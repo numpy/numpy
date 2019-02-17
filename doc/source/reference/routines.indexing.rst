@@ -36,6 +36,7 @@ Indexing-like operations
    :toctree: generated/
 
    take
+   take_along_axis
    choose
    compress
    diag
@@ -50,6 +51,7 @@ Inserting data into arrays
 
    place
    put
+   put_along_axis
    putmask
    fill_diagonal
 
@@ -61,5 +63,6 @@ Iterating over arrays
    nditer
    ndenumerate
    ndindex
+   nested_iters
    flatiter
    lib.Arrayterator

@@ -4,13 +4,15 @@ import sys
 import warnings
 import itertools
 import operator
+import platform
+import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose, assert_array_equal, IS_PYPY,
-    suppress_warnings, dec, _gen_alignment_data,
-)
+    assert_, assert_equal, assert_raises, assert_almost_equal,
+    assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
+    assert_warns
+    )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -134,7 +136,7 @@ class TestPower(object):
         # 1 ** -1 possible special case
         base = [np.array(1, dt)[()] for dt in 'bhilqBHILQ']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -144,7 +146,7 @@ class TestPower(object):
         # -1 ** -1 possible special case
         base = [np.array(-1, dt)[()] for dt in 'bhilq']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -154,7 +156,7 @@ class TestPower(object):
         # 2 ** -1 perhaps generic
         base = [np.array(2, dt)[()] for dt in 'bhilqBHILQ']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -182,7 +184,7 @@ class TestPower(object):
         a = 5
         b = 4
         c = 10
-        expected = pow(a, b, c)
+        expected = pow(a, b, c)  # noqa: F841
         for t in (np.int32, np.float32, np.complex64):
             # note that 3-operand power only dispatches on the first argument
             assert_raises(TypeError, operator.pow, t(a), b, c)
@@ -398,7 +400,7 @@ class TestConversion(object):
         for code in 'lLqQ':
             assert_raises(OverflowError, overflow_error_func, code)
 
-    def test_longdouble_int(self):
+    def test_int_from_infinite_longdouble(self):
         # gh-627
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, int, x)
@@ -408,15 +410,34 @@ class TestConversion(object):
             assert_raises(OverflowError, int, x)
             assert_equal(len(sup.log), 1)
 
-    @dec.knownfailureif(not IS_PYPY)
-    def test_clongdouble___int__(self):
+    @pytest.mark.skipif(not IS_PYPY, reason="Test is PyPy only (gh-9972)")
+    def test_int_from_infinite_longdouble___int__(self):
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
         with suppress_warnings() as sup:
             sup.record(np.ComplexWarning)
             x = np.clongdouble(np.inf)
             assert_raises(OverflowError, x.__int__)
-            self.assertEqual(len(sup.log), 1)
+            assert_equal(len(sup.log), 1)
+
+    @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+                        reason="long double is same as double")
+    @pytest.mark.skipif(platform.machine().startswith("ppc64"),
+                        reason="IBM double double")
+    def test_int_from_huge_longdouble(self):
+        # Produce a longdouble that would overflow a double,
+        # use exponent that avoids bug in Darwin pow function.
+        exp = np.finfo(np.double).maxexp - 1
+        huge_ld = 2 * 1234 * np.longdouble(2) ** exp
+        huge_i = 2 * 1234 * 2 ** exp
+        assert_(huge_ld != np.inf)
+        assert_equal(int(huge_ld), huge_i)
+
+    def test_int_from_longdouble(self):
+        x = np.longdouble(1.5)
+        assert_equal(int(x), 1)
+        x = np.longdouble(-10.5)
+        assert_equal(int(x), -10)
 
     def test_numpy_scalar_relational_operators(self):
         # All integer
@@ -498,7 +519,7 @@ class TestRepr(object):
         storage_bytes = np.dtype(t).itemsize*8
         # could add some more types to the list below
         for which in ['small denorm', 'small norm']:
-            # Values from http://en.wikipedia.org/wiki/IEEE_754
+            # Values from https://en.wikipedia.org/wiki/IEEE_754
             constr = np.array([0x00]*storage_bytes, dtype=np.uint8)
             if which == 'small denorm':
                 byte = last_fraction_bit_idx // 8
@@ -520,7 +541,7 @@ class TestRepr(object):
         # long double test cannot work, because eval goes through a python
         # float
         for t in [np.float32, np.float64]:
-            yield self._test_type_repr, t
+            self._test_type_repr(t)
 
 
 if not IS_PYPY:
@@ -543,16 +564,29 @@ class TestMultiply(object):
         # numpy integers. And errors are raised when multiplied with others.
         # Some of this behaviour may be controversial and could be open for
         # change.
+        accepted_types = set(np.typecodes["AllInteger"])
+        deprecated_types = {'?'}
+        forbidden_types = (
+            set(np.typecodes["All"]) - accepted_types - deprecated_types)
+        forbidden_types -= {'V'}  # can't default-construct void scalars
+
         for seq_type in (list, tuple):
             seq = seq_type([1, 2, 3])
-            for numpy_type in np.typecodes["AllInteger"]:
+            for numpy_type in accepted_types:
                 i = np.dtype(numpy_type).type(2)
                 assert_equal(seq * i, seq * int(i))
                 assert_equal(i * seq, int(i) * seq)
 
-            for numpy_type in np.typecodes["All"].replace("V", ""):
-                if numpy_type in np.typecodes["AllInteger"]:
-                    continue
+            for numpy_type in deprecated_types:
+                i = np.dtype(numpy_type).type()
+                assert_equal(
+                    assert_warns(DeprecationWarning, operator.mul, seq, i),
+                    seq * int(i))
+                assert_equal(
+                    assert_warns(DeprecationWarning, operator.mul, i, seq),
+                    int(i) * seq)
+
+            for numpy_type in forbidden_types:
                 i = np.dtype(numpy_type).type()
                 assert_raises(TypeError, operator.mul, seq, i)
                 assert_raises(TypeError, operator.mul, i, seq)
@@ -630,7 +664,3 @@ class TestAbs(object):
 
     def test_numpy_abs(self):
         self._test_abs_func(np.abs)
-
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -14,8 +14,8 @@ from numpy import ndarray, float_
 import numpy.core.umath as umath
 import numpy.testing
 from numpy.testing import (
-    TestCase, assert_, assert_allclose, assert_array_almost_equal_nulp,
-    assert_raises, build_err_msg, run_module_suite
+    assert_, assert_allclose, assert_array_almost_equal_nulp,
+    assert_raises, build_err_msg
     )
 from .core import mask_or, getmask, masked_array, nomask, masked, filled
 
@@ -31,9 +31,10 @@ __all__masked = [
 # have mistakenly included them from this file. SciPy is one. That is
 # unfortunate, as some of these functions are not intended to work with
 # masked arrays. But there was no way to tell before.
+from unittest import TestCase
 __some__from_testing = [
-    'TestCase', 'assert_', 'assert_allclose',
-    'assert_array_almost_equal_nulp', 'assert_raises', 'run_module_suite',
+    'TestCase', 'assert_', 'assert_allclose', 'assert_array_almost_equal_nulp',
+    'assert_raises'
     ]
 
 __all__ = __all__masked + __some__from_testing

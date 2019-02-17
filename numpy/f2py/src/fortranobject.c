@@ -241,7 +241,7 @@ fortran_doc(FortranDataDef def)
 
 static FortranDataDef *save_def; /* save pointer of an allocatable array */
 static void set_data(char *d,npy_intp *f) {  /* callback from Fortran */
-    if (*f)                               /* In fortran f=allocated(d) */
+    if (*f)                                  /* In fortran f=allocated(d) */
         save_def->data = d;
     else
         save_def->data = NULL;
@@ -439,23 +439,23 @@ PyTypeObject PyFortran_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
 #else
     PyObject_HEAD_INIT(0)
-    0,                    /*ob_size*/
+    0,                            /*ob_size*/
 #endif
     "fortran",                    /*tp_name*/
     sizeof(PyFortranObject),      /*tp_basicsize*/
-    0,                    /*tp_itemsize*/
+    0,                            /*tp_itemsize*/
     /* methods */
-    (destructor)fortran_dealloc, /*tp_dealloc*/
-    0,                    /*tp_print*/
+    (destructor)fortran_dealloc,  /*tp_dealloc*/
+    0,                            /*tp_print*/
     (getattrfunc)fortran_getattr, /*tp_getattr*/
     (setattrfunc)fortran_setattr, /*tp_setattr*/
-    0,                    /*tp_compare/tp_reserved*/
-    (reprfunc)fortran_repr, /*tp_repr*/
-    0,                    /*tp_as_number*/
-    0,                    /*tp_as_sequence*/
-    0,                    /*tp_as_mapping*/
-    0,                    /*tp_hash*/
-    (ternaryfunc)fortran_call,                    /*tp_call*/
+    0,                            /*tp_compare/tp_reserved*/
+    (reprfunc)fortran_repr,       /*tp_repr*/
+    0,                            /*tp_as_number*/
+    0,                            /*tp_as_sequence*/
+    0,                            /*tp_as_mapping*/
+    0,                            /*tp_hash*/
+    (ternaryfunc)fortran_call,    /*tp_call*/
 };
 
 /************************* f2py_report_atexit *******************************/
@@ -539,7 +539,7 @@ void f2py_report_on_exit(int exit_flag,void *name) {
     fprintf(stderr,"(d) f2py call-back interface, %6d calls  : %8d msec\n",
             cb_passed_counter,cb_passed_time);
 
-    fprintf(stderr,"(e) wrapped (Fortran/C) functions (acctual) : %8d msec\n\n",
+    fprintf(stderr,"(e) wrapped (Fortran/C) functions (actual) : %8d msec\n\n",
             passed_call_time-cb_passed_call_time-cb_passed_time);
     fprintf(stderr,"Use -DF2PY_REPORT_ATEXIT_DISABLE to disable this message.\n");
     fprintf(stderr,"Exit status: %d\n",exit_flag);
@@ -576,7 +576,7 @@ static void f2py_report_on_array_copy_fromany(void) {
  *
  * Description:
  * ------------
- * Provides array_from_pyobj function that returns a contigious array
+ * Provides array_from_pyobj function that returns a contiguous array
  * object with the given dimensions and required storage order, either
  * in row-major (C) or column-major (Fortran) order. The function
  * array_from_pyobj is very flexible about its Python object argument
@@ -656,17 +656,18 @@ PyArrayObject* array_from_pyobj(const int type_num,
                                 const int rank,
                                 const int intent,
                                 PyObject *obj) {
-    /* Note about reference counting
-       -----------------------------
-       If the caller returns the array to Python, it must be done with
-       Py_BuildValue("N",arr).
-       Otherwise, if obj!=arr then the caller must call Py_DECREF(arr).
-
-       Note on intent(cache,out,..)
-       ---------------------
-       Don't expect correct data when returning intent(cache) array.
-
-    */
+    /*
+     * Note about reference counting
+     *  -----------------------------
+     * If the caller returns the array to Python, it must be done with
+     * Py_BuildValue("N",arr).
+     * Otherwise, if obj!=arr then the caller must call Py_DECREF(arr).
+     *
+     * Note on intent(cache,out,..)
+     * ---------------------
+     * Don't expect correct data when returning intent(cache) array.
+     *
+     */
     char mess[200];
     PyArrayObject *arr = NULL;
     PyArray_Descr *descr;
@@ -744,17 +745,17 @@ PyArrayObject* array_from_pyobj(const int type_num,
         if (check_and_fix_dimensions(arr, rank, dims)) {
             return NULL;
         }
-	/*
-	printf("intent alignement=%d\n", F2PY_GET_ALIGNMENT(intent));
-	printf("alignement check=%d\n", F2PY_CHECK_ALIGNMENT(arr, intent));
-	int i;
-	for (i=1;i<=16;i++)
-	  printf("i=%d isaligned=%d\n", i, ARRAY_ISALIGNED(arr, i));
-	*/
+        /*
+        printf("intent alignment=%d\n", F2PY_GET_ALIGNMENT(intent));
+        printf("alignment check=%d\n", F2PY_CHECK_ALIGNMENT(arr, intent));
+        int i;
+        for (i=1;i<=16;i++)
+          printf("i=%d isaligned=%d\n", i, ARRAY_ISALIGNED(arr, i));
+        */
         if ((! (intent & F2PY_INTENT_COPY))
             && PyArray_ITEMSIZE(arr)==elsize
             && ARRAY_ISCOMPATIBLE(arr,type_num)
-	    && F2PY_CHECK_ALIGNMENT(arr, intent)
+            && F2PY_CHECK_ALIGNMENT(arr, intent)
             ) {
             if ((intent & F2PY_INTENT_C)?PyArray_ISCARRAY(arr):PyArray_ISFARRAY(arr)) {
                 if ((intent & F2PY_INTENT_OUT)) {
@@ -780,8 +781,8 @@ PyArrayObject* array_from_pyobj(const int type_num,
             if (!(ARRAY_ISCOMPATIBLE(arr,type_num)))
                 sprintf(mess+strlen(mess)," -- input '%c' not compatible to '%c'",
                         PyArray_DESCR(arr)->type,typechar);
-	    if (!(F2PY_CHECK_ALIGNMENT(arr, intent)))
-	      sprintf(mess+strlen(mess)," -- input not %d-aligned", F2PY_GET_ALIGNMENT(intent));
+            if (!(F2PY_CHECK_ALIGNMENT(arr, intent)))
+              sprintf(mess+strlen(mess)," -- input not %d-aligned", F2PY_GET_ALIGNMENT(intent));
             PyErr_SetString(PyExc_ValueError,mess);
             return NULL;
         }
@@ -858,14 +859,14 @@ static
 int check_and_fix_dimensions(const PyArrayObject* arr, const int rank, npy_intp *dims)
 {
     /*
-      This function fills in blanks (that are -1's) in dims list using
-      the dimensions from arr. It also checks that non-blank dims will
-      match with the corresponding values in arr dimensions.
-
-      Returns 0 if the function is successful.
-
-      If an error condition is detected, an exception is set and 1 is returned.
-    */
+     * This function fills in blanks (that are -1's) in dims list using
+     * the dimensions from arr. It also checks that non-blank dims will
+     * match with the corresponding values in arr dimensions.
+     *
+     * Returns 0 if the function is successful.
+     *
+     * If an error condition is detected, an exception is set and 1 is returned.
+     */
     const npy_intp arr_size = (PyArray_NDIM(arr))?PyArray_Size((PyObject *)arr):1;
 #ifdef DEBUG_COPY_ND_ARRAY
     dump_attrs(arr);
@@ -922,7 +923,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr, const int rank, npy_intp 
         int i;
         npy_intp d;
         for (i=0; i<rank; ++i) {
-	    d = PyArray_DIM(arr,i);
+            d = PyArray_DIM(arr,i);
             if (dims[i]>=0) {
                 if (d > 1 && d!=dims[i]) {
                     PyErr_Format(PyExc_ValueError,

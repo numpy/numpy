@@ -15,17 +15,16 @@ import shutil
 import atexit
 import textwrap
 import re
-import random
-import numpy.f2py
+import pytest
 
 from numpy.compat import asbytes, asstr
-from numpy.testing import SkipTest, temppath, dec
+from numpy.testing import temppath
 from importlib import import_module
 
 try:
     from hashlib import md5
 except ImportError:
-    from md5 import new as md5
+    from md5 import new as md5  # noqa: F401
 
 #
 # Maintaining a temporary module directory
@@ -319,14 +318,16 @@ class F2PyTest(object):
     module = None
     module_name = None
 
-    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran (Issue #9673)')
     def setup(self):
+        if sys.platform == 'win32':
+            pytest.skip('Fails with MinGW64 Gfortran (Issue #9673)')
+
         if self.module is not None:
             return
 
         # Check compiler availability first
         if not has_c_compiler():
-            raise SkipTest("No C compiler available")
+            pytest.skip("No C compiler available")
 
         codes = []
         if self.sources:
@@ -342,9 +343,9 @@ class F2PyTest(object):
             elif fn.endswith('.f90'):
                 needs_f90 = True
         if needs_f77 and not has_f77_compiler():
-            raise SkipTest("No Fortran 77 compiler available")
+            pytest.skip("No Fortran 77 compiler available")
         if needs_f90 and not has_f90_compiler():
-            raise SkipTest("No Fortran 90 compiler available")
+            pytest.skip("No Fortran 90 compiler available")
 
         # Build the module
         if self.code is not None:

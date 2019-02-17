@@ -1,7 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 from numpy import array
-from numpy.testing import run_module_suite, assert_, dec
+from numpy.testing import assert_
 from . import util
 
 
@@ -79,10 +81,10 @@ cf2py    intent(out) ts
        end
     """
 
-    @dec.slow
-    def test_all(self):
-        for name in "t0,t1,t5,s0,s1,s5,ss".split(","):
-            self.check_function(getattr(self.module, name))
+    @pytest.mark.slow
+    @pytest.mark.parametrize('name', 't0,t1,t5,s0,s1,s5,ss'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module, name))
 
 
 class TestF90ReturnCharacter(TestReturnCharacter):
@@ -138,10 +140,7 @@ module f90_return_char
 end module f90_return_char
     """
 
-    @dec.slow
-    def test_all(self):
-        for name in "t0,t1,t5,ts,s0,s1,s5,ss".split(","):
-            self.check_function(getattr(self.module.f90_return_char, name))
-
-if __name__ == "__main__":
-    run_module_suite()
+    @pytest.mark.slow
+    @pytest.mark.parametrize('name', 't0,t1,t5,ts,s0,s1,s5,ss'.split(','))
+    def test_all(self, name):
+        self.check_function(getattr(self.module.f90_return_char, name))

@@ -69,13 +69,10 @@ class NDArrayOperatorsMixin(object):
     deferring to the ``__array_ufunc__`` method, which subclasses must
     implement.
 
-    This class does not yet implement the special operators corresponding
-    to ``matmul`` (``@``), because ``np.matmul`` is not yet a NumPy ufunc.
-
     It is useful for writing classes that do not inherit from `numpy.ndarray`,
     but that should support arithmetic and numpy universal functions like
-    arrays as described in :ref:`A Mechanism for Overriding Ufuncs
-    <neps.ufunc-overrides>`.
+    arrays as described in `A Mechanism for Overriding Ufuncs
+    <../../neps/nep-0013-ufunc-overrides.html>`_.
 
     As an trivial example, consider this implementation of an ``ArrayLike``
     class that simply wraps a NumPy array and ensures that the result of any
@@ -137,6 +134,8 @@ class NDArrayOperatorsMixin(object):
     Note that unlike ``numpy.ndarray``, ``ArrayLike`` does not allow operations
     with arbitrary, unrecognized types. This ensures that interactions with
     ArrayLike preserve a well-defined casting hierarchy.
+
+    .. versionadded:: 1.13
     """
     # Like np.ndarray, this mixin class implements "Option 1" from the ufunc
     # overrides NEP.
@@ -153,6 +152,8 @@ class NDArrayOperatorsMixin(object):
     __add__, __radd__, __iadd__ = _numeric_methods(um.add, 'add')
     __sub__, __rsub__, __isub__ = _numeric_methods(um.subtract, 'sub')
     __mul__, __rmul__, __imul__ = _numeric_methods(um.multiply, 'mul')
+    __matmul__, __rmatmul__, __imatmul__ = _numeric_methods(
+        um.matmul, 'matmul')
     if sys.version_info.major < 3:
         # Python 3 uses only __truediv__ and __floordiv__
         __div__, __rdiv__, __idiv__ = _numeric_methods(um.divide, 'div')

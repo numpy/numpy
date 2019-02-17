@@ -409,6 +409,7 @@ be performed.
 .. autosummary::
    :toctree: generated/
 
+   ndarray.max
    ndarray.argmax
    ndarray.min
    ndarray.argmin
@@ -461,12 +462,12 @@ Truth value of an array (:func:`bool()`):
 .. autosummary::
    :toctree: generated/
 
-   ndarray.__nonzero__
+   ndarray.__bool__
 
 .. note::
 
    Truth-value testing of an array invokes
-   :meth:`ndarray.__nonzero__`, which raises an error if the number of
+   :meth:`ndarray.__bool__`, which raises an error if the number of
    elements in the array is larger than 1, because the truth value
    of such arrays is ambiguous. Use :meth:`.any() <ndarray.any>` and
    :meth:`.all() <ndarray.all>` instead to be clear about what is meant
@@ -492,7 +493,6 @@ Arithmetic:
    ndarray.__add__
    ndarray.__sub__
    ndarray.__mul__
-   ndarray.__div__
    ndarray.__truediv__
    ndarray.__floordiv__
    ndarray.__mod__
@@ -517,7 +517,7 @@ Arithmetic:
      ``__r{op}__`` special methods are not directly defined.
 
    - The functions called to implement many arithmetic special methods
-     for arrays can be modified using :func:`set_numeric_ops`.
+     for arrays can be modified using :class:`__array_ufunc__ <numpy.class.__array_ufunc__>`.
 
 Arithmetic, in-place:
 
@@ -527,7 +527,6 @@ Arithmetic, in-place:
    ndarray.__iadd__
    ndarray.__isub__
    ndarray.__imul__
-   ndarray.__idiv__
    ndarray.__itruediv__
    ndarray.__ifloordiv__
    ndarray.__imod__
@@ -597,19 +596,17 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    ndarray.__setitem__
    ndarray.__contains__
 
-Conversion; the operations :func:`complex()`, :func:`int()`,
-:func:`long()`, :func:`float()`, :func:`oct()`, and
-:func:`hex()`. They work only on arrays that have one element in them
+Conversion; the operations :func:`int()`, :func:`float()` and
+:func:`complex()`.
+. They work only on arrays that have one element in them
 and return the appropriate scalar.
 
 .. autosummary::
    :toctree: generated/
 
    ndarray.__int__
-   ndarray.__long__
    ndarray.__float__
-   ndarray.__oct__
-   ndarray.__hex__
+   ndarray.__complex__
 
 String representations:
 

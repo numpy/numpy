@@ -1,19 +1,25 @@
 from __future__ import division, absolute_import, print_function
 
+import functools
 import sys
 import math
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
-    asarray, ScalarType, array, alltrue, cumprod, arange
+    asarray, ScalarType, array, alltrue, cumprod, arange, ndim
     )
 from numpy.core.numerictypes import find_common_type, issubdtype
 
-from . import function_base
 import numpy.matrixlib as matrixlib
 from .function_base import diff
 from numpy.core.multiarray import ravel_multi_index, unravel_index
+from numpy.core.overrides import set_module
+from numpy.core import overrides, linspace
 from numpy.lib.stride_tricks import as_strided
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 __all__ = [
@@ -23,6 +29,11 @@ __all__ = [
     ]
 
 
+def _ix__dispatcher(*args):
+    return args
+
+
+@array_function_dispatch(_ix__dispatcher)
 def ix_(*args):
     """
     Construct an open mesh from multiple sequences.
@@ -121,39 +132,13 @@ class nd_grid(object):
     Notes
     -----
     Two instances of `nd_grid` are made available in the NumPy namespace,
-    `mgrid` and `ogrid`::
+    `mgrid` and `ogrid`, approximately defined as::
 
         mgrid = nd_grid(sparse=False)
         ogrid = nd_grid(sparse=True)
 
     Users should use these pre-defined instances instead of using `nd_grid`
     directly.
-
-    Examples
-    --------
-    >>> mgrid = np.lib.index_tricks.nd_grid()
-    >>> mgrid[0:5,0:5]
-    array([[[0, 0, 0, 0, 0],
-            [1, 1, 1, 1, 1],
-            [2, 2, 2, 2, 2],
-            [3, 3, 3, 3, 3],
-            [4, 4, 4, 4, 4]],
-           [[0, 1, 2, 3, 4],
-            [0, 1, 2, 3, 4],
-            [0, 1, 2, 3, 4],
-            [0, 1, 2, 3, 4],
-            [0, 1, 2, 3, 4]]])
-    >>> mgrid[-1:1:5j]
-    array([-1. , -0.5,  0. ,  0.5,  1. ])
-
-    >>> ogrid = np.lib.index_tricks.nd_grid(sparse=True)
-    >>> ogrid[0:5,0:5]
-    [array([[0],
-            [1],
-            [2],
-            [3],
-            [4]]), array([[0, 1, 2, 3, 4]])]
-
     """
 
     def __init__(self, sparse=False):
@@ -201,7 +186,7 @@ class nd_grid(object):
                 slobj = [_nx.newaxis]*len(size)
                 for k in range(len(size)):
                     slobj[k] = slice(None, None)
-                    nn[k] = nn[k][slobj]
+                    nn[k] = nn[k][tuple(slobj)]
                     slobj[k] = _nx.newaxis
             return nn
         except (IndexError, TypeError):
@@ -220,13 +205,97 @@ class nd_grid(object):
             else:
                 return _nx.arange(start, stop, step)
 
-    def __len__(self):
-        return 0
 
-mgrid = nd_grid(sparse=False)
-ogrid = nd_grid(sparse=True)
-mgrid.__doc__ = None  # set in numpy.add_newdocs
-ogrid.__doc__ = None  # set in numpy.add_newdocs
+class MGridClass(nd_grid):
+    """
+    `nd_grid` instance which returns a dense multi-dimensional "meshgrid".
+
+    An instance of `numpy.lib.index_tricks.nd_grid` which returns an dense
+    (or fleshed out) mesh-grid when indexed, so that each returned argument
+    has the same shape.  The dimensions and number of the output arrays are
+    equal to the number of indexing dimensions.  If the step length is not a
+    complex number, then the stop is not inclusive.
+
+    However, if the step length is a **complex number** (e.g. 5j), then
+    the integer part of its magnitude is interpreted as specifying the
+    number of points to create between the start and stop values, where
+    the stop value **is inclusive**.
+
+    Returns
+    ----------
+    mesh-grid `ndarrays` all of the same dimensions
+
+    See Also
+    --------
+    numpy.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
+    ogrid : like mgrid but returns open (not fleshed out) mesh grids
+    r_ : array concatenator
+
+    Examples
+    --------
+    >>> np.mgrid[0:5,0:5]
+    array([[[0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1],
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 3],
+            [4, 4, 4, 4, 4]],
+           [[0, 1, 2, 3, 4],
+            [0, 1, 2, 3, 4],
+            [0, 1, 2, 3, 4],
+            [0, 1, 2, 3, 4],
+            [0, 1, 2, 3, 4]]])
+    >>> np.mgrid[-1:1:5j]
+    array([-1. , -0.5,  0. ,  0.5,  1. ])
+
+    """
+    def __init__(self):
+        super(MGridClass, self).__init__(sparse=False)
+
+mgrid = MGridClass()
+
+class OGridClass(nd_grid):
+    """
+    `nd_grid` instance which returns an open multi-dimensional "meshgrid".
+
+    An instance of `numpy.lib.index_tricks.nd_grid` which returns an open
+    (i.e. not fleshed out) mesh-grid when indexed, so that only one dimension
+    of each returned array is greater than 1.  The dimension and number of the
+    output arrays are equal to the number of indexing dimensions.  If the step
+    length is not a complex number, then the stop is not inclusive.
+
+    However, if the step length is a **complex number** (e.g. 5j), then
+    the integer part of its magnitude is interpreted as specifying the
+    number of points to create between the start and stop values, where
+    the stop value **is inclusive**.
+
+    Returns
+    ----------
+    mesh-grid `ndarrays` with only one dimension :math:`\\neq 1`
+
+    See Also
+    --------
+    np.lib.index_tricks.nd_grid : class of `ogrid` and `mgrid` objects
+    mgrid : like `ogrid` but returns dense (or fleshed out) mesh grids
+    r_ : array concatenator
+
+    Examples
+    --------
+    >>> from numpy import ogrid
+    >>> ogrid[-1:1:5j]
+    array([-1. , -0.5,  0. ,  0.5,  1. ])
+    >>> ogrid[0:5,0:5]
+    [array([[0],
+            [1],
+            [2],
+            [3],
+            [4]]), array([[0, 1, 2, 3, 4]])]
+
+    """
+    def __init__(self):
+        super(OGridClass, self).__init__(sparse=True)
+
+ogrid = OGridClass()
+
 
 class AxisConcatenator(object):
     """
@@ -277,7 +346,7 @@ class AxisConcatenator(object):
                     step = 1
                 if isinstance(step, complex):
                     size = int(abs(step))
-                    newobj = function_base.linspace(start, stop, num=size)
+                    newobj = linspace(start, stop, num=size)
                 else:
                     newobj = _nx.arange(start, stop, step)
                 if ndmin > 1:
@@ -312,21 +381,16 @@ class AxisConcatenator(object):
                 scalar = True
                 scalartypes.append(newobj.dtype)
             else:
-                newobj = item
-                if ndmin > 1:
-                    tempobj = array(newobj, copy=False, subok=True)
-                    newobj = array(newobj, copy=False, subok=True,
-                                   ndmin=ndmin)
-                    if trans1d != -1 and tempobj.ndim < ndmin:
-                        k2 = ndmin-tempobj.ndim
-                        if (trans1d < 0):
-                            trans1d += k2 + 1
-                        defaxes = list(range(ndmin))
-                        k1 = trans1d
-                        axes = defaxes[:k1] + defaxes[k2:] + \
-                               defaxes[k1:k2]
-                        newobj = newobj.transpose(axes)
-                    del tempobj
+                item_ndim = ndim(item)
+                newobj = array(item, copy=False, subok=True, ndmin=ndmin)
+                if trans1d != -1 and item_ndim < ndmin:
+                    k2 = ndmin - item_ndim
+                    k1 = trans1d
+                    if k1 < 0:
+                        k1 += k2 + 1
+                    defaxes = list(range(ndmin))
+                    axes = defaxes[:k1] + defaxes[k2:] + defaxes[k1:k2]
+                    newobj = newobj.transpose(axes)
             objs.append(newobj)
             if not scalar and isinstance(newobj, _nx.ndarray):
                 arraytypes.append(newobj.dtype)
@@ -414,7 +478,7 @@ class RClass(AxisConcatenator):
     Examples
     --------
     >>> np.r_[np.array([1,2,3]), 0, 0, np.array([4,5,6])]
-    array([1, 2, 3, 0, 0, 4, 5, 6])
+    array([1, 2, 3, ..., 4, 5, 6])
     >>> np.r_[-1:1:6j, [0]*3, 5, 6]
     array([-1. , -0.6, -0.2,  0.2,  0.6,  1. ,  0. ,  0. ,  0. ,  5. ,  6. ])
 
@@ -474,15 +538,18 @@ class CClass(AxisConcatenator):
            [2, 5],
            [3, 6]])
     >>> np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
-    array([[1, 2, 3, 0, 0, 4, 5, 6]])
+    array([[1, 2, 3, ..., 4, 5, 6]])
 
     """
 
     def __init__(self):
         AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
 
+
 c_ = CClass()
 
+
+@set_module('numpy')
 class ndenumerate(object):
     """
     Multidimensional index iterator.
@@ -533,6 +600,7 @@ class ndenumerate(object):
     next = __next__
 
 
+@set_module('numpy')
 class ndindex(object):
     """
     An N-dimensional iterator object to index arrays.
@@ -673,6 +741,12 @@ s_ = IndexExpression(maketuple=False)
 # The following functions complement those in twodim_base, but are
 # applicable to N-dimensions.
 
+
+def _fill_diagonal_dispatcher(a, val, wrap=None):
+    return (a,)
+
+
+@array_function_dispatch(_fill_diagonal_dispatcher)
 def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
@@ -739,7 +813,7 @@ def fill_diagonal(a, val, wrap=False):
 
     >>> # tall matrices no wrap
     >>> a = np.zeros((5, 3),int)
-    >>> fill_diagonal(a, 4)
+    >>> np.fill_diagonal(a, 4)
     >>> a
     array([[4, 0, 0],
            [0, 4, 0],
@@ -749,7 +823,7 @@ def fill_diagonal(a, val, wrap=False):
 
     >>> # tall matrices wrap
     >>> a = np.zeros((5, 3),int)
-    >>> fill_diagonal(a, 4, wrap=True)
+    >>> np.fill_diagonal(a, 4, wrap=True)
     >>> a
     array([[4, 0, 0],
            [0, 4, 0],
@@ -759,7 +833,7 @@ def fill_diagonal(a, val, wrap=False):
 
     >>> # wide matrices
     >>> a = np.zeros((3, 5),int)
-    >>> fill_diagonal(a, 4, wrap=True)
+    >>> np.fill_diagonal(a, 4, wrap=True)
     >>> a
     array([[4, 0, 0, 0, 0],
            [0, 4, 0, 0, 0],
@@ -787,6 +861,7 @@ def fill_diagonal(a, val, wrap=False):
     a.flat[:end:step] = val
 
 
+@set_module('numpy')
 def diag_indices(n, ndim=2):
     """
     Return the indices to access the main diagonal of an array.
@@ -855,6 +930,11 @@ def diag_indices(n, ndim=2):
     return (idx,) * ndim
 
 
+def _diag_indices_from(arr):
+    return (arr,)
+
+
+@array_function_dispatch(_diag_indices_from)
 def diag_indices_from(arr):
     """
     Return the indices to access the main diagonal of an n-dimensional array.

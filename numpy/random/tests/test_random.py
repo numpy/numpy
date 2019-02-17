@@ -3,13 +3,12 @@ import warnings
 
 import numpy as np
 from numpy.testing import (
-        run_module_suite, assert_, assert_raises, assert_equal, assert_warns,
+        assert_, assert_raises, assert_equal, assert_warns,
         assert_no_warnings, assert_array_equal, assert_array_almost_equal,
         suppress_warnings
         )
 from numpy import random
 import sys
-import warnings
 
 
 class TestSeed(object):
@@ -231,7 +230,7 @@ class TestRandint(object):
             res = hashlib.md5(val.view(np.int8)).hexdigest()
             assert_(tgt[np.dtype(dt).name] == res)
 
-        # bools do not depend on endianess
+        # bools do not depend on endianness
         np.random.seed(1234)
         val = self.rfunc(0, 2, size=1000, dtype=bool).view(np.int8)
         res = hashlib.md5(val).hexdigest()
@@ -440,6 +439,20 @@ class TestRandomDist(object):
         assert_equal(np.random.choice(6, s, replace=False, p=p).shape, s)
         assert_equal(np.random.choice(np.arange(6), s, replace=True).shape, s)
 
+        # Check zero-size
+        assert_equal(np.random.randint(0, 0, size=(3, 0, 4)).shape, (3, 0, 4))
+        assert_equal(np.random.randint(0, -10, size=0).shape, (0,))
+        assert_equal(np.random.randint(10, 10, size=0).shape, (0,))
+        assert_equal(np.random.choice(0, size=0).shape, (0,))
+        assert_equal(np.random.choice([], size=(0,)).shape, (0,))
+        assert_equal(np.random.choice(['a', 'b'], size=(3, 0, 4)).shape, (3, 0, 4))
+        assert_raises(ValueError, np.random.choice, [], 10)
+
+    def test_choice_nan_probabilities(self):
+        a = np.array([42, 1, 2])
+        p = [None, None, None]
+        assert_raises(ValueError, np.random.choice, a, p=p)
+
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
@@ -458,6 +471,10 @@ class TestRandomDist(object):
                      lambda x: [(i, i) for i in x],
                      lambda x: np.asarray([[i, i] for i in x]),
                      lambda x: np.vstack([x, x]).T,
+                     # gh-11442
+                     lambda x: (np.asarray([(i, i) for i in x],
+                                           [("a", int), ("b", int)])
+                                .view(np.recarray)),
                      # gh-4270
                      lambda x: np.asarray([(i, i) for i in x],
                                           [("a", object, 1),
@@ -759,7 +776,7 @@ class TestRandomDist(object):
                  [1.40840323350391515e+02, 1.98390255135251704e+05]])
         # For some reason on 32-bit x86 Ubuntu 12.10 the [1, 0] entry in this
         # matrix differs by 24 nulps. Discussion:
-        #   http://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
+        #   https://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
         # Consensus is that this is probably some gcc quirk that affects
         # rounding but not in any important way, so we just use a looser
         # tolerance on this test:
@@ -930,7 +947,8 @@ class TestRandomDist(object):
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_weibull_0(self):
-        assert_equal(np.random.weibull(a=0), 0)
+        np.random.seed(self.seed)
+        assert_equal(np.random.weibull(a=0, size=12), np.zeros(12))
         assert_raises(ValueError, np.random.weibull, a=-0.)
 
     def test_zipf(self):
@@ -1445,7 +1463,6 @@ class TestBroadcast(object):
             assert_raises(ValueError, zipf, np.nan)
             assert_raises(ValueError, zipf, [0, 0, np.nan])
 
-
     def test_geometric(self):
         p = [0.5]
         bad_p_one = [-1]
@@ -1634,6 +1651,3 @@ class TestSingleEltArrayInput(object):
 
             out = func(self.argOne, self.argTwo[0], self.argThree)
             assert_equal(out.shape, self.tgtShape)
-
-if __name__ == "__main__":
-    run_module_suite()

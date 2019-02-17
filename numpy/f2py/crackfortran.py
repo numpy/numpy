@@ -33,7 +33,7 @@ Note: f2py directive: <commentchar>f2py<line> is read as <line>
 Note: pythonmodule is introduced to represent Python module
 
 Usage:
-  `postlist=crackfortran(files,funcs)`
+  `postlist=crackfortran(files)`
   `postlist` contains declaration information read from the list of files `files`.
   `crack2fortran(postlist)` returns a fortran code to be saved to pyf-file
 
@@ -346,8 +346,6 @@ def readfortrancode(ffile, dowithline=show, istop=1):
     cont = 0
     finalline = ''
     ll = ''
-    commentline = re.compile(
-        r'(?P<line>([^"]*["][^"]*["][^"!]*|[^\']*\'[^\']*\'[^\'!]*|[^!\'"]*))!{1}(?P<rest>.*)')
     includeline = re.compile(
         r'\s*include\s*(\'|")(?P<name>[^\'"]*)(\'|")', re.I)
     cont1 = re.compile(r'(?P<line>.*)&\s*\Z')
@@ -391,17 +389,10 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 break
             l = l[:-1]
         if not strictf77:
-            r = commentline.match(l)
-            if r:
-                l = r.group('line') + ' '  # Strip comments starting with `!'
-                rl = r.group('rest')
-                if rl[:4].lower() == 'f2py':  # f2py directive
-                    l = l + 4 * ' '
-                    r = commentline.match(rl[4:])
-                    if r:
-                        l = l + r.group('line')
-                    else:
-                        l = l + rl[4:]
+            (l, rl) = split_by_unquoted(l, '!')
+            l += ' '
+            if rl[:5].lower() == '!f2py':  # f2py directive
+                l, _ = split_by_unquoted(l + 4 * ' ' + rl[5:], '!')
         if l.strip() == '':  # Skip empty line
             cont = 0
             continue
@@ -618,6 +609,25 @@ multilinepattern = re.compile(
     r"\s*(?P<before>''')(?P<this>.*?)(?P<after>''')\s*\Z", re.S), 'multiline'
 ##
 
+def split_by_unquoted(line, characters):
+    """
+    Splits the line into (line[:i], line[i:]),
+    where i is the index of first occurrence of one of the characters
+    not within quotes, or len(line) if no such index exists
+    """
+    assert not (set('"\'') & set(characters)), "cannot split by unquoted quotes"
+    r = re.compile(
+        r"\A(?P<before>({single_quoted}|{double_quoted}|{not_quoted})*)"
+        r"(?P<after>{char}.*)\Z".format(
+            not_quoted="[^\"'{}]".format(re.escape(characters)),
+            char="[{}]".format(re.escape(characters)),
+            single_quoted=r"('([^'\\]|(\\.))*')",
+            double_quoted=r'("([^"\\]|(\\.))*")'))
+    m = r.match(line)
+    if m:
+        d = m.groupdict()
+        return (d["before"], d["after"])
+    return (line, "")
 
 def _simplifyargs(argsline):
     a = []
@@ -642,12 +652,17 @@ def crackline(line, reset=0):
     global filepositiontext, currentfilename, neededmodule, expectbegin
     global skipblocksuntil, skipemptyends, previous_context, gotnextfile
 
-    if ';' in line and not (f2pyenhancementspattern[0].match(line) or
-                            multilinepattern[0].match(line)):
-        for l in line.split(';'):
-            # XXX: non-zero reset values need testing
-            assert reset == 0, repr(reset)
-            crackline(l, reset)
+    _, has_semicolon = split_by_unquoted(line, ";")
+    if has_semicolon and not (f2pyenhancementspattern[0].match(line) or
+                               multilinepattern[0].match(line)):
+        # XXX: non-zero reset values need testing
+        assert reset == 0, repr(reset)
+        # split line on unquoted semicolons
+        line, semicolon_line = split_by_unquoted(line, ";")
+        while semicolon_line:
+            crackline(line, reset)
+            line, semicolon_line = split_by_unquoted(semicolon_line[1:], ";")
+        crackline(line, reset)
         return
     if reset < 0:
         groupcounter = 0
@@ -802,25 +817,21 @@ def markouterparen(line):
 def markoutercomma(line, comma=','):
     l = ''
     f = 0
-    cc = ''
-    for c in line:
-        if (not cc or cc == ')') and c == '(':
-            f = f + 1
-            cc = ')'
-        elif not cc and c == '\'' and (not l or l[-1] != '\\'):
-            f = f + 1
-            cc = '\''
-        elif c == cc:
-            f = f - 1
-            if f == 0:
-                cc = ''
-        elif c == comma and f == 0:
-            l = l + '@' + comma + '@'
-            continue
-        l = l + c
-    assert not f, repr((f, line, l, cc))
+    before, after = split_by_unquoted(line, comma + '()')
+    l += before
+    while after:
+        if (after[0] == comma) and (f == 0):
+            l += '@' + comma + '@'
+        else:
+            l += after[0]
+            if after[0] == '(':
+                f += 1
+            elif after[0] == ')':
+                f -= 1
+        before, after = split_by_unquoted(after[1:], comma + '()')
+        l += before
+    assert not f, repr((f, line, l))
     return l
-
 
 def unmarkouterparen(line):
     r = line.replace('@(@', '(').replace('@)@', ')')
@@ -1838,10 +1849,8 @@ def postcrack2(block, tab='', param_map=None):
     if not f90modulevars:
         return block
     if isinstance(block, list):
-        ret = []
-        for g in block:
-            g = postcrack2(g, tab=tab + '\t', param_map=param_map)
-            ret.append(g)
+        ret = [postcrack2(g, tab=tab + '\t', param_map=param_map)
+               for g in block]
         return ret
     setmesstext(block)
     outmess('%sBlock: %s\n' % (tab, block['name']), 0)
@@ -1859,10 +1868,8 @@ def postcrack2(block, tab='', param_map=None):
                     val = kind['kind']
                     if val in param_map:
                         kind['kind'] = param_map[val]
-    new_body = []
-    for b in block['body']:
-        b = postcrack2(b, tab=tab + '\t', param_map=param_map)
-        new_body.append(b)
+    new_body = [postcrack2(b, tab=tab + '\t', param_map=param_map)
+                for b in block['body']]
     block['body'] = new_body
 
     return block
@@ -2392,7 +2399,7 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith('power') or machine.startswith('ppc64'):
+    if machine.startswith(('aarch64', 'power', 'ppc64', 's390x', 'sparc')):
         if p <= 20:
             return 16
     else:
@@ -2707,7 +2714,7 @@ def analyzevars(block):
                 i = -1
                 ni = len(vars[n]['dimension'])
                 for d in vars[n]['dimension']:
-                    ddeps = []  # dependecies of 'd'
+                    ddeps = []  # dependencies of 'd'
                     ad = ''
                     pd = ''
                     if d not in vars:
@@ -3200,10 +3207,8 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
                 vardef = '%s(kind=%s)' % (vardef, selector['kind'])
         c = ' '
         if 'attrspec' in vars[a]:
-            attr = []
-            for l in vars[a]['attrspec']:
-                if l not in ['external']:
-                    attr.append(l)
+            attr = [l for l in vars[a]['attrspec']
+                    if l not in ['external']]
             if attr:
                 vardef = '%s, %s' % (vardef, ','.join(attr))
                 c = ','
@@ -3324,13 +3329,13 @@ if __name__ == "__main__":
             funcs.append(l)
     if not strictf77 and f77modulename and not skipemptyends:
         outmess("""\
-  Warning: You have specifyied module name for non Fortran 77 code
+  Warning: You have specified module name for non Fortran 77 code
   that should not need one (expect if you are scanning F90 code
   for non module blocks but then you should use flag -skipemptyends
   and also be sure that the files do not contain programs without program statement).
 """, 0)
 
-    postlist = crackfortran(files, funcs)
+    postlist = crackfortran(files)
     if pyffilename:
         outmess('Writing fortran code to file %s\n' % repr(pyffilename), 0)
         pyf = crack2fortran(postlist)

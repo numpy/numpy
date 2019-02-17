@@ -6,17 +6,15 @@ Random Number Generation
 ==================== =========================================================
 Utility functions
 ==============================================================================
-random               Uniformly distributed values of a given shape.
+random_sample        Uniformly distributed floats over ``[0, 1)``.
+random               Alias for `random_sample`.
 bytes                Uniformly distributed random bytes.
 random_integers      Uniformly distributed integers in a given range.
-random_sample        Uniformly distributed floats in a given range.
-random               Alias for random_sample
-ranf                 Alias for random_sample
-sample               Alias for random_sample
-choice               Generate a weighted random sample from a given array-like
 permutation          Randomly permute a sequence / generate a random sequence.
 shuffle              Randomly permute a sequence in place.
 seed                 Seed the random number generator.
+choice               Random sample from 1-D array.
+
 ==================== =========================================================
 
 ==================== =========================================================
@@ -90,9 +88,55 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 
-# To get sub-modules
-from .info import __doc__, __all__
-
+__all__ = [
+    'beta',
+    'binomial',
+    'bytes',
+    'chisquare',
+    'choice',
+    'dirichlet',
+    'exponential',
+    'f',
+    'gamma',
+    'geometric',
+    'get_state',
+    'gumbel',
+    'hypergeometric',
+    'laplace',
+    'logistic',
+    'lognormal',
+    'logseries',
+    'multinomial',
+    'multivariate_normal',
+    'negative_binomial',
+    'noncentral_chisquare',
+    'noncentral_f',
+    'normal',
+    'pareto',
+    'permutation',
+    'poisson',
+    'power',
+    'rand',
+    'randint',
+    'randn',
+    'random_integers',
+    'random_sample',
+    'rayleigh',
+    'seed',
+    'set_state',
+    'shuffle',
+    'standard_cauchy',
+    'standard_exponential',
+    'standard_gamma',
+    'standard_normal',
+    'standard_t',
+    'triangular',
+    'uniform',
+    'vonmises',
+    'wald',
+    'weibull',
+    'zipf'
+]
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
@@ -117,6 +161,6 @@ def __RandomState_ctor():
     """
     return RandomState(seed=0)
 
-from numpy.testing import _numpy_tester
-test = _numpy_tester().test
-bench = _numpy_tester().bench
+from numpy._pytesttester import PytestTester
+test = PytestTester(__name__)
+del PytestTester

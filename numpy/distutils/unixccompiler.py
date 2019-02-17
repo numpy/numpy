@@ -61,8 +61,9 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
         raise CompileError(msg)
 
     # add commandline flags to dependency file
-    with open(obj + '.d', 'a') as f:
-        f.write(_commandline_dep_string(cc_args, extra_postargs, pp_opts))
+    if deps:
+        with open(obj + '.d', 'a') as f:
+            f.write(_commandline_dep_string(cc_args, extra_postargs, pp_opts))
 
 replace_method(UnixCCompiler, '_compile', UnixCCompiler__compile)
 

@@ -15,6 +15,7 @@
 #include "temp_elide.h"
 
 #include "binop_override.h"
+#include "ufunc_override.h"
 
 /*************************************************************************
  ****************   Implement Number Protocol ****************************
@@ -70,12 +71,8 @@ array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo
         n_ops.op = temp; \
     }
 
-
-/*NUMPY_API
- *Set internal structure with number functions that all arrays will use
- */
 NPY_NO_EXPORT int
-PyArray_SetNumericOps(PyObject *dict)
+_PyArray_SetNumericOps(PyObject *dict)
 {
     PyObject *temp = NULL;
     SET(add);
@@ -115,19 +112,32 @@ PyArray_SetNumericOps(PyObject *dict)
     SET(minimum);
     SET(rint);
     SET(conjugate);
+    SET(matmul);
     return 0;
 }
 
-/* FIXME - macro contains goto */
+/*NUMPY_API
+ *Set internal structure with number functions that all arrays will use
+ */
+NPY_NO_EXPORT int
+PyArray_SetNumericOps(PyObject *dict)
+{
+    /* 2018-09-09, 1.16 */
+    if (DEPRECATE("PyArray_SetNumericOps is deprecated. Use "
+        "PyUFunc_ReplaceLoopBySignature to replace ufunc inner loop functions "
+        "instead.") < 0) {
+        return -1;
+    }
+    return _PyArray_SetNumericOps(dict);
+}
+
+/* Note - macro contains goto */
 #define GET(op) if (n_ops.op &&                                         \
                     (PyDict_SetItemString(dict, #op, n_ops.op)==-1))    \
         goto fail;
 
-/*NUMPY_API
-  Get dictionary showing number functions that all arrays will use
-*/
 NPY_NO_EXPORT PyObject *
-PyArray_GetNumericOps(void)
+_PyArray_GetNumericOps(void)
 {
     PyObject *dict;
     if ((dict = PyDict_New())==NULL)
@@ -168,11 +178,25 @@ PyArray_GetNumericOps(void)
     GET(minimum);
     GET(rint);
     GET(conjugate);
+    GET(matmul);
     return dict;
 
  fail:
     Py_DECREF(dict);
     return NULL;
+}
+
+/*NUMPY_API
+  Get dictionary showing number functions that all arrays will use
+*/
+NPY_NO_EXPORT PyObject *
+PyArray_GetNumericOps(void)
+{
+    /* 2018-09-09, 1.16 */
+    if (DEPRECATE("PyArray_GetNumericOps is deprecated.") < 0) {
+        return NULL;
+    }
+    return _PyArray_GetNumericOps();
 }
 
 static PyObject *
@@ -360,14 +384,8 @@ array_divmod(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
 {
-    static PyObject *matmul = NULL;
-
-    npy_cache_import("numpy.core.multiarray", "matmul", &matmul);
-    if (matmul == NULL) {
-        return NULL;
-    }
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_matrix_multiply, array_matrix_multiply);
-    return PyArray_GenericBinaryFunction(m1, m2, matmul);
+    return PyArray_GenericBinaryFunction(m1, m2, n_ops.matmul);
 }
 
 static PyObject *
@@ -467,7 +485,9 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace,
     double exponent;
     NPY_SCALARKIND kind;   /* NPY_NOSCALAR is not scalar */
 
-    if (PyArray_Check(a1) && ((kind=is_scalar_with_conversion(o2, &exponent))>0)) {
+    if (PyArray_Check(a1) &&
+            !PyArray_ISOBJECT(a1) &&
+            ((kind=is_scalar_with_conversion(o2, &exponent))>0)) {
         PyObject *fastop = NULL;
         if (PyArray_ISFLOAT(a1) || PyArray_ISCOMPLEX(a1)) {
             if (exponent == 1.0) {
@@ -548,6 +568,51 @@ array_power(PyArrayObject *a1, PyObject *o2, PyObject *modulo)
     return value;
 }
 
+static PyObject *
+array_positive(PyArrayObject *m1)
+{
+    /*
+     * For backwards compatibility, where + just implied a copy,
+     * we cannot just call n_ops.positive.  Instead, we do the following
+     * 1. Try n_ops.positive
+     * 2. If we get an exception, check whether __array_ufunc__ is
+     *    overridden; if so, we live in the future and we allow the
+     *    TypeError to be passed on.
+     * 3. If not, give a deprecation warning and return a copy.
+     */
+    PyObject *value;
+    if (can_elide_temp_unary(m1)) {
+        value = PyArray_GenericInplaceUnaryFunction(m1, n_ops.positive);
+    }
+    else {
+        value = PyArray_GenericUnaryFunction(m1, n_ops.positive);
+    }
+    if (value == NULL) {
+        /*
+         * We first fetch the error, as it needs to be clear to check
+         * for the override.  When the deprecation is removed,
+         * this whole stanza can be deleted.
+         */
+        PyObject *exc, *val, *tb;
+        PyErr_Fetch(&exc, &val, &tb);
+        if (PyUFunc_HasOverride((PyObject *)m1)) {
+            PyErr_Restore(exc, val, tb);
+            return NULL;
+        }
+        Py_XDECREF(exc);
+        Py_XDECREF(val);
+        Py_XDECREF(tb);
+
+        /* 2018-06-28, 1.16.0 */
+        if (DEPRECATE("Applying '+' to a non-numerical array is "
+                      "ill-defined. Returning a copy, but in the future "
+                      "this will error.") < 0) {
+            return NULL;
+        }
+        value = PyArray_Return((PyArrayObject *)PyArray_Copy(m1));
+    }
+    return value;
+}
 
 static PyObject *
 array_negative(PyArrayObject *m1)
@@ -785,7 +850,7 @@ _array_nonzero(PyArrayObject *mp)
     n = PyArray_SIZE(mp);
     if (n == 1) {
         int res;
-        if (Py_EnterRecursiveCall(" while converting array to bool")) {
+        if (Npy_EnterRecursiveCall(" while converting array to bool")) {
             return -1;
         }
         res = PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
@@ -814,222 +879,115 @@ _array_nonzero(PyArrayObject *mp)
     }
 }
 
+/*
+ * Convert the array to a scalar if allowed, and apply the builtin function
+ * to it. The where argument is passed onto Py_EnterRecursiveCall when the
+ * array contains python objects.
+ */
+NPY_NO_EXPORT PyObject *
+array_scalar_forward(PyArrayObject *v,
+                     PyObject *(*builtin_func)(PyObject *),
+                     const char *where)
+{
+    PyObject *scalar;
+    if (PyArray_SIZE(v) != 1) {
+        PyErr_SetString(PyExc_TypeError, "only size-1 arrays can be"\
+                        " converted to Python scalars");
+        return NULL;
+    }
+
+    scalar = PyArray_GETITEM(v, PyArray_DATA(v));
+    if (scalar == NULL) {
+        return NULL;
+    }
+
+    /* Need to guard against recursion if our array holds references */
+    if (PyDataType_REFCHK(PyArray_DESCR(v))) {
+        PyObject *res;
+        if (Npy_EnterRecursiveCall(where) != 0) {
+            Py_DECREF(scalar);
+            return NULL;
+        }
+        res = builtin_func(scalar);
+        Py_DECREF(scalar);
+        Py_LeaveRecursiveCall();
+        return res;
+    }
+    else {
+        PyObject *res;
+        res = builtin_func(scalar);
+        Py_DECREF(scalar);
+        return res;
+    }
+}
+
+
+NPY_NO_EXPORT PyObject *
+array_float(PyArrayObject *v)
+{
+    return array_scalar_forward(v, &PyNumber_Float, " in ndarray.__float__");
+}
+
+#if defined(NPY_PY3K)
 
 NPY_NO_EXPORT PyObject *
 array_int(PyArrayObject *v)
 {
-    PyObject *pv, *pv2;
-    if (PyArray_SIZE(v) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can be"\
-                        " converted to Python scalars");
-        return NULL;
-    }
-    pv = PyArray_GETITEM(v, PyArray_DATA(v));
-    if (pv == NULL) {
-        return NULL;
-    }
-    if (Py_TYPE(pv)->tp_as_number == 0) {
-        PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
-                        "scalar object is not a number");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    if (Py_TYPE(pv)->tp_as_number->nb_int == 0) {
-        PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
-                        "scalar number to int");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    /*
-     * If we still got an array which can hold references, stop
-     * because it could point back at 'v'.
-     */
-    if (PyArray_Check(pv) &&
-                PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
-        PyErr_SetString(PyExc_TypeError,
-                "object array may be self-referencing");
-        Py_DECREF(pv);
-        return NULL;
-    }
-
-    pv2 = Py_TYPE(pv)->tp_as_number->nb_int(pv);
-    Py_DECREF(pv);
-    return pv2;
+    return array_scalar_forward(v, &PyNumber_Long, " in ndarray.__int__");
 }
 
-static PyObject *
-array_float(PyArrayObject *v)
+#else
+
+NPY_NO_EXPORT PyObject *
+array_int(PyArrayObject *v)
 {
-    PyObject *pv, *pv2;
-    if (PyArray_SIZE(v) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-                        "be converted to Python scalars");
-        return NULL;
-    }
-    pv = PyArray_GETITEM(v, PyArray_DATA(v));
-    if (pv == NULL) {
-        return NULL;
-    }
-    if (Py_TYPE(pv)->tp_as_number == 0) {
-        PyErr_SetString(PyExc_TypeError, "cannot convert to a "\
-                        "float; scalar object is not a number");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    if (Py_TYPE(pv)->tp_as_number->nb_float == 0) {
-        PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
-                        "scalar number to float");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    /*
-     * If we still got an array which can hold references, stop
-     * because it could point back at 'v'.
-     */
-    if (PyArray_Check(pv) &&
-                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
-        PyErr_SetString(PyExc_TypeError,
-                "object array may be self-referencing");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    pv2 = Py_TYPE(pv)->tp_as_number->nb_float(pv);
-    Py_DECREF(pv);
-    return pv2;
+    return array_scalar_forward(v, &PyNumber_Int, " in ndarray.__int__");
 }
 
-#if !defined(NPY_PY3K)
-
-static PyObject *
+NPY_NO_EXPORT PyObject *
 array_long(PyArrayObject *v)
 {
-    PyObject *pv, *pv2;
-    if (PyArray_SIZE(v) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-                        "be converted to Python scalars");
+    return array_scalar_forward(v, &PyNumber_Long, " in ndarray.__long__");
+}
+
+/* hex and oct aren't exposed to the C api, but we need a function pointer */
+static PyObject *
+_PyNumber_Oct(PyObject *o) {
+    PyObject *res;
+    PyObject *mod = PyImport_ImportModule("__builtin__");
+    if (mod == NULL) {
         return NULL;
     }
-    pv = PyArray_GETITEM(v, PyArray_DATA(v));
-    if (pv == NULL) {
-        return NULL;
-    }
-    if (Py_TYPE(pv)->tp_as_number == 0) {
-        PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
-                        "scalar object is not a number");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    if (Py_TYPE(pv)->tp_as_number->nb_long == 0) {
-        PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
-                        "scalar number to long");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    /*
-     * If we still got an array which can hold references, stop
-     * because it could point back at 'v'.
-     */
-    if (PyArray_Check(pv) &&
-                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
-        PyErr_SetString(PyExc_TypeError,
-                "object array may be self-referencing");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    pv2 = Py_TYPE(pv)->tp_as_number->nb_long(pv);
-    Py_DECREF(pv);
-    return pv2;
+    res = PyObject_CallMethod(mod, "oct", "(O)", o);
+    Py_DECREF(mod);
+    return res;
 }
 
 static PyObject *
+_PyNumber_Hex(PyObject *o) {
+    PyObject *res;
+    PyObject *mod = PyImport_ImportModule("__builtin__");
+    if (mod == NULL) {
+        return NULL;
+    }
+    res = PyObject_CallMethod(mod, "hex", "(O)", o);
+    Py_DECREF(mod);
+    return res;
+}
+
+NPY_NO_EXPORT PyObject *
 array_oct(PyArrayObject *v)
 {
-    PyObject *pv, *pv2;
-    if (PyArray_SIZE(v) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-                        "be converted to Python scalars");
-        return NULL;
-    }
-    pv = PyArray_GETITEM(v, PyArray_DATA(v));
-    if (pv == NULL) {
-        return NULL;
-    }
-    if (Py_TYPE(pv)->tp_as_number == 0) {
-        PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
-                        "scalar object is not a number");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    if (Py_TYPE(pv)->tp_as_number->nb_oct == 0) {
-        PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
-                        "scalar number to oct");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    /*
-     * If we still got an array which can hold references, stop
-     * because it could point back at 'v'.
-     */
-    if (PyArray_Check(pv) &&
-                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
-        PyErr_SetString(PyExc_TypeError,
-                "object array may be self-referencing");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    pv2 = Py_TYPE(pv)->tp_as_number->nb_oct(pv);
-    Py_DECREF(pv);
-    return pv2;
+    return array_scalar_forward(v, &_PyNumber_Oct, " in ndarray.__oct__");
 }
 
-static PyObject *
+NPY_NO_EXPORT PyObject *
 array_hex(PyArrayObject *v)
 {
-    PyObject *pv, *pv2;
-    if (PyArray_SIZE(v) != 1) {
-        PyErr_SetString(PyExc_TypeError, "only length-1 arrays can "\
-                        "be converted to Python scalars");
-        return NULL;
-    }
-    pv = PyArray_GETITEM(v, PyArray_DATA(v));
-    if (pv == NULL) {
-        return NULL;
-    }
-    if (Py_TYPE(pv)->tp_as_number == 0) {
-        PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
-                        "scalar object is not a number");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    if (Py_TYPE(pv)->tp_as_number->nb_hex == 0) {
-        PyErr_SetString(PyExc_TypeError, "don't know how to convert "\
-                        "scalar number to hex");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    /*
-     * If we still got an array which can hold references, stop
-     * because it could point back at 'v'.
-     */
-    if (PyArray_Check(pv) &&
-                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
-        PyErr_SetString(PyExc_TypeError,
-                "object array may be self-referencing");
-        Py_DECREF(pv);
-        return NULL;
-    }
-    pv2 = Py_TYPE(pv)->tp_as_number->nb_hex(pv);
-    Py_DECREF(pv);
-    return pv2;
+    return array_scalar_forward(v, &_PyNumber_Hex, " in ndarray.__hex__");
 }
 
 #endif
-
-static PyObject *
-_array_copy_nice(PyArrayObject *self)
-{
-    return PyArray_Return((PyArrayObject *) PyArray_Copy(self));
-}
 
 static PyObject *
 array_index(PyArrayObject *v)
@@ -1054,7 +1012,7 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_divmod,                   /*nb_divmod*/
     (ternaryfunc)array_power,                   /*nb_power*/
     (unaryfunc)array_negative,                  /*nb_neg*/
-    (unaryfunc)_array_copy_nice,                /*nb_pos*/
+    (unaryfunc)array_positive,                  /*nb_pos*/
     (unaryfunc)array_absolute,                  /*(unaryfunc)array_abs,*/
     (inquiry)_array_nonzero,                    /*nb_nonzero*/
     (unaryfunc)array_invert,                    /*nb_invert*/

@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 from numpy import linalg, arange, float64, array, dot, transpose
 from numpy.testing import (
-    run_module_suite, assert_, assert_raises, assert_equal, assert_array_equal,
+    assert_, assert_raises, assert_equal, assert_array_equal,
     assert_array_almost_equal, assert_array_less
 )
 
@@ -137,6 +137,14 @@ class TestRegression(object):
         assert_raises(TypeError, linalg.norm, testmatrix, ord=-2)
         assert_raises(ValueError, linalg.norm, testmatrix, ord=3)
 
-
-if __name__ == '__main__':
-    run_module_suite()
+    def test_lstsq_complex_larger_rhs(self):
+        # gh-9891
+        size = 20
+        n_rhs = 70
+        G = np.random.randn(size, size) + 1j * np.random.randn(size, size)
+        u = np.random.randn(size, n_rhs) + 1j * np.random.randn(size, n_rhs)
+        b = G.dot(u)
+        # This should work without segmentation fault.
+        u_lstsq, res, rank, sv = linalg.lstsq(G, b, rcond=None)
+        # check results just in case
+        assert_array_almost_equal(u_lstsq, u)

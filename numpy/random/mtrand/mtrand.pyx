@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 # mtrand.pyx -- A Pyrex wrapper of Jean-Sebastien Roy's RandomKit
 #
 # Copyright 2005 Robert Kern (robert.kern@gmail.com)
@@ -22,8 +24,8 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 include "Python.pxi"
-include "randint_helpers.pxi"
 include "numpy.pxd"
+include "randint_helpers.pxi"
 include "cpython/pycapsule.pxd"
 
 from libc cimport string
@@ -573,21 +575,21 @@ def _shape_from_size(size, d):
            shape = tuple(size) + (d,)
     return shape
 
-# Look up table for randint functions keyed by type name. The stored data
-# is a tuple (lbnd, ubnd, func), where lbnd is the smallest value for the
-# type, ubnd is one greater than the largest value, and func is the
+# Look up table for randint functions keyed by dtype.
+# The stored data is a tuple (lbnd, ubnd, func), where lbnd is the smallest
+# value for the type, ubnd is one greater than the largest value, and func is the
 # function to call.
 _randint_type = {
-    'bool': (0, 2, _rand_bool),
-    'int8': (-2**7, 2**7, _rand_int8),
-    'int16': (-2**15, 2**15, _rand_int16),
-    'int32': (-2**31, 2**31, _rand_int32),
-    'int64': (-2**63, 2**63, _rand_int64),
-    'uint8': (0, 2**8, _rand_uint8),
-    'uint16': (0, 2**16, _rand_uint16),
-    'uint32': (0, 2**32, _rand_uint32),
-    'uint64': (0, 2**64, _rand_uint64)
-    }
+    np.dtype(np.bool_): (0, 2, _rand_bool),
+    np.dtype(np.int8): (-2**7, 2**7, _rand_int8),
+    np.dtype(np.int16): (-2**15, 2**15, _rand_int16),
+    np.dtype(np.int32): (-2**31, 2**31, _rand_int32),
+    np.dtype(np.int64): (-2**63, 2**63, _rand_int64),
+    np.dtype(np.uint8): (0, 2**8, _rand_uint8),
+    np.dtype(np.uint16): (0, 2**16, _rand_uint16),
+    np.dtype(np.uint32): (0, 2**32, _rand_uint32),
+    np.dtype(np.uint64): (0, 2**64, _rand_uint64)
+}
 
 
 cdef class RandomState:
@@ -844,16 +846,16 @@ cdef class RandomState:
         Examples
         --------
         >>> np.random.random_sample()
-        0.47108547995356098
+        0.47108547995356098 # random
         >>> type(np.random.random_sample())
-        <type 'float'>
+        <class 'float'>
         >>> np.random.random_sample((5,))
-        array([ 0.30220482,  0.86820401,  0.1654503 ,  0.11659149,  0.54323428])
+        array([ 0.30220482,  0.86820401,  0.1654503 ,  0.11659149,  0.54323428]) # random
 
         Three-by-two array of random numbers from [-5, 0):
 
         >>> 5 * np.random.random_sample((3, 2)) - 5
-        array([[-3.99149989, -0.52338984],
+        array([[-3.99149989, -0.52338984], # random
                [-2.99091858, -0.79479508],
                [-1.23204345, -1.75224494]])
 
@@ -902,7 +904,7 @@ cdef class RandomState:
         array([[[ True,  True],
                 [ True,  True]],
                [[ True,  True],
-                [ True,  True]]], dtype=bool)
+                [ True,  True]]])
 
         """
         return disc0_array(self.internal_state, rk_long, size, self.lock)
@@ -954,14 +956,14 @@ cdef class RandomState:
         Examples
         --------
         >>> np.random.randint(2, size=10)
-        array([1, 0, 0, 0, 1, 1, 0, 0, 1, 0])
+        array([1, 0, 0, 0, 1, 1, 0, 0, 1, 0]) # random
         >>> np.random.randint(1, size=10)
         array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
         Generate a 2 x 4 array of ints between 0 and 4, inclusive:
 
         >>> np.random.randint(5, size=(2, 4))
-        array([[4, 0, 2, 1],
+        array([[4, 0, 2, 1], # random
                [3, 2, 2, 0]])
 
         """
@@ -969,13 +971,12 @@ cdef class RandomState:
             high = low
             low = 0
 
-        # '_randint_type' is defined in
-        # 'generate_randint_helpers.py'
-        key = np.dtype(dtype).name
-        if key not in _randint_type:
-            raise TypeError('Unsupported dtype "%s" for randint' % key)
-
-        lowbnd, highbnd, randfunc = _randint_type[key]
+        raw_dtype = dtype
+        dtype = np.dtype(dtype)
+        try:
+            lowbnd, highbnd, randfunc = _randint_type[dtype]
+        except KeyError:
+            raise TypeError('Unsupported dtype "%s" for randint' % dtype)
 
         # TODO: Do not cast these inputs to Python int
         #
@@ -986,20 +987,20 @@ cdef class RandomState:
         ihigh = int(high)
 
         if ilow < lowbnd:
-            raise ValueError("low is out of bounds for %s" % (key,))
+            raise ValueError("low is out of bounds for %s" % dtype)
         if ihigh > highbnd:
-            raise ValueError("high is out of bounds for %s" % (key,))
-        if ilow >= ihigh:
-            raise ValueError("low >= high")
-
+            raise ValueError("high is out of bounds for %s" % dtype)
+        if ilow >= ihigh and np.prod(size) != 0:
+            raise ValueError("Range cannot be empty (low >= high) unless no samples are taken")
+ 
         with self.lock:
             ret = randfunc(ilow, ihigh - 1, size, self.state_address)
 
-            if size is None:
-                if dtype in (np.bool, np.int, np.long):
-                    return dtype(ret)
+        # back-compat: keep python scalars when a python type is passed
+        if size is None and raw_dtype in (bool, int, np.long):
+            return raw_dtype(ret)
 
-            return ret
+        return ret
 
     def bytes(self, npy_intp length):
         """
@@ -1077,34 +1078,34 @@ cdef class RandomState:
         Generate a uniform random sample from np.arange(5) of size 3:
 
         >>> np.random.choice(5, 3)
-        array([0, 3, 4])
+        array([0, 3, 4]) # random
         >>> #This is equivalent to np.random.randint(0,5,3)
 
         Generate a non-uniform random sample from np.arange(5) of size 3:
 
         >>> np.random.choice(5, 3, p=[0.1, 0, 0.3, 0.6, 0])
-        array([3, 3, 0])
+        array([3, 3, 0]) # random
 
         Generate a uniform random sample from np.arange(5) of size 3 without
         replacement:
 
         >>> np.random.choice(5, 3, replace=False)
-        array([3,1,0])
+        array([3,1,0]) # random
         >>> #This is equivalent to np.random.permutation(np.arange(5))[:3]
 
         Generate a non-uniform random sample from np.arange(5) of size
         3 without replacement:
 
         >>> np.random.choice(5, 3, replace=False, p=[0.1, 0, 0.3, 0.6, 0])
-        array([2, 3, 0])
+        array([2, 3, 0]) # random
 
         Any of the above can be repeated with an arbitrary array-like
         instead of just integers. For instance:
 
         >>> aa_milne_arr = ['pooh', 'rabbit', 'piglet', 'Christopher']
         >>> np.random.choice(aa_milne_arr, 5, p=[0.5, 0.1, 0.1, 0.3])
-        array(['pooh', 'pooh', 'pooh', 'Christopher', 'piglet'],
-              dtype='|S11')
+        array(['pooh', 'pooh', 'pooh', 'Christopher', 'piglet'], # random
+              dtype='<U11')
 
         """
 
@@ -1115,15 +1116,15 @@ cdef class RandomState:
                 # __index__ must return an integer by python rules.
                 pop_size = operator.index(a.item())
             except TypeError:
-                raise ValueError("a must be 1-dimensional or an integer")
-            if pop_size <= 0:
-                raise ValueError("a must be greater than 0")
+                raise ValueError("'a' must be 1-dimensional or an integer")
+            if pop_size <= 0 and np.prod(size) != 0:
+                raise ValueError("'a' must be greater than 0 unless no samples are taken")
         elif a.ndim != 1:
-            raise ValueError("a must be 1-dimensional")
+            raise ValueError("'a' must be 1-dimensional")
         else:
             pop_size = a.shape[0]
-            if pop_size is 0:
-                raise ValueError("a must be non-empty")
+            if pop_size is 0 and np.prod(size) != 0:
+                raise ValueError("'a' cannot be empty unless no samples are taken")
 
         if p is not None:
             d = len(p)
@@ -1137,12 +1138,15 @@ cdef class RandomState:
             pix = <double*>PyArray_DATA(p)
 
             if p.ndim != 1:
-                raise ValueError("p must be 1-dimensional")
+                raise ValueError("'p' must be 1-dimensional")
             if p.size != pop_size:
-                raise ValueError("a and p must have same size")
+                raise ValueError("'a' and 'p' must have same size")
+            p_sum = kahan_sum(pix, d)
+            if np.isnan(p_sum):
+                raise ValueError("probabilities contain NaN")
             if np.logical_or.reduce(p < 0):
                 raise ValueError("probabilities are not non-negative")
-            if abs(kahan_sum(pix, d) - 1.) > atol:
+            if abs(p_sum - 1.) > atol:
                 raise ValueError("probabilities do not sum to 1")
 
         shape = size
@@ -1284,7 +1288,7 @@ cdef class RandomState:
         probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 15, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 15, density=True)
         >>> plt.plot(bins, np.ones_like(bins), linewidth=2, color='r')
         >>> plt.show()
 
@@ -1394,7 +1398,7 @@ cdef class RandomState:
 
         See Also
         --------
-        random.standard_normal : Similar, but takes a tuple as its argument.
+        standard_normal : Similar, but takes a tuple as its argument.
 
         Notes
         -----
@@ -1457,7 +1461,7 @@ cdef class RandomState:
 
         See Also
         --------
-        random.randint : Similar to `random_integers`, only for the half-open
+        randint : Similar to `random_integers`, only for the half-open
             interval [`low`, `high`), and 0 is the lowest value if `high` is
             omitted.
 
@@ -1471,11 +1475,11 @@ cdef class RandomState:
         Examples
         --------
         >>> np.random.random_integers(5)
-        4
+        4 # random
         >>> type(np.random.random_integers(5))
-        <type 'int'>
+        <class 'numpy.int64'>
         >>> np.random.random_integers(5, size=(3,2))
-        array([[5, 4],
+        array([[5, 4], # random
                [3, 3],
                [4, 5]])
 
@@ -1484,7 +1488,7 @@ cdef class RandomState:
         :math:`{0, 5/8, 10/8, 15/8, 20/8}`):
 
         >>> 2.5 * (np.random.random_integers(5, size=(5,)) - 1) / 4.
-        array([ 0.625,  1.25 ,  0.625,  0.625,  2.5  ])
+        array([ 0.625,  1.25 ,  0.625,  0.625,  2.5  ]) # random
 
         Roll two six sided dice 1000 times and sum the results:
 
@@ -1495,7 +1499,7 @@ cdef class RandomState:
         Display results as a histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(dsums, 11, normed=True)
+        >>> count, bins, ignored = plt.hist(dsums, 11, density=True)
         >>> plt.show()
 
         """
@@ -1607,7 +1611,7 @@ cdef class RandomState:
         References
         ----------
         .. [1] Wikipedia, "Normal distribution",
-               http://en.wikipedia.org/wiki/Normal_distribution
+               https://en.wikipedia.org/wiki/Normal_distribution
         .. [2] P. R. Peebles Jr., "Central Limit Theorem" in "Probability,
                Random Variables and Random Signal Principles", 4th ed., 2001,
                pp. 51, 51, 125.
@@ -1631,7 +1635,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 30, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 30, density=True)
         >>> plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *
         ...                np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
         ...          linewidth=2, color='r')
@@ -1680,9 +1684,9 @@ cdef class RandomState:
         Parameters
         ----------
         a : float or array_like of floats
-            Alpha, non-negative.
+            Alpha, positive (>0).
         b : float or array_like of floats
-            Beta, non-negative.
+            Beta, positive (>0).
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -1759,9 +1763,9 @@ cdef class RandomState:
         .. [1] Peyton Z. Peebles Jr., "Probability, Random Variables and
                Random Signal Principles", 4th ed, 2001, p. 57.
         .. [2] Wikipedia, "Poisson process",
-               http://en.wikipedia.org/wiki/Poisson_process
+               https://en.wikipedia.org/wiki/Poisson_process
         .. [3] Wikipedia, "Exponential distribution",
-               http://en.wikipedia.org/wiki/Exponential_distribution
+               https://en.wikipedia.org/wiki/Exponential_distribution
 
         """
         cdef ndarray oscale
@@ -1860,7 +1864,7 @@ cdef class RandomState:
                Wolfram Web Resource.
                http://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
-               http://en.wikipedia.org/wiki/Gamma_distribution
+               https://en.wikipedia.org/wiki/Gamma_distribution
 
         Examples
         --------
@@ -1874,7 +1878,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps
-        >>> count, bins, ignored = plt.hist(s, 50, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1) * ((np.exp(-bins/scale))/ \\
         ...                       (sps.gamma(shape) * scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')
@@ -1950,7 +1954,7 @@ cdef class RandomState:
                Wolfram Web Resource.
                http://mathworld.wolfram.com/GammaDistribution.html
         .. [2] Wikipedia, "Gamma distribution",
-               http://en.wikipedia.org/wiki/Gamma_distribution
+               https://en.wikipedia.org/wiki/Gamma_distribution
 
         Examples
         --------
@@ -1964,7 +1968,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> import scipy.special as sps
-        >>> count, bins, ignored = plt.hist(s, 50, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 50, density=True)
         >>> y = bins**(shape-1)*(np.exp(-bins/scale) /
         ...                      (sps.gamma(shape)*scale**shape))
         >>> plt.plot(bins, y, linewidth=2, color='r')
@@ -2047,7 +2051,7 @@ cdef class RandomState:
         .. [1] Glantz, Stanton A. "Primer of Biostatistics.", McGraw-Hill,
                Fifth Edition, 2002.
         .. [2] Wikipedia, "F-distribution",
-               http://en.wikipedia.org/wiki/F-distribution
+               https://en.wikipedia.org/wiki/F-distribution
 
         Examples
         --------
@@ -2069,8 +2073,8 @@ cdef class RandomState:
 
         The lower bound for the top 1% of the samples is :
 
-        >>> sort(s)[-10]
-        7.61988120985
+        >>> np.sort(s)[-10]
+        7.61988120985 # random
 
         So there is about a 1% chance that the F statistic will exceed 7.62,
         the measured value is 36, so the null hypothesis is rejected at the 1%
@@ -2150,7 +2154,7 @@ cdef class RandomState:
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/NoncentralF-Distribution.html
         .. [2] Wikipedia, "Noncentral F-distribution",
-               http://en.wikipedia.org/wiki/Noncentral_F-distribution
+               https://en.wikipedia.org/wiki/Noncentral_F-distribution
 
         Examples
         --------
@@ -2164,9 +2168,10 @@ cdef class RandomState:
         >>> dfden = 20 # within groups degrees of freedom
         >>> nonc = 3.0
         >>> nc_vals = np.random.noncentral_f(dfnum, dfden, nonc, 1000000)
-        >>> NF = np.histogram(nc_vals, bins=50, normed=True)
+        >>> NF = np.histogram(nc_vals, bins=50, density=True)
         >>> c_vals = np.random.f(dfnum, dfden, 1000000)
-        >>> F = np.histogram(c_vals, bins=50, normed=True)
+        >>> F = np.histogram(c_vals, bins=50, density=True)
+        >>> import matplotlib.pyplot as plt
         >>> plt.plot(F[1][1:], F[0])
         >>> plt.plot(NF[1][1:], NF[0])
         >>> plt.show()
@@ -2257,12 +2262,12 @@ cdef class RandomState:
         References
         ----------
         .. [1] NIST "Engineering Statistics Handbook"
-               http://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm
+               https://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm
 
         Examples
         --------
         >>> np.random.chisquare(2,4)
-        array([ 1.89920014,  9.00867716,  3.13710533,  5.62318272])
+        array([ 1.89920014,  9.00867716,  3.13710533,  5.62318272]) # random
 
         """
         cdef ndarray odf
@@ -2333,8 +2338,8 @@ cdef class RandomState:
         .. [1] Delhi, M.S. Holla, "On a noncentral chi-square distribution in
                the analysis of weapon systems effectiveness", Metrika,
                Volume 15, Number 1 / December, 1970.
-        .. [2] Wikipedia, "Noncentral chi-square distribution"
-               http://en.wikipedia.org/wiki/Noncentral_chi-square_distribution
+        .. [2] Wikipedia, "Noncentral chi-squared distribution"
+               https://en.wikipedia.org/wiki/Noncentral_chi-squared_distribution
 
         Examples
         --------
@@ -2342,7 +2347,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> values = plt.hist(np.random.noncentral_chisquare(3, 20, 100000),
-        ...                   bins=200, normed=True)
+        ...                   bins=200, density=True)
         >>> plt.show()
 
         Draw values from a noncentral chisquare with very small noncentrality,
@@ -2350,9 +2355,9 @@ cdef class RandomState:
 
         >>> plt.figure()
         >>> values = plt.hist(np.random.noncentral_chisquare(3, .0000001, 100000),
-        ...                   bins=np.arange(0., 25, .1), normed=True)
+        ...                   bins=np.arange(0., 25, .1), density=True)
         >>> values2 = plt.hist(np.random.chisquare(3, 100000),
-        ...                    bins=np.arange(0., 25, .1), normed=True)
+        ...                    bins=np.arange(0., 25, .1), density=True)
         >>> plt.plot(values[1][0:-1], values[0]-values2[0], 'ob')
         >>> plt.show()
 
@@ -2361,7 +2366,7 @@ cdef class RandomState:
 
         >>> plt.figure()
         >>> values = plt.hist(np.random.noncentral_chisquare(3, 20, 100000),
-        ...                   bins=200, normed=True)
+        ...                   bins=200, density=True)
         >>> plt.show()
 
         """
@@ -2433,17 +2438,18 @@ cdef class RandomState:
         ----------
         .. [1] NIST/SEMATECH e-Handbook of Statistical Methods, "Cauchy
               Distribution",
-              http://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
+              https://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
         .. [2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
               Wolfram Web Resource.
               http://mathworld.wolfram.com/CauchyDistribution.html
         .. [3] Wikipedia, "Cauchy distribution"
-              http://en.wikipedia.org/wiki/Cauchy_distribution
+              https://en.wikipedia.org/wiki/Cauchy_distribution
 
         Examples
         --------
         Draw samples and plot the distribution:
 
+        >>> import matplotlib.pyplot as plt
         >>> s = np.random.standard_cauchy(1000000)
         >>> s = s[(s>-25) & (s<25)]  # truncate distribution so it plots well
         >>> plt.hist(s, bins=100)
@@ -2501,12 +2507,12 @@ cdef class RandomState:
         .. [1] Dalgaard, Peter, "Introductory Statistics With R",
                Springer, 2002.
         .. [2] Wikipedia, "Student's t-distribution"
-               http://en.wikipedia.org/wiki/Student's_t-distribution
+               https://en.wikipedia.org/wiki/Student's_t-distribution
 
         Examples
         --------
         From Dalgaard page 83 [1]_, suppose the daily energy intake for 11
-        women in Kj is:
+        women in kilojoules (kJ) is:
 
         >>> intake = np.array([5260., 5470, 5640, 6180, 6390, 6515, 6805, 7515, \\
         ...                    7515, 8230, 8770])
@@ -2529,7 +2535,7 @@ cdef class RandomState:
 
         >>> t = (np.mean(intake)-7725)/(intake.std(ddof=1)/np.sqrt(len(intake)))
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(s, bins=100, normed=True)
+        >>> h = plt.hist(s, bins=100, density=True)
 
         For a one-sided t-test, how far out in the distribution does the t
         statistic appear?
@@ -2630,7 +2636,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> from scipy.special import i0
-        >>> plt.hist(s, 50, normed=True)
+        >>> plt.hist(s, 50, density=True)
         >>> x = np.linspace(-np.pi, np.pi, num=51)
         >>> y = np.exp(kappa*np.cos(x-mu))/(2*np.pi*i0(kappa))
         >>> plt.plot(x, y, linewidth=2, color='r')
@@ -2731,7 +2737,7 @@ cdef class RandomState:
         .. [3] Reiss, R.D., Thomas, M.(2001), Statistical Analysis of Extreme
                Values, Birkhauser Verlag, Basel, pp 23-30.
         .. [4] Wikipedia, "Pareto distribution",
-               http://en.wikipedia.org/wiki/Pareto_distribution
+               https://en.wikipedia.org/wiki/Pareto_distribution
 
         Examples
         --------
@@ -2744,7 +2750,7 @@ cdef class RandomState:
         density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, _ = plt.hist(s, 100, normed=True)
+        >>> count, bins, _ = plt.hist(s, 100, density=True)
         >>> fit = a*m**a / bins**(a+1)
         >>> plt.plot(bins, max(count)*fit/max(fit), linewidth=2, color='r')
         >>> plt.show()
@@ -2786,7 +2792,7 @@ cdef class RandomState:
         Parameters
         ----------
         a : float or array_like of floats
-            Shape of the distribution. Should be greater than zero.
+            Shape parameter of the distribution.  Must be nonnegative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2836,7 +2842,7 @@ cdef class RandomState:
                Wide Applicability", Journal Of Applied Mechanics ASME Paper
                1951.
         .. [3] Wikipedia, "Weibull distribution",
-               http://en.wikipedia.org/wiki/Weibull_distribution
+               https://en.wikipedia.org/wiki/Weibull_distribution
 
         Examples
         --------
@@ -2927,7 +2933,7 @@ cdef class RandomState:
                Dataplot Reference Manual, Volume 2: Let Subcommands and Library
                Functions", National Institute of Standards and Technology
                Handbook Series, June 2003.
-               http://www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/powpdf.pdf
+               https://www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/powpdf.pdf
 
         Examples
         --------
@@ -2957,17 +2963,17 @@ cdef class RandomState:
         >>> powpdf = stats.powerlaw.pdf(xx,5)
 
         >>> plt.figure()
-        >>> plt.hist(rvs, bins=50, normed=True)
+        >>> plt.hist(rvs, bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
         >>> plt.title('np.random.power(5)')
 
         >>> plt.figure()
-        >>> plt.hist(1./(1.+rvsp), bins=50, normed=True)
+        >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
         >>> plt.title('inverse of 1 + np.random.pareto(5)')
 
         >>> plt.figure()
-        >>> plt.hist(1./(1.+rvsp), bins=50, normed=True)
+        >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
         >>> plt.title('inverse of stats.pareto(5)')
 
@@ -3042,7 +3048,7 @@ cdef class RandomState:
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/LaplaceDistribution.html
         .. [4] Wikipedia, "Laplace distribution",
-               http://en.wikipedia.org/wiki/Laplace_distribution
+               https://en.wikipedia.org/wiki/Laplace_distribution
 
         Examples
         --------
@@ -3055,7 +3061,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 30, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 30, density=True)
         >>> x = np.arange(-8., 8., .01)
         >>> pdf = np.exp(-abs(x-loc)/scale)/(2.*scale)
         >>> plt.plot(x, pdf)
@@ -3171,7 +3177,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 30, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 30, density=True)
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
         ...          * np.exp( -np.exp( -(bins - mu) /beta) ),
         ...          linewidth=2, color='r')
@@ -3186,7 +3192,7 @@ cdef class RandomState:
         ...    a = np.random.normal(mu, beta, 1000)
         ...    means.append(a.mean())
         ...    maxima.append(a.max())
-        >>> count, bins, ignored = plt.hist(maxima, 30, normed=True)
+        >>> count, bins, ignored = plt.hist(maxima, 30, density=True)
         >>> beta = np.std(maxima) * np.sqrt(6) / np.pi
         >>> mu = np.mean(maxima) - 0.57721*beta
         >>> plt.plot(bins, (1/beta)*np.exp(-(bins - mu)/beta)
@@ -3272,7 +3278,7 @@ cdef class RandomState:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/LogisticDistribution.html
         .. [3] Wikipedia, "Logistic-distribution",
-               http://en.wikipedia.org/wiki/Logistic_distribution
+               https://en.wikipedia.org/wiki/Logistic_distribution
 
         Examples
         --------
@@ -3280,12 +3286,13 @@ cdef class RandomState:
 
         >>> loc, scale = 10, 1
         >>> s = np.random.logistic(loc, scale, 10000)
+        >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, bins=50)
 
         #   plot against distribution
 
         >>> def logist(x, loc, scale):
-        ...     return exp((loc-x)/scale)/(scale*(1+exp((loc-x)/scale))**2)
+        ...     return np.exp((loc-x)/scale)/(scale*(1+np.exp((loc-x)/scale))**2)
         >>> plt.plot(bins, logist(bins, loc, scale)*count.max()/\\
         ... logist(bins, loc, scale).max())
         >>> plt.show()
@@ -3366,7 +3373,7 @@ cdef class RandomState:
         .. [1] Limpert, E., Stahel, W. A., and Abbt, M., "Log-normal
                Distributions across the Sciences: Keys and Clues,"
                BioScience, Vol. 51, No. 5, May, 2001.
-               http://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
+               https://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
         .. [2] Reiss, R.D. and Thomas, M., "Statistical Analysis of Extreme
                Values," Basel: Birkhauser Verlag, 2001, pp. 31-32.
 
@@ -3381,7 +3388,7 @@ cdef class RandomState:
         the probability density function:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 100, normed=True, align='mid')
+        >>> count, bins, ignored = plt.hist(s, 100, density=True, align='mid')
 
         >>> x = np.linspace(min(bins), max(bins), 10000)
         >>> pdf = (np.exp(-(np.log(x) - mu)**2 / (2 * sigma**2))
@@ -3403,7 +3410,7 @@ cdef class RandomState:
         ...    b.append(np.product(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
-        >>> count, bins, ignored = plt.hist(b, 100, normed=True, align='mid')
+        >>> count, bins, ignored = plt.hist(b, 100, density=True, align='mid')
         >>> sigma = np.std(np.log(b))
         >>> mu = np.mean(np.log(b))
 
@@ -3472,15 +3479,16 @@ cdef class RandomState:
         References
         ----------
         .. [1] Brighton Webs Ltd., "Rayleigh Distribution,"
-               http://www.brighton-webs.co.uk/distributions/rayleigh.asp
+               https://web.archive.org/web/20090514091424/http://brighton-webs.co.uk:80/distributions/rayleigh.asp
         .. [2] Wikipedia, "Rayleigh distribution"
-               http://en.wikipedia.org/wiki/Rayleigh_distribution
+               https://en.wikipedia.org/wiki/Rayleigh_distribution
 
         Examples
         --------
         Draw values from the distribution and plot the histogram
 
-        >>> values = hist(np.random.rayleigh(3, 100000), bins=200, normed=True)
+        >>> from matplotlib.pyplot import hist
+        >>> values = hist(np.random.rayleigh(3, 100000), bins=200, density=True)
 
         Wave heights tend to follow a Rayleigh distribution. If the mean wave
         height is 1 meter, what fraction of waves are likely to be larger than 3
@@ -3493,7 +3501,7 @@ cdef class RandomState:
         The percentage of waves larger than 3 meters is:
 
         >>> 100.*sum(s>3)/1000000.
-        0.087300000000000003
+        0.087300000000000003 # random
 
         """
         cdef ndarray oscale
@@ -3560,19 +3568,19 @@ cdef class RandomState:
         References
         ----------
         .. [1] Brighton Webs Ltd., Wald Distribution,
-               http://www.brighton-webs.co.uk/distributions/wald.asp
+               https://web.archive.org/web/20090423014010/http://www.brighton-webs.co.uk:80/distributions/wald.asp
         .. [2] Chhikara, Raj S., and Folks, J. Leroy, "The Inverse Gaussian
                Distribution: Theory : Methodology, and Applications", CRC Press,
                1988.
-        .. [3] Wikipedia, "Wald distribution"
-               http://en.wikipedia.org/wiki/Wald_distribution
+        .. [3] Wikipedia, "Inverse Gaussian distribution"
+               https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution
 
         Examples
         --------
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(np.random.wald(3, 2, 100000), bins=200, normed=True)
+        >>> h = plt.hist(np.random.wald(3, 2, 100000), bins=200, density=True)
         >>> plt.show()
 
         """
@@ -3651,7 +3659,7 @@ cdef class RandomState:
         References
         ----------
         .. [1] Wikipedia, "Triangular distribution"
-               http://en.wikipedia.org/wiki/Triangular_distribution
+               https://en.wikipedia.org/wiki/Triangular_distribution
 
         Examples
         --------
@@ -3659,7 +3667,7 @@ cdef class RandomState:
 
         >>> import matplotlib.pyplot as plt
         >>> h = plt.hist(np.random.triangular(-3, 0, 8, 100000), bins=200,
-        ...              normed=True)
+        ...              density=True)
         >>> plt.show()
 
         """
@@ -3758,7 +3766,7 @@ cdef class RandomState:
                Wolfram Web Resource.
                http://mathworld.wolfram.com/BinomialDistribution.html
         .. [5] Wikipedia, "Binomial distribution",
-               http://en.wikipedia.org/wiki/Binomial_distribution
+               https://en.wikipedia.org/wiki/Binomial_distribution
 
         Examples
         --------
@@ -3817,14 +3825,13 @@ cdef class RandomState:
         Draw samples from a negative binomial distribution.
 
         Samples are drawn from a negative binomial distribution with specified
-        parameters, `n` trials and `p` probability of success where `n` is an
-        integer > 0 and `p` is in the interval [0, 1].
+        parameters, `n` successes and `p` probability of success where `n`
+        is > 0 and `p` is in the interval [0, 1].
 
         Parameters
         ----------
-        n : int or array_like of ints
-            Parameter of the distribution, > 0. Floats are also accepted,
-            but they will be truncated to integers.
+        n : float or array_like of floats
+            Parameter of the distribution, > 0.
         p : float or array_like of floats
             Parameter of the distribution, >= 0 and <=1.
         size : int or tuple of ints, optional
@@ -3837,21 +3844,22 @@ cdef class RandomState:
         -------
         out : ndarray or scalar
             Drawn samples from the parameterized negative binomial distribution,
-            where each sample is equal to N, the number of trials it took to
-            achieve n - 1 successes, N - (n - 1) failures, and a success on the,
-            (N + n)th trial.
+            where each sample is equal to N, the number of failures that
+            occurred before a total of n successes was reached.
 
         Notes
         -----
-        The probability density for the negative binomial distribution is
+        The probability mass function of the negative binomial distribution is
 
-        .. math:: P(N;n,p) = \\binom{N+n-1}{n-1}p^{n}(1-p)^{N},
+        .. math:: P(N;n,p) = \\frac{\Gamma(N+n)}{N!\Gamma(n)}p^{n}(1-p)^{N},
 
-        where :math:`n-1` is the number of successes, :math:`p` is the
-        probability of success, and :math:`N+n-1` is the number of trials.
-        The negative binomial distribution gives the probability of n-1
-        successes and N failures in N+n-1 trials, and success on the (N+n)th
-        trial.
+        where :math:`n` is the number of successes, :math:`p` is the
+        probability of success, :math:`N+n` is the number of trials, and
+        :math:`\Gamma` is the gamma function. When :math:`n` is an integer,
+        :math:`\\frac{\Gamma(N+n)}{N!\Gamma(n)} = \\binom{N+n-1}{N}`, which is
+        the more common form of this term in the the pmf. The negative
+        binomial distribution gives the probability of N failures given n
+        successes, with a success on the last trial.
 
         If one throws a die repeatedly until the third time a "1" appears,
         then the probability distribution of the number of non-"1"s that
@@ -3863,7 +3871,7 @@ cdef class RandomState:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/NegativeBinomialDistribution.html
         .. [2] Wikipedia, "Negative binomial distribution",
-               http://en.wikipedia.org/wiki/Negative_binomial_distribution
+               https://en.wikipedia.org/wiki/Negative_binomial_distribution
 
         Examples
         --------
@@ -3876,9 +3884,9 @@ cdef class RandomState:
         single success after drilling 5 wells, after 6 wells, etc.?
 
         >>> s = np.random.negative_binomial(1, 0.1, 100000)
-        >>> for i in range(1, 11):
+        >>> for i in range(1, 11): # doctest: +SKIP
         ...    probability = sum(s<i) / 100000.
-        ...    print i, "wells drilled, probability of one success =", probability
+        ...    print(i, "wells drilled, probability of one success =", probability)
 
         """
         cdef ndarray on
@@ -3957,7 +3965,7 @@ cdef class RandomState:
                From MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/PoissonDistribution.html
         .. [2] Wikipedia, "Poisson distribution",
-               http://en.wikipedia.org/wiki/Poisson_distribution
+               https://en.wikipedia.org/wiki/Poisson_distribution
 
         Examples
         --------
@@ -3969,7 +3977,7 @@ cdef class RandomState:
         Display histogram of the sample:
 
         >>> import matplotlib.pyplot as plt
-        >>> count, bins, ignored = plt.hist(s, 14, normed=True)
+        >>> count, bins, ignored = plt.hist(s, 14, density=True)
         >>> plt.show()
 
         Draw each 100 values for lambda 100 and 500:
@@ -4066,7 +4074,7 @@ cdef class RandomState:
 
         Truncate s values at 50 so plot is interesting:
 
-        >>> count, bins, ignored = plt.hist(s[s<50], 50, normed=True)
+        >>> count, bins, ignored = plt.hist(s[s<50], 50, density=True)
         >>> x = np.arange(1., 50.)
         >>> y = x**(-a) / special.zetac(a)
         >>> plt.plot(x, y/max(y), linewidth=2, color='r')
@@ -4146,15 +4154,15 @@ cdef class RandomState:
         if op.shape == ():
             fp = PyFloat_AsDouble(p)
 
-            if fp < 0.0:
-                raise ValueError("p < 0.0")
+            if fp <= 0.0:
+                raise ValueError("p <= 0.0")
             if fp > 1.0:
                 raise ValueError("p > 1.0")
             return discd_array_sc(self.internal_state, rk_geometric, size, fp,
                                   self.lock)
 
-        if np.any(np.less(op, 0.0)):
-            raise ValueError("p < 0.0")
+        if np.any(np.less_equal(op, 0.0)):
+            raise ValueError("p <= 0.0")
         if np.any(np.greater(op, 1.0)):
             raise ValueError("p > 1.0")
         return discd_array(self.internal_state, rk_geometric, size, op,
@@ -4201,12 +4209,12 @@ cdef class RandomState:
         -----
         The probability density for the Hypergeometric distribution is
 
-        .. math:: P(x) = \\frac{\\binom{m}{n}\\binom{N-m}{n-x}}{\\binom{N}{n}},
+        .. math:: P(x) = \\frac{\\binom{g}{x}\\binom{b}{n-x}}{\\binom{g+b}{n}},
 
-        where :math:`0 \\le x \\le m` and :math:`n+m-N \\le x \\le n`
+        where :math:`0 \\le x \\le n` and :math:`n-b \\le x \\le g`
 
-        for P(x) the probability of x successes, n = ngood, m = nbad, and
-        N = number of samples.
+        for P(x) the probability of x successes, g = ngood, b = nbad, and
+        n = number of samples.
 
         Consider an urn with black and white marbles in it, ngood of them
         black and nbad are white. If you draw nsample balls without
@@ -4227,7 +4235,7 @@ cdef class RandomState:
                MathWorld--A Wolfram Web Resource.
                http://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric distribution",
-               http://en.wikipedia.org/wiki/Hypergeometric_distribution
+               https://en.wikipedia.org/wiki/Hypergeometric_distribution
 
         Examples
         --------
@@ -4236,6 +4244,7 @@ cdef class RandomState:
         >>> ngood, nbad, nsamp = 100, 2, 10
         # number of good, number of bad, and number of samples
         >>> s = np.random.hypergeometric(ngood, nbad, nsamp, 1000)
+        >>> from matplotlib.pyplot import hist
         >>> hist(s)
         #   note that it is very unlikely to grab both bad items
 
@@ -4337,7 +4346,7 @@ cdef class RandomState:
         .. [3] D. J. Hand, F. Daly, D. Lunn, E. Ostrowski, A Handbook of Small
                Data Sets, CRC Press, 1994.
         .. [4] Wikipedia, "Logarithmic distribution",
-               http://en.wikipedia.org/wiki/Logarithmic_distribution
+               https://en.wikipedia.org/wiki/Logarithmic_distribution
 
         Examples
         --------
@@ -4345,14 +4354,15 @@ cdef class RandomState:
 
         >>> a = .6
         >>> s = np.random.logseries(a, 10000)
+        >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s)
 
         #   plot against distribution
 
         >>> def logseries(k, p):
-        ...     return -p**k/(k*log(1-p))
+        ...     return -p**k/(k*np.log(1-p))
         >>> plt.plot(bins, logseries(bins, a)*count.max()/
-                     logseries(bins, a).max(), 'r')
+        ...          logseries(bins, a).max(), 'r')
         >>> plt.show()
 
         """
@@ -4477,7 +4487,7 @@ cdef class RandomState:
         standard deviation:
 
         >>> list((x[0,0,:] - mean) < 0.6)
-        [True, True]
+        [True, True] # random
 
         """
         from numpy.dual import svd
@@ -4514,12 +4524,11 @@ cdef class RandomState:
         # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
         # decomposition of cov is such an A.
         #
-        # Also check that cov is positive-semidefinite. If so, the u.T and v
+        # Also check that cov is symmetric positive-semidefinite. If so, the u.T and v
         # matrices should be equal up to roundoff error if cov is
-        # symmetrical and the singular value of the corresponding row is
+        # symmetric and the singular value of the corresponding row is
         # not zero. We continue to use the SVD rather than Cholesky in
-        # order to preserve current outputs. Note that symmetry has not
-        # been checked.
+        # order to preserve current outputs.
 
         (u, s, v) = svd(cov)
 
@@ -4530,10 +4539,12 @@ cdef class RandomState:
             psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
             if not psd:
                 if check_valid == 'warn':
-                    warnings.warn("covariance is not positive-semidefinite.",
-                                  RuntimeWarning)
+                    warnings.warn(
+                        "covariance is not symmetric positive-semidefinite.",
+                        RuntimeWarning)
                 else:
-                    raise ValueError("covariance is not positive-semidefinite.")
+                    raise ValueError(
+                        "covariance is not symmetric positive-semidefinite.")
 
         x = np.dot(x, np.sqrt(s)[:, None] * v)
         x += mean
@@ -4582,14 +4593,14 @@ cdef class RandomState:
         Throw a dice 20 times:
 
         >>> np.random.multinomial(20, [1/6.]*6, size=1)
-        array([[4, 1, 7, 5, 2, 1]])
+        array([[4, 1, 7, 5, 2, 1]]) # random
 
         It landed 4 times on 1, once on 2, etc.
 
         Now, throw the dice 20 times, and 20 times again:
 
         >>> np.random.multinomial(20, [1/6.]*6, size=2)
-        array([[3, 4, 3, 3, 4, 3],
+        array([[3, 4, 3, 3, 4, 3], # random
                [2, 4, 3, 4, 0, 7]])
 
         For the first run, we threw 3 times 1, 4 times 2, etc.  For the second,
@@ -4598,7 +4609,7 @@ cdef class RandomState:
         A loaded die is more likely to land on number 6:
 
         >>> np.random.multinomial(100, [1/7.]*5 + [2/7.])
-        array([11, 16, 14, 17, 16, 26])
+        array([11, 16, 14, 17, 16, 26]) # random
 
         The probability inputs should be normalized. As an implementation
         detail, the value of the last entry is ignored and assumed to take
@@ -4607,7 +4618,7 @@ cdef class RandomState:
         other should be sampled like so:
 
         >>> np.random.multinomial(100, [1.0 / 3, 2.0 / 3])  # RIGHT
-        array([38, 62])
+        array([38, 62]) # random
 
         not like:
 
@@ -4661,8 +4672,9 @@ cdef class RandomState:
 
         Draw `size` samples of dimension k from a Dirichlet distribution. A
         Dirichlet-distributed random variable can be seen as a multivariate
-        generalization of a Beta distribution. Dirichlet pdf is the conjugate
-        prior of a multinomial in Bayesian inference.
+        generalization of a Beta distribution. The Dirichlet distribution
+        is a conjugate prior of a multinomial distribution in Bayesian 
+        inference.
 
         Parameters
         ----------
@@ -4686,21 +4698,32 @@ cdef class RandomState:
 
         Notes
         -----
-        .. math:: X \\approx \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i}
 
-        Uses the following property for computation: for each dimension,
-        draw a random sample y_i from a standard gamma generator of shape
-        `alpha_i`, then
-        :math:`X = \\frac{1}{\\sum_{i=1}^k{y_i}} (y_1, \\ldots, y_n)` is
-        Dirichlet distributed.
+        The Dirichlet distribution is a distribution over vectors 
+        :math:`x` that fulfil the conditions :math:`x_i>0` and 
+        :math:`\\sum_{i=1}^k x_i = 1`.
+
+        The probability density function :math:`p` of a 
+        Dirichlet-distributed random vector :math:`X` is 
+        proportional to
+
+        .. math:: p(x) \\propto \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i},
+
+        where :math:`\\alpha` is a vector containing the positive 
+        concentration parameters.
+
+        The method uses the following property for computation: let :math:`Y`
+        be a random vector which has components that follow a standard gamma 
+        distribution, then :math:`X = \\frac{1}{\\sum_{i=1}^k{Y_i}} Y` 
+        is Dirichlet-distributed
 
         References
         ----------
         .. [1] David McKay, "Information Theory, Inference and Learning
                Algorithms," chapter 23,
-               http://www.inference.phy.cam.ac.uk/mackay/
+               http://www.inference.org.uk/mackay/itila/
         .. [2] Wikipedia, "Dirichlet distribution",
-               http://en.wikipedia.org/wiki/Dirichlet_distribution
+               https://en.wikipedia.org/wiki/Dirichlet_distribution
 
         Examples
         --------
@@ -4712,6 +4735,7 @@ cdef class RandomState:
 
         >>> s = np.random.dirichlet((10, 5, 3), 20).transpose()
 
+        >>> import matplotlib.pyplot as plt
         >>> plt.barh(range(20), s[0])
         >>> plt.barh(range(20), s[1], left=s[0], color='g')
         >>> plt.barh(range(20), s[2], left=s[0]+s[1], color='r')
@@ -4800,14 +4824,14 @@ cdef class RandomState:
         >>> arr = np.arange(10)
         >>> np.random.shuffle(arr)
         >>> arr
-        [1 7 5 2 9 4 3 6 0 8]
+        [1 7 5 2 9 4 3 6 0 8] # random
 
         Multi-dimensional arrays are only shuffled along the first axis:
 
         >>> arr = np.arange(9).reshape((3, 3))
         >>> np.random.shuffle(arr)
         >>> arr
-        array([[3, 4, 5],
+        array([[3, 4, 5], # random
                [6, 7, 8],
                [0, 1, 2]])
 
@@ -4838,9 +4862,8 @@ cdef class RandomState:
                     self._shuffle_raw(n, sizeof(npy_intp), stride, x_ptr, buf_ptr)
                 else:
                     self._shuffle_raw(n, itemsize, stride, x_ptr, buf_ptr)
-        elif isinstance(x, np.ndarray) and x.ndim > 1 and x.size:
-            # Multidimensional ndarrays require a bounce buffer.
-            buf = np.empty_like(x[0])
+        elif isinstance(x, np.ndarray) and x.ndim and x.size:
+            buf = np.empty_like(x[0,...])
             with self.lock:
                 for i in reversed(range(1, n)):
                     j = rk_interval(i, self.internal_state)
@@ -4888,24 +4911,38 @@ cdef class RandomState:
         Examples
         --------
         >>> np.random.permutation(10)
-        array([1, 7, 4, 3, 0, 9, 2, 5, 8, 6])
+        array([1, 7, 4, 3, 0, 9, 2, 5, 8, 6]) # random
 
         >>> np.random.permutation([1, 4, 9, 12, 15])
-        array([15,  1,  9,  4, 12])
+        array([15,  1,  9,  4, 12]) # random
 
         >>> arr = np.arange(9).reshape((3, 3))
         >>> np.random.permutation(arr)
-        array([[6, 7, 8],
+        array([[6, 7, 8], # random
                [0, 1, 2],
                [3, 4, 5]])
 
         """
         if isinstance(x, (int, long, np.integer)):
             arr = np.arange(x)
-        else:
-            arr = np.array(x)
-        self.shuffle(arr)
-        return arr
+            self.shuffle(arr)
+            return arr
+
+        arr = np.asarray(x)
+    
+        # shuffle has fast-path for 1-d
+        if arr.ndim == 1:
+            # Return a copy if same memory
+            if np.may_share_memory(arr, x):
+                arr = np.array(arr)
+            self.shuffle(arr)
+            return arr
+
+        # Shuffle index array, dtype to ensure fast path
+        idx = np.arange(arr.shape[0], dtype=np.intp)
+        self.shuffle(idx)
+        return arr[idx]
+        
 
 _rand = RandomState()
 seed = _rand.seed

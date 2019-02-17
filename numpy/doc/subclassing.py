@@ -108,7 +108,7 @@ A brief Python primer on ``__new__`` and ``__init__``
 ``__new__`` is a standard Python method, and, if present, is called
 before ``__init__`` when we create a class instance. See the `python
 __new__ documentation
-<http://docs.python.org/reference/datamodel.html#object.__new__>`_ for more detail.
+<https://docs.python.org/reference/datamodel.html#object.__new__>`_ for more detail.
 
 For example, consider the following Python code:
 
@@ -441,7 +441,7 @@ The signature of ``__array_ufunc__`` is::
       function. This includes any ``out`` arguments, which are always
       contained in a tuple.
 
-A typical implementation would convert any inputs or ouputs that are
+A typical implementation would convert any inputs or outputs that are
 instances of one's own class, pass everything on to a superclass using
 ``super()``, and finally return the results after possible
 back-conversion. An example, taken from the test case
@@ -562,7 +562,7 @@ pass on to ``A.__array_ufunc__``, the ``super`` call in ``A`` would go to
 
 Prior to numpy 1.13, the behaviour of ufuncs could only be tuned using
 ``__array_wrap__`` and ``__array_prepare__``. These two allowed one to
-change the output type of a ufunc, but, in constrast to
+change the output type of a ufunc, but, in contrast to
 ``__array_ufunc__``, did not allow one to make any changes to the inputs.
 It is hoped to eventually deprecate these, but ``__array_wrap__`` is also
 used by other numpy functions and methods, such as ``squeeze``, so at the

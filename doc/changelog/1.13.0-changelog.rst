@@ -364,7 +364,7 @@ A total of 309 pull requests were merged for this release.
 * `#8928 <https://github.com/numpy/numpy/pull/8928>`__: BUG: runtests --bench fails on windows
 * `#8929 <https://github.com/numpy/numpy/pull/8929>`__: BENCH: Masked array benchmarks
 * `#8939 <https://github.com/numpy/numpy/pull/8939>`__: DEP: Deprecate `np.ma.MaskedArray.mini`
-* `#8942 <https://github.com/numpy/numpy/pull/8942>`__: DOC: stop refering to 'S' dtype as string
+* `#8942 <https://github.com/numpy/numpy/pull/8942>`__: DOC: stop referring to 'S' dtype as string
 * `#8948 <https://github.com/numpy/numpy/pull/8948>`__: DEP: Deprecate NPY_CHAR
 * `#8949 <https://github.com/numpy/numpy/pull/8949>`__: REL: add `python_requires` to setup.py
 * `#8951 <https://github.com/numpy/numpy/pull/8951>`__: ENH: Add ufunc.identity for hypot and logical_xor
@@ -396,7 +396,7 @@ A total of 309 pull requests were merged for this release.
 * `#9027 <https://github.com/numpy/numpy/pull/9027>`__: DOC: update binary-op / ufunc interactions and recommendations...
 * `#9038 <https://github.com/numpy/numpy/pull/9038>`__: BUG: check compiler flags to determine the need for a rebuild
 * `#9039 <https://github.com/numpy/numpy/pull/9039>`__: DOC: actually produce docs for as_strided
-* `#9050 <https://github.com/numpy/numpy/pull/9050>`__: BUG: distutils, add compatiblity python parallelization
+* `#9050 <https://github.com/numpy/numpy/pull/9050>`__: BUG: distutils, add compatibility python parallelization
 * `#9054 <https://github.com/numpy/numpy/pull/9054>`__: BUG: Various fixes to _dtype_from_pep3118
 * `#9058 <https://github.com/numpy/numpy/pull/9058>`__: MAINT: Update FutureWarning message.
 * `#9060 <https://github.com/numpy/numpy/pull/9060>`__: DEP: deprecate ndarray.conjugate's no-op fall through for non-numeric...

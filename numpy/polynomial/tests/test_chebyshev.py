@@ -3,12 +3,13 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.chebyshev as cheb
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite
     )
 
 
@@ -110,6 +111,15 @@ class TestArithmetic(object):
                 tgt = cheb.chebadd(ci, cj)
                 quo, rem = cheb.chebdiv(tgt, ci)
                 res = cheb.chebadd(cheb.chebmul(quo, ci), rem)
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_chebpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(cheb.chebmul, [c]*j, np.array([1]))
+                res = cheb.chebpow(c, j)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
@@ -609,6 +619,3 @@ class TestMisc(object):
         assert_almost_equal(cheb.chebpts2(4), tgt)
         tgt = [-1.0, -0.707106781187, 0, 0.707106781187, 1.0]
         assert_almost_equal(cheb.chebpts2(5), tgt)
-
-if __name__ == "__main__":
-    run_module_suite()

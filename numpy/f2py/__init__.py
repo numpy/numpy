@@ -7,6 +7,10 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['run_main', 'compile', 'f2py_testing']
 
 import sys
+import subprocess
+import os
+
+import numpy as np
 
 from . import f2py2e
 from . import f2py_testing
@@ -24,16 +28,24 @@ def compile(source,
             extension='.f'
            ):
     """
-    Build extension module from processing source with f2py.
+    Build extension module from a Fortran 77 source string with f2py.
 
     Parameters
     ----------
-    source : str
+    source : str or bytes
         Fortran source of module / subroutine to compile
+
+        .. versionchanged:: 1.16.0
+           Accept str as well as bytes
+
     modulename : str, optional
         The name of the compiled python module
-    extra_args : str, optional
+    extra_args : str or list, optional
         Additional parameters passed to f2py
+
+        .. versionchanged:: 1.16.0
+            A list of args may also be provided.
+
     verbose : bool, optional
         Print f2py output to screen
     source_fn : str, optional
@@ -47,28 +59,63 @@ def compile(source,
 
         .. versionadded:: 1.11.0
 
+    Returns
+    -------
+    result : int
+        0 on success
+
+    Examples
+    --------
+    .. include:: compile_session.dat
+        :literal:
+
     """
-    from numpy.distutils.exec_command import exec_command
     import tempfile
+    import shlex
+
     if source_fn is None:
-        f = tempfile.NamedTemporaryFile(suffix=extension)
+        f, fname = tempfile.mkstemp(suffix=extension)
+        # f is a file descriptor so need to close it
+        # carefully -- not with .close() directly
+        os.close(f)
     else:
-        f = open(source_fn, 'w')
+        fname = source_fn
 
+    if not isinstance(source, str):
+        source = str(source, 'utf-8')
     try:
-        f.write(source)
-        f.flush()
+        with open(fname, 'w') as f:
+            f.write(source)
 
-        args = ' -c -m {} {} {}'.format(modulename, f.name, extra_args)
-        c = '{} -c "import numpy.f2py as f2py2e;f2py2e.main()" {}'
-        c = c.format(sys.executable, args)
-        status, output = exec_command(c)
+        args = ['-c', '-m', modulename, f.name]
+
+        if isinstance(extra_args, np.compat.basestring):
+            is_posix = (os.name == 'posix')
+            extra_args = shlex.split(extra_args, posix=is_posix)
+
+        args.extend(extra_args)
+
+        c = [sys.executable,
+             '-c',
+             'import numpy.f2py as f2py2e;f2py2e.main()'] + args
+        try:
+            output = subprocess.check_output(c)
+        except subprocess.CalledProcessError as exc:
+            status = exc.returncode
+            output = ''
+        except OSError:
+            # preserve historic status code used by exec_command()
+            status = 127
+            output = ''
+        else:
+            status = 0
         if verbose:
             print(output)
     finally:
-        f.close()
+        if source_fn is None:
+            os.remove(fname)
     return status
 
-from numpy.testing import _numpy_tester
-test = _numpy_tester().test
-bench = _numpy_tester().bench
+from numpy._pytesttester import PytestTester
+test = PytestTester(__name__)
+del PytestTester

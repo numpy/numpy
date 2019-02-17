@@ -23,7 +23,10 @@ class BaseIntelFCompiler(FCompiler):
                                            f + '.f', '-o', f + '.o']
 
     def runtime_library_dir_option(self, dir):
-        return '-Wl,-rpath="%s"' % dir
+        # TODO: could use -Xlinker here, if it's supported
+        assert "," not in dir
+
+        return '-Wl,-rpath=%s' % dir
 
 
 class IntelFCompiler(BaseIntelFCompiler):
@@ -215,7 +218,5 @@ class IntelEM64VisualFCompiler(IntelVisualFCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    compiler = new_fcompiler(compiler='intel')
-    compiler.customize()
-    print(compiler.get_version())
+    from numpy.distutils import customized_fcompiler
+    print(customized_fcompiler(compiler='intel').get_version())

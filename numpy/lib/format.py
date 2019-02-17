@@ -1,5 +1,10 @@
 """
-Define a simple format for saving numpy arrays to disk with the full
+Binary serialization
+
+NPY format
+==========
+
+A simple format for saving numpy arrays to disk with the full
 information about them.
 
 The ``.npy`` format is the standard binary file format in NumPy for
@@ -143,8 +148,10 @@ data HEADER_LEN."
 
 Notes
 -----
-The ``.npy`` format, including reasons for creating it and a comparison of
-alternatives, is described fully in the "npy-format" NEP.
+The ``.npy`` format, including motivation for creating it and a comparison of
+alternatives, is described in the `"npy-format" NEP 
+<https://www.numpy.org/neps/nep-0001-npy-format.html>`_, however details have
+evolved with time and this document is more current.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -154,12 +161,11 @@ import sys
 import io
 import warnings
 from numpy.lib.utils import safe_eval
-from numpy.compat import asbytes, asstr, isfileobj, long, basestring
+from numpy.compat import (
+    asbytes, asstr, isfileobj, long, os_fspath
+    )
+from numpy.core.numeric import pickle
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
@@ -252,6 +258,43 @@ def dtype_to_descr(dtype):
         return dtype.descr
     else:
         return dtype.str
+
+def descr_to_dtype(descr):
+    '''
+    descr may be stored as dtype.descr, which is a list of
+    (name, format, [shape]) tuples. Offsets are not explicitly saved, rather
+    empty fields with name,format == '', '|Vn' are added as padding.
+
+    This function reverses the process, eliminating the empty padding fields.
+    '''
+    if isinstance(descr, (str, dict)):
+        # No padding removal needed
+        return numpy.dtype(descr)
+
+    fields = []
+    offset = 0
+    for field in descr:
+        if len(field) == 2:
+            name, descr_str = field
+            dt = descr_to_dtype(descr_str)
+        else:
+            name, descr_str, shape = field
+            dt = numpy.dtype((descr_to_dtype(descr_str), shape))
+
+        # Ignore padding bytes, which will be void bytes with '' as name
+        # Once support for blank names is removed, only "if name == ''" needed)
+        is_pad = (name == '' and dt.type is numpy.void and dt.names is None)
+        if not is_pad:
+            fields.append((name, dt, offset))
+
+        offset += dt.itemsize
+
+    names, formats, offsets = zip(*fields)
+    # names may be (title, names) tuples
+    nametups = (n  if isinstance(n, tuple) else (None, n) for n in names)
+    titles, names = zip(*nametups)
+    return numpy.dtype({'names': names, 'formats': formats, 'titles': titles,
+                        'offsets': offsets, 'itemsize': offset})
 
 def header_data_from_array_1_0(array):
     """ Get the dictionary of header metadata from a numpy.ndarray.
@@ -454,7 +497,9 @@ def _filter_header(s):
 
     tokens = []
     last_token_was_number = False
-    for token in tokenize.generate_tokens(StringIO(asstr(s)).read):
+    # adding newline as python 2.7.5 workaround
+    string = asstr(s) + "\n"
+    for token in tokenize.generate_tokens(StringIO(string).readline):
         token_type = token[0]
         token_string = token[1]
         if (last_token_was_number and
@@ -464,7 +509,8 @@ def _filter_header(s):
         else:
             tokens.append(token)
         last_token_was_number = (token_type == tokenize.NUMBER)
-    return tokenize.untokenize(tokens)
+    # removing newline (see above) as python 2.7.5 workaround
+    return tokenize.untokenize(tokens)[:-1]
 
 
 def _read_array_header(fp, version):
@@ -514,7 +560,7 @@ def _read_array_header(fp, version):
         msg = "fortran_order is not a valid bool: %r"
         raise ValueError(msg % (d['fortran_order'],))
     try:
-        dtype = numpy.dtype(d['descr'])
+        dtype = descr_to_dtype(d['descr'])
     except TypeError as e:
         msg = "descr is not a valid dtype descriptor: %r"
         raise ValueError(msg % (d['descr'],))
@@ -699,7 +745,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     Parameters
     ----------
-    filename : str
+    filename : str or path-like
         The name of the file on disk.  This may *not* be a file-like
         object.
     mode : str, optional
@@ -740,9 +786,9 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     memmap
 
     """
-    if not isinstance(filename, basestring):
-        raise ValueError("Filename must be a string.  Memmap cannot use"
-                         " existing file handles.")
+    if isfileobj(filename):
+        raise ValueError("Filename must be a string or a path-like object."
+                         "  Memmap cannot use existing file handles.")
 
     if 'w' in mode:
         # We are creating the file, not reading it.
@@ -760,7 +806,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        fp = open(filename, mode+'b')
+        fp = open(os_fspath(filename), mode+'b')
         try:
             used_ver = _write_array_header(fp, d, version)
             # this warning can be removed when 1.9 has aged enough
@@ -772,7 +818,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             fp.close()
     else:
         # Read the header of the file first.
-        fp = open(filename, 'rb')
+        fp = open(os_fspath(filename), 'rb')
         try:
             version = read_magic(fp)
             _check_version(version)

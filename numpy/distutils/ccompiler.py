@@ -6,6 +6,7 @@ import sys
 import types
 import shlex
 import time
+import subprocess
 from copy import copy
 from distutils import ccompiler
 from distutils.ccompiler import *
@@ -16,9 +17,11 @@ from distutils.version import LooseVersion
 
 from numpy.distutils import log
 from numpy.distutils.compat import get_exception
-from numpy.distutils.exec_command import exec_command
+from numpy.distutils.exec_command import (
+    filepath_from_subprocess_output, forward_bytes_to_stdout
+)
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
-                                      quote_args, get_num_build_jobs, \
+                                      get_num_build_jobs, \
                                       _commandline_dep_string
 
 # globals for parallel build management
@@ -50,7 +53,7 @@ def _needs_build(obj, cc_args, extra_postargs, pp_opts):
         return True
 
     # dep_file is a makefile containing 'object: dependencies'
-    # formated like posix shell (spaces escaped, \ line continuations)
+    # formatted like posix shell (spaces escaped, \ line continuations)
     # the last line contains the compiler commandline arguments as some
     # projects may compile an extension multiple times with different
     # arguments
@@ -136,20 +139,37 @@ def CCompiler_spawn(self, cmd, display=None):
         if is_sequence(display):
             display = ' '.join(list(display))
     log.info(display)
-    s, o = exec_command(cmd)
-    if s:
-        if is_sequence(cmd):
-            cmd = ' '.join(list(cmd))
-        try:
-            print(o)
-        except UnicodeError:
-            # When installing through pip, `o` can contain non-ascii chars
-            pass
-        if re.search('Too many open files', o):
-            msg = '\nTry rerunning setup command until build succeeds.'
-        else:
-            msg = ''
-        raise DistutilsExecError('Command "%s" failed with exit status %d%s' % (cmd, s, msg))
+    try:
+        subprocess.check_output(cmd)
+    except subprocess.CalledProcessError as exc:
+        o = exc.output
+        s = exc.returncode
+    except OSError:
+        # OSError doesn't have the same hooks for the exception
+        # output, but exec_command() historically would use an
+        # empty string for EnvironmentError (base class for
+        # OSError)
+        o = b''
+        # status previously used by exec_command() for parent
+        # of OSError
+        s = 127
+    else:
+        # use a convenience return here so that any kind of
+        # caught exception will execute the default code after the
+        # try / except block, which handles various exceptions
+        return None
+
+    if is_sequence(cmd):
+        cmd = ' '.join(list(cmd))
+
+    forward_bytes_to_stdout(o)
+
+    if re.search(b'Too many open files', o):
+        msg = '\nTry rerunning setup command until build succeeds.'
+    else:
+        msg = ''
+    raise DistutilsExecError('Command "%s" failed with exit status %d%s' %
+                            (cmd, s, msg))
 
 replace_method(CCompiler, 'spawn', CCompiler_spawn)
 
@@ -404,10 +424,8 @@ def _compiler_to_string(compiler):
             v = getattr(compiler, key)
             mx = max(mx, len(key))
             props.append((key, repr(v)))
-    lines = []
-    format = '%-' + repr(mx+1) + 's = %s'
-    for prop in props:
-        lines.append(format % prop)
+    fmt = '%-' + repr(mx+1) + 's = %s'
+    lines = [fmt % prop for prop in props]
     return '\n'.join(lines)
 
 def CCompiler_show_customization(self):
@@ -620,7 +638,21 @@ def CCompiler_get_version(self, force=False, ok_status=[0]):
             version = m.group('version')
             return version
 
-    status, output = exec_command(version_cmd, use_tee=0)
+    try:
+        output = subprocess.check_output(version_cmd)
+    except subprocess.CalledProcessError as exc:
+        output = exc.output
+        status = exc.returncode
+    except OSError:
+        # match the historical returns for a parent
+        # exception class caught by exec_command()
+        status = 127
+        output = b''
+    else:
+        # output isn't actually a filepath but we do this
+        # for now to match previous distutils behavior
+        output = filepath_from_subprocess_output(output)
+        status = 0
 
     version = None
     if status in ok_status:
@@ -738,8 +770,13 @@ ccompiler.new_compiler = new_compiler
 
 _distutils_gen_lib_options = gen_lib_options
 def gen_lib_options(compiler, library_dirs, runtime_library_dirs, libraries):
-    library_dirs = quote_args(library_dirs)
-    runtime_library_dirs = quote_args(runtime_library_dirs)
+    # the version of this function provided by CPython allows the following
+    # to return lists, which are unpacked automatically:
+    # - compiler.runtime_library_dir_option
+    # our version extends the behavior to:
+    # - compiler.library_dir_option
+    # - compiler.library_option
+    # - compiler.find_library_file
     r = _distutils_gen_lib_options(compiler, library_dirs,
                                    runtime_library_dirs, libraries)
     lib_opts = []
@@ -759,11 +796,6 @@ for _cc in ['msvc9', 'msvc', '_msvc', 'bcpp', 'cygwinc', 'emxc', 'unixc']:
     if _m is not None:
         setattr(_m, 'gen_lib_options', gen_lib_options)
 
-_distutils_gen_preprocess_options = gen_preprocess_options
-def gen_preprocess_options (macros, include_dirs):
-    include_dirs = quote_args(include_dirs)
-    return _distutils_gen_preprocess_options(macros, include_dirs)
-ccompiler.gen_preprocess_options = gen_preprocess_options
 
 ##Fix distutils.util.split_quoted:
 # NOTE:  I removed this fix in revision 4481 (see ticket #619), but it appears

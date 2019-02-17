@@ -27,12 +27,12 @@ Arithmetic
 .. autosummary::
    :toctree: generated/
 
-   legmulx              multiply a Legendre series in P_i(x) by x.
    legadd               add two Legendre series.
    legsub               subtract one Legendre series from another.
+   legmulx              multiply a Legendre series in ``P_i(x)`` by ``x``.
    legmul               multiply two Legendre series.
    legdiv               divide one Legendre series by another.
-   legpow               raise a Legendre series to an positive integer power
+   legpow               raise a Legendre series to a positive integer power.
    legval               evaluate a Legendre series at given points.
    legval2d             evaluate a 2D Legendre series at given points.
    legval3d             evaluate a 3D Legendre series at given points.
@@ -136,10 +136,10 @@ def poly2leg(pol):
     >>> from numpy import polynomial as P
     >>> p = P.Polynomial(np.arange(4))
     >>> p
-    Polynomial([ 0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
+    Polynomial([0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
     >>> c = P.Legendre(P.legendre.poly2leg(p.coef))
     >>> c
-    Legendre([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1])
+    Legendre([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1]) # may vary
 
     """
     [pol] = pu.as_series([pol])
@@ -183,12 +183,13 @@ def leg2poly(c):
 
     Examples
     --------
+    >>> from numpy import polynomial as P
     >>> c = P.Legendre(range(4))
     >>> c
-    Legendre([ 0.,  1.,  2.,  3.], [-1.,  1.])
+    Legendre([0., 1., 2., 3.], domain=[-1,  1], window=[-1,  1])
     >>> p = c.convert(kind=P.Polynomial)
     >>> p
-    Polynomial([-1. , -3.5,  3. ,  7.5], [-1.,  1.])
+    Polynomial([-1. , -3.5,  3. ,  7.5], domain=[-1.,  1.], window=[-1.,  1.])
     >>> P.leg2poly(range(4))
     array([-1. , -3.5,  3. ,  7.5])
 
@@ -310,7 +311,7 @@ def legfromroots(roots):
     array([ 0. , -0.4,  0. ,  0.4])
     >>> j = complex(0,1)
     >>> L.legfromroots((-j,j)) # x^2 + 1 relative to the standard basis
-    array([ 1.33333333+0.j,  0.00000000+0.j,  0.66666667+0.j])
+    array([ 1.33333333+0.j,  0.00000000+0.j,  0.66666667+0.j]) # may vary
 
     """
     if len(roots) == 0:
@@ -351,7 +352,7 @@ def legadd(c1, c2):
 
     See Also
     --------
-    legsub, legmul, legdiv, legpow
+    legsub, legmulx, legmul, legdiv, legpow
 
     Notes
     -----
@@ -366,7 +367,7 @@ def legadd(c1, c2):
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> L.legadd(c1,c2)
-    array([ 4.,  4.,  4.])
+    array([4.,  4.,  4.])
 
     """
     # c1, c2 are trimmed copies
@@ -401,7 +402,7 @@ def legsub(c1, c2):
 
     See Also
     --------
-    legadd, legmul, legdiv, legpow
+    legadd, legmulx, legmul, legdiv, legpow
 
     Notes
     -----
@@ -451,6 +452,10 @@ def legmulx(c):
     out : ndarray
         Array representing the result of the multiplication.
 
+    See Also
+    --------
+    legadd, legmul, legmul, legdiv, legpow
+
     Notes
     -----
     The multiplication uses the recursion relationship for Legendre
@@ -459,6 +464,12 @@ def legmulx(c):
     .. math::
 
       xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
+
+    Examples
+    --------
+    >>> from numpy.polynomial import legendre as L
+    >>> L.legmulx([1,2,3])
+    array([ 0.66666667, 2.2, 1.33333333, 1.8]) # may vary
 
     """
     # c is a trimmed copy
@@ -500,7 +511,7 @@ def legmul(c1, c2):
 
     See Also
     --------
-    legadd, legsub, legdiv, legpow
+    legadd, legsub, legmulx, legdiv, legpow
 
     Notes
     -----
@@ -515,8 +526,8 @@ def legmul(c1, c2):
     >>> from numpy.polynomial import legendre as L
     >>> c1 = (1,2,3)
     >>> c2 = (3,2)
-    >>> P.legmul(c1,c2) # multiplication requires "reprojection"
-    array([  4.33333333,  10.4       ,  11.66666667,   3.6       ])
+    >>> L.legmul(c1,c2) # multiplication requires "reprojection"
+    array([  4.33333333,  10.4       ,  11.66666667,   3.6       ]) # may vary
 
     """
     # s1, s2 are trimmed copies
@@ -570,7 +581,7 @@ def legdiv(c1, c2):
 
     See Also
     --------
-    legadd, legsub, legmul, legpow
+    legadd, legsub, legmulx, legmul, legpow
 
     Notes
     -----
@@ -587,10 +598,10 @@ def legdiv(c1, c2):
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> L.legdiv(c1,c2) # quotient "intuitive," remainder not
-    (array([ 3.]), array([-8., -4.]))
+    (array([3.]), array([-8., -4.]))
     >>> c2 = (0,1,2,3)
     >>> L.legdiv(c2,c1) # neither "intuitive"
-    (array([-0.07407407,  1.66666667]), array([-1.03703704, -2.51851852]))
+    (array([-0.07407407,  1.66666667]), array([-1.03703704, -2.51851852])) # may vary
 
     """
     # c1, c2 are trimmed copies
@@ -640,7 +651,7 @@ def legpow(c, pow, maxpower=16):
 
     See Also
     --------
-    legadd, legsub, legmul, legdiv
+    legadd, legsub, legmulx, legmul, legdiv
 
     Examples
     --------
@@ -719,7 +730,7 @@ def legder(c, m=1, scl=1, axis=0):
     >>> L.legder(c)
     array([  6.,   9.,  20.])
     >>> L.legder(c, 3)
-    array([ 60.])
+    array([60.])
     >>> L.legder(c, scl=-1)
     array([ -6.,  -9., -20.])
     >>> L.legder(c, 2,-1)
@@ -835,16 +846,16 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     >>> from numpy.polynomial import legendre as L
     >>> c = (1,2,3)
     >>> L.legint(c)
-    array([ 0.33333333,  0.4       ,  0.66666667,  0.6       ])
+    array([ 0.33333333,  0.4       ,  0.66666667,  0.6       ]) # may vary
     >>> L.legint(c, 3)
-    array([  1.66666667e-02,  -1.78571429e-02,   4.76190476e-02,
-            -1.73472348e-18,   1.90476190e-02,   9.52380952e-03])
+    array([  1.66666667e-02,  -1.78571429e-02,   4.76190476e-02, # may vary
+             -1.73472348e-18,   1.90476190e-02,   9.52380952e-03])
     >>> L.legint(c, k=3)
-    array([ 3.33333333,  0.4       ,  0.66666667,  0.6       ])
+     array([ 3.33333333,  0.4       ,  0.66666667,  0.6       ]) # may vary
     >>> L.legint(c, lbnd=-2)
-    array([ 7.33333333,  0.4       ,  0.66666667,  0.6       ])
+    array([ 7.33333333,  0.4       ,  0.66666667,  0.6       ]) # may vary
     >>> L.legint(c, scl=2)
-    array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ])
+    array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ]) # may vary
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -1466,7 +1477,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', RankWarning)
+        >>> warnings.simplefilter('ignore', np.RankWarning)
 
     See Also
     --------
@@ -1509,7 +1520,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+           https://en.wikipedia.org/wiki/Curve_fitting
 
     Examples
     --------
@@ -1676,7 +1687,7 @@ def legroots(c):
     --------
     >>> import numpy.polynomial.legendre as leg
     >>> leg.legroots((1, 2, 3, 4)) # 4L_3 + 3L_2 + 2L_1 + 1L_0, all real roots
-    array([-0.85099543, -0.11407192,  0.51506735])
+    array([-0.85099543, -0.11407192,  0.51506735]) # may vary
 
     """
     # c is a trimmed copy
@@ -1831,3 +1842,4 @@ class Legendre(ABCPolyBase):
     nickname = 'leg'
     domain = np.array(legdomain)
     window = np.array(legdomain)
+    basis_name = 'P'

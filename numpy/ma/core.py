@@ -26,6 +26,7 @@ import sys
 import operator
 import warnings
 import textwrap
+import re
 from functools import reduce
 
 if sys.version_info[0] >= 3:
@@ -42,15 +43,12 @@ from numpy.lib.function_base import angle
 from numpy.compat import (
     getargspec, formatargspec, long, basestring, unicode, bytes
     )
-from numpy import expand_dims as n_expand_dims
+from numpy import expand_dims
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
+from numpy.core._internal import recursive
+from numpy.core.numeric import pickle
 
-
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
 __all__ = [
     'MAError', 'MaskError', 'MaskType', 'MaskedArray', 'abs', 'absolute',
@@ -131,14 +129,18 @@ def doc_note(initialdoc, note):
         return
     if note is None:
         return initialdoc
-    newdoc = """
-    %s
 
-    Notes
+    notesplit = re.split(r'\n\s*?Notes\n\s*?-----', initialdoc)
+
+    notedoc = """\
+Notes
     -----
-    %s
-    """
-    return newdoc % (initialdoc, note)
+    %s""" % note
+
+    if len(notesplit) > 1:
+        notedoc = '\n\n    ' + notedoc + '\n'
+
+    return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
 
 def get_object_signature(obj):
@@ -210,7 +212,7 @@ def _recursive_fill_value(dtype, f):
     """
     Recursively produce a fill value for `dtype`, calling f on scalar dtypes
     """
-    if dtype.names:
+    if dtype.names is not None:
         vals = tuple(_recursive_fill_value(dtype[name], f) for name in dtype.names)
         return np.array(vals, dtype=dtype)[()]  # decay to void scalar from 0d
     elif dtype.subdtype:
@@ -428,7 +430,7 @@ def _recursive_set_fill_value(fillvalue, dt):
         if cdtype.subdtype:
             cdtype = cdtype.subdtype[0]
 
-        if cdtype.names:
+        if cdtype.names is not None:
             output_value.append(tuple(_recursive_set_fill_value(fval, cdtype)))
         else:
             output_value.append(np.array(fval, dtype=cdtype).item())
@@ -444,36 +446,37 @@ def _check_fill_value(fill_value, ndtype):
     If fill_value is not None, its value is forced to the given dtype.
 
     The result is always a 0d array.
+
     """
     ndtype = np.dtype(ndtype)
-    fields = ndtype.fields
     if fill_value is None:
         fill_value = default_fill_value(ndtype)
-    elif fields:
-        fdtype = [(_[0], _[1]) for _ in ndtype.descr]
+    elif ndtype.names is not None:
         if isinstance(fill_value, (ndarray, np.void)):
             try:
-                fill_value = np.array(fill_value, copy=False, dtype=fdtype)
+                fill_value = np.array(fill_value, copy=False, dtype=ndtype)
             except ValueError:
                 err_msg = "Unable to transform %s to dtype %s"
-                raise ValueError(err_msg % (fill_value, fdtype))
+                raise ValueError(err_msg % (fill_value, ndtype))
         else:
             fill_value = np.asarray(fill_value, dtype=object)
             fill_value = np.array(_recursive_set_fill_value(fill_value, ndtype),
                                   dtype=ndtype)
     else:
         if isinstance(fill_value, basestring) and (ndtype.char not in 'OSVU'):
+            # Note this check doesn't work if fill_value is not a scalar
             err_msg = "Cannot set fill value of string with array of dtype %s"
             raise TypeError(err_msg % ndtype)
         else:
             # In case we want to convert 1e20 to int.
+            # Also in case of converting string arrays.
             try:
                 fill_value = np.array(fill_value, copy=False, dtype=ndtype)
-            except OverflowError:
-                # Raise TypeError instead of OverflowError. OverflowError
-                # is seldom used, and the real problem here is that the
-                # passed fill_value is not compatible with the ndtype.
-                err_msg = "Fill value %s overflows dtype %s"
+            except (OverflowError, ValueError):
+                # Raise TypeError instead of OverflowError or ValueError.
+                # OverflowError is seldom used, and the real problem here is
+                # that the passed fill_value is not compatible with the ndtype.
+                err_msg = "Cannot convert fill_value %s to dtype %s"
                 raise TypeError(err_msg % (fill_value, ndtype))
     return np.array(fill_value)
 
@@ -513,18 +516,18 @@ def set_fill_value(a, fill_value):
     array([0, 1, 2, 3, 4])
     >>> a = ma.masked_where(a < 3, a)
     >>> a
-    masked_array(data = [-- -- -- 3 4],
-          mask = [ True  True  True False False],
-          fill_value=999999)
+    masked_array(data=[--, --, --, 3, 4],
+                 mask=[ True,  True,  True, False, False],
+           fill_value=999999)
     >>> ma.set_fill_value(a, -999)
     >>> a
-    masked_array(data = [-- -- -- 3 4],
-          mask = [ True  True  True False False],
-          fill_value=-999)
+    masked_array(data=[--, --, --, 3, 4],
+                 mask=[ True,  True,  True, False, False],
+           fill_value=-999)
 
     Nothing happens if `a` is not a masked array.
 
-    >>> a = range(5)
+    >>> a = list(range(5))
     >>> a
     [0, 1, 2, 3, 4]
     >>> ma.set_fill_value(a, 100)
@@ -686,13 +689,12 @@ def getdata(a, subok=True):
     >>> import numpy.ma as ma
     >>> a = ma.masked_equal([[1,2],[3,4]], 2)
     >>> a
-    masked_array(data =
-     [[1 --]
-     [3 4]],
-          mask =
-     [[False  True]
-     [False False]],
-          fill_value=999999)
+    masked_array(
+      data=[[1, --],
+            [3, 4]],
+      mask=[[False,  True],
+            [False, False]],
+      fill_value=2)
     >>> ma.getdata(a)
     array([[1, 2],
            [3, 4]])
@@ -749,20 +751,19 @@ def fix_invalid(a, mask=nomask, copy=True, fill_value=None):
     --------
     >>> x = np.ma.array([1., -1, np.nan, np.inf], mask=[1] + [0]*3)
     >>> x
-    masked_array(data = [-- -1.0 nan inf],
-                 mask = [ True False False False],
-           fill_value = 1e+20)
+    masked_array(data=[--, -1.0, nan, inf],
+                 mask=[ True, False, False, False],
+           fill_value=1e+20)
     >>> np.ma.fix_invalid(x)
-    masked_array(data = [-- -1.0 -- --],
-                 mask = [ True False  True  True],
-           fill_value = 1e+20)
+    masked_array(data=[--, -1.0, --, --],
+                 mask=[ True, False,  True,  True],
+           fill_value=1e+20)
 
     >>> fixed = np.ma.fix_invalid(x)
     >>> fixed.data
-    array([  1.00000000e+00,  -1.00000000e+00,   1.00000000e+20,
-             1.00000000e+20])
+    array([ 1.e+00, -1.e+00,  1.e+20,  1.e+20])
     >>> x.data
-    array([  1.,  -1.,  NaN,  Inf])
+    array([ 1., -1., nan, inf])
 
     """
     a = masked_array(a, copy=copy, mask=mask, subok=True)
@@ -775,6 +776,10 @@ def fix_invalid(a, mask=nomask, copy=True, fill_value=None):
     a._data[invalid] = fill_value
     return a
 
+def is_string_or_list_of_strings(val):
+    return (isinstance(val, basestring) or
+            (isinstance(val, list) and val and
+             builtins.all(isinstance(s, basestring) for s in val)))
 
 ###############################################################################
 #                                  Ufuncs                                     #
@@ -1277,7 +1282,7 @@ def _replace_dtype_fields_recursive(dtype, primitive_dtype):
     _recurse = _replace_dtype_fields_recursive
 
     # Do we have some name fields ?
-    if dtype.names:
+    if dtype.names is not None:
         descr = []
         for name in dtype.names:
             field = dtype.fields[name]
@@ -1339,9 +1344,9 @@ def make_mask_descr(ndtype):
     --------
     >>> import numpy.ma as ma
     >>> dtype = np.dtype({'names':['foo', 'bar'],
-                          'formats':[np.float32, int]})
+    ...                   'formats':[np.float32, np.int64]})
     >>> dtype
-    dtype([('foo', '<f4'), ('bar', '<i4')])
+    dtype([('foo', '<f4'), ('bar', '<i8')])
     >>> ma.make_mask_descr(dtype)
     dtype([('foo', '|b1'), ('bar', '|b1')])
     >>> ma.make_mask_descr(np.float32)
@@ -1374,33 +1379,31 @@ def getmask(a):
     >>> import numpy.ma as ma
     >>> a = ma.masked_equal([[1,2],[3,4]], 2)
     >>> a
-    masked_array(data =
-     [[1 --]
-     [3 4]],
-          mask =
-     [[False  True]
-     [False False]],
-          fill_value=999999)
+    masked_array(
+      data=[[1, --],
+            [3, 4]],
+      mask=[[False,  True],
+            [False, False]],
+      fill_value=2)
     >>> ma.getmask(a)
     array([[False,  True],
-           [False, False]], dtype=bool)
+           [False, False]])
 
     Equivalently use the `MaskedArray` `mask` attribute.
 
     >>> a.mask
     array([[False,  True],
-           [False, False]], dtype=bool)
+           [False, False]])
 
     Result when mask == `nomask`
 
     >>> b = ma.masked_array([[1,2],[3,4]])
     >>> b
-    masked_array(data =
-     [[1 2]
-     [3 4]],
-          mask =
-     False,
-          fill_value=999999)
+    masked_array(
+      data=[[1, 2],
+            [3, 4]],
+      mask=False,
+      fill_value=999999)
     >>> ma.nomask
     False
     >>> ma.getmask(b) == ma.nomask
@@ -1438,30 +1441,28 @@ def getmaskarray(arr):
     >>> import numpy.ma as ma
     >>> a = ma.masked_equal([[1,2],[3,4]], 2)
     >>> a
-    masked_array(data =
-     [[1 --]
-     [3 4]],
-          mask =
-     [[False  True]
-     [False False]],
-          fill_value=999999)
+    masked_array(
+      data=[[1, --],
+            [3, 4]],
+      mask=[[False,  True],
+            [False, False]],
+      fill_value=2)
     >>> ma.getmaskarray(a)
     array([[False,  True],
-           [False, False]], dtype=bool)
+           [False, False]])
 
     Result when mask == ``nomask``
 
     >>> b = ma.masked_array([[1,2],[3,4]])
     >>> b
-    masked_array(data =
-     [[1 2]
-     [3 4]],
-          mask =
-     False,
-          fill_value=999999)
-    >>> >ma.getmaskarray(b)
+    masked_array(
+      data=[[1, 2],
+            [3, 4]],
+      mask=False,
+      fill_value=999999)
+    >>> ma.getmaskarray(b)
     array([[False, False],
-           [False, False]], dtype=bool)
+           [False, False]])
 
     """
     mask = getmask(arr)
@@ -1497,9 +1498,9 @@ def is_mask(m):
     >>> import numpy.ma as ma
     >>> m = ma.masked_equal([0, 1, 0, 2, 3], 0)
     >>> m
-    masked_array(data = [-- 1 -- 2 3],
-          mask = [ True False  True False False],
-          fill_value=999999)
+    masked_array(data=[--, 1, --, 2, 3],
+                 mask=[ True, False,  True, False, False],
+           fill_value=0)
     >>> ma.is_mask(m)
     False
     >>> ma.is_mask(m.mask)
@@ -1513,21 +1514,21 @@ def is_mask(m):
     False
     >>> m = np.array([False, True, False])
     >>> m
-    array([False,  True, False], dtype=bool)
+    array([False,  True, False])
     >>> ma.is_mask(m)
     True
 
     Arrays with complex dtypes don't return True.
 
     >>> dtype = np.dtype({'names':['monty', 'pithon'],
-                          'formats':[bool, bool]})
+    ...                   'formats':[bool, bool]})
     >>> dtype
     dtype([('monty', '|b1'), ('pithon', '|b1')])
     >>> m = np.array([(True, False), (False, True), (True, False)],
-                     dtype=dtype)
+    ...              dtype=dtype)
     >>> m
-    array([(True, False), (False, True), (True, False)],
-          dtype=[('monty', '|b1'), ('pithon', '|b1')])
+    array([( True, False), (False,  True), ( True, False)],
+          dtype=[('monty', '?'), ('pithon', '?')])
     >>> ma.is_mask(m)
     False
 
@@ -1542,7 +1543,7 @@ def _shrink_mask(m):
     """
     Shrink a mask to nomask if possible
     """
-    if not m.dtype.names and not m.any():
+    if m.dtype.names is None and not m.any():
         return nomask
     else:
         return m
@@ -1581,23 +1582,23 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     >>> import numpy.ma as ma
     >>> m = [True, False, True, True]
     >>> ma.make_mask(m)
-    array([ True, False,  True,  True], dtype=bool)
+    array([ True, False,  True,  True])
     >>> m = [1, 0, 1, 1]
     >>> ma.make_mask(m)
-    array([ True, False,  True,  True], dtype=bool)
+    array([ True, False,  True,  True])
     >>> m = [1, 0, 2, -3]
     >>> ma.make_mask(m)
-    array([ True, False,  True,  True], dtype=bool)
+    array([ True, False,  True,  True])
 
     Effect of the `shrink` parameter.
 
     >>> m = np.zeros(4)
     >>> m
-    array([ 0.,  0.,  0.,  0.])
+    array([0., 0., 0., 0.])
     >>> ma.make_mask(m)
     False
     >>> ma.make_mask(m, shrink=False)
-    array([False, False, False, False], dtype=bool)
+    array([False, False, False, False])
 
     Using a flexible `dtype`.
 
@@ -1609,11 +1610,11 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     >>> arr
     [(1, 0), (0, 1), (1, 0), (1, 0)]
     >>> dtype = np.dtype({'names':['man', 'mouse'],
-                          'formats':[int, int]})
+    ...                   'formats':[np.int64, np.int64]})
     >>> arr = np.array(arr, dtype=dtype)
     >>> arr
     array([(1, 0), (0, 1), (1, 0), (1, 0)],
-          dtype=[('man', '<i4'), ('mouse', '<i4')])
+          dtype=[('man', '<i8'), ('mouse', '<i8')])
     >>> ma.make_mask(arr, dtype=dtype)
     array([(True, False), (False, True), (True, False), (True, False)],
           dtype=[('man', '|b1'), ('mouse', '|b1')])
@@ -1624,7 +1625,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
 
     # Make sure the input dtype is valid.
     dtype = make_mask_descr(dtype)
-    
+
     # legacy boolean special case: "existence of fields implies true"
     if isinstance(m, ndarray) and m.dtype.fields and dtype == np.bool_:
         return np.ones(m.shape, dtype=dtype)
@@ -1667,14 +1668,14 @@ def make_mask_none(newshape, dtype=None):
     --------
     >>> import numpy.ma as ma
     >>> ma.make_mask_none((3,))
-    array([False, False, False], dtype=bool)
+    array([False, False, False])
 
     Defining a more complex dtype.
 
     >>> dtype = np.dtype({'names':['foo', 'bar'],
-                          'formats':[np.float32, int]})
+    ...                   'formats':[np.float32, np.int64]})
     >>> dtype
-    dtype([('foo', '<f4'), ('bar', '<i4')])
+    dtype([('foo', '<f4'), ('bar', '<i8')])
     >>> ma.make_mask_none((3,), dtype=dtype)
     array([(False, False), (False, False), (False, False)],
           dtype=[('foo', '|b1'), ('bar', '|b1')])
@@ -1720,16 +1721,17 @@ def mask_or(m1, m2, copy=False, shrink=True):
     >>> m1 = np.ma.make_mask([0, 1, 1, 0])
     >>> m2 = np.ma.make_mask([1, 0, 0, 0])
     >>> np.ma.mask_or(m1, m2)
-    array([ True,  True,  True, False], dtype=bool)
+    array([ True,  True,  True, False])
 
     """
 
-    def _recursive_mask_or(m1, m2, newmask):
+    @recursive
+    def _recursive_mask_or(self, m1, m2, newmask):
         names = m1.dtype.names
         for name in names:
             current1 = m1[name]
-            if current1.dtype.names:
-                _recursive_mask_or(current1, m2[name], newmask[name])
+            if current1.dtype.names is not None:
+                self(current1, m2[name], newmask[name])
             else:
                 umath.logical_or(current1, m2[name], newmask[name])
         return
@@ -1745,7 +1747,7 @@ def mask_or(m1, m2, copy=False, shrink=True):
     (dtype1, dtype2) = (getattr(m1, 'dtype', None), getattr(m2, 'dtype', None))
     if (dtype1 != dtype2):
         raise ValueError("Incompatible dtypes '%s'<>'%s'" % (dtype1, dtype2))
-    if dtype1.names:
+    if dtype1.names is not None:
         # Allocate an output mask array with the properly broadcast shape.
         newmask = np.empty(np.broadcast(m1, m2).shape, dtype1)
         _recursive_mask_or(m1, m2, newmask)
@@ -1770,25 +1772,25 @@ def flatten_mask(mask):
 
     Examples
     --------
-    >>> mask = np.array([0, 0, 1], dtype=bool)
-    >>> flatten_mask(mask)
-    array([False, False,  True], dtype=bool)
+    >>> mask = np.array([0, 0, 1])
+    >>> np.ma.flatten_mask(mask)
+    array([False, False,  True])
 
     >>> mask = np.array([(0, 0), (0, 1)], dtype=[('a', bool), ('b', bool)])
-    >>> flatten_mask(mask)
-    array([False, False, False,  True], dtype=bool)
+    >>> np.ma.flatten_mask(mask)
+    array([False, False, False,  True])
 
     >>> mdtype = [('a', bool), ('b', [('ba', bool), ('bb', bool)])]
     >>> mask = np.array([(0, (0, 0)), (0, (0, 1))], dtype=mdtype)
-    >>> flatten_mask(mask)
-    array([False, False, False, False, False,  True], dtype=bool)
+    >>> np.ma.flatten_mask(mask)
+    array([False, False, False, False, False,  True])
 
     """
 
     def _flatmask(mask):
         "Flatten the mask and returns a (maybe nested) sequence of booleans."
         mnames = mask.dtype.names
-        if mnames:
+        if mnames is not None:
             return [flatten_mask(mask[name]) for name in mnames]
         else:
             return mask
@@ -1865,38 +1867,39 @@ def masked_where(condition, a, copy=True):
     >>> a
     array([0, 1, 2, 3])
     >>> ma.masked_where(a <= 2, a)
-    masked_array(data = [-- -- -- 3],
-          mask = [ True  True  True False],
-          fill_value=999999)
+    masked_array(data=[--, --, --, 3],
+                 mask=[ True,  True,  True, False],
+           fill_value=999999)
 
     Mask array `b` conditional on `a`.
 
     >>> b = ['a', 'b', 'c', 'd']
     >>> ma.masked_where(a == 2, b)
-    masked_array(data = [a b -- d],
-          mask = [False False  True False],
-          fill_value=N/A)
+    masked_array(data=['a', 'b', --, 'd'],
+                 mask=[False, False,  True, False],
+           fill_value='N/A',
+                dtype='<U1')
 
     Effect of the `copy` argument.
 
     >>> c = ma.masked_where(a <= 2, a)
     >>> c
-    masked_array(data = [-- -- -- 3],
-          mask = [ True  True  True False],
-          fill_value=999999)
+    masked_array(data=[--, --, --, 3],
+                 mask=[ True,  True,  True, False],
+           fill_value=999999)
     >>> c[0] = 99
     >>> c
-    masked_array(data = [99 -- -- 3],
-          mask = [False  True  True False],
-          fill_value=999999)
+    masked_array(data=[99, --, --, 3],
+                 mask=[False,  True,  True, False],
+           fill_value=999999)
     >>> a
     array([0, 1, 2, 3])
     >>> c = ma.masked_where(a <= 2, a, copy=False)
     >>> c[0] = 99
     >>> c
-    masked_array(data = [99 -- -- 3],
-          mask = [False  True  True False],
-          fill_value=999999)
+    masked_array(data=[99, --, --, 3],
+                 mask=[False,  True,  True, False],
+           fill_value=999999)
     >>> a
     array([99,  1,  2,  3])
 
@@ -1905,19 +1908,19 @@ def masked_where(condition, a, copy=True):
     >>> a = np.arange(4)
     >>> a = ma.masked_where(a == 2, a)
     >>> a
-    masked_array(data = [0 1 -- 3],
-          mask = [False False  True False],
-          fill_value=999999)
+    masked_array(data=[0, 1, --, 3],
+                 mask=[False, False,  True, False],
+           fill_value=999999)
     >>> b = np.arange(4)
     >>> b = ma.masked_where(b == 0, b)
     >>> b
-    masked_array(data = [-- 1 2 3],
-          mask = [ True False False False],
-          fill_value=999999)
+    masked_array(data=[--, 1, 2, 3],
+                 mask=[ True, False, False, False],
+           fill_value=999999)
     >>> ma.masked_where(a == 3, b)
-    masked_array(data = [-- 1 -- --],
-          mask = [ True False  True  True],
-          fill_value=999999)
+    masked_array(data=[--, 1, --, --],
+                 mask=[ True, False,  True,  True],
+           fill_value=999999)
 
     """
     # Make sure that condition is a valid standard-type mask.
@@ -1957,9 +1960,9 @@ def masked_greater(x, value, copy=True):
     >>> a
     array([0, 1, 2, 3])
     >>> ma.masked_greater(a, 2)
-    masked_array(data = [0 1 2 --],
-          mask = [False False False  True],
-          fill_value=999999)
+    masked_array(data=[0, 1, 2, --],
+                 mask=[False, False, False,  True],
+           fill_value=999999)
 
     """
     return masked_where(greater(x, value), x, copy=copy)
@@ -1983,9 +1986,9 @@ def masked_greater_equal(x, value, copy=True):
     >>> a
     array([0, 1, 2, 3])
     >>> ma.masked_greater_equal(a, 2)
-    masked_array(data = [0 1 -- --],
-          mask = [False False  True  True],
-          fill_value=999999)
+    masked_array(data=[0, 1, --, --],
+                 mask=[False, False,  True,  True],
+           fill_value=999999)
 
     """
     return masked_where(greater_equal(x, value), x, copy=copy)
@@ -2009,9 +2012,9 @@ def masked_less(x, value, copy=True):
     >>> a
     array([0, 1, 2, 3])
     >>> ma.masked_less(a, 2)
-    masked_array(data = [-- -- 2 3],
-          mask = [ True  True False False],
-          fill_value=999999)
+    masked_array(data=[--, --, 2, 3],
+                 mask=[ True,  True, False, False],
+           fill_value=999999)
 
     """
     return masked_where(less(x, value), x, copy=copy)
@@ -2035,9 +2038,9 @@ def masked_less_equal(x, value, copy=True):
     >>> a
     array([0, 1, 2, 3])
     >>> ma.masked_less_equal(a, 2)
-    masked_array(data = [-- -- -- 3],
-          mask = [ True  True  True False],
-          fill_value=999999)
+    masked_array(data=[--, --, --, 3],
+                 mask=[ True,  True,  True, False],
+           fill_value=999999)
 
     """
     return masked_where(less_equal(x, value), x, copy=copy)
@@ -2061,9 +2064,9 @@ def masked_not_equal(x, value, copy=True):
     >>> a
     array([0, 1, 2, 3])
     >>> ma.masked_not_equal(a, 2)
-    masked_array(data = [-- -- 2 --],
-          mask = [ True  True False  True],
-          fill_value=999999)
+    masked_array(data=[--, --, 2, --],
+                 mask=[ True,  True, False,  True],
+           fill_value=999999)
 
     """
     return masked_where(not_equal(x, value), x, copy=copy)
@@ -2089,9 +2092,9 @@ def masked_equal(x, value, copy=True):
     >>> a
     array([0, 1, 2, 3])
     >>> ma.masked_equal(a, 2)
-    masked_array(data = [0 1 -- 3],
-          mask = [False False  True False],
-          fill_value=999999)
+    masked_array(data=[0, 1, --, 3],
+                 mask=[False, False,  True, False],
+           fill_value=2)
 
     """
     output = masked_where(equal(x, value), x, copy=copy)
@@ -2120,16 +2123,16 @@ def masked_inside(x, v1, v2, copy=True):
     >>> import numpy.ma as ma
     >>> x = [0.31, 1.2, 0.01, 0.2, -0.4, -1.1]
     >>> ma.masked_inside(x, -0.3, 0.3)
-    masked_array(data = [0.31 1.2 -- -- -0.4 -1.1],
-          mask = [False False  True  True False False],
-          fill_value=1e+20)
+    masked_array(data=[0.31, 1.2, --, --, -0.4, -1.1],
+                 mask=[False, False,  True,  True, False, False],
+           fill_value=1e+20)
 
     The order of `v1` and `v2` doesn't matter.
 
     >>> ma.masked_inside(x, 0.3, -0.3)
-    masked_array(data = [0.31 1.2 -- -- -0.4 -1.1],
-          mask = [False False  True  True False False],
-          fill_value=1e+20)
+    masked_array(data=[0.31, 1.2, --, --, -0.4, -1.1],
+                 mask=[False, False,  True,  True, False, False],
+           fill_value=1e+20)
 
     """
     if v2 < v1:
@@ -2160,16 +2163,16 @@ def masked_outside(x, v1, v2, copy=True):
     >>> import numpy.ma as ma
     >>> x = [0.31, 1.2, 0.01, 0.2, -0.4, -1.1]
     >>> ma.masked_outside(x, -0.3, 0.3)
-    masked_array(data = [-- -- 0.01 0.2 -- --],
-          mask = [ True  True False False  True  True],
-          fill_value=1e+20)
+    masked_array(data=[--, --, 0.01, 0.2, --, --],
+                 mask=[ True,  True, False, False,  True,  True],
+           fill_value=1e+20)
 
     The order of `v1` and `v2` doesn't matter.
 
     >>> ma.masked_outside(x, 0.3, -0.3)
-    masked_array(data = [-- -- 0.01 0.2 -- --],
-          mask = [ True  True False False  True  True],
-          fill_value=1e+20)
+    masked_array(data=[--, --, 0.01, 0.2, --, --],
+                 mask=[ True,  True, False, False,  True,  True],
+           fill_value=1e+20)
 
     """
     if v2 < v1:
@@ -2214,20 +2217,27 @@ def masked_object(x, value, copy=True, shrink=True):
     >>> food = np.array(['green_eggs', 'ham'], dtype=object)
     >>> # don't eat spoiled food
     >>> eat = ma.masked_object(food, 'green_eggs')
-    >>> print(eat)
-    [-- ham]
+    >>> eat
+    masked_array(data=[--, 'ham'],
+                 mask=[ True, False],
+           fill_value='green_eggs',
+                dtype=object)
     >>> # plain ol` ham is boring
     >>> fresh_food = np.array(['cheese', 'ham', 'pineapple'], dtype=object)
     >>> eat = ma.masked_object(fresh_food, 'green_eggs')
-    >>> print(eat)
-    [cheese ham pineapple]
+    >>> eat
+    masked_array(data=['cheese', 'ham', 'pineapple'],
+                 mask=False,
+           fill_value='green_eggs',
+                dtype=object)
 
     Note that `mask` is set to ``nomask`` if possible.
 
     >>> eat
-    masked_array(data = [cheese ham pineapple],
-          mask = False,
-          fill_value=?)
+    masked_array(data=['cheese', 'ham', 'pineapple'],
+                 mask=False,
+           fill_value='green_eggs',
+                dtype=object)
 
     """
     if isMaskedArray(x):
@@ -2245,12 +2255,14 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
     Mask using floating point equality.
 
     Return a MaskedArray, masked where the data in array `x` are approximately
-    equal to `value`, i.e. where the following condition is True
+    equal to `value`, determined using `isclose`. The default tolerances for
+    `masked_values` are the same as those for `isclose`.
 
-    (abs(x - value) <= atol+rtol*abs(value))
+    For integer types, exact equality is used, in the same way as
+    `masked_equal`.
 
     The fill_value is set to `value` and the mask is set to ``nomask`` if
-    possible.  For integers, consider using ``masked_equal``.
+    possible.
 
     Parameters
     ----------
@@ -2258,10 +2270,8 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
         Array to mask.
     value : float
         Masking value.
-    rtol : float, optional
-        Tolerance parameter.
-    atol : float, optional
-        Tolerance parameter (1e-8).
+    rtol, atol : float, optional
+        Tolerance parameters passed on to `isclose`
     copy : bool, optional
         Whether to return a copy of `x`.
     shrink : bool, optional
@@ -2282,16 +2292,16 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
     >>> import numpy.ma as ma
     >>> x = np.array([1, 1.1, 2, 1.1, 3])
     >>> ma.masked_values(x, 1.1)
-    masked_array(data = [1.0 -- 2.0 -- 3.0],
-          mask = [False  True False  True False],
-          fill_value=1.1)
+    masked_array(data=[1.0, --, 2.0, --, 3.0],
+                 mask=[False,  True, False,  True, False],
+           fill_value=1.1)
 
     Note that `mask` is set to ``nomask`` if possible.
 
     >>> ma.masked_values(x, 1.5)
-    masked_array(data = [ 1.   1.1  2.   1.1  3. ],
-          mask = False,
-          fill_value=1.5)
+    masked_array(data=[1. , 1.1, 2. , 1.1, 3. ],
+                 mask=False,
+           fill_value=1.5)
 
     For integers, the fill value will be different in general to the
     result of ``masked_equal``.
@@ -2300,26 +2310,24 @@ def masked_values(x, value, rtol=1e-5, atol=1e-8, copy=True, shrink=True):
     >>> x
     array([0, 1, 2, 3, 4])
     >>> ma.masked_values(x, 2)
-    masked_array(data = [0 1 -- 3 4],
-          mask = [False False  True False False],
-          fill_value=2)
+    masked_array(data=[0, 1, --, 3, 4],
+                 mask=[False, False,  True, False, False],
+           fill_value=2)
     >>> ma.masked_equal(x, 2)
-    masked_array(data = [0 1 -- 3 4],
-          mask = [False False  True False False],
-          fill_value=999999)
+    masked_array(data=[0, 1, --, 3, 4],
+                 mask=[False, False,  True, False, False],
+           fill_value=2)
 
     """
-    mabs = umath.absolute
     xnew = filled(x, value)
-    if issubclass(xnew.dtype.type, np.floating):
-        condition = umath.less_equal(
-            mabs(xnew - value), atol + rtol * mabs(value))
-        mask = getmask(x)
+    if np.issubdtype(xnew.dtype, np.floating):
+        mask = np.isclose(xnew, value, atol=atol, rtol=rtol)
     else:
-        condition = umath.equal(xnew, value)
-        mask = nomask
-    mask = mask_or(mask, make_mask(condition, shrink=shrink), shrink=shrink)
-    return masked_array(xnew, mask=mask, copy=copy, fill_value=value)
+        mask = umath.equal(xnew, value)
+    ret = masked_array(xnew, mask=mask, copy=copy, fill_value=value)
+    if shrink:
+        ret.shrink_mask()
+    return ret
 
 
 def masked_invalid(a, copy=True):
@@ -2342,11 +2350,11 @@ def masked_invalid(a, copy=True):
     >>> a[2] = np.NaN
     >>> a[3] = np.PINF
     >>> a
-    array([  0.,   1.,  NaN,  Inf,   4.])
+    array([ 0.,  1., nan, inf,  4.])
     >>> ma.masked_invalid(a)
-    masked_array(data = [0.0 1.0 -- -- 4.0],
-          mask = [False False  True  True False],
-          fill_value=1e+20)
+    masked_array(data=[0.0, 1.0, --, --, 4.0],
+                 mask=[False, False,  True,  True, False],
+           fill_value=1e+20)
 
     """
     a = np.array(a, copy=copy, subok=True)
@@ -2428,7 +2436,7 @@ def _recursive_printoption(result, mask, printopt):
 
     """
     names = result.dtype.names
-    if names:
+    if names is not None:
         for name in names:
             curdata = result[name]
             curmask = mask[name]
@@ -2438,7 +2446,7 @@ def _recursive_printoption(result, mask, printopt):
     return
 
 # For better or worse, these end in a newline
-_print_templates = dict(
+_legacy_print_templates = dict(
     long_std=textwrap.dedent("""\
         masked_%(name)s(data =
          %(data)s,
@@ -2480,7 +2488,7 @@ def _recursive_filled(a, mask, fill_value):
     names = a.dtype.names
     for name in names:
         current = a[name]
-        if current.dtype.names:
+        if current.dtype.names is not None:
             _recursive_filled(current, mask[name], fill_value[name])
         else:
             np.copyto(current, fill_value[name], where=mask[name])
@@ -2507,7 +2515,7 @@ def flatten_structured_array(a):
     --------
     >>> ndtype = [('a', int), ('b', float)]
     >>> a = np.array([(1, 1), (2, 2)], dtype=ndtype)
-    >>> flatten_structured_array(a)
+    >>> np.ma.flatten_structured_array(a)
     array([[1., 1.],
            [2., 2.]])
 
@@ -2678,9 +2686,7 @@ class MaskedIterator(object):
         >>> fl.next()
         3
         >>> fl.next()
-        masked_array(data = --,
-                     mask = True,
-               fill_value = 1e+20)
+        masked
         >>> fl.next()
         Traceback (most recent call last):
           File "<stdin>", line 1, in <module>
@@ -2798,13 +2804,8 @@ class MaskedArray(ndarray):
             # FIXME _sharedmask is never used.
             _sharedmask = True
         # Process mask.
-        # Number of named fields (or zero if none)
-        names_ = _data.dtype.names or ()
         # Type of the mask
-        if names_:
-            mdtype = make_mask_descr(_data.dtype)
-        else:
-            mdtype = MaskType
+        mdtype = make_mask_descr(_data.dtype)
 
         if mask is nomask:
             # Case 1. : no mask in input.
@@ -2830,14 +2831,12 @@ class MaskedArray(ndarray):
                     _data._mask = mask
                     _data._sharedmask = False
             else:
+                _data._sharedmask = not copy
                 if copy:
                     _data._mask = _data._mask.copy()
-                    _data._sharedmask = False
                     # Reset the shape of the original mask
                     if getmask(data) is not nomask:
                         data._mask.shape = data.shape
-                else:
-                    _data._sharedmask = True
         else:
             # Case 2. : With a mask in input.
             # If mask is boolean, create an array of True or False
@@ -2874,16 +2873,16 @@ class MaskedArray(ndarray):
                     _data._mask = mask
                     _data._sharedmask = not copy
                 else:
-                    if names_:
+                    if _data.dtype.names is not None:
                         def _recursive_or(a, b):
                             "do a|=b on each field of a, recursively"
                             for name in a.dtype.names:
                                 (af, bf) = (a[name], b[name])
-                                if af.dtype.names:
+                                if af.dtype.names is not None:
                                     _recursive_or(af, bf)
                                 else:
                                     af |= bf
-                            return
+
                         _recursive_or(_data._mask, mask)
                     else:
                         _data._mask = np.logical_or(mask, _data._mask)
@@ -2966,7 +2965,7 @@ class MaskedArray(ndarray):
         if isinstance(obj, ndarray):
             # XX: This looks like a bug -- shouldn't it check self.dtype
             # instead?
-            if obj.dtype.names:
+            if obj.dtype.names is not None:
                 _mask = getmaskarray(obj)
             else:
                 _mask = getmask(obj)
@@ -2978,11 +2977,32 @@ class MaskedArray(ndarray):
             # heuristic it's not bad.) In all other cases, we make a copy of
             # the mask, so that future modifications to 'self' do not end up
             # side-effecting 'obj' as well.
-            if (obj.__array_interface__["data"][0]
+            if (_mask is not nomask and obj.__array_interface__["data"][0]
                     != self.__array_interface__["data"][0]):
-                _mask = _mask.copy()
+                # We should make a copy. But we could get here via astype,
+                # in which case the mask might need a new dtype as well
+                # (e.g., changing to or from a structured dtype), and the
+                # order could have changed. So, change the mask type if
+                # needed and use astype instead of copy.
+                if self.dtype == obj.dtype:
+                    _mask_dtype = _mask.dtype
+                else:
+                    _mask_dtype = make_mask_descr(self.dtype)
+
+                if self.flags.c_contiguous:
+                    order = "C"
+                elif self.flags.f_contiguous:
+                    order = "F"
+                else:
+                    order = "K"
+
+                _mask = _mask.astype(_mask_dtype, order)
+            else:
+                # Take a view so shape changes, etc., do not propagate back.
+                _mask = _mask.view()
         else:
             _mask = nomask
+
         self._mask = _mask
         # Finalize the mask
         if self._mask is not nomask:
@@ -2993,11 +3013,13 @@ class MaskedArray(ndarray):
             except (TypeError, AttributeError):
                 # When _mask.shape is not writable (because it's a void)
                 pass
-        # Finalize the fill_value for structured arrays
-        if self.dtype.names:
-            if self._fill_value is None:
-                self._fill_value = _check_fill_value(None, self.dtype)
-        return
+
+        # Finalize the fill_value
+        if self._fill_value is not None:
+            self._fill_value = _check_fill_value(self._fill_value, self.dtype)
+        elif self.dtype.names is not None:
+            # Finalize the default fill_value for structured arrays
+            self._fill_value = _check_fill_value(None, self.dtype)
 
     def __array_wrap__(self, obj, context=None):
         """
@@ -3014,18 +3036,16 @@ class MaskedArray(ndarray):
 
         if context is not None:
             result._mask = result._mask.copy()
-            (func, args, _) = context
-            m = reduce(mask_or, [getmaskarray(arg) for arg in args])
+            func, args, out_i = context
+            # args sometimes contains outputs (gh-10459), which we don't want
+            input_args = args[:func.nin]
+            m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
             domain = ufunc_domain.get(func, None)
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
-                if len(args) > 2:
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        d = filled(reduce(domain, args), True)
-                else:
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        d = filled(domain(*args), True)
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    d = filled(domain(*input_args), True)
 
                 if d.any():
                     # Fill the result where the domain is wrong
@@ -3071,7 +3091,7 @@ class MaskedArray(ndarray):
             returned object (this is equivalent to setting the ``type``
             parameter).
         type : Python type, optional
-            Type of the returned view, e.g., ndarray or matrix.  Again, the
+            Type of the returned view, either ndarray or a subclass.  The
             default None results in type preservation.
 
         Notes
@@ -3139,45 +3159,6 @@ class MaskedArray(ndarray):
                 output.fill_value = fill_value
         return output
     view.__doc__ = ndarray.view.__doc__
-
-    def astype(self, newtype):
-        """
-        Returns a copy of the MaskedArray cast to given newtype.
-
-        Returns
-        -------
-        output : MaskedArray
-            A copy of self cast to input newtype.
-            The returned record shape matches self.shape.
-
-        Examples
-        --------
-        >>> x = np.ma.array([[1,2,3.1],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print(x)
-        [[1.0 -- 3.1]
-         [-- 5.0 --]
-         [7.0 -- 9.0]]
-        >>> print(x.astype(int32))
-        [[1 -- 3]
-         [-- 5 --]
-         [7 -- 9]]
-
-        """
-        newtype = np.dtype(newtype)
-        newmasktype = make_mask_descr(newtype)
-
-        output = self._data.astype(newtype).view(type(self))
-        output._update_from(self)
-
-        if self._mask is nomask:
-            output._mask = nomask
-        else:
-            output._mask = self._mask.astype(newmasktype)
-
-        # Don't check _fill_value if it's None, that'll speed things up
-        if self._fill_value is not None:
-            output._fill_value = _check_fill_value(self._fill_value, newtype)
-        return output
 
     def __getitem__(self, indx):
         """
@@ -3266,7 +3247,7 @@ class MaskedArray(ndarray):
             # Inherit attributes from self
             dout._update_from(self)
             # Check the fill_value
-            if isinstance(indx, basestring):
+            if is_string_or_list_of_strings(indx):
                 if self._fill_value is not None:
                     dout._fill_value = self._fill_value[indx]
 
@@ -3319,15 +3300,14 @@ class MaskedArray(ndarray):
             return
 
         _dtype = _data.dtype
-        nbfields = len(_dtype.names or ())
 
         if value is masked:
             # The mask wasn't set: create a full version.
             if _mask is nomask:
                 _mask = self._mask = make_mask_none(self.shape, _dtype)
             # Now, set the mask to its value.
-            if nbfields:
-                _mask[indx] = tuple([True] * nbfields)
+            if _dtype.names is not None:
+                _mask[indx] = tuple([True] * len(_dtype.names))
             else:
                 _mask[indx] = True
             return
@@ -3336,8 +3316,8 @@ class MaskedArray(ndarray):
         dval = getattr(value, '_data', value)
         # Get the _mask part of the new value
         mval = getmask(value)
-        if nbfields and mval is nomask:
-            mval = tuple([False] * nbfields)
+        if _dtype.names is not None and mval is nomask:
+            mval = tuple([False] * len(_dtype.names))
         if _mask is nomask:
             # Set the data, then the mask
             _data[indx] = dval
@@ -3352,7 +3332,7 @@ class MaskedArray(ndarray):
             indx = indx * umath.logical_not(_mask)
             _data[indx] = dval
         else:
-            if nbfields:
+            if _dtype.names is not None:
                 err_msg = "Flexible 'hard' masks are not yet supported."
                 raise NotImplementedError(err_msg)
             mindx = mask_or(_mask[indx], mval, copy=True)
@@ -3365,16 +3345,34 @@ class MaskedArray(ndarray):
             _mask[indx] = mindx
         return
 
-    def __setattr__(self, attr, value):
-        super(MaskedArray, self).__setattr__(attr, value)
-        if attr == 'dtype' and self._mask is not nomask:
-            self._mask = self._mask.view(make_mask_descr(value), ndarray)
-            # Try to reset the shape of the mask (if we don't have a void)
-            # This raises a ValueError if the dtype change won't work
+    # Define so that we can overwrite the setter.
+    @property
+    def dtype(self):
+        return super(MaskedArray, self).dtype
+
+    @dtype.setter
+    def dtype(self, dtype):
+        super(MaskedArray, type(self)).dtype.__set__(self, dtype)
+        if self._mask is not nomask:
+            self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
+            # Try to reset the shape of the mask (if we don't have a void).
+            # This raises a ValueError if the dtype change won't work.
             try:
                 self._mask.shape = self.shape
             except (AttributeError, TypeError):
                 pass
+
+    @property
+    def shape(self):
+        return super(MaskedArray, self).shape
+
+    @shape.setter
+    def shape(self, shape):
+        super(MaskedArray, type(self)).shape.__set__(self, shape)
+        # Cannot use self._mask, since it may not (yet) exist when a
+        # masked matrix sets the shape.
+        if getmask(self) is not nomask:
+            self._mask.shape = self.shape
 
     def __setmask__(self, mask, copy=False):
         """
@@ -3551,8 +3549,13 @@ class MaskedArray(ndarray):
         >>> x = np.ma.array([[1,2 ], [3, 4]], mask=[0]*4)
         >>> x.mask
         array([[False, False],
-               [False, False]], dtype=bool)
+               [False, False]])
         >>> x.shrink_mask()
+        masked_array(
+          data=[[1, 2],
+                [3, 4]],
+          mask=False,
+          fill_value=999999)
         >>> x.mask
         False
 
@@ -3641,7 +3644,7 @@ class MaskedArray(ndarray):
         -inf
         >>> x.set_fill_value(np.pi)
         >>> x.fill_value
-        3.1415926535897931
+        3.1415926535897931 # may vary
 
         Reset to default:
 
@@ -3690,18 +3693,18 @@ class MaskedArray(ndarray):
         --------
         >>> x = np.ma.array([1,2,3,4,5], mask=[0,0,1,0,1], fill_value=-999)
         >>> x.filled()
-        array([1, 2, -999, 4, -999])
+        array([   1,    2, -999,    4, -999])
         >>> type(x.filled())
-        <type 'numpy.ndarray'>
+        <class 'numpy.ndarray'>
 
-        Subclassing is preserved. This means that if the data part of the masked
-        array is a matrix, `filled` returns a matrix:
+        Subclassing is preserved. This means that if, e.g., the data part of
+        the masked array is a recarray, `filled` returns a recarray:
 
-        >>> x = np.ma.array(np.matrix([[1, 2], [3, 4]]), mask=[[0, 1], [1, 0]])
-        >>> x.filled()
-        matrix([[     1, 999999],
-                [999999,      4]])
-
+        >>> x = np.array([(-1, 2), (-3, 4)], dtype='i8,i8').view(np.recarray)
+        >>> m = np.ma.array(x, mask=[(True, False), (False, True)])
+        >>> m.filled()
+        rec.array([(999999,      2), (    -3, 999999)],
+                  dtype=[('f0', '<i8'), ('f1', '<i8')])
         """
         m = self._mask
         if m is nomask:
@@ -3715,7 +3718,7 @@ class MaskedArray(ndarray):
         if self is masked_singleton:
             return np.asanyarray(fill_value)
 
-        if m.dtype.names:
+        if m.dtype.names is not None:
             result = self._data.copy('K')
             _recursive_filled(result, self._mask, fill_value)
         elif not m.any():
@@ -3757,7 +3760,7 @@ class MaskedArray(ndarray):
         >>> x.compressed()
         array([0, 1])
         >>> type(x.compressed())
-        <type 'numpy.ndarray'>
+        <class 'numpy.ndarray'>
 
         """
         data = ndarray.ravel(self._data)
@@ -3799,25 +3802,29 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print(x)
-        [[1 -- 3]
-         [-- 5 --]
-         [7 -- 9]]
+        >>> x
+        masked_array(
+          data=[[1, --, 3],
+                [--, 5, --],
+                [7, --, 9]],
+          mask=[[False,  True, False],
+                [ True, False,  True],
+                [False,  True, False]],
+          fill_value=999999)
         >>> x.compress([1, 0, 1])
-        masked_array(data = [1 3],
-              mask = [False False],
-              fill_value=999999)
+        masked_array(data=[1, 3],
+                     mask=[False, False],
+               fill_value=999999)
 
         >>> x.compress([1, 0, 1], axis=1)
-        masked_array(data =
-         [[1 3]
-         [-- --]
-         [7 9]],
-              mask =
-         [[False False]
-         [ True  True]
-         [False False]],
-              fill_value=999999)
+        masked_array(
+          data=[[1, 3],
+                [--, --],
+                [7, 9]],
+          mask=[[False, False],
+                [ True,  True],
+                [False, False]],
+          fill_value=999999)
 
         """
         # Get the basic components
@@ -3867,6 +3874,10 @@ class MaskedArray(ndarray):
     def __str__(self):
         return str(self._insert_masked_print())
 
+    if sys.version_info.major < 3:
+        def __unicode__(self):
+            return unicode(self._insert_masked_print())
+
     def __repr__(self):
         """
         Literal string representation.
@@ -3877,23 +3888,79 @@ class MaskedArray(ndarray):
         else:
             name = self._baseclass.__name__
 
-        is_long = self.ndim > 1
-        is_structured = bool(self.dtype.names)
 
-        parameters = dict(
-            name=name,
-            nlen=" " * len(name),
-            data=str(self),
-            mask=str(self._mask),
-            fill=str(self.fill_value),
-            dtype=str(self.dtype)
+        # 2016-11-19: Demoted to legacy format
+        if np.get_printoptions()['legacy'] == '1.13':
+            is_long = self.ndim > 1
+            parameters = dict(
+                name=name,
+                nlen=" " * len(name),
+                data=str(self),
+                mask=str(self._mask),
+                fill=str(self.fill_value),
+                dtype=str(self.dtype)
+            )
+            is_structured = bool(self.dtype.names)
+            key = '{}_{}'.format(
+                'long' if is_long else 'short',
+                'flx' if is_structured else 'std'
+            )
+            return _legacy_print_templates[key] % parameters
+
+        prefix = 'masked_{}('.format(name)
+
+        dtype_needed = (
+            not np.core.arrayprint.dtype_is_implied(self.dtype) or
+            np.all(self.mask) or
+            self.size == 0
         )
 
-        key = '{}_{}'.format(
-            'long' if is_long else 'short',
-            'flx' if is_structured else 'std'
+        # determine which keyword args need to be shown
+        keys = ['data', 'mask', 'fill_value']
+        if dtype_needed:
+            keys.append('dtype')
+
+        # array has only one row (non-column)
+        is_one_row = builtins.all(dim == 1 for dim in self.shape[:-1])
+
+        # choose what to indent each keyword with
+        min_indent = 2
+        if is_one_row:
+            # first key on the same line as the type, remaining keys
+            # aligned by equals
+            indents = {}
+            indents[keys[0]] = prefix
+            for k in keys[1:]:
+                n = builtins.max(min_indent, len(prefix + keys[0]) - len(k))
+                indents[k] = ' ' * n
+            prefix = ''  # absorbed into the first indent
+        else:
+            # each key on its own line, indented by two spaces
+            indents = {k: ' ' * min_indent for k in keys}
+            prefix = prefix + '\n'  # first key on the next line
+
+        # format the field values
+        reprs = {}
+        reprs['data'] = np.array2string(
+            self._insert_masked_print(),
+            separator=", ",
+            prefix=indents['data'] + 'data=',
+            suffix=',')
+        reprs['mask'] = np.array2string(
+            self._mask,
+            separator=", ",
+            prefix=indents['mask'] + 'mask=',
+            suffix=',')
+        reprs['fill_value'] = repr(self.fill_value)
+        if dtype_needed:
+            reprs['dtype'] = np.core.arrayprint.dtype_short_repr(self.dtype)
+
+        # join keys with values and indentations
+        result = ',\n'.join(
+            '{}{}={}'.format(indents[k], k, reprs[k])
+            for k in keys
         )
-        return _print_templates[key] % parameters
+        return prefix + result + ')'
 
     def _delegate_binop(self, other):
         # This emulates the logic in
@@ -3925,7 +3992,7 @@ class MaskedArray(ndarray):
         mask = mask_or(smask, omask, copy=True)
 
         odata = getdata(other)
-        if mask.dtype.names:
+        if mask.dtype.names is not None:
             # For possibly masked structured arrays we need to be careful,
             # since the standard structured array comparison will use all
             # fields, masked or not. To avoid masked fields influencing the
@@ -3961,6 +4028,16 @@ class MaskedArray(ndarray):
         check = check.view(type(self))
         check._update_from(self)
         check._mask = mask
+
+        # Cast fill value to bool_ if needed. If it cannot be cast, the
+        # default boolean fill value is used.
+        if check._fill_value is not None:
+            try:
+                fill = _check_fill_value(check._fill_value, np.bool_)
+            except (TypeError, ValueError):
+                fill = _check_fill_value(None, np.bool_)
+            check._fill_value = fill
+
         return check
 
     def __eq__(self, other):
@@ -4243,18 +4320,18 @@ class MaskedArray(ndarray):
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python int.')
         return int(self.item())
-    
+
     def __long__(self):
         """
         Convert to long.
         """
         if self.size > 1:
-            raise TypeError("Only length-1 arrays can be conveted "
+            raise TypeError("Only length-1 arrays can be converted "
                             "to Python scalars")
         elif self._mask:
             raise MaskError('Cannot convert masked element to a Python long.')
         return long(self.item())
-      
+
 
     def get_imag(self):
         """
@@ -4280,9 +4357,9 @@ class MaskedArray(ndarray):
         --------
         >>> x = np.ma.array([1+1.j, -2j, 3.45+1.6j], mask=[False, True, False])
         >>> x.get_imag()
-        masked_array(data = [1.0 -- 1.6],
-                     mask = [False  True False],
-               fill_value = 1e+20)
+        masked_array(data=[1.0, --, 1.6],
+                     mask=[False,  True, False],
+               fill_value=1e+20)
 
         """
         result = self._data.imag.view(type(self))
@@ -4315,9 +4392,9 @@ class MaskedArray(ndarray):
         --------
         >>> x = np.ma.array([1+1.j, -2j, 3.45+1.6j], mask=[False, True, False])
         >>> x.get_real()
-        masked_array(data = [1.0 -- 3.45],
-                     mask = [False  True False],
-               fill_value = 1e+20)
+        masked_array(data=[1.0, --, 3.45],
+                     mask=[False,  True, False],
+               fill_value=1e+20)
 
         """
         result = self._data.real.view(type(self))
@@ -4363,13 +4440,12 @@ class MaskedArray(ndarray):
         >>> a = ma.arange(6).reshape((2, 3))
         >>> a[1, :] = ma.masked
         >>> a
-        masked_array(data =
-         [[0 1 2]
-         [-- -- --]],
-                     mask =
-         [[False False False]
-         [ True  True  True]],
-               fill_value = 999999)
+        masked_array(
+          data=[[0, 1, 2],
+                [--, --, --]],
+          mask=[[False, False, False],
+                [ True,  True,  True]],
+          fill_value=999999)
         >>> a.count()
         3
 
@@ -4454,12 +4530,20 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print(x)
-        [[1 -- 3]
-         [-- 5 --]
-         [7 -- 9]]
-        >>> print(x.ravel())
-        [1 -- 3 -- 5 -- 7 -- 9]
+        >>> x
+        masked_array(
+          data=[[1, --, 3],
+                [--, 5, --],
+                [7, --, 9]],
+          mask=[[False,  True, False],
+                [ True, False,  True],
+                [False,  True, False]],
+          fill_value=999999)
+        >>> x.ravel()
+        masked_array(data=[1, --, 3, --, 5, --, 7, --, 9],
+                     mask=[False,  True, False,  True, False,  True, False,  True,
+                           False],
+               fill_value=999999)
 
         """
         r = ndarray.ravel(self._data, order=order).view(type(self))
@@ -4508,15 +4592,25 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2],[3,4]], mask=[1,0,0,1])
-        >>> print(x)
-        [[-- 2]
-         [3 --]]
+        >>> x
+        masked_array(
+          data=[[--, 2],
+                [3, --]],
+          mask=[[ True, False],
+                [False,  True]],
+          fill_value=999999)
         >>> x = x.reshape((4,1))
-        >>> print(x)
-        [[--]
-         [2]
-         [3]
-         [--]]
+        >>> x
+        masked_array(
+          data=[[--],
+                [2],
+                [3],
+                [--]],
+          mask=[[ True],
+                [False],
+                [False],
+                [ True]],
+          fill_value=999999)
 
         """
         kwargs.update(order=kwargs.get('order', 'C'))
@@ -4573,21 +4667,36 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print(x)
-        [[1 -- 3]
-         [-- 5 --]
-         [7 -- 9]]
+        >>> x
+        masked_array(
+          data=[[1, --, 3],
+                [--, 5, --],
+                [7, --, 9]],
+          mask=[[False,  True, False],
+                [ True, False,  True],
+                [False,  True, False]],
+          fill_value=999999)
         >>> x.put([0,4,8],[10,20,30])
-        >>> print(x)
-        [[10 -- 3]
-         [-- 20 --]
-         [7 -- 30]]
+        >>> x
+        masked_array(
+          data=[[10, --, 3],
+                [--, 20, --],
+                [7, --, 30]],
+          mask=[[False,  True, False],
+                [ True, False,  True],
+                [False,  True, False]],
+          fill_value=999999)
 
         >>> x.put(4,999)
-        >>> print(x)
-        [[10 -- 3]
-         [-- 999 --]
-         [7 -- 30]]
+        >>> x
+        masked_array(
+          data=[[10, --, 3],
+                [--, 999, --],
+                [7, --, 30]],
+          mask=[[False,  True, False],
+                [ True, False,  True],
+                [False,  True, False]],
+          fill_value=999999)
 
         """
         # Hard mask: Get rid of the values/indices that fall on masked data
@@ -4627,14 +4736,14 @@ class MaskedArray(ndarray):
         --------
         >>> x = np.ma.array([1, 2, 3], mask=[0, 1, 1])
         >>> x.ids()
-        (166670640, 166659832)
+        (166670640, 166659832) # may vary
 
         If the array has no mask, the address of `nomask` is returned. This address
         is typically not close to the data in memory:
 
         >>> x = np.ma.array([1, 2, 3])
         >>> x.ids()
-        (166691080, 3083169284L)
+        (166691080, 3083169284L) # may vary
 
         """
         if self._mask is nomask:
@@ -4663,6 +4772,7 @@ class MaskedArray(ndarray):
           OWNDATA : False
           WRITEABLE : True
           ALIGNED : True
+          WRITEBACKIFCOPY : False
           UPDATEIFCOPY : False
 
         """
@@ -4782,13 +4892,12 @@ class MaskedArray(ndarray):
         >>> import numpy.ma as ma
         >>> x = ma.array(np.eye(3))
         >>> x
-        masked_array(data =
-         [[ 1.  0.  0.]
-         [ 0.  1.  0.]
-         [ 0.  0.  1.]],
-              mask =
-         False,
-              fill_value=1e+20)
+        masked_array(
+          data=[[1., 0., 0.],
+                [0., 1., 0.],
+                [0., 0., 1.]],
+          mask=False,
+          fill_value=1e+20)
         >>> x.nonzero()
         (array([0, 1, 2]), array([0, 1, 2]))
 
@@ -4796,15 +4905,14 @@ class MaskedArray(ndarray):
 
         >>> x[1, 1] = ma.masked
         >>> x
-        masked_array(data =
-         [[1.0 0.0 0.0]
-         [0.0 -- 0.0]
-         [0.0 0.0 1.0]],
-              mask =
-         [[False False False]
-         [False  True False]
-         [False False False]],
-              fill_value=1e+20)
+        masked_array(
+          data=[[1.0, 0.0, 0.0],
+                [0.0, --, 0.0],
+                [0.0, 0.0, 1.0]],
+          mask=[[False, False, False],
+                [False,  True, False],
+                [False, False, False]],
+          fill_value=1e+20)
         >>> x.nonzero()
         (array([0, 2]), array([0, 2]))
 
@@ -4821,13 +4929,12 @@ class MaskedArray(ndarray):
 
         >>> a = ma.array([[1,2,3],[4,5,6],[7,8,9]])
         >>> a > 3
-        masked_array(data =
-         [[False False False]
-         [ True  True  True]
-         [ True  True  True]],
-              mask =
-         False,
-              fill_value=999999)
+        masked_array(
+          data=[[False, False, False],
+                [ True,  True,  True],
+                [ True,  True,  True]],
+          mask=False,
+          fill_value=True)
         >>> ma.nonzero(a > 3)
         (array([1, 1, 1, 2, 2, 2]), array([0, 1, 2, 0, 1, 2]))
 
@@ -4909,18 +5016,27 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print(x)
-        [[1 -- 3]
-         [-- 5 --]
-         [7 -- 9]]
-        >>> print(x.sum())
+        >>> x
+        masked_array(
+          data=[[1, --, 3],
+                [--, 5, --],
+                [7, --, 9]],
+          mask=[[False,  True, False],
+                [ True, False,  True],
+                [False,  True, False]],
+          fill_value=999999)
+        >>> x.sum()
         25
-        >>> print(x.sum(axis=1))
-        [4 5 16]
-        >>> print(x.sum(axis=0))
-        [8 5 12]
+        >>> x.sum(axis=1)
+        masked_array(data=[4, 5, 16],
+                     mask=[False, False, False],
+               fill_value=999999)
+        >>> x.sum(axis=0)
+        masked_array(data=[8, 5, 12],
+                     mask=[False, False, False],
+               fill_value=999999)
         >>> print(type(x.sum(axis=0, dtype=np.int64)[0]))
-        <type 'numpy.int64'>
+        <class 'numpy.int64'>
 
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
@@ -4971,8 +5087,11 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> marr = np.ma.array(np.arange(10), mask=[0,0,0,1,1,1,0,0,0,0])
-        >>> print(marr.cumsum())
-        [0 1 3 -- -- -- 9 16 24 33]
+        >>> marr.cumsum()
+        masked_array(data=[0, 1, 3, --, --, --, 9, 16, 24, 33],
+                     mask=[False, False, False,  True,  True,  True, False, False,
+                           False, False],
+               fill_value=999999)
 
         """
         result = self.filled(0).cumsum(axis=axis, dtype=dtype, out=out)
@@ -5076,9 +5195,9 @@ class MaskedArray(ndarray):
         --------
         >>> a = np.ma.array([1,2,3], mask=[False, False, True])
         >>> a
-        masked_array(data = [1 2 --],
-                     mask = [False False  True],
-               fill_value = 999999)
+        masked_array(data=[1, 2, --],
+                     mask=[False, False,  True],
+               fill_value=999999)
         >>> a.mean()
         1.5
 
@@ -5131,9 +5250,9 @@ class MaskedArray(ndarray):
         --------
         >>> a = np.ma.array([1,2,3])
         >>> a.anom()
-        masked_array(data = [-1.  0.  1.],
-                     mask = False,
-               fill_value = 1e+20)
+        masked_array(data=[-1.,  0.,  1.],
+                     mask=False,
+               fill_value=1e+20)
 
         """
         m = self.mean(axis, dtype)
@@ -5277,7 +5396,7 @@ class MaskedArray(ndarray):
                 originally intended.
                 Until then, the axis should be given explicitly when
                 ``arr.ndim > 1``, to avoid a FutureWarning.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm.
         order : list, optional
             When `a` is an array with fields defined, this argument specifies
@@ -5313,9 +5432,9 @@ class MaskedArray(ndarray):
         --------
         >>> a = np.ma.array([3,2,1], mask=[False, False, True])
         >>> a
-        masked_array(data = [3 2 --],
-                     mask = [False False  True],
-               fill_value = 999999)
+        masked_array(data=[3, 2, --],
+                     mask=[False, False,  True],
+               fill_value=999999)
         >>> a.argsort()
         array([1, 0, 2])
 
@@ -5363,15 +5482,19 @@ class MaskedArray(ndarray):
 
         Examples
         --------
-        >>> x = np.ma.array(arange(4), mask=[1,1,0,0])
+        >>> x = np.ma.array(np.arange(4), mask=[1,1,0,0])
         >>> x.shape = (2,2)
-        >>> print(x)
-        [[-- --]
-         [2 3]]
-        >>> print(x.argmin(axis=0, fill_value=-1))
-        [0 0]
-        >>> print(x.argmin(axis=0, fill_value=9))
-        [1 1]
+        >>> x
+        masked_array(
+          data=[[--, --],
+                [2, 3]],
+          mask=[[ True,  True],
+                [False, False]],
+          fill_value=999999)
+        >>> x.argmin(axis=0, fill_value=-1)
+        array([0, 0])
+        >>> x.argmin(axis=0, fill_value=9)
+        array([1, 1])
 
         """
         if fill_value is None:
@@ -5428,7 +5551,7 @@ class MaskedArray(ndarray):
         axis : int, optional
             Axis along which to sort. If None, the array is flattened before
             sorting. The default is -1, which sorts along the last axis.
-        kind : {'quicksort', 'mergesort', 'heapsort'}, optional
+        kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             Sorting algorithm. Default is 'quicksort'.
         order : list, optional
             When `a` is a structured array, this argument specifies which fields
@@ -5462,23 +5585,29 @@ class MaskedArray(ndarray):
 
         Examples
         --------
-        >>> a = ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
+        >>> a = np.ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
         >>> # Default
         >>> a.sort()
-        >>> print(a)
-        [1 3 5 -- --]
+        >>> a
+        masked_array(data=[1, 3, 5, --, --],
+                     mask=[False, False, False,  True,  True],
+               fill_value=999999)
 
-        >>> a = ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
+        >>> a = np.ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
         >>> # Put missing values in the front
         >>> a.sort(endwith=False)
-        >>> print(a)
-        [-- -- 1 3 5]
+        >>> a
+        masked_array(data=[--, --, 1, 3, 5],
+                     mask=[ True,  True, False, False, False],
+               fill_value=999999)
 
-        >>> a = ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
+        >>> a = np.ma.array([1, 2, 5, 4, 3],mask=[0, 1, 0, 1, 0])
         >>> # fill_value takes over endwith
         >>> a.sort(endwith=False, fill_value=3)
-        >>> print(a)
-        [1 -- -- 3 5]
+        >>> a
+        masked_array(data=[1, --, --, 3, 5],
+                     mask=[False,  True,  True, False, False],
+               fill_value=999999)
 
         """
         if self._mask is nomask:
@@ -5491,14 +5620,7 @@ class MaskedArray(ndarray):
         sidx = self.argsort(axis=axis, kind=kind, order=order,
                             fill_value=fill_value, endwith=endwith)
 
-        # save memory for 1d arrays
-        if self.ndim == 1:
-            idx = sidx
-        else:
-            idx = list(np.ix_(*[np.arange(x) for x in self.shape]))
-            idx[axis] = sidx
-
-        self[...] = self[idx]
+        self[...] = np.take_along_axis(self, sidx, axis=axis)
 
     def min(self, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         """
@@ -5591,27 +5713,36 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array(np.arange(6), mask=[0 ,1, 0, 0, 0 ,1]).reshape(3, 2)
-        >>> print(x)
-        [[0 --]
-         [2 3]
-         [4 --]]
+        >>> x
+        masked_array(
+          data=[[0, --],
+                [2, 3],
+                [4, --]],
+          mask=[[False,  True],
+                [False, False],
+                [False,  True]],
+          fill_value=999999)
         >>> x.mini()
-        0
+        masked_array(data=0,
+                     mask=False,
+               fill_value=999999)
         >>> x.mini(axis=0)
-        masked_array(data = [0 3],
-                     mask = [False False],
-               fill_value = 999999)
-        >>> print(x.mini(axis=1))
-        [0 2 4]
+        masked_array(data=[0, 3],
+                     mask=[False, False],
+               fill_value=999999)
+        >>> x.mini(axis=1)
+        masked_array(data=[0, 2, 4],
+                     mask=[False, False, False],
+               fill_value=999999)
 
         There is a small difference between `mini` and `min`:
 
         >>> x[:,1].mini(axis=0)
-        masked_array(data = --,
-                     mask = True,
-               fill_value = 999999)
+        masked_array(data=3,
+                     mask=False,
+               fill_value=999999)
         >>> x[:,1].min(axis=0)
-        masked
+        3
         """
 
         # 2016-04-13, 1.13.0, gh-8764
@@ -5684,7 +5815,7 @@ class MaskedArray(ndarray):
             np.copyto(out, np.nan, where=newmask)
         return out
 
-    def ptp(self, axis=None, out=None, fill_value=None):
+    def ptp(self, axis=None, out=None, fill_value=None, keepdims=False):
         """
         Return (maximum - minimum) along the given dimension
         (i.e. peak-to-peak value).
@@ -5709,11 +5840,15 @@ class MaskedArray(ndarray):
 
         """
         if out is None:
-            result = self.max(axis=axis, fill_value=fill_value)
-            result -= self.min(axis=axis, fill_value=fill_value)
+            result = self.max(axis=axis, fill_value=fill_value,
+                              keepdims=keepdims)
+            result -= self.min(axis=axis, fill_value=fill_value,
+                               keepdims=keepdims)
             return result
-        out.flat = self.max(axis=axis, out=out, fill_value=fill_value)
-        min_value = self.min(axis=axis, fill_value=fill_value)
+        out.flat = self.max(axis=axis, out=out, fill_value=fill_value,
+                            keepdims=keepdims)
+        min_value = self.min(axis=axis, fill_value=fill_value,
+                             keepdims=keepdims)
         np.subtract(out, min_value, out=out, casting='unsafe')
         return out
 
@@ -5860,7 +5995,7 @@ class MaskedArray(ndarray):
         --------
         >>> x = np.ma.array(np.array([[1, 2], [3, 4]]), mask=[[0, 1], [1, 0]])
         >>> x.tobytes()
-        '\\x01\\x00\\x00\\x00?B\\x0f\\x00?B\\x0f\\x00\\x04\\x00\\x00\\x00'
+        b'\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00?B\\x0f\\x00\\x00\\x00\\x00\\x00?B\\x0f\\x00\\x00\\x00\\x00\\x00\\x04\\x00\\x00\\x00\\x00\\x00\\x00\\x00'
 
         """
         return self.filled(fill_value).tobytes(order=order)
@@ -5908,14 +6043,20 @@ class MaskedArray(ndarray):
         Examples
         --------
         >>> x = np.ma.array([[1,2,3],[4,5,6],[7,8,9]], mask=[0] + [1,0]*4)
-        >>> print(x)
-        [[1 -- 3]
-         [-- 5 --]
-         [7 -- 9]]
-        >>> print(x.toflex())
-        [[(1, False) (2, True) (3, False)]
-         [(4, True) (5, False) (6, True)]
-         [(7, False) (8, True) (9, False)]]
+        >>> x
+        masked_array(
+          data=[[1, --, 3],
+                [--, 5, --],
+                [7, --, 9]],
+          mask=[[False,  True, False],
+                [ True, False,  True],
+                [False,  True, False]],
+          fill_value=999999)
+        >>> x.toflex()
+        array([[(1, False), (2,  True), (3, False)],
+               [(4,  True), (5, False), (6,  True)],
+               [(7, False), (8,  True), (9, False)]],
+              dtype=[('_data', '<i8'), ('_mask', '?')])
 
         """
         # Get the basic dtype.
@@ -6162,15 +6303,14 @@ def isMaskedArray(x):
            [ 0.,  0.,  1.]])
     >>> m = ma.masked_values(a, 0)
     >>> m
-    masked_array(data =
-     [[1.0 -- --]
-     [-- 1.0 --]
-     [-- -- 1.0]],
-          mask =
-     [[False  True  True]
-     [ True False  True]
-     [ True  True False]],
-          fill_value=0.0)
+    masked_array(
+      data=[[1.0, --, --],
+            [--, 1.0, --],
+            [--, --, 1.0]],
+      mask=[[False,  True,  True],
+            [ True, False,  True],
+            [ True,  True, False]],
+      fill_value=0.0)
     >>> ma.isMaskedArray(a)
     False
     >>> ma.isMaskedArray(m)
@@ -6237,6 +6377,10 @@ class MaskedConstant(MaskedArray):
     def __str__(self):
         return str(masked_print_option._display)
 
+    if sys.version_info.major < 3:
+        def __unicode__(self):
+            return unicode(masked_print_option._display)
+
     def __repr__(self):
         if self is MaskedConstant.__singleton:
             return 'masked'
@@ -6267,6 +6411,24 @@ class MaskedConstant(MaskedArray):
         # maskedconstant is a scalar, so copy doesn't need to copy. There's
         # precedent for this with `np.bool_` scalars.
         return self
+
+    def __copy__(self):
+        return self
+
+    def __deepcopy__(self, memo):
+        return self
+
+    def __setattr__(self, attr, value):
+        if not self.__has_singleton():
+            # allow the singleton to be initialized
+            return super(MaskedConstant, self).__setattr__(attr, value)
+        elif self is self.__singleton:
+            raise AttributeError(
+                "attributes of {!r} are not writeable".format(self))
+        else:
+            # duplicate instance - we can end up here from __array_finalize__,
+            # where we set the __class__ attribute
+            return super(MaskedConstant, self).__setattr__(attr, value)
 
 
 masked = masked_singleton = MaskedConstant()
@@ -6312,16 +6474,16 @@ def is_masked(x):
     >>> import numpy.ma as ma
     >>> x = ma.masked_equal([0, 1, 0, 2, 3], 0)
     >>> x
-    masked_array(data = [-- 1 -- 2 3],
-          mask = [ True False  True False False],
-          fill_value=999999)
+    masked_array(data=[--, 1, --, 2, 3],
+                 mask=[ True, False,  True, False, False],
+           fill_value=0)
     >>> ma.is_masked(x)
     True
     >>> x = ma.masked_equal([0, 1, 0, 2, 3], 42)
     >>> x
-    masked_array(data = [0 1 0 2 3],
-          mask = False,
-          fill_value=999999)
+    masked_array(data=[0, 1, 0, 2, 3],
+                 mask=False,
+           fill_value=42)
     >>> ma.is_masked(x)
     False
 
@@ -6448,17 +6610,15 @@ def max(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
 max.__doc__ = MaskedArray.max.__doc__
 
 
-def ptp(obj, axis=None, out=None, fill_value=None):
-    """
-    a.ptp(axis=None) =  a.max(axis) - a.min(axis)
-
-    """
+def ptp(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
+    kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
     try:
-        return obj.ptp(axis, out=out, fill_value=fill_value)
+        return obj.ptp(axis, out=out, fill_value=fill_value, **kwargs)
     except (AttributeError, TypeError):
         # If obj doesn't have a ptp method or if the method doesn't accept
         # a fill_value argument
-        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value, out=out)
+        return asanyarray(obj).ptp(axis=axis, fill_value=fill_value,
+                                   out=out, **kwargs)
 ptp.__doc__ = MaskedArray.ptp.__doc__
 
 
@@ -6673,17 +6833,17 @@ def concatenate(arrays, axis=0):
     >>> a[1] = ma.masked
     >>> b = ma.arange(2, 5)
     >>> a
-    masked_array(data = [0 -- 2],
-                 mask = [False  True False],
-           fill_value = 999999)
+    masked_array(data=[0, --, 2],
+                 mask=[False,  True, False],
+           fill_value=999999)
     >>> b
-    masked_array(data = [2 3 4],
-                 mask = False,
-           fill_value = 999999)
+    masked_array(data=[2, 3, 4],
+                 mask=False,
+           fill_value=999999)
     >>> ma.concatenate([a, b])
-    masked_array(data = [0 -- 2 2 3 4],
-                 mask = [False  True False False False False],
-           fill_value = 999999)
+    masked_array(data=[0, --, 2, 2, 3, 4],
+                 mask=[False,  True, False, False, False, False],
+           fill_value=999999)
 
     """
     d = np.concatenate([getdata(a) for a in arrays], axis)
@@ -6721,56 +6881,6 @@ def diag(v, k=0):
     if getmask(v) is not nomask:
         output._mask = np.diag(v._mask, k)
     return output
-
-
-def expand_dims(x, axis):
-    """
-    Expand the shape of an array.
-
-    Expands the shape of the array by including a new axis before the one
-    specified by the `axis` parameter. This function behaves the same as
-    `numpy.expand_dims` but preserves masked elements.
-
-    See Also
-    --------
-    numpy.expand_dims : Equivalent function in top-level NumPy module.
-
-    Examples
-    --------
-    >>> import numpy.ma as ma
-    >>> x = ma.array([1, 2, 4])
-    >>> x[1] = ma.masked
-    >>> x
-    masked_array(data = [1 -- 4],
-                 mask = [False  True False],
-           fill_value = 999999)
-    >>> np.expand_dims(x, axis=0)
-    array([[1, 2, 4]])
-    >>> ma.expand_dims(x, axis=0)
-    masked_array(data =
-     [[1 -- 4]],
-                 mask =
-     [[False  True False]],
-           fill_value = 999999)
-
-    The same result can be achieved using slicing syntax with `np.newaxis`.
-
-    >>> x[np.newaxis, :]
-    masked_array(data =
-     [[1 -- 4]],
-                 mask =
-     [[False  True False]],
-           fill_value = 999999)
-
-    """
-    result = n_expand_dims(x, axis)
-    if isinstance(x, MaskedArray):
-        new_shape = result.shape
-        result = x.view()
-        result.shape = new_shape
-        if result._mask is not nomask:
-            result._mask.shape = new_shape
-    return result
 
 
 def left_shift(a, n):
@@ -6888,23 +6998,21 @@ def transpose(a, axes=None):
     >>> import numpy.ma as ma
     >>> x = ma.arange(4).reshape((2,2))
     >>> x[1, 1] = ma.masked
-    >>>> x
-    masked_array(data =
-     [[0 1]
-     [2 --]],
-                 mask =
-     [[False False]
-     [False  True]],
-           fill_value = 999999)
-    >>> ma.transpose(x)
-    masked_array(data =
-     [[0 2]
-     [1 --]],
-                 mask =
-     [[False False]
-     [False  True]],
-           fill_value = 999999)
+    >>> x
+    masked_array(
+      data=[[0, 1],
+            [2, --]],
+      mask=[[False, False],
+            [False,  True]],
+      fill_value=999999)
 
+    >>> ma.transpose(x)
+    masked_array(
+      data=[[0, 2],
+            [1, --]],
+      mask=[[False, False],
+            [False,  True]],
+      fill_value=999999)
     """
     # We can't use 'frommethod', as 'transpose' doesn't take keywords
     try:
@@ -6951,39 +7059,39 @@ def resize(x, new_shape):
     >>> a = ma.array([[1, 2] ,[3, 4]])
     >>> a[0, 1] = ma.masked
     >>> a
-    masked_array(data =
-     [[1 --]
-     [3 4]],
-                 mask =
-     [[False  True]
-     [False False]],
-           fill_value = 999999)
+    masked_array(
+      data=[[1, --],
+            [3, 4]],
+      mask=[[False,  True],
+            [False, False]],
+      fill_value=999999)
     >>> np.resize(a, (3, 3))
-    array([[1, 2, 3],
-           [4, 1, 2],
-           [3, 4, 1]])
+    masked_array(
+      data=[[1, 2, 3],
+            [4, 1, 2],
+            [3, 4, 1]],
+      mask=False,
+      fill_value=999999)
     >>> ma.resize(a, (3, 3))
-    masked_array(data =
-     [[1 -- 3]
-     [4 1 --]
-     [3 4 1]],
-                 mask =
-     [[False  True False]
-     [False False  True]
-     [False False False]],
-           fill_value = 999999)
+    masked_array(
+      data=[[1, --, 3],
+            [4, 1, --],
+            [3, 4, 1]],
+      mask=[[False,  True, False],
+            [False, False,  True],
+            [False, False, False]],
+      fill_value=999999)
 
     A MaskedArray is always returned, regardless of the input type.
 
     >>> a = np.array([[1, 2] ,[3, 4]])
     >>> ma.resize(a, (3, 3))
-    masked_array(data =
-     [[1 2 3]
-     [4 1 2]
-     [3 4 1]],
-                 mask =
-     False,
-           fill_value = 999999)
+    masked_array(
+      data=[[1, 2, 3],
+            [4, 1, 2],
+            [3, 4, 1]],
+      mask=False,
+      fill_value=999999)
 
     """
     # We can't use _frommethods here, as N.resize is notoriously whiny.
@@ -7042,49 +7150,56 @@ size.__doc__ = np.size.__doc__
 
 def where(condition, x=_NoValue, y=_NoValue):
     """
-    Return a masked array with elements from x or y, depending on condition.
+    Return a masked array with elements from `x` or `y`, depending on condition.
 
-    Returns a masked array, shaped like condition, where the elements
-    are from `x` when `condition` is True, and from `y` otherwise.
-    If neither `x` nor `y` are given, the function returns a tuple of
-    indices where `condition` is True (the result of
-    ``condition.nonzero()``).
+    .. note::
+        When only `condition` is provided, this function is identical to
+        `nonzero`. The rest of this documentation covers only the case where
+        all three arguments are provided.
 
     Parameters
     ----------
     condition : array_like, bool
-        The condition to meet. For each True element, yield the corresponding
-        element from `x`, otherwise from `y`.
+        Where True, yield `x`, otherwise yield `y`.
     x, y : array_like, optional
         Values from which to choose. `x`, `y` and `condition` need to be
         broadcastable to some shape.
 
     Returns
     -------
-    out : MaskedArray or tuple of ndarrays
-        The resulting masked array if `x` and `y` were given, otherwise
-        the result of ``condition.nonzero()``.
+    out : MaskedArray
+        An masked array with `masked` elements where the condition is masked,
+        elements from `x` where `condition` is True, and elements from `y`
+        elsewhere.
 
     See Also
     --------
     numpy.where : Equivalent function in the top-level NumPy module.
+    nonzero : The function that is called when x and y are omitted
 
     Examples
     --------
     >>> x = np.ma.array(np.arange(9.).reshape(3, 3), mask=[[0, 1, 0],
     ...                                                    [1, 0, 1],
     ...                                                    [0, 1, 0]])
-    >>> print(x)
-    [[0.0 -- 2.0]
-     [-- 4.0 --]
-     [6.0 -- 8.0]]
-    >>> np.ma.where(x > 5)    # return the indices where x > 5
-    (array([2, 2]), array([0, 2]))
-
-    >>> print(np.ma.where(x > 5, x, -3.1416))
-    [[-3.1416 -- -3.1416]
-     [-- -3.1416 --]
-     [6.0 -- 8.0]]
+    >>> x
+    masked_array(
+      data=[[0.0, --, 2.0],
+            [--, 4.0, --],
+            [6.0, --, 8.0]],
+      mask=[[False,  True, False],
+            [ True, False,  True],
+            [False,  True, False]],
+      fill_value=1e+20)
+    >>> np.ma.where(x > 5, x, -3.1416)
+    masked_array(
+      data=[[-3.1416, --, -3.1416],
+            [--, -3.1416, --],
+            [6.0, --, 8.0]],
+      mask=[[False,  True, False],
+            [ True, False,  True],
+            [False,  True, False]],
+      fill_value=1e+20)
 
     """
 
@@ -7164,9 +7279,9 @@ def choose(indices, choices, out=None, mode='raise'):
     >>> choice = np.array([[1,1,1], [2,2,2], [3,3,3]])
     >>> a = np.array([2, 1, 0])
     >>> np.ma.choose(a, choice)
-    masked_array(data = [3 2 1],
-          mask = False,
-          fill_value=999999)
+    masked_array(data=[3, 2, 1],
+                 mask=False,
+           fill_value=999999)
 
     """
     def fmask(x):
@@ -7289,25 +7404,23 @@ def mask_rowcols(a, axis=None):
            [0, 0, 0]])
     >>> a = ma.masked_equal(a, 1)
     >>> a
-    masked_array(data =
-     [[0 0 0]
-     [0 -- 0]
-     [0 0 0]],
-          mask =
-     [[False False False]
-     [False  True False]
-     [False False False]],
-          fill_value=999999)
+    masked_array(
+      data=[[0, 0, 0],
+            [0, --, 0],
+            [0, 0, 0]],
+      mask=[[False, False, False],
+            [False,  True, False],
+            [False, False, False]],
+      fill_value=1)
     >>> ma.mask_rowcols(a)
-    masked_array(data =
-     [[0 -- 0]
-     [-- -- --]
-     [0 -- 0]],
-          mask =
-     [[False  True False]
-     [ True  True  True]
-     [False  True False]],
-          fill_value=999999)
+    masked_array(
+      data=[[0, --, 0],
+            [--, --, --],
+            [0, --, 0]],
+      mask=[[False,  True, False],
+            [ True,  True,  True],
+            [False,  True, False]],
+      fill_value=1)
 
     """
     a = array(a, subok=False)
@@ -7368,24 +7481,22 @@ def dot(a, b, strict=False, out=None):
 
     Examples
     --------
-    >>> a = ma.array([[1, 2, 3], [4, 5, 6]], mask=[[1, 0, 0], [0, 0, 0]])
-    >>> b = ma.array([[1, 2], [3, 4], [5, 6]], mask=[[1, 0], [0, 0], [0, 0]])
+    >>> a = np.ma.array([[1, 2, 3], [4, 5, 6]], mask=[[1, 0, 0], [0, 0, 0]])
+    >>> b = np.ma.array([[1, 2], [3, 4], [5, 6]], mask=[[1, 0], [0, 0], [0, 0]])
     >>> np.ma.dot(a, b)
-    masked_array(data =
-     [[21 26]
-     [45 64]],
-                 mask =
-     [[False False]
-     [False False]],
-           fill_value = 999999)
+    masked_array(
+      data=[[21, 26],
+            [45, 64]],
+      mask=[[False, False],
+            [False, False]],
+      fill_value=999999)
     >>> np.ma.dot(a, b, strict=True)
-    masked_array(data =
-     [[-- --]
-     [-- 64]],
-                 mask =
-     [[ True  True]
-     [ True False]],
-           fill_value = 999999)
+    masked_array(
+      data=[[--, --],
+            [--, 64]],
+      mask=[[ True,  True],
+            [ True, False]],
+      fill_value=999999)
 
     """
     # !!!: Works only with 2D arrays. There should be a way to get it to run
@@ -7418,11 +7529,7 @@ def inner(a, b):
     Returns the inner product of a and b for arrays of floating point types.
 
     Like the generic NumPy equivalent the product sum is over the last dimension
-    of a and b.
-
-    Notes
-    -----
-    The first argument is not conjugated.
+    of a and b. The first argument is not conjugated.
 
     """
     fa = filled(a, 0)
@@ -7557,18 +7664,18 @@ def allequal(a, b, fill_value=True):
 
     Examples
     --------
-    >>> a = ma.array([1e10, 1e-7, 42.0], mask=[0, 0, 1])
+    >>> a = np.ma.array([1e10, 1e-7, 42.0], mask=[0, 0, 1])
     >>> a
-    masked_array(data = [10000000000.0 1e-07 --],
-          mask = [False False  True],
-          fill_value=1e+20)
+    masked_array(data=[10000000000.0, 1e-07, --],
+                 mask=[False, False,  True],
+           fill_value=1e+20)
 
-    >>> b = array([1e10, 1e-7, -42.0])
+    >>> b = np.array([1e10, 1e-7, -42.0])
     >>> b
     array([  1.00000000e+10,   1.00000000e-07,  -4.20000000e+01])
-    >>> ma.allequal(a, b, fill_value=False)
+    >>> np.ma.allequal(a, b, fill_value=False)
     False
-    >>> ma.allequal(a, b)
+    >>> np.ma.allequal(a, b)
     True
 
     """
@@ -7634,29 +7741,29 @@ def allclose(a, b, masked_equal=True, rtol=1e-5, atol=1e-8):
 
     Examples
     --------
-    >>> a = ma.array([1e10, 1e-7, 42.0], mask=[0, 0, 1])
+    >>> a = np.ma.array([1e10, 1e-7, 42.0], mask=[0, 0, 1])
     >>> a
-    masked_array(data = [10000000000.0 1e-07 --],
-                 mask = [False False  True],
-           fill_value = 1e+20)
-    >>> b = ma.array([1e10, 1e-8, -42.0], mask=[0, 0, 1])
-    >>> ma.allclose(a, b)
+    masked_array(data=[10000000000.0, 1e-07, --],
+                 mask=[False, False,  True],
+           fill_value=1e+20)
+    >>> b = np.ma.array([1e10, 1e-8, -42.0], mask=[0, 0, 1])
+    >>> np.ma.allclose(a, b)
     False
 
-    >>> a = ma.array([1e10, 1e-8, 42.0], mask=[0, 0, 1])
-    >>> b = ma.array([1.00001e10, 1e-9, -42.0], mask=[0, 0, 1])
-    >>> ma.allclose(a, b)
+    >>> a = np.ma.array([1e10, 1e-8, 42.0], mask=[0, 0, 1])
+    >>> b = np.ma.array([1.00001e10, 1e-9, -42.0], mask=[0, 0, 1])
+    >>> np.ma.allclose(a, b)
     True
-    >>> ma.allclose(a, b, masked_equal=False)
+    >>> np.ma.allclose(a, b, masked_equal=False)
     False
 
     Masked values are not compared directly.
 
-    >>> a = ma.array([1e10, 1e-8, 42.0], mask=[0, 0, 1])
-    >>> b = ma.array([1.00001e10, 1e-9, 42.0], mask=[0, 0, 1])
-    >>> ma.allclose(a, b)
+    >>> a = np.ma.array([1e10, 1e-8, 42.0], mask=[0, 0, 1])
+    >>> b = np.ma.array([1.00001e10, 1e-9, 42.0], mask=[0, 0, 1])
+    >>> np.ma.allclose(a, b)
     True
-    >>> ma.allclose(a, b, masked_equal=False)
+    >>> np.ma.allclose(a, b, masked_equal=False)
     False
 
     """
@@ -7723,15 +7830,14 @@ def asarray(a, dtype=None, order=None):
     --------
     >>> x = np.arange(10.).reshape(2, 5)
     >>> x
-    array([[ 0.,  1.,  2.,  3.,  4.],
-           [ 5.,  6.,  7.,  8.,  9.]])
+    array([[0., 1., 2., 3., 4.],
+           [5., 6., 7., 8., 9.]])
     >>> np.ma.asarray(x)
-    masked_array(data =
-     [[ 0.  1.  2.  3.  4.]
-     [ 5.  6.  7.  8.  9.]],
-                 mask =
-     False,
-           fill_value = 1e+20)
+    masked_array(
+      data=[[0., 1., 2., 3., 4.],
+            [5., 6., 7., 8., 9.]],
+      mask=False,
+      fill_value=1e+20)
     >>> type(np.ma.asarray(x))
     <class 'numpy.ma.core.MaskedArray'>
 
@@ -7771,15 +7877,14 @@ def asanyarray(a, dtype=None):
     --------
     >>> x = np.arange(10.).reshape(2, 5)
     >>> x
-    array([[ 0.,  1.,  2.,  3.,  4.],
-           [ 5.,  6.,  7.,  8.,  9.]])
+    array([[0., 1., 2., 3., 4.],
+           [5., 6., 7., 8., 9.]])
     >>> np.ma.asanyarray(x)
-    masked_array(data =
-     [[ 0.  1.  2.  3.  4.]
-     [ 5.  6.  7.  8.  9.]],
-                 mask =
-     False,
-           fill_value = 1e+20)
+    masked_array(
+      data=[[0., 1., 2., 3., 4.],
+            [5., 6., 7., 8., 9.]],
+      mask=False,
+      fill_value=1e+20)
     >>> type(np.ma.asanyarray(x))
     <class 'numpy.ma.core.MaskedArray'>
 
@@ -7794,6 +7899,16 @@ def asanyarray(a, dtype=None):
 ##############################################################################
 #                               Pickling                                     #
 ##############################################################################
+
+def _pickle_warn(method):
+    # NumPy 1.15.0, 2017-12-10
+    warnings.warn(
+        "np.ma.{method} is deprecated, use pickle.{method} instead"
+            .format(method=method),
+        DeprecationWarning,
+        stacklevel=3)
+
+
 def dump(a, F):
     """
     Pickle a masked array to a file.
@@ -7808,9 +7923,12 @@ def dump(a, F):
         The file to pickle `a` to. If a string, the full path to the file.
 
     """
+    _pickle_warn('dump')
     if not hasattr(F, 'readline'):
-        F = open(F, 'w')
-    return pickle.dump(a, F)
+        with open(F, 'w') as F:
+            pickle.dump(a, F)
+    else:
+        pickle.dump(a, F)
 
 
 def dumps(a):
@@ -7826,6 +7944,7 @@ def dumps(a):
         returned.
 
     """
+    _pickle_warn('dumps')
     return pickle.dumps(a)
 
 
@@ -7849,9 +7968,12 @@ def load(F):
     the NumPy binary .npy format.
 
     """
+    _pickle_warn('load')
     if not hasattr(F, 'readline'):
-        F = open(F, 'r')
-    return pickle.load(F)
+        with open(F, 'r') as F:
+            return pickle.load(F)
+    else:
+        return pickle.load(F)
 
 
 def loads(strg):
@@ -7870,6 +7992,7 @@ def loads(strg):
     dumps : Return a string corresponding to the pickling of a masked array.
 
     """
+    _pickle_warn('loads')
     return pickle.loads(strg)
 
 
@@ -7905,39 +8028,38 @@ def fromflex(fxarray):
     >>> x = np.ma.array(np.arange(9).reshape(3, 3), mask=[0] + [1, 0] * 4)
     >>> rec = x.toflex()
     >>> rec
-    array([[(0, False), (1, True), (2, False)],
-           [(3, True), (4, False), (5, True)],
-           [(6, False), (7, True), (8, False)]],
-          dtype=[('_data', '<i4'), ('_mask', '|b1')])
+    array([[(0, False), (1,  True), (2, False)],
+           [(3,  True), (4, False), (5,  True)],
+           [(6, False), (7,  True), (8, False)]],
+          dtype=[('_data', '<i8'), ('_mask', '?')])
     >>> x2 = np.ma.fromflex(rec)
     >>> x2
-    masked_array(data =
-     [[0 -- 2]
-     [-- 4 --]
-     [6 -- 8]],
-                 mask =
-     [[False  True False]
-     [ True False  True]
-     [False  True False]],
-           fill_value = 999999)
+    masked_array(
+      data=[[0, --, 2],
+            [--, 4, --],
+            [6, --, 8]],
+      mask=[[False,  True, False],
+            [ True, False,  True],
+            [False,  True, False]],
+      fill_value=999999)
 
     Extra fields can be present in the structured array but are discarded:
 
     >>> dt = [('_data', '<i4'), ('_mask', '|b1'), ('field3', '<f4')]
     >>> rec2 = np.zeros((2, 2), dtype=dt)
     >>> rec2
-    array([[(0, False, 0.0), (0, False, 0.0)],
-           [(0, False, 0.0), (0, False, 0.0)]],
-          dtype=[('_data', '<i4'), ('_mask', '|b1'), ('field3', '<f4')])
+    array([[(0, False, 0.), (0, False, 0.)],
+           [(0, False, 0.), (0, False, 0.)]],
+          dtype=[('_data', '<i4'), ('_mask', '?'), ('field3', '<f4')])
     >>> y = np.ma.fromflex(rec2)
     >>> y
-    masked_array(data =
-     [[0 0]
-     [0 0]],
-                 mask =
-     [[False False]
-     [False False]],
-           fill_value = 999999)
+    masked_array(
+      data=[[0, 0],
+            [0, 0]],
+      mask=[[False, False],
+            [False, False]],
+      fill_value=999999,
+      dtype=int32)
 
     """
     return masked_array(fxarray['_data'], mask=fxarray['_mask'])
@@ -8038,7 +8160,10 @@ def append(a, b, axis=None):
     >>> import numpy.ma as ma
     >>> a = ma.masked_values([1, 2, 3], 2)
     >>> b = ma.masked_values([[4, 5, 6], [7, 8, 9]], 7)
-    >>> print(ma.append(a, b))
-    [1 -- 3 4 5 6 -- 8 9]
+    >>> ma.append(a, b)
+    masked_array(data=[1, --, 3, 4, 5, 6, --, 8, 9],
+                 mask=[False,  True, False, False, False, False,  True, False,
+                       False],
+           fill_value=999999)
     """
     return concatenate([a, b], axis)

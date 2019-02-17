@@ -1,6 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstract classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import tempfile
 import sys
 import shutil
@@ -12,28 +17,28 @@ import functools
 import ctypes
 import os
 import gc
+import weakref
+import pytest
 from contextlib import contextmanager
+
+from numpy.core.numeric import pickle
+
 if sys.version_info[0] >= 3:
     import builtins
 else:
     import __builtin__ as builtins
 from decimal import Decimal
 
-
 import numpy as np
 from numpy.compat import strchar, unicode
-from .test_print import in_foreign_locale
-from numpy.core.multiarray_tests import (
-    test_neighborhood_iterator, test_neighborhood_iterator_oob,
-    test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
-    test_inplace_increment, get_buffer_info, test_as_c_array,
-    )
+import numpy.core._multiarray_tests as _multiarray_tests
 from numpy.testing import (
-    run_module_suite, assert_, assert_raises, assert_warns,
-    assert_equal, assert_almost_equal, assert_array_equal, assert_raises_regex,
-    assert_array_almost_equal, assert_allclose, IS_PYPY, HAS_REFCOUNT,
-    assert_array_less, runstring, dec, SkipTest, temppath, suppress_warnings
+    assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
+    assert_array_equal, assert_raises_regex, assert_array_almost_equal,
+    assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
+    temppath, suppress_warnings
     )
+from numpy.core.tests._locales import CommaDecimalPointLocale
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -42,14 +47,19 @@ from datetime import timedelta, datetime
 if sys.version_info[:2] > (3, 2):
     # In Python 3.3 the representation of empty shape, strides and sub-offsets
     # is an empty tuple instead of None.
-    # http://docs.python.org/dev/whatsnew/3.3.html#api-changes
+    # https://docs.python.org/dev/whatsnew/3.3.html#api-changes
     EMPTY = ()
 else:
     EMPTY = None
 
 
 def _aligned_zeros(shape, dtype=float, order="C", align=None):
-    """Allocate a new ndarray with aligned memory."""
+    """
+    Allocate a new ndarray with aligned memory.
+
+    The ndarray is guaranteed *not* aligned to twice the requested alignment.
+    Eg, if align=4, guarantees it is not aligned to 8. If align=None uses
+    dtype.alignment."""
     dtype = np.dtype(dtype)
     if dtype == np.dtype(object):
         # Can't do this, fall back to standard allocation (which
@@ -62,10 +72,15 @@ def _aligned_zeros(shape, dtype=float, order="C", align=None):
     if not hasattr(shape, '__len__'):
         shape = (shape,)
     size = functools.reduce(operator.mul, shape) * dtype.itemsize
-    buf = np.empty(size + align + 1, np.uint8)
-    offset = buf.__array_interface__['data'][0] % align
+    buf = np.empty(size + 2*align + 1, np.uint8)
+
+    ptr = buf.__array_interface__['data'][0]
+    offset = ptr % align
     if offset != 0:
         offset = align - offset
+    if (ptr % (2*align)) == 0:
+        offset += align
+
     # Note: slices producing 0-size arrays do not necessarily change
     # data pointer --- so we use and allocate size+1
     buf = buf[offset:offset+size+1][:-1]
@@ -87,8 +102,49 @@ class TestFlags(object):
         self.a[0] = 5
         self.a[0] = 0
 
+    def test_writeable_from_readonly(self):
+        # gh-9440 - make sure fromstring, from buffer on readonly buffers
+        # set writeable False
+        data = b'\x00' * 100
+        vals = np.frombuffer(data, 'B')
+        assert_raises(ValueError, vals.setflags, write=True)
+        types = np.dtype( [('vals', 'u1'), ('res3', 'S4')] )
+        values = np.core.records.fromstring(data, types)
+        vals = values['vals']
+        assert_raises(ValueError, vals.setflags, write=True)
+
+    def test_writeable_from_buffer(self):
+        data = bytearray(b'\x00' * 100)
+        vals = np.frombuffer(data, 'B')
+        assert_(vals.flags.writeable)
+        vals.setflags(write=False)
+        assert_(vals.flags.writeable is False)
+        vals.setflags(write=True)
+        assert_(vals.flags.writeable)
+        types = np.dtype( [('vals', 'u1'), ('res3', 'S4')] )
+        values = np.core.records.fromstring(data, types)
+        vals = values['vals']
+        assert_(vals.flags.writeable)
+        vals.setflags(write=False)
+        assert_(vals.flags.writeable is False)
+        vals.setflags(write=True)
+        assert_(vals.flags.writeable)
+
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 2 always copies")
+    def test_writeable_pickle(self):
+        import pickle
+        # Small arrays will be copied without setting base.
+        # See condition for using PyArray_SetBaseObject in
+        # array_setstate.
+        a = np.arange(1000)
+        for v in range(pickle.HIGHEST_PROTOCOL):
+            vals = pickle.loads(pickle.dumps(a, v))
+            assert_(vals.flags.writeable)
+            assert_(isinstance(vals.base, bytes))
+
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
+        assert_equal(self.a.flags['C'], True)
         assert_equal(self.a.flags.farray, False)
         assert_equal(self.a.flags.behaved, True)
         assert_equal(self.a.flags.fnc, False)
@@ -96,7 +152,14 @@ class TestFlags(object):
         assert_equal(self.a.flags.owndata, True)
         assert_equal(self.a.flags.writeable, True)
         assert_equal(self.a.flags.aligned, True)
-        assert_equal(self.a.flags.updateifcopy, False)
+        with assert_warns(DeprecationWarning):
+            assert_equal(self.a.flags.updateifcopy, False)
+        with assert_warns(DeprecationWarning):
+            assert_equal(self.a.flags['U'], False)
+            assert_equal(self.a.flags['UPDATEIFCOPY'], False)
+        assert_equal(self.a.flags.writebackifcopy, False)
+        assert_equal(self.a.flags['X'], False)
+        assert_equal(self.a.flags['WRITEBACKIFCOPY'], False)
 
     def test_string_align(self):
         a = np.zeros(4, dtype=np.dtype('|S4'))
@@ -182,7 +245,7 @@ class TestAttributes(object):
             assert_equal(isinstance(numpy_int, int), True)
 
             # ... and fast-path checks on C-API level should also work
-            from numpy.core.multiarray_tests import test_int_subclass
+            from numpy.core._multiarray_tests import test_int_subclass
             assert_equal(test_int_subclass(numpy_int), True)
 
     def test_stridesattr(self):
@@ -451,6 +514,14 @@ class TestAssignment(object):
             arr = np.array([np.array(tinya)])
             assert_equal(arr[0], tinya)
 
+    def test_cast_to_string(self):
+        # cast to str should do "str(scalar)", not "str(scalar.item())"
+        # Example: In python2, str(float) is truncated, so we want to avoid
+        # str(np.float64(...).item()) as this would incorrectly truncate.
+        a = np.zeros(1, dtype='S20')
+        a[:] = np.array(['1.12345678901234567890'], dtype='f8')
+        assert_equal(a[0], b"1.1234567890123457")
+
 
 class TestDtypedescr(object):
     def test_construction(self):
@@ -462,6 +533,16 @@ class TestDtypedescr(object):
     def test_byteorders(self):
         assert_(np.dtype('<i4') != np.dtype('>i4'))
         assert_(np.dtype([('a', '<i4')]) != np.dtype([('a', '>i4')]))
+
+    def test_structured_non_void(self):
+        fields = [('a', '<i2'), ('b', '<i2')]
+        dt_int = np.dtype(('i4', fields))
+        assert_equal(str(dt_int), "(numpy.int32, [('a', '<i2'), ('b', '<i2')])")
+
+        # gh-9821
+        arr_int = np.zeros(4, dt_int)
+        assert_equal(repr(arr_int),
+            "array([0, 0, 0, 0], dtype=(numpy.int32, [('a', '<i2'), ('b', '<i2')]))")
 
 
 class TestZeroRank(object):
@@ -544,6 +625,22 @@ class TestZeroRank(object):
     def test_output(self):
         x = np.array(2)
         assert_raises(ValueError, np.add, x, [1], x)
+
+    def test_real_imag(self):
+        # contiguity checks are for gh-11245
+        x = np.array(1j)
+        xr = x.real
+        xi = x.imag
+
+        assert_equal(xr, np.array(0))
+        assert_(type(xr) is np.ndarray)
+        assert_equal(xr.flags.contiguous, True)
+        assert_equal(xr.flags.f_contiguous, True)
+
+        assert_equal(xi, np.array(1))
+        assert_(type(xi) is np.ndarray)
+        assert_equal(xi.flags.contiguous, True)
+        assert_equal(xi.flags.f_contiguous, True)
 
 
 class TestScalarIndexing(object):
@@ -643,6 +740,9 @@ class TestScalarIndexing(object):
 
 
 class TestCreation(object):
+    """
+    Test the np.array constructor
+    """
     def test_from_attribute(self):
         class x(object):
             def __array__(self, dtype=None):
@@ -699,7 +799,7 @@ class TestCreation(object):
             d = np.zeros(2, dtype='(2,4)i4, (2,4)i4')
             assert_equal(np.count_nonzero(d), 0)
 
-    @dec.slow
+    @pytest.mark.slow
     def test_zeros_big(self):
         # test big array as they might be allocated different by the system
         types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
@@ -770,7 +870,7 @@ class TestCreation(object):
         assert_equal(np.array([[1j, 1j],[1, 1]]).dtype, complex)
         assert_equal(np.array([[1, 1, 1],[1, 1j, 1.], [1, 1, 1]]).dtype, complex)
 
-    @dec.skipif(sys.version_info[0] >= 3)
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
     def test_sequence_long(self):
         assert_equal(np.array([long(4), long(4)]).dtype, np.long)
         assert_equal(np.array([long(4), 2**80]).dtype, object)
@@ -857,6 +957,34 @@ class TestCreation(object):
                        shape=(max_bytes//itemsize,), dtype=dtype)
             assert_raises(ValueError, np.ndarray, buffer=buf, strides=(0,),
                           shape=(max_bytes//itemsize + 1,), dtype=dtype)
+
+    def test_jagged_ndim_object(self):
+        # Lists of mismatching depths are treated as object arrays
+        a = np.array([[1], 2, 3])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([1, [2], 3])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([1, 2, [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+    def test_jagged_shape_object(self):
+        # The jagged dimension of a list is turned into an object array
+        a = np.array([[1, 1], [2], [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([[1], [2, 2], [3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array([[1], [2], [3, 3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
 
 
 class TestStructured(object):
@@ -1142,8 +1270,10 @@ class TestStructured(object):
     def test_multiindex_titles(self):
         a = np.zeros(4, dtype=[(('a', 'b'), 'i'), ('c', 'i'), ('d', 'i')])
         assert_raises(KeyError, lambda : a[['a','c']])
-        assert_raises(KeyError, lambda : a[['b','b']])
+        assert_raises(KeyError, lambda : a[['a','a']])
+        assert_raises(ValueError, lambda : a[['b','b']])  # field exists, but repeated
         a[['b','c']]  # no exception
+
 
 class TestBool(object):
     def test_test_interning(self):
@@ -1187,7 +1317,7 @@ class TestBool(object):
         # covers most cases of the 16 byte unrolled code
         self.check_count_nonzero(12, 17)
 
-    @dec.slow
+    @pytest.mark.slow
     def test_count_nonzero_all(self):
         # check all combinations in a length 17 array
         # covers all cases of the 16 byte unrolled code
@@ -1226,11 +1356,11 @@ class TestBool(object):
     def test_cast_from_void(self):
         self._test_cast_from_flexible(np.void)
 
-    @dec.knownfailureif(True, "See gh-9847")
+    @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_unicode(self):
         self._test_cast_from_flexible(np.unicode_)
 
-    @dec.knownfailureif(True, "See gh-9847")
+    @pytest.mark.xfail(reason="See gh-9847")
     def test_cast_from_bytes(self):
         self._test_cast_from_flexible(np.bytes_)
 
@@ -1265,10 +1395,10 @@ class TestZeroSizeFlexible(object):
                 sort_func(zs, kind=kind, **kwargs)
 
     def test_sort(self):
-        self._test_sort_partition('sort', kinds='qhm')
+        self._test_sort_partition('sort', kinds='qhs')
 
     def test_argsort(self):
-        self._test_sort_partition('argsort', kinds='qhm')
+        self._test_sort_partition('argsort', kinds='qhs')
 
     def test_partition(self):
         self._test_sort_partition('partition', kinds=['introselect'], kth=2)
@@ -1294,16 +1424,34 @@ class TestZeroSizeFlexible(object):
             assert_equal(zs.view((dt, 1)).shape, (0,))
 
     def test_pickle(self):
-        import pickle
-        for dt in [bytes, np.void, unicode]:
-            zs = self._zeros(10, dt)
-            p = pickle.dumps(zs)
-            zs2 = pickle.loads(p)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            for dt in [bytes, np.void, unicode]:
+                zs = self._zeros(10, dt)
+                p = pickle.dumps(zs, protocol=proto)
+                zs2 = pickle.loads(p)
 
-            assert_equal(zs.dtype, zs2.dtype)
+                assert_equal(zs.dtype, zs2.dtype)
+
+    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL < 5,
+                        reason="requires pickle protocol 5")
+    def test_pickle_with_buffercallback(self):
+        array = np.arange(10)
+        buffers = []
+        bytes_string = pickle.dumps(array, buffer_callback=buffers.append,
+                                    protocol=5)
+        array_from_buffer = pickle.loads(bytes_string, buffers=buffers)
+        # when using pickle protocol 5 with buffer callbacks,
+        # array_from_buffer is reconstructed from a buffer holding a view
+        # to the initial array's data, so modifying an element in array
+        # should modify it in array_from_buffer too.
+        array[0] = -1
+        assert array_from_buffer[0] == -1, array_from_buffer[0]
 
 
 class TestMethods(object):
+
+    sort_kinds = ['quicksort', 'heapsort', 'stable']
+
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
         arr = np.arange(10).reshape(2, 5)
@@ -1338,6 +1486,10 @@ class TestMethods(object):
 
         A = ind.choose((x, y2))
         assert_equal(A, [[2, 2, 3], [2, 2, 3]])
+
+        oned = np.ones(1)
+        # gh-12031, caused SEGFAULT
+        assert_raises(TypeError, oned.choose,np.void(0), [oned])
 
     def test_prod(self):
         ba = [1, 2, 10, 11, 6, 5, 4]
@@ -1460,7 +1612,7 @@ class TestMethods(object):
         # sort for small arrays.
         a = np.arange(101)
         b = a[::-1].copy()
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "scalar sort, kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
@@ -1473,7 +1625,7 @@ class TestMethods(object):
         # but the compare function differs.
         ai = a*1j + 1
         bi = b*1j + 1
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "complex sort, real part == 1, kind=%s" % kind
             c = ai.copy()
             c.sort(kind=kind)
@@ -1483,7 +1635,7 @@ class TestMethods(object):
             assert_equal(c, ai, msg)
         ai = a + 1j
         bi = b + 1j
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "complex sort, imag part == 1, kind=%s" % kind
             c = ai.copy()
             c.sort(kind=kind)
@@ -1493,9 +1645,9 @@ class TestMethods(object):
             assert_equal(c, ai, msg)
 
         # test sorting of complex arrays requiring byte-swapping, gh-5441
-        for endianess in '<>':
+        for endianness in '<>':
             for dt in np.typecodes['Complex']:
-                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianess + dt)
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianness + dt)
                 c = arr.copy()
                 c.sort()
                 msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
@@ -1505,7 +1657,7 @@ class TestMethods(object):
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(101)])
         b = a[::-1].copy()
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "string sort, kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
@@ -1518,7 +1670,7 @@ class TestMethods(object):
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode)
         b = a[::-1].copy()
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "unicode sort, kind=%s" % kind
             c = a.copy()
             c.sort(kind=kind)
@@ -1608,34 +1760,36 @@ class TestMethods(object):
                 return True
 
         a = np.array([Boom()]*100, dtype=object)
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "bogus comparison object sort, kind=%s" % kind
             c.sort(kind=kind)
 
     def test_void_sort(self):
         # gh-8210 - previously segfaulted
         for i in range(4):
-            arr = np.empty(1000, 'V4')
+            rand = np.random.randint(256, size=4000, dtype=np.uint8)
+            arr = rand.view('V4')
             arr[::-1].sort()
 
         dt = np.dtype([('val', 'i4', (1,))])
         for i in range(4):
-            arr = np.empty(1000, dt)
+            rand = np.random.randint(256, size=4000, dtype=np.uint8)
+            arr = rand.view(dt)
             arr[::-1].sort()
 
     def test_sort_raises(self):
         #gh-9404
         arr = np.array([0, datetime.now(), 1], dtype=object)
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             assert_raises(TypeError, arr.sort, kind=kind)
-        #gh-3879 
+        #gh-3879
         class Raiser(object):
             def raises_anything(*args, **kwargs):
                 raise TypeError("SOMETHING ERRORED")
             __eq__ = __ne__ = __lt__ = __gt__ = __ge__ = __le__ = raises_anything
         arr = np.array([[Raiser(), n] for n in range(10)]).reshape(-1)
         np.random.shuffle(arr)
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             assert_raises(TypeError, arr.sort, kind=kind)
 
     def test_sort_degraded(self):
@@ -1723,7 +1877,7 @@ class TestMethods(object):
         # sort for small arrays.
         a = np.arange(101)
         b = a[::-1].copy()
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "scalar argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), a, msg)
             assert_equal(b.copy().argsort(kind=kind), b, msg)
@@ -1732,21 +1886,21 @@ class TestMethods(object):
         # but the compare function differs.
         ai = a*1j + 1
         bi = b*1j + 1
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "complex argsort, kind=%s" % kind
             assert_equal(ai.copy().argsort(kind=kind), a, msg)
             assert_equal(bi.copy().argsort(kind=kind), b, msg)
         ai = a + 1j
         bi = b + 1j
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "complex argsort, kind=%s" % kind
             assert_equal(ai.copy().argsort(kind=kind), a, msg)
             assert_equal(bi.copy().argsort(kind=kind), b, msg)
 
         # test argsort of complex arrays requiring byte-swapping, gh-5441
-        for endianess in '<>':
+        for endianness in '<>':
             for dt in np.typecodes['Complex']:
-                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianess + dt)
+                arr = np.array([1+3.j, 2+2.j, 3+1.j], dtype=endianness + dt)
                 msg = 'byte-swapped complex argsort, dtype={0}'.format(dt)
                 assert_equal(arr.argsort(),
                              np.arange(len(arr), dtype=np.intp), msg)
@@ -1757,7 +1911,7 @@ class TestMethods(object):
         b = a[::-1].copy()
         r = np.arange(101)
         rr = r[::-1]
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "string argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
@@ -1768,7 +1922,7 @@ class TestMethods(object):
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "unicode argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
@@ -1779,7 +1933,7 @@ class TestMethods(object):
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "object argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
@@ -1790,7 +1944,7 @@ class TestMethods(object):
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
-        for kind in ['q', 'm', 'h']:
+        for kind in self.sort_kinds:
             msg = "structured array argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
@@ -1948,6 +2102,13 @@ class TestMethods(object):
             assert_equal(b, out)
             b = a.searchsorted(a, 'r')
             assert_equal(b, out + 1)
+            # Test empty array, use a fresh array to get warnings in
+            # valgrind if access happens.
+            e = np.ndarray(shape=0, buffer=b'', dtype=dt)
+            b = e.searchsorted(a, 'l')
+            assert_array_equal(b, np.zeros(len(a), dtype=np.intp))
+            b = a.searchsorted(e, 'l')
+            assert_array_equal(b, np.zeros(0, dtype=np.intp))
 
     def test_searchsorted_unicode(self):
         # Test searchsorted on unicode strings.
@@ -2045,6 +2206,13 @@ class TestMethods(object):
             assert_equal(b, out)
             b = a.searchsorted(a, 'r', s)
             assert_equal(b, out + 1)
+            # Test empty array, use a fresh array to get warnings in
+            # valgrind if access happens.
+            e = np.ndarray(shape=0, buffer=b'', dtype=dt)
+            b = e.searchsorted(a, 'l', s[:0])
+            assert_array_equal(b, np.zeros(len(a), dtype=np.intp))
+            b = a.searchsorted(e, 'l', s)
+            assert_array_equal(b, np.zeros(0, dtype=np.intp))
 
         # Test non-contiguous sorter array
         a = np.array([3, 4, 1, 2, 0])
@@ -2480,7 +2648,8 @@ class TestMethods(object):
         assert_equal(x1.flatten('F'), y1f)
         assert_equal(x1.flatten('F'), x1.T.flatten())
 
-    def test_dot(self):
+    @pytest.mark.parametrize('func', (np.dot, np.matmul))
+    def test_arr_mult(self, func):
         a = np.array([[1, 0], [0, 1]])
         b = np.array([[0, 1], [1, 0]])
         c = np.array([[9, 1], [1, -9]])
@@ -2504,49 +2673,49 @@ class TestMethods(object):
         # gemm vs syrk optimizations
         for et in [np.float32, np.float64, np.complex64, np.complex128]:
             eaf = a.astype(et)
-            assert_equal(np.dot(eaf, eaf), eaf)
-            assert_equal(np.dot(eaf.T, eaf), eaf)
-            assert_equal(np.dot(eaf, eaf.T), eaf)
-            assert_equal(np.dot(eaf.T, eaf.T), eaf)
-            assert_equal(np.dot(eaf.T.copy(), eaf), eaf)
-            assert_equal(np.dot(eaf, eaf.T.copy()), eaf)
-            assert_equal(np.dot(eaf.T.copy(), eaf.T.copy()), eaf)
+            assert_equal(func(eaf, eaf), eaf)
+            assert_equal(func(eaf.T, eaf), eaf)
+            assert_equal(func(eaf, eaf.T), eaf)
+            assert_equal(func(eaf.T, eaf.T), eaf)
+            assert_equal(func(eaf.T.copy(), eaf), eaf)
+            assert_equal(func(eaf, eaf.T.copy()), eaf)
+            assert_equal(func(eaf.T.copy(), eaf.T.copy()), eaf)
 
         # syrk validations
         for et in [np.float32, np.float64, np.complex64, np.complex128]:
             eaf = a.astype(et)
             ebf = b.astype(et)
-            assert_equal(np.dot(ebf, ebf), eaf)
-            assert_equal(np.dot(ebf.T, ebf), eaf)
-            assert_equal(np.dot(ebf, ebf.T), eaf)
-            assert_equal(np.dot(ebf.T, ebf.T), eaf)
+            assert_equal(func(ebf, ebf), eaf)
+            assert_equal(func(ebf.T, ebf), eaf)
+            assert_equal(func(ebf, ebf.T), eaf)
+            assert_equal(func(ebf.T, ebf.T), eaf)
 
         # syrk - different shape, stride, and view validations
         for et in [np.float32, np.float64, np.complex64, np.complex128]:
             edf = d.astype(et)
             assert_equal(
-                np.dot(edf[::-1, :], edf.T),
-                np.dot(edf[::-1, :].copy(), edf.T.copy())
+                func(edf[::-1, :], edf.T),
+                func(edf[::-1, :].copy(), edf.T.copy())
             )
             assert_equal(
-                np.dot(edf[:, ::-1], edf.T),
-                np.dot(edf[:, ::-1].copy(), edf.T.copy())
+                func(edf[:, ::-1], edf.T),
+                func(edf[:, ::-1].copy(), edf.T.copy())
             )
             assert_equal(
-                np.dot(edf, edf[::-1, :].T),
-                np.dot(edf, edf[::-1, :].T.copy())
+                func(edf, edf[::-1, :].T),
+                func(edf, edf[::-1, :].T.copy())
             )
             assert_equal(
-                np.dot(edf, edf[:, ::-1].T),
-                np.dot(edf, edf[:, ::-1].T.copy())
+                func(edf, edf[:, ::-1].T),
+                func(edf, edf[:, ::-1].T.copy())
             )
             assert_equal(
-                np.dot(edf[:edf.shape[0] // 2, :], edf[::2, :].T),
-                np.dot(edf[:edf.shape[0] // 2, :].copy(), edf[::2, :].T.copy())
+                func(edf[:edf.shape[0] // 2, :], edf[::2, :].T),
+                func(edf[:edf.shape[0] // 2, :].copy(), edf[::2, :].T.copy())
             )
             assert_equal(
-                np.dot(edf[::2, :], edf[:edf.shape[0] // 2, :].T),
-                np.dot(edf[::2, :].copy(), edf[:edf.shape[0] // 2, :].T.copy())
+                func(edf[::2, :], edf[:edf.shape[0] // 2, :].T),
+                func(edf[::2, :].copy(), edf[:edf.shape[0] // 2, :].T.copy())
             )
 
         # syrk - different shape
@@ -2554,9 +2723,43 @@ class TestMethods(object):
             edf = d.astype(et)
             eddtf = ddt.astype(et)
             edtdf = dtd.astype(et)
-            assert_equal(np.dot(edf, edf.T), eddtf)
-            assert_equal(np.dot(edf.T, edf), edtdf)
+            assert_equal(func(edf, edf.T), eddtf)
+            assert_equal(func(edf.T, edf), edtdf)
 
+    @pytest.mark.parametrize('func', (np.dot, np.matmul))
+    @pytest.mark.parametrize('dtype', 'ifdFD')
+    def test_no_dgemv(self, func, dtype):
+        # check vector arg for contiguous before gemv
+        # gh-12156
+        a = np.arange(8.0, dtype=dtype).reshape(2, 4)
+        b = np.broadcast_to(1., (4, 1))
+        ret1 = func(a, b)
+        ret2 = func(a, b.copy())
+        assert_equal(ret1, ret2)
+
+        ret1 = func(b.T, a.T)
+        ret2 = func(b.T.copy(), a.T)
+        assert_equal(ret1, ret2)
+
+        # check for unaligned data
+        dt = np.dtype(dtype)
+        a = np.zeros(8 * dt.itemsize // 2 + 1, dtype='int16')[1:].view(dtype)
+        a = a.reshape(2, 4)
+        b = a[0]
+        # make sure it is not aligned
+        assert_(a.__array_interface__['data'][0] % dt.itemsize != 0)
+        ret1 = func(a, b)
+        ret2 = func(a.copy(), b.copy())
+        assert_equal(ret1, ret2)
+
+        ret1 = func(b.T, a.T)
+        ret2 = func(b.T.copy(), a.T.copy())
+        assert_equal(ret1, ret2)
+
+    def test_dot(self):
+        a = np.array([[1, 0], [0, 1]])
+        b = np.array([[0, 1], [1, 0]])
+        c = np.array([[9, 1], [1, -9]])
         # function versus methods
         assert_equal(np.dot(a, b), a.dot(b))
         assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
@@ -2612,12 +2815,39 @@ class TestMethods(object):
         np.dot(a, b, out=out)
         np.matmul(a, b, out=out)
 
+    def test_dot_matmul_inner_array_casting_fails(self):
+
+        class A(object):
+            def __array__(self, *args, **kwargs):
+                raise NotImplementedError
+
+        # Don't override the error from calling __array__()
+        assert_raises(NotImplementedError, np.dot, A(), A())
+        assert_raises(NotImplementedError, np.matmul, A(), A())
+        assert_raises(NotImplementedError, np.inner, A(), A())
+
+    def test_matmul_out(self):
+        # overlapping memory
+        a = np.arange(18).reshape(2, 3, 3)
+        b = np.matmul(a, a)
+        c = np.matmul(a, a, out=a)
+        assert_(c is a)
+        assert_equal(c, b)
+        a = np.arange(18).reshape(2, 3, 3)
+        c = np.matmul(a, a, out=a[::-1, ...])
+        assert_(c.base is a.base)
+        assert_equal(c, b)
+
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.diagonal(), [0, 5, 10])
         assert_equal(a.diagonal(0), [0, 5, 10])
         assert_equal(a.diagonal(1), [1, 6, 11])
         assert_equal(a.diagonal(-1), [4, 9])
+        assert_raises(np.AxisError, a.diagonal, axis1=0, axis2=5)
+        assert_raises(np.AxisError, a.diagonal, axis1=5, axis2=0)
+        assert_raises(np.AxisError, a.diagonal, axis1=5, axis2=5)
+        assert_raises(ValueError, a.diagonal, axis1=1, axis2=1)
 
         b = np.arange(8).reshape((2, 2, 2))
         assert_equal(b.diagonal(), [[0, 6], [1, 7]])
@@ -2847,10 +3077,10 @@ class TestMethods(object):
         assert_(a.flags['OWNDATA'])
         b = a.copy()
         # check exceptions
-        assert_raises(ValueError, a.swapaxes, -5, 0)
-        assert_raises(ValueError, a.swapaxes, 4, 0)
-        assert_raises(ValueError, a.swapaxes, 0, -5)
-        assert_raises(ValueError, a.swapaxes, 0, 4)
+        assert_raises(np.AxisError, a.swapaxes, -5, 0)
+        assert_raises(np.AxisError, a.swapaxes, 4, 0)
+        assert_raises(np.AxisError, a.swapaxes, 0, -5)
+        assert_raises(np.AxisError, a.swapaxes, 0, 4)
 
         for i in range(-4, 4):
             for j in range(-4, 4):
@@ -2907,8 +3137,8 @@ class TestMethods(object):
         assert_equal(ac, np.conjugate(a))
 
         a = np.array([1-1j, 1, 2.0, 'f'], object)
-        assert_raises(AttributeError, lambda: a.conj())
-        assert_raises(AttributeError, lambda: a.conjugate())
+        assert_raises(TypeError, lambda: a.conj())
+        assert_raises(TypeError, lambda: a.conjugate())
 
     def test__complex__(self):
         dtypes = ['i1', 'i2', 'i4', 'i8',
@@ -3017,6 +3247,8 @@ class TestBinop(object):
             # 'eq':       (np.equal, False),
             # 'ne':       (np.not_equal, False),
         }
+        if sys.version_info >= (3, 5):
+            ops['matmul'] = (np.matmul, False, float)
 
         class Coerced(Exception):
             pass
@@ -3059,7 +3291,7 @@ class TestBinop(object):
             if issubclass(MyType, np.ndarray):
                 # Use this range to avoid special case weirdnesses around
                 # divide-by-0, pow(x, 2), overflow due to pow(big, big), etc.
-                return np.arange(3, 5).view(MyType)
+                return np.arange(3, 7).reshape(2, 2).view(MyType)
             else:
                 return MyType()
 
@@ -3068,7 +3300,7 @@ class TestBinop(object):
             for op, (ufunc, has_inplace, dtype) in ops.items():
                 err_msg = ('op: %s, ufunc: %s, has_inplace: %s, dtype: %s'
                            % (op, ufunc, has_inplace, dtype))
-                check_objs = [np.arange(3, 5, dtype=dtype)]
+                check_objs = [np.arange(3, 7, dtype=dtype).reshape(2, 2)]
                 if check_scalar:
                     check_objs.append(check_objs[0][0])
                 for arr in check_objs:
@@ -3282,6 +3514,48 @@ class TestBinop(object):
         with assert_raises(NotImplementedError):
             a ** 2
 
+    def test_pow_array_object_dtype(self):
+        # test pow on arrays of object dtype
+        class SomeClass(object):
+            def __init__(self, num=None):
+                self.num = num
+
+            # want to ensure a fast pow path is not taken
+            def __mul__(self, other):
+                raise AssertionError('__mul__ should not be called')
+
+            def __div__(self, other):
+                raise AssertionError('__div__ should not be called')
+
+            def __pow__(self, exp):
+                return SomeClass(num=self.num ** exp)
+
+            def __eq__(self, other):
+                if isinstance(other, SomeClass):
+                    return self.num == other.num
+
+            __rpow__ = __pow__
+
+        def pow_for(exp, arr):
+            return np.array([x ** exp for x in arr])
+
+        obj_arr = np.array([SomeClass(1), SomeClass(2), SomeClass(3)])
+
+        assert_equal(obj_arr ** 0.5, pow_for(0.5, obj_arr))
+        assert_equal(obj_arr ** 0, pow_for(0, obj_arr))
+        assert_equal(obj_arr ** 1, pow_for(1, obj_arr))
+        assert_equal(obj_arr ** -1, pow_for(-1, obj_arr))
+        assert_equal(obj_arr ** 2, pow_for(2, obj_arr))
+
+    def test_pos_array_ufunc_override(self):
+        class A(np.ndarray):
+            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+                return getattr(ufunc, method)(*[i.view(np.ndarray) for
+                                                i in inputs], **kwargs)
+        tst = np.array('foo').view(A)
+        with assert_raises(TypeError):
+            +tst
+
 
 class TestTemporaryElide(object):
     # elision is only triggered on relatively large arrays
@@ -3293,7 +3567,7 @@ class TestTemporaryElide(object):
         # def incref_elide(a):
         #    d = input.copy() # refcount 1
         #    return d, d + d # PyNumber_Add without increasing refcount
-        from numpy.core.multiarray_tests import incref_elide
+        from numpy.core._multiarray_tests import incref_elide
         d = np.ones(100000)
         orig, res = incref_elide(d)
         d + d
@@ -3308,8 +3582,8 @@ class TestTemporaryElide(object):
         #
         # def incref_elide_l(d):
         #    return l[4] + l[4] # PyNumber_Add without increasing refcount
-        from numpy.core.multiarray_tests import incref_elide_l
-        # padding with 1 makes sure the object on the stack is not overwriten
+        from numpy.core._multiarray_tests import incref_elide_l
+        # padding with 1 makes sure the object on the stack is not overwritten
         l = [1, 1, 1, 1, np.ones(100000)]
         res = incref_elide_l(l)
         # the return original should not be changed to an inplace operation
@@ -3387,7 +3661,7 @@ class TestTemporaryElide(object):
 
 class TestCAPI(object):
     def test_IsPythonScalar(self):
-        from numpy.core.multiarray_tests import IsPythonScalar
+        from numpy.core._multiarray_tests import IsPythonScalar
         assert_(IsPythonScalar(b'foobar'))
         assert_(IsPythonScalar(1))
         assert_(IsPythonScalar(2**80))
@@ -3405,24 +3679,115 @@ class TestSubscripting(object):
 
 
 class TestPickling(object):
-    def test_roundtrip(self):
-        import pickle
-        carray = np.array([[2, 9], [7, 0], [3, 8]])
-        DATA = [
-            carray,
-            np.transpose(carray),
-            np.array([('xxx', 1, 2.0)], dtype=[('a', (str, 3)), ('b', int),
-                                               ('c', float)])
-        ]
+    def test_highest_available_pickle_protocol(self):
+        try:
+            import pickle5
+        except ImportError:
+            pickle5 = None
 
-        for a in DATA:
-            assert_equal(a, pickle.loads(a.dumps()), err_msg="%r" % a)
+        if sys.version_info[:2] >= (3, 8) or pickle5 is not None:
+            assert pickle.HIGHEST_PROTOCOL >= 5
+        else:
+            assert pickle.HIGHEST_PROTOCOL < 5
+
+    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL >= 5,
+                        reason=('this tests the error messages when trying to'
+                                'protocol 5 although it is not available'))
+    def test_correct_protocol5_error_message(self):
+        array = np.arange(10)
+
+        if sys.version_info[:2] in ((3, 6), (3, 7)):
+            # For the specific case of python3.6 and 3.7, raise a clear import
+            # error about the pickle5 backport when trying to use protocol=5
+            # without the pickle5 package
+            with pytest.raises(ImportError):
+                array.__reduce_ex__(5)
+
+        elif sys.version_info[:2] < (3, 6):
+            # when calling __reduce_ex__ explicitly with protocol=5 on python
+            # raise a ValueError saying that protocol 5 is not available for
+            # this python version
+            with pytest.raises(ValueError):
+                array.__reduce_ex__(5)
+
+    def test_record_array_with_object_dtype(self):
+        my_object = object()
+
+        arr_with_object = np.array(
+                [(my_object, 1, 2.0)],
+                dtype=[('a', object), ('b', int), ('c', float)])
+        arr_without_object = np.array(
+                [('xxx', 1, 2.0)],
+                dtype=[('a', str), ('b', int), ('c', float)])
+
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            depickled_arr_with_object = pickle.loads(
+                    pickle.dumps(arr_with_object, protocol=proto))
+            depickled_arr_without_object = pickle.loads(
+                    pickle.dumps(arr_without_object, protocol=proto))
+
+            assert_equal(arr_with_object.dtype,
+                         depickled_arr_with_object.dtype)
+            assert_equal(arr_without_object.dtype,
+                         depickled_arr_without_object.dtype)
+
+    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL < 5,
+                        reason="requires pickle protocol 5")
+    def test_f_contiguous_array(self):
+        f_contiguous_array = np.array([[1, 2, 3], [4, 5, 6]], order='F')
+        buffers = []
+
+        # When using pickle protocol 5, Fortran-contiguous arrays can be
+        # serialized using out-of-band buffers
+        bytes_string = pickle.dumps(f_contiguous_array, protocol=5,
+                                    buffer_callback=buffers.append)
+
+        assert len(buffers) > 0
+
+        depickled_f_contiguous_array = pickle.loads(bytes_string,
+                                                    buffers=buffers)
+
+        assert_equal(f_contiguous_array, depickled_f_contiguous_array)
+
+    def test_non_contiguous_array(self):
+        non_contiguous_array = np.arange(12).reshape(3, 4)[:, :2]
+        assert not non_contiguous_array.flags.c_contiguous
+        assert not non_contiguous_array.flags.f_contiguous
+
+        # make sure non-contiguous arrays can be pickled-depickled
+        # using any protocol
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            depickled_non_contiguous_array = pickle.loads(
+                    pickle.dumps(non_contiguous_array, protocol=proto))
+
+            assert_equal(non_contiguous_array, depickled_non_contiguous_array)
+
+    def test_roundtrip(self):
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            carray = np.array([[2, 9], [7, 0], [3, 8]])
+            DATA = [
+                carray,
+                np.transpose(carray),
+                np.array([('xxx', 1, 2.0)], dtype=[('a', (str, 3)), ('b', int),
+                                                   ('c', float)])
+            ]
+
+            refs = [weakref.ref(a) for a in DATA]
+            for a in DATA:
+                assert_equal(
+                        a, pickle.loads(pickle.dumps(a, protocol=proto)),
+                        err_msg="%r" % a)
+            del a, DATA, carray
+            gc.collect()
+            # check for reference leaks (gh-12793)
+            for ref in refs:
+                assert ref() is None
 
     def _loads(self, obj):
         if sys.version_info[0] >= 3:
-            return np.loads(obj, encoding='latin1')
+            return pickle.loads(obj, encoding='latin1')
         else:
-            return np.loads(obj)
+            return pickle.loads(obj)
 
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
@@ -3988,19 +4353,16 @@ class TestPutmask(object):
             for types in np.sctypes.values():
                 for T in types:
                     if T not in unchecked_types:
-                        yield self.tst_basic, x.copy().astype(T), T, mask, val
+                        self.tst_basic(x.copy().astype(T), T, mask, val)
 
     def test_mask_size(self):
         assert_raises(ValueError, np.putmask, np.array([1, 2, 3]), [True], 5)
 
-    def tst_byteorder(self, dtype):
+    @pytest.mark.parametrize('dtype', ('>i4', '<i4'))
+    def test_byteorder(self, dtype):
         x = np.array([1, 2, 3], dtype)
         np.putmask(x, [True, False, True], -1)
         assert_array_equal(x, [-1, 2, -1])
-
-    def test_ip_byteorder(self):
-        for dtype in ('>i4', '<i4'):
-            yield self.tst_byteorder, dtype
 
     def test_record_array(self):
         # Note mixed byteorder.
@@ -4029,7 +4391,7 @@ class TestTake(object):
         for types in np.sctypes.values():
             for T in types:
                 if T not in unchecked_types:
-                    yield self.tst_basic, x.copy().astype(T)
+                    self.tst_basic(x.copy().astype(T))
 
     def test_raise(self):
         x = np.random.random(24)*100
@@ -4051,13 +4413,10 @@ class TestTake(object):
         assert_array_equal(x.take([2], axis=0, mode='wrap')[0], x[0])
         assert_array_equal(x.take([3], axis=0, mode='wrap')[0], x[1])
 
-    def tst_byteorder(self, dtype):
+    @pytest.mark.parametrize('dtype', ('>i4', '<i4'))
+    def test_byteorder(self, dtype):
         x = np.array([1, 2, 3], dtype)
         assert_array_equal(x.take([0, 2, 1]), [1, 3, 2])
-
-    def test_ip_byteorder(self):
-        for dtype in ('>i4', '<i4'):
-            yield self.tst_byteorder, dtype
 
     def test_record_array(self):
         # Note mixed byteorder.
@@ -4244,7 +4603,6 @@ class TestIO(object):
             d.tofile(f)
         assert_equal(os.path.getsize(self.filename), d.nbytes * 2)
 
-
     def test_io_open_buffered_fromfile(self):
         # gh-6632
         self.x.tofile(self.filename)
@@ -4301,6 +4659,19 @@ class TestIO(object):
             f.close()
             assert_equal(pos, 10, err_msg=err_msg)
 
+    def test_load_object_array_fromfile(self):
+        # gh-12300
+        with open(self.filename, 'w') as f:
+            # Ensure we have a file with consistent contents
+            pass
+
+        with open(self.filename, 'rb') as f:
+            assert_raises_regex(ValueError, "Cannot read into object array",
+                                np.fromfile, f, dtype=object)
+
+        assert_raises_regex(ValueError, "Cannot read into object array",
+                            np.fromfile, self.filename, dtype=object)
+
     def _check_from(self, s, value, **kw):
         if 'sep' not in kw:
             y = np.frombuffer(s, **kw)
@@ -4335,7 +4706,7 @@ class TestIO(object):
                          np.array([1, 2, 3, 4]),
                          dtype='<f4')
 
-    @dec.slow  # takes > 1 minute on mechanical hard drive
+    @pytest.mark.slow  # takes > 1 minute on mechanical hard drive
     def test_big_binary(self):
         """Test workarounds for 32-bit limited fwrite, fseek, and ftell
         calls in windows. These normally would hang doing something like this.
@@ -4423,30 +4794,28 @@ class TestIO(object):
         assert_equal(s, '1.51,2.00,3.51,4.00')
 
     def test_locale(self):
-        in_foreign_locale(self.test_numbers)()
-        in_foreign_locale(self.test_nan)()
-        in_foreign_locale(self.test_inf)()
-        in_foreign_locale(self.test_counted_string)()
-        in_foreign_locale(self.test_ascii)()
-        in_foreign_locale(self.test_malformed)()
-        in_foreign_locale(self.test_tofile_sep)()
-        in_foreign_locale(self.test_tofile_format)()
+        with CommaDecimalPointLocale():
+            self.test_numbers()
+            self.test_nan()
+            self.test_inf()
+            self.test_counted_string()
+            self.test_ascii()
+            self.test_malformed()
+            self.test_tofile_sep()
+            self.test_tofile_format()
 
 
 class TestFromBuffer(object):
-    def tst_basic(self, buffer, expected, kwargs):
-        assert_array_equal(np.frombuffer(buffer,**kwargs), expected)
-
-    def test_ip_basic(self):
-        for byteorder in ['<', '>']:
-            for dtype in [float, int, complex]:
-                dt = np.dtype(dtype).newbyteorder(byteorder)
-                x = (np.random.random((4, 7))*5).astype(dt)
-                buf = x.tobytes()
-                yield self.tst_basic, buf, x.flat, {'dtype':dt}
+    @pytest.mark.parametrize('byteorder', ['<', '>'])
+    @pytest.mark.parametrize('dtype', [float, int, complex])
+    def test_basic(self, byteorder, dtype):
+        dt = np.dtype(dtype).newbyteorder(byteorder)
+        x = (np.random.random((4, 7)) * 5).astype(dt)
+        buf = x.tobytes()
+        assert_array_equal(np.frombuffer(buf, dtype=dt), x.flat)
 
     def test_empty(self):
-        yield self.tst_basic, b'', np.array([]), {}
+        assert_array_equal(np.frombuffer(b''), np.array([]))
 
 
 class TestFlat(object):
@@ -4490,12 +4859,19 @@ class TestFlat(object):
         # UPDATEIFCOPY array returned for non-contiguous arrays.
         assert_(e.flags.writeable is True)
         assert_(f.flags.writeable is False)
-
-        assert_(c.flags.updateifcopy is False)
-        assert_(d.flags.updateifcopy is False)
-        assert_(e.flags.updateifcopy is False)
-        # UPDATEIFCOPY is removed.
-        assert_(f.flags.updateifcopy is False)
+        with assert_warns(DeprecationWarning):
+            assert_(c.flags.updateifcopy is False)
+        with assert_warns(DeprecationWarning):
+            assert_(d.flags.updateifcopy is False)
+        with assert_warns(DeprecationWarning):
+            assert_(e.flags.updateifcopy is False)
+        with assert_warns(DeprecationWarning):
+            # UPDATEIFCOPY is removed.
+            assert_(f.flags.updateifcopy is False)
+        assert_(c.flags.writebackifcopy is False)
+        assert_(d.flags.writebackifcopy is False)
+        assert_(e.flags.writebackifcopy is False)
+        assert_(f.flags.writebackifcopy is False)
 
 
 class TestResize(object):
@@ -4584,6 +4960,12 @@ class TestResize(object):
         x_view.resize((0, 10))
         x_view.resize((0, 100))
 
+    def test_check_weakref(self):
+        x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        xref = weakref.ref(x)
+        assert_raises(ValueError, x.resize, (5, 1))
+        del xref  # avoid pyflakes unused variable warning.
+
 
 class TestRecord(object):
     def test_field_rename(self):
@@ -4592,56 +4974,76 @@ class TestRecord(object):
         assert_equal(dt.names, ['p', 'q'])
 
     def test_multiple_field_name_occurrence(self):
-        def test_assign():
-            dtype = np.dtype([("A", "f8"), ("B", "f8"), ("A", "f8")])
+        def test_dtype_init():
+            np.dtype([("A", "f8"), ("B", "f8"), ("A", "f8")])
 
         # Error raised when multiple fields have the same name
-        assert_raises(ValueError, test_assign)
+        assert_raises(ValueError, test_dtype_init)
 
-    if sys.version_info[0] >= 3:
-        def test_bytes_fields(self):
-            # Bytes are not allowed in field names and not recognized in titles
-            # on Py3
-            assert_raises(TypeError, np.dtype, [(b'a', int)])
-            assert_raises(TypeError, np.dtype, [(('b', b'a'), int)])
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
+    def test_bytes_fields(self):
+        # Bytes are not allowed in field names and not recognized in titles
+        # on Py3
+        assert_raises(TypeError, np.dtype, [(b'a', int)])
+        assert_raises(TypeError, np.dtype, [(('b', b'a'), int)])
 
-            dt = np.dtype([((b'a', 'b'), int)])
-            assert_raises(TypeError, dt.__getitem__, b'a')
+        dt = np.dtype([((b'a', 'b'), int)])
+        assert_raises(TypeError, dt.__getitem__, b'a')
 
-            x = np.array([(1,), (2,), (3,)], dtype=dt)
-            assert_raises(IndexError, x.__getitem__, b'a')
+        x = np.array([(1,), (2,), (3,)], dtype=dt)
+        assert_raises(IndexError, x.__getitem__, b'a')
 
-            y = x[0]
-            assert_raises(IndexError, y.__getitem__, b'a')
+        y = x[0]
+        assert_raises(IndexError, y.__getitem__, b'a')
 
-        def test_multiple_field_name_unicode(self):
-            def test_assign_unicode():
-                dt = np.dtype([("\u20B9", "f8"),
-                               ("B", "f8"),
-                               ("\u20B9", "f8")])
+    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
+    def test_multiple_field_name_unicode(self):
+        def test_dtype_unicode():
+            np.dtype([("\u20B9", "f8"), ("B", "f8"), ("\u20B9", "f8")])
 
-            # Error raised when multiple fields have the same name(unicode included)
-            assert_raises(ValueError, test_assign_unicode)
+        # Error raised when multiple fields have the same name(unicode included)
+        assert_raises(ValueError, test_dtype_unicode)
 
-    else:
-        def test_unicode_field_titles(self):
-            # Unicode field titles are added to field dict on Py2
-            title = u'b'
-            dt = np.dtype([((title, 'a'), int)])
-            dt[title]
-            dt['a']
-            x = np.array([(1,), (2,), (3,)], dtype=dt)
-            x[title]
-            x['a']
-            y = x[0]
-            y[title]
-            y['a']
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
+    def test_unicode_field_titles(self):
+        # Unicode field titles are added to field dict on Py2
+        title = u'b'
+        dt = np.dtype([((title, 'a'), int)])
+        dt[title]
+        dt['a']
+        x = np.array([(1,), (2,), (3,)], dtype=dt)
+        x[title]
+        x['a']
+        y = x[0]
+        y[title]
+        y['a']
 
-        def test_unicode_field_names(self):
-            # Unicode field names are not allowed on Py2
-            title = u'b'
-            assert_raises(TypeError, np.dtype, [(title, int)])
-            assert_raises(TypeError, np.dtype, [(('a', title), int)])
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
+    def test_unicode_field_names(self):
+        # Unicode field names are converted to ascii on Python 2:
+        encodable_name = u'b'
+        assert_equal(np.dtype([(encodable_name, int)]).names[0], b'b')
+        assert_equal(np.dtype([(('a', encodable_name), int)]).names[0], b'b')
+
+        # But raises UnicodeEncodeError if it can't be encoded:
+        nonencodable_name = u'\uc3bc'
+        assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_name, int)])
+        assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_name), int)])
+
+    def test_fromarrays_unicode(self):
+        # A single name string provided to fromarrays() is allowed to be unicode
+        # on both Python 2 and 3:
+        x = np.core.records.fromarrays([[0], [1]], names=u'a,b', formats=u'i4,i4')
+        assert_equal(x['a'][0], 0)
+        assert_equal(x['b'][0], 1)
+
+    def test_unicode_order(self):
+        # Test that we can sort with order as a unicode field name in both Python 2 and
+        # 3:
+        name = u'b'
+        x = np.array([1, 3, 2], dtype=[(name, int)])
+        x.sort(order=name)
+        assert_equal(x[u'b'], np.array([1, 2, 3]))
 
     def test_field_names(self):
         # Test unicode and 8-bit / byte strings can be used
@@ -4688,8 +5090,8 @@ class TestRecord(object):
 
         # non-ascii unicode field indexing is well behaved
         if not is_py3:
-            raise SkipTest('non ascii unicode field indexing skipped; '
-                           'raises segfault on python 2.x')
+            pytest.skip('non ascii unicode field indexing skipped; '
+                        'raises segfault on python 2.x')
         else:
             assert_raises(ValueError, a.__setitem__, u'\u03e0', 1)
             assert_raises(ValueError, a.__getitem__, u'\u03e0')
@@ -4716,6 +5118,16 @@ class TestRecord(object):
                            'offsets': [], 'itemsize': 12})
         np.array([(), (), (), (), ()], dtype={'names': [], 'formats': [],
                                            'offsets': [], 'itemsize': 12})
+
+    def test_multifield_indexing_view(self):
+        a = np.ones(3, dtype=[('a', 'i4'), ('b', 'f4'), ('c', 'u4')])
+        v = a[['a', 'c']]
+        assert_(v.base is a)
+        assert_(v.dtype == np.dtype({'names': ['a', 'c'],
+                                     'formats': ['i4', 'u4'],
+                                     'offsets': [0, 8]}))
+        v[:] = (4,5)
+        assert_equal(a[0].item(), (4, 1, 5))
 
 class TestView(object):
     def test_basic(self):
@@ -5215,13 +5627,6 @@ class TestDot(object):
         assert_equal(np.dot(b, a), res)
         assert_equal(np.dot(b, b), res)
 
-    def test_dot_scalar_and_matrix_of_objects(self):
-        # Ticket #2469
-        arr = np.matrix([1, 2], dtype=object)
-        desired = np.matrix([[3, 6]], dtype=object)
-        assert_equal(np.dot(arr, 3), desired)
-        assert_equal(np.dot(3, arr), desired)
-
     def test_accelerate_framework_sgemv_fix(self):
 
         def aligned_array(shape, align, dtype, order='C'):
@@ -5290,8 +5695,6 @@ class TestDot(object):
 class MatmulCommon(object):
     """Common tests for '@' operator and numpy.matmul.
 
-    Do not derive from TestCase to avoid nose running it.
-
     """
     # Should work with these types. Will want to add
     # "O" at some point
@@ -5349,13 +5752,36 @@ class MatmulCommon(object):
             res = self.matmul(v, v)
             assert_(type(res) is np.dtype(dt).type)
 
-    def test_vector_vector_values(self):
-        vec = np.array([1, 2])
-        tgt = 5
+    def test_scalar_output(self):
+        vec1 = np.array([2])
+        vec2 = np.array([3, 4]).reshape(1, -1)
+        tgt = np.array([6, 8])
         for dt in self.types[1:]:
-            v1 = vec.astype(dt)
-            res = self.matmul(v1, v1)
+            v1 = vec1.astype(dt)
+            v2 = vec2.astype(dt)
+            res = self.matmul(v1, v2)
             assert_equal(res, tgt)
+            res = self.matmul(v2.T, v1)
+            assert_equal(res, tgt)
+
+        # boolean type
+        vec = np.array([True, True], dtype='?').reshape(1, -1)
+        res = self.matmul(vec[:, 0], vec)
+        assert_equal(res, True)
+
+    def test_vector_vector_values(self):
+        vec1 = np.array([1, 2])
+        vec2 = np.array([3, 4]).reshape(-1, 1)
+        tgt1 = np.array([11])
+        tgt2 = np.array([[3, 6], [4, 8]])
+        for dt in self.types[1:]:
+            v1 = vec1.astype(dt)
+            v2 = vec2.astype(dt)
+            res = self.matmul(v1, v2)
+            assert_equal(res, tgt1)
+            # no broadcast, we must make v1 into a 2d ndarray
+            res = self.matmul(v2, v1.reshape(1, -1))
+            assert_equal(res, tgt2)
 
         # boolean type
         vec = np.array([True, True], dtype='?')
@@ -5486,44 +5912,96 @@ class TestMatmul(MatmulCommon):
     matmul = np.matmul
 
     def test_out_arg(self):
-        a = np.ones((2, 2), dtype=float)
-        b = np.ones((2, 2), dtype=float)
-        tgt = np.full((2,2), 2, dtype=float)
+        a = np.ones((5, 2), dtype=float)
+        b = np.array([[1, 3], [5, 7]], dtype=float)
+        tgt = np.dot(a, b)
 
         # test as positional argument
         msg = "out positional argument"
-        out = np.zeros((2, 2), dtype=float)
+        out = np.zeros((5, 2), dtype=float)
         self.matmul(a, b, out)
         assert_array_equal(out, tgt, err_msg=msg)
 
         # test as keyword argument
         msg = "out keyword argument"
-        out = np.zeros((2, 2), dtype=float)
+        out = np.zeros((5, 2), dtype=float)
         self.matmul(a, b, out=out)
         assert_array_equal(out, tgt, err_msg=msg)
 
         # test out with not allowed type cast (safe casting)
-        # einsum and cblas raise different error types, so
-        # use Exception.
-        msg = "out argument with illegal cast"
-        out = np.zeros((2, 2), dtype=np.int32)
-        assert_raises(Exception, self.matmul, a, b, out=out)
+        msg = "Cannot cast ufunc .* output"
+        out = np.zeros((5, 2), dtype=np.int32)
+        assert_raises_regex(TypeError, msg, self.matmul, a, b, out=out)
 
-        # skip following tests for now, cblas does not allow non-contiguous
-        # outputs and consistency with dot would require same type,
-        # dimensions, subtype, and c_contiguous.
+        # test out with type upcast to complex
+        out = np.zeros((5, 2), dtype=np.complex128)
+        c = self.matmul(a, b, out=out)
+        assert_(c is out)
+        with suppress_warnings() as sup:
+            sup.filter(np.ComplexWarning, '')
+            c = c.astype(tgt.dtype)
+        assert_array_equal(c, tgt)
 
-        # test out with allowed type cast
-        # msg = "out argument with allowed cast"
-        # out = np.zeros((2, 2), dtype=np.complex128)
-        # self.matmul(a, b, out=out)
-        # assert_array_equal(out, tgt, err_msg=msg)
+    def test_out_contiguous(self):
+        a = np.ones((5, 2), dtype=float)
+        b = np.array([[1, 3], [5, 7]], dtype=float)
+        v = np.array([1, 3], dtype=float)
+        tgt = np.dot(a, b)
+        tgt_mv = np.dot(a, v)
 
         # test out non-contiguous
-        # msg = "out argument with non-contiguous layout"
-        # c = np.zeros((2, 2, 2), dtype=float)
-        # self.matmul(a, b, out=c[..., 0])
-        # assert_array_equal(c, tgt, err_msg=msg)
+        out = np.ones((5, 2, 2), dtype=float)
+        c = self.matmul(a, b, out=out[..., 0])
+        assert c.base is out
+        assert_array_equal(c, tgt)
+        c = self.matmul(a, v, out=out[:, 0, 0])
+        assert_array_equal(c, tgt_mv)
+        c = self.matmul(v, a.T, out=out[:, 0, 0])
+        assert_array_equal(c, tgt_mv)
+
+        # test out contiguous in only last dim
+        out = np.ones((10, 2), dtype=float)
+        c = self.matmul(a, b, out=out[::2, :])
+        assert_array_equal(c, tgt)
+
+        # test transposes of out, args
+        out = np.ones((5, 2), dtype=float)
+        c = self.matmul(b.T, a.T, out=out.T)
+        assert_array_equal(out, tgt)
+
+    m1 = np.arange(15.).reshape(5, 3)
+    m2 = np.arange(21.).reshape(3, 7)
+    m3 = np.arange(30.).reshape(5, 6)[:, ::2]  # non-contiguous
+    vc = np.arange(10.)
+    vr = np.arange(6.)
+    m0 = np.zeros((3, 0))
+    @pytest.mark.parametrize('args', (
+            # matrix-matrix
+            (m1, m2), (m2.T, m1.T), (m2.T.copy(), m1.T), (m2.T, m1.T.copy()),
+            # matrix-matrix-transpose, contiguous and non
+            (m1, m1.T), (m1.T, m1), (m1, m3.T), (m3, m1.T),
+            (m3, m3.T), (m3.T, m3),
+            # matrix-matrix non-contiguous
+            (m3, m2), (m2.T, m3.T), (m2.T.copy(), m3.T),
+            # vector-matrix, matrix-vector, contiguous
+            (m1, vr[:3]), (vc[:5], m1), (m1.T, vc[:5]), (vr[:3], m1.T),
+            # vector-matrix, matrix-vector, vector non-contiguous
+            (m1, vr[::2]), (vc[::2], m1), (m1.T, vc[::2]), (vr[::2], m1.T),
+            # vector-matrix, matrix-vector, matrix non-contiguous
+            (m3, vr[:3]), (vc[:5], m3), (m3.T, vc[:5]), (vr[:3], m3.T),
+            # vector-matrix, matrix-vector, both non-contiguous
+            (m3, vr[::2]), (vc[::2], m3), (m3.T, vc[::2]), (vr[::2], m3.T),
+            # size == 0
+            (m0, m0.T), (m0.T, m0), (m1, m0), (m0.T, m1.T),
+        ))
+    def test_dot_equivalent(self, args):
+        r1 = np.matmul(*args)
+        r2 = np.dot(*args)
+        assert_equal(r1, r2)
+
+        r3 = np.matmul(args[0].copy(), args[1].copy())
+        assert_equal(r1, r3)
+        
 
 
 if sys.version_info[:2] >= (3, 5):
@@ -5547,6 +6025,11 @@ if sys.version_info[:2] >= (3, 5):
             assert_equal(self.matmul(a, b), "A")
             assert_equal(self.matmul(b, a), "A")
 
+        def test_matmul_raises(self):
+            assert_raises(TypeError, self.matmul, np.int8(5), np.int8(5))
+            assert_raises(TypeError, self.matmul, np.void(b'abc'), np.void(b'abc'))
+            assert_raises(ValueError, self.matmul, np.arange(10), np.void(b'abc'))
+
     def test_matmul_inplace():
         # It would be nice to support in-place matmul eventually, but for now
         # we don't have a working implementation, so better just to error out
@@ -5560,6 +6043,17 @@ if sys.version_info[:2] >= (3, 5):
         # parser
         exec_ = getattr(builtins, "exec")
         assert_raises(TypeError, exec_, "a @= b", globals(), locals())
+
+    def test_matmul_axes():
+        a = np.arange(3*4*5).reshape(3, 4, 5)
+        c = np.matmul(a, a, axes=[(-2, -1), (-1, -2), (1, 2)])
+        assert c.shape == (3, 4, 4)
+        d = np.matmul(a, a, axes=[(-2, -1), (-1, -2), (0, 1)])
+        assert d.shape == (4, 4, 3)
+        e = np.swapaxes(d, 0, 2)
+        assert_array_equal(e, c)
+        f = np.matmul(a, np.arange(3), axes=[(1, 0), (0), (0)])
+        assert f.shape == (4, 5)
 
 
 class TestInner(object):
@@ -5578,21 +6072,6 @@ class TestInner(object):
             desired = np.array([3, 6], dtype=dt)
             assert_equal(np.inner(vec, sca), desired)
             assert_equal(np.inner(sca, vec), desired)
-
-    def test_inner_scalar_and_matrix(self):
-        for dt in np.typecodes['AllInteger'] + np.typecodes['AllFloat'] + '?':
-            sca = np.array(3, dtype=dt)[()]
-            arr = np.matrix([[1, 2], [3, 4]], dtype=dt)
-            desired = np.matrix([[3, 6], [9, 12]], dtype=dt)
-            assert_equal(np.inner(arr, sca), desired)
-            assert_equal(np.inner(sca, arr), desired)
-
-    def test_inner_scalar_and_matrix_of_objects(self):
-        # Ticket #4482
-        arr = np.matrix([1, 2], dtype=object)
-        desired = np.matrix([[3, 6]], dtype=object)
-        assert_equal(np.inner(arr, 3), desired)
-        assert_equal(np.inner(3, arr), desired)
 
     def test_vecself(self):
         # Ticket 844.
@@ -5653,26 +6132,6 @@ class TestInner(object):
             )
             assert_equal(np.inner(a, b), desired)
             assert_equal(np.inner(b, a).transpose(2,3,0,1), desired)
-
-
-class TestSummarization(object):
-    def test_1d(self):
-        A = np.arange(1001)
-        strA = '[   0    1    2 ...  998  999 1000]'
-        assert_(str(A) == strA)
-
-        reprA = 'array([   0,    1,    2, ...,  998,  999, 1000])'
-        assert_(repr(A) == reprA)
-
-    def test_2d(self):
-        A = np.arange(1002).reshape(2, 501)
-        strA = '[[   0    1    2 ...  498  499  500]\n' \
-               ' [ 501  502  503 ...  999 1000 1001]]'
-        assert_(str(A) == strA)
-
-        reprA = 'array([[   0,    1,    2, ...,  498,  499,  500],\n' \
-                '       [ 501,  502,  503, ...,  999, 1000, 1001]])'
-        assert_(repr(A) == reprA)
 
 
 class TestAlen(object):
@@ -5755,107 +6214,84 @@ class TestRepeat(object):
 NEIGH_MODE = {'zero': 0, 'one': 1, 'constant': 2, 'circular': 3, 'mirror': 4}
 
 
+@pytest.mark.parametrize('dt', [float, Decimal], ids=['float', 'object'])
 class TestNeighborhoodIter(object):
     # Simple, 2d tests
-    def _test_simple2d(self, dt):
+    def test_simple2d(self, dt):
         # Test zero and one padding for simple data type
         x = np.array([[0, 1], [2, 3]], dtype=dt)
         r = [np.array([[0, 0, 0], [0, 0, 1]], dtype=dt),
              np.array([[0, 0, 0], [0, 1, 0]], dtype=dt),
              np.array([[0, 0, 1], [0, 2, 3]], dtype=dt),
              np.array([[0, 1, 0], [2, 3, 0]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0],
-                NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 0, -1, 1], x[0], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         r = [np.array([[1, 1, 1], [1, 0, 1]], dtype=dt),
              np.array([[1, 1, 1], [0, 1, 1]], dtype=dt),
              np.array([[1, 0, 1], [1, 2, 3]], dtype=dt),
              np.array([[0, 1, 1], [2, 3, 1]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0],
-                NEIGH_MODE['one'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 0, -1, 1], x[0], NEIGH_MODE['one'])
         assert_array_equal(l, r)
 
         r = [np.array([[4, 4, 4], [4, 0, 1]], dtype=dt),
              np.array([[4, 4, 4], [0, 1, 4]], dtype=dt),
              np.array([[4, 0, 1], [4, 2, 3]], dtype=dt),
              np.array([[0, 1, 4], [2, 3, 4]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], 4,
-                NEIGH_MODE['constant'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 0, -1, 1], 4, NEIGH_MODE['constant'])
         assert_array_equal(l, r)
 
-    def test_simple2d(self):
-        self._test_simple2d(float)
-
-    def test_simple2d_object(self):
-        self._test_simple2d(Decimal)
-
-    def _test_mirror2d(self, dt):
+    def test_mirror2d(self, dt):
         x = np.array([[0, 1], [2, 3]], dtype=dt)
         r = [np.array([[0, 0, 1], [0, 0, 1]], dtype=dt),
              np.array([[0, 1, 1], [0, 1, 1]], dtype=dt),
              np.array([[0, 0, 1], [2, 2, 3]], dtype=dt),
              np.array([[0, 1, 1], [2, 3, 3]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0],
-                NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 0, -1, 1], x[0], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
-    def test_mirror2d(self):
-        self._test_mirror2d(float)
-
-    def test_mirror2d_object(self):
-        self._test_mirror2d(Decimal)
-
     # Simple, 1d tests
-    def _test_simple(self, dt):
+    def test_simple(self, dt):
         # Test padding with constant values
         x = np.linspace(1, 5, 5).astype(dt)
         r = [[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 0]]
-        l = test_neighborhood_iterator(x, [-1, 1], x[0], NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 1], x[0], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         r = [[1, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 1]]
-        l = test_neighborhood_iterator(x, [-1, 1], x[0], NEIGH_MODE['one'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 1], x[0], NEIGH_MODE['one'])
         assert_array_equal(l, r)
 
         r = [[x[4], 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, x[4]]]
-        l = test_neighborhood_iterator(x, [-1, 1], x[4], NEIGH_MODE['constant'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-1, 1], x[4], NEIGH_MODE['constant'])
         assert_array_equal(l, r)
 
-    def test_simple_float(self):
-        self._test_simple(float)
-
-    def test_simple_object(self):
-        self._test_simple(Decimal)
-
     # Test mirror modes
-    def _test_mirror(self, dt):
+    def test_mirror(self, dt):
         x = np.linspace(1, 5, 5).astype(dt)
         r = np.array([[2, 1, 1, 2, 3], [1, 1, 2, 3, 4], [1, 2, 3, 4, 5],
                 [2, 3, 4, 5, 5], [3, 4, 5, 5, 4]], dtype=dt)
-        l = test_neighborhood_iterator(x, [-2, 2], x[1], NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-2, 2], x[1], NEIGH_MODE['mirror'])
         assert_([i.dtype == dt for i in l])
         assert_array_equal(l, r)
 
-    def test_mirror(self):
-        self._test_mirror(float)
-
-    def test_mirror_object(self):
-        self._test_mirror(Decimal)
-
     # Circular mode
-    def _test_circular(self, dt):
+    def test_circular(self, dt):
         x = np.linspace(1, 5, 5).astype(dt)
         r = np.array([[4, 5, 1, 2, 3], [5, 1, 2, 3, 4], [1, 2, 3, 4, 5],
                 [2, 3, 4, 5, 1], [3, 4, 5, 1, 2]], dtype=dt)
-        l = test_neighborhood_iterator(x, [-2, 2], x[0], NEIGH_MODE['circular'])
+        l = _multiarray_tests.test_neighborhood_iterator(
+                x, [-2, 2], x[0], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
-    def test_circular(self):
-        self._test_circular(float)
-
-    def test_circular_object(self):
-        self._test_circular(Decimal)
 
 # Test stacking neighborhood iterators
 class TestStackedNeighborhoodIter(object):
@@ -5871,8 +6307,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([3], dtype=dt),
              np.array([0], dtype=dt),
              np.array([0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-2, 4], NEIGH_MODE['zero'],
-                [0, 0], NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-2, 4], NEIGH_MODE['zero'], [0, 0], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         r = [np.array([1, 0, 1], dtype=dt),
@@ -5880,8 +6316,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([1, 2, 3], dtype=dt),
              np.array([2, 3, 0], dtype=dt),
              np.array([3, 0, 1], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [-1, 1], NEIGH_MODE['one'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [-1, 1], NEIGH_MODE['one'])
         assert_array_equal(l, r)
 
     # 2nd simple, 1d test: stacking 2 neigh iterators, mixing const padding and
@@ -5895,8 +6331,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([1, 2, 3], dtype=dt),
              np.array([2, 3, 3], dtype=dt),
              np.array([3, 3, 0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['mirror'],
-                [-1, 1], NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['mirror'], [-1, 1], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero
@@ -5906,8 +6342,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([0, 1, 2], dtype=dt),
              np.array([1, 2, 3], dtype=dt),
              np.array([2, 3, 0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [-2, 0], NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [-2, 0], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero: 2nd
@@ -5917,8 +6353,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([2, 3, 0], dtype=dt),
              np.array([3, 0, 0], dtype=dt),
              np.array([0, 0, 3], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [0, 2], NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [0, 2], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero: 3rd
@@ -5928,8 +6364,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([0, 1, 2, 3, 0], dtype=dt),
              np.array([1, 2, 3, 0, 0], dtype=dt),
              np.array([2, 3, 0, 0, 3], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [-2, 2], NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [-2, 2], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
     # 3rd simple, 1d test: stacking 2 neigh iterators, mixing const padding and
@@ -5943,8 +6379,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([1, 2, 3], dtype=dt),
              np.array([2, 3, 1], dtype=dt),
              np.array([3, 1, 0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['circular'],
-                [-1, 1], NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['circular'], [-1, 1], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero
@@ -5954,8 +6390,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([0, 1, 2], dtype=dt),
              np.array([1, 2, 3], dtype=dt),
              np.array([2, 3, 0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [-2, 0], NEIGH_MODE['circular'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [-2, 0], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero: 2nd
@@ -5965,8 +6401,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([2, 3, 0], dtype=dt),
              np.array([3, 0, 0], dtype=dt),
              np.array([0, 0, 1], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [0, 2], NEIGH_MODE['circular'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [0, 2], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero: 3rd
@@ -5976,8 +6412,8 @@ class TestStackedNeighborhoodIter(object):
              np.array([0, 1, 2, 3, 0], dtype=dt),
              np.array([1, 2, 3, 0, 0], dtype=dt),
              np.array([2, 3, 0, 0, 1], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [-1, 3], NEIGH_MODE['zero'],
-                [-2, 2], NEIGH_MODE['circular'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [-1, 3], NEIGH_MODE['zero'], [-2, 2], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
     # 4th simple, 1d test: stacking 2 neigh iterators, but with lower iterator
@@ -5988,24 +6424,24 @@ class TestStackedNeighborhoodIter(object):
         # array
         x = np.array([1, 2, 3], dtype=dt)
         r = [np.array([1, 2, 3, 0], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
-                [-1, 2], NEIGH_MODE['zero'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [1, 1], NEIGH_MODE['zero'], [-1, 2], NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero, first neighborhood strictly inside the
         # array
         x = np.array([1, 2, 3], dtype=dt)
         r = [np.array([1, 2, 3, 3], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
-                [-1, 2], NEIGH_MODE['mirror'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [1, 1], NEIGH_MODE['zero'], [-1, 2], NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
         # Stacking mirror on top of zero, first neighborhood strictly inside the
         # array
         x = np.array([1, 2, 3], dtype=dt)
         r = [np.array([1, 2, 3, 1], dtype=dt)]
-        l = test_neighborhood_iterator_oob(x, [1, 1], NEIGH_MODE['zero'],
-                [-1, 2], NEIGH_MODE['circular'])
+        l = _multiarray_tests.test_neighborhood_iterator_oob(
+                x, [1, 1], NEIGH_MODE['zero'], [-1, 2], NEIGH_MODE['circular'])
         assert_array_equal(l, r)
 
 class TestWarnings(object):
@@ -6157,7 +6593,10 @@ class TestPEP3118Dtype(object):
         self._check('i', 'i')
         self._check('i:f0:', [('f0', 'i')])
 
+
 class TestNewBufferProtocol(object):
+    """ Test PEP3118 buffers """
+
     def _check_roundtrip(self, obj):
         obj = np.asarray(obj)
         x = memoryview(obj)
@@ -6290,6 +6729,14 @@ class TestNewBufferProtocol(object):
         # Issue #4015.
         self._check_roundtrip(0)
 
+    def test_invalid_buffer_format(self):
+        # datetime64 cannot be used fully in a buffer yet
+        # Should be fixed in the next Numpy major release
+        dt = np.dtype([('a', 'uint16'), ('b', 'M8[s]')])
+        a = np.empty(3, dt)
+        assert_raises((ValueError, BufferError), memoryview, a)
+        assert_raises((ValueError, BufferError), memoryview, np.array((3), 'M8[D]'))
+
     def test_export_simple_1d(self):
         x = np.array([1, 2, 3, 4, 5], dtype='i')
         y = memoryview(x)
@@ -6389,7 +6836,9 @@ class TestNewBufferProtocol(object):
 
     def test_export_flags(self):
         # Check SIMPLE flag, see also gh-3613 (exception should be BufferError)
-        assert_raises(ValueError, get_buffer_info, np.arange(5)[::2], ('SIMPLE',))
+        assert_raises(ValueError,
+                      _multiarray_tests.get_buffer_info,
+                       np.arange(5)[::2], ('SIMPLE',))
 
     def test_padding(self):
         for j in range(8):
@@ -6445,11 +6894,94 @@ class TestNewBufferProtocol(object):
 
         arr = np.ones((1, 10))
         if arr.flags.f_contiguous:
-            shape, strides = get_buffer_info(arr, ['F_CONTIGUOUS'])
+            shape, strides = _multiarray_tests.get_buffer_info(
+                    arr, ['F_CONTIGUOUS'])
             assert_(strides[0] == 8)
             arr = np.ones((10, 1), order='F')
-            shape, strides = get_buffer_info(arr, ['C_CONTIGUOUS'])
+            shape, strides = _multiarray_tests.get_buffer_info(
+                    arr, ['C_CONTIGUOUS'])
             assert_(strides[-1] == 8)
+
+    def test_out_of_order_fields(self):
+        dt = np.dtype(dict(
+            formats=['<i4', '<i4'],
+            names=['one', 'two'],
+            offsets=[4, 0],
+            itemsize=8
+        ))
+
+        # overlapping fields cannot be represented by PEP3118
+        arr = np.empty(1, dt)
+        with assert_raises(ValueError):
+            memoryview(arr)
+
+    def test_max_dims(self):
+        a = np.empty((1,) * 32)
+        self._check_roundtrip(a)
+
+    @pytest.mark.skipif(sys.version_info < (2, 7, 7), reason="See gh-11115")
+    def test_error_too_many_dims(self):
+        def make_ctype(shape, scalar_type):
+            t = scalar_type
+            for dim in shape[::-1]:
+                t = dim * t
+            return t
+
+        # construct a memoryview with 33 dimensions
+        c_u8_33d = make_ctype((1,)*33, ctypes.c_uint8)
+        m = memoryview(c_u8_33d())
+        assert_equal(m.ndim, 33)
+
+        assert_raises_regex(
+            RuntimeError, "ndim",
+            np.array, m)
+
+    def test_error_pointer_type(self):
+        # gh-6741
+        m = memoryview(ctypes.pointer(ctypes.c_uint8()))
+        assert_('&' in m.format)
+
+        assert_raises_regex(
+            ValueError, "format string",
+            np.array, m)
+
+    def test_error_message_unsupported(self):
+        # wchar has no corresponding numpy type - if this changes in future, we
+        # need a better way to construct an invalid memoryview format.
+        t = ctypes.c_wchar * 4
+        with assert_raises(ValueError) as cm:
+            np.array(t())
+
+        exc = cm.exception
+        if sys.version_info.major > 2:
+            with assert_raises_regex(
+                NotImplementedError,
+                r"Unrepresentable .* 'u' \(UCS-2 strings\)"
+            ):
+                raise exc.__cause__
+
+    def test_ctypes_integer_via_memoryview(self):
+        # gh-11150, due to bpo-10746
+        for c_integer in {ctypes.c_int, ctypes.c_long, ctypes.c_longlong}:
+            value = c_integer(42)
+            with warnings.catch_warnings(record=True):
+                warnings.filterwarnings('always', r'.*\bctypes\b', RuntimeWarning)
+                np.asarray(value)
+
+    def test_ctypes_struct_via_memoryview(self):
+        # gh-10528
+        class foo(ctypes.Structure):
+            _fields_ = [('a', ctypes.c_uint8), ('b', ctypes.c_uint32)]
+        f = foo(a=1, b=2)
+
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings('always', r'.*\bctypes\b', RuntimeWarning)
+            arr = np.asarray(f)
+
+        assert_equal(arr['a'], 1)
+        assert_equal(arr['b'], 2)
+        f.a = 3
+        assert_equal(arr['a'], 3)
 
 
 class TestArrayAttributeDeletion(object):
@@ -6473,7 +7005,7 @@ class TestArrayAttributeDeletion(object):
 
     def test_multiarray_flags_writable_attribute_deletion(self):
         a = np.ones(2).flags
-        attr = ['updateifcopy', 'aligned', 'writeable']
+        attr = ['writebackifcopy', 'updateifcopy', 'aligned', 'writeable']
         for s in attr:
             assert_raises(AttributeError, delattr, a, s)
 
@@ -6486,12 +7018,11 @@ class TestArrayAttributeDeletion(object):
             assert_raises(AttributeError, delattr, a, s)
 
 
-def test_array_interface():
-    # Test scalar coercion within the array interface
+class TestArrayInterface():
     class Foo(object):
         def __init__(self, value):
             self.value = value
-            self.iface = {'typestr': '=f8'}
+            self.iface = {'typestr': 'f8'}
 
         def __float__(self):
             return float(self.value)
@@ -6500,22 +7031,39 @@ def test_array_interface():
         def __array_interface__(self):
             return self.iface
 
-    f = Foo(0.5)
-    assert_equal(np.array(f), 0.5)
-    assert_equal(np.array([f]), [0.5])
-    assert_equal(np.array([f, f]), [0.5, 0.5])
-    assert_equal(np.array(f).dtype, np.dtype('=f8'))
-    # Test various shape definitions
-    f.iface['shape'] = ()
-    assert_equal(np.array(f), 0.5)
-    f.iface['shape'] = None
-    assert_raises(TypeError, np.array, f)
-    f.iface['shape'] = (1, 1)
-    assert_equal(np.array(f), [[0.5]])
-    f.iface['shape'] = (2,)
-    assert_raises(ValueError, np.array, f)
 
-    # test scalar with no shape
+    f = Foo(0.5)
+
+    @pytest.mark.parametrize('val, iface, expected', [
+        (f, {}, 0.5),
+        ([f], {}, [0.5]),
+        ([f, f], {}, [0.5, 0.5]),
+        (f, {'shape': ()}, 0.5),
+        (f, {'shape': None}, TypeError),
+        (f, {'shape': (1, 1)}, [[0.5]]),
+        (f, {'shape': (2,)}, ValueError),
+        (f, {'strides': ()}, 0.5),
+        (f, {'strides': (2,)}, ValueError),
+        (f, {'strides': 16}, TypeError),
+        ])
+    def test_scalar_interface(self, val, iface, expected):
+        # Test scalar coercion within the array interface
+        self.f.iface = {'typestr': 'f8'}
+        self.f.iface.update(iface)
+        if HAS_REFCOUNT:
+            pre_cnt = sys.getrefcount(np.dtype('f8'))
+        if isinstance(expected, type):
+            assert_raises(expected, np.array, val)
+        else:
+            result = np.array(val)
+            assert_equal(np.array(val), expected)
+            assert result.dtype == 'f8'
+            del result
+        if HAS_REFCOUNT:
+            post_cnt = sys.getrefcount(np.dtype('f8'))
+            assert_equal(pre_cnt, post_cnt)
+
+def test_interface_no_shape():
     class ArrayLike(object):
         array = np.array(1)
         __array_interface__ = array.__array_interface__
@@ -6577,26 +7125,26 @@ def test_scalar_element_deletion():
 class TestMemEventHook(object):
     def test_mem_seteventhook(self):
         # The actual tests are within the C code in
-        # multiarray/multiarray_tests.c.src
-        test_pydatamem_seteventhook_start()
+        # multiarray/_multiarray_tests.c.src
+        _multiarray_tests.test_pydatamem_seteventhook_start()
         # force an allocation and free of a numpy array
         # needs to be larger then limit of small memory cacher in ctors.c
         a = np.zeros(1000)
         del a
         gc.collect()
-        test_pydatamem_seteventhook_end()
+        _multiarray_tests.test_pydatamem_seteventhook_end()
 
 class TestMapIter(object):
     def test_mapiter(self):
         # The actual tests are within the C code in
-        # multiarray/multiarray_tests.c.src
+        # multiarray/_multiarray_tests.c.src
 
         a = np.arange(12).reshape((3, 4)).astype(float)
         index = ([1, 1, 2, 0],
                  [0, 0, 2, 3])
         vals = [50, 50, 30, 16]
 
-        test_inplace_increment(a, index, vals)
+        _multiarray_tests.test_inplace_increment(a, index, vals)
         assert_equal(a, [[0.00, 1., 2.0, 19.],
                          [104., 5., 6.0, 7.0],
                          [8.00, 9., 40., 11.]])
@@ -6604,24 +7152,24 @@ class TestMapIter(object):
         b = np.arange(6).astype(float)
         index = (np.array([1, 2, 0]),)
         vals = [50, 4, 100.1]
-        test_inplace_increment(b, index, vals)
+        _multiarray_tests.test_inplace_increment(b, index, vals)
         assert_equal(b, [100.1,  51.,   6.,   3.,   4.,   5.])
 
 
 class TestAsCArray(object):
     def test_1darray(self):
         array = np.arange(24, dtype=np.double)
-        from_c = test_as_c_array(array, 3)
+        from_c = _multiarray_tests.test_as_c_array(array, 3)
         assert_equal(array[3], from_c)
 
     def test_2darray(self):
         array = np.arange(24, dtype=np.double).reshape(3, 8)
-        from_c = test_as_c_array(array, 2, 4)
+        from_c = _multiarray_tests.test_as_c_array(array, 2, 4)
         assert_equal(array[2, 4], from_c)
 
     def test_3darray(self):
         array = np.arange(24, dtype=np.double).reshape(2, 3, 4)
-        from_c = test_as_c_array(array, 1, 2, 3)
+        from_c = _multiarray_tests.test_as_c_array(array, 1, 2, 3)
         assert_equal(array[1, 2, 3], from_c)
 
 
@@ -6688,6 +7236,35 @@ class TestConversion(object):
         except NameError:
             Error = RuntimeError  # python < 3.5
         assert_raises(Error, bool, self_containing)  # previously stack overflow
+        self_containing[0] = None  # resolve circular reference
+
+    def test_to_int_scalar(self):
+        # gh-9972 means that these aren't always the same
+        int_funcs = (int, lambda x: x.__int__())
+        for int_func in int_funcs:
+            assert_equal(int_func(np.array([1])), 1)
+            assert_equal(int_func(np.array([0])), 0)
+            assert_equal(int_func(np.array([[42]])), 42)
+            assert_raises(TypeError, int_func, np.array([1, 2]))
+
+            # gh-9972
+            assert_equal(4, int_func(np.array('4')))
+            assert_equal(5, int_func(np.bytes_(b'5')))
+            assert_equal(6, int_func(np.unicode_(u'6')))
+
+            class HasTrunc:
+                def __trunc__(self):
+                    return 3
+            assert_equal(3, int_func(np.array(HasTrunc())))
+            assert_equal(3, int_func(np.array([HasTrunc()])))
+
+            class NotConvertible(object):
+                def __int__(self):
+                    raise NotImplementedError
+            assert_raises(NotImplementedError,
+                int_func, np.array(NotConvertible()))
+            assert_raises(NotImplementedError,
+                int_func, np.array([NotConvertible()]))
 
 
 class TestWhere(object):
@@ -6911,7 +7488,7 @@ class TestHashing(object):
 
     def test_collections_hashable(self):
         x = np.array([])
-        assert_(not isinstance(x, collections.Hashable))
+        assert_(not isinstance(x, collections_abc.Hashable))
 
 
 class TestArrayPriority(object):
@@ -6924,7 +7501,7 @@ class TestArrayPriority(object):
         op.ge, op.lt, op.le, op.ne, op.eq
         ]
 
-    # See #7949. Dont use "/" operator With -3 switch, since python reports it
+    # See #7949. Don't use "/" operator With -3 switch, since python reports it
     # as a DeprecationWarning
     if sys.version_info[0] < 3 and not sys.py3kwarning:
         binary_ops.append(op.div)
@@ -7056,22 +7633,14 @@ class TestFormat(object):
     def test_1d_format(self):
         # until gh-5543, ensure that the behaviour matches what it used to be
         a = np.array([np.pi])
-
-        def ret_and_exc(f, *args, **kwargs):
-            try:
-                return f(*args, **kwargs), None
-            except Exception as e:
-                # exceptions don't compare equal, so return type and args
-                # which do
-                return None, (type(e), e.args)
-
-        # Could switch on python version here, but all we care about is
-        # that the behaviour hasn't changed
-        assert_equal(
-            ret_and_exc(object.__format__, a, '30'),
-            ret_and_exc('{:30}'.format, a)
-        )
-
+        if sys.version_info[:2] >= (3, 4):
+            assert_raises(TypeError, '{:30}'.format, a)
+        else:
+            with suppress_warnings() as sup:
+                sup.filter(PendingDeprecationWarning)
+                res = '{:30}'.format(a)
+                dst = object.__format__(a, '30')
+                assert_equal(res, dst)
 
 class TestCTypes(object):
 
@@ -7092,6 +7661,245 @@ class TestCTypes(object):
             assert_equal(tuple(test_arr.ctypes.shape), (2, 3))
         finally:
             _internal.ctypes = ctypes
+
+    def _make_readonly(x):
+        x.flags.writeable = False
+        return x
+
+    @pytest.mark.parametrize('arr', [
+        np.array([1, 2, 3]),
+        np.array([['one', 'two'], ['three', 'four']]),
+        np.array((1, 2), dtype='i4,i4'),
+        np.zeros((2,), dtype=
+            np.dtype(dict(
+                formats=['<i4', '<i4'],
+                names=['a', 'b'],
+                offsets=[0, 2],
+                itemsize=6
+            ))
+        ),
+        np.array([None], dtype=object),
+        np.array([]),
+        np.empty((0, 0)),
+        _make_readonly(np.array([1, 2, 3])),
+    ], ids=[
+        '1d',
+        '2d',
+        'structured',
+        'overlapping',
+        'object',
+        'empty',
+        'empty-2d',
+        'readonly'
+    ])
+    def test_ctypes_data_as_holds_reference(self, arr):
+        # gh-9647
+        # create a copy to ensure that pytest does not mess with the refcounts
+        arr = arr.copy()
+
+        arr_ref = weakref.ref(arr)
+
+        ctypes_ptr = arr.ctypes.data_as(ctypes.c_void_p)
+
+        # `ctypes_ptr` should hold onto `arr`
+        del arr
+        gc.collect()
+        assert_(arr_ref() is not None, "ctypes pointer did not hold onto a reference")
+
+        # but when the `ctypes_ptr` object dies, so should `arr`
+        del ctypes_ptr
+        gc.collect()
+        assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
+
+
+class TestWritebackIfCopy(object):
+    # all these tests use the WRITEBACKIFCOPY mechanism
+    def test_argmax_with_out(self):
+        mat = np.eye(5)
+        out = np.empty(5, dtype='i2')
+        res = np.argmax(mat, 0, out=out)
+        assert_equal(res, range(5))
+
+    def test_argmin_with_out(self):
+        mat = -np.eye(5)
+        out = np.empty(5, dtype='i2')
+        res = np.argmin(mat, 0, out=out)
+        assert_equal(res, range(5))
+
+    def test_clip_with_out(self):
+        mat = np.eye(5)
+        out = np.eye(5, dtype='i2')
+        res = np.clip(mat, a_min=-10, a_max=0, out=out)
+        assert_(res is out)
+        assert_equal(np.sum(out), 0)
+
+    def test_insert_noncontiguous(self):
+        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        # uses arr_insert
+        np.place(a, a>2, [44, 55])
+        assert_equal(a, np.array([[0, 44], [1, 55], [2, 44]]))
+        # hit one of the failing paths
+        assert_raises(ValueError, np.place, a, a>20, [])
+
+    def test_put_noncontiguous(self):
+        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        np.put(a, [0, 2], [44, 55])
+        assert_equal(a, np.array([[44, 3], [55, 4], [2, 5]]))
+
+    def test_putmask_noncontiguous(self):
+        a = np.arange(6).reshape(2,3).T # force non-c-contiguous
+        # uses arr_putmask
+        np.putmask(a, a>2, a**2)
+        assert_equal(a, np.array([[0, 9], [1, 16], [2, 25]]))
+
+    def test_take_mode_raise(self):
+        a = np.arange(6, dtype='int')
+        out = np.empty(2, dtype='int')
+        np.take(a, [0, 2], out=out, mode='raise')
+        assert_equal(out, np.array([0, 2]))
+
+    def test_choose_mod_raise(self):
+        a = np.array([[1, 0, 1], [0, 1, 0], [1, 0, 1]])
+        out = np.empty((3,3), dtype='int')
+        choices = [-10, 10]
+        np.choose(a, choices, out=out, mode='raise')
+        assert_equal(out, np.array([[ 10, -10,  10],
+                                    [-10,  10, -10],
+                                    [ 10, -10,  10]]))
+
+    def test_flatiter__array__(self):
+        a = np.arange(9).reshape(3,3)
+        b = a.T.flat
+        c = b.__array__()
+        # triggers the WRITEBACKIFCOPY resolution, assuming refcount semantics
+        del c
+
+    def test_dot_out(self):
+        # if HAVE_CBLAS, will use WRITEBACKIFCOPY
+        a = np.arange(9, dtype=float).reshape(3,3)
+        b = np.dot(a, a, out=a)
+        assert_equal(b, np.array([[15, 18, 21], [42, 54, 66], [69, 90, 111]]))
+
+    def test_view_assign(self):
+        from numpy.core._multiarray_tests import npy_create_writebackifcopy, npy_resolve
+
+        arr = np.arange(9).reshape(3, 3).T
+        arr_wb = npy_create_writebackifcopy(arr)
+        assert_(arr_wb.flags.writebackifcopy)
+        assert_(arr_wb.base is arr)
+        arr_wb[...] = -100
+        npy_resolve(arr_wb)
+        # arr changes after resolve, even though we assigned to arr_wb
+        assert_equal(arr, -100)
+        # after resolve, the two arrays no longer reference each other
+        assert_(arr_wb.ctypes.data != 0)
+        assert_equal(arr_wb.base, None)
+        # assigning to arr_wb does not get transferred to arr
+        arr_wb[...] = 100
+        assert_equal(arr, -100)
+
+    def test_dealloc_warning(self):
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            arr = np.arange(9).reshape(3, 3)
+            v = arr.T
+            _multiarray_tests.npy_abuse_writebackifcopy(v)
+            assert len(sup.log) == 1
+
+    def test_view_discard_refcount(self):
+        from numpy.core._multiarray_tests import npy_create_writebackifcopy, npy_discard
+
+        arr = np.arange(9).reshape(3, 3).T
+        orig = arr.copy()
+        if HAS_REFCOUNT:
+            arr_cnt = sys.getrefcount(arr)
+        arr_wb = npy_create_writebackifcopy(arr)
+        assert_(arr_wb.flags.writebackifcopy)
+        assert_(arr_wb.base is arr)
+        arr_wb[...] = -100
+        npy_discard(arr_wb)
+        # arr remains unchanged after discard
+        assert_equal(arr, orig)
+        # after discard, the two arrays no longer reference each other
+        assert_(arr_wb.ctypes.data != 0)
+        assert_equal(arr_wb.base, None)
+        if HAS_REFCOUNT:
+            assert_equal(arr_cnt, sys.getrefcount(arr))
+        # assigning to arr_wb does not get transferred to arr
+        arr_wb[...] = 100
+        assert_equal(arr, orig)
+
+
+class TestArange(object):
+    def test_infinite(self):
+        assert_raises_regex(
+            ValueError, "size exceeded",
+            np.arange, 0, np.inf
+        )
+
+    def test_nan_step(self):
+        assert_raises_regex(
+            ValueError, "cannot compute length",
+            np.arange, 0, 1, np.nan
+        )
+
+    def test_zero_step(self):
+        assert_raises(ZeroDivisionError, np.arange, 0, 10, 0)
+        assert_raises(ZeroDivisionError, np.arange, 0.0, 10.0, 0.0)
+
+        # empty range
+        assert_raises(ZeroDivisionError, np.arange, 0, 0, 0)
+        assert_raises(ZeroDivisionError, np.arange, 0.0, 0.0, 0.0)
+
+
+class TestArrayFinalize(object):
+    """ Tests __array_finalize__ """
+
+    def test_receives_base(self):
+        # gh-11237
+        class SavesBase(np.ndarray):
+            def __array_finalize__(self, obj):
+                self.saved_base = self.base
+
+        a = np.array(1).view(SavesBase)
+        assert_(a.saved_base is a.base)
+
+    def test_lifetime_on_error(self):
+        # gh-11237
+        class RaisesInFinalize(np.ndarray):
+            def __array_finalize__(self, obj):
+                # crash, but keep this object alive
+                raise Exception(self)
+
+        # a plain object can't be weakref'd
+        class Dummy(object): pass
+
+        # get a weak reference to an object within an array
+        obj_arr = np.array(Dummy())
+        obj_ref = weakref.ref(obj_arr[()])
+
+        # get an array that crashed in __array_finalize__
+        with assert_raises(Exception) as e:
+            obj_arr.view(RaisesInFinalize)
+        if sys.version_info.major == 2:
+            # prevent an extra reference being kept
+            sys.exc_clear()
+
+        obj_subarray = e.exception.args[0]
+        del e
+        assert_(isinstance(obj_subarray, RaisesInFinalize))
+
+        # reference should still be held by obj_arr
+        gc.collect()
+        assert_(obj_ref() is not None, "object should not already be dead")
+
+        del obj_arr
+        gc.collect()
+        assert_(obj_ref() is not None, "obj_arr should not hold the last reference")
+
+        del obj_subarray
+        gc.collect()
+        assert_(obj_ref() is None, "no references should remain")
 
 
 def test_orderconverter_with_nonASCII_unicode_ordering():
@@ -7128,7 +7936,7 @@ def test_equal_override():
 
 def test_npymath_complex():
     # Smoketest npymath functions
-    from numpy.core.multiarray_tests import (
+    from numpy.core._multiarray_tests import (
         npy_cabs, npy_carg)
 
     funcs = {npy_cabs: np.absolute,
@@ -7147,7 +7955,7 @@ def test_npymath_complex():
 
 def test_npymath_real():
     # Smoketest npymath functions
-    from numpy.core.multiarray_tests import (
+    from numpy.core._multiarray_tests import (
         npy_log10, npy_cosh, npy_sinh, npy_tan, npy_tanh)
 
     funcs = {npy_log10: np.log10,
@@ -7166,6 +7974,125 @@ def test_npymath_real():
                 expected = npfun(z)
                 assert_allclose(got, expected)
 
+def test_uintalignment_and_alignment():
+    # alignment code needs to satisfy these requrements:
+    #  1. numpy structs match C struct layout
+    #  2. ufuncs/casting is safe wrt to aligned access
+    #  3. copy code is safe wrt to "uint alidned" access
+    #
+    # Complex types are the main problem, whose alignment may not be the same
+    # as their "uint alignment".
+    #
+    # This test might only fail on certain platforms, where uint64 alignment is
+    # not equal to complex64 alignment. The second 2 tests will only fail
+    # for DEBUG=1.
 
-if __name__ == "__main__":
-    run_module_suite()
+    d1 = np.dtype('u1,c8', align=True)
+    d2 = np.dtype('u4,c8', align=True)
+    d3 = np.dtype({'names': ['a', 'b'], 'formats': ['u1', d1]}, align=True)
+
+    assert_equal(np.zeros(1, dtype=d1)['f1'].flags['ALIGNED'], True)
+    assert_equal(np.zeros(1, dtype=d2)['f1'].flags['ALIGNED'], True)
+    assert_equal(np.zeros(1, dtype='u1,c8')['f1'].flags['ALIGNED'], False)
+
+    # check that C struct matches numpy struct size
+    s = _multiarray_tests.get_struct_alignments()
+    for d, (alignment, size) in zip([d1,d2,d3], s):
+        assert_equal(d.alignment, alignment)
+        assert_equal(d.itemsize, size)
+
+    # check that ufuncs don't complain in debug mode
+    # (this is probably OK if the aligned flag is true above)
+    src = np.zeros((2,2), dtype=d1)['f1']  # 4-byte aligned, often
+    np.exp(src)  # assert fails?
+
+    # check that copy code doesn't complain in debug mode
+    dst = np.zeros((2,2), dtype='c8')
+    dst[:,1] = src[:,1]  # assert in lowlevel_strided_loops fails?
+
+class TestAlignment(object):
+    # adapted from scipy._lib.tests.test__util.test__aligned_zeros
+    # Checks that unusual memory alignments don't trip up numpy.
+    # In particular, check RELAXED_STRIDES don't trip alignment assertions in
+    # NDEBUG mode for size-0 arrays (gh-12503)
+
+    def check(self, shape, dtype, order, align):
+        err_msg = repr((shape, dtype, order, align))
+        x = _aligned_zeros(shape, dtype, order, align=align)
+        if align is None:
+            align = np.dtype(dtype).alignment
+        assert_equal(x.__array_interface__['data'][0] % align, 0)
+        if hasattr(shape, '__len__'):
+            assert_equal(x.shape, shape, err_msg)
+        else:
+            assert_equal(x.shape, (shape,), err_msg)
+        assert_equal(x.dtype, dtype)
+        if order == "C":
+            assert_(x.flags.c_contiguous, err_msg)
+        elif order == "F":
+            if x.size > 0:
+                assert_(x.flags.f_contiguous, err_msg)
+        elif order is None:
+            assert_(x.flags.c_contiguous, err_msg)
+        else:
+            raise ValueError()
+
+    def test_various_alignments(self):
+        for align in [1, 2, 3, 4, 8, 12, 16, 32, 64, None]:
+            for n in [0, 1, 3, 11]:
+                for order in ["C", "F", None]:
+                    for dtype in list(np.typecodes["All"]) + ['i4,i4,i4']:
+                        if dtype == 'O':
+                            # object dtype can't be misaligned
+                            continue
+                        for shape in [n, (1, 2, 3, n)]:
+                            self.check(shape, np.dtype(dtype), order, align)
+
+    def test_strided_loop_alignments(self):
+        # particularly test that complex64 and float128 use right alignment
+        # code-paths, since these are particularly problematic. It is useful to
+        # turn on USE_DEBUG for this test, so lowlevel-loop asserts are run.
+        for align in [1, 2, 4, 8, 12, 16, None]:
+            xf64 = _aligned_zeros(3, np.float64)
+
+            xc64 = _aligned_zeros(3, np.complex64, align=align)
+            xf128 = _aligned_zeros(3, np.longdouble, align=align)
+
+            # test casting, both to and from misaligned
+            with suppress_warnings() as sup:
+                sup.filter(np.ComplexWarning, "Casting complex values")
+                xc64.astype('f8')
+            xf64.astype(np.complex64)
+            test = xc64 + xf64
+
+            xf128.astype('f8')
+            xf64.astype(np.longdouble)
+            test = xf128 + xf64
+
+            test = xf128 + xc64
+
+            # test copy, both to and from misaligned
+            # contig copy
+            xf64[:] = xf64.copy()
+            xc64[:] = xc64.copy()
+            xf128[:] = xf128.copy()
+            # strided copy
+            xf64[::2] = xf64[::2].copy()
+            xc64[::2] = xc64[::2].copy()
+            xf128[::2] = xf128[::2].copy()
+
+def test_getfield():
+    a = np.arange(32, dtype='uint16')
+    if sys.byteorder == 'little':
+        i = 0
+        j = 1
+    else:
+        i = 1
+        j = 0
+    b = a.getfield('int8', i)
+    assert_equal(b, a)
+    b = a.getfield('int8', j)
+    assert_equal(b, 0)
+    pytest.raises(ValueError, a.getfield, 'uint8', -1)
+    pytest.raises(ValueError, a.getfield, 'uint8', 16)
+    pytest.raises(ValueError, a.getfield, 'uint64', 0)

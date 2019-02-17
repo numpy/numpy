@@ -490,7 +490,10 @@ Construction and Destruction
 
             Indicate how the user of the iterator will read or write
             to ``op[i]``.  Exactly one of these flags must be specified
-            per operand.
+            per operand. Using ``NPY_ITER_READWRITE`` or ``NPY_ITER_WRITEONLY``
+            for a user-provided operand may trigger `WRITEBACKIFCOPY``
+            semantics. The data will be written back to the original array
+            when ``NpyIter_Deallocate`` is called.
 
         .. c:var:: NPY_ITER_COPY
 
@@ -502,13 +505,13 @@ Construction and Destruction
 
             Triggers :c:data:`NPY_ITER_COPY`, and when an array operand
             is flagged for writing and is copied, causes the data
-            in a copy to be copied back to ``op[i]`` when the iterator
-            is destroyed.
+            in a copy to be copied back to ``op[i]`` when
+            ``NpyIter_Deallocate`` is called.
 
             If the operand is flagged as write-only and a copy is needed,
             an uninitialized temporary array will be created and then copied
-            to back to ``op[i]`` on destruction, instead of doing
-            the unnecessary copy operation.
+            to back to ``op[i]`` on calling ``NpyIter_Deallocate``, instead of
+            doing the unnecessary copy operation.
 
         .. c:var:: NPY_ITER_NBO
         .. c:var:: NPY_ITER_ALIGNED
@@ -704,6 +707,8 @@ Construction and Destruction
     the functions will pass back errors through it instead of setting
     a Python exception.
 
+    :c:func:`NpyIter_Deallocate` must be called for each copy.
+
 .. c:function:: int NpyIter_RemoveAxis(NpyIter* iter, int axis)``
 
     Removes an axis from iteration.  This requires that
@@ -756,8 +761,7 @@ Construction and Destruction
 
 .. c:function:: int NpyIter_Deallocate(NpyIter* iter)
 
-    Deallocates the iterator object.  This additionally frees any
-    copies made, triggering UPDATEIFCOPY behavior where necessary.
+    Deallocates the iterator object and resolves any needed writebacks.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 

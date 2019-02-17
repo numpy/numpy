@@ -14,6 +14,7 @@ from .shape_base import *
 from .stride_tricks import *
 from .twodim_base import *
 from .ufunclike import *
+from .histograms import *
 
 from . import scimath as emath
 from .polynomial import *
@@ -25,7 +26,7 @@ from .financial import *
 from .arrayterator import Arrayterator
 from .arraypad import *
 from ._version import *
-from numpy.core.multiarray import tracemalloc_domain
+from numpy.core._multiarray_umath import tracemalloc_domain
 
 __all__ = ['emath', 'math', 'tracemalloc_domain']
 __all__ += type_check.__all__
@@ -43,7 +44,8 @@ __all__ += arraysetops.__all__
 __all__ += npyio.__all__
 __all__ += financial.__all__
 __all__ += nanfunctions.__all__
+__all__ += histograms.__all__
 
-from numpy.testing import _numpy_tester
-test = _numpy_tester().test
-bench = _numpy_tester().bench
+from numpy._pytesttester import PytestTester
+test = PytestTester(__name__)
+del PytestTester

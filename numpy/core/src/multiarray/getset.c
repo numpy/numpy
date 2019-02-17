@@ -13,12 +13,14 @@
 #include "npy_import.h"
 
 #include "common.h"
+#include "ctors.h"
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "getset.h"
 #include "arrayobject.h"
 #include "mem_overlap.h"
 #include "alloc.h"
+#include "buffer.h"
 
 /*******************  array attribute get and set routines ******************/
 
@@ -106,8 +108,12 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     npy_intp offset = 0;
     npy_intp lower_offset = 0;
     npy_intp upper_offset = 0;
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#else
     Py_ssize_t buf_len;
     char *buf;
+#endif
 
     if (obj == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -132,12 +138,22 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
      * Get the available memory through the buffer interface on
      * PyArray_BASE(new) or if that fails from the current new
      */
-    if (PyArray_BASE(new) && PyObject_AsReadBuffer(PyArray_BASE(new),
-                                           (const void **)&buf,
-                                           &buf_len) >= 0) {
+#if defined(NPY_PY3K)
+    if (PyArray_BASE(new) &&
+            PyObject_GetBuffer(PyArray_BASE(new), &view, PyBUF_SIMPLE) >= 0) {
+        offset = PyArray_BYTES(self) - (char *)view.buf;
+        numbytes = view.len + offset;
+        PyBuffer_Release(&view);
+        _dealloc_cached_buffer_info((PyObject*)new);
+    }
+#else
+    if (PyArray_BASE(new) &&
+            PyObject_AsReadBuffer(PyArray_BASE(new), (const void **)&buf,
+                                  &buf_len) >= 0) {
         offset = PyArray_BYTES(self) - buf;
         numbytes = buf_len + offset;
     }
+#endif
     else {
         PyErr_Clear();
         offset_bounds_from_strides(PyArray_ITEMSIZE(new), PyArray_NDIM(new),
@@ -172,12 +188,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 static PyObject *
 array_priority_get(PyArrayObject *self)
 {
-    if (PyArray_CheckExact(self)) {
-        return PyFloat_FromDouble(NPY_PRIORITY);
-    }
-    else {
-        return PyFloat_FromDouble(NPY_PRIORITY);
-    }
+    return PyFloat_FromDouble(NPY_PRIORITY);
 }
 
 static PyObject *
@@ -328,6 +339,9 @@ array_data_set(PyArrayObject *self, PyObject *op)
     void *buf;
     Py_ssize_t buf_len;
     int writeable=1;
+#if defined(NPY_PY3K)
+    Py_buffer view;
+#endif
 
     /* 2016-19-02, 1.12 */
     int ret = DEPRECATE("Assigning the 'data' attribute is an "
@@ -342,18 +356,39 @@ array_data_set(PyArrayObject *self, PyObject *op)
                 "Cannot delete array data");
         return -1;
     }
-    if (PyObject_AsWriteBuffer(op, &buf, &buf_len) < 0) {
+#if defined(NPY_PY3K)
+    if (PyObject_GetBuffer(op, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         writeable = 0;
-        if (PyObject_AsReadBuffer(op, (const void **)&buf, &buf_len) < 0) {
-            PyErr_SetString(PyExc_AttributeError,
-                            "object does not have single-segment " \
-                            "buffer interface");
+        PyErr_Clear();
+        if (PyObject_GetBuffer(op, &view, PyBUF_SIMPLE) < 0) {
             return -1;
         }
     }
+    buf = view.buf;
+    buf_len = view.len;
+    /*
+     * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+     * PyObject_AsReadBuffer that this code replaces release the buffer. It is
+     * up to the object that supplies the buffer to guarantee that the buffer
+     * sticks around after the release.
+     */
+    PyBuffer_Release(&view);
+    _dealloc_cached_buffer_info(op);
+#else
+    if (PyObject_AsWriteBuffer(op, &buf, &buf_len) < 0) {
+        PyErr_Clear();
+        writeable = 0;
+        if (PyObject_AsReadBuffer(op, (const void **)&buf, &buf_len) < 0) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_AttributeError,
+                    "object does not have single-segment buffer interface");
+            return -1;
+        }
+    }
+#endif
     if (!PyArray_ISONESEGMENT(self)) {
-        PyErr_SetString(PyExc_AttributeError, "cannot set single-" \
-                        "segment buffer for discontiguous array");
+        PyErr_SetString(PyExc_AttributeError,
+                "cannot set single-segment buffer for discontiguous array");
         return -1;
     }
     if (PyArray_NBYTES(self) > buf_len) {
@@ -365,9 +400,11 @@ array_data_set(PyArrayObject *self, PyObject *op)
         PyDataMem_FREE(PyArray_DATA(self));
     }
     if (PyArray_BASE(self)) {
-        if (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY) {
+        if ((PyArray_FLAGS(self) & NPY_ARRAY_WRITEBACKIFCOPY) ||
+            (PyArray_FLAGS(self) & NPY_ARRAY_UPDATEIFCOPY)) {
             PyArray_ENABLEFLAGS((PyArrayObject *)PyArray_BASE(self),
                                                 NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEBACKIFCOPY);
             PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
         }
         Py_DECREF(PyArray_BASE(self));
@@ -470,19 +507,18 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     }
 
     /*
-     * Treat V0 as resizable void - unless the destination is already V0, then
-     * don't allow np.void to be duplicated
+     * Viewing as an unsized void implies a void dtype matching the size of the
+     * current dtype.
      */
     if (newtype->type_num == NPY_VOID &&
-            newtype->elsize == 0 &&
-            PyArray_DESCR(self)->elsize != 0) {
+            PyDataType_ISUNSIZED(newtype) &&
+            newtype->elsize != PyArray_DESCR(self)->elsize) {
         PyArray_DESCR_REPLACE(newtype);
         if (newtype == NULL) {
             return -1;
         }
         newtype->elsize = PyArray_DESCR(self)->elsize;
     }
-
 
     /* Changing the size of the dtype results in a shape change */
     if (newtype->elsize != PyArray_DESCR(self)->elsize) {
@@ -615,7 +651,7 @@ array_struct_get(PyArrayObject *self)
     inter->itemsize = PyArray_DESCR(self)->elsize;
     inter->flags = PyArray_FLAGS(self);
     /* reset unused flags */
-    inter->flags &= ~(NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_OWNDATA);
+    inter->flags &= ~(NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_UPDATEIFCOPY |NPY_ARRAY_OWNDATA);
     if (PyArray_ISNOTSWAPPED(self)) inter->flags |= NPY_ARRAY_NOTSWAPPED;
     /*
      * Copy shape and strides over since these can be reset
@@ -705,23 +741,17 @@ _get_part(PyArrayObject *self, int imag)
         Py_DECREF(type);
         type = new;
     }
-    ret = (PyArrayObject *)
-        PyArray_NewFromDescr(Py_TYPE(self),
-                             type,
-                             PyArray_NDIM(self),
-                             PyArray_DIMS(self),
-                             PyArray_STRIDES(self),
-                             PyArray_BYTES(self) + offset,
-                             PyArray_FLAGS(self), (PyObject *)self);
+    ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+            Py_TYPE(self),
+            type,
+            PyArray_NDIM(self),
+            PyArray_DIMS(self),
+            PyArray_STRIDES(self),
+            PyArray_BYTES(self) + offset,
+            PyArray_FLAGS(self), (PyObject *)self, (PyObject *)self);
     if (ret == NULL) {
         return NULL;
     }
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-    PyArray_CLEARFLAGS(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
     return ret;
 }
 

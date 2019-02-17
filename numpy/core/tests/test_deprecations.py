@@ -9,11 +9,12 @@ import datetime
 import sys
 import operator
 import warnings
+import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_raises, assert_warns, assert_no_warnings,
-    assert_array_equal, assert_, dec)
+    assert_raises, assert_warns, assert_
+    )
 
 try:
     import pytz
@@ -34,7 +35,7 @@ class _DeprecationTestCase(object):
 
         # Do *not* ignore other DeprecationWarnings. Ignoring warnings
         # can give very confusing results because of
-        # http://bugs.python.org/issue4180 and it is probably simplest to
+        # https://bugs.python.org/issue4180 and it is probably simplest to
         # try to keep the tests cleanly giving only the right warning type.
         # (While checking them set to "error" those are ignored anyway)
         # We still have them show up, because otherwise they would be raised
@@ -132,6 +133,22 @@ class _VisibleDeprecationTestCase(_DeprecationTestCase):
     warning_cls = np.VisibleDeprecationWarning
 
 
+class TestNonTupleNDIndexDeprecation(object):
+    def test_basic(self):
+        a = np.zeros((5, 5))
+        with warnings.catch_warnings():
+            warnings.filterwarnings('always')
+            assert_warns(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
+            assert_warns(FutureWarning, a.__getitem__, [slice(None)])
+
+            warnings.filterwarnings('error')
+            assert_raises(FutureWarning, a.__getitem__, [[0, 1], [0, 1]])
+            assert_raises(FutureWarning, a.__getitem__, [slice(None)])
+
+            # a a[[0, 1]] always was advanced indexing, so no error/warning
+            a[[0, 1]]
+
+
 class TestRankDeprecation(_DeprecationTestCase):
     """Test that np.rank is deprecated. The function should simply be
     removed. The VisibleDeprecationWarning may become unnecessary.
@@ -172,10 +189,10 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         b = np.array(['a', 'b', 'c'])
         assert_raises(ValueError, lambda x, y: x == y, a, b)
 
-        # The empty list is not cast to string, as this is only to document
-        # that fact (it likely should be changed). This means that the
-        # following works (and returns False) due to dtype mismatch:
-        a == []
+        # The empty list is not cast to string, and this used to pass due
+        # to dtype mismatch; now (2018-06-21) it correctly leads to a
+        # FutureWarning.
+        assert_warns(FutureWarning, lambda: a == [])
 
     def test_void_dtype_equality_failures(self):
         class NotArray(object):
@@ -242,7 +259,8 @@ class TestDatetime64Timezone(_DeprecationTestCase):
         self.assert_deprecated(np.datetime64, args=('2000-01-01T00+01',))
         self.assert_deprecated(np.datetime64, args=('2000-01-01T00Z',))
 
-    @dec.skipif(not _has_pytz, "The pytz module is not available.")
+    @pytest.mark.skipif(not _has_pytz,
+                        reason="The pytz module is not available.")
     def test_datetime(self):
         tz = pytz.timezone('US/Eastern')
         dt = datetime.datetime(2000, 1, 1, 0, 0, tzinfo=tz)
@@ -395,7 +413,7 @@ class TestClassicIntDivision(_DeprecationTestCase):
     """
     See #7949. Deprecate the numeric-style dtypes with -3 flag in python 2
     if used for division
-    List of data types: http://docs.scipy.org/doc/numpy/user/basics.types.html
+    List of data types: https://docs.scipy.org/doc/numpy/user/basics.types.html
     """
     def test_int_dtypes(self):
         #scramble types and do some mix and match testing
@@ -429,9 +447,21 @@ class TestNonNumericConjugate(_DeprecationTestCase):
 class TestNPY_CHAR(_DeprecationTestCase):
     # 2017-05-03, 1.13.0
     def test_npy_char_deprecation(self):
-        from numpy.core.multiarray_tests import npy_char_deprecation
+        from numpy.core._multiarray_tests import npy_char_deprecation
         self.assert_deprecated(npy_char_deprecation)
         assert_(npy_char_deprecation() == 'S1')
+
+
+class Test_UPDATEIFCOPY(_DeprecationTestCase):
+    """
+    v1.14 deprecates creating an array with the UPDATEIFCOPY flag, use
+    WRITEBACKIFCOPY instead
+    """
+    def test_npy_updateifcopy_deprecation(self):
+        from numpy.core._multiarray_tests import npy_updateifcopy_deprecation
+        arr = np.arange(9).reshape(3, 3)
+        v = arr.T
+        self.assert_deprecated(npy_updateifcopy_deprecation, args=(v,))
 
 
 class TestDatetimeEvent(_DeprecationTestCase):
@@ -469,5 +499,37 @@ class TestBincount(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.bincount([1, 2, 3], minlength=None))
 
 
-if __name__ == "__main__":
-    run_module_suite()
+class TestGeneratorSum(_DeprecationTestCase):
+    # 2018-02-25, 1.15.0
+    def test_generator_sum(self):
+        self.assert_deprecated(np.sum, args=((i for i in range(5)),))
+
+
+class TestSctypeNA(_VisibleDeprecationTestCase):
+    # 2018-06-24, 1.16
+    def test_sctypeNA(self):
+        self.assert_deprecated(lambda: np.sctypeNA['?'])
+        self.assert_deprecated(lambda: np.typeNA['?'])
+        self.assert_deprecated(lambda: np.typeNA.get('?'))
+
+
+class TestPositiveOnNonNumerical(_DeprecationTestCase):
+    # 2018-06-28, 1.16.0
+    def test_positive_on_non_number(self):
+        self.assert_deprecated(operator.pos, args=(np.array('foo'),))
+
+class TestFromstring(_DeprecationTestCase):
+    # 2017-10-19, 1.14
+    def test_fromstring(self):
+        self.assert_deprecated(np.fromstring, args=('\x00'*80,))
+
+class Test_GetSet_NumericOps(_DeprecationTestCase):
+    # 2018-09-20, 1.16.0
+    def test_get_numeric_ops(self):
+        from numpy.core._multiarray_tests import getset_numericops
+        self.assert_deprecated(getset_numericops, num=2)
+        
+        # empty kwargs prevents any state actually changing which would break
+        # other tests.
+        self.assert_deprecated(np.set_numeric_ops, kwargs={})
+        assert_raises(ValueError, np.set_numeric_ops, add='abc')

@@ -16,7 +16,7 @@ Building NumPy requires the following software installed:
    On Debian and derivatives (Ubuntu): python, python-dev (or python3-dev)
 
    On Windows: the official python installer at
-   `www.python.org <http://www.python.org>`_ is enough
+   `www.python.org <https://www.python.org>`_ is enough
 
    Make sure that the Python package distutils is installed before
    continuing. For example, in Debian GNU/Linux, installing python-dev
@@ -132,6 +132,8 @@ Supplying additional compiler flags
 
 Additional compiler flags can be supplied by setting the ``OPT``,
 ``FOPT`` (for Fortran), and ``CC`` environment variables.
+When providing options that should improve the performance of the code ensure
+that you also set ``-DNDEBUG`` so that debugging code is not executed.
 
 
 Building with ATLAS support

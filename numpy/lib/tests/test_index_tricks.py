@@ -1,13 +1,15 @@
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_raises,
-    assert_raises_regex
+    assert_, assert_equal, assert_array_equal, assert_almost_equal,
+    assert_array_almost_equal, assert_raises, assert_raises_regex,
+    assert_warns
     )
 from numpy.lib.index_tricks import (
-    mgrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
+    mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
     index_exp, ndindex, r_, s_, ix_
     )
 
@@ -15,6 +17,33 @@ from numpy.lib.index_tricks import (
 class TestRavelUnravelIndex(object):
     def test_basic(self):
         assert_equal(np.unravel_index(2, (2, 2)), (1, 0))
+
+        # test backwards compatibility with older dims
+        # keyword argument; see Issue #10586
+        with assert_warns(DeprecationWarning):
+            # we should achieve the correct result
+            # AND raise the appropriate warning
+            # when using older "dims" kw argument
+            assert_equal(np.unravel_index(indices=2,
+                                          dims=(2, 2)),
+                                          (1, 0))
+
+        # test that new shape argument works properly
+        assert_equal(np.unravel_index(indices=2,
+                                      shape=(2, 2)),
+                                      (1, 0))
+
+        # test that an invalid second keyword argument
+        # is properly handled
+        with assert_raises(TypeError):
+            np.unravel_index(indices=2, hape=(2, 2))
+
+        with assert_raises(TypeError):
+            np.unravel_index(2, hape=(2, 2))
+
+        with assert_raises(TypeError):
+            np.unravel_index(254, ims=(17, 94))
+
         assert_equal(np.ravel_multi_index((1, 0), (2, 2)), 2)
         assert_equal(np.unravel_index(254, (17, 94)), (2, 66))
         assert_equal(np.ravel_multi_index((2, 66), (17, 94)), 254)
@@ -114,7 +143,6 @@ class TestRavelUnravelIndex(object):
         assert_(x.flags.writeable)
         assert_(y.flags.writeable)
 
-
     def test_0d(self):
         # gh-580
         x = np.unravel_index(0, ())
@@ -157,6 +185,31 @@ class TestGrid(object):
         assert_array_almost_equal(d[1, :, 1] - d[1, :, 0],
                                   0.2*np.ones(20, 'd'), 11)
 
+    def test_sparse(self):
+        grid_full   = mgrid[-1:1:10j, -2:2:10j]
+        grid_sparse = ogrid[-1:1:10j, -2:2:10j]
+
+        # sparse grids can be made dense by broadcasting
+        grid_broadcast = np.broadcast_arrays(*grid_sparse)
+        for f, b in zip(grid_full, grid_broadcast):
+            assert_equal(f, b)
+
+    @pytest.mark.parametrize("start, stop, step, expected", [
+        (None, 10, 10j, (200, 10)),
+        (-10, 20, None, (1800, 30)),
+        ])
+    def test_mgrid_size_none_handling(self, start, stop, step, expected):
+        # regression test None value handling for
+        # start and step values used by mgrid;
+        # internally, this aims to cover previously
+        # unexplored code paths in nd_grid()
+        grid = mgrid[start:stop:step, start:stop:step]
+        # need a smaller grid to explore one of the
+        # untested code paths
+        grid_small = mgrid[start:stop:step]
+        assert_equal(grid.size, expected[0])
+        assert_equal(grid_small.size, expected[1])
+
 
 class TestConcatenator(object):
     def test_1d(self):
@@ -173,6 +226,11 @@ class TestConcatenator(object):
         g = r_[-10.1, np.array([1]), np.array([2, 3, 4]), 10.0]
         assert_(g.dtype == 'f8')
 
+    def test_complex_step(self):
+        # Regression test for #12262
+        g = r_[0:36:100j]
+        assert_(g.shape == (100,))
+
     def test_2d(self):
         b = np.random.rand(5, 5)
         c = np.random.rand(5, 5)
@@ -185,36 +243,10 @@ class TestConcatenator(object):
         assert_array_equal(d[:5, :], b)
         assert_array_equal(d[5:, :], c)
 
-    def test_matrix(self):
-        a = [1, 2]
-        b = [3, 4]
-
-        ab_r = np.r_['r', a, b]
-        ab_c = np.r_['c', a, b]
-
-        assert_equal(type(ab_r), np.matrix)
-        assert_equal(type(ab_c), np.matrix)
-
-        assert_equal(np.array(ab_r), [[1,2,3,4]])
-        assert_equal(np.array(ab_c), [[1],[2],[3],[4]])
-
-        assert_raises(ValueError, lambda: np.r_['rc', a, b])
-
-    def test_matrix_scalar(self):
-        r = np.r_['r', [1, 2], 3]
-        assert_equal(type(r), np.matrix)
-        assert_equal(np.array(r), [[1,2,3]])
-
-    def test_matrix_builder(self):
-        a = np.array([1])
-        b = np.array([2])
-        c = np.array([3])
-        d = np.array([4])
-        actual = np.r_['a, b; c, d']
-        expected = np.bmat([[a, b], [c, d]])
-
-        assert_equal(actual, expected)
-        assert_equal(type(actual), type(expected))
+    def test_0d(self):
+        assert_equal(r_[0, np.array(1), 2], [0, 1, 2])
+        assert_equal(r_[[0, 1, 2], np.array(3)], [0, 1, 2, 3])
+        assert_equal(r_[np.array(0), [1, 2, 3]], [0, 1, 2, 3])
 
 
 class TestNdenumerate(object):
@@ -240,7 +272,7 @@ class TestIndexExpression(object):
 
 class TestIx_(object):
     def test_regression_1(self):
-        # Test empty inputs create ouputs of indexing type, gh-5804
+        # Test empty inputs create outputs of indexing type, gh-5804
         # Test both lists and arrays
         for func in (range, np.arange):
             a, = np.ix_(func(0))
@@ -280,71 +312,90 @@ def test_c_():
     assert_equal(a, [[1, 2, 3, 0, 0, 4, 5, 6]])
 
 
-def test_fill_diagonal():
-    a = np.zeros((3, 3), int)
-    fill_diagonal(a, 5)
-    yield (assert_array_equal, a,
-           np.array([[5, 0, 0],
-                  [0, 5, 0],
-                  [0, 0, 5]]))
+class TestFillDiagonal(object):
+    def test_basic(self):
+        a = np.zeros((3, 3), int)
+        fill_diagonal(a, 5)
+        assert_array_equal(
+            a, np.array([[5, 0, 0],
+                         [0, 5, 0],
+                         [0, 0, 5]])
+            )
 
-    #Test tall matrix
-    a = np.zeros((10, 3), int)
-    fill_diagonal(a, 5)
-    yield (assert_array_equal, a,
-           np.array([[5, 0, 0],
-                  [0, 5, 0],
-                  [0, 0, 5],
-                  [0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0],
-                  [0, 0, 0]]))
+    def test_tall_matrix(self):
+        a = np.zeros((10, 3), int)
+        fill_diagonal(a, 5)
+        assert_array_equal(
+            a, np.array([[5, 0, 0],
+                         [0, 5, 0],
+                         [0, 0, 5],
+                         [0, 0, 0],
+                         [0, 0, 0],
+                         [0, 0, 0],
+                         [0, 0, 0],
+                         [0, 0, 0],
+                         [0, 0, 0],
+                         [0, 0, 0]])
+            )
 
-    #Test tall matrix wrap
-    a = np.zeros((10, 3), int)
-    fill_diagonal(a, 5, True)
-    yield (assert_array_equal, a,
-           np.array([[5, 0, 0],
-                  [0, 5, 0],
-                  [0, 0, 5],
-                  [0, 0, 0],
-                  [5, 0, 0],
-                  [0, 5, 0],
-                  [0, 0, 5],
-                  [0, 0, 0],
-                  [5, 0, 0],
-                  [0, 5, 0]]))
+    def test_tall_matrix_wrap(self):
+        a = np.zeros((10, 3), int)
+        fill_diagonal(a, 5, True)
+        assert_array_equal(
+            a, np.array([[5, 0, 0],
+                         [0, 5, 0],
+                         [0, 0, 5],
+                         [0, 0, 0],
+                         [5, 0, 0],
+                         [0, 5, 0],
+                         [0, 0, 5],
+                         [0, 0, 0],
+                         [5, 0, 0],
+                         [0, 5, 0]])
+            )
 
-    #Test wide matrix
-    a = np.zeros((3, 10), int)
-    fill_diagonal(a, 5)
-    yield (assert_array_equal, a,
-           np.array([[5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                  [0, 5, 0, 0, 0, 0, 0, 0, 0, 0],
-                  [0, 0, 5, 0, 0, 0, 0, 0, 0, 0]]))
+    def test_wide_matrix(self):
+        a = np.zeros((3, 10), int)
+        fill_diagonal(a, 5)
+        assert_array_equal(
+            a, np.array([[5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                         [0, 5, 0, 0, 0, 0, 0, 0, 0, 0],
+                         [0, 0, 5, 0, 0, 0, 0, 0, 0, 0]])
+            )
 
-    # The same function can operate on a 4-d array:
-    a = np.zeros((3, 3, 3, 3), int)
-    fill_diagonal(a, 4)
-    i = np.array([0, 1, 2])
-    yield (assert_equal, np.where(a != 0), (i, i, i, i))
+    def test_operate_4d_array(self):
+        a = np.zeros((3, 3, 3, 3), int)
+        fill_diagonal(a, 4)
+        i = np.array([0, 1, 2])
+        assert_equal(np.where(a != 0), (i, i, i, i))
+
+    def test_low_dim_handling(self):
+        # raise error with low dimensionality
+        a = np.zeros(3, int)
+        with assert_raises_regex(ValueError, "at least 2-d"):
+            fill_diagonal(a, 5)
+
+    def test_hetero_shape_handling(self):
+        # raise error with high dimensionality and
+        # shape mismatch
+        a = np.zeros((3,3,7,3), int)
+        with assert_raises_regex(ValueError, "equal length"):
+            fill_diagonal(a, 2)
 
 
 def test_diag_indices():
     di = diag_indices(4)
     a = np.array([[1, 2, 3, 4],
-               [5, 6, 7, 8],
-               [9, 10, 11, 12],
-               [13, 14, 15, 16]])
+                  [5, 6, 7, 8],
+                  [9, 10, 11, 12],
+                  [13, 14, 15, 16]])
     a[di] = 100
-    yield (assert_array_equal, a,
-           np.array([[100, 2, 3, 4],
-                  [5, 100, 7, 8],
-                  [9, 10, 100, 12],
-                  [13, 14, 15, 100]]))
+    assert_array_equal(
+        a, np.array([[100, 2, 3, 4],
+                     [5, 100, 7, 8],
+                     [9, 10, 100, 12],
+                     [13, 14, 15, 100]])
+        )
 
     # Now, we create indices to manipulate a 3-d array:
     d3 = diag_indices(2, 3)
@@ -352,19 +403,31 @@ def test_diag_indices():
     # And use it to set the diagonal of a zeros array to 1:
     a = np.zeros((2, 2, 2), int)
     a[d3] = 1
-    yield (assert_array_equal, a,
-           np.array([[[1, 0],
-                   [0, 0]],
+    assert_array_equal(
+        a, np.array([[[1, 0],
+                      [0, 0]],
+                     [[0, 0],
+                      [0, 1]]])
+        )
 
-                  [[0, 0],
-                   [0, 1]]]))
 
+class TestDiagIndicesFrom(object):
 
-def test_diag_indices_from():
-    x = np.random.random((4, 4))
-    r, c = diag_indices_from(x)
-    assert_array_equal(r, np.arange(4))
-    assert_array_equal(c, np.arange(4))
+    def test_diag_indices_from(self):
+        x = np.random.random((4, 4))
+        r, c = diag_indices_from(x)
+        assert_array_equal(r, np.arange(4))
+        assert_array_equal(c, np.arange(4))
+
+    def test_error_small_input(self):
+        x = np.ones(7)
+        with assert_raises_regex(ValueError, "at least 2-d"):
+            diag_indices_from(x)
+
+    def test_error_shape_mismatch(self):
+        x = np.zeros((3, 3, 2, 3), int)
+        with assert_raises_regex(ValueError, "equal length"):
+            diag_indices_from(x)
 
 
 def test_ndindex():
@@ -389,7 +452,3 @@ def test_ndindex():
     # Make sure 0-sized ndindex works correctly
     x = list(ndindex(*[0]))
     assert_equal(x, [])
-
-
-if __name__ == "__main__":
-    run_module_suite()

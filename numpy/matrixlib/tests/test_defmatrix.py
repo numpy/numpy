@@ -1,14 +1,19 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstract classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 
 import numpy as np
 from numpy import matrix, asmatrix, bmat
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_almost_equal,
-    assert_array_equal, assert_array_almost_equal, assert_raises
-)
-from numpy.matrixlib.defmatrix import matrix_power
+    assert_, assert_equal, assert_almost_equal, assert_array_equal,
+    assert_array_almost_equal, assert_raises
+    )
+from numpy.linalg import matrix_power
 from numpy.matrixlib import mat
 
 class TestCtor(object):
@@ -261,21 +266,13 @@ class TestAlgebra(object):
                     [3., 4.]])
 
         # __rpow__
-        try:
+        with assert_raises(TypeError):
             1.0**A
-        except TypeError:
-            pass
-        else:
-            self.fail("matrix.__rpow__ doesn't raise a TypeError")
 
         # __mul__ with something not a list, ndarray, tuple, or scalar
-        try:
+        with assert_raises(TypeError):
             A*object()
-        except TypeError:
-            pass
-        else:
-            self.fail("matrix.__mul__ with non-numeric object doesn't raise"
-                      "a TypeError")
+
 
 class TestMatrixReturn(object):
     def test_instance_methods(self):
@@ -302,7 +299,7 @@ class TestMatrixReturn(object):
             if attrib.startswith('_') or attrib in excluded_methods:
                 continue
             f = getattr(a, attrib)
-            if isinstance(f, collections.Callable):
+            if isinstance(f, collections_abc.Callable):
                 # reset contents of a
                 a.astype('f8')
                 a.fill(1.0)
@@ -454,6 +451,10 @@ class TestShape(object):
         assert_(np.may_share_memory(self.m, self.m.ravel()))
         assert_(not np.may_share_memory(self.m, self.m.flatten()))
 
-
-if __name__ == "__main__":
-    run_module_suite()
+    def test_expand_dims_matrix(self):
+        # matrices are always 2d - so expand_dims only makes sense when the
+        # type is changed away from matrix.
+        a = np.arange(10).reshape((2, 5)).view(np.matrix)
+        expanded = np.expand_dims(a, axis=1)
+        assert_equal(expanded.ndim, 3)
+        assert_(not isinstance(expanded, np.matrix))

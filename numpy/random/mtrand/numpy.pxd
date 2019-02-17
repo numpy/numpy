@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 # :Author:    Travis Oliphant
 from cpython.exc cimport PyErr_Print
 
@@ -41,7 +43,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ARRAY_ALIGNED
         NPY_ARRAY_NOTSWAPPED
         NPY_ARRAY_WRITEABLE
-        NPY_ARRAY_UPDATEIFCOPY
+        NPY_ARRAY_WRITEBACKIFCOPY
         NPY_ARR_HAS_DESCR
 
         NPY_ARRAY_BEHAVED

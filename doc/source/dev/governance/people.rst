@@ -28,6 +28,8 @@ Steering council
 
 * Allan Haldane
 
+* Stefan van der Walt
+
 
 Emeritus members
 ----------------
@@ -54,7 +56,7 @@ NumFOCUS Subcommittee
 Institutional Partners
 ----------------------
 
-*  UC Berkeley (Nathaniel Smith)
+*  UC Berkeley (Stefan van der Walt)
 
 
 Document history

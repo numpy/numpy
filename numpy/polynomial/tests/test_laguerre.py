@@ -3,12 +3,13 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.laguerre as lag
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite
     )
 
 L0 = np.array([1])/1
@@ -96,6 +97,15 @@ class TestArithmetic(object):
                 quo, rem = lag.lagdiv(tgt, ci)
                 res = lag.lagadd(lag.lagmul(quo, ci), rem)
                 assert_almost_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_lagpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(lag.lagmul, [c]*j, np.array([1]))
+                res = lag.lagpow(c, j) 
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
 class TestEvaluation(object):
@@ -527,7 +537,3 @@ class TestMisc(object):
         tgt = np.exp(-x)
         res = lag.lagweight(x)
         assert_almost_equal(res, tgt)
-
-
-if __name__ == "__main__":
-    run_module_suite()

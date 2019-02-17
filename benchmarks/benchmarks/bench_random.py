@@ -65,3 +65,18 @@ class Randint_dtype(Benchmark):
         high = self.high[name]
         np.random.randint(0, high + 1, size=10**5, dtype=name)
 
+
+class Permutation(Benchmark):
+    def setup(self):
+        self.n = 10000
+        self.a_1d = np.random.random_sample(self.n)
+        self.a_2d = np.random.random_sample((self.n, 2))
+    
+    def time_permutation_1d(self):
+        np.random.permutation(self.a_1d)
+
+    def time_permutation_2d(self):
+        np.random.permutation(self.a_2d)        
+
+    def time_permutation_int(self):
+        np.random.permutation(self.n)

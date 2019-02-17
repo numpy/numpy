@@ -156,19 +156,19 @@ def as_series(alist, trim=True):
     >>> from numpy.polynomial import polyutils as pu
     >>> a = np.arange(4)
     >>> pu.as_series(a)
-    [array([ 0.]), array([ 1.]), array([ 2.]), array([ 3.])]
+    [array([0.]), array([1.]), array([2.]), array([3.])]
     >>> b = np.arange(6).reshape((2,3))
     >>> pu.as_series(b)
-    [array([ 0.,  1.,  2.]), array([ 3.,  4.,  5.])]
+    [array([0., 1., 2.]), array([3., 4., 5.])]
 
     >>> pu.as_series((1, np.arange(3), np.arange(2, dtype=np.float16)))
-    [array([ 1.]), array([ 0.,  1.,  2.]), array([ 0.,  1.])]
+    [array([1.]), array([0., 1., 2.]), array([0., 1.])]
 
     >>> pu.as_series([2, [1.1, 0.]])
-    [array([ 2.]), array([ 1.1])]
+    [array([2.]), array([1.1])]
 
     >>> pu.as_series([2, [1.1, 0.]], trim=False)
-    [array([ 2.]), array([ 1.1,  0. ])]
+    [array([2.]), array([1.1, 0. ])]
 
     """
     arrays = [np.array(a, ndmin=1, copy=0) for a in alist]
@@ -233,12 +233,12 @@ def trimcoef(c, tol=0):
     --------
     >>> from numpy.polynomial import polyutils as pu
     >>> pu.trimcoef((0,0,3,0,5,0,0))
-    array([ 0.,  0.,  3.,  0.,  5.])
+    array([0.,  0.,  3.,  0.,  5.])
     >>> pu.trimcoef((0,0,1e-3,0,1e-5,0,0),1e-3) # item == tol is trimmed
-    array([ 0.])
+    array([0.])
     >>> i = complex(0,1) # works for complex
     >>> pu.trimcoef((3e-4,1e-3*(1-i),5e-4,2e-5*(1+i)), 1e-3)
-    array([ 0.0003+0.j   ,  0.0010-0.001j])
+    array([0.0003+0.j   , 0.001 -0.001j])
 
     """
     if tol < 0:
@@ -332,10 +332,10 @@ def mapparms(old, new):
     >>> pu.mapparms((-1,1),(-1,1))
     (0.0, 1.0)
     >>> pu.mapparms((1,-1),(-1,1))
-    (0.0, -1.0)
+    (-0.0, -1.0)
     >>> i = complex(0,1)
     >>> pu.mapparms((-i,-1),(1,i))
-    ((1+1j), (1+0j))
+    ((1+1j), (1-0j))
 
     """
     oldlen = old[1] - old[0]
@@ -390,10 +390,10 @@ def mapdomain(x, old, new):
     >>> x = np.linspace(-1,1,6); x
     array([-1. , -0.6, -0.2,  0.2,  0.6,  1. ])
     >>> x_out = pu.mapdomain(x, old_domain, new_domain); x_out
-    array([ 0.        ,  1.25663706,  2.51327412,  3.76991118,  5.02654825,
+    array([ 0.        ,  1.25663706,  2.51327412,  3.76991118,  5.02654825, # may vary
             6.28318531])
     >>> x - pu.mapdomain(x_out, new_domain, old_domain)
-    array([ 0.,  0.,  0.,  0.,  0.,  0.])
+    array([0., 0., 0., 0., 0., 0.])
 
     Also works for complex numbers (and thus can be used to map any line in
     the complex plane to any other line therein).
@@ -402,9 +402,9 @@ def mapdomain(x, old, new):
     >>> old = (-1 - i, 1 + i)
     >>> new = (-1 + i, 1 - i)
     >>> z = np.linspace(old[0], old[1], 6); z
-    array([-1.0-1.j , -0.6-0.6j, -0.2-0.2j,  0.2+0.2j,  0.6+0.6j,  1.0+1.j ])
-    >>> new_z = P.mapdomain(z, old, new); new_z
-    array([-1.0+1.j , -0.6+0.6j, -0.2+0.2j,  0.2-0.2j,  0.6-0.6j,  1.0-1.j ])
+    array([-1. -1.j , -0.6-0.6j, -0.2-0.2j,  0.2+0.2j,  0.6+0.6j,  1. +1.j ])
+    >>> new_z = pu.mapdomain(z, old, new); new_z
+    array([-1.0+1.j , -0.6+0.6j, -0.2+0.2j,  0.2-0.2j,  0.6-0.6j,  1.0-1.j ]) # may vary
 
     """
     x = np.asanyarray(x)

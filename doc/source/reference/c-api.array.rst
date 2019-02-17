@@ -76,9 +76,10 @@ sub-types).
     your own memory, you should use the function :c:func:`PyArray_SetBaseObject`
     to set the base to an object which owns the memory.
 
-    If the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag is set, it has a different
+    If the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or the
+    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flags are set, it has a different
     meaning, namely base is the array into which the current array will
-    be copied upon destruction. This overloading of the base property
+    be copied upon copy resolution. This overloading of the base property
     for two functions is likely to change in a future version of NumPy.
 
 .. c:function:: PyArray_Descr *PyArray_DESCR(PyArrayObject* arr)
@@ -121,9 +122,11 @@ sub-types).
 
 .. c:function:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
-    Get a Python object from the ndarray, *arr*, at the location
-    pointed to by itemptr. Return ``NULL`` on failure.
-
+    Get a Python object of a builtin type from the ndarray, *arr*, 
+    at the location pointed to by itemptr. Return ``NULL`` on failure.
+    
+    `numpy.ndarray.item` is identical to PyArray_GETITEM.
+    
 .. c:function:: int PyArray_SETITEM( \
         PyArrayObject* arr, void* itemptr, PyObject* obj)
 
@@ -199,7 +202,8 @@ From scratch
         PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, \
         npy_intp* strides, void* data, int flags, PyObject* obj)
 
-    This function steals a reference to *descr*.
+    This function steals a reference to *descr*. The easiest way to get one
+    is using :c:func:`PyArray_DescrFromType`.
 
     This is the main array creation function. Most new arrays are
     created with this flexible function.
@@ -213,13 +217,15 @@ From scratch
     :c:data:`&PyArray_Type<PyArray_Type>`, then *obj* is the object to pass to
     the :obj:`~numpy.class.__array_finalize__` method of the subclass.
 
-    If *data* is ``NULL``, then new memory will be allocated and *flags*
-    can be non-zero to indicate a Fortran-style contiguous array. If
-    *data* is not ``NULL``, then it is assumed to point to the memory
+    If *data* is ``NULL``, then new unitinialized memory will be allocated and
+    *flags* can be non-zero to indicate a Fortran-style contiguous array. Use
+    :c:ref:`PyArray_FILLWBYTE` to initialze the memory.
+
+    If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the
-    new flags for the array (except the state of :c:data:`NPY_OWNDATA`
-    and :c:data:`NPY_ARRAY_UPDATEIFCOPY` flags of the new array will
-    be reset).
+    new flags for the array (except the state of :c:data:`NPY_OWNDATA`,
+    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and :c:data:`NPY_ARRAY_UPDATEIFCOPY`
+    flags of the new array will be reset).
 
     In addition, if *data* is non-NULL, then *strides* can
     also be provided. If *strides* is ``NULL``, then the array strides
@@ -228,6 +234,12 @@ From scratch
     :c:data:`NPY_ARRAY_F_CONTIGUOUS` is nonzero non-NULL *data*). Any
     provided *dims* and *strides* are copied into newly allocated
     dimension and strides arrays for the new array object.
+
+    :c:func:`PyArray_CheckStrides` can help verify non- ``NULL`` stride
+    information.
+
+    If ``data`` is provided, it must stay alive for the life of the array. One
+    way to manage this is through :c:func:`PyArray_SetBaseObject`
 
 .. c:function:: PyObject* PyArray_NewLikeArray( \
         PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr, \
@@ -295,10 +307,10 @@ From scratch
 .. c:function:: PyObject* PyArray_SimpleNewFromDescr( \
         int nd, npy_intp* dims, PyArray_Descr* descr)
 
-    This function steals a reference to *descr* if it is not NULL.
+    This function steals a reference to *descr*.
 
-    Create a new array with the provided data-type descriptor, *descr*
-    , of the shape determined by *nd* and *dims*.
+    Create a new array with the provided data-type descriptor, *descr*,
+    of the shape determined by *nd* and *dims*.
 
 .. c:function:: PyArray_FILLWBYTE(PyObject* obj, int val)
 
@@ -381,10 +393,11 @@ From other objects
     sequence, or object that exposes the array interface, *op*. The
     parameters allow specification of the required *dtype*, the
     minimum (*min_depth*) and maximum (*max_depth*) number of
-    dimensions acceptable, and other *requirements* for the array. The
-    *dtype* argument needs to be a :c:type:`PyArray_Descr` structure
+    dimensions acceptable, and other *requirements* for the array. This
+    function **steals a reference** to the dtype argument, which needs
+    to be a :c:type:`PyArray_Descr` structure
     indicating the desired data-type (including required
-    byteorder). The *dtype* argument may be NULL, indicating that any
+    byteorder). The *dtype* argument may be ``NULL``, indicating that any
     data-type (and byteorder) is acceptable. Unless
     :c:data:`NPY_ARRAY_FORCECAST` is present in ``flags``,
     this call will generate an error if the data
@@ -402,10 +415,6 @@ From other objects
     is passed to the :obj:`~numpy.class.__array__` method of *op* and is only used if
     the array is constructed that way. Almost always this
     parameter is ``NULL``.
-
-    In versions 1.6 and earlier of NumPy, the following flags
-    did not have the ``_ARRAY_`` macro namespace in them. That form
-    of the constant names is deprecated in 1.7.
 
     .. c:var:: NPY_ARRAY_C_CONTIGUOUS
 
@@ -444,18 +453,25 @@ From other objects
         safely.  Without this flag, a data cast will occur only if it
         can be done safely, otherwise an error is raised.
 
-    .. c:var:: NPY_ARRAY_UPDATEIFCOPY
+    .. c:var:: NPY_ARRAY_WRITEBACKIFCOPY
 
         If *op* is already an array, but does not satisfy the
         requirements, then a copy is made (which will satisfy the
         requirements). If this flag is present and a copy (of an object
         that is already an array) must be made, then the corresponding
-        :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag is set in the returned
-        copy and *op* is made to be read-only. When the returned copy
-        is deleted (presumably after your calculations are complete),
-        its contents will be copied back into *op* and the *op* array
+        :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag is set in the returned
+        copy and *op* is made to be read-only. You must be sure to call
+        :c:func:`PyArray_ResolveWritebackIfCopy` to copy the contents
+        back into *op* and the *op* array
         will be made writeable again. If *op* is not writeable to begin
         with, or if it is not already an array, then an error is raised.
+
+    .. c:var:: NPY_ARRAY_UPDATEIFCOPY
+
+        Deprecated. Use :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, which is similar.
+        This flag "automatically" copies the data back when the returned
+        array is deallocated, which is not supported in all python
+        implementations.
 
     .. c:var:: NPY_ARRAY_BEHAVED
 
@@ -502,12 +518,14 @@ From other objects
     .. c:var:: NPY_ARRAY_INOUT_ARRAY
 
         :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_UPDATEIFCOPY`
+        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
+        :c:data:`NPY_ARRAY_UPDATEIFCOPY`
 
     .. c:var:: NPY_ARRAY_INOUT_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_UPDATEIFCOPY`
+        :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
+        :c:data:`NPY_ARRAY_UPDATEIFCOPY`
 
 .. c:function:: int PyArray_GetArrayParamsFromObject( \
         PyObject* op, PyArray_Descr* requested_dtype, npy_bool writeable, \
@@ -752,7 +770,8 @@ From other objects
     :c:data:`NPY_ARRAY_C_CONTIGUOUS`, :c:data:`NPY_ARRAY_F_CONTIGUOUS`,
     :c:data:`NPY_ARRAY_ALIGNED`, :c:data:`NPY_ARRAY_WRITEABLE`,
     :c:data:`NPY_ARRAY_NOTSWAPPED`, :c:data:`NPY_ARRAY_ENSURECOPY`,
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY`, :c:data:`NPY_ARRAY_FORCECAST`, and
+    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, :c:data:`NPY_ARRAY_UPDATEIFCOPY`,
+    :c:data:`NPY_ARRAY_FORCECAST`, and
     :c:data:`NPY_ARRAY_ENSUREARRAY`. Standard combinations of flags can also
     be used:
 
@@ -946,6 +965,12 @@ argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpret
 
     Type represents one of the flexible array types ( :c:data:`NPY_STRING`,
     :c:data:`NPY_UNICODE`, or :c:data:`NPY_VOID` ).
+
+.. c:function:: PyDataType_ISUNSIZED(descr):
+
+    Type has no size information attached, and can be resized. Should only be
+    called on flexible dtypes. Types that are attached to an array will always
+    be sized, hence the array form of this macro not existing.
 
 .. c:function:: PyTypeNum_ISUSERDEF(num)
 
@@ -1330,6 +1355,26 @@ Special functions for NPY_OBJECT
     decrement all the items in the object array prior to calling this
     function.
 
+.. c:function:: int PyArray_SetUpdateIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
+
+    Precondition: ``arr`` is a copy of ``base`` (though possibly with different
+    strides, ordering, etc.) Set the UPDATEIFCOPY flag and ``arr->base`` so
+    that when ``arr`` is destructed, it will copy any changes back to ``base``.
+    DEPRECATED, use :c:func:`PyArray_SetWritebackIfCopyBase``.
+
+    Returns 0 for success, -1 for failure.
+
+.. c:function:: int PyArray_SetWritebackIfCopyBase(PyArrayObject* arr, PyArrayObject* base)
+
+    Precondition: ``arr`` is a copy of ``base`` (though possibly with different
+    strides, ordering, etc.) Sets the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag
+    and ``arr->base``, and set ``base`` to READONLY. Call
+    :c:func:`PyArray_ResolveWritebackIfCopy` before calling
+    `Py_DECREF`` in order copy any changes back to ``base`` and
+    reset the READONLY flag.
+
+    Returns 0 for success, -1 for failure.
+
 
 Array flags
 -----------
@@ -1409,23 +1454,32 @@ of the constant names is deprecated in 1.7.
     Notice that the above 3 flags are defined so that a new, well-
     behaved array has these flags defined as true.
 
-.. c:var:: NPY_ARRAY_UPDATEIFCOPY
+.. c:var:: NPY_ARRAY_WRITEBACKIFCOPY
 
     The data area represents a (well-behaved) copy whose information
-    should be transferred back to the original when this array is deleted.
+    should be transferred back to the original when
+    :c:func:`PyArray_ResolveWritebackIfCopy` is called.
 
     This is a special flag that is set if this array represents a copy
     made because a user required certain flags in
     :c:func:`PyArray_FromAny` and a copy had to be made of some other
     array (and the user asked for this flag to be set in such a
     situation). The base attribute then points to the "misbehaved"
-    array (which is set read_only). When the array with this flag set
-    is deallocated, it will copy its contents back to the "misbehaved"
+    array (which is set read_only). :c:func`PyArray_ResolveWritebackIfCopy`
+    will copy its contents back to the "misbehaved"
     array (casting if necessary) and will reset the "misbehaved" array
     to :c:data:`NPY_ARRAY_WRITEABLE`. If the "misbehaved" array was not
     :c:data:`NPY_ARRAY_WRITEABLE` to begin with then :c:func:`PyArray_FromAny`
-    would have returned an error because :c:data:`NPY_ARRAY_UPDATEIFCOPY`
+    would have returned an error because :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
     would not have been possible.
+
+.. c:var:: NPY_ARRAY_UPDATEIFCOPY
+
+    A deprecated version of :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` which
+    depends upon ``dealloc`` to trigger the writeback. For backwards
+    compatibility, :c:func:`PyArray_ResolveWritebackIfCopy` is called at
+    ``dealloc`` but relying
+    on that behavior is deprecated and not supported in PyPy.
 
 :c:func:`PyArray_UpdateFlags` (obj, flags) will update the ``obj->flags``
 for ``flags`` which can be any of :c:data:`NPY_ARRAY_C_CONTIGUOUS`,
@@ -1507,7 +1561,8 @@ For all of these macros *arr* must be an instance of a (subclass of)
     combinations of the possible flags an array can have:
     :c:data:`NPY_ARRAY_C_CONTIGUOUS`, :c:data:`NPY_ARRAY_F_CONTIGUOUS`,
     :c:data:`NPY_ARRAY_OWNDATA`, :c:data:`NPY_ARRAY_ALIGNED`,
-    :c:data:`NPY_ARRAY_WRITEABLE`, :c:data:`NPY_ARRAY_UPDATEIFCOPY`.
+    :c:data:`NPY_ARRAY_WRITEABLE`, :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`,
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY`.
 
 .. c:function:: PyArray_IS_C_CONTIGUOUS(arr)
 
@@ -1849,22 +1904,23 @@ Item selection and manipulation
         all values are clipped to the region [0, len(*op*) ).
 
 
-.. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis)
+.. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
 
-    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*). Return an array with
-    the items of *self* sorted along *axis*.
+    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*).
+    Return an array with the items of *self* sorted along *axis*. The array
+    is sorted using the algorithm denoted by *kind* , which is an integer/enum pointing
+    to the type of sorting algorithms used.
 
 .. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis)
 
-    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*). Return an array of
-    indices such that selection of these indices along the given
-    ``axis`` would return a sorted version of *self*. If *self*
-    ->descr is a data-type with fields defined, then
-    self->descr->names is used to determine the sort order. A
-    comparison where the first field is equal will use the second
-    field and so on. To alter the sort order of a structured array, create
-    a new data-type with a different order of names and construct a
-    view of the array with that new data-type.
+    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*).
+    Return an array of indices such that selection of these indices
+    along the given ``axis`` would return a sorted version of *self*. If *self* ->descr
+    is a data-type with fields defined, then self->descr->names is used
+    to determine the sort order. A comparison where the first field is equal
+    will use the second field and so on. To alter the sort order of a
+    structured array, create a new data-type with a different order of names
+    and construct a view of the array with that new data-type.
 
 .. c:function:: PyObject* PyArray_LexSort(PyObject* sort_keys, int axis)
 
@@ -2799,7 +2855,10 @@ Data-type descriptors
 
     Returns a data-type object corresponding to *typenum*. The
     *typenum* can be one of the enumerated types, a character code for
-    one of the enumerated types, or a user-defined type.
+    one of the enumerated types, or a user-defined type. If you want to use a
+    flexible size array, then you need to ``flexible typenum`` and set the
+    results ``elsize`` parameter to the desired size. The typenum is one of the
+    :c:data:`NPY_TYPES`.
 
 .. c:function:: int PyArray_DescrConverter(PyObject* obj, PyArray_Descr** dtype)
 
@@ -2930,8 +2989,11 @@ to.
 .. c:function:: int PyArray_SortkindConverter(PyObject* obj, NPY_SORTKIND* sort)
 
     Convert Python strings into one of :c:data:`NPY_QUICKSORT` (starts
-    with 'q' or 'Q') , :c:data:`NPY_HEAPSORT` (starts with 'h' or 'H'),
-    or :c:data:`NPY_MERGESORT` (starts with 'm' or 'M').
+    with 'q' or 'Q'), :c:data:`NPY_HEAPSORT` (starts with 'h' or 'H'),
+    :c:data:`NPY_MERGESORT` (starts with 'm' or 'M') or :c:data:`NPY_STABLESORT`
+    (starts with 't' or 'T'). :c:data:`NPY_MERGESORT` and :c:data:`NPY_STABLESORT`
+    are aliased to each other for backwards compatibility and may refer to one
+    of several stable sorting algorithms depending on the data type.
 
 .. c:function:: int PyArray_SearchsideConverter( \
         PyObject* obj, NPY_SEARCHSIDE* side)
@@ -3159,11 +3221,15 @@ Internal Flexibility
     setting a Python Error) if one of the objects being assigned is not
     callable.
 
+    .. deprecated:: 1.16
+
 .. c:function:: PyObject* PyArray_GetNumericOps(void)
 
     Return a Python dictionary containing the callable Python objects
     stored in the internal arithmetic operation table. The keys of
     this dictionary are given in the explanation for :c:func:`PyArray_SetNumericOps`.
+
+    .. deprecated:: 1.16
 
 .. c:function:: void PyArray_SetStringFunction(PyObject* op, int repr)
 
@@ -3209,6 +3275,19 @@ Memory management
     :c:data:`NPY_USE_PYMEM` is 0, if :c:data:`NPY_USE_PYMEM` is 1, then
     the Python memory allocator is used.
 
+.. c:function:: int PyArray_ResolveWritebackIfCopy(PyArrayObject* obj)
+
+    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or (deprecated)
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY`, this function clears the flags, `DECREF` s
+    `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. It then
+    copies ``obj->data`` to `obj->base->data`, and returns the error state of
+    the copy operation. This is the opposite of
+    :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called once
+    you are finished with ``obj``, just before ``Py_DECREF(obj)``. It may be called
+    multiple times, or with ``NULL`` input. See also
+    :c:func:`PyArray_DiscardWritebackIfCopy`.
+
+    Returns 0 if nothing was done, -1 on error, and 1 if action was taken.
 
 Threading support
 ^^^^^^^^^^^^^^^^^
@@ -3426,13 +3505,28 @@ Miscellaneous Macros
 
     Returns the reference count of any Python object.
 
-.. c:function:: PyArray_XDECREF_ERR(PyObject \*obj)
+.. c:function:: PyArray_DiscardWritebackIfCopy(PyObject* obj)
 
-    DECREF's an array object which may have the :c:data:`NPY_ARRAY_UPDATEIFCOPY`
+    If ``obj.flags`` has :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or (deprecated)
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY`, this function clears the flags, `DECREF` s
+    `obj->base` and makes it writeable, and sets ``obj->base`` to NULL. In
+    contrast to :c:func:`PyArray_DiscardWritebackIfCopy` it makes no attempt
+    to copy the data from `obj->base` This undoes
+    :c:func:`PyArray_SetWritebackIfCopyBase`. Usually this is called after an
+    error when you are finished with ``obj``, just before ``Py_DECREF(obj)``.
+    It may be called multiple times, or with ``NULL`` input.
+
+.. c:function:: PyArray_XDECREF_ERR(PyObject* obj)
+
+    Deprecated in 1.14, use :c:func:`PyArray_DiscardWritebackIfCopy`
+    followed by ``Py_XDECREF``
+
+    DECREF's an array object which may have the (deprecated)
+    :c:data:`NPY_ARRAY_UPDATEIFCOPY` or :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`
     flag set without causing the contents to be copied back into the
     original array. Resets the :c:data:`NPY_ARRAY_WRITEABLE` flag on the base
     object. This is useful for recovering from an error condition when
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY` is used.
+    writeback semantics are used, but will lead to wrong results.
 
 
 Enumerated Types
@@ -3443,11 +3537,15 @@ Enumerated Types
     A special variable-type which can take on the values :c:data:`NPY_{KIND}`
     where ``{KIND}`` is
 
-        **QUICKSORT**, **HEAPSORT**, **MERGESORT**
+        **QUICKSORT**, **HEAPSORT**, **MERGESORT**, **STABLESORT**
 
     .. c:var:: NPY_NSORTS
 
-       Defined to be the number of sorts.
+       Defined to be the number of sorts. It is fixed at three by the need for
+       backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
+       :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
+       of several stable sorting algorithms depending on the data type.
+
 
 .. c:type:: NPY_SCALARKIND
 

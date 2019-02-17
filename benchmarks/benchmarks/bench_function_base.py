@@ -96,15 +96,50 @@ class Select(Benchmark):
 
 
 class Sort(Benchmark):
-    def setup(self):
-        self.e = np.arange(10000, dtype=np.float32)
-        self.o = np.arange(10001, dtype=np.float32)
+    params = [
+        ['quick', 'merge', 'heap'],
+        ['float32', 'int32', 'uint32']
+    ]
+    param_names = ['kind', 'dtype']
+
+    def setup(self, kind, dtype):
+        self.e = np.arange(10000, dtype=dtype)
+        self.o = np.arange(10001, dtype=dtype)
         np.random.seed(25)
         np.random.shuffle(self.o)
         # quicksort implementations can have issues with equal elements
-        self.equal = np.ones(10000)
-        self.many_equal = np.sort(np.arange(10000) % 10)
+        self.equal = np.ones(10000, dtype=dtype)
+        self.many_equal = np.sort(np.arange(10000) % 10).astype(dtype)
 
+        try:
+            np.sort(self.e, kind=kind)
+        except TypeError:
+            raise NotImplementedError()
+
+    def time_sort(self, kind, dtype):
+        np.sort(self.e, kind=kind)
+
+    def time_sort_random(self, kind, dtype):
+        np.sort(self.o, kind=kind)
+
+    def time_sort_inplace(self, kind, dtype):
+        self.e.sort(kind=kind)
+
+    def time_sort_equal(self, kind, dtype):
+        self.equal.sort(kind=kind)
+
+    def time_sort_many_equal(self, kind, dtype):
+        self.many_equal.sort(kind=kind)
+
+    def time_argsort(self, kind, dtype):
+        self.e.argsort(kind=kind)
+
+    def time_argsort_random(self, kind, dtype):
+        self.o.argsort(kind=kind)
+
+
+class SortWorst(Benchmark):
+    def setup(self):
         # quicksort median of 3 worst case
         self.worst = np.arange(1000000)
         x = self.worst
@@ -113,29 +148,11 @@ class Sort(Benchmark):
             x[mid], x[-2] = x[-2], x[mid]
             x = x[:-2]
 
-    def time_sort(self):
-        np.sort(self.e)
-
-    def time_sort_random(self):
-        np.sort(self.o)
-
-    def time_sort_inplace(self):
-        self.e.sort()
-
-    def time_sort_equal(self):
-        self.equal.sort()
-
-    def time_sort_many_equal(self):
-        self.many_equal.sort()
-
     def time_sort_worst(self):
         np.sort(self.worst)
 
-    def time_argsort(self):
-        self.e.argsort()
-
-    def time_argsort_random(self):
-        self.o.argsort()
+    # Retain old benchmark name for backward compatability
+    time_sort_worst.benchmark_name = "bench_function_base.Sort.time_sort_worst"
 
 
 class Where(Benchmark):

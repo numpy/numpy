@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.compat import long
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, run_module_suite, assert_raises
+    assert_, assert_equal, assert_array_equal, assert_raises
     )
 from numpy.lib.type_check import (
     common_type, mintypecode, isreal, iscomplex, isposinf, isneginf,
@@ -359,6 +359,7 @@ class TestNanToNum(object):
         assert_all(vals[0] < -1e10) and assert_all(np.isfinite(vals[0]))
         assert_(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))
+        assert_equal(type(vals), np.ndarray)
 
         # perform the same test but in-place
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -369,16 +370,27 @@ class TestNanToNum(object):
         assert_all(vals[0] < -1e10) and assert_all(np.isfinite(vals[0]))
         assert_(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))
+        assert_equal(type(vals), np.ndarray)
+
+    def test_array(self):
+        vals = nan_to_num([1])
+        assert_array_equal(vals, np.array([1], int))
+        assert_equal(type(vals), np.ndarray)
 
     def test_integer(self):
         vals = nan_to_num(1)
         assert_all(vals == 1)
-        vals = nan_to_num([1])
-        assert_array_equal(vals, np.array([1], int))
+        assert_equal(type(vals), np.int_)
+
+    def test_float(self):
+        vals = nan_to_num(1.0)
+        assert_all(vals == 1.0)
+        assert_equal(type(vals), np.float_)
 
     def test_complex_good(self):
         vals = nan_to_num(1+1j)
         assert_all(vals == 1+1j)
+        assert_equal(type(vals), np.complex_)
 
     def test_complex_bad(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -387,6 +399,7 @@ class TestNanToNum(object):
         vals = nan_to_num(v)
         # !! This is actually (unexpectedly) zero
         assert_all(np.isfinite(vals))
+        assert_equal(type(vals), np.complex_)
 
     def test_complex_bad2(self):
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -394,6 +407,7 @@ class TestNanToNum(object):
             v += np.array(-1+1.j)/0.
         vals = nan_to_num(v)
         assert_all(np.isfinite(vals))
+        assert_equal(type(vals), np.complex_)
         # Fixme
         #assert_all(vals.imag > 1e10)  and assert_all(np.isfinite(vals))
         # !! This is actually (unexpectedly) positive
@@ -426,7 +440,3 @@ class TestArrayConversion(object):
         # other numpy function
         assert_raises(TypeError,
             asfarray, np.array([1, 2, 3]), dtype=np.array(1.0))
-
-
-if __name__ == "__main__":
-    run_module_suite()
