@@ -390,6 +390,8 @@ static NPY_INLINE float standard_gamma_zig_f(brng_t *brng_state, float shape) {
 
   if (shape == 1.0f) {
     return random_standard_exponential_zig_f(brng_state);
+  } else if (shape == 0.0) {
+    return 0.0;
   } else if (shape < 1.0f) {
     for (;;) {
       U = next_float(brng_state);
