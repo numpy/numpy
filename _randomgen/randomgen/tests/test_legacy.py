@@ -10,3 +10,8 @@ def test_pickle():
     lg2 = pickle.loads(pickle.dumps(lg))
     assert lg.standard_normal() == lg2.standard_normal()
     assert lg.random_sample() == lg2.random_sample()
+
+
+def test_weibull():
+    lg = LegacyGenerator()
+    assert lg.weibull(0.0) == 0.0

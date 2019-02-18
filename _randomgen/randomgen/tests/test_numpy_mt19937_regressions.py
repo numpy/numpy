@@ -158,3 +158,11 @@ class TestRegression(object):
         perm = mt19937.permutation(m)
         assert_array_equal(perm, np.array([2, 1, 4, 0, 3]))
         assert_array_equal(m.__array__(), np.arange(5))
+
+    def test_gamma_0(self):
+        assert mt19937.standard_gamma(0.0) == 0.0
+        assert_array_equal(mt19937.standard_gamma([0.0]), 0.0)
+
+        actual = mt19937.standard_gamma([0.0], dtype='float')
+        expected = np.array([0.], dtype=np.float32)
+        assert_array_equal(actual, expected)

@@ -1161,11 +1161,13 @@ class TestBroadcast(object):
         actual = normal(loc * 3, scale)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, normal, loc * 3, bad_scale)
+        assert_raises(ValueError, mt19937.normal, loc * 3, bad_scale)
 
         self.set_seed()
         actual = normal(loc, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, normal, loc, bad_scale * 3)
+        assert_raises(ValueError, mt19937.normal, loc, bad_scale * 3)
 
     def test_beta(self):
         a = [1]
@@ -1182,12 +1184,14 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, beta, bad_a * 3, b)
         assert_raises(ValueError, beta, a * 3, bad_b)
+        assert_raises(ValueError, mt19937.beta, bad_a * 3, b)
+        assert_raises(ValueError, mt19937.beta, a * 3, bad_b)
 
         self.set_seed()
         actual = beta(a, b * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
-        assert_raises(ValueError, beta, bad_a, b * 3)
-        assert_raises(ValueError, beta, a, bad_b * 3)
+        assert_raises(ValueError, mt19937.beta, bad_a, b * 3)
+        assert_raises(ValueError, mt19937.beta, a, bad_b * 3)
 
     def test_exponential(self):
         scale = [1]
@@ -1201,6 +1205,7 @@ class TestBroadcast(object):
         actual = exponential(scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, exponential, bad_scale * 3)
+        assert_raises(ValueError, mt19937.exponential, bad_scale * 3)
 
     def test_standard_gamma(self):
         shape = [1]
@@ -1214,6 +1219,7 @@ class TestBroadcast(object):
         actual = std_gamma(shape * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, std_gamma, bad_shape * 3)
+        assert_raises(ValueError, mt19937.standard_gamma, bad_shape * 3)
 
     def test_gamma(self):
         shape = [1]
@@ -1230,12 +1236,16 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, gamma, bad_shape * 3, scale)
         assert_raises(ValueError, gamma, shape * 3, bad_scale)
+        assert_raises(ValueError, mt19937.gamma, bad_shape * 3, scale)
+        assert_raises(ValueError, mt19937.gamma, shape * 3, bad_scale)
 
         self.set_seed()
         actual = gamma(shape, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, gamma, bad_shape, scale * 3)
         assert_raises(ValueError, gamma, shape, bad_scale * 3)
+        assert_raises(ValueError, mt19937.gamma, bad_shape, scale * 3)
+        assert_raises(ValueError, mt19937.gamma, shape, bad_scale * 3)
 
     def test_f(self):
         dfnum = [1]
@@ -1252,12 +1262,16 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, f, bad_dfnum * 3, dfden)
         assert_raises(ValueError, f, dfnum * 3, bad_dfden)
+        assert_raises(ValueError, mt19937.f, bad_dfnum * 3, dfden)
+        assert_raises(ValueError, mt19937.f, dfnum * 3, bad_dfden)
 
         self.set_seed()
         actual = f(dfnum, dfden * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, f, bad_dfnum, dfden * 3)
         assert_raises(ValueError, f, dfnum, bad_dfden * 3)
+        assert_raises(ValueError, mt19937.f, bad_dfnum, dfden * 3)
+        assert_raises(ValueError, mt19937.f, dfnum, bad_dfden * 3)
 
     def test_noncentral_f(self):
         dfnum = [2]
@@ -1277,6 +1291,9 @@ class TestBroadcast(object):
         assert_raises(ValueError, nonc_f, bad_dfnum * 3, dfden, nonc)
         assert_raises(ValueError, nonc_f, dfnum * 3, bad_dfden, nonc)
         assert_raises(ValueError, nonc_f, dfnum * 3, dfden, bad_nonc)
+        assert_raises(ValueError, mt19937.noncentral_f, bad_dfnum * 3, dfden, nonc)
+        assert_raises(ValueError, mt19937.noncentral_f, dfnum * 3, bad_dfden, nonc)
+        assert_raises(ValueError, mt19937.noncentral_f, dfnum * 3, dfden, bad_nonc)
 
         self.set_seed()
         actual = nonc_f(dfnum, dfden * 3, nonc)
@@ -1284,6 +1301,9 @@ class TestBroadcast(object):
         assert_raises(ValueError, nonc_f, bad_dfnum, dfden * 3, nonc)
         assert_raises(ValueError, nonc_f, dfnum, bad_dfden * 3, nonc)
         assert_raises(ValueError, nonc_f, dfnum, dfden * 3, bad_nonc)
+        assert_raises(ValueError, mt19937.noncentral_f, bad_dfnum, dfden * 3, nonc)
+        assert_raises(ValueError, mt19937.noncentral_f, dfnum, bad_dfden * 3, nonc)
+        assert_raises(ValueError, mt19937.noncentral_f, dfnum, dfden * 3, bad_nonc)
 
         self.set_seed()
         actual = nonc_f(dfnum, dfden, nonc * 3)
@@ -1291,6 +1311,9 @@ class TestBroadcast(object):
         assert_raises(ValueError, nonc_f, bad_dfnum, dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, bad_dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, dfden, bad_nonc * 3)
+        assert_raises(ValueError, mt19937.noncentral_f, bad_dfnum, dfden, nonc * 3)
+        assert_raises(ValueError, mt19937.noncentral_f, dfnum, bad_dfden, nonc * 3)
+        assert_raises(ValueError, mt19937.noncentral_f, dfnum, dfden, bad_nonc * 3)
 
     def test_chisquare(self):
         df = [1]
@@ -1320,12 +1343,16 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, nonc_chi, bad_df * 3, nonc)
         assert_raises(ValueError, nonc_chi, df * 3, bad_nonc)
+        assert_raises(ValueError, mt19937.noncentral_chisquare, bad_df * 3, nonc)
+        assert_raises(ValueError, mt19937.noncentral_chisquare, df * 3, bad_nonc)
 
         self.set_seed()
         actual = nonc_chi(df, nonc * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, nonc_chi, bad_df, nonc * 3)
         assert_raises(ValueError, nonc_chi, df, bad_nonc * 3)
+        assert_raises(ValueError, mt19937.noncentral_chisquare, bad_df, nonc * 3)
+        assert_raises(ValueError, mt19937.noncentral_chisquare, df, bad_nonc * 3)
 
     def test_standard_t(self):
         df = [1]
@@ -1339,6 +1366,7 @@ class TestBroadcast(object):
         actual = t(df * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, t, bad_df * 3)
+        assert_raises(ValueError, mt19937.standard_t, bad_df * 3)
 
     def test_vonmises(self):
         mu = [2]
@@ -1371,6 +1399,7 @@ class TestBroadcast(object):
         actual = pareto(a * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, pareto, bad_a * 3)
+        assert_raises(ValueError, mt19937.pareto, bad_a * 3)
 
     def test_weibull(self):
         a = [1]
@@ -1384,6 +1413,7 @@ class TestBroadcast(object):
         actual = weibull(a * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, weibull, bad_a * 3)
+        assert_raises(ValueError, mt19937.weibull, bad_a * 3)
 
     def test_power(self):
         a = [1]
@@ -1397,6 +1427,7 @@ class TestBroadcast(object):
         actual = power(a * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, power, bad_a * 3)
+        assert_raises(ValueError, mt19937.power, bad_a * 3)
 
     def test_laplace(self):
         loc = [0]
@@ -1468,11 +1499,13 @@ class TestBroadcast(object):
         actual = lognormal(mean * 3, sigma)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, lognormal, mean * 3, bad_sigma)
+        assert_raises(ValueError, mt19937.lognormal, mean * 3, bad_sigma)
 
         self.set_seed()
         actual = lognormal(mean, sigma * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, lognormal, mean, bad_sigma * 3)
+        assert_raises(ValueError, mt19937.lognormal, mean, bad_sigma * 3)
 
     def test_rayleigh(self):
         scale = [1]
@@ -1502,12 +1535,16 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, wald, bad_mean * 3, scale)
         assert_raises(ValueError, wald, mean * 3, bad_scale)
+        assert_raises(ValueError, mt19937.wald, bad_mean * 3, scale)
+        assert_raises(ValueError, mt19937.wald, mean * 3, bad_scale)
 
         self.set_seed()
         actual = wald(mean, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, wald, bad_mean, scale * 3)
         assert_raises(ValueError, wald, mean, bad_scale * 3)
+        assert_raises(ValueError, mt19937.wald, bad_mean, scale * 3)
+        assert_raises(ValueError, mt19937.wald, mean, bad_scale * 3)
 
     def test_triangular(self):
         left = [1]
@@ -1583,6 +1620,9 @@ class TestBroadcast(object):
         assert_raises(ValueError, neg_binom, bad_n * 3, p)
         assert_raises(ValueError, neg_binom, n * 3, bad_p_one)
         assert_raises(ValueError, neg_binom, n * 3, bad_p_two)
+        assert_raises(ValueError, mt19937.negative_binomial, bad_n * 3, p)
+        assert_raises(ValueError, mt19937.negative_binomial, n * 3, bad_p_one)
+        assert_raises(ValueError, mt19937.negative_binomial, n * 3, bad_p_two)
 
         self.set_seed()
         actual = neg_binom(n, p * 3)
@@ -1590,6 +1630,9 @@ class TestBroadcast(object):
         assert_raises(ValueError, neg_binom, bad_n, p * 3)
         assert_raises(ValueError, neg_binom, n, bad_p_one * 3)
         assert_raises(ValueError, neg_binom, n, bad_p_two * 3)
+        assert_raises(ValueError, mt19937.negative_binomial, bad_n, p * 3)
+        assert_raises(ValueError, mt19937.negative_binomial, n, bad_p_one * 3)
+        assert_raises(ValueError, mt19937.negative_binomial, n, bad_p_two * 3)
 
     def test_poisson(self):
         max_lam = random.poisson_lam_max
