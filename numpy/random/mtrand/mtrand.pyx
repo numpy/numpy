@@ -3530,9 +3530,9 @@ cdef class RandomState:
         Parameters
         ----------
         mean : float or array_like of floats
-            Distribution mean, should be > 0.
+            Distribution mean, must be > 0.
         scale : float or array_like of floats
-            Scale parameter, should be >= 0.
+            Scale parameter, must be > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
