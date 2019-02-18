@@ -96,9 +96,35 @@ class Select(Benchmark):
 
 
 class Sort(Benchmark):
+    """
+    This benchmark tests sorting performance with several
+    different types of arrays that are likely to appear in
+    real-world applications.
+
+    ordered
+        Perfectly ordered array
+    reversed
+        A reversed array
+    uniform
+        A array where all values are the same
+    sorted_block_X
+        An array that is entirely composed of sorted blocks
+        of size X
+    swapped_pair_X_percent
+        An array which has random pairs swapped. The number
+        of swapped pairs is X% of the size of the array
+    random_unsorted_area_X_percent
+        This kind of array has random unsorted areas which
+        take up X% of the original array, the size of one
+        area is AREA_SIZE
+    random_bubble_X_fold
+        ?
+    """
     params = [
+        # In NumPy 1.17 and newer, 'merge' can be one of several
+        # stable sorts
         ['quick', 'merge', 'heap'],
-        ['float32', 'int32', 'uint32'],
+        ['float64', 'int64', 'uint64'],
         [
             'ordered',
             'reversed',
@@ -119,7 +145,13 @@ class Sort(Benchmark):
     ]
     param_names = ['kind', 'dtype', 'array_type']
 
+    # The size of the benchmarked arrays.
     ARRAY_SIZE = 10000
+    # The size of the unsorted area in the "random unsorted area"
+    # benchmarks
+    AREA_SIZE = 10
+    # ?
+    BUBBLE_SIZE = 10
 
     def setup(self, kind, dtype, array_type):
         np.random.seed(1234)
@@ -166,8 +198,6 @@ class Sort(Benchmark):
     def array_swapped_pair_50_percent(self, size, dtype):
         return self.swapped_pair(size, dtype, 0.5)
 
-    AREA_SIZE = 10
-
     def array_random_unsorted_area_50_percent(self, size, dtype):
         return self.random_unsorted_area(size, dtype, 0.5, self.AREA_SIZE)
 
@@ -176,8 +206,6 @@ class Sort(Benchmark):
 
     def array_random_unsorted_area_1_percent(self, size, dtype):
         return self.random_unsorted_area(size, dtype, 0.01, self.AREA_SIZE)
-
-    BUBBLE_SIZE = 10
 
     def array_random_bubble_1_fold(self, size, dtype):
         return self.random_unsorted_area(size, dtype, 1, size / self.BUBBLE_SIZE)
