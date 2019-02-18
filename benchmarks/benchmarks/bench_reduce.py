@@ -32,7 +32,7 @@ class AnyAll(Benchmark):
         # avoid np.zeros's lazy allocation that would
         # cause page faults during benchmark
         self.zeros = np.full(100000, 0, bool)
-        self.ones = np.full(100000, 0, bool)
+        self.ones = np.full(100000, 1, bool)
 
     def time_all_fast(self):
         self.zeros.all()
