@@ -36,7 +36,21 @@ Casting from a different floating point precision to float16 used incorrect
 rounding in some edge cases. This means in rare cases, subnormal results will
 now be rounded up instead of down, changing the last bit (ULP) of the result.
 
+Signed zero when using divmod
+-----------------------------
 
+Starting in version 1.12.0, numpy incorrectly returned a negatively signed zero
+when using the ``divmod`` and ``floor_divide`` functions when the result was
+zero. For example::
+
+   >>> np.zeros(10)//1
+   array([-0., -0., -0., -0., -0., -0., -0., -0., -0., -0.])
+
+With this release, the result is correctly returned as a positively signed
+zero::
+
+   >>> np.zeros(10)//1
+   array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 
 C API changes
 =============

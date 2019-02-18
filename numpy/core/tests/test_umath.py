@@ -273,6 +273,12 @@ class TestDivision(object):
         y = np.floor_divide(x**2, x)
         assert_equal(y, [1.e+110, 0], err_msg=msg)
 
+    def test_floor_division_signed_zero(self):
+        # Check that the sign bit is correctly set when dividing positive and
+        # negative zero by one.
+        x = np.zeros(10)
+        assert_equal(np.signbit(x//1), 0)
+        assert_equal(np.signbit((-x)//1), 1)
 
 def floor_divide_and_remainder(x, y):
     return (np.floor_divide(x, y), np.remainder(x, y))
