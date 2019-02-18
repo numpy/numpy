@@ -825,20 +825,25 @@ class TestReflect(object):
         b = np.array([1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3])
         assert_array_equal(a, b)
 
-    def test_check_padding_an_empty_array(self):
-        a = np.pad(np.zeros((0, 3)), ((0,), (1,)), mode='reflect')
-        b = np.zeros((0, 5))
-        assert_array_equal(a, b)
 
-    def test_padding_empty_dimension(self):
+class TestEmptyArray(object):
+    """Check how padding behaves on arrays with an empty dimension."""
+
+    @pytest.mark.parametrize("mode", _all_modes.keys() - {"constant", "empty"})
+    def test_pad_empty_dimension(self, mode):
         match = ("can't extend empty axis 0 using modes other than 'constant' "
                  "or 'empty'")
         with pytest.raises(ValueError, match=match):
-            np.pad([], 4, mode='reflect')
+            np.pad([], 4, mode=mode)
         with pytest.raises(ValueError, match=match):
-            np.pad(np.ndarray(0), 4, mode='reflect')
+            np.pad(np.ndarray(0), 4, mode=mode)
         with pytest.raises(ValueError, match=match):
-            np.pad(np.zeros((0, 3)), ((1,), (0,)), mode='reflect')
+            np.pad(np.zeros((0, 3)), ((1,), (0,)), mode=mode)
+
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_pad_non_empty_dimension(self, mode):
+        result = np.pad(np.ones((2, 0, 2)), ((3,), (0,), (1,)), mode=mode)
+        assert result.shape == (8, 0, 4)
 
 
 class TestSymmetric(object):
