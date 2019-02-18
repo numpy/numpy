@@ -375,64 +375,61 @@ def _set_reflect_both(padded, axis, width_pair, method, include_edge=False):
     original shape would violate repetition in the final iteration.
     """
     left_pad, right_pad = width_pair
-    period = padded.shape[axis] - right_pad - left_pad
+    old_length = padded.shape[axis] - right_pad - left_pad
 
     if include_edge:
-        offset = 1  # Edge is included, we need to offset the pad amount by 1
+        # Edge is included, we need to offset the pad amount by 1
+        edge_offset = 1
     else:
-        offset = 0  # Edge is not included, no need to offset pad amount
-        period -= 1  # But decrease size of chunk because edge is omitted
+        edge_offset = 0  # Edge is not included, no need to offset pad amount
+        old_length -= 1  # but must be omitted from the chunk
 
     if left_pad > 0:
-        # Pad with reflected values on left side
-        # First slice chunk from right side of the non-pad area.
-        # Use min(period, left_pad) to ensure that chunk is not larger than
-        # pad area
-        left_index = left_pad - offset
-        left_slice = _slice_at_axis(
-            slice(left_index + min(period, left_pad), left_index, -1), axis)
+        # Pad with reflected values on left side:
+        # First limit chunk size which can't be larger than pad area
+        chunk_length = min(old_length, left_pad)
+        # Slice right to left, stop on or next to edge, start relative to stop
+        stop = left_pad - edge_offset
+        start = stop + chunk_length
+        left_slice = _slice_at_axis(slice(start, stop, -1), axis)
         left_chunk = padded[left_slice]
 
         if method == "odd":
+            # Negate chunk and align with edge
             edge_slice = _slice_at_axis(slice(left_pad, left_pad + 1), axis)
             left_chunk = 2 * padded[edge_slice] - left_chunk
 
-        if left_pad > period:
-            # Chunk is smaller than pad area
-            left_pad -= period
-            pad_area = _slice_at_axis(slice(left_pad, left_pad + period), axis)
-        else:
-            # Chunk matches pad area
-            pad_area = _slice_at_axis(slice(None, left_pad), axis)
-            left_pad = 0
+        # Insert chunk into padded area
+        start = left_pad - chunk_length
+        stop = left_pad
+        pad_area = _slice_at_axis(slice(start, stop), axis)
         padded[pad_area] = left_chunk
+        # Adjust pointer to left edge for next iteration
+        left_pad -= chunk_length
 
     if right_pad > 0:
-        # Pad with reflected values on left side
-        # First slice chunk from right side of the non-pad area.
-        # Use min(period, right_pad) to ensure that chunk is not larger than
-        # pad area
-        right_index = -right_pad + offset - 2
-        right_slice = _slice_at_axis(
-            slice(right_index, right_index - min(period, right_pad), -1), axis)
+        # Pad with reflected values on right side:
+        # First limit chunk size which can't be larger than pad area
+        chunk_length = min(old_length, right_pad)
+        # Slice right to left, start on or next to edge, stop relative to start
+        start = -right_pad + edge_offset - 2
+        stop = start - chunk_length
+        right_slice = _slice_at_axis(slice(start, stop, -1), axis)
         right_chunk = padded[right_slice]
 
         if method == "odd":
+            # Negate chunk and align with edge
             edge_slice = _slice_at_axis(
                 slice(-right_pad - 1, -right_pad), axis)
             right_chunk = 2 * padded[edge_slice] - right_chunk
 
-        if right_pad > period:
-            # Chunk is smaller than pad area
-            right_pad -= period
-            pad_area = _slice_at_axis(
-                slice(-right_pad - period, -right_pad), axis)
-
-        else:
-            # Chunk matches pad area
-            pad_area = _slice_at_axis(slice(-right_pad, None), axis)
-            right_pad = 0
+        # Insert chunk into padded area
+        start = padded.shape[axis] - right_pad
+        stop = start + chunk_length
+        pad_area = _slice_at_axis(slice(start, stop), axis)
         padded[pad_area] = right_chunk
+        # Adjust pointer to right edge for next iteration
+        right_pad -= chunk_length
 
     return left_pad, right_pad
 
