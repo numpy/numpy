@@ -1354,6 +1354,8 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, wald, bad_mean, scale * 3)
         assert_raises(ValueError, wald, mean, bad_scale * 3)
+        assert_raises(ValueError, wald, 0.0, 1)
+        assert_raises(ValueError, wald, 0.5, 0.0)
 
     def test_triangular(self):
         left = [1]
