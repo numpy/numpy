@@ -1445,6 +1445,7 @@ def roll(a, shift, axis=None):
     array([8, 9, 0, 1, 2, 3, 4, 5, 6, 7])
     >>> np.roll(x, -2)
     array([2, 3, 4, 5, 6, 7, 8, 9, 0, 1])
+    
     >>> x2 = np.reshape(x, (2,5))
     >>> x2
     array([[0, 1, 2, 3, 4],
