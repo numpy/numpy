@@ -346,6 +346,8 @@ static NPY_INLINE double standard_gamma_zig(brng_t *brng_state, double shape) {
 
   if (shape == 1.0) {
     return random_standard_exponential_zig(brng_state);
+  } else if (shape == 0.0) {
+    return 0.0;
   } else if (shape < 1.0) {
     for (;;) {
       U = next_double(brng_state);
