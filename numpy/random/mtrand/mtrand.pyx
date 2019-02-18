@@ -2328,17 +2328,9 @@ cdef class RandomState:
 
         where :math:`Y_{q}` is the Chi-square with q degrees of freedom.
 
-        In Delhi (2007), it is noted that the noncentral chi-square is
-        useful in bombing and coverage problems, the probability of
-        killing the point target given by the noncentral chi-squared
-        distribution.
-
         References
         ----------
-        .. [1] Delhi, M.S. Holla, "On a noncentral chi-square distribution in
-               the analysis of weapon systems effectiveness", Metrika,
-               Volume 15, Number 1 / December, 1970.
-        .. [2] Wikipedia, "Noncentral chi-squared distribution"
+        .. [1] Wikipedia, "Noncentral chi-squared distribution"
                https://en.wikipedia.org/wiki/Noncentral_chi-squared_distribution
 
         Examples
@@ -2368,7 +2360,6 @@ cdef class RandomState:
         >>> values = plt.hist(np.random.noncentral_chisquare(3, 20, 100000),
         ...                   bins=200, density=True)
         >>> plt.show()
-
         """
         cdef ndarray odf, ononc
         cdef double fdf, fnonc
@@ -3539,9 +3530,9 @@ cdef class RandomState:
         Parameters
         ----------
         mean : float or array_like of floats
-            Distribution mean, should be > 0.
+            Distribution mean, must be > 0.
         scale : float or array_like of floats
-            Scale parameter, should be >= 0.
+            Scale parameter, must be > 0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
