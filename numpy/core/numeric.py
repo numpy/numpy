@@ -1443,7 +1443,9 @@ def roll(a, shift, axis=None):
     >>> x = np.arange(10)
     >>> np.roll(x, 2)
     array([8, 9, 0, 1, 2, 3, 4, 5, 6, 7])
-
+    >>> np.roll(x, -2)
+    array([2, 3, 4, 5, 6, 7, 8, 9, 0, 1])
+    
     >>> x2 = np.reshape(x, (2,5))
     >>> x2
     array([[0, 1, 2, 3, 4],
@@ -1451,12 +1453,21 @@ def roll(a, shift, axis=None):
     >>> np.roll(x2, 1)
     array([[9, 0, 1, 2, 3],
            [4, 5, 6, 7, 8]])
+    >>> np.roll(x2, -1)
+    array([[1, 2, 3, 4, 5],
+           [6, 7, 8, 9, 0]])
     >>> np.roll(x2, 1, axis=0)
+    array([[5, 6, 7, 8, 9],
+           [0, 1, 2, 3, 4]])
+    >>> np.roll(x2, -1, axis=0)
     array([[5, 6, 7, 8, 9],
            [0, 1, 2, 3, 4]])
     >>> np.roll(x2, 1, axis=1)
     array([[4, 0, 1, 2, 3],
            [9, 5, 6, 7, 8]])
+    >>> np.roll(x2, -1, axis=1)
+    array([[1, 2, 3, 4, 0],
+           [6, 7, 8, 9, 5]])
 
     """
     a = asanyarray(a)
