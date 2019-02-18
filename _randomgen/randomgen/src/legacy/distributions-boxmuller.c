@@ -39,6 +39,9 @@ double legacy_standard_gamma(aug_brng_t *aug_state, double shape) {
 
   if (shape == 1.0) {
     return legacy_standard_exponential(aug_state);
+  }
+  else if (shape == 0.0) {
+    return 0.0;
   } else if (shape < 1.0) {
     for (;;) {
       U = legacy_double(aug_state);
@@ -84,6 +87,9 @@ double legacy_pareto(aug_brng_t *aug_state, double a) {
 }
 
 double legacy_weibull(aug_brng_t *aug_state, double a) {
+  if (a == 0.0) {
+    return 0.0;
+  }
   return pow(legacy_standard_exponential(aug_state), 1. / a);
 }
 

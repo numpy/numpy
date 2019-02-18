@@ -210,7 +210,7 @@ DECLDIR void random_bounded_uint32_fill(brng_t *brng_state, uint32_t off,
 DECLDIR void random_bounded_uint16_fill(brng_t *brng_state, uint16_t off,
                                         uint16_t rng, npy_intp cnt,
                                         bool use_masked, uint16_t *out);
-DECLDIR void random_bounded_uint8_fill(brng_t *brng_state, npy_bool off,
+DECLDIR void random_bounded_uint8_fill(brng_t *brng_state, uint8_t off,
                                        uint8_t rng, npy_intp cnt,
                                        bool use_masked, uint8_t *out);
 DECLDIR void random_bounded_bool_fill(brng_t *brng_state, npy_bool off,
