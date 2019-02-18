@@ -110,46 +110,25 @@ class TestAsPairs(object):
 
 
 class TestConditionalShortcuts(object):
-    def test_zero_padding_shortcuts(self):
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_zero_padding_shortcuts(self, mode):
         test = np.arange(120).reshape(4, 5, 6)
-        pad_amt = [(0, 0) for axis in test.shape]
-        modes = ['constant',
-                 'edge',
-                 'linear_ramp',
-                 'maximum',
-                 'mean',
-                 'median',
-                 'minimum',
-                 'reflect',
-                 'symmetric',
-                 'wrap',
-                 ]
-        for mode in modes:
-            assert_array_equal(test, np.pad(test, pad_amt, mode=mode))
+        pad_amt = [(0, 0) for _ in test.shape]
+        assert_array_equal(test, np.pad(test, pad_amt, mode=mode))
 
-    def test_shallow_statistic_range(self):
+    @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
+    def test_shallow_statistic_range(self, mode):
         test = np.arange(120).reshape(4, 5, 6)
-        pad_amt = [(1, 1) for axis in test.shape]
-        modes = ['maximum',
-                 'mean',
-                 'median',
-                 'minimum',
-                 ]
-        for mode in modes:
-            assert_array_equal(np.pad(test, pad_amt, mode='edge'),
-                               np.pad(test, pad_amt, mode=mode, stat_length=1))
+        pad_amt = [(1, 1) for _ in test.shape]
+        assert_array_equal(np.pad(test, pad_amt, mode='edge'),
+                           np.pad(test, pad_amt, mode=mode, stat_length=1))
 
-    def test_clip_statistic_range(self):
+    @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
+    def test_clip_statistic_range(self, mode):
         test = np.arange(30).reshape(5, 6)
-        pad_amt = [(3, 3) for axis in test.shape]
-        modes = ['maximum',
-                 'mean',
-                 'median',
-                 'minimum',
-                 ]
-        for mode in modes:
-            assert_array_equal(np.pad(test, pad_amt, mode=mode),
-                               np.pad(test, pad_amt, mode=mode, stat_length=30))
+        pad_amt = [(3, 3) for _ in test.shape]
+        assert_array_equal(np.pad(test, pad_amt, mode=mode),
+                           np.pad(test, pad_amt, mode=mode, stat_length=30))
 
 
 class TestStatistic(object):
