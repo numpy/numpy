@@ -829,7 +829,11 @@ class TestReflect(object):
 class TestEmptyArray(object):
     """Check how padding behaves on arrays with an empty dimension."""
 
-    @pytest.mark.parametrize("mode", _all_modes.keys() - {"constant", "empty"})
+    @pytest.mark.parametrize(
+        # Keep parametrization ordered, otherwise pytest-xdist might believe
+        # that different tests were collected during parallelization
+        "mode", sorted(_all_modes.keys() - {"constant", "empty"})
+    )
     def test_pad_empty_dimension(self, mode):
         match = ("can't extend empty axis 0 using modes other than 'constant' "
                  "or 'empty'")
