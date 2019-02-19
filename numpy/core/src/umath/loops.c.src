@@ -1816,6 +1816,9 @@ pairwise_sum_@TYPE@(char *a, npy_intp n, npy_intp stride)
  * # OP = +, -, *, /#
  * # PW = 1, 0, 0, 0#
  */
+#ifdef __INTEL_COMPILER // See GH Ticket #11796
+    #pragma intel optimization_level 2
+#endif
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
