@@ -103,21 +103,21 @@ class SortGenerator(object):
     BUBBLE_SIZE = 10
 
     @staticmethod
-    def random(size, dtype):
+    def _random(size, dtype):
         arr = np.arange(size, dtype=dtype)
         np.random.shuffle(arr)
         return arr
     
     @staticmethod
-    def ordered(size, dtype):
+    def _ordered(size, dtype):
         return np.arange(size, dtype=dtype)
 
     @staticmethod
-    def reversed(size, dtype):
+    def _reversed(size, dtype):
         return np.arange(size-1, -1, -1, dtype=dtype)
 
     @staticmethod
-    def uniform(size, dtype):
+    def _uniform(size, dtype):
         return np.ones(size, dtype=dtype)
 
     @staticmethod
@@ -155,21 +155,29 @@ class SortGenerator(object):
         import re
         import functools
         token_specification = [
+            (r'random',
+                lambda match: cls._random(size, dtype)),
+            (r'ordered',
+                lambda match: cls._ordered(size, dtype)),
+            (r'reversed',
+                lambda match: cls._reversed(size, dtype)),
+            (r'uniform',
+                lambda match: cls._uniform(size, dtype)),
             (r'sorted\_block\_([0-9]+)',
-                lambda size, dtype, x: cls._type_sorted_block(size, dtype, x)),
+                lambda match: cls._type_sorted_block(size, dtype, int(match.group(1)))),
             (r'swapped\_pair\_([0-9]+)\_percent',
-                lambda size, dtype, x: cls._type_swapped_pair(size, dtype, x / 100.0)),
+                lambda match: cls._type_swapped_pair(size, dtype, int(match.group(1)) / 100.0)),
             (r'random\_unsorted\_area\_([0-9]+)\_percent',
-                lambda size, dtype, x: cls._type_random_unsorted_area(size, dtype, x / 100.0, cls.AREA_SIZE)),
+                lambda match: cls._type_random_unsorted_area(size, dtype, int(match.group(1)) / 100.0, cls.AREA_SIZE)),
             (r'random_bubble\_([0-9]+)\_fold',
-                lambda size, dtype, x: cls._type_random_unsorted_area(size, dtype, x * cls.BUBBLE_SIZE / size, cls.BUBBLE_SIZE)),
+                lambda match: cls._type_random_unsorted_area(size, dtype, int(match.group(1)) * cls.BUBBLE_SIZE / size, cls.BUBBLE_SIZE)),
         ]
 
         for pattern, function in token_specification:
             match = re.fullmatch(pattern, array_type)
 
             if match is not None:
-                return function(size, dtype, int(match.group(1)))
+                return function(match)
 
         raise ValueError("Incorrect array_type specified.")
 
