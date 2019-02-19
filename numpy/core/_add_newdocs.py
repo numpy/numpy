@@ -1170,6 +1170,8 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
         The offset (in bytes) from the file's current position. Defaults to 0.
         Only permitted for binary files.
 
+        .. versionadded:: 1.17.0
+
     See also
     --------
     load, save
