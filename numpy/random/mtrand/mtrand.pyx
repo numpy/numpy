@@ -2683,7 +2683,7 @@ cdef class RandomState:
         Parameters
         ----------
         a : float or array_like of floats
-            Shape of the distribution. Must be non-negative.
+            Shape of the distribution. Must all be positive.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3328,8 +3328,8 @@ cdef class RandomState:
         mean : float or array_like of floats, optional
             Mean value of the underlying normal distribution. Default is 0.
         sigma : float or array_like of floats, optional
-            Standard deviation of the underlying normal distribution. Should
-            be greater than zero. Default is 1.
+            Standard deviation of the underlying normal distribution. Must be
+            non-negative. Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
