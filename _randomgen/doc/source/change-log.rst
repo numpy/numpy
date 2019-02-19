@@ -1,5 +1,10 @@
 Change Log
 ----------
+v1.16.1
+=======
+- Synchronized with upstream changes.
+- Fixed a bug in gamma generation if the shape parameters is 0.0.
+
 v1.16.0
 =======
 - Fixed a bug that affected :class:`~randomgen.dsfmt.DSFMT` when calling

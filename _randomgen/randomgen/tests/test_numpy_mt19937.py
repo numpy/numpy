@@ -558,6 +558,10 @@ class TestRandomDist(object):
         assert_raises(ValueError, sample, [1, 2], 3, p=[1.1, -0.1])
         assert_raises(ValueError, sample, [1, 2], 3, p=[0.4, 0.4])
         assert_raises(ValueError, sample, [1, 2, 3], 4, replace=False)
+        # gh-13087
+        assert_raises(ValueError, sample, [1, 2, 3], -2, replace=False)
+        assert_raises(ValueError, sample, [1, 2, 3], (-1,), replace=False)
+        assert_raises(ValueError, sample, [1, 2, 3], (-1, 1), replace=False)
         assert_raises(ValueError, sample, [1, 2, 3], 2,
                       replace=False, p=[1, 0, 0])
 
@@ -1485,6 +1489,7 @@ class TestBroadcast(object):
         actual = logistic(loc, scale * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, logistic, loc, bad_scale * 3)
+        assert_equal(mt19937.logistic(1.0, 0.0), 1.0)
 
     def test_lognormal(self):
         mean = [0]
