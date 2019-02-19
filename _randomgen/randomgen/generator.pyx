@@ -429,7 +429,8 @@ cdef class RandomGenerator:
         Parameters
         ----------
         scale : float or array_like of floats
-            The scale parameter, :math:`\\beta = 1/\\lambda`.
+            The scale parameter, :math:`\\beta = 1/\\lambda`. Must be
+            non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -855,6 +856,8 @@ cdef class RandomGenerator:
             if size > pop_size:
                 raise ValueError("Cannot take a larger sample than "
                                  "population when 'replace=False'")
+            elif size < 0:
+                raise ValueError("negative dimensions are not allowed")
 
             if p is not None:
                 if np.count_nonzero(p > 0) < size:
@@ -1017,6 +1020,12 @@ cdef class RandomGenerator:
 
         Random values in a given shape.
 
+        .. note::
+            This is a convenience function for users porting code from Matlab,
+            and wraps `numpy.random.random_sample`. That function takes a
+            tuple to specify the size of the output, which is consistent with
+            other NumPy functions like `numpy.zeros` and `numpy.ones`.
+
         Create an array of the given shape and populate it with
         random samples from a uniform distribution
         over ``[0, 1)``.
@@ -1065,16 +1074,20 @@ cdef class RandomGenerator:
 
         Return a sample (or samples) from the "standard normal" distribution.
 
-        If positive, int_like or int-convertible arguments are provided,
-        `randn` generates an array of shape ``(d0, d1, ..., dn)``, filled
+        .. note::
+            This is a convenience function for users porting code from Matlab,
+            and wraps `numpy.random.standard_normal`. That function takes a
+            tuple to specify the size of the output, which is consistent with
+            other NumPy functions like `numpy.zeros` and `numpy.ones`.
+
+        If positive int_like arguments are provided, `randn` generates an array
+        of shape ``(d0, d1, ..., dn)``, filled
         with random floats sampled from a univariate "normal" (Gaussian)
-        distribution of mean 0 and variance 1 (if any of the :math:`d_i` are
-        floats, they are first converted to integers by truncation). A single
-        float randomly sampled from the distribution is returned if no
-        argument is provided.
+        distribution of mean 0 and variance 1. A single float randomly sampled
+        from the distribution is returned if no argument is provided.
 
         This is a convenience function.  If you want an interface that takes a
-        tuple as the first argument, use `standard_normal` instead.
+        tuple as the first argument, use `numpy.random.standard_normal` instead.
 
         Parameters
         ----------
@@ -1096,6 +1109,7 @@ cdef class RandomGenerator:
         See Also
         --------
         standard_normal : Similar, but takes a tuple as its argument.
+        normal : Also accepts mu and sigma arguments
 
         Notes
         -----
@@ -1106,13 +1120,13 @@ cdef class RandomGenerator:
         Examples
         --------
         >>> randomgen.generator.randn()
-        2.1923875335537315 #random
+        2.1923875335537315  # random
 
         Two-by-four array of samples from N(3, 6.25):
 
-        >>> 2.5 * randomgen.generator.randn(2, 4) + 3
-        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],  #random
-               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]]) #random
+        >>> 3 + 2.5 * np.random.randn(2, 4)
+        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
+               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
         if len(args) == 0:
@@ -1237,19 +1251,42 @@ cdef class RandomGenerator:
         Returns
         -------
         out : float or ndarray
-            Drawn samples.
+            A floating-point array of shape ``size`` of drawn samples, or a
+            single sample if ``size`` was not specified.
+
+        Notes
+        -----
+        For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
+
+            mu + sigma * np.random.standard_normal(size=...)
+            np.random.normal(mu, sigma, size=...)
+
+        See Also
+        --------
+        normal :
+            Equivalent function with additional ``loc`` and ``scale`` arguments
+            for setting the mean and standard deviation.
 
         Examples
         --------
-        >>> s = randomgen.generator.standard_normal(8000)
+        >>> np.random.standard_normal()
+        2.1923875335537315 #random
+
+        >>> s = np.random.standard_normal(8000)
         >>> s
-        array([ 0.6888893 ,  0.78096262, -0.89086505, ...,  0.49876311, #random
-               -0.38672696, -0.4685006 ])                               #random
+        array([ 0.6888893 ,  0.78096262, -0.89086505, ...,  0.49876311,  # random
+               -0.38672696, -0.4685006 ])                                # random
         >>> s.shape
         (8000,)
-        >>> s = randomgen.generator.standard_normal(size=(3, 4, 2))
+        >>> s = np.random.standard_normal(size=(3, 4, 2))
         >>> s.shape
         (3, 4, 2)
+
+        Two-by-four array of samples from :math:`N(3, 6.25)`:
+
+        >>> 3 + 2.5 * np.random.standard_normal(size=(2, 4))
+        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
+               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
         key = np.dtype(dtype).name
@@ -1283,7 +1320,8 @@ cdef class RandomGenerator:
         loc : float or array_like of floats
             Mean ("centre") of the distribution.
         scale : float or array_like of floats
-            Standard deviation (spread or "width") of the distribution.
+            Standard deviation (spread or "width") of the distribution. Must be
+            non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -1334,11 +1372,11 @@ cdef class RandomGenerator:
 
         Verify the mean and the variance:
 
-        >>> abs(mu - np.mean(s)) < 0.01
-        True
+        >>> abs(mu - np.mean(s))
+        0.0  # may vary
 
-        >>> abs(sigma - np.std(s, ddof=1)) < 0.01
-        True
+        >>> abs(sigma - np.std(s, ddof=1))
+        0.1  # may vary
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1349,6 +1387,12 @@ cdef class RandomGenerator:
         ...                np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
         ...          linewidth=2, color='r')
         >>> plt.show()
+
+        Two-by-four array of samples from N(3, 6.25):
+
+        >>> np.random.normal(3, 2.5, size=(2, 4))
+        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
+               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
         return cont(&random_normal_zig, self._brng, size, self.lock, 2,
@@ -1530,7 +1574,7 @@ cdef class RandomGenerator:
         Parameters
         ----------
         shape : float or array_like of floats
-            Parameter, should be > 0.
+            Parameter, must be non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -1622,9 +1666,9 @@ cdef class RandomGenerator:
         Parameters
         ----------
         shape : float or array_like of floats
-            The shape of the gamma distribution. Should be greater than zero.
+            The shape of the gamma distribution. Must be non-negative.
         scale : float or array_like of floats, optional
-            The scale of the gamma distribution. Should be greater than zero.
+            The scale of the gamma distribution. Must be non-negative.
             Default is equal to 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -1706,9 +1750,9 @@ cdef class RandomGenerator:
         Parameters
         ----------
         dfnum : int or array_like of ints
-            Degrees of freedom in numerator. Should be greater than zero.
+            Degrees of freedom in numerator. Must be non-negative.
         dfden : int or array_like of ints
-            Degrees of freedom in denominator. Should be greater than zero.
+            Degrees of freedom in denominator. Must be non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2262,7 +2306,7 @@ cdef class RandomGenerator:
         Parameters
         ----------
         a : float or array_like of floats
-            Shape of the distribution. Should be greater than zero.
+            Shape of the distribution. All values must be positive.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2443,7 +2487,7 @@ cdef class RandomGenerator:
         Parameters
         ----------
         a : float or array_like of floats
-            Parameter of the distribution. Should be greater than zero.
+            Parameter of the distribution. Must be positive.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2513,12 +2557,12 @@ cdef class RandomGenerator:
         >>> plt.figure()
         >>> plt.hist(rvs, bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
-        >>> plt.title('randomgen.power(5)')
+        >>> plt.title('randomgen.generator.power(5)')
 
         >>> plt.figure()
         >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')
-        >>> plt.title('inverse of 1 + randomgen.pareto(5)')
+        >>> plt.title('inverse of 1 + randomgen.generator.pareto(5)')
 
         >>> plt.figure()
         >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
@@ -2548,7 +2592,8 @@ cdef class RandomGenerator:
         loc : float or array_like of floats, optional
             The position, :math:`\\mu`, of the distribution peak. Default is 0.
         scale : float or array_like of floats, optional
-            :math:`\\lambda`, the exponential decay. Default is 1.
+            :math:`\\lambda`, the exponential decay. Default is 1. Must be
+            non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2630,7 +2675,8 @@ cdef class RandomGenerator:
         loc : float or array_like of floats, optional
             The location of the mode of the distribution. Default is 0.
         scale : float or array_like of floats, optional
-            The scale parameter of the distribution. Default is 1.
+            The scale parameter of the distribution. Default is 1. Must be
+            non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2746,7 +2792,7 @@ cdef class RandomGenerator:
         loc : float or array_like of floats, optional
             Parameter of the distribution. Default is 0.
         scale : float or array_like of floats, optional
-            Parameter of the distribution. Should be greater than zero.
+            Parameter of the distribution. Must be >= 0.
             Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -2809,7 +2855,7 @@ cdef class RandomGenerator:
         """
         return cont(&random_logistic, self._brng, size, self.lock, 2,
                     loc, 'loc', CONS_NONE,
-                    scale, 'scale', CONS_POSITIVE,
+                    scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE, None)
 
     def lognormal(self, mean=0.0, sigma=1.0, size=None):
@@ -2828,8 +2874,8 @@ cdef class RandomGenerator:
         mean : float or array_like of floats, optional
             Mean value of the underlying normal distribution. Default is 0.
         sigma : float or array_like of floats, optional
-            Standard deviation of the underlying normal distribution. Should
-            be greater than zero. Default is 1.
+            Standard deviation of the underlying normal distribution. Must be
+            non-negative. Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2934,7 +2980,7 @@ cdef class RandomGenerator:
         Parameters
         ----------
         scale : float or array_like of floats, optional
-            Scale, also equals the mode. Should be >= 0. Default is 1.
+            Scale, also equals the mode. Must be non-negative. Default is 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3463,7 +3509,7 @@ cdef class RandomGenerator:
         Parameters
         ----------
         a : float or array_like of floats
-            Distribution parameter. Should be greater than 1.
+            Distribution parameter. Must be greater than 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),

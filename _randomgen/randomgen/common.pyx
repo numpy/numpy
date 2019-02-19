@@ -187,7 +187,7 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
             raise ValueError(name + " <= 0")
     elif cons == CONS_BOUNDED_0_1 or cons == CONS_BOUNDED_0_1_NOTNAN:
         if val < 0 or val > 1:
-            raise ValueError(name + " <= 0 or " + name + " >= 1")
+            raise ValueError(name + " < 0 or " + name + " > 1")
         if cons == CONS_BOUNDED_0_1_NOTNAN:
             if np.isnan(val):
                 raise ValueError(name + ' contains NaNs')

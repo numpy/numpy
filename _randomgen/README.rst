@@ -12,9 +12,9 @@ generators in Python and NumPy.
 Python 2.7 Support
 ------------------
 
-Release 1.16.0 is the final version that supports Python 2.7. Any bugs
-in v1.16.0 will be patched until the end of 2019. All future releases
-are Python 3, with an initial minimum version of 3.5.
+v1.16 is the final major version that supports Python 2.7. Any bugs in
+v1.16 will be patched until the end of 2019. All future releases are
+Python 3, with an initial minimum version of 3.5.
 
 Compatibility Warning
 ---------------------
@@ -181,7 +181,7 @@ Requirements
 Building requires:
 
 -  Python (2.7, 3.5, 3.6, 3.7)
--  NumPy (1.13, 1.14, 1.15)
+-  NumPy (1.13, 1.14, 1.15, 1.16)
 -  Cython (0.26+)
 -  tempita (0.5+), if not provided by Cython
 
