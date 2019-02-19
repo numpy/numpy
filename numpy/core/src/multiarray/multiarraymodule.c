@@ -2072,7 +2072,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         return NULL;
     }
     if (offset != 0 && strcmp(sep, "") != 0) {
-        PyErr_SetString(PyExc_ValueError, "'offset' argument only permitted for binary files");
+        PyErr_SetString(PyExc_TypeError, "'offset' argument only permitted for binary files");
         return NULL;
     }
     if (PyString_Check(file) || PyUnicode_Check(file)) {
@@ -2092,7 +2092,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         return NULL;
     }
     if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
-        PyErr_SetString(PyExc_IOError, "seeking file failed");
+        PyErr_SetFromErrno(PyExc_IOError);
         Py_DECREF(file);
         return NULL;
     }
