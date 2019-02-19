@@ -150,27 +150,28 @@ class SortGenerator(object):
             np.random.shuffle(a[start:end])
         return a
 
-    def __getattr__(self, name):
+    @classmethod
+    def get_array(cls, array_type, size, dtype):
         import re
         import functools
         token_specification = [
             (r'sorted\_block\_([0-9]+)',
-                lambda size, dtype, x: self._type_sorted_block(size, dtype, x)),
+                lambda size, dtype, x: cls._type_sorted_block(size, dtype, x)),
             (r'swapped\_pair\_([0-9]+)\_percent',
-                lambda size, dtype, x: self._type_swapped_pair(size, dtype, x / 100.0)),
+                lambda size, dtype, x: cls._type_swapped_pair(size, dtype, x / 100.0)),
             (r'random\_unsorted\_area\_([0-9]+)\_percent',
-                lambda size, dtype, x: self._type_random_unsorted_area(size, dtype, x / 100.0, self.AREA_SIZE)),
+                lambda size, dtype, x: cls._type_random_unsorted_area(size, dtype, x / 100.0, cls.AREA_SIZE)),
             (r'random_bubble\_([0-9]+)\_fold',
-                lambda size, dtype, x: self._type_random_unsorted_area(size, dtype, x * self.BUBBLE_SIZE / size, self.BUBBLE_SIZE)),
+                lambda size, dtype, x: cls._type_random_unsorted_area(size, dtype, x * cls.BUBBLE_SIZE / size, cls.BUBBLE_SIZE)),
         ]
 
         for pattern, function in token_specification:
-            match = re.fullmatch(pattern, name)
+            match = re.fullmatch(pattern, array_type)
 
             if match is not None:
-                return functools.partial(function, x=int(match.group(1)))
+                return function(size, dtype, int(match.group(1)))
 
-        raise AttributeError
+        raise ValueError("Incorrect array_type specified.")
 
 
 class Sort(Benchmark):
@@ -229,7 +230,7 @@ class Sort(Benchmark):
 
     def setup(self, kind, dtype, array_type):
         np.random.seed(1234)
-        self.arr = getattr(SortGenerator(), array_type)(self.ARRAY_SIZE, dtype)
+        self.arr = SortGenerator.get_array(array_type, self.ARRAY_SIZE, dtype)
 
     def time_sort_inplace(self, kind, dtype, array_type):
         self.arr.sort(kind=kind)
