@@ -1010,7 +1010,7 @@ def eigvals(a):
     See Also
     --------
     eig : eigenvalues and right eigenvectors of general arrays
-    eigvalsh : eigenvalues of real symmetric or complex Hermitian 
+    eigvalsh : eigenvalues of real symmetric or complex Hermitian
                (conjugate symmetric) arrays.
     eigh : eigenvalues and eigenvectors of real symmetric or complex
            Hermitian (conjugate symmetric) arrays.
@@ -1214,7 +1214,7 @@ def eig(a):
     --------
     eigvals : eigenvalues of a non-symmetric array.
 
-    eigh : eigenvalues and eigenvectors of a real symmetric or complex 
+    eigh : eigenvalues and eigenvectors of a real symmetric or complex
            Hermitian (conjugate symmetric) array.
 
     eigvalsh : eigenvalues of a real symmetric or complex Hermitian
@@ -2130,16 +2130,16 @@ def _lstsq_dispatcher(a, b, rcond=None):
 
 @array_function_dispatch(_lstsq_dispatcher)
 def lstsq(a, b, rcond="warn"):
-    """
+    r"""
     Return the least-squares solution to a linear matrix equation.
 
-    Solves the equation `a x = b` by computing a vector `x` that
-    minimizes the Euclidean 2-norm `|| b - a x ||^2`.  The equation may
-    be under-, well-, or over- determined (i.e., the number of
-    linearly independent rows of `a` can be less than, equal to, or
-    greater than its number of linearly independent columns).  If `a`
-    is square and of full rank, then `x` (but for round-off error) is
-    the "exact" solution of the equation.
+    Solves the equation :math:`a x = b` by computing a vector `x` that
+    minimizes the squared Euclidean 2-norm :math:`\| b - a x \|^2_2`.
+    The equation may be under-, well-, or over-determined (i.e., the
+    number of linearly independent rows of `a` can be less than, equal
+    to, or greater than its number of linearly independent columns).
+    If `a` is square and of full rank, then `x` (but for round-off error)
+    is the "exact" solution of the equation.
 
     Parameters
     ----------
