@@ -912,6 +912,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     data types.
 
     .. versionadded:: 1.17.0
+
     Timsort is added for better performance on already or nearly
     sorted data. On random data timsort is almost identical to
     mergesort. It is now used for stable sort while quicksort is still the

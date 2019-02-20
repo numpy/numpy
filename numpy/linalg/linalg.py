@@ -2621,10 +2621,8 @@ def multi_dot(arrays):
     instead of::
 
     >>> _ = np.dot(np.dot(np.dot(A, B), C), D)
-    ...
     >>> # or
     >>> _ = A.dot(B).dot(C).dot(D)
-    ...
 
     Notes
     -----

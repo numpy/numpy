@@ -159,7 +159,7 @@ Glossary
 
    field
        In a :term:`structured data type`, each sub-type is called a `field`.
-       The `field` has a name (a string), a type (any valid :term:`dtype`, and
+       The `field` has a name (a string), a type (any valid dtype, and
        an optional `title`. See :ref:`arrays.dtypes`
 
    Fortran order
@@ -208,6 +208,9 @@ Glossary
          Key 0: a
          Key 1: b
          Key 2: c
+
+   itemsize
+       The size of the dtype element in bytes.
 
    list
        A Python container that can hold any number of objects or items.
@@ -377,6 +380,15 @@ Glossary
    structured data type
        A data type composed of other datatypes
 
+   subarray
+       A :term:`structured data type` may contain a :term:`ndarray` with its
+       own dtype and shape.
+
+   title
+       In addition to field names, structured array fields may have an
+       associated :ref:`title <titles>` which is an alias to the name and is
+       commonly used for plotting.
+
    tuple
        A sequence that may contain a variable number of types of any
        kind.  A tuple is immutable, i.e., once constructed it cannot be
@@ -415,6 +427,12 @@ Glossary
    ufunc
        Universal function.  A fast element-wise array operation.  Examples include
        ``add``, ``sin`` and ``logical_or``.
+
+   vectorized
+       A loop-based function that operates on data with fixed strides.
+       Compilers know how to take advantage of well-constructed loops and
+       match the data to specialized hardware that can operate on a number
+       of operands in parallel.
 
    view
        An array that does not own its data, but refers to another array's

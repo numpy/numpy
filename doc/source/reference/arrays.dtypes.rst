@@ -14,7 +14,7 @@ following aspects of the data:
 1. Type of the data (integer, float, Python object, etc.)
 2. Size of the data (how many bytes is in *e.g.* the integer)
 3. Byte order of the data (:term:`little-endian` or :term:`big-endian`)
-4. If the data type is :term:`structured`, an aggregate of other
+4. If the data type is :term:`structured data type`, an aggregate of other
    data types, (*e.g.*, describing an array item consisting of
    an integer and a float),
 
@@ -42,7 +42,7 @@ needed in NumPy.
    pair: dtype; field
 
 Structured data types are formed by creating a data type whose
-:term:`fields` contain other data types. Each field has a name by
+:term:`field` contain other data types. Each field has a name by
 which it can be :ref:`accessed <arrays.indexing.fields>`. The parent data
 type should be of sufficient size to contain all its fields; the
 parent is nearly always based on the :class:`void` type which allows
@@ -145,7 +145,7 @@ Array-scalar types
     This is true for their sub-classes as well.
 
     Note that not all data-type information can be supplied with a
-    type-object: for example, :term:`flexible` data-types have
+    type-object: for example, `flexible` data-types have
     a default *itemsize* of 0, and require an explicitly given size
     to be useful.
 
@@ -511,7 +511,7 @@ Endianness of this data:
 
    dtype.byteorder
 
-Information about sub-data-types in a :term:`structured` data type:
+Information about sub-data-types in a :term:`structured data type`:
 
 .. autosummary::
    :toctree: generated/
