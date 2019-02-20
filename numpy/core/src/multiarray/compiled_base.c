@@ -567,6 +567,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         if (lenxp <= lenx) {
             slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_double));
             if (slopes == NULL) {
+                PyErr_NoMemory();
                 goto fail;
             }
         }
@@ -736,6 +737,7 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         if (lenxp <= lenx) {
             slopes = PyArray_malloc((lenxp - 1) * sizeof(npy_cdouble));
             if (slopes == NULL) {
+                PyErr_NoMemory();
                 goto fail;
             }
         }
