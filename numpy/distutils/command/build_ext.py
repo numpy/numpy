@@ -119,7 +119,7 @@ class build_ext (old_build_ext):
         self.compiler.show_customization()
 
         # Setup directory for storing generated extra DLL files on Windows
-        self.extra_dll_dir = os.path.join(self.build_temp, '.libs')
+        self.extra_dll_dir = os.path.join(self.build_temp, 'core')
         if not os.path.isdir(self.extra_dll_dir):
             os.makedirs(self.extra_dll_dir)
 
@@ -270,7 +270,7 @@ class build_ext (old_build_ext):
             for ext in self.extensions
         }
         for pkg_root in pkg_roots:
-            shared_lib_dir = os.path.join(pkg_root, '.libs')
+            shared_lib_dir = os.path.join(pkg_root, 'core')
             if not self.inplace:
                 shared_lib_dir = os.path.join(self.build_lib, shared_lib_dir)
             for fn in os.listdir(self.extra_dll_dir):
