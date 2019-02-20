@@ -77,31 +77,51 @@ _arraydescr_from_ctypes_type(PyTypeObject *type)
  * and it can be converted to a dtype object.
  *
  * Returns a new reference to a dtype object, or NULL
- * if this is not possible. When it returns NULL, it does
- * not set a Python exception.
+ * if this is not possible.
+ * When the return value is true, the dtype attribute should have been used
+ * and parsed. Currently the only failure mode for a 1 return is a
+ * RecursionError and the descriptor is set to NULL.
+ * When the return value is false, no error will be set.
  */
-NPY_NO_EXPORT PyArray_Descr *
-_arraydescr_from_dtype_attr(PyObject *obj)
+int
+_arraydescr_from_dtype_attr(PyObject *obj, PyArray_Descr **newdescr)
 {
     PyObject *dtypedescr;
-    PyArray_Descr *newdescr = NULL;
     int ret;
 
     /* For arbitrary objects that have a "dtype" attribute */
     dtypedescr = PyObject_GetAttrString(obj, "dtype");
-    PyErr_Clear();
     if (dtypedescr == NULL) {
-        return NULL;
+        /*
+         * This can be reached due to recursion limit being hit while fetching
+         * the attribute (tested for py3.7). This removes the custom message.
+         */
+        goto fail;
     }
 
-    ret = PyArray_DescrConverter(dtypedescr, &newdescr);
+    if (Py_EnterRecursiveCall(
+            " while trying to convert the given data type from its "
+            "`.dtype` attribute.") != 0) {
+        return 1;
+    }
+
+    ret = PyArray_DescrConverter(dtypedescr, newdescr);
+
     Py_DECREF(dtypedescr);
+    Py_LeaveRecursiveCall();
     if (ret != NPY_SUCCEED) {
-        PyErr_Clear();
-        return NULL;
+        goto fail;
     }
 
-    return newdescr;
+    return 1;
+
+  fail:
+    /* Ignore all but recursion errors, to give ctypes a full try. */
+    if (!PyErr_ExceptionMatches(PyExc_RecursionError)) {
+        PyErr_Clear();
+        return 0;
+    }
+    return 1;
 }
 
 /*
@@ -1425,11 +1445,16 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             check_num = NPY_VOID;
         }
         else {
-            *at = _arraydescr_from_dtype_attr(obj);
-            if (*at) {
+            if (_arraydescr_from_dtype_attr(obj, at)) {
+                /*
+                 * Using dtype attribute, *at may be NULL if a
+                 * RecursionError occurred.
+                 */
+                if (*at == NULL) {
+                    goto error;
+                }
                 return NPY_SUCCEED;
             }
-
             /*
              * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
              * type might override the dtype if numpy does not otherwise
@@ -1608,14 +1633,16 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         goto fail;
     }
     else {
-        *at = _arraydescr_from_dtype_attr(obj);
-        if (*at) {
+        if (_arraydescr_from_dtype_attr(obj, at)) {
+            /*
+             * Using dtype attribute, *at may be NULL if a
+             * RecursionError occurred.
+             */
+            if (*at == NULL) {
+                goto error;
+            }
             return NPY_SUCCEED;
         }
-        if (PyErr_Occurred()) {
-            return NPY_FAIL;
-        }
-
         /*
          * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
          * type might override the dtype if numpy does not otherwise
