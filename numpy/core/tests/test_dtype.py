@@ -939,6 +939,50 @@ def test_invalid_dtype_string():
     assert_raises(TypeError, np.dtype, u'Fl\xfcgel')
 
 
+class TestFromDTypeAttribute(object):
+    def test_simple(self):
+        class dt:
+            dtype = "f8"
+
+        assert np.dtype(dt) == np.float64
+        assert np.dtype(dt()) == np.float64
+
+    def test_recursion(self):
+        class dt:
+            pass
+
+        dt.dtype = dt
+        with pytest.raises(RecursionError):
+            np.dtype(dt)
+
+        dt_instance = dt()
+        dt_instance.dtype = dt
+        with pytest.raises(RecursionError):
+            np.dtype(dt_instance)
+
+    def test_void_subtype(self):
+        class dt(np.void):
+            # This code path is fully untested before, so it is unclear
+            # what this should be useful for. Note that if np.void is used
+            # numpy will think we are deallocating a base type [1.17, 2019-02].
+            dtype = np.dtype("f,f")
+            pass
+
+        np.dtype(dt)
+        np.dtype(dt(1))
+
+    def test_void_subtype_recursion(self):
+        class dt(np.void):
+            pass
+
+        dt.dtype = dt
+
+        with pytest.raises(RecursionError):
+            np.dtype(dt)
+
+        with pytest.raises(RecursionError):
+            np.dtype(dt(1))
+
 class TestFromCTypes(object):
 
     @staticmethod
