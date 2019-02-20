@@ -62,12 +62,15 @@ The :class:`MaskedArray` class
 
 
 
+.. _ma-attributes:
+
 Attributes and properties of masked arrays
 ------------------------------------------
 
 .. seealso:: :ref:`Array Attributes <arrays.ndarray.attributes>`
 
 
+.. _ma-data:
 .. attribute:: MaskedArray.data
 
    Returns the underlying data, as a view of the masked array.
@@ -82,12 +85,16 @@ Attributes and properties of masked arrays
    The type of the data can be accessed through the :attr:`baseclass`
    attribute.
 
+.. _ma-mask:
+
 .. attribute:: MaskedArray.mask
 
    Returns the underlying mask, as an array with the same shape and structure
    as the data, but where all fields are atomically booleans.
    A value of ``True`` indicates an invalid entry.
 
+
+.. _ma-recordmask:
 
 .. attribute:: MaskedArray.recordmask
 
@@ -101,6 +108,8 @@ Attributes and properties of masked arrays
       >>> x.recordmask
       array([False, False,  True, False, False])
 
+
+.. _ma-fillvalue:
 
 .. attribute:: MaskedArray.fill_value
 

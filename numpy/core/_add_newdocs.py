@@ -161,62 +161,63 @@ add_newdoc('numpy.core', 'nditer',
     ----------
     op : ndarray or sequence of array_like
         The array(s) to iterate over.
-    flags : sequence of str, optional
-        Flags to control the behavior of the iterator.
 
-          * "buffered" enables buffering when required.
-          * "c_index" causes a C-order index to be tracked.
-          * "f_index" causes a Fortran-order index to be tracked.
-          * "multi_index" causes a multi-index, or a tuple of indices
+    flags : sequence of str, optional
+          Flags to control the behavior of the iterator.
+
+          * ``buffered`` enables buffering when required.
+          * ``c_index`` causes a C-order index to be tracked.
+          * ``f_index`` causes a Fortran-order index to be tracked.
+          * ``multi_index`` causes a multi-index, or a tuple of indices
             with one per iteration dimension, to be tracked.
-          * "common_dtype" causes all the operands to be converted to
+          * ``common_dtype`` causes all the operands to be converted to
             a common data type, with copying or buffering as necessary.
-          * "copy_if_overlap" causes the iterator to determine if read
+          * ``copy_if_overlap`` causes the iterator to determine if read
             operands have overlap with write operands, and make temporary
             copies as necessary to avoid overlap. False positives (needless
             copying) are possible in some cases.
-          * "delay_bufalloc" delays allocation of the buffers until
-            a reset() call is made. Allows "allocate" operands to
+          * ``delay_bufalloc`` delays allocation of the buffers until
+            a reset() call is made. Allows ``allocate`` operands to
             be initialized before their values are copied into the buffers.
-          * "external_loop" causes the `values` given to be
+          * ``external_loop`` causes the ``values`` given to be
             one-dimensional arrays with multiple values instead of
             zero-dimensional arrays.
-          * "grow_inner" allows the `value` array sizes to be made
-            larger than the buffer size when both "buffered" and
-            "external_loop" is used.
-          * "ranged" allows the iterator to be restricted to a sub-range
+          * ``grow_inner`` allows the ``value`` array sizes to be made
+            larger than the buffer size when both ``buffered`` and
+            ``external_loop`` is used.
+          * ``ranged`` allows the iterator to be restricted to a sub-range
             of the iterindex values.
-          * "refs_ok" enables iteration of reference types, such as
+          * ``refs_ok`` enables iteration of reference types, such as
             object arrays.
-          * "reduce_ok" enables iteration of "readwrite" operands
+          * ``reduce_ok`` enables iteration of ``readwrite`` operands
             which are broadcasted, also known as reduction operands.
-          * "zerosize_ok" allows `itersize` to be zero.
+          * ``zerosize_ok`` allows `itersize` to be zero.
     op_flags : list of list of str, optional
-        This is a list of flags for each operand. At minimum, one of
-        "readonly", "readwrite", or "writeonly" must be specified.
+          This is a list of flags for each operand. At minimum, one of
+          ``readonly``, ``readwrite``, or ``writeonly`` must be specified.
 
-          * "readonly" indicates the operand will only be read from.
-          * "readwrite" indicates the operand will be read from and written to.
-          * "writeonly" indicates the operand will only be written to.
-          * "no_broadcast" prevents the operand from being broadcasted.
-          * "contig" forces the operand data to be contiguous.
-          * "aligned" forces the operand data to be aligned.
-          * "nbo" forces the operand data to be in native byte order.
-          * "copy" allows a temporary read-only copy if required.
-          * "updateifcopy" allows a temporary read-write copy if required.
-          * "allocate" causes the array to be allocated if it is None
-            in the `op` parameter.
-          * "no_subtype" prevents an "allocate" operand from using a subtype.
-          * "arraymask" indicates that this operand is the mask to use
+          * ``readonly`` indicates the operand will only be read from.
+          * ``readwrite`` indicates the operand will be read from and written to.
+          * ``writeonly`` indicates the operand will only be written to.
+          * ``no_broadcast`` prevents the operand from being broadcasted.
+          * ``contig`` forces the operand data to be contiguous.
+          * ``aligned`` forces the operand data to be aligned.
+          * ``nbo`` forces the operand data to be in native byte order.
+          * ``copy`` allows a temporary read-only copy if required.
+          * ``updateifcopy`` allows a temporary read-write copy if required.
+          * ``allocate`` causes the array to be allocated if it is None
+            in the ``op`` parameter.
+          * ``no_subtype`` prevents an ``allocate`` operand from using a subtype.
+          * ``arraymask`` indicates that this operand is the mask to use
             for selecting elements when writing to operands with the
             'writemasked' flag set. The iterator does not enforce this,
             but when writing from a buffer back to the array, it only
             copies those elements indicated by this mask.
-          * 'writemasked' indicates that only elements where the chosen
-            'arraymask' operand is True will be written to.
-          * "overlap_assume_elementwise" can be used to mark operands that are
+          * ``writemasked`` indicates that only elements where the chosen
+            ``arraymask`` operand is True will be written to.
+          * ``overlap_assume_elementwise`` can be used to mark operands that are
             accessed only in the iterator order, to allow less conservative
-            copying when "copy_if_overlap" is present.
+            copying when ``copy_if_overlap`` is present.
     op_dtypes : dtype or tuple of dtype(s), optional
         The required data type(s) of the operands. If copying or buffering
         is enabled, the data will be converted to/from their original types.
@@ -225,7 +226,7 @@ add_newdoc('numpy.core', 'nditer',
         Fortran order, 'A' means 'F' order if all the arrays are Fortran
         contiguous, 'C' order otherwise, and 'K' means as close to the
         order the array elements appear in memory as possible. This also
-        affects the element memory order of "allocate" operands, as they
+        affects the element memory order of ``allocate`` operands, as they
         are allocated to be compatible with iteration order.
         Default is 'K'.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
@@ -233,20 +234,20 @@ add_newdoc('numpy.core', 'nditer',
         or buffering.  Setting this to 'unsafe' is not recommended,
         as it can adversely affect accumulations.
 
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
+        * 'no' means the data types should not be cast at all.
+        * 'equiv' means only byte-order changes are allowed.
+        * 'safe' means only casts which can preserve values are allowed.
+        * 'same_kind' means only safe casts or casts within a kind,
+          like float64 to float32, are allowed.
+        * 'unsafe' means any data conversions may be done.
     op_axes : list of list of ints, optional
         If provided, is a list of ints or None for each operands.
         The list of axes for an operand is a mapping from the dimensions
         of the iterator to the dimensions of the operand. A value of
         -1 can be placed for entries, causing that dimension to be
-        treated as "newaxis".
+        treated as `newaxis`.
     itershape : tuple of ints, optional
-        The desired shape of the iterator. This allows "allocate" operands
+        The desired shape of the iterator. This allows ``allocate`` operands
         with a dimension mapped by op_axes not corresponding to a dimension
         of a different operand to get a value not equal to 1 for that
         dimension.
@@ -263,19 +264,19 @@ add_newdoc('numpy.core', 'nditer',
     finished : bool
         Whether the iteration over the operands is finished or not.
     has_delayed_bufalloc : bool
-        If True, the iterator was created with the "delay_bufalloc" flag,
+        If True, the iterator was created with the ``delay_bufalloc`` flag,
         and no reset() function was called on it yet.
     has_index : bool
-        If True, the iterator was created with either the "c_index" or
-        the "f_index" flag, and the property `index` can be used to
+        If True, the iterator was created with either the ``c_index`` or
+        the ``f_index`` flag, and the property `index` can be used to
         retrieve it.
     has_multi_index : bool
-        If True, the iterator was created with the "multi_index" flag,
+        If True, the iterator was created with the ``multi_index`` flag,
         and the property `multi_index` can be used to retrieve it.
     index
-        When the "c_index" or "f_index" flag was used, this property
+        When the ``c_index`` or ``f_index`` flag was used, this property
         provides access to the index. Raises a ValueError if accessed
-        and `has_index` is False.
+        and ``has_index`` is False.
     iterationneedsapi : bool
         Whether iteration requires access to the Python API, for example
         if one of the operands is an object array.
@@ -288,11 +289,11 @@ add_newdoc('numpy.core', 'nditer',
         and optimized iterator access pattern. Valid only before the iterator
         is closed.
     multi_index
-        When the "multi_index" flag was used, this property
+        When the ``multi_index`` flag was used, this property
         provides access to the index. Raises a ValueError if accessed
-        accessed and `has_multi_index` is False.
+        accessed and ``has_multi_index`` is False.
     ndim : int
-        The iterator's dimension.
+        The dimensions of the iterator.
     nop : int
         The number of iterator operands.
     operands : tuple of operand(s)
@@ -301,8 +302,8 @@ add_newdoc('numpy.core', 'nditer',
     shape : tuple of ints
         Shape tuple, the shape of the iterator.
     value
-        Value of `operands` at current iteration. Normally, this is a
-        tuple of array scalars, but if the flag "external_loop" is used,
+        Value of ``operands`` at current iteration. Normally, this is a
+        tuple of array scalars, but if the flag ``external_loop`` is used,
         it is a tuple of one dimensional arrays.
 
     Notes
@@ -313,12 +314,12 @@ add_newdoc('numpy.core', 'nditer',
     The Python exposure supplies two iteration interfaces, one which follows
     the Python iterator protocol, and another which mirrors the C-style
     do-while pattern.  The native Python approach is better in most cases, but
-    if you need the iterator's coordinates or index, use the C-style pattern.
+    if you need the coordinates or index of an iterator, use the C-style pattern.
 
     Examples
     --------
     Here is how we might write an ``iter_add`` function, using the
-    Python iterator protocol::
+    Python iterator protocol:
 
     >>> def iter_add_py(x, y, out=None):
     ...     addop = np.add
@@ -329,7 +330,7 @@ add_newdoc('numpy.core', 'nditer',
     ...             addop(a, b, out=c)
     ...     return it.operands[2]
 
-    Here is the same function, but following the C-style pattern::
+    Here is the same function, but following the C-style pattern:
 
     >>> def iter_add(x, y, out=None):
     ...    addop = np.add
@@ -341,7 +342,7 @@ add_newdoc('numpy.core', 'nditer',
     ...            it.iternext()
     ...        return it.operands[2]
 
-    Here is an example outer product function::
+    Here is an example outer product function:
 
     >>> def outer_it(x, y, out=None):
     ...     mulop = np.multiply
@@ -361,7 +362,7 @@ add_newdoc('numpy.core', 'nditer',
     array([[1, 2, 3],
            [2, 4, 6]])
 
-    Here is an example function which operates like a "lambda" ufunc::
+    Here is an example function which operates like a "lambda" ufunc:
 
     >>> def luf(lamdaexpr, *args, **kwargs):
     ...    '''luf(lambdaexpr, op1, ..., opn, out=None, order='K', casting='safe', buffersize=0)'''
@@ -2031,21 +2032,27 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ctypes',
     as well as documented private attributes):
 
     .. autoattribute:: numpy.core._internal._ctypes.data
+        :noindex:
 
     .. autoattribute:: numpy.core._internal._ctypes.shape
+        :noindex:
 
     .. autoattribute:: numpy.core._internal._ctypes.strides
+        :noindex:
 
     .. automethod:: numpy.core._internal._ctypes.data_as
+        :noindex:
 
     .. automethod:: numpy.core._internal._ctypes.shape_as
+        :noindex:
 
     .. automethod:: numpy.core._internal._ctypes.strides_as
+        :noindex:
 
     If the ctypes module is not available, then the ctypes attribute
     of array objects still returns something useful, but ctypes objects
     are not returned and errors may be raised instead. In particular,
-    the object will still have the as parameter attribute which will
+    the object will still have the ``as_parameter`` attribute which will
     return an integer equal to the data attribute.
 
     Examples
@@ -4861,7 +4868,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or `None`,
         a freshly-allocated array is returned. For consistency with
-        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
 
         .. versionchanged:: 1.13.0
@@ -4978,7 +4985,7 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or `None`,
         a freshly-allocated array is returned. For consistency with
-        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
 
         .. versionchanged:: 1.13.0
@@ -5060,7 +5067,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or `None`,
         a freshly-allocated array is returned. For consistency with
-        :ref:`ufunc.__call__`, if given as a keyword, this may be wrapped in a
+        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
 
         .. versionchanged:: 1.13.0

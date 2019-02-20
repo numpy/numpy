@@ -59,7 +59,7 @@ understood by four rules:
    entry in that dimension will be used for all calculations along
    that dimension. In other words, the stepping machinery of the
    :term:`ufunc` will simply not step along that dimension (the
-   :term:`stride` will be 0 for that dimension).
+   :ref:`stride <memory-layout>` will be 0 for that dimension).
 
 Broadcasting is used throughout NumPy to decide how to handle
 disparately shaped arrays; for example, all arithmetic operations (``+``,
@@ -70,7 +70,7 @@ arrays before operation.
 
 .. index:: broadcastable
 
-A set of arrays is called ":term:`broadcastable`" to the same shape if
+A set of arrays is called "broadcastable" to the same shape if
 the above rules produce a valid result, *i.e.*, one of the following
 is true:
 
