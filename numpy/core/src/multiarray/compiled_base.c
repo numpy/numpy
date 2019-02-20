@@ -774,17 +774,18 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                 dres[i] = dy[j];
             }
             else {
-                if (slopes!=NULL) {
-                    dres[i].real = slopes[j].real*(x_val - dx[j]) + dy[j].real;
-                    dres[i].imag = slopes[j].imag*(x_val - dx[j]) + dy[j].imag;
+                npy_cdouble slope;
+                if (slopes != NULL) {
+                    slope = slopes[j];
                 }
                 else {
                     const npy_double inv_dx = 1.0 / (dx[j+1] - dx[j]);
-                    dres[i].real = (dy[j+1].real - dy[j].real)*(x_val - dx[j])*
-                        inv_dx + dy[j].real;
-                    dres[i].imag = (dy[j+1].imag - dy[j].imag)*(x_val - dx[j])*
-                        inv_dx + dy[j].imag;
+                    slope.real = (dy[j+1].real - dy[j].real) * inv_dx;
+                    slope.imag = (dy[j+1].imag - dy[j].imag) * inv_dx;
                 }
+
+                dres[i].real = slope.real*(x_val - dx[j]) + dy[j].real;
+                dres[i].imag = slope.imag*(x_val - dx[j]) + dy[j].imag;
             }
         }
 
