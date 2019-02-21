@@ -8,7 +8,7 @@ __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
            'asstr', 'open_latin1', 'long', 'basestring', 'sixu',
            'integer_types', 'is_pathlib_path', 'npy_load_module', 'Path',
-           'contextlib_nullcontext', 'os_fspath', 'os_PathLike']
+           'pickle', 'contextlib_nullcontext', 'os_fspath', 'os_PathLike']
 
 import sys
 try:
@@ -18,6 +18,11 @@ except ImportError:
 
 if sys.version_info[0] >= 3:
     import io
+
+    try:
+        import pickle5 as pickle
+    except ImportError:
+        import pickle
 
     long = int
     integer_types = (int,)
@@ -51,8 +56,9 @@ if sys.version_info[0] >= 3:
 
     strchar = 'U'
 
-
 else:
+    import cpickle as pickle
+
     bytes = str
     long = long
     basestring = basestring
@@ -75,7 +81,6 @@ else:
 
     def sixu(s):
         return unicode(s, 'unicode_escape')
-
 
 def getexception():
     return sys.exc_info()[1]

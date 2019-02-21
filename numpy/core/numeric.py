@@ -15,6 +15,7 @@ import numbers
 import contextlib
 
 import numpy as np
+from numpy.compat import pickle, basestring
 from . import multiarray
 from .multiarray import (
     _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
@@ -44,17 +45,8 @@ ufunc = type(sin)
 newaxis = None
 
 if sys.version_info[0] >= 3:
-    if sys.version_info[1] in (6, 7):
-        try:
-            import pickle5 as pickle
-        except ImportError:
-            import pickle
-    else:
-        import pickle
-    basestring = str
     import builtins
 else:
-    import cPickle as pickle
     import __builtin__ as builtins
 
 

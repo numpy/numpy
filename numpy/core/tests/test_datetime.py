@@ -9,7 +9,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
     assert_raises_regex,
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 # Use pytz to test out various time zones if available
 try:

@@ -24,9 +24,8 @@ from ._iotools import (
 
 from numpy.compat import (
     asbytes, asstr, asunicode, asbytes_nested, bytes, basestring, unicode,
-    os_fspath, os_PathLike
+    os_fspath, os_PathLike, pickle
     )
-from numpy.core.numeric import pickle
 
 if sys.version_info[0] >= 3:
     from collections.abc import Mapping
