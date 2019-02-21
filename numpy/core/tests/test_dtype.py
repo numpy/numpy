@@ -10,7 +10,7 @@ import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT)
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
