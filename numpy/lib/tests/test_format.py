@@ -633,10 +633,7 @@ def test_version_2_0():
     d = np.ones(1000, dtype=dt)
 
     format.write_array(f, d, version=(2, 0))
-    with warnings.catch_warnings(record=True) as w:
-        warnings.filterwarnings('always', '', UserWarning)
-        format.write_array(f, d)
-        assert_(w[0].category is UserWarning)
+    format.write_array(f, d)
 
     # check alignment of data portion
     f.seek(0)
