@@ -3,6 +3,7 @@ import sys
 import copy
 import pytest
 
+import numpy as np
 from numpy import (
     array, alltrue, ndarray, zeros, dtype, intp, clongdouble
     )
@@ -153,7 +154,8 @@ class Type:
         info = typeinfo[self.NAME]
         self.type_num = getattr(wrap, 'NPY_' + self.NAME)
         assert_equal(self.type_num, info.num)
-        self.dtype = info.type
+        self.dtype = np.dtype(info.type)
+        self.type = info.type
         self.elsize = info.bits / 8
         self.dtypechar = info.char
 
@@ -564,8 +566,8 @@ class TestSharedMemory:
             if t is self.type:
                 continue
             obj = array(self.num23seq, dtype=t.dtype)
-            assert_(obj.dtype.type == t.dtype)
-            assert_(obj.dtype.type is not self.type.dtype)
+            assert_(obj.dtype.type == t.type)
+            assert_(obj.dtype.type is not self.type.type)
             assert_(not obj.flags['FORTRAN'] and obj.flags['CONTIGUOUS'])
             shape = obj.shape
             a = self.array(shape, intent.inplace, obj)
@@ -576,4 +578,4 @@ class TestSharedMemory:
             assert_(a.arr is obj)
             assert_(obj.flags['FORTRAN'])  # obj attributes changed inplace!
             assert_(not obj.flags['CONTIGUOUS'])
-            assert_(obj.dtype.type is self.type.dtype)  # obj changed inplace!
+            assert_(obj.dtype.type is self.type.type)  # obj changed inplace!

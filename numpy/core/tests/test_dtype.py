@@ -3,6 +3,7 @@ import operator
 import pytest
 import ctypes
 import gc
+import warnings
 
 import numpy as np
 from numpy.core._rational_tests import rational
@@ -1106,7 +1107,7 @@ def test_keyword_argument():
 class TestFromDTypeAttribute:
     def test_simple(self):
         class dt:
-            dtype = "f8"
+            dtype = np.dtype("f8")
 
         assert np.dtype(dt) == np.float64
         assert np.dtype(dt()) == np.float64
@@ -1130,22 +1131,52 @@ class TestFromDTypeAttribute:
             # what this should be useful for. Note that if np.void is used
             # numpy will think we are deallocating a base type [1.17, 2019-02].
             dtype = np.dtype("f,f")
-            pass
 
         np.dtype(dt)
         np.dtype(dt(1))
 
     def test_void_subtype_recursion(self):
-        class dt(np.void):
+        class vdt(np.void):
             pass
 
-        dt.dtype = dt
+        vdt.dtype = vdt
 
         with pytest.raises(RecursionError):
-            np.dtype(dt)
+            np.dtype(vdt)
 
         with pytest.raises(RecursionError):
-            np.dtype(dt(1))
+            np.dtype(vdt(1))
+
+    def test_deprecation_dtype_attribute_is_dtype(self):
+        # Deprecated NumPy 1.17, 2019-02-21
+        class dt:
+            dtype = "f8"
+
+        class vdt(np.void):
+            dtype = "f,f"
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("always", DeprecationWarning)
+            with pytest.warns(DeprecationWarning, match="`.dtype` attribute"):
+                np.dtype(dt)
+            with pytest.warns(DeprecationWarning, match="`.dtype` attribute"):
+                np.dtype(dt())
+            with pytest.warns(DeprecationWarning, match="`.dtype` attribute"):
+                np.dtype(vdt)
+            with pytest.warns(DeprecationWarning, match="`.dtype` attribute"):
+                np.dtype(vdt(1))
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            with pytest.raises(DeprecationWarning, match="`.dtype` attribute"):
+                np.dtype(dt)
+            with pytest.raises(DeprecationWarning, match="`.dtype` attribute"):
+                np.dtype(dt())
+            with pytest.raises(DeprecationWarning, match="`.dtype` attribute"):
+                np.dtype(vdt)
+            with pytest.raises(DeprecationWarning, match="`.dtype` attribute"):
+                np.dtype(vdt(1))
+
 
 
 class TestDTypeClasses:

@@ -108,6 +108,12 @@ _try_convert_from_dtype_attr(PyObject *obj)
         goto fail;
     }
 
+    if (PyArray_DescrCheck(dtypedescr)) {
+        /* The dtype attribute is already a valid descriptor */
+        *newdescr = (PyArray_Descr *)dtypedescr;
+        return 1;
+    }
+
     if (Py_EnterRecursiveCall(
             " while trying to convert the given data type from its "
             "`.dtype` attribute.") != 0) {
@@ -120,6 +126,16 @@ _try_convert_from_dtype_attr(PyObject *obj)
     Py_LeaveRecursiveCall();
     if (newdescr == NULL) {
         goto fail;
+    }
+
+    if (DEPRECATE("in the future the `.dtype` attribute of a given data"
+                  "type object must be a valid dtype instance. "
+                  "`data_type.dtype` may need to be coerced using "
+                  "`np.dtype(data_type.dtype)`. This will raise an error "
+                  "in NumPy 1.19.") < 0) {
+        /* NumPy 1.17, 2019-05-16 */
+        Py_DECREF(newdescr);
+        return NULL;
     }
 
     return newdescr;
