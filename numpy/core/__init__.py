@@ -14,11 +14,19 @@ if os.name == 'nt':
     # convention for storing / loading the DLL from
     # numpy/.libs/, if present
     libs_path = Path(Path(__file__).absolute().parents[1], '.libs')
+    DLL_filenames = []
     if libs_path.exists():
         for filename in libs_path.glob('*openblas*dll'):
             # NOTE: would it change behavior to load ALL
             # DLLs at this path vs. the name restriction?
             WinDLL(str(filename.absolute()))
+            DLL_filenames.append(str(filename))
+    if len(DLL_filenames) > 1:
+        import warnings
+        warnings.warn("loaded more than 1 DLL from .libs:",
+                      stacklevel=1)
+        for DLL_filename in DLL_filenames:
+            warnings.warn(DLL_filename, stacklevel=1)
 
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
