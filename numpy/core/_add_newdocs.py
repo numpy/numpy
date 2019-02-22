@@ -4145,9 +4145,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
     Returns a view of the array with axes transposed.
 
-    For a 1-D array, this has no effect. (To change between column and
-    row vectors, first cast the 1-D array into a matrix object.)
-    For a 2-D array, this is the usual matrix transpose.
+    For a 1-D array this has no effect, as a transposed vector is simply the
+    same vector. To convert a 1-D array into a 2D column vector, an additional
+    dimension must be added. `np.atleast2d(a).T` achieves this, as does
+    `a[:, np.newaxis]`.
+    For a 2-D array, this is a standard matrix transpose.
     For an n-D array, if axes are given, their order indicates how the
     axes are permuted (see Examples). If axes are not provided and
     ``a.shape = (i[0], i[1], ... i[n-2], i[n-1])``, then
@@ -4173,6 +4175,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
     See Also
     --------
     ndarray.T : Array property returning the array transposed.
+    ndarray.reshape : Give a new shape to an array without changing its data.
 
     Examples
     --------
