@@ -1737,6 +1737,9 @@ NPY_NO_EXPORT void
  * The recursion depth is O(lg n) as well.
  * when updating also update similar complex floats summation
  */
+#if defined(__INTEL_COMPILER) && defined(_WIN32) // See GH Pull 12991
+    #pragma intel optimization_level 1
+#endif
 static @type@
 pairwise_sum_@TYPE@(char *a, npy_intp n, npy_intp stride)
 {
