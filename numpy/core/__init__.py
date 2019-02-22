@@ -10,17 +10,18 @@ import os
 # path resolution portability with an absolute path DLL load
 if os.name == 'nt':
     from ctypes import WinDLL
-    from pathlib import Path
+    import glob
     # convention for storing / loading the DLL from
     # numpy/.libs/, if present
-    libs_path = Path(Path(__file__).absolute().parents[1], '.libs')
+    libs_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             '..', '.libs'))
     DLL_filenames = []
-    if libs_path.exists():
-        for filename in libs_path.glob('*openblas*dll'):
+    if os.path.isdir(libs_path):
+        for filename in glob.glob(os.path.join(libs_path, '*openblas*dll')):
             # NOTE: would it change behavior to load ALL
             # DLLs at this path vs. the name restriction?
-            WinDLL(str(filename.absolute()))
-            DLL_filenames.append(str(filename))
+            WinDLL(os.path.abspath(filename))
+            DLL_filenames.append(filename)
     if len(DLL_filenames) > 1:
         import warnings
         warnings.warn("loaded more than 1 DLL from .libs:",
