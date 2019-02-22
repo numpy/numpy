@@ -4145,8 +4145,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
     Returns a view of the array with axes transposed.
 
-    For a 1-D array, this has no effect, as transposed vector is simply the same
-    vector. To convert a 1-D array into a 2D column vector, an additional
+    For a 1-D array this has no effect, as a transposed vector is simply the
+    same vector. To convert a 1-D array into a 2D column vector, an additional
     dimension must be added. `np.atleast2d(a).T` achieves this, as does
     `a[:, np.newaxis]`.
     For a 2-D array, this is a standard matrix transpose.
