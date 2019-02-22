@@ -162,9 +162,8 @@ import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
-    asbytes, asstr, isfileobj, long, os_fspath
+    asbytes, asstr, isfileobj, long, os_fspath, pickle
     )
-from numpy.core.numeric import pickle
 
 
 MAGIC_PREFIX = b'\x93NUMPY'

@@ -47,7 +47,7 @@ from numpy import expand_dims
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.core._internal import recursive
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 
 __all__ = [

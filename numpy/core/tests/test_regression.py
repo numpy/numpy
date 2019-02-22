@@ -16,8 +16,7 @@ from numpy.testing import (
         assert_raises_regex, assert_warns, suppress_warnings,
         _assert_valid_refcount, HAS_REFCOUNT,
         )
-from numpy.compat import asbytes, asunicode, long
-from numpy.core.numeric import pickle
+from numpy.compat import asbytes, asunicode, long, pickle
 
 try:
     RecursionError

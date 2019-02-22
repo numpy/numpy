@@ -21,7 +21,7 @@ import weakref
 import pytest
 from contextlib import contextmanager
 
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 if sys.version_info[0] >= 3:
     import builtins
