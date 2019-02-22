@@ -3,9 +3,25 @@ from __future__ import division, absolute_import, print_function
 from .info import __doc__
 from numpy.version import version as __version__
 
+import os
+
+# on Windows NumPy loads an important OpenBLAS-related DLL
+# and the code below aims to alleviate issues with DLL
+# path resolution portability with an absolute path DLL load
+if os.name == 'nt':
+    from ctypes import WinDLL
+    from pathlib import Path
+    # convention for storing / loading the DLL from
+    # numpy/.libs/, if present
+    libs_path = Path(Path(__file__).absolute().parents[1], '.libs')
+    if libs_path.exists():
+        for filename in libs_path.glob('*openblas*dll'):
+            # NOTE: would it change behavior to load ALL
+            # DLLs at this path vs. the name restriction?
+            WinDLL(str(filename.absolute()))
+
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
-import os
 env_added = []
 for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
     if envkey not in os.environ:
