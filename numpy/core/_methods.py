@@ -39,10 +39,10 @@ def _prod(a, axis=None, dtype=None, out=None, keepdims=False,
           initial=_NoValue, where=True):
     return umr_prod(a, axis, dtype, out, keepdims, initial, where)
 
-def _any(a, axis=None, dtype=None, out=None, keepdims=False):
+def _any(a, axis=None, dtype=bool, out=None, keepdims=False):
     return umr_any(a, axis, dtype, out, keepdims)
 
-def _all(a, axis=None, dtype=None, out=None, keepdims=False):
+def _all(a, axis=None, dtype=bool, out=None, keepdims=False):
     return umr_all(a, axis, dtype, out, keepdims)
 
 def _count_reduce_items(arr, axis):

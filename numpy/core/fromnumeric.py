@@ -76,12 +76,7 @@ def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
         except AttributeError:
             pass
         else:
-            # This branch is needed for reductions like any which don't
-            # support a dtype.
-            if dtype is not None:
-                return reduction(axis=axis, dtype=dtype, out=out, **passkwargs)
-            else:
-                return reduction(axis=axis, out=out, **passkwargs)
+            return reduction(axis=axis, out=out, **passkwargs)
 
     return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
 
@@ -2211,7 +2206,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
     (191614240, 191614240)
 
     """
-    return _wrapreduction(a, np.logical_or, 'any', axis, None, out, keepdims=keepdims)
+    return _wrapreduction(a, np.logical_or, 'any', axis, np.bool_, out, keepdims=keepdims)
 
 
 def _all_dispatcher(a, axis=None, out=None, keepdims=None):
@@ -2292,7 +2287,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     (28293632, 28293632, array(True)) # may vary
 
     """
-    return _wrapreduction(a, np.logical_and, 'all', axis, None, out, keepdims=keepdims)
+    return _wrapreduction(a, np.logical_and, 'all', axis, np.bool_, out, keepdims=keepdims)
 
 
 def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):
