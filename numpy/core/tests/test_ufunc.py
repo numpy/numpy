@@ -1172,6 +1172,19 @@ class TestUfunc(object):
         assert_equal(np.array([1], dtype=object).sum(initial=1), 2)
         assert_equal(np.array([[1], [2, 3]], dtype=object)
                      .sum(initial=[0], where=[False, True]), [0, 2, 3])
+        a = np.array([[1, None, 2], [False, bool, 3.14]], dtype=object)
+        assert_equal(type(np.any(a)), np.bool_)
+        assert_equal(type(np.all(a)), np.bool_)
+        assert_equal(type(np.any(a, axis=0)), np.ndarray)
+        assert_equal(type(np.any(a, axis=0)), np.ndarray)
+        assert_equal(np.any(a, axis=0).dtype, bool)
+        assert_equal(np.all(a, axis=0).dtype, bool)
+        assert_equal(type(a.any()), np.bool_)
+        assert_equal(type(a.all()), np.bool_)
+        assert_equal(type(a.any(axis=0)), np.ndarray)
+        assert_equal(type(a.any(axis=0)), np.ndarray)
+        assert_equal(a.any(axis=0).dtype, bool)
+        assert_equal(a.all(axis=0).dtype, bool)
 
     def test_object_array_accumulate_inplace(self):
         # Checks that in-place accumulates work, see also gh-7402
