@@ -3448,6 +3448,7 @@ class MaskedArray(ndarray):
     @property
     def mask(self):
         """ Current mask. """
+
         # We could try to force a reshape, but that wouldn't work in some
         # cases.
         return self._mask
@@ -3459,11 +3460,17 @@ class MaskedArray(ndarray):
     @property
     def recordmask(self):
         """
-        Return the mask of the records.
+        Get or set the mask of the array if it has no named fields. For
+        structured arrays, returns a ndarray of booleans where entries are
+        ``True`` if **all** the fields are masked, ``False`` otherwise:
 
-        A record is masked when all the fields are masked.
-
+        >>> x = np.ma.array([(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
+        ...         mask=[(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)],
+        ...        dtype=[('a', int), ('b', int)])
+        >>> x.recordmask
+        array([False, False,  True, False, False])
         """
+
         _mask = self._mask.view(ndarray)
         if _mask.dtype.names is None:
             return _mask
@@ -3568,9 +3575,19 @@ class MaskedArray(ndarray):
         return self._baseclass
 
     def _get_data(self):
-        """Return the current data, as a view of the original
-        underlying data.
+        """
+        Returns the underlying data, as a view of the masked array.
 
+        If the underlying data is a subclass of :class:`numpy.ndarray`, it is
+        returned as such.
+
+        >>> x = np.ma.array(np.matrix([[1, 2], [3, 4]]), mask=[[0, 1], [1, 0]])
+        >>> x.data
+        matrix([[1, 2],
+                [3, 4]])
+
+        The type of the data can be accessed through the :attr:`baseclass`
+        attribute.
         """
         return ndarray.view(self, self._baseclass)
 

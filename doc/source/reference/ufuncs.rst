@@ -16,7 +16,7 @@ A universal function (or :term:`ufunc` for short) is a function that
 operates on :class:`ndarrays <ndarray>` in an element-by-element fashion,
 supporting :ref:`array broadcasting <ufuncs.broadcasting>`, :ref:`type
 casting <ufuncs.casting>`, and several other standard features. That
-is, a ufunc is a ":term:`vectorized`" wrapper for a function that
+is, a ufunc is a ":term:`vectorized <vectorization>`" wrapper for a function that
 takes a fixed number of specific inputs and produces a fixed number of
 specific outputs.
 

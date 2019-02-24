@@ -57,10 +57,10 @@ A structured datatype can be thought of as a sequence of bytes of a certain
 length (the structure's :term:`itemsize`) which is interpreted as a collection
 of fields. Each field has a name, a datatype, and a byte offset within the
 structure. The datatype of a field may be any numpy datatype including other
-structured datatypes, and it may also be a :term:`subarray` which behaves like
-an ndarray of a specified shape. The offsets of the fields are arbitrary, and
-fields may even overlap. These offsets are usually determined automatically by
-numpy, but can also be specified.
+structured datatypes, and it may also be a :term:`subarray data type` which
+behaves like an ndarray of a specified shape. The offsets of the fields are
+arbitrary, and fields may even overlap. These offsets are usually determined
+automatically by numpy, but can also be specified.
 
 Structured Datatype Creation
 ----------------------------
@@ -266,7 +266,7 @@ providing a 3-element tuple ``(datatype, offset, title)`` instead of the usual
  >>> np.dtype({'name': ('i4', 0, 'my title')})
  dtype([(('my title', 'name'), '<i4')])
 
-The ``dtype.fields`` dictionary will contain title as keys, if any
+The ``dtype.fields`` dictionary will contain titles as keys, if any
 titles are used.  This means effectively that a field with a title will be
 represented twice in the fields dictionary. The tuple values for these fields
 will also have a third element, the field title. Because of this, and because
