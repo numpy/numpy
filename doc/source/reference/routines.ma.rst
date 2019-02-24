@@ -77,9 +77,11 @@ Inspecting the array
    ma.size
 
 
-.. seealso:: :ref:`ma.MaskedArray.data <ma-data>`,
-    :ref:`ma.MaskedArray.mask <ma-mask>` and
-    :ref:`ma.MaskedArray.recordmask <ma-recordmask>`
+.. autosummary::
+
+    ma.MaskedArray.data
+    ma.MaskedArray.mask
+    ma.MaskedArray.recordmask
 
 _____
 
@@ -287,7 +289,9 @@ Filling a masked array
    ma.MaskedArray.get_fill_value
    ma.MaskedArray.set_fill_value
 
-.. seealso: :ref:`ma.MaskedArray.fill_value <ma-fill_value>`
+.. autosummary::
+
+    ma.MaskedArray.fill_value
 
 _____
 
