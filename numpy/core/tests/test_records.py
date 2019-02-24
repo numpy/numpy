@@ -437,12 +437,12 @@ class TestRecord(object):
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
         assert_raises(ValueError, lambda: arr[['nofield']])
 
-    def test_frommarrays_using_subarrays(self):
+    def test_fromarrays_nested_structured_arrays(self):
         arrays = [
             np.arange(10),
             np.ones(10, dtype=[('a', '<u2'), ('b', '<f4')]),
         ]
-        arr = np.rec.fromarrays(arrays) # ValueError?
+        arr = np.rec.fromarrays(arrays)  # ValueError?
 
 
 def test_find_duplicate():
