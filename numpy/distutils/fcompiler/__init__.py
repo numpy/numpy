@@ -22,7 +22,6 @@ import os
 import sys
 import re
 import types
-import shlex
 
 from numpy.compat import open_latin1
 
@@ -38,6 +37,7 @@ from numpy.distutils.misc_util import is_string, all_strings, is_sequence, \
     make_temp_file, get_shared_lib_extension
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils.compat import get_exception
+from numpy.distutils import _shell_utils
 
 from .environment import EnvironmentConfig
 
@@ -475,10 +475,10 @@ class FCompiler(CCompiler):
         fixflags = []
 
         if f77:
-            f77 = shlex.split(f77, posix=(os.name == 'posix'))
+            f77 = _shell_utils.NativeParser.split(f77)
             f77flags = self.flag_vars.f77
         if f90:
-            f90 = shlex.split(f90, posix=(os.name == 'posix'))
+            f90 = _shell_utils.NativeParser.split(f90)
             f90flags = self.flag_vars.f90
             freeflags = self.flag_vars.free
         # XXX Assuming that free format is default for f90 compiler.
@@ -491,7 +491,7 @@ class FCompiler(CCompiler):
         # should perhaps eventually be more throughly tested and more
         # robustly handled
         if fix:
-            fix = shlex.split(fix, posix=(os.name == 'posix'))
+            fix = _shell_utils.NativeParser.split(fix)
             fixflags = self.flag_vars.fix + f90flags
 
         oflags, aflags, dflags = [], [], []
