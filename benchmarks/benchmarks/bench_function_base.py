@@ -162,7 +162,7 @@ class SortGenerator(object):
     def random_unsorted_area(cls, size, dtype, frac, area_size=None):
         """
         This type of array has random unsorted areas such that they
-        compose ``frac`` percent of the original array.
+        compose the fraction ``frac`` of the original array.
         """
         if area_size is None:
             area_size = cls.AREA_SIZE
