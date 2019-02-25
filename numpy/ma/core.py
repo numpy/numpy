@@ -3667,6 +3667,7 @@ class MaskedArray(ndarray):
             # Don't overwrite the attribute, just fill it (for propagation)
             _fill_value[()] = target
 
+    # kept for compatibility
     get_fill_value = fill_value.fget
     set_fill_value = fill_value.fset
 
@@ -4343,7 +4344,7 @@ class MaskedArray(ndarray):
         Return the imaginary part of the masked array.
 
         The returned array is a view on the imaginary part of the `MaskedArray`
-        whose `get_imag` method is called.
+        whose `imag` method is called.
 
         Parameters
         ----------
@@ -4356,12 +4357,12 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        get_real, real, imag
+        real, get_real, get_imag
 
         Examples
         --------
         >>> x = np.ma.array([1+1.j, -2j, 3.45+1.6j], mask=[False, True, False])
-        >>> x.get_imag()
+        >>> x.imag
         masked_array(data=[1.0, --, 1.6],
                      mask=[False,  True, False],
                fill_value=1e+20)
@@ -4371,6 +4372,7 @@ class MaskedArray(ndarray):
         result.__setmask__(self._mask)
         return result
 
+    # kept for compatibility
     get_imag = imag.fget
 
     @property
@@ -4392,12 +4394,12 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        get_imag, real, imag
+        imag, get_real, get_imag
 
         Examples
         --------
         >>> x = np.ma.array([1+1.j, -2j, 3.45+1.6j], mask=[False, True, False])
-        >>> x.get_real()
+        >>> x.real
         masked_array(data=[1.0, --, 3.45],
                      mask=[False,  True, False],
                fill_value=1e+20)
@@ -4407,6 +4409,7 @@ class MaskedArray(ndarray):
         result.__setmask__(self._mask)
         return result
 
+    # kept for compatibility
     get_real = real.fget
 
     def count(self, axis=None, keepdims=np._NoValue):
@@ -5905,11 +5908,8 @@ class MaskedArray(ndarray):
     repeat = _arraymethod('repeat')
     squeeze = _arraymethod('squeeze')
     swapaxes = _arraymethod('swapaxes')
+    T = property(fget=lambda self: self.transpose())
     transpose = _arraymethod('transpose')
-
-    @property
-    def T(self):
-        return self.transpose()
 
     def tolist(self, fill_value=None):
         """
