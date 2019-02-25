@@ -89,6 +89,9 @@ def ones(shape, dtype=None, order='C'):
     matrix([[1.,  1.]])
 
     """
+    if isinstance(dtype, int):
+        raise TypeError('Did you mean to use a tuple as shape?')
+
     a = ndarray.__new__(matrix, shape, dtype, order=order)
     a.fill(1)
     return a
@@ -133,6 +136,10 @@ def zeros(shape, dtype=None, order='C'):
     matrix([[0.,  0.]])
 
     """
+
+    if isinstance(dtype, int):
+        raise TypeError('Did you mean to use a tuple as shape?')
+
     a = ndarray.__new__(matrix, shape, dtype, order=order)
     a.fill(0)
     return a

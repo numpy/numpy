@@ -213,6 +213,9 @@ def ones(shape, dtype=None, order='C'):
            [1.,  1.]])
 
     """
+    if isinstance(dtype, int):
+        raise TypeError('Did you mean to use a tuple as shape?')
+
     a = empty(shape, dtype, order)
     multiarray.copyto(a, 1, casting='unsafe')
     return a
