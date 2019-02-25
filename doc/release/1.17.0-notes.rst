@@ -142,6 +142,12 @@ but with this change, you can do::
 
 thereby saving a level of indentation
 
+``np.interp`` handles infinities more robustly
+----------------------------------------------
+In some cases where ``np.interp`` would previously return ``np.nan``, it now
+returns an appropriate infinity.
+
+
 Changes
 =======
 
