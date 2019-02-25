@@ -24,10 +24,9 @@ if os.name == 'nt':
             DLL_filenames.append(filename)
     if len(DLL_filenames) > 1:
         import warnings
-        warnings.warn("loaded more than 1 DLL from .libs:",
+        warnings.warn("loaded more than 1 DLL from .libs:\n%s" %
+                      "\n".join(DLL_filenames),
                       stacklevel=1)
-        for DLL_filename in DLL_filenames:
-            warnings.warn(DLL_filename, stacklevel=1)
 
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
