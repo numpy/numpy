@@ -13,7 +13,7 @@ NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
 
 def test_array_array():
     tobj = type(object)
-    ones11 = np.ones((1, 1), np.float64)
+    ones11 = np.ones((1, 1), dtype=np.float64)
     tndarray = type(ones11)
     # Test is_ndarray
     assert_equal(np.array(ones11, dtype=np.float64), ones11)

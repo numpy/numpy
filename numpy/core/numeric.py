@@ -166,7 +166,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
 
 
 @set_module('numpy')
-def ones(shape, dtype=None, order='C'):
+def ones(*shape, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with ones.
 
@@ -213,7 +213,7 @@ def ones(shape, dtype=None, order='C'):
            [1.,  1.]])
 
     """
-    a = empty(shape, dtype, order)
+    a = empty(tuple(shape), dtype, order)
     multiarray.copyto(a, 1, casting='unsafe')
     return a
 

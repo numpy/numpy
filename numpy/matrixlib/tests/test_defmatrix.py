@@ -202,14 +202,14 @@ class TestCasting(object):
         mA = matrix(A)
 
         mB = mA.copy()
-        O = np.ones((10, 10), np.float64) * 0.1
+        O = np.ones((10, 10), dtype=np.float64) * 0.1
         mB = mB + O
         assert_(mB.dtype.type == np.float64)
         assert_(np.all(mA != mB))
         assert_(np.all(mB == mA+0.1))
 
         mC = mA.copy()
-        O = np.ones((10, 10), np.complex128)
+        O = np.ones((10, 10), dtype=np.complex128)
         mC = mC * O
         assert_(mC.dtype.type == np.complex128)
         assert_(np.all(mA != mB))

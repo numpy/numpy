@@ -48,7 +48,7 @@ def empty(shape, dtype=None, order='C'):
     """
     return ndarray.__new__(matrix, shape, dtype, order=order)
 
-def ones(shape, dtype=None, order='C'):
+def ones(*shape, dtype=None, order='C'):
     """
     Matrix of ones.
 
@@ -88,12 +88,16 @@ def ones(shape, dtype=None, order='C'):
     >>> np.matlib.ones(2)
     matrix([[1.,  1.]])
 
+    >>> np.matlib.ones(2, 3)
+    matrix([[1.,  1.,  1.],
+            [1.,  1.,  1.]])
     """
-    a = ndarray.__new__(matrix, shape, dtype, order=order)
+
+    a = ndarray.__new__(matrix, tuple(shape), dtype, order=order)
     a.fill(1)
     return a
 
-def zeros(shape, dtype=None, order='C'):
+def zeros(*shape, dtype=None, order='C'):
     """
     Return a matrix of given shape and type, filled with zeros.
 
@@ -132,8 +136,12 @@ def zeros(shape, dtype=None, order='C'):
     >>> np.matlib.zeros(2)
     matrix([[0.,  0.]])
 
+    >>> np.matlib.zeros(2, 3)
+    matrix([[0.,  0.,  0.],
+            [0.,  0.,  0.]])
+
     """
-    a = ndarray.__new__(matrix, shape, dtype, order=order)
+    a = ndarray.__new__(matrix, tuple(shape), dtype, order=order)
     a.fill(0)
     return a
 
