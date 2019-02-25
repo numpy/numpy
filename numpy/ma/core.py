@@ -3445,15 +3445,16 @@ class MaskedArray(ndarray):
 
     _set_mask = __setmask__
 
-    def _get_mask(self):
-        """Return the current mask.
-
-        """
+    @property
+    def mask(self):
+        """ Current mask. """
         # We could try to force a reshape, but that wouldn't work in some
         # cases.
         return self._mask
-
-    mask = property(fget=_get_mask, fset=__setmask__, doc="Mask")
+    
+    @mask.setter
+    def mask(self, value):
+        self.__setmask__(value)
 
     @property
     def recordmask(self):
@@ -3470,10 +3471,6 @@ class MaskedArray(ndarray):
 
     @recordmask.setter
     def recordmask(self, mask):
-        """
-        Set the mask of the records.
-
-        """
         raise NotImplementedError("Coming soon: setting the mask per records!")
 
     def harden_mask(self):
@@ -3582,24 +3579,19 @@ class MaskedArray(ndarray):
 
     @property
     def flat(self):
-        """ Return a flat iterator. """
+        """ Return a flat iterator, or set a flattened version of self to value. """
         return MaskedIterator(self)
 
     @flat.setter
     def flat(self, value):
-        """ Set a flattened version of self to value. """
         y = self.ravel()
         y[:] = value
 
     @property
     def fill_value(self):
         """
-        Return the filling value of the masked array.
-
-        Returns
-        -------
-        fill_value : scalar
-            The filling value.
+        The filling value of the masked array is a scalar. When setting, None
+        will set to a default based on the data type.
 
         Examples
         --------
@@ -3612,8 +3604,17 @@ class MaskedArray(ndarray):
         (1e+20+0j)
 
         >>> x = np.ma.array([0, 1.], fill_value=-np.inf)
-        >>> x.get_fill_value()
+        >>> x.fill_value
         -inf
+        >>> x.fill_value = np.pi
+        >>> x.fill_value
+        3.1415926535897931 # may vary
+
+        Reset to default:
+
+        >>> x.fill_value = None
+        >>> x.fill_value
+        1e+20
 
         """
         if self._fill_value is None:
@@ -3629,35 +3630,6 @@ class MaskedArray(ndarray):
 
     @fill_value.setter
     def fill_value(self, value=None):
-        """
-        Set the filling value of the masked array.
-
-        Parameters
-        ----------
-        value : scalar, optional
-            The new filling value. Default is None, in which case a default
-            based on the data type is used.
-
-        See Also
-        --------
-        ma.set_fill_value : Equivalent function.
-
-        Examples
-        --------
-        >>> x = np.ma.array([0, 1.], fill_value=-np.inf)
-        >>> x.fill_value
-        -inf
-        >>> x.set_fill_value(np.pi)
-        >>> x.fill_value
-        3.1415926535897931 # may vary
-
-        Reset to default:
-
-        >>> x.set_fill_value()
-        >>> x.fill_value
-        1e+20
-
-        """
         target = _check_fill_value(value, self.dtype)
         _fill_value = self._fill_value
         if _fill_value is None:
@@ -4341,10 +4313,9 @@ class MaskedArray(ndarray):
     @property
     def imag(self):
         """
-        Return the imaginary part of the masked array.
+        Get and set the imaginary part of the masked array.
 
-        The returned array is a view on the imaginary part of the `MaskedArray`
-        whose `imag` method is called.
+        The returned array is a view on the imaginary part of this `MaskedArray`.
 
         Parameters
         ----------
@@ -4357,7 +4328,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        real, get_real, get_imag
+        real
 
         Examples
         --------
@@ -4378,10 +4349,9 @@ class MaskedArray(ndarray):
     @property
     def real(self):
         """
-        Return the real part of the masked array.
+        Get and set the real part of the masked array.
 
-        The returned array is a view on the real part of the `MaskedArray`
-        whose `get_real` method is called.
+        The returned array is a view on the real part of this `MaskedArray`.
 
         Parameters
         ----------
@@ -4394,7 +4364,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        imag, get_real, get_imag
+        imag
 
         Examples
         --------
