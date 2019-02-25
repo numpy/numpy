@@ -79,6 +79,16 @@ random data.  The algorithm is stable and requires O(n/2) working space.  For
 details of the algorithm, refer to
 `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
 
+``np.unpackbits`` now accepts a ``count`` parameter
+---------------------------------------------------
+``count`` allows subsetting the number of bits that will be unpacked up-front,
+rather than reshaping and subsetting later, making the ``packbits`` operation
+invertible, and the unpacking less wasteful. Counts larger than the number of
+available bits add zero padding. Negative counts trim bits off the end instead
+of counting from the beginning. None counts implement the existing behavior of
+unpacking everything.
+
+
 ``np.linalg.svd`` and ``np.linalg.pinv`` can be faster on hermitian inputs
 --------------------------------------------------------------------------
 These functions now accept a ``hermitian`` argument, matching the one added
