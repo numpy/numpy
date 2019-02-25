@@ -98,30 +98,46 @@ class Select(Benchmark):
 class SortGenerator(object):
     # The size of the unsorted area in the "random unsorted area"
     # benchmarks
-    AREA_SIZE = 10
+    AREA_SIZE = 100
     # The size of the "partially ordered" sub-arrays
-    BUBBLE_SIZE = 10
+    BUBBLE_SIZE = 100
 
     @staticmethod
-    def _random(size, dtype):
+    def random(size, dtype):
+        """
+        Returns a randomly-shuffled array.
+        """
         arr = np.arange(size, dtype=dtype)
         np.random.shuffle(arr)
         return arr
     
     @staticmethod
-    def _ordered(size, dtype):
+    def ordered(size, dtype):
+        """
+        Returns an ordered array.
+        """
         return np.arange(size, dtype=dtype)
 
     @staticmethod
-    def _reversed(size, dtype):
+    def reversed(size, dtype):
+        """
+        Returns an array that's in descending order.
+        """
         return np.arange(size-1, -1, -1, dtype=dtype)
 
     @staticmethod
-    def _uniform(size, dtype):
+    def uniform(size, dtype):
+        """
+        Returns an array that has the same value everywhere.
+        """
         return np.ones(size, dtype=dtype)
 
     @staticmethod
-    def _type_swapped_pair(size, dtype, swap_frac):
+    def swapped_pair(size, dtype, swap_frac):
+        """
+        Returns an ordered array, but one that has ``swap_frac * size``
+        pairs swapped.
+        """
         a = np.arange(size, dtype=dtype)
         for _ in range(int(size * swap_frac)):
             x, y = np.random.randint(0, size, 2)
@@ -129,7 +145,10 @@ class SortGenerator(object):
         return a
 
     @staticmethod
-    def _type_sorted_block(size, dtype, block_size):
+    def sorted_block(size, dtype, block_size):
+        """
+        Returns an array with blocks that are all sorted.
+        """
         a = np.arange(size, dtype=dtype)
         b = []
         if size < block_size:
@@ -139,47 +158,33 @@ class SortGenerator(object):
             b.extend(a[i::block_num])
         return np.array(b)
 
-    @staticmethod
-    def _type_random_unsorted_area(size, dtype, frac, area_num):
-        area_num = int(area_num)
+    @classmethod
+    def random_unsorted_area(cls, size, dtype, frac, area_size=None):
+        """
+        This type of array has random unsorted areas such that they
+        compose ``frac`` percent of the original array.
+        """
+        if area_size is None:
+            area_size = cls.AREA_SIZE
+
+        area_num = int(size * frac / area_size)
         a = np.arange(size, dtype=dtype)
-        unsorted_len = int(size * frac / area_num)
         for _ in range(area_num):
-            start = np.random.randint(size-unsorted_len)
-            end = start + unsorted_len
+            start = np.random.randint(size-area_size)
+            end = start + area_size
             np.random.shuffle(a[start:end])
         return a
 
     @classmethod
-    def get_array(cls, array_type, size, dtype):
-        import re
-        import functools
-        token_specification = [
-            (r'random',
-                lambda match: cls._random(size, dtype)),
-            (r'ordered',
-                lambda match: cls._ordered(size, dtype)),
-            (r'reversed',
-                lambda match: cls._reversed(size, dtype)),
-            (r'uniform',
-                lambda match: cls._uniform(size, dtype)),
-            (r'sorted\_block\_([0-9]+)',
-                lambda match: cls._type_sorted_block(size, dtype, int(match.group(1)))),
-            (r'swapped\_pair\_([0-9]+)\_percent',
-                lambda match: cls._type_swapped_pair(size, dtype, int(match.group(1)) / 100.0)),
-            (r'random\_unsorted\_area\_([0-9]+)\_percent',
-                lambda match: cls._type_random_unsorted_area(size, dtype, int(match.group(1)) / 100.0, cls.AREA_SIZE)),
-            (r'random_bubble\_([0-9]+)\_fold',
-                lambda match: cls._type_random_unsorted_area(size, dtype, int(match.group(1)) * cls.BUBBLE_SIZE / size, cls.BUBBLE_SIZE)),
-        ]
+    def random_bubble(cls, size, dtype, bubble_num, bubble_size=None):
+        """
+        This type of array has ``bubble_num`` random unsorted areas.
+        """
+        if bubble_size is None:
+            bubble_size = cls.BUBBLE_SIZE
+        frac = bubble_size * bubble_num / size
 
-        for pattern, function in token_specification:
-            match = re.fullmatch(pattern, array_type)
-
-            if match is not None:
-                return function(match)
-
-        raise ValueError("Incorrect array_type specified.")
+        return cls.random_unsorted_area(size, dtype, frac, bubble_size)
 
 
 class Sort(Benchmark):
@@ -187,26 +192,6 @@ class Sort(Benchmark):
     This benchmark tests sorting performance with several
     different types of arrays that are likely to appear in
     real-world applications.
-
-    ordered
-        Perfectly ordered array
-    reversed
-        A reversed array
-    uniform
-        A array where all values are the same
-    sorted_block_X
-        An array that is entirely composed of sorted blocks
-        of size X
-    swapped_pair_X_percent
-        An array which has random pairs swapped. The number
-        of swapped pairs is X% of the size of the array
-    random_unsorted_area_X_percent
-        This kind of array has random unsorted areas which
-        take up X% of the original array, the size of one
-        area is SortGenerator.AREA_SIZE
-    random_bubble_X_fold
-        Same as random_unsorted_area, except that it has
-        X areas of size SortGenerator.BUBBLE_SIZE
     """
     params = [
         # In NumPy 1.17 and newer, 'merge' can be one of several
@@ -214,21 +199,21 @@ class Sort(Benchmark):
         ['quick', 'merge', 'heap'],
         ['float64', 'int64', 'uint64'],
         [
-            'ordered',
-            'reversed',
-            'uniform',
-            'sorted_block_10',
-            'sorted_block_100',
-            'sorted_block_1000',
-            'swapped_pair_1_percent',
-            'swapped_pair_10_percent',
-            'swapped_pair_50_percent',
-            'random_unsorted_area_50_percent',
-            'random_unsorted_area_10_percent',
-            'random_unsorted_area_1_percent',
-            'random_bubble_1_fold',
-            'random_bubble_5_fold',
-            'random_bubble_10_fold',
+            ('ordered',),
+            ('reversed',),
+            ('uniform',),
+            ('sorted_block', 10),
+            ('sorted_block', 100),
+            ('sorted_block', 1000),
+            ('swapped_pair', 0.01),
+            ('swapped_pair', 0.1),
+            ('swapped_pair', 0.5),
+            ('random_unsorted_area', 0.5),
+            ('random_unsorted_area', 0.1),
+            ('random_unsorted_area', 0.01),
+            ('random_bubble', 1),
+            ('random_bubble', 5),
+            ('random_bubble', 10),
         ],
     ]
     param_names = ['kind', 'dtype', 'array_type']
@@ -238,7 +223,8 @@ class Sort(Benchmark):
 
     def setup(self, kind, dtype, array_type):
         np.random.seed(1234)
-        self.arr = SortGenerator.get_array(array_type, self.ARRAY_SIZE, dtype)
+        array_class = array_type[0]
+        self.arr = getattr(SortGenerator, array_class)(self.ARRAY_SIZE, dtype, *array_type[1:])
 
     def time_sort_inplace(self, kind, dtype, array_type):
         self.arr.sort(kind=kind)
