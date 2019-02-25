@@ -12,6 +12,54 @@
 
 #include "simd.inc"
 
+/**
+ * Simple unoptimized loop macros that iterate over the ufunc arguments in
+ * parallel.
+ * @{
+ */
+
+/** (<ignored>) -> (op1) */
+#define OUTPUT_LOOP\
+    char *op1 = args[1];\
+    npy_intp os1 = steps[1];\
+    npy_intp n = dimensions[0];\
+    npy_intp i;\
+    for(i = 0; i < n; i++, op1 += os1)
+
+/** (ip1) -> (op1) */
+#define UNARY_LOOP\
+    char *ip1 = args[0], *op1 = args[1];\
+    npy_intp is1 = steps[0], os1 = steps[1];\
+    npy_intp n = dimensions[0];\
+    npy_intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, op1 += os1)
+
+/** (ip1) -> (op1, op2) */
+#define UNARY_LOOP_TWO_OUT\
+    char *ip1 = args[0], *op1 = args[1], *op2 = args[2];\
+    npy_intp is1 = steps[0], os1 = steps[1], os2 = steps[2];\
+    npy_intp n = dimensions[0];\
+    npy_intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2)
+
+/** (ip1, ip2) -> (op1) */
+#define BINARY_LOOP\
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];\
+    npy_intp n = dimensions[0];\
+    npy_intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1)
+
+/** (ip1, ip2) -> (op1, op2) */
+#define BINARY_LOOP_TWO_OUT\
+    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];\
+    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2], os2 = steps[3];\
+    npy_intp n = dimensions[0];\
+    npy_intp i;\
+    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1, op2 += os2)
+
+/** @} */
+
 /* unary loop input and output contiguous */
 #define IS_UNARY_CONT(tin, tout) (steps[0] == sizeof(tin) && \
                                   steps[1] == sizeof(tout))
@@ -33,19 +81,6 @@
                                    steps[1] == 0 && \
                                    steps[2] == sizeof(tout))
 
-#define OUTPUT_LOOP\
-    char *op1 = args[1];\
-    npy_intp os1 = steps[1];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, op1 += os1)
-
-#define UNARY_LOOP\
-    char *ip1 = args[0], *op1 = args[1];\
-    npy_intp is1 = steps[0], os1 = steps[1];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, op1 += os1)
 
 /*
  * loop with contiguous specialization
@@ -76,20 +111,6 @@
     } \
     } \
     while (0)
-
-#define UNARY_LOOP_TWO_OUT\
-    char *ip1 = args[0], *op1 = args[1], *op2 = args[2];\
-    npy_intp is1 = steps[0], os1 = steps[1], os2 = steps[2];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2)
-
-#define BINARY_LOOP\
-    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
-    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1)
 
 /*
  * loop with contiguous specialization
@@ -192,13 +213,6 @@
     char *iop1 = args[0]; \
     TYPE io1 = *(TYPE *)iop1; \
     BINARY_REDUCE_LOOP_INNER
-
-#define BINARY_LOOP_TWO_OUT\
-    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];\
-    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2], os2 = steps[3];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1, op2 += os2)
 
 
 #endif /* _NPY_UMATH_FAST_LOOP_MACROS_H_ */
