@@ -2484,7 +2484,7 @@ PyArray_FromInterface(PyObject *origin)
         }
 #endif
         /* Get offset number from interface specification */
-        attr = PyDict_GetItemString(origin, "offset");
+        attr = PyDict_GetItemString(iface, "offset");
         if (attr) {
             npy_longlong num = PyLong_AsLongLong(attr);
             if (error_converting(num)) {
