@@ -3455,7 +3455,8 @@ class MaskedArray(ndarray):
 
     mask = property(fget=_get_mask, fset=__setmask__, doc="Mask")
 
-    def _get_recordmask(self):
+    @property
+    def recordmask(self):
         """
         Return the mask of the records.
 
@@ -3467,16 +3468,13 @@ class MaskedArray(ndarray):
             return _mask
         return np.all(flatten_structured_array(_mask), axis=-1)
 
-    def _set_recordmask(self):
+    @recordmask.setter
+    def recordmask(self, mask):
         """
-        Return the mask of the records.
-
-        A record is masked when all the fields are masked.
+        Set the mask of the records.
 
         """
         raise NotImplementedError("Coming soon: setting the mask per records!")
-
-    recordmask = property(fget=_get_recordmask)
 
     def harden_mask(self):
         """
@@ -3508,8 +3506,10 @@ class MaskedArray(ndarray):
         self._hardmask = False
         return self
 
-    hardmask = property(fget=lambda self: self._hardmask,
-                        doc="Hardness of the mask")
+    @property
+    def hardmask(self):
+        """ Hardness of the mask """
+        return self._hardmask
 
     def unshare_mask(self):
         """
@@ -3529,8 +3529,10 @@ class MaskedArray(ndarray):
             self._sharedmask = False
         return self
 
-    sharedmask = property(fget=lambda self: self._sharedmask,
-                          doc="Share status of the mask (read-only).")
+    @property
+    def sharedmask(self):
+        """ Share status of the mask (read-only). """
+        return self._sharedmask
 
     def shrink_mask(self):
         """
@@ -3563,8 +3565,10 @@ class MaskedArray(ndarray):
         self._mask = _shrink_mask(self._mask)
         return self
 
-    baseclass = property(fget=lambda self: self._baseclass,
-                         doc="Class of the underlying data (read-only).")
+    @property
+    def baseclass(self):
+        """ Class of the underlying data (read-only). """
+        return self._baseclass
 
     def _get_data(self):
         """Return the current data, as a view of the original
@@ -3576,19 +3580,19 @@ class MaskedArray(ndarray):
     _data = property(fget=_get_data)
     data = property(fget=_get_data)
 
-    def _get_flat(self):
-        "Return a flat iterator."
+    @property
+    def flat(self):
+        """ Return a flat iterator. """
         return MaskedIterator(self)
 
-    def _set_flat(self, value):
-        "Set a flattened version of self to value."
+    @flat.setter
+    def flat(self, value):
+        """ Set a flattened version of self to value. """
         y = self.ravel()
         y[:] = value
 
-    flat = property(fget=_get_flat, fset=_set_flat,
-                    doc="Flat version of the array.")
-
-    def get_fill_value(self):
+    @property
+    def fill_value(self):
         """
         Return the filling value of the masked array.
 
@@ -3623,7 +3627,8 @@ class MaskedArray(ndarray):
             return self._fill_value[()]
         return self._fill_value
 
-    def set_fill_value(self, value=None):
+    @fill_value.setter
+    def fill_value(self, value=None):
         """
         Set the filling value of the masked array.
 
@@ -3662,8 +3667,8 @@ class MaskedArray(ndarray):
             # Don't overwrite the attribute, just fill it (for propagation)
             _fill_value[()] = target
 
-    fill_value = property(fget=get_fill_value, fset=set_fill_value,
-                          doc="Filling value.")
+    get_fill_value = fill_value.fget
+    set_fill_value = fill_value.fset
 
     def filled(self, fill_value=None):
         """
@@ -4332,8 +4337,8 @@ class MaskedArray(ndarray):
             raise MaskError('Cannot convert masked element to a Python long.')
         return long(self.item())
 
-
-    def get_imag(self):
+    @property
+    def imag(self):
         """
         Return the imaginary part of the masked array.
 
@@ -4366,9 +4371,10 @@ class MaskedArray(ndarray):
         result.__setmask__(self._mask)
         return result
 
-    imag = property(fget=get_imag, doc="Imaginary part.")
+    get_imag = imag.fget
 
-    def get_real(self):
+    @property
+    def real(self):
         """
         Return the real part of the masked array.
 
@@ -4400,7 +4406,8 @@ class MaskedArray(ndarray):
         result = self._data.real.view(type(self))
         result.__setmask__(self._mask)
         return result
-    real = property(fget=get_real, doc="Real part")
+
+    get_real = real.fget
 
     def count(self, axis=None, keepdims=np._NoValue):
         """
@@ -5898,8 +5905,11 @@ class MaskedArray(ndarray):
     repeat = _arraymethod('repeat')
     squeeze = _arraymethod('squeeze')
     swapaxes = _arraymethod('swapaxes')
-    T = property(fget=lambda self: self.transpose())
     transpose = _arraymethod('transpose')
+
+    @property
+    def T(self):
+        return self.transpose()
 
     def tolist(self, fill_value=None):
         """
@@ -6156,11 +6166,10 @@ class mvoid(MaskedArray):
             _data.fill_value = fill_value
         return _data
 
-    def _get_data(self):
+    @property
+    def _data(self):
         # Make sure that the _data part is a np.void
         return super(mvoid, self)._data[()]
-
-    _data = property(fget=_get_data)
 
     def __getitem__(self, indx):
         """

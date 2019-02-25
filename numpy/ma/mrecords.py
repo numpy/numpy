@@ -167,23 +167,21 @@ class MaskedRecords(MaskedArray, object):
             _dict['_baseclass'] = recarray
         return
 
-    def _getdata(self):
+    @property
+    def _data(self):
         """
         Returns the data as a recarray.
 
         """
         return ndarray.view(self, recarray)
 
-    _data = property(fget=_getdata)
-
-    def _getfieldmask(self):
+    @property
+    def _fieldmask(self):
         """
         Alias to mask.
 
         """
         return self._mask
-
-    _fieldmask = property(fget=_getfieldmask)
 
     def __len__(self):
         """

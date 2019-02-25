@@ -505,6 +505,7 @@ class iinfo(object):
         if self.kind not in 'iu':
             raise ValueError("Invalid integer data type %r." % (self.kind,))
 
+    @property
     def min(self):
         """Minimum value of given dtype."""
         if self.kind == 'u':
@@ -517,8 +518,7 @@ class iinfo(object):
                 iinfo._min_vals[self.key] = val
             return val
 
-    min = property(min)
-
+    @property
     def max(self):
         """Maximum value of given dtype."""
         try:
@@ -530,8 +530,6 @@ class iinfo(object):
                 val = int((1 << (self.bits-1)) - 1)
             iinfo._max_vals[self.key] = val
         return val
-
-    max = property(max)
 
     def __str__(self):
         """String representation."""
