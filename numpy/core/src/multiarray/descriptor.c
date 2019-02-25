@@ -1044,7 +1044,6 @@ _convert_from_dict(PyObject *obj, int align)
         PyErr_Clear();
     } else {
         if (tmp == Py_True) {
-            Py_DECREF(tmp);
             align = 1;
         }
         else if (tmp != Py_False) {
@@ -1054,6 +1053,7 @@ _convert_from_dict(PyObject *obj, int align)
                     "but its value is neither True nor False");
             goto fail;
         }
+        Py_DECREF(tmp);
     }
 
     totalsize = 0;
@@ -1209,9 +1209,7 @@ _convert_from_dict(PyObject *obj, int align)
     }
     new->elsize = totalsize;
     if (!PyTuple_Check(names)) {
-        PyObject *tmp = PySequence_Tuple(names);
-        Py_DECREF(names);
-        names = tmp;
+        Py_SETREF(names, PySequence_Tuple(names));
     }
     new->names = names;
     new->fields = fields;
@@ -1278,10 +1276,13 @@ _convert_from_dict(PyObject *obj, int align)
     else if (new->metadata == NULL) {
         new->metadata = metadata;
     }
-    else if (PyDict_Merge(new->metadata, metadata, 0) == -1) {
-        Py_DECREF(new);
+    else {
+        int ret = PyDict_Merge(new->metadata, metadata, 0);
         Py_DECREF(metadata);
-        goto fail;
+        if (ret == -1) {
+            Py_DECREF(new);
+            goto fail;
+        }
     }
     return new;
 
