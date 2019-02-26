@@ -42,19 +42,6 @@ static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 static PyArray_Descr *
 _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag);
 
-
-/*
- * Returns value of PyMapping_GetItemString but as a borrowed reference instead
- * of a new reference.
- */
-static PyObject *
-Borrowed_PyMapping_GetItemString(PyObject *o, char *key)
-{
-    PyObject *ret = PyMapping_GetItemString(o, key);
-    Py_XDECREF(ret);
-    return ret;
-}
-
 static PyArray_Descr *
 _arraydescr_from_ctypes_type(PyTypeObject *type)
 {
@@ -1001,8 +988,11 @@ _convert_from_dict(PyObject *obj, int align)
 {
     PyArray_Descr *new;
     PyObject *fields = NULL;
-    PyObject *names, *offsets, *descrs, *titles, *tmp;
-    PyObject *metadata;
+    PyObject *names  = NULL;
+    PyObject *offsets= NULL;
+    PyObject *descrs = NULL;
+    PyObject *titles = NULL;
+    PyObject *metadata, *tmp;
     int n, i;
     int totalsize, itemsize;
     int maxalign = 0;
@@ -1017,19 +1007,27 @@ _convert_from_dict(PyObject *obj, int align)
     /*
      * Use PyMapping_GetItemString to support dictproxy objects as well.
      */
-    names = Borrowed_PyMapping_GetItemString(obj, "names");
-    descrs = Borrowed_PyMapping_GetItemString(obj, "formats");
-    if (!names || !descrs) {
+    names = PyMapping_GetItemString(obj, "names");
+    if (names == NULL) {
         Py_DECREF(fields);
+        /* XXX should check this is a KeyError */
         PyErr_Clear();
         return _use_fields_dict(obj, align);
     }
+    descrs = PyMapping_GetItemString(obj, "formats");
+    if (descrs == NULL) {
+        Py_DECREF(fields);
+        /* XXX should check this is a KeyError */
+        PyErr_Clear();
+        Py_DECREF(names);
+        return _use_fields_dict(obj, align);
+    }
     n = PyObject_Length(names);
-    offsets = Borrowed_PyMapping_GetItemString(obj, "offsets");
+    offsets = PyMapping_GetItemString(obj, "offsets");
     if (!offsets) {
         PyErr_Clear();
     }
-    titles = Borrowed_PyMapping_GetItemString(obj, "titles");
+    titles = PyMapping_GetItemString(obj, "titles");
     if (!titles) {
         PyErr_Clear();
     }
@@ -1047,7 +1045,7 @@ _convert_from_dict(PyObject *obj, int align)
      * If a property 'aligned' is in the dict, it overrides the align flag
      * to be True if it not already true.
      */
-    tmp = Borrowed_PyMapping_GetItemString(obj, "aligned");
+    tmp = PyMapping_GetItemString(obj, "aligned");
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
@@ -1055,11 +1053,13 @@ _convert_from_dict(PyObject *obj, int align)
             align = 1;
         }
         else if (tmp != Py_False) {
+            Py_DECREF(tmp);
             PyErr_SetString(PyExc_ValueError,
                     "NumPy dtype descriptor includes 'aligned' entry, "
                     "but its value is neither True nor False");
-            return NULL;
+            goto fail;
         }
+        Py_DECREF(tmp);
     }
 
     totalsize = 0;
@@ -1215,14 +1215,18 @@ _convert_from_dict(PyObject *obj, int align)
     }
     new->elsize = totalsize;
     if (!PyTuple_Check(names)) {
-        names = PySequence_Tuple(names);
-    }
-    else {
-        Py_INCREF(names);
+        Py_SETREF(names, PySequence_Tuple(names));
+        if (names == NULL) {
+            Py_DECREF(new);
+            goto fail;
+        }
     }
     new->names = names;
     new->fields = fields;
     new->flags = dtypeflags;
+    /* new takes responsibility for DECREFing names, fields */
+    names = NULL;
+    fields = NULL;
 
     /*
      * If the fields weren't in order, and there was an OBJECT type,
@@ -1231,7 +1235,7 @@ _convert_from_dict(PyObject *obj, int align)
     if (has_out_of_order_fields && PyDataType_REFCHK(new)) {
         if (validate_object_field_overlap(new) < 0) {
             Py_DECREF(new);
-            return NULL;
+            goto fail;
         }
     }
 
@@ -1241,14 +1245,15 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Override the itemsize if provided */
-    tmp = Borrowed_PyMapping_GetItemString(obj, "itemsize");
+    tmp = PyMapping_GetItemString(obj, "itemsize");
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
         itemsize = (int)PyArray_PyIntAsInt(tmp);
+        Py_DECREF(tmp);
         if (error_converting(itemsize)) {
             Py_DECREF(new);
-            return NULL;
+            goto fail;
         }
         /* Make sure the itemsize isn't made too small */
         if (itemsize < new->elsize) {
@@ -1257,7 +1262,7 @@ _convert_from_dict(PyObject *obj, int align)
                     "cannot override to smaller itemsize of %d",
                     (int)new->elsize, (int)itemsize);
             Py_DECREF(new);
-            return NULL;
+            goto fail;
         }
         /* If align is set, make sure the alignment divides into the size */
         if (align && itemsize % new->alignment != 0) {
@@ -1266,30 +1271,37 @@ _convert_from_dict(PyObject *obj, int align)
                     "which is not divisible into the specified itemsize %d",
                     (int)new->alignment, (int)itemsize);
             Py_DECREF(new);
-            return NULL;
+            goto fail;
         }
         /* Set the itemsize */
         new->elsize = itemsize;
     }
 
     /* Add the metadata if provided */
-    metadata = Borrowed_PyMapping_GetItemString(obj, "metadata");
+    metadata = PyMapping_GetItemString(obj, "metadata");
 
     if (metadata == NULL) {
         PyErr_Clear();
     }
     else if (new->metadata == NULL) {
         new->metadata = metadata;
-        Py_XINCREF(new->metadata);
     }
-    else if (PyDict_Merge(new->metadata, metadata, 0) == -1) {
-        Py_DECREF(new);
-        return NULL;
+    else {
+        int ret = PyDict_Merge(new->metadata, metadata, 0);
+        Py_DECREF(metadata);
+        if (ret < 0) {
+            Py_DECREF(new);
+            goto fail;
+        }
     }
     return new;
 
  fail:
     Py_XDECREF(fields);
+    Py_XDECREF(names);
+    Py_XDECREF(descrs);
+    Py_XDECREF(offsets);
+    Py_XDECREF(titles);
     return NULL;
 }
 
