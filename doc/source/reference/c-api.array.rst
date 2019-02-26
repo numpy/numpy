@@ -243,7 +243,7 @@ From scratch
 
 .. c:function:: PyObject* PyArray_NewLikeArray( \
         PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr, \
-        int ndim, npy_intp* dims, int subok)
+        int subok)
 
     .. versionadded:: 1.6
 
@@ -252,6 +252,30 @@ From scratch
     This array creation routine allows for the convenient creation of
     a new array matching an existing array's shapes and memory layout,
     possibly changing the layout and/or data type.
+
+    When *order* is :c:data:`NPY_ANYORDER`, the result order is
+    :c:data:`NPY_FORTRANORDER` if *prototype* is a fortran array,
+    :c:data:`NPY_CORDER` otherwise.  When *order* is
+    :c:data:`NPY_KEEPORDER`, the result order matches that of *prototype*, even
+    when the axes of *prototype* aren't in C or Fortran order.
+
+    If *descr* is NULL, the data type of *prototype* is used.
+
+    If *subok* is 1, the newly created array will use the sub-type of
+    *prototype* to create the new array, otherwise it will create a
+    base-class array.
+
+.. c:function:: PyObject* PyArray_NewLikeArrayWithShape( \
+        PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr, \
+        int ndim, npy_intp* dims, int subok)
+
+    .. versionadded:: 1.17
+
+    This function steals a reference to *descr* if it is not NULL.
+
+    This array creation routine allows for the convenient creation of
+    a new array matching an existing array's shapes and memory layout,
+    possibly changing the layout, data type and/or shape.
 
     When *order* is :c:data:`NPY_ANYORDER`, the result order is
     :c:data:`NPY_FORTRANORDER` if *prototype* is a fortran array,

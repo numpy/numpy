@@ -350,6 +350,8 @@ multiarray_funcs_api = {
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
+    'PyArray_NewLikeArrayWithShape':        (304, StealRef(3), NonNull(1)),
+    # End 1.17 API
 }
 
 ufunc_types_api = {

@@ -1185,7 +1185,7 @@ PyArray_NewFromDescrAndBase(
 
 /*NUMPY_API
  * Creates a new array with the same shape as the provided one,
- * with possible memory layout order and data type changes.
+ * with possible memory layout order, data type and shape changes.
  *
  * prototype - The array the new one should be like.
  * order     - NPY_CORDER - C-contiguous result.
@@ -1202,8 +1202,8 @@ PyArray_NewFromDescrAndBase(
  * dtype->subarray is true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
-                     PyArray_Descr *dtype, int ndim, npy_intp *dims, int subok)
+PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
+                              PyArray_Descr *dtype, int ndim, npy_intp *dims, int subok)
 {
     PyObject *ret = NULL;
 
@@ -1279,6 +1279,29 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
     }
 
     return ret;
+}
+
+/*NUMPY_API
+ * Creates a new array with the same shape as the provided one,
+ * with possible memory layout order and data type changes.
+ *
+ * prototype - The array the new one should be like.
+ * order     - NPY_CORDER - C-contiguous result.
+ *             NPY_FORTRANORDER - Fortran-contiguous result.
+ *             NPY_ANYORDER - Fortran if prototype is Fortran, C otherwise.
+ *             NPY_KEEPORDER - Keeps the axis ordering of prototype.
+ * dtype     - If not NULL, overrides the data type of the result.
+ * subok     - If 1, use the prototype's array subtype, otherwise
+ *             always create a base-class array.
+ *
+ * NOTE: If dtype is not NULL, steals the dtype reference.  On failure or when
+ * dtype->subarray is true, dtype will be decrefed.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
+                     PyArray_Descr *dtype, int subok)
+{
+    return PyArray_NewLikeArrayWithShape(prototype, order, dtype, 0, NULL, subok);
 }
 
 /*NUMPY_API
@@ -2120,7 +2143,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             subok = 0;
         }
         ret = (PyArrayObject *)PyArray_NewLikeArray(arr, order,
-                                                    newtype, 0, NULL, subok);
+                                                    newtype, subok);
         if (ret == NULL) {
             return NULL;
         }

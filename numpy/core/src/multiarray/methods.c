@@ -832,7 +832,7 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
         /* This steals the reference to dtype, so no DECREF of dtype */
         ret = (PyArrayObject *)PyArray_NewLikeArray(
-                                    self, order, dtype, 0, NULL, subok);
+                                    self, order, dtype, subok);
         if (ret == NULL) {
             return NULL;
         }

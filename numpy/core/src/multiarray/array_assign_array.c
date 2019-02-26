@@ -338,7 +338,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
          * Allocate a temporary copy array.
          */
         tmp = (PyArrayObject *)PyArray_NewLikeArray(dst,
-                                        NPY_KEEPORDER, NULL, 0, NULL, 0);
+                                        NPY_KEEPORDER, NULL, 0);
         if (tmp == NULL) {
             goto fail;
         }
