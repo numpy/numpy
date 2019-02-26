@@ -1008,12 +1008,18 @@ _convert_from_dict(PyObject *obj, int align)
      * Use PyMapping_GetItemString to support dictproxy objects as well.
      */
     names = PyMapping_GetItemString(obj, "names");
-    descrs = PyMapping_GetItemString(obj, "formats");
-    if (!names || !descrs) {
+    if (names == NULL) {
         Py_DECREF(fields);
+        /* XXX should check this is a KeyError */
         PyErr_Clear();
-        Py_XDECREF(names);
-        Py_XDECREF(descrs);
+        return _use_fields_dict(obj, align);
+    }
+    descrs = PyMapping_GetItemString(obj, "formats");
+    if (descrs == NULL) {
+        Py_DECREF(fields);
+        /* XXX should check this is a KeyError */
+        PyErr_Clear();
+        Py_DECREF(names);
         return _use_fields_dict(obj, align);
     }
     n = PyObject_Length(names);
