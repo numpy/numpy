@@ -1210,6 +1210,10 @@ _convert_from_dict(PyObject *obj, int align)
     new->elsize = totalsize;
     if (!PyTuple_Check(names)) {
         Py_SETREF(names, PySequence_Tuple(names));
+        if (names == NULL) {
+            Py_DECREF(new);
+            goto fail;
+        }
     }
     new->names = names;
     new->fields = fields;
@@ -1279,7 +1283,7 @@ _convert_from_dict(PyObject *obj, int align)
     else {
         int ret = PyDict_Merge(new->metadata, metadata, 0);
         Py_DECREF(metadata);
-        if (ret == -1) {
+        if (ret < 0) {
             Py_DECREF(new);
             goto fail;
         }
