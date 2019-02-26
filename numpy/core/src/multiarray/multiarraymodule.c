@@ -1846,18 +1846,20 @@ static PyObject *
 array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"prototype","dtype","order","subok",NULL};
+    static char *kwlist[] = {"prototype","dtype","order","subok","shape",NULL};
     PyArrayObject *prototype = NULL;
     PyArray_Descr *dtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
     PyArrayObject *ret = NULL;
     int subok = 1;
+    PyArray_Dims shape = {NULL, 0};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&i:empty_like", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&iO&:empty_like", kwlist,
                 &PyArray_Converter, &prototype,
                 &PyArray_DescrConverter2, &dtype,
                 &PyArray_OrderConverter, &order,
-                &subok)) {
+                &subok,
+                &PyArray_IntpConverter, &shape)) {
         goto fail;
     }
     /* steals the reference to dtype if it's not NULL */

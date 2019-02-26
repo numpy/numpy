@@ -106,12 +106,12 @@ class ComplexWarning(RuntimeWarning):
     pass
 
 
-def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None):
+def _zeros_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
     return (a,)
 
 
 @array_function_dispatch(_zeros_like_dispatcher)
-def zeros_like(a, dtype=None, order='K', subok=True):
+def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     """
     Return an array of zeros with the same shape and type as a given array.
 
@@ -135,6 +135,10 @@ def zeros_like(a, dtype=None, order='K', subok=True):
         If True, then the newly created array will use the sub-class
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
+
+        .. versionadded:: 1.17.0
+    shape : int or sequence of ints, optional.
+        Overrides the shape of the result.
 
     Returns
     -------
@@ -166,7 +170,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     array([0.,  0.,  0.])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok)
+    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
     # needed instead of a 0 to get same result as zeros for for string dtypes
     z = zeros(1, dtype=res.dtype)
     multiarray.copyto(res, z, casting='unsafe')
@@ -226,12 +230,12 @@ def ones(shape, dtype=None, order='C'):
     return a
 
 
-def _ones_like_dispatcher(a, dtype=None, order=None, subok=None):
+def _ones_like_dispatcher(a, dtype=None, order=None, subok=None, shape=None):
     return (a,)
 
 
 @array_function_dispatch(_ones_like_dispatcher)
-def ones_like(a, dtype=None, order='K', subok=True):
+def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     """
     Return an array of ones with the same shape and type as a given array.
 
@@ -255,6 +259,10 @@ def ones_like(a, dtype=None, order='K', subok=True):
         If True, then the newly created array will use the sub-class
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
+
+        .. versionadded:: 1.17.0
+    shape : int or sequence of ints, optional.
+        Overrides the shape of the result.
 
     Returns
     -------
@@ -286,7 +294,7 @@ def ones_like(a, dtype=None, order='K', subok=True):
     array([1.,  1.,  1.])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok)
+    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
     multiarray.copyto(res, 1, casting='unsafe')
     return res
 
@@ -338,12 +346,12 @@ def full(shape, fill_value, dtype=None, order='C'):
     return a
 
 
-def _full_like_dispatcher(a, fill_value, dtype=None, order=None, subok=None):
+def _full_like_dispatcher(a, fill_value, dtype=None, order=None, subok=None, shape=None):
     return (a,)
 
 
 @array_function_dispatch(_full_like_dispatcher)
-def full_like(a, fill_value, dtype=None, order='K', subok=True):
+def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     """
     Return a full array with the same shape and type as a given array.
 
@@ -365,6 +373,10 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
         If True, then the newly created array will use the sub-class
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
+
+        .. versionadded:: 1.17.0
+    shape : int or sequence of ints, optional.
+        Overrides the shape of the result.
 
     Returns
     -------
@@ -395,7 +407,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True):
     array([0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok)
+    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
     multiarray.copyto(res, fill_value, casting='unsafe')
     return res
 

@@ -71,9 +71,9 @@ array_function_from_c_func_and_dispatcher = functools.partial(
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.empty_like)
-def empty_like(prototype, dtype=None, order=None, subok=None):
+def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
     """
-    empty_like(prototype, dtype=None, order='K', subok=True)
+    empty_like(prototype, dtype=None, order='K', subok=True, shape=None)
 
     Return a new array with the same shape and type as a given array.
 
@@ -97,6 +97,10 @@ def empty_like(prototype, dtype=None, order=None, subok=None):
         If True, then the newly created array will use the sub-class
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
+
+        .. versionadded:: 1.17.0
+    shape : int or sequence of ints, optional.
+        Overrides the shape of the result.
 
     Returns
     -------
