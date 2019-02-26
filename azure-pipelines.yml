@@ -5,6 +5,10 @@ trigger:
     include:
       - master
       - maintenance/*
+
+variables:
+  OPENBLAS_VERSION: "0.3.5.dev"
+
 jobs:
 - job: Linux_Python_36_32bit_full_with_asserts
   pool:
@@ -26,7 +30,10 @@ jobs:
            cp ./usr/local/include/* /usr/include && \
            cd ../numpy && \
            F77=gfortran-5 F90=gfortran-5 \
-           CFLAGS='-UNDEBUG -std=c99' python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
+           CFLAGS='-UNDEBUG -std=c99' python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+           cd .. && \
+           export PYTHONPATH=/numpy/build/testenv/lib/python3.6/site-packages && \
+           python3 -c \"import numpy; from numpy.distutils.system_info import get_info; assert get_info('openblas')['versions'][0] == '$(OPENBLAS_VERSION)', 'received versions: ' + ' '.join(get_info('openblas')['versions']) + ' and expected $(OPENBLAS_VERSION)'\""
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
   - task: PublishTestResults@2
     inputs:
@@ -81,7 +88,7 @@ jobs:
     displayName: 'install pre-built openblas'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
-  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx>=1.8.3 numpydoc matplotlib
+  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx>=1.8.3 numpydoc
     displayName: 'Install dependencies; some are optional to avoid test skips'
   - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
     displayName: 'Check for unreachable code paths in Python modules'
@@ -95,10 +102,18 @@ jobs:
       ATLAS: None
       ACCELERATE: None
       CC: /usr/bin/clang
+  # wait until after dev build of NumPy to pip
+  # install matplotlib to avoid pip install of older numpy
+  - script: python -m pip install matplotlib
+    displayName: 'Install matplotlib before refguide run'
   - script: python runtests.py -g --refguide-check
     displayName: 'Run Refuide Check'
-  - script: python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
+  - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
+  - bash: |
+      cd .. &&
+      python -c "import numpy; from numpy.distutils.system_info import get_info; assert get_info('openblas')['versions'][0] == '$(OPENBLAS_VERSION)', 'received versions: ' + ' '.join(get_info('openblas')['versions']) + ' and expected $(OPENBLAS_VERSION)'"
+    displayName: 'Post-mortem OpenBLAS version confirmation'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
@@ -161,14 +176,26 @@ jobs:
       Expand-Archive "openblas.zip" $tmpdir
       $pyversion = python -c "from __future__ import print_function; import sys; print(sys.version.split()[0])"
       Write-Host "Python Version: $pyversion"
-      $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
-      Write-Host "target path: $target"
-      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target
+      # for OpenBLAS version detection and proper build / test behavior
+      # we need to use OpenBLAS static library (.a), dynamic library (.dll), and
+      # the import library for the DLL (.dll.a extension renamed to .lib)
+      $target_dll = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.dll"
+      $target_importlib = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.lib"
+      $target_static = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
+      cp $tmpdir\$(BITS)\bin\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.dll $target_dll
+      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.dll.a $target_importlib
+      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target_static
     displayName: 'Download / Install OpenBLAS'
   - powershell: |
-      choco install -y mingw --forcex86 --force --version=5.3.0
+      # need a version of mingw with requisite DLLs
+      choco install -y mingw --forcex86 --force --version=7.3.0
     displayName: 'Install 32-bit mingw for 32-bit builds'
     condition: eq(variables['BITS'], 32)
+  - powershell: |
+      # need a version of mingw with requisite DLLs
+      choco install -y mingw --force --version=7.3.0
+    displayName: 'Install 64-bit mingw for 64-bit builds'
+    condition: eq(variables['BITS'], 64)
   - script: python -m pip install cython nose pytz pytest
     displayName: 'Install dependencies; some are optional to avoid test skips'
   # NOTE: for Windows builds it seems much more tractable to use runtests.py
@@ -180,9 +207,10 @@ jobs:
          $env:NPY_DISTUTILS_APPEND_FLAGS = 1
          $env:CFLAGS = "-m32"
          $env:LDFLAGS = "-m32"
-         $env:PATH = "C:\\tools\\mingw32\\bin;" + $env:PATH
          refreshenv
       }
+         $env:PATH = "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw$(BITS)\\bin;" + $env:PATH
+
       pip wheel -v -v -v --wheel-dir=dist .
 
       ls dist -r | Foreach-Object {
@@ -200,6 +228,11 @@ jobs:
     displayName: 'For gh-12667; Windows DLL resolution'
   - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run NumPy Test Suite'
+  - powershell: |
+      cd D:/a
+      $env:PATH = "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw$(BITS)\\bin;" + $env:PATH
+      python -c "import numpy; from numpy.distutils.system_info import get_info; assert get_info('openblas')['versions'][0] == '$(OPENBLAS_VERSION)', 'received versions: ' + ' '.join(get_info('openblas')['versions']) + ' and expected $(OPENBLAS_VERSION)'"
+    displayName: 'Post-mortem OpenBLAS version confirmation'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'

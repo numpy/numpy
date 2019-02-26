@@ -128,6 +128,8 @@ import copy
 import warnings
 from glob import glob
 from functools import reduce
+import ctypes
+
 if sys.version_info[0] < 3:
     from ConfigParser import NoOptionError
     from ConfigParser import RawConfigParser as ConfigParser
@@ -1758,6 +1760,44 @@ class openblas_info(blas_info):
     def check_embedded_lapack(self, info):
         return True
 
+    def parse_openblas_version(self, library_dirs, info,
+                               backup_lib_dirs=None):
+        # OpenBLAS >= 0.3.4 has a C extension API for
+        # version number
+
+        # use a list for versions for the case where
+        # more than one is detected on lib paths
+        # this can happen in non-pathological scenarios
+        # because of similar lib files with different names
+        # especially given conventions relating to linking
+        # lib files to ones with simpler names, etc.
+        info['versions'] = []
+        if library_dirs is None:
+            library_dirs = backup_lib_dirs
+        if backup_lib_dirs is not None:
+            for libdir in backup_lib_dirs:
+                if libdir not in library_dirs:
+                    library_dirs.append(libdir)
+        for library_dir in library_dirs:
+            for entry in glob(os.path.join(library_dir, '*openblas*')):
+                try:
+                    dll = ctypes.CDLL(entry)
+                    openblas_get_config = dll.openblas_get_config
+                    openblas_get_config.restype = ctypes.c_char_p
+                    openblas_config_str = openblas_get_config()
+                    openblas_config_list = openblas_config_str.split()
+                    if openblas_config_list[0] == b"OpenBLAS":
+                        # version string will be present
+                        info['versions'].append(openblas_config_list[1].decode())
+                    else:
+                        # older OpenBLAS config API
+                        info['versions'].append(None)
+                except OSError:
+                    # not all library file types will be valid
+                    # for the parsing above
+                    pass
+        return info
+
     def calc_info(self):
         c = customized_ccompiler()
 
@@ -1768,10 +1808,20 @@ class openblas_info(blas_info):
             openblas_libs = self.get_libs('openblas_libs', self._lib_names)
 
         info = self.check_libs(lib_dirs, openblas_libs, [])
+        backup_lib_dirs = None
 
-        if c.compiler_type == "msvc" and info is None:
+        # info is not None when linking with OpenBLAS DLL, and previously
+        # we required info is None for execution of the code block below;
+        # however, that restriction would prevent the generation of
+        # numpy/.libs when linking to OpenBLAS DLL; now, it is possible
+        # to generate numpy/.libs using the OpenBLAS DLL, but the static
+        # library will still be required (and two DLLs are likely produced
+        # in numpy/.libs for the time being); attempts at removing the
+        # requirement for the openblas.a static library have so far failed
+        if c.compiler_type == "msvc":
             from numpy.distutils.fcompiler import new_fcompiler
             f = new_fcompiler(c_compiler=c)
+            backup_lib_dirs = lib_dirs[:]
             if f and f.compiler_type == 'gnu95':
                 # Try gfortran-compatible library files
                 info = self.check_msvc_gfortran_libs(lib_dirs, openblas_libs)
@@ -1792,6 +1842,9 @@ class openblas_info(blas_info):
             return
 
         info['define_macros'] = [('HAVE_CBLAS', None)]
+        info = self.parse_openblas_version(library_dirs=info['library_dirs'],
+                                           info=info,
+                                           backup_lib_dirs=backup_lib_dirs)
         self.set_info(**info)
 
     def check_msvc_gfortran_libs(self, library_dirs, libraries):
@@ -1800,6 +1853,8 @@ class openblas_info(blas_info):
         for library in libraries:
             for library_dir in library_dirs:
                 # MinGW static ext will be .a
+                # NOTE: it does not currently appear to be possible
+                # to only use the DLL when linking with openblas.dll
                 fullpath = os.path.join(library_dir, library + '.a')
                 if os.path.isfile(fullpath):
                     library_paths.append(fullpath)

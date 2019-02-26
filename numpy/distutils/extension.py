@@ -38,7 +38,8 @@ class Extension(old_Extension):
             f2py_options=None,
             module_dirs=None,
             extra_f77_compile_args=None,
-            extra_f90_compile_args=None,):
+            extra_f90_compile_args=None,
+            versions=None):
 
         old_Extension.__init__(
                 self, name, [],
