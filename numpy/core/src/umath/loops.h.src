@@ -38,6 +38,13 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 NPY_NO_EXPORT void
 BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
 
+/**begin repeat
+ * #kind = isnan, isinf, isfinite#
+ **/
+NPY_NO_EXPORT void
+BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
 /*
  *****************************************************************************
  **                           INTEGER LOOPS
@@ -145,6 +152,13 @@ NPY_NO_EXPORT void
 
 NPY_NO_EXPORT void
 @S@@TYPE@_lcm(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat2
+ * #kind = isnan, isinf, isfinite#
+ **/
+NPY_NO_EXPORT void
+@S@@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+/**end repeat2**/
 
 /**end repeat1**/
 
