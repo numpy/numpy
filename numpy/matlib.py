@@ -46,6 +46,10 @@ def empty(shape, dtype=None, order='C'):
             [ 6586976, 22740995]])
 
     """
+    if isinstance(dtype, int):
+        raise ValueError(
+            "Argument dtype can not be an integer. "
+            "Did you mean to pass a list or tuple for the shape?")
     return ndarray.__new__(matrix, shape, dtype, order=order)
 
 def ones(shape, dtype=None, order='C'):
@@ -89,6 +93,10 @@ def ones(shape, dtype=None, order='C'):
     matrix([[1.,  1.]])
 
     """
+    if isinstance(dtype, int):
+        raise ValueError(
+            "Argument dtype can not be an integer. "
+            "Did you mean to pass a list or tuple for the shape?")
     a = ndarray.__new__(matrix, shape, dtype, order=order)
     a.fill(1)
     return a
@@ -133,6 +141,10 @@ def zeros(shape, dtype=None, order='C'):
     matrix([[0.,  0.]])
 
     """
+    if isinstance(dtype, int):
+        raise ValueError(
+            "Argument dtype can not be an integer. "
+            "Did you mean to pass a list or tuple for the shape?")
     a = ndarray.__new__(matrix, shape, dtype, order=order)
     a.fill(0)
     return a
