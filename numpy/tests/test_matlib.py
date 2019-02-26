@@ -10,12 +10,15 @@ except ImportError:
 
 import numpy as np
 import numpy.matlib
-from numpy.testing import assert_array_equal, assert_
+from numpy.testing import assert_array_equal, assert_, assert_raises
 
 def test_empty():
     x = numpy.matlib.empty((2,))
     assert_(isinstance(x, np.matrix))
     assert_(x.shape, (1, 2))
+
+def test_bad_empty():
+    assert_raises(numpy.matlib.empty(2, 2), ValueError)
 
 def test_ones():
     assert_array_equal(numpy.matlib.ones((2, 3)),
@@ -24,12 +27,18 @@ def test_ones():
 
     assert_array_equal(numpy.matlib.ones(2), np.matrix([[ 1.,  1.]]))
 
+def test_bad_ones():
+    assert_raises(numpy.matlib.ones(2, 2), ValueError)
+
 def test_zeros():
     assert_array_equal(numpy.matlib.zeros((2, 3)),
                        np.matrix([[ 0.,  0.,  0.],
                                  [ 0.,  0.,  0.]]))
 
     assert_array_equal(numpy.matlib.zeros(2), np.matrix([[ 0.,  0.]]))
+
+def test_bad_zeros():
+    assert_raises(numpy.matlib.zeros(2, 2), ValueError)
 
 def test_identity():
     x = numpy.matlib.identity(2, dtype=int)
