@@ -18,7 +18,7 @@ def test_empty():
     assert_(x.shape, (1, 2))
 
 def test_bad_empty():
-    assert_raises(ValueError, numpy.matlib.empty, [2, 2])
+    assert_raises(ValueError, numpy.matlib.empty, 2, 2)
 
 def test_ones():
     assert_array_equal(numpy.matlib.ones((2, 3)),
@@ -28,7 +28,7 @@ def test_ones():
     assert_array_equal(numpy.matlib.ones(2), np.matrix([[ 1.,  1.]]))
 
 def test_bad_ones():
-    assert_raises(ValueError, numpy.matlib.ones, [2, 2])
+    assert_raises(ValueError, numpy.matlib.ones, 2, 2)
 
 def test_zeros():
     assert_array_equal(numpy.matlib.zeros((2, 3)),
@@ -38,7 +38,7 @@ def test_zeros():
     assert_array_equal(numpy.matlib.zeros(2), np.matrix([[ 0.,  0.]]))
 
 def test_bad_zeros():
-    assert_raises(ValueError, numpy.matlib.zeros, [2, 2])
+    assert_raises(ValueError, numpy.matlib.zeros, 2, 2)
 
 def test_identity():
     x = numpy.matlib.identity(2, dtype=int)
