@@ -321,7 +321,7 @@ class TestRecord(object):
         assert_equal(dt[1], dt[np.int8(1)])
 
     def test_partial_dict(self):
-        # 'name' is missing
+        # 'names' is missing
         assert_raises(ValueError, np.dtype,
                 {'formats': ['i4', 'i4'], 'f0': ('i4', 0), 'f1':('i4', 4)})
         
