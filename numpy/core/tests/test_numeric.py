@@ -2154,6 +2154,7 @@ class TestLikeFuncs(object):
                 (np.arange(24).reshape(2, 3, 4).swapaxes(0, 1), None),
                 (np.arange(24).reshape(4, 3, 2).swapaxes(0, 1), '?'),
                      ]
+        self.shapes = [(1,), (1,2,), (1,2,3,)]
 
     def compare_array_value(self, dz, value, fill_value):
         if value is not None:
@@ -2218,6 +2219,12 @@ class TestLikeFuncs(object):
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
             self.compare_array_value(dz, value, fill_value)
+
+            # Test the 'shape' parameter
+            for s in self.shapes:
+                sz = like_function(d, dtype=dtype, shape=s, **fill_kwarg)
+                assert_equal(sz.shape, s)
+                self.compare_array_value(sz, value, fill_value)
 
         # Test the 'subok' parameter
         class MyNDArray(np.ndarray):
