@@ -851,7 +851,7 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
               solve_may_share_memory(out, ap2, 1) == 0)) {
             /* allocate temporary output array */
             out_buf = (PyArrayObject *)PyArray_NewLikeArray(out, NPY_CORDER,
-                                                            NULL, 0);
+                                                            NULL, 0, NULL, 0);
             if (out_buf == NULL) {
                 return NULL;
             }

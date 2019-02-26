@@ -3276,7 +3276,7 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
                                                     (PyObject *)extra_op)) {
         /* Make a copy of the input array */
         a_copy = (PyArrayObject *)PyArray_NewLikeArray(a, NPY_ANYORDER,
-                                                       NULL, 0);
+                                                       NULL, 0, NULL, 0);
         if (a_copy == NULL) {
             goto fail;
         }

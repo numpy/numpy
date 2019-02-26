@@ -581,7 +581,7 @@ PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
 {
     PyArrayObject *ret;
 
-    ret = (PyArrayObject *)PyArray_NewLikeArray(obj, order, NULL, 1);
+    ret = (PyArrayObject *)PyArray_NewLikeArray(obj, order, NULL, 0, NULL, 1);
     if (ret == NULL) {
         return NULL;
     }

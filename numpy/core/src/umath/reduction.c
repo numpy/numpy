@@ -174,7 +174,7 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
         PyArrayObject *ret_copy;
 
         ret_copy = (PyArrayObject *)PyArray_NewLikeArray(
-            (PyArrayObject *)ret, NPY_ANYORDER, NULL, 0);
+            (PyArrayObject *)ret, NPY_ANYORDER, NULL, 0, NULL, 0);
         if (ret_copy == NULL) {
             Py_DECREF(ret);
             return NULL;

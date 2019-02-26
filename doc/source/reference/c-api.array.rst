@@ -243,7 +243,7 @@ From scratch
 
 .. c:function:: PyObject* PyArray_NewLikeArray( \
         PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr, \
-        int subok)
+        int ndim, npy_intp* dims, int subok)
 
     .. versionadded:: 1.6
 
@@ -260,6 +260,8 @@ From scratch
     when the axes of *prototype* aren't in C or Fortran order.
 
     If *descr* is NULL, the data type of *prototype* is used.
+
+    If *ndim* is 0 or *dims* is NULL, the shape of *prototype* is used.
 
     If *subok* is 1, the newly created array will use the sub-type of
     *prototype* to create the new array, otherwise it will create a
