@@ -52,6 +52,13 @@ zero::
    >>> np.zeros(10)//1
    array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 
+Do not lookup ``__buffer__`` attribute in `numpy.frombuffer`
+------------------------------------------------------------
+
+Looking up ``__buffer__`` attribute in `numpy.frombuffer` was undocumented and
+non-functional. This code was removed. If needed, use
+``frombuffer(memoryview(obj), ...)`` instead.
+
 C API changes
 =============
 

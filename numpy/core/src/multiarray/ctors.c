@@ -3693,32 +3693,12 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         Py_DECREF(type);
         return NULL;
     }
-    if (Py_TYPE(buf)->tp_as_buffer == NULL
-#if defined(NPY_PY3K)
-        || Py_TYPE(buf)->tp_as_buffer->bf_getbuffer == NULL
-#else
-        || (Py_TYPE(buf)->tp_as_buffer->bf_getwritebuffer == NULL
-            && Py_TYPE(buf)->tp_as_buffer->bf_getreadbuffer == NULL)
-#endif
-        ) {
-        PyObject *newbuf;
-        newbuf = PyObject_GetAttr(buf, npy_ma_str_buffer);
-        if (newbuf == NULL) {
-            Py_DECREF(type);
-            return NULL;
-        }
-        buf = newbuf;
-    }
-    else {
-        Py_INCREF(buf);
-    }
 
 #if defined(NPY_PY3K)
     if (PyObject_GetBuffer(buf, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         writeable = 0;
         PyErr_Clear();
         if (PyObject_GetBuffer(buf, &view, PyBUF_SIMPLE) < 0) {
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3738,7 +3718,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         writeable = 0;
         PyErr_Clear();
         if (PyObject_AsReadBuffer(buf, (void *)&data, &ts) == -1) {
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3749,7 +3728,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         PyErr_Format(PyExc_ValueError,
                      "offset must be non-negative and no greater than buffer "\
                      "length (%" NPY_INTP_FMT ")", (npy_intp)ts);
-        Py_DECREF(buf);
         Py_DECREF(type);
         return NULL;
     }
@@ -3763,7 +3741,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             PyErr_SetString(PyExc_ValueError,
                             "buffer size must be a multiple"\
                             " of element size");
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3774,7 +3751,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             PyErr_SetString(PyExc_ValueError,
                             "buffer is smaller than requested"\
                             " size");
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3784,7 +3760,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             &PyArray_Type, type,
             1, &n, NULL, data,
             NPY_ARRAY_DEFAULT, NULL, buf);
-    Py_DECREF(buf);
     if (ret == NULL) {
         return NULL;
     }
