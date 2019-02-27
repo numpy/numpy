@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal, assert_raises
 import pytest
+from itertools import chain
 
 def test_packbits():
     # Copied from the docstring.
@@ -242,7 +243,7 @@ def test_pack_unpack_order():
     assert_array_equal(a, np.packbits(b_big, axis=1, order='big'))
     assert_raises(ValueError, np.unpackbits, a, order='r')
     assert_raises(TypeError, np.unpackbits, a, order=10)
-    
+
 
 
 def test_unpackbits_empty():
@@ -283,8 +284,7 @@ def test_unpackbits_large():
     assert_array_equal(np.packbits(np.unpackbits(d, axis=0), axis=0), d)
 
 
-def test_unpackbits_count():
-    # test complete invertibility of packbits and unpackbits with count
+class TestCount():
     x = np.array([
         [1, 0, 1, 0, 0, 1, 0],
         [0, 1, 1, 1, 0, 0, 0],
@@ -294,53 +294,81 @@ def test_unpackbits_count():
         [0, 0, 1, 1, 1, 0, 0],
         [0, 1, 0, 1, 0, 1, 0],
     ], dtype=np.uint8)
-
     padded1 = np.zeros(57, dtype=np.uint8)
     padded1[:49] = x.ravel()
-
-    packed = np.packbits(x)
-    for count in range(58):
-        unpacked = np.unpackbits(packed, count=count)
-        assert_equal(unpacked.dtype, np.uint8)
-        assert_array_equal(unpacked, padded1[:count])
-    for count in range(-1, -57, -1):
-        unpacked = np.unpackbits(packed, count=count)
-        assert_equal(unpacked.dtype, np.uint8)
-        # count -1 because padded1 has 57 instead of 56 elements
-        assert_array_equal(unpacked, padded1[:count-1])
-    for kwargs in [{}, {'count': None}]:
-        unpacked = np.unpackbits(packed, **kwargs)
-        assert_equal(unpacked.dtype, np.uint8)
-        assert_array_equal(unpacked, padded1[:-1])
-    assert_raises(ValueError, np.unpackbits, packed, count=-57)
-
+    padded1b = np.zeros(57, dtype=np.uint8)
+    padded1b[:49] = x[::-1].copy().ravel()
     padded2 = np.zeros((9, 9), dtype=np.uint8)
     padded2[:7, :7] = x
 
-    packed0 = np.packbits(x, axis=0)
-    packed1 = np.packbits(x, axis=1)
-    for count in range(10):
-        unpacked0 = np.unpackbits(packed0, axis=0, count=count)
+    @pytest.mark.parametrize('order', ('l', 'b'))
+    @pytest.mark.parametrize('count', chain(range(58), range(-1, -57, -1)))
+    def test_roundtrip(self, order, count):
+        if count < 0:
+            # one extra zero of padding
+            cutoff = count - 1
+        else:
+            cutoff = count
+        # test complete invertibility of packbits and unpackbits with count
+        packed = np.packbits(self.x, order=order)
+        unpacked = np.unpackbits(packed, count=count, order=order)
+        assert_equal(unpacked.dtype, np.uint8)
+        assert_array_equal(unpacked, self.padded1[:cutoff])
+
+    @pytest.mark.parametrize('kwargs', [
+                    {}, {'count': None},
+                    ])
+    def test_count(self, kwargs):
+        packed = np.packbits(self.x)
+        unpacked = np.unpackbits(packed, **kwargs)
+        assert_equal(unpacked.dtype, np.uint8)
+        assert_array_equal(unpacked, self.padded1[:-1])
+
+    @pytest.mark.parametrize('order', ('l', 'b'))
+    # delta==-1 when count<0 because one extra zero of padding
+    @pytest.mark.parametrize('count', chain(range(8), range(-1, -9, -1)))
+    def test_roundtrip_axis(self, order, count):
+        if count < 0:
+            # one extra zero of padding
+            cutoff = count - 1
+        else:
+            cutoff = count
+        packed0 = np.packbits(self.x, axis=0, order=order)
+        unpacked0 = np.unpackbits(packed0, axis=0, count=count, order=order)
         assert_equal(unpacked0.dtype, np.uint8)
-        assert_array_equal(unpacked0, padded2[:count, :x.shape[1]])
-        unpacked1 = np.unpackbits(packed1, axis=1, count=count)
+        assert_array_equal(unpacked0, self.padded2[:cutoff, :self.x.shape[1]])
+
+        packed1 = np.packbits(self.x, axis=1, order=order)
+        unpacked1 = np.unpackbits(packed1, axis=1, count=count, order=order)
         assert_equal(unpacked1.dtype, np.uint8)
-        assert_array_equal(unpacked1, padded2[:x.shape[1], :count])
-    for count in range(-1, -9, -1):
-        unpacked0 = np.unpackbits(packed0, axis=0, count=count)
-        assert_equal(unpacked0.dtype, np.uint8)
-        # count -1 because one extra zero of padding
-        assert_array_equal(unpacked0, padded2[:count-1, :x.shape[1]])
-        unpacked1 = np.unpackbits(packed1, axis=1, count=count)
-        assert_equal(unpacked1.dtype, np.uint8)
-        assert_array_equal(unpacked1, padded2[:x.shape[0], :count-1])
-    for kwargs in [{}, {'count': None}]:
+        assert_array_equal(unpacked1, self.padded2[:self.x.shape[0], :cutoff])
+
+    @pytest.mark.parametrize('kwargs', [
+                    {}, {'count': None},
+                    {'order' : 'l'}, {'order': 'l', 'count': None},
+                    {'order' : 'b'}, {'order': 'b', 'count': None},
+                    ])
+    def test_axis_count(self, kwargs):
+        packed0 = np.packbits(self.x, axis=0)
         unpacked0 = np.unpackbits(packed0, axis=0, **kwargs)
         assert_equal(unpacked0.dtype, np.uint8)
-        assert_array_equal(unpacked0, padded2[:-1, :x.shape[1]])
+        if kwargs.get('order', 'b') == 'b':
+            assert_array_equal(unpacked0, self.padded2[:-1, :self.x.shape[1]])
+        else:
+            assert_array_equal(unpacked0[::-1, :], self.padded2[:-1, :self.x.shape[1]])
+
+        packed1 = np.packbits(self.x, axis=1)
         unpacked1 = np.unpackbits(packed1, axis=1, **kwargs)
         assert_equal(unpacked1.dtype, np.uint8)
-        assert_array_equal(unpacked1, padded2[:x.shape[0], :-1])
-    assert_raises(ValueError, np.unpackbits, packed0, axis=0, count=-9)
-    assert_raises(ValueError, np.unpackbits, packed1, axis=1, count=-9)
+        if kwargs.get('order', 'b') == 'b':
+            assert_array_equal(unpacked1, self.padded2[:self.x.shape[0], :-1])
+        else:
+            assert_array_equal(unpacked1[:, ::-1], self.padded2[:self.x.shape[0], :-1])
 
+    def test_bad_count(self):
+        packed0 = np.packbits(self.x, axis=0)
+        assert_raises(ValueError, np.unpackbits, packed0, axis=0, count=-9)
+        packed1 = np.packbits(self.x, axis=1)
+        assert_raises(ValueError, np.unpackbits, packed1, axis=1, count=-9)
+        packed = np.packbits(self.x)
+        assert_raises(ValueError, np.unpackbits, packed, count=-57)
