@@ -9,7 +9,7 @@ from numpy.testing import (
 from numpy.core.overrides import (
     _get_implementing_args, array_function_dispatch,
     verify_matching_signatures)
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 import pytest
 
 

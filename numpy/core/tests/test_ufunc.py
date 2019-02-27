@@ -15,7 +15,7 @@ from numpy.testing import (
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
     assert_allclose,
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 
 class TestUfuncKwargs(object):

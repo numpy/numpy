@@ -4145,9 +4145,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
 
     Returns a view of the array with axes transposed.
 
-    For a 1-D array, this has no effect. (To change between column and
-    row vectors, first cast the 1-D array into a matrix object.)
-    For a 2-D array, this is the usual matrix transpose.
+    For a 1-D array this has no effect, as a transposed vector is simply the
+    same vector. To convert a 1-D array into a 2D column vector, an additional
+    dimension must be added. `np.atleast2d(a).T` achieves this, as does
+    `a[:, np.newaxis]`.
+    For a 2-D array, this is a standard matrix transpose.
     For an n-D array, if axes are given, their order indicates how the
     axes are permuted (see Examples). If axes are not provided and
     ``a.shape = (i[0], i[1], ... i[n-2], i[n-1])``, then
@@ -4173,6 +4175,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('transpose',
     See Also
     --------
     ndarray.T : Array property returning the array transposed.
+    ndarray.reshape : Give a new shape to an array without changing its data.
 
     Examples
     --------
@@ -4523,97 +4526,6 @@ add_newdoc('numpy.core.umath', '_add_newdoc_ufunc',
     and then throwing away the ufunc.
     """)
 
-add_newdoc('numpy.core.multiarray', 'packbits',
-    """
-    packbits(myarray, axis=None)
-
-    Packs the elements of a binary-valued array into bits in a uint8 array.
-
-    The result is padded to full bytes by inserting zero bits at the end.
-
-    Parameters
-    ----------
-    myarray : array_like
-        An array of integers or booleans whose elements should be packed to
-        bits.
-    axis : int, optional
-        The dimension over which bit-packing is done.
-        ``None`` implies packing the flattened array.
-
-    Returns
-    -------
-    packed : ndarray
-        Array of type uint8 whose elements represent bits corresponding to the
-        logical (0 or nonzero) value of the input elements. The shape of
-        `packed` has the same number of dimensions as the input (unless `axis`
-        is None, in which case the output is 1-D).
-
-    See Also
-    --------
-    unpackbits: Unpacks elements of a uint8 array into a binary-valued output
-                array.
-
-    Examples
-    --------
-    >>> a = np.array([[[1,0,1],
-    ...                [0,1,0]],
-    ...               [[1,1,0],
-    ...                [0,0,1]]])
-    >>> b = np.packbits(a, axis=-1)
-    >>> b
-    array([[[160],
-            [ 64]],
-           [[192],
-            [ 32]]], dtype=uint8)
-
-    Note that in binary 160 = 1010 0000, 64 = 0100 0000, 192 = 1100 0000,
-    and 32 = 0010 0000.
-
-    """)
-
-add_newdoc('numpy.core.multiarray', 'unpackbits',
-    """
-    unpackbits(myarray, axis=None)
-
-    Unpacks elements of a uint8 array into a binary-valued output array.
-
-    Each element of `myarray` represents a bit-field that should be unpacked
-    into a binary-valued output array. The shape of the output array is either
-    1-D (if `axis` is None) or the same shape as the input array with unpacking
-    done along the axis specified.
-
-    Parameters
-    ----------
-    myarray : ndarray, uint8 type
-       Input array.
-    axis : int, optional
-        The dimension over which bit-unpacking is done.
-        ``None`` implies unpacking the flattened array.
-
-    Returns
-    -------
-    unpacked : ndarray, uint8 type
-       The elements are binary-valued (0 or 1).
-
-    See Also
-    --------
-    packbits : Packs the elements of a binary-valued array into bits in a uint8
-               array.
-
-    Examples
-    --------
-    >>> a = np.array([[2], [7], [23]], dtype=np.uint8)
-    >>> a
-    array([[ 2],
-           [ 7],
-           [23]], dtype=uint8)
-    >>> b = np.unpackbits(a, axis=1)
-    >>> b
-    array([[0, 0, 0, 0, 0, 0, 1, 0],
-           [0, 0, 0, 0, 0, 1, 1, 1],
-           [0, 0, 0, 1, 0, 1, 1, 1]], dtype=uint8)
-
-    """)
 
 add_newdoc('numpy.core._multiarray_tests', 'format_float_OSprintf_g',
     """

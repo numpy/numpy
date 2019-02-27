@@ -36,7 +36,21 @@ Casting from a different floating point precision to float16 used incorrect
 rounding in some edge cases. This means in rare cases, subnormal results will
 now be rounded up instead of down, changing the last bit (ULP) of the result.
 
+Signed zero when using divmod
+-----------------------------
 
+Starting in version 1.12.0, numpy incorrectly returned a negatively signed zero
+when using the ``divmod`` and ``floor_divide`` functions when the result was
+zero. For example::
+
+   >>> np.zeros(10)//1
+   array([-0., -0., -0., -0., -0., -0., -0., -0., -0., -0.])
+
+With this release, the result is correctly returned as a positively signed
+zero::
+
+   >>> np.zeros(10)//1
+   array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 
 C API changes
 =============
@@ -64,6 +78,16 @@ performace on already or nearly sorted data and performs like mergesort on
 random data.  The algorithm is stable and requires O(n/2) working space.  For
 details of the algorithm, refer to
 `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
+
+``np.unpackbits`` now accepts a ``count`` parameter
+---------------------------------------------------
+``count`` allows subsetting the number of bits that will be unpacked up-front,
+rather than reshaping and subsetting later, making the ``packbits`` operation
+invertible, and the unpacking less wasteful. Counts larger than the number of
+available bits add zero padding. Negative counts trim bits off the end instead
+of counting from the beginning. None counts implement the existing behavior of
+unpacking everything.
+
 
 ``np.linalg.svd`` and ``np.linalg.pinv`` can be faster on hermitian inputs
 --------------------------------------------------------------------------
@@ -137,6 +161,12 @@ Improve performance of ``np.pad``
 The performance of the function has been improved for most cases by filling in
 a preallocated array with the desired padded shape instead of using
 concatenation.
+
+``np.interp`` handles infinities more robustly
+----------------------------------------------
+In some cases where ``np.interp`` would previously return ``np.nan``, it now
+returns an appropriate infinity.
+
 
 Changes
 =======
