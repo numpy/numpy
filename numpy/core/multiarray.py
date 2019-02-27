@@ -1132,7 +1132,7 @@ def packbits(a, axis=None, order='big'):
         ``None`` implies packing the flattened array.
     order : 'big' or 'little', only the first letter is checked
         The order of the returned bits. The default is the common standard
-        where 3 => [0, 0, 0, 0, 0, 1, 1]
+        where [0, 0, 0, 0, 0, 1, 1] => 3
 
         .. versionadded:: 1.17.0
 

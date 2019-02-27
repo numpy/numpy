@@ -1558,7 +1558,7 @@ pack_inner(const char *inptr,
     if (remain == 0) {                  /* assumes n_in > 0 */
         remain = 8;
     }
-    /* don't reset index to handle remainder of above block */
+    /* Don't reset index. Just handle remainder of above block */
     for (; index < n_out; index++) {
         char build = 0;
         int i, maxi;
@@ -1705,6 +1705,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
     static int unpack_init = 0;
     static lookup unpack_lookup_b;
     static lookup unpack_lookup_l;
+    lookup *unpack_lookup;
     PyArrayObject *inp;
     PyArrayObject *new = NULL;
     PyArrayObject *out = NULL;
@@ -1793,7 +1794,8 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
     /* setup lookup table under GIL, big endian 0..256 as bytes */
     if (unpack_init == 0) {
         npy_uint64 j;
-        npy_uint64 * unpack_lookup_64 = (npy_uint64 *)unpack_lookup_l;
+        npy_uint64 * unpack_lookup_64b = (npy_uint64 *)unpack_lookup_b;
+        npy_uint64 * unpack_lookup_64l = (npy_uint64 *)unpack_lookup_l;
         for (j=0; j < 256; j++) {
             npy_uint64 v = 0;
             v |= (npy_uint64)((j &   1) ==   1);
@@ -1804,23 +1806,9 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             v |= (npy_uint64)((j &  32) ==  32) << 40;
             v |= (npy_uint64)((j &  64) ==  64) << 48;
             v |= (npy_uint64)((j & 128) == 128) << 56;
-            unpack_lookup_64[j] = v;
+            unpack_lookup_64l[j] = v;
+            unpack_lookup_64b[j] = npy_bswap8(v);
         }
-        unpack_lookup_64 = (npy_uint64 *)unpack_lookup_b;
-        for (j=0; j < 256; j++) {
-            npy_uint64 v = 0;
-            v |= (npy_uint64)((j &   1) ==   1);
-            v |= (npy_uint64)((j &   2) ==   2) << 8;
-            v |= (npy_uint64)((j &   4) ==   4) << 16;
-            v |= (npy_uint64)((j &   8) ==   8) << 24;
-            v |= (npy_uint64)((j &  16) ==  16) << 32;
-            v |= (npy_uint64)((j &  32) ==  32) << 40;
-            v |= (npy_uint64)((j &  64) ==  64) << 48;
-            v |= (npy_uint64)((j & 128) == 128) << 56;
-            v = npy_bswap8(v);
-            unpack_lookup_64[j] = v;
-        }
-
         unpack_init = 1;
     }
 
@@ -1839,17 +1827,19 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
     in_stride = PyArray_STRIDE(new, axis);
     out_stride = PyArray_STRIDE(out, axis);
 
+    if (order == 'l') {
+        unpack_lookup = &unpack_lookup_l;
+    }
+    else {
+        unpack_lookup = &unpack_lookup_b;
+    }
+
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_Size((PyObject *)out) / 8);
 
     while (PyArray_ITER_NOTDONE(it)) {
         npy_intp index;
         unsigned const char *inptr = PyArray_ITER_DATA(it);
         char *outptr = PyArray_ITER_DATA(ot);
-        lookup *unpack_lookup;
-        unpack_lookup = &unpack_lookup_b;
-        if (order == 'l') {
-            unpack_lookup = &unpack_lookup_l;
-        }
 
         if (out_stride == 1) {
             /* for unity stride we can just copy out of the lookup table */
@@ -1870,19 +1860,38 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
         else {
             unsigned char mask;
 
-            for (index = 0; index < in_n; index++) {
-                for (mask = 128; mask; mask >>= 1) {
+            if (order == 'b') {
+                for (index = 0; index < in_n; index++) {
+                    for (mask = 128; mask; mask >>= 1) {
+                        *outptr = ((mask & (*inptr)) != 0);
+                        outptr += out_stride;
+                    }
+                    inptr += in_stride;
+                }
+                /* Clean up the tail portion */
+                mask = 128;
+                for (i = 0; i < in_tail; i++) {
                     *outptr = ((mask & (*inptr)) != 0);
                     outptr += out_stride;
+                    mask >>= 1;
                 }
-                inptr += in_stride;
             }
-            /* Clean up the tail portion */
-            mask = 128;
-            for (i = 0; i < in_tail; i++) {
-                *outptr = ((mask & (*inptr)) != 0);
-                outptr += out_stride;
-                mask >>= 1;
+            else {
+                for (index = 0; index < in_n; index++) {
+                    /* stops when char(128)<<=1 overflows to 0 */
+                    for (mask = 1; mask; mask <<= 1) {
+                        *outptr = ((mask & (*inptr)) != 0);
+                        outptr += out_stride;
+                    }
+                    inptr += in_stride;
+                }
+                /* Clean up the tail portion */
+                mask = 1;
+                for (i = 0; i < in_tail; i++) {
+                    *outptr = ((mask & (*inptr)) != 0);
+                    outptr += out_stride;
+                    mask <<= 1;
+                }
             }
             /* Add padding */
             for (index = 0; index < out_pad; index++) {
