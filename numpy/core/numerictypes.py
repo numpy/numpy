@@ -140,6 +140,7 @@ genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
                    'complex32', 'complex64', 'complex128', 'complex160',
                    'complex192', 'complex256', 'complex512', 'object']
 
+@set_module('numpy')
 def maximum_sctype(t):
     """
     Return the scalar type of highest precision of the same kind as the input.

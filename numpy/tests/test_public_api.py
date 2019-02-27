@@ -43,7 +43,6 @@ def test_numpy_namespace():
         'get_include': 'numpy.lib.utils.get_include',
         'int_asbuffer': 'numpy.core._multiarray_umath.int_asbuffer',
         'mafromtxt': 'numpy.lib.npyio.mafromtxt',
-        'maximum_sctype': 'numpy.core.numerictypes.maximum_sctype',
         'ndfromtxt': 'numpy.lib.npyio.ndfromtxt',
         'recfromcsv': 'numpy.lib.npyio.recfromcsv',
         'recfromtxt': 'numpy.lib.npyio.recfromtxt',

@@ -17,10 +17,8 @@ Data type routines
 
 Creating data types
 -------------------
-
 .. autosummary::
    :toctree: generated/
-
 
    dtype
    format_parser
@@ -53,3 +51,4 @@ Miscellaneous
    typename
    sctype2char
    mintypecode
+   maximum_sctype
