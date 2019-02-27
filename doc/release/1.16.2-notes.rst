@@ -1,0 +1,70 @@
+==========================
+NumPy 1.16.2 Release Notes
+==========================
+
+NumPy 1.16.2 is a quick release fixing several problems encountered on Windows.
+The Python versions supported are 2.7 and 3.5-3.7. The Windows problems
+addressed are:
+
+- DLL load problems for NumPy wheels on Windows,
+- distutils command line parsing on Windows.
+
+There is also a regression fix correcting signed zeros produced by divmod, see
+below for details.
+
+Downstream developers building this release should use Cython >= 0.29.2 and, if
+using OpenBLAS, OpenBLAS > v0.3.4.
+
+If you are installing using pip, you may encounter a problem with older
+installed versions of NumPy that pip did not delete becoming mixed with the
+current version, resulting in an ``ImportError``. That problem is particularly
+common on Debian derived distributions due to a modified pip.  The fix is to
+make sure all previous NumPy versions installed by pip have been removed. See
+`#12736 <https://github.com/numpy/numpy/issues/12736>`__ for discussion of the
+issue.
+
+
+Compatibility notes
+===================
+
+Signed zero when using divmod
+-----------------------------
+Starting in version 1.12.0, numpy incorrectly returned a negatively signed zero
+when using the ``divmod`` and ``floor_divide`` functions when the result was
+zero. For example::
+
+   >>> np.zeros(10)//1
+   array([-0., -0., -0., -0., -0., -0., -0., -0., -0., -0.])
+
+With this release, the result is correctly returned as a positively signed
+zero::
+
+   >>> np.zeros(10)//1
+   array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+
+
+Contributors
+============
+
+A total of 5 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Eric Wieser
+* Matti Picus
+* Tyler Reddy
+* Tony LaTorre +
+
+
+Pull requests merged
+====================
+
+A total of 7 pull requests were merged for this release.
+
+* `#12909 <https://github.com/numpy/numpy/pull/12909>`__: TST: fix vmImage dispatch in Azure
+* `#12923 <https://github.com/numpy/numpy/pull/12923>`__: MAINT: remove complicated test of multiarray import failure mode
+* `#13020 <https://github.com/numpy/numpy/pull/13020>`__: BUG: fix signed zero behavior in npy_divmod
+* `#13026 <https://github.com/numpy/numpy/pull/13026>`__: MAINT: Add functions to parse shell-strings in the platform-native...
+* `#13028 <https://github.com/numpy/numpy/pull/13028>`__: BUG: Fix regression in parsing of F90 and F77 environment variables
+* `#13038 <https://github.com/numpy/numpy/pull/13038>`__: BUG: parse shell escaping in extra_compile_args and extra_link_args
+* `#13041 <https://github.com/numpy/numpy/pull/13041>`__: BLD: Windows absolute path DLL loading
