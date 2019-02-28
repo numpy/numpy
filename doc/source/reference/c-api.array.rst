@@ -219,7 +219,7 @@ From scratch
 
     If *data* is ``NULL``, then new unitinialized memory will be allocated and
     *flags* can be non-zero to indicate a Fortran-style contiguous array. Use
-    :c:ref:`PyArray_FILLWBYTE` to initialze the memory.
+    :c:func:`PyArray_FILLWBYTE` to initialze the memory.
 
     If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the
@@ -573,8 +573,9 @@ From other objects
             return NULL;
         }
         if (arr == NULL) {
+            /*
             ... validate/change dtype, validate flags, ndim, etc ...
-            // Could make custom strides here too
+             Could make custom strides here too */
             arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
                                         dims, NULL,
                                         fortran ? NPY_ARRAY_F_CONTIGUOUS : 0,
@@ -588,10 +589,14 @@ From other objects
             }
         }
         else {
+            /*
             ... in this case the other parameters weren't filled, just
                 validate and possibly copy arr itself ...
+            */
         }
+        /*
         ... use arr ...
+        */
 
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
@@ -2660,22 +2665,22 @@ cost of a slight overhead.
 
     .. code-block:: c
 
-       PyArrayIterObject \*iter;
-       PyArrayNeighborhoodIterObject \*neigh_iter;
+       PyArrayIterObject *iter;
+       PyArrayNeighborhoodIterObject *neigh_iter;
        iter = PyArray_IterNew(x);
 
-       //For a 3x3 kernel
+       /*For a 3x3 kernel */
        bounds = {-1, 1, -1, 1};
        neigh_iter = (PyArrayNeighborhoodIterObject*)PyArrayNeighborhoodIter_New(
             iter, bounds, NPY_NEIGHBORHOOD_ITER_ZERO_PADDING, NULL);
 
        for(i = 0; i < iter->size; ++i) {
             for (j = 0; j < neigh_iter->size; ++j) {
-                    // Walk around the item currently pointed by iter->dataptr
+                    /* Walk around the item currently pointed by iter->dataptr */
                     PyArrayNeighborhoodIter_Next(neigh_iter);
             }
 
-            // Move to the next point of iter
+            /* Move to the next point of iter */
             PyArrayIter_Next(iter);
             PyArrayNeighborhoodIter_Reset(neigh_iter);
        }
