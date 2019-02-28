@@ -19,9 +19,8 @@ def dos2unix(file):
     newdata = re.sub("\r\n", "\n", data)
     if newdata != data:
         print('dos2unix:', file)
-        f = open(file, "wb")
-        f.write(newdata)
-        f.close()
+        with open(file, "wb") as f:
+            f.write(newdata)
         return file
     else:
         print(file, 'ok')
@@ -53,9 +52,8 @@ def unix2dos(file):
     newdata = re.sub("\n", "\r\n", newdata)
     if newdata != data:
         print('unix2dos:', file)
-        f = open(file, "wb")
-        f.write(newdata)
-        f.close()
+        with open(file, "wb") as f:
+            f.write(newdata)
         return file
     else:
         print(file, 'ok')
