@@ -1839,7 +1839,7 @@ class Configuration(object):
         except (subprocess.CalledProcessError, OSError):
             pass
         else:
-            m = re.match(r'(?P<revision>\d+)', output)
+            m = re.match(rb'(?P<revision>\d+)', output)
             if m:
                 return int(m.group('revision'))
 
@@ -1870,7 +1870,7 @@ class Configuration(object):
         except (subprocess.CalledProcessError, OSError):
             pass
         else:
-            m = re.match(r'(?P<revision>\d+)', output)
+            m = re.match(rb'(?P<revision>\d+)', output)
             if m:
                 return int(m.group('revision'))
 
