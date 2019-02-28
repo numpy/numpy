@@ -3445,17 +3445,19 @@ class MaskedArray(ndarray):
 
     _set_mask = __setmask__
 
-    def _get_mask(self):
-        """Return the current mask.
-
-        """
+    @property
+    def mask(self):
+        """ Current mask. """
         # We could try to force a reshape, but that wouldn't work in some
         # cases.
         return self._mask
+    
+    @mask.setter
+    def mask(self, value):
+        self.__setmask__(value)
 
-    mask = property(fget=_get_mask, fset=__setmask__, doc="Mask")
-
-    def _get_recordmask(self):
+    @property
+    def recordmask(self):
         """
         Return the mask of the records.
 
@@ -3467,16 +3469,9 @@ class MaskedArray(ndarray):
             return _mask
         return np.all(flatten_structured_array(_mask), axis=-1)
 
-    def _set_recordmask(self):
-        """
-        Return the mask of the records.
-
-        A record is masked when all the fields are masked.
-
-        """
+    @recordmask.setter
+    def recordmask(self, mask):
         raise NotImplementedError("Coming soon: setting the mask per records!")
-
-    recordmask = property(fget=_get_recordmask)
 
     def harden_mask(self):
         """
@@ -3508,8 +3503,10 @@ class MaskedArray(ndarray):
         self._hardmask = False
         return self
 
-    hardmask = property(fget=lambda self: self._hardmask,
-                        doc="Hardness of the mask")
+    @property
+    def hardmask(self):
+        """ Hardness of the mask """
+        return self._hardmask
 
     def unshare_mask(self):
         """
@@ -3529,8 +3526,10 @@ class MaskedArray(ndarray):
             self._sharedmask = False
         return self
 
-    sharedmask = property(fget=lambda self: self._sharedmask,
-                          doc="Share status of the mask (read-only).")
+    @property
+    def sharedmask(self):
+        """ Share status of the mask (read-only). """
+        return self._sharedmask
 
     def shrink_mask(self):
         """
@@ -3563,8 +3562,10 @@ class MaskedArray(ndarray):
         self._mask = _shrink_mask(self._mask)
         return self
 
-    baseclass = property(fget=lambda self: self._baseclass,
-                         doc="Class of the underlying data (read-only).")
+    @property
+    def baseclass(self):
+        """ Class of the underlying data (read-only). """
+        return self._baseclass
 
     def _get_data(self):
         """Return the current data, as a view of the original
@@ -3576,26 +3577,21 @@ class MaskedArray(ndarray):
     _data = property(fget=_get_data)
     data = property(fget=_get_data)
 
-    def _get_flat(self):
-        "Return a flat iterator."
+    @property
+    def flat(self):
+        """ Return a flat iterator, or set a flattened version of self to value. """
         return MaskedIterator(self)
 
-    def _set_flat(self, value):
-        "Set a flattened version of self to value."
+    @flat.setter
+    def flat(self, value):
         y = self.ravel()
         y[:] = value
 
-    flat = property(fget=_get_flat, fset=_set_flat,
-                    doc="Flat version of the array.")
-
-    def get_fill_value(self):
+    @property
+    def fill_value(self):
         """
-        Return the filling value of the masked array.
-
-        Returns
-        -------
-        fill_value : scalar
-            The filling value.
+        The filling value of the masked array is a scalar. When setting, None
+        will set to a default based on the data type.
 
         Examples
         --------
@@ -3608,8 +3604,17 @@ class MaskedArray(ndarray):
         (1e+20+0j)
 
         >>> x = np.ma.array([0, 1.], fill_value=-np.inf)
-        >>> x.get_fill_value()
+        >>> x.fill_value
         -inf
+        >>> x.fill_value = np.pi
+        >>> x.fill_value
+        3.1415926535897931 # may vary
+
+        Reset to default:
+
+        >>> x.fill_value = None
+        >>> x.fill_value
+        1e+20
 
         """
         if self._fill_value is None:
@@ -3623,36 +3628,8 @@ class MaskedArray(ndarray):
             return self._fill_value[()]
         return self._fill_value
 
-    def set_fill_value(self, value=None):
-        """
-        Set the filling value of the masked array.
-
-        Parameters
-        ----------
-        value : scalar, optional
-            The new filling value. Default is None, in which case a default
-            based on the data type is used.
-
-        See Also
-        --------
-        ma.set_fill_value : Equivalent function.
-
-        Examples
-        --------
-        >>> x = np.ma.array([0, 1.], fill_value=-np.inf)
-        >>> x.fill_value
-        -inf
-        >>> x.set_fill_value(np.pi)
-        >>> x.fill_value
-        3.1415926535897931 # may vary
-
-        Reset to default:
-
-        >>> x.set_fill_value()
-        >>> x.fill_value
-        1e+20
-
-        """
+    @fill_value.setter
+    def fill_value(self, value=None):
         target = _check_fill_value(value, self.dtype)
         _fill_value = self._fill_value
         if _fill_value is None:
@@ -3662,8 +3639,9 @@ class MaskedArray(ndarray):
             # Don't overwrite the attribute, just fill it (for propagation)
             _fill_value[()] = target
 
-    fill_value = property(fget=get_fill_value, fset=set_fill_value,
-                          doc="Filling value.")
+    # kept for compatibility
+    get_fill_value = fill_value.fget
+    set_fill_value = fill_value.fset
 
     def filled(self, fill_value=None):
         """
@@ -4332,31 +4310,21 @@ class MaskedArray(ndarray):
             raise MaskError('Cannot convert masked element to a Python long.')
         return long(self.item())
 
-
-    def get_imag(self):
+    @property
+    def imag(self):
         """
-        Return the imaginary part of the masked array.
+        The imaginary part of the masked array.
 
-        The returned array is a view on the imaginary part of the `MaskedArray`
-        whose `get_imag` method is called.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        result : MaskedArray
-            The imaginary part of the masked array.
+        This property is a view on the imaginary part of this `MaskedArray`.
 
         See Also
         --------
-        get_real, real, imag
+        real
 
         Examples
         --------
         >>> x = np.ma.array([1+1.j, -2j, 3.45+1.6j], mask=[False, True, False])
-        >>> x.get_imag()
+        >>> x.imag
         masked_array(data=[1.0, --, 1.6],
                      mask=[False,  True, False],
                fill_value=1e+20)
@@ -4366,32 +4334,24 @@ class MaskedArray(ndarray):
         result.__setmask__(self._mask)
         return result
 
-    imag = property(fget=get_imag, doc="Imaginary part.")
+    # kept for compatibility
+    get_imag = imag.fget
 
-    def get_real(self):
+    @property
+    def real(self):
         """
-        Return the real part of the masked array.
+        The real part of the masked array.
 
-        The returned array is a view on the real part of the `MaskedArray`
-        whose `get_real` method is called.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        result : MaskedArray
-            The real part of the masked array.
+        This property is a view on the real part of this `MaskedArray`.
 
         See Also
         --------
-        get_imag, real, imag
+        imag
 
         Examples
         --------
         >>> x = np.ma.array([1+1.j, -2j, 3.45+1.6j], mask=[False, True, False])
-        >>> x.get_real()
+        >>> x.real
         masked_array(data=[1.0, --, 3.45],
                      mask=[False,  True, False],
                fill_value=1e+20)
@@ -4400,7 +4360,9 @@ class MaskedArray(ndarray):
         result = self._data.real.view(type(self))
         result.__setmask__(self._mask)
         return result
-    real = property(fget=get_real, doc="Real part")
+
+    # kept for compatibility
+    get_real = real.fget
 
     def count(self, axis=None, keepdims=np._NoValue):
         """
@@ -6156,11 +6118,10 @@ class mvoid(MaskedArray):
             _data.fill_value = fill_value
         return _data
 
-    def _get_data(self):
+    @property
+    def _data(self):
         # Make sure that the _data part is a np.void
         return super(mvoid, self)._data[()]
-
-    _data = property(fget=_get_data)
 
     def __getitem__(self, indx):
         """
