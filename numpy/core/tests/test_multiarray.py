@@ -2787,7 +2787,7 @@ class TestMethods(object):
         # Test BLAS and non-BLAS code paths, including all dtypes
         # that dot() supports
         dtypes = [np.dtype(code) for code in np.typecodes['All']
-                  if code not in 'USVM']
+                  if code not in 'USVMm']
         for dtype in dtypes:
             a = np.random.rand(3, 3).astype(dtype)
 

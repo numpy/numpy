@@ -304,6 +304,12 @@ def test_truediv(Poly):
         if not issubclass(stype, Number) or issubclass(stype, bool):
             continue
         s = stype(5)
+        if stype == np.timedelta64:
+            # we prohibit division by a type with units
+            # the actual TypeError is related to lack of
+            # ufunc support
+            assert_raises(TypeError, op.truediv, p2, s)
+            continue
         assert_poly_almost_equal(op.truediv(p2, s), p1)
         assert_raises(TypeError, op.truediv, s, p2)
     for stype in (int, long, float):
