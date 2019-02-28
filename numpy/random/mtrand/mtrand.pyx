@@ -1328,6 +1328,12 @@ cdef class RandomState:
 
         Random values in a given shape.
 
+        .. note::
+            This is a convenience function for users porting code from Matlab,
+            and wraps `numpy.random.random_sample`. That function takes a
+            tuple to specify the size of the output, which is consistent with
+            other NumPy functions like `numpy.zeros` and `numpy.ones`.
+
         Create an array of the given shape and populate it with
         random samples from a uniform distribution
         over ``[0, 1)``.
@@ -1346,12 +1352,6 @@ cdef class RandomState:
         See Also
         --------
         random
-
-        Notes
-        -----
-        This is a convenience function. If you want an interface that
-        takes a shape-tuple as the first argument, refer to
-        np.random.random_sample .
 
         Examples
         --------
@@ -1372,16 +1372,17 @@ cdef class RandomState:
 
         Return a sample (or samples) from the "standard normal" distribution.
 
-        If positive, int_like or int-convertible arguments are provided,
-        `randn` generates an array of shape ``(d0, d1, ..., dn)``, filled
-        with random floats sampled from a univariate "normal" (Gaussian)
-        distribution of mean 0 and variance 1 (if any of the :math:`d_i` are
-        floats, they are first converted to integers by truncation). A single
-        float randomly sampled from the distribution is returned if no
-        argument is provided.
+        .. note::
+            This is a convenience function for users porting code from Matlab,
+            and wraps `numpy.random.standard_normal`. That function takes a
+            tuple to specify the size of the output, which is consistent with
+            other NumPy functions like `numpy.zeros` and `numpy.ones`.
 
-        This is a convenience function.  If you want an interface that takes a
-        tuple as the first argument, use `numpy.random.standard_normal` instead.
+        If positive int_like arguments are provided, `randn` generates an array
+        of shape ``(d0, d1, ..., dn)``, filled
+        with random floats sampled from a univariate "normal" (Gaussian)
+        distribution of mean 0 and variance 1. A single float randomly sampled
+        from the distribution is returned if no argument is provided.
 
         Parameters
         ----------
@@ -1399,6 +1400,7 @@ cdef class RandomState:
         See Also
         --------
         standard_normal : Similar, but takes a tuple as its argument.
+        normal : Also accepts mu and sigma arguments.
 
         Notes
         -----
@@ -1409,14 +1411,13 @@ cdef class RandomState:
         Examples
         --------
         >>> np.random.randn()
-        2.1923875335537315 #random
+        2.1923875335537315  # random
 
         Two-by-four array of samples from N(3, 6.25):
 
-        >>> 2.5 * np.random.randn(2, 4) + 3
-        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],  #random
-               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]]) #random
-
+        >>> 3 + 2.5 * np.random.randn(2, 4)
+        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
+               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
         """
         if len(args) == 0:
             return self.standard_normal()
@@ -1536,19 +1537,42 @@ cdef class RandomState:
         Returns
         -------
         out : float or ndarray
-            Drawn samples.
+            A floating-point array of shape ``size`` of drawn samples, or a
+            single sample if ``size`` was not specified.
+
+        Notes
+        -----
+        For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
+
+            mu + sigma * np.random.standard_normal(size=...)
+            np.random.normal(mu, sigma, size=...)
+
+        See Also
+        --------
+        normal :
+            Equivalent function with additional ``loc`` and ``scale`` arguments
+            for setting the mean and standard deviation.
 
         Examples
         --------
+        >>> np.random.standard_normal()
+        2.1923875335537315 #random
+
         >>> s = np.random.standard_normal(8000)
         >>> s
-        array([ 0.6888893 ,  0.78096262, -0.89086505, ...,  0.49876311, #random
-               -0.38672696, -0.4685006 ])                               #random
+        array([ 0.6888893 ,  0.78096262, -0.89086505, ...,  0.49876311,  # random
+               -0.38672696, -0.4685006 ])                                # random
         >>> s.shape
         (8000,)
         >>> s = np.random.standard_normal(size=(3, 4, 2))
         >>> s.shape
         (3, 4, 2)
+
+        Two-by-four array of samples from :math:`N(3, 6.25)`:
+
+        >>> 3 + 2.5 * np.random.standard_normal(size=(2, 4))
+        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
+               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
         return cont0_array(self.internal_state, rk_gauss, size, self.lock)
@@ -1641,6 +1665,12 @@ cdef class RandomState:
         ...                np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
         ...          linewidth=2, color='r')
         >>> plt.show()
+
+        Two-by-four array of samples from N(3, 6.25):
+
+        >>> np.random.normal(3, 2.5, size=(2, 4))
+        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
+               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
         cdef ndarray oloc, oscale
