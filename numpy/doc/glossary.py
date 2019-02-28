@@ -435,12 +435,14 @@ Glossary
        ``logical_or``.
 
    vectorization
-       Optimizing a looping block by specialized code. In a traditional send,
-       vectorization operates on data with fixed strides via specialized
-       hardware. Compilers know how to take advantage of well-constructed loops
-       and match the data to specialized hardware that can operate on a number
-       of operands in parallel. NumPy uses :ref:`vectorization
-       <whatis-vectorization>` to mean any optimization via specialized code. 
+       Optimizing a looping block by specialized code. In a traditional sense,
+       vectorization performs the same operation on multiple elements with
+       fixed strides between them via specialized hardware. Compilers know how
+       to take advantage of well-constructed loops to implement such
+       optimizations. NumPy uses :ref:`vectorization <whatis-vectorization>`
+       to mean any optimization via specialized code performing the same
+       operations on multiple elements, typically achieving speedups by
+       avoiding some of the overhead in looking up and converting the elements.
 
    view
        An array that does not own its data, but refers to another array's
