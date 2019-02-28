@@ -4313,18 +4313,9 @@ class MaskedArray(ndarray):
     @property
     def imag(self):
         """
-        Get and set the imaginary part of the masked array.
+        The imaginary part of the masked array.
 
-        The returned array is a view on the imaginary part of this `MaskedArray`.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        result : MaskedArray
-            The imaginary part of the masked array.
+        This property is a view on the imaginary part of this `MaskedArray`.
 
         See Also
         --------
@@ -4349,18 +4340,9 @@ class MaskedArray(ndarray):
     @property
     def real(self):
         """
-        Get and set the real part of the masked array.
+        The real part of the masked array.
 
-        The returned array is a view on the real part of this `MaskedArray`.
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-        result : MaskedArray
-            The real part of the masked array.
+        This property is a view on the real part of this `MaskedArray`.
 
         See Also
         --------
