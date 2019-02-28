@@ -3,8 +3,7 @@
 
 # This needs to be major.minor, just "3" doesn't work - it will result in
 # issues with the amendments to PYTHONPATH and install paths (see DIST_VARS).
-# If you're using a different Python version, just change the number here.
-PYVER = 3.6
+export PYVER=`python3 -c 'import sys; print("{0}.{1}".format(*sys.version_info[:2]))'`
 PYTHON = python$(PYVER)
 
 # You can set these variables from the command line.
