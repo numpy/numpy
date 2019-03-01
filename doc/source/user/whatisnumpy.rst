@@ -134,4 +134,4 @@ numerous methods and attributes.  Many of its methods are mirrored by
 functions in the outer-most NumPy namespace, allowing the programmer
 to code in whichever paradigm they prefer. This flexibility has allowed the
 NumPy array dialect and NumPy `ndarray` class to become the *de-facto* language
-of mulit-dimensional data interchange used in Python.
+of multi-dimensional data interchange used in Python.
