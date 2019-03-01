@@ -1,9 +1,13 @@
 # Makefile for Sphinx documentation
 #
 
-# This needs to be major.minor, just "3" doesn't work - it will result in
+# PYVER needs to be major.minor, just "3" doesn't work - it will result in
 # issues with the amendments to PYTHONPATH and install paths (see DIST_VARS).
-export PYVER=`python3 -c 'import sys; print("{0}.{1}".format(*sys.version_info[:2]))'`
+
+# Use explicit "version_info" indexing since make cannot handle colon characters, and
+# evaluate it now to allow easier debugging when printing the varaible
+
+PYVER:=$(shell python3 -c 'from sys import version_info as v; print("{0}.{1}".format(v[0], v[1]))')
 PYTHON = python$(PYVER)
 
 # You can set these variables from the command line.
