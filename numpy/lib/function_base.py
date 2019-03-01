@@ -1292,9 +1292,9 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         The x-coordinates at which to evaluate the interpolated values.
 
     xp : 1-D sequence of floats
-        The x-coordinates of the data points, must be increasing if argument
-        `period` is not specified. Otherwise, `xp` is internally sorted after
-        normalizing the periodic boundaries with ``xp = xp % period``.
+        The x-coordinates of the data points, must be strictly increasing if
+        argument `period` is not specified. Otherwise, `xp` is internally sorted
+        after normalizing the periodic boundaries with ``xp = xp % period``.
 
     fp : 1-D sequence of float or complex
         The y-coordinates of the data points, same length as `xp`.
