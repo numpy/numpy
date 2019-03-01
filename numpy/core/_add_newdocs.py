@@ -714,6 +714,7 @@ add_newdoc('numpy.core', 'broadcast', ('numiter',
 
     """))
 
+
 add_newdoc('numpy.core', 'broadcast', ('shape',
     """
     Shape of broadcasted result.
