@@ -1835,7 +1835,7 @@ class Configuration(object):
         """
         try:
             output = subprocess.check_output(
-                ['svnversion'], shell=True, close_fds=True, cwd=path)
+                ['svnversion'], shell=True, cwd=path)
         except (subprocess.CalledProcessError, OSError):
             pass
         else:
@@ -1866,7 +1866,7 @@ class Configuration(object):
         """
         try:
             output = subprocess.check_output(
-                ['hg identify --num'], shell=True, close_fds=True, cwd=path)
+                ['hg identify --num'], shell=True, cwd=path)
         except (subprocess.CalledProcessError, OSError):
             pass
         else:
