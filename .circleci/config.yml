@@ -39,14 +39,14 @@ jobs:
             . venv/bin/activate
             cd doc
             git submodule update --init
-            make html
+            make html -halt-on-error
 
       - run:
           name: build neps
           command: |
             . venv/bin/activate
             cd doc/neps
-            make html
+            make html -halt-on-error
 
       - store_artifacts:
           path: doc/build/html/
