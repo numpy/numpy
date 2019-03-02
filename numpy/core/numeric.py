@@ -1205,11 +1205,11 @@ def tensordot(a, b, axes=2):
     """
     Compute tensor dot product along specified axes.
 
-    Given two tensors,`a` and `b`, and an array_like object containing
+    Given two tensors, `a` and `b`, and an array_like object containing
     two array_like objects, ``(a_axes, b_axes)``, sum the products of
     `a`'s and `b`'s elements (components) over the axes specified by
     ``a_axes`` and ``b_axes``. The third argument can be a single non-negative
-    integer_like scalar, ``N``; if it is such, then the last ``N``dimensions
+    integer_like scalar, ``N``; if it is such, then the last ``N`` dimensions
     of `a` and the first ``N`` dimensions of `b` are summed over.
 
     Parameters
