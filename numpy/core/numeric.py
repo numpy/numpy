@@ -1203,20 +1203,18 @@ def _tensordot_dispatcher(a, b, axes=None):
 @array_function_dispatch(_tensordot_dispatcher)
 def tensordot(a, b, axes=2):
     """
-    Compute tensor dot product along specified axes for arrays >= 1-D.
+    Compute tensor dot product along specified axes.
 
-    Given two tensors (arrays of dimension greater than or equal to one),
-    `a` and `b`, and an array_like object containing two array_like
-    objects, ``(a_axes, b_axes)``, sum the products of `a`'s and `b`'s
-    elements (components) over the axes specified by ``a_axes`` and
-    ``b_axes``. The third argument can be a single non-negative
-    integer_like scalar, ``N``; if it is such, then the last ``N``
-    dimensions of `a` and the first ``N`` dimensions of `b` are summed
-    over.
+    Given two tensors,`a` and `b`, and an array_like object containing
+    two array_like objects, ``(a_axes, b_axes)``, sum the products of
+    `a`'s and `b`'s elements (components) over the axes specified by
+    ``a_axes`` and ``b_axes``. The third argument can be a single non-negative
+    integer_like scalar, ``N``; if it is such, then the last ``N``dimensions
+    of `a` and the first ``N`` dimensions of `b` are summed over.
 
     Parameters
     ----------
-    a, b : array_like, len(shape) >= 1
+    a, b : array_like
         Tensors to "dot".
 
     axes : int or (2,) array_like
