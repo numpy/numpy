@@ -55,9 +55,11 @@ class EnvironmentConfig(object):
         if envvar is not None:
             envvar_contents = os.environ.get(envvar)
             if envvar_contents is not None:
-                if var and append:
+                if convert:
+                    envvar_contents = convert(envvar_contents)
+                if var and append: # in case var is None?
                     if os.environ.get('NPY_DISTUTILS_APPEND_FLAGS', '0') == '1':
-                        var = var + [envvar_contents]
+                        var.extend(envvar_contents)
                     else:
                         var = envvar_contents
                         if 'NPY_DISTUTILS_APPEND_FLAGS' not in os.environ.keys():
@@ -70,6 +72,8 @@ class EnvironmentConfig(object):
                 else:
                     var = envvar_contents
         if confvar is not None and self._conf:
+            # FIXME: conf shall do the conversion immediately after the key is parsed.
+            # postpartum conversion will not always catch the right cases.
             var = self._conf.get(confvar, (None, var))[1]
         if convert is not None:
             var = convert(var)
