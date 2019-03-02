@@ -51,7 +51,8 @@ class EnvironmentConfig(object):
 
     def _get_var(self, name, conf_desc):
         hook, envvar, confvar, convert, append = conf_desc
-        if convert is None: convert = lambda x: x
+        if convert is None:
+            convert = lambda x: x
         var = self._hook_handler(name, hook)
         if envvar is not None:
             envvar_contents = os.environ.get(envvar)
