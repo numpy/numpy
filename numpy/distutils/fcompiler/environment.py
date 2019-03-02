@@ -73,7 +73,7 @@ class EnvironmentConfig(object):
                     var = envvar_contents
         if confvar is not None and self._conf:
             if confvar in self._conf:
-                source, confvar_contents = self._conf[convvar]
+                source, confvar_contents = self._conf[confvar]
                 var = convert(confvar_contents)
         return var
 
