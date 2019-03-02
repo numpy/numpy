@@ -2468,6 +2468,9 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         *out = PyLong_AsLongLong(obj);
+        if (error_converting(*out)) {
+            return -1;
+        }
         return 0;
     }
     /* Datetime scalar */
@@ -2666,6 +2669,9 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
 
         *out = PyLong_AsLongLong(obj);
+        if (error_converting(*out)) {
+            return -1;
+        }
         return 0;
     }
     /* Timedelta scalar */
@@ -2853,6 +2859,9 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
 
         *out = PyLong_AsLongLong(obj);
+        if (error_converting(*out)) {
+            return -1;
+        }
         return 0;
     }
     else {
