@@ -1543,6 +1543,12 @@ class TestDateTime(object):
 
         assert_equal(x[0].astype(np.int64), 322689600000000000)
 
+        # gh-13062
+        with pytest.raises(OverflowError):
+            np.datetime64(2**64, 'D')
+        with pytest.raises(OverflowError):
+            np.timedelta64(2**64, 'D')
+
     def test_datetime_as_string(self):
         # Check all the units with default string conversion
         date = '1959-10-13'
