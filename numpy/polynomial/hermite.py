@@ -286,21 +286,7 @@ def hermfromroots(roots):
     array([0.+0.j, 0.+0.j])
 
     """
-    if len(roots) == 0:
-        return np.ones(1)
-    else:
-        [roots] = pu.as_series([roots], trim=False)
-        roots.sort()
-        p = [hermline(-r, 1) for r in roots]
-        n = len(p)
-        while n > 1:
-            m, r = divmod(n, 2)
-            tmp = [hermmul(p[i], p[i+m]) for i in range(m)]
-            if r:
-                tmp[0] = hermmul(tmp[0], p[-1])
-            p = tmp
-            n = m
-        return p[0]
+    return pu._fromroots(hermline, hermmul, roots)
 
 
 def hermadd(c1, c2):
