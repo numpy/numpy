@@ -188,21 +188,7 @@ def polyfromroots(roots):
     array([1.+0.j,  0.+0.j,  1.+0.j])
 
     """
-    if len(roots) == 0:
-        return np.ones(1)
-    else:
-        [roots] = pu.as_series([roots], trim=False)
-        roots.sort()
-        p = [polyline(-r, 1) for r in roots]
-        n = len(p)
-        while n > 1:
-            m, r = divmod(n, 2)
-            tmp = [polymul(p[i], p[i+m]) for i in range(m)]
-            if r:
-                tmp[0] = polymul(tmp[0], p[-1])
-            p = tmp
-            n = m
-        return p[0]
+    return pu._fromroots(polyline, polymul, roots)
 
 
 def polyadd(c1, c2):

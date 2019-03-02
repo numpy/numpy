@@ -283,21 +283,7 @@ def lagfromroots(roots):
     array([0.+0.j, 0.+0.j])
 
     """
-    if len(roots) == 0:
-        return np.ones(1)
-    else:
-        [roots] = pu.as_series([roots], trim=False)
-        roots.sort()
-        p = [lagline(-r, 1) for r in roots]
-        n = len(p)
-        while n > 1:
-            m, r = divmod(n, 2)
-            tmp = [lagmul(p[i], p[i+m]) for i in range(m)]
-            if r:
-                tmp[0] = lagmul(tmp[0], p[-1])
-            p = tmp
-            n = m
-        return p[0]
+    return pu._fromroots(lagline, lagmul, roots)
 
 
 def lagadd(c1, c2):
