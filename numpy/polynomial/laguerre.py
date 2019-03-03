@@ -1290,17 +1290,7 @@ def lagvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
-    x, y = np.array((x, y), copy=0) + 0.0
-
-    vx = lagvander(x, degx)
-    vy = lagvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    return v.reshape(v.shape[:-2] + (-1,))
+    return pu._vander2d(lagvander, x, y, deg)
 
 
 def lagvander3d(x, y, z, deg):
@@ -1354,18 +1344,7 @@ def lagvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
-
-    vx = lagvander(x, degx)
-    vy = lagvander(y, degy)
-    vz = lagvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    return v.reshape(v.shape[:-3] + (-1,))
+    return pu._vander3d(lagvander, x, y, z, deg)
 
 
 def lagfit(x, y, deg, rcond=None, full=False, w=None):

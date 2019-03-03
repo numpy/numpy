@@ -1327,17 +1327,7 @@ def legvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
-    x, y = np.array((x, y), copy=0) + 0.0
-
-    vx = legvander(x, degx)
-    vy = legvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    return v.reshape(v.shape[:-2] + (-1,))
+    return pu._vander2d(legvander, x, y, deg)
 
 
 def legvander3d(x, y, z, deg):
@@ -1391,18 +1381,7 @@ def legvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
-
-    vx = legvander(x, degx)
-    vy = legvander(y, degy)
-    vz = legvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    return v.reshape(v.shape[:-3] + (-1,))
+    return pu._vander3d(legvander, x, y, z, deg)
 
 
 def legfit(x, y, deg, rcond=None, full=False, w=None):
