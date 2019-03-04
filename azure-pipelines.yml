@@ -63,7 +63,7 @@ jobs:
     displayName: 'make gfortran available on mac os vm'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
-  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx==1.7.9 numpydoc matplotlib
+  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx>=1.8.3 numpydoc matplotlib
     displayName: 'Install dependencies; some are optional to avoid test skips'
   - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
     displayName: 'Check for unreachable code paths in Python modules'
