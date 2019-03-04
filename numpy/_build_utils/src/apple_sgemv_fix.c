@@ -80,7 +80,7 @@ static inline int cpu_supports_avx() {
 }
 	
 /* Check if we are using MacOS X version 10.9 */
-static inline int cpu_supports_avx() {
+static inline int using_mavericks() {
 	int r;
 	char str[32] = {0};
 	size_t size = sizeof(str);
