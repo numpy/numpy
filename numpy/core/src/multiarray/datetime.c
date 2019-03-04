@@ -155,6 +155,8 @@ get_datetimestruct_seconds(const npy_datetimestruct *dts)
 {
     npy_int64 seconds = get_datetimestruct_minutes(dts) * 60;
     seconds += dts->sec;
+    seconds += (dts->us / pow(10, 6));
+    seconds += (dts->ps / pow(10, 12));
 
     return seconds;
 }
@@ -344,7 +346,7 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
             case NPY_FR_ps:
                 /* only +- 106 days around epoch tolerated */
                 if (abs(get_datetimestruct_seconds(dts)) > 
-                        106 * 24 * 60 * 60) {
+                        NPY_MAX_INT64 * pow(10, -12)) {
                     /* reject with seconds resolution */
                     PyErr_SetString(PyExc_ValueError,
                             "Time span around POSIX epoch is "
@@ -380,7 +382,8 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                 break;
             case NPY_FR_as:
                 /* only 9.2 secs */
-                if (abs(get_datetimestruct_seconds(dts)) > 9.2) {
+                if (abs(get_datetimestruct_seconds(dts)) >
+                        NPY_MAX_INT64 / pow(10, 18)) {
                     /* NOTE: may want to increase resolution here */
                     PyErr_SetString(PyExc_ValueError,
                             "Time span around POSIX epoch is "

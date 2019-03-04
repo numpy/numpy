@@ -4,6 +4,7 @@ from __future__ import division, absolute_import, print_function
 import numpy
 import numpy as np
 import datetime
+import operator
 import pytest
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
@@ -798,6 +799,41 @@ class TestDateTime(object):
         # regression test for gh-5452
         with assert_raises_regex(ValueError, 'Time span'):
             numpy.datetime64(time_str)
+
+    @pytest.mark.xfail(reason="work in progress")
+    @pytest.mark.parametrize("op", [operator.add, operator.sub])
+    # parametrize over +/- epoch span limits
+    @pytest.mark.parametrize("time_unit, sec_val, rem_val", [
+        ('s', *divmod(np.iinfo(np.int64).max,   1)),
+        ('ms', *divmod(np.iinfo(np.int64).max, (10 ** 3))),
+        ('us', *divmod(np.iinfo(np.int64).max, (10 ** 6))),
+        ('ns', *divmod(np.iinfo(np.int64).max, (10 ** 9))),
+        ('ps', *divmod(np.iinfo(np.int64).max, (10 ** 12))),
+        ('fs', *divmod(np.iinfo(np.int64).max, (10 ** 15))),
+        ('as', *divmod(np.iinfo(np.int64).max, (10 ** 18))),
+        ])
+    def test_span_limit_acceptance(self, time_unit, sec_val, rem_val,
+                                   op):
+        # probe the extreme dtype-enforced limits
+        # of time spans relative to the epoch
+        if time_unit != 'as':
+            input_str = str(op(op(np.datetime64(0, 's'),
+                               np.timedelta64(sec_val, 's')),
+                               np.timedelta64(rem_val, time_unit)))
+        else:
+            # finding a common divisor between attosecond units
+            # and seconds units requires some caution to avoid overflow
+            input_str = str(op(op(op(np.datetime64(0, 's'),
+                                     np.timedelta64(sec_val, 's')),
+                                     np.timedelta64(0, 'fs')),
+                                     np.timedelta64(rem_val, time_unit)))
+        # should not raise exception at +/- limit of precision:
+        actual = np.datetime64(input_str)
+        # double check that we are near true limit of precision by
+        # ensuring that +/- 1 of the remainder unit returns NaT
+        # NOTE: susceptibility to wrap-around behavior only on subtraction
+        # below lower limit for a subset of the time_units
+        assert_equal(op(actual, np.timedelta64(1, time_unit)), np.datetime64('NaT'))
 
     def test_month_truncation(self):
         # Make sure that months are truncating correctly
