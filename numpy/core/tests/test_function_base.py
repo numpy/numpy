@@ -362,3 +362,9 @@ class TestLinspace(object):
                 assert_(isinstance(y, tuple) and len(y) == 2 and
                         len(y[0]) == num and isnan(y[1]),
                         'num={0}, endpoint={1}'.format(num, ept))
+
+    def test_object(self):
+        start = array(1, dtype='O')
+        stop = array(2, dtype='O')
+        y = linspace(start, stop, 3)
+        assert_array_equal(y, array([1., 1.5, 2.]))
