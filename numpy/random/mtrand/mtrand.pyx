@@ -1170,6 +1170,9 @@ cdef class RandomState:
                 raise ValueError("Cannot take a larger sample than "
                                  "population when 'replace=False'")
 
+            if size < 0:
+                raise ValueError("negative dimensions are not allowed")
+
             if p is not None:
                 if np.count_nonzero(p > 0) < size:
                     raise ValueError("Fewer non-zero entries in p than size")
