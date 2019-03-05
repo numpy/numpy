@@ -18,7 +18,6 @@ New functions
 Deprecations
 ============
 
-
 Future Changes
 ==============
 
@@ -186,5 +185,9 @@ NumPy now always checks the ``__array_function__`` method to implement overrides
 of NumPy functions on non-NumPy arrays, as described in `NEP 18`_. The feature
 was available for testing with NumPy 1.16 if appropriate environment variables
 are set, but is now always enabled.
+
+``__array_interface__`` offset now works as documented
+------------------------------------------------------
+The interface may use an ``offset`` value that was mistakenly ignored.
 
 .. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html
