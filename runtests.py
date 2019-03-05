@@ -74,7 +74,7 @@ def main(argv):
     parser.add_argument("--doctests", action="store_true", default=False,
                         help="Run doctests in module")
     parser.add_argument("--refguide-check", action="store_true", default=False,
-                        help="Run refguide check (do not run regular tests.)")
+                        help="Run refguide (doctest) check (do not run regular tests.)")
     parser.add_argument("--coverage", action="store_true", default=False,
                         help=("report coverage of project code. HTML output goes "
                               "under build/coverage"))
