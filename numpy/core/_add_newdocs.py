@@ -2458,8 +2458,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('strides',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
     """
-    Same as self.transpose(), except that self is returned if
-    self.ndim < 2.
+    The transposed array.
+
+    Same as ``self.transpose()``.
 
     Examples
     --------
@@ -2475,6 +2476,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
     array([ 1.,  2.,  3.,  4.])
     >>> x.T
     array([ 1.,  2.,  3.,  4.])
+
+    See Also
+    --------
+    transpose
 
     """))
 
