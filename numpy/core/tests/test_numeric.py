@@ -1336,11 +1336,17 @@ class TestClip(object):
         self.nr = 5
         self.nc = 3
 
-    def fastclip(self, a, m, M, out=None):
+    def fastclip(self, a, m, M, out=None, casting=None):
         if out is None:
-            return a.clip(m, M)
+            if casting is None:
+                return a.clip(m, M)
+            else:
+                return a.clip(m, M, casting=casting)
         else:
-            return a.clip(m, M, out)
+            if casting is None:
+                return a.clip(m, M, out)
+            else:
+                return a.clip(m, M, out, casting=casting)
 
     def clip(self, a, m, M, out=None):
         # use slow-clip
@@ -1378,6 +1384,20 @@ class TestClip(object):
         return (10 * rand(n, m)).astype(np.int32)
 
     # Now the real test cases
+
+    @pytest.mark.parametrize("dtype", '?bhilqpBHILQPefdgFDGO')
+    def test_ones_pathological(self, dtype):
+        # for preservation of behavior described in
+        # gh-12519; amin > amax behavior may still change
+        # in the future
+        arr = np.ones(10, dtype=dtype)
+        expected = np.zeros(10, dtype=dtype)
+        actual = np.clip(arr, 1, 0)
+        if dtype == 'O':
+            assert actual.tolist() == expected.tolist()
+        else:
+            assert_equal(actual, expected)
+
     def test_simple_double(self):
         # Test native double input with scalar min/max.
         a = self._generate_data(self.nr, self.nc)
@@ -1476,16 +1496,21 @@ class TestClip(object):
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
-    def test_simple_int32_inout(self):
+    @pytest.mark.parametrize("casting", [None, "unsafe"])
+    def test_simple_int32_inout(self, casting):
         # Test native int32 input with double min/max and int32 out.
         a = self._generate_int32_data(self.nr, self.nc)
         m = np.float64(0)
         M = np.float64(2)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        with assert_warns(DeprecationWarning):
-            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
-            self.fastclip(a, m, M, ac)
+        if casting is None:
+            with assert_warns(DeprecationWarning):
+                # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+                self.fastclip(a, m, M, ac, casting=casting)
+        else:
+            # explicitly passing "unsafe" will silence warning
+            self.fastclip(a, m, M, ac, casting=casting)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1800,6 +1825,84 @@ class TestClip(object):
             assert_equal(d.clip(min=-2, max=np.nan), d)
         with assert_warns(DeprecationWarning):
             assert_equal(d.clip(min=np.nan, max=10), d)
+
+    def test_object_clip(self):
+        a = np.arange(10, dtype=object)
+        actual = np.clip(a, 1, 5)
+        expected = np.array([1, 1, 2, 3, 4, 5, 5, 5, 5, 5])
+        assert actual.tolist() == expected.tolist()
+
+    def test_clip_all_none(self):
+        a = np.arange(10, dtype=object)
+        with assert_raises_regex(ValueError, 'max or min'):
+            np.clip(a, None, None)
+
+    def test_clip_invalid_casting(self):
+        a = np.arange(10, dtype=object)
+        with assert_raises_regex(ValueError,
+                                 'casting must be one of'):
+            self.fastclip(a, 1, 8, casting="garbage")
+
+    @pytest.mark.parametrize("amin, amax", [
+        # two scalars
+        (1, 0),
+        # mix scalar and array
+        (1, np.zeros(10)),
+        # two arrays
+        (np.ones(10), np.zeros(10)),
+        ])
+    def test_clip_value_min_max_flip(self, amin, amax):
+        a = np.arange(10, dtype=np.int64)
+        # requirement from ufunc_docstrings.py
+        expected = np.maximum(amin, np.minimum(a, amax))
+        actual = np.clip(a, amin, amax)
+        assert_equal(actual, expected)
+
+    @pytest.mark.parametrize("arr, amin, amax, exp", [
+        # for a bug in npy_ObjectClip, based on a
+        # case produced by hypothesis
+        (np.zeros(10, dtype=np.int64),
+         0,
+         -9223372036854775809,
+         np.zeros(10, dtype=object)),
+        # for bugs in NPY_TIMEDELTA_MAX, based on a case
+        # produced by hypothesis
+        (np.zeros(10, dtype='m8') - 1,
+         0,
+         0,
+         np.zeros(10, dtype='m8')),
+    ])
+    def test_clip_problem_cases(self, arr, amin, amax, exp):
+        actual = np.clip(arr, amin, amax)
+        assert_equal(actual, exp)
+
+    @pytest.mark.xfail(reason="no scalar nan propagation yet")
+    @pytest.mark.parametrize("arr, amin, amax", [
+        # problematic scalar nan case from hypothesis
+        (np.zeros(10, dtype=np.int64),
+         np.array(np.nan),
+         np.zeros(10, dtype=np.int32)),
+    ])
+    def test_clip_scalar_nan_propagation(self, arr, amin, amax):
+        # enforcement of scalar nan propagation for comparisons
+        # called through clip()
+        expected = np.maximum(amin, np.minimum(arr, amax))
+        with assert_warns(DeprecationWarning):
+            actual = np.clip(arr, amin, amax)
+            assert_equal(actual, expected)
+
+    @pytest.mark.xfail(reason="propagation doesn't match spec")
+    @pytest.mark.parametrize("arr, amin, amax", [
+        (np.array([1] * 10, dtype='m8'),
+         np.timedelta64('NaT'),
+         np.zeros(10, dtype=np.int32)),
+    ])
+    def test_NaT_propagation(self, arr, amin, amax):
+        # NOTE: the expected function spec doesn't
+        # propagate NaT, but clip() now does
+        expected = np.maximum(amin, np.minimum(arr, amax))
+        actual = np.clip(arr, amin, amax)
+        assert_equal(actual, expected)
 
 
 class TestAllclose(object):

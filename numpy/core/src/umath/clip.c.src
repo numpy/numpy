@@ -83,6 +83,7 @@ NPY_NO_EXPORT void
 {
     if (steps[1] == 0 && steps[2] == 0) {
         /* min and max are constant throughout the loop, the most common case */
+        /* NOTE: it may be possible to optimize these checks for nan */
         @type@ min_val = *(@type@ *)args[1];
         @type@ max_val = *(@type@ *)args[2];
 
