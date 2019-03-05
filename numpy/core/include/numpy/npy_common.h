@@ -50,6 +50,12 @@
 #define NPY_GCC_TARGET_AVX2
 #endif
 
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F && defined HAVE_LINK_AVX512F
+#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
+#else
+#define NPY_GCC_TARGET_AVX512F
+#endif
+
 /*
  * mark an argument (starting from 1) that must not be NULL and is not checked
  * DO NOT USE IF FUNCTION CHECKS FOR NULL!! the compiler will remove the check
@@ -68,6 +74,13 @@
 #define NPY_HAVE_SSE2_INTRINSICS
 #endif
 
+#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX2
+#define NPY_HAVE_AVX2_INTRINSICS
+#endif
+
+#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX512F
+#define NPY_HAVE_AVX512F_INTRINSICS
+#endif
 /*
  * give a hint to the compiler which branch is more likely or unlikely
  * to occur, e.g. rare error cases:
