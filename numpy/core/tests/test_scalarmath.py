@@ -422,7 +422,7 @@ class TestConversion(object):
 
     @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                         reason="long double is same as double")
-    @pytest.mark.skipif(platform.machine().startswith("ppc64"),
+    @pytest.mark.skipif(platform.machine().startswith("ppc"),
                         reason="IBM double double")
     def test_int_from_huge_longdouble(self):
         # Produce a longdouble that would overflow a double,
