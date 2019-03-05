@@ -401,6 +401,8 @@ class TestRandomDist(object):
         assert_raises(ValueError, sample, [1, 2], 3, p=[0.4, 0.4])
         assert_raises(ValueError, sample, [1, 2, 3], 4, replace=False)
         assert_raises(ValueError, sample, [1, 2, 3], -2, replace=False)
+        assert_raises(ValueError, sample, [1, 2, 3], (-1,), replace=False)
+        assert_raises(ValueError, sample, [1, 2, 3], (-1, 1), replace=False)
         assert_raises(ValueError, sample, [1, 2, 3], 2,
                       replace=False, p=[1, 0, 0])
 
