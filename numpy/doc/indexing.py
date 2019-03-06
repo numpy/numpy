@@ -93,7 +93,9 @@ well. A few examples illustrates best: ::
         [21, 24, 27]])
 
 Note that slices of arrays do not copy the internal array data but
-only produce new views of the original data.
+only produce new views of the original data. This is different from
+list or tuple slicing and an explicit ``copy()`` is recommended if
+the original data is not required anymore.
 
 It is possible to index arrays with other arrays for the purposes of
 selecting lists of values out of arrays into new arrays. There are
