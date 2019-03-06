@@ -1653,11 +1653,11 @@ cdef class RandomState:
 
         Verify the mean and the variance:
 
-        >>> abs(mu - np.mean(s)) < 0.01
-        True
+        >>> abs(mu - np.mean(s))
+        0.0  # may vary
 
-        >>> abs(sigma - np.std(s, ddof=1)) < 0.01
-        True
+        >>> abs(sigma - np.std(s, ddof=1))
+        0.1  # may vary
 
         Display the histogram of the samples, along with
         the probability density function:
