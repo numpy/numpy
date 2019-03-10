@@ -308,13 +308,45 @@ to the front of the integer name.
 
     (unsigned) char
 
-.. c:type:: npy_(u)short
+.. c:type:: npy_short
 
-    (unsigned) short
+    short
 
-.. c:type:: npy_(u)int
+.. c:type:: npy_ushort
 
-    (unsigned) int
+    unsigned short
+
+.. c:type:: npy_uint
+
+    unsigned int
+
+.. c:type:: npy_int
+
+    int
+
+.. c:type:: npy_int16
+
+    16-bit integer
+
+.. c:type:: npy_uint16
+
+    16-bit unsigned integer
+
+.. c:type:: npy_int32
+
+    32-bit integer
+
+.. c:type:: npy_uint32
+
+    32-bit unsigned integer
+
+.. c:type:: npy_int64
+
+    64-bit integer
+
+.. c:type:: npy_uint64
+
+    64-bit unsigned integer
 
 .. c:type:: npy_(u)long
 
@@ -324,22 +356,31 @@ to the front of the integer name.
 
     (unsigned long long int)
 
-.. c:type:: npy_(u)intp
+.. c:type:: npy_intp
 
-    (unsigned) Py_intptr_t (an integer that is the size of a pointer on
+    Py_intptr_t (an integer that is the size of a pointer on
+    the platform).
+
+.. c:type:: npy_uintp
+
+    unsigned Py_intptr_t (an integer that is the size of a pointer on
     the platform).
 
 
 (Complex) Floating point
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. c:type:: npy_half
+
+    16-bit float
+
 .. c:type:: npy_(c)float
 
-    float
+    32-bit float
 
 .. c:type:: npy_(c)double
 
-    double
+    64-bit double
 
 .. c:type:: npy_(c)longdouble
 
