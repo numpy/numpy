@@ -1827,13 +1827,22 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
     in_stride = PyArray_STRIDE(new, axis);
     out_stride = PyArray_STRIDE(out, axis);
 
+
+#if NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
+     if (order == 'l') {
+         unpack_lookup = &unpack_lookup_l;
+     }
+     else {
+         unpack_lookup = &unpack_lookup_b;
+     }
+#else
     if (order == 'l') {
-        unpack_lookup = &unpack_lookup_l;
-    }
-    else {
         unpack_lookup = &unpack_lookup_b;
     }
-
+    else {
+        unpack_lookup = &unpack_lookup_l;
+    }
+#endif
     NPY_BEGIN_THREADS_THRESHOLDED(PyArray_Size((PyObject *)out) / 8);
 
     while (PyArray_ITER_NOTDONE(it)) {
