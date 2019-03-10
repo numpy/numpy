@@ -6,7 +6,7 @@ import operator
 
 from . import numeric as _nx
 from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
-                      TooHardError, asanyarray)
+                      TooHardError, asanyarray, ndim)
 from numpy.core.multiarray import add_docstring
 from numpy.core import overrides
 
@@ -140,7 +140,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         dtype = dt
 
     delta = stop - start
-    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * delta.ndim)
+    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
     # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
     # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
     # see gh-7142. Hence, we multiply in place only for standard scalar types.
