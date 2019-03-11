@@ -410,3 +410,52 @@ def mapdomain(x, old, new):
     x = np.asanyarray(x)
     off, scl = mapparms(old, new)
     return off + scl*x
+
+
+def _vander2d(vander_f, x, y, deg):
+    """
+    Helper function used to implement the ``<type>vander2d`` functions.
+
+    Parameters
+    ----------
+    vander_f : function(array_like, int) -> ndarray
+        The 1d vander function, such as ``polyvander``
+    x, y, deg :
+        See the ``<type>vander2d`` functions for more detail
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy = ideg
+    x, y = np.array((x, y), copy=0) + 0.0
+
+    vx = vander_f(x, degx)
+    vy = vander_f(y, degy)
+    v = vx[..., None]*vy[..., None,:]
+    return v.reshape(v.shape[:-2] + (-1,))
+
+
+def _vander3d(vander_f, x, y, z, deg):
+    """
+    Helper function used to implement the ``<type>vander3d`` functions.
+
+    Parameters
+    ----------
+    vander_f : function(array_like, int) -> ndarray
+        The 1d vander function, such as ``polyvander``
+    x, y, z, deg :
+        See the ``<type>vander3d`` functions for more detail
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy, degz = ideg
+    x, y, z = np.array((x, y, z), copy=0) + 0.0
+
+    vx = vander_f(x, degx)
+    vy = vander_f(y, degy)
+    vz = vander_f(z, degz)
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
+    return v.reshape(v.shape[:-3] + (-1,))
