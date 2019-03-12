@@ -45,6 +45,8 @@ Functions
 """
 from __future__ import division, absolute_import, print_function
 
+import operator
+
 import numpy as np
 
 __all__ = [
@@ -423,11 +425,10 @@ def _vander2d(vander_f, x, y, deg):
     x, y, deg :
         See the ``<type>vander2d`` functions for more detail
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
+    degx, degy = [
+        _deprecate_as_int(d, "degrees")
+        for d in deg
+    ]
     x, y = np.array((x, y), copy=0) + 0.0
 
     vx = vander_f(x, degx)
@@ -447,11 +448,10 @@ def _vander3d(vander_f, x, y, z, deg):
     x, y, z, deg :
         See the ``<type>vander3d`` functions for more detail
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
+    degx, degy, degz = [
+        _deprecate_as_int(d, "degrees")
+        for d in deg
+    ]
     x, y, z = np.array((x, y, z), copy=0) + 0.0
 
     vx = vander_f(x, degx)
@@ -688,3 +688,41 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
         return c, [resids, rank, s, rcond]
     else:
         return c
+
+
+def _deprecate_as_int(x, desc):
+    """
+    Like `operator.index`, but emits a deprecation warning when passed a float
+
+    Parameters
+    ----------
+    x : int-like, or float with integral value
+        Value to interpret as an integer
+    desc : str
+        description to include in any error message
+
+    Raises
+    ------
+    TypeError : if x is a non-integral float or non-numeric
+    DeprecationWarning : if x is an integral float
+    """
+    try:
+        return operator.index(x)
+    except TypeError:
+        # Numpy 1.17.0, 2019-03-11
+        try:
+            ix = int(x)
+        except TypeError:
+            pass
+        else:
+            if ix == x:
+                warnings.warn(
+                    "In future, this will raise TypeError, as {} will need to "
+                    "be an integer not just an integral float."
+                    .format(desc),
+                    DeprecationWarning,
+                    stacklevel=3
+                )
+                return ix
+
+        raise TypeError("{} must be an integer".format(desc))
