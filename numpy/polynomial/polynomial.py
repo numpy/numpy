@@ -910,14 +910,7 @@ def polyval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = polyval(x, c)
-    c = polyval(y, c, tensor=False)
-    return c
+    return pu._valnd(polyval, c, x, y)
 
 
 def polygrid2d(x, y, c):
@@ -970,9 +963,7 @@ def polygrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = polyval(x, c)
-    c = polyval(y, c)
-    return c
+    return pu._gridnd(polyval, c, x, y)
 
 
 def polyval3d(x, y, z, c):
@@ -1023,15 +1014,7 @@ def polyval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = polyval(x, c)
-    c = polyval(y, c, tensor=False)
-    c = polyval(z, c, tensor=False)
-    return c
+    return pu._valnd(polyval, c, x, y, z)
 
 
 def polygrid3d(x, y, z, c):
@@ -1087,10 +1070,7 @@ def polygrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = polyval(x, c)
-    c = polyval(y, c)
-    c = polyval(z, c)
-    return c
+    return pu._gridnd(polyval, c, x, y, z)
 
 
 def polyvander(x, deg):

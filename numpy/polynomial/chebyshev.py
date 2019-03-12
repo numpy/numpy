@@ -1224,14 +1224,7 @@ def chebval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = chebval(x, c)
-    c = chebval(y, c, tensor=False)
-    return c
+    return pu._valnd(chebval, c, x, y)
 
 
 def chebgrid2d(x, y, c):
@@ -1284,9 +1277,7 @@ def chebgrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = chebval(x, c)
-    c = chebval(y, c)
-    return c
+    return pu._gridnd(chebval, c, x, y)
 
 
 def chebval3d(x, y, z, c):
@@ -1337,15 +1328,7 @@ def chebval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = chebval(x, c)
-    c = chebval(y, c, tensor=False)
-    c = chebval(z, c, tensor=False)
-    return c
+    return pu._valnd(chebval, c, x, y, z)
 
 
 def chebgrid3d(x, y, z, c):
@@ -1401,10 +1384,7 @@ def chebgrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = chebval(x, c)
-    c = chebval(y, c)
-    c = chebval(z, c)
-    return c
+    return pu._gridnd(chebval, c, x, y, z)
 
 
 def chebvander(x, deg):
