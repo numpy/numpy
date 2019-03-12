@@ -1025,14 +1025,7 @@ def legval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = legval(x, c)
-    c = legval(y, c, tensor=False)
-    return c
+    return pu._valnd(legval, c, x, y)
 
 
 def leggrid2d(x, y, c):
@@ -1085,9 +1078,7 @@ def leggrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = legval(x, c)
-    c = legval(y, c)
-    return c
+    return pu._gridnd(legval, c, x, y)
 
 
 def legval3d(x, y, z, c):
@@ -1138,15 +1129,7 @@ def legval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = legval(x, c)
-    c = legval(y, c, tensor=False)
-    c = legval(z, c, tensor=False)
-    return c
+    return pu._valnd(legval, c, x, y, z)
 
 
 def leggrid3d(x, y, z, c):
@@ -1202,10 +1185,7 @@ def leggrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = legval(x, c)
-    c = legval(y, c)
-    c = legval(z, c)
-    return c
+    return pu._gridnd(legval, c, x, y, z)
 
 
 def legvander(x, deg):

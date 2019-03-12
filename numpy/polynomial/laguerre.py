@@ -981,14 +981,7 @@ def lagval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = lagval(x, c)
-    c = lagval(y, c, tensor=False)
-    return c
+    return pu._valnd(lagval, c, x, y)
 
 
 def laggrid2d(x, y, c):
@@ -1041,9 +1034,7 @@ def laggrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = lagval(x, c)
-    c = lagval(y, c)
-    return c
+    return pu._gridnd(lagval, c, x, y)
 
 
 def lagval3d(x, y, z, c):
@@ -1094,15 +1085,7 @@ def lagval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = lagval(x, c)
-    c = lagval(y, c, tensor=False)
-    c = lagval(z, c, tensor=False)
-    return c
+    return pu._valnd(lagval, c, x, y, z)
 
 
 def laggrid3d(x, y, z, c):
@@ -1158,10 +1141,7 @@ def laggrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = lagval(x, c)
-    c = lagval(y, c)
-    c = lagval(z, c)
-    return c
+    return pu._gridnd(lagval, c, x, y, z)
 
 
 def lagvander(x, deg):
