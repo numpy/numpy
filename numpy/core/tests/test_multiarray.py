@@ -21,7 +21,7 @@ import weakref
 import pytest
 from contextlib import contextmanager
 
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 try:
     import pathlib
@@ -1403,10 +1403,10 @@ class TestZeroSizeFlexible(object):
                 sort_func(zs, kind=kind, **kwargs)
 
     def test_sort(self):
-        self._test_sort_partition('sort', kinds='qhm')
+        self._test_sort_partition('sort', kinds='qhs')
 
     def test_argsort(self):
-        self._test_sort_partition('argsort', kinds='qhm')
+        self._test_sort_partition('argsort', kinds='qhs')
 
     def test_partition(self):
         self._test_sort_partition('partition', kinds=['introselect'], kth=2)
@@ -1458,7 +1458,7 @@ class TestZeroSizeFlexible(object):
 
 class TestMethods(object):
 
-    sort_kinds = [r'm', 'q', 'h', 't']
+    sort_kinds = ['quicksort', 'heapsort', 'stable']
 
     def test_compress(self):
         tgt = [[5, 6, 7, 8, 9]]
@@ -7130,6 +7130,19 @@ def test_array_interface_empty_shape():
     assert_equal(arr1, arr2)
     assert_equal(arr1, arr3)
 
+def test_array_interface_offset():
+    arr = np.array([1, 2, 3], dtype='int32')
+    interface = dict(arr.__array_interface__)
+    interface['data'] = memoryview(arr)
+    interface['shape'] = (2,)
+    interface['offset'] = 4
+
+
+    class DummyArray(object):
+        __array_interface__ = interface
+
+    arr1 = np.asarray(DummyArray())
+    assert_equal(arr1, arr[1:])
 
 def test_flat_element_deletion():
     it = np.ones(3).flat
@@ -8121,43 +8134,3 @@ def test_getfield():
     pytest.raises(ValueError, a.getfield, 'uint8', -1)
     pytest.raises(ValueError, a.getfield, 'uint8', 16)
     pytest.raises(ValueError, a.getfield, 'uint64', 0)
-
-def test_multiarray_module():
-    # gh-12736
-    # numpy 1.16 replaced the multiarray and umath c-extension modules with
-    # a single _multiarray_umath one. For backward compatibility, it added a
-    # pure-python multiarray.py and umath.py shim so people can still do
-    # from numpy.core.multirarray import something-public-api
-    # It turns out pip can leave old pieces of previous versions of numpy
-    # around when installing a newer version. If the old c-extension modules
-    # are found, they will be given precedence over the new pure-python ones.
-    #
-    # This test copies a multiarray c-extension in parallel with the pure-
-    # python one, and starts another python interpreter to load multiarray.
-    # The expectation is that import will fail.
-    import subprocess, shutil
-    core_dir = os.path.dirname(np.core.multiarray.__file__)
-    cextension = np.core._multiarray_umath.__file__
-    testfile = cextension.replace('_multiarray_umath', '_multiarray_module_test')
-    badfile = cextension.replace('_multiarray_umath', 'multiarray')
-    assert not os.path.exists(badfile), '%s exists, this numpy ' \
-                                    'installation is faulty' % badfile
-    try:
-        shutil.copy(testfile, badfile)
-        p = subprocess.Popen([sys.executable, '-c', 'import numpy' ],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                env=os.environ.copy())
-        stdout, stderr = p.communicate()
-        r = p.wait()
-        #print(stdout.decode())
-        #print(stderr.decode())
-        assert r != 0
-        assert b'ImportError' in stderr
-    finally:
-        if os.path.exists(badfile):
-            try:
-                # can this fail?
-                os.remove(badfile)
-            except:
-                print("Could not remove %s, remove it by hand" % badfile)
-                raise

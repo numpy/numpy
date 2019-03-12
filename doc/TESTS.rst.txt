@@ -37,10 +37,9 @@ or from the command line::
 
   $ python runtests.py
 
-SciPy uses the testing framework from NumPy (specifically
-:ref:`numpy-testing`), so all the SciPy examples shown here are also
-applicable to NumPy.  NumPy's full test suite can be run as
-follows::
+SciPy uses the testing framework from :mod:`numpy.testing`, so all
+the SciPy examples shown here are also applicable to NumPy.  NumPy's full test
+suite can be run as follows::
 
   >>> import numpy
   >>> numpy.test()

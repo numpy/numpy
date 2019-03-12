@@ -10,7 +10,7 @@ import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT)
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -215,7 +215,6 @@ class TestRecord(object):
         assert_equal(dt1.descr, [('a', '|i1'), ('', '|V3'),
                                  ('b', [('f0', '<i2'), ('', '|V2'),
                                  ('f1', '<f4')], (2,))])
-        
 
     def test_union_struct(self):
         # Should be able to create union dtypes
@@ -321,6 +320,11 @@ class TestRecord(object):
 
         assert_equal(dt[1], dt[np.int8(1)])
 
+    def test_partial_dict(self):
+        # 'names' is missing
+        assert_raises(ValueError, np.dtype,
+                {'formats': ['i4', 'i4'], 'f0': ('i4', 0), 'f1':('i4', 4)})
+        
 
 class TestSubarray(object):
     def test_single_subarray(self):

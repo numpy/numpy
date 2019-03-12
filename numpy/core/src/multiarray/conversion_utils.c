@@ -419,16 +419,23 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
         *sortkind = NPY_HEAPSORT;
     }
     else if (str[0] == 'm' || str[0] == 'M') {
-        *sortkind = NPY_MERGESORT;
-    }
-    else if (str[0] == 't' || str[0] == 'T'){
-        *sortkind = NPY_TIMSORT;
+        /*
+         * Mergesort is an alias for NPY_STABLESORT.
+         * That maintains backwards compatibility while
+         * allowing other types of stable sorts to be used.
+         */
+        *sortkind = NPY_STABLESORT;
     }
     else if (str[0] == 's' || str[0] == 'S') {
-        /* available options: mergesort and timsort
-         * among which timsort is assumed to be better
+        /*
+         * NPY_STABLESORT is one of
+         *
+         *   - mergesort
+         *   - timsort
+         *
+         *  Which one is used depends on the data type.
          */
-        *sortkind = NPY_TIMSORT;
+        *sortkind = NPY_STABLESORT;
     }
     else {
         PyErr_Format(PyExc_ValueError,

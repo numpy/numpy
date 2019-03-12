@@ -1208,19 +1208,7 @@ def polyvander2d(x, y, deg):
     polyvander, polyvander3d. polyval2d, polyval3d
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
-    x, y = np.array((x, y), copy=0) + 0.0
-
-    vx = polyvander(x, degx)
-    vy = polyvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    # einsum bug
-    #v = np.einsum("...i,...j->...ij", vx, vy)
-    return v.reshape(v.shape[:-2] + (-1,))
+    return pu._vander2d(polyvander, x, y, deg)
 
 
 def polyvander3d(x, y, z, deg):
@@ -1274,20 +1262,7 @@ def polyvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
-
-    vx = polyvander(x, degx)
-    vy = polyvander(y, degy)
-    vz = polyvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    # einsum bug
-    #v = np.einsum("...i, ...j, ...k->...ijk", vx, vy, vz)
-    return v.reshape(v.shape[:-3] + (-1,))
+    return pu._vander3d(polyvander, x, y, z, deg)
 
 
 def polyfit(x, y, deg, rcond=None, full=False, w=None):

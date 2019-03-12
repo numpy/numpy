@@ -219,7 +219,7 @@ From scratch
 
     If *data* is ``NULL``, then new unitinialized memory will be allocated and
     *flags* can be non-zero to indicate a Fortran-style contiguous array. Use
-    :c:ref:`PyArray_FILLWBYTE` to initialze the memory.
+    :c:func:`PyArray_FILLWBYTE` to initialze the memory.
 
     If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the
@@ -573,8 +573,9 @@ From other objects
             return NULL;
         }
         if (arr == NULL) {
+            /*
             ... validate/change dtype, validate flags, ndim, etc ...
-            // Could make custom strides here too
+             Could make custom strides here too */
             arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
                                         dims, NULL,
                                         fortran ? NPY_ARRAY_F_CONTIGUOUS : 0,
@@ -588,10 +589,14 @@ From other objects
             }
         }
         else {
+            /*
             ... in this case the other parameters weren't filled, just
                 validate and possibly copy arr itself ...
+            */
         }
+        /*
         ... use arr ...
+        */
 
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
@@ -1906,20 +1911,21 @@ Item selection and manipulation
 
 .. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
 
-    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*). Return an array with
-    the items of *self* sorted along *axis*.Array is sorted according to *kind* which is an integer/enum pointing to the type of sorting algorithms used.
+    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*).
+    Return an array with the items of *self* sorted along *axis*. The array
+    is sorted using the algorithm denoted by *kind* , which is an integer/enum pointing
+    to the type of sorting algorithms used.
 
 .. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis)
 
-    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*). Return an array of
-    indices such that selection of these indices along the given
-    ``axis`` would return a sorted version of *self*. If *self*
-    ->descr is a data-type with fields defined, then
-    self->descr->names is used to determine the sort order. A
-    comparison where the first field is equal will use the second
-    field and so on. To alter the sort order of a structured array, create
-    a new data-type with a different order of names and construct a
-    view of the array with that new data-type.
+    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*).
+    Return an array of indices such that selection of these indices
+    along the given ``axis`` would return a sorted version of *self*. If *self* ->descr
+    is a data-type with fields defined, then self->descr->names is used
+    to determine the sort order. A comparison where the first field is equal
+    will use the second field and so on. To alter the sort order of a
+    structured array, create a new data-type with a different order of names
+    and construct a view of the array with that new data-type.
 
 .. c:function:: PyObject* PyArray_LexSort(PyObject* sort_keys, int axis)
 
@@ -2659,22 +2665,22 @@ cost of a slight overhead.
 
     .. code-block:: c
 
-       PyArrayIterObject \*iter;
-       PyArrayNeighborhoodIterObject \*neigh_iter;
+       PyArrayIterObject *iter;
+       PyArrayNeighborhoodIterObject *neigh_iter;
        iter = PyArray_IterNew(x);
 
-       //For a 3x3 kernel
+       /*For a 3x3 kernel */
        bounds = {-1, 1, -1, 1};
        neigh_iter = (PyArrayNeighborhoodIterObject*)PyArrayNeighborhoodIter_New(
             iter, bounds, NPY_NEIGHBORHOOD_ITER_ZERO_PADDING, NULL);
 
        for(i = 0; i < iter->size; ++i) {
             for (j = 0; j < neigh_iter->size; ++j) {
-                    // Walk around the item currently pointed by iter->dataptr
+                    /* Walk around the item currently pointed by iter->dataptr */
                     PyArrayNeighborhoodIter_Next(neigh_iter);
             }
 
-            // Move to the next point of iter
+            /* Move to the next point of iter */
             PyArrayIter_Next(iter);
             PyArrayNeighborhoodIter_Reset(neigh_iter);
        }
@@ -2989,8 +2995,10 @@ to.
 
     Convert Python strings into one of :c:data:`NPY_QUICKSORT` (starts
     with 'q' or 'Q'), :c:data:`NPY_HEAPSORT` (starts with 'h' or 'H'),
-    :c:data:`NPY_MERGESORT` (starts with 'm' or 'M') or :c:data:`NPY_TIMSORT`
-    (starts with 't' or 'T').
+    :c:data:`NPY_MERGESORT` (starts with 'm' or 'M') or :c:data:`NPY_STABLESORT`
+    (starts with 't' or 'T'). :c:data:`NPY_MERGESORT` and :c:data:`NPY_STABLESORT`
+    are aliased to each other for backwards compatibility and may refer to one
+    of several stable sorting algorithms depending on the data type.
 
 .. c:function:: int PyArray_SearchsideConverter( \
         PyObject* obj, NPY_SEARCHSIDE* side)
@@ -3534,11 +3542,15 @@ Enumerated Types
     A special variable-type which can take on the values :c:data:`NPY_{KIND}`
     where ``{KIND}`` is
 
-        **QUICKSORT**, **HEAPSORT**, **MERGESORT**, **TIMSORT**
+        **QUICKSORT**, **HEAPSORT**, **MERGESORT**, **STABLESORT**
 
     .. c:var:: NPY_NSORTS
 
-       Defined to be the number of sorts.
+       Defined to be the number of sorts. It is fixed at three by the need for
+       backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
+       :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
+       of several stable sorting algorithms depending on the data type.
+
 
 .. c:type:: NPY_SCALARKIND
 

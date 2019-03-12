@@ -24,9 +24,8 @@ from ._iotools import (
 
 from numpy.compat import (
     asbytes, asstr, asunicode, asbytes_nested, bytes, basestring, unicode,
-    os_fspath, os_PathLike
+    os_fspath, os_PathLike, pickle
     )
-from numpy.core.numeric import pickle
 
 if sys.version_info[0] >= 3:
     from collections.abc import Mapping
@@ -289,6 +288,12 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
          encoding='ASCII'):
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
+
+    .. warning:: Loading files that contain object arrays uses the ``pickle``
+                 module, which is not secure against erroneous or maliciously
+                 constructed data. Consider passing ``allow_pickle=False`` to
+                 load data that is known not to contain object arrays for the
+                 safer handling of untrusted sources.
 
     Parameters
     ----------

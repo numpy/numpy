@@ -17,7 +17,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, temppath
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 
 class TestFromrecords(object):

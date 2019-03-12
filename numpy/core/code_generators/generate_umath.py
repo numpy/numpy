@@ -74,8 +74,16 @@ class TypeDescription(object):
         assert len(self.out) == nout
         self.astype = self.astype_dict.get(self.type, None)
 
-_fdata_map = dict(e='npy_%sf', f='npy_%sf', d='npy_%s', g='npy_%sl',
-                  F='nc_%sf', D='nc_%s', G='nc_%sl')
+_fdata_map = dict(
+    e='npy_%sf',
+    f='npy_%sf',
+    d='npy_%s',
+    g='npy_%sl',
+    F='nc_%sf',
+    D='nc_%s',
+    G='nc_%sl'
+)
+
 def build_func_data(types, f):
     func_data = [_fdata_map.get(t, '%s') % (f,) for t in types]
     return func_data
@@ -191,31 +199,32 @@ def english_upper(s):
 #       output specification (optional)
 #       ]
 
-chartoname = {'?': 'bool',
-              'b': 'byte',
-              'B': 'ubyte',
-              'h': 'short',
-              'H': 'ushort',
-              'i': 'int',
-              'I': 'uint',
-              'l': 'long',
-              'L': 'ulong',
-              'q': 'longlong',
-              'Q': 'ulonglong',
-              'e': 'half',
-              'f': 'float',
-              'd': 'double',
-              'g': 'longdouble',
-              'F': 'cfloat',
-              'D': 'cdouble',
-              'G': 'clongdouble',
-              'M': 'datetime',
-              'm': 'timedelta',
-              'O': 'OBJECT',
-              # '.' is like 'O', but calls a method of the object instead
-              # of a function
-              'P': 'OBJECT',
-              }
+chartoname = {
+    '?': 'bool',
+    'b': 'byte',
+    'B': 'ubyte',
+    'h': 'short',
+    'H': 'ushort',
+    'i': 'int',
+    'I': 'uint',
+    'l': 'long',
+    'L': 'ulong',
+    'q': 'longlong',
+    'Q': 'ulonglong',
+    'e': 'half',
+    'f': 'float',
+    'd': 'double',
+    'g': 'longdouble',
+    'F': 'cfloat',
+    'D': 'cdouble',
+    'G': 'clongdouble',
+    'M': 'datetime',
+    'm': 'timedelta',
+    'O': 'OBJECT',
+    # '.' is like 'O', but calls a method of the object instead
+    # of a function
+    'P': 'OBJECT',
+}
 
 all = '?bBhHiIlLqQefdgFDGOMm'
 O = 'O'
@@ -407,7 +416,7 @@ defdict = {
 'positive':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.positive'),
-          'PyUFunc_SimpleUnaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(ints+flts+timedeltaonly),
           TD(cmplx, f='pos'),
           TD(O, f='PyNumber_Positive'),
@@ -415,7 +424,7 @@ defdict = {
 'sign':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sign'),
-          'PyUFunc_SimpleUnaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(nobool_or_datetime),
           ),
 'greater':
@@ -491,28 +500,28 @@ defdict = {
 'maximum':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.maximum'),
-          'PyUFunc_SimpleBinaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(noobj),
           TD(O, f='npy_ObjectMax')
           ),
 'minimum':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.minimum'),
-          'PyUFunc_SimpleBinaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
 'fmax':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmax'),
-          'PyUFunc_SimpleBinaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(noobj),
           TD(O, f='npy_ObjectMax')
           ),
 'fmin':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmin'),
-          'PyUFunc_SimpleBinaryOperationTypeResolver',
+          'PyUFunc_SimpleUniformOperationTypeResolver',
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
@@ -895,21 +904,21 @@ defdict = {
 'gcd' :
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.gcd'),
-          "PyUFunc_SimpleBinaryOperationTypeResolver",
+          "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(ints),
           TD('O', f='npy_ObjectGCD'),
           ),
 'lcm' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.lcm'),
-          "PyUFunc_SimpleBinaryOperationTypeResolver",
+          "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(ints),
           TD('O', f='npy_ObjectLCM'),
           ),
 'matmul' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.matmul'),
-          "PyUFunc_SimpleBinaryOperationTypeResolver",
+          "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(notimes_or_obj),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
@@ -926,25 +935,32 @@ def indent(st, spaces):
     indented = re.sub(r' +$', r'', indented)
     return indented
 
-chartotype1 = {'e': 'e_e',
-               'f': 'f_f',
-               'd': 'd_d',
-               'g': 'g_g',
-               'F': 'F_F',
-               'D': 'D_D',
-               'G': 'G_G',
-               'O': 'O_O',
-               'P': 'O_O_method'}
+# maps [nin, nout][type] to a suffix
+arity_lookup = {
+    (1, 1): {
+        'e': 'e_e',
+        'f': 'f_f',
+        'd': 'd_d',
+        'g': 'g_g',
+        'F': 'F_F',
+        'D': 'D_D',
+        'G': 'G_G',
+        'O': 'O_O',
+        'P': 'O_O_method',
+    },
+    (2, 1): {
+        'e': 'ee_e',
+        'f': 'ff_f',
+        'd': 'dd_d',
+        'g': 'gg_g',
+        'F': 'FF_F',
+        'D': 'DD_D',
+        'G': 'GG_G',
+        'O': 'OO_O',
+        'P': 'OO_O_method',
+    },
+}
 
-chartotype2 = {'e': 'ee_e',
-               'f': 'ff_f',
-               'd': 'dd_d',
-               'g': 'gg_g',
-               'F': 'FF_F',
-               'D': 'DD_D',
-               'G': 'GG_G',
-               'O': 'OO_O',
-               'P': 'OO_O_method'}
 #for each name
 # 1) create functions, data, and signature
 # 2) fill in functions and data in InitOperators
@@ -994,11 +1010,9 @@ def make_arrays(funcdict):
                         ))
             else:
                 funclist.append('NULL')
-                if (uf.nin, uf.nout) == (2, 1):
-                    thedict = chartotype2
-                elif (uf.nin, uf.nout) == (1, 1):
-                    thedict = chartotype1
-                else:
+                try:
+                    thedict = arity_lookup[uf.nin, uf.nout]
+                except KeyError:
                     raise ValueError("Could not handle {}[{}]".format(name, t.type))
 
                 astype = ''

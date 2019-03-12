@@ -51,13 +51,16 @@ class EnvironmentConfig(object):
 
     def _get_var(self, name, conf_desc):
         hook, envvar, confvar, convert, append = conf_desc
+        if convert is None:
+            convert = lambda x: x
         var = self._hook_handler(name, hook)
         if envvar is not None:
             envvar_contents = os.environ.get(envvar)
             if envvar_contents is not None:
+                envvar_contents = convert(envvar_contents)
                 if var and append:
                     if os.environ.get('NPY_DISTUTILS_APPEND_FLAGS', '0') == '1':
-                        var = var + [envvar_contents]
+                        var.extend(envvar_contents)
                     else:
                         var = envvar_contents
                         if 'NPY_DISTUTILS_APPEND_FLAGS' not in os.environ.keys():
@@ -70,10 +73,11 @@ class EnvironmentConfig(object):
                 else:
                     var = envvar_contents
         if confvar is not None and self._conf:
-            var = self._conf.get(confvar, (None, var))[1]
-        if convert is not None:
-            var = convert(var)
+            if confvar in self._conf:
+                source, confvar_contents = self._conf[confvar]
+                var = convert(confvar_contents)
         return var
+
 
     def clone(self, hook_handler):
         ec = self.__class__(distutils_section=self._distutils_section,

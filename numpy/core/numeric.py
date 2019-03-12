@@ -15,6 +15,7 @@ import numbers
 import contextlib
 
 import numpy as np
+from numpy.compat import pickle, basestring
 from . import multiarray
 from .multiarray import (
     _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
@@ -44,17 +45,8 @@ ufunc = type(sin)
 newaxis = None
 
 if sys.version_info[0] >= 3:
-    if sys.version_info[1] in (6, 7):
-        try:
-            import pickle5 as pickle
-        except ImportError:
-            import pickle
-    else:
-        import pickle
-    basestring = str
     import builtins
 else:
-    import cPickle as pickle
     import __builtin__ as builtins
 
 
@@ -1211,20 +1203,18 @@ def _tensordot_dispatcher(a, b, axes=None):
 @array_function_dispatch(_tensordot_dispatcher)
 def tensordot(a, b, axes=2):
     """
-    Compute tensor dot product along specified axes for arrays >= 1-D.
+    Compute tensor dot product along specified axes.
 
-    Given two tensors (arrays of dimension greater than or equal to one),
-    `a` and `b`, and an array_like object containing two array_like
-    objects, ``(a_axes, b_axes)``, sum the products of `a`'s and `b`'s
-    elements (components) over the axes specified by ``a_axes`` and
-    ``b_axes``. The third argument can be a single non-negative
-    integer_like scalar, ``N``; if it is such, then the last ``N``
-    dimensions of `a` and the first ``N`` dimensions of `b` are summed
-    over.
+    Given two tensors, `a` and `b`, and an array_like object containing
+    two array_like objects, ``(a_axes, b_axes)``, sum the products of
+    `a`'s and `b`'s elements (components) over the axes specified by
+    ``a_axes`` and ``b_axes``. The third argument can be a single non-negative
+    integer_like scalar, ``N``; if it is such, then the last ``N`` dimensions
+    of `a` and the first ``N`` dimensions of `b` are summed over.
 
     Parameters
     ----------
-    a, b : array_like, len(shape) >= 1
+    a, b : array_like
         Tensors to "dot".
 
     axes : int or (2,) array_like
@@ -1443,7 +1433,9 @@ def roll(a, shift, axis=None):
     >>> x = np.arange(10)
     >>> np.roll(x, 2)
     array([8, 9, 0, 1, 2, 3, 4, 5, 6, 7])
-
+    >>> np.roll(x, -2)
+    array([2, 3, 4, 5, 6, 7, 8, 9, 0, 1])
+    
     >>> x2 = np.reshape(x, (2,5))
     >>> x2
     array([[0, 1, 2, 3, 4],
@@ -1451,12 +1443,21 @@ def roll(a, shift, axis=None):
     >>> np.roll(x2, 1)
     array([[9, 0, 1, 2, 3],
            [4, 5, 6, 7, 8]])
+    >>> np.roll(x2, -1)
+    array([[1, 2, 3, 4, 5],
+           [6, 7, 8, 9, 0]])
     >>> np.roll(x2, 1, axis=0)
+    array([[5, 6, 7, 8, 9],
+           [0, 1, 2, 3, 4]])
+    >>> np.roll(x2, -1, axis=0)
     array([[5, 6, 7, 8, 9],
            [0, 1, 2, 3, 4]])
     >>> np.roll(x2, 1, axis=1)
     array([[4, 0, 1, 2, 3],
            [9, 5, 6, 7, 8]])
+    >>> np.roll(x2, -1, axis=1)
+    array([[1, 2, 3, 4, 0],
+           [6, 7, 8, 9, 5]])
 
     """
     a = asanyarray(a)

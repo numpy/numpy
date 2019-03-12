@@ -269,8 +269,9 @@ class OGridClass(nd_grid):
     the stop value **is inclusive**.
 
     Returns
-    ----------
-    mesh-grid `ndarrays` with only one dimension :math:`\\neq 1`
+    -------
+    mesh-grid
+        `ndarrays` with only one dimension not equal to 1
 
     See Also
     --------

@@ -176,7 +176,7 @@ of:
 * :c:member:`PyUFuncObject.core_dim_flags`
 * :c:member:`PyUFuncObject.core_dim_sizes`
 * :c:member:`PyUFuncObject.identity_value`
-* :c:function:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`
+* :c:func:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`
 
 
 New Features
@@ -407,7 +407,7 @@ Additionally, `logaddexp` now has an identity of ``-inf``, allowing it to be
 called on empty sequences, where previously it could not be.
 
 This is possible thanks to the new
-:c:function:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`, which allows
+:c:func:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`, which allows
 arbitrary values to be used as identities now.
 
 Improved conversion from ctypes objects
