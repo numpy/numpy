@@ -1026,7 +1026,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
         length for all axes.
 
         Default is ``None``, to use the entire axis.
-    constant_values : sequence or int, optional
+    constant_values : sequence or scalar, optional
         Used in 'constant'.  The values to set the padded values for each
         axis.
 
@@ -1040,7 +1040,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
         all axes.
 
         Default is 0.
-    end_values : sequence or int, optional
+    end_values : sequence or scalar, optional
         Used in 'linear_ramp'.  The values used for the ending value of the
         linear_ramp and that will form the edge of the padded array.
 
