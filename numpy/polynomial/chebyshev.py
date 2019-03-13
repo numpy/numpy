@@ -793,6 +793,7 @@ def chebdiv(c1, c2):
     if c2[-1] == 0:
         raise ZeroDivisionError()
 
+    # note: this is more efficient than `pu._div(chebmul, c1, c2)`
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
