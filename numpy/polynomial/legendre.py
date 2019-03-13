@@ -590,26 +590,7 @@ def legdiv(c1, c2):
     (array([-0.07407407,  1.66666667]), array([-1.03703704, -2.51851852])) # may vary
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if c2[-1] == 0:
-        raise ZeroDivisionError()
-
-    lc1 = len(c1)
-    lc2 = len(c2)
-    if lc1 < lc2:
-        return c1[:1]*0, c1
-    elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
-    else:
-        quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
-        rem = c1
-        for i in range(lc1 - lc2, - 1, -1):
-            p = legmul([0]*i + [1], c2)
-            q = rem[-1]/p[-1]
-            rem = rem[:-1] - q*p[:-1]
-            quo[i] = q
-        return quo, pu.trimseq(rem)
+    return pu._div(legmul, c1, c2)
 
 
 def legpow(c, pow, maxpower=16):
