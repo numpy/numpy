@@ -1114,7 +1114,7 @@ def putmask(a, mask, values):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
-def packbits(a, axis=None, order='big'):
+def packbits(a, axis=None, bitorder='big'):
     """
     packbits(a, axis=None)
 
@@ -1130,9 +1130,11 @@ def packbits(a, axis=None, order='big'):
     axis : int, optional
         The dimension over which bit-packing is done.
         ``None`` implies packing the flattened array.
-    order : 'big' or 'little', only the first letter is checked
-        The order of the returned bits. The default is the common standard
-        where [0, 0, 0, 0, 0, 1, 1] => 3
+    bitorder : {'big', 'little'}, optional
+        The order of the input bits. 'big' will mimic bin(val),
+        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011 => ``, 'little' will
+        reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
+        Defaults to 'big'.
 
         .. versionadded:: 1.17.0
 
@@ -1170,7 +1172,7 @@ def packbits(a, axis=None, order='big'):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
-def unpackbits(a, axis=None, count=None, order='big'):
+def unpackbits(a, axis=None, count=None, bitorder='big'):
     """
     unpackbits(a, axis=None, count=None)
 
@@ -1200,9 +1202,11 @@ def unpackbits(a, axis=None, count=None, order='big'):
 
         .. versionadded:: 1.17.0
 
-    order : 'big' or 'little', only the first letter is checked
-        The order of the returned bits. The default is the common standard
-        where 3 => [0, 0, 0, 0, 0, 1, 1]
+    bitorder : {'big', 'little'}, optional
+        The order of the returned bits. 'big' will mimic bin(val),
+        ``3 = 0b00000011 => [0, 0, 0, 0, 0, 0, 1, 1]``, 'little' will reverse
+        the order to ``[1, 1, 0, 0, 0, 0, 0, 0]``.
+        Defaults to 'big'.
 
         .. versionadded:: 1.17.0
 
