@@ -1183,7 +1183,7 @@ PyArray_NewFromDescrAndBase(
                                     flags, obj, base, 0, 0);
 }
 
-/*NUMPY_API
+/*
  * Creates a new array with the same shape as the provided one,
  * with possible memory layout order, data type and shape changes.
  *
