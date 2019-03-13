@@ -225,15 +225,15 @@ def _zseries_div(z1, z2):
     """
     z1 = z1.copy()
     z2 = z2.copy()
-    len1 = len(z1)
-    len2 = len(z2)
-    if len2 == 1:
+    lc1 = len(z1)
+    lc2 = len(z2)
+    if lc2 == 1:
         z1 /= z2
         return z1, z1[:1]*0
-    elif len1 < len2:
+    elif lc1 < lc2:
         return z1[:1]*0, z1
     else:
-        dlen = len1 - len2
+        dlen = lc1 - lc2
         scl = z2[0]
         z2 /= scl
         quo = np.empty(dlen + 1, dtype=z1.dtype)
@@ -244,16 +244,16 @@ def _zseries_div(z1, z2):
             quo[i] = z1[i]
             quo[dlen - i] = r
             tmp = r*z2
-            z1[i:i+len2] -= tmp
-            z1[j:j+len2] -= tmp
+            z1[i:i+lc2] -= tmp
+            z1[j:j+lc2] -= tmp
             i += 1
             j -= 1
         r = z1[i]
         quo[i] = r
         tmp = r*z2
-        z1[i:i+len2] -= tmp
+        z1[i:i+lc2] -= tmp
         quo /= scl
-        rem = z1[i+1:i-1+len2].copy()
+        rem = z1[i+1:i-1+lc2].copy()
         return quo, rem
 
 
