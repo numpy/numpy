@@ -4203,9 +4203,9 @@ cdef class RandomState:
         Draw samples from a Hypergeometric distribution.
 
         Samples are drawn from a hypergeometric distribution with specified
-        parameters, ngood (ways to make a good selection), nbad (ways to make
-        a bad selection), and nsample = number of items sampled, which is less
-        than or equal to the sum ngood + nbad.
+        parameters, ``ngood`` (ways to make a good selection), ``nbad`` (ways to make
+        a bad selection), and ``nsample`` = number of items sampled, which is less
+        than or equal to the sum ``ngood + nbad``.
 
         Parameters
         ----------
@@ -4226,7 +4226,7 @@ cdef class RandomState:
         Returns
         -------
         out : ndarray or scalar
-            Drawn samples from the parameterized hypergeometric distribution.
+            Number of drawn good samples from the parameterized hypergeometric distribution.
 
         See Also
         --------
@@ -4241,11 +4241,11 @@ cdef class RandomState:
 
         where :math:`0 \\le x \\le n` and :math:`n-b \\le x \\le g`
 
-        for P(x) the probability of x successes, g = ngood, b = nbad, and
-        n = number of samples.
+        for P(x) the probability of ``x`` good results in the drawn sample,
+        g = ``ngood``, b = ``nbad``, and n = ``nsample``.
 
-        Consider an urn with black and white marbles in it, ngood of them
-        black and nbad are white. If you draw nsample balls without
+        Consider an urn with black and white marbles in it, ``ngood`` of them
+        are black and ``nbad`` are white. If you draw ``nsample`` balls without
         replacement, then the hypergeometric distribution describes the
         distribution of black balls in the drawn sample.
 
