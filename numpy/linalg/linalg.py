@@ -357,7 +357,7 @@ def solve(a, b):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    The solutions are computed using LAPACK routine _gesv
+    The solutions are computed using LAPACK routine ``_gesv``.
 
     `a` must be square and of full-rank, i.e., all rows (or, equivalently,
     columns) must be linearly independent; if either is not true, use
@@ -820,8 +820,8 @@ def qr(a, mode='reduced'):
 
     Notes
     -----
-    This is an interface to the LAPACK routines dgeqrf, zgeqrf,
-    dorgqr, and zungqr.
+    This is an interface to the LAPACK routines ``dgeqrf``, ``zgeqrf``,
+    ``dorgqr``, and ``zungqr``.
 
     For more information on the qr factorization, see for example:
     https://en.wikipedia.org/wiki/QR_factorization
@@ -1023,7 +1023,7 @@ def eigvals(a):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    This is implemented using the _geev LAPACK routines which compute
+    This is implemented using the ``_geev`` LAPACK routines which compute
     the eigenvalues and eigenvectors of general square arrays.
 
     Examples
@@ -1041,7 +1041,7 @@ def eigvals(a):
     >>> LA.norm(Q[0, :]), LA.norm(Q[1, :]), np.dot(Q[0, :],Q[1, :])
     (1.0, 1.0, 0.0)
 
-    Now multiply a diagonal matrix by Q on one side and by Q.T on the other:
+    Now multiply a diagonal matrix by `Q` on one side and by `Q.T` on the other:
 
     >>> D = np.diag((-1,1))
     >>> LA.eigvals(D)
@@ -1124,7 +1124,7 @@ def eigvalsh(a, UPLO='L'):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    The eigenvalues are computed using LAPACK routines _syevd, _heevd
+    The eigenvalues are computed using LAPACK routines ``_syevd``, ``_heevd``.
 
     Examples
     --------
@@ -1228,7 +1228,7 @@ def eig(a):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    This is implemented using the _geev LAPACK routines which compute
+    This is implemented using the ``_geev`` LAPACK routines which compute
     the eigenvalues and eigenvectors of general square arrays.
 
     The number `w` is an eigenvalue of `a` if there exists a vector
@@ -1279,7 +1279,7 @@ def eig(a):
            [0.        -0.70710678j, 0.        +0.70710678j]])
 
     Complex-valued matrix with real e-values (but complex-valued e-vectors);
-    note that a.conj().T = a, i.e., a is Hermitian.
+    note that ``a.conj().T = a``, i.e., `a` is Hermitian.
 
     >>> a = np.array([[1, 1j], [-1j, 1]])
     >>> w, v = LA.eig(a)
@@ -1374,8 +1374,8 @@ def eigh(a, UPLO='L'):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    The eigenvalues/eigenvectors are computed using LAPACK routines _syevd,
-    _heevd
+    The eigenvalues/eigenvectors are computed using LAPACK routines ``_syevd``,
+    ``_heevd``.
 
     The eigenvalues of real symmetric or complex Hermitian matrices are
     always real. [1]_ The array `v` of (column) eigenvectors is unitary
@@ -2019,7 +2019,7 @@ def slogdet(a):
     .. versionadded:: 1.6.0
 
     The determinant is computed via LU factorization using the LAPACK
-    routine z/dgetrf.
+    routine ``z/dgetrf``.
 
 
     Examples
@@ -2093,7 +2093,7 @@ def det(a):
     details.
 
     The determinant is computed via LU factorization using the LAPACK
-    routine z/dgetrf.
+    routine ``z/dgetrf``.
 
     Examples
     --------
@@ -2288,7 +2288,7 @@ def lstsq(a, b, rcond="warn"):
 def _multi_svd_norm(x, row_axis, col_axis, op):
     """Compute a function of the singular values of the 2-D matrices in `x`.
 
-    This is a private utility function used by numpy.linalg.norm().
+    This is a private utility function used by ``numpy.linalg.norm()``.
 
     Parameters
     ----------
@@ -2296,7 +2296,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     row_axis, col_axis : int
         The axes of `x` that hold the 2-D matrices.
     op : callable
-        This should be either numpy.amin or numpy.amax or numpy.sum.
+        This should be either numpy.amin or ``numpy.amax`` or ``numpy.sum``.
 
     Returns
     -------
