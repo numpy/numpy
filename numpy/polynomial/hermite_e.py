@@ -975,14 +975,7 @@ def hermeval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = hermeval(x, c)
-    c = hermeval(y, c, tensor=False)
-    return c
+    return pu._valnd(hermeval, c, x, y)
 
 
 def hermegrid2d(x, y, c):
@@ -1035,9 +1028,7 @@ def hermegrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = hermeval(x, c)
-    c = hermeval(y, c)
-    return c
+    return pu._gridnd(hermeval, c, x, y)
 
 
 def hermeval3d(x, y, z, c):
@@ -1088,15 +1079,7 @@ def hermeval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = hermeval(x, c)
-    c = hermeval(y, c, tensor=False)
-    c = hermeval(z, c, tensor=False)
-    return c
+    return pu._valnd(hermeval, c, x, y, z)
 
 
 def hermegrid3d(x, y, z, c):
@@ -1152,10 +1135,7 @@ def hermegrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = hermeval(x, c)
-    c = hermeval(y, c)
-    c = hermeval(z, c)
-    return c
+    return pu._gridnd(hermeval, c, x, y, z)
 
 
 def hermevander(x, deg):

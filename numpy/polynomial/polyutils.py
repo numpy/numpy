@@ -489,3 +489,51 @@ def _fromroots(line_f, mul_f, roots):
             p = tmp
             n = m
         return p[0]
+
+
+def _valnd(val_f, c, *args):
+    """
+    Helper function used to implement the ``<type>val<n>d`` functions.
+
+    Parameters
+    ----------
+    val_f : function(array_like, array_like, tensor: bool) -> array_like
+        The ``<type>val`` function, such as ``polyval``
+    c, args :
+        See the ``<type>val<n>d`` functions for more detail
+    """
+    try:
+        args = tuple(np.array(args, copy=False))
+    except Exception:
+        # preserve the old error message
+        if len(args) == 2:
+            raise ValueError('x, y, z are incompatible')
+        elif len(args) == 3:
+            raise ValueError('x, y are incompatible')
+        else:
+            raise ValueError('ordinates are incompatible')
+
+    it = iter(args)
+    x0 = next(it)
+
+    # use tensor on only the first
+    c = val_f(x0, c)
+    for xi in it:
+        c = val_f(xi, c, tensor=False)
+    return c
+
+
+def _gridnd(val_f, c, *args):
+    """
+    Helper function used to implement the ``<type>grid<n>d`` functions.
+
+    Parameters
+    ----------
+    val_f : function(array_like, array_like, tensor: bool) -> array_like
+        The ``<type>val`` function, such as ``polyval``
+    c, args :
+        See the ``<type>grid<n>d`` functions for more detail
+    """
+    for xi in args:
+        c = val_f(xi, c)
+    return c
