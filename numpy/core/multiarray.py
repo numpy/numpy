@@ -97,10 +97,10 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
         If True, then the newly created array will use the sub-class
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
-
-        .. versionadded:: 1.17.0
     shape : int or sequence of ints, optional.
         Overrides the shape of the result.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
