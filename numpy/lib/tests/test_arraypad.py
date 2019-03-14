@@ -1249,10 +1249,9 @@ def test_kwargs(mode):
             np.pad([1, 2, 3], 1, mode, **{key: value})
 
 
-def test_missing_mode():
-    match = "missing 1 required positional argument: 'mode'"
-    with pytest.raises(TypeError, match=match):
-        np.pad(np.ones((5, 6)), 4)
+def test_constant_zero_default():
+    arr = np.array([1, 1])
+    assert_array_equal(pad(arr, 2), [0, 0, 1, 1, 0, 0])
 
 
 @pytest.mark.parametrize("mode", _all_modes.keys())

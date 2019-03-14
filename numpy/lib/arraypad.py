@@ -962,7 +962,7 @@ def _pad_dispatcher(array, pad_width, mode, **kwargs):
 
 
 @array_function_dispatch(_pad_dispatcher, module='numpy')
-def pad(array, pad_width, mode, **kwargs):
+def pad(array, pad_width, mode='constant', **kwargs):
     """
     Pads an array.
 
@@ -977,10 +977,10 @@ def pad(array, pad_width, mode, **kwargs):
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
         axes.
-    mode : str or function
+    mode : str or function, optional
         One of the following string values or a user supplied function.
 
-        'constant'
+        'constant' (default)
             Pads with a constant value.
         'edge'
             Pads with the edge values of array.
