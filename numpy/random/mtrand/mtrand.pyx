@@ -4203,9 +4203,9 @@ cdef class RandomState:
         Draw samples from a Hypergeometric distribution.
 
         Samples are drawn from a hypergeometric distribution with specified
-        parameters, ``ngood`` (ways to make a good selection), ``nbad`` (ways to make
-        a bad selection), and ``nsample`` = number of items sampled, which is less
-        than or equal to the sum ``ngood + nbad``.
+        parameters, `ngood` (ways to make a good selection), `nbad` (ways to make
+        a bad selection), and `nsample` (number of items sampled, which is less
+        than or equal to the sum ``ngood + nbad``).
 
         Parameters
         ----------
@@ -4219,14 +4219,16 @@ cdef class RandomState:
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
-            a single value is returned if ``ngood``, ``nbad``, and ``nsample``
+            a single value is returned if `ngood`, `nbad`, and `nsample`
             are all scalars.  Otherwise, ``np.broadcast(ngood, nbad, nsample).size``
             samples are drawn.
 
         Returns
         -------
         out : ndarray or scalar
-            Number of drawn good samples from the parameterized hypergeometric distribution.
+            Drawn samples from the parameterized hypergeometric distribution. Each
+            sample is the number of good items within a randomly selected subset of
+            size `nsample` taken from a set of `ngood` good items and `nbad` bad items.
 
         See Also
         --------
@@ -4242,10 +4244,10 @@ cdef class RandomState:
         where :math:`0 \\le x \\le n` and :math:`n-b \\le x \\le g`
 
         for P(x) the probability of ``x`` good results in the drawn sample,
-        g = ``ngood``, b = ``nbad``, and n = ``nsample``.
+        g = `ngood`, b = `nbad`, and n = `nsample`.
 
-        Consider an urn with black and white marbles in it, ``ngood`` of them
-        are black and ``nbad`` are white. If you draw ``nsample`` balls without
+        Consider an urn with black and white marbles in it, `ngood` of them
+        are black and `nbad` are white. If you draw `nsample` balls without
         replacement, then the hypergeometric distribution describes the
         distribution of black balls in the drawn sample.
 
