@@ -1041,7 +1041,7 @@ def eigvals(a):
     >>> LA.norm(Q[0, :]), LA.norm(Q[1, :]), np.dot(Q[0, :],Q[1, :])
     (1.0, 1.0, 0.0)
 
-    Now multiply a diagonal matrix by `Q` on one side and by `Q.T` on the other:
+    Now multiply a diagonal matrix by ``Q`` on one side and by ``Q.T`` on the other:
 
     >>> D = np.diag((-1,1))
     >>> LA.eigvals(D)
