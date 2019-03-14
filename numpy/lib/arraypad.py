@@ -1030,13 +1030,13 @@ def pad(array, pad_width, mode='constant', **kwargs):
         Used in 'constant'.  The values to set the padded values for each
         axis.
 
-        ((before_1, after_1), ... (before_N, after_N)) unique pad constants
+        ``((before_1, after_1), ... (before_N, after_N))`` unique pad constants
         for each axis.
 
-        ((before, after),) yields same before and after constants for each
+        ``((before, after),)`` yields same before and after constants for each
         axis.
 
-        (constant,) or int is a shortcut for before = after = constant for
+        ``(constant,)`` or ``constant`` is a shortcut for ``before = after = constant`` for
         all axes.
 
         Default is 0.
@@ -1044,13 +1044,13 @@ def pad(array, pad_width, mode='constant', **kwargs):
         Used in 'linear_ramp'.  The values used for the ending value of the
         linear_ramp and that will form the edge of the padded array.
 
-        ((before_1, after_1), ... (before_N, after_N)) unique end values
+        ``((before_1, after_1), ... (before_N, after_N))`` unique end values
         for each axis.
 
-        ((before, after),) yields same before and after end values for each
+        ``((before, after),)`` yields same before and after end values for each
         axis.
 
-        (constant,) or int is a shortcut for before = after = end value for
+        ``(constant,)`` or ``constant`` is a shortcut for ``before = after = constant`` for
         all axes.
 
         Default is 0.
