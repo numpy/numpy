@@ -139,6 +139,13 @@ class TestSetState(object):
         # arguments without truncation.
         self.prng.negative_binomial(0.5, 0.5)
 
+    def test_get_random_state(self):
+        # Ensure that the result of get_random_state is the same as the
+        # RandomState instance used by free-floating np.random functions
+
+        global_state = np.random.get_random_state()
+        assert_(np.random.random_sample == global_state.random_sample)
+
 
 class TestRandint(object):
 

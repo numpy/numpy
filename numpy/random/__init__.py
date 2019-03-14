@@ -99,6 +99,7 @@ __all__ = [
     'f',
     'gamma',
     'geometric',
+    'get_random_state',
     'get_state',
     'gumbel',
     'hypergeometric',

@@ -992,7 +992,7 @@ cdef class RandomState:
             raise ValueError("high is out of bounds for %s" % dtype)
         if ilow >= ihigh and np.prod(size) != 0:
             raise ValueError("Range cannot be empty (low >= high) unless no samples are taken")
- 
+
         with self.lock:
             ret = randfunc(ilow, ihigh - 1, size, self.state_address)
 
@@ -4701,7 +4701,7 @@ cdef class RandomState:
         Draw `size` samples of dimension k from a Dirichlet distribution. A
         Dirichlet-distributed random variable can be seen as a multivariate
         generalization of a Beta distribution. The Dirichlet distribution
-        is a conjugate prior of a multinomial distribution in Bayesian 
+        is a conjugate prior of a multinomial distribution in Bayesian
         inference.
 
         Parameters
@@ -4727,22 +4727,22 @@ cdef class RandomState:
         Notes
         -----
 
-        The Dirichlet distribution is a distribution over vectors 
-        :math:`x` that fulfil the conditions :math:`x_i>0` and 
+        The Dirichlet distribution is a distribution over vectors
+        :math:`x` that fulfil the conditions :math:`x_i>0` and
         :math:`\\sum_{i=1}^k x_i = 1`.
 
-        The probability density function :math:`p` of a 
-        Dirichlet-distributed random vector :math:`X` is 
+        The probability density function :math:`p` of a
+        Dirichlet-distributed random vector :math:`X` is
         proportional to
 
         .. math:: p(x) \\propto \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i},
 
-        where :math:`\\alpha` is a vector containing the positive 
+        where :math:`\\alpha` is a vector containing the positive
         concentration parameters.
 
         The method uses the following property for computation: let :math:`Y`
-        be a random vector which has components that follow a standard gamma 
-        distribution, then :math:`X = \\frac{1}{\\sum_{i=1}^k{Y_i}} Y` 
+        be a random vector which has components that follow a standard gamma
+        distribution, then :math:`X = \\frac{1}{\\sum_{i=1}^k{Y_i}} Y`
         is Dirichlet-distributed
 
         References
@@ -4957,7 +4957,7 @@ cdef class RandomState:
             return arr
 
         arr = np.asarray(x)
-    
+
         # shuffle has fast-path for 1-d
         if arr.ndim == 1:
             # Return a copy if same memory
@@ -4970,9 +4970,31 @@ cdef class RandomState:
         idx = np.arange(arr.shape[0], dtype=np.intp)
         self.shuffle(idx)
         return arr[idx]
-        
+
 
 _rand = RandomState()
+
+
+def get_random_state():
+    """
+    get_random_state()
+
+    Return the global RandomState instance used by functions in the `numpy.random` module.
+
+    Returns
+    -------
+    out : RandomState
+        Global RandomState instance
+
+    Examples
+    --------
+    >>> global_random = np.random.get_random_state()
+    >>> global_random.random_sample == np.random.random_sample
+    True
+    """
+    return _rand
+
+
 seed = _rand.seed
 get_state = _rand.get_state
 set_state = _rand.set_state
