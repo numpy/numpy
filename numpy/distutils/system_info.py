@@ -1539,140 +1539,212 @@ Make sure that -lgfortran is used for C++ extensions.
 class lapack_opt_info(system_info):
 
     notfounderror = LapackNotFoundError
+    # Default order of LAPACK checks
+    lapack_order = ['mkl', 'openblas', 'atlas', 'accelerate', 'lapack']
+
+    def _calc_info_mkl(self):
+        info = get_info('lapack_mkl')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_openblas(self):
+        info = get_info('openblas_lapack')
+        if info:
+            self.set_info(**info)
+            return True
+        info = get_info('openblas_clapack')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_atlas(self):
+        info = get_info('atlas_3_10_threads')
+        if not info:
+            info = get_info('atlas_3_10')
+        if not info:
+            info = get_info('atlas_threads')
+        if not info:
+            info = get_info('atlas')
+        if info:
+            # Figure out if ATLAS has lapack...
+            # If not we need the lapack library, but not BLAS!
+            l = info.get('define_macros', [])
+            if ('ATLAS_WITH_LAPACK_ATLAS', None) in l \
+               or ('ATLAS_WITHOUT_LAPACK', None) in l:
+                # Get LAPACK (with possible warnings)
+                lapack_info = self._get_info_lapack()
+                dict_append(info, **lapack_info)
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_accelerate(self):
+        info = get_info('accelerate')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
+
+    def _get_info_blas(self):
+        # TODO this was previously blas? Using blas_opt allows NetLIB lapack and BLIS, for instance.
+        #      However, does this break anything!?!?
+        info = get_info('blas_opt')
+        if not info:
+            warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
+            info_src = get_info('blas_src')
+            if not info_src:
+                warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
+                return {}
+            dict_append(info, libraries=[('fblas_src', info_src)])
+        return info
+
+    def _get_info_lapack(self):
+        info = get_info('lapack')
+        if not info:
+            warnings.warn(LapackNotFoundError.__doc__, stacklevel=2)
+            info_src = get_info('lapack_src')
+            if not info_src:
+                warnings.warn(LapackSrcNotFoundError.__doc__, stacklevel=2)
+                return {}
+            dict_append(info, libraries=[('flapack_src', info_src)])
+        return info
+
+    def _calc_info_lapack(self):
+        info = self._get_info_lapack()
+        # TODO check whether this is actually necessary to warn about?
+        #      I think the warning is superfluous!
+        # warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
+
+        # Ensure we have NO_ATLAS_INFO in the macro list
+        dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
+        info_blas = self._get_info_blas()
+        dict_append(info, **info_blas)
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
     def calc_info(self):
+        # Copy list so we can overwrite
+        lapack_order = self.lapack_order[:]
 
-        lapack_mkl_info = get_info('lapack_mkl')
-        if lapack_mkl_info:
-            self.set_info(**lapack_mkl_info)
-            return
+        user_order = os.environ.get('NUMPY_LAPACK_ORDER', None)
+        if not user_order is None:
+            # the user has requested the order of the
+            # check they are all in the available list, a COMMA SEPARATED list
+            user_order = user_order.lower().split(',')
+            non_existing = []
+            for order in user_order:
+                if order not in lapack_order:
+                    non_existing.append(order)
+            if len(non_existing) > 0:
+                raise ValueError("lapack_opt_info user defined LAPACK order has unacceptable values: {}".format(non_existing))
+            lapack_order = user_order
 
-        openblas_info = get_info('openblas_lapack')
-        if openblas_info:
-            self.set_info(**openblas_info)
-            return
+        for lapack in lapack_order:
+            if getattr(self, '_calc_info_{}'.format(lapack))():
+                return
 
-        openblas_info = get_info('openblas_clapack')
-        if openblas_info:
-            self.set_info(**openblas_info)
-            return
-
-        atlas_info = get_info('atlas_3_10_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas_3_10')
-        if not atlas_info:
-            atlas_info = get_info('atlas_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas')
-
-        accelerate_info = get_info('accelerate')
-        if accelerate_info and not atlas_info:
-            self.set_info(**accelerate_info)
-            return
-
-        need_lapack = 0
-        need_blas = 0
-        info = {}
-        if atlas_info:
-            l = atlas_info.get('define_macros', [])
-            if ('ATLAS_WITH_LAPACK_ATLAS', None) in l \
-                   or ('ATLAS_WITHOUT_LAPACK', None) in l:
-                need_lapack = 1
-            info = atlas_info
-
-        else:
-            warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
-            need_blas = 1
-            need_lapack = 1
-            dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
-
-        if need_lapack:
-            lapack_info = get_info('lapack')
-            #lapack_info = {} ## uncomment for testing
-            if lapack_info:
-                dict_append(info, **lapack_info)
-            else:
-                warnings.warn(LapackNotFoundError.__doc__, stacklevel=2)
-                lapack_src_info = get_info('lapack_src')
-                if not lapack_src_info:
-                    warnings.warn(LapackSrcNotFoundError.__doc__, stacklevel=2)
-                    return
-                dict_append(info, libraries=[('flapack_src', lapack_src_info)])
-
-        if need_blas:
-            blas_info = get_info('blas')
-            if blas_info:
-                dict_append(info, **blas_info)
-            else:
-                warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
-                blas_src_info = get_info('blas_src')
-                if not blas_src_info:
-                    warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
-                    return
-                dict_append(info, libraries=[('fblas_src', blas_src_info)])
-
-        self.set_info(**info)
-        return
+        # possible fail-handler? Raise something?
+        # reaching this point means that nothing has been found
 
 
 class blas_opt_info(system_info):
 
     notfounderror = BlasNotFoundError
+    # Default order of BLAS checks
+    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'accelerate', 'blas']
 
-    def calc_info(self):
+    def _calc_info_mkl(self):
+        info = get_info('blas_mkl')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
-        blas_mkl_info = get_info('blas_mkl')
-        if blas_mkl_info:
-            self.set_info(**blas_mkl_info)
-            return
+    def _calc_info_blis(self):
+        info = get_info('blis')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
-        blis_info = get_info('blis')
-        if blis_info:
-            self.set_info(**blis_info)
-            return
+    def _calc_info_openblas(self):
+        info = get_info('openblas')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
-        openblas_info = get_info('openblas')
-        if openblas_info:
-            self.set_info(**openblas_info)
-            return
+    def _calc_info_atlas(self):
+        info = get_info('atlas_3_10_blas_threads')
+        if not info:
+            info = get_info('atlas_3_10_blas')
+        if not info:
+            info = get_info('atlas_blas_threads')
+        if not info:
+            info = get_info('atlas_blas')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
-        atlas_info = get_info('atlas_3_10_blas_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas_3_10_blas')
-        if not atlas_info:
-            atlas_info = get_info('atlas_blas_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas_blas')
+    def _calc_info_accelerate(self):
+        info = get_info('accelerate')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
-        accelerate_info = get_info('accelerate')
-        if accelerate_info and not atlas_info:
-            self.set_info(**accelerate_info)
-            return
-
-        need_blas = 0
+    def _calc_info_blas(self):
+        # When one is finally asking for BLAS we need to report
+        # of insufficient usage of optimized BLAS
+        warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
         info = {}
-        if atlas_info:
-            info = atlas_info
-        else:
-            warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
-            need_blas = 1
-            dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
+        dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
 
-        if need_blas:
-            blas_info = get_info('blas')
-            if blas_info:
-                dict_append(info, **blas_info)
-            else:
-                warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
-                blas_src_info = get_info('blas_src')
-                if not blas_src_info:
-                    warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
-                    return
-                dict_append(info, libraries=[('fblas_src', blas_src_info)])
+        blas = get_info('blas')
+        if blas:
+            dict_append(info, **blas)
+        else:
+            # Not even BLAS was found!
+            warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
+
+            blas_src = get_info('blas_src')
+            if not blas_src:
+                warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
+                return False
+            dict_append(info, libraries=[('fblas_src', blas_src)])
 
         self.set_info(**info)
-        return
+        return True
 
+    def calc_info(self):
+        # Copy list so we can overwrite
+        blas_order = self.blas_order[:]
+
+        user_order = os.environ.get('NUMPY_BLAS_ORDER', None)
+        if not user_order is None:
+            # the user has requested the order of the
+            # check they are all in the available list
+            user_order = user_order.lower().split(',')
+            non_existing = []
+            for order in user_order:
+                if order not in blas_order:
+                    non_existing.append(order)
+            if len(non_existing) > 0:
+                raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(non_existing))
+            blas_order = user_order
+
+        for blas in blas_order:
+            if getattr(self, '_calc_info_{}'.format(blas))():
+                return
+
+        # possible fail-handler? Raise something?
+        # reaching this point means that nothing has been found
 
 class blas_info(system_info):
     section = 'blas'
