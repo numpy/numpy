@@ -14,11 +14,18 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'cholesky', 'eigvals', 'eigvalsh', 'pinv', 'slogdet', 'det',
            'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
-           'LinAlgError', 'multi_dot']
+           'LinAlgError', 'multi_dot', 'set_num_threads', 'get_num_threads',
+           'num_threads']
 
 import functools
 import operator
 import warnings
+import contextlib
+
+try:
+    from ctypes import cdll, c_int
+except ImportError:
+    cdll = None
 
 from numpy.core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
@@ -2745,3 +2752,99 @@ def _multi_dot(arrays, order, i, j):
     else:
         return dot(_multi_dot(arrays, order, i, order[i, j]),
                    _multi_dot(arrays, order, order[i, j] + 1, j))
+
+
+_noop_set_num_threads = lambda *args, **kwargs: None
+_noop_get_num_threads = lambda *args, **kwargs: 1
+
+if cdll is None:
+    set_num_threads = set_module('numpy.linalg')(_noop_set_num_threads)
+    get_num_threads = set_module('numpy.linalg')(_noop_get_num_threads)
+else:
+    _cached_threads_funcs = [None, None]
+
+    @set_module('numpy.linalg')
+    def set_num_threads(nthreads):
+        """
+        Specify the number of OpenMP threads to use in further calls to BLAS.
+        MKL and OpenBLAS are currently supported.
+
+        Notes
+        -----
+        Changing the number of threads is not a light task, this should
+        be performed only if necessary.
+        """
+        _set_num_threads = _cached_threads_funcs[0]
+        if _set_num_threads is None:
+            blas = cdll[lapack_lite.__file__]
+            if blas is None:
+                _set_num_threads = _noop_set_num_threads
+            else:
+                try:
+                    blas.MKL_Set_Num_Threads.argtypes = [c_int]
+                    _set_num_threads = blas.MKL_Set_Num_Threads
+                except AttributeError:
+                    pass
+            if _set_num_threads is None:
+                try:
+                    blas.openblas_set_num_threads.argtypes = [c_int]
+                    _set_num_threads = blas.openblas_set_num_threads
+                except AttributeError:
+                    _set_num_threads = _noop_set_num_threads
+            _cached_threads_funcs[0] = _set_num_threads
+        _set_num_threads(nthreads)
+
+    @set_module('numpy.linalg')
+    def get_num_threads():
+        """
+        Get the number of OpenMP threads used by BLAS.
+        MKL and OpenBLAS are currently supported.
+        """
+        _get_num_threads = _cached_threads_funcs[1]
+        if _get_num_threads is None:
+            blas = cdll[lapack_lite.__file__]
+            if blas is None:
+                _get_num_threads = _noop_get_num_threads
+            else:
+                try:
+                    blas.MKL_Get_Max_Threads.restype = c_int
+                    _get_num_threads = blas.MKL_Get_Max_Threads
+                except AttributeError:
+                    pass
+            if _get_num_threads is None:
+                try:
+                    blas.openblas_get_num_threads.restype = c_int
+                    _get_num_threads = blas.openblas_get_num_threads
+                except AttributeError:
+                    _get_num_threads = _noop_get_num_threads
+            _cached_threads_funcs[1] = _get_num_threads
+        return _get_num_threads()
+
+
+@set_module('numpy.linalg')
+@contextlib.contextmanager
+def num_threads(nthreads):
+    """Context manager for temporarily changing number of threads in BLAS.
+
+    Change number of threads for the scope of the `with` block, and restore the
+    old number of threads at the end. This may be desirable to prevent
+    multithreading in BLAS if this is known to cause performance issues.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = [[1, 0], [0, 1]]
+    >>> b = [[4, 1], [2, 2]]
+    >>> with np.linalg.num_threads(1):
+    ...     np.dot(a, b)
+    array([[4, 1],
+           [2, 2]])
+    """
+    try:
+        old_nthreads = get_num_threads()
+        if old_nthreads != nthreads:
+            set_num_threads(nthreads)
+        yield
+    finally:
+        if old_nthreads != nthreads:
+            set_num_threads(old_nthreads)
