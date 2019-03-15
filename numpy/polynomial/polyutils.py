@@ -573,3 +573,30 @@ def _div(mul_f, c1, c2):
             rem = rem[:-1] - q*p[:-1]
             quo[i] = q
         return quo, trimseq(rem)
+
+
+def _add(c1, c2):
+    """ Helper function used to implement the ``<type>add`` functions. """
+    # c1, c2 are trimmed copies
+    [c1, c2] = as_series([c1, c2])
+    if len(c1) > len(c2):
+        c1[:c2.size] += c2
+        ret = c1
+    else:
+        c2[:c1.size] += c1
+        ret = c2
+    return trimseq(ret)
+
+
+def _sub(c1, c2):
+    """ Helper function used to implement the ``<type>sub`` functions. """
+    # c1, c2 are trimmed copies
+    [c1, c2] = as_series([c1, c2])
+    if len(c1) > len(c2):
+        c1[:c2.size] -= c2
+        ret = c1
+    else:
+        c2 = -c2
+        c2[:c1.size] += c1
+        ret = c2
+    return trimseq(ret)
