@@ -39,14 +39,14 @@ jobs:
             . venv/bin/activate
             cd doc
             git submodule update --init
-            make html
+            SPHINXOPTS=-q make -e html
 
       - run:
           name: build neps
           command: |
             . venv/bin/activate
             cd doc/neps
-            make html
+            SPHINXOPTS=-q make -e html
 
       - store_artifacts:
           path: doc/build/html/
