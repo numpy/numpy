@@ -957,7 +957,7 @@ def _as_pairs(x, ndim, as_index=False):
 # Public functions
 
 
-def _pad_dispatcher(array, pad_width, mode, **kwargs):
+def _pad_dispatcher(array, pad_width, mode=None, **kwargs):
     return (array,)
 
 
