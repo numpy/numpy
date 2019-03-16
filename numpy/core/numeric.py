@@ -145,6 +145,11 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     out : ndarray
         Array of zeros with the same shape and type as `a`.
 
+    Raises
+    ------
+    ValueError
+        If len(ndim) different from a.ndim and order is 'K'
+
     See Also
     --------
     empty_like : Return an empty array with shape and type of input.
@@ -269,6 +274,11 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     out : ndarray
         Array of ones with the same shape and type as `a`.
 
+    Raises
+    ------
+    ValueError
+        If len(ndim) different from a.ndim and order is 'K'
+
     See Also
     --------
     empty_like : Return an empty array with shape and type of input.
@@ -382,6 +392,11 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     -------
     out : ndarray
         Array of `fill_value` with the same shape and type as `a`.
+
+    Raises
+    ------
+    ValueError
+        If len(ndim) different from a.ndim and order is 'K'
 
     See Also
     --------

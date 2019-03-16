@@ -108,6 +108,11 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
         Array of uninitialized (arbitrary) data with the same
         shape and type as `prototype`.
 
+    Raises
+    ------
+    ValueError
+        If len(ndim) different from a.ndim and order is 'K'
+
     See Also
     --------
     ones_like : Return an array of ones with shape and type of input.
@@ -133,6 +138,9 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """
+    if (shape is not None and prototype.ndim != len(shape) and
+            order not in 'CFA'):
+        raise ValueError("mismatching ndim can not keep order")
     return (prototype,)
 
 
