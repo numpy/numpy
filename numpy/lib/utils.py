@@ -105,6 +105,20 @@ class _Deprecate(object):
         if doc is None:
             doc = depdoc
         else:
+            lines = doc.expandtabs().split('\n')
+            indent = _get_indent(lines[1:])
+            if lines[0].lstrip():
+                # Indent the original first line to let inspect.cleandoc()
+                # dedent the docstring despite the deprecation notice.
+                doc = indent * ' ' + doc
+            else:
+                # Remove the same leading blank lines as cleandoc() would.
+                skip = len(lines[0]) + 1
+                for line in lines[1:]:
+                    if len(line) > indent:
+                        break
+                    skip += len(line) + 1
+                doc = doc[skip:]
             doc = '\n\n'.join([depdoc, doc])
         newfunc.__doc__ = doc
         try:
@@ -114,6 +128,21 @@ class _Deprecate(object):
         else:
             newfunc.__dict__.update(d)
         return newfunc
+
+
+def _get_indent(lines):
+    """
+    Determines the leading whitespace that could be removed from all the lines.
+    """
+    indent = sys.maxsize
+    for line in lines:
+        content = len(line.lstrip())
+        if content:
+            indent = min(indent, len(line) - content)
+    if indent == sys.maxsize:
+        indent = 0
+    return indent
+
 
 def deprecate(*args, **kwargs):
     """
