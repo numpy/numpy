@@ -51,7 +51,7 @@ Then, we're ready to call ``foo_func``:
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
+__all__ = ['load_library', 'ndpointer', 'ctypes_load_library',
            'c_intp', 'as_ctypes', 'as_array']
 
 import os

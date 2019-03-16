@@ -430,11 +430,10 @@ if __name__ == '__main__':
     setup_cur = "import numpy.ma.core as module\n" + setup_base
     (nrepeat, nloop) = (10, 10)
 
-    if 1:
-        for i in range(1, 8):
-            func = 'tester.test_%i()' % i
-            cur = timeit.Timer(func, setup_cur).repeat(nrepeat, nloop*10)
-            cur = np.sort(cur)
-            print("#%i" % i + 50*'.')
-            print(eval("ModuleTester.test_%i.__doc__" % i))
-            print("core_current : %.3f - %.3f" % (cur[0], cur[1]))
+    for i in range(1, 8):
+        func = 'tester.test_%i()' % i
+        cur = timeit.Timer(func, setup_cur).repeat(nrepeat, nloop*10)
+        cur = np.sort(cur)
+        print("#%i" % i + 50*'.')
+        print(eval("ModuleTester.test_%i.__doc__" % i))
+        print("core_current : %.3f - %.3f" % (cur[0], cur[1]))

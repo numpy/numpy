@@ -906,7 +906,6 @@ class fftw_info(system_info):
                    == len(ver_param['includes']):
                     dict_append(info, include_dirs=[d])
                     flag = 1
-                    incl_dirs = [d]
                     break
             if flag:
                 dict_append(info, define_macros=ver_param['macros'])
@@ -1058,9 +1057,9 @@ class mkl_info(system_info):
         for d in paths:
             dirs = glob(os.path.join(d, 'mkl', '*'))
             dirs += glob(os.path.join(d, 'mkl*'))
-            for d in dirs:
-                if os.path.isdir(os.path.join(d, 'lib')):
-                    return d
+            for sub_dir in dirs:
+                if os.path.isdir(os.path.join(sub_dir, 'lib')):
+                    return sub_dir
         return None
 
     def __init__(self):

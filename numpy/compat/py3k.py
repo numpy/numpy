@@ -11,6 +11,7 @@ __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'pickle', 'contextlib_nullcontext', 'os_fspath', 'os_PathLike']
 
 import sys
+import os
 try:
     from pathlib import Path, PurePath
 except ImportError:
@@ -173,7 +174,6 @@ else:
 
         """
         import imp
-        import os
         if info is None:
             path = os.path.dirname(fn)
             fo, fn, info = imp.find_module(name, [path])
@@ -195,7 +195,6 @@ else:
 
 # Backport os.fs_path, os.PathLike, and PurePath.__fspath__
 if sys.version_info[:2] >= (3, 6):
-    import os
     os_fspath = os.fspath
     os_PathLike = os.PathLike
 else:

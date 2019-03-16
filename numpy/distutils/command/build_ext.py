@@ -281,8 +281,8 @@ class build_ext (old_build_ext):
                 runtime_lib = os.path.join(self.extra_dll_dir, fn)
                 copy_file(runtime_lib, shared_lib_dir)
 
-    def swig_sources(self, sources):
-        # Do nothing. Swig sources have beed handled in build_src command.
+    def swig_sources(self, sources, extensions=None):
+        # Do nothing. Swig sources have been handled in build_src command.
         return sources
 
     def build_extension(self, ext):

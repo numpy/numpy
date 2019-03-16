@@ -23,8 +23,7 @@ from ._iotools import (
     )
 
 from numpy.compat import (
-    asbytes, asstr, asunicode, asbytes_nested, bytes, basestring, unicode,
-    os_fspath, os_PathLike, pickle
+    asbytes, asstr, asunicode, bytes, basestring, os_fspath, os_PathLike, pickle
     )
 
 if sys.version_info[0] >= 3:
@@ -1123,7 +1122,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     if type(x) is bytes:
                         return conv(x)
                     return conv(x.encode("latin1"))
-                import functools
                 converters[i] = functools.partial(tobytes_first, conv=conv)
             else:
                 converters[i] = conv
@@ -1974,7 +1972,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 if type(x) is bytes:
                     return conv(x)
                 return conv(x.encode("latin1"))
-            import functools
             user_conv = functools.partial(tobytes_first, conv=conv)
         else:
             user_conv = conv

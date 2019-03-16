@@ -44,7 +44,6 @@ from numpy.compat import (
     getargspec, formatargspec, long, basestring, unicode, bytes
     )
 from numpy import expand_dims
-from numpy.core.multiarray import normalize_axis_index
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.core._internal import recursive
 from numpy.compat import pickle
@@ -1198,7 +1197,6 @@ exp = _MaskedUnaryOperation(umath.exp)
 conjugate = _MaskedUnaryOperation(umath.conjugate)
 sin = _MaskedUnaryOperation(umath.sin)
 cos = _MaskedUnaryOperation(umath.cos)
-tan = _MaskedUnaryOperation(umath.tan)
 arctan = _MaskedUnaryOperation(umath.arctan)
 arcsinh = _MaskedUnaryOperation(umath.arcsinh)
 sinh = _MaskedUnaryOperation(umath.sinh)

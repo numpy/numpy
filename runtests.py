@@ -259,8 +259,6 @@ def main(argv):
             ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
             sys.exit(ret)
 
-    test_dir = os.path.join(ROOT_DIR, 'build', 'test')
-
     if args.build_only:
         sys.exit(0)
     else:
