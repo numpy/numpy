@@ -75,6 +75,15 @@ divmod operation is now supported for two ``timedelta64`` operands
 The divmod operator now handles two ``np.timedelta64`` operands, with
 type signature mm->qm.
 
+``np.empty_like`` and related functions now accept a ``shape`` argument
+-----------------------------------------------------------------------
+``np.empty_like``, ``np.full_like``, ``np.ones_like`` and ``np.zeros_like`` now
+accept a ``shape`` keyword argument, which can be used to create a new array
+as the prototype, overriding its shape as well. This is particularly useful
+when combined with the ``__array_function__`` protocol, allowing the creation
+of new arbitrary-shape arrays from NumPy-like libraries when such an array
+is used as the prototype.
+
 
 Improvements
 ============
