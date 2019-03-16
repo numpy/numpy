@@ -1743,6 +1743,8 @@ class blas_info(system_info):
                     res = "blas"
             except distutils.ccompiler.CompileError:
                 res = None
+            except distutils.ccompiler.LinkError:
+                res = None
         finally:
             shutil.rmtree(tmpdir)
         return res

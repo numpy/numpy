@@ -436,7 +436,7 @@ Linear Algebra Equivalents
        ``a``
 
    * - ``rand(3,4)``
-     - ``random.rand(3,4)``
+     - ``random.rand(3,4)`` or ``random.random_sample((3, 4))``
      - random 3x4 matrix
 
    * - ``linspace(1,3,4)``

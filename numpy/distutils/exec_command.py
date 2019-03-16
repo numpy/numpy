@@ -57,6 +57,7 @@ import os
 import sys
 import subprocess
 import locale
+import warnings
 
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
@@ -105,6 +106,9 @@ def forward_bytes_to_stdout(val):
 
 
 def temp_file_name():
+    # 2019-01-30, 1.17
+    warnings.warn('temp_file_name is deprecated since NumPy v1.17, use '
+                  'tempfile.mkstemp instead', DeprecationWarning, stacklevel=1)
     fo, name = make_temp_file()
     fo.close()
     return name
@@ -179,23 +183,13 @@ def _update_environment( **env ):
     for name, value in env.items():
         os.environ[name] = value or ''
 
-def _supports_fileno(stream):
-    """
-    Returns True if 'stream' supports the file descriptor and allows fileno().
-    """
-    if hasattr(stream, 'fileno'):
-        try:
-            stream.fileno()
-            return True
-        except IOError:
-            return False
-    else:
-        return False
-
 def exec_command(command, execute_in='', use_shell=None, use_tee=None,
                  _with_python = 1, **env ):
     """
     Return (status,output) of executed command.
+
+    .. deprecated:: 1.17
+        Use subprocess.Popen instead
 
     Parameters
     ----------
@@ -220,6 +214,9 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
     Wild cards will not work for non-posix systems or when use_shell=0.
 
     """
+    # 2019-01-30, 1.17
+    warnings.warn('exec_command is deprecated since NumPy v1.17, use '
+                  'subprocess.Popen instead', DeprecationWarning, stacklevel=1)
     log.debug('exec_command(%r,%s)' % (command,\
          ','.join(['%s=%r'%kv for kv in env.items()])))
 

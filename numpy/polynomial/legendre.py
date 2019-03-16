@@ -314,21 +314,7 @@ def legfromroots(roots):
     array([ 1.33333333+0.j,  0.00000000+0.j,  0.66666667+0.j]) # may vary
 
     """
-    if len(roots) == 0:
-        return np.ones(1)
-    else:
-        [roots] = pu.as_series([roots], trim=False)
-        roots.sort()
-        p = [legline(-r, 1) for r in roots]
-        n = len(p)
-        while n > 1:
-            m, r = divmod(n, 2)
-            tmp = [legmul(p[i], p[i+m]) for i in range(m)]
-            if r:
-                tmp[0] = legmul(tmp[0], p[-1])
-            p = tmp
-            n = m
-        return p[0]
+    return pu._fromroots(legline, legmul, roots)
 
 
 def legadd(c1, c2):
@@ -370,15 +356,7 @@ def legadd(c1, c2):
     array([4.,  4.,  4.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] += c2
-        ret = c1
-    else:
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._add(c1, c2)
 
 
 def legsub(c1, c2):
@@ -422,16 +400,7 @@ def legsub(c1, c2):
     array([ 2.,  0., -2.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] -= c2
-        ret = c1
-    else:
-        c2 = -c2
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._sub(c1, c2)
 
 
 def legmulx(c):
@@ -604,26 +573,7 @@ def legdiv(c1, c2):
     (array([-0.07407407,  1.66666667]), array([-1.03703704, -2.51851852])) # may vary
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if c2[-1] == 0:
-        raise ZeroDivisionError()
-
-    lc1 = len(c1)
-    lc2 = len(c2)
-    if lc1 < lc2:
-        return c1[:1]*0, c1
-    elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
-    else:
-        quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
-        rem = c1
-        for i in range(lc1 - lc2, - 1, -1):
-            p = legmul([0]*i + [1], c2)
-            q = rem[-1]/p[-1]
-            rem = rem[:-1] - q*p[:-1]
-            quo[i] = q
-        return quo, pu.trimseq(rem)
+    return pu._div(legmul, c1, c2)
 
 
 def legpow(c, pow, maxpower=16):
@@ -1039,14 +989,7 @@ def legval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = legval(x, c)
-    c = legval(y, c, tensor=False)
-    return c
+    return pu._valnd(legval, c, x, y)
 
 
 def leggrid2d(x, y, c):
@@ -1099,9 +1042,7 @@ def leggrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = legval(x, c)
-    c = legval(y, c)
-    return c
+    return pu._gridnd(legval, c, x, y)
 
 
 def legval3d(x, y, z, c):
@@ -1152,15 +1093,7 @@ def legval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = legval(x, c)
-    c = legval(y, c, tensor=False)
-    c = legval(z, c, tensor=False)
-    return c
+    return pu._valnd(legval, c, x, y, z)
 
 
 def leggrid3d(x, y, z, c):
@@ -1216,10 +1149,7 @@ def leggrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = legval(x, c)
-    c = legval(y, c)
-    c = legval(z, c)
-    return c
+    return pu._gridnd(legval, c, x, y, z)
 
 
 def legvander(x, deg):
@@ -1327,17 +1257,7 @@ def legvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
-    x, y = np.array((x, y), copy=0) + 0.0
-
-    vx = legvander(x, degx)
-    vy = legvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    return v.reshape(v.shape[:-2] + (-1,))
+    return pu._vander2d(legvander, x, y, deg)
 
 
 def legvander3d(x, y, z, deg):
@@ -1391,18 +1311,7 @@ def legvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
-
-    vx = legvander(x, degx)
-    vy = legvander(y, degy)
-    vz = legvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    return v.reshape(v.shape[:-3] + (-1,))
+    return pu._vander3d(legvander, x, y, z, deg)
 
 
 def legfit(x, y, deg, rcond=None, full=False, w=None):

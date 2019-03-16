@@ -20,7 +20,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install cython sphinx==1.7.9 matplotlib
+            pip install cython sphinx>=1.8.3 matplotlib
             sudo apt-get update
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
 
@@ -39,14 +39,14 @@ jobs:
             . venv/bin/activate
             cd doc
             git submodule update --init
-            make html
+            SPHINXOPTS=-q make -e html
 
       - run:
           name: build neps
           command: |
             . venv/bin/activate
             cd doc/neps
-            make html
+            SPHINXOPTS=-q make -e html
 
       - store_artifacts:
           path: doc/build/html/

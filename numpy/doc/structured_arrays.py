@@ -57,10 +57,10 @@ A structured datatype can be thought of as a sequence of bytes of a certain
 length (the structure's :term:`itemsize`) which is interpreted as a collection
 of fields. Each field has a name, a datatype, and a byte offset within the
 structure. The datatype of a field may be any numpy datatype including other
-structured datatypes, and it may also be a :term:`sub-array` which behaves like
-an ndarray of a specified shape. The offsets of the fields are arbitrary, and
-fields may even overlap. These offsets are usually determined automatically by
-numpy, but can also be specified.
+structured datatypes, and it may also be a :term:`subarray data type` which
+behaves like an ndarray of a specified shape. The offsets of the fields are
+arbitrary, and fields may even overlap. These offsets are usually determined
+automatically by numpy, but can also be specified.
 
 Structured Datatype Creation
 ----------------------------
@@ -231,7 +231,7 @@ each field's offset is a multiple of its size and that the itemsize is a
 multiple of the largest field size, and raise an exception if not.
 
 If the offsets of the fields and itemsize of a structured array satisfy the
-alignment conditions, the array will have the ``ALIGNED`` :ref:`flag
+alignment conditions, the array will have the ``ALIGNED`` :attr:`flag
 <numpy.ndarray.flags>` set.
 
 A convenience function :func:`numpy.lib.recfunctions.repack_fields` converts an
@@ -266,7 +266,7 @@ providing a 3-element tuple ``(datatype, offset, title)`` instead of the usual
  >>> np.dtype({'name': ('i4', 0, 'my title')})
  dtype([(('my title', 'name'), '<i4')])
 
-The ``dtype.fields`` dictionary will contain :term:`titles` as keys, if any
+The ``dtype.fields`` dictionary will contain titles as keys, if any
 titles are used.  This means effectively that a field with a title will be
 represented twice in the fields dictionary. The tuple values for these fields
 will also have a third element, the field title. Because of this, and because
@@ -431,8 +431,9 @@ array, as follows::
 
 Assignment to the view modifies the original array. The view's fields will be
 in the order they were indexed. Note that unlike for single-field indexing, the
-view's dtype has the same itemsize as the original array, and has fields at the
-same offsets as in the original array, and unindexed fields are merely missing.
+dtype of the view has the same itemsize as the original array, and has fields
+at the same offsets as in the original array, and unindexed fields are merely
+missing.
 
 .. warning::
     In Numpy 1.15, indexing an array with a multi-field index returned a copy of
@@ -453,7 +454,7 @@ same offsets as in the original array, and unindexed fields are merely missing.
     Numpy 1.12, and similar code has raised ``FutureWarning`` since 1.7.
 
     In 1.16 a number of functions have been introduced in the
-    :module:`numpy.lib.recfunctions` module to help users account for this
+    :mod:`numpy.lib.recfunctions` module to help users account for this
     change. These are
     :func:`numpy.lib.recfunctions.repack_fields`.
     :func:`numpy.lib.recfunctions.structured_to_unstructured`,
@@ -610,7 +611,7 @@ creating record arrays, see :ref:`record array creation routines
 <routines.array-creation.rec>`.
 
 A record array representation of a structured array can be obtained using the
-appropriate :ref:`view`::
+appropriate `view <numpy-ndarray-view>`_::
 
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'a10')])

@@ -225,15 +225,15 @@ def _zseries_div(z1, z2):
     """
     z1 = z1.copy()
     z2 = z2.copy()
-    len1 = len(z1)
-    len2 = len(z2)
-    if len2 == 1:
+    lc1 = len(z1)
+    lc2 = len(z2)
+    if lc2 == 1:
         z1 /= z2
         return z1, z1[:1]*0
-    elif len1 < len2:
+    elif lc1 < lc2:
         return z1[:1]*0, z1
     else:
-        dlen = len1 - len2
+        dlen = lc1 - lc2
         scl = z2[0]
         z2 /= scl
         quo = np.empty(dlen + 1, dtype=z1.dtype)
@@ -244,16 +244,16 @@ def _zseries_div(z1, z2):
             quo[i] = z1[i]
             quo[dlen - i] = r
             tmp = r*z2
-            z1[i:i+len2] -= tmp
-            z1[j:j+len2] -= tmp
+            z1[i:i+lc2] -= tmp
+            z1[j:j+lc2] -= tmp
             i += 1
             j -= 1
         r = z1[i]
         quo[i] = r
         tmp = r*z2
-        z1[i:i+len2] -= tmp
+        z1[i:i+lc2] -= tmp
         quo /= scl
-        rem = z1[i+1:i-1+len2].copy()
+        rem = z1[i+1:i-1+lc2].copy()
         return quo, rem
 
 
@@ -541,21 +541,7 @@ def chebfromroots(roots):
     array([1.5+0.j, 0. +0.j, 0.5+0.j])
 
     """
-    if len(roots) == 0:
-        return np.ones(1)
-    else:
-        [roots] = pu.as_series([roots], trim=False)
-        roots.sort()
-        p = [chebline(-r, 1) for r in roots]
-        n = len(p)
-        while n > 1:
-            m, r = divmod(n, 2)
-            tmp = [chebmul(p[i], p[i+m]) for i in range(m)]
-            if r:
-                tmp[0] = chebmul(tmp[0], p[-1])
-            p = tmp
-            n = m
-        return p[0]
+    return pu._fromroots(chebline, chebmul, roots)
 
 
 def chebadd(c1, c2):
@@ -597,15 +583,7 @@ def chebadd(c1, c2):
     array([4., 4., 4.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] += c2
-        ret = c1
-    else:
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._add(c1, c2)
 
 
 def chebsub(c1, c2):
@@ -649,16 +627,7 @@ def chebsub(c1, c2):
     array([ 2.,  0., -2.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] -= c2
-        ret = c1
-    else:
-        c2 = -c2
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._sub(c1, c2)
 
 
 def chebmulx(c):
@@ -807,6 +776,7 @@ def chebdiv(c1, c2):
     if c2[-1] == 0:
         raise ZeroDivisionError()
 
+    # note: this is more efficient than `pu._div(chebmul, c1, c2)`
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
@@ -1238,14 +1208,7 @@ def chebval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = chebval(x, c)
-    c = chebval(y, c, tensor=False)
-    return c
+    return pu._valnd(chebval, c, x, y)
 
 
 def chebgrid2d(x, y, c):
@@ -1298,9 +1261,7 @@ def chebgrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = chebval(x, c)
-    c = chebval(y, c)
-    return c
+    return pu._gridnd(chebval, c, x, y)
 
 
 def chebval3d(x, y, z, c):
@@ -1351,15 +1312,7 @@ def chebval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = chebval(x, c)
-    c = chebval(y, c, tensor=False)
-    c = chebval(z, c, tensor=False)
-    return c
+    return pu._valnd(chebval, c, x, y, z)
 
 
 def chebgrid3d(x, y, z, c):
@@ -1415,10 +1368,7 @@ def chebgrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = chebval(x, c)
-    c = chebval(y, c)
-    c = chebval(z, c)
-    return c
+    return pu._gridnd(chebval, c, x, y, z)
 
 
 def chebvander(x, deg):
@@ -1526,17 +1476,7 @@ def chebvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
-    x, y = np.array((x, y), copy=0) + 0.0
-
-    vx = chebvander(x, degx)
-    vy = chebvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    return v.reshape(v.shape[:-2] + (-1,))
+    return pu._vander2d(chebvander, x, y, deg)
 
 
 def chebvander3d(x, y, z, deg):
@@ -1590,18 +1530,7 @@ def chebvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
-
-    vx = chebvander(x, degx)
-    vy = chebvander(y, degy)
-    vz = chebvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    return v.reshape(v.shape[:-3] + (-1,))
+    return pu._vander3d(chebvander, x, y, z, deg)
 
 
 def chebfit(x, y, deg, rcond=None, full=False, w=None):

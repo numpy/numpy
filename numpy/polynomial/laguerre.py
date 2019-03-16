@@ -283,21 +283,7 @@ def lagfromroots(roots):
     array([0.+0.j, 0.+0.j])
 
     """
-    if len(roots) == 0:
-        return np.ones(1)
-    else:
-        [roots] = pu.as_series([roots], trim=False)
-        roots.sort()
-        p = [lagline(-r, 1) for r in roots]
-        n = len(p)
-        while n > 1:
-            m, r = divmod(n, 2)
-            tmp = [lagmul(p[i], p[i+m]) for i in range(m)]
-            if r:
-                tmp[0] = lagmul(tmp[0], p[-1])
-            p = tmp
-            n = m
-        return p[0]
+    return pu._fromroots(lagline, lagmul, roots)
 
 
 def lagadd(c1, c2):
@@ -338,15 +324,7 @@ def lagadd(c1, c2):
 
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] += c2
-        ret = c1
-    else:
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._add(c1, c2)
 
 
 def lagsub(c1, c2):
@@ -386,16 +364,7 @@ def lagsub(c1, c2):
     array([0.,  0.,  0.,  4.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] -= c2
-        ret = c1
-    else:
-        c2 = -c2
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._sub(c1, c2)
 
 
 def lagmulx(c):
@@ -561,26 +530,7 @@ def lagdiv(c1, c2):
     (array([1., 2., 3.]), array([1., 1.]))
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if c2[-1] == 0:
-        raise ZeroDivisionError()
-
-    lc1 = len(c1)
-    lc2 = len(c2)
-    if lc1 < lc2:
-        return c1[:1]*0, c1
-    elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
-    else:
-        quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
-        rem = c1
-        for i in range(lc1 - lc2, - 1, -1):
-            p = lagmul([0]*i + [1], c2)
-            q = rem[-1]/p[-1]
-            rem = rem[:-1] - q*p[:-1]
-            quo[i] = q
-        return quo, pu.trimseq(rem)
+    return pu._div(lagmul, c1, c2)
 
 
 def lagpow(c, pow, maxpower=16):
@@ -995,14 +945,7 @@ def lagval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = lagval(x, c)
-    c = lagval(y, c, tensor=False)
-    return c
+    return pu._valnd(lagval, c, x, y)
 
 
 def laggrid2d(x, y, c):
@@ -1055,9 +998,7 @@ def laggrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = lagval(x, c)
-    c = lagval(y, c)
-    return c
+    return pu._gridnd(lagval, c, x, y)
 
 
 def lagval3d(x, y, z, c):
@@ -1108,15 +1049,7 @@ def lagval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = lagval(x, c)
-    c = lagval(y, c, tensor=False)
-    c = lagval(z, c, tensor=False)
-    return c
+    return pu._valnd(lagval, c, x, y, z)
 
 
 def laggrid3d(x, y, z, c):
@@ -1172,10 +1105,7 @@ def laggrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = lagval(x, c)
-    c = lagval(y, c)
-    c = lagval(z, c)
-    return c
+    return pu._gridnd(lagval, c, x, y, z)
 
 
 def lagvander(x, deg):
@@ -1290,17 +1220,7 @@ def lagvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
-    x, y = np.array((x, y), copy=0) + 0.0
-
-    vx = lagvander(x, degx)
-    vy = lagvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    return v.reshape(v.shape[:-2] + (-1,))
+    return pu._vander2d(lagvander, x, y, deg)
 
 
 def lagvander3d(x, y, z, deg):
@@ -1354,18 +1274,7 @@ def lagvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
-
-    vx = lagvander(x, degx)
-    vy = lagvander(y, degy)
-    vz = lagvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    return v.reshape(v.shape[:-3] + (-1,))
+    return pu._vander3d(lagvander, x, y, z, deg)
 
 
 def lagfit(x, y, deg, rcond=None, full=False, w=None):

@@ -610,9 +610,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         # and determine the formats.
         formats = []
         for obj in arrayList:
-            if not isinstance(obj, ndarray):
-                raise ValueError("item in the array list must be an ndarray.")
-            formats.append(obj.dtype.str)
+            formats.append(obj.dtype)
 
     if dtype is not None:
         descr = sb.dtype(dtype)
@@ -768,7 +766,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> r.shape
     (10,)
     """
-    
+
     if dtype is None and formats is None:
         raise TypeError("fromfile() needs a 'dtype' or 'formats' argument")
 

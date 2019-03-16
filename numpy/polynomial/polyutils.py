@@ -410,3 +410,193 @@ def mapdomain(x, old, new):
     x = np.asanyarray(x)
     off, scl = mapparms(old, new)
     return off + scl*x
+
+
+def _vander2d(vander_f, x, y, deg):
+    """
+    Helper function used to implement the ``<type>vander2d`` functions.
+
+    Parameters
+    ----------
+    vander_f : function(array_like, int) -> ndarray
+        The 1d vander function, such as ``polyvander``
+    x, y, deg :
+        See the ``<type>vander2d`` functions for more detail
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy = ideg
+    x, y = np.array((x, y), copy=0) + 0.0
+
+    vx = vander_f(x, degx)
+    vy = vander_f(y, degy)
+    v = vx[..., None]*vy[..., None,:]
+    return v.reshape(v.shape[:-2] + (-1,))
+
+
+def _vander3d(vander_f, x, y, z, deg):
+    """
+    Helper function used to implement the ``<type>vander3d`` functions.
+
+    Parameters
+    ----------
+    vander_f : function(array_like, int) -> ndarray
+        The 1d vander function, such as ``polyvander``
+    x, y, z, deg :
+        See the ``<type>vander3d`` functions for more detail
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy, degz = ideg
+    x, y, z = np.array((x, y, z), copy=0) + 0.0
+
+    vx = vander_f(x, degx)
+    vy = vander_f(y, degy)
+    vz = vander_f(z, degz)
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
+    return v.reshape(v.shape[:-3] + (-1,))
+
+
+def _fromroots(line_f, mul_f, roots):
+    """
+    Helper function used to implement the ``<type>fromroots`` functions.
+
+    Parameters
+    ----------
+    line_f : function(float, float) -> ndarray
+        The ``<type>line`` function, such as ``polyline``
+    mul_f : function(array_like, array_like) -> ndarray
+        The ``<type>mul`` function, such as ``polymul``
+    roots :
+        See the ``<type>fromroots`` functions for more detail
+    """
+    if len(roots) == 0:
+        return np.ones(1)
+    else:
+        [roots] = as_series([roots], trim=False)
+        roots.sort()
+        p = [line_f(-r, 1) for r in roots]
+        n = len(p)
+        while n > 1:
+            m, r = divmod(n, 2)
+            tmp = [mul_f(p[i], p[i+m]) for i in range(m)]
+            if r:
+                tmp[0] = mul_f(tmp[0], p[-1])
+            p = tmp
+            n = m
+        return p[0]
+
+
+def _valnd(val_f, c, *args):
+    """
+    Helper function used to implement the ``<type>val<n>d`` functions.
+
+    Parameters
+    ----------
+    val_f : function(array_like, array_like, tensor: bool) -> array_like
+        The ``<type>val`` function, such as ``polyval``
+    c, args :
+        See the ``<type>val<n>d`` functions for more detail
+    """
+    try:
+        args = tuple(np.array(args, copy=False))
+    except Exception:
+        # preserve the old error message
+        if len(args) == 2:
+            raise ValueError('x, y, z are incompatible')
+        elif len(args) == 3:
+            raise ValueError('x, y are incompatible')
+        else:
+            raise ValueError('ordinates are incompatible')
+
+    it = iter(args)
+    x0 = next(it)
+
+    # use tensor on only the first
+    c = val_f(x0, c)
+    for xi in it:
+        c = val_f(xi, c, tensor=False)
+    return c
+
+
+def _gridnd(val_f, c, *args):
+    """
+    Helper function used to implement the ``<type>grid<n>d`` functions.
+
+    Parameters
+    ----------
+    val_f : function(array_like, array_like, tensor: bool) -> array_like
+        The ``<type>val`` function, such as ``polyval``
+    c, args :
+        See the ``<type>grid<n>d`` functions for more detail
+    """
+    for xi in args:
+        c = val_f(xi, c)
+    return c
+
+
+def _div(mul_f, c1, c2):
+    """
+    Helper function used to implement the ``<type>div`` functions.
+
+    Implementation uses repeated subtraction of c2 multiplied by the nth basis.
+    For some polynomial types, a more efficient approach may be possible.
+
+    Parameters
+    ----------
+    mul_f : function(array_like, array_like) -> array_like
+        The ``<type>mul`` function, such as ``polymul``
+    c1, c2 :
+        See the ``<type>div`` functions for more detail
+    """
+    # c1, c2 are trimmed copies
+    [c1, c2] = as_series([c1, c2])
+    if c2[-1] == 0:
+        raise ZeroDivisionError()
+
+    lc1 = len(c1)
+    lc2 = len(c2)
+    if lc1 < lc2:
+        return c1[:1]*0, c1
+    elif lc2 == 1:
+        return c1/c2[-1], c1[:1]*0
+    else:
+        quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
+        rem = c1
+        for i in range(lc1 - lc2, - 1, -1):
+            p = mul_f([0]*i + [1], c2)
+            q = rem[-1]/p[-1]
+            rem = rem[:-1] - q*p[:-1]
+            quo[i] = q
+        return quo, trimseq(rem)
+
+
+def _add(c1, c2):
+    """ Helper function used to implement the ``<type>add`` functions. """
+    # c1, c2 are trimmed copies
+    [c1, c2] = as_series([c1, c2])
+    if len(c1) > len(c2):
+        c1[:c2.size] += c2
+        ret = c1
+    else:
+        c2[:c1.size] += c1
+        ret = c2
+    return trimseq(ret)
+
+
+def _sub(c1, c2):
+    """ Helper function used to implement the ``<type>sub`` functions. """
+    # c1, c2 are trimmed copies
+    [c1, c2] = as_series([c1, c2])
+    if len(c1) > len(c2):
+        c1[:c2.size] -= c2
+        ret = c1
+    else:
+        c2 = -c2
+        c2[:c1.size] += c1
+        ret = c2
+    return trimseq(ret)

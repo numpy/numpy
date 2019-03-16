@@ -188,21 +188,7 @@ def polyfromroots(roots):
     array([1.+0.j,  0.+0.j,  1.+0.j])
 
     """
-    if len(roots) == 0:
-        return np.ones(1)
-    else:
-        [roots] = pu.as_series([roots], trim=False)
-        roots.sort()
-        p = [polyline(-r, 1) for r in roots]
-        n = len(p)
-        while n > 1:
-            m, r = divmod(n, 2)
-            tmp = [polymul(p[i], p[i+m]) for i in range(m)]
-            if r:
-                tmp[0] = polymul(tmp[0], p[-1])
-            p = tmp
-            n = m
-        return p[0]
+    return pu._fromroots(polyline, polymul, roots)
 
 
 def polyadd(c1, c2):
@@ -238,15 +224,7 @@ def polyadd(c1, c2):
     28.0
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] += c2
-        ret = c1
-    else:
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._add(c1, c2)
 
 
 def polysub(c1, c2):
@@ -283,16 +261,7 @@ def polysub(c1, c2):
     array([ 2.,  0., -2.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] -= c2
-        ret = c1
-    else:
-        c2 = -c2
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._sub(c1, c2)
 
 
 def polymulx(c):
@@ -411,18 +380,19 @@ def polydiv(c1, c2):
     if c2[-1] == 0:
         raise ZeroDivisionError()
 
-    len1 = len(c1)
-    len2 = len(c2)
-    if len2 == 1:
-        return c1/c2[-1], c1[:1]*0
-    elif len1 < len2:
+    # note: this is more efficient than `pu._div(polymul, c1, c2)`
+    lc1 = len(c1)
+    lc2 = len(c2)
+    if lc1 < lc2:
         return c1[:1]*0, c1
+    elif lc2 == 1:
+        return c1/c2[-1], c1[:1]*0
     else:
-        dlen = len1 - len2
+        dlen = lc1 - lc2
         scl = c2[-1]
         c2 = c2[:-1]/scl
         i = dlen
-        j = len1 - 1
+        j = lc1 - 1
         while i >= 0:
             c1[i:j] -= c2*c1[j]
             i -= 1
@@ -924,14 +894,7 @@ def polyval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = polyval(x, c)
-    c = polyval(y, c, tensor=False)
-    return c
+    return pu._valnd(polyval, c, x, y)
 
 
 def polygrid2d(x, y, c):
@@ -984,9 +947,7 @@ def polygrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = polyval(x, c)
-    c = polyval(y, c)
-    return c
+    return pu._gridnd(polyval, c, x, y)
 
 
 def polyval3d(x, y, z, c):
@@ -1037,15 +998,7 @@ def polyval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = polyval(x, c)
-    c = polyval(y, c, tensor=False)
-    c = polyval(z, c, tensor=False)
-    return c
+    return pu._valnd(polyval, c, x, y, z)
 
 
 def polygrid3d(x, y, z, c):
@@ -1101,10 +1054,7 @@ def polygrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = polyval(x, c)
-    c = polyval(y, c)
-    c = polyval(z, c)
-    return c
+    return pu._gridnd(polyval, c, x, y, z)
 
 
 def polyvander(x, deg):
@@ -1208,19 +1158,7 @@ def polyvander2d(x, y, deg):
     polyvander, polyvander3d. polyval2d, polyval3d
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
-    x, y = np.array((x, y), copy=0) + 0.0
-
-    vx = polyvander(x, degx)
-    vy = polyvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    # einsum bug
-    #v = np.einsum("...i,...j->...ij", vx, vy)
-    return v.reshape(v.shape[:-2] + (-1,))
+    return pu._vander2d(polyvander, x, y, deg)
 
 
 def polyvander3d(x, y, z, deg):
@@ -1274,20 +1212,7 @@ def polyvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
-
-    vx = polyvander(x, degx)
-    vy = polyvander(y, degy)
-    vz = polyvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    # einsum bug
-    #v = np.einsum("...i, ...j, ...k->...ijk", vx, vy, vz)
-    return v.reshape(v.shape[:-3] + (-1,))
+    return pu._vander3d(polyvander, x, y, z, deg)
 
 
 def polyfit(x, y, deg, rcond=None, full=False, w=None):

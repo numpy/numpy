@@ -82,9 +82,11 @@ Indexing arrays
 
 Arrays can be indexed using an extended Python slicing syntax,
 ``array[selection]``.  Similar syntax is also used for accessing
-fields in a :ref:`structured array <arrays.dtypes.field>`.
+fields in a :term:`structured data type`.
 
 .. seealso:: :ref:`Array Indexing <arrays.indexing>`.
+
+.. _memory-layout:
 
 Internal memory layout of an ndarray
 ====================================
@@ -127,7 +129,7 @@ strided scheme, and correspond to memory that can be *addressed* by the strides:
 where :math:`d_j` `= self.shape[j]`.
 
 Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
-:term:`single-segment`, memory layouts, in which every part of the
+single-segment, memory layouts, in which every part of the
 memory block can be accessed by some combination of the indices.
 
 While a C-style and Fortran-style contiguous array, which has the corresponding
@@ -143,14 +145,15 @@ different. This can happen in two cases:
        considered C-style and Fortran-style contiguous.
 
 Point 1. means that ``self`` and ``self.squeeze()`` always have the same
-contiguity and :term:`aligned` flags value. This also means that even a high
-dimensional array could be C-style and Fortran-style contiguous at the same
-time.
+contiguity and ``aligned`` flags value. This also means
+that even a high dimensional array could be C-style and Fortran-style
+contiguous at the same time.
 
 .. index:: aligned
 
 An array is considered aligned if the memory offsets for all elements and the
-base offset itself is a multiple of `self.itemsize`.
+base offset itself is a multiple of `self.itemsize`. Understanding
+`memory-alignment` leads to better performance on most hardware.
 
 .. note::
 
@@ -441,7 +444,7 @@ Each of the arithmetic operations (``+``, ``-``, ``*``, ``/``, ``//``,
 ``%``, ``divmod()``, ``**`` or ``pow()``, ``<<``, ``>>``, ``&``,
 ``^``, ``|``, ``~``) and the comparisons (``==``, ``<``, ``>``,
 ``<=``, ``>=``, ``!=``) is equivalent to the corresponding
-:term:`universal function` (or :term:`ufunc` for short) in NumPy.  For
+universal function (or :term:`ufunc` for short) in NumPy.  For
 more information, see the section on :ref:`Universal Functions
 <ufuncs>`.
 

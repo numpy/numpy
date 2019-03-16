@@ -219,7 +219,7 @@ From scratch
 
     If *data* is ``NULL``, then new unitinialized memory will be allocated and
     *flags* can be non-zero to indicate a Fortran-style contiguous array. Use
-    :c:ref:`PyArray_FILLWBYTE` to initialze the memory.
+    :c:func:`PyArray_FILLWBYTE` to initialze the memory.
 
     If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the
@@ -573,8 +573,9 @@ From other objects
             return NULL;
         }
         if (arr == NULL) {
+            /*
             ... validate/change dtype, validate flags, ndim, etc ...
-            // Could make custom strides here too
+             Could make custom strides here too */
             arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
                                         dims, NULL,
                                         fortran ? NPY_ARRAY_F_CONTIGUOUS : 0,
@@ -588,10 +589,14 @@ From other objects
             }
         }
         else {
+            /*
             ... in this case the other parameters weren't filled, just
                 validate and possibly copy arr itself ...
+            */
         }
+        /*
         ... use arr ...
+        */
 
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
@@ -816,17 +821,17 @@ Dealing with types
 General check of Python Type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. c:function:: PyArray_Check(op)
+.. c:function:: PyArray_Check(PyObject *op)
 
     Evaluates true if *op* is a Python object whose type is a sub-type
     of :c:data:`PyArray_Type`.
 
-.. c:function:: PyArray_CheckExact(op)
+.. c:function:: PyArray_CheckExact(PyObject *op)
 
     Evaluates true if *op* is a Python object with type
     :c:data:`PyArray_Type`.
 
-.. c:function:: PyArray_HasArrayInterface(op, out)
+.. c:function:: PyArray_HasArrayInterface(PyObject *op, PyObject *out)
 
     If ``op`` implements any part of the array interface, then ``out``
     will contain a new reference to the newly created ndarray using
@@ -2660,22 +2665,22 @@ cost of a slight overhead.
 
     .. code-block:: c
 
-       PyArrayIterObject \*iter;
-       PyArrayNeighborhoodIterObject \*neigh_iter;
+       PyArrayIterObject *iter;
+       PyArrayNeighborhoodIterObject *neigh_iter;
        iter = PyArray_IterNew(x);
 
-       //For a 3x3 kernel
+       /*For a 3x3 kernel */
        bounds = {-1, 1, -1, 1};
        neigh_iter = (PyArrayNeighborhoodIterObject*)PyArrayNeighborhoodIter_New(
             iter, bounds, NPY_NEIGHBORHOOD_ITER_ZERO_PADDING, NULL);
 
        for(i = 0; i < iter->size; ++i) {
             for (j = 0; j < neigh_iter->size; ++j) {
-                    // Walk around the item currently pointed by iter->dataptr
+                    /* Walk around the item currently pointed by iter->dataptr */
                     PyArrayNeighborhoodIter_Next(neigh_iter);
             }
 
-            // Move to the next point of iter
+            /* Move to the next point of iter */
             PyArrayIter_Next(iter);
             PyArrayNeighborhoodIter_Reset(neigh_iter);
        }
@@ -3256,19 +3261,19 @@ Memory management
     Macros to allocate, free, and reallocate memory. These macros are used
     internally to create arrays.
 
-.. c:function:: npy_intp*  PyDimMem_NEW(nd)
+.. c:function:: npy_intp*  PyDimMem_NEW(int nd)
 
-.. c:function:: PyDimMem_FREE(npy_intp* ptr)
+.. c:function:: PyDimMem_FREE(char* ptr)
 
-.. c:function:: npy_intp* PyDimMem_RENEW(npy_intp* ptr, npy_intp newnd)
+.. c:function:: npy_intp* PyDimMem_RENEW(void* ptr, size_t newnd)
 
     Macros to allocate, free, and reallocate dimension and strides memory.
 
-.. c:function:: PyArray_malloc(nbytes)
+.. c:function:: void* PyArray_malloc(size_t nbytes)
 
-.. c:function:: PyArray_free(ptr)
+.. c:function:: PyArray_free(void* ptr)
 
-.. c:function:: PyArray_realloc(ptr, nbytes)
+.. c:function:: void* PyArray_realloc(npy_intp* ptr, size_t nbytes)
 
     These macros use different memory allocators, depending on the
     constant :c:data:`NPY_USE_PYMEM`. The system malloc is used when
@@ -3470,31 +3475,31 @@ Other constants
 Miscellaneous Macros
 ^^^^^^^^^^^^^^^^^^^^
 
-.. c:function:: PyArray_SAMESHAPE(a1, a2)
+.. c:function:: PyArray_SAMESHAPE(PyArrayObject *a1, PyArrayObject *a2)
 
     Evaluates as True if arrays *a1* and *a2* have the same shape.
 
-.. c:function:: PyArray_MAX(a,b)
+.. c:macro:: PyArray_MAX(a,b)
 
     Returns the maximum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
 
-.. c:function:: PyArray_MIN(a,b)
+.. c:macro:: PyArray_MIN(a,b)
 
     Returns the minimum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
 
-.. c:function:: PyArray_CLT(a,b)
+.. c:macro:: PyArray_CLT(a,b)
 
-.. c:function:: PyArray_CGT(a,b)
+.. c:macro:: PyArray_CGT(a,b)
 
-.. c:function:: PyArray_CLE(a,b)
+.. c:macro:: PyArray_CLE(a,b)
 
-.. c:function:: PyArray_CGE(a,b)
+.. c:macro:: PyArray_CGE(a,b)
 
-.. c:function:: PyArray_CEQ(a,b)
+.. c:macro:: PyArray_CEQ(a,b)
 
-.. c:function:: PyArray_CNE(a,b)
+.. c:macro:: PyArray_CNE(a,b)
 
     Implements the complex comparisons between two complex numbers
     (structures with a real and imag member) using NumPy's definition
