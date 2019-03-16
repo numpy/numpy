@@ -5,7 +5,6 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
 
 import functools
 import operator
-import types
 import warnings
 
 from . import numeric as _nx

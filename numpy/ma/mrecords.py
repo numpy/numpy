@@ -19,7 +19,6 @@ import sys
 import warnings
 
 import numpy as np
-import numpy.core.numerictypes as ntypes
 from numpy.compat import basestring
 from numpy import (
         bool_, dtype, ndarray, recarray, array as narray

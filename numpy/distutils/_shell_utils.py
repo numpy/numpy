@@ -24,12 +24,12 @@ class CommandLineParser:
     @staticmethod
     def join(argv):
         """ Join a list of arguments into a command line string """
-        raise NotImplemented
+        raise NotImplementedError
 
     @staticmethod
     def split(cmd):
         """ Split a command line string into a list of arguments """
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class WindowsParser:
