@@ -2222,9 +2222,23 @@ class TestLikeFuncs(object):
 
             # Test the 'shape' parameter
             for s in self.shapes:
-                sz = like_function(d, dtype=dtype, shape=s, **fill_kwarg)
-                assert_equal(sz.shape, s)
-                self.compare_array_value(sz, value, fill_value)
+                for o in 'CFA':
+                    sz = like_function(d, dtype=dtype, shape=s, order=o,
+                                       **fill_kwarg)
+                    assert_equal(sz.shape, s)
+                    if dtype is None:
+                        assert_equal(sz.dtype, d.dtype)
+                    else:
+                        assert_equal(sz.dtype, np.dtype(dtype))
+                    if o == 'C' or (o == 'A' and d.flags.c_contiguous):
+                        assert_(sz.flags.c_contiguous)
+                    elif o == 'F' or (o == 'A' and d.flags.f_contiguous):
+                        assert_(sz.flags.f_contiguous)
+                    self.compare_array_value(sz, value, fill_value)
+
+                if d.ndim != len(s):
+                    assert_raises(ValueError, like_function, d, dtype=dtype,
+                                  shape=s, order='K', **fill_kwarg)
 
         # Test the 'subok' parameter
         class MyNDArray(np.ndarray):
