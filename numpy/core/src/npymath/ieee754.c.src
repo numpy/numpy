@@ -682,7 +682,7 @@ void npy_set_floatstatus_invalid(void)
 }
 
 #elif defined(_MSC_VER) || (defined(__osf__) && defined(__alpha)) || \
-      defined (__UCLIBC__)
+      defined (__UCLIBC__) || (defined(__arc__) && defined(__GLIBC__))
 
 /*
  * By using a volatile floating point value,
