@@ -826,6 +826,9 @@ def chebpow(c, pow, maxpower=16):
     array([15.5, 22. , 16. , ..., 12.5, 12. ,  8. ])
 
     """
+    # note: this is more efficient than `pu._pow(chebmul, c1, c2)`, as it
+    # avoids converting between z and c series repeatedly
+
     # c is a trimmed copy
     [c] = pu.as_series([c])
     power = int(pow)

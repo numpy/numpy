@@ -570,24 +570,7 @@ def hermpow(c, pow, maxpower=16):
     array([81.,  52.,  82.,  12.,   9.])
 
     """
-    # c is a trimmed copy
-    [c] = pu.as_series([c])
-    power = int(pow)
-    if power != pow or power < 0:
-        raise ValueError("Power must be a non-negative integer.")
-    elif maxpower is not None and power > maxpower:
-        raise ValueError("Power is too large")
-    elif power == 0:
-        return np.array([1], dtype=c.dtype)
-    elif power == 1:
-        return c
-    else:
-        # This can be made more efficient by using powers of two
-        # in the usual way.
-        prd = c
-        for i in range(2, power + 1):
-            prd = hermmul(prd, c)
-        return prd
+    return pu._pow(hermmul, c, pow, maxpower)
 
 
 def hermder(c, m=1, scl=1, axis=0):
