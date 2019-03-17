@@ -2236,9 +2236,15 @@ class TestLikeFuncs(object):
                         assert_(sz.flags.f_contiguous)
                     self.compare_array_value(sz, value, fill_value)
 
-                if d.ndim != len(s):
+                if (d.ndim != len(s) or
+                        not (d.flags.c_contiguous or d.flags.f_contiguous)):
                     assert_raises(ValueError, like_function, d, dtype=dtype,
                                   shape=s, order='K', **fill_kwarg)
+                else:
+                    assert_equal(np.argsort(like_function(d, dtype=dtype,
+                                                          shape=s, order='K',
+                                                          **fill_kwarg).strides),
+                                 np.argsort(d.strides))
 
         # Test the 'subok' parameter
         class MyNDArray(np.ndarray):

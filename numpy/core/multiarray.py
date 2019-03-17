@@ -111,7 +111,8 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
     Raises
     ------
     ValueError
-        If len(shape) different from a.ndim and order is 'K'
+        If len(shape) different from prototype.ndim and order is 'K', or
+        prototype is not a C/F-layout array
 
     See Also
     --------
@@ -138,9 +139,11 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """
-    if (shape is not None and prototype.ndim != len(shape) and
-            order not in 'CFA'):
-        raise ValueError("mismatching ndim can not keep order")
+    if (shape is not None and order not in 'CFA' and
+            (prototype.ndim != len(shape) or
+                not (prototype.flags.c_contiguous or prototype.flags.f_contiguous))):
+        raise ValueError(
+                "mismatching ndim or non-C/F-layout arrays can not keep order")
     return (prototype,)
 
 

@@ -148,7 +148,8 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     Raises
     ------
     ValueError
-        If len(shape) different from a.ndim and order is 'K'
+        If len(shape) different from a.ndim and order is 'K', or
+        a is not a C/F-layout array
 
     See Also
     --------
@@ -277,7 +278,8 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     Raises
     ------
     ValueError
-        If len(shape) different from a.ndim and order is 'K'
+        If len(shape) different from a.ndim and order is 'K', or
+        a is not a C/F-layout array
 
     See Also
     --------
@@ -396,7 +398,8 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     Raises
     ------
     ValueError
-        If len(shape) different from a.ndim and order is 'K'
+        If len(shape) different from a.ndim and order is 'K', or
+        a is not a C/F-layout array
 
     See Also
     --------
