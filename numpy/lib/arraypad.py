@@ -1075,9 +1075,8 @@ def pad(array, pad_width, mode='constant', **kwargs):
     think about with a rank 2 array where the corners of the padded array
     are calculated by using padded values from the first axis.
 
-    The padding function, if used, should return a rank 1 array equal in
-    length to the vector argument with padded values replaced. It has the
-    following signature::
+    The padding function, if used, should modify a rank 1 array in-place. It
+    has the following signature::
 
         padding_func(vector, iaxis_pad_width, iaxis, kwargs)
 
@@ -1147,7 +1146,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
     ...     pad_value = kwargs.get('padder', 10)
     ...     vector[:pad_width[0]] = pad_value
     ...     vector[-pad_width[1]:] = pad_value
-    ...     return vector
+    ...     return
     >>> a = np.arange(6)
     >>> a = a.reshape((2, 3))
     >>> np.pad(a, 2, pad_with)
