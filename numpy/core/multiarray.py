@@ -111,7 +111,7 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
     Raises
     ------
     ValueError
-        If len(ndim) different from a.ndim and order is 'K'
+        If len(shape) different from a.ndim and order is 'K'
 
     See Also
     --------
