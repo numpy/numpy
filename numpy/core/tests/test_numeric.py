@@ -2154,7 +2154,7 @@ class TestLikeFuncs(object):
                 (np.arange(24).reshape(2, 3, 4).swapaxes(0, 1), None),
                 (np.arange(24).reshape(4, 3, 2).swapaxes(0, 1), '?'),
                      ]
-        self.shapes = [(1,), (1,2,), (1,2,3,)]
+        self.shapes = [(5,), (5,6,), (5,6,7,)]
 
     def compare_array_value(self, dz, value, fill_value):
         if value is not None:
