@@ -11,15 +11,18 @@ include site.cfg.example
 include numpy/random/mtrand/generate_mtrand_c.py
 recursive-include numpy/random/mtrand *.pyx *.pxd
 # Add build support that should go in sdist, but not go in bdist/be installed
+# Note that sub-directories that don't have __init__ are apparently not
+# included by 'recursive-include', so list those separately
+recursive-include numpy *
 recursive-include numpy/_build_utils *
-recursive-include numpy/linalg/lapack_lite *.c *.h
+recursive-include numpy/linalg/lapack_lite *
 include runtests.py
 include tox.ini pytest.ini .coveragerc
 recursive-include tools *
 # Add sdist files whose use depends on local configuration.
 include numpy/core/src/common/cblasfuncs.c
 include numpy/core/src/common/python_xerbla.c
-# Adding scons build related files not found by distutils
+# Adding build related files not found by distutils
 recursive-include numpy/core/code_generators *.py *.txt
 recursive-include numpy/core *.in *.h
 # Add documentation and benchmarks: we don't use add_data_dir since we do not
