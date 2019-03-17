@@ -41,3 +41,8 @@ Improvements
 
 Changes
 =======
+
+``__array_interface__`` offset now works as documented
+------------------------------------------------------
+The interface may use an ``offset`` value that was mistakenly ignored.
+
