@@ -1,5 +1,5 @@
 """
-A place for code to be called from core C-code.
+A place for internal code
 
 Some things are more easily handled Python.
 
@@ -9,13 +9,13 @@ from __future__ import division, absolute_import, print_function
 import re
 import sys
 
-from numpy.compat import basestring, unicode
+from numpy.compat import unicode
+from numpy.core.overrides import set_module
 from .multiarray import dtype, array, ndarray
 try:
     import ctypes
 except ImportError:
     ctypes = None
-from .numerictypes import object_
 
 if (sys.byteorder == 'little'):
     _nbo = b'<'
@@ -238,19 +238,68 @@ _getintp_ctype.cache = None
 
 class _missing_ctypes(object):
     def cast(self, num, obj):
-        return num
+        return num.value
 
-    def c_void_p(self, num):
-        return num
+    class c_void_p(object):
+        def __init__(self, ptr):
+            self.value = ptr
+
+
+class _unsafe_first_element_pointer(object):
+    """
+    Helper to allow viewing an array as a ctypes pointer to the first element
+
+    This avoids:
+      * dealing with strides
+      * `.view` rejecting object-containing arrays
+      * `memoryview` not supporting overlapping fields
+    """
+    def __init__(self, arr):
+        self.base = arr
+
+    @property
+    def __array_interface__(self):
+        i = dict(
+            shape=(),
+            typestr='|V0',
+            data=(self.base.__array_interface__['data'][0], False),
+            strides=(),
+            version=3,
+        )
+        return i
+
+
+def _get_void_ptr(arr):
+    """
+    Get a `ctypes.c_void_p` to arr.data, that keeps a reference to the array
+    """
+    import numpy as np
+    # convert to a 0d array that has a data pointer referrign to the start
+    # of arr. This holds a reference to arr.
+    simple_arr = np.asarray(_unsafe_first_element_pointer(arr))
+
+    # create a `char[0]` using the same memory.
+    c_arr = (ctypes.c_char * 0).from_buffer(simple_arr)
+
+    # finally cast to void*
+    return ctypes.cast(ctypes.pointer(c_arr), ctypes.c_void_p)
+
 
 class _ctypes(object):
     def __init__(self, array, ptr=None):
+        self._arr = array
+
         if ctypes:
             self._ctypes = ctypes
+            # get a void pointer to the buffer, which keeps the array alive
+            self._data = _get_void_ptr(array)
+            assert self._data.value == ptr
         else:
+            # fake a pointer-like object that holds onto the reference
             self._ctypes = _missing_ctypes()
-        self._arr = array
-        self._data = ptr
+            self._data = self._ctypes.c_void_p(ptr)
+            self._data._objects = array
+
         if self._arr.ndim == 0:
             self._zerod = True
         else:
@@ -263,6 +312,8 @@ class _ctypes(object):
         ``self.data_as(ctypes.c_void_p)``. Perhaps you want to use the data as a
         pointer to a ctypes array of floating-point data:
         ``self.data_as(ctypes.POINTER(ctypes.c_double))``.
+
+        The returned pointer will keep a reference to the array.
         """
         return self._ctypes.cast(self._data, obj)
 
@@ -284,7 +335,8 @@ class _ctypes(object):
             return None
         return (obj*self._arr.ndim)(*self._arr.strides)
 
-    def get_data(self):
+    @property
+    def data(self):
         """
         A pointer to the memory area of the array as a Python integer.
         This memory area may contain data that is not aligned, or not in correct
@@ -293,10 +345,16 @@ class _ctypes(object):
         attribute to arbitrary C-code to avoid trouble that can include Python
         crashing. User Beware! The value of this attribute is exactly the same
         as ``self._array_interface_['data'][0]``.
-        """
-        return self._data
 
-    def get_shape(self):
+        Note that unlike `data_as`, a reference will not be kept to the array:
+        code like ``ctypes.c_void_p((a + b).ctypes.data)`` will result in a
+        pointer to a deallocated array, and should be spelt
+        ``(a + b).ctypes.data_as(ctypes.c_void_p)``
+        """
+        return self._data.value
+
+    @property
+    def shape(self):
         """
         (c_intp*self.ndim): A ctypes array of length self.ndim where
         the basetype is the C-integer corresponding to ``dtype('p')`` on this
@@ -307,7 +365,8 @@ class _ctypes(object):
         """
         return self.shape_as(_getintp_ctype())
 
-    def get_strides(self):
+    @property
+    def strides(self):
         """
         (c_intp*self.ndim): A ctypes array of length self.ndim where
         the basetype is the same as for the shape attribute. This ctypes array
@@ -317,13 +376,20 @@ class _ctypes(object):
         """
         return self.strides_as(_getintp_ctype())
 
-    def get_as_parameter(self):
-        return self._ctypes.c_void_p(self._data)
+    @property
+    def _as_parameter_(self):
+        """
+        Overrides the ctypes semi-magic method
 
-    data = property(get_data)
-    shape = property(get_shape)
-    strides = property(get_strides)
-    _as_parameter_ = property(get_as_parameter, None, doc="_as parameter_")
+        Enables `c_func(some_array.ctypes)`
+        """
+        return self._data
+
+    # kept for compatibility
+    get_data = data.fget
+    get_shape = shape.fget
+    get_strides = strides.fget
+    get_as_parameter = _as_parameter_.fget
 
 
 def _newnames(datatype, order):
@@ -483,6 +549,12 @@ _pep3118_standard_map = {
 }
 _pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
 
+_pep3118_unsupported_map = {
+    'u': 'UCS-2 strings',
+    '&': 'pointers',
+    't': 'bitfields',
+    'X': 'function pointers',
+}
 
 class _Stream(object):
     def __init__(self, s):
@@ -594,6 +666,11 @@ def __dtype_from_pep3118(stream, is_subdtype):
                 stream.byteorder, stream.byteorder)
             value = dtype(numpy_byteorder + dtypechar)
             align = value.alignment
+        elif stream.next in _pep3118_unsupported_map:
+            desc = _pep3118_unsupported_map[stream.next]
+            raise NotImplementedError(
+                "Unrepresentable PEP 3118 data type {!r} ({})"
+                .format(stream.next, desc))
         else:
             raise ValueError("Unknown PEP 3118 data type specifier %r" % stream.s)
 
@@ -719,9 +796,11 @@ def _lcm(a, b):
     return a // _gcd(a, b) * b
 
 # Exception used in shares_memory()
+@set_module('numpy')
 class TooHardError(RuntimeError):
     pass
 
+@set_module('numpy')
 class AxisError(ValueError, IndexError):
     """ Axis supplied was invalid. """
     def __init__(self, axis, ndim=None, msg_prefix=None):
@@ -749,6 +828,13 @@ def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     return ('operand type(s) all returned NotImplemented from '
             '__array_ufunc__({!r}, {!r}, {}): {}'
             .format(ufunc, method, args_string, types_string))
+
+
+def array_function_errmsg_formatter(public_api, types):
+    """ Format the error message for when __array_ufunc__ gives up. """
+    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
+    return ("no implementation found for '{}' on types that implement "
+            '__array_function__: {}'.format(func_name, list(types)))
 
 
 def _ufunc_doc_signature_formatter(ufunc):
@@ -797,14 +883,46 @@ def _ufunc_doc_signature_formatter(ufunc):
     )
 
 
-def _is_from_ctypes(obj):
-    # determine if an object comes from ctypes, in order to work around
+def npy_ctypes_check(cls):
+    # determine if a class comes from ctypes, in order to work around
     # a bug in the buffer protocol for those objects, bpo-10746
     try:
         # ctypes class are new-style, so have an __mro__. This probably fails
         # for ctypes classes with multiple inheritance.
-        ctype_base = type(obj).__mro__[-2]
+        ctype_base = cls.__mro__[-2]
         # right now, they're part of the _ctypes module
         return 'ctypes' in ctype_base.__module__
     except Exception:
         return False
+
+
+class recursive(object):
+    '''
+    A decorator class for recursive nested functions.
+    Naive recursive nested functions hold a reference to themselves:
+
+    def outer(*args):
+        def stringify_leaky(arg0, *arg1):
+            if len(arg1) > 0:
+                return stringify_leaky(*arg1)  # <- HERE
+            return str(arg0)
+        stringify_leaky(*args)
+
+    This design pattern creates a reference cycle that is difficult for a
+    garbage collector to resolve. The decorator class prevents the
+    cycle by passing the nested function in as an argument `self`:
+
+    def outer(*args):
+        @recursive
+        def stringify(self, arg0, *arg1):
+            if len(arg1) > 0:
+                return self(*arg1)
+            return str(arg0)
+        stringify(*args)
+
+    '''
+    def __init__(self, func):
+        self.func = func
+    def __call__(self, *args, **kwargs):
+        return self.func(self, *args, **kwargs)
+

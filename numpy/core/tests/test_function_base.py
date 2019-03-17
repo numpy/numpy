@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 from numpy import (
     logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
-    ndarray, sqrt, nextafter
+    ndarray, sqrt, nextafter, stack
     )
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
@@ -53,6 +53,20 @@ class TestLogspace(object):
         assert_(y[-1] < 10 ** 6)
         y = logspace(0, 6, num=7)
         assert_array_equal(y, [1, 10, 100, 1e3, 1e4, 1e5, 1e6])
+
+    def test_start_stop_array(self):
+        start = array([0., 1.])
+        stop = array([6., 7.])
+        t1 = logspace(start, stop, 6)
+        t2 = stack([logspace(_start, _stop, 6)
+                    for _start, _stop in zip(start, stop)], axis=1)
+        assert_equal(t1, t2)
+        t3 = logspace(start, stop[0], 6)
+        t4 = stack([logspace(_start, stop[0], 6)
+                    for _start in start], axis=1)
+        assert_equal(t3, t4)
+        t5 = logspace(start, stop, 6, axis=-1)
+        assert_equal(t5, t2.T)
 
     def test_dtype(self):
         y = logspace(0, 6, dtype='float32')
@@ -156,7 +170,7 @@ class TestGeomspace(object):
         y = geomspace(1, 1e6, dtype=complex)
         assert_equal(y.dtype, dtype('complex'))
 
-    def test_array_scalar(self):
+    def test_start_stop_array_scalar(self):
         lim1 = array([120, 100], dtype="int8")
         lim2 = array([-120, -100], dtype="int8")
         lim3 = array([1200, 1000], dtype="uint16")
@@ -171,6 +185,21 @@ class TestGeomspace(object):
         assert_allclose(t1, t4, rtol=1e-2)
         assert_allclose(t2, t5, rtol=1e-2)
         assert_allclose(t3, t6, rtol=1e-5)
+
+    def test_start_stop_array(self):
+        # Try to use all special cases.
+        start = array([1.e0, 32., 1j, -4j, 1+1j, -1])
+        stop = array([1.e4, 2., 16j, -324j, 10000+10000j, 1])
+        t1 = geomspace(start, stop, 5)
+        t2 = stack([geomspace(_start, _stop, 5)
+                    for _start, _stop in zip(start, stop)], axis=1)
+        assert_equal(t1, t2)
+        t3 = geomspace(start, stop[0], 5)
+        t4 = stack([geomspace(_start, stop[0], 5)
+                    for _start in start], axis=1)
+        assert_equal(t3, t4)
+        t5 = geomspace(start, stop, 5, axis=-1)
+        assert_equal(t5, t2.T)
 
     def test_physical_quantities(self):
         a = PhysicalQuantity(1.0)
@@ -227,7 +256,7 @@ class TestLinspace(object):
         y = linspace(0, 6, dtype='int32')
         assert_equal(y.dtype, dtype('int32'))
 
-    def test_array_scalar(self):
+    def test_start_stop_array_scalar(self):
         lim1 = array([-120, 100], dtype="int8")
         lim2 = array([120, -100], dtype="int8")
         lim3 = array([1200, 1000], dtype="uint16")
@@ -240,6 +269,20 @@ class TestLinspace(object):
         assert_equal(t1, t4)
         assert_equal(t2, t5)
         assert_equal(t3, t6)
+
+    def test_start_stop_array(self):
+        start = array([-120, 120], dtype="int8")
+        stop = array([100, -100], dtype="int8")
+        t1 = linspace(start, stop, 5)
+        t2 = stack([linspace(_start, _stop, 5)
+                    for _start, _stop in zip(start, stop)], axis=1)
+        assert_equal(t1, t2)
+        t3 = linspace(start, stop[0], 5)
+        t4 = stack([linspace(_start, stop[0], 5)
+                    for _start in start], axis=1)
+        assert_equal(t3, t4)
+        t5 = linspace(start, stop, 5, axis=-1)
+        assert_equal(t5, t2.T)
 
     def test_complex(self):
         lim1 = linspace(1 + 2j, 3 + 4j, 5)
@@ -285,9 +328,7 @@ class TestLinspace(object):
 
             @property
             def __array_interface__(self):
-                # Ideally should be `'shape': ()` but the current interface
-                # does not allow that
-                return {'shape': (1,), 'typestr': '<i4', 'data': self._data,
+                return {'shape': (), 'typestr': '<i4', 'data': self._data,
                         'version': 3}
 
             def __mul__(self, other):
@@ -321,3 +362,9 @@ class TestLinspace(object):
                 assert_(isinstance(y, tuple) and len(y) == 2 and
                         len(y[0]) == num and isnan(y[1]),
                         'num={0}, endpoint={1}'.format(num, ept))
+
+    def test_object(self):
+        start = array(1, dtype='O')
+        stop = array(2, dtype='O')
+        y = linspace(start, stop, 3)
+        assert_array_equal(y, array([1., 1.5, 2.]))

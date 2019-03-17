@@ -201,7 +201,7 @@ Naming conventions
   In the future the names should be of the form ``Npy*_PublicFunction``,
   where the star is something appropriate.
 
-* Public Macros should have a NPY_ prefix and then use upper case,
+* Public Macros should have a ``NPY_`` prefix and then use upper case,
   for example, ``NPY_DOUBLE``.
 
 * Private functions should be lower case with underscores, for example:

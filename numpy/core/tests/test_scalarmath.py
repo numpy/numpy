@@ -9,7 +9,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_almost_equal, assert_allclose,
+    assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
     assert_warns
     )
@@ -184,7 +184,7 @@ class TestPower(object):
         a = 5
         b = 4
         c = 10
-        expected = pow(a, b, c)
+        expected = pow(a, b, c)  # noqa: F841
         for t in (np.int32, np.float32, np.complex64):
             # note that 3-operand power only dispatches on the first argument
             assert_raises(TypeError, operator.pow, t(a), b, c)
@@ -422,7 +422,7 @@ class TestConversion(object):
 
     @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                         reason="long double is same as double")
-    @pytest.mark.skipif(platform.machine().startswith("ppc64"),
+    @pytest.mark.skipif(platform.machine().startswith("ppc"),
                         reason="IBM double double")
     def test_int_from_huge_longdouble(self):
         # Produce a longdouble that would overflow a double,
@@ -565,10 +565,10 @@ class TestMultiply(object):
         # Some of this behaviour may be controversial and could be open for
         # change.
         accepted_types = set(np.typecodes["AllInteger"])
-        deprecated_types = set('?')
+        deprecated_types = {'?'}
         forbidden_types = (
             set(np.typecodes["All"]) - accepted_types - deprecated_types)
-        forbidden_types -= set('V')  # can't default-construct void scalars
+        forbidden_types -= {'V'}  # can't default-construct void scalars
 
         for seq_type in (list, tuple):
             seq = seq_type([1, 2, 3])

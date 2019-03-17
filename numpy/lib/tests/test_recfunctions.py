@@ -10,7 +10,8 @@ from numpy.testing import assert_, assert_raises
 from numpy.lib.recfunctions import (
     drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by,
-    repack_fields)
+    repack_fields, unstructured_to_structured, structured_to_unstructured,
+    apply_along_fields, require_fields, assign_fields_by_name)
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
 zip_descr = np.lib.recfunctions.zip_descr
@@ -203,6 +204,77 @@ class TestRecFunctions(object):
         # make sure type is preserved
         dt = np.dtype((np.record, dt))
         assert_(repack_fields(dt).type is np.record)
+
+    def test_structured_to_unstructured(self):
+        a = np.zeros(4, dtype=[('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
+        out = structured_to_unstructured(a)
+        assert_equal(out, np.zeros((4,5), dtype='f8'))
+
+        b = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+                     dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
+        out = np.mean(structured_to_unstructured(b[['x', 'z']]), axis=-1)
+        assert_equal(out, np.array([ 3. ,  5.5,  9. , 11. ]))
+
+        c = np.arange(20).reshape((4,5))
+        out = unstructured_to_structured(c, a.dtype)
+        want = np.array([( 0, ( 1.,  2), [ 3.,  4.]),
+                         ( 5, ( 6.,  7), [ 8.,  9.]),
+                         (10, (11., 12), [13., 14.]),
+                         (15, (16., 17), [18., 19.])],
+                     dtype=[('a', 'i4'),
+                            ('b', [('f0', 'f4'), ('f1', 'u2')]),
+                            ('c', 'f4', (2,))])
+        assert_equal(out, want)
+
+        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+                     dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
+        assert_equal(apply_along_fields(np.mean, d),
+                     np.array([ 8.0/3,  16.0/3,  26.0/3, 11. ]))
+        assert_equal(apply_along_fields(np.mean, d[['x', 'z']]),
+                     np.array([ 3. ,  5.5,  9. , 11. ]))
+
+        # check that for uniform field dtypes we get a view, not a copy:
+        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+                     dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'i4')])
+        dd = structured_to_unstructured(d)
+        ddd = unstructured_to_structured(dd, d.dtype)
+        assert_(dd.base is d)
+        assert_(ddd.base is d)
+
+        # test that nested fields with identical names don't break anything
+        point = np.dtype([('x', int), ('y', int)])
+        triangle = np.dtype([('a', point), ('b', point), ('c', point)])
+        arr = np.zeros(10, triangle)
+        res = structured_to_unstructured(arr, dtype=int)
+        assert_equal(res, np.zeros((10, 6), dtype=int))
+
+
+    def test_field_assignment_by_name(self):
+        a = np.ones(2, dtype=[('a', 'i4'), ('b', 'f8'), ('c', 'u1')])
+        newdt = [('b', 'f4'), ('c', 'u1')]
+
+        assert_equal(require_fields(a, newdt), np.ones(2, newdt))
+
+        b = np.array([(1,2), (3,4)], dtype=newdt)
+        assign_fields_by_name(a, b, zero_unassigned=False)
+        assert_equal(a, np.array([(1,1,2),(1,3,4)], dtype=a.dtype))
+        assign_fields_by_name(a, b)
+        assert_equal(a, np.array([(0,1,2),(0,3,4)], dtype=a.dtype))
+
+        # test nested fields
+        a = np.ones(2, dtype=[('a', [('b', 'f8'), ('c', 'u1')])])
+        newdt = [('a', [('c', 'u1')])]
+        assert_equal(require_fields(a, newdt), np.ones(2, newdt))
+        b = np.array([((2,),), ((3,),)], dtype=newdt)
+        assign_fields_by_name(a, b, zero_unassigned=False)
+        assert_equal(a, np.array([((1,2),), ((1,3),)], dtype=a.dtype))
+        assign_fields_by_name(a, b)
+        assert_equal(a, np.array([((0,2),), ((0,3),)], dtype=a.dtype))
+
+        # test unstructured code path for 0d arrays
+        a, b = np.array(3), np.array(0)
+        assign_fields_by_name(b, a)
+        assert_equal(b[()], 3)
 
 
 class TestRecursiveFillFields(object):
@@ -541,12 +613,8 @@ class TestStackArrays(object):
         test = stack_arrays((a, b), autoconvert=True)
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
-        try:
-            test = stack_arrays((a, b), autoconvert=False)
-        except TypeError:
-            pass
-        else:
-            raise AssertionError
+        with assert_raises(TypeError):
+            stack_arrays((a, b), autoconvert=False)
 
     def test_checktitles(self):
         # Test using titles in the field names

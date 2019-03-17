@@ -27,13 +27,10 @@ import subprocess
 import textwrap
 
 
-if sys.version_info[:2] < (2, 7) or (3, 0) <= sys.version_info[:2] < (3, 4):
-    raise RuntimeError("Python version 2.7 or >= 3.4 required.")
+if sys.version_info[:2] < (3, 5):
+    raise RuntimeError("Python version >= 3.5 required.")
 
-if sys.version_info[0] >= 3:
-    import builtins
-else:
-    import __builtin__ as builtins
+import builtins
 
 
 CLASSIFIERS = """\
@@ -43,10 +40,7 @@ Intended Audience :: Developers
 License :: OSI Approved
 Programming Language :: C
 Programming Language :: Python
-Programming Language :: Python :: 2
-Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
@@ -60,7 +54,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 16
+MINOR               = 17
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -375,7 +369,7 @@ def setup_package():
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
         cmdclass={"sdist": sdist_checked},
-        python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
+        python_requires='>=3.5',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds

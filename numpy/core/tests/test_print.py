@@ -2,8 +2,10 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 
+import pytest
+
 import numpy as np
-from numpy.testing import assert_, assert_equal, SkipTest
+from numpy.testing import assert_, assert_equal
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
 
@@ -15,7 +17,15 @@ else:
 _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 
 
-def check_float_type(tp):
+@pytest.mark.parametrize('tp', [np.float32, np.double, np.longdouble])
+def test_float_types(tp):
+    """ Check formatting.
+
+        This is only for the str function, and only for simple types.
+        The precision of np.float32 and np.longdouble aren't the same as the
+        python float precision.
+
+    """
     for x in [0, 1, -1, 1e20]:
         assert_equal(str(tp(x)), str(float(x)),
                      err_msg='Failed str formatting for type %s' % tp)
@@ -28,23 +38,9 @@ def check_float_type(tp):
         assert_equal(str(tp(1e16)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
-def test_float_types():
-    """ Check formatting.
 
-        This is only for the str function, and only for simple types.
-        The precision of np.float32 and np.longdouble aren't the same as the
-        python float precision.
-
-    """
-    for t in [np.float32, np.double, np.longdouble]:
-        check_float_type(t)
-
-def check_nan_inf_float(tp):
-    for x in [np.inf, -np.inf, np.nan]:
-        assert_equal(str(tp(x)), _REF[x],
-                     err_msg='Failed str formatting for type %s' % tp)
-
-def test_nan_inf_float():
+@pytest.mark.parametrize('tp', [np.float32, np.double, np.longdouble])
+def test_nan_inf_float(tp):
     """ Check formatting of nan & inf.
 
         This is only for the str function, and only for simple types.
@@ -52,10 +48,20 @@ def test_nan_inf_float():
         python float precision.
 
     """
-    for t in [np.float32, np.double, np.longdouble]:
-        check_nan_inf_float(t)
+    for x in [np.inf, -np.inf, np.nan]:
+        assert_equal(str(tp(x)), _REF[x],
+                     err_msg='Failed str formatting for type %s' % tp)
 
-def check_complex_type(tp):
+
+@pytest.mark.parametrize('tp', [np.complex64, np.cdouble, np.clongdouble])
+def test_complex_types(tp):
+    """Check formatting of complex types.
+
+        This is only for the str function, and only for simple types.
+        The precision of np.float32 and np.longdouble aren't the same as the
+        python float precision.
+
+    """
     for x in [0, 1, -1, 1e20]:
         assert_equal(str(tp(x)), str(complex(x)),
                      err_msg='Failed str formatting for type %s' % tp)
@@ -72,18 +78,9 @@ def check_complex_type(tp):
         assert_equal(str(tp(1e16)), ref,
                      err_msg='Failed str formatting for type %s' % tp)
 
-def test_complex_types():
-    """Check formatting of complex types.
 
-        This is only for the str function, and only for simple types.
-        The precision of np.float32 and np.longdouble aren't the same as the
-        python float precision.
-
-    """
-    for t in [np.complex64, np.cdouble, np.clongdouble]:
-        check_complex_type(t)
-
-def test_complex_inf_nan():
+@pytest.mark.parametrize('dtype', [np.complex64, np.cdouble, np.clongdouble])
+def test_complex_inf_nan(dtype):
     """Check inf/nan formatting of complex types."""
     TESTS = {
         complex(np.inf, 0): "(inf+0j)",
@@ -103,12 +100,9 @@ def test_complex_inf_nan():
         complex(-np.nan, 1): "(nan+1j)",
         complex(1, -np.nan): "(1+nanj)",
     }
-    for tp in [np.complex64, np.cdouble, np.clongdouble]:
-        for c, s in TESTS.items():
-            _check_complex_inf_nan(c, s, tp)
+    for c, s in TESTS.items():
+        assert_equal(str(dtype(c)), s)
 
-def _check_complex_inf_nan(c, s, dtype):
-    assert_equal(str(dtype(c)), s)
 
 # print tests
 def _test_redirected_print(x, tp, ref=None):
@@ -129,7 +123,10 @@ def _test_redirected_print(x, tp, ref=None):
     assert_equal(file.getvalue(), file_tp.getvalue(),
                  err_msg='print failed for type%s' % tp)
 
-def check_float_type_print(tp):
+
+@pytest.mark.parametrize('tp', [np.float32, np.double, np.longdouble])
+def test_float_type_print(tp):
+    """Check formatting when using print """
     for x in [0, 1, -1, 1e20]:
         _test_redirected_print(float(x), tp)
 
@@ -142,7 +139,10 @@ def check_float_type_print(tp):
         ref = '1e+16'
         _test_redirected_print(float(1e16), tp, ref)
 
-def check_complex_type_print(tp):
+
+@pytest.mark.parametrize('tp', [np.complex64, np.cdouble, np.clongdouble])
+def test_complex_type_print(tp):
+    """Check formatting when using print """
     # We do not create complex with inf/nan directly because the feature is
     # missing in python < 2.6
     for x in [0, 1, -1, 1e20]:
@@ -158,15 +158,6 @@ def check_complex_type_print(tp):
     _test_redirected_print(complex(-np.inf, 1), tp, '(-inf+1j)')
     _test_redirected_print(complex(-np.nan, 1), tp, '(nan+1j)')
 
-def test_float_type_print():
-    """Check formatting when using print """
-    for t in [np.float32, np.double, np.longdouble]:
-        check_float_type_print(t)
-
-def test_complex_type_print():
-    """Check formatting when using print """
-    for t in [np.complex64, np.cdouble, np.clongdouble]:
-        check_complex_type_print(t)
 
 def test_scalar_format():
     """Test the str.format method with NumPy scalar types"""

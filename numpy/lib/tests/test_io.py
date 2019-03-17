@@ -6,7 +6,6 @@ import os
 import threading
 import time
 import warnings
-import gc
 import io
 import re
 import pytest
@@ -18,10 +17,10 @@ import locale
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, unicode, Path
+from numpy.compat import asbytes, bytes, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    assert_warns, assert_, SkipTest, assert_raises_regex, assert_raises,
+    assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
     HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles,
     )
@@ -355,6 +354,16 @@ class TestSaveTxt(object):
         c.seek(0)
         assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
 
+    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
+    def test_multifield_view(self):
+        a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
+        v = a[['x', 'z']]
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            np.save(path, v)
+            data = np.load(path)
+            assert_array_equal(data, v)
+
     def test_delimiter(self):
         a = np.array([[1., 2.], [3., 4.]])
         c = BytesIO()
@@ -567,12 +576,12 @@ class LoadTxtBase(object):
 
     @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
     @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
-    def test_compressed_gzip(self):
+    def test_compressed_bz2(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
     @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
     @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
-    def test_compressed_gzip(self):
+    def test_compressed_lzma(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
     def test_encoding(self):
@@ -1068,6 +1077,55 @@ class TestLoadTxt(LoadTxtBase):
             x = [b'5,6,7,\xc3\x95scarscar', b'15,2,3,hello', b'20,2,3,\xc3\x95scar']
             assert_array_equal(x, np.array(x, dtype="S"))
 
+    def test_max_rows(self):
+        c = TextIO()
+        c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       max_rows=1)
+        a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_with_skiprows(self):
+        c = TextIO()
+        c.write('comments\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=1)
+        a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+
+        c = TextIO()
+        c.write('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=2)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8]], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_with_read_continuation(self):
+        c = TextIO()
+        c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       max_rows=2)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8]], int)
+        assert_array_equal(x, a)
+        # test continuation
+        x = np.loadtxt(c, dtype=int, delimiter=',')
+        a = np.array([2,1,4,5], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_larger(self):
+        #test max_rows > num rows
+        c = TextIO()
+        c.write('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=6)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
+        assert_array_equal(x, a)
+
 class Testfromregex(object):
     def test_record(self):
         c = TextIO()
@@ -1454,14 +1512,10 @@ M   33  21.99
         assert_equal(test, control)
 
         ndtype = [('nest', [('idx', int), ('code', object)])]
-        try:
+        with assert_raises_regex(NotImplementedError,
+                                 'Nested fields.* not supported.*'):
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
-        except NotImplementedError:
-            pass
-        else:
-            errmsg = "Nested dtype involving objects should be supported."
-            raise AssertionError(errmsg)
 
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
@@ -2004,7 +2058,6 @@ M   33  21.99
 
     def test_utf8_file(self):
         utf8 = b"\xcf\x96"
-        latin1 = b"\xf6\xfc\xf6"
         with temppath() as path:
             with open(path, "wb") as f:
                 f.write((b"test1,testNonethe" + utf8 + b",test3\n") * 2)
@@ -2037,8 +2090,8 @@ M   33  21.99
             encoding = locale.getpreferredencoding()
             utf8.encode(encoding)
         except (UnicodeError, ImportError):
-            raise SkipTest('Skipping test_utf8_file_nodtype_unicode, '
-                           'unable to encode utf8 in preferred encoding')
+            pytest.skip('Skipping test_utf8_file_nodtype_unicode, '
+                        'unable to encode utf8 in preferred encoding')
 
         with temppath() as path:
             with io.open(path, "wt") as f:
@@ -2250,11 +2303,35 @@ class TestPathUsage(object):
             assert_array_equal(x, a)
 
     def test_save_load(self):
-        # Test that pathlib.Path instances can be used with savez.
+        # Test that pathlib.Path instances can be used with save.
         with temppath(suffix='.npy') as path:
             path = Path(path)
             a = np.array([[1, 2], [3, 4]], int)
             np.save(path, a)
+            data = np.load(path)
+            assert_array_equal(data, a)
+
+    def test_save_load_memmap(self):
+        # Test that pathlib.Path instances can be loaded mem-mapped.
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            a = np.array([[1, 2], [3, 4]], int)
+            np.save(path, a)
+            data = np.load(path, mmap_mode='r')
+            assert_array_equal(data, a)
+            # close the mem-mapped file
+            del data
+
+    def test_save_load_memmap_readwrite(self):
+        # Test that pathlib.Path instances can be written mem-mapped.
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            a = np.array([[1, 2], [3, 4]], int)
+            np.save(path, a)
+            b = np.load(path, mmap_mode='r+')
+            a[0][0] = 5
+            b[0][0] = 5
+            del b  # closes the file
             data = np.load(path)
             assert_array_equal(data, a)
 
@@ -2416,3 +2493,9 @@ def test_load_refcount():
 
     with assert_no_gc_cycles():
         np.load(f)
+
+    f.seek(0)
+    dt = [("a", 'u1', 2), ("b", 'u1', 2)]
+    with assert_no_gc_cycles():
+        x = np.loadtxt(TextIO("0 1 2 3"), dtype=dt)
+        assert_equal(x, np.array([((0, 1), (2, 3))], dtype=dt))

@@ -13,7 +13,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    suppress_warnings, HAS_REFCOUNT
+    HAS_REFCOUNT
     )
 
 
@@ -152,7 +152,15 @@ class TestNonarrayArgs(object):
 
     def test_squeeze(self):
         A = [[[1, 1, 1], [2, 2, 2], [3, 3, 3]]]
-        assert_(np.squeeze(A).shape == (3, 3))
+        assert_equal(np.squeeze(A).shape, (3, 3))
+        assert_equal(np.squeeze(np.zeros((1, 3, 1))).shape, (3,))
+        assert_equal(np.squeeze(np.zeros((1, 3, 1)), axis=0).shape, (3, 1))
+        assert_equal(np.squeeze(np.zeros((1, 3, 1)), axis=-1).shape, (1, 3))
+        assert_equal(np.squeeze(np.zeros((1, 3, 1)), axis=2).shape, (1, 3))
+        assert_equal(np.squeeze([np.zeros((3, 1))]).shape, (3,))
+        assert_equal(np.squeeze([np.zeros((3, 1))], axis=0).shape, (3, 1))
+        assert_equal(np.squeeze([np.zeros((3, 1))], axis=2).shape, (1, 3))
+        assert_equal(np.squeeze([np.zeros((3, 1))], axis=-1).shape, (1, 3))
 
     def test_std(self):
         A = [[1, 2, 3], [4, 5, 6]]
@@ -471,12 +479,9 @@ class TestSeterr(object):
     @pytest.mark.skipif(platform.machine() == "armv5tel", reason="See gh-413.")
     def test_divide_err(self):
         with np.errstate(divide='raise'):
-            try:
+            with assert_raises(FloatingPointError):
                 np.array([1.]) / np.array([0.])
-            except FloatingPointError:
-                pass
-            else:
-                self.fail()
+
             np.seterr(divide='ignore')
             np.array([1.]) / np.array([0.])
 
@@ -2751,3 +2756,9 @@ class TestTensordot(object):
         td = np.tensordot(a, b, (1, 0))
         assert_array_equal(td, np.dot(a, b))
         assert_array_equal(td, np.einsum('ij,jk', a, b))
+        
+    def test_zero_dimensional(self):
+        # gh-12130
+        arr_0d = np.array(1)
+        ret = np.tensordot(arr_0d, arr_0d, ([], []))  # contracting no axes is well defined
+        assert_array_equal(ret, arr_0d)

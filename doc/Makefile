@@ -1,7 +1,13 @@
 # Makefile for Sphinx documentation
 #
 
-PYVER = 3.6
+# PYVER needs to be major.minor, just "3" doesn't work - it will result in
+# issues with the amendments to PYTHONPATH and install paths (see DIST_VARS).
+
+# Use explicit "version_info" indexing since make cannot handle colon characters, and
+# evaluate it now to allow easier debugging when printing the varaible
+
+PYVER:=$(shell python3 -c 'from sys import version_info as v; print("{0}.{1}".format(v[0], v[1]))')
 PYTHON = python$(PYVER)
 
 # You can set these variables from the command line.
@@ -58,7 +64,7 @@ gitwash-update:
 #
 
 
-INSTALL_DIR = $(CURDIR)/build/inst-dist/
+INSTALL_DIR = $(CURDIR)/build/inst-dist
 INSTALL_PPH = $(INSTALL_DIR)/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/lib/python$(PYVER)/dist-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/dist-packages
 UPLOAD_DIR=/srv/docs_scipy_org/doc/numpy-$(RELEASE)
 

@@ -39,6 +39,7 @@ typedef struct {
     PyObject *minimum;
     PyObject *rint;
     PyObject *conjugate;
+    PyObject *matmul;
 } NumericOps;
 
 extern NPY_NO_EXPORT NumericOps n_ops;
@@ -48,10 +49,10 @@ NPY_NO_EXPORT PyObject *
 array_int(PyArrayObject *v);
 
 NPY_NO_EXPORT int
-PyArray_SetNumericOps(PyObject *dict);
+_PyArray_SetNumericOps(PyObject *dict);
 
 NPY_NO_EXPORT PyObject *
-PyArray_GetNumericOps(void);
+_PyArray_GetNumericOps(void);
 
 NPY_NO_EXPORT PyObject *
 PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op);

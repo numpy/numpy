@@ -1,0 +1,205 @@
+==========================
+NumPy 1.17.0 Release Notes
+==========================
+
+
+Highlights
+==========
+
+* Experimental support for overriding numpy functions is now always available,
+  see ``__array_function__`` below.
+
+* NumPy's FFT implementation has switched to pocketfft
+
+New functions
+=============
+
+
+Deprecations
+============
+
+``np.polynomial`` functions warn when passed ``float``s in place of ``int``s
+----------------------------------------------------------------------------
+Previously functions in this module would accept ``float``s provided their
+values were integral. For consistency with the rest of numpy, doing so is now
+deprecated, and in future will raise a ``TypeError``.
+
+Similarly, passing a float like ``0.5`` in place of an integer will now raise a
+``TypeError`` instead of the previous ``ValueError``.
+
+Deprecate ``numpy.distutils.exec_command`` and ``numpy.distutils.temp_file_name``
+---------------------------------------------------------------------------------
+The internal use of these functions has been refactored and there are better
+alternatives. Relace ``exec_command`` with `subprocess.Popen` and
+``temp_file_name`` with `tempfile.mkstemp`.
+
+
+Future Changes
+==============
+
+
+Expired deprecations
+====================
+
+
+Compatibility notes
+===================
+
+float16 subnormal rounding
+--------------------------
+Casting from a different floating point precision to float16 used incorrect
+rounding in some edge cases. This means in rare cases, subnormal results will
+now be rounded up instead of down, changing the last bit (ULP) of the result.
+
+Signed zero when using divmod
+-----------------------------
+Starting in version 1.12.0, numpy incorrectly returned a negatively signed zero
+when using the ``divmod`` and ``floor_divide`` functions when the result was
+zero. For example::
+
+   >>> np.zeros(10)//1
+   array([-0., -0., -0., -0., -0., -0., -0., -0., -0., -0.])
+
+With this release, the result is correctly returned as a positively signed
+zero::
+
+   >>> np.zeros(10)//1
+   array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+
+Do not lookup ``__buffer__`` attribute in `numpy.frombuffer`
+------------------------------------------------------------
+Looking up ``__buffer__`` attribute in `numpy.frombuffer` was undocumented and
+non-functional. This code was removed. If needed, use
+``frombuffer(memoryview(obj), ...)`` instead.
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+``np.ufunc.reduce`` and related functions now accept a ``where`` mask
+---------------------------------------------------------------------
+``np.ufunc.reduce``, ``np.sum``, ``np.prod``, ``np.min``, ``np.max`` all
+now accept a ``where`` keyword argument, which can be used to tell which
+elements to include in the reduction.  For reductions that do not have an
+identity, it is necessary to also pass in an initial value (e.g.,
+``initial=np.inf`` for ``np.min``).  For instance, the equivalent of
+``nansum`` would be, ``np.sum(a, where=~np.isnan(a))``.
+
+Timsort has replaced mergesort as the stable sorting implementation
+-------------------------------------------------------------------
+Timsort has been implemented and is now used in place of mergesort. Due to the
+need to maintain backward compatibility, the sorting ``kind`` options ``"stable"``
+and ``"mergesort"`` have been made aliases of each other with the actual sort
+implementation used a function of the array type. Timsort features improved
+performace on already or nearly sorted data and performs like mergesort on
+random data.  The algorithm is stable and requires O(n/2) working space.  For
+details of the algorithm, refer to
+`CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
+
+``np.unpackbits`` now accepts a ``count`` parameter
+---------------------------------------------------
+``count`` allows subsetting the number of bits that will be unpacked up-front,
+rather than reshaping and subsetting later, making the ``packbits`` operation
+invertible, and the unpacking less wasteful. Counts larger than the number of
+available bits add zero padding. Negative counts trim bits off the end instead
+of counting from the beginning. None counts implement the existing behavior of
+unpacking everything.
+
+``np.linalg.svd`` and ``np.linalg.pinv`` can be faster on hermitian inputs
+--------------------------------------------------------------------------
+These functions now accept a ``hermitian`` argument, matching the one added
+to ``np.linalg.matrix_rank`` in 1.14.0.
+
+divmod operation is now supported for two ``timedelta64`` operands
+------------------------------------------------------------------
+The divmod operator now handles two ``np.timedelta64`` operands, with
+type signature mm->qm.
+
+
+Improvements
+============
+
+Array comparison assertions include maximum differences
+-------------------------------------------------------
+Error messages from array comparison tests such as
+`np.testing.assert_allclose` now include "max absolute difference" and
+"max relative difference," in addition to the previous "mismatch" percentage.
+This information makes it easier to update absolute and relative error
+tolerances.
+
+Replacement of the `fftpack`-based FFT module by the `pocketfft` library
+------------------------------------------------------------------------
+Both implementations have the same ancestor (Fortran77 `FFTPACK` by Paul N.
+Swarztrauber), but `pocketfft` contains additional modifications which
+improve both accuracy and performance in some circumstances. For FFT lengths
+containing large prime factors, `pocketfft` uses Bluestein's algorithm, which
+maintains `O(N log N)` run time complexity instead of deteriorating towards
+`O(N*N)` for prime lengths. Also, accuracy for real-valued FFTs with near-prime
+lengths has improved and is on par with complex-valued FFTs.
+
+Further improvements to ``ctypes`` support in ``np.ctypeslib``
+--------------------------------------------------------------
+A new ``np.ctypeslib.as_ctypes_type`` function has been added, which can be
+used to converts a `dtype` into a best-guess `ctypes` type. Thanks to this
+new function, ``np.ctypeslib.as_ctypes`` now supports a much wider range of
+array types, including structures, booleans, and integers of non-native
+endianness.
+
+`numpy.errstate` is now also function decorator
+-----------------------------------------------
+
+Currently, if you have a function like::
+
+    def foo():
+        pass
+
+and you want to wrap the whole thing in `errstate`, you have to rewrite it like so::
+
+    def foo():
+        with np.errstate(...):
+            pass
+
+but with this change, you can do::
+
+    @np.errstate(...)
+    def foo():
+        pass
+
+thereby saving a level of indentation
+
+``np.interp`` handles infinities more robustly
+----------------------------------------------
+In some cases where ``np.interp`` would previously return ``np.nan``, it now
+returns an appropriate infinity.
+
+
+Changes
+=======
+
+``median`` and ``percentile`` family of functions no longer warn about ``nan``
+------------------------------------------------------------------------------
+`numpy.median`, `numpy.percentile`, and `numpy.quantile` used to emit a
+``RuntimeWarning`` when encountering an `numpy.nan`. Since they return the
+``nan`` value, the warning is redundant and has been removed.
+
+``timedelta64 % 0`` behavior adjusted to return ``NaT``
+-------------------------------------------------------
+The modulus operation with two ``np.timedelta64`` operands now returns
+``NaT`` in the case of division by zero, rather than returning zero
+
+NumPy functions now always support overrides with ``__array_function__``
+------------------------------------------------------------------------
+NumPy now always checks the ``__array_function__`` method to implement overrides
+of NumPy functions on non-NumPy arrays, as described in `NEP 18`_. The feature
+was available for testing with NumPy 1.16 if appropriate environment variables
+are set, but is now always enabled.
+
+``__array_interface__`` offset now works as documented
+------------------------------------------------------
+The interface may use an ``offset`` value that was mistakenly ignored.
+
+.. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html

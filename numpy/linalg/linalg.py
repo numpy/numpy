@@ -16,6 +16,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
            'LinAlgError', 'multi_dot']
 
+import functools
 import operator
 import warnings
 
@@ -25,11 +26,18 @@ from numpy.core import (
     add, multiply, sqrt, fastCopyAndTranspose, sum, isfinite,
     finfo, errstate, geterrobj, moveaxis, amin, amax, product, abs,
     atleast_2d, intp, asanyarray, object_, matmul,
-    swapaxes, divide, count_nonzero, isnan
+    swapaxes, divide, count_nonzero, isnan, sign
 )
 from numpy.core.multiarray import normalize_axis_index
+from numpy.core.overrides import set_module
+from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
 from numpy.linalg import lapack_lite, _umath_linalg
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy.linalg')
+
 
 # For Python2/3 compatibility
 _N = b'N'
@@ -40,7 +48,8 @@ _L = b'L'
 
 fortran_int = intc
 
-# Error object
+
+@set_module('numpy.linalg')
 class LinAlgError(Exception):
     """
     Generic Python-exception-derived object raised by linalg functions.
@@ -68,7 +77,6 @@ class LinAlgError(Exception):
     numpy.linalg.LinAlgError: Singular matrix
 
     """
-    pass
 
 
 def _determine_error_states():
@@ -198,11 +206,6 @@ def _assertRankAtLeast2(*arrays):
             raise LinAlgError('%d-dimensional array given. Array must be '
                     'at least two-dimensional' % a.ndim)
 
-def _assertSquareness(*arrays):
-    for a in arrays:
-        if max(a.shape) != min(a.shape):
-            raise LinAlgError('Array must be square')
-
 def _assertNdSquareness(*arrays):
     for a in arrays:
         m, n = a.shape[-2:]
@@ -242,6 +245,11 @@ def transpose(a):
 
 # Linear equations
 
+def _tensorsolve_dispatcher(a, b, axes=None):
+    return (a, b)
+
+
+@array_function_dispatch(_tensorsolve_dispatcher)
 def tensorsolve(a, b, axes=None):
     """
     Solve the tensor equation ``a x = b`` for x.
@@ -311,6 +319,12 @@ def tensorsolve(a, b, axes=None):
     res.shape = oldshape
     return res
 
+
+def _solve_dispatcher(a, b):
+    return (a, b)
+
+
+@array_function_dispatch(_solve_dispatcher)
 def solve(a, b):
     """
     Solve a linear matrix equation, or system of linear scalar equations.
@@ -363,7 +377,7 @@ def solve(a, b):
     >>> b = np.array([9,8])
     >>> x = np.linalg.solve(a, b)
     >>> x
-    array([ 2.,  3.])
+    array([2.,  3.])
 
     Check that the solution is correct:
 
@@ -391,6 +405,11 @@ def solve(a, b):
     return wrap(r.astype(result_t, copy=False))
 
 
+def _tensorinv_dispatcher(a, ind=None):
+    return (a,)
+
+
+@array_function_dispatch(_tensorinv_dispatcher)
 def tensorinv(a, ind=2):
     """
     Compute the 'inverse' of an N-dimensional array.
@@ -460,6 +479,11 @@ def tensorinv(a, ind=2):
 
 # Matrix inversion
 
+def _unary_dispatcher(a):
+    return (a,)
+
+
+@array_function_dispatch(_unary_dispatcher)
 def inv(a):
     """
     Compute the (multiplicative) inverse of a matrix.
@@ -511,10 +535,10 @@ def inv(a):
 
     >>> a = np.array([[[1., 2.], [3., 4.]], [[1, 3], [3, 5]]])
     >>> inv(a)
-    array([[[-2. ,  1. ],
-            [ 1.5, -0.5]],
-           [[-5. ,  2. ],
-            [ 3. , -1. ]]])
+    array([[[-2.  ,  1.  ],
+            [ 1.5 , -0.5 ]],
+           [[-1.25,  0.75],
+            [ 0.75, -0.25]]])
 
     """
     a, wrap = _makearray(a)
@@ -528,6 +552,11 @@ def inv(a):
     return wrap(ainv.astype(result_t, copy=False))
 
 
+def _matrix_power_dispatcher(a, n):
+    return (a,)
+
+
+@array_function_dispatch(_matrix_power_dispatcher)
 def matrix_power(a, n):
     """
     Raise a square matrix to the (integer) power `n`.
@@ -645,6 +674,8 @@ def matrix_power(a, n):
 
 # Cholesky decomposition
 
+
+@array_function_dispatch(_unary_dispatcher)
 def cholesky(a):
     """
     Cholesky decomposition.
@@ -699,21 +730,21 @@ def cholesky(a):
     --------
     >>> A = np.array([[1,-2j],[2j,5]])
     >>> A
-    array([[ 1.+0.j,  0.-2.j],
+    array([[ 1.+0.j, -0.-2.j],
            [ 0.+2.j,  5.+0.j]])
     >>> L = np.linalg.cholesky(A)
     >>> L
-    array([[ 1.+0.j,  0.+0.j],
-           [ 0.+2.j,  1.+0.j]])
+    array([[1.+0.j, 0.+0.j],
+           [0.+2.j, 1.+0.j]])
     >>> np.dot(L, L.T.conj()) # verify that L * L.H = A
-    array([[ 1.+0.j,  0.-2.j],
-           [ 0.+2.j,  5.+0.j]])
+    array([[1.+0.j, 0.-2.j],
+           [0.+2.j, 5.+0.j]])
     >>> A = [[1,-2j],[2j,5]] # what happens if A is only array_like?
     >>> np.linalg.cholesky(A) # an ndarray object is returned
-    array([[ 1.+0.j,  0.+0.j],
-           [ 0.+2.j,  1.+0.j]])
+    array([[1.+0.j, 0.+0.j],
+           [0.+2.j, 1.+0.j]])
     >>> # But a matrix object is returned if A is a matrix object
-    >>> LA.cholesky(np.matrix(A))
+    >>> np.linalg.cholesky(np.matrix(A))
     matrix([[ 1.+0.j,  0.+0.j],
             [ 0.+2.j,  1.+0.j]])
 
@@ -728,8 +759,14 @@ def cholesky(a):
     r = gufunc(a, signature=signature, extobj=extobj)
     return wrap(r.astype(result_t, copy=False))
 
+
 # QR decompostion
 
+def _qr_dispatcher(a, mode=None):
+    return (a,)
+
+
+@array_function_dispatch(_qr_dispatcher)
 def qr(a, mode='reduced'):
     """
     Compute the qr factorization of a matrix.
@@ -841,9 +878,9 @@ def qr(a, mode='reduced'):
            [1, 1],
            [2, 1]])
     >>> b = np.array([1, 0, 2, 1])
-    >>> q, r = LA.qr(A)
+    >>> q, r = np.linalg.qr(A)
     >>> p = np.dot(q.T, b)
-    >>> np.dot(LA.inv(r), p)
+    >>> np.dot(np.linalg.inv(r), p)
     array([  1.1e-16,   1.0e+00])
 
     """
@@ -945,6 +982,7 @@ def qr(a, mode='reduced'):
 # Eigenvalues
 
 
+@array_function_dispatch(_unary_dispatcher)
 def eigvals(a):
     """
     Compute the eigenvalues of a general matrix.
@@ -972,7 +1010,7 @@ def eigvals(a):
     See Also
     --------
     eig : eigenvalues and right eigenvectors of general arrays
-    eigvalsh : eigenvalues of real symmetric or complex Hermitian 
+    eigvalsh : eigenvalues of real symmetric or complex Hermitian
                (conjugate symmetric) arrays.
     eigh : eigenvalues and eigenvectors of real symmetric or complex
            Hermitian (conjugate symmetric) arrays.
@@ -1011,7 +1049,7 @@ def eigvals(a):
     >>> A = np.dot(Q, D)
     >>> A = np.dot(A, Q.T)
     >>> LA.eigvals(A)
-    array([ 1., -1.])
+    array([ 1., -1.]) # random
 
     """
     a, wrap = _makearray(a)
@@ -1034,6 +1072,12 @@ def eigvals(a):
 
     return w.astype(result_t, copy=False)
 
+
+def _eigvalsh_dispatcher(a, UPLO=None):
+    return (a,)
+
+
+@array_function_dispatch(_eigvalsh_dispatcher)
 def eigvalsh(a, UPLO='L'):
     """
     Compute the eigenvalues of a complex Hermitian or real symmetric matrix.
@@ -1087,24 +1131,24 @@ def eigvalsh(a, UPLO='L'):
     >>> from numpy import linalg as LA
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> LA.eigvalsh(a)
-    array([ 0.17157288,  5.82842712])
+    array([ 0.17157288,  5.82842712]) # may vary
 
     >>> # demonstrate the treatment of the imaginary part of the diagonal
     >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]])
     >>> a
-    array([[ 5.+2.j,  9.-2.j],
-           [ 0.+2.j,  2.-1.j]])
+    array([[5.+2.j, 9.-2.j],
+           [0.+2.j, 2.-1.j]])
     >>> # with UPLO='L' this is numerically equivalent to using LA.eigvals()
     >>> # with:
     >>> b = np.array([[5.+0.j, 0.-2.j], [0.+2.j, 2.-0.j]])
     >>> b
-    array([[ 5.+0.j,  0.-2.j],
-           [ 0.+2.j,  2.+0.j]])
+    array([[5.+0.j, 0.-2.j],
+           [0.+2.j, 2.+0.j]])
     >>> wa = LA.eigvalsh(a)
     >>> wb = LA.eigvals(b)
     >>> wa; wb
-    array([ 1.,  6.])
-    array([ 6.+0.j,  1.+0.j])
+    array([1., 6.])
+    array([6.+0.j, 1.+0.j])
 
     """
     UPLO = UPLO.upper()
@@ -1135,6 +1179,7 @@ def _convertarray(a):
 # Eigenvectors
 
 
+@array_function_dispatch(_unary_dispatcher)
 def eig(a):
     """
     Compute the eigenvalues and right eigenvectors of a square array.
@@ -1169,7 +1214,7 @@ def eig(a):
     --------
     eigvals : eigenvalues of a non-symmetric array.
 
-    eigh : eigenvalues and eigenvectors of a real symmetric or complex 
+    eigh : eigenvalues and eigenvectors of a real symmetric or complex
            Hermitian (conjugate symmetric) array.
 
     eigvalsh : eigenvalues of a real symmetric or complex Hermitian
@@ -1219,19 +1264,19 @@ def eig(a):
 
     >>> w, v = LA.eig(np.diag((1, 2, 3)))
     >>> w; v
-    array([ 1.,  2.,  3.])
-    array([[ 1.,  0.,  0.],
-           [ 0.,  1.,  0.],
-           [ 0.,  0.,  1.]])
+    array([1., 2., 3.])
+    array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]])
 
     Real matrix possessing complex e-values and e-vectors; note that the
     e-values are complex conjugates of each other.
 
     >>> w, v = LA.eig(np.array([[1, -1], [1, 1]]))
     >>> w; v
-    array([ 1. + 1.j,  1. - 1.j])
-    array([[ 0.70710678+0.j        ,  0.70710678+0.j        ],
-           [ 0.00000000-0.70710678j,  0.00000000+0.70710678j]])
+    array([1.+1.j, 1.-1.j])
+    array([[0.70710678+0.j        , 0.70710678-0.j        ],
+           [0.        -0.70710678j, 0.        +0.70710678j]])
 
     Complex-valued matrix with real e-values (but complex-valued e-vectors);
     note that a.conj().T = a, i.e., a is Hermitian.
@@ -1239,9 +1284,9 @@ def eig(a):
     >>> a = np.array([[1, 1j], [-1j, 1]])
     >>> w, v = LA.eig(a)
     >>> w; v
-    array([  2.00000000e+00+0.j,   5.98651912e-36+0.j]) # i.e., {2, 0}
-    array([[ 0.00000000+0.70710678j,  0.70710678+0.j        ],
-           [ 0.70710678+0.j        ,  0.00000000+0.70710678j]])
+    array([2.+0.j, 0.+0.j])
+    array([[ 0.        +0.70710678j,  0.70710678+0.j        ], # may vary
+           [ 0.70710678+0.j        , -0.        +0.70710678j]])
 
     Be careful about round-off error!
 
@@ -1249,9 +1294,9 @@ def eig(a):
     >>> # Theor. e-values are 1 +/- 1e-9
     >>> w, v = LA.eig(a)
     >>> w; v
-    array([ 1.,  1.])
-    array([[ 1.,  0.],
-           [ 0.,  1.]])
+    array([1., 1.])
+    array([[1., 0.],
+           [0., 1.]])
 
     """
     a, wrap = _makearray(a)
@@ -1276,6 +1321,7 @@ def eig(a):
     return w.astype(result_t, copy=False), wrap(vt)
 
 
+@array_function_dispatch(_eigvalsh_dispatcher)
 def eigh(a, UPLO='L'):
     """
     Return the eigenvalues and eigenvectors of a complex Hermitian
@@ -1346,49 +1392,49 @@ def eigh(a, UPLO='L'):
     >>> from numpy import linalg as LA
     >>> a = np.array([[1, -2j], [2j, 5]])
     >>> a
-    array([[ 1.+0.j,  0.-2.j],
+    array([[ 1.+0.j, -0.-2.j],
            [ 0.+2.j,  5.+0.j]])
     >>> w, v = LA.eigh(a)
     >>> w; v
-    array([ 0.17157288,  5.82842712])
-    array([[-0.92387953+0.j        , -0.38268343+0.j        ],
-           [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
+    array([0.17157288, 5.82842712])
+    array([[-0.92387953+0.j        , -0.38268343+0.j        ], # may vary
+           [ 0.        +0.38268343j,  0.        -0.92387953j]])
 
     >>> np.dot(a, v[:, 0]) - w[0] * v[:, 0] # verify 1st e-val/vec pair
-    array([2.77555756e-17 + 0.j, 0. + 1.38777878e-16j])
+    array([5.55111512e-17+0.0000000e+00j, 0.00000000e+00+1.2490009e-16j])
     >>> np.dot(a, v[:, 1]) - w[1] * v[:, 1] # verify 2nd e-val/vec pair
-    array([ 0.+0.j,  0.+0.j])
+    array([0.+0.j, 0.+0.j])
 
     >>> A = np.matrix(a) # what happens if input is a matrix object
     >>> A
-    matrix([[ 1.+0.j,  0.-2.j],
+    matrix([[ 1.+0.j, -0.-2.j],
             [ 0.+2.j,  5.+0.j]])
     >>> w, v = LA.eigh(A)
     >>> w; v
-    array([ 0.17157288,  5.82842712])
-    matrix([[-0.92387953+0.j        , -0.38268343+0.j        ],
-            [ 0.00000000+0.38268343j,  0.00000000-0.92387953j]])
+    array([0.17157288, 5.82842712])
+    matrix([[-0.92387953+0.j        , -0.38268343+0.j        ], # may vary
+            [ 0.        +0.38268343j,  0.        -0.92387953j]])
 
     >>> # demonstrate the treatment of the imaginary part of the diagonal
     >>> a = np.array([[5+2j, 9-2j], [0+2j, 2-1j]])
     >>> a
-    array([[ 5.+2.j,  9.-2.j],
-           [ 0.+2.j,  2.-1.j]])
+    array([[5.+2.j, 9.-2.j],
+           [0.+2.j, 2.-1.j]])
     >>> # with UPLO='L' this is numerically equivalent to using LA.eig() with:
     >>> b = np.array([[5.+0.j, 0.-2.j], [0.+2.j, 2.-0.j]])
     >>> b
-    array([[ 5.+0.j,  0.-2.j],
-           [ 0.+2.j,  2.+0.j]])
+    array([[5.+0.j, 0.-2.j],
+           [0.+2.j, 2.+0.j]])
     >>> wa, va = LA.eigh(a)
     >>> wb, vb = LA.eig(b)
     >>> wa; wb
-    array([ 1.,  6.])
-    array([ 6.+0.j,  1.+0.j])
+    array([1., 6.])
+    array([6.+0.j, 1.+0.j])
     >>> va; vb
-    array([[-0.44721360-0.j        , -0.89442719+0.j        ],
-           [ 0.00000000+0.89442719j,  0.00000000-0.4472136j ]])
-    array([[ 0.89442719+0.j       ,  0.00000000-0.4472136j],
-           [ 0.00000000-0.4472136j,  0.89442719+0.j       ]])
+    array([[-0.4472136 +0.j        , -0.89442719+0.j        ], # may vary
+           [ 0.        +0.89442719j,  0.        -0.4472136j ]])
+    array([[ 0.89442719+0.j       , -0.        +0.4472136j],
+           [-0.        +0.4472136j,  0.89442719+0.j       ]])
     """
     UPLO = UPLO.upper()
     if UPLO not in ('L', 'U'):
@@ -1415,7 +1461,12 @@ def eigh(a, UPLO='L'):
 
 # Singular value decomposition
 
-def svd(a, full_matrices=True, compute_uv=True):
+def _svd_dispatcher(a, full_matrices=None, compute_uv=None, hermitian=None):
+    return (a,)
+
+
+@array_function_dispatch(_svd_dispatcher)
+def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     """
     Singular Value Decomposition.
 
@@ -1453,6 +1504,12 @@ def svd(a, full_matrices=True, compute_uv=True):
         size as those of the input `a`. The size of the last two dimensions
         depends on the value of `full_matrices`. Only returned when
         `compute_uv` is True.
+    hermitian : bool, optional
+        If True, `a` is assumed to be Hermitian (symmetric if real-valued),
+        enabling a more efficient method for finding singular values.
+        Defaults to False.
+
+        ..versionadded:: 1.17.0
 
     Raises
     ------
@@ -1539,6 +1596,24 @@ def svd(a, full_matrices=True, compute_uv=True):
 
     """
     a, wrap = _makearray(a)
+
+    if hermitian:
+        # note: lapack returns eigenvalues in reverse order to our contract.
+        # reversing is cheap by design in numpy, so we do so to be consistent
+        if compute_uv:
+            s, u = eigh(a)
+            s = s[..., ::-1]
+            u = u[..., ::-1]
+            # singular values are unsigned, move the sign into v
+            vt = transpose(u * sign(s)[..., None, :]).conjugate()
+            s = abs(s)
+            return wrap(u), s, wrap(vt)
+        else:
+            s = eigvalsh(a)
+            s = s[..., ::-1]
+            s = abs(s)
+            return s
+
     _assertRankAtLeast2(a)
     t, result_t = _commonType(a)
 
@@ -1575,6 +1650,11 @@ def svd(a, full_matrices=True, compute_uv=True):
         return s
 
 
+def _cond_dispatcher(x, p=None):
+    return (x,)
+
+
+@array_function_dispatch(_cond_dispatcher)
 def cond(x, p=None):
     """
     Compute the condition number of a matrix.
@@ -1649,9 +1729,9 @@ def cond(x, p=None):
     >>> LA.cond(a, 2)
     1.4142135623730951
     >>> LA.cond(a, -2)
-    0.70710678118654746
+    0.70710678118654746 # may vary
     >>> min(LA.svd(a, compute_uv=0))*min(LA.svd(LA.inv(a), compute_uv=0))
-    0.70710678118654746
+    0.70710678118654746 # may vary
 
     """
     x = asarray(x)  # in case we have a matrix
@@ -1692,6 +1772,11 @@ def cond(x, p=None):
     return r
 
 
+def _matrix_rank_dispatcher(M, tol=None, hermitian=None):
+    return (M,)
+
+
+@array_function_dispatch(_matrix_rank_dispatcher)
 def matrix_rank(M, tol=None, hermitian=False):
     """
     Return matrix rank of array using SVD method
@@ -1783,10 +1868,7 @@ def matrix_rank(M, tol=None, hermitian=False):
     M = asarray(M)
     if M.ndim < 2:
         return int(not all(M==0))
-    if hermitian:
-        S = abs(eigvalsh(M))
-    else:
-        S = svd(M, compute_uv=False)
+    S = svd(M, compute_uv=False, hermitian=hermitian)
     if tol is None:
         tol = S.max(axis=-1, keepdims=True) * max(M.shape[-2:]) * finfo(S.dtype).eps
     else:
@@ -1796,7 +1878,12 @@ def matrix_rank(M, tol=None, hermitian=False):
 
 # Generalized inverse
 
-def pinv(a, rcond=1e-15 ):
+def _pinv_dispatcher(a, rcond=None, hermitian=None):
+    return (a,)
+
+
+@array_function_dispatch(_pinv_dispatcher)
+def pinv(a, rcond=1e-15, hermitian=False):
     """
     Compute the (Moore-Penrose) pseudo-inverse of a matrix.
 
@@ -1816,6 +1903,12 @@ def pinv(a, rcond=1e-15 ):
         Singular values smaller (in modulus) than
         `rcond` * largest_singular_value (again, in modulus)
         are set to zero. Broadcasts against the stack of matrices
+    hermitian : bool, optional
+        If True, `a` is assumed to be Hermitian (symmetric if real-valued),
+        enabling a more efficient method for finding singular values.
+        Defaults to False.
+
+        ..versionadded:: 1.17.0
 
     Returns
     -------
@@ -1869,7 +1962,7 @@ def pinv(a, rcond=1e-15 ):
         res = empty(a.shape[:-2] + (n, m), dtype=a.dtype)
         return wrap(res)
     a = a.conjugate()
-    u, s, vt = svd(a, full_matrices=False)
+    u, s, vt = svd(a, full_matrices=False, hermitian=hermitian)
 
     # discard small singular values
     cutoff = rcond[..., newaxis] * amax(s, axis=-1, keepdims=True)
@@ -1880,8 +1973,11 @@ def pinv(a, rcond=1e-15 ):
     res = matmul(transpose(vt), multiply(s[..., newaxis], transpose(u)))
     return wrap(res)
 
+
 # Determinant
 
+
+@array_function_dispatch(_unary_dispatcher)
 def slogdet(a):
     """
     Compute the sign and (natural) logarithm of the determinant of an array.
@@ -1933,7 +2029,7 @@ def slogdet(a):
     >>> a = np.array([[1, 2], [3, 4]])
     >>> (sign, logdet) = np.linalg.slogdet(a)
     >>> (sign, logdet)
-    (-1, 0.69314718055994529)
+    (-1, 0.69314718055994529) # may vary
     >>> sign * np.exp(logdet)
     -2.0
 
@@ -1967,6 +2063,8 @@ def slogdet(a):
     logdet = logdet.astype(real_t, copy=False)
     return sign, logdet
 
+
+@array_function_dispatch(_unary_dispatcher)
 def det(a):
     """
     Compute the determinant of an array.
@@ -2003,7 +2101,7 @@ def det(a):
 
     >>> a = np.array([[1, 2], [3, 4]])
     >>> np.linalg.det(a)
-    -2.0
+    -2.0 # may vary
 
     Computing determinants for a stack of matrices:
 
@@ -2023,19 +2121,25 @@ def det(a):
     r = r.astype(result_t, copy=False)
     return r
 
+
 # Linear Least Squares
 
+def _lstsq_dispatcher(a, b, rcond=None):
+    return (a, b)
+
+
+@array_function_dispatch(_lstsq_dispatcher)
 def lstsq(a, b, rcond="warn"):
-    """
+    r"""
     Return the least-squares solution to a linear matrix equation.
 
-    Solves the equation `a x = b` by computing a vector `x` that
-    minimizes the Euclidean 2-norm `|| b - a x ||^2`.  The equation may
-    be under-, well-, or over- determined (i.e., the number of
-    linearly independent rows of `a` can be less than, equal to, or
-    greater than its number of linearly independent columns).  If `a`
-    is square and of full rank, then `x` (but for round-off error) is
-    the "exact" solution of the equation.
+    Solves the equation :math:`a x = b` by computing a vector `x` that
+    minimizes the squared Euclidean 2-norm :math:`\| b - a x \|^2_2`.
+    The equation may be under-, well-, or over-determined (i.e., the
+    number of linearly independent rows of `a` can be less than, equal
+    to, or greater than its number of linearly independent columns).
+    If `a` is square and of full rank, then `x` (but for round-off error)
+    is the "exact" solution of the equation.
 
     Parameters
     ----------
@@ -2104,15 +2208,15 @@ def lstsq(a, b, rcond="warn"):
            [ 3.,  1.]])
 
     >>> m, c = np.linalg.lstsq(A, y, rcond=None)[0]
-    >>> print(m, c)
-    1.0 -0.95
+    >>> m, c
+    (1.0 -0.95) # may vary
 
     Plot the data along with the fitted line:
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.plot(x, y, 'o', label='Original data', markersize=10)
-    >>> plt.plot(x, m*x + c, 'r', label='Fitted line')
-    >>> plt.legend()
+    >>> _ = plt.plot(x, y, 'o', label='Original data', markersize=10)
+    >>> _ = plt.plot(x, m*x + c, 'r', label='Fitted line')
+    >>> _ = plt.legend()
     >>> plt.show()
 
     """
@@ -2128,6 +2232,7 @@ def lstsq(a, b, rcond="warn"):
         raise LinAlgError('Incompatible dimensions')
 
     t, result_t = _commonType(a, b)
+    # FIXME: real_t is unused
     real_t = _linalgRealType(t)
     result_real_t = _realType(result_t)
 
@@ -2208,6 +2313,11 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     return result
 
 
+def _norm_dispatcher(x, ord=None, axis=None, keepdims=None):
+    return (x,)
+
+
+@array_function_dispatch(_norm_dispatcher)
 def norm(x, ord=None, axis=None, keepdims=False):
     """
     Matrix or vector norm.
@@ -2284,7 +2394,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
     >>> from numpy import linalg as LA
     >>> a = np.arange(9) - 4
     >>> a
-    array([-4, -3, -2, -1,  0,  1,  2,  3,  4])
+    array([-4, -3, -2, ...,  2,  3,  4])
     >>> b = a.reshape((3, 3))
     >>> b
     array([[-4, -3, -2],
@@ -2320,13 +2430,13 @@ def norm(x, ord=None, axis=None, keepdims=False):
     7.3484692283495345
 
     >>> LA.norm(a, -2)
-    nan
+    0.0
     >>> LA.norm(b, -2)
-    1.8570331885190563e-016
+    1.8570331885190563e-016 # may vary
     >>> LA.norm(a, 3)
-    5.8480354764257312
+    5.8480354764257312 # may vary
     >>> LA.norm(a, -3)
-    nan
+    0.0
 
     Using the `axis` argument to compute vector norms:
 
@@ -2450,6 +2560,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
 # multi_dot
 
+def _multidot_dispatcher(arrays):
+    return arrays
+
+
+@array_function_dispatch(_multidot_dispatcher)
 def multi_dot(arrays):
     """
     Compute the dot product of two or more arrays in a single function call,
@@ -2496,18 +2611,18 @@ def multi_dot(arrays):
 
     >>> from numpy.linalg import multi_dot
     >>> # Prepare some data
-    >>> A = np.random.random(10000, 100)
-    >>> B = np.random.random(100, 1000)
-    >>> C = np.random.random(1000, 5)
-    >>> D = np.random.random(5, 333)
+    >>> A = np.random.random((10000, 100))
+    >>> B = np.random.random((100, 1000))
+    >>> C = np.random.random((1000, 5))
+    >>> D = np.random.random((5, 333))
     >>> # the actual dot multiplication
-    >>> multi_dot([A, B, C, D])
+    >>> _ = multi_dot([A, B, C, D])
 
     instead of::
 
-    >>> np.dot(np.dot(np.dot(A, B), C), D)
+    >>> _ = np.dot(np.dot(np.dot(A, B), C), D)
     >>> # or
-    >>> A.dot(B).dot(C).dot(D)
+    >>> _ = A.dot(B).dot(C).dot(D)
 
     Notes
     -----
@@ -2517,7 +2632,7 @@ def multi_dot(arrays):
         def cost(A, B):
             return A.shape[0] * A.shape[1] * B.shape[1]
 
-    Let's assume we have three matrices
+    Assume we have three matrices
     :math:`A_{10x100}, B_{100x5}, C_{5x50}`.
 
     The costs for the two different parenthesizations are as follows::

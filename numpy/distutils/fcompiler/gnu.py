@@ -8,10 +8,10 @@ import platform
 import tempfile
 import hashlib
 import base64
+import subprocess
 from subprocess import Popen, PIPE, STDOUT
-from copy import copy
+from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils.exec_command import exec_command
 from numpy.distutils.compat import get_exception
 from numpy.distutils.system_info import system_info
 
@@ -160,9 +160,13 @@ class GnuFCompiler(FCompiler):
         return opt
 
     def get_libgcc_dir(self):
-        status, output = exec_command(
-            self.compiler_f77 + ['-print-libgcc-file-name'], use_tee=0)
-        if not status:
+        try:
+            output = subprocess.check_output(self.compiler_f77 +
+                                            ['-print-libgcc-file-name'])
+        except (OSError, subprocess.CalledProcessError):
+            pass
+        else:
+            output = filepath_from_subprocess_output(output)
             return os.path.dirname(output)
         return None
 
@@ -177,9 +181,13 @@ class GnuFCompiler(FCompiler):
         libgfortran_dir = None
         if libgfortran_name:
             find_lib_arg = ['-print-file-name={0}'.format(libgfortran_name)]
-            status, output = exec_command(
-                self.compiler_f77 + find_lib_arg, use_tee=0)
-            if not status:
+            try:
+                output = subprocess.check_output(
+                                       self.compiler_f77 + find_lib_arg)
+            except (OSError, subprocess.CalledProcessError):
+                pass
+            else:
+                output = filepath_from_subprocess_output(output)
                 libgfortran_dir = os.path.dirname(output)
         return libgfortran_dir
 
@@ -257,8 +265,15 @@ class GnuFCompiler(FCompiler):
         return []
 
     def runtime_library_dir_option(self, dir):
+        if sys.platform[:3] == 'aix' or sys.platform == 'win32':
+            # Linux/Solaris/Unix support RPATH, Windows and AIX do not
+            raise NotImplementedError
+
+        # TODO: could use -Xlinker here, if it's supported
+        assert "," not in dir
+
         sep = ',' if sys.platform == 'darwin' else '='
-        return '-Wl,-rpath%s"%s"' % (sep, dir)
+        return '-Wl,-rpath%s%s' % (sep, dir)
 
 
 class Gnu95FCompiler(GnuFCompiler):
@@ -302,6 +317,12 @@ class Gnu95FCompiler(GnuFCompiler):
 
     module_dir_switch = '-J'
     module_include_switch = '-I'
+
+    if sys.platform[:3] == 'aix':
+        executables['linker_so'].append('-lpthread')
+        if platform.architecture()[0][:2] == '64':
+            for key in ['compiler_f77', 'compiler_f90','compiler_fix','linker_so', 'linker_exe']:
+                executables[key].append('-maix64')
 
     g2c = 'gfortran'
 
@@ -373,8 +394,12 @@ class Gnu95FCompiler(GnuFCompiler):
         return opt
 
     def get_target(self):
-        status, output = exec_command(self.compiler_f77 + ['-v'], use_tee=0)
-        if not status:
+        try:
+            output = subprocess.check_output(self.compiler_f77 + ['-v'])
+        except (OSError, subprocess.CalledProcessError):
+            pass
+        else:
+            output = filepath_from_subprocess_output(output)
             m = TARGET_R.search(output)
             if m:
                 return m.group(1)

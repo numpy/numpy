@@ -29,7 +29,6 @@ else:
 
 import distutils.cygwinccompiler
 from distutils.version import StrictVersion
-from numpy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from distutils.errors import (DistutilsExecError, CompileError,
@@ -71,7 +70,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # we need to support 3.2 which doesn't match the standard
         # get_versions methods regex
         if self.gcc_version is None:
-            import re
             p = subprocess.Popen(['gcc', '-dumpversion'], shell=True,
                                  stdout=subprocess.PIPE)
             out_string = p.stdout.read()

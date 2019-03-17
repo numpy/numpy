@@ -6,7 +6,7 @@ from numpy.lib.histograms import histogram, histogramdd, histogram_bin_edges
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose,
-    assert_array_max_ulp, assert_warns, assert_raises_regex, suppress_warnings,
+    assert_array_max_ulp, assert_raises_regex, suppress_warnings,
     )
 
 
@@ -119,6 +119,13 @@ class TestHistogram(object):
         h, b = histogram(a, bins=8, range=[1, 9], weights=w)
         assert_equal(h, w[1:-1])
 
+    def test_arr_weights_mismatch(self):
+        a = np.arange(10) + .5
+        w = np.arange(11) + .5
+        with assert_raises_regex(ValueError, "same shape as"):
+            h, b = histogram(a, range=[1, 9], weights=w, density=True)
+
+
     def test_type(self):
         # Check the type of the returned histogram
         a = np.arange(10) + .5
@@ -140,6 +147,23 @@ class TestHistogram(object):
         y = np.array([5005.689453, 4481.327637, 6010.369629], dtype=np.float32)
         counts_hist, xedges, yedges = np.histogram2d(x, y, bins=100)
         assert_equal(counts_hist.sum(), 3.)
+
+    def test_bool_conversion(self):
+        # gh-12107
+        # Reference integer histogram
+        a = np.array([1, 1, 0], dtype=np.uint8)
+        int_hist, int_edges = np.histogram(a)
+
+        # Should raise an warning on booleans
+        # Ensure that the histograms are equivalent, need to suppress
+        # the warnings to get the actual outputs
+        with suppress_warnings() as sup:
+            rec = sup.record(RuntimeWarning, 'Converting input from .*')
+            hist, edges = np.histogram([True, True, False])
+            # A warning should be issued
+            assert_equal(len(rec), 1)
+            assert_array_equal(hist, int_hist)
+            assert_array_equal(edges, int_edges)
 
     def test_weights(self):
         v = np.random.rand(100)
@@ -225,6 +249,12 @@ class TestHistogram(object):
         assert_raises(ValueError, histogram, vals, range=[np.nan,0.75])
         assert_raises(ValueError, histogram, vals, range=[0.25,np.inf])
 
+    def test_invalid_range(self):
+        # start of range must be < end of range
+        vals = np.linspace(0.0, 1.0, num=100)
+        with assert_raises_regex(ValueError, "max must be larger than"):
+            np.histogram(vals, range=[0.1, 0.01])
+
     def test_bin_edge_cases(self):
         # Ensure that floating-point computations correctly place edge cases.
         arr = np.array([337, 404, 739, 806, 1007, 1811, 2012])
@@ -241,6 +271,13 @@ class TestHistogram(object):
         hist, edges = np.histogram(arr, bins=30, range=(-0.5, 5))
         assert_equal(hist[-1], 1)
 
+    def test_bin_array_dims(self):
+        # gracefully handle bins object > 1 dimension
+        vals = np.linspace(0.0, 1.0, num=100)
+        bins = np.array([[0, 0.5], [0.6, 1.0]])
+        with assert_raises_regex(ValueError, "must be 1d"):
+            np.histogram(vals, bins=bins)
+
     def test_unsigned_monotonicity_check(self):
         # Ensures ValueError is raised if bins not increasing monotonically
         # when bins contain unsigned values (see #9222)
@@ -252,13 +289,13 @@ class TestHistogram(object):
     def test_object_array_of_0d(self):
         # gh-7864
         assert_raises(ValueError,
-            histogram, [np.array([0.4]) for i in range(10)] + [-np.inf])
+            histogram, [np.array(0.4) for i in range(10)] + [-np.inf])
         assert_raises(ValueError,
-            histogram, [np.array([0.4]) for i in range(10)] + [np.inf])
+            histogram, [np.array(0.4) for i in range(10)] + [np.inf])
 
         # these should not crash
-        np.histogram([np.array([0.5]) for i in range(10)] + [.500000000000001])
-        np.histogram([np.array([0.5]) for i in range(10)] + [.5])
+        np.histogram([np.array(0.5) for i in range(10)] + [.500000000000001])
+        np.histogram([np.array(0.5) for i in range(10)] + [.5])
 
     def test_some_nan_values(self):
         # gh-7503
@@ -394,7 +431,7 @@ class TestHistogramOptimBinNums(object):
 
     def test_empty(self):
         estimator_list = ['fd', 'scott', 'rice', 'sturges',
-                          'doane', 'sqrt', 'auto']
+                          'doane', 'sqrt', 'auto', 'stone']
         # check it can deal with empty data
         for estimator in estimator_list:
             a, b = histogram([], bins=estimator)
@@ -410,11 +447,11 @@ class TestHistogramOptimBinNums(object):
         # Some basic sanity checking, with some fixed data.
         # Checking for the correct number of bins
         basic_test = {50:   {'fd': 4,  'scott': 4,  'rice': 8,  'sturges': 7,
-                             'doane': 8, 'sqrt': 8, 'auto': 7},
+                             'doane': 8, 'sqrt': 8, 'auto': 7, 'stone': 2},
                       500:  {'fd': 8,  'scott': 8,  'rice': 16, 'sturges': 10,
-                             'doane': 12, 'sqrt': 23, 'auto': 10},
+                             'doane': 12, 'sqrt': 23, 'auto': 10, 'stone': 9},
                       5000: {'fd': 17, 'scott': 17, 'rice': 35, 'sturges': 14,
-                             'doane': 17, 'sqrt': 71, 'auto': 17}}
+                             'doane': 17, 'sqrt': 71, 'auto': 17, 'stone': 20}}
 
         for testlen, expectedResults in basic_test.items():
             # Create some sort of non uniform data to test with
@@ -434,11 +471,11 @@ class TestHistogramOptimBinNums(object):
         precalculated.
         """
         small_dat = {1: {'fd': 1, 'scott': 1, 'rice': 1, 'sturges': 1,
-                         'doane': 1, 'sqrt': 1},
+                         'doane': 1, 'sqrt': 1, 'stone': 1},
                      2: {'fd': 2, 'scott': 1, 'rice': 3, 'sturges': 2,
-                         'doane': 1, 'sqrt': 2},
+                         'doane': 1, 'sqrt': 2, 'stone': 1},
                      3: {'fd': 2, 'scott': 2, 'rice': 3, 'sturges': 3,
-                         'doane': 3, 'sqrt': 2}}
+                         'doane': 3, 'sqrt': 2, 'stone': 1}}
 
         for testlen, expectedResults in small_dat.items():
             testdat = np.arange(testlen)
@@ -462,7 +499,7 @@ class TestHistogramOptimBinNums(object):
         """
         novar_dataset = np.ones(100)
         novar_resultdict = {'fd': 1, 'scott': 1, 'rice': 1, 'sturges': 1,
-                            'doane': 1, 'sqrt': 1, 'auto': 1}
+                            'doane': 1, 'sqrt': 1, 'auto': 1, 'stone': 1}
 
         for estimator, numbins in novar_resultdict.items():
             a, b = np.histogram(novar_dataset, estimator)
@@ -501,11 +538,31 @@ class TestHistogramOptimBinNums(object):
         xcenter = np.linspace(-10, 10, 50)
         outlier_dataset = np.hstack((np.linspace(-110, -100, 5), xcenter))
 
-        outlier_resultdict = {'fd': 21, 'scott': 5, 'doane': 11}
+        outlier_resultdict = {'fd': 21, 'scott': 5, 'doane': 11, 'stone': 6}
 
         for estimator, numbins in outlier_resultdict.items():
             a, b = np.histogram(outlier_dataset, estimator)
             assert_equal(len(a), numbins)
+
+    def test_scott_vs_stone(self):
+        """Verify that Scott's rule and Stone's rule converges for normally distributed data"""
+
+        def nbins_ratio(seed, size):
+            rng = np.random.RandomState(seed)
+            x = rng.normal(loc=0, scale=2, size=size)
+            a, b = len(np.histogram(x, 'stone')[0]), len(np.histogram(x, 'scott')[0])
+            return a / (a + b)
+
+        ll = [[nbins_ratio(seed, size) for size in np.geomspace(start=10, stop=100, num=4).round().astype(int)]
+              for seed in range(256)]
+
+        # the average difference between the two methods decreases as the dataset size increases.
+        assert_almost_equal(abs(np.mean(ll, axis=0) - 0.5),
+                            [0.1065248,
+                             0.0968844,
+                             0.0331818,
+                             0.0178057],
+                            decimal=3)
 
     def test_simple_range(self):
         """
@@ -518,11 +575,11 @@ class TestHistogramOptimBinNums(object):
         # Checking for the correct number of bins
         basic_test = {
                       50:   {'fd': 8,  'scott': 8,  'rice': 15,
-                             'sturges': 14, 'auto': 14},
+                             'sturges': 14, 'auto': 14, 'stone': 8},
                       500:  {'fd': 15, 'scott': 16, 'rice': 32,
-                             'sturges': 20, 'auto': 20},
+                             'sturges': 20, 'auto': 20, 'stone': 80},
                       5000: {'fd': 33, 'scott': 33, 'rice': 69,
-                             'sturges': 27, 'auto': 33}
+                             'sturges': 27, 'auto': 33, 'stone': 80}
                      }
 
         for testlen, expectedResults in basic_test.items():
@@ -757,3 +814,20 @@ class TestHistogramdd(object):
         hist_dd, edges_dd = histogramdd((v,), (bins,), density=True)
         assert_equal(hist, hist_dd)
         assert_equal(edges, edges_dd[0])
+
+    def test_density_via_normed(self):
+        # normed should simply alias to density argument
+        v = np.arange(10)
+        bins = np.array([0, 1, 3, 6, 10])
+        hist, edges = histogram(v, bins, density=True)
+        hist_dd, edges_dd = histogramdd((v,), (bins,), normed=True)
+        assert_equal(hist, hist_dd)
+        assert_equal(edges, edges_dd[0])
+
+    def test_density_normed_redundancy(self):
+        v = np.arange(10)
+        bins = np.array([0, 1, 3, 6, 10])
+        with assert_raises_regex(TypeError, "Cannot specify both"):
+            hist_dd, edges_dd = histogramdd((v,), (bins,),
+                                            density=True,
+                                            normed=True)

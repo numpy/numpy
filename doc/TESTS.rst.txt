@@ -37,10 +37,9 @@ or from the command line::
 
   $ python runtests.py
 
-SciPy uses the testing framework from NumPy (specifically
-:ref:`numpy-testing`), so all the SciPy examples shown here are also
-applicable to NumPy.  NumPy's full test suite can be run as
-follows::
+SciPy uses the testing framework from :mod:`numpy.testing`, so all
+the SciPy examples shown here are also applicable to NumPy.  NumPy's full test
+suite can be run as follows::
 
   >>> import numpy
   >>> numpy.test()
@@ -119,15 +118,6 @@ Note that ``test_`` functions or methods should not have a docstring, because
 that makes it hard to identify the test from the output of running the test
 suite with ``verbose=2`` (or similar verbosity setting).  Use plain comments
 (``#``) if necessary.
-
-Sometimes it is convenient to run ``test_yyy.py`` by itself, so we add
-
-::
-
-  if __name__ == "__main__":
-      run_module_suite()
-
-at the bottom.
 
 Labeling tests 
 --------------

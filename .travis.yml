@@ -2,8 +2,7 @@
 #   http://lint.travis-ci.org/
 language: python
 group: travis_latest
-# Run jobs on container-based infrastructure, can be overridden per job
-sudo: false
+dist: xenial
 
 # Travis whitelists the installable packages, additions can be requested
 #   https://github.com/travis-ci/apt-package-whitelist
@@ -31,25 +30,13 @@ env:
                ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
 
 python:
-  - 2.7
-  - 3.4
   - 3.5
   - 3.6
 matrix:
   include:
     - python: 3.7
-      dist: xenial  # Required for Python 3.7
-      sudo: true    # travis-ci/travis-ci#9069
-    - python: 3.6
-      env: USE_CHROOT=1 ARCH=i386 DIST=bionic PYTHON=3.6
-      sudo: true
-      addons:
-        apt:
-          update: true
-          packages:
-            - dpkg
-            - debootstrap
-    - python: 3.4
+      env: INSTALL_PICKLE5=1
+    - python: 3.5
       env: USE_DEBUG=1
       addons:
         apt:
@@ -60,9 +47,7 @@ matrix:
             - python3-dev
             - python3-setuptools
     - python: 3.6
-      env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1
-    - python: 2.7
-      env: USE_WHEEL=1 RUN_FULL_TESTS=1 PYTHON_OPTS="-3 -OO"
+      env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1 INSTALL_PICKLE5=1
     - python: 3.6
       env: USE_SDIST=1
     - python: 3.6
@@ -70,6 +55,7 @@ matrix:
        - PYTHONOPTIMIZE=2
        - USE_ASV=1
     - python: 3.5
+      dist: trusty # remove after April 2019
       env: NPY_RELAXED_STRIDES_CHECKING=0
     - python: 3.6
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
@@ -78,6 +64,11 @@ matrix:
        - BLAS=None
        - LAPACK=None
        - ATLAS=None
+    - os: linux-ppc64le
+      python: 3.6
+      env:
+       # for matrix annotation only
+       - PPC64_LE=1
 
 before_install:
   - ./tools/travis-before-install.sh

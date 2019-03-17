@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises
+    assert_array_almost_equal, assert_raises, assert_allclose
     )
 
 
@@ -122,26 +122,33 @@ class TestPolynomial(object):
         weights = np.arange(8, 1, -1)**2/7.0
 
         # Check exception when too few points for variance estimate. Note that
-        # the Bayesian estimate requires the number of data points to exceed
-        # degree + 3.
+        # the estimate requires the number of data points to exceed
+        # degree + 1
         assert_raises(ValueError, np.polyfit,
-                      [0, 1, 3], [0, 1, 3], deg=0, cov=True)
+                      [1], [1], deg=0, cov=True)
 
         # check 1D case
         m, cov = np.polyfit(x, y+err, 2, cov=True)
         est = [3.8571, 0.2857, 1.619]
         assert_almost_equal(est, m, decimal=4)
-        val0 = [[2.9388, -5.8776, 1.6327],
-                [-5.8776, 12.7347, -4.2449],
-                [1.6327, -4.2449, 2.3220]]
+        val0 = [[ 1.4694, -2.9388,  0.8163],
+                [-2.9388,  6.3673, -2.1224],
+                [ 0.8163, -2.1224,  1.161 ]]
         assert_almost_equal(val0, cov, decimal=4)
 
         m2, cov2 = np.polyfit(x, y+err, 2, w=weights, cov=True)
         assert_almost_equal([4.8927, -1.0177, 1.7768], m2, decimal=4)
-        val = [[8.7929, -10.0103, 0.9756],
-               [-10.0103, 13.6134, -1.8178],
-               [0.9756, -1.8178, 0.6674]]
+        val = [[ 4.3964, -5.0052,  0.4878],
+               [-5.0052,  6.8067, -0.9089],
+               [ 0.4878, -0.9089,  0.3337]]
         assert_almost_equal(val, cov2, decimal=4)
+
+        m3, cov3 = np.polyfit(x, y+err, 2, w=weights, cov="unscaled")
+        assert_almost_equal([4.8927, -1.0177, 1.7768], m3, decimal=4)
+        val = [[ 0.1473, -0.1677,  0.0163],
+               [-0.1677,  0.228 , -0.0304],
+               [ 0.0163, -0.0304,  0.0112]]
+        assert_almost_equal(val, cov3, decimal=4)
 
         # check 2D (n,1) case
         y = y[:, np.newaxis]
@@ -157,6 +164,29 @@ class TestPolynomial(object):
         assert_almost_equal(est, m[:, 1], decimal=4)
         assert_almost_equal(val0, cov[:, :, 0], decimal=4)
         assert_almost_equal(val0, cov[:, :, 1], decimal=4)
+
+        # check order 1 (deg=0) case, were the analytic results are simple
+        np.random.seed(123)
+        y = np.random.normal(size=(4, 10000))
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, deg=0, cov=True)
+        # Should get sigma_mean = sigma/sqrt(N) = 1./sqrt(4) = 0.5.
+        assert_allclose(mean.std(), 0.5, atol=0.01)
+        assert_allclose(np.sqrt(cov.mean()), 0.5, atol=0.01)
+        # Without scaling, since reduced chi2 is 1, the result should be the same.
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=np.ones(y.shape[0]),
+                               deg=0, cov="unscaled")
+        assert_allclose(mean.std(), 0.5, atol=0.01)
+        assert_almost_equal(np.sqrt(cov.mean()), 0.5)
+        # If we estimate our errors wrong, no change with scaling:
+        w = np.full(y.shape[0], 1./0.5)
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=w, deg=0, cov=True)
+        assert_allclose(mean.std(), 0.5, atol=0.01)
+        assert_allclose(np.sqrt(cov.mean()), 0.5, atol=0.01)
+        # But if we do not scale, our estimate for the error in the mean will
+        # differ.
+        mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=w, deg=0, cov="unscaled")
+        assert_allclose(mean.std(), 0.5, atol=0.01)
+        assert_almost_equal(np.sqrt(cov.mean()), 0.25)
 
     def test_objects(self):
         from decimal import Decimal

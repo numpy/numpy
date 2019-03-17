@@ -2,7 +2,8 @@
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "structmember.h"
-
+#include <limits.h>
+#include <assert.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -34,8 +35,7 @@
 
 #include "cblasfuncs.h"
 #include "npy_cblas.h"
-#include <limits.h>
-#include <assert.h>
+#include "buffer.h"
 
 /* check for sequences, but ignore the types numpy considers scalars */
 static NPY_INLINE npy_bool
@@ -149,32 +149,6 @@ MyPyLong_AsUnsigned@Type@ (PyObject *obj)
 }
 
 /**end repeat**/
-
-static npy_longlong
-npy_strtoll(const char *str, char **endptr, int base)
-{
-#if defined HAVE_STRTOLL
-    return strtoll(str, endptr, base);
-#elif defined _MSC_VER
-    return _strtoi64(str, endptr, base);
-#else
-    /* ok on 64 bit posix */
-    return PyOS_strtol(str, endptr, base);
-#endif
-}
-
-static npy_ulonglong
-npy_strtoull(const char *str, char **endptr, int base)
-{
-#if defined HAVE_STRTOULL
-    return strtoull(str, endptr, base);
-#elif defined _MSC_VER
-    return _strtoui64(str, endptr, base);
-#else
-    /* ok on 64 bit posix */
-    return PyOS_strtoul(str, endptr, base);
-#endif
-}
 
 /*
  *****************************************************************************
@@ -947,6 +921,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             memset(ip + view.len, 0, itemsize - view.len);
         }
         PyBuffer_Release(&view);
+        _dealloc_cached_buffer_info(op);
     }
 #else
     {
@@ -1489,10 +1464,14 @@ OBJECT_to_@TOTYPE@(void *input, void *output, npy_intp n,
 
     for (i = 0; i < n; i++, ip++, op += skip) {
         if (*ip == NULL) {
-            @TOTYPE@_setitem(Py_False, op, aop);
+            if (@TOTYPE@_setitem(Py_False, op, aop) < 0) {
+                return;
+            }
         }
         else {
-            @TOTYPE@_setitem(*ip, op, aop);
+            if (@TOTYPE@_setitem(*ip, op, aop) < 0) {
+                return;
+            }
         }
     }
 }
@@ -1792,8 +1771,8 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_datetime, npy_timedelta#
- * #func = (PyOS_strtol, PyOS_strtoul)*4, npy_strtoll, npy_strtoull,
- *         npy_strtoll*2#
+ * #func = (PyOS_strtol, PyOS_strtoul)*4, NumPyOS_strtoll, NumPyOS_strtoull,
+ *         NumPyOS_strtoll*2#
  * #btype = (npy_long, npy_ulong)*4, npy_longlong, npy_ulonglong,
  *          npy_longlong*2#
  */
@@ -2226,15 +2205,19 @@ static void
 VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
                 npy_intp n, int swap, PyArrayObject *arr)
 {
+    PyArray_Descr *descr;
+
     if (arr == NULL) {
         return;
     }
+
+    descr = PyArray_DESCR(arr);
+
     if (PyArray_HASFIELDS(arr)) {
         PyObject *key, *value;
-        PyArray_Descr *descr;
+
         Py_ssize_t pos = 0;
 
-        descr = PyArray_DESCR(arr);
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
             npy_intp offset;
             PyArray_Descr * new;
@@ -2257,14 +2240,28 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
-    if (swap && PyArray_DESCR(arr)->subarray != NULL) {
-        PyArray_Descr *descr, *new;
+    if (PyDataType_HASSUBARRAY(descr)) {
+        PyArray_Descr *new;
         npy_intp num;
         npy_intp i;
         int subitemsize;
         char *dstptr, *srcptr;
+        /*
+         * In certain cases subarray copy can be optimized. This is when
+         * swapping is unecessary and the subarrays data type can certainly
+         * be simply copied (no object, fields, subarray, and not a user dtype).
+         */
+        npy_bool can_optimize_subarray = (!swap &&
+                !PyDataType_HASFIELDS(descr->subarray->base) &&
+                !PyDataType_HASSUBARRAY(descr->subarray->base) &&
+                !PyDataType_REFCHK(descr->subarray->base) &&
+                (descr->subarray->base->type_num < NPY_NTYPES));
 
-        descr = PyArray_DESCR(arr);
+        if (can_optimize_subarray) {
+            _basic_copyn(dst, dstride, src, sstride, n, descr->elsize);
+            return;
+        }
+
         new = descr->subarray->base;
         /*
          * TODO: temporarily modifying the array like this
@@ -2274,6 +2271,10 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         dstptr = dst;
         srcptr = src;
         subitemsize = new->elsize;
+        if (subitemsize == 0) {
+            /* There cannot be any elements, so return */
+            return;
+        }
         num = descr->elsize / subitemsize;
         for (i = 0; i < n; i++) {
             new->f->copyswapn(dstptr, subitemsize, srcptr,
@@ -2286,22 +2287,26 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
-    _basic_copyn(dst, dstride, src, sstride, n, PyArray_DESCR(arr)->elsize);
+    /* Must be a naive Void type (e.g. a "V8") so simple copy is sufficient. */
+    _basic_copyn(dst, dstride, src, sstride, n, descr->elsize);
     return;
 }
 
 static void
 VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
 {
+    PyArray_Descr *descr;
+
     if (arr == NULL) {
         return;
     }
+
+    descr = PyArray_DESCR(arr);
+
     if (PyArray_HASFIELDS(arr)) {
         PyObject *key, *value;
-        PyArray_Descr *descr;
         Py_ssize_t pos = 0;
 
-        descr = PyArray_DESCR(arr);
         while (PyDict_Next(descr->fields, &pos, &key, &value)) {
             npy_intp offset;
             PyArray_Descr * new;
@@ -2324,28 +2329,45 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
-    if (swap && PyArray_DESCR(arr)->subarray != NULL) {
-        PyArray_Descr *descr, *new;
+    if (PyDataType_HASSUBARRAY(descr)) {
+        PyArray_Descr *new;
         npy_intp num;
-        int itemsize;
+        int subitemsize;
+        /*
+         * In certain cases subarray copy can be optimized. This is when
+         * swapping is unecessary and the subarrays data type can certainly
+         * be simply copied (no object, fields, subarray, and not a user dtype).
+         */
+        npy_bool can_optimize_subarray = (!swap &&
+                !PyDataType_HASFIELDS(descr->subarray->base) &&
+                !PyDataType_HASSUBARRAY(descr->subarray->base) &&
+                !PyDataType_REFCHK(descr->subarray->base) &&
+                (descr->subarray->base->type_num < NPY_NTYPES));
 
-        descr = PyArray_DESCR(arr);
+        if (can_optimize_subarray) {
+            _basic_copy(dst, src, descr->elsize);
+            return;
+        }
+
         new = descr->subarray->base;
         /*
          * TODO: temporarily modifying the array like this
          *       is bad coding style, should be changed.
          */
         ((PyArrayObject_fields *)arr)->descr = new;
-        itemsize = new->elsize;
-        num = descr->elsize / itemsize;
-        new->f->copyswapn(dst, itemsize, src,
-                itemsize, num, swap, arr);
+        subitemsize = new->elsize;
+        if (subitemsize == 0) {
+            /* There cannot be any elements, so return */
+            return;
+        }
+        num = descr->elsize / subitemsize;
+        new->f->copyswapn(dst, subitemsize, src,
+                subitemsize, num, swap, arr);
         ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
-
-    /* copy first if needed */
-    _basic_copy(dst, src, PyArray_DESCR(arr)->elsize);
+    /* Must be a naive Void type (e.g. a "V8") so simple copy is sufficient. */
+    _basic_copy(dst, src, descr->elsize);
     return;
 }
 
@@ -3615,9 +3637,10 @@ OBJECT_dot(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp 
 #define BOOL_fill NULL
 
 /* this requires buffer to be filled with objects or NULL */
-static void
+static int
 OBJECT_fill(PyObject **buffer, npy_intp length, void *NPY_UNUSED(ignored))
 {
+    int retval = 0;
     npy_intp i;
     PyObject *start = buffer[0];
     PyObject *delta = buffer[1];
@@ -3625,27 +3648,31 @@ OBJECT_fill(PyObject **buffer, npy_intp length, void *NPY_UNUSED(ignored))
 
     delta = PyNumber_Subtract(delta, start);
     if (!delta) {
-        return;
+        return -1;
     }
     second = start = PyNumber_Add(start, delta);
     if (!start) {
-        goto finish;
+        goto error;
     }
     buffer += 2;
 
     for (i = 2; i < length; i++, buffer++) {
         start = PyNumber_Add(start, delta);
         if (!start) {
-            goto finish;
+            goto error;
         }
         Py_XDECREF(*buffer);
         *buffer = start;
     }
+    goto finish;
+
+error:
+    retval = -1;
 
 finish:
     Py_XDECREF(second);
     Py_DECREF(delta);
-    return;
+    return retval;
 }
 
 /**begin repeat
@@ -3659,7 +3686,7 @@ finish:
  *         npy_float, npy_double, npy_longdouble,
  *         npy_datetime, npy_timedelta#
 */
-static void
+static int
 @NAME@_fill(@type@ *buffer, npy_intp length, void *NPY_UNUSED(ignored))
 {
     npy_intp i;
@@ -3670,10 +3697,11 @@ static void
     for (i = 2; i < length; ++i) {
         buffer[i] = start + i*delta;
     }
+    return 0;
 }
 /**end repeat**/
 
-static void
+static int
 HALF_fill(npy_half *buffer, npy_intp length, void *NPY_UNUSED(ignored))
 {
     npy_intp i;
@@ -3684,6 +3712,7 @@ HALF_fill(npy_half *buffer, npy_intp length, void *NPY_UNUSED(ignored))
     for (i = 2; i < length; ++i) {
         buffer[i] = npy_float_to_half(start + i*delta);
     }
+    return 0;
 }
 
 /**begin repeat
@@ -3691,7 +3720,7 @@ HALF_fill(npy_half *buffer, npy_intp length, void *NPY_UNUSED(ignored))
  * #NAME = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
 */
-static void
+static int
 @NAME@_fill(@type@ *buffer, npy_intp length, void *NPY_UNUSED(ignore))
 {
     npy_intp i;
@@ -3709,6 +3738,7 @@ static void
         buffer->real = start.real + i*delta.real;
         buffer->imag = start.imag + i*delta.imag;
     }
+    return 0;
 }
 /**end repeat**/
 
@@ -4188,6 +4218,53 @@ small_correlate(const char * d_, npy_intp dstride,
 }
 
 /*
+*/
+
+/* A clone function for the datetime dtype c_metadata */
+static NpyAuxData *
+_datetime_dtype_metadata_clone(NpyAuxData *data)
+{
+    PyArray_DatetimeDTypeMetaData *newdata =
+        (PyArray_DatetimeDTypeMetaData *)PyArray_malloc(
+                        sizeof(*newdata));
+    if (newdata == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    memcpy(newdata, data, sizeof(*newdata));
+
+    return (NpyAuxData *)newdata;
+}
+
+/*
+ * Allcoate and initialize a PyArray_DatetimeDTypeMetaData object
+ */
+static NpyAuxData*
+_create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
+{
+    PyArray_DatetimeDTypeMetaData *data;
+
+    /* Allocate memory for the metadata */
+    data = PyArray_malloc(sizeof(*data));
+    if (data == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    /* Initialize the base aux data */
+    memset(data, 0, sizeof(PyArray_DatetimeDTypeMetaData));
+    data->base.free = (NpyAuxData_FreeFunc *)PyArray_free;
+    data->base.clone = _datetime_dtype_metadata_clone;
+
+    data->meta.base = base;
+    data->meta.num = num;
+
+    return (NpyAuxData*)data;
+}
+
+
+/*
  *****************************************************************************
  **                       SETUP FUNCTION POINTERS                           **
  *****************************************************************************
@@ -4243,12 +4320,12 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     {
         quicksort_@suff@,
         heapsort_@suff@,
-        mergesort_@suff@
+        timsort_@suff@
     },
     {
         aquicksort_@suff@,
         aheapsort_@suff@,
-        amergesort_@suff@
+        atimsort_@suff@
     },
 #else
     {
@@ -4322,12 +4399,11 @@ static PyArray_Descr @from@_Descr = {
  *         cfloat, cdouble, clongdouble,
  *         object, datetime, timedelta#
  * #sort = 1*18, 0*1, 1*2#
- * #num = 1*15, 2*3, 1*3#
  * #fromtype = npy_bool,
  *             npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *             npy_half, npy_float, npy_double, npy_longdouble,
- *             npy_float, npy_double, npy_longdouble,
+ *             npy_cfloat, npy_cdouble, npy_clongdouble,
  *             PyObject *, npy_datetime, npy_timedelta#
  * #NAME = Bool,
  *         Byte, UByte, Short, UShort, Int, UInt,
@@ -4385,12 +4461,12 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     {
         quicksort_@suff@,
         heapsort_@suff@,
-        mergesort_@suff@
+        timsort_@suff@
     },
     {
         aquicksort_@suff@,
         aheapsort_@suff@,
-        amergesort_@suff@
+        atimsort_@suff@
     },
 #else
     {
@@ -4428,10 +4504,9 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     /* type_num */
     NPY_@from@,
     /* elsize */
-    @num@ * sizeof(@fromtype@),
+    sizeof(@fromtype@),
     /* alignment */
-    @num@ * _ALIGN(@fromtype@) > NPY_MAX_COPY_ALIGNMENT ?
-        NPY_MAX_COPY_ALIGNMENT : @num@ * _ALIGN(@fromtype@),
+    _ALIGN(@fromtype@),
     /* subarray */
     NULL,
     /* fields */
@@ -4545,66 +4620,6 @@ PyArray_DescrFromType(int type)
     return ret;
 }
 
-/* A clone function for the datetime dtype metadata */
-static NpyAuxData *
-datetime_dtype_metadata_clone(NpyAuxData *data)
-{
-    PyArray_DatetimeDTypeMetaData *newdata =
-        (PyArray_DatetimeDTypeMetaData *)PyArray_malloc(
-                        sizeof(PyArray_DatetimeDTypeMetaData));
-    if (newdata == NULL) {
-        return NULL;
-    }
-
-    memcpy(newdata, data, sizeof(PyArray_DatetimeDTypeMetaData));
-
-    return (NpyAuxData *)newdata;
-}
-
-/*
- * Initializes the c_metadata field for the _builtin_descrs DATETIME
- * and TIMEDELTA.
- *
- * must not be static, gcc 4.1.2 on redhat 5 then miscompiles this function
- * see gh-5163
- *
- */
-NPY_NO_EXPORT int
-initialize_builtin_datetime_metadata(void)
-{
-    PyArray_DatetimeDTypeMetaData *data1, *data2;
-
-    /* Allocate memory for the metadata */
-    data1 = PyArray_malloc(sizeof(PyArray_DatetimeDTypeMetaData));
-    if (data1 == NULL) {
-        return -1;
-    }
-    data2 = PyArray_malloc(sizeof(PyArray_DatetimeDTypeMetaData));
-    if (data2 == NULL) {
-        PyArray_free(data1);
-        return -1;
-    }
-
-    /* Initialize the base aux data */
-    memset(data1, 0, sizeof(PyArray_DatetimeDTypeMetaData));
-    memset(data2, 0, sizeof(PyArray_DatetimeDTypeMetaData));
-    data1->base.free = (NpyAuxData_FreeFunc *)PyArray_free;
-    data2->base.free = (NpyAuxData_FreeFunc *)PyArray_free;
-    data1->base.clone = datetime_dtype_metadata_clone;
-    data2->base.clone = datetime_dtype_metadata_clone;
-
-    /* Set to the default metadata */
-    data1->meta.base = NPY_DATETIME_DEFAULTUNIT;
-    data1->meta.num = 1;
-    data2->meta.base = NPY_DATETIME_DEFAULTUNIT;
-    data2->meta.num = 1;
-
-    _builtin_descrs[NPY_DATETIME]->c_metadata = (NpyAuxData *)data1;
-    _builtin_descrs[NPY_TIMEDELTA]->c_metadata = (NpyAuxData *)data2;
-
-    return 0;
-}
-
 /*
  *****************************************************************************
  **                             SETUP TYPE INFO                             **
@@ -4673,7 +4688,14 @@ set_typeinfo(PyObject *dict)
 
     /**end repeat**/
 
-    if (initialize_builtin_datetime_metadata() < 0) {
+    _builtin_descrs[NPY_DATETIME]->c_metadata = _create_datetime_metadata(
+                NPY_DATETIME_DEFAULTUNIT, 1);
+    if (_builtin_descrs[NPY_DATETIME]->c_metadata == NULL) {
+        return -1;
+    }
+    _builtin_descrs[NPY_TIMEDELTA]->c_metadata = _create_datetime_metadata(
+                NPY_DATETIME_DEFAULTUNIT, 1);
+    if (_builtin_descrs[NPY_DATETIME]->c_metadata == NULL) {
         return -1;
     }
 
@@ -4786,13 +4808,10 @@ set_typeinfo(PyObject *dict)
      *         CFLOAT, CDOUBLE, CLONGDOUBLE#
      * #Name = Half, Float, Double, LongDouble,
      *         CFloat, CDouble, CLongDouble#
-     * #num  = 1, 1, 1, 1, 2, 2, 2#
      */
     s = PyArray_typeinfo(
         NPY_@name@LTR, NPY_@name@, NPY_BITSOF_@name@,
-        @num@ * _ALIGN(@type@) > NPY_MAX_COPY_ALIGNMENT ?
-            NPY_MAX_COPY_ALIGNMENT : @num@ * _ALIGN(@type@),
-        &Py@Name@ArrType_Type
+        _ALIGN(@type@), &Py@Name@ArrType_Type
     );
     if (s == NULL) {
         return -1;

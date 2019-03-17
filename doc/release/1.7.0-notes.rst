@@ -280,9 +280,9 @@ The macros in old_defines.h are deprecated and will be removed in the next
 major release (>= 2.0). The sed script tools/replace_old_macros.sed can be
 used to replace these macros with the newer versions.
 
-You can test your code against the deprecated C API by #defining
-NPY_NO_DEPRECATED_API to the target version number, for example
-NPY_1_7_API_VERSION, before including any NumPy headers.
+You can test your code against the deprecated C API by adding a line
+composed of ``#define NPY_NO_DEPRECATED_API`` and the target version number,
+such as ``NPY_1_7_API_VERSION``, before including any NumPy headers.
 
 The ``NPY_CHAR`` member of the ``NPY_TYPES`` enum is deprecated and will be
 removed in NumPy 1.8. See the discussion at

@@ -164,7 +164,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
-                    return -1;
+                    goto fail;
                 }
 #if defined(NPY_PY3K)
     #if PY_VERSION_HEX >= 0x03030000
@@ -182,7 +182,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #else
                 if ((temp = PyObject_Unicode(obj)) == NULL) {
 #endif
-                    return -1;
+                    goto fail;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
 #ifndef Py_UNICODE_WIDE
@@ -216,7 +216,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
-                    return -1;
+                    goto fail;
                 }
 #if defined(NPY_PY3K)
     #if PY_VERSION_HEX >= 0x03030000
@@ -234,7 +234,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #else
                 if ((temp = PyObject_Unicode(obj)) == NULL) {
 #endif
-                    return -1;
+                    goto fail;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
 #ifndef Py_UNICODE_WIDE
@@ -312,6 +312,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             PyErr_Clear();
             dtype = _descriptor_from_pep3118_format(buffer_view.format);
             PyBuffer_Release(&buffer_view);
+            _dealloc_cached_buffer_info(obj);
             if (dtype) {
                 goto promote_types;
             }
@@ -323,6 +324,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             dtype = PyArray_DescrNewFromType(NPY_VOID);
             dtype->elsize = buffer_view.itemsize;
             PyBuffer_Release(&buffer_view);
+            _dealloc_cached_buffer_info(obj);
             goto promote_types;
         }
         else {
@@ -438,12 +440,18 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         return 0;
     }
 
-    /* Recursive case, first check the sequence contains only one type */
+    /*
+     * The C-API recommends calling PySequence_Fast before any of the other
+     * PySequence_Fast* functions. This is required for PyPy
+     */
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
     if (seq == NULL) {
         goto fail;
     }
+
+    /* Recursive case, first check the sequence contains only one type */
     size = PySequence_Fast_GET_SIZE(seq);
+    /* objects is borrowed, do not release seq */
     objects = PySequence_Fast_ITEMS(seq);
     common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
     for (i = 1; i < size; ++i) {
@@ -503,7 +511,7 @@ promote_types:
         PyArray_Descr *res_dtype = PyArray_PromoteTypes(dtype, *out_dtype);
         Py_DECREF(dtype);
         if (res_dtype == NULL) {
-            return -1;
+            goto fail;
         }
         if (!string_type &&
                 res_dtype->type_num == NPY_UNICODE &&
@@ -587,50 +595,6 @@ _zerofill(PyArrayObject *ret)
     return 0;
 }
 
-NPY_NO_EXPORT int
-_IsAligned(PyArrayObject *ap)
-{
-    int i;
-    npy_uintp aligned;
-    npy_uintp alignment = PyArray_DESCR(ap)->alignment;
-
-    /* alignment 1 types should have a efficient alignment for copy loops */
-    if (PyArray_ISFLEXIBLE(ap) || PyArray_ISSTRING(ap)) {
-        npy_intp itemsize = PyArray_ITEMSIZE(ap);
-        /* power of two sizes may be loaded in larger moves */
-        if (((itemsize & (itemsize - 1)) == 0)) {
-            alignment = itemsize > NPY_MAX_COPY_ALIGNMENT ?
-                NPY_MAX_COPY_ALIGNMENT : itemsize;
-        }
-        else {
-            /* if not power of two it will be accessed bytewise */
-            alignment = 1;
-        }
-    }
-
-    if (alignment == 1) {
-        return 1;
-    }
-    aligned = (npy_uintp)PyArray_DATA(ap);
-
-    for (i = 0; i < PyArray_NDIM(ap); i++) {
-#if NPY_RELAXED_STRIDES_CHECKING
-        /* skip dim == 1 as it is not required to have stride 0 */
-        if (PyArray_DIM(ap, i) > 1) {
-            /* if shape[i] == 1, the stride is never used */
-            aligned |= (npy_uintp)PyArray_STRIDES(ap)[i];
-        }
-        else if (PyArray_DIM(ap, i) == 0) {
-            /* an array with zero elements is always aligned */
-            return 1;
-        }
-#else /* not NPY_RELAXED_STRIDES_CHECKING */
-        aligned |= (npy_uintp)PyArray_STRIDES(ap)[i];
-#endif /* not NPY_RELAXED_STRIDES_CHECKING */
-    }
-    return npy_is_aligned((void *)aligned, alignment);
-}
-
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap)
 {
@@ -651,12 +615,6 @@ _IsWriteable(PyArrayObject *ap)
      * If it is a writeable array, then return TRUE
      * If we can find an array object
      * or a writeable buffer object as the final base object
-     * or a string object (for pickling support memory savings).
-     * - this last could be removed if a proper pickleable
-     * buffer was added to Python.
-     *
-     * MW: I think it would better to disallow switching from READONLY
-     *     to WRITEABLE like this...
      */
 
     while(PyArray_Check(base)) {
@@ -665,21 +623,20 @@ _IsWriteable(PyArrayObject *ap)
         }
         base = PyArray_BASE((PyArrayObject *)base);
     }
-
-    /*
-     * here so pickle support works seamlessly
-     * and unpickled array can be set and reset writeable
-     * -- could be abused --
-     */
-    if (PyString_Check(base)) {
-        return NPY_TRUE;
-    }
 #if defined(NPY_PY3K)
     if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         PyErr_Clear();
         return NPY_FALSE;
     }
     PyBuffer_Release(&view);
+    /*
+     * The first call to PyObject_GetBuffer stores a reference to a struct
+     * _buffer_info_t (from buffer.c, with format, ndim, strides and shape) in
+     * a static dictionary, with id(base) as the key. Usually we release it
+     * after the call to PyBuffer_Release, via a call to
+     * _dealloc_cached_buffer_info, but in this case leave it in the cache to
+     * speed up future calls to _IsWriteable.
+     */
 #else
     if (PyObject_AsWriteBuffer(base, &dummy, &n) < 0) {
         PyErr_Clear();

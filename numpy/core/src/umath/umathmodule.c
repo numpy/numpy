@@ -16,12 +16,12 @@
  * __ufunc_api.c
  */
 #define _UMATHMODULE
+#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "Python.h"
 
 #include "npy_config.h"
-#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
@@ -29,20 +29,7 @@
 #include "abstract.h"
 
 #include "numpy/npy_math.h"
-
-/*
- *****************************************************************************
- **                    INCLUDE GENERATED CODE                               **
- *****************************************************************************
- */
-#include "funcs.inc"
-#include "loops.h"
-#include "ufunc_object.h"
-#include "ufunc_type_resolution.h"
-#include "__umath_generated.c"
-#include "__ufunc_api.c"
-
-NPY_NO_EXPORT int initscalarmath(PyObject *);
+#include "number.h"
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
@@ -82,7 +69,7 @@ object_ufunc_loop_selector(PyUFuncObject *ufunc,
     return 0;
 }
 
-static PyObject *
+PyObject *
 ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds)) {
     /* Keywords are ignored for now */
 
@@ -174,16 +161,17 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
 
     self->type_resolver = &object_ufunc_type_resolver;
     self->legacy_inner_loop_selector = &object_ufunc_loop_selector;
+    PyObject_GC_Track(self);
 
     return (PyObject *)self;
 }
 
 /* docstring in numpy.add_newdocs.py */
-static PyObject *
+PyObject *
 add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyUFuncObject *ufunc;
-    PyObject *str;
+    PyObject *str, *tmp;
     char *docstr, *newdocstr;
 
 #if defined(NPY_PY3K)
@@ -191,7 +179,11 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
                                         &PyUnicode_Type, &str)) {
         return NULL;
     }
-    docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
+    tmp = PyUnicode_AsUTF8String(str);
+    if (tmp == NULL) {
+        return NULL;
+    }
+    docstr = PyBytes_AS_STRING(tmp);
 #else
     if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
                                          &PyString_Type, &str)) {
@@ -203,6 +195,9 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (NULL != ufunc->doc) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot change docstring of ufunc with non-NULL docstring");
+#if defined(NPY_PY3K)
+        Py_DECREF(tmp);
+#endif
         return NULL;
     }
 
@@ -216,6 +211,9 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     strcpy(newdocstr, docstr);
     ufunc->doc = newdocstr;
 
+#if defined(NPY_PY3K)
+    Py_DECREF(tmp);
+#endif
     Py_RETURN_NONE;
 }
 
@@ -270,96 +268,19 @@ intern_strings(void)
         npy_um_str_array_wrap && npy_um_str_array_finalize && npy_um_str_ufunc;
 }
 
-/* Setup the umath module */
-/* Remove for time being, it is declared in __ufunc_api.h */
-/*static PyTypeObject PyUFunc_Type;*/
+/* Setup the umath part of the module */
 
-static struct PyMethodDef methods[] = {
-    {"frompyfunc",
-        (PyCFunction) ufunc_frompyfunc,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-    {"seterrobj",
-        (PyCFunction) ufunc_seterr,
-        METH_VARARGS, NULL},
-    {"geterrobj",
-        (PyCFunction) ufunc_geterr,
-        METH_VARARGS, NULL},
-    {"_add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
-        METH_VARARGS, NULL},
-    {NULL, NULL, 0, NULL}                /* sentinel */
-};
-
-
-#if defined(NPY_PY3K)
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "umath",
-        NULL,
-        -1,
-        methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
-#endif
-
-#include <stdio.h>
-
-#if defined(NPY_PY3K)
-#define RETVAL(x) x
-PyMODINIT_FUNC PyInit_umath(void)
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC initumath(void)
-#endif
+int initumath(PyObject *m)
 {
-    PyObject *m, *d, *s, *s2, *c_api;
+    PyObject *d, *s, *s2;
     int UFUNC_FLOATING_POINT_SUPPORT = 1;
 
 #ifdef NO_UFUNC_FLOATING_POINT_SUPPORT
     UFUNC_FLOATING_POINT_SUPPORT = 0;
 #endif
-    /* Create the module and add the functions */
-#if defined(NPY_PY3K)
-    m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("umath", methods);
-#endif
-    if (!m) {
-        goto err;
-    }
-
-    /* Import the array */
-    if (_import_array() < 0) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_ImportError,
-                            "umath failed: Could not import array core.");
-        }
-        goto err;
-    }
-
-    /* Initialize the types */
-    if (PyType_Ready(&PyUFunc_Type) < 0)
-        goto err;
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
-
-    c_api = NpyCapsule_FromVoidPtr((void *)PyUFunc_API, NULL);
-    if (PyErr_Occurred()) {
-        goto err;
-    }
-    PyDict_SetItemString(d, "_UFUNC_API", c_api);
-    Py_DECREF(c_api);
-    if (PyErr_Occurred()) {
-        goto err;
-    }
-
-    /* Load the ufunc operators into the array module's namespace */
-    if (InitOperators(d) < 0) {
-        goto err;
-    }
 
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
@@ -412,24 +333,16 @@ PyMODINIT_FUNC initumath(void)
     s2 = PyDict_GetItemString(d, "remainder");
     /* Setup the array object's numerical structures with appropriate
        ufuncs in d*/
-    PyArray_SetNumericOps(d);
+    _PyArray_SetNumericOps(d);
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);
 
-    initscalarmath(m);
-
     if (!intern_strings()) {
-        goto err;
-    }
-
-    return RETVAL(m);
-
- err:
-    /* Check for errors */
-    if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load umath module.");
+           "cannot intern umath strings while initializing _multiarray_umath.");
+        return -1;
     }
-    return RETVAL(NULL);
+
+    return 0;
 }

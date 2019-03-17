@@ -8,7 +8,6 @@ import numpy.core.fromnumeric as fromnumeric
 from numpy.testing import (
     assert_, assert_raises, assert_equal,
     )
-from numpy.ma.testutils import assert_array_equal
 from numpy.ma import (
     MaskType, MaskedArray, absolute, add, all, allclose, allequal, alltrue,
     arange, arccos, arcsin, arctan, arctan2, array, average, choose,
@@ -22,6 +21,7 @@ from numpy.ma import (
     repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
     take, tan, tanh, transpose, where, zeros,
     )
+from numpy.compat import pickle
 
 pi = np.pi
 
@@ -549,13 +549,13 @@ class TestMa(object):
 
     def test_testPickle(self):
         # Test of pickling
-        import pickle
         x = arange(12)
         x[4:10:2] = masked
         x = x.reshape(4, 3)
-        s = pickle.dumps(x)
-        y = pickle.loads(s)
-        assert_(eq(x, y))
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            s = pickle.dumps(x, protocol=proto)
+            y = pickle.loads(s)
+            assert_(eq(x, y))
 
     def test_testMasked(self):
         # Test of masked element

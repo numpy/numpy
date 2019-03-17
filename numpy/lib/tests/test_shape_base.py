@@ -260,8 +260,8 @@ class TestApplyAlongAxis(object):
     def test_with_iterable_object(self):
         # from issue 5248
         d = np.array([
-            [set([1, 11]), set([2, 22]), set([3, 33])],
-            [set([4, 44]), set([5, 55]), set([6, 66])]
+            [{1, 11}, {2, 22}, {3, 33}],
+            [{4, 44}, {5, 55}, {6, 66}]
         ])
         actual = np.apply_along_axis(lambda a: set.union(*a), 0, d)
         expected = np.array([{1, 11, 4, 44}, {2, 22, 5, 55}, {3, 33, 6, 66}])
@@ -457,9 +457,34 @@ class TestSplit(object):
         a = np.arange(10)
         assert_raises(ValueError, split, a, 3)
 
+
 class TestColumnStack(object):
     def test_non_iterable(self):
         assert_raises(TypeError, column_stack, 1)
+
+    def test_1D_arrays(self):
+        # example from docstring
+        a = np.array((1, 2, 3))
+        b = np.array((2, 3, 4))
+        expected = np.array([[1, 2],
+                             [2, 3],
+                             [3, 4]])
+        actual = np.column_stack((a, b))
+        assert_equal(actual, expected)
+
+    def test_2D_arrays(self):
+        # same as hstack 2D docstring example
+        a = np.array([[1], [2], [3]])
+        b = np.array([[2], [3], [4]])
+        expected = np.array([[1, 2],
+                             [2, 3],
+                             [3, 4]])
+        actual = np.column_stack((a, b))
+        assert_equal(actual, expected)
+
+    def test_generator(self):
+        with assert_warns(FutureWarning):
+            column_stack((np.arange(3) for _ in range(2)))
 
 
 class TestDstack(object):
@@ -493,6 +518,10 @@ class TestDstack(object):
         res = dstack([a, b])
         desired = np.array([[[1, 1], [2, 2]]])
         assert_array_equal(res, desired)
+
+    def test_generator(self):
+        with assert_warns(FutureWarning):
+            dstack((np.arange(3) for _ in range(2)))
 
 
 # array_split has more comprehensive test of splitting.

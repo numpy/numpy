@@ -122,9 +122,11 @@ sub-types).
 
 .. c:function:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
-    Get a Python object from the ndarray, *arr*, at the location
-    pointed to by itemptr. Return ``NULL`` on failure.
-
+    Get a Python object of a builtin type from the ndarray, *arr*, 
+    at the location pointed to by itemptr. Return ``NULL`` on failure.
+    
+    `numpy.ndarray.item` is identical to PyArray_GETITEM.
+    
 .. c:function:: int PyArray_SETITEM( \
         PyArrayObject* arr, void* itemptr, PyObject* obj)
 
@@ -200,7 +202,8 @@ From scratch
         PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, \
         npy_intp* strides, void* data, int flags, PyObject* obj)
 
-    This function steals a reference to *descr*.
+    This function steals a reference to *descr*. The easiest way to get one
+    is using :c:func:`PyArray_DescrFromType`.
 
     This is the main array creation function. Most new arrays are
     created with this flexible function.
@@ -214,9 +217,11 @@ From scratch
     :c:data:`&PyArray_Type<PyArray_Type>`, then *obj* is the object to pass to
     the :obj:`~numpy.class.__array_finalize__` method of the subclass.
 
-    If *data* is ``NULL``, then new memory will be allocated and *flags*
-    can be non-zero to indicate a Fortran-style contiguous array. If
-    *data* is not ``NULL``, then it is assumed to point to the memory
+    If *data* is ``NULL``, then new unitinialized memory will be allocated and
+    *flags* can be non-zero to indicate a Fortran-style contiguous array. Use
+    :c:func:`PyArray_FILLWBYTE` to initialze the memory.
+
+    If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the
     new flags for the array (except the state of :c:data:`NPY_OWNDATA`,
     :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and :c:data:`NPY_ARRAY_UPDATEIFCOPY`
@@ -229,6 +234,12 @@ From scratch
     :c:data:`NPY_ARRAY_F_CONTIGUOUS` is nonzero non-NULL *data*). Any
     provided *dims* and *strides* are copied into newly allocated
     dimension and strides arrays for the new array object.
+
+    :c:func:`PyArray_CheckStrides` can help verify non- ``NULL`` stride
+    information.
+
+    If ``data`` is provided, it must stay alive for the life of the array. One
+    way to manage this is through :c:func:`PyArray_SetBaseObject`
 
 .. c:function:: PyObject* PyArray_NewLikeArray( \
         PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr, \
@@ -296,10 +307,10 @@ From scratch
 .. c:function:: PyObject* PyArray_SimpleNewFromDescr( \
         int nd, npy_intp* dims, PyArray_Descr* descr)
 
-    This function steals a reference to *descr* if it is not NULL.
+    This function steals a reference to *descr*.
 
-    Create a new array with the provided data-type descriptor, *descr*
-    , of the shape determined by *nd* and *dims*.
+    Create a new array with the provided data-type descriptor, *descr*,
+    of the shape determined by *nd* and *dims*.
 
 .. c:function:: PyArray_FILLWBYTE(PyObject* obj, int val)
 
@@ -404,10 +415,6 @@ From other objects
     is passed to the :obj:`~numpy.class.__array__` method of *op* and is only used if
     the array is constructed that way. Almost always this
     parameter is ``NULL``.
-
-    In versions 1.6 and earlier of NumPy, the following flags
-    did not have the ``_ARRAY_`` macro namespace in them. That form
-    of the constant names is deprecated in 1.7.
 
     .. c:var:: NPY_ARRAY_C_CONTIGUOUS
 
@@ -566,8 +573,9 @@ From other objects
             return NULL;
         }
         if (arr == NULL) {
+            /*
             ... validate/change dtype, validate flags, ndim, etc ...
-            // Could make custom strides here too
+             Could make custom strides here too */
             arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
                                         dims, NULL,
                                         fortran ? NPY_ARRAY_F_CONTIGUOUS : 0,
@@ -581,10 +589,14 @@ From other objects
             }
         }
         else {
+            /*
             ... in this case the other parameters weren't filled, just
                 validate and possibly copy arr itself ...
+            */
         }
+        /*
         ... use arr ...
+        */
 
 .. c:function:: PyObject* PyArray_CheckFromAny( \
         PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, \
@@ -809,17 +821,17 @@ Dealing with types
 General check of Python Type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. c:function:: PyArray_Check(op)
+.. c:function:: PyArray_Check(PyObject *op)
 
     Evaluates true if *op* is a Python object whose type is a sub-type
     of :c:data:`PyArray_Type`.
 
-.. c:function:: PyArray_CheckExact(op)
+.. c:function:: PyArray_CheckExact(PyObject *op)
 
     Evaluates true if *op* is a Python object with type
     :c:data:`PyArray_Type`.
 
-.. c:function:: PyArray_HasArrayInterface(op, out)
+.. c:function:: PyArray_HasArrayInterface(PyObject *op, PyObject *out)
 
     If ``op`` implements any part of the array interface, then ``out``
     will contain a new reference to the newly created ndarray using
@@ -1897,22 +1909,23 @@ Item selection and manipulation
         all values are clipped to the region [0, len(*op*) ).
 
 
-.. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis)
+.. c:function:: PyObject* PyArray_Sort(PyArrayObject* self, int axis, NPY_SORTKIND kind)
 
-    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*). Return an array with
-    the items of *self* sorted along *axis*.
+    Equivalent to :meth:`ndarray.sort<numpy.ndarray.sort>` (*self*, *axis*, *kind*).
+    Return an array with the items of *self* sorted along *axis*. The array
+    is sorted using the algorithm denoted by *kind* , which is an integer/enum pointing
+    to the type of sorting algorithms used.
 
 .. c:function:: PyObject* PyArray_ArgSort(PyArrayObject* self, int axis)
 
-    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*). Return an array of
-    indices such that selection of these indices along the given
-    ``axis`` would return a sorted version of *self*. If *self*
-    ->descr is a data-type with fields defined, then
-    self->descr->names is used to determine the sort order. A
-    comparison where the first field is equal will use the second
-    field and so on. To alter the sort order of a structured array, create
-    a new data-type with a different order of names and construct a
-    view of the array with that new data-type.
+    Equivalent to :meth:`ndarray.argsort<numpy.ndarray.argsort>` (*self*, *axis*).
+    Return an array of indices such that selection of these indices
+    along the given ``axis`` would return a sorted version of *self*. If *self* ->descr
+    is a data-type with fields defined, then self->descr->names is used
+    to determine the sort order. A comparison where the first field is equal
+    will use the second field and so on. To alter the sort order of a
+    structured array, create a new data-type with a different order of names
+    and construct a view of the array with that new data-type.
 
 .. c:function:: PyObject* PyArray_LexSort(PyObject* sort_keys, int axis)
 
@@ -2652,22 +2665,22 @@ cost of a slight overhead.
 
     .. code-block:: c
 
-       PyArrayIterObject \*iter;
-       PyArrayNeighborhoodIterObject \*neigh_iter;
+       PyArrayIterObject *iter;
+       PyArrayNeighborhoodIterObject *neigh_iter;
        iter = PyArray_IterNew(x);
 
-       //For a 3x3 kernel
+       /*For a 3x3 kernel */
        bounds = {-1, 1, -1, 1};
        neigh_iter = (PyArrayNeighborhoodIterObject*)PyArrayNeighborhoodIter_New(
             iter, bounds, NPY_NEIGHBORHOOD_ITER_ZERO_PADDING, NULL);
 
        for(i = 0; i < iter->size; ++i) {
             for (j = 0; j < neigh_iter->size; ++j) {
-                    // Walk around the item currently pointed by iter->dataptr
+                    /* Walk around the item currently pointed by iter->dataptr */
                     PyArrayNeighborhoodIter_Next(neigh_iter);
             }
 
-            // Move to the next point of iter
+            /* Move to the next point of iter */
             PyArrayIter_Next(iter);
             PyArrayNeighborhoodIter_Reset(neigh_iter);
        }
@@ -2847,7 +2860,10 @@ Data-type descriptors
 
     Returns a data-type object corresponding to *typenum*. The
     *typenum* can be one of the enumerated types, a character code for
-    one of the enumerated types, or a user-defined type.
+    one of the enumerated types, or a user-defined type. If you want to use a
+    flexible size array, then you need to ``flexible typenum`` and set the
+    results ``elsize`` parameter to the desired size. The typenum is one of the
+    :c:data:`NPY_TYPES`.
 
 .. c:function:: int PyArray_DescrConverter(PyObject* obj, PyArray_Descr** dtype)
 
@@ -2978,8 +2994,11 @@ to.
 .. c:function:: int PyArray_SortkindConverter(PyObject* obj, NPY_SORTKIND* sort)
 
     Convert Python strings into one of :c:data:`NPY_QUICKSORT` (starts
-    with 'q' or 'Q') , :c:data:`NPY_HEAPSORT` (starts with 'h' or 'H'),
-    or :c:data:`NPY_MERGESORT` (starts with 'm' or 'M').
+    with 'q' or 'Q'), :c:data:`NPY_HEAPSORT` (starts with 'h' or 'H'),
+    :c:data:`NPY_MERGESORT` (starts with 'm' or 'M') or :c:data:`NPY_STABLESORT`
+    (starts with 't' or 'T'). :c:data:`NPY_MERGESORT` and :c:data:`NPY_STABLESORT`
+    are aliased to each other for backwards compatibility and may refer to one
+    of several stable sorting algorithms depending on the data type.
 
 .. c:function:: int PyArray_SearchsideConverter( \
         PyObject* obj, NPY_SEARCHSIDE* side)
@@ -3207,11 +3226,15 @@ Internal Flexibility
     setting a Python Error) if one of the objects being assigned is not
     callable.
 
+    .. deprecated:: 1.16
+
 .. c:function:: PyObject* PyArray_GetNumericOps(void)
 
     Return a Python dictionary containing the callable Python objects
     stored in the internal arithmetic operation table. The keys of
     this dictionary are given in the explanation for :c:func:`PyArray_SetNumericOps`.
+
+    .. deprecated:: 1.16
 
 .. c:function:: void PyArray_SetStringFunction(PyObject* op, int repr)
 
@@ -3238,19 +3261,19 @@ Memory management
     Macros to allocate, free, and reallocate memory. These macros are used
     internally to create arrays.
 
-.. c:function:: npy_intp*  PyDimMem_NEW(nd)
+.. c:function:: npy_intp*  PyDimMem_NEW(int nd)
 
-.. c:function:: PyDimMem_FREE(npy_intp* ptr)
+.. c:function:: PyDimMem_FREE(char* ptr)
 
-.. c:function:: npy_intp* PyDimMem_RENEW(npy_intp* ptr, npy_intp newnd)
+.. c:function:: npy_intp* PyDimMem_RENEW(void* ptr, size_t newnd)
 
     Macros to allocate, free, and reallocate dimension and strides memory.
 
-.. c:function:: PyArray_malloc(nbytes)
+.. c:function:: void* PyArray_malloc(size_t nbytes)
 
-.. c:function:: PyArray_free(ptr)
+.. c:function:: PyArray_free(void* ptr)
 
-.. c:function:: PyArray_realloc(ptr, nbytes)
+.. c:function:: void* PyArray_realloc(npy_intp* ptr, size_t nbytes)
 
     These macros use different memory allocators, depending on the
     constant :c:data:`NPY_USE_PYMEM`. The system malloc is used when
@@ -3452,31 +3475,31 @@ Other constants
 Miscellaneous Macros
 ^^^^^^^^^^^^^^^^^^^^
 
-.. c:function:: PyArray_SAMESHAPE(a1, a2)
+.. c:function:: PyArray_SAMESHAPE(PyArrayObject *a1, PyArrayObject *a2)
 
     Evaluates as True if arrays *a1* and *a2* have the same shape.
 
-.. c:function:: PyArray_MAX(a,b)
+.. c:macro:: PyArray_MAX(a,b)
 
     Returns the maximum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
 
-.. c:function:: PyArray_MIN(a,b)
+.. c:macro:: PyArray_MIN(a,b)
 
     Returns the minimum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
 
-.. c:function:: PyArray_CLT(a,b)
+.. c:macro:: PyArray_CLT(a,b)
 
-.. c:function:: PyArray_CGT(a,b)
+.. c:macro:: PyArray_CGT(a,b)
 
-.. c:function:: PyArray_CLE(a,b)
+.. c:macro:: PyArray_CLE(a,b)
 
-.. c:function:: PyArray_CGE(a,b)
+.. c:macro:: PyArray_CGE(a,b)
 
-.. c:function:: PyArray_CEQ(a,b)
+.. c:macro:: PyArray_CEQ(a,b)
 
-.. c:function:: PyArray_CNE(a,b)
+.. c:macro:: PyArray_CNE(a,b)
 
     Implements the complex comparisons between two complex numbers
     (structures with a real and imag member) using NumPy's definition
@@ -3519,11 +3542,15 @@ Enumerated Types
     A special variable-type which can take on the values :c:data:`NPY_{KIND}`
     where ``{KIND}`` is
 
-        **QUICKSORT**, **HEAPSORT**, **MERGESORT**
+        **QUICKSORT**, **HEAPSORT**, **MERGESORT**, **STABLESORT**
 
     .. c:var:: NPY_NSORTS
 
-       Defined to be the number of sorts.
+       Defined to be the number of sorts. It is fixed at three by the need for
+       backwards compatibility, and consequently :c:data:`NPY_MERGESORT` and
+       :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
+       of several stable sorting algorithms depending on the data type.
+
 
 .. c:type:: NPY_SCALARKIND
 

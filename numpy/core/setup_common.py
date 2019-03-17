@@ -41,7 +41,8 @@ C_ABI_VERSION = 0x01000009
 # 0x0000000b - 1.13.x
 # 0x0000000c - 1.14.x
 # 0x0000000c - 1.15.x
-C_API_VERSION = 0x0000000c
+# 0x0000000d - 1.16.x
+C_API_VERSION = 0x0000000d
 
 class MismatchCAPIWarning(Warning):
     pass
@@ -110,7 +111,7 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter", "ftello", "fseeko",
         "strtoll", "strtoull", "cbrt", "strtold_l", "fallocate",
-        "backtrace"]
+        "backtrace", "madvise"]
 
 
 OPTIONAL_HEADERS = [
@@ -120,6 +121,7 @@ OPTIONAL_HEADERS = [
                 "features.h",  # for glibc version linux
                 "xlocale.h",  # see GH#8367
                 "dlfcn.h", # dladdr
+                "sys/mman.h", #madvise
 ]
 
 # optional gcc compiler builtins and their call arguments and optional a

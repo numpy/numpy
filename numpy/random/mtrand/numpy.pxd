@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 # :Author:    Travis Oliphant
 from cpython.exc cimport PyErr_Print
 

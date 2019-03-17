@@ -161,12 +161,10 @@ import sys
 import io
 import warnings
 from numpy.lib.utils import safe_eval
-from numpy.compat import asbytes, asstr, isfileobj, long, basestring
+from numpy.compat import (
+    asbytes, asstr, isfileobj, long, os_fspath, pickle
+    )
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
@@ -259,6 +257,43 @@ def dtype_to_descr(dtype):
         return dtype.descr
     else:
         return dtype.str
+
+def descr_to_dtype(descr):
+    '''
+    descr may be stored as dtype.descr, which is a list of
+    (name, format, [shape]) tuples. Offsets are not explicitly saved, rather
+    empty fields with name,format == '', '|Vn' are added as padding.
+
+    This function reverses the process, eliminating the empty padding fields.
+    '''
+    if isinstance(descr, (str, dict)):
+        # No padding removal needed
+        return numpy.dtype(descr)
+
+    fields = []
+    offset = 0
+    for field in descr:
+        if len(field) == 2:
+            name, descr_str = field
+            dt = descr_to_dtype(descr_str)
+        else:
+            name, descr_str, shape = field
+            dt = numpy.dtype((descr_to_dtype(descr_str), shape))
+
+        # Ignore padding bytes, which will be void bytes with '' as name
+        # Once support for blank names is removed, only "if name == ''" needed)
+        is_pad = (name == '' and dt.type is numpy.void and dt.names is None)
+        if not is_pad:
+            fields.append((name, dt, offset))
+
+        offset += dt.itemsize
+
+    names, formats, offsets = zip(*fields)
+    # names may be (title, names) tuples
+    nametups = (n  if isinstance(n, tuple) else (None, n) for n in names)
+    titles, names = zip(*nametups)
+    return numpy.dtype({'names': names, 'formats': formats, 'titles': titles,
+                        'offsets': offsets, 'itemsize': offset})
 
 def header_data_from_array_1_0(array):
     """ Get the dictionary of header metadata from a numpy.ndarray.
@@ -489,7 +524,7 @@ def _read_array_header(fp, version):
     elif version == (2, 0):
         hlength_type = '<I'
     else:
-        raise ValueError("Invalid version %r" % version)
+        raise ValueError("Invalid version {!r}".format(version))
 
     hlength_str = _read_bytes(fp, struct.calcsize(hlength_type), "array header length")
     header_length = struct.unpack(hlength_type, hlength_str)[0]
@@ -505,29 +540,29 @@ def _read_array_header(fp, version):
     try:
         d = safe_eval(header)
     except SyntaxError as e:
-        msg = "Cannot parse header: %r\nException: %r"
-        raise ValueError(msg % (header, e))
+        msg = "Cannot parse header: {!r}\nException: {!r}"
+        raise ValueError(msg.format(header, e))
     if not isinstance(d, dict):
-        msg = "Header is not a dictionary: %r"
-        raise ValueError(msg % d)
+        msg = "Header is not a dictionary: {!r}"
+        raise ValueError(msg.format(d))
     keys = sorted(d.keys())
     if keys != ['descr', 'fortran_order', 'shape']:
-        msg = "Header does not contain the correct keys: %r"
-        raise ValueError(msg % (keys,))
+        msg = "Header does not contain the correct keys: {!r}"
+        raise ValueError(msg.format(keys))
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
             not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
-        msg = "shape is not valid: %r"
-        raise ValueError(msg % (d['shape'],))
+        msg = "shape is not valid: {!r}"
+        raise ValueError(msg.format(d['shape']))
     if not isinstance(d['fortran_order'], bool):
-        msg = "fortran_order is not a valid bool: %r"
-        raise ValueError(msg % (d['fortran_order'],))
+        msg = "fortran_order is not a valid bool: {!r}"
+        raise ValueError(msg.format(d['fortran_order']))
     try:
-        dtype = numpy.dtype(d['descr'])
+        dtype = descr_to_dtype(d['descr'])
     except TypeError as e:
-        msg = "descr is not a valid dtype descriptor: %r"
-        raise ValueError(msg % (d['descr'],))
+        msg = "descr is not a valid dtype descriptor: {!r}"
+        raise ValueError(msg.format(d['descr']))
 
     return d['shape'], d['fortran_order'], dtype
 
@@ -709,7 +744,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     Parameters
     ----------
-    filename : str
+    filename : str or path-like
         The name of the file on disk.  This may *not* be a file-like
         object.
     mode : str, optional
@@ -750,9 +785,9 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     memmap
 
     """
-    if not isinstance(filename, basestring):
-        raise ValueError("Filename must be a string.  Memmap cannot use"
-                         " existing file handles.")
+    if isfileobj(filename):
+        raise ValueError("Filename must be a string or a path-like object."
+                         "  Memmap cannot use existing file handles.")
 
     if 'w' in mode:
         # We are creating the file, not reading it.
@@ -770,7 +805,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        fp = open(filename, mode+'b')
+        fp = open(os_fspath(filename), mode+'b')
         try:
             used_ver = _write_array_header(fp, d, version)
             # this warning can be removed when 1.9 has aged enough
@@ -782,7 +817,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             fp.close()
     else:
         # Read the header of the file first.
-        fp = open(filename, 'rb')
+        fp = open(os_fspath(filename), 'rb')
         try:
             version = read_magic(fp)
             _check_version(version)

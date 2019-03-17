@@ -1,13 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-# As we are testing matrices, we ignore its PendingDeprecationWarnings
-try:
-    import pytest
-    pytestmark = pytest.mark.filterwarnings(
-        'ignore:the matrix subclass is not:PendingDeprecationWarning')
-except ImportError:
-    pass
-
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
 

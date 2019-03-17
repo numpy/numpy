@@ -286,7 +286,7 @@ from io import BytesIO
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_array_equal, assert_raises, raises, SkipTest
+    assert_, assert_array_equal, assert_raises, assert_raises_regex,
     )
 from numpy.lib import format
 
@@ -523,6 +523,30 @@ def test_compressed_roundtrip():
     assert_array_equal(arr, arr1)
 
 
+# aligned
+dt1 = np.dtype('i1, i4, i1', align=True)
+# non-aligned, explicit offsets
+dt2 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
+                'offsets': [1, 6]})
+# nested struct-in-struct
+dt3 = np.dtype({'names': ['c', 'd'], 'formats': ['i4', dt2]})
+# field with '' name
+dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4']*3})
+# titles
+dt5 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
+                'offsets': [1, 6], 'titles': ['aa', 'bb']})
+
+@pytest.mark.parametrize("dt", [dt1, dt2, dt3, dt4, dt5])
+def test_load_padded_dtype(dt):
+    arr = np.zeros(3, dt)
+    for i in range(3):
+        arr[i] = i + 5
+    npz_file = os.path.join(tempdir, 'aligned.npz')
+    np.savez(npz_file, arr=arr)
+    arr1 = np.load(npz_file)['arr']
+    assert_array_equal(arr, arr1)
+
+
 def test_python2_python3_interoperability():
     if sys.version_info[0] >= 3:
         fname = 'win64python2.npy'
@@ -531,7 +555,6 @@ def test_python2_python3_interoperability():
     path = os.path.join(os.path.dirname(__file__), 'data', fname)
     data = np.load(path)
     assert_array_equal(data, np.ones(2))
-
 
 def test_pickle_python2_python3():
     # Test that loading object arrays saved on Python 2 works both on
@@ -678,12 +701,9 @@ def test_write_version():
         (255, 255),
     ]
     for version in bad_versions:
-        try:
+        with assert_raises_regex(ValueError,
+                                 'we only support format version.*'):
             format.write_array(f, arr, version=version)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError("we should have raised a ValueError for the bad version %r" % (version,))
 
 
 bad_version_magic = [
@@ -809,7 +829,7 @@ def test_bad_header():
 
 def test_large_file_support():
     if (sys.platform == 'win32' or sys.platform == 'cygwin'):
-        raise SkipTest("Unknown if Windows has sparse filesystems")
+        pytest.skip("Unknown if Windows has sparse filesystems")
     # try creating a large sparse file
     tf_name = os.path.join(tempdir, 'sparse_file')
     try:
@@ -819,7 +839,7 @@ def test_large_file_support():
         import subprocess as sp
         sp.check_call(["truncate", "-s", "5368709120", tf_name])
     except Exception:
-        raise SkipTest("Could not create 5GB large file")
+        pytest.skip("Could not create 5GB large file")
     # write a small array to the end
     with open(tf_name, "wb") as f:
         f.seek(5368709120)
@@ -841,7 +861,7 @@ def test_large_archive():
     try:
         a = np.empty((2**30, 2), dtype=np.uint8)
     except MemoryError:
-        raise SkipTest("Could not create large file")
+        pytest.skip("Could not create large file")
 
     fname = os.path.join(tempdir, "large_archive")
 

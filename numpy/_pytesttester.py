@@ -105,24 +105,18 @@ class PytestTester(object):
 
         Notes
         -----
-        Each NumPy module exposes `test` in its namespace to run all tests for it.
-        For example, to run all tests for numpy.lib:
+        Each NumPy module exposes `test` in its namespace to run all tests for
+        it. For example, to run all tests for numpy.lib:
 
         >>> np.lib.test() #doctest: +SKIP
 
         Examples
         --------
         >>> result = np.lib.test() #doctest: +SKIP
-        Running unit tests for numpy.lib
         ...
-        Ran 976 tests in 3.933s
-
-        OK
-
-        >>> result.errors #doctest: +SKIP
-        []
-        >>> result.knownfail #doctest: +SKIP
-        []
+        1023 passed, 2 skipped, 6 deselected, 1 xfailed in 10.39 seconds
+        >>> result
+        True
 
         """
         import pytest
@@ -159,6 +153,24 @@ class PytestTester(object):
             "-W ignore:numpy.ufunc size changed",
             "-W ignore::UserWarning:cpuinfo",
             ]
+
+        # When testing matrices, ignore their PendingDeprecationWarnings
+        pytest_args += [
+            "-W ignore:the matrix subclass is not",
+            ]
+
+        # Ignore python2.7 -3 warnings
+        pytest_args += [
+            r"-W ignore:sys\.exc_clear\(\) not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:in 3\.x, __setslice__:DeprecationWarning",
+            r"-W ignore:in 3\.x, __getslice__:DeprecationWarning",
+            r"-W ignore:buffer\(\) not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:CObject type is not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:comparing unequal types not supported in 3\.x:DeprecationWarning",
+            r"-W ignore:the commands module has been removed in Python 3\.0:DeprecationWarning",
+            r"-W ignore:The 'new' module has been removed in Python 3\.0:DeprecationWarning",
+            ]
+
 
         if doctests:
             raise ValueError("Doctests not supported")

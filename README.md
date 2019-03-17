@@ -1,8 +1,13 @@
 # <img alt="NumPy" src="https://cdn.rawgit.com/numpy/numpy/master/branding/icons/numpylogo.svg" height="60">
 
-[![Travis](https://img.shields.io/travis/numpy/numpy/master.svg?label=Travis%20CI)](https://travis-ci.org/numpy/numpy)
-[![AppVeyor](https://img.shields.io/appveyor/ci/charris/numpy/master.svg?label=AppVeyor)](https://ci.appveyor.com/project/charris/numpy)
-[![codecov](https://codecov.io/gh/numpy/numpy/branch/master/graph/badge.svg)](https://codecov.io/gh/numpy/numpy)
+[![Travis](https://img.shields.io/travis/numpy/numpy/master.svg?label=Travis%20CI)](
+    https://travis-ci.org/numpy/numpy)
+[![AppVeyor](https://img.shields.io/appveyor/ci/charris/numpy/master.svg?label=AppVeyor)](
+    https://ci.appveyor.com/project/charris/numpy)
+[![Azure](https://dev.azure.com/numpy/numpy/_apis/build/status/azure-pipeline%20numpy.numpy)](
+    https://dev.azure.com/numpy/numpy/_build/latest?definitionId=5)
+[![codecov](https://codecov.io/gh/numpy/numpy/branch/master/graph/badge.svg)](
+    https://codecov.io/gh/numpy/numpy)
 
 NumPy is the fundamental package needed for scientific computing with Python.
 
@@ -10,6 +15,7 @@ NumPy is the fundamental package needed for scientific computing with Python.
 - **Mailing list:** https://mail.python.org/mailman/listinfo/numpy-discussion
 - **Source:** https://github.com/numpy/numpy
 - **Bug reports:** https://github.com/numpy/numpy/issues
+- **Contributing:** https://www.numpy.org/devdocs/dev/index.html
 
 It provides:
 

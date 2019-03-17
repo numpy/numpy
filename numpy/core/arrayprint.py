@@ -26,6 +26,7 @@ __docformat__ = 'restructuredtext'
 
 import sys
 import functools
+import numbers
 if sys.version_info[0] >= 3:
     try:
         from _thread import get_ident
@@ -42,12 +43,13 @@ from . import numerictypes as _nt
 from .umath import absolute, not_equal, isnan, isinf, isfinite, isnat
 from . import multiarray
 from .multiarray import (array, dragon4_positional, dragon4_scientific,
-                         datetime_as_string, datetime_data, dtype, ndarray,
+                         datetime_as_string, datetime_data, ndarray,
                          set_legacy_print_mode)
 from .fromnumeric import ravel, any
 from .numeric import concatenate, asarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
+from .overrides import array_function_dispatch, set_module
 import warnings
 import contextlib
 
@@ -85,9 +87,15 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if legacy not in [None, False, '1.13']:
         warnings.warn("legacy printing option can currently only be '1.13' or "
                       "`False`", stacklevel=3)
-
+    if threshold is not None:
+        # forbid the bad threshold arg suggested by stack overflow, gh-12351
+        if not isinstance(threshold, numbers.Number) or np.isnan(threshold):
+            raise ValueError("threshold must be numeric and non-NAN, try "
+                             "sys.maxsize for untruncated representation")
     return options
 
+
+@set_module('numpy')
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None, infstr=None,
                      formatter=None, sign=None, floatmode=None, **kwarg):
@@ -193,21 +201,21 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     Floating point precision can be set:
 
     >>> np.set_printoptions(precision=4)
-    >>> print(np.array([1.123456789]))
-    [ 1.1235]
+    >>> np.array([1.123456789])
+    [1.1235]
 
     Long arrays can be summarised:
 
     >>> np.set_printoptions(threshold=5)
-    >>> print(np.arange(10))
-    [0 1 2 ..., 7 8 9]
+    >>> np.arange(10)
+    array([0, 1, 2, ..., 7, 8, 9])
 
     Small results can be suppressed:
 
     >>> eps = np.finfo(float).eps
     >>> x = np.arange(4.)
     >>> x**2 - (x + eps)**2
-    array([ -4.9304e-32,  -4.4409e-16,   0.0000e+00,   0.0000e+00])
+    array([-4.9304e-32, -4.4409e-16,  0.0000e+00,  0.0000e+00])
     >>> np.set_printoptions(suppress=True)
     >>> x**2 - (x + eps)**2
     array([-0., -0.,  0.,  0.])
@@ -249,6 +257,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         set_legacy_print_mode(0)
 
 
+@set_module('numpy')
 def get_printoptions():
     """
     Return the current print options.
@@ -278,6 +287,7 @@ def get_printoptions():
     return _format_options.copy()
 
 
+@set_module('numpy')
 @contextlib.contextmanager
 def printoptions(*args, **kwargs):
     """Context manager for setting print options.
@@ -289,9 +299,10 @@ def printoptions(*args, **kwargs):
     Examples
     --------
 
+    >>> from numpy.testing import assert_equal
     >>> with np.printoptions(precision=2):
-    ...     print(np.array([2.0])) / 3
-    [0.67]
+    ...     np.array([2.0]) / 3
+    array([0.67])
 
     The `as`-clause of the `with`-statement gives the current print options:
 
@@ -496,6 +507,16 @@ def _array2string(a, options, separator=' ', prefix=""):
     return lst
 
 
+def _array2string_dispatcher(
+        a, max_line_width=None, precision=None,
+        suppress_small=None, separator=None, prefix=None,
+        style=None, formatter=None, threshold=None,
+        edgeitems=None, sign=None, floatmode=None, suffix=None,
+        **kwarg):
+    return (a,)
+
+
+@array_function_dispatch(_array2string_dispatcher, module='numpy')
 def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=np._NoValue, formatter=None, threshold=None,
@@ -624,9 +645,9 @@ def array2string(a, max_line_width=None, precision=None,
     Examples
     --------
     >>> x = np.array([1e-16,1,2,3])
-    >>> print(np.array2string(x, precision=2, separator=',',
-    ...                       suppress_small=True))
-    [ 0., 1., 2., 3.]
+    >>> np.array2string(x, precision=2, separator=',',
+    ...                       suppress_small=True)
+    '[0.,1.,2.,3.]'
 
     >>> x  = np.arange(3.)
     >>> np.array2string(x, formatter={'float_kind':lambda x: "%.2f" % x})
@@ -634,7 +655,7 @@ def array2string(a, max_line_width=None, precision=None,
 
     >>> x  = np.arange(3)
     >>> np.array2string(x, formatter={'int':lambda x: hex(x)})
-    '[0x0L 0x1L 0x2L]'
+    '[0x0 0x1 0x2]'
 
     """
     legacy = kwarg.pop('legacy', None)
@@ -965,6 +986,8 @@ class LongFloatFormat(FloatingFormat):
                       DeprecationWarning, stacklevel=2)
         super(LongFloatFormat, self).__init__(*args, **kwargs)
 
+
+@set_module('numpy')
 def format_float_scientific(x, precision=None, unique=True, trim='k',
                             sign=False, pad_left=None, exp_digits=None):
     """
@@ -1032,6 +1055,8 @@ def format_float_scientific(x, precision=None, unique=True, trim='k',
                               trim=trim, sign=sign, pad_left=pad_left,
                               exp_digits=exp_digits)
 
+
+@set_module('numpy')
 def format_float_positional(x, precision=None, unique=True,
                             fractional=True, trim='k', sign=False,
                             pad_left=None, pad_right=None):
@@ -1333,7 +1358,7 @@ def dtype_is_implied(dtype):
     >>> np.core.arrayprint.dtype_is_implied(np.int8)
     False
     >>> np.array([1, 2, 3], np.int8)
-    array([1, 2, 3], dtype=np.int8)
+    array([1, 2, 3], dtype=int8)
     """
     dtype = np.dtype(dtype)
     if _format_options['legacy'] == '1.13' and dtype.type == bool_:
@@ -1353,6 +1378,7 @@ def dtype_short_repr(dtype):
     The intent is roughly that the following holds
 
     >>> from numpy import *
+    >>> dt = np.int64([1, 2]).dtype
     >>> assert eval(dtype_short_repr(dt)) == dt
     """
     if dtype.names is not None:
@@ -1370,48 +1396,10 @@ def dtype_short_repr(dtype):
     return typename
 
 
-def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
-    """
-    Return the string representation of an array.
-
-    Parameters
-    ----------
-    arr : ndarray
-        Input array.
-    max_line_width : int, optional
-        The maximum number of columns the string should span. Newline
-        characters split the string appropriately after array elements.
-    precision : int, optional
-        Floating point precision. Default is the current printing precision
-        (usually 8), which can be altered using `set_printoptions`.
-    suppress_small : bool, optional
-        Represent very small numbers as zero, default is False. Very small
-        is defined by `precision`, if the precision is 8 then
-        numbers smaller than 5e-9 are represented as zero.
-
-    Returns
-    -------
-    string : str
-      The string representation of an array.
-
-    See Also
-    --------
-    array_str, array2string, set_printoptions
-
-    Examples
-    --------
-    >>> np.array_repr(np.array([1,2]))
-    'array([1, 2])'
-    >>> np.array_repr(np.ma.array([0.]))
-    'MaskedArray([ 0.])'
-    >>> np.array_repr(np.array([], np.int32))
-    'array([], dtype=int32)'
-
-    >>> x = np.array([1e-6, 4e-7, 2, 3])
-    >>> np.array_repr(x, precision=6, suppress_small=True)
-    'array([ 0.000001,  0.      ,  2.      ,  3.      ])'
-
-    """
+def _array_repr_implementation(
+        arr, max_line_width=None, precision=None, suppress_small=None,
+        array2string=array2string):
+    """Internal version of array_repr() that allows overriding array2string."""
     if max_line_width is None:
         max_line_width = _format_options['linewidth']
 
@@ -1454,8 +1442,88 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
 
     return arr_str + spacer + dtype_str
 
+
+def _array_repr_dispatcher(
+        arr, max_line_width=None, precision=None, suppress_small=None):
+    return (arr,)
+
+
+@array_function_dispatch(_array_repr_dispatcher, module='numpy')
+def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
+    """
+    Return the string representation of an array.
+
+    Parameters
+    ----------
+    arr : ndarray
+        Input array.
+    max_line_width : int, optional
+        The maximum number of columns the string should span. Newline
+        characters split the string appropriately after array elements.
+    precision : int, optional
+        Floating point precision. Default is the current printing precision
+        (usually 8), which can be altered using `set_printoptions`.
+    suppress_small : bool, optional
+        Represent very small numbers as zero, default is False. Very small
+        is defined by `precision`, if the precision is 8 then
+        numbers smaller than 5e-9 are represented as zero.
+
+    Returns
+    -------
+    string : str
+      The string representation of an array.
+
+    See Also
+    --------
+    array_str, array2string, set_printoptions
+
+    Examples
+    --------
+    >>> np.array_repr(np.array([1,2]))
+    'array([1, 2])'
+    >>> np.array_repr(np.ma.array([0.]))
+    'MaskedArray([0.])'
+    >>> np.array_repr(np.array([], np.int32))
+    'array([], dtype=int32)'
+
+    >>> x = np.array([1e-6, 4e-7, 2, 3])
+    >>> np.array_repr(x, precision=6, suppress_small=True)
+    'array([0.000001,  0.      ,  2.      ,  3.      ])'
+
+    """
+    return _array_repr_implementation(
+        arr, max_line_width, precision, suppress_small)
+
+
 _guarded_str = _recursive_guard()(str)
 
+
+def _array_str_implementation(
+        a, max_line_width=None, precision=None, suppress_small=None,
+        array2string=array2string):
+    """Internal version of array_str() that allows overriding array2string."""
+    if (_format_options['legacy'] == '1.13' and
+            a.shape == () and not a.dtype.names):
+        return str(a.item())
+
+    # the str of 0d arrays is a special case: It should appear like a scalar,
+    # so floats are not truncated by `precision`, and strings are not wrapped
+    # in quotes. So we return the str of the scalar value.
+    if a.shape == ():
+        # obtain a scalar and call str on it, avoiding problems for subclasses
+        # for which indexing with () returns a 0d instead of a scalar by using
+        # ndarray's getindex. Also guard against recursive 0d object arrays.
+        return _guarded_str(np.ndarray.__getitem__(a, ()))
+
+    return array2string(a, max_line_width, precision, suppress_small, ' ', "")
+
+
+def _array_str_dispatcher(
+        a, max_line_width=None, precision=None, suppress_small=None):
+    return (a,)
+
+
+@array_function_dispatch(_array_str_dispatcher, module='numpy')
 def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     """
     Return a string representation of the data in an array.
@@ -1490,20 +1558,17 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     '[0 1 2]'
 
     """
-    if (_format_options['legacy'] == '1.13' and
-            a.shape == () and not a.dtype.names):
-        return str(a.item())
+    return _array_str_implementation(
+        a, max_line_width, precision, suppress_small)
 
-    # the str of 0d arrays is a special case: It should appear like a scalar,
-    # so floats are not truncated by `precision`, and strings are not wrapped
-    # in quotes. So we return the str of the scalar value.
-    if a.shape == ():
-        # obtain a scalar and call str on it, avoiding problems for subclasses
-        # for which indexing with () returns a 0d instead of a scalar by using
-        # ndarray's getindex. Also guard against recursive 0d object arrays.
-        return _guarded_str(np.ndarray.__getitem__(a, ()))
 
-    return array2string(a, max_line_width, precision, suppress_small, ' ', "")
+# needed if __array_function__ is disabled
+_array2string_impl = getattr(array2string, '__wrapped__', array2string)
+_default_array_str = functools.partial(_array_str_implementation,
+                                       array2string=_array2string_impl)
+_default_array_repr = functools.partial(_array_repr_implementation,
+                                        array2string=_array2string_impl)
+
 
 def set_string_function(f, repr=True):
     """
@@ -1534,8 +1599,8 @@ def set_string_function(f, repr=True):
     >>> a = np.arange(10)
     >>> a
     HA! - What are you going to do now?
-    >>> print(a)
-    [0 1 2 3 4 5 6 7 8 9]
+    >>> _ = a
+    >>> # [0 1 2 3 4 5 6 7 8 9]
 
     We can reset the function to the default:
 
@@ -1553,16 +1618,16 @@ def set_string_function(f, repr=True):
     >>> x.__str__()
     'random'
     >>> x.__repr__()
-    'array([     0,      1,      2,      3])'
+    'array([0, 1, 2, 3])'
 
     """
     if f is None:
         if repr:
-            return multiarray.set_string_function(array_repr, 1)
+            return multiarray.set_string_function(_default_array_repr, 1)
         else:
-            return multiarray.set_string_function(array_str, 0)
+            return multiarray.set_string_function(_default_array_str, 0)
     else:
         return multiarray.set_string_function(f, repr)
 
-set_string_function(array_str, 0)
-set_string_function(array_repr, 1)
+set_string_function(_default_array_str, 0)
+set_string_function(_default_array_repr, 1)

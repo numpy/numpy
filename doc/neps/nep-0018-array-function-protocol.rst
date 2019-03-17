@@ -7,9 +7,10 @@ NEP 18 — A dispatch mechanism for NumPy's high level array functions
 :Author: Marten van Kerkwijk <mhvk@astro.utoronto.ca>
 :Author: Hameer Abbasi <hameerabbasi@yahoo.com>
 :Author: Eric Wieser <wieser.eric@gmail.com>
-:Status: Draft
+:Status: Provisional
 :Type: Standards Track
 :Created: 2018-05-29
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-August/078493.html
 
 Abstact
 -------
@@ -84,6 +85,25 @@ instance and method.
 A prototype implementation can be found in
 `this notebook <https://nbviewer.jupyter.org/gist/shoyer/1f0a308a06cd96df20879a1ddb8f0006>`_.
 
+.. warning::
+
+  The ``__array_function__`` protocol, and its use on particular functions,
+  is *experimental*. We plan to retain an interface that makes it possible
+  to override NumPy functions, but the way to do so for particular functions
+  **can and will change** with little warning. If such reduced backwards
+  compatibility guarantees are not accepted to you, do not rely upon overrides
+  of NumPy functions for non-NumPy arrays. See "Non-goals" below for more
+  details.
+
+.. note::
+
+  Dispatch with the ``__array_function__`` protocol has been implemented on
+  NumPy's master branch but is not yet enabled by default. In NumPy 1.16,
+  you will need to set the environment variable
+  ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to test
+  NumPy function overrides. We anticipate the protocol will be enabled by
+  default in NumPy 1.17.
+
 The interface
 ~~~~~~~~~~~~~
 
@@ -96,8 +116,9 @@ We propose the following signature for implementations of
 
 -  ``func`` is an arbitrary callable exposed by NumPy's public API,
    which was called in the form ``func(*args, **kwargs)``.
--  ``types`` is a ``frozenset`` of unique argument types from the original NumPy
-   function call that implement ``__array_function__``.
+-  ``types`` is a `collection <https://docs.python.org/3/library/collections.abc.html#collections.abc.Collection>`_
+   of unique argument types from the original NumPy function call that
+   implement ``__array_function__``.
 -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
    original call.
 
@@ -107,12 +128,14 @@ implementing the array API.
 
 As a convenience for ``__array_function__`` implementors, ``types`` provides all
 argument types with an ``'__array_function__'`` attribute. This
-allows downstream implementations to quickly determine if they are likely able
-to support the operation. A ``frozenset`` is used to ensure that
-``__array_function__`` implementations cannot rely on the iteration order of
-``types``, which would facilitate violating the well-defined "Type casting
-hierarchy" described in
-`NEP-13 <https://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_.
+allows implementors to quickly identify cases where they should defer to
+``__array_function__`` implementations on other arguments.
+The type of ``types`` is intentionally vague:
+``frozenset`` would most closely match intended use, but we may use ``tuple``
+instead for performance reasons. In any case, ``__array_function__``
+implementations should not rely on the iteration order of ``types``, which
+would violate a well-defined "Type casting hierarchy" (as described in
+`NEP-13 <https://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_).
 
 Example for a project implementing the NumPy API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -317,9 +340,9 @@ Changes within NumPy functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Given a function defining the above behavior, for now call it
-``try_array_function_override``, we now need to call that function from
-within every relevant NumPy function. This is a pervasive change, but of
-fairly simple and innocuous code that should complete quickly and
+``implement_array_function``, we now need to call that
+function from within every relevant NumPy function. This is a pervasive change,
+but of fairly simple and innocuous code that should complete quickly and
 without effect if no arguments implement the ``__array_function__``
 protocol.
 
@@ -331,20 +354,17 @@ functions:
 
     def array_function_dispatch(dispatcher):
         """Wrap a function for dispatch with the __array_function__ protocol."""
-        def decorator(func):
-            @functools.wraps(func)
-            def new_func(*args, **kwargs):
-                relevant_arguments = dispatcher(*args, **kwargs)
-                success, value = try_array_function_override(
-                    new_func, relevant_arguments, args, kwargs)
-                if success:
-                    return value
-                return func(*args, **kwargs)
-            return new_func
+        def decorator(implementation):
+            @functools.wraps(implementation)
+            def public_api(*args, **kwargs):
+                relevant_args = dispatcher(*args, **kwargs)
+                return implement_array_function(
+                    implementation, public_api, relevant_args, args, kwargs)
+            return public_api
         return decorator
 
     # example usage
-    def _broadcast_to_dispatcher(array, shape, subok=None, **ignored_kwargs):
+    def _broadcast_to_dispatcher(array, shape, subok=None):
         return (array,)
 
     @array_function_dispatch(_broadcast_to_dispatcher)
@@ -375,12 +395,12 @@ It's particularly worth calling out the decorator's use of
 
 In a few cases, it would not make sense to use the ``array_function_dispatch``
 decorator directly, but override implementation in terms of
-``try_array_function_override`` should still be straightforward.
+``implement_array_function`` should still be straightforward.
 
 - Functions written entirely in C (e.g., ``np.concatenate``) can't use
   decorators, but they could still use a C equivalent of
-  ``try_array_function_override``. If performance is not a concern, they could
-  also be easily wrapped with a small Python wrapper.
+  ``implement_array_function``. If performance is not a
+  concern, they could also be easily wrapped with a small Python wrapper.
 - ``np.einsum`` does complicated argument parsing to handle two different
   function signatures. It would probably be best to avoid the overhead of
   parsing it twice in the typical case of no overrides.
@@ -392,6 +412,12 @@ to ``__array_function__``. (In C, arguments for all Python functions are parsed
 from a tuple ``*args`` and dict ``**kwargs``.) This shouldn't stop us from
 writing overrides for functions with non-generic signatures that can't use the
 decorator, but we should consider these cases carefully.
+
+.. note::
+
+    The code for ``array_function_dispatch`` above has been updated from the
+    original version of this NEP to match the actual
+    `implementation in NumPy <https://github.com/numpy/numpy/blob/e104f03ac8f65ae5b92a9b413b0fa639f39e6de2/numpy/core/overrides.py>`_.
 
 Extensibility
 ~~~~~~~~~~~~~
@@ -449,10 +475,10 @@ the difference in speed between the ``ndarray.sum()`` method (1.6 us) and
 ``numpy.sum()`` function (2.6 us).
 
 Fortunately, we expect significantly less overhead with a C implementation of
-``try_array_function_override``, which is where the bulk of the runtime is.
-This would leave the ``array_function_dispatch`` decorator and dispatcher
-function on their own adding about 0.5 microseconds of overhead, for perhaps ~1
-microsecond of overhead in the typical case.
+``implement_array_function``, which is where the bulk of the
+runtime is. This would leave the ``array_function_dispatch`` decorator and
+dispatcher function on their own adding about 0.5 microseconds of overhead,
+for perhaps ~1 microsecond of overhead in the typical case.
 
 In our view, this level of overhead is reasonable to accept for code written
 in Python. We're pretty sure that the vast majority of NumPy users aren't
@@ -477,7 +503,7 @@ already wrap a limited subset of SciPy functionality (e.g.,
 
 If we want to do this, we should expose at least the decorator
 ``array_function_dispatch()`` and possibly also the lower level
-``try_array_function_override()`` as part of NumPy's public API.
+``implement_array_function()`` as part of NumPy's public API.
 
 Non-goals
 ---------
@@ -493,7 +519,10 @@ wait for an optimal implementation. The price of moving fast is that for
 now **this protocol should be considered strictly experimental**. We
 reserve the right to change the details of this protocol and how
 specific NumPy functions use it at any time in the future -- even in
-otherwise bug-fix only releases of NumPy.
+otherwise bug-fix only releases of NumPy. In practice, once initial
+issues with ``__array_function__`` are worked out, we will use abbreviated
+deprecation cycles as short as a single major NumPy release (e.g., as
+little as four months).
 
 In particular, we don't plan to write additional NEPs that list all
 specific functions to overload, with exactly how they should be
@@ -511,11 +540,13 @@ own protocols:
 -  dispatch for methods of any kind, e.g., methods on
    ``np.random.RandomState`` objects.
 
-As a concrete example of how we expect to break behavior in the future,
-some functions such as ``np.where`` are currently not NumPy universal
-functions, but conceivably could become universal functions in the
-future. When/if this happens, we will change such overloads from using
-``__array_function__`` to the more specialized ``__array_ufunc__``.
+We also expect that the mechanism for overriding specific functions
+that will initially use the ``__array_function__`` protocol can and will
+change in the future. As a concrete example of how we expect to break
+behavior in the future, some functions such as ``np.where`` are currently
+not NumPy universal functions, but conceivably could become universal
+functions in the future. When/if this happens, we will change such overloads
+from using ``__array_function__`` to the more specialized ``__array_ufunc__``.
 
 
 Backward compatibility
@@ -538,6 +569,17 @@ As mentioned above, if this means that some functions that we overload
 with ``__array_function__`` should switch to a new protocol instead,
 that is explicitly OK for as long as ``__array_function__`` retains its
 experimental status.
+
+Switching to a new protocol should use an abbreviated version of NumPy's
+normal deprecation cycle:
+
+- For a single major release, after checking for any new protocols, NumPy
+  should still check for ``__array_function__`` methods that implement the
+  given function. If any argument returns a value other than
+  ``NotImplemented`` from ``__array_function__``, a descriptive
+  ``FutureWarning`` should be issued.
+- In the next major release, the checks for ``__array_function__`` will be
+  removed.
 
 Separate namespace
 ~~~~~~~~~~~~~~~~~~
@@ -765,9 +807,9 @@ public API.
 
 ``types`` is included because we can compute it almost for free as part of
 collecting ``__array_function__`` implementations to call in
-``try_array_function_override``. We also think it will be used by most
-``__array_function__`` methods, which otherwise would need to extract this
-information themselves. It would be equivalently easy to provide single
+``implement_array_function``. We also think it will be used
+by many ``__array_function__`` methods, which otherwise would need to extract
+this information themselves. It would be equivalently easy to provide single
 instances of each type, but providing only types seemed cleaner.
 
 Taking this even further, it was suggested that ``__array_function__`` should be
@@ -778,10 +820,10 @@ worth breaking from the precedence of ``__array_ufunc__``.
 There are two other arguments that we think *might* be important to pass to
 ``__array_ufunc__`` implementations:
 
-- Access to the non-dispatched function (i.e., before wrapping with
+- Access to the non-dispatched implementation (i.e., before wrapping with
   ``array_function_dispatch``) in ``ndarray.__array_function__`` would allow
-  use to drop special case logic for that method from
-  ``try_array_function_override``.
+  us to drop special case logic for that method from
+  ``implement_array_function``.
 - Access to the ``dispatcher`` function passed into
   ``array_function_dispatch()`` would allow ``__array_function__``
   implementations to determine the list of "array-like" arguments in a generic

@@ -7,6 +7,7 @@ from __future__ import division, absolute_import, print_function
 import os, signal
 import warnings
 import sys
+import subprocess
 
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
@@ -14,7 +15,7 @@ from distutils import log
 from distutils.file_util import copy_file
 from distutils.ccompiler import CompileError, LinkError
 import distutils
-from numpy.distutils.exec_command import exec_command
+from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import (check_gcc_function_attribute,
                                               check_gcc_variable_attribute,
@@ -94,7 +95,7 @@ Original exception was: %s, and the Compiler class was %s
         try:
             ret = mth(*((self,)+args))
         except (DistutilsExecError, CompileError):
-            msg = str(get_exception())
+            str(get_exception())
             self.compiler = save_compiler
             raise CompileError
         self.compiler = save_compiler
@@ -121,9 +122,13 @@ Original exception was: %s, and the Compiler class was %s
                         # correct path when compiling in Cygwin but with
                         # normal Win Python
                         if d.startswith('/usr/lib'):
-                            s, o = exec_command(['cygpath', '-w', d],
-                                               use_tee=False)
-                            if not s: d = o
+                            try:
+                                d = subprocess.check_output(['cygpath',
+                                                             '-w', d])
+                            except (OSError, subprocess.CalledProcessError):
+                                pass
+                            else:
+                                d = filepath_from_subprocess_output(d)
                         library_dirs.append(d)
                     for libname in self.fcompiler.libraries or []:
                         if libname not in libraries:
@@ -436,7 +441,6 @@ int main (void)
                       "involving running executable on the target machine.\n" \
                       "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
                       DeprecationWarning, stacklevel=2)
-        from distutils.ccompiler import CompileError, LinkError
         self._check_compiler()
         exitcode, output = 255, ''
         try:
@@ -450,8 +454,24 @@ int main (void)
                 grabber.restore()
                 raise
             exe = os.path.join('.', exe)
-            exitstatus, output = exec_command(exe, execute_in='.',
-                                              use_tee=use_tee)
+            try:
+                # specify cwd arg for consistency with
+                # historic usage pattern of exec_command()
+                # also, note that exe appears to be a string,
+                # which exec_command() handled, but we now
+                # use a list for check_output() -- this assumes
+                # that exe is always a single command
+                output = subprocess.check_output([exe], cwd='.')
+            except subprocess.CalledProcessError as exc:
+                exitstatus = exc.returncode
+                output = ''
+            except OSError:
+                # preserve the EnvironmentError exit status
+                # used historically in exec_command()
+                exitstatus = 127
+                output = ''
+            else:
+                output = filepath_from_subprocess_output(output)
             if hasattr(os, 'WEXITSTATUS'):
                 exitcode = os.WEXITSTATUS(exitstatus)
                 if os.WIFSIGNALED(exitstatus):

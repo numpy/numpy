@@ -1,4 +1,4 @@
-Copyright (c) 2005-2017, NumPy Developers.
+Copyright (c) 2005-2019, NumPy Developers.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ License: 2-clause BSD
 Name: scipy-sphinx-theme
 Files: doc/scipy-sphinx-theme/*
 License: 3-clause BSD, PSF and Apache 2.0
-  For details, see doc/sphinxext/LICENSE.txt
+  For details, see doc/scipy-sphinx-theme/LICENSE.txt
 
 Name: lapack-lite
 Files: numpy/linalg/lapack_lite/*

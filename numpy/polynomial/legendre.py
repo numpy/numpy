@@ -32,7 +32,7 @@ Arithmetic
    legmulx              multiply a Legendre series in ``P_i(x)`` by ``x``.
    legmul               multiply two Legendre series.
    legdiv               divide one Legendre series by another.
-   legpow               raise a Legendre series to an positive integer power.
+   legpow               raise a Legendre series to a positive integer power.
    legval               evaluate a Legendre series at given points.
    legval2d             evaluate a 2D Legendre series at given points.
    legval3d             evaluate a 3D Legendre series at given points.
@@ -136,10 +136,10 @@ def poly2leg(pol):
     >>> from numpy import polynomial as P
     >>> p = P.Polynomial(np.arange(4))
     >>> p
-    Polynomial([ 0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
+    Polynomial([0.,  1.,  2.,  3.], domain=[-1,  1], window=[-1,  1])
     >>> c = P.Legendre(P.legendre.poly2leg(p.coef))
     >>> c
-    Legendre([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1])
+    Legendre([ 1.  ,  3.25,  1.  ,  0.75], domain=[-1,  1], window=[-1,  1]) # may vary
 
     """
     [pol] = pu.as_series([pol])
@@ -183,12 +183,13 @@ def leg2poly(c):
 
     Examples
     --------
+    >>> from numpy import polynomial as P
     >>> c = P.Legendre(range(4))
     >>> c
-    Legendre([ 0.,  1.,  2.,  3.], [-1.,  1.])
+    Legendre([0., 1., 2., 3.], domain=[-1,  1], window=[-1,  1])
     >>> p = c.convert(kind=P.Polynomial)
     >>> p
-    Polynomial([-1. , -3.5,  3. ,  7.5], [-1.,  1.])
+    Polynomial([-1. , -3.5,  3. ,  7.5], domain=[-1.,  1.], window=[-1.,  1.])
     >>> P.leg2poly(range(4))
     array([-1. , -3.5,  3. ,  7.5])
 
@@ -310,24 +311,10 @@ def legfromroots(roots):
     array([ 0. , -0.4,  0. ,  0.4])
     >>> j = complex(0,1)
     >>> L.legfromroots((-j,j)) # x^2 + 1 relative to the standard basis
-    array([ 1.33333333+0.j,  0.00000000+0.j,  0.66666667+0.j])
+    array([ 1.33333333+0.j,  0.00000000+0.j,  0.66666667+0.j]) # may vary
 
     """
-    if len(roots) == 0:
-        return np.ones(1)
-    else:
-        [roots] = pu.as_series([roots], trim=False)
-        roots.sort()
-        p = [legline(-r, 1) for r in roots]
-        n = len(p)
-        while n > 1:
-            m, r = divmod(n, 2)
-            tmp = [legmul(p[i], p[i+m]) for i in range(m)]
-            if r:
-                tmp[0] = legmul(tmp[0], p[-1])
-            p = tmp
-            n = m
-        return p[0]
+    return pu._fromroots(legline, legmul, roots)
 
 
 def legadd(c1, c2):
@@ -366,18 +353,10 @@ def legadd(c1, c2):
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> L.legadd(c1,c2)
-    array([ 4.,  4.,  4.])
+    array([4.,  4.,  4.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] += c2
-        ret = c1
-    else:
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._add(c1, c2)
 
 
 def legsub(c1, c2):
@@ -421,16 +400,7 @@ def legsub(c1, c2):
     array([ 2.,  0., -2.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] -= c2
-        ret = c1
-    else:
-        c2 = -c2
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._sub(c1, c2)
 
 
 def legmulx(c):
@@ -468,7 +438,7 @@ def legmulx(c):
     --------
     >>> from numpy.polynomial import legendre as L
     >>> L.legmulx([1,2,3])
-    array([ 0.66666667, 2.2, 1.33333333, 1.8])
+    array([ 0.66666667, 2.2, 1.33333333, 1.8]) # may vary
 
     """
     # c is a trimmed copy
@@ -525,8 +495,8 @@ def legmul(c1, c2):
     >>> from numpy.polynomial import legendre as L
     >>> c1 = (1,2,3)
     >>> c2 = (3,2)
-    >>> P.legmul(c1,c2) # multiplication requires "reprojection"
-    array([  4.33333333,  10.4       ,  11.66666667,   3.6       ])
+    >>> L.legmul(c1,c2) # multiplication requires "reprojection"
+    array([  4.33333333,  10.4       ,  11.66666667,   3.6       ]) # may vary
 
     """
     # s1, s2 are trimmed copies
@@ -597,32 +567,13 @@ def legdiv(c1, c2):
     >>> c1 = (1,2,3)
     >>> c2 = (3,2,1)
     >>> L.legdiv(c1,c2) # quotient "intuitive," remainder not
-    (array([ 3.]), array([-8., -4.]))
+    (array([3.]), array([-8., -4.]))
     >>> c2 = (0,1,2,3)
     >>> L.legdiv(c2,c1) # neither "intuitive"
-    (array([-0.07407407,  1.66666667]), array([-1.03703704, -2.51851852]))
+    (array([-0.07407407,  1.66666667]), array([-1.03703704, -2.51851852])) # may vary
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if c2[-1] == 0:
-        raise ZeroDivisionError()
-
-    lc1 = len(c1)
-    lc2 = len(c2)
-    if lc1 < lc2:
-        return c1[:1]*0, c1
-    elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
-    else:
-        quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
-        rem = c1
-        for i in range(lc1 - lc2, - 1, -1):
-            p = legmul([0]*i + [1], c2)
-            q = rem[-1]/p[-1]
-            rem = rem[:-1] - q*p[:-1]
-            quo[i] = q
-        return quo, pu.trimseq(rem)
+    return pu._div(legmul, c1, c2)
 
 
 def legpow(c, pow, maxpower=16):
@@ -733,7 +684,7 @@ def legder(c, m=1, scl=1, axis=0):
     >>> L.legder(c)
     array([  6.,   9.,  20.])
     >>> L.legder(c, 3)
-    array([ 60.])
+    array([60.])
     >>> L.legder(c, scl=-1)
     array([ -6.,  -9., -20.])
     >>> L.legder(c, 2,-1)
@@ -743,14 +694,10 @@ def legder(c, m=1, scl=1, axis=0):
     c = np.array(c, ndmin=1, copy=1)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
-    cnt, iaxis = [int(t) for t in [m, axis]]
-
-    if cnt != m:
-        raise ValueError("The order of derivation must be integer")
+    cnt = pu._deprecate_as_int(m, "the order of derivation")
+    iaxis = pu._deprecate_as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    if iaxis != axis:
-        raise ValueError("The axis must be integer")
     iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
@@ -849,16 +796,16 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     >>> from numpy.polynomial import legendre as L
     >>> c = (1,2,3)
     >>> L.legint(c)
-    array([ 0.33333333,  0.4       ,  0.66666667,  0.6       ])
+    array([ 0.33333333,  0.4       ,  0.66666667,  0.6       ]) # may vary
     >>> L.legint(c, 3)
-    array([  1.66666667e-02,  -1.78571429e-02,   4.76190476e-02,
-            -1.73472348e-18,   1.90476190e-02,   9.52380952e-03])
+    array([  1.66666667e-02,  -1.78571429e-02,   4.76190476e-02, # may vary
+             -1.73472348e-18,   1.90476190e-02,   9.52380952e-03])
     >>> L.legint(c, k=3)
-    array([ 3.33333333,  0.4       ,  0.66666667,  0.6       ])
+     array([ 3.33333333,  0.4       ,  0.66666667,  0.6       ]) # may vary
     >>> L.legint(c, lbnd=-2)
-    array([ 7.33333333,  0.4       ,  0.66666667,  0.6       ])
+    array([ 7.33333333,  0.4       ,  0.66666667,  0.6       ]) # may vary
     >>> L.legint(c, scl=2)
-    array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ])
+    array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ]) # may vary
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -866,10 +813,8 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         c = c.astype(np.double)
     if not np.iterable(k):
         k = [k]
-    cnt, iaxis = [int(t) for t in [m, axis]]
-
-    if cnt != m:
-        raise ValueError("The order of integration must be integer")
+    cnt = pu._deprecate_as_int(m, "the order of integration")
+    iaxis = pu._deprecate_as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -878,8 +823,6 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    if iaxis != axis:
-        raise ValueError("The axis must be integer")
     iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
@@ -1051,14 +994,7 @@ def legval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = legval(x, c)
-    c = legval(y, c, tensor=False)
-    return c
+    return pu._valnd(legval, c, x, y)
 
 
 def leggrid2d(x, y, c):
@@ -1111,9 +1047,7 @@ def leggrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = legval(x, c)
-    c = legval(y, c)
-    return c
+    return pu._gridnd(legval, c, x, y)
 
 
 def legval3d(x, y, z, c):
@@ -1164,15 +1098,7 @@ def legval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = legval(x, c)
-    c = legval(y, c, tensor=False)
-    c = legval(z, c, tensor=False)
-    return c
+    return pu._valnd(legval, c, x, y, z)
 
 
 def leggrid3d(x, y, z, c):
@@ -1228,10 +1154,7 @@ def leggrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = legval(x, c)
-    c = legval(y, c)
-    c = legval(z, c)
-    return c
+    return pu._gridnd(legval, c, x, y, z)
 
 
 def legvander(x, deg):
@@ -1278,9 +1201,7 @@ def legvander(x, deg):
            [ 1.,  1.,  1. ,  1.]])
 
     """
-    ideg = int(deg)
-    if ideg != deg:
-        raise ValueError("deg must be integer")
+    ideg = pu._deprecate_as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
@@ -1348,17 +1269,7 @@ def legvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
-    x, y = np.array((x, y), copy=0) + 0.0
-
-    vx = legvander(x, degx)
-    vy = legvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    return v.reshape(v.shape[:-2] + (-1,))
+    return pu._vander2d(legvander, x, y, deg)
 
 
 def legvander3d(x, y, z, deg):
@@ -1412,18 +1323,7 @@ def legvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
-
-    vx = legvander(x, degx)
-    vy = legvander(y, degy)
-    vz = legvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    return v.reshape(v.shape[:-3] + (-1,))
+    return pu._vander3d(legvander, x, y, z, deg)
 
 
 def legfit(x, y, deg, rcond=None, full=False, w=None):
@@ -1507,7 +1407,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', RankWarning)
+        >>> warnings.simplefilter('ignore', np.RankWarning)
 
     See Also
     --------
@@ -1563,81 +1463,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     array([ 1.01248507,  1.99801426,  2.99930525])
 
     """
-    x = np.asarray(x) + 0.0
-    y = np.asarray(y) + 0.0
-    deg = np.asarray(deg)
-
-    # check arguments.
-    if deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0:
-        raise TypeError("deg must be an int or non-empty 1-D array of int")
-    if deg.min() < 0:
-        raise ValueError("expected deg >= 0")
-    if x.ndim != 1:
-        raise TypeError("expected 1D vector for x")
-    if x.size == 0:
-        raise TypeError("expected non-empty vector for x")
-    if y.ndim < 1 or y.ndim > 2:
-        raise TypeError("expected 1D or 2D array for y")
-    if len(x) != len(y):
-        raise TypeError("expected x and y to have same length")
-
-    if deg.ndim == 0:
-        lmax = deg
-        order = lmax + 1
-        van = legvander(x, lmax)
-    else:
-        deg = np.sort(deg)
-        lmax = deg[-1]
-        order = len(deg)
-        van = legvander(x, lmax)[:, deg]
-
-    # set up the least squares matrices in transposed form
-    lhs = van.T
-    rhs = y.T
-    if w is not None:
-        w = np.asarray(w) + 0.0
-        if w.ndim != 1:
-            raise TypeError("expected 1D vector for w")
-        if len(x) != len(w):
-            raise TypeError("expected x and w to have same length")
-        # apply weights. Don't use inplace operations as they
-        # can cause problems with NA.
-        lhs = lhs * w
-        rhs = rhs * w
-
-    # set rcond
-    if rcond is None:
-        rcond = len(x)*np.finfo(x.dtype).eps
-
-    # Determine the norms of the design matrix columns.
-    if issubclass(lhs.dtype.type, np.complexfloating):
-        scl = np.sqrt((np.square(lhs.real) + np.square(lhs.imag)).sum(1))
-    else:
-        scl = np.sqrt(np.square(lhs).sum(1))
-    scl[scl == 0] = 1
-
-    # Solve the least squares problem.
-    c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
-    c = (c.T/scl).T
-
-    # Expand c to include non-fitted coefficients which are set to zero
-    if deg.ndim > 0:
-        if c.ndim == 2:
-            cc = np.zeros((lmax+1, c.shape[1]), dtype=c.dtype)
-        else:
-            cc = np.zeros(lmax+1, dtype=c.dtype)
-        cc[deg] = c
-        c = cc
-
-    # warn on rank reduction
-    if rank != order and not full:
-        msg = "The fit may be poorly conditioned"
-        warnings.warn(msg, pu.RankWarning, stacklevel=2)
-
-    if full:
-        return c, [resids, rank, s, rcond]
-    else:
-        return c
+    return pu._fit(legvander, x, y, deg, rcond, full, w)
 
 
 def legcompanion(c):
@@ -1724,7 +1550,7 @@ def legroots(c):
     --------
     >>> import numpy.polynomial.legendre as leg
     >>> leg.legroots((1, 2, 3, 4)) # 4L_3 + 3L_2 + 2L_1 + 1L_0, all real roots
-    array([-0.85099543, -0.11407192,  0.51506735])
+    array([-0.85099543, -0.11407192,  0.51506735]) # may vary
 
     """
     # c is a trimmed copy
@@ -1776,9 +1602,9 @@ def leggauss(deg):
     the right value when integrating 1.
 
     """
-    ideg = int(deg)
-    if ideg != deg or ideg < 1:
-        raise ValueError("deg must be a non-negative integer")
+    ideg = pu._deprecate_as_int(deg, "deg")
+    if ideg <= 0:
+        raise ValueError("deg must be a positive integer")
 
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.

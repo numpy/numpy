@@ -1,3 +1,5 @@
+.. module:: numpy.polynomial
+
 Polynomial Package
 ==================
 

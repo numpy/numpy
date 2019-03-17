@@ -471,7 +471,7 @@ array_dealloc(PyArrayObject *self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
-    _array_dealloc_buffer_info(self);
+    _dealloc_cached_buffer_info((PyObject*)self);
 
     if (fa->weakreflist != NULL) {
         PyObject_ClearWeakRefs((PyObject *)self);
@@ -656,11 +656,9 @@ array_might_be_written(PyArrayObject *obj)
 {
     const char *msg =
         "Numpy has detected that you (may be) writing to an array returned\n"
-        "by numpy.diagonal or by selecting multiple fields in a structured\n"
-        "array. This code will likely break in a future numpy release --\n"
-        "see numpy.diagonal or arrays.indexing reference docs for details.\n"
-        "The quick fix is to make an explicit copy (e.g., do\n"
-        "arr.diagonal().copy() or arr[['f0','f1']].copy()).";
+        "by numpy.diagonal. This code will likely break in a future numpy\n"
+        "release -- see numpy.diagonal docs for details. The quick fix is\n"
+        "to make an explicit copy (e.g., do arr.diagonal().copy()).";
     if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
         /* 2012-07-17, 1.7 */
         if (DEPRECATE_FUTUREWARNING(msg) < 0) {
@@ -1218,37 +1216,6 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
     }
 }
 
-/* This is a copy of _PyErr_ChainExceptions, with:
- *  - a minimal implementation for python 2
- *  - __cause__ used instead of __context__
- */
-NPY_NO_EXPORT void
-PyArray_ChainExceptionsCause(PyObject *exc, PyObject *val, PyObject *tb)
-{
-    if (exc == NULL)
-        return;
-
-    if (PyErr_Occurred()) {
-        /* only py3 supports this anyway */
-        #ifdef NPY_PY3K
-            PyObject *exc2, *val2, *tb2;
-            PyErr_Fetch(&exc2, &val2, &tb2);
-            PyErr_NormalizeException(&exc, &val, &tb);
-            if (tb != NULL) {
-                PyException_SetTraceback(val, tb);
-                Py_DECREF(tb);
-            }
-            Py_DECREF(exc);
-            PyErr_NormalizeException(&exc2, &val2, &tb2);
-            PyException_SetCause(val2, val);
-            PyErr_Restore(exc2, val2, tb2);
-        #endif
-    }
-    else {
-        PyErr_Restore(exc, val, tb);
-    }
-}
-
 /*
  * Silence the current error and emit a deprecation warning instead.
  *
@@ -1260,7 +1227,7 @@ DEPRECATE_silence_error(const char *msg) {
     PyObject *exc, *val, *tb;
     PyErr_Fetch(&exc, &val, &tb);
     if (DEPRECATE(msg) < 0) {
-        PyArray_ChainExceptionsCause(exc, val, tb);
+        npy_PyErr_ChainExceptionsCause(exc, val, tb);
         return -1;
     }
     Py_XDECREF(exc);
@@ -1377,7 +1344,7 @@ fail:
     /*
      * Reraise the original exception, possibly chaining with a new one.
      */
-    PyArray_ChainExceptionsCause(exc, val, tb);
+    npy_PyErr_ChainExceptionsCause(exc, val, tb);
     return NULL;
 }
 

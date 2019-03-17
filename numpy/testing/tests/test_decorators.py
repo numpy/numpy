@@ -13,7 +13,7 @@ from numpy.testing import (
 
 
 try:
-    import nose
+    import nose  # noqa: F401
 except ImportError:
     HAVE_NOSE = False
 else:
@@ -29,7 +29,6 @@ class TestNoseDecorators(object):
         pass
 
     def test_slow(self):
-        import nose
         @dec.slow
         def slow_func(x, y, z):
             pass

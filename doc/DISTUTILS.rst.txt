@@ -300,8 +300,72 @@ in writing setup scripts:
 Template files
 --------------
 
-XXX: Describe how files with extensions ``.f.src``, ``.pyf.src``,
-``.c.src``, etc. are pre-processed by the ``build_src`` command.
+NumPy Distutils preprocesses C source files (extension: :file:`.c.src`) written
+in a custom templating language to generate C code. The :c:data:`@` symbol is
+used to wrap macro-style variables to empower a string substitution mechansim
+that might describe (for instance) a set of data types.
+
+As a more detailed scenario, a loop in the NumPy C source code may
+have a :c:data:`@TYPE@` variable, targeted for string substitution,
+which is preprocessed to a number of otherwise identical loops with
+several strings such as :c:data:`INT, LONG, UINT, ULONG`. The :c:data:`@TYPE@`
+style syntax thus reduces code duplication and maintenance burden by
+mimicking languages that have generic type support. By convention,
+and as required by the preprocessor, generically typed blocks are preceded
+by comment blocks that enumerate the intended string substitutions.
+
+The template language blocks are delimited by :c:data:`/**begin repeat`
+and :c:data:`/**end repeat**/` lines, which may also be nested using
+consecutively numbered delimiting lines such as :c:data:`/**begin repeat1`
+and :c:data:`/**end repeat1**/`. String replacement specifications are started
+and terminated using :c:data:`#`. This may be clearer in the following
+template source example:
+
+.. code-block:: C
+   :linenos:
+   :emphasize-lines: 3, 13, 29, 31
+
+    /* TIMEDELTA to non-float types */
+
+    /**begin repeat
+     *
+     * #TOTYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+     *           LONGLONG, ULONGLONG, DATETIME,
+     *           TIMEDELTA#
+     * #totype = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+     *           npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+     *           npy_datetime, npy_timedelta#
+     */
+
+    /**begin repeat1
+     *
+     * #FROMTYPE = TIMEDELTA#
+     * #fromtype = npy_timedelta#
+     */
+    static void
+    @FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
+            void *NPY_UNUSED(aip), void *NPY_UNUSED(aop))
+    {
+        const @fromtype@ *ip = input;
+        @totype@ *op = output;
+
+        while (n--) {
+            *op++ = (@totype@)*ip++;
+        }
+    }
+    /**end repeat1**/
+
+    /**end repeat**/
+
+The preprocessing of generically typed C source files (whether in NumPy
+proper or in any third party package using NumPy Distutils) is performed
+by `conv_template.py`_.
+The type specific C files generated (extension: :file:`.c`) by these modules
+during the build process are ready to be compiled. This form
+of generic typing is also supported for C header files (preprocessed to
+produce :file:`.h` files).
+
+.. _conv_template.py: https://github.com/numpy/numpy/blob/master/numpy/distutils/conv_template.py
 
 Useful functions in ``numpy.distutils.misc_util``
 -------------------------------------------------
@@ -427,7 +491,7 @@ Extra features in NumPy Distutils
 '''''''''''''''''''''''''''''''''
 
 Specifying config_fc options for libraries in setup.py script
-------------------------------------------------------------
+-------------------------------------------------------------
 
 It is possible to specify config_fc options in setup.py scripts.
 For example, using

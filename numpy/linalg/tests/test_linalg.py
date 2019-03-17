@@ -13,13 +13,14 @@ import pytest
 
 import numpy as np
 from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
-from numpy import multiply, atleast_2d, inf, asarray, matrix
+from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, SkipTest, suppress_warnings
+    assert_almost_equal, assert_allclose, suppress_warnings,
+    assert_raises_regex,
     )
 
 
@@ -462,12 +463,10 @@ class SolveCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 
 class TestSolve(SolveCases):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            assert_equal(linalg.solve(x, x).dtype, dtype)
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        assert_equal(linalg.solve(x, x).dtype, dtype)
 
     def test_0_size(self):
         class ArraySubclass(np.ndarray):
@@ -531,12 +530,10 @@ class InvCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 
 class TestInv(InvCases):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            assert_equal(linalg.inv(x).dtype, dtype)
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        assert_equal(linalg.inv(x).dtype, dtype)
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -564,14 +561,12 @@ class EigvalsCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 
 class TestEigvals(EigvalsCases):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            assert_equal(linalg.eigvals(x).dtype, dtype)
-            x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
-            assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        assert_equal(linalg.eigvals(x).dtype, dtype)
+        x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
+        assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -603,20 +598,17 @@ class EigCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
 
 class TestEig(EigCases):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            w, v = np.linalg.eig(x)
-            assert_equal(w.dtype, dtype)
-            assert_equal(v.dtype, dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        w, v = np.linalg.eig(x)
+        assert_equal(w.dtype, dtype)
+        assert_equal(v.dtype, dtype)
 
-            x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
-            w, v = np.linalg.eig(x)
-            assert_equal(w.dtype, get_complex_dtype(dtype))
-            assert_equal(v.dtype, get_complex_dtype(dtype))
-
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+        x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
+        w, v = np.linalg.eig(x)
+        assert_equal(w.dtype, get_complex_dtype(dtype))
+        assert_equal(v.dtype, get_complex_dtype(dtype))
 
     def test_0_size(self):
         # Check that all kinds of 0-sized arrays work
@@ -641,6 +633,20 @@ class TestEig(EigCases):
         assert_(isinstance(a, np.ndarray))
 
 
+class SVDBaseTests(object):
+    hermitian = False
+
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        u, s, vh = linalg.svd(x)
+        assert_equal(u.dtype, dtype)
+        assert_equal(s.dtype, get_real_dtype(dtype))
+        assert_equal(vh.dtype, dtype)
+        s = linalg.svd(x, compute_uv=False, hermitian=self.hermitian)
+        assert_equal(s.dtype, get_real_dtype(dtype))
+
+
 class SVDCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
@@ -652,33 +658,35 @@ class SVDCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         assert_(consistent_subclass(vt, a))
 
 
-class TestSVD(SVDCases):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            u, s, vh = linalg.svd(x)
-            assert_equal(u.dtype, dtype)
-            assert_equal(s.dtype, get_real_dtype(dtype))
-            assert_equal(vh.dtype, dtype)
-            s = linalg.svd(x, compute_uv=False)
-            assert_equal(s.dtype, get_real_dtype(dtype))
-
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
-
+class TestSVD(SVDCases, SVDBaseTests):
     def test_empty_identity(self):
         """ Empty input should put an identity matrix in u or vh """
         x = np.empty((4, 0))
-        u, s, vh = linalg.svd(x, compute_uv=True)
+        u, s, vh = linalg.svd(x, compute_uv=True, hermitian=self.hermitian)
         assert_equal(u.shape, (4, 4))
         assert_equal(vh.shape, (0, 0))
         assert_equal(u, np.eye(4))
 
         x = np.empty((0, 4))
-        u, s, vh = linalg.svd(x, compute_uv=True)
+        u, s, vh = linalg.svd(x, compute_uv=True, hermitian=self.hermitian)
         assert_equal(u.shape, (0, 0))
         assert_equal(vh.shape, (4, 4))
         assert_equal(vh, np.eye(4))
+
+
+class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
+
+    def do(self, a, b, tags):
+        u, s, vt = linalg.svd(a, 0, hermitian=True)
+        assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
+                                           np.asarray(vt)),
+                        rtol=get_rtol(u.dtype))
+        assert_(consistent_subclass(u, a))
+        assert_(consistent_subclass(vt, a))
+
+
+class TestSVDHermitian(SVDHermitianCases, SVDBaseTests):
+    hermitian = True
 
 
 class CondCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -808,6 +816,20 @@ class TestPinv(PinvCases):
     pass
 
 
+class PinvHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
+
+    def do(self, a, b, tags):
+        a_ginv = linalg.pinv(a, hermitian=True)
+        # `a @ a_ginv == I` does not hold if a is singular
+        dot = dot_generalized
+        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
+        assert_(consistent_subclass(a_ginv, a))
+
+
+class TestPinvHermitian(PinvHermitianCases):
+    pass
+
+
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
@@ -842,15 +864,13 @@ class TestDet(DetCases):
         assert_equal(type(linalg.slogdet([[0.0j]])[0]), cdouble)
         assert_equal(type(linalg.slogdet([[0.0j]])[1]), double)
 
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            assert_equal(np.linalg.det(x).dtype, dtype)
-            ph, s = np.linalg.slogdet(x)
-            assert_equal(s.dtype, get_real_dtype(dtype))
-            assert_equal(ph.dtype, dtype)
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        assert_equal(np.linalg.det(x).dtype, dtype)
+        ph, s = np.linalg.slogdet(x)
+        assert_equal(s.dtype, get_real_dtype(dtype))
+        assert_equal(ph.dtype, dtype)
 
     def test_0_size(self):
         a = np.zeros((0, 0), dtype=np.complex64)
@@ -945,6 +965,14 @@ class TestLstsq(LstsqCases):
         assert_equal(rank, min(m, n))
         assert_equal(s.shape, (min(m, n),))
 
+    def test_incompatible_dims(self):
+        # use modified version of docstring example
+        x = np.array([0, 1, 2, 3])
+        y = np.array([-1, 0.2, 0.9, 2.1, 3.3])
+        A = np.vstack([x, np.ones(len(x))]).T
+        with assert_raises_regex(LinAlgError, "Incompatible dimensions"):
+            linalg.lstsq(A, y, rcond=None)
+
 
 @pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
 class TestMatrixPower(object):
@@ -960,7 +988,6 @@ class TestMatrixPower(object):
     dtnoinv = [object, np.dtype('e'), np.dtype('g'), np.dtype('G')]
 
     def test_large_power(self, dt):
-        power = matrix_power
         rshft = self.rshft_1.astype(dt)
         assert_equal(
             matrix_power(rshft, 2**100 + 2**10 + 2**5 + 0), self.rshft_0)
@@ -1049,13 +1076,11 @@ class TestEigvalshCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
 
 class TestEigvalsh(object):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            w = np.linalg.eigvalsh(x)
-            assert_equal(w.dtype, get_real_dtype(dtype))
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        w = np.linalg.eigvalsh(x)
+        assert_equal(w.dtype, get_real_dtype(dtype))
 
     def test_invalid(self):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=np.float32)
@@ -1127,14 +1152,12 @@ class TestEighCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
 
 class TestEigh(object):
-    def test_types(self):
-        def check(dtype):
-            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
-            w, v = np.linalg.eigh(x)
-            assert_equal(w.dtype, get_real_dtype(dtype))
-            assert_equal(v.dtype, dtype)
-        for dtype in [single, double, csingle, cdouble]:
-            check(dtype)
+    @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
+    def test_types(self, dtype):
+        x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+        w, v = np.linalg.eigh(x)
+        assert_equal(w.dtype, get_real_dtype(dtype))
+        assert_equal(v.dtype, dtype)
 
     def test_invalid(self):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=np.float32)
@@ -1628,8 +1651,6 @@ class TestQR(object):
     def test_qr_empty(self, m, n):
         k = min(m, n)
         a = np.empty((m, n))
-        a_type = type(a)
-        a_dtype = a.dtype
 
         self.check_qr(a)
 
@@ -1769,7 +1790,7 @@ def test_xerbla_override():
         pid = os.fork()
     except (OSError, AttributeError):
         # fork failed, or not running on POSIX
-        raise SkipTest("Not POSIX or fork failed.")
+        pytest.skip("Not POSIX or fork failed.")
 
     if pid == 0:
         # child; close i/o file handles
@@ -1804,7 +1825,7 @@ def test_xerbla_override():
         # parent
         pid, status = os.wait()
         if os.WEXITSTATUS(status) != XERBLA_OK:
-            raise SkipTest('Numpy xerbla not linked in.')
+            pytest.skip('Numpy xerbla not linked in.')
 
 
 def test_sdot_bug_8577():
@@ -1852,6 +1873,14 @@ class TestMultiDot(object):
 
         assert_almost_equal(multi_dot([A, B, C]), A.dot(B).dot(C))
         assert_almost_equal(multi_dot([A, B, C]), np.dot(A, np.dot(B, C)))
+
+    def test_basic_function_with_two_arguments(self):
+        # separate code path with two arguments
+        A = np.random.random((6, 2))
+        B = np.random.random((2, 6))
+
+        assert_almost_equal(multi_dot([A, B]), A.dot(B))
+        assert_almost_equal(multi_dot([A, B]), np.dot(A, B))
 
     def test_basic_function_with_dynamic_programing_optimization(self):
         # multi_dot with four or more arguments uses the dynamic programing
@@ -1925,3 +1954,51 @@ class TestMultiDot(object):
     def test_too_few_input_arrays(self):
         assert_raises(ValueError, multi_dot, [])
         assert_raises(ValueError, multi_dot, [np.random.random((3, 3))])
+
+
+class TestTensorinv(object):
+
+    @pytest.mark.parametrize("arr, ind", [
+        (np.ones((4, 6, 8, 2)), 2),
+        (np.ones((3, 3, 2)), 1),
+        ])
+    def test_non_square_handling(self, arr, ind):
+        with assert_raises(LinAlgError):
+            linalg.tensorinv(arr, ind=ind)
+
+    @pytest.mark.parametrize("shape, ind", [
+        # examples from docstring
+        ((4, 6, 8, 3), 2),
+        ((24, 8, 3), 1),
+        ])
+    def test_tensorinv_shape(self, shape, ind):
+        a = np.eye(24)
+        a.shape = shape
+        ainv = linalg.tensorinv(a=a, ind=ind)
+        expected = a.shape[ind:] + a.shape[:ind]
+        actual = ainv.shape
+        assert_equal(actual, expected)
+
+    @pytest.mark.parametrize("ind", [
+        0, -2,
+        ])
+    def test_tensorinv_ind_limit(self, ind):
+        a = np.eye(24)
+        a.shape = (4, 6, 8, 3)
+        with assert_raises(ValueError):
+            linalg.tensorinv(a=a, ind=ind)
+
+    def test_tensorinv_result(self):
+        # mimic a docstring example
+        a = np.eye(24)
+        a.shape = (24, 8, 3)
+        ainv = linalg.tensorinv(a, ind=1)
+        b = np.ones(24)
+        assert_allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
+
+
+def test_unsupported_commontype():
+    # linalg gracefully handles unsupported type
+    arr = np.array([[1, -2], [2, 5]], dtype='float16')
+    with assert_raises_regex(TypeError, "unsupported in linalg"):
+        linalg.cholesky(arr)

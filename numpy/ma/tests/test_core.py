@@ -10,7 +10,6 @@ __author__ = "Pierre GF Gerard-Marchant"
 
 import sys
 import warnings
-import pickle
 import operator
 import itertools
 import textwrap
@@ -27,7 +26,7 @@ from numpy.testing import (
     assert_raises, assert_warns, suppress_warnings
     )
 from numpy import ndarray
-from numpy.compat import asbytes, asbytes_nested
+from numpy.compat import asbytes
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal,
     assert_equal_records, fail_if_equal, assert_not_equal,
@@ -50,6 +49,7 @@ from numpy.ma.core import (
     ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
     subtract, sum, take, tan, tanh, transpose, where, zeros,
     )
+from numpy.compat import pickle
 
 pi = np.pi
 
@@ -58,6 +58,11 @@ suppress_copy_mask_on_assignment = suppress_warnings()
 suppress_copy_mask_on_assignment.filter(
     numpy.ma.core.MaskedArrayFutureWarning,
     "setting an item on a masked array which has a shared mask will not copy")
+
+
+# For parametrized numeric testing
+num_dts = [np.dtype(dt_) for dt_ in '?bhilqBHILQefdgFD']
+num_ids = [dt_.char for dt_ in num_dts]
 
 
 class TestMaskedArray(object):
@@ -228,7 +233,7 @@ class TestMaskedArray(object):
         x = np.array([('A', 0)], dtype={'names':['f0','f1'],
                                         'formats':['S4','i8'],
                                         'offsets':[0,8]})
-        data = array(x) # used to fail due to 'V' padding field in x.dtype.descr
+        array(x)  # used to fail due to 'V' padding field in x.dtype.descr
 
     def test_asarray(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
@@ -555,50 +560,55 @@ class TestMaskedArray(object):
                      True,                            # Fully masked
                      False)                           # Fully unmasked
 
-            for mask in masks:
-                a.mask = mask
-                a_pickled = pickle.loads(a.dumps())
-                assert_equal(a_pickled._mask, a._mask)
-                assert_equal(a_pickled._data, a._data)
-                if dtype in (object, int):
-                    assert_equal(a_pickled.fill_value, 999)
-                else:
-                    assert_equal(a_pickled.fill_value, dtype(999))
-                assert_array_equal(a_pickled.mask, mask)
+            for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+                for mask in masks:
+                    a.mask = mask
+                    a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
+                    assert_equal(a_pickled._mask, a._mask)
+                    assert_equal(a_pickled._data, a._data)
+                    if dtype in (object, int):
+                        assert_equal(a_pickled.fill_value, 999)
+                    else:
+                        assert_equal(a_pickled.fill_value, dtype(999))
+                    assert_array_equal(a_pickled.mask, mask)
 
     def test_pickling_subbaseclass(self):
         # Test pickling w/ a subclass of ndarray
         x = np.array([(1.0, 2), (3.0, 4)],
                      dtype=[('x', float), ('y', int)]).view(np.recarray)
         a = masked_array(x, mask=[(True, False), (False, True)])
-        a_pickled = pickle.loads(a.dumps())
-        assert_equal(a_pickled._mask, a._mask)
-        assert_equal(a_pickled, a)
-        assert_(isinstance(a_pickled._data, np.recarray))
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
+            assert_equal(a_pickled._mask, a._mask)
+            assert_equal(a_pickled, a)
+            assert_(isinstance(a_pickled._data, np.recarray))
 
     def test_pickling_maskedconstant(self):
         # Test pickling MaskedConstant
         mc = np.ma.masked
-        mc_pickled = pickle.loads(mc.dumps())
-        assert_equal(mc_pickled._baseclass, mc._baseclass)
-        assert_equal(mc_pickled._mask, mc._mask)
-        assert_equal(mc_pickled._data, mc._data)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            mc_pickled = pickle.loads(pickle.dumps(mc, protocol=proto))
+            assert_equal(mc_pickled._baseclass, mc._baseclass)
+            assert_equal(mc_pickled._mask, mc._mask)
+            assert_equal(mc_pickled._data, mc._data)
 
     def test_pickling_wstructured(self):
         # Tests pickling w/ structured array
         a = array([(1, 1.), (2, 2.)], mask=[(0, 0), (0, 1)],
                   dtype=[('a', int), ('b', float)])
-        a_pickled = pickle.loads(a.dumps())
-        assert_equal(a_pickled._mask, a._mask)
-        assert_equal(a_pickled, a)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
+            assert_equal(a_pickled._mask, a._mask)
+            assert_equal(a_pickled, a)
 
     def test_pickling_keepalignment(self):
         # Tests pickling w/ F_CONTIGUOUS arrays
         a = arange(10)
         a.shape = (-1, 2)
         b = a.T
-        test = pickle.loads(pickle.dumps(b))
-        assert_equal(test, b)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            test = pickle.loads(pickle.dumps(b, protocol=proto))
+            assert_equal(test, b)
 
     def test_single_element_subscript(self):
         # Tests single element subscripts of Maskedarrays.
@@ -1410,23 +1420,34 @@ class TestMaskedArrayArithmetic(object):
         # Test the equality of structured arrays
         ndtype = [('A', int), ('B', int)]
         a = array([(1, 1), (2, 2)], mask=[(0, 1), (0, 0)], dtype=ndtype)
+
         test = (a == a)
         assert_equal(test.data, [True, True])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         test = (a == a[0])
         assert_equal(test.data, [True, False])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         b = array([(1, 1), (2, 2)], mask=[(1, 0), (0, 0)], dtype=ndtype)
         test = (a == b)
         assert_equal(test.data, [False, True])
         assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         test = (a[0] == b)
         assert_equal(test.data, [False, False])
         assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         b = array([(1, 1), (2, 2)], mask=[(0, 1), (1, 0)], dtype=ndtype)
         test = (a == b)
         assert_equal(test.data, [True, True])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         # complicated dtype, 2-dimensional array.
         ndtype = [('A', int), ('B', [('BA', int), ('BB', int)])]
         a = array([[(1, (1, 1)), (2, (2, 2))],
@@ -1436,28 +1457,40 @@ class TestMaskedArrayArithmetic(object):
         test = (a[0, 0] == a)
         assert_equal(test.data, [[True, False], [False, False]])
         assert_equal(test.mask, [[False, False], [False, True]])
+        assert_(test.fill_value == True)
 
     def test_ne_on_structured(self):
         # Test the equality of structured arrays
         ndtype = [('A', int), ('B', int)]
         a = array([(1, 1), (2, 2)], mask=[(0, 1), (0, 0)], dtype=ndtype)
+
         test = (a != a)
         assert_equal(test.data, [False, False])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         test = (a != a[0])
         assert_equal(test.data, [False, True])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         b = array([(1, 1), (2, 2)], mask=[(1, 0), (0, 0)], dtype=ndtype)
         test = (a != b)
         assert_equal(test.data, [True, False])
         assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         test = (a[0] != b)
         assert_equal(test.data, [True, True])
         assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
         b = array([(1, 1), (2, 2)], mask=[(0, 1), (1, 0)], dtype=ndtype)
         test = (a != b)
         assert_equal(test.data, [False, False])
         assert_equal(test.mask, [False, False])
+        assert_(test.fill_value == True)
+
         # complicated dtype, 2-dimensional array.
         ndtype = [('A', int), ('B', [('BA', int), ('BB', int)])]
         a = array([[(1, (1, 1)), (2, (2, 2))],
@@ -1467,6 +1500,7 @@ class TestMaskedArrayArithmetic(object):
         test = (a[0, 0] != a)
         assert_equal(test.data, [[False, True], [True, True]])
         assert_equal(test.mask, [[False, False], [False, True]])
+        assert_(test.fill_value == True)
 
     def test_eq_ne_structured_extra(self):
         # ensure simple examples are symmetric and make sense.
@@ -1501,6 +1535,120 @@ class TestMaskedArrayArithmetic(object):
                 assert_equal(ma1 != ma2, ne_expected)
                 el_by_el = [m1[name] != m2[name] for name in dt.names]
                 assert_equal(array(el_by_el, dtype=bool).any(), ne_expected)
+
+    @pytest.mark.parametrize('dt', ['S', 'U'])
+    @pytest.mark.parametrize('fill', [None, 'A'])
+    def test_eq_for_strings(self, dt, fill):
+        # Test the equality of structured arrays
+        a = array(['a', 'b'], dtype=dt, mask=[0, 1], fill_value=fill)
+
+        test = (a == a)
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        test = (a == a[0])
+        assert_equal(test.data, [True, False])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        b = array(['a', 'b'], dtype=dt, mask=[1, 0], fill_value=fill)
+        test = (a == b)
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [True, True])
+        assert_(test.fill_value == True)
+
+        # test = (a[0] == b)  # doesn't work in Python2
+        test = (b == a[0])
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
+    @pytest.mark.parametrize('dt', ['S', 'U'])
+    @pytest.mark.parametrize('fill', [None, 'A'])
+    def test_ne_for_strings(self, dt, fill):
+        # Test the equality of structured arrays
+        a = array(['a', 'b'], dtype=dt, mask=[0, 1], fill_value=fill)
+
+        test = (a != a)
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        test = (a != a[0])
+        assert_equal(test.data, [False, True])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        b = array(['a', 'b'], dtype=dt, mask=[1, 0], fill_value=fill)
+        test = (a != b)
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [True, True])
+        assert_(test.fill_value == True)
+
+        # test = (a[0] != b)  # doesn't work in Python2
+        test = (b != a[0])
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
+    @pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('fill', [None, 1])
+    def test_eq_for_numeric(self, dt1, dt2, fill):
+        # Test the equality of structured arrays
+        a = array([0, 1], dtype=dt1, mask=[0, 1], fill_value=fill)
+
+        test = (a == a)
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        test = (a == a[0])
+        assert_equal(test.data, [True, False])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        b = array([0, 1], dtype=dt2, mask=[1, 0], fill_value=fill)
+        test = (a == b)
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [True, True])
+        assert_(test.fill_value == True)
+
+        # test = (a[0] == b)  # doesn't work in Python2
+        test = (b == a[0])
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
+
+    @pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
+    @pytest.mark.parametrize('fill', [None, 1])
+    def test_ne_for_numeric(self, dt1, dt2, fill):
+        # Test the equality of structured arrays
+        a = array([0, 1], dtype=dt1, mask=[0, 1], fill_value=fill)
+
+        test = (a != a)
+        assert_equal(test.data, [False, False])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        test = (a != a[0])
+        assert_equal(test.data, [False, True])
+        assert_equal(test.mask, [False, True])
+        assert_(test.fill_value == True)
+
+        b = array([0, 1], dtype=dt2, mask=[1, 0], fill_value=fill)
+        test = (a != b)
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [True, True])
+        assert_(test.fill_value == True)
+
+        # test = (a[0] != b)  # doesn't work in Python2
+        test = (b != a[0])
+        assert_equal(test.data, [True, True])
+        assert_equal(test.mask, [True, False])
+        assert_(test.fill_value == True)
 
     def test_eq_with_None(self):
         # Really, comparisons with None should not be done, but check them
@@ -1881,6 +2029,17 @@ class TestFillingValues(object):
         assert_equal(x.fill_value, 999.)
         assert_equal(x._fill_value, np.array(999.))
 
+    def test_subarray_fillvalue(self):
+        # gh-10483   test multi-field index fill value
+        fields = array([(1, 1, 1)],
+                      dtype=[('i', int), ('s', '|S8'), ('f', float)])
+        with suppress_warnings() as sup:
+            sup.filter(FutureWarning, "Numpy has detected")
+            subfields = fields[['i', 'f']]
+            assert_equal(tuple(subfields.fill_value), (999999, 1.e+20))
+            # test comparison does not raise:
+            subfields[1:] == subfields[:-1]
+
     def test_fillvalue_exotic_dtype(self):
         # Tests yet more exotic flexible dtypes
         _check_fill_value = np.ma.core._check_fill_value
@@ -2242,9 +2401,9 @@ class TestMaskedArrayInPlaceArithmetics(object):
         assert_equal(xm, y + 1)
 
         (x, _, xm) = self.floatdata
-        id1 = x.data.ctypes._data
+        id1 = x.data.ctypes.data
         x += 1.
-        assert_(id1 == x.data.ctypes._data)
+        assert_(id1 == x.data.ctypes.data)
         assert_equal(x, y + 1.)
 
     def test_inplace_addition_array(self):
@@ -3806,12 +3965,8 @@ class TestMaskedArrayFunctions(object):
 
     def test_masked_where_shape_constraint(self):
         a = arange(10)
-        try:
-            test = masked_equal(1, a)
-        except IndexError:
-            pass
-        else:
-            raise AssertionError("Should have failed...")
+        with assert_raises(IndexError):
+            masked_equal(1, a)
         test = masked_equal(a, 1)
         assert_equal(test.mask, [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
@@ -4805,13 +4960,13 @@ class TestMaskedConstant(object):
 
     def test_pickle(self):
         from io import BytesIO
-        import pickle
 
-        with BytesIO() as f:
-            pickle.dump(np.ma.masked, f)
-            f.seek(0)
-            res = pickle.load(f)
-        assert_(res is np.ma.masked)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            with BytesIO() as f:
+                pickle.dump(np.ma.masked, f, protocol=proto)
+                f.seek(0)
+                res = pickle.load(f)
+            assert_(res is np.ma.masked)
 
     def test_copy(self):
         # gh-9328
@@ -4984,7 +5139,7 @@ def test_ufunc_with_out_varied():
     assert_equal(res_pos.data, expected.data)
 
 
-def test_astype():
+def test_astype_mask_ordering():
     descr = [('v', int, 3), ('x', [('y', float)])]
     x = array([
         [([1, 2, 3], (1.0,)),  ([1, 2, 3], (2.0,))],
@@ -5014,6 +5169,25 @@ def test_astype():
     x_f2 = np.array(x, dtype=x.dtype, order='F', subok=True)
     assert_(x_f2.flags.f_contiguous)
     assert_(x_f2.mask.flags.f_contiguous)
+
+
+@pytest.mark.parametrize('dt1', num_dts, ids=num_ids)
+@pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
+@pytest.mark.filterwarnings('ignore::numpy.ComplexWarning')
+def test_astype_basic(dt1, dt2):
+    # See gh-12070
+    src = np.ma.array(ones(3, dt1), fill_value=1)
+    dst = src.astype(dt2)
+
+    assert_(src.fill_value == 1)
+    assert_(src.dtype == dt1)
+    assert_(src.fill_value.dtype == dt1)
+
+    assert_(dst.fill_value == 1)
+    assert_(dst.dtype == dt2)
+    assert_(dst.fill_value.dtype == dt2)
+
+    assert_equal(src, dst)
 
 
 def test_fieldless_void():

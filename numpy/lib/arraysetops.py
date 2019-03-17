@@ -27,7 +27,14 @@ To do: Optionally return indices analogously to unique for all functions.
 """
 from __future__ import division, absolute_import, print_function
 
+import functools
+
 import numpy as np
+from numpy.core import overrides
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
 
 
 __all__ = [
@@ -36,6 +43,11 @@ __all__ = [
     ]
 
 
+def _ediff1d_dispatcher(ary, to_end=None, to_begin=None):
+    return (ary, to_end, to_begin)
+
+
+@array_function_dispatch(_ediff1d_dispatcher)
 def ediff1d(ary, to_end=None, to_begin=None):
     """
     The differences between consecutive elements of an array.
@@ -70,7 +82,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
     array([ 1,  2,  3, -7])
 
     >>> np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))
-    array([-99,   1,   2,   3,  -7,  88,  99])
+    array([-99,   1,   2, ...,  -7,  88,  99])
 
     The returned array is always 1D.
 
@@ -82,6 +94,10 @@ def ediff1d(ary, to_end=None, to_begin=None):
     # force a 1d array
     ary = np.asanyarray(ary).ravel()
 
+    # enforce propagation of the dtype of input
+    # ary to returned result
+    dtype_req = ary.dtype
+
     # fast track default case
     if to_begin is None and to_end is None:
         return ary[1:] - ary[:-1]
@@ -89,13 +105,22 @@ def ediff1d(ary, to_end=None, to_begin=None):
     if to_begin is None:
         l_begin = 0
     else:
-        to_begin = np.asanyarray(to_begin).ravel()
+        _to_begin = np.asanyarray(to_begin, dtype=dtype_req)
+        if not np.all(_to_begin == to_begin):
+            raise ValueError("cannot convert 'to_begin' to array with dtype "
+                            "'%r' as required for input ary" % dtype_req)
+        to_begin = _to_begin.ravel()
         l_begin = len(to_begin)
 
     if to_end is None:
         l_end = 0
     else:
-        to_end = np.asanyarray(to_end).ravel()
+        _to_end = np.asanyarray(to_end, dtype=dtype_req)
+        # check that casting has not overflowed
+        if not np.all(_to_end == to_end):
+            raise ValueError("cannot convert 'to_end' to array with dtype "
+                             "'%r' as required for input ary" % dtype_req)
+        to_end = _to_end.ravel()
         l_end = len(to_end)
 
     # do the calculation in place and copy to_begin and to_end
@@ -118,6 +143,12 @@ def _unpack_tuple(x):
         return x
 
 
+def _unique_dispatcher(ar, return_index=None, return_inverse=None,
+                       return_counts=None, axis=None):
+    return (ar,)
+
+
+@array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
            return_counts=False, axis=None):
     """
@@ -208,13 +239,11 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> a = np.array(['a', 'b', 'b', 'c', 'a'])
     >>> u, indices = np.unique(a, return_index=True)
     >>> u
-    array(['a', 'b', 'c'],
-           dtype='|S1')
+    array(['a', 'b', 'c'], dtype='<U1')
     >>> indices
     array([0, 1, 3])
     >>> a[indices]
-    array(['a', 'b', 'c'],
-           dtype='|S1')
+    array(['a', 'b', 'c'], dtype='<U1')
 
     Reconstruct the input array from the unique values:
 
@@ -223,9 +252,9 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> u
     array([1, 2, 3, 4, 6])
     >>> indices
-    array([0, 1, 4, 3, 1, 2, 1])
+    array([0, 1, 4, ..., 1, 2, 1])
     >>> u[indices]
-    array([1, 2, 6, 4, 2, 3, 2])
+    array([1, 2, 6, ..., 2, 3, 2])
 
     """
     ar = np.asanyarray(ar)
@@ -298,6 +327,12 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     return ret
 
 
+def _intersect1d_dispatcher(
+        ar1, ar2, assume_unique=None, return_indices=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_intersect1d_dispatcher)
 def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     """
     Find the intersection of two arrays.
@@ -393,6 +428,11 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         return int1d
 
 
+def _setxor1d_dispatcher(ar1, ar2, assume_unique=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_setxor1d_dispatcher)
 def setxor1d(ar1, ar2, assume_unique=False):
     """
     Find the set exclusive-or of two arrays.
@@ -435,6 +475,11 @@ def setxor1d(ar1, ar2, assume_unique=False):
     return aux[flag[1:] & flag[:-1]]
 
 
+def _in1d_dispatcher(ar1, ar2, assume_unique=None, invert=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_in1d_dispatcher)
 def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of a 1-D array is also present in a second array.
@@ -547,6 +592,11 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         return ret[rev_idx]
 
 
+def _isin_dispatcher(element, test_elements, assume_unique=None, invert=None):
+    return (element, test_elements)
+
+
+@array_function_dispatch(_isin_dispatcher)
 def isin(element, test_elements, assume_unique=False, invert=False):
     """
     Calculates `element in test_elements`, broadcasting over `element` only.
@@ -607,8 +657,8 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     >>> test_elements = [1, 2, 4, 8]
     >>> mask = np.isin(element, test_elements)
     >>> mask
-    array([[ False,  True],
-           [ True,  False]])
+    array([[False,  True],
+           [ True, False]])
     >>> element[mask]
     array([2, 4])
 
@@ -622,7 +672,7 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     >>> mask = np.isin(element, test_elements, invert=True)
     >>> mask
     array([[ True, False],
-           [ False, True]])
+           [False,  True]])
     >>> element[mask]
     array([0, 6])
 
@@ -631,20 +681,25 @@ def isin(element, test_elements, assume_unique=False, invert=False):
 
     >>> test_set = {1, 2, 4, 8}
     >>> np.isin(element, test_set)
-    array([[ False, False],
-           [ False, False]])
+    array([[False, False],
+           [False, False]])
 
     Casting the set to a list gives the expected result:
 
     >>> np.isin(element, list(test_set))
-    array([[ False,  True],
-           [ True,  False]])
+    array([[False,  True],
+           [ True, False]])
     """
     element = np.asarray(element)
     return in1d(element, test_elements, assume_unique=assume_unique,
                 invert=invert).reshape(element.shape)
 
 
+def _union1d_dispatcher(ar1, ar2):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_union1d_dispatcher)
 def union1d(ar1, ar2):
     """
     Find the union of two arrays.
@@ -680,11 +735,17 @@ def union1d(ar1, ar2):
     """
     return unique(np.concatenate((ar1, ar2), axis=None))
 
+
+def _setdiff1d_dispatcher(ar1, ar2, assume_unique=None):
+    return (ar1, ar2)
+
+
+@array_function_dispatch(_setdiff1d_dispatcher)
 def setdiff1d(ar1, ar2, assume_unique=False):
     """
     Find the set difference of two arrays.
 
-    Return the sorted, unique values in `ar1` that are not in `ar2`.
+    Return the unique values in `ar1` that are not in `ar2`.
 
     Parameters
     ----------
@@ -699,7 +760,9 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     Returns
     -------
     setdiff1d : ndarray
-        Sorted 1D array of values in `ar1` that are not in `ar2`.
+        1D array of values in `ar1` that are not in `ar2`. The result
+        is sorted when `assume_unique=False`, but otherwise only sorted
+        if the input is sorted.
 
     See Also
     --------
