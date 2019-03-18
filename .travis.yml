@@ -64,6 +64,13 @@ matrix:
        - BLAS=None
        - LAPACK=None
        - ATLAS=None
+    - python: 3.6
+      env:
+       - BLAS=None
+       - LAPACK=None
+       - ATLAS=None
+       - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas
+       - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
     - os: linux-ppc64le
       python: 3.6
       env:
