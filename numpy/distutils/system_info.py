@@ -1628,28 +1628,26 @@ class lapack_opt_info(system_info):
         return False
 
     def calc_info(self):
-        # Copy list so we can overwrite
-        lapack_order = self.lapack_order[:]
-
-        user_order = os.environ.get('NUMPY_LAPACK_ORDER', None)
-        if not user_order is None:
+        user_order = os.environ.get('NPY_LAPACK_ORDER', None)
+        if user_order is None:
+            lapack_order = self.lapack_order
+        else:
             # the user has requested the order of the
             # check they are all in the available list, a COMMA SEPARATED list
             user_order = user_order.lower().split(',')
             non_existing = []
+            lapack_order = []
             for order in user_order:
-                if order not in lapack_order:
+                if order in self.lapack_order:
+                    lapack_order.append(order)
+                elif len(order) > 0:
                     non_existing.append(order)
             if len(non_existing) > 0:
                 raise ValueError("lapack_opt_info user defined LAPACK order has unacceptable values: {}".format(non_existing))
-            lapack_order = user_order
 
         for lapack in lapack_order:
             if getattr(self, '_calc_info_{}'.format(lapack))():
                 return
-
-        # possible fail-handler? Raise something?
-        # reaching this point means that nothing has been found
 
 
 class blas_opt_info(system_info):
@@ -1723,28 +1721,27 @@ class blas_opt_info(system_info):
         return True
 
     def calc_info(self):
-        # Copy list so we can overwrite
-        blas_order = self.blas_order[:]
-
-        user_order = os.environ.get('NUMPY_BLAS_ORDER', None)
-        if not user_order is None:
+        user_order = os.environ.get('NPY_BLAS_ORDER', None)
+        if user_order is None:
+            blas_order = self.blas_order
+        else:
             # the user has requested the order of the
             # check they are all in the available list
             user_order = user_order.lower().split(',')
             non_existing = []
+            blas_order = []
             for order in user_order:
-                if order not in blas_order:
+                if order in self.blas_order:
+                    blas_order.append(order)
+                elif len(order) > 0:
                     non_existing.append(order)
             if len(non_existing) > 0:
                 raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(non_existing))
-            blas_order = user_order
 
         for blas in blas_order:
             if getattr(self, '_calc_info_{}'.format(blas))():
                 return
 
-        # possible fail-handler? Raise something?
-        # reaching this point means that nothing has been found
 
 class blas_info(system_info):
     section = 'blas'
