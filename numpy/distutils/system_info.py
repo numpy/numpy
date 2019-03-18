@@ -1575,7 +1575,11 @@ class lapack_opt_info(system_info):
             if ('ATLAS_WITH_LAPACK_ATLAS', None) in l \
                or ('ATLAS_WITHOUT_LAPACK', None) in l:
                 # Get LAPACK (with possible warnings)
+                # If not found we don't accept anything
+                # since we can't use ATLAS with LAPACK!
                 lapack_info = self._get_info_lapack()
+                if not lapack_info:
+                    return False
                 dict_append(info, **lapack_info)
             self.set_info(**info)
             return True
@@ -1617,12 +1621,10 @@ class lapack_opt_info(system_info):
         # TODO check whether this is actually necessary to warn about?
         #      I think the warning is superfluous!
         # warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
-
-        # Ensure we have NO_ATLAS_INFO in the macro list
-        dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
-        info_blas = self._get_info_blas()
-        dict_append(info, **info_blas)
         if info:
+            info_blas = self._get_info_blas()
+            dict_append(info, **info_blas)
+            dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
             self.set_info(**info)
             return True
         return False
