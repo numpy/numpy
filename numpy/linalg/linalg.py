@@ -1279,7 +1279,7 @@ def eig(a):
            [0.        -0.70710678j, 0.        +0.70710678j]])
 
     Complex-valued matrix with real e-values (but complex-valued e-vectors);
-    note that ``a.conj().T = a``, i.e., `a` is Hermitian.
+    note that ``a.conj().T == a``, i.e., `a` is Hermitian.
 
     >>> a = np.array([[1, 1j], [-1j, 1]])
     >>> w, v = LA.eig(a)
@@ -2288,7 +2288,7 @@ def lstsq(a, b, rcond="warn"):
 def _multi_svd_norm(x, row_axis, col_axis, op):
     """Compute a function of the singular values of the 2-D matrices in `x`.
 
-    This is a private utility function used by ``numpy.linalg.norm()``.
+    This is a private utility function used by `numpy.linalg.norm()`.
 
     Parameters
     ----------
@@ -2296,7 +2296,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     row_axis, col_axis : int
         The axes of `x` that hold the 2-D matrices.
     op : callable
-        This should be either numpy.amin or ``numpy.amax`` or ``numpy.sum``.
+        This should be either numpy.amin or `numpy.amax` or `numpy.sum`.
 
     Returns
     -------
