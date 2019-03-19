@@ -288,7 +288,7 @@ respectively ::
     >>> np.iinfo(np.int32) # Bounds of a 32-bit integer
     iinfo(min=-2147483648, max=2147483647, dtype=int32)
     >>> np.iinfo(np.int64) # Bounds of a 64-bit integer
-    iinfo(min=-9223372036854775808, max=9223372036854775807, dtype=int64)s
+    iinfo(min=-9223372036854775808, max=9223372036854775807, dtype=int64)
 
 If 64-bit integers are still too small the result may be cast to a
 floating point number. Floating point numbers offer a larger, but inexact,
