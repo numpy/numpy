@@ -21,6 +21,7 @@ import functools
 import operator
 import warnings
 import contextlib
+import sys
 
 try:
     from ctypes import cdll, c_int
@@ -40,6 +41,7 @@ from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.lib.twodim_base import triu, eye
 from numpy.linalg import lapack_lite, _umath_linalg
+from numpy import __config__
 
 
 array_function_dispatch = functools.partial(
@@ -2776,7 +2778,14 @@ else:
         """
         _set_num_threads = _cached_threads_funcs[0]
         if _set_num_threads is None:
-            blas = cdll[lapack_lite.__file__]
+            if sys.platform == 'win32':
+                # On Windows, we have to check BLAS dll
+                try:
+                    blas = cdll[__config__.blas_opt_info['libraries'][0]]
+                except Exception:
+                    blas = None
+            else:
+                blas = cdll[lapack_lite.__file__]
             if blas is None:
                 _set_num_threads = _noop_set_num_threads
             else:
@@ -2802,7 +2811,14 @@ else:
         """
         _get_num_threads = _cached_threads_funcs[1]
         if _get_num_threads is None:
-            blas = cdll[lapack_lite.__file__]
+            if sys.platform == 'win32':
+                # On Windows, we have to check BLAS dll
+                try:
+                    blas = cdll[__config__.blas_opt_info['libraries'][0]]
+                except Exception:
+                    blas = None
+            else:
+                blas = cdll[lapack_lite.__file__]
             if blas is None:
                 _get_num_threads = _noop_get_num_threads
             else:
