@@ -2755,7 +2755,7 @@ def _multi_dot(arrays, order, i, j):
 
 
 _noop_set_num_threads = lambda *args, **kwargs: None
-_noop_get_num_threads = lambda *args, **kwargs: 1
+_noop_get_num_threads = lambda *args, **kwargs: -1
 
 if cdll is None:
     set_num_threads = set_module('numpy.linalg')(_noop_set_num_threads)
