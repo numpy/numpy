@@ -139,11 +139,6 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """
-    if (shape is not None and order not in 'CFA' and
-            (prototype.ndim != len(shape) or
-                not (prototype.flags.c_contiguous or prototype.flags.f_contiguous))):
-        raise ValueError(
-                "mismatching ndim or non-C/F-layout arrays can not keep order")
     return (prototype,)
 
 

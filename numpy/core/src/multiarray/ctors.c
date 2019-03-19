@@ -1214,6 +1214,12 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
         dims = PyArray_DIMS(prototype);
         new_shape = 0;
     }
+    else if (order == NPY_KEEPORDER && (ndim != PyArray_NDIM(prototype) ||
+                !(PyArray_IS_C_CONTIGUOUS(prototype) || PyArray_IS_F_CONTIGUOUS(prototype)))) {
+        PyErr_SetString(PyExc_ValueError,
+                        "mismatching ndim or non-C/F-layout arrays can not keep order");
+        return ret;
+    }
 
     /* If no override data type, use the one from the prototype */
     if (dtype == NULL) {
