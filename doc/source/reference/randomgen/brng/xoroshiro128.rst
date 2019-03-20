@@ -1,0 +1,42 @@
+Xoroshiro128+
+-------------
+
+.. module:: numpy.random.randomgen.xoroshiro128
+
+.. currentmodule:: numpy.random.randomgen.xoroshiro128
+
+.. autoclass:: Xoroshiro128
+	:exclude-members:
+
+Seeding and State
+=================
+
+.. autosummary::
+   :toctree: generated/
+
+   ~Xoroshiro128.seed
+   ~Xoroshiro128.state
+
+Parallel generation
+===================
+.. autosummary::
+   :toctree: generated/
+
+   ~Xoroshiro128.jump
+
+Random Generator
+================
+.. autosummary::
+   :toctree: generated/
+
+   ~Xoroshiro128.generator
+
+Extending
+=========
+.. autosummary::
+   :toctree: generated/
+
+   ~Xoroshiro128.cffi
+   ~Xoroshiro128.ctypes
+
+
