@@ -447,6 +447,10 @@ long rk_binomial(rk_state *state, long n, double p)
 {
     double q;
 
+    if ((n == 0LL) || (p == 0.0f)) {
+        return 0;
+    }
+
     if (p <= 0.5)
     {
         if (p*n <= 30.0)

@@ -1,0 +1,42 @@
+Xorshift1024*φ
+--------------
+
+.. module:: numpy.random.randomgen.xorshift1024
+
+.. currentmodule:: numpy.random.randomgen.xorshift1024
+
+.. autoclass:: Xorshift1024
+	:exclude-members:
+
+Seeding and State
+=================
+
+.. autosummary::
+   :toctree: generated/
+
+   ~Xorshift1024.seed
+   ~Xorshift1024.state
+
+Parallel generation
+===================
+.. autosummary::
+   :toctree: generated/
+
+   ~Xorshift1024.jump
+
+Random Generator
+================
+.. autosummary::
+   :toctree: generated/
+
+   ~Xorshift1024.generator
+
+Extending
+=========
+.. autosummary::
+   :toctree: generated/
+
+   ~Xorshift1024.cffi
+   ~Xorshift1024.ctypes
+
+

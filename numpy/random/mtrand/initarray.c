@@ -71,7 +71,6 @@
  *  http://www.math.keio.ac.jp/matumoto/emt.html
  *  email: matumoto@math.keio.ac.jp
  */
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "initarray.h"
 

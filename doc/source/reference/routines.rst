@@ -42,6 +42,7 @@ indentation.
    routines.padding
    routines.polynomials
    routines.random
+   randomgen/index
    routines.set
    routines.sort
    routines.statistics

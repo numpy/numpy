@@ -86,8 +86,6 @@ set_state            Set state of generator.
 """
 from __future__ import division, absolute_import, print_function
 
-import warnings
-
 __all__ = [
     'beta',
     'binomial',
@@ -138,9 +136,8 @@ __all__ = [
     'zipf'
 ]
 
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
-    from .mtrand import *
+from .randomgen import mtrand
+from .randomgen.mtrand import *
 
 # Some aliases:
 ranf = random = sample = random_sample

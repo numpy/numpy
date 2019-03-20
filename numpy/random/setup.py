@@ -2,6 +2,9 @@ from __future__ import division, print_function
 
 from os.path import join
 import sys
+import os
+import platform
+import struct
 from distutils.dep_util import newer
 from distutils.msvccompiler import get_build_version as get_msvc_build_version
 
@@ -15,6 +18,7 @@ def needs_mingw_ftime_workaround():
         return True
 
     return False
+
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
@@ -40,6 +44,7 @@ def configuration(parent_package='',top_path=None):
         defs.append(("NPY_NEEDS_MINGW_TIME_WORKAROUND", None))
 
     libs = []
+    defs.append(('NPY_NO_DEPRECATED_API', 0))
     # Configure mtrand
     config.add_extension('mtrand',
                          sources=[join('mtrand', x) for x in
@@ -55,8 +60,8 @@ def configuration(parent_package='',top_path=None):
     config.add_data_files(('.', join('mtrand', 'randomkit.h')))
     config.add_data_dir('tests')
 
+    config.add_subpackage('randomgen')
     return config
-
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup
