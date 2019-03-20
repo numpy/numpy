@@ -1,0 +1,42 @@
+Mersenne Twister (MT19937) 
+--------------------------
+
+.. module:: numpy.random.randomgen.mt19937
+
+.. currentmodule:: numpy.random.randomgen.mt19937
+
+.. autoclass:: MT19937
+	:exclude-members:
+
+Seeding and State
+=================
+
+.. autosummary::
+   :toctree: generated/
+
+   ~MT19937.seed
+   ~MT19937.state
+
+Parallel generation
+===================
+.. autosummary::
+   :toctree: generated/
+
+   ~MT19937.jump
+
+Random Generator
+================
+.. autosummary::
+   :toctree: generated/
+
+   ~MT19937.generator
+
+Extending
+=========
+.. autosummary::
+   :toctree: generated/
+
+   ~MT19937.cffi
+   ~MT19937.ctypes
+
+

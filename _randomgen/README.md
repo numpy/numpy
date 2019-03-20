@@ -47,9 +47,9 @@ which can fully reproduce the sequence produced by NumPy.
   from randomgen import RandomGenerator
   # Default basic PRNG is Xoroshiro128
   rnd = RandomGenerator()
-  w = rnd.standard_normal(10000, method='zig')
-  x = rnd.standard_exponential(10000, method='zig')
-  y = rnd.standard_gamma(5.5, 10000, method='zig')
+  w = rnd.standard_normal(10000)
+  x = rnd.standard_exponential(10000)
+  y = rnd.standard_gamma(5.5, 10000)
   ```
 
 * Support for 32-bit floating randoms for core generators. 
@@ -135,15 +135,15 @@ The RNGs include:
 ## Status
 
 * Builds and passes all tests on:
-  * Linux 32/64 bit, Python 2.7, 3.4, 3.5, 3.6
+  * Linux 32/64 bit, Python 2.7, 3.4, 3.5, 3.6, 3.6
   * PC-BSD (FreeBSD) 64-bit, Python 2.7
-  * OSX 64-bit, Python 3.6
-  * Windows 32/64 bit, Python 2.7, 3.5 and 3.6
+  * OSX 64-bit, Python 2.7, 3.5, 3.6, 3.7
+  * Windows 32/64 bit, Python 2.7, 3.5, 3.6 and 3.7
 
 ## Version
 
 The version matched the latest version of NumPy where
-`RandomGenerator(MT19937())` passes all NumPy test.
+`LegacyGenerator(MT19937())` passes all NumPy test.
 
 ## Documentation
 
@@ -168,7 +168,7 @@ Building requires:
 * Cython (0.26+)
 * tempita (0.5+), if not provided by Cython
  
-Testing requires pytest (3.0+).
+Testing requires pytest (4.0+).
 
 **Note:** it might work with other versions but only tested with these
 versions.

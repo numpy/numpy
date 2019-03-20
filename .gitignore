@@ -168,7 +168,7 @@ numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
-doc/source/reference/generated
+doc/source/**/generated/
 benchmarks/results
 benchmarks/html
 benchmarks/env
@@ -176,4 +176,8 @@ benchmarks/numpy
 # cythonized files
 cythonize.dat
 numpy/random/mtrand/mtrand.c
+numpy/random/randomgen/*.c
+numpy/random/randomgen/legacy/*.c
 numpy/random/mtrand/randint_helpers.pxi
+numpy/random/randomgen/bounded_integers.pyx
+numpy/random/randomgen/bounded_integers.pxd

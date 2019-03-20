@@ -3,8 +3,6 @@
 # :Author:    Travis Oliphant
 from cpython.exc cimport PyErr_Print
 
-cdef extern from "numpy/npy_no_deprecated_api.h": pass
-
 cdef extern from "numpy/arrayobject.h":
 
     cdef enum NPY_TYPES:
