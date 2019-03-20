@@ -2007,12 +2007,16 @@ class TestThreads(object):
 
     def test_set_threads(self):
         old_threads = linalg.get_num_threads()
+        if old_threads < 0:
+            pytest.skip("Cannot change number of BLAS threads.")
         linalg.set_num_threads(1)
         new_threads = linalg.get_num_threads()
         linalg.set_num_threads(old_threads)
         assert_equal(new_threads, 1)
 
     def test_num_threads(self):
+        if linalg.get_num_threads() < 0:
+            pytest.skip("Cannot change number of BLAS threads.")
         with linalg.num_threads(1):
             new_threads = linalg.get_num_threads()
         assert_equal(new_threads, 1)
