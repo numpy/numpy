@@ -1594,8 +1594,8 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
- *  #func = exp, log#
- *  #scalarf = npy_expf, npy_logf#
+ *  #func = sin, cos, exp, log#
+ *  #scalarf = npy_sinf, npy_cosf, npy_expf, npy_logf#
  */
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
@@ -1642,6 +1642,36 @@ FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY
 }
 
 /**end repeat1**/
+
+/**begin repeat1
+ *  #func = cos, sin#
+ *  #scalarf = npy_cosf, npy_sinf#
+ */
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
+    char str[] = "@func@";
+    @ISA@_sincos_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0], str);
+#else
+    /*
+     * This is the path it would take if ISA was runtime detected, but not
+     * compiled for. It fixes the error on clang6.0 which fails to compile
+     * AVX512F version. Not sure if I like this idea, if during runtime it
+     * detects AXV512F, it will end up running the scalar version instead
+     * of AVX2.
+     */
+    UNARY_LOOP {
+	const npy_float in1 = *(npy_float *)ip1;
+	*(npy_float *)op1 = @scalarf@(in1);
+    }
+#endif
+}
+
+/**end repeat1**/
+
+
 /**end repeat**/
 
 /**begin repeat

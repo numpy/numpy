@@ -178,7 +178,7 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
- *  #func = exp, log#
+ *  #func = sin, cos, exp, log#
  */
 NPY_NO_EXPORT void
 FLOAT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
