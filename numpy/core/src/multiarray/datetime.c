@@ -462,8 +462,21 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
             break;
 
         case NPY_FR_W:
-            /* A week is 7 days */
-            set_datetimestruct_days(dt * 7, out);
+            /*
+             * A week is 7 days but we can overflow
+             * if we apply the product directly, so
+             * iteratively account for week when near
+             * max int64 value
+             */
+            if ((dt > 0 && (dt > (NPY_MAX_INT64 / 7))) ||
+                (dt < 0 && (dt < NPY_MIN_INT64 / 7))) {
+                for (int i = 0; i < 7; ++i) {
+                    set_datetimestruct_days(dt, out);
+                }
+            }
+            else {
+                set_datetimestruct_days(dt * 7, out);
+            }
             break;
 
         case NPY_FR_D:
@@ -478,7 +491,12 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                /*
+                 * Careful with extra arithmetic on time delta subtraction
+                 * from the epoch--if dt is near the negative time span
+                 * limit it will be susceptible to overflow
+                 */
+                set_datetimestruct_days(dt / perday - (1 - 1/perday), out);
                 dt = (perday-1) + (dt + 1) % perday;
             }
             out->hour = (int)dt;
@@ -492,7 +510,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                set_datetimestruct_days(dt / perday - (1 - 1/perday), out);
                 dt = (perday-1) + (dt + 1) % perday;
             }
             out->hour = (int)(dt / 60);
@@ -507,7 +525,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                set_datetimestruct_days(dt / perday - (1 - 1/perday), out);
                 dt = (perday-1) + (dt + 1) % perday;
             }
             out->hour = (int)(dt / (60*60));
@@ -523,7 +541,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                set_datetimestruct_days(dt / perday - (1 - 1/perday), out);
                 dt = (perday-1) + (dt + 1) % perday;
             }
             out->hour = (int)(dt / (60*60*1000LL));
@@ -540,7 +558,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                set_datetimestruct_days(dt / perday - (1 - 1/perday), out);
                 dt = (perday-1) + (dt + 1) % perday;
             }
             out->hour = (int)(dt / (60*60*1000000LL));
@@ -557,7 +575,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                set_datetimestruct_days(dt / perday - (1 - 1/perday), out);
                 dt = (perday-1) + (dt + 1) % perday;
             }
             out->hour = (int)(dt / (60*60*1000000000LL));
@@ -575,7 +593,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 dt  = dt % perday;
             }
             else {
-                set_datetimestruct_days((dt - (perday-1)) / perday, out);
+                set_datetimestruct_days(dt / perday - (1 - 1/perday), out);
                 dt = (perday-1) + (dt + 1) % perday;
             }
             out->hour = (int)(dt / (60*60*1000000000000LL));

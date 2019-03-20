@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 
+import operator
 import numpy
 import numpy as np
 import datetime
@@ -2220,6 +2221,33 @@ class TestDateTime(object):
         assert_raises(RecursionError, obj_arr.astype, 'M8')
         assert_raises(RecursionError, obj_arr.astype, 'm8')
 
+    @pytest.mark.parametrize("op1, op2, op3", [
+        # operator check / roundtrip test sequences
+        # around unix epoch
+        (operator.add, operator.gt, operator.sub),
+        (operator.sub, operator.lt, operator.add),
+    ])
+    @pytest.mark.parametrize("time_unit", [
+        "Y", "M", "W", "D", "h", "m",
+        "s", "ms", "us", "ns", "ps",
+        "fs", "as",
+        ])
+    def test_time_span_limit_symmetry(self, time_unit, op1, op2, op3):
+        # time spans around the unix epoch
+        # should have symmetric limits at +/-
+        # np.int64 in respective time units
+        ref = np.datetime64(0, time_unit)
+        max_delta = np.timedelta64(np.iinfo(np.int64).max)
+        # subtraction is particularly prone to overflow
+        # in older code; the overflow shows up in the repr
+        # so test a roundtrip from epoch to limit and back
+        # using the str representation
+        actual = np.datetime64(str(op1(ref, max_delta)))
+        # often this will fail if overflow occurs:
+        assert op2(actual, ref)
+        # finish the roundtrip to unix epoch:
+        restored = op3(actual, max_delta)
+        assert restored == ref
 
 class TestDateTimeData(object):
 
