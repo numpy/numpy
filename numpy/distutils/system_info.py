@@ -92,14 +92,14 @@ src_dirs = /usr/local/src:/opt/src
 search_static_first = 0
 
 [fftw]
-fftw_libs = rfftw, fftw
+libraries = rfftw, fftw
 fftw_opt_libs = rfftw_threaded, fftw_threaded
 # if the above aren't found, look for {s,d}fftw_libs and {s,d}fftw_opt_libs
 
 [atlas]
 library_dirs = /usr/lib/3dnow:/usr/lib/3dnow/atlas
 # for overriding the names of the atlas libraries
-atlas_libs = lapack, f77blas, cblas, atlas
+libraries = lapack, f77blas, cblas, atlas
 
 [x11]
 library_dirs = /usr/X11R6/lib
@@ -898,6 +898,7 @@ class fftw_info(system_info):
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
         libs = self.get_libs(self.section + '_libs', ver_param['libs'])
+        libs = self.get_libs('libraries', libs)
         info = self.check_libs(lib_dirs, libs)
         if info is not None:
             flag = 0
@@ -1083,6 +1084,7 @@ class mkl_info(system_info):
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
         mkl_libs = self.get_libs('mkl_libs', self._lib_mkl)
+        mkl_libs = self.get_libs('libraries', mkl_libs)
         info = self.check_libs2(lib_dirs, mkl_libs)
         if info is None:
             return
@@ -1131,6 +1133,7 @@ class atlas_info(system_info):
         info = {}
         atlas_libs = self.get_libs('atlas_libs',
                                    self._lib_names + self._lib_atlas)
+        atlas_libs = self.get_libs('libraries', atlas_libs)
         lapack_libs = self.get_libs('lapack_libs', self._lib_lapack)
         atlas = None
         lapack = None
@@ -1224,6 +1227,7 @@ class atlas_blas_info(atlas_info):
         info = {}
         atlas_libs = self.get_libs('atlas_libs',
                                    self._lib_names + self._lib_atlas)
+        atlas_libs = self.get_libs('libraries', atlas_libs)
         atlas = self.check_libs2(lib_dirs, atlas_libs, [])
         if atlas is None:
             return
@@ -1277,6 +1281,7 @@ class atlas_3_10_blas_info(atlas_3_10_info):
         info = {}
         atlas_libs = self.get_libs('atlas_libs',
                                    self._lib_names)
+        atlas_libs = self.get_libs('libraries', atlas_libs)
         atlas = self.check_libs2(lib_dirs, atlas_libs, [])
         if atlas is None:
             return
@@ -1328,6 +1333,7 @@ class lapack_info(system_info):
         lib_dirs = self.get_lib_dirs()
 
         lapack_libs = self.get_libs('lapack_libs', self._lib_names)
+        lapack_libs = self.get_libs('libraries', lapack_libs)
         info = self.check_libs(lib_dirs, lapack_libs, [])
         if info is None:
             return
@@ -1683,6 +1689,7 @@ class blas_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         blas_libs = self.get_libs('blas_libs', self._lib_names)
+        blas_libs = self.get_libs('libraries', blas_libs)
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
@@ -1763,9 +1770,9 @@ class openblas_info(blas_info):
 
         lib_dirs = self.get_lib_dirs()
 
-        openblas_libs = self.get_libs('libraries', self._lib_names)
-        if openblas_libs == self._lib_names: # backward compat with 1.8.0
-            openblas_libs = self.get_libs('openblas_libs', self._lib_names)
+        # Prefer to use libraries over openblas_libs
+        openblas_libs = self.get_libs('openblas_libs', self._lib_names)
+        openblas_libs = self.get_libs('libraries', openblas_libs)
 
         info = self.check_libs(lib_dirs, openblas_libs, [])
 
@@ -1877,10 +1884,8 @@ class blis_info(blas_info):
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
-        blis_libs = self.get_libs('libraries', self._lib_names)
-        if blis_libs == self._lib_names:
-            blis_libs = self.get_libs('blis_libs', self._lib_names)
-
+        blis_libs = self.get_libs('blis_libs', self._lib_names)
+        blis_libs = self.get_libs('libraries', blis_libs)
         info = self.check_libs2(lib_dirs, blis_libs, [])
         if info is None:
             return
@@ -1895,6 +1900,7 @@ class blis_info(blas_info):
 
 class accelerate_info(system_info):
     section = 'accelerate'
+    _lib_names = ['accelerate', 'veclib']
     notfounderror = BlasNotFoundError
 
     def calc_info(self):
@@ -1903,7 +1909,7 @@ class accelerate_info(system_info):
         if libraries:
             libraries = [libraries]
         else:
-            libraries = self.get_libs('libraries', ['accelerate', 'veclib'])
+            libraries = self.get_libs('libraries', self._lib_names)
         libraries = [lib.strip().lower() for lib in libraries]
 
         if (sys.platform == 'darwin' and
@@ -2013,6 +2019,7 @@ class x11_info(system_info):
         lib_dirs = self.get_lib_dirs()
         include_dirs = self.get_include_dirs()
         x11_libs = self.get_libs('x11_libs', ['X11'])
+        x11_libs = self.get_libs('libraries', x11_libs)
         info = self.check_libs(lib_dirs, x11_libs, [])
         if info is None:
             return
@@ -2404,6 +2411,7 @@ class amd_info(system_info):
         lib_dirs = self.get_lib_dirs()
 
         amd_libs = self.get_libs('amd_libs', self._lib_names)
+        amd_libs = self.get_libs('libraries', amd_libs)
         info = self.check_libs(lib_dirs, amd_libs, [])
         if info is None:
             return
@@ -2435,6 +2443,7 @@ class umfpack_info(system_info):
         lib_dirs = self.get_lib_dirs()
 
         umfpack_libs = self.get_libs('umfpack_libs', self._lib_names)
+        umfpack_libs = self.get_libs('libraries', umfpack_libs)
         info = self.check_libs(lib_dirs, umfpack_libs, [])
         if info is None:
             return
