@@ -319,11 +319,7 @@ and :c:data:`/**end repeat**/` lines, which may also be nested using
 consecutively numbered delimiting lines such as :c:data:`/**begin repeat1`
 and :c:data:`/**end repeat1**/`. String replacement specifications are started
 and terminated using :c:data:`#`. This may be clearer in the following
-template source example:
-
-.. code-block:: C
-   :linenos:
-   :emphasize-lines: 3, 13, 29, 31
+template source example::
 
     /* TIMEDELTA to non-float types */
 
