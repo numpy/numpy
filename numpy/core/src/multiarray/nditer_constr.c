@@ -2120,8 +2120,8 @@ npyiter_apply_forced_iteration_order(NpyIter *iter, NPY_ORDER order)
             /* Check that all the array inputs are fortran order */
             for (iop = 0; iop < nop; ++iop, ++op) {
                 if (*op && !PyArray_CHKFLAGS(*op, NPY_ARRAY_F_CONTIGUOUS)) {
-                   forder = 0;
-                   break;
+                    forder = 0;
+                    break;
                 }
             }
 

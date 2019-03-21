@@ -187,7 +187,7 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 #else
     if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
                                          &PyString_Type, &str)) {
-         return NULL;
+        return NULL;
     }
     docstr = PyString_AS_STRING(str);
 #endif

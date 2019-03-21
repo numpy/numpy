@@ -147,7 +147,7 @@ _UpdateContiguousFlags(PyArrayObject *ap)
         if (PyArray_STRIDES(ap)[i] != sd) {
             is_c_contig = 0;
             break;
-         }
+        }
         /* contiguous, if it got this far */
         if (dim == 0) {
             break;

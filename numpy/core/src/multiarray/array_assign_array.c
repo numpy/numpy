@@ -420,14 +420,14 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
 
         /* A straightforward where-masked assignment */
          /* Do the masked assignment with raw array iteration */
-         if (raw_array_wheremasked_assign_array(
-                 PyArray_NDIM(dst), PyArray_DIMS(dst),
-                 PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
-                 PyArray_DESCR(src), PyArray_DATA(src), src_strides,
-                 PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
-                         wheremask_strides) < 0) {
-             goto fail;
-         }
+        if (raw_array_wheremasked_assign_array(
+                PyArray_NDIM(dst), PyArray_DIMS(dst),
+                PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
+                PyArray_DESCR(src), PyArray_DATA(src), src_strides,
+                PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
+                        wheremask_strides) < 0) {
+            goto fail;
+        }
     }
 
     if (copied_src) {
