@@ -1198,7 +1198,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
      * if "dims" is detected in keywords, then replace it with
      * the new "shape" argument and continue processing as usual.
      */
-     if (kwds) {
+    if (kwds) {
         PyObject *dims_item, *shape_item;
         dims_item = PyDict_GetItemString(kwds, "dims");
         shape_item = PyDict_GetItemString(kwds, "shape");

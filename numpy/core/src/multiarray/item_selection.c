@@ -2392,7 +2392,7 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
         npy_intp ind = multi_index[idim];
 
         if (check_and_adjust_index(&ind, shapevalue, idim, NULL) < 0) {
-          return NULL;
+            return NULL;
         }
         data += ind * strides[idim];
     }
