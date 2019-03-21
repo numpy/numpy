@@ -18,11 +18,11 @@ New functions
 Deprecations
 ============
 
-``np.polynomial`` functions warn when passed ``float``s in place of ``int``s
-----------------------------------------------------------------------------
-Previously functions in this module would accept ``float``s provided their
-values were integral. For consistency with the rest of numpy, doing so is now
-deprecated, and in future will raise a ``TypeError``.
+``np.polynomial`` functions warn when passed ``float`` in place of ``int``
+--------------------------------------------------------------------------
+Previously functions in this module would accept ``float`` values provided they
+were integral (``1.0``, ``2.0``, etc). For consistency with the rest of numpy,
+doing so is now deprecated, and in future will raise a ``TypeError``.
 
 Similarly, passing a float like ``0.5`` in place of an integer will now raise a
 ``TypeError`` instead of the previous ``ValueError``.
