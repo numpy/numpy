@@ -324,8 +324,7 @@ replaced in each repeat block with corresponding word. All named
 variables in the same+ repeat block must define the same number of words.
 
 In specifying the repeat rule for a named variable, item*N is short-
-hand for item, item, ..., item repeated N times. String replacement
-specifications are started and terminated using :c:data:`#`.In addition,
+hand for item, item, ..., item repeated N times. In addition,
 parenthesis in combination with \*N can be used for grouping several
 items that should be repeated. Thus, #name=(item1, item2)*4# is
 equivalent to #name=item1, item2, item1, item2, item1, item2, item1,
@@ -334,12 +333,9 @@ item2#
 The template language blocks are delimited by :c:data:`/**begin repeat`
 and :c:data:`/**end repeat**/` lines, which may also be nested using
 consecutively numbered delimiting lines such as :c:data:`/**begin repeat1`
-and :c:data:`/**end repeat1**/`. This may be clearer in the following
-template source example:
-
-.. code-block:: C
-   :linenos:
-   :emphasize-lines: 3, 13, 29, 31
+and :c:data:`/**end repeat1**/`. String replacement specifications are started
+and terminated using :c:data:`#`. This may be clearer in the following
+template source example::
 
     /* TIMEDELTA to non-float types */
 
