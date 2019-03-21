@@ -666,9 +666,6 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         Py_DECREF(obj);
         return (PyObject *)ret;
     }
-    else {
-        Py_DECREF(indtype);
-    }
 
 
  fail:
