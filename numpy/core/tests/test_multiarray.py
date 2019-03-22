@@ -4881,12 +4881,13 @@ class TestFlat(object):
         rc_indtype = sys.getrefcount(indtype)
         for ind in inds:
             rc_ind = sys.getrefcount(ind)
-            try:
-                self.a.flat[ind]
-            except IndexError:
-                pass
-            assert_(sys.getrefcount(ind) == rc_ind)
-            assert_(sys.getrefcount(indtype) == rc_indtype)
+            for _ in range(100):
+                try:
+                    self.a.flat[ind]
+                except IndexError:
+                    pass
+            assert_(abs(sys.getrefcount(ind) - rc_ind) < 50)
+            assert_(abs(sys.getrefcount(indtype) - rc_indtype) < 50)
 
 
 class TestResize(object):
