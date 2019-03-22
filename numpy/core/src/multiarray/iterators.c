@@ -656,11 +656,13 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     /* Check for integer array */
     if (PyArray_ISINTEGER((PyArrayObject *)obj)) {
         PyObject *new;
+        Py_INCREF(indtype);
         new = PyArray_FromAny(obj, indtype, 0, 0,
                           NPY_ARRAY_FORCECAST | NPY_ARRAY_ALIGNED, NULL);
         if (new == NULL) {
             goto fail;
         }
+        Py_DECREF(indtype);
         Py_DECREF(obj);
         obj = new;
         new = iter_subscript_int(self, (PyArrayObject *)obj);
