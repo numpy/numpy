@@ -1099,19 +1099,19 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
 /* bunch of helper functions used in ISA_exp/log_FLOAT*/
 
 #if HAVE_ATTRIBUTE_TARGET_AVX2
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_fmadd(__m256 a, __m256 b, __m256 c)
 {
     return _mm256_add_ps(_mm256_mul_ps(a, b), c);
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_get_full_load_mask(void)
 {
     return _mm256_set1_ps(-1.0);
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_get_partial_load_mask(const npy_int num_elem, const npy_int total_elem)
 {
     float maskint[16] = {-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,
@@ -1120,25 +1120,25 @@ avx2_get_partial_load_mask(const npy_int num_elem, const npy_int total_elem)
     return _mm256_loadu_ps(addr);
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_masked_load(__m256 mask, npy_float* addr)
 {
     return _mm256_maskload_ps(addr, _mm256_cvtps_epi32(mask));
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_set_masked_lanes(__m256 x, __m256 val, __m256 mask)
 {
     return _mm256_blendv_ps(x, val, mask);
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_blend(__m256 x, __m256 y, __m256 ymask)
 {
     return _mm256_blendv_ps(x, y, ymask);
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_get_exponent(__m256 x)
 {
     /*
@@ -1162,7 +1162,7 @@ avx2_get_exponent(__m256 x)
     return _mm256_blendv_ps(exp, denorm_exp, denormal_mask);
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_get_mantissa(__m256 x)
 {
     /*
@@ -1187,43 +1187,43 @@ avx2_get_mantissa(__m256 x)
 #endif
 
 #if HAVE_ATTRIBUTE_TARGET_AVX512F
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
 avx512_get_full_load_mask(void)
 {
     return 0xFFFF;
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
 avx512_get_partial_load_mask(const npy_int num_elem, const npy_int total_elem)
 {
     return (0x0001 << num_elem) - 0x0001;
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
 avx512_masked_load(__mmask16 mask, npy_float* addr)
 {
     return _mm512_maskz_loadu_ps(mask, (__m512 *)addr);
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
 avx512_set_masked_lanes(__m512 x, __m512 val, __mmask16 mask)
 {
     return _mm512_mask_blend_ps(mask, x, val);
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
 avx512_blend(__m512 x, __m512 y, __mmask16 ymask)
 {
     return _mm512_mask_mov_ps(x, ymask, y);
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
 avx512_get_exponent(__m512 x)
 {
     return _mm512_add_ps(_mm512_getexp_ps(x), _mm512_set1_ps(1.0f));
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
 avx512_get_mantissa(__m512 x)
 {
     return _mm512_getmant_ps(x, _MM_MANT_NORM_p5_1, _MM_MANT_SIGN_src);
@@ -1242,13 +1242,7 @@ avx512_get_mantissa(__m512 x)
  **/
 
 #if HAVE_ATTRIBUTE_TARGET_@ISA@
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @mask@
-@isa@_cmp_mask(@vtype@ x, npy_float fnum, int sign)
-{
-    return _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(fnum), sign);
-}
-
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
 @isa@_range_reduction(@vtype@ x, @vtype@ y, @vtype@ c1, @vtype@ c2, @vtype@ c3)
 {
     @vtype@ reduced_x = @fmadd@(y, c1, x);
@@ -1266,6 +1260,7 @@ NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
  * #vsize = 256, 512#
  * #BYTES = 32, 64#
  * #mask = __m256, __mmask16#
+ * #vsub = , _mask#
  * #and_masks =_mm256_and_ps, _mm512_kand#
  * #fmadd = avx2_fmadd,_mm512_fmadd_ps#
  * #mask_to_int = _mm256_movemask_ps, #
@@ -1291,7 +1286,7 @@ NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
  * same x = 0xc2781e37)
  */
 
-NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
+static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 @ISA@_exp_FLOAT(npy_float * op, npy_float * ip, const npy_int array_size)
 {
     const npy_int num_lanes = @BYTES@/sizeof(npy_float);
@@ -1327,8 +1322,8 @@ NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
             load_mask = @isa@_get_partial_load_mask(num_remaining_elements,
                                                          num_lanes);
         @vtype@ x  = @isa@_masked_load(load_mask, ip);
-        xmax_mask = @isa@_cmp_mask(x, xmax, _CMP_GE_OQ);
-        xmin_mask = @isa@_cmp_mask(x, xmin, _CMP_LE_OQ);
+        xmax_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmax), _CMP_GE_OQ);
+        xmin_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmin), _CMP_LE_OQ);
 
         x = @isa@_set_masked_lanes(x, zeros_f,
                                    @and_masks@(xmax_mask,xmin_mask));
@@ -1388,7 +1383,7 @@ NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
  * x = 0x3f486945)
  */
 
-NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
+static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 @ISA@_log_FLOAT(npy_float * op, npy_float * ip, const npy_int array_size)
 {
     const npy_int num_lanes = @BYTES@/sizeof(npy_float);
@@ -1424,9 +1419,9 @@ NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                                                          num_lanes);
         @vtype@ x_in  = @isa@_masked_load(load_mask, ip);
 
-        negx_mask = @isa@_cmp_mask(x_in, 0.0f, _CMP_LT_OQ);
-        zero_mask = @isa@_cmp_mask(x_in, 0.0f, _CMP_EQ_OQ);
-        inf_nan_mask = @isa@_cmp_mask(x_in, FLT_MAX, _CMP_GT_OQ);
+        negx_mask = _mm@vsize@_cmp_ps@vsub@(x_in, zeros_f, _CMP_LT_OQ);
+        zero_mask = _mm@vsize@_cmp_ps@vsub@(x_in, zeros_f, _CMP_EQ_OQ);
+        inf_nan_mask = _mm@vsize@_cmp_ps@vsub@(x_in, _mm@vsize@_set1_ps(FLT_MAX), _CMP_GT_OQ);
 
         @vtype@ x = @isa@_set_masked_lanes(x_in, zeros_f, negx_mask);
 
@@ -1435,7 +1430,7 @@ NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         x = @isa@_get_mantissa(x);
 
         /* if x < sqrt(2) {exp = exp-1; x = 2*x} */
-        sqrt2_mask = @isa@_cmp_mask(x, NPY_SQRT1_2f, _CMP_LE_OQ);
+        sqrt2_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(NPY_SQRT1_2f), _CMP_LE_OQ);
         x = @isa@_blend(x, _mm@vsize@_add_ps(x,x), sqrt2_mask);
         exponent = @isa@_blend(exponent,
                                _mm@vsize@_sub_ps(exponent,ones_f), sqrt2_mask);
