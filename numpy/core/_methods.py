@@ -115,7 +115,10 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     # Note that x may not be inexact and that we need it to be an array,
     # not a scalar.
     x = asanyarray(arr - arrmean)
-    x = um.multiply(x,um.conjugate(x),out=x).real
+    if not issubclass(arr.dtype.type, nt.integer):
+        x = um.multiply(x, um.conjugate(x), out=x).real
+    else:
+        x = um.multiply(x, x, out=x)
     ret = umr_sum(x, axis, dtype, out, keepdims)
 
     # Compute degrees of freedom and make sure it is not negative.
