@@ -539,6 +539,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     char *dptr;
     int size;
     PyObject *obj = NULL;
+    PyObject *new;
     PyArray_CopySwapFunc *copyswap;
 
     if (ind == Py_Ellipsis) {
@@ -653,22 +654,23 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         return (PyObject *)ret;
     }
 
-    /* Check for integer array */
-    if (PyArray_ISINTEGER((PyArrayObject *)obj)) {
-        PyObject *new;
-        Py_INCREF(indtype);
-        new = PyArray_FromAny(obj, indtype, 0, 0,
-                          NPY_ARRAY_FORCECAST | NPY_ARRAY_ALIGNED, NULL);
-        if (new == NULL) {
-            goto fail;
-        }
-        Py_DECREF(indtype);
-        Py_DECREF(obj);
-        obj = new;
-        new = iter_subscript_int(self, (PyArrayObject *)obj);
-        Py_DECREF(obj);
-        return new;
+    /* Only integer arrays left */
+    if (!PyArray_ISINTEGER((PyArrayObject *)obj)) {
+        goto fail;
     }
+
+    Py_INCREF(indtype);
+    new = PyArray_FromAny(obj, indtype, 0, 0,
+                      NPY_ARRAY_FORCECAST | NPY_ARRAY_ALIGNED, NULL);
+    if (new == NULL) {
+        goto fail;
+    }
+    Py_DECREF(indtype);
+    Py_DECREF(obj);
+    obj = new;
+    new = iter_subscript_int(self, (PyArrayObject *)obj);
+    Py_DECREF(obj);
+    return new;
 
 
  fail:
