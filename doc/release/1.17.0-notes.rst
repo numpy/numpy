@@ -72,6 +72,11 @@ Looking up ``__buffer__`` attribute in `numpy.frombuffer` was undocumented and
 non-functional. This code was removed. If needed, use
 ``frombuffer(memoryview(obj), ...)`` instead.
 
+``out``is buffered for memory overlaps in ``np.take``, ``np.choose``, ``np.put``
+--------------------------------------------------------------------------------
+If the out argument to these functions is provided and has memory overlap with
+the other arguments, it is now buffered to avoid order-dependent behavior.
+
 
 C API changes
 =============
