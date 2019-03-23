@@ -66,7 +66,8 @@ class Savez(Benchmark):
         self.squares = get_squares()
 
     def time_vb_savez_squares(self):
-        np.savez('tmp.npz', self.squares)
+        np.savez('tmp.npz', **self.squares)
+
 
 class LoadtxtCSVComments(Benchmark):
     # benchmarks for np.loadtxt comment handling
