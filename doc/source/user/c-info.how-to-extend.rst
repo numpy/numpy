@@ -447,17 +447,13 @@ writeable). The syntax is
 
         :c:data:`NPY_ARRAY_IN_ARRAY`
 
-            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :c:data:`NPY_ARRAY_ALIGNED`. This combination of flags is useful
-            for arrays that must be in C-contiguous order and aligned.
-            These kinds of arrays are usually input arrays for some
-            algorithm.
+            This flag is useful for arrays that must be in C-contiguous
+            order and aligned. These kinds of arrays are usually input 
+            arrays for some algorithm.
 
-        .. c:var:: NPY_ARRAY_OUT_ARRAY
+        :c:data:`NPY_ARRAY_OUT_ARRAY`
 
-            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE`. This
-            combination of flags is useful to specify an array that is
+            This flag is useful to specify an array that is
             in C-contiguous order, is aligned, and can be written to
             as well. Such an array is usually returned as output
             (although normally such output arrays are created from
@@ -465,11 +461,7 @@ writeable). The syntax is
 
         :c:data:`NPY_ARRAY_INOUT_ARRAY`
 
-            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-            :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
-            :c:data:`NPY_ARRAY_UPDATEIFCOPY`. This combination of flags is
-            useful to specify an array that will be used for both
+            This flag is useful to specify an array that will be used for both
             input and output. :c:func:`PyArray_ResolveWritebackIfCopy`
             must be called before :func:`Py_DECREF` at
             the end of the interface routine to write back the temporary data
