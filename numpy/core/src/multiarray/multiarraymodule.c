@@ -368,6 +368,400 @@ PyArray_GetSubType(int narrays, PyArrayObject **arrays) {
     return subtype;
 }
 
+/*
+ * Helper function for np.block to create error messages with depth info.
+ */
+void
+_concat_block_depth_str(PyObject **str, int depth, int *position){
+    int i;
+    PyUString_ConcatAndDel(str, PyUString_FromString("arrays"));
+    for (i = 0; i < depth; i++) {
+        PyObject *ind_str = PyUString_FromFormat("[%i]", position[i]);
+        PyUString_ConcatAndDel(str, ind_str);
+    }
+}
+
+/*
+ * Helper function for np.block which pads a shape with 1s.
+ */
+void
+_block_prepend_shape_ones(npy_intp *shape, int ndim, int n_ones){
+    int j;
+    for (j = ndim; j >= 0; j--) {
+        shape[j + n_ones] = shape[j];
+    }
+    for(j = 0; j < n_ones; j++) {
+        shape[j] = 1;
+    }
+}
+
+/*
+ * Helper function for np.block doing first pass to process input arrays. Given
+ * input of a nested list of ndarray/scalars, recursively compute the output
+ * ndim, dtype, shape, subtype, and also the max_depth of the input, and return
+ * a new nested list with all inner elements converted to ndarray.
+ *
+ * Returns a new reference to a nested list like the input nested list,
+ * converted to ndarrays. Sets dtype to a new reference, except on error in
+ * which case dtype will be null.
+ */
+PyObject *
+_get_block_info(PyObject *arrays, int *ndim, PyArray_Descr **dtype,
+                npy_intp *shape, double *sub_priority, PyTypeObject **subtype,
+                int *contigflag, int depth, int *concat_axis, int *position){
+
+    if (depth > NPY_MAXDIMS) {
+        PyErr_SetString(PyExc_ValueError, "arrays exceeded maximum dimensions");
+        return NULL;
+    }
+
+    *dtype = NULL;
+
+    if (PyTuple_Check(arrays)) {
+        PyObject *errmsg = PyUString_FromString("Element at ");
+        _concat_block_depth_str(&errmsg, depth, position);
+        PyUString_ConcatAndDel(&errmsg, PyUString_FromString(
+                        " is a tuple. Only lists can be used to arrange "
+                        "blocks, and np.block does not allow implicit "
+                        "conversion from tuple to ndarray."));
+        PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
+        return NULL;
+    }
+    else if (PyList_Check(arrays)) {
+        int i, idim;
+        PyObject *arrlist, *seq, *item;
+        PyObject *sub_block;
+        int len;
+
+        /* Error if we get an empty list */
+        if (PyList_Size(arrays) == 0){
+            PyObject *errmsg = PyUString_FromString("List at ");
+            _concat_block_depth_str(&errmsg, depth, position);
+            PyUString_ConcatAndDel(&errmsg,
+                                   PyUString_FromString(" cannot be empty"));
+            PyErr_SetObject(PyExc_ValueError, errmsg);
+            Py_DECREF(errmsg);
+            return NULL;
+        }
+
+        /* begin constructing output nested list */
+        seq = PySequence_Fast(arrays, "expected a sequence");
+        if(seq == NULL){
+            return NULL;
+        }
+        len = PySequence_Fast_GET_SIZE(seq);
+        arrlist = PyList_New(len);
+
+        /* take care of first element */
+        item = PySequence_Fast_GET_ITEM(seq, 0);
+        if (item == NULL) {
+            goto block_fail;
+        }
+        position[depth] = 0;
+        sub_block = _get_block_info(item, ndim, dtype, shape, sub_priority,
+                                    subtype, contigflag, depth+1, concat_axis,
+                                    position);
+        if (sub_block == NULL) {
+            goto block_fail;
+        }
+        PyList_SET_ITEM(arrlist, 0, sub_block);
+
+        /* loop over remaining elements */
+        for (i = 1; i < len; i++) {
+            int ndim_i;
+            double priority_i;
+            int concat_axis_i;
+            int contigflag_i;
+            PyTypeObject *subtype_i;
+            PyArray_Descr *dtype_i, *promoted_dtype;
+            npy_intp shape_i[NPY_MAXDIMS];
+
+            item = PySequence_Fast_GET_ITEM(seq, i);
+            position[depth] = i;
+            sub_block = _get_block_info(item, &ndim_i, &dtype_i, shape_i,
+                                        &priority_i, &subtype_i, &contigflag_i,
+                                        depth+1, &concat_axis_i, position);
+            if(sub_block == NULL){
+                goto block_fail;
+            }
+            PyList_SET_ITEM(arrlist, i, sub_block);
+
+            /* update total dtype */
+            promoted_dtype = PyArray_PromoteTypes(*dtype, dtype_i);
+            Py_DECREF(dtype_i);
+            Py_DECREF(*dtype);
+            *dtype = promoted_dtype;
+            if (promoted_dtype == NULL) {
+                goto block_fail;
+            }
+
+            /* update total ndim (prepend ones if needed) */
+            if (ndim_i > *ndim) {
+                _block_prepend_shape_ones(shape, *ndim, ndim_i - *ndim);
+                *concat_axis += ndim_i - *ndim;
+                *ndim = ndim_i;
+            }
+            else if (ndim_i < *ndim) {
+                _block_prepend_shape_ones(shape_i, ndim_i, *ndim - ndim_i);
+                concat_axis_i += *ndim - ndim_i;
+                ndim_i = *ndim;
+            }
+
+            /* check depths */
+            if (concat_axis_i != *concat_axis) {
+                PyObject *errmsg = PyUString_FromString(
+                    "List depths are mismatched. Element ");
+                _concat_block_depth_str(&errmsg, depth+1, position);
+                PyUString_ConcatAndDel(&errmsg, PyUString_FromFormat(
+                    " has depth %i but previous elements have depth %i.",
+                    depth + (ndim_i - concat_axis_i),
+                    depth + (*ndim - *concat_axis)));
+                PyErr_SetObject(PyExc_ValueError, errmsg);
+                Py_DECREF(errmsg);
+                goto block_fail;
+            }
+
+            /* update total shape */
+            for (idim = 0; idim < *ndim; idim++) {
+                /* Build up the size of the concatenation axis */
+                if (idim == concat_axis_i) {
+                    shape[idim] += shape_i[idim];
+                }
+                /* Validate that the rest of the dimensions match */
+                else if (shape[idim] != shape_i[idim]) {
+                    PyObject *errmsg = PyUString_FromString(
+                        "Shape mismatch at ");
+                    _concat_block_depth_str(&errmsg, depth+1, position);
+                    PyUString_ConcatAndDel(&errmsg, PyUString_FromFormat(
+                        " along broadcasted axis %i. Previous elemement's "
+                        "length is %i but this element's is %i.",
+                        idim, shape[idim], shape_i[idim]));
+                    PyErr_SetObject(PyExc_ValueError, errmsg);
+                    Py_DECREF(errmsg);
+                    goto block_fail;
+                }
+            }
+
+            /* update subtype */
+            if (priority_i > *sub_priority) {
+                *sub_priority = priority_i;
+                *subtype = subtype_i;
+            }
+
+            *contigflag = *contigflag & contigflag_i;
+        }
+        Py_DECREF(seq);
+        *concat_axis -= 1;
+        return arrlist;
+
+block_fail:
+        Py_XDECREF(*dtype);
+        *dtype = NULL;
+        Py_DECREF(arrlist);
+        Py_DECREF(seq);
+        return NULL;
+    }
+    else {
+        int arr_ndim;
+
+        /* We've 'bottomed out' - arrays is either a scalar or an array */
+        PyArrayObject *ret = (PyArrayObject *)PyArray_FromAny(arrays, NULL,
+                                                              0, 0, 0, NULL);
+        if (ret == NULL) {
+            return NULL;
+        }
+
+        arr_ndim = PyArray_NDIM(ret);
+        memcpy(shape, PyArray_SHAPE(ret), arr_ndim * sizeof(shape[0]));
+
+        /* pad dimensions with 1s if deeply nested */
+        if (depth > arr_ndim) {
+            _block_prepend_shape_ones(shape, arr_ndim, depth - arr_ndim);
+            arr_ndim = depth;
+        }
+
+        *concat_axis = arr_ndim - 1;
+
+        *ndim = arr_ndim;
+        *dtype = PyArray_DESCR(ret);
+        Py_INCREF(*dtype);
+        *sub_priority = PyArray_GetPriority((PyObject *)(ret), 0.0);
+        *subtype = Py_TYPE(ret);
+        *contigflag = PyArray_FLAGS(ret) &
+                      (NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
+        return (PyObject *)ret;
+    }
+}
+
+/*
+ * Helper function for np.block. Recursively copies a list of lists of
+ * ndarrays to the appropriate location in the out ndarray.
+ *
+ * Clobbers out's shape. Returns -1 on failure.
+ */
+int
+_block_copy_blocks(PyObject *blocks, PyArrayObject *out, int axis){
+    PyObject *seq, *item;
+    int len, i;
+    void *orig_data;
+
+    /* if we bottomed out at an ndarray, copy to out at the current offset */
+    if (PyArray_Check(blocks)) {
+        PyArrayObject *arr = (PyArrayObject *)blocks;
+        int dim_diff = PyArray_NDIM(out) - PyArray_NDIM(arr);
+
+        /* set out's shape to the block shape (prepend ones if needed) */
+        for (i = 0; i < dim_diff; i++) {
+            PyArray_SHAPE(out)[i] = 1;
+        }
+        for ( ; i < PyArray_NDIM(out); i++) {
+            PyArray_SHAPE(out)[i] = PyArray_SHAPE(arr)[i - dim_diff];
+        }
+
+        /* do the copy */
+        if (PyArray_AssignArray(out, arr, NULL, NPY_SAME_KIND_CASTING) < 0) {
+            return -1;
+        }
+
+        return 0;
+    }
+
+    /* otherwise, iterate through the list at this level and recurse */
+    seq = PySequence_Fast(blocks, "expected a sequence");
+    if(seq == NULL){
+        return -1;
+    }
+    len = PySequence_Fast_GET_SIZE(blocks);
+    orig_data = ((PyArrayObject_fields *)out)->data;
+
+    for (i = 0; i < len; i++) {
+        item = PySequence_Fast_GET_ITEM(seq, i);
+
+        if (item == NULL || _block_copy_blocks(item, out, axis+1) < 0) {
+            Py_DECREF(seq);
+            return -1;
+        }
+
+        /*
+         * move datapointer offset based on the shape of the block we just
+         * copied, which happens to be what out's shape was last set to.
+         */
+        ((PyArrayObject_fields *)out)->data +=
+                PyArray_SHAPE(out)[axis] * PyArray_STRIDES(out)[axis];
+    }
+
+    ((PyArrayObject_fields *)out)->data = orig_data;  /* reset data pointer */
+    Py_DECREF(seq);
+    return 0;
+}
+
+/*
+ * Core implementation of np.block, in 2 passes.
+ *
+ * First pass calls _get_block_info, which processes input nested list.
+ * Second pass calls _block_copy_blocks, which copies input arrays to out.
+ *
+ * Returns -1 on failure.
+ */
+PyObject *
+_block_arrays(PyObject *arrays, PyArrayObject *out){
+    /* Compare to PyArray_ConcatenateArrays. */
+    PyArray_Descr *dtype;
+    int ndim;
+    npy_intp shape[NPY_MAXDIMS];
+    double sub_priority;
+    PyTypeObject *subtype;
+    int contigflag;
+    int start_axis;
+    PyObject *blocks;
+    int position[NPY_MAXDIMS];
+    int ret;
+
+    /*
+     * First-pass through the input arrays to get ndim, output shape, dtype,
+     * etc (with validation). Convert input to a nested list of ndarrays.
+     */
+    blocks = _get_block_info(arrays, &ndim, &dtype, shape, &sub_priority,
+                             &subtype, &contigflag, 0, &start_axis, position);
+    if (blocks == NULL) {
+        return NULL;
+    }
+
+    /* Set up the output array with the detected shape and dtype. */
+    if (out == NULL) {
+        int f_flag =  (contigflag & NPY_ARRAY_F_CONTIGUOUS) &&
+                     !(contigflag & NPY_ARRAY_C_CONTIGUOUS);
+        out = (PyArrayObject *)PyArray_NewFromDescr(subtype, dtype, ndim, shape,
+                                                    NULL, NULL, f_flag, NULL);
+        if (out == NULL) {
+            return NULL;
+        }
+    }
+    else {
+        if (PyArray_NDIM(out) != ndim ||
+                !PyArray_CompareLists(shape, PyArray_SHAPE(out), ndim)) {
+            int i;
+            PyObject *ind_str, *errmsg;
+
+            errmsg = PyUString_FromFormat(
+                              "Output array has wrong shape. Expected shape (");
+            for (i = 0; i < ndim-1; i++) {
+                ind_str = PyUString_FromFormat("%i, ", shape[i]);
+                PyUString_ConcatAndDel(&errmsg, ind_str);
+            }
+            ind_str = PyUString_FromFormat("%i)", shape[ndim-1]);
+            PyUString_ConcatAndDel(&errmsg, ind_str);
+            PyErr_SetObject(PyExc_ValueError, errmsg);
+            Py_DECREF(errmsg);
+
+            Py_DECREF(blocks);
+            return NULL;
+        }
+        Py_INCREF(out);
+    }
+
+    /*
+     * Second pass through the nested list of ndarrays, doing the copy. Rather
+     * than slicing, we (temporarily) clobber out's shape and data pointer
+     * using the fact that the increment in memory position at each axis level
+     * can be determined from the shape of the last ndarray copied.
+     */
+    ret = _block_copy_blocks(blocks, out, start_axis + 1);
+    memcpy(PyArray_SHAPE(out), shape, ndim*sizeof(shape[0])); /* reset shape */
+    Py_DECREF(blocks);
+
+    if (ret < 0) {
+        Py_DECREF(out);
+        return NULL;
+    }
+
+    return (PyObject *)out;
+}
+
+static PyObject *
+array_block(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    PyObject *arrays = NULL;
+    PyObject *out = NULL;
+    static char *kwlist[] = {"arrays", "out", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O:block", kwlist,
+                &arrays, &out)) {
+        return NULL;
+    }
+    if (out != NULL) {
+        if (out == Py_None) {
+            out = NULL;
+        }
+        else if (!PyArray_Check(out)) {
+            PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+            return NULL;
+        }
+    }
+
+    return _block_arrays(arrays, (PyArrayObject *)out);
+}
 
 /*
  * Concatenates a list of ndarrays.
@@ -4139,6 +4533,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"concatenate",
         (PyCFunction)array_concatenate,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"block",
+        (PyCFunction)array_block,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"inner",
         (PyCFunction)array_innerproduct,

@@ -176,6 +176,10 @@ thereby saving a level of indentation
 In some cases where ``np.interp`` would previously return ``np.nan``, it now
 returns an appropriate infinity.
 
+``np.block`` is ported to C for performance and supports ``out`` argument
+-------------------------------------------------------------------------
+``np.block`` should have increased performance, particularly for inputs with
+many small arrays. It also has a new ``out`` keyword argument.
 
 Changes
 =======

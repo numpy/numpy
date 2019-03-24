@@ -26,7 +26,7 @@ from .multiarray import (
     inner, int_asbuffer, lexsort, matmul, may_share_memory,
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
-    zeros, normalize_axis_index)
+    zeros, normalize_axis_index, block)
 if sys.version_info[0] < 3:
     from .multiarray import newbuffer, getbuffer
 
