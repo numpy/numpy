@@ -667,9 +667,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
     Py_DECREF(indtype);
     Py_DECREF(obj);
-    obj = new;
-    new = iter_subscript_int(self, (PyArrayObject *)obj);
-    Py_DECREF(obj);
+    Py_SETREF(new, iter_subscript_int(self, (PyArrayObject *)new));
     return new;
 
 
