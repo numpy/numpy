@@ -365,14 +365,7 @@ def _set_reflect_both(padded, axis, width_pair, method, include_edge=False):
     -------
     pad_amt : tuple of ints, length 2
         New index positions of padding to do along the `axis`. If these are
-        both 0, padding is done in this dimension. See notes on why this is
-        necessary.
-
-    Notes
-    -----
-    The modes 'reflect', 'symmetric', and 'wrap' must be padded with a
-    single function, lest the indexing tricks in non-integer multiples of the
-    original shape would violate repetition in the final iteration.
+        both 0, padding is done in this dimension.
     """
     left_pad, right_pad = width_pair
     old_length = padded.shape[axis] - right_pad - left_pad
@@ -452,17 +445,7 @@ def _set_wrap_both(padded, axis, width_pair):
     -------
     pad_amt : tuple of ints, length 2
         New index positions of padding to do along the `axis`. If these are
-        both 0, padding is done in this dimension. See notes on why this is
-        necessary.
-
-    Notes
-    -----
-    This algorithm does not pad with repetition, i.e. the edges are not
-    repeated in the reflection. For that behavior, use `mode='symmetric'`.
-
-    The modes 'reflect', 'symmetric', and 'wrap' must be padded with a
-    single function, lest the indexing tricks in non-integer multiples of the
-    original shape would violate repetition in the final iteration.
+        both 0, padding is done in this dimension.
     """
     left_pad, right_pad = width_pair
     period = padded.shape[axis] - right_pad - left_pad
