@@ -60,11 +60,10 @@ jobs:
   # now stuck getting the full gcc toolchain instead of
   # just pulling in gfortran
   - script: |
-      # same version of gfortran as the wheel builds
+      # we are not bound to specific gcc / gfortran
+      # library versions anymore, as upstream OpenBLAS
+      # builds have statically linked gcc runtime deps
       brew install gcc49
-      # manually link critical gfortran libraries
-      ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libgfortran.3.dylib /usr/local/lib/libgfortran.3.dylib
-      ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libquadmath.0.dylib /usr/local/lib/libquadmath.0.dylib
       # manually symlink gfortran-4.9 to plain gfortran
       # for f2py
       ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
@@ -73,11 +72,16 @@ jobs:
   # matches our MacOS wheel builds -- currently based
   # primarily on file size / name details
   - script: |
-      wget "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz"
-      tar -zxvf openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz
+      wget -O openblas-mac.tar.gz "https://www.dropbox.com/s/64u1h9sm7uq0vrd/openblas-mac.tar.gz?dl=0"
+      tar -zxvf openblas-mac.tar.gz
       # manually link to appropriate system paths
       cp ./usr/local/lib/* /usr/local/lib/
       cp ./usr/local/include/* /usr/local/include/
+      # OpenBLAS build is more portable now
+      # strictly enforce lack of runtime deps
+      # libgfortran & libquadmath should be statically linked
+      ! otool -L ./usr/local/lib/libopenblasp-r0.3.5.dev.dylib | grep -q 'libgfortran'
+      ! otool -L ./usr/local/lib/libopenblasp-r0.3.5.dev.dylib | grep -q 'libquadmath'
     displayName: 'install pre-built openblas'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
