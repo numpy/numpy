@@ -1146,7 +1146,6 @@ def pad(array, pad_width, mode='constant', **kwargs):
     ...     pad_value = kwargs.get('padder', 10)
     ...     vector[:pad_width[0]] = pad_value
     ...     vector[-pad_width[1]:] = pad_value
-    ...     return
     >>> a = np.arange(6)
     >>> a = a.reshape((2, 3))
     >>> np.pad(a, 2, pad_with)
