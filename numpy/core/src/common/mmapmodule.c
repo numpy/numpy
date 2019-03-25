@@ -2,7 +2,6 @@
  /  Author: Sam Rushing <rushing@nightmare.com>
  /  Hacked for Unix by AMK
  /  $Id$
-
  / Modified to support mmap with offset - to map a 'window' of a file
  /   Author:  Yotam Medini  yotamm@mellanox.co.il
  /
@@ -15,7 +14,7 @@
  / This version of mmapmodule.c has been changed significantly
  / from the original mmapfile.c on which it was based.
  / The original version of mmapfile is maintained by Sam at
- / 
+ / ftp://squirl.nightmare.com/pub/python/python-ext.
 */
 
 #define PY_SSIZE_T_CLEAN
@@ -118,26 +117,22 @@ static void
 mmap_object_dealloc(mmap_object *m_obj)
 {
 #ifdef MS_WINDOWS
-    Py_BEGIN_ALLOW_THREADS
     if (m_obj->data != NULL)
         UnmapViewOfFile (m_obj->data);
     if (m_obj->map_handle != NULL)
         CloseHandle (m_obj->map_handle);
     if (m_obj->file_handle != INVALID_HANDLE_VALUE)
         CloseHandle (m_obj->file_handle);
-    Py_END_ALLOW_THREADS
     if (m_obj->tagname)
         PyMem_Free(m_obj->tagname);
 #endif /* MS_WINDOWS */
 
 #ifdef UNIX
-    Py_BEGIN_ALLOW_THREADS
     if (m_obj->fd >= 0)
         (void) close(m_obj->fd);
     if (m_obj->data!=NULL) {
         munmap(m_obj->data, m_obj->size);
     }
-    Py_END_ALLOW_THREADS
 #endif /* UNIX */
 
     if (m_obj->weakreflist != NULL)
@@ -161,37 +156,28 @@ mmap_close_method(mmap_object *self, PyObject *unused)
        again.
        TODO - should we check for errors in the close operations???
     */
-    HANDLE map_handle = self->map_handle;
-    HANDLE file_handle = self->file_handle;
-    char *data = self->data;
-    self->map_handle = NULL;
-    self->file_handle = INVALID_HANDLE_VALUE;
-    self->data = NULL;
-    Py_BEGIN_ALLOW_THREADS
-    if (data != NULL) {
-        UnmapViewOfFile(data);
+    if (self->data != NULL) {
+        UnmapViewOfFile(self->data);
+        self->data = NULL;
     }
-    if (map_handle != NULL) {
-        CloseHandle(map_handle);
+    if (self->map_handle != NULL) {
+        CloseHandle(self->map_handle);
+        self->map_handle = NULL;
     }
-    if (file_handle != INVALID_HANDLE_VALUE) {
-        CloseHandle(file_handle);
+    if (self->file_handle != INVALID_HANDLE_VALUE) {
+        CloseHandle(self->file_handle);
+        self->file_handle = INVALID_HANDLE_VALUE;
     }
-    Py_END_ALLOW_THREADS
 #endif /* MS_WINDOWS */
 
 #ifdef UNIX
-    int fd = self->fd;
-    char *data = self->data;
+    if (0 <= self->fd)
+        (void) close(self->fd);
     self->fd = -1;
-    self->data = NULL;
-    Py_BEGIN_ALLOW_THREADS
-    if (0 <= fd)
-        (void) close(fd);
-    if (data != NULL) {
-        munmap(data, self->size);
+    if (self->data != NULL) {
+        munmap(self->data, self->size);
+        self->data = NULL;
     }
-    Py_END_ALLOW_THREADS
 #endif
 
     Py_RETURN_NONE;
@@ -582,21 +568,18 @@ mmap_flush_method(mmap_object *self, PyObject *args)
     }
 
     if (self->access == ACCESS_READ || self->access == ACCESS_COPY)
-        Py_RETURN_NONE;
+        return PyLong_FromLong(0);
 
 #ifdef MS_WINDOWS
-    if (!FlushViewOfFile(self->data+offset, size)) {
-        PyErr_SetFromWindowsErr(GetLastError());
-        return NULL;
-    }
-    Py_RETURN_NONE;
+    return PyLong_FromLong((long) FlushViewOfFile(self->data+offset, size));
 #elif defined(UNIX)
+    /* XXX semantics of return value? */
     /* XXX flags for msync? */
     if (-1 == msync(self->data + offset, size, MS_SYNC)) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
-    Py_RETURN_NONE;
+    return PyLong_FromLong(0);
 #else
     PyErr_SetString(PyExc_ValueError, "flush not supported on this system");
     return NULL;
@@ -669,7 +652,7 @@ mmap_move_method(mmap_object *self, PyObject *args)
 }
 
 static PyObject *
-mmap_closed_get(mmap_object *self, void *Py_UNUSED(ignored))
+mmap_closed_get(mmap_object *self)
 {
 #ifdef MS_WINDOWS
     return PyBool_FromLong(self->map_handle == NULL ? 1 : 0);
@@ -708,11 +691,51 @@ mmap__sizeof__method(mmap_object *self, void *unused)
 }
 #endif
 
+#ifdef HAVE_MADVISE
+static PyObject *
+mmap_madvise_method(mmap_object *self, PyObject *args)
+{
+    int option;
+    Py_ssize_t start = 0, length;
+
+    CHECK_VALID(NULL);
+    length = self->size;
+
+    if (!PyArg_ParseTuple(args, "i|nn:madvise", &option, &start, &length)) {
+        return NULL;
+    }
+
+    if (start < 0 || start > self->size) {
+        PyErr_SetString(PyExc_ValueError, "madvise start invalid");
+        return NULL;
+    }
+
+    if (length <= 0 || length > self->size) {
+        PyErr_SetString(PyExc_ValueError, "madvise length invalid");
+        return NULL;
+    }
+
+    if (start + length > self->size) {
+        length = self->size - start;
+    }
+
+    if (madvise(self->data + start, length, option) == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+#endif // HAVE_MADVISE
+
 static struct PyMethodDef mmap_object_methods[] = {
     {"close",           (PyCFunction) mmap_close_method,        METH_NOARGS},
     {"find",            (PyCFunction) mmap_find_method,         METH_VARARGS},
     {"rfind",           (PyCFunction) mmap_rfind_method,        METH_VARARGS},
     {"flush",           (PyCFunction) mmap_flush_method,        METH_VARARGS},
+#ifdef HAVE_MADVISE
+    {"madvise",         (PyCFunction) mmap_madvise_method,      METH_VARARGS},
+#endif
     {"move",            (PyCFunction) mmap_move_method,         METH_VARARGS},
     {"read",            (PyCFunction) mmap_read_method,         METH_VARARGS},
     {"read_byte",       (PyCFunction) mmap_read_byte_method,    METH_NOARGS},
@@ -826,6 +849,24 @@ mmap_subscript(mmap_object *self, PyObject *item)
                         "mmap indices must be integers");
         return NULL;
     }
+}
+
+static PyObject *
+mmap_concat(mmap_object *self, PyObject *bb)
+{
+    CHECK_VALID(NULL);
+    PyErr_SetString(PyExc_SystemError,
+                    "mmaps don't support concatenation");
+    return NULL;
+}
+
+static PyObject *
+mmap_repeat(mmap_object *self, Py_ssize_t n)
+{
+    CHECK_VALID(NULL);
+    PyErr_SetString(PyExc_SystemError,
+                    "mmaps don't support repeat operation");
+    return NULL;
 }
 
 static int
@@ -947,8 +988,8 @@ mmap_ass_subscript(mmap_object *self, PyObject *item, PyObject *value)
 
 static PySequenceMethods mmap_as_sequence = {
     (lenfunc)mmap_length,            /*sq_length*/
-    0,                               /*sq_concat*/
-    0,                               /*sq_repeat*/
+    (binaryfunc)mmap_concat,         /*sq_concat*/
+    (ssizeargfunc)mmap_repeat,       /*sq_repeat*/
     (ssizeargfunc)mmap_item,         /*sq_item*/
     0,                               /*sq_slice*/
     (ssizeobjargproc)mmap_ass_item,  /*sq_ass_item*/
@@ -996,7 +1037,7 @@ To map anonymous memory, pass -1 as the fileno (both versions).");
 static PyTypeObject mmap_object_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "mmap.mmap",                                /* tp_name */
-    sizeof(mmap_object),                        /* tp_basicsize */
+    sizeof(mmap_object),                        /* tp_size */
     0,                                          /* tp_itemsize */
     /* methods */
     (destructor) mmap_object_dealloc,           /* tp_dealloc */
@@ -1065,7 +1106,7 @@ new_mmap_object(PyTypeObject *type, PyObject *args, PyObject *kwdict)
         return NULL;
     if (map_size < 0) {
         PyErr_SetString(PyExc_OverflowError,
-                        "memory mapped length must be positive");
+                        "memory mapped length must be postiive");
         return NULL;
     }
     if (offset < 0) {
@@ -1251,7 +1292,7 @@ new_mmap_object(PyTypeObject *type, PyObject *args, PyObject *kwdict)
 
     if (map_size < 0) {
         PyErr_SetString(PyExc_OverflowError,
-                        "memory mapped length must be positive");
+                        "memory mapped length must be postiive");
         return NULL;
     }
     if (offset < 0) {
@@ -1475,5 +1516,80 @@ PyInit_mmap(void)
     setint(dict, "ACCESS_READ", ACCESS_READ);
     setint(dict, "ACCESS_WRITE", ACCESS_WRITE);
     setint(dict, "ACCESS_COPY", ACCESS_COPY);
+
+#ifdef HAVE_MADVISE
+    // Conventional advice values
+#ifdef MADV_NORMAL
+    setint(dict, "MADV_NORMAL", MADV_NORMAL);
+#endif
+#ifdef MADV_RANDOM
+    setint(dict, "MADV_RANDOM", MADV_RANDOM);
+#endif
+#ifdef MADV_SEQUENTIAL
+    setint(dict, "MADV_SEQUENTIAL", MADV_SEQUENTIAL);
+#endif
+#ifdef MADV_WILLNEED
+    setint(dict, "MADV_WILLNEED", MADV_WILLNEED);
+#endif
+#ifdef MADV_DONTNEED
+    setint(dict, "MADV_DONTNEED", MADV_DONTNEED);
+#endif
+
+    // Linux-specific advice values
+#ifdef MADV_REMOVE
+    setint(dict, "MADV_REMOVE", MADV_REMOVE);
+#endif
+#ifdef MADV_DONTFORK
+    setint(dict, "MADV_DONTFORK", MADV_DONTFORK);
+#endif
+#ifdef MADV_DOFORK
+    setint(dict, "MADV_DOFORK", MADV_DOFORK);
+#endif
+#ifdef MADV_HWPOISON
+    setint(dict, "MADV_HWPOISON", MADV_HWPOISON);
+#endif
+#ifdef MADV_MERGEABLE
+    setint(dict, "MADV_MERGEABLE", MADV_MERGEABLE);
+#endif
+#ifdef MADV_UNMERGEABLE
+    setint(dict, "MADV_UNMERGEABLE", MADV_UNMERGEABLE);
+#endif
+#ifdef MADV_SOFT_OFFLINE
+    setint(dict, "MADV_SOFT_OFFLINE", MADV_SOFT_OFFLINE);
+#endif
+#ifdef MADV_HUGEPAGE
+    setint(dict, "MADV_HUGEPAGE", MADV_HUGEPAGE);
+#endif
+#ifdef MADV_NOHUGEPAGE
+    setint(dict, "MADV_NOHUGEPAGE", MADV_NOHUGEPAGE);
+#endif
+#ifdef MADV_DONTDUMP
+    setint(dict, "MADV_DONTDUMP", MADV_DONTDUMP);
+#endif
+#ifdef MADV_DODUMP
+    setint(dict, "MADV_DODUMP", MADV_DODUMP);
+#endif
+#ifdef MADV_FREE // (Also present on FreeBSD and macOS.)
+    setint(dict, "MADV_FREE", MADV_FREE);
+#endif
+
+    // FreeBSD-specific
+#ifdef MADV_NOSYNC
+    setint(dict, "MADV_NOSYNC", MADV_NOSYNC);
+#endif
+#ifdef MADV_AUTOSYNC
+    setint(dict, "MADV_AUTOSYNC", MADV_AUTOSYNC);
+#endif
+#ifdef MADV_NOCORE
+    setint(dict, "MADV_NOCORE", MADV_NOCORE);
+#endif
+#ifdef MADV_CORE
+    setint(dict, "MADV_CORE", MADV_CORE);
+#endif
+#ifdef MADV_PROTECT
+    setint(dict, "MADV_PROTECT", MADV_PROTECT);
+#endif
+#endif // HAVE_MADVISE
+
     return module;
 }
