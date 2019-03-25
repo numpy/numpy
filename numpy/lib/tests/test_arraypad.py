@@ -2,6 +2,7 @@
 
 """
 from __future__ import division, absolute_import, print_function
+from itertools import chain
 
 import pytest
 
@@ -21,6 +22,7 @@ _all_modes = {
     'reflect': {'reflect_type': 'even'},
     'symmetric': {'reflect_type': 'even'},
     'wrap': {},
+    'empty': {}
 }
 
 
@@ -108,46 +110,25 @@ class TestAsPairs(object):
 
 
 class TestConditionalShortcuts(object):
-    def test_zero_padding_shortcuts(self):
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_zero_padding_shortcuts(self, mode):
         test = np.arange(120).reshape(4, 5, 6)
-        pad_amt = [(0, 0) for axis in test.shape]
-        modes = ['constant',
-                 'edge',
-                 'linear_ramp',
-                 'maximum',
-                 'mean',
-                 'median',
-                 'minimum',
-                 'reflect',
-                 'symmetric',
-                 'wrap',
-                 ]
-        for mode in modes:
-            assert_array_equal(test, np.pad(test, pad_amt, mode=mode))
+        pad_amt = [(0, 0) for _ in test.shape]
+        assert_array_equal(test, np.pad(test, pad_amt, mode=mode))
 
-    def test_shallow_statistic_range(self):
+    @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
+    def test_shallow_statistic_range(self, mode):
         test = np.arange(120).reshape(4, 5, 6)
-        pad_amt = [(1, 1) for axis in test.shape]
-        modes = ['maximum',
-                 'mean',
-                 'median',
-                 'minimum',
-                 ]
-        for mode in modes:
-            assert_array_equal(np.pad(test, pad_amt, mode='edge'),
-                               np.pad(test, pad_amt, mode=mode, stat_length=1))
+        pad_amt = [(1, 1) for _ in test.shape]
+        assert_array_equal(np.pad(test, pad_amt, mode='edge'),
+                           np.pad(test, pad_amt, mode=mode, stat_length=1))
 
-    def test_clip_statistic_range(self):
+    @pytest.mark.parametrize("mode", ['maximum', 'mean', 'median', 'minimum',])
+    def test_clip_statistic_range(self, mode):
         test = np.arange(30).reshape(5, 6)
-        pad_amt = [(3, 3) for axis in test.shape]
-        modes = ['maximum',
-                 'mean',
-                 'median',
-                 'minimum',
-                 ]
-        for mode in modes:
-            assert_array_equal(np.pad(test, pad_amt, mode=mode),
-                               np.pad(test, pad_amt, mode=mode, stat_length=30))
+        pad_amt = [(3, 3) for _ in test.shape]
+        assert_array_equal(np.pad(test, pad_amt, mode=mode),
+                           np.pad(test, pad_amt, mode=mode, stat_length=30))
 
 
 class TestStatistic(object):
@@ -444,7 +425,7 @@ class TestStatistic(object):
         assert_array_equal(a, b)
 
     @pytest.mark.parametrize("mode", [
-        pytest.param("mean", marks=pytest.mark.xfail(reason="gh-11216")),
+        "mean",
         "median",
         "minimum",
         "maximum"
@@ -662,6 +643,11 @@ class TestConstant(object):
 
         assert_array_equal(arr, expected)
 
+    def test_pad_empty_dimension(self):
+        arr = np.zeros((3, 0, 2))
+        result = np.pad(arr, [(0,), (2,), (1,)], mode="constant")
+        assert result.shape == (3, 4, 4)
+
 
 class TestLinearRamp(object):
     def test_check_simple(self):
@@ -720,6 +706,14 @@ class TestLinearRamp(object):
             Fraction(-0, 12),
         ])
         assert_equal(actual, expected)
+
+    def test_end_values(self):
+        """Ensure that end values are exact."""
+        a = np.pad(np.ones(10).reshape(2, 5), (223, 123), mode="linear_ramp")
+        assert_equal(a[:, 0], 0.)
+        assert_equal(a[:, -1], 0.)
+        assert_equal(a[0, :], 0.)
+        assert_equal(a[-1, :], 0.)
 
 
 class TestReflect(object):
@@ -831,19 +825,29 @@ class TestReflect(object):
         b = np.array([1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3])
         assert_array_equal(a, b)
 
-    def test_check_padding_an_empty_array(self):
-        a = np.pad(np.zeros((0, 3)), ((0,), (1,)), mode='reflect')
-        b = np.zeros((0, 5))
-        assert_array_equal(a, b)
 
-    def test_padding_empty_dimension(self):
-        match = "There aren't any elements to reflect in axis 0"
+class TestEmptyArray(object):
+    """Check how padding behaves on arrays with an empty dimension."""
+
+    @pytest.mark.parametrize(
+        # Keep parametrization ordered, otherwise pytest-xdist might believe
+        # that different tests were collected during parallelization
+        "mode", sorted(_all_modes.keys() - {"constant", "empty"})
+    )
+    def test_pad_empty_dimension(self, mode):
+        match = ("can't extend empty axis 0 using modes other than 'constant' "
+                 "or 'empty'")
         with pytest.raises(ValueError, match=match):
-            np.pad([], 4, mode='reflect')
+            np.pad([], 4, mode=mode)
         with pytest.raises(ValueError, match=match):
-            np.pad(np.ndarray(0), 4, mode='reflect')
+            np.pad(np.ndarray(0), 4, mode=mode)
         with pytest.raises(ValueError, match=match):
-            np.pad(np.zeros((0, 3)), ((1,), (0,)), mode='reflect')
+            np.pad(np.zeros((0, 3)), ((1,), (0,)), mode=mode)
+
+    @pytest.mark.parametrize("mode", _all_modes.keys())
+    def test_pad_non_empty_dimension(self, mode):
+        result = np.pad(np.ones((2, 0, 2)), ((3,), (0,), (1,)), mode=mode)
+        assert result.shape == (8, 0, 4)
 
 
 class TestSymmetric(object):
@@ -1080,6 +1084,19 @@ class TestWrap(object):
         b = np.pad(a, (0, 5), mode="wrap")
         assert_array_equal(a, b[:-5, :-5])
 
+    def test_repeated_wrapping(self):
+        """
+        Check wrapping on each side individually if the wrapped area is longer
+        than the original array.
+        """
+        a = np.arange(5)
+        b = np.pad(a, (12, 0), mode="wrap")
+        assert_array_equal(np.r_[a, a, a, a][3:], b)
+
+        a = np.arange(5)
+        b = np.pad(a, (0, 12), mode="wrap")
+        assert_array_equal(np.r_[a, a, a, a][:-3], b)
+
 
 class TestEdge(object):
     def test_check_simple(self):
@@ -1118,6 +1135,19 @@ class TestEdge(object):
         padded = np.pad(a, ((1, 2),), 'edge')
         expected = np.pad(a, ((1, 2), (1, 2), (1, 2)), 'edge')
         assert_array_equal(padded, expected)
+
+
+class TestEmpty(object):
+    def test_simple(self):
+        arr = np.arange(24).reshape(4, 6)
+        result = np.pad(arr, [(2, 3), (3, 1)], mode="empty")
+        assert result.shape == (9, 10)
+        assert_equal(arr, result[2:-3, 3:-1])
+
+    def test_pad_empty_dimension(self):
+        arr = np.zeros((3, 0, 2))
+        result = np.pad(arr, [(0,), (2,), (1,)], mode="empty")
+        assert result.shape == (3, 4, 4)
 
 
 def test_legacy_vector_functionality():
@@ -1244,7 +1274,7 @@ def test_kwargs(mode):
     np.pad([1, 2, 3], 1, mode, **allowed)
     # Test if prohibited keyword arguments of other modes raise an error
     for key, value in not_allowed.items():
-        match = 'keyword not in allowed keywords'
+        match = "unsupported keyword arguments for mode '{}'".format(mode)
         with pytest.raises(ValueError, match=match):
             np.pad([1, 2, 3], 1, mode, **{key: value})
 
@@ -1254,9 +1284,39 @@ def test_constant_zero_default():
     assert_array_equal(np.pad(arr, 2), [0, 0, 1, 1, 0, 0])
 
 
+@pytest.mark.parametrize("mode", [1, "const", object(), None, True, False])
+def test_unsupported_mode(mode):
+    match= "mode '{}' is not supported".format(mode)
+    with pytest.raises(ValueError, match=match):
+        np.pad([1, 2, 3], 4, mode=mode)
+
+
 @pytest.mark.parametrize("mode", _all_modes.keys())
 def test_non_contiguous_array(mode):
     arr = np.arange(24).reshape(4, 6)[::2, ::2]
     result = np.pad(arr, (2, 3), mode)
     assert result.shape == (7, 8)
     assert_equal(result[2:-3, 2:-3], arr)
+
+
+@pytest.mark.parametrize("mode", _all_modes.keys())
+def test_memory_layout_persistence(mode):
+    """Test if C and F order is preserved for all pad modes."""
+    x = np.ones((5, 10), order='C')
+    assert np.pad(x, 5, mode).flags["C_CONTIGUOUS"]
+    x = np.ones((5, 10), order='F')
+    assert np.pad(x, 5, mode).flags["F_CONTIGUOUS"]
+
+
+@pytest.mark.parametrize("dtype", chain(
+    # Skip "other" dtypes as they are not supported by all modes
+    np.sctypes["int"],
+    np.sctypes["uint"],
+    np.sctypes["float"],
+    np.sctypes["complex"]
+))
+@pytest.mark.parametrize("mode", _all_modes.keys())
+def test_dtype_persistence(dtype, mode):
+    arr = np.zeros((3, 2, 1), dtype=dtype)
+    result = np.pad(arr, 1, mode=mode)
+    assert result.dtype == dtype
