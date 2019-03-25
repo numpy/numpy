@@ -1154,7 +1154,6 @@ def test_legacy_vector_functionality():
     def _padwithtens(vector, pad_width, iaxis, kwargs):
         vector[:pad_width[0]] = 10
         vector[-pad_width[1]:] = 10
-        return vector
 
     a = np.arange(6).reshape(2, 3)
     a = np.pad(a, 2, _padwithtens)
