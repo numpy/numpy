@@ -119,6 +119,10 @@ divmod operation is now supported for two ``timedelta64`` operands
 The divmod operator now handles two ``np.timedelta64`` operands, with
 type signature mm->qm.
 
+New mode "empty" for ``np.pad``
+-------------------------------
+This mode pads an array to a desired shape without initializing the new
+entries.
 
 Improvements
 ============
@@ -170,6 +174,12 @@ but with this change, you can do::
         pass
 
 thereby saving a level of indentation
+
+Improve performance of ``np.pad``
+---------------------------------
+The performance of the function has been improved for most cases by filling in
+a preallocated array with the desired padded shape instead of using
+concatenation.
 
 ``np.interp`` handles infinities more robustly
 ----------------------------------------------
