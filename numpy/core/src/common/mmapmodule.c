@@ -15,6 +15,7 @@
  / from the original mmapfile.c on which it was based.
  / The original version of mmapfile is maintained by Sam at
  / ftp://squirl.nightmare.com/pub/python/python-ext.
+ / and further modified by a-deeb
 */
 
 #define PY_SSIZE_T_CLEAN
@@ -699,13 +700,13 @@ mmap_madvise_method(mmap_object *self, PyObject *args)
     Py_ssize_t start = 0, length;
 
     CHECK_VALID(NULL);
-    length = self->size;
+    length =  *self->size < 0 ? PY_SSIZE_T_MAX : 0;
 
     if (!PyArg_ParseTuple(args, "i|nn:madvise", &option, &start, &length)) {
         return NULL;
     }
 
-    if (start < 0 || start > self->size) {
+    if (start >= self->size) {
         PyErr_SetString(PyExc_ValueError, "madvise start invalid");
         return NULL;
     }
@@ -719,7 +720,7 @@ mmap_madvise_method(mmap_object *self, PyObject *args)
         length = self->size - start;
     }
 
-    if (madvise(self->data + start, length, option) == -1) {
+    if (madvise(self->data + start, length, option) != 1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
