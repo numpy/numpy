@@ -301,6 +301,9 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         Axis along which `arr` is sliced.
     arr : ndarray (Ni..., M, Nk...)
         Input array.
+    inplace : bool, optional
+        When True, it is assumed that `func1d` modifies `arr` in-place and
+        no new array is created.
     args : any
         Additional arguments to `func1d`.
     kwargs : any
@@ -376,6 +379,15 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         ind0 = next(inds)
     except StopIteration:
         raise ValueError('Cannot apply_along_axis when any iteration dimensions are 0')
+
+    inplace = kwargs.pop('inplace', False)
+    if inplace:
+        # inarr_view will be modified in-place
+        func1d(inarr_view[ind0], *args, **kwargs)
+        for ind in inds:
+            func1d(inarr_view[ind], *args, **kwargs)
+        return arr
+
     res = asanyarray(func1d(inarr_view[ind0], *args, **kwargs))
 
     # build a buffer for storing evaluations of func1d.

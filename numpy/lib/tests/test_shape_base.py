@@ -272,6 +272,25 @@ class TestApplyAlongAxis(object):
         for i in np.ndindex(actual.shape):
             assert_equal(type(actual[i]), type(expected[i]))
 
+    def test_inplace_func1d(self):
+        def set5_inplace(x):
+            x[:] = 5
+
+        # array input is modified in-place
+        arr = np.array([[1, 2], [3, 4]])
+        np.apply_along_axis(set5_inplace, 1, arr, inplace=True)
+        assert_array_equal(arr, np.array([[5, 5], [5, 5]]))
+
+        # list input doesn't get modified inplace due to array conversion
+        arr = [[1, 2], [3, 4]]
+        np.apply_along_axis(set5_inplace, 1, arr, inplace=True)
+        assert_array_equal(np.array(arr), np.array([[1, 2], [3, 4]]))
+
+        # assigning the output returns array copy after inplace modification
+        arr = [[1, 2], [3, 4]]
+        arr = np.apply_along_axis(set5_inplace, 1, arr, inplace=True)
+        assert_array_equal(arr, np.array([[5, 5], [5, 5]]))
+
 
 class TestApplyOverAxes(object):
     def test_simple(self):
