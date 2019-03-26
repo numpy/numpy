@@ -24,6 +24,12 @@ It provides:
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
 
+Installation:
+
+- NumPy can be installed through various Python Distributions like Anaconda
+- NumPy can also installed via pip
+
+
 Testing:
 
 - NumPy versions &ge; 1.15 require `pytest`
