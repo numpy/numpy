@@ -510,6 +510,11 @@ From other objects
         :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED`
 
+    .. c:var:: NPY_ARRAY_OUT_ARRAY
+
+        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED` \|
+        :c:data:`NPY_ARRAY_WRITEABLE`
+
     .. c:var:: NPY_ARRAY_OUT_FARRAY
 
         :c:data:`NPY_ARRAY_F_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
@@ -789,7 +794,7 @@ From other objects
         PyObject* obj, int typenum, int requirements)
 
     Combination of :c:func:`PyArray_FROM_OF` and :c:func:`PyArray_FROM_OT`
-    allowing both a *typenum* and a *flags* argument to be provided..
+    allowing both a *typenum* and a *flags* argument to be provided.
 
 .. c:function:: PyObject* PyArray_FROMANY( \
         PyObject* obj, int typenum, int min, int max, int requirements)
