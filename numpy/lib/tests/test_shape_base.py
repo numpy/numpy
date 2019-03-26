@@ -278,23 +278,18 @@ class TestApplyAlongAxis(object):
 
         # array input is modified in-place
         arr = np.array([[1, 2], [3, 4]])
-        np.apply_along_axis(set5_inplace, 1, arr, inplace=True)
+        np.apply_along_axis(set5_inplace, 1, arr)
         assert_array_equal(arr, np.array([[5, 5], [5, 5]]))
 
         # list input doesn't get modified inplace due to array conversion
         arr = [[1, 2], [3, 4]]
-        np.apply_along_axis(set5_inplace, 1, arr, inplace=True)
+        np.apply_along_axis(set5_inplace, 1, arr)
         assert_array_equal(np.array(arr), np.array([[1, 2], [3, 4]]))
 
         # assigning the output returns array copy after inplace modification
         arr = [[1, 2], [3, 4]]
-        arr = np.apply_along_axis(set5_inplace, 1, arr, inplace=True)
+        arr = np.apply_along_axis(set5_inplace, 1, arr)
         assert_array_equal(arr, np.array([[5, 5], [5, 5]]))
-
-        # using a function that returns None warns when inplace != True
-        arr = np.array([[1, 2], [3, 4]])
-        assert_warns(DeprecationWarning, np.apply_along_axis, set5_inplace, 1,
-                     arr)
 
 
 class TestApplyOverAxes(object):

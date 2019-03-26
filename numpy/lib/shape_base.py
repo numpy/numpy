@@ -301,9 +301,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         Axis along which `arr` is sliced.
     arr : ndarray (Ni..., M, Nk...)
         Input array.
-    inplace : bool, optional
-        When True, it is assumed that `func1d` modifies `arr` in-place and
-        no new array is created.
     args : any
         Additional arguments to `func1d`.
     kwargs : any
@@ -319,7 +316,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         `arr`, except along the `axis` dimension. This axis is removed, and
         replaced with new dimensions equal to the shape of the return value
         of `func1d`. So if `func1d` returns a scalar `out` will have one
-        fewer dimensions than `arr`.
+        fewer dimensions than `arr`. If `func1d` returns None, it is assumed
+        that `func1d` modifies `arr` in-place.
 
     See Also
     --------
@@ -380,20 +378,13 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     except StopIteration:
         raise ValueError('Cannot apply_along_axis when any iteration dimensions are 0')
 
-    inplace = kwargs.pop('inplace', False)
-    if inplace:
-        # inarr_view will be modified in-place
-        func1d(inarr_view[ind0], *args, **kwargs)
+    res = func1d(inarr_view[ind0], *args, **kwargs)
+    if res is None:
+        # no return value: assume arr is being modified in-place
         for ind in inds:
             func1d(inarr_view[ind], *args, **kwargs)
         return arr
 
-    res = func1d(inarr_view[ind0], *args, **kwargs)
-    if res is None:
-        warnings.warn(
-            "func1d returned None, but inplace=True was not specified. In the "
-            "future, this will raise a ValueError.",
-            DeprecationWarning, stacklevel=2)
     res = asanyarray(res)
 
     # build a buffer for storing evaluations of func1d.
