@@ -1232,7 +1232,8 @@ def pad(array, pad_width, mode='constant', **kwargs):
                                 newmat,
                                 pad_width[iaxis],
                                 iaxis,
-                                kwargs)
+                                kwargs,
+                                inplace=True)
         return newmat
 
     # If we get here, use new padding method
