@@ -291,6 +291,11 @@ class TestApplyAlongAxis(object):
         arr = np.apply_along_axis(set5_inplace, 1, arr, inplace=True)
         assert_array_equal(arr, np.array([[5, 5], [5, 5]]))
 
+        # using a function that returns None warns when inplace != True
+        arr = np.array([[1, 2], [3, 4]])
+        assert_warns(DeprecationWarning, np.apply_along_axis, set5_inplace, 1,
+                     arr)
+
 
 class TestApplyOverAxes(object):
     def test_simple(self):

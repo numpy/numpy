@@ -388,7 +388,13 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             func1d(inarr_view[ind], *args, **kwargs)
         return arr
 
-    res = asanyarray(func1d(inarr_view[ind0], *args, **kwargs))
+    res = func1d(inarr_view[ind0], *args, **kwargs)
+    if res is None:
+        warnings.warn(
+            "func1d returned None, but inplace=True was not specified. In the "
+            "future, this will raise a ValueError.",
+            DeprecationWarning, stacklevel=2)
+    res = asanyarray(res)
 
     # build a buffer for storing evaluations of func1d.
     # remove the requested axis, and add the new ones on the end.
