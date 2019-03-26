@@ -7,7 +7,7 @@ trigger:
       - maintenance/*
 
 variables:
-  OPENBLAS_VERSION: "0.3.5.dev"
+  OPENBLAS_VERSION: "0.3.5"
 
 jobs:
 - job: Linux_Python_36_32bit_full_with_asserts
@@ -24,8 +24,8 @@ jobs:
            apt-get -y install gfortran-5 wget && \
            cd .. && \
            mkdir openblas && cd openblas && \
-           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-manylinux1_i686.tar.gz && \
-           tar zxvf openblas-v0.3.3-186-g701ea883-manylinux1_i686.tar.gz && \
+           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-manylinux1_i686.tar.gz && \
+           tar zxvf openblas-v0.3.5-manylinux1_i686.tar.gz && \
            cp -r ./usr/local/lib/* /usr/lib && \
            cp ./usr/local/include/* /usr/include && \
            cd ../numpy && \
@@ -80,8 +80,8 @@ jobs:
   # matches our MacOS wheel builds -- currently based
   # primarily on file size / name details
   - script: |
-      wget "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz"
-      tar -zxvf openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz
+      wget "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-macosx_10_9_x86_64-gf_1becaaa.tar.gz"
+      tar -zxvf openblas-v0.3.5-macosx_10_9_x86_64-gf_1becaaa.tar.gz
       # manually link to appropriate system paths
       cp ./usr/local/lib/* /usr/local/lib/
       cp ./usr/local/include/* /usr/local/include/
@@ -124,8 +124,8 @@ jobs:
   variables:
       # openblas URLs from numpy-wheels
       # appveyor / Windows config
-      OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win32-gcc_7_1_0.zip"
-      OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win_amd64-gcc_7_1_0.zip"
+      OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-win32-gcc_7_1_0.zip"
+      OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-win_amd64-gcc_7_1_0.zip"
   strategy:
     maxParallel: 6
     matrix:
@@ -182,9 +182,9 @@ jobs:
       $target_dll = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.dll"
       $target_importlib = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.lib"
       $target_static = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
-      cp $tmpdir\$(BITS)\bin\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.dll $target_dll
-      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.dll.a $target_importlib
-      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target_static
+      cp $tmpdir\$(BITS)\bin\libopenblas_v0.3.5-gcc_7_1_0.dll $target_dll
+      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.5-gcc_7_1_0.dll.a $target_importlib
+      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.5-gcc_7_1_0.a $target_static
     displayName: 'Download / Install OpenBLAS'
   - powershell: |
       # need a version of mingw with requisite DLLs
