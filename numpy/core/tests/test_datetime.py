@@ -2220,6 +2220,44 @@ class TestDateTime(object):
         assert_raises(RecursionError, obj_arr.astype, 'M8')
         assert_raises(RecursionError, obj_arr.astype, 'm8')
 
+    @pytest.mark.parametrize("time_unit", [
+        "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as",
+        # compound units
+        "10D", "2M",
+    ])
+    def test_limit_symmetry(self, time_unit):
+        """
+        Dates should have symmetric limits around the unix epoch at +/-np.int64
+        """
+        epoch = np.datetime64(0, time_unit)
+        latest = np.datetime64(np.iinfo(np.int64).max, time_unit)
+        earliest = np.datetime64(-np.iinfo(np.int64).max, time_unit)
+
+        # above should not have overflowed
+        assert earliest < epoch < latest
+
+    @pytest.mark.parametrize("time_unit", [
+        "Y", "M",
+        pytest.param("W", marks=pytest.mark.xfail(reason="gh-13197")),
+        "D", "h", "m",
+        "s", "ms", "us", "ns", "ps", "fs", "as",
+        pytest.param("10D", marks=pytest.mark.xfail(reason="similar to gh-13197")),
+    ])
+    @pytest.mark.parametrize("sign", [-1, 1])
+    def test_limit_str_roundtrip(self, time_unit, sign):
+        """
+        Limits should roundtrip when converted to strings.
+
+        This tests the conversion to and from npy_datetimestruct.
+        """
+        # TODO: add absolute (gold standard) time span limit strings
+        limit = np.datetime64(np.iinfo(np.int64).max * sign, time_unit)
+
+        # Convert to string and back. Explicit unit needed since the day and
+        # week reprs are not distinguishable.
+        limit_via_str = np.datetime64(str(limit), time_unit)
+        assert limit_via_str == limit
+
 
 class TestDateTimeData(object):
 
