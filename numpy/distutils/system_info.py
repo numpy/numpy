@@ -450,7 +450,9 @@ class NotFoundError(DistutilsError):
 
 
 class AliasedOptionError(DistutilsError):
-    """Aliases entries in config files should not be existing. In section '{section}' we found multiple of options {options} """
+    """
+    Aliases entries in config files should not be existing.
+    In section '{section}' we found multiple appearances of options {options}"""
 
 
 class AtlasNotFoundError(NotFoundError):
@@ -629,7 +631,8 @@ class system_info(object):
         AliasedOptionError :
             in case more than one of the options are found
         """
-        found = list(map(lambda opt: self.cp.has_option(self.section, opt), options))
+        found = map(lambda opt: self.cp.has_option(self.section, opt), options)
+        found = list(found)
         if sum(found) == 1:
             return options[found.index(True)]
         elif sum(found) == 0:
@@ -637,7 +640,8 @@ class system_info(object):
             return options[0]
 
         # Else we have more than 1 key found
-        raise AliasedOptionError(AliasedOptionError.__doc__.format(section=self.section, options='[{}]'.format(', '.join(options))))
+        raise AliasedOptionError(AliasedOptionError.__doc__.format(
+            section=self.section, options='[{}]'.format(', '.join(options))))
 
 
     def has_info(self):
