@@ -449,6 +449,10 @@ class NotFoundError(DistutilsError):
     """Some third-party program or library is not found."""
 
 
+class AliasedOptionError(DistutilsError):
+    """Aliases entries in config files should not be existing. In section '{section}' we found multiple of options {options} """
+
+
 class AtlasNotFoundError(NotFoundError):
     """
     Atlas (http://math-atlas.sourceforge.net/) libraries not found.
@@ -606,6 +610,35 @@ class system_info(object):
             extra_info = self.calc_extra_info()
             dict_append(info, **extra_info)
         self.saved_results[self.__class__.__name__] = info
+
+    def get_option_single(self, *options):
+        """ Ensure that only one of `options` are found in the section
+
+        Parameters
+        ----------
+        *options : list of str
+           a list of options to be found in the section (``self.section``)
+
+        Returns
+        -------
+        str :
+            the option that is uniquely found in the section
+
+        Raises
+        ------
+        AliasedOptionError :
+            in case more than one of the options are found
+        """
+        found = list(map(lambda opt: self.cp.has_option(self.section, opt), options))
+        if sum(found) == 1:
+            return options[found.index(True)]
+        elif sum(found) == 0:
+            # nothing is found anyways
+            return options[0]
+
+        # Else we have more than 1 key found
+        raise AliasedOptionError(AliasedOptionError.__doc__.format(section=self.section, options='[{}]'.format(', '.join(options))))
+
 
     def has_info(self):
         return self.__class__.__name__ in self.saved_results
@@ -897,8 +930,9 @@ class fftw_info(system_info):
         """Returns True on successful version detection, else False"""
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
-        libs = self.get_libs(self.section + '_libs', ver_param['libs'])
-        libs = self.get_libs('libraries', libs)
+
+        opt = self.get_option_single(self.section + '_libs', 'libraries')
+        libs = self.get_libs(opt, ver_param['libs'])
         info = self.check_libs(lib_dirs, libs)
         if info is not None:
             flag = 0
@@ -1083,8 +1117,8 @@ class mkl_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
-        mkl_libs = self.get_libs('mkl_libs', self._lib_mkl)
-        mkl_libs = self.get_libs('libraries', mkl_libs)
+        opt = self.get_option_single('mkl_libs', 'libraries')
+        mkl_libs = self.get_libs(opt, self._lib_mkl)
         info = self.check_libs2(lib_dirs, mkl_libs)
         if info is None:
             return
@@ -1131,9 +1165,8 @@ class atlas_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         info = {}
-        atlas_libs = self.get_libs('atlas_libs',
-                                   self._lib_names + self._lib_atlas)
-        atlas_libs = self.get_libs('libraries', atlas_libs)
+        opt = self.get_option_single('atlas_libs', 'libraries')
+        atlas_libs = self.get_libs(opt, self._lib_names + self._lib_atlas)
         lapack_libs = self.get_libs('lapack_libs', self._lib_lapack)
         atlas = None
         lapack = None
@@ -1225,9 +1258,8 @@ class atlas_blas_info(atlas_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         info = {}
-        atlas_libs = self.get_libs('atlas_libs',
-                                   self._lib_names + self._lib_atlas)
-        atlas_libs = self.get_libs('libraries', atlas_libs)
+        opt = self.get_option_single('atlas_libs', 'libraries')
+        atlas_libs = self.get_libs(opt, self._lib_names + self._lib_atlas)
         atlas = self.check_libs2(lib_dirs, atlas_libs, [])
         if atlas is None:
             return
@@ -1279,9 +1311,8 @@ class atlas_3_10_blas_info(atlas_3_10_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         info = {}
-        atlas_libs = self.get_libs('atlas_libs',
-                                   self._lib_names)
-        atlas_libs = self.get_libs('libraries', atlas_libs)
+        opt = self.get_option_single('atlas_lib', 'libraries')
+        atlas_libs = self.get_libs(opt, self._lib_names)
         atlas = self.check_libs2(lib_dirs, atlas_libs, [])
         if atlas is None:
             return
@@ -1332,8 +1363,8 @@ class lapack_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        lapack_libs = self.get_libs('lapack_libs', self._lib_names)
-        lapack_libs = self.get_libs('libraries', lapack_libs)
+        opt = self.get_option_single('lapack_libs', 'libraries')
+        lapack_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs(lib_dirs, lapack_libs, [])
         if info is None:
             return
@@ -1688,8 +1719,8 @@ class blas_info(system_info):
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
-        blas_libs = self.get_libs('blas_libs', self._lib_names)
-        blas_libs = self.get_libs('libraries', blas_libs)
+        opt = self.get_option_single('blas_libs', 'libraries')
+        blas_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
@@ -1771,8 +1802,8 @@ class openblas_info(blas_info):
         lib_dirs = self.get_lib_dirs()
 
         # Prefer to use libraries over openblas_libs
-        openblas_libs = self.get_libs('openblas_libs', self._lib_names)
-        openblas_libs = self.get_libs('libraries', openblas_libs)
+        opt = self.get_option_single('openblas_libs', 'libraries')
+        openblas_libs = self.get_libs(opt, self._lib_names)
 
         info = self.check_libs(lib_dirs, openblas_libs, [])
 
@@ -1884,8 +1915,8 @@ class blis_info(blas_info):
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
-        blis_libs = self.get_libs('blis_libs', self._lib_names)
-        blis_libs = self.get_libs('libraries', blis_libs)
+        opt = self.get_option_single('blis_libs', 'libraries')
+        blis_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs2(lib_dirs, blis_libs, [])
         if info is None:
             return
@@ -2007,6 +2038,7 @@ class blas_src_info(system_info):
 class x11_info(system_info):
     section = 'x11'
     notfounderror = X11NotFoundError
+    _lib_names = ['X11']
 
     def __init__(self):
         system_info.__init__(self,
@@ -2018,8 +2050,8 @@ class x11_info(system_info):
             return
         lib_dirs = self.get_lib_dirs()
         include_dirs = self.get_include_dirs()
-        x11_libs = self.get_libs('x11_libs', ['X11'])
-        x11_libs = self.get_libs('libraries', x11_libs)
+        opt = self.get_option_single('x11_libs', 'libraries')
+        x11_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs(lib_dirs, x11_libs, [])
         if info is None:
             return
@@ -2410,8 +2442,8 @@ class amd_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        amd_libs = self.get_libs('amd_libs', self._lib_names)
-        amd_libs = self.get_libs('libraries', amd_libs)
+        opt = self.get_option_single('amd_libs', 'libraries')
+        amd_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs(lib_dirs, amd_libs, [])
         if info is None:
             return
@@ -2442,8 +2474,8 @@ class umfpack_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        umfpack_libs = self.get_libs('umfpack_libs', self._lib_names)
-        umfpack_libs = self.get_libs('libraries', umfpack_libs)
+        opt = self.get_option_single('umfpack_libs', 'libraries')
+        umfpack_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs(lib_dirs, umfpack_libs, [])
         if info is None:
             return
