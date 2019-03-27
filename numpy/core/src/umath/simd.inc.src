@@ -1098,7 +1098,7 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
 
 /* bunch of helper functions used in ISA_exp/log_FLOAT*/
 
-#if HAVE_ATTRIBUTE_TARGET_AVX2
+#if defined HAVE_ATTRIBUTE_TARGET_AVX2 && defined NPY_HAVE_AVX2_INTRINSICS
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_fmadd(__m256 a, __m256 b, __m256 c)
 {
@@ -1186,7 +1186,7 @@ avx2_get_mantissa(__m256 x)
 }
 #endif
 
-#if HAVE_ATTRIBUTE_TARGET_AVX512F
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F && defined NPY_HAVE_AVX512F_INTRINSICS
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
 avx512_get_full_load_mask(void)
 {
@@ -1241,7 +1241,7 @@ avx512_get_mantissa(__m512 x)
  * #fmadd = avx2_fmadd,_mm512_fmadd_ps#
  **/
 
-#if HAVE_ATTRIBUTE_TARGET_@ISA@
+#if defined HAVE_ATTRIBUTE_TARGET_@ISA@ && defined NPY_HAVE_@ISA@_INTRINSICS
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
 @isa@_range_reduction(@vtype@ x, @vtype@ y, @vtype@ c1, @vtype@ c2, @vtype@ c3)
 {
@@ -1269,7 +1269,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
  * #cvtps_epi32 = _mm256_cvtps_epi32, #
  */
 
-#if HAVE_ATTRIBUTE_TARGET_@ISA@
+#if defined HAVE_ATTRIBUTE_TARGET_@ISA@ && defined NPY_HAVE_@ISA@_INTRINSICS
 
 /*
  * Vectorized implementation of exp using AVX2 and AVX512:
