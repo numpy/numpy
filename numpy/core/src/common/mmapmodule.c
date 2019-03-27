@@ -1,22 +1,15 @@
 /*
- /  Author: Sam Rushing <rushing@nightmare.com>
- /  Hacked for Unix by AMK
- /  $Id$
- / Modified to support mmap with offset - to map a 'window' of a file
- /   Author:  Yotam Medini  yotamm@mellanox.co.il
- /
- / mmapmodule.cpp -- map a view of a file into memory
- /
- / todo: need permission flags, perhaps a 'chsize' analog
- /   not all functions check range yet!!!
- /
- /
- / This version of mmapmodule.c has been changed significantly
- / from the original mmapfile.c on which it was based.
- / The original version of mmapfile is maintained by Sam at
- / ftp://squirl.nightmare.com/pub/python/python-ext.
- / and further modified by a-deeb
-*/
+ * Author: Sam Rushing <rushing@nightmare.com>
+ *  
+ * Contributors: ZackerySpytz, Yotam Medini, a-deeb
+ * Modified to support mmap with offset - to map a 'window' of a file
+ *
+ * mmapmodule.cpp -- map a view of a file into memory
+ *
+ * todo: need permission flags, perhaps a 'chsize' analog
+ *   not all functions check range yet!!!
+ *
+ */
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
@@ -65,7 +58,6 @@ my_getpagesize(void)
 #else
 #define my_getpagesize getpagesize
 #endif
-
 #endif /* UNIX */
 
 #include <string.h>
@@ -1510,9 +1502,7 @@ PyInit_mmap(void)
 #endif
 
     setint(dict, "PAGESIZE", (long)my_getpagesize());
-
     setint(dict, "ALLOCATIONGRANULARITY", (long)my_getallocationgranularity());
-
     setint(dict, "ACCESS_DEFAULT", ACCESS_DEFAULT);
     setint(dict, "ACCESS_READ", ACCESS_READ);
     setint(dict, "ACCESS_WRITE", ACCESS_WRITE);
