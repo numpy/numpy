@@ -593,25 +593,23 @@ Construction and Destruction
             code doing iteration can write to this operand to
             control which elements will be untouched and which ones will be
             modified. This is useful when the mask should be a combination
-            of input masks, for example. Mask values can be created
-            with the :c:func:`NpyMask_Create` function.
+            of input masks.
 
         .. c:var:: NPY_ITER_WRITEMASKED
 
             .. versionadded:: 1.7
 
-            Indicates that only elements which the operand with
-            the ARRAYMASK flag indicates are intended to be modified
-            by the iteration. In general, the iterator does not enforce
-            this, it is up to the code doing the iteration to follow
-            that promise. Code can use the :c:func:`NpyMask_IsExposed`
-            inline function to test whether the mask at a particular
-            element allows writing.
+            This array is the mask for all `writemasked <numpy.nditer>`
+            operands. Code uses the ``writemasked`` flag which indicates 
+            that only elements where the chosen ARRAYMASK operand is True
+            will be written to. In general, the iterator does not enforce
+            this, it is up to the code doing the iteration to follow that
+            promise.
 
-            When this flag is used, and this operand is buffered, this
-            changes how data is copied from the buffer into the array.
+            When ``writemasked`` flag is used, and this operand is buffered,
+            this changes how data is copied from the buffer into the array.
             A masked copying routine is used, which only copies the
-            elements in the buffer for which :c:func:`NpyMask_IsExposed`
+            elements in the buffer for which ``writemasked``
             returns true from the corresponding element in the ARRAYMASK
             operand.
 
@@ -974,19 +972,6 @@ Construction and Destruction
 
     Returns the number of operands in the iterator.
 
-    When :c:data:`NPY_ITER_USE_MASKNA` is used on an operand, a new
-    operand is added to the end of the operand list in the iterator
-    to track that operand's NA mask. Thus, this equals the number
-    of construction operands plus the number of operands for
-    which the flag :c:data:`NPY_ITER_USE_MASKNA` was specified.
-
-.. c:function:: int NpyIter_GetFirstMaskNAOp(NpyIter* iter)
-
-    .. versionadded:: 1.7
-
-    Returns the index of the first NA mask operand in the array. This
-    value is equal to the number of operands passed into the constructor.
-
 .. c:function:: npy_intp* NpyIter_GetAxisStrideArray(NpyIter* iter, int axis)
 
     Gets the array of strides for the specified axis. Requires that
@@ -1022,16 +1007,6 @@ Construction and Destruction
     This gives back a pointer to the ``nop`` operand PyObjects
     that are being iterated.  The result points into ``iter``,
     so the caller does not gain any references to the PyObjects.
-
-.. c:function:: npy_int8* NpyIter_GetMaskNAIndexArray(NpyIter* iter)
-
-    .. versionadded:: 1.7
-
-    This gives back a pointer to the ``nop`` indices which map
-    construction operands with :c:data:`NPY_ITER_USE_MASKNA` flagged
-    to their corresponding NA mask operands and vice versa. For
-    operands which were not flagged with :c:data:`NPY_ITER_USE_MASKNA`,
-    this array contains negative values.
 
 .. c:function:: PyObject* NpyIter_GetIterView(NpyIter* iter, npy_intp i)
 
