@@ -78,6 +78,26 @@ main()
 """ % (attribute, name)
     return cmd.try_compile(body, None, None) != 0
 
+def check_gcc_function_attribute_with_intrinsics(cmd, attribute, name, code,
+                                                include):
+    """Return True if the given function attribute is supported with
+    intrinsics."""
+    cmd._check_compiler()
+    body = """
+#include<%s>
+int %s %s(void)
+{
+    %s;
+    return 0;
+}
+
+int
+main()
+{
+    return 0;
+}
+""" % (include, attribute, name, code)
+    return cmd.try_compile(body, None, None) != 0
 def check_gcc_variable_attribute(cmd, attribute):
     """Return True if the given variable attribute is supported."""
     cmd._check_compiler()

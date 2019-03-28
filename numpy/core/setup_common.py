@@ -172,6 +172,21 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                  'attribute_target_avx512f'),
                                 ]
 
+# function attributes with intrinsics
+# To ensure your compiler can compile avx intrinsics with just the attributes
+# gcc 4.8.4 support attributes but not with intrisics
+# tested via "#include<%s> int %s %s(void *){code; return 0;};" % (header, attribute, name, code)
+# function name will be converted to HAVE_<upper-case-name> preprocessor macro
+OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2")))',
+                                'attribute_target_avx2_with_intrinsics',
+                                '__m256 temp = _mm256_set1_ps(1.0)',
+                                'immintrin.h'),
+                                ('__attribute__((target("avx512f")))',
+                                'attribute_target_avx512f_with_intrinsics',
+                                '__m512 temp = _mm512_set1_ps(1.0)',
+                                'immintrin.h'),
+                                ]
+
 # variable attributes tested via "int %s a" % attribute
 OPTIONAL_VARIABLE_ATTRIBUTES = ["__thread", "__declspec(thread)"]
 

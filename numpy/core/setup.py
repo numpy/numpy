@@ -171,6 +171,11 @@ def check_math_capabilities(config, moredefs, mathlibs):
         if config.check_gcc_function_attribute(dec, fn):
             moredefs.append((fname2def(fn), 1))
 
+    for dec, fn, code, header in OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS:
+        if config.check_gcc_function_attribute_with_intrinsics(dec, fn, code,
+                                                               header):
+            moredefs.append((fname2def(fn), 1))
+
     for fn in OPTIONAL_VARIABLE_ATTRIBUTES:
         if config.check_gcc_variable_attribute(fn):
             m = fn.replace("(", "_").replace(")", "_")
