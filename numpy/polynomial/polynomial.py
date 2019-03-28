@@ -1429,7 +1429,7 @@ def polyroots(c):
         return np.array([-c[0]/c[1]])
 
     m = polycompanion(c)
-    r = la.eigvals(m)
+    r = la.eigvals(m[::-1,::-1])
     r.sort()
     return r
 
