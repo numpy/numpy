@@ -1,10 +1,13 @@
 # Makefile for Sphinx documentation
 #
 
-# This needs to be major.minor, just "3" doesn't work - it will result in
+# PYVER needs to be major.minor, just "3" doesn't work - it will result in
 # issues with the amendments to PYTHONPATH and install paths (see DIST_VARS).
-# If you're using a different Python version, just change the number here.
-PYVER = 3.6
+
+# Use explicit "version_info" indexing since make cannot handle colon characters, and
+# evaluate it now to allow easier debugging when printing the varaible
+
+PYVER:=$(shell python3 -c 'from sys import version_info as v; print("{0}.{1}".format(v[0], v[1]))')
 PYTHON = python$(PYVER)
 
 # You can set these variables from the command line.
@@ -17,7 +20,8 @@ FILES=
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
+ALLSPHINXOPTS   = -WT --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
+  $(SPHINXOPTS) source
 
 .PHONY: help clean html web pickle htmlhelp latex changes linkcheck \
         dist dist-build gitwash-update

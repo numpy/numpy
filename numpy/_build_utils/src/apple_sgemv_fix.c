@@ -76,7 +76,7 @@ static int AVX_and_10_9 = 0;
 __attribute__((destructor))
 static void unloadlib(void)
 {
-   if (veclib) dlclose(veclib);
+    if (veclib) dlclose(veclib);
 }
 
 __attribute__((constructor))
@@ -198,30 +198,30 @@ void cblas_sgemv(const enum CBLAS_ORDER order,
                  const float  *X, const int incX, const float beta,
                  float  *Y, const int incY)
 {
-   char TA;
-   if (order == CblasColMajor)
-   {
-      if (TransA == CblasNoTrans) TA = 'N';
-      else if (TransA == CblasTrans) TA = 'T';
-      else if (TransA == CblasConjTrans) TA = 'C';
-      else
-      {
-         cblas_xerbla(2, "cblas_sgemv","Illegal TransA setting, %d\n", TransA);
-      }
-      sgemv_(&TA, &M, &N, &alpha, A, &lda, X, &incX, &beta, Y, &incY);
-   }
-   else if (order == CblasRowMajor)
-   {
-      if (TransA == CblasNoTrans) TA = 'T';
-      else if (TransA == CblasTrans) TA = 'N';
-      else if (TransA == CblasConjTrans) TA = 'N';
-      else
-      {
-         cblas_xerbla(2, "cblas_sgemv", "Illegal TransA setting, %d\n", TransA);
-         return;
-      }
-      sgemv_(&TA, &N, &M, &alpha, A, &lda, X, &incX, &beta, Y, &incY);
-   }
-   else
-      cblas_xerbla(1, "cblas_sgemv", "Illegal Order setting, %d\n", order);
+    char TA;
+    if (order == CblasColMajor)
+    {
+        if (TransA == CblasNoTrans) TA = 'N';
+        else if (TransA == CblasTrans) TA = 'T';
+        else if (TransA == CblasConjTrans) TA = 'C';
+        else
+        {
+            cblas_xerbla(2, "cblas_sgemv","Illegal TransA setting, %d\n", TransA);
+        }
+        sgemv_(&TA, &M, &N, &alpha, A, &lda, X, &incX, &beta, Y, &incY);
+    }
+    else if (order == CblasRowMajor)
+    {
+        if (TransA == CblasNoTrans) TA = 'T';
+        else if (TransA == CblasTrans) TA = 'N';
+        else if (TransA == CblasConjTrans) TA = 'N';
+        else
+        {
+            cblas_xerbla(2, "cblas_sgemv", "Illegal TransA setting, %d\n", TransA);
+            return;
+        }
+        sgemv_(&TA, &N, &M, &alpha, A, &lda, X, &incX, &beta, Y, &incY);
+    }
+    else
+        cblas_xerbla(1, "cblas_sgemv", "Illegal Order setting, %d\n", order);
 }

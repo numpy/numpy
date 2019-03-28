@@ -18,6 +18,21 @@ New functions
 Deprecations
 ============
 
+``np.polynomial`` functions warn when passed ``float`` in place of ``int``
+--------------------------------------------------------------------------
+Previously functions in this module would accept ``float`` values provided they
+were integral (``1.0``, ``2.0``, etc). For consistency with the rest of numpy,
+doing so is now deprecated, and in future will raise a ``TypeError``.
+
+Similarly, passing a float like ``0.5`` in place of an integer will now raise a
+``TypeError`` instead of the previous ``ValueError``.
+
+Deprecate ``numpy.distutils.exec_command`` and ``numpy.distutils.temp_file_name``
+---------------------------------------------------------------------------------
+The internal use of these functions has been refactored and there are better
+alternatives. Relace ``exec_command`` with `subprocess.Popen` and
+``temp_file_name`` with `tempfile.mkstemp`.
+
 
 Future Changes
 ==============
@@ -36,6 +51,31 @@ Casting from a different floating point precision to float16 used incorrect
 rounding in some edge cases. This means in rare cases, subnormal results will
 now be rounded up instead of down, changing the last bit (ULP) of the result.
 
+Signed zero when using divmod
+-----------------------------
+Starting in version 1.12.0, numpy incorrectly returned a negatively signed zero
+when using the ``divmod`` and ``floor_divide`` functions when the result was
+zero. For example::
+
+   >>> np.zeros(10)//1
+   array([-0., -0., -0., -0., -0., -0., -0., -0., -0., -0.])
+
+With this release, the result is correctly returned as a positively signed
+zero::
+
+   >>> np.zeros(10)//1
+   array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+
+Do not lookup ``__buffer__`` attribute in `numpy.frombuffer`
+------------------------------------------------------------
+Looking up ``__buffer__`` attribute in `numpy.frombuffer` was undocumented and
+non-functional. This code was removed. If needed, use
+``frombuffer(memoryview(obj), ...)`` instead.
+
+``out``is buffered for memory overlaps in ``np.take``, ``np.choose``, ``np.put``
+--------------------------------------------------------------------------------
+If the out argument to these functions is provided and has memory overlap with
+the other arguments, it is now buffered to avoid order-dependent behavior.
 
 
 C API changes
@@ -65,6 +105,15 @@ random data.  The algorithm is stable and requires O(n/2) working space.  For
 details of the algorithm, refer to
 `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
 
+``np.unpackbits`` now accepts a ``count`` parameter
+---------------------------------------------------
+``count`` allows subsetting the number of bits that will be unpacked up-front,
+rather than reshaping and subsetting later, making the ``packbits`` operation
+invertible, and the unpacking less wasteful. Counts larger than the number of
+available bits add zero padding. Negative counts trim bits off the end instead
+of counting from the beginning. None counts implement the existing behavior of
+unpacking everything.
+
 ``np.linalg.svd`` and ``np.linalg.pinv`` can be faster on hermitian inputs
 --------------------------------------------------------------------------
 These functions now accept a ``hermitian`` argument, matching the one added
@@ -75,6 +124,11 @@ divmod operation is now supported for two ``timedelta64`` operands
 The divmod operator now handles two ``np.timedelta64`` operands, with
 type signature mm->qm.
 
+New mode "empty" for ``np.pad``
+-------------------------------
+This mode pads an array to a desired shape without initializing the new
+entries.
+
 ``np.empty_like`` and related functions now accept a ``shape`` argument
 -----------------------------------------------------------------------
 ``np.empty_like``, ``np.full_like``, ``np.ones_like`` and ``np.zeros_like`` now
@@ -83,7 +137,6 @@ as the prototype, overriding its shape as well. This is particularly useful
 when combined with the ``__array_function__`` protocol, allowing the creation
 of new arbitrary-shape arrays from NumPy-like libraries when such an array
 is used as the prototype.
-
 
 Improvements
 ============
@@ -98,7 +151,6 @@ tolerances.
 
 Replacement of the `fftpack`-based FFT module by the `pocketfft` library
 ------------------------------------------------------------------------
-
 Both implementations have the same ancestor (Fortran77 `FFTPACK` by Paul N.
 Swarztrauber), but `pocketfft` contains additional modifications which
 improve both accuracy and performance in some circumstances. For FFT lengths
@@ -137,12 +189,23 @@ but with this change, you can do::
 
 thereby saving a level of indentation
 
+Improve performance of ``np.pad``
+---------------------------------
+The performance of the function has been improved for most cases by filling in
+a preallocated array with the desired padded shape instead of using
+concatenation.
+
+``np.interp`` handles infinities more robustly
+----------------------------------------------
+In some cases where ``np.interp`` would previously return ``np.nan``, it now
+returns an appropriate infinity.
+
+
 Changes
 =======
 
 ``median`` and ``percentile`` family of functions no longer warn about ``nan``
 ------------------------------------------------------------------------------
-
 `numpy.median`, `numpy.percentile`, and `numpy.quantile` used to emit a
 ``RuntimeWarning`` when encountering an `numpy.nan`. Since they return the
 ``nan`` value, the warning is redundant and has been removed.
@@ -158,5 +221,9 @@ NumPy now always checks the ``__array_function__`` method to implement overrides
 of NumPy functions on non-NumPy arrays, as described in `NEP 18`_. The feature
 was available for testing with NumPy 1.16 if appropriate environment variables
 are set, but is now always enabled.
+
+``__array_interface__`` offset now works as documented
+------------------------------------------------------
+The interface may use an ``offset`` value that was mistakenly ignored.
 
 .. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html

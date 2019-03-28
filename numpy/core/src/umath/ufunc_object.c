@@ -563,14 +563,14 @@ _get_size(const char* str)
 
     if (stop == str || _is_alpha_underscore(*stop)) {
         /* not a well formed number */
-         return -1;
+        return -1;
     }
     if (size >= NPY_MAX_INTP || size <= NPY_MIN_INTP) {
         /* len(str) too long */
         return -1;
     }
     return size;
- }
+}
 
 /*
  * Return the ending position of a variable name including optional modifier

@@ -74,7 +74,7 @@ def main(argv):
     parser.add_argument("--doctests", action="store_true", default=False,
                         help="Run doctests in module")
     parser.add_argument("--refguide-check", action="store_true", default=False,
-                        help="Run refguide check (do not run regular tests.)")
+                        help="Run refguide (doctest) check (do not run regular tests.)")
     parser.add_argument("--coverage", action="store_true", default=False,
                         help=("report coverage of project code. HTML output goes "
                               "under build/coverage"))
@@ -258,8 +258,6 @@ def main(argv):
                    commit_a, commit_b] + bench_args
             ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
             sys.exit(ret)
-
-    test_dir = os.path.join(ROOT_DIR, 'build', 'test')
 
     if args.build_only:
         sys.exit(0)

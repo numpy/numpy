@@ -225,15 +225,15 @@ def _zseries_div(z1, z2):
     """
     z1 = z1.copy()
     z2 = z2.copy()
-    len1 = len(z1)
-    len2 = len(z2)
-    if len2 == 1:
+    lc1 = len(z1)
+    lc2 = len(z2)
+    if lc2 == 1:
         z1 /= z2
         return z1, z1[:1]*0
-    elif len1 < len2:
+    elif lc1 < lc2:
         return z1[:1]*0, z1
     else:
-        dlen = len1 - len2
+        dlen = lc1 - lc2
         scl = z2[0]
         z2 /= scl
         quo = np.empty(dlen + 1, dtype=z1.dtype)
@@ -244,16 +244,16 @@ def _zseries_div(z1, z2):
             quo[i] = z1[i]
             quo[dlen - i] = r
             tmp = r*z2
-            z1[i:i+len2] -= tmp
-            z1[j:j+len2] -= tmp
+            z1[i:i+lc2] -= tmp
+            z1[j:j+lc2] -= tmp
             i += 1
             j -= 1
         r = z1[i]
         quo[i] = r
         tmp = r*z2
-        z1[i:i+len2] -= tmp
+        z1[i:i+lc2] -= tmp
         quo /= scl
-        rem = z1[i+1:i-1+len2].copy()
+        rem = z1[i+1:i-1+lc2].copy()
         return quo, rem
 
 
@@ -541,21 +541,7 @@ def chebfromroots(roots):
     array([1.5+0.j, 0. +0.j, 0.5+0.j])
 
     """
-    if len(roots) == 0:
-        return np.ones(1)
-    else:
-        [roots] = pu.as_series([roots], trim=False)
-        roots.sort()
-        p = [chebline(-r, 1) for r in roots]
-        n = len(p)
-        while n > 1:
-            m, r = divmod(n, 2)
-            tmp = [chebmul(p[i], p[i+m]) for i in range(m)]
-            if r:
-                tmp[0] = chebmul(tmp[0], p[-1])
-            p = tmp
-            n = m
-        return p[0]
+    return pu._fromroots(chebline, chebmul, roots)
 
 
 def chebadd(c1, c2):
@@ -597,15 +583,7 @@ def chebadd(c1, c2):
     array([4., 4., 4.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] += c2
-        ret = c1
-    else:
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._add(c1, c2)
 
 
 def chebsub(c1, c2):
@@ -649,16 +627,7 @@ def chebsub(c1, c2):
     array([ 2.,  0., -2.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] -= c2
-        ret = c1
-    else:
-        c2 = -c2
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._sub(c1, c2)
 
 
 def chebmulx(c):
@@ -807,6 +776,7 @@ def chebdiv(c1, c2):
     if c2[-1] == 0:
         raise ZeroDivisionError()
 
+    # note: this is more efficient than `pu._div(chebmul, c1, c2)`
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
@@ -856,6 +826,9 @@ def chebpow(c, pow, maxpower=16):
     array([15.5, 22. , 16. , ..., 12.5, 12. ,  8. ])
 
     """
+    # note: this is more efficient than `pu._pow(chebmul, c1, c2)`, as it
+    # avoids converting between z and c series repeatedly
+
     # c is a trimmed copy
     [c] = pu.as_series([c])
     power = int(pow)
@@ -940,14 +913,10 @@ def chebder(c, m=1, scl=1, axis=0):
     c = np.array(c, ndmin=1, copy=1)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
-    cnt, iaxis = [int(t) for t in [m, axis]]
-
-    if cnt != m:
-        raise ValueError("The order of derivation must be integer")
+    cnt = pu._deprecate_as_int(m, "the order of derivation")
+    iaxis = pu._deprecate_as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    if iaxis != axis:
-        raise ValueError("The axis must be integer")
     iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
@@ -1063,10 +1032,8 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         c = c.astype(np.double)
     if not np.iterable(k):
         k = [k]
-    cnt, iaxis = [int(t) for t in [m, axis]]
-
-    if cnt != m:
-        raise ValueError("The order of integration must be integer")
+    cnt = pu._deprecate_as_int(m, "the order of integration")
+    iaxis = pu._deprecate_as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -1075,8 +1042,6 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    if iaxis != axis:
-        raise ValueError("The axis must be integer")
     iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
@@ -1238,14 +1203,7 @@ def chebval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = chebval(x, c)
-    c = chebval(y, c, tensor=False)
-    return c
+    return pu._valnd(chebval, c, x, y)
 
 
 def chebgrid2d(x, y, c):
@@ -1298,9 +1256,7 @@ def chebgrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = chebval(x, c)
-    c = chebval(y, c)
-    return c
+    return pu._gridnd(chebval, c, x, y)
 
 
 def chebval3d(x, y, z, c):
@@ -1351,15 +1307,7 @@ def chebval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = chebval(x, c)
-    c = chebval(y, c, tensor=False)
-    c = chebval(z, c, tensor=False)
-    return c
+    return pu._valnd(chebval, c, x, y, z)
 
 
 def chebgrid3d(x, y, z, c):
@@ -1415,10 +1363,7 @@ def chebgrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = chebval(x, c)
-    c = chebval(y, c)
-    c = chebval(z, c)
-    return c
+    return pu._gridnd(chebval, c, x, y, z)
 
 
 def chebvander(x, deg):
@@ -1456,9 +1401,7 @@ def chebvander(x, deg):
         the converted `x`.
 
     """
-    ideg = int(deg)
-    if ideg != deg:
-        raise ValueError("deg must be integer")
+    ideg = pu._deprecate_as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
@@ -1526,17 +1469,7 @@ def chebvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
-    x, y = np.array((x, y), copy=0) + 0.0
-
-    vx = chebvander(x, degx)
-    vy = chebvander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    return v.reshape(v.shape[:-2] + (-1,))
+    return pu._vander2d(chebvander, x, y, deg)
 
 
 def chebvander3d(x, y, z, deg):
@@ -1590,18 +1523,7 @@ def chebvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
-
-    vx = chebvander(x, degx)
-    vy = chebvander(y, degy)
-    vz = chebvander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    return v.reshape(v.shape[:-3] + (-1,))
+    return pu._vander3d(chebvander, x, y, z, deg)
 
 
 def chebfit(x, y, deg, rcond=None, full=False, w=None):
@@ -1723,81 +1645,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     --------
 
     """
-    x = np.asarray(x) + 0.0
-    y = np.asarray(y) + 0.0
-    deg = np.asarray(deg)
-
-    # check arguments.
-    if deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0:
-        raise TypeError("deg must be an int or non-empty 1-D array of int")
-    if deg.min() < 0:
-        raise ValueError("expected deg >= 0")
-    if x.ndim != 1:
-        raise TypeError("expected 1D vector for x")
-    if x.size == 0:
-        raise TypeError("expected non-empty vector for x")
-    if y.ndim < 1 or y.ndim > 2:
-        raise TypeError("expected 1D or 2D array for y")
-    if len(x) != len(y):
-        raise TypeError("expected x and y to have same length")
-
-    if deg.ndim == 0:
-        lmax = deg
-        order = lmax + 1
-        van = chebvander(x, lmax)
-    else:
-        deg = np.sort(deg)
-        lmax = deg[-1]
-        order = len(deg)
-        van = chebvander(x, lmax)[:, deg]
-
-    # set up the least squares matrices in transposed form
-    lhs = van.T
-    rhs = y.T
-    if w is not None:
-        w = np.asarray(w) + 0.0
-        if w.ndim != 1:
-            raise TypeError("expected 1D vector for w")
-        if len(x) != len(w):
-            raise TypeError("expected x and w to have same length")
-        # apply weights. Don't use inplace operations as they
-        # can cause problems with NA.
-        lhs = lhs * w
-        rhs = rhs * w
-
-    # set rcond
-    if rcond is None:
-        rcond = len(x)*np.finfo(x.dtype).eps
-
-    # Determine the norms of the design matrix columns.
-    if issubclass(lhs.dtype.type, np.complexfloating):
-        scl = np.sqrt((np.square(lhs.real) + np.square(lhs.imag)).sum(1))
-    else:
-        scl = np.sqrt(np.square(lhs).sum(1))
-    scl[scl == 0] = 1
-
-    # Solve the least squares problem.
-    c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
-    c = (c.T/scl).T
-
-    # Expand c to include non-fitted coefficients which are set to zero
-    if deg.ndim > 0:
-        if c.ndim == 2:
-            cc = np.zeros((lmax + 1, c.shape[1]), dtype=c.dtype)
-        else:
-            cc = np.zeros(lmax + 1, dtype=c.dtype)
-        cc[deg] = c
-        c = cc
-
-    # warn on rank reduction
-    if rank != order and not full:
-        msg = "The fit may be poorly conditioned"
-        warnings.warn(msg, pu.RankWarning, stacklevel=2)
-
-    if full:
-        return c, [resids, rank, s, rcond]
-    else:
-        return c
+    return pu._fit(chebvander, x, y, deg, rcond, full, w)
 
 
 def chebcompanion(c):
@@ -2003,9 +1851,9 @@ def chebgauss(deg):
     .. math:: w_i = \\pi / n
 
     """
-    ideg = int(deg)
-    if ideg != deg or ideg < 1:
-        raise ValueError("deg must be a non-negative integer")
+    ideg = pu._deprecate_as_int(deg, "deg")
+    if ideg <= 0:
+        raise ValueError("deg must be a positive integer")
 
     x = np.cos(np.pi * np.arange(1, 2*ideg, 2) / (2.0*ideg))
     w = np.ones(ideg)*(np.pi/ideg)

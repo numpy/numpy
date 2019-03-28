@@ -654,7 +654,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     }
     else {
         /* if mod is zero ensure correct sign */
-        mod = (b > 0) ? 0.0@c@ : -0.0@c@;
+        mod = npy_copysign@c@(0, b);
     }
 
     /* snap quotient to nearest integral value */
@@ -665,7 +665,7 @@ npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
     }
     else {
         /* if div is zero ensure correct sign */
-        floordiv = (a / b > 0) ?  0.0@c@ : -0.0@c@;
+        floordiv = npy_copysign@c@(0, a/b);
     }
 
     *modulus = mod;

@@ -52,17 +52,20 @@ def _wrapit(obj, method, *args, **kwds):
 
 
 def _wrapfunc(obj, method, *args, **kwds):
+    bound = getattr(obj, method, None)
+    if bound is None:
+        return _wrapit(obj, method, *args, **kwds)
+
     try:
-        return getattr(obj, method)(*args, **kwds)
-
-    # An AttributeError occurs if the object does not have
-    # such a method in its class.
-
-    # A TypeError occurs if the object does have such a method
-    # in its class, but its signature is not identical to that
-    # of NumPy's. This situation has occurred in the case of
-    # a downstream library like 'pandas'.
-    except (AttributeError, TypeError):
+        return bound(*args, **kwds)
+    except TypeError:
+        # A TypeError occurs if the object does have such a method in its
+        # class, but its signature is not identical to that of NumPy's. This
+        # situation has occurred in the case of a downstream library like
+        # 'pandas'.
+        #
+        # Call _wrapit from within the except clause to ensure a potential
+        # exception has a traceback chain.
         return _wrapit(obj, method, *args, **kwds)
 
 
@@ -127,7 +130,8 @@ def take(a, indices, axis=None, out=None, mode='raise'):
         input array is used.
     out : ndarray, optional (Ni..., Nj..., Nk...)
         If provided, the result will be placed in this array. It should
-        be of the appropriate shape and dtype.
+        be of the appropriate shape and dtype. Note that `out` is always
+        buffered if `mode='raise'`; use other modes for better performance.
     mode : {'raise', 'wrap', 'clip'}, optional
         Specifies how out-of-bounds indices will behave.
 
@@ -352,7 +356,8 @@ def choose(a, choices, out=None, mode='raise'):
         ``choices.shape[0]``) is taken as defining the "sequence".
     out : array, optional
         If provided, the result will be inserted into this array. It should
-        be of the appropriate shape and dtype.
+        be of the appropriate shape and dtype. Note that `out` is always
+        buffered if `mode='raise'`; use other modes for better performance.
     mode : {'raise' (default), 'wrap', 'clip'}, optional
         Specifies how indices outside `[0, n-1]` will be treated:
 
@@ -509,7 +514,8 @@ def put(a, ind, v, mode='raise'):
 
         'clip' mode means that all indices that are too large are replaced
         by the index that addresses the last element along that axis. Note
-        that this disables indexing with negative numbers.
+        that this disables indexing with negative numbers. In 'raise' mode,
+        if an exception occurs the target array may still be modified.
 
     See Also
     --------
@@ -912,6 +918,7 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     data types.
 
     .. versionadded:: 1.17.0
+
     Timsort is added for better performance on already or nearly
     sorted data. On random data timsort is almost identical to
     mergesort. It is now used for stable sort while quicksort is still the

@@ -98,6 +98,10 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             goto fail;
         }
 
+        if (arrays_overlap(out, self)) {
+            flags |= NPY_ARRAY_ENSURECOPY;
+        }
+
         if (clipmode == NPY_RAISE) {
             /*
              * we need to make sure and get a copy
@@ -261,6 +265,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     npy_intp i, chunk, ni, max_item, nv, tmp;
     char *src, *dest;
     int copied = 0;
+    int overlap = 0;
 
     indices = NULL;
     values = NULL;
@@ -274,24 +279,6 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         return NULL;
     }
 
-    if (!PyArray_ISCONTIGUOUS(self)) {
-        PyArrayObject *obj;
-        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY;
-
-        if (clipmode == NPY_RAISE) {
-            flags |= NPY_ARRAY_ENSURECOPY;
-        }
-        Py_INCREF(PyArray_DESCR(self));
-        obj = (PyArrayObject *)PyArray_FromArray(self,
-                                                 PyArray_DESCR(self), flags);
-        if (obj != self) {
-            copied = 1;
-        }
-        self = obj;
-    }
-    max_item = PyArray_SIZE(self);
-    dest = PyArray_DATA(self);
-    chunk = PyArray_DESCR(self)->elsize;
     indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
                                                          NPY_INTP, 0, 0);
     if (indices == NULL) {
@@ -308,6 +295,25 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     if (nv <= 0) {
         goto finish;
     }
+
+    overlap = arrays_overlap(self, values) || arrays_overlap(self, indices);
+    if (overlap || !PyArray_ISCONTIGUOUS(self)) {
+        PyArrayObject *obj;
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY |
+                    NPY_ARRAY_ENSURECOPY;
+
+        Py_INCREF(PyArray_DESCR(self));
+        obj = (PyArrayObject *)PyArray_FromArray(self,
+                                                 PyArray_DESCR(self), flags);
+        if (obj != self) {
+            copied = 1;
+        }
+        self = obj;
+    }
+    max_item = PyArray_SIZE(self);
+    dest = PyArray_DATA(self);
+    chunk = PyArray_DESCR(self)->elsize;
+
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         switch(clipmode) {
         case NPY_RAISE:
@@ -434,10 +440,11 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     PyArray_FastPutmaskFunc *func;
     PyArrayObject *mask, *values;
     PyArray_Descr *dtype;
-    npy_intp i, j, chunk, ni, max_item, nv;
+    npy_intp i, j, chunk, ni, nv;
     char *src, *dest;
     npy_bool *mask_data;
     int copied = 0;
+    int overlap = 0;
 
     mask = NULL;
     values = NULL;
@@ -447,29 +454,14 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
                         "be an array");
         return NULL;
     }
-    if (!PyArray_ISCONTIGUOUS(self)) {
-        PyArrayObject *obj;
 
-        dtype = PyArray_DESCR(self);
-        Py_INCREF(dtype);
-        obj = (PyArrayObject *)PyArray_FromArray(self, dtype,
-                                NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY);
-        if (obj != self) {
-            copied = 1;
-        }
-        self = obj;
-    }
-
-    max_item = PyArray_SIZE(self);
-    dest = PyArray_DATA(self);
-    chunk = PyArray_DESCR(self)->elsize;
     mask = (PyArrayObject *)PyArray_FROM_OTF(mask0, NPY_BOOL,
                                 NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST);
     if (mask == NULL) {
         goto fail;
     }
     ni = PyArray_SIZE(mask);
-    if (ni != max_item) {
+    if (ni != PyArray_SIZE(self)) {
         PyErr_SetString(PyExc_ValueError,
                         "putmask: mask and data must be "
                         "the same size");
@@ -490,6 +482,27 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         Py_RETURN_NONE;
     }
     src = PyArray_DATA(values);
+
+    overlap = arrays_overlap(self, values) || arrays_overlap(self, mask);
+    if (overlap || !PyArray_ISCONTIGUOUS(self)) {
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_WRITEBACKIFCOPY;
+        PyArrayObject *obj;
+
+        if (overlap) {
+            flags |= NPY_ARRAY_ENSURECOPY;
+        }
+
+        dtype = PyArray_DESCR(self);
+        Py_INCREF(dtype);
+        obj = (PyArrayObject *)PyArray_FromArray(self, dtype, flags);
+        if (obj != self) {
+            copied = 1;
+        }
+        self = obj;
+    }
+
+    chunk = PyArray_DESCR(self)->elsize;
+    dest = PyArray_DATA(self);
 
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         for (i = 0, j = 0; i < ni; i++, j++) {
@@ -712,6 +725,13 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                             "choose: invalid shape for output array.");
             goto fail;
         }
+
+        for (i = 0; i < n; i++) {
+            if (arrays_overlap(out, mps[i])) {
+                flags |= NPY_ARRAY_ENSURECOPY;
+            }
+        }
+
         if (clipmode == NPY_RAISE) {
             /*
              * we need to make sure and get a copy
@@ -2392,7 +2412,7 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
         npy_intp ind = multi_index[idim];
 
         if (check_and_adjust_index(&ind, shapevalue, idim, NULL) < 0) {
-          return NULL;
+            return NULL;
         }
         data += ind * strides[idim];
     }

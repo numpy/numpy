@@ -162,9 +162,8 @@ import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
-    asbytes, asstr, isfileobj, long, os_fspath
+    asbytes, asstr, isfileobj, long, os_fspath, pickle
     )
-from numpy.core.numeric import pickle
 
 
 MAGIC_PREFIX = b'\x93NUMPY'
@@ -525,7 +524,7 @@ def _read_array_header(fp, version):
     elif version == (2, 0):
         hlength_type = '<I'
     else:
-        raise ValueError("Invalid version %r" % version)
+        raise ValueError("Invalid version {!r}".format(version))
 
     hlength_str = _read_bytes(fp, struct.calcsize(hlength_type), "array header length")
     header_length = struct.unpack(hlength_type, hlength_str)[0]
@@ -541,29 +540,29 @@ def _read_array_header(fp, version):
     try:
         d = safe_eval(header)
     except SyntaxError as e:
-        msg = "Cannot parse header: %r\nException: %r"
-        raise ValueError(msg % (header, e))
+        msg = "Cannot parse header: {!r}\nException: {!r}"
+        raise ValueError(msg.format(header, e))
     if not isinstance(d, dict):
-        msg = "Header is not a dictionary: %r"
-        raise ValueError(msg % d)
+        msg = "Header is not a dictionary: {!r}"
+        raise ValueError(msg.format(d))
     keys = sorted(d.keys())
     if keys != ['descr', 'fortran_order', 'shape']:
-        msg = "Header does not contain the correct keys: %r"
-        raise ValueError(msg % (keys,))
+        msg = "Header does not contain the correct keys: {!r}"
+        raise ValueError(msg.format(keys))
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
             not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
-        msg = "shape is not valid: %r"
-        raise ValueError(msg % (d['shape'],))
+        msg = "shape is not valid: {!r}"
+        raise ValueError(msg.format(d['shape']))
     if not isinstance(d['fortran_order'], bool):
-        msg = "fortran_order is not a valid bool: %r"
-        raise ValueError(msg % (d['fortran_order'],))
+        msg = "fortran_order is not a valid bool: {!r}"
+        raise ValueError(msg.format(d['fortran_order']))
     try:
         dtype = descr_to_dtype(d['descr'])
     except TypeError as e:
-        msg = "descr is not a valid dtype descriptor: %r"
-        raise ValueError(msg % (d['descr'],))
+        msg = "descr is not a valid dtype descriptor: {!r}"
+        raise ValueError(msg.format(d['descr']))
 
     return d['shape'], d['fortran_order'], dtype
 

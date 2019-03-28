@@ -2375,7 +2375,7 @@ get_subarray_transfer_function(int aligned,
 
     /* Get the subarray shapes and sizes */
     if (PyDataType_HASSUBARRAY(src_dtype)) {
-       if (!(PyArray_IntpConverter(src_dtype->subarray->shape,
+        if (!(PyArray_IntpConverter(src_dtype->subarray->shape,
                                             &src_shape))) {
             PyErr_SetString(PyExc_ValueError,
                     "invalid subarray shape");
@@ -2385,7 +2385,7 @@ get_subarray_transfer_function(int aligned,
         src_dtype = src_dtype->subarray->base;
     }
     if (PyDataType_HASSUBARRAY(dst_dtype)) {
-       if (!(PyArray_IntpConverter(dst_dtype->subarray->shape,
+        if (!(PyArray_IntpConverter(dst_dtype->subarray->shape,
                                             &dst_shape))) {
             npy_free_cache_dim_obj(src_shape);
             PyErr_SetString(PyExc_ValueError,

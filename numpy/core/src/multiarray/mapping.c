@@ -710,26 +710,26 @@ prepare_index(PyArrayObject *self, PyObject *index,
      * to find the ellipsis value or append an ellipsis if necessary.
      */
     if (used_ndim < PyArray_NDIM(self)) {
-       if (index_type & HAS_ELLIPSIS) {
-           indices[ellipsis_pos].value = PyArray_NDIM(self) - used_ndim;
-           used_ndim = PyArray_NDIM(self);
-           new_ndim += indices[ellipsis_pos].value;
-       }
-       else {
-           /*
-            * There is no ellipsis yet, but it is not a full index
-            * so we append an ellipsis to the end.
-            */
-           index_type |= HAS_ELLIPSIS;
-           indices[curr_idx].object = NULL;
-           indices[curr_idx].type = HAS_ELLIPSIS;
-           indices[curr_idx].value = PyArray_NDIM(self) - used_ndim;
-           ellipsis_pos = curr_idx;
+        if (index_type & HAS_ELLIPSIS) {
+            indices[ellipsis_pos].value = PyArray_NDIM(self) - used_ndim;
+            used_ndim = PyArray_NDIM(self);
+            new_ndim += indices[ellipsis_pos].value;
+        }
+        else {
+            /*
+             * There is no ellipsis yet, but it is not a full index
+             * so we append an ellipsis to the end.
+             */
+            index_type |= HAS_ELLIPSIS;
+            indices[curr_idx].object = NULL;
+            indices[curr_idx].type = HAS_ELLIPSIS;
+            indices[curr_idx].value = PyArray_NDIM(self) - used_ndim;
+            ellipsis_pos = curr_idx;
 
-           used_ndim = PyArray_NDIM(self);
-           new_ndim += indices[curr_idx].value;
-           curr_idx += 1;
-       }
+            used_ndim = PyArray_NDIM(self);
+            new_ndim += indices[curr_idx].value;
+            curr_idx += 1;
+        }
     }
     else if (used_ndim > PyArray_NDIM(self)) {
         PyErr_SetString(PyExc_IndexError,

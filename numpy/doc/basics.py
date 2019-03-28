@@ -260,6 +260,45 @@ identical behaviour between arrays and scalars, irrespective of whether the
 value is inside an array or not.  NumPy scalars also have many of the same
 methods arrays do.
 
+Overflow Errors
+===============
+
+The fixed size of NumPy numeric types may cause overflow errors when a value
+requires more memory than available in the data type. For example, 
+`numpy.power` evaluates ``100 * 10 ** 8`` correctly for 64-bit integers,
+but gives 1874919424 (incorrect) for a 32-bit integer.
+
+    >>> np.power(100, 8, dtype=np.int64)
+    10000000000000000
+    >>> np.power(100, 8, dtype=np.int32)
+    1874919424
+
+The behaviour of NumPy and Python integer types differs significantly for
+integer overflows and may confuse users expecting NumPy integers to behave
+similar to Python's ``int``. Unlike NumPy, the size of Python's ``int`` is
+flexible. This means Python integers may expand to accomodate any integer and
+will not overflow.
+
+NumPy provides `numpy.iinfo` and `numpy.finfo` to verify the
+minimum or maximum values of NumPy integer and floating point values
+respectively ::
+
+    >>> np.iinfo(np.int) # Bounds of the default integer on this system.
+    iinfo(min=-9223372036854775808, max=9223372036854775807, dtype=int64)
+    >>> np.iinfo(np.int32) # Bounds of a 32-bit integer
+    iinfo(min=-2147483648, max=2147483647, dtype=int32)
+    >>> np.iinfo(np.int64) # Bounds of a 64-bit integer
+    iinfo(min=-9223372036854775808, max=9223372036854775807, dtype=int64)
+
+If 64-bit integers are still too small the result may be cast to a
+floating point number. Floating point numbers offer a larger, but inexact,
+range of possible values.
+
+    >>> np.power(100, 100, dtype=np.int64) # Incorrect even with 64-bit int
+    0
+    >>> np.power(100, 100, dtype=np.float64)
+    1e+200
+
 Extended Precision
 ==================
 

@@ -362,8 +362,7 @@ specific builtin data-type ( *e.g.* float), while specifying a
 particular set of requirements ( *e.g.* contiguous, aligned, and
 writeable). The syntax is
 
-.. c:function:: PyObject *PyArray_FROM_OTF( \
-        PyObject* obj, int typenum, int requirements)
+:c:func:`PyArray_FROM_OTF`
 
     Return an ndarray from any Python object, *obj*, that can be
     converted to an array. The number of dimensions in the returned
@@ -446,31 +445,23 @@ writeable). The syntax is
         flags most commonly needed are :c:data:`NPY_ARRAY_IN_ARRAY`,
         :c:data:`NPY_OUT_ARRAY`, and :c:data:`NPY_ARRAY_INOUT_ARRAY`:
 
-        .. c:var:: NPY_ARRAY_IN_ARRAY
+        :c:data:`NPY_ARRAY_IN_ARRAY`
 
-            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :c:data:`NPY_ARRAY_ALIGNED`. This combination of flags is useful
-            for arrays that must be in C-contiguous order and aligned.
-            These kinds of arrays are usually input arrays for some
-            algorithm.
+            This flag is useful for arrays that must be in C-contiguous
+            order and aligned. These kinds of arrays are usually input 
+            arrays for some algorithm.
 
-        .. c:var:: NPY_ARRAY_OUT_ARRAY
+        :c:data:`NPY_ARRAY_OUT_ARRAY`
 
-            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE`. This
-            combination of flags is useful to specify an array that is
+            This flag is useful to specify an array that is
             in C-contiguous order, is aligned, and can be written to
             as well. Such an array is usually returned as output
             (although normally such output arrays are created from
             scratch).
 
-        .. c:var:: NPY_ARRAY_INOUT_ARRAY
+        :c:data:`NPY_ARRAY_INOUT_ARRAY`
 
-            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-            :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` \|
-            :c:data:`NPY_ARRAY_UPDATEIFCOPY`. This combination of flags is
-            useful to specify an array that will be used for both
+            This flag is useful to specify an array that will be used for both
             input and output. :c:func:`PyArray_ResolveWritebackIfCopy`
             must be called before :func:`Py_DECREF` at
             the end of the interface routine to write back the temporary data
@@ -487,16 +478,16 @@ writeable). The syntax is
 
         Other useful flags that can be OR'd as additional requirements are:
 
-        .. c:var:: NPY_ARRAY_FORCECAST
+        :c:data:`NPY_ARRAY_FORCECAST`
 
             Cast to the desired type, even if it can't be done without losing
             information.
 
-        .. c:var:: NPY_ARRAY_ENSURECOPY
+        :c:data:`NPY_ARRAY_ENSURECOPY`
 
             Make sure the resulting array is a copy of the original.
 
-        .. c:var:: NPY_ARRAY_ENSUREARRAY
+        :c:data:`NPY_ARRAY_ENSUREARRAY`
 
             Make sure the resulting object is an actual ndarray and not a sub-
             class.
@@ -523,7 +514,7 @@ creation functions go through this heavily re-used code. Because of
 its flexibility, it can be somewhat confusing to use. As a result,
 simpler forms exist that are easier to use.
 
-.. c:function:: PyObject *PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
+:c:func:`PyArray_SimpleNew`
 
     This function allocates new memory and places it in an ndarray
     with *nd* dimensions whose shape is determined by the array of
@@ -535,8 +526,7 @@ simpler forms exist that are easier to use.
     memory for the array can be set to zero if desired using
     :c:func:`PyArray_FILLWBYTE` (return_object, 0).
 
-.. c:function:: PyObject *PyArray_SimpleNewFromData( \
-        int nd, npy_intp* dims, int typenum, void* data)
+:c:func:`PyArray_SimpleNewFromData`
 
     Sometimes, you want to wrap memory allocated elsewhere into an
     ndarray object for downstream use. This routine makes it

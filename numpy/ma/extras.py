@@ -390,7 +390,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     i[axis] = slice(None, None)
     outshape = np.asarray(arr.shape).take(indlist)
     i.put(indlist, ind)
-    j = i.copy()
     res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
     #  if res is a number, then we have a smaller output array
     asscalar = np.isscalar(res)

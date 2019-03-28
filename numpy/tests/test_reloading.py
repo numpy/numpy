@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 from numpy.testing import assert_raises, assert_, assert_equal
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 if sys.version_info[:2] >= (3, 4):
     from importlib import reload

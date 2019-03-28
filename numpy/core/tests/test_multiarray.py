@@ -21,7 +21,7 @@ import weakref
 import pytest
 from contextlib import contextmanager
 
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 if sys.version_info[0] >= 3:
     import builtins
@@ -1490,6 +1490,11 @@ class TestMethods(object):
         oned = np.ones(1)
         # gh-12031, caused SEGFAULT
         assert_raises(TypeError, oned.choose,np.void(0), [oned])
+
+        # gh-6272 check overlap on out
+        x = np.arange(5)
+        y = np.choose([0,0,0], [x[:3], x[:3], x[:3]], out=x[1:4], mode='wrap')
+        assert_equal(y, np.array([0, 1, 2]))
 
     def test_prod(self):
         ba = [1, 2, 10, 11, 6, 5, 4]
@@ -4377,6 +4382,16 @@ class TestPutmask(object):
         assert_array_equal(rec['y'], [11, 4])
         assert_array_equal(rec['z'], [3, 3])
 
+    def test_overlaps(self):
+        # gh-6272 check overlap
+        x = np.array([True, False, True, False])
+        np.putmask(x[1:4], [True, True, True], x[:3])
+        assert_equal(x, np.array([True, True, False, True]))
+
+        x = np.array([True, False, True, False])
+        np.putmask(x[1:4], x[:3], [True, False, True])
+        assert_equal(x, np.array([True, True, True, True]))
+
 
 class TestTake(object):
     def tst_basic(self, x):
@@ -4425,6 +4440,11 @@ class TestTake(object):
         rec1 = rec.take([1])
         assert_(rec1['x'] == 5.0 and rec1['y'] == 4.0)
 
+    def test_out_overlap(self):
+        # gh-6272 check overlap on out
+        x = np.arange(5)
+        y = np.take(x, [1, 2, 3], out=x[2:5], mode='wrap')
+        assert_equal(y, np.array([1, 2, 3]))
 
 class TestLexsort(object):
     def test_basic(self):
@@ -7105,6 +7125,19 @@ def test_array_interface_empty_shape():
     assert_equal(arr1, arr2)
     assert_equal(arr1, arr3)
 
+def test_array_interface_offset():
+    arr = np.array([1, 2, 3], dtype='int32')
+    interface = dict(arr.__array_interface__)
+    interface['data'] = memoryview(arr)
+    interface['shape'] = (2,)
+    interface['offset'] = 4
+
+
+    class DummyArray(object):
+        __array_interface__ = interface
+
+    arr1 = np.asarray(DummyArray())
+    assert_equal(arr1, arr[1:])
 
 def test_flat_element_deletion():
     it = np.ones(3).flat

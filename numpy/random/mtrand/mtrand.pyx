@@ -1170,6 +1170,9 @@ cdef class RandomState:
                 raise ValueError("Cannot take a larger sample than "
                                  "population when 'replace=False'")
 
+            if size < 0:
+                raise ValueError("negative dimensions are not allowed")
+
             if p is not None:
                 if np.count_nonzero(p > 0) < size:
                     raise ValueError("Fewer non-zero entries in p than size")
@@ -1328,6 +1331,12 @@ cdef class RandomState:
 
         Random values in a given shape.
 
+        .. note::
+            This is a convenience function for users porting code from Matlab,
+            and wraps `numpy.random.random_sample`. That function takes a
+            tuple to specify the size of the output, which is consistent with
+            other NumPy functions like `numpy.zeros` and `numpy.ones`.
+
         Create an array of the given shape and populate it with
         random samples from a uniform distribution
         over ``[0, 1)``.
@@ -1346,12 +1355,6 @@ cdef class RandomState:
         See Also
         --------
         random
-
-        Notes
-        -----
-        This is a convenience function. If you want an interface that
-        takes a shape-tuple as the first argument, refer to
-        np.random.random_sample .
 
         Examples
         --------
@@ -1372,16 +1375,17 @@ cdef class RandomState:
 
         Return a sample (or samples) from the "standard normal" distribution.
 
-        If positive, int_like or int-convertible arguments are provided,
-        `randn` generates an array of shape ``(d0, d1, ..., dn)``, filled
-        with random floats sampled from a univariate "normal" (Gaussian)
-        distribution of mean 0 and variance 1 (if any of the :math:`d_i` are
-        floats, they are first converted to integers by truncation). A single
-        float randomly sampled from the distribution is returned if no
-        argument is provided.
+        .. note::
+            This is a convenience function for users porting code from Matlab,
+            and wraps `numpy.random.standard_normal`. That function takes a
+            tuple to specify the size of the output, which is consistent with
+            other NumPy functions like `numpy.zeros` and `numpy.ones`.
 
-        This is a convenience function.  If you want an interface that takes a
-        tuple as the first argument, use `numpy.random.standard_normal` instead.
+        If positive int_like arguments are provided, `randn` generates an array
+        of shape ``(d0, d1, ..., dn)``, filled
+        with random floats sampled from a univariate "normal" (Gaussian)
+        distribution of mean 0 and variance 1. A single float randomly sampled
+        from the distribution is returned if no argument is provided.
 
         Parameters
         ----------
@@ -1399,6 +1403,7 @@ cdef class RandomState:
         See Also
         --------
         standard_normal : Similar, but takes a tuple as its argument.
+        normal : Also accepts mu and sigma arguments.
 
         Notes
         -----
@@ -1409,14 +1414,13 @@ cdef class RandomState:
         Examples
         --------
         >>> np.random.randn()
-        2.1923875335537315 #random
+        2.1923875335537315  # random
 
         Two-by-four array of samples from N(3, 6.25):
 
-        >>> 2.5 * np.random.randn(2, 4) + 3
-        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],  #random
-               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]]) #random
-
+        >>> 3 + 2.5 * np.random.randn(2, 4)
+        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
+               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
         """
         if len(args) == 0:
             return self.standard_normal()
@@ -1536,19 +1540,42 @@ cdef class RandomState:
         Returns
         -------
         out : float or ndarray
-            Drawn samples.
+            A floating-point array of shape ``size`` of drawn samples, or a
+            single sample if ``size`` was not specified.
+
+        Notes
+        -----
+        For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
+
+            mu + sigma * np.random.standard_normal(size=...)
+            np.random.normal(mu, sigma, size=...)
+
+        See Also
+        --------
+        normal :
+            Equivalent function with additional ``loc`` and ``scale`` arguments
+            for setting the mean and standard deviation.
 
         Examples
         --------
+        >>> np.random.standard_normal()
+        2.1923875335537315 #random
+
         >>> s = np.random.standard_normal(8000)
         >>> s
-        array([ 0.6888893 ,  0.78096262, -0.89086505, ...,  0.49876311, #random
-               -0.38672696, -0.4685006 ])                               #random
+        array([ 0.6888893 ,  0.78096262, -0.89086505, ...,  0.49876311,  # random
+               -0.38672696, -0.4685006 ])                                # random
         >>> s.shape
         (8000,)
         >>> s = np.random.standard_normal(size=(3, 4, 2))
         >>> s.shape
         (3, 4, 2)
+
+        Two-by-four array of samples from :math:`N(3, 6.25)`:
+
+        >>> 3 + 2.5 * np.random.standard_normal(size=(2, 4))
+        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
+               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
         return cont0_array(self.internal_state, rk_gauss, size, self.lock)
@@ -1626,11 +1653,11 @@ cdef class RandomState:
 
         Verify the mean and the variance:
 
-        >>> abs(mu - np.mean(s)) < 0.01
-        True
+        >>> abs(mu - np.mean(s))
+        0.0  # may vary
 
-        >>> abs(sigma - np.std(s, ddof=1)) < 0.01
-        True
+        >>> abs(sigma - np.std(s, ddof=1))
+        0.1  # may vary
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1641,6 +1668,12 @@ cdef class RandomState:
         ...                np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
         ...          linewidth=2, color='r')
         >>> plt.show()
+
+        Two-by-four array of samples from N(3, 6.25):
+
+        >>> np.random.normal(3, 2.5, size=(2, 4))
+        array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
+               [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
         cdef ndarray oloc, oscale
@@ -4170,9 +4203,9 @@ cdef class RandomState:
         Draw samples from a Hypergeometric distribution.
 
         Samples are drawn from a hypergeometric distribution with specified
-        parameters, ngood (ways to make a good selection), nbad (ways to make
-        a bad selection), and nsample = number of items sampled, which is less
-        than or equal to the sum ngood + nbad.
+        parameters, `ngood` (ways to make a good selection), `nbad` (ways to make
+        a bad selection), and `nsample` (number of items sampled, which is less
+        than or equal to the sum ``ngood + nbad``).
 
         Parameters
         ----------
@@ -4186,14 +4219,16 @@ cdef class RandomState:
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
-            a single value is returned if ``ngood``, ``nbad``, and ``nsample``
+            a single value is returned if `ngood`, `nbad`, and `nsample`
             are all scalars.  Otherwise, ``np.broadcast(ngood, nbad, nsample).size``
             samples are drawn.
 
         Returns
         -------
         out : ndarray or scalar
-            Drawn samples from the parameterized hypergeometric distribution.
+            Drawn samples from the parameterized hypergeometric distribution. Each
+            sample is the number of good items within a randomly selected subset of
+            size `nsample` taken from a set of `ngood` good items and `nbad` bad items.
 
         See Also
         --------
@@ -4208,11 +4243,11 @@ cdef class RandomState:
 
         where :math:`0 \\le x \\le n` and :math:`n-b \\le x \\le g`
 
-        for P(x) the probability of x successes, g = ngood, b = nbad, and
-        n = number of samples.
+        for P(x) the probability of ``x`` good results in the drawn sample,
+        g = `ngood`, b = `nbad`, and n = `nsample`.
 
-        Consider an urn with black and white marbles in it, ngood of them
-        black and nbad are white. If you draw nsample balls without
+        Consider an urn with black and white marbles in it, `ngood` of them
+        are black and `nbad` are white. If you draw `nsample` balls without
         replacement, then the hypergeometric distribution describes the
         distribution of black balls in the drawn sample.
 
@@ -4414,6 +4449,7 @@ cdef class RandomState:
             Behavior when the covariance matrix is not positive semidefinite.
         tol : float, optional
             Tolerance when checking the singular values in covariance matrix.
+            cov is cast to double before the check.
 
         Returns
         -------
@@ -4525,6 +4561,8 @@ cdef class RandomState:
         # not zero. We continue to use the SVD rather than Cholesky in
         # order to preserve current outputs.
 
+        # GH10839, ensure double to make tol meaningful
+        cov = cov.astype(np.double)
         (u, s, v) = svd(cov)
 
         if check_valid != 'ignore':

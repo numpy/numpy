@@ -9,7 +9,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
     assert_raises_regex,
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 # Use pytz to test out various time zones if available
 try:
@@ -1542,6 +1542,12 @@ class TestDateTime(object):
                          err_msg='Datetime conversion error for unit %s' % unit)
 
         assert_equal(x[0].astype(np.int64), 322689600000000000)
+
+        # gh-13062
+        with pytest.raises(OverflowError):
+            np.datetime64(2**64, 'D')
+        with pytest.raises(OverflowError):
+            np.timedelta64(2**64, 'D')
 
     def test_datetime_as_string(self):
         # Check all the units with default string conversion

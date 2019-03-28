@@ -153,6 +153,7 @@ from numpy.distutils.misc_util import (is_sequence, is_string,
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
 from numpy.distutils import customized_ccompiler
+from numpy.distutils import _shell_utils
 import distutils.ccompiler
 import tempfile
 import shutil
@@ -619,8 +620,9 @@ class system_info(object):
         for key in ['extra_compile_args', 'extra_link_args']:
             # Get values
             opt = self.cp.get(self.section, key)
+            opt = _shell_utils.NativeParser.split(opt)
             if opt:
-                tmp = {key : [opt]}
+                tmp = {key: opt}
                 dict_append(info, **tmp)
         return info
 
@@ -904,7 +906,6 @@ class fftw_info(system_info):
                    == len(ver_param['includes']):
                     dict_append(info, include_dirs=[d])
                     flag = 1
-                    incl_dirs = [d]
                     break
             if flag:
                 dict_append(info, define_macros=ver_param['macros'])
@@ -1056,9 +1057,9 @@ class mkl_info(system_info):
         for d in paths:
             dirs = glob(os.path.join(d, 'mkl', '*'))
             dirs += glob(os.path.join(d, 'mkl*'))
-            for d in dirs:
-                if os.path.isdir(os.path.join(d, 'lib')):
-                    return d
+            for sub_dir in dirs:
+                if os.path.isdir(os.path.join(sub_dir, 'lib')):
+                    return sub_dir
         return None
 
     def __init__(self):
@@ -1740,6 +1741,8 @@ class blas_info(system_info):
                                       extra_postargs=info.get('extra_link_args', []))
                     res = "blas"
             except distutils.ccompiler.CompileError:
+                res = None
+            except distutils.ccompiler.LinkError:
                 res = None
         finally:
             shutil.rmtree(tmpdir)

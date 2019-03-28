@@ -79,7 +79,7 @@ broadcast_error: {
         Py_DECREF(errmsg);
 
         return -1;
-   }
+    }
 }
 
 /* See array_assign.h for parameter documentation */
