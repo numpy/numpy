@@ -4422,7 +4422,7 @@ cdef class RandomState:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
                             tol=1e-8):
         """
-        multivariate_normal(mean, cov[, size, check_valid, tol])
+        multivariate_normal(mean, cov, size=None, check_valid='warn', tol=1e-8)
 
         Draw random samples from a multivariate normal distribution.
 
