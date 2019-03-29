@@ -16,6 +16,7 @@ Functions
 - `nanvar` -- variance of non-NaN values
 - `nanstd` -- standard deviation of non-NaN values
 - `nanmedian` -- median of non-NaN values
+- `nanptp` -- peak to peak of non-NaN values
 - `nanquantile` -- qth quantile of non-NaN values
 - `nanpercentile` -- qth percentile of non-NaN values
 
@@ -34,9 +35,9 @@ array_function_dispatch = functools.partial(
 
 
 __all__ = [
-    'nansum', 'nanmax', 'nanmin', 'nanargmax', 'nanargmin', 'nanmean',
-    'nanmedian', 'nanpercentile', 'nanvar', 'nanstd', 'nanprod',
-    'nancumsum', 'nancumprod', 'nanquantile'
+    'nansum', 'nanmax', 'nanmin', 'nanargmax', 'nanargmin', 'nanptp',
+    'nanmean', 'nanmedian', 'nanpercentile', 'nanvar', 'nanstd',
+    'nanprod', 'nancumsum', 'nancumprod', 'nanquantile'
     ]
 
 
@@ -66,6 +67,7 @@ def _nan_mask(a, out=None):
     y = np.isnan(a, out=out)
     y = np.invert(y, out=y)
     return y
+
 
 def _replace_nan(a, val):
     """
@@ -543,6 +545,24 @@ def nanargmax(a, axis=None):
         mask = np.all(mask, axis=axis)
         if np.any(mask):
             raise ValueError("All-NaN slice encountered")
+    return res
+
+
+def _nanptp_dispatcher(a, axis=None):
+    return (a,)
+
+
+@array_function_dispatch(_nanptp_dispatcher)
+def nanptp(a, axis=None):
+    amin = nanmin(a, axis)
+    amax = nanmax(a, axis)
+    res = amax - amin
+    valid_mask = (~np.isnan(a))
+    invalid_ptp = (valid_mask.sum(axis=axis) < 2)
+    if np.any(invalid_ptp):
+        warnings.warn("Slice without peak to peak encountered",
+                      RuntimeWarning)
+        res[invalid_ptp] = np.nan
     return res
 
 
