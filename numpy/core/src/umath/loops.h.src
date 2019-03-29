@@ -428,6 +428,9 @@ NPY_NO_EXPORT void
 @TYPE@_isnat(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
+@TYPE@_isfinite(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
 
 /**begin repeat1
