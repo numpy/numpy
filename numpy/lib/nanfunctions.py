@@ -16,9 +16,9 @@ Functions
 - `nanvar` -- variance of non-NaN values
 - `nanstd` -- standard deviation of non-NaN values
 - `nanmedian` -- median of non-NaN values
-- `nanptp` -- peak to peak of non-NaN values
 - `nanquantile` -- qth quantile of non-NaN values
 - `nanpercentile` -- qth percentile of non-NaN values
+- `nanptp` -- peak to peak of non-NaN values
 
 """
 from __future__ import division, absolute_import, print_function
