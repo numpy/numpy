@@ -652,7 +652,7 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    OUTPUT_LOOP_FAST(npy_bool, *out = @val@);
+    OUTPUT_LOOP_FAST(npy_bool, @val@);
 }
 
 /**end repeat**/
@@ -896,7 +896,7 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    OUTPUT_LOOP_FAST(npy_bool, *out = @val@);
+    OUTPUT_LOOP_FAST(npy_bool, @val@);
 }
 /**end repeat1**/
 
