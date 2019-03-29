@@ -126,7 +126,7 @@ abs_ptrdiff(char *a, char *b)
  */
 
 /* prototypes */
-#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS
+#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
 
 /**begin repeat1
  * #func = exp, log#
