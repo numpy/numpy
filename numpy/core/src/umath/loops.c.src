@@ -644,6 +644,19 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
 }
 
 
+/**begin repeat
+ * #kind = isnan, isinf, isfinite#
+ * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
+ **/
+NPY_NO_EXPORT void
+BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    OUTPUT_LOOP_FAST(npy_bool, *out = @val@);
+}
+
+/**end repeat**/
+
 /*
  *****************************************************************************
  **                           INTEGER LOOPS
@@ -874,6 +887,18 @@ NPY_NO_EXPORT void
 
     }
 }
+
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite#
+ * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
+ **/
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    OUTPUT_LOOP_FAST(npy_bool, *out = @val@);
+}
+/**end repeat1**/
 
 /**end repeat**/
 
