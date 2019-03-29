@@ -191,6 +191,12 @@ concatenation.
 In some cases where ``np.interp`` would previously return ``np.nan``, it now
 returns an appropriate infinity.
 
+Specialized ``np.isnan``, ``np.isinf``, and ``np.isfinite`` ufuncs for bool and int types
+-----------------------------------------------------------------------------------------
+The boolean and integer types are incapable of storing ``np.nan`` and ``np.inf`` values,
+which allows us to provide specialized ufuncs that are up to 250x faster than the current
+approach.
+
 
 Changes
 =======
