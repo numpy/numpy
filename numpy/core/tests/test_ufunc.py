@@ -1915,3 +1915,24 @@ class TestUfunc(object):
         exc = pytest.raises(TypeError, np.sqrt, None)
         # minimally check the exception text
         assert 'loop of ufunc does not support' in str(exc)
+
+    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    def test_nat_is_not_finite(self, nat):
+        try:
+            assert not np.isfinite(nat)
+        except TypeError:
+            pass  # ok, just not implemented
+
+    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    def test_nat_is_nan(self, nat):
+        try:
+            assert np.isnan(nat)
+        except TypeError:
+            pass  # ok, just not implemented
+
+    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    def test_nat_is_not_inf(self, nat):
+        try:
+            assert not np.isinf(nat)
+        except TypeError:
+            pass  # ok, just not implemented
