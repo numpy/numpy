@@ -9,21 +9,24 @@
  * todo: need permission flags, perhaps a 'chsize' analog
  *   not all functions check range yet!!!
  *
+ * Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+ * 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019
+ * Python Software Foundation; All Rights Reserved
+ *
  */
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "structmember.h"
-
 #ifndef MS_WINDOWS
 #define UNIX
 # ifdef HAVE_FCNTL_H
 #  include <fcntl.h>
 # endif /* HAVE_FCNTL_H */
 #endif
-
 #ifdef MS_WINDOWS
 #include <windows.h>
+
 static int
 my_getpagesize(void)
 {
