@@ -85,31 +85,6 @@
                                    steps[1] == 0 && \
                                    steps[2] == sizeof(tout))
 
-
-/*
- * loop with contiguous specialization
- * val should be the value to be stored in `tout *out`
- * combine with NPY_GCC_OPT_3 to allow autovectorization
- * should only be used where its worthwhile to avoid code bloat
- */
-#define BASE_OUTPUT_LOOP(tout, val) \
-    OUTPUT_LOOP { \
-        tout *out = (tout *)op1; \
-        *out = val; \
-    }
-
-#define OUTPUT_LOOP_FAST(tout, val) \
-    do { \
-        /* condition allows compiler to optimize the generic macro */ \
-        if (IS_OUTPUT_CONT(tout)) { \
-            BASE_OUTPUT_LOOP(tout, val) \
-        } \
-        else { \
-            BASE_OUTPUT_LOOP(tout, val) \
-        } \
-    } \
-    while (0)
-
 /*
  * loop with contiguous specialization
  * op should be the code working on `tin in` and
