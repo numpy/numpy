@@ -868,6 +868,7 @@ astype_anyint(PyObject *obj) {
     if (!(PyArray_ISINTEGER(ret) || PyArray_ISBOOL(ret))) {
         /* ensure dtype is int-based */
         PyErr_SetString(PyExc_TypeError, NON_INTEGRAL_ERROR_MSG);
+        Py_DECREF(ret);
         return NULL;
     }
 
@@ -899,7 +900,6 @@ static int int_sequence_to_arrays(PyObject *seq,
     }
 
     for (i = 0; i < count; ++i) {
-        PyArray_Descr *dtype = NULL;
         PyObject *item = PySequence_GetItem(seq, i);
         if (item == NULL) {
             goto fail;
