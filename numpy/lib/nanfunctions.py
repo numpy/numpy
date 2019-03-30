@@ -606,12 +606,6 @@ def nanptp(a, axis=None):
 
     """
     res = nanmax(a, axis=axis) - nanmin(a, axis=axis)
-    valid_mask = ~np.isnan(a)
-    invalid_ptp = (valid_mask.sum(axis=axis) < 2)
-    if np.any(invalid_ptp):
-        warnings.warn("Slice without valid peak-to-peak encountered",
-                      RuntimeWarning, stacklevel=2)
-        res = _copyto(res, np.nan, invalid_ptp)
     return res
 
 
