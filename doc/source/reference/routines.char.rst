@@ -56,6 +56,7 @@ comparison.
    less_equal
    greater
    less
+   compare_chararrays
 
 String information
 ------------------
@@ -90,4 +91,3 @@ Convenience class
    array
    asarray
    chararray
-   compare_chararrays
