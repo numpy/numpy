@@ -554,24 +554,12 @@ def _nanptp_dispatcher(a, axis=None):
 
 @array_function_dispatch(_nanptp_dispatcher)
 def nanptp(a, axis=None):
-    # find nanmin and nanmax for ptp range
-    # not using nanmin and nanmax fn calls because of 
-    # irrelevant warnings thrown
-    if type(a) is np.ndarray and a.dtype != np.object_:
-        # Fast, but not safe for subclasses of ndarray, or object arrays,
-        # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
-        res = np.fmax.reduce(a, axis=axis) - np.fmin.reduce(a, axis=axis)
-    else:
-        # Slow, but safe for subclasses of ndarray
-        a_minus, _ = _replace_nan(a, -np.inf)
-        a_plus, _ = _replace_nan(a, np.inf)
-        res = np.amax(a_plus, axis=axis) - np.amin(a_minus, axis=axis)
-    # Check for invalid peak-to-peak detections
+    res = nanmax(a, axis=axis) - nanmin(a, axis=axis)
     valid_mask = ~np.isnan(a)
     invalid_ptp = (valid_mask.sum(axis=axis) < 2)
     if np.any(invalid_ptp):
         warnings.warn("Slice without valid peak-to-peak encountered",
-                      RuntimeWarning)
+                      RuntimeWarning, stacklevel=2)
         res = _copyto(res, np.nan, invalid_ptp)
     return res
 
