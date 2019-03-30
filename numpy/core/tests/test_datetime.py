@@ -2208,6 +2208,27 @@ class TestDateTime(object):
                 continue
             assert_raises(TypeError, np.isnat, np.zeros(10, t))
 
+    def test_isfinite(self):
+        assert_(not np.isfinite(np.datetime64('NaT', 'ms')))
+        assert_(not np.isfinite(np.datetime64('NaT', 'ns')))
+        assert_(np.isfinite(np.datetime64('2038-01-19T03:14:07')))
+
+        assert_(not np.isfinite(np.timedelta64('NaT', "ms")))
+        assert_(np.isfinite(np.timedelta64(34, "ms")))
+
+        res = np.array([True, True,  False])
+        for unit in ['Y', 'M', 'W', 'D',
+                     'h', 'm', 's', 'ms', 'us',
+                     'ns', 'ps', 'fs', 'as']:
+            arr = np.array([123, -321, "NaT"], dtype='<datetime64[%s]' % unit)
+            assert_equal(np.isfinite(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='>datetime64[%s]' % unit)
+            assert_equal(np.isfinite(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='<timedelta64[%s]' % unit)
+            assert_equal(np.isfinite(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='>timedelta64[%s]' % unit)
+            assert_equal(np.isfinite(arr), res)
+
     def test_corecursive_input(self):
         # construct a co-recursive list
         a, b = [], []
