@@ -130,7 +130,8 @@ def take(a, indices, axis=None, out=None, mode='raise'):
         input array is used.
     out : ndarray, optional (Ni..., Nj..., Nk...)
         If provided, the result will be placed in this array. It should
-        be of the appropriate shape and dtype.
+        be of the appropriate shape and dtype. Note that `out` is always
+        buffered if `mode='raise'`; use other modes for better performance.
     mode : {'raise', 'wrap', 'clip'}, optional
         Specifies how out-of-bounds indices will behave.
 
@@ -355,7 +356,8 @@ def choose(a, choices, out=None, mode='raise'):
         ``choices.shape[0]``) is taken as defining the "sequence".
     out : array, optional
         If provided, the result will be inserted into this array. It should
-        be of the appropriate shape and dtype.
+        be of the appropriate shape and dtype. Note that `out` is always
+        buffered if `mode='raise'`; use other modes for better performance.
     mode : {'raise' (default), 'wrap', 'clip'}, optional
         Specifies how indices outside `[0, n-1]` will be treated:
 
@@ -512,7 +514,8 @@ def put(a, ind, v, mode='raise'):
 
         'clip' mode means that all indices that are too large are replaced
         by the index that addresses the last element along that axis. Note
-        that this disables indexing with negative numbers.
+        that this disables indexing with negative numbers. In 'raise' mode,
+        if an exception occurs the target array may still be modified.
 
     See Also
     --------

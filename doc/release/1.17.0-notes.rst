@@ -72,6 +72,11 @@ Looking up ``__buffer__`` attribute in `numpy.frombuffer` was undocumented and
 non-functional. This code was removed. If needed, use
 ``frombuffer(memoryview(obj), ...)`` instead.
 
+``out``is buffered for memory overlaps in ``np.take``, ``np.choose``, ``np.put``
+--------------------------------------------------------------------------------
+If the out argument to these functions is provided and has memory overlap with
+the other arguments, it is now buffered to avoid order-dependent behavior.
+
 
 C API changes
 =============
@@ -185,6 +190,12 @@ concatenation.
 ----------------------------------------------
 In some cases where ``np.interp`` would previously return ``np.nan``, it now
 returns an appropriate infinity.
+
+Specialized ``np.isnan``, ``np.isinf``, and ``np.isfinite`` ufuncs for bool and int types
+-----------------------------------------------------------------------------------------
+The boolean and integer types are incapable of storing ``np.nan`` and ``np.inf`` values,
+which allows us to provide specialized ufuncs that are up to 250x faster than the current
+approach.
 
 
 Changes

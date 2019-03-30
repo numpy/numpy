@@ -64,6 +64,8 @@
 #define IS_UNARY_CONT(tin, tout) (steps[0] == sizeof(tin) && \
                                   steps[1] == sizeof(tout))
 
+#define IS_OUTPUT_CONT(tout) (steps[1] == sizeof(tout))
+
 #define IS_BINARY_REDUCE ((args[0] == args[2])\
         && (steps[0] == steps[2])\
         && (steps[0] == 0))
@@ -81,6 +83,29 @@
                                    steps[1] == 0 && \
                                    steps[2] == sizeof(tout))
 
+
+/*
+ * loop with contiguous specialization
+ * op should be the code storing the result in `tout * out`
+ * combine with NPY_GCC_OPT_3 to allow autovectorization
+ * should only be used where its worthwhile to avoid code bloat
+ */
+#define BASE_OUTPUT_LOOP(tout, op) \
+    OUTPUT_LOOP { \
+        tout * out = (tout *)op1; \
+        op; \
+    }
+#define OUTPUT_LOOP_FAST(tout, op) \
+    do { \
+    /* condition allows compiler to optimize the generic macro */ \
+    if (IS_OUTPUT_CONT(tout)) { \
+        BASE_OUTPUT_LOOP(tout, op) \
+    } \
+    else { \
+        BASE_OUTPUT_LOOP(tout, op) \
+    } \
+    } \
+    while (0)
 
 /*
  * loop with contiguous specialization
