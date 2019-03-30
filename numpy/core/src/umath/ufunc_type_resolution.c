@@ -620,7 +620,7 @@ PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
                           PyArray_Descr **out_dtypes)
 {
     if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
-        PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
                                     type_tup, out_dtypes);
     }
 
