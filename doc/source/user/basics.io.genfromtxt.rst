@@ -521,12 +521,6 @@ provides several convenience functions derived from
 :func:`~numpy.genfromtxt`.  These functions work the same way as the
 original, but they have different default values.
 
-:func:`~numpy.ndfromtxt`
-   Always set ``usemask=False``.
-   The output is always a standard :class:`numpy.ndarray`.
-:func:`~numpy.mafromtxt`
-   Always set ``usemask=True``.
-   The output is always a :class:`~numpy.ma.MaskedArray`
 :func:`~numpy.recfromtxt`
    Returns a standard :class:`numpy.recarray` (if ``usemask=False``) or a
    :class:`~numpy.ma.MaskedRecords` array (if ``usemaske=True``).  The
