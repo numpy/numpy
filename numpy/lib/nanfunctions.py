@@ -589,10 +589,12 @@ def nanptp(a, axis=None):
     >>> a = np.array([[1, 2], [3, np.nan], [-3, 1]])
     >>> np.nanptp(a)
     6.0
-    >>> np.nanmin(a, axis=0)
+    >>> np.nanptp(a, axis=0)
     array([6., 1.])
-    >>> np.nanmin(a, axis=1)
-    RuntimeWarning: Slice without valid peak-to-peak encountered
+
+    The command below will raise a RuntimeWarning
+    
+    >>> np.nanptp(a, axis=1)
     array([ 1., nan, 4.])
 
     When positive infinity and/or negative infinity are present:
