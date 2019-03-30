@@ -554,6 +554,55 @@ def _nanptp_dispatcher(a, axis=None):
 
 @array_function_dispatch(_nanptp_dispatcher)
 def nanptp(a, axis=None):
+    """
+    Range of values (maximum - minimum) along an axis, ignoring any NaNs.
+    When slices with less than two non-NaN values are encountered,
+    a ``RuntimeWarning`` is raised and Nan is returned for that slice.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing numbers whose peak-to-peak is desired. If `a` is not an
+        array, a conversion is attempted.
+    axis : {int, tuple of int, None}, optional
+        Axis or axes along which the minimum is computed. The default is to compute
+        the minimum of the flattened array.
+
+    Returns
+    -------
+    nanptp : ndarray
+        An array with the same shape as `a`, with the specified axis
+        removed.  If `a` is a 0-d array, or if axis is None, np.nan is
+        returned, and a warning raised.  The same dtype as `a` is returned.
+
+    Notes
+    -----
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+    Positive infinity is treated as a very large number and negative
+    infinity is treated as a very small (i.e. negative) number.
+
+    If the input has a integer type the function is equivalent to np.ptp.
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, np.nan], [-3, 1]])
+    >>> np.nanptp(a)
+    6.0
+    >>> np.nanmin(a, axis=0)
+    array([6., 1.])
+    >>> np.nanmin(a, axis=1)
+    RuntimeWarning: Slice without valid peak-to-peak encountered
+    array([ 1., nan, 4.])
+
+    When positive infinity and/or negative infinity are present:
+
+    >>> np.nanptp([1, 2, np.nan, np.inf])
+    inf
+    >>> np.nanptp([1, 2, np.nan, np.NINF])
+    inf
+
+    """
     res = nanmax(a, axis=axis) - nanmin(a, axis=axis)
     valid_mask = ~np.isnan(a)
     invalid_ptp = (valid_mask.sum(axis=axis) < 2)
