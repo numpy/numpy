@@ -360,6 +360,15 @@ class TestNanToNum(object):
         assert_(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))
         assert_equal(type(vals), np.ndarray)
+        
+        # perform the same tests but with nan, posinf and neginf keywords
+        with np.errstate(divide='ignore', invalid='ignore'):
+            vals = nan_to_num(np.array((-1., 0, 1))/0., 
+                              nan=10, posinf=20, neginf=30)
+        assert_all(vals[0] == 30) and assert_all(np.isfinite(vals[0]))
+        assert_(vals[1] == 10)
+        assert_all(vals[2] == 20) and assert_all(np.isfinite(vals[2]))
+        assert_equal(type(vals), np.ndarray)
 
         # perform the same test but in-place
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -371,9 +380,23 @@ class TestNanToNum(object):
         assert_(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(np.isfinite(vals[2]))
         assert_equal(type(vals), np.ndarray)
+        
+        # perform the same test but in-place
+        with np.errstate(divide='ignore', invalid='ignore'):
+            vals = np.array((-1., 0, 1))/0.
+        result = nan_to_num(vals, copy=False, nan=10, posinf=20, neginf=30)
+
+        assert_(result is vals)
+        assert_all(vals[0] == 30) and assert_all(np.isfinite(vals[0]))
+        assert_(vals[1] == 10)
+        assert_all(vals[2] == 20) and assert_all(np.isfinite(vals[2]))
+        assert_equal(type(vals), np.ndarray)
 
     def test_array(self):
         vals = nan_to_num([1])
+        assert_array_equal(vals, np.array([1], int))
+        assert_equal(type(vals), np.ndarray)
+        vals = nan_to_num([1], nan=10, posinf=20, neginf=30)
         assert_array_equal(vals, np.array([1], int))
         assert_equal(type(vals), np.ndarray)
 
@@ -381,14 +404,23 @@ class TestNanToNum(object):
         vals = nan_to_num(1)
         assert_all(vals == 1)
         assert_equal(type(vals), np.int_)
+        vals = nan_to_num(1, nan=10, posinf=20, neginf=30)
+        assert_all(vals == 1)
+        assert_equal(type(vals), np.int_)
 
     def test_float(self):
         vals = nan_to_num(1.0)
         assert_all(vals == 1.0)
         assert_equal(type(vals), np.float_)
+        vals = nan_to_num(1.1, nan=10, posinf=20, neginf=30)
+        assert_all(vals == 1.1)
+        assert_equal(type(vals), np.float_)
 
     def test_complex_good(self):
         vals = nan_to_num(1+1j)
+        assert_all(vals == 1+1j)
+        assert_equal(type(vals), np.complex_)
+        vals = nan_to_num(1+1j, nan=10, posinf=20, neginf=30)
         assert_all(vals == 1+1j)
         assert_equal(type(vals), np.complex_)
 
@@ -414,6 +446,16 @@ class TestNanToNum(object):
         # !! inf.  Comment out for now, and see if it
         # !! changes
         #assert_all(vals.real < -1e10) and assert_all(np.isfinite(vals))
+    
+    def test_do_not_rewrite__previous_keyword(self):
+        # This is done to test that when, for instance, nan=np.inf then these 
+        # values are not rewritten by posinf keyword to the posinf value.
+        with np.errstate(divide='ignore', invalid='ignore'):
+            vals = nan_to_num(np.array((-1., 0, 1))/0., nan=np.inf, posinf=999)
+        assert_all(vals[0] < -1e10) and assert_all(np.isfinite(vals[0]))
+        assert_(vals[1] == np.inf)
+        assert_all(vals[2] == 999) and assert_all(np.isfinite(vals[2]))
+        assert_equal(type(vals), np.ndarray)
 
 
 class TestRealIfClose(object):
