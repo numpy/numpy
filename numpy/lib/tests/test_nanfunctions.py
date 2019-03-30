@@ -261,7 +261,7 @@ class TestNanFunctions_Nanptp(object):
     def test_scalar(self):
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning)
-            assert_(np.isnan(np.nanptp(0.)))
+            assert_(np.nanptp(1.) == 0.)
 
     def test_allnans(self):
         mat = np.array([np.nan]*9).reshape(3, 3)
