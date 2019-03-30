@@ -607,7 +607,8 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     else {
         for (j = 0; j < n; j++) {
             if (counts[j] < 0) {
-                PyErr_SetString(PyExc_ValueError, "count < 0");
+                PyErr_SetString(PyExc_ValueError,
+                                "repeats may not contain negative values.");
                 goto fail;
             }
             total += counts[j];
