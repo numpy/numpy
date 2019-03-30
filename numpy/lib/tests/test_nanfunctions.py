@@ -233,6 +233,46 @@ class TestNanFunctions_ArgminArgmax(object):
             assert_(res.shape == ())
 
 
+class TestNanFunctions_Nanptp(object):
+
+    def test_mutation(self):
+        # Check that passed array is not modified.
+        ndat = _ndat.copy()
+        np.nanptp(ndat)
+        assert_equal(ndat, _ndat)
+
+    def test_dtype_from_input(self):
+        codes = 'efdgFDG'
+        for c in codes:
+            mat = np.eye(3, dtype=c)
+            tgt = np.ptp(mat, axis=1).dtype.type
+            res = np.nanptp(mat, axis=1).dtype.type
+            assert_(res is tgt)
+            # scalar case
+            tgt = np.ptp(mat, axis=None).dtype.type
+            res = np.nanptp(mat, axis=None).dtype.type
+            assert_(res is tgt)
+
+    def test_result_values(self):
+        tgt = [np.ptp(d) for d in _rdat]
+        res = np.nanptp(_ndat, axis=1)
+        assert_almost_equal(res, tgt)
+
+    def test_scalar(self):
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning)
+            assert_(np.isnan(np.nanptp(0.)))
+
+    def test_allnans(self):
+        mat = np.array([np.nan]*9).reshape(3, 3)
+        with suppress_warnings() as sup:
+            sup.filter(RuntimeWarning)
+            for axis in [None, 0, 1]:
+                assert_(np.isnan(np.nanptp(mat, axis=axis)).all())
+            # Check scalar
+            assert_(np.isnan(np.nanptp(np.nan)))
+
+
 class TestNanFunctions_IntTypes(object):
 
     int_types = (np.int8, np.int16, np.int32, np.int64, np.uint8,
@@ -263,6 +303,11 @@ class TestNanFunctions_IntTypes(object):
         tgt = np.argmax(self.mat)
         for mat in self.integer_arrays():
             assert_equal(np.nanargmax(mat), tgt)
+
+    def test_nanptp(self):
+        tgt = np.ptp(self.mat)
+        for mat in self.integer_arrays():
+            assert_equal(np.nanptp(mat), tgt)
 
     def test_nansum(self):
         tgt = np.sum(self.mat)
