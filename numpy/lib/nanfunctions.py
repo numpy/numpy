@@ -591,11 +591,8 @@ def nanptp(a, axis=None):
     6.0
     >>> np.nanptp(a, axis=0)
     array([6., 1.])
-
-    The command below will raise a RuntimeWarning
-    
     >>> np.nanptp(a, axis=1)
-    array([ 1., nan, 4.])
+    array([ 1., 0., 4.])
 
     When positive infinity and/or negative infinity are present:
 
