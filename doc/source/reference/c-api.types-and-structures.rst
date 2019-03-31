@@ -203,14 +203,17 @@ PyArrayDescr_Type
           char kind;
           char type;
           char byteorder;
-          char unused;
-          int flags;
+          char flags;
           int type_num;
           int elsize;
           int alignment;
           PyArray_ArrayDescr *subarray;
           PyObject *fields;
+          PyObject *names;
           PyArray_ArrFuncs *f;
+          PyObject *metadata;
+          NpyAuxData *c_metadata;
+          npy_hash_t hash;
       } PyArray_Descr;
 
 .. c:member:: PyTypeObject *PyArray_Descr.typeobj
@@ -242,7 +245,7 @@ PyArrayDescr_Type
     endian), '=' (native), '\|' (irrelevant, ignore). All builtin data-
     types have byteorder '='.
 
-.. c:member:: int PyArray_Descr.flags
+.. c:member:: char PyArray_Descr.flags
 
     A data-type bit-flag that determines if the data-type exhibits object-
     array like behavior. Each bit in this member is a flag which are named
@@ -377,12 +380,27 @@ PyArrayDescr_Type
     normally a Python string. These tuples are placed in this
     dictionary keyed by name (and also title if given).
 
+.. c:member:: PyObject *PyArray_Descr.names
+
+    A table of functions specifiv for each
+    basic data descriptor.
+
 .. c:member:: PyArray_ArrFuncs *PyArray_Descr.f
 
     A pointer to a structure containing functions that the type needs
     to implement internal features. These functions are not the same
     thing as the universal functions (ufuncs) described later. Their
     signatures can vary arbitrarily.
+
+.. c:member:: PyObject *PyArray_Descr.metadata
+
+    Metadata specific to the C implementation
+    of the particular dtype. Added for NumPy 1.7.0.
+
+.. c:member:: NpyAuxData *PyArray_Descr.c_metadata
+
+    A pointer cached with the hash value. It is -1 if not yet
+    computed. Added for NumPy 2.0.0.
 
 .. c:type:: PyArray_ArrFuncs
 
