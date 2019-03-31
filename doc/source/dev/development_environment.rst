@@ -127,6 +127,9 @@ the interpreter, tests can be run like this::
     >>> np.test('full')   # Also run tests marked as slow
     >>> np.test('full', verbose=2)   # Additionally print test name/file
 
+    An example of a successful test :
+    ``4686 passed, 362 skipped, 9 xfailed, 5 warnings in 213.99 seconds``
+
 Or a similar way from the command line::
 
     $ python -c "import numpy as np; np.test()"
