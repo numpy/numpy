@@ -992,7 +992,7 @@ cdef class RandomState:
             raise ValueError("high is out of bounds for %s" % dtype)
         if ilow >= ihigh and np.prod(size) != 0:
             raise ValueError("Range cannot be empty (low >= high) unless no samples are taken")
- 
+
         with self.lock:
             ret = randfunc(ilow, ihigh - 1, size, self.state_address)
 
@@ -1040,7 +1040,7 @@ cdef class RandomState:
                 .. versionadded:: 1.7.0
 
         Parameters
-        -----------
+        ----------
         a : 1-D array-like or int
             If an ndarray, a random sample is generated from its elements.
             If an int, the random sample is generated as if a were np.arange(a)
@@ -4706,7 +4706,7 @@ cdef class RandomState:
         Draw `size` samples of dimension k from a Dirichlet distribution. A
         Dirichlet-distributed random variable can be seen as a multivariate
         generalization of a Beta distribution. The Dirichlet distribution
-        is a conjugate prior of a multinomial distribution in Bayesian 
+        is a conjugate prior of a multinomial distribution in Bayesian
         inference.
 
         Parameters
@@ -4732,22 +4732,22 @@ cdef class RandomState:
         Notes
         -----
 
-        The Dirichlet distribution is a distribution over vectors 
-        :math:`x` that fulfil the conditions :math:`x_i>0` and 
+        The Dirichlet distribution is a distribution over vectors
+        :math:`x` that fulfil the conditions :math:`x_i>0` and
         :math:`\\sum_{i=1}^k x_i = 1`.
 
-        The probability density function :math:`p` of a 
-        Dirichlet-distributed random vector :math:`X` is 
+        The probability density function :math:`p` of a
+        Dirichlet-distributed random vector :math:`X` is
         proportional to
 
         .. math:: p(x) \\propto \\prod_{i=1}^{k}{x^{\\alpha_i-1}_i},
 
-        where :math:`\\alpha` is a vector containing the positive 
+        where :math:`\\alpha` is a vector containing the positive
         concentration parameters.
 
         The method uses the following property for computation: let :math:`Y`
-        be a random vector which has components that follow a standard gamma 
-        distribution, then :math:`X = \\frac{1}{\\sum_{i=1}^k{Y_i}} Y` 
+        be a random vector which has components that follow a standard gamma
+        distribution, then :math:`X = \\frac{1}{\\sum_{i=1}^k{Y_i}} Y`
         is Dirichlet-distributed
 
         References
@@ -4962,7 +4962,7 @@ cdef class RandomState:
             return arr
 
         arr = np.asarray(x)
-    
+
         # shuffle has fast-path for 1-d
         if arr.ndim == 1:
             # Return a copy if same memory
@@ -4975,7 +4975,7 @@ cdef class RandomState:
         idx = np.arange(arr.shape[0], dtype=np.intp)
         self.shuffle(idx)
         return arr[idx]
-        
+
 
 _rand = RandomState()
 seed = _rand.seed
