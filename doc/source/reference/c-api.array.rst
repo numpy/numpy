@@ -1660,8 +1660,8 @@ Conversion
 .. c:function:: PyObject* PyArray_GetField( \
         PyArrayObject* self, PyArray_Descr* dtype, int offset)
 
-    Equivalent to :meth:`ndarray.getfield<numpy.ndarray.getfield>` (*self*, *dtype*, *offset*).
-    This function :meth:`steals a reference<https://stackoverflow.com/questions/23644926/what-is-reference-stealing-and-borrowing>`
+    Equivalent to :meth:`ndarray.getfield<numpy.ndarray.getfield>` (*self*, *dtype*, *offset*). This function 
+    :meth:`steals a reference<https://stackoverflow.com/questions/23644926/what-is-reference-stealing-and-borrowing>`
     to ``PyArray_Descr`` and return a new array of the given *dtype* 
     using the data in the current array at a specified *offset* in bytes. 
     The *offset* plus the itemsize of the new array type must be less than *self*
