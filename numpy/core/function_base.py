@@ -123,25 +123,47 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     if num < 0:
         raise ValueError("Number of samples, %s, must be non-negative." % num)
     div = (num - 1) if endpoint else num
+    # Make sure one can use variables that have an __array_interface__, gh-6634
+    start = asanyarray(start)
+    stop  = asanyarray(stop)
 
-    # Convert float/complex array scalars to float, gh-3504
-    # and make sure one can use variables that have an __array_interface__, gh-6634
-    start = asanyarray(start) * 1.0
-    stop  = asanyarray(stop)  * 1.0
+    # check if dealing with datetime64 or timedelta64
+    is_datelike = start.dtype.kind in 'Mm'
+    if is_datelike:
+        # For datetime/timedelta, dtype must be specified
+        # start and stop will first be cast to this dtype.
+        # Warning: dtype must have high enough precision so
+        # that it is at all possible to draw num equispaced
+        # samples.
+        assert dtype is not None, "linspace with {} objects cannot be called "\
+            "with dtype=None".format(start.dtype)
+        start = start.astype(dtype)
+        stop = stop.astype(dtype)
+        # y cannot be cast to datetime64/timedelta64, but left
+        # as int64, since later on we will do y * delta, and
+        # <m8[s] * <m8[s] is not allowed.
+        delta = stop - start
+        y = _nx.arange(0, num).reshape((-1,) + (1,) * ndim(delta))
 
-    dt = result_type(start, stop, float(num))
-    if dtype is None:
-        dtype = dt
+    else:
+        # Convert float/complex array scalars to float, gh-3504
+        start = start * 1.0
+        stop  = stop  * 1.0
+        dt = result_type(start, stop, float(num))
+        delta = stop - start
+        y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
 
-    delta = stop - start
-    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
+        if dtype is None:
+            dtype = dt
+
     # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
     # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
-    # see gh-7142. Hence, we multiply in place only for standard scalar types.
-    _mult_inplace = _nx.isscalar(delta)
+    # see gh-7142. Hence, we multiply in place only for standard scalar types,
+    # excepting datetime64 and timedelta64
+    _mult_inplace = _nx.isscalar(delta) and (not is_datelike)
     if num > 1:
         step = delta / div
-        if _nx.any(step == 0):
+        if (not is_datelike) and _nx.any(step == 0):
             # Special handling for denormal numbers, gh-5437
             y /= div
             if _mult_inplace:
@@ -159,7 +181,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         # Multiply with delta to allow possible override of output class.
         y = y * delta
 
-    y += start
+    if is_datelike:
+        y = y + start
+    else:
+        y += start
 
     if endpoint and num > 1:
         y[-1] = stop

@@ -365,3 +365,16 @@ class TestLinspace(object):
         stop = array(2, dtype='O')
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([1., 1.5, 2.]))
+
+    def test_datetime(self):
+        dt1 = array('2018-12-12 06:00:00', dtype='M8[s]')
+        dt2 = array('2018-12-12 07:00:00', dtype='M8[s]')
+        quarters = array([0, 15*60, 30*60, 45*60, 60*60], dtype='m8[s]')
+        assert_((linspace(dt1, dt2, 5, dtype='M8[s]') == dt1 + quarters).all())
+
+    def test_timedelta(self):
+        td1 = array(0, dtype='m8[s]')
+        td2 = array(3600, dtype='m8[s]')
+        quarters = array([0, 15*60, 30*60, 45*60, 60*60], dtype='m8[s]')
+        assert_((linspace(td1, td2, 5, dtype='m8[s]') == td1 + quarters).all())
+
