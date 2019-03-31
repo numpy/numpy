@@ -211,6 +211,9 @@ code blocks requiring only simple changes between blocks. During the
 build phase of setup, if a template file named <somefile>.src is
 encountered, a new file named <somefile> is constructed from the
 template and placed in the build directory to be used instead. Two
-forms of template conversion are supported. The first form occurs for.. Read more `here`_.
+forms of template conversion are supported. The first form occurs for
+files named <file>.ext.src where ext is a recognized Fortran
+extension (f, f90, f95, f77, for, ftn, pyf). The second form is used
+for all other cases. Read more `here`_.
 
 .. _here: http://www.numpy.org/devdocs/reference/distutils_guide.html#template-files

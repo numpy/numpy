@@ -297,11 +297,8 @@ in writing setup scripts:
 
 + ``config.get_info(*names)`` ---
 
-Template files
-==============
-
-Conversion of ``.src`` files
-----------------------------
+Conversion of .src files using Templates
+========================================
 
 NumPy distutils supports automatic conversion of source files named
 <somefile>.src. This facility can be used to maintain very similar
@@ -376,6 +373,9 @@ The following predefined named repeat rules are available:
 - <ftypereal=float, double precision, \\0, \\1>
 
 - <ctypereal=float, double, \\0, \\1>
+
+Other files
+-----------
 
 NumPy Distutils preprocesses C source files (extension: :file:`.c.src`) written
 in a custom templating language to generate C code. The :c:data:`@` symbol is
