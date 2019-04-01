@@ -288,13 +288,6 @@ From scratch
     are passed in they must be consistent with the dimensions, the
     itemsize, and the data of the array.
 
-.. c:function:: PyObject* PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
-
-    Create a new uninitialized array of type, *typenum*, whose size in
-    each of *nd* dimensions is given by the integer array, *dims*.
-    This function cannot be used to create a flexible-type array (no
-    itemsize given).
-
 .. c:function:: PyObject* PyArray_SimpleNewFromData( \
         int nd, npy_intp* dims, int typenum, void* data)
 
