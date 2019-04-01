@@ -382,8 +382,8 @@ PyArrayDescr_Type
 
 .. c:member:: PyObject *PyArray_Descr.names
 
-    A table of functions specifiv for each
-    basic data descriptor.
+    An ordered tupple of field names. It is NULL if no field is
+    defined.
 
 .. c:member:: PyArray_ArrFuncs *PyArray_Descr.f
 
@@ -394,13 +394,17 @@ PyArrayDescr_Type
 
 .. c:member:: PyObject *PyArray_Descr.metadata
 
-    Metadata specific to the C implementation
-    of the particular dtype. Added for NumPy 1.7.0.
+    Metadata about this dtype.
 
 .. c:member:: NpyAuxData *PyArray_Descr.c_metadata
 
-    A pointer cached with the hash value. It is -1 if not yet
-    computed. Added for NumPy 2.0.0.
+    Metadata specific to the C implementation
+    of the particular dtype. Added for NumPy 1.7.0.
+
+.. c:member:: Npy_hash_t *PyArray_Descr.hash
+
+    Currently unused. Reserved for future use in caching
+    hash values.
 
 .. c:type:: PyArray_ArrFuncs
 
