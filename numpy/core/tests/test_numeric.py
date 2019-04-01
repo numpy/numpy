@@ -216,6 +216,7 @@ class TestNonarrayArgs(object):
             assert_(np.isnan(np.var([])))
             assert_(w[0].category is RuntimeWarning)
 
+        # Regression test for gh-13177, that object arrays are treated correctly.
         B = np.array([None, 0])
         B[0] = 1j
         assert_almost_equal(np.var(B), 0.25)
