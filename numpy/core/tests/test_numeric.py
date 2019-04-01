@@ -210,16 +210,15 @@ class TestNonarrayArgs(object):
         assert_almost_equal(np.var(A), 2.9166666666666665)
         assert_almost_equal(np.var(A, 0), np.array([2.25, 2.25, 2.25]))
         assert_almost_equal(np.var(A, 1), np.array([0.66666667, 0.66666667]))
+        # gh-13177. Regression test to check if imaginary data in object arrays are treated correctly.
+        B = np.array([None, 0])
+        B[0] = 1j
+        assert_almost_equal(np.var(B), 0.25)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_(np.isnan(np.var([])))
             assert_(w[0].category is RuntimeWarning)
-
-        # Regression test for gh-13177, that object arrays are treated correctly.
-        B = np.array([None, 0])
-        B[0] = 1j
-        assert_almost_equal(np.var(B), 0.25)
 
 class TestIsscalar(object):
     def test_isscalar(self):
