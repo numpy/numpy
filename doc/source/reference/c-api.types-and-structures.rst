@@ -382,7 +382,7 @@ PyArrayDescr_Type
 
 .. c:member:: PyObject *PyArray_Descr.names
 
-    An ordered tupple of field names. It is NULL if no field is
+    An ordered tuple of field names. It is NULL if no field is
     defined.
 
 .. c:member:: PyArray_ArrFuncs *PyArray_Descr.f
