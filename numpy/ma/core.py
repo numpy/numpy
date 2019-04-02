@@ -602,9 +602,8 @@ def filled(a, fill_value=None):
     ----------
     a : MaskedArray or array_like
         An input object.
-    fill_value : {var}, optional
-        Value used to fill in the masked values that can be any shape.
-        Default is None.
+    fill_value : scalar, optional
+        Filling value. Default is None.
 
     Returns
     -------
@@ -2739,9 +2738,8 @@ class MaskedArray(ndarray):
         plain `MaskedArray`. Default is True.
     ndmin : int, optional
         Minimum number of dimensions. Default is 0.
-    fill_value : {var}, optional
-        Value used to fill in the masked values that can be any shape.
-        Default is None.
+    fill_value : scalar, optional
+        Value used to fill in the masked values when necessary.
         If None, a default based on the data-type is used.
     keep_mask : bool, optional
         Whether to combine `mask` with the mask of the input data, if any
@@ -3668,9 +3666,8 @@ class MaskedArray(ndarray):
 
         Parameters
         ----------
-        fill_value : {var}, optional
-            Value used to fill in the masked values that can be any shape.
-            Default is None.
+        fill_value : scalar, optional
+            The value to use for invalid entries (None by default).
             If None, the `fill_value` attribute of the array is used instead.
 
         Returns
@@ -6205,9 +6202,8 @@ class mvoid(MaskedArray):
 
         Parameters
         ----------
-        fill_value : {var}, optional
-            Value used to fill in the masked values that can be any shape.
-            Default is None.
+        fill_value : scalar, optional
+            The value to use for invalid entries (None by default).
             If None, the `fill_value` attribute is used instead.
 
         Returns
