@@ -2607,7 +2607,7 @@ add_newdoc('numpy.core.umath', 'matmul',
 
     >>> a = np.array([[1, 0],
     ...               [0, 1]])
-    >>> b = np.array([[4, 1], 
+    >>> b = np.array([[4, 1],
     ...               [2, 2]])
     >>> np.matmul(a, b)
     array([[4, 1],
