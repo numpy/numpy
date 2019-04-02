@@ -2753,10 +2753,10 @@ class MaskedArray(ndarray):
         plain `MaskedArray`. Default is True.
     ndmin : int, optional
         Minimum number of dimensions. Default is 0.
-    fill_value : {var}, optional
-        Value used to fill in the masked values that can be any shape.
-        Default is None.
-        If None, a default based on the data-type is used.
+    fill_value : scalar or array_like or MaskedArray, optional
+        Value used to fill in the masked values. Default is None.
+        If array_like, the resulting ndarray must be broadcastable
+        over `a`.
     keep_mask : bool, optional
         Whether to combine `mask` with the mask of the input data, if any
         (True), or to use only `mask` for the output (False). Default is True.
