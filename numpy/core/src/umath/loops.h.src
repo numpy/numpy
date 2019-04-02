@@ -320,8 +320,6 @@ C@TYPE@_multiply(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_U
 NPY_NO_EXPORT void
 C@TYPE@_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
-NPY_NO_EXPORT void
-C@TYPE@_floor_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 /**begin repeat1
  * #kind= greater, greater_equal, less, less_equal, equal, not_equal#
