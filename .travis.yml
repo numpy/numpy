@@ -69,6 +69,8 @@ matrix:
       env:
        # for matrix annotation only
        - PPC64_LE=1
+       # use POWER8 OpenBLAS build, not system ATLAS
+       - ATLAS=None
 
 before_install:
   - ./tools/travis-before-install.sh
