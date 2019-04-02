@@ -5,7 +5,7 @@ Building the NumPy API and reference docs
 =========================================
 
 We currently use Sphinx_ for generating the API and reference
-documentation for NumPy.  You will need Sphinx 1.0.1 or newer.
+documentation for NumPy.  You will need Sphinx 1.8.3 or newer.
 
 If you only want to get the documentation, note that pre-built
 versions can be found at
