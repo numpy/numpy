@@ -602,9 +602,11 @@ def filled(a, fill_value=None):
     ----------
     a : MaskedArray or array_like
         An input object.
-    fill_value : {var}, optional
-        Value used to fill in the masked values that can be any shape.
-        Default is None.
+    fill_value : scalar or array_like or MaskedArray, optional
+        Value used to fill in the masked values. Default is None.
+        If array_like, the resulting ndarray must be broadcastable
+        over `a`.
+
 
     Returns
     -------
@@ -624,9 +626,21 @@ def filled(a, fill_value=None):
     array([[999999,      1,      2],
            [999999,      4,      5],
            [     6,      7,      8]])
-
+    >>> x.filled(fill_value=333)
+    array([[333,   1,   2],
+           [333,   4,   5],
+           [  6,   7,   8]])
+    >>> x.filled(fill_value=np.arange(3))
+    array([[0, 1, 2],
+           [0, 4, 5],
+           [6, 7, 8]])
     """
     if hasattr(a, 'filled'):
+        # 2019-04-02, 1.17.0, gh-4363
+        warnings.warn(
+            "Non-scalar arrays for fill values are deprecated. Use "
+            "Arrays with scalar values instead",
+            DeprecationWarning, stacklevel=2)
         return a.filled(fill_value)
     elif isinstance(a, ndarray):
         # Should we check for contiguity ? and a.flags['CONTIGUOUS']:
@@ -3668,10 +3682,10 @@ class MaskedArray(ndarray):
 
         Parameters
         ----------
-        fill_value : {var}, optional
-            Value used to fill in the masked values that can be any shape.
-            Default is None.
-            If None, the `fill_value` attribute of the array is used instead.
+        fill_value : scalar or array_like or MaskedArray, optional
+            Value used to fill in the masked values. Default is None.
+            If array_like, the resulting ndarray must be broadcastable
+            over `a`.
 
         Returns
         -------
@@ -3690,6 +3704,8 @@ class MaskedArray(ndarray):
         >>> x = np.ma.array([1,2,3,4,5], mask=[0,0,1,0,1], fill_value=-999)
         >>> x.filled()
         array([   1,    2, -999,    4, -999])
+        >>> x.filled(fill_value=1000)
+        array([   1,    2, 1000,    4, 1000])
         >>> type(x.filled())
         <class 'numpy.ndarray'>
 
@@ -3709,6 +3725,11 @@ class MaskedArray(ndarray):
         if fill_value is None:
             fill_value = self.fill_value
         else:
+            # 2019-04-02, 1.17.0, gh-4363
+            warnings.warn(
+                "Non-scalar arrays for fill values are deprecated. Use "
+                "Arrays with scalar values instead",
+                DeprecationWarning, stacklevel=2)
             fill_value = _check_fill_value(fill_value, self.dtype)
 
         if self is masked_singleton:
@@ -6205,10 +6226,10 @@ class mvoid(MaskedArray):
 
         Parameters
         ----------
-        fill_value : {var}, optional
-            Value used to fill in the masked values that can be any shape.
-            Default is None.
-            If None, the `fill_value` attribute is used instead.
+        fill_value : scalar or array_like or MaskedArray, optional
+            Value used to fill in the masked values. Default is None.
+            If array_like, the resulting ndarray must be broadcastable
+            over `a`.
 
         Returns
         -------
