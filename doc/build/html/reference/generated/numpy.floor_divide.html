@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <title>numpy.floor_divide &mdash; NumPy v1.16 Manual</title>
+
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" >
+    <link rel="stylesheet" href="../../_static/graphviz.css" type="text/css" >
+
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.16.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    <link rel="author" title="About these documents" href="../../about.html" >
+    <link rel="index" title="Index" href="../../genindex.html" >
+    <link rel="search" title="Search" href="../../search.html" >
+    <link rel="top" title="NumPy v1.16 Manual" href="../../index.html" >
+    <link rel="up" title="Mathematical functions" href="../routines.math.html" >
+    <link rel="next" title="numpy.float_power" href="numpy.float_power.html" >
+    <link rel="prev" title="numpy.true_divide" href="numpy.true_divide.html" >
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+
+    <ul class="nav nav-pills pull-left">
+
+        <li class="active"><a href="../../index.html">NumPy v1.16 Manual</a></li>
+
+
+          <li class="active"><a href="../index.html" >NumPy Reference</a></li>
+          <li class="active"><a href="../routines.html" >Routines</a></li>
+          <li class="active"><a href="../routines.math.html" accesskey="U">Mathematical functions</a></li>
+    </ul>
+
+
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="numpy.float_power.html" title="numpy.float_power"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="numpy.true_divide.html" title="numpy.true_divide"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+
+	    </div>
+	  </div>
+	</div>
+
+
+	<div class="row-fluid">
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="numpy.true_divide.html"
+                        title="previous chapter">numpy.true_divide</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="numpy.float_power.html"
+                        title="next chapter">numpy.float_power</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h4>Quick search</h4>
+    <div>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" style="width: inherit;" name="q" />
+      <input type="submit" value="search" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+          <div class="span9">
+
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+
+  <div class="section" id="numpy-floor-divide">
+<h1>numpy.floor_divide<a class="headerlink" href="#numpy-floor-divide" title="Permalink to this headline">¶</a></h1>
+<dl class="data">
+<dt id="numpy.floor_divide">
+<code class="descclassname">numpy.</code><code class="descname">floor_divide</code><span class="sig-paren">(</span><em>x1</em>, <em>x2</em>, <em>/</em>, <em>out=None</em>, <em>*</em>, <em>where=True</em>, <em>casting='same_kind'</em>, <em>order='K'</em>, <em>dtype=None</em>, <em>subok=True</em><span class="optional">[</span>, <em>signature</em>, <em>extobj</em><span class="optional">]</span><span class="sig-paren">)</span><em class="property"> = &lt;ufunc 'floor_divide'&gt;</em><a class="headerlink" href="#numpy.floor_divide" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the largest integer smaller or equal to the division of the inputs.
+It is equivalent to the Python <code class="docutils literal notranslate"><span class="pre">//</span></code> operator and pairs with the
+Python <code class="docutils literal notranslate"><span class="pre">%</span></code> (<a class="reference internal" href="numpy.remainder.html#numpy.remainder" title="numpy.remainder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remainder</span></code></a>), function so that <code class="docutils literal notranslate"><span class="pre">a</span> <span class="pre">=</span> <span class="pre">a</span> <span class="pre">%</span> <span class="pre">b</span> <span class="pre">+</span> <span class="pre">b</span> <span class="pre">*</span> <span class="pre">(a</span> <span class="pre">//</span> <span class="pre">b)</span></code>
+up to roundoff.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>x1</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">Numerator.</p>
+</dd>
+<dt><strong>x2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">Denominator.</p>
+</dd>
+<dt><strong>out</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, None, or tuple of ndarray and None, optional</span></dt>
+<dd><p class="first last">A location into which the result is stored. If provided, it must have
+a shape that the inputs broadcast to. If not provided or <em class="xref py py-obj">None</em>,
+a freshly-allocated array is returned. A tuple (possible only as a
+keyword argument) must have length equal to the number of outputs.</p>
+</dd>
+<dt><strong>where</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like, optional</span></dt>
+<dd><p class="first last">Values of True indicate to calculate the ufunc at that position, values
+of False indicate to leave the value in the output alone.</p>
+</dd>
+<dt><strong>**kwargs</strong></dt>
+<dd><p class="first last">For other keyword-only arguments, see the
+<a class="reference internal" href="../ufuncs.html#ufuncs-kwargs"><span class="std std-ref">ufunc docs</span></a>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>y</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last">y = floor(<em class="xref py py-obj">x1</em>/<em class="xref py py-obj">x2</em>)
+This is a scalar if both <em class="xref py py-obj">x1</em> and <em class="xref py py-obj">x2</em> are scalars.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="numpy.remainder.html#numpy.remainder" title="numpy.remainder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remainder</span></code></a></dt>
+<dd>Remainder complementary to floor_divide.</dd>
+<dt><a class="reference internal" href="numpy.divmod.html#numpy.divmod" title="numpy.divmod"><code class="xref py py-obj docutils literal notranslate"><span class="pre">divmod</span></code></a></dt>
+<dd>Simultaneous floor division and remainder.</dd>
+<dt><a class="reference internal" href="numpy.divide.html#numpy.divide" title="numpy.divide"><code class="xref py py-obj docutils literal notranslate"><span class="pre">divide</span></code></a></dt>
+<dd>Standard division.</dd>
+<dt><a class="reference internal" href="numpy.floor.html#numpy.floor" title="numpy.floor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">floor</span></code></a></dt>
+<dd>Round a number to the nearest integer toward minus infinity.</dd>
+<dt><a class="reference internal" href="numpy.ceil.html#numpy.ceil" title="numpy.ceil"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ceil</span></code></a></dt>
+<dd>Round a number to the nearest integer toward infinity.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">floor_divide</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">floor_divide</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">],</span> <span class="mf">2.5</span><span class="p">)</span>
+<span class="go">array([ 0.,  0.,  1.,  1.])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2008-2019, The SciPy community.
+      </li>
+      <li>
+      Last updated on Apr 02, 2019.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.8.5.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>
