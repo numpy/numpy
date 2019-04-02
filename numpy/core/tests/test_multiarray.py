@@ -4893,6 +4893,22 @@ class TestFlat(object):
         assert_(e.flags.writebackifcopy is False)
         assert_(f.flags.writebackifcopy is False)
 
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test_refcount(self):
+        # includes regression test for reference count error gh-13165
+        inds = [np.intp(0), np.array([True]*self.a.size), np.array([0]), None]
+        indtype = np.dtype(np.intp)
+        rc_indtype = sys.getrefcount(indtype)
+        for ind in inds:
+            rc_ind = sys.getrefcount(ind)
+            for _ in range(100):
+                try:
+                    self.a.flat[ind]
+                except IndexError:
+                    pass
+            assert_(abs(sys.getrefcount(ind) - rc_ind) < 50)
+            assert_(abs(sys.getrefcount(indtype) - rc_indtype) < 50)
+
 
 class TestResize(object):
     def test_basic(self):
