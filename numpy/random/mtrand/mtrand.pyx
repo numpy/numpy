@@ -866,10 +866,9 @@ cdef class RandomState:
         """
         tomaxint(size=None)
 
-        Random integers between 0 and ``sys.maxint``, inclusive.
-
         Return a sample of uniformly distributed random integers in the interval
-        [0, ``sys.maxint``].
+        [0, ``np.iinfo(np.int).max``]. The np.int type translates to the C long
+        integer type and its precision is platform dependent.
 
         Parameters
         ----------
@@ -891,16 +890,15 @@ cdef class RandomState:
 
         Examples
         --------
-        >>> RS = np.random.mtrand.RandomState() # need a RandomState object
-        >>> RS.tomaxint((2,2,2))
-        array([[[1170048599, 1600360186],
+        >>> rs = np.random.RandomState() # need a RandomState object
+        >>> rs.tomaxint((2,2,2))
+        array([[[1170048599, 1600360186], # random
                 [ 739731006, 1947757578]],
                [[1871712945,  752307660],
                 [1601631370, 1479324245]]])
-        >>> import sys
-        >>> sys.maxint
+        >>> np.iinfo(np.int).max
         2147483647
-        >>> RS.tomaxint((2,2,2)) < sys.maxint
+        >>> rs.tomaxint((2,2,2)) < np.iinfo(np.int).max
         array([[[ True,  True],
                 [ True,  True]],
                [[ True,  True],
@@ -1056,12 +1054,12 @@ cdef class RandomState:
             entries in a.
 
         Returns
-        --------
+        -------
         samples : single item or ndarray
             The generated random samples
 
         Raises
-        -------
+        ------
         ValueError
             If a is an int and less than zero, if a or p are not 1-dimensional,
             if a is an array-like of size 0, if p is not a vector of
@@ -1070,11 +1068,11 @@ cdef class RandomState:
             size
 
         See Also
-        ---------
+        --------
         randint, shuffle, permutation
 
         Examples
-        ---------
+        --------
         Generate a uniform random sample from np.arange(5) of size 3:
 
         >>> np.random.choice(5, 3)
@@ -1421,6 +1419,7 @@ cdef class RandomState:
         >>> 3 + 2.5 * np.random.randn(2, 4)
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
+
         """
         if len(args) == 0:
             return self.standard_normal()
@@ -1436,8 +1435,8 @@ cdef class RandomState:
         Return random integers of type np.int from the "discrete uniform"
         distribution in the closed interval [`low`, `high`].  If `high` is
         None (the default), then results are from [1, `low`]. The np.int
-        type translates to the C long type used by Python 2 for "short"
-        integers and its precision is platform dependent.
+        type translates to the C long integer type and its precision
+        is platform dependent.
 
         This function has been deprecated. Use randint instead.
 
@@ -1708,7 +1707,7 @@ cdef class RandomState:
         .. math:: f(x; a,b) = \\frac{1}{B(\\alpha, \\beta)} x^{\\alpha - 1}
                                                          (1 - x)^{\\beta - 1},
 
-        where the normalisation, B, is the beta function,
+        where the normalization, B, is the beta function,
 
         .. math:: B(\\alpha, \\beta) = \\int_0^1 t^{\\alpha - 1}
                                      (1 - t)^{\\beta - 1} dt.
@@ -2329,7 +2328,7 @@ cdef class RandomState:
 
         Draw samples from a noncentral chi-square distribution.
 
-        The noncentral :math:`\\chi^2` distribution is a generalisation of
+        The noncentral :math:`\\chi^2` distribution is a generalization of
         the :math:`\\chi^2` distribution.
 
         Parameters
@@ -2359,7 +2358,7 @@ cdef class RandomState:
 
         .. math:: P(x;df,nonc) = \\sum^{\\infty}_{i=0}
                                \\frac{e^{-nonc/2}(nonc/2)^{i}}{i!}
-                               \\P_{Y_{df+2i}}(x),
+                               P_{Y_{df+2i}}(x),
 
         where :math:`Y_{q}` is the Chi-square with q degrees of freedom.
 
@@ -2395,6 +2394,7 @@ cdef class RandomState:
         >>> values = plt.hist(np.random.noncentral_chisquare(3, 20, 100000),
         ...                   bins=200, density=True)
         >>> plt.show()
+
         """
         cdef ndarray odf, ononc
         cdef double fdf, fnonc
@@ -2921,7 +2921,7 @@ cdef class RandomState:
         Parameters
         ----------
         a : float or array_like of floats
-            Parameter of the distribution. Should be greater than zero.
+            Parameter of the distribution. Must be non-negative.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3434,7 +3434,7 @@ cdef class RandomState:
         >>> # values, drawn from a normal distribution.
         >>> b = []
         >>> for i in range(1000):
-        ...    a = 10. + np.random.random(100)
+        ...    a = 10. + np.random.standard_normal(100)
         ...    b.append(np.product(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
@@ -4052,7 +4052,7 @@ cdef class RandomState:
         Parameters
         ----------
         a : float or array_like of floats
-            Distribution parameter. Should be greater than 1.
+            Distribution parameter. Must be greater than 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -4590,7 +4590,7 @@ cdef class RandomState:
 
         Draw samples from a multinomial distribution.
 
-        The multinomial distribution is a multivariate generalisation of the
+        The multinomial distribution is a multivariate generalization of the
         binomial distribution.  Take an experiment with one of ``p``
         possible outcomes.  An example of such an experiment is throwing a dice,
         where the outcome can be 1 through 6.  Each sample drawn from the
@@ -4731,7 +4731,6 @@ cdef class RandomState:
 
         Notes
         -----
-
         The Dirichlet distribution is a distribution over vectors
         :math:`x` that fulfil the conditions :math:`x_i>0` and
         :math:`\\sum_{i=1}^k x_i = 1`.
