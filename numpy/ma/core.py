@@ -3450,7 +3450,7 @@ class MaskedArray(ndarray):
         # We could try to force a reshape, but that wouldn't work in some
         # cases.
         return self._mask
-    
+
     @mask.setter
     def mask(self, value):
         self.__setmask__(value)
