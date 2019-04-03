@@ -2369,7 +2369,8 @@ class TestPathUsage(object):
 
             control = np.array([[1, 2], [3, 4]], dtype=int)
             test = np.ndfromtxt(path, dtype=int)
-            assert_array_equal(test, control)
+            with assert_warns(VisibleDeprecationWarning):
+                assert_array_equal(test, control)
 
     def test_mafromtxt(self):
         # From `test_fancy_dtype_alt` above
@@ -2380,7 +2381,8 @@ class TestPathUsage(object):
 
             test = np.mafromtxt(path, delimiter=',')
             control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
-            assert_equal(test, control)
+            with assert_warns(VisibleDeprecationWarning):
+                assert_equal(test, control)
 
     def test_recfromtxt(self):
         with temppath(suffix='.txt') as path:

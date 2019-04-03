@@ -1098,6 +1098,9 @@ def safe_eval(source):
     Evaluate a string containing a Python literal expression without
     allowing the execution of arbitrary non-literal code.
 
+    .. deprecate:: 1.17
+        safe_eval is deprecated
+
     Parameters
     ----------
     source : str
@@ -1137,6 +1140,9 @@ def safe_eval(source):
     # Local import to speed up numpy's import time.
     import ast
 
+    # Numpy 1.17
+    warnings.warn("SafeEval is deprecated in 1.17",
+                      DeprecationWarning, stacklevel=2)
     return ast.literal_eval(source)
 
 
