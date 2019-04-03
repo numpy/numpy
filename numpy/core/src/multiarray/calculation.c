@@ -903,6 +903,9 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     char *max_data, *min_data;
     PyObject *zero;
 
+    if (PyArray_FailUnlessWriteable(self, "output array") < 0) {
+        return NULL;
+    }
     /* Treat None the same as NULL */
     if (min == Py_None) {
         min = NULL;
