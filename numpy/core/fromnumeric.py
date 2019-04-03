@@ -1950,7 +1950,7 @@ def _clip_dispatcher(a, a_min, a_max, out=None):
 
 
 @array_function_dispatch(_clip_dispatcher)
-def clip(a, a_min, a_max, out=None):
+def clip(a, a_min=None, a_max=None, out=None):
     """
     Clip (limit) the values in an array.
 
