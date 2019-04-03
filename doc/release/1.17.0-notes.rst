@@ -200,7 +200,7 @@ approach.
 New keywords added to ``np.nan_to_num``
 ---------------------------------------
 ``np.nan_to_num`` now accepts keywords ``nan``, ``posinf`` and ``neginf`` allowing the
-user to define the value to replace the ``nan``s, positive and negative ``np.inf``s 
+user to define the value to replace the ``nan``, positive and negative ``np.inf`` values 
 respectively.
 
 
