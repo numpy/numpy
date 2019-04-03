@@ -51,13 +51,6 @@ Deprecation warning
 
    deprecate
 
-Display message
----------------
-.. autosummary::
-   :toctree: generated/
-
-   disp
-
 Details of used variables
 -------------------------
 .. autosummary::
