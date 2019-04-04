@@ -111,8 +111,10 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
     Raises
     ------
     ValueError
-        If len(shape) different from prototype.ndim and order is 'K', or
-        prototype is not a C/F-layout array
+        If `order` is 'K' and any of the following is true
+
+            - ``len(shape) != a.ndim``,
+            - `a` is neither C nor F contiguous.
 
     See Also
     --------
