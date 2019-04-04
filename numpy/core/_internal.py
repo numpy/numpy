@@ -486,7 +486,27 @@ def _view_is_safe(oldtype, newtype):
     """
 
     # if the types are equivalent, there is no problem.
+    # compare irrespective of name fields
     # for example: dtype((np.record, 'i4,i4')) == dtype((np.void, 'i4,i4'))
+    def _recursive_remove_name_fields(ndtype):
+        newdtype = []
+        if ndtype.names:
+            for name in ndtype.names:
+                current = ndtype[name]
+                if current.names:
+                    newdtype.append(
+                        ('', _recursive_remove_name_fields(current))
+                    )
+                else:
+                    newdtype.append(('', current))
+        else:
+            return ndtype.type
+        return newdtype
+
+    if oldtype.names or oldtype.names:
+        oldtype = dtype(_recursive_remove_name_fields(oldtype))
+        newtype = dtype(_recursive_remove_name_fields(newtype))
+
     if oldtype == newtype:
         return
 
