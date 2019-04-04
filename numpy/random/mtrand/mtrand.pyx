@@ -3779,8 +3779,8 @@ cdef class RandomState:
         product p*n <=5, where p = population proportion estimate, and n =
         number of samples, in which case the binomial distribution is used
         instead. For example, a sample of 15 people shows 4 who are left
-        handed, and 11 who are right handed. Then p = 4/15 = 27%. 0.27*15 = 4,
-        so the binomial distribution should be used in this case.
+        handed, and 11 who are right handed. Then p = 4/15 = 27%. Since 
+        0.27*15 = 4, the binomial distribution should be used in this case.
 
         References
         ----------
