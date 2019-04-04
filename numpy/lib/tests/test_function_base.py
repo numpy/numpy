@@ -260,6 +260,10 @@ class TestCopy(object):
         assert_equal(a[0, 0], 1)
         assert_equal(a_copy[0, 0], 10)
 
+        # testing independent of dtypes
+        assert a.dtype == a_copy.dtype
+        assert a.dtype is not a_copy.dtype
+
     def test_order(self):
         # It turns out that people rely on np.copy() preserving order by
         # default; changing this broke scikit-learn:

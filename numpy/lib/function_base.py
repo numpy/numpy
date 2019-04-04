@@ -766,9 +766,11 @@ def copy(a, order='K'):
 
     Notes
     -----
-    This is equivalent to:
+    This is NOT equivalent to:
 
     >>> np.array(a, copy=True)  #doctest: +SKIP
+
+    since the numpy.copy function will also create an independent dtype instance.
 
     Examples
     --------
@@ -786,8 +788,20 @@ def copy(a, order='K'):
     >>> x[0] == z[0]
     False
 
+    and the types are independant when using numpy.copy
+    >>> x.dtype is y.dtype
+    True
+    >>> x.dtype is z.dtype
+    False
+    >>> x.dtype == z.dtype
+    True
+
     """
-    return array(a, order=order, copy=True)
+    import copy as cp
+    copied_type = cp.copy(a.dtype)
+    copied_a = array(a, order=order, copy=True)
+    copied_a.dtype = copied_type
+    return copied_a
 
 # Basic operations
 
