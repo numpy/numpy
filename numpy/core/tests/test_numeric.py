@@ -1784,6 +1784,14 @@ class TestClip(object):
         assert_equal(d.clip(min=-2, max=np.nan), d)
         assert_equal(d.clip(min=np.nan, max=10), d)
 
+    def test_clip_writeable(self):
+        with assert_raises(ValueError):
+            a = self._generate_data(self.nr, self.nc)
+            a.flags.writeable = False
+            m = 1
+            M = 2
+            self.clip(a, m, M, a)
+
 
 class TestAllclose(object):
     rtol = 1e-5
