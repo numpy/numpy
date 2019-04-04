@@ -361,10 +361,9 @@ static void *cross1d_data[] = { (void *)NULL, (void *)NULL };
 static char cross1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction euclidean_pdist_functions[] =
                             { FLOAT_euclidean_pdist, DOUBLE_euclidean_pdist };
-static void *eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
+static void *euclidean_pdist_data[] = { (void *)NULL, (void *)NULL };
 static char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
                                              NPY_DOUBLE, NPY_DOUBLE };
-
 static PyUFuncGenericFunction cumsum_functions[] = { LONG_cumsum, DOUBLE_cumsum };
 static void *cumsum_data[] = { (void *)NULL, (void *)NULL };
 static char cumsum_signatures[] = { NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE };
@@ -421,7 +420,7 @@ addUfuncs(PyObject *dictionary) {
     PyDict_SetItemString(dictionary, "matmul", f);
     Py_DECREF(f);
     f = PyUFunc_FromFuncAndDataAndSignature(euclidean_pdist_functions,
-                    eucldiean_pdist_data, euclidean_pdist_signatures,
+                    euclidean_pdist_data, euclidean_pdist_signatures,
                     2, 1, 1, PyUFunc_None, "euclidean_pdist",
                     "pairwise euclidean distance on last two dimensions \n"
                     "     \"(n,d)->(p)\" \n",

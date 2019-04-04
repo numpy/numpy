@@ -166,6 +166,8 @@ numpy/core/src/umath/simd.inc
 numpy/core/src/umath/struct_ufunc_test.c
 numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
+numpy/core/src/umath/clip.[ch]
+numpy/core/src/umath/_var_helper.[ch]
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
 doc/source/**/generated/

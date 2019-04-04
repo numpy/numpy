@@ -16,7 +16,7 @@ import numpy as np
 from numpy.core._multiarray_umath import *
 from numpy.core._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity
+    _ARRAY_API, _monotonicity, _var_helper
     )
 
 __all__ = [
