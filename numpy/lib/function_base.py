@@ -1726,7 +1726,9 @@ def place(arr, mask, vals):
 def disp(mesg, device=None, linefeed=True):
     """
     Display a message on a device.
-
+    
+    ..deprecated:: 1.17.0
+ 
     Parameters
     ----------
     mesg : str
@@ -1755,6 +1757,10 @@ def disp(mesg, device=None, linefeed=True):
     '"Display" in a file\\n'
 
     """
+    # NumPy 1.17.0, 2019-04-04
+    warnings.warn(
+        "numpy.lib.function_base.disp is deprecated",
+        DeprecationWarning, stacklevel=2)
     if device is None:
         device = sys.stdout
     if linefeed:
