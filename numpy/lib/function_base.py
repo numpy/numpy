@@ -1727,7 +1727,8 @@ def disp(mesg, device=None, linefeed=True):
     """
     Display a message on a device.
     
-    ..deprecated:: 1.17.0
+    .. deprecated:: 1.17.0
+       disp() is deprecated, use print() instead
  
     Parameters
     ----------
@@ -1757,9 +1758,10 @@ def disp(mesg, device=None, linefeed=True):
     '"Display" in a file\\n'
 
     """
-    # NumPy 1.17.0, 2019-04-04
+    # NumPy 1.17.0, 2019-04-04, gh-13214
     warnings.warn(
-        "numpy.lib.function_base.disp is deprecated",
+        "numpy.lib.function_base.disp is deprecated,"
+        "use print instead.",
         DeprecationWarning, stacklevel=2)
     if device is None:
         device = sys.stdout
