@@ -69,26 +69,34 @@ static int AVX_and_10_9 = 0;
 /* Dynamic check for AVX support
  * __builtin_cpu_supports("avx") is available in gcc 4.8,
  * but clang and icc do not currently support it. */
-static inline int cpu_supports_avx() {
+static inline int 
+cpu_supports_avx() 
+{
     int enabled, r;
     size_t length = sizeof(enabled);
     r = sysctlbyname("hw.optional.avx1_0", &enabled, &length, NULL, 0);
-    if ( r == 0 && enabled != 0) 
+    if ( r == 0 && enabled != 0) {
         return 1;
-    else
+    }
+    else {
         return 0;
+    }
 }
 	
 /* Check if we are using MacOS X version 10.9 */
-static inline int using_mavericks() {
+static inline int 
+using_mavericks() 
+{
     int r;
     char str[32] = {0};
     size_t size = sizeof(str);
     r = sysctlbyname("kern.osproductversion", str, &size, NULL, 0);
-    if ( r == 0 && strncmp(str, "10.9", strlen("10.9")) == 0)
+    if ( r == 0 && strncmp(str, "10.9", strlen("10.9")) == 0) {
         return 1;
-    else
+    }
+    else {
         return 0;
+    }
 }
 
 __attribute__((destructor))
