@@ -216,6 +216,9 @@ class TestNonarrayArgs(object):
             assert_(np.isnan(np.var([])))
             assert_(w[0].category is RuntimeWarning)
 
+        B = np.array([None, 0])
+        B[0] = 1j
+        assert_almost_equal(np.var(B), 0.25)
 
 class TestIsscalar(object):
     def test_isscalar(self):

@@ -64,6 +64,8 @@
 #define IS_UNARY_CONT(tin, tout) (steps[0] == sizeof(tin) && \
                                   steps[1] == sizeof(tout))
 
+#define IS_OUTPUT_CONT(tout) (steps[1] == sizeof(tout))
+
 #define IS_BINARY_REDUCE ((args[0] == args[2])\
         && (steps[0] == steps[2])\
         && (steps[0] == 0))
@@ -72,50 +74,52 @@
 #define IS_BINARY_CONT(tin, tout) (steps[0] == sizeof(tin) && \
                                    steps[1] == sizeof(tin) && \
                                    steps[2] == sizeof(tout))
+
 /* binary loop input and output contiguous with first scalar */
 #define IS_BINARY_CONT_S1(tin, tout) (steps[0] == 0 && \
                                    steps[1] == sizeof(tin) && \
                                    steps[2] == sizeof(tout))
+
 /* binary loop input and output contiguous with second scalar */
 #define IS_BINARY_CONT_S2(tin, tout) (steps[0] == sizeof(tin) && \
                                    steps[1] == 0 && \
                                    steps[2] == sizeof(tout))
 
-
 /*
  * loop with contiguous specialization
  * op should be the code working on `tin in` and
- * storing the result in `tout * out`
+ * storing the result in `tout *out`
  * combine with NPY_GCC_OPT_3 to allow autovectorization
  * should only be used where its worthwhile to avoid code bloat
  */
 #define BASE_UNARY_LOOP(tin, tout, op) \
     UNARY_LOOP { \
         const tin in = *(tin *)ip1; \
-        tout * out = (tout *)op1; \
+        tout *out = (tout *)op1; \
         op; \
     }
-#define UNARY_LOOP_FAST(tin, tout, op) \
+
+#define UNARY_LOOP_FAST(tin, tout, op)          \
     do { \
-    /* condition allows compiler to optimize the generic macro */ \
-    if (IS_UNARY_CONT(tin, tout)) { \
-        if (args[0] == args[1]) { \
-            BASE_UNARY_LOOP(tin, tout, op) \
+        /* condition allows compiler to optimize the generic macro */ \
+        if (IS_UNARY_CONT(tin, tout)) { \
+            if (args[0] == args[1]) { \
+                BASE_UNARY_LOOP(tin, tout, op) \
+            } \
+            else { \
+                BASE_UNARY_LOOP(tin, tout, op) \
+            } \
         } \
         else { \
             BASE_UNARY_LOOP(tin, tout, op) \
         } \
-    } \
-    else { \
-        BASE_UNARY_LOOP(tin, tout, op) \
-    } \
     } \
     while (0)
 
 /*
  * loop with contiguous specialization
  * op should be the code working on `tin in1`, `tin in2` and
- * storing the result in `tout * out`
+ * storing the result in `tout *out`
  * combine with NPY_GCC_OPT_3 to allow autovectorization
  * should only be used where its worthwhile to avoid code bloat
  */
@@ -123,9 +127,10 @@
     BINARY_LOOP { \
         const tin in1 = *(tin *)ip1; \
         const tin in2 = *(tin *)ip2; \
-        tout * out = (tout *)op1; \
+        tout *out = (tout *)op1; \
         op; \
     }
+
 /*
  * unfortunately gcc 6/7 regressed and we need to give it additional hints to
  * vectorize inplace operations (PR80198)
@@ -146,59 +151,62 @@
     for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1) { \
         const tin in1 = *(tin *)ip1; \
         const tin in2 = *(tin *)ip2; \
-        tout * out = (tout *)op1; \
+        tout *out = (tout *)op1; \
         op; \
     }
+
 #define BASE_BINARY_LOOP_S(tin, tout, cin, cinp, vin, vinp, op) \
     const tin cin = *(tin *)cinp; \
     BINARY_LOOP { \
         const tin vin = *(tin *)vinp; \
-        tout * out = (tout *)op1; \
+        tout *out = (tout *)op1; \
         op; \
     }
+
 /* PR80198 again, scalar works without the pragma */
 #define BASE_BINARY_LOOP_S_INP(tin, tout, cin, cinp, vin, vinp, op) \
     const tin cin = *(tin *)cinp; \
     BINARY_LOOP { \
         const tin vin = *(tin *)vinp; \
-        tout * out = (tout *)vinp; \
+        tout *out = (tout *)vinp; \
         op; \
     }
-#define BINARY_LOOP_FAST(tin, tout, op) \
+
+#define BINARY_LOOP_FAST(tin, tout, op)         \
     do { \
-    /* condition allows compiler to optimize the generic macro */ \
-    if (IS_BINARY_CONT(tin, tout)) { \
-        if (abs_ptrdiff(args[2], args[0]) == 0 && \
-                abs_ptrdiff(args[2], args[1]) >= NPY_MAX_SIMD_SIZE) { \
-            BASE_BINARY_LOOP_INP(tin, tout, op) \
+        /* condition allows compiler to optimize the generic macro */ \
+        if (IS_BINARY_CONT(tin, tout)) { \
+            if (abs_ptrdiff(args[2], args[0]) == 0 && \
+                    abs_ptrdiff(args[2], args[1]) >= NPY_MAX_SIMD_SIZE) { \
+                BASE_BINARY_LOOP_INP(tin, tout, op) \
+            } \
+            else if (abs_ptrdiff(args[2], args[1]) == 0 && \
+                         abs_ptrdiff(args[2], args[0]) >= NPY_MAX_SIMD_SIZE) { \
+                BASE_BINARY_LOOP_INP(tin, tout, op) \
+            } \
+            else { \
+                BASE_BINARY_LOOP(tin, tout, op) \
+            } \
         } \
-        else if (abs_ptrdiff(args[2], args[1]) == 0 && \
-                     abs_ptrdiff(args[2], args[0]) >= NPY_MAX_SIMD_SIZE) { \
-            BASE_BINARY_LOOP_INP(tin, tout, op) \
+        else if (IS_BINARY_CONT_S1(tin, tout)) { \
+            if (abs_ptrdiff(args[2], args[1]) == 0) { \
+                BASE_BINARY_LOOP_S_INP(tin, tout, in1, args[0], in2, ip2, op) \
+            } \
+            else { \
+                BASE_BINARY_LOOP_S(tin, tout, in1, args[0], in2, ip2, op) \
+            } \
+        } \
+        else if (IS_BINARY_CONT_S2(tin, tout)) { \
+            if (abs_ptrdiff(args[2], args[0]) == 0) { \
+                BASE_BINARY_LOOP_S_INP(tin, tout, in2, args[1], in1, ip1, op) \
+            } \
+            else { \
+                BASE_BINARY_LOOP_S(tin, tout, in2, args[1], in1, ip1, op) \
+            }\
         } \
         else { \
             BASE_BINARY_LOOP(tin, tout, op) \
         } \
-    } \
-    else if (IS_BINARY_CONT_S1(tin, tout)) { \
-        if (abs_ptrdiff(args[2], args[1]) == 0) { \
-            BASE_BINARY_LOOP_S_INP(tin, tout, in1, args[0], in2, ip2, op) \
-        } \
-        else { \
-            BASE_BINARY_LOOP_S(tin, tout, in1, args[0], in2, ip2, op) \
-        } \
-    } \
-    else if (IS_BINARY_CONT_S2(tin, tout)) { \
-        if (abs_ptrdiff(args[2], args[0]) == 0) { \
-            BASE_BINARY_LOOP_S_INP(tin, tout, in2, args[1], in1, ip1, op) \
-        } \
-        else { \
-            BASE_BINARY_LOOP_S(tin, tout, in2, args[1], in1, ip1, op) \
-        }\
-    } \
-    else { \
-        BASE_BINARY_LOOP(tin, tout, op) \
-    } \
     } \
     while (0)
 

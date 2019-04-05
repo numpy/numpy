@@ -28,9 +28,11 @@ jobs:
            F77=gfortran-5 F90=gfortran-5 \
            CFLAGS='-UNDEBUG -std=c99' python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
+    continueOnError: true
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
+      failTaskOnFailedTests: true
       testRunTitle: 'Publish test results for Python 3.6-32 bit full Linux'
 - job: macOS
   pool:
@@ -81,7 +83,7 @@ jobs:
     displayName: 'install pre-built openblas'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
-  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx>=1.8.3 numpydoc matplotlib
+  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx==1.8.5 numpydoc matplotlib
     displayName: 'Install dependencies; some are optional to avoid test skips'
   - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
     displayName: 'Check for unreachable code paths in Python modules'
@@ -99,9 +101,11 @@ jobs:
     displayName: 'Run Refuide Check'
   - script: python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
+    continueOnError: true
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
+      failTaskOnFailedTests: true
       testRunTitle: 'Publish test results for Python 3.6 64-bit full Mac OS'
 - job: Windows
   pool:
@@ -200,7 +204,9 @@ jobs:
     displayName: 'For gh-12667; Windows DLL resolution'
   - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run NumPy Test Suite'
+    continueOnError: true
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
+      failTaskOnFailedTests: true
       testRunTitle: 'Publish test results for Python $(PYTHON_VERSION) $(BITS)-bit $(TEST_MODE) Windows'
