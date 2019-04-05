@@ -9,6 +9,7 @@ import itertools
 import traceback
 import textwrap
 import subprocess
+import platform
 import pytest
 
 import numpy as np
@@ -813,7 +814,10 @@ class PinvCases(LinalgSquareTestCase,
 
 
 class TestPinv(PinvCases):
-    pass
+    mark = pytest.mark.skipif((platform.system() == "Linux" and
+                               sys.maxsize < 2**32),
+                               reason="see NumPy gh-12862")
+    PinvCases.test_generalized_sq_cases.pytestmark = mark
 
 
 class PinvHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
