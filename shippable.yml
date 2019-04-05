@@ -22,7 +22,15 @@ runtime:
 build:
     ci:
     # install dependencies
-    - sudo apt-get install gcc gfortran libblas-dev liblapack-dev
+    - sudo apt-get install gcc gfortran
+    # ARMv8 OpenBLAS built using script available here:
+    # https://github.com/tylerjereddy/openblas-static-gcc/tree/master/ARMv8
+    # build done on GCC compile farm machine named gcc115
+    # tarball uploaded manually to an unshared Dropbox location
+    - wget -O openblas-v0.3.5-armv8.tar.gz https://www.dropbox.com/s/pbqkxzlmih4cky1/openblas-v0.3.5-armv8.tar.gz?dl=0
+    - tar zxvf openblas-v0.3.5-armv8.tar.gz
+    - sudo cp -r ./64/lib/* /usr/lib
+    - sudo cp ./64/include/* /usr/include
     # add pathlib for Python 2, otherwise many tests are skipped
     - pip install --upgrade pip
     # we will pay the ~13 minute cost of compiling Cython only when a new
