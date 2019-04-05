@@ -8,9 +8,7 @@ def configuration(parent_package='',top_path=None):
     config.add_data_dir('tests')
 
     # Configure pocketfft_internal
-    config.add_extension('pocketfft_internal',
-                         sources=['pocketfft.c']
-                         )
+    config.add_extension('pocketfft_internal', sources=['pocketfft.c'])
 
     return config
 
