@@ -135,7 +135,7 @@ format_def(char *buf, Py_ssize_t size, FortranDataDef def)
 
     if (def.data == NULL) {
         static const char notalloc[] = ", not allocated";
-        if (size < sizeof(notalloc)) {
+        if ((size_t) size < sizeof(notalloc)) {
             return -1;
         }
         memcpy(p, notalloc, sizeof(notalloc));
