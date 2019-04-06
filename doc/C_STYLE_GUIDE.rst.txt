@@ -129,14 +129,14 @@ Code lay-out
         }
 
 
-* The return statement should *not* get redundant parenthesis::
+* The return statement should *not* get redundant parentheses::
 
         return Py_None; /* correct */
         return(Py_None); /* incorrect */
 
 * Function and macro call style: ``foo(a, b, c)``, no space before
   the open paren, no spaces inside the parens, no spaces before
-  the commas, one space after each comma.
+  commas, one space after each comma.
 
 * Always put spaces around the assignment, Boolean and comparison
   operators.  In expressions using a lot of operators, add spaces
@@ -166,7 +166,7 @@ Code lay-out
   Note that the terms in the multi-line Boolean expression are indented so
   as to make the beginning of the code block clearly visible.
 
-* Put blank lines around functions, structure definitions and
+* Put blank lines around functions, structure definitions, and
   major sections inside functions.
 
 * Comments go before the code they describe. Multi-line comments should
@@ -196,7 +196,7 @@ Naming conventions
 ------------------
 
 * There has been no consistent prefix for NumPy public functions, but
-  they all begin with a prefix of some sort, followed by an underscore and
+  they all begin with a prefix of some sort, followed by an underscore, and
   are in camel case: ``PyArray_DescrAlignConverter``, ``NpyIter_GetIterNext``.
   In the future the names should be of the form ``Npy*_PublicFunction``,
   where the star is something appropriate.
