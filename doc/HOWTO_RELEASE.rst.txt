@@ -6,7 +6,7 @@ Current build and release info
 
 The current info on building and releasing NumPy and SciPy is scattered in
 several places. It should be summarized in one place, updated, and where
-necessary, should be described in more detail. The sections below list all places where
+necessary described in more detail. The sections below list all places where
 useful info can be found.
 
 Source tree
