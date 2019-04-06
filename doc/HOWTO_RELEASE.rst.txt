@@ -38,7 +38,7 @@ Supported platforms and versions
 
 Python 2.7 and >=3.4 are the currently supported versions when building from
 source.  We test NumPy against all these versions every time we merge code to
-trunk.  Binary installers may be available for a subset of these versions (see
+master.  Binary installers may be available for a subset of these versions (see
 below).
 
 OS X
@@ -182,7 +182,7 @@ After a date is set, create a new maintenance/x.y.z branch, add new empty
 release notes for the next version in the master branch and update the Trac
 Milestones.
 
-Make sure current trunk builds a package correctly
+Make sure current branch builds a package correctly
 --------------------------------------------------
 ::
 
@@ -271,7 +271,7 @@ Mention at least the following:
   - outlook for the near future
 
 Also make sure that as soon as the branch is made, there is a new release
-notes file in the trunk for the next release.
+notes file in the master branch for the next release.
 
 Update the release status and create a release "tag"
 ----------------------------------------------------
@@ -497,5 +497,5 @@ After the final release is announced, a few administrative tasks are left to be
 done:
 
   - Forward port changes in the release branch to release notes and release
-    scripts, if any, to trunk.
+    scripts, if any, to master branch.
   - Update the Milestones in Trac.
