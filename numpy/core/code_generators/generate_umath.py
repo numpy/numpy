@@ -845,7 +845,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
           'PyUFunc_IsFiniteTypeResolver',
-          TD(nodatetime_or_obj + times, out='?'),
+          TD(noobj, out='?'),
           ),
 'signbit':
     Ufunc(1, 1, None,
