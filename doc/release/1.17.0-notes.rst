@@ -212,6 +212,10 @@ New keywords added to ``np.nan_to_num``
 user to define the value to replace the ``nan``, positive and negative ``np.inf`` values 
 respectively.
 
+``np.isfinite`` ufunc supports ``datetime64`` and ``timedelta64`` types
+-----------------------------------------------------------------------
+Previously, `np.isfinite` used to raise a ``TypeError`` on being used on these
+two types.
 
 Changes
 =======
