@@ -1475,7 +1475,8 @@ def lagroots(c):
     if len(c) == 2:
         return np.array([1 + c[0]/c[1]])
 
-    m = lagcompanion(c)
+    # rotated companion matrix reduces error
+    m = lagcompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r

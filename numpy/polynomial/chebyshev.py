@@ -1743,7 +1743,8 @@ def chebroots(c):
     if len(c) == 2:
         return np.array([-c[0]/c[1]])
 
-    m = chebcompanion(c)
+    # rotated companion matrix reduces error
+    m = chebcompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r
