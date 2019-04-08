@@ -53,8 +53,7 @@ class TestBinomial(object):
         # This test addresses issue #3480.
         zeros = np.zeros(2, dtype='int')
         for p in [0, .5, 1]:
-            val = random.binomial(0, p)
-            assert val == 0
+            assert_(random.binomial(0, p) == 0)
             assert_array_equal(random.binomial(zeros, p), zeros)
 
     def test_p_is_nan(self):
@@ -96,40 +95,40 @@ class TestMultinomial(object):
 class TestSetState(object):
     def setup(self):
         self.seed = 1234567890
-        self.brng = RandomGenerator(MT19937(self.seed))
-        self.state = self.brng.state
+        self.rg = RandomGenerator(MT19937(self.seed))
+        self.state = self.rg.state
         self.legacy_state = (self.state['brng'],
                              self.state['state']['key'],
                              self.state['state']['pos'])
 
     def test_basic(self):
-        old = self.brng.tomaxint(16)
-        self.brng.state = self.state
-        new = self.brng.tomaxint(16)
+        old = self.rg.tomaxint(16)
+        self.rg.state = self.state
+        new = self.rg.tomaxint(16)
         assert_(np.all(old == new))
 
     def test_gaussian_reset(self):
         # Make sure the cached every-other-Gaussian is reset.
-        old = self.brng.standard_normal(size=3)
-        self.brng.state = self.state
-        new = self.brng.standard_normal(size=3)
+        old = self.rg.standard_normal(size=3)
+        self.rg.state = self.state
+        new = self.rg.standard_normal(size=3)
         assert_(np.all(old == new))
 
     def test_gaussian_reset_in_media_res(self):
         # When the state is saved with a cached Gaussian, make sure the
         # cached Gaussian is restored.
 
-        self.brng.standard_normal()
-        state = self.brng.state
-        old = self.brng.standard_normal(size=3)
-        self.brng.state = state
-        new = self.brng.standard_normal(size=3)
+        self.rg.standard_normal()
+        state = self.rg.state
+        old = self.rg.standard_normal(size=3)
+        self.rg.state = state
+        new = self.rg.standard_normal(size=3)
         assert_(np.all(old == new))
 
     def test_negative_binomial(self):
         # Ensure that the negative binomial results take floating point
         # arguments without truncation.
-        self.brng.negative_binomial(0.5, 0.5)
+        self.rg.negative_binomial(0.5, 0.5)
 
 
 class TestRandint(object):
@@ -554,8 +553,7 @@ class TestRandomDist(object):
 
     def test_choice_nonuniform_noreplace(self):
         random.seed(self.seed)
-        actual = random.choice(4, 3, replace=False,
-                               p=[0.1, 0.3, 0.5, 0.1])
+        actual = random.choice(4, 3, replace=False, p=[0.1, 0.3, 0.5, 0.1])
         desired = np.array([2, 3, 1])
         assert_array_equal(actual, desired)
 
@@ -614,11 +612,11 @@ class TestRandomDist(object):
         # Check multi dimensional array
         s = (2, 3)
         p = [0.1, 0.1, 0.1, 0.1, 0.4, 0.2]
-        assert_(random.choice(6, s, replace=True).shape, s)
-        assert_(random.choice(6, s, replace=False).shape, s)
-        assert_(random.choice(6, s, replace=True, p=p).shape, s)
-        assert_(random.choice(6, s, replace=False, p=p).shape, s)
-        assert_(random.choice(np.arange(6), s, replace=True).shape, s)
+        assert_equal(random.choice(6, s, replace=True).shape, s)
+        assert_equal(random.choice(6, s, replace=False).shape, s)
+        assert_equal(random.choice(6, s, replace=True, p=p).shape, s)
+        assert_equal(random.choice(6, s, replace=False, p=p).shape, s)
+        assert_equal(random.choice(np.arange(6), s, replace=True).shape, s)
 
         # Check zero-size
         assert_equal(random.randint(0, 0, size=(3, 0, 4)).shape, (3, 0, 4))
@@ -711,6 +709,11 @@ class TestRandomDist(object):
                             [46, 45]])
         assert_array_equal(actual, desired)
 
+        random.seed(self.seed)
+        actual = random.binomial(100.123, .456)
+        desired = 37
+        assert_array_equal(actual, desired)
+
     def test_chisquare(self):
         random.seed(self.seed)
         actual = random.chisquare(50, size=(3, 2))
@@ -795,6 +798,16 @@ class TestRandomDist(object):
                             [5, 12]])
         assert_array_equal(actual, desired)
 
+    def test_geometric_exceptions(self):
+        assert_raises(ValueError, random.geometric, 1.1)
+        assert_raises(ValueError, random.geometric, [1.1] * 10)
+        assert_raises(ValueError, random.geometric, -0.1)
+        assert_raises(ValueError, random.geometric, [-0.1] * 10)
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            assert_raises(ValueError, random.geometric, np.nan)
+            assert_raises(ValueError, random.geometric, [np.nan] * 10)
+
     def test_gumbel(self):
         random.seed(self.seed)
         actual = random.gumbel(loc=.123456789, scale=2.0, size=(3, 2))
@@ -873,6 +886,12 @@ class TestRandomDist(object):
                             [3, 6]])
         assert_array_equal(actual, desired)
 
+    def test_logseries_exceptions(self):
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            assert_raises(ValueError, random.logseries, np.nan)
+            assert_raises(ValueError, random.logseries, [np.nan] * 10)
+
     def test_multinomial(self):
         random.seed(self.seed)
         actual = random.multinomial(20, [1 / 6.] * 6, size=(3, 2))
@@ -943,6 +962,13 @@ class TestRandomDist(object):
                             [723, 751]])
         assert_array_equal(actual, desired)
 
+    def test_negative_binomial_exceptions(self):
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            assert_raises(ValueError, random.negative_binomial, 100, np.nan)
+            assert_raises(ValueError, random.negative_binomial, 100,
+                          [np.nan] * 10)
+
     def test_noncentral_chisquare(self):
         random.seed(self.seed)
         actual = random.noncentral_chisquare(df=5, nonc=5, size=(3, 2))
@@ -973,6 +999,11 @@ class TestRandomDist(object):
                             [1.16362730891403, 2.54104276581491]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
+    def test_noncentral_f_nan(self):
+        random.seed(self.seed)
+        actual = random.noncentral_f(dfnum=5, dfden=2, nonc=np.nan)
+        assert np.isnan(actual)
+
     def test_normal(self):
         random.seed(self.seed)
         actual = random.normal(loc=.123456789, scale=2.0, size=(3, 2))
@@ -993,7 +1024,7 @@ class TestRandomDist(object):
                             [1.1281132447159091e+01, 3.1895968171107006e+08]])
         # For some reason on 32-bit x86 Ubuntu 12.10 the [1, 0] entry in this
         # matrix differs by 24 nulps. Discussion:
-        #   http://mail.scipy.org/pipermail/numpy-discussion/2012-September/063801.html
+        #   https://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
         # Consensus is that this is probably some gcc quirk that affects
         # rounding but not in any important way, so we just use a looser
         # tolerance on this test:
@@ -1014,6 +1045,10 @@ class TestRandomDist(object):
         assert_raises(ValueError, random.poisson, [lamneg] * 10)
         assert_raises(ValueError, random.poisson, lambig)
         assert_raises(ValueError, random.poisson, [lambig] * 10)
+        with suppress_warnings() as sup:
+            sup.record(RuntimeWarning)
+            assert_raises(ValueError, random.poisson, np.nan)
+            assert_raises(ValueError, random.poisson, [np.nan] * 10)
 
     def test_power(self):
         random.seed(self.seed)
@@ -1168,8 +1203,8 @@ class TestRandomDist(object):
                 raise TypeError
 
         throwing_float = np.array(1.0).view(ThrowingFloat)
-        assert_raises(TypeError, random.uniform,
-                      throwing_float, throwing_float)
+        assert_raises(TypeError, random.uniform, throwing_float,
+                      throwing_float)
 
         class ThrowingInteger(np.ndarray):
             def __int__(self):
@@ -1189,8 +1224,13 @@ class TestRandomDist(object):
     def test_vonmises_small(self):
         # check infinite loop, gh-4720
         random.seed(self.seed)
-        r = random.vonmises(mu=0., kappa=1.1e-8, size=10 ** 6)
+        r = random.vonmises(mu=0., kappa=1.1e-8, size=10**6)
         assert_(np.isfinite(r).all())
+
+    def test_vonmises_nan(self):
+        random.seed(self.seed)
+        r = random.vonmises(mu=0., kappa=np.nan)
+        assert_(np.isnan(r))
 
     def test_wald(self):
         random.seed(self.seed)
@@ -1372,8 +1412,9 @@ class TestBroadcast(object):
 
         self.set_seed()
         actual = nonc_f(dfnum * 3, dfden, nonc)
-        mt_nonc_f = random.noncentral_f
         assert_array_almost_equal(actual, desired, decimal=14)
+        assert np.all(np.isnan(nonc_f(dfnum, dfden, [np.nan] * 3)))
+
         assert_raises(ValueError, nonc_f, bad_dfnum * 3, dfden, nonc)
         assert_raises(ValueError, nonc_f, dfnum * 3, bad_dfden, nonc)
         assert_raises(ValueError, nonc_f, dfnum * 3, dfden, bad_nonc)
@@ -1391,9 +1432,12 @@ class TestBroadcast(object):
         assert_raises(ValueError, nonc_f, bad_dfnum, dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, bad_dfden, nonc * 3)
         assert_raises(ValueError, nonc_f, dfnum, dfden, bad_nonc * 3)
-        assert_raises(ValueError, mt_nonc_f, bad_dfnum, dfden, nonc * 3)
-        assert_raises(ValueError, mt_nonc_f, dfnum, bad_dfden, nonc * 3)
-        assert_raises(ValueError, mt_nonc_f, dfnum, dfden, bad_nonc * 3)
+
+    def test_noncentral_f_small_df(self):
+        self.set_seed()
+        desired = np.array([21.57878070681719,  1.17110217503908])
+        actual = random.noncentral_f(0.9, 0.9, 2, size=2)
+        assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_chisquare(self):
         df = [1]
@@ -1420,20 +1464,15 @@ class TestBroadcast(object):
 
         self.set_seed()
         actual = nonc_chi(df * 3, nonc)
-        mt_nonc_chi2 = random.noncentral_chisquare
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, nonc_chi, bad_df * 3, nonc)
         assert_raises(ValueError, nonc_chi, df * 3, bad_nonc)
-        assert_raises(ValueError, mt_nonc_chi2, bad_df * 3, nonc)
-        assert_raises(ValueError, mt_nonc_chi2, df * 3, bad_nonc)
 
         self.set_seed()
         actual = nonc_chi(df, nonc * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, nonc_chi, bad_df, nonc * 3)
         assert_raises(ValueError, nonc_chi, df, bad_nonc * 3)
-        assert_raises(ValueError, mt_nonc_chi2, bad_df, nonc * 3)
-        assert_raises(ValueError, mt_nonc_chi2, df, bad_nonc * 3)
 
     def test_standard_t(self):
         df = [1]
@@ -1645,24 +1684,24 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one * 3, mode, right)
         assert_raises(ValueError, triangular, left * 3, bad_mode_one, right)
-        assert_raises(ValueError, triangular,
-                      bad_left_two * 3, bad_mode_two, right)
+        assert_raises(ValueError, triangular, bad_left_two * 3, bad_mode_two,
+                      right)
 
         self.set_seed()
         actual = triangular(left, mode * 3, right)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one, mode * 3, right)
         assert_raises(ValueError, triangular, left, bad_mode_one * 3, right)
-        assert_raises(ValueError, triangular, bad_left_two,
-                      bad_mode_two * 3, right)
+        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two * 3,
+                      right)
 
         self.set_seed()
         actual = triangular(left, mode, right * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one, mode, right * 3)
         assert_raises(ValueError, triangular, left, bad_mode_one, right * 3)
-        assert_raises(ValueError, triangular, bad_left_two,
-                      bad_mode_two, right * 3)
+        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two,
+                      right * 3)
 
         assert_raises(ValueError, triangular, 10., 0., 20.)
         assert_raises(ValueError, triangular, 10., 25., 20.)
@@ -1739,6 +1778,9 @@ class TestBroadcast(object):
         actual = zipf(a * 3)
         assert_array_equal(actual, desired)
         assert_raises(ValueError, zipf, bad_a * 3)
+        with np.errstate(invalid='ignore'):
+            assert_raises(ValueError, zipf, np.nan)
+            assert_raises(ValueError, zipf, [0, 0, np.nan])
 
     def test_geometric(self):
         p = [0.5]
@@ -1809,7 +1851,6 @@ class TestBroadcast(object):
 
 class TestThread(object):
     # make sure each state produces the same sequence even in threads
-
     def setup(self):
         self.seeds = range(4)
 
