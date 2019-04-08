@@ -233,14 +233,14 @@ class Base(object):
 
     def test_repr(self):
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert 'RandomGenerator' in rs.__repr__()
-        assert str(hex(id(rs)))[2:].upper() in rs.__repr__()
+        assert 'RandomGenerator' in repr(rs)
+        assert '{:#x}'.format(id(rs)).upper().replace('X', 'x') in repr(rs)
 
     def test_str(self):
         rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert 'RandomGenerator' in str(rs)
         assert str(self.brng.__name__) in str(rs)
-        assert str(hex(id(rs)))[2:].upper() not in str(rs)
+        assert '{:#x}'.format(id(rs)).upper().replace('X', 'x') not in str(rs)
 
     def test_generator(self):
         brng = self.brng(*self.data1['seed'])

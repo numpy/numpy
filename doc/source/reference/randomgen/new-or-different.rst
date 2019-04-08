@@ -35,7 +35,7 @@ What's New or Different
 
 .. ipython:: python
 
-  from randomgen import Xoroshiro128
+  from numpy.random.randomgen import Xoroshiro128
   import numpy.random
   rg = Xoroshiro128().generator
   %timeit rg.standard_normal(100000)
