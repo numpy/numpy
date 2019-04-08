@@ -199,6 +199,7 @@ class Sort(Benchmark):
         ['quick', 'merge', 'heap'],
         ['float64', 'int64', 'uint64'],
         [
+            ('random',),
             ('ordered',),
             ('reversed',),
             ('uniform',),
