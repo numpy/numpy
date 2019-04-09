@@ -176,8 +176,8 @@ benchmarks/numpy
 # cythonized files
 cythonize.dat
 numpy/random/mtrand/mtrand.c
-numpy/random/randomgen/*.c
-numpy/random/randomgen/legacy/*.c
-numpy/random/mtrand/randint_helpers.pxi
-numpy/random/randomgen/bounded_integers.pyx
-numpy/random/randomgen/bounded_integers.pxd
+numpy/random/*.c
+numpy/random/legacy/*.c
+numpy/random/_mtrand/randint_helpers.pxi
+numpy/random/bounded_integers.pyx
+numpy/random/bounded_integers.pxd

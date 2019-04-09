@@ -225,10 +225,10 @@ class sdist_checked(sdist):
 def generate_cython():
     cwd = os.path.abspath(os.path.dirname(__file__))
     print("Cythonizing sources")
-    for d in ('mtrand', 'randomgen', 'randomgen/legacy'):
+    for d in ('random/_mtrand', 'random'):
         p = subprocess.call([sys.executable,
                               os.path.join(cwd, 'tools', 'cythonize.py'),
-                              'numpy/random/{0}'.format(d)],
+                              'numpy/{0}'.format(d)],
                              cwd=cwd)
         if p != 0:
             raise RuntimeError("Running cythonize failed!")

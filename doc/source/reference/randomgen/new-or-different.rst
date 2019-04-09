@@ -64,9 +64,9 @@ What's New or Different
 
 .. ipython:: python
 
-  rg.seed(0)
+  rg.brng.seed(0)
   rg.random_sample(3, dtype='d')
-  rg.seed(0)
+  rg.brng.seed(0)
   rg.random_sample(3, dtype='f')
 
 * Optional ``out`` argument that allows existing arrays to be filled for

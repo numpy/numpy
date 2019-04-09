@@ -49,7 +49,7 @@ cdef class RandomGenerator:
 
     Notes
     -----
-    The Python stdlib module "random" contains pseudo-random number generator
+    The Python stdlib module `random` contains pseudo-random number generator
     with a number of methods that are similar to the ones available in
     ``RandomGenerator``. It uses Mersenne Twister, and this basic RNG can be
     accessed using ``MT19937``. ``RandomGenerator``, besides being
@@ -72,7 +72,7 @@ cdef class RandomGenerator:
     >>> rg = MT19937().generator
     >>> rg.standard_normal()
     """
-    cdef public object _basicrng
+    cdef public object brng
     cdef brng_t *_brng
     cdef binomial_t *_binomial
     cdef object lock
@@ -81,7 +81,7 @@ cdef class RandomGenerator:
     def __init__(self, brng=None):
         if brng is None:
             brng = Xoroshiro128()
-        self._basicrng = brng
+        self.brng = brng
 
         capsule = brng.capsule
         cdef const char *name = "BasicRNG"
@@ -99,79 +99,21 @@ cdef class RandomGenerator:
 
     def __str__(self):
         _str = self.__class__.__name__
-        _str += '(' + self._basicrng.__class__.__name__ + ')'
+        _str += '(' + self.brng.__class__.__name__ + ')'
         return _str
 
     # Pickling support:
     def __getstate__(self):
-        return self.state
+        return self.brng.state
 
     def __setstate__(self, state):
-        self.state = state
+        self.brng.state = state
 
     def __reduce__(self):
         from ._pickle import __generator_ctor
         return (__generator_ctor,
-                (self.state['brng'],),
-                self.state)
-
-    def seed(self, *args, **kwargs):
-        """
-        Reseed the basic RNG.
-
-        Parameters depend on the basic RNG used.
-
-        Notes
-        -----
-        Arguments are directly passed to the basic RNG. This is a convenience
-        function.
-
-        The best method to access seed is to directly use a basic RNG instance.
-        This example demonstrates this best practice.
-
-        >>> from numpy.random.randomgen import RandomGenerator, PCG64
-        >>> brng = PCG64(1234567891011)
-        >>> rg = brng.generator
-        >>> brng.seed(1110987654321)
-
-        The method used to create the generator is not important.
-
-        >>> brng = PCG64(1234567891011)
-        >>> rg = RandomGenerator(brng)
-        >>> brng.seed(1110987654321)
-
-        These best practice examples are equivalent to
-
-        >>> rg = RandomGenerator(PCG64(1234567891011))
-        >>> rg.seed(1110987654321)
-
-        """
-        # TODO: Should this remain
-        self._basicrng.seed(*args, **kwargs)
-        return self
-
-    @property
-    def state(self):
-        """
-        Get or set the Basic RNG's state
-
-        Returns
-        -------
-        state : dict
-            Dictionary containing the information required to describe the
-            state of the Basic RNG
-
-        Notes
-        -----
-        This is a trivial pass-through function.  RandomGenerator does not
-        directly contain or manipulate the basic RNG's state.
-
-        """
-        return self._basicrng.state
-
-    @state.setter
-    def state(self, value):
-        self._basicrng.state = value
+                (self.brng.state['brng'],),
+                self.brng.state)
 
     def random_sample(self, size=None, dtype=np.float64, out=None):
         """

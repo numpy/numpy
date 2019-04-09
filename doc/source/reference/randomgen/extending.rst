@@ -59,6 +59,8 @@ directly in Numba after compiling the file distributions.c into a DLL or so.
 An example showing the use of a more complicated distribution is in the
 examples folder.
 
+.. _randomgen_cython:
+
 Cython
 ======
 

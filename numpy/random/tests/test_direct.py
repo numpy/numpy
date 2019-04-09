@@ -7,10 +7,10 @@ from numpy.testing import assert_equal, assert_allclose, assert_array_equal, \
     assert_raises
 import pytest
 
-from ...randomgen import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
+from numpy.random import RandomGenerator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
     PCG32, PCG64, Philox, Xoroshiro128, Xorshift1024, Xoshiro256StarStar, \
     Xoshiro512StarStar, RandomState
-from ...randomgen.common import interface
+from numpy.random.common import interface
 
 try:
     import cffi  # noqa: F401
@@ -206,30 +206,30 @@ class Base(object):
     def test_seed_float(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(self.seed_error_type, rs.seed, np.pi)
-        assert_raises(self.seed_error_type, rs.seed, -np.pi)
+        assert_raises(self.seed_error_type, rs.brng.seed, np.pi)
+        assert_raises(self.seed_error_type, rs.brng.seed, -np.pi)
 
     def test_seed_float_array(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(self.seed_error_type, rs.seed, np.array([np.pi]))
-        assert_raises(self.seed_error_type, rs.seed, np.array([-np.pi]))
-        assert_raises(ValueError, rs.seed, np.array([np.pi, -np.pi]))
-        assert_raises(TypeError, rs.seed, np.array([0, np.pi]))
-        assert_raises(TypeError, rs.seed, [np.pi])
-        assert_raises(TypeError, rs.seed, [0, np.pi])
+        assert_raises(self.seed_error_type, rs.brng.seed, np.array([np.pi]))
+        assert_raises(self.seed_error_type, rs.brng.seed, np.array([-np.pi]))
+        assert_raises(ValueError, rs.brng.seed, np.array([np.pi, -np.pi]))
+        assert_raises(TypeError, rs.brng.seed, np.array([0, np.pi]))
+        assert_raises(TypeError, rs.brng.seed, [np.pi])
+        assert_raises(TypeError, rs.brng.seed, [0, np.pi])
 
     def test_seed_out_of_range(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(ValueError, rs.seed, 2 ** (2 * self.bits + 1))
-        assert_raises(ValueError, rs.seed, -1)
+        assert_raises(ValueError, rs.brng.seed, 2 ** (2 * self.bits + 1))
+        assert_raises(ValueError, rs.brng.seed, -1)
 
     def test_seed_out_of_range_array(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(ValueError, rs.seed, [2 ** (2 * self.bits + 1)])
-        assert_raises(ValueError, rs.seed, [-1])
+        assert_raises(ValueError, rs.brng.seed, [2 ** (2 * self.bits + 1)])
+        assert_raises(ValueError, rs.brng.seed, [-1])
 
     def test_repr(self):
         rs = RandomGenerator(self.brng(*self.data1['seed']))
@@ -412,18 +412,18 @@ class TestPCG64(Base):
 
     def test_seed_float_array(self):
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(self.seed_error_type, rs.seed, np.array([np.pi]))
-        assert_raises(self.seed_error_type, rs.seed, np.array([-np.pi]))
-        assert_raises(self.seed_error_type, rs.seed, np.array([np.pi, -np.pi]))
-        assert_raises(self.seed_error_type, rs.seed, np.array([0, np.pi]))
-        assert_raises(self.seed_error_type, rs.seed, [np.pi])
-        assert_raises(self.seed_error_type, rs.seed, [0, np.pi])
+        assert_raises(self.seed_error_type, rs.brng.seed, np.array([np.pi]))
+        assert_raises(self.seed_error_type, rs.brng.seed, np.array([-np.pi]))
+        assert_raises(self.seed_error_type, rs.brng.seed, np.array([np.pi, -np.pi]))
+        assert_raises(self.seed_error_type, rs.brng.seed, np.array([0, np.pi]))
+        assert_raises(self.seed_error_type, rs.brng.seed, [np.pi])
+        assert_raises(self.seed_error_type, rs.brng.seed, [0, np.pi])
 
     def test_seed_out_of_range_array(self):
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(self.seed_error_type, rs.seed,
+        assert_raises(self.seed_error_type, rs.brng.seed,
                       [2 ** (2 * self.bits + 1)])
-        assert_raises(self.seed_error_type, rs.seed, [-1])
+        assert_raises(self.seed_error_type, rs.brng.seed, [-1])
 
 
 class TestPhilox(Base):
@@ -464,43 +464,45 @@ class TestMT19937(Base):
     def test_seed_out_of_range(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(ValueError, rs.seed, 2 ** (self.bits + 1))
-        assert_raises(ValueError, rs.seed, -1)
-        assert_raises(ValueError, rs.seed, 2 ** (2 * self.bits + 1))
+        assert_raises(ValueError, rs.brng.seed, 2 ** (self.bits + 1))
+        assert_raises(ValueError, rs.brng.seed, -1)
+        assert_raises(ValueError, rs.brng.seed, 2 ** (2 * self.bits + 1))
 
     def test_seed_out_of_range_array(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(ValueError, rs.seed, [2 ** (self.bits + 1)])
-        assert_raises(ValueError, rs.seed, [-1])
-        assert_raises(TypeError, rs.seed, [2 ** (2 * self.bits + 1)])
+        assert_raises(ValueError, rs.brng.seed, [2 ** (self.bits + 1)])
+        assert_raises(ValueError, rs.brng.seed, [-1])
+        assert_raises(TypeError, rs.brng.seed, [2 ** (2 * self.bits + 1)])
 
     def test_seed_float(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(TypeError, rs.seed, np.pi)
-        assert_raises(TypeError, rs.seed, -np.pi)
+        assert_raises(TypeError, rs.brng.seed, np.pi)
+        assert_raises(TypeError, rs.brng.seed, -np.pi)
 
     def test_seed_float_array(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(TypeError, rs.seed, np.array([np.pi]))
-        assert_raises(TypeError, rs.seed, np.array([-np.pi]))
-        assert_raises(TypeError, rs.seed, np.array([np.pi, -np.pi]))
-        assert_raises(TypeError, rs.seed, np.array([0, np.pi]))
-        assert_raises(TypeError, rs.seed, [np.pi])
-        assert_raises(TypeError, rs.seed, [0, np.pi])
+        brng = rs.brng
+        assert_raises(TypeError, brng.seed, np.array([np.pi]))
+        assert_raises(TypeError, brng.seed, np.array([-np.pi]))
+        assert_raises(TypeError, brng.seed, np.array([np.pi, -np.pi]))
+        assert_raises(TypeError, brng.seed, np.array([0, np.pi]))
+        assert_raises(TypeError, brng.seed, [np.pi])
+        assert_raises(TypeError, brng.seed, [0, np.pi])
 
     def test_state_tuple(self):
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        state = rs.state
+        brng = rs.brng
+        state = brng.state
         desired = rs.randint(2 ** 16)
         tup = (state['brng'], state['state']['key'], state['state']['pos'])
-        rs.state = tup
+        brng.state = tup
         actual = rs.randint(2 ** 16)
         assert_equal(actual, desired)
         tup = tup + (0, 0.0)
-        rs.state = tup
+        brng.state = tup
         actual = rs.randint(2 ** 16)
         assert_equal(actual, desired)
 
@@ -542,25 +544,25 @@ class TestDSFMT(Base):
     def test_seed_out_of_range_array(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(ValueError, rs.seed, [2 ** (self.bits + 1)])
-        assert_raises(ValueError, rs.seed, [-1])
-        assert_raises(TypeError, rs.seed, [2 ** (2 * self.bits + 1)])
+        assert_raises(ValueError, rs.brng.seed, [2 ** (self.bits + 1)])
+        assert_raises(ValueError, rs.brng.seed, [-1])
+        assert_raises(TypeError, rs.brng.seed, [2 ** (2 * self.bits + 1)])
 
     def test_seed_float(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(TypeError, rs.seed, np.pi)
-        assert_raises(TypeError, rs.seed, -np.pi)
+        assert_raises(TypeError, rs.brng.seed, np.pi)
+        assert_raises(TypeError, rs.brng.seed, -np.pi)
 
     def test_seed_float_array(self):
         # GH #82
         rs = RandomGenerator(self.brng(*self.data1['seed']))
-        assert_raises(TypeError, rs.seed, np.array([np.pi]))
-        assert_raises(TypeError, rs.seed, np.array([-np.pi]))
-        assert_raises(TypeError, rs.seed, np.array([np.pi, -np.pi]))
-        assert_raises(TypeError, rs.seed, np.array([0, np.pi]))
-        assert_raises(TypeError, rs.seed, [np.pi])
-        assert_raises(TypeError, rs.seed, [0, np.pi])
+        assert_raises(TypeError, rs.brng.seed, np.array([np.pi]))
+        assert_raises(TypeError, rs.brng.seed, np.array([-np.pi]))
+        assert_raises(TypeError, rs.brng.seed, np.array([np.pi, -np.pi]))
+        assert_raises(TypeError, rs.brng.seed, np.array([0, np.pi]))
+        assert_raises(TypeError, rs.brng.seed, [np.pi])
+        assert_raises(TypeError, rs.brng.seed, [0, np.pi])
 
     def test_uniform_float(self):
         rs = RandomGenerator(self.brng(*self.data1['seed']))
@@ -578,9 +580,9 @@ class TestDSFMT(Base):
     def test_buffer_reset(self):
         rs = RandomGenerator(self.brng(*self.data1['seed']))
         rs.random_sample(1)
-        assert rs.state['buffer_loc'] != 382
-        rs.seed(*self.data1['seed'])
-        assert rs.state['buffer_loc'] == 382
+        assert rs.brng.state['buffer_loc'] != 382
+        rs.brng.seed(*self.data1['seed'])
+        assert rs.brng.state['buffer_loc'] == 382
 
 
 class TestThreeFry32(Base):
