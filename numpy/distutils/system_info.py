@@ -452,7 +452,7 @@ class NotFoundError(DistutilsError):
 class AliasedOptionError(DistutilsError):
     """
     Aliases entries in config files should not be existing.
-    In section '{section}' we found multiple appearances of options {options}"""
+    In section '{section}' we found multiple appearances of options {options}."""
 
 
 class AtlasNotFoundError(NotFoundError):
@@ -640,6 +640,8 @@ class system_info(object):
             return options[0]
 
         # Else we have more than 1 key found
+        if AliasedOptionError.__doc__ is None:
+            raise AliasedOptionError()
         raise AliasedOptionError(AliasedOptionError.__doc__.format(
             section=self.section, options='[{}]'.format(', '.join(options))))
 
