@@ -447,7 +447,7 @@ class TestNanToNum(object):
         # !! changes
         #assert_all(vals.real < -1e10) and assert_all(np.isfinite(vals))
     
-    def test_do_not_rewrite__previous_keyword(self):
+    def test_do_not_rewrite_previous_keyword(self):
         # This is done to test that when, for instance, nan=np.inf then these 
         # values are not rewritten by posinf keyword to the posinf value.
         with np.errstate(divide='ignore', invalid='ignore'):
