@@ -83,6 +83,22 @@ get_state            Get tuple representing internal state of generator.
 set_state            Set state of generator.
 ==================== =========================================================
 
+==================== =========================================================
+Random Number Streams that work with RandomGenerator
+==============================================================================
+MT19937
+DSFMT
+PCG32
+PCG64
+Philox
+ThreeFry
+ThreeFry32
+Xoroshiro128
+Xoroshift1024
+Xoshiro256StarStar
+Xoshiro512StarStar
+==================== =========================================================
+
 """
 from __future__ import division, absolute_import, print_function
 
@@ -136,8 +152,24 @@ __all__ = [
     'zipf'
 ]
 
-from .randomgen import mtrand
-from .randomgen.mtrand import *
+from . import mtrand
+from .mtrand import *
+from .dsfmt import DSFMT
+from .generator import RandomGenerator
+from .mt19937 import MT19937
+from .pcg32 import PCG32
+from .pcg64 import PCG64
+from .philox import Philox
+from .threefry import ThreeFry
+from .threefry32 import ThreeFry32
+from .xoroshiro128 import Xoroshiro128
+from .xorshift1024 import Xorshift1024
+from .xoshiro256starstar import Xoshiro256StarStar
+from .xoshiro512starstar import Xoshiro512StarStar
+from .mtrand import RandomState
+__all__ += ['RandomGenerator', 'DSFMT', 'MT19937', 'PCG64', 'PCG32', 'Philox',
+           'ThreeFry', 'ThreeFry32', 'Xoroshiro128', 'Xorshift1024',
+           'Xoshiro256StarStar', 'Xoshiro512StarStar', 'RandomState']
 
 # Some aliases:
 ranf = random = sample = random_sample

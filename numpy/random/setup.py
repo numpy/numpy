@@ -46,21 +46,160 @@ def configuration(parent_package='',top_path=None):
     libs = []
     defs.append(('NPY_NO_DEPRECATED_API', 0))
     # Configure mtrand
-    config.add_extension('mtrand',
-                         sources=[join('mtrand', x) for x in
+    config.add_extension('_mtrand',
+                         sources=[join('_mtrand', x) for x in
                                   ['mtrand.c', 'randomkit.c', 'initarray.c',
                                    'distributions.c']]+[generate_libraries],
                          libraries=libs,
-                         depends=[join('mtrand', '*.h'),
-                                  join('mtrand', '*.pyx'),
-                                  join('mtrand', '*.pxi'),],
+                         depends=[join('_mtrand', '*.h'),
+                                  join('_mtrand', '*.pyx'),
+                                  join('_mtrand', '*.pxi'),],
                          define_macros=defs,
                          )
 
-    config.add_data_files(('.', join('mtrand', 'randomkit.h')))
+    config.add_data_files(('.', join('_mtrand', 'randomkit.h')))
     config.add_data_dir('tests')
 
-    config.add_subpackage('randomgen')
+    ##############################
+    # randomgen
+    ##############################
+
+    # Make a guess as to whether SSE2 is present for now, TODO: Improve
+    USE_SSE2 = False
+    for k in platform.uname():
+        for val in ('x86', 'i686', 'i386', 'amd64'):
+            USE_SSE2 = USE_SSE2 or val in k.lower()
+    print('Building with SSE?: {0}'.format(USE_SSE2))
+    if '--no-sse2' in sys.argv:
+        USE_SSE2 = False
+        sys.argv.remove('--no-sse2')
+
+    DEBUG = False
+    PCG_EMULATED_MATH = False
+    EXTRA_LINK_ARGS = []
+    EXTRA_LIBRARIES = ['m'] if os.name != 'nt' else []
+    EXTRA_COMPILE_ARGS = [] if os.name == 'nt' else [
+        '-std=c99', '-U__GNUC_GNU_INLINE__']
+    if os.name == 'nt':
+        EXTRA_LINK_ARGS = ['/LTCG', '/OPT:REF', 'Advapi32.lib', 'Kernel32.lib']
+        if DEBUG:
+            EXTRA_LINK_ARGS += ['-debug']
+            EXTRA_COMPILE_ARGS += ["-Zi", "/Od"]
+        if sys.version_info < (3, 0):
+            EXTRA_INCLUDE_DIRS += [join(MOD_DIR, 'src', 'common')]
+
+    PCG64_DEFS = []
+    # TODO: remove the unconditional forced emulation, move code from pcg64.pyx
+    # to an #ifdef
+    if 1 or sys.maxsize < 2 ** 32 or os.name == 'nt':
+        # Force emulated mode here
+        PCG_EMULATED_MATH = True
+        PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
+    
+    if struct.calcsize('P') < 8:
+        PCG_EMULATED_MATH = True
+    defs.append(('PCG_EMULATED_MATH', int(PCG_EMULATED_MATH)))
+
+    DSFMT_DEFS = [('DSFMT_MEXP', '19937')]
+    if USE_SSE2:
+        if os.name == 'nt':
+            EXTRA_COMPILE_ARGS += ['/wd4146', '/GL']
+            if struct.calcsize('P') < 8:
+                EXTRA_COMPILE_ARGS += ['/arch:SSE2']
+        else:
+            EXTRA_COMPILE_ARGS += ['-msse2']
+        DSFMT_DEFS += [('HAVE_SSE2', '1')]
+
+    config.add_extension('entropy',
+                        sources=['entropy.c', 'src/entropy/entropy.c'],
+                        include_dirs=[join('randomgen', 'src', 'entropy')],
+                        libraries=EXTRA_LIBRARIES,
+                        extra_compile_args=EXTRA_COMPILE_ARGS,
+                        extra_link_args=EXTRA_LINK_ARGS,
+                        depends=[join('src', 'splitmix64', 'splitmix.h'),
+                                 join('src', 'entropy', 'entropy.h'),
+                                 'entropy.pyx',
+                                ],
+                        define_macros=defs,
+                        )
+    config.add_extension('dsfmt',
+                        sources=['dsfmt.c', 'src/dsfmt/dSFMT.c',
+                             'src/dsfmt/dSFMT-jump.c',
+                             'src/aligned_malloc/aligned_malloc.c'],
+                        include_dirs=[join('src', 'dsfmt')],
+                        libraries=EXTRA_LIBRARIES,
+                        extra_compile_args=EXTRA_COMPILE_ARGS,
+                        extra_link_args=EXTRA_LINK_ARGS,
+                        depends=[join('src', 'dsfmt', 'dsfmt.h'),
+                                 'dsfmt.pyx',
+                                ],
+                        define_macros=defs + DSFMT_DEFS,
+                        )
+    for gen in ['mt19937']:
+        # gen.pyx, src/gen/gen.c, src/gen/gen-jump.c
+        config.add_extension(gen,
+                        sources=['{0}.c'.format(gen), 'src/{0}/{0}.c'.format(gen),
+                             'src/{0}/{0}-jump.c'.format(gen)],
+                        include_dirs=[join('src', gen)],
+                        libraries=EXTRA_LIBRARIES,
+                        extra_compile_args=EXTRA_COMPILE_ARGS,
+                        extra_link_args=EXTRA_LINK_ARGS,
+                        depends=['%s.pyx' % gen],
+                        define_macros=defs,
+                        )
+    for gen in ['philox', 'threefry', 'threefry32',
+                'xoroshiro128', 'xorshift1024', 'xoshiro256starstar',
+                'xoshiro512starstar',
+                'pcg64', 'pcg32',
+               ]:
+        # gen.pyx, src/gen/gen.c
+        if gen == 'pcg64':
+            _defs = defs + PCG64_DEFS
+        else:
+            _defs = defs
+        config.add_extension(gen,
+                        sources=['{0}.c'.format(gen), 'src/{0}/{0}.c'.format(gen)],
+                        include_dirs=[join('src', gen)],
+                        libraries=EXTRA_LIBRARIES,
+                        extra_compile_args=EXTRA_COMPILE_ARGS,
+                        extra_link_args=EXTRA_LINK_ARGS,
+                        depends=['%s.pyx' % gen],
+                        define_macros=_defs,
+                        )
+    for gen in ['common']:
+        # gen.pyx
+        config.add_extension(gen,
+                        sources=['{0}.c'.format(gen)],
+                        libraries=EXTRA_LIBRARIES,
+                        extra_compile_args=EXTRA_COMPILE_ARGS,
+                        extra_link_args=EXTRA_LINK_ARGS,
+                        depends=['%s.pyx' % gen],
+                        define_macros=defs,
+                        )
+    for gen in ['generator', 'bounded_integers']:
+        # gen.pyx, src/distributions/distributions.c
+        config.add_extension(gen,
+                        sources=['{0}.c'.format(gen),
+                                 join('src', 'distributions',
+                                      'distributions.c')],
+                        libraries=EXTRA_LIBRARIES,
+                        extra_compile_args=EXTRA_COMPILE_ARGS,
+                        extra_link_args=EXTRA_LINK_ARGS,
+                        depends=['%s.pyx' % gen],
+                        define_macros=defs,
+                        )
+    config.add_extension('mtrand',
+                        sources=['mtrand.c',
+                             'src/legacy/distributions-boxmuller.c',
+                             'src/distributions/distributions.c' ],
+                        include_dirs=['.', 'legacy'],
+                        libraries=EXTRA_LIBRARIES,
+                        extra_compile_args=EXTRA_COMPILE_ARGS,
+                        extra_link_args=EXTRA_LINK_ARGS,
+                        depends=['mtrand.pyx'],
+                        define_macros=defs + DSFMT_DEFS,
+                        )
+    config.add_subpackage('legacy')
     return config
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ from numpy.testing import (assert_allclose, assert_array_equal, assert_equal,
 
 import pytest
 
-from numpy.random.randomgen import RandomGenerator, MT19937, generator
+from numpy.random import RandomGenerator, MT19937, generator
 from numpy.random import RandomState
 
 
@@ -98,12 +98,12 @@ class TestAgainstNumPy(object):
         cls.rg = RandomGenerator(cls.brng(*cls.seed))
         cls.rs = RandomState(cls.brng(*cls.seed))
         cls.nprs = cls.np.RandomState(*cls.seed)
-        cls.initial_state = cls.rg.state
+        cls.initial_state = cls.rg.brng.state
         cls._set_common_state()
 
     @classmethod
     def _set_common_state(cls):
-        state = cls.rg.state
+        state = cls.rg.brng.state
         st = [[]] * 5
         st[0] = 'MT19937'
         st[1] = state['state']['key']
@@ -125,7 +125,7 @@ class TestAgainstNumPy(object):
 
     def _is_state_common(self):
         state = self.nprs.get_state()
-        state2 = self.rg.state
+        state2 = self.rg.brng.state
         assert (state[1] == state2['state']['key']).all()
         assert (state[2] == state2['state']['pos'])
 
@@ -138,10 +138,10 @@ class TestAgainstNumPy(object):
         assert_allclose(state[4], state2['gauss'], atol=1e-10)
 
     def test_common_seed(self):
-        self.rg.seed(1234)
+        self.rg.brng.seed(1234)
         self.nprs.seed(1234)
         self._is_state_common()
-        self.rg.seed(23456)
+        self.rg.brng.seed(23456)
         self.nprs.seed(23456)
         self._is_state_common()
 
@@ -149,8 +149,8 @@ class TestAgainstNumPy(object):
         nprs = np.random.RandomState()
         nprs.standard_normal(99)
         state = nprs.get_state()
-        self.rg.state = state
-        state2 = self.rg.state
+        self.rg.brng.state = state
+        state2 = self.rg.brng.state
         assert (state[1] == state2['state']['key']).all()
         assert (state[2] == state2['state']['pos'])
 
@@ -383,7 +383,7 @@ class TestAgainstNumPy(object):
         assert_equal(s1.randint(1000), 419)
         assert_equal(s1.randint(1000), s.randint(1000))
 
-        self.rg.seed(4294967295)
+        self.rg.brng.seed(4294967295)
         self.nprs.seed(4294967295)
         self._is_state_common()
 
@@ -399,26 +399,6 @@ class TestAgainstNumPy(object):
         assert_equal(s.randint(1000), 973)
         s = RandomGenerator(MT19937([4294967295]))
         assert_equal(s.randint(1000), 265)
-
-    def test_dir(self):
-        nprs_d = set(dir(self.nprs))
-        rs_d = dir(self.rg)
-        excluded = {'get_state', 'set_state'}
-        nprs_d.difference_update(excluded)
-        assert (len(nprs_d.difference(rs_d)) == 0)
-
-        npmod = dir(numpy.random)
-        mod = dir(generator)
-        known_exlcuded = ['__all__', '__cached__', '__path__', 'Tester',
-                          'info', 'bench', '__RandomState_ctor', 'mtrand',
-                          'test', '__warningregistry__', '_numpy_tester',
-                          'division', 'get_state', 'set_state', 'seed',
-                          'ranf', 'random', 'sample', 'absolute_import',
-                          'print_function', 'RandomState', 'randomgen',
-                          'tests', 'Lock']
-        mod += known_exlcuded
-        diff = set(npmod).difference(mod)
-        assert_equal(len(diff), 0)
 
     # Tests using legacy generator
     def test_chisquare(self):
