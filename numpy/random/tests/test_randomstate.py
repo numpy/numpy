@@ -9,7 +9,7 @@ from numpy.testing import (
         suppress_warnings
         )
 
-from ...randomgen import MT19937, Xoshiro256StarStar, mtrand as random
+from numpy.random import MT19937, Xoshiro256StarStar, mtrand as random
 
 
 def assert_mt19937_state_equal(a, b):

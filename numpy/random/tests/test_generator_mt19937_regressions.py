@@ -1,11 +1,11 @@
 import sys
-from numpy.testing import (
-    assert_, assert_array_equal, assert_raises,
-    )
+from numpy.testing import (assert_, assert_array_equal)
 from numpy.compat import long
 import numpy as np
+import pytest
+from numpy.random import RandomGenerator, MT19937
 
-from ...randomgen import mtrand as random
+mt19937 = RandomGenerator(MT19937())
 
 
 class TestRegression(object):
@@ -14,13 +14,13 @@ class TestRegression(object):
         # Make sure generated random variables are in [-pi, pi].
         # Regression test for ticket #986.
         for mu in np.linspace(-7., 7., 5):
-            r = random.vonmises(mu, 1, 50)
+            r = mt19937.vonmises(mu, 1, 50)
             assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
     def test_hypergeometric_range(self):
         # Test for ticket #921
-        assert_(np.all(random.hypergeometric(3, 18, 11, size=10) < 4))
-        assert_(np.all(random.hypergeometric(18, 3, 11, size=10) > 0))
+        assert_(np.all(mt19937.hypergeometric(3, 18, 11, size=10) < 4))
+        assert_(np.all(mt19937.hypergeometric(18, 3, 11, size=10) > 0))
 
         # Test for ticket #5623
         args = [
@@ -31,13 +31,13 @@ class TestRegression(object):
             # Check for 64-bit systems
             args.append((2**40 - 2, 2**40 - 2, 2**40 - 2))
         for arg in args:
-            assert_(random.hypergeometric(*arg) > 0)
+            assert_(mt19937.hypergeometric(*arg) > 0)
 
     def test_logseries_convergence(self):
         # Test for ticket #923
         N = 1000
-        random.seed(0)
-        rvsn = random.logseries(0.8, size=N)
+        mt19937.brng.seed(0)
+        rvsn = mt19937.logseries(0.8, size=N)
         # these two frequency counts should be close to theoretical
         # numbers with this large sample
         # theoretical large N result is 0.49706795
@@ -50,10 +50,10 @@ class TestRegression(object):
         assert_(freq < 0.23, msg)
 
     def test_permutation_longs(self):
-        random.seed(1234)
-        a = random.permutation(12)
-        random.seed(1234)
-        b = random.permutation(long(12))
+        mt19937.brng.seed(1234)
+        a = mt19937.permutation(12)
+        mt19937.brng.seed(1234)
+        b = mt19937.permutation(long(12))
         assert_array_equal(a, b)
 
     def test_shuffle_mixed_dimension(self):
@@ -62,18 +62,18 @@ class TestRegression(object):
                   [(1, 1), (2, 2), (3, 3), None],
                   [1, (2, 2), (3, 3), None],
                   [(1, 1), 2, 3, None]]:
-            random.seed(12345)
+            mt19937.brng.seed(12345)
             shuffled = list(t)
-            random.shuffle(shuffled)
+            mt19937.shuffle(shuffled)
             assert_array_equal(shuffled, [t[0], t[3], t[1], t[2]])
 
     def test_call_within_randomstate(self):
         # Check that custom RandomState does not call into global state
-        m = random.RandomState()
+        m = RandomGenerator(MT19937())  # mt19937.RandomState()
         res = np.array([0, 8, 7, 2, 1, 9, 4, 7, 0, 3])
         for i in range(3):
-            random.seed(i)
-            m.seed(4321)
+            mt19937.brng.seed(i)
+            m.brng.seed(4321)
             # If m.state is not honored, the result will change
             assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
 
@@ -81,40 +81,41 @@ class TestRegression(object):
         # Test for multivariate_normal issue with 'size' argument.
         # Check that the multivariate_normal size argument can be a
         # numpy integer.
-        random.multivariate_normal([0], [[0]], size=1)
-        random.multivariate_normal([0], [[0]], size=np.int_(1))
-        random.multivariate_normal([0], [[0]], size=np.int64(1))
+        mt19937.multivariate_normal([0], [[0]], size=1)
+        mt19937.multivariate_normal([0], [[0]], size=np.int_(1))
+        mt19937.multivariate_normal([0], [[0]], size=np.int64(1))
 
     def test_beta_small_parameters(self):
         # Test that beta with small a and b parameters does not produce
         # NaNs due to roundoff errors causing 0 / 0, gh-5851
-        random.seed(1234567890)
-        x = random.beta(0.0001, 0.0001, size=100)
-        assert_(not np.any(np.isnan(x)), 'Nans in random.beta')
+        mt19937.brng.seed(1234567890)
+        x = mt19937.beta(0.0001, 0.0001, size=100)
+        assert_(not np.any(np.isnan(x)), 'Nans in mt19937.beta')
 
     def test_choice_sum_of_probs_tolerance(self):
         # The sum of probs should be 1.0 with some tolerance.
         # For low precision dtypes the tolerance was too tight.
         # See numpy github issue 6123.
-        random.seed(1234)
+        mt19937.brng.seed(1234)
         a = [1, 2, 3]
         counts = [4, 4, 2]
         for dt in np.float16, np.float32, np.float64:
             probs = np.array(counts, dtype=dt) / sum(counts)
-            c = random.choice(a, p=probs)
+            c = mt19937.choice(a, p=probs)
             assert_(c in a)
-            assert_raises(ValueError, random.choice, a, p=probs*0.9)
+            with pytest.raises(ValueError):
+                mt19937.choice(a, p=probs*0.9)
 
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings
         # will not cause a segfault on garbage collection
         # Tests gh-7710
-        random.seed(1234)
+        mt19937.brng.seed(1234)
 
         a = np.array(['a', 'a' * 1000])
 
         for _ in range(100):
-            random.shuffle(a)
+            mt19937.shuffle(a)
 
         # Force Garbage Collection - should not segfault.
         import gc
@@ -124,11 +125,11 @@ class TestRegression(object):
         # Test that permuting an array of objects will not cause
         # a segfault on garbage collection.
         # See gh-7719
-        random.seed(1234)
+        mt19937.brng.seed(1234)
         a = np.array([np.arange(1), np.arange(4)])
 
         for _ in range(1000):
-            random.shuffle(a)
+            mt19937.shuffle(a)
 
         # Force Garbage Collection - should not segfault.
         import gc
@@ -138,9 +139,9 @@ class TestRegression(object):
         class N(np.ndarray):
             pass
 
-        random.seed(1)
+        mt19937.brng.seed(1)
         orig = np.arange(3).view(N)
-        perm = random.permutation(orig)
+        perm = mt19937.permutation(orig)
         assert_array_equal(perm, np.array([0, 2, 1]))
         assert_array_equal(orig, np.arange(3).view(N))
 
@@ -150,8 +151,16 @@ class TestRegression(object):
             def __array__(self):
                 return self.a
 
-        random.seed(1)
+        mt19937.brng.seed(1)
         m = M()
-        perm = random.permutation(m)
+        perm = mt19937.permutation(m)
         assert_array_equal(perm, np.array([2, 1, 4, 0, 3]))
         assert_array_equal(m.__array__(), np.arange(5))
+
+    def test_gamma_0(self):
+        assert mt19937.standard_gamma(0.0) == 0.0
+        assert_array_equal(mt19937.standard_gamma([0.0]), 0.0)
+
+        actual = mt19937.standard_gamma([0.0], dtype='float')
+        expected = np.array([0.], dtype=np.float32)
+        assert_array_equal(actual, expected)
