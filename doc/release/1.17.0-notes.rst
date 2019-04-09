@@ -197,6 +197,12 @@ The boolean and integer types are incapable of storing ``np.nan`` and ``np.inf``
 which allows us to provide specialized ufuncs that are up to 250x faster than the current
 approach.
 
+New keywords added to ``np.nan_to_num``
+---------------------------------------
+``np.nan_to_num`` now accepts keywords ``nan``, ``posinf`` and ``neginf`` allowing the
+user to define the value to replace the ``nan``, positive and negative ``np.inf`` values 
+respectively.
+
 
 Changes
 =======
