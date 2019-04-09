@@ -365,9 +365,8 @@ class TestNanToNum(object):
         with np.errstate(divide='ignore', invalid='ignore'):
             vals = nan_to_num(np.array((-1., 0, 1))/0., 
                               nan=10, posinf=20, neginf=30)
-        assert_all(vals[0] == 30) and assert_all(np.isfinite(vals[0]))
-        assert_(vals[1] == 10)
-        assert_all(vals[2] == 20) and assert_all(np.isfinite(vals[2]))
+        assert_equal(vals, [30, 10, 20])
+        assert_all(np.isfinite(vals[[0, 2]]))
         assert_equal(type(vals), np.ndarray)
 
         # perform the same test but in-place
@@ -387,9 +386,8 @@ class TestNanToNum(object):
         result = nan_to_num(vals, copy=False, nan=10, posinf=20, neginf=30)
 
         assert_(result is vals)
-        assert_all(vals[0] == 30) and assert_all(np.isfinite(vals[0]))
-        assert_(vals[1] == 10)
-        assert_all(vals[2] == 20) and assert_all(np.isfinite(vals[2]))
+        assert_equal(vals, [30, 10, 20])
+        assert_all(np.isfinite(vals[[0, 2]]))
         assert_equal(type(vals), np.ndarray)
 
     def test_array(self):
@@ -452,9 +450,9 @@ class TestNanToNum(object):
         # values are not rewritten by posinf keyword to the posinf value.
         with np.errstate(divide='ignore', invalid='ignore'):
             vals = nan_to_num(np.array((-1., 0, 1))/0., nan=np.inf, posinf=999)
-        assert_all(vals[0] < -1e10) and assert_all(np.isfinite(vals[0]))
-        assert_(vals[1] == np.inf)
-        assert_all(vals[2] == 999) and assert_all(np.isfinite(vals[2]))
+        assert_all(np.isfinite(vals[[0, 2]]))
+        assert_all(vals[0] < -1e10)
+        assert_equal(vals[[1, 2]], [np.inf, 999])
         assert_equal(type(vals), np.ndarray)
 
 
