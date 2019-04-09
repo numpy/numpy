@@ -56,7 +56,9 @@ NumFOCUS Subcommittee
 Institutional Partners
 ----------------------
 
-*  UC Berkeley (Stefan van der Walt)
+* UC Berkeley (Stefan van der Walt)
+
+* Quansight Labs (Ralf Gommers, Hameer Abbasi)
 
 
 Document history
