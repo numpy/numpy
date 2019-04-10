@@ -140,11 +140,7 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     Raises
     ------
     ValueError
-        If `order` is 'K' and any of the following is true
-
-            - ``len(shape) != a.ndim``,
-            - `a` is neither C nor F contiguous.
-
+        If `order` is 'K' and ``len(shape) != a.ndim``.
 
     See Also
     --------
@@ -273,10 +269,7 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     Raises
     ------
     ValueError
-        If `order` is 'K' and any of the following is true
-
-            - ``len(shape) != a.ndim``,
-            - `a` is neither C nor F contiguous.
+        If `order` is 'K' and ``len(shape) != a.ndim``.
 
     See Also
     --------
@@ -395,10 +388,7 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     Raises
     ------
     ValueError
-        If `order` is 'K' and any of the following is true
-
-            - ``len(shape) != a.ndim``,
-            - `a` is neither C nor F contiguous.
+        If `order` is 'K' and ``len(shape) != a.ndim``.
 
     See Also
     --------

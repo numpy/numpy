@@ -111,10 +111,7 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
     Raises
     ------
     ValueError
-        If `order` is 'K' and any of the following is true
-
-            - ``len(shape) != a.ndim``,
-            - `a` is neither C nor F contiguous.
+        If `order` is 'K' and ``len(shape) != a.ndim``.
 
     See Also
     --------

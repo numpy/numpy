@@ -1214,10 +1214,9 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
         dims = PyArray_DIMS(prototype);
         new_shape = 0;
     }
-    else if (order == NPY_KEEPORDER && (ndim != PyArray_NDIM(prototype) ||
-                !(PyArray_IS_C_CONTIGUOUS(prototype) || PyArray_IS_F_CONTIGUOUS(prototype)))) {
+    else if (order == NPY_KEEPORDER && (ndim != PyArray_NDIM(prototype))) {
         PyErr_SetString(PyExc_ValueError,
-                        "mismatching ndim or non-C/F-layout arrays can not keep order");
+                        "mismatching ndim arrays can not keep order");
         return ret;
     }
 
@@ -1248,7 +1247,7 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
     }
 
     /* If it's not KEEPORDER, or there is a shape change, this is simple */
-    if (order != NPY_KEEPORDER || new_shape) {
+    if (order != NPY_KEEPORDER || (new_shape && ndim != PyArray_NDIM(prototype))) {
         ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
                                         dtype,
                                         ndim,
