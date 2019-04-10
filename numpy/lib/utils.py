@@ -1139,10 +1139,6 @@ def safe_eval(source):
     """
     # Local import to speed up numpy's import time.
     import ast
-
-    # Numpy 1.17
-    warnings.warn("SafeEval is deprecated in 1.17",
-                      DeprecationWarning, stacklevel=2)
     return ast.literal_eval(source)
 
 
