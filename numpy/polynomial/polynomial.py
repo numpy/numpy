@@ -1428,7 +1428,8 @@ def polyroots(c):
     if len(c) == 2:
         return np.array([-c[0]/c[1]])
 
-    m = polycompanion(c)
+    # rotated companion matrix reduces error
+    m = polycompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r

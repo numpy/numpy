@@ -1476,7 +1476,8 @@ def hermroots(c):
     if len(c) == 2:
         return np.array([-.5*c[0]/c[1]])
 
-    m = hermcompanion(c)
+    # rotated companion matrix reduces error
+    m = hermcompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r

@@ -32,7 +32,7 @@ jobs:
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
-      failTaskOnFailedTests: false
+      failTaskOnFailedTests: true
       testRunTitle: 'Publish test results for Python 3.6-32 bit full Linux'
 - job: macOS
   pool:
@@ -105,7 +105,7 @@ jobs:
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
-      failTaskOnFailedTests: false
+      failTaskOnFailedTests: true
       testRunTitle: 'Publish test results for Python 3.6 64-bit full Mac OS'
 - job: Windows
   pool:
@@ -208,5 +208,5 @@ jobs:
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
-      failTaskOnFailedTests: false
+      failTaskOnFailedTests: true
       testRunTitle: 'Publish test results for Python $(PYTHON_VERSION) $(BITS)-bit $(TEST_MODE) Windows'
