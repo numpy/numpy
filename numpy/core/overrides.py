@@ -152,6 +152,8 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         if module is not None:
             public_api.__module__ = module
 
+        public_api.__numpy_implementation__ = implementation
+
         return public_api
 
     return decorator
