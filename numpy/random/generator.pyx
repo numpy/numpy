@@ -3642,7 +3642,7 @@ cdef class RandomGenerator:
         x.shape = tuple(final_shape)
         return x
 
-    def multinomial(self, np.npy_intp n, object pvals, size=None):
+    def multinomial(self, object n, object pvals, size=None):
         """
         multinomial(n, pvals, size=None)
 
@@ -3658,7 +3658,7 @@ cdef class RandomGenerator:
 
         Parameters
         ----------
-        n : int
+        n : int or array-like of ints
             Number of experiments.
         pvals : sequence of floats, length p
             Probabilities of each of the ``p`` different outcomes.  These
@@ -3697,6 +3697,18 @@ cdef class RandomGenerator:
         For the first run, we threw 3 times 1, 4 times 2, etc.  For the second,
         we threw 2 times 1, 4 times 2, etc.
 
+        Now, do one experiment throwing the dice 10 time, and 10 times again,
+        and another throwing the dice 20 times, and 20 times again:
+
+        >>> np.random.multinomial([[10], [20]], [1/6.]*6, size=2)
+        array([[[2, 4, 0, 1, 2, 1],
+                [1, 3, 0, 3, 1, 2]],
+               [[1, 4, 4, 4, 4, 3],
+                [3, 3, 2, 5, 5, 2]]])  # random
+
+        The first array shows the outcomes of throwing the dice 10 times, and
+        the second shows the outcomes from throwing the dice 20 times.
+
         A loaded die is more likely to land on number 6:
 
         >>> np.random.multinomial(100, [1/7.]*5 + [2/7.])
@@ -3717,18 +3729,43 @@ cdef class RandomGenerator:
         array([100,   0])
 
         """
-        cdef np.npy_intp d, i, j, dn, sz
-        cdef np.ndarray parr "arrayObject_parr", mnarr "arrayObject_mnarr"
+
+        cdef np.npy_intp d, i, sz, offset
+        cdef np.ndarray parr, mnarr, on, temp_arr
         cdef double *pix
         cdef int64_t *mnix
-        cdef double Sum
+        cdef int64_t ni
+        cdef np.broadcast it
 
         d = len(pvals)
+        on = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INT64, np.NPY_ALIGNED)
         parr = <np.ndarray>np.PyArray_FROM_OTF(pvals, np.NPY_DOUBLE, np.NPY_ALIGNED)
         pix = <double*>np.PyArray_DATA(parr)
-
+        check_array_constraint(parr, 'pvals', CONS_BOUNDED_0_1)
         if kahan_sum(pix, d-1) > (1.0 + 1e-12):
             raise ValueError("sum(pvals[:-1]) > 1.0")
+
+        if np.PyArray_NDIM(on) != 0: # vector
+            check_array_constraint(on, 'n', CONS_NON_NEGATIVE)
+            if size is None:
+                it = np.PyArray_MultiIterNew1(on)
+            else:
+                temp = np.empty(size, dtype=np.int8)
+                temp_arr = <np.ndarray>temp
+                it = np.PyArray_MultiIterNew2(on, temp_arr)
+            shape = it.shape + (d,)
+            multin = np.zeros(shape, dtype=np.int64)
+            mnarr = <np.ndarray>multin
+            mnix = <int64_t*>np.PyArray_DATA(mnarr)
+            offset = 0
+            sz = it.size
+            with self.lock, nogil:
+                for i in range(sz):
+                    ni = (<int64_t*>np.PyArray_MultiIter_DATA(it, 0))[0]
+                    random_multinomial(self._brng, ni, &mnix[offset], pix, d, self._binomial)
+                    offset += d
+                    np.PyArray_MultiIter_NEXT(it)
+            return multin
 
         if size is None:
             shape = (d,)
@@ -3742,23 +3779,13 @@ cdef class RandomGenerator:
         mnarr = <np.ndarray>multin
         mnix = <int64_t*>np.PyArray_DATA(mnarr)
         sz = np.PyArray_SIZE(mnarr)
-
+        ni = n
+        check_constraint(ni, 'n', CONS_NON_NEGATIVE)
+        offset = 0
         with self.lock, nogil:
-            i = 0
-            while i < sz:
-                Sum = 1.0
-                dn = n
-                for j in range(d-1):
-                    mnix[i+j] = random_binomial(self._brng, pix[j]/Sum, dn,
-                                                self._binomial)
-                    dn = dn - mnix[i+j]
-                    if dn <= 0:
-                        break
-                    Sum = Sum - pix[j]
-                if dn > 0:
-                    mnix[i+d-1] = dn
-
-                i = i + d
+            for i in range(sz // d):
+                random_multinomial(self._brng, ni, &mnix[offset], pix, d, self._binomial)
+                offset += d
 
         return multin
 

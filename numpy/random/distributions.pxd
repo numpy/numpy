@@ -144,3 +144,6 @@ cdef extern from "src/distributions/distributions.h":
                                   np.npy_bool off, np.npy_bool rng, np.npy_intp cnt,
                                   bint use_masked,
                                   np.npy_bool *out) nogil
+
+    void random_multinomial(brng_t *brng_state, int64_t n, int64_t *mnix,
+                            double *pix, np.npy_intp d, binomial_t *binomial) nogil
