@@ -360,8 +360,8 @@ class TestSaveTxt(object):
             ('foo', 'i4'), ('bar', 'i4'), ('baz', 'i4')
         ])
         c = BytesIO()
+        np.savetxt(c, a[['foo', 'baz']], fmt='%d')
         c.seek(0)
-        np.savetxt(c, a[['foo', 'baz']])
         assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
 
     @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
