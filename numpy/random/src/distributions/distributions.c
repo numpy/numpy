@@ -1048,25 +1048,31 @@ int64_t random_geometric(brng_t *brng_state, double p) {
 }
 
 int64_t random_zipf(brng_t *brng_state, double a) {
-  double T, U, V;
-  int64_t X;
   double am1, b;
 
   am1 = a - 1.0;
   b = pow(2.0, am1);
-  do {
-    U = 1.0 - next_double(brng_state);
-    V = next_double(brng_state);
-    X = (int64_t)floor(pow(U, -1.0 / am1));
-    /* The real result may be above what can be represented in a int64.
-     * It will get casted to -sys.maxint-1. Since this is
-     * a straightforward rejection algorithm, we can just reject this value
-     * in the rejection condition below. This function then models a Zipf
+  while (1) {
+    double T, U, V, X;
+
+    U = 1.0 - random_double(brng_state);
+    V = random_double(brng_state);
+    X = floor(pow(U, -1.0 / am1));
+    /*
+     * The real result may be above what can be represented in a signed
+     * long. Since this is a straightforward rejection algorithm, we can
+     * just reject this value. This function then models a Zipf
      * distribution truncated to sys.maxint.
      */
+    if (X > LONG_MAX || X < 1.0) {
+      continue;
+    }
+
     T = pow(1.0 + 1.0 / X, am1);
-  } while (((V * X * (T - 1.0) / (b - 1.0)) > (T / b)) || X < 1);
-  return X;
+    if (V * X * (T - 1.0) / (b - 1.0) <= T / b) {
+      return (long)X;
+    }
+  }
 }
 
 double random_triangular(brng_t *brng_state, double left, double mode,
@@ -1179,8 +1185,10 @@ int64_t random_hypergeometric(brng_t *brng_state, int64_t good, int64_t bad,
                               int64_t sample) {
   if (sample > 10) {
     return random_hypergeometric_hrua(brng_state, good, bad, sample);
-  } else {
+  } else if (sample > 0) {
     return random_hypergeometric_hyp(brng_state, good, bad, sample);
+  } else {
+  return 0;
   }
 }
 
@@ -1807,5 +1815,23 @@ void random_bounded_bool_fill(brng_t *brng_state, npy_bool off, npy_bool rng,
 
   for (i = 0; i < cnt; i++) {
     out[i] = buffered_bounded_bool(brng_state, off, rng, mask, &bcnt, &buf);
+  }
+}
+
+void random_multinomial(brng_t *brng_state, int64_t n, int64_t *mnix,
+                        double *pix, npy_intp d, binomial_t *binomial) {
+  double remaining_p = 1.0;
+  npy_intp j;
+  int64_t dn = n;
+  for (j = 0; j < (d - 1); j++) {
+    mnix[j] = random_binomial(brng_state, pix[j] / remaining_p, dn, binomial);
+    dn = dn - mnix[j];
+    if (dn <= 0) {
+      break;
+    }
+    remaining_p -= pix[j];
+    if (dn > 0) {
+      mnix[d - 1] = dn;
+    }
   }
 }

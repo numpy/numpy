@@ -112,6 +112,10 @@ class TestMultinomial(object):
 
     def test_invalid_prob(self):
         assert_raises(ValueError, random.multinomial, 100, [1.1, 0.2])
+        assert_raises(ValueError, random.multinomial, 100, [-.1, 0.9])
+
+    def test_invalid_n(self):
+        assert_raises(ValueError, random.multinomial, -1, [0.8, 0.2])
 
 
 class TestSetState(object):

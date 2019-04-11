@@ -217,4 +217,7 @@ DECLDIR void random_bounded_bool_fill(brng_t *brng_state, npy_bool off,
                                       npy_bool rng, npy_intp cnt,
                                       bool use_masked, npy_bool *out);
 
+DECLDIR void random_multinomial(brng_t *brng_state, int64_t n, int64_t *mnix,
+                                double *pix, npy_intp d, binomial_t *binomial);
+
 #endif
