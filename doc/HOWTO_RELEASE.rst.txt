@@ -183,7 +183,7 @@ release notes for the next version in the master branch and update the Trac
 Milestones.
 
 Make sure current branch builds a package correctly
---------------------------------------------------
+---------------------------------------------------
 ::
 
     git clean -fxd
