@@ -51,11 +51,12 @@ Deprecation warning
 
    deprecate
 
-Details of used variables
--------------------------
+Matlab-like Functions
+---------------------
 .. autosummary::
    :toctree: generated/
- 
+   
+   disp
    who
 
 

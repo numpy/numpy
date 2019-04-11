@@ -2255,6 +2255,7 @@ def mafromtxt(fname, **kwargs):
     return genfromtxt(fname, **kwargs)
 
 
+@set_module('numpy')
 def recfromtxt(fname, **kwargs):
     """
     Load ASCII data from a file and return it in a record array.
@@ -2262,6 +2263,9 @@ def recfromtxt(fname, **kwargs):
     If ``usemask=False`` a standard `recarray` is returned,
     if ``usemask=True`` a MaskedRecords array is returned.
 
+    .. deprecated:: 1.17.0
+    recfromtxt() is deprecated, use genfromtxt() with dtype=None
+ 
     Parameters
     ----------
     fname, kwargs : For a description of input parameters, see `genfromtxt`.
@@ -2276,6 +2280,12 @@ def recfromtxt(fname, **kwargs):
     array will be determined from the data.
 
     """
+    # NumPy 1.17.0, 2019-04-11, gh-13214
+    warnings.warn(
+    "numpy.lib.npyio.recfromtxt is deprecated,"
+    "use numpy.lib.npyio.genfromtxt with dtype=None instead",
+    DeprecationWarning, stacklevel=2)
+
     kwargs.setdefault("dtype", None)
     usemask = kwargs.get('usemask', False)
     output = genfromtxt(fname, **kwargs)
@@ -2287,6 +2297,7 @@ def recfromtxt(fname, **kwargs):
     return output
 
 
+@set_module('numpy')
 def recfromcsv(fname, **kwargs):
     """
     Load ASCII data stored in a comma-separated file.
@@ -2294,6 +2305,10 @@ def recfromcsv(fname, **kwargs):
     The returned array is a record array (if ``usemask=False``, see
     `recarray`) or a masked record array (if ``usemask=True``,
     see `ma.mrecords.MaskedRecords`).
+
+    .. deprecated:: 1.17.0
+    recfromcsv() is deprecated, use genfromtxt() with dtype=None 
+    and delimiter=","
 
     Parameters
     ----------
@@ -2309,6 +2324,13 @@ def recfromcsv(fname, **kwargs):
     array will be determined from the data.
 
     """
+    # NumPy 1.17.0, 2019-04-11, gh-13214
+    warnings.warn(
+    "numpy.lib.npyio.recfromcsv is deprecated,"
+    "use numpy.lib.npyio.genfromtxt with dtype=None"
+    "and delimiter=',' instead.",
+    DeprecationWarning, stacklevel=2)
+
     # Set default kwargs for genfromtxt as relevant to csv import.
     kwargs.setdefault("case_sensitive", "lower")
     kwargs.setdefault("names", True)

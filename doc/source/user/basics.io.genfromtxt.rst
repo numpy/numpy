@@ -529,7 +529,7 @@ original, but they have different default values.
    The output is always a :class:`~numpy.ma.MaskedArray`
 :func:`~numpy.recfromtxt`
    Returns a standard :class:`numpy.recarray` (if ``usemask=False``) or a
-   :class:`~numpy.ma.MaskedRecords` array (if ``usemaske=True``).  The
+   :class:`~numpy.ma.MaskedRecords` array (if ``usemask=True``).  The
    default dtype is ``dtype=None``, meaning that the types of each column
    will be automatically determined.
 :func:`~numpy.recfromcsv`
