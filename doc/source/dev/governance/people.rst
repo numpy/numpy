@@ -58,7 +58,7 @@ Institutional Partners
 
 * UC Berkeley (Stefan van der Walt, Matti Picus, Tyler Reddy)
 
-* Quansight Labs (Ralf Gommers, Hameer Abbasi)
+* Quansight (Ralf Gommers, Hameer Abbasi)
 
 
 Document history

@@ -1476,5 +1476,5 @@ Further reading
 -  The `Python tutorial <https://docs.python.org/tutorial/>`__
 -  :ref:`reference`
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
--  `SciPy Lecture Notes <https://www.scipy-lectures.org>`__
+-  `SciPy Lecture Notes <https://scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__
