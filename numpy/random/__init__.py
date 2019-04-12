@@ -3,6 +3,11 @@
 Random Number Generation
 ========================
 
+Instantiate a RandomNumberGenerator (RNG) and wrap it in a RandomGenerator
+which will convert the uniform stream to a number of distributions. For
+covenience, the module provides an instantiated instance of a RandomGenerator
+available as ``gen``. 
+
 ==================== =========================================================
 Utility functions
 ==============================================================================
@@ -149,7 +154,7 @@ __all__ = [
     'vonmises',
     'wald',
     'weibull',
-    'zipf'
+    'zipf',
 ]
 
 from . import mtrand
@@ -167,9 +172,12 @@ from .xorshift1024 import Xorshift1024
 from .xoshiro256starstar import Xoshiro256StarStar
 from .xoshiro512starstar import Xoshiro512StarStar
 from .mtrand import RandomState
+
+gen = RandomGenerator(Xoshiro512StarStar())
+
 __all__ += ['RandomGenerator', 'DSFMT', 'MT19937', 'PCG64', 'PCG32', 'Philox',
            'ThreeFry', 'ThreeFry32', 'Xoroshiro128', 'Xorshift1024',
-           'Xoshiro256StarStar', 'Xoshiro512StarStar', 'RandomState']
+           'Xoshiro256StarStar', 'Xoshiro512StarStar', 'RandomState', 'gen']
 
 # Some aliases:
 ranf = random = sample = random_sample
