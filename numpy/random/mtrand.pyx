@@ -4142,9 +4142,7 @@ randn = _rand.randn
 random = _rand.random_sample
 random_integers = _rand.random_integers
 random_sample = _rand.random_sample
-ranf = _rand.random_sample
 rayleigh = _rand.rayleigh
-sample = _rand.random_sample
 seed = _rand.seed
 set_state = _rand.set_state
 shuffle = _rand.shuffle
@@ -4159,6 +4157,21 @@ vonmises = _rand.vonmises
 wald = _rand.wald
 weibull = _rand.weibull
 zipf = _rand.zipf
+
+# Old aliases that should not be removed
+def sample(*args, **kwargs):
+    """
+    This is an alias of `random_sample`. See `random_sample`  for the complete
+    documentation.
+    """
+    return _rand.random_sample(*args, **kwargs)
+
+def ranf(*args, **kwargs):
+    """
+    This is an alias of `random_sample`. See `random_sample`  for the complete
+    documentation.
+    """
+    return _rand.random_sample(*args, **kwargs)
 
 __all__ = [
     'beta',
@@ -4193,7 +4206,9 @@ __all__ = [
     'randn',
     'random_integers',
     'random_sample',
+    'ranf',
     'rayleigh',
+    'sample',
     'seed',
     'set_state',
     'shuffle',
