@@ -60,8 +60,3 @@ Institutional Partners
 
 * Quansight (Ralf Gommers, Hameer Abbasi)
 
-
-Document history
-----------------
-
-https://github.com/numpy/numpy/commits/master/doc/source/dev/governance/governance.rst
