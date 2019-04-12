@@ -1379,7 +1379,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
             # Complex dtype -- each field indicates a separate column
             else:
-                ncol = len(X.dtype.descr)
+                ncol = len(X.dtype.names)
         else:
             ncol = X.shape[1]
 
