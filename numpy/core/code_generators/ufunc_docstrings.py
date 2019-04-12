@@ -2550,7 +2550,7 @@ add_newdoc('numpy.core.umath', 'clip',
     is specified, values smaller than 0 become 0, and values larger
     than 1 become 1.
 
-    Equivalent to but faster than ``np.maximum(a_min, np.minimum(a, a_max))``.
+    Equivalent to but faster than ``np.minimum(np.maximum(a, a_min), a_max)``.
 
     Parameters
     ----------

@@ -1854,7 +1854,7 @@ class TestClip(object):
     def test_clip_value_min_max_flip(self, amin, amax):
         a = np.arange(10, dtype=np.int64)
         # requirement from ufunc_docstrings.py
-        expected = np.maximum(amin, np.minimum(a, amax))
+        expected = np.minimum(np.maximum(a, amin), amax)
         actual = np.clip(a, amin, amax)
         assert_equal(actual, expected)
 
@@ -1863,8 +1863,8 @@ class TestClip(object):
         # case produced by hypothesis
         (np.zeros(10, dtype=np.int64),
          0,
-         -9223372036854775809,
-         np.zeros(10, dtype=object)),
+         -2**64+1,
+         np.full(10, -2**64+1, dtype=object)),
         # for bugs in NPY_TIMEDELTA_MAX, based on a case
         # produced by hypothesis
         (np.zeros(10, dtype='m8') - 1,
@@ -1886,7 +1886,7 @@ class TestClip(object):
     def test_clip_scalar_nan_propagation(self, arr, amin, amax):
         # enforcement of scalar nan propagation for comparisons
         # called through clip()
-        expected = np.maximum(amin, np.minimum(arr, amax))
+        expected = np.minimum(np.maximum(a, amin), amax)
         with assert_warns(DeprecationWarning):
             actual = np.clip(arr, amin, amax)
             assert_equal(actual, expected)
@@ -1900,7 +1900,7 @@ class TestClip(object):
     def test_NaT_propagation(self, arr, amin, amax):
         # NOTE: the expected function spec doesn't
         # propagate NaT, but clip() now does
-        expected = np.maximum(amin, np.minimum(arr, amax))
+        expected = np.minimum(np.maximum(a, amin), amax)
         actual = np.clip(arr, amin, amax)
         assert_equal(actual, expected)
 

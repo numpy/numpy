@@ -76,7 +76,7 @@
  */
 
 #define _NPY_CLIP(x, min, max) \
-    _NPY_@name@_MAX(_NPY_@name@_MIN((x), (max)), (min))
+    _NPY_@name@_MIN(_NPY_@name@_MAX((x), (min)), (max))
 
 NPY_NO_EXPORT void
 @name@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))

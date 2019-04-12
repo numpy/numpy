@@ -262,11 +262,11 @@ npy_ObjectLCM(PyObject *i1, PyObject *i2)
 
 static PyObject *
 npy_ObjectClip(PyObject *arr, PyObject *min, PyObject *max) {
-    PyObject *o = npy_ObjectMin(arr, max);
+    PyObject *o = npy_ObjectMax(arr, min);
     if (o == NULL) {
         return NULL;
     }
-    Py_SETREF(o, npy_ObjectMax(o, min));
+    Py_SETREF(o, npy_ObjectMin(o, max));
     return o;
 }
 
