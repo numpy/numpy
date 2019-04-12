@@ -364,6 +364,11 @@ def setup_package():
         url = "https://www.numpy.org",
         author = "Travis E. Oliphant et al.",
         download_url = "https://pypi.python.org/pypi/numpy",
+        project_urls={
+            "Bug Tracker": "https://github.com/numpy/numpy/issues",
+            "Documentation": "https://docs.scipy.org/doc/numpy/",
+            "Source Code": "https://github.com/numpy/numpy",
+        },
         license = 'BSD',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
