@@ -204,3 +204,13 @@ class TestMemmap(object):
         self.tmpfp.write(b'a'*16)
         mm = memmap(self.tmpfp, dtype='float64')
         assert_equal(mm.shape, (2,))
+
+    def test_empty_array(self):
+        # gh-12653
+        with pytest.raises(ValueError, match='empty file'):
+            memmap(self.tmpfp, shape=(0,4), mode='w+')
+
+        self.tmpfp.write(b'\0')
+
+        # ok now the file is not empty
+        memmap(self.tmpfp, shape=(0,4), mode='w+')
