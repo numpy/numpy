@@ -639,6 +639,18 @@ class TestRandomDist(object):
         p = [None, None, None]
         assert_raises(ValueError, random.choice, a, p=p)
 
+    def test_choice_return_type(self):
+        # gh 9867
+        p = np.ones(4) / 4.
+        actual = random.choice(4, 2)
+        assert actual.dtype == np.int64
+        actual = random.choice(4, 2, replace=False)
+        assert actual.dtype == np.int64
+        actual = random.choice(4, 2, p=p)
+        assert actual.dtype == np.int64
+        actual = random.choice(4, 2, p=p, replace=False)
+        assert actual.dtype == np.int64
+
     def test_bytes(self):
         random.brng.seed(self.seed)
         actual = random.bytes(10)
