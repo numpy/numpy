@@ -1,12 +1,11 @@
-Double SIMD Mersenne Twister (dSFMT) 
-------------------------------------
+Parallel Congruent Generator (32-bit, PCG32)
+--------------------------------------------
 
-.. module:: numpy.random.randomgen.dsfmt
+.. module:: numpy.random.pcg32
 
-.. currentmodule:: numpy.random.randomgen.dsfmt
+.. currentmodule:: numpy.random.pcg32
 
-
-.. autoclass:: DSFMT
+.. autoclass:: PCG32
 	:exclude-members:
 
 Seeding and State
@@ -15,29 +14,30 @@ Seeding and State
 .. autosummary::
    :toctree: generated/
 
-   ~DSFMT.seed
-   ~DSFMT.state
+   ~PCG32.seed
+   ~PCG32.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~DSFMT.jump
+   ~PCG32.advance
+   ~PCG32.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~DSFMT.generator
+   ~PCG32.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~DSFMT.cffi
-   ~DSFMT.ctypes
+   ~PCG32.cffi
+   ~PCG32.ctypes
 
 

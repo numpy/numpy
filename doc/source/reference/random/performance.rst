@@ -1,26 +1,28 @@
 Performance
 -----------
 
-.. py:module:: randomgen
+.. py:module:: numpy.random
+
+.. currentmodule:: numpy.random
 
 Recommendation
 **************
 The recommended generator for single use is
-:class:`~randomgen.xoroshiro128.Xoroshiro128`.  The recommended generator
+:class:`~xoroshiro128.Xoroshiro128`.  The recommended generator
 for use in large-scale parallel applications is
-:class:`~randomgen.xorshift1024.Xorshift1024`
+:class:`~xorshift1024.Xorshift1024`
 where the `jump` method is used to advance the state. For very large scale
 applications -- requiring 1,000+ independent streams,
-:class:`~randomgen.pcg64.PCG64` or :class:`~randomgen.threefry.ThreeFry` are
+:class:`~pcg64.PCG64` or :class:`~threefry.ThreeFry` are
 the best choices.
 
 Timings
 *******
 
 The timings below are the time in ms to produce 1,000,000 random values from a
-specific distribution.  :class:`~randomgen.xoroshiro128.Xoroshiro128` is the
-fastest, followed by :class:`~randomgen.xorshift1024.Xorshift1024` and
-:class:`~randomgen.pcg64.PCG64`.  The original :class:`~randomgen.mt19937.MT19937`
+specific distribution.  :class:`~xoroshiro128.Xoroshiro128` is the
+fastest, followed by :class:`~xorshift1024.Xorshift1024` and
+:class:`~pcg64.PCG64`.  The original :class:`~mt19937.MT19937`
 generator is much slower since it requires 2 32-bit values to equal the output
 of the faster generators.
 

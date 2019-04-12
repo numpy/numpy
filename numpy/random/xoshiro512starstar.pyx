@@ -83,11 +83,11 @@ cdef class Xoshiro512StarStar:
     in each worker process. All generators should be initialized with the same
     seed to ensure that the segments come from the same sequence.
 
-    >>> from randomgen import RandomGenerator, Xoshiro512StarStar
+    >>> from numpy.random import RandomGenerator, Xoshiro512StarStar
     >>> rg = [RandomGenerator(Xoshiro512StarStar(1234)) for _ in range(10)]
-    # Advance rs[i] by i jumps
+    # Advance each Xoshiro512StarStar instance by i jumps
     >>> for i in range(10):
-    ...     rg[i].jump(i)
+    ...     rg[i].brng.jump(i)
 
     **State and Seeding**
 
@@ -108,14 +108,16 @@ cdef class Xoshiro512StarStar:
 
     Examples
     --------
-    >>> from randomgen import RandomGenerator, Xoshiro512StarStar
+    >>> from numpy.random import RandomGenerator, Xoshiro512StarStar
     >>> rg = RandomGenerator(Xoshiro512StarStar(1234))
     >>> rg.standard_normal()
+    0.123  # random
 
     Identical method using only Xoshiro512StarStar
 
     >>> rg = Xoshiro512StarStar(1234).generator
     >>> rg.standard_normal()
+    0.123  # random
 
     References
     ----------
@@ -163,8 +165,10 @@ cdef class Xoshiro512StarStar:
                 self.state)
 
     def __dealloc__(self):
-        free(self.rng_state)
-        free(self._brng)
+        if self.rng_state:
+            free(self.rng_state)
+        if self._brng:
+            free(self._brng)
 
     cdef _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
@@ -347,7 +351,7 @@ cdef class Xoshiro512StarStar:
 
         Returns
         -------
-        gen : numpy.random.randomgen.generator.RandomGenerator
+        gen : numpy.random.RandomGenerator
             Random generator used this instance as the basic RNG
         """
         if self._generator is None:

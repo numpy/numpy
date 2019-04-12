@@ -109,11 +109,11 @@ cdef class ThreeFry32:
     in parallel applications by using a sequence of distinct keys where each
     instance uses different key.
 
-    >>> from randomgen import RandomGenerator, ThreeFry32
+    >>> from numpy.random import RandomGenerator, ThreeFry32
     >>> rg = [RandomGenerator(ThreeFry32(1234)) for _ in range(10)]
-    # Advance rs[i] by i jumps
+    # Advance each ThreeFry32 instance by i jumps
     >>> for i in range(10):
-    ...     rg[i].jump(i)
+    ...     rg[i].brng.jump(i)
 
     Using distinct keys produces independent streams
 
@@ -142,14 +142,16 @@ cdef class ThreeFry32:
 
     Examples
     --------
-    >>> from randomgen import RandomGenerator, ThreeFry32
+    >>> from numpy.random import RandomGenerator, ThreeFry32
     >>> rg = RandomGenerator(ThreeFry32(1234))
     >>> rg.standard_normal()
+    0.123  # random
 
     Identical method using only ThreeFry32
 
     >>> rg = ThreeFry32(1234).generator
     >>> rg.standard_normal()
+    0.123  # random
 
     References
     ----------
@@ -201,10 +203,12 @@ cdef class ThreeFry32:
                 self.state)
 
     def __dealloc__(self):
-        free(self.rng_state.ctr)
-        free(self.rng_state.key)
-        free(self.rng_state)
-        free(self._brng)
+        if self.rng_state:
+            free(self.rng_state.ctr)
+            free(self.rng_state.key)
+            free(self.rng_state)
+        if self._brng:
+            free(self._brng)
 
     cdef _reset_state_variables(self):
         self.rng_state.buffer_pos = THREEFRY_BUFFER_SIZE
@@ -458,7 +462,7 @@ cdef class ThreeFry32:
 
         Returns
         -------
-        gen : numpy.random.randomgen.generator.RandomGenerator
+        gen : numpy.random.RandomGenerator
             Random generator used this instance as the core PRNG
         """
         if self._generator is None:

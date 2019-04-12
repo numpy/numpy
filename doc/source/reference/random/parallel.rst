@@ -7,18 +7,20 @@ or distributed).
 
 .. _independent-streams:
 
+.. currentmodule:: numpy.random
+
 Independent Streams
 -------------------
 
-:class:`~randomgen.pcg64.PCG64`, :class:`~randomgen.threefry.ThreeFry`
-and :class:`~randomgen.philox.Philox` support independent streams.  This
+:class:`~pcg64.PCG64`, :class:`~threefry.ThreeFry`
+and :class:`~philox.Philox` support independent streams.  This
 example shows how many streams can be created by passing in different index
 values in the second input while using the same seed in the first.
 
 .. code-block:: python
 
-  from randomgen.entropy import random_entropy
-  from randomgen import PCG64
+  from numpy.random.entropy import random_entropy
+  from numpy.random import PCG64
 
   entropy = random_entropy(4)
   # 128-bit number as a seed
@@ -26,14 +28,14 @@ values in the second input while using the same seed in the first.
   streams = [PCG64(seed, stream) for stream in range(10)]
 
 
-:class:`~randomgen.philox.Philox` and :class:`~randomgen.threefry.ThreeFry` are
+:class:`~philox.Philox` and :class:`~threefry.ThreeFry` are
 counter-based RNGs which use a counter and key.  Different keys can be used
 to produce independent streams.
 
 .. code-block:: python
 
   import numpy as np
-  from randomgen import ThreeFry
+  from numpy.random import ThreeFry
 
   key = random_entropy(8)
   key = key.view(np.uint64)
@@ -81,8 +83,8 @@ overlap.
 
 .. code-block:: python
 
-  from randomgen.entropy import random_entropy
-  from randomgen import Xorshift1024
+  from numpy.random.entropy import random_entropy
+  from numpy.random import Xorshift1024
 
   entropy = random_entropy(2).astype(np.uint64)
   # 64-bit number as a seed
@@ -97,8 +99,8 @@ overlap.
 Advance
 *******
 ``advance`` can be used to jump the state an arbitrary number of steps, and so
-is a more general approach than ``jump``.  :class:`~randomgen.pcg64.PCG64`,
-:class:`~randomgen.threefry.ThreeFry` and :class:`~randomgen.philox.Philox`
+is a more general approach than ``jump``.  :class:`~pcg64.PCG64`,
+:class:`~threefry.ThreeFry` and :class:`~philox.Philox`
 support ``advance``, and since these also support independent
 streams, it is not usually necessary to use ``advance``.
 
@@ -119,12 +121,12 @@ This occurs for two reasons:
 Advancing the PRNG state resets any pre-computed random numbers. This is
 required to ensure exact reproducibility.
 
-This example uses ``advance`` to advance a :class:`~randomgen.pcg64.PCG64`
+This example uses ``advance`` to advance a :class:`~pcg64.PCG64`
 generator 2 ** 127 steps to set a sequence of random number generators.
 
 .. code-block:: python
 
-   from randomgen import PCG64
+   from numpy.random import PCG64
    brng = PCG64()
    brng_copy = PCG64()
    brng_copy.state = brng.state

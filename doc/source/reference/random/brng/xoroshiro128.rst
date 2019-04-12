@@ -1,11 +1,11 @@
-Xorshift1024*φ
---------------
+Xoroshiro128+
+-------------
 
-.. module:: numpy.random.randomgen.xorshift1024
+.. module:: numpy.random.xoroshiro128
 
-.. currentmodule:: numpy.random.randomgen.xorshift1024
+.. currentmodule:: numpy.random.xoroshiro128
 
-.. autoclass:: Xorshift1024
+.. autoclass:: Xoroshiro128
 	:exclude-members:
 
 Seeding and State
@@ -14,29 +14,29 @@ Seeding and State
 .. autosummary::
    :toctree: generated/
 
-   ~Xorshift1024.seed
-   ~Xorshift1024.state
+   ~Xoroshiro128.seed
+   ~Xoroshiro128.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~Xorshift1024.jump
+   ~Xoroshiro128.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~Xorshift1024.generator
+   ~Xoroshiro128.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~Xorshift1024.cffi
-   ~Xorshift1024.ctypes
+   ~Xoroshiro128.cffi
+   ~Xoroshiro128.ctypes
 
 

@@ -1,9 +1,9 @@
 Xoshiro256**
 ------------
 
-.. module:: numpy.random.randomgen.xoshiro256starstar
+.. module:: numpy.random.xoshiro256starstar
 
-.. currentmodule:: numpy.random.randomgen.xoshiro256starstar
+.. currentmodule:: numpy.random.xoshiro256starstar
 
 .. autoclass:: Xoshiro256StarStar
 	:exclude-members:

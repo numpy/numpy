@@ -84,11 +84,11 @@ cdef class Xoroshiro128:
     in each worker process. All generators should be initialized with the same
     seed to ensure that the segments come from the same sequence.
 
-    >>> from randomgen import RandomGenerator, Xoroshiro128
+    >>> from numpy.random import RandomGenerator, Xoroshiro128
     >>> rg = [RandomGenerator(Xoroshiro128(1234)) for _ in range(10)]
-    # Advance rs[i] by i jumps
+    # Advance each Xoroshiro128 instance by i jumps
     >>> for i in range(10):
-    ...     rg[i].jump(i)
+    ...     rg[i].brng.jump(i)
 
     **State and Seeding**
 
@@ -108,14 +108,16 @@ cdef class Xoroshiro128:
 
     Examples
     --------
-    >>> from randomgen import RandomGenerator, Xoroshiro128
+    >>> from numpy.random import RandomGenerator, Xoroshiro128
     >>> rg = RandomGenerator(Xoroshiro128(1234))
     >>> rg.standard_normal()
+    0.123  # random
 
     Identical method using only Xoroshiro128
 
     >>> rg = Xoroshiro128(1234).generator
     >>> rg.standard_normal()
+    0.123  # random
 
     References
     ----------
@@ -163,8 +165,10 @@ cdef class Xoroshiro128:
                 self.state)
 
     def __dealloc__(self):
-        free(self.rng_state)
-        free(self._brng)
+        if self.rng_state:
+            free(self.rng_state)
+        if self._brng:
+            free(self._brng)
 
     cdef _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
@@ -348,7 +352,7 @@ cdef class Xoroshiro128:
 
         Returns
         -------
-        gen : numpy.random.randomgen.generator.RandomGenerator
+        gen : numpy.random.RandomGenerator
             Random generator used this instance as the basic RNG
         """
         if self._generator is None:

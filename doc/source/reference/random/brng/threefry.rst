@@ -1,11 +1,11 @@
-Parallel Congruent Generator (32-bit, PCG32)
---------------------------------------------
+ThreeFry Counter-based RNG
+--------------------------
 
-.. module:: numpy.random.randomgen.pcg32
+.. module:: numpy.random.threefry
 
-.. currentmodule:: numpy.random.randomgen.pcg32
+.. currentmodule:: numpy.random.threefry
 
-.. autoclass:: PCG32
+.. autoclass:: ThreeFry
 	:exclude-members:
 
 Seeding and State
@@ -14,30 +14,30 @@ Seeding and State
 .. autosummary::
    :toctree: generated/
 
-   ~PCG32.seed
-   ~PCG32.state
+   ~ThreeFry.seed
+   ~ThreeFry.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~PCG32.advance
-   ~PCG32.jump
+   ~ThreeFry.advance
+   ~ThreeFry.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~PCG32.generator
+   ~ThreeFry.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~PCG32.cffi
-   ~PCG32.ctypes
+   ~ThreeFry.cffi
+   ~ThreeFry.ctypes
 
 

@@ -1,9 +1,9 @@
 ThreeFry32 Counter-based RNG
 ----------------------------
 
-.. module:: numpy.random.randomgen.threefry32
+.. module:: numpy.random.threefry32
 
-.. currentmodule:: numpy.random.randomgen.threefry32
+.. currentmodule:: numpy.random.threefry32
 
 .. autoclass:: ThreeFry32
 	:exclude-members:

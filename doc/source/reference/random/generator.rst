@@ -1,8 +1,8 @@
-.. currentmodule:: numpy.random.randomgen
+.. currentmodule:: numpy.random
 
 Random Generator
 ----------------
-The :class:`~RandomGenerator` provides access to
+The `~RandomGenerator` provides access to
 a wide range of distributions, and served as a replacement for
 :class:`~numpy.random.RandomState`.  The main difference between
 the two is that ``RandomGenerator`` relies on an additional basic RNG to

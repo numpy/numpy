@@ -4,8 +4,7 @@ from .common import Benchmark
 
 import numpy as np
 
-from numpy.random import RandomState
-from numpy.random.randomgen import RandomGenerator
+from numpy.random import RandomState, RandomGenerator
 
 class Random(Benchmark):
     params = ['normal', 'uniform', 'weibull 1', 'binomial 10 0.5',
@@ -95,7 +94,7 @@ class RNG(Benchmark):
         if brng == 'numpy':
             self.rg = np.random.RandomState()
         else:
-            self.rg = RandomGenerator(getattr(np.random.randomgen, brng)())
+            self.rg = RandomGenerator(getattr(np.random, brng)())
         self.rg.random_sample()
         self.int32info = np.iinfo(np.int32)
         self.uint32info = np.iinfo(np.uint32)
@@ -149,7 +148,7 @@ class Bounded(Benchmark):
         if brng == 'numpy':
             self.rg = np.random.RandomState()
         else:
-            self.rg = RandomGenerator(getattr(np.random.randomgen, brng)())
+            self.rg = RandomGenerator(getattr(np.random, brng)())
         self.rg.random_sample()
 
     def time_bounded(self, brng, args):
