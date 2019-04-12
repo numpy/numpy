@@ -102,13 +102,13 @@ cdef class DSFMT:
     generators should be initialized with the same seed to ensure that the
     segments come from the same sequence.
 
-    >>> from numpy.random.randomgen.entropy import random_entropy
-    >>> from numpy.random.randomgen import RandomGenerator, DSFMT
+    >>> from numpy.random.entropy import random_entropy
+    >>> from numpy.random import RandomGenerator, DSFMT
     >>> seed = random_entropy()
     >>> rs = [RandomGenerator(DSFMT(seed)) for _ in range(10)]
-    # Advance rs[i] by i jumps
+    # Advance each DSFMT instance by i jumps
     >>> for i in range(10):
-    ...     rs[i].jump()
+    ...     rs[i].brng.jump()
 
     **State and Seeding**
 
@@ -182,10 +182,12 @@ cdef class DSFMT:
                 self.state)
 
     def __dealloc__(self):
-        PyArray_free_aligned(self.rng_state.state)
-        PyArray_free_aligned(self.rng_state.buffered_uniforms)
-        free(self.rng_state)
-        free(self._brng)
+        if self.rng_state:
+            PyArray_free_aligned(self.rng_state.state)
+            PyArray_free_aligned(self.rng_state.buffered_uniforms)
+            free(self.rng_state)
+        if self._brng:
+            free(self._brng)
 
     cdef _reset_state_variables(self):
         self.rng_state.buffer_loc = DSFMT_N64
@@ -396,7 +398,7 @@ cdef class DSFMT:
 
         Returns
         -------
-        gen : numpy.random.randomgen.generator.RandomGenerator
+        gen : numpy.random.RandomGenerator  # ignore
             Random generator used this instance as the basic RNG
         """
         if self._generator is None:

@@ -1,11 +1,11 @@
-ThreeFry Counter-based RNG
---------------------------
+Xorshift1024*φ
+--------------
 
-.. module:: numpy.random.randomgen.threefry
+.. module:: numpy.random.xorshift1024
 
-.. currentmodule:: numpy.random.randomgen.threefry
+.. currentmodule:: numpy.random.xorshift1024
 
-.. autoclass:: ThreeFry
+.. autoclass:: Xorshift1024
 	:exclude-members:
 
 Seeding and State
@@ -14,30 +14,29 @@ Seeding and State
 .. autosummary::
    :toctree: generated/
 
-   ~ThreeFry.seed
-   ~ThreeFry.state
+   ~Xorshift1024.seed
+   ~Xorshift1024.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~ThreeFry.advance
-   ~ThreeFry.jump
+   ~Xorshift1024.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~ThreeFry.generator
+   ~Xorshift1024.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~ThreeFry.cffi
-   ~ThreeFry.ctypes
+   ~Xorshift1024.cffi
+   ~Xorshift1024.ctypes
 
 

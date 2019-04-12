@@ -1,11 +1,11 @@
-Parallel Congruent Generator (64-bit, PCG64)
---------------------------------------------
+Philox Counter-based RNG
+------------------------
 
-.. module:: numpy.random.randomgen.pcg64
+.. module:: numpy.random.philox
 
-.. currentmodule:: numpy.random.randomgen.pcg64
+.. currentmodule:: numpy.random.philox
 
-.. autoclass:: PCG64
+.. autoclass:: Philox
 	:exclude-members:
 
 Seeding and State
@@ -14,30 +14,30 @@ Seeding and State
 .. autosummary::
    :toctree: generated/
 
-   ~PCG64.seed
-   ~PCG64.state
+   ~Philox.seed
+   ~Philox.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~PCG64.advance
-   ~PCG64.jump
+   ~Philox.advance
+   ~Philox.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~PCG64.generator
+   ~Philox.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~PCG64.cffi
-   ~PCG64.ctypes
+   ~Philox.cffi
+   ~Philox.ctypes
 
 

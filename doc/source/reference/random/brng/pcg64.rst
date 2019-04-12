@@ -1,11 +1,11 @@
-Xoroshiro128+
--------------
+Parallel Congruent Generator (64-bit, PCG64)
+--------------------------------------------
 
-.. module:: numpy.random.randomgen.xoroshiro128
+.. module:: numpy.random.pcg64
 
-.. currentmodule:: numpy.random.randomgen.xoroshiro128
+.. currentmodule:: numpy.random.pcg64
 
-.. autoclass:: Xoroshiro128
+.. autoclass:: PCG64
 	:exclude-members:
 
 Seeding and State
@@ -14,29 +14,30 @@ Seeding and State
 .. autosummary::
    :toctree: generated/
 
-   ~Xoroshiro128.seed
-   ~Xoroshiro128.state
+   ~PCG64.seed
+   ~PCG64.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~Xoroshiro128.jump
+   ~PCG64.advance
+   ~PCG64.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~Xoroshiro128.generator
+   ~PCG64.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~Xoroshiro128.cffi
-   ~Xoroshiro128.ctypes
+   ~PCG64.cffi
+   ~PCG64.ctypes
 
 

@@ -1,8 +1,10 @@
+.. currentmodule:: numpy.random
+
 Extending
 ---------
 The basic RNGs have been designed to be extendable using standard tools for
 high-performance Python -- numba and Cython.
-The :class:`randomgen.generator.RandomGenerator` object can also be used with
+The `~RandomGenerator` object can also be used with
 user-provided basic RNGs as long as these export a small set of required
 functions.
 
@@ -17,7 +19,7 @@ provided by ``ctypes.next_double``.
 
 .. code-block:: python
 
-    from randomgen import Xoroshiro128
+    from numpy.random import Xoroshiro128
     import numpy as np
     import numba as nb
 
@@ -65,7 +67,7 @@ Cython
 ======
 
 Cython can be used to unpack the ``PyCapsule`` provided by a basic RNG.
-This example uses :class:`~randomgen.xoroshiro128.Xoroshiro128` and
+This example uses `~xoroshiro128.Xoroshiro128` and
 ``random_gauss_zig``, the Ziggurat-based generator for normals, to fill an
 array.  The usual caveats for writing high-performance code using Cython --
 removing bounds checks and wrap around, providing array alignment information
@@ -77,9 +79,9 @@ removing bounds checks and wrap around, providing array alignment information
     cimport numpy as np
     cimport cython
     from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
-    from randomgen.common cimport *
-    from randomgen.distributions cimport random_gauss_zig
-    from randomgen.xoroshiro128 import Xoroshiro128
+    from numpy.random.common cimport *
+    from numpy.random.distributions cimport random_gauss_zig
+    from numpy.random.xoroshiro128 import Xoroshiro128
 
 
    @cython.boundscheck(False)
@@ -137,7 +139,7 @@ examples folder.
 
 New Basic RNGs
 ==============
-:class:`~randomgen.generator.RandomGenerator` can be used with other
+`~RandomGenerator` can be used with other
 user-provided basic RNGs.  The simplest way to write a new basic RNG is to
 examine the pyx file of one of the existing basic RNGs. The key structure
 that must be provided is the ``capsule`` which contains a ``PyCapsule`` to a
@@ -158,7 +160,7 @@ used by the basic RNG.  The next three are function pointers which return the
 next 64- and 32-bit unsigned integers, the next random double and the next
 raw value.  This final function is used for testing and so can be set to
 the next 64-bit unsigned integer function if not needed. Functions inside
-:class:`~randomgen.generator.RandomGenerator` use this structure as in
+``RandomGenerator`` use this structure as in
 
 .. code-block:: c
 

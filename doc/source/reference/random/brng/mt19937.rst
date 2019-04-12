@@ -1,11 +1,11 @@
-Philox Counter-based RNG
-------------------------
+Mersenne Twister (MT19937) 
+--------------------------
 
-.. module:: numpy.random.randomgen.philox
+.. module:: numpy.random.mt19937
 
-.. currentmodule:: numpy.random.randomgen.philox
+.. currentmodule:: numpy.random.mt19937
 
-.. autoclass:: Philox
+.. autoclass:: MT19937
 	:exclude-members:
 
 Seeding and State
@@ -14,30 +14,29 @@ Seeding and State
 .. autosummary::
    :toctree: generated/
 
-   ~Philox.seed
-   ~Philox.state
+   ~MT19937.seed
+   ~MT19937.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~Philox.advance
-   ~Philox.jump
+   ~MT19937.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~Philox.generator
+   ~MT19937.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~Philox.cffi
-   ~Philox.ctypes
+   ~MT19937.cffi
+   ~MT19937.ctypes
 
 

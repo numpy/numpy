@@ -107,11 +107,11 @@ cdef class ThreeFry:
     in parallel applications by using a sequence of distinct keys where each
     instance uses different key.
 
-    >>> from randomgen import RandomGenerator, ThreeFry
+    >>> from numpy.random import RandomGenerator, ThreeFry
     >>> rg = [RandomGenerator(ThreeFry(1234)) for _ in range(10)]
-    # Advance rs[i] by i jumps
+    # Advance each ThreeFry instance by i jumps
     >>> for i in range(10):
-    ...     rg[i].jump(i)
+    ...     rg[i].brng.jump(i)
 
     Using distinct keys produces independent streams
 
@@ -139,14 +139,16 @@ cdef class ThreeFry:
 
     Examples
     --------
-    >>> from randomgen import RandomGenerator, ThreeFry
+    >>> from numpy.random import RandomGenerator, ThreeFry
     >>> rg = RandomGenerator(ThreeFry(1234))
     >>> rg.standard_normal()
+    0.123  # random
 
     Identical method using only ThreeFry
 
     >>> rg = ThreeFry(1234).generator
     >>> rg.standard_normal()
+    0.123  # random
 
     References
     ----------
@@ -198,10 +200,12 @@ cdef class ThreeFry:
                 self.state)
 
     def __dealloc__(self):
-        free(self.rng_state.ctr)
-        free(self.rng_state.key)
-        free(self.rng_state)
-        free(self._brng)
+        if self.rng_state:
+            free(self.rng_state.ctr)
+            free(self.rng_state.key)
+            free(self.rng_state)
+        if self._brng:
+            free(self._brng)
 
     cdef _reset_state_variables(self):
         self.rng_state.has_uint32 = 0
@@ -462,7 +466,7 @@ cdef class ThreeFry:
 
         Returns
         -------
-        gen : numpy.random.randomgen.generator.RandomGenerator
+        gen : numpy.random.RandomGenerator
             Random generator used this instance as the core PRNG
         """
         if self._generator is None:

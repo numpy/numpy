@@ -1,9 +1,9 @@
 Xoshiro512**
 ------------
 
-.. module:: numpy.random.randomgen.xoshiro512starstar
+.. module:: numpy.random.xoshiro512starstar
 
-.. currentmodule:: numpy.random.randomgen.xoshiro512starstar
+.. currentmodule:: numpy.random.xoshiro512starstar
 
 .. autoclass:: Xoshiro512StarStar
 	:exclude-members:

@@ -1,6 +1,6 @@
 System Entropy
 ==============
 
-.. module:: numpy.random.randomgen.entropy
+.. module:: numpy.random.entropy
 
 .. autofunction:: random_entropy
