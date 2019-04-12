@@ -362,7 +362,7 @@ class FCompiler(CCompiler):
         set_exe('archiver')
         set_exe('ranlib')
 
-    def update_executables(elf):
+    def update_executables(self):
         """Called at the beginning of customisation. Subclasses should
         override this if they need to set up the executables dictionary.
 
