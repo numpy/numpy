@@ -183,6 +183,7 @@ class TestAgainstNumPy(object):
                         self.rs.standard_exponential)
         self._is_state_common_legacy()
 
+    @pytest.mark.xfail(reason='Stream broken for simplicity')
     def test_tomaxint(self):
         self._set_common_state()
         self._is_state_common()
