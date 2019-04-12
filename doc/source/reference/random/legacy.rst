@@ -1,15 +1,15 @@
 Legacy Random Generation
 ------------------------
-The :class:`~randomgen.legacy.LegacyGenerator` provides access to 
-some legacy generators.  These all depend on Box-Muller normals or
+The :class:`~legacy.LegacyGenerator` provides access to 
+legacy generators.  These all depend on Box-Muller normals or
 inverse CDF exponentials or gammas. This class should only be used 
 if it is essential to have randoms that are identical to what
 would have been produced by NumPy. 
 
-:class:`~randomgen.legacy.LegacyGenerator` add additional information
+:class:`~legacy.LegacyGenerator` add additional information
 to the state which is required when using Box-Muller normals since these
 are produced in pairs. It is important to use 
-:attr:`~randomgen.legacy.LegacyGenerator.state` 
+:attr:`~legacy.LegacyGenerator.state` 
 when accessing the state so that these extra values are saved. 
 
 .. warning::
@@ -27,8 +27,8 @@ when accessing the state so that these extra values are saved.
 
 .. code-block:: python
   
-   from randomgen import RandomGenerator, MT19937
-   from randomgen.legacy import LegacyGenerator
+   from numpy.random import MT19937
+   from numpy.random.legacy import LegacyGenerator
    from numpy.random import RandomState
       # Use same seed
    rs = RandomState(12345)
@@ -47,7 +47,7 @@ when accessing the state so that these extra values are saved.
    lg.standard_exponential()
    
 
-.. currentmodule:: numpy.random.randomgen.legacy
+.. currentmodule:: numpy.random.legacy
 
 .. autoclass:: LegacyGenerator
 	:exclude-members:

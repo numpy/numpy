@@ -98,13 +98,13 @@ cdef class MT19937:
     generators should be initialized with the same seed to ensure that the
     segments come from the same sequence.
 
-    >>> from numpy.random.randomgen.entropy import random_entropy
-    >>> from numpy.random.randomgen import RandomGenerator, MT19937
+    >>> from numpy.random.entropy import random_entropy
+    >>> from numpy.random import RandomGenerator, MT19937
     >>> seed = random_entropy()
-    >>> rs = [RandomGenerator(MT19937(seed) for _ in range(10)]
-    # Advance rs[i] by i jumps
+    >>> rs = [RandomGenerator(MT19937(seed)) for _ in range(10)]
+    # Advance each MT19937 instance by i jumps
     >>> for i in range(10):
-            rs[i].jump(i)
+    ...     rs[i].brng.jump(i)
 
     References
     ----------
@@ -145,8 +145,10 @@ cdef class MT19937:
         self.capsule = PyCapsule_New(<void *>self._brng, name, NULL)
 
     def __dealloc__(self):
-        free(self.rng_state)
-        free(self._brng)
+        if self.rng_state:
+            free(self.rng_state)
+        if self._brng:
+            free(self._brng)
 
     # Pickling support:
     def __getstate__(self):
@@ -353,7 +355,7 @@ cdef class MT19937:
 
         Returns
         -------
-        gen : numpy.random.randomgen.generator.RandomGenerator
+        gen : numpy.random.RandomGenerator
             Random generator used this instance as the core PRNG
         """
         if self._generator is None:

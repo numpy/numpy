@@ -16,7 +16,7 @@ that the same seed will produce the same outputs.
 
 .. code-block:: ipython
 
-    from randomgen import Xorshift1024
+    from numpy.random import Xorshift1024
     import multiprocessing
     import concurrent.futures
     import numpy as np

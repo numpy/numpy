@@ -1,11 +1,12 @@
-Mersenne Twister (MT19937) 
---------------------------
+Double SIMD Mersenne Twister (dSFMT) 
+------------------------------------
 
-.. module:: numpy.random.randomgen.mt19937
+.. module:: numpy.random.dsfmt
 
-.. currentmodule:: numpy.random.randomgen.mt19937
+.. currentmodule:: numpy.random.dsfmt
 
-.. autoclass:: MT19937
+
+.. autoclass:: DSFMT
 	:exclude-members:
 
 Seeding and State
@@ -14,29 +15,29 @@ Seeding and State
 .. autosummary::
    :toctree: generated/
 
-   ~MT19937.seed
-   ~MT19937.state
+   ~DSFMT.seed
+   ~DSFMT.state
 
 Parallel generation
 ===================
 .. autosummary::
    :toctree: generated/
 
-   ~MT19937.jump
+   ~DSFMT.jump
 
 Random Generator
 ================
 .. autosummary::
    :toctree: generated/
 
-   ~MT19937.generator
+   ~DSFMT.generator
 
 Extending
 =========
 .. autosummary::
    :toctree: generated/
 
-   ~MT19937.cffi
-   ~MT19937.ctypes
+   ~DSFMT.cffi
+   ~DSFMT.ctypes
 
 
