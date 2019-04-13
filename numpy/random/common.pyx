@@ -305,10 +305,10 @@ cdef int check_array_constraint(np.ndarray val, object name, constraint_type con
     elif cons == CONS_BOUNDED_0_1:
         if not np.all(np.greater_equal(val, 0)) or \
                 not np.all(np.less_equal(val, 1)):
-            raise ValueError("{0} < 0 , {0} > 1 or {0} contains NaNs".format(name))
+            raise ValueError("{0} < 0, {0} > 1 or {0} contains NaNs".format(name))
     elif cons == CONS_BOUNDED_GT_0_1:
         if not np.all(np.greater(val, 0)) or not np.all(np.less_equal(val, 1)):
-            raise ValueError("{0} <= 0 , {0} > 1 or {0} contains NaNs".format(name))
+            raise ValueError("{0} <= 0, {0} > 1 or {0} contains NaNs".format(name))
     elif cons == CONS_GT_1:
         if not np.all(np.greater(val, 1)):
             raise ValueError("{0} <= 1 or {0} contains NaNs".format(name))
@@ -336,10 +336,10 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
             raise ValueError(name + " <= 0")
     elif cons == CONS_BOUNDED_0_1:
         if not (val >= 0) or not (val <= 1):
-            raise ValueError("{0} < 0 , {0} > 1 or {0} is NaN".format(name))
+            raise ValueError("{0} < 0, {0} > 1 or {0} is NaN".format(name))
     elif cons == CONS_BOUNDED_GT_0_1:
         if not val >0 or not val <= 1:
-            raise ValueError("{0} <= 0 , {0} > 1 or {0} contains NaNs".format(name))
+            raise ValueError("{0} <= 0, {0} > 1 or {0} contains NaNs".format(name))
     elif cons == CONS_GT_1:
         if not (val > 1):
             raise ValueError("{0} <= 1 or {0} is NaN".format(name))

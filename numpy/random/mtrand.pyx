@@ -3787,7 +3787,8 @@ cdef class RandomState:
         not like:
 
         >>> np.random.multinomial(100, [1.0, 2.0])  # WRONG
-        array([100,   0])
+        Traceback (most recent call last):
+        ValueError: pvals < 0, pvals > 1 or pvals contains NaNs
 
         """
         cdef np.npy_intp d, i, sz, offset
