@@ -5572,7 +5572,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
-    int i;
+    npy_intp i;
     int nop;
 
     /* override vars */
