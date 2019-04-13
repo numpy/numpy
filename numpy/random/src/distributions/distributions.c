@@ -1070,7 +1070,7 @@ int64_t random_zipf(brng_t *brng_state, double a) {
 
     T = pow(1.0 + 1.0 / X, am1);
     if (V * X * (T - 1.0) / (b - 1.0) <= T / b) {
-      return (long)X;
+      return (int64_t)X;
     }
   }
 }
