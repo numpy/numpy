@@ -5,7 +5,7 @@ from libc.stdint cimport uint64_t
 import numpy as np
 cimport numpy as np
 
-from ..distributions cimport brng_t
+from .distributions cimport brng_t
 
 cdef extern from "../src/legacy/distributions-boxmuller.h":
 

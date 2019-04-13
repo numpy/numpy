@@ -115,9 +115,7 @@ cdef class RandomGenerator:
 
     def __reduce__(self):
         from ._pickle import __generator_ctor
-        return (__generator_ctor,
-                (self.brng.state['brng'],),
-                self.brng.state)
+        return __generator_ctor, (self.brng.state['brng'],), self.brng.state
 
     def random_sample(self, size=None, dtype=np.float64, out=None):
         """
@@ -3323,7 +3321,7 @@ cdef class RandomGenerator:
         nbad : int or array_like of ints
             Number of ways to make a bad selection.  Must be nonnegative.
         nsample : int or array_like of ints
-            Number of items sampled.  Must be at least 1 and at most
+            Number of items sampled.  Must be nonnegative and less than
             ``ngood + nbad``.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
@@ -3415,14 +3413,14 @@ cdef class RandomGenerator:
             return disc(&random_hypergeometric, self._brng, size, self.lock, 0, 3,
                         lngood, 'ngood', CONS_NON_NEGATIVE,
                         lnbad, 'nbad', CONS_NON_NEGATIVE,
-                        lnsample, 'nsample', CONS_GTE_1)
+                        lnsample, 'nsample', CONS_NON_NEGATIVE)
 
         if np.any(np.less(np.add(ongood, onbad), onsample)):
             raise ValueError("ngood + nbad < nsample")
         return discrete_broadcast_iii(&random_hypergeometric, self._brng, size, self.lock,
                                       ongood, 'ngood', CONS_NON_NEGATIVE,
                                       onbad, 'nbad', CONS_NON_NEGATIVE,
-                                      onsample, 'nsample', CONS_GTE_1)
+                                      onsample, 'nsample', CONS_NON_NEGATIVE)
 
     def logseries(self, p, size=None):
         """

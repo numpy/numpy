@@ -1837,7 +1837,7 @@ class TestBroadcast(object):
         nsample = [2]
         bad_ngood = [-1]
         bad_nbad = [-2]
-        bad_nsample_one = [0]
+        bad_nsample_one = [-1]
         bad_nsample_two = [4]
         hypergeom = random.hypergeometric
         desired = np.array([1, 1, 1])
@@ -1868,7 +1868,7 @@ class TestBroadcast(object):
 
         assert_raises(ValueError, hypergeom, -1, 10, 20)
         assert_raises(ValueError, hypergeom, 10, -1, 20)
-        assert_raises(ValueError, hypergeom, 10, 10, 0)
+        assert_raises(ValueError, hypergeom, 10, 10, -1)
         assert_raises(ValueError, hypergeom, 10, 10, 25)
 
     def test_logseries(self):
