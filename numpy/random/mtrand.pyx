@@ -15,7 +15,7 @@ from .bounded_integers cimport *
 from .bounded_integers import _randint_types
 from .common cimport *
 from .distributions cimport *
-from .legacy.legacy_distributions cimport *
+from .legacy_distributions cimport *
 from .mt19937 import MT19937 as _MT19937
 
 np.import_array()
@@ -113,9 +113,7 @@ cdef class RandomState:
     def __reduce__(self):
         state = self.get_state(legacy=False)
         from ._pickle import __randomstate_ctor
-        return (__randomstate_ctor,
-                (state['brng'],),
-                state)
+        return __randomstate_ctor, (state['brng'],), state
 
     cdef _reset_gauss(self):
         self._aug_state.has_gauss = 0
