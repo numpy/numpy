@@ -542,25 +542,25 @@ class TestRandomDist(object):
     def test_choice_uniform_replace(self):
         random.brng.seed(self.seed)
         actual = random.choice(4, 4)
-        desired = np.array([2, 3, 2, 3])
+        desired = np.array([2, 3, 2, 3], dtype=np.int64)
         assert_array_equal(actual, desired)
 
     def test_choice_nonuniform_replace(self):
         random.brng.seed(self.seed)
         actual = random.choice(4, 4, p=[0.4, 0.4, 0.1, 0.1])
-        desired = np.array([1, 1, 2, 2])
+        desired = np.array([1, 1, 2, 2], dtype=np.int64)
         assert_array_equal(actual, desired)
 
     def test_choice_uniform_noreplace(self):
         random.brng.seed(self.seed)
         actual = random.choice(4, 3, replace=False)
-        desired = np.array([0, 1, 3])
+        desired = np.array([0, 2, 3], dtype=np.int64)
         assert_array_equal(actual, desired)
 
     def test_choice_nonuniform_noreplace(self):
         random.brng.seed(self.seed)
         actual = random.choice(4, 3, replace=False, p=[0.1, 0.3, 0.5, 0.1])
-        desired = np.array([2, 3, 1])
+        desired = np.array([2, 3, 1], dtype=np.int64)
         assert_array_equal(actual, desired)
 
     def test_choice_noninteger(self):
@@ -569,11 +569,22 @@ class TestRandomDist(object):
         desired = np.array(['c', 'd', 'c', 'd'])
         assert_array_equal(actual, desired)
 
+    def test_choice_multidimensional_default_axis(self):
+        random.brng.seed(self.seed)
+        actual = random.choice([[0, 1], [2, 3], [4, 5], [6, 7]], 3)
+        desired = np.array([[4, 5], [6, 7], [4, 5]])
+        assert_array_equal(actual, desired)
+
+    def test_choice_multidimensional_custom_axis(self):
+        random.brng.seed(self.seed)
+        actual = random.choice([[0, 1], [2, 3], [4, 5], [6, 7]], 1, axis=1)
+        desired = np.array([[0], [2], [4], [6]])
+        assert_array_equal(actual, desired)
+
     def test_choice_exceptions(self):
         sample = random.choice
         assert_raises(ValueError, sample, -1, 3)
         assert_raises(ValueError, sample, 3., 3)
-        assert_raises(ValueError, sample, [[1, 2], [3, 4]], 3)
         assert_raises(ValueError, sample, [], 3)
         assert_raises(ValueError, sample, [1, 2, 3, 4], 3,
                       p=[[0.25, 0.25], [0.25, 0.25]])
@@ -650,6 +661,17 @@ class TestRandomDist(object):
         assert actual.dtype == np.int64
         actual = random.choice(4, 2, p=p, replace=False)
         assert actual.dtype == np.int64
+
+    def test_choice_large_sample(self):
+        import hashlib
+
+        choice_hash = '6395868be877d27518c832213c17977c'
+        random.brng.seed(self.seed)
+        actual = random.choice(10000, 5000, replace=False)
+        if sys.byteorder != 'little':
+            actual = actual.byteswap()
+        res = hashlib.md5(actual.view(np.int8)).hexdigest()
+        assert_(choice_hash == res)
 
     def test_bytes(self):
         random.brng.seed(self.seed)
