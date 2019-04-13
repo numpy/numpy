@@ -121,3 +121,17 @@ class AxisError(ValueError, IndexError):
                 msg = "{}: {}".format(msg_prefix, msg)
 
         super(AxisError, self).__init__(msg)
+
+
+@_display_as_base
+class _ArrayMemoryError(MemoryError):
+    """ Thrown when an array cannot be allocated"""
+    def __init__(self, shape, dtype):
+        self.shape = shape
+        self.dtype = dtype
+
+    def __str__(self):
+        return "Attempted to allocate array with shape " + \
+        str(self.shape).rstrip(')').rstrip(',') + ") and data type " + \
+        str(self.dtype) + "."
+
