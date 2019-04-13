@@ -68,7 +68,7 @@ cf2py  intent(out) a
 
     @pytest.mark.slow
     def test_docstring(self):
-        expected = """
+        expected = textwrap.dedent("""\
         a = t(fun,[fun_extra_args])
 
         Wrapper for ``t``.
@@ -93,8 +93,8 @@ cf2py  intent(out) a
           def fun(): return a
           Return objects:
             a : int
-        """
-        assert_equal(self.module.t.__doc__, textwrap.dedent(expected).lstrip())
+        """)
+        assert_equal(self.module.t.__doc__, expected)
 
     def check_function(self, name):
         t = getattr(self.module, name)
