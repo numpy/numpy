@@ -5,6 +5,7 @@ in python where it's easier.
 By putting the formatting in `__str__`, we also avoid paying the cost for
 users who silence the exceptions.
 """
+from numpy.core.overrides import set_module
 
 def _unpack_tuple(tup):
     if len(tup) == 1:
@@ -96,3 +97,27 @@ class _UFuncOutputCastingError(_UFuncCastingError):
         ).format(
             self.ufunc.__name__, i_str, self.from_, self.to, self.casting
         )
+
+
+# Exception used in shares_memory()
+@set_module('numpy')
+class TooHardError(RuntimeError):
+    pass
+
+
+@set_module('numpy')
+class AxisError(ValueError, IndexError):
+    """ Axis supplied was invalid. """
+    def __init__(self, axis, ndim=None, msg_prefix=None):
+        # single-argument form just delegates to base class
+        if ndim is None and msg_prefix is None:
+            msg = axis
+
+        # do the string formatting here, to save work in the C code
+        else:
+            msg = ("axis {} is out of bounds for array of dimension {}"
+                   .format(axis, ndim))
+            if msg_prefix is not None:
+                msg = "{}: {}".format(msg_prefix, msg)
+
+        super(AxisError, self).__init__(msg)

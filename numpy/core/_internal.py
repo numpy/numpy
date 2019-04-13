@@ -548,6 +548,12 @@ _pep3118_standard_map = {
 }
 _pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
 
+_pep3118_unsupported_map = {
+    'u': 'UCS-2 strings',
+    '&': 'pointers',
+    't': 'bitfields',
+    'X': 'function pointers',
+}
 
 class _Stream(object):
     def __init__(self, s):
@@ -659,6 +665,11 @@ def __dtype_from_pep3118(stream, is_subdtype):
                 stream.byteorder, stream.byteorder)
             value = dtype(numpy_byteorder + dtypechar)
             align = value.alignment
+        elif stream.next in _pep3118_unsupported_map:
+            desc = _pep3118_unsupported_map[stream.next]
+            raise NotImplementedError(
+                "Unrepresentable PEP 3118 data type {!r} ({})"
+                .format(stream.next, desc))
         else:
             raise ValueError("Unknown PEP 3118 data type specifier %r" % stream.s)
 
@@ -782,27 +793,6 @@ def _gcd(a, b):
 
 def _lcm(a, b):
     return a // _gcd(a, b) * b
-
-# Exception used in shares_memory()
-class TooHardError(RuntimeError):
-    pass
-
-class AxisError(ValueError, IndexError):
-    """ Axis supplied was invalid. """
-    def __init__(self, axis, ndim=None, msg_prefix=None):
-        # single-argument form just delegates to base class
-        if ndim is None and msg_prefix is None:
-            msg = axis
-
-        # do the string formatting here, to save work in the C code
-        else:
-            msg = ("axis {} is out of bounds for array of dimension {}"
-                   .format(axis, ndim))
-            if msg_prefix is not None:
-                msg = "{}: {}".format(msg_prefix, msg)
-
-        super(AxisError, self).__init__(msg)
-
 
 def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     """ Format the error message for when __array_ufunc__ gives up. """
