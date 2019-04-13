@@ -38,7 +38,7 @@ from .umath import (multiply, invert, sin, UFUNC_BUFSIZE_DEFAULT,
                     ERR_LOG, ERR_DEFAULT, PINF, NAN)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
-from ._internal import TooHardError, AxisError
+from ._exceptions import TooHardError, AxisError
 
 bitwise_not = invert
 ufunc = type(sin)
