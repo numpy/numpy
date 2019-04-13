@@ -328,6 +328,7 @@ class TestAgainstNumPy(object):
                      g(100, np.array(p), size=(7, 23)))
         self._is_state_common()
 
+    @pytest.mark.xfail(reason='Stream broken for performance')
     def test_choice(self):
         self._set_common_state()
         self._is_state_common()

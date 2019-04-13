@@ -515,9 +515,9 @@ cdef class RandomGenerator:
         return self.randint(0, 4294967296, size=n_uint32, dtype=np.uint32).tobytes()[:length]
 
     @cython.wraparound(True)
-    def choice(self, a, size=None, replace=True, p=None):
+    def choice(self, a, size=None, replace=True, p=None, axis=0):
         """
-        choice(a, size=None, replace=True, p=None)
+        choice(a, size=None, replace=True, p=None, axis=0):
 
         Generates a random sample from a given 1-D array
 
@@ -538,6 +538,9 @@ cdef class RandomGenerator:
             The probabilities associated with each entry in a.
             If not given the sample assumes a uniform distribution over all
             entries in a.
+        axis : int, optional
+            The axis along which the selection is performed. The default, 0,
+            selects by row.
 
         Returns
         -------
@@ -547,11 +550,11 @@ cdef class RandomGenerator:
         Raises
         ------
         ValueError
-            If a is an int and less than zero, if a or p are not 1-dimensional,
-            if a is an array-like of size 0, if p is not a vector of
+            If a is an int and less than zero, if p is not 1-dimensional, if
+            a is array-like with a size 0, if p is not a vector of
             probabilities, if a and p have different lengths, or if
             replace=False and the sample size is greater than the population
-            size
+            size.
 
         See Also
         --------
@@ -592,7 +595,14 @@ cdef class RandomGenerator:
               dtype='<U11')
 
         """
+        cdef char* idx_ptr
+        cdef int64_t buf
+        cdef char* buf_ptr
 
+        cdef set idx_set
+        cdef int64_t val, t, loc, size_i, pop_size_i
+        cdef int64_t *idx_data
+        cdef np.npy_intp j
         # Format and Verify input
         a = np.array(a, copy=False)
         if a.ndim == 0:
@@ -603,11 +613,9 @@ cdef class RandomGenerator:
                 raise ValueError("a must be 1-dimensional or an integer")
             if pop_size <= 0 and np.prod(size) != 0:
                 raise ValueError("a must be greater than 0 unless no samples are taken")
-        elif a.ndim != 1:
-            raise ValueError("a must be 1-dimensional")
         else:
-            pop_size = a.shape[0]
-            if pop_size is 0 and np.prod(size) != 0:
+            pop_size = a.shape[axis]
+            if pop_size == 0 and np.prod(size) != 0:
                 raise ValueError("'a' cannot be empty unless no samples are taken")
 
         if p is not None:
@@ -677,7 +685,39 @@ cdef class RandomGenerator:
                     n_uniq += new.size
                 idx = found
             else:
-                idx = (self.permutation(pop_size)[:size]).astype(np.int64)
+                size_i = size
+                pop_size_i = pop_size
+                # This is a heuristic tuning. should be improvable
+                if pop_size_i > 200 and (size > 200 or size > (10 * pop_size // size)):
+                    # Tail shuffle size elements
+                    idx = np.arange(pop_size, dtype=np.int64)
+                    idx_ptr = np.PyArray_BYTES(<np.ndarray>idx)
+                    buf_ptr = <char*>&buf
+                    self._shuffle_raw(pop_size_i, max(pop_size_i - size_i,1),
+                                      8, 8, idx_ptr, buf_ptr)
+                    # Copy to allow potentially large array backing idx to be gc
+                    idx = idx[(pop_size - size):].copy()
+                else:
+                    # Floyds's algorithm with precomputed indices
+                    # Worst case, O(n**2) when size is close to pop_size
+                    idx = np.empty(size, dtype=np.int64)
+                    idx_data = <int64_t*>np.PyArray_DATA(<np.ndarray>idx)
+                    idx_set = set()
+                    loc = 0
+                    # Sample indices with one pass to avoid reacquiring the lock
+                    with self.lock:
+                        for j in range(pop_size_i - size_i, pop_size_i):
+                            idx_data[loc] = random_interval(self._brng, j)
+                            loc += 1
+                    loc = 0
+                    while len(idx_set) < size_i:
+                        for j in range(pop_size_i - size_i, pop_size_i):
+                            if idx_data[loc] not in idx_set:
+                                val = idx_data[loc]
+                            else:
+                                idx_data[loc] = val = j
+                            idx_set.add(val)
+                            loc += 1
                 if shape is not None:
                     idx.shape = shape
 
@@ -699,7 +739,9 @@ cdef class RandomGenerator:
             res[()] = a[idx]
             return res
 
-        return a[idx]
+        # asarray downcasts on 32-bit platforms, always safe
+        # no-op on 64-bit platforms
+        return a.take(np.asarray(idx, dtype=np.intp), axis=axis)
 
     def uniform(self, low=0.0, high=1.0, size=None):
         """
@@ -3971,9 +4013,9 @@ cdef class RandomGenerator:
                 # the most common case, yielding a ~33% performance improvement.
                 # Note that apparently, only one branch can ever be specialized.
                 if itemsize == sizeof(np.npy_intp):
-                    self._shuffle_raw(n, sizeof(np.npy_intp), stride, x_ptr, buf_ptr)
+                    self._shuffle_raw(n, 1, sizeof(np.npy_intp), stride, x_ptr, buf_ptr)
                 else:
-                    self._shuffle_raw(n, itemsize, stride, x_ptr, buf_ptr)
+                    self._shuffle_raw(n, 1, itemsize, stride, x_ptr, buf_ptr)
         elif isinstance(x, np.ndarray) and x.ndim and x.size:
             buf = np.empty_like(x[0, ...])
             with self.lock:
@@ -3992,10 +4034,29 @@ cdef class RandomGenerator:
                     j = random_interval(self._brng, i)
                     x[i], x[j] = x[j], x[i]
 
-    cdef inline _shuffle_raw(self, np.npy_intp n, np.npy_intp itemsize,
-                             np.npy_intp stride, char* data, char* buf):
+    cdef inline _shuffle_raw(self, np.npy_intp n, np.npy_intp first,
+                             np.npy_intp itemsize, np.npy_intp stride,
+                             char* data, char* buf):
+        """
+        Parameters
+        ----------
+        n
+            Number of elements in data 
+        first
+            First observation to shuffle.  Shuffles n-1, 
+            n-2, ..., first, so that when first=1 the entire
+            array is shuffled 
+        itemsize
+            Size in bytes of item 
+        stride
+            Array stride
+        data
+            Location of data
+        buf
+            Location of buffer (itemsize)
+        """
         cdef np.npy_intp i, j
-        for i in reversed(range(1, n)):
+        for i in reversed(range(first, n)):
             j = random_interval(self._brng, i)
             string.memcpy(buf, data + j * stride, itemsize)
             string.memcpy(data + j * stride, data + i * stride, itemsize)
