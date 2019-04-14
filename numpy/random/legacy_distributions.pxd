@@ -7,7 +7,7 @@ cimport numpy as np
 
 from .distributions cimport brng_t
 
-cdef extern from "../src/legacy/distributions-boxmuller.h":
+cdef extern from "distributions-boxmuller.h":
 
     struct aug_brng:
         brng_t *basicrng
