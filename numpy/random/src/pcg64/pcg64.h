@@ -100,7 +100,7 @@ static inline void _pcg_mult64(uint64_t x, uint64_t y, uint64_t *z1,
                                uint64_t *z0) {
 
 #if defined _WIN32 && _MSC_VER >= 1900 && _M_AMD64
-    z0[0] = _umul128(x, y, z1);
+  z0[0] = _umul128(x, y, z1);
 #else
   uint64_t x0, x1, y0, y1;
   uint64_t w0, w1, w2, t;
@@ -118,7 +118,6 @@ static inline void _pcg_mult64(uint64_t x, uint64_t y, uint64_t *z1,
   w1 += x0 * y1;
   *z1 = x1 * y1 + w2 + (w1 >> 32);
 #endif
-
 }
 
 static inline pcg128_t _pcg128_mult(pcg128_t a, pcg128_t b) {
@@ -237,5 +236,11 @@ static inline uint32_t pcg64_next32(pcg64_state *state) {
 void pcg64_advance(pcg64_state *state, uint64_t *step);
 
 void pcg64_set_seed(pcg64_state *state, uint64_t *seed, uint64_t *inc);
+
+void pcg64_get_state(pcg64_state *state, uint64_t *state_arr, int *has_uint32,
+                     uint32_t *uinteger);
+
+void pcg64_set_state(pcg64_state *state, uint64_t *state_arr, int has_uint32,
+                     uint32_t uinteger);
 
 #endif /* PCG64_H_INCLUDED */
