@@ -8,14 +8,36 @@ What's New or Different
 .. warning::
 
   The Box-Muller method used to produce NumPy's normals is no longer available
-  in `~.RandomGenerator`.  It is not possible to
-  reproduce the exact random values using ``RandomGenerator`` for the normal
-  distribution or any other distribution that relies on the normal such as the
-  `numpy.random.gamma` or `numpy.random.standard_t`. If you require backward
-  compatibility, a legacy generator, `~.legacy.
-  LegacyGenerator`, has been created which can fully reproduce the exact byte
-  sequence produced by legacy code.
+  in `Generator`.  It is not possible to reproduce the exact random
+  values using ``Generator`` for the normal distribution or any other
+  distribution that relies on the normal such as the `gamma` or
+  `standard_t`. If you require bitwise backward compatible
+  streams, use `RandomState`.
 
+Quick comparison of legacy `mtrand <legacy>`_ to the new `Generator`
+
+================== ==================== =============
+Feature            Older Equivalent     Notes
+------------------ -------------------- -------------
+`Generator`        `RandomState`        ``Generator`` requires a stream
+                                        source, called a `BitGenerator
+                                        <bit_generators>` A number of these
+                                        are provided.  ``RandomState`` uses
+                                        only the Box- Muller method.
+------------------ -------------------- -------------
+``np.random.``     ``np.random.``       Access the values in a BitGenerator,
+``Generator().``   ``random_sample()``  convert them to ``float64`` in the
+``random()``                            interval ``[0.0.,`` `` 1.0)``.
+                                        In addition to the ``size`` kwarg, now
+                                        supports ``dtype='d'`` or ``dtype='f'``,
+                                        and an ``out`` kwarg to fill a user-
+                                        supplied array.
+
+                                        Many other distributions are also
+                                        supported.
+=================== =================== =============
+
+And in more detail:
 
 * `~.entropy.random_entropy` provides access to the system
   source of randomness that is used in cryptographic applications (e.g.,
@@ -81,7 +103,7 @@ What's New or Different
   * Standard Exponentials (`~.RandomGenerator.standard_exponential`)
 
   This allows multithreading to fill large arrays in chunks using suitable
-  PRNGs in parallel.
+  BitGenerators in parallel.
 
 .. ipython:: python
 

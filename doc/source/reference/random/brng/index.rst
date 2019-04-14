@@ -1,3 +1,5 @@
+.. _brng:
+
 Basic Random Number Generators
 ------------------------------
 
@@ -12,8 +14,6 @@ access the functions provided, e.g., `numba <https://numba.pydata.org>`_.
 
 Stable RNGs
 ===========
-These RNGs will be included in future releases.
-
 
 .. toctree::
    :maxdepth: 1
