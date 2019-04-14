@@ -9,7 +9,7 @@ import warnings
 
 from numpy.core import multiarray as mu
 from numpy.core import umath as um
-from numpy.core.numeric import asanyarray
+from numpy.core._asarray import asanyarray
 from numpy.core import numerictypes as nt
 from numpy._globals import _NoValue
 

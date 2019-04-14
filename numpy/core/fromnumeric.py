@@ -13,7 +13,8 @@ from . import multiarray as mu
 from . import overrides
 from . import umath as um
 from . import numerictypes as nt
-from .numeric import asarray, array, asanyarray, concatenate
+from ._asarray import asarray, array, asanyarray
+from .multiarray import concatenate
 from . import _methods
 
 _dt_ = nt.sctype2char
