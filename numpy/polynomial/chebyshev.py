@@ -528,8 +528,7 @@ def chebfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots,
-    hermefromroots.
+    polyfromroots, legfromroots, lagfromroots, hermfromroots, hermefromroots
 
     Examples
     --------
