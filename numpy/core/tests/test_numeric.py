@@ -43,7 +43,7 @@ class TestResize(object):
 
     def test_reshape_from_zero(self):
         # See also gh-6740
-        A = np.zeros(0, dtype=[('a', np.float32, 1)])
+        A = np.zeros(0, dtype=[('a', np.float32)])
         Ar = np.resize(A, (2, 1))
         assert_array_equal(Ar, np.zeros((2, 1), Ar.dtype))
         assert_equal(A.dtype, Ar.dtype)
