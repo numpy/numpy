@@ -17,24 +17,8 @@ np.import_array()
 
 # IF PCG_EMULATED_MATH==1:
 cdef extern from "src/pcg64/pcg64.h":
-
-    ctypedef struct pcg128_t:
-        uint64_t high
-        uint64_t low
-# ELSE:
-#    cdef extern from "inttypes.h":
-#        ctypedef unsigned long long __uint128_t
-#
-#    cdef extern from "src/pcg64/pcg64.h":
-#        ctypedef __uint128_t pcg128_t
-
-cdef extern from "src/pcg64/pcg64.h":
-
-    cdef struct pcg_state_setseq_128:
-        pcg128_t state
-        pcg128_t inc
-
-    ctypedef pcg_state_setseq_128 pcg64_random_t
+    # Use int as generic type, actual type read from pcg64.h and is platform dependent
+    ctypedef int pcg64_random_t
 
     struct s_pcg64_state:
         pcg64_random_t *pcg_state
@@ -48,6 +32,8 @@ cdef extern from "src/pcg64/pcg64.h":
     void pcg64_jump(pcg64_state *state)
     void pcg64_advance(pcg64_state *state, uint64_t *step)
     void pcg64_set_seed(pcg64_state *state, uint64_t *seed, uint64_t *inc)
+    void pcg64_get_state(pcg64_state *state, uint64_t *state_arr, int *has_uint32, uint32_t *uinteger)
+    void pcg64_set_state(pcg64_state *state, uint64_t *state_arr, int has_uint32, uint32_t uinteger)
 
 cdef uint64_t pcg64_uint64(void* st) nogil:
     return pcg64_next64(<pcg64_state *>st)
@@ -280,40 +266,39 @@ cdef class PCG64:
             Dictionary containing the information required to describe the
             state of the RNG
         """
-        # IF PCG_EMULATED_MATH==1:
-        # TODO: push this into an #ifdef in the C code
-        state = 2 **64 * self.rng_state.pcg_state.state.high
-        state += self.rng_state.pcg_state.state.low
-        inc = 2 **64 * self.rng_state.pcg_state.inc.high
-        inc += self.rng_state.pcg_state.inc.low
-        # ELSE:
-        #    state = self.rng_state.pcg_state.state
-        #    inc = self.rng_state.pcg_state.inc
+        cdef np.ndarray state_vec
+        cdef int has_uint32
+        cdef uint32_t uinteger
 
+        # state_vec is state.high, state.low, inc.high, inc.low
+        state_vec = <np.ndarray>np.empty(4, dtype=np.uint64)
+        pcg64_get_state(self.rng_state, <uint64_t *>state_vec.data, &has_uint32, &uinteger)
+        state = int(state_vec[0]) * 2**64 + int(state_vec[1])
+        inc = int(state_vec[2]) * 2**64 + int(state_vec[3])
         return {'brng': self.__class__.__name__,
                 'state': {'state': state, 'inc': inc},
-                'has_uint32': self.rng_state.has_uint32,
-                'uinteger': self.rng_state.uinteger}
+                'has_uint32': has_uint32,
+                'uinteger': uinteger}
 
     @state.setter
     def state(self, value):
+        cdef np.ndarray state_vec
+        cdef int has_uint32
+        cdef uint32_t uinteger
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
         brng = value.get('brng', '')
         if brng != self.__class__.__name__:
             raise ValueError('state must be for a {0} '
                              'RNG'.format(self.__class__.__name__))
-        # IF PCG_EMULATED_MATH==1:
-        self.rng_state.pcg_state.state.high = value['state']['state'] // 2 ** 64
-        self.rng_state.pcg_state.state.low = value['state']['state'] % 2 ** 64
-        self.rng_state.pcg_state.inc.high = value['state']['inc'] // 2 ** 64
-        self.rng_state.pcg_state.inc.low = value['state']['inc'] % 2 ** 64
-        # ELSE:
-        #    self.rng_state.pcg_state.state  = value['state']['state']
-        #    self.rng_state.pcg_state.inc = value['state']['inc']
-
-        self.rng_state.has_uint32 = value['has_uint32']
-        self.rng_state.uinteger = value['uinteger']
+        state_vec = <np.ndarray>np.empty(4, dtype=np.uint64)
+        state_vec[0] = value['state']['state'] // 2 ** 64
+        state_vec[1] = value['state']['state'] % 2 ** 64
+        state_vec[2] = value['state']['inc'] // 2 ** 64
+        state_vec[3] = value['state']['inc'] % 2 ** 64
+        has_uint32 = value['has_uint32']
+        uinteger = value['uinteger']
+        pcg64_set_state(self.rng_state, <uint64_t *>state_vec.data, has_uint32, uinteger)
 
     def advance(self, delta):
         """
