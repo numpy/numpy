@@ -47,6 +47,16 @@ a manner are very rare in practice and only available through the NumPy C-API.
 Future Changes
 ==============
 
+Shape-1 fields in dtypes won't be collapsed to scalars in a future version
+--------------------------------------------------------------------------
+
+Currently, a field specified as ``[(name, dtype, 1)]`` or ``"1type"`` is
+interpreted as a scalar field (i.e., the same as ``[(name, dtype)]`` or
+``[(name, dtype, ()]``). This now raises a FutureWarning; in a future version,
+it will be interpreted as a shape-(1,) field, i.e. the same as ``[(name,
+dtype, (1,))]`` or ``"(1,)type"`` (consistently with ``[(name, dtype, n)]``
+/ ``"ntype"`` with ``n>1``, which is already equivalent to ``[(name, dtype,
+(n,)]`` / ``"(n,)type"``).
 
 Expired deprecations
 ====================
