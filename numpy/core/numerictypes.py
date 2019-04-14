@@ -347,7 +347,7 @@ def issubsctype(arg1, arg2):
 
     See Also
     --------
-    issctype, issubdtype,obj2sctype
+    issctype, issubdtype, obj2sctype
 
     Examples
     --------
