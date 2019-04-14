@@ -5884,9 +5884,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('T',
     albeit unimplemented, all the attributes of the ndarray class so as to
     provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -5898,9 +5896,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('base',
     albeit unimplemented, all the attributes of the ndarray class so as to
     a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -5950,9 +5946,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('all',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -5964,9 +5958,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('any',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -5978,9 +5970,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('argmax',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -5992,9 +5982,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('argmin',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6006,9 +5994,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('argsort',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6020,9 +6006,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('astype',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6034,9 +6018,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('byteswap',
     albeit unimplemented, all the attributes of the ndarray class so as to
     provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6048,9 +6030,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('choose',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6062,9 +6042,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('clip',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6076,9 +6054,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('compress',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6090,9 +6066,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('conjugate',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6104,9 +6078,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('copy',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6118,9 +6090,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('cumprod',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6132,9 +6102,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('cumsum',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6146,9 +6114,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('diagonal',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6160,9 +6126,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('dump',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6174,9 +6138,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('dumps',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6188,9 +6150,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('fill',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6202,9 +6162,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('flatten',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6216,9 +6174,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('getfield',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6230,9 +6186,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('item',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6244,9 +6198,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('itemset',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6258,9 +6210,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('max',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6272,9 +6222,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('mean',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6286,9 +6234,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('min',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6333,9 +6279,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('nonzero',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6347,9 +6291,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('prod',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6361,9 +6303,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('ptp',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6375,9 +6315,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('put',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6389,9 +6327,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('ravel',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6403,9 +6339,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('repeat',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6417,9 +6351,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('reshape',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6431,9 +6363,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('resize',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6445,9 +6375,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('round',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6459,9 +6387,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('searchsorted',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6473,9 +6399,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('setfield',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6487,9 +6411,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('setflags',
     albeit unimplemented, all the attributes of the ndarray class so as to
     provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6501,9 +6423,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('sort',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6515,9 +6435,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('squeeze',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6529,9 +6447,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('std',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6543,9 +6459,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('sum',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6557,9 +6471,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('swapaxes',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6571,9 +6483,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('take',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6585,9 +6495,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('tofile',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6599,9 +6507,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('tolist',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6613,9 +6519,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('tostring',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6627,9 +6531,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('trace',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6641,9 +6543,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('transpose',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6655,9 +6555,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('var',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6669,9 +6567,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
