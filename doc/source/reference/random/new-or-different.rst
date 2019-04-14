@@ -8,14 +8,37 @@ What's New or Different
 .. warning::
 
   The Box-Muller method used to produce NumPy's normals is no longer available
-  in `~.RandomGenerator`.  It is not possible to
-  reproduce the exact random values using ``RandomGenerator`` for the normal
-  distribution or any other distribution that relies on the normal such as the
-  `numpy.random.gamma` or `numpy.random.standard_t`. If you require backward
-  compatibility, a legacy generator, `~.legacy.
-  LegacyGenerator`, has been created which can fully reproduce the exact byte
-  sequence produced by legacy code.
+  in `~.RandomGenerator`.  It is not possible to reproduce the exact random
+  values using ``RandomGenerator`` for the normal distribution or any other
+  distribution that relies on the normal such as the `numpy.random.gamma` or
+  `numpy.random.standard_t`. If you require bitwise backward compatible
+  streams, use `~.mtrand.RandomState`.
 
+Quick comparison of legacy `mtrand <legacy>`_ to the new `generator
+<RandomGenerator>`
+
+=================== =================== =============
+Feature             Older Equivalent    Notes
+------------------- ------------------- -------------
+`RandomGenerator`   `RandomState`       ``RandomGenerator`` requires a stream
+                                        source, called a RandomNumberGenerator
+                                        (RNG). A number of different basic
+                                        `RNGs <brng>`_ exist.  ``RandomState``
+                                        uses only the Box- Muller method.
+------------------- ------------------- -------------
+``np.random.gen.``  ``np.random.``      Access the next values in an already-
+``random_sample()`` ``random_sample()`` instaniated RNG, convert them to
+                                        ``float64`` in the interval ``[0.0.,``
+                                        `` 1.0)`` In addition to the ``size``
+                                        kwarg, now supports ``dtype='d'`` or
+                                        ``dtype='f'``, and an ``out`` kwarg to
+                                        fill a user-supplied array.
+
+                                        Many other distributions are also
+                                        supported.
+=================== =================== =============
+
+And in more detail:
 
 * `~.entropy.random_entropy` provides access to the system
   source of randomness that is used in cryptographic applications (e.g.,

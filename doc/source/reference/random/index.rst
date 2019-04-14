@@ -93,11 +93,11 @@ What's New or Different
 .. warning::
 
   The Box-Muller method used to produce NumPy's normals is no longer available
-  in `~RandomGenerator`.  It is not possible to reproduce the random values
-  using ``RandomGenerator`` for the normal distribution or any other
-  distribution that relies on the normal such as the gamma or student's t.
-  Use the backward-compatible legacy generator, `~mtrand`, which fully
-  reproduces the sequence produced by pre-1.17.0.
+  in `~.RandomGenerator`.  It is not possible to reproduce the exact random
+  values using ``RandomGenerator`` for the normal distribution or any other
+  distribution that relies on the normal such as the `numpy.random.gamma` or
+  `numpy.random.standard_t`. If you require bitwise backward compatible
+  streams, use `~.mtrand.RandomState`.
 
 * The normal, exponential and gamma generators use 256-step Ziggurat
   methods which are 2-10 times faster than NumPy's Box-Muller or inverse CDF
@@ -119,7 +119,6 @@ What's New or Different
 * Support for Lemire’s method [Lemire]_ of generating uniform integers on an
   arbitrary interval by setting ``use_masked=True`` in
   `~RandomGenerator.randint`.
-
 
 See :ref:`new-or-different` for a complete list of improvements and
 differences.
