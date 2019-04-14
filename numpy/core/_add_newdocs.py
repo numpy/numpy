@@ -4415,7 +4415,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     Examples
     --------
     >>> np.geterrobj()  # first get the defaults
-    [10000, 0, None]
+    [8192, 521, None]
 
     >>> def err_handler(type, flag):
     ...     print("Floating point error (%s), with flag %s" % (type, flag))
@@ -4424,7 +4424,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     >>> old_err = np.seterr(divide='raise')
     >>> old_handler = np.seterrcall(err_handler)
     >>> np.geterrobj()
-    [20000, 2, <function err_handler at 0x91dcaac>]
+    [8192, 521, <function err_handler at 0x91dcaac>]
 
     >>> old_err = np.seterr(all='ignore')
     >>> np.base_repr(np.geterrobj()[1], 8)
@@ -4479,7 +4479,7 @@ add_newdoc('numpy.core.umath', 'seterrobj',
     --------
     >>> old_errobj = np.geterrobj()  # first get the defaults
     >>> old_errobj
-    [10000, 0, None]
+    [8192, 521, None]
 
     >>> def err_handler(type, flag):
     ...     print("Floating point error (%s), with flag %s" % (type, flag))
