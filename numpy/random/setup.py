@@ -126,7 +126,7 @@ def configuration(parent_package='',top_path=None):
                         sources=['dsfmt.c', 'src/dsfmt/dSFMT.c',
                              'src/dsfmt/dSFMT-jump.c',
                              'src/aligned_malloc/aligned_malloc.c'],
-                        include_dirs=[join('src', 'dsfmt')],
+                        include_dirs=['.', 'src', join('src', 'dsfmt')],
                         libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS,
@@ -140,7 +140,7 @@ def configuration(parent_package='',top_path=None):
         config.add_extension(gen,
                         sources=['{0}.c'.format(gen), 'src/{0}/{0}.c'.format(gen),
                              'src/{0}/{0}-jump.c'.format(gen)],
-                        include_dirs=[join('src', gen)],
+                        include_dirs=['.', 'src', join('src', gen)],
                         libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS,
@@ -159,7 +159,7 @@ def configuration(parent_package='',top_path=None):
             _defs = defs
         config.add_extension(gen,
                         sources=['{0}.c'.format(gen), 'src/{0}/{0}.c'.format(gen)],
-                        include_dirs=[join('src', gen)],
+                        include_dirs=['.', 'src', join('src', gen)],
                         libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS,
@@ -173,6 +173,7 @@ def configuration(parent_package='',top_path=None):
                         libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS,
+                        include_dirs=['.', 'src'],
                         depends=['%s.pyx' % gen],
                         define_macros=defs,
                         )
@@ -184,6 +185,7 @@ def configuration(parent_package='',top_path=None):
                                       'distributions.c')],
                         libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
+                        include_dirs=['.', 'src'],
                         extra_link_args=EXTRA_LINK_ARGS,
                         depends=['%s.pyx' % gen],
                         define_macros=defs,
@@ -192,14 +194,13 @@ def configuration(parent_package='',top_path=None):
                         sources=['mtrand.c',
                              'src/legacy/distributions-boxmuller.c',
                              'src/distributions/distributions.c' ],
-                        include_dirs=['.', 'legacy'],
+                        include_dirs=['.', 'src', 'src/legacy'],
                         libraries=EXTRA_LIBRARIES,
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS,
                         depends=['mtrand.pyx'],
                         define_macros=defs + DSFMT_DEFS,
                         )
-    config.add_subpackage('legacy')
     return config
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ Quick Start
 
 By default, `RandomGenerator` uses normals provided by
 `xoroshiro128.Xoroshiro128` which will be faster than the legacy methods in
-`numpy.random.RandomState`
+`mtrand.RandomState`
 
 .. code-block:: python
 
@@ -96,9 +96,8 @@ What's New or Different
   in `~RandomGenerator`.  It is not possible to reproduce the random values
   using ``RandomGenerator`` for the normal distribution or any other
   distribution that relies on the normal such as the gamma or student's t.
-  If you require backward compatibility, a legacy generator, `~legacy.
-  LegacyGenerator`, has been created which can fully reproduce the sequence
-  produced by NumPy.
+  Use the backward-compatible legacy generator, `~mtrand`, which fully
+  reproduces the sequence produced by pre-1.17.0.
 
 * The normal, exponential and gamma generators use 256-step Ziggurat
   methods which are 2-10 times faster than NumPy's Box-Muller or inverse CDF
@@ -185,7 +184,7 @@ Random Generator
    :maxdepth: 1
 
    generator
-   legacy
+   legacy mtrand <legacy>
 
 Basic Random Number Generators
 ------------------------------

@@ -5,7 +5,7 @@ from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
 import numpy as np
 cimport numpy as np
 
-cdef extern from "src/distributions/distributions.h":
+cdef extern from "distributions/distributions.h":
 
     struct s_binomial_t:
         int has_binomial
