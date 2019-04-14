@@ -9,10 +9,11 @@ these requirements.
 
 This example makes use of Python 3 :mod:`concurrent.futures` to fill an array
 using multiple threads.  Threads are long-lived so that repeated calls do not
-require any additional overheads from thread creation. The underlying PRNG is
-xorshift2014 which is fast, has a long period and supports using ``jump`` to
-advance the state. The random numbers generated are reproducible in the sense
-that the same seed will produce the same outputs.
+require any additional overheads from thread creation. The underlying
+BitGenerator is `Xorshift1024` which is fast, has a long period and supports
+using `Xorshift1024.jumped` to return a new generator while advancing the
+state. The random numbers generated are reproducible in the sense that the same
+seed will produce the same outputs.
 
 .. code-block:: ipython
 
@@ -84,7 +85,7 @@ the time required to generate using a single thread.
     4
     32.8 ms ± 2.71 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
-The single threaded call directly uses the PRNG.
+The single threaded call directly uses the BitGenerator.
 
 .. code-block:: ipython
 

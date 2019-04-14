@@ -1,15 +1,17 @@
+.. _legacy:
+
 Legacy Random Generation
 ------------------------
-The :class:`~mtrand.RandomState` provides access to
+The `~mtrand.RandomState` provides access to
 legacy generators.  These all depend on Box-Muller normals or
 inverse CDF exponentials or gammas. This class should only be used
 if it is essential to have randoms that are identical to what
 would have been produced by NumPy.
 
-:class:`~mtrand.RandomState` adds additional information
+`~mtrand.RandomState` adds additional information
 to the state which is required when using Box-Muller normals since these
 are produced in pairs. It is important to use
-:attr:`~mtrand.RandomState.get_state`
+`~mtrand.RandomState.get_state`
 when accessing the state so that these extra values are saved.
 
 .. warning::
@@ -60,6 +62,7 @@ Seeding and State
 
    ~RandomState.get_state
    ~RandomState.set_state
+   ~RandomState.seed
 
 Simple random data
 ==================
