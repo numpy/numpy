@@ -567,7 +567,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     High-order polynomials may oscillate wildly:
 
     >>> p30 = np.poly1d(np.polyfit(x, y, 30))
-    ... 
+    ...
     >>> # RankWarning: Polyfit may be poorly conditioned...
     >>> p30(4)
     -0.80000000000000204 # may vary
@@ -632,7 +632,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
         msg = "Polyfit may be poorly conditioned"
-        warnings.warn(msg, RankWarning, stacklevel=2)
+        warnings.warn(msg, RankWarning, stacklevel=3)
 
     if full:
         return c, resids, rank, s, rcond
@@ -874,8 +874,7 @@ def polymul(a1, a2):
     See Also
     --------
     poly1d : A one-dimensional polynomial class.
-    poly, polyadd, polyder, polydiv, polyfit, polyint, polysub,
-    polyval
+    poly, polyadd, polyder, polydiv, polyfit, polyint, polysub, polyval
     convolve : Array convolution. Same output as polymul, but has parameter
                for overlap mode.
 
@@ -937,7 +936,7 @@ def polydiv(u, v):
 
     See Also
     --------
-    poly, polyadd, polyder, polydiv, polyfit, polyint, polymul, polysub,
+    poly, polyadd, polyder, polydiv, polyfit, polyint, polymul, polysub
     polyval
 
     Notes

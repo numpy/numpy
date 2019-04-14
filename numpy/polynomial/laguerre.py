@@ -269,8 +269,7 @@ def lagfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, chebfromroots, hermfromroots,
-    hermefromroots.
+    polyfromroots, legfromroots, chebfromroots, hermfromroots, hermefromroots
 
     Examples
     --------

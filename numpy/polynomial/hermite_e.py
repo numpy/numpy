@@ -273,8 +273,7 @@ def hermefromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots,
-    chebfromroots.
+    polyfromroots, legfromroots, lagfromroots, hermfromroots, chebfromroots
 
     Examples
     --------
