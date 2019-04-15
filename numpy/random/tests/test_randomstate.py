@@ -436,6 +436,14 @@ class TestRandomDist(object):
 
         desired = np.iinfo('l').max
         assert_equal(actual, desired)
+        with suppress_warnings() as sup:
+            w = sup.record(DeprecationWarning)
+            typer = np.dtype('l').type
+            actual = random.random_integers(typer(np.iinfo('l').max),
+                                            typer(np.iinfo('l').max))
+            assert_(len(w) == 1)
+        assert_equal(actual, desired)
+
 
     def test_random_integers_deprecated(self):
         with warnings.catch_warnings():

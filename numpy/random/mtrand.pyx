@@ -1130,7 +1130,7 @@ cdef class RandomState:
                            "instead".format(low=low, high=high)),
                           DeprecationWarning)
 
-        return self.randint(low, high + 1, size=size, dtype='l')
+        return self.randint(low, int(high) + 1, size=size, dtype='l')
 
     # Complicated, continuous distributions:
     def standard_normal(self, size=None):
