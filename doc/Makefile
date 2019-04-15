@@ -49,8 +49,10 @@ clean:
 	-rm -rf build/* source/reference/generated
 
 version-check:
-ifneq ($(NUMPYVER),$(GITVER))
-	@echo installed numpy $(NUMPYVER) != current repo git version $(GITVER)
+ifeq "$(GITVER)" "Unknown"
+	# @echo sdist build with unlabeled sources
+else ifneq ($(NUMPYVER),$(GITVER))
+	@echo installed numpy $(NUMPYVER) != current repo git version \'$(GITVER)\'
 	@echo set GITVER to $(NUMPYVER) to override
 	@exit 1
 else
