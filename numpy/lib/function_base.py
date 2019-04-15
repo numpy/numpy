@@ -377,7 +377,7 @@ def average(a, axis=None, weights=None, returned=False):
     Traceback (most recent call last):
         ...
     TypeError: Axis must be specified when shapes of a and weights differ.
-    
+
     >>> a = np.ones(5, dtype=np.float128)
     >>> w = np.ones(5, dtype=np.complex64)
     >>> avg = np.average(a, weights=w)
@@ -1431,7 +1431,7 @@ def angle(z, deg=False):
     angle : ndarray or scalar
         The counterclockwise angle from the positive real axis on
         the complex plane, with dtype as numpy.float64.
-        
+
         ..versionchanged:: 1.16.0
             This function works on subclasses of ndarray like `ma.array`.
 
@@ -1929,6 +1929,30 @@ class vectorize(object):
     vectorized : callable
         Vectorized function.
 
+    See Also
+    --------
+    frompyfunc : Takes an arbitrary Python function and returns a ufunc
+
+    Notes
+    -----
+    The `vectorize` function is provided primarily for convenience, not for
+    performance. The implementation is essentially a for loop.
+
+    If `otypes` is not specified, then a call to the function with the
+    first argument will be used to determine the number of outputs.  The
+    results of this call will be cached if `cache` is `True` to prevent
+    calling the function twice.  However, to implement the cache, the
+    original function must be wrapped which will slow down subsequent
+    calls, so only do this if your function is expensive.
+
+    The new keyword argument interface and `excluded` argument support
+    further degrades performance.
+
+    References
+    ----------
+    .. [1] NumPy Reference, section `Generalized Universal Function API
+           <https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
+
     Examples
     --------
     >>> def myfunc(a, b):
@@ -1988,8 +2012,8 @@ class vectorize(object):
 
     >>> import scipy.stats
     >>> pearsonr = np.vectorize(scipy.stats.pearsonr,
-    ...                 signature='(n),(n)->(),()') 
-    >>> pearsonr([[0, 1, 2, 3]], [[1, 2, 3, 4], [4, 3, 2, 1]]) 
+    ...                 signature='(n),(n)->(),()')
+    >>> pearsonr([[0, 1, 2, 3]], [[1, 2, 3, 4], [4, 3, 2, 1]])
     (array([ 1., -1.]), array([ 0.,  0.]))
 
     Or for a vectorized convolution:
@@ -2001,31 +2025,7 @@ class vectorize(object):
            [0., 0., 1., 2., 1., 0.],
            [0., 0., 0., 1., 2., 1.]])
 
-    See Also
-    --------
-    frompyfunc : Takes an arbitrary Python function and returns a ufunc
-
-    Notes
-    -----
-    The `vectorize` function is provided primarily for convenience, not for
-    performance. The implementation is essentially a for loop.
-
-    If `otypes` is not specified, then a call to the function with the
-    first argument will be used to determine the number of outputs.  The
-    results of this call will be cached if `cache` is `True` to prevent
-    calling the function twice.  However, to implement the cache, the
-    original function must be wrapped which will slow down subsequent
-    calls, so only do this if your function is expensive.
-
-    The new keyword argument interface and `excluded` argument support
-    further degrades performance.
-
-    References
-    ----------
-    .. [1] NumPy Reference, section `Generalized Universal Function API
-           <https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
-
     def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
                  cache=False, signature=None):
         self.pyfunc = pyfunc
@@ -2618,7 +2618,9 @@ def blackman(M):
     >>> A = fft(window, 2048) / 25.5
     >>> mag = np.abs(fftshift(A))
     >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
+    >>> with np.errstate(divide='ignore', invalid='ignore'):
+    ...     response = 20 * np.log10(mag)
+    ...
     >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -2725,7 +2727,9 @@ def bartlett(M):
     >>> A = fft(window, 2048) / 25.5
     >>> mag = np.abs(fftshift(A))
     >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
+    >>> with np.errstate(divide='ignore', invalid='ignore'):
+    ...     response = 20 * np.log10(mag)
+    ...
     >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -2826,7 +2830,9 @@ def hanning(M):
     >>> A = fft(window, 2048) / 25.5
     >>> mag = np.abs(fftshift(A))
     >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
+    >>> with np.errstate(divide='ignore', invalid='ignore'):
+    ...     response = 20 * np.log10(mag)
+    ...
     >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]

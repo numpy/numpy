@@ -272,8 +272,7 @@ def hermfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, chebfromroots,
-    hermefromroots.
+    polyfromroots, legfromroots, lagfromroots, chebfromroots, hermefromroots
 
     Examples
     --------
@@ -1186,7 +1185,7 @@ def hermvander2d(x, y, deg):
 
     See Also
     --------
-    hermvander, hermvander3d. hermval2d, hermval3d
+    hermvander, hermvander3d, hermval2d, hermval3d
 
     Notes
     -----
@@ -1240,7 +1239,7 @@ def hermvander3d(x, y, z, deg):
 
     See Also
     --------
-    hermvander, hermvander3d. hermval2d, hermval3d
+    hermvander, hermvander3d, hermval2d, hermval3d
 
     Notes
     -----
