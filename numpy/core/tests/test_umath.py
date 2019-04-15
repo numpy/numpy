@@ -2909,7 +2909,6 @@ def test_complex_nan_comparisons():
                 assert_equal(x >= y, False, err_msg="%r >= %r" % (x, y))
                 assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
 
-
 def test_rint_big_int():
     # np.rint bug for large integer values on Windows 32-bit and MKL
     # https://github.com/numpy/numpy/issues/6685
@@ -2919,8 +2918,45 @@ def test_rint_big_int():
     # Rint should not change the value
     assert_equal(val, np.rint(val))
 
-
 def test_signaling_nan_exceptions():
     with assert_no_warnings():
         a = np.ndarray(shape=(), dtype='float32', buffer=b'\x00\xe0\xbf\xff')
         np.isnan(a)
+
+def test_any_as_bool():
+    """ Test if any return bool as desired"""
+    a = np.zeros(2, dtype='O')
+    b = np.ones(2, dtype='O')
+    c = np.array([1,0], dtype='O')
+    d = [a, b, c]
+    e = np.array([1.5, 2.4], dtype=object)
+    f = np.array([0.0, 2.4], dtype=object)
+    g = np.array([object(), 2.4], dtype=object)
+    h = np.array([np.array([3]), 0], dtype=object)
+    assert_equal(np.any(a), False)
+    assert_equal(np.any(b), True)
+    assert_equal(np.any(c), True)
+    assert_equal(np.any(d, axis=1), np.array([False, True, True]))
+    assert_equal(np.any(e), True)
+    assert_equal(np.any(f), True)
+    assert_equal(np.any(g), True)
+    assert_equal(np.any(h), True)
+
+def test_all_as_bool():
+    """ Test if all return bool as desired"""
+    a = np.zeros(2, dtype='O')
+    b = np.ones(2, dtype='O')
+    c = np.array([1,0], dtype='O')
+    d = [a, b, c]
+    e = np.array([1.5, 2.4], dtype=object)
+    f = np.array([0.0, 2.4], dtype=object)
+    g = np.array([object(), 2.4], dtype=object)
+    h = np.array([np.array([3]), 0], dtype=object)
+    assert_equal(np.all(a), False)
+    assert_equal(np.all(b), True)
+    assert_equal(np.all(c), False)
+    assert_equal(np.all(d, axis=1), np.array([False, True, False]))
+    assert_equal(np.all(e), True)
+    assert_equal(np.all(f), False)
+    assert_equal(np.all(g), True)
+    assert_equal(np.all(h), False)
