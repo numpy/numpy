@@ -462,7 +462,7 @@ if ctypes is not None:
 
 
     def as_ctypes_type(dtype):
-        """
+        r"""
         Convert a dtype into a ctypes type.
 
         Parameters
@@ -472,7 +472,7 @@ if ctypes is not None:
 
         Returns
         -------
-        ctypes
+        ctype
             A ctype scalar, union, array, or struct
 
         Raises
@@ -485,13 +485,17 @@ if ctypes is not None:
         This function does not losslessly round-trip in either direction.
 
         ``np.dtype(as_ctypes_type(dt))`` will:
+
          - insert padding fields
          - reorder fields to be sorted by offset
          - discard field titles
 
         ``as_ctypes_type(np.dtype(ctype))`` will:
-         - discard the class names of ``Structure``s and ``Union``s
-         - convert single-element ``Union``s into single-element ``Structure``s
+
+         - discard the class names of `ctypes.Structure`\ s and
+           `ctypes.Union`\ s
+         - convert single-element `ctypes.Union`\ s into single-element
+           `ctypes.Structure`\ s
          - insert padding fields
 
         """

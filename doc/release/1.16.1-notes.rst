@@ -80,9 +80,9 @@ Improvements
 
 Further improvements to ``ctypes`` support in ``np.ctypeslib``
 --------------------------------------------------------------
-A new ``np.ctypeslib.as_ctypes_type`` function has been added, which can be
+A new `numpy.ctypeslib.as_ctypes_type` function has been added, which can be
 used to converts a `dtype` into a best-guess `ctypes` type. Thanks to this
-new function, ``np.ctypeslib.as_ctypes`` now supports a much wider range of
+new function, `numpy.ctypeslib.as_ctypes` now supports a much wider range of
 array types, including structures, booleans, and integers of non-native
 endianness.
 
