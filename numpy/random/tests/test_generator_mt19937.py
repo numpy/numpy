@@ -335,6 +335,33 @@ class TestRandint(object):
 
             assert_array_equal(val, val_bc)
 
+    def test_int64_uint64_broadcast_exceptions(self):
+        configs = {np.uint64: ((0, 2**65), (-1, 2**62), (10, 9), (0, 0)),
+                   np.int64: ((0, 2**64), (-(2**64), 2**62), (10, 9), (0, 0),
+                              (-2**63-1, -2**63-1))}
+        for dtype in configs:
+            for config in configs[dtype]:
+                low, high = config
+                low_a = np.array([[low]*10])
+                high_a = np.array([high] * 10)
+                assert_raises(ValueError, random.randint, low, high,
+                              dtype=dtype)
+                assert_raises(ValueError, random.randint, low_a, high,
+                              dtype=dtype)
+                assert_raises(ValueError, random.randint, low, high_a,
+                              dtype=dtype)
+                assert_raises(ValueError, random.randint, low_a, high_a,
+                              dtype=dtype)
+
+                low_o = np.array([[low]*10], dtype=np.object)
+                high_o = np.array([high] * 10, dtype=np.object)
+                assert_raises(ValueError, random.randint, low_o, high,
+                              dtype=dtype)
+                assert_raises(ValueError, random.randint, low, high_o,
+                              dtype=dtype)
+                assert_raises(ValueError, random.randint, low_o, high_o,
+                              dtype=dtype)
+
     def test_int64_uint64_corner_case(self):
         # When stored in Numpy arrays, `lbnd` is casted
         # as np.int64, and `ubnd` is casted as np.uint64.
