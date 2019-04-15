@@ -2602,7 +2602,7 @@ def blackman(M):
     Plot the window and the frequency response:
 
     >>> from numpy.fft import fft, fftshift
-    >>> window = np.blackman(51) + 1e-10  # eps shift to avoid division by zero
+    >>> window = np.blackman(51)
     >>> plt.plot(window)
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Blackman window")
@@ -2618,7 +2618,9 @@ def blackman(M):
     >>> A = fft(window, 2048) / 25.5
     >>> mag = np.abs(fftshift(A))
     >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
+    >>> with np.errstate(divide='ignore', invalid='ignore'):
+    ...     response = 20 * np.log10(mag)
+    ...
     >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -2709,7 +2711,7 @@ def bartlett(M):
     Plot the window and its frequency response (requires SciPy and matplotlib):
 
     >>> from numpy.fft import fft, fftshift
-    >>> window = np.bartlett(51) + 1e-10  # eps shift to avoid division by zero
+    >>> window = np.bartlett(51)
     >>> plt.plot(window)
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Bartlett window")
@@ -2725,7 +2727,9 @@ def bartlett(M):
     >>> A = fft(window, 2048) / 25.5
     >>> mag = np.abs(fftshift(A))
     >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
+    >>> with np.errstate(divide='ignore', invalid='ignore'):
+    ...     response = 20 * np.log10(mag)
+    ...
     >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -2810,7 +2814,7 @@ def hanning(M):
 
     >>> import matplotlib.pyplot as plt
     >>> from numpy.fft import fft, fftshift
-    >>> window = np.hanning(51) + 1e-10  # eps shift to avoid division by zero
+    >>> window = np.hanning(51)
     >>> plt.plot(window)
     [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.title("Hann window")
@@ -2826,7 +2830,9 @@ def hanning(M):
     >>> A = fft(window, 2048) / 25.5
     >>> mag = np.abs(fftshift(A))
     >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
+    >>> with np.errstate(divide='ignore', invalid='ignore'):
+    ...     response = 20 * np.log10(mag)
+    ...
     >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
