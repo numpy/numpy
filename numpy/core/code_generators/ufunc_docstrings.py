@@ -793,6 +793,13 @@ add_newdoc('numpy.core.umath', 'conjugate',
         The complex conjugate of `x`, with same dtype as `y`.
         $OUT_SCALAR_1
 
+    Notes
+    -----
+    `conj` is an alias for `conjugate`:
+
+    >>> np.conj is np.conjugate
+    True
+
     Examples
     --------
     >>> np.conjugate(1+2j)
@@ -3079,6 +3086,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     -----
     Returns 0 when `x2` is 0 and both `x1` and `x2` are (arrays of)
     integers.
+    ``mod`` is an alias of ``remainder``.
 
     Examples
     --------
