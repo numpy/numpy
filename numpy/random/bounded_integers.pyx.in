@@ -125,19 +125,29 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
 
     if np.any(np.less(low_arr, {{lb}})):
         raise ValueError('low is out of bounds for {{nptype}}')
-
-    highm1_arr = <np.ndarray>np.empty_like(high_arr, dtype=np.{{nptype}})
-    highm1_data = <{{nptype}}_t *>np.PyArray_DATA(highm1_arr)
-    cnt = np.PyArray_SIZE(high_arr)
-    flat = high_arr.flat
-    for i in range(cnt):
-        # Subtract 1 since generator produces values on the closed int [off, off+rng]
-        closed_upper = int(flat[i]) - 1
-        if closed_upper > {{ub}}:
-            raise ValueError('high is out of bounds for {{nptype}}')
-        if closed_upper < {{lb}}:
+    dt = high_arr.dtype
+    if np.issubdtype(dt, np.integer):
+        # Avoid object dtype path if already an integer
+        if np.any(np.less_equal(high_arr, {{lb}})):
             raise ValueError('low >= high')
-        highm1_data[i] = <{{nptype}}_t>closed_upper
+        high_m1 = high_arr - dt.type(1)
+        if np.any(np.greater(high_m1, {{ub}})):
+            raise ValueError('high is out of bounds for {{nptype}}')
+        highm1_arr = <np.ndarray>np.PyArray_FROM_OTF(high_m1, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
+    else:
+        # If input is object or a floating type
+        highm1_arr = <np.ndarray>np.empty_like(high_arr, dtype=np.{{nptype}})
+        highm1_data = <{{nptype}}_t *>np.PyArray_DATA(highm1_arr)
+        cnt = np.PyArray_SIZE(high_arr)
+        flat = high_arr.flat
+        for i in range(cnt):
+            # Subtract 1 since generator produces values on the closed int [off, off+rng]
+            closed_upper = int(flat[i]) - 1
+            if closed_upper > {{ub}}:
+                raise ValueError('high is out of bounds for {{nptype}}')
+            if closed_upper < {{lb}}:
+                raise ValueError('low >= high')
+            highm1_data[i] = <{{nptype}}_t>closed_upper
 
     if np.any(np.greater(low_arr, highm1_arr)):
         raise ValueError('low >= high')

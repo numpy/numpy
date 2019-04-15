@@ -51,6 +51,7 @@ def uniform32_from_uint64(x):
     out = (joined >> np.uint32(9)) * (1.0 / 2 ** 23)
     return out.astype(np.float32)
 
+
 def uniform32_from_uint53(x):
     x = np.uint64(x) >> np.uint64(16)
     x = np.uint32(x & np.uint64(0xffffffff))
@@ -91,6 +92,7 @@ def uniform_from_uint32(x):
         b = x[i + 1] >> 6
         out[i // 2] = (a * 67108864.0 + b) / 9007199254740992.0
     return out
+
 
 def uniform_from_dsfmt(x):
     return x.view(np.double) - 1.0
@@ -414,7 +416,8 @@ class TestPCG64(Base):
         rs = RandomGenerator(self.brng(*self.data1['seed']))
         assert_raises(self.seed_error_type, rs.brng.seed, np.array([np.pi]))
         assert_raises(self.seed_error_type, rs.brng.seed, np.array([-np.pi]))
-        assert_raises(self.seed_error_type, rs.brng.seed, np.array([np.pi, -np.pi]))
+        assert_raises(self.seed_error_type, rs.brng.seed,
+                      np.array([np.pi, -np.pi]))
         assert_raises(self.seed_error_type, rs.brng.seed, np.array([0, np.pi]))
         assert_raises(self.seed_error_type, rs.brng.seed, [np.pi])
         assert_raises(self.seed_error_type, rs.brng.seed, [0, np.pi])
