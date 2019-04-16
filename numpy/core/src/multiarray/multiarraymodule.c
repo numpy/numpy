@@ -2066,7 +2066,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT "sl:fromfile", kwlist,
+                "O|O&" NPY_SSIZE_T_PYFMT "s" NPY_OFF_T_PYFMT ":fromfile", kwlist,
                 &file, PyArray_DescrConverter, &type, &nin, &sep, &offset)) {
         Py_XDECREF(type);
         return NULL;
