@@ -20,6 +20,7 @@
 #include "lowlevel_strided_loops.h"
 #include "item_selection.h"
 #include "mem_overlap.h"
+#include "array_assign.h"
 
 
 #define HAS_INTEGER 1
@@ -139,6 +140,210 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
     *ret = (PyArrayObject *)new;
 }
 
+static NPY_INLINE void
+multi_DECREF(PyObject **objects, npy_intp n)
+{
+    npy_intp i;
+    for (i = 0; i < n; i++) {
+        Py_DECREF(objects[i]);
+    }
+}
+
+/**
+ * Unpack a tuple into an array of new references. Returns the number of objects
+ * unpacked.
+ *
+ * Useful if a tuple is being iterated over multiple times, or for a code path
+ * that doesn't always want the overhead of allocating a tuple.
+ */
+static NPY_INLINE npy_intp
+unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
+{
+    npy_intp n, i;
+    n = PyTuple_GET_SIZE(index);
+    if (n > result_n) {
+        PyErr_SetString(PyExc_IndexError,
+                        "too many indices for array");
+        return -1;
+    }
+    for (i = 0; i < n; i++) {
+        result[i] = PyTuple_GET_ITEM(index, i);
+        Py_INCREF(result[i]);
+    }
+    return n;
+}
+
+/* Unpack a single scalar index, taking a new reference to match unpack_tuple */
+static NPY_INLINE npy_intp
+unpack_scalar(PyObject *index, PyObject **result, npy_intp result_n)
+{
+    Py_INCREF(index);
+    result[0] = index;
+    return 1;
+}
+
+/**
+ * Turn an index argument into a c-array of `PyObject *`s, one for each index.
+ *
+ * When a scalar is passed, this is written directly to the buffer. When a
+ * tuple is passed, the tuple elements are unpacked into the buffer.
+ *
+ * When some other sequence is passed, this implements the following section
+ * from the advanced indexing docs to decide whether to unpack or just write
+ * one element:
+ *
+ * > In order to remain backward compatible with a common usage in Numeric,
+ * > basic slicing is also initiated if the selection object is any non-ndarray
+ * > sequence (such as a list) containing slice objects, the Ellipsis object,
+ * > or the newaxis object, but not for integer arrays or other embedded
+ * > sequences.
+ *
+ * It might be worth deprecating this behaviour (gh-4434), in which case the
+ * entire function should become a simple check of PyTuple_Check.
+ *
+ * @param  index     The index object, which may or may not be a tuple. This is
+ *                   a borrowed reference.
+ * @param  result    An empty buffer of PyObject* to write each index component
+ *                   to. The references written are new.
+ * @param  result_n  The length of the result buffer
+ *
+ * @returns          The number of items in `result`, or -1 if an error occurred.
+ *                   The entries in `result` at and beyond this index should be
+ *                   assumed to contain garbage, even if they were initialized
+ *                   to NULL, so are not safe to Py_XDECREF. Use multi_DECREF to
+ *                   dispose of them.
+ */
+NPY_NO_EXPORT npy_intp
+unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
+{
+    npy_intp n, i;
+    npy_bool commit_to_unpack;
+
+    /* Fast route for passing a tuple */
+    if (PyTuple_CheckExact(index)) {
+        return unpack_tuple((PyTupleObject *)index, result, result_n);
+    }
+
+    /* Obvious single-entry cases */
+    if (0  /* to aid macros below */
+#if !defined(NPY_PY3K)
+            || PyInt_CheckExact(index)
+#else
+            || PyLong_CheckExact(index)
+#endif
+            || index == Py_None
+            || PySlice_Check(index)
+            || PyArray_Check(index)
+            || !PySequence_Check(index)
+            || PyBaseString_Check(index)) {
+
+        return unpack_scalar(index, result, result_n);
+    }
+
+    /*
+     * Passing a tuple subclass - coerce to the base type. This incurs an
+     * allocation, but doesn't need to be a fast path anyway
+     */
+    if (PyTuple_Check(index)) {
+        PyTupleObject *tup = (PyTupleObject *) PySequence_Tuple(index);
+        if (tup == NULL) {
+            return -1;
+        }
+        n = unpack_tuple(tup, result, result_n);
+        Py_DECREF(tup);
+        return n;
+    }
+
+    /*
+     * At this point, we're left with a non-tuple, non-array, sequence:
+     * typically, a list. We use some somewhat-arbitrary heuristics from here
+     * onwards to decided whether to treat that list as a single index, or a
+     * list of indices.
+     */
+
+    /* if len fails, treat like a scalar */
+    n = PySequence_Size(index);
+    if (n < 0) {
+        PyErr_Clear();
+        return unpack_scalar(index, result, result_n);
+    }
+
+    /*
+     * Backwards compatibility only takes effect for short sequences - otherwise
+     * we treat it like any other scalar.
+     *
+     * Sequences < NPY_MAXDIMS with any slice objects
+     * or newaxis, Ellipsis or other arrays or sequences
+     * embedded, are considered equivalent to an indexing
+     * tuple. (`a[[[1,2], [3,4]]] == a[[1,2], [3,4]]`)
+     */
+    if (n >= NPY_MAXDIMS) {
+        return unpack_scalar(index, result, result_n);
+    }
+
+    /* In case we change result_n elsewhere */
+    assert(n <= result_n);
+
+    /*
+     * Some other type of short sequence - assume we should unpack it like a
+     * tuple, and then decide whether that was actually necessary.
+     */
+    commit_to_unpack = 0;
+    for (i = 0; i < n; i++) {
+        PyObject *tmp_obj = result[i] = PySequence_GetItem(index, i);
+
+        if (commit_to_unpack) {
+            /* propagate errors */
+            if (tmp_obj == NULL) {
+                goto fail;
+            }
+        }
+        else {
+            /*
+             * if getitem fails (unusual) before we've committed, then stop
+             * unpacking
+             */
+            if (tmp_obj == NULL) {
+                PyErr_Clear();
+                break;
+            }
+
+            /* decide if we should treat this sequence like a tuple */
+            if (PyArray_Check(tmp_obj)
+                    || PySequence_Check(tmp_obj)
+                    || PySlice_Check(tmp_obj)
+                    || tmp_obj == Py_Ellipsis
+                    || tmp_obj == Py_None) {
+                if (DEPRECATE_FUTUREWARNING(
+                        "Using a non-tuple sequence for multidimensional "
+                        "indexing is deprecated; use `arr[tuple(seq)]` "
+                        "instead of `arr[seq]`. In the future this will be "
+                        "interpreted as an array index, `arr[np.array(seq)]`, "
+                        "which will result either in an error or a different "
+                        "result.") < 0) {
+                    i++;  /* since loop update doesn't run */
+                    goto fail;
+                }
+                commit_to_unpack = 1;
+            }
+        }
+    }
+
+    /* unpacking was the right thing to do, and we already did it */
+    if (commit_to_unpack) {
+        return n;
+    }
+    /* got to the end, never found an indication that we should have unpacked */
+    else {
+        /* we partially filled result, so empty it first */
+        multi_DECREF(result, i);
+        return unpack_scalar(index, result, result_n);
+    }
+
+fail:
+    multi_DECREF(result, i);
+    return -1;
+}
 
 /**
  * Prepare an npy_index_object from the python slicing object.
@@ -174,7 +379,6 @@ prepare_index(PyArrayObject *self, PyObject *index,
     int i;
     npy_intp n;
 
-    npy_bool make_tuple = 0;
     PyObject *obj = NULL;
     PyArrayObject *arr;
 
@@ -182,81 +386,16 @@ prepare_index(PyArrayObject *self, PyObject *index,
     int ellipsis_pos = -1;
 
     /*
-     * The index might be a multi-dimensional index, but not yet a tuple
-     * this makes it a tuple in that case.
-     *
-     * TODO: Refactor into its own function.
+     * The choice of only unpacking `2*NPY_MAXDIMS` items is historic.
+     * The longest "reasonable" index that produces a result of <= 32 dimensions
+     * is `(0,)*np.MAXDIMS + (None,)*np.MAXDIMS`. Longer indices can exist, but
+     * are uncommon.
      */
-    if (!PyTuple_CheckExact(index)
-            /* Next three are just to avoid slow checks */
-#if !defined(NPY_PY3K)
-            && (!PyInt_CheckExact(index))
-#else
-            && (!PyLong_CheckExact(index))
-#endif
-            && (index != Py_None)
-            && (!PySlice_Check(index))
-            && (!PyArray_Check(index))
-            && (PySequence_Check(index))) {
-        /*
-         * Sequences < NPY_MAXDIMS with any slice objects
-         * or newaxis, Ellipsis or other arrays or sequences
-         * embedded, are considered equivalent to an indexing
-         * tuple. (`a[[[1,2], [3,4]]] == a[[1,2], [3,4]]`)
-         */
+    PyObject *raw_indices[NPY_MAXDIMS*2];
 
-        if (PyTuple_Check(index)) {
-            /* If it is already a tuple, make it an exact tuple anyway */
-            n = 0;
-            make_tuple = 1;
-        }
-        else {
-            n = PySequence_Size(index);
-        }
-        if (n < 0 || n >= NPY_MAXDIMS) {
-            n = 0;
-        }
-        for (i = 0; i < n; i++) {
-            PyObject *tmp_obj = PySequence_GetItem(index, i);
-            /* if getitem fails (unusual) treat this as a single index */
-            if (tmp_obj == NULL) {
-                PyErr_Clear();
-                make_tuple = 0;
-                break;
-            }
-            if (PyArray_Check(tmp_obj) || PySequence_Check(tmp_obj)
-                    || PySlice_Check(tmp_obj) || tmp_obj == Py_Ellipsis
-                    || tmp_obj == Py_None) {
-                make_tuple = 1;
-                Py_DECREF(tmp_obj);
-                break;
-            }
-            Py_DECREF(tmp_obj);
-        }
-
-        if (make_tuple) {
-            /* We want to interpret it as a tuple, so make it one */
-            index = PySequence_Tuple(index);
-            if (index == NULL) {
-                return -1;
-            }
-        }
-    }
-
-    /* If the index is not a tuple, handle it the same as (index,) */
-    if (!PyTuple_CheckExact(index)) {
-        obj = index;
-        index_ndim = 1;
-    }
-    else {
-        n = PyTuple_GET_SIZE(index);
-        if (n > NPY_MAXDIMS * 2) {
-            PyErr_SetString(PyExc_IndexError,
-                            "too many indices for array");
-            goto fail;
-        }
-        index_ndim = (int)n;
-        obj = NULL;
+    index_ndim = unpack_indices(index, raw_indices, NPY_MAXDIMS*2);
+    if (index_ndim == -1) {
+        return -1;
     }
 
     /*
@@ -275,14 +414,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
             goto failed_building_indices;
         }
 
-        /* Check for single index. obj is already set then. */
-        if ((curr_idx != 0) || (obj == NULL)) {
-            obj = PyTuple_GET_ITEM(index, get_idx++);
-        }
-        else {
-            /* only one loop */
-            get_idx += 1;
-        }
+        obj = raw_indices[get_idx++];
 
         /**** Try the cascade of possible indices ****/
 
@@ -355,7 +487,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
 #endif
                 npy_intp ind = PyArray_PyIntAsIntp(obj);
 
-                if ((ind == -1) && PyErr_Occurred()) {
+                if (error_converting(ind)) {
                     PyErr_Clear();
                 }
                 else {
@@ -379,7 +511,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
         if (!PyArray_Check(obj)) {
             PyArrayObject *tmp_arr;
-            tmp_arr = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
+            tmp_arr = (PyArrayObject *)PyArray_FROM_O(obj);
             if (tmp_arr == NULL) {
                 /* TODO: Should maybe replace the error here? */
                 goto failed_building_indices;
@@ -526,7 +658,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 npy_intp ind = PyArray_PyIntAsIntp((PyObject *)arr);
 
                 Py_DECREF(arr);
-                if ((ind == -1) && PyErr_Occurred()) {
+                if (error_converting(ind)) {
                     goto failed_building_indices;
                 }
                 else {
@@ -686,9 +818,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     *ndim = new_ndim + fancy_ndim;
     *out_fancy_ndim = fancy_ndim;
 
-    if (make_tuple) {
-        Py_DECREF(index);
-    }
+    multi_DECREF(raw_indices, index_ndim);
 
     return index_type;
 
@@ -696,10 +826,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
     for (i=0; i < curr_idx; i++) {
         Py_XDECREF(indices[i].object);
     }
-  fail:
-    if (make_tuple) {
-        Py_DECREF(index);
-    }
+    multi_DECREF(raw_indices, index_ndim);
     return -1;
 }
 
@@ -855,20 +982,14 @@ get_view_from_index(PyArrayObject *self, PyArrayObject **view,
 
     /* Create the new view and set the base array */
     Py_INCREF(PyArray_DESCR(self));
-    *view = (PyArrayObject *)PyArray_NewFromDescr(
-                                ensure_array ? &PyArray_Type : Py_TYPE(self),
-                                PyArray_DESCR(self),
-                                new_dim, new_shape,
-                                new_strides, data_ptr,
-                                PyArray_FLAGS(self),
-                                ensure_array ? NULL : (PyObject *)self);
+    *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+            ensure_array ? &PyArray_Type : Py_TYPE(self),
+            PyArray_DESCR(self),
+            new_dim, new_shape, new_strides, data_ptr,
+            PyArray_FLAGS(self),
+            ensure_array ? NULL : (PyObject *)self,
+            (PyObject *)self);
     if (*view == NULL) {
-        return -1;
-    }
-
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(*view, (PyObject *)self) < 0) {
-        Py_DECREF(*view);
         return -1;
     }
 
@@ -943,7 +1064,8 @@ array_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
-        if (PyArray_GetDTypeTransferFunction(PyArray_ISALIGNED(self),
+        if (PyArray_GetDTypeTransferFunction(
+                        IsUintAligned(self) && IsAligned(self),
                         fixed_strides[0], itemsize,
                         dtype, dtype,
                         0,
@@ -1002,17 +1124,13 @@ array_boolean_subscript(PyArrayObject *self,
         PyArrayObject *tmp = ret;
 
         Py_INCREF(dtype);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype, 1,
-                            &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
-                            PyArray_FLAGS(self), (PyObject *)self);
+        ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                Py_TYPE(self), dtype,
+                1, &size, PyArray_STRIDES(ret), PyArray_BYTES(ret),
+                PyArray_FLAGS(self), (PyObject *)self, (PyObject *)tmp);
 
+        Py_DECREF(tmp);
         if (ret == NULL) {
-            Py_DECREF(tmp);
-            return NULL;
-        }
-
-        if (PyArray_SetBaseObject(ret, (PyObject *)tmp) < 0) {
-            Py_DECREF(ret);
             return NULL;
         }
     }
@@ -1136,7 +1254,8 @@ array_assign_boolean_subscript(PyArrayObject *self,
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
         if (PyArray_GetDTypeTransferFunction(
-                        PyArray_ISALIGNED(self) && PyArray_ISALIGNED(v),
+                        IsUintAligned(self) && IsAligned(self) &&
+                        IsUintAligned(v) && IsAligned(v),
                         v_stride, fixed_strides[0],
                         PyArray_DESCR(v), PyArray_DESCR(self),
                         0,
@@ -1284,11 +1403,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
     *view = NULL;
 
     /* first check for a single field name */
-#if defined(NPY_PY3K)
-    if (PyUnicode_Check(ind)) {
-#else
-    if (PyString_Check(ind) || PyUnicode_Check(ind)) {
-#endif
+    if (PyBaseString_Check(ind)) {
         PyObject *tup;
         PyArray_Descr *fieldtype;
         npy_intp offset;
@@ -1309,21 +1424,17 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         /* view the array at the new offset+dtype */
         Py_INCREF(fieldtype);
         *view = (PyArrayObject*)PyArray_NewFromDescr_int(
-                                    Py_TYPE(arr),
-                                    fieldtype,
-                                    PyArray_NDIM(arr),
-                                    PyArray_SHAPE(arr),
-                                    PyArray_STRIDES(arr),
-                                    PyArray_BYTES(arr) + offset,
-                                    PyArray_FLAGS(arr),
-                                    (PyObject *)arr, 0, 1);
+                Py_TYPE(arr),
+                fieldtype,
+                PyArray_NDIM(arr),
+                PyArray_SHAPE(arr),
+                PyArray_STRIDES(arr),
+                PyArray_BYTES(arr) + offset,
+                PyArray_FLAGS(arr),
+                (PyObject *)arr, (PyObject *)arr,
+                0, 1);
         if (*view == NULL) {
             return 0;
-        }
-        Py_INCREF(arr);
-        if (PyArray_SetBaseObject(*view, (PyObject *)arr) < 0) {
-            Py_DECREF(*view);
-            *view = NULL;
         }
         return 0;
     }
@@ -1333,10 +1444,6 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         PyObject *name = NULL, *tup;
         PyObject *fields, *names;
         PyArray_Descr *view_dtype;
-
-        /* variables needed to make a copy, to remove in the future */
-        static PyObject *copyfunc = NULL;
-        PyObject *viewcopy;
 
         seqlen = PySequence_Size(ind);
 
@@ -1369,11 +1476,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
                 return -1;
             }
 
-#if defined(NPY_PY3K)
-            if (!PyUnicode_Check(name)) {
-#else
-            if (!PyString_Check(name) && !PyUnicode_Check(name)) {
-#endif
+            if (!PyBaseString_Check(name)) {
                 Py_DECREF(name);
                 Py_DECREF(fields);
                 Py_DECREF(names);
@@ -1383,6 +1486,33 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
             tup = PyDict_GetItem(PyArray_DESCR(arr)->fields, name);
             if (tup == NULL){
                 PyObject *errmsg = PyUString_FromString("no field of name ");
+                PyUString_ConcatAndDel(&errmsg, name);
+                PyErr_SetObject(PyExc_ValueError, errmsg);
+                Py_DECREF(errmsg);
+                Py_DECREF(fields);
+                Py_DECREF(names);
+                return 0;
+            }
+            /* disallow use of titles as index */
+            if (PyTuple_Size(tup) == 3) {
+                PyObject *title = PyTuple_GET_ITEM(tup, 2);
+                int titlecmp = PyObject_RichCompareBool(title, name, Py_EQ);
+                if (titlecmp == 1) {
+                    /* if title == name, we got a title, not a field name */
+                    PyErr_SetString(PyExc_KeyError,
+                                "cannot use field titles in multi-field index");
+                }
+                if (titlecmp != 0 || PyDict_SetItem(fields, title, tup) < 0) {
+                    Py_DECREF(name);
+                    Py_DECREF(fields);
+                    Py_DECREF(names);
+                    return 0;
+                }
+            }
+            /* disallow duplicate field indices */
+            if (PyDict_Contains(fields, name)) {
+                PyObject *errmsg = PyUString_FromString(
+                                       "duplicate field of name ");
                 PyUString_ConcatAndDel(&errmsg, name);
                 PyErr_SetObject(PyExc_ValueError, errmsg);
                 Py_DECREF(errmsg);
@@ -1415,47 +1545,20 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         view_dtype->flags = PyArray_DESCR(arr)->flags;
 
         *view = (PyArrayObject*)PyArray_NewFromDescr_int(
-                                    Py_TYPE(arr),
-                                    view_dtype,
-                                    PyArray_NDIM(arr),
-                                    PyArray_SHAPE(arr),
-                                    PyArray_STRIDES(arr),
-                                    PyArray_DATA(arr),
-                                    PyArray_FLAGS(arr),
-                                    (PyObject *)arr, 0, 1);
+                Py_TYPE(arr),
+                view_dtype,
+                PyArray_NDIM(arr),
+                PyArray_SHAPE(arr),
+                PyArray_STRIDES(arr),
+                PyArray_DATA(arr),
+                PyArray_FLAGS(arr),
+                (PyObject *)arr, (PyObject *)arr,
+                0, 1);
+
         if (*view == NULL) {
             return 0;
         }
-        Py_INCREF(arr);
-        if (PyArray_SetBaseObject(*view, (PyObject *)arr) < 0) {
-            Py_DECREF(*view);
-            *view = NULL;
-            return 0;
-        }
 
-        /*
-         * Return copy for now (future plan to return the view above). All the
-         * following code in this block can then be replaced by "return 0;"
-         */
-        npy_cache_import("numpy.core._internal", "_copy_fields", &copyfunc);
-        if (copyfunc == NULL) {
-            Py_DECREF(*view);
-            *view = NULL;
-            return 0;
-        }
-
-        PyArray_CLEARFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
-        viewcopy = PyObject_CallFunction(copyfunc, "O", *view);
-        if (viewcopy == NULL) {
-            Py_DECREF(*view);
-            *view = NULL;
-            return 0;
-        }
-        Py_DECREF(*view);
-        *view = (PyArrayObject*)viewcopy;
-
-        /* warn when writing to the copy */
-        PyArray_ENABLEFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
         return 0;
     }
     return -1;
@@ -1488,11 +1591,6 @@ array_subscript(PyArrayObject *self, PyObject *op)
         if (ret == 0){
             if (view == NULL) {
                 return NULL;
-            }
-
-            /* warn if writing to a copy. copies will have no base */
-            if (PyArray_BASE(view) == NULL) {
-                PyArray_ENABLEFLAGS(view, NPY_ARRAY_WARN_ON_WRITE);
             }
             return (PyObject*)view;
         }
@@ -1584,7 +1682,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
                 PyArray_DESCR(ind)->kind == 'i' &&
-                PyArray_ISALIGNED(ind) &&
+                IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
             Py_INCREF(PyArray_DESCR(self));
@@ -1658,24 +1756,17 @@ array_subscript(PyArrayObject *self, PyObject *op)
         PyArrayObject *tmp_arr = (PyArrayObject *)result;
 
         Py_INCREF(PyArray_DESCR(tmp_arr));
-        result = PyArray_NewFromDescr(Py_TYPE(self),
-                                      PyArray_DESCR(tmp_arr),
-                                      PyArray_NDIM(tmp_arr),
-                                      PyArray_SHAPE(tmp_arr),
-                                      PyArray_STRIDES(tmp_arr),
-                                      PyArray_BYTES(tmp_arr),
-                                      PyArray_FLAGS(self),
-                                      (PyObject *)self);
-
+        result = PyArray_NewFromDescrAndBase(
+                Py_TYPE(self),
+                PyArray_DESCR(tmp_arr),
+                PyArray_NDIM(tmp_arr),
+                PyArray_SHAPE(tmp_arr),
+                PyArray_STRIDES(tmp_arr),
+                PyArray_BYTES(tmp_arr),
+                PyArray_FLAGS(self),
+                (PyObject *)self, (PyObject *)tmp_arr);
+        Py_DECREF(tmp_arr);
         if (result == NULL) {
-            Py_DECREF(tmp_arr);
-            goto finish;
-        }
-
-        if (PyArray_SetBaseObject((PyArrayObject *)result,
-                                  (PyObject *)tmp_arr) < 0) {
-            Py_DECREF(result);
-            result = NULL;
             goto finish;
         }
     }
@@ -1780,17 +1871,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         PyArrayObject *view;
         int ret = _get_field_view(self, ind, &view);
         if (ret == 0){
-
-#if defined(NPY_PY3K)
-            if (!PyUnicode_Check(ind)) {
-#else
-            if (!PyString_Check(ind) && !PyUnicode_Check(ind)) {
-#endif
-                PyErr_SetString(PyExc_ValueError,
-                                "multi-field assignment is not supported");
-                return -1;
-            }
-
             if (view == NULL) {
                 return -1;
             }
@@ -1961,11 +2041,11 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
                                                PyArray_TRIVIALLY_ITERABLE_OP_READ,
                                                PyArray_TRIVIALLY_ITERABLE_OP_READ) ||
                  (PyArray_NDIM(tmp_arr) == 0 &&
-                        PyArray_TRIVIALLY_ITERABLE(tmp_arr))) &&
+                        PyArray_TRIVIALLY_ITERABLE(ind))) &&
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(ind) == sizeof(npy_intp) &&
                 PyArray_DESCR(ind)->kind == 'i' &&
-                PyArray_ISALIGNED(ind) &&
+                IsUintAligned(ind) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(ind))) {
 
             /* trivial_set checks the index for us */
@@ -2112,9 +2192,10 @@ _nonzero_indices(PyObject *myBool, PyArrayObject **arrays)
 
     /* create count-sized index arrays for each dimension */
     for (j = 0; j < nd; j++) {
-        new = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &count,
-                                           NPY_INTP, NULL, NULL,
-                                           0, 0, NULL);
+        new = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, PyArray_DescrFromType(NPY_INTP),
+            1, &count, NULL, NULL,
+            0, NULL);
         if (new == NULL) {
             goto fail;
         }
@@ -2484,7 +2565,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                 /* Check if the type is equivalent to INTP */
                 PyArray_ITEMSIZE(op) == sizeof(npy_intp) &&
                 PyArray_DESCR(op)->kind == 'i' &&
-                PyArray_ISALIGNED(op) &&
+                IsUintAligned(op) &&
                 PyDataType_ISNOTSWAPPED(PyArray_DESCR(op))) {
             char *data;
             npy_intp stride;
@@ -2793,20 +2874,20 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         Py_INCREF(extra_op_dtype);
         mit->extra_op_dtype = extra_op_dtype;
 
-        /* Create an iterator, just to broadcast the arrays?! */
-        tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
-                                    NPY_ITER_ZEROSIZE_OK |
-                                    NPY_ITER_REFS_OK |
-                                    NPY_ITER_MULTI_INDEX |
-                                    NPY_ITER_DONT_NEGATE_STRIDES,
-                                    NPY_KEEPORDER,
-                                    NPY_UNSAFE_CASTING,
-                                    tmp_op_flags, NULL);
-        if (tmp_iter == NULL) {
-            goto fail;
-        }
-
         if (PyArray_SIZE(subspace) == 1) {
+            /* Create an iterator, just to broadcast the arrays?! */
+            tmp_iter = NpyIter_MultiNew(mit->numiter, index_arrays,
+                                        NPY_ITER_ZEROSIZE_OK |
+                                        NPY_ITER_REFS_OK |
+                                        NPY_ITER_MULTI_INDEX |
+                                        NPY_ITER_DONT_NEGATE_STRIDES,
+                                        NPY_KEEPORDER,
+                                        NPY_UNSAFE_CASTING,
+                                        tmp_op_flags, NULL);
+            if (tmp_iter == NULL) {
+                goto fail;
+            }
+
             /*
              * nditer allows itemsize with npy_intp type, so it works
              * here, but it would *not* work directly, since elsize
@@ -2819,6 +2900,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                         "internal error: failed to find output array strides");
                 goto fail;
             }
+            NpyIter_Deallocate(tmp_iter);
         }
         else {
             /* Just use C-order strides (TODO: allow also F-order) */
@@ -2828,7 +2910,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                 stride *= mit->dimensions[i];
             }
         }
-        NpyIter_Deallocate(tmp_iter);
 
         /* shape is set, and strides is set up to mit->nd, set rest */
         PyArray_CreateSortedStridePerm(PyArray_NDIM(subspace),
@@ -3171,7 +3252,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
  * If copy_if_overlap != 0, check if `a` has memory overlap with any of the
  * arrays in `index` and with `extra_op`. If yes, make copies as appropriate
  * to avoid problems if `a` is modified during the iteration.
- * `iter->array` may contain a copied array (with UPDATEIFCOPY set).
+ * `iter->array` may contain a copied array (UPDATEIFCOPY/WRITEBACKIFCOPY set).
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
@@ -3205,7 +3286,7 @@ PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
         }
 
         Py_INCREF(a);
-        if (PyArray_SetUpdateIfCopyBase(a_copy, a) < 0) {
+        if (PyArray_SetWritebackIfCopyBase(a_copy, a) < 0) {
             goto fail;
         }
 
@@ -3284,6 +3365,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
 {
+    PyArray_ResolveWritebackIfCopy(mit->array);
     Py_XDECREF(mit->array);
     Py_XDECREF(mit->ait);
     Py_XDECREF(mit->subspace);
@@ -3305,7 +3387,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
  * The mapiter object must be created new each time.  It does not work
  * to bind to a new array, and continue.
  *
- * This was the orginal intention, but currently that does not work.
+ * This was the original intention, but currently that does not work.
  * Do not expose the MapIter_Type to Python.
  *
  * The original mapiter(indexobj); mapiter.bind(a); idea is now fully

@@ -29,7 +29,6 @@ from numpy.core.records import (
         )
 
 _byteorderconv = np.core.records._byteorderconv
-_typestr = ntypes._typestr
 
 import numpy.ma as ma
 from numpy.ma import (
@@ -46,24 +45,6 @@ __all__ = [
     ]
 
 reserved_fields = ['_data', '_mask', '_fieldmask', 'dtype']
-
-
-def _getformats(data):
-    """
-    Returns the formats of arrays in arraylist as a comma-separated string.
-
-    """
-    if hasattr(data, 'dtype'):
-        return ",".join([desc[1] for desc in data.dtype.descr])
-
-    formats = ''
-    for obj in data:
-        obj = np.asarray(obj)
-        formats += _typestr[obj.dtype.type]
-        if issubclass(obj.dtype.type, ntypes.flexible):
-            formats += repr(obj.itemsize)
-        formats += ','
-    return formats[:-1]
 
 
 def _checknames(descr, names=None):
@@ -243,7 +224,7 @@ class MaskedRecords(MaskedArray, object):
             except IndexError:
                 # Couldn't find a mask: use the default (nomask)
                 pass
-            hasmasked = _mask.view((np.bool, (len(_mask.dtype) or 1))).any()
+            hasmasked = _mask.view((bool, (len(_mask.dtype) or 1))).any()
         if (obj.shape or hasmasked):
             obj = obj.view(MaskedArray)
             obj._baseclass = ndarray
@@ -276,7 +257,7 @@ class MaskedRecords(MaskedArray, object):
         try:
             # Is attr a generic attribute ?
             ret = object.__setattr__(self, attr, val)
-        except:
+        except Exception:
             # Not a generic attribute: exit if it's not a valid field
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             optinfo = ndarray.__getattribute__(self, '_optinfo') or {}
@@ -294,7 +275,7 @@ class MaskedRecords(MaskedArray, object):
                 # internal attribute.
                 try:
                     object.__delattr__(self, attr)
-                except:
+                except Exception:
                     return ret
         # Let's try to set the field
         try:

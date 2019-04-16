@@ -4,7 +4,7 @@ Usage: make_lite.py <wrapped_routines_file> <lapack_dir> <output_dir>
 
 Typical invocation:
 
-    make_lite.py wrapped_routines /tmp/lapack-3.x.x .
+    make_lite.py wrapped_routines /tmp/lapack-3.x.x
 
 Requires the following to be on the path:
  * f2c
@@ -16,14 +16,22 @@ from __future__ import division, absolute_import, print_function
 import sys
 import os
 import subprocess
+import shutil
 
 import fortran
 import clapack_scrub
 
+PY2 = sys.version_info < (3, 0)
+
+if PY2:
+    from distutils.spawn import find_executable as which
+else:
+    from shutil import which
+
 # Arguments to pass to f2c. You'll always want -A for ANSI C prototypes
 # Others of interest: -a to not make variables static by default
 #                     -C to check array subscripts
-F2C_ARGS = ['-A']
+F2C_ARGS = ['-A', '-Nx800']
 
 # The header to add to the top of the f2c_*.c file. Note that dlamch_() calls
 # will be replaced by the macros below by clapack_scrub.scrub_source()
@@ -251,6 +259,7 @@ class F2CError(Exception):
     pass
 
 def runF2C(fortran_filename, output_dir):
+    fortran_filename = fortran_filename.replace('\\', '/')
     try:
         subprocess.check_call(
             ["f2c"] + F2C_ARGS + ['-d', output_dir, fortran_filename]
@@ -266,13 +275,29 @@ def scrubF2CSource(c_file):
         fo.write(HEADER)
         fo.write(source)
 
+def ensure_executable(name):
+    try:
+        which(name)
+    except:
+        raise SystemExit(name + ' not found')
+
 def main():
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 3:
         print(__doc__)
         return
+    # Make sure that patch and f2c are found on path
+    ensure_executable('f2c')
+    ensure_executable('patch')
+
     wrapped_routines_file = sys.argv[1]
     lapack_src_dir = sys.argv[2]
-    output_dir = sys.argv[3]
+    output_dir = os.path.join(os.path.dirname(__file__), 'build')
+
+    try:
+        shutil.rmtree(output_dir)
+    except:
+        pass
+    os.makedirs(output_dir)
 
     wrapped_routines, ignores = getWrappedRoutineNames(wrapped_routines_file)
     library = getLapackRoutines(wrapped_routines, ignores, lapack_src_dir)
@@ -285,6 +310,12 @@ def main():
         print('creating %s ...'  % c_file)
         routines = library.allRoutinesByType(typename)
         concatenateRoutines(routines, fortran_file)
+
+        # apply the patchpatch
+        patch_file = os.path.basename(fortran_file) + '.patch'
+        if os.path.exists(patch_file):
+            subprocess.check_call(['patch', '-u', fortran_file, patch_file])
+            print("Patched {}".format(fortran_file))
         try:
             runF2C(fortran_file, output_dir)
         except F2CError:
@@ -298,6 +329,15 @@ def main():
             subprocess.check_call(['patch', '-u', c_file, c_patch_file])
 
         print()
+
+    for fname in os.listdir(output_dir):
+        if fname.endswith('.c'):
+            print('Copying ' + fname)
+            shutil.copy(
+                os.path.join(output_dir, fname),
+                os.path.dirname(__file__),
+            )
+
 
 if __name__ == '__main__':
     main()

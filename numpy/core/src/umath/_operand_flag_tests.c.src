@@ -1,0 +1,105 @@
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include <Python.h>
+#include <numpy/arrayobject.h>
+#include <numpy/ufuncobject.h>
+#include "numpy/npy_3kcompat.h"
+#include <math.h>
+#include <structmember.h>
+
+
+static PyMethodDef TestMethods[] = {
+        {NULL, NULL, 0, NULL}
+};
+
+
+static void
+inplace_add(char **args, npy_intp *dimensions, npy_intp *steps, void *data)
+{
+    npy_intp i;
+    npy_intp n = dimensions[0];
+    char *in1 = args[0];
+    char *in2 = args[1];
+    npy_intp in1_step = steps[0];
+    npy_intp in2_step = steps[1];
+
+    for (i = 0; i < n; i++) {
+        (*(long *)in1) = *(long*)in1 + *(long*)in2;
+        in1 += in1_step;
+        in2 += in2_step;
+    }
+}
+
+
+/*This a pointer to the above function*/
+PyUFuncGenericFunction funcs[1] = {&inplace_add};
+
+/* These are the input and return dtypes of logit.*/
+static char types[2] = {NPY_LONG, NPY_LONG};
+
+static void *data[1] = {NULL};
+
+#if defined(NPY_PY3K)
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_operand_flag_tests",
+    NULL,
+    -1,
+    TestMethods,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+#define RETVAL m
+PyMODINIT_FUNC PyInit__operand_flag_tests(void)
+{
+#else
+#define RETVAL
+PyMODINIT_FUNC init_operand_flag_tests(void)
+{
+#endif
+    PyObject *m = NULL;
+    PyObject *ufunc;
+
+#if defined(NPY_PY3K)
+    m = PyModule_Create(&moduledef);
+#else
+    m = Py_InitModule("_operand_flag_tests", TestMethods);
+#endif
+    if (m == NULL) {
+        goto fail;
+    }
+
+    import_array();
+    import_umath();
+
+    ufunc = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 0,
+                                    PyUFunc_None, "inplace_add",
+                                    "inplace_add_docstring", 0);
+
+    /*
+     * Set flags to turn off buffering for first input operand,
+     * so that result can be written back to input operand.
+     */
+    ((PyUFuncObject*)ufunc)->op_flags[0] = NPY_ITER_READWRITE;
+    ((PyUFuncObject*)ufunc)->iter_flags = NPY_ITER_REDUCE_OK;
+    PyModule_AddObject(m, "inplace_add", (PyObject*)ufunc);
+
+    return RETVAL;
+
+fail:
+    if (!PyErr_Occurred()) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load _operand_flag_tests module.");
+    }
+#if defined(NPY_PY3K)
+    if (m) {
+        Py_DECREF(m);
+        m = NULL;
+    }
+#endif
+    return RETVAL;
+
+}

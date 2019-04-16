@@ -10,12 +10,16 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
-
+#include "npy_ctypes.h"
 #include "npy_pycompat.h"
 
 #include "_datetime.h"
 #include "common.h"
+#include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "descriptor.h"
+#include "alloc.h"
+#include "assert.h"
+#include "buffer.h"
 
 /*
  * offset:    A starting offset.
@@ -38,92 +42,46 @@ static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 static PyArray_Descr *
 _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag);
 
-
-/*
- * Returns value of PyMapping_GetItemString but as a borrowed reference instead
- * of a new reference.
- */
-static PyObject *
-Borrowed_PyMapping_GetItemString(PyObject *o, char *key)
-{
-    PyObject *ret = PyMapping_GetItemString(o, key);
-    Py_XDECREF(ret);
-    return ret;
-}
-
-/*
- * Creates a dtype object from ctypes inputs.
- *
- * Returns a new reference to a dtype object, or NULL
- * if this is not possible. When it returns NULL, it does
- * not set a Python exception.
- */
 static PyArray_Descr *
-_arraydescr_fromctypes(PyObject *obj)
+_arraydescr_from_ctypes_type(PyTypeObject *type)
 {
-    PyObject *dtypedescr;
-    PyArray_Descr *newdescr;
-    int ret;
+    PyObject *_numpy_dtype_ctypes;
+    PyObject *res;
 
-    /* Understand basic ctypes */
-    dtypedescr = PyObject_GetAttrString(obj, "_type_");
-    PyErr_Clear();
-    if (dtypedescr) {
-        ret = PyArray_DescrConverter(dtypedescr, &newdescr);
-        Py_DECREF(dtypedescr);
-        if (ret == NPY_SUCCEED) {
-            PyObject *length;
-            /* Check for ctypes arrays */
-            length = PyObject_GetAttrString(obj, "_length_");
-            PyErr_Clear();
-            if (length) {
-                /* derived type */
-                PyObject *newtup;
-                PyArray_Descr *derived;
-                newtup = Py_BuildValue("NN", newdescr, length);
-                ret = PyArray_DescrConverter(newtup, &derived);
-                Py_DECREF(newtup);
-                if (ret == NPY_SUCCEED) {
-                    return derived;
-                }
-                PyErr_Clear();
-                return NULL;
-            }
-            return newdescr;
-        }
-        PyErr_Clear();
+    /* Call the python function of the same name. */
+    _numpy_dtype_ctypes = PyImport_ImportModule("numpy.core._dtype_ctypes");
+    if (_numpy_dtype_ctypes == NULL) {
         return NULL;
     }
-    /* Understand ctypes structures --
-       bit-fields are not supported
-       automatically aligns */
-    dtypedescr = PyObject_GetAttrString(obj, "_fields_");
-    PyErr_Clear();
-    if (dtypedescr) {
-        ret = PyArray_DescrAlignConverter(dtypedescr, &newdescr);
-        Py_DECREF(dtypedescr);
-        if (ret == NPY_SUCCEED) {
-            return newdescr;
-        }
-        PyErr_Clear();
+    res = PyObject_CallMethod(_numpy_dtype_ctypes, "dtype_from_ctypes_type", "O", (PyObject *)type);
+    Py_DECREF(_numpy_dtype_ctypes);
+    if (res == NULL) {
+        return NULL;
     }
 
-    return NULL;
+    /*
+     * sanity check that dtype_from_ctypes_type returned the right type,
+     * since getting it wrong would give segfaults.
+     */
+    if (!PyObject_TypeCheck(res, &PyArrayDescr_Type)) {
+        Py_DECREF(res);
+        PyErr_BadInternalCall();
+        return NULL;
+    }
+
+    return (PyArray_Descr *)res;
 }
 
 /*
- * This function creates a dtype object when:
- *  - The object has a "dtype" attribute, and it can be converted
- *    to a dtype object.
- *  - The object is a ctypes type object, including array
- *    and structure types.
+ * This function creates a dtype object when the object has a "dtype" attribute,
+ * and it can be converted to a dtype object.
  *
  * Returns a new reference to a dtype object, or NULL
  * if this is not possible. When it returns NULL, it does
  * not set a Python exception.
  */
 NPY_NO_EXPORT PyArray_Descr *
-_arraydescr_fromobj(PyObject *obj)
+_arraydescr_from_dtype_attr(PyObject *obj)
 {
     PyObject *dtypedescr;
     PyArray_Descr *newdescr = NULL;
@@ -132,15 +90,18 @@ _arraydescr_fromobj(PyObject *obj)
     /* For arbitrary objects that have a "dtype" attribute */
     dtypedescr = PyObject_GetAttrString(obj, "dtype");
     PyErr_Clear();
-    if (dtypedescr != NULL) {
-        ret = PyArray_DescrConverter(dtypedescr, &newdescr);
-        Py_DECREF(dtypedescr);
-        if (ret == NPY_SUCCEED) {
-            return newdescr;
-        }
-        PyErr_Clear();
+    if (dtypedescr == NULL) {
+        return NULL;
     }
-    return _arraydescr_fromctypes(obj);
+
+    ret = PyArray_DescrConverter(dtypedescr, &newdescr);
+    Py_DECREF(dtypedescr);
+    if (ret != NPY_SUCCEED) {
+        PyErr_Clear();
+        return NULL;
+    }
+
+    return newdescr;
 }
 
 /*
@@ -152,7 +113,7 @@ array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
 {
     PyObject *dict;
 
-    if (!PyArg_ParseTuple(args, "O", &dict)) {
+    if (!PyArg_ParseTuple(args, "O:set_typeDict", &dict)) {
         return NULL;
     }
     /* Decrement old reference (if any)*/
@@ -196,7 +157,7 @@ _check_for_commastring(char *type, Py_ssize_t len)
      * allows commas inside of [], for parameterized dtypes to use.
      */
     sqbracket = 0;
-    for (i = 1; i < len; i++) {
+    for (i = 0; i < len; i++) {
         switch (type[i]) {
             case ',':
                 if (sqbracket == 0) {
@@ -241,7 +202,7 @@ is_datetime_typestr(char *type, Py_ssize_t len)
 }
 
 static PyArray_Descr *
-_convert_from_tuple(PyObject *obj)
+_convert_from_tuple(PyObject *obj, int align)
 {
     PyArray_Descr *type, *res;
     PyObject *val;
@@ -250,42 +211,49 @@ _convert_from_tuple(PyObject *obj)
     if (PyTuple_GET_SIZE(obj) != 2) {
         return NULL;
     }
-    if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj,0), &type)) {
-        return NULL;
+    if (align) {
+        if (!PyArray_DescrAlignConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
+            return NULL;
+        }
     }
+    else {
+        if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
+            return NULL;
+        }
+    }    
     val = PyTuple_GET_ITEM(obj,1);
     /* try to interpret next item as a type */
     res = _use_inherit(type, val, &errflag);
     if (res || errflag) {
         Py_DECREF(type);
-        if (res) {
-            return res;
-        }
-        else {
-            return NULL;
-        }
+        return res;
     }
     PyErr_Clear();
     /*
      * We get here if res was NULL but errflag wasn't set
      * --- i.e. the conversion to a data-descr failed in _use_inherit
      */
-    if (type->elsize == 0) {
+    if (PyDataType_ISUNSIZED(type)) {
         /* interpret next item as a typesize */
         int itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
 
         if (error_converting(itemsize)) {
             PyErr_SetString(PyExc_ValueError,
                     "invalid itemsize in generic type tuple");
-            goto fail;
+            Py_DECREF(type);
+            return NULL;
         }
         PyArray_DESCR_REPLACE(type);
+        if (type == NULL) {
+            return NULL;
+        }
         if (type->type_num == NPY_UNICODE) {
             type->elsize = itemsize << 2;
         }
         else {
             type->elsize = itemsize;
         }
+        return type;
     }
     else if (type->metadata && (PyDict_Check(val) || PyDictProxy_Check(val))) {
         /* Assume it's a metadata dictionary */
@@ -293,6 +261,7 @@ _convert_from_tuple(PyObject *obj)
             Py_DECREF(type);
             return NULL;
         }
+        return type;
     }
     else {
         /*
@@ -301,12 +270,12 @@ _convert_from_tuple(PyObject *obj)
          * a new fields attribute.
          */
         PyArray_Dims shape = {NULL, -1};
-        PyArray_Descr *newdescr;
+        PyArray_Descr *newdescr = NULL;
         npy_intp items;
-        int i;
+        int i, overflowed;
+        int nbytes;
 
         if (!(PyArray_IntpConverter(val, &shape)) || (shape.len > NPY_MAXDIMS)) {
-            PyDimMem_FREE(shape.ptr);
             PyErr_SetString(PyExc_ValueError,
                     "invalid shape in fixed-type tuple.");
             goto fail;
@@ -320,13 +289,8 @@ _convert_from_tuple(PyObject *obj)
                     && PyNumber_Check(val))
                 || (shape.len == 0
                     && PyTuple_Check(val))) {
-            PyDimMem_FREE(shape.ptr);
+            npy_free_cache_dim_obj(shape);
             return type;
-        }
-        newdescr = PyArray_DescrNewFromType(NPY_VOID);
-        if (newdescr == NULL) {
-            PyDimMem_FREE(shape.ptr);
-            goto fail;
         }
 
         /* validate and set shape */
@@ -335,34 +299,36 @@ _convert_from_tuple(PyObject *obj)
                 PyErr_SetString(PyExc_ValueError,
                                 "invalid shape in fixed-type tuple: "
                                 "dimension smaller then zero.");
-                PyDimMem_FREE(shape.ptr);
                 goto fail;
             }
             if (shape.ptr[i] > NPY_MAX_INT) {
                 PyErr_SetString(PyExc_ValueError,
                                 "invalid shape in fixed-type tuple: "
                                 "dimension does not fit into a C int.");
-                PyDimMem_FREE(shape.ptr);
                 goto fail;
             }
         }
         items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
-        if ((items < 0) || (items > (NPY_MAX_INT / type->elsize))) {
+        if (items < 0 || items > NPY_MAX_INT) {
+            overflowed = 1;
+        }
+        else {
+            overflowed = npy_mul_with_overflow_int(
+                &nbytes, type->elsize, (int) items);
+        }
+        if (overflowed) {
             PyErr_SetString(PyExc_ValueError,
                             "invalid shape in fixed-type tuple: dtype size in "
                             "bytes must fit into a C int.");
-            PyDimMem_FREE(shape.ptr);
             goto fail;
         }
-        newdescr->elsize = type->elsize * items;
-        if (newdescr->elsize == -1) {
-            PyDimMem_FREE(shape.ptr);
+        newdescr = PyArray_DescrNewFromType(NPY_VOID);
+        if (newdescr == NULL) {
             goto fail;
         }
-
+        newdescr->elsize = nbytes;
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
         if (newdescr->subarray == NULL) {
-            Py_DECREF(newdescr);
             PyErr_NoMemory();
             goto fail;
         }
@@ -381,7 +347,6 @@ _convert_from_tuple(PyObject *obj)
          */
         newdescr->subarray->shape = PyTuple_New(shape.len);
         if (newdescr->subarray->shape == NULL) {
-            PyDimMem_FREE(shape.ptr);
             goto fail;
         }
         for (i=0; i < shape.len; i++) {
@@ -389,21 +354,19 @@ _convert_from_tuple(PyObject *obj)
                              PyInt_FromLong((long)shape.ptr[i]));
 
             if (PyTuple_GET_ITEM(newdescr->subarray->shape, i) == NULL) {
-                Py_DECREF(newdescr->subarray->shape);
-                newdescr->subarray->shape = NULL;
-                PyDimMem_FREE(shape.ptr);
                 goto fail;
             }
         }
 
-        PyDimMem_FREE(shape.ptr);
-        type = newdescr;
-    }
-    return type;
+        npy_free_cache_dim_obj(shape);
+        return newdescr;
 
- fail:
-    Py_XDECREF(type);
-    return NULL;
+    fail:
+        Py_XDECREF(type);
+        Py_XDECREF(newdescr);
+        npy_free_cache_dim_obj(shape);
+        return NULL;
+    }
 }
 
 /*
@@ -443,7 +406,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         name = PyTuple_GET_ITEM(item, 0);
-        if (PyUString_Check(name)) {
+        if (PyBaseString_Check(name)) {
             title = NULL;
         }
         else if (PyTuple_Check(name)) {
@@ -452,7 +415,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
-            if (!PyUString_Check(name)) {
+            if (!PyBaseString_Check(name)) {
                 goto fail;
             }
         }
@@ -463,6 +426,17 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Insert name into nameslist */
         Py_INCREF(name);
 
+#if !defined(NPY_PY3K)
+        /* convert unicode name to ascii on Python 2 if possible */ 
+        if (PyUnicode_Check(name)) {
+            PyObject *tmp = PyUnicode_AsASCIIString(name);
+            Py_DECREF(name);
+            if (tmp == NULL) { 
+                goto fail;
+            }
+            name = tmp;
+        }
+#endif
         if (PyUString_GET_SIZE(name) == 0) {
             Py_DECREF(name);
             if (title == NULL) {
@@ -518,11 +492,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         if ((PyDict_GetItem(fields, name) != NULL)
              || (title
-#if defined(NPY_PY3K)
-                 && PyUString_Check(title)
-#else
-                 && (PyUString_Check(title) || PyUnicode_Check(title))
-#endif
+                 && PyBaseString_Check(title)
                  && (PyDict_GetItem(fields, title) != NULL))) {
 #if defined(NPY_PY3K)
             name = PyUnicode_AsUTF8String(name);
@@ -532,6 +502,7 @@ _convert_from_array_descr(PyObject *obj, int align)
 #if defined(NPY_PY3K)
             Py_DECREF(name);
 #endif
+            Py_DECREF(conv);
             goto fail;
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
@@ -557,11 +528,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             Py_INCREF(title);
             PyTuple_SET_ITEM(tup, 2, title);
             PyDict_SetItem(fields, name, tup);
-#if defined(NPY_PY3K)
-            if (PyUString_Check(title)) {
-#else
-            if (PyUString_Check(title) || PyUnicode_Check(title)) {
-#endif
+            if (PyBaseString_Check(title)) {
                 if (PyDict_GetItem(fields, title) != NULL) {
                     PyErr_SetString(PyExc_ValueError,
                             "title already used as a name or title.");
@@ -852,15 +819,20 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
     if (new == NULL) {
         goto fail;
     }
-    if (new->elsize && new->elsize != conv->elsize) {
+    if (PyDataType_ISUNSIZED(new)) {
+        new->elsize = conv->elsize;
+    }
+    else if (new->elsize != conv->elsize) {
         PyErr_SetString(PyExc_ValueError,
                 "mismatch in size of old and new data-descriptor");
+        Py_DECREF(new);
         goto fail;
     }
-    if (new->elsize && invalid_union_object_dtype(new, conv)) {
+    else if (invalid_union_object_dtype(new, conv)) {
+        Py_DECREF(new);
         goto fail;
     }
-    new->elsize = conv->elsize;
+
     if (PyDataType_HASFIELDS(conv)) {
         Py_XDECREF(new->fields);
         new->fields = conv->fields;
@@ -1016,8 +988,11 @@ _convert_from_dict(PyObject *obj, int align)
 {
     PyArray_Descr *new;
     PyObject *fields = NULL;
-    PyObject *names, *offsets, *descrs, *titles, *tmp;
-    PyObject *metadata;
+    PyObject *names  = NULL;
+    PyObject *offsets= NULL;
+    PyObject *descrs = NULL;
+    PyObject *titles = NULL;
+    PyObject *metadata, *tmp;
     int n, i;
     int totalsize, itemsize;
     int maxalign = 0;
@@ -1032,19 +1007,27 @@ _convert_from_dict(PyObject *obj, int align)
     /*
      * Use PyMapping_GetItemString to support dictproxy objects as well.
      */
-    names = Borrowed_PyMapping_GetItemString(obj, "names");
-    descrs = Borrowed_PyMapping_GetItemString(obj, "formats");
-    if (!names || !descrs) {
+    names = PyMapping_GetItemString(obj, "names");
+    if (names == NULL) {
         Py_DECREF(fields);
+        /* XXX should check this is a KeyError */
         PyErr_Clear();
         return _use_fields_dict(obj, align);
     }
+    descrs = PyMapping_GetItemString(obj, "formats");
+    if (descrs == NULL) {
+        Py_DECREF(fields);
+        /* XXX should check this is a KeyError */
+        PyErr_Clear();
+        Py_DECREF(names);
+        return _use_fields_dict(obj, align);
+    }
     n = PyObject_Length(names);
-    offsets = Borrowed_PyMapping_GetItemString(obj, "offsets");
+    offsets = PyMapping_GetItemString(obj, "offsets");
     if (!offsets) {
         PyErr_Clear();
     }
-    titles = Borrowed_PyMapping_GetItemString(obj, "titles");
+    titles = PyMapping_GetItemString(obj, "titles");
     if (!titles) {
         PyErr_Clear();
     }
@@ -1062,7 +1045,7 @@ _convert_from_dict(PyObject *obj, int align)
      * If a property 'aligned' is in the dict, it overrides the align flag
      * to be True if it not already true.
      */
-    tmp = Borrowed_PyMapping_GetItemString(obj, "aligned");
+    tmp = PyMapping_GetItemString(obj, "aligned");
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
@@ -1070,11 +1053,13 @@ _convert_from_dict(PyObject *obj, int align)
             align = 1;
         }
         else if (tmp != Py_False) {
+            Py_DECREF(tmp);
             PyErr_SetString(PyExc_ValueError,
                     "NumPy dtype descriptor includes 'aligned' entry, "
                     "but its value is neither True nor False");
-            return NULL;
+            goto fail;
         }
+        Py_DECREF(tmp);
     }
 
     totalsize = 0;
@@ -1130,7 +1115,7 @@ _convert_from_dict(PyObject *obj, int align)
                 goto fail;
             }
             offset = PyArray_PyIntAsInt(off);
-            if (offset == -1 && PyErr_Occurred()) {
+            if (error_converting(offset)) {
                 Py_DECREF(off);
                 Py_DECREF(tup);
                 Py_DECREF(ind);
@@ -1184,11 +1169,7 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(tup);
             goto fail;
         }
-#if defined(NPY_PY3K)
-        if (!PyUString_Check(name)) {
-#else
-        if (!(PyUString_Check(name) || PyUnicode_Check(name))) {
-#endif
+        if (!PyBaseString_Check(name)) {
             PyErr_SetString(PyExc_ValueError,
                     "field names must be strings");
             Py_DECREF(tup);
@@ -1205,11 +1186,7 @@ _convert_from_dict(PyObject *obj, int align)
         PyDict_SetItem(fields, name, tup);
         Py_DECREF(name);
         if (len == 3) {
-#if defined(NPY_PY3K)
-            if (PyUString_Check(title)) {
-#else
-            if (PyUString_Check(title) || PyUnicode_Check(title)) {
-#endif
+            if (PyBaseString_Check(title)) {
                 if (PyDict_GetItem(fields, title) != NULL) {
                     PyErr_SetString(PyExc_ValueError,
                             "title already used as a name or title.");
@@ -1238,14 +1215,18 @@ _convert_from_dict(PyObject *obj, int align)
     }
     new->elsize = totalsize;
     if (!PyTuple_Check(names)) {
-        names = PySequence_Tuple(names);
-    }
-    else {
-        Py_INCREF(names);
+        Py_SETREF(names, PySequence_Tuple(names));
+        if (names == NULL) {
+            Py_DECREF(new);
+            goto fail;
+        }
     }
     new->names = names;
     new->fields = fields;
     new->flags = dtypeflags;
+    /* new takes responsibility for DECREFing names, fields */
+    names = NULL;
+    fields = NULL;
 
     /*
      * If the fields weren't in order, and there was an OBJECT type,
@@ -1254,7 +1235,7 @@ _convert_from_dict(PyObject *obj, int align)
     if (has_out_of_order_fields && PyDataType_REFCHK(new)) {
         if (validate_object_field_overlap(new) < 0) {
             Py_DECREF(new);
-            return NULL;
+            goto fail;
         }
     }
 
@@ -1264,14 +1245,15 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Override the itemsize if provided */
-    tmp = Borrowed_PyMapping_GetItemString(obj, "itemsize");
+    tmp = PyMapping_GetItemString(obj, "itemsize");
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
         itemsize = (int)PyArray_PyIntAsInt(tmp);
-        if (itemsize == -1 && PyErr_Occurred()) {
+        Py_DECREF(tmp);
+        if (error_converting(itemsize)) {
             Py_DECREF(new);
-            return NULL;
+            goto fail;
         }
         /* Make sure the itemsize isn't made too small */
         if (itemsize < new->elsize) {
@@ -1280,7 +1262,7 @@ _convert_from_dict(PyObject *obj, int align)
                     "cannot override to smaller itemsize of %d",
                     (int)new->elsize, (int)itemsize);
             Py_DECREF(new);
-            return NULL;
+            goto fail;
         }
         /* If align is set, make sure the alignment divides into the size */
         if (align && itemsize % new->alignment != 0) {
@@ -1289,30 +1271,37 @@ _convert_from_dict(PyObject *obj, int align)
                     "which is not divisible into the specified itemsize %d",
                     (int)new->alignment, (int)itemsize);
             Py_DECREF(new);
-            return NULL;
+            goto fail;
         }
         /* Set the itemsize */
         new->elsize = itemsize;
     }
 
     /* Add the metadata if provided */
-    metadata = Borrowed_PyMapping_GetItemString(obj, "metadata");
+    metadata = PyMapping_GetItemString(obj, "metadata");
 
     if (metadata == NULL) {
         PyErr_Clear();
     }
     else if (new->metadata == NULL) {
         new->metadata = metadata;
-        Py_XINCREF(new->metadata);
     }
-    else if (PyDict_Merge(new->metadata, metadata, 0) == -1) {
-        Py_DECREF(new);
-        return NULL;
+    else {
+        int ret = PyDict_Merge(new->metadata, metadata, 0);
+        Py_DECREF(metadata);
+        if (ret < 0) {
+            Py_DECREF(new);
+            goto fail;
+        }
     }
     return new;
 
  fail:
     Py_XDECREF(fields);
+    Py_XDECREF(names);
+    Py_XDECREF(descrs);
+    Py_XDECREF(offsets);
+    Py_XDECREF(titles);
     return NULL;
 }
 
@@ -1423,9 +1412,19 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             check_num = NPY_VOID;
         }
         else {
-            *at = _arraydescr_fromobj(obj);
+            *at = _arraydescr_from_dtype_attr(obj);
             if (*at) {
                 return NPY_SUCCEED;
+            }
+
+            /*
+             * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
+             * type might override the dtype if numpy does not otherwise
+             * support it.
+             */
+            if (npy_ctypes_check((PyTypeObject *)obj)) {
+                *at = _arraydescr_from_ctypes_type((PyTypeObject *)obj);
+                return *at ? NPY_SUCCEED : NPY_FAIL;
             }
         }
         goto finish;
@@ -1439,6 +1438,12 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         PyObject *obj2;
         obj2 = PyUnicode_AsASCIIString(obj);
         if (obj2 == NULL) {
+            /* Convert the exception into a TypeError */
+            PyObject *err = PyErr_Occurred();
+            if (PyErr_GivenExceptionMatches(err, PyExc_UnicodeEncodeError)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "data type not understood");
+            }
             return NPY_FAIL;
         }
         retval = PyArray_DescrConverter(obj2, at);
@@ -1555,7 +1560,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
-        *at = _convert_from_tuple(obj);
+        *at = _convert_from_tuple(obj, 0);
         if (*at == NULL){
             if (PyErr_Occurred()) {
                 return NPY_FAIL;
@@ -1590,12 +1595,22 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         goto fail;
     }
     else {
-        *at = _arraydescr_fromobj(obj);
+        *at = _arraydescr_from_dtype_attr(obj);
         if (*at) {
             return NPY_SUCCEED;
         }
         if (PyErr_Occurred()) {
             return NPY_FAIL;
+        }
+
+        /*
+         * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
+         * type might override the dtype if numpy does not otherwise
+         * support it.
+         */
+        if (npy_ctypes_check(Py_TYPE(obj))) {
+            *at = _arraydescr_from_ctypes_type(Py_TYPE(obj));
+            return *at ? NPY_SUCCEED : NPY_FAIL;
         }
         goto fail;
     }
@@ -1652,8 +1667,11 @@ finish:
         goto fail;
     }
 
-    if (((*at)->elsize == 0) && (elsize != 0)) {
+    if (PyDataType_ISUNSIZED(*at) && (*at)->elsize != elsize) {
         PyArray_DESCR_REPLACE(*at);
+        if (*at == NULL) {
+            goto error;
+        }
         (*at)->elsize = elsize;
     }
     if (endian != '=' && PyArray_ISNBO(endian)) {
@@ -1662,6 +1680,9 @@ finish:
     if (endian != '=' && (*at)->byteorder != '|'
         && (*at)->byteorder != endian) {
         PyArray_DESCR_REPLACE(*at);
+        if (*at == NULL) {
+            goto error;
+        }
         (*at)->byteorder = endian;
     }
     return NPY_SUCCEED;
@@ -1722,6 +1743,7 @@ PyArray_DescrNew(PyArray_Descr *base)
         newdescr->c_metadata = NPY_AUXDATA_CLONE(base->c_metadata);
         if (newdescr->c_metadata == NULL) {
             PyErr_NoMemory();
+            /* TODO: This seems wrong, as the old fields get decref'd? */
             Py_DECREF(newdescr);
             return NULL;
         }
@@ -1764,6 +1786,7 @@ arraydescr_dealloc(PyArray_Descr *self)
         Py_INCREF(self);
         return;
     }
+    _dealloc_cached_buffer_info((PyObject*)self);
     Py_XDECREF(self->typeobj);
     Py_XDECREF(self->names);
     Py_XDECREF(self->fields);
@@ -1853,72 +1876,17 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
 }
 
 static PyObject *
-arraydescr_typename_get(PyArray_Descr *self)
+arraydescr_name_get(PyArray_Descr *self)
 {
-    static const char np_prefix[] = "numpy.";
-    const int np_prefix_len = sizeof(np_prefix) - 1;
-    PyTypeObject *typeobj = self->typeobj;
+    /* let python handle this */
+    PyObject *_numpy_dtype;
     PyObject *res;
-    char *s;
-    int len;
-    int prefix_len;
-    int suffix_len;
-
-    if (PyTypeNum_ISUSERDEF(self->type_num)) {
-        s = strrchr(typeobj->tp_name, '.');
-        if (s == NULL) {
-            res = PyUString_FromString(typeobj->tp_name);
-        }
-        else {
-            res = PyUString_FromStringAndSize(s + 1, strlen(s) - 1);
-        }
-        return res;
+    _numpy_dtype = PyImport_ImportModule("numpy.core._dtype");
+    if (_numpy_dtype == NULL) {
+        return NULL;
     }
-    else {
-        /*
-         * NumPy type or subclass
-         *
-         * res is derived from typeobj->tp_name with the following rules:
-         * - if starts with "numpy.", that prefix is removed
-         * - if ends with "_", that suffix is removed
-         */
-        len = strlen(typeobj->tp_name);
-
-        if (! strncmp(typeobj->tp_name, np_prefix, np_prefix_len)) {
-            prefix_len = np_prefix_len;
-        }
-        else {
-            prefix_len = 0;
-        }
-
-        if (typeobj->tp_name[len - 1] == '_') {
-            suffix_len = 1;
-        }
-        else {
-            suffix_len = 0;
-        }
-
-        len -= prefix_len;
-        len -= suffix_len;
-        res = PyUString_FromStringAndSize(typeobj->tp_name+prefix_len, len);
-    }
-    if (PyTypeNum_ISFLEXIBLE(self->type_num) && self->elsize != 0) {
-        PyObject *p;
-        p = PyUString_FromFormat("%d", self->elsize * 8);
-        PyUString_ConcatAndDel(&res, p);
-    }
-    if (PyDataType_ISDATETIME(self)) {
-        PyArray_DatetimeMetaData *meta;
-
-        meta = get_datetime_metadata_from_dtype(self);
-        if (meta == NULL) {
-            Py_DECREF(res);
-            return NULL;
-        }
-
-        res = append_metastr_to_string(meta, 0, res);
-    }
-
+    res = PyObject_CallMethod(_numpy_dtype, "_name_get", "O", self);
+    Py_DECREF(_numpy_dtype);
     return res;
 }
 
@@ -1939,33 +1907,26 @@ arraydescr_shape_get(PyArray_Descr *self)
     if (!PyDataType_HASSUBARRAY(self)) {
         return PyTuple_New(0);
     }
-    /*TODO
-     * self->subarray->shape should always be a tuple,
-     * so this check should be unnecessary
-     */
-    if (PyTuple_Check(self->subarray->shape)) {
-        Py_INCREF(self->subarray->shape);
-        return (PyObject *)(self->subarray->shape);
-    }
-    return Py_BuildValue("(O)", self->subarray->shape);
+    assert(PyTuple_Check(self->subarray->shape));
+    Py_INCREF(self->subarray->shape);
+    return self->subarray->shape;
 }
 
 static PyObject *
 arraydescr_ndim_get(PyArray_Descr *self)
 {
+    Py_ssize_t ndim;
+
     if (!PyDataType_HASSUBARRAY(self)) {
         return PyInt_FromLong(0);
     }
-    /*TODO
-     * self->subarray->shape should always be a tuple,
-     * so this check should be unnecessary
+
+    /*
+     * PyTuple_Size has built in check
+     * for tuple argument
      */
-    if (PyTuple_Check(self->subarray->shape)) {
-        Py_ssize_t ndim = PyTuple_Size(self->subarray->shape);
-        return PyInt_FromLong(ndim);
-    }
-    /* consistent with arraydescr_shape_get */
-    return PyInt_FromLong(1);
+    ndim = PyTuple_Size(self->subarray->shape);
+    return PyInt_FromLong(ndim);
 }
 
 
@@ -2219,7 +2180,7 @@ static PyGetSetDef arraydescr_getsets[] = {
         (getter)arraydescr_protocol_typestr_get,
         NULL, NULL, NULL},
     {"name",
-        (getter)arraydescr_typename_get,
+        (getter)arraydescr_name_get,
         NULL, NULL, NULL},
     {"base",
         (getter)arraydescr_base_get,
@@ -2267,7 +2228,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!:dtype", kwlist,
                 &odescr,
                 PyArray_BoolConverter, &align,
                 PyArray_BoolConverter, &copy,
@@ -2408,7 +2369,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     if (ret == NULL) {
         return NULL;
     }
-    mod = PyImport_ImportModule("numpy.core.multiarray");
+    mod = PyImport_ImportModule("numpy.core._multiarray_umath");
     if (mod == NULL) {
         Py_DECREF(ret);
         return NULL;
@@ -2566,7 +2527,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
-        if (!PyArg_ParseTuple(args, "(iOOOOiiiO)", &version, &endian_obj,
+        if (!PyArg_ParseTuple(args, "(iOOOOiiiO):__setstate__",
+                    &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment, &int_dtypeflags, &metadata)) {
             PyErr_Clear();
@@ -2574,21 +2536,24 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         }
         break;
     case 8:
-        if (!PyArg_ParseTuple(args, "(iOOOOiii)", &version, &endian_obj,
+        if (!PyArg_ParseTuple(args, "(iOOOOiii):__setstate__",
+                    &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment, &int_dtypeflags)) {
             return NULL;
         }
         break;
     case 7:
-        if (!PyArg_ParseTuple(args, "(iOOOOii)", &version, &endian_obj,
+        if (!PyArg_ParseTuple(args, "(iOOOOii):__setstate__",
+                    &version, &endian_obj,
                     &subarray, &names, &fields, &elsize,
                     &alignment)) {
             return NULL;
         }
         break;
     case 6:
-        if (!PyArg_ParseTuple(args, "(iOOOii)", &version,
+        if (!PyArg_ParseTuple(args, "(iOOOii):__setstate__",
+                    &version,
                     &endian_obj, &subarray, &fields,
                     &elsize, &alignment)) {
             return NULL;
@@ -2596,7 +2561,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         break;
     case 5:
         version = 0;
-        if (!PyArg_ParseTuple(args, "(OOOii)",
+        if (!PyArg_ParseTuple(args, "(OOOii):__setstate__",
                     &endian_obj, &subarray, &fields, &elsize,
                     &alignment)) {
             return NULL;
@@ -2882,7 +2847,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 
         if (convert_datetime_metadata_tuple_to_datetime_metadata(
                                     PyTuple_GET_ITEM(metadata, 1),
-                                    &temp_dt_data) < 0) {
+                                    &temp_dt_data,
+                                    NPY_TRUE) < 0) {
             return NULL;
         }
 
@@ -2930,6 +2896,9 @@ PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
         tmp = PyUnicode_AsASCIIString(obj);
         *at = _convert_from_commastring(tmp, 1);
         Py_DECREF(tmp);
+    }
+    else if (PyTuple_Check(obj)) {
+        *at = _convert_from_tuple(obj, 1);
     }
     else if (PyList_Check(obj)) {
         *at = _convert_from_array_descr(obj, 1);
@@ -3082,7 +3051,7 @@ arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args)
 {
     char endian=NPY_SWAP;
 
-    if (!PyArg_ParseTuple(args, "|O&", PyArray_ByteorderConverter,
+    if (!PyArg_ParseTuple(args, "|O&:newbyteorder", PyArray_ByteorderConverter,
                 &endian)) {
         return NULL;
     }
@@ -3114,7 +3083,7 @@ static PyMethodDef arraydescr_methods[] = {
  *
  * Returns 1 if it has a simple layout, 0 otherwise.
  */
-static int
+NPY_NO_EXPORT int
 is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype)
 {
     PyObject *names, *fields, *key, *tup, *title;
@@ -3165,462 +3134,36 @@ is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype)
 }
 
 /*
- * Returns a string representation of a structured array,
- * in a list format.
- */
-static PyObject *
-arraydescr_struct_list_str(PyArray_Descr *dtype)
-{
-    PyObject *names, *key, *fields, *ret, *tmp, *tup, *title;
-    Py_ssize_t i, names_size;
-    PyArray_Descr *fld_dtype;
-    int fld_offset;
-
-    names = dtype->names;
-    names_size = PyTuple_GET_SIZE(names);
-    fields = dtype->fields;
-
-    /* Build up a string to make the list */
-
-    /* Go through all the names */
-    ret = PyUString_FromString("[");
-    for (i = 0; i < names_size; ++i) {
-        key = PyTuple_GET_ITEM(names, i);
-        tup = PyDict_GetItem(fields, key);
-        if (tup == NULL) {
-            return 0;
-        }
-        title = NULL;
-        if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &fld_offset, &title)) {
-            PyErr_Clear();
-            return 0;
-        }
-        PyUString_ConcatAndDel(&ret, PyUString_FromString("("));
-        /* Check for whether to do titles as well */
-        if (title != NULL && title != Py_None) {
-            PyUString_ConcatAndDel(&ret, PyUString_FromString("("));
-            PyUString_ConcatAndDel(&ret, PyObject_Repr(title));
-            PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
-            PyUString_ConcatAndDel(&ret, PyObject_Repr(key));
-            PyUString_ConcatAndDel(&ret, PyUString_FromString("), "));
-        }
-        else {
-            PyUString_ConcatAndDel(&ret, PyObject_Repr(key));
-            PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
-        }
-        /* Special case subarray handling here */
-        if (PyDataType_HASSUBARRAY(fld_dtype)) {
-            tmp = arraydescr_construction_repr(
-                            fld_dtype->subarray->base, 0, 1);
-            PyUString_ConcatAndDel(&ret, tmp);
-            PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
-            PyUString_ConcatAndDel(&ret,
-                            PyObject_Str(fld_dtype->subarray->shape));
-        }
-        else {
-            tmp = arraydescr_construction_repr(fld_dtype, 0, 1);
-            PyUString_ConcatAndDel(&ret, tmp);
-        }
-        PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
-        if (i != names_size - 1) {
-            PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
-        }
-    }
-    PyUString_ConcatAndDel(&ret, PyUString_FromString("]"));
-
-    return ret;
-}
-
-/*
- * Returns a string representation of a structured array,
- * in a dict format.
- */
-static PyObject *
-arraydescr_struct_dict_str(PyArray_Descr *dtype, int includealignedflag)
-{
-    PyObject *names, *key, *fields, *ret, *tmp, *tup, *title;
-    Py_ssize_t i, names_size;
-    PyArray_Descr *fld_dtype;
-    int fld_offset, has_titles;
-
-    names = dtype->names;
-    names_size = PyTuple_GET_SIZE(names);
-    fields = dtype->fields;
-    has_titles = 0;
-
-    /* Build up a string to make the dictionary */
-
-    /* First, the names */
-    ret = PyUString_FromString("{'names':[");
-    for (i = 0; i < names_size; ++i) {
-        key = PyTuple_GET_ITEM(names, i);
-        PyUString_ConcatAndDel(&ret, PyObject_Repr(key));
-        if (i != names_size - 1) {
-            PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
-        }
-    }
-    /* Second, the formats */
-    PyUString_ConcatAndDel(&ret, PyUString_FromString("], 'formats':["));
-    for (i = 0; i < names_size; ++i) {
-        key = PyTuple_GET_ITEM(names, i);
-        tup = PyDict_GetItem(fields, key);
-        if (tup == NULL) {
-            return 0;
-        }
-        title = NULL;
-        if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &fld_offset, &title)) {
-            PyErr_Clear();
-            return 0;
-        }
-        /* Check for whether to do titles as well */
-        if (title != NULL && title != Py_None) {
-            has_titles = 1;
-        }
-        tmp = arraydescr_construction_repr(fld_dtype, 0, 1);
-        PyUString_ConcatAndDel(&ret, tmp);
-        if (i != names_size - 1) {
-            PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
-        }
-    }
-    /* Third, the offsets */
-    PyUString_ConcatAndDel(&ret, PyUString_FromString("], 'offsets':["));
-    for (i = 0; i < names_size; ++i) {
-        key = PyTuple_GET_ITEM(names, i);
-        tup = PyDict_GetItem(fields, key);
-        if (tup == NULL) {
-            return 0;
-        }
-        if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &fld_offset, &title)) {
-            PyErr_Clear();
-            return 0;
-        }
-        PyUString_ConcatAndDel(&ret, PyUString_FromFormat("%d", fld_offset));
-        if (i != names_size - 1) {
-            PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
-        }
-    }
-    /* Fourth, the titles */
-    if (has_titles) {
-        PyUString_ConcatAndDel(&ret, PyUString_FromString("], 'titles':["));
-        for (i = 0; i < names_size; ++i) {
-            key = PyTuple_GET_ITEM(names, i);
-            tup = PyDict_GetItem(fields, key);
-            if (tup == NULL) {
-                return 0;
-            }
-            title = Py_None;
-            if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype,
-                                            &fld_offset, &title)) {
-                PyErr_Clear();
-                return 0;
-            }
-            PyUString_ConcatAndDel(&ret, PyObject_Repr(title));
-            if (i != names_size - 1) {
-                PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
-            }
-        }
-    }
-    if (includealignedflag && (dtype->flags&NPY_ALIGNED_STRUCT)) {
-        /* Finally, the itemsize/itemsize and aligned flag */
-        PyUString_ConcatAndDel(&ret,
-                PyUString_FromFormat("], 'itemsize':%d, 'aligned':True}",
-                        (int)dtype->elsize));
-    }
-    else {
-        /* Finally, the itemsize/itemsize*/
-        PyUString_ConcatAndDel(&ret,
-                PyUString_FromFormat("], 'itemsize':%d}", (int)dtype->elsize));
-    }
-
-    return ret;
-}
-
-/* Produces a string representation for a structured dtype */
-static PyObject *
-arraydescr_struct_str(PyArray_Descr *dtype, int includealignflag)
-{
-    PyObject *sub;
-
-    /*
-     * The list str representation can't include the 'align=' flag,
-     * so if it is requested and the struct has the aligned flag set,
-     * we must use the dict str instead.
-     */
-    if (!(includealignflag && (dtype->flags&NPY_ALIGNED_STRUCT)) &&
-                        is_dtype_struct_simple_unaligned_layout(dtype)) {
-        sub = arraydescr_struct_list_str(dtype);
-    }
-    else {
-        sub = arraydescr_struct_dict_str(dtype, includealignflag);
-    }
-
-    /* If the data type has a non-void (subclassed) type, show it */
-    if (dtype->type_num == NPY_VOID && dtype->typeobj != &PyVoidArrType_Type) {
-        /*
-         * Note: We cannot get the type name from dtype->typeobj->tp_name
-         * because its value depends on whether the type is dynamically or
-         * statically allocated.  Instead use __name__ and __module__.
-         * See https://docs.python.org/2/c-api/typeobj.html.
-         */
-
-        PyObject *str_name, *namestr, *str_module, *modulestr, *ret;
-
-        str_name = PyUString_FromString("__name__");
-        namestr = PyObject_GetAttr((PyObject*)(dtype->typeobj), str_name);
-        Py_DECREF(str_name);
-
-        if (namestr == NULL) {
-            /* this should never happen since types always have __name__ */
-            PyErr_Format(PyExc_RuntimeError,
-                         "dtype does not have a __name__ attribute");
-            return NULL;
-        }
-
-        str_module = PyUString_FromString("__module__");
-        modulestr = PyObject_GetAttr((PyObject*)(dtype->typeobj), str_module);
-        Py_DECREF(str_module);
-
-        ret = PyUString_FromString("(");
-        if (modulestr != NULL) {
-            /* Note: if modulestr == NULL, the type is unpicklable */
-            PyUString_ConcatAndDel(&ret, modulestr);
-            PyUString_ConcatAndDel(&ret, PyUString_FromString("."));
-        }
-        PyUString_ConcatAndDel(&ret, namestr);
-        PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
-        PyUString_ConcatAndDel(&ret, sub);
-        PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
-        return ret;
-    }
-    else {
-        return sub;
-    }
-}
-
-/* Produces a string representation for a subarray dtype */
-static PyObject *
-arraydescr_subarray_str(PyArray_Descr *dtype)
-{
-    PyObject *p, *ret;
-
-    ret = PyUString_FromString("(");
-    p = arraydescr_construction_repr(dtype->subarray->base, 0, 1);
-    PyUString_ConcatAndDel(&ret, p);
-    PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
-    PyUString_ConcatAndDel(&ret, PyObject_Str(dtype->subarray->shape));
-    PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
-
-    return ret;
-}
-
-static PyObject *
-arraydescr_str(PyArray_Descr *dtype)
-{
-    PyObject *sub;
-
-    if (PyDataType_HASFIELDS(dtype)) {
-        sub = arraydescr_struct_str(dtype, 1);
-    }
-    else if (PyDataType_HASSUBARRAY(dtype)) {
-        sub = arraydescr_subarray_str(dtype);
-    }
-    else if (PyDataType_ISFLEXIBLE(dtype) || !PyArray_ISNBO(dtype->byteorder)) {
-        sub = arraydescr_protocol_typestr_get(dtype);
-    }
-    else {
-        sub = arraydescr_typename_get(dtype);
-    }
-    return sub;
-}
-
-/*
- * The dtype repr function specifically for structured arrays.
- */
-static PyObject *
-arraydescr_struct_repr(PyArray_Descr *dtype)
-{
-    PyObject *sub, *s;
-
-    s = PyUString_FromString("dtype(");
-    sub = arraydescr_struct_str(dtype, 0);
-    if (sub == NULL) {
-        return NULL;
-    }
-
-    PyUString_ConcatAndDel(&s, sub);
-
-    /* If it's an aligned structure, add the align=True parameter */
-    if (dtype->flags&NPY_ALIGNED_STRUCT) {
-        PyUString_ConcatAndDel(&s, PyUString_FromString(", align=True"));
-    }
-
-    PyUString_ConcatAndDel(&s, PyUString_FromString(")"));
-    return s;
-}
-
-/* See descriptor.h for documentation */
-NPY_NO_EXPORT PyObject *
-arraydescr_construction_repr(PyArray_Descr *dtype, int includealignflag,
-                                int shortrepr)
-{
-    PyObject *ret;
-    PyArray_DatetimeMetaData *meta;
-    char byteorder[2];
-
-    if (PyDataType_HASFIELDS(dtype)) {
-        return arraydescr_struct_str(dtype, includealignflag);
-    }
-    else if (PyDataType_HASSUBARRAY(dtype)) {
-        return arraydescr_subarray_str(dtype);
-    }
-
-    /* Normalize byteorder to '<' or '>' */
-    switch (dtype->byteorder) {
-        case NPY_NATIVE:
-            byteorder[0] = NPY_NATBYTE;
-            break;
-        case NPY_SWAP:
-            byteorder[0] = NPY_OPPBYTE;
-            break;
-        case NPY_IGNORE:
-            byteorder[0] = '\0';
-            break;
-        default:
-            byteorder[0] = dtype->byteorder;
-            break;
-    }
-    byteorder[1] = '\0';
-
-    /* Handle booleans, numbers, and custom dtypes */
-    if (dtype->type_num == NPY_BOOL) {
-        if (shortrepr) {
-            return PyUString_FromString("'?'");
-        }
-        else {
-            return PyUString_FromString("'bool'");
-        }
-    }
-    else if (PyTypeNum_ISNUMBER(dtype->type_num)) {
-        /* Short repr with endianness, like '<f8' */
-        if (shortrepr || (dtype->byteorder != NPY_NATIVE &&
-                          dtype->byteorder != NPY_IGNORE)) {
-            return PyUString_FromFormat("'%s%c%d'", byteorder,
-                                        (int)dtype->kind, dtype->elsize);
-        }
-        /* Longer repr, like 'float64' */
-        else {
-            char *kindstr;
-            switch (dtype->kind) {
-                case 'u':
-                    kindstr = "uint";
-                    break;
-                case 'i':
-                    kindstr = "int";
-                    break;
-                case 'f':
-                    kindstr = "float";
-                    break;
-                case 'c':
-                    kindstr = "complex";
-                    break;
-                default:
-                    PyErr_Format(PyExc_RuntimeError,
-                            "internal dtype repr error, unknown kind '%c'",
-                            (int)dtype->kind);
-                    return NULL;
-            }
-            return PyUString_FromFormat("'%s%d'", kindstr, 8*dtype->elsize);
-        }
-    }
-    else if (PyTypeNum_ISUSERDEF(dtype->type_num)) {
-        char *s = strrchr(dtype->typeobj->tp_name, '.');
-        if (s == NULL) {
-            return PyUString_FromString(dtype->typeobj->tp_name);
-        }
-        else {
-            return PyUString_FromStringAndSize(s + 1, strlen(s) - 1);
-        }
-    }
-
-    /* All the rest which don't fit in the same pattern */
-    switch (dtype->type_num) {
-        /*
-         * The object reference may be different sizes on different
-         * platforms, so it should never include the itemsize here.
-         */
-        case NPY_OBJECT:
-            return PyUString_FromString("'O'");
-
-        case NPY_STRING:
-            if (dtype->elsize == 0) {
-                return PyUString_FromString("'S'");
-            }
-            else {
-                return PyUString_FromFormat("'S%d'", (int)dtype->elsize);
-            }
-
-        case NPY_UNICODE:
-            if (dtype->elsize == 0) {
-                return PyUString_FromFormat("'%sU'", byteorder);
-            }
-            else {
-                return PyUString_FromFormat("'%sU%d'", byteorder,
-                                                (int)dtype->elsize / 4);
-            }
-
-        case NPY_VOID:
-            if (dtype->elsize == 0) {
-                return PyUString_FromString("'V'");
-            }
-            else {
-                return PyUString_FromFormat("'V%d'", (int)dtype->elsize);
-            }
-
-        case NPY_DATETIME:
-            meta = get_datetime_metadata_from_dtype(dtype);
-            if (meta == NULL) {
-                return NULL;
-            }
-            ret = PyUString_FromFormat("'%sM8", byteorder);
-            ret = append_metastr_to_string(meta, 0, ret);
-            PyUString_ConcatAndDel(&ret, PyUString_FromString("'"));
-            return ret;
-
-        case NPY_TIMEDELTA:
-            meta = get_datetime_metadata_from_dtype(dtype);
-            if (meta == NULL) {
-                return NULL;
-            }
-            ret = PyUString_FromFormat("'%sm8", byteorder);
-            ret = append_metastr_to_string(meta, 0, ret);
-            PyUString_ConcatAndDel(&ret, PyUString_FromString("'"));
-            return ret;
-
-        default:
-            PyErr_SetString(PyExc_RuntimeError, "Internal error: NumPy dtype "
-                            "unrecognized type number");
-            return NULL;
-    }
-}
-
-/*
  * The general dtype repr function.
  */
 static PyObject *
 arraydescr_repr(PyArray_Descr *dtype)
 {
-    PyObject *ret;
-
-    if (PyDataType_HASFIELDS(dtype)) {
-        return arraydescr_struct_repr(dtype);
+    PyObject *_numpy_dtype;
+    PyObject *res;
+    _numpy_dtype = PyImport_ImportModule("numpy.core._dtype");
+    if (_numpy_dtype == NULL) {
+        return NULL;
     }
-    else {
-        ret = PyUString_FromString("dtype(");
-        PyUString_ConcatAndDel(&ret,
-                            arraydescr_construction_repr(dtype, 1, 0));
-        PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
-        return ret;
+    res = PyObject_CallMethod(_numpy_dtype, "__repr__", "O", dtype);
+    Py_DECREF(_numpy_dtype);
+    return res;
+}
+/*
+ * The general dtype str function.
+ */
+static PyObject *
+arraydescr_str(PyArray_Descr *dtype)
+{
+    PyObject *_numpy_dtype;
+    PyObject *res;
+    _numpy_dtype = PyImport_ImportModule("numpy.core._dtype");
+    if (_numpy_dtype == NULL) {
+        return NULL;
     }
+    res = PyObject_CallMethod(_numpy_dtype, "__str__", "O", dtype);
+    Py_DECREF(_numpy_dtype);
+    return res;
 }
 
 static PyObject *
@@ -3753,89 +3296,109 @@ descr_repeat(PyObject *self, Py_ssize_t length)
     return (PyObject *)new;
 }
 
-static PyObject *
-descr_subscript(PyArray_Descr *self, PyObject *op)
+static int
+_check_has_fields(PyArray_Descr *self)
 {
-    PyObject *retval;
-
     if (!PyDataType_HASFIELDS(self)) {
         PyObject *astr = arraydescr_str(self);
+        if (astr == NULL) {
+            return -1;
+        }
 #if defined(NPY_PY3K)
-        PyObject *bstr = PyUnicode_AsUnicodeEscapeString(astr);
-        Py_DECREF(astr);
-        astr = bstr;
+        {
+            PyObject *bstr = PyUnicode_AsUnicodeEscapeString(astr);
+            Py_DECREF(astr);
+            astr = bstr;
+        }
 #endif
         PyErr_Format(PyExc_KeyError,
                 "There are no fields in dtype %s.", PyBytes_AsString(astr));
         Py_DECREF(astr);
-        return NULL;
-    }
-#if defined(NPY_PY3K)
-    if (PyUString_Check(op)) {
-#else
-    if (PyUString_Check(op) || PyUnicode_Check(op)) {
-#endif
-        PyObject *obj = PyDict_GetItem(self->fields, op);
-        PyObject *descr;
-        PyObject *s;
-
-        if (obj == NULL) {
-            if (PyUnicode_Check(op)) {
-                s = PyUnicode_AsUnicodeEscapeString(op);
-            }
-            else {
-                s = op;
-            }
-
-            PyErr_Format(PyExc_KeyError,
-                    "Field named \'%s\' not found.", PyBytes_AsString(s));
-            if (s != op) {
-                Py_DECREF(s);
-            }
-            return NULL;
-        }
-        descr = PyTuple_GET_ITEM(obj, 0);
-        Py_INCREF(descr);
-        retval = descr;
-    }
-    else if (PyInt_Check(op)) {
-        PyObject *name;
-        int size = PyTuple_GET_SIZE(self->names);
-        int value = PyArray_PyIntAsInt(op);
-        int orig_value = value;
-
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
-        if (value < 0) {
-            value += size;
-        }
-        if (value < 0 || value >= size) {
-            PyErr_Format(PyExc_IndexError,
-                         "Field index %d out of range.", orig_value);
-            return NULL;
-        }
-        name = PyTuple_GET_ITEM(self->names, value);
-        retval = descr_subscript(self, name);
+        return -1;
     }
     else {
-        PyErr_SetString(PyExc_ValueError,
-                "Field key must be an integer, string, or unicode.");
+        return 0;
+    }
+}
+
+static PyObject *
+_subscript_by_name(PyArray_Descr *self, PyObject *op)
+{
+    PyObject *obj = PyDict_GetItem(self->fields, op);
+    PyObject *descr;
+    PyObject *s;
+
+    if (obj == NULL) {
+        if (PyUnicode_Check(op)) {
+            s = PyUnicode_AsUnicodeEscapeString(op);
+        }
+        else {
+            s = op;
+        }
+
+        PyErr_Format(PyExc_KeyError,
+                "Field named \'%s\' not found.", PyBytes_AsString(s));
+        if (s != op) {
+            Py_DECREF(s);
+        }
         return NULL;
     }
-    return retval;
+    descr = PyTuple_GET_ITEM(obj, 0);
+    Py_INCREF(descr);
+    return descr;
+}
+
+static PyObject *
+_subscript_by_index(PyArray_Descr *self, Py_ssize_t i)
+{
+    PyObject *name = PySequence_GetItem(self->names, i);
+    PyObject *ret;
+    if (name == NULL) {
+        PyErr_Format(PyExc_IndexError,
+                     "Field index %zd out of range.", i);
+        return NULL;
+    }
+    ret = _subscript_by_name(self, name);
+    Py_DECREF(name);
+    return ret;
+}
+
+static PyObject *
+descr_subscript(PyArray_Descr *self, PyObject *op)
+{
+    if (_check_has_fields(self) < 0) {
+        return NULL;
+    }
+
+    if (PyBaseString_Check(op)) {
+        return _subscript_by_name(self, op);
+    }
+    else {
+        Py_ssize_t i = PyArray_PyIntAsIntp(op);
+        if (error_converting(i)) {
+            /* if converting to an int gives a type error, adjust the message */
+            PyObject *err = PyErr_Occurred();
+            if (PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "Field key must be an integer, string, or unicode.");
+            }
+            return NULL;
+        }
+        return _subscript_by_index(self, i);
+    }
 }
 
 static PySequenceMethods descr_as_sequence = {
-    descr_length,
-    (binaryfunc)NULL,
-    descr_repeat,
-    NULL, NULL,
-    NULL,                                        /* sq_ass_item */
-    NULL,                                        /* ssizessizeobjargproc sq_ass_slice */
-    0,                                           /* sq_contains */
-    0,                                           /* sq_inplace_concat */
-    0,                                           /* sq_inplace_repeat */
+    (lenfunc) descr_length,                  /* sq_length */
+    (binaryfunc) NULL,                       /* sq_concat */
+    (ssizeargfunc) descr_repeat,             /* sq_repeat */
+    (ssizeargfunc) NULL,                     /* sq_item */
+    (ssizessizeargfunc) NULL,                /* sq_slice */
+    (ssizeobjargproc) NULL,                  /* sq_ass_item */
+    (ssizessizeobjargproc) NULL,             /* sq_ass_slice */
+    (objobjproc) NULL,                       /* sq_contains */
+    (binaryfunc) NULL,                       /* sq_inplace_concat */
+    (ssizeargfunc) NULL,                     /* sq_inplace_repeat */
 };
 
 static PyMappingMethods descr_as_mapping = {

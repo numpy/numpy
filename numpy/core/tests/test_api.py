@@ -3,11 +3,9 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 import numpy as np
-from numpy.compat import sixu
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_array_equal,
-     assert_raises, HAS_REFCOUNT
-)
+     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT
+    )
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
 NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
@@ -225,22 +223,25 @@ def test_array_astype():
     b = a.astype('f4', subok=0, copy=False)
     assert_(a is b)
 
-    a = np.matrix([[0, 1, 2], [3, 4, 5]], dtype='f4')
+    class MyNDArray(np.ndarray):
+        pass
 
-    # subok=True passes through a matrix
+    a = np.array([[0, 1, 2], [3, 4, 5]], dtype='f4').view(MyNDArray)
+
+    # subok=True passes through a subclass
     b = a.astype('f4', subok=True, copy=False)
     assert_(a is b)
 
     # subok=True is default, and creates a subtype on a cast
     b = a.astype('i4', copy=False)
     assert_equal(a, b)
-    assert_equal(type(b), np.matrix)
+    assert_equal(type(b), MyNDArray)
 
-    # subok=False never returns a matrix
+    # subok=False never returns a subclass
     b = a.astype('f4', subok=False, copy=False)
     assert_equal(a, b)
     assert_(not (a is b))
-    assert_(type(b) is not np.matrix)
+    assert_(type(b) is not MyNDArray)
 
     # Make sure converting from string object to fixed length string
     # does not truncate.
@@ -248,7 +249,7 @@ def test_array_astype():
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S100'))
-    a = np.array([sixu('a')*100], dtype='O')
+    a = np.array([u'a'*100], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U100'))
@@ -258,7 +259,7 @@ def test_array_astype():
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S10'))
-    a = np.array([sixu('a')*10], dtype='O')
+    a = np.array([u'a'*10], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U10'))
@@ -266,19 +267,19 @@ def test_array_astype():
     a = np.array(123456789012345678901234567890, dtype='O').astype('S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array(123456789012345678901234567890, dtype='O').astype('U')
-    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
+    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
 
     a = np.array([123456789012345678901234567890], dtype='O').astype('S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array([123456789012345678901234567890], dtype='O').astype('U')
-    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
+    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
 
     a = np.array(123456789012345678901234567890, dtype='S')
     assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array(123456789012345678901234567890, dtype='U')
-    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
+    assert_array_equal(a, np.array(u'1234567890' * 3, dtype='U30'))
 
-    a = np.array(sixu('a\u0140'), dtype='U')
+    a = np.array(u'a\u0140', dtype='U')
     b = np.ndarray(buffer=a, dtype='uint32', shape=2)
     assert_(b.size == 2)
 
@@ -513,6 +514,3 @@ def test_broadcast_arrays():
     result = np.broadcast_arrays(a, b)
     assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
     assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -517,7 +517,7 @@ Arithmetic:
      ``__r{op}__`` special methods are not directly defined.
 
    - The functions called to implement many arithmetic special methods
-     for arrays can be modified using :func:`set_numeric_ops`.
+     for arrays can be modified using :class:`__array_ufunc__ <numpy.class.__array_ufunc__>`.
 
 Arithmetic, in-place:
 

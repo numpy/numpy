@@ -1,0 +1,32 @@
+@@ -19075,5 +19075,6 @@
+ !                 Skip any trailing zeros.
+                   DO LASTV = N, I+1, -1
+-                     IF( V( LASTV, I ).NE.ZERO ) EXIT
++                     IF( V( LASTV, I ).NE.ZERO ) GO TO 15
+                   END DO
++   15             CONTINUE
+                   J = MIN( LASTV, PREVLASTV )
+@@ -19087,5 +19088,6 @@
+ !                 Skip any trailing zeros.
+                   DO LASTV = N, I+1, -1
+-                     IF( V( I, LASTV ).NE.ZERO ) EXIT
++                     IF( V( I, LASTV ).NE.ZERO ) GO TO 16
+                   END DO
++   16             CONTINUE
+                   J = MIN( LASTV, PREVLASTV )
+@@ -19131,5 +19133,6 @@
+ !                    Skip any leading zeros.
+                      DO LASTV = 1, I-1
+-                        IF( V( LASTV, I ).NE.ZERO ) EXIT
++                        IF( V( LASTV, I ).NE.ZERO ) GO TO 35
+                      END DO
++   35                CONTINUE
+                      J = MAX( LASTV, PREVLASTV )
+@@ -19147,5 +19150,6 @@
+ !                    Skip any leading zeros.
+                      DO LASTV = N, I+1, -1
+-                        IF( V( I, LASTV ).NE.ZERO ) EXIT
++                        IF( V( I, LASTV ).NE.ZERO ) GO TO 36
+                      END DO
++   36                CONTINUE
+                      J = MAX( LASTV, PREVLASTV )

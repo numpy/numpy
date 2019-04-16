@@ -9,19 +9,23 @@
  * See LICENSE.txt for the license.
  */
 #define _UMATHMODULE
+#define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "Python.h"
 
 #include "npy_config.h"
-#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
-#define NO_IMPORT_ARRAY
-
 #include "npy_pycompat.h"
 
 #include "numpy/ufuncobject.h"
 #include "ufunc_type_resolution.h"
+#include "ufunc_object.h"
 #include "common.h"
+
+#include "mem_overlap.h"
+#if defined(HAVE_CBLAS)
+#include "cblasfuncs.h"
+#endif
 
 static const char *
 npy_casting_to_string(NPY_CASTING casting)
@@ -41,6 +45,25 @@ npy_casting_to_string(NPY_CASTING casting)
             return "<unknown>";
     }
 }
+
+static int
+raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
+    PyObject *errmsg;
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
+    errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
+                        "with types ", ufunc_name);
+    PyUString_ConcatAndDel(&errmsg,
+            PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
+    PyUString_ConcatAndDel(&errmsg,
+            PyUString_FromString(" and "));
+    PyUString_ConcatAndDel(&errmsg,
+            PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
+    PyErr_SetObject(PyExc_TypeError, errmsg);
+    Py_DECREF(errmsg);
+    return -1;
+}
+
+
 /*UFUNC_API
  *
  * Validates that the input operands can be cast to
@@ -56,9 +79,7 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
                             PyArray_Descr **dtypes)
 {
     int i, nin = ufunc->nin, nop = nin + ufunc->nout;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     for (i = 0; i < nop; ++i) {
         if (i < nin) {
@@ -184,9 +205,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, type_num1, type_num2;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     if (ufunc->nin != 2 || ufunc->nout != 1) {
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
@@ -290,9 +309,7 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, type_num1;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     if (ufunc->nin != 1 || ufunc->nout != 1) {
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
@@ -430,9 +447,7 @@ PyUFunc_SimpleBinaryOperationTypeResolver(PyUFuncObject *ufunc,
                                 PyArray_Descr **out_dtypes)
 {
     int i, type_num1, type_num2;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
+    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
 
     if (ufunc->nin != 2 || ufunc->nout != 1) {
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
@@ -537,6 +552,32 @@ PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc,
 }
 
 /*
+ * This function applies special type resolution rules for the isnat
+ * ufunc. This ufunc converts datetime/timedelta -> bool, and is not covered
+ * by the simple unary type resolution.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
+                          NPY_CASTING casting,
+                          PyArrayObject **operands,
+                          PyObject *type_tup,
+                          PyArray_Descr **out_dtypes)
+{
+    if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
+        PyErr_SetString(PyExc_TypeError,
+                "ufunc 'isnat' is only defined for datetime and timedelta.");
+        return -1;
+    }
+
+    out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+    out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
+
+    return 0;
+}
+
+/*
  * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
  * from the given dtype.
  *
@@ -588,9 +629,6 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -646,7 +684,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
             type_num2 = NPY_TIMEDELTA;
         }
         else {
-            goto type_reso_error;
+            return raise_binary_type_reso_error(ufunc, operands);
         }
     }
     else if (type_num1 == NPY_DATETIME) {
@@ -688,7 +726,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
             type_num2 = NPY_TIMEDELTA;
         }
         else {
-            goto type_reso_error;
+            return raise_binary_type_reso_error(ufunc, operands);
         }
     }
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
@@ -724,11 +762,11 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
             type_num1 = NPY_TIMEDELTA;
         }
         else {
-            goto type_reso_error;
+            return raise_binary_type_reso_error(ufunc, operands);
         }
     }
     else {
-        goto type_reso_error;
+        return raise_binary_type_reso_error(ufunc, operands);
     }
 
     /* Check against the casting rules */
@@ -741,21 +779,6 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     }
 
     return 0;
-
-type_reso_error: {
-        PyObject *errmsg;
-        errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
-                            "with types ", ufunc_name);
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" and "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
-        return -1;
-    }
 }
 
 /*
@@ -778,9 +801,6 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -833,7 +853,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
             type_num2 = NPY_TIMEDELTA;
         }
         else {
-            goto type_reso_error;
+            return raise_binary_type_reso_error(ufunc, operands);
         }
     }
     else if (type_num1 == NPY_DATETIME) {
@@ -891,7 +911,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
             Py_INCREF(out_dtypes[1]);
         }
         else {
-            goto type_reso_error;
+            return raise_binary_type_reso_error(ufunc, operands);
         }
     }
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
@@ -909,11 +929,11 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
             type_num1 = NPY_TIMEDELTA;
         }
         else {
-            goto type_reso_error;
+            return raise_binary_type_reso_error(ufunc, operands);
         }
     }
     else {
-        goto type_reso_error;
+        return raise_binary_type_reso_error(ufunc, operands);
     }
 
     /* Check against the casting rules */
@@ -926,21 +946,6 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
     }
 
     return 0;
-
-type_reso_error: {
-        PyObject *errmsg;
-        errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
-                            "with types ", ufunc_name);
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" and "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
-        return -1;
-    }
 }
 
 /*
@@ -960,9 +965,6 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -1009,7 +1011,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
             type_num2 = NPY_DOUBLE;
         }
         else {
-            goto type_reso_error;
+            return raise_binary_type_reso_error(ufunc, operands);
         }
     }
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
@@ -1031,7 +1033,7 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
             type_num1 = NPY_LONGLONG;
         }
         else {
-            goto type_reso_error;
+            return raise_binary_type_reso_error(ufunc, operands);
         }
     }
     else if (PyTypeNum_ISFLOAT(type_num1)) {
@@ -1053,11 +1055,11 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
             type_num1 = NPY_DOUBLE;
         }
         else {
-            goto type_reso_error;
+            return raise_binary_type_reso_error(ufunc, operands);
         }
     }
     else {
-        goto type_reso_error;
+        return raise_binary_type_reso_error(ufunc, operands);
     }
 
     /* Check against the casting rules */
@@ -1070,21 +1072,6 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
     }
 
     return 0;
-
-type_reso_error: {
-        PyObject *errmsg;
-        errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
-                            "with types ", ufunc_name);
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" and "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
-        return -1;
-    }
 }
 
 
@@ -1104,9 +1091,6 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-    const char *ufunc_name;
-
-    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
@@ -1130,7 +1114,16 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
             }
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
+
+            /*
+             * TODO: split function into truediv and floordiv resolvers
+             */
+            if (strcmp(ufunc->name, "floor_divide") == 0) {
+                out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
+            }
+            else {
             out_dtypes[2] = PyArray_DescrFromType(NPY_DOUBLE);
+            }
             if (out_dtypes[2] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
@@ -1174,11 +1167,11 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
             type_num2 = NPY_DOUBLE;
         }
         else {
-            goto type_reso_error;
+            return raise_binary_type_reso_error(ufunc, operands);
         }
     }
     else {
-        goto type_reso_error;
+        return raise_binary_type_reso_error(ufunc, operands);
     }
 
     /* Check against the casting rules */
@@ -1191,57 +1184,134 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
     }
 
     return 0;
-
-type_reso_error: {
-        PyObject *errmsg;
-        errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
-                            "with types ", ufunc_name);
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" and "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
-        PyErr_SetObject(PyExc_TypeError, errmsg);
-        Py_DECREF(errmsg);
-        return -1;
-    }
 }
 
-/*
- * Function to check and report floor division warning when python2.x is 
- * invoked with -3 switch 
- * See PEP238 and #7949 for numpy
- * This function will not be hit for py3 or when __future__ imports division. 
- * See generate_umath.py for reason
-*/
+
 NPY_NO_EXPORT int
-PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
+PyUFunc_RemainderTypeResolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes)
 {
- /* Depreciation checks needed only on python 2 */
+    int type_num1, type_num2;
+    int i;
+
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+
+    /* Use the default when datetime and timedelta are not involved */
+    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                    type_tup, out_dtypes);
+    }
+    if (type_num1 == NPY_TIMEDELTA) {
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = out_dtypes[0];
+            Py_INCREF(out_dtypes[2]);
+        }
+        else {
+            return raise_binary_type_reso_error(ufunc, operands);
+        }
+    }
+    else {
+        return raise_binary_type_reso_error(ufunc, operands);
+    }
+
+    /* Check against the casting rules */
+    if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
+        for (i = 0; i < 3; ++i) {
+            Py_DECREF(out_dtypes[i]);
+            out_dtypes[i] = NULL;
+        }
+        return -1;
+    }
+
+    return 0;
+}
+
+
+/*
+ * True division should return float64 results when both inputs are integer
+ * types. The PyUFunc_DefaultTypeResolver promotes 8 bit integers to float16
+ * and 16 bit integers to float32, so that is overridden here by specifying a
+ * 'dd->d' signature. Returns -1 on failure.
+*/
+NPY_NO_EXPORT int
+PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
+                                 NPY_CASTING casting,
+                                 PyArrayObject **operands,
+                                 PyObject *type_tup,
+                                 PyArray_Descr **out_dtypes)
+{
+    int type_num1, type_num2;
+    static PyObject *default_type_tup = NULL;
+
+    /* Set default type for integer inputs to NPY_DOUBLE */
+    if (default_type_tup == NULL) {
+        PyArray_Descr *tmp = PyArray_DescrFromType(NPY_DOUBLE);
+
+        if (tmp == NULL) {
+            return -1;
+        }
+        default_type_tup = PyTuple_Pack(3, tmp, tmp, tmp);
+        if (default_type_tup == NULL) {
+            Py_DECREF(tmp);
+            return -1;
+        }
+        Py_DECREF(tmp);
+    }
+
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+
+    if (type_tup == NULL &&
+            (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
+            (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                                           default_type_tup, out_dtypes);
+    }
+    return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
+                                        type_tup, out_dtypes);
+}
+/*
+ * Function to check and report floor division warning when python2.x is
+ * invoked with -3 switch
+ * See PEP238 and #7949 for numpy
+ * This function will not be hit for py3 or when __future__ imports division.
+ * See generate_umath.py for reason
+*/
+NPY_NO_EXPORT int
+PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
+                                  NPY_CASTING casting,
+                                  PyArrayObject **operands,
+                                  PyObject *type_tup,
+                                  PyArray_Descr **out_dtypes)
+{
+ /* Deprecation checks needed only on python 2 */
 #if !defined(NPY_PY3K)
     int type_num1, type_num2;
 
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
 
-    /* If both types are integer, warn the user, same as python does */ 
+    /* If both types are integer, warn the user, same as python does */
     if (Py_DivisionWarningFlag &&
-        (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
-        (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)))
-    {
+            (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
+            (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
         PyErr_Warn(PyExc_DeprecationWarning, "numpy: classic int division");
-    } 
-#endif  
-
-   return PyUFunc_DivisionTypeResolver(ufunc, casting, operands, 
-                                       type_tup, out_dtypes);
+    }
+#endif
+    return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
+                                        type_tup, out_dtypes);
 }
-
 
 static int
 find_userloop(PyUFuncObject *ufunc,
@@ -1279,8 +1349,9 @@ find_userloop(PyUFuncObject *ufunc,
             if (obj == NULL) {
                 continue;
             }
-            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-            while (funcdata != NULL) {
+            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+                 funcdata != NULL;
+                 funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
 
                 for (j = 0; j < nargs; ++j) {
@@ -1294,8 +1365,6 @@ find_userloop(PyUFuncObject *ufunc,
                     *out_innerloopdata = funcdata->data;
                     return 1;
                 }
-
-                funcdata = funcdata->next;
             }
         }
     }
@@ -1317,7 +1386,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
     PyObject *errmsg;
     int i, j;
 
-    ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    ufunc_name = ufunc_get_name_cstr(ufunc);
 
     /*
      * If there are user-loops search them first.
@@ -1701,8 +1770,9 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
             if (obj == NULL) {
                 continue;
             }
-            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-            while (funcdata != NULL) {
+            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+                 funcdata != NULL;
+                 funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
                 switch (ufunc_loop_matches(self, op,
                             input_casting, output_casting,
@@ -1718,8 +1788,6 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
                         set_ufunc_loop_data_types(self, op, out_dtype, types, funcdata->arg_dtypes);
                         return 1;
                 }
-
-                funcdata = funcdata->next;
             }
         }
     }
@@ -1766,8 +1834,10 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
             if (obj == NULL) {
                 continue;
             }
-            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
-            while (funcdata != NULL) {
+
+            for (funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+                 funcdata != NULL;
+                 funcdata = funcdata->next) {
                 int *types = funcdata->arg_types;
                 int matched = 1;
 
@@ -1806,14 +1876,12 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                              "matching the type-tuple, "
                              "but the inputs and/or outputs could not be "
                              "cast according to the casting rule",
-                             self->name ? self->name : "(unknown)");
+                             ufunc_get_name_cstr(self));
                         return -1;
                     /* Error */
                     case -1:
                         return -1;
                 }
-
-                funcdata = funcdata->next;
             }
         }
     }
@@ -1912,7 +1980,7 @@ linear_search_type_resolver(PyUFuncObject *self,
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
-    ufunc_name = self->name ? self->name : "(unknown)";
+    ufunc_name = ufunc_get_name_cstr(self);
 
     use_min_scalar = should_use_min_scalar(op, nin);
 
@@ -2021,7 +2089,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
-    ufunc_name = self->name ? self->name : "(unknown)";
+    ufunc_name = ufunc_get_name_cstr(self);
 
     use_min_scalar = should_use_min_scalar(op, nin);
 
@@ -2033,7 +2101,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
             PyErr_Format(PyExc_ValueError,
                          "a type-tuple must be specified "
                          "of length 1 or %d for ufunc '%s'", (int)nop,
-                         self->name ? self->name : "(unknown)");
+                         ufunc_get_name_cstr(self));
             return -1;
         }
 
@@ -2086,7 +2154,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
                                  "requires 1 typecode, or "
                                  "%d typecode(s) before " \
                                  "and %d after the -> sign",
-                                 self->name ? self->name : "(unknown)",
+                                 ufunc_get_name_cstr(self),
                                  self->nin, self->nout);
             Py_XDECREF(str_obj);
             return -1;
@@ -2187,4 +2255,53 @@ type_tuple_type_resolver(PyUFuncObject *self,
             "was found for ufunc %s", ufunc_name);
 
     return -1;
+}
+
+NPY_NO_EXPORT int
+PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+    int type_num1, type_num2;
+    int i;
+
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+
+    /* Use the default when datetime and timedelta are not involved */
+    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                    type_tup, out_dtypes);
+    }
+    if (type_num1 == NPY_TIMEDELTA) {
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
+            Py_INCREF(out_dtypes[2]);
+            out_dtypes[3] = out_dtypes[0];
+            Py_INCREF(out_dtypes[3]);
+        }
+        else {
+            return raise_binary_type_reso_error(ufunc, operands);
+        }
+    }
+    else {
+        return raise_binary_type_reso_error(ufunc, operands);
+    }
+
+    /* Check against the casting rules */
+    if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
+        for (i = 0; i < 4; ++i) {
+            Py_DECREF(out_dtypes[i]);
+            out_dtypes[i] = NULL;
+        }
+        return -1;
+    }
+
+    return 0;
 }

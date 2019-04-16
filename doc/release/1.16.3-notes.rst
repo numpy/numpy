@@ -1,0 +1,48 @@
+==========================
+NumPy 1.16.3 Release Notes
+==========================
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+
+New deprecations
+================
+
+
+Expired deprecations
+====================
+
+
+Future changes
+==============
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======
+
+``__array_interface__`` offset now works as documented
+------------------------------------------------------
+The interface may use an ``offset`` value that was mistakenly ignored.
+

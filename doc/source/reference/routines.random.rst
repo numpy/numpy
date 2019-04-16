@@ -1,5 +1,7 @@
 .. _routines.random:
 
+.. module:: numpy.random
+
 Random sampling (:mod:`numpy.random`)
 *************************************
 

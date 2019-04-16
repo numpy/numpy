@@ -35,8 +35,12 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
+import functools
+
 from numpy.core import (array, asarray, zeros, swapaxes, shape, conjugate,
                         take, sqrt)
+from numpy.core.multiarray import normalize_axis_index
+from numpy.core import overrides
 from . import fftpack_lite as fftpack
 from .helper import _FFTCache
 
@@ -44,9 +48,14 @@ _fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
 _real_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
 
 
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy.fft')
+
+
 def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
              work_function=fftpack.cfftf, fft_cache=_fft_cache):
     a = asarray(a)
+    axis = normalize_axis_index(axis, a.ndim)
 
     if n is None:
         n = a.shape[axis]
@@ -69,19 +78,19 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         if s[axis] > n:
             index = [slice(None)]*len(s)
             index[axis] = slice(0, n)
-            a = a[index]
+            a = a[tuple(index)]
         else:
             index = [slice(None)]*len(s)
             index[axis] = slice(0, s[axis])
             s[axis] = n
             z = zeros(s, a.dtype.char)
-            z[index] = a
+            z[tuple(index)] = a
             a = z
 
-    if axis != -1:
+    if axis != a.ndim - 1:
         a = swapaxes(a, axis, -1)
     r = work_function(a, wsave)
-    if axis != -1:
+    if axis != a.ndim - 1:
         r = swapaxes(r, axis, -1)
 
     # As soon as we put wsave back into the cache, another thread could pick it
@@ -99,6 +108,11 @@ def _unitary(norm):
     return norm is not None
 
 
+def _fft_dispatcher(a, n=None, axis=None, norm=None):
+    return (a,)
+
+
+@array_function_dispatch(_fft_dispatcher)
 def fft(a, n=None, axis=-1, norm=None):
     """
     Compute the one-dimensional discrete Fourier Transform.
@@ -195,6 +209,7 @@ def fft(a, n=None, axis=-1, norm=None):
     return output
 
 
+@array_function_dispatch(_fft_dispatcher)
 def ifft(a, n=None, axis=-1, norm=None):
     """
     Compute the one-dimensional inverse discrete Fourier Transform.
@@ -288,6 +303,8 @@ def ifft(a, n=None, axis=-1, norm=None):
     return output * (1 / (sqrt(n) if unitary else n))
 
 
+
+@array_function_dispatch(_fft_dispatcher)
 def rfft(a, n=None, axis=-1, norm=None):
     """
     Compute the one-dimensional discrete Fourier Transform for real input.
@@ -377,6 +394,7 @@ def rfft(a, n=None, axis=-1, norm=None):
     return output
 
 
+@array_function_dispatch(_fft_dispatcher)
 def irfft(a, n=None, axis=-1, norm=None):
     """
     Compute the inverse of the n-point DFT for real input.
@@ -467,6 +485,7 @@ def irfft(a, n=None, axis=-1, norm=None):
     return output * (1 / (sqrt(n) if unitary else n))
 
 
+@array_function_dispatch(_fft_dispatcher)
 def hfft(a, n=None, axis=-1, norm=None):
     """
     Compute the FFT of a signal that has Hermitian symmetry, i.e., a real
@@ -549,6 +568,7 @@ def hfft(a, n=None, axis=-1, norm=None):
     return irfft(conjugate(a), n, axis) * (sqrt(n) if unitary else n)
 
 
+@array_function_dispatch(_fft_dispatcher)
 def ihfft(a, n=None, axis=-1, norm=None):
     """
     Compute the inverse FFT of a signal that has Hermitian symmetry.
@@ -639,6 +659,11 @@ def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None):
     return a
 
 
+def _fftn_dispatcher(a, s=None, axes=None, norm=None):
+    return (a,)
+
+
+@array_function_dispatch(_fftn_dispatcher)
 def fftn(a, s=None, axes=None, norm=None):
     """
     Compute the N-dimensional discrete Fourier Transform.
@@ -736,6 +761,7 @@ def fftn(a, s=None, axes=None, norm=None):
     return _raw_fftnd(a, s, axes, fft, norm)
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def ifftn(a, s=None, axes=None, norm=None):
     """
     Compute the N-dimensional inverse discrete Fourier Transform.
@@ -833,6 +859,7 @@ def ifftn(a, s=None, axes=None, norm=None):
     return _raw_fftnd(a, s, axes, ifft, norm)
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def fft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional discrete Fourier Transform
@@ -923,6 +950,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
     return _raw_fftnd(a, s, axes, fft, norm)
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def ifft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional inverse discrete Fourier Transform.
@@ -1010,6 +1038,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
     return _raw_fftnd(a, s, axes, ifft, norm)
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def rfftn(a, s=None, axes=None, norm=None):
     """
     Compute the N-dimensional discrete Fourier Transform for real input.
@@ -1102,6 +1131,7 @@ def rfftn(a, s=None, axes=None, norm=None):
     return a
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def rfft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional FFT of a real array.
@@ -1139,6 +1169,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
     return rfftn(a, s, axes, norm)
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def irfftn(a, s=None, axes=None, norm=None):
     """
     Compute the inverse of the N-dimensional FFT of real input.
@@ -1233,6 +1264,7 @@ def irfftn(a, s=None, axes=None, norm=None):
     return a
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def irfft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional inverse FFT of a real array.

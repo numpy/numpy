@@ -11,9 +11,11 @@ __all__ = ['MachAr']
 
 from numpy.core.fromnumeric import any
 from numpy.core.numeric import errstate
+from numpy.core.overrides import set_module
 
 # Need to speed this up...especially for longfloat
 
+@set_module('numpy')
 class MachAr(object):
     """
     Diagnosing machine parameters.
@@ -30,7 +32,7 @@ class MachAr(object):
     eps : float
         Floating-point number ``beta**machep`` (floating point precision)
     negep : int
-        Exponent of the smallest power of `ibeta` that, substracted
+        Exponent of the smallest power of `ibeta` that, subtracted
         from 1.0, gives something different from 1.0.
     epsneg : float
         Floating-point number ``beta**negep``.

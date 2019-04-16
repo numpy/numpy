@@ -1,5 +1,6 @@
+==========================
 NumPy 1.10.1 Release Notes
-**************************
+==========================
 
 This release deals with a few build problems that showed up in 1.10.0. Most
 users would not have seen these problems. The differences are:

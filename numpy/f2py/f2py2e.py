@@ -396,8 +396,25 @@ def dict_append(d_out, d_in):
 
 
 def run_main(comline_list):
-    """Run f2py as if string.join(comline_list,' ') is used as a command line.
-    In case of using -h flag, return None.
+    """
+    Equivalent to running::
+
+        f2py <args>
+
+    where ``<args>=string.join(<list>,' ')``, but in Python.  Unless
+    ``-h`` is used, this function returns a dictionary containing
+    information on generated modules and their dependencies on source
+    files.  For example, the command ``f2py -m scalar scalar.f`` can be
+    executed from Python as follows
+
+    You cannot build extension modules with this function, that is,
+    using ``-c`` is not allowed. Use ``compile`` command instead
+
+    Examples
+    --------
+    .. include:: run_main_session.dat
+        :literal:
+
     """
     crackfortran.reset_global_f2py_vars()
     f2pydir = os.path.dirname(os.path.abspath(cfuncs.__file__))
@@ -644,13 +661,25 @@ def main():
         from numpy.distutils.system_info import show_all
         show_all()
         return
+
+    # Probably outdated options that were not working before 1.16
+    if '--g3-numpy' in sys.argv[1:]:
+        sys.stderr.write("G3 f2py support is not implemented, yet.\\n")
+        sys.exit(1)
+    elif '--2e-numeric' in sys.argv[1:]:
+        sys.argv.remove('--2e-numeric')
+    elif '--2e-numarray' in sys.argv[1:]:
+        # Note that this errors becaust the -DNUMARRAY argument is
+        # not recognized. Just here for back compatibility and the
+        # error message.
+        sys.argv.append("-DNUMARRAY")
+        sys.argv.remove('--2e-numarray')
+    elif '--2e-numpy' in sys.argv[1:]:
+        sys.argv.remove('--2e-numpy')
+    else:
+        pass
+
     if '-c' in sys.argv[1:]:
         run_compile()
     else:
         run_main(sys.argv[1:])
-
-# if __name__ == "__main__":
-#    main()
-
-
-# EOF

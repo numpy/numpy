@@ -7,7 +7,7 @@ import numpy as np
 from numpy import float_
 import numpy.core.fromnumeric as fromnumeric
 
-from numpy.testing.utils import build_err_msg
+from numpy.testing import build_err_msg
 
 # Fixme: this does not look right.
 np.seterr(all='ignore')

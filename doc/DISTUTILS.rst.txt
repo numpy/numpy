@@ -215,7 +215,7 @@ in writing setup scripts:
 + ``config.add_scripts(*files)`` --- prepend ``files`` to ``scripts``
   list. Scripts will be installed under ``<prefix>/bin/`` directory.
 
-+ ``config.add_extension(name,sources,*kw)`` --- create and add an
++ ``config.add_extension(name,sources,**kw)`` --- create and add an
   ``Extension`` instance to ``ext_modules`` list. The first argument
   ``name`` defines the name of the extension module that will be
   installed under ``config.name`` package. The second argument is
@@ -226,7 +226,7 @@ in writing setup scripts:
   ``runtime_library_dirs``, ``extra_objects``, ``extra_compile_args``,
   ``extra_link_args``, ``export_symbols``, ``swig_opts``, ``depends``,
   ``language``, ``f2py_options``, ``module_dirs``, ``extra_info``,
-  ``extra_f77_compile_args``, ``extra_compile_f90_args``.
+  ``extra_f77_compile_args``, ``extra_f90_compile_args``.
 
   Note that ``config.paths`` method is applied to all lists that
   may contain paths. ``extra_info`` is a dictionary or a list
@@ -265,7 +265,7 @@ in writing setup scripts:
   library to ``libraries`` list. Allowed keywords arguments are
   ``depends``, ``macros``, ``include_dirs``, ``extra_compiler_args``,
   ``f2py_options``, ``extra_f77_compile_args``,
-  ``extra_compile_f90_args``.  See ``.add_extension()`` method for
+  ``extra_f90_compile_args``.  See ``.add_extension()`` method for
   more information on arguments.
 
 + ``config.have_f77c()`` --- return True if Fortran 77 compiler is

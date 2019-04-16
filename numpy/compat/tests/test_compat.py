@@ -2,9 +2,9 @@ from __future__ import division, absolute_import, print_function
 
 from os.path import join
 
-from numpy.compat import isfileobj
-from numpy.testing import assert_, run_module_suite
-from numpy.testing.utils import tempdir
+from numpy.compat import isfileobj, os_fspath
+from numpy.testing import assert_
+from numpy.testing import tempdir
 
 
 def test_isfileobj():
@@ -21,5 +21,6 @@ def test_isfileobj():
             assert_(isfileobj(f))
 
 
-if __name__ == "__main__":
-    run_module_suite()
+def test_os_fspath_strings():
+    for string_path in (b'/a/b/c.d', u'/a/b/c.d'):
+        assert_(os_fspath(string_path) == string_path)

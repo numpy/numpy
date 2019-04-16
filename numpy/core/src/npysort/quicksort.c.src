@@ -258,7 +258,7 @@ quicksort_@suff@(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = varr;
     const size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
-    @type@ *vp = malloc(PyArray_ITEMSIZE(arr));
+    @type@ *vp;
     @type@ *pl = start;
     @type@ *pr = pl + (num - 1)*len;
     @type@ *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pk;
@@ -266,6 +266,12 @@ quicksort_@suff@(void *start, npy_intp num, void *varr)
     int * psdepth = depth;
     int cdepth = npy_get_msb(num) * 2;
 
+    /* Items that have zero size don't make sense to sort */
+    if (len == 0) {
+        return 0;
+    }
+
+    vp = malloc(PyArray_ITEMSIZE(arr));
     if (vp == NULL) {
         return -NPY_ENOMEM;
     }
@@ -351,6 +357,11 @@ aquicksort_@suff@(void *vv, npy_intp* tosort, npy_intp num, void *varr)
     int * psdepth = depth;
     int cdepth = npy_get_msb(num) * 2;
 
+    /* Items that have zero size don't make sense to sort */
+    if (len == 0) {
+        return 0;
+    }
+
     for (;;) {
         if (NPY_UNLIKELY(cdepth < 0)) {
             aheapsort_@suff@(vv, pl, pr - pl + 1, varr);
@@ -429,7 +440,7 @@ npy_quicksort(void *start, npy_intp num, void *varr)
     PyArrayObject *arr = varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
     PyArray_CompareFunc *cmp = PyArray_DESCR(arr)->f->compare;
-    char *vp = malloc(elsize);
+    char *vp;
     char *pl = start;
     char *pr = pl + (num - 1)*elsize;
     char *stack[PYA_QS_STACK];
@@ -439,6 +450,12 @@ npy_quicksort(void *start, npy_intp num, void *varr)
     int * psdepth = depth;
     int cdepth = npy_get_msb(num) * 2;
 
+    /* Items that have zero size don't make sense to sort */
+    if (elsize == 0) {
+        return 0;
+    }
+
+    vp = malloc(elsize);
     if (vp == NULL) {
         return -NPY_ENOMEM;
     }
@@ -465,7 +482,7 @@ npy_quicksort(void *start, npy_intp num, void *varr)
             pj = pr - elsize;
             GENERIC_SWAP(pm, pj, elsize);
             /*
-             * Generic comparisons may be buggy, so don't rely on the sentinals
+             * Generic comparisons may be buggy, so don't rely on the sentinels
              * to keep the pointers from going out of bounds.
              */
             for (;;) {
@@ -538,6 +555,11 @@ npy_aquicksort(void *vv, npy_intp* tosort, npy_intp num, void *varr)
     int depth[PYA_QS_STACK];
     int * psdepth = depth;
     int cdepth = npy_get_msb(num) * 2;
+
+    /* Items that have zero size don't make sense to sort */
+    if (elsize == 0) {
+        return 0;
+    }
 
     for (;;) {
         if (NPY_UNLIKELY(cdepth < 0)) {

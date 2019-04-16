@@ -1,0 +1,71 @@
+branches:
+    only:
+       - master
+       - maintenance/*
+
+language: python
+
+python:
+    # use versions available for job image
+    # aarch64_u16pytall:v6.7.4 
+    # (what we currently have access to by default)
+    # this is a bit restrictive in terms
+    # of version availability / control,
+    # but it is convenient
+    - 2.7
+    - 3.7
+
+runtime:
+    # use the free open source pool of nodes
+    # only for ARM platform
+    nodePool: shippable_shared_aarch64
+
+build:
+    ci:
+    # install dependencies
+    - sudo apt-get install gcc gfortran libblas-dev liblapack-dev
+    # add pathlib for Python 2, otherwise many tests are skipped
+    - pip install --upgrade pip
+    # we will pay the ~13 minute cost of compiling Cython only when a new
+    # version is scraped in by pip; otherwise, use the cached
+    # wheel shippable places on Amazon S3 after we build it once
+    - pip install cython --cache-dir=/root/.cache/pip/wheels/$SHIPPABLE_PYTHON_VERSION
+    - pip install pathlib
+    # install pytz for datetime testing
+    - pip install pytz
+    # install pytest-xdist to leverage a second core
+    # for unit tests
+    - pip install pytest-xdist
+
+    # build and test numpy
+    - export PATH=$PATH:$SHIPPABLE_REPO_DIR
+    # build first and adjust PATH so f2py is found in scripts dir
+    # use > 1 core for build sometimes slows down a fair bit,
+    # other times modestly speeds up, so avoid for now
+    - python setup.py install
+    - extra_directories=($SHIPPABLE_REPO_DIR/build/*scripts*)
+    - extra_path=$(printf "%s:" "${extra_directories[@]}")
+    - export PATH="${extra_path}${PATH}"
+    # run the test suite
+    - python runtests.py -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
+
+    cache: true
+    cache_dir_list:
+        # the NumPy project uses a single Amazon S3 cache
+        # so upload the parent path of the Python-specific
+        # version paths to avoid i.e., 2.7 overwriting
+        # 3.7 pip cache (seems to be an issue)
+        - /root/.cache/pip/wheels
+
+
+
+# disable email notification
+# of CI job result
+integrations:
+  notifications:
+    - integrationName: email
+      type: email
+      on_success: never
+      on_failure: never
+      on_cancel: never
+      on_pull_request: never

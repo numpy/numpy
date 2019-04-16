@@ -1,5 +1,10 @@
 """
-Define a simple format for saving numpy arrays to disk with the full
+Binary serialization
+
+NPY format
+==========
+
+A simple format for saving numpy arrays to disk with the full
 information about them.
 
 The ``.npy`` format is the standard binary file format in NumPy for
@@ -100,9 +105,9 @@ the header data HEADER_LEN.
 The next HEADER_LEN bytes form the header data describing the array's
 format. It is an ASCII string which contains a Python literal expression
 of a dictionary. It is terminated by a newline (``\\n``) and padded with
-spaces (``\\x20``) to make the total length of
-``magic string + 4 + HEADER_LEN`` be evenly divisible by 16 for alignment
-purposes.
+spaces (``\\x20``) to make the total of
+``len(magic string) + 2 + len(length) + HEADER_LEN`` be evenly divisible
+by 64 for alignment purposes.
 
 The dictionary contains three keys:
 
@@ -143,8 +148,10 @@ data HEADER_LEN."
 
 Notes
 -----
-The ``.npy`` format, including reasons for creating it and a comparison of
-alternatives, is described fully in the "npy-format" NEP.
+The ``.npy`` format, including motivation for creating it and a comparison of
+alternatives, is described in the `"npy-format" NEP 
+<https://www.numpy.org/neps/nep-0001-npy-format.html>`_, however details have
+evolved with time and this document is more current.
 
 """
 from __future__ import division, absolute_import, print_function
@@ -154,15 +161,15 @@ import sys
 import io
 import warnings
 from numpy.lib.utils import safe_eval
-from numpy.compat import asbytes, asstr, isfileobj, long, basestring
+from numpy.compat import (
+    asbytes, asstr, isfileobj, long, os_fspath
+    )
+from numpy.core.numeric import pickle
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
 
-MAGIC_PREFIX = asbytes('\x93NUMPY')
+MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
+ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
 BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
@@ -252,6 +259,43 @@ def dtype_to_descr(dtype):
     else:
         return dtype.str
 
+def descr_to_dtype(descr):
+    '''
+    descr may be stored as dtype.descr, which is a list of
+    (name, format, [shape]) tuples. Offsets are not explicitly saved, rather
+    empty fields with name,format == '', '|Vn' are added as padding.
+
+    This function reverses the process, eliminating the empty padding fields.
+    '''
+    if isinstance(descr, (str, dict)):
+        # No padding removal needed
+        return numpy.dtype(descr)
+
+    fields = []
+    offset = 0
+    for field in descr:
+        if len(field) == 2:
+            name, descr_str = field
+            dt = descr_to_dtype(descr_str)
+        else:
+            name, descr_str, shape = field
+            dt = numpy.dtype((descr_to_dtype(descr_str), shape))
+
+        # Ignore padding bytes, which will be void bytes with '' as name
+        # Once support for blank names is removed, only "if name == ''" needed)
+        is_pad = (name == '' and dt.type is numpy.void and dt.names is None)
+        if not is_pad:
+            fields.append((name, dt, offset))
+
+        offset += dt.itemsize
+
+    names, formats, offsets = zip(*fields)
+    # names may be (title, names) tuples
+    nametups = (n  if isinstance(n, tuple) else (None, n) for n in names)
+    titles, names = zip(*nametups)
+    return numpy.dtype({'names': names, 'formats': formats, 'titles': titles,
+                        'offsets': offsets, 'itemsize': offset})
+
 def header_data_from_array_1_0(array):
     """ Get the dictionary of header metadata from a numpy.ndarray.
 
@@ -304,26 +348,32 @@ def _write_array_header(fp, d, version=None):
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    # Pad the header with spaces and a final newline such that the magic
-    # string, the header-length short and the header are aligned on a
-    # 16-byte boundary.  Hopefully, some system, possibly memory-mapping,
-    # can take advantage of our premature optimization.
-    current_header_len = MAGIC_LEN + 2 + len(header) + 1  # 1 for the newline
-    topad = 16 - (current_header_len % 16)
-    header = header + ' '*topad + '\n'
     header = asbytes(_filter_header(header))
 
-    hlen = len(header)
-    if hlen < 256*256 and version in (None, (1, 0)):
+    hlen = len(header) + 1 # 1 for newline
+    padlen_v1 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<H') + hlen) % ARRAY_ALIGN)
+    padlen_v2 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<I') + hlen) % ARRAY_ALIGN)
+
+    # Which version(s) we write depends on the total header size; v1 has a max of 65535
+    if hlen + padlen_v1 < 2**16 and version in (None, (1, 0)):
         version = (1, 0)
-        header_prefix = magic(1, 0) + struct.pack('<H', hlen)
-    elif hlen < 2**32 and version in (None, (2, 0)):
+        header_prefix = magic(1, 0) + struct.pack('<H', hlen + padlen_v1)
+        topad = padlen_v1
+    elif hlen + padlen_v2 < 2**32 and version in (None, (2, 0)):
         version = (2, 0)
-        header_prefix = magic(2, 0) + struct.pack('<I', hlen)
+        header_prefix = magic(2, 0) + struct.pack('<I', hlen + padlen_v2)
+        topad = padlen_v2
     else:
         msg = "Header length %s too big for version=%s"
         msg %= (hlen, version)
         raise ValueError(msg)
+
+    # Pad the header with spaces and a final newline such that the magic
+    # string, the header-length short and the header are aligned on a
+    # ARRAY_ALIGN byte boundary.  This supports memory mapping of dtypes
+    # aligned up to ARRAY_ALIGN on systems like Linux where mmap()
+    # offset must be page-aligned (i.e. the beginning of the file).
+    header = header + b' '*topad + b'\n'
 
     fp.write(header_prefix)
     fp.write(header)
@@ -447,7 +497,9 @@ def _filter_header(s):
 
     tokens = []
     last_token_was_number = False
-    for token in tokenize.generate_tokens(StringIO(asstr(s)).read):
+    # adding newline as python 2.7.5 workaround
+    string = asstr(s) + "\n"
+    for token in tokenize.generate_tokens(StringIO(string).readline):
         token_type = token[0]
         token_string = token[1]
         if (last_token_was_number and
@@ -457,7 +509,8 @@ def _filter_header(s):
         else:
             tokens.append(token)
         last_token_was_number = (token_type == tokenize.NUMBER)
-    return tokenize.untokenize(tokens)
+    # removing newline (see above) as python 2.7.5 workaround
+    return tokenize.untokenize(tokens)[:-1]
 
 
 def _read_array_header(fp, version):
@@ -468,18 +521,18 @@ def _read_array_header(fp, version):
     # header.
     import struct
     if version == (1, 0):
-        hlength_str = _read_bytes(fp, 2, "array header length")
-        header_length = struct.unpack('<H', hlength_str)[0]
-        header = _read_bytes(fp, header_length, "array header")
+        hlength_type = '<H'
     elif version == (2, 0):
-        hlength_str = _read_bytes(fp, 4, "array header length")
-        header_length = struct.unpack('<I', hlength_str)[0]
-        header = _read_bytes(fp, header_length, "array header")
+        hlength_type = '<I'
     else:
-        raise ValueError("Invalid version %r" % version)
+        raise ValueError("Invalid version {!r}".format(version))
+
+    hlength_str = _read_bytes(fp, struct.calcsize(hlength_type), "array header length")
+    header_length = struct.unpack(hlength_type, hlength_str)[0]
+    header = _read_bytes(fp, header_length, "array header")
 
     # The header is a pretty-printed string representation of a literal
-    # Python dictionary with trailing newlines padded to a 16-byte
+    # Python dictionary with trailing newlines padded to a ARRAY_ALIGN byte
     # boundary. The keys are strings.
     #   "shape" : tuple of int
     #   "fortran_order" : bool
@@ -488,29 +541,29 @@ def _read_array_header(fp, version):
     try:
         d = safe_eval(header)
     except SyntaxError as e:
-        msg = "Cannot parse header: %r\nException: %r"
-        raise ValueError(msg % (header, e))
+        msg = "Cannot parse header: {!r}\nException: {!r}"
+        raise ValueError(msg.format(header, e))
     if not isinstance(d, dict):
-        msg = "Header is not a dictionary: %r"
-        raise ValueError(msg % d)
+        msg = "Header is not a dictionary: {!r}"
+        raise ValueError(msg.format(d))
     keys = sorted(d.keys())
     if keys != ['descr', 'fortran_order', 'shape']:
-        msg = "Header does not contain the correct keys: %r"
-        raise ValueError(msg % (keys,))
+        msg = "Header does not contain the correct keys: {!r}"
+        raise ValueError(msg.format(keys))
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
             not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
-        msg = "shape is not valid: %r"
-        raise ValueError(msg % (d['shape'],))
+        msg = "shape is not valid: {!r}"
+        raise ValueError(msg.format(d['shape']))
     if not isinstance(d['fortran_order'], bool):
-        msg = "fortran_order is not a valid bool: %r"
-        raise ValueError(msg % (d['fortran_order'],))
+        msg = "fortran_order is not a valid bool: {!r}"
+        raise ValueError(msg.format(d['fortran_order']))
     try:
-        dtype = numpy.dtype(d['descr'])
+        dtype = descr_to_dtype(d['descr'])
     except TypeError as e:
-        msg = "descr is not a valid dtype descriptor: %r"
-        raise ValueError(msg % (d['descr'],))
+        msg = "descr is not a valid dtype descriptor: {!r}"
+        raise ValueError(msg.format(d['descr']))
 
     return d['shape'], d['fortran_order'], dtype
 
@@ -692,7 +745,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
 
     Parameters
     ----------
-    filename : str
+    filename : str or path-like
         The name of the file on disk.  This may *not* be a file-like
         object.
     mode : str, optional
@@ -733,9 +786,9 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     memmap
 
     """
-    if not isinstance(filename, basestring):
-        raise ValueError("Filename must be a string.  Memmap cannot use"
-                         " existing file handles.")
+    if isfileobj(filename):
+        raise ValueError("Filename must be a string or a path-like object."
+                         "  Memmap cannot use existing file handles.")
 
     if 'w' in mode:
         # We are creating the file, not reading it.
@@ -753,7 +806,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        fp = open(filename, mode+'b')
+        fp = open(os_fspath(filename), mode+'b')
         try:
             used_ver = _write_array_header(fp, d, version)
             # this warning can be removed when 1.9 has aged enough
@@ -765,7 +818,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             fp.close()
     else:
         # Read the header of the file first.
-        fp = open(filename, 'rb')
+        fp = open(os_fspath(filename), 'rb')
         try:
             version = read_magic(fp)
             _check_version(version)

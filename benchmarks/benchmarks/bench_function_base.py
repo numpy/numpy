@@ -5,6 +5,34 @@ from .common import Benchmark
 import numpy as np
 
 
+class Histogram1D(Benchmark):
+    def setup(self):
+        self.d = np.linspace(0, 100, 100000)
+
+    def time_full_coverage(self):
+        np.histogram(self.d, 200, (0, 100))
+
+    def time_small_coverage(self):
+        np.histogram(self.d, 200, (50, 51))
+
+    def time_fine_binning(self):
+        np.histogram(self.d, 10000, (0, 100))
+
+
+class Histogram2D(Benchmark):
+    def setup(self):
+        self.d = np.linspace(0, 100, 200000).reshape((-1,2))
+
+    def time_full_coverage(self):
+        np.histogramdd(self.d, (200, 200), ((0, 100), (0, 100)))
+
+    def time_small_coverage(self):
+        np.histogramdd(self.d, (200, 200), ((50, 51), (50, 51)))
+
+    def time_fine_binning(self):
+        np.histogramdd(self.d, (10000, 10000), ((0, 100), (0, 100)))
+
+
 class Bincount(Benchmark):
     def setup(self):
         self.d = np.arange(80000, dtype=np.intp)
@@ -77,14 +105,6 @@ class Sort(Benchmark):
         self.equal = np.ones(10000)
         self.many_equal = np.sort(np.arange(10000) % 10)
 
-        # quicksort median of 3 worst case
-        self.worst = np.arange(1000000)
-        x = self.worst
-        while x.size > 3:
-            mid = x.size // 2
-            x[mid], x[-2] = x[-2], x[mid]
-            x = x[:-2]
-
     def time_sort(self):
         np.sort(self.e)
 
@@ -100,14 +120,28 @@ class Sort(Benchmark):
     def time_sort_many_equal(self):
         self.many_equal.sort()
 
-    def time_sort_worst(self):
-        np.sort(self.worst)
-
     def time_argsort(self):
         self.e.argsort()
 
     def time_argsort_random(self):
         self.o.argsort()
+
+
+class SortWorst(Benchmark):
+    def setup(self):
+        # quicksort median of 3 worst case
+        self.worst = np.arange(1000000)
+        x = self.worst
+        while x.size > 3:
+            mid = x.size // 2
+            x[mid], x[-2] = x[-2], x[mid]
+            x = x[:-2]
+
+    def time_sort_worst(self):
+        np.sort(self.worst)
+
+    # Retain old benchmark name for backward compatability
+    time_sort_worst.benchmark_name = "bench_function_base.Sort.time_sort_worst"
 
 
 class Where(Benchmark):

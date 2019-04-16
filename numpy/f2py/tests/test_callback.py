@@ -2,10 +2,12 @@ from __future__ import division, absolute_import, print_function
 
 import math
 import textwrap
+import sys
+import pytest
 
-from numpy import array
-from numpy.testing import run_module_suite, assert_, assert_equal, dec
-import util
+import numpy as np
+from numpy.testing import assert_, assert_equal
+from . import util
 
 
 class TestF77Callback(util.F2PyTest):
@@ -47,14 +49,24 @@ cf2py  intent(out) a
        a = callback(r)
        end
 
+       subroutine string_callback_array(callback, cu, lencu, a)
+       external callback
+       integer callback
+       integer lencu
+       character*8 cu(lencu)
+       integer a
+cf2py  intent(out) a
+
+       a = callback(cu, lencu)
+       end
     """
 
-    @dec.slow
-    def test_all(self):
-        for name in "t,t2".split(","):
-            self.check_function(name)
+    @pytest.mark.slow
+    @pytest.mark.parametrize('name', 't,t2'.split(','))
+    def test_all(self, name):
+        self.check_function(name)
 
-    @dec.slow
+    @pytest.mark.slow
     def test_docstring(self):
         expected = """
         a = t(fun,[fun_extra_args])
@@ -119,6 +131,8 @@ cf2py  intent(out) a
         r = t(a.mth)
         assert_(r == 9, repr(r))
 
+    @pytest.mark.skipif(sys.platform=='win32',
+                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
     def test_string_callback(self):
 
         def callback(code):
@@ -131,6 +145,21 @@ cf2py  intent(out) a
         r = f(callback)
         assert_(r == 0, repr(r))
 
+    @pytest.mark.skipif(sys.platform=='win32',
+                        reason='Fails with MinGW64 Gfortran (Issue #9673)')
+    def test_string_callback_array(self):
+        # See gh-10027
+        cu = np.zeros((1, 8), 'S1')
 
-if __name__ == "__main__":
-    run_module_suite()
+        def callback(cu, lencu):
+            if cu.shape != (lencu, 8):
+                return 1
+            if cu.dtype != 'S1':
+                return 2
+            if not np.all(cu == b''):
+                return 3
+            return 0
+
+        f = getattr(self.module, 'string_callback_array')
+        res = f(callback, cu, len(cu))
+        assert_(res == 0, repr(res))

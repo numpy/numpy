@@ -17,7 +17,7 @@ pieces of code. The purpose behind these explanations is to enable
 somebody to be able to understand the ideas behind the implementation
 somewhat more easily than just staring at the code. Perhaps in this
 way, the algorithms can be improved on, borrowed from, and/or
-optimized.
+optimized by more people.
 
 
 Memory model
@@ -105,7 +105,7 @@ which work very simply.
 For the general case, the iteration works by keeping track of a list
 of coordinate counters in the iterator object. At each iteration, the
 last coordinate counter is increased (starting from 0). If this
-counter is smaller then one less than the size of the array in that
+counter is smaller than one less than the size of the array in that
 dimension (a pre-computed and stored value), then the counter is
 increased and the dataptr member is increased by the strides in that
 dimension and the macro ends. If the end of a dimension is reached,
@@ -133,9 +133,9 @@ Broadcasting
 .. index::
    single: broadcasting
 
-In Numeric, broadcasting was implemented in several lines of code
-buried deep in ufuncobject.c. In NumPy, the notion of broadcasting has
-been abstracted so that it can be performed in multiple places.
+In Numeric, the ancestor of Numpy, broadcasting was implemented in several
+lines of code buried deep in ufuncobject.c. In NumPy, the notion of broadcasting
+has been abstracted so that it can be performed in multiple places.
 Broadcasting is handled by the function :c:func:`PyArray_Broadcast`. This
 function requires a :c:type:`PyArrayMultiIterObject` (or something that is a
 binary equivalent) to be passed in. The :c:type:`PyArrayMultiIterObject` keeps
@@ -368,8 +368,9 @@ The output arguments (if any) are then processed and any missing
 return arrays are constructed. If any provided output array doesn't
 have the correct type (or is mis-aligned) and is smaller than the
 buffer size, then a new output array is constructed with the special
-UPDATEIFCOPY flag set so that when it is DECREF'd on completion of the
-function, it's contents will be copied back into the output array.
+:c:data:`WRITEBACKIFCOPY` flag set. At the end of the function,
+:c:func:`PyArray_ResolveWritebackIfCopy` is called so that 
+its contents will be copied back into the output array.
 Iterators for the output arguments are then processed.
 
 Finally, the decision is made about how to execute the looping
@@ -460,12 +461,12 @@ Ufuncs allow other array-like classes to be passed seamlessly through
 the interface in that inputs of a particular class will induce the
 outputs to be of that same class. The mechanism by which this works is
 the following. If any of the inputs are not ndarrays and define the
-:obj:`__array_wrap__` method, then the class with the largest
-:obj:`__array_priority__` attribute determines the type of all the
+:obj:`~numpy.class.__array_wrap__` method, then the class with the largest
+:obj:`~numpy.class.__array_priority__` attribute determines the type of all the
 outputs (with the exception of any output arrays passed in). The
-:obj:`__array_wrap__` method of the input array will be called with the
+:obj:`~numpy.class.__array_wrap__` method of the input array will be called with the
 ndarray being returned from the ufunc as it's input. There are two
-calling styles of the :obj:`__array_wrap__` function supported. The first
+calling styles of the :obj:`~numpy.class.__array_wrap__` function supported. The first
 takes the ndarray as the first argument and a tuple of "context" as
 the second argument. The context is (ufunc, arguments, output argument
 number). This is the first call tried. If a TypeError occurs, then the
@@ -475,7 +476,7 @@ function is called with just the ndarray as the first argument.
 Methods
 -------
 
-Their are three methods of ufuncs that require calculation similar to
+There are three methods of ufuncs that require calculation similar to
 the general-purpose ufuncs. These are reduce, accumulate, and
 reduceat. Each of these methods requires a setup command followed by a
 loop. There are four loop styles possible for the methods
@@ -508,10 +509,11 @@ of a different shape depending on whether the method is reduce,
 accumulate, or reduceat. If an output array is already provided, then
 it's shape is checked. If the output array is not C-contiguous,
 aligned, and of the correct data type, then a temporary copy is made
-with the UPDATEIFCOPY flag set. In this way, the methods will be able
+with the WRITEBACKIFCOPY flag set. In this way, the methods will be able
 to work with a well-behaved output array but the result will be copied
-back into the true output array when the method computation is
-complete. Finally, iterators are set up to loop over the correct axis
+back into the true output array when :c:func:`PyArray_ResolveWritebackIfCopy`
+is called at function completion.
+Finally, iterators are set up to loop over the correct axis
 (depending on the value of axis provided to the method) and the setup
 routine returns to the actual computation routine.
 
