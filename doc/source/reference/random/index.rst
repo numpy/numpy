@@ -1,12 +1,30 @@
+.. _numpyrandom:
+
 .. currentmodule:: numpy.random
 
 numpy.random
 ============
 
-A `~RandomGenerator` can
-be initialized with a number of different Random Number Generators (RNG)s, and
-exposes many different probability distributions.
+Numpy's random number routines produce psuedo random numbers using
+combinations of generators and distributions:
 
+* Generators: Objects that generate random numbers. These are typically
+  unsigned integer words filled with sequences of either 32 or 64 random bits.
+* Distributions: Objects that transform sequences of random bits from a
+  generator into sequences of numbers that follow a specific probability
+  distribution (such as uniform, Normal or Binomial) within a specified
+  interval.
+
+Since Numpy version 1.17.0 the `RandomGenerator` can be initialized with a
+number of different Random Number Generators (RNG)s, and exposes many
+different probability distributions. See
+`NEP 19 <https://www.numpy.org/neps/nep-0019-rng-policy.html>`_ for context on
+the updated random Numpy number routines. The legacy `mtrand.RandomState`
+random number routines are still available, but limited to a single generator.
+
+For convenience and backward compatibility, a single `mtrand.RandomState`
+instance's methods are imported into the numpy.random namespace, see
+:ref:`legacy` for the complete list.
 
 Quick Start
 -----------
