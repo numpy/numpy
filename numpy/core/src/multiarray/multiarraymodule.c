@@ -2093,8 +2093,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     }
     if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
         PyErr_SetFromErrno(PyExc_IOError);
-        Py_DECREF(file);
-        return NULL;
+        goto cleanup;
     }
     if (type == NULL) {
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
@@ -2105,6 +2104,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
      * we need to clear it, and restore it later to ensure that
      * we can cleanup the duplicated file descriptor properly.
      */
+cleanup:
     PyErr_Fetch(&err_type, &err_value, &err_traceback);
     if (npy_PyFile_DupClose2(file, fp, orig_pos) < 0) {
         npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
