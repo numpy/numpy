@@ -1230,8 +1230,8 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     if n == 0:
         return a
     if n < 0:
-        raise ValueError(
-            "order must be non-negative but got " + repr(n))
+        raise TypeError(
+	    "diff requires more than one element, i.e., an iterable input")
 
     a = asanyarray(a)
     nd = a.ndim
