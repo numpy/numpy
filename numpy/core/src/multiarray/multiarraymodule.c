@@ -4725,11 +4725,9 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
     set_flaginfo(d);
 
     /* Create the typeinfo types */
-    typeinfo_init_structsequences();
-    PyDict_SetItemString(d,
-        "typeinfo", (PyObject *)&PyArray_typeinfoType);
-    PyDict_SetItemString(d,
-        "typeinforanged", (PyObject *)&PyArray_typeinforangedType);
+    if (typeinfo_init_structsequences(d) < 0) {
+        goto err;
+    }
 
     if (!intern_strings()) {
         goto err;
