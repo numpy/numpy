@@ -364,7 +364,3 @@ def linkcode_resolve(domain, info):
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
 
-doctest_global_setup = '''
-import numpy as np
-from numpy.random import randomgen
-'''

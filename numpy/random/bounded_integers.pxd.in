@@ -22,5 +22,5 @@ py:
 inttypes = ('uint64','uint32','uint16','uint8','bool','int64','int32','int16','int8')
 }}
 {{for inttype in inttypes}}
-cdef object _rand_{{inttype}}(object low, object high, object size, bint use_masked, brng_t *state, object lock)
+cdef object _rand_{{inttype}}(object low, object high, object size, bint use_masked, bint closed, brng_t *state, object lock)
 {{endfor}}
