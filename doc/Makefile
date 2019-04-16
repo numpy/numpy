@@ -28,7 +28,7 @@ ALLSPHINXOPTS   = -WT --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
   $(SPHINXOPTS) source
 
 .PHONY: help clean html web pickle htmlhelp latex changes linkcheck \
-        dist dist-build gitwash-update
+        dist dist-build gitwash-update version-check
 
 #------------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ ifeq "$(GITVER)" "Unknown"
 	# @echo sdist build with unlabeled sources
 else ifneq ($(NUMPYVER),$(GITVER))
 	@echo installed numpy $(NUMPYVER) != current repo git version \'$(GITVER)\'
-	@echo set GITVER to $(NUMPYVER) to override
+	@echo use '"make dist"' or '"set GITVER=$(NUMPYVER) make $(MAKECMDGOALS) ..."'
 	@exit 1
 else
 	# for testing
