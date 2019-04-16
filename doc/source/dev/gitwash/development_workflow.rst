@@ -97,7 +97,7 @@ In more detail
 
 #. Optional: Compare the changes with the previous version using with ``git
    diff`` (`git diff`_). This brings up a simple text browser interface that
-   highlights the difference between your files and the previous verison.
+   highlights the difference between your files and the previous version.
 
 #. Add any relevant modified or new files using  ``git add modified_file``
    (see `git add`_). This puts the files into a staging area, which is a queue
@@ -174,6 +174,7 @@ what not to do; the reader has to go look for context elsewhere.
 Standard acronyms to start the commit message with are::
 
    API: an (incompatible) API change
+   BENCH: changes to the benchmark suite
    BLD: change related to building numpy
    BUG: bug fix
    DEP: deprecate something, or remove a deprecated object
@@ -373,7 +374,7 @@ Deleting a branch on github_
    git push origin :my-unwanted-branch
 
 (Note the colon ``:`` before ``test-branch``.  See also:
-http://github.com/guides/remove-a-remote-branch
+https://github.com/guides/remove-a-remote-branch
 
 
 Several people sharing a single repository
@@ -386,7 +387,7 @@ share it via github_.
 First fork NumPy into your account, as from :ref:`forking`.
 
 Then, go to your forked repository github page, say
-``http://github.com/your-user-name/numpy``
+``https://github.com/your-user-name/numpy``
 
 Click on the 'Admin' button, and add anyone else to the repo as a
 collaborator:
@@ -395,7 +396,7 @@ collaborator:
 
 Now all those people can do::
 
-    git clone git@githhub.com:your-user-name/numpy.git
+    git clone git@github.com:your-user-name/numpy.git
 
 Remember that links starting with ``git@`` use the ssh protocol and are
 read-write; links starting with ``git://`` are read-only.

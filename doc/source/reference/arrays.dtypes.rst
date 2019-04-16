@@ -14,7 +14,7 @@ following aspects of the data:
 1. Type of the data (integer, float, Python object, etc.)
 2. Size of the data (how many bytes is in *e.g.* the integer)
 3. Byte order of the data (:term:`little-endian` or :term:`big-endian`)
-4. If the data type is :term:`structured`, an aggregate of other
+4. If the data type is :term:`structured data type`, an aggregate of other
    data types, (*e.g.*, describing an array item consisting of
    an integer and a float),
 
@@ -42,7 +42,7 @@ needed in NumPy.
    pair: dtype; field
 
 Structured data types are formed by creating a data type whose
-:term:`fields` contain other data types. Each field has a name by
+:term:`field` contain other data types. Each field has a name by
 which it can be :ref:`accessed <arrays.indexing.fields>`. The parent data
 type should be of sufficient size to contain all its fields; the
 parent is nearly always based on the :class:`void` type which allows
@@ -85,9 +85,9 @@ Sub-arrays always have a C-contiguous memory layout.
    A structured data type containing a 16-character string (in field 'name')
    and a sub-array of two 64-bit floating-point number (in field 'grades'):
 
-   >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+   >>> dt = np.dtype([('name', np.unicode_, 16), ('grades', np.float64, (2,))])
    >>> dt['name']
-   dtype('|S16')
+   dtype('|U16')
    >>> dt['grades']
    dtype(('float64',(2,)))
 
@@ -145,7 +145,7 @@ Array-scalar types
     This is true for their sub-classes as well.
 
     Note that not all data-type information can be supplied with a
-    type-object: for example, :term:`flexible` data-types have
+    type-object: for example, `flexible` data-types have
     a default *itemsize* of 0, and require an explicitly given size
     to be useful.
 
@@ -178,11 +178,17 @@ Built-in Python types
     :class:`bool`     :class:`bool\_`
     :class:`float`    :class:`float\_`
     :class:`complex`  :class:`cfloat`
-    :class:`str`      :class:`string`
+    :class:`bytes`    :class:`bytes\_`
+    :class:`str`      :class:`bytes\_` (Python2) or :class:`unicode\_` (Python3)
     :class:`unicode`  :class:`unicode\_`
     :class:`buffer`   :class:`void`
     (all others)      :class:`object_`
     ================  ===============
+
+    Note that ``str`` refers to either null terminated bytes or unicode strings
+    depending on the Python version. In code targeting both Python 2 and 3
+    ``np.unicode_`` should be used as a dtype for strings.
+    See :ref:`Note on string types<string-dtype-note>`.
 
     .. admonition:: Example
 
@@ -225,7 +231,9 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    supported kinds are
 
    ================   ========================
-   ``'b'``            boolean
+   ``'?'``            boolean
+   ``'b'``            (signed) byte
+   ``'B'``            unsigned byte
    ``'i'``            (signed) integer
    ``'u'``            unsigned integer
    ``'f'``            floating-point
@@ -233,8 +241,8 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    ``'m'``            timedelta
    ``'M'``            datetime
    ``'O'``            (Python) objects
-   ``'S'``, ``'a'``   (byte-)string
-   ``'U'``            Unicode
+   ``'S'``, ``'a'``   zero-terminated bytes (not recommended)
+   ``'U'``            Unicode string
    ``'V'``            raw data (:class:`void`)
    ================   ========================
 
@@ -243,7 +251,19 @@ Array-protocol type strings (see :ref:`arrays.interface`)
       >>> dt = np.dtype('i4')   # 32-bit signed integer
       >>> dt = np.dtype('f8')   # 64-bit floating-point number
       >>> dt = np.dtype('c16')  # 128-bit complex floating-point number
-      >>> dt = np.dtype('a25')  # 25-character string
+      >>> dt = np.dtype('a25')  # 25-length zero-terminated bytes
+      >>> dt = np.dtype('U25')  # 25-character string
+
+   .. _string-dtype-note:
+
+   .. admonition:: Note on string types
+
+    For backward compatibility with Python 2 the ``S`` and ``a`` typestrings
+    remain zero-terminated bytes and ``np.string_`` continues to map to
+    ``np.bytes_``.
+    To use actual strings in Python 3 use ``U`` or ``np.unicode_``.
+    For signed bytes that do not need zero-termination ``b`` or ``i1`` can be
+    used.
 
 String with comma-separated fields
 
@@ -297,8 +317,7 @@ Type strings
 
     .. admonition:: Example
 
-       >>> dt = np.dtype((void, 10))  # 10-byte wide data block
-       >>> dt = np.dtype((str, 35))   # 35-character string
+       >>> dt = np.dtype((np.void, 10))  # 10-byte wide data block
        >>> dt = np.dtype(('U', 10))   # 10-character unicode string
 
 ``(fixed_dtype, shape)``
@@ -315,7 +334,7 @@ Type strings
     .. admonition:: Example
 
        >>> dt = np.dtype((np.int32, (2,2)))          # 2 x 2 integer sub-array
-       >>> dt = np.dtype(('S10', 1))                 # 10-character string
+       >>> dt = np.dtype(('U10', 1))                 # 10-character string
        >>> dt = np.dtype(('i4, (2,3)f8, f4', (2,3))) # 2 x 3 structured sub-array
 
 .. index::
@@ -372,8 +391,8 @@ Type strings
     When the optional keys *offsets* and *titles* are provided,
     their values must each be lists of the same length as the *names*
     and *formats* lists. The *offsets* value is a list of byte offsets
-    (integers) for each field, while the *titles* value is a list of
-    titles for each field (:const:`None` can be used if no title is
+    (limited to `ctypes.c_int`) for each field, while the *titles* value is a
+    list of titles for each field (:const:`None` can be used if no title is
     desired for that field). The *titles* can be any :class:`string`
     or :class:`unicode` object and will add another entry to the
     fields dictionary keyed by the title and referencing the same
@@ -383,12 +402,13 @@ Type strings
     The *itemsize* key allows the total size of the dtype to be
     set, and must be an integer large enough so all the fields
     are within the dtype. If the dtype being constructed is aligned,
-    the *itemsize* must also be divisible by the struct alignment.
+    the *itemsize* must also be divisible by the struct alignment. Total dtype
+    *itemsize* is limited to `ctypes.c_int`.
 
     .. admonition:: Example
 
        Data type with fields ``r``, ``g``, ``b``, ``a``, each being
-       a 8-bit unsigned integer:
+       an 8-bit unsigned integer:
 
        >>> dt = np.dtype({'names': ['r','g','b','a'],
        ...                'formats': [uint8, uint8, uint8, uint8]})
@@ -421,7 +441,7 @@ Type strings
        byte position 0), ``col2`` (32-bit float at byte position 10),
        and ``col3`` (integers at byte position 14):
 
-       >>> dt = np.dtype({'col1': ('S10', 0), 'col2': (float32, 10),
+       >>> dt = np.dtype({'col1': ('U10', 0), 'col2': (float32, 10),
            'col3': (int, 14)})
 
 ``(base_dtype, new_dtype)``
@@ -438,6 +458,7 @@ Type strings
 
     Both arguments must be convertible to data-type objects with the same total
     size.
+
     .. admonition:: Example
 
        32-bit integer, whose first two bytes are interpreted as an integer
@@ -490,7 +511,7 @@ Endianness of this data:
 
    dtype.byteorder
 
-Information about sub-data-types in a :term:`structured` data type:
+Information about sub-data-types in a :term:`structured data type`:
 
 .. autosummary::
    :toctree: generated/

@@ -3,10 +3,6 @@
 
 #include "common.h"
 
-extern NPY_NO_EXPORT PyArray_Descr LONGLONG_Descr;
-extern NPY_NO_EXPORT PyArray_Descr LONG_Descr;
-extern NPY_NO_EXPORT PyArray_Descr INT_Descr;
-
 NPY_NO_EXPORT int
 set_typeinfo(PyObject *dict);
 

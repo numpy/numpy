@@ -1,5 +1,6 @@
+=========================
 NumPy 1.9.1 Release Notes
-*************************
+=========================
 
 This is a bugfix only release in the 1.9.x series.
 

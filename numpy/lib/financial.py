@@ -7,10 +7,21 @@ so that the functions behave like ufuncs with
 broadcasting and being able to be called with scalars
 or arrays (or other sequences).
 
+Functions support the :class:`decimal.Decimal` type unless
+otherwise stated.
 """
 from __future__ import division, absolute_import, print_function
 
+from decimal import Decimal
+import functools
+
 import numpy as np
+from numpy.core import overrides
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy')
+
 
 __all__ = ['fv', 'pmt', 'nper', 'ipmt', 'ppmt', 'pv', 'rate',
            'irr', 'npv', 'mirr']
@@ -33,6 +44,11 @@ def _convert_when(when):
         return [_when_to_num[x] for x in when]
 
 
+def _fv_dispatcher(rate, nper, pmt, pv, when=None):
+    return (rate, nper, pmt, pv)
+
+
+@array_function_dispatch(_fv_dispatcher)
 def fv(rate, nper, pmt, pv, when='end'):
     """
     Compute the future value.
@@ -111,18 +127,22 @@ def fv(rate, nper, pmt, pv, when='end'):
 
     >>> a = np.array((0.05, 0.06, 0.07))/12
     >>> np.fv(a, 10*12, -100, -100)
-    array([ 15692.92889434,  16569.87435405,  17509.44688102])
+    array([ 15692.92889434,  16569.87435405,  17509.44688102]) # may vary
 
     """
     when = _convert_when(when)
     (rate, nper, pmt, pv, when) = map(np.asarray, [rate, nper, pmt, pv, when])
     temp = (1+rate)**nper
-    miter = np.broadcast(rate, nper, pmt, pv, when)
-    zer = np.zeros(miter.shape)
-    fact = np.where(rate == zer, nper + zer,
-                    (1 + rate*when)*(temp - 1)/rate + zer)
+    fact = np.where(rate == 0, nper,
+                    (1 + rate*when)*(temp - 1)/rate)
     return -(pv*temp + pmt*fact)
 
+
+def _pmt_dispatcher(rate, nper, pv, fv=None, when=None):
+    return (rate, nper, pv, fv)
+
+
+@array_function_dispatch(_pmt_dispatcher)
 def pmt(rate, nper, pv, fv=0, when='end'):
     """
     Compute the payment against loan principal plus interest.
@@ -209,16 +229,23 @@ def pmt(rate, nper, pv, fv=0, when='end'):
     when = _convert_when(when)
     (rate, nper, pv, fv, when) = map(np.array, [rate, nper, pv, fv, when])
     temp = (1 + rate)**nper
-    mask = (rate == 0.0)
-    masked_rate = np.where(mask, 1.0, rate)
-    z = np.zeros(np.broadcast(masked_rate, nper, pv, fv, when).shape)
-    fact = np.where(mask != z, nper + z,
-                    (1 + masked_rate*when)*(temp - 1)/masked_rate + z)
+    mask = (rate == 0)
+    masked_rate = np.where(mask, 1, rate)
+    fact = np.where(mask != 0, nper,
+                    (1 + masked_rate*when)*(temp - 1)/masked_rate)
     return -(fv + pv*temp) / fact
 
+
+def _nper_dispatcher(rate, pmt, pv, fv=None, when=None):
+    return (rate, pmt, pv, fv)
+
+
+@array_function_dispatch(_nper_dispatcher)
 def nper(rate, pmt, pv, fv=0, when='end'):
     """
     Compute the number of periodic payments.
+
+    :class:`decimal.Decimal` type is not supported.
 
     Parameters
     ----------
@@ -248,7 +275,7 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     If you only had $150/month to pay towards the loan, how long would it take
     to pay-off a loan of $8,000 at 7% annual interest?
 
-    >>> print(round(np.nper(0.07/12, -150, 8000), 5))
+    >>> print(np.round(np.nper(0.07/12, -150, 8000), 5))
     64.07335
 
     So, over 64 months would be required to pay off the loan.
@@ -259,10 +286,10 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     >>> np.nper(*(np.ogrid[0.07/12: 0.08/12: 0.01/12,
     ...                    -150   : -99     : 50    ,
     ...                    8000   : 9001    : 1000]))
-    array([[[  64.07334877,   74.06368256],
-            [ 108.07548412,  127.99022654]],
-           [[  66.12443902,   76.87897353],
-            [ 114.70165583,  137.90124779]]])
+    array([[[ 64.07334877,  74.06368256],
+            [108.07548412, 127.99022654]],
+           [[ 66.12443902,  76.87897353],
+            [114.70165583, 137.90124779]]])
 
     """
     when = _convert_when(when)
@@ -271,20 +298,24 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     use_zero_rate = False
     with np.errstate(divide="raise"):
         try:
-            z = pmt*(1.0+rate*when)/rate
+            z = pmt*(1+rate*when)/rate
         except FloatingPointError:
             use_zero_rate = True
 
     if use_zero_rate:
-        return (-fv + pv) / (pmt + 0.0)
+        return (-fv + pv) / pmt
     else:
-        A = -(fv + pv)/(pmt+0.0)
-        B = np.log((-fv+z) / (pv+z))/np.log(1.0+rate)
-        miter = np.broadcast(rate, pmt, pv, fv, when)
-        zer = np.zeros(miter.shape)
-        return np.where(rate == zer, A + zer, B + zer) + 0.0
+        A = -(fv + pv)/(pmt+0)
+        B = np.log((-fv+z) / (pv+z))/np.log(1+rate)
+        return np.where(rate == 0, A, B)
 
-def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
+
+def _ipmt_dispatcher(rate, per, nper, pv, fv=None, when=None):
+    return (rate, per, nper, pv, fv)
+
+
+@array_function_dispatch(_ipmt_dispatcher)
+def ipmt(rate, per, nper, pv, fv=0, when='end'):
     """
     Compute the interest portion of a payment.
 
@@ -374,10 +405,11 @@ def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     ipmt = _rbl(rate, per, total_pmt, pv, when)*rate
     try:
         ipmt = np.where(when == 1, ipmt/(1 + rate), ipmt)
-        ipmt = np.where(np.logical_and(when == 1, per == 1), 0.0, ipmt)
+        ipmt = np.where(np.logical_and(when == 1, per == 1), 0, ipmt)
     except IndexError:
         pass
     return ipmt
+
 
 def _rbl(rate, per, pmt, pv, when):
     """
@@ -388,7 +420,13 @@ def _rbl(rate, per, pmt, pv, when):
     """
     return fv(rate, (per - 1), pmt, pv, when)
 
-def ppmt(rate, per, nper, pv, fv=0.0, when='end'):
+
+def _ppmt_dispatcher(rate, per, nper, pv, fv=None, when=None):
+    return (rate, per, nper, pv, fv)
+
+
+@array_function_dispatch(_ppmt_dispatcher)
+def ppmt(rate, per, nper, pv, fv=0, when='end'):
     """
     Compute the payment against loan principal.
 
@@ -416,7 +454,13 @@ def ppmt(rate, per, nper, pv, fv=0.0, when='end'):
     total = pmt(rate, nper, pv, fv, when)
     return total - ipmt(rate, per, nper, pv, fv, when)
 
-def pv(rate, nper, pmt, fv=0.0, when='end'):
+
+def _pv_dispatcher(rate, nper, pmt, fv=None, when=None):
+    return (rate, nper, nper, pv, fv)
+
+
+@array_function_dispatch(_pv_dispatcher)
+def pv(rate, nper, pmt, fv=0, when='end'):
     """
     Compute the present value.
 
@@ -495,7 +539,7 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
 
     >>> a = np.array((0.05, 0.04, 0.03))/12
     >>> np.pv(a, 10*12, -100, 15692.93)
-    array([ -100.00067132,  -649.26771385, -1273.78633713])
+    array([ -100.00067132,  -649.26771385, -1273.78633713]) # may vary
 
     So, to end up with the same $15692.93 under the same $100 per month
     "savings plan," for annual interest rates of 4% and 3%, one would
@@ -505,9 +549,7 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
     when = _convert_when(when)
     (rate, nper, pmt, fv, when) = map(np.asarray, [rate, nper, pmt, fv, when])
     temp = (1+rate)**nper
-    miter = np.broadcast(rate, nper, pmt, fv, when)
-    zer = np.zeros(miter.shape)
-    fact = np.where(rate == zer, nper+zer, (1+rate*when)*(temp-1)/rate+zer)
+    fact = np.where(rate == 0, nper, (1+rate*when)*(temp-1)/rate)
     return -(fv + pmt*fact)/temp
 
 # Computed with Sage
@@ -522,6 +564,12 @@ def _g_div_gp(r, n, p, x, y, w):
                 (n*t2*x - p*(t1 - 1)*(r*w + 1)/(r**2) + n*p*t2*(r*w + 1)/r +
                  p*(t1 - 1)*w/r))
 
+
+def _rate_dispatcher(nper, pmt, pv, fv, when=None, guess=None, tol=None,
+                     maxiter=None):
+    return (nper, pmt, pv, fv)
+
+
 # Use Newton's iteration until the change is less than 1e-6
 #  for all values or a maximum of 100 iterations is reached.
 #  Newton's rule is
@@ -529,7 +577,8 @@ def _g_div_gp(r, n, p, x, y, w):
 #     where
 #  g(r) is the formula
 #  g'(r) is the derivative with respect to r.
-def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
+@array_function_dispatch(_rate_dispatcher)
+def rate(nper, pmt, pv, fv, when='end', guess=None, tol=None, maxiter=100):
     """
     Compute the rate of interest per period.
 
@@ -545,10 +594,10 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
         Future value
     when : {{'begin', 1}, {'end', 0}}, {string, int}, optional
         When payments are due ('begin' (1) or 'end' (0))
-    guess : float, optional
-        Starting guess for solving the rate of interest
-    tol : float, optional
-        Required tolerance for the solution
+    guess : Number, optional
+        Starting guess for solving the rate of interest, default 0.1
+    tol : Number, optional
+        Required tolerance for the solution, default 1e-6
     maxiter : int, optional
         Maximum iterations in finding the solution
 
@@ -573,15 +622,26 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
 
     """
     when = _convert_when(when)
+    default_type = Decimal if isinstance(pmt, Decimal) else float
+
+    # Handle casting defaults to Decimal if/when pmt is a Decimal and
+    # guess and/or tol are not given default values
+    if guess is None:
+        guess = default_type('0.1')
+
+    if tol is None:
+        tol = default_type('1e-6')
+
     (nper, pmt, pv, fv, when) = map(np.asarray, [nper, pmt, pv, fv, when])
+
     rn = guess
-    iter = 0
+    iterator = 0
     close = False
-    while (iter < maxiter) and not close:
+    while (iterator < maxiter) and not close:
         rnp1 = rn - _g_div_gp(rn, nper, pmt, pv, fv, when)
         diff = abs(rnp1-rn)
         close = np.all(diff < tol)
-        iter += 1
+        iterator += 1
         rn = rnp1
     if not close:
         # Return nan's in array of the same shape as rn
@@ -589,6 +649,12 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
     else:
         return rn
 
+
+def _irr_dispatcher(values):
+    return (values,)
+
+
+@array_function_dispatch(_irr_dispatcher)
 def irr(values):
     """
     Return the Internal Rate of Return (IRR).
@@ -596,6 +662,8 @@ def irr(values):
     This is the "average" periodically compounded rate of return
     that gives a net present value of 0.0; for a more complete explanation,
     see Notes below.
+
+    :class:`decimal.Decimal` type is not supported.
 
     Parameters
     ----------
@@ -636,20 +704,25 @@ def irr(values):
 
     Examples
     --------
-    >>> round(irr([-100, 39, 59, 55, 20]), 5)
+    >>> round(np.irr([-100, 39, 59, 55, 20]), 5)
     0.28095
-    >>> round(irr([-100, 0, 0, 74]), 5)
+    >>> round(np.irr([-100, 0, 0, 74]), 5)
     -0.0955
-    >>> round(irr([-100, 100, 0, -7]), 5)
+    >>> round(np.irr([-100, 100, 0, -7]), 5)
     -0.0833
-    >>> round(irr([-100, 100, 0, 7]), 5)
+    >>> round(np.irr([-100, 100, 0, 7]), 5)
     0.06206
-    >>> round(irr([-5, 10.5, 1, -8, 1]), 5)
+    >>> round(np.irr([-5, 10.5, 1, -8, 1]), 5)
     0.0886
 
     (Compare with the Example given for numpy.lib.financial.npv)
 
     """
+    # `np.roots` call is why this function does not support Decimal type.
+    #
+    # Ultimately Decimal support needs to be added to np.roots, which has
+    # greater implications on the entire linear algebra module and how it does
+    # eigenvalue computations.
     res = np.roots(values[::-1])
     mask = (res.imag == 0) & (res.real > 0)
     if not mask.any():
@@ -657,10 +730,16 @@ def irr(values):
     res = res[mask].real
     # NPV(rate) = 0 can have more than one solution so we return
     # only the solution closest to zero.
-    rate = 1.0/res - 1
+    rate = 1/res - 1
     rate = rate.item(np.argmin(np.abs(rate)))
     return rate
 
+
+def _npv_dispatcher(rate, values):
+    return (values,)
+
+
+@array_function_dispatch(_npv_dispatcher)
 def npv(rate, values):
     """
     Returns the NPV (Net Present Value) of a cash flow series.
@@ -698,7 +777,7 @@ def npv(rate, values):
     Examples
     --------
     >>> np.npv(0.281,[-100, 39, 59, 55, 20])
-    -0.0084785916384548798
+    -0.0084785916384548798 # may vary
 
     (Compare with the Example given for numpy.lib.financial.irr)
 
@@ -706,6 +785,12 @@ def npv(rate, values):
     values = np.asarray(values)
     return (values / (1+rate)**np.arange(0, len(values))).sum(axis=0)
 
+
+def _mirr_dispatcher(values, finance_rate, reinvest_rate):
+    return (values,)
+
+
+@array_function_dispatch(_mirr_dispatcher)
 def mirr(values, finance_rate, reinvest_rate):
     """
     Modified internal rate of return.
@@ -727,12 +812,19 @@ def mirr(values, finance_rate, reinvest_rate):
         Modified internal rate of return
 
     """
-    values = np.asarray(values, dtype=np.double)
+    values = np.asarray(values)
     n = values.size
+
+    # Without this explicit cast the 1/(n - 1) computation below
+    # becomes a float, which causes TypeError when using Decimal
+    # values.
+    if isinstance(finance_rate, Decimal):
+        n = Decimal(n)
+
     pos = values > 0
     neg = values < 0
     if not (pos.any() and neg.any()):
         return np.nan
     numer = np.abs(npv(reinvest_rate, values*pos))
     denom = np.abs(npv(finance_rate, values*neg))
-    return (numer/denom)**(1.0/(n - 1))*(1 + reinvest_rate) - 1
+    return (numer/denom)**(1/(n - 1))*(1 + reinvest_rate) - 1

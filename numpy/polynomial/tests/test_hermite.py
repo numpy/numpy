@@ -3,12 +3,14 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.hermite as herm
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
-    TestCase, assert_almost_equal, assert_raises,
-    assert_equal, assert_, run_module_suite)
+    assert_almost_equal, assert_raises, assert_equal, assert_,
+    )
 
 H0 = np.array([1])
 H1 = np.array([0, 2])
@@ -28,7 +30,7 @@ def trim(x):
     return herm.hermtrim(x, tol=1e-6)
 
 
-class TestConstants(TestCase):
+class TestConstants(object):
 
     def test_hermdomain(self):
         assert_equal(herm.hermdomain, [-1, 1])
@@ -43,7 +45,7 @@ class TestConstants(TestCase):
         assert_equal(herm.hermx, [0, .5])
 
 
-class TestArithmetic(TestCase):
+class TestArithmetic(object):
     x = np.linspace(-3, 3, 100)
 
     def test_hermadd(self):
@@ -99,8 +101,17 @@ class TestArithmetic(TestCase):
                 res = herm.hermadd(herm.hermmul(quo, ci), rem)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
+    def test_hermpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(herm.hermmul, [c]*j, np.array([1]))
+                res = herm.hermpow(c, j) 
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
 
-class TestEvaluation(TestCase):
+
+class TestEvaluation(object):
     # coefficients of 1 + 2*x + 3*x**2
     c1d = np.array([2.5, 1., .75])
     c2d = np.einsum('i,j->ij', c1d, c1d)
@@ -194,13 +205,16 @@ class TestEvaluation(TestCase):
         assert_(res.shape == (2, 3)*3)
 
 
-class TestIntegral(TestCase):
+class TestIntegral(object):
 
     def test_hermint(self):
         # check exceptions
-        assert_raises(ValueError, herm.hermint, [0], .5)
+        assert_raises(TypeError, herm.hermint, [0], .5)
         assert_raises(ValueError, herm.hermint, [0], -1)
         assert_raises(ValueError, herm.hermint, [0], 1, [0, 0])
+        assert_raises(ValueError, herm.hermint, [0], lbnd=[0])
+        assert_raises(ValueError, herm.hermint, [0], scl=[0])
+        assert_raises(TypeError, herm.hermint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -293,11 +307,11 @@ class TestIntegral(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestDerivative(TestCase):
+class TestDerivative(object):
 
     def test_hermder(self):
         # check exceptions
-        assert_raises(ValueError, herm.hermder, [0], .5)
+        assert_raises(TypeError, herm.hermder, [0], .5)
         assert_raises(ValueError, herm.hermder, [0], -1)
 
         # check that zeroth derivative does nothing
@@ -333,7 +347,7 @@ class TestDerivative(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestVander(TestCase):
+class TestVander(object):
     # some random values in [-1, 1)
     x = np.random.random((3, 5))*2 - 1
 
@@ -381,7 +395,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestFitting(TestCase):
+class TestFitting(object):
 
     def test_hermfit(self):
         def f(x):
@@ -458,7 +472,7 @@ class TestFitting(TestCase):
         assert_almost_equal(coef1, coef2)
 
 
-class TestCompanion(TestCase):
+class TestCompanion(object):
 
     def test_raises(self):
         assert_raises(ValueError, herm.hermcompanion, [])
@@ -473,7 +487,7 @@ class TestCompanion(TestCase):
         assert_(herm.hermcompanion([1, 2])[0, 0] == -.25)
 
 
-class TestGauss(TestCase):
+class TestGauss(object):
 
     def test_100(self):
         x, w = herm.hermgauss(100)
@@ -492,7 +506,7 @@ class TestGauss(TestCase):
         assert_almost_equal(w.sum(), tgt)
 
 
-class TestMisc(TestCase):
+class TestMisc(object):
 
     def test_hermfromroots(self):
         res = herm.hermfromroots([])
@@ -541,7 +555,3 @@ class TestMisc(TestCase):
         tgt = np.exp(-x**2)
         res = herm.hermweight(x)
         assert_almost_equal(res, tgt)
-
-
-if __name__ == "__main__":
-    run_module_suite()

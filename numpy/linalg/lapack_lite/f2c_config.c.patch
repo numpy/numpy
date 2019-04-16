@@ -1,4 +1,4 @@
-@@ -690,7 +690,7 @@ L10:
+@@ -696,7 +696,7 @@
  doublereal dlamc3_(doublereal *a, doublereal *b)
  {
      /* System generated locals */
@@ -7,7 +7,7 @@
  
  
  /*
-@@ -1773,7 +1773,7 @@ L10:
+@@ -1773,7 +1773,7 @@
  doublereal slamc3_(real *a, real *b)
  {
      /* System generated locals */

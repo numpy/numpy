@@ -29,7 +29,6 @@ else:
 
 import distutils.cygwinccompiler
 from distutils.version import StrictVersion
-from numpy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from distutils.errors import (DistutilsExecError, CompileError,
@@ -71,7 +70,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # we need to support 3.2 which doesn't match the standard
         # get_versions methods regex
         if self.gcc_version is None:
-            import re
             p = subprocess.Popen(['gcc', '-dumpversion'], shell=True,
                                  stdout=subprocess.PIPE)
             out_string = p.stdout.read()
@@ -251,18 +249,21 @@ def find_python_dll():
     # We can't do much here:
     # - find it in the virtualenv (sys.prefix)
     # - find it in python main dir (sys.base_prefix, if in a virtualenv)
+    # - sys.real_prefix is main dir for virtualenvs in Python 2.7
     # - in system32,
     # - ortherwise (Sxs), I don't know how to get it.
     stems = [sys.prefix]
-    if sys.base_prefix != sys.prefix:
+    if hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix:
         stems.append(sys.base_prefix)
+    elif hasattr(sys, 'real_prefix') and sys.real_prefix != sys.prefix:
+        stems.append(sys.real_prefix)
 
     sub_dirs = ['', 'lib', 'bin']
     # generate possible combinations of directory trees and sub-directories
     lib_dirs = []
     for stem in stems:
         for folder in sub_dirs:
-            lib_dirs = os.path.join(stem, folder)
+            lib_dirs.append(os.path.join(stem, folder))
 
     # add system directory as well
     if 'SYSTEMROOT' in os.environ:
@@ -326,7 +327,8 @@ def find_dll(dll_name):
 
     def _find_dll_in_winsxs(dll_name):
         # Walk through the WinSxS directory to find the dll.
-        winsxs_path = os.path.join(os.environ['WINDIR'], 'winsxs')
+        winsxs_path = os.path.join(os.environ.get('WINDIR', r'C:\WINDOWS'),
+                                   'winsxs')
         if not os.path.exists(winsxs_path):
             return None
         for root, dirs, files in os.walk(winsxs_path):
@@ -426,8 +428,10 @@ def _check_for_import_lib():
 
     # directory trees that may contain the library
     stems = [sys.prefix]
-    if sys.base_prefix != sys.prefix:
+    if hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix:
         stems.append(sys.base_prefix)
+    elif hasattr(sys, 'real_prefix') and sys.real_prefix != sys.prefix:
+        stems.append(sys.real_prefix)
 
     # possible subdirectories within those trees where it is placed
     sub_dirs = ['libs', 'lib']
@@ -481,8 +485,15 @@ def _build_import_library_x86():
     lib_file = os.path.join(sys.prefix, 'libs', lib_name)
     if not os.path.isfile(lib_file):
         # didn't find library file in virtualenv, try base distribution, too,
-        # and use that instead if found there
-        base_lib = os.path.join(sys.base_prefix, 'libs', lib_name)
+        # and use that instead if found there. for Python 2.7 venvs, the base
+        # directory is in attribute real_prefix instead of base_prefix.
+        if hasattr(sys, 'base_prefix'):
+            base_lib = os.path.join(sys.base_prefix, 'libs', lib_name)
+        elif hasattr(sys, 'real_prefix'):
+            base_lib = os.path.join(sys.real_prefix, 'libs', lib_name)
+        else:
+            base_lib = ''  # os.path.isfile('') == False
+
         if os.path.isfile(base_lib):
             lib_file = base_lib
         else:
@@ -556,7 +567,7 @@ def msvc_manifest_xml(maj, min):
                          (maj, min))
     # Don't be fooled, it looks like an XML, but it is not. In particular, it
     # should not have any space before starting, and its size should be
-    # divisible by 4, most likely for alignement constraints when the xml is
+    # divisible by 4, most likely for alignment constraints when the xml is
     # embedded in the binary...
     # This template was copied directly from the python 2.6 binary (using
     # strings.exe from mingw on python.exe).

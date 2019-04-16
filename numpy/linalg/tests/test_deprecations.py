@@ -4,7 +4,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import assert_warns, run_module_suite
+from numpy.testing import assert_warns
 
 
 def test_qr_mode_full_future_warning():
@@ -20,7 +20,3 @@ def test_qr_mode_full_future_warning():
     assert_warns(DeprecationWarning, np.linalg.qr, a, mode='f')
     assert_warns(DeprecationWarning, np.linalg.qr, a, mode='economic')
     assert_warns(DeprecationWarning, np.linalg.qr, a, mode='e')
-
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -39,15 +39,18 @@ static real c_b151 = -1.f;
 static integer c_n1 = -1;
 static integer c__3 = 3;
 static integer c__2 = 2;
-static integer c__8 = 8;
-static integer c__4 = 4;
 static integer c__65 = 65;
-static integer c__15 = 15;
+static integer c__6 = 6;
+static integer c__12 = 12;
+static integer c__49 = 49;
+static integer c__4 = 4;
 static logical c_false = FALSE_;
-static integer c__10 = 10;
-static integer c__11 = 11;
-static real c_b2489 = 2.f;
+static integer c__13 = 13;
+static integer c__15 = 15;
+static integer c__14 = 14;
+static integer c__16 = 16;
 static logical c_true = TRUE_;
+static real c_b3178 = 2.f;
 
 /* Subroutine */ int sbdsdc_(char *uplo, char *compq, integer *n, real *d__,
 	real *e, real *u, integer *ldu, real *vt, integer *ldvt, real *q,
@@ -56,9 +59,6 @@ static logical c_true = TRUE_;
     /* System generated locals */
     integer u_dim1, u_offset, vt_dim1, vt_offset, i__1, i__2;
     real r__1;
-
-    /* Builtin functions */
-    double r_sign(real *, real *), log(doublereal);
 
     /* Local variables */
     static integer i__, j, k;
@@ -104,10 +104,10 @@ static logical c_true = TRUE_;
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       December 1, 1999
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -128,7 +128,7 @@ static logical c_true = TRUE_;
     It could conceivably fail on hexadecimal or decimal machines
     without guard digits, but we know of none.  See SLASD3 for details.
 
-    The code currently call SLASDQ if singular values only are desired.
+    The code currently calls SLASDQ if singular values only are desired.
     However, it can be slightly modified to compute singular values
     using the divide and conquer method.
 
@@ -154,7 +154,7 @@ static logical c_true = TRUE_;
             On entry, the n diagonal elements of the bidiagonal matrix B.
             On exit, if INFO=0, the singular values of B.
 
-    E       (input/output) REAL array, dimension (N)
+    E       (input/output) REAL array, dimension (N-1)
             On entry, the elements of E contain the offdiagonal
             elements of the bidiagonal matrix whose SVD is desired.
             On exit, E has been destroyed.
@@ -203,7 +203,7 @@ static logical c_true = TRUE_;
                bottom of the computation tree (usually about 25).
             For other values of COMPQ, IQ is not referenced.
 
-    WORK    (workspace) REAL array, dimension (LWORK)
+    WORK    (workspace) REAL array, dimension (MAX(1,LWORK))
             If COMPQ = 'N' then LWORK >= (4 * N).
             If COMPQ = 'P' then LWORK >= (6 * N).
             If COMPQ = 'I' then LWORK >= (3 * N**2 + 4 * N).
@@ -213,7 +213,7 @@ static logical c_true = TRUE_;
     INFO    (output) INTEGER
             = 0:  successful exit.
             < 0:  if INFO = -i, the i-th argument had an illegal value.
-            > 0:  The algorithm failed to compute an singular value.
+            > 0:  The algorithm failed to compute a singular value.
                   The update process of divide and conquer failed.
 
     Further Details
@@ -222,7 +222,9 @@ static logical c_true = TRUE_;
     Based on contributions by
        Ming Gu and Huan Ren, Computer Science Division, University of
        California at Berkeley, USA
-
+    =====================================================================
+    Changed dimension statement in comment describing E from (N) to
+    (N-1).  Sven, 17 Feb 05.
     =====================================================================
 
 
@@ -465,9 +467,9 @@ static logical c_true = TRUE_;
 			2) * *n], &q[start + (ic + qstart - 2) * *n], &q[
 			start + (is + qstart - 2) * *n], &work[wstart], &
 			iwork[1], info);
-		if (*info != 0) {
-		    return 0;
-		}
+	    }
+	    if (*info != 0) {
+		return 0;
 	    }
 	    start = i__ + 1;
 	}
@@ -545,10 +547,6 @@ L40:
     real r__1, r__2, r__3, r__4;
     doublereal d__1;
 
-    /* Builtin functions */
-    double pow_dd(doublereal *, doublereal *), sqrt(doublereal), r_sign(real *
-	    , real *);
-
     /* Local variables */
     static real f, g, h__;
     static integer i__, j, m;
@@ -588,27 +586,39 @@ L40:
 	    );
     static real thresh;
     static logical rotate;
-    static real sminlo, tolmul;
+    static real tolmul;
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       January 2007
 
 
     Purpose
     =======
 
-    SBDSQR computes the singular value decomposition (SVD) of a real
-    N-by-N (upper or lower) bidiagonal matrix B:  B = Q * S * P' (P'
-    denotes the transpose of P), where S is a diagonal matrix with
-    non-negative diagonal elements (the singular values of B), and Q
-    and P are orthogonal matrices.
+    SBDSQR computes the singular values and, optionally, the right and/or
+    left singular vectors from the singular value decomposition (SVD) of
+    a real N-by-N (upper or lower) bidiagonal matrix B using the implicit
+    zero-shift QR algorithm.  The SVD of B has the form
 
-    The routine computes S, and optionally computes U * Q, P' * VT,
-    or Q' * C, for given real input matrices U, VT, and C.
+       B = Q * S * P**T
+
+    where S is the diagonal matrix of singular values, Q is an orthogonal
+    matrix of left singular vectors, and P is an orthogonal matrix of
+    right singular vectors.  If left singular vectors are requested, this
+    subroutine actually returns U*Q instead of Q, and, if right singular
+    vectors are requested, this subroutine returns P**T*VT instead of
+    P**T, for given real input matrices U and VT.  When U and VT are the
+    orthogonal matrices that reduce a general matrix A to bidiagonal
+    form:  A = U*B*VT, as computed by SGEBRD, then
+
+       A = (U*Q) * S * (P**T*VT)
+
+    is the SVD of A.  Optionally, the subroutine may also compute Q**T*C
+    for a given real input matrix C.
 
     See "Computing  Small Singular Values of Bidiagonal Matrices With
     Guaranteed High Relative Accuracy," by J. Demmel and W. Kahan,
@@ -643,19 +653,18 @@ L40:
             On exit, if INFO=0, the singular values of B in decreasing
             order.
 
-    E       (input/output) REAL array, dimension (N)
-            On entry, the elements of E contain the
-            offdiagonal elements of the bidiagonal matrix whose SVD
-            is desired. On normal exit (INFO = 0), E is destroyed.
-            If the algorithm does not converge (INFO > 0), D and E
+    E       (input/output) REAL array, dimension (N-1)
+            On entry, the N-1 offdiagonal elements of the bidiagonal
+            matrix B.
+            On exit, if INFO = 0, E is destroyed; if INFO > 0, D and E
             will contain the diagonal and superdiagonal elements of a
             bidiagonal matrix orthogonally equivalent to the one given
-            as input. E(N) is used for workspace.
+            as input.
 
     VT      (input/output) REAL array, dimension (LDVT, NCVT)
             On entry, an N-by-NCVT matrix VT.
-            On exit, VT is overwritten by P' * VT.
-            VT is not referenced if NCVT = 0.
+            On exit, VT is overwritten by P**T * VT.
+            Not referenced if NCVT = 0.
 
     LDVT    (input) INTEGER
             The leading dimension of the array VT.
@@ -664,15 +673,15 @@ L40:
     U       (input/output) REAL array, dimension (LDU, N)
             On entry, an NRU-by-N matrix U.
             On exit, U is overwritten by U * Q.
-            U is not referenced if NRU = 0.
+            Not referenced if NRU = 0.
 
     LDU     (input) INTEGER
             The leading dimension of the array U.  LDU >= max(1,NRU).
 
     C       (input/output) REAL array, dimension (LDC, NCC)
             On entry, an N-by-NCC matrix C.
-            On exit, C is overwritten by Q' * C.
-            C is not referenced if NCC = 0.
+            On exit, C is overwritten by Q**T * C.
+            Not referenced if NCC = 0.
 
     LDC     (input) INTEGER
             The leading dimension of the array C.
@@ -683,10 +692,18 @@ L40:
     INFO    (output) INTEGER
             = 0:  successful exit
             < 0:  If INFO = -i, the i-th argument had an illegal value
-            > 0:  the algorithm did not converge; D and E contain the
-                  elements of a bidiagonal matrix which is orthogonally
-                  similar to the input matrix B;  if INFO = i, i
-                  elements of E have not converged to zero.
+            > 0:
+               if NCVT = NRU = NCC = 0,
+                  = 1, a split was marked by a positive value in E
+                  = 2, current block of Z not diagonalized after 30*N
+                       iterations (in inner while loop)
+                  = 3, termination criterion of outer while loop not met
+                       (program created more than N unreduced blocks)
+               else NCVT = NRU = NCC = 0,
+                     the algorithm did not converge; D and E contain the
+                     elements of a bidiagonal matrix which is orthogonally
+                     similar to the input matrix B;  if INFO = i, i
+                     elements of E have not converged to zero.
 
     Internal Parameters
     ===================
@@ -1030,7 +1047,6 @@ L90:
 		    e[lll] = 0.f;
 		    goto L60;
 		}
-		sminlo = sminl;
 		mu = (r__2 = d__[lll + 1], dabs(r__2)) * (mu / (mu + (r__1 =
 			e[lll], dabs(r__1))));
 		sminl = dmin(sminl,mu);
@@ -1066,7 +1082,6 @@ L90:
 		    e[lll] = 0.f;
 		    goto L60;
 		}
-		sminlo = sminl;
 		mu = (r__2 = d__[lll], dabs(r__2)) * (mu / (mu + (r__1 = e[
 			lll], dabs(r__1))));
 		sminl = dmin(sminl,mu);
@@ -1453,10 +1468,10 @@ L220:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -1663,14 +1678,15 @@ L50:
     extern doublereal slamch_(char *);
     extern /* Subroutine */ int xerbla_(char *, integer *);
     extern integer isamax_(integer *, real *, integer *);
+    extern logical sisnan_(real *);
     static logical noconv;
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -1908,7 +1924,7 @@ L120:
 
     sfmin1 = slamch_("S") / slamch_("P");
     sfmax1 = 1.f / sfmin1;
-    sfmin2 = sfmin1 * 8.f;
+    sfmin2 = sfmin1 * 2.f;
     sfmax2 = 1.f / sfmin2;
 L140:
     noconv = FALSE_;
@@ -1939,7 +1955,7 @@ L150:
 	if (c__ == 0.f || r__ == 0.f) {
 	    goto L200;
 	}
-	g = r__ / 8.f;
+	g = r__ / 2.f;
 	f = 1.f;
 	s = c__ + r__;
 L160:
@@ -1950,28 +1966,38 @@ L160:
 	if (c__ >= g || dmax(r__1,ca) >= sfmax2 || dmin(r__2,ra) <= sfmin2) {
 	    goto L170;
 	}
-	f *= 8.f;
-	c__ *= 8.f;
-	ca *= 8.f;
-	r__ /= 8.f;
-	g /= 8.f;
-	ra /= 8.f;
+	f *= 2.f;
+	c__ *= 2.f;
+	ca *= 2.f;
+	r__ /= 2.f;
+	g /= 2.f;
+	ra /= 2.f;
 	goto L160;
 
 L170:
-	g = c__ / 8.f;
+	g = c__ / 2.f;
 L180:
 /* Computing MIN */
 	r__1 = min(f,c__), r__1 = min(r__1,g);
 	if (g < r__ || dmax(r__,ra) >= sfmax2 || dmin(r__1,ca) <= sfmin2) {
 	    goto L190;
 	}
-	f /= 8.f;
-	c__ /= 8.f;
-	g /= 8.f;
-	ca /= 8.f;
-	r__ *= 8.f;
-	ra *= 8.f;
+	r__1 = c__ + f + ca + r__ + g + ra;
+	if (sisnan_(&r__1)) {
+
+/*           Exit if NaN to avoid infinite loop */
+
+	    *info = -3;
+	    i__2 = -(*info);
+	    xerbla_("SGEBAL", &i__2);
+	    return 0;
+	}
+	f /= 2.f;
+	c__ /= 2.f;
+	g /= 2.f;
+	ca /= 2.f;
+	r__ *= 2.f;
+	ra *= 2.f;
 	goto L180;
 
 /*        Now balance. */
@@ -2020,7 +2046,7 @@ L210:
 	real *d__, real *e, real *tauq, real *taup, real *work, integer *info)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
+    integer a_dim1, a_offset, i__1, i__2, i__3;
 
     /* Local variables */
     static integer i__;
@@ -2031,10 +2057,10 @@ L210:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -2196,10 +2222,13 @@ L210:
 
 /*           Apply H(i) to A(i:m,i+1:n) from the left */
 
-	    i__2 = *m - i__ + 1;
-	    i__3 = *n - i__;
-	    slarf_("Left", &i__2, &i__3, &a[i__ + i__ * a_dim1], &c__1, &tauq[
-		    i__], &a[i__ + (i__ + 1) * a_dim1], lda, &work[1]);
+	    if (i__ < *n) {
+		i__2 = *m - i__ + 1;
+		i__3 = *n - i__;
+		slarf_("Left", &i__2, &i__3, &a[i__ + i__ * a_dim1], &c__1, &
+			tauq[i__], &a[i__ + (i__ + 1) * a_dim1], lda, &work[1]
+			);
+	    }
 	    a[i__ + i__ * a_dim1] = d__[i__];
 
 	    if (i__ < *n) {
@@ -2249,12 +2278,12 @@ L210:
 
 /*           Apply G(i) to A(i+1:m,i:n) from the right */
 
-	    i__2 = *m - i__;
-	    i__3 = *n - i__ + 1;
-/* Computing MIN */
-	    i__4 = i__ + 1;
-	    slarf_("Right", &i__2, &i__3, &a[i__ + i__ * a_dim1], lda, &taup[
-		    i__], &a[min(i__4,*m) + i__ * a_dim1], lda, &work[1]);
+	    if (i__ < *m) {
+		i__2 = *m - i__;
+		i__3 = *n - i__ + 1;
+		slarf_("Right", &i__2, &i__3, &a[i__ + i__ * a_dim1], lda, &
+			taup[i__], &a[i__ + 1 + i__ * a_dim1], lda, &work[1]);
+	    }
 	    a[i__ + i__ * a_dim1] = d__[i__];
 
 	    if (i__ < *m) {
@@ -2319,10 +2348,10 @@ L210:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -2381,7 +2410,7 @@ L210:
             The scalar factors of the elementary reflectors which
             represent the orthogonal matrix P. See Further Details.
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -2610,11 +2639,8 @@ L210:
 {
     /* System generated locals */
     integer a_dim1, a_offset, vl_dim1, vl_offset, vr_dim1, vr_offset, i__1,
-	    i__2, i__3, i__4;
+	    i__2, i__3;
     real r__1, r__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, k;
@@ -2625,7 +2651,6 @@ L210:
     static real dum[1], eps;
     static integer ibal;
     static char side[1];
-    static integer maxb;
     static real anrm;
     static integer ierr, itau, iwrk, nout;
     extern /* Subroutine */ int srot_(integer *, real *, integer *, real *,
@@ -2668,10 +2693,10 @@ L210:
 
 
 /*
-    -- LAPACK driver routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       December 8, 1999
+    -- LAPACK driver routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -2749,7 +2774,7 @@ L210:
             The leading dimension of the array VR.  LDVR >= 1; if
             JOBVR = 'V', LDVR >= N.
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -2821,69 +2846,66 @@ L210:
          the worst case.)
 */
 
-    minwrk = 1;
-    if (*info == 0 && (*lwork >= 1 || lquery)) {
-	maxwrk = (*n << 1) + *n * ilaenv_(&c__1, "SGEHRD", " ", n, &c__1, n, &
-		c__0, (ftnlen)6, (ftnlen)1);
-	if (! wantvl && ! wantvr) {
-/* Computing MAX */
-	    i__1 = 1, i__2 = *n * 3;
-	    minwrk = max(i__1,i__2);
-/* Computing MAX */
-	    i__1 = ilaenv_(&c__8, "SHSEQR", "EN", n, &c__1, n, &c_n1, (ftnlen)
-		    6, (ftnlen)2);
-	    maxb = max(i__1,2);
-/*
-   Computing MIN
-   Computing MAX
-*/
-	    i__3 = 2, i__4 = ilaenv_(&c__4, "SHSEQR", "EN", n, &c__1, n, &
-		    c_n1, (ftnlen)6, (ftnlen)2);
-	    i__1 = min(maxb,*n), i__2 = max(i__3,i__4);
-	    k = min(i__1,i__2);
-/* Computing MAX */
-	    i__1 = k * (k + 2), i__2 = *n << 1;
-	    hswork = max(i__1,i__2);
-/* Computing MAX */
-	    i__1 = maxwrk, i__2 = *n + 1, i__1 = max(i__1,i__2), i__2 = *n +
-		    hswork;
-	    maxwrk = max(i__1,i__2);
+    if (*info == 0) {
+	if (*n == 0) {
+	    minwrk = 1;
+	    maxwrk = 1;
 	} else {
+	    maxwrk = (*n << 1) + *n * ilaenv_(&c__1, "SGEHRD", " ", n, &c__1,
+		    n, &c__0, (ftnlen)6, (ftnlen)1);
+	    if (wantvl) {
+		minwrk = *n << 2;
 /* Computing MAX */
-	    i__1 = 1, i__2 = *n << 2;
-	    minwrk = max(i__1,i__2);
+		i__1 = maxwrk, i__2 = (*n << 1) + (*n - 1) * ilaenv_(&c__1,
+			"SORGHR", " ", n, &c__1, n, &c_n1, (ftnlen)6, (ftnlen)
+			1);
+		maxwrk = max(i__1,i__2);
+		shseqr_("S", "V", n, &c__1, n, &a[a_offset], lda, &wr[1], &wi[
+			1], &vl[vl_offset], ldvl, &work[1], &c_n1, info);
+		hswork = work[1];
 /* Computing MAX */
-	    i__1 = maxwrk, i__2 = (*n << 1) + (*n - 1) * ilaenv_(&c__1, "SOR"
-		    "GHR", " ", n, &c__1, n, &c_n1, (ftnlen)6, (ftnlen)1);
-	    maxwrk = max(i__1,i__2);
+		i__1 = maxwrk, i__2 = *n + 1, i__1 = max(i__1,i__2), i__2 = *
+			n + hswork;
+		maxwrk = max(i__1,i__2);
 /* Computing MAX */
-	    i__1 = ilaenv_(&c__8, "SHSEQR", "SV", n, &c__1, n, &c_n1, (ftnlen)
-		    6, (ftnlen)2);
-	    maxb = max(i__1,2);
-/*
-   Computing MIN
-   Computing MAX
-*/
-	    i__3 = 2, i__4 = ilaenv_(&c__4, "SHSEQR", "SV", n, &c__1, n, &
-		    c_n1, (ftnlen)6, (ftnlen)2);
-	    i__1 = min(maxb,*n), i__2 = max(i__3,i__4);
-	    k = min(i__1,i__2);
+		i__1 = maxwrk, i__2 = *n << 2;
+		maxwrk = max(i__1,i__2);
+	    } else if (wantvr) {
+		minwrk = *n << 2;
 /* Computing MAX */
-	    i__1 = k * (k + 2), i__2 = *n << 1;
-	    hswork = max(i__1,i__2);
+		i__1 = maxwrk, i__2 = (*n << 1) + (*n - 1) * ilaenv_(&c__1,
+			"SORGHR", " ", n, &c__1, n, &c_n1, (ftnlen)6, (ftnlen)
+			1);
+		maxwrk = max(i__1,i__2);
+		shseqr_("S", "V", n, &c__1, n, &a[a_offset], lda, &wr[1], &wi[
+			1], &vr[vr_offset], ldvr, &work[1], &c_n1, info);
+		hswork = work[1];
 /* Computing MAX */
-	    i__1 = maxwrk, i__2 = *n + 1, i__1 = max(i__1,i__2), i__2 = *n +
-		    hswork;
-	    maxwrk = max(i__1,i__2);
+		i__1 = maxwrk, i__2 = *n + 1, i__1 = max(i__1,i__2), i__2 = *
+			n + hswork;
+		maxwrk = max(i__1,i__2);
 /* Computing MAX */
-	    i__1 = maxwrk, i__2 = *n << 2;
-	    maxwrk = max(i__1,i__2);
+		i__1 = maxwrk, i__2 = *n << 2;
+		maxwrk = max(i__1,i__2);
+	    } else {
+		minwrk = *n * 3;
+		shseqr_("E", "N", n, &c__1, n, &a[a_offset], lda, &wr[1], &wi[
+			1], &vr[vr_offset], ldvr, &work[1], &c_n1, info);
+		hswork = work[1];
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n + 1, i__1 = max(i__1,i__2), i__2 = *
+			n + hswork;
+		maxwrk = max(i__1,i__2);
+	    }
+	    maxwrk = max(maxwrk,minwrk);
 	}
 	work[1] = (real) maxwrk;
+
+	if (*lwork < minwrk && ! lquery) {
+	    *info = -13;
+	}
     }
-    if (*lwork < minwrk && ! lquery) {
-	*info = -13;
-    }
+
     if (*info != 0) {
 	i__1 = -(*info);
 	xerbla_("SGEEV ", &i__1);
@@ -3178,10 +3200,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -3331,20 +3353,23 @@ L50:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
 
     /* Local variables */
-    static integer i__;
+    static integer i__, j;
     static real t[4160]	/* was [65][64] */;
     static integer ib;
     static real ei;
     static integer nb, nh, nx, iws, nbmin, iinfo;
     extern /* Subroutine */ int sgemm_(char *, char *, integer *, integer *,
 	    integer *, real *, real *, integer *, real *, integer *, real *,
-	    real *, integer *), sgehd2_(integer *, integer *,
-	    integer *, real *, integer *, real *, real *, integer *), slarfb_(
-	    char *, char *, char *, char *, integer *, integer *, integer *,
-	    real *, integer *, real *, integer *, real *, integer *, real *,
-	    integer *), slahrd_(integer *,
+	    real *, integer *), strmm_(char *, char *, char *,
+	     char *, integer *, integer *, real *, real *, integer *, real *,
+	    integer *), saxpy_(integer *,
+	    real *, real *, integer *, real *, integer *), sgehd2_(integer *,
 	    integer *, integer *, real *, integer *, real *, real *, integer *
-	    , real *, integer *), xerbla_(char *, integer *);
+	    ), slahr2_(integer *, integer *, integer *, real *, integer *,
+	    real *, real *, integer *, real *, integer *), slarfb_(char *,
+	    char *, char *, char *, integer *, integer *, integer *, real *,
+	    integer *, real *, integer *, real *, integer *, real *, integer *
+	    ), xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
     static integer ldwork, lwkopt;
@@ -3352,10 +3377,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2.1)                                  --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    -- April 2009                                                      --
 
 
     Purpose
@@ -3444,6 +3469,10 @@ L50:
     modified element of the upper Hessenberg matrix H, and vi denotes an
     element of the vector defining H(i).
 
+    This file is a slight modification of LAPACK-3.0's DGEHRD
+    subroutine incorporating improvements proposed by Quintana-Orti and
+    Van de Geijn (2006). (See DLAHR2.)
+
     =====================================================================
 
 
@@ -3507,7 +3536,7 @@ L50:
     }
 
 /*
-       Determine the block size.
+       Determine the block size
 
    Computing MIN
 */
@@ -3520,7 +3549,7 @@ L50:
 
 /*
           Determine when to cross over from blocked to unblocked code
-          (last block is always handled by unblocked code).
+          (last block is always handled by unblocked code)
 
    Computing MAX
 */
@@ -3529,7 +3558,7 @@ L50:
 	nx = max(i__1,i__2);
 	if (nx < nh) {
 
-/*           Determine if workspace is large enough for blocked code. */
+/*           Determine if workspace is large enough for blocked code */
 
 	    iws = *n * nb;
 	    if (*lwork < iws) {
@@ -3537,7 +3566,7 @@ L50:
 /*
                 Not enough workspace to use optimal NB:  determine the
                 minimum value of NB, and reduce NB or force use of
-                unblocked code.
+                unblocked code
 
    Computing MAX
 */
@@ -3577,13 +3606,13 @@ L50:
              which performs the reduction, and also the matrix Y = A*V*T
 */
 
-	    slahrd_(ihi, &i__, &ib, &a[i__ * a_dim1 + 1], lda, &tau[i__], t, &
+	    slahr2_(ihi, &i__, &ib, &a[i__ * a_dim1 + 1], lda, &tau[i__], t, &
 		    c__65, &work[1], &ldwork);
 
 /*
              Apply the block reflector H to A(1:ihi,i+ib:ihi) from the
              right, computing  A := A - Y * V'. V(i+ib,ib-1) must be set
-             to 1.
+             to 1
 */
 
 	    ei = a[i__ + ib + (i__ + ib - 1) * a_dim1];
@@ -3595,6 +3624,21 @@ L50:
 	    a[i__ + ib + (i__ + ib - 1) * a_dim1] = ei;
 
 /*
+             Apply the block reflector H to A(1:i,i+1:i+ib-1) from the
+             right
+*/
+
+	    i__3 = ib - 1;
+	    strmm_("Right", "Lower", "Transpose", "Unit", &i__, &i__3, &c_b15,
+		     &a[i__ + 1 + i__ * a_dim1], lda, &work[1], &ldwork);
+	    i__3 = ib - 2;
+	    for (j = 0; j <= i__3; ++j) {
+		saxpy_(&i__, &c_b151, &work[ldwork * j + 1], &c__1, &a[(i__ +
+			j + 1) * a_dim1 + 1], &c__1);
+/* L30: */
+	    }
+
+/*
              Apply the block reflector H to A(i+1:ihi,i+ib:n) from the
              left
 */
@@ -3604,7 +3648,7 @@ L50:
 	    slarfb_("Left", "Transpose", "Forward", "Columnwise", &i__3, &
 		    i__4, &ib, &a[i__ + 1 + i__ * a_dim1], lda, t, &c__65, &a[
 		    i__ + 1 + (i__ + ib) * a_dim1], lda, &work[1], &ldwork);
-/* L30: */
+/* L40: */
 	}
     }
 
@@ -3635,10 +3679,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -3773,10 +3817,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -3809,7 +3853,7 @@ L50:
             The scalar factors of the elementary reflectors (see Further
             Details).
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -3982,6 +4026,710 @@ L50:
 
 } /* sgelqf_ */
 
+/* Subroutine */ int sgelsd_(integer *m, integer *n, integer *nrhs, real *a,
+	integer *lda, real *b, integer *ldb, real *s, real *rcond, integer *
+	rank, real *work, integer *lwork, integer *iwork, integer *info)
+{
+    /* System generated locals */
+    integer a_dim1, a_offset, b_dim1, b_offset, i__1, i__2, i__3, i__4;
+
+    /* Local variables */
+    static integer ie, il, mm;
+    static real eps, anrm, bnrm;
+    static integer itau, nlvl, iascl, ibscl;
+    static real sfmin;
+    static integer minmn, maxmn, itaup, itauq, mnthr, nwork;
+    extern /* Subroutine */ int slabad_(real *, real *), sgebrd_(integer *,
+	    integer *, real *, integer *, real *, real *, real *, real *,
+	    real *, integer *, integer *);
+    extern doublereal slamch_(char *), slange_(char *, integer *,
+	    integer *, real *, integer *, real *);
+    extern /* Subroutine */ int xerbla_(char *, integer *);
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static real bignum;
+    extern /* Subroutine */ int sgelqf_(integer *, integer *, real *, integer
+	    *, real *, real *, integer *, integer *), slalsd_(char *, integer
+	    *, integer *, integer *, real *, real *, real *, integer *, real *
+	    , integer *, real *, integer *, integer *), slascl_(char *
+	    , integer *, integer *, real *, real *, integer *, integer *,
+	    real *, integer *, integer *);
+    static integer wlalsd;
+    extern /* Subroutine */ int sgeqrf_(integer *, integer *, real *, integer
+	    *, real *, real *, integer *, integer *), slacpy_(char *, integer
+	    *, integer *, real *, integer *, real *, integer *),
+	    slaset_(char *, integer *, integer *, real *, real *, real *,
+	    integer *);
+    static integer ldwork;
+    extern /* Subroutine */ int sormbr_(char *, char *, char *, integer *,
+	    integer *, integer *, real *, integer *, real *, real *, integer *
+	    , real *, integer *, integer *);
+    static integer liwork, minwrk, maxwrk;
+    static real smlnum;
+    extern /* Subroutine */ int sormlq_(char *, char *, integer *, integer *,
+	    integer *, real *, integer *, real *, real *, integer *, real *,
+	    integer *, integer *);
+    static logical lquery;
+    static integer smlsiz;
+    extern /* Subroutine */ int sormqr_(char *, char *, integer *, integer *,
+	    integer *, real *, integer *, real *, real *, integer *, real *,
+	    integer *, integer *);
+
+
+/*
+    -- LAPACK driver routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    SGELSD computes the minimum-norm solution to a real linear least
+    squares problem:
+        minimize 2-norm(| b - A*x |)
+    using the singular value decomposition (SVD) of A. A is an M-by-N
+    matrix which may be rank-deficient.
+
+    Several right hand side vectors b and solution vectors x can be
+    handled in a single call; they are stored as the columns of the
+    M-by-NRHS right hand side matrix B and the N-by-NRHS solution
+    matrix X.
+
+    The problem is solved in three steps:
+    (1) Reduce the coefficient matrix A to bidiagonal form with
+        Householder transformations, reducing the original problem
+        into a "bidiagonal least squares problem" (BLS)
+    (2) Solve the BLS using a divide and conquer approach.
+    (3) Apply back all the Householder tranformations to solve
+        the original least squares problem.
+
+    The effective rank of A is determined by treating as zero those
+    singular values which are less than RCOND times the largest singular
+    value.
+
+    The divide and conquer algorithm makes very mild assumptions about
+    floating point arithmetic. It will work on machines with a guard
+    digit in add/subtract, or on those binary machines without guard
+    digits which subtract like the Cray X-MP, Cray Y-MP, Cray C-90, or
+    Cray-2. It could conceivably fail on hexadecimal or decimal machines
+    without guard digits, but we know of none.
+
+    Arguments
+    =========
+
+    M       (input) INTEGER
+            The number of rows of A. M >= 0.
+
+    N       (input) INTEGER
+            The number of columns of A. N >= 0.
+
+    NRHS    (input) INTEGER
+            The number of right hand sides, i.e., the number of columns
+            of the matrices B and X. NRHS >= 0.
+
+    A       (input) REAL array, dimension (LDA,N)
+            On entry, the M-by-N matrix A.
+            On exit, A has been destroyed.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A.  LDA >= max(1,M).
+
+    B       (input/output) REAL array, dimension (LDB,NRHS)
+            On entry, the M-by-NRHS right hand side matrix B.
+            On exit, B is overwritten by the N-by-NRHS solution
+            matrix X.  If m >= n and RANK = n, the residual
+            sum-of-squares for the solution in the i-th column is given
+            by the sum of squares of elements n+1:m in that column.
+
+    LDB     (input) INTEGER
+            The leading dimension of the array B. LDB >= max(1,max(M,N)).
+
+    S       (output) REAL array, dimension (min(M,N))
+            The singular values of A in decreasing order.
+            The condition number of A in the 2-norm = S(1)/S(min(m,n)).
+
+    RCOND   (input) REAL
+            RCOND is used to determine the effective rank of A.
+            Singular values S(i) <= RCOND*S(1) are treated as zero.
+            If RCOND < 0, machine precision is used instead.
+
+    RANK    (output) INTEGER
+            The effective rank of A, i.e., the number of singular values
+            which are greater than RCOND*S(1).
+
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
+            On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+
+    LWORK   (input) INTEGER
+            The dimension of the array WORK. LWORK must be at least 1.
+            The exact minimum amount of workspace needed depends on M,
+            N and NRHS. As long as LWORK is at least
+                12*N + 2*N*SMLSIZ + 8*N*NLVL + N*NRHS + (SMLSIZ+1)**2,
+            if M is greater than or equal to N or
+                12*M + 2*M*SMLSIZ + 8*M*NLVL + M*NRHS + (SMLSIZ+1)**2,
+            if M is less than N, the code will execute correctly.
+            SMLSIZ is returned by ILAENV and is equal to the maximum
+            size of the subproblems at the bottom of the computation
+            tree (usually about 25), and
+               NLVL = MAX( 0, INT( LOG_2( MIN( M,N )/(SMLSIZ+1) ) ) + 1 )
+            For good performance, LWORK should generally be larger.
+
+            If LWORK = -1, then a workspace query is assumed; the routine
+            only calculates the optimal size of the array WORK and the
+            minimum size of the array IWORK, and returns these values as
+            the first entries of the WORK and IWORK arrays, and no error
+            message related to LWORK is issued by XERBLA.
+
+    IWORK   (workspace) INTEGER array, dimension (MAX(1,LIWORK))
+            LIWORK >= max(1, 3*MINMN*NLVL + 11*MINMN),
+            where MINMN = MIN( M,N ).
+            On exit, if INFO = 0, IWORK(1) returns the minimum LIWORK.
+
+    INFO    (output) INTEGER
+            = 0:  successful exit
+            < 0:  if INFO = -i, the i-th argument had an illegal value.
+            > 0:  the algorithm for computing the SVD failed to converge;
+                  if INFO = i, i off-diagonal elements of an intermediate
+                  bidiagonal form did not converge to zero.
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input arguments.
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    --s;
+    --work;
+    --iwork;
+
+    /* Function Body */
+    *info = 0;
+    minmn = min(*m,*n);
+    maxmn = max(*m,*n);
+    lquery = *lwork == -1;
+    if (*m < 0) {
+	*info = -1;
+    } else if (*n < 0) {
+	*info = -2;
+    } else if (*nrhs < 0) {
+	*info = -3;
+    } else if (*lda < max(1,*m)) {
+	*info = -5;
+    } else if (*ldb < max(1,maxmn)) {
+	*info = -7;
+    }
+
+/*
+       Compute workspace.
+       (Note: Comments in the code beginning "Workspace:" describe the
+       minimal amount of workspace needed at that point in the code,
+       as well as the preferred amount for good performance.
+       NB refers to the optimal block size for the immediately
+       following subroutine, as returned by ILAENV.)
+*/
+
+    if (*info == 0) {
+	minwrk = 1;
+	maxwrk = 1;
+	liwork = 1;
+	if (minmn > 0) {
+	    smlsiz = ilaenv_(&c__9, "SGELSD", " ", &c__0, &c__0, &c__0, &c__0,
+		     (ftnlen)6, (ftnlen)1);
+	    mnthr = ilaenv_(&c__6, "SGELSD", " ", m, n, nrhs, &c_n1, (ftnlen)
+		    6, (ftnlen)1);
+/* Computing MAX */
+	    i__1 = (integer) (log((real) minmn / (real) (smlsiz + 1)) / log(
+		    2.f)) + 1;
+	    nlvl = max(i__1,0);
+	    liwork = minmn * 3 * nlvl + minmn * 11;
+	    mm = *m;
+	    if (*m >= *n && *m >= mnthr) {
+
+/*
+                Path 1a - overdetermined, with many more rows than
+                          columns.
+*/
+
+		mm = *n;
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n + *n * ilaenv_(&c__1, "SGEQRF",
+			" ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n + *nrhs * ilaenv_(&c__1, "SORMQR",
+			"LT", m, nrhs, n, &c_n1, (ftnlen)6, (ftnlen)2);
+		maxwrk = max(i__1,i__2);
+	    }
+	    if (*m >= *n) {
+
+/*
+                Path 1 - overdetermined or exactly determined.
+
+   Computing MAX
+*/
+		i__1 = maxwrk, i__2 = *n * 3 + (mm + *n) * ilaenv_(&c__1,
+			"SGEBRD", " ", &mm, n, &c_n1, &c_n1, (ftnlen)6, (
+			ftnlen)1);
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n * 3 + *nrhs * ilaenv_(&c__1, "SORMBR"
+			, "QLT", &mm, nrhs, n, &c_n1, (ftnlen)6, (ftnlen)3);
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n * 3 + (*n - 1) * ilaenv_(&c__1,
+			"SORMBR", "PLN", n, nrhs, n, &c_n1, (ftnlen)6, (
+			ftnlen)3);
+		maxwrk = max(i__1,i__2);
+/* Computing 2nd power */
+		i__1 = smlsiz + 1;
+		wlalsd = *n * 9 + (*n << 1) * smlsiz + (*n << 3) * nlvl + *n *
+			 *nrhs + i__1 * i__1;
+/* Computing MAX */
+		i__1 = maxwrk, i__2 = *n * 3 + wlalsd;
+		maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		i__1 = *n * 3 + mm, i__2 = *n * 3 + *nrhs, i__1 = max(i__1,
+			i__2), i__2 = *n * 3 + wlalsd;
+		minwrk = max(i__1,i__2);
+	    }
+	    if (*n > *m) {
+/* Computing 2nd power */
+		i__1 = smlsiz + 1;
+		wlalsd = *m * 9 + (*m << 1) * smlsiz + (*m << 3) * nlvl + *m *
+			 *nrhs + i__1 * i__1;
+		if (*n >= mnthr) {
+
+/*
+                   Path 2a - underdetermined, with many more columns
+                             than rows.
+*/
+
+		    maxwrk = *m + *m * ilaenv_(&c__1, "SGELQF", " ", m, n, &
+			    c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + (*m << 1) *
+			    ilaenv_(&c__1, "SGEBRD", " ", m, m, &c_n1, &c_n1,
+			    (ftnlen)6, (ftnlen)1);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + *nrhs *
+			    ilaenv_(&c__1, "SORMBR", "QLT", m, nrhs, m, &c_n1,
+			     (ftnlen)6, (ftnlen)3);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + (*m - 1) *
+			    ilaenv_(&c__1, "SORMBR", "PLN", m, nrhs, m, &c_n1,
+			     (ftnlen)6, (ftnlen)3);
+		    maxwrk = max(i__1,i__2);
+		    if (*nrhs > 1) {
+/* Computing MAX */
+			i__1 = maxwrk, i__2 = *m * *m + *m + *m * *nrhs;
+			maxwrk = max(i__1,i__2);
+		    } else {
+/* Computing MAX */
+			i__1 = maxwrk, i__2 = *m * *m + (*m << 1);
+			maxwrk = max(i__1,i__2);
+		    }
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m + *nrhs * ilaenv_(&c__1, "SORMLQ"
+			    , "LT", n, nrhs, m, &c_n1, (ftnlen)6, (ftnlen)2);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * *m + (*m << 2) + wlalsd;
+		    maxwrk = max(i__1,i__2);
+/*
+       XXX: Ensure the Path 2a case below is triggered.  The workspace
+       calculation should use queries for all routines eventually.
+   Computing MAX
+   Computing MAX
+*/
+		    i__3 = *m, i__4 = (*m << 1) - 4, i__3 = max(i__3,i__4),
+			    i__3 = max(i__3,*nrhs), i__4 = *n - *m * 3;
+		    i__1 = maxwrk, i__2 = (*m << 2) + *m * *m + max(i__3,i__4)
+			    ;
+		    maxwrk = max(i__1,i__2);
+		} else {
+
+/*                 Path 2 - remaining underdetermined cases. */
+
+		    maxwrk = *m * 3 + (*n + *m) * ilaenv_(&c__1, "SGEBRD",
+			    " ", m, n, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * 3 + *nrhs * ilaenv_(&c__1,
+			    "SORMBR", "QLT", m, nrhs, n, &c_n1, (ftnlen)6, (
+			    ftnlen)3);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * 3 + *m * ilaenv_(&c__1, "SORM"
+			    "BR", "PLN", n, nrhs, m, &c_n1, (ftnlen)6, (ftnlen)
+			    3);
+		    maxwrk = max(i__1,i__2);
+/* Computing MAX */
+		    i__1 = maxwrk, i__2 = *m * 3 + wlalsd;
+		    maxwrk = max(i__1,i__2);
+		}
+/* Computing MAX */
+		i__1 = *m * 3 + *nrhs, i__2 = *m * 3 + *m, i__1 = max(i__1,
+			i__2), i__2 = *m * 3 + wlalsd;
+		minwrk = max(i__1,i__2);
+	    }
+	}
+	minwrk = min(minwrk,maxwrk);
+	work[1] = (real) maxwrk;
+	iwork[1] = liwork;
+
+	if (*lwork < minwrk && ! lquery) {
+	    *info = -12;
+	}
+    }
+
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("SGELSD", &i__1);
+	return 0;
+    } else if (lquery) {
+	return 0;
+    }
+
+/*     Quick return if possible. */
+
+    if (*m == 0 || *n == 0) {
+	*rank = 0;
+	return 0;
+    }
+
+/*     Get machine parameters. */
+
+    eps = slamch_("P");
+    sfmin = slamch_("S");
+    smlnum = sfmin / eps;
+    bignum = 1.f / smlnum;
+    slabad_(&smlnum, &bignum);
+
+/*     Scale A if max entry outside range [SMLNUM,BIGNUM]. */
+
+    anrm = slange_("M", m, n, &a[a_offset], lda, &work[1]);
+    iascl = 0;
+    if (anrm > 0.f && anrm < smlnum) {
+
+/*        Scale matrix norm up to SMLNUM. */
+
+	slascl_("G", &c__0, &c__0, &anrm, &smlnum, m, n, &a[a_offset], lda,
+		info);
+	iascl = 1;
+    } else if (anrm > bignum) {
+
+/*        Scale matrix norm down to BIGNUM. */
+
+	slascl_("G", &c__0, &c__0, &anrm, &bignum, m, n, &a[a_offset], lda,
+		info);
+	iascl = 2;
+    } else if (anrm == 0.f) {
+
+/*        Matrix all zero. Return zero solution. */
+
+	i__1 = max(*m,*n);
+	slaset_("F", &i__1, nrhs, &c_b29, &c_b29, &b[b_offset], ldb);
+	slaset_("F", &minmn, &c__1, &c_b29, &c_b29, &s[1], &c__1);
+	*rank = 0;
+	goto L10;
+    }
+
+/*     Scale B if max entry outside range [SMLNUM,BIGNUM]. */
+
+    bnrm = slange_("M", m, nrhs, &b[b_offset], ldb, &work[1]);
+    ibscl = 0;
+    if (bnrm > 0.f && bnrm < smlnum) {
+
+/*        Scale matrix norm up to SMLNUM. */
+
+	slascl_("G", &c__0, &c__0, &bnrm, &smlnum, m, nrhs, &b[b_offset], ldb,
+		 info);
+	ibscl = 1;
+    } else if (bnrm > bignum) {
+
+/*        Scale matrix norm down to BIGNUM. */
+
+	slascl_("G", &c__0, &c__0, &bnrm, &bignum, m, nrhs, &b[b_offset], ldb,
+		 info);
+	ibscl = 2;
+    }
+
+/*     If M < N make sure certain entries of B are zero. */
+
+    if (*m < *n) {
+	i__1 = *n - *m;
+	slaset_("F", &i__1, nrhs, &c_b29, &c_b29, &b[*m + 1 + b_dim1], ldb);
+    }
+
+/*     Overdetermined case. */
+
+    if (*m >= *n) {
+
+/*        Path 1 - overdetermined or exactly determined. */
+
+	mm = *m;
+	if (*m >= mnthr) {
+
+/*           Path 1a - overdetermined, with many more rows than columns. */
+
+	    mm = *n;
+	    itau = 1;
+	    nwork = itau + *n;
+
+/*
+             Compute A=Q*R.
+             (Workspace: need 2*N, prefer N+N*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sgeqrf_(m, n, &a[a_offset], lda, &work[itau], &work[nwork], &i__1,
+		     info);
+
+/*
+             Multiply B by transpose(Q).
+             (Workspace: need N+NRHS, prefer N+NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sormqr_("L", "T", m, nrhs, n, &a[a_offset], lda, &work[itau], &b[
+		    b_offset], ldb, &work[nwork], &i__1, info);
+
+/*           Zero out below R. */
+
+	    if (*n > 1) {
+		i__1 = *n - 1;
+		i__2 = *n - 1;
+		slaset_("L", &i__1, &i__2, &c_b29, &c_b29, &a[a_dim1 + 2],
+			lda);
+	    }
+	}
+
+	ie = 1;
+	itauq = ie + *n;
+	itaup = itauq + *n;
+	nwork = itaup + *n;
+
+/*
+          Bidiagonalize R in A.
+          (Workspace: need 3*N+MM, prefer 3*N+(MM+N)*NB)
+*/
+
+	i__1 = *lwork - nwork + 1;
+	sgebrd_(&mm, n, &a[a_offset], lda, &s[1], &work[ie], &work[itauq], &
+		work[itaup], &work[nwork], &i__1, info);
+
+/*
+          Multiply B by transpose of left bidiagonalizing vectors of R.
+          (Workspace: need 3*N+NRHS, prefer 3*N+NRHS*NB)
+*/
+
+	i__1 = *lwork - nwork + 1;
+	sormbr_("Q", "L", "T", &mm, nrhs, n, &a[a_offset], lda, &work[itauq],
+		&b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Solve the bidiagonal least squares problem. */
+
+	slalsd_("U", &smlsiz, n, nrhs, &s[1], &work[ie], &b[b_offset], ldb,
+		rcond, rank, &work[nwork], &iwork[1], info);
+	if (*info != 0) {
+	    goto L10;
+	}
+
+/*        Multiply B by right bidiagonalizing vectors of R. */
+
+	i__1 = *lwork - nwork + 1;
+	sormbr_("P", "L", "N", n, nrhs, n, &a[a_offset], lda, &work[itaup], &
+		b[b_offset], ldb, &work[nwork], &i__1, info);
+
+    } else /* if(complicated condition) */ {
+/* Computing MAX */
+	i__1 = *m, i__2 = (*m << 1) - 4, i__1 = max(i__1,i__2), i__1 = max(
+		i__1,*nrhs), i__2 = *n - *m * 3, i__1 = max(i__1,i__2);
+	if (*n >= mnthr && *lwork >= (*m << 2) + *m * *m + max(i__1,wlalsd)) {
+
+/*
+          Path 2a - underdetermined, with many more columns than rows
+          and sufficient workspace for an efficient algorithm.
+*/
+
+	    ldwork = *m;
+/*
+   Computing MAX
+   Computing MAX
+*/
+	    i__3 = *m, i__4 = (*m << 1) - 4, i__3 = max(i__3,i__4), i__3 =
+		    max(i__3,*nrhs), i__4 = *n - *m * 3;
+	    i__1 = (*m << 2) + *m * *lda + max(i__3,i__4), i__2 = *m * *lda +
+		    *m + *m * *nrhs, i__1 = max(i__1,i__2), i__2 = (*m << 2)
+		    + *m * *lda + wlalsd;
+	    if (*lwork >= max(i__1,i__2)) {
+		ldwork = *lda;
+	    }
+	    itau = 1;
+	    nwork = *m + 1;
+
+/*
+          Compute A=L*Q.
+          (Workspace: need 2*M, prefer M+M*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sgelqf_(m, n, &a[a_offset], lda, &work[itau], &work[nwork], &i__1,
+		     info);
+	    il = nwork;
+
+/*        Copy L to WORK(IL), zeroing out above its diagonal. */
+
+	    slacpy_("L", m, m, &a[a_offset], lda, &work[il], &ldwork);
+	    i__1 = *m - 1;
+	    i__2 = *m - 1;
+	    slaset_("U", &i__1, &i__2, &c_b29, &c_b29, &work[il + ldwork], &
+		    ldwork);
+	    ie = il + ldwork * *m;
+	    itauq = ie + *m;
+	    itaup = itauq + *m;
+	    nwork = itaup + *m;
+
+/*
+          Bidiagonalize L in WORK(IL).
+          (Workspace: need M*M+5*M, prefer M*M+4*M+2*M*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sgebrd_(m, m, &work[il], &ldwork, &s[1], &work[ie], &work[itauq],
+		    &work[itaup], &work[nwork], &i__1, info);
+
+/*
+          Multiply B by transpose of left bidiagonalizing vectors of L.
+          (Workspace: need M*M+4*M+NRHS, prefer M*M+4*M+NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sormbr_("Q", "L", "T", m, nrhs, m, &work[il], &ldwork, &work[
+		    itauq], &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Solve the bidiagonal least squares problem. */
+
+	    slalsd_("U", &smlsiz, m, nrhs, &s[1], &work[ie], &b[b_offset],
+		    ldb, rcond, rank, &work[nwork], &iwork[1], info);
+	    if (*info != 0) {
+		goto L10;
+	    }
+
+/*        Multiply B by right bidiagonalizing vectors of L. */
+
+	    i__1 = *lwork - nwork + 1;
+	    sormbr_("P", "L", "N", m, nrhs, m, &work[il], &ldwork, &work[
+		    itaup], &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Zero out below first M rows of B. */
+
+	    i__1 = *n - *m;
+	    slaset_("F", &i__1, nrhs, &c_b29, &c_b29, &b[*m + 1 + b_dim1],
+		    ldb);
+	    nwork = itau + *m;
+
+/*
+          Multiply transpose(Q) by B.
+          (Workspace: need M+NRHS, prefer M+NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sormlq_("L", "T", n, nrhs, m, &a[a_offset], lda, &work[itau], &b[
+		    b_offset], ldb, &work[nwork], &i__1, info);
+
+	} else {
+
+/*        Path 2 - remaining underdetermined cases. */
+
+	    ie = 1;
+	    itauq = ie + *m;
+	    itaup = itauq + *m;
+	    nwork = itaup + *m;
+
+/*
+          Bidiagonalize A.
+          (Workspace: need 3*M+N, prefer 3*M+(M+N)*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sgebrd_(m, n, &a[a_offset], lda, &s[1], &work[ie], &work[itauq], &
+		    work[itaup], &work[nwork], &i__1, info);
+
+/*
+          Multiply B by transpose of left bidiagonalizing vectors.
+          (Workspace: need 3*M+NRHS, prefer 3*M+NRHS*NB)
+*/
+
+	    i__1 = *lwork - nwork + 1;
+	    sormbr_("Q", "L", "T", m, nrhs, n, &a[a_offset], lda, &work[itauq]
+		    , &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+/*        Solve the bidiagonal least squares problem. */
+
+	    slalsd_("L", &smlsiz, m, nrhs, &s[1], &work[ie], &b[b_offset],
+		    ldb, rcond, rank, &work[nwork], &iwork[1], info);
+	    if (*info != 0) {
+		goto L10;
+	    }
+
+/*        Multiply B by right bidiagonalizing vectors of A. */
+
+	    i__1 = *lwork - nwork + 1;
+	    sormbr_("P", "L", "N", n, nrhs, m, &a[a_offset], lda, &work[itaup]
+		    , &b[b_offset], ldb, &work[nwork], &i__1, info);
+
+	}
+    }
+
+/*     Undo scaling. */
+
+    if (iascl == 1) {
+	slascl_("G", &c__0, &c__0, &anrm, &smlnum, n, nrhs, &b[b_offset], ldb,
+		 info);
+	slascl_("G", &c__0, &c__0, &smlnum, &anrm, &minmn, &c__1, &s[1], &
+		minmn, info);
+    } else if (iascl == 2) {
+	slascl_("G", &c__0, &c__0, &anrm, &bignum, n, nrhs, &b[b_offset], ldb,
+		 info);
+	slascl_("G", &c__0, &c__0, &bignum, &anrm, &minmn, &c__1, &s[1], &
+		minmn, info);
+    }
+    if (ibscl == 1) {
+	slascl_("G", &c__0, &c__0, &smlnum, &bnrm, n, nrhs, &b[b_offset], ldb,
+		 info);
+    } else if (ibscl == 2) {
+	slascl_("G", &c__0, &c__0, &bignum, &bnrm, n, nrhs, &b[b_offset], ldb,
+		 info);
+    }
+
+L10:
+    work[1] = (real) maxwrk;
+    iwork[1] = liwork;
+    return 0;
+
+/*     End of SGELSD */
+
+} /* sgelsd_ */
+
 /* Subroutine */ int sgeqr2_(integer *m, integer *n, real *a, integer *lda,
 	real *tau, real *work, integer *info)
 {
@@ -3998,10 +4746,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -4136,10 +4884,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -4173,7 +4921,7 @@ L50:
             The scalar factors of the elementary reflectors (see Further
             Details).
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -4354,9 +5102,6 @@ L50:
     integer a_dim1, a_offset, u_dim1, u_offset, vt_dim1, vt_offset, i__1,
 	    i__2, i__3;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, ie, il, ir, iu, blk;
     static real dum[1], eps;
@@ -4409,10 +5154,10 @@ L50:
 
 
 /*
-    -- LAPACK driver routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK driver routine (version 3.2.1)                                  --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       March 2009
 
 
     Purpose
@@ -4458,7 +5203,7 @@ L50:
                     the array VT;
                     otherwise, all columns of U are returned in the
                     array U and the first M rows of V**T are overwritten
-                    in the array VT;
+                    in the array A;
             = 'N':  no columns of U or rows of V**T are computed.
 
     M       (input) INTEGER
@@ -4509,7 +5254,7 @@ L50:
             JOBZ = 'A' or JOBZ = 'O' and M >= N, LDVT >= N;
             if JOBZ = 'S', LDVT >= min(M,N).
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK;
 
     LWORK   (input) INTEGER
@@ -4517,13 +5262,13 @@ L50:
             If JOBZ = 'N',
               LWORK >= 3*min(M,N) + max(max(M,N),6*min(M,N)).
             If JOBZ = 'O',
-              LWORK >= 3*min(M,N)*min(M,N) +
+              LWORK >= 3*min(M,N) +
                        max(max(M,N),5*min(M,N)*min(M,N)+4*min(M,N)).
             If JOBZ = 'S' or 'A'
-              LWORK >= 3*min(M,N)*min(M,N) +
+              LWORK >= 3*min(M,N) +
                        max(max(M,N),4*min(M,N)*min(M,N)+4*min(M,N)).
             For good performance, LWORK should generally be larger.
-            If LWORK < 0 but other input arguments are legal, WORK(1)
+            If LWORK = -1 but other input arguments are legal, WORK(1)
             returns the optimal LWORK.
 
     IWORK   (workspace) INTEGER array, dimension (8*min(M,N))
@@ -4563,14 +5308,11 @@ L50:
     /* Function Body */
     *info = 0;
     minmn = min(*m,*n);
-    mnthr = (integer) (minmn * 11.f / 6.f);
     wntqa = lsame_(jobz, "A");
     wntqs = lsame_(jobz, "S");
     wntqas = wntqa || wntqs;
     wntqo = lsame_(jobz, "O");
     wntqn = lsame_(jobz, "N");
-    minwrk = 1;
-    maxwrk = 1;
     lquery = *lwork == -1;
 
     if (! (wntqa || wntqs || wntqo || wntqn)) {
@@ -4598,11 +5340,14 @@ L50:
          following subroutine, as returned by ILAENV.)
 */
 
-    if (*info == 0 && *m > 0 && *n > 0) {
-	if (*m >= *n) {
+    if (*info == 0) {
+	minwrk = 1;
+	maxwrk = 1;
+	if (*m >= *n && minmn > 0) {
 
 /*           Compute space needed for SBDSDC */
 
+	    mnthr = (integer) (minmn * 11.f / 6.f);
 	    if (wntqn) {
 		bdspac = *n * 7;
 	    } else {
@@ -4764,10 +5509,11 @@ L50:
 		    minwrk = *n * 3 + max(*m,bdspac);
 		}
 	    }
-	} else {
+	} else if (minmn > 0) {
 
 /*           Compute space needed for SBDSDC */
 
+	    mnthr = (integer) (minmn * 11.f / 6.f);
 	    if (wntqn) {
 		bdspac = *m * 7;
 	    } else {
@@ -4930,12 +5676,14 @@ L50:
 		}
 	    }
 	}
+	maxwrk = max(maxwrk,minwrk);
 	work[1] = (real) maxwrk;
+
+	if (*lwork < minwrk && ! lquery) {
+	    *info = -12;
+	}
     }
 
-    if (*lwork < minwrk && ! lquery) {
-	*info = -12;
-    }
     if (*info != 0) {
 	i__1 = -(*info);
 	xerbla_("SGESDD", &i__1);
@@ -4947,9 +5695,6 @@ L50:
 /*     Quick return if possible */
 
     if (*m == 0 || *n == 0) {
-	if (*lwork >= 1) {
-	    work[1] = 1.f;
-	}
 	return 0;
     }
 
@@ -5493,10 +6238,12 @@ L50:
 
 /*              Set the right corner of U to identity matrix */
 
-		i__1 = *m - *n;
-		i__2 = *m - *n;
-		slaset_("F", &i__1, &i__2, &c_b29, &c_b15, &u[*n + 1 + (*n +
-			1) * u_dim1], ldu);
+		if (*m > *n) {
+		    i__1 = *m - *n;
+		    i__2 = *m - *n;
+		    slaset_("F", &i__1, &i__2, &c_b29, &c_b15, &u[*n + 1 + (*
+			    n + 1) * u_dim1], ldu);
+		}
 
 /*
                 Overwrite U by left singular vectors of A and VT
@@ -6031,10 +6778,12 @@ L50:
 
 /*              Set the right corner of VT to identity matrix */
 
-		i__1 = *n - *m;
-		i__2 = *n - *m;
-		slaset_("F", &i__1, &i__2, &c_b29, &c_b15, &vt[*m + 1 + (*m +
-			1) * vt_dim1], ldvt);
+		if (*n > *m) {
+		    i__1 = *n - *m;
+		    i__2 = *n - *m;
+		    slaset_("F", &i__1, &i__2, &c_b29, &c_b15, &vt[*m + 1 + (*
+			    m + 1) * vt_dim1], ldvt);
+		}
 
 /*
                 Overwrite U by left singular vectors of A and VT
@@ -6092,10 +6841,10 @@ L50:
 
 
 /*
-    -- LAPACK driver routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       March 31, 1993
+    -- LAPACK driver routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -6205,19 +6954,23 @@ L50:
     real r__1;
 
     /* Local variables */
-    static integer j, jp;
+    static integer i__, j, jp;
     extern /* Subroutine */ int sger_(integer *, integer *, real *, real *,
 	    integer *, real *, integer *, real *, integer *), sscal_(integer *
-	    , real *, real *, integer *), sswap_(integer *, real *, integer *,
-	     real *, integer *), xerbla_(char *, integer *);
+	    , real *, real *, integer *);
+    static real sfmin;
+    extern /* Subroutine */ int sswap_(integer *, real *, integer *, real *,
+	    integer *);
+    extern doublereal slamch_(char *);
+    extern /* Subroutine */ int xerbla_(char *, integer *);
     extern integer isamax_(integer *, real *, integer *);
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1992
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -6296,6 +7049,10 @@ L50:
 	return 0;
     }
 
+/*     Compute machine safe minimum */
+
+    sfmin = slamch_("S");
+
     i__1 = min(*m,*n);
     for (j = 1; j <= i__1; ++j) {
 
@@ -6315,9 +7072,17 @@ L50:
 /*           Compute elements J+1:M of J-th column. */
 
 	    if (j < *m) {
-		i__2 = *m - j;
-		r__1 = 1.f / a[j + j * a_dim1];
-		sscal_(&i__2, &r__1, &a[j + 1 + j * a_dim1], &c__1);
+		if ((r__1 = a[j + j * a_dim1], dabs(r__1)) >= sfmin) {
+		    i__2 = *m - j;
+		    r__1 = 1.f / a[j + j * a_dim1];
+		    sscal_(&i__2, &r__1, &a[j + 1 + j * a_dim1], &c__1);
+		} else {
+		    i__2 = *m - j;
+		    for (i__ = 1; i__ <= i__2; ++i__) {
+			a[j + i__ + j * a_dim1] /= a[j + j * a_dim1];
+/* L20: */
+		    }
+		}
 	    }
 
 	} else if (*info == 0) {
@@ -6365,10 +7130,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       March 31, 1993
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -6547,10 +7312,10 @@ L50:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       March 31, 1993
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -6693,164 +7458,265 @@ L50:
 {
     /* System generated locals */
     address a__1[2];
-    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3[2], i__4,
-	    i__5;
-    real r__1, r__2;
+    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2[2], i__3;
+    real r__1;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
-    static integer i__, j, k, l;
-    static real s[225]	/* was [15][15] */, v[16];
-    static integer i1, i2, ii, nh, nr, ns, nv;
-    static real vv[16];
-    static integer itn;
-    static real tau;
-    static integer its;
-    static real ulp, tst1;
-    static integer maxb;
-    static real absw;
-    static integer ierr;
-    static real unfl, temp, ovfl;
+    static integer i__;
+    static real hl[2401]	/* was [49][49] */;
+    static integer kbot, nmin;
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int sscal_(integer *, real *, real *, integer *);
-    static integer itemp;
-    extern /* Subroutine */ int sgemv_(char *, integer *, integer *, real *,
-	    real *, integer *, real *, integer *, real *, real *, integer *);
-    static logical initz, wantt;
-    extern /* Subroutine */ int scopy_(integer *, real *, integer *, real *,
-	    integer *);
-    static logical wantz;
-    extern doublereal slapy2_(real *, real *);
-    extern /* Subroutine */ int slabad_(real *, real *);
-    extern doublereal slamch_(char *);
-    extern /* Subroutine */ int xerbla_(char *, integer *);
+    static logical initz;
+    static real workl[49];
+    static logical wantt, wantz;
+    extern /* Subroutine */ int slaqr0_(logical *, logical *, integer *,
+	    integer *, integer *, real *, integer *, real *, real *, integer *
+	    , integer *, real *, integer *, real *, integer *, integer *),
+	    xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
-    extern /* Subroutine */ int slarfg_(integer *, real *, real *, integer *,
-	    real *);
-    extern integer isamax_(integer *, real *, integer *);
-    extern doublereal slanhs_(char *, integer *, real *, integer *, real *);
     extern /* Subroutine */ int slahqr_(logical *, logical *, integer *,
 	    integer *, integer *, real *, integer *, real *, real *, integer *
 	    , integer *, real *, integer *, integer *), slacpy_(char *,
 	    integer *, integer *, real *, integer *, real *, integer *), slaset_(char *, integer *, integer *, real *, real *,
-	    real *, integer *), slarfx_(char *, integer *, integer *,
-	    real *, real *, real *, integer *, real *);
-    static real smlnum;
+	    real *, integer *);
     static logical lquery;
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK computational routine (version 3.2.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       June 2010
+
+       Purpose
+       =======
+
+       SHSEQR computes the eigenvalues of a Hessenberg matrix H
+       and, optionally, the matrices T and Z from the Schur decomposition
+       H = Z T Z**T, where T is an upper quasi-triangular matrix (the
+       Schur form), and Z is the orthogonal matrix of Schur vectors.
+
+       Optionally Z may be postmultiplied into an input orthogonal
+       matrix Q so that this routine can give the Schur factorization
+       of a matrix A which has been reduced to the Hessenberg form H
+       by the orthogonal matrix Q:  A = Q*H*Q**T = (QZ)*T*(QZ)**T.
+
+       Arguments
+       =========
+
+       JOB   (input) CHARACTER*1
+             = 'E':  compute eigenvalues only;
+             = 'S':  compute eigenvalues and the Schur form T.
+
+       COMPZ (input) CHARACTER*1
+             = 'N':  no Schur vectors are computed;
+             = 'I':  Z is initialized to the unit matrix and the matrix Z
+                     of Schur vectors of H is returned;
+             = 'V':  Z must contain an orthogonal matrix Q on entry, and
+                     the product Q*Z is returned.
+
+       N     (input) INTEGER
+             The order of the matrix H.  N .GE. 0.
+
+       ILO   (input) INTEGER
+       IHI   (input) INTEGER
+             It is assumed that H is already upper triangular in rows
+             and columns 1:ILO-1 and IHI+1:N. ILO and IHI are normally
+             set by a previous call to SGEBAL, and then passed to SGEHRD
+             when the matrix output by SGEBAL is reduced to Hessenberg
+             form. Otherwise ILO and IHI should be set to 1 and N
+             respectively.  If N.GT.0, then 1.LE.ILO.LE.IHI.LE.N.
+             If N = 0, then ILO = 1 and IHI = 0.
+
+       H     (input/output) REAL array, dimension (LDH,N)
+             On entry, the upper Hessenberg matrix H.
+             On exit, if INFO = 0 and JOB = 'S', then H contains the
+             upper quasi-triangular matrix T from the Schur decomposition
+             (the Schur form); 2-by-2 diagonal blocks (corresponding to
+             complex conjugate pairs of eigenvalues) are returned in
+             standard form, with H(i,i) = H(i+1,i+1) and
+             H(i+1,i)*H(i,i+1).LT.0. If INFO = 0 and JOB = 'E', the
+             contents of H are unspecified on exit.  (The output value of
+             H when INFO.GT.0 is given under the description of INFO
+             below.)
+
+             Unlike earlier versions of SHSEQR, this subroutine may
+             explicitly H(i,j) = 0 for i.GT.j and j = 1, 2, ... ILO-1
+             or j = IHI+1, IHI+2, ... N.
+
+       LDH   (input) INTEGER
+             The leading dimension of the array H. LDH .GE. max(1,N).
+
+       WR    (output) REAL array, dimension (N)
+       WI    (output) REAL array, dimension (N)
+             The real and imaginary parts, respectively, of the computed
+             eigenvalues. If two eigenvalues are computed as a complex
+             conjugate pair, they are stored in consecutive elements of
+             WR and WI, say the i-th and (i+1)th, with WI(i) .GT. 0 and
+             WI(i+1) .LT. 0. If JOB = 'S', the eigenvalues are stored in
+             the same order as on the diagonal of the Schur form returned
+             in H, with WR(i) = H(i,i) and, if H(i:i+1,i:i+1) is a 2-by-2
+             diagonal block, WI(i) = sqrt(-H(i+1,i)*H(i,i+1)) and
+             WI(i+1) = -WI(i).
+
+       Z     (input/output) REAL array, dimension (LDZ,N)
+             If COMPZ = 'N', Z is not referenced.
+             If COMPZ = 'I', on entry Z need not be set and on exit,
+             if INFO = 0, Z contains the orthogonal matrix Z of the Schur
+             vectors of H.  If COMPZ = 'V', on entry Z must contain an
+             N-by-N matrix Q, which is assumed to be equal to the unit
+             matrix except for the submatrix Z(ILO:IHI,ILO:IHI). On exit,
+             if INFO = 0, Z contains Q*Z.
+             Normally Q is the orthogonal matrix generated by SORGHR
+             after the call to SGEHRD which formed the Hessenberg matrix
+             H. (The output value of Z when INFO.GT.0 is given under
+             the description of INFO below.)
+
+       LDZ   (input) INTEGER
+             The leading dimension of the array Z.  if COMPZ = 'I' or
+             COMPZ = 'V', then LDZ.GE.MAX(1,N).  Otherwize, LDZ.GE.1.
+
+       WORK  (workspace/output) REAL array, dimension (LWORK)
+             On exit, if INFO = 0, WORK(1) returns an estimate of
+             the optimal value for LWORK.
+
+       LWORK (input) INTEGER
+             The dimension of the array WORK.  LWORK .GE. max(1,N)
+             is sufficient and delivers very good and sometimes
+             optimal performance.  However, LWORK as large as 11*N
+             may be required for optimal performance.  A workspace
+             query is recommended to determine the optimal workspace
+             size.
+
+             If LWORK = -1, then SHSEQR does a workspace query.
+             In this case, SHSEQR checks the input parameters and
+             estimates the optimal workspace size for the given
+             values of N, ILO and IHI.  The estimate is returned
+             in WORK(1).  No error message related to LWORK is
+             issued by XERBLA.  Neither H nor Z are accessed.
 
 
-    Purpose
-    =======
+       INFO  (output) INTEGER
+               =  0:  successful exit
+             .LT. 0:  if INFO = -i, the i-th argument had an illegal
+                      value
+             .GT. 0:  if INFO = i, SHSEQR failed to compute all of
+                  the eigenvalues.  Elements 1:ilo-1 and i+1:n of WR
+                  and WI contain those eigenvalues which have been
+                  successfully computed.  (Failures are rare.)
 
-    SHSEQR computes the eigenvalues of a real upper Hessenberg matrix H
-    and, optionally, the matrices T and Z from the Schur decomposition
-    H = Z T Z**T, where T is an upper quasi-triangular matrix (the Schur
-    form), and Z is the orthogonal matrix of Schur vectors.
+                  If INFO .GT. 0 and JOB = 'E', then on exit, the
+                  remaining unconverged eigenvalues are the eigen-
+                  values of the upper Hessenberg matrix rows and
+                  columns ILO through INFO of the final, output
+                  value of H.
 
-    Optionally Z may be postmultiplied into an input orthogonal matrix Q,
-    so that this routine can give the Schur factorization of a matrix A
-    which has been reduced to the Hessenberg form H by the orthogonal
-    matrix Q:  A = Q*H*Q**T = (QZ)*T*(QZ)**T.
+                  If INFO .GT. 0 and JOB   = 'S', then on exit
 
-    Arguments
-    =========
+             (*)  (initial value of H)*U  = U*(final value of H)
 
-    JOB     (input) CHARACTER*1
-            = 'E':  compute eigenvalues only;
-            = 'S':  compute eigenvalues and the Schur form T.
+                  where U is an orthogonal matrix.  The final
+                  value of H is upper Hessenberg and quasi-triangular
+                  in rows and columns INFO+1 through IHI.
 
-    COMPZ   (input) CHARACTER*1
-            = 'N':  no Schur vectors are computed;
-            = 'I':  Z is initialized to the unit matrix and the matrix Z
-                    of Schur vectors of H is returned;
-            = 'V':  Z must contain an orthogonal matrix Q on entry, and
-                    the product Q*Z is returned.
+                  If INFO .GT. 0 and COMPZ = 'V', then on exit
 
-    N       (input) INTEGER
-            The order of the matrix H.  N >= 0.
+                    (final value of Z)  =  (initial value of Z)*U
 
-    ILO     (input) INTEGER
-    IHI     (input) INTEGER
-            It is assumed that H is already upper triangular in rows
-            and columns 1:ILO-1 and IHI+1:N. ILO and IHI are normally
-            set by a previous call to SGEBAL, and then passed to SGEHRD
-            when the matrix output by SGEBAL is reduced to Hessenberg
-            form. Otherwise ILO and IHI should be set to 1 and N
-            respectively.
-            1 <= ILO <= IHI <= N, if N > 0; ILO=1 and IHI=0, if N=0.
+                  where U is the orthogonal matrix in (*) (regard-
+                  less of the value of JOB.)
 
-    H       (input/output) REAL array, dimension (LDH,N)
-            On entry, the upper Hessenberg matrix H.
-            On exit, if JOB = 'S', H contains the upper quasi-triangular
-            matrix T from the Schur decomposition (the Schur form);
-            2-by-2 diagonal blocks (corresponding to complex conjugate
-            pairs of eigenvalues) are returned in standard form, with
-            H(i,i) = H(i+1,i+1) and H(i+1,i)*H(i,i+1) < 0. If JOB = 'E',
-            the contents of H are unspecified on exit.
+                  If INFO .GT. 0 and COMPZ = 'I', then on exit
+                        (final value of Z)  = U
+                  where U is the orthogonal matrix in (*) (regard-
+                  less of the value of JOB.)
 
-    LDH     (input) INTEGER
-            The leading dimension of the array H. LDH >= max(1,N).
+                  If INFO .GT. 0 and COMPZ = 'N', then Z is not
+                  accessed.
 
-    WR      (output) REAL array, dimension (N)
-    WI      (output) REAL array, dimension (N)
-            The real and imaginary parts, respectively, of the computed
-            eigenvalues. If two eigenvalues are computed as a complex
-            conjugate pair, they are stored in consecutive elements of
-            WR and WI, say the i-th and (i+1)th, with WI(i) > 0 and
-            WI(i+1) < 0. If JOB = 'S', the eigenvalues are stored in the
-            same order as on the diagonal of the Schur form returned in
-            H, with WR(i) = H(i,i) and, if H(i:i+1,i:i+1) is a 2-by-2
-            diagonal block, WI(i) = sqrt(H(i+1,i)*H(i,i+1)) and
-            WI(i+1) = -WI(i).
+       ================================================================
+               Default values supplied by
+               ILAENV(ISPEC,'SHSEQR',JOB(:1)//COMPZ(:1),N,ILO,IHI,LWORK).
+               It is suggested that these defaults be adjusted in order
+               to attain best performance in each particular
+               computational environment.
 
-    Z       (input/output) REAL array, dimension (LDZ,N)
-            If COMPZ = 'N': Z is not referenced.
-            If COMPZ = 'I': on entry, Z need not be set, and on exit, Z
-            contains the orthogonal matrix Z of the Schur vectors of H.
-            If COMPZ = 'V': on entry Z must contain an N-by-N matrix Q,
-            which is assumed to be equal to the unit matrix except for
-            the submatrix Z(ILO:IHI,ILO:IHI); on exit Z contains Q*Z.
-            Normally Q is the orthogonal matrix generated by SORGHR after
-            the call to SGEHRD which formed the Hessenberg matrix H.
+              ISPEC=12: The SLAHQR vs SLAQR0 crossover point.
+                        Default: 75. (Must be at least 11.)
 
-    LDZ     (input) INTEGER
-            The leading dimension of the array Z.
-            LDZ >= max(1,N) if COMPZ = 'I' or 'V'; LDZ >= 1 otherwise.
+              ISPEC=13: Recommended deflation window size.
+                        This depends on ILO, IHI and NS.  NS is the
+                        number of simultaneous shifts returned
+                        by ILAENV(ISPEC=15).  (See ISPEC=15 below.)
+                        The default for (IHI-ILO+1).LE.500 is NS.
+                        The default for (IHI-ILO+1).GT.500 is 3*NS/2.
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
-            On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+              ISPEC=14: Nibble crossover point. (See IPARMQ for
+                        details.)  Default: 14% of deflation window
+                        size.
 
-    LWORK   (input) INTEGER
-            The dimension of the array WORK.  LWORK >= max(1,N).
+              ISPEC=15: Number of simultaneous shifts in a multishift
+                        QR iteration.
 
-            If LWORK = -1, then a workspace query is assumed; the routine
-            only calculates the optimal size of the WORK array, returns
-            this value as the first entry of the WORK array, and no error
-            message related to LWORK is issued by XERBLA.
+                        If IHI-ILO+1 is ...
 
-    INFO    (output) INTEGER
-            = 0:  successful exit
-            < 0:  if INFO = -i, the i-th argument had an illegal value
-            > 0:  if INFO = i, SHSEQR failed to compute all of the
-                  eigenvalues in a total of 30*(IHI-ILO+1) iterations;
-                  elements 1:ilo-1 and i+1:n of WR and WI contain those
-                  eigenvalues which have been successfully computed.
+                        greater than      ...but less    ... the
+                        or equal to ...      than        default is
 
-    =====================================================================
+                             1               30          NS =   2(+)
+                            30               60          NS =   4(+)
+                            60              150          NS =  10(+)
+                           150              590          NS =  **
+                           590             3000          NS =  64
+                          3000             6000          NS = 128
+                          6000             infinity      NS = 256
 
+                    (+)  By default some or all matrices of this order
+                         are passed to the implicit double shift routine
+                         SLAHQR and this parameter is ignored.  See
+                         ISPEC=12 above and comments in IPARMQ for
+                         details.
 
-       Decode and test the input parameters
+                   (**)  The asterisks (**) indicate an ad-hoc
+                         function of N increasing from 10 to 64.
+
+              ISPEC=16: Select structured matrix multiply.
+                        If the number of simultaneous shifts (specified
+                        by ISPEC=15) is less than 14, then the default
+                        for ISPEC=16 is 0.  Otherwise the default for
+                        ISPEC=16 is 2.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+       References:
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part I: Maintaining Well Focused Shifts, and Level 3
+         Performance, SIAM Journal of Matrix Analysis, volume 23, pages
+         929--947, 2002.
+
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part II: Aggressive Early Deflation, SIAM Journal
+         of Matrix Analysis, volume 23, pages 948--973, 2002.
+
+       ================================================================
+
+       ==== Matrices of order NTINY or smaller must be processed by
+       .    SLAHQR because of insufficient subdiagonal scratch space.
+       .    (This is a hard limit.) ====
+
+       ==== NL allocates some local workspace to help small matrices
+       .    through a rare SLAHQR failure.  NL .GT. NTINY = 11 is
+       .    required and NL .LE. NMIN = ILAENV(ISPEC=12,...) is recom-
+       .    mended.  (The default value of NMIN is 75.)  Using NL = 49
+       .    allows up to six simultaneous shifts and a 16-by-16
+       .    deflation window.  ====
+
+       ==== Decode and check the input parameters. ====
 */
 
     /* Parameter adjustments */
@@ -6868,10 +7734,10 @@ L50:
     wantt = lsame_(job, "S");
     initz = lsame_(compz, "I");
     wantz = initz || lsame_(compz, "V");
-
-    *info = 0;
     work[1] = (real) max(1,*n);
     lquery = *lwork == -1;
+
+    *info = 0;
     if (! lsame_(job, "E") && ! wantt) {
 	*info = -1;
     } else if (! lsame_(compz, "N") && ! wantz) {
@@ -6889,413 +7755,204 @@ L50:
     } else if (*lwork < max(1,*n) && ! lquery) {
 	*info = -13;
     }
+
     if (*info != 0) {
+
+/*        ==== Quick return in case of invalid argument. ==== */
+
 	i__1 = -(*info);
 	xerbla_("SHSEQR", &i__1);
 	return 0;
+
+    } else if (*n == 0) {
+
+/*        ==== Quick return in case N = 0; nothing to do. ==== */
+
+	return 0;
+
     } else if (lquery) {
-	return 0;
-    }
 
-/*     Initialize Z, if necessary */
+/*        ==== Quick return in case of a workspace query ==== */
 
-    if (initz) {
-	slaset_("Full", n, n, &c_b29, &c_b15, &z__[z_offset], ldz);
-    }
-
-/*     Store the eigenvalues isolated by SGEBAL. */
-
-    i__1 = *ilo - 1;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	wr[i__] = h__[i__ + i__ * h_dim1];
-	wi[i__] = 0.f;
-/* L10: */
-    }
-    i__1 = *n;
-    for (i__ = *ihi + 1; i__ <= i__1; ++i__) {
-	wr[i__] = h__[i__ + i__ * h_dim1];
-	wi[i__] = 0.f;
-/* L20: */
-    }
-
-/*     Quick return if possible. */
-
-    if (*n == 0) {
-	return 0;
-    }
-    if (*ilo == *ihi) {
-	wr[*ilo] = h__[*ilo + *ilo * h_dim1];
-	wi[*ilo] = 0.f;
-	return 0;
-    }
-
+	slaqr0_(&wantt, &wantz, n, ilo, ihi, &h__[h_offset], ldh, &wr[1], &wi[
+		1], ilo, ihi, &z__[z_offset], ldz, &work[1], lwork, info);
 /*
-       Set rows and columns ILO to IHI to zero below the first
-       subdiagonal.
+          ==== Ensure reported workspace size is backward-compatible with
+          .    previous LAPACK versions. ====
+   Computing MAX
 */
+	r__1 = (real) max(1,*n);
+	work[1] = dmax(r__1,work[1]);
+	return 0;
 
-    i__1 = *ihi - 2;
-    for (j = *ilo; j <= i__1; ++j) {
-	i__2 = *n;
-	for (i__ = j + 2; i__ <= i__2; ++i__) {
-	    h__[i__ + j * h_dim1] = 0.f;
-/* L30: */
+    } else {
+
+/*        ==== copy eigenvalues isolated by SGEBAL ==== */
+
+	i__1 = *ilo - 1;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    wr[i__] = h__[i__ + i__ * h_dim1];
+	    wi[i__] = 0.f;
+/* L10: */
 	}
-/* L40: */
-    }
-    nh = *ihi - *ilo + 1;
+	i__1 = *n;
+	for (i__ = *ihi + 1; i__ <= i__1; ++i__) {
+	    wr[i__] = h__[i__ + i__ * h_dim1];
+	    wi[i__] = 0.f;
+/* L20: */
+	}
+
+/*        ==== Initialize Z, if requested ==== */
+
+	if (initz) {
+	    slaset_("A", n, n, &c_b29, &c_b15, &z__[z_offset], ldz)
+		    ;
+	}
+
+/*        ==== Quick return if possible ==== */
+
+	if (*ilo == *ihi) {
+	    wr[*ilo] = h__[*ilo + *ilo * h_dim1];
+	    wi[*ilo] = 0.f;
+	    return 0;
+	}
 
 /*
-       Determine the order of the multi-shift QR algorithm to be used.
+          ==== SLAHQR/SLAQR0 crossover point ====
 
    Writing concatenation
 */
-    i__3[0] = 1, a__1[0] = job;
-    i__3[1] = 1, a__1[1] = compz;
-    s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
-    ns = ilaenv_(&c__4, "SHSEQR", ch__1, n, ilo, ihi, &c_n1, (ftnlen)6, (
-	    ftnlen)2);
-/* Writing concatenation */
-    i__3[0] = 1, a__1[0] = job;
-    i__3[1] = 1, a__1[1] = compz;
-    s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
-    maxb = ilaenv_(&c__8, "SHSEQR", ch__1, n, ilo, ihi, &c_n1, (ftnlen)6, (
-	    ftnlen)2);
-    if (ns <= 2 || ns > nh || maxb >= nh) {
+	i__2[0] = 1, a__1[0] = job;
+	i__2[1] = 1, a__1[1] = compz;
+	s_cat(ch__1, a__1, i__2, &c__2, (ftnlen)2);
+	nmin = ilaenv_(&c__12, "SHSEQR", ch__1, n, ilo, ihi, lwork, (ftnlen)6,
+		 (ftnlen)2);
+	nmin = max(11,nmin);
 
-/*        Use the standard double-shift algorithm */
+/*        ==== SLAQR0 for big matrices; SLAHQR for small ones ==== */
 
-	slahqr_(&wantt, &wantz, n, ilo, ihi, &h__[h_offset], ldh, &wr[1], &wi[
-		1], ilo, ihi, &z__[z_offset], ldz, info);
-	return 0;
-    }
-    maxb = max(3,maxb);
-/* Computing MIN */
-    i__1 = min(ns,maxb);
-    ns = min(i__1,15);
-
-/*
-       Now 2 < NS <= MAXB < NH.
-
-       Set machine-dependent constants for the stopping criterion.
-       If norm(H) <= sqrt(OVFL), overflow should not occur.
-*/
-
-    unfl = slamch_("Safe minimum");
-    ovfl = 1.f / unfl;
-    slabad_(&unfl, &ovfl);
-    ulp = slamch_("Precision");
-    smlnum = unfl * (nh / ulp);
-
-/*
-       I1 and I2 are the indices of the first row and last column of H
-       to which transformations must be applied. If eigenvalues only are
-       being computed, I1 and I2 are set inside the main loop.
-*/
-
-    if (wantt) {
-	i1 = 1;
-	i2 = *n;
-    }
-
-/*     ITN is the total number of multiple-shift QR iterations allowed. */
-
-    itn = nh * 30;
-
-/*
-       The main loop begins here. I is the loop index and decreases from
-       IHI to ILO in steps of at most MAXB. Each iteration of the loop
-       works with the active submatrix in rows and columns L to I.
-       Eigenvalues I+1 to IHI have already converged. Either L = ILO or
-       H(L,L-1) is negligible so that the matrix splits.
-*/
-
-    i__ = *ihi;
-L50:
-    l = *ilo;
-    if (i__ < *ilo) {
-	goto L170;
-    }
-
-/*
-       Perform multiple-shift QR iterations on rows and columns ILO to I
-       until a submatrix of order at most MAXB splits off at the bottom
-       because a subdiagonal element has become negligible.
-*/
-
-    i__1 = itn;
-    for (its = 0; its <= i__1; ++its) {
-
-/*        Look for a single small subdiagonal element. */
-
-	i__2 = l + 1;
-	for (k = i__; k >= i__2; --k) {
-	    tst1 = (r__1 = h__[k - 1 + (k - 1) * h_dim1], dabs(r__1)) + (r__2
-		    = h__[k + k * h_dim1], dabs(r__2));
-	    if (tst1 == 0.f) {
-		i__4 = i__ - l + 1;
-		tst1 = slanhs_("1", &i__4, &h__[l + l * h_dim1], ldh, &work[1]
-			);
-	    }
-/* Computing MAX */
-	    r__2 = ulp * tst1;
-	    if ((r__1 = h__[k + (k - 1) * h_dim1], dabs(r__1)) <= dmax(r__2,
-		    smlnum)) {
-		goto L70;
-	    }
-/* L60: */
-	}
-L70:
-	l = k;
-	if (l > *ilo) {
-
-/*           H(L,L-1) is negligible. */
-
-	    h__[l + (l - 1) * h_dim1] = 0.f;
-	}
-
-/*        Exit from loop if a submatrix of order <= MAXB has split off. */
-
-	if (l >= i__ - maxb + 1) {
-	    goto L160;
-	}
-
-/*
-          Now the active submatrix is in rows and columns L to I. If
-          eigenvalues only are being computed, only the active submatrix
-          need be transformed.
-*/
-
-	if (! wantt) {
-	    i1 = l;
-	    i2 = i__;
-	}
-
-	if (its == 20 || its == 30) {
-
-/*           Exceptional shifts. */
-
-	    i__2 = i__;
-	    for (ii = i__ - ns + 1; ii <= i__2; ++ii) {
-		wr[ii] = ((r__1 = h__[ii + (ii - 1) * h_dim1], dabs(r__1)) + (
-			r__2 = h__[ii + ii * h_dim1], dabs(r__2))) * 1.5f;
-		wi[ii] = 0.f;
-/* L80: */
-	    }
+	if (*n > nmin) {
+	    slaqr0_(&wantt, &wantz, n, ilo, ihi, &h__[h_offset], ldh, &wr[1],
+		    &wi[1], ilo, ihi, &z__[z_offset], ldz, &work[1], lwork,
+		    info);
 	} else {
 
-/*           Use eigenvalues of trailing submatrix of order NS as shifts. */
+/*           ==== Small matrix ==== */
 
-	    slacpy_("Full", &ns, &ns, &h__[i__ - ns + 1 + (i__ - ns + 1) *
-		    h_dim1], ldh, s, &c__15);
-	    slahqr_(&c_false, &c_false, &ns, &c__1, &ns, s, &c__15, &wr[i__ -
-		    ns + 1], &wi[i__ - ns + 1], &c__1, &ns, &z__[z_offset],
-		    ldz, &ierr);
-	    if (ierr > 0) {
+	    slahqr_(&wantt, &wantz, n, ilo, ihi, &h__[h_offset], ldh, &wr[1],
+		    &wi[1], ilo, ihi, &z__[z_offset], ldz, info);
+
+	    if (*info > 0) {
 
 /*
-                If SLAHQR failed to compute all NS eigenvalues, use the
-                unconverged diagonal elements as the remaining shifts.
+                ==== A rare SLAHQR failure!  SLAQR0 sometimes succeeds
+                .    when SLAHQR fails. ====
 */
 
-		i__2 = ierr;
-		for (ii = 1; ii <= i__2; ++ii) {
-		    wr[i__ - ns + ii] = s[ii + ii * 15 - 16];
-		    wi[i__ - ns + ii] = 0.f;
-/* L90: */
-		}
-	    }
-	}
+		kbot = *info;
+
+		if (*n >= 49) {
 
 /*
-          Form the first column of (G-w(1)) (G-w(2)) . . . (G-w(ns))
-          where G is the Hessenberg submatrix H(L:I,L:I) and w is
-          the vector of shifts (stored in WR and WI). The result is
-          stored in the local array V.
+                   ==== Larger matrices have enough subdiagonal scratch
+                   .    space to call SLAQR0 directly. ====
 */
 
-	v[0] = 1.f;
-	i__2 = ns + 1;
-	for (ii = 2; ii <= i__2; ++ii) {
-	    v[ii - 1] = 0.f;
-/* L100: */
-	}
-	nv = 1;
-	i__2 = i__;
-	for (j = i__ - ns + 1; j <= i__2; ++j) {
-	    if (wi[j] >= 0.f) {
-		if (wi[j] == 0.f) {
+		    slaqr0_(&wantt, &wantz, n, ilo, &kbot, &h__[h_offset],
+			    ldh, &wr[1], &wi[1], ilo, ihi, &z__[z_offset],
+			    ldz, &work[1], lwork, info);
 
-/*                 real shift */
-
-		    i__4 = nv + 1;
-		    scopy_(&i__4, v, &c__1, vv, &c__1);
-		    i__4 = nv + 1;
-		    r__1 = -wr[j];
-		    sgemv_("No transpose", &i__4, &nv, &c_b15, &h__[l + l *
-			    h_dim1], ldh, vv, &c__1, &r__1, v, &c__1);
-		    ++nv;
-		} else if (wi[j] > 0.f) {
-
-/*                 complex conjugate pair of shifts */
-
-		    i__4 = nv + 1;
-		    scopy_(&i__4, v, &c__1, vv, &c__1);
-		    i__4 = nv + 1;
-		    r__1 = wr[j] * -2.f;
-		    sgemv_("No transpose", &i__4, &nv, &c_b15, &h__[l + l *
-			    h_dim1], ldh, v, &c__1, &r__1, vv, &c__1);
-		    i__4 = nv + 1;
-		    itemp = isamax_(&i__4, vv, &c__1);
-/* Computing MAX */
-		    r__2 = (r__1 = vv[itemp - 1], dabs(r__1));
-		    temp = 1.f / dmax(r__2,smlnum);
-		    i__4 = nv + 1;
-		    sscal_(&i__4, &temp, vv, &c__1);
-		    absw = slapy2_(&wr[j], &wi[j]);
-		    temp = temp * absw * absw;
-		    i__4 = nv + 2;
-		    i__5 = nv + 1;
-		    sgemv_("No transpose", &i__4, &i__5, &c_b15, &h__[l + l *
-			    h_dim1], ldh, vv, &c__1, &temp, v, &c__1);
-		    nv += 2;
-		}
-
-/*
-                Scale V(1:NV) so that max(abs(V(i))) = 1. If V is zero,
-                reset it to the unit vector.
-*/
-
-		itemp = isamax_(&nv, v, &c__1);
-		temp = (r__1 = v[itemp - 1], dabs(r__1));
-		if (temp == 0.f) {
-		    v[0] = 1.f;
-		    i__4 = nv;
-		    for (ii = 2; ii <= i__4; ++ii) {
-			v[ii - 1] = 0.f;
-/* L110: */
-		    }
 		} else {
-		    temp = dmax(temp,smlnum);
-		    r__1 = 1.f / temp;
-		    sscal_(&nv, &r__1, v, &c__1);
+
+/*
+                   ==== Tiny matrices don't have enough subdiagonal
+                   .    scratch space to benefit from SLAQR0.  Hence,
+                   .    tiny matrices must be copied into a larger
+                   .    array before calling SLAQR0. ====
+*/
+
+		    slacpy_("A", n, n, &h__[h_offset], ldh, hl, &c__49);
+		    hl[*n + 1 + *n * 49 - 50] = 0.f;
+		    i__1 = 49 - *n;
+		    slaset_("A", &c__49, &i__1, &c_b29, &c_b29, &hl[(*n + 1) *
+			     49 - 49], &c__49);
+		    slaqr0_(&wantt, &wantz, &c__49, ilo, &kbot, hl, &c__49, &
+			    wr[1], &wi[1], ilo, ihi, &z__[z_offset], ldz,
+			    workl, &c__49, info);
+		    if (wantt || *info != 0) {
+			slacpy_("A", n, n, hl, &c__49, &h__[h_offset], ldh);
+		    }
 		}
 	    }
-/* L120: */
 	}
 
-/*        Multiple-shift QR step */
+/*        ==== Clear out the trash, if necessary. ==== */
 
-	i__2 = i__ - 1;
-	for (k = l; k <= i__2; ++k) {
-
-/*
-             The first iteration of this loop determines a reflection G
-             from the vector V and applies it from left and right to H,
-             thus creating a nonzero bulge below the subdiagonal.
-
-             Each subsequent iteration determines a reflection G to
-             restore the Hessenberg form in the (K-1)th column, and thus
-             chases the bulge one step toward the bottom of the active
-             submatrix. NR is the order of G.
-
-   Computing MIN
-*/
-	    i__4 = ns + 1, i__5 = i__ - k + 1;
-	    nr = min(i__4,i__5);
-	    if (k > l) {
-		scopy_(&nr, &h__[k + (k - 1) * h_dim1], &c__1, v, &c__1);
-	    }
-	    slarfg_(&nr, v, &v[1], &c__1, &tau);
-	    if (k > l) {
-		h__[k + (k - 1) * h_dim1] = v[0];
-		i__4 = i__;
-		for (ii = k + 1; ii <= i__4; ++ii) {
-		    h__[ii + (k - 1) * h_dim1] = 0.f;
-/* L130: */
-		}
-	    }
-	    v[0] = 1.f;
-
-/*
-             Apply G from the left to transform the rows of the matrix in
-             columns K to I2.
-*/
-
-	    i__4 = i2 - k + 1;
-	    slarfx_("Left", &nr, &i__4, v, &tau, &h__[k + k * h_dim1], ldh, &
-		    work[1]);
-
-/*
-             Apply G from the right to transform the columns of the
-             matrix in rows I1 to min(K+NR,I).
-
-   Computing MIN
-*/
-	    i__5 = k + nr;
-	    i__4 = min(i__5,i__) - i1 + 1;
-	    slarfx_("Right", &i__4, &nr, v, &tau, &h__[i1 + k * h_dim1], ldh,
-		    &work[1]);
-
-	    if (wantz) {
-
-/*              Accumulate transformations in the matrix Z */
-
-		slarfx_("Right", &nh, &nr, v, &tau, &z__[*ilo + k * z_dim1],
-			ldz, &work[1]);
-	    }
-/* L140: */
+	if ((wantt || *info != 0) && *n > 2) {
+	    i__1 = *n - 2;
+	    i__3 = *n - 2;
+	    slaset_("L", &i__1, &i__3, &c_b29, &c_b29, &h__[h_dim1 + 3], ldh);
 	}
 
-/* L150: */
+/*
+          ==== Ensure reported workspace size is backward-compatible with
+          .    previous LAPACK versions. ====
+
+   Computing MAX
+*/
+	r__1 = (real) max(1,*n);
+	work[1] = dmax(r__1,work[1]);
     }
 
-/*     Failure to converge in remaining number of iterations */
+/*     ==== End of SHSEQR ==== */
 
-    *info = i__;
     return 0;
-
-L160:
-
-/*
-       A submatrix of order <= MAXB in rows and columns L to I has split
-       off. Use the double-shift QR algorithm to handle it.
-*/
-
-    slahqr_(&wantt, &wantz, n, &l, &i__, &h__[h_offset], ldh, &wr[1], &wi[1],
-	    ilo, ihi, &z__[z_offset], ldz, info);
-    if (*info > 0) {
-	return 0;
-    }
-
-/*
-       Decrement number of remaining iterations, and return to start of
-       the main loop with a new value of I.
-*/
-
-    itn -= its;
-    i__ = l - 1;
-    goto L50;
-
-L170:
-    work[1] = (real) max(1,*n);
-    return 0;
-
-/*     End of SHSEQR */
-
 } /* shseqr_ */
+
+logical sisnan_(real *sin__)
+{
+    /* System generated locals */
+    logical ret_val;
+
+    /* Local variables */
+    extern logical slaisnan_(real *, real *);
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
+
+
+    Purpose
+    =======
+
+    SISNAN returns .TRUE. if its argument is NaN, and .FALSE.
+    otherwise.  To be replaced by the Fortran 2003 intrinsic in the
+    future.
+
+    Arguments
+    =========
+
+    SIN     (input) REAL
+            Input to test for NaN.
+
+    =====================================================================
+*/
+
+    ret_val = slaisnan_(sin__, sin__);
+    return ret_val;
+} /* sisnan_ */
 
 /* Subroutine */ int slabad_(real *small, real *large)
 {
-    /* Builtin functions */
-    double r_lg10(real *), sqrt(doublereal);
-
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -7358,10 +8015,10 @@ L170:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -7437,7 +8094,7 @@ L170:
             The n-by-nb matrix Y required to update the unreduced part
             of A.
 
-    LDY     (output) INTEGER
+    LDY     (input) INTEGER
             The leading dimension of the array Y. LDY >= N.
 
     Further Details
@@ -7754,10 +8411,10 @@ L170:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -7852,10 +8509,10 @@ L170:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -7910,18 +8567,15 @@ L170:
     /* System generated locals */
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real ab, df, tb, sm, rt, adf, acmn, acmx;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -8038,10 +8692,6 @@ L170:
     integer q_dim1, q_offset, qstore_dim1, qstore_offset, i__1, i__2;
     real r__1;
 
-    /* Builtin functions */
-    double log(doublereal);
-    integer pow_ii(integer *, integer *);
-
     /* Local variables */
     static integer i__, j, k, iq, lgn, msd2, smm1, spm1, spm2;
     static real temp;
@@ -8072,10 +8722,10 @@ L170:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -8468,10 +9118,10 @@ L140:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -8677,9 +9327,6 @@ L20:
     integer q_dim1, q_offset, i__1, i__2;
     real r__1, r__2, r__3, r__4;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real c__;
     static integer i__, j;
@@ -8700,10 +9347,10 @@ L20:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -9189,9 +9836,6 @@ L190:
     integer q_dim1, q_offset, i__1, i__2;
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal), r_sign(real *, real *);
-
     /* Local variables */
     static integer i__, j, n2, n12, ii, n23, iq2;
     static real temp;
@@ -9209,10 +9853,10 @@ L190:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -9494,9 +10138,6 @@ L120:
     integer i__1;
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real a, b, c__;
     static integer j;
@@ -9521,10 +10162,10 @@ L120:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       December 23, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -9563,10 +10204,10 @@ L120:
            The components of the updating vector.
 
     DELTA  (output) REAL array, dimension (N)
-           If N .ne. 1, DELTA contains (D(j) - lambda_I) in its  j-th
-           component.  If N = 1, then DELTA(1) = 1.  The vector DELTA
-           contains the information necessary to construct the
-           eigenvectors.
+           If N .GT. 2, DELTA contains (D(j) - lambda_I) in its  j-th
+           component.  If N = 1, then DELTA(1) = 1. If N = 2, see SLAED5
+           for detail. The vector DELTA contains the information necessary
+           to construct the eigenvectors by SLAED3 and SLAED9.
 
     RHO    (input) REAL
            The scalar in the symmetric updating formula.
@@ -10182,7 +10823,6 @@ L120:
 
 	prew = w;
 
-/* L170: */
 	i__1 = *n;
 	for (j = 1; j <= i__1; ++j) {
 	    delta[j] -= eta;
@@ -10440,18 +11080,15 @@ L250:
     /* System generated locals */
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real b, c__, w, del, tau, temp;
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -10564,21 +11201,14 @@ L250:
 /* Subroutine */ int slaed6_(integer *kniter, logical *orgati, real *rho,
 	real *d__, real *z__, real *finit, real *tau, integer *info)
 {
-    /* Initialized data */
-
-    static logical first = TRUE_;
-
     /* System generated locals */
     integer i__1;
     real r__1, r__2, r__3, r__4;
 
-    /* Builtin functions */
-    double sqrt(doublereal), log(doublereal), pow_ri(real *, integer *);
-
     /* Local variables */
     static real a, b, c__, f;
     static integer i__;
-    static real fc, df, ddf, eta, eps, base;
+    static real fc, df, ddf, lbd, eta, ubd, eps, base;
     static integer iter;
     static real temp, temp1, temp2, temp3, temp4;
     static logical scale;
@@ -10589,10 +11219,10 @@ L250:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       February 2007
 
 
     Purpose
@@ -10648,20 +11278,39 @@ L250:
     Further Details
     ===============
 
-    Based on contributions by
+    30/06/99: Based on contributions by
        Ren-Cang Li, Computer Science Division, University of California
        at Berkeley, USA
 
+    10/02/03: This version has a few statements commented out for thread safety
+       (machine parameters are computed on each entry). SJH.
+
+    05/10/06: Modified from a new version of Ren-Cang Li, use
+       Gragg-Thornton-Warner cubic convergent scheme for better stability.
+
     =====================================================================
 */
+
 
     /* Parameter adjustments */
     --z__;
     --d__;
 
     /* Function Body */
-
     *info = 0;
+
+    if (*orgati) {
+	lbd = d__[2];
+	ubd = d__[3];
+    } else {
+	lbd = d__[1];
+	ubd = d__[2];
+    }
+    if (*finit < 0.f) {
+	lbd = 0.f;
+    } else {
+	ubd = 0.f;
+    }
 
     niter = 1;
     *tau = 0.f;
@@ -10693,29 +11342,41 @@ L250:
 	    *tau = b * 2.f / (a + sqrt((r__1 = a * a - b * 4.f * c__, dabs(
 		    r__1))));
 	}
-	temp = *rho + z__[1] / (d__[1] - *tau) + z__[2] / (d__[2] - *tau) +
-		z__[3] / (d__[3] - *tau);
-	if (dabs(*finit) <= dabs(temp)) {
+	if (*tau < lbd || *tau > ubd) {
+	    *tau = (lbd + ubd) / 2.f;
+	}
+	if (d__[1] == *tau || d__[2] == *tau || d__[3] == *tau) {
 	    *tau = 0.f;
+	} else {
+	    temp = *finit + *tau * z__[1] / (d__[1] * (d__[1] - *tau)) + *tau
+		    * z__[2] / (d__[2] * (d__[2] - *tau)) + *tau * z__[3] / (
+		    d__[3] * (d__[3] - *tau));
+	    if (temp <= 0.f) {
+		lbd = *tau;
+	    } else {
+		ubd = *tau;
+	    }
+	    if (dabs(*finit) <= dabs(temp)) {
+		*tau = 0.f;
+	    }
 	}
     }
 
 /*
-       On first call to routine, get machine parameters for
-       possible scaling to avoid overflow
+       get machine parameters for possible scaling to avoid overflow
+
+       modified by Sven: parameters SMALL1, SMINV1, SMALL2,
+       SMINV2, EPS are not SAVEd anymore between one call to the
+       others but recomputed at each call
 */
 
-    if (first) {
-	eps = slamch_("Epsilon");
-	base = slamch_("Base");
-	i__1 = (integer) (log(slamch_("SafMin")) / log(base) / 3.f)
-		;
-	small1 = pow_ri(&base, &i__1);
-	sminv1 = 1.f / small1;
-	small2 = small1 * small1;
-	sminv2 = sminv1 * sminv1;
-	first = FALSE_;
-    }
+    eps = slamch_("Epsilon");
+    base = slamch_("Base");
+    i__1 = (integer) (log(slamch_("SafMin")) / log(base) / 3.f);
+    small1 = pow_ri(&base, &i__1);
+    sminv1 = 1.f / small1;
+    small2 = small1 * small1;
+    sminv2 = sminv1 * sminv1;
 
 /*
        Determine if scaling of inputs necessary to avoid overflow
@@ -10758,6 +11419,8 @@ L250:
 /* L10: */
 	}
 	*tau *= sclfac;
+	lbd *= sclfac;
+	ubd *= sclfac;
     } else {
 
 /*        Copy D and Z to DSCALE and ZSCALE */
@@ -10787,9 +11450,15 @@ L250:
     if (dabs(f) <= 0.f) {
 	goto L60;
     }
+    if (f <= 0.f) {
+	lbd = *tau;
+    } else {
+	ubd = *tau;
+    }
 
 /*
-          Iteration begins
+          Iteration begins -- Use Gragg-Thornton-Warner cubic convergent
+                              scheme
 
        It is not hard to see that
 
@@ -10802,7 +11471,7 @@ L250:
 
     iter = niter + 1;
 
-    for (niter = iter; niter <= 20; ++niter) {
+    for (niter = iter; niter <= 40; ++niter) {
 
 	if (*orgati) {
 	    temp1 = dscale[1] - *tau;
@@ -10834,23 +11503,10 @@ L250:
 	    eta = -f / df;
 	}
 
-	temp = eta + *tau;
-	if (*orgati) {
-	    if (eta > 0.f && temp >= dscale[2]) {
-		eta = (dscale[2] - *tau) / 2.f;
-	    }
-	    if (eta < 0.f && temp <= dscale[1]) {
-		eta = (dscale[1] - *tau) / 2.f;
-	    }
-	} else {
-	    if (eta > 0.f && temp >= dscale[1]) {
-		eta = (dscale[1] - *tau) / 2.f;
-	    }
-	    if (eta < 0.f && temp <= dscale[0]) {
-		eta = (dscale[0] - *tau) / 2.f;
-	    }
-	}
 	*tau += eta;
+	if (*tau < lbd || *tau > ubd) {
+	    *tau = (lbd + ubd) / 2.f;
+	}
 
 	fc = 0.f;
 	erretm = 0.f;
@@ -10872,6 +11528,11 @@ L250:
 	erretm = (dabs(*finit) + dabs(*tau) * erretm) * 8.f + dabs(*tau) * df;
 	if (dabs(f) <= eps * erretm) {
 	    goto L60;
+	}
+	if (f <= 0.f) {
+	    lbd = *tau;
+	} else {
+	    ubd = *tau;
 	}
 /* L50: */
     }
@@ -10899,9 +11560,6 @@ L60:
     /* System generated locals */
     integer q_dim1, q_offset, i__1, i__2;
 
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
-
     /* Local variables */
     static integer i__, k, n1, n2, is, iw, iz, iq2, ptr, ldq2, indx, curr,
 	    indxc;
@@ -10925,10 +11583,10 @@ L60:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -11226,9 +11884,6 @@ L30:
     integer q_dim1, q_offset, q2_dim1, q2_offset, i__1;
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real c__;
     static integer i__, j;
@@ -11249,10 +11904,10 @@ L30:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -11424,6 +12079,15 @@ L30:
 	return 0;
     }
 
+/*
+       Need to initialize GIVPTR to O here in case of quick exit
+       to prevent an unspecified code behavior (usually sigfault)
+       when IWORK array on entry to *stedc is not zeroed
+       (or at least some IWORK entries which used in *laed7 for GIVPTR).
+*/
+
+    *givptr = 0;
+
 /*     Quick return if possible */
 
     if (*n == 0) {
@@ -11515,7 +12179,6 @@ L30:
 */
 
     *k = 0;
-    *givptr = 0;
     k2 = *n + 1;
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
@@ -11677,9 +12340,6 @@ L110:
     integer q_dim1, q_offset, s_dim1, s_offset, i__1, i__2;
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal), r_sign(real *, real *);
-
     /* Local variables */
     static integer i__, j;
     static real temp;
@@ -11692,10 +12352,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -11923,10 +12583,6 @@ L120:
     /* System generated locals */
     integer i__1, i__2, i__3;
 
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, k, mid, ptr, curr;
     extern /* Subroutine */ int srot_(integer *, real *, integer *, real *,
@@ -11938,10 +12594,10 @@ L120:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -12093,7 +12749,7 @@ L120:
     }
 
 /*
-       Loop thru remaining levels 1 -> CURLVL applying the Givens
+       Loop through remaining levels 1 -> CURLVL applying the Givens
        rotations and permutation and then multiplying the center matrices
        against the current Z.
 */
@@ -12181,9 +12837,6 @@ L120:
     /* System generated locals */
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real ab, df, cs, ct, tb, sm, tn, rt, adf, acs;
     static integer sgn1, sgn2;
@@ -12191,10 +12844,10 @@ L120:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -12347,74 +13000,508 @@ L120:
 
 } /* slaev2_ */
 
+/* Subroutine */ int slaexc_(logical *wantq, integer *n, real *t, integer *
+	ldt, real *q, integer *ldq, integer *j1, integer *n1, integer *n2,
+	real *work, integer *info)
+{
+    /* System generated locals */
+    integer q_dim1, q_offset, t_dim1, t_offset, i__1;
+    real r__1, r__2, r__3;
+
+    /* Local variables */
+    static real d__[16]	/* was [4][4] */;
+    static integer k;
+    static real u[3], x[4]	/* was [2][2] */;
+    static integer j2, j3, j4;
+    static real u1[3], u2[3];
+    static integer nd;
+    static real cs, t11, t22, t33, sn, wi1, wi2, wr1, wr2, eps, tau, tau1,
+	    tau2;
+    static integer ierr;
+    static real temp;
+    extern /* Subroutine */ int srot_(integer *, real *, integer *, real *,
+	    integer *, real *, real *);
+    static real scale, dnorm, xnorm;
+    extern /* Subroutine */ int slanv2_(real *, real *, real *, real *, real *
+	    , real *, real *, real *, real *, real *), slasy2_(logical *,
+	    logical *, integer *, integer *, integer *, real *, integer *,
+	    real *, integer *, real *, integer *, real *, real *, integer *,
+	    real *, integer *);
+    extern doublereal slamch_(char *), slange_(char *, integer *,
+	    integer *, real *, integer *, real *);
+    extern /* Subroutine */ int slarfg_(integer *, real *, real *, integer *,
+	    real *), slacpy_(char *, integer *, integer *, real *, integer *,
+	    real *, integer *), slartg_(real *, real *, real *, real *
+	    , real *);
+    static real thresh;
+    extern /* Subroutine */ int slarfx_(char *, integer *, integer *, real *,
+	    real *, real *, integer *, real *);
+    static real smlnum;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    SLAEXC swaps adjacent diagonal blocks T11 and T22 of order 1 or 2 in
+    an upper quasi-triangular matrix T by an orthogonal similarity
+    transformation.
+
+    T must be in Schur canonical form, that is, block upper triangular
+    with 1-by-1 and 2-by-2 diagonal blocks; each 2-by-2 diagonal block
+    has its diagonal elemnts equal and its off-diagonal elements of
+    opposite sign.
+
+    Arguments
+    =========
+
+    WANTQ   (input) LOGICAL
+            = .TRUE. : accumulate the transformation in the matrix Q;
+            = .FALSE.: do not accumulate the transformation.
+
+    N       (input) INTEGER
+            The order of the matrix T. N >= 0.
+
+    T       (input/output) REAL array, dimension (LDT,N)
+            On entry, the upper quasi-triangular matrix T, in Schur
+            canonical form.
+            On exit, the updated matrix T, again in Schur canonical form.
+
+    LDT     (input)  INTEGER
+            The leading dimension of the array T. LDT >= max(1,N).
+
+    Q       (input/output) REAL array, dimension (LDQ,N)
+            On entry, if WANTQ is .TRUE., the orthogonal matrix Q.
+            On exit, if WANTQ is .TRUE., the updated matrix Q.
+            If WANTQ is .FALSE., Q is not referenced.
+
+    LDQ     (input) INTEGER
+            The leading dimension of the array Q.
+            LDQ >= 1; and if WANTQ is .TRUE., LDQ >= N.
+
+    J1      (input) INTEGER
+            The index of the first row of the first block T11.
+
+    N1      (input) INTEGER
+            The order of the first block T11. N1 = 0, 1 or 2.
+
+    N2      (input) INTEGER
+            The order of the second block T22. N2 = 0, 1 or 2.
+
+    WORK    (workspace) REAL array, dimension (N)
+
+    INFO    (output) INTEGER
+            = 0: successful exit
+            = 1: the transformed matrix T would be too far from Schur
+                 form; the blocks are not swapped and T and Q are
+                 unchanged.
+
+    =====================================================================
+*/
+
+
+    /* Parameter adjustments */
+    t_dim1 = *ldt;
+    t_offset = 1 + t_dim1;
+    t -= t_offset;
+    q_dim1 = *ldq;
+    q_offset = 1 + q_dim1;
+    q -= q_offset;
+    --work;
+
+    /* Function Body */
+    *info = 0;
+
+/*     Quick return if possible */
+
+    if (*n == 0 || *n1 == 0 || *n2 == 0) {
+	return 0;
+    }
+    if (*j1 + *n1 > *n) {
+	return 0;
+    }
+
+    j2 = *j1 + 1;
+    j3 = *j1 + 2;
+    j4 = *j1 + 3;
+
+    if (*n1 == 1 && *n2 == 1) {
+
+/*        Swap two 1-by-1 blocks. */
+
+	t11 = t[*j1 + *j1 * t_dim1];
+	t22 = t[j2 + j2 * t_dim1];
+
+/*        Determine the transformation to perform the interchange. */
+
+	r__1 = t22 - t11;
+	slartg_(&t[*j1 + j2 * t_dim1], &r__1, &cs, &sn, &temp);
+
+/*        Apply transformation to the matrix T. */
+
+	if (j3 <= *n) {
+	    i__1 = *n - *j1 - 1;
+	    srot_(&i__1, &t[*j1 + j3 * t_dim1], ldt, &t[j2 + j3 * t_dim1],
+		    ldt, &cs, &sn);
+	}
+	i__1 = *j1 - 1;
+	srot_(&i__1, &t[*j1 * t_dim1 + 1], &c__1, &t[j2 * t_dim1 + 1], &c__1,
+		&cs, &sn);
+
+	t[*j1 + *j1 * t_dim1] = t22;
+	t[j2 + j2 * t_dim1] = t11;
+
+	if (*wantq) {
+
+/*           Accumulate transformation in the matrix Q. */
+
+	    srot_(n, &q[*j1 * q_dim1 + 1], &c__1, &q[j2 * q_dim1 + 1], &c__1,
+		    &cs, &sn);
+	}
+
+    } else {
+
+/*
+          Swapping involves at least one 2-by-2 block.
+
+          Copy the diagonal block of order N1+N2 to the local array D
+          and compute its norm.
+*/
+
+	nd = *n1 + *n2;
+	slacpy_("Full", &nd, &nd, &t[*j1 + *j1 * t_dim1], ldt, d__, &c__4);
+	dnorm = slange_("Max", &nd, &nd, d__, &c__4, &work[1]);
+
+/*
+          Compute machine-dependent threshold for test for accepting
+          swap.
+*/
+
+	eps = slamch_("P");
+	smlnum = slamch_("S") / eps;
+/* Computing MAX */
+	r__1 = eps * 10.f * dnorm;
+	thresh = dmax(r__1,smlnum);
+
+/*        Solve T11*X - X*T22 = scale*T12 for X. */
+
+	slasy2_(&c_false, &c_false, &c_n1, n1, n2, d__, &c__4, &d__[*n1 + 1 +
+		(*n1 + 1 << 2) - 5], &c__4, &d__[(*n1 + 1 << 2) - 4], &c__4, &
+		scale, x, &c__2, &xnorm, &ierr);
+
+/*        Swap the adjacent diagonal blocks. */
+
+	k = *n1 + *n1 + *n2 - 3;
+	switch (k) {
+	    case 1:  goto L10;
+	    case 2:  goto L20;
+	    case 3:  goto L30;
+	}
+
+L10:
+
+/*
+          N1 = 1, N2 = 2: generate elementary reflector H so that:
+
+          ( scale, X11, X12 ) H = ( 0, 0, * )
+*/
+
+	u[0] = scale;
+	u[1] = x[0];
+	u[2] = x[2];
+	slarfg_(&c__3, &u[2], u, &c__1, &tau);
+	u[2] = 1.f;
+	t11 = t[*j1 + *j1 * t_dim1];
+
+/*        Perform swap provisionally on diagonal block in D. */
+
+	slarfx_("L", &c__3, &c__3, u, &tau, d__, &c__4, &work[1]);
+	slarfx_("R", &c__3, &c__3, u, &tau, d__, &c__4, &work[1]);
+
+/*
+          Test whether to reject swap.
+
+   Computing MAX
+*/
+	r__2 = dabs(d__[2]), r__3 = dabs(d__[6]), r__2 = max(r__2,r__3), r__3
+		= (r__1 = d__[10] - t11, dabs(r__1));
+	if (dmax(r__2,r__3) > thresh) {
+	    goto L50;
+	}
+
+/*        Accept swap: apply transformation to the entire matrix T. */
+
+	i__1 = *n - *j1 + 1;
+	slarfx_("L", &c__3, &i__1, u, &tau, &t[*j1 + *j1 * t_dim1], ldt, &
+		work[1]);
+	slarfx_("R", &j2, &c__3, u, &tau, &t[*j1 * t_dim1 + 1], ldt, &work[1]);
+
+	t[j3 + *j1 * t_dim1] = 0.f;
+	t[j3 + j2 * t_dim1] = 0.f;
+	t[j3 + j3 * t_dim1] = t11;
+
+	if (*wantq) {
+
+/*           Accumulate transformation in the matrix Q. */
+
+	    slarfx_("R", n, &c__3, u, &tau, &q[*j1 * q_dim1 + 1], ldq, &work[
+		    1]);
+	}
+	goto L40;
+
+L20:
+
+/*
+          N1 = 2, N2 = 1: generate elementary reflector H so that:
+
+          H (  -X11 ) = ( * )
+            (  -X21 ) = ( 0 )
+            ( scale ) = ( 0 )
+*/
+
+	u[0] = -x[0];
+	u[1] = -x[1];
+	u[2] = scale;
+	slarfg_(&c__3, u, &u[1], &c__1, &tau);
+	u[0] = 1.f;
+	t33 = t[j3 + j3 * t_dim1];
+
+/*        Perform swap provisionally on diagonal block in D. */
+
+	slarfx_("L", &c__3, &c__3, u, &tau, d__, &c__4, &work[1]);
+	slarfx_("R", &c__3, &c__3, u, &tau, d__, &c__4, &work[1]);
+
+/*
+          Test whether to reject swap.
+
+   Computing MAX
+*/
+	r__2 = dabs(d__[1]), r__3 = dabs(d__[2]), r__2 = max(r__2,r__3), r__3
+		= (r__1 = d__[0] - t33, dabs(r__1));
+	if (dmax(r__2,r__3) > thresh) {
+	    goto L50;
+	}
+
+/*        Accept swap: apply transformation to the entire matrix T. */
+
+	slarfx_("R", &j3, &c__3, u, &tau, &t[*j1 * t_dim1 + 1], ldt, &work[1]);
+	i__1 = *n - *j1;
+	slarfx_("L", &c__3, &i__1, u, &tau, &t[*j1 + j2 * t_dim1], ldt, &work[
+		1]);
+
+	t[*j1 + *j1 * t_dim1] = t33;
+	t[j2 + *j1 * t_dim1] = 0.f;
+	t[j3 + *j1 * t_dim1] = 0.f;
+
+	if (*wantq) {
+
+/*           Accumulate transformation in the matrix Q. */
+
+	    slarfx_("R", n, &c__3, u, &tau, &q[*j1 * q_dim1 + 1], ldq, &work[
+		    1]);
+	}
+	goto L40;
+
+L30:
+
+/*
+          N1 = 2, N2 = 2: generate elementary reflectors H(1) and H(2) so
+          that:
+
+          H(2) H(1) (  -X11  -X12 ) = (  *  * )
+                    (  -X21  -X22 )   (  0  * )
+                    ( scale    0  )   (  0  0 )
+                    (    0  scale )   (  0  0 )
+*/
+
+	u1[0] = -x[0];
+	u1[1] = -x[1];
+	u1[2] = scale;
+	slarfg_(&c__3, u1, &u1[1], &c__1, &tau1);
+	u1[0] = 1.f;
+
+	temp = -tau1 * (x[2] + u1[1] * x[3]);
+	u2[0] = -temp * u1[1] - x[3];
+	u2[1] = -temp * u1[2];
+	u2[2] = scale;
+	slarfg_(&c__3, u2, &u2[1], &c__1, &tau2);
+	u2[0] = 1.f;
+
+/*        Perform swap provisionally on diagonal block in D. */
+
+	slarfx_("L", &c__3, &c__4, u1, &tau1, d__, &c__4, &work[1])
+		;
+	slarfx_("R", &c__4, &c__3, u1, &tau1, d__, &c__4, &work[1])
+		;
+	slarfx_("L", &c__3, &c__4, u2, &tau2, &d__[1], &c__4, &work[1]);
+	slarfx_("R", &c__4, &c__3, u2, &tau2, &d__[4], &c__4, &work[1]);
+
+/*
+          Test whether to reject swap.
+
+   Computing MAX
+*/
+	r__1 = dabs(d__[2]), r__2 = dabs(d__[6]), r__1 = max(r__1,r__2), r__2
+		= dabs(d__[3]), r__1 = max(r__1,r__2), r__2 = dabs(d__[7]);
+	if (dmax(r__1,r__2) > thresh) {
+	    goto L50;
+	}
+
+/*        Accept swap: apply transformation to the entire matrix T. */
+
+	i__1 = *n - *j1 + 1;
+	slarfx_("L", &c__3, &i__1, u1, &tau1, &t[*j1 + *j1 * t_dim1], ldt, &
+		work[1]);
+	slarfx_("R", &j4, &c__3, u1, &tau1, &t[*j1 * t_dim1 + 1], ldt, &work[
+		1]);
+	i__1 = *n - *j1 + 1;
+	slarfx_("L", &c__3, &i__1, u2, &tau2, &t[j2 + *j1 * t_dim1], ldt, &
+		work[1]);
+	slarfx_("R", &j4, &c__3, u2, &tau2, &t[j2 * t_dim1 + 1], ldt, &work[1]
+		);
+
+	t[j3 + *j1 * t_dim1] = 0.f;
+	t[j3 + j2 * t_dim1] = 0.f;
+	t[j4 + *j1 * t_dim1] = 0.f;
+	t[j4 + j2 * t_dim1] = 0.f;
+
+	if (*wantq) {
+
+/*           Accumulate transformation in the matrix Q. */
+
+	    slarfx_("R", n, &c__3, u1, &tau1, &q[*j1 * q_dim1 + 1], ldq, &
+		    work[1]);
+	    slarfx_("R", n, &c__3, u2, &tau2, &q[j2 * q_dim1 + 1], ldq, &work[
+		    1]);
+	}
+
+L40:
+
+	if (*n2 == 2) {
+
+/*           Standardize new 2-by-2 block T11 */
+
+	    slanv2_(&t[*j1 + *j1 * t_dim1], &t[*j1 + j2 * t_dim1], &t[j2 + *
+		    j1 * t_dim1], &t[j2 + j2 * t_dim1], &wr1, &wi1, &wr2, &
+		    wi2, &cs, &sn);
+	    i__1 = *n - *j1 - 1;
+	    srot_(&i__1, &t[*j1 + (*j1 + 2) * t_dim1], ldt, &t[j2 + (*j1 + 2)
+		    * t_dim1], ldt, &cs, &sn);
+	    i__1 = *j1 - 1;
+	    srot_(&i__1, &t[*j1 * t_dim1 + 1], &c__1, &t[j2 * t_dim1 + 1], &
+		    c__1, &cs, &sn);
+	    if (*wantq) {
+		srot_(n, &q[*j1 * q_dim1 + 1], &c__1, &q[j2 * q_dim1 + 1], &
+			c__1, &cs, &sn);
+	    }
+	}
+
+	if (*n1 == 2) {
+
+/*           Standardize new 2-by-2 block T22 */
+
+	    j3 = *j1 + *n2;
+	    j4 = j3 + 1;
+	    slanv2_(&t[j3 + j3 * t_dim1], &t[j3 + j4 * t_dim1], &t[j4 + j3 *
+		    t_dim1], &t[j4 + j4 * t_dim1], &wr1, &wi1, &wr2, &wi2, &
+		    cs, &sn);
+	    if (j3 + 2 <= *n) {
+		i__1 = *n - j3 - 1;
+		srot_(&i__1, &t[j3 + (j3 + 2) * t_dim1], ldt, &t[j4 + (j3 + 2)
+			 * t_dim1], ldt, &cs, &sn);
+	    }
+	    i__1 = j3 - 1;
+	    srot_(&i__1, &t[j3 * t_dim1 + 1], &c__1, &t[j4 * t_dim1 + 1], &
+		    c__1, &cs, &sn);
+	    if (*wantq) {
+		srot_(n, &q[j3 * q_dim1 + 1], &c__1, &q[j4 * q_dim1 + 1], &
+			c__1, &cs, &sn);
+	    }
+	}
+
+    }
+    return 0;
+
+/*     Exit with INFO = 1 if swap was rejected. */
+
+L50:
+    *info = 1;
+    return 0;
+
+/*     End of SLAEXC */
+
+} /* slaexc_ */
+
 /* Subroutine */ int slahqr_(logical *wantt, logical *wantz, integer *n,
 	integer *ilo, integer *ihi, real *h__, integer *ldh, real *wr, real *
 	wi, integer *iloz, integer *ihiz, real *z__, integer *ldz, integer *
 	info)
 {
     /* System generated locals */
-    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
-    real r__1, r__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal), r_sign(real *, real *);
+    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3;
+    real r__1, r__2, r__3, r__4;
 
     /* Local variables */
     static integer i__, j, k, l, m;
     static real s, v[3];
     static integer i1, i2;
-    static real t1, t2, t3, v1, v2, v3, h00, h10, h11, h12, h21, h22, h33,
-	    h44;
+    static real t1, t2, t3, v2, v3, aa, ab, ba, bb, h11, h12, h21, h22, cs;
     static integer nh;
-    static real cs;
-    static integer nr;
     static real sn;
+    static integer nr;
+    static real tr;
     static integer nz;
-    static real ave, h33s, h44s;
-    static integer itn, its;
-    static real ulp, sum, tst1, h43h34, disc, unfl, ovfl, work[1];
+    static real det, h21s;
+    static integer its;
+    static real ulp, sum, tst, rt1i, rt2i, rt1r, rt2r;
     extern /* Subroutine */ int srot_(integer *, real *, integer *, real *,
 	    integer *, real *, real *), scopy_(integer *, real *, integer *,
 	    real *, integer *), slanv2_(real *, real *, real *, real *, real *
 	    , real *, real *, real *, real *, real *), slabad_(real *, real *)
 	    ;
     extern doublereal slamch_(char *);
+    static real safmin;
     extern /* Subroutine */ int slarfg_(integer *, real *, real *, integer *,
 	    real *);
-    extern doublereal slanhs_(char *, integer *, real *, integer *, real *);
-    static real smlnum;
+    static real safmax, rtdisc, smlnum;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       November 2006
 
 
-    Purpose
-    =======
+       Purpose
+       =======
 
-    SLAHQR is an auxiliary routine called by SHSEQR to update the
-    eigenvalues and Schur decomposition already computed by SHSEQR, by
-    dealing with the Hessenberg submatrix in rows and columns ILO to IHI.
+       SLAHQR is an auxiliary routine called by SHSEQR to update the
+       eigenvalues and Schur decomposition already computed by SHSEQR, by
+       dealing with the Hessenberg submatrix in rows and columns ILO to
+       IHI.
 
-    Arguments
-    =========
+       Arguments
+       =========
 
-    WANTT   (input) LOGICAL
+       WANTT   (input) LOGICAL
             = .TRUE. : the full Schur form T is required;
             = .FALSE.: only eigenvalues are required.
 
-    WANTZ   (input) LOGICAL
+       WANTZ   (input) LOGICAL
             = .TRUE. : the matrix of Schur vectors Z is required;
             = .FALSE.: Schur vectors are not required.
 
-    N       (input) INTEGER
+       N       (input) INTEGER
             The order of the matrix H.  N >= 0.
 
-    ILO     (input) INTEGER
-    IHI     (input) INTEGER
+       ILO     (input) INTEGER
+       IHI     (input) INTEGER
             It is assumed that H is already upper quasi-triangular in
             rows and columns IHI+1:N, and that H(ILO,ILO-1) = 0 (unless
             ILO = 1). SLAHQR works primarily with the Hessenberg
@@ -12422,18 +13509,20 @@ L120:
             transformations to all of H if WANTT is .TRUE..
             1 <= ILO <= max(1,IHI); IHI <= N.
 
-    H       (input/output) REAL array, dimension (LDH,N)
+       H       (input/output) REAL array, dimension (LDH,N)
             On entry, the upper Hessenberg matrix H.
-            On exit, if WANTT is .TRUE., H is upper quasi-triangular in
-            rows and columns ILO:IHI, with any 2-by-2 diagonal blocks in
-            standard form. If WANTT is .FALSE., the contents of H are
-            unspecified on exit.
+            On exit, if INFO is zero and if WANTT is .TRUE., H is upper
+            quasi-triangular in rows and columns ILO:IHI, with any
+            2-by-2 diagonal blocks in standard form. If INFO is zero
+            and WANTT is .FALSE., the contents of H are unspecified on
+            exit.  The output state of H if INFO is nonzero is given
+            below under the description of INFO.
 
-    LDH     (input) INTEGER
+       LDH     (input) INTEGER
             The leading dimension of the array H. LDH >= max(1,N).
 
-    WR      (output) REAL array, dimension (N)
-    WI      (output) REAL array, dimension (N)
+       WR      (output) REAL array, dimension (N)
+       WI      (output) REAL array, dimension (N)
             The real and imaginary parts, respectively, of the computed
             eigenvalues ILO to IHI are stored in the corresponding
             elements of WR and WI. If two eigenvalues are computed as a
@@ -12445,36 +13534,61 @@ L120:
             H(i:i+1,i:i+1) is a 2-by-2 diagonal block,
             WI(i) = sqrt(H(i+1,i)*H(i,i+1)) and WI(i+1) = -WI(i).
 
-    ILOZ    (input) INTEGER
-    IHIZ    (input) INTEGER
+       ILOZ    (input) INTEGER
+       IHIZ    (input) INTEGER
             Specify the rows of Z to which transformations must be
             applied if WANTZ is .TRUE..
             1 <= ILOZ <= ILO; IHI <= IHIZ <= N.
 
-    Z       (input/output) REAL array, dimension (LDZ,N)
+       Z       (input/output) REAL array, dimension (LDZ,N)
             If WANTZ is .TRUE., on entry Z must contain the current
             matrix Z of transformations accumulated by SHSEQR, and on
             exit Z has been updated; transformations are applied only to
             the submatrix Z(ILOZ:IHIZ,ILO:IHI).
             If WANTZ is .FALSE., Z is not referenced.
 
-    LDZ     (input) INTEGER
+       LDZ     (input) INTEGER
             The leading dimension of the array Z. LDZ >= max(1,N).
 
-    INFO    (output) INTEGER
-            = 0: successful exit
-            > 0: SLAHQR failed to compute all the eigenvalues ILO to IHI
-                 in a total of 30*(IHI-ILO+1) iterations; if INFO = i,
-                 elements i+1:ihi of WR and WI contain those eigenvalues
-                 which have been successfully computed.
+       INFO    (output) INTEGER
+             =   0: successful exit
+            .GT. 0: If INFO = i, SLAHQR failed to compute all the
+                    eigenvalues ILO to IHI in a total of 30 iterations
+                    per eigenvalue; elements i+1:ihi of WR and WI
+                    contain those eigenvalues which have been
+                    successfully computed.
 
-    Further Details
-    ===============
+                    If INFO .GT. 0 and WANTT is .FALSE., then on exit,
+                    the remaining unconverged eigenvalues are the
+                    eigenvalues of the upper Hessenberg matrix rows
+                    and columns ILO thorugh INFO of the final, output
+                    value of H.
 
-    2-96 Based on modifications by
+                    If INFO .GT. 0 and WANTT is .TRUE., then on exit
+            (*)       (initial value of H)*U  = U*(final value of H)
+                    where U is an orthognal matrix.    The final
+                    value of H is upper Hessenberg and triangular in
+                    rows and columns INFO+1 through IHI.
+
+                    If INFO .GT. 0 and WANTZ is .TRUE., then on exit
+                        (final value of Z)  = (initial value of Z)*U
+                    where U is the orthogonal matrix in (*)
+                    (regardless of the value of WANTT.)
+
+       Further Details
+       ===============
+
+       02-96 Based on modifications by
        David Day, Sandia National Laboratory, USA
 
-    =====================================================================
+       12-04 Further modifications by
+       Ralph Byers, University of Kansas, USA
+       This is a modified version of SLAHQR from LAPACK version 3.0.
+       It is (1) more robust against overflow and underflow and
+       (2) adopts the more conservative Ahues & Tisseur stopping
+       criterion (LAWN 122, 1997).
+
+       =========================================================
 */
 
 
@@ -12502,19 +13616,27 @@ L120:
 	return 0;
     }
 
+/*     ==== clear out the trash ==== */
+    i__1 = *ihi - 3;
+    for (j = *ilo; j <= i__1; ++j) {
+	h__[j + 2 + j * h_dim1] = 0.f;
+	h__[j + 3 + j * h_dim1] = 0.f;
+/* L10: */
+    }
+    if (*ilo <= *ihi - 2) {
+	h__[*ihi + (*ihi - 2) * h_dim1] = 0.f;
+    }
+
     nh = *ihi - *ilo + 1;
     nz = *ihiz - *iloz + 1;
 
-/*
-       Set machine-dependent constants for the stopping criterion.
-       If norm(H) <= sqrt(OVFL), overflow should not occur.
-*/
+/*     Set machine-dependent constants for the stopping criterion. */
 
-    unfl = slamch_("Safe minimum");
-    ovfl = 1.f / unfl;
-    slabad_(&unfl, &ovfl);
-    ulp = slamch_("Precision");
-    smlnum = unfl * (nh / ulp);
+    safmin = slamch_("SAFE MINIMUM");
+    safmax = 1.f / safmin;
+    slabad_(&safmin, &safmax);
+    ulp = slamch_("PRECISION");
+    smlnum = safmin * ((real) nh / ulp);
 
 /*
        I1 and I2 are the indices of the first row and last column of H
@@ -12527,10 +13649,6 @@ L120:
 	i2 = *n;
     }
 
-/*     ITN is the total number of QR iterations allowed. */
-
-    itn = nh * 30;
-
 /*
        The main loop begins here. I is the loop index and decreases from
        IHI to ILO in steps of 1 or 2. Each iteration of the loop works
@@ -12540,10 +13658,10 @@ L120:
 */
 
     i__ = *ihi;
-L10:
+L20:
     l = *ilo;
     if (i__ < *ilo) {
-	goto L150;
+	goto L160;
     }
 
 /*
@@ -12552,28 +13670,60 @@ L10:
        subdiagonal element has become negligible.
 */
 
-    i__1 = itn;
-    for (its = 0; its <= i__1; ++its) {
+    for (its = 0; its <= 30; ++its) {
 
 /*        Look for a single small subdiagonal element. */
 
-	i__2 = l + 1;
-	for (k = i__; k >= i__2; --k) {
-	    tst1 = (r__1 = h__[k - 1 + (k - 1) * h_dim1], dabs(r__1)) + (r__2
-		    = h__[k + k * h_dim1], dabs(r__2));
-	    if (tst1 == 0.f) {
-		i__3 = i__ - l + 1;
-		tst1 = slanhs_("1", &i__3, &h__[l + l * h_dim1], ldh, work);
+	i__1 = l + 1;
+	for (k = i__; k >= i__1; --k) {
+	    if ((r__1 = h__[k + (k - 1) * h_dim1], dabs(r__1)) <= smlnum) {
+		goto L40;
 	    }
+	    tst = (r__1 = h__[k - 1 + (k - 1) * h_dim1], dabs(r__1)) + (r__2 =
+		     h__[k + k * h_dim1], dabs(r__2));
+	    if (tst == 0.f) {
+		if (k - 2 >= *ilo) {
+		    tst += (r__1 = h__[k - 1 + (k - 2) * h_dim1], dabs(r__1));
+		}
+		if (k + 1 <= *ihi) {
+		    tst += (r__1 = h__[k + 1 + k * h_dim1], dabs(r__1));
+		}
+	    }
+/*
+             ==== The following is a conservative small subdiagonal
+             .    deflation  criterion due to Ahues & Tisseur (LAWN 122,
+             .    1997). It has better mathematical foundation and
+             .    improves accuracy in some cases.  ====
+*/
+	    if ((r__1 = h__[k + (k - 1) * h_dim1], dabs(r__1)) <= ulp * tst) {
 /* Computing MAX */
-	    r__2 = ulp * tst1;
-	    if ((r__1 = h__[k + (k - 1) * h_dim1], dabs(r__1)) <= dmax(r__2,
-		    smlnum)) {
-		goto L30;
+		r__3 = (r__1 = h__[k + (k - 1) * h_dim1], dabs(r__1)), r__4 =
+			(r__2 = h__[k - 1 + k * h_dim1], dabs(r__2));
+		ab = dmax(r__3,r__4);
+/* Computing MIN */
+		r__3 = (r__1 = h__[k + (k - 1) * h_dim1], dabs(r__1)), r__4 =
+			(r__2 = h__[k - 1 + k * h_dim1], dabs(r__2));
+		ba = dmin(r__3,r__4);
+/* Computing MAX */
+		r__3 = (r__1 = h__[k + k * h_dim1], dabs(r__1)), r__4 = (r__2
+			= h__[k - 1 + (k - 1) * h_dim1] - h__[k + k * h_dim1],
+			 dabs(r__2));
+		aa = dmax(r__3,r__4);
+/* Computing MIN */
+		r__3 = (r__1 = h__[k + k * h_dim1], dabs(r__1)), r__4 = (r__2
+			= h__[k - 1 + (k - 1) * h_dim1] - h__[k + k * h_dim1],
+			 dabs(r__2));
+		bb = dmin(r__3,r__4);
+		s = aa + ab;
+/* Computing MAX */
+		r__1 = smlnum, r__2 = ulp * (bb * (aa / s));
+		if (ba * (ab / s) <= dmax(r__1,r__2)) {
+		    goto L40;
+		}
 	    }
-/* L20: */
+/* L30: */
 	}
-L30:
+L40:
 	l = k;
 	if (l > *ilo) {
 
@@ -12585,7 +13735,7 @@ L30:
 /*        Exit from loop if a submatrix of order 1 or 2 has split off. */
 
 	if (l >= i__ - 1) {
-	    goto L140;
+	    goto L150;
 	}
 
 /*
@@ -12599,15 +13749,26 @@ L30:
 	    i2 = i__;
 	}
 
-	if (its == 10 || its == 20) {
+	if (its == 10) {
+
+/*           Exceptional shift. */
+
+	    s = (r__1 = h__[l + 1 + l * h_dim1], dabs(r__1)) + (r__2 = h__[l
+		    + 2 + (l + 1) * h_dim1], dabs(r__2));
+	    h11 = s * .75f + h__[l + l * h_dim1];
+	    h12 = s * -.4375f;
+	    h21 = s;
+	    h22 = h11;
+	} else if (its == 20) {
 
 /*           Exceptional shift. */
 
 	    s = (r__1 = h__[i__ + (i__ - 1) * h_dim1], dabs(r__1)) + (r__2 =
 		    h__[i__ - 1 + (i__ - 2) * h_dim1], dabs(r__2));
-	    h44 = s * .75f + h__[i__ + i__ * h_dim1];
-	    h33 = h44;
-	    h43h34 = s * -.4375f * s;
+	    h11 = s * .75f + h__[i__ + i__ * h_dim1];
+	    h12 = s * -.4375f;
+	    h21 = s;
+	    h22 = h11;
 	} else {
 
 /*
@@ -12615,74 +13776,95 @@ L30:
              (i.e. 2nd degree generalized Rayleigh quotient)
 */
 
-	    h44 = h__[i__ + i__ * h_dim1];
-	    h33 = h__[i__ - 1 + (i__ - 1) * h_dim1];
-	    h43h34 = h__[i__ + (i__ - 1) * h_dim1] * h__[i__ - 1 + i__ *
-		    h_dim1];
-	    s = h__[i__ - 1 + (i__ - 2) * h_dim1] * h__[i__ - 1 + (i__ - 2) *
-		    h_dim1];
-	    disc = (h33 - h44) * .5f;
-	    disc = disc * disc + h43h34;
-	    if (disc > 0.f) {
+	    h11 = h__[i__ - 1 + (i__ - 1) * h_dim1];
+	    h21 = h__[i__ + (i__ - 1) * h_dim1];
+	    h12 = h__[i__ - 1 + i__ * h_dim1];
+	    h22 = h__[i__ + i__ * h_dim1];
+	}
+	s = dabs(h11) + dabs(h12) + dabs(h21) + dabs(h22);
+	if (s == 0.f) {
+	    rt1r = 0.f;
+	    rt1i = 0.f;
+	    rt2r = 0.f;
+	    rt2i = 0.f;
+	} else {
+	    h11 /= s;
+	    h21 /= s;
+	    h12 /= s;
+	    h22 /= s;
+	    tr = (h11 + h22) / 2.f;
+	    det = (h11 - tr) * (h22 - tr) - h12 * h21;
+	    rtdisc = sqrt((dabs(det)));
+	    if (det >= 0.f) {
 
-/*              Real roots: use Wilkinson's shift twice */
+/*              ==== complex conjugate shifts ==== */
 
-		disc = sqrt(disc);
-		ave = (h33 + h44) * .5f;
-		if (dabs(h33) - dabs(h44) > 0.f) {
-		    h33 = h33 * h44 - h43h34;
-		    h44 = h33 / (r_sign(&disc, &ave) + ave);
+		rt1r = tr * s;
+		rt2r = rt1r;
+		rt1i = rtdisc * s;
+		rt2i = -rt1i;
+	    } else {
+
+/*              ==== real shifts (use only one of them)  ==== */
+
+		rt1r = tr + rtdisc;
+		rt2r = tr - rtdisc;
+		if ((r__1 = rt1r - h22, dabs(r__1)) <= (r__2 = rt2r - h22,
+			dabs(r__2))) {
+		    rt1r *= s;
+		    rt2r = rt1r;
 		} else {
-		    h44 = r_sign(&disc, &ave) + ave;
+		    rt2r *= s;
+		    rt1r = rt2r;
 		}
-		h33 = h44;
-		h43h34 = 0.f;
+		rt1i = 0.f;
+		rt2i = 0.f;
 	    }
 	}
 
 /*        Look for two consecutive small subdiagonal elements. */
 
-	i__2 = l;
-	for (m = i__ - 2; m >= i__2; --m) {
+	i__1 = l;
+	for (m = i__ - 2; m >= i__1; --m) {
 /*
              Determine the effect of starting the double-shift QR
              iteration at row M, and see if this would make H(M,M-1)
-             negligible.
+             negligible.  (The following uses scaling to avoid
+             overflows and most underflows.)
 */
 
-	    h11 = h__[m + m * h_dim1];
-	    h22 = h__[m + 1 + (m + 1) * h_dim1];
-	    h21 = h__[m + 1 + m * h_dim1];
-	    h12 = h__[m + (m + 1) * h_dim1];
-	    h44s = h44 - h11;
-	    h33s = h33 - h11;
-	    v1 = (h33s * h44s - h43h34) / h21 + h12;
-	    v2 = h22 - h11 - h33s - h44s;
-	    v3 = h__[m + 2 + (m + 1) * h_dim1];
-	    s = dabs(v1) + dabs(v2) + dabs(v3);
-	    v1 /= s;
-	    v2 /= s;
-	    v3 /= s;
-	    v[0] = v1;
-	    v[1] = v2;
-	    v[2] = v3;
+	    h21s = h__[m + 1 + m * h_dim1];
+	    s = (r__1 = h__[m + m * h_dim1] - rt2r, dabs(r__1)) + dabs(rt2i)
+		    + dabs(h21s);
+	    h21s = h__[m + 1 + m * h_dim1] / s;
+	    v[0] = h21s * h__[m + (m + 1) * h_dim1] + (h__[m + m * h_dim1] -
+		    rt1r) * ((h__[m + m * h_dim1] - rt2r) / s) - rt1i * (rt2i
+		    / s);
+	    v[1] = h21s * (h__[m + m * h_dim1] + h__[m + 1 + (m + 1) * h_dim1]
+		     - rt1r - rt2r);
+	    v[2] = h21s * h__[m + 2 + (m + 1) * h_dim1];
+	    s = dabs(v[0]) + dabs(v[1]) + dabs(v[2]);
+	    v[0] /= s;
+	    v[1] /= s;
+	    v[2] /= s;
 	    if (m == l) {
-		goto L50;
+		goto L60;
 	    }
-	    h00 = h__[m - 1 + (m - 1) * h_dim1];
-	    h10 = h__[m + (m - 1) * h_dim1];
-	    tst1 = dabs(v1) * (dabs(h00) + dabs(h11) + dabs(h22));
-	    if (dabs(h10) * (dabs(v2) + dabs(v3)) <= ulp * tst1) {
-		goto L50;
+	    if ((r__1 = h__[m + (m - 1) * h_dim1], dabs(r__1)) * (dabs(v[1])
+		    + dabs(v[2])) <= ulp * dabs(v[0]) * ((r__2 = h__[m - 1 + (
+		    m - 1) * h_dim1], dabs(r__2)) + (r__3 = h__[m + m *
+		    h_dim1], dabs(r__3)) + (r__4 = h__[m + 1 + (m + 1) *
+		    h_dim1], dabs(r__4)))) {
+		goto L60;
 	    }
-/* L40: */
+/* L50: */
 	}
-L50:
+L60:
 
 /*        Double-shift QR step */
 
-	i__2 = i__ - 1;
-	for (k = m; k <= i__2; ++k) {
+	i__1 = i__ - 1;
+	for (k = m; k <= i__1; ++k) {
 
 /*
              The first iteration of this loop determines a reflection G
@@ -12696,8 +13878,8 @@ L50:
 
    Computing MIN
 */
-	    i__3 = 3, i__4 = i__ - k + 1;
-	    nr = min(i__3,i__4);
+	    i__2 = 3, i__3 = i__ - k + 1;
+	    nr = min(i__2,i__3);
 	    if (k > m) {
 		scopy_(&nr, &h__[k + (k - 1) * h_dim1], &c__1, v, &c__1);
 	    }
@@ -12709,7 +13891,13 @@ L50:
 		    h__[k + 2 + (k - 1) * h_dim1] = 0.f;
 		}
 	    } else if (m > l) {
-		h__[k + (k - 1) * h_dim1] = -h__[k + (k - 1) * h_dim1];
+/*
+                 ==== Use the following instead of
+                 .    H( K, K-1 ) = -H( K, K-1 ) to
+                 .    avoid a bug when v(2) and v(3)
+                 .    underflow. ====
+*/
+		h__[k + (k - 1) * h_dim1] *= 1.f - t1;
 	    }
 	    v2 = v[1];
 	    t2 = t1 * v2;
@@ -12722,14 +13910,14 @@ L50:
                 in columns K to I2.
 */
 
-		i__3 = i2;
-		for (j = k; j <= i__3; ++j) {
+		i__2 = i2;
+		for (j = k; j <= i__2; ++j) {
 		    sum = h__[k + j * h_dim1] + v2 * h__[k + 1 + j * h_dim1]
 			    + v3 * h__[k + 2 + j * h_dim1];
 		    h__[k + j * h_dim1] -= sum * t1;
 		    h__[k + 1 + j * h_dim1] -= sum * t2;
 		    h__[k + 2 + j * h_dim1] -= sum * t3;
-/* L60: */
+/* L70: */
 		}
 
 /*
@@ -12738,29 +13926,29 @@ L50:
 
    Computing MIN
 */
-		i__4 = k + 3;
-		i__3 = min(i__4,i__);
-		for (j = i1; j <= i__3; ++j) {
+		i__3 = k + 3;
+		i__2 = min(i__3,i__);
+		for (j = i1; j <= i__2; ++j) {
 		    sum = h__[j + k * h_dim1] + v2 * h__[j + (k + 1) * h_dim1]
 			     + v3 * h__[j + (k + 2) * h_dim1];
 		    h__[j + k * h_dim1] -= sum * t1;
 		    h__[j + (k + 1) * h_dim1] -= sum * t2;
 		    h__[j + (k + 2) * h_dim1] -= sum * t3;
-/* L70: */
+/* L80: */
 		}
 
 		if (*wantz) {
 
 /*                 Accumulate transformations in the matrix Z */
 
-		    i__3 = *ihiz;
-		    for (j = *iloz; j <= i__3; ++j) {
+		    i__2 = *ihiz;
+		    for (j = *iloz; j <= i__2; ++j) {
 			sum = z__[j + k * z_dim1] + v2 * z__[j + (k + 1) *
 				z_dim1] + v3 * z__[j + (k + 2) * z_dim1];
 			z__[j + k * z_dim1] -= sum * t1;
 			z__[j + (k + 1) * z_dim1] -= sum * t2;
 			z__[j + (k + 2) * z_dim1] -= sum * t3;
-/* L80: */
+/* L90: */
 		    }
 		}
 	    } else if (nr == 2) {
@@ -12770,12 +13958,12 @@ L50:
                 in columns K to I2.
 */
 
-		i__3 = i2;
-		for (j = k; j <= i__3; ++j) {
+		i__2 = i2;
+		for (j = k; j <= i__2; ++j) {
 		    sum = h__[k + j * h_dim1] + v2 * h__[k + 1 + j * h_dim1];
 		    h__[k + j * h_dim1] -= sum * t1;
 		    h__[k + 1 + j * h_dim1] -= sum * t2;
-/* L90: */
+/* L100: */
 		}
 
 /*
@@ -12783,33 +13971,33 @@ L50:
                 matrix in rows I1 to min(K+3,I).
 */
 
-		i__3 = i__;
-		for (j = i1; j <= i__3; ++j) {
+		i__2 = i__;
+		for (j = i1; j <= i__2; ++j) {
 		    sum = h__[j + k * h_dim1] + v2 * h__[j + (k + 1) * h_dim1]
 			    ;
 		    h__[j + k * h_dim1] -= sum * t1;
 		    h__[j + (k + 1) * h_dim1] -= sum * t2;
-/* L100: */
+/* L110: */
 		}
 
 		if (*wantz) {
 
 /*                 Accumulate transformations in the matrix Z */
 
-		    i__3 = *ihiz;
-		    for (j = *iloz; j <= i__3; ++j) {
+		    i__2 = *ihiz;
+		    for (j = *iloz; j <= i__2; ++j) {
 			sum = z__[j + k * z_dim1] + v2 * z__[j + (k + 1) *
 				z_dim1];
 			z__[j + k * z_dim1] -= sum * t1;
 			z__[j + (k + 1) * z_dim1] -= sum * t2;
-/* L110: */
+/* L120: */
 		    }
 		}
 	    }
-/* L120: */
+/* L130: */
 	}
 
-/* L130: */
+/* L140: */
     }
 
 /*     Failure to converge in remaining number of iterations */
@@ -12817,7 +14005,7 @@ L50:
     *info = i__;
     return 0;
 
-L140:
+L150:
 
     if (l == i__) {
 
@@ -12861,23 +14049,19 @@ L140:
 	}
     }
 
-/*
-       Decrement number of remaining iterations, and return to start of
-       the main loop with new value of I.
-*/
+/*     return to start of the main loop with new value of I. */
 
-    itn -= its;
     i__ = l - 1;
-    goto L10;
+    goto L20;
 
-L150:
+L160:
     return 0;
 
 /*     End of SLAHQR */
 
 } /* slahqr_ */
 
-/* Subroutine */ int slahrd_(integer *n, integer *k, integer *nb, real *a,
+/* Subroutine */ int slahr2_(integer *n, integer *k, integer *nb, real *a,
 	integer *lda, real *tau, real *t, integer *ldt, real *y, integer *ldy)
 {
     /* System generated locals */
@@ -12889,25 +14073,28 @@ L150:
     static integer i__;
     static real ei;
     extern /* Subroutine */ int sscal_(integer *, real *, real *, integer *),
-	    sgemv_(char *, integer *, integer *, real *, real *, integer *,
-	    real *, integer *, real *, real *, integer *), scopy_(
-	    integer *, real *, integer *, real *, integer *), saxpy_(integer *
-	    , real *, real *, integer *, real *, integer *), strmv_(char *,
-	    char *, char *, integer *, real *, integer *, real *, integer *), slarfg_(integer *, real *, real *,
-	    integer *, real *);
+	    sgemm_(char *, char *, integer *, integer *, integer *, real *,
+	    real *, integer *, real *, integer *, real *, real *, integer *), sgemv_(char *, integer *, integer *, real *,
+	    real *, integer *, real *, integer *, real *, real *, integer *), scopy_(integer *, real *, integer *, real *, integer *),
+	    strmm_(char *, char *, char *, char *, integer *, integer *, real
+	    *, real *, integer *, real *, integer *), saxpy_(integer *, real *, real *, integer *, real *,
+	    integer *), strmv_(char *, char *, char *, integer *, real *,
+	    integer *, real *, integer *), slarfg_(
+	    integer *, real *, real *, integer *, real *), slacpy_(char *,
+	    integer *, integer *, real *, integer *, real *, integer *);
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2.1)                        --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+    -- April 2009                                                      --
 
 
     Purpose
     =======
 
-    SLAHRD reduces the first NB columns of a real general n-by-(n-k+1)
+    SLAHR2 reduces the first NB columns of A real general n-BY-(n-k+1)
     matrix A so that elements below the k-th subdiagonal are zero. The
     reduction is performed by an orthogonal similarity transformation
     Q' * A * Q. The routine returns the matrices V and T which determine
@@ -12924,6 +14111,7 @@ L150:
     K       (input) INTEGER
             The offset for the reduction. Elements below the k-th
             subdiagonal in the first NB columns are reduced to zero.
+            K < N.
 
     NB      (input) INTEGER
             The number of columns to be reduced.
@@ -12979,9 +14167,9 @@ L150:
     The contents of A on exit are illustrated by the following example
     with n = 7, k = 3 and nb = 2:
 
-       ( a   h   a   a   a )
-       ( a   h   a   a   a )
-       ( a   h   a   a   a )
+       ( a   a   a   a   a )
+       ( a   a   a   a   a )
+       ( a   a   a   a   a )
        ( h   h   a   a   a )
        ( v1  h   a   a   a )
        ( v1  v2  a   a   a )
@@ -12990,6 +14178,19 @@ L150:
     where a denotes an element of the original matrix A, h denotes a
     modified element of the upper Hessenberg matrix H, and vi denotes an
     element of the vector defining H(i).
+
+    This subroutine is a slight modification of LAPACK-3.0's DLAHRD
+    incorporating improvements proposed by Quintana-Orti and Van de
+    Gejin. Note that the entries of A(1:K,2:NB) differ from those
+    returned by the original LAPACK-3.0's DLAHRD routine. (This
+    subroutine is not backward compatible with LAPACK-3.0's DLAHRD.)
+
+    References
+    ==========
+
+    Gregorio Quintana-Orti and Robert van de Geijn, "Improving the
+    performance of reduction to Hessenberg form," ACM Transactions on
+    Mathematical Software, 32(2):180-194, June 2006.
 
     =====================================================================
 
@@ -13019,15 +14220,16 @@ L150:
 	if (i__ > 1) {
 
 /*
-             Update A(1:n,i)
+             Update A(K+1:N,I)
 
-             Compute i-th column of A - Y * V'
+             Update I-th column of A - Y * V'
 */
 
-	    i__2 = i__ - 1;
-	    sgemv_("No transpose", n, &i__2, &c_b151, &y[y_offset], ldy, &a[*
-		    k + i__ - 1 + a_dim1], lda, &c_b15, &a[i__ * a_dim1 + 1],
-		    &c__1);
+	    i__2 = *n - *k;
+	    i__3 = i__ - 1;
+	    sgemv_("NO TRANSPOSE", &i__2, &i__3, &c_b151, &y[*k + 1 + y_dim1],
+		     ldy, &a[*k + i__ - 1 + a_dim1], lda, &c_b15, &a[*k + 1 +
+		    i__ * a_dim1], &c__1);
 
 /*
              Apply I - V * T' * V' to this column (call it b) from the
@@ -13045,7 +14247,7 @@ L150:
 	    scopy_(&i__2, &a[*k + 1 + i__ * a_dim1], &c__1, &t[*nb * t_dim1 +
 		    1], &c__1);
 	    i__2 = i__ - 1;
-	    strmv_("Lower", "Transpose", "Unit", &i__2, &a[*k + 1 + a_dim1],
+	    strmv_("Lower", "Transpose", "UNIT", &i__2, &a[*k + 1 + a_dim1],
 		    lda, &t[*nb * t_dim1 + 1], &c__1);
 
 /*           w := w + V2'*b2 */
@@ -13059,21 +14261,21 @@ L150:
 /*           w := T'*w */
 
 	    i__2 = i__ - 1;
-	    strmv_("Upper", "Transpose", "Non-unit", &i__2, &t[t_offset], ldt,
+	    strmv_("Upper", "Transpose", "NON-UNIT", &i__2, &t[t_offset], ldt,
 		     &t[*nb * t_dim1 + 1], &c__1);
 
 /*           b2 := b2 - V2*w */
 
 	    i__2 = *n - *k - i__ + 1;
 	    i__3 = i__ - 1;
-	    sgemv_("No transpose", &i__2, &i__3, &c_b151, &a[*k + i__ +
+	    sgemv_("NO TRANSPOSE", &i__2, &i__3, &c_b151, &a[*k + i__ +
 		    a_dim1], lda, &t[*nb * t_dim1 + 1], &c__1, &c_b15, &a[*k
 		    + i__ + i__ * a_dim1], &c__1);
 
 /*           b1 := b1 - V1*w */
 
 	    i__2 = i__ - 1;
-	    strmv_("Lower", "No transpose", "Unit", &i__2, &a[*k + 1 + a_dim1]
+	    strmv_("Lower", "NO TRANSPOSE", "UNIT", &i__2, &a[*k + 1 + a_dim1]
 		    , lda, &t[*nb * t_dim1 + 1], &c__1);
 	    i__2 = i__ - 1;
 	    saxpy_(&i__2, &c_b151, &t[*nb * t_dim1 + 1], &c__1, &a[*k + 1 +
@@ -13083,8 +14285,8 @@ L150:
 	}
 
 /*
-          Generate the elementary reflector H(i) to annihilate
-          A(k+i+1:n,i)
+          Generate the elementary reflector H(I) to annihilate
+          A(K+I+1:N,I)
 */
 
 	i__2 = *n - *k - i__ + 1;
@@ -13095,29 +14297,33 @@ L150:
 	ei = a[*k + i__ + i__ * a_dim1];
 	a[*k + i__ + i__ * a_dim1] = 1.f;
 
-/*        Compute  Y(1:n,i) */
+/*        Compute  Y(K+1:N,I) */
 
-	i__2 = *n - *k - i__ + 1;
-	sgemv_("No transpose", n, &i__2, &c_b15, &a[(i__ + 1) * a_dim1 + 1],
-		lda, &a[*k + i__ + i__ * a_dim1], &c__1, &c_b29, &y[i__ *
-		y_dim1 + 1], &c__1);
+	i__2 = *n - *k;
+	i__3 = *n - *k - i__ + 1;
+	sgemv_("NO TRANSPOSE", &i__2, &i__3, &c_b15, &a[*k + 1 + (i__ + 1) *
+		a_dim1], lda, &a[*k + i__ + i__ * a_dim1], &c__1, &c_b29, &y[*
+		k + 1 + i__ * y_dim1], &c__1);
 	i__2 = *n - *k - i__ + 1;
 	i__3 = i__ - 1;
 	sgemv_("Transpose", &i__2, &i__3, &c_b15, &a[*k + i__ + a_dim1], lda,
 		&a[*k + i__ + i__ * a_dim1], &c__1, &c_b29, &t[i__ * t_dim1 +
 		1], &c__1);
-	i__2 = i__ - 1;
-	sgemv_("No transpose", n, &i__2, &c_b151, &y[y_offset], ldy, &t[i__ *
-		t_dim1 + 1], &c__1, &c_b15, &y[i__ * y_dim1 + 1], &c__1);
-	sscal_(n, &tau[i__], &y[i__ * y_dim1 + 1], &c__1);
+	i__2 = *n - *k;
+	i__3 = i__ - 1;
+	sgemv_("NO TRANSPOSE", &i__2, &i__3, &c_b151, &y[*k + 1 + y_dim1],
+		ldy, &t[i__ * t_dim1 + 1], &c__1, &c_b15, &y[*k + 1 + i__ *
+		y_dim1], &c__1);
+	i__2 = *n - *k;
+	sscal_(&i__2, &tau[i__], &y[*k + 1 + i__ * y_dim1], &c__1);
 
-/*        Compute T(1:i,i) */
+/*        Compute T(1:I,I) */
 
 	i__2 = i__ - 1;
 	r__1 = -tau[i__];
 	sscal_(&i__2, &r__1, &t[i__ * t_dim1 + 1], &c__1);
 	i__2 = i__ - 1;
-	strmv_("Upper", "No transpose", "Non-unit", &i__2, &t[t_offset], ldt,
+	strmv_("Upper", "No Transpose", "NON-UNIT", &i__2, &t[t_offset], ldt,
 		&t[i__ * t_dim1 + 1], &c__1)
 		;
 	t[i__ + i__ * t_dim1] = tau[i__];
@@ -13126,11 +14332,70 @@ L150:
     }
     a[*k + *nb + *nb * a_dim1] = ei;
 
+/*     Compute Y(1:K,1:NB) */
+
+    slacpy_("ALL", k, nb, &a[(a_dim1 << 1) + 1], lda, &y[y_offset], ldy);
+    strmm_("RIGHT", "Lower", "NO TRANSPOSE", "UNIT", k, nb, &c_b15, &a[*k + 1
+	    + a_dim1], lda, &y[y_offset], ldy);
+    if (*n > *k + *nb) {
+	i__1 = *n - *k - *nb;
+	sgemm_("NO TRANSPOSE", "NO TRANSPOSE", k, nb, &i__1, &c_b15, &a[(*nb
+		+ 2) * a_dim1 + 1], lda, &a[*k + 1 + *nb + a_dim1], lda, &
+		c_b15, &y[y_offset], ldy);
+    }
+    strmm_("RIGHT", "Upper", "NO TRANSPOSE", "NON-UNIT", k, nb, &c_b15, &t[
+	    t_offset], ldt, &y[y_offset], ldy);
+
     return 0;
 
-/*     End of SLAHRD */
+/*     End of SLAHR2 */
 
-} /* slahrd_ */
+} /* slahr2_ */
+
+logical slaisnan_(real *sin1, real *sin2)
+{
+    /* System generated locals */
+    logical ret_val;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
+
+
+    Purpose
+    =======
+
+    This routine is not for general use.  It exists solely to avoid
+    over-optimization in SISNAN.
+
+    SLAISNAN checks for NaNs by comparing its two arguments for
+    inequality.  NaN is the only floating-point value where NaN != NaN
+    returns .TRUE.  To check for NaNs, pass the same variable as both
+    arguments.
+
+    A compiler must assume that the two arguments are
+    not the same variable, and the test will not be optimized away.
+    Interprocedural or whole-program optimization may delete this
+    test.  The ISNAN functions will be replaced by the correct
+    Fortran 03 intrinsic once the intrinsic is widely available.
+
+    Arguments
+    =========
+
+    SIN1     (input) REAL
+
+    SIN2     (input) REAL
+            Two numbers to compare for inequality.
+
+    =====================================================================
+*/
+
+    ret_val = *sin1 != *sin2;
+    return ret_val;
+} /* slaisnan_ */
 
 /* Subroutine */ int slaln2_(logical *ltrans, integer *na, integer *nw, real *
 	smin, real *ca, real *a, integer *lda, real *d1, real *d2, real *b,
@@ -13169,10 +14434,10 @@ L150:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -13688,6 +14953,1389 @@ L150:
 #undef ci
 
 
+/* Subroutine */ int slals0_(integer *icompq, integer *nl, integer *nr,
+	integer *sqre, integer *nrhs, real *b, integer *ldb, real *bx,
+	integer *ldbx, integer *perm, integer *givptr, integer *givcol,
+	integer *ldgcol, real *givnum, integer *ldgnum, real *poles, real *
+	difl, real *difr, real *z__, integer *k, real *c__, real *s, real *
+	work, integer *info)
+{
+    /* System generated locals */
+    integer givcol_dim1, givcol_offset, b_dim1, b_offset, bx_dim1, bx_offset,
+	    difr_dim1, difr_offset, givnum_dim1, givnum_offset, poles_dim1,
+	    poles_offset, i__1, i__2;
+    real r__1;
+
+    /* Local variables */
+    static integer i__, j, m, n;
+    static real dj;
+    static integer nlp1;
+    static real temp;
+    extern /* Subroutine */ int srot_(integer *, real *, integer *, real *,
+	    integer *, real *, real *);
+    extern doublereal snrm2_(integer *, real *, integer *);
+    static real diflj, difrj, dsigj;
+    extern /* Subroutine */ int sscal_(integer *, real *, real *, integer *),
+	    sgemv_(char *, integer *, integer *, real *, real *, integer *,
+	    real *, integer *, real *, real *, integer *), scopy_(
+	    integer *, real *, integer *, real *, integer *);
+    extern doublereal slamc3_(real *, real *);
+    extern /* Subroutine */ int xerbla_(char *, integer *);
+    static real dsigjp;
+    extern /* Subroutine */ int slascl_(char *, integer *, integer *, real *,
+	    real *, integer *, integer *, real *, integer *, integer *), slacpy_(char *, integer *, integer *, real *, integer *,
+	    real *, integer *);
+
+
+/*
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    SLALS0 applies back the multiplying factors of either the left or the
+    right singular vector matrix of a diagonal matrix appended by a row
+    to the right hand side matrix B in solving the least squares problem
+    using the divide-and-conquer SVD approach.
+
+    For the left singular vector matrix, three types of orthogonal
+    matrices are involved:
+
+    (1L) Givens rotations: the number of such rotations is GIVPTR; the
+         pairs of columns/rows they were applied to are stored in GIVCOL;
+         and the C- and S-values of these rotations are stored in GIVNUM.
+
+    (2L) Permutation. The (NL+1)-st row of B is to be moved to the first
+         row, and for J=2:N, PERM(J)-th row of B is to be moved to the
+         J-th row.
+
+    (3L) The left singular vector matrix of the remaining matrix.
+
+    For the right singular vector matrix, four types of orthogonal
+    matrices are involved:
+
+    (1R) The right singular vector matrix of the remaining matrix.
+
+    (2R) If SQRE = 1, one extra Givens rotation to generate the right
+         null space.
+
+    (3R) The inverse transformation of (2L).
+
+    (4R) The inverse transformation of (1L).
+
+    Arguments
+    =========
+
+    ICOMPQ (input) INTEGER
+           Specifies whether singular vectors are to be computed in
+           factored form:
+           = 0: Left singular vector matrix.
+           = 1: Right singular vector matrix.
+
+    NL     (input) INTEGER
+           The row dimension of the upper block. NL >= 1.
+
+    NR     (input) INTEGER
+           The row dimension of the lower block. NR >= 1.
+
+    SQRE   (input) INTEGER
+           = 0: the lower block is an NR-by-NR square matrix.
+           = 1: the lower block is an NR-by-(NR+1) rectangular matrix.
+
+           The bidiagonal matrix has row dimension N = NL + NR + 1,
+           and column dimension M = N + SQRE.
+
+    NRHS   (input) INTEGER
+           The number of columns of B and BX. NRHS must be at least 1.
+
+    B      (input/output) REAL array, dimension ( LDB, NRHS )
+           On input, B contains the right hand sides of the least
+           squares problem in rows 1 through M. On output, B contains
+           the solution X in rows 1 through N.
+
+    LDB    (input) INTEGER
+           The leading dimension of B. LDB must be at least
+           max(1,MAX( M, N ) ).
+
+    BX     (workspace) REAL array, dimension ( LDBX, NRHS )
+
+    LDBX   (input) INTEGER
+           The leading dimension of BX.
+
+    PERM   (input) INTEGER array, dimension ( N )
+           The permutations (from deflation and sorting) applied
+           to the two blocks.
+
+    GIVPTR (input) INTEGER
+           The number of Givens rotations which took place in this
+           subproblem.
+
+    GIVCOL (input) INTEGER array, dimension ( LDGCOL, 2 )
+           Each pair of numbers indicates a pair of rows/columns
+           involved in a Givens rotation.
+
+    LDGCOL (input) INTEGER
+           The leading dimension of GIVCOL, must be at least N.
+
+    GIVNUM (input) REAL array, dimension ( LDGNUM, 2 )
+           Each number indicates the C or S value used in the
+           corresponding Givens rotation.
+
+    LDGNUM (input) INTEGER
+           The leading dimension of arrays DIFR, POLES and
+           GIVNUM, must be at least K.
+
+    POLES  (input) REAL array, dimension ( LDGNUM, 2 )
+           On entry, POLES(1:K, 1) contains the new singular
+           values obtained from solving the secular equation, and
+           POLES(1:K, 2) is an array containing the poles in the secular
+           equation.
+
+    DIFL   (input) REAL array, dimension ( K ).
+           On entry, DIFL(I) is the distance between I-th updated
+           (undeflated) singular value and the I-th (undeflated) old
+           singular value.
+
+    DIFR   (input) REAL array, dimension ( LDGNUM, 2 ).
+           On entry, DIFR(I, 1) contains the distances between I-th
+           updated (undeflated) singular value and the I+1-th
+           (undeflated) old singular value. And DIFR(I, 2) is the
+           normalizing factor for the I-th right singular vector.
+
+    Z      (input) REAL array, dimension ( K )
+           Contain the components of the deflation-adjusted updating row
+           vector.
+
+    K      (input) INTEGER
+           Contains the dimension of the non-deflated matrix,
+           This is the order of the related secular equation. 1 <= K <=N.
+
+    C      (input) REAL
+           C contains garbage if SQRE =0 and the C-value of a Givens
+           rotation related to the right null space if SQRE = 1.
+
+    S      (input) REAL
+           S contains garbage if SQRE =0 and the S-value of a Givens
+           rotation related to the right null space if SQRE = 1.
+
+    WORK   (workspace) REAL array, dimension ( K )
+
+    INFO   (output) INTEGER
+            = 0:  successful exit.
+            < 0:  if INFO = -i, the i-th argument had an illegal value.
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    bx_dim1 = *ldbx;
+    bx_offset = 1 + bx_dim1;
+    bx -= bx_offset;
+    --perm;
+    givcol_dim1 = *ldgcol;
+    givcol_offset = 1 + givcol_dim1;
+    givcol -= givcol_offset;
+    difr_dim1 = *ldgnum;
+    difr_offset = 1 + difr_dim1;
+    difr -= difr_offset;
+    poles_dim1 = *ldgnum;
+    poles_offset = 1 + poles_dim1;
+    poles -= poles_offset;
+    givnum_dim1 = *ldgnum;
+    givnum_offset = 1 + givnum_dim1;
+    givnum -= givnum_offset;
+    --difl;
+    --z__;
+    --work;
+
+    /* Function Body */
+    *info = 0;
+
+    if (*icompq < 0 || *icompq > 1) {
+	*info = -1;
+    } else if (*nl < 1) {
+	*info = -2;
+    } else if (*nr < 1) {
+	*info = -3;
+    } else if (*sqre < 0 || *sqre > 1) {
+	*info = -4;
+    }
+
+    n = *nl + *nr + 1;
+
+    if (*nrhs < 1) {
+	*info = -5;
+    } else if (*ldb < n) {
+	*info = -7;
+    } else if (*ldbx < n) {
+	*info = -9;
+    } else if (*givptr < 0) {
+	*info = -11;
+    } else if (*ldgcol < n) {
+	*info = -13;
+    } else if (*ldgnum < n) {
+	*info = -15;
+    } else if (*k < 1) {
+	*info = -20;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("SLALS0", &i__1);
+	return 0;
+    }
+
+    m = n + *sqre;
+    nlp1 = *nl + 1;
+
+    if (*icompq == 0) {
+
+/*
+          Apply back orthogonal transformations from the left.
+
+          Step (1L): apply back the Givens rotations performed.
+*/
+
+	i__1 = *givptr;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    srot_(nrhs, &b[givcol[i__ + (givcol_dim1 << 1)] + b_dim1], ldb, &
+		    b[givcol[i__ + givcol_dim1] + b_dim1], ldb, &givnum[i__ +
+		    (givnum_dim1 << 1)], &givnum[i__ + givnum_dim1]);
+/* L10: */
+	}
+
+/*        Step (2L): permute rows of B. */
+
+	scopy_(nrhs, &b[nlp1 + b_dim1], ldb, &bx[bx_dim1 + 1], ldbx);
+	i__1 = n;
+	for (i__ = 2; i__ <= i__1; ++i__) {
+	    scopy_(nrhs, &b[perm[i__] + b_dim1], ldb, &bx[i__ + bx_dim1],
+		    ldbx);
+/* L20: */
+	}
+
+/*
+          Step (3L): apply the inverse of the left singular vector
+          matrix to BX.
+*/
+
+	if (*k == 1) {
+	    scopy_(nrhs, &bx[bx_offset], ldbx, &b[b_offset], ldb);
+	    if (z__[1] < 0.f) {
+		sscal_(nrhs, &c_b151, &b[b_offset], ldb);
+	    }
+	} else {
+	    i__1 = *k;
+	    for (j = 1; j <= i__1; ++j) {
+		diflj = difl[j];
+		dj = poles[j + poles_dim1];
+		dsigj = -poles[j + (poles_dim1 << 1)];
+		if (j < *k) {
+		    difrj = -difr[j + difr_dim1];
+		    dsigjp = -poles[j + 1 + (poles_dim1 << 1)];
+		}
+		if (z__[j] == 0.f || poles[j + (poles_dim1 << 1)] == 0.f) {
+		    work[j] = 0.f;
+		} else {
+		    work[j] = -poles[j + (poles_dim1 << 1)] * z__[j] / diflj /
+			     (poles[j + (poles_dim1 << 1)] + dj);
+		}
+		i__2 = j - 1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+		    if (z__[i__] == 0.f || poles[i__ + (poles_dim1 << 1)] ==
+			    0.f) {
+			work[i__] = 0.f;
+		    } else {
+			work[i__] = poles[i__ + (poles_dim1 << 1)] * z__[i__]
+				/ (slamc3_(&poles[i__ + (poles_dim1 << 1)], &
+				dsigj) - diflj) / (poles[i__ + (poles_dim1 <<
+				1)] + dj);
+		    }
+/* L30: */
+		}
+		i__2 = *k;
+		for (i__ = j + 1; i__ <= i__2; ++i__) {
+		    if (z__[i__] == 0.f || poles[i__ + (poles_dim1 << 1)] ==
+			    0.f) {
+			work[i__] = 0.f;
+		    } else {
+			work[i__] = poles[i__ + (poles_dim1 << 1)] * z__[i__]
+				/ (slamc3_(&poles[i__ + (poles_dim1 << 1)], &
+				dsigjp) + difrj) / (poles[i__ + (poles_dim1 <<
+				 1)] + dj);
+		    }
+/* L40: */
+		}
+		work[1] = -1.f;
+		temp = snrm2_(k, &work[1], &c__1);
+		sgemv_("T", k, nrhs, &c_b15, &bx[bx_offset], ldbx, &work[1], &
+			c__1, &c_b29, &b[j + b_dim1], ldb);
+		slascl_("G", &c__0, &c__0, &temp, &c_b15, &c__1, nrhs, &b[j +
+			b_dim1], ldb, info);
+/* L50: */
+	    }
+	}
+
+/*        Move the deflated rows of BX to B also. */
+
+	if (*k < max(m,n)) {
+	    i__1 = n - *k;
+	    slacpy_("A", &i__1, nrhs, &bx[*k + 1 + bx_dim1], ldbx, &b[*k + 1
+		    + b_dim1], ldb);
+	}
+    } else {
+
+/*
+          Apply back the right orthogonal transformations.
+
+          Step (1R): apply back the new right singular vector matrix
+          to B.
+*/
+
+	if (*k == 1) {
+	    scopy_(nrhs, &b[b_offset], ldb, &bx[bx_offset], ldbx);
+	} else {
+	    i__1 = *k;
+	    for (j = 1; j <= i__1; ++j) {
+		dsigj = poles[j + (poles_dim1 << 1)];
+		if (z__[j] == 0.f) {
+		    work[j] = 0.f;
+		} else {
+		    work[j] = -z__[j] / difl[j] / (dsigj + poles[j +
+			    poles_dim1]) / difr[j + (difr_dim1 << 1)];
+		}
+		i__2 = j - 1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+		    if (z__[j] == 0.f) {
+			work[i__] = 0.f;
+		    } else {
+			r__1 = -poles[i__ + 1 + (poles_dim1 << 1)];
+			work[i__] = z__[j] / (slamc3_(&dsigj, &r__1) - difr[
+				i__ + difr_dim1]) / (dsigj + poles[i__ +
+				poles_dim1]) / difr[i__ + (difr_dim1 << 1)];
+		    }
+/* L60: */
+		}
+		i__2 = *k;
+		for (i__ = j + 1; i__ <= i__2; ++i__) {
+		    if (z__[j] == 0.f) {
+			work[i__] = 0.f;
+		    } else {
+			r__1 = -poles[i__ + (poles_dim1 << 1)];
+			work[i__] = z__[j] / (slamc3_(&dsigj, &r__1) - difl[
+				i__]) / (dsigj + poles[i__ + poles_dim1]) /
+				difr[i__ + (difr_dim1 << 1)];
+		    }
+/* L70: */
+		}
+		sgemv_("T", k, nrhs, &c_b15, &b[b_offset], ldb, &work[1], &
+			c__1, &c_b29, &bx[j + bx_dim1], ldbx);
+/* L80: */
+	    }
+	}
+
+/*
+          Step (2R): if SQRE = 1, apply back the rotation that is
+          related to the right null space of the subproblem.
+*/
+
+	if (*sqre == 1) {
+	    scopy_(nrhs, &b[m + b_dim1], ldb, &bx[m + bx_dim1], ldbx);
+	    srot_(nrhs, &bx[bx_dim1 + 1], ldbx, &bx[m + bx_dim1], ldbx, c__,
+		    s);
+	}
+	if (*k < max(m,n)) {
+	    i__1 = n - *k;
+	    slacpy_("A", &i__1, nrhs, &b[*k + 1 + b_dim1], ldb, &bx[*k + 1 +
+		    bx_dim1], ldbx);
+	}
+
+/*        Step (3R): permute rows of B. */
+
+	scopy_(nrhs, &bx[bx_dim1 + 1], ldbx, &b[nlp1 + b_dim1], ldb);
+	if (*sqre == 1) {
+	    scopy_(nrhs, &bx[m + bx_dim1], ldbx, &b[m + b_dim1], ldb);
+	}
+	i__1 = n;
+	for (i__ = 2; i__ <= i__1; ++i__) {
+	    scopy_(nrhs, &bx[i__ + bx_dim1], ldbx, &b[perm[i__] + b_dim1],
+		    ldb);
+/* L90: */
+	}
+
+/*        Step (4R): apply back the Givens rotations performed. */
+
+	for (i__ = *givptr; i__ >= 1; --i__) {
+	    r__1 = -givnum[i__ + givnum_dim1];
+	    srot_(nrhs, &b[givcol[i__ + (givcol_dim1 << 1)] + b_dim1], ldb, &
+		    b[givcol[i__ + givcol_dim1] + b_dim1], ldb, &givnum[i__ +
+		    (givnum_dim1 << 1)], &r__1);
+/* L100: */
+	}
+    }
+
+    return 0;
+
+/*     End of SLALS0 */
+
+} /* slals0_ */
+
+/* Subroutine */ int slalsa_(integer *icompq, integer *smlsiz, integer *n,
+	integer *nrhs, real *b, integer *ldb, real *bx, integer *ldbx, real *
+	u, integer *ldu, real *vt, integer *k, real *difl, real *difr, real *
+	z__, real *poles, integer *givptr, integer *givcol, integer *ldgcol,
+	integer *perm, real *givnum, real *c__, real *s, real *work, integer *
+	iwork, integer *info)
+{
+    /* System generated locals */
+    integer givcol_dim1, givcol_offset, perm_dim1, perm_offset, b_dim1,
+	    b_offset, bx_dim1, bx_offset, difl_dim1, difl_offset, difr_dim1,
+	    difr_offset, givnum_dim1, givnum_offset, poles_dim1, poles_offset,
+	     u_dim1, u_offset, vt_dim1, vt_offset, z_dim1, z_offset, i__1,
+	    i__2;
+
+    /* Local variables */
+    static integer i__, j, i1, ic, lf, nd, ll, nl, nr, im1, nlf, nrf, lvl,
+	    ndb1, nlp1, lvl2, nrp1, nlvl, sqre, inode, ndiml;
+    extern /* Subroutine */ int sgemm_(char *, char *, integer *, integer *,
+	    integer *, real *, real *, integer *, real *, integer *, real *,
+	    real *, integer *);
+    static integer ndimr;
+    extern /* Subroutine */ int scopy_(integer *, real *, integer *, real *,
+	    integer *), slals0_(integer *, integer *, integer *, integer *,
+	    integer *, real *, integer *, real *, integer *, integer *,
+	    integer *, integer *, integer *, real *, integer *, real *, real *
+	    , real *, real *, integer *, real *, real *, real *, integer *),
+	    xerbla_(char *, integer *), slasdt_(integer *, integer *,
+	    integer *, integer *, integer *, integer *, integer *);
+
+
+/*
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    SLALSA is an itermediate step in solving the least squares problem
+    by computing the SVD of the coefficient matrix in compact form (The
+    singular vectors are computed as products of simple orthorgonal
+    matrices.).
+
+    If ICOMPQ = 0, SLALSA applies the inverse of the left singular vector
+    matrix of an upper bidiagonal matrix to the right hand side; and if
+    ICOMPQ = 1, SLALSA applies the right singular vector matrix to the
+    right hand side. The singular vector matrices were generated in
+    compact form by SLALSA.
+
+    Arguments
+    =========
+
+
+    ICOMPQ (input) INTEGER
+           Specifies whether the left or the right singular vector
+           matrix is involved.
+           = 0: Left singular vector matrix
+           = 1: Right singular vector matrix
+
+    SMLSIZ (input) INTEGER
+           The maximum size of the subproblems at the bottom of the
+           computation tree.
+
+    N      (input) INTEGER
+           The row and column dimensions of the upper bidiagonal matrix.
+
+    NRHS   (input) INTEGER
+           The number of columns of B and BX. NRHS must be at least 1.
+
+    B      (input/output) REAL array, dimension ( LDB, NRHS )
+           On input, B contains the right hand sides of the least
+           squares problem in rows 1 through M.
+           On output, B contains the solution X in rows 1 through N.
+
+    LDB    (input) INTEGER
+           The leading dimension of B in the calling subprogram.
+           LDB must be at least max(1,MAX( M, N ) ).
+
+    BX     (output) REAL array, dimension ( LDBX, NRHS )
+           On exit, the result of applying the left or right singular
+           vector matrix to B.
+
+    LDBX   (input) INTEGER
+           The leading dimension of BX.
+
+    U      (input) REAL array, dimension ( LDU, SMLSIZ ).
+           On entry, U contains the left singular vector matrices of all
+           subproblems at the bottom level.
+
+    LDU    (input) INTEGER, LDU = > N.
+           The leading dimension of arrays U, VT, DIFL, DIFR,
+           POLES, GIVNUM, and Z.
+
+    VT     (input) REAL array, dimension ( LDU, SMLSIZ+1 ).
+           On entry, VT' contains the right singular vector matrices of
+           all subproblems at the bottom level.
+
+    K      (input) INTEGER array, dimension ( N ).
+
+    DIFL   (input) REAL array, dimension ( LDU, NLVL ).
+           where NLVL = INT(log_2 (N/(SMLSIZ+1))) + 1.
+
+    DIFR   (input) REAL array, dimension ( LDU, 2 * NLVL ).
+           On entry, DIFL(*, I) and DIFR(*, 2 * I -1) record
+           distances between singular values on the I-th level and
+           singular values on the (I -1)-th level, and DIFR(*, 2 * I)
+           record the normalizing factors of the right singular vectors
+           matrices of subproblems on I-th level.
+
+    Z      (input) REAL array, dimension ( LDU, NLVL ).
+           On entry, Z(1, I) contains the components of the deflation-
+           adjusted updating row vector for subproblems on the I-th
+           level.
+
+    POLES  (input) REAL array, dimension ( LDU, 2 * NLVL ).
+           On entry, POLES(*, 2 * I -1: 2 * I) contains the new and old
+           singular values involved in the secular equations on the I-th
+           level.
+
+    GIVPTR (input) INTEGER array, dimension ( N ).
+           On entry, GIVPTR( I ) records the number of Givens
+           rotations performed on the I-th problem on the computation
+           tree.
+
+    GIVCOL (input) INTEGER array, dimension ( LDGCOL, 2 * NLVL ).
+           On entry, for each I, GIVCOL(*, 2 * I - 1: 2 * I) records the
+           locations of Givens rotations performed on the I-th level on
+           the computation tree.
+
+    LDGCOL (input) INTEGER, LDGCOL = > N.
+           The leading dimension of arrays GIVCOL and PERM.
+
+    PERM   (input) INTEGER array, dimension ( LDGCOL, NLVL ).
+           On entry, PERM(*, I) records permutations done on the I-th
+           level of the computation tree.
+
+    GIVNUM (input) REAL array, dimension ( LDU, 2 * NLVL ).
+           On entry, GIVNUM(*, 2 *I -1 : 2 * I) records the C- and S-
+           values of Givens rotations performed on the I-th level on the
+           computation tree.
+
+    C      (input) REAL array, dimension ( N ).
+           On entry, if the I-th subproblem is not square,
+           C( I ) contains the C-value of a Givens rotation related to
+           the right null space of the I-th subproblem.
+
+    S      (input) REAL array, dimension ( N ).
+           On entry, if the I-th subproblem is not square,
+           S( I ) contains the S-value of a Givens rotation related to
+           the right null space of the I-th subproblem.
+
+    WORK   (workspace) REAL array.
+           The dimension must be at least N.
+
+    IWORK  (workspace) INTEGER array.
+           The dimension must be at least 3 * N
+
+    INFO   (output) INTEGER
+            = 0:  successful exit.
+            < 0:  if INFO = -i, the i-th argument had an illegal value.
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    bx_dim1 = *ldbx;
+    bx_offset = 1 + bx_dim1;
+    bx -= bx_offset;
+    givnum_dim1 = *ldu;
+    givnum_offset = 1 + givnum_dim1;
+    givnum -= givnum_offset;
+    poles_dim1 = *ldu;
+    poles_offset = 1 + poles_dim1;
+    poles -= poles_offset;
+    z_dim1 = *ldu;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    difr_dim1 = *ldu;
+    difr_offset = 1 + difr_dim1;
+    difr -= difr_offset;
+    difl_dim1 = *ldu;
+    difl_offset = 1 + difl_dim1;
+    difl -= difl_offset;
+    vt_dim1 = *ldu;
+    vt_offset = 1 + vt_dim1;
+    vt -= vt_offset;
+    u_dim1 = *ldu;
+    u_offset = 1 + u_dim1;
+    u -= u_offset;
+    --k;
+    --givptr;
+    perm_dim1 = *ldgcol;
+    perm_offset = 1 + perm_dim1;
+    perm -= perm_offset;
+    givcol_dim1 = *ldgcol;
+    givcol_offset = 1 + givcol_dim1;
+    givcol -= givcol_offset;
+    --c__;
+    --s;
+    --work;
+    --iwork;
+
+    /* Function Body */
+    *info = 0;
+
+    if (*icompq < 0 || *icompq > 1) {
+	*info = -1;
+    } else if (*smlsiz < 3) {
+	*info = -2;
+    } else if (*n < *smlsiz) {
+	*info = -3;
+    } else if (*nrhs < 1) {
+	*info = -4;
+    } else if (*ldb < *n) {
+	*info = -6;
+    } else if (*ldbx < *n) {
+	*info = -8;
+    } else if (*ldu < *n) {
+	*info = -10;
+    } else if (*ldgcol < *n) {
+	*info = -19;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("SLALSA", &i__1);
+	return 0;
+    }
+
+/*     Book-keeping and  setting up the computation tree. */
+
+    inode = 1;
+    ndiml = inode + *n;
+    ndimr = ndiml + *n;
+
+    slasdt_(n, &nlvl, &nd, &iwork[inode], &iwork[ndiml], &iwork[ndimr],
+	    smlsiz);
+
+/*
+       The following code applies back the left singular vector factors.
+       For applying back the right singular vector factors, go to 50.
+*/
+
+    if (*icompq == 1) {
+	goto L50;
+    }
+
+/*
+       The nodes on the bottom level of the tree were solved
+       by SLASDQ. The corresponding left and right singular vector
+       matrices are in explicit form. First apply back the left
+       singular vector matrices.
+*/
+
+    ndb1 = (nd + 1) / 2;
+    i__1 = nd;
+    for (i__ = ndb1; i__ <= i__1; ++i__) {
+
+/*
+          IC : center row of each node
+          NL : number of rows of left  subproblem
+          NR : number of rows of right subproblem
+          NLF: starting row of the left   subproblem
+          NRF: starting row of the right  subproblem
+*/
+
+	i1 = i__ - 1;
+	ic = iwork[inode + i1];
+	nl = iwork[ndiml + i1];
+	nr = iwork[ndimr + i1];
+	nlf = ic - nl;
+	nrf = ic + 1;
+	sgemm_("T", "N", &nl, nrhs, &nl, &c_b15, &u[nlf + u_dim1], ldu, &b[
+		nlf + b_dim1], ldb, &c_b29, &bx[nlf + bx_dim1], ldbx);
+	sgemm_("T", "N", &nr, nrhs, &nr, &c_b15, &u[nrf + u_dim1], ldu, &b[
+		nrf + b_dim1], ldb, &c_b29, &bx[nrf + bx_dim1], ldbx);
+/* L10: */
+    }
+
+/*
+       Next copy the rows of B that correspond to unchanged rows
+       in the bidiagonal matrix to BX.
+*/
+
+    i__1 = nd;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	ic = iwork[inode + i__ - 1];
+	scopy_(nrhs, &b[ic + b_dim1], ldb, &bx[ic + bx_dim1], ldbx);
+/* L20: */
+    }
+
+/*
+       Finally go through the left singular vector matrices of all
+       the other subproblems bottom-up on the tree.
+*/
+
+    j = pow_ii(&c__2, &nlvl);
+    sqre = 0;
+
+    for (lvl = nlvl; lvl >= 1; --lvl) {
+	lvl2 = (lvl << 1) - 1;
+
+/*
+          find the first node LF and last node LL on
+          the current level LVL
+*/
+
+	if (lvl == 1) {
+	    lf = 1;
+	    ll = 1;
+	} else {
+	    i__1 = lvl - 1;
+	    lf = pow_ii(&c__2, &i__1);
+	    ll = (lf << 1) - 1;
+	}
+	i__1 = ll;
+	for (i__ = lf; i__ <= i__1; ++i__) {
+	    im1 = i__ - 1;
+	    ic = iwork[inode + im1];
+	    nl = iwork[ndiml + im1];
+	    nr = iwork[ndimr + im1];
+	    nlf = ic - nl;
+	    nrf = ic + 1;
+	    --j;
+	    slals0_(icompq, &nl, &nr, &sqre, nrhs, &bx[nlf + bx_dim1], ldbx, &
+		    b[nlf + b_dim1], ldb, &perm[nlf + lvl * perm_dim1], &
+		    givptr[j], &givcol[nlf + lvl2 * givcol_dim1], ldgcol, &
+		    givnum[nlf + lvl2 * givnum_dim1], ldu, &poles[nlf + lvl2 *
+		     poles_dim1], &difl[nlf + lvl * difl_dim1], &difr[nlf +
+		    lvl2 * difr_dim1], &z__[nlf + lvl * z_dim1], &k[j], &c__[
+		    j], &s[j], &work[1], info);
+/* L30: */
+	}
+/* L40: */
+    }
+    goto L90;
+
+/*     ICOMPQ = 1: applying back the right singular vector factors. */
+
+L50:
+
+/*
+       First now go through the right singular vector matrices of all
+       the tree nodes top-down.
+*/
+
+    j = 0;
+    i__1 = nlvl;
+    for (lvl = 1; lvl <= i__1; ++lvl) {
+	lvl2 = (lvl << 1) - 1;
+
+/*
+          Find the first node LF and last node LL on
+          the current level LVL.
+*/
+
+	if (lvl == 1) {
+	    lf = 1;
+	    ll = 1;
+	} else {
+	    i__2 = lvl - 1;
+	    lf = pow_ii(&c__2, &i__2);
+	    ll = (lf << 1) - 1;
+	}
+	i__2 = lf;
+	for (i__ = ll; i__ >= i__2; --i__) {
+	    im1 = i__ - 1;
+	    ic = iwork[inode + im1];
+	    nl = iwork[ndiml + im1];
+	    nr = iwork[ndimr + im1];
+	    nlf = ic - nl;
+	    nrf = ic + 1;
+	    if (i__ == ll) {
+		sqre = 0;
+	    } else {
+		sqre = 1;
+	    }
+	    ++j;
+	    slals0_(icompq, &nl, &nr, &sqre, nrhs, &b[nlf + b_dim1], ldb, &bx[
+		    nlf + bx_dim1], ldbx, &perm[nlf + lvl * perm_dim1], &
+		    givptr[j], &givcol[nlf + lvl2 * givcol_dim1], ldgcol, &
+		    givnum[nlf + lvl2 * givnum_dim1], ldu, &poles[nlf + lvl2 *
+		     poles_dim1], &difl[nlf + lvl * difl_dim1], &difr[nlf +
+		    lvl2 * difr_dim1], &z__[nlf + lvl * z_dim1], &k[j], &c__[
+		    j], &s[j], &work[1], info);
+/* L60: */
+	}
+/* L70: */
+    }
+
+/*
+       The nodes on the bottom level of the tree were solved
+       by SLASDQ. The corresponding right singular vector
+       matrices are in explicit form. Apply them back.
+*/
+
+    ndb1 = (nd + 1) / 2;
+    i__1 = nd;
+    for (i__ = ndb1; i__ <= i__1; ++i__) {
+	i1 = i__ - 1;
+	ic = iwork[inode + i1];
+	nl = iwork[ndiml + i1];
+	nr = iwork[ndimr + i1];
+	nlp1 = nl + 1;
+	if (i__ == nd) {
+	    nrp1 = nr;
+	} else {
+	    nrp1 = nr + 1;
+	}
+	nlf = ic - nl;
+	nrf = ic + 1;
+	sgemm_("T", "N", &nlp1, nrhs, &nlp1, &c_b15, &vt[nlf + vt_dim1], ldu,
+		&b[nlf + b_dim1], ldb, &c_b29, &bx[nlf + bx_dim1], ldbx);
+	sgemm_("T", "N", &nrp1, nrhs, &nrp1, &c_b15, &vt[nrf + vt_dim1], ldu,
+		&b[nrf + b_dim1], ldb, &c_b29, &bx[nrf + bx_dim1], ldbx);
+/* L80: */
+    }
+
+L90:
+
+    return 0;
+
+/*     End of SLALSA */
+
+} /* slalsa_ */
+
+/* Subroutine */ int slalsd_(char *uplo, integer *smlsiz, integer *n, integer
+	*nrhs, real *d__, real *e, real *b, integer *ldb, real *rcond,
+	integer *rank, real *work, integer *iwork, integer *info)
+{
+    /* System generated locals */
+    integer b_dim1, b_offset, i__1, i__2;
+    real r__1;
+
+    /* Local variables */
+    static integer c__, i__, j, k;
+    static real r__;
+    static integer s, u, z__;
+    static real cs;
+    static integer bx;
+    static real sn;
+    static integer st, vt, nm1, st1;
+    static real eps;
+    static integer iwk;
+    static real tol;
+    static integer difl, difr;
+    static real rcnd;
+    static integer perm, nsub, nlvl, sqre, bxst;
+    extern /* Subroutine */ int srot_(integer *, real *, integer *, real *,
+	    integer *, real *, real *), sgemm_(char *, char *, integer *,
+	    integer *, integer *, real *, real *, integer *, real *, integer *
+	    , real *, real *, integer *);
+    static integer poles, sizei, nsize;
+    extern /* Subroutine */ int scopy_(integer *, real *, integer *, real *,
+	    integer *);
+    static integer nwork, icmpq1, icmpq2;
+    extern doublereal slamch_(char *);
+    extern /* Subroutine */ int slasda_(integer *, integer *, integer *,
+	    integer *, real *, real *, real *, integer *, real *, integer *,
+	    real *, real *, real *, real *, integer *, integer *, integer *,
+	    integer *, real *, real *, real *, real *, integer *, integer *),
+	    xerbla_(char *, integer *), slalsa_(integer *, integer *,
+	    integer *, integer *, real *, integer *, real *, integer *, real *
+	    , integer *, real *, integer *, real *, real *, real *, real *,
+	    integer *, integer *, integer *, integer *, real *, real *, real *
+	    , real *, integer *, integer *), slascl_(char *, integer *,
+	    integer *, real *, real *, integer *, integer *, real *, integer *
+	    , integer *);
+    static integer givcol;
+    extern integer isamax_(integer *, real *, integer *);
+    extern /* Subroutine */ int slasdq_(char *, integer *, integer *, integer
+	    *, integer *, integer *, real *, real *, real *, integer *, real *
+	    , integer *, real *, integer *, real *, integer *),
+	    slacpy_(char *, integer *, integer *, real *, integer *, real *,
+	    integer *), slartg_(real *, real *, real *, real *, real *
+	    ), slaset_(char *, integer *, integer *, real *, real *, real *,
+	    integer *);
+    static real orgnrm;
+    static integer givnum;
+    extern doublereal slanst_(char *, integer *, real *, real *);
+    extern /* Subroutine */ int slasrt_(char *, integer *, real *, integer *);
+    static integer givptr, smlszp;
+
+
+/*
+    -- LAPACK routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
+
+
+    Purpose
+    =======
+
+    SLALSD uses the singular value decomposition of A to solve the least
+    squares problem of finding X to minimize the Euclidean norm of each
+    column of A*X-B, where A is N-by-N upper bidiagonal, and X and B
+    are N-by-NRHS. The solution X overwrites B.
+
+    The singular values of A smaller than RCOND times the largest
+    singular value are treated as zero in solving the least squares
+    problem; in this case a minimum norm solution is returned.
+    The actual singular values are returned in D in ascending order.
+
+    This code makes very mild assumptions about floating point
+    arithmetic. It will work on machines with a guard digit in
+    add/subtract, or on those binary machines without guard digits
+    which subtract like the Cray XMP, Cray YMP, Cray C 90, or Cray 2.
+    It could conceivably fail on hexadecimal or decimal machines
+    without guard digits, but we know of none.
+
+    Arguments
+    =========
+
+    UPLO   (input) CHARACTER*1
+           = 'U': D and E define an upper bidiagonal matrix.
+           = 'L': D and E define a  lower bidiagonal matrix.
+
+    SMLSIZ (input) INTEGER
+           The maximum size of the subproblems at the bottom of the
+           computation tree.
+
+    N      (input) INTEGER
+           The dimension of the  bidiagonal matrix.  N >= 0.
+
+    NRHS   (input) INTEGER
+           The number of columns of B. NRHS must be at least 1.
+
+    D      (input/output) REAL array, dimension (N)
+           On entry D contains the main diagonal of the bidiagonal
+           matrix. On exit, if INFO = 0, D contains its singular values.
+
+    E      (input/output) REAL array, dimension (N-1)
+           Contains the super-diagonal entries of the bidiagonal matrix.
+           On exit, E has been destroyed.
+
+    B      (input/output) REAL array, dimension (LDB,NRHS)
+           On input, B contains the right hand sides of the least
+           squares problem. On output, B contains the solution X.
+
+    LDB    (input) INTEGER
+           The leading dimension of B in the calling subprogram.
+           LDB must be at least max(1,N).
+
+    RCOND  (input) REAL
+           The singular values of A less than or equal to RCOND times
+           the largest singular value are treated as zero in solving
+           the least squares problem. If RCOND is negative,
+           machine precision is used instead.
+           For example, if diag(S)*X=B were the least squares problem,
+           where diag(S) is a diagonal matrix of singular values, the
+           solution would be X(i) = B(i) / S(i) if S(i) is greater than
+           RCOND*max(S), and X(i) = 0 if S(i) is less than or equal to
+           RCOND*max(S).
+
+    RANK   (output) INTEGER
+           The number of singular values of A greater than RCOND times
+           the largest singular value.
+
+    WORK   (workspace) REAL array, dimension at least
+           (9*N + 2*N*SMLSIZ + 8*N*NLVL + N*NRHS + (SMLSIZ+1)**2),
+           where NLVL = max(0, INT(log_2 (N/(SMLSIZ+1))) + 1).
+
+    IWORK  (workspace) INTEGER array, dimension at least
+           (3*N*NLVL + 11*N)
+
+    INFO   (output) INTEGER
+           = 0:  successful exit.
+           < 0:  if INFO = -i, the i-th argument had an illegal value.
+           > 0:  The algorithm failed to compute a singular value while
+                 working on the submatrix lying in rows and columns
+                 INFO/(N+1) through MOD(INFO,N+1).
+
+    Further Details
+    ===============
+
+    Based on contributions by
+       Ming Gu and Ren-Cang Li, Computer Science Division, University of
+         California at Berkeley, USA
+       Osni Marques, LBNL/NERSC, USA
+
+    =====================================================================
+
+
+       Test the input parameters.
+*/
+
+    /* Parameter adjustments */
+    --d__;
+    --e;
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    --work;
+    --iwork;
+
+    /* Function Body */
+    *info = 0;
+
+    if (*n < 0) {
+	*info = -3;
+    } else if (*nrhs < 1) {
+	*info = -4;
+    } else if (*ldb < 1 || *ldb < *n) {
+	*info = -8;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("SLALSD", &i__1);
+	return 0;
+    }
+
+    eps = slamch_("Epsilon");
+
+/*     Set up the tolerance. */
+
+    if (*rcond <= 0.f || *rcond >= 1.f) {
+	rcnd = eps;
+    } else {
+	rcnd = *rcond;
+    }
+
+    *rank = 0;
+
+/*     Quick return if possible. */
+
+    if (*n == 0) {
+	return 0;
+    } else if (*n == 1) {
+	if (d__[1] == 0.f) {
+	    slaset_("A", &c__1, nrhs, &c_b29, &c_b29, &b[b_offset], ldb);
+	} else {
+	    *rank = 1;
+	    slascl_("G", &c__0, &c__0, &d__[1], &c_b15, &c__1, nrhs, &b[
+		    b_offset], ldb, info);
+	    d__[1] = dabs(d__[1]);
+	}
+	return 0;
+    }
+
+/*     Rotate the matrix if it is lower bidiagonal. */
+
+    if (*(unsigned char *)uplo == 'L') {
+	i__1 = *n - 1;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    slartg_(&d__[i__], &e[i__], &cs, &sn, &r__);
+	    d__[i__] = r__;
+	    e[i__] = sn * d__[i__ + 1];
+	    d__[i__ + 1] = cs * d__[i__ + 1];
+	    if (*nrhs == 1) {
+		srot_(&c__1, &b[i__ + b_dim1], &c__1, &b[i__ + 1 + b_dim1], &
+			c__1, &cs, &sn);
+	    } else {
+		work[(i__ << 1) - 1] = cs;
+		work[i__ * 2] = sn;
+	    }
+/* L10: */
+	}
+	if (*nrhs > 1) {
+	    i__1 = *nrhs;
+	    for (i__ = 1; i__ <= i__1; ++i__) {
+		i__2 = *n - 1;
+		for (j = 1; j <= i__2; ++j) {
+		    cs = work[(j << 1) - 1];
+		    sn = work[j * 2];
+		    srot_(&c__1, &b[j + i__ * b_dim1], &c__1, &b[j + 1 + i__ *
+			     b_dim1], &c__1, &cs, &sn);
+/* L20: */
+		}
+/* L30: */
+	    }
+	}
+    }
+
+/*     Scale. */
+
+    nm1 = *n - 1;
+    orgnrm = slanst_("M", n, &d__[1], &e[1]);
+    if (orgnrm == 0.f) {
+	slaset_("A", n, nrhs, &c_b29, &c_b29, &b[b_offset], ldb);
+	return 0;
+    }
+
+    slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, n, &c__1, &d__[1], n, info);
+    slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, &nm1, &c__1, &e[1], &nm1,
+	    info);
+
+/*
+       If N is smaller than the minimum divide size SMLSIZ, then solve
+       the problem with another solver.
+*/
+
+    if (*n <= *smlsiz) {
+	nwork = *n * *n + 1;
+	slaset_("A", n, n, &c_b29, &c_b15, &work[1], n);
+	slasdq_("U", &c__0, n, n, &c__0, nrhs, &d__[1], &e[1], &work[1], n, &
+		work[1], n, &b[b_offset], ldb, &work[nwork], info);
+	if (*info != 0) {
+	    return 0;
+	}
+	tol = rcnd * (r__1 = d__[isamax_(n, &d__[1], &c__1)], dabs(r__1));
+	i__1 = *n;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+	    if (d__[i__] <= tol) {
+		slaset_("A", &c__1, nrhs, &c_b29, &c_b29, &b[i__ + b_dim1],
+			ldb);
+	    } else {
+		slascl_("G", &c__0, &c__0, &d__[i__], &c_b15, &c__1, nrhs, &b[
+			i__ + b_dim1], ldb, info);
+		++(*rank);
+	    }
+/* L40: */
+	}
+	sgemm_("T", "N", n, nrhs, n, &c_b15, &work[1], n, &b[b_offset], ldb, &
+		c_b29, &work[nwork], n);
+	slacpy_("A", n, nrhs, &work[nwork], n, &b[b_offset], ldb);
+
+/*        Unscale. */
+
+	slascl_("G", &c__0, &c__0, &c_b15, &orgnrm, n, &c__1, &d__[1], n,
+		info);
+	slasrt_("D", n, &d__[1], info);
+	slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, n, nrhs, &b[b_offset],
+		ldb, info);
+
+	return 0;
+    }
+
+/*     Book-keeping and setting up some constants. */
+
+    nlvl = (integer) (log((real) (*n) / (real) (*smlsiz + 1)) / log(2.f)) + 1;
+
+    smlszp = *smlsiz + 1;
+
+    u = 1;
+    vt = *smlsiz * *n + 1;
+    difl = vt + smlszp * *n;
+    difr = difl + nlvl * *n;
+    z__ = difr + (nlvl * *n << 1);
+    c__ = z__ + nlvl * *n;
+    s = c__ + *n;
+    poles = s + *n;
+    givnum = poles + (nlvl << 1) * *n;
+    bx = givnum + (nlvl << 1) * *n;
+    nwork = bx + *n * *nrhs;
+
+    sizei = *n + 1;
+    k = sizei + *n;
+    givptr = k + *n;
+    perm = givptr + *n;
+    givcol = perm + nlvl * *n;
+    iwk = givcol + (nlvl * *n << 1);
+
+    st = 1;
+    sqre = 0;
+    icmpq1 = 1;
+    icmpq2 = 0;
+    nsub = 0;
+
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	if ((r__1 = d__[i__], dabs(r__1)) < eps) {
+	    d__[i__] = r_sign(&eps, &d__[i__]);
+	}
+/* L50: */
+    }
+
+    i__1 = nm1;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	if ((r__1 = e[i__], dabs(r__1)) < eps || i__ == nm1) {
+	    ++nsub;
+	    iwork[nsub] = st;
+
+/*
+             Subproblem found. First determine its size and then
+             apply divide and conquer on it.
+*/
+
+	    if (i__ < nm1) {
+
+/*              A subproblem with E(I) small for I < NM1. */
+
+		nsize = i__ - st + 1;
+		iwork[sizei + nsub - 1] = nsize;
+	    } else if ((r__1 = e[i__], dabs(r__1)) >= eps) {
+
+/*              A subproblem with E(NM1) not too small but I = NM1. */
+
+		nsize = *n - st + 1;
+		iwork[sizei + nsub - 1] = nsize;
+	    } else {
+
+/*
+                A subproblem with E(NM1) small. This implies an
+                1-by-1 subproblem at D(N), which is not solved
+                explicitly.
+*/
+
+		nsize = i__ - st + 1;
+		iwork[sizei + nsub - 1] = nsize;
+		++nsub;
+		iwork[nsub] = *n;
+		iwork[sizei + nsub - 1] = 1;
+		scopy_(nrhs, &b[*n + b_dim1], ldb, &work[bx + nm1], n);
+	    }
+	    st1 = st - 1;
+	    if (nsize == 1) {
+
+/*
+                This is a 1-by-1 subproblem and is not solved
+                explicitly.
+*/
+
+		scopy_(nrhs, &b[st + b_dim1], ldb, &work[bx + st1], n);
+	    } else if (nsize <= *smlsiz) {
+
+/*              This is a small subproblem and is solved by SLASDQ. */
+
+		slaset_("A", &nsize, &nsize, &c_b29, &c_b15, &work[vt + st1],
+			n);
+		slasdq_("U", &c__0, &nsize, &nsize, &c__0, nrhs, &d__[st], &e[
+			st], &work[vt + st1], n, &work[nwork], n, &b[st +
+			b_dim1], ldb, &work[nwork], info);
+		if (*info != 0) {
+		    return 0;
+		}
+		slacpy_("A", &nsize, nrhs, &b[st + b_dim1], ldb, &work[bx +
+			st1], n);
+	    } else {
+
+/*              A large problem. Solve it using divide and conquer. */
+
+		slasda_(&icmpq1, smlsiz, &nsize, &sqre, &d__[st], &e[st], &
+			work[u + st1], n, &work[vt + st1], &iwork[k + st1], &
+			work[difl + st1], &work[difr + st1], &work[z__ + st1],
+			 &work[poles + st1], &iwork[givptr + st1], &iwork[
+			givcol + st1], n, &iwork[perm + st1], &work[givnum +
+			st1], &work[c__ + st1], &work[s + st1], &work[nwork],
+			&iwork[iwk], info);
+		if (*info != 0) {
+		    return 0;
+		}
+		bxst = bx + st1;
+		slalsa_(&icmpq2, smlsiz, &nsize, nrhs, &b[st + b_dim1], ldb, &
+			work[bxst], n, &work[u + st1], n, &work[vt + st1], &
+			iwork[k + st1], &work[difl + st1], &work[difr + st1],
+			&work[z__ + st1], &work[poles + st1], &iwork[givptr +
+			st1], &iwork[givcol + st1], n, &iwork[perm + st1], &
+			work[givnum + st1], &work[c__ + st1], &work[s + st1],
+			&work[nwork], &iwork[iwk], info);
+		if (*info != 0) {
+		    return 0;
+		}
+	    }
+	    st = i__ + 1;
+	}
+/* L60: */
+    }
+
+/*     Apply the singular values and treat the tiny ones as zero. */
+
+    tol = rcnd * (r__1 = d__[isamax_(n, &d__[1], &c__1)], dabs(r__1));
+
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+
+/*
+          Some of the elements in D can be negative because 1-by-1
+          subproblems were not solved explicitly.
+*/
+
+	if ((r__1 = d__[i__], dabs(r__1)) <= tol) {
+	    slaset_("A", &c__1, nrhs, &c_b29, &c_b29, &work[bx + i__ - 1], n);
+	} else {
+	    ++(*rank);
+	    slascl_("G", &c__0, &c__0, &d__[i__], &c_b15, &c__1, nrhs, &work[
+		    bx + i__ - 1], n, info);
+	}
+	d__[i__] = (r__1 = d__[i__], dabs(r__1));
+/* L70: */
+    }
+
+/*     Now apply back the right singular vectors. */
+
+    icmpq2 = 1;
+    i__1 = nsub;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	st = iwork[i__];
+	st1 = st - 1;
+	nsize = iwork[sizei + i__ - 1];
+	bxst = bx + st1;
+	if (nsize == 1) {
+	    scopy_(nrhs, &work[bxst], n, &b[st + b_dim1], ldb);
+	} else if (nsize <= *smlsiz) {
+	    sgemm_("T", "N", &nsize, nrhs, &nsize, &c_b15, &work[vt + st1], n,
+		     &work[bxst], n, &c_b29, &b[st + b_dim1], ldb);
+	} else {
+	    slalsa_(&icmpq2, smlsiz, &nsize, nrhs, &work[bxst], n, &b[st +
+		    b_dim1], ldb, &work[u + st1], n, &work[vt + st1], &iwork[
+		    k + st1], &work[difl + st1], &work[difr + st1], &work[z__
+		    + st1], &work[poles + st1], &iwork[givptr + st1], &iwork[
+		    givcol + st1], n, &iwork[perm + st1], &work[givnum + st1],
+		     &work[c__ + st1], &work[s + st1], &work[nwork], &iwork[
+		    iwk], info);
+	    if (*info != 0) {
+		return 0;
+	    }
+	}
+/* L80: */
+    }
+
+/*     Unscale and sort the singular values. */
+
+    slascl_("G", &c__0, &c__0, &c_b15, &orgnrm, n, &c__1, &d__[1], n, info);
+    slasrt_("D", n, &d__[1], info);
+    slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, n, nrhs, &b[b_offset], ldb,
+	    info);
+
+    return 0;
+
+/*     End of SLALSD */
+
+} /* slalsd_ */
+
 /* Subroutine */ int slamrg_(integer *n1, integer *n2, real *a, integer *
 	strd1, integer *strd2, integer *index)
 {
@@ -13699,10 +16347,10 @@ L150:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -13808,9 +16456,6 @@ doublereal slange_(char *norm, integer *m, integer *n, real *a, integer *lda,
     integer a_dim1, a_offset, i__1, i__2;
     real ret_val, r__1, r__2, r__3;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, j;
     static real sum, scale;
@@ -13821,10 +16466,10 @@ doublereal slange_(char *norm, integer *m, integer *n, real *a, integer *lda,
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -13850,7 +16495,7 @@ doublereal slange_(char *norm, integer *m, integer *n, real *a, integer *lda,
     where  norm1  denotes the  one norm of a matrix (maximum column sum),
     normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
     normF  denotes the  Frobenius norm of a matrix (square root of sum of
-    squares).  Note that  max(abs(A(i,j)))  is not a  matrix norm.
+    squares).  Note that  max(abs(A(i,j)))  is not a consistent matrix norm.
 
     Arguments
     =========
@@ -13873,7 +16518,7 @@ doublereal slange_(char *norm, integer *m, integer *n, real *a, integer *lda,
     LDA     (input) INTEGER
             The leading dimension of the array A.  LDA >= max(M,1).
 
-    WORK    (workspace) REAL array, dimension (LWORK),
+    WORK    (workspace) REAL array, dimension (MAX(1,LWORK)),
             where LWORK >= M when NORM = 'I'; otherwise, WORK is not
             referenced.
 
@@ -13970,188 +16615,11 @@ doublereal slange_(char *norm, integer *m, integer *n, real *a, integer *lda,
 
 } /* slange_ */
 
-doublereal slanhs_(char *norm, integer *n, real *a, integer *lda, real *work)
-{
-    /* System generated locals */
-    integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
-    real ret_val, r__1, r__2, r__3;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
-
-    /* Local variables */
-    static integer i__, j;
-    static real sum, scale;
-    extern logical lsame_(char *, char *);
-    static real value;
-    extern /* Subroutine */ int slassq_(integer *, real *, integer *, real *,
-	    real *);
-
-
-/*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
-
-
-    Purpose
-    =======
-
-    SLANHS  returns the value of the one norm,  or the Frobenius norm, or
-    the  infinity norm,  or the  element of  largest absolute value  of a
-    Hessenberg matrix A.
-
-    Description
-    ===========
-
-    SLANHS returns the value
-
-       SLANHS = ( max(abs(A(i,j))), NORM = 'M' or 'm'
-                (
-                ( norm1(A),         NORM = '1', 'O' or 'o'
-                (
-                ( normI(A),         NORM = 'I' or 'i'
-                (
-                ( normF(A),         NORM = 'F', 'f', 'E' or 'e'
-
-    where  norm1  denotes the  one norm of a matrix (maximum column sum),
-    normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
-    normF  denotes the  Frobenius norm of a matrix (square root of sum of
-    squares).  Note that  max(abs(A(i,j)))  is not a  matrix norm.
-
-    Arguments
-    =========
-
-    NORM    (input) CHARACTER*1
-            Specifies the value to be returned in SLANHS as described
-            above.
-
-    N       (input) INTEGER
-            The order of the matrix A.  N >= 0.  When N = 0, SLANHS is
-            set to zero.
-
-    A       (input) REAL array, dimension (LDA,N)
-            The n by n upper Hessenberg matrix A; the part of A below the
-            first sub-diagonal is not referenced.
-
-    LDA     (input) INTEGER
-            The leading dimension of the array A.  LDA >= max(N,1).
-
-    WORK    (workspace) REAL array, dimension (LWORK),
-            where LWORK >= N when NORM = 'I'; otherwise, WORK is not
-            referenced.
-
-   =====================================================================
-*/
-
-
-    /* Parameter adjustments */
-    a_dim1 = *lda;
-    a_offset = 1 + a_dim1;
-    a -= a_offset;
-    --work;
-
-    /* Function Body */
-    if (*n == 0) {
-	value = 0.f;
-    } else if (lsame_(norm, "M")) {
-
-/*        Find max(abs(A(i,j))). */
-
-	value = 0.f;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-/* Computing MIN */
-	    i__3 = *n, i__4 = j + 1;
-	    i__2 = min(i__3,i__4);
-	    for (i__ = 1; i__ <= i__2; ++i__) {
-/* Computing MAX */
-		r__2 = value, r__3 = (r__1 = a[i__ + j * a_dim1], dabs(r__1));
-		value = dmax(r__2,r__3);
-/* L10: */
-	    }
-/* L20: */
-	}
-    } else if (lsame_(norm, "O") || *(unsigned char *)
-	    norm == '1') {
-
-/*        Find norm1(A). */
-
-	value = 0.f;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-	    sum = 0.f;
-/* Computing MIN */
-	    i__3 = *n, i__4 = j + 1;
-	    i__2 = min(i__3,i__4);
-	    for (i__ = 1; i__ <= i__2; ++i__) {
-		sum += (r__1 = a[i__ + j * a_dim1], dabs(r__1));
-/* L30: */
-	    }
-	    value = dmax(value,sum);
-/* L40: */
-	}
-    } else if (lsame_(norm, "I")) {
-
-/*        Find normI(A). */
-
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    work[i__] = 0.f;
-/* L50: */
-	}
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-/* Computing MIN */
-	    i__3 = *n, i__4 = j + 1;
-	    i__2 = min(i__3,i__4);
-	    for (i__ = 1; i__ <= i__2; ++i__) {
-		work[i__] += (r__1 = a[i__ + j * a_dim1], dabs(r__1));
-/* L60: */
-	    }
-/* L70: */
-	}
-	value = 0.f;
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-/* Computing MAX */
-	    r__1 = value, r__2 = work[i__];
-	    value = dmax(r__1,r__2);
-/* L80: */
-	}
-    } else if (lsame_(norm, "F") || lsame_(norm, "E")) {
-
-/*        Find normF(A). */
-
-	scale = 0.f;
-	sum = 1.f;
-	i__1 = *n;
-	for (j = 1; j <= i__1; ++j) {
-/* Computing MIN */
-	    i__3 = *n, i__4 = j + 1;
-	    i__2 = min(i__3,i__4);
-	    slassq_(&i__2, &a[j * a_dim1 + 1], &c__1, &scale, &sum);
-/* L90: */
-	}
-	value = scale * sqrt(sum);
-    }
-
-    ret_val = value;
-    return ret_val;
-
-/*     End of SLANHS */
-
-} /* slanhs_ */
-
 doublereal slanst_(char *norm, integer *n, real *d__, real *e)
 {
     /* System generated locals */
     integer i__1;
     real ret_val, r__1, r__2, r__3, r__4, r__5;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__;
@@ -14163,10 +16631,10 @@ doublereal slanst_(char *norm, integer *n, real *d__, real *e)
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -14192,7 +16660,7 @@ doublereal slanst_(char *norm, integer *n, real *d__, real *e)
     where  norm1  denotes the  one norm of a matrix (maximum column sum),
     normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
     normF  denotes the  Frobenius norm of a matrix (square root of sum of
-    squares).  Note that  max(abs(A(i,j)))  is not a  matrix norm.
+    squares).  Note that  max(abs(A(i,j)))  is not a consistent matrix norm.
 
     Arguments
     =========
@@ -14287,9 +16755,6 @@ doublereal slansy_(char *norm, char *uplo, integer *n, real *a, integer *lda,
     integer a_dim1, a_offset, i__1, i__2;
     real ret_val, r__1, r__2, r__3;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, j;
     static real sum, absa, scale;
@@ -14300,10 +16765,10 @@ doublereal slansy_(char *norm, char *uplo, integer *n, real *a, integer *lda,
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -14329,7 +16794,7 @@ doublereal slansy_(char *norm, char *uplo, integer *n, real *a, integer *lda,
     where  norm1  denotes the  one norm of a matrix (maximum column sum),
     normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
     normF  denotes the  Frobenius norm of a matrix (square root of sum of
-    squares).  Note that  max(abs(A(i,j)))  is not a  matrix norm.
+    squares).  Note that  max(abs(A(i,j)))  is not a consistent matrix norm.
 
     Arguments
     =========
@@ -14360,7 +16825,7 @@ doublereal slansy_(char *norm, char *uplo, integer *n, real *a, integer *lda,
     LDA     (input) INTEGER
             The leading dimension of the array A.  LDA >= max(N,1).
 
-    WORK    (workspace) REAL array, dimension (LWORK),
+    WORK    (workspace) REAL array, dimension (MAX(1,LWORK)),
             where LWORK >= N when NORM = 'I' or '1' or 'O'; otherwise,
             WORK is not referenced.
 
@@ -14495,9 +16960,6 @@ doublereal slansy_(char *norm, char *uplo, integer *n, real *a, integer *lda,
     /* System generated locals */
     real r__1, r__2;
 
-    /* Builtin functions */
-    double r_sign(real *, real *), sqrt(doublereal);
-
     /* Local variables */
     static real p, z__, aa, bb, cc, dd, cs1, sn1, sab, sac, eps, tau, temp,
 	    scale, bcmax, bcmis, sigma;
@@ -14505,10 +16967,10 @@ doublereal slansy_(char *norm, char *uplo, integer *n, real *a, integer *lda,
 
 
 /*
-    -- LAPACK driver routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -14710,18 +17172,15 @@ doublereal slapy2_(real *x, real *y)
     /* System generated locals */
     real ret_val, r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real w, z__, xabs, yabs;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -14763,18 +17222,15 @@ doublereal slapy3_(real *x, real *y, real *z__)
     /* System generated locals */
     real ret_val, r__1, r__2, r__3;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real w, xabs, yabs, zabs;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -14802,7 +17258,12 @@ doublereal slapy3_(real *x, real *y, real *z__)
     r__1 = max(xabs,yabs);
     w = dmax(r__1,zabs);
     if (w == 0.f) {
-	ret_val = 0.f;
+/*
+       W can be zero for max(0,nan,0)
+       adding all three entries together will make sure
+       NaN will not disappear.
+*/
+	ret_val = xabs + yabs + zabs;
     } else {
 /* Computing 2nd power */
 	r__1 = xabs / w;
@@ -14818,6 +17279,4034 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 } /* slapy3_ */
 
+/* Subroutine */ int slaqr0_(logical *wantt, logical *wantz, integer *n,
+	integer *ilo, integer *ihi, real *h__, integer *ldh, real *wr, real *
+	wi, integer *iloz, integer *ihiz, real *z__, integer *ldz, real *work,
+	 integer *lwork, integer *info)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
+    real r__1, r__2, r__3, r__4;
+
+    /* Local variables */
+    static integer i__, k;
+    static real aa, bb, cc, dd;
+    static integer ld;
+    static real cs;
+    static integer nh, it, ks, kt;
+    static real sn;
+    static integer ku, kv, ls, ns;
+    static real ss;
+    static integer nw, inf, kdu, nho, nve, kwh, nsr, nwr, kwv, ndec, ndfl,
+	    kbot, nmin;
+    static real swap;
+    static integer ktop;
+    static real zdum[1]	/* was [1][1] */;
+    static integer kacc22, itmax, nsmax, nwmax, kwtop;
+    extern /* Subroutine */ int slanv2_(real *, real *, real *, real *, real *
+	    , real *, real *, real *, real *, real *), slaqr3_(logical *,
+	    logical *, integer *, integer *, integer *, integer *, real *,
+	    integer *, integer *, integer *, real *, integer *, integer *,
+	    integer *, real *, real *, real *, integer *, integer *, real *,
+	    integer *, integer *, real *, integer *, real *, integer *),
+	    slaqr4_(logical *, logical *, integer *, integer *, integer *,
+	    real *, integer *, real *, real *, integer *, integer *, real *,
+	    integer *, real *, integer *, integer *), slaqr5_(logical *,
+	    logical *, integer *, integer *, integer *, integer *, integer *,
+	    real *, real *, real *, integer *, integer *, integer *, real *,
+	    integer *, real *, integer *, real *, integer *, integer *, real *
+	    , integer *, integer *, real *, integer *);
+    static integer nibble;
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static char jbcmpz[2];
+    extern /* Subroutine */ int slahqr_(logical *, logical *, integer *,
+	    integer *, integer *, real *, integer *, real *, real *, integer *
+	    , integer *, real *, integer *, integer *), slacpy_(char *,
+	    integer *, integer *, real *, integer *, real *, integer *);
+    static integer nwupbd;
+    static logical sorted;
+    static integer lwkopt;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       November 2006
+
+
+       Purpose
+       =======
+
+       SLAQR0 computes the eigenvalues of a Hessenberg matrix H
+       and, optionally, the matrices T and Z from the Schur decomposition
+       H = Z T Z**T, where T is an upper quasi-triangular matrix (the
+       Schur form), and Z is the orthogonal matrix of Schur vectors.
+
+       Optionally Z may be postmultiplied into an input orthogonal
+       matrix Q so that this routine can give the Schur factorization
+       of a matrix A which has been reduced to the Hessenberg form H
+       by the orthogonal matrix Q:  A = Q*H*Q**T = (QZ)*T*(QZ)**T.
+
+       Arguments
+       =========
+
+       WANTT   (input) LOGICAL
+            = .TRUE. : the full Schur form T is required;
+            = .FALSE.: only eigenvalues are required.
+
+       WANTZ   (input) LOGICAL
+            = .TRUE. : the matrix of Schur vectors Z is required;
+            = .FALSE.: Schur vectors are not required.
+
+       N     (input) INTEGER
+             The order of the matrix H.  N .GE. 0.
+
+       ILO   (input) INTEGER
+       IHI   (input) INTEGER
+             It is assumed that H is already upper triangular in rows
+             and columns 1:ILO-1 and IHI+1:N and, if ILO.GT.1,
+             H(ILO,ILO-1) is zero. ILO and IHI are normally set by a
+             previous call to SGEBAL, and then passed to SGEHRD when the
+             matrix output by SGEBAL is reduced to Hessenberg form.
+             Otherwise, ILO and IHI should be set to 1 and N,
+             respectively.  If N.GT.0, then 1.LE.ILO.LE.IHI.LE.N.
+             If N = 0, then ILO = 1 and IHI = 0.
+
+       H     (input/output) REAL array, dimension (LDH,N)
+             On entry, the upper Hessenberg matrix H.
+             On exit, if INFO = 0 and WANTT is .TRUE., then H contains
+             the upper quasi-triangular matrix T from the Schur
+             decomposition (the Schur form); 2-by-2 diagonal blocks
+             (corresponding to complex conjugate pairs of eigenvalues)
+             are returned in standard form, with H(i,i) = H(i+1,i+1)
+             and H(i+1,i)*H(i,i+1).LT.0. If INFO = 0 and WANTT is
+             .FALSE., then the contents of H are unspecified on exit.
+             (The output value of H when INFO.GT.0 is given under the
+             description of INFO below.)
+
+             This subroutine may explicitly set H(i,j) = 0 for i.GT.j and
+             j = 1, 2, ... ILO-1 or j = IHI+1, IHI+2, ... N.
+
+       LDH   (input) INTEGER
+             The leading dimension of the array H. LDH .GE. max(1,N).
+
+       WR    (output) REAL array, dimension (IHI)
+       WI    (output) REAL array, dimension (IHI)
+             The real and imaginary parts, respectively, of the computed
+             eigenvalues of H(ILO:IHI,ILO:IHI) are stored in WR(ILO:IHI)
+             and WI(ILO:IHI). If two eigenvalues are computed as a
+             complex conjugate pair, they are stored in consecutive
+             elements of WR and WI, say the i-th and (i+1)th, with
+             WI(i) .GT. 0 and WI(i+1) .LT. 0. If WANTT is .TRUE., then
+             the eigenvalues are stored in the same order as on the
+             diagonal of the Schur form returned in H, with
+             WR(i) = H(i,i) and, if H(i:i+1,i:i+1) is a 2-by-2 diagonal
+             block, WI(i) = sqrt(-H(i+1,i)*H(i,i+1)) and
+             WI(i+1) = -WI(i).
+
+       ILOZ     (input) INTEGER
+       IHIZ     (input) INTEGER
+             Specify the rows of Z to which transformations must be
+             applied if WANTZ is .TRUE..
+             1 .LE. ILOZ .LE. ILO; IHI .LE. IHIZ .LE. N.
+
+       Z     (input/output) REAL array, dimension (LDZ,IHI)
+             If WANTZ is .FALSE., then Z is not referenced.
+             If WANTZ is .TRUE., then Z(ILO:IHI,ILOZ:IHIZ) is
+             replaced by Z(ILO:IHI,ILOZ:IHIZ)*U where U is the
+             orthogonal Schur factor of H(ILO:IHI,ILO:IHI).
+             (The output value of Z when INFO.GT.0 is given under
+             the description of INFO below.)
+
+       LDZ   (input) INTEGER
+             The leading dimension of the array Z.  if WANTZ is .TRUE.
+             then LDZ.GE.MAX(1,IHIZ).  Otherwize, LDZ.GE.1.
+
+       WORK  (workspace/output) REAL array, dimension LWORK
+             On exit, if LWORK = -1, WORK(1) returns an estimate of
+             the optimal value for LWORK.
+
+       LWORK (input) INTEGER
+             The dimension of the array WORK.  LWORK .GE. max(1,N)
+             is sufficient, but LWORK typically as large as 6*N may
+             be required for optimal performance.  A workspace query
+             to determine the optimal workspace size is recommended.
+
+             If LWORK = -1, then SLAQR0 does a workspace query.
+             In this case, SLAQR0 checks the input parameters and
+             estimates the optimal workspace size for the given
+             values of N, ILO and IHI.  The estimate is returned
+             in WORK(1).  No error message related to LWORK is
+             issued by XERBLA.  Neither H nor Z are accessed.
+
+
+       INFO  (output) INTEGER
+               =  0:  successful exit
+             .GT. 0:  if INFO = i, SLAQR0 failed to compute all of
+                  the eigenvalues.  Elements 1:ilo-1 and i+1:n of WR
+                  and WI contain those eigenvalues which have been
+                  successfully computed.  (Failures are rare.)
+
+                  If INFO .GT. 0 and WANT is .FALSE., then on exit,
+                  the remaining unconverged eigenvalues are the eigen-
+                  values of the upper Hessenberg matrix rows and
+                  columns ILO through INFO of the final, output
+                  value of H.
+
+                  If INFO .GT. 0 and WANTT is .TRUE., then on exit
+
+             (*)  (initial value of H)*U  = U*(final value of H)
+
+                  where U is an orthogonal matrix.  The final
+                  value of H is upper Hessenberg and quasi-triangular
+                  in rows and columns INFO+1 through IHI.
+
+                  If INFO .GT. 0 and WANTZ is .TRUE., then on exit
+
+                    (final value of Z(ILO:IHI,ILOZ:IHIZ)
+                     =  (initial value of Z(ILO:IHI,ILOZ:IHIZ)*U
+
+                  where U is the orthogonal matrix in (*) (regard-
+                  less of the value of WANTT.)
+
+                  If INFO .GT. 0 and WANTZ is .FALSE., then Z is not
+                  accessed.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+       References:
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part I: Maintaining Well Focused Shifts, and Level 3
+         Performance, SIAM Journal of Matrix Analysis, volume 23, pages
+         929--947, 2002.
+
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part II: Aggressive Early Deflation, SIAM Journal
+         of Matrix Analysis, volume 23, pages 948--973, 2002.
+
+       ================================================================
+
+       ==== Matrices of order NTINY or smaller must be processed by
+       .    SLAHQR because of insufficient subdiagonal scratch space.
+       .    (This is a hard limit.) ====
+
+       ==== Exceptional deflation windows:  try to cure rare
+       .    slow convergence by varying the size of the
+       .    deflation window after KEXNW iterations. ====
+
+       ==== Exceptional shifts: try to cure rare slow convergence
+       .    with ad-hoc exceptional shifts every KEXSH iterations.
+       .    ====
+
+       ==== The constants WILK1 and WILK2 are used to form the
+       .    exceptional shifts. ====
+*/
+    /* Parameter adjustments */
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    --wr;
+    --wi;
+    z_dim1 = *ldz;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    --work;
+
+    /* Function Body */
+    *info = 0;
+
+/*     ==== Quick return for N = 0: nothing to do. ==== */
+
+    if (*n == 0) {
+	work[1] = 1.f;
+	return 0;
+    }
+
+    if (*n <= 11) {
+
+/*        ==== Tiny matrices must use SLAHQR. ==== */
+
+	lwkopt = 1;
+	if (*lwork != -1) {
+	    slahqr_(wantt, wantz, n, ilo, ihi, &h__[h_offset], ldh, &wr[1], &
+		    wi[1], iloz, ihiz, &z__[z_offset], ldz, info);
+	}
+    } else {
+
+/*
+          ==== Use small bulge multi-shift QR with aggressive early
+          .    deflation on larger-than-tiny matrices. ====
+
+          ==== Hope for the best. ====
+*/
+
+	*info = 0;
+
+/*        ==== Set up job flags for ILAENV. ==== */
+
+	if (*wantt) {
+	    *(unsigned char *)jbcmpz = 'S';
+	} else {
+	    *(unsigned char *)jbcmpz = 'E';
+	}
+	if (*wantz) {
+	    *(unsigned char *)&jbcmpz[1] = 'V';
+	} else {
+	    *(unsigned char *)&jbcmpz[1] = 'N';
+	}
+
+/*
+          ==== NWR = recommended deflation window size.  At this
+          .    point,  N .GT. NTINY = 11, so there is enough
+          .    subdiagonal workspace for NWR.GE.2 as required.
+          .    (In fact, there is enough subdiagonal space for
+          .    NWR.GE.3.) ====
+*/
+
+	nwr = ilaenv_(&c__13, "SLAQR0", jbcmpz, n, ilo, ihi, lwork, (ftnlen)6,
+		 (ftnlen)2);
+	nwr = max(2,nwr);
+/* Computing MIN */
+	i__1 = *ihi - *ilo + 1, i__2 = (*n - 1) / 3, i__1 = min(i__1,i__2);
+	nwr = min(i__1,nwr);
+
+/*
+          ==== NSR = recommended number of simultaneous shifts.
+          .    At this point N .GT. NTINY = 11, so there is at
+          .    enough subdiagonal workspace for NSR to be even
+          .    and greater than or equal to two as required. ====
+*/
+
+	nsr = ilaenv_(&c__15, "SLAQR0", jbcmpz, n, ilo, ihi, lwork, (ftnlen)6,
+		 (ftnlen)2);
+/* Computing MIN */
+	i__1 = nsr, i__2 = (*n + 6) / 9, i__1 = min(i__1,i__2), i__2 = *ihi -
+		*ilo;
+	nsr = min(i__1,i__2);
+/* Computing MAX */
+	i__1 = 2, i__2 = nsr - nsr % 2;
+	nsr = max(i__1,i__2);
+
+/*
+          ==== Estimate optimal workspace ====
+
+          ==== Workspace query call to SLAQR3 ====
+*/
+
+	i__1 = nwr + 1;
+	slaqr3_(wantt, wantz, n, ilo, ihi, &i__1, &h__[h_offset], ldh, iloz,
+		ihiz, &z__[z_offset], ldz, &ls, &ld, &wr[1], &wi[1], &h__[
+		h_offset], ldh, n, &h__[h_offset], ldh, n, &h__[h_offset],
+		ldh, &work[1], &c_n1);
+
+/*
+          ==== Optimal workspace = MAX(SLAQR5, SLAQR3) ====
+
+   Computing MAX
+*/
+	i__1 = nsr * 3 / 2, i__2 = (integer) work[1];
+	lwkopt = max(i__1,i__2);
+
+/*        ==== Quick return in case of workspace query. ==== */
+
+	if (*lwork == -1) {
+	    work[1] = (real) lwkopt;
+	    return 0;
+	}
+
+/*        ==== SLAHQR/SLAQR0 crossover point ==== */
+
+	nmin = ilaenv_(&c__12, "SLAQR0", jbcmpz, n, ilo, ihi, lwork, (ftnlen)
+		6, (ftnlen)2);
+	nmin = max(11,nmin);
+
+/*        ==== Nibble crossover point ==== */
+
+	nibble = ilaenv_(&c__14, "SLAQR0", jbcmpz, n, ilo, ihi, lwork, (
+		ftnlen)6, (ftnlen)2);
+	nibble = max(0,nibble);
+
+/*
+          ==== Accumulate reflections during ttswp?  Use block
+          .    2-by-2 structure during matrix-matrix multiply? ====
+*/
+
+	kacc22 = ilaenv_(&c__16, "SLAQR0", jbcmpz, n, ilo, ihi, lwork, (
+		ftnlen)6, (ftnlen)2);
+	kacc22 = max(0,kacc22);
+	kacc22 = min(2,kacc22);
+
+/*
+          ==== NWMAX = the largest possible deflation window for
+          .    which there is sufficient workspace. ====
+
+   Computing MIN
+*/
+	i__1 = (*n - 1) / 3, i__2 = *lwork / 2;
+	nwmax = min(i__1,i__2);
+	nw = nwmax;
+
+/*
+          ==== NSMAX = the Largest number of simultaneous shifts
+          .    for which there is sufficient workspace. ====
+
+   Computing MIN
+*/
+	i__1 = (*n + 6) / 9, i__2 = (*lwork << 1) / 3;
+	nsmax = min(i__1,i__2);
+	nsmax -= nsmax % 2;
+
+/*        ==== NDFL: an iteration count restarted at deflation. ==== */
+
+	ndfl = 1;
+
+/*
+          ==== ITMAX = iteration limit ====
+
+   Computing MAX
+*/
+	i__1 = 10, i__2 = *ihi - *ilo + 1;
+	itmax = max(i__1,i__2) * 30;
+
+/*        ==== Last row and column in the active block ==== */
+
+	kbot = *ihi;
+
+/*        ==== Main Loop ==== */
+
+	i__1 = itmax;
+	for (it = 1; it <= i__1; ++it) {
+
+/*           ==== Done when KBOT falls below ILO ==== */
+
+	    if (kbot < *ilo) {
+		goto L90;
+	    }
+
+/*           ==== Locate active block ==== */
+
+	    i__2 = *ilo + 1;
+	    for (k = kbot; k >= i__2; --k) {
+		if (h__[k + (k - 1) * h_dim1] == 0.f) {
+		    goto L20;
+		}
+/* L10: */
+	    }
+	    k = *ilo;
+L20:
+	    ktop = k;
+
+/*
+             ==== Select deflation window size:
+             .    Typical Case:
+             .      If possible and advisable, nibble the entire
+             .      active block.  If not, use size MIN(NWR,NWMAX)
+             .      or MIN(NWR+1,NWMAX) depending upon which has
+             .      the smaller corresponding subdiagonal entry
+             .      (a heuristic).
+             .
+             .    Exceptional Case:
+             .      If there have been no deflations in KEXNW or
+             .      more iterations, then vary the deflation window
+             .      size.   At first, because, larger windows are,
+             .      in general, more powerful than smaller ones,
+             .      rapidly increase the window to the maximum possible.
+             .      Then, gradually reduce the window size. ====
+*/
+
+	    nh = kbot - ktop + 1;
+	    nwupbd = min(nh,nwmax);
+	    if (ndfl < 5) {
+		nw = min(nwupbd,nwr);
+	    } else {
+/* Computing MIN */
+		i__2 = nwupbd, i__3 = nw << 1;
+		nw = min(i__2,i__3);
+	    }
+	    if (nw < nwmax) {
+		if (nw >= nh - 1) {
+		    nw = nh;
+		} else {
+		    kwtop = kbot - nw + 1;
+		    if ((r__1 = h__[kwtop + (kwtop - 1) * h_dim1], dabs(r__1))
+			     > (r__2 = h__[kwtop - 1 + (kwtop - 2) * h_dim1],
+			    dabs(r__2))) {
+			++nw;
+		    }
+		}
+	    }
+	    if (ndfl < 5) {
+		ndec = -1;
+	    } else if (ndec >= 0 || nw >= nwupbd) {
+		++ndec;
+		if (nw - ndec < 2) {
+		    ndec = 0;
+		}
+		nw -= ndec;
+	    }
+
+/*
+             ==== Aggressive early deflation:
+             .    split workspace under the subdiagonal into
+             .      - an nw-by-nw work array V in the lower
+             .        left-hand-corner,
+             .      - an NW-by-at-least-NW-but-more-is-better
+             .        (NW-by-NHO) horizontal work array along
+             .        the bottom edge,
+             .      - an at-least-NW-but-more-is-better (NHV-by-NW)
+             .        vertical work array along the left-hand-edge.
+             .        ====
+*/
+
+	    kv = *n - nw + 1;
+	    kt = nw + 1;
+	    nho = *n - nw - 1 - kt + 1;
+	    kwv = nw + 2;
+	    nve = *n - nw - kwv + 1;
+
+/*           ==== Aggressive early deflation ==== */
+
+	    slaqr3_(wantt, wantz, n, &ktop, &kbot, &nw, &h__[h_offset], ldh,
+		    iloz, ihiz, &z__[z_offset], ldz, &ls, &ld, &wr[1], &wi[1],
+		     &h__[kv + h_dim1], ldh, &nho, &h__[kv + kt * h_dim1],
+		    ldh, &nve, &h__[kwv + h_dim1], ldh, &work[1], lwork);
+
+/*           ==== Adjust KBOT accounting for new deflations. ==== */
+
+	    kbot -= ld;
+
+/*           ==== KS points to the shifts. ==== */
+
+	    ks = kbot - ls + 1;
+
+/*
+             ==== Skip an expensive QR sweep if there is a (partly
+             .    heuristic) reason to expect that many eigenvalues
+             .    will deflate without it.  Here, the QR sweep is
+             .    skipped if many eigenvalues have just been deflated
+             .    or if the remaining active block is small.
+*/
+
+	    if (ld == 0 || ld * 100 <= nw * nibble && kbot - ktop + 1 > min(
+		    nmin,nwmax)) {
+
+/*
+                ==== NS = nominal number of simultaneous shifts.
+                .    This may be lowered (slightly) if SLAQR3
+                .    did not provide that many shifts. ====
+
+   Computing MIN
+   Computing MAX
+*/
+		i__4 = 2, i__5 = kbot - ktop;
+		i__2 = min(nsmax,nsr), i__3 = max(i__4,i__5);
+		ns = min(i__2,i__3);
+		ns -= ns % 2;
+
+/*
+                ==== If there have been no deflations
+                .    in a multiple of KEXSH iterations,
+                .    then try exceptional shifts.
+                .    Otherwise use shifts provided by
+                .    SLAQR3 above or from the eigenvalues
+                .    of a trailing principal submatrix. ====
+*/
+
+		if (ndfl % 6 == 0) {
+		    ks = kbot - ns + 1;
+/* Computing MAX */
+		    i__3 = ks + 1, i__4 = ktop + 2;
+		    i__2 = max(i__3,i__4);
+		    for (i__ = kbot; i__ >= i__2; i__ += -2) {
+			ss = (r__1 = h__[i__ + (i__ - 1) * h_dim1], dabs(r__1)
+				) + (r__2 = h__[i__ - 1 + (i__ - 2) * h_dim1],
+				 dabs(r__2));
+			aa = ss * .75f + h__[i__ + i__ * h_dim1];
+			bb = ss;
+			cc = ss * -.4375f;
+			dd = aa;
+			slanv2_(&aa, &bb, &cc, &dd, &wr[i__ - 1], &wi[i__ - 1]
+				, &wr[i__], &wi[i__], &cs, &sn);
+/* L30: */
+		    }
+		    if (ks == ktop) {
+			wr[ks + 1] = h__[ks + 1 + (ks + 1) * h_dim1];
+			wi[ks + 1] = 0.f;
+			wr[ks] = wr[ks + 1];
+			wi[ks] = wi[ks + 1];
+		    }
+		} else {
+
+/*
+                   ==== Got NS/2 or fewer shifts? Use SLAQR4 or
+                   .    SLAHQR on a trailing principal submatrix to
+                   .    get more. (Since NS.LE.NSMAX.LE.(N+6)/9,
+                   .    there is enough space below the subdiagonal
+                   .    to fit an NS-by-NS scratch array.) ====
+*/
+
+		    if (kbot - ks + 1 <= ns / 2) {
+			ks = kbot - ns + 1;
+			kt = *n - ns + 1;
+			slacpy_("A", &ns, &ns, &h__[ks + ks * h_dim1], ldh, &
+				h__[kt + h_dim1], ldh);
+			if (ns > nmin) {
+			    slaqr4_(&c_false, &c_false, &ns, &c__1, &ns, &h__[
+				    kt + h_dim1], ldh, &wr[ks], &wi[ks], &
+				    c__1, &c__1, zdum, &c__1, &work[1], lwork,
+				     &inf);
+			} else {
+			    slahqr_(&c_false, &c_false, &ns, &c__1, &ns, &h__[
+				    kt + h_dim1], ldh, &wr[ks], &wi[ks], &
+				    c__1, &c__1, zdum, &c__1, &inf);
+			}
+			ks += inf;
+
+/*
+                      ==== In case of a rare QR failure use
+                      .    eigenvalues of the trailing 2-by-2
+                      .    principal submatrix.  ====
+*/
+
+			if (ks >= kbot) {
+			    aa = h__[kbot - 1 + (kbot - 1) * h_dim1];
+			    cc = h__[kbot + (kbot - 1) * h_dim1];
+			    bb = h__[kbot - 1 + kbot * h_dim1];
+			    dd = h__[kbot + kbot * h_dim1];
+			    slanv2_(&aa, &bb, &cc, &dd, &wr[kbot - 1], &wi[
+				    kbot - 1], &wr[kbot], &wi[kbot], &cs, &sn)
+				    ;
+			    ks = kbot - 1;
+			}
+		    }
+
+		    if (kbot - ks + 1 > ns) {
+
+/*
+                      ==== Sort the shifts (Helps a little)
+                      .    Bubble sort keeps complex conjugate
+                      .    pairs together. ====
+*/
+
+			sorted = FALSE_;
+			i__2 = ks + 1;
+			for (k = kbot; k >= i__2; --k) {
+			    if (sorted) {
+				goto L60;
+			    }
+			    sorted = TRUE_;
+			    i__3 = k - 1;
+			    for (i__ = ks; i__ <= i__3; ++i__) {
+				if ((r__1 = wr[i__], dabs(r__1)) + (r__2 = wi[
+					i__], dabs(r__2)) < (r__3 = wr[i__ +
+					1], dabs(r__3)) + (r__4 = wi[i__ + 1],
+					 dabs(r__4))) {
+				    sorted = FALSE_;
+
+				    swap = wr[i__];
+				    wr[i__] = wr[i__ + 1];
+				    wr[i__ + 1] = swap;
+
+				    swap = wi[i__];
+				    wi[i__] = wi[i__ + 1];
+				    wi[i__ + 1] = swap;
+				}
+/* L40: */
+			    }
+/* L50: */
+			}
+L60:
+			;
+		    }
+
+/*
+                   ==== Shuffle shifts into pairs of real shifts
+                   .    and pairs of complex conjugate shifts
+                   .    assuming complex conjugate shifts are
+                   .    already adjacent to one another. (Yes,
+                   .    they are.)  ====
+*/
+
+		    i__2 = ks + 2;
+		    for (i__ = kbot; i__ >= i__2; i__ += -2) {
+			if (wi[i__] != -wi[i__ - 1]) {
+
+			    swap = wr[i__];
+			    wr[i__] = wr[i__ - 1];
+			    wr[i__ - 1] = wr[i__ - 2];
+			    wr[i__ - 2] = swap;
+
+			    swap = wi[i__];
+			    wi[i__] = wi[i__ - 1];
+			    wi[i__ - 1] = wi[i__ - 2];
+			    wi[i__ - 2] = swap;
+			}
+/* L70: */
+		    }
+		}
+
+/*
+                ==== If there are only two shifts and both are
+                .    real, then use only one.  ====
+*/
+
+		if (kbot - ks + 1 == 2) {
+		    if (wi[kbot] == 0.f) {
+			if ((r__1 = wr[kbot] - h__[kbot + kbot * h_dim1],
+				dabs(r__1)) < (r__2 = wr[kbot - 1] - h__[kbot
+				+ kbot * h_dim1], dabs(r__2))) {
+			    wr[kbot - 1] = wr[kbot];
+			} else {
+			    wr[kbot] = wr[kbot - 1];
+			}
+		    }
+		}
+
+/*
+                ==== Use up to NS of the the smallest magnatiude
+                .    shifts.  If there aren't NS shifts available,
+                .    then use them all, possibly dropping one to
+                .    make the number of shifts even. ====
+
+   Computing MIN
+*/
+		i__2 = ns, i__3 = kbot - ks + 1;
+		ns = min(i__2,i__3);
+		ns -= ns % 2;
+		ks = kbot - ns + 1;
+
+/*
+                ==== Small-bulge multi-shift QR sweep:
+                .    split workspace under the subdiagonal into
+                .    - a KDU-by-KDU work array U in the lower
+                .      left-hand-corner,
+                .    - a KDU-by-at-least-KDU-but-more-is-better
+                .      (KDU-by-NHo) horizontal work array WH along
+                .      the bottom edge,
+                .    - and an at-least-KDU-but-more-is-better-by-KDU
+                .      (NVE-by-KDU) vertical work WV arrow along
+                .      the left-hand-edge. ====
+*/
+
+		kdu = ns * 3 - 3;
+		ku = *n - kdu + 1;
+		kwh = kdu + 1;
+		nho = *n - kdu - 3 - (kdu + 1) + 1;
+		kwv = kdu + 4;
+		nve = *n - kdu - kwv + 1;
+
+/*              ==== Small-bulge multi-shift QR sweep ==== */
+
+		slaqr5_(wantt, wantz, &kacc22, n, &ktop, &kbot, &ns, &wr[ks],
+			&wi[ks], &h__[h_offset], ldh, iloz, ihiz, &z__[
+			z_offset], ldz, &work[1], &c__3, &h__[ku + h_dim1],
+			ldh, &nve, &h__[kwv + h_dim1], ldh, &nho, &h__[ku +
+			kwh * h_dim1], ldh);
+	    }
+
+/*           ==== Note progress (or the lack of it). ==== */
+
+	    if (ld > 0) {
+		ndfl = 1;
+	    } else {
+		++ndfl;
+	    }
+
+/*
+             ==== End of main loop ====
+   L80:
+*/
+	}
+
+/*
+          ==== Iteration limit exceeded.  Set INFO to show where
+          .    the problem occurred and exit. ====
+*/
+
+	*info = kbot;
+L90:
+	;
+    }
+
+/*     ==== Return the optimal value of LWORK. ==== */
+
+    work[1] = (real) lwkopt;
+
+/*     ==== End of SLAQR0 ==== */
+
+    return 0;
+} /* slaqr0_ */
+
+/* Subroutine */ int slaqr1_(integer *n, real *h__, integer *ldh, real *sr1,
+	real *si1, real *sr2, real *si2, real *v)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset;
+    real r__1, r__2, r__3;
+
+    /* Local variables */
+    static real s, h21s, h31s;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       November 2006
+
+
+         Given a 2-by-2 or 3-by-3 matrix H, SLAQR1 sets v to a
+         scalar multiple of the first column of the product
+
+         (*)  K = (H - (sr1 + i*si1)*I)*(H - (sr2 + i*si2)*I)
+
+         scaling to avoid overflows and most underflows. It
+         is assumed that either
+
+                 1) sr1 = sr2 and si1 = -si2
+             or
+                 2) si1 = si2 = 0.
+
+         This is useful for starting double implicit shift bulges
+         in the QR algorithm.
+
+
+         N      (input) integer
+                Order of the matrix H. N must be either 2 or 3.
+
+         H      (input) REAL array of dimension (LDH,N)
+                The 2-by-2 or 3-by-3 matrix H in (*).
+
+         LDH    (input) integer
+                The leading dimension of H as declared in
+                the calling procedure.  LDH.GE.N
+
+         SR1    (input) REAL
+         SI1    The shifts in (*).
+         SR2
+         SI2
+
+         V      (output) REAL array of dimension N
+                A scalar multiple of the first column of the
+                matrix K in (*).
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+*/
+
+    /* Parameter adjustments */
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    --v;
+
+    /* Function Body */
+    if (*n == 2) {
+	s = (r__1 = h__[h_dim1 + 1] - *sr2, dabs(r__1)) + dabs(*si2) + (r__2 =
+		 h__[h_dim1 + 2], dabs(r__2));
+	if (s == 0.f) {
+	    v[1] = 0.f;
+	    v[2] = 0.f;
+	} else {
+	    h21s = h__[h_dim1 + 2] / s;
+	    v[1] = h21s * h__[(h_dim1 << 1) + 1] + (h__[h_dim1 + 1] - *sr1) *
+		    ((h__[h_dim1 + 1] - *sr2) / s) - *si1 * (*si2 / s);
+	    v[2] = h21s * (h__[h_dim1 + 1] + h__[(h_dim1 << 1) + 2] - *sr1 - *
+		    sr2);
+	}
+    } else {
+	s = (r__1 = h__[h_dim1 + 1] - *sr2, dabs(r__1)) + dabs(*si2) + (r__2 =
+		 h__[h_dim1 + 2], dabs(r__2)) + (r__3 = h__[h_dim1 + 3], dabs(
+		r__3));
+	if (s == 0.f) {
+	    v[1] = 0.f;
+	    v[2] = 0.f;
+	    v[3] = 0.f;
+	} else {
+	    h21s = h__[h_dim1 + 2] / s;
+	    h31s = h__[h_dim1 + 3] / s;
+	    v[1] = (h__[h_dim1 + 1] - *sr1) * ((h__[h_dim1 + 1] - *sr2) / s)
+		    - *si1 * (*si2 / s) + h__[(h_dim1 << 1) + 1] * h21s + h__[
+		    h_dim1 * 3 + 1] * h31s;
+	    v[2] = h21s * (h__[h_dim1 + 1] + h__[(h_dim1 << 1) + 2] - *sr1 - *
+		    sr2) + h__[h_dim1 * 3 + 2] * h31s;
+	    v[3] = h31s * (h__[h_dim1 + 1] + h__[h_dim1 * 3 + 3] - *sr1 - *
+		    sr2) + h21s * h__[(h_dim1 << 1) + 3];
+	}
+    }
+    return 0;
+} /* slaqr1_ */
+
+/* Subroutine */ int slaqr2_(logical *wantt, logical *wantz, integer *n,
+	integer *ktop, integer *kbot, integer *nw, real *h__, integer *ldh,
+	integer *iloz, integer *ihiz, real *z__, integer *ldz, integer *ns,
+	integer *nd, real *sr, real *si, real *v, integer *ldv, integer *nh,
+	real *t, integer *ldt, integer *nv, real *wv, integer *ldwv, real *
+	work, integer *lwork)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset, t_dim1, t_offset, v_dim1, v_offset, wv_dim1,
+	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
+    real r__1, r__2, r__3, r__4, r__5, r__6;
+
+    /* Local variables */
+    static integer i__, j, k;
+    static real s, aa, bb, cc, dd, cs, sn;
+    static integer jw;
+    static real evi, evk, foo;
+    static integer kln;
+    static real tau, ulp;
+    static integer lwk1, lwk2;
+    static real beta;
+    static integer kend, kcol, info, ifst, ilst, ltop, krow;
+    static logical bulge;
+    extern /* Subroutine */ int slarf_(char *, integer *, integer *, real *,
+	    integer *, real *, real *, integer *, real *), sgemm_(
+	    char *, char *, integer *, integer *, integer *, real *, real *,
+	    integer *, real *, integer *, real *, real *, integer *);
+    static integer infqr;
+    extern /* Subroutine */ int scopy_(integer *, real *, integer *, real *,
+	    integer *);
+    static integer kwtop;
+    extern /* Subroutine */ int slanv2_(real *, real *, real *, real *, real *
+	    , real *, real *, real *, real *, real *), slabad_(real *, real *)
+	    ;
+    extern doublereal slamch_(char *);
+    extern /* Subroutine */ int sgehrd_(integer *, integer *, integer *, real
+	    *, integer *, real *, real *, integer *, integer *);
+    static real safmin;
+    extern /* Subroutine */ int slarfg_(integer *, real *, real *, integer *,
+	    real *);
+    static real safmax;
+    extern /* Subroutine */ int slahqr_(logical *, logical *, integer *,
+	    integer *, integer *, real *, integer *, real *, real *, integer *
+	    , integer *, real *, integer *, integer *), slacpy_(char *,
+	    integer *, integer *, real *, integer *, real *, integer *), slaset_(char *, integer *, integer *, real *, real *,
+	    real *, integer *);
+    static logical sorted;
+    extern /* Subroutine */ int strexc_(char *, integer *, real *, integer *,
+	    real *, integer *, integer *, integer *, real *, integer *), sormhr_(char *, char *, integer *, integer *, integer *,
+	    integer *, real *, integer *, real *, real *, integer *, real *,
+	    integer *, integer *);
+    static real smlnum;
+    static integer lwkopt;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.1)                        --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+    -- April 2009                                                      --
+
+
+       This subroutine is identical to SLAQR3 except that it avoids
+       recursion by calling SLAHQR instead of SLAQR4.
+
+
+       ******************************************************************
+       Aggressive early deflation:
+
+       This subroutine accepts as input an upper Hessenberg matrix
+       H and performs an orthogonal similarity transformation
+       designed to detect and deflate fully converged eigenvalues from
+       a trailing principal submatrix.  On output H has been over-
+       written by a new Hessenberg matrix that is a perturbation of
+       an orthogonal similarity transformation of H.  It is to be
+       hoped that the final version of H has many zero subdiagonal
+       entries.
+
+       ******************************************************************
+       WANTT   (input) LOGICAL
+            If .TRUE., then the Hessenberg matrix H is fully updated
+            so that the quasi-triangular Schur factor may be
+            computed (in cooperation with the calling subroutine).
+            If .FALSE., then only enough of H is updated to preserve
+            the eigenvalues.
+
+       WANTZ   (input) LOGICAL
+            If .TRUE., then the orthogonal matrix Z is updated so
+            so that the orthogonal Schur factor may be computed
+            (in cooperation with the calling subroutine).
+            If .FALSE., then Z is not referenced.
+
+       N       (input) INTEGER
+            The order of the matrix H and (if WANTZ is .TRUE.) the
+            order of the orthogonal matrix Z.
+
+       KTOP    (input) INTEGER
+            It is assumed that either KTOP = 1 or H(KTOP,KTOP-1)=0.
+            KBOT and KTOP together determine an isolated block
+            along the diagonal of the Hessenberg matrix.
+
+       KBOT    (input) INTEGER
+            It is assumed without a check that either
+            KBOT = N or H(KBOT+1,KBOT)=0.  KBOT and KTOP together
+            determine an isolated block along the diagonal of the
+            Hessenberg matrix.
+
+       NW      (input) INTEGER
+            Deflation window size.  1 .LE. NW .LE. (KBOT-KTOP+1).
+
+       H       (input/output) REAL array, dimension (LDH,N)
+            On input the initial N-by-N section of H stores the
+            Hessenberg matrix undergoing aggressive early deflation.
+            On output H has been transformed by an orthogonal
+            similarity transformation, perturbed, and the returned
+            to Hessenberg form that (it is to be hoped) has some
+            zero subdiagonal entries.
+
+       LDH     (input) integer
+            Leading dimension of H just as declared in the calling
+            subroutine.  N .LE. LDH
+
+       ILOZ    (input) INTEGER
+       IHIZ    (input) INTEGER
+            Specify the rows of Z to which transformations must be
+            applied if WANTZ is .TRUE.. 1 .LE. ILOZ .LE. IHIZ .LE. N.
+
+       Z       (input/output) REAL array, dimension (LDZ,N)
+            IF WANTZ is .TRUE., then on output, the orthogonal
+            similarity transformation mentioned above has been
+            accumulated into Z(ILOZ:IHIZ,ILO:IHI) from the right.
+            If WANTZ is .FALSE., then Z is unreferenced.
+
+       LDZ     (input) integer
+            The leading dimension of Z just as declared in the
+            calling subroutine.  1 .LE. LDZ.
+
+       NS      (output) integer
+            The number of unconverged (ie approximate) eigenvalues
+            returned in SR and SI that may be used as shifts by the
+            calling subroutine.
+
+       ND      (output) integer
+            The number of converged eigenvalues uncovered by this
+            subroutine.
+
+       SR      (output) REAL array, dimension KBOT
+       SI      (output) REAL array, dimension KBOT
+            On output, the real and imaginary parts of approximate
+            eigenvalues that may be used for shifts are stored in
+            SR(KBOT-ND-NS+1) through SR(KBOT-ND) and
+            SI(KBOT-ND-NS+1) through SI(KBOT-ND), respectively.
+            The real and imaginary parts of converged eigenvalues
+            are stored in SR(KBOT-ND+1) through SR(KBOT) and
+            SI(KBOT-ND+1) through SI(KBOT), respectively.
+
+       V       (workspace) REAL array, dimension (LDV,NW)
+            An NW-by-NW work array.
+
+       LDV     (input) integer scalar
+            The leading dimension of V just as declared in the
+            calling subroutine.  NW .LE. LDV
+
+       NH      (input) integer scalar
+            The number of columns of T.  NH.GE.NW.
+
+       T       (workspace) REAL array, dimension (LDT,NW)
+
+       LDT     (input) integer
+            The leading dimension of T just as declared in the
+            calling subroutine.  NW .LE. LDT
+
+       NV      (input) integer
+            The number of rows of work array WV available for
+            workspace.  NV.GE.NW.
+
+       WV      (workspace) REAL array, dimension (LDWV,NW)
+
+       LDWV    (input) integer
+            The leading dimension of W just as declared in the
+            calling subroutine.  NW .LE. LDV
+
+       WORK    (workspace) REAL array, dimension LWORK.
+            On exit, WORK(1) is set to an estimate of the optimal value
+            of LWORK for the given values of N, NW, KTOP and KBOT.
+
+       LWORK   (input) integer
+            The dimension of the work array WORK.  LWORK = 2*NW
+            suffices, but greater efficiency may result from larger
+            values of LWORK.
+
+            If LWORK = -1, then a workspace query is assumed; SLAQR2
+            only estimates the optimal workspace size for the given
+            values of N, NW, KTOP and KBOT.  The estimate is returned
+            in WORK(1).  No error message related to LWORK is issued
+            by XERBLA.  Neither H nor Z are accessed.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+
+       ==== Estimate optimal workspace. ====
+*/
+
+    /* Parameter adjustments */
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    z_dim1 = *ldz;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    --sr;
+    --si;
+    v_dim1 = *ldv;
+    v_offset = 1 + v_dim1;
+    v -= v_offset;
+    t_dim1 = *ldt;
+    t_offset = 1 + t_dim1;
+    t -= t_offset;
+    wv_dim1 = *ldwv;
+    wv_offset = 1 + wv_dim1;
+    wv -= wv_offset;
+    --work;
+
+    /* Function Body */
+/* Computing MIN */
+    i__1 = *nw, i__2 = *kbot - *ktop + 1;
+    jw = min(i__1,i__2);
+    if (jw <= 2) {
+	lwkopt = 1;
+    } else {
+
+/*        ==== Workspace query call to SGEHRD ==== */
+
+	i__1 = jw - 1;
+	sgehrd_(&jw, &c__1, &i__1, &t[t_offset], ldt, &work[1], &work[1], &
+		c_n1, &info);
+	lwk1 = (integer) work[1];
+
+/*        ==== Workspace query call to SORMHR ==== */
+
+	i__1 = jw - 1;
+	sormhr_("R", "N", &jw, &jw, &c__1, &i__1, &t[t_offset], ldt, &work[1],
+		 &v[v_offset], ldv, &work[1], &c_n1, &info);
+	lwk2 = (integer) work[1];
+
+/*        ==== Optimal workspace ==== */
+
+	lwkopt = jw + max(lwk1,lwk2);
+    }
+
+/*     ==== Quick return in case of workspace query. ==== */
+
+    if (*lwork == -1) {
+	work[1] = (real) lwkopt;
+	return 0;
+    }
+
+/*
+       ==== Nothing to do ...
+       ... for an empty active block ... ====
+*/
+    *ns = 0;
+    *nd = 0;
+    work[1] = 1.f;
+    if (*ktop > *kbot) {
+	return 0;
+    }
+/*     ... nor for an empty deflation window. ==== */
+    if (*nw < 1) {
+	return 0;
+    }
+
+/*     ==== Machine constants ==== */
+
+    safmin = slamch_("SAFE MINIMUM");
+    safmax = 1.f / safmin;
+    slabad_(&safmin, &safmax);
+    ulp = slamch_("PRECISION");
+    smlnum = safmin * ((real) (*n) / ulp);
+
+/*
+       ==== Setup deflation window ====
+
+   Computing MIN
+*/
+    i__1 = *nw, i__2 = *kbot - *ktop + 1;
+    jw = min(i__1,i__2);
+    kwtop = *kbot - jw + 1;
+    if (kwtop == *ktop) {
+	s = 0.f;
+    } else {
+	s = h__[kwtop + (kwtop - 1) * h_dim1];
+    }
+
+    if (*kbot == kwtop) {
+
+/*        ==== 1-by-1 deflation window: not much to do ==== */
+
+	sr[kwtop] = h__[kwtop + kwtop * h_dim1];
+	si[kwtop] = 0.f;
+	*ns = 1;
+	*nd = 0;
+/* Computing MAX */
+	r__2 = smlnum, r__3 = ulp * (r__1 = h__[kwtop + kwtop * h_dim1], dabs(
+		r__1));
+	if (dabs(s) <= dmax(r__2,r__3)) {
+	    *ns = 0;
+	    *nd = 1;
+	    if (kwtop > *ktop) {
+		h__[kwtop + (kwtop - 1) * h_dim1] = 0.f;
+	    }
+	}
+	work[1] = 1.f;
+	return 0;
+    }
+
+/*
+       ==== Convert to spike-triangular form.  (In case of a
+       .    rare QR failure, this routine continues to do
+       .    aggressive early deflation using that part of
+       .    the deflation window that converged using INFQR
+       .    here and there to keep track.) ====
+*/
+
+    slacpy_("U", &jw, &jw, &h__[kwtop + kwtop * h_dim1], ldh, &t[t_offset],
+	    ldt);
+    i__1 = jw - 1;
+    i__2 = *ldh + 1;
+    i__3 = *ldt + 1;
+    scopy_(&i__1, &h__[kwtop + 1 + kwtop * h_dim1], &i__2, &t[t_dim1 + 2], &
+	    i__3);
+
+    slaset_("A", &jw, &jw, &c_b29, &c_b15, &v[v_offset], ldv);
+    slahqr_(&c_true, &c_true, &jw, &c__1, &jw, &t[t_offset], ldt, &sr[kwtop],
+	    &si[kwtop], &c__1, &jw, &v[v_offset], ldv, &infqr);
+
+/*     ==== STREXC needs a clean margin near the diagonal ==== */
+
+    i__1 = jw - 3;
+    for (j = 1; j <= i__1; ++j) {
+	t[j + 2 + j * t_dim1] = 0.f;
+	t[j + 3 + j * t_dim1] = 0.f;
+/* L10: */
+    }
+    if (jw > 2) {
+	t[jw + (jw - 2) * t_dim1] = 0.f;
+    }
+
+/*     ==== Deflation detection loop ==== */
+
+    *ns = jw;
+    ilst = infqr + 1;
+L20:
+    if (ilst <= *ns) {
+	if (*ns == 1) {
+	    bulge = FALSE_;
+	} else {
+	    bulge = t[*ns + (*ns - 1) * t_dim1] != 0.f;
+	}
+
+/*        ==== Small spike tip test for deflation ==== */
+
+	if (! bulge) {
+
+/*           ==== Real eigenvalue ==== */
+
+	    foo = (r__1 = t[*ns + *ns * t_dim1], dabs(r__1));
+	    if (foo == 0.f) {
+		foo = dabs(s);
+	    }
+/* Computing MAX */
+	    r__2 = smlnum, r__3 = ulp * foo;
+	    if ((r__1 = s * v[*ns * v_dim1 + 1], dabs(r__1)) <= dmax(r__2,
+		    r__3)) {
+
+/*              ==== Deflatable ==== */
+
+		--(*ns);
+	    } else {
+
+/*
+                ==== Undeflatable.   Move it up out of the way.
+                .    (STREXC can not fail in this case.) ====
+*/
+
+		ifst = *ns;
+		strexc_("V", &jw, &t[t_offset], ldt, &v[v_offset], ldv, &ifst,
+			 &ilst, &work[1], &info);
+		++ilst;
+	    }
+	} else {
+
+/*           ==== Complex conjugate pair ==== */
+
+	    foo = (r__3 = t[*ns + *ns * t_dim1], dabs(r__3)) + sqrt((r__1 = t[
+		    *ns + (*ns - 1) * t_dim1], dabs(r__1))) * sqrt((r__2 = t[*
+		    ns - 1 + *ns * t_dim1], dabs(r__2)));
+	    if (foo == 0.f) {
+		foo = dabs(s);
+	    }
+/* Computing MAX */
+	    r__3 = (r__1 = s * v[*ns * v_dim1 + 1], dabs(r__1)), r__4 = (r__2
+		    = s * v[(*ns - 1) * v_dim1 + 1], dabs(r__2));
+/* Computing MAX */
+	    r__5 = smlnum, r__6 = ulp * foo;
+	    if (dmax(r__3,r__4) <= dmax(r__5,r__6)) {
+
+/*              ==== Deflatable ==== */
+
+		*ns += -2;
+	    } else {
+
+/*
+                ==== Undeflatable. Move them up out of the way.
+                .    Fortunately, STREXC does the right thing with
+                .    ILST in case of a rare exchange failure. ====
+*/
+
+		ifst = *ns;
+		strexc_("V", &jw, &t[t_offset], ldt, &v[v_offset], ldv, &ifst,
+			 &ilst, &work[1], &info);
+		ilst += 2;
+	    }
+	}
+
+/*        ==== End deflation detection loop ==== */
+
+	goto L20;
+    }
+
+/*        ==== Return to Hessenberg form ==== */
+
+    if (*ns == 0) {
+	s = 0.f;
+    }
+
+    if (*ns < jw) {
+
+/*
+          ==== sorting diagonal blocks of T improves accuracy for
+          .    graded matrices.  Bubble sort deals well with
+          .    exchange failures. ====
+*/
+
+	sorted = FALSE_;
+	i__ = *ns + 1;
+L30:
+	if (sorted) {
+	    goto L50;
+	}
+	sorted = TRUE_;
+
+	kend = i__ - 1;
+	i__ = infqr + 1;
+	if (i__ == *ns) {
+	    k = i__ + 1;
+	} else if (t[i__ + 1 + i__ * t_dim1] == 0.f) {
+	    k = i__ + 1;
+	} else {
+	    k = i__ + 2;
+	}
+L40:
+	if (k <= kend) {
+	    if (k == i__ + 1) {
+		evi = (r__1 = t[i__ + i__ * t_dim1], dabs(r__1));
+	    } else {
+		evi = (r__3 = t[i__ + i__ * t_dim1], dabs(r__3)) + sqrt((r__1
+			= t[i__ + 1 + i__ * t_dim1], dabs(r__1))) * sqrt((
+			r__2 = t[i__ + (i__ + 1) * t_dim1], dabs(r__2)));
+	    }
+
+	    if (k == kend) {
+		evk = (r__1 = t[k + k * t_dim1], dabs(r__1));
+	    } else if (t[k + 1 + k * t_dim1] == 0.f) {
+		evk = (r__1 = t[k + k * t_dim1], dabs(r__1));
+	    } else {
+		evk = (r__3 = t[k + k * t_dim1], dabs(r__3)) + sqrt((r__1 = t[
+			k + 1 + k * t_dim1], dabs(r__1))) * sqrt((r__2 = t[k
+			+ (k + 1) * t_dim1], dabs(r__2)));
+	    }
+
+	    if (evi >= evk) {
+		i__ = k;
+	    } else {
+		sorted = FALSE_;
+		ifst = i__;
+		ilst = k;
+		strexc_("V", &jw, &t[t_offset], ldt, &v[v_offset], ldv, &ifst,
+			 &ilst, &work[1], &info);
+		if (info == 0) {
+		    i__ = ilst;
+		} else {
+		    i__ = k;
+		}
+	    }
+	    if (i__ == kend) {
+		k = i__ + 1;
+	    } else if (t[i__ + 1 + i__ * t_dim1] == 0.f) {
+		k = i__ + 1;
+	    } else {
+		k = i__ + 2;
+	    }
+	    goto L40;
+	}
+	goto L30;
+L50:
+	;
+    }
+
+/*     ==== Restore shift/eigenvalue array from T ==== */
+
+    i__ = jw;
+L60:
+    if (i__ >= infqr + 1) {
+	if (i__ == infqr + 1) {
+	    sr[kwtop + i__ - 1] = t[i__ + i__ * t_dim1];
+	    si[kwtop + i__ - 1] = 0.f;
+	    --i__;
+	} else if (t[i__ + (i__ - 1) * t_dim1] == 0.f) {
+	    sr[kwtop + i__ - 1] = t[i__ + i__ * t_dim1];
+	    si[kwtop + i__ - 1] = 0.f;
+	    --i__;
+	} else {
+	    aa = t[i__ - 1 + (i__ - 1) * t_dim1];
+	    cc = t[i__ + (i__ - 1) * t_dim1];
+	    bb = t[i__ - 1 + i__ * t_dim1];
+	    dd = t[i__ + i__ * t_dim1];
+	    slanv2_(&aa, &bb, &cc, &dd, &sr[kwtop + i__ - 2], &si[kwtop + i__
+		    - 2], &sr[kwtop + i__ - 1], &si[kwtop + i__ - 1], &cs, &
+		    sn);
+	    i__ += -2;
+	}
+	goto L60;
+    }
+
+    if (*ns < jw || s == 0.f) {
+	if (*ns > 1 && s != 0.f) {
+
+/*           ==== Reflect spike back into lower triangle ==== */
+
+	    scopy_(ns, &v[v_offset], ldv, &work[1], &c__1);
+	    beta = work[1];
+	    slarfg_(ns, &beta, &work[2], &c__1, &tau);
+	    work[1] = 1.f;
+
+	    i__1 = jw - 2;
+	    i__2 = jw - 2;
+	    slaset_("L", &i__1, &i__2, &c_b29, &c_b29, &t[t_dim1 + 3], ldt);
+
+	    slarf_("L", ns, &jw, &work[1], &c__1, &tau, &t[t_offset], ldt, &
+		    work[jw + 1]);
+	    slarf_("R", ns, ns, &work[1], &c__1, &tau, &t[t_offset], ldt, &
+		    work[jw + 1]);
+	    slarf_("R", &jw, ns, &work[1], &c__1, &tau, &v[v_offset], ldv, &
+		    work[jw + 1]);
+
+	    i__1 = *lwork - jw;
+	    sgehrd_(&jw, &c__1, ns, &t[t_offset], ldt, &work[1], &work[jw + 1]
+		    , &i__1, &info);
+	}
+
+/*        ==== Copy updated reduced window into place ==== */
+
+	if (kwtop > 1) {
+	    h__[kwtop + (kwtop - 1) * h_dim1] = s * v[v_dim1 + 1];
+	}
+	slacpy_("U", &jw, &jw, &t[t_offset], ldt, &h__[kwtop + kwtop * h_dim1]
+		, ldh);
+	i__1 = jw - 1;
+	i__2 = *ldt + 1;
+	i__3 = *ldh + 1;
+	scopy_(&i__1, &t[t_dim1 + 2], &i__2, &h__[kwtop + 1 + kwtop * h_dim1],
+		 &i__3);
+
+/*
+          ==== Accumulate orthogonal matrix in order update
+          .    H and Z, if requested.  ====
+*/
+
+	if (*ns > 1 && s != 0.f) {
+	    i__1 = *lwork - jw;
+	    sormhr_("R", "N", &jw, ns, &c__1, ns, &t[t_offset], ldt, &work[1],
+		     &v[v_offset], ldv, &work[jw + 1], &i__1, &info);
+	}
+
+/*        ==== Update vertical slab in H ==== */
+
+	if (*wantt) {
+	    ltop = 1;
+	} else {
+	    ltop = *ktop;
+	}
+	i__1 = kwtop - 1;
+	i__2 = *nv;
+	for (krow = ltop; i__2 < 0 ? krow >= i__1 : krow <= i__1; krow +=
+		i__2) {
+/* Computing MIN */
+	    i__3 = *nv, i__4 = kwtop - krow;
+	    kln = min(i__3,i__4);
+	    sgemm_("N", "N", &kln, &jw, &jw, &c_b15, &h__[krow + kwtop *
+		    h_dim1], ldh, &v[v_offset], ldv, &c_b29, &wv[wv_offset],
+		    ldwv);
+	    slacpy_("A", &kln, &jw, &wv[wv_offset], ldwv, &h__[krow + kwtop *
+		    h_dim1], ldh);
+/* L70: */
+	}
+
+/*        ==== Update horizontal slab in H ==== */
+
+	if (*wantt) {
+	    i__2 = *n;
+	    i__1 = *nh;
+	    for (kcol = *kbot + 1; i__1 < 0 ? kcol >= i__2 : kcol <= i__2;
+		    kcol += i__1) {
+/* Computing MIN */
+		i__3 = *nh, i__4 = *n - kcol + 1;
+		kln = min(i__3,i__4);
+		sgemm_("C", "N", &jw, &kln, &jw, &c_b15, &v[v_offset], ldv, &
+			h__[kwtop + kcol * h_dim1], ldh, &c_b29, &t[t_offset],
+			 ldt);
+		slacpy_("A", &jw, &kln, &t[t_offset], ldt, &h__[kwtop + kcol *
+			 h_dim1], ldh);
+/* L80: */
+	    }
+	}
+
+/*        ==== Update vertical slab in Z ==== */
+
+	if (*wantz) {
+	    i__1 = *ihiz;
+	    i__2 = *nv;
+	    for (krow = *iloz; i__2 < 0 ? krow >= i__1 : krow <= i__1; krow +=
+		     i__2) {
+/* Computing MIN */
+		i__3 = *nv, i__4 = *ihiz - krow + 1;
+		kln = min(i__3,i__4);
+		sgemm_("N", "N", &kln, &jw, &jw, &c_b15, &z__[krow + kwtop *
+			z_dim1], ldz, &v[v_offset], ldv, &c_b29, &wv[
+			wv_offset], ldwv);
+		slacpy_("A", &kln, &jw, &wv[wv_offset], ldwv, &z__[krow +
+			kwtop * z_dim1], ldz);
+/* L90: */
+	    }
+	}
+    }
+
+/*     ==== Return the number of deflations ... ==== */
+
+    *nd = jw - *ns;
+
+/*
+       ==== ... and the number of shifts. (Subtracting
+       .    INFQR from the spike length takes care
+       .    of the case of a rare QR failure while
+       .    calculating eigenvalues of the deflation
+       .    window.)  ====
+*/
+
+    *ns -= infqr;
+
+/*      ==== Return optimal workspace. ==== */
+
+    work[1] = (real) lwkopt;
+
+/*     ==== End of SLAQR2 ==== */
+
+    return 0;
+} /* slaqr2_ */
+
+/* Subroutine */ int slaqr3_(logical *wantt, logical *wantz, integer *n,
+	integer *ktop, integer *kbot, integer *nw, real *h__, integer *ldh,
+	integer *iloz, integer *ihiz, real *z__, integer *ldz, integer *ns,
+	integer *nd, real *sr, real *si, real *v, integer *ldv, integer *nh,
+	real *t, integer *ldt, integer *nv, real *wv, integer *ldwv, real *
+	work, integer *lwork)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset, t_dim1, t_offset, v_dim1, v_offset, wv_dim1,
+	    wv_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4;
+    real r__1, r__2, r__3, r__4, r__5, r__6;
+
+    /* Local variables */
+    static integer i__, j, k;
+    static real s, aa, bb, cc, dd, cs, sn;
+    static integer jw;
+    static real evi, evk, foo;
+    static integer kln;
+    static real tau, ulp;
+    static integer lwk1, lwk2, lwk3;
+    static real beta;
+    static integer kend, kcol, info, nmin, ifst, ilst, ltop, krow;
+    static logical bulge;
+    extern /* Subroutine */ int slarf_(char *, integer *, integer *, real *,
+	    integer *, real *, real *, integer *, real *), sgemm_(
+	    char *, char *, integer *, integer *, integer *, real *, real *,
+	    integer *, real *, integer *, real *, real *, integer *);
+    static integer infqr;
+    extern /* Subroutine */ int scopy_(integer *, real *, integer *, real *,
+	    integer *);
+    static integer kwtop;
+    extern /* Subroutine */ int slanv2_(real *, real *, real *, real *, real *
+	    , real *, real *, real *, real *, real *), slaqr4_(logical *,
+	    logical *, integer *, integer *, integer *, real *, integer *,
+	    real *, real *, integer *, integer *, real *, integer *, real *,
+	    integer *, integer *), slabad_(real *, real *);
+    extern doublereal slamch_(char *);
+    extern /* Subroutine */ int sgehrd_(integer *, integer *, integer *, real
+	    *, integer *, real *, real *, integer *, integer *);
+    static real safmin;
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static real safmax;
+    extern /* Subroutine */ int slarfg_(integer *, real *, real *, integer *,
+	    real *), slahqr_(logical *, logical *, integer *, integer *,
+	    integer *, real *, integer *, real *, real *, integer *, integer *
+	    , real *, integer *, integer *), slacpy_(char *, integer *,
+	    integer *, real *, integer *, real *, integer *), slaset_(
+	    char *, integer *, integer *, real *, real *, real *, integer *);
+    static logical sorted;
+    extern /* Subroutine */ int strexc_(char *, integer *, real *, integer *,
+	    real *, integer *, integer *, integer *, real *, integer *), sormhr_(char *, char *, integer *, integer *, integer *,
+	    integer *, real *, integer *, real *, real *, integer *, real *,
+	    integer *, integer *);
+    static real smlnum;
+    static integer lwkopt;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2.1)                        --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+    -- April 2009                                                      --
+
+
+       ******************************************************************
+       Aggressive early deflation:
+
+       This subroutine accepts as input an upper Hessenberg matrix
+       H and performs an orthogonal similarity transformation
+       designed to detect and deflate fully converged eigenvalues from
+       a trailing principal submatrix.  On output H has been over-
+       written by a new Hessenberg matrix that is a perturbation of
+       an orthogonal similarity transformation of H.  It is to be
+       hoped that the final version of H has many zero subdiagonal
+       entries.
+
+       ******************************************************************
+       WANTT   (input) LOGICAL
+            If .TRUE., then the Hessenberg matrix H is fully updated
+            so that the quasi-triangular Schur factor may be
+            computed (in cooperation with the calling subroutine).
+            If .FALSE., then only enough of H is updated to preserve
+            the eigenvalues.
+
+       WANTZ   (input) LOGICAL
+            If .TRUE., then the orthogonal matrix Z is updated so
+            so that the orthogonal Schur factor may be computed
+            (in cooperation with the calling subroutine).
+            If .FALSE., then Z is not referenced.
+
+       N       (input) INTEGER
+            The order of the matrix H and (if WANTZ is .TRUE.) the
+            order of the orthogonal matrix Z.
+
+       KTOP    (input) INTEGER
+            It is assumed that either KTOP = 1 or H(KTOP,KTOP-1)=0.
+            KBOT and KTOP together determine an isolated block
+            along the diagonal of the Hessenberg matrix.
+
+       KBOT    (input) INTEGER
+            It is assumed without a check that either
+            KBOT = N or H(KBOT+1,KBOT)=0.  KBOT and KTOP together
+            determine an isolated block along the diagonal of the
+            Hessenberg matrix.
+
+       NW      (input) INTEGER
+            Deflation window size.  1 .LE. NW .LE. (KBOT-KTOP+1).
+
+       H       (input/output) REAL array, dimension (LDH,N)
+            On input the initial N-by-N section of H stores the
+            Hessenberg matrix undergoing aggressive early deflation.
+            On output H has been transformed by an orthogonal
+            similarity transformation, perturbed, and the returned
+            to Hessenberg form that (it is to be hoped) has some
+            zero subdiagonal entries.
+
+       LDH     (input) integer
+            Leading dimension of H just as declared in the calling
+            subroutine.  N .LE. LDH
+
+       ILOZ    (input) INTEGER
+       IHIZ    (input) INTEGER
+            Specify the rows of Z to which transformations must be
+            applied if WANTZ is .TRUE.. 1 .LE. ILOZ .LE. IHIZ .LE. N.
+
+       Z       (input/output) REAL array, dimension (LDZ,N)
+            IF WANTZ is .TRUE., then on output, the orthogonal
+            similarity transformation mentioned above has been
+            accumulated into Z(ILOZ:IHIZ,ILO:IHI) from the right.
+            If WANTZ is .FALSE., then Z is unreferenced.
+
+       LDZ     (input) integer
+            The leading dimension of Z just as declared in the
+            calling subroutine.  1 .LE. LDZ.
+
+       NS      (output) integer
+            The number of unconverged (ie approximate) eigenvalues
+            returned in SR and SI that may be used as shifts by the
+            calling subroutine.
+
+       ND      (output) integer
+            The number of converged eigenvalues uncovered by this
+            subroutine.
+
+       SR      (output) REAL array, dimension KBOT
+       SI      (output) REAL array, dimension KBOT
+            On output, the real and imaginary parts of approximate
+            eigenvalues that may be used for shifts are stored in
+            SR(KBOT-ND-NS+1) through SR(KBOT-ND) and
+            SI(KBOT-ND-NS+1) through SI(KBOT-ND), respectively.
+            The real and imaginary parts of converged eigenvalues
+            are stored in SR(KBOT-ND+1) through SR(KBOT) and
+            SI(KBOT-ND+1) through SI(KBOT), respectively.
+
+       V       (workspace) REAL array, dimension (LDV,NW)
+            An NW-by-NW work array.
+
+       LDV     (input) integer scalar
+            The leading dimension of V just as declared in the
+            calling subroutine.  NW .LE. LDV
+
+       NH      (input) integer scalar
+            The number of columns of T.  NH.GE.NW.
+
+       T       (workspace) REAL array, dimension (LDT,NW)
+
+       LDT     (input) integer
+            The leading dimension of T just as declared in the
+            calling subroutine.  NW .LE. LDT
+
+       NV      (input) integer
+            The number of rows of work array WV available for
+            workspace.  NV.GE.NW.
+
+       WV      (workspace) REAL array, dimension (LDWV,NW)
+
+       LDWV    (input) integer
+            The leading dimension of W just as declared in the
+            calling subroutine.  NW .LE. LDV
+
+       WORK    (workspace) REAL array, dimension LWORK.
+            On exit, WORK(1) is set to an estimate of the optimal value
+            of LWORK for the given values of N, NW, KTOP and KBOT.
+
+       LWORK   (input) integer
+            The dimension of the work array WORK.  LWORK = 2*NW
+            suffices, but greater efficiency may result from larger
+            values of LWORK.
+
+            If LWORK = -1, then a workspace query is assumed; SLAQR3
+            only estimates the optimal workspace size for the given
+            values of N, NW, KTOP and KBOT.  The estimate is returned
+            in WORK(1).  No error message related to LWORK is issued
+            by XERBLA.  Neither H nor Z are accessed.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+
+       ==== Estimate optimal workspace. ====
+*/
+
+    /* Parameter adjustments */
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    z_dim1 = *ldz;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    --sr;
+    --si;
+    v_dim1 = *ldv;
+    v_offset = 1 + v_dim1;
+    v -= v_offset;
+    t_dim1 = *ldt;
+    t_offset = 1 + t_dim1;
+    t -= t_offset;
+    wv_dim1 = *ldwv;
+    wv_offset = 1 + wv_dim1;
+    wv -= wv_offset;
+    --work;
+
+    /* Function Body */
+/* Computing MIN */
+    i__1 = *nw, i__2 = *kbot - *ktop + 1;
+    jw = min(i__1,i__2);
+    if (jw <= 2) {
+	lwkopt = 1;
+    } else {
+
+/*        ==== Workspace query call to SGEHRD ==== */
+
+	i__1 = jw - 1;
+	sgehrd_(&jw, &c__1, &i__1, &t[t_offset], ldt, &work[1], &work[1], &
+		c_n1, &info);
+	lwk1 = (integer) work[1];
+
+/*        ==== Workspace query call to SORMHR ==== */
+
+	i__1 = jw - 1;
+	sormhr_("R", "N", &jw, &jw, &c__1, &i__1, &t[t_offset], ldt, &work[1],
+		 &v[v_offset], ldv, &work[1], &c_n1, &info);
+	lwk2 = (integer) work[1];
+
+/*        ==== Workspace query call to SLAQR4 ==== */
+
+	slaqr4_(&c_true, &c_true, &jw, &c__1, &jw, &t[t_offset], ldt, &sr[1],
+		&si[1], &c__1, &jw, &v[v_offset], ldv, &work[1], &c_n1, &
+		infqr);
+	lwk3 = (integer) work[1];
+
+/*
+          ==== Optimal workspace ====
+
+   Computing MAX
+*/
+	i__1 = jw + max(lwk1,lwk2);
+	lwkopt = max(i__1,lwk3);
+    }
+
+/*     ==== Quick return in case of workspace query. ==== */
+
+    if (*lwork == -1) {
+	work[1] = (real) lwkopt;
+	return 0;
+    }
+
+/*
+       ==== Nothing to do ...
+       ... for an empty active block ... ====
+*/
+    *ns = 0;
+    *nd = 0;
+    work[1] = 1.f;
+    if (*ktop > *kbot) {
+	return 0;
+    }
+/*     ... nor for an empty deflation window. ==== */
+    if (*nw < 1) {
+	return 0;
+    }
+
+/*     ==== Machine constants ==== */
+
+    safmin = slamch_("SAFE MINIMUM");
+    safmax = 1.f / safmin;
+    slabad_(&safmin, &safmax);
+    ulp = slamch_("PRECISION");
+    smlnum = safmin * ((real) (*n) / ulp);
+
+/*
+       ==== Setup deflation window ====
+
+   Computing MIN
+*/
+    i__1 = *nw, i__2 = *kbot - *ktop + 1;
+    jw = min(i__1,i__2);
+    kwtop = *kbot - jw + 1;
+    if (kwtop == *ktop) {
+	s = 0.f;
+    } else {
+	s = h__[kwtop + (kwtop - 1) * h_dim1];
+    }
+
+    if (*kbot == kwtop) {
+
+/*        ==== 1-by-1 deflation window: not much to do ==== */
+
+	sr[kwtop] = h__[kwtop + kwtop * h_dim1];
+	si[kwtop] = 0.f;
+	*ns = 1;
+	*nd = 0;
+/* Computing MAX */
+	r__2 = smlnum, r__3 = ulp * (r__1 = h__[kwtop + kwtop * h_dim1], dabs(
+		r__1));
+	if (dabs(s) <= dmax(r__2,r__3)) {
+	    *ns = 0;
+	    *nd = 1;
+	    if (kwtop > *ktop) {
+		h__[kwtop + (kwtop - 1) * h_dim1] = 0.f;
+	    }
+	}
+	work[1] = 1.f;
+	return 0;
+    }
+
+/*
+       ==== Convert to spike-triangular form.  (In case of a
+       .    rare QR failure, this routine continues to do
+       .    aggressive early deflation using that part of
+       .    the deflation window that converged using INFQR
+       .    here and there to keep track.) ====
+*/
+
+    slacpy_("U", &jw, &jw, &h__[kwtop + kwtop * h_dim1], ldh, &t[t_offset],
+	    ldt);
+    i__1 = jw - 1;
+    i__2 = *ldh + 1;
+    i__3 = *ldt + 1;
+    scopy_(&i__1, &h__[kwtop + 1 + kwtop * h_dim1], &i__2, &t[t_dim1 + 2], &
+	    i__3);
+
+    slaset_("A", &jw, &jw, &c_b29, &c_b15, &v[v_offset], ldv);
+    nmin = ilaenv_(&c__12, "SLAQR3", "SV", &jw, &c__1, &jw, lwork, (ftnlen)6,
+	    (ftnlen)2);
+    if (jw > nmin) {
+	slaqr4_(&c_true, &c_true, &jw, &c__1, &jw, &t[t_offset], ldt, &sr[
+		kwtop], &si[kwtop], &c__1, &jw, &v[v_offset], ldv, &work[1],
+		lwork, &infqr);
+    } else {
+	slahqr_(&c_true, &c_true, &jw, &c__1, &jw, &t[t_offset], ldt, &sr[
+		kwtop], &si[kwtop], &c__1, &jw, &v[v_offset], ldv, &infqr);
+    }
+
+/*     ==== STREXC needs a clean margin near the diagonal ==== */
+
+    i__1 = jw - 3;
+    for (j = 1; j <= i__1; ++j) {
+	t[j + 2 + j * t_dim1] = 0.f;
+	t[j + 3 + j * t_dim1] = 0.f;
+/* L10: */
+    }
+    if (jw > 2) {
+	t[jw + (jw - 2) * t_dim1] = 0.f;
+    }
+
+/*     ==== Deflation detection loop ==== */
+
+    *ns = jw;
+    ilst = infqr + 1;
+L20:
+    if (ilst <= *ns) {
+	if (*ns == 1) {
+	    bulge = FALSE_;
+	} else {
+	    bulge = t[*ns + (*ns - 1) * t_dim1] != 0.f;
+	}
+
+/*        ==== Small spike tip test for deflation ==== */
+
+	if (! bulge) {
+
+/*           ==== Real eigenvalue ==== */
+
+	    foo = (r__1 = t[*ns + *ns * t_dim1], dabs(r__1));
+	    if (foo == 0.f) {
+		foo = dabs(s);
+	    }
+/* Computing MAX */
+	    r__2 = smlnum, r__3 = ulp * foo;
+	    if ((r__1 = s * v[*ns * v_dim1 + 1], dabs(r__1)) <= dmax(r__2,
+		    r__3)) {
+
+/*              ==== Deflatable ==== */
+
+		--(*ns);
+	    } else {
+
+/*
+                ==== Undeflatable.   Move it up out of the way.
+                .    (STREXC can not fail in this case.) ====
+*/
+
+		ifst = *ns;
+		strexc_("V", &jw, &t[t_offset], ldt, &v[v_offset], ldv, &ifst,
+			 &ilst, &work[1], &info);
+		++ilst;
+	    }
+	} else {
+
+/*           ==== Complex conjugate pair ==== */
+
+	    foo = (r__3 = t[*ns + *ns * t_dim1], dabs(r__3)) + sqrt((r__1 = t[
+		    *ns + (*ns - 1) * t_dim1], dabs(r__1))) * sqrt((r__2 = t[*
+		    ns - 1 + *ns * t_dim1], dabs(r__2)));
+	    if (foo == 0.f) {
+		foo = dabs(s);
+	    }
+/* Computing MAX */
+	    r__3 = (r__1 = s * v[*ns * v_dim1 + 1], dabs(r__1)), r__4 = (r__2
+		    = s * v[(*ns - 1) * v_dim1 + 1], dabs(r__2));
+/* Computing MAX */
+	    r__5 = smlnum, r__6 = ulp * foo;
+	    if (dmax(r__3,r__4) <= dmax(r__5,r__6)) {
+
+/*              ==== Deflatable ==== */
+
+		*ns += -2;
+	    } else {
+
+/*
+                ==== Undeflatable. Move them up out of the way.
+                .    Fortunately, STREXC does the right thing with
+                .    ILST in case of a rare exchange failure. ====
+*/
+
+		ifst = *ns;
+		strexc_("V", &jw, &t[t_offset], ldt, &v[v_offset], ldv, &ifst,
+			 &ilst, &work[1], &info);
+		ilst += 2;
+	    }
+	}
+
+/*        ==== End deflation detection loop ==== */
+
+	goto L20;
+    }
+
+/*        ==== Return to Hessenberg form ==== */
+
+    if (*ns == 0) {
+	s = 0.f;
+    }
+
+    if (*ns < jw) {
+
+/*
+          ==== sorting diagonal blocks of T improves accuracy for
+          .    graded matrices.  Bubble sort deals well with
+          .    exchange failures. ====
+*/
+
+	sorted = FALSE_;
+	i__ = *ns + 1;
+L30:
+	if (sorted) {
+	    goto L50;
+	}
+	sorted = TRUE_;
+
+	kend = i__ - 1;
+	i__ = infqr + 1;
+	if (i__ == *ns) {
+	    k = i__ + 1;
+	} else if (t[i__ + 1 + i__ * t_dim1] == 0.f) {
+	    k = i__ + 1;
+	} else {
+	    k = i__ + 2;
+	}
+L40:
+	if (k <= kend) {
+	    if (k == i__ + 1) {
+		evi = (r__1 = t[i__ + i__ * t_dim1], dabs(r__1));
+	    } else {
+		evi = (r__3 = t[i__ + i__ * t_dim1], dabs(r__3)) + sqrt((r__1
+			= t[i__ + 1 + i__ * t_dim1], dabs(r__1))) * sqrt((
+			r__2 = t[i__ + (i__ + 1) * t_dim1], dabs(r__2)));
+	    }
+
+	    if (k == kend) {
+		evk = (r__1 = t[k + k * t_dim1], dabs(r__1));
+	    } else if (t[k + 1 + k * t_dim1] == 0.f) {
+		evk = (r__1 = t[k + k * t_dim1], dabs(r__1));
+	    } else {
+		evk = (r__3 = t[k + k * t_dim1], dabs(r__3)) + sqrt((r__1 = t[
+			k + 1 + k * t_dim1], dabs(r__1))) * sqrt((r__2 = t[k
+			+ (k + 1) * t_dim1], dabs(r__2)));
+	    }
+
+	    if (evi >= evk) {
+		i__ = k;
+	    } else {
+		sorted = FALSE_;
+		ifst = i__;
+		ilst = k;
+		strexc_("V", &jw, &t[t_offset], ldt, &v[v_offset], ldv, &ifst,
+			 &ilst, &work[1], &info);
+		if (info == 0) {
+		    i__ = ilst;
+		} else {
+		    i__ = k;
+		}
+	    }
+	    if (i__ == kend) {
+		k = i__ + 1;
+	    } else if (t[i__ + 1 + i__ * t_dim1] == 0.f) {
+		k = i__ + 1;
+	    } else {
+		k = i__ + 2;
+	    }
+	    goto L40;
+	}
+	goto L30;
+L50:
+	;
+    }
+
+/*     ==== Restore shift/eigenvalue array from T ==== */
+
+    i__ = jw;
+L60:
+    if (i__ >= infqr + 1) {
+	if (i__ == infqr + 1) {
+	    sr[kwtop + i__ - 1] = t[i__ + i__ * t_dim1];
+	    si[kwtop + i__ - 1] = 0.f;
+	    --i__;
+	} else if (t[i__ + (i__ - 1) * t_dim1] == 0.f) {
+	    sr[kwtop + i__ - 1] = t[i__ + i__ * t_dim1];
+	    si[kwtop + i__ - 1] = 0.f;
+	    --i__;
+	} else {
+	    aa = t[i__ - 1 + (i__ - 1) * t_dim1];
+	    cc = t[i__ + (i__ - 1) * t_dim1];
+	    bb = t[i__ - 1 + i__ * t_dim1];
+	    dd = t[i__ + i__ * t_dim1];
+	    slanv2_(&aa, &bb, &cc, &dd, &sr[kwtop + i__ - 2], &si[kwtop + i__
+		    - 2], &sr[kwtop + i__ - 1], &si[kwtop + i__ - 1], &cs, &
+		    sn);
+	    i__ += -2;
+	}
+	goto L60;
+    }
+
+    if (*ns < jw || s == 0.f) {
+	if (*ns > 1 && s != 0.f) {
+
+/*           ==== Reflect spike back into lower triangle ==== */
+
+	    scopy_(ns, &v[v_offset], ldv, &work[1], &c__1);
+	    beta = work[1];
+	    slarfg_(ns, &beta, &work[2], &c__1, &tau);
+	    work[1] = 1.f;
+
+	    i__1 = jw - 2;
+	    i__2 = jw - 2;
+	    slaset_("L", &i__1, &i__2, &c_b29, &c_b29, &t[t_dim1 + 3], ldt);
+
+	    slarf_("L", ns, &jw, &work[1], &c__1, &tau, &t[t_offset], ldt, &
+		    work[jw + 1]);
+	    slarf_("R", ns, ns, &work[1], &c__1, &tau, &t[t_offset], ldt, &
+		    work[jw + 1]);
+	    slarf_("R", &jw, ns, &work[1], &c__1, &tau, &v[v_offset], ldv, &
+		    work[jw + 1]);
+
+	    i__1 = *lwork - jw;
+	    sgehrd_(&jw, &c__1, ns, &t[t_offset], ldt, &work[1], &work[jw + 1]
+		    , &i__1, &info);
+	}
+
+/*        ==== Copy updated reduced window into place ==== */
+
+	if (kwtop > 1) {
+	    h__[kwtop + (kwtop - 1) * h_dim1] = s * v[v_dim1 + 1];
+	}
+	slacpy_("U", &jw, &jw, &t[t_offset], ldt, &h__[kwtop + kwtop * h_dim1]
+		, ldh);
+	i__1 = jw - 1;
+	i__2 = *ldt + 1;
+	i__3 = *ldh + 1;
+	scopy_(&i__1, &t[t_dim1 + 2], &i__2, &h__[kwtop + 1 + kwtop * h_dim1],
+		 &i__3);
+
+/*
+          ==== Accumulate orthogonal matrix in order update
+          .    H and Z, if requested.  ====
+*/
+
+	if (*ns > 1 && s != 0.f) {
+	    i__1 = *lwork - jw;
+	    sormhr_("R", "N", &jw, ns, &c__1, ns, &t[t_offset], ldt, &work[1],
+		     &v[v_offset], ldv, &work[jw + 1], &i__1, &info);
+	}
+
+/*        ==== Update vertical slab in H ==== */
+
+	if (*wantt) {
+	    ltop = 1;
+	} else {
+	    ltop = *ktop;
+	}
+	i__1 = kwtop - 1;
+	i__2 = *nv;
+	for (krow = ltop; i__2 < 0 ? krow >= i__1 : krow <= i__1; krow +=
+		i__2) {
+/* Computing MIN */
+	    i__3 = *nv, i__4 = kwtop - krow;
+	    kln = min(i__3,i__4);
+	    sgemm_("N", "N", &kln, &jw, &jw, &c_b15, &h__[krow + kwtop *
+		    h_dim1], ldh, &v[v_offset], ldv, &c_b29, &wv[wv_offset],
+		    ldwv);
+	    slacpy_("A", &kln, &jw, &wv[wv_offset], ldwv, &h__[krow + kwtop *
+		    h_dim1], ldh);
+/* L70: */
+	}
+
+/*        ==== Update horizontal slab in H ==== */
+
+	if (*wantt) {
+	    i__2 = *n;
+	    i__1 = *nh;
+	    for (kcol = *kbot + 1; i__1 < 0 ? kcol >= i__2 : kcol <= i__2;
+		    kcol += i__1) {
+/* Computing MIN */
+		i__3 = *nh, i__4 = *n - kcol + 1;
+		kln = min(i__3,i__4);
+		sgemm_("C", "N", &jw, &kln, &jw, &c_b15, &v[v_offset], ldv, &
+			h__[kwtop + kcol * h_dim1], ldh, &c_b29, &t[t_offset],
+			 ldt);
+		slacpy_("A", &jw, &kln, &t[t_offset], ldt, &h__[kwtop + kcol *
+			 h_dim1], ldh);
+/* L80: */
+	    }
+	}
+
+/*        ==== Update vertical slab in Z ==== */
+
+	if (*wantz) {
+	    i__1 = *ihiz;
+	    i__2 = *nv;
+	    for (krow = *iloz; i__2 < 0 ? krow >= i__1 : krow <= i__1; krow +=
+		     i__2) {
+/* Computing MIN */
+		i__3 = *nv, i__4 = *ihiz - krow + 1;
+		kln = min(i__3,i__4);
+		sgemm_("N", "N", &kln, &jw, &jw, &c_b15, &z__[krow + kwtop *
+			z_dim1], ldz, &v[v_offset], ldv, &c_b29, &wv[
+			wv_offset], ldwv);
+		slacpy_("A", &kln, &jw, &wv[wv_offset], ldwv, &z__[krow +
+			kwtop * z_dim1], ldz);
+/* L90: */
+	    }
+	}
+    }
+
+/*     ==== Return the number of deflations ... ==== */
+
+    *nd = jw - *ns;
+
+/*
+       ==== ... and the number of shifts. (Subtracting
+       .    INFQR from the spike length takes care
+       .    of the case of a rare QR failure while
+       .    calculating eigenvalues of the deflation
+       .    window.)  ====
+*/
+
+    *ns -= infqr;
+
+/*      ==== Return optimal workspace. ==== */
+
+    work[1] = (real) lwkopt;
+
+/*     ==== End of SLAQR3 ==== */
+
+    return 0;
+} /* slaqr3_ */
+
+/* Subroutine */ int slaqr4_(logical *wantt, logical *wantz, integer *n,
+	integer *ilo, integer *ihi, real *h__, integer *ldh, real *wr, real *
+	wi, integer *iloz, integer *ihiz, real *z__, integer *ldz, real *work,
+	 integer *lwork, integer *info)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset, z_dim1, z_offset, i__1, i__2, i__3, i__4, i__5;
+    real r__1, r__2, r__3, r__4;
+
+    /* Local variables */
+    static integer i__, k;
+    static real aa, bb, cc, dd;
+    static integer ld;
+    static real cs;
+    static integer nh, it, ks, kt;
+    static real sn;
+    static integer ku, kv, ls, ns;
+    static real ss;
+    static integer nw, inf, kdu, nho, nve, kwh, nsr, nwr, kwv, ndec, ndfl,
+	    kbot, nmin;
+    static real swap;
+    static integer ktop;
+    static real zdum[1]	/* was [1][1] */;
+    static integer kacc22, itmax, nsmax, nwmax, kwtop;
+    extern /* Subroutine */ int slaqr2_(logical *, logical *, integer *,
+	    integer *, integer *, integer *, real *, integer *, integer *,
+	    integer *, real *, integer *, integer *, integer *, real *, real *
+	    , real *, integer *, integer *, real *, integer *, integer *,
+	    real *, integer *, real *, integer *), slanv2_(real *, real *,
+	    real *, real *, real *, real *, real *, real *, real *, real *),
+	    slaqr5_(logical *, logical *, integer *, integer *, integer *,
+	    integer *, integer *, real *, real *, real *, integer *, integer *
+	    , integer *, real *, integer *, real *, integer *, real *,
+	    integer *, integer *, real *, integer *, integer *, real *,
+	    integer *);
+    static integer nibble;
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static char jbcmpz[2];
+    extern /* Subroutine */ int slahqr_(logical *, logical *, integer *,
+	    integer *, integer *, real *, integer *, real *, real *, integer *
+	    , integer *, real *, integer *, integer *), slacpy_(char *,
+	    integer *, integer *, real *, integer *, real *, integer *);
+    static integer nwupbd;
+    static logical sorted;
+    static integer lwkopt;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..
+       November 2006
+
+
+       This subroutine implements one level of recursion for SLAQR0.
+       It is a complete implementation of the small bulge multi-shift
+       QR algorithm.  It may be called by SLAQR0 and, for large enough
+       deflation window size, it may be called by SLAQR3.  This
+       subroutine is identical to SLAQR0 except that it calls SLAQR2
+       instead of SLAQR3.
+
+       Purpose
+       =======
+
+       SLAQR4 computes the eigenvalues of a Hessenberg matrix H
+       and, optionally, the matrices T and Z from the Schur decomposition
+       H = Z T Z**T, where T is an upper quasi-triangular matrix (the
+       Schur form), and Z is the orthogonal matrix of Schur vectors.
+
+       Optionally Z may be postmultiplied into an input orthogonal
+       matrix Q so that this routine can give the Schur factorization
+       of a matrix A which has been reduced to the Hessenberg form H
+       by the orthogonal matrix Q:  A = Q*H*Q**T = (QZ)*T*(QZ)**T.
+
+       Arguments
+       =========
+
+       WANTT   (input) LOGICAL
+            = .TRUE. : the full Schur form T is required;
+            = .FALSE.: only eigenvalues are required.
+
+       WANTZ   (input) LOGICAL
+            = .TRUE. : the matrix of Schur vectors Z is required;
+            = .FALSE.: Schur vectors are not required.
+
+       N     (input) INTEGER
+             The order of the matrix H.  N .GE. 0.
+
+       ILO   (input) INTEGER
+       IHI   (input) INTEGER
+             It is assumed that H is already upper triangular in rows
+             and columns 1:ILO-1 and IHI+1:N and, if ILO.GT.1,
+             H(ILO,ILO-1) is zero. ILO and IHI are normally set by a
+             previous call to SGEBAL, and then passed to SGEHRD when the
+             matrix output by SGEBAL is reduced to Hessenberg form.
+             Otherwise, ILO and IHI should be set to 1 and N,
+             respectively.  If N.GT.0, then 1.LE.ILO.LE.IHI.LE.N.
+             If N = 0, then ILO = 1 and IHI = 0.
+
+       H     (input/output) REAL array, dimension (LDH,N)
+             On entry, the upper Hessenberg matrix H.
+             On exit, if INFO = 0 and WANTT is .TRUE., then H contains
+             the upper quasi-triangular matrix T from the Schur
+             decomposition (the Schur form); 2-by-2 diagonal blocks
+             (corresponding to complex conjugate pairs of eigenvalues)
+             are returned in standard form, with H(i,i) = H(i+1,i+1)
+             and H(i+1,i)*H(i,i+1).LT.0. If INFO = 0 and WANTT is
+             .FALSE., then the contents of H are unspecified on exit.
+             (The output value of H when INFO.GT.0 is given under the
+             description of INFO below.)
+
+             This subroutine may explicitly set H(i,j) = 0 for i.GT.j and
+             j = 1, 2, ... ILO-1 or j = IHI+1, IHI+2, ... N.
+
+       LDH   (input) INTEGER
+             The leading dimension of the array H. LDH .GE. max(1,N).
+
+       WR    (output) REAL array, dimension (IHI)
+       WI    (output) REAL array, dimension (IHI)
+             The real and imaginary parts, respectively, of the computed
+             eigenvalues of H(ILO:IHI,ILO:IHI) are stored in WR(ILO:IHI)
+             and WI(ILO:IHI). If two eigenvalues are computed as a
+             complex conjugate pair, they are stored in consecutive
+             elements of WR and WI, say the i-th and (i+1)th, with
+             WI(i) .GT. 0 and WI(i+1) .LT. 0. If WANTT is .TRUE., then
+             the eigenvalues are stored in the same order as on the
+             diagonal of the Schur form returned in H, with
+             WR(i) = H(i,i) and, if H(i:i+1,i:i+1) is a 2-by-2 diagonal
+             block, WI(i) = sqrt(-H(i+1,i)*H(i,i+1)) and
+             WI(i+1) = -WI(i).
+
+       ILOZ     (input) INTEGER
+       IHIZ     (input) INTEGER
+             Specify the rows of Z to which transformations must be
+             applied if WANTZ is .TRUE..
+             1 .LE. ILOZ .LE. ILO; IHI .LE. IHIZ .LE. N.
+
+       Z     (input/output) REAL array, dimension (LDZ,IHI)
+             If WANTZ is .FALSE., then Z is not referenced.
+             If WANTZ is .TRUE., then Z(ILO:IHI,ILOZ:IHIZ) is
+             replaced by Z(ILO:IHI,ILOZ:IHIZ)*U where U is the
+             orthogonal Schur factor of H(ILO:IHI,ILO:IHI).
+             (The output value of Z when INFO.GT.0 is given under
+             the description of INFO below.)
+
+       LDZ   (input) INTEGER
+             The leading dimension of the array Z.  if WANTZ is .TRUE.
+             then LDZ.GE.MAX(1,IHIZ).  Otherwize, LDZ.GE.1.
+
+       WORK  (workspace/output) REAL array, dimension LWORK
+             On exit, if LWORK = -1, WORK(1) returns an estimate of
+             the optimal value for LWORK.
+
+       LWORK (input) INTEGER
+             The dimension of the array WORK.  LWORK .GE. max(1,N)
+             is sufficient, but LWORK typically as large as 6*N may
+             be required for optimal performance.  A workspace query
+             to determine the optimal workspace size is recommended.
+
+             If LWORK = -1, then SLAQR4 does a workspace query.
+             In this case, SLAQR4 checks the input parameters and
+             estimates the optimal workspace size for the given
+             values of N, ILO and IHI.  The estimate is returned
+             in WORK(1).  No error message related to LWORK is
+             issued by XERBLA.  Neither H nor Z are accessed.
+
+
+       INFO  (output) INTEGER
+               =  0:  successful exit
+             .GT. 0:  if INFO = i, SLAQR4 failed to compute all of
+                  the eigenvalues.  Elements 1:ilo-1 and i+1:n of WR
+                  and WI contain those eigenvalues which have been
+                  successfully computed.  (Failures are rare.)
+
+                  If INFO .GT. 0 and WANT is .FALSE., then on exit,
+                  the remaining unconverged eigenvalues are the eigen-
+                  values of the upper Hessenberg matrix rows and
+                  columns ILO through INFO of the final, output
+                  value of H.
+
+                  If INFO .GT. 0 and WANTT is .TRUE., then on exit
+
+             (*)  (initial value of H)*U  = U*(final value of H)
+
+                  where U is an orthogonal matrix.  The final
+                  value of H is upper Hessenberg and quasi-triangular
+                  in rows and columns INFO+1 through IHI.
+
+                  If INFO .GT. 0 and WANTZ is .TRUE., then on exit
+
+                    (final value of Z(ILO:IHI,ILOZ:IHIZ)
+                     =  (initial value of Z(ILO:IHI,ILOZ:IHIZ)*U
+
+                  where U is the orthogonal matrix in (*) (regard-
+                  less of the value of WANTT.)
+
+                  If INFO .GT. 0 and WANTZ is .FALSE., then Z is not
+                  accessed.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+       References:
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part I: Maintaining Well Focused Shifts, and Level 3
+         Performance, SIAM Journal of Matrix Analysis, volume 23, pages
+         929--947, 2002.
+
+         K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+         Algorithm Part II: Aggressive Early Deflation, SIAM Journal
+         of Matrix Analysis, volume 23, pages 948--973, 2002.
+
+       ================================================================
+
+       ==== Matrices of order NTINY or smaller must be processed by
+       .    SLAHQR because of insufficient subdiagonal scratch space.
+       .    (This is a hard limit.) ====
+
+       ==== Exceptional deflation windows:  try to cure rare
+       .    slow convergence by varying the size of the
+       .    deflation window after KEXNW iterations. ====
+
+       ==== Exceptional shifts: try to cure rare slow convergence
+       .    with ad-hoc exceptional shifts every KEXSH iterations.
+       .    ====
+
+       ==== The constants WILK1 and WILK2 are used to form the
+       .    exceptional shifts. ====
+*/
+    /* Parameter adjustments */
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    --wr;
+    --wi;
+    z_dim1 = *ldz;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    --work;
+
+    /* Function Body */
+    *info = 0;
+
+/*     ==== Quick return for N = 0: nothing to do. ==== */
+
+    if (*n == 0) {
+	work[1] = 1.f;
+	return 0;
+    }
+
+    if (*n <= 11) {
+
+/*        ==== Tiny matrices must use SLAHQR. ==== */
+
+	lwkopt = 1;
+	if (*lwork != -1) {
+	    slahqr_(wantt, wantz, n, ilo, ihi, &h__[h_offset], ldh, &wr[1], &
+		    wi[1], iloz, ihiz, &z__[z_offset], ldz, info);
+	}
+    } else {
+
+/*
+          ==== Use small bulge multi-shift QR with aggressive early
+          .    deflation on larger-than-tiny matrices. ====
+
+          ==== Hope for the best. ====
+*/
+
+	*info = 0;
+
+/*        ==== Set up job flags for ILAENV. ==== */
+
+	if (*wantt) {
+	    *(unsigned char *)jbcmpz = 'S';
+	} else {
+	    *(unsigned char *)jbcmpz = 'E';
+	}
+	if (*wantz) {
+	    *(unsigned char *)&jbcmpz[1] = 'V';
+	} else {
+	    *(unsigned char *)&jbcmpz[1] = 'N';
+	}
+
+/*
+          ==== NWR = recommended deflation window size.  At this
+          .    point,  N .GT. NTINY = 11, so there is enough
+          .    subdiagonal workspace for NWR.GE.2 as required.
+          .    (In fact, there is enough subdiagonal space for
+          .    NWR.GE.3.) ====
+*/
+
+	nwr = ilaenv_(&c__13, "SLAQR4", jbcmpz, n, ilo, ihi, lwork, (ftnlen)6,
+		 (ftnlen)2);
+	nwr = max(2,nwr);
+/* Computing MIN */
+	i__1 = *ihi - *ilo + 1, i__2 = (*n - 1) / 3, i__1 = min(i__1,i__2);
+	nwr = min(i__1,nwr);
+
+/*
+          ==== NSR = recommended number of simultaneous shifts.
+          .    At this point N .GT. NTINY = 11, so there is at
+          .    enough subdiagonal workspace for NSR to be even
+          .    and greater than or equal to two as required. ====
+*/
+
+	nsr = ilaenv_(&c__15, "SLAQR4", jbcmpz, n, ilo, ihi, lwork, (ftnlen)6,
+		 (ftnlen)2);
+/* Computing MIN */
+	i__1 = nsr, i__2 = (*n + 6) / 9, i__1 = min(i__1,i__2), i__2 = *ihi -
+		*ilo;
+	nsr = min(i__1,i__2);
+/* Computing MAX */
+	i__1 = 2, i__2 = nsr - nsr % 2;
+	nsr = max(i__1,i__2);
+
+/*
+          ==== Estimate optimal workspace ====
+
+          ==== Workspace query call to SLAQR2 ====
+*/
+
+	i__1 = nwr + 1;
+	slaqr2_(wantt, wantz, n, ilo, ihi, &i__1, &h__[h_offset], ldh, iloz,
+		ihiz, &z__[z_offset], ldz, &ls, &ld, &wr[1], &wi[1], &h__[
+		h_offset], ldh, n, &h__[h_offset], ldh, n, &h__[h_offset],
+		ldh, &work[1], &c_n1);
+
+/*
+          ==== Optimal workspace = MAX(SLAQR5, SLAQR2) ====
+
+   Computing MAX
+*/
+	i__1 = nsr * 3 / 2, i__2 = (integer) work[1];
+	lwkopt = max(i__1,i__2);
+
+/*        ==== Quick return in case of workspace query. ==== */
+
+	if (*lwork == -1) {
+	    work[1] = (real) lwkopt;
+	    return 0;
+	}
+
+/*        ==== SLAHQR/SLAQR0 crossover point ==== */
+
+	nmin = ilaenv_(&c__12, "SLAQR4", jbcmpz, n, ilo, ihi, lwork, (ftnlen)
+		6, (ftnlen)2);
+	nmin = max(11,nmin);
+
+/*        ==== Nibble crossover point ==== */
+
+	nibble = ilaenv_(&c__14, "SLAQR4", jbcmpz, n, ilo, ihi, lwork, (
+		ftnlen)6, (ftnlen)2);
+	nibble = max(0,nibble);
+
+/*
+          ==== Accumulate reflections during ttswp?  Use block
+          .    2-by-2 structure during matrix-matrix multiply? ====
+*/
+
+	kacc22 = ilaenv_(&c__16, "SLAQR4", jbcmpz, n, ilo, ihi, lwork, (
+		ftnlen)6, (ftnlen)2);
+	kacc22 = max(0,kacc22);
+	kacc22 = min(2,kacc22);
+
+/*
+          ==== NWMAX = the largest possible deflation window for
+          .    which there is sufficient workspace. ====
+
+   Computing MIN
+*/
+	i__1 = (*n - 1) / 3, i__2 = *lwork / 2;
+	nwmax = min(i__1,i__2);
+	nw = nwmax;
+
+/*
+          ==== NSMAX = the Largest number of simultaneous shifts
+          .    for which there is sufficient workspace. ====
+
+   Computing MIN
+*/
+	i__1 = (*n + 6) / 9, i__2 = (*lwork << 1) / 3;
+	nsmax = min(i__1,i__2);
+	nsmax -= nsmax % 2;
+
+/*        ==== NDFL: an iteration count restarted at deflation. ==== */
+
+	ndfl = 1;
+
+/*
+          ==== ITMAX = iteration limit ====
+
+   Computing MAX
+*/
+	i__1 = 10, i__2 = *ihi - *ilo + 1;
+	itmax = max(i__1,i__2) * 30;
+
+/*        ==== Last row and column in the active block ==== */
+
+	kbot = *ihi;
+
+/*        ==== Main Loop ==== */
+
+	i__1 = itmax;
+	for (it = 1; it <= i__1; ++it) {
+
+/*           ==== Done when KBOT falls below ILO ==== */
+
+	    if (kbot < *ilo) {
+		goto L90;
+	    }
+
+/*           ==== Locate active block ==== */
+
+	    i__2 = *ilo + 1;
+	    for (k = kbot; k >= i__2; --k) {
+		if (h__[k + (k - 1) * h_dim1] == 0.f) {
+		    goto L20;
+		}
+/* L10: */
+	    }
+	    k = *ilo;
+L20:
+	    ktop = k;
+
+/*
+             ==== Select deflation window size:
+             .    Typical Case:
+             .      If possible and advisable, nibble the entire
+             .      active block.  If not, use size MIN(NWR,NWMAX)
+             .      or MIN(NWR+1,NWMAX) depending upon which has
+             .      the smaller corresponding subdiagonal entry
+             .      (a heuristic).
+             .
+             .    Exceptional Case:
+             .      If there have been no deflations in KEXNW or
+             .      more iterations, then vary the deflation window
+             .      size.   At first, because, larger windows are,
+             .      in general, more powerful than smaller ones,
+             .      rapidly increase the window to the maximum possible.
+             .      Then, gradually reduce the window size. ====
+*/
+
+	    nh = kbot - ktop + 1;
+	    nwupbd = min(nh,nwmax);
+	    if (ndfl < 5) {
+		nw = min(nwupbd,nwr);
+	    } else {
+/* Computing MIN */
+		i__2 = nwupbd, i__3 = nw << 1;
+		nw = min(i__2,i__3);
+	    }
+	    if (nw < nwmax) {
+		if (nw >= nh - 1) {
+		    nw = nh;
+		} else {
+		    kwtop = kbot - nw + 1;
+		    if ((r__1 = h__[kwtop + (kwtop - 1) * h_dim1], dabs(r__1))
+			     > (r__2 = h__[kwtop - 1 + (kwtop - 2) * h_dim1],
+			    dabs(r__2))) {
+			++nw;
+		    }
+		}
+	    }
+	    if (ndfl < 5) {
+		ndec = -1;
+	    } else if (ndec >= 0 || nw >= nwupbd) {
+		++ndec;
+		if (nw - ndec < 2) {
+		    ndec = 0;
+		}
+		nw -= ndec;
+	    }
+
+/*
+             ==== Aggressive early deflation:
+             .    split workspace under the subdiagonal into
+             .      - an nw-by-nw work array V in the lower
+             .        left-hand-corner,
+             .      - an NW-by-at-least-NW-but-more-is-better
+             .        (NW-by-NHO) horizontal work array along
+             .        the bottom edge,
+             .      - an at-least-NW-but-more-is-better (NHV-by-NW)
+             .        vertical work array along the left-hand-edge.
+             .        ====
+*/
+
+	    kv = *n - nw + 1;
+	    kt = nw + 1;
+	    nho = *n - nw - 1 - kt + 1;
+	    kwv = nw + 2;
+	    nve = *n - nw - kwv + 1;
+
+/*           ==== Aggressive early deflation ==== */
+
+	    slaqr2_(wantt, wantz, n, &ktop, &kbot, &nw, &h__[h_offset], ldh,
+		    iloz, ihiz, &z__[z_offset], ldz, &ls, &ld, &wr[1], &wi[1],
+		     &h__[kv + h_dim1], ldh, &nho, &h__[kv + kt * h_dim1],
+		    ldh, &nve, &h__[kwv + h_dim1], ldh, &work[1], lwork);
+
+/*           ==== Adjust KBOT accounting for new deflations. ==== */
+
+	    kbot -= ld;
+
+/*           ==== KS points to the shifts. ==== */
+
+	    ks = kbot - ls + 1;
+
+/*
+             ==== Skip an expensive QR sweep if there is a (partly
+             .    heuristic) reason to expect that many eigenvalues
+             .    will deflate without it.  Here, the QR sweep is
+             .    skipped if many eigenvalues have just been deflated
+             .    or if the remaining active block is small.
+*/
+
+	    if (ld == 0 || ld * 100 <= nw * nibble && kbot - ktop + 1 > min(
+		    nmin,nwmax)) {
+
+/*
+                ==== NS = nominal number of simultaneous shifts.
+                .    This may be lowered (slightly) if SLAQR2
+                .    did not provide that many shifts. ====
+
+   Computing MIN
+   Computing MAX
+*/
+		i__4 = 2, i__5 = kbot - ktop;
+		i__2 = min(nsmax,nsr), i__3 = max(i__4,i__5);
+		ns = min(i__2,i__3);
+		ns -= ns % 2;
+
+/*
+                ==== If there have been no deflations
+                .    in a multiple of KEXSH iterations,
+                .    then try exceptional shifts.
+                .    Otherwise use shifts provided by
+                .    SLAQR2 above or from the eigenvalues
+                .    of a trailing principal submatrix. ====
+*/
+
+		if (ndfl % 6 == 0) {
+		    ks = kbot - ns + 1;
+/* Computing MAX */
+		    i__3 = ks + 1, i__4 = ktop + 2;
+		    i__2 = max(i__3,i__4);
+		    for (i__ = kbot; i__ >= i__2; i__ += -2) {
+			ss = (r__1 = h__[i__ + (i__ - 1) * h_dim1], dabs(r__1)
+				) + (r__2 = h__[i__ - 1 + (i__ - 2) * h_dim1],
+				 dabs(r__2));
+			aa = ss * .75f + h__[i__ + i__ * h_dim1];
+			bb = ss;
+			cc = ss * -.4375f;
+			dd = aa;
+			slanv2_(&aa, &bb, &cc, &dd, &wr[i__ - 1], &wi[i__ - 1]
+				, &wr[i__], &wi[i__], &cs, &sn);
+/* L30: */
+		    }
+		    if (ks == ktop) {
+			wr[ks + 1] = h__[ks + 1 + (ks + 1) * h_dim1];
+			wi[ks + 1] = 0.f;
+			wr[ks] = wr[ks + 1];
+			wi[ks] = wi[ks + 1];
+		    }
+		} else {
+
+/*
+                   ==== Got NS/2 or fewer shifts? Use SLAHQR
+                   .    on a trailing principal submatrix to
+                   .    get more. (Since NS.LE.NSMAX.LE.(N+6)/9,
+                   .    there is enough space below the subdiagonal
+                   .    to fit an NS-by-NS scratch array.) ====
+*/
+
+		    if (kbot - ks + 1 <= ns / 2) {
+			ks = kbot - ns + 1;
+			kt = *n - ns + 1;
+			slacpy_("A", &ns, &ns, &h__[ks + ks * h_dim1], ldh, &
+				h__[kt + h_dim1], ldh);
+			slahqr_(&c_false, &c_false, &ns, &c__1, &ns, &h__[kt
+				+ h_dim1], ldh, &wr[ks], &wi[ks], &c__1, &
+				c__1, zdum, &c__1, &inf);
+			ks += inf;
+
+/*
+                      ==== In case of a rare QR failure use
+                      .    eigenvalues of the trailing 2-by-2
+                      .    principal submatrix.  ====
+*/
+
+			if (ks >= kbot) {
+			    aa = h__[kbot - 1 + (kbot - 1) * h_dim1];
+			    cc = h__[kbot + (kbot - 1) * h_dim1];
+			    bb = h__[kbot - 1 + kbot * h_dim1];
+			    dd = h__[kbot + kbot * h_dim1];
+			    slanv2_(&aa, &bb, &cc, &dd, &wr[kbot - 1], &wi[
+				    kbot - 1], &wr[kbot], &wi[kbot], &cs, &sn)
+				    ;
+			    ks = kbot - 1;
+			}
+		    }
+
+		    if (kbot - ks + 1 > ns) {
+
+/*
+                      ==== Sort the shifts (Helps a little)
+                      .    Bubble sort keeps complex conjugate
+                      .    pairs together. ====
+*/
+
+			sorted = FALSE_;
+			i__2 = ks + 1;
+			for (k = kbot; k >= i__2; --k) {
+			    if (sorted) {
+				goto L60;
+			    }
+			    sorted = TRUE_;
+			    i__3 = k - 1;
+			    for (i__ = ks; i__ <= i__3; ++i__) {
+				if ((r__1 = wr[i__], dabs(r__1)) + (r__2 = wi[
+					i__], dabs(r__2)) < (r__3 = wr[i__ +
+					1], dabs(r__3)) + (r__4 = wi[i__ + 1],
+					 dabs(r__4))) {
+				    sorted = FALSE_;
+
+				    swap = wr[i__];
+				    wr[i__] = wr[i__ + 1];
+				    wr[i__ + 1] = swap;
+
+				    swap = wi[i__];
+				    wi[i__] = wi[i__ + 1];
+				    wi[i__ + 1] = swap;
+				}
+/* L40: */
+			    }
+/* L50: */
+			}
+L60:
+			;
+		    }
+
+/*
+                   ==== Shuffle shifts into pairs of real shifts
+                   .    and pairs of complex conjugate shifts
+                   .    assuming complex conjugate shifts are
+                   .    already adjacent to one another. (Yes,
+                   .    they are.)  ====
+*/
+
+		    i__2 = ks + 2;
+		    for (i__ = kbot; i__ >= i__2; i__ += -2) {
+			if (wi[i__] != -wi[i__ - 1]) {
+
+			    swap = wr[i__];
+			    wr[i__] = wr[i__ - 1];
+			    wr[i__ - 1] = wr[i__ - 2];
+			    wr[i__ - 2] = swap;
+
+			    swap = wi[i__];
+			    wi[i__] = wi[i__ - 1];
+			    wi[i__ - 1] = wi[i__ - 2];
+			    wi[i__ - 2] = swap;
+			}
+/* L70: */
+		    }
+		}
+
+/*
+                ==== If there are only two shifts and both are
+                .    real, then use only one.  ====
+*/
+
+		if (kbot - ks + 1 == 2) {
+		    if (wi[kbot] == 0.f) {
+			if ((r__1 = wr[kbot] - h__[kbot + kbot * h_dim1],
+				dabs(r__1)) < (r__2 = wr[kbot - 1] - h__[kbot
+				+ kbot * h_dim1], dabs(r__2))) {
+			    wr[kbot - 1] = wr[kbot];
+			} else {
+			    wr[kbot] = wr[kbot - 1];
+			}
+		    }
+		}
+
+/*
+                ==== Use up to NS of the the smallest magnatiude
+                .    shifts.  If there aren't NS shifts available,
+                .    then use them all, possibly dropping one to
+                .    make the number of shifts even. ====
+
+   Computing MIN
+*/
+		i__2 = ns, i__3 = kbot - ks + 1;
+		ns = min(i__2,i__3);
+		ns -= ns % 2;
+		ks = kbot - ns + 1;
+
+/*
+                ==== Small-bulge multi-shift QR sweep:
+                .    split workspace under the subdiagonal into
+                .    - a KDU-by-KDU work array U in the lower
+                .      left-hand-corner,
+                .    - a KDU-by-at-least-KDU-but-more-is-better
+                .      (KDU-by-NHo) horizontal work array WH along
+                .      the bottom edge,
+                .    - and an at-least-KDU-but-more-is-better-by-KDU
+                .      (NVE-by-KDU) vertical work WV arrow along
+                .      the left-hand-edge. ====
+*/
+
+		kdu = ns * 3 - 3;
+		ku = *n - kdu + 1;
+		kwh = kdu + 1;
+		nho = *n - kdu - 3 - (kdu + 1) + 1;
+		kwv = kdu + 4;
+		nve = *n - kdu - kwv + 1;
+
+/*              ==== Small-bulge multi-shift QR sweep ==== */
+
+		slaqr5_(wantt, wantz, &kacc22, n, &ktop, &kbot, &ns, &wr[ks],
+			&wi[ks], &h__[h_offset], ldh, iloz, ihiz, &z__[
+			z_offset], ldz, &work[1], &c__3, &h__[ku + h_dim1],
+			ldh, &nve, &h__[kwv + h_dim1], ldh, &nho, &h__[ku +
+			kwh * h_dim1], ldh);
+	    }
+
+/*           ==== Note progress (or the lack of it). ==== */
+
+	    if (ld > 0) {
+		ndfl = 1;
+	    } else {
+		++ndfl;
+	    }
+
+/*
+             ==== End of main loop ====
+   L80:
+*/
+	}
+
+/*
+          ==== Iteration limit exceeded.  Set INFO to show where
+          .    the problem occurred and exit. ====
+*/
+
+	*info = kbot;
+L90:
+	;
+    }
+
+/*     ==== Return the optimal value of LWORK. ==== */
+
+    work[1] = (real) lwkopt;
+
+/*     ==== End of SLAQR4 ==== */
+
+    return 0;
+} /* slaqr4_ */
+
+/* Subroutine */ int slaqr5_(logical *wantt, logical *wantz, integer *kacc22,
+	integer *n, integer *ktop, integer *kbot, integer *nshfts, real *sr,
+	real *si, real *h__, integer *ldh, integer *iloz, integer *ihiz, real
+	*z__, integer *ldz, real *v, integer *ldv, real *u, integer *ldu,
+	integer *nv, real *wv, integer *ldwv, integer *nh, real *wh, integer *
+	ldwh)
+{
+    /* System generated locals */
+    integer h_dim1, h_offset, u_dim1, u_offset, v_dim1, v_offset, wh_dim1,
+	    wh_offset, wv_dim1, wv_offset, z_dim1, z_offset, i__1, i__2, i__3,
+	     i__4, i__5, i__6, i__7;
+    real r__1, r__2, r__3, r__4, r__5;
+
+    /* Local variables */
+    static integer i__, j, k, m, i2, j2, i4, j4, k1;
+    static real h11, h12, h21, h22;
+    static integer m22, ns, nu;
+    static real vt[3], scl;
+    static integer kdu, kms;
+    static real ulp;
+    static integer knz, kzs;
+    static real tst1, tst2, beta;
+    static logical blk22, bmp22;
+    static integer mend, jcol, jlen, jbot, mbot;
+    static real swap;
+    static integer jtop, jrow, mtop;
+    static real alpha;
+    static logical accum;
+    static integer ndcol, incol;
+    extern /* Subroutine */ int sgemm_(char *, char *, integer *, integer *,
+	    integer *, real *, real *, integer *, real *, integer *, real *,
+	    real *, integer *);
+    static integer krcol, nbmps;
+    extern /* Subroutine */ int strmm_(char *, char *, char *, char *,
+	    integer *, integer *, real *, real *, integer *, real *, integer *
+	    ), slaqr1_(integer *, real *,
+	    integer *, real *, real *, real *, real *, real *), slabad_(real *
+	    , real *);
+    extern doublereal slamch_(char *);
+    static real safmin;
+    extern /* Subroutine */ int slarfg_(integer *, real *, real *, integer *,
+	    real *);
+    static real safmax;
+    extern /* Subroutine */ int slacpy_(char *, integer *, integer *, real *,
+	    integer *, real *, integer *), slaset_(char *, integer *,
+	    integer *, real *, real *, real *, integer *);
+    static real refsum;
+    static integer mstart;
+    static real smlnum;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+       This auxiliary subroutine called by SLAQR0 performs a
+       single small-bulge multi-shift QR sweep.
+
+        WANTT  (input) logical scalar
+               WANTT = .true. if the quasi-triangular Schur factor
+               is being computed.  WANTT is set to .false. otherwise.
+
+        WANTZ  (input) logical scalar
+               WANTZ = .true. if the orthogonal Schur factor is being
+               computed.  WANTZ is set to .false. otherwise.
+
+        KACC22 (input) integer with value 0, 1, or 2.
+               Specifies the computation mode of far-from-diagonal
+               orthogonal updates.
+          = 0: SLAQR5 does not accumulate reflections and does not
+               use matrix-matrix multiply to update far-from-diagonal
+               matrix entries.
+          = 1: SLAQR5 accumulates reflections and uses matrix-matrix
+               multiply to update the far-from-diagonal matrix entries.
+          = 2: SLAQR5 accumulates reflections, uses matrix-matrix
+               multiply to update the far-from-diagonal matrix entries,
+               and takes advantage of 2-by-2 block structure during
+               matrix multiplies.
+
+        N      (input) integer scalar
+               N is the order of the Hessenberg matrix H upon which this
+               subroutine operates.
+
+        KTOP   (input) integer scalar
+        KBOT   (input) integer scalar
+               These are the first and last rows and columns of an
+               isolated diagonal block upon which the QR sweep is to be
+               applied. It is assumed without a check that
+                         either KTOP = 1  or   H(KTOP,KTOP-1) = 0
+               and
+                         either KBOT = N  or   H(KBOT+1,KBOT) = 0.
+
+        NSHFTS (input) integer scalar
+               NSHFTS gives the number of simultaneous shifts.  NSHFTS
+               must be positive and even.
+
+        SR     (input/output) REAL array of size (NSHFTS)
+        SI     (input/output) REAL array of size (NSHFTS)
+               SR contains the real parts and SI contains the imaginary
+               parts of the NSHFTS shifts of origin that define the
+               multi-shift QR sweep.  On output SR and SI may be
+               reordered.
+
+        H      (input/output) REAL array of size (LDH,N)
+               On input H contains a Hessenberg matrix.  On output a
+               multi-shift QR sweep with shifts SR(J)+i*SI(J) is applied
+               to the isolated diagonal block in rows and columns KTOP
+               through KBOT.
+
+        LDH    (input) integer scalar
+               LDH is the leading dimension of H just as declared in the
+               calling procedure.  LDH.GE.MAX(1,N).
+
+        ILOZ   (input) INTEGER
+        IHIZ   (input) INTEGER
+               Specify the rows of Z to which transformations must be
+               applied if WANTZ is .TRUE.. 1 .LE. ILOZ .LE. IHIZ .LE. N
+
+        Z      (input/output) REAL array of size (LDZ,IHI)
+               If WANTZ = .TRUE., then the QR Sweep orthogonal
+               similarity transformation is accumulated into
+               Z(ILOZ:IHIZ,ILO:IHI) from the right.
+               If WANTZ = .FALSE., then Z is unreferenced.
+
+        LDZ    (input) integer scalar
+               LDA is the leading dimension of Z just as declared in
+               the calling procedure. LDZ.GE.N.
+
+        V      (workspace) REAL array of size (LDV,NSHFTS/2)
+
+        LDV    (input) integer scalar
+               LDV is the leading dimension of V as declared in the
+               calling procedure.  LDV.GE.3.
+
+        U      (workspace) REAL array of size
+               (LDU,3*NSHFTS-3)
+
+        LDU    (input) integer scalar
+               LDU is the leading dimension of U just as declared in the
+               in the calling subroutine.  LDU.GE.3*NSHFTS-3.
+
+        NH     (input) integer scalar
+               NH is the number of columns in array WH available for
+               workspace. NH.GE.1.
+
+        WH     (workspace) REAL array of size (LDWH,NH)
+
+        LDWH   (input) integer scalar
+               Leading dimension of WH just as declared in the
+               calling procedure.  LDWH.GE.3*NSHFTS-3.
+
+        NV     (input) integer scalar
+               NV is the number of rows in WV agailable for workspace.
+               NV.GE.1.
+
+        WV     (workspace) REAL array of size
+               (LDWV,3*NSHFTS-3)
+
+        LDWV   (input) integer scalar
+               LDWV is the leading dimension of WV as declared in the
+               in the calling subroutine.  LDWV.GE.NV.
+
+       ================================================================
+       Based on contributions by
+          Karen Braman and Ralph Byers, Department of Mathematics,
+          University of Kansas, USA
+
+       ================================================================
+       Reference:
+
+       K. Braman, R. Byers and R. Mathias, The Multi-Shift QR
+       Algorithm Part I: Maintaining Well Focused Shifts, and
+       Level 3 Performance, SIAM Journal of Matrix Analysis,
+       volume 23, pages 929--947, 2002.
+
+       ================================================================
+
+
+       ==== If there are no shifts, then there is nothing to do. ====
+*/
+
+    /* Parameter adjustments */
+    --sr;
+    --si;
+    h_dim1 = *ldh;
+    h_offset = 1 + h_dim1;
+    h__ -= h_offset;
+    z_dim1 = *ldz;
+    z_offset = 1 + z_dim1;
+    z__ -= z_offset;
+    v_dim1 = *ldv;
+    v_offset = 1 + v_dim1;
+    v -= v_offset;
+    u_dim1 = *ldu;
+    u_offset = 1 + u_dim1;
+    u -= u_offset;
+    wv_dim1 = *ldwv;
+    wv_offset = 1 + wv_dim1;
+    wv -= wv_offset;
+    wh_dim1 = *ldwh;
+    wh_offset = 1 + wh_dim1;
+    wh -= wh_offset;
+
+    /* Function Body */
+    if (*nshfts < 2) {
+	return 0;
+    }
+
+/*
+       ==== If the active block is empty or 1-by-1, then there
+       .    is nothing to do. ====
+*/
+
+    if (*ktop >= *kbot) {
+	return 0;
+    }
+
+/*
+       ==== Shuffle shifts into pairs of real shifts and pairs
+       .    of complex conjugate shifts assuming complex
+       .    conjugate shifts are already adjacent to one
+       .    another. ====
+*/
+
+    i__1 = *nshfts - 2;
+    for (i__ = 1; i__ <= i__1; i__ += 2) {
+	if (si[i__] != -si[i__ + 1]) {
+
+	    swap = sr[i__];
+	    sr[i__] = sr[i__ + 1];
+	    sr[i__ + 1] = sr[i__ + 2];
+	    sr[i__ + 2] = swap;
+
+	    swap = si[i__];
+	    si[i__] = si[i__ + 1];
+	    si[i__ + 1] = si[i__ + 2];
+	    si[i__ + 2] = swap;
+	}
+/* L10: */
+    }
+
+/*
+       ==== NSHFTS is supposed to be even, but if it is odd,
+       .    then simply reduce it by one.  The shuffle above
+       .    ensures that the dropped shift is real and that
+       .    the remaining shifts are paired. ====
+*/
+
+    ns = *nshfts - *nshfts % 2;
+
+/*     ==== Machine constants for deflation ==== */
+
+    safmin = slamch_("SAFE MINIMUM");
+    safmax = 1.f / safmin;
+    slabad_(&safmin, &safmax);
+    ulp = slamch_("PRECISION");
+    smlnum = safmin * ((real) (*n) / ulp);
+
+/*
+       ==== Use accumulated reflections to update far-from-diagonal
+       .    entries ? ====
+*/
+
+    accum = *kacc22 == 1 || *kacc22 == 2;
+
+/*     ==== If so, exploit the 2-by-2 block structure? ==== */
+
+    blk22 = ns > 2 && *kacc22 == 2;
+
+/*     ==== clear trash ==== */
+
+    if (*ktop + 2 <= *kbot) {
+	h__[*ktop + 2 + *ktop * h_dim1] = 0.f;
+    }
+
+/*     ==== NBMPS = number of 2-shift bulges in the chain ==== */
+
+    nbmps = ns / 2;
+
+/*     ==== KDU = width of slab ==== */
+
+    kdu = nbmps * 6 - 3;
+
+/*     ==== Create and chase chains of NBMPS bulges ==== */
+
+    i__1 = *kbot - 2;
+    i__2 = nbmps * 3 - 2;
+    for (incol = (1 - nbmps) * 3 + *ktop - 1; i__2 < 0 ? incol >= i__1 :
+	    incol <= i__1; incol += i__2) {
+	ndcol = incol + kdu;
+	if (accum) {
+	    slaset_("ALL", &kdu, &kdu, &c_b29, &c_b15, &u[u_offset], ldu);
+	}
+
+/*
+          ==== Near-the-diagonal bulge chase.  The following loop
+          .    performs the near-the-diagonal part of a small bulge
+          .    multi-shift QR sweep.  Each 6*NBMPS-2 column diagonal
+          .    chunk extends from column INCOL to column NDCOL
+          .    (including both column INCOL and column NDCOL). The
+          .    following loop chases a 3*NBMPS column long chain of
+          .    NBMPS bulges 3*NBMPS-2 columns to the right.  (INCOL
+          .    may be less than KTOP and and NDCOL may be greater than
+          .    KBOT indicating phantom columns from which to chase
+          .    bulges before they are actually introduced or to which
+          .    to chase bulges beyond column KBOT.)  ====
+
+   Computing MIN
+*/
+	i__4 = incol + nbmps * 3 - 3, i__5 = *kbot - 2;
+	i__3 = min(i__4,i__5);
+	for (krcol = incol; krcol <= i__3; ++krcol) {
+
+/*
+             ==== Bulges number MTOP to MBOT are active double implicit
+             .    shift bulges.  There may or may not also be small
+             .    2-by-2 bulge, if there is room.  The inactive bulges
+             .    (if any) must wait until the active bulges have moved
+             .    down the diagonal to make room.  The phantom matrix
+             .    paradigm described above helps keep track.  ====
+
+   Computing MAX
+*/
+	    i__4 = 1, i__5 = (*ktop - 1 - krcol + 2) / 3 + 1;
+	    mtop = max(i__4,i__5);
+/* Computing MIN */
+	    i__4 = nbmps, i__5 = (*kbot - krcol) / 3;
+	    mbot = min(i__4,i__5);
+	    m22 = mbot + 1;
+	    bmp22 = mbot < nbmps && krcol + (m22 - 1) * 3 == *kbot - 2;
+
+/*
+             ==== Generate reflections to chase the chain right
+             .    one column.  (The minimum value of K is KTOP-1.) ====
+*/
+
+	    i__4 = mbot;
+	    for (m = mtop; m <= i__4; ++m) {
+		k = krcol + (m - 1) * 3;
+		if (k == *ktop - 1) {
+		    slaqr1_(&c__3, &h__[*ktop + *ktop * h_dim1], ldh, &sr[(m
+			    << 1) - 1], &si[(m << 1) - 1], &sr[m * 2], &si[m *
+			     2], &v[m * v_dim1 + 1]);
+		    alpha = v[m * v_dim1 + 1];
+		    slarfg_(&c__3, &alpha, &v[m * v_dim1 + 2], &c__1, &v[m *
+			    v_dim1 + 1]);
+		} else {
+		    beta = h__[k + 1 + k * h_dim1];
+		    v[m * v_dim1 + 2] = h__[k + 2 + k * h_dim1];
+		    v[m * v_dim1 + 3] = h__[k + 3 + k * h_dim1];
+		    slarfg_(&c__3, &beta, &v[m * v_dim1 + 2], &c__1, &v[m *
+			    v_dim1 + 1]);
+
+/*
+                   ==== A Bulge may collapse because of vigilant
+                   .    deflation or destructive underflow.  In the
+                   .    underflow case, try the two-small-subdiagonals
+                   .    trick to try to reinflate the bulge.  ====
+*/
+
+		    if (h__[k + 3 + k * h_dim1] != 0.f || h__[k + 3 + (k + 1)
+			    * h_dim1] != 0.f || h__[k + 3 + (k + 2) * h_dim1]
+			    == 0.f) {
+
+/*                    ==== Typical case: not collapsed (yet). ==== */
+
+			h__[k + 1 + k * h_dim1] = beta;
+			h__[k + 2 + k * h_dim1] = 0.f;
+			h__[k + 3 + k * h_dim1] = 0.f;
+		    } else {
+
+/*
+                      ==== Atypical case: collapsed.  Attempt to
+                      .    reintroduce ignoring H(K+1,K) and H(K+2,K).
+                      .    If the fill resulting from the new
+                      .    reflector is too large, then abandon it.
+                      .    Otherwise, use the new one. ====
+*/
+
+			slaqr1_(&c__3, &h__[k + 1 + (k + 1) * h_dim1], ldh, &
+				sr[(m << 1) - 1], &si[(m << 1) - 1], &sr[m *
+				2], &si[m * 2], vt);
+			alpha = vt[0];
+			slarfg_(&c__3, &alpha, &vt[1], &c__1, vt);
+			refsum = vt[0] * (h__[k + 1 + k * h_dim1] + vt[1] *
+				h__[k + 2 + k * h_dim1]);
+
+			if ((r__1 = h__[k + 2 + k * h_dim1] - refsum * vt[1],
+				dabs(r__1)) + (r__2 = refsum * vt[2], dabs(
+				r__2)) > ulp * ((r__3 = h__[k + k * h_dim1],
+				dabs(r__3)) + (r__4 = h__[k + 1 + (k + 1) *
+				h_dim1], dabs(r__4)) + (r__5 = h__[k + 2 + (k
+				+ 2) * h_dim1], dabs(r__5)))) {
+
+/*
+                         ==== Starting a new bulge here would
+                         .    create non-negligible fill.  Use
+                         .    the old one with trepidation. ====
+*/
+
+			    h__[k + 1 + k * h_dim1] = beta;
+			    h__[k + 2 + k * h_dim1] = 0.f;
+			    h__[k + 3 + k * h_dim1] = 0.f;
+			} else {
+
+/*
+                         ==== Stating a new bulge here would
+                         .    create only negligible fill.
+                         .    Replace the old reflector with
+                         .    the new one. ====
+*/
+
+			    h__[k + 1 + k * h_dim1] -= refsum;
+			    h__[k + 2 + k * h_dim1] = 0.f;
+			    h__[k + 3 + k * h_dim1] = 0.f;
+			    v[m * v_dim1 + 1] = vt[0];
+			    v[m * v_dim1 + 2] = vt[1];
+			    v[m * v_dim1 + 3] = vt[2];
+			}
+		    }
+		}
+/* L20: */
+	    }
+
+/*           ==== Generate a 2-by-2 reflection, if needed. ==== */
+
+	    k = krcol + (m22 - 1) * 3;
+	    if (bmp22) {
+		if (k == *ktop - 1) {
+		    slaqr1_(&c__2, &h__[k + 1 + (k + 1) * h_dim1], ldh, &sr[(
+			    m22 << 1) - 1], &si[(m22 << 1) - 1], &sr[m22 * 2],
+			     &si[m22 * 2], &v[m22 * v_dim1 + 1]);
+		    beta = v[m22 * v_dim1 + 1];
+		    slarfg_(&c__2, &beta, &v[m22 * v_dim1 + 2], &c__1, &v[m22
+			    * v_dim1 + 1]);
+		} else {
+		    beta = h__[k + 1 + k * h_dim1];
+		    v[m22 * v_dim1 + 2] = h__[k + 2 + k * h_dim1];
+		    slarfg_(&c__2, &beta, &v[m22 * v_dim1 + 2], &c__1, &v[m22
+			    * v_dim1 + 1]);
+		    h__[k + 1 + k * h_dim1] = beta;
+		    h__[k + 2 + k * h_dim1] = 0.f;
+		}
+	    }
+
+/*           ==== Multiply H by reflections from the left ==== */
+
+	    if (accum) {
+		jbot = min(ndcol,*kbot);
+	    } else if (*wantt) {
+		jbot = *n;
+	    } else {
+		jbot = *kbot;
+	    }
+	    i__4 = jbot;
+	    for (j = max(*ktop,krcol); j <= i__4; ++j) {
+/* Computing MIN */
+		i__5 = mbot, i__6 = (j - krcol + 2) / 3;
+		mend = min(i__5,i__6);
+		i__5 = mend;
+		for (m = mtop; m <= i__5; ++m) {
+		    k = krcol + (m - 1) * 3;
+		    refsum = v[m * v_dim1 + 1] * (h__[k + 1 + j * h_dim1] + v[
+			    m * v_dim1 + 2] * h__[k + 2 + j * h_dim1] + v[m *
+			    v_dim1 + 3] * h__[k + 3 + j * h_dim1]);
+		    h__[k + 1 + j * h_dim1] -= refsum;
+		    h__[k + 2 + j * h_dim1] -= refsum * v[m * v_dim1 + 2];
+		    h__[k + 3 + j * h_dim1] -= refsum * v[m * v_dim1 + 3];
+/* L30: */
+		}
+/* L40: */
+	    }
+	    if (bmp22) {
+		k = krcol + (m22 - 1) * 3;
+/* Computing MAX */
+		i__4 = k + 1;
+		i__5 = jbot;
+		for (j = max(i__4,*ktop); j <= i__5; ++j) {
+		    refsum = v[m22 * v_dim1 + 1] * (h__[k + 1 + j * h_dim1] +
+			    v[m22 * v_dim1 + 2] * h__[k + 2 + j * h_dim1]);
+		    h__[k + 1 + j * h_dim1] -= refsum;
+		    h__[k + 2 + j * h_dim1] -= refsum * v[m22 * v_dim1 + 2];
+/* L50: */
+		}
+	    }
+
+/*
+             ==== Multiply H by reflections from the right.
+             .    Delay filling in the last row until the
+             .    vigilant deflation check is complete. ====
+*/
+
+	    if (accum) {
+		jtop = max(*ktop,incol);
+	    } else if (*wantt) {
+		jtop = 1;
+	    } else {
+		jtop = *ktop;
+	    }
+	    i__5 = mbot;
+	    for (m = mtop; m <= i__5; ++m) {
+		if (v[m * v_dim1 + 1] != 0.f) {
+		    k = krcol + (m - 1) * 3;
+/* Computing MIN */
+		    i__6 = *kbot, i__7 = k + 3;
+		    i__4 = min(i__6,i__7);
+		    for (j = jtop; j <= i__4; ++j) {
+			refsum = v[m * v_dim1 + 1] * (h__[j + (k + 1) *
+				h_dim1] + v[m * v_dim1 + 2] * h__[j + (k + 2)
+				* h_dim1] + v[m * v_dim1 + 3] * h__[j + (k +
+				3) * h_dim1]);
+			h__[j + (k + 1) * h_dim1] -= refsum;
+			h__[j + (k + 2) * h_dim1] -= refsum * v[m * v_dim1 +
+				2];
+			h__[j + (k + 3) * h_dim1] -= refsum * v[m * v_dim1 +
+				3];
+/* L60: */
+		    }
+
+		    if (accum) {
+
+/*
+                      ==== Accumulate U. (If necessary, update Z later
+                      .    with with an efficient matrix-matrix
+                      .    multiply.) ====
+*/
+
+			kms = k - incol;
+/* Computing MAX */
+			i__4 = 1, i__6 = *ktop - incol;
+			i__7 = kdu;
+			for (j = max(i__4,i__6); j <= i__7; ++j) {
+			    refsum = v[m * v_dim1 + 1] * (u[j + (kms + 1) *
+				    u_dim1] + v[m * v_dim1 + 2] * u[j + (kms
+				    + 2) * u_dim1] + v[m * v_dim1 + 3] * u[j
+				    + (kms + 3) * u_dim1]);
+			    u[j + (kms + 1) * u_dim1] -= refsum;
+			    u[j + (kms + 2) * u_dim1] -= refsum * v[m *
+				    v_dim1 + 2];
+			    u[j + (kms + 3) * u_dim1] -= refsum * v[m *
+				    v_dim1 + 3];
+/* L70: */
+			}
+		    } else if (*wantz) {
+
+/*
+                      ==== U is not accumulated, so update Z
+                      .    now by multiplying by reflections
+                      .    from the right. ====
+*/
+
+			i__7 = *ihiz;
+			for (j = *iloz; j <= i__7; ++j) {
+			    refsum = v[m * v_dim1 + 1] * (z__[j + (k + 1) *
+				    z_dim1] + v[m * v_dim1 + 2] * z__[j + (k
+				    + 2) * z_dim1] + v[m * v_dim1 + 3] * z__[
+				    j + (k + 3) * z_dim1]);
+			    z__[j + (k + 1) * z_dim1] -= refsum;
+			    z__[j + (k + 2) * z_dim1] -= refsum * v[m *
+				    v_dim1 + 2];
+			    z__[j + (k + 3) * z_dim1] -= refsum * v[m *
+				    v_dim1 + 3];
+/* L80: */
+			}
+		    }
+		}
+/* L90: */
+	    }
+
+/*           ==== Special case: 2-by-2 reflection (if needed) ==== */
+
+	    k = krcol + (m22 - 1) * 3;
+	    if (bmp22 && v[m22 * v_dim1 + 1] != 0.f) {
+/* Computing MIN */
+		i__7 = *kbot, i__4 = k + 3;
+		i__5 = min(i__7,i__4);
+		for (j = jtop; j <= i__5; ++j) {
+		    refsum = v[m22 * v_dim1 + 1] * (h__[j + (k + 1) * h_dim1]
+			    + v[m22 * v_dim1 + 2] * h__[j + (k + 2) * h_dim1])
+			    ;
+		    h__[j + (k + 1) * h_dim1] -= refsum;
+		    h__[j + (k + 2) * h_dim1] -= refsum * v[m22 * v_dim1 + 2];
+/* L100: */
+		}
+
+		if (accum) {
+		    kms = k - incol;
+/* Computing MAX */
+		    i__5 = 1, i__7 = *ktop - incol;
+		    i__4 = kdu;
+		    for (j = max(i__5,i__7); j <= i__4; ++j) {
+			refsum = v[m22 * v_dim1 + 1] * (u[j + (kms + 1) *
+				u_dim1] + v[m22 * v_dim1 + 2] * u[j + (kms +
+				2) * u_dim1]);
+			u[j + (kms + 1) * u_dim1] -= refsum;
+			u[j + (kms + 2) * u_dim1] -= refsum * v[m22 * v_dim1
+				+ 2];
+/* L110: */
+		    }
+		} else if (*wantz) {
+		    i__4 = *ihiz;
+		    for (j = *iloz; j <= i__4; ++j) {
+			refsum = v[m22 * v_dim1 + 1] * (z__[j + (k + 1) *
+				z_dim1] + v[m22 * v_dim1 + 2] * z__[j + (k +
+				2) * z_dim1]);
+			z__[j + (k + 1) * z_dim1] -= refsum;
+			z__[j + (k + 2) * z_dim1] -= refsum * v[m22 * v_dim1
+				+ 2];
+/* L120: */
+		    }
+		}
+	    }
+
+/*           ==== Vigilant deflation check ==== */
+
+	    mstart = mtop;
+	    if (krcol + (mstart - 1) * 3 < *ktop) {
+		++mstart;
+	    }
+	    mend = mbot;
+	    if (bmp22) {
+		++mend;
+	    }
+	    if (krcol == *kbot - 2) {
+		++mend;
+	    }
+	    i__4 = mend;
+	    for (m = mstart; m <= i__4; ++m) {
+/* Computing MIN */
+		i__5 = *kbot - 1, i__7 = krcol + (m - 1) * 3;
+		k = min(i__5,i__7);
+
+/*
+                ==== The following convergence test requires that
+                .    the tradition small-compared-to-nearby-diagonals
+                .    criterion and the Ahues & Tisseur (LAWN 122, 1997)
+                .    criteria both be satisfied.  The latter improves
+                .    accuracy in some examples. Falling back on an
+                .    alternate convergence criterion when TST1 or TST2
+                .    is zero (as done here) is traditional but probably
+                .    unnecessary. ====
+*/
+
+		if (h__[k + 1 + k * h_dim1] != 0.f) {
+		    tst1 = (r__1 = h__[k + k * h_dim1], dabs(r__1)) + (r__2 =
+			    h__[k + 1 + (k + 1) * h_dim1], dabs(r__2));
+		    if (tst1 == 0.f) {
+			if (k >= *ktop + 1) {
+			    tst1 += (r__1 = h__[k + (k - 1) * h_dim1], dabs(
+				    r__1));
+			}
+			if (k >= *ktop + 2) {
+			    tst1 += (r__1 = h__[k + (k - 2) * h_dim1], dabs(
+				    r__1));
+			}
+			if (k >= *ktop + 3) {
+			    tst1 += (r__1 = h__[k + (k - 3) * h_dim1], dabs(
+				    r__1));
+			}
+			if (k <= *kbot - 2) {
+			    tst1 += (r__1 = h__[k + 2 + (k + 1) * h_dim1],
+				    dabs(r__1));
+			}
+			if (k <= *kbot - 3) {
+			    tst1 += (r__1 = h__[k + 3 + (k + 1) * h_dim1],
+				    dabs(r__1));
+			}
+			if (k <= *kbot - 4) {
+			    tst1 += (r__1 = h__[k + 4 + (k + 1) * h_dim1],
+				    dabs(r__1));
+			}
+		    }
+/* Computing MAX */
+		    r__2 = smlnum, r__3 = ulp * tst1;
+		    if ((r__1 = h__[k + 1 + k * h_dim1], dabs(r__1)) <= dmax(
+			    r__2,r__3)) {
+/* Computing MAX */
+			r__3 = (r__1 = h__[k + 1 + k * h_dim1], dabs(r__1)),
+				r__4 = (r__2 = h__[k + (k + 1) * h_dim1],
+				dabs(r__2));
+			h12 = dmax(r__3,r__4);
+/* Computing MIN */
+			r__3 = (r__1 = h__[k + 1 + k * h_dim1], dabs(r__1)),
+				r__4 = (r__2 = h__[k + (k + 1) * h_dim1],
+				dabs(r__2));
+			h21 = dmin(r__3,r__4);
+/* Computing MAX */
+			r__3 = (r__1 = h__[k + 1 + (k + 1) * h_dim1], dabs(
+				r__1)), r__4 = (r__2 = h__[k + k * h_dim1] -
+				h__[k + 1 + (k + 1) * h_dim1], dabs(r__2));
+			h11 = dmax(r__3,r__4);
+/* Computing MIN */
+			r__3 = (r__1 = h__[k + 1 + (k + 1) * h_dim1], dabs(
+				r__1)), r__4 = (r__2 = h__[k + k * h_dim1] -
+				h__[k + 1 + (k + 1) * h_dim1], dabs(r__2));
+			h22 = dmin(r__3,r__4);
+			scl = h11 + h12;
+			tst2 = h22 * (h11 / scl);
+
+/* Computing MAX */
+			r__1 = smlnum, r__2 = ulp * tst2;
+			if (tst2 == 0.f || h21 * (h12 / scl) <= dmax(r__1,
+				r__2)) {
+			    h__[k + 1 + k * h_dim1] = 0.f;
+			}
+		    }
+		}
+/* L130: */
+	    }
+
+/*
+             ==== Fill in the last row of each bulge. ====
+
+   Computing MIN
+*/
+	    i__4 = nbmps, i__5 = (*kbot - krcol - 1) / 3;
+	    mend = min(i__4,i__5);
+	    i__4 = mend;
+	    for (m = mtop; m <= i__4; ++m) {
+		k = krcol + (m - 1) * 3;
+		refsum = v[m * v_dim1 + 1] * v[m * v_dim1 + 3] * h__[k + 4 + (
+			k + 3) * h_dim1];
+		h__[k + 4 + (k + 1) * h_dim1] = -refsum;
+		h__[k + 4 + (k + 2) * h_dim1] = -refsum * v[m * v_dim1 + 2];
+		h__[k + 4 + (k + 3) * h_dim1] -= refsum * v[m * v_dim1 + 3];
+/* L140: */
+	    }
+
+/*
+             ==== End of near-the-diagonal bulge chase. ====
+
+   L150:
+*/
+	}
+
+/*
+          ==== Use U (if accumulated) to update far-from-diagonal
+          .    entries in H.  If required, use U to update Z as
+          .    well. ====
+*/
+
+	if (accum) {
+	    if (*wantt) {
+		jtop = 1;
+		jbot = *n;
+	    } else {
+		jtop = *ktop;
+		jbot = *kbot;
+	    }
+	    if (! blk22 || incol < *ktop || ndcol > *kbot || ns <= 2) {
+
+/*
+                ==== Updates not exploiting the 2-by-2 block
+                .    structure of U.  K1 and NU keep track of
+                .    the location and size of U in the special
+                .    cases of introducing bulges and chasing
+                .    bulges off the bottom.  In these special
+                .    cases and in case the number of shifts
+                .    is NS = 2, there is no 2-by-2 block
+                .    structure to exploit.  ====
+
+   Computing MAX
+*/
+		i__3 = 1, i__4 = *ktop - incol;
+		k1 = max(i__3,i__4);
+/* Computing MAX */
+		i__3 = 0, i__4 = ndcol - *kbot;
+		nu = kdu - max(i__3,i__4) - k1 + 1;
+
+/*              ==== Horizontal Multiply ==== */
+
+		i__3 = jbot;
+		i__4 = *nh;
+		for (jcol = min(ndcol,*kbot) + 1; i__4 < 0 ? jcol >= i__3 :
+			jcol <= i__3; jcol += i__4) {
+/* Computing MIN */
+		    i__5 = *nh, i__7 = jbot - jcol + 1;
+		    jlen = min(i__5,i__7);
+		    sgemm_("C", "N", &nu, &jlen, &nu, &c_b15, &u[k1 + k1 *
+			    u_dim1], ldu, &h__[incol + k1 + jcol * h_dim1],
+			    ldh, &c_b29, &wh[wh_offset], ldwh);
+		    slacpy_("ALL", &nu, &jlen, &wh[wh_offset], ldwh, &h__[
+			    incol + k1 + jcol * h_dim1], ldh);
+/* L160: */
+		}
+
+/*              ==== Vertical multiply ==== */
+
+		i__4 = max(*ktop,incol) - 1;
+		i__3 = *nv;
+		for (jrow = jtop; i__3 < 0 ? jrow >= i__4 : jrow <= i__4;
+			jrow += i__3) {
+/* Computing MIN */
+		    i__5 = *nv, i__7 = max(*ktop,incol) - jrow;
+		    jlen = min(i__5,i__7);
+		    sgemm_("N", "N", &jlen, &nu, &nu, &c_b15, &h__[jrow + (
+			    incol + k1) * h_dim1], ldh, &u[k1 + k1 * u_dim1],
+			    ldu, &c_b29, &wv[wv_offset], ldwv);
+		    slacpy_("ALL", &jlen, &nu, &wv[wv_offset], ldwv, &h__[
+			    jrow + (incol + k1) * h_dim1], ldh);
+/* L170: */
+		}
+
+/*              ==== Z multiply (also vertical) ==== */
+
+		if (*wantz) {
+		    i__3 = *ihiz;
+		    i__4 = *nv;
+		    for (jrow = *iloz; i__4 < 0 ? jrow >= i__3 : jrow <= i__3;
+			     jrow += i__4) {
+/* Computing MIN */
+			i__5 = *nv, i__7 = *ihiz - jrow + 1;
+			jlen = min(i__5,i__7);
+			sgemm_("N", "N", &jlen, &nu, &nu, &c_b15, &z__[jrow +
+				(incol + k1) * z_dim1], ldz, &u[k1 + k1 *
+				u_dim1], ldu, &c_b29, &wv[wv_offset], ldwv);
+			slacpy_("ALL", &jlen, &nu, &wv[wv_offset], ldwv, &z__[
+				jrow + (incol + k1) * z_dim1], ldz)
+				;
+/* L180: */
+		    }
+		}
+	    } else {
+
+/*
+                ==== Updates exploiting U's 2-by-2 block structure.
+                .    (I2, I4, J2, J4 are the last rows and columns
+                .    of the blocks.) ====
+*/
+
+		i2 = (kdu + 1) / 2;
+		i4 = kdu;
+		j2 = i4 - i2;
+		j4 = kdu;
+
+/*
+                ==== KZS and KNZ deal with the band of zeros
+                .    along the diagonal of one of the triangular
+                .    blocks. ====
+*/
+
+		kzs = j4 - j2 - (ns + 1);
+		knz = ns + 1;
+
+/*              ==== Horizontal multiply ==== */
+
+		i__4 = jbot;
+		i__3 = *nh;
+		for (jcol = min(ndcol,*kbot) + 1; i__3 < 0 ? jcol >= i__4 :
+			jcol <= i__4; jcol += i__3) {
+/* Computing MIN */
+		    i__5 = *nh, i__7 = jbot - jcol + 1;
+		    jlen = min(i__5,i__7);
+
+/*
+                   ==== Copy bottom of H to top+KZS of scratch ====
+                    (The first KZS rows get multiplied by zero.) ====
+*/
+
+		    slacpy_("ALL", &knz, &jlen, &h__[incol + 1 + j2 + jcol *
+			    h_dim1], ldh, &wh[kzs + 1 + wh_dim1], ldwh);
+
+/*                 ==== Multiply by U21' ==== */
+
+		    slaset_("ALL", &kzs, &jlen, &c_b29, &c_b29, &wh[wh_offset]
+			    , ldwh);
+		    strmm_("L", "U", "C", "N", &knz, &jlen, &c_b15, &u[j2 + 1
+			    + (kzs + 1) * u_dim1], ldu, &wh[kzs + 1 + wh_dim1]
+			    , ldwh);
+
+/*                 ==== Multiply top of H by U11' ==== */
+
+		    sgemm_("C", "N", &i2, &jlen, &j2, &c_b15, &u[u_offset],
+			    ldu, &h__[incol + 1 + jcol * h_dim1], ldh, &c_b15,
+			     &wh[wh_offset], ldwh);
+
+/*                 ==== Copy top of H to bottom of WH ==== */
+
+		    slacpy_("ALL", &j2, &jlen, &h__[incol + 1 + jcol * h_dim1]
+			    , ldh, &wh[i2 + 1 + wh_dim1], ldwh);
+
+/*                 ==== Multiply by U21' ==== */
+
+		    strmm_("L", "L", "C", "N", &j2, &jlen, &c_b15, &u[(i2 + 1)
+			     * u_dim1 + 1], ldu, &wh[i2 + 1 + wh_dim1], ldwh);
+
+/*                 ==== Multiply by U22 ==== */
+
+		    i__5 = i4 - i2;
+		    i__7 = j4 - j2;
+		    sgemm_("C", "N", &i__5, &jlen, &i__7, &c_b15, &u[j2 + 1 +
+			    (i2 + 1) * u_dim1], ldu, &h__[incol + 1 + j2 +
+			    jcol * h_dim1], ldh, &c_b15, &wh[i2 + 1 + wh_dim1]
+			    , ldwh);
+
+/*                 ==== Copy it back ==== */
+
+		    slacpy_("ALL", &kdu, &jlen, &wh[wh_offset], ldwh, &h__[
+			    incol + 1 + jcol * h_dim1], ldh);
+/* L190: */
+		}
+
+/*              ==== Vertical multiply ==== */
+
+		i__3 = max(incol,*ktop) - 1;
+		i__4 = *nv;
+		for (jrow = jtop; i__4 < 0 ? jrow >= i__3 : jrow <= i__3;
+			jrow += i__4) {
+/* Computing MIN */
+		    i__5 = *nv, i__7 = max(incol,*ktop) - jrow;
+		    jlen = min(i__5,i__7);
+
+/*
+                   ==== Copy right of H to scratch (the first KZS
+                   .    columns get multiplied by zero) ====
+*/
+
+		    slacpy_("ALL", &jlen, &knz, &h__[jrow + (incol + 1 + j2) *
+			     h_dim1], ldh, &wv[(kzs + 1) * wv_dim1 + 1], ldwv);
+
+/*                 ==== Multiply by U21 ==== */
+
+		    slaset_("ALL", &jlen, &kzs, &c_b29, &c_b29, &wv[wv_offset]
+			    , ldwv);
+		    strmm_("R", "U", "N", "N", &jlen, &knz, &c_b15, &u[j2 + 1
+			    + (kzs + 1) * u_dim1], ldu, &wv[(kzs + 1) *
+			    wv_dim1 + 1], ldwv);
+
+/*                 ==== Multiply by U11 ==== */
+
+		    sgemm_("N", "N", &jlen, &i2, &j2, &c_b15, &h__[jrow + (
+			    incol + 1) * h_dim1], ldh, &u[u_offset], ldu, &
+			    c_b15, &wv[wv_offset], ldwv)
+			    ;
+
+/*                 ==== Copy left of H to right of scratch ==== */
+
+		    slacpy_("ALL", &jlen, &j2, &h__[jrow + (incol + 1) *
+			    h_dim1], ldh, &wv[(i2 + 1) * wv_dim1 + 1], ldwv);
+
+/*                 ==== Multiply by U21 ==== */
+
+		    i__5 = i4 - i2;
+		    strmm_("R", "L", "N", "N", &jlen, &i__5, &c_b15, &u[(i2 +
+			    1) * u_dim1 + 1], ldu, &wv[(i2 + 1) * wv_dim1 + 1]
+			    , ldwv);
+
+/*                 ==== Multiply by U22 ==== */
+
+		    i__5 = i4 - i2;
+		    i__7 = j4 - j2;
+		    sgemm_("N", "N", &jlen, &i__5, &i__7, &c_b15, &h__[jrow +
+			    (incol + 1 + j2) * h_dim1], ldh, &u[j2 + 1 + (i2
+			    + 1) * u_dim1], ldu, &c_b15, &wv[(i2 + 1) *
+			    wv_dim1 + 1], ldwv);
+
+/*                 ==== Copy it back ==== */
+
+		    slacpy_("ALL", &jlen, &kdu, &wv[wv_offset], ldwv, &h__[
+			    jrow + (incol + 1) * h_dim1], ldh);
+/* L200: */
+		}
+
+/*              ==== Multiply Z (also vertical) ==== */
+
+		if (*wantz) {
+		    i__4 = *ihiz;
+		    i__3 = *nv;
+		    for (jrow = *iloz; i__3 < 0 ? jrow >= i__4 : jrow <= i__4;
+			     jrow += i__3) {
+/* Computing MIN */
+			i__5 = *nv, i__7 = *ihiz - jrow + 1;
+			jlen = min(i__5,i__7);
+
+/*
+                      ==== Copy right of Z to left of scratch (first
+                      .     KZS columns get multiplied by zero) ====
+*/
+
+			slacpy_("ALL", &jlen, &knz, &z__[jrow + (incol + 1 +
+				j2) * z_dim1], ldz, &wv[(kzs + 1) * wv_dim1 +
+				1], ldwv);
+
+/*                    ==== Multiply by U12 ==== */
+
+			slaset_("ALL", &jlen, &kzs, &c_b29, &c_b29, &wv[
+				wv_offset], ldwv);
+			strmm_("R", "U", "N", "N", &jlen, &knz, &c_b15, &u[j2
+				+ 1 + (kzs + 1) * u_dim1], ldu, &wv[(kzs + 1)
+				* wv_dim1 + 1], ldwv);
+
+/*                    ==== Multiply by U11 ==== */
+
+			sgemm_("N", "N", &jlen, &i2, &j2, &c_b15, &z__[jrow +
+				(incol + 1) * z_dim1], ldz, &u[u_offset], ldu,
+				 &c_b15, &wv[wv_offset], ldwv);
+
+/*                    ==== Copy left of Z to right of scratch ==== */
+
+			slacpy_("ALL", &jlen, &j2, &z__[jrow + (incol + 1) *
+				z_dim1], ldz, &wv[(i2 + 1) * wv_dim1 + 1],
+				ldwv);
+
+/*                    ==== Multiply by U21 ==== */
+
+			i__5 = i4 - i2;
+			strmm_("R", "L", "N", "N", &jlen, &i__5, &c_b15, &u[(
+				i2 + 1) * u_dim1 + 1], ldu, &wv[(i2 + 1) *
+				wv_dim1 + 1], ldwv);
+
+/*                    ==== Multiply by U22 ==== */
+
+			i__5 = i4 - i2;
+			i__7 = j4 - j2;
+			sgemm_("N", "N", &jlen, &i__5, &i__7, &c_b15, &z__[
+				jrow + (incol + 1 + j2) * z_dim1], ldz, &u[j2
+				+ 1 + (i2 + 1) * u_dim1], ldu, &c_b15, &wv[(
+				i2 + 1) * wv_dim1 + 1], ldwv);
+
+/*                    ==== Copy the result back to Z ==== */
+
+			slacpy_("ALL", &jlen, &kdu, &wv[wv_offset], ldwv, &
+				z__[jrow + (incol + 1) * z_dim1], ldz);
+/* L210: */
+		    }
+		}
+	    }
+	}
+/* L220: */
+    }
+
+/*     ==== End of SLAQR5 ==== */
+
+    return 0;
+} /* slaqr5_ */
+
 /* Subroutine */ int slarf_(char *side, integer *m, integer *n, real *v,
 	integer *incv, real *tau, real *c__, integer *ldc, real *work)
 {
@@ -14826,18 +21315,24 @@ doublereal slapy3_(real *x, real *y, real *z__)
     real r__1;
 
     /* Local variables */
+    static integer i__;
+    static logical applyleft;
     extern /* Subroutine */ int sger_(integer *, integer *, real *, real *,
 	    integer *, real *, integer *, real *, integer *);
     extern logical lsame_(char *, char *);
+    static integer lastc;
     extern /* Subroutine */ int sgemv_(char *, integer *, integer *, real *,
 	    real *, integer *, real *, integer *, real *, real *, integer *);
+    static integer lastv;
+    extern integer ilaslc_(integer *, integer *, real *, integer *), ilaslr_(
+	    integer *, integer *, real *, integer *);
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -14901,39 +21396,74 @@ doublereal slapy3_(real *x, real *y, real *z__)
     --work;
 
     /* Function Body */
-    if (lsame_(side, "L")) {
+    applyleft = lsame_(side, "L");
+    lastv = 0;
+    lastc = 0;
+    if (*tau != 0.f) {
+/*
+       Set up variables for scanning V.  LASTV begins pointing to the end
+       of V.
+*/
+	if (applyleft) {
+	    lastv = *m;
+	} else {
+	    lastv = *n;
+	}
+	if (*incv > 0) {
+	    i__ = (lastv - 1) * *incv + 1;
+	} else {
+	    i__ = 1;
+	}
+/*     Look for the last non-zero row in V. */
+	while(lastv > 0 && v[i__] == 0.f) {
+	    --lastv;
+	    i__ -= *incv;
+	}
+	if (applyleft) {
+/*     Scan for the last non-zero column in C(1:lastv,:). */
+	    lastc = ilaslc_(&lastv, n, &c__[c_offset], ldc);
+	} else {
+/*     Scan for the last non-zero row in C(:,1:lastv). */
+	    lastc = ilaslr_(m, &lastv, &c__[c_offset], ldc);
+	}
+    }
+/*
+       Note that lastc.eq.0 renders the BLAS operations null; no special
+       case is needed at this level.
+*/
+    if (applyleft) {
 
 /*        Form  H * C */
 
-	if (*tau != 0.f) {
+	if (lastv > 0) {
 
-/*           w := C' * v */
+/*           w(1:lastc,1) := C(1:lastv,1:lastc)' * v(1:lastv,1) */
 
-	    sgemv_("Transpose", m, n, &c_b15, &c__[c_offset], ldc, &v[1],
-		    incv, &c_b29, &work[1], &c__1);
+	    sgemv_("Transpose", &lastv, &lastc, &c_b15, &c__[c_offset], ldc, &
+		    v[1], incv, &c_b29, &work[1], &c__1);
 
-/*           C := C - v * w' */
+/*           C(1:lastv,1:lastc) := C(...) - v(1:lastv,1) * w(1:lastc,1)' */
 
 	    r__1 = -(*tau);
-	    sger_(m, n, &r__1, &v[1], incv, &work[1], &c__1, &c__[c_offset],
-		    ldc);
+	    sger_(&lastv, &lastc, &r__1, &v[1], incv, &work[1], &c__1, &c__[
+		    c_offset], ldc);
 	}
     } else {
 
 /*        Form  C * H */
 
-	if (*tau != 0.f) {
+	if (lastv > 0) {
 
-/*           w := C * v */
+/*           w(1:lastc,1) := C(1:lastc,1:lastv) * v(1:lastv,1) */
 
-	    sgemv_("No transpose", m, n, &c_b15, &c__[c_offset], ldc, &v[1],
-		    incv, &c_b29, &work[1], &c__1);
+	    sgemv_("No transpose", &lastc, &lastv, &c_b15, &c__[c_offset],
+		    ldc, &v[1], incv, &c_b29, &work[1], &c__1);
 
-/*           C := C - w * v' */
+/*           C(1:lastc,1:lastv) := C(...) - w(1:lastc,1) * v(1:lastv,1)' */
 
 	    r__1 = -(*tau);
-	    sger_(m, n, &r__1, &work[1], &c__1, &v[1], incv, &c__[c_offset],
-		    ldc);
+	    sger_(&lastc, &lastv, &r__1, &work[1], &c__1, &v[1], incv, &c__[
+		    c_offset], ldc);
 	}
     }
     return 0;
@@ -14954,20 +21484,24 @@ doublereal slapy3_(real *x, real *y, real *z__)
     /* Local variables */
     static integer i__, j;
     extern logical lsame_(char *, char *);
+    static integer lastc;
     extern /* Subroutine */ int sgemm_(char *, char *, integer *, integer *,
 	    integer *, real *, real *, integer *, real *, integer *, real *,
-	    real *, integer *), scopy_(integer *, real *,
-	    integer *, real *, integer *), strmm_(char *, char *, char *,
-	    char *, integer *, integer *, real *, real *, integer *, real *,
-	    integer *);
+	    real *, integer *);
+    static integer lastv;
+    extern /* Subroutine */ int scopy_(integer *, real *, integer *, real *,
+	    integer *), strmm_(char *, char *, char *, char *, integer *,
+	    integer *, real *, real *, integer *, real *, integer *);
+    extern integer ilaslc_(integer *, integer *, real *, integer *), ilaslr_(
+	    integer *, integer *, real *, integer *);
     static char transt[1];
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -15089,6 +21623,13 @@ doublereal slapy3_(real *x, real *y, real *z__)
                 Form  H * C  or  H' * C  where  C = ( C1 )
                                                     ( C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaslr_(m, k, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaslc_(&lastv, n, &c__[c_offset], ldc);
+
+/*
                 W := C' * V  =  (C1'*V1 + C2'*V2)  (stored in WORK)
 
                 W := C1'
@@ -15096,52 +21637,53 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    scopy_(n, &c__[j + c_dim1], ldc, &work[j * work_dim1 + 1],
-			     &c__1);
+		    scopy_(&lastc, &c__[j + c_dim1], ldc, &work[j * work_dim1
+			    + 1], &c__1);
 /* L10: */
 		}
 
 /*              W := W * V1 */
 
-		strmm_("Right", "Lower", "No transpose", "Unit", n, k, &c_b15,
-			 &v[v_offset], ldv, &work[work_offset], ldwork);
-		if (*m > *k) {
+		strmm_("Right", "Lower", "No transpose", "Unit", &lastc, k, &
+			c_b15, &v[v_offset], ldv, &work[work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C2'*V2 */
 
-		    i__1 = *m - *k;
-		    sgemm_("Transpose", "No transpose", n, k, &i__1, &c_b15, &
-			    c__[*k + 1 + c_dim1], ldc, &v[*k + 1 + v_dim1],
-			    ldv, &c_b15, &work[work_offset], ldwork);
+		    i__1 = lastv - *k;
+		    sgemm_("Transpose", "No transpose", &lastc, k, &i__1, &
+			    c_b15, &c__[*k + 1 + c_dim1], ldc, &v[*k + 1 +
+			    v_dim1], ldv, &c_b15, &work[work_offset], ldwork);
 		}
 
 /*              W := W * T'  or  W * T */
 
-		strmm_("Right", "Upper", transt, "Non-unit", n, k, &c_b15, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		strmm_("Right", "Upper", transt, "Non-unit", &lastc, k, &
+			c_b15, &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - V * W' */
 
-		if (*m > *k) {
+		if (lastv > *k) {
 
 /*                 C2 := C2 - V2 * W' */
 
-		    i__1 = *m - *k;
-		    sgemm_("No transpose", "Transpose", &i__1, n, k, &c_b151,
-			    &v[*k + 1 + v_dim1], ldv, &work[work_offset],
-			    ldwork, &c_b15, &c__[*k + 1 + c_dim1], ldc);
+		    i__1 = lastv - *k;
+		    sgemm_("No transpose", "Transpose", &i__1, &lastc, k, &
+			    c_b151, &v[*k + 1 + v_dim1], ldv, &work[
+			    work_offset], ldwork, &c_b15, &c__[*k + 1 +
+			    c_dim1], ldc);
 		}
 
 /*              W := W * V1' */
 
-		strmm_("Right", "Lower", "Transpose", "Unit", n, k, &c_b15, &
-			v[v_offset], ldv, &work[work_offset], ldwork);
+		strmm_("Right", "Lower", "Transpose", "Unit", &lastc, k, &
+			c_b15, &v[v_offset], ldv, &work[work_offset], ldwork);
 
 /*              C1 := C1 - W' */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *n;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			c__[j + i__ * c_dim1] -= work[i__ + j * work_dim1];
 /* L20: */
@@ -15154,6 +21696,13 @@ doublereal slapy3_(real *x, real *y, real *z__)
 /*
                 Form  C * H  or  C * H'  where  C = ( C1  C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaslr_(n, k, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaslr_(m, &lastv, &c__[c_offset], ldc);
+
+/*
                 W := C * V  =  (C1*V1 + C2*V2)  (stored in WORK)
 
                 W := C1
@@ -15161,21 +21710,21 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    scopy_(m, &c__[j * c_dim1 + 1], &c__1, &work[j *
+		    scopy_(&lastc, &c__[j * c_dim1 + 1], &c__1, &work[j *
 			    work_dim1 + 1], &c__1);
 /* L40: */
 		}
 
 /*              W := W * V1 */
 
-		strmm_("Right", "Lower", "No transpose", "Unit", m, k, &c_b15,
-			 &v[v_offset], ldv, &work[work_offset], ldwork);
-		if (*n > *k) {
+		strmm_("Right", "Lower", "No transpose", "Unit", &lastc, k, &
+			c_b15, &v[v_offset], ldv, &work[work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C2 * V2 */
 
-		    i__1 = *n - *k;
-		    sgemm_("No transpose", "No transpose", m, k, &i__1, &
+		    i__1 = lastv - *k;
+		    sgemm_("No transpose", "No transpose", &lastc, k, &i__1, &
 			    c_b15, &c__[(*k + 1) * c_dim1 + 1], ldc, &v[*k +
 			    1 + v_dim1], ldv, &c_b15, &work[work_offset],
 			    ldwork);
@@ -15183,31 +21732,32 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 /*              W := W * T  or  W * T' */
 
-		strmm_("Right", "Upper", trans, "Non-unit", m, k, &c_b15, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		strmm_("Right", "Upper", trans, "Non-unit", &lastc, k, &c_b15,
+			 &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - W * V' */
 
-		if (*n > *k) {
+		if (lastv > *k) {
 
 /*                 C2 := C2 - W * V2' */
 
-		    i__1 = *n - *k;
-		    sgemm_("No transpose", "Transpose", m, &i__1, k, &c_b151,
-			    &work[work_offset], ldwork, &v[*k + 1 + v_dim1],
-			    ldv, &c_b15, &c__[(*k + 1) * c_dim1 + 1], ldc);
+		    i__1 = lastv - *k;
+		    sgemm_("No transpose", "Transpose", &lastc, &i__1, k, &
+			    c_b151, &work[work_offset], ldwork, &v[*k + 1 +
+			    v_dim1], ldv, &c_b15, &c__[(*k + 1) * c_dim1 + 1],
+			     ldc);
 		}
 
 /*              W := W * V1' */
 
-		strmm_("Right", "Lower", "Transpose", "Unit", m, k, &c_b15, &
-			v[v_offset], ldv, &work[work_offset], ldwork);
+		strmm_("Right", "Lower", "Transpose", "Unit", &lastc, k, &
+			c_b15, &v[v_offset], ldv, &work[work_offset], ldwork);
 
 /*              C1 := C1 - W */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *m;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			c__[i__ + j * c_dim1] -= work[i__ + j * work_dim1];
 /* L50: */
@@ -15230,6 +21780,13 @@ doublereal slapy3_(real *x, real *y, real *z__)
                 Form  H * C  or  H' * C  where  C = ( C1 )
                                                     ( C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaslr_(m, k, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaslc_(&lastv, n, &c__[c_offset], ldc);
+
+/*
                 W := C' * V  =  (C1'*V1 + C2'*V2)  (stored in WORK)
 
                 W := C2'
@@ -15237,57 +21794,56 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    scopy_(n, &c__[*m - *k + j + c_dim1], ldc, &work[j *
-			    work_dim1 + 1], &c__1);
+		    scopy_(&lastc, &c__[lastv - *k + j + c_dim1], ldc, &work[
+			    j * work_dim1 + 1], &c__1);
 /* L70: */
 		}
 
 /*              W := W * V2 */
 
-		strmm_("Right", "Upper", "No transpose", "Unit", n, k, &c_b15,
-			 &v[*m - *k + 1 + v_dim1], ldv, &work[work_offset],
-			ldwork);
-		if (*m > *k) {
+		strmm_("Right", "Upper", "No transpose", "Unit", &lastc, k, &
+			c_b15, &v[lastv - *k + 1 + v_dim1], ldv, &work[
+			work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C1'*V1 */
 
-		    i__1 = *m - *k;
-		    sgemm_("Transpose", "No transpose", n, k, &i__1, &c_b15, &
-			    c__[c_offset], ldc, &v[v_offset], ldv, &c_b15, &
-			    work[work_offset], ldwork);
+		    i__1 = lastv - *k;
+		    sgemm_("Transpose", "No transpose", &lastc, k, &i__1, &
+			    c_b15, &c__[c_offset], ldc, &v[v_offset], ldv, &
+			    c_b15, &work[work_offset], ldwork);
 		}
 
 /*              W := W * T'  or  W * T */
 
-		strmm_("Right", "Lower", transt, "Non-unit", n, k, &c_b15, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		strmm_("Right", "Lower", transt, "Non-unit", &lastc, k, &
+			c_b15, &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - V * W' */
 
-		if (*m > *k) {
+		if (lastv > *k) {
 
 /*                 C1 := C1 - V1 * W' */
 
-		    i__1 = *m - *k;
-		    sgemm_("No transpose", "Transpose", &i__1, n, k, &c_b151,
-			    &v[v_offset], ldv, &work[work_offset], ldwork, &
-			    c_b15, &c__[c_offset], ldc)
-			    ;
+		    i__1 = lastv - *k;
+		    sgemm_("No transpose", "Transpose", &i__1, &lastc, k, &
+			    c_b151, &v[v_offset], ldv, &work[work_offset],
+			    ldwork, &c_b15, &c__[c_offset], ldc);
 		}
 
 /*              W := W * V2' */
 
-		strmm_("Right", "Upper", "Transpose", "Unit", n, k, &c_b15, &
-			v[*m - *k + 1 + v_dim1], ldv, &work[work_offset],
-			ldwork);
+		strmm_("Right", "Upper", "Transpose", "Unit", &lastc, k, &
+			c_b15, &v[lastv - *k + 1 + v_dim1], ldv, &work[
+			work_offset], ldwork);
 
 /*              C2 := C2 - W' */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *n;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
-			c__[*m - *k + j + i__ * c_dim1] -= work[i__ + j *
+			c__[lastv - *k + j + i__ * c_dim1] -= work[i__ + j *
 				work_dim1];
 /* L80: */
 		    }
@@ -15299,6 +21855,13 @@ doublereal slapy3_(real *x, real *y, real *z__)
 /*
                 Form  C * H  or  C * H'  where  C = ( C1  C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaslr_(n, k, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaslr_(m, &lastv, &c__[c_offset], ldc);
+
+/*
                 W := C * V  =  (C1*V1 + C2*V2)  (stored in WORK)
 
                 W := C2
@@ -15306,58 +21869,57 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    scopy_(m, &c__[(*n - *k + j) * c_dim1 + 1], &c__1, &work[
-			    j * work_dim1 + 1], &c__1);
+		    scopy_(&lastc, &c__[(*n - *k + j) * c_dim1 + 1], &c__1, &
+			    work[j * work_dim1 + 1], &c__1);
 /* L100: */
 		}
 
 /*              W := W * V2 */
 
-		strmm_("Right", "Upper", "No transpose", "Unit", m, k, &c_b15,
-			 &v[*n - *k + 1 + v_dim1], ldv, &work[work_offset],
-			ldwork);
-		if (*n > *k) {
+		strmm_("Right", "Upper", "No transpose", "Unit", &lastc, k, &
+			c_b15, &v[lastv - *k + 1 + v_dim1], ldv, &work[
+			work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C1 * V1 */
 
-		    i__1 = *n - *k;
-		    sgemm_("No transpose", "No transpose", m, k, &i__1, &
+		    i__1 = lastv - *k;
+		    sgemm_("No transpose", "No transpose", &lastc, k, &i__1, &
 			    c_b15, &c__[c_offset], ldc, &v[v_offset], ldv, &
 			    c_b15, &work[work_offset], ldwork);
 		}
 
 /*              W := W * T  or  W * T' */
 
-		strmm_("Right", "Lower", trans, "Non-unit", m, k, &c_b15, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		strmm_("Right", "Lower", trans, "Non-unit", &lastc, k, &c_b15,
+			 &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - W * V' */
 
-		if (*n > *k) {
+		if (lastv > *k) {
 
 /*                 C1 := C1 - W * V1' */
 
-		    i__1 = *n - *k;
-		    sgemm_("No transpose", "Transpose", m, &i__1, k, &c_b151,
-			    &work[work_offset], ldwork, &v[v_offset], ldv, &
-			    c_b15, &c__[c_offset], ldc)
-			    ;
+		    i__1 = lastv - *k;
+		    sgemm_("No transpose", "Transpose", &lastc, &i__1, k, &
+			    c_b151, &work[work_offset], ldwork, &v[v_offset],
+			    ldv, &c_b15, &c__[c_offset], ldc);
 		}
 
 /*              W := W * V2' */
 
-		strmm_("Right", "Upper", "Transpose", "Unit", m, k, &c_b15, &
-			v[*n - *k + 1 + v_dim1], ldv, &work[work_offset],
-			ldwork);
+		strmm_("Right", "Upper", "Transpose", "Unit", &lastc, k, &
+			c_b15, &v[lastv - *k + 1 + v_dim1], ldv, &work[
+			work_offset], ldwork);
 
 /*              C2 := C2 - W */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *m;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
-			c__[i__ + (*n - *k + j) * c_dim1] -= work[i__ + j *
-				work_dim1];
+			c__[i__ + (lastv - *k + j) * c_dim1] -= work[i__ + j *
+				 work_dim1];
 /* L110: */
 		    }
 /* L120: */
@@ -15380,6 +21942,13 @@ doublereal slapy3_(real *x, real *y, real *z__)
                 Form  H * C  or  H' * C  where  C = ( C1 )
                                                     ( C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaslc_(k, m, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaslc_(&lastv, n, &c__[c_offset], ldc);
+
+/*
                 W := C' * V'  =  (C1'*V1' + C2'*V2') (stored in WORK)
 
                 W := C1'
@@ -15387,52 +21956,53 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    scopy_(n, &c__[j + c_dim1], ldc, &work[j * work_dim1 + 1],
-			     &c__1);
+		    scopy_(&lastc, &c__[j + c_dim1], ldc, &work[j * work_dim1
+			    + 1], &c__1);
 /* L130: */
 		}
 
 /*              W := W * V1' */
 
-		strmm_("Right", "Upper", "Transpose", "Unit", n, k, &c_b15, &
-			v[v_offset], ldv, &work[work_offset], ldwork);
-		if (*m > *k) {
+		strmm_("Right", "Upper", "Transpose", "Unit", &lastc, k, &
+			c_b15, &v[v_offset], ldv, &work[work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C2'*V2' */
 
-		    i__1 = *m - *k;
-		    sgemm_("Transpose", "Transpose", n, k, &i__1, &c_b15, &
-			    c__[*k + 1 + c_dim1], ldc, &v[(*k + 1) * v_dim1 +
-			    1], ldv, &c_b15, &work[work_offset], ldwork);
+		    i__1 = lastv - *k;
+		    sgemm_("Transpose", "Transpose", &lastc, k, &i__1, &c_b15,
+			     &c__[*k + 1 + c_dim1], ldc, &v[(*k + 1) * v_dim1
+			    + 1], ldv, &c_b15, &work[work_offset], ldwork);
 		}
 
 /*              W := W * T'  or  W * T */
 
-		strmm_("Right", "Upper", transt, "Non-unit", n, k, &c_b15, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		strmm_("Right", "Upper", transt, "Non-unit", &lastc, k, &
+			c_b15, &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - V' * W' */
 
-		if (*m > *k) {
+		if (lastv > *k) {
 
 /*                 C2 := C2 - V2' * W' */
 
-		    i__1 = *m - *k;
-		    sgemm_("Transpose", "Transpose", &i__1, n, k, &c_b151, &v[
-			    (*k + 1) * v_dim1 + 1], ldv, &work[work_offset],
-			    ldwork, &c_b15, &c__[*k + 1 + c_dim1], ldc);
+		    i__1 = lastv - *k;
+		    sgemm_("Transpose", "Transpose", &i__1, &lastc, k, &
+			    c_b151, &v[(*k + 1) * v_dim1 + 1], ldv, &work[
+			    work_offset], ldwork, &c_b15, &c__[*k + 1 +
+			    c_dim1], ldc);
 		}
 
 /*              W := W * V1 */
 
-		strmm_("Right", "Upper", "No transpose", "Unit", n, k, &c_b15,
-			 &v[v_offset], ldv, &work[work_offset], ldwork);
+		strmm_("Right", "Upper", "No transpose", "Unit", &lastc, k, &
+			c_b15, &v[v_offset], ldv, &work[work_offset], ldwork);
 
 /*              C1 := C1 - W' */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *n;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			c__[j + i__ * c_dim1] -= work[i__ + j * work_dim1];
 /* L140: */
@@ -15445,6 +22015,13 @@ doublereal slapy3_(real *x, real *y, real *z__)
 /*
                 Form  C * H  or  C * H'  where  C = ( C1  C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaslc_(k, n, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaslr_(m, &lastv, &c__[c_offset], ldc);
+
+/*
                 W := C * V'  =  (C1*V1' + C2*V2')  (stored in WORK)
 
                 W := C1
@@ -15452,39 +22029,39 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    scopy_(m, &c__[j * c_dim1 + 1], &c__1, &work[j *
+		    scopy_(&lastc, &c__[j * c_dim1 + 1], &c__1, &work[j *
 			    work_dim1 + 1], &c__1);
 /* L160: */
 		}
 
 /*              W := W * V1' */
 
-		strmm_("Right", "Upper", "Transpose", "Unit", m, k, &c_b15, &
-			v[v_offset], ldv, &work[work_offset], ldwork);
-		if (*n > *k) {
+		strmm_("Right", "Upper", "Transpose", "Unit", &lastc, k, &
+			c_b15, &v[v_offset], ldv, &work[work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C2 * V2' */
 
-		    i__1 = *n - *k;
-		    sgemm_("No transpose", "Transpose", m, k, &i__1, &c_b15, &
-			    c__[(*k + 1) * c_dim1 + 1], ldc, &v[(*k + 1) *
-			    v_dim1 + 1], ldv, &c_b15, &work[work_offset],
-			    ldwork);
+		    i__1 = lastv - *k;
+		    sgemm_("No transpose", "Transpose", &lastc, k, &i__1, &
+			    c_b15, &c__[(*k + 1) * c_dim1 + 1], ldc, &v[(*k +
+			    1) * v_dim1 + 1], ldv, &c_b15, &work[work_offset],
+			     ldwork);
 		}
 
 /*              W := W * T  or  W * T' */
 
-		strmm_("Right", "Upper", trans, "Non-unit", m, k, &c_b15, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		strmm_("Right", "Upper", trans, "Non-unit", &lastc, k, &c_b15,
+			 &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - W * V */
 
-		if (*n > *k) {
+		if (lastv > *k) {
 
 /*                 C2 := C2 - W * V2 */
 
-		    i__1 = *n - *k;
-		    sgemm_("No transpose", "No transpose", m, &i__1, k, &
+		    i__1 = lastv - *k;
+		    sgemm_("No transpose", "No transpose", &lastc, &i__1, k, &
 			    c_b151, &work[work_offset], ldwork, &v[(*k + 1) *
 			    v_dim1 + 1], ldv, &c_b15, &c__[(*k + 1) * c_dim1
 			    + 1], ldc);
@@ -15492,14 +22069,14 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 /*              W := W * V1 */
 
-		strmm_("Right", "Upper", "No transpose", "Unit", m, k, &c_b15,
-			 &v[v_offset], ldv, &work[work_offset], ldwork);
+		strmm_("Right", "Upper", "No transpose", "Unit", &lastc, k, &
+			c_b15, &v[v_offset], ldv, &work[work_offset], ldwork);
 
 /*              C1 := C1 - W */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *m;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
 			c__[i__ + j * c_dim1] -= work[i__ + j * work_dim1];
 /* L170: */
@@ -15522,6 +22099,13 @@ doublereal slapy3_(real *x, real *y, real *z__)
                 Form  H * C  or  H' * C  where  C = ( C1 )
                                                     ( C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaslc_(k, m, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaslc_(&lastv, n, &c__[c_offset], ldc);
+
+/*
                 W := C' * V'  =  (C1'*V1' + C2'*V2') (stored in WORK)
 
                 W := C2'
@@ -15529,56 +22113,56 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    scopy_(n, &c__[*m - *k + j + c_dim1], ldc, &work[j *
-			    work_dim1 + 1], &c__1);
+		    scopy_(&lastc, &c__[lastv - *k + j + c_dim1], ldc, &work[
+			    j * work_dim1 + 1], &c__1);
 /* L190: */
 		}
 
 /*              W := W * V2' */
 
-		strmm_("Right", "Lower", "Transpose", "Unit", n, k, &c_b15, &
-			v[(*m - *k + 1) * v_dim1 + 1], ldv, &work[work_offset]
-			, ldwork);
-		if (*m > *k) {
+		strmm_("Right", "Lower", "Transpose", "Unit", &lastc, k, &
+			c_b15, &v[(lastv - *k + 1) * v_dim1 + 1], ldv, &work[
+			work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C1'*V1' */
 
-		    i__1 = *m - *k;
-		    sgemm_("Transpose", "Transpose", n, k, &i__1, &c_b15, &
-			    c__[c_offset], ldc, &v[v_offset], ldv, &c_b15, &
+		    i__1 = lastv - *k;
+		    sgemm_("Transpose", "Transpose", &lastc, k, &i__1, &c_b15,
+			     &c__[c_offset], ldc, &v[v_offset], ldv, &c_b15, &
 			    work[work_offset], ldwork);
 		}
 
 /*              W := W * T'  or  W * T */
 
-		strmm_("Right", "Lower", transt, "Non-unit", n, k, &c_b15, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		strmm_("Right", "Lower", transt, "Non-unit", &lastc, k, &
+			c_b15, &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - V' * W' */
 
-		if (*m > *k) {
+		if (lastv > *k) {
 
 /*                 C1 := C1 - V1' * W' */
 
-		    i__1 = *m - *k;
-		    sgemm_("Transpose", "Transpose", &i__1, n, k, &c_b151, &v[
-			    v_offset], ldv, &work[work_offset], ldwork, &
-			    c_b15, &c__[c_offset], ldc);
+		    i__1 = lastv - *k;
+		    sgemm_("Transpose", "Transpose", &i__1, &lastc, k, &
+			    c_b151, &v[v_offset], ldv, &work[work_offset],
+			    ldwork, &c_b15, &c__[c_offset], ldc);
 		}
 
 /*              W := W * V2 */
 
-		strmm_("Right", "Lower", "No transpose", "Unit", n, k, &c_b15,
-			 &v[(*m - *k + 1) * v_dim1 + 1], ldv, &work[
+		strmm_("Right", "Lower", "No transpose", "Unit", &lastc, k, &
+			c_b15, &v[(lastv - *k + 1) * v_dim1 + 1], ldv, &work[
 			work_offset], ldwork);
 
 /*              C2 := C2 - W' */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *n;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
-			c__[*m - *k + j + i__ * c_dim1] -= work[i__ + j *
+			c__[lastv - *k + j + i__ * c_dim1] -= work[i__ + j *
 				work_dim1];
 /* L200: */
 		    }
@@ -15590,6 +22174,13 @@ doublereal slapy3_(real *x, real *y, real *z__)
 /*
                 Form  C * H  or  C * H'  where  C = ( C1  C2 )
 
+   Computing MAX
+*/
+		i__1 = *k, i__2 = ilaslc_(k, n, &v[v_offset], ldv);
+		lastv = max(i__1,i__2);
+		lastc = ilaslr_(m, &lastv, &c__[c_offset], ldc);
+
+/*
                 W := C * V'  =  (C1*V1' + C2*V2')  (stored in WORK)
 
                 W := C2
@@ -15597,57 +22188,57 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    scopy_(m, &c__[(*n - *k + j) * c_dim1 + 1], &c__1, &work[
-			    j * work_dim1 + 1], &c__1);
+		    scopy_(&lastc, &c__[(lastv - *k + j) * c_dim1 + 1], &c__1,
+			     &work[j * work_dim1 + 1], &c__1);
 /* L220: */
 		}
 
 /*              W := W * V2' */
 
-		strmm_("Right", "Lower", "Transpose", "Unit", m, k, &c_b15, &
-			v[(*n - *k + 1) * v_dim1 + 1], ldv, &work[work_offset]
-			, ldwork);
-		if (*n > *k) {
+		strmm_("Right", "Lower", "Transpose", "Unit", &lastc, k, &
+			c_b15, &v[(lastv - *k + 1) * v_dim1 + 1], ldv, &work[
+			work_offset], ldwork);
+		if (lastv > *k) {
 
 /*                 W := W + C1 * V1' */
 
-		    i__1 = *n - *k;
-		    sgemm_("No transpose", "Transpose", m, k, &i__1, &c_b15, &
-			    c__[c_offset], ldc, &v[v_offset], ldv, &c_b15, &
-			    work[work_offset], ldwork);
+		    i__1 = lastv - *k;
+		    sgemm_("No transpose", "Transpose", &lastc, k, &i__1, &
+			    c_b15, &c__[c_offset], ldc, &v[v_offset], ldv, &
+			    c_b15, &work[work_offset], ldwork);
 		}
 
 /*              W := W * T  or  W * T' */
 
-		strmm_("Right", "Lower", trans, "Non-unit", m, k, &c_b15, &t[
-			t_offset], ldt, &work[work_offset], ldwork);
+		strmm_("Right", "Lower", trans, "Non-unit", &lastc, k, &c_b15,
+			 &t[t_offset], ldt, &work[work_offset], ldwork);
 
 /*              C := C - W * V */
 
-		if (*n > *k) {
+		if (lastv > *k) {
 
 /*                 C1 := C1 - W * V1 */
 
-		    i__1 = *n - *k;
-		    sgemm_("No transpose", "No transpose", m, &i__1, k, &
+		    i__1 = lastv - *k;
+		    sgemm_("No transpose", "No transpose", &lastc, &i__1, k, &
 			    c_b151, &work[work_offset], ldwork, &v[v_offset],
 			    ldv, &c_b15, &c__[c_offset], ldc);
 		}
 
 /*              W := W * V2 */
 
-		strmm_("Right", "Lower", "No transpose", "Unit", m, k, &c_b15,
-			 &v[(*n - *k + 1) * v_dim1 + 1], ldv, &work[
+		strmm_("Right", "Lower", "No transpose", "Unit", &lastc, k, &
+			c_b15, &v[(lastv - *k + 1) * v_dim1 + 1], ldv, &work[
 			work_offset], ldwork);
 
 /*              C1 := C1 - W */
 
 		i__1 = *k;
 		for (j = 1; j <= i__1; ++j) {
-		    i__2 = *m;
+		    i__2 = lastc;
 		    for (i__ = 1; i__ <= i__2; ++i__) {
-			c__[i__ + (*n - *k + j) * c_dim1] -= work[i__ + j *
-				work_dim1];
+			c__[i__ + (lastv - *k + j) * c_dim1] -= work[i__ + j *
+				 work_dim1];
 /* L230: */
 		    }
 /* L240: */
@@ -15671,9 +22262,6 @@ doublereal slapy3_(real *x, real *y, real *z__)
     integer i__1;
     real r__1;
 
-    /* Builtin functions */
-    double r_sign(real *, real *);
-
     /* Local variables */
     static integer j, knt;
     static real beta;
@@ -15685,10 +22273,10 @@ doublereal slapy3_(real *x, real *y, real *z__)
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -15763,12 +22351,12 @@ doublereal slapy3_(real *x, real *y, real *z__)
 	r__1 = slapy2_(alpha, &xnorm);
 	beta = -r_sign(&r__1, alpha);
 	safmin = slamch_("S") / slamch_("E");
+	knt = 0;
 	if (dabs(beta) < safmin) {
 
 /*           XNORM, BETA may be inaccurate; scale X and recompute them */
 
 	    rsafmn = 1.f / safmin;
-	    knt = 0;
 L10:
 	    ++knt;
 	    i__1 = *n - 1;
@@ -15785,26 +22373,20 @@ L10:
 	    xnorm = snrm2_(&i__1, &x[1], incx);
 	    r__1 = slapy2_(alpha, &xnorm);
 	    beta = -r_sign(&r__1, alpha);
-	    *tau = (beta - *alpha) / beta;
-	    i__1 = *n - 1;
-	    r__1 = 1.f / (*alpha - beta);
-	    sscal_(&i__1, &r__1, &x[1], incx);
-
-/*           If ALPHA is subnormal, it may lose relative accuracy */
-
-	    *alpha = beta;
-	    i__1 = knt;
-	    for (j = 1; j <= i__1; ++j) {
-		*alpha *= safmin;
-/* L20: */
-	    }
-	} else {
-	    *tau = (beta - *alpha) / beta;
-	    i__1 = *n - 1;
-	    r__1 = 1.f / (*alpha - beta);
-	    sscal_(&i__1, &r__1, &x[1], incx);
-	    *alpha = beta;
 	}
+	*tau = (beta - *alpha) / beta;
+	i__1 = *n - 1;
+	r__1 = 1.f / (*alpha - beta);
+	sscal_(&i__1, &r__1, &x[1], incx);
+
+/*        If ALPHA is subnormal, it may lose relative accuracy */
+
+	i__1 = knt;
+	for (j = 1; j <= i__1; ++j) {
+	    beta *= safmin;
+/* L20: */
+	}
+	*alpha = beta;
     }
 
     return 0;
@@ -15821,19 +22403,21 @@ L10:
     real r__1;
 
     /* Local variables */
-    static integer i__, j;
+    static integer i__, j, prevlastv;
     static real vii;
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int sgemv_(char *, integer *, integer *, real *,
-	    real *, integer *, real *, integer *, real *, real *, integer *), strmv_(char *, char *, char *, integer *, real *,
-	    integer *, real *, integer *);
+	    real *, integer *, real *, integer *, real *, real *, integer *);
+    static integer lastv;
+    extern /* Subroutine */ int strmv_(char *, char *, char *, integer *,
+	    real *, integer *, real *, integer *);
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -15945,8 +22529,10 @@ L10:
     }
 
     if (lsame_(direct, "F")) {
+	prevlastv = *n;
 	i__1 = *k;
 	for (i__ = 1; i__ <= i__1; ++i__) {
+	    prevlastv = max(i__,prevlastv);
 	    if (tau[i__] == 0.f) {
 
 /*              H(i)  =  I */
@@ -15963,21 +22549,39 @@ L10:
 		vii = v[i__ + i__ * v_dim1];
 		v[i__ + i__ * v_dim1] = 1.f;
 		if (lsame_(storev, "C")) {
+/*                 Skip any trailing zeros. */
+		    i__2 = i__ + 1;
+		    for (lastv = *n; lastv >= i__2; --lastv) {
+			if (v[lastv + i__ * v_dim1] != 0.f) {
+			    goto L15;
+			}
+		    }
+L15:
+		    j = min(lastv,prevlastv);
 
-/*                 T(1:i-1,i) := - tau(i) * V(i:n,1:i-1)' * V(i:n,i) */
+/*                 T(1:i-1,i) := - tau(i) * V(i:j,1:i-1)' * V(i:j,i) */
 
-		    i__2 = *n - i__ + 1;
+		    i__2 = j - i__ + 1;
 		    i__3 = i__ - 1;
 		    r__1 = -tau[i__];
 		    sgemv_("Transpose", &i__2, &i__3, &r__1, &v[i__ + v_dim1],
 			     ldv, &v[i__ + i__ * v_dim1], &c__1, &c_b29, &t[
 			    i__ * t_dim1 + 1], &c__1);
 		} else {
+/*                 Skip any trailing zeros. */
+		    i__2 = i__ + 1;
+		    for (lastv = *n; lastv >= i__2; --lastv) {
+			if (v[i__ + lastv * v_dim1] != 0.f) {
+			    goto L16;
+			}
+		    }
+L16:
+		    j = min(lastv,prevlastv);
 
-/*                 T(1:i-1,i) := - tau(i) * V(1:i-1,i:n) * V(i,i:n)' */
+/*                 T(1:i-1,i) := - tau(i) * V(1:i-1,i:j) * V(i,i:j)' */
 
 		    i__2 = i__ - 1;
-		    i__3 = *n - i__ + 1;
+		    i__3 = j - i__ + 1;
 		    r__1 = -tau[i__];
 		    sgemv_("No transpose", &i__2, &i__3, &r__1, &v[i__ *
 			    v_dim1 + 1], ldv, &v[i__ + i__ * v_dim1], ldv, &
@@ -15991,10 +22595,16 @@ L10:
 		strmv_("Upper", "No transpose", "Non-unit", &i__2, &t[
 			t_offset], ldt, &t[i__ * t_dim1 + 1], &c__1);
 		t[i__ + i__ * t_dim1] = tau[i__];
+		if (i__ > 1) {
+		    prevlastv = max(prevlastv,lastv);
+		} else {
+		    prevlastv = lastv;
+		}
 	    }
 /* L20: */
 	}
     } else {
+	prevlastv = 1;
 	for (i__ = *k; i__ >= 1; --i__) {
 	    if (tau[i__] == 0.f) {
 
@@ -16013,35 +22623,54 @@ L10:
 		    if (lsame_(storev, "C")) {
 			vii = v[*n - *k + i__ + i__ * v_dim1];
 			v[*n - *k + i__ + i__ * v_dim1] = 1.f;
+/*                    Skip any leading zeros. */
+			i__1 = i__ - 1;
+			for (lastv = 1; lastv <= i__1; ++lastv) {
+			    if (v[lastv + i__ * v_dim1] != 0.f) {
+				goto L35;
+			    }
+			}
+L35:
+			j = max(lastv,prevlastv);
 
 /*
                       T(i+1:k,i) :=
-                              - tau(i) * V(1:n-k+i,i+1:k)' * V(1:n-k+i,i)
+                              - tau(i) * V(j:n-k+i,i+1:k)' * V(j:n-k+i,i)
 */
 
-			i__1 = *n - *k + i__;
+			i__1 = *n - *k + i__ - j + 1;
 			i__2 = *k - i__;
 			r__1 = -tau[i__];
-			sgemv_("Transpose", &i__1, &i__2, &r__1, &v[(i__ + 1)
-				* v_dim1 + 1], ldv, &v[i__ * v_dim1 + 1], &
+			sgemv_("Transpose", &i__1, &i__2, &r__1, &v[j + (i__
+				+ 1) * v_dim1], ldv, &v[j + i__ * v_dim1], &
 				c__1, &c_b29, &t[i__ + 1 + i__ * t_dim1], &
 				c__1);
 			v[*n - *k + i__ + i__ * v_dim1] = vii;
 		    } else {
 			vii = v[i__ + (*n - *k + i__) * v_dim1];
 			v[i__ + (*n - *k + i__) * v_dim1] = 1.f;
+/*                    Skip any leading zeros. */
+			i__1 = i__ - 1;
+			for (lastv = 1; lastv <= i__1; ++lastv) {
+			    if (v[i__ + lastv * v_dim1] != 0.f) {
+				goto L36;
+			    }
+			}
+L36:
+			j = max(lastv,prevlastv);
 
 /*
                       T(i+1:k,i) :=
-                              - tau(i) * V(i+1:k,1:n-k+i) * V(i,1:n-k+i)'
+                              - tau(i) * V(i+1:k,j:n-k+i) * V(i,j:n-k+i)'
 */
 
 			i__1 = *k - i__;
-			i__2 = *n - *k + i__;
+			i__2 = *n - *k + i__ - j + 1;
 			r__1 = -tau[i__];
 			sgemv_("No transpose", &i__1, &i__2, &r__1, &v[i__ +
-				1 + v_dim1], ldv, &v[i__ + v_dim1], ldv, &
-				c_b29, &t[i__ + 1 + i__ * t_dim1], &c__1);
+				1 + j * v_dim1], ldv, &v[i__ + j * v_dim1],
+				ldv, &c_b29, &t[i__ + 1 + i__ * t_dim1], &
+				c__1);
 			v[i__ + (*n - *k + i__) * v_dim1] = vii;
 		    }
 
@@ -16052,6 +22681,11 @@ L10:
 			    + 1 + (i__ + 1) * t_dim1], ldt, &t[i__ + 1 + i__ *
 			     t_dim1], &c__1)
 			    ;
+		    if (i__ > 1) {
+			prevlastv = min(prevlastv,lastv);
+		    } else {
+			prevlastv = lastv;
+		    }
 		}
 		t[i__ + i__ * t_dim1] = tau[i__];
 	    }
@@ -16069,24 +22703,21 @@ L10:
 {
     /* System generated locals */
     integer c_dim1, c_offset, i__1;
-    real r__1;
 
     /* Local variables */
     static integer j;
     static real t1, t2, t3, t4, t5, t6, t7, t8, t9, v1, v2, v3, v4, v5, v6,
 	    v7, v8, v9, t10, v10, sum;
-    extern /* Subroutine */ int sger_(integer *, integer *, real *, real *,
-	    integer *, real *, integer *, real *, integer *);
     extern logical lsame_(char *, char *);
-    extern /* Subroutine */ int sgemv_(char *, integer *, integer *, real *,
-	    real *, integer *, real *, integer *, real *, real *, integer *);
+    extern /* Subroutine */ int slarf_(char *, integer *, integer *, real *,
+	    integer *, real *, real *, integer *, real *);
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -16169,20 +22800,9 @@ L10:
 	    case 10:  goto L190;
 	}
 
-/*
-          Code for general M
+/*        Code for general M */
 
-          w := C'*v
-*/
-
-	sgemv_("Transpose", m, n, &c_b15, &c__[c_offset], ldc, &v[1], &c__1, &
-		c_b29, &work[1], &c__1);
-
-/*        C := C - tau * v * w' */
-
-	r__1 = -(*tau);
-	sger_(m, n, &r__1, &v[1], &c__1, &work[1], &c__1, &c__[c_offset], ldc)
-		;
+	slarf_(side, m, n, &v[1], &c__1, tau, &c__[c_offset], ldc, &work[1]);
 	goto L410;
 L10:
 
@@ -16484,20 +23104,9 @@ L190:
 	    case 10:  goto L390;
 	}
 
-/*
-          Code for general N
+/*        Code for general N */
 
-          w := C * v
-*/
-
-	sgemv_("No transpose", m, n, &c_b15, &c__[c_offset], ldc, &v[1], &
-		c__1, &c_b29, &work[1], &c__1);
-
-/*        C := C - tau * w * v' */
-
-	r__1 = -(*tau);
-	sger_(m, n, &r__1, &work[1], &c__1, &v[1], &c__1, &c__[c_offset], ldc)
-		;
+	slarf_(side, m, n, &v[1], &c__1, tau, &c__[c_offset], ldc, &work[1]);
 	goto L410;
 L210:
 
@@ -16792,16 +23401,9 @@ L410:
 
 /* Subroutine */ int slartg_(real *f, real *g, real *cs, real *sn, real *r__)
 {
-    /* Initialized data */
-
-    static logical first = TRUE_;
-
     /* System generated locals */
     integer i__1;
     real r__1, r__2;
-
-    /* Builtin functions */
-    double log(doublereal), pow_ri(real *, integer *), sqrt(doublereal);
 
     /* Local variables */
     static integer i__;
@@ -16813,10 +23415,10 @@ L410:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -16855,20 +23457,27 @@ L410:
     R       (output) REAL
             The nonzero component of the rotated vector.
 
+    This version has a few statements commented out for thread safety
+    (machine parameters are computed on each entry). 10 feb 03, SJH.
+
     =====================================================================
+
+       LOGICAL            FIRST
+       SAVE               FIRST, SAFMX2, SAFMIN, SAFMN2
+       DATA               FIRST / .TRUE. /
+
+       IF( FIRST ) THEN
 */
-
-
-    if (first) {
-	first = FALSE_;
-	safmin = slamch_("S");
-	eps = slamch_("E");
-	r__1 = slamch_("B");
-	i__1 = (integer) (log(safmin / eps) / log(slamch_("B")) /
-		2.f);
-	safmn2 = pow_ri(&r__1, &i__1);
-	safmx2 = 1.f / safmn2;
-    }
+    safmin = slamch_("S");
+    eps = slamch_("E");
+    r__1 = slamch_("B");
+    i__1 = (integer) (log(safmin / eps) / log(slamch_("B")) / 2.f);
+    safmn2 = pow_ri(&r__1, &i__1);
+    safmx2 = 1.f / safmn2;
+/*
+          FIRST = .FALSE.
+       END IF
+*/
     if (*g == 0.f) {
 	*cs = 1.f;
 	*sn = 0.f;
@@ -16958,18 +23567,15 @@ L30:
     /* System generated locals */
     real r__1, r__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real c__, fa, ga, ha, as, at, au, fhmn, fhmx;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -17097,14 +23703,16 @@ L30:
     extern doublereal slamch_(char *);
     static real cfromc;
     extern /* Subroutine */ int xerbla_(char *, integer *);
-    static real bignum, smlnum;
+    static real bignum;
+    extern logical sisnan_(real *);
+    static real smlnum;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -17155,7 +23763,7 @@ L30:
     N       (input) INTEGER
             The number of columns of the matrix A.  N >= 0.
 
-    A       (input/output) REAL array, dimension (LDA,M)
+    A       (input/output) REAL array, dimension (LDA,N)
             The matrix to be multiplied by CTO/CFROM.  See TYPE for the
             storage type.
 
@@ -17200,8 +23808,10 @@ L30:
 
     if (itype == -1) {
 	*info = -1;
-    } else if (*cfrom == 0.f) {
+    } else if (*cfrom == 0.f || sisnan_(cfrom)) {
 	*info = -4;
+    } else if (sisnan_(cto)) {
+	*info = -5;
     } else if (*m < 0) {
 	*info = -6;
     } else if (*n < 0 || itype == 4 && *n != *m || itype == 5 && *n != *m) {
@@ -17248,18 +23858,36 @@ L30:
 
 L10:
     cfrom1 = cfromc * smlnum;
-    cto1 = ctoc / bignum;
-    if (dabs(cfrom1) > dabs(ctoc) && ctoc != 0.f) {
-	mul = smlnum;
-	done = FALSE_;
-	cfromc = cfrom1;
-    } else if (dabs(cto1) > dabs(cfromc)) {
-	mul = bignum;
-	done = FALSE_;
-	ctoc = cto1;
-    } else {
+    if (cfrom1 == cfromc) {
+/*
+          CFROMC is an inf.  Multiply by a correctly signed zero for
+          finite CTOC, or a NaN if CTOC is infinite.
+*/
 	mul = ctoc / cfromc;
 	done = TRUE_;
+	cto1 = ctoc;
+    } else {
+	cto1 = ctoc / bignum;
+	if (cto1 == ctoc) {
+/*
+             CTOC is either 0 or an inf.  In both cases, CTOC itself
+             serves as the correct multiplication factor.
+*/
+	    mul = ctoc;
+	    done = TRUE_;
+	    cfromc = 1.f;
+	} else if (dabs(cfrom1) > dabs(ctoc) && ctoc != 0.f) {
+	    mul = smlnum;
+	    done = FALSE_;
+	    cfromc = cfrom1;
+	} else if (dabs(cto1) > dabs(cfromc)) {
+	    mul = bignum;
+	    done = FALSE_;
+	    ctoc = cto1;
+	} else {
+	    mul = ctoc / cfromc;
+	    done = TRUE_;
+	}
     }
 
     if (itype == 0) {
@@ -17397,9 +24025,6 @@ L10:
     /* System generated locals */
     integer u_dim1, u_offset, vt_dim1, vt_offset, i__1, i__2;
 
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
-
     /* Local variables */
     static integer i__, j, m, i1, ic, lf, nd, ll, nl, nr, im1, ncc, nlf, nrf,
 	    iwk, lvl, ndb1, nlp1, nrp1;
@@ -17417,10 +24042,10 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -17472,16 +24097,14 @@ L10:
            On entry, maximum size of the subproblems at the
            bottom of the computation tree.
 
-    IWORK  INTEGER work array.
-           Dimension must be at least (8 * N)
+    IWORK  (workspace) INTEGER array, dimension (8*N)
 
-    WORK   REAL work array.
-           Dimension must be at least (3 * M**2 + 2 * M)
+    WORK   (workspace) REAL array, dimension (3*M**2+2*M)
 
     INFO   (output) INTEGER
             = 0:  successful exit.
             < 0:  if INFO = -i, the i-th argument had an illegal value.
-            > 0:  if INFO = 1, an singular value did not converge
+            > 0:  if INFO = 1, a singular value did not converge
 
     Further Details
     ===============
@@ -17689,10 +24312,10 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -17753,21 +24376,21 @@ L10:
            The bidiagonal matrix has row dimension N = NL + NR + 1,
            and column dimension M = N + SQRE.
 
-    D      (input/output) REAL array,
-                          dimension (N = NL+NR+1).
+    D      (input/output) REAL array, dimension (NL+NR+1).
+           N = NL+NR+1
            On entry D(1:NL,1:NL) contains the singular values of the
            upper block; and D(NL+2:N) contains the singular values of
            the lower block. On exit D(1:N) contains the singular values
            of the modified matrix.
 
-    ALPHA  (input) REAL
+    ALPHA  (input/output) REAL
            Contains the diagonal element associated with the added row.
 
-    BETA   (input) REAL
+    BETA   (input/output) REAL
            Contains the off-diagonal element associated with the added
            row.
 
-    U      (input/output) REAL array, dimension(LDU,N)
+    U      (input/output) REAL array, dimension (LDU,N)
            On entry U(1:NL, 1:NL) contains the left singular vectors of
            the upper block; U(NL+2:N, NL+2:N) contains the left singular
            vectors of the lower block. On exit U contains the left
@@ -17776,7 +24399,7 @@ L10:
     LDU    (input) INTEGER
            The leading dimension of the array U.  LDU >= max( 1, N ).
 
-    VT     (input/output) REAL array, dimension(LDVT,M)
+    VT     (input/output) REAL array, dimension (LDVT,M)
            where M = N + SQRE.
            On entry VT(1:NL+1, 1:NL+1)' contains the right singular
            vectors of the upper block; VT(NL+2:M, NL+2:M)' contains
@@ -17787,19 +24410,19 @@ L10:
     LDVT   (input) INTEGER
            The leading dimension of the array VT.  LDVT >= max( 1, M ).
 
-    IDXQ  (output) INTEGER array, dimension(N)
+    IDXQ  (output) INTEGER array, dimension (N)
            This contains the permutation which will reintegrate the
            subproblem just solved back into sorted order, i.e.
            D( IDXQ( I = 1, N ) ) will be in ascending order.
 
-    IWORK  (workspace) INTEGER array, dimension( 4 * N )
+    IWORK  (workspace) INTEGER array, dimension (4*N)
 
-    WORK   (workspace) REAL array, dimension( 3*M**2 + 2*M )
+    WORK   (workspace) REAL array, dimension (3*M**2+2*M)
 
     INFO   (output) INTEGER
             = 0:  successful exit.
             < 0:  if INFO = -i, the i-th argument had an illegal value.
-            > 0:  if INFO = 1, an singular value did not converge
+            > 0:  if INFO = 1, a singular value did not converge
 
     Further Details
     ===============
@@ -17952,10 +24575,10 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       October 31, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -17990,11 +24613,15 @@ L10:
            Contains the dimension of the non-deflated matrix,
            This is the order of the related secular equation. 1 <= K <=N.
 
-    D      (input/output) REAL array, dimension(N)
+    D      (input/output) REAL array, dimension (N)
            On entry D contains the singular values of the two submatrices
            to be combined.  On exit D contains the trailing (N-K) updated
            singular values (those which were deflated) sorted into
            increasing order.
+
+    Z      (output) REAL array, dimension (N)
+           On exit Z contains the updating row vector in the secular
+           equation.
 
     ALPHA  (input) REAL
            Contains the diagonal element associated with the added row.
@@ -18003,7 +24630,7 @@ L10:
            Contains the off-diagonal element associated with the added
            row.
 
-    U      (input/output) REAL array, dimension(LDU,N)
+    U      (input/output) REAL array, dimension (LDU,N)
            On entry U contains the left singular vectors of two
            submatrices in the two square blocks with corners at (1,1),
            (NL, NL), and (NL+2, NL+2), (N,N).
@@ -18013,27 +24640,7 @@ L10:
     LDU    (input) INTEGER
            The leading dimension of the array U.  LDU >= N.
 
-    Z      (output) REAL array, dimension(N)
-           On exit Z contains the updating row vector in the secular
-           equation.
-
-    DSIGMA (output) REAL array, dimension (N)
-           Contains a copy of the diagonal elements (K-1 singular values
-           and one zero) in the secular equation.
-
-    U2     (output) REAL array, dimension(LDU2,N)
-           Contains a copy of the first K-1 left singular vectors which
-           will be used by SLASD3 in a matrix multiply (SGEMM) to solve
-           for the new left singular vectors. U2 is arranged into four
-           blocks. The first block contains a column with 1 at NL+1 and
-           zero everywhere else; the second block contains non-zero
-           entries only at and above NL; the third contains non-zero
-           entries only below NL+1; and the fourth is dense.
-
-    LDU2   (input) INTEGER
-           The leading dimension of the array U2.  LDU2 >= N.
-
-    VT     (input/output) REAL array, dimension(LDVT,M)
+    VT     (input/output) REAL array, dimension (LDVT,M)
            On entry VT' contains the right singular vectors of two
            submatrices in the two square blocks with corners at (1,1),
            (NL+1, NL+1), and (NL+2, NL+2), (M,M).
@@ -18045,7 +24652,23 @@ L10:
     LDVT   (input) INTEGER
            The leading dimension of the array VT.  LDVT >= M.
 
-    VT2    (output) REAL array, dimension(LDVT2,N)
+    DSIGMA (output) REAL array, dimension (N)
+           Contains a copy of the diagonal elements (K-1 singular values
+           and one zero) in the secular equation.
+
+    U2     (output) REAL array, dimension (LDU2,N)
+           Contains a copy of the first K-1 left singular vectors which
+           will be used by SLASD3 in a matrix multiply (SGEMM) to solve
+           for the new left singular vectors. U2 is arranged into four
+           blocks. The first block contains a column with 1 at NL+1 and
+           zero everywhere else; the second block contains non-zero
+           entries only at and above NL; the third contains non-zero
+           entries only below NL+1; and the fourth is dense.
+
+    LDU2   (input) INTEGER
+           The leading dimension of the array U2.  LDU2 >= N.
+
+    VT2    (output) REAL array, dimension (LDVT2,N)
            VT2' contains a copy of the first K right singular vectors
            which will be used by SLASD3 in a matrix multiply (SGEMM) to
            solve for the new right singular vectors. VT2 is arranged into
@@ -18057,24 +24680,31 @@ L10:
     LDVT2  (input) INTEGER
            The leading dimension of the array VT2.  LDVT2 >= M.
 
-    IDXP   (workspace) INTEGER array, dimension(N)
+    IDXP   (workspace) INTEGER array, dimension (N)
            This will contain the permutation used to place deflated
            values of D at the end of the array. On output IDXP(2:K)
            points to the nondeflated D-values and IDXP(K+1:N)
            points to the deflated singular values.
 
-    IDX    (workspace) INTEGER array, dimension(N)
+    IDX    (workspace) INTEGER array, dimension (N)
            This will contain the permutation used to sort the contents of
            D into ascending order.
 
-    IDXC   (output) INTEGER array, dimension(N)
+    IDXC   (output) INTEGER array, dimension (N)
            This will contain the permutation used to arrange the columns
            of the deflated U matrix into three groups:  the first group
            contains non-zero entries only at and above NL, the second
            contains non-zero entries only below NL+2, and the third is
            dense.
 
-    COLTYP (workspace/output) INTEGER array, dimension(N)
+    IDXQ   (input/output) INTEGER array, dimension (N)
+           This contains the permutation which separately sorts the two
+           sub-problems in D into ascending order.  Note that entries in
+           the first hlaf of this permutation must first be moved one
+           position backward; and entries in the second half
+           must first have NL+1 added to their values.
+
+    COLTYP (workspace/output) INTEGER array, dimension (N)
            As workspace, this will contain a label which will indicate
            which of the following types a column in the U2 matrix or a
            row in the VT2 matrix is:
@@ -18085,13 +24715,6 @@ L10:
 
            On exit, it is an array of dimension 4, with COLTYP(I) being
            the dimension of the I-th type columns.
-
-    IDXQ   (input) INTEGER array, dimension(N)
-           This contains the permutation which separately sorts the two
-           sub-problems in D into ascending order.  Note that entries in
-           the first hlaf of this permutation must first be moved one
-           position backward; and entries in the second half
-           must first have NL+1 added to their values.
 
     INFO   (output) INTEGER
             = 0:  successful exit.
@@ -18522,9 +25145,6 @@ L120:
 	    vt_offset, vt2_dim1, vt2_offset, i__1, i__2;
     real r__1, r__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal), r_sign(real *, real *);
-
     /* Local variables */
     static integer i__, j, m, n, jc;
     static real rho;
@@ -18547,10 +25167,10 @@ L120:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       October 31, 1999
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -18599,12 +25219,12 @@ L120:
     LDQ    (input) INTEGER
            The leading dimension of the array Q.  LDQ >= K.
 
-    DSIGMA (input) REAL array, dimension(K)
+    DSIGMA (input/output) REAL array, dimension(K)
            The first K elements of this array contain the old roots
            of the deflated updating problem.  These are the poles
            of the secular equation.
 
-    U      (input) REAL array, dimension (LDU, N)
+    U      (output) REAL array, dimension (LDU, N)
            The last N - K columns of this matrix contain the deflated
            left singular vectors.
 
@@ -18618,21 +25238,21 @@ L120:
     LDU2   (input) INTEGER
            The leading dimension of the array U2.  LDU2 >= N.
 
-    VT     (input) REAL array, dimension (LDVT, M)
+    VT     (output) REAL array, dimension (LDVT, M)
            The last M - K columns of VT' contain the deflated
            right singular vectors.
 
     LDVT   (input) INTEGER
            The leading dimension of the array VT.  LDVT >= N.
 
-    VT2    (input) REAL array, dimension (LDVT2, N)
+    VT2    (input/output) REAL array, dimension (LDVT2, N)
            The first K columns of VT2' contain the non-deflated
            right singular vectors for the split problem.
 
     LDVT2  (input) INTEGER
            The leading dimension of the array VT2.  LDVT2 >= N.
 
-    IDXC   (input) INTEGER array, dimension ( N )
+    IDXC   (input) INTEGER array, dimension (N)
            The permutation used to arrange the columns of U (and rows of
            VT) into three groups:  the first group contains non-zero
            entries only at and above (or before) NL +1; the second
@@ -18644,19 +25264,19 @@ L120:
            must be likewise permuted before the matrix multiplies can
            take place.
 
-    CTOT   (input) INTEGER array, dimension ( 4 )
+    CTOT   (input) INTEGER array, dimension (4)
            A count of the total number of the various types of columns
            in U (or rows in VT), as described in IDXC. The fourth column
            type is any column which has been deflated.
 
-    Z      (input) REAL array, dimension (K)
+    Z      (input/output) REAL array, dimension (K)
            The first K elements of this array contain the components
            of the deflation-adjusted updating row vector.
 
     INFO   (output) INTEGER
            = 0:  successful exit.
            < 0:  if INFO = -i, the i-th argument had an illegal value.
-           > 0:  if INFO = 1, an singular value did not converge
+           > 0:  if INFO = 1, a singular value did not converge
 
     Further Details
     ===============
@@ -18760,7 +25380,7 @@ L120:
        changes the bottommost bits of DSIGMA(I). It does not account
        for hexadecimal or decimal machines without guard digits
        (we know of none). We use a subroutine call to compute
-       2*DLAMBDA(I) to prevent optimizing compilers from eliminating
+       2*DSIGMA(I) to prevent optimizing compilers from eliminating
        this code.
 */
 
@@ -18939,9 +25559,6 @@ L100:
     integer i__1;
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real a, b, c__;
     static integer j;
@@ -18971,10 +25588,10 @@ L100:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       October 31, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -19010,10 +25627,10 @@ L100:
            The original eigenvalues.  It is assumed that they are in
            order, 0 <= D(I) < D(J)  for I < J.
 
-    Z      (input) REAL array, dimension ( N )
+    Z      (input) REAL array, dimension (N)
            The components of the updating vector.
 
-    DELTA  (output) REAL array, dimension ( N )
+    DELTA  (output) REAL array, dimension (N)
            If N .ne. 1, DELTA contains (D(j) - sigma_I) in its  j-th
            component.  If N = 1, then DELTA(1) = 1.  The vector DELTA
            contains the information necessary to construct the
@@ -19023,9 +25640,9 @@ L100:
            The scalar in the symmetric updating formula.
 
     SIGMA  (output) REAL
-           The computed lambda_I, the I-th updated eigenvalue.
+           The computed sigma_I, the I-th updated eigenvalue.
 
-    WORK   (workspace) REAL array, dimension ( N )
+    WORK   (workspace) REAL array, dimension (N)
            If N .ne. 1, WORK contains (D(j) + sigma_I) in its  j-th
            component.  If N = 1, then WORK( 1 ) = 1.
 
@@ -19948,18 +26565,15 @@ L240:
     /* System generated locals */
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static real b, c__, w, del, tau, delsq;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -19984,14 +26598,14 @@ L240:
     I      (input) INTEGER
            The index of the eigenvalue to be computed.  I = 1 or I = 2.
 
-    D      (input) REAL array, dimension ( 2 )
+    D      (input) REAL array, dimension (2)
            The original eigenvalues.  We assume 0 <= D(1) < D(2).
 
-    Z      (input) REAL array, dimension ( 2 )
+    Z      (input) REAL array, dimension (2)
            The components of the updating vector.
 
-    DELTA  (output) REAL array, dimension ( 2 )
-           Contains (D(j) - lambda_I) in its  j-th component.
+    DELTA  (output) REAL array, dimension (2)
+           Contains (D(j) - sigma_I) in its  j-th component.
            The vector DELTA contains the information necessary
            to construct the eigenvectors.
 
@@ -19999,9 +26613,9 @@ L240:
            The scalar in the symmetric updating formula.
 
     DSIGMA (output) REAL
-           The computed lambda_I, the I-th updated eigenvalue.
+           The computed sigma_I, the I-th updated eigenvalue.
 
-    WORK   (workspace) REAL array, dimension ( 2 )
+    WORK   (workspace) REAL array, dimension (2)
            WORK contains (D(j) + sigma_I) in its  j-th component.
 
     Further Details
@@ -20150,10 +26764,10 @@ L240:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -20226,34 +26840,34 @@ L240:
            The bidiagonal matrix has row dimension N = NL + NR + 1,
            and column dimension M = N + SQRE.
 
-    D      (input/output) REAL array, dimension ( NL+NR+1 ).
+    D      (input/output) REAL array, dimension (NL+NR+1).
            On entry D(1:NL,1:NL) contains the singular values of the
            upper block, and D(NL+2:N) contains the singular values
            of the lower block. On exit D(1:N) contains the singular
            values of the modified matrix.
 
-    VF     (input/output) REAL array, dimension ( M )
+    VF     (input/output) REAL array, dimension (M)
            On entry, VF(1:NL+1) contains the first components of all
            right singular vectors of the upper block; and VF(NL+2:M)
            contains the first components of all right singular vectors
            of the lower block. On exit, VF contains the first components
            of all right singular vectors of the bidiagonal matrix.
 
-    VL     (input/output) REAL array, dimension ( M )
+    VL     (input/output) REAL array, dimension (M)
            On entry, VL(1:NL+1) contains the  last components of all
            right singular vectors of the upper block; and VL(NL+2:M)
            contains the last components of all right singular vectors of
            the lower block. On exit, VL contains the last components of
            all right singular vectors of the bidiagonal matrix.
 
-    ALPHA  (input) REAL
+    ALPHA  (input/output) REAL
            Contains the diagonal element associated with the added row.
 
-    BETA   (input) REAL
+    BETA   (input/output) REAL
            Contains the off-diagonal element associated with the added
            row.
 
-    IDXQ   (output) INTEGER array, dimension ( N )
+    IDXQ   (output) INTEGER array, dimension (N)
            This contains the permutation which will reintegrate the
            subproblem just solved back into sorted order, i.e.
            D( IDXQ( I = 1, N ) ) will be in ascending order.
@@ -20326,7 +26940,7 @@ L240:
     INFO   (output) INTEGER
             = 0:  successful exit.
             < 0:  if INFO = -i, the i-th argument had an illegal value.
-            > 0:  if INFO = 1, an singular value did not converge
+            > 0:  if INFO = 1, a singular value did not converge
 
     Further Details
     ===============
@@ -20485,10 +27099,10 @@ L240:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -20961,9 +27575,6 @@ L100:
     integer difr_dim1, difr_offset, i__1, i__2;
     real r__1, r__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal), r_sign(real *, real *);
-
     /* Local variables */
     static integer i__, j;
     static real dj, rho;
@@ -20986,10 +27597,10 @@ L100:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Oak Ridge National Lab, Argonne National Lab,
-       Courant Institute, NAG Ltd., and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -21020,9 +27631,10 @@ L100:
     D       (output) REAL array, dimension ( K )
             On output, D contains the updated singular values.
 
-    Z       (input) REAL array, dimension ( K )
-            The first K elements of this array contain the components
-            of the deflation-adjusted updating row vector.
+    Z       (input/output) REAL array, dimension ( K )
+            On entry, the first K elements of this array contain the
+            components of the deflation-adjusted updating row vector.
+            On exit, Z is updated.
 
     VF      (input/output) REAL array, dimension ( K )
             On entry, VF contains  information passed through DBEDE8.
@@ -21051,17 +27663,19 @@ L100:
     LDDIFR  (input) INTEGER
             The leading dimension of DIFR, must be at least K.
 
-    DSIGMA  (input) REAL array, dimension ( K )
-            The first K elements of this array contain the old roots
-            of the deflated updating problem.  These are the poles
+    DSIGMA  (input/output) REAL array, dimension ( K )
+            On entry, the first K elements of this array contain the old
+            roots of the deflated updating problem.  These are the poles
             of the secular equation.
+            On exit, the elements of DSIGMA may be very slightly altered
+            in value.
 
     WORK    (workspace) REAL array, dimension at least 3 * K
 
     INFO    (output) INTEGER
             = 0:  successful exit.
             < 0:  if INFO = -i, the i-th argument had an illegal value.
-            > 0:  if INFO = 1, an singular value did not converge
+            > 0:  if INFO = 1, a singular value did not converge
 
     Further Details
     ===============
@@ -21257,9 +27871,6 @@ L100:
 	    poles_dim1, poles_offset, u_dim1, u_offset, vt_dim1, vt_offset,
 	    z_dim1, z_offset, i__1, i__2;
 
-    /* Builtin functions */
-    integer pow_ii(integer *, integer *);
-
     /* Local variables */
     static integer i__, j, m, i1, ic, lf, nd, ll, nl, vf, nr, vl, im1, ncc,
 	    nlf, nrf, vfi, iwk, vli, lvl, nru, ndb1, nlp1, lvl2, nrp1;
@@ -21285,10 +27896,10 @@ L100:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -21351,8 +27962,8 @@ L100:
            singular vector matrices of all subproblems at the bottom
            level.
 
-    K      (output) INTEGER array,
-           dimension ( N ) if ICOMPQ = 1 and dimension 1 if ICOMPQ = 0.
+    K      (output) INTEGER array, dimension ( N )
+           if ICOMPQ = 1 and dimension 1 if ICOMPQ = 0.
            If ICOMPQ = 1, on exit, K(I) is the dimension of the I-th
            secular equation on the computation tree.
 
@@ -21397,8 +28008,8 @@ L100:
     LDGCOL (input) INTEGER, LDGCOL = > N.
            The leading dimension of arrays GIVCOL and PERM.
 
-    PERM   (output) INTEGER array,
-           dimension ( LDGCOL, NLVL ) if ICOMPQ = 1, and not referenced
+    PERM   (output) INTEGER array, dimension ( LDGCOL, NLVL )
+           if ICOMPQ = 1, and not referenced
            if ICOMPQ = 0. If ICOMPQ = 1, on exit, PERM(1, I) records
            permutations done on the I-th level of the computation tree.
 
@@ -21424,13 +28035,12 @@ L100:
     WORK   (workspace) REAL array, dimension
            (6 * N + (SMLSIZ + 1)*(SMLSIZ + 1)).
 
-    IWORK  (workspace) INTEGER array.
-           Dimension must be at least (7 * N).
+    IWORK  (workspace) INTEGER array, dimension (7*N).
 
     INFO   (output) INTEGER
             = 0:  successful exit.
             < 0:  if INFO = -i, the i-th argument had an illegal value.
-            > 0:  if INFO = 1, an singular value did not converge
+            > 0:  if INFO = 1, a singular value did not converge
 
     Further Details
     ===============
@@ -21734,10 +28344,10 @@ L100:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -22070,9 +28680,6 @@ L100:
     /* System generated locals */
     integer i__1, i__2;
 
-    /* Builtin functions */
-    double log(doublereal);
-
     /* Local variables */
     static integer i__, il, ir, maxn;
     static real temp;
@@ -22080,10 +28687,10 @@ L100:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK auxiliary routine (version 3.2.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       June 2010
 
 
     Purpose
@@ -22114,7 +28721,7 @@ L100:
      NDIMR  (output) INTEGER array, dimension ( N )
             On exit, row dimensions of right children.
 
-     MSUB   (input) INTEGER.
+     MSUB   (input) INTEGER
             On entry, the maximum row dimension each subproblem at the
             bottom of the tree can be of.
 
@@ -22192,10 +28799,10 @@ L100:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -22321,9 +28928,6 @@ L100:
     integer i__1, i__2;
     real r__1, r__2, r__3;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__;
     static real eps;
@@ -22343,10 +28947,15 @@ L100:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK routine (version 3.2)                                    --
+
+    -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    -- Berkeley                                                        --
+    -- November 2008                                                   --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 
 
     Purpose
@@ -22500,42 +29109,48 @@ L100:
     integer i__1, i__2, i__3;
     real r__1, r__2;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
-    static real d__, e;
+    static real d__, e, g;
     static integer k;
     static real s, t;
-    static integer i0, i4, n0, pp;
-    static real eps, tol;
+    static integer i0, i4, n0;
+    static real dn;
+    static integer pp;
+    static real dn1, dn2, dee, eps, tau, tol;
     static integer ipn4;
     static real tol2;
     static logical ieee;
     static integer nbig;
     static real dmin__, emin, emax;
-    static integer ndiv, iter;
+    static integer kmin, ndiv, iter;
     static real qmin, temp, qmax, zmax;
-    static integer splt, nfail;
+    static integer splt;
+    static real dmin1, dmin2;
+    static integer nfail;
     static real desig, trace, sigma;
-    static integer iinfo;
+    static integer iinfo, ttype;
     extern /* Subroutine */ int slasq3_(integer *, integer *, real *, integer
 	    *, real *, real *, real *, real *, integer *, integer *, integer *
-	    , logical *);
+	    , logical *, integer *, real *, real *, real *, real *, real *,
+	    real *, real *);
+    static real deemin;
     extern doublereal slamch_(char *);
     static integer iwhila, iwhilb;
     static real oldemn, safmin;
-    extern /* Subroutine */ int xerbla_(char *, integer *);
-    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
-	    integer *, integer *, ftnlen, ftnlen);
-    extern /* Subroutine */ int slasrt_(char *, integer *, real *, integer *);
+    extern /* Subroutine */ int xerbla_(char *, integer *), slasrt_(
+	    char *, integer *, real *, integer *);
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK routine (version 3.2)                                    --
+
+    -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    -- Berkeley                                                        --
+    -- November 2008                                                   --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 
 
     Purpose
@@ -22563,7 +29178,7 @@ L100:
     N     (input) INTEGER
           The number of rows and columns in the matrix. N >= 0.
 
-    Z     (workspace) REAL array, dimension ( 4*N )
+    Z     (input/output) REAL array, dimension ( 4*N )
           On entry Z holds the qd array. On exit, entries 1 to N hold
           the eigenvalues in decreasing order, Z( 2*N+1 ) holds the
           trace, and Z( 2*N+2 ) holds the sum of the eigenvalues. If
@@ -22721,11 +29336,17 @@ L100:
 	return 0;
     }
 
-/*     Check whether the machine is IEEE conformable. */
+/*
+       Check whether the machine is IEEE conformable.
 
-    ieee = ilaenv_(&c__10, "SLASQ2", "N", &c__1, &c__2, &c__3, &c__4, (ftnlen)
-	    6, (ftnlen)1) == 1 && ilaenv_(&c__11, "SLASQ2", "N", &c__1, &c__2,
-	     &c__3, &c__4, (ftnlen)6, (ftnlen)1) == 1;
+       IEEE = ILAENV( 10, 'SLASQ2', 'N', 1, 2, 3, 4 ).EQ.1 .AND.
+      $       ILAENV( 11, 'SLASQ2', 'N', 1, 2, 3, 4 ).EQ.1
+
+       [11/15/2008] The case IEEE=.TRUE. has a problem in single precision with
+       some the test matrices of type 16. The double precision code is fine.
+*/
+
+    ieee = FALSE_;
 
 /*     Rearrange data for locality: Z=(q1,qq1,e1,ee1,q2,qq2,e2,ee2,...). */
 
@@ -22820,6 +29441,17 @@ L100:
 /* L80: */
     }
 
+/*     Initialise variables to pass to SLASQ3. */
+
+    ttype = 0;
+    dmin1 = 0.f;
+    dmin2 = 0.f;
+    dn = 0.f;
+    dn1 = 0.f;
+    dn2 = 0.f;
+    g = 0.f;
+    tau = 0.f;
+
     iter = 2;
     nfail = 0;
     ndiv = n0 - i0 << 1;
@@ -22827,7 +29459,7 @@ L100:
     i__1 = *n + 1;
     for (iwhila = 1; iwhila <= i__1; ++iwhila) {
 	if (n0 < 1) {
-	    goto L150;
+	    goto L170;
 	}
 
 /*
@@ -22885,10 +29517,43 @@ L100:
 
 L100:
 	i0 = i4 / 4;
+	pp = 0;
 
-/*        Store EMIN for passing to SLASQ3. */
-
-	z__[(n0 << 2) - 1] = emin;
+	if (n0 - i0 > 1) {
+	    dee = z__[(i0 << 2) - 3];
+	    deemin = dee;
+	    kmin = i0;
+	    i__2 = (n0 << 2) - 3;
+	    for (i4 = (i0 << 2) + 1; i4 <= i__2; i4 += 4) {
+		dee = z__[i4] * (dee / (dee + z__[i4 - 2]));
+		if (dee <= deemin) {
+		    deemin = dee;
+		    kmin = (i4 + 3) / 4;
+		}
+/* L110: */
+	    }
+	    if (kmin - i0 << 1 < n0 - kmin && deemin <= z__[(n0 << 2) - 3] *
+		    .5f) {
+		ipn4 = i0 + n0 << 2;
+		pp = 2;
+		i__2 = i0 + n0 - 1 << 1;
+		for (i4 = i0 << 2; i4 <= i__2; i4 += 4) {
+		    temp = z__[i4 - 3];
+		    z__[i4 - 3] = z__[ipn4 - i4 - 3];
+		    z__[ipn4 - i4 - 3] = temp;
+		    temp = z__[i4 - 2];
+		    z__[i4 - 2] = z__[ipn4 - i4 - 2];
+		    z__[ipn4 - i4 - 2] = temp;
+		    temp = z__[i4 - 1];
+		    z__[i4 - 1] = z__[ipn4 - i4 - 5];
+		    z__[ipn4 - i4 - 5] = temp;
+		    temp = z__[i4];
+		    z__[i4] = z__[ipn4 - i4 - 4];
+		    z__[ipn4 - i4 - 4] = temp;
+/* L120: */
+		}
+	    }
+	}
 
 /*
           Put -(initial shift) into DMIN.
@@ -22898,21 +29563,26 @@ L100:
 	r__1 = 0.f, r__2 = qmin - sqrt(qmin) * 2.f * sqrt(emax);
 	dmin__ = -dmax(r__1,r__2);
 
-/*        Now I0:N0 is unreduced. PP = 0 for ping, PP = 1 for pong. */
-
-	pp = 0;
+/*
+          Now I0:N0 is unreduced.
+          PP = 0 for ping, PP = 1 for pong.
+          PP = 2 indicates that flipping was applied to the Z array and
+                 and that the tests for deflation upon entry in SLASQ3
+                 should not be performed.
+*/
 
 	nbig = (n0 - i0 + 1) * 30;
 	i__2 = nbig;
 	for (iwhilb = 1; iwhilb <= i__2; ++iwhilb) {
 	    if (i0 > n0) {
-		goto L130;
+		goto L150;
 	    }
 
 /*           While submatrix unfinished take a good dqds step. */
 
 	    slasq3_(&i0, &n0, &z__[1], &pp, &dmin__, &sigma, &desig, &qmax, &
-		    nfail, &iter, &ndiv, &ieee);
+		    nfail, &iter, &ndiv, &ieee, &ttype, &dmin1, &dmin2, &dn, &
+		    dn1, &dn2, &g, &tau);
 
 	    pp = 1 - pp;
 
@@ -22945,7 +29615,7 @@ L100:
 			    r__1 = oldemn, r__2 = z__[i4];
 			    oldemn = dmin(r__1,r__2);
 			}
-/* L110: */
+/* L130: */
 		    }
 		    z__[(n0 << 2) - 1] = emin;
 		    z__[n0 * 4] = oldemn;
@@ -22953,7 +29623,7 @@ L100:
 		}
 	    }
 
-/* L120: */
+/* L140: */
 	}
 
 	*info = 2;
@@ -22961,9 +29631,9 @@ L100:
 
 /*        end IWHILB */
 
-L130:
+L150:
 
-/* L140: */
+/* L160: */
 	;
     }
 
@@ -22972,14 +29642,14 @@ L130:
 
 /*     end IWHILA */
 
-L150:
+L170:
 
 /*     Move q's to the front. */
 
     i__1 = *n;
     for (k = 2; k <= i__1; ++k) {
 	z__[k] = z__[(k << 2) - 3];
-/* L160: */
+/* L180: */
     }
 
 /*     Sort and compute sum of eigenvalues. */
@@ -22989,7 +29659,7 @@ L150:
     e = 0.f;
     for (k = *n; k >= 1; --k) {
 	e += z__[k];
-/* L170: */
+/* L190: */
     }
 
 /*     Store trace, sum(eigenvalues) and information on performance. */
@@ -23009,24 +29679,13 @@ L150:
 
 /* Subroutine */ int slasq3_(integer *i0, integer *n0, real *z__, integer *pp,
 	 real *dmin__, real *sigma, real *desig, real *qmax, integer *nfail,
-	integer *iter, integer *ndiv, logical *ieee)
+	integer *iter, integer *ndiv, logical *ieee, integer *ttype, real *
+	dmin1, real *dmin2, real *dn, real *dn1, real *dn2, real *g, real *
+	tau)
 {
-    /* Initialized data */
-
-    static integer ttype = 0;
-    static real dmin1 = 0.f;
-    static real dmin2 = 0.f;
-    static real dn = 0.f;
-    static real dn1 = 0.f;
-    static real dn2 = 0.f;
-    static real tau = 0.f;
-
     /* System generated locals */
     integer i__1;
     real r__1, r__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static real s, t;
@@ -23036,19 +29695,24 @@ L150:
     static real tol2, temp;
     extern /* Subroutine */ int slasq4_(integer *, integer *, real *, integer
 	    *, integer *, real *, real *, real *, real *, real *, real *,
-	    real *, integer *), slasq5_(integer *, integer *, real *, integer
-	    *, real *, real *, real *, real *, real *, real *, real *,
-	    logical *), slasq6_(integer *, integer *, real *, integer *, real
-	    *, real *, real *, real *, real *, real *);
+	    real *, integer *, real *), slasq5_(integer *, integer *, real *,
+	    integer *, real *, real *, real *, real *, real *, real *, real *,
+	     logical *), slasq6_(integer *, integer *, real *, integer *,
+	    real *, real *, real *, real *, real *, real *);
     extern doublereal slamch_(char *);
-    static real safmin;
+    extern logical sisnan_(real *);
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       May 17, 2000
+    -- LAPACK routine (version 3.2.2)                                    --
+
+    -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    -- Berkeley                                                        --
+    -- June 2010                                                       --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 
 
     Purpose
@@ -23064,14 +29728,17 @@ L150:
     I0     (input) INTEGER
            First index.
 
-    N0     (input) INTEGER
+    N0     (input/output) INTEGER
            Last index.
 
     Z      (input) REAL array, dimension ( 4*N )
            Z holds the qd array.
 
-    PP     (input) INTEGER
+    PP     (input/output) INTEGER
            PP=0 for ping, PP=1 for pong.
+           PP=2 indicates that flipping was applied to the Z array
+           and that the initial tests for deflation should not be
+           performed.
 
     DMIN   (output) REAL
            Minimum value of d.
@@ -23094,23 +29761,39 @@ L150:
     NDIV   (output) INTEGER
            Number of divisions.
 
-    TTYPE  (output) INTEGER
-           Shift type.
-
     IEEE   (input) LOGICAL
            Flag for IEEE or non IEEE arithmetic (passed to SLASQ5).
 
+    TTYPE  (input/output) INTEGER
+           Shift type.
+
+    DMIN1  (input/output) REAL
+
+    DMIN2  (input/output) REAL
+
+    DN     (input/output) REAL
+
+    DN1    (input/output) REAL
+
+    DN2    (input/output) REAL
+
+    G      (input/output) REAL
+
+    TAU    (input/output) REAL
+
+           These are passed as arguments in order to save their values
+           between calls to SLASQ3.
+
     =====================================================================
 */
+
 
     /* Parameter adjustments */
     --z__;
 
     /* Function Body */
-
     n0in = *n0;
     eps = slamch_("Precision");
-    safmin = slamch_("Safe minimum");
     tol = eps * 100.f;
 /* Computing 2nd power */
     r__1 = tol;
@@ -23178,6 +29861,9 @@ L40:
     goto L10;
 
 L50:
+    if (*pp == 2) {
+	*pp = 0;
+    }
 
 /*     Reverse the qd-array, if warranted. */
 
@@ -23205,8 +29891,8 @@ L50:
 		z__[(*n0 << 2) - *pp] = z__[(*i0 << 2) - *pp];
 	    }
 /* Computing MIN */
-	    r__1 = dmin2, r__2 = z__[(*n0 << 2) + *pp - 1];
-	    dmin2 = dmin(r__1,r__2);
+	    r__1 = *dmin2, r__2 = z__[(*n0 << 2) + *pp - 1];
+	    *dmin2 = dmin(r__1,r__2);
 /* Computing MIN */
 	    r__1 = z__[(*n0 << 2) + *pp - 1], r__2 = z__[(*i0 << 2) + *pp - 1]
 		    , r__1 = min(r__1,r__2), r__2 = z__[(*i0 << 2) + *pp + 3];
@@ -23223,100 +29909,94 @@ L50:
 	}
     }
 
-/*
-   L70:
+/*     Choose a shift. */
 
-   Computing MIN
-*/
-    r__1 = z__[(*n0 << 2) + *pp - 1], r__2 = z__[(*n0 << 2) + *pp - 9], r__1 =
-	     min(r__1,r__2), r__2 = dmin2 + z__[(*n0 << 2) - *pp];
-    if (*dmin__ < 0.f || safmin * *qmax < dmin(r__1,r__2)) {
+    slasq4_(i0, n0, &z__[1], pp, &n0in, dmin__, dmin1, dmin2, dn, dn1, dn2,
+	    tau, ttype, g);
 
-/*        Choose a shift. */
+/*     Call dqds until DMIN > 0. */
 
-	slasq4_(i0, n0, &z__[1], pp, &n0in, dmin__, &dmin1, &dmin2, &dn, &dn1,
-		 &dn2, &tau, &ttype);
+L70:
 
-/*        Call dqds until DMIN > 0. */
+    slasq5_(i0, n0, &z__[1], pp, tau, dmin__, dmin1, dmin2, dn, dn1, dn2,
+	    ieee);
 
-L80:
+    *ndiv += *n0 - *i0 + 2;
+    ++(*iter);
 
-	slasq5_(i0, n0, &z__[1], pp, &tau, dmin__, &dmin1, &dmin2, &dn, &dn1,
-		&dn2, ieee);
+/*     Check status. */
 
-	*ndiv += *n0 - *i0 + 2;
-	++(*iter);
+    if (*dmin__ >= 0.f && *dmin1 > 0.f) {
 
-/*        Check status. */
+/*        Success. */
 
-	if (*dmin__ >= 0.f && dmin1 > 0.f) {
+	goto L90;
 
-/*           Success. */
+    } else if (*dmin__ < 0.f && *dmin1 > 0.f && z__[(*n0 - 1 << 2) - *pp] <
+	    tol * (*sigma + *dn1) && dabs(*dn) < tol * *sigma) {
 
-	    goto L100;
+/*        Convergence hidden by negative DN. */
 
-	} else if (*dmin__ < 0.f && dmin1 > 0.f && z__[(*n0 - 1 << 2) - *pp] <
-		 tol * (*sigma + dn1) && dabs(dn) < tol * *sigma) {
+	z__[(*n0 - 1 << 2) - *pp + 2] = 0.f;
+	*dmin__ = 0.f;
+	goto L90;
+    } else if (*dmin__ < 0.f) {
 
-/*           Convergence hidden by negative DN. */
+/*        TAU too big. Select new TAU and try again. */
 
-	    z__[(*n0 - 1 << 2) - *pp + 2] = 0.f;
-	    *dmin__ = 0.f;
-	    goto L100;
-	} else if (*dmin__ < 0.f) {
+	++(*nfail);
+	if (*ttype < -22) {
 
-/*           TAU too big. Select new TAU and try again. */
+/*           Failed twice. Play it safe. */
 
-	    ++(*nfail);
-	    if (ttype < -22) {
+	    *tau = 0.f;
+	} else if (*dmin1 > 0.f) {
 
-/*              Failed twice. Play it safe. */
+/*           Late failure. Gives excellent shift. */
 
-		tau = 0.f;
-	    } else if (dmin1 > 0.f) {
-
-/*              Late failure. Gives excellent shift. */
-
-		tau = (tau + *dmin__) * (1.f - eps * 2.f);
-		ttype += -11;
-	    } else {
-
-/*              Early failure. Divide by 4. */
-
-		tau *= .25f;
-		ttype += -12;
-	    }
-	    goto L80;
-	} else if (*dmin__ != *dmin__) {
-
-/*           NaN. */
-
-	    tau = 0.f;
-	    goto L80;
+	    *tau = (*tau + *dmin__) * (1.f - eps * 2.f);
+	    *ttype += -11;
 	} else {
 
-/*           Possible underflow. Play it safe. */
+/*           Early failure. Divide by 4. */
 
-	    goto L90;
+	    *tau *= .25f;
+	    *ttype += -12;
 	}
+	goto L70;
+    } else if (sisnan_(dmin__)) {
+
+/*        NaN. */
+
+	if (*tau == 0.f) {
+	    goto L80;
+	} else {
+	    *tau = 0.f;
+	    goto L70;
+	}
+    } else {
+
+/*        Possible underflow. Play it safe. */
+
+	goto L80;
     }
 
 /*     Risk of underflow. */
 
-L90:
-    slasq6_(i0, n0, &z__[1], pp, dmin__, &dmin1, &dmin2, &dn, &dn1, &dn2);
+L80:
+    slasq6_(i0, n0, &z__[1], pp, dmin__, dmin1, dmin2, dn, dn1, dn2);
     *ndiv += *n0 - *i0 + 2;
     ++(*iter);
-    tau = 0.f;
+    *tau = 0.f;
 
-L100:
-    if (tau < *sigma) {
-	*desig += tau;
+L90:
+    if (*tau < *sigma) {
+	*desig += *tau;
 	t = *sigma + *desig;
 	*desig -= t - *sigma;
     } else {
-	t = *sigma + tau;
-	*desig = *sigma - (t - tau) + *desig;
+	t = *sigma + *tau;
+	*desig = *sigma - (t - *tau) + *desig;
     }
     *sigma = t;
 
@@ -23328,18 +30008,11 @@ L100:
 
 /* Subroutine */ int slasq4_(integer *i0, integer *n0, real *z__, integer *pp,
 	 integer *n0in, real *dmin__, real *dmin1, real *dmin2, real *dn,
-	real *dn1, real *dn2, real *tau, integer *ttype)
+	real *dn1, real *dn2, real *tau, integer *ttype, real *g)
 {
-    /* Initialized data */
-
-    static real g = 0.f;
-
     /* System generated locals */
     integer i__1;
     real r__1, r__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static real s, a2, b1, b2;
@@ -23348,10 +30021,15 @@ L100:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK routine (version 3.2)                                    --
+
+    -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    -- Berkeley                                                        --
+    -- November 2008                                                   --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 
 
     Purpose
@@ -23399,23 +30077,25 @@ L100:
     TTYPE (output) INTEGER
           Shift type.
 
+    G     (input/output) REAL
+          G is passed as an argument in order to save its value between
+          calls to SLASQ4.
+
     Further Details
     ===============
     CNST1 = 9/16
 
     =====================================================================
+
+
+       A negative DMIN forces the shift to take that absolute value
+       TTYPE records the type of shift.
 */
 
     /* Parameter adjustments */
     --z__;
 
     /* Function Body */
-
-/*
-       A negative DMIN forces the shift to take that absolute value
-       TTYPE records the type of shift.
-*/
-
     if (*dmin__ <= 0.f) {
 	*tau = -(*dmin__);
 	*ttype = -1;
@@ -23570,13 +30250,13 @@ L40:
 /*           Case 6, no information to guide us. */
 
 	    if (*ttype == -6) {
-		g += (1.f - g) * .333f;
+		*g += (1.f - *g) * .333f;
 	    } else if (*ttype == -18) {
-		g = .083250000000000005f;
+		*g = .083250000000000005f;
 	    } else {
-		g = .25f;
+		*g = .25f;
 	    }
-	    s = g * *dmin__;
+	    s = *g * *dmin__;
 	    *ttype = -6;
 	}
 
@@ -23719,10 +30399,15 @@ L80:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       May 17, 2000
+    -- LAPACK routine (version 3.2)                                    --
+
+    -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    -- Berkeley                                                        --
+    -- November 2008                                                   --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 
 
     Purpose
@@ -23932,10 +30617,15 @@ L80:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1999
+    -- LAPACK routine (version 3.2)                                    --
+
+    -- Contributed by Osni Marques of the Lawrence Berkeley National   --
+    -- Laboratory and Beresford Parlett of the Univ. of California at  --
+    -- Berkeley                                                        --
+    -- November 2008                                                   --
+
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
 
 
     Purpose
@@ -24112,53 +30802,86 @@ L80:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
     =======
 
-    SLASR   performs the transformation
+    SLASR applies a sequence of plane rotations to a real matrix A,
+    from either the left or the right.
 
-       A := P*A,   when SIDE = 'L' or 'l'  (  Left-hand side )
+    When SIDE = 'L', the transformation takes the form
 
-       A := A*P',  when SIDE = 'R' or 'r'  ( Right-hand side )
+       A := P*A
 
-    where A is an m by n real matrix and P is an orthogonal matrix,
-    consisting of a sequence of plane rotations determined by the
-    parameters PIVOT and DIRECT as follows ( z = m when SIDE = 'L' or 'l'
-    and z = n when SIDE = 'R' or 'r' ):
+    and when SIDE = 'R', the transformation takes the form
 
-    When  DIRECT = 'F' or 'f'  ( Forward sequence ) then
+       A := A*P**T
 
-       P = P( z - 1 )*...*P( 2 )*P( 1 ),
+    where P is an orthogonal matrix consisting of a sequence of z plane
+    rotations, with z = M when SIDE = 'L' and z = N when SIDE = 'R',
+    and P**T is the transpose of P.
 
-    and when DIRECT = 'B' or 'b'  ( Backward sequence ) then
+    When DIRECT = 'F' (Forward sequence), then
 
-       P = P( 1 )*P( 2 )*...*P( z - 1 ),
+       P = P(z-1) * ... * P(2) * P(1)
 
-    where  P( k ) is a plane rotation matrix for the following planes:
+    and when DIRECT = 'B' (Backward sequence), then
 
-       when  PIVOT = 'V' or 'v'  ( Variable pivot ),
-          the plane ( k, k + 1 )
+       P = P(1) * P(2) * ... * P(z-1)
 
-       when  PIVOT = 'T' or 't'  ( Top pivot ),
-          the plane ( 1, k + 1 )
+    where P(k) is a plane rotation matrix defined by the 2-by-2 rotation
 
-       when  PIVOT = 'B' or 'b'  ( Bottom pivot ),
-          the plane ( k, z )
+       R(k) = (  c(k)  s(k) )
+            = ( -s(k)  c(k) ).
 
-    c( k ) and s( k )  must contain the  cosine and sine that define the
-    matrix  P( k ).  The two by two plane rotation part of the matrix
-    P( k ), R( k ), is assumed to be of the form
+    When PIVOT = 'V' (Variable pivot), the rotation is performed
+    for the plane (k,k+1), i.e., P(k) has the form
 
-       R( k ) = (  c( k )  s( k ) ).
-                ( -s( k )  c( k ) )
+       P(k) = (  1                                            )
+              (       ...                                     )
+              (              1                                )
+              (                   c(k)  s(k)                  )
+              (                  -s(k)  c(k)                  )
+              (                                1              )
+              (                                     ...       )
+              (                                            1  )
 
-    This version vectorises across rows of the array A when SIDE = 'L'.
+    where R(k) appears as a rank-2 modification to the identity matrix in
+    rows and columns k and k+1.
+
+    When PIVOT = 'T' (Top pivot), the rotation is performed for the
+    plane (1,k+1), so P(k) has the form
+
+       P(k) = (  c(k)                    s(k)                 )
+              (         1                                     )
+              (              ...                              )
+              (                     1                         )
+              ( -s(k)                    c(k)                 )
+              (                                 1             )
+              (                                      ...      )
+              (                                             1 )
+
+    where R(k) appears in rows and columns 1 and k+1.
+
+    Similarly, when PIVOT = 'B' (Bottom pivot), the rotation is
+    performed for the plane (k,z), giving P(k) the form
+
+       P(k) = ( 1                                             )
+              (      ...                                      )
+              (             1                                 )
+              (                  c(k)                    s(k) )
+              (                         1                     )
+              (                              ...              )
+              (                                     1         )
+              (                 -s(k)                    c(k) )
+
+    where R(k) appears in rows and columns k and z.  The rotations are
+    performed without ever forming P(k) explicitly.
 
     Arguments
     =========
@@ -24167,13 +30890,7 @@ L80:
             Specifies whether the plane rotation matrix P is applied to
             A on the left or the right.
             = 'L':  Left, compute A := P*A
-            = 'R':  Right, compute A:= A*P'
-
-    DIRECT  (input) CHARACTER*1
-            Specifies whether P is a forward or backward sequence of
-            plane rotations.
-            = 'F':  Forward, P = P( z - 1 )*...*P( 2 )*P( 1 )
-            = 'B':  Backward, P = P( 1 )*P( 2 )*...*P( z - 1 )
+            = 'R':  Right, compute A:= A*P**T
 
     PIVOT   (input) CHARACTER*1
             Specifies the plane for which P(k) is a plane rotation
@@ -24181,6 +30898,12 @@ L80:
             = 'V':  Variable pivot, the plane (k,k+1)
             = 'T':  Top pivot, the plane (1,k+1)
             = 'B':  Bottom pivot, the plane (k,z)
+
+    DIRECT  (input) CHARACTER*1
+            Specifies whether P is a forward or backward sequence of
+            plane rotations.
+            = 'F':  Forward, P = P(z-1)*...*P(2)*P(1)
+            = 'B':  Backward, P = P(1)*P(2)*...*P(z-1)
 
     M       (input) INTEGER
             The number of rows of the matrix A.  If m <= 1, an immediate
@@ -24190,18 +30913,22 @@ L80:
             The number of columns of the matrix A.  If n <= 1, an
             immediate return is effected.
 
-    C, S    (input) REAL arrays, dimension
+    C       (input) REAL array, dimension
                     (M-1) if SIDE = 'L'
                     (N-1) if SIDE = 'R'
-            c(k) and s(k) contain the cosine and sine that define the
-            matrix P(k).  The two by two plane rotation part of the
-            matrix P(k), R(k), is assumed to be of the form
-            R( k ) = (  c( k )  s( k ) ).
-                     ( -s( k )  c( k ) )
+            The cosines c(k) of the plane rotations.
+
+    S       (input) REAL array, dimension
+                    (M-1) if SIDE = 'L'
+                    (N-1) if SIDE = 'R'
+            The sines s(k) of the plane rotations.  The 2-by-2 plane
+            rotation part of the matrix P(k), R(k), has the form
+            R(k) = (  c(k)  s(k) )
+                   ( -s(k)  c(k) ).
 
     A       (input/output) REAL array, dimension (LDA,N)
-            The m by n matrix A.  On exit, A is overwritten by P*A if
-            SIDE = 'R' or by A*P' if SIDE = 'L'.
+            The M-by-N matrix A.  On exit, A is overwritten by P*A if
+            SIDE = 'R' or by A*P**T if SIDE = 'L'.
 
     LDA     (input) INTEGER
             The leading dimension of the array A.  LDA >= max(1,M).
@@ -24506,10 +31233,10 @@ L80:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -24760,10 +31487,10 @@ L110:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -24847,9 +31574,6 @@ L110:
     /* System generated locals */
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal), r_sign(real *, real *);
-
     /* Local variables */
     static real a, d__, l, m, r__, s, t, fa, ga, ha, ft, gt, ht, mm, tt, clt,
 	    crt, slt, srt;
@@ -24862,10 +31586,10 @@ L110:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -25043,7 +31767,7 @@ L110:
 /*              Note that M is very tiny */
 
 		if (l == 0.f) {
-		    t = r_sign(&c_b2489, &ft) * r_sign(&c_b15, &gt);
+		    t = r_sign(&c_b3178, &ft) * r_sign(&c_b15, &gt);
 		} else {
 		    t = gt / r_sign(&d__, &ft) + m / t;
 		}
@@ -25102,10 +31826,10 @@ L110:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -25136,7 +31860,7 @@ L110:
             The last element of IPIV for which a row interchange will
             be done.
 
-    IPIV    (input) INTEGER array, dimension (M*abs(INCX))
+    IPIV    (input) INTEGER array, dimension (K2*abs(INCX))
             The vector of pivot indices.  Only the elements in positions
             K1 through K2 of IPIV are accessed.
             IPIV(K) = L implies rows K and L are to be interchanged.
@@ -25230,6 +31954,460 @@ L110:
 
 } /* slaswp_ */
 
+/* Subroutine */ int slasy2_(logical *ltranl, logical *ltranr, integer *isgn,
+	integer *n1, integer *n2, real *tl, integer *ldtl, real *tr, integer *
+	ldtr, real *b, integer *ldb, real *scale, real *x, integer *ldx, real
+	*xnorm, integer *info)
+{
+    /* Initialized data */
+
+    static integer locu12[4] = { 3,4,1,2 };
+    static integer locl21[4] = { 2,1,4,3 };
+    static integer locu22[4] = { 4,3,2,1 };
+    static logical xswpiv[4] = { FALSE_,FALSE_,TRUE_,TRUE_ };
+    static logical bswpiv[4] = { FALSE_,TRUE_,FALSE_,TRUE_ };
+
+    /* System generated locals */
+    integer b_dim1, b_offset, tl_dim1, tl_offset, tr_dim1, tr_offset, x_dim1,
+	    x_offset;
+    real r__1, r__2, r__3, r__4, r__5, r__6, r__7, r__8;
+
+    /* Local variables */
+    static integer i__, j, k;
+    static real x2[2], l21, u11, u12;
+    static integer ip, jp;
+    static real u22, t16[16]	/* was [4][4] */, gam, bet, eps, sgn, tmp[4],
+	    tau1, btmp[4], smin;
+    static integer ipiv;
+    static real temp;
+    static integer jpiv[4];
+    static real xmax;
+    static integer ipsv, jpsv;
+    static logical bswap;
+    extern /* Subroutine */ int scopy_(integer *, real *, integer *, real *,
+	    integer *), sswap_(integer *, real *, integer *, real *, integer *
+	    );
+    static logical xswap;
+    extern doublereal slamch_(char *);
+    extern integer isamax_(integer *, real *, integer *);
+    static real smlnum;
+
+
+/*
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    SLASY2 solves for the N1 by N2 matrix X, 1 <= N1,N2 <= 2, in
+
+           op(TL)*X + ISGN*X*op(TR) = SCALE*B,
+
+    where TL is N1 by N1, TR is N2 by N2, B is N1 by N2, and ISGN = 1 or
+    -1.  op(T) = T or T', where T' denotes the transpose of T.
+
+    Arguments
+    =========
+
+    LTRANL  (input) LOGICAL
+            On entry, LTRANL specifies the op(TL):
+               = .FALSE., op(TL) = TL,
+               = .TRUE., op(TL) = TL'.
+
+    LTRANR  (input) LOGICAL
+            On entry, LTRANR specifies the op(TR):
+              = .FALSE., op(TR) = TR,
+              = .TRUE., op(TR) = TR'.
+
+    ISGN    (input) INTEGER
+            On entry, ISGN specifies the sign of the equation
+            as described before. ISGN may only be 1 or -1.
+
+    N1      (input) INTEGER
+            On entry, N1 specifies the order of matrix TL.
+            N1 may only be 0, 1 or 2.
+
+    N2      (input) INTEGER
+            On entry, N2 specifies the order of matrix TR.
+            N2 may only be 0, 1 or 2.
+
+    TL      (input) REAL array, dimension (LDTL,2)
+            On entry, TL contains an N1 by N1 matrix.
+
+    LDTL    (input) INTEGER
+            The leading dimension of the matrix TL. LDTL >= max(1,N1).
+
+    TR      (input) REAL array, dimension (LDTR,2)
+            On entry, TR contains an N2 by N2 matrix.
+
+    LDTR    (input) INTEGER
+            The leading dimension of the matrix TR. LDTR >= max(1,N2).
+
+    B       (input) REAL array, dimension (LDB,2)
+            On entry, the N1 by N2 matrix B contains the right-hand
+            side of the equation.
+
+    LDB     (input) INTEGER
+            The leading dimension of the matrix B. LDB >= max(1,N1).
+
+    SCALE   (output) REAL
+            On exit, SCALE contains the scale factor. SCALE is chosen
+            less than or equal to 1 to prevent the solution overflowing.
+
+    X       (output) REAL array, dimension (LDX,2)
+            On exit, X contains the N1 by N2 solution.
+
+    LDX     (input) INTEGER
+            The leading dimension of the matrix X. LDX >= max(1,N1).
+
+    XNORM   (output) REAL
+            On exit, XNORM is the infinity-norm of the solution.
+
+    INFO    (output) INTEGER
+            On exit, INFO is set to
+               0: successful exit.
+               1: TL and TR have too close eigenvalues, so TL or
+                  TR is perturbed to get a nonsingular equation.
+            NOTE: In the interests of speed, this routine does not
+                  check the inputs for errors.
+
+   =====================================================================
+*/
+
+    /* Parameter adjustments */
+    tl_dim1 = *ldtl;
+    tl_offset = 1 + tl_dim1;
+    tl -= tl_offset;
+    tr_dim1 = *ldtr;
+    tr_offset = 1 + tr_dim1;
+    tr -= tr_offset;
+    b_dim1 = *ldb;
+    b_offset = 1 + b_dim1;
+    b -= b_offset;
+    x_dim1 = *ldx;
+    x_offset = 1 + x_dim1;
+    x -= x_offset;
+
+    /* Function Body */
+
+/*     Do not check the input parameters for errors */
+
+    *info = 0;
+
+/*     Quick return if possible */
+
+    if (*n1 == 0 || *n2 == 0) {
+	return 0;
+    }
+
+/*     Set constants to control overflow */
+
+    eps = slamch_("P");
+    smlnum = slamch_("S") / eps;
+    sgn = (real) (*isgn);
+
+    k = *n1 + *n1 + *n2 - 2;
+    switch (k) {
+	case 1:  goto L10;
+	case 2:  goto L20;
+	case 3:  goto L30;
+	case 4:  goto L50;
+    }
+
+/*     1 by 1: TL11*X + SGN*X*TR11 = B11 */
+
+L10:
+    tau1 = tl[tl_dim1 + 1] + sgn * tr[tr_dim1 + 1];
+    bet = dabs(tau1);
+    if (bet <= smlnum) {
+	tau1 = smlnum;
+	bet = smlnum;
+	*info = 1;
+    }
+
+    *scale = 1.f;
+    gam = (r__1 = b[b_dim1 + 1], dabs(r__1));
+    if (smlnum * gam > bet) {
+	*scale = 1.f / gam;
+    }
+
+    x[x_dim1 + 1] = b[b_dim1 + 1] * *scale / tau1;
+    *xnorm = (r__1 = x[x_dim1 + 1], dabs(r__1));
+    return 0;
+
+/*
+       1 by 2:
+       TL11*[X11 X12] + ISGN*[X11 X12]*op[TR11 TR12]  = [B11 B12]
+                                         [TR21 TR22]
+*/
+
+L20:
+
+/*
+   Computing MAX
+   Computing MAX
+*/
+    r__7 = (r__1 = tl[tl_dim1 + 1], dabs(r__1)), r__8 = (r__2 = tr[tr_dim1 +
+	    1], dabs(r__2)), r__7 = max(r__7,r__8), r__8 = (r__3 = tr[(
+	    tr_dim1 << 1) + 1], dabs(r__3)), r__7 = max(r__7,r__8), r__8 = (
+	    r__4 = tr[tr_dim1 + 2], dabs(r__4)), r__7 = max(r__7,r__8), r__8 =
+	     (r__5 = tr[(tr_dim1 << 1) + 2], dabs(r__5));
+    r__6 = eps * dmax(r__7,r__8);
+    smin = dmax(r__6,smlnum);
+    tmp[0] = tl[tl_dim1 + 1] + sgn * tr[tr_dim1 + 1];
+    tmp[3] = tl[tl_dim1 + 1] + sgn * tr[(tr_dim1 << 1) + 2];
+    if (*ltranr) {
+	tmp[1] = sgn * tr[tr_dim1 + 2];
+	tmp[2] = sgn * tr[(tr_dim1 << 1) + 1];
+    } else {
+	tmp[1] = sgn * tr[(tr_dim1 << 1) + 1];
+	tmp[2] = sgn * tr[tr_dim1 + 2];
+    }
+    btmp[0] = b[b_dim1 + 1];
+    btmp[1] = b[(b_dim1 << 1) + 1];
+    goto L40;
+
+/*
+       2 by 1:
+            op[TL11 TL12]*[X11] + ISGN* [X11]*TR11  = [B11]
+              [TL21 TL22] [X21]         [X21]         [B21]
+*/
+
+L30:
+/*
+   Computing MAX
+   Computing MAX
+*/
+    r__7 = (r__1 = tr[tr_dim1 + 1], dabs(r__1)), r__8 = (r__2 = tl[tl_dim1 +
+	    1], dabs(r__2)), r__7 = max(r__7,r__8), r__8 = (r__3 = tl[(
+	    tl_dim1 << 1) + 1], dabs(r__3)), r__7 = max(r__7,r__8), r__8 = (
+	    r__4 = tl[tl_dim1 + 2], dabs(r__4)), r__7 = max(r__7,r__8), r__8 =
+	     (r__5 = tl[(tl_dim1 << 1) + 2], dabs(r__5));
+    r__6 = eps * dmax(r__7,r__8);
+    smin = dmax(r__6,smlnum);
+    tmp[0] = tl[tl_dim1 + 1] + sgn * tr[tr_dim1 + 1];
+    tmp[3] = tl[(tl_dim1 << 1) + 2] + sgn * tr[tr_dim1 + 1];
+    if (*ltranl) {
+	tmp[1] = tl[(tl_dim1 << 1) + 1];
+	tmp[2] = tl[tl_dim1 + 2];
+    } else {
+	tmp[1] = tl[tl_dim1 + 2];
+	tmp[2] = tl[(tl_dim1 << 1) + 1];
+    }
+    btmp[0] = b[b_dim1 + 1];
+    btmp[1] = b[b_dim1 + 2];
+L40:
+
+/*
+       Solve 2 by 2 system using complete pivoting.
+       Set pivots less than SMIN to SMIN.
+*/
+
+    ipiv = isamax_(&c__4, tmp, &c__1);
+    u11 = tmp[ipiv - 1];
+    if (dabs(u11) <= smin) {
+	*info = 1;
+	u11 = smin;
+    }
+    u12 = tmp[locu12[ipiv - 1] - 1];
+    l21 = tmp[locl21[ipiv - 1] - 1] / u11;
+    u22 = tmp[locu22[ipiv - 1] - 1] - u12 * l21;
+    xswap = xswpiv[ipiv - 1];
+    bswap = bswpiv[ipiv - 1];
+    if (dabs(u22) <= smin) {
+	*info = 1;
+	u22 = smin;
+    }
+    if (bswap) {
+	temp = btmp[1];
+	btmp[1] = btmp[0] - l21 * temp;
+	btmp[0] = temp;
+    } else {
+	btmp[1] -= l21 * btmp[0];
+    }
+    *scale = 1.f;
+    if (smlnum * 2.f * dabs(btmp[1]) > dabs(u22) || smlnum * 2.f * dabs(btmp[
+	    0]) > dabs(u11)) {
+/* Computing MAX */
+	r__1 = dabs(btmp[0]), r__2 = dabs(btmp[1]);
+	*scale = .5f / dmax(r__1,r__2);
+	btmp[0] *= *scale;
+	btmp[1] *= *scale;
+    }
+    x2[1] = btmp[1] / u22;
+    x2[0] = btmp[0] / u11 - u12 / u11 * x2[1];
+    if (xswap) {
+	temp = x2[1];
+	x2[1] = x2[0];
+	x2[0] = temp;
+    }
+    x[x_dim1 + 1] = x2[0];
+    if (*n1 == 1) {
+	x[(x_dim1 << 1) + 1] = x2[1];
+	*xnorm = (r__1 = x[x_dim1 + 1], dabs(r__1)) + (r__2 = x[(x_dim1 << 1)
+		+ 1], dabs(r__2));
+    } else {
+	x[x_dim1 + 2] = x2[1];
+/* Computing MAX */
+	r__3 = (r__1 = x[x_dim1 + 1], dabs(r__1)), r__4 = (r__2 = x[x_dim1 +
+		2], dabs(r__2));
+	*xnorm = dmax(r__3,r__4);
+    }
+    return 0;
+
+/*
+       2 by 2:
+       op[TL11 TL12]*[X11 X12] +ISGN* [X11 X12]*op[TR11 TR12] = [B11 B12]
+         [TL21 TL22] [X21 X22]        [X21 X22]   [TR21 TR22]   [B21 B22]
+
+       Solve equivalent 4 by 4 system using complete pivoting.
+       Set pivots less than SMIN to SMIN.
+*/
+
+L50:
+/* Computing MAX */
+    r__5 = (r__1 = tr[tr_dim1 + 1], dabs(r__1)), r__6 = (r__2 = tr[(tr_dim1 <<
+	     1) + 1], dabs(r__2)), r__5 = max(r__5,r__6), r__6 = (r__3 = tr[
+	    tr_dim1 + 2], dabs(r__3)), r__5 = max(r__5,r__6), r__6 = (r__4 =
+	    tr[(tr_dim1 << 1) + 2], dabs(r__4));
+    smin = dmax(r__5,r__6);
+/* Computing MAX */
+    r__5 = smin, r__6 = (r__1 = tl[tl_dim1 + 1], dabs(r__1)), r__5 = max(r__5,
+	    r__6), r__6 = (r__2 = tl[(tl_dim1 << 1) + 1], dabs(r__2)), r__5 =
+	    max(r__5,r__6), r__6 = (r__3 = tl[tl_dim1 + 2], dabs(r__3)), r__5
+	    = max(r__5,r__6), r__6 = (r__4 = tl[(tl_dim1 << 1) + 2], dabs(
+	    r__4));
+    smin = dmax(r__5,r__6);
+/* Computing MAX */
+    r__1 = eps * smin;
+    smin = dmax(r__1,smlnum);
+    btmp[0] = 0.f;
+    scopy_(&c__16, btmp, &c__0, t16, &c__1);
+    t16[0] = tl[tl_dim1 + 1] + sgn * tr[tr_dim1 + 1];
+    t16[5] = tl[(tl_dim1 << 1) + 2] + sgn * tr[tr_dim1 + 1];
+    t16[10] = tl[tl_dim1 + 1] + sgn * tr[(tr_dim1 << 1) + 2];
+    t16[15] = tl[(tl_dim1 << 1) + 2] + sgn * tr[(tr_dim1 << 1) + 2];
+    if (*ltranl) {
+	t16[4] = tl[tl_dim1 + 2];
+	t16[1] = tl[(tl_dim1 << 1) + 1];
+	t16[14] = tl[tl_dim1 + 2];
+	t16[11] = tl[(tl_dim1 << 1) + 1];
+    } else {
+	t16[4] = tl[(tl_dim1 << 1) + 1];
+	t16[1] = tl[tl_dim1 + 2];
+	t16[14] = tl[(tl_dim1 << 1) + 1];
+	t16[11] = tl[tl_dim1 + 2];
+    }
+    if (*ltranr) {
+	t16[8] = sgn * tr[(tr_dim1 << 1) + 1];
+	t16[13] = sgn * tr[(tr_dim1 << 1) + 1];
+	t16[2] = sgn * tr[tr_dim1 + 2];
+	t16[7] = sgn * tr[tr_dim1 + 2];
+    } else {
+	t16[8] = sgn * tr[tr_dim1 + 2];
+	t16[13] = sgn * tr[tr_dim1 + 2];
+	t16[2] = sgn * tr[(tr_dim1 << 1) + 1];
+	t16[7] = sgn * tr[(tr_dim1 << 1) + 1];
+    }
+    btmp[0] = b[b_dim1 + 1];
+    btmp[1] = b[b_dim1 + 2];
+    btmp[2] = b[(b_dim1 << 1) + 1];
+    btmp[3] = b[(b_dim1 << 1) + 2];
+
+/*     Perform elimination */
+
+    for (i__ = 1; i__ <= 3; ++i__) {
+	xmax = 0.f;
+	for (ip = i__; ip <= 4; ++ip) {
+	    for (jp = i__; jp <= 4; ++jp) {
+		if ((r__1 = t16[ip + (jp << 2) - 5], dabs(r__1)) >= xmax) {
+		    xmax = (r__1 = t16[ip + (jp << 2) - 5], dabs(r__1));
+		    ipsv = ip;
+		    jpsv = jp;
+		}
+/* L60: */
+	    }
+/* L70: */
+	}
+	if (ipsv != i__) {
+	    sswap_(&c__4, &t16[ipsv - 1], &c__4, &t16[i__ - 1], &c__4);
+	    temp = btmp[i__ - 1];
+	    btmp[i__ - 1] = btmp[ipsv - 1];
+	    btmp[ipsv - 1] = temp;
+	}
+	if (jpsv != i__) {
+	    sswap_(&c__4, &t16[(jpsv << 2) - 4], &c__1, &t16[(i__ << 2) - 4],
+		    &c__1);
+	}
+	jpiv[i__ - 1] = jpsv;
+	if ((r__1 = t16[i__ + (i__ << 2) - 5], dabs(r__1)) < smin) {
+	    *info = 1;
+	    t16[i__ + (i__ << 2) - 5] = smin;
+	}
+	for (j = i__ + 1; j <= 4; ++j) {
+	    t16[j + (i__ << 2) - 5] /= t16[i__ + (i__ << 2) - 5];
+	    btmp[j - 1] -= t16[j + (i__ << 2) - 5] * btmp[i__ - 1];
+	    for (k = i__ + 1; k <= 4; ++k) {
+		t16[j + (k << 2) - 5] -= t16[j + (i__ << 2) - 5] * t16[i__ + (
+			k << 2) - 5];
+/* L80: */
+	    }
+/* L90: */
+	}
+/* L100: */
+    }
+    if (dabs(t16[15]) < smin) {
+	t16[15] = smin;
+    }
+    *scale = 1.f;
+    if (smlnum * 8.f * dabs(btmp[0]) > dabs(t16[0]) || smlnum * 8.f * dabs(
+	    btmp[1]) > dabs(t16[5]) || smlnum * 8.f * dabs(btmp[2]) > dabs(
+	    t16[10]) || smlnum * 8.f * dabs(btmp[3]) > dabs(t16[15])) {
+/* Computing MAX */
+	r__1 = dabs(btmp[0]), r__2 = dabs(btmp[1]), r__1 = max(r__1,r__2),
+		r__2 = dabs(btmp[2]), r__1 = max(r__1,r__2), r__2 = dabs(btmp[
+		3]);
+	*scale = .125f / dmax(r__1,r__2);
+	btmp[0] *= *scale;
+	btmp[1] *= *scale;
+	btmp[2] *= *scale;
+	btmp[3] *= *scale;
+    }
+    for (i__ = 1; i__ <= 4; ++i__) {
+	k = 5 - i__;
+	temp = 1.f / t16[k + (k << 2) - 5];
+	tmp[k - 1] = btmp[k - 1] * temp;
+	for (j = k + 1; j <= 4; ++j) {
+	    tmp[k - 1] -= temp * t16[k + (j << 2) - 5] * tmp[j - 1];
+/* L110: */
+	}
+/* L120: */
+    }
+    for (i__ = 1; i__ <= 3; ++i__) {
+	if (jpiv[4 - i__ - 1] != 4 - i__) {
+	    temp = tmp[4 - i__ - 1];
+	    tmp[4 - i__ - 1] = tmp[jpiv[4 - i__ - 1] - 1];
+	    tmp[jpiv[4 - i__ - 1] - 1] = temp;
+	}
+/* L130: */
+    }
+    x[x_dim1 + 1] = tmp[0];
+    x[x_dim1 + 2] = tmp[1];
+    x[(x_dim1 << 1) + 1] = tmp[2];
+    x[(x_dim1 << 1) + 2] = tmp[3];
+/* Computing MAX */
+    r__1 = dabs(tmp[0]) + dabs(tmp[2]), r__2 = dabs(tmp[1]) + dabs(tmp[3]);
+    *xnorm = dmax(r__1,r__2);
+    return 0;
+
+/*     End of SLASY2 */
+
+} /* slasy2_ */
+
 /* Subroutine */ int slatrd_(char *uplo, integer *n, integer *nb, real *a,
 	integer *lda, real *e, real *tau, real *w, integer *ldw)
 {
@@ -25251,10 +32429,10 @@ L110:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -25275,7 +32453,7 @@ L110:
     Arguments
     =========
 
-    UPLO    (input) CHARACTER
+    UPLO    (input) CHARACTER*1
             Specifies whether the upper or lower triangular part of the
             symmetric matrix A is stored:
             = 'U': Upper triangular
@@ -25571,10 +32749,10 @@ L110:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -25725,10 +32903,10 @@ L110:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -25900,10 +33078,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -26056,10 +33234,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -26125,7 +33303,7 @@ L110:
             reflector H(i) or G(i), which determines Q or P**T, as
             returned by SGEBRD in its array argument TAUQ or TAUP.
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -26328,10 +33506,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -26368,7 +33546,7 @@ L110:
             TAU(i) must contain the scalar factor of the elementary
             reflector H(i), as returned by SGEHRD.
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -26511,10 +33689,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -26668,10 +33846,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -26711,7 +33889,7 @@ L110:
             TAU(i) must contain the scalar factor of the elementary
             reflector H(i), as returned by SGELQF.
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -26924,10 +34102,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -26968,7 +34146,7 @@ L110:
             TAU(i) must contain the scalar factor of the elementary
             reflector H(i), as returned by SGEQRF.
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -27179,10 +34357,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -27379,10 +34557,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -27573,9 +34751,6 @@ L110:
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3[2];
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i1, i2, nb, mi, ni, nq, nw;
     static logical left;
@@ -27597,10 +34772,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -27687,7 +34862,7 @@ L110:
     LDC     (input) INTEGER
             The leading dimension of the array C. LDC >= max(1,M).
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -27896,6 +35071,231 @@ L110:
 
 } /* sormbr_ */
 
+/* Subroutine */ int sormhr_(char *side, char *trans, integer *m, integer *n,
+	integer *ilo, integer *ihi, real *a, integer *lda, real *tau, real *
+	c__, integer *ldc, real *work, integer *lwork, integer *info)
+{
+    /* System generated locals */
+    address a__1[2];
+    integer a_dim1, a_offset, c_dim1, c_offset, i__1[2], i__2;
+    char ch__1[2];
+
+    /* Local variables */
+    static integer i1, i2, nb, mi, nh, ni, nq, nw;
+    static logical left;
+    extern logical lsame_(char *, char *);
+    static integer iinfo;
+    extern /* Subroutine */ int xerbla_(char *, integer *);
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
+    static integer lwkopt;
+    static logical lquery;
+    extern /* Subroutine */ int sormqr_(char *, char *, integer *, integer *,
+	    integer *, real *, integer *, real *, real *, integer *, real *,
+	    integer *, integer *);
+
+
+/*
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    SORMHR overwrites the general real M-by-N matrix C with
+
+                    SIDE = 'L'     SIDE = 'R'
+    TRANS = 'N':      Q * C          C * Q
+    TRANS = 'T':      Q**T * C       C * Q**T
+
+    where Q is a real orthogonal matrix of order nq, with nq = m if
+    SIDE = 'L' and nq = n if SIDE = 'R'. Q is defined as the product of
+    IHI-ILO elementary reflectors, as returned by SGEHRD:
+
+    Q = H(ilo) H(ilo+1) . . . H(ihi-1).
+
+    Arguments
+    =========
+
+    SIDE    (input) CHARACTER*1
+            = 'L': apply Q or Q**T from the Left;
+            = 'R': apply Q or Q**T from the Right.
+
+    TRANS   (input) CHARACTER*1
+            = 'N':  No transpose, apply Q;
+            = 'T':  Transpose, apply Q**T.
+
+    M       (input) INTEGER
+            The number of rows of the matrix C. M >= 0.
+
+    N       (input) INTEGER
+            The number of columns of the matrix C. N >= 0.
+
+    ILO     (input) INTEGER
+    IHI     (input) INTEGER
+            ILO and IHI must have the same values as in the previous call
+            of SGEHRD. Q is equal to the unit matrix except in the
+            submatrix Q(ilo+1:ihi,ilo+1:ihi).
+            If SIDE = 'L', then 1 <= ILO <= IHI <= M, if M > 0, and
+            ILO = 1 and IHI = 0, if M = 0;
+            if SIDE = 'R', then 1 <= ILO <= IHI <= N, if N > 0, and
+            ILO = 1 and IHI = 0, if N = 0.
+
+    A       (input) REAL array, dimension
+                                 (LDA,M) if SIDE = 'L'
+                                 (LDA,N) if SIDE = 'R'
+            The vectors which define the elementary reflectors, as
+            returned by SGEHRD.
+
+    LDA     (input) INTEGER
+            The leading dimension of the array A.
+            LDA >= max(1,M) if SIDE = 'L'; LDA >= max(1,N) if SIDE = 'R'.
+
+    TAU     (input) REAL array, dimension
+                                 (M-1) if SIDE = 'L'
+                                 (N-1) if SIDE = 'R'
+            TAU(i) must contain the scalar factor of the elementary
+            reflector H(i), as returned by SGEHRD.
+
+    C       (input/output) REAL array, dimension (LDC,N)
+            On entry, the M-by-N matrix C.
+            On exit, C is overwritten by Q*C or Q**T*C or C*Q**T or C*Q.
+
+    LDC     (input) INTEGER
+            The leading dimension of the array C. LDC >= max(1,M).
+
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
+            On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
+
+    LWORK   (input) INTEGER
+            The dimension of the array WORK.
+            If SIDE = 'L', LWORK >= max(1,N);
+            if SIDE = 'R', LWORK >= max(1,M).
+            For optimum performance LWORK >= N*NB if SIDE = 'L', and
+            LWORK >= M*NB if SIDE = 'R', where NB is the optimal
+            blocksize.
+
+            If LWORK = -1, then a workspace query is assumed; the routine
+            only calculates the optimal size of the WORK array, returns
+            this value as the first entry of the WORK array, and no error
+            message related to LWORK is issued by XERBLA.
+
+    INFO    (output) INTEGER
+            = 0:  successful exit
+            < 0:  if INFO = -i, the i-th argument had an illegal value
+
+    =====================================================================
+
+
+       Test the input arguments
+*/
+
+    /* Parameter adjustments */
+    a_dim1 = *lda;
+    a_offset = 1 + a_dim1;
+    a -= a_offset;
+    --tau;
+    c_dim1 = *ldc;
+    c_offset = 1 + c_dim1;
+    c__ -= c_offset;
+    --work;
+
+    /* Function Body */
+    *info = 0;
+    nh = *ihi - *ilo;
+    left = lsame_(side, "L");
+    lquery = *lwork == -1;
+
+/*     NQ is the order of Q and NW is the minimum dimension of WORK */
+
+    if (left) {
+	nq = *m;
+	nw = *n;
+    } else {
+	nq = *n;
+	nw = *m;
+    }
+    if (! left && ! lsame_(side, "R")) {
+	*info = -1;
+    } else if (! lsame_(trans, "N") && ! lsame_(trans,
+	    "T")) {
+	*info = -2;
+    } else if (*m < 0) {
+	*info = -3;
+    } else if (*n < 0) {
+	*info = -4;
+    } else if (*ilo < 1 || *ilo > max(1,nq)) {
+	*info = -5;
+    } else if (*ihi < min(*ilo,nq) || *ihi > nq) {
+	*info = -6;
+    } else if (*lda < max(1,nq)) {
+	*info = -8;
+    } else if (*ldc < max(1,*m)) {
+	*info = -11;
+    } else if (*lwork < max(1,nw) && ! lquery) {
+	*info = -13;
+    }
+
+    if (*info == 0) {
+	if (left) {
+/* Writing concatenation */
+	    i__1[0] = 1, a__1[0] = side;
+	    i__1[1] = 1, a__1[1] = trans;
+	    s_cat(ch__1, a__1, i__1, &c__2, (ftnlen)2);
+	    nb = ilaenv_(&c__1, "SORMQR", ch__1, &nh, n, &nh, &c_n1, (ftnlen)
+		    6, (ftnlen)2);
+	} else {
+/* Writing concatenation */
+	    i__1[0] = 1, a__1[0] = side;
+	    i__1[1] = 1, a__1[1] = trans;
+	    s_cat(ch__1, a__1, i__1, &c__2, (ftnlen)2);
+	    nb = ilaenv_(&c__1, "SORMQR", ch__1, m, &nh, &nh, &c_n1, (ftnlen)
+		    6, (ftnlen)2);
+	}
+	lwkopt = max(1,nw) * nb;
+	work[1] = (real) lwkopt;
+    }
+
+    if (*info != 0) {
+	i__2 = -(*info);
+	xerbla_("SORMHR", &i__2);
+	return 0;
+    } else if (lquery) {
+	return 0;
+    }
+
+/*     Quick return if possible */
+
+    if (*m == 0 || *n == 0 || nh == 0) {
+	work[1] = 1.f;
+	return 0;
+    }
+
+    if (left) {
+	mi = nh;
+	ni = *n;
+	i1 = *ilo + 1;
+	i2 = 1;
+    } else {
+	mi = *m;
+	ni = nh;
+	i1 = 1;
+	i2 = *ilo + 1;
+    }
+
+    sormqr_(side, trans, &mi, &ni, &nh, &a[*ilo + 1 + *ilo * a_dim1], lda, &
+	    tau[*ilo], &c__[i1 + i2 * c_dim1], ldc, &work[1], lwork, &iinfo);
+
+    work[1] = (real) lwkopt;
+    return 0;
+
+/*     End of SORMHR */
+
+} /* sormhr_ */
+
 /* Subroutine */ int sorml2_(char *side, char *trans, integer *m, integer *n,
 	integer *k, real *a, integer *lda, real *tau, real *c__, integer *ldc,
 	 real *work, integer *info)
@@ -27915,10 +35315,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -28110,9 +35510,6 @@ L110:
 	    i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static real t[4160]	/* was [65][64] */;
@@ -28137,10 +35534,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -28205,7 +35602,7 @@ L110:
     LDC     (input) INTEGER
             The leading dimension of the array C. LDC >= max(1,M).
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -28417,9 +35814,6 @@ L110:
 	    i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static real t[4160]	/* was [65][64] */;
@@ -28442,10 +35836,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -28510,7 +35904,7 @@ L110:
     LDC     (input) INTEGER
             The leading dimension of the array C. LDC >= max(1,M).
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -28556,10 +35950,10 @@ L110:
 
     if (left) {
 	nq = *m;
-	nw = *n;
+	nw = max(1,*n);
     } else {
 	nq = *n;
-	nw = *m;
+	nw = max(1,*m);
     }
     if (! left && ! lsame_(side, "R")) {
 	*info = -1;
@@ -28575,27 +35969,34 @@ L110:
 	*info = -7;
     } else if (*ldc < max(1,*m)) {
 	*info = -10;
-    } else if (*lwork < max(1,nw) && ! lquery) {
-	*info = -12;
     }
 
     if (*info == 0) {
+	if (*m == 0 || *n == 0) {
+	    lwkopt = 1;
+	} else {
 
 /*
-          Determine the block size.  NB may be at most NBMAX, where NBMAX
-          is used to define the local array T.
+             Determine the block size.  NB may be at most NBMAX, where
+             NBMAX is used to define the local array T.
+
 
    Computing MIN
    Writing concatenation
 */
-	i__3[0] = 1, a__1[0] = side;
-	i__3[1] = 1, a__1[1] = trans;
-	s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
-	i__1 = 64, i__2 = ilaenv_(&c__1, "SORMQL", ch__1, m, n, k, &c_n1, (
-		ftnlen)6, (ftnlen)2);
-	nb = min(i__1,i__2);
-	lwkopt = max(1,nw) * nb;
+	    i__3[0] = 1, a__1[0] = side;
+	    i__3[1] = 1, a__1[1] = trans;
+	    s_cat(ch__1, a__1, i__3, &c__2, (ftnlen)2);
+	    i__1 = 64, i__2 = ilaenv_(&c__1, "SORMQL", ch__1, m, n, k, &c_n1,
+		    (ftnlen)6, (ftnlen)2);
+	    nb = min(i__1,i__2);
+	    lwkopt = nw * nb;
+	}
 	work[1] = (real) lwkopt;
+
+	if (*lwork < nw && ! lquery) {
+	    *info = -12;
+	}
     }
 
     if (*info != 0) {
@@ -28608,8 +36009,7 @@ L110:
 
 /*     Quick return if possible */
 
-    if (*m == 0 || *n == 0 || *k == 0) {
-	work[1] = 1.f;
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -28712,9 +36112,6 @@ L110:
 	    i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i__;
     static real t[4160]	/* was [65][64] */;
@@ -28737,10 +36134,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -28805,7 +36202,7 @@ L110:
     LDC     (input) INTEGER
             The leading dimension of the array C. LDC >= max(1,M).
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -29011,9 +36408,6 @@ L110:
     integer a_dim1, a_offset, c_dim1, c_offset, i__1[2], i__2, i__3;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer i1, i2, nb, mi, ni, nq, nw;
     static logical left;
@@ -29034,10 +36428,10 @@ L110:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -29103,7 +36497,7 @@ L110:
     LDC     (input) INTEGER
             The leading dimension of the array C. LDC >= max(1,M).
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -29278,9 +36672,6 @@ L110:
     integer a_dim1, a_offset, i__1, i__2, i__3;
     real r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer j;
     static real ajj;
@@ -29291,13 +36682,14 @@ L110:
 	    real *, integer *, real *, real *, integer *);
     static logical upper;
     extern /* Subroutine */ int xerbla_(char *, integer *);
+    extern logical sisnan_(real *);
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -29392,7 +36784,7 @@ L110:
 	    i__2 = j - 1;
 	    ajj = a[j + j * a_dim1] - sdot_(&i__2, &a[j * a_dim1 + 1], &c__1,
 		    &a[j * a_dim1 + 1], &c__1);
-	    if (ajj <= 0.f) {
+	    if (ajj <= 0.f || sisnan_(&ajj)) {
 		a[j + j * a_dim1] = ajj;
 		goto L30;
 	    }
@@ -29425,7 +36817,7 @@ L110:
 	    i__2 = j - 1;
 	    ajj = a[j + j * a_dim1] - sdot_(&i__2, &a[j + a_dim1], lda, &a[j
 		    + a_dim1], lda);
-	    if (ajj <= 0.f) {
+	    if (ajj <= 0.f || sisnan_(&ajj)) {
 		a[j + j * a_dim1] = ajj;
 		goto L30;
 	    }
@@ -29483,10 +36875,10 @@ L40:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       March 31, 1993
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -29688,10 +37080,10 @@ L40:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       March 31, 1993
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -29791,10 +37183,10 @@ L40:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       March 31, 1993
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -29922,15 +37314,10 @@ L40:
     integer z_dim1, z_offset, i__1, i__2;
     real r__1, r__2;
 
-    /* Builtin functions */
-    double log(doublereal);
-    integer pow_ii(integer *, integer *);
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, j, k, m;
     static real p;
-    static integer ii, end, lgn;
+    static integer ii, lgn;
     static real eps, tiny;
     extern logical lsame_(char *, char *);
     extern /* Subroutine */ int sgemm_(char *, char *, integer *, integer *,
@@ -29945,6 +37332,7 @@ L40:
     extern /* Subroutine */ int xerbla_(char *, integer *);
     extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
 	    integer *, integer *, ftnlen, ftnlen);
+    static integer finish;
     extern /* Subroutine */ int slascl_(char *, integer *, integer *, real *,
 	    real *, integer *, integer *, real *, integer *, integer *), slacpy_(char *, integer *, integer *, real *, integer *,
 	    real *, integer *), slaset_(char *, integer *, integer *,
@@ -29962,10 +37350,10 @@ L40:
 
 
 /*
-    -- LAPACK driver routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK driver routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -30019,8 +37407,7 @@ L40:
             The leading dimension of the array Z.  LDZ >= 1.
             If eigenvectors are desired, then LDZ >= max(1,N).
 
-    WORK    (workspace/output) REAL array,
-                                           dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -30032,13 +37419,16 @@ L40:
                            that 2**k >= N.
             If COMPZ = 'I' and N > 1 then LWORK must be at least
                            ( 1 + 4*N + N**2 ).
+            Note that for COMPZ = 'I' or 'V', then if N is less than or
+            equal to the minimum divide size, usually 25, then LWORK need
+            only be max(1,2*(N-1)).
 
             If LWORK = -1, then a workspace query is assumed; the routine
             only calculates the optimal size of the WORK array, returns
             this value as the first entry of the WORK array, and no error
             message related to LWORK is issued by XERBLA.
 
-    IWORK   (workspace/output) INTEGER array, dimension (LIWORK)
+    IWORK   (workspace/output) INTEGER array, dimension (MAX(1,LIWORK))
             On exit, if INFO = 0, IWORK(1) returns the optimal LIWORK.
 
     LIWORK  (input) INTEGER
@@ -30048,6 +37438,9 @@ L40:
                            ( 6 + 6*N + 5*N*lg N ).
             If COMPZ = 'I' and N > 1 then LIWORK must be at least
                            ( 3 + 5*N ).
+            Note that for COMPZ = 'I' or 'V', then if N is less than or
+            equal to the minimum divide size, usually 25, then LIWORK
+            need only be 1.
 
             If LIWORK = -1, then a workspace query is assumed; the
             routine only calculates the optimal size of the IWORK array,
@@ -30097,44 +37490,54 @@ L40:
     } else {
 	icompz = -1;
     }
-    if (*n <= 1 || icompz <= 0) {
-	liwmin = 1;
-	lwmin = 1;
-    } else {
-	lgn = (integer) (log((real) (*n)) / log(2.f));
-	if (pow_ii(&c__2, &lgn) < *n) {
-	    ++lgn;
-	}
-	if (pow_ii(&c__2, &lgn) < *n) {
-	    ++lgn;
-	}
-	if (icompz == 1) {
-/* Computing 2nd power */
-	    i__1 = *n;
-	    lwmin = *n * 3 + 1 + (*n << 1) * lgn + i__1 * i__1 * 3;
-	    liwmin = *n * 6 + 6 + *n * 5 * lgn;
-	} else if (icompz == 2) {
-/* Computing 2nd power */
-	    i__1 = *n;
-	    lwmin = (*n << 2) + 1 + i__1 * i__1;
-	    liwmin = *n * 5 + 3;
-	}
-    }
     if (icompz < 0) {
 	*info = -1;
     } else if (*n < 0) {
 	*info = -2;
     } else if (*ldz < 1 || icompz > 0 && *ldz < max(1,*n)) {
 	*info = -6;
-    } else if (*lwork < lwmin && ! lquery) {
-	*info = -8;
-    } else if (*liwork < liwmin && ! lquery) {
-	*info = -10;
     }
 
     if (*info == 0) {
+
+/*        Compute the workspace requirements */
+
+	smlsiz = ilaenv_(&c__9, "SSTEDC", " ", &c__0, &c__0, &c__0, &c__0, (
+		ftnlen)6, (ftnlen)1);
+	if (*n <= 1 || icompz == 0) {
+	    liwmin = 1;
+	    lwmin = 1;
+	} else if (*n <= smlsiz) {
+	    liwmin = 1;
+	    lwmin = *n - 1 << 1;
+	} else {
+	    lgn = (integer) (log((real) (*n)) / log(2.f));
+	    if (pow_ii(&c__2, &lgn) < *n) {
+		++lgn;
+	    }
+	    if (pow_ii(&c__2, &lgn) < *n) {
+		++lgn;
+	    }
+	    if (icompz == 1) {
+/* Computing 2nd power */
+		i__1 = *n;
+		lwmin = *n * 3 + 1 + (*n << 1) * lgn + i__1 * i__1 * 3;
+		liwmin = *n * 6 + 6 + *n * 5 * lgn;
+	    } else if (icompz == 2) {
+/* Computing 2nd power */
+		i__1 = *n;
+		lwmin = (*n << 2) + 1 + i__1 * i__1;
+		liwmin = *n * 5 + 3;
+	    }
+	}
 	work[1] = (real) lwmin;
 	iwork[1] = liwmin;
+
+	if (*lwork < lwmin && ! lquery) {
+	    *info = -8;
+	} else if (*liwork < liwmin && ! lquery) {
+	    *info = -10;
+	}
     }
 
     if (*info != 0) {
@@ -30157,9 +37560,6 @@ L40:
 	return 0;
     }
 
-    smlsiz = ilaenv_(&c__9, "SSTEDC", " ", &c__0, &c__0, &c__0, &c__0, (
-	    ftnlen)6, (ftnlen)1);
-
 /*
        If the following conditional clause is removed, then the routine
        will use the Divide and Conquer routine to compute only the
@@ -30167,14 +37567,15 @@ L40:
        (2 + 5N + 2N lg(N)) integer workspace.
        Since on many architectures SSTERF is much faster than any other
        algorithm for finding eigenvalues only, it is used here
-       as the default.
+       as the default. If the conditional clause is removed, then
+       information on the size of workspace needs to be changed.
 
        If COMPZ = 'N', use SSTERF to compute the eigenvalues.
 */
 
     if (icompz == 0) {
 	ssterf_(n, &d__[1], &e[1], info);
-	return 0;
+	goto L50;
     }
 
 /*
@@ -30183,182 +37584,176 @@ L40:
 */
 
     if (*n <= smlsiz) {
-	if (icompz == 0) {
-	    ssterf_(n, &d__[1], &e[1], info);
-	    return 0;
-	} else if (icompz == 2) {
-	    ssteqr_("I", n, &d__[1], &e[1], &z__[z_offset], ldz, &work[1],
-		    info);
-	    return 0;
-	} else {
-	    ssteqr_("V", n, &d__[1], &e[1], &z__[z_offset], ldz, &work[1],
-		    info);
-	    return 0;
-	}
-    }
+
+	ssteqr_(compz, n, &d__[1], &e[1], &z__[z_offset], ldz, &work[1], info);
+
+    } else {
 
 /*
-       If COMPZ = 'V', the Z matrix must be stored elsewhere for later
-       use.
+          If COMPZ = 'V', the Z matrix must be stored elsewhere for later
+          use.
 */
 
-    if (icompz == 1) {
-	storez = *n * *n + 1;
-    } else {
-	storez = 1;
-    }
+	if (icompz == 1) {
+	    storez = *n * *n + 1;
+	} else {
+	    storez = 1;
+	}
 
-    if (icompz == 2) {
-	slaset_("Full", n, n, &c_b29, &c_b15, &z__[z_offset], ldz);
-    }
+	if (icompz == 2) {
+	    slaset_("Full", n, n, &c_b29, &c_b15, &z__[z_offset], ldz);
+	}
 
-/*     Scale. */
+/*        Scale. */
 
-    orgnrm = slanst_("M", n, &d__[1], &e[1]);
-    if (orgnrm == 0.f) {
-	return 0;
-    }
+	orgnrm = slanst_("M", n, &d__[1], &e[1]);
+	if (orgnrm == 0.f) {
+	    goto L50;
+	}
 
-    eps = slamch_("Epsilon");
+	eps = slamch_("Epsilon");
 
-    start = 1;
+	start = 1;
 
-/*     while ( START <= N ) */
+/*        while ( START <= N ) */
 
 L10:
-    if (start <= *n) {
+	if (start <= *n) {
 
 /*
-       Let END be the position of the next subdiagonal entry such that
-       E( END ) <= TINY or END = N if no such subdiagonal exists.  The
-       matrix identified by the elements between START and END
-       constitutes an independent sub-problem.
+             Let FINISH be the position of the next subdiagonal entry
+             such that E( FINISH ) <= TINY or FINISH = N if no such
+             subdiagonal exists.  The matrix identified by the elements
+             between START and FINISH constitutes an independent
+             sub-problem.
 */
 
-	end = start;
+	    finish = start;
 L20:
-	if (end < *n) {
-	    tiny = eps * sqrt((r__1 = d__[end], dabs(r__1))) * sqrt((r__2 =
-		    d__[end + 1], dabs(r__2)));
-	    if ((r__1 = e[end], dabs(r__1)) > tiny) {
-		++end;
-		goto L20;
+	    if (finish < *n) {
+		tiny = eps * sqrt((r__1 = d__[finish], dabs(r__1))) * sqrt((
+			r__2 = d__[finish + 1], dabs(r__2)));
+		if ((r__1 = e[finish], dabs(r__1)) > tiny) {
+		    ++finish;
+		    goto L20;
+		}
 	    }
-	}
 
-/*        (Sub) Problem determined.  Compute its size and solve it. */
+/*           (Sub) Problem determined.  Compute its size and solve it. */
 
-	m = end - start + 1;
-	if (m == 1) {
-	    start = end + 1;
+	    m = finish - start + 1;
+	    if (m == 1) {
+		start = finish + 1;
+		goto L10;
+	    }
+	    if (m > smlsiz) {
+
+/*              Scale. */
+
+		orgnrm = slanst_("M", &m, &d__[start], &e[start]);
+		slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, &m, &c__1, &d__[
+			start], &m, info);
+		i__1 = m - 1;
+		i__2 = m - 1;
+		slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, &i__1, &c__1, &e[
+			start], &i__2, info);
+
+		if (icompz == 1) {
+		    strtrw = 1;
+		} else {
+		    strtrw = start;
+		}
+		slaed0_(&icompz, n, &m, &d__[start], &e[start], &z__[strtrw +
+			start * z_dim1], ldz, &work[1], n, &work[storez], &
+			iwork[1], info);
+		if (*info != 0) {
+		    *info = (*info / (m + 1) + start - 1) * (*n + 1) + *info %
+			     (m + 1) + start - 1;
+		    goto L50;
+		}
+
+/*              Scale back. */
+
+		slascl_("G", &c__0, &c__0, &c_b15, &orgnrm, &m, &c__1, &d__[
+			start], &m, info);
+
+	    } else {
+		if (icompz == 1) {
+
+/*
+                   Since QR won't update a Z matrix which is larger than
+                   the length of D, we must solve the sub-problem in a
+                   workspace and then multiply back into Z.
+*/
+
+		    ssteqr_("I", &m, &d__[start], &e[start], &work[1], &m, &
+			    work[m * m + 1], info);
+		    slacpy_("A", n, &m, &z__[start * z_dim1 + 1], ldz, &work[
+			    storez], n);
+		    sgemm_("N", "N", n, &m, &m, &c_b15, &work[storez], n, &
+			    work[1], &m, &c_b29, &z__[start * z_dim1 + 1],
+			    ldz);
+		} else if (icompz == 2) {
+		    ssteqr_("I", &m, &d__[start], &e[start], &z__[start +
+			    start * z_dim1], ldz, &work[1], info);
+		} else {
+		    ssterf_(&m, &d__[start], &e[start], info);
+		}
+		if (*info != 0) {
+		    *info = start * (*n + 1) + finish;
+		    goto L50;
+		}
+	    }
+
+	    start = finish + 1;
 	    goto L10;
 	}
-	if (m > smlsiz) {
-	    *info = smlsiz;
-
-/*           Scale. */
-
-	    orgnrm = slanst_("M", &m, &d__[start], &e[start]);
-	    slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, &m, &c__1, &d__[start]
-		    , &m, info);
-	    i__1 = m - 1;
-	    i__2 = m - 1;
-	    slascl_("G", &c__0, &c__0, &orgnrm, &c_b15, &i__1, &c__1, &e[
-		    start], &i__2, info);
-
-	    if (icompz == 1) {
-		strtrw = 1;
-	    } else {
-		strtrw = start;
-	    }
-	    slaed0_(&icompz, n, &m, &d__[start], &e[start], &z__[strtrw +
-		    start * z_dim1], ldz, &work[1], n, &work[storez], &iwork[
-		    1], info);
-	    if (*info != 0) {
-		*info = (*info / (m + 1) + start - 1) * (*n + 1) + *info % (m
-			+ 1) + start - 1;
-		return 0;
-	    }
-
-/*           Scale back. */
-
-	    slascl_("G", &c__0, &c__0, &c_b15, &orgnrm, &m, &c__1, &d__[start]
-		    , &m, info);
-
-	} else {
-	    if (icompz == 1) {
 
 /*
-       Since QR won't update a Z matrix which is larger than the
-       length of D, we must solve the sub-problem in a workspace and
-       then multiply back into Z.
+          endwhile
+
+          If the problem split any number of times, then the eigenvalues
+          will not be properly ordered.  Here we permute the eigenvalues
+          (and the associated eigenvectors) into ascending order.
 */
 
-		ssteqr_("I", &m, &d__[start], &e[start], &work[1], &m, &work[
-			m * m + 1], info);
-		slacpy_("A", n, &m, &z__[start * z_dim1 + 1], ldz, &work[
-			storez], n);
-		sgemm_("N", "N", n, &m, &m, &c_b15, &work[storez], ldz, &work[
-			1], &m, &c_b29, &z__[start * z_dim1 + 1], ldz);
-	    } else if (icompz == 2) {
-		ssteqr_("I", &m, &d__[start], &e[start], &z__[start + start *
-			z_dim1], ldz, &work[1], info);
+	if (m != *n) {
+	    if (icompz == 0) {
+
+/*              Use Quick Sort */
+
+		slasrt_("I", n, &d__[1], info);
+
 	    } else {
-		ssterf_(&m, &d__[start], &e[start], info);
-	    }
-	    if (*info != 0) {
-		*info = start * (*n + 1) + end;
-		return 0;
-	    }
-	}
 
-	start = end + 1;
-	goto L10;
-    }
+/*              Use Selection Sort to minimize swaps of eigenvectors */
 
-/*
-       endwhile
-
-       If the problem split any number of times, then the eigenvalues
-       will not be properly ordered.  Here we permute the eigenvalues
-       (and the associated eigenvectors) into ascending order.
-*/
-
-    if (m != *n) {
-	if (icompz == 0) {
-
-/*        Use Quick Sort */
-
-	    slasrt_("I", n, &d__[1], info);
-
-	} else {
-
-/*        Use Selection Sort to minimize swaps of eigenvectors */
-
-	    i__1 = *n;
-	    for (ii = 2; ii <= i__1; ++ii) {
-		i__ = ii - 1;
-		k = i__;
-		p = d__[i__];
-		i__2 = *n;
-		for (j = ii; j <= i__2; ++j) {
-		    if (d__[j] < p) {
-			k = j;
-			p = d__[j];
-		    }
+		i__1 = *n;
+		for (ii = 2; ii <= i__1; ++ii) {
+		    i__ = ii - 1;
+		    k = i__;
+		    p = d__[i__];
+		    i__2 = *n;
+		    for (j = ii; j <= i__2; ++j) {
+			if (d__[j] < p) {
+			    k = j;
+			    p = d__[j];
+			}
 /* L30: */
-		}
-		if (k != i__) {
-		    d__[k] = d__[i__];
-		    d__[i__] = p;
-		    sswap_(n, &z__[i__ * z_dim1 + 1], &c__1, &z__[k * z_dim1
-			    + 1], &c__1);
-		}
+		    }
+		    if (k != i__) {
+			d__[k] = d__[i__];
+			d__[i__] = p;
+			sswap_(n, &z__[i__ * z_dim1 + 1], &c__1, &z__[k *
+				z_dim1 + 1], &c__1);
+		    }
 /* L40: */
+		}
 	    }
 	}
     }
 
+L50:
     work[1] = (real) lwmin;
     iwork[1] = liwmin;
 
@@ -30374,9 +37769,6 @@ L20:
     /* System generated locals */
     integer z_dim1, z_offset, i__1, i__2;
     real r__1, r__2;
-
-    /* Builtin functions */
-    double sqrt(doublereal), r_sign(real *, real *);
 
     /* Local variables */
     static real b, c__, f, g;
@@ -30416,10 +37808,10 @@ L20:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -30971,9 +38363,6 @@ L190:
     integer i__1;
     real r__1, r__2, r__3;
 
-    /* Builtin functions */
-    double sqrt(doublereal), r_sign(real *, real *);
-
     /* Local variables */
     static real c__;
     static integer i__, l, m;
@@ -31004,10 +38393,10 @@ L190:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -31410,11 +38799,8 @@ L180:
 	integer *liwork, integer *info)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, i__1, i__2, i__3;
+    integer a_dim1, a_offset, i__1, i__2;
     real r__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static real eps;
@@ -31430,6 +38816,8 @@ L180:
     static integer indwk2, llwrk2, iscale;
     extern doublereal slamch_(char *);
     static real safmin;
+    extern integer ilaenv_(integer *, char *, char *, integer *, integer *,
+	    integer *, integer *, ftnlen, ftnlen);
     extern /* Subroutine */ int xerbla_(char *, integer *);
     static real bignum;
     extern /* Subroutine */ int slascl_(char *, integer *, integer *, real *,
@@ -31454,10 +38842,10 @@ L180:
 
 
 /*
-    -- LAPACK driver routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK driver routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -31521,11 +38909,12 @@ L180:
                                                   1 + 6*N + 2*N**2.
 
             If LWORK = -1, then a workspace query is assumed; the routine
-            only calculates the optimal size of the WORK array, returns
-            this value as the first entry of the WORK array, and no error
-            message related to LWORK is issued by XERBLA.
+            only calculates the optimal sizes of the WORK and IWORK
+            arrays, returns these values as the first entries of the WORK
+            and IWORK arrays, and no error message related to LWORK or
+            LIWORK is issued by XERBLA.
 
-    IWORK   (workspace/output) INTEGER array, dimension (LIWORK)
+    IWORK   (workspace/output) INTEGER array, dimension (MAX(1,LIWORK))
             On exit, if INFO = 0, IWORK(1) returns the optimal LIWORK.
 
     LIWORK  (input) INTEGER
@@ -31535,16 +38924,21 @@ L180:
             If JOBZ  = 'V' and N > 1, LIWORK must be at least 3 + 5*N.
 
             If LIWORK = -1, then a workspace query is assumed; the
-            routine only calculates the optimal size of the IWORK array,
-            returns this value as the first entry of the IWORK array, and
-            no error message related to LIWORK is issued by XERBLA.
+            routine only calculates the optimal sizes of the WORK and
+            IWORK arrays, returns these values as the first entries of
+            the WORK and IWORK arrays, and no error message related to
+            LWORK or LIWORK is issued by XERBLA.
 
     INFO    (output) INTEGER
             = 0:  successful exit
             < 0:  if INFO = -i, the i-th argument had an illegal value
-            > 0:  if INFO = i, the algorithm failed to converge; i
-                  off-diagonal elements of an intermediate tridiagonal
-                  form did not converge to zero.
+            > 0:  if INFO = i and JOBZ = 'N', then the algorithm failed
+                  to converge; i off-diagonal elements of an intermediate
+                  tridiagonal form did not converge to zero;
+                  if INFO = i and JOBZ = 'V', then the algorithm failed
+                  to compute an eigenvalue while working on the submatrix
+                  lying in rows and columns INFO/(N+1) through
+                  mod(INFO,N+1).
 
     Further Details
     ===============
@@ -31554,6 +38948,7 @@ L180:
        at Berkeley, USA
     Modified by Francoise Tisseur, University of Tennessee.
 
+    Modified description of INFO. Sven, 16 Feb 05.
     =====================================================================
 
 
@@ -31574,24 +38969,6 @@ L180:
     lquery = *lwork == -1 || *liwork == -1;
 
     *info = 0;
-    if (*n <= 1) {
-	liwmin = 1;
-	lwmin = 1;
-	lopt = lwmin;
-	liopt = liwmin;
-    } else {
-	if (wantz) {
-	    liwmin = *n * 5 + 3;
-/* Computing 2nd power */
-	    i__1 = *n;
-	    lwmin = *n * 6 + 1 + (i__1 * i__1 << 1);
-	} else {
-	    liwmin = 1;
-	    lwmin = (*n << 1) + 1;
-	}
-	lopt = lwmin;
-	liopt = liwmin;
-    }
     if (! (wantz || lsame_(jobz, "N"))) {
 	*info = -1;
     } else if (! (lower || lsame_(uplo, "U"))) {
@@ -31600,15 +38977,38 @@ L180:
 	*info = -3;
     } else if (*lda < max(1,*n)) {
 	*info = -5;
-    } else if (*lwork < lwmin && ! lquery) {
-	*info = -8;
-    } else if (*liwork < liwmin && ! lquery) {
-	*info = -10;
     }
 
     if (*info == 0) {
+	if (*n <= 1) {
+	    liwmin = 1;
+	    lwmin = 1;
+	    lopt = lwmin;
+	    liopt = liwmin;
+	} else {
+	    if (wantz) {
+		liwmin = *n * 5 + 3;
+/* Computing 2nd power */
+		i__1 = *n;
+		lwmin = *n * 6 + 1 + (i__1 * i__1 << 1);
+	    } else {
+		liwmin = 1;
+		lwmin = (*n << 1) + 1;
+	    }
+/* Computing MAX */
+	    i__1 = lwmin, i__2 = (*n << 1) + ilaenv_(&c__1, "SSYTRD", uplo, n,
+		     &c_n1, &c_n1, &c_n1, (ftnlen)6, (ftnlen)1);
+	    lopt = max(i__1,i__2);
+	    liopt = liwmin;
+	}
 	work[1] = (real) lopt;
 	iwork[1] = liopt;
+
+	if (*lwork < lwmin && ! lquery) {
+	    *info = -8;
+	} else if (*liwork < liwmin && ! lquery) {
+	    *info = -10;
+	}
     }
 
     if (*info != 0) {
@@ -31669,7 +39069,6 @@ L180:
 
     ssytrd_(uplo, n, &a[a_offset], lda, &w[1], &work[inde], &work[indtau], &
 	    work[indwrk], &llwork, &iinfo);
-    lopt = (*n << 1) + work[indwrk];
 
 /*
        For eigenvalues only, call SSTERF.  For eigenvectors, first call
@@ -31686,13 +39085,6 @@ L180:
 	sormtr_("L", uplo, "N", n, n, &a[a_offset], lda, &work[indtau], &work[
 		indwrk], n, &work[indwk2], &llwrk2, &iinfo);
 	slacpy_("A", n, n, &work[indwrk], n, &a[a_offset], lda);
-/*
-   Computing MAX
-   Computing 2nd power
-*/
-	i__3 = *n;
-	i__1 = lopt, i__2 = *n * 6 + 1 + (i__3 * i__3 << 1);
-	lopt = max(i__1,i__2);
     }
 
 /*     If matrix was scaled, then rescale eigenvalues appropriately. */
@@ -31734,10 +39126,10 @@ L180:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -32016,10 +39408,10 @@ L180:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -32073,7 +39465,7 @@ L180:
             The scalar factors of the elementary reflectors (see Further
             Details).
 
-    WORK    (workspace/output) REAL array, dimension (LWORK)
+    WORK    (workspace/output) REAL array, dimension (MAX(1,LWORK))
             On exit, if INFO = 0, WORK(1) returns the optimal LWORK.
 
     LWORK   (input) INTEGER
@@ -32345,9 +39737,6 @@ L180:
 	    i__2, i__3;
     real r__1, r__2, r__3, r__4;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, j, k;
     static real x[4]	/* was [2][2] */;
@@ -32387,10 +39776,10 @@ L180:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       June 30, 1999
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -32398,28 +39787,23 @@ L180:
 
     STREVC computes some or all of the right and/or left eigenvectors of
     a real upper quasi-triangular matrix T.
+    Matrices of this type are produced by the Schur factorization of
+    a real general matrix:  A = Q*T*Q**T, as computed by SHSEQR.
 
     The right eigenvector x and the left eigenvector y of T corresponding
     to an eigenvalue w are defined by:
 
-                 T*x = w*x,     y'*T = w*y'
+       T*x = w*x,     (y**H)*T = w*(y**H)
 
-    where y' denotes the conjugate transpose of the vector y.
+    where y**H denotes the conjugate transpose of y.
+    The eigenvalues are not input to this routine, but are read directly
+    from the diagonal blocks of T.
 
-    If all eigenvectors are requested, the routine may either return the
-    matrices X and/or Y of right or left eigenvectors of T, or the
-    products Q*X and/or Q*Y, where Q is an input orthogonal
-    matrix. If T was obtained from the real-Schur factorization of an
-    original matrix A = Q*T*Q', then Q*X and Q*Y are the matrices of
-    right or left eigenvectors of A.
-
-    T must be in Schur canonical form (as returned by SHSEQR), that is,
-    block upper triangular with 1-by-1 and 2-by-2 diagonal blocks; each
-    2-by-2 diagonal block has its diagonal elements equal and its
-    off-diagonal elements of opposite sign.  Corresponding to each 2-by-2
-    diagonal block is a complex conjugate pair of eigenvalues and
-    eigenvectors; only one eigenvector of the pair is computed, namely
-    the one corresponding to the eigenvalue with positive imaginary part.
+    This routine returns the matrices X and/or Y of right and left
+    eigenvectors of T, or the products Q*X and/or Q*Y, where Q is an
+    input matrix.  If Q is the orthogonal factor that reduces a matrix
+    A to Schur form T, then Q*X and Q*Y are the matrices of right and
+    left eigenvectors of A.
 
     Arguments
     =========
@@ -32432,21 +39816,21 @@ L180:
     HOWMNY  (input) CHARACTER*1
             = 'A':  compute all right and/or left eigenvectors;
             = 'B':  compute all right and/or left eigenvectors,
-                    and backtransform them using the input matrices
-                    supplied in VR and/or VL;
+                    backtransformed by the matrices in VR and/or VL;
             = 'S':  compute selected right and/or left eigenvectors,
-                    specified by the logical array SELECT.
+                    as indicated by the logical array SELECT.
 
     SELECT  (input/output) LOGICAL array, dimension (N)
             If HOWMNY = 'S', SELECT specifies the eigenvectors to be
             computed.
-            If HOWMNY = 'A' or 'B', SELECT is not referenced.
-            To select the real eigenvector corresponding to a real
-            eigenvalue w(j), SELECT(j) must be set to .TRUE..  To select
-            the complex eigenvector corresponding to a complex conjugate
-            pair w(j) and w(j+1), either SELECT(j) or SELECT(j+1) must be
-            set to .TRUE.; then on exit SELECT(j) is .TRUE. and
-            SELECT(j+1) is .FALSE..
+            If w(j) is a real eigenvalue, the corresponding real
+            eigenvector is computed if SELECT(j) is .TRUE..
+            If w(j) and w(j+1) are the real and imaginary parts of a
+            complex eigenvalue, the corresponding complex eigenvector is
+            computed if either SELECT(j) or SELECT(j+1) is .TRUE., and
+            on exit SELECT(j) is set to .TRUE. and SELECT(j+1) is set to
+            .FALSE..
+            Not referenced if HOWMNY = 'A' or 'B'.
 
     N       (input) INTEGER
             The order of the matrix T. N >= 0.
@@ -32463,15 +39847,6 @@ L180:
             of Schur vectors returned by SHSEQR).
             On exit, if SIDE = 'L' or 'B', VL contains:
             if HOWMNY = 'A', the matrix Y of left eigenvectors of T;
-                             VL has the same quasi-lower triangular form
-                             as T'. If T(i,i) is a real eigenvalue, then
-                             the i-th column VL(i) of VL  is its
-                             corresponding eigenvector. If T(i:i+1,i:i+1)
-                             is a 2-by-2 block whose eigenvalues are
-                             complex-conjugate eigenvalues of T, then
-                             VL(i)+sqrt(-1)*VL(i+1) is the complex
-                             eigenvector corresponding to the eigenvalue
-                             with positive real part.
             if HOWMNY = 'B', the matrix Q*Y;
             if HOWMNY = 'S', the left eigenvectors of T specified by
                              SELECT, stored consecutively in the columns
@@ -32480,11 +39855,11 @@ L180:
             A complex eigenvector corresponding to a complex eigenvalue
             is stored in two consecutive columns, the first holding the
             real part, and the second the imaginary part.
-            If SIDE = 'R', VL is not referenced.
+            Not referenced if SIDE = 'R'.
 
     LDVL    (input) INTEGER
-            The leading dimension of the array VL.  LDVL >= max(1,N) if
-            SIDE = 'L' or 'B'; LDVL >= 1 otherwise.
+            The leading dimension of the array VL.  LDVL >= 1, and if
+            SIDE = 'L' or 'B', LDVL >= N.
 
     VR      (input/output) REAL array, dimension (LDVR,MM)
             On entry, if SIDE = 'R' or 'B' and HOWMNY = 'B', VR must
@@ -32492,15 +39867,6 @@ L180:
             of Schur vectors returned by SHSEQR).
             On exit, if SIDE = 'R' or 'B', VR contains:
             if HOWMNY = 'A', the matrix X of right eigenvectors of T;
-                             VR has the same quasi-upper triangular form
-                             as T. If T(i,i) is a real eigenvalue, then
-                             the i-th column VR(i) of VR  is its
-                             corresponding eigenvector. If T(i:i+1,i:i+1)
-                             is a 2-by-2 block whose eigenvalues are
-                             complex-conjugate eigenvalues of T, then
-                             VR(i)+sqrt(-1)*VR(i+1) is the complex
-                             eigenvector corresponding to the eigenvalue
-                             with positive real part.
             if HOWMNY = 'B', the matrix Q*X;
             if HOWMNY = 'S', the right eigenvectors of T specified by
                              SELECT, stored consecutively in the columns
@@ -32509,11 +39875,11 @@ L180:
             A complex eigenvector corresponding to a complex eigenvalue
             is stored in two consecutive columns, the first holding the
             real part and the second the imaginary part.
-            If SIDE = 'L', VR is not referenced.
+            Not referenced if SIDE = 'L'.
 
     LDVR    (input) INTEGER
-            The leading dimension of the array VR.  LDVR >= max(1,N) if
-            SIDE = 'R' or 'B'; LDVR >= 1 otherwise.
+            The leading dimension of the array VR.  LDVR >= 1, and if
+            SIDE = 'R' or 'B', LDVR >= N.
 
     MM      (input) INTEGER
             The number of columns in the arrays VL and/or VR. MM >= M.
@@ -33491,11 +40857,8 @@ L200:
 		    ;
 		}
 
-/*
-                Copy the vector x or Q*x to VL and normalize.
+/*              Copy the vector x or Q*x to VL and normalize. */
 
-   L210:
-*/
 		if (! over) {
 		    i__2 = *n - ki + 1;
 		    scopy_(&i__2, &work[ki + *n], &c__1, &vl[ki + is *
@@ -33586,6 +40949,386 @@ L250:
 
 } /* strevc_ */
 
+/* Subroutine */ int strexc_(char *compq, integer *n, real *t, integer *ldt,
+	real *q, integer *ldq, integer *ifst, integer *ilst, real *work,
+	integer *info)
+{
+    /* System generated locals */
+    integer q_dim1, q_offset, t_dim1, t_offset, i__1;
+
+    /* Local variables */
+    static integer nbf, nbl, here;
+    extern logical lsame_(char *, char *);
+    static logical wantq;
+    extern /* Subroutine */ int xerbla_(char *, integer *), slaexc_(
+	    logical *, integer *, real *, integer *, real *, integer *,
+	    integer *, integer *, integer *, real *, integer *);
+    static integer nbnext;
+
+
+/*
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
+
+
+    Purpose
+    =======
+
+    STREXC reorders the real Schur factorization of a real matrix
+    A = Q*T*Q**T, so that the diagonal block of T with row index IFST is
+    moved to row ILST.
+
+    The real Schur form T is reordered by an orthogonal similarity
+    transformation Z**T*T*Z, and optionally the matrix Q of Schur vectors
+    is updated by postmultiplying it with Z.
+
+    T must be in Schur canonical form (as returned by SHSEQR), that is,
+    block upper triangular with 1-by-1 and 2-by-2 diagonal blocks; each
+    2-by-2 diagonal block has its diagonal elements equal and its
+    off-diagonal elements of opposite sign.
+
+    Arguments
+    =========
+
+    COMPQ   (input) CHARACTER*1
+            = 'V':  update the matrix Q of Schur vectors;
+            = 'N':  do not update Q.
+
+    N       (input) INTEGER
+            The order of the matrix T. N >= 0.
+
+    T       (input/output) REAL array, dimension (LDT,N)
+            On entry, the upper quasi-triangular matrix T, in Schur
+            Schur canonical form.
+            On exit, the reordered upper quasi-triangular matrix, again
+            in Schur canonical form.
+
+    LDT     (input) INTEGER
+            The leading dimension of the array T. LDT >= max(1,N).
+
+    Q       (input/output) REAL array, dimension (LDQ,N)
+            On entry, if COMPQ = 'V', the matrix Q of Schur vectors.
+            On exit, if COMPQ = 'V', Q has been postmultiplied by the
+            orthogonal transformation matrix Z which reorders T.
+            If COMPQ = 'N', Q is not referenced.
+
+    LDQ     (input) INTEGER
+            The leading dimension of the array Q.  LDQ >= max(1,N).
+
+    IFST    (input/output) INTEGER
+    ILST    (input/output) INTEGER
+            Specify the reordering of the diagonal blocks of T.
+            The block with row index IFST is moved to row ILST, by a
+            sequence of transpositions between adjacent blocks.
+            On exit, if IFST pointed on entry to the second row of a
+            2-by-2 block, it is changed to point to the first row; ILST
+            always points to the first row of the block in its final
+            position (which may differ from its input value by +1 or -1).
+            1 <= IFST <= N; 1 <= ILST <= N.
+
+    WORK    (workspace) REAL array, dimension (N)
+
+    INFO    (output) INTEGER
+            = 0:  successful exit
+            < 0:  if INFO = -i, the i-th argument had an illegal value
+            = 1:  two adjacent blocks were too close to swap (the problem
+                  is very ill-conditioned); T may have been partially
+                  reordered, and ILST points to the first row of the
+                  current position of the block being moved.
+
+    =====================================================================
+
+
+       Decode and test the input arguments.
+*/
+
+    /* Parameter adjustments */
+    t_dim1 = *ldt;
+    t_offset = 1 + t_dim1;
+    t -= t_offset;
+    q_dim1 = *ldq;
+    q_offset = 1 + q_dim1;
+    q -= q_offset;
+    --work;
+
+    /* Function Body */
+    *info = 0;
+    wantq = lsame_(compq, "V");
+    if (! wantq && ! lsame_(compq, "N")) {
+	*info = -1;
+    } else if (*n < 0) {
+	*info = -2;
+    } else if (*ldt < max(1,*n)) {
+	*info = -4;
+    } else if (*ldq < 1 || wantq && *ldq < max(1,*n)) {
+	*info = -6;
+    } else if (*ifst < 1 || *ifst > *n) {
+	*info = -7;
+    } else if (*ilst < 1 || *ilst > *n) {
+	*info = -8;
+    }
+    if (*info != 0) {
+	i__1 = -(*info);
+	xerbla_("STREXC", &i__1);
+	return 0;
+    }
+
+/*     Quick return if possible */
+
+    if (*n <= 1) {
+	return 0;
+    }
+
+/*
+       Determine the first row of specified block
+       and find out it is 1 by 1 or 2 by 2.
+*/
+
+    if (*ifst > 1) {
+	if (t[*ifst + (*ifst - 1) * t_dim1] != 0.f) {
+	    --(*ifst);
+	}
+    }
+    nbf = 1;
+    if (*ifst < *n) {
+	if (t[*ifst + 1 + *ifst * t_dim1] != 0.f) {
+	    nbf = 2;
+	}
+    }
+
+/*
+       Determine the first row of the final block
+       and find out it is 1 by 1 or 2 by 2.
+*/
+
+    if (*ilst > 1) {
+	if (t[*ilst + (*ilst - 1) * t_dim1] != 0.f) {
+	    --(*ilst);
+	}
+    }
+    nbl = 1;
+    if (*ilst < *n) {
+	if (t[*ilst + 1 + *ilst * t_dim1] != 0.f) {
+	    nbl = 2;
+	}
+    }
+
+    if (*ifst == *ilst) {
+	return 0;
+    }
+
+    if (*ifst < *ilst) {
+
+/*        Update ILST */
+
+	if (nbf == 2 && nbl == 1) {
+	    --(*ilst);
+	}
+	if (nbf == 1 && nbl == 2) {
+	    ++(*ilst);
+	}
+
+	here = *ifst;
+
+L10:
+
+/*        Swap block with next one below */
+
+	if (nbf == 1 || nbf == 2) {
+
+/*           Current block either 1 by 1 or 2 by 2 */
+
+	    nbnext = 1;
+	    if (here + nbf + 1 <= *n) {
+		if (t[here + nbf + 1 + (here + nbf) * t_dim1] != 0.f) {
+		    nbnext = 2;
+		}
+	    }
+	    slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &here, &
+		    nbf, &nbnext, &work[1], info);
+	    if (*info != 0) {
+		*ilst = here;
+		return 0;
+	    }
+	    here += nbnext;
+
+/*           Test if 2 by 2 block breaks into two 1 by 1 blocks */
+
+	    if (nbf == 2) {
+		if (t[here + 1 + here * t_dim1] == 0.f) {
+		    nbf = 3;
+		}
+	    }
+
+	} else {
+
+/*
+             Current block consists of two 1 by 1 blocks each of which
+             must be swapped individually
+*/
+
+	    nbnext = 1;
+	    if (here + 3 <= *n) {
+		if (t[here + 3 + (here + 2) * t_dim1] != 0.f) {
+		    nbnext = 2;
+		}
+	    }
+	    i__1 = here + 1;
+	    slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &i__1, &
+		    c__1, &nbnext, &work[1], info);
+	    if (*info != 0) {
+		*ilst = here;
+		return 0;
+	    }
+	    if (nbnext == 1) {
+
+/*              Swap two 1 by 1 blocks, no problems possible */
+
+		slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &
+			here, &c__1, &nbnext, &work[1], info);
+		++here;
+	    } else {
+
+/*              Recompute NBNEXT in case 2 by 2 split */
+
+		if (t[here + 2 + (here + 1) * t_dim1] == 0.f) {
+		    nbnext = 1;
+		}
+		if (nbnext == 2) {
+
+/*                 2 by 2 Block did not split */
+
+		    slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &
+			    here, &c__1, &nbnext, &work[1], info);
+		    if (*info != 0) {
+			*ilst = here;
+			return 0;
+		    }
+		    here += 2;
+		} else {
+
+/*                 2 by 2 Block did split */
+
+		    slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &
+			    here, &c__1, &c__1, &work[1], info);
+		    i__1 = here + 1;
+		    slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &
+			    i__1, &c__1, &c__1, &work[1], info);
+		    here += 2;
+		}
+	    }
+	}
+	if (here < *ilst) {
+	    goto L10;
+	}
+
+    } else {
+
+	here = *ifst;
+L20:
+
+/*        Swap block with next one above */
+
+	if (nbf == 1 || nbf == 2) {
+
+/*           Current block either 1 by 1 or 2 by 2 */
+
+	    nbnext = 1;
+	    if (here >= 3) {
+		if (t[here - 1 + (here - 2) * t_dim1] != 0.f) {
+		    nbnext = 2;
+		}
+	    }
+	    i__1 = here - nbnext;
+	    slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &i__1, &
+		    nbnext, &nbf, &work[1], info);
+	    if (*info != 0) {
+		*ilst = here;
+		return 0;
+	    }
+	    here -= nbnext;
+
+/*           Test if 2 by 2 block breaks into two 1 by 1 blocks */
+
+	    if (nbf == 2) {
+		if (t[here + 1 + here * t_dim1] == 0.f) {
+		    nbf = 3;
+		}
+	    }
+
+	} else {
+
+/*
+             Current block consists of two 1 by 1 blocks each of which
+             must be swapped individually
+*/
+
+	    nbnext = 1;
+	    if (here >= 3) {
+		if (t[here - 1 + (here - 2) * t_dim1] != 0.f) {
+		    nbnext = 2;
+		}
+	    }
+	    i__1 = here - nbnext;
+	    slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &i__1, &
+		    nbnext, &c__1, &work[1], info);
+	    if (*info != 0) {
+		*ilst = here;
+		return 0;
+	    }
+	    if (nbnext == 1) {
+
+/*              Swap two 1 by 1 blocks, no problems possible */
+
+		slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &
+			here, &nbnext, &c__1, &work[1], info);
+		--here;
+	    } else {
+
+/*              Recompute NBNEXT in case 2 by 2 split */
+
+		if (t[here + (here - 1) * t_dim1] == 0.f) {
+		    nbnext = 1;
+		}
+		if (nbnext == 2) {
+
+/*                 2 by 2 Block did not split */
+
+		    i__1 = here - 1;
+		    slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &
+			    i__1, &c__2, &c__1, &work[1], info);
+		    if (*info != 0) {
+			*ilst = here;
+			return 0;
+		    }
+		    here += -2;
+		} else {
+
+/*                 2 by 2 Block did split */
+
+		    slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &
+			    here, &c__1, &c__1, &work[1], info);
+		    i__1 = here - 1;
+		    slaexc_(&wantq, n, &t[t_offset], ldt, &q[q_offset], ldq, &
+			    i__1, &c__1, &c__1, &work[1], info);
+		    here += -2;
+		}
+	    }
+	}
+	if (here > *ilst) {
+	    goto L20;
+	}
+    }
+    *ilst = here;
+
+    return 0;
+
+/*     End of STREXC */
+
+} /* strexc_ */
+
 /* Subroutine */ int strti2_(char *uplo, char *diag, integer *n, real *a,
 	integer *lda, integer *info)
 {
@@ -33605,10 +41348,10 @@ L250:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       February 29, 1992
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose
@@ -33747,9 +41490,6 @@ L250:
     integer a_dim1, a_offset, i__1, i__2[2], i__3, i__4, i__5;
     char ch__1[2];
 
-    /* Builtin functions */
-    /* Subroutine */ int s_cat(char *, char **, integer *, integer *, ftnlen);
-
     /* Local variables */
     static integer j, jb, nb, nn;
     extern logical lsame_(char *, char *);
@@ -33767,10 +41507,10 @@ L250:
 
 
 /*
-    -- LAPACK routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       March 31, 1993
+    -- LAPACK routine (version 3.2) --
+    -- LAPACK is a software package provided by Univ. of Tennessee,    --
+    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+       November 2006
 
 
     Purpose

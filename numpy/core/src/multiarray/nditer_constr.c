@@ -17,8 +17,7 @@
 
 #include "arrayobject.h"
 #include "templ_common.h"
-#include "mem_overlap.h"
-
+#include "array_assign.h"
 
 /* Internal helper functions private to this file */
 static int
@@ -651,6 +650,8 @@ NpyIter_Deallocate(NpyIter *iter)
     int iop, nop;
     PyArray_Descr **dtype;
     PyArrayObject **object;
+    npyiter_opitflags *op_itflags;
+    npy_bool resolve = 1;
 
     if (iter == NULL) {
         return NPY_SUCCEED;
@@ -660,6 +661,7 @@ NpyIter_Deallocate(NpyIter *iter)
     nop = NIT_NOP(iter);
     dtype = NIT_DTYPES(iter);
     object = NIT_OPERANDS(iter);
+    op_itflags = NIT_OPITFLAGS(iter);
 
     /* Deallocate any buffers and buffering data */
     if (itflags & NPY_ITFLAG_BUFFER) {
@@ -688,15 +690,28 @@ NpyIter_Deallocate(NpyIter *iter)
         }
     }
 
-    /* Deallocate all the dtypes and objects that were iterated */
+    /*
+     * Deallocate all the dtypes and objects that were iterated and resolve
+     * any writeback buffers created by the iterator
+     */
     for(iop = 0; iop < nop; ++iop, ++dtype, ++object) {
+        if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
+            if (resolve && PyArray_ResolveWritebackIfCopy(*object) < 0) {
+                resolve = 0;
+            }
+            else {
+                PyArray_DiscardWritebackIfCopy(*object);
+            }
+        }
         Py_XDECREF(*dtype);
         Py_XDECREF(*object);
     }
 
     /* Deallocate the iterator memory */
     PyObject_Free(iter);
-
+    if (resolve == 0) {
+        return NPY_FAIL;
+    }
     return NPY_SUCCEED;
 }
 
@@ -1086,8 +1101,8 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             /* We just have a borrowed reference to op_request_dtype */
             Py_INCREF(op_request_dtype);
             /* If the requested dtype is flexible, adapt it */
-            PyArray_AdaptFlexibleDType((PyObject *)(*op), PyArray_DESCR(*op),
-                                        &op_request_dtype);
+            op_request_dtype = PyArray_AdaptFlexibleDType((PyObject *)(*op), PyArray_DESCR(*op),
+                                                          op_request_dtype);
             if (op_request_dtype == NULL) {
                 return 0;
             }
@@ -1117,7 +1132,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         /* Check if the operand is aligned */
         if (op_flags & NPY_ITER_ALIGNED) {
             /* Check alignment */
-            if (!PyArray_ISALIGNED(*op)) {
+            if (!IsAligned(*op)) {
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_ALIGNED\n");
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
@@ -1233,9 +1248,9 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
     return 1;
 
   fail_nop:
-    iop = nop;
+    iop = nop - 1;
   fail_iop:
-    for (i = 0; i < iop; ++i) {
+    for (i = 0; i < iop+1; ++i) {
         Py_XDECREF(op[i]);
         Py_XDECREF(op_dtype[i]);
     }
@@ -2105,8 +2120,8 @@ npyiter_apply_forced_iteration_order(NpyIter *iter, NPY_ORDER order)
             /* Check that all the array inputs are fortran order */
             for (iop = 0; iop < nop; ++iop, ++op) {
                 if (*op && !PyArray_CHKFLAGS(*op, NPY_ARRAY_F_CONTIGUOUS)) {
-                   forder = 0;
-                   break;
+                    forder = 0;
+                    break;
                 }
             }
 
@@ -2672,9 +2687,6 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
         return NULL;
     }
 
-    /* Make sure all the flags are good */
-    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
-
     /* Double-check that the subtype didn't mess with the dimensions */
     if (subtype != &PyArray_Type) {
         if (PyArray_NDIM(ret) != op_ndim ||
@@ -2716,7 +2728,7 @@ npyiter_allocate_arrays(NpyIter *iter,
          *
          * If any write operand has memory overlap with any read operand,
          * eliminate all overlap by making temporary copies, by enabling
-         * NPY_OP_ITFLAG_FORCECOPY for the write operand to force UPDATEIFCOPY.
+         * NPY_OP_ITFLAG_FORCECOPY for the write operand to force WRITEBACKIFCOPY.
          *
          * Operands with NPY_ITER_OVERLAP_ASSUME_ELEMENTWISE enabled are not
          * considered overlapping if the arrays are exactly the same. In this
@@ -2839,8 +2851,14 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iop, op[iop], ondim,
                     PyArray_DATA(op[iop]), op_axes ? op_axes[iop] : NULL);
 
-            /* New arrays are aligned and need no cast */
-            op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            /*
+             * New arrays are guaranteed true-aligned, but copy/cast code
+             * needs uint-alignment in addition.
+             */
+            if (IsUintAligned(out)) {
+                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            }
+            /* New arrays need no cast */
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
         }
         /*
@@ -2876,11 +2894,17 @@ npyiter_allocate_arrays(NpyIter *iter,
                     PyArray_DATA(op[iop]), NULL);
 
             /*
-             * New arrays are aligned need no cast, and in the case
+             * New arrays are guaranteed true-aligned, but copy/cast code
+             * needs uint-alignment in addition.
+             */
+            if (IsUintAligned(temp)) {
+                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            }
+            /*
+             * New arrays need no cast, and in the case
              * of scalars, always have stride 0 so never need buffering
              */
-            op_itflags[iop] |= (NPY_OP_ITFLAG_ALIGNED |
-                                  NPY_OP_ITFLAG_BUFNEVER);
+            op_itflags[iop] |= NPY_OP_ITFLAG_BUFNEVER;
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
             if (itflags & NPY_ITFLAG_BUFFER) {
                 NBF_STRIDES(bufferdata)[iop] = 0;
@@ -2920,13 +2944,15 @@ npyiter_allocate_arrays(NpyIter *iter,
                     return 0;
                 }
             }
-            /* If the data will be written to, set UPDATEIFCOPY */
+            /* If the data will be written to, set WRITEBACKIFCOPY
+               and require a context manager */
             if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
                 Py_INCREF(op[iop]);
-                if (PyArray_SetUpdateIfCopyBase(temp, op[iop]) < 0) {
+                if (PyArray_SetWritebackIfCopyBase(temp, op[iop]) < 0) {
                     Py_DECREF(temp);
                     return 0;
                 }
+                op_itflags[iop] |= NPY_OP_ITFLAG_HAS_WRITEBACK;
             }
 
             Py_DECREF(op[iop]);
@@ -2939,8 +2965,14 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iop, op[iop], ondim,
                     PyArray_DATA(op[iop]), op_axes ? op_axes[iop] : NULL);
 
-            /* The temporary copy is aligned and needs no cast */
-            op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            /*
+             * New arrays are guaranteed true-aligned, but copy/cast code
+             * additionally needs uint-alignment in addition.
+             */
+            if (IsUintAligned(temp)) {
+                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            }
+            /* The temporary copy needs no cast */
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
         }
         else {
@@ -2960,7 +2992,7 @@ npyiter_allocate_arrays(NpyIter *iter,
              * If the operand is aligned, any buffering can use aligned
              * optimizations.
              */
-            if (PyArray_ISALIGNED(op[iop])) {
+            if (IsUintAligned(op[iop])) {
                 op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
             }
         }
@@ -3143,6 +3175,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         &stransfer,
                                         &transferdata,
                                         &needs_api) != NPY_SUCCEED) {
+                    iop -= 1;  /* This one cannot be cleaned up yet. */
                     goto fail;
                 }
                 readtransferfn[iop] = stransfer;
@@ -3236,7 +3269,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     return 1;
 
 fail:
-    for (i = 0; i < iop; ++i) {
+    for (i = 0; i < iop+1; ++i) {
         if (readtransferdata[iop] != NULL) {
             NPY_AUXDATA_FREE(readtransferdata[iop]);
             readtransferdata[iop] = NULL;

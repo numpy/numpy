@@ -43,9 +43,6 @@ doublereal dlamch_(char *cmach)
     integer i__1;
     doublereal ret_val;
 
-    /* Builtin functions */
-    double pow_di(doublereal *, integer *);
-
     /* Local variables */
     static doublereal t;
     static integer it;
@@ -62,10 +59,9 @@ doublereal dlamch_(char *cmach)
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -107,7 +103,6 @@ doublereal dlamch_(char *cmach)
 
 
     if (first) {
-	first = FALSE_;
 	dlamc2_(&beta, &it, &lrnd, &eps, &imin, &rmin, &imax, &rmax);
 	base = (doublereal) beta;
 	t = (doublereal) it;
@@ -159,6 +154,7 @@ doublereal dlamch_(char *cmach)
     }
 
     ret_val = rmach;
+    first = FALSE_;
     return ret_val;
 
 /*     End of DLAMCH */
@@ -190,10 +186,9 @@ doublereal dlamch_(char *cmach)
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -239,7 +234,6 @@ doublereal dlamch_(char *cmach)
 
 
     if (first) {
-	first = FALSE_;
 	one = 1.;
 
 /*
@@ -370,6 +364,7 @@ L30:
     *t = lt;
     *rnd = lrnd;
     *ieee1 = lieee1;
+    first = FALSE_;
     return 0;
 
 /*     End of DLAMC1 */
@@ -399,10 +394,6 @@ L30:
     integer i__1;
     doublereal d__1, d__2, d__3, d__4, d__5;
 
-    /* Builtin functions */
-    double pow_di(doublereal *, integer *);
-    integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void);
-
     /* Local variables */
     static doublereal a, b, c__;
     static integer i__, lt;
@@ -431,10 +422,9 @@ L30:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -492,7 +482,6 @@ L30:
 
 
     if (first) {
-	first = FALSE_;
 	zero = 0.;
 	one = 1.;
 	two = 2.;
@@ -637,6 +626,7 @@ L10:
 /*         ( A guess; no known machine ) */
 	    iwarn = TRUE_;
 	}
+	first = FALSE_;
 /*
    **
    Comment out this if block if EMIN is ok
@@ -699,14 +689,13 @@ L10:
 doublereal dlamc3_(doublereal *a, doublereal *b)
 {
     /* System generated locals */
-    volatile doublereal ret_val;
+    doublereal ret_val;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -719,7 +708,8 @@ doublereal dlamc3_(doublereal *a, doublereal *b)
     Arguments
     =========
 
-    A, B    (input) DOUBLE PRECISION
+    A       (input) DOUBLE PRECISION
+    B       (input) DOUBLE PRECISION
             The values A and B.
 
    =====================================================================
@@ -751,10 +741,9 @@ doublereal dlamc3_(doublereal *a, doublereal *b)
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -765,7 +754,7 @@ doublereal dlamc3_(doublereal *a, doublereal *b)
     Arguments
     =========
 
-    EMIN    (output) EMIN
+    EMIN    (output) INTEGER
             The minimum exponent before (gradual) underflow, computed by
             setting A = START and dividing by BASE until the previous A
             can not be recovered.
@@ -851,10 +840,9 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -1018,10 +1006,9 @@ logical lsame_(char *ca, char *cb)
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       September 30, 1994
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -1127,9 +1114,6 @@ doublereal slamch_(char *cmach)
     integer i__1;
     real ret_val;
 
-    /* Builtin functions */
-    double pow_ri(real *, integer *);
-
     /* Local variables */
     static real t;
     static integer it;
@@ -1146,10 +1130,9 @@ doublereal slamch_(char *cmach)
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -1191,7 +1174,6 @@ doublereal slamch_(char *cmach)
 
 
     if (first) {
-	first = FALSE_;
 	slamc2_(&beta, &it, &lrnd, &eps, &imin, &rmin, &imax, &rmax);
 	base = (real) beta;
 	t = (real) it;
@@ -1243,6 +1225,7 @@ doublereal slamch_(char *cmach)
     }
 
     ret_val = rmach;
+    first = FALSE_;
     return ret_val;
 
 /*     End of SLAMCH */
@@ -1274,10 +1257,9 @@ doublereal slamch_(char *cmach)
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -1323,7 +1305,6 @@ doublereal slamch_(char *cmach)
 
 
     if (first) {
-	first = FALSE_;
 	one = 1.f;
 
 /*
@@ -1454,6 +1435,7 @@ L30:
     *t = lt;
     *rnd = lrnd;
     *ieee1 = lieee1;
+    first = FALSE_;
     return 0;
 
 /*     End of SLAMC1 */
@@ -1481,10 +1463,6 @@ L30:
     /* System generated locals */
     integer i__1;
     real r__1, r__2, r__3, r__4, r__5;
-
-    /* Builtin functions */
-    double pow_ri(real *, integer *);
-    integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void);
 
     /* Local variables */
     static real a, b, c__;
@@ -1514,10 +1492,9 @@ L30:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -1575,7 +1552,6 @@ L30:
 
 
     if (first) {
-	first = FALSE_;
 	zero = 0.f;
 	one = 1.f;
 	two = 2.f;
@@ -1720,6 +1696,7 @@ L10:
 /*         ( A guess; no known machine ) */
 	    iwarn = TRUE_;
 	}
+	first = FALSE_;
 /*
    **
    Comment out this if block if EMIN is ok
@@ -1782,14 +1759,13 @@ L10:
 doublereal slamc3_(real *a, real *b)
 {
     /* System generated locals */
-    volatile real ret_val;
+    real ret_val;
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -1802,7 +1778,8 @@ doublereal slamc3_(real *a, real *b)
     Arguments
     =========
 
-    A, B    (input) REAL
+    A       (input) REAL
+    B       (input) REAL
             The values A and B.
 
    =====================================================================
@@ -1834,10 +1811,9 @@ doublereal slamc3_(real *a, real *b)
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose
@@ -1848,7 +1824,7 @@ doublereal slamc3_(real *a, real *b)
     Arguments
     =========
 
-    EMIN    (output) EMIN
+    EMIN    (output) INTEGER
             The minimum exponent before (gradual) underflow, computed by
             setting A = START and dividing by BASE until the previous A
             can not be recovered.
@@ -1934,10 +1910,9 @@ L10:
 
 
 /*
-    -- LAPACK auxiliary routine (version 3.0) --
-       Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-       Courant Institute, Argonne National Lab, and Rice University
-       October 31, 1992
+    -- LAPACK auxiliary routine (version 3.2) --
+       Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+       November 2006
 
 
     Purpose

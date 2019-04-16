@@ -23,7 +23,7 @@ def get_dispatch(dtypes):
 
 {{for npy_dt, npy_udt, np_dt in get_dispatch(dtypes)}}
 
-def _rand_{{npy_dt}}(low, high, size, rngstate):
+def _rand_{{npy_dt}}(npy_{{npy_dt}} low, npy_{{npy_dt}} high, size, rngstate):
     """
     _rand_{{npy_dt}}(low, high, size, rngstate)
 
@@ -60,8 +60,8 @@ def _rand_{{npy_dt}}(low, high, size, rngstate):
     cdef npy_intp cnt
     cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
 
-    rng = <npy_{{npy_udt}}>(high - low)
-    off = <npy_{{npy_udt}}>(<npy_{{npy_dt}}>low)
+    off = <npy_{{npy_udt}}>(low)
+    rng = <npy_{{npy_udt}}>(high) - <npy_{{npy_udt}}>(low)
 
     if size is None:
         rk_random_{{npy_udt}}(off, rng, 1, &buf, state)

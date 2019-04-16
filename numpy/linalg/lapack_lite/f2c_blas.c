@@ -30,29 +30,34 @@ them.
 /* Table of constant values */
 
 static complex c_b21 = {1.f,0.f};
-static doublecomplex c_b1069 = {1.,0.};
+static doublecomplex c_b1078 = {1.,0.};
 
 /* Subroutine */ int caxpy_(integer *n, complex *ca, complex *cx, integer *
 	incx, complex *cy, integer *incy)
 {
     /* System generated locals */
     integer i__1, i__2, i__3, i__4;
-    real r__1, r__2;
     complex q__1, q__2;
-
-    /* Builtin functions */
-    double r_imag(complex *);
 
     /* Local variables */
     static integer i__, ix, iy;
+    extern doublereal scabs1_(complex *);
 
 
 /*
-       constant times a vector plus a vector.
+    Purpose
+    =======
+
+       CAXPY constant times a vector plus a vector.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cy;
@@ -62,7 +67,7 @@ static doublecomplex c_b1069 = {1.,0.};
     if (*n <= 0) {
 	return 0;
     }
-    if ((r__1 = ca->r, dabs(r__1)) + (r__2 = r_imag(ca), dabs(r__2)) == 0.f) {
+    if (scabs1_(ca) == 0.f) {
 	return 0;
     }
     if (*incx == 1 && *incy == 1) {
@@ -125,11 +130,19 @@ L20:
 
 
 /*
-       copies a vector, x, to a vector, y.
+    Purpose
+    =======
+
+       CCOPY copies a vector x to a vector y.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cy;
@@ -187,21 +200,26 @@ L20:
     integer i__1, i__2;
     complex q__1, q__2, q__3;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, ix, iy;
     static complex ctemp;
 
 
 /*
+    Purpose
+    =======
+
        forms the dot product of two vectors, conjugating the first
        vector.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack,  3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cy;
@@ -275,11 +293,19 @@ L20:
 
 
 /*
-       forms the dot product of two vectors.
+    Purpose
+    =======
+
+       CDOTU forms the dot product of two vectors.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cy;
@@ -349,9 +375,6 @@ L20:
 	    i__3, i__4, i__5, i__6;
     complex q__1, q__2, q__3, q__4;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, l, info;
     static logical nota, notb;
@@ -378,7 +401,7 @@ L20:
     alpha and beta are scalars, and A, B and C are matrices, with op( A )
     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANSA - CHARACTER*1.
@@ -474,6 +497,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -482,6 +507,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
@@ -1018,9 +1045,6 @@ L20:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     complex q__1, q__2, q__3;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, ix, iy, jx, jy, kx, ky, info;
     static complex temp;
@@ -1034,7 +1058,7 @@ L20:
     Purpose
     =======
 
-    CGEMV  performs one of the matrix-vector operations
+    CGEMV performs one of the matrix-vector operations
 
        y := alpha*A*x + beta*y,   or   y := alpha*A'*x + beta*y,   or
 
@@ -1043,7 +1067,7 @@ L20:
     where alpha and beta are scalars, x and y are vectors and A is an
     m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANS  - CHARACTER*1.
@@ -1114,6 +1138,8 @@ L20:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -1122,6 +1148,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -1405,9 +1433,6 @@ L20:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     complex q__1, q__2;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, ix, jy, kx, info;
     static complex temp;
@@ -1425,7 +1450,7 @@ L20:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -1475,6 +1500,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -1483,6 +1510,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -1616,7 +1645,7 @@ L20:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -1666,6 +1695,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -1674,6 +1705,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -1792,9 +1825,6 @@ L20:
     real r__1;
     complex q__1, q__2, q__3, q__4;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, ix, iy, jx, jy, kx, ky, info;
     static complex temp1, temp2;
@@ -1813,7 +1843,7 @@ L20:
     where alpha and beta are scalars, x and y are n element vectors and
     A is an n by n hermitian matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -1884,6 +1914,8 @@ L20:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -1892,6 +1924,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -2199,9 +2233,6 @@ L20:
     real r__1;
     complex q__1, q__2, q__3, q__4;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, ix, iy, jx, jy, kx, ky, info;
     static complex temp1, temp2;
@@ -2220,7 +2251,7 @@ L20:
     where alpha is a scalar, x and y are n element vectors and A is an n
     by n hermitian matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -2290,6 +2321,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -2298,6 +2331,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -2624,9 +2659,6 @@ L20:
     real r__1;
     complex q__1, q__2, q__3, q__4, q__5, q__6;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, l, info;
     static complex temp1, temp2;
@@ -2652,7 +2684,7 @@ L20:
     hermitian matrix and  A and B  are  n by k matrices in the first case
     and  k by n  matrices in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -2755,6 +2787,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -2766,6 +2800,8 @@ L20:
 
     -- Modified 8-Nov-93 to set C(J,J) to REAL( C(J,J) ) when BETA = 1.
        Ed Anderson, Cray Research Inc.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -3272,9 +3308,6 @@ L20:
     real r__1;
     complex q__1, q__2, q__3;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, l, info;
     static complex temp;
@@ -3301,7 +3334,7 @@ L20:
     matrix and  A  is an  n by k  matrix in the  first case and a  k by n
     matrix in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -3385,6 +3418,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -3396,6 +3431,8 @@ L20:
 
     -- Modified 8-Nov-93 to set C(J,J) to REAL( C(J,J) ) when BETA = 1.
        Ed Anderson, Cray Research Inc.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -3780,12 +3817,20 @@ L20:
 
 
 /*
-       scales a vector by a constant.
+    Purpose
+    =======
+
+       CSCAL scales a vector by a constant.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack,  3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cx;
@@ -3828,6 +3873,141 @@ L20:
     return 0;
 } /* cscal_ */
 
+/* Subroutine */ int csrot_(integer *n, complex *cx, integer *incx, complex *
+	cy, integer *incy, real *c__, real *s)
+{
+    /* System generated locals */
+    integer i__1, i__2, i__3, i__4;
+    complex q__1, q__2, q__3;
+
+    /* Local variables */
+    static integer i__, ix, iy;
+    static complex ctemp;
+
+
+/*
+    Purpose
+    =======
+
+    CSROT applies a plane rotation, where the cos and sin (c and s) are real
+    and the vectors cx and cy are complex.
+    jack dongarra, linpack, 3/11/78.
+
+    Arguments
+    ==========
+
+    N        (input) INTEGER
+             On entry, N specifies the order of the vectors cx and cy.
+             N must be at least zero.
+             Unchanged on exit.
+
+    CX       (input) COMPLEX array, dimension at least
+             ( 1 + ( N - 1 )*abs( INCX ) ).
+             Before entry, the incremented array CX must contain the n
+             element vector cx. On exit, CX is overwritten by the updated
+             vector cx.
+
+    INCX     (input) INTEGER
+             On entry, INCX specifies the increment for the elements of
+             CX. INCX must not be zero.
+             Unchanged on exit.
+
+    CY       (input) COMPLEX array, dimension at least
+             ( 1 + ( N - 1 )*abs( INCY ) ).
+             Before entry, the incremented array CY must contain the n
+             element vector cy. On exit, CY is overwritten by the updated
+             vector cy.
+
+    INCY     (input) INTEGER
+             On entry, INCY specifies the increment for the elements of
+             CY. INCY must not be zero.
+             Unchanged on exit.
+
+    C        (input) REAL
+             On entry, C specifies the cosine, cos.
+             Unchanged on exit.
+
+    S        (input) REAL
+             On entry, S specifies the sine, sin.
+             Unchanged on exit.
+
+    =====================================================================
+*/
+
+
+    /* Parameter adjustments */
+    --cy;
+    --cx;
+
+    /* Function Body */
+    if (*n <= 0) {
+	return 0;
+    }
+    if (*incx == 1 && *incy == 1) {
+	goto L20;
+    }
+
+/*
+          code for unequal increments or equal increments not equal
+            to 1
+*/
+
+    ix = 1;
+    iy = 1;
+    if (*incx < 0) {
+	ix = (-(*n) + 1) * *incx + 1;
+    }
+    if (*incy < 0) {
+	iy = (-(*n) + 1) * *incy + 1;
+    }
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	i__2 = ix;
+	q__2.r = *c__ * cx[i__2].r, q__2.i = *c__ * cx[i__2].i;
+	i__3 = iy;
+	q__3.r = *s * cy[i__3].r, q__3.i = *s * cy[i__3].i;
+	q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
+	ctemp.r = q__1.r, ctemp.i = q__1.i;
+	i__2 = iy;
+	i__3 = iy;
+	q__2.r = *c__ * cy[i__3].r, q__2.i = *c__ * cy[i__3].i;
+	i__4 = ix;
+	q__3.r = *s * cx[i__4].r, q__3.i = *s * cx[i__4].i;
+	q__1.r = q__2.r - q__3.r, q__1.i = q__2.i - q__3.i;
+	cy[i__2].r = q__1.r, cy[i__2].i = q__1.i;
+	i__2 = ix;
+	cx[i__2].r = ctemp.r, cx[i__2].i = ctemp.i;
+	ix += *incx;
+	iy += *incy;
+/* L10: */
+    }
+    return 0;
+
+/*        code for both increments equal to 1 */
+
+L20:
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	i__2 = i__;
+	q__2.r = *c__ * cx[i__2].r, q__2.i = *c__ * cx[i__2].i;
+	i__3 = i__;
+	q__3.r = *s * cy[i__3].r, q__3.i = *s * cy[i__3].i;
+	q__1.r = q__2.r + q__3.r, q__1.i = q__2.i + q__3.i;
+	ctemp.r = q__1.r, ctemp.i = q__1.i;
+	i__2 = i__;
+	i__3 = i__;
+	q__2.r = *c__ * cy[i__3].r, q__2.i = *c__ * cy[i__3].i;
+	i__4 = i__;
+	q__3.r = *s * cx[i__4].r, q__3.i = *s * cx[i__4].i;
+	q__1.r = q__2.r - q__3.r, q__1.i = q__2.i - q__3.i;
+	cy[i__2].r = q__1.r, cy[i__2].i = q__1.i;
+	i__2 = i__;
+	cx[i__2].r = ctemp.r, cx[i__2].i = ctemp.i;
+/* L30: */
+    }
+    return 0;
+} /* csrot_ */
+
 /* Subroutine */ int csscal_(integer *n, real *sa, complex *cx, integer *incx)
 {
     /* System generated locals */
@@ -3835,20 +4015,25 @@ L20:
     real r__1, r__2;
     complex q__1;
 
-    /* Builtin functions */
-    double r_imag(complex *);
-
     /* Local variables */
     static integer i__, nincx;
 
 
 /*
-       scales a complex vector by a real constant.
+    Purpose
+    =======
+
+       CSSCAL scales a complex vector by a real constant.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cx;
@@ -3905,11 +4090,19 @@ L20:
 
 
 /*
-       interchanges two vectors.
+    Purpose
+    =======
+
+      CSWAP interchanges two vectors.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cy;
@@ -3976,9 +4169,6 @@ L20:
 	    i__6;
     complex q__1, q__2, q__3;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, k, info;
     static complex temp;
@@ -4003,7 +4193,7 @@ L20:
 
        op( A ) = A   or   op( A ) = A'   or   op( A ) = conjg( A' ).
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -4097,6 +4287,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -4105,6 +4297,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -4156,7 +4350,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -4635,9 +4829,6 @@ L20:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     complex q__1, q__2, q__3;
 
-    /* Builtin functions */
-    void r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, ix, jx, kx, info;
     static complex temp;
@@ -4657,7 +4848,7 @@ L20:
     where x is an n element vector and  A is an n by n unit, or non-unit,
     upper or lower triangular matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -4728,6 +4919,8 @@ L20:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -4736,6 +4929,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -5168,9 +5363,6 @@ L20:
 	    i__6, i__7;
     complex q__1, q__2, q__3;
 
-    /* Builtin functions */
-    void c_div(complex *, complex *, complex *), r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, k, info;
     static complex temp;
@@ -5197,7 +5389,7 @@ L20:
 
     The matrix X is overwritten on B.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -5291,6 +5483,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -5299,6 +5493,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -5350,7 +5546,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -5837,9 +6033,6 @@ L20:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     complex q__1, q__2, q__3;
 
-    /* Builtin functions */
-    void c_div(complex *, complex *, complex *), r_cnjg(complex *, complex *);
-
     /* Local variables */
     static integer i__, j, ix, jx, kx, info;
     static complex temp;
@@ -5862,7 +6055,7 @@ L20:
     No test for singularity or near-singularity is included in this
     routine. Such tests must be performed before calling this routine.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -5933,6 +6126,8 @@ L20:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -5941,6 +6136,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -6341,12 +6538,20 @@ L20:
 
 
 /*
-       constant times a vector plus a vector.
+    Purpose
+    =======
+
+       DAXPY constant times a vector plus a vector.
        uses unrolled loops for increments equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dy;
@@ -6421,21 +6626,21 @@ L40:
 doublereal dcabs1_(doublecomplex *z__)
 {
     /* System generated locals */
-    doublereal ret_val;
-    static doublecomplex equiv_0[1];
+    doublereal ret_val, d__1, d__2;
 
-    /* Local variables */
-#define t ((doublereal *)equiv_0)
-#define zz (equiv_0)
+/*
+    Purpose
+    =======
 
-    zz->r = z__->r, zz->i = z__->i;
-    ret_val = abs(t[0]) + abs(t[1]);
+    DCABS1 computes absolute value of a double complex number
+
+    =====================================================================
+*/
+
+
+    ret_val = (d__1 = z__->r, abs(d__1)) + (d__2 = d_imag(z__), abs(d__2));
     return ret_val;
 } /* dcabs1_ */
-
-#undef zz
-#undef t
-
 
 /* Subroutine */ int dcopy_(integer *n, doublereal *dx, integer *incx,
 	doublereal *dy, integer *incy)
@@ -6448,12 +6653,20 @@ doublereal dcabs1_(doublecomplex *z__)
 
 
 /*
-       copies a vector, x, to a vector, y.
+    Purpose
+    =======
+
+       DCOPY copies a vector, x, to a vector, y.
        uses unrolled loops for increments equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dy;
@@ -6538,12 +6751,20 @@ doublereal ddot_(integer *n, doublereal *dx, integer *incx, doublereal *dy,
 
 
 /*
-       forms the dot product of two vectors.
+    Purpose
+    =======
+
+       DDOT forms the dot product of two vectors.
        uses unrolled loops for increments equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dy;
@@ -6650,7 +6871,7 @@ L60:
     alpha and beta are scalars, and A, B and C are matrices, with op( A )
     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANSA - CHARACTER*1.
@@ -6746,6 +6967,8 @@ L60:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -6754,6 +6977,8 @@ L60:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
@@ -7004,7 +7229,7 @@ L60:
     where alpha and beta are scalars, x and y are vectors and A is an
     m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANS  - CHARACTER*1.
@@ -7075,6 +7300,8 @@ L60:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -7083,6 +7310,8 @@ L60:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -7291,7 +7520,7 @@ L60:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -7341,6 +7570,8 @@ L60:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -7349,6 +7580,8 @@ L60:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -7444,26 +7677,29 @@ doublereal dnrm2_(integer *n, doublereal *x, integer *incx)
     integer i__1, i__2;
     doublereal ret_val, d__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer ix;
     static doublereal ssq, norm, scale, absxi;
 
 
 /*
+    Purpose
+    =======
+
     DNRM2 returns the euclidean norm of a vector via the function
     name, so that
 
        DNRM2 := sqrt( x'*x )
 
+    Further Details
+    ===============
 
     -- This version written on 25-October-1982.
        Modified on 14-October-1993 to inline the call to DLASSQ.
        Sven Hammarling, Nag Ltd.
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --x;
@@ -7522,11 +7758,19 @@ doublereal dnrm2_(integer *n, doublereal *x, integer *incx)
 
 
 /*
-       applies a plane rotation.
+    Purpose
+    =======
+
+       DROT applies a plane rotation.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dy;
@@ -7588,13 +7832,21 @@ L20:
 
 
 /*
-       scales a vector by a constant.
+    Purpose
+    =======
+
+       DSCAL scales a vector by a constant.
        uses unrolled loops for increment equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dx;
@@ -7664,12 +7916,20 @@ L40:
 
 
 /*
+    Purpose
+    =======
+
        interchanges two vectors.
        uses unrolled loops for increments equal one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dy;
@@ -7772,7 +8032,7 @@ L40:
     where alpha and beta are scalars, x and y are n element vectors and
     A is an n by n symmetric matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -7841,6 +8101,8 @@ L40:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -7849,6 +8111,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -8060,7 +8324,7 @@ L40:
     where alpha is a scalar, x and y are n element vectors and A is an n
     by n symmetric matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -8127,6 +8391,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -8135,6 +8401,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -8320,7 +8588,7 @@ L40:
     and  A and B  are  n by k  matrices  in the  first  case  and  k by n
     matrices in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -8421,6 +8689,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -8430,6 +8700,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -8699,7 +8971,7 @@ L40:
     and  A  is an  n by k  matrix in the first case and a  k by n  matrix
     in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -8782,6 +9054,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -8790,6 +9064,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -9043,7 +9319,7 @@ L40:
 
        op( A ) = A   or   op( A ) = A'.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -9137,6 +9413,8 @@ L40:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -9145,6 +9423,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -9195,7 +9475,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -9463,7 +9743,7 @@ L40:
     where x is an n element vector and  A is an n by n unit, or non-unit,
     upper or lower triangular matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -9534,6 +9814,8 @@ L40:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -9542,6 +9824,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -9793,7 +10077,7 @@ L40:
 
     The matrix X is overwritten on B.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -9887,6 +10171,8 @@ L40:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -9896,6 +10182,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -9946,7 +10234,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -10236,12 +10524,20 @@ doublereal dzasum_(integer *n, doublecomplex *zx, integer *incx)
 
 
 /*
-       takes the sum of the absolute values.
+    Purpose
+    =======
+
+       DZASUM takes the sum of the absolute values.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zx;
@@ -10286,26 +10582,29 @@ doublereal dznrm2_(integer *n, doublecomplex *x, integer *incx)
     integer i__1, i__2, i__3;
     doublereal ret_val, d__1;
 
-    /* Builtin functions */
-    double d_imag(doublecomplex *), sqrt(doublereal);
-
     /* Local variables */
     static integer ix;
     static doublereal ssq, temp, norm, scale;
 
 
 /*
+    Purpose
+    =======
+
     DZNRM2 returns the euclidean norm of a vector via the function
     name, so that
 
        DZNRM2 := sqrt( conjg( x' )*x )
 
+    Further Details
+    ===============
 
     -- This version written on 25-October-1982.
        Modified on 14-October-1993 to inline the call to ZLASSQ.
        Sven Hammarling, Nag Ltd.
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --x;
@@ -10368,24 +10667,29 @@ doublereal dznrm2_(integer *n, doublecomplex *x, integer *incx)
 integer icamax_(integer *n, complex *cx, integer *incx)
 {
     /* System generated locals */
-    integer ret_val, i__1, i__2;
-    real r__1, r__2;
-
-    /* Builtin functions */
-    double r_imag(complex *);
+    integer ret_val, i__1;
 
     /* Local variables */
     static integer i__, ix;
     static real smax;
+    extern doublereal scabs1_(complex *);
 
 
 /*
-       finds the index of element having max. absolute value.
+    Purpose
+    =======
+
+       ICAMAX finds the index of element having max. absolute value.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cx;
@@ -10406,19 +10710,15 @@ integer icamax_(integer *n, complex *cx, integer *incx)
 /*        code for increment not equal to 1 */
 
     ix = 1;
-    smax = (r__1 = cx[1].r, dabs(r__1)) + (r__2 = r_imag(&cx[1]), dabs(r__2));
+    smax = scabs1_(&cx[1]);
     ix += *incx;
     i__1 = *n;
     for (i__ = 2; i__ <= i__1; ++i__) {
-	i__2 = ix;
-	if ((r__1 = cx[i__2].r, dabs(r__1)) + (r__2 = r_imag(&cx[ix]), dabs(
-		r__2)) <= smax) {
+	if (scabs1_(&cx[ix]) <= smax) {
 	    goto L5;
 	}
 	ret_val = i__;
-	i__2 = ix;
-	smax = (r__1 = cx[i__2].r, dabs(r__1)) + (r__2 = r_imag(&cx[ix]),
-		dabs(r__2));
+	smax = scabs1_(&cx[ix]);
 L5:
 	ix += *incx;
 /* L10: */
@@ -10428,18 +10728,14 @@ L5:
 /*        code for increment equal to 1 */
 
 L20:
-    smax = (r__1 = cx[1].r, dabs(r__1)) + (r__2 = r_imag(&cx[1]), dabs(r__2));
+    smax = scabs1_(&cx[1]);
     i__1 = *n;
     for (i__ = 2; i__ <= i__1; ++i__) {
-	i__2 = i__;
-	if ((r__1 = cx[i__2].r, dabs(r__1)) + (r__2 = r_imag(&cx[i__]), dabs(
-		r__2)) <= smax) {
+	if (scabs1_(&cx[i__]) <= smax) {
 	    goto L30;
 	}
 	ret_val = i__;
-	i__2 = i__;
-	smax = (r__1 = cx[i__2].r, dabs(r__1)) + (r__2 = r_imag(&cx[i__]),
-		dabs(r__2));
+	smax = scabs1_(&cx[i__]);
 L30:
 	;
     }
@@ -10458,12 +10754,20 @@ integer idamax_(integer *n, doublereal *dx, integer *incx)
 
 
 /*
-       finds the index of element having max. absolute value.
+    Purpose
+    =======
+
+       IDAMAX finds the index of element having max. absolute value.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --dx;
@@ -10528,12 +10832,20 @@ integer isamax_(integer *n, real *sx, integer *incx)
 
 
 /*
-       finds the index of element having max. absolute value.
+    Purpose
+    =======
+
+       ISAMAX finds the index of element having max. absolute value.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sx;
@@ -10598,12 +10910,20 @@ integer izamax_(integer *n, doublecomplex *zx, integer *incx)
 
 
 /*
-       finds the index of element having max. absolute value.
+    Purpose
+    =======
+
+       IZAMAX finds the index of element having max. absolute value.
+
+    Further Details
+    ===============
+
        jack dongarra, 1/15/85.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zx;
@@ -10667,12 +10987,20 @@ L30:
 
 
 /*
-       constant times a vector plus a vector.
+    Purpose
+    =======
+
+       SAXPY constant times a vector plus a vector.
        uses unrolled loop for increments equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sy;
@@ -10744,14 +11072,30 @@ L40:
     return 0;
 } /* saxpy_ */
 
+doublereal scabs1_(complex *z__)
+{
+    /* System generated locals */
+    real ret_val, r__1, r__2;
+
+
+/*
+    Purpose
+    =======
+
+    SCABS1 computes absolute value of a complex number
+
+    =====================================================================
+*/
+
+    ret_val = (r__1 = z__->r, dabs(r__1)) + (r__2 = r_imag(z__), dabs(r__2));
+    return ret_val;
+} /* scabs1_ */
+
 doublereal scasum_(integer *n, complex *cx, integer *incx)
 {
     /* System generated locals */
     integer i__1, i__2, i__3;
     real ret_val, r__1, r__2;
-
-    /* Builtin functions */
-    double r_imag(complex *);
 
     /* Local variables */
     static integer i__, nincx;
@@ -10759,13 +11103,21 @@ doublereal scasum_(integer *n, complex *cx, integer *incx)
 
 
 /*
-       takes the sum of the absolute values of a complex vector and
+    Purpose
+    =======
+
+       SCASUM takes the sum of the absolute values of a complex vector and
        returns a single precision result.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --cx;
@@ -10814,26 +11166,29 @@ doublereal scnrm2_(integer *n, complex *x, integer *incx)
     integer i__1, i__2, i__3;
     real ret_val, r__1;
 
-    /* Builtin functions */
-    double r_imag(complex *), sqrt(doublereal);
-
     /* Local variables */
     static integer ix;
     static real ssq, temp, norm, scale;
 
 
 /*
+    Purpose
+    =======
+
     SCNRM2 returns the euclidean norm of a vector via the function
     name, so that
 
        SCNRM2 := sqrt( conjg( x' )*x )
 
+    Further Details
+    ===============
 
     -- This version written on 25-October-1982.
        Modified on 14-October-1993 to inline the call to CLASSQ.
        Sven Hammarling, Nag Ltd.
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --x;
@@ -10904,12 +11259,20 @@ doublereal scnrm2_(integer *n, complex *x, integer *incx)
 
 
 /*
-       copies a vector, x, to a vector, y.
+    Purpose
+    =======
+
+       SCOPY copies a vector, x, to a vector, y.
        uses unrolled loops for increments equal to 1.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sy;
@@ -10993,12 +11356,20 @@ doublereal sdot_(integer *n, real *sx, integer *incx, real *sy, integer *incy)
 
 
 /*
-       forms the dot product of two vectors.
+    Purpose
+    =======
+
+       SDOT forms the dot product of two vectors.
        uses unrolled loops for increments equal to one.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sy;
@@ -11104,7 +11475,7 @@ L60:
     alpha and beta are scalars, and A, B and C are matrices, with op( A )
     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANSA - CHARACTER*1.
@@ -11200,6 +11571,8 @@ L60:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -11208,6 +11581,8 @@ L60:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
@@ -11458,7 +11833,7 @@ L60:
     where alpha and beta are scalars, x and y are vectors and A is an
     m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANS  - CHARACTER*1.
@@ -11529,6 +11904,8 @@ L60:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -11537,6 +11914,8 @@ L60:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -11744,7 +12123,7 @@ L60:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -11794,6 +12173,8 @@ L60:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -11802,6 +12183,8 @@ L60:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -11897,26 +12280,29 @@ doublereal snrm2_(integer *n, real *x, integer *incx)
     integer i__1, i__2;
     real ret_val, r__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer ix;
     static real ssq, norm, scale, absxi;
 
 
 /*
+    Purpose
+    =======
+
     SNRM2 returns the euclidean norm of a vector via the function
     name, so that
 
-       SNRM2 := sqrt( x'*x )
+       SNRM2 := sqrt( x'*x ).
 
+    Further Details
+    ===============
 
     -- This version written on 25-October-1982.
        Modified on 14-October-1993 to inline the call to SLASSQ.
        Sven Hammarling, Nag Ltd.
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --x;
@@ -11975,11 +12361,19 @@ doublereal snrm2_(integer *n, real *x, integer *incx)
 
 
 /*
+    Purpose
+    =======
+
        applies a plane rotation.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sy;
@@ -12040,13 +12434,21 @@ L20:
 
 
 /*
+    Purpose
+    =======
+
        scales a vector by a constant.
        uses unrolled loops for increment equal to 1.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sx;
@@ -12116,12 +12518,20 @@ L40:
 
 
 /*
+    Purpose
+    =======
+
        interchanges two vectors.
        uses unrolled loops for increments equal to 1.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --sy;
@@ -12224,7 +12634,7 @@ L40:
     where alpha and beta are scalars, x and y are n element vectors and
     A is an n by n symmetric matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -12293,6 +12703,8 @@ L40:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -12301,6 +12713,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -12511,7 +12925,7 @@ L40:
     where alpha is a scalar, x and y are n element vectors and A is an n
     by n symmetric matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -12578,6 +12992,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -12586,6 +13002,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -12771,7 +13189,7 @@ L40:
     and  A and B  are  n by k  matrices  in the  first  case  and  k by n
     matrices in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -12872,6 +13290,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -12881,6 +13301,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -13152,7 +13574,7 @@ L40:
     and  A  is an  n by k  matrix in the first case and a  k by n  matrix
     in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -13235,6 +13657,8 @@ L40:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -13243,6 +13667,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -13496,7 +13922,7 @@ L40:
 
        op( A ) = A   or   op( A ) = A'.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -13590,6 +14016,8 @@ L40:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -13598,6 +14026,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -13648,7 +14078,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -13916,7 +14346,7 @@ L40:
     where x is an n element vector and  A is an n by n unit, or non-unit,
     upper or lower triangular matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -13987,6 +14417,8 @@ L40:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -13995,6 +14427,8 @@ L40:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -14246,7 +14680,7 @@ L40:
 
     The matrix X is overwritten on B.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -14340,6 +14774,8 @@ L40:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -14349,6 +14785,8 @@ L40:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -14399,7 +14837,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -14689,9 +15127,18 @@ L40:
 
 
 /*
-       constant times a vector plus a vector.
+    Purpose
+    =======
+
+       ZAXPY constant times a vector plus a vector.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
+
+    =====================================================================
 */
 
     /* Parameter adjustments */
@@ -14765,11 +15212,19 @@ L20:
 
 
 /*
-       copies a vector, x, to a vector, y.
+    Purpose
+    =======
+
+       ZCOPY copies a vector, x, to a vector, y.
+
+    Further Details
+    ===============
+
        jack dongarra, linpack, 4/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zy;
@@ -14827,18 +15282,24 @@ L20:
     integer i__1, i__2;
     doublecomplex z__1, z__2, z__3;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, ix, iy;
     static doublecomplex ztemp;
 
 
 /*
-       forms the dot product of a vector.
+    Purpose
+    =======
+
+    ZDOTC forms the dot product of a vector.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
+
+    =====================================================================
 */
 
     /* Parameter adjustments */
@@ -14913,9 +15374,18 @@ L20:
 
 
 /*
-       forms the dot product of two vectors.
+    Purpose
+    =======
+
+       ZDOTU forms the dot product of two vectors.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
+
+    =====================================================================
 */
 
     /* Parameter adjustments */
@@ -14977,6 +15447,141 @@ L20:
     return ;
 } /* zdotu_ */
 
+/* Subroutine */ int zdrot_(integer *n, doublecomplex *cx, integer *incx,
+	doublecomplex *cy, integer *incy, doublereal *c__, doublereal *s)
+{
+    /* System generated locals */
+    integer i__1, i__2, i__3, i__4;
+    doublecomplex z__1, z__2, z__3;
+
+    /* Local variables */
+    static integer i__, ix, iy;
+    static doublecomplex ctemp;
+
+
+/*
+    Purpose
+    =======
+
+    Applies a plane rotation, where the cos and sin (c and s) are real
+    and the vectors cx and cy are complex.
+    jack dongarra, linpack, 3/11/78.
+
+    Arguments
+    ==========
+
+    N        (input) INTEGER
+             On entry, N specifies the order of the vectors cx and cy.
+             N must be at least zero.
+             Unchanged on exit.
+
+    CX       (input) COMPLEX*16 array, dimension at least
+             ( 1 + ( N - 1 )*abs( INCX ) ).
+             Before entry, the incremented array CX must contain the n
+             element vector cx. On exit, CX is overwritten by the updated
+             vector cx.
+
+    INCX     (input) INTEGER
+             On entry, INCX specifies the increment for the elements of
+             CX. INCX must not be zero.
+             Unchanged on exit.
+
+    CY       (input) COMPLEX*16 array, dimension at least
+             ( 1 + ( N - 1 )*abs( INCY ) ).
+             Before entry, the incremented array CY must contain the n
+             element vector cy. On exit, CY is overwritten by the updated
+             vector cy.
+
+    INCY     (input) INTEGER
+             On entry, INCY specifies the increment for the elements of
+             CY. INCY must not be zero.
+             Unchanged on exit.
+
+    C        (input) DOUBLE PRECISION
+             On entry, C specifies the cosine, cos.
+             Unchanged on exit.
+
+    S        (input) DOUBLE PRECISION
+             On entry, S specifies the sine, sin.
+             Unchanged on exit.
+
+   =====================================================================
+*/
+
+
+    /* Parameter adjustments */
+    --cy;
+    --cx;
+
+    /* Function Body */
+    if (*n <= 0) {
+	return 0;
+    }
+    if (*incx == 1 && *incy == 1) {
+	goto L20;
+    }
+
+/*
+          code for unequal increments or equal increments not equal
+            to 1
+*/
+
+    ix = 1;
+    iy = 1;
+    if (*incx < 0) {
+	ix = (-(*n) + 1) * *incx + 1;
+    }
+    if (*incy < 0) {
+	iy = (-(*n) + 1) * *incy + 1;
+    }
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	i__2 = ix;
+	z__2.r = *c__ * cx[i__2].r, z__2.i = *c__ * cx[i__2].i;
+	i__3 = iy;
+	z__3.r = *s * cy[i__3].r, z__3.i = *s * cy[i__3].i;
+	z__1.r = z__2.r + z__3.r, z__1.i = z__2.i + z__3.i;
+	ctemp.r = z__1.r, ctemp.i = z__1.i;
+	i__2 = iy;
+	i__3 = iy;
+	z__2.r = *c__ * cy[i__3].r, z__2.i = *c__ * cy[i__3].i;
+	i__4 = ix;
+	z__3.r = *s * cx[i__4].r, z__3.i = *s * cx[i__4].i;
+	z__1.r = z__2.r - z__3.r, z__1.i = z__2.i - z__3.i;
+	cy[i__2].r = z__1.r, cy[i__2].i = z__1.i;
+	i__2 = ix;
+	cx[i__2].r = ctemp.r, cx[i__2].i = ctemp.i;
+	ix += *incx;
+	iy += *incy;
+/* L10: */
+    }
+    return 0;
+
+/*        code for both increments equal to 1 */
+
+L20:
+    i__1 = *n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
+	i__2 = i__;
+	z__2.r = *c__ * cx[i__2].r, z__2.i = *c__ * cx[i__2].i;
+	i__3 = i__;
+	z__3.r = *s * cy[i__3].r, z__3.i = *s * cy[i__3].i;
+	z__1.r = z__2.r + z__3.r, z__1.i = z__2.i + z__3.i;
+	ctemp.r = z__1.r, ctemp.i = z__1.i;
+	i__2 = i__;
+	i__3 = i__;
+	z__2.r = *c__ * cy[i__3].r, z__2.i = *c__ * cy[i__3].i;
+	i__4 = i__;
+	z__3.r = *s * cx[i__4].r, z__3.i = *s * cx[i__4].i;
+	z__1.r = z__2.r - z__3.r, z__1.i = z__2.i - z__3.i;
+	cy[i__2].r = z__1.r, cy[i__2].i = z__1.i;
+	i__2 = i__;
+	cx[i__2].r = ctemp.r, cx[i__2].i = ctemp.i;
+/* L30: */
+    }
+    return 0;
+} /* zdrot_ */
+
 /* Subroutine */ int zdscal_(integer *n, doublereal *da, doublecomplex *zx,
 	integer *incx)
 {
@@ -14989,12 +15594,20 @@ L20:
 
 
 /*
-       scales a vector by a constant.
+    Purpose
+    =======
+
+       ZDSCAL scales a vector by a constant.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zx;
@@ -15049,9 +15662,6 @@ L20:
 	    i__3, i__4, i__5, i__6;
     doublecomplex z__1, z__2, z__3, z__4;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, l, info;
     static logical nota, notb;
@@ -15078,7 +15688,7 @@ L20:
     alpha and beta are scalars, and A, B and C are matrices, with op( A )
     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANSA - CHARACTER*1.
@@ -15174,6 +15784,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -15182,6 +15794,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
@@ -15719,9 +16333,6 @@ L20:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     doublecomplex z__1, z__2, z__3;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, ix, iy, jx, jy, kx, ky, info;
     static doublecomplex temp;
@@ -15744,7 +16355,7 @@ L20:
     where alpha and beta are scalars, x and y are vectors and A is an
     m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     TRANS  - CHARACTER*1.
@@ -15815,6 +16426,8 @@ L20:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -15823,6 +16436,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -16107,9 +16722,6 @@ L20:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     doublecomplex z__1, z__2;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, ix, jy, kx, info;
     static doublecomplex temp;
@@ -16127,7 +16739,7 @@ L20:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -16177,6 +16789,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -16185,6 +16799,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -16319,7 +16935,7 @@ L20:
     where alpha is a scalar, x is an m element vector, y is an n element
     vector and A is an m by n matrix.
 
-    Parameters
+    Arguments
     ==========
 
     M      - INTEGER.
@@ -16369,6 +16985,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -16377,6 +16995,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -16495,9 +17115,6 @@ L20:
     doublereal d__1;
     doublecomplex z__1, z__2, z__3, z__4;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, ix, iy, jx, jy, kx, ky, info;
     static doublecomplex temp1, temp2;
@@ -16516,7 +17133,7 @@ L20:
     where alpha and beta are scalars, x and y are n element vectors and
     A is an n by n hermitian matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -16587,6 +17204,8 @@ L20:
              Y. INCY must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -16595,6 +17214,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -16903,9 +17524,6 @@ L20:
     doublereal d__1;
     doublecomplex z__1, z__2, z__3, z__4;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, ix, iy, jx, jy, kx, ky, info;
     static doublecomplex temp1, temp2;
@@ -16924,7 +17542,7 @@ L20:
     where alpha is a scalar, x and y are n element vectors and A is an n
     by n hermitian matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -16994,6 +17612,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -17002,6 +17622,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -17328,9 +17950,6 @@ L20:
     doublereal d__1;
     doublecomplex z__1, z__2, z__3, z__4, z__5, z__6;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, l, info;
     static doublecomplex temp1, temp2;
@@ -17356,7 +17975,7 @@ L20:
     hermitian matrix and  A and B  are  n by k matrices in the first case
     and  k by n  matrices in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -17459,6 +18078,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -17470,6 +18091,8 @@ L20:
 
     -- Modified 8-Nov-93 to set C(J,J) to DBLE( C(J,J) ) when BETA = 1.
        Ed Anderson, Cray Research Inc.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -17976,9 +18599,6 @@ L20:
     doublereal d__1;
     doublecomplex z__1, z__2, z__3;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, l, info;
     static doublecomplex temp;
@@ -18005,7 +18625,7 @@ L20:
     matrix and  A  is an  n by k  matrix in the  first case and a  k by n
     matrix in the second case.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -18089,6 +18709,8 @@ L20:
              max( 1, n ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -18100,6 +18722,8 @@ L20:
 
     -- Modified 8-Nov-93 to set C(J,J) to DBLE( C(J,J) ) when BETA = 1.
        Ed Anderson, Cray Research Inc.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -18484,12 +19108,20 @@ L20:
 
 
 /*
-       scales a vector by a constant.
+    Purpose
+    =======
+
+       ZSCAL scales a vector by a constant.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 3/93 to return if incx .le. 0.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zx;
@@ -18544,11 +19176,19 @@ L20:
 
 
 /*
-       interchanges two vectors.
+    Purpose
+    =======
+
+       ZSWAP interchanges two vectors.
+
+    Further Details
+    ===============
+
        jack dongarra, 3/11/78.
        modified 12/3/93, array(1) declarations changed to array(*)
-*/
 
+    =====================================================================
+*/
 
     /* Parameter adjustments */
     --zy;
@@ -18615,9 +19255,6 @@ L20:
 	    i__6;
     doublecomplex z__1, z__2, z__3;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, k, info;
     static doublecomplex temp;
@@ -18642,7 +19279,7 @@ L20:
 
        op( A ) = A   or   op( A ) = A'   or   op( A ) = conjg( A' ).
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -18736,6 +19373,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -18744,6 +19383,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -18795,7 +19436,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -19274,9 +19915,6 @@ L20:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     doublecomplex z__1, z__2, z__3;
 
-    /* Builtin functions */
-    void d_cnjg(doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, ix, jx, kx, info;
     static doublecomplex temp;
@@ -19296,7 +19934,7 @@ L20:
     where x is an n element vector and  A is an n by n unit, or non-unit,
     upper or lower triangular matrix.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -19367,6 +20005,8 @@ L20:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -19375,6 +20015,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -19807,10 +20449,6 @@ L20:
 	    i__6, i__7;
     doublecomplex z__1, z__2, z__3;
 
-    /* Builtin functions */
-    void z_div(doublecomplex *, doublecomplex *, doublecomplex *), d_cnjg(
-	    doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, k, info;
     static doublecomplex temp;
@@ -19837,7 +20475,7 @@ L20:
 
     The matrix X is overwritten on B.
 
-    Parameters
+    Arguments
     ==========
 
     SIDE   - CHARACTER*1.
@@ -19931,6 +20569,8 @@ L20:
              max( 1, m ).
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 3 Blas routine.
 
@@ -19939,6 +20579,8 @@ L20:
        Iain Duff, AERE Harwell.
        Jeremy Du Croz, Numerical Algorithms Group Ltd.
        Sven Hammarling, Numerical Algorithms Group Ltd.
+
+    =====================================================================
 
 
        Test the input parameters.
@@ -19990,7 +20632,7 @@ L20:
 
 /*     Quick return if possible. */
 
-    if (*n == 0) {
+    if (*m == 0 || *n == 0) {
 	return 0;
     }
 
@@ -20259,7 +20901,7 @@ L20:
 /* L210: */
 		    }
 		    if (nounit) {
-			z_div(&z__1, &c_b1069, &a[j + j * a_dim1]);
+			z_div(&z__1, &c_b1078, &a[j + j * a_dim1]);
 			temp.r = z__1.r, temp.i = z__1.i;
 			i__2 = *m;
 			for (i__ = 1; i__ <= i__2; ++i__) {
@@ -20310,7 +20952,7 @@ L20:
 /* L260: */
 		    }
 		    if (nounit) {
-			z_div(&z__1, &c_b1069, &a[j + j * a_dim1]);
+			z_div(&z__1, &c_b1078, &a[j + j * a_dim1]);
 			temp.r = z__1.r, temp.i = z__1.i;
 			i__1 = *m;
 			for (i__ = 1; i__ <= i__1; ++i__) {
@@ -20337,11 +20979,11 @@ L20:
 		for (k = *n; k >= 1; --k) {
 		    if (nounit) {
 			if (noconj) {
-			    z_div(&z__1, &c_b1069, &a[k + k * a_dim1]);
+			    z_div(&z__1, &c_b1078, &a[k + k * a_dim1]);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			} else {
 			    d_cnjg(&z__2, &a[k + k * a_dim1]);
-			    z_div(&z__1, &c_b1069, &z__2);
+			    z_div(&z__1, &c_b1078, &z__2);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			}
 			i__1 = *m;
@@ -20401,11 +21043,11 @@ L20:
 		for (k = 1; k <= i__1; ++k) {
 		    if (nounit) {
 			if (noconj) {
-			    z_div(&z__1, &c_b1069, &a[k + k * a_dim1]);
+			    z_div(&z__1, &c_b1078, &a[k + k * a_dim1]);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			} else {
 			    d_cnjg(&z__2, &a[k + k * a_dim1]);
-			    z_div(&z__1, &c_b1069, &z__2);
+			    z_div(&z__1, &c_b1078, &z__2);
 			    temp.r = z__1.r, temp.i = z__1.i;
 			}
 			i__2 = *m;
@@ -20477,10 +21119,6 @@ L20:
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4, i__5;
     doublecomplex z__1, z__2, z__3;
 
-    /* Builtin functions */
-    void z_div(doublecomplex *, doublecomplex *, doublecomplex *), d_cnjg(
-	    doublecomplex *, doublecomplex *);
-
     /* Local variables */
     static integer i__, j, ix, jx, kx, info;
     static doublecomplex temp;
@@ -20503,7 +21141,7 @@ L20:
     No test for singularity or near-singularity is included in this
     routine. Such tests must be performed before calling this routine.
 
-    Parameters
+    Arguments
     ==========
 
     UPLO   - CHARACTER*1.
@@ -20574,6 +21212,8 @@ L20:
              X. INCX must not be zero.
              Unchanged on exit.
 
+    Further Details
+    ===============
 
     Level 2 Blas routine.
 
@@ -20582,6 +21222,8 @@ L20:
        Jeremy Du Croz, Nag Central Office.
        Sven Hammarling, Nag Central Office.
        Richard Hanson, Sandia National Labs.
+
+    =====================================================================
 
 
        Test the input parameters.

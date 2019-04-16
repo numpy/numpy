@@ -1,3 +1,5 @@
+.. module:: numpy.testing
+
 Test Support (:mod:`numpy.testing`)
 ===================================
 
@@ -6,8 +8,9 @@ Test Support (:mod:`numpy.testing`)
 Common test support for all numpy test scripts.
 
 This single module should provide all the common functionality for numpy
-tests in a single location, so that test scripts can just import it and
-work right away.
+tests in a single location, so that :ref:`test scripts
+<development-environment>` can just import it and work right away. For
+background, see the :ref:`testing-guidelines`
 
 
 Asserts
@@ -41,7 +44,6 @@ Decorators
    decorators.slow
    decorate_methods
 
-
 Test Running
 ------------
 .. autosummary::
@@ -50,3 +52,11 @@ Test Running
    Tester
    run_module_suite
    rundocs
+   suppress_warnings
+
+Guidelines
+----------
+
+.. toctree::
+
+   testing

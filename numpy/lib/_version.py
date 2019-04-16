@@ -45,11 +45,14 @@ class NumpyVersion():
     Examples
     --------
     >>> from numpy.lib import NumpyVersion
-    >>> if NumpyVersion(np.__version__) < '1.7.0'):
+    >>> if NumpyVersion(np.__version__) < '1.7.0':
     ...     print('skip')
-    skip
+    >>> # skip
 
     >>> NumpyVersion('1.7')  # raises ValueError, add ".0"
+    Traceback (most recent call last):
+        ...
+    ValueError: Not a valid numpy version string
 
     """
 

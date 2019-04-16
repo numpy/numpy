@@ -9,12 +9,7 @@ pushd builds
 
 # Build into own virtualenv
 # We therefore control our own environment, avoid travis' numpy
-#
-# Some change in virtualenv 14.0.5 caused `test_f2py` to fail. So, we have
-# pinned `virtualenv` to the last known working version to avoid this failure.
-# Appears we had some issues with certificates on Travis. It looks like
-# bumping to 14.0.6 will help.
-pip install -U 'virtualenv==14.0.6'
+pip install -U virtualenv
 
 if [ -n "$USE_DEBUG" ]
 then
@@ -25,7 +20,23 @@ fi
 
 source venv/bin/activate
 python -V
+
+if [ -n "$INSTALL_PICKLE5" ]; then
+  pip install pickle5
+fi
+
+if [ -n "$PPC64_LE" ]; then
+  # build script for POWER8 OpenBLAS available here:
+  # https://github.com/tylerjereddy/openblas-static-gcc/blob/master/power8
+  # built on GCC compile farm machine named gcc112
+  # manually uploaded tarball to an unshared Dropbox location
+  wget -O openblas-power8.tar.gz https://www.dropbox.com/s/zcwhk7c2zptwy0s/openblas-v0.3.5-ppc64le-power8.tar.gz?dl=0
+  tar zxvf openblas-power8.tar.gz
+  sudo cp -r ./64/lib/* /usr/lib
+  sudo cp ./64/include/* /usr/include
+fi
+
 pip install --upgrade pip setuptools
-pip install nose pytz cython
+pip install nose pytz cython pytest
 if [ -n "$USE_ASV" ]; then pip install asv; fi
 popd

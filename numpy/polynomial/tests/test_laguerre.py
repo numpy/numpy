@@ -3,12 +3,14 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.laguerre as lag
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
-    TestCase, assert_almost_equal, assert_raises,
-    assert_equal, assert_, run_module_suite)
+    assert_almost_equal, assert_raises, assert_equal, assert_,
+    )
 
 L0 = np.array([1])/1
 L1 = np.array([1, -1])/1
@@ -25,7 +27,7 @@ def trim(x):
     return lag.lagtrim(x, tol=1e-6)
 
 
-class TestConstants(TestCase):
+class TestConstants(object):
 
     def test_lagdomain(self):
         assert_equal(lag.lagdomain, [0, 1])
@@ -40,7 +42,7 @@ class TestConstants(TestCase):
         assert_equal(lag.lagx, [1, -1])
 
 
-class TestArithmetic(TestCase):
+class TestArithmetic(object):
     x = np.linspace(-3, 3, 100)
 
     def test_lagadd(self):
@@ -96,8 +98,17 @@ class TestArithmetic(TestCase):
                 res = lag.lagadd(lag.lagmul(quo, ci), rem)
                 assert_almost_equal(trim(res), trim(tgt), err_msg=msg)
 
+    def test_lagpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(lag.lagmul, [c]*j, np.array([1]))
+                res = lag.lagpow(c, j) 
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
 
-class TestEvaluation(TestCase):
+
+class TestEvaluation(object):
     # coefficients of 1 + 2*x + 3*x**2
     c1d = np.array([9., -14., 6.])
     c2d = np.einsum('i,j->ij', c1d, c1d)
@@ -191,13 +202,16 @@ class TestEvaluation(TestCase):
         assert_(res.shape == (2, 3)*3)
 
 
-class TestIntegral(TestCase):
+class TestIntegral(object):
 
     def test_lagint(self):
         # check exceptions
-        assert_raises(ValueError, lag.lagint, [0], .5)
+        assert_raises(TypeError, lag.lagint, [0], .5)
         assert_raises(ValueError, lag.lagint, [0], -1)
         assert_raises(ValueError, lag.lagint, [0], 1, [0, 0])
+        assert_raises(ValueError, lag.lagint, [0], lbnd=[0])
+        assert_raises(ValueError, lag.lagint, [0], scl=[0])
+        assert_raises(TypeError, lag.lagint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -290,11 +304,11 @@ class TestIntegral(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestDerivative(TestCase):
+class TestDerivative(object):
 
     def test_lagder(self):
         # check exceptions
-        assert_raises(ValueError, lag.lagder, [0], .5)
+        assert_raises(TypeError, lag.lagder, [0], .5)
         assert_raises(ValueError, lag.lagder, [0], -1)
 
         # check that zeroth derivative does nothing
@@ -330,7 +344,7 @@ class TestDerivative(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestVander(TestCase):
+class TestVander(object):
     # some random values in [-1, 1)
     x = np.random.random((3, 5))*2 - 1
 
@@ -378,7 +392,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestFitting(TestCase):
+class TestFitting(object):
 
     def test_lagfit(self):
         def f(x):
@@ -440,7 +454,7 @@ class TestFitting(TestCase):
         assert_almost_equal(lag.lagfit(x, x, [0, 1]), [1, -1])
 
 
-class TestCompanion(TestCase):
+class TestCompanion(object):
 
     def test_raises(self):
         assert_raises(ValueError, lag.lagcompanion, [])
@@ -455,7 +469,7 @@ class TestCompanion(TestCase):
         assert_(lag.lagcompanion([1, 2])[0, 0] == 1.5)
 
 
-class TestGauss(TestCase):
+class TestGauss(object):
 
     def test_100(self):
         x, w = lag.laggauss(100)
@@ -474,7 +488,7 @@ class TestGauss(TestCase):
         assert_almost_equal(w.sum(), tgt)
 
 
-class TestMisc(TestCase):
+class TestMisc(object):
 
     def test_lagfromroots(self):
         res = lag.lagfromroots([])
@@ -523,7 +537,3 @@ class TestMisc(TestCase):
         tgt = np.exp(-x)
         res = lag.lagweight(x)
         assert_almost_equal(res, tgt)
-
-
-if __name__ == "__main__":
-    run_module_suite()

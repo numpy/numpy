@@ -1,5 +1,7 @@
 .. _routines.linalg:
 
+.. module:: numpy.linalg
+
 Linear algebra (:mod:`numpy.linalg`)
 ************************************
 
@@ -18,6 +20,7 @@ Matrix and vector products
    matmul
    tensordot
    einsum
+   einsum_path
    linalg.matrix_power
    kron
 
@@ -70,6 +73,8 @@ Exceptions
    :toctree: generated/
 
    linalg.LinAlgError
+
+.. _routines.linalg-broadcasting:
 
 Linear algebra on several matrices at once
 ------------------------------------------

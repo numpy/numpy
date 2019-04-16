@@ -36,17 +36,17 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l);
  */
 static char _normalize_byteorder(char byteorder)
 {
-   switch(byteorder) {
-       case '=':
-           if (PyArray_GetEndianness() == NPY_CPU_BIG) {
-               return '>';
-           }
-           else {
-               return '<';
-           }
-       default:
-           return byteorder;
-   }
+    switch(byteorder) {
+        case '=':
+            if (PyArray_GetEndianness() == NPY_CPU_BIG) {
+                return '>';
+            }
+            else {
+                return '<';
+            }
+        default:
+            return byteorder;
+    }
 }
 
 /*
@@ -253,7 +253,7 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
 }
 
 /*
- * Return 0 if successfull
+ * Return 0 if successful
  */
 static int _PyArray_DescrHashImp(PyArray_Descr *descr, npy_hash_t *hash)
 {

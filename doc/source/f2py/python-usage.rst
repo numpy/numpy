@@ -10,7 +10,7 @@ objects.
 
 All ``fortran`` type object have attribute ``_cpointer`` that contains
 CObject referring to the C pointer of the corresponding Fortran/C
-function or variable in C level. Such CObjects can be used as an
+function or variable in C level. Such CObjects can be used as a
 callback argument of F2PY generated functions to bypass Python C/API
 layer of calling Python functions from Fortran or C when the
 computational part of such functions is implemented in C or Fortran
@@ -120,7 +120,7 @@ There are two types of proper-contiguous NumPy arrays:
 
 For one-dimensional arrays these notions coincide.
 
-For example, an 2x2 array ``A`` is Fortran-contiguous if its elements
+For example, a 2x2 array ``A`` is Fortran-contiguous if its elements
 are stored in memory in the following order::
 
   A[0,0] A[1,0] A[0,1] A[1,1]
@@ -215,7 +215,7 @@ Sometimes a Fortran package may require that users provide routines
 that the package will use. F2PY can construct an interface to such
 routines so that Python functions could be called from Fortran.
 
-Consider the following `Fortran 77 subroutine`__ that takes an array
+Consider the following Fortran 77 subroutine that takes an array
 and applies a function ``func`` to its elements.
 
   .. include:: calculate.f
@@ -279,7 +279,7 @@ but the following Python function
      ...
      return y_1,...,y_l
 
-is provided by an user, and in addition,
+is provided by a user, and in addition,
 
 ::
 

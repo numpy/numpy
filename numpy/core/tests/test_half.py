@@ -1,11 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
 import platform
+import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import TestCase, run_module_suite, assert_, assert_equal, \
-    dec
+from numpy.testing import assert_, assert_equal
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -18,8 +18,8 @@ def assert_raises_fpe(strmatch, callable, *args, **kwargs):
         assert_(False,
                 "Did not raise floating point %s error" % strmatch)
 
-class TestHalf(TestCase):
-    def setUp(self):
+class TestHalf(object):
+    def setup(self):
         # An array of all possible float16 values
         self.all_f16 = np.arange(0x10000, dtype=uint16)
         self.all_f16.dtype = float16
@@ -66,8 +66,87 @@ class TestHalf(TestCase):
         # Check the range for which all integers can be represented
         i_int = np.arange(-2048, 2049)
         i_f16 = np.array(i_int, dtype=float16)
-        j = np.array(i_f16, dtype=np.int)
+        j = np.array(i_f16, dtype=int)
         assert_equal(i_int, j)
+
+    @pytest.mark.parametrize("offset", [None, "up", "down"])
+    @pytest.mark.parametrize("shift", [None, "up", "down"])
+    @pytest.mark.parametrize("float_t", [np.float32, np.float64])
+    def test_half_conversion_rounding(self, float_t, shift, offset):
+        # Assumes that round to even is used during casting.
+        max_pattern = np.float16(np.finfo(np.float16).max).view(np.uint16)
+
+        # Test all (positive) finite numbers, denormals are most interesting
+        # however:
+        f16s_patterns = np.arange(0, max_pattern+1, dtype=np.uint16)
+        f16s_float = f16s_patterns.view(np.float16).astype(float_t)
+
+        # Shift the values by half a bit up or a down (or do not shift),
+        if shift == "up":
+            f16s_float = 0.5 * (f16s_float[:-1] + f16s_float[1:])[1:]
+        elif shift == "down":
+            f16s_float = 0.5 * (f16s_float[:-1] + f16s_float[1:])[:-1]
+        else:
+            f16s_float = f16s_float[1:-1]
+
+        # Increase the float by a minimal value:
+        if offset == "up":
+            f16s_float = np.nextafter(f16s_float, float_t(1e50))
+        elif offset == "down":
+            f16s_float = np.nextafter(f16s_float, float_t(-1e50))
+
+        # Convert back to float16 and its bit pattern:
+        res_patterns = f16s_float.astype(np.float16).view(np.uint16)
+
+        # The above calculations tries the original values, or the exact
+        # mid points between the float16 values. It then further offsets them
+        # by as little as possible. If no offset occurs, "round to even"
+        # logic will be necessary, an arbitrarily small offset should cause
+        # normal up/down rounding always.
+
+        # Calculate the expecte pattern:
+        cmp_patterns = f16s_patterns[1:-1].copy()
+
+        if shift == "down" and offset != "up":
+            shift_pattern = -1
+        elif shift == "up" and offset != "down":
+            shift_pattern = 1
+        else:
+            # There cannot be a shift, either shift is None, so all rounding
+            # will go back to original, or shift is reduced by offset too much.
+            shift_pattern = 0
+
+        # If rounding occurs, is it normal rounding or round to even?
+        if offset is None:
+            # Round to even occurs, modify only non-even, cast to allow + (-1)
+            cmp_patterns[0::2].view(np.int16)[...] += shift_pattern
+        else:
+            cmp_patterns.view(np.int16)[...] += shift_pattern
+
+        assert_equal(res_patterns, cmp_patterns)
+
+    @pytest.mark.parametrize(["float_t", "uint_t", "bits"],
+                             [(np.float32, np.uint32, 23),
+                              (np.float64, np.uint64, 52)])
+    def test_half_conversion_denormal_round_even(self, float_t, uint_t, bits):
+        # Test specifically that all bits are considered when deciding
+        # whether round to even should occur (i.e. no bits are lost at the
+        # end. Compare also gh-12721. The most bits can get lost for the
+        # smallest denormal:
+        smallest_value = np.uint16(1).view(np.float16).astype(float_t)
+        assert smallest_value == 2**-24
+
+        # Will be rounded to zero based on round to even rule:
+        rounded_to_zero = smallest_value / float_t(2)
+        assert rounded_to_zero.astype(np.float16) == 0
+
+        # The significand will be all 0 for the float_t, test that we do not
+        # lose the lower ones of these:
+        for i in range(bits):
+            # slightly increasing the value should make it round up:
+            larger_pattern = rounded_to_zero.view(uint_t) | uint_t(1 << i)
+            larger_value = larger_pattern.view(float_t)
+            assert larger_value.astype(np.float16) == smallest_value
 
     def test_nans_infs(self):
         with np.errstate(all='ignore'):
@@ -301,15 +380,19 @@ class TestHalf(TestCase):
         assert_equal(np.copysign(b, a), [2, 5, 1, 4, 3])
 
         assert_equal(np.maximum(a, b), [0, 5, 2, 4, 3])
+
         x = np.maximum(b, c)
         assert_(np.isnan(x[3]))
         x[3] = 0
         assert_equal(x, [0, 5, 1, 0, 6])
+
         assert_equal(np.minimum(a, b), [-2, 1, 1, 4, 2])
+
         x = np.minimum(b, c)
         assert_(np.isnan(x[3]))
         x[3] = 0
         assert_equal(x, [-2, -1, -np.inf, 0, 3])
+
         assert_equal(np.fmax(a, b), [0, 5, 2, 4, 3])
         assert_equal(np.fmax(b, c), [0, 5, 1, 4, 6])
         assert_equal(np.fmin(a, b), [-2, 1, 1, 4, 2])
@@ -317,12 +400,14 @@ class TestHalf(TestCase):
 
         assert_equal(np.floor_divide(a, b), [0, 0, 2, 1, 0])
         assert_equal(np.remainder(a, b), [0, 1, 0, 0, 2])
+        assert_equal(np.divmod(a, b), ([0, 0, 2, 1, 0], [0, 1, 0, 0, 2]))
         assert_equal(np.square(b), [4, 25, 1, 16, 9])
         assert_equal(np.reciprocal(b), [-0.5, 0.199951171875, 1, 0.25, 0.333251953125])
         assert_equal(np.ones_like(b), [1, 1, 1, 1, 1])
         assert_equal(np.conjugate(b), b)
         assert_equal(np.absolute(b), [2, 5, 1, 4, 3])
         assert_equal(np.negative(b), [2, -5, -1, -4, -3])
+        assert_equal(np.positive(b), b)
         assert_equal(np.sign(b), [-1, 1, 1, 1, 1])
         assert_equal(np.modf(b), ([0, 0, 0, 0, 0], b))
         assert_equal(np.frexp(b), ([-0.5, 0.625, 0.5, 0.5, 0.75], [2, 3, 1, 3, 2]))
@@ -354,7 +439,8 @@ class TestHalf(TestCase):
         assert_equal(np.power(b32, a16).dtype, float16)
         assert_equal(np.power(b32, b16).dtype, float32)
 
-    @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
+    @pytest.mark.skipif(platform.machine() == "armv5tel",
+                        reason="See gh-413.")
     def test_half_fpe(self):
         with np.errstate(all='raise'):
             sx16 = np.array((1e-4,), dtype=float16)
@@ -430,7 +516,3 @@ class TestHalf(TestCase):
         c = np.array(b)
         assert_(c.dtype == float16)
         assert_equal(a, c)
-
-
-if __name__ == "__main__":
-    run_module_suite()

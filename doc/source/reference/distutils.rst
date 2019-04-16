@@ -13,8 +13,7 @@ distutils, use the :func:`setup <core.setup>` command from
 :mod:`numpy.distutils.misc_util` that can make it easier to construct
 keyword arguments to pass to the setup function (by passing the
 dictionary obtained from the todict() method of the class). More
-information is available in the NumPy Distutils Users Guide in
-``<site-packages>/numpy/doc/DISTUTILS.txt``.
+information is available in the :ref:`distutils-user-guide`.
 
 
 .. index::
@@ -213,7 +212,7 @@ build phase of setup, if a template file named <somefile>.src is
 encountered, a new file named <somefile> is constructed from the
 template and placed in the build directory to be used instead. Two
 forms of template conversion are supported. The first form occurs for
-files named named <file>.ext.src where ext is a recognized Fortran
+files named <file>.ext.src where ext is a recognized Fortran
 extension (f, f90, f95, f77, for, ftn, pyf). The second form is used
 for all other cases.
 
