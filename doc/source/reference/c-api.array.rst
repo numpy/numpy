@@ -124,6 +124,8 @@ sub-types).
 
     Get a Python object of a builtin type from the ndarray, *arr*, 
     at the location pointed to by itemptr. Return ``NULL`` on failure.
+    Contrary to PySequence_GetItem, PyArray_GETITEM returns standard
+    Python types on success.
     
     `numpy.ndarray.item` is identical to PyArray_GETITEM.
     
