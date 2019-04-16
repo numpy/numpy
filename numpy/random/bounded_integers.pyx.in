@@ -30,7 +30,7 @@ type_info = (('uint32', 'uint32', 'uint64', 'NPY_UINT64', 0, 0, 0, '0X100000000U
 {{for  nptype, utype, nptype_up, npctype, remaining, bitshift, lb, ub in type_info}}
 {{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
 cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object size,
-                                       bint use_masked,
+                                       bint use_masked, bint closed,
                                        brng_t *state, object lock):
     """
     Array path for smaller integer types
@@ -40,7 +40,7 @@ cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object s
     this type for checking and the recast to {{nptype}} when producing the
     random integers.
     """
-    cdef {{utype}}_t rng, last_rng, off, val, mask, out_val
+    cdef {{utype}}_t rng, last_rng, off, val, mask, out_val, is_open
     cdef uint32_t buf
     cdef {{utype}}_t *out_data
     cdef {{nptype_up}}_t low_v, high_v
@@ -50,14 +50,23 @@ cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object s
     cdef int buf_rem = 0
 
     # Array path
+    is_open = not closed
     low_arr = <np.ndarray>low
     high_arr = <np.ndarray>high
     if np.any(np.less(low_arr, {{lb}})):
         raise ValueError('low is out of bounds for {{nptype}}')
-    if np.any(np.greater(high_arr, {{ub}})):
+    if closed:
+        high_comp = np.greater_equal
+        low_high_comp = np.greater
+    else:
+        high_comp = np.greater
+        low_high_comp = np.greater_equal
+
+    if np.any(high_comp(high_arr, {{ub}})):
         raise ValueError('high is out of bounds for {{nptype}}')
-    if np.any(np.greater_equal(low_arr, high_arr)):
-        raise ValueError('low >= high')
+    if np.any(low_high_comp(low_arr, high_arr)):
+        comp = '>' if closed else '>='
+        raise ValueError('low {comp} high'.format(comp=comp))
 
     low_arr = <np.ndarray>np.PyArray_FROM_OTF(low, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
     high_arr = <np.ndarray>np.PyArray_FROM_OTF(high, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
@@ -77,7 +86,7 @@ cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object s
             low_v = (<{{nptype_up}}_t*>np.PyArray_MultiIter_DATA(it, 0))[0]
             high_v = (<{{nptype_up}}_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
             # Subtract 1 since generator produces values on the closed int [off, off+rng]
-            rng = <{{utype}}_t>((high_v - 1) - low_v)
+            rng = <{{utype}}_t>((high_v - is_open) - low_v)
             off = <{{utype}}_t>(<{{nptype_up}}_t>low_v)
 
             if rng != last_rng:
@@ -97,7 +106,7 @@ big_type_info = (('uint64', 'uint64', 'NPY_UINT64', '0x0ULL', '0xFFFFFFFFFFFFFFF
 {{for  nptype, utype, npctype, lb, ub in big_type_info}}
 {{ py: otype = nptype}}
 cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
-                                       bint use_masked,
+                                       bint use_masked, bint closed,
                                        brng_t *state, object lock):
     """
     Array path for 64-bit integer types
@@ -126,11 +135,13 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
     if np.any(np.less(low_arr, {{lb}})):
         raise ValueError('low is out of bounds for {{nptype}}')
     dt = high_arr.dtype
-    if np.issubdtype(dt, np.integer):
+    if closed or np.issubdtype(dt, np.integer):
         # Avoid object dtype path if already an integer
-        if np.any(np.less_equal(high_arr, {{lb}})):
-            raise ValueError('low >= high')
-        high_m1 = high_arr - dt.type(1)
+        high_lower_comp = np.less if closed else np.less_equal
+        if np.any(high_lower_comp(high_arr, {{lb}})):
+            comp = '>' if closed else '>='
+            raise ValueError('low {comp} high'.format(comp=comp))
+        high_m1 = high_arr if closed else high_arr - dt.type(1)
         if np.any(np.greater(high_m1, {{ub}})):
             raise ValueError('high is out of bounds for {{nptype}}')
         highm1_arr = <np.ndarray>np.PyArray_FROM_OTF(high_m1, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
@@ -146,11 +157,13 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
             if closed_upper > {{ub}}:
                 raise ValueError('high is out of bounds for {{nptype}}')
             if closed_upper < {{lb}}:
-                raise ValueError('low >= high')
+                comp = '>' if closed else '>='
+                raise ValueError('low {comp} high'.format(comp=comp))
             highm1_data[i] = <{{nptype}}_t>closed_upper
 
     if np.any(np.greater(low_arr, highm1_arr)):
-        raise ValueError('low >= high')
+        comp = '>' if closed else '>='
+        raise ValueError('low {comp} high'.format(comp=comp))
 
     high_arr = highm1_arr
     low_arr = <np.ndarray>np.PyArray_FROM_OTF(low, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
@@ -196,7 +209,7 @@ type_info = (('uint64', 'uint64', '0x0ULL', '0xFFFFFFFFFFFFFFFFULL'),
 {{for  nptype, utype, lb, ub in type_info}}
 {{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
 cdef object _rand_{{nptype}}(object low, object high, object size,
-                             bint use_masked,
+                             bint use_masked, bint closed,
                              brng_t *state, object lock):
     """
     _rand_{{nptype}}(low, high, size, use_masked, *state, lock)
@@ -223,6 +236,8 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
         single value is returned.
     use_masked : bool
         If True then rejection sampling with a range mask is used else Lemire's algorithm is used.
+    closed : bool
+        If True then sample from [low, high].  If False, sample [low, high)
     state : basic random state
         State to use in the core random number generators
     lock : threading.Lock
@@ -237,10 +252,10 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
     Notes
     -----
     The internal integer generator produces values from the closed
-    interval [low, high-1].  This requires some care since high can be
-    out-of-range for {{utype}}. The scalar path leaves integers as Python
-    integers until the 1 has been subtracted to avoid needing to cast
-    to a larger type.
+    interval [low, high-(not closed)].  This requires some care since 
+    high can be out-of-range for {{utype}}. The scalar path leaves 
+    integers as Python integers until the 1 has been subtracted to 
+    avoid needing to cast to a larger type.
     """
     cdef np.ndarray out_arr, low_arr, high_arr
     cdef {{utype}}_t rng, off, out_val
@@ -260,14 +275,16 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
         low = int(low_arr)
         high = int(high_arr)
         # Subtract 1 since internal generator produces on closed interval [low, high]
-        high -= 1
+        if not closed:
+            high -= 1
 
         if low < {{lb}}:
             raise ValueError("low is out of bounds for {{nptype}}")
         if high > {{ub}}:
             raise ValueError("high is out of bounds for {{nptype}}")
         if low > high:  # -1 already subtracted, closed interval
-            raise ValueError("low >= high")
+            comp = '>' if closed else '>='
+            raise ValueError('low {comp} high'.format(comp=comp))
 
         rng = <{{utype}}_t>(high - low)
         off = <{{utype}}_t>(<{{nptype}}_t>low)
@@ -282,5 +299,5 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
             with lock, nogil:
                 random_bounded_{{utype}}_fill(state, off, rng, cnt, use_masked, out_data)
             return out_arr
-    return _rand_{{nptype}}_broadcast(low_arr, high_arr, size, use_masked, state, lock)
+    return _rand_{{nptype}}_broadcast(low_arr, high_arr, size, use_masked, closed, state, lock)
 {{endfor}}

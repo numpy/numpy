@@ -444,7 +444,6 @@ class TestRandomDist(object):
             assert_(len(w) == 1)
         assert_equal(actual, desired)
 
-
     def test_random_integers_deprecated(self):
         with warnings.catch_warnings():
             warnings.simplefilter("error", DeprecationWarning)
