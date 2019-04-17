@@ -77,6 +77,11 @@ non-functional. This code was removed. If needed, use
 If the out argument to these functions is provided and has memory overlap with
 the other arguments, it is now buffered to avoid order-dependent behavior.
 
+Unpickling while loading requires explicit opt-in
+-------------------------------------------------
+The functions ``np.load``, and ``np.lib.format.read_array`` take an
+`allow_pickle` keyword which now defaults to ``False`` in response to
+`CVE-2019-6446 <https://nvd.nist.gov/vuln/detail/CVE-2019-6446>`_.
 
 C API changes
 =============
