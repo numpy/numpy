@@ -36,7 +36,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
-    temppath, suppress_warnings
+    temppath, suppress_warnings, break_cycles,
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
@@ -3784,7 +3784,7 @@ class TestPickling(object):
                         a, pickle.loads(pickle.dumps(a, protocol=proto)),
                         err_msg="%r" % a)
             del a, DATA, carray
-            gc.collect(); gc.collect(); gc.collect()
+            break_cycles()
             # check for reference leaks (gh-12793)
             for ref in refs:
                 assert ref() is None
@@ -7181,7 +7181,7 @@ class TestMemEventHook(object):
         # needs to be larger then limit of small memory cacher in ctors.c
         a = np.zeros(1000)
         del a
-        gc.collect(); gc.collect(); gc.collect()
+        break_cycles()
         _multiarray_tests.test_pydatamem_seteventhook_end()
 
 class TestMapIter(object):
@@ -7753,12 +7753,12 @@ class TestCTypes(object):
 
         # `ctypes_ptr` should hold onto `arr`
         del arr
-        gc.collect(); gc.collect(); gc.collect()
+        break_cycles()
         assert_(arr_ref() is not None, "ctypes pointer did not hold onto a reference")
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
-        gc.collect(); gc.collect(); gc.collect()
+        break_cycles()
         assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
 
 
@@ -7940,15 +7940,15 @@ class TestArrayFinalize(object):
         assert_(isinstance(obj_subarray, RaisesInFinalize))
 
         # reference should still be held by obj_arr
-        gc.collect(); gc.collect(); gc.collect()
+        break_cycles()
         assert_(obj_ref() is not None, "object should not already be dead")
 
         del obj_arr
-        gc.collect(); gc.collect(); gc.collect()
+        break_cycles()
         assert_(obj_ref() is not None, "obj_arr should not hold the last reference")
 
         del obj_subarray
-        gc.collect(); gc.collect(); gc.collect()
+        break_cycles()
         assert_(obj_ref() is None, "no references should remain")
 
 
