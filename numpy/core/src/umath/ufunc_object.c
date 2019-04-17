@@ -5396,6 +5396,8 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyArrayObject *ap1 = NULL, *ap2 = NULL, *ap_new = NULL;
     PyObject *new_args, *tmp;
     PyObject *shape1, *shape2, *newshape;
+    static PyObject *_numpy_matrix;
+
 
     errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override);
     if (errval) {
@@ -5428,7 +5430,18 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (tmp == NULL) {
         return NULL;
     }
-    ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
+
+    npy_cache_import(
+        "numpy",
+        "matrix",
+        &_numpy_matrix);
+
+    if (PyObject_IsInstance(tmp, _numpy_matrix)) {
+        ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
+    }
+    else {
+        ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
+    }
     Py_DECREF(tmp);
     if (ap1 == NULL) {
         return NULL;
@@ -5437,7 +5450,12 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (tmp == NULL) {
         return NULL;
     }
-    ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
+    if (PyObject_IsInstance(tmp, _numpy_matrix)) {
+        ap2 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
+    }
+    else {
+        ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
+    }
     Py_DECREF(tmp);
     if (ap2 == NULL) {
         Py_DECREF(ap1);

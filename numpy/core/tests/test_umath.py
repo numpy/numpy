@@ -2924,3 +2924,14 @@ def test_signaling_nan_exceptions():
     with assert_no_warnings():
         a = np.ndarray(shape=(), dtype='float32', buffer=b'\x00\xe0\xbf\xff')
         np.isnan(a)
+
+@pytest.mark.parametrize("arr", [
+    np.arange(2),
+    np.matrix([0, 1]),
+    np.matrix([[0, 1], [2, 5]]),
+    ])
+def test_outer_subclass_preserve(arr):
+    # for gh-8661
+    class foo(np.ndarray): pass
+    actual = np.multiply.outer(arr.view(foo), arr.view(foo))
+    assert actual.__class__.__name__ == 'foo'
