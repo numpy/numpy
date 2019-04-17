@@ -8,4 +8,8 @@ mkdir -p pypy3
 pypy3/bin/pypy3 -mensurepip
 pypy3/bin/pypy3 -m pip install --upgrade pip setuptools
 pypy3/bin/pypy3 -m pip install --user cython==0.29.0 pytest pytz --no-warn-script-location
+echo
+echo pypy3 version 
+pypy3/bin/pypy3 -c "import sys; print(sys.version)"
+echo
 pypy3/bin/pypy3 runtests.py -- -rsx --junitxml=junit/test-results.xml --durations 10
