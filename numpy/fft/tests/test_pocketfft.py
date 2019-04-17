@@ -138,6 +138,16 @@ class TestFFT1D(object):
             x_herm, np.fft.ihfft(np.fft.hfft(x_herm, norm="ortho"),
                                  norm="ortho"))
 
+    @pytest.mark.parametrize("op", [np.fft.fftn, np.fft.ifftn,
+                                    np.fft.rfftn, np.fft.irfftn])
+    def test_axes(self, op):
+        x = random((30, 20, 10))
+        axes = [(0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1), (2, 1, 0)]
+        for a in axes:
+            op_tr = op(np.transpose(x, a))
+            tr_op = np.transpose(op(x, axes=a), a)
+            assert_array_almost_equal(op_tr, tr_op)
+
     def test_all_1d_norm_preserving(self):
         # verify that round-trip transforms are norm-preserving
         x = random(30)
