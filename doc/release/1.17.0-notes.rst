@@ -202,6 +202,11 @@ The boolean and integer types are incapable of storing ``np.nan`` and ``np.inf``
 which allows us to provide specialized ufuncs that are up to 250x faster than the current
 approach.
 
+``np.isfinite`` supports ``datetime64`` and ``timedelta64`` types
+-----------------------------------------------------------------
+Previously, `np.isfinite` used to raise a ``TypeError`` on being used on these
+two types.
+
 New keywords added to ``np.nan_to_num``
 ---------------------------------------
 ``np.nan_to_num`` now accepts keywords ``nan``, ``posinf`` and ``neginf`` allowing the

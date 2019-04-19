@@ -611,6 +611,26 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
     return 0;
 }
 
+
+NPY_NO_EXPORT int
+PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
+                          NPY_CASTING casting,
+                          PyArrayObject **operands,
+                          PyObject *type_tup,
+                          PyArray_Descr **out_dtypes)
+{
+    if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                                    type_tup, out_dtypes);
+    }
+
+    out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+    out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
+
+    return 0;
+}
+
+
 /*
  * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
  * from the given dtype.
