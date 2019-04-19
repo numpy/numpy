@@ -507,4 +507,4 @@ them to ``upstream`` as follows:
     want.
 
 
-.. include:: git_links.inc
+.. include:: gitwash/git_links.inc
