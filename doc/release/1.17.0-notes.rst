@@ -191,6 +191,12 @@ but with this change, you can do::
 
 thereby saving a level of indentation
 
+`numpy.exp and numpy.log` speed up for float32 implementation
+-------------------------------------------------------------
+float32 implementation of numpy.exp and numpy.log now benefit from AVX2/AVX512
+instruction set which are detected during runtime. numpy.exp has a max ulp
+error of 2.52 and numpy.log has a max ulp error or 3.83.
+
 Improve performance of ``np.pad``
 ---------------------------------
 The performance of the function has been improved for most cases by filling in
