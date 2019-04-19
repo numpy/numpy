@@ -3875,7 +3875,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         axis = 0
 
     Nx = ap.shape[axis]
-    indices = q * (Nx - 1)
+    indices = q * (Nx - 1.)
 
     # round fractional indices according to interpolation method
     if interpolation == 'lower':
