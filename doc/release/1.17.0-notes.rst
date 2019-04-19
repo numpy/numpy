@@ -77,6 +77,11 @@ non-functional. This code was removed. If needed, use
 If the out argument to these functions is provided and has memory overlap with
 the other arguments, it is now buffered to avoid order-dependent behavior.
 
+Unpickling while loading requires explicit opt-in
+-------------------------------------------------
+The functions ``np.load``, and ``np.lib.format.read_array`` take an
+`allow_pickle` keyword which now defaults to ``False`` in response to
+`CVE-2019-6446 <https://nvd.nist.gov/vuln/detail/CVE-2019-6446>`_.
 
 C API changes
 =============
@@ -129,6 +134,7 @@ New mode "empty" for ``np.pad``
 This mode pads an array to a desired shape without initializing the new
 entries.
 
+
 ``np.empty_like`` and related functions now accept a ``shape`` argument
 -----------------------------------------------------------------------
 ``np.empty_like``, ``np.full_like``, ``np.ones_like`` and ``np.zeros_like`` now
@@ -137,6 +143,12 @@ as the prototype, overriding its shape as well. This is particularly useful
 when combined with the ``__array_function__`` protocol, allowing the creation
 of new arbitrary-shape arrays from NumPy-like libraries when such an array
 is used as the prototype.
+
+Floating point scalars implement ``as_integer_ratio`` to match the builtin float
+--------------------------------------------------------------------------------
+This returns a (numerator, denominator) pair, which can be used to construct a
+`fractions.Fraction`.
+
 
 Improvements
 ============
@@ -161,9 +173,9 @@ lengths has improved and is on par with complex-valued FFTs.
 
 Further improvements to ``ctypes`` support in ``np.ctypeslib``
 --------------------------------------------------------------
-A new ``np.ctypeslib.as_ctypes_type`` function has been added, which can be
+A new `numpy.ctypeslib.as_ctypes_type` function has been added, which can be
 used to converts a `dtype` into a best-guess `ctypes` type. Thanks to this
-new function, ``np.ctypeslib.as_ctypes`` now supports a much wider range of
+new function, `numpy.ctypeslib.as_ctypes` now supports a much wider range of
 array types, including structures, booleans, and integers of non-native
 endianness.
 
@@ -205,6 +217,17 @@ Specialized ``np.isnan``, ``np.isinf``, and ``np.isfinite`` ufuncs for bool and 
 The boolean and integer types are incapable of storing ``np.nan`` and ``np.inf`` values,
 which allows us to provide specialized ufuncs that are up to 250x faster than the current
 approach.
+
+``np.isfinite`` supports ``datetime64`` and ``timedelta64`` types
+-----------------------------------------------------------------
+Previously, `np.isfinite` used to raise a ``TypeError`` on being used on these
+two types.
+
+New keywords added to ``np.nan_to_num``
+---------------------------------------
+``np.nan_to_num`` now accepts keywords ``nan``, ``posinf`` and ``neginf`` allowing the
+user to define the value to replace the ``nan``, positive and negative ``np.inf`` values 
+respectively.
 
 
 Changes

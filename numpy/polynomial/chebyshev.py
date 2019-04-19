@@ -528,8 +528,7 @@ def chebfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots,
-    hermefromroots.
+    polyfromroots, legfromroots, lagfromroots, hermfromroots, hermefromroots
 
     Examples
     --------
@@ -1461,7 +1460,7 @@ def chebvander2d(x, y, deg):
 
     See Also
     --------
-    chebvander, chebvander3d. chebval2d, chebval3d
+    chebvander, chebvander3d, chebval2d, chebval3d
 
     Notes
     -----
@@ -1515,7 +1514,7 @@ def chebvander3d(x, y, z, deg):
 
     See Also
     --------
-    chebvander, chebvander3d. chebval2d, chebval3d
+    chebvander, chebvander3d, chebval2d, chebval3d
 
     Notes
     -----
@@ -1743,7 +1742,8 @@ def chebroots(c):
     if len(c) == 2:
         return np.array([-c[0]/c[1]])
 
-    m = chebcompanion(c)
+    # rotated companion matrix reduces error
+    m = chebcompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r

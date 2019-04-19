@@ -13,7 +13,8 @@ from . import multiarray as mu
 from . import overrides
 from . import umath as um
 from . import numerictypes as nt
-from .numeric import asarray, array, asanyarray, concatenate
+from ._asarray import asarray, array, asanyarray
+from .multiarray import concatenate
 from . import _methods
 
 _dt_ = nt.sctype2char
@@ -1531,9 +1532,9 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
             [2, 3]],
            [[4, 5],
             [6, 7]]])
-    >>> a.diagonal(0, # Main diagonals of two arrays created by skipping
-    ...            0, # across the outer(left)-most axis last and
-    ...            1) # the "middle" (row) axis first.
+    >>> a.diagonal(0,  # Main diagonals of two arrays created by skipping
+    ...            0,  # across the outer(left)-most axis last and
+    ...            1)  # the "middle" (row) axis first.
     array([[0, 6],
            [1, 7]])
 
@@ -1541,13 +1542,28 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     corresponds to fixing the right-most (column) axis, and that the
     diagonals are "packed" in rows.
 
-    >>> a[:,:,0] # main diagonal is [0 6]
+    >>> a[:,:,0]  # main diagonal is [0 6]
     array([[0, 2],
            [4, 6]])
-    >>> a[:,:,1] # main diagonal is [1 7]
+    >>> a[:,:,1]  # main diagonal is [1 7]
     array([[1, 3],
            [5, 7]])
 
+    The anti-diagonal can be obtained by reversing the order of elements
+    using either `numpy.flipud` or `numpy.fliplr`.
+
+    >>> a = np.arange(9).reshape(3, 3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.fliplr(a).diagonal()  # Horizontal flip
+    array([2, 4, 6])
+    >>> np.flipud(a).diagonal()  # Vertical flip
+    array([6, 4, 2])
+
+    Note that the order in which the diagonal is retrieved varies depending
+    on the flip function.
     """
     if isinstance(a, np.matrix):
         # Make diagonal of matrix 1-D to preserve backward compatibility.
@@ -3390,7 +3406,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
 
     See Also
     --------
-    std , mean, nanmean, nanstd, nanvar
+    std, mean, nanmean, nanstd, nanvar
     numpy.doc.ufuncs : Section "Output arguments"
 
     Notes

@@ -4020,7 +4020,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            npy_cache_import("numpy.core._internal", "TooHardError",
+            npy_cache_import("numpy.core._exceptions", "TooHardError",
                              &too_hard_cls);
             if (too_hard_cls) {
                 PyErr_SetString(too_hard_cls, "Exceeded max_work");
@@ -4730,11 +4730,9 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
     set_flaginfo(d);
 
     /* Create the typeinfo types */
-    typeinfo_init_structsequences();
-    PyDict_SetItemString(d,
-        "typeinfo", (PyObject *)&PyArray_typeinfoType);
-    PyDict_SetItemString(d,
-        "typeinforanged", (PyObject *)&PyArray_typeinforangedType);
+    if (typeinfo_init_structsequences(d) < 0) {
+        goto err;
+    }
 
     if (!intern_strings()) {
         goto err;

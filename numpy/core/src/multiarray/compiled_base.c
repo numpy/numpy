@@ -832,17 +832,63 @@ fail:
     return NULL;
 }
 
+static const char *EMPTY_SEQUENCE_ERR_MSG = "indices must be integral: the provided " \
+    "empty sequence was inferred as float. Wrap it with " \
+    "'np.array(indices, dtype=np.intp)'";
+
+static const char *NON_INTEGRAL_ERROR_MSG = "only int indices permitted";
+
+/* Convert obj to an ndarray with integer dtype or fail */
+static PyArrayObject *
+astype_anyint(PyObject *obj) {
+    PyArrayObject *ret;
+
+    if (!PyArray_Check(obj)) {
+        /* prefer int dtype */
+        PyArray_Descr *dtype_guess = NULL;
+        if (PyArray_DTypeFromObject(obj, NPY_MAXDIMS, &dtype_guess) < 0) {
+            return NULL;
+        }
+        if (dtype_guess == NULL) {
+            if (PySequence_Check(obj) && PySequence_Size(obj) == 0) {
+                PyErr_SetString(PyExc_TypeError, EMPTY_SEQUENCE_ERR_MSG);
+            }
+            return NULL;
+        }
+        ret = (PyArrayObject*)PyArray_FromAny(obj, dtype_guess, 0, 0, 0, NULL);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+    else {
+        ret = (PyArrayObject *)obj;
+        Py_INCREF(ret);
+    }
+
+    if (!(PyArray_ISINTEGER(ret) || PyArray_ISBOOL(ret))) {
+        /* ensure dtype is int-based */
+        PyErr_SetString(PyExc_TypeError, NON_INTEGRAL_ERROR_MSG);
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    return ret;
+}
+
 /*
  * Converts a Python sequence into 'count' PyArrayObjects
  *
- * seq       - Input Python object, usually a tuple but any sequence works.
- * op        - Where the arrays are placed.
- * count     - How many arrays there should be (errors if it doesn't match).
- * paramname - The name of the parameter that produced 'seq'.
+ * seq         - Input Python object, usually a tuple but any sequence works.
+ *               Must have integral content.
+ * paramname   - The name of the parameter that produced 'seq'.
+ * count       - How many arrays there should be (errors if it doesn't match).
+ * op          - Where the arrays are placed.
  */
-static int sequence_to_arrays(PyObject *seq,
-                                PyArrayObject **op, int count,
-                                char *paramname)
+static int int_sequence_to_arrays(PyObject *seq,
+                              char *paramname,
+                              int count,
+                              PyArrayObject **op
+                              )
 {
     int i;
 
@@ -856,27 +902,23 @@ static int sequence_to_arrays(PyObject *seq,
     for (i = 0; i < count; ++i) {
         PyObject *item = PySequence_GetItem(seq, i);
         if (item == NULL) {
-            while (--i >= 0) {
-                Py_DECREF(op[i]);
-                op[i] = NULL;
-            }
-            return -1;
+            goto fail;
         }
-
-        op[i] = (PyArrayObject *)PyArray_FROM_O(item);
-        if (op[i] == NULL) {
-            while (--i >= 0) {
-                Py_DECREF(op[i]);
-                op[i] = NULL;
-            }
-            Py_DECREF(item);
-            return -1;
-        }
-
+        op[i] = astype_anyint(item);
         Py_DECREF(item);
+        if (op[i] == NULL) {
+            goto fail;
+        }
     }
 
     return 0;
+
+fail:
+    while (--i >= 0) {
+        Py_XDECREF(op[i]);
+        op[i] = NULL;
+    }
+    return -1;
 }
 
 /* Inner loop for unravel_index */
@@ -1023,10 +1065,9 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
     }
 
     /* Get the multi_index into op */
-    if (sequence_to_arrays(coords0, op, dimensions.len, "multi_index") < 0) {
+    if (int_sequence_to_arrays(coords0, "multi_index", dimensions.len, op) < 0) {
         goto fail;
     }
-
 
     for (i = 0; i < dimensions.len; ++i) {
         op_flags[i] = NPY_ITER_READONLY|
@@ -1222,15 +1263,9 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     unravel_size = PyArray_MultiplyList(dimensions.ptr, dimensions.len);
 
-    if (!PyArray_Check(indices0)) {
-        indices = (PyArrayObject*)PyArray_FROM_O(indices0);
-        if (indices == NULL) {
-            goto fail;
-        }
-    }
-    else {
-        indices = (PyArrayObject *)indices0;
-        Py_INCREF(indices);
+    indices = astype_anyint(indices0);
+    if (indices == NULL) {
+        goto fail;
     }
 
     dtype = PyArray_DescrFromType(NPY_INTP);

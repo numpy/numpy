@@ -98,7 +98,7 @@ class TestRegression(object):
             f = BytesIO()
             pickle.dump(ca, f, protocol=proto)
             f.seek(0)
-            ca = np.load(f)
+            ca = np.load(f, allow_pickle=True)
             f.close()
 
     def test_noncontiguous_fill(self):
@@ -2448,3 +2448,9 @@ class TestRegression(object):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             dumped = pickle.dumps(arr, protocol=proto)
             assert_equal(pickle.loads(dumped), arr)
+
+    def test_bad_array_interface(self):
+        class T(object):
+            __array_interface__ = {}
+
+        np.array([T()])

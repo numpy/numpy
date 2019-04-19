@@ -56,10 +56,7 @@ NumFOCUS Subcommittee
 Institutional Partners
 ----------------------
 
-*  UC Berkeley (Stefan van der Walt)
+* UC Berkeley (Stefan van der Walt, Matti Picus, Tyler Reddy)
 
+* Quansight (Ralf Gommers, Hameer Abbasi)
 
-Document history
-----------------
-
-https://github.com/numpy/numpy/commits/master/doc/source/dev/governance/governance.rst
