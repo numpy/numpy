@@ -98,7 +98,9 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
-        Overrides the shape of the result.
+        Overrides the shape of the result. If order='K' and the number of
+        dimensions is unchanged, will try to keep order, otherwise,
+        order='C' is implied.
 
         .. versionadded:: 1.17.0
 
@@ -107,11 +109,6 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
     out : ndarray
         Array of uninitialized (arbitrary) data with the same
         shape and type as `prototype`.
-
-    Raises
-    ------
-    ValueError
-        If `order` is 'K' and ``len(shape) != a.ndim``.
 
     See Also
     --------

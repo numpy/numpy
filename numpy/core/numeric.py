@@ -128,7 +128,9 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
-        Overrides the shape of the result.
+        Overrides the shape of the result. If order='K' and the number of
+        dimensions is unchanged, will try to keep order, otherwise,
+        order='C' is implied.
 
         .. versionadded:: 1.17.0
 
@@ -136,11 +138,6 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     -------
     out : ndarray
         Array of zeros with the same shape and type as `a`.
-
-    Raises
-    ------
-    ValueError
-        If `order` is 'K' and ``len(shape) != a.ndim``.
 
     See Also
     --------
@@ -257,7 +254,9 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
-        Overrides the shape of the result.
+        Overrides the shape of the result. If order='K' and the number of
+        dimensions is unchanged, will try to keep order, otherwise,
+        order='C' is implied.
 
         .. versionadded:: 1.17.0
 
@@ -265,11 +264,6 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     -------
     out : ndarray
         Array of ones with the same shape and type as `a`.
-
-    Raises
-    ------
-    ValueError
-        If `order` is 'K' and ``len(shape) != a.ndim``.
 
     See Also
     --------
@@ -376,7 +370,9 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
     shape : int or sequence of ints, optional.
-        Overrides the shape of the result.
+        Overrides the shape of the result. If order='K' and the number of
+        dimensions is unchanged, will try to keep order, otherwise,
+        order='C' is implied.
 
         .. versionadded:: 1.17.0
 
@@ -384,11 +380,6 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     -------
     out : ndarray
         Array of `fill_value` with the same shape and type as `a`.
-
-    Raises
-    ------
-    ValueError
-        If `order` is 'K' and ``len(shape) != a.ndim``.
 
     See Also
     --------

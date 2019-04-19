@@ -1207,17 +1207,12 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
 {
     PyObject *ret = NULL;
 
-    int new_shape = 1;
-
     if (dims == NULL) {
         ndim = PyArray_NDIM(prototype);
         dims = PyArray_DIMS(prototype);
-        new_shape = 0;
     }
     else if (order == NPY_KEEPORDER && (ndim != PyArray_NDIM(prototype))) {
-        PyErr_SetString(PyExc_ValueError,
-                        "mismatching ndim arrays can not keep order");
-        return ret;
+        order = NPY_CORDER;
     }
 
     /* If no override data type, use the one from the prototype */
@@ -1246,8 +1241,8 @@ PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
             break;
     }
 
-    /* If it's not KEEPORDER, or there is a shape change, this is simple */
-    if (order != NPY_KEEPORDER || (new_shape && ndim != PyArray_NDIM(prototype))) {
+    /* If it's not KEEPORDER, this is simple */
+    if (order != NPY_KEEPORDER) {
         ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
                                         dtype,
                                         ndim,
