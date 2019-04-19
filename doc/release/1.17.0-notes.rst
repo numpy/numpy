@@ -134,6 +134,12 @@ New mode "empty" for ``np.pad``
 This mode pads an array to a desired shape without initializing the new
 entries.
 
+Floating point scalars implement ``as_integer_ratio`` to match the builtin float
+--------------------------------------------------------------------------------
+This returns a (numerator, denominator) pair, which can be used to construct a
+`fractions.Fraction`.
+
+
 Improvements
 ============
 
