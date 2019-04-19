@@ -2240,8 +2240,11 @@ class TestLikeFuncs(object):
                     self.compare_array_value(sz, value, fill_value)
 
                 if (d.ndim != len(s)):
-                    assert_raises(ValueError, like_function, d, dtype=dtype,
-                                  shape=s, order='K', **fill_kwarg)
+                    assert_equal(np.argsort(like_function(d, dtype=dtype,
+                                                          shape=s, order='K',
+                                                          **fill_kwarg).strides),
+                                 np.argsort(np.empty(s, dtype=dtype,
+                                                     order='C').strides))
                 else:
                     assert_equal(np.argsort(like_function(d, dtype=dtype,
                                                           shape=s, order='K',
