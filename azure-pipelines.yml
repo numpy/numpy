@@ -217,7 +217,9 @@ jobs:
   steps:
   - script: source tools/pypy-test.sh
     displayName: 'Run PyPy3 Build / Tests'
+    continueOnError: true
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for PyPy3'
+      failTaskOnFailedTests: true
