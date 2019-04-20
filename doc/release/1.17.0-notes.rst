@@ -228,6 +228,12 @@ respectively.
 -----------------------------------------------------------------------
 Previously, `np.isfinite` used to raise a ``TypeError`` on being used on these
 two types.
+`floor`, `ceil`, and `trunc` now respect builtin magic methods
+--------------------------------------------------------------
+These ufuncs now call the ``__floor__``, ``__ceil__``, and ``__trunc__``
+methods when called on object arrays, making them compatible with
+`decimal.Decimal` and `fractions.Fraction` objects.
+
 
 Changes
 =======
