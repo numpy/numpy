@@ -1429,8 +1429,8 @@ def angle(z, deg=False):
     Returns
     -------
     angle : ndarray or scalar
-        The counterclockwise angle from the positive real axis on
-        the complex plane, with dtype as numpy.float64.
+        The counterclockwise angle from the positive real axis on the complex
+        plane in the range ``(-pi, pi]``, with dtype as numpy.float64.
 
         ..versionchanged:: 1.16.0
             This function works on subclasses of ndarray like `ma.array`.
