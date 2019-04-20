@@ -763,14 +763,14 @@ defdict = {
           docstrings.get('numpy.core.umath.ceil'),
           None,
           TD(flts, f='ceil', astype={'e':'f'}),
-          TD(P, f='ceil'),
+          TD(O, f='npy_ObjectCeil'),
           ),
 'trunc':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.trunc'),
           None,
           TD(flts, f='trunc', astype={'e':'f'}),
-          TD(P, f='trunc'),
+          TD(O, f='npy_ObjectTrunc'),
           ),
 'fabs':
     Ufunc(1, 1, None,
@@ -784,7 +784,7 @@ defdict = {
           docstrings.get('numpy.core.umath.floor'),
           None,
           TD(flts, f='floor', astype={'e':'f'}),
-          TD(P, f='floor'),
+          TD(O, f='npy_ObjectFloor'),
           ),
 'rint':
     Ufunc(1, 1, None,
