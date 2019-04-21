@@ -101,3 +101,22 @@ Platform information
     Returns the endianness of the current platform.
     One of :c:data:`NPY_CPU_BIG`, :c:data:`NPY_CPU_LITTLE`,
     or :c:data:`NPY_CPU_UNKNOWN_ENDIAN`.
+
+
+Compiler directives
+-------------------
+
+.. c:var:: NPY_LIKELY
+.. c:var:: NPY_UNLIKELY
+.. c:var:: NPY_UNUSED
+
+
+Interrupt Handling
+------------------
+
+.. c:var:: NPY_INTERRUPT_H
+.. c:var:: NPY_SIGSETJMP
+.. c:var:: NPY_SIGLONGJMP
+.. c:var:: NPY_SIGJMP_BUF
+.. c:var:: NPY_SIGINT_ON
+.. c:var:: NPY_SIGINT_OFF
