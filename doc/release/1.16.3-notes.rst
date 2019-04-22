@@ -1,0 +1,46 @@
+==========================
+NumPy 1.16.3 Release Notes
+==========================
+
+The NumPy 1.16.3 release fixes bugs reported against the 1.16.2 release, and
+also backports several enhancements from master that seem appropriate for a
+release series that is the last to support Python 2.7. The wheels on PyPI are
+linked with OpenBLAS v0.3.4+,  which should fix the known threading issues
+found in previous OpenBLAS versions.
+
+Downstream developers building this release should use Cython >= 0.29.2 and,
+if using OpenBLAS, OpenBLAS > v0.3.4.
+
+The most noticeable change in this release is that unpickling object arrays
+when loading ``*.npy`` or ``*.npz`` files now requires an explicit opt-in.
+This backwards incompatible change was made in response to
+`CVE-2019-6446 <https://nvd.nist.gov/vuln/detail/CVE-2019-6446>`_.
+
+
+Compatibility notes
+===================
+
+Unpickling while loading requires explicit opt-in
+-------------------------------------------------
+The functions ``np.load``, and ``np.lib.format.read_array`` take an
+`allow_pickle` keyword which now defaults to ``False`` in response to
+`CVE-2019-6446 <https://nvd.nist.gov/vuln/detail/CVE-2019-6446>`_.
+
+
+Improvements
+============
+
+Covariance in `random.mvnormal` cast to double
+----------------------------------------------
+This should make the tolerance used when checking the singular values of the
+covariance matrix more meaningful.
+
+
+Changes
+=======
+
+``__array_interface__`` offset now works as documented
+------------------------------------------------------
+The interface may use an ``offset`` value that was previously mistakenly
+ignored.
+
