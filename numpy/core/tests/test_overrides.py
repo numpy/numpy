@@ -412,8 +412,11 @@ class TestNumPyFunctions(object):
         proxy.value.__array__.return_value = np.array(2)
         result = np.sum.__numpy_implementation__(proxy)
         assert_equal(result, 2)
-        proxy.value.__array_function__.assert_not_called()
-        proxy.value.__array__.assert_called()
+        # TODO: switch to proxy.value.__array__.assert_called() and
+        # proxy.value.__array_function__.assert_not_called() once we drop
+        # Python 3.5 support.
+        ((called_method_name, _, _),) = proxy.value.mock_calls
+        assert_equal(called_method_name, '__array__')
 
     def test_sum_forwarding_implementation(self):
 
