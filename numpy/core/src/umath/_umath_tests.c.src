@@ -564,7 +564,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
         core_dim_sizes = Py_None;
     }
     Py_DECREF(f);
-    return Py_BuildValue("iOOOO", core_enabled, core_num_dims,
+    return Py_BuildValue("iNNNN", core_enabled, core_num_dims,
                          core_dim_ixs, core_dim_flags, core_dim_sizes);
 
 fail:

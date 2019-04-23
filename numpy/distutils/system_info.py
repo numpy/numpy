@@ -153,6 +153,7 @@ from numpy.distutils.misc_util import (is_sequence, is_string,
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
 from numpy.distutils import customized_ccompiler
+from numpy.distutils import _shell_utils
 import distutils.ccompiler
 import tempfile
 import shutil
@@ -162,6 +163,17 @@ import shutil
 import platform
 _bits = {'32bit': 32, '64bit': 64}
 platform_bits = _bits[platform.architecture()[0]]
+
+
+def _c_string_literal(s):
+    """
+    Convert a python string into a literal suitable for inclusion into C code
+    """
+    # only these three characters are forbidden in C strings
+    s = s.replace('\\', r'\\')
+    s = s.replace('"',  r'\"')
+    s = s.replace('\n', r'\n')
+    return '"{}"'.format(s)
 
 
 def libpaths(paths, bits):
@@ -608,8 +620,9 @@ class system_info(object):
         for key in ['extra_compile_args', 'extra_link_args']:
             # Get values
             opt = self.cp.get(self.section, key)
+            opt = _shell_utils.NativeParser.split(opt)
             if opt:
-                tmp = {key : [opt]}
+                tmp = {key: opt}
                 dict_append(info, **tmp)
         return info
 
@@ -893,7 +906,6 @@ class fftw_info(system_info):
                    == len(ver_param['includes']):
                     dict_append(info, include_dirs=[d])
                     flag = 1
-                    incl_dirs = [d]
                     break
             if flag:
                 dict_append(info, define_macros=ver_param['macros'])
@@ -1045,9 +1057,9 @@ class mkl_info(system_info):
         for d in paths:
             dirs = glob(os.path.join(d, 'mkl', '*'))
             dirs += glob(os.path.join(d, 'mkl*'))
-            for d in dirs:
-                if os.path.isdir(os.path.join(d, 'lib')):
-                    return d
+            for sub_dir in dirs:
+                if os.path.isdir(os.path.join(sub_dir, 'lib')):
+                    return sub_dir
         return None
 
     def __init__(self):
@@ -1124,8 +1136,9 @@ class atlas_info(system_info):
         lapack = None
         atlas_1 = None
         for d in lib_dirs:
-            atlas = self.check_libs2(d, atlas_libs, [])
+            # FIXME: lapack_atlas is unused
             lapack_atlas = self.check_libs2(d, ['lapack_atlas'], [])
+            atlas = self.check_libs2(d, atlas_libs, [])
             if atlas is not None:
                 lib_dirs2 = [d] + self.combine_paths(d, ['atlas*', 'ATLAS*'])
                 lapack = self.check_libs2(lib_dirs2, lapack_libs, [])
@@ -1496,7 +1509,7 @@ Make sure that -lgfortran is used for C++ extensions.
             atlas_version = os.environ.get('ATLAS_VERSION', None)
         if atlas_version:
             dict_append(info, define_macros=[(
-                'ATLAS_INFO', '"\\"%s\\""' % atlas_version)
+                'ATLAS_INFO', _c_string_literal(atlas_version))
             ])
         else:
             dict_append(info, define_macros=[('NO_ATLAS_INFO', -1)])
@@ -1517,7 +1530,7 @@ Make sure that -lgfortran is used for C++ extensions.
         dict_append(info, define_macros=[('NO_ATLAS_INFO', -2)])
     else:
         dict_append(info, define_macros=[(
-            'ATLAS_INFO', '"\\"%s\\""' % atlas_version)
+            'ATLAS_INFO', _c_string_literal(atlas_version))
         ])
     result = _cached_atlas_version[key] = atlas_version, info
     return result
@@ -1676,23 +1689,46 @@ class blas_info(system_info):
         else:
             info['include_dirs'] = self.get_include_dirs()
         if platform.system() == 'Windows':
-            # The check for windows is needed because has_cblas uses the
+            # The check for windows is needed because get_cblas_libs uses the
             # same compiler that was used to compile Python and msvc is
             # often not installed when mingw is being used. This rough
             # treatment is not desirable, but windows is tricky.
             info['language'] = 'f77'  # XXX: is it generally true?
         else:
-            lib = self.has_cblas(info)
+            lib = self.get_cblas_libs(info)
             if lib is not None:
                 info['language'] = 'c'
-                info['libraries'] = [lib]
+                info['libraries'] = lib
                 info['define_macros'] = [('HAVE_CBLAS', None)]
         self.set_info(**info)
 
-    def has_cblas(self, info):
+    def get_cblas_libs(self, info):
+        """ Check whether we can link with CBLAS interface
+
+        This method will search through several combinations of libraries
+        to check whether CBLAS is present:
+
+        1. Libraries in ``info['libraries']``, as is
+        2. As 1. but also explicitly adding ``'cblas'`` as a library
+        3. As 1. but also explicitly adding ``'blas'`` as a library
+        4. Check only library ``'cblas'``
+        5. Check only library ``'blas'``
+
+        Parameters
+        ----------
+        info : dict
+           system information dictionary for compilation and linking
+
+        Returns
+        -------
+        libraries : list of str or None
+            a list of libraries that enables the use of CBLAS interface.
+            Returns None if not found or a compilation error occurs.
+
+            Since 1.17 returns a list.
+        """
         # primitive cblas check by looking for the header and trying to link
         # cblas or blas
-        res = False
         c = customized_ccompiler()
         tmpdir = tempfile.mkdtemp()
         s = """#include <cblas.h>
@@ -1711,27 +1747,26 @@ class blas_info(system_info):
                 # check we can compile (find headers)
                 obj = c.compile([src], output_dir=tmpdir,
                                 include_dirs=self.get_include_dirs())
+            except (distutils.ccompiler.CompileError, distutils.ccompiler.LinkError):
+                return None
 
-                # check we can link (find library)
-                # some systems have separate cblas and blas libs. First
-                # check for cblas lib, and if not present check for blas lib.
+            # check we can link (find library)
+            # some systems have separate cblas and blas libs.
+            for libs in [info['libraries'], ['cblas'] + info['libraries'],
+                         ['blas'] + info['libraries'], ['cblas'], ['blas']]:
                 try:
                     c.link_executable(obj, os.path.join(tmpdir, "a.out"),
-                                      libraries=["cblas"],
+                                      libraries=libs,
                                       library_dirs=info['library_dirs'],
                                       extra_postargs=info.get('extra_link_args', []))
-                    res = "cblas"
+                    return libs
+                    # This breaks the for loop
+                    break
                 except distutils.ccompiler.LinkError:
-                    c.link_executable(obj, os.path.join(tmpdir, "a.out"),
-                                      libraries=["blas"],
-                                      library_dirs=info['library_dirs'],
-                                      extra_postargs=info.get('extra_link_args', []))
-                    res = "blas"
-            except distutils.ccompiler.CompileError:
-                res = None
+                    pass
         finally:
             shutil.rmtree(tmpdir)
-        return res
+        return None
 
 
 class openblas_info(blas_info):
@@ -2062,7 +2097,7 @@ class _numpy_info(system_info):
             if vrs is None:
                 continue
             macros = [(self.modulename.upper() + '_VERSION',
-                      '"\\"%s\\""' % (vrs)),
+                      _c_string_literal(vrs)),
                       (self.modulename.upper(), None)]
             break
         dict_append(info, define_macros=macros)
@@ -2107,17 +2142,17 @@ class numerix_info(system_info):
         if which[0] is None:
             which = "numpy", "defaulted"
             try:
-                import numpy
+                import numpy  # noqa: F401
                 which = "numpy", "defaulted"
             except ImportError:
                 msg1 = str(get_exception())
                 try:
-                    import Numeric
+                    import Numeric  # noqa: F401
                     which = "numeric", "defaulted"
                 except ImportError:
                     msg2 = str(get_exception())
                     try:
-                        import numarray
+                        import numarray  # noqa: F401
                         which = "numarray", "defaulted"
                     except ImportError:
                         msg3 = str(get_exception())
@@ -2267,7 +2302,7 @@ class _pkg_config_info(system_info):
         version = self.get_config_output(config_exe, self.version_flag)
         if version:
             macros.append((self.__class__.__name__.split('.')[-1].upper(),
-                           '"\\"%s\\""' % (version)))
+                           _c_string_literal(version)))
             if self.version_macro_name:
                 macros.append((self.version_macro_name + '_%s'
                                % (version.replace('.', '_')), None))
@@ -2437,7 +2472,6 @@ class umfpack_info(system_info):
                         define_macros=[('SCIPY_UMFPACK_H', None)],
                         swig_opts=['-I' + inc_dir])
 
-        amd = get_info('amd')
         dict_append(info, **get_info('amd'))
 
         self.set_info(**info)
@@ -2533,6 +2567,7 @@ def show_all(argv=None):
             del show_only[show_only.index(name)]
         conf = c()
         conf.verbosity = 2
+        # FIXME: r not used
         r = conf.get_info()
     if show_only:
         log.info('Info classes not defined: %s', ','.join(show_only))

@@ -8,7 +8,6 @@ import numpy.core.fromnumeric as fromnumeric
 from numpy.testing import (
     assert_, assert_raises, assert_equal,
     )
-from numpy.ma.testutils import assert_array_equal
 from numpy.ma import (
     MaskType, MaskedArray, absolute, add, all, allclose, allequal, alltrue,
     arange, arccos, arcsin, arctan, arctan2, array, average, choose,
@@ -22,7 +21,7 @@ from numpy.ma import (
     repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
     take, tan, tanh, transpose, where, zeros,
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 pi = np.pi
 

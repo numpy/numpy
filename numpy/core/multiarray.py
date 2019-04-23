@@ -40,6 +40,10 @@ __all__ = [
     'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
     'where', 'zeros']
 
+# For backward compatibility, make sure pickle imports these functions from here
+_reconstruct.__module__ = 'numpy.core.multiarray'
+scalar.__module__ = 'numpy.core.multiarray'
+
 
 arange.__module__ = 'numpy'
 array.__module__ = 'numpy'
@@ -51,7 +55,6 @@ fromiter.__module__ = 'numpy'
 frompyfunc.__module__ = 'numpy'
 fromstring.__module__ = 'numpy'
 geterrobj.__module__ = 'numpy'
-matmul.__module__ = 'numpy'
 may_share_memory.__module__ = 'numpy'
 nested_iters.__module__ = 'numpy'
 promote_types.__module__ = 'numpy'
@@ -60,17 +63,19 @@ seterrobj.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
 
 
-array_function_dispatch = functools.partial(
-    overrides.array_function_dispatch, module='numpy')
+# We can't verify dispatcher signatures because NumPy's C functions don't
+# support introspection.
+array_function_from_c_func_and_dispatcher = functools.partial(
+    overrides.array_function_from_dispatcher,
+    module='numpy', docs_from_dispatcher=True, verify=False)
 
 
-def _empty_like_dispatcher(prototype, dtype=None, order=None, subok=None):
-    return (prototype,)
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.empty_like)
+def empty_like(prototype, dtype=None, order=None, subok=None):
+    """
+    empty_like(prototype, dtype=None, order='K', subok=True)
 
-
-@array_function_dispatch(_empty_like_dispatcher)
-def empty_like(prototype, dtype=None, order='K', subok=True):
-    """Return a new array with the same shape and type as a given array.
+    Return a new array with the same shape and type as a given array.
 
     Parameters
     ----------
@@ -116,25 +121,19 @@ def empty_like(prototype, dtype=None, order='K', subok=True):
     --------
     >>> a = ([1,2,3], [4,5,6])                         # a is array-like
     >>> np.empty_like(a)
-    array([[-1073741821, -1073741821,           3],    #random
+    array([[-1073741821, -1073741821,           3],    # random
            [          0,           0, -1073741821]])
     >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
     >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000],#random
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # random
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """
-    return _multiarray_umath.empty_like(prototype, dtype, order, subok)
+    return (prototype,)
 
 
-def _concatenate_dispatcher(arrays, axis=None, out=None):
-    for array in arrays:
-        yield array
-    yield out
-
-
-@array_function_dispatch(_concatenate_dispatcher)
-def concatenate(arrays, axis=0, out=None):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.concatenate)
+def concatenate(arrays, axis=None, out=None):
     """
     concatenate((a1, a2, ...), axis=0, out=None)
 
@@ -216,16 +215,18 @@ def concatenate(arrays, axis=0, out=None):
            fill_value=999999)
 
     """
-    return _multiarray_umath.concatenate(arrays, axis, out)
+    if out is not None:
+        # optimize for the typical case where only arrays is provided
+        arrays = list(arrays)
+        arrays.append(out)
+    return arrays
 
 
-def _inner_dispatcher(a, b):
-    return (a, b)
-
-
-@array_function_dispatch(_inner_dispatcher)
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)
 def inner(a, b):
     """
+    inner(a, b)
+
     Inner product of two arrays.
 
     Ordinary inner product of vectors for 1-D arrays (without complex
@@ -291,19 +292,15 @@ def inner(a, b):
     An example where `b` is a scalar:
 
     >>> np.inner(np.eye(2), 7)
-    array([[ 7.,  0.],
-           [ 0.,  7.]])
+    array([[7., 0.],
+           [0., 7.]])
 
     """
-    return _multiarray_umath.inner(a, b)
+    return (a, b)
 
 
-def _where_dispatcher(condition, x=None, y=None):
-    return (condition, x, y)
-
-
-@array_function_dispatch(_where_dispatcher)
-def where(condition, x=np._NoValue, y=np._NoValue):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.where)
+def where(condition, x=None, y=None):
     """
     where(condition, [x, y])
 
@@ -374,21 +371,14 @@ def where(condition, x=np._NoValue, y=np._NoValue):
            [ 0,  2, -1],
            [ 0,  3, -1]])
     """
-    # _multiarray_umath.where only accepts positional arguments
-    args = tuple(a for a in (x, y) if a is not np._NoValue)
-    return _multiarray_umath.where(condition, *args)
+    return (condition, x, y)
 
 
-def _lexsort_dispatcher(keys, axis=None):
-    if isinstance(keys, tuple):
-        return keys
-    else:
-        return (keys,)
-
-
-@array_function_dispatch(_lexsort_dispatcher)
-def lexsort(keys, axis=-1):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.lexsort)
+def lexsort(keys, axis=None):
     """
+    lexsort(keys, axis=-1)
+
     Perform an indirect stable sort using a sequence of keys.
 
     Given multiple sorting keys, which can be interpreted as columns in a
@@ -437,8 +427,8 @@ def lexsort(keys, axis=-1):
     >>> a = [1,5,1,4,3,4,4] # First column
     >>> b = [9,4,0,4,0,2,1] # Second column
     >>> ind = np.lexsort((b,a)) # Sort by a, then by b
-    >>> print(ind)
-    [2 0 4 6 5 3 1]
+    >>> ind
+    array([2, 0, 4, 6, 5, 3, 1])
 
     >>> [(a[i],b[i]) for i in ind]
     [(1, 0), (1, 9), (3, 0), (4, 1), (4, 2), (4, 4), (5, 4)]
@@ -460,16 +450,17 @@ def lexsort(keys, axis=-1):
     array([2, 0, 4, 6, 5, 3, 1])
 
     """
-    return _multiarray_umath.lexsort(keys, axis)
+    if isinstance(keys, tuple):
+        return keys
+    else:
+        return (keys,)
 
 
-def _can_cast_dispatcher(from_, to, casting=None):
-    return (from_,)
-
-
-@array_function_dispatch(_can_cast_dispatcher)
-def can_cast(from_, to, casting='safe'):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.can_cast)
+def can_cast(from_, to, casting=None):
     """
+    can_cast(from_, to, casting='safe')
+
     Returns True if cast between data types can occur according to the
     casting rule.  If from is a scalar or array scalar, also returns
     True if the scalar value can be cast without overflow or truncation
@@ -573,16 +564,14 @@ def can_cast(from_, to, casting='safe'):
     True
 
     """
-    return _multiarray_umath.can_cast(from_, to, casting)
+    return (from_,)
 
 
-def _min_scalar_type_dispatcher(a):
-    return (a,)
-
-
-@array_function_dispatch(_min_scalar_type_dispatcher)
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.min_scalar_type)
 def min_scalar_type(a):
     """
+    min_scalar_type(a)
+
     For scalar ``a``, returns the data type with the smallest size
     and smallest scalar kind which can hold its value.  For non-scalar
     array ``a``, returns the vector's dtype unmodified.
@@ -626,16 +615,14 @@ def min_scalar_type(a):
     dtype('float64')
 
     """
-    return _multiarray_umath.min_scalar_type(a)
+    return (a,)
 
 
-def _result_type_dispatcher(*arrays_and_dtypes):
-    return arrays_and_dtypes
-
-
-@array_function_dispatch(_result_type_dispatcher)
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.result_type)
 def result_type(*arrays_and_dtypes):
     """
+    result_type(*arrays_and_dtypes)
+
     Returns the type that results from applying the NumPy
     type promotion rules to the arguments.
 
@@ -700,16 +687,14 @@ def result_type(*arrays_and_dtypes):
     dtype('float64')
 
     """
-    return _multiarray_umath.result_type(*arrays_and_dtypes)
+    return arrays_and_dtypes
 
 
-def _dot_dispatcher(a, b, out=None):
-    return (a, b, out)
-
-
-@array_function_dispatch(_dot_dispatcher)
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.dot)
 def dot(a, b, out=None):
     """
+    dot(a, b, out=None)
+
     Dot product of two arrays. Specifically,
 
     - If both `a` and `b` are 1-D arrays, it is inner product of vectors
@@ -790,16 +775,14 @@ def dot(a, b, out=None):
     499128
 
     """
-    return _multiarray_umath.dot(a, b, out)
+    return (a, b, out)
 
 
-def _vdot_dispatcher(a, b):
-    return (a, b)
-
-
-@array_function_dispatch(_vdot_dispatcher)
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.vdot)
 def vdot(a, b):
     """
+    vdot(a, b)
+
     Return the dot product of two vectors.
 
     The vdot(`a`, `b`) function handles complex numbers differently than
@@ -850,16 +833,14 @@ def vdot(a, b):
     30
 
     """
-    return _multiarray_umath.vdot(a, b)
+    return (a, b)
 
 
-def _bincount_dispatcher(x, weights=None, minlength=None):
-    return (x, weights)
-
-
-@array_function_dispatch(_bincount_dispatcher)
-def bincount(x, weights=None, minlength=0):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.bincount)
+def bincount(x, weights=None, minlength=None):
     """
+    bincount(x, weights=None, minlength=0)
+
     Count number of occurrences of each value in array of non-negative ints.
 
     The number of bins (of size 1) is one larger than the largest value in
@@ -928,16 +909,14 @@ def bincount(x, weights=None, minlength=0):
     array([ 0.3,  0.7,  1.1])
 
     """
-    return _multiarray_umath.bincount(x, weights=weights, minlength=minlength)
+    return (x, weights)
 
 
-def _ravel_multi_index_dispatcher(multi_index, dims, mode=None, order=None):
-    return multi_index
-
-
-@array_function_dispatch(_ravel_multi_index_dispatcher)
-def ravel_multi_index(multi_index, dims, mode='raise', order='C'):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.ravel_multi_index)
+def ravel_multi_index(multi_index, dims, mode=None, order=None):
     """
+    ravel_multi_index(multi_index, dims, mode='raise', order='C')
+
     Converts a tuple of index arrays into an array of flat
     indices, applying boundary modes to the multi-index.
 
@@ -991,26 +970,14 @@ def ravel_multi_index(multi_index, dims, mode='raise', order='C'):
     >>> np.ravel_multi_index((3,1,4,1), (6,7,8,9))
     1621
     """
-    return _multiarray_umath.ravel_multi_index(
-        multi_index, dims, mode=mode, order=order)
+    return multi_index
 
 
-def _deprecate_dims(shape, dims):
-    if dims is not None:
-        warnings.warn("'shape' argument should be used instead of 'dims'",
-                      DeprecationWarning, stacklevel=3)
-        shape = dims
-    return shape
-
-
-def _unravel_index_dispatcher(indices, shape=None, order=None, dims=None):
-    shape = _deprecate_dims(shape, dims)
-    return (indices,)
-
-
-@array_function_dispatch(_unravel_index_dispatcher)
-def unravel_index(indices, shape=None, order='C', dims=None):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.unravel_index)
+def unravel_index(indices, shape=None, order=None, dims=None):
     """
+    unravel_index(indices, shape, order='C')
+
     Converts a flat index or array of flat indices into a tuple
     of coordinate arrays.
 
@@ -1053,17 +1020,17 @@ def unravel_index(indices, shape=None, order='C', dims=None):
     (3, 1, 4, 1)
 
     """
-    shape = _deprecate_dims(shape, dims)
-    return _multiarray_umath.unravel_index(indices, shape, order=order)
+    if dims is not None:
+        warnings.warn("'shape' argument should be used instead of 'dims'",
+                      DeprecationWarning, stacklevel=3)
+    return (indices,)
 
 
-def _copyto_dispatcher(dst, src, casting=None, where=None):
-    return (dst, src, where)
-
-
-@array_function_dispatch(_copyto_dispatcher)
-def copyto(dst, src, casting='same_kind', where=True):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.copyto)
+def copyto(dst, src, casting=None, where=None):
     """
+    copyto(dst, src, casting='same_kind', where=True)
+
     Copies values from one array to another, broadcasting as necessary.
 
     Raises a TypeError if the `casting` rule is violated, and if
@@ -1091,16 +1058,14 @@ def copyto(dst, src, casting='same_kind', where=True):
         of `dst`, and selects elements to copy from `src` to `dst`
         wherever it contains the value True.
     """
-    return _multiarray_umath.copyto(dst, src, casting=casting, where=where)
+    return (dst, src, where)
 
 
-def _putmask_dispatcher(a, mask, values):
-    return (a, mask, values)
-
-
-@array_function_dispatch(_putmask_dispatcher)
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.putmask)
 def putmask(a, mask, values):
     """
+    putmask(a, mask, values)
+
     Changes elements of an array based on conditional and input values.
 
     Sets ``a.flat[n] = values[n]`` for each n where ``mask.flat[n]==True``.
@@ -1138,23 +1103,21 @@ def putmask(a, mask, values):
     array([  0,   1, -33, -44, -33])
 
     """
-    return _multiarray_umath.putmask(a, mask, values)
+    return (a, mask, values)
 
 
-def _packbits_and_unpackbits_dispatcher(myarray, axis=None):
-    return (myarray,)
-
-
-@array_function_dispatch(_packbits_and_unpackbits_dispatcher)
-def packbits(myarray, axis=None):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
+def packbits(a, axis=None):
     """
+    packbits(a, axis=None)
+
     Packs the elements of a binary-valued array into bits in a uint8 array.
 
     The result is padded to full bytes by inserting zero bits at the end.
 
     Parameters
     ----------
-    myarray : array_like
+    a : array_like
         An array of integers or booleans whose elements should be packed to
         bits.
     axis : int, optional
@@ -1182,32 +1145,48 @@ def packbits(myarray, axis=None):
     ...                [0,0,1]]])
     >>> b = np.packbits(a, axis=-1)
     >>> b
-    array([[[160],[64]],[[192],[32]]], dtype=uint8)
+    array([[[160],
+            [ 64]],
+           [[192],
+            [ 32]]], dtype=uint8)
 
     Note that in binary 160 = 1010 0000, 64 = 0100 0000, 192 = 1100 0000,
     and 32 = 0010 0000.
 
     """
-    return _multiarray_umath.packbits(myarray, axis)
+    return (a,)
 
 
-@array_function_dispatch(_packbits_and_unpackbits_dispatcher)
-def unpackbits(myarray, axis=None):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
+def unpackbits(a, axis=None, count=None):
     """
+    unpackbits(a, axis=None, count=None)
+
     Unpacks elements of a uint8 array into a binary-valued output array.
 
-    Each element of `myarray` represents a bit-field that should be unpacked
-    into a binary-valued output array. The shape of the output array is either
-    1-D (if `axis` is None) or the same shape as the input array with unpacking
-    done along the axis specified.
+    Each element of `a` represents a bit-field that should be unpacked
+    into a binary-valued output array. The shape of the output array is
+    either 1-D (if `axis` is ``None``) or the same shape as the input
+    array with unpacking done along the axis specified.
 
     Parameters
     ----------
-    myarray : ndarray, uint8 type
+    a : ndarray, uint8 type
        Input array.
     axis : int, optional
         The dimension over which bit-unpacking is done.
         ``None`` implies unpacking the flattened array.
+    count : int or None, optional
+        The number of elements to unpack along `axis`, provided as a way
+        of undoing the effect of packing a size that is not a multiple
+        of eight. A non-negative number means to only unpack `count`
+        bits. A negative number means to trim off that many bits from
+        the end. ``None`` means to unpack the entire array (the
+        default). Counts larger than the available number of bits will
+        add zero padding to the output. Negative counts must not
+        exceed the available number of bits.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1216,8 +1195,8 @@ def unpackbits(myarray, axis=None):
 
     See Also
     --------
-    packbits : Packs the elements of a binary-valued array into bits in a uint8
-               array.
+    packbits : Packs the elements of a binary-valued array into bits in
+               a uint8 array.
 
     Examples
     --------
@@ -1231,18 +1210,34 @@ def unpackbits(myarray, axis=None):
     array([[0, 0, 0, 0, 0, 0, 1, 0],
            [0, 0, 0, 0, 0, 1, 1, 1],
            [0, 0, 0, 1, 0, 1, 1, 1]], dtype=uint8)
+    >>> c = np.unpackbits(a, axis=1, count=-3)
+    >>> c
+    array([[0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0],
+           [0, 0, 0, 1, 0]], dtype=uint8)
+
+    >>> p = np.packbits(b, axis=0)
+    >>> np.unpackbits(p, axis=0)
+    array([[0, 0, 0, 0, 0, 0, 1, 0],
+           [0, 0, 0, 0, 0, 1, 1, 1],
+           [0, 0, 0, 1, 0, 1, 1, 1],
+           [0, 0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0, 0]], dtype=uint8)
+    >>> np.array_equal(b, np.unpackbits(p, axis=0, count=b.shape[0]))
+    True
 
     """
-    return _multiarray_umath.unpackbits(myarray, axis)
+    return (a,)
 
 
-def _shares_memory_dispatcher(a, b, max_work=None):
-    return (a, b)
-
-
-@array_function_dispatch(_shares_memory_dispatcher)
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.shares_memory)
 def shares_memory(a, b, max_work=None):
     """
+    shares_memory(a, b, max_work=None)
+
     Determine if two arrays share memory
 
     Parameters
@@ -1279,12 +1274,14 @@ def shares_memory(a, b, max_work=None):
     False
 
     """
-    return _multiarray_umath.shares_memory(a, b, max_work=max_work)
+    return (a, b)
 
 
-@array_function_dispatch(_shares_memory_dispatcher)
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.may_share_memory)
 def may_share_memory(a, b, max_work=None):
     """
+    may_share_memory(a, b, max_work=None)
+
     Determine if two arrays might share memory
 
     A return of True does not necessarily mean that the two arrays
@@ -1318,17 +1315,11 @@ def may_share_memory(a, b, max_work=None):
     True
 
     """
-    return _multiarray_umath.may_share_memory(a, b, max_work=max_work)
+    return (a, b)
 
 
-def _is_busday_dispatcher(
-        dates, weekmask=None, holidays=None, busdaycal=None, out=None):
-    return (dates, weekmask, holidays, out)
-
-
-@array_function_dispatch(_is_busday_dispatcher)
-def is_busday(dates, weekmask=None, holidays=None, busdaycal=None,
-              out=None):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.is_busday)
+def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
     """
     is_busday(dates, weekmask='1111100', holidays=None, busdaycal=None, out=None)
 
@@ -1376,28 +1367,14 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None,
     >>> # The weekdays are Friday, Saturday, and Monday
     ... np.is_busday(['2011-07-01', '2011-07-02', '2011-07-18'],
     ...                 holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
-    array([False, False,  True], dtype='bool')
+    array([False, False,  True])
     """
-    kwargs = {}
-    if weekmask is not None:
-        kwargs['weekmask'] = weekmask
-    if holidays is not None:
-        kwargs['holidays'] = holidays
-    if busdaycal is not None:
-        kwargs['busdaycal'] = busdaycal
-    if out is not None:
-        kwargs['out'] = out
-    return _multiarray_umath.is_busday(dates, **kwargs)
+    return (dates, weekmask, holidays, out)
 
 
-def _busday_offset_dispatcher(dates, offsets, roll=None, weekmask=None,
-                              holidays=None, busdaycal=None, out=None):
-    return (dates, offsets, weekmask, holidays, out)
-
-
-@array_function_dispatch(_busday_offset_dispatcher)
-def busday_offset(dates, offsets, roll='raise', weekmask=None,
-                  holidays=None, busdaycal=None, out=None):
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.busday_offset)
+def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
+                  busdaycal=None, out=None):
     """
     busday_offset(dates, offsets, roll='raise', weekmask='1111100', holidays=None, busdaycal=None, out=None)
 
@@ -1464,46 +1441,32 @@ def busday_offset(dates, offsets, roll='raise', weekmask=None,
     --------
     >>> # First business day in October 2011 (not accounting for holidays)
     ... np.busday_offset('2011-10', 0, roll='forward')
-    numpy.datetime64('2011-10-03','D')
+    numpy.datetime64('2011-10-03')
     >>> # Last business day in February 2012 (not accounting for holidays)
     ... np.busday_offset('2012-03', -1, roll='forward')
-    numpy.datetime64('2012-02-29','D')
+    numpy.datetime64('2012-02-29')
     >>> # Third Wednesday in January 2011
     ... np.busday_offset('2011-01', 2, roll='forward', weekmask='Wed')
-    numpy.datetime64('2011-01-19','D')
+    numpy.datetime64('2011-01-19')
     >>> # 2012 Mother's Day in Canada and the U.S.
     ... np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
-    numpy.datetime64('2012-05-13','D')
+    numpy.datetime64('2012-05-13')
 
     >>> # First business day on or after a date
     ... np.busday_offset('2011-03-20', 0, roll='forward')
-    numpy.datetime64('2011-03-21','D')
+    numpy.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 0, roll='forward')
-    numpy.datetime64('2011-03-22','D')
+    numpy.datetime64('2011-03-22')
     >>> # First business day after a date
     ... np.busday_offset('2011-03-20', 1, roll='backward')
-    numpy.datetime64('2011-03-21','D')
+    numpy.datetime64('2011-03-21')
     >>> np.busday_offset('2011-03-22', 1, roll='backward')
-    numpy.datetime64('2011-03-23','D')
+    numpy.datetime64('2011-03-23')
     """
-    kwargs = {}
-    if weekmask is not None:
-        kwargs['weekmask'] = weekmask
-    if holidays is not None:
-        kwargs['holidays'] = holidays
-    if busdaycal is not None:
-        kwargs['busdaycal'] = busdaycal
-    if out is not None:
-        kwargs['out'] = out
-    return _multiarray_umath.busday_offset(dates, offsets, roll, **kwargs)
+    return (dates, offsets, weekmask, holidays, out)
 
 
-def _busday_count_dispatcher(begindates, enddates, weekmask=None,
-                             holidays=None, busdaycal=None, out=None):
-    return (begindates, enddates, weekmask, holidays, out)
-
-
-@array_function_dispatch(_busday_count_dispatcher)
+@array_function_from_c_func_and_dispatcher(_multiarray_umath.busday_count)
 def busday_count(begindates, enddates, weekmask=None, holidays=None,
                  busdaycal=None, out=None):
     """
@@ -1562,32 +1525,21 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
     ... np.busday_count('2011-01', '2011-02')
     21
     >>> # Number of weekdays in 2011
-    ...  np.busday_count('2011', '2012')
+    >>> np.busday_count('2011', '2012')
     260
     >>> # Number of Saturdays in 2011
     ... np.busday_count('2011', '2012', weekmask='Sat')
     53
     """
-    kwargs = {}
-    if weekmask is not None:
-        kwargs['weekmask'] = weekmask
-    if holidays is not None:
-        kwargs['holidays'] = holidays
-    if busdaycal is not None:
-        kwargs['busdaycal'] = busdaycal
-    if out is not None:
-        kwargs['out'] = out
-    return _multiarray_umath.busday_count(begindates, enddates, **kwargs)
+    return (begindates, enddates, weekmask, holidays, out)
 
 
-def _datetime_as_string_dispatcher(
-        arr, unit=None, timezone=None, casting=None):
-    return (arr,)
-
-
-@array_function_dispatch(_datetime_as_string_dispatcher)
-def datetime_as_string(arr, unit=None, timezone='naive', casting='same_kind'):
+@array_function_from_c_func_and_dispatcher(
+    _multiarray_umath.datetime_as_string)
+def datetime_as_string(arr, unit=None, timezone=None, casting=None):
     """
+    datetime_as_string(arr, unit=None, timezone='naive', casting='same_kind')
+
     Convert an array of datetimes into an array of strings.
 
     Parameters
@@ -1611,6 +1563,7 @@ def datetime_as_string(arr, unit=None, timezone='naive', casting='same_kind'):
 
     Examples
     --------
+    >>> import pytz
     >>> d = np.arange('2002-10-27T04:30', 4*60, 60, dtype='M8[m]')
     >>> d
     array(['2002-10-27T04:30', '2002-10-27T05:30', '2002-10-27T06:30',
@@ -1641,8 +1594,9 @@ def datetime_as_string(arr, unit=None, timezone='naive', casting='same_kind'):
     'casting' can be used to specify whether precision can be changed
 
     >>> np.datetime_as_string(d, unit='h', casting='safe')
+    Traceback (most recent call last):
+        ...
     TypeError: Cannot create a datetime string as units 'h' from a NumPy
     datetime with units 'm' according to the rule 'safe'
     """
-    return _multiarray_umath.datetime_as_string(arr, unit, timezone, casting)
-
+    return (arr,)

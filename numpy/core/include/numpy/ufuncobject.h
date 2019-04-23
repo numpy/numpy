@@ -120,7 +120,11 @@ typedef struct _tagPyUFuncObject {
          */
         int nin, nout, nargs;
 
-        /* Identity for reduction, either PyUFunc_One or PyUFunc_Zero */
+        /*
+         * Identity for reduction, any of PyUFunc_One, PyUFunc_Zero
+         * PyUFunc_MinusOne, PyUFunc_None, PyUFunc_ReorderableNone,
+         * PyUFunc_IdentityValue.
+         */
         int identity;
 
         /* Array of one-dimensional core loops */
@@ -301,7 +305,7 @@ typedef struct _tagPyUFuncObject {
  */
 #define PyUFunc_ReorderableNone -2
 /*
- * UFunc unit is in identity_value, and the order of operations can be reordered
+ * UFunc unit is an identity_value, and the order of operations can be reordered
  * This case allows reduction with multiple axes at once.
  */
 #define PyUFunc_IdentityValue -3

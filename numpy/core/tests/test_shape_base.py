@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import pytest
-import warnings
 import sys
 import numpy as np
 from numpy.core import (
@@ -12,7 +11,7 @@ from numpy.core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
-    assert_raises_regex, assert_warns, assert_almost_equal
+    assert_raises_regex, assert_warns
     )
 
 from numpy.compat import long
@@ -225,13 +224,27 @@ class TestConcatenate(object):
         assert_raises(ValueError, concatenate, (0,))
         assert_raises(ValueError, concatenate, (np.array(0),))
 
+        # dimensionality must match
+        assert_raises_regex(
+            ValueError,
+            r"all the input arrays must have same number of dimensions, but "
+            r"the array at index 0 has 1 dimension\(s\) and the array at "
+            r"index 1 has 2 dimension\(s\)",
+            np.concatenate, (np.zeros(1), np.zeros((1, 1))))
+
         # test shapes must match except for concatenation axis
         a = np.ones((1, 2, 3))
         b = np.ones((2, 2, 3))
         axis = list(range(3))
         for i in range(3):
             np.concatenate((a, b), axis=axis[0])  # OK
-            assert_raises(ValueError, np.concatenate, (a, b), axis=axis[1])
+            assert_raises_regex(
+                ValueError,
+                "all the input array dimensions for the concatenation axis "
+                "must match exactly, but along dimension {}, the array at "
+                "index 0 has size 1 and the array at index 1 has size 2"
+                .format(i),
+                np.concatenate, (a, b), axis=axis[1])
             assert_raises(ValueError, np.concatenate, (a, b), axis=axis[2])
             a = np.moveaxis(a, -1, 0)
             b = np.moveaxis(b, -1, 0)
@@ -374,6 +387,10 @@ def test_stack():
     # empty arrays
     assert_(stack([[], [], []]).shape == (3, 0))
     assert_(stack([[], [], []], axis=1).shape == (0, 3))
+    # out
+    out = np.zeros_like(r1)
+    np.stack((a, b), out=out)
+    assert_array_equal(out, r1)
     # edge cases
     assert_raises_regex(ValueError, 'need at least one array', stack, [])
     assert_raises_regex(ValueError, 'must have the same shape',

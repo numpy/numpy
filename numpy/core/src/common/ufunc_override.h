@@ -28,7 +28,7 @@ PyUFunc_HasOverride(PyObject *obj);
  * Get possible out argument from kwds, and returns the number of outputs
  * contained within it: if a tuple, the number of elements in it, 1 otherwise.
  * The out argument itself is returned in out_kwd_obj, and the outputs
- * in the out_obj array (all as borrowed references).
+ * in the out_obj array (as borrowed references).
  *
  * Returns 0 if no outputs found, -1 if kwds is not a dict (with an error set).
  */

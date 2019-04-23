@@ -7,8 +7,6 @@
 """
 from __future__ import division, absolute_import, print_function
 
-import warnings
-
 import numpy as np
 import numpy.ma as ma
 from numpy import recarray
@@ -25,7 +23,7 @@ from numpy.ma.testutils import (
     assert_, assert_equal,
     assert_equal_records,
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 
 class TestMRecords(object):

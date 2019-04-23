@@ -11,6 +11,7 @@ from numpy.distutils import ccompiler, customized_ccompiler
 from numpy.testing import assert_, assert_equal
 from numpy.distutils.system_info import system_info, ConfigParser
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
+from numpy.distutils import _shell_utils
 
 
 def get_class(name, notfound_action=1):
@@ -29,7 +30,7 @@ simple_site = """
 [ALL]
 library_dirs = {dir1:s}{pathsep:s}{dir2:s}
 libraries = {lib1:s},{lib2:s}
-extra_compile_args = -I/fake/directory
+extra_compile_args = -I/fake/directory -I"/path with/spaces" -Os
 runtime_library_dirs = {dir1:s}
 
 [temp1]
@@ -40,7 +41,7 @@ runtime_library_dirs = {dir1:s}
 [temp2]
 library_dirs = {dir2:s}
 libraries = {lib2:s}
-extra_link_args = -Wl,-rpath={lib2:s}
+extra_link_args = -Wl,-rpath={lib2_escaped:s}
 rpath = {dir2:s}
 """
 site_cfg = simple_site
@@ -137,7 +138,8 @@ class TestSystemInfoReading(object):
             'lib1': self._lib1,
             'dir2': self._dir2,
             'lib2': self._lib2,
-            'pathsep': os.pathsep
+            'pathsep': os.pathsep,
+            'lib2_escaped': _shell_utils.NativeParser.join([self._lib2])
         })
         # Write site.cfg
         fd, self._sitecfg = mkstemp()
@@ -181,7 +183,7 @@ class TestSystemInfoReading(object):
         assert_equal(tsi.get_libraries(), [self._lib1, self._lib2])
         assert_equal(tsi.get_runtime_lib_dirs(), [self._dir1])
         extra = tsi.calc_extra_info()
-        assert_equal(extra['extra_compile_args'], ['-I/fake/directory'])
+        assert_equal(extra['extra_compile_args'], ['-I/fake/directory', '-I/path with/spaces', '-Os'])
 
     def test_temp1(self):
         # Read in all information in the temp1 block

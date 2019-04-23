@@ -8,6 +8,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
+#include "arrayfunction_override.h"
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
@@ -187,7 +188,7 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (n <= 1) {
-        if (PyTuple_GET_ITEM(args, 0) == Py_None) {
+        if (n != 0 && PyTuple_GET_ITEM(args, 0) == Py_None) {
             return PyArray_View(self, NULL, NULL);
         }
         if (!PyArg_ParseTuple(args, "O&:reshape", PyArray_IntpConverter,
@@ -823,8 +824,8 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyArrayObject *ret;
 
         /* If the requested dtype is flexible, adapt it */
-        PyArray_AdaptFlexibleDType((PyObject *)self, PyArray_DESCR(self),
-                                                                    &dtype);
+        dtype = PyArray_AdaptFlexibleDType((PyObject *)self,
+                                           PyArray_DESCR(self), dtype);
         if (dtype == NULL) {
             return NULL;
         }
@@ -1003,6 +1004,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     int i;
     int nin, nout;
     PyObject *out_kwd_obj;
+    PyObject *fast;
     PyObject **in_objs, **out_objs;
 
     /* check inputs */
@@ -1010,12 +1012,18 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     if (nin < 0) {
         return -1;
     }
-    in_objs = PySequence_Fast_ITEMS(args);
+    fast = PySequence_Fast(args, "Could not convert object to sequence");
+    if (fast == NULL) {
+        return -1;
+    }
+    in_objs = PySequence_Fast_ITEMS(fast);
     for (i = 0; i < nin; ++i) {
         if (PyUFunc_HasOverride(in_objs[i])) {
+            Py_DECREF(fast);
             return 1;
         }
     }
+    Py_DECREF(fast);
     /* check outputs, if any */
     nout = PyUFuncOverride_GetOutObjects(kwds, &out_kwd_obj, &out_objs);
     if (nout < 0) {
@@ -1023,9 +1031,11 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
     }
     for (i = 0; i < nout; i++) {
         if (PyUFunc_HasOverride(out_objs[i])) {
+            Py_DECREF(out_kwd_obj);
             return 1;
         }
     }
+    Py_DECREF(out_kwd_obj);
     return 0;
 }
 
@@ -1079,13 +1089,29 @@ cleanup:
     return result;
 }
 
-
 static PyObject *
-array_function(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_function(PyArrayObject *self, PyObject *c_args, PyObject *c_kwds)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_array_function");
-}
+    PyObject *func, *types, *args, *kwargs, *result;
+    static char *kwlist[] = {"func", "types", "args", "kwargs", NULL};
 
+    if (!PyArg_ParseTupleAndKeywords(
+            c_args, c_kwds, "OOOO:__array_function__", kwlist,
+            &func, &types, &args, &kwargs)) {
+        return NULL;
+    }
+
+    types = PySequence_Fast(
+        types,
+        "types argument to ndarray.__array_function__ must be iterable");
+    if (types == NULL) {
+        return NULL;
+    }
+
+    result = array_function_method_impl(func, types, args, kwargs);
+    Py_DECREF(types);
+    return result;
+}
 
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -1355,6 +1381,7 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
         newd = PyArray_DescrNew(saved);
+        Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
@@ -1409,6 +1436,7 @@ array_argpartition(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
         newd = PyArray_DescrNew(saved);
+        Py_DECREF(newd->names);
         newd->names = new_name;
         ((PyArrayObject_fields *)self)->descr = newd;
     }
@@ -1512,7 +1540,6 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
         copy = PyImport_ImportModule("copy");
         if (copy == NULL) {
             Py_DECREF(copied_array);
-            Py_DECREF(copy);
             return NULL;
         }
         deepcopy = PyObject_GetAttrString(copy, "deepcopy");
@@ -1695,129 +1722,150 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 static PyObject *
-array_reduce_ex(PyArrayObject *self, PyObject *args)
+array_reduce_ex_regular(PyArrayObject *self, int protocol)
 {
-    int protocol;
-    PyObject *ret = NULL, *numeric_mod = NULL, *from_buffer_func = NULL;
-    PyObject *buffer_tuple = NULL, *pickle_module = NULL, *pickle_class = NULL;
-    PyObject *class_args = NULL, *class_args_tuple = NULL, *unused = NULL;
     PyObject *subclass_array_reduce = NULL;
+    PyObject *ret;
+
+    /* We do not call array_reduce directly but instead lookup and call
+     * the __reduce__ method to make sure that it's possible to customize
+     * pickling in sub-classes. */
+    subclass_array_reduce = PyObject_GetAttrString((PyObject *)self,
+                                                   "__reduce__");
+    if (subclass_array_reduce == NULL) {
+        return NULL;
+    }
+    ret = PyObject_CallObject(subclass_array_reduce, NULL);
+    Py_DECREF(subclass_array_reduce);
+    return ret;
+}
+
+static PyObject *
+array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
+{
+    PyObject *numeric_mod = NULL, *from_buffer_func = NULL;
+    PyObject *pickle_module = NULL, *picklebuf_class = NULL;
+    PyObject *picklebuf_args = NULL;
     PyObject *buffer = NULL, *transposed_array = NULL;
     PyArray_Descr *descr = NULL;
     char order;
 
-    if (PyArg_ParseTuple(args, "i", &protocol)){
-        descr = PyArray_DESCR(self);
-        if ((protocol < 5) ||
-            (!PyArray_IS_C_CONTIGUOUS((PyArrayObject*)self) &&
-             !PyArray_IS_F_CONTIGUOUS((PyArrayObject*)self)) ||
-            PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT) ||
-            (PyType_IsSubtype(((PyObject*)self)->ob_type, &PyArray_Type) &&
-             ((PyObject*)self)->ob_type != &PyArray_Type) ||
-            PyDataType_ISUNSIZED(descr)) {
-            /* The PickleBuffer class from version 5 of the pickle protocol
-             * can only be used for arrays backed by a contiguous data buffer.
-             * For all other cases we fallback to the generic array_reduce
-             * method that involves using a temporary bytes allocation. However
-             * we do not call array_reduce directly but instead lookup and call
-             * the __reduce__ method to make sure that it's possible customize
-             * pickling in sub-classes. */
-            subclass_array_reduce = PyObject_GetAttrString((PyObject *)self,
-                                                           "__reduce__");
-            return PyObject_CallObject(subclass_array_reduce, unused);
-        }
-        else if (protocol == 5){
-            ret = PyTuple_New(2);
+    descr = PyArray_DESCR(self);
 
-            if (ret == NULL) {
-                return NULL;
-            }
-
-            /* if the python version is below 3.8, the pickle module does not provide
-             * built-in support for protocol 5. We try importing the pickle5
-             * backport instead */
+    /* if the python version is below 3.8, the pickle module does not provide
+     * built-in support for protocol 5. We try importing the pickle5
+     * backport instead */
 #if PY_VERSION_HEX >= 0x03080000
-            pickle_module = PyImport_ImportModule("pickle");
-#elif PY_VERSION_HEX < 0x03080000 && PY_VERSION_HEX >= 0x03060000
-            pickle_module = PyImport_ImportModule("pickle5");
-            if (pickle_module == NULL){
-                /* for protocol 5, raise a clear ImportError if pickle5 is not found
-                 */
-                PyErr_SetString(PyExc_ImportError, "Using pickle protocol 5 "
-                        "requires the pickle5 module for python versions >=3.6 "
-                        "and <3.8");
-                return NULL;
-            }
-#else
-            PyErr_SetString(PyExc_ValueError, "pickle protocol 5 is not available "
-                                               "for python versions < 3.6");
-            return NULL;
-#endif
-            if (pickle_module == NULL){
-                return NULL;
-            }
-
-            pickle_class = PyObject_GetAttrString(pickle_module,
-                                                  "PickleBuffer");
-
-            class_args_tuple = PyTuple_New(1);
-            if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject*)self) &&
-                PyArray_IS_F_CONTIGUOUS((PyArrayObject*)self)){
-
-                /* if the array if Fortran-contiguous and not C-contiguous,
-                 * the PickleBuffer instance will hold a view on the transpose
-                 * of the initial array, that is C-contiguous. */
-                order = 'F';
-                transposed_array = PyArray_Transpose((PyArrayObject*)self, NULL);
-                PyTuple_SET_ITEM(class_args_tuple, 0, transposed_array);
-            }
-            else {
-                order = 'C';
-                PyTuple_SET_ITEM(class_args_tuple, 0, (PyObject *)self);
-                Py_INCREF(self);
-            }
-
-            class_args = Py_BuildValue("O", class_args_tuple);
-
-            buffer = PyObject_CallObject(pickle_class, class_args);
-
-            numeric_mod = PyImport_ImportModule("numpy.core.numeric");
-            if (numeric_mod == NULL) {
-                Py_DECREF(ret);
-                return NULL;
-            }
-            from_buffer_func = PyObject_GetAttrString(numeric_mod,
-                                                      "_frombuffer");
-            Py_DECREF(numeric_mod);
-
-            Py_INCREF(descr);
-
-            buffer_tuple = PyTuple_New(4);
-            PyTuple_SET_ITEM(buffer_tuple, 0, buffer);
-            PyTuple_SET_ITEM(buffer_tuple, 1, (PyObject *)descr);
-            PyTuple_SET_ITEM(buffer_tuple, 2,
-                             PyObject_GetAttrString((PyObject *)self,
-                                                    "shape"));
-            PyTuple_SET_ITEM(buffer_tuple, 3,
-                             PyUnicode_FromStringAndSize(&order,
-                                                         (Py_ssize_t)1));
-
-            PyTuple_SET_ITEM(ret, 0, from_buffer_func);
-            PyTuple_SET_ITEM(ret, 1, buffer_tuple);
-
-            return ret;
-        }
-        else {
-            PyErr_Format(PyExc_ValueError,
-                         "cannot call __reduce_ex__ with protocol >= %d",
-                         5);
-            return NULL;
-        }
+    /* we expect protocol 5 to be available in Python 3.8 */
+    pickle_module = PyImport_ImportModule("pickle");
+#elif PY_VERSION_HEX >= 0x03060000
+    pickle_module = PyImport_ImportModule("pickle5");
+    if (pickle_module == NULL) {
+        /* for protocol 5, raise a clear ImportError if pickle5 is not found
+         */
+        PyErr_SetString(PyExc_ImportError, "Using pickle protocol 5 "
+                "requires the pickle5 module for Python >=3.6 and <3.8");
+        return NULL;
     }
-    else {
+#else
+    PyErr_SetString(PyExc_ValueError, "pickle protocol 5 is not available "
+                                      "for Python < 3.6");
+    return NULL;
+#endif
+    if (pickle_module == NULL){
+        return NULL;
+    }
+    picklebuf_class = PyObject_GetAttrString(pickle_module, "PickleBuffer");
+    Py_DECREF(pickle_module);
+    if (picklebuf_class == NULL) {
         return NULL;
     }
 
+    /* Construct a PickleBuffer of the array */
+
+    if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject*) self) &&
+         PyArray_IS_F_CONTIGUOUS((PyArrayObject*) self)) {
+        /* if the array if Fortran-contiguous and not C-contiguous,
+         * the PickleBuffer instance will hold a view on the transpose
+         * of the initial array, that is C-contiguous. */
+        order = 'F';
+        transposed_array = PyArray_Transpose((PyArrayObject*)self, NULL);
+        picklebuf_args = Py_BuildValue("(N)", transposed_array);
+    }
+    else {
+        order = 'C';
+        picklebuf_args = Py_BuildValue("(O)", self);
+    }
+    if (picklebuf_args == NULL) {
+        Py_DECREF(picklebuf_class);
+        return NULL;
+    }
+
+    buffer = PyObject_CallObject(picklebuf_class, picklebuf_args);
+    Py_DECREF(picklebuf_class);
+    Py_DECREF(picklebuf_args);
+    if (buffer == NULL) {
+        /* Some arrays may refuse to export a buffer, in which case
+         * just fall back on regular __reduce_ex__ implementation
+         * (gh-12745).
+         */
+        PyErr_Clear();
+        return array_reduce_ex_regular(self, protocol);
+    }
+
+    /* Get the _frombuffer() function for reconstruction */
+
+    numeric_mod = PyImport_ImportModule("numpy.core.numeric");
+    if (numeric_mod == NULL) {
+        Py_DECREF(buffer);
+        return NULL;
+    }
+    from_buffer_func = PyObject_GetAttrString(numeric_mod,
+                                              "_frombuffer");
+    Py_DECREF(numeric_mod);
+    if (from_buffer_func == NULL) {
+        Py_DECREF(buffer);
+        return NULL;
+    }
+
+    return Py_BuildValue("N(NONN)",
+                         from_buffer_func, buffer, (PyObject *)descr,
+                         PyObject_GetAttrString((PyObject *)self, "shape"),
+                         PyUnicode_FromStringAndSize(&order, 1));
+}
+
+static PyObject *
+array_reduce_ex(PyArrayObject *self, PyObject *args)
+{
+    int protocol;
+    PyArray_Descr *descr = NULL;
+
+    if (!PyArg_ParseTuple(args, "i", &protocol)) {
+        return NULL;
+    }
+
+    descr = PyArray_DESCR(self);
+    if ((protocol < 5) ||
+        (!PyArray_IS_C_CONTIGUOUS((PyArrayObject*)self) &&
+         !PyArray_IS_F_CONTIGUOUS((PyArrayObject*)self)) ||
+        PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT) ||
+        (PyType_IsSubtype(((PyObject*)self)->ob_type, &PyArray_Type) &&
+         ((PyObject*)self)->ob_type != &PyArray_Type) ||
+        PyDataType_ISUNSIZED(descr)) {
+        /* The PickleBuffer class from version 5 of the pickle protocol
+         * can only be used for arrays backed by a contiguous data buffer.
+         * For all other cases we fallback to the generic array_reduce
+         * method that involves using a temporary bytes allocation. */
+        return array_reduce_ex_regular(self, protocol);
+    }
+    else if (protocol == 5) {
+        return array_reduce_ex_picklebuffer(self, protocol);
+    }
+    else {
+        PyErr_Format(PyExc_ValueError,
+                     "__reduce_ex__ called with protocol > 5");
+        return NULL;
+    }
 }
 
 static PyObject *

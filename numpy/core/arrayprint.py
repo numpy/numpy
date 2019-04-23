@@ -26,6 +26,7 @@ __docformat__ = 'restructuredtext'
 
 import sys
 import functools
+import numbers
 if sys.version_info[0] >= 3:
     try:
         from _thread import get_ident
@@ -86,7 +87,11 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if legacy not in [None, False, '1.13']:
         warnings.warn("legacy printing option can currently only be '1.13' or "
                       "`False`", stacklevel=3)
-
+    if threshold is not None:
+        # forbid the bad threshold arg suggested by stack overflow, gh-12351
+        if not isinstance(threshold, numbers.Number) or np.isnan(threshold):
+            raise ValueError("threshold must be numeric and non-NAN, try "
+                             "sys.maxsize for untruncated representation")
     return options
 
 
@@ -196,21 +201,21 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     Floating point precision can be set:
 
     >>> np.set_printoptions(precision=4)
-    >>> print(np.array([1.123456789]))
-    [ 1.1235]
+    >>> np.array([1.123456789])
+    [1.1235]
 
     Long arrays can be summarised:
 
     >>> np.set_printoptions(threshold=5)
-    >>> print(np.arange(10))
-    [0 1 2 ..., 7 8 9]
+    >>> np.arange(10)
+    array([0, 1, 2, ..., 7, 8, 9])
 
     Small results can be suppressed:
 
     >>> eps = np.finfo(float).eps
     >>> x = np.arange(4.)
     >>> x**2 - (x + eps)**2
-    array([ -4.9304e-32,  -4.4409e-16,   0.0000e+00,   0.0000e+00])
+    array([-4.9304e-32, -4.4409e-16,  0.0000e+00,  0.0000e+00])
     >>> np.set_printoptions(suppress=True)
     >>> x**2 - (x + eps)**2
     array([-0., -0.,  0.,  0.])
@@ -294,9 +299,10 @@ def printoptions(*args, **kwargs):
     Examples
     --------
 
+    >>> from numpy.testing import assert_equal
     >>> with np.printoptions(precision=2):
-    ...     print(np.array([2.0])) / 3
-    [0.67]
+    ...     np.array([2.0]) / 3
+    array([0.67])
 
     The `as`-clause of the `with`-statement gives the current print options:
 
@@ -639,9 +645,9 @@ def array2string(a, max_line_width=None, precision=None,
     Examples
     --------
     >>> x = np.array([1e-16,1,2,3])
-    >>> print(np.array2string(x, precision=2, separator=',',
-    ...                       suppress_small=True))
-    [ 0., 1., 2., 3.]
+    >>> np.array2string(x, precision=2, separator=',',
+    ...                       suppress_small=True)
+    '[0.,1.,2.,3.]'
 
     >>> x  = np.arange(3.)
     >>> np.array2string(x, formatter={'float_kind':lambda x: "%.2f" % x})
@@ -649,7 +655,7 @@ def array2string(a, max_line_width=None, precision=None,
 
     >>> x  = np.arange(3)
     >>> np.array2string(x, formatter={'int':lambda x: hex(x)})
-    '[0x0L 0x1L 0x2L]'
+    '[0x0 0x1 0x2]'
 
     """
     legacy = kwarg.pop('legacy', None)
@@ -1352,7 +1358,7 @@ def dtype_is_implied(dtype):
     >>> np.core.arrayprint.dtype_is_implied(np.int8)
     False
     >>> np.array([1, 2, 3], np.int8)
-    array([1, 2, 3], dtype=np.int8)
+    array([1, 2, 3], dtype=int8)
     """
     dtype = np.dtype(dtype)
     if _format_options['legacy'] == '1.13' and dtype.type == bool_:
@@ -1372,6 +1378,7 @@ def dtype_short_repr(dtype):
     The intent is roughly that the following holds
 
     >>> from numpy import *
+    >>> dt = np.int64([1, 2]).dtype
     >>> assert eval(dtype_short_repr(dt)) == dt
     """
     if dtype.names is not None:
@@ -1475,13 +1482,13 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     >>> np.array_repr(np.array([1,2]))
     'array([1, 2])'
     >>> np.array_repr(np.ma.array([0.]))
-    'MaskedArray([ 0.])'
+    'MaskedArray([0.])'
     >>> np.array_repr(np.array([], np.int32))
     'array([], dtype=int32)'
 
     >>> x = np.array([1e-6, 4e-7, 2, 3])
     >>> np.array_repr(x, precision=6, suppress_small=True)
-    'array([ 0.000001,  0.      ,  2.      ,  3.      ])'
+    'array([0.000001,  0.      ,  2.      ,  3.      ])'
 
     """
     return _array_repr_implementation(
@@ -1592,8 +1599,8 @@ def set_string_function(f, repr=True):
     >>> a = np.arange(10)
     >>> a
     HA! - What are you going to do now?
-    >>> print(a)
-    [0 1 2 3 4 5 6 7 8 9]
+    >>> _ = a
+    >>> # [0 1 2 3 4 5 6 7 8 9]
 
     We can reset the function to the default:
 
@@ -1611,7 +1618,7 @@ def set_string_function(f, repr=True):
     >>> x.__str__()
     'random'
     >>> x.__repr__()
-    'array([     0,      1,      2,      3])'
+    'array([0, 1, 2, 3])'
 
     """
     if f is None:

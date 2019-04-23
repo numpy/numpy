@@ -8,7 +8,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy.core.numeric as nx
-from numpy.core.overrides import array_function_dispatch, ENABLE_ARRAY_FUNCTION
+from numpy.core.overrides import array_function_dispatch
 import warnings
 import functools
 
@@ -53,10 +53,6 @@ def _fix_out_named_y(f):
         return f(x, out=out, **kwargs)
 
     return func
-
-
-if not ENABLE_ARRAY_FUNCTION:
-    _fix_out_named_y = _deprecate_out_named_y
 
 
 @_deprecate_out_named_y
@@ -154,11 +150,11 @@ def isposinf(x, out=None):
     Examples
     --------
     >>> np.isposinf(np.PINF)
-    array(True, dtype=bool)
+    True
     >>> np.isposinf(np.inf)
-    array(True, dtype=bool)
+    True
     >>> np.isposinf(np.NINF)
-    array(False, dtype=bool)
+    False
     >>> np.isposinf([-np.inf, 0., np.inf])
     array([False, False,  True])
 
@@ -224,11 +220,11 @@ def isneginf(x, out=None):
     Examples
     --------
     >>> np.isneginf(np.NINF)
-    array(True, dtype=bool)
+    True
     >>> np.isneginf(np.inf)
-    array(False, dtype=bool)
+    False
     >>> np.isneginf(np.PINF)
-    array(False, dtype=bool)
+    False
     >>> np.isneginf([-np.inf, 0., np.inf])
     array([ True, False, False])
 

@@ -3,6 +3,8 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import itertools
 
+import pytest
+
 import numpy as np
 import numpy.core._umath_tests as umt
 import numpy.linalg._umath_linalg as uml
@@ -13,7 +15,7 @@ from numpy.testing import (
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
     assert_allclose,
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 
 class TestUfuncKwargs(object):
@@ -596,6 +598,12 @@ class TestUfunc(object):
         assert_equal(np.sum(np.ones((2, 3, 5), dtype=np.int64), axis=(0, 2), initial=2),
                      [12, 12, 12])
 
+    def test_sum_where(self):
+        # More extensive tests done in test_reduction_with_where.
+        assert_equal(np.sum([[1., 2.], [3., 4.]], where=[True, False]), 4.)
+        assert_equal(np.sum([[1., 2.], [3., 4.]], axis=0, initial=5.,
+                            where=[True, False]), [9., 5.])
+
     def test_inner1d(self):
         a = np.arange(6).reshape((2, 3))
         assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1))
@@ -1162,6 +1170,8 @@ class TestUfunc(object):
         assert_equal(np.array([[1]], dtype=object).sum(), 1)
         assert_equal(np.array([[[1, 2]]], dtype=object).sum((0, 1)), [1, 2])
         assert_equal(np.array([1], dtype=object).sum(initial=1), 2)
+        assert_equal(np.array([[1], [2, 3]], dtype=object)
+                     .sum(initial=[0], where=[False, True]), [0, 2, 3])
 
     def test_object_array_accumulate_inplace(self):
         # Checks that in-place accumulates work, see also gh-7402
@@ -1396,6 +1406,44 @@ class TestUfunc(object):
         res = np.add.reduce(a, initial=5)
         assert_equal(res, 15)
 
+    @pytest.mark.parametrize('axis', (0, 1, None))
+    @pytest.mark.parametrize('where', (np.array([False, True, True]),
+                                       np.array([[True], [False], [True]]),
+                                       np.array([[True, False, False],
+                                                 [False, True, False],
+                                                 [False, True, True]])))
+    def test_reduction_with_where(self, axis, where):
+        a = np.arange(9.).reshape(3, 3)
+        a_copy = a.copy()
+        a_check = np.zeros_like(a)
+        np.positive(a, out=a_check, where=where)
+
+        res = np.add.reduce(a, axis=axis, where=where)
+        check = a_check.sum(axis)
+        assert_equal(res, check)
+        # Check we do not overwrite elements of a internally.
+        assert_array_equal(a, a_copy)
+
+    @pytest.mark.parametrize(('axis', 'where'),
+                             ((0, np.array([True, False, True])),
+                              (1, [True, True, False]),
+                              (None, True)))
+    @pytest.mark.parametrize('initial', (-np.inf, 5.))
+    def test_reduction_with_where_and_initial(self, axis, where, initial):
+        a = np.arange(9.).reshape(3, 3)
+        a_copy = a.copy()
+        a_check = np.full(a.shape, -np.inf)
+        np.positive(a, out=a_check, where=where)
+
+        res = np.maximum.reduce(a, axis=axis, where=where, initial=initial)
+        check = a_check.max(axis, initial=initial)
+        assert_equal(res, check)
+
+    def test_reduction_where_initial_needed(self):
+        a = np.arange(9.).reshape(3, 3)
+        m = [False, True, False]
+        assert_raises(ValueError, np.maximum.reduce, a, where=m)
+
     def test_identityless_reduction_nonreorderable(self):
         a = np.array([[8.0, 2.0, 2.0], [1.0, 0.5, 0.25]])
 
@@ -1532,6 +1580,7 @@ class TestUfunc(object):
 
         result = struct_ufunc.add_triplet(a, b)
         assert_equal(result, np.array([(2, 4, 6)], dtype='u8,u8,u8'))
+        assert_raises(RuntimeError, struct_ufunc.register_fail)
 
     def test_custom_ufunc(self):
         a = np.array(
@@ -1749,16 +1798,19 @@ class TestUfunc(object):
         assert_equal(f(d, 0, None, None, True), r.reshape((1,) + r.shape))
         assert_equal(f(d, 0, None, None, False, 0), r)
         assert_equal(f(d, 0, None, None, False, initial=0), r)
+        assert_equal(f(d, 0, None, None, False, 0, True), r)
+        assert_equal(f(d, 0, None, None, False, 0, where=True), r)
         # multiple keywords
         assert_equal(f(d, axis=0, dtype=None, out=None, keepdims=False), r)
         assert_equal(f(d, 0, dtype=None, out=None, keepdims=False), r)
         assert_equal(f(d, 0, None, out=None, keepdims=False), r)
-        assert_equal(f(d, 0, None, out=None, keepdims=False, initial=0), r)
+        assert_equal(f(d, 0, None, out=None, keepdims=False, initial=0,
+                       where=True), r)
 
         # too little
         assert_raises(TypeError, f)
         # too much
-        assert_raises(TypeError, f, d, 0, None, None, False, 0, 1)
+        assert_raises(TypeError, f, d, 0, None, None, False, 0, True, 1)
         # invalid axis
         assert_raises(TypeError, f, d, "invalid")
         assert_raises(TypeError, f, d, axis="invalid")
@@ -1857,3 +1909,30 @@ class TestUfunc(object):
     def test_no_doc_string(self):
         # gh-9337
         assert_('\n' not in umt.inner1d_no_doc.__doc__)
+
+    def test_invalid_args(self):
+        # gh-7961
+        exc = pytest.raises(TypeError, np.sqrt, None)
+        # minimally check the exception text
+        assert 'loop of ufunc does not support' in str(exc)
+
+    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    def test_nat_is_not_finite(self, nat):
+        try:
+            assert not np.isfinite(nat)
+        except TypeError:
+            pass  # ok, just not implemented
+
+    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    def test_nat_is_nan(self, nat):
+        try:
+            assert np.isnan(nat)
+        except TypeError:
+            pass  # ok, just not implemented
+
+    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    def test_nat_is_not_inf(self, nat):
+        try:
+            assert not np.isinf(nat)
+        except TypeError:
+            pass  # ok, just not implemented

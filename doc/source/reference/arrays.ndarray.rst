@@ -82,9 +82,11 @@ Indexing arrays
 
 Arrays can be indexed using an extended Python slicing syntax,
 ``array[selection]``.  Similar syntax is also used for accessing
-fields in a :ref:`structured array <arrays.dtypes.field>`.
+fields in a :term:`structured data type`.
 
 .. seealso:: :ref:`Array Indexing <arrays.indexing>`.
+
+.. _memory-layout:
 
 Internal memory layout of an ndarray
 ====================================
@@ -127,7 +129,7 @@ strided scheme, and correspond to memory that can be *addressed* by the strides:
 where :math:`d_j` `= self.shape[j]`.
 
 Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
-:term:`single-segment`, memory layouts, in which every part of the
+single-segment, memory layouts, in which every part of the
 memory block can be accessed by some combination of the indices.
 
 While a C-style and Fortran-style contiguous array, which has the corresponding
@@ -143,14 +145,15 @@ different. This can happen in two cases:
        considered C-style and Fortran-style contiguous.
 
 Point 1. means that ``self`` and ``self.squeeze()`` always have the same
-contiguity and :term:`aligned` flags value. This also means that even a high
-dimensional array could be C-style and Fortran-style contiguous at the same
-time.
+contiguity and ``aligned`` flags value. This also means
+that even a high dimensional array could be C-style and Fortran-style
+contiguous at the same time.
 
 .. index:: aligned
 
 An array is considered aligned if the memory offsets for all elements and the
-base offset itself is a multiple of `self.itemsize`.
+base offset itself is a multiple of `self.itemsize`. Understanding
+`memory-alignment` leads to better performance on most hardware.
 
 .. note::
 
@@ -409,6 +412,7 @@ be performed.
 .. autosummary::
    :toctree: generated/
 
+   ndarray.max
    ndarray.argmax
    ndarray.min
    ndarray.argmin
@@ -440,7 +444,7 @@ Each of the arithmetic operations (``+``, ``-``, ``*``, ``/``, ``//``,
 ``%``, ``divmod()``, ``**`` or ``pow()``, ``<<``, ``>>``, ``&``,
 ``^``, ``|``, ``~``) and the comparisons (``==``, ``<``, ``>``,
 ``<=``, ``>=``, ``!=``) is equivalent to the corresponding
-:term:`universal function` (or :term:`ufunc` for short) in NumPy.  For
+universal function (or :term:`ufunc` for short) in NumPy.  For
 more information, see the section on :ref:`Universal Functions
 <ufuncs>`.
 
@@ -461,12 +465,12 @@ Truth value of an array (:func:`bool()`):
 .. autosummary::
    :toctree: generated/
 
-   ndarray.__nonzero__
+   ndarray.__bool__
 
 .. note::
 
    Truth-value testing of an array invokes
-   :meth:`ndarray.__nonzero__`, which raises an error if the number of
+   :meth:`ndarray.__bool__`, which raises an error if the number of
    elements in the array is larger than 1, because the truth value
    of such arrays is ambiguous. Use :meth:`.any() <ndarray.any>` and
    :meth:`.all() <ndarray.all>` instead to be clear about what is meant
@@ -492,7 +496,6 @@ Arithmetic:
    ndarray.__add__
    ndarray.__sub__
    ndarray.__mul__
-   ndarray.__div__
    ndarray.__truediv__
    ndarray.__floordiv__
    ndarray.__mod__
@@ -527,7 +530,6 @@ Arithmetic, in-place:
    ndarray.__iadd__
    ndarray.__isub__
    ndarray.__imul__
-   ndarray.__idiv__
    ndarray.__itruediv__
    ndarray.__ifloordiv__
    ndarray.__imod__
@@ -597,19 +599,17 @@ Container customization: (see :ref:`Indexing <arrays.indexing>`)
    ndarray.__setitem__
    ndarray.__contains__
 
-Conversion; the operations :func:`complex()`, :func:`int()`,
-:func:`long()`, :func:`float()`, :func:`oct()`, and
-:func:`hex()`. They work only on arrays that have one element in them
+Conversion; the operations :func:`int()`, :func:`float()` and
+:func:`complex()`.
+. They work only on arrays that have one element in them
 and return the appropriate scalar.
 
 .. autosummary::
    :toctree: generated/
 
    ndarray.__int__
-   ndarray.__long__
    ndarray.__float__
-   ndarray.__oct__
-   ndarray.__hex__
+   ndarray.__complex__
 
 String representations:
 

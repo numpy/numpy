@@ -18,6 +18,7 @@ import distutils
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import (check_gcc_function_attribute,
+                                              check_gcc_function_attribute_with_intrinsics,
                                               check_gcc_variable_attribute,
                                               check_inline,
                                               check_restrict,
@@ -95,7 +96,7 @@ Original exception was: %s, and the Compiler class was %s
         try:
             ret = mth(*((self,)+args))
         except (DistutilsExecError, CompileError):
-            msg = str(get_exception())
+            str(get_exception())
             self.compiler = save_compiler
             raise CompileError
         self.compiler = save_compiler
@@ -423,6 +424,11 @@ int main (void)
 
     def check_gcc_function_attribute(self, attribute, name):
         return check_gcc_function_attribute(self, attribute, name)
+
+    def check_gcc_function_attribute_with_intrinsics(self, attribute, name,
+                                                     code, include):
+        return check_gcc_function_attribute_with_intrinsics(self, attribute,
+                                                            name, code, include)
 
     def check_gcc_variable_attribute(self, attribute):
         return check_gcc_variable_attribute(self, attribute)

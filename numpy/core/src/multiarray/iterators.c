@@ -539,6 +539,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     char *dptr;
     int size;
     PyObject *obj = NULL;
+    PyObject *new;
     PyArray_CopySwapFunc *copyswap;
 
     if (ind == Py_Ellipsis) {
@@ -640,35 +641,35 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         obj = ind;
     }
 
-    if (PyArray_Check(obj)) {
-        /* Check for Boolean object */
-        if (PyArray_TYPE((PyArrayObject *)obj) == NPY_BOOL) {
-            ret = iter_subscript_Bool(self, (PyArrayObject *)obj);
-            Py_DECREF(indtype);
-        }
-        /* Check for integer array */
-        else if (PyArray_ISINTEGER((PyArrayObject *)obj)) {
-            PyObject *new;
-            new = PyArray_FromAny(obj, indtype, 0, 0,
-                              NPY_ARRAY_FORCECAST | NPY_ARRAY_ALIGNED, NULL);
-            if (new == NULL) {
-                goto fail;
-            }
-            Py_DECREF(obj);
-            obj = new;
-            new = iter_subscript_int(self, (PyArrayObject *)obj);
-            Py_DECREF(obj);
-            return new;
-        }
-        else {
-            goto fail;
-        }
+    /* Any remaining valid input is an array or has been turned into one */
+    if (!PyArray_Check(obj)) {
+        goto fail;
+    }
+
+    /* Check for Boolean array */
+    if (PyArray_TYPE((PyArrayObject *)obj) == NPY_BOOL) {
+        ret = iter_subscript_Bool(self, (PyArrayObject *)obj);
+        Py_DECREF(indtype);
         Py_DECREF(obj);
         return (PyObject *)ret;
     }
-    else {
-        Py_DECREF(indtype);
+
+    /* Only integer arrays left */
+    if (!PyArray_ISINTEGER((PyArrayObject *)obj)) {
+        goto fail;
     }
+
+    Py_INCREF(indtype);
+    new = PyArray_FromAny(obj, indtype, 0, 0,
+                      NPY_ARRAY_FORCECAST | NPY_ARRAY_ALIGNED, NULL);
+    if (new == NULL) {
+        goto fail;
+    }
+    Py_DECREF(indtype);
+    Py_DECREF(obj);
+    ret = (PyArrayObject *)iter_subscript_int(self, (PyArrayObject *)new);
+    Py_DECREF(new);
+    return (PyObject *)ret;
 
 
  fail:

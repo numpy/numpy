@@ -5,7 +5,6 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
 
 import functools
 import operator
-import types
 import warnings
 
 from . import numeric as _nx
@@ -48,13 +47,13 @@ def atleast_1d(*arys):
     Examples
     --------
     >>> np.atleast_1d(1.0)
-    array([ 1.])
+    array([1.])
 
     >>> x = np.arange(9.0).reshape(3,3)
     >>> np.atleast_1d(x)
-    array([[ 0.,  1.,  2.],
-           [ 3.,  4.,  5.],
-           [ 6.,  7.,  8.]])
+    array([[0., 1., 2.],
+           [3., 4., 5.],
+           [6., 7., 8.]])
     >>> np.atleast_1d(x) is x
     True
 
@@ -106,11 +105,11 @@ def atleast_2d(*arys):
     Examples
     --------
     >>> np.atleast_2d(3.0)
-    array([[ 3.]])
+    array([[3.]])
 
     >>> x = np.arange(3.0)
     >>> np.atleast_2d(x)
-    array([[ 0.,  1.,  2.]])
+    array([[0., 1., 2.]])
     >>> np.atleast_2d(x).base is x
     True
 
@@ -166,7 +165,7 @@ def atleast_3d(*arys):
     Examples
     --------
     >>> np.atleast_3d(3.0)
-    array([[[ 3.]]])
+    array([[[3.]]])
 
     >>> x = np.arange(3.0)
     >>> np.atleast_3d(x).shape
@@ -179,7 +178,7 @@ def atleast_3d(*arys):
     True
 
     >>> for arr in np.atleast_3d([1, 2], [[1, 2]], [[[1, 2]]]):
-    ...     print(arr, arr.shape)
+    ...     print(arr, arr.shape) # doctest: +SKIP
     ...
     [[[1]
       [2]]] (1, 2, 1)
@@ -215,11 +214,6 @@ def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
                       FutureWarning, stacklevel=stacklevel)
         return ()
     return arrays
-
-
-def _warn_for_nonsequence(arrays):
-    if not overrides.ENABLE_ARRAY_FUNCTION:
-        _arrays_for_stack_dispatcher(arrays, stacklevel=4)
 
 
 def _vhstack_dispatcher(tup):
@@ -279,7 +273,6 @@ def vstack(tup):
            [4]])
 
     """
-    _warn_for_nonsequence(tup)
     return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
 
 
@@ -331,7 +324,6 @@ def hstack(tup):
            [3, 4]])
 
     """
-    _warn_for_nonsequence(tup)
     arrs = [atleast_1d(_m) for _m in tup]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
@@ -342,10 +334,11 @@ def hstack(tup):
 
 def _stack_dispatcher(arrays, axis=None, out=None):
     arrays = _arrays_for_stack_dispatcher(arrays, stacklevel=6)
-    for a in arrays:
-        yield a
     if out is not None:
-        yield out
+        # optimize for the typical case where only arrays is provided
+        arrays = list(arrays)
+        arrays.append(out)
+    return arrays
 
 
 @array_function_dispatch(_stack_dispatcher)
@@ -353,9 +346,9 @@ def stack(arrays, axis=0, out=None):
     """
     Join a sequence of arrays along a new axis.
 
-    The `axis` parameter specifies the index of the new axis in the dimensions
-    of the result. For example, if ``axis=0`` it will be the first dimension
-    and if ``axis=-1`` it will be the last dimension.
+    The ``axis`` parameter specifies the index of the new axis in the
+    dimensions of the result. For example, if ``axis=0`` it will be the first
+    dimension and if ``axis=-1`` it will be the last dimension.
 
     .. versionadded:: 1.10.0
 
@@ -363,8 +356,10 @@ def stack(arrays, axis=0, out=None):
     ----------
     arrays : sequence of array_like
         Each array must have the same shape.
+
     axis : int, optional
         The axis in the result array along which the input arrays are stacked.
+
     out : ndarray, optional
         If provided, the destination to place the result. The shape must be
         correct, matching that of what stack would have returned if no
@@ -405,12 +400,11 @@ def stack(arrays, axis=0, out=None):
            [3, 4]])
 
     """
-    _warn_for_nonsequence(arrays)
     arrays = [asanyarray(arr) for arr in arrays]
     if not arrays:
         raise ValueError('need at least one array to stack')
 
-    shapes = set(arr.shape for arr in arrays)
+    shapes = {arr.shape for arr in arrays}
     if len(shapes) != 1:
         raise ValueError('all input arrays must have the same shape')
 
@@ -760,11 +754,11 @@ def block(arrays):
     ...     [A,               np.zeros((2, 3))],
     ...     [np.ones((3, 2)), B               ]
     ... ])
-    array([[ 2.,  0.,  0.,  0.,  0.],
-           [ 0.,  2.,  0.,  0.,  0.],
-           [ 1.,  1.,  3.,  0.,  0.],
-           [ 1.,  1.,  0.,  3.,  0.],
-           [ 1.,  1.,  0.,  0.,  3.]])
+    array([[2., 0., 0., 0., 0.],
+           [0., 2., 0., 0., 0.],
+           [1., 1., 3., 0., 0.],
+           [1., 1., 0., 3., 0.],
+           [1., 1., 0., 0., 3.]])
 
     With a list of depth 1, `block` can be used as `hstack`
 
@@ -774,7 +768,7 @@ def block(arrays):
     >>> a = np.array([1, 2, 3])
     >>> b = np.array([2, 3, 4])
     >>> np.block([a, b, 10])             # hstack([a, b, 10])
-    array([1, 2, 3, 2, 3, 4, 10])
+    array([ 1,  2,  3,  2,  3,  4, 10])
 
     >>> A = np.ones((2, 2), int)
     >>> B = 2 * A

@@ -1,5 +1,7 @@
 .. _routines.linalg:
 
+.. module:: numpy.linalg
+
 Linear algebra (:mod:`numpy.linalg`)
 ************************************
 

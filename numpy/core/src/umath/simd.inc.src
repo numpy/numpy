@@ -32,13 +32,7 @@
 #include <float.h>
 #include <string.h> /* for memcpy */
 
-#if defined __AVX512F__
-#define VECTOR_SIZE_BYTES 64
-#elif defined __AVX2__
-#define VECTOR_SIZE_BYTES 32
-#else
 #define VECTOR_SIZE_BYTES 16
-#endif
 
 static NPY_INLINE npy_uintp
 abs_ptrdiff(char *a, char *b)
@@ -128,6 +122,27 @@ abs_ptrdiff(char *a, char *b)
  */
 
 /**begin repeat
+ * #ISA = AVX2, AVX512F#
+ */
+
+/* prototypes */
+#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+
+/**begin repeat1
+ * #func = exp, log#
+ */
+
+static void
+@ISA@_@func@_FLOAT(npy_float *, npy_float *, const npy_int n);
+
+/**end repeat1**/
+#endif
+
+/**end repeat**/
+
+
+
+/**begin repeat
  * Float types
  *  #type = npy_float, npy_double, npy_longdouble#
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
@@ -190,17 +205,24 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
     @type@ * ip2 = (@type@ *)args[1];
     @type@ * op = (@type@ *)args[2];
     npy_intp n = dimensions[0];
+#if defined __AVX512F__
+    const npy_intp vector_size_bytes = 64;
+#elif defined __AVX2__
+    const npy_intp vector_size_bytes = 32;
+#else
+    const npy_intp vector_size_bytes = 32;
+#endif
     /* argument one scalar */
-    if (IS_BLOCKABLE_BINARY_SCALAR1(sizeof(@type@), VECTOR_SIZE_BYTES)) {
+    if (IS_BLOCKABLE_BINARY_SCALAR1(sizeof(@type@), vector_size_bytes)) {
         sse2_binary_scalar1_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
     /* argument two scalar */
-    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), VECTOR_SIZE_BYTES)) {
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), vector_size_bytes)) {
         sse2_binary_scalar2_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
-    else if (IS_BLOCKABLE_BINARY(sizeof(@type@), VECTOR_SIZE_BYTES)) {
+    else if (IS_BLOCKABLE_BINARY(sizeof(@type@), vector_size_bytes)) {
         sse2_binary_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
@@ -427,19 +449,20 @@ static void
 sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
 #ifdef  __AVX512F__
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    const npy_intp vector_size_bytes = 64;
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[i] @OP@ ip2[i];
     /* lots of specializations, to squeeze out max performance */
-    if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES) && npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
+    if (npy_is_aligned(&ip1[i], vector_size_bytes) && npy_is_aligned(&ip2[i], vector_size_bytes)) {
         if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
                 @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, a);
                 @vpre512@_store_@vsuf@(&op[i], c);
             }
         }
         else {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
                 @vtype512@ b = @vpre512@_load_@vsuf@(&ip2[i]);
                 @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
@@ -447,16 +470,16 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
             }
         }
     }
-    else if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    else if (npy_is_aligned(&ip1[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
             @vtype512@ b = @vpre512@_loadu_@vsuf@(&ip2[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
             @vpre512@_store_@vsuf@(&op[i], c);
         }
     }
-    else if (npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    else if (npy_is_aligned(&ip2[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
             @vtype512@ b = @vpre512@_load_@vsuf@(&ip2[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
@@ -465,14 +488,14 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
     }
     else {
         if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
                 @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, a);
                 @vpre512@_store_@vsuf@(&op[i], c);
             }
         }
         else {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
                 @vtype512@ b = @vpre512@_loadu_@vsuf@(&ip2[i]);
                 @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
@@ -481,20 +504,21 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
         }
     }
 #elif __AVX2__
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    const npy_intp vector_size_bytes = 32;
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[i] @OP@ ip2[i];
     /* lots of specializations, to squeeze out max performance */
-    if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES) &&
-            npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
+    if (npy_is_aligned(&ip1[i], vector_size_bytes) &&
+            npy_is_aligned(&ip2[i], vector_size_bytes)) {
         if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
                 @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, a);
                 @vpre256@_store_@vsuf@(&op[i], c);
             }
         }
         else {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
                 @vtype256@ b = @vpre256@_load_@vsuf@(&ip2[i]);
                 @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
@@ -502,16 +526,16 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
             }
         }
     }
-    else if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    else if (npy_is_aligned(&ip1[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
             @vtype256@ b = @vpre256@_loadu_@vsuf@(&ip2[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
             @vpre256@_store_@vsuf@(&op[i], c);
         }
     }
-    else if (npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    else if (npy_is_aligned(&ip2[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
             @vtype256@ b = @vpre256@_load_@vsuf@(&ip2[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
@@ -520,14 +544,14 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
     }
     else {
         if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
                 @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, a);
                 @vpre256@_store_@vsuf@(&op[i], c);
             }
         }
         else {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
                 @vtype256@ b = @vpre256@_loadu_@vsuf@(&ip2[i]);
                 @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
@@ -601,18 +625,19 @@ static void
 sse2_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
 #ifdef __AVX512F__
+    const npy_intp vector_size_bytes = 64;
     const @vtype512@ a = @vpre512@_set1_@vsuf@(ip1[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[0] @OP@ ip2[i];
-    if (npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    if (npy_is_aligned(&ip2[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ b = @vpre512@_load_@vsuf@(&ip2[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
             @vpre512@_store_@vsuf@(&op[i], c);
         }
     }
     else {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ b = @vpre512@_loadu_@vsuf@(&ip2[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
             @vpre512@_store_@vsuf@(&op[i], c);
@@ -621,18 +646,19 @@ sse2_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
 
 
 #elif __AVX2__
+    const npy_intp vector_size_bytes = 32;
     const @vtype256@ a = @vpre256@_set1_@vsuf@(ip1[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[0] @OP@ ip2[i];
-    if (npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    if (npy_is_aligned(&ip2[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ b = @vpre256@_load_@vsuf@(&ip2[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
             @vpre256@_store_@vsuf@(&op[i], c);
         }
     }
     else {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ b = @vpre256@_loadu_@vsuf@(&ip2[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
             @vpre256@_store_@vsuf@(&op[i], c);
@@ -667,18 +693,19 @@ static void
 sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
 #ifdef __AVX512F__
+    const npy_intp vector_size_bytes = 64;
     const @vtype512@ b = @vpre512@_set1_@vsuf@(ip2[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[i] @OP@ ip2[0];
-    if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    if (npy_is_aligned(&ip1[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
             @vpre512@_store_@vsuf@(&op[i], c);
         }
     }
     else {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
             @vpre512@_store_@vsuf@(&op[i], c);
@@ -686,18 +713,19 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
     }
 
 #elif __AVX2__
+    const npy_intp vector_size_bytes = 32;
     const @vtype256@ b = @vpre256@_set1_@vsuf@(ip2[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[i] @OP@ ip2[0];
-    if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    if (npy_is_aligned(&ip1[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
             @vpre256@_store_@vsuf@(&op[i], c);
         }
     }
     else {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
             @vpre256@_store_@vsuf@(&op[i], c);
@@ -1029,7 +1057,8 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
 {
     const npy_intp stride = VECTOR_SIZE_BYTES / (npy_intp)sizeof(@type@);
     LOOP_BLOCK_ALIGN_VAR(ip, @type@, VECTOR_SIZE_BYTES) {
-        *op = (npy_isnan(*op) || *op @OP@ ip[i]) ? *op : ip[i];
+        /* Order of operations important for MSVC 2015 */
+        *op = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
     assert(n < (stride) || npy_is_aligned(&ip[i], VECTOR_SIZE_BYTES));
     if (i + 3 * stride <= n) {
@@ -1053,16 +1082,393 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
         }
         else {
             @type@ tmp = sse2_horizontal_@VOP@_@vtype@(c1);
-            *op  = (npy_isnan(*op) || *op @OP@ tmp) ? *op : tmp;
+            /* Order of operations important for MSVC 2015 */
+            *op  = (*op @OP@ tmp || npy_isnan(*op)) ? *op : tmp;
         }
     }
     LOOP_BLOCKED_END {
-        *op  = (npy_isnan(*op) || *op @OP@ ip[i]) ? *op : ip[i];
+        /* Order of operations important for MSVC 2015 */
+        *op  = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
     npy_clear_floatstatus_barrier((char*)op);
 }
 /**end repeat1**/
 
+/**end repeat**/
+
+/* bunch of helper functions used in ISA_exp/log_FLOAT*/
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+avx2_fmadd(__m256 a, __m256 b, __m256 c)
+{
+    return _mm256_add_ps(_mm256_mul_ps(a, b), c);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+avx2_get_full_load_mask(void)
+{
+    return _mm256_set1_ps(-1.0);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+avx2_get_partial_load_mask(const npy_int num_elem, const npy_int total_elem)
+{
+    float maskint[16] = {-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,
+                            1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0};
+    float* addr = maskint + total_elem - num_elem;
+    return _mm256_loadu_ps(addr);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+avx2_masked_load(__m256 mask, npy_float* addr)
+{
+    return _mm256_maskload_ps(addr, _mm256_cvtps_epi32(mask));
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+avx2_set_masked_lanes(__m256 x, __m256 val, __m256 mask)
+{
+    return _mm256_blendv_ps(x, val, mask);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+avx2_blend(__m256 x, __m256 y, __m256 ymask)
+{
+    return _mm256_blendv_ps(x, y, ymask);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+avx2_get_exponent(__m256 x)
+{
+    /*
+     * Special handling of denormals:
+     * 1) Multiply denormal elements with 2**100 (0x71800000)
+     * 2) Get the 8 bits of unbiased exponent
+     * 3) Subtract 100 from exponent of denormals
+     */
+
+    __m256 two_power_100 = _mm256_castsi256_ps(_mm256_set1_epi32(0x71800000));
+    __m256 denormal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_LT_OQ);
+    __m256 temp = _mm256_mul_ps(x, two_power_100);
+    x = _mm256_blendv_ps(x, temp, denormal_mask);
+
+    __m256 exp = _mm256_cvtepi32_ps(
+                    _mm256_sub_epi32(
+                        _mm256_srli_epi32(
+                            _mm256_castps_si256(x), 23),_mm256_set1_epi32(0x7E)));
+
+    __m256 denorm_exp = _mm256_sub_ps(exp, _mm256_set1_ps(100.0f));
+    return _mm256_blendv_ps(exp, denorm_exp, denormal_mask);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+avx2_get_mantissa(__m256 x)
+{
+    /*
+     * Special handling of denormals:
+     * 1) Multiply denormal elements with 2**100 (0x71800000)
+     * 2) Get the 23 bits of mantissa
+     * 3) Mantissa for denormals is not affected by the multiplication
+     */
+
+    __m256 two_power_100 = _mm256_castsi256_ps(_mm256_set1_epi32(0x71800000));
+    __m256 denormal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_LT_OQ);
+    __m256 temp = _mm256_mul_ps(x, two_power_100);
+    x = _mm256_blendv_ps(x, temp, denormal_mask);
+
+    __m256i mantissa_bits = _mm256_set1_epi32(0x7fffff);
+    __m256i exp_126_bits  = _mm256_set1_epi32(126 << 23);
+    return _mm256_castsi256_ps(
+                _mm256_or_si256(
+                    _mm256_and_si256(
+                        _mm256_castps_si256(x), mantissa_bits), exp_126_bits));
+}
+#endif
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
+avx512_get_full_load_mask(void)
+{
+    return 0xFFFF;
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __mmask16
+avx512_get_partial_load_mask(const npy_int num_elem, const npy_int total_elem)
+{
+    return (0x0001 << num_elem) - 0x0001;
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+avx512_masked_load(__mmask16 mask, npy_float* addr)
+{
+    return _mm512_maskz_loadu_ps(mask, (__m512 *)addr);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+avx512_set_masked_lanes(__m512 x, __m512 val, __mmask16 mask)
+{
+    return _mm512_mask_blend_ps(mask, x, val);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+avx512_blend(__m512 x, __m512 y, __mmask16 ymask)
+{
+    return _mm512_mask_mov_ps(x, ymask, y);
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+avx512_get_exponent(__m512 x)
+{
+    return _mm512_add_ps(_mm512_getexp_ps(x), _mm512_set1_ps(1.0f));
+}
+
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
+avx512_get_mantissa(__m512 x)
+{
+    return _mm512_getmant_ps(x, _MM_MANT_NORM_p5_1, _MM_MANT_SIGN_src);
+}
+#endif
+
+/**begin repeat
+ * #ISA = AVX2, AVX512F#
+ * #isa = avx2, avx512#
+ * #vtype = __m256, __m512#
+ * #vsize = 256, 512#
+ * #or = or_ps, kor#
+ * #vsub = , _mask#
+ * #mask = __m256, __mmask16#
+ * #fmadd = avx2_fmadd,_mm512_fmadd_ps#
+ **/
+
+#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
+@isa@_range_reduction(@vtype@ x, @vtype@ y, @vtype@ c1, @vtype@ c2, @vtype@ c3)
+{
+    @vtype@ reduced_x = @fmadd@(y, c1, x);
+    reduced_x = @fmadd@(y, c2, reduced_x);
+    reduced_x = @fmadd@(y, c3, reduced_x);
+    return reduced_x;
+}
+#endif
+/**end repeat**/
+
+/**begin repeat
+ * #ISA = AVX2, AVX512F#
+ * #isa = avx2, avx512#
+ * #vtype = __m256, __m512#
+ * #vsize = 256, 512#
+ * #BYTES = 32, 64#
+ * #mask = __m256, __mmask16#
+ * #vsub = , _mask#
+ * #and_masks =_mm256_and_ps, _mm512_kand#
+ * #fmadd = avx2_fmadd,_mm512_fmadd_ps#
+ * #mask_to_int = _mm256_movemask_ps, #
+ * #full_mask= 0xFF, 0xFFFF#
+ * #masked_store = _mm256_maskstore_ps, _mm512_mask_storeu_ps#
+ * #cvtps_epi32 = _mm256_cvtps_epi32, #
+ */
+
+
+/*
+ * Vectorized implementation of exp using AVX2 and AVX512:
+ * 1) if x >= xmax; return INF (overflow)
+ * 2) if x <= xmin; return 0.0f (underflow)
+ * 3) Range reduction (using Coyd-Waite):
+ *      a) y = x - k*ln(2); k = rint(x/ln(2)); y \in [0, ln(2)]
+ * 4) Compute exp(y) = P/Q, ratio of 2 polynomials P and Q
+ *      b) P = 5th order and Q = 2nd order polynomials obtained from Remez's
+ *      algorithm (mini-max polynomial approximation)
+ * 5) Compute exp(x) = exp(y) * 2^k
+ * 6) Max ULP error measured across all 32-bit FP's = 2.52 (x = 0xc2781e37)
+ * 7) Max relative error measured across all 32-bit FP's= 2.1264E-07 (for the
+ * same x = 0xc2781e37)
+ */
+
+#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS
+static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
+@ISA@_exp_FLOAT(npy_float * op, npy_float * ip, const npy_int array_size)
+{
+    const npy_int num_lanes = @BYTES@/sizeof(npy_float);
+    npy_float xmax = 88.72283935546875f;
+    npy_float xmin = -87.3365478515625f;
+
+    /* Load up frequently used constants */
+    @vtype@ codyw_c1 = _mm@vsize@_set1_ps(NPY_CODY_WAITE_LOGE_2_HIGHf);
+    @vtype@ codyw_c2 = _mm@vsize@_set1_ps(NPY_CODY_WAITE_LOGE_2_LOWf);
+    @vtype@ exp_p0 = _mm@vsize@_set1_ps(NPY_COEFF_P0_EXPf);
+    @vtype@ exp_p1 = _mm@vsize@_set1_ps(NPY_COEFF_P1_EXPf);
+    @vtype@ exp_p2 = _mm@vsize@_set1_ps(NPY_COEFF_P2_EXPf);
+    @vtype@ exp_p3 = _mm@vsize@_set1_ps(NPY_COEFF_P3_EXPf);
+    @vtype@ exp_p4 = _mm@vsize@_set1_ps(NPY_COEFF_P4_EXPf);
+    @vtype@ exp_p5 = _mm@vsize@_set1_ps(NPY_COEFF_P5_EXPf);
+    @vtype@ exp_q0 = _mm@vsize@_set1_ps(NPY_COEFF_Q0_EXPf);
+    @vtype@ exp_q1 = _mm@vsize@_set1_ps(NPY_COEFF_Q1_EXPf);
+    @vtype@ exp_q2 = _mm@vsize@_set1_ps(NPY_COEFF_Q2_EXPf);
+    @vtype@ cvt_magic = _mm@vsize@_set1_ps(NPY_RINT_CVT_MAGICf);
+    @vtype@ log2e = _mm@vsize@_set1_ps(NPY_LOG2Ef);
+    @vtype@ inf = _mm@vsize@_set1_ps(NPY_INFINITYF);
+    @vtype@ zeros_f = _mm@vsize@_set1_ps(0.0f);
+    @vtype@ poly, num_poly, denom_poly, quadrant;
+    @vtype@i exponent;
+
+    @mask@ xmax_mask, xmin_mask;
+    @mask@ load_mask = @isa@_get_full_load_mask();
+    npy_int num_remaining_elements = array_size;
+
+    while (num_remaining_elements > 0) {
+
+        if (num_remaining_elements < num_lanes)
+            load_mask = @isa@_get_partial_load_mask(num_remaining_elements,
+                                                         num_lanes);
+        @vtype@ x  = @isa@_masked_load(load_mask, ip);
+        xmax_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmax), _CMP_GE_OQ);
+        xmin_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmin), _CMP_LE_OQ);
+
+        x = @isa@_set_masked_lanes(x, zeros_f,
+                                   @and_masks@(xmax_mask,xmin_mask));
+
+        quadrant = _mm@vsize@_mul_ps(x, log2e);
+
+        /* round to nearest */
+        quadrant = _mm@vsize@_add_ps(quadrant, cvt_magic);
+        quadrant = _mm@vsize@_sub_ps(quadrant, cvt_magic);
+
+        /* Cody-Waite's range reduction algorithm */
+        x = @isa@_range_reduction(x, quadrant,
+                                  codyw_c1, codyw_c2, zeros_f);
+
+        num_poly = @fmadd@(exp_p5, x, exp_p4);
+        num_poly = @fmadd@(num_poly, x, exp_p3);
+        num_poly = @fmadd@(num_poly, x, exp_p2);
+        num_poly = @fmadd@(num_poly, x, exp_p1);
+        num_poly = @fmadd@(num_poly, x, exp_p0);
+        denom_poly = @fmadd@(exp_q2, x, exp_q1);
+        denom_poly = @fmadd@(denom_poly, x, exp_q0);
+        poly = _mm@vsize@_div_ps(num_poly, denom_poly);
+
+        /*
+         * compute val = poly * 2^quadrant; which is same as adding the
+         * exponent of quadrant to the exponent of poly. quadrant is an int,
+         * so extracting exponent is simply extracting 8 bits.
+         */
+        exponent = _mm@vsize@_slli_epi32(_mm@vsize@_cvtps_epi32(quadrant), 23);
+        poly = _mm@vsize@_castsi@vsize@_ps(
+                    _mm@vsize@_add_epi32(
+                        _mm@vsize@_castps_si@vsize@(poly), exponent));
+
+        /* elem > xmax; return inf, elem < xmin; return 0.0f */
+        poly = @isa@_set_masked_lanes(poly, inf, xmax_mask);
+        poly = @isa@_set_masked_lanes(poly, zeros_f, xmin_mask);
+
+        @masked_store@(op, @cvtps_epi32@(load_mask), poly);
+
+        ip += num_lanes;
+        op += num_lanes;
+        num_remaining_elements -= num_lanes;
+    }
+}
+
+/*
+ * Vectorized implementation of log using AVX2 and AVX512
+ * 1) if x < 0.0f; return -NAN (invalid input)
+ * 2) Range reduction: y = x/2^k;
+ *      a) y = normalized mantissa, k is the exponent (0.5 <= y < 1)
+ * 3) Compute log(y) = P/Q, ratio of 2 polynomials P and Q
+ *      b) P = 5th order and Q = 5th order polynomials obtained from Remez's
+ *      algorithm (mini-max polynomial approximation)
+ * 5) Compute log(x) = log(y) + k*ln(2)
+ * 6) Max ULP error measured across all 32-bit FP's = 3.83 (x = 0x3f486945)
+ * 7) Max relative error measured across all 32-bit FP's = 2.359E-07 (for same
+ * x = 0x3f486945)
+ */
+
+static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
+@ISA@_log_FLOAT(npy_float * op, npy_float * ip, const npy_int array_size)
+{
+    const npy_int num_lanes = @BYTES@/sizeof(npy_float);
+
+    /* Load up frequently used constants */
+    @vtype@ log_p0 = _mm@vsize@_set1_ps(NPY_COEFF_P0_LOGf);
+    @vtype@ log_p1 = _mm@vsize@_set1_ps(NPY_COEFF_P1_LOGf);
+    @vtype@ log_p2 = _mm@vsize@_set1_ps(NPY_COEFF_P2_LOGf);
+    @vtype@ log_p3 = _mm@vsize@_set1_ps(NPY_COEFF_P3_LOGf);
+    @vtype@ log_p4 = _mm@vsize@_set1_ps(NPY_COEFF_P4_LOGf);
+    @vtype@ log_p5 = _mm@vsize@_set1_ps(NPY_COEFF_P5_LOGf);
+    @vtype@ log_q0 = _mm@vsize@_set1_ps(NPY_COEFF_Q0_LOGf);
+    @vtype@ log_q1 = _mm@vsize@_set1_ps(NPY_COEFF_Q1_LOGf);
+    @vtype@ log_q2 = _mm@vsize@_set1_ps(NPY_COEFF_Q2_LOGf);
+    @vtype@ log_q3 = _mm@vsize@_set1_ps(NPY_COEFF_Q3_LOGf);
+    @vtype@ log_q4 = _mm@vsize@_set1_ps(NPY_COEFF_Q4_LOGf);
+    @vtype@ log_q5 = _mm@vsize@_set1_ps(NPY_COEFF_Q5_LOGf);
+    @vtype@ loge2 = _mm@vsize@_set1_ps(NPY_LOGE2f);
+    @vtype@ neg_nan = _mm@vsize@_set1_ps(-NPY_NANF);
+    @vtype@ neg_inf = _mm@vsize@_set1_ps(-NPY_INFINITYF);
+    @vtype@ zeros_f = _mm@vsize@_set1_ps(0.0f);
+    @vtype@ ones_f = _mm@vsize@_set1_ps(1.0f);
+    @vtype@ poly, num_poly, denom_poly, exponent;
+
+    @mask@ inf_nan_mask, sqrt2_mask, zero_mask, negx_mask;
+    @mask@ load_mask = @isa@_get_full_load_mask();
+    npy_int num_remaining_elements = array_size;
+
+    while (num_remaining_elements > 0) {
+
+        if (num_remaining_elements < num_lanes)
+            load_mask = @isa@_get_partial_load_mask(num_remaining_elements,
+                                                         num_lanes);
+        @vtype@ x_in  = @isa@_masked_load(load_mask, ip);
+
+        negx_mask = _mm@vsize@_cmp_ps@vsub@(x_in, zeros_f, _CMP_LT_OQ);
+        zero_mask = _mm@vsize@_cmp_ps@vsub@(x_in, zeros_f, _CMP_EQ_OQ);
+        inf_nan_mask = _mm@vsize@_cmp_ps@vsub@(x_in, _mm@vsize@_set1_ps(FLT_MAX), _CMP_GT_OQ);
+
+        @vtype@ x = @isa@_set_masked_lanes(x_in, zeros_f, negx_mask);
+
+        /* set x = normalized mantissa */
+        exponent = @isa@_get_exponent(x);
+        x = @isa@_get_mantissa(x);
+
+        /* if x < sqrt(2) {exp = exp-1; x = 2*x} */
+        sqrt2_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(NPY_SQRT1_2f), _CMP_LE_OQ);
+        x = @isa@_blend(x, _mm@vsize@_add_ps(x,x), sqrt2_mask);
+        exponent = @isa@_blend(exponent,
+                               _mm@vsize@_sub_ps(exponent,ones_f), sqrt2_mask);
+
+        /* x = x - 1 */
+        x = _mm@vsize@_sub_ps(x, ones_f);
+
+        /* Polynomial approximation for log(1+x) */
+        num_poly = @fmadd@(log_p5, x, log_p4);
+        num_poly = @fmadd@(num_poly, x, log_p3);
+        num_poly = @fmadd@(num_poly, x, log_p2);
+        num_poly = @fmadd@(num_poly, x, log_p1);
+        num_poly = @fmadd@(num_poly, x, log_p0);
+        denom_poly = @fmadd@(log_q5, x, log_q4);
+        denom_poly = @fmadd@(denom_poly, x, log_q3);
+        denom_poly = @fmadd@(denom_poly, x, log_q2);
+        denom_poly = @fmadd@(denom_poly, x, log_q1);
+        denom_poly = @fmadd@(denom_poly, x, log_q0);
+        poly = _mm@vsize@_div_ps(num_poly, denom_poly);
+        poly = @fmadd@(exponent, loge2, poly);
+
+        /*
+         * x < 0.0f; return -NAN
+         * x = 0.0f; return -INF
+         * x > FLT_MAX; return x
+         */
+        poly = @isa@_set_masked_lanes(poly, neg_nan, negx_mask);
+        poly = @isa@_set_masked_lanes(poly, neg_inf, zero_mask);
+        poly = @isa@_set_masked_lanes(poly, x_in, inf_nan_mask);
+
+        @masked_store@(op, @cvtps_epi32@(load_mask), poly);
+
+        ip += num_lanes;
+        op += num_lanes;
+        num_remaining_elements -= num_lanes;
+    }
+}
+#endif
 /**end repeat**/
 
 /*

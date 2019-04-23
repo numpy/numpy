@@ -160,6 +160,39 @@ npy_ObjectLogicalNot(PyObject *i1)
 }
 
 static PyObject *
+npy_ObjectFloor(PyObject *obj) {
+    PyObject *math_floor_func = NULL;
+
+    npy_cache_import("math", "floor", &math_floor_func);
+    if (math_floor_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_floor_func, "O", obj);
+}
+
+static PyObject *
+npy_ObjectCeil(PyObject *obj) {
+    PyObject *math_ceil_func = NULL;
+
+    npy_cache_import("math", "ceil", &math_ceil_func);
+    if (math_ceil_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_ceil_func, "O", obj);
+}
+
+static PyObject *
+npy_ObjectTrunc(PyObject *obj) {
+    PyObject *math_trunc_func = NULL;
+
+    npy_cache_import("math", "trunc", &math_trunc_func);
+    if (math_trunc_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_trunc_func, "O", obj);
+}
+
+static PyObject *
 npy_ObjectGCD(PyObject *i1, PyObject *i2)
 {
     PyObject *gcd = NULL;

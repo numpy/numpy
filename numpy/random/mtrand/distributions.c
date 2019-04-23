@@ -894,7 +894,7 @@ double rk_triangular(rk_state *state, double left, double mode, double right)
         return left + sqrt(U*leftprod);
     } else
     {
-      return right - sqrt((1.0 - U) * rightprod);
+        return right - sqrt((1.0 - U) * rightprod);
     }
 }
 

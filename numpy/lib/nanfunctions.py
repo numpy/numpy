@@ -40,6 +40,33 @@ __all__ = [
     ]
 
 
+def _nan_mask(a, out=None):
+    """
+    Parameters
+    ----------
+    a : array-like
+        Input array with at least 1 dimension.
+    out : ndarray, optional
+        Alternate output array in which to place the result.  The default
+        is ``None``; if provided, it must have the same shape as the
+        expected output and will prevent the allocation of a new array.
+
+    Returns
+    -------
+    y : bool ndarray or True
+        A bool array where ``np.nan`` positions are marked with ``False``
+        and other positions are marked with ``True``. If the type of ``a``
+        is such that it can't possibly contain ``np.nan``, returns ``True``.
+    """
+    # we assume that a is an array for this private function
+
+    if a.dtype.kind not in 'fc':
+        return True
+
+    y = np.isnan(a, out=out)
+    y = np.invert(y, out=y)
+    return y
+
 def _replace_nan(a, val):
     """
     If `a` is of inexact type, make a copy of `a`, replace NaNs with
@@ -271,9 +298,9 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.nanmin(a)
     1.0
     >>> np.nanmin(a, axis=0)
-    array([ 1.,  2.])
+    array([1.,  2.])
     >>> np.nanmin(a, axis=1)
-    array([ 1.,  3.])
+    array([1.,  3.])
 
     When positive infinity and negative infinity are present:
 
@@ -384,9 +411,9 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     >>> np.nanmax(a)
     3.0
     >>> np.nanmax(a, axis=0)
-    array([ 3.,  2.])
+    array([3.,  2.])
     >>> np.nanmax(a, axis=1)
-    array([ 2.,  3.])
+    array([2.,  3.])
 
     When positive infinity and negative infinity are present:
 
@@ -601,12 +628,15 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.nansum(a)
     3.0
     >>> np.nansum(a, axis=0)
-    array([ 2.,  1.])
+    array([2.,  1.])
     >>> np.nansum([1, np.nan, np.inf])
     inf
     >>> np.nansum([1, np.nan, np.NINF])
     -inf
-    >>> np.nansum([1, np.nan, np.inf, -np.inf]) # both +/- infinity present
+    >>> from numpy.testing import suppress_warnings
+    >>> with suppress_warnings() as sup:
+    ...     sup.filter(RuntimeWarning)
+    ...     np.nansum([1, np.nan, np.inf, -np.inf]) # both +/- infinity present
     nan
 
     """
@@ -677,7 +707,7 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.nanprod(a)
     6.0
     >>> np.nanprod(a, axis=0)
-    array([ 3.,  2.])
+    array([3., 2.])
 
     """
     a, mask = _replace_nan(a, 1)
@@ -738,16 +768,16 @@ def nancumsum(a, axis=None, dtype=None, out=None):
     >>> np.nancumsum([1])
     array([1])
     >>> np.nancumsum([1, np.nan])
-    array([ 1.,  1.])
+    array([1.,  1.])
     >>> a = np.array([[1, 2], [3, np.nan]])
     >>> np.nancumsum(a)
-    array([ 1.,  3.,  6.,  6.])
+    array([1.,  3.,  6.,  6.])
     >>> np.nancumsum(a, axis=0)
-    array([[ 1.,  2.],
-           [ 4.,  2.]])
+    array([[1.,  2.],
+           [4.,  2.]])
     >>> np.nancumsum(a, axis=1)
-    array([[ 1.,  3.],
-           [ 3.,  3.]])
+    array([[1.,  3.],
+           [3.,  3.]])
 
     """
     a, mask = _replace_nan(a, 0)
@@ -805,16 +835,16 @@ def nancumprod(a, axis=None, dtype=None, out=None):
     >>> np.nancumprod([1])
     array([1])
     >>> np.nancumprod([1, np.nan])
-    array([ 1.,  1.])
+    array([1.,  1.])
     >>> a = np.array([[1, 2], [3, np.nan]])
     >>> np.nancumprod(a)
-    array([ 1.,  2.,  6.,  6.])
+    array([1.,  2.,  6.,  6.])
     >>> np.nancumprod(a, axis=0)
-    array([[ 1.,  2.],
-           [ 3.,  2.]])
+    array([[1.,  2.],
+           [3.,  2.]])
     >>> np.nancumprod(a, axis=1)
-    array([[ 1.,  2.],
-           [ 3.,  3.]])
+    array([[1.,  2.],
+           [3.,  3.]])
 
     """
     a, mask = _replace_nan(a, 1)
@@ -895,9 +925,9 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     >>> np.nanmean(a)
     2.6666666666666665
     >>> np.nanmean(a, axis=0)
-    array([ 2.,  4.])
+    array([2.,  4.])
     >>> np.nanmean(a, axis=1)
-    array([ 1.,  3.5])
+    array([1.,  3.5]) # may vary
 
     """
     arr, mask = _replace_nan(a, 0)
@@ -1049,19 +1079,19 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
     >>> a = np.array([[10.0, 7, 4], [3, 2, 1]])
     >>> a[0, 1] = np.nan
     >>> a
-    array([[ 10.,  nan,   4.],
-       [  3.,   2.,   1.]])
+    array([[10., nan,  4.],
+           [ 3.,  2.,  1.]])
     >>> np.median(a)
     nan
     >>> np.nanmedian(a)
     3.0
     >>> np.nanmedian(a, axis=0)
-    array([ 6.5,  2.,  2.5])
+    array([6.5, 2. , 2.5])
     >>> np.median(a, axis=1)
-    array([ 7.,  2.])
+    array([nan,  2.])
     >>> b = a.copy()
     >>> np.nanmedian(b, axis=1, overwrite_input=True)
-    array([ 7.,  2.])
+    array([7.,  2.])
     >>> assert not np.all(a==b)
     >>> b = a.copy()
     >>> np.nanmedian(b, axis=None, overwrite_input=True)
@@ -1177,27 +1207,27 @@ def nanpercentile(a, q, axis=None, out=None, overwrite_input=False,
     >>> a = np.array([[10., 7., 4.], [3., 2., 1.]])
     >>> a[0][1] = np.nan
     >>> a
-    array([[ 10.,  nan,   4.],
-          [  3.,   2.,   1.]])
+    array([[10.,  nan,   4.],
+          [ 3.,   2.,   1.]])
     >>> np.percentile(a, 50)
     nan
     >>> np.nanpercentile(a, 50)
-    3.5
+    3.0
     >>> np.nanpercentile(a, 50, axis=0)
-    array([ 6.5,  2.,   2.5])
+    array([6.5, 2. , 2.5])
     >>> np.nanpercentile(a, 50, axis=1, keepdims=True)
-    array([[ 7.],
-           [ 2.]])
+    array([[7.],
+           [2.]])
     >>> m = np.nanpercentile(a, 50, axis=0)
     >>> out = np.zeros_like(m)
     >>> np.nanpercentile(a, 50, axis=0, out=out)
-    array([ 6.5,  2.,   2.5])
+    array([6.5, 2. , 2.5])
     >>> m
-    array([ 6.5,  2. ,  2.5])
+    array([6.5,  2. ,  2.5])
 
     >>> b = a.copy()
     >>> np.nanpercentile(b, 50, axis=1, overwrite_input=True)
-    array([  7.,  2.])
+    array([7., 2.])
     >>> assert not np.all(a==b)
 
     """
@@ -1291,26 +1321,26 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
     >>> a = np.array([[10., 7., 4.], [3., 2., 1.]])
     >>> a[0][1] = np.nan
     >>> a
-    array([[ 10.,  nan,   4.],
-          [  3.,   2.,   1.]])
+    array([[10.,  nan,   4.],
+          [ 3.,   2.,   1.]])
     >>> np.quantile(a, 0.5)
     nan
     >>> np.nanquantile(a, 0.5)
-    3.5
+    3.0
     >>> np.nanquantile(a, 0.5, axis=0)
-    array([ 6.5,  2.,   2.5])
+    array([6.5, 2. , 2.5])
     >>> np.nanquantile(a, 0.5, axis=1, keepdims=True)
-    array([[ 7.],
-           [ 2.]])
+    array([[7.],
+           [2.]])
     >>> m = np.nanquantile(a, 0.5, axis=0)
     >>> out = np.zeros_like(m)
     >>> np.nanquantile(a, 0.5, axis=0, out=out)
-    array([ 6.5,  2.,   2.5])
+    array([6.5, 2. , 2.5])
     >>> m
-    array([ 6.5,  2. ,  2.5])
+    array([6.5,  2. ,  2.5])
     >>> b = a.copy()
     >>> np.nanquantile(b, 0.5, axis=1, overwrite_input=True)
-    array([  7.,  2.])
+    array([7., 2.])
     >>> assert not np.all(a==b)
     """
     a = np.asanyarray(a)
@@ -1465,12 +1495,12 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     Examples
     --------
     >>> a = np.array([[1, np.nan], [3, 4]])
-    >>> np.var(a)
+    >>> np.nanvar(a)
     1.5555555555555554
     >>> np.nanvar(a, axis=0)
-    array([ 1.,  0.])
+    array([1.,  0.])
     >>> np.nanvar(a, axis=1)
-    array([ 0.,  0.25])
+    array([0.,  0.25])  # may vary
 
     """
     arr, mask = _replace_nan(a, 0)
@@ -1619,9 +1649,9 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     >>> np.nanstd(a)
     1.247219128924647
     >>> np.nanstd(a, axis=0)
-    array([ 1.,  0.])
+    array([1., 0.])
     >>> np.nanstd(a, axis=1)
-    array([ 0.,  0.5])
+    array([0.,  0.5]) # may vary
 
     """
     var = nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,

@@ -26,9 +26,6 @@ n = n-dimensional transform
 (Note: 2D routines are just nD routines with different default
 behavior.)
 
-The underlying code for these functions is an f2c-translated and modified
-version of the FFTPACK routines.
-
 """
 from __future__ import division, absolute_import, print_function
 
@@ -37,41 +34,24 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 
 import functools
 
-from numpy.core import (array, asarray, zeros, swapaxes, shape, conjugate,
-                        take, sqrt)
+from numpy.core import asarray, zeros, swapaxes, conjugate, take, sqrt
+from . import pocketfft_internal as pfi
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
-from . import fftpack_lite as fftpack
-from .helper import _FFTCache
-
-_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
-_real_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
 
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.fft')
 
 
-def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
-             work_function=fftpack.cfftf, fft_cache=_fft_cache):
-    a = asarray(a)
+def _raw_fft(a, n, axis, is_real, is_forward, fct):
     axis = normalize_axis_index(axis, a.ndim)
-
     if n is None:
         n = a.shape[axis]
 
     if n < 1:
         raise ValueError("Invalid number of FFT data points (%d) specified."
                          % n)
-
-    # We have to ensure that only a single thread can access a wsave array
-    # at any given time. Thus we remove it from the cache and insert it
-    # again after it has been used. Multiple threads might create multiple
-    # copies of the wsave array. This is intentional and a limitation of
-    # the current C code.
-    wsave = fft_cache.pop_twiddle_factors(n)
-    if wsave is None:
-        wsave = init_function(n)
 
     if a.shape[axis] != n:
         s = list(a.shape)
@@ -87,25 +67,22 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
             z[tuple(index)] = a
             a = z
 
-    if axis != a.ndim - 1:
+    if axis == a.ndim-1:
+        r = pfi.execute(a, is_real, is_forward, fct)
+    else:
         a = swapaxes(a, axis, -1)
-    r = work_function(a, wsave)
-    if axis != a.ndim - 1:
+        r = pfi.execute(a, is_real, is_forward, fct)
         r = swapaxes(r, axis, -1)
-
-    # As soon as we put wsave back into the cache, another thread could pick it
-    # up and start using it, so we must not do this until after we're
-    # completely done using it ourselves.
-    fft_cache.put_twiddle_factors(n, wsave)
-
     return r
 
 
 def _unitary(norm):
-    if norm not in (None, "ortho"):
-        raise ValueError("Invalid norm value %s, should be None or \"ortho\"."
-                         % norm)
-    return norm is not None
+    if norm is None:
+        return False
+    if norm=="ortho":
+        return True
+    raise ValueError("Invalid norm value %s, should be None or \"ortho\"."
+                     % norm)
 
 
 def _fft_dispatcher(a, n=None, axis=None, norm=None):
@@ -177,14 +154,10 @@ def fft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.fft(np.exp(2j * np.pi * np.arange(8) / 8))
-    array([ -3.44505240e-16 +1.14383329e-17j,
-             8.00000000e+00 -5.71092652e-15j,
-             2.33482938e-16 +1.22460635e-16j,
-             1.64863782e-15 +1.77635684e-15j,
-             9.95839695e-17 +2.33482938e-16j,
-             0.00000000e+00 +1.66837030e-15j,
-             1.14383329e-17 +1.22460635e-16j,
-             -1.64863782e-15 +1.77635684e-15j])
+    array([-2.33486982e-16+1.14423775e-17j,  8.00000000e+00-1.25557246e-15j,
+            2.33486982e-16+2.33486982e-16j,  0.00000000e+00+1.22464680e-16j,
+           -1.14423775e-17+2.33486982e-16j,  0.00000000e+00+5.20784380e-16j,
+            1.14423775e-17+1.14423775e-17j,  0.00000000e+00+1.22464680e-16j])
 
     In this example, real input has an FFT which is Hermitian, i.e., symmetric
     in the real part and anti-symmetric in the imaginary part, as described in
@@ -200,12 +173,13 @@ def fft(a, n=None, axis=-1, norm=None):
 
     """
 
-    a = asarray(a).astype(complex, copy=False)
+    a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    output = _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftf, _fft_cache)
-    if _unitary(norm):
-        output *= 1 / sqrt(n)
+    fct = 1
+    if norm is not None and _unitary(norm):
+        fct = 1 / sqrt(n)
+    output = _raw_fft(a, n, axis, False, True, fct)
     return output
 
 
@@ -278,7 +252,7 @@ def ifft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.ifft([0, 4, 0, 0])
-    array([ 1.+0.j,  0.+1.j, -1.+0.j,  0.-1.j])
+    array([ 1.+0.j,  0.+1.j, -1.+0.j,  0.-1.j]) # may vary
 
     Create and plot a band-limited signal with random phases:
 
@@ -288,19 +262,20 @@ def ifft(a, n=None, axis=-1, norm=None):
     >>> n[40:60] = np.exp(1j*np.random.uniform(0, 2*np.pi, (20,)))
     >>> s = np.fft.ifft(n)
     >>> plt.plot(t, s.real, 'b-', t, s.imag, 'r--')
-    ...
+    [<matplotlib.lines.Line2D object at ...>, <matplotlib.lines.Line2D object at ...>]
     >>> plt.legend(('real', 'imaginary'))
-    ...
+    <matplotlib.legend.Legend object at ...>
     >>> plt.show()
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=complex)
+    a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    unitary = _unitary(norm)
-    output = _raw_fft(a, n, axis, fftpack.cffti, fftpack.cfftb, _fft_cache)
-    return output * (1 / (sqrt(n) if unitary else n))
+    fct = 1/n
+    if norm is not None and _unitary(norm):
+        fct = 1/sqrt(n)
+    output = _raw_fft(a, n, axis, False, False, fct)
+    return output
 
 
 
@@ -374,23 +349,22 @@ def rfft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.fft([0, 1, 0, 0])
-    array([ 1.+0.j,  0.-1.j, -1.+0.j,  0.+1.j])
+    array([ 1.+0.j,  0.-1.j, -1.+0.j,  0.+1.j]) # may vary
     >>> np.fft.rfft([0, 1, 0, 0])
-    array([ 1.+0.j,  0.-1.j, -1.+0.j])
+    array([ 1.+0.j,  0.-1.j, -1.+0.j]) # may vary
 
     Notice how the final element of the `fft` output is the complex conjugate
     of the second element, for real input. For `rfft`, this symmetry is
     exploited to compute only the non-negative frequency terms.
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=float)
-    output = _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftf,
-                      _real_fft_cache)
-    if _unitary(norm):
+    a = asarray(a)
+    fct = 1
+    if norm is not None and _unitary(norm):
         if n is None:
             n = a.shape[axis]
-        output *= 1 / sqrt(n)
+        fct = 1/sqrt(n)
+    output = _raw_fft(a, n, axis, True, True, fct)
     return output
 
 
@@ -465,9 +439,9 @@ def irfft(a, n=None, axis=-1, norm=None):
     Examples
     --------
     >>> np.fft.ifft([1, -1j, -1, 1j])
-    array([ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j])
+    array([0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]) # may vary
     >>> np.fft.irfft([1, -1j, -1])
-    array([ 0.,  1.,  0.,  0.])
+    array([0.,  1.,  0.,  0.])
 
     Notice how the last term in the input to the ordinary `ifft` is the
     complex conjugate of the second term, and the output has zero imaginary
@@ -475,14 +449,14 @@ def irfft(a, n=None, axis=-1, norm=None):
     specified, and the output array is purely real.
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=complex)
+    a = asarray(a)
     if n is None:
         n = (a.shape[axis] - 1) * 2
-    unitary = _unitary(norm)
-    output = _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftb,
-                      _real_fft_cache)
-    return output * (1 / (sqrt(n) if unitary else n))
+    fct = 1/n
+    if norm is not None and _unitary(norm):
+        fct = 1/sqrt(n)
+    output = _raw_fft(a, n, axis, True, False, fct)
+    return output
 
 
 @array_function_dispatch(_fft_dispatcher)
@@ -543,16 +517,16 @@ def hfft(a, n=None, axis=-1, norm=None):
     --------
     >>> signal = np.array([1, 2, 3, 4, 3, 2])
     >>> np.fft.fft(signal)
-    array([ 15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j])
+    array([15.+0.j,  -4.+0.j,   0.+0.j,  -1.-0.j,   0.+0.j,  -4.+0.j]) # may vary
     >>> np.fft.hfft(signal[:4]) # Input first half of signal
-    array([ 15.,  -4.,   0.,  -1.,   0.,  -4.])
+    array([15.,  -4.,   0.,  -1.,   0.,  -4.])
     >>> np.fft.hfft(signal, 6)  # Input entire signal and truncate
-    array([ 15.,  -4.,   0.,  -1.,   0.,  -4.])
+    array([15.,  -4.,   0.,  -1.,   0.,  -4.])
 
 
     >>> signal = np.array([[1, 1.j], [-1.j, 2]])
     >>> np.conj(signal.T) - signal   # check Hermitian symmetry
-    array([[ 0.-0.j,  0.+0.j],
+    array([[ 0.-0.j,  -0.+0.j], # may vary
            [ 0.+0.j,  0.-0.j]])
     >>> freq_spectrum = np.fft.hfft(signal)
     >>> freq_spectrum
@@ -560,8 +534,7 @@ def hfft(a, n=None, axis=-1, norm=None):
            [ 2., -2.]])
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=complex)
+    a = asarray(a)
     if n is None:
         n = (a.shape[axis] - 1) * 2
     unitary = _unitary(norm)
@@ -616,13 +589,12 @@ def ihfft(a, n=None, axis=-1, norm=None):
     --------
     >>> spectrum = np.array([ 15, -4, 0, -1, 0, -4])
     >>> np.fft.ifft(spectrum)
-    array([ 1.+0.j,  2.-0.j,  3.+0.j,  4.+0.j,  3.+0.j,  2.-0.j])
+    array([1.+0.j,  2.+0.j,  3.+0.j,  4.+0.j,  3.+0.j,  2.+0.j]) # may vary
     >>> np.fft.ihfft(spectrum)
-    array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j])
+    array([ 1.-0.j,  2.-0.j,  3.-0.j,  4.-0.j]) # may vary
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=float)
+    a = asarray(a)
     if n is None:
         n = a.shape[axis]
     unitary = _unitary(norm)
@@ -732,17 +704,17 @@ def fftn(a, s=None, axes=None, norm=None):
     --------
     >>> a = np.mgrid[:3, :3, :3][0]
     >>> np.fft.fftn(a, axes=(1, 2))
-    array([[[  0.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j]],
-           [[  9.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j]],
-           [[ 18.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j],
-            [  0.+0.j,   0.+0.j,   0.+0.j]]])
+    array([[[ 0.+0.j,   0.+0.j,   0.+0.j], # may vary
+            [ 0.+0.j,   0.+0.j,   0.+0.j],
+            [ 0.+0.j,   0.+0.j,   0.+0.j]],
+           [[ 9.+0.j,   0.+0.j,   0.+0.j],
+            [ 0.+0.j,   0.+0.j,   0.+0.j],
+            [ 0.+0.j,   0.+0.j,   0.+0.j]],
+           [[18.+0.j,   0.+0.j,   0.+0.j],
+            [ 0.+0.j,   0.+0.j,   0.+0.j],
+            [ 0.+0.j,   0.+0.j,   0.+0.j]]])
     >>> np.fft.fftn(a, (2, 2), axes=(0, 1))
-    array([[[ 2.+0.j,  2.+0.j,  2.+0.j],
+    array([[[ 2.+0.j,  2.+0.j,  2.+0.j], # may vary
             [ 0.+0.j,  0.+0.j,  0.+0.j]],
            [[-2.+0.j, -2.+0.j, -2.+0.j],
             [ 0.+0.j,  0.+0.j,  0.+0.j]]])
@@ -838,10 +810,10 @@ def ifftn(a, s=None, axes=None, norm=None):
     --------
     >>> a = np.eye(4)
     >>> np.fft.ifftn(np.fft.fftn(a, axes=(0,)), axes=(1,))
-    array([[ 1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j],
-           [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j],
-           [ 0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
-           [ 0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j]])
+    array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j], # may vary
+           [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j],
+           [0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
+           [0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j]])
 
 
     Create and plot an image with band-limited frequency content:
@@ -934,16 +906,16 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
     --------
     >>> a = np.mgrid[:5, :5][0]
     >>> np.fft.fft2(a)
-    array([[ 50.0 +0.j        ,   0.0 +0.j        ,   0.0 +0.j        ,
-              0.0 +0.j        ,   0.0 +0.j        ],
-           [-12.5+17.20477401j,   0.0 +0.j        ,   0.0 +0.j        ,
-              0.0 +0.j        ,   0.0 +0.j        ],
-           [-12.5 +4.0614962j ,   0.0 +0.j        ,   0.0 +0.j        ,
-              0.0 +0.j        ,   0.0 +0.j        ],
-           [-12.5 -4.0614962j ,   0.0 +0.j        ,   0.0 +0.j        ,
-                0.0 +0.j        ,   0.0 +0.j        ],
-           [-12.5-17.20477401j,   0.0 +0.j        ,   0.0 +0.j        ,
-              0.0 +0.j        ,   0.0 +0.j        ]])
+    array([[ 50.  +0.j        ,   0.  +0.j        ,   0.  +0.j        , # may vary
+              0.  +0.j        ,   0.  +0.j        ],
+           [-12.5+17.20477401j,   0.  +0.j        ,   0.  +0.j        ,
+              0.  +0.j        ,   0.  +0.j        ],
+           [-12.5 +4.0614962j ,   0.  +0.j        ,   0.  +0.j        ,
+              0.  +0.j        ,   0.  +0.j        ],
+           [-12.5 -4.0614962j ,   0.  +0.j        ,   0.  +0.j        ,
+              0.  +0.j        ,   0.  +0.j        ],
+           [-12.5-17.20477401j,   0.  +0.j        ,   0.  +0.j        ,
+              0.  +0.j        ,   0.  +0.j        ]])
 
     """
 
@@ -1028,10 +1000,10 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
     --------
     >>> a = 4 * np.eye(4)
     >>> np.fft.ifft2(a)
-    array([[ 1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j],
-           [ 0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j],
-           [ 0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
-           [ 0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
+    array([[1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j], # may vary
+           [0.+0.j,  0.+0.j,  0.+0.j,  1.+0.j],
+           [0.+0.j,  0.+0.j,  1.+0.j,  0.+0.j],
+           [0.+0.j,  1.+0.j,  0.+0.j,  0.+0.j]])
 
     """
 
@@ -1110,20 +1082,19 @@ def rfftn(a, s=None, axes=None, norm=None):
     --------
     >>> a = np.ones((2, 2, 2))
     >>> np.fft.rfftn(a)
-    array([[[ 8.+0.j,  0.+0.j],
-            [ 0.+0.j,  0.+0.j]],
-           [[ 0.+0.j,  0.+0.j],
-            [ 0.+0.j,  0.+0.j]]])
+    array([[[8.+0.j,  0.+0.j], # may vary
+            [0.+0.j,  0.+0.j]],
+           [[0.+0.j,  0.+0.j],
+            [0.+0.j,  0.+0.j]]])
 
     >>> np.fft.rfftn(a, axes=(2, 0))
-    array([[[ 4.+0.j,  0.+0.j],
-            [ 4.+0.j,  0.+0.j]],
-           [[ 0.+0.j,  0.+0.j],
-            [ 0.+0.j,  0.+0.j]]])
+    array([[[4.+0.j,  0.+0.j], # may vary
+            [4.+0.j,  0.+0.j]],
+           [[0.+0.j,  0.+0.j],
+            [0.+0.j,  0.+0.j]]])
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=float)
+    a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
     a = rfft(a, s[-1], axes[-1], norm)
     for ii in range(len(axes)-1):
@@ -1247,16 +1218,15 @@ def irfftn(a, s=None, axes=None, norm=None):
     >>> a = np.zeros((3, 2, 2))
     >>> a[0, 0, 0] = 3 * 2 * 2
     >>> np.fft.irfftn(a)
-    array([[[ 1.,  1.],
-            [ 1.,  1.]],
-           [[ 1.,  1.],
-            [ 1.,  1.]],
-           [[ 1.,  1.],
-            [ 1.,  1.]]])
+    array([[[1.,  1.],
+            [1.,  1.]],
+           [[1.,  1.],
+            [1.,  1.]],
+           [[1.,  1.],
+            [1.,  1.]]])
 
     """
-    # The copy may be required for multithreading.
-    a = array(a, copy=True, dtype=complex)
+    a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
     for ii in range(len(axes)-1):
         a = ifft(a, s[ii], axes[ii], norm)

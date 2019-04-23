@@ -265,10 +265,10 @@ class build_ext (old_build_ext):
         # we blindly assume that both packages need all of the libraries,
         # resulting in a larger wheel than is required. This should be fixed,
         # but it's so rare that I won't bother to handle it.
-        pkg_roots = set(
+        pkg_roots = {
             self.get_ext_fullname(ext.name).split('.')[0]
             for ext in self.extensions
-        )
+        }
         for pkg_root in pkg_roots:
             shared_lib_dir = os.path.join(pkg_root, '.libs')
             if not self.inplace:
@@ -281,8 +281,8 @@ class build_ext (old_build_ext):
                 runtime_lib = os.path.join(self.extra_dll_dir, fn)
                 copy_file(runtime_lib, shared_lib_dir)
 
-    def swig_sources(self, sources):
-        # Do nothing. Swig sources have beed handled in build_src command.
+    def swig_sources(self, sources, extensions=None):
+        # Do nothing. Swig sources have been handled in build_src command.
         return sources
 
     def build_extension(self, ext):

@@ -6,7 +6,6 @@ import os
 import threading
 import time
 import warnings
-import gc
 import io
 import re
 import pytest
@@ -18,12 +17,12 @@ import locale
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, unicode, Path
+from numpy.compat import asbytes, bytes, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles,
+    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings
     )
 
 
@@ -88,7 +87,7 @@ class RoundtripTest(object):
 
         """
         save_kwds = kwargs.get('save_kwds', {})
-        load_kwds = kwargs.get('load_kwds', {})
+        load_kwds = kwargs.get('load_kwds', {"allow_pickle": True})
         file_on_disk = kwargs.get('file_on_disk', False)
 
         if file_on_disk:
@@ -348,12 +347,32 @@ class TestSaveTxt(object):
         assert_raises(ValueError, np.savetxt, c, np.array(1))
         assert_raises(ValueError, np.savetxt, c, np.array([[[1], [2]]]))
 
-    def test_record(self):
+    def test_structured(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         c = BytesIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
+
+    def test_structured_padded(self):
+        # gh-13297
+        a = np.array([(1, 2, 3),(4, 5, 6)], dtype=[
+            ('foo', 'i4'), ('bar', 'i4'), ('baz', 'i4')
+        ])
+        c = BytesIO()
+        np.savetxt(c, a[['foo', 'baz']], fmt='%d')
+        c.seek(0)
+        assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
+
+    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
+    def test_multifield_view(self):
+        a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
+        v = a[['x', 'z']]
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            np.save(path, v)
+            data = np.load(path)
+            assert_array_equal(data, v)
 
     def test_delimiter(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -1372,6 +1391,19 @@ M   33  21.99
         control = np.array([(1, 2), (3, 4)], dtype=[('col1', int), ('col2', int)])
         assert_equal(test, control)
 
+    def test_file_is_closed_on_error(self):
+        # gh-13200
+        with tempdir() as tmpdir:
+            fpath = os.path.join(tmpdir, "test.csv")
+            with open(fpath, "wb") as f:
+                f.write(u'\N{GREEK PI SYMBOL}'.encode('utf8'))
+
+            # ResourceWarnings are emitted from a destructor, so won't be
+            # detected by regular propagation to errors.
+            with assert_no_warnings():
+                with pytest.raises(UnicodeDecodeError):
+                    np.genfromtxt(fpath, encoding="ascii")
+
     def test_autonames_and_usecols(self):
         # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
@@ -2049,7 +2081,6 @@ M   33  21.99
 
     def test_utf8_file(self):
         utf8 = b"\xcf\x96"
-        latin1 = b"\xf6\xfc\xf6"
         with temppath() as path:
             with open(path, "wb") as f:
                 f.write((b"test1,testNonethe" + utf8 + b",test3\n") * 2)

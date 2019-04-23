@@ -1,8 +1,6 @@
 """ Test functions for linalg module using the matrix class."""
 from __future__ import division, absolute_import, print_function
 
-import pytest
-
 import numpy as np
 
 from numpy.linalg.tests.test_linalg import (

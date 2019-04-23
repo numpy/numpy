@@ -269,8 +269,9 @@ class OGridClass(nd_grid):
     the stop value **is inclusive**.
 
     Returns
-    ----------
-    mesh-grid `ndarrays` with only one dimension :math:`\\neq 1`
+    -------
+    mesh-grid
+        `ndarrays` with only one dimension not equal to 1
 
     See Also
     --------
@@ -478,7 +479,7 @@ class RClass(AxisConcatenator):
     Examples
     --------
     >>> np.r_[np.array([1,2,3]), 0, 0, np.array([4,5,6])]
-    array([1, 2, 3, 0, 0, 4, 5, 6])
+    array([1, 2, 3, ..., 4, 5, 6])
     >>> np.r_[-1:1:6j, [0]*3, 5, 6]
     array([-1. , -0.6, -0.2,  0.2,  0.6,  1. ,  0. ,  0. ,  0. ,  5. ,  6. ])
 
@@ -538,7 +539,7 @@ class CClass(AxisConcatenator):
            [2, 5],
            [3, 6]])
     >>> np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
-    array([[1, 2, 3, 0, 0, 4, 5, 6]])
+    array([[1, 2, 3, ..., 4, 5, 6]])
 
     """
 
@@ -812,8 +813,8 @@ def fill_diagonal(a, val, wrap=False):
     The wrap option affects only tall matrices:
 
     >>> # tall matrices no wrap
-    >>> a = np.zeros((5, 3),int)
-    >>> fill_diagonal(a, 4)
+    >>> a = np.zeros((5, 3), int)
+    >>> np.fill_diagonal(a, 4)
     >>> a
     array([[4, 0, 0],
            [0, 4, 0],
@@ -822,8 +823,8 @@ def fill_diagonal(a, val, wrap=False):
            [0, 0, 0]])
 
     >>> # tall matrices wrap
-    >>> a = np.zeros((5, 3),int)
-    >>> fill_diagonal(a, 4, wrap=True)
+    >>> a = np.zeros((5, 3), int)
+    >>> np.fill_diagonal(a, 4, wrap=True)
     >>> a
     array([[4, 0, 0],
            [0, 4, 0],
@@ -832,13 +833,30 @@ def fill_diagonal(a, val, wrap=False):
            [4, 0, 0]])
 
     >>> # wide matrices
-    >>> a = np.zeros((3, 5),int)
-    >>> fill_diagonal(a, 4, wrap=True)
+    >>> a = np.zeros((3, 5), int)
+    >>> np.fill_diagonal(a, 4, wrap=True)
     >>> a
     array([[4, 0, 0, 0, 0],
            [0, 4, 0, 0, 0],
            [0, 0, 4, 0, 0]])
 
+    The anti-diagonal can be filled by reversing the order of elements
+    using either `numpy.flipud` or `numpy.fliplr`.
+
+    >>> a = np.zeros((3, 3), int);
+    >>> np.fill_diagonal(np.fliplr(a), [1,2,3])  # Horizontal flip
+    >>> a
+    array([[0, 0, 1],
+           [0, 2, 0],
+           [3, 0, 0]])
+    >>> np.fill_diagonal(np.flipud(a), [1,2,3])  # Vertical flip
+    >>> a
+    array([[0, 0, 3],
+           [0, 2, 0],
+           [1, 0, 0]])
+
+    Note that the order in which the diagonal is filled varies depending
+    on the flip function.
     """
     if a.ndim < 2:
         raise ValueError("array must be at least 2-d")

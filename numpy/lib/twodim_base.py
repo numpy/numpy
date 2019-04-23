@@ -77,13 +77,13 @@ def fliplr(m):
     --------
     >>> A = np.diag([1.,2.,3.])
     >>> A
-    array([[ 1.,  0.,  0.],
-           [ 0.,  2.,  0.],
-           [ 0.,  0.,  3.]])
+    array([[1.,  0.,  0.],
+           [0.,  2.,  0.],
+           [0.,  0.,  3.]])
     >>> np.fliplr(A)
-    array([[ 0.,  0.,  1.],
-           [ 0.,  2.,  0.],
-           [ 3.,  0.,  0.]])
+    array([[0.,  0.,  1.],
+           [0.,  2.,  0.],
+           [3.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
     >>> np.all(np.fliplr(A) == A[:,::-1,...])
@@ -129,13 +129,13 @@ def flipud(m):
     --------
     >>> A = np.diag([1.0, 2, 3])
     >>> A
-    array([[ 1.,  0.,  0.],
-           [ 0.,  2.,  0.],
-           [ 0.,  0.,  3.]])
+    array([[1.,  0.,  0.],
+           [0.,  2.,  0.],
+           [0.,  0.,  3.]])
     >>> np.flipud(A)
-    array([[ 0.,  0.,  3.],
-           [ 0.,  2.,  0.],
-           [ 1.,  0.,  0.]])
+    array([[0.,  0.,  3.],
+           [0.,  2.,  0.],
+           [1.,  0.,  0.]])
 
     >>> A = np.random.randn(2,3,5)
     >>> np.all(np.flipud(A) == A[::-1,...])
@@ -191,9 +191,9 @@ def eye(N, M=None, k=0, dtype=float, order='C'):
     array([[1, 0],
            [0, 1]])
     >>> np.eye(3, k=1)
-    array([[ 0.,  1.,  0.],
-           [ 0.,  0.,  1.],
-           [ 0.,  0.,  0.]])
+    array([[0.,  1.,  0.],
+           [0.,  0.,  1.],
+           [0.,  0.,  0.]])
 
     """
     if M is None:
@@ -378,9 +378,9 @@ def tri(N, M=None, k=0, dtype=float):
            [1, 1, 1, 1, 1]])
 
     >>> np.tri(3, 5, -1)
-    array([[ 0.,  0.,  0.,  0.,  0.],
-           [ 1.,  0.,  0.,  0.,  0.],
-           [ 1.,  1.,  0.,  0.,  0.]])
+    array([[0.,  0.,  0.,  0.,  0.],
+           [1.,  0.,  0.,  0.,  0.],
+           [1.,  1.,  0.,  0.,  0.]])
 
     """
     if M is None:
@@ -540,7 +540,7 @@ def vander(x, N=None, increasing=False):
     of the differences between the values of the input vector:
 
     >>> np.linalg.det(np.vander(x))
-    48.000000000000043
+    48.000000000000043 # may vary
     >>> (5-3)*(5-2)*(5-1)*(3-2)*(3-1)*(2-1)
     48
 
@@ -644,7 +644,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
 
     Examples
     --------
-    >>> import matplotlib as mpl
+    >>> from matplotlib.image import NonUniformImage
     >>> import matplotlib.pyplot as plt
 
     Construct a 2-D histogram with variable bin width. First define the bin
@@ -666,6 +666,7 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     >>> ax = fig.add_subplot(131, title='imshow: square bins')
     >>> plt.imshow(H, interpolation='nearest', origin='low',
     ...         extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
+    <matplotlib.image.AxesImage object at 0x...>
 
     :func:`pcolormesh <matplotlib.pyplot.pcolormesh>` can display actual edges:
 
@@ -673,13 +674,14 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     ...         aspect='equal')
     >>> X, Y = np.meshgrid(xedges, yedges)
     >>> ax.pcolormesh(X, Y, H)
+    <matplotlib.collections.QuadMesh object at 0x...>
 
     :class:`NonUniformImage <matplotlib.image.NonUniformImage>` can be used to
     display actual bin edges with interpolation:
 
     >>> ax = fig.add_subplot(133, title='NonUniformImage: interpolated',
     ...         aspect='equal', xlim=xedges[[0, -1]], ylim=yedges[[0, -1]])
-    >>> im = mpl.image.NonUniformImage(ax, interpolation='bilinear')
+    >>> im = NonUniformImage(ax, interpolation='bilinear')
     >>> xcenters = (xedges[:-1] + xedges[1:]) / 2
     >>> ycenters = (yedges[:-1] + yedges[1:]) / 2
     >>> im.set_data(xcenters, ycenters, H)
@@ -829,7 +831,7 @@ def tril_indices(n, k=0, m=None):
     Both for indexing:
 
     >>> a[il1]
-    array([ 0,  4,  5,  8,  9, 10, 12, 13, 14, 15])
+    array([ 0,  4,  5, ..., 13, 14, 15])
 
     And for assigning values:
 
@@ -944,7 +946,7 @@ def triu_indices(n, k=0, m=None):
     Both for indexing:
 
     >>> a[iu1]
-    array([ 0,  1,  2,  3,  5,  6,  7, 10, 11, 15])
+    array([ 0,  1,  2, ..., 10, 11, 15])
 
     And for assigning values:
 

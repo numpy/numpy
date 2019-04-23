@@ -5,7 +5,7 @@ import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal, suppress_warnings
+from numpy.testing import assert_, assert_equal
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -68,6 +68,85 @@ class TestHalf(object):
         i_f16 = np.array(i_int, dtype=float16)
         j = np.array(i_f16, dtype=int)
         assert_equal(i_int, j)
+
+    @pytest.mark.parametrize("offset", [None, "up", "down"])
+    @pytest.mark.parametrize("shift", [None, "up", "down"])
+    @pytest.mark.parametrize("float_t", [np.float32, np.float64])
+    def test_half_conversion_rounding(self, float_t, shift, offset):
+        # Assumes that round to even is used during casting.
+        max_pattern = np.float16(np.finfo(np.float16).max).view(np.uint16)
+
+        # Test all (positive) finite numbers, denormals are most interesting
+        # however:
+        f16s_patterns = np.arange(0, max_pattern+1, dtype=np.uint16)
+        f16s_float = f16s_patterns.view(np.float16).astype(float_t)
+
+        # Shift the values by half a bit up or a down (or do not shift),
+        if shift == "up":
+            f16s_float = 0.5 * (f16s_float[:-1] + f16s_float[1:])[1:]
+        elif shift == "down":
+            f16s_float = 0.5 * (f16s_float[:-1] + f16s_float[1:])[:-1]
+        else:
+            f16s_float = f16s_float[1:-1]
+
+        # Increase the float by a minimal value:
+        if offset == "up":
+            f16s_float = np.nextafter(f16s_float, float_t(1e50))
+        elif offset == "down":
+            f16s_float = np.nextafter(f16s_float, float_t(-1e50))
+
+        # Convert back to float16 and its bit pattern:
+        res_patterns = f16s_float.astype(np.float16).view(np.uint16)
+
+        # The above calculations tries the original values, or the exact
+        # mid points between the float16 values. It then further offsets them
+        # by as little as possible. If no offset occurs, "round to even"
+        # logic will be necessary, an arbitrarily small offset should cause
+        # normal up/down rounding always.
+
+        # Calculate the expecte pattern:
+        cmp_patterns = f16s_patterns[1:-1].copy()
+
+        if shift == "down" and offset != "up":
+            shift_pattern = -1
+        elif shift == "up" and offset != "down":
+            shift_pattern = 1
+        else:
+            # There cannot be a shift, either shift is None, so all rounding
+            # will go back to original, or shift is reduced by offset too much.
+            shift_pattern = 0
+
+        # If rounding occurs, is it normal rounding or round to even?
+        if offset is None:
+            # Round to even occurs, modify only non-even, cast to allow + (-1)
+            cmp_patterns[0::2].view(np.int16)[...] += shift_pattern
+        else:
+            cmp_patterns.view(np.int16)[...] += shift_pattern
+
+        assert_equal(res_patterns, cmp_patterns)
+
+    @pytest.mark.parametrize(["float_t", "uint_t", "bits"],
+                             [(np.float32, np.uint32, 23),
+                              (np.float64, np.uint64, 52)])
+    def test_half_conversion_denormal_round_even(self, float_t, uint_t, bits):
+        # Test specifically that all bits are considered when deciding
+        # whether round to even should occur (i.e. no bits are lost at the
+        # end. Compare also gh-12721. The most bits can get lost for the
+        # smallest denormal:
+        smallest_value = np.uint16(1).view(np.float16).astype(float_t)
+        assert smallest_value == 2**-24
+
+        # Will be rounded to zero based on round to even rule:
+        rounded_to_zero = smallest_value / float_t(2)
+        assert rounded_to_zero.astype(np.float16) == 0
+
+        # The significand will be all 0 for the float_t, test that we do not
+        # lose the lower ones of these:
+        for i in range(bits):
+            # slightly increasing the value should make it round up:
+            larger_pattern = rounded_to_zero.view(uint_t) | uint_t(1 << i)
+            larger_value = larger_pattern.view(float_t)
+            assert larger_value.astype(np.float16) == smallest_value
 
     def test_nans_infs(self):
         with np.errstate(all='ignore'):

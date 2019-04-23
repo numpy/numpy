@@ -124,6 +124,10 @@ numpy/core/include/numpy/config.h
 numpy/core/include/numpy/multiarray_api.txt
 numpy/core/include/numpy/ufunc_api.txt
 numpy/core/lib/
+numpy/core/src/common/npy_binsearch.h
+numpy/core/src/common/npy_partition.h
+numpy/core/src/common/npy_sort.h
+numpy/core/src/common/templ_common.h
 numpy/core/src/multiarray/_multiarray_tests.c
 numpy/core/src/multiarray/arraytypes.c
 numpy/core/src/multiarray/einsum.c
@@ -139,7 +143,12 @@ numpy/core/src/npysort/heapsort.c
 numpy/core/src/npysort/mergesort.c
 numpy/core/src/npysort/quicksort.c
 numpy/core/src/npysort/selection.c
+numpy/core/src/npysort/timsort.c
 numpy/core/src/npysort/sort.c
+numpy/core/src/common/npy_binsearch.h
+numpy/core/src/common/npy_partition.h
+numpy/core/src/common/npy_sort.h
+numpy/core/src/common/templ_common.h
 numpy/core/src/private/npy_binsearch.h
 numpy/core/src/private/npy_partition.h
 numpy/core/src/private/templ_common.h
@@ -150,6 +159,7 @@ numpy/core/src/umath/_umath_tests.c
 numpy/core/src/umath/scalarmath.c
 numpy/core/src/umath/funcs.inc
 numpy/core/src/umath/loops.[ch]
+numpy/core/src/umath/matmul.[ch]
 numpy/core/src/umath/operand_flag_tests.c
 numpy/core/src/umath/simd.inc
 numpy/core/src/umath/struct_ufunc_test.c

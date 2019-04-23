@@ -1,11 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
 import platform
 import warnings
 import fnmatch
 import itertools
 import pytest
+from fractions import Fraction
 
 import numpy.core.umath as ncu
 from numpy.core import _umath_tests as ncu_tests
@@ -14,7 +14,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_warns
+    _gen_alignment_data
     )
 
 
@@ -274,6 +274,12 @@ class TestDivision(object):
         y = np.floor_divide(x**2, x)
         assert_equal(y, [1.e+110, 0], err_msg=msg)
 
+    def test_floor_division_signed_zero(self):
+        # Check that the sign bit is correctly set when dividing positive and
+        # negative zero by one.
+        x = np.zeros(10)
+        assert_equal(np.signbit(x//1), 0)
+        assert_equal(np.signbit((-x)//1), 1)
 
 def floor_divide_and_remainder(x, y):
     return (np.floor_divide(x, y), np.remainder(x, y))
@@ -1298,6 +1304,7 @@ class TestSign(object):
         # In reference to github issue #6229
         def test_nan():
             foo = np.array([np.nan])
+            # FIXME: a not used
             a = np.sign(foo.astype(object))
 
         assert_raises(TypeError, test_nan)
@@ -1894,7 +1901,8 @@ class TestSpecialMethods(object):
 
         # reduce, kwargs
         res = np.multiply.reduce(a, axis='axis0', dtype='dtype0', out='out0',
-                                 keepdims='keep0', initial='init0')
+                                 keepdims='keep0', initial='init0',
+                                 where='where0')
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduce')
@@ -1903,7 +1911,8 @@ class TestSpecialMethods(object):
                               'out': ('out0',),
                               'keepdims': 'keep0',
                               'axis': 'axis0',
-                              'initial': 'init0'})
+                              'initial': 'init0',
+                              'where': 'where0'})
 
         # reduce, output equal to None removed, but not other explicit ones,
         # even if they are at their default value.
@@ -1913,14 +1922,18 @@ class TestSpecialMethods(object):
         assert_equal(res[4], {'axis': 0, 'keepdims': True})
         res = np.multiply.reduce(a, None, out=(None,), dtype=None)
         assert_equal(res[4], {'axis': None, 'dtype': None})
-        res = np.multiply.reduce(a, 0, None, None, False, 2)
-        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False, 'initial': 2})
-        # np._NoValue ignored for initial.
-        res = np.multiply.reduce(a, 0, None, None, False, np._NoValue)
-        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False})
-        # None kept for initial.
-        res = np.multiply.reduce(a, 0, None, None, False, None)
-        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False, 'initial': None})
+        res = np.multiply.reduce(a, 0, None, None, False, 2, True)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False,
+                              'initial': 2, 'where': True})
+        # np._NoValue ignored for initial
+        res = np.multiply.reduce(a, 0, None, None, False,
+                                 np._NoValue, True)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False,
+                              'where': True})
+        # None kept for initial, True for where.
+        res = np.multiply.reduce(a, 0, None, None, False, None, True)
+        assert_equal(res[4], {'axis': 0, 'dtype': None, 'keepdims': False,
+                              'initial': None, 'where': True})
 
         # reduce, wrong args
         assert_raises(ValueError, np.multiply.reduce, a, out=())
@@ -2448,6 +2461,42 @@ class TestRationalFunctions(object):
         assert_equal(np.gcd(2**100, 3**100), 1)
 
 
+class TestRoundingFunctions(object):
+
+    def test_object_direct(self):
+        """ test direct implementation of these magic methods """
+        class C:
+            def __floor__(self):
+                return 1
+            def __ceil__(self):
+                return 2
+            def __trunc__(self):
+                return 3
+
+        arr = np.array([C(), C()])
+        assert_equal(np.floor(arr), [1, 1])
+        assert_equal(np.ceil(arr),  [2, 2])
+        assert_equal(np.trunc(arr), [3, 3])
+
+    def test_object_indirect(self):
+        """ test implementations via __float__ """
+        class C:
+            def __float__(self):
+                return -2.5
+
+        arr = np.array([C(), C()])
+        assert_equal(np.floor(arr), [-3, -3])
+        assert_equal(np.ceil(arr),  [-2, -2])
+        with pytest.raises(TypeError):
+            np.trunc(arr)  # consistent with math.trunc
+
+    def test_fraction(self):
+        f = Fraction(-4, 3)
+        assert_equal(np.floor(f), -2)
+        assert_equal(np.ceil(f), -1)
+        assert_equal(np.trunc(f), -1)
+
+
 class TestComplexFunctions(object):
     funcs = [np.arcsin,  np.arccos,  np.arctan, np.arcsinh, np.arccosh,
              np.arctanh, np.sin,     np.cos,    np.tan,     np.exp,
@@ -2912,3 +2961,14 @@ def test_signaling_nan_exceptions():
     with assert_no_warnings():
         a = np.ndarray(shape=(), dtype='float32', buffer=b'\x00\xe0\xbf\xff')
         np.isnan(a)
+
+@pytest.mark.parametrize("arr", [
+    np.arange(2),
+    np.matrix([0, 1]),
+    np.matrix([[0, 1], [2, 5]]),
+    ])
+def test_outer_subclass_preserve(arr):
+    # for gh-8661
+    class foo(np.ndarray): pass
+    actual = np.multiply.outer(arr.view(foo), arr.view(foo))
+    assert actual.__class__.__name__ == 'foo'

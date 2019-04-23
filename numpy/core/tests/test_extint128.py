@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
 import itertools
 import contextlib
 import operator
@@ -8,7 +7,6 @@ import pytest
 
 import numpy as np
 import numpy.core._multiarray_tests as mt
-from numpy.compat import long
 
 from numpy.testing import assert_raises, assert_equal
 

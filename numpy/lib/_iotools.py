@@ -8,7 +8,7 @@ __docformat__ = "restructuredtext en"
 import sys
 import numpy as np
 import numpy.core.numeric as nx
-from numpy.compat import asbytes, asunicode, bytes, asbytes_nested, basestring
+from numpy.compat import asbytes, asunicode, bytes, basestring
 
 if sys.version_info[0] >= 3:
     from builtins import bool, int, float, complex, object, str
@@ -146,11 +146,17 @@ def flatten_dtype(ndtype, flatten_base=False):
     >>> dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
     ...                ('block', int, (2, 3))])
     >>> np.lib._iotools.flatten_dtype(dt)
-    [dtype('|S4'), dtype('float64'), dtype('float64'), dtype('int32')]
+    [dtype('S4'), dtype('float64'), dtype('float64'), dtype('int64')]
     >>> np.lib._iotools.flatten_dtype(dt, flatten_base=True)
-    [dtype('|S4'), dtype('float64'), dtype('float64'), dtype('int32'),
-     dtype('int32'), dtype('int32'), dtype('int32'), dtype('int32'),
-     dtype('int32')]
+    [dtype('S4'),
+     dtype('float64'),
+     dtype('float64'),
+     dtype('int64'),
+     dtype('int64'),
+     dtype('int64'),
+     dtype('int64'),
+     dtype('int64'),
+     dtype('int64')]
 
     """
     names = ndtype.names
@@ -309,13 +315,13 @@ class NameValidator(object):
     --------
     >>> validator = np.lib._iotools.NameValidator()
     >>> validator(['file', 'field2', 'with space', 'CaSe'])
-    ['file_', 'field2', 'with_space', 'CaSe']
+    ('file_', 'field2', 'with_space', 'CaSe')
 
     >>> validator = np.lib._iotools.NameValidator(excludelist=['excl'],
-                                                  deletechars='q',
-                                                  case_sensitive='False')
+    ...                                           deletechars='q',
+    ...                                           case_sensitive=False)
     >>> validator(['excl', 'field2', 'no_q', 'with space', 'CaSe'])
-    ['excl_', 'field2', 'no_', 'with_space', 'case']
+    ('EXCL', 'FIELD2', 'NO_Q', 'WITH_SPACE', 'CASE')
 
     """
     #
@@ -599,7 +605,7 @@ class StringConverter(object):
     --------
     >>> import dateutil.parser
     >>> import datetime
-    >>> dateparser = datetustil.parser.parse
+    >>> dateparser = dateutil.parser.parse
     >>> defaultdate = datetime.date(2000, 1, 1)
     >>> StringConverter.upgrade_mapper(dateparser, default=defaultdate)
         """
@@ -693,7 +699,7 @@ class StringConverter(object):
                     self.func = lambda x: int(float(x))
         # Store the list of strings corresponding to missing values.
         if missing_values is None:
-            self.missing_values = set([''])
+            self.missing_values = {''}
         else:
             if isinstance(missing_values, basestring):
                 missing_values = missing_values.split(",")

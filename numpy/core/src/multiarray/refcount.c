@@ -19,8 +19,12 @@
 static void
 _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
 
-/* Incref all objects found at this record */
+
 /*NUMPY_API
+ * XINCREF all objects in a single array item. This is complicated for
+ * structured datatypes where the position of objects needs to be extracted.
+ * The function is execute recursively for each nested field or subarrays dtype
+ * such as as `np.dtype([("field1", "O"), ("field2", "f,O", (3,2))])`
  */
 NPY_NO_EXPORT void
 PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
@@ -51,11 +55,37 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
             PyArray_Item_INCREF(data + offset, new);
         }
     }
+    else if (PyDataType_HASSUBARRAY(descr)) {
+        int size, i, inner_elsize;
+
+        inner_elsize = descr->subarray->base->elsize;
+        if (inner_elsize == 0) {
+            /* There cannot be any elements, so return */
+            return;
+        }
+        /* Subarrays are always contiguous in memory */
+        size = descr->elsize / inner_elsize;
+
+        for (i = 0; i < size; i++){
+            /* Recursively increment the reference count of subarray elements */
+            PyArray_Item_INCREF(data + i * inner_elsize,
+                                descr->subarray->base);
+        }
+    }
+    else {
+        /* This path should not be reachable. */
+        assert(0);
+    }
     return;
 }
 
-/* XDECREF all objects found at this record */
+
 /*NUMPY_API
+ *
+ * XDECREF all objects in a single array item. This is complicated for
+ * structured datatypes where the position of objects needs to be extracted.
+ * The function is execute recursively for each nested field or subarrays dtype
+ * such as as `np.dtype([("field1", "O"), ("field2", "f,O", (3,2))])`
  */
 NPY_NO_EXPORT void
 PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
@@ -87,6 +117,27 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
                 PyArray_Item_XDECREF(data + offset, new);
             }
         }
+    else if (PyDataType_HASSUBARRAY(descr)) {
+        int size, i, inner_elsize;
+
+        inner_elsize = descr->subarray->base->elsize;
+        if (inner_elsize == 0) {
+            /* There cannot be any elements, so return */
+            return;
+        }
+        /* Subarrays are always contiguous in memory */
+        size = descr->elsize / inner_elsize;
+
+        for (i = 0; i < size; i++){
+            /* Recursively decrement the reference count of subarray elements */
+            PyArray_Item_XDECREF(data + i * inner_elsize,
+                                 descr->subarray->base);
+        }
+    }
+    else {
+        /* This path should not be reachable. */
+        assert(0);
+    }
     return;
 }
 
@@ -258,6 +309,10 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
             Py_XDECREF(arr);
         }
     }
+    if (dtype->type_num == NPY_OBJECT) {
+        Py_XINCREF(obj);
+        NPY_COPY_PYOBJECT_PTR(optr, &obj);
+    }
     else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
@@ -274,15 +329,26 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
             _fillobject(optr + offset, obj, new);
         }
     }
-    else {
-        npy_intp i;
-        npy_intp nsize = dtype->elsize / sizeof(obj);
+    else if (PyDataType_HASSUBARRAY(dtype)) {
+        int size, i, inner_elsize;
 
-        for (i = 0; i < nsize; i++) {
-            Py_XINCREF(obj);
-            NPY_COPY_PYOBJECT_PTR(optr, &obj);
-            optr += sizeof(obj);
+        inner_elsize = dtype->subarray->base->elsize;
+        if (inner_elsize == 0) {
+            /* There cannot be any elements, so return */
+            return;
         }
-        return;
+        /* Subarrays are always contiguous in memory */
+        size = dtype->elsize / inner_elsize;
+
+        /* Call _fillobject on each item recursively. */
+        for (i = 0; i < size; i++){
+            _fillobject(optr, obj, dtype->subarray->base);
+            optr += inner_elsize;
+        }
     }
+    else {
+        /* This path should not be reachable. */
+        assert(0);
+    }
+    return;
 }

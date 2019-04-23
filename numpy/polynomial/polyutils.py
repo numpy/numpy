@@ -45,6 +45,8 @@ Functions
 """
 from __future__ import division, absolute_import, print_function
 
+import operator
+
 import numpy as np
 
 __all__ = [
@@ -156,19 +158,19 @@ def as_series(alist, trim=True):
     >>> from numpy.polynomial import polyutils as pu
     >>> a = np.arange(4)
     >>> pu.as_series(a)
-    [array([ 0.]), array([ 1.]), array([ 2.]), array([ 3.])]
+    [array([0.]), array([1.]), array([2.]), array([3.])]
     >>> b = np.arange(6).reshape((2,3))
     >>> pu.as_series(b)
-    [array([ 0.,  1.,  2.]), array([ 3.,  4.,  5.])]
+    [array([0., 1., 2.]), array([3., 4., 5.])]
 
     >>> pu.as_series((1, np.arange(3), np.arange(2, dtype=np.float16)))
-    [array([ 1.]), array([ 0.,  1.,  2.]), array([ 0.,  1.])]
+    [array([1.]), array([0., 1., 2.]), array([0., 1.])]
 
     >>> pu.as_series([2, [1.1, 0.]])
-    [array([ 2.]), array([ 1.1])]
+    [array([2.]), array([1.1])]
 
     >>> pu.as_series([2, [1.1, 0.]], trim=False)
-    [array([ 2.]), array([ 1.1,  0. ])]
+    [array([2.]), array([1.1, 0. ])]
 
     """
     arrays = [np.array(a, ndmin=1, copy=0) for a in alist]
@@ -233,12 +235,12 @@ def trimcoef(c, tol=0):
     --------
     >>> from numpy.polynomial import polyutils as pu
     >>> pu.trimcoef((0,0,3,0,5,0,0))
-    array([ 0.,  0.,  3.,  0.,  5.])
+    array([0.,  0.,  3.,  0.,  5.])
     >>> pu.trimcoef((0,0,1e-3,0,1e-5,0,0),1e-3) # item == tol is trimmed
-    array([ 0.])
+    array([0.])
     >>> i = complex(0,1) # works for complex
     >>> pu.trimcoef((3e-4,1e-3*(1-i),5e-4,2e-5*(1+i)), 1e-3)
-    array([ 0.0003+0.j   ,  0.0010-0.001j])
+    array([0.0003+0.j   , 0.001 -0.001j])
 
     """
     if tol < 0:
@@ -332,10 +334,10 @@ def mapparms(old, new):
     >>> pu.mapparms((-1,1),(-1,1))
     (0.0, 1.0)
     >>> pu.mapparms((1,-1),(-1,1))
-    (0.0, -1.0)
+    (-0.0, -1.0)
     >>> i = complex(0,1)
     >>> pu.mapparms((-i,-1),(1,i))
-    ((1+1j), (1+0j))
+    ((1+1j), (1-0j))
 
     """
     oldlen = old[1] - old[0]
@@ -390,10 +392,10 @@ def mapdomain(x, old, new):
     >>> x = np.linspace(-1,1,6); x
     array([-1. , -0.6, -0.2,  0.2,  0.6,  1. ])
     >>> x_out = pu.mapdomain(x, old_domain, new_domain); x_out
-    array([ 0.        ,  1.25663706,  2.51327412,  3.76991118,  5.02654825,
+    array([ 0.        ,  1.25663706,  2.51327412,  3.76991118,  5.02654825, # may vary
             6.28318531])
     >>> x - pu.mapdomain(x_out, new_domain, old_domain)
-    array([ 0.,  0.,  0.,  0.,  0.,  0.])
+    array([0., 0., 0., 0., 0., 0.])
 
     Also works for complex numbers (and thus can be used to map any line in
     the complex plane to any other line therein).
@@ -402,11 +404,358 @@ def mapdomain(x, old, new):
     >>> old = (-1 - i, 1 + i)
     >>> new = (-1 + i, 1 - i)
     >>> z = np.linspace(old[0], old[1], 6); z
-    array([-1.0-1.j , -0.6-0.6j, -0.2-0.2j,  0.2+0.2j,  0.6+0.6j,  1.0+1.j ])
-    >>> new_z = P.mapdomain(z, old, new); new_z
-    array([-1.0+1.j , -0.6+0.6j, -0.2+0.2j,  0.2-0.2j,  0.6-0.6j,  1.0-1.j ])
+    array([-1. -1.j , -0.6-0.6j, -0.2-0.2j,  0.2+0.2j,  0.6+0.6j,  1. +1.j ])
+    >>> new_z = pu.mapdomain(z, old, new); new_z
+    array([-1.0+1.j , -0.6+0.6j, -0.2+0.2j,  0.2-0.2j,  0.6-0.6j,  1.0-1.j ]) # may vary
 
     """
     x = np.asanyarray(x)
     off, scl = mapparms(old, new)
     return off + scl*x
+
+
+def _vander2d(vander_f, x, y, deg):
+    """
+    Helper function used to implement the ``<type>vander2d`` functions.
+
+    Parameters
+    ----------
+    vander_f : function(array_like, int) -> ndarray
+        The 1d vander function, such as ``polyvander``
+    x, y, deg :
+        See the ``<type>vander2d`` functions for more detail
+    """
+    degx, degy = [
+        _deprecate_as_int(d, "degrees")
+        for d in deg
+    ]
+    x, y = np.array((x, y), copy=0) + 0.0
+
+    vx = vander_f(x, degx)
+    vy = vander_f(y, degy)
+    v = vx[..., None]*vy[..., None,:]
+    return v.reshape(v.shape[:-2] + (-1,))
+
+
+def _vander3d(vander_f, x, y, z, deg):
+    """
+    Helper function used to implement the ``<type>vander3d`` functions.
+
+    Parameters
+    ----------
+    vander_f : function(array_like, int) -> ndarray
+        The 1d vander function, such as ``polyvander``
+    x, y, z, deg :
+        See the ``<type>vander3d`` functions for more detail
+    """
+    degx, degy, degz = [
+        _deprecate_as_int(d, "degrees")
+        for d in deg
+    ]
+    x, y, z = np.array((x, y, z), copy=0) + 0.0
+
+    vx = vander_f(x, degx)
+    vy = vander_f(y, degy)
+    vz = vander_f(z, degz)
+    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
+    return v.reshape(v.shape[:-3] + (-1,))
+
+
+def _fromroots(line_f, mul_f, roots):
+    """
+    Helper function used to implement the ``<type>fromroots`` functions.
+
+    Parameters
+    ----------
+    line_f : function(float, float) -> ndarray
+        The ``<type>line`` function, such as ``polyline``
+    mul_f : function(array_like, array_like) -> ndarray
+        The ``<type>mul`` function, such as ``polymul``
+    roots :
+        See the ``<type>fromroots`` functions for more detail
+    """
+    if len(roots) == 0:
+        return np.ones(1)
+    else:
+        [roots] = as_series([roots], trim=False)
+        roots.sort()
+        p = [line_f(-r, 1) for r in roots]
+        n = len(p)
+        while n > 1:
+            m, r = divmod(n, 2)
+            tmp = [mul_f(p[i], p[i+m]) for i in range(m)]
+            if r:
+                tmp[0] = mul_f(tmp[0], p[-1])
+            p = tmp
+            n = m
+        return p[0]
+
+
+def _valnd(val_f, c, *args):
+    """
+    Helper function used to implement the ``<type>val<n>d`` functions.
+
+    Parameters
+    ----------
+    val_f : function(array_like, array_like, tensor: bool) -> array_like
+        The ``<type>val`` function, such as ``polyval``
+    c, args :
+        See the ``<type>val<n>d`` functions for more detail
+    """
+    try:
+        args = tuple(np.array(args, copy=False))
+    except Exception:
+        # preserve the old error message
+        if len(args) == 2:
+            raise ValueError('x, y, z are incompatible')
+        elif len(args) == 3:
+            raise ValueError('x, y are incompatible')
+        else:
+            raise ValueError('ordinates are incompatible')
+
+    it = iter(args)
+    x0 = next(it)
+
+    # use tensor on only the first
+    c = val_f(x0, c)
+    for xi in it:
+        c = val_f(xi, c, tensor=False)
+    return c
+
+
+def _gridnd(val_f, c, *args):
+    """
+    Helper function used to implement the ``<type>grid<n>d`` functions.
+
+    Parameters
+    ----------
+    val_f : function(array_like, array_like, tensor: bool) -> array_like
+        The ``<type>val`` function, such as ``polyval``
+    c, args :
+        See the ``<type>grid<n>d`` functions for more detail
+    """
+    for xi in args:
+        c = val_f(xi, c)
+    return c
+
+
+def _div(mul_f, c1, c2):
+    """
+    Helper function used to implement the ``<type>div`` functions.
+
+    Implementation uses repeated subtraction of c2 multiplied by the nth basis.
+    For some polynomial types, a more efficient approach may be possible.
+
+    Parameters
+    ----------
+    mul_f : function(array_like, array_like) -> array_like
+        The ``<type>mul`` function, such as ``polymul``
+    c1, c2 :
+        See the ``<type>div`` functions for more detail
+    """
+    # c1, c2 are trimmed copies
+    [c1, c2] = as_series([c1, c2])
+    if c2[-1] == 0:
+        raise ZeroDivisionError()
+
+    lc1 = len(c1)
+    lc2 = len(c2)
+    if lc1 < lc2:
+        return c1[:1]*0, c1
+    elif lc2 == 1:
+        return c1/c2[-1], c1[:1]*0
+    else:
+        quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
+        rem = c1
+        for i in range(lc1 - lc2, - 1, -1):
+            p = mul_f([0]*i + [1], c2)
+            q = rem[-1]/p[-1]
+            rem = rem[:-1] - q*p[:-1]
+            quo[i] = q
+        return quo, trimseq(rem)
+
+
+def _add(c1, c2):
+    """ Helper function used to implement the ``<type>add`` functions. """
+    # c1, c2 are trimmed copies
+    [c1, c2] = as_series([c1, c2])
+    if len(c1) > len(c2):
+        c1[:c2.size] += c2
+        ret = c1
+    else:
+        c2[:c1.size] += c1
+        ret = c2
+    return trimseq(ret)
+
+
+def _sub(c1, c2):
+    """ Helper function used to implement the ``<type>sub`` functions. """
+    # c1, c2 are trimmed copies
+    [c1, c2] = as_series([c1, c2])
+    if len(c1) > len(c2):
+        c1[:c2.size] -= c2
+        ret = c1
+    else:
+        c2 = -c2
+        c2[:c1.size] += c1
+        ret = c2
+    return trimseq(ret)
+
+
+def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
+    """
+    Helper function used to implement the ``<type>fit`` functions.
+
+    Parameters
+    ----------
+    vander_f : function(array_like, int) -> ndarray
+        The 1d vander function, such as ``polyvander``
+    c1, c2 :
+        See the ``<type>fit`` functions for more detail
+    """
+    x = np.asarray(x) + 0.0
+    y = np.asarray(y) + 0.0
+    deg = np.asarray(deg)
+
+    # check arguments.
+    if deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0:
+        raise TypeError("deg must be an int or non-empty 1-D array of int")
+    if deg.min() < 0:
+        raise ValueError("expected deg >= 0")
+    if x.ndim != 1:
+        raise TypeError("expected 1D vector for x")
+    if x.size == 0:
+        raise TypeError("expected non-empty vector for x")
+    if y.ndim < 1 or y.ndim > 2:
+        raise TypeError("expected 1D or 2D array for y")
+    if len(x) != len(y):
+        raise TypeError("expected x and y to have same length")
+
+    if deg.ndim == 0:
+        lmax = deg
+        order = lmax + 1
+        van = vander_f(x, lmax)
+    else:
+        deg = np.sort(deg)
+        lmax = deg[-1]
+        order = len(deg)
+        van = vander_f(x, lmax)[:, deg]
+
+    # set up the least squares matrices in transposed form
+    lhs = van.T
+    rhs = y.T
+    if w is not None:
+        w = np.asarray(w) + 0.0
+        if w.ndim != 1:
+            raise TypeError("expected 1D vector for w")
+        if len(x) != len(w):
+            raise TypeError("expected x and w to have same length")
+        # apply weights. Don't use inplace operations as they
+        # can cause problems with NA.
+        lhs = lhs * w
+        rhs = rhs * w
+
+    # set rcond
+    if rcond is None:
+        rcond = len(x)*np.finfo(x.dtype).eps
+
+    # Determine the norms of the design matrix columns.
+    if issubclass(lhs.dtype.type, np.complexfloating):
+        scl = np.sqrt((np.square(lhs.real) + np.square(lhs.imag)).sum(1))
+    else:
+        scl = np.sqrt(np.square(lhs).sum(1))
+    scl[scl == 0] = 1
+
+    # Solve the least squares problem.
+    c, resids, rank, s = np.linalg.lstsq(lhs.T/scl, rhs.T, rcond)
+    c = (c.T/scl).T
+
+    # Expand c to include non-fitted coefficients which are set to zero
+    if deg.ndim > 0:
+        if c.ndim == 2:
+            cc = np.zeros((lmax+1, c.shape[1]), dtype=c.dtype)
+        else:
+            cc = np.zeros(lmax+1, dtype=c.dtype)
+        cc[deg] = c
+        c = cc
+
+    # warn on rank reduction
+    if rank != order and not full:
+        msg = "The fit may be poorly conditioned"
+        warnings.warn(msg, RankWarning, stacklevel=2)
+
+    if full:
+        return c, [resids, rank, s, rcond]
+    else:
+        return c
+
+
+def _pow(mul_f, c, pow, maxpower):
+    """
+    Helper function used to implement the ``<type>pow`` functions.
+
+    Parameters
+    ----------
+    vander_f : function(array_like, int) -> ndarray
+        The 1d vander function, such as ``polyvander``
+    pow, maxpower :
+        See the ``<type>pow`` functions for more detail
+    mul_f : function(array_like, array_like) -> ndarray
+        The ``<type>mul`` function, such as ``polymul``
+    """
+    # c is a trimmed copy
+    [c] = as_series([c])
+    power = int(pow)
+    if power != pow or power < 0:
+        raise ValueError("Power must be a non-negative integer.")
+    elif maxpower is not None and power > maxpower:
+        raise ValueError("Power is too large")
+    elif power == 0:
+        return np.array([1], dtype=c.dtype)
+    elif power == 1:
+        return c
+    else:
+        # This can be made more efficient by using powers of two
+        # in the usual way.
+        prd = c
+        for i in range(2, power + 1):
+            prd = mul_f(prd, c)
+        return prd
+
+
+def _deprecate_as_int(x, desc):
+    """
+    Like `operator.index`, but emits a deprecation warning when passed a float
+
+    Parameters
+    ----------
+    x : int-like, or float with integral value
+        Value to interpret as an integer
+    desc : str
+        description to include in any error message
+
+    Raises
+    ------
+    TypeError : if x is a non-integral float or non-numeric
+    DeprecationWarning : if x is an integral float
+    """
+    try:
+        return operator.index(x)
+    except TypeError:
+        # Numpy 1.17.0, 2019-03-11
+        try:
+            ix = int(x)
+        except TypeError:
+            pass
+        else:
+            if ix == x:
+                warnings.warn(
+                    "In future, this will raise TypeError, as {} will need to "
+                    "be an integer not just an integral float."
+                    .format(desc),
+                    DeprecationWarning,
+                    stacklevel=3
+                )
+                return ix
+
+        raise TypeError("{} must be an integer".format(desc))

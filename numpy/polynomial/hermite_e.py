@@ -161,7 +161,7 @@ def herme2poly(c):
     --------
     >>> from numpy.polynomial.hermite_e import herme2poly
     >>> herme2poly([  2.,  10.,   2.,   3.])
-    array([ 0.,  1.,  2.,  3.])
+    array([0.,  1.,  2.,  3.])
 
     """
     from .polynomial import polyadd, polysub, polymulx
@@ -273,35 +273,20 @@ def hermefromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots,
-    chebfromroots.
+    polyfromroots, legfromroots, lagfromroots, hermfromroots, chebfromroots
 
     Examples
     --------
     >>> from numpy.polynomial.hermite_e import hermefromroots, hermeval
     >>> coef = hermefromroots((-1, 0, 1))
     >>> hermeval((-1, 0, 1), coef)
-    array([ 0.,  0.,  0.])
+    array([0., 0., 0.])
     >>> coef = hermefromroots((-1j, 1j))
     >>> hermeval((-1j, 1j), coef)
-    array([ 0.+0.j,  0.+0.j])
+    array([0.+0.j, 0.+0.j])
 
     """
-    if len(roots) == 0:
-        return np.ones(1)
-    else:
-        [roots] = pu.as_series([roots], trim=False)
-        roots.sort()
-        p = [hermeline(-r, 1) for r in roots]
-        n = len(p)
-        while n > 1:
-            m, r = divmod(n, 2)
-            tmp = [hermemul(p[i], p[i+m]) for i in range(m)]
-            if r:
-                tmp[0] = hermemul(tmp[0], p[-1])
-            p = tmp
-            n = m
-        return p[0]
+    return pu._fromroots(hermeline, hermemul, roots)
 
 
 def hermeadd(c1, c2):
@@ -338,18 +323,10 @@ def hermeadd(c1, c2):
     --------
     >>> from numpy.polynomial.hermite_e import hermeadd
     >>> hermeadd([1, 2, 3], [1, 2, 3, 4])
-    array([ 2.,  4.,  6.,  4.])
+    array([2.,  4.,  6.,  4.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] += c2
-        ret = c1
-    else:
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._add(c1, c2)
 
 
 def hermesub(c1, c2):
@@ -386,19 +363,10 @@ def hermesub(c1, c2):
     --------
     >>> from numpy.polynomial.hermite_e import hermesub
     >>> hermesub([1, 2, 3, 4], [1, 2, 3])
-    array([ 0.,  0.,  0.,  4.])
+    array([0., 0., 0., 4.])
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if len(c1) > len(c2):
-        c1[:c2.size] -= c2
-        ret = c1
-    else:
-        c2 = -c2
-        c2[:c1.size] += c1
-        ret = c2
-    return pu.trimseq(ret)
+    return pu._sub(c1, c2)
 
 
 def hermemulx(c):
@@ -432,7 +400,7 @@ def hermemulx(c):
     --------
     >>> from numpy.polynomial.hermite_e import hermemulx
     >>> hermemulx([1, 2, 3])
-    array([ 2.,  7.,  2.,  3.])
+    array([2.,  7.,  2.,  3.])
 
     """
     # c is a trimmed copy
@@ -485,7 +453,7 @@ def hermemul(c1, c2):
     --------
     >>> from numpy.polynomial.hermite_e import hermemul
     >>> hermemul([1, 2, 3], [0, 1, 2])
-    array([ 14.,  15.,  28.,   7.,   6.])
+    array([14.,  15.,  28.,   7.,   6.])
 
     """
     # s1, s2 are trimmed copies
@@ -554,31 +522,12 @@ def hermediv(c1, c2):
     --------
     >>> from numpy.polynomial.hermite_e import hermediv
     >>> hermediv([ 14.,  15.,  28.,   7.,   6.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 0.]))
+    (array([1., 2., 3.]), array([0.]))
     >>> hermediv([ 15.,  17.,  28.,   7.,   6.], [0, 1, 2])
-    (array([ 1.,  2.,  3.]), array([ 1.,  2.]))
+    (array([1., 2., 3.]), array([1., 2.]))
 
     """
-    # c1, c2 are trimmed copies
-    [c1, c2] = pu.as_series([c1, c2])
-    if c2[-1] == 0:
-        raise ZeroDivisionError()
-
-    lc1 = len(c1)
-    lc2 = len(c2)
-    if lc1 < lc2:
-        return c1[:1]*0, c1
-    elif lc2 == 1:
-        return c1/c2[-1], c1[:1]*0
-    else:
-        quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
-        rem = c1
-        for i in range(lc1 - lc2, - 1, -1):
-            p = hermemul([0]*i + [1], c2)
-            q = rem[-1]/p[-1]
-            rem = rem[:-1] - q*p[:-1]
-            quo[i] = q
-        return quo, pu.trimseq(rem)
+    return pu._div(hermemul, c1, c2)
 
 
 def hermepow(c, pow, maxpower=16):
@@ -612,27 +561,10 @@ def hermepow(c, pow, maxpower=16):
     --------
     >>> from numpy.polynomial.hermite_e import hermepow
     >>> hermepow([1, 2, 3], 2)
-    array([ 23.,  28.,  46.,  12.,   9.])
+    array([23.,  28.,  46.,  12.,   9.])
 
     """
-    # c is a trimmed copy
-    [c] = pu.as_series([c])
-    power = int(pow)
-    if power != pow or power < 0:
-        raise ValueError("Power must be a non-negative integer.")
-    elif maxpower is not None and power > maxpower:
-        raise ValueError("Power is too large")
-    elif power == 0:
-        return np.array([1], dtype=c.dtype)
-    elif power == 1:
-        return c
-    else:
-        # This can be made more efficient by using powers of two
-        # in the usual way.
-        prd = c
-        for i in range(2, power + 1):
-            prd = hermemul(prd, c)
-        return prd
+    return pu._pow(hermemul, c, pow, maxpower)
 
 
 def hermeder(c, m=1, scl=1, axis=0):
@@ -685,22 +617,18 @@ def hermeder(c, m=1, scl=1, axis=0):
     --------
     >>> from numpy.polynomial.hermite_e import hermeder
     >>> hermeder([ 1.,  1.,  1.,  1.])
-    array([ 1.,  2.,  3.])
+    array([1.,  2.,  3.])
     >>> hermeder([-0.25,  1.,  1./2.,  1./3.,  1./4 ], m=2)
-    array([ 1.,  2.,  3.])
+    array([1.,  2.,  3.])
 
     """
     c = np.array(c, ndmin=1, copy=1)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
-    cnt, iaxis = [int(t) for t in [m, axis]]
-
-    if cnt != m:
-        raise ValueError("The order of derivation must be integer")
+    cnt = pu._deprecate_as_int(m, "the order of derivation")
+    iaxis = pu._deprecate_as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
-    if iaxis != axis:
-        raise ValueError("The axis must be integer")
     iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
@@ -794,15 +722,15 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     --------
     >>> from numpy.polynomial.hermite_e import hermeint
     >>> hermeint([1, 2, 3]) # integrate once, value 0 at 0.
-    array([ 1.,  1.,  1.,  1.])
+    array([1., 1., 1., 1.])
     >>> hermeint([1, 2, 3], m=2) # integrate twice, value & deriv 0 at 0
-    array([-0.25      ,  1.        ,  0.5       ,  0.33333333,  0.25      ])
+    array([-0.25      ,  1.        ,  0.5       ,  0.33333333,  0.25      ]) # may vary
     >>> hermeint([1, 2, 3], k=1) # integrate once, value 1 at 0.
-    array([ 2.,  1.,  1.,  1.])
+    array([2., 1., 1., 1.])
     >>> hermeint([1, 2, 3], lbnd=-1) # integrate once, value 0 at -1
     array([-1.,  1.,  1.,  1.])
     >>> hermeint([1, 2, 3], m=2, k=[1, 2], lbnd=-1)
-    array([ 1.83333333,  0.        ,  0.5       ,  0.33333333,  0.25      ])
+    array([ 1.83333333,  0.        ,  0.5       ,  0.33333333,  0.25      ]) # may vary
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -810,10 +738,8 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         c = c.astype(np.double)
     if not np.iterable(k):
         k = [k]
-    cnt, iaxis = [int(t) for t in [m, axis]]
-
-    if cnt != m:
-        raise ValueError("The order of integration must be integer")
+    cnt = pu._deprecate_as_int(m, "the order of integration")
+    iaxis = pu._deprecate_as_int(axis, "the axis")
     if cnt < 0:
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
@@ -822,8 +748,6 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("lbnd must be a scalar.")
     if np.ndim(scl) != 0:
         raise ValueError("scl must be a scalar.")
-    if iaxis != axis:
-        raise ValueError("The axis must be integer")
     iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
@@ -913,8 +837,8 @@ def hermeval(x, c, tensor=True):
     >>> hermeval(1, coef)
     3.0
     >>> hermeval([[1,2],[3,4]], coef)
-    array([[  3.,  14.],
-           [ 31.,  54.]])
+    array([[ 3., 14.],
+           [31., 54.]])
 
     """
     c = np.array(c, ndmin=1, copy=0)
@@ -989,14 +913,7 @@ def hermeval2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y = np.array((x, y), copy=0)
-    except Exception:
-        raise ValueError('x, y are incompatible')
-
-    c = hermeval(x, c)
-    c = hermeval(y, c, tensor=False)
-    return c
+    return pu._valnd(hermeval, c, x, y)
 
 
 def hermegrid2d(x, y, c):
@@ -1049,9 +966,7 @@ def hermegrid2d(x, y, c):
     .. versionadded:: 1.7.0
 
     """
-    c = hermeval(x, c)
-    c = hermeval(y, c)
-    return c
+    return pu._gridnd(hermeval, c, x, y)
 
 
 def hermeval3d(x, y, z, c):
@@ -1102,15 +1017,7 @@ def hermeval3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    try:
-        x, y, z = np.array((x, y, z), copy=0)
-    except Exception:
-        raise ValueError('x, y, z are incompatible')
-
-    c = hermeval(x, c)
-    c = hermeval(y, c, tensor=False)
-    c = hermeval(z, c, tensor=False)
-    return c
+    return pu._valnd(hermeval, c, x, y, z)
 
 
 def hermegrid3d(x, y, z, c):
@@ -1166,10 +1073,7 @@ def hermegrid3d(x, y, z, c):
     .. versionadded:: 1.7.0
 
     """
-    c = hermeval(x, c)
-    c = hermeval(y, c)
-    c = hermeval(z, c)
-    return c
+    return pu._gridnd(hermeval, c, x, y, z)
 
 
 def hermevander(x, deg):
@@ -1216,9 +1120,7 @@ def hermevander(x, deg):
            [ 1.,  1.,  0., -2.]])
 
     """
-    ideg = int(deg)
-    if ideg != deg:
-        raise ValueError("deg must be integer")
+    ideg = pu._deprecate_as_int(deg, "deg")
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
@@ -1276,7 +1178,7 @@ def hermevander2d(x, y, deg):
 
     See Also
     --------
-    hermevander, hermevander3d. hermeval2d, hermeval3d
+    hermevander, hermevander3d, hermeval2d, hermeval3d
 
     Notes
     -----
@@ -1284,17 +1186,7 @@ def hermevander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy = ideg
-    x, y = np.array((x, y), copy=0) + 0.0
-
-    vx = hermevander(x, degx)
-    vy = hermevander(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    return v.reshape(v.shape[:-2] + (-1,))
+    return pu._vander2d(hermevander, x, y, deg)
 
 
 def hermevander3d(x, y, z, deg):
@@ -1340,7 +1232,7 @@ def hermevander3d(x, y, z, deg):
 
     See Also
     --------
-    hermevander, hermevander3d. hermeval2d, hermeval3d
+    hermevander, hermevander3d, hermeval2d, hermeval3d
 
     Notes
     -----
@@ -1348,18 +1240,7 @@ def hermevander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    ideg = [int(d) for d in deg]
-    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
-    if is_valid != [1, 1, 1]:
-        raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = ideg
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
-
-    vx = hermevander(x, degx)
-    vy = hermevander(y, degy)
-    vz = hermevander(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    return v.reshape(v.shape[:-3] + (-1,))
+    return pu._vander3d(hermevander, x, y, z, deg)
 
 
 def hermefit(x, y, deg, rcond=None, full=False, w=None):
@@ -1430,7 +1311,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
         warnings can be turned off by
 
         >>> import warnings
-        >>> warnings.simplefilter('ignore', RankWarning)
+        >>> warnings.simplefilter('ignore', np.RankWarning)
 
     See Also
     --------
@@ -1480,87 +1361,14 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     --------
     >>> from numpy.polynomial.hermite_e import hermefit, hermeval
     >>> x = np.linspace(-10, 10)
+    >>> np.random.seed(123)
     >>> err = np.random.randn(len(x))/10
     >>> y = hermeval(x, [1, 2, 3]) + err
     >>> hermefit(x, y, 2)
-    array([ 1.01690445,  1.99951418,  2.99948696])
+    array([ 1.01690445,  1.99951418,  2.99948696]) # may vary
 
     """
-    x = np.asarray(x) + 0.0
-    y = np.asarray(y) + 0.0
-    deg = np.asarray(deg)
-
-    # check arguments.
-    if deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0:
-        raise TypeError("deg must be an int or non-empty 1-D array of int")
-    if deg.min() < 0:
-        raise ValueError("expected deg >= 0")
-    if x.ndim != 1:
-        raise TypeError("expected 1D vector for x")
-    if x.size == 0:
-        raise TypeError("expected non-empty vector for x")
-    if y.ndim < 1 or y.ndim > 2:
-        raise TypeError("expected 1D or 2D array for y")
-    if len(x) != len(y):
-        raise TypeError("expected x and y to have same length")
-
-    if deg.ndim == 0:
-        lmax = deg
-        order = lmax + 1
-        van = hermevander(x, lmax)
-    else:
-        deg = np.sort(deg)
-        lmax = deg[-1]
-        order = len(deg)
-        van = hermevander(x, lmax)[:, deg]
-
-    # set up the least squares matrices in transposed form
-    lhs = van.T
-    rhs = y.T
-    if w is not None:
-        w = np.asarray(w) + 0.0
-        if w.ndim != 1:
-            raise TypeError("expected 1D vector for w")
-        if len(x) != len(w):
-            raise TypeError("expected x and w to have same length")
-        # apply weights. Don't use inplace operations as they
-        # can cause problems with NA.
-        lhs = lhs * w
-        rhs = rhs * w
-
-    # set rcond
-    if rcond is None:
-        rcond = len(x)*np.finfo(x.dtype).eps
-
-    # Determine the norms of the design matrix columns.
-    if issubclass(lhs.dtype.type, np.complexfloating):
-        scl = np.sqrt((np.square(lhs.real) + np.square(lhs.imag)).sum(1))
-    else:
-        scl = np.sqrt(np.square(lhs).sum(1))
-    scl[scl == 0] = 1
-
-    # Solve the least squares problem.
-    c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
-    c = (c.T/scl).T
-
-    # Expand c to include non-fitted coefficients which are set to zero
-    if deg.ndim > 0:
-        if c.ndim == 2:
-            cc = np.zeros((lmax+1, c.shape[1]), dtype=c.dtype)
-        else:
-            cc = np.zeros(lmax+1, dtype=c.dtype)
-        cc[deg] = c
-        c = cc
-
-    # warn on rank reduction
-    if rank != order and not full:
-        msg = "The fit may be poorly conditioned"
-        warnings.warn(msg, pu.RankWarning, stacklevel=2)
-
-    if full:
-        return c, [resids, rank, s, rcond]
-    else:
-        return c
+    return pu._fit(hermevander, x, y, deg, rcond, full, w)
 
 
 def hermecompanion(c):
@@ -1650,9 +1458,9 @@ def hermeroots(c):
     >>> from numpy.polynomial.hermite_e import hermeroots, hermefromroots
     >>> coef = hermefromroots([-1, 0, 1])
     >>> coef
-    array([ 0.,  2.,  0.,  1.])
+    array([0., 2., 0., 1.])
     >>> hermeroots(coef)
-    array([-1.,  0.,  1.])
+    array([-1.,  0.,  1.]) # may vary
 
     """
     # c is a trimmed copy
@@ -1662,7 +1470,8 @@ def hermeroots(c):
     if len(c) == 2:
         return np.array([-c[0]/c[1]])
 
-    m = hermecompanion(c)
+    # rotated companion matrix reduces error
+    m = hermecompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r
@@ -1747,9 +1556,9 @@ def hermegauss(deg):
     the right value when integrating 1.
 
     """
-    ideg = int(deg)
-    if ideg != deg or ideg < 1:
-        raise ValueError("deg must be a non-negative integer")
+    ideg = pu._deprecate_as_int(deg, "deg")
+    if ideg <= 0:
+        raise ValueError("deg must be a positive integer")
 
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.

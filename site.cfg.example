@@ -4,11 +4,11 @@
 # packages will use all sections so you should leave out sections that your
 # package does not use.
 
-# To assist automatic installation like easy_install, the user's home directory
+# To assist automatic installation like pip, the user's home directory
 # will also be checked for the file ~/.numpy-site.cfg .
 
 # The format of the file is that of the standard library's ConfigParser module.
-# No interpolation is allowed, RawConfigParser class being used to load it.
+# No interpolation is allowed; the RawConfigParser class is being used to load it.
 #
 #   https://docs.python.org/library/configparser.html
 #
@@ -46,7 +46,7 @@
 #       LAPACK libraries are one example. However, most dependencies are more
 #       complicated and require actual installation that you need to do
 #       yourself.
-#           src_dirs = /home/rkern/src/BLAS_SRC:/home/rkern/src/LAPACK_SRC
+#           src_dirs = /home/username/src/BLAS_SRC:/home/username/src/LAPACK_SRC
 #
 #   search_static_first
 #       Boolean (one of (0, false, no, off) for False or (1, true, yes, on) for
@@ -64,14 +64,14 @@
 #
 #   extra_compile_args
 #       Add additional arguments to the compilation of sources.
-#       Simple variable with no parsing done. 
+#       Split into arguments in a platform-appropriate way.
 #       Provide a single line with all complete flags.
 #           extra_compile_args = -g -ftree-vectorize
 #
 #   extra_link_args
 #       Add additional arguments when libraries/executables
 #       are linked.
-#       Simple variable with no parsing done. 
+#       Split into arguments in a platform-appropriate way.
 #       Provide a single line with all complete flags.
 #           extra_link_args = -lgfortran
 #
@@ -87,13 +87,13 @@
 #include_dirs = /usr/local/include
 #
 
-# Atlas
+# ATLAS
 # -----
-# Atlas is an open source optimized implementation of the BLAS and Lapack
-# routines. NumPy will try to build against Atlas by default when available in
-# the system library dirs. To build numpy against a custom installation of
-# Atlas you can add an explicit section such as the following. Here we assume
-# that Atlas was configured with ``prefix=/opt/atlas``.
+# ATLAS is an open source optimized implementation of the BLAS and LAPACK
+# routines. NumPy will try to build against ATLAS by default when available in
+# the system library dirs. To build NumPy against a custom installation of
+# ATLAS you can add an explicit section such as the following. Here we assume
+# that ATLAS was configured with ``prefix=/opt/atlas``.
 #
 # [atlas]
 # library_dirs = /opt/atlas/lib
@@ -101,9 +101,9 @@
 
 # OpenBLAS
 # --------
-# OpenBLAS is another open source optimized implementation of BLAS and Lapack
-# and can be seen as an alternative to Atlas. To build numpy against OpenBLAS
-# instead of Atlas, use this section instead of the above, adjusting as needed
+# OpenBLAS is another open source optimized implementation of BLAS and LAPACK
+# and can be seen as an alternative to ATLAS. To build NumPy against OpenBLAS
+# instead of ATLAS, use this section instead of the above, adjusting as needed
 # for your configuration (in the following example we installed OpenBLAS with
 # ``make install PREFIX=/opt/OpenBLAS``.
 # OpenBLAS is generically installed as a shared library, to force the OpenBLAS
@@ -114,7 +114,7 @@
 # way Python's multiprocessing is implemented, a multithreaded OpenBLAS can
 # cause programs using both to hang as soon as a worker process is forked on
 # POSIX systems (Linux, Mac).
-# This is fixed in Openblas 0.2.9 for the pthread build, the OpenMP build using
+# This is fixed in OpenBLAS 0.2.9 for the pthread build, the OpenMP build using
 # GNU openmp is as of gcc-4.9 not fixed yet.
 # Python 3.4 will introduce a new feature in multiprocessing, called the
 # "forkserver", which solves this problem. For older versions, make sure
@@ -135,7 +135,7 @@
 # ----
 # BLIS (https://github.com/flame/blis) also provides a BLAS interface.  It's a
 # relatively new library, its performance in some cases seems to match that of
-# MKL and OpenBLAS, but it hasn't been benchmarked with NumPy or Scipy yet.
+# MKL and OpenBLAS, but it hasn't been benchmarked with NumPy or SciPy yet.
 #
 # Notes on compiling BLIS itself:
 #   - the CBLAS interface (needed by NumPy) isn't built by default; define
@@ -155,7 +155,7 @@
 # MKL
 #---- 
 # Intel MKL is Intel's very optimized yet proprietary implementation of BLAS and 
-# Lapack. Find the latest info on building numpy with Intel MKL in this article:
+# LAPACK. Find the latest info on building NumPy with Intel MKL in this article:
 # https://software.intel.com/en-us/articles/numpyscipy-with-intel-mkl
 # Assuming you installed the mkl in /opt/intel/compilers_and_libraries_2018/linux/mkl, 
 # for 64 bits code at Linux: 
@@ -172,7 +172,7 @@
 # mkl_libs = mkl_rt 
 # lapack_libs =  
 # 
-# On win-64, the following options compiles numpy with the MKL library 
+# On win-64, the following options compiles NumPy with the MKL library 
 # dynamically linked. 
 # [mkl] 
 # include_dirs = C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018\windows\mkl\include
@@ -180,9 +180,9 @@
 # mkl_libs = mkl_rt 
 # lapack_libs =
 
-# ACCELERATE
+# Accelerate
 # ----------
-# Accelerate/vecLib is an OSX framework providing a BLAS and LAPACK implementations.
+# Accelerate/vecLib is an OSX framework providing a BLAS and LAPACK implementation.
 #
 # [accelerate]
 # libraries = Accelerate, vecLib
@@ -195,7 +195,7 @@
 # better performance.  Note that the AMD library has nothing to do with AMD
 # (Advanced Micro Devices), the CPU company.
 #
-# UMFPACK is not used by numpy.
+# UMFPACK is not used by NumPy.
 #
 #   https://www.cise.ufl.edu/research/sparse/umfpack/
 #   https://www.cise.ufl.edu/research/sparse/amd/
@@ -210,7 +210,7 @@
 # FFT libraries
 # -------------
 # There are two FFT libraries that we can configure here: FFTW (2 and 3) and djbfft.
-# Note that these libraries are not used by for numpy or scipy.
+# Note that these libraries are not used by NumPy or SciPy.
 #
 #   http://fftw.org/
 #   https://cr.yp.to/djbfft.html

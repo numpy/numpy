@@ -5,7 +5,8 @@ import platform
 import pytest
 
 import numpy as np
-import numpy.core.umath as ncu
+# import the c-extension module directly since _arg is not exported via umath
+import numpy.core._multiarray_umath as ncu
 from numpy.testing import (
     assert_raises, assert_equal, assert_array_equal, assert_almost_equal
     )

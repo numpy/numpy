@@ -57,11 +57,10 @@ def recursive_fill_fields(input, output):
     Examples
     --------
     >>> from numpy.lib import recfunctions as rfn
-    >>> a = np.array([(1, 10.), (2, 20.)], dtype=[('A', int), ('B', float)])
+    >>> a = np.array([(1, 10.), (2, 20.)], dtype=[('A', np.int64), ('B', np.float64)])
     >>> b = np.zeros((3,), dtype=a.dtype)
     >>> rfn.recursive_fill_fields(a, b)
-    array([(1, 10.0), (2, 20.0), (0, 0.0)],
-          dtype=[('A', '<i4'), ('B', '<f8')])
+    array([(1, 10.), (2, 20.), (0,  0.)], dtype=[('A', '<i8'), ('B', '<f8')])
 
     """
     newdtype = output.dtype
@@ -89,11 +88,11 @@ def get_fieldspec(dtype):
 
     Examples
     --------
-    >>> dt = np.dtype([(('a', 'A'), int), ('b', float, 3)])
+    >>> dt = np.dtype([(('a', 'A'), np.int64), ('b', np.double, 3)])
     >>> dt.descr
-    [(('a', 'A'), '<i4'), ('b', '<f8', (3,))]
+    [(('a', 'A'), '<i8'), ('b', '<f8', (3,))]
     >>> get_fieldspec(dt)
-    [(('a', 'A'), dtype('int32')), ('b', dtype(('<f8', (3,))))]
+    [(('a', 'A'), dtype('int64')), ('b', dtype(('<f8', (3,))))]
 
     """
     if dtype.names is None:
@@ -120,10 +119,15 @@ def get_names(adtype):
     Examples
     --------
     >>> from numpy.lib import recfunctions as rfn
-    >>> rfn.get_names(np.empty((1,), dtype=int)) is None
-    True
+    >>> rfn.get_names(np.empty((1,), dtype=int))
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'numpy.ndarray' object has no attribute 'names'
+
     >>> rfn.get_names(np.empty((1,), dtype=[('A',int), ('B', float)]))
-    ('A', 'B')
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'numpy.ndarray' object has no attribute 'names'
     >>> adtype = np.dtype([('a', int), ('b', [('ba', int), ('bb', int)])])
     >>> rfn.get_names(adtype)
     ('a', ('b', ('ba', 'bb')))
@@ -153,9 +157,13 @@ def get_names_flat(adtype):
     --------
     >>> from numpy.lib import recfunctions as rfn
     >>> rfn.get_names_flat(np.empty((1,), dtype=int)) is None
-    True
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'numpy.ndarray' object has no attribute 'names'
     >>> rfn.get_names_flat(np.empty((1,), dtype=[('A',int), ('B', float)]))
-    ('A', 'B')
+    Traceback (most recent call last):
+        ...
+    AttributeError: 'numpy.ndarray' object has no attribute 'names'
     >>> adtype = np.dtype([('a', int), ('b', [('ba', int), ('bb', int)])])
     >>> rfn.get_names_flat(adtype)
     ('a', 'b', 'ba', 'bb')
@@ -403,20 +411,18 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     --------
     >>> from numpy.lib import recfunctions as rfn
     >>> rfn.merge_arrays((np.array([1, 2]), np.array([10., 20., 30.])))
-    masked_array(data = [(1, 10.0) (2, 20.0) (--, 30.0)],
-                 mask = [(False, False) (False, False) (True, False)],
-           fill_value = (999999, 1e+20),
-                dtype = [('f0', '<i4'), ('f1', '<f8')])
+    array([( 1, 10.), ( 2, 20.), (-1, 30.)],
+          dtype=[('f0', '<i8'), ('f1', '<f8')])
 
-    >>> rfn.merge_arrays((np.array([1, 2]), np.array([10., 20., 30.])),
-    ...              usemask=False)
-    array([(1, 10.0), (2, 20.0), (-1, 30.0)],
-          dtype=[('f0', '<i4'), ('f1', '<f8')])
-    >>> rfn.merge_arrays((np.array([1, 2]).view([('a', int)]),
+    >>> rfn.merge_arrays((np.array([1, 2], dtype=np.int64),
+    ...         np.array([10., 20., 30.])), usemask=False)
+     array([(1, 10.0), (2, 20.0), (-1, 30.0)],
+             dtype=[('f0', '<i8'), ('f1', '<f8')])
+    >>> rfn.merge_arrays((np.array([1, 2]).view([('a', np.int64)]),
     ...               np.array([10., 20., 30.])),
     ...              usemask=False, asrecarray=True)
-    rec.array([(1, 10.0), (2, 20.0), (-1, 30.0)],
-              dtype=[('a', '<i4'), ('f1', '<f8')])
+    rec.array([( 1, 10.), ( 2, 20.), (-1, 30.)],
+              dtype=[('a', '<i8'), ('f1', '<f8')])
 
     Notes
     -----
@@ -547,16 +553,14 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
     --------
     >>> from numpy.lib import recfunctions as rfn
     >>> a = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
-    ...   dtype=[('a', int), ('b', [('ba', float), ('bb', int)])])
+    ...   dtype=[('a', np.int64), ('b', [('ba', np.double), ('bb', np.int64)])])
     >>> rfn.drop_fields(a, 'a')
-    array([((2.0, 3),), ((5.0, 6),)],
-          dtype=[('b', [('ba', '<f8'), ('bb', '<i4')])])
+    array([((2., 3),), ((5., 6),)],
+          dtype=[('b', [('ba', '<f8'), ('bb', '<i8')])])
     >>> rfn.drop_fields(a, 'ba')
-    array([(1, (3,)), (4, (6,))],
-          dtype=[('a', '<i4'), ('b', [('bb', '<i4')])])
+    array([(1, (3,)), (4, (6,))], dtype=[('a', '<i8'), ('b', [('bb', '<i8')])])
     >>> rfn.drop_fields(a, ['ba', 'bb'])
-    array([(1,), (4,)],
-          dtype=[('a', '<i4')])
+    array([(1,), (4,)], dtype=[('a', '<i8')])
     """
     if _is_string_like(drop_names):
         drop_names = [drop_names]
@@ -648,8 +652,8 @@ def rename_fields(base, namemapper):
     >>> a = np.array([(1, (2, [3.0, 30.])), (4, (5, [6.0, 60.]))],
     ...   dtype=[('a', int),('b', [('ba', float), ('bb', (float, 2))])])
     >>> rfn.rename_fields(a, {'a':'A', 'bb':'BB'})
-    array([(1, (2.0, [3.0, 30.0])), (4, (5.0, [6.0, 60.0]))],
-          dtype=[('A', '<i4'), ('b', [('ba', '<f8'), ('BB', '<f8', 2)])])
+    array([(1, (2., [ 3., 30.])), (4, (5., [ 6., 60.]))],
+          dtype=[('A', '<i8'), ('b', [('ba', '<f8'), ('BB', '<f8', (2,))])])
 
     """
     def _recursive_rename_fields(ndtype, namemapper):
@@ -834,18 +838,18 @@ def repack_fields(a, align=False, recurse=False):
     ...     print("offsets:", [d.fields[name][1] for name in d.names])
     ...     print("itemsize:", d.itemsize)
     ...
-    >>> dt = np.dtype('u1,i4,f4', align=True)
+    >>> dt = np.dtype('u1,<i4,<f4', align=True)
     >>> dt
-    dtype({'names':['f0','f1','f2'], 'formats':['u1','<i4','<f8'], 'offsets':[0,4,8], 'itemsize':16}, align=True)
+    dtype({'names':['f0','f1','f2'], 'formats':['u1','<i8','<f8'], 'offsets':[0,8,16], 'itemsize':24}, align=True)
     >>> print_offsets(dt)
-    offsets: [0, 4, 8]
-    itemsize: 16
+    offsets: [0, 8, 16]
+    itemsize: 24
     >>> packed_dt = repack_fields(dt)
     >>> packed_dt
-    dtype([('f0', 'u1'), ('f1', '<i4'), ('f2', '<f8')])
+    dtype([('f0', 'u1'), ('f1', '<i8'), ('f2', '<f8')])
     >>> print_offsets(packed_dt)
-    offsets: [0, 1, 5]
-    itemsize: 13
+    offsets: [0, 1, 9]
+    itemsize: 17
 
     """
     if not isinstance(a, np.dtype):
@@ -1244,15 +1248,16 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
     True
     >>> z = np.array([('A', 1), ('B', 2)], dtype=[('A', '|S3'), ('B', float)])
     >>> zz = np.array([('a', 10., 100.), ('b', 20., 200.), ('c', 30., 300.)],
-    ...   dtype=[('A', '|S3'), ('B', float), ('C', float)])
+    ...   dtype=[('A', '|S3'), ('B', np.double), ('C', np.double)])
     >>> test = rfn.stack_arrays((z,zz))
     >>> test
-    masked_array(data = [('A', 1.0, --) ('B', 2.0, --) ('a', 10.0, 100.0) ('b', 20.0, 200.0)
-     ('c', 30.0, 300.0)],
-                 mask = [(False, False, True) (False, False, True) (False, False, False)
-     (False, False, False) (False, False, False)],
-           fill_value = ('N/A', 1e+20, 1e+20),
-                dtype = [('A', '|S3'), ('B', '<f8'), ('C', '<f8')])
+    masked_array(data=[(b'A', 1.0, --), (b'B', 2.0, --), (b'a', 10.0, 100.0),
+                       (b'b', 20.0, 200.0), (b'c', 30.0, 300.0)],
+                 mask=[(False, False,  True), (False, False,  True),
+                       (False, False, False), (False, False, False),
+                       (False, False, False)],
+           fill_value=(b'N/A', 1.e+20, 1.e+20),
+                dtype=[('A', 'S3'), ('B', '<f8'), ('C', '<f8')])
 
     """
     if isinstance(arrays, ndarray):
@@ -1331,7 +1336,10 @@ def find_duplicates(a, key=None, ignoremask=True, return_index=False):
     >>> a = np.ma.array([1, 1, 1, 2, 2, 3, 3],
     ...         mask=[0, 0, 1, 0, 0, 0, 1]).view(ndtype)
     >>> rfn.find_duplicates(a, ignoremask=True, return_index=True)
-    ... # XXX: judging by the output, the ignoremask flag has no effect
+    (masked_array(data=[(1,), (1,), (2,), (2,)],
+                 mask=[(False,), (False,), (False,), (False,)],
+           fill_value=(999999,),
+                dtype=[('a', '<i8')]), array([0, 1, 3, 4]))
     """
     a = np.asanyarray(a).ravel()
     # Get a dictionary of fields

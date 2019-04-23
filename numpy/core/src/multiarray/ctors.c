@@ -1410,6 +1410,7 @@ _array_from_buffer_3118(PyObject *memoryview)
          * dimensions, so the array is now 0d.
          */
         nd = 0;
+        Py_DECREF(descr);
         descr = (PyArray_Descr *)PyObject_CallFunctionObjArgs(
                 (PyObject *)&PyArrayDescr_Type, Py_TYPE(view->obj), NULL);
         if (descr == NULL) {
@@ -1811,9 +1812,12 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* If the requested dtype is flexible, adapt it */
     if (newtype != NULL) {
-        PyArray_AdaptFlexibleDType(op,
+        newtype = PyArray_AdaptFlexibleDType(op,
                     (dtype == NULL) ? PyArray_DESCR(arr) : dtype,
-                    &newtype);
+                    newtype);
+        if (newtype == NULL) {
+            return NULL;
+        }
     }
 
     /* If we got dimensions and dtype instead of an array */
@@ -2024,7 +2028,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         newtype = oldtype;
         Py_INCREF(oldtype);
     }
-    if (PyDataType_ISUNSIZED(newtype)) {
+    else if (PyDataType_ISUNSIZED(newtype)) {
         PyArray_DESCR_REPLACE(newtype);
         if (newtype == NULL) {
             return NULL;
@@ -2128,12 +2132,15 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
              */
 
             /* 2017-Nov-10 1.14 */
-            if (DEPRECATE("NPY_ARRAY_UPDATEIFCOPY, NPY_ARRAY_INOUT_ARRAY, and "
-                "NPY_ARRAY_INOUT_FARRAY are deprecated, use NPY_WRITEBACKIFCOPY, "
-                "NPY_ARRAY_INOUT_ARRAY2, or NPY_ARRAY_INOUT_FARRAY2 respectively "
-                "instead, and call PyArray_ResolveWritebackIfCopy before the "
-                "array is deallocated, i.e. before the last call to Py_DECREF.") < 0)
+            if (DEPRECATE(
+                    "NPY_ARRAY_UPDATEIFCOPY, NPY_ARRAY_INOUT_ARRAY, and "
+                    "NPY_ARRAY_INOUT_FARRAY are deprecated, use NPY_WRITEBACKIFCOPY, "
+                    "NPY_ARRAY_INOUT_ARRAY2, or NPY_ARRAY_INOUT_FARRAY2 respectively "
+                    "instead, and call PyArray_ResolveWritebackIfCopy before the "
+                    "array is deallocated, i.e. before the last call to Py_DECREF.") < 0) {
+                Py_DECREF(ret);
                 return NULL;
+            }
             Py_INCREF(arr);
             if (PyArray_SetWritebackIfCopyBase(ret, arr) < 0) {
                 Py_DECREF(ret);
@@ -2160,14 +2167,12 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
         Py_DECREF(newtype);
         if (needview) {
-            PyArray_Descr *dtype = PyArray_DESCR(arr);
             PyTypeObject *subtype = NULL;
 
             if (flags & NPY_ARRAY_ENSUREARRAY) {
                 subtype = &PyArray_Type;
             }
 
-            Py_INCREF(dtype);
             ret = (PyArrayObject *)PyArray_View(arr, NULL, subtype);
             if (ret == NULL) {
                 return NULL;
@@ -2479,7 +2484,7 @@ PyArray_FromInterface(PyObject *origin)
         }
 #endif
         /* Get offset number from interface specification */
-        attr = PyDict_GetItemString(origin, "offset");
+        attr = PyDict_GetItemString(iface, "offset");
         if (attr) {
             npy_longlong num = PyLong_AsLongLong(attr);
             if (error_converting(num)) {
@@ -2495,6 +2500,11 @@ PyArray_FromInterface(PyObject *origin)
             &PyArray_Type, dtype,
             n, dims, NULL, data,
             dataflags, NULL, base);
+    /*
+     * Ref to dtype was stolen by PyArray_NewFromDescrAndBase
+     * Prevent DECREFing dtype in fail codepath by setting to NULL
+     */
+    dtype = NULL;
     if (ret == NULL) {
         goto fail;
     }
@@ -2827,7 +2837,8 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
      * contiguous strides, etc.
      */
     if (PyArray_GetDTypeTransferFunction(
-                    IsUintAligned(src) && IsUintAligned(dst),
+                    IsUintAligned(src) && IsAligned(src) &&
+                    IsUintAligned(dst) && IsAligned(dst),
                     src_stride, dst_stride,
                     PyArray_DESCR(src), PyArray_DESCR(dst),
                     0,
@@ -3682,32 +3693,12 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         Py_DECREF(type);
         return NULL;
     }
-    if (Py_TYPE(buf)->tp_as_buffer == NULL
-#if defined(NPY_PY3K)
-        || Py_TYPE(buf)->tp_as_buffer->bf_getbuffer == NULL
-#else
-        || (Py_TYPE(buf)->tp_as_buffer->bf_getwritebuffer == NULL
-            && Py_TYPE(buf)->tp_as_buffer->bf_getreadbuffer == NULL)
-#endif
-        ) {
-        PyObject *newbuf;
-        newbuf = PyObject_GetAttr(buf, npy_ma_str_buffer);
-        if (newbuf == NULL) {
-            Py_DECREF(type);
-            return NULL;
-        }
-        buf = newbuf;
-    }
-    else {
-        Py_INCREF(buf);
-    }
 
 #if defined(NPY_PY3K)
     if (PyObject_GetBuffer(buf, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         writeable = 0;
         PyErr_Clear();
         if (PyObject_GetBuffer(buf, &view, PyBUF_SIMPLE) < 0) {
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3727,7 +3718,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         writeable = 0;
         PyErr_Clear();
         if (PyObject_AsReadBuffer(buf, (void *)&data, &ts) == -1) {
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3738,7 +3728,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         PyErr_Format(PyExc_ValueError,
                      "offset must be non-negative and no greater than buffer "\
                      "length (%" NPY_INTP_FMT ")", (npy_intp)ts);
-        Py_DECREF(buf);
         Py_DECREF(type);
         return NULL;
     }
@@ -3752,7 +3741,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             PyErr_SetString(PyExc_ValueError,
                             "buffer size must be a multiple"\
                             " of element size");
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3763,7 +3751,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             PyErr_SetString(PyExc_ValueError,
                             "buffer is smaller than requested"\
                             " size");
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3773,7 +3760,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             &PyArray_Type, type,
             1, &n, NULL, data,
             NPY_ARRAY_DEFAULT, NULL, buf);
-    Py_DECREF(buf);
     if (ret == NULL) {
         return NULL;
     }

@@ -42,13 +42,12 @@ from paver.easy import Bunch, options, task, sh
 #-----------------------------------
 
 # Path to the release notes
-RELEASE_NOTES = 'doc/release/1.16.0-notes.rst'
+RELEASE_NOTES = 'doc/release/1.17.0-notes.rst'
 
 
 #-------------------------------------------------------
 # Hardcoded build/install dirs, virtualenv options, etc.
 #-------------------------------------------------------
-DEFAULT_PYTHON = "2.7"
 
 # Where to put the release installers
 options(installers=Bunch(releasedir="release",
