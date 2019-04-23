@@ -31,14 +31,14 @@ class FortranTestCase(unittest.TestCase):
         second = Fortran.__dict__[self.typeStr + "SecondElement"]
         matrix = np.asfortranarray(np.arange(9).reshape(3, 3),
                                    self.typeCode)
-        self.assertEquals(second(matrix), 3)
+        self.assertEqual(second(matrix), 3)
 
     def testSecondElementObject(self):
         "Test Fortran matrix initialized from nested list fortranarray"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         second = Fortran.__dict__[self.typeStr + "SecondElement"]
         matrix = np.asfortranarray([[0, 1, 2], [3, 4, 5], [6, 7, 8]], self.typeCode)
-        self.assertEquals(second(matrix), 3)
+        self.assertEqual(second(matrix), 3)
 
 ######################################################################
 
