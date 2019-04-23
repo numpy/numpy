@@ -2,10 +2,10 @@
 Contributing to NumPy
 #####################
 
-Development process
-===================
+Development process - summary
+=============================
 
-Here's the long and short of it:
+Here's the short summary, complete TOC links are below:
 
 1. If you are a first-time contributor:
 
@@ -39,22 +39,22 @@ Here's the long and short of it:
 
    * Create a branch for the feature you want to work on. Since the
      branch name will appear in the merge message, use a sensible name
-     such as 'transform-speedups'::
+     such as 'linspace-speedups'::
 
-      git checkout -b transform-speedups
+      git checkout -b linspace-speedups
 
    * Commit locally as you progress (``git add`` and ``git commit``)
      Use a `properly formatted <writing-the-commit-message>` commit message,
      write tests that fail before your change and pass afterward, run all the
-     `tests locally <development-environment>` after running ``git clean -xfd``
-     to be sure you have not broken anything, and be sure to document any
-     changed behavior in `numpydoc-appropriate docstrings <howto-document>`.
+     `tests locally <development-environment>`. Be sure to document any
+     changed behavior in docstrings, keeping to the NumPy docstring
+     `standard <howto-document>`.
 
 3. To submit your contribution:
 
    * Push your changes back to your fork on GitHub::
 
-      git push origin transform-speedups
+      git push origin linspace-speedups
 
    * Enter your GitHub username and password (repeat contributors or advanced
      users can remove this step by connecting to GitHub with `SSH <set-up-and-
@@ -95,31 +95,32 @@ Here's the long and short of it:
      and waste of this resource, `test your work <recommended-development-
      setup>` locally before committing.
 
-   * A code-change PR must be **approved** by at least two core team members
-     before merging. Approval means the core team member has carefully reviewed
-     the changes, and the PR is ready for merging.
+   * A PR must be **approved** by at least one core team member before merging.
+     Approval means the core team member has carefully reviewed the changes,
+     and the PR is ready for merging.
 
 5. Document changes
 
    Beyond changes to a functions docstring and possible description in the
    general documentation, if your change introduces any user-facing
-   modifications, update the current release notice under
+   modifications, update the current release notes under
    ``doc/release/X.XX-notes.rst``
 
-   If your change introduces a deprecation, make sure to follow the
-   `deprecation policy <http://www.numpy.org/neps/nep-0023-backwards-
-   compatibility.html>`_.
+   If your change introduces a deprecation, make sure to discuss this first on
+   GitHub or the mailing list first. If agreement on the deprecation is
+   reached, follow `NEP 23 `deprecation policy <http://www.numpy.org/neps/
+   nep-0023-backwards-compatibility.html>`_  to add the deprecation.
 
 6. Cross referencing issues
 
-   If the PR relates to any issues, you can add the text ``xref #xxxx`` where
+   If the PR relates to any issues, you can add the text ``xref gh-xxxx`` where
    ``xxxx`` is the number of the issue to github comments. Likewise, if the PR
    solves an issue, replace the ``xref`` with ``closes``, ``fixes`` or any of
    the other flavors `github accepts <https://help.github.com/en/articles/
    closing-issues-using-keywords>`_.
 
    In the source code, be sure to preface any issue or PR reference with
-   ``gh-xxxx`` since the code may move to a different host.
+   ``gh-xxxx``.
 
 For a more detailed discussion, read on and follow the links at the bottom of
 this page.
@@ -138,13 +139,13 @@ Guidelines
 * All code should have tests (see `test coverage`_ below for more details).
 * All code should be `documented <docstring-standard>`.
 * No changes are ever committed without review and approval by a core
-  team member.  Ask on the `mailing list`_ if you get no response to your pull
-  request.
+  team member.Please ask politely on the PR or on the `mailing list`_ if you
+  get no response to your pull request within a week.
 
 Stylistic Guidelines
 --------------------
 
-* Set up your editor to follow `PEP08 <https://www.python.org/dev/peps/
+* Set up your editor to follow `PEP 8 <https://www.python.org/dev/peps/
   pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code with
   pyflakes / flake8.
 
@@ -154,11 +155,6 @@ Stylistic Guidelines
 * Use the following import conventions::
 
    import numpy as np
-
-   cimport numpy as cnp  # in Cython code
-
-* Use ``np_intp`` as data type for all indexing, shape and size variables
-  in C/C++ and Cython code.
 
 * For C code, see the `numpy-c-style-guide`
 
@@ -196,43 +192,14 @@ all targets. For example, to build the HTML documentation, you can run:
     make html
 
 Then, all the HTML files will be generated in ``doc/build/html/``.
-To rebuild a full clean documentation, run:
-
-.. code:: sh
-
-    make dist
+Since the documentation is based on docstrings, the appropriate version of
+numpy must be installed in the host python used to run sphinx.
 
 Requirements
 ~~~~~~~~~~~~
 
-`Sphinx <http://www.sphinx-doc.org/en/stable/>`__ and LaTeX are needed to build
-the documentation.
-
-**Sphinx:**
-
-Sphinx and other python packages needed to build the documentation
-Python dependencies can be installed using:
-
-.. code:: sh
-
-    pip install -r sphinx matplotlib scipy
-
-**LaTeX Ubuntu:**
-
-.. code:: sh
-
-    sudo apt-get install -qq texlive texlive-latex-extra dvipng
-
-**LaTeX Mac:**
-
-Install the full `MacTex <https://www.tug.org/mactex/>`__ installation or
-install the smaller
-`BasicTex <https://www.tug.org/mactex/morepackages.html>`__ and add *ucs*
-and *dvipng* packages:
-
-.. code:: sh
-
-    sudo tlmgr install ucs dvipng
+`Sphinx <http://www.sphinx-doc.org/en/stable/>`__ is needed to build
+the documentation. Matplotlib and SciPy are also required.
 
 Fixing Warnings
 ~~~~~~~~~~~~~~~
@@ -244,76 +211,10 @@ Fixing Warnings
 -  "Duplicate citation R###, other instance in..."" There is probably a
    [2] without a [1] in one of the docstrings
 
--  Make sure to use pre-sphinxification paths to images (not the
-   \_images directory)
+Development process - details
+=============================
 
-Deprecation cycle
------------------
-
-If the behavior of the library has to be changed, a deprecation cycle must be
-followed to warn users.
-
-- a deprecation cycle is *not* necessary when:
-
-    * adding a new function, or
-    * adding a new keyword argument to the *end* of a function signature, or
-    * fixing what was buggy behaviour
-
-- a deprecation cycle is necessary for *any breaking API change*, meaning a
-    change where the function, invoked with the same arguments, would return a
-    different result after the change. This includes:
-
-    * changing the order of arguments or keyword arguments, or
-    * adding arguments or keyword arguments to a function, or
-    * changing a function's name or submodule, or
-    * changing the default value of a function's arguments.
-
-Usually, our policy is to put in place a deprecation cycle over two releases.
-
-For the sake of illustration, we consider the modification of a default value in
-a function signature. In version N (therefore, next release will be N+1), we
-have
-
-.. code-block:: python
-
-    def a_function(array, rescale=True):
-        out = do_something(array, rescale=rescale)
-        return out
-
-that has to be changed to
-
-.. code-block:: python
-
-    def a_function(array, rescale=None):
-        if rescale is None:
-            # 2019-02-24
-            warn('The default value of rescale will change to `False`
-                 in version N+3', DeprecationWarning, stacklevel=2)
-            rescale = True
-        out = do_something(image, rescale=rescale)
-        return out
-
-and in version N+3
-
-.. code-block:: python
-
-    def a_function(array, rescale=False):
-        out = do_something(array, rescale=rescale)
-        return out
-
-Here is the process for a 2-release deprecation cycle:
-
-- In the signature, set default to `None`, and modify the docstring to specify
-  that it's `True`.
-- In the function, _if_ rescale is set to `None`, set to `True` and warn that the
-  default will change to `False` in version N+3.
-- In ``doc/release/X.XX-notes.rst``, under deprecations, add "In
-  `a_function`, the `rescale` argument will default to `False` in N+3."
-
-Note that the 2-release deprecation cycle is not a strict rule and in some
-cases, the developers can agree on a different procedure upon justification
-(like when we can't detect the change, or it involves moving or deleting an
-entire function for example).
+The rest of the story
 
 .. toctree::
    :maxdepth: 2
@@ -327,6 +228,6 @@ entire function for example).
    releasing
    governance/index
 
-NumPy-specific workflow is in `development-workflow`.
+NumPy-specific workflow is in `numpy-development-workflow`.
 
 .. _`mailing list`: https://mail.python.org/mailman/listinfo/numpy-devel
