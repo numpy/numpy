@@ -131,7 +131,5 @@ class _ArrayMemoryError(MemoryError):
         self.dtype = dtype
 
     def __str__(self):
-        return "Attempted to allocate array with shape " + \
-        str(self.shape).rstrip(')').rstrip(',') + ") and data type " + \
-        str(self.dtype) + "."
+        return "Unable to allocate array with shape {} and data type {}".format(self.shape, self.dtype)
 
