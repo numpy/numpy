@@ -5,6 +5,7 @@ import warnings
 import sys
 import decimal
 import types
+from fractions import Fraction
 import pytest
 
 import numpy as np
@@ -2508,6 +2509,21 @@ class TestPercentile(object):
         assert_equal(np.percentile(x, 0), np.nan)
         assert_equal(np.percentile(x, 0, interpolation='nearest'), np.nan)
 
+    def test_fraction(self):
+        x = [Fraction(i, 2) for i in np.arange(8)]
+
+        p = np.percentile(x, Fraction(0))
+        assert_equal(p, Fraction(0))
+        assert_equal(type(p), Fraction)
+
+        p = np.percentile(x, Fraction(100))
+        assert_equal(p, Fraction(7, 2))
+        assert_equal(type(p), Fraction)
+
+        p = np.percentile(x, Fraction(50))
+        assert_equal(p, Fraction(7, 4))
+        assert_equal(type(p), Fraction)
+
     def test_api(self):
         d = np.ones(5)
         np.percentile(d, 5, None, None, False)
@@ -2911,6 +2927,26 @@ class TestQuantile(object):
         assert_equal(np.quantile(x, 0), 0.)
         assert_equal(np.quantile(x, 1), 3.5)
         assert_equal(np.quantile(x, 0.5), 1.75)
+
+    def test_fraction(self):
+        # fractional input, integral quantile
+        x = [Fraction(i, 2) for i in np.arange(8)]
+
+        q = np.quantile(x, 0)
+        assert_equal(q, 0)
+        assert_equal(type(q), Fraction)
+
+        q = np.quantile(x, 1)
+        assert_equal(q, Fraction(7, 2))
+        assert_equal(type(q), Fraction)
+
+        q = np.quantile(x, Fraction(1, 2))
+        assert_equal(q, Fraction(7, 4))
+        assert_equal(type(q), Fraction)
+
+        # repeat with integral input but fractional quantile
+        x = np.arange(8)
+        assert_equal(np.quantile(x, Fraction(1, 2)), Fraction(7, 2))
 
     def test_no_p_overwrite(self):
         # this is worth retesting, because quantile does not make a copy
