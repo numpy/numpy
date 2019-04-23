@@ -231,6 +231,11 @@ These ufuncs now call the ``__floor__``, ``__ceil__``, and ``__trunc__``
 methods when called on object arrays, making them compatible with
 `decimal.Decimal` and `fractions.Fraction` objects.
 
+`quantile` now works on `fraction.Fraction` and `decimal.Decimal` objects
+-------------------------------------------------------------------------
+In general, this handles object arrays more gracefully, and avoids floating-
+point operations if exact arithmetic types are used.
+
 
 Changes
 =======
