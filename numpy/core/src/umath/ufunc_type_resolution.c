@@ -22,6 +22,11 @@
 #include "ufunc_object.h"
 #include "common.h"
 
+#include "mem_overlap.h"
+#if defined(HAVE_CBLAS)
+#include "cblasfuncs.h"
+#endif
+
 static const char *
 npy_casting_to_string(NPY_CASTING casting)
 {
@@ -1109,7 +1114,16 @@ PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
             }
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
+
+            /*
+             * TODO: split function into truediv and floordiv resolvers
+             */
+            if (strcmp(ufunc->name, "floor_divide") == 0) {
+                out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
+            }
+            else {
             out_dtypes[2] = PyArray_DescrFromType(NPY_DOUBLE);
+            }
             if (out_dtypes[2] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
@@ -1298,7 +1312,6 @@ PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);
 }
-
 
 static int
 find_userloop(PyUFuncObject *ufunc,
@@ -2242,4 +2255,53 @@ type_tuple_type_resolver(PyUFuncObject *self,
             "was found for ufunc %s", ufunc_name);
 
     return -1;
+}
+
+NPY_NO_EXPORT int
+PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes)
+{
+    int type_num1, type_num2;
+    int i;
+
+    type_num1 = PyArray_DESCR(operands[0])->type_num;
+    type_num2 = PyArray_DESCR(operands[1])->type_num;
+
+    /* Use the default when datetime and timedelta are not involved */
+    if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                    type_tup, out_dtypes);
+    }
+    if (type_num1 == NPY_TIMEDELTA) {
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
+            Py_INCREF(out_dtypes[2]);
+            out_dtypes[3] = out_dtypes[0];
+            Py_INCREF(out_dtypes[3]);
+        }
+        else {
+            return raise_binary_type_reso_error(ufunc, operands);
+        }
+    }
+    else {
+        return raise_binary_type_reso_error(ufunc, operands);
+    }
+
+    /* Check against the casting rules */
+    if (PyUFunc_ValidateCasting(ufunc, casting, operands, out_dtypes) < 0) {
+        for (i = 0; i < 4; ++i) {
+            Py_DECREF(out_dtypes[i]);
+            out_dtypes[i] = NULL;
+        }
+        return -1;
+    }
+
+    return 0;
 }

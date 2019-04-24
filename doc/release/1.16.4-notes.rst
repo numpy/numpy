@@ -1,0 +1,52 @@
+==========================
+NumPy 1.16.4 Release Notes
+==========================
+
+The NumPy 1.16.4 release fixes bugs reported against the 1.16.3 release, and
+also backports several enhancements from master that seem appropriate for a
+release series that is the last to support Python 2.7. The wheels on PyPI are
+linked with OpenBLAS v0.3.4+,  which should fix the known threading issues
+found in previous OpenBLAS versions.
+
+Downstream developers building this release should use Cython >= 0.29.2 and,
+if using OpenBLAS, OpenBLAS > v0.3.4.
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+
+New deprecations
+================
+
+
+Expired deprecations
+====================
+
+
+Future changes
+==============
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======

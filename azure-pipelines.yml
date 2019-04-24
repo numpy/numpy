@@ -6,9 +6,9 @@ trigger:
       - master
       - maintenance/*
 jobs:
-- job: Linux_Python_36_32bit_full
+- job: Linux_Python_36_32bit_full_with_asserts
   pool:
-    vmIMage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-16.04'
   steps:
   - script: |
            docker pull i386/ubuntu:bionic
@@ -19,6 +19,7 @@ jobs:
            pip3 install setuptools nose cython==0.29.0 pytest pytz pickle5 && \
            apt-get -y install libopenblas-dev gfortran && \
            NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1 \
+           F77=gfortran-5 F90=gfortran-5 CFLAGS=-UNDEBUG \
            python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
   - task: PublishTestResults@2
@@ -34,7 +35,7 @@ jobs:
     # the docs even though i.e., numba uses another in their
     # azure config for mac os -- Microsoft has indicated
     # they will patch this issue
-    vmIMage: macOS-10.13
+    vmImage: macOS-10.13
   steps:
   # the @0 refers to the (major) version of the *task* on Microsoft's
   # end, not the order in the build matrix nor anything to do
@@ -52,7 +53,7 @@ jobs:
   # two C compilers, but with homebrew looks like we're
   # now stuck getting the full gcc toolchain instead of
   # just pulling in gfortran
-  - script: brew install gcc
+  - script: HOMEBREW_NO_AUTO_UPDATE=1 brew install gcc
     displayName: 'make gfortran available on mac os vm'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
@@ -84,7 +85,12 @@ jobs:
       testRunTitle: 'Publish test results for Python $(python.version)'
 - job: Windows
   pool:
-    vmIMage: 'VS2017-Win2016'
+    vmImage: 'VS2017-Win2016'
+  variables:
+      # openblas URLs from numpy-wheels
+      # appveyor / Windows config
+      OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win32-gcc_7_1_0.zip"
+      OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win_amd64-gcc_7_1_0.zip"
   strategy:
     maxParallel: 6
     matrix:
@@ -92,28 +98,40 @@ jobs:
           PYTHON_VERSION: '3.6'
           PYTHON_ARCH: 'x86'
           TEST_MODE: fast
+          OPENBLAS: $(OPENBLAS_32)
+          BITS: 32
         Python37-32bit-fast:
           PYTHON_VERSION: '3.7'
           PYTHON_ARCH: 'x86'
           TEST_MODE: fast
+          OPENBLAS: $(OPENBLAS_32)
+          BITS: 32
         Python27-64bit-fast:
           PYTHON_VERSION: '2.7'
           PYTHON_ARCH: 'x64'
           TEST_MODE: fast
+          OPENBLAS: $(OPENBLAS_64)
+          BITS: 64
         Python35-64bit-full:
           PYTHON_VERSION: '3.5'
           PYTHON_ARCH: 'x64'
           TEST_MODE: full
+          OPENBLAS: $(OPENBLAS_64)
+          BITS: 64
         Python36-64bit-full:
           PYTHON_VERSION: '3.6'
           PYTHON_ARCH: 'x64'
           TEST_MODE: full
           INSTALL_PICKLE5: 1
+          OPENBLAS: $(OPENBLAS_64)
+          BITS: 64
         Python37-64bit-full:
           PYTHON_VERSION: '3.7'
           PYTHON_ARCH: 'x64'
           TEST_MODE: full
           INSTALL_PICKLE5: 1
+          OPENBLAS: $(OPENBLAS_64)
+          BITS: 64
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -122,22 +140,60 @@ jobs:
       architecture: $(PYTHON_ARCH)
    # as noted by numba project, currently need
    # specific VC install for Python 2.7
-   # NOTE: had some issues splitting powershell
-   # command into bits and / or using condition
-   # directive, so squeezing operation to a single
-   # line for now
-  - powershell: if ($env:PYTHON_VERSION -eq 2.7) {$wc = New-Object net.webclient; $wc.Downloadfile("https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi", "VCForPython27.msi"); Start-Process "VCForPython27.msi" /qn -Wait}
+  - powershell: |
+      $wc = New-Object net.webclient
+      $wc.Downloadfile("https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi", "VCForPython27.msi")
+      Start-Process "VCForPython27.msi" /qn -Wait
     displayName: 'Install VC 9.0'
+    condition: eq(variables['PYTHON_VERSION'], '2.7')
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
+  - powershell: |
+      $wc = New-Object net.webclient
+      $wc.Downloadfile("$(OPENBLAS)", "openblas.zip")
+      $tmpdir = New-TemporaryFile | %{ rm $_; mkdir $_ }
+      Expand-Archive "openblas.zip" $tmpdir
+      $pyversion = python -c "from __future__ import print_function; import sys; print(sys.version.split()[0])"
+      Write-Host "Python Version: $pyversion"
+      $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
+      Write-Host "target path: $target"
+      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target
+    displayName: 'Download / Install OpenBLAS'
+  - powershell: |
+      choco install -y mingw --forcex86 --force --version=5.3.0
+    displayName: 'Install 32-bit mingw for 32-bit builds'
+    condition: eq(variables['BITS'], 32)
   - script: python -m pip install cython nose pytz pytest
     displayName: 'Install dependencies; some are optional to avoid test skips'
   # NOTE: for Windows builds it seems much more tractable to use runtests.py
   # vs. manual setup.py and then runtests.py for testing only
   - script: if [%INSTALL_PICKLE5%]==[1] python -m pip install pickle5
     displayName: 'Install optional pickle5 backport (only for python3.6 and 3.7)'
-  - script: python runtests.py --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
-    displayName: 'Build NumPy & Run Full NumPy Test Suite'
+  - powershell: |
+      If ($(BITS) -eq 32) {
+         $env:NPY_DISTUTILS_APPEND_FLAGS = 1
+         $env:CFLAGS = "-m32"
+         $env:LDFLAGS = "-m32"
+         $env:PATH = "C:\\tools\\mingw32\\bin;" + $env:PATH
+         refreshenv
+      }
+      pip wheel -v -v -v --wheel-dir=dist .
+
+      ls dist -r | Foreach-Object {
+          pip install $_.FullName
+      }
+    displayName: 'Build NumPy'
+  - bash: |
+      pushd . && cd .. && target=$(python -c "import numpy, os; print(os.path.abspath(os.path.join(os.path.dirname(numpy.__file__), '.libs')))") && popd
+      pip download -d destination --only-binary --no-deps numpy==1.14
+      cd destination && unzip numpy*.whl && cp numpy/.libs/*.dll $target
+      ls $target
+    displayName: 'Add extraneous & older DLL to numpy/.libs to probe DLL handling robustness'
+    condition: eq(variables['PYTHON_VERSION'], '3.6')
+  - script: pushd . && cd .. && python -c "from ctypes import windll; windll.kernel32.SetDefaultDllDirectories(0x00000800); import numpy" && popd
+    displayName: 'For gh-12667; Windows DLL resolution'
+  - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
+    displayName: 'Run NumPy Test Suite'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'

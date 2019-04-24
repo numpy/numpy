@@ -3,9 +3,33 @@ from __future__ import division, absolute_import, print_function
 from .info import __doc__
 from numpy.version import version as __version__
 
+import os
+
+# on Windows NumPy loads an important OpenBLAS-related DLL
+# and the code below aims to alleviate issues with DLL
+# path resolution portability with an absolute path DLL load
+if os.name == 'nt':
+    from ctypes import WinDLL
+    import glob
+    # convention for storing / loading the DLL from
+    # numpy/.libs/, if present
+    libs_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             '..', '.libs'))
+    DLL_filenames = []
+    if os.path.isdir(libs_path):
+        for filename in glob.glob(os.path.join(libs_path, '*openblas*dll')):
+            # NOTE: would it change behavior to load ALL
+            # DLLs at this path vs. the name restriction?
+            WinDLL(os.path.abspath(filename))
+            DLL_filenames.append(filename)
+    if len(DLL_filenames) > 1:
+        import warnings
+        warnings.warn("loaded more than 1 DLL from .libs:\n%s" %
+                      "\n".join(DLL_filenames),
+                      stacklevel=1)
+
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
-import os
 env_added = []
 for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
     if envkey not in os.environ:
@@ -53,7 +77,19 @@ del env_added
 del os
 
 from . import umath
-from . import _internal  # for freeze programs
+
+# Check that multiarray,umath are pure python modules wrapping
+# _multiarray_umath and not either of the old c-extension modules
+if not (hasattr(multiarray, '_multiarray_umath') and
+        hasattr(umath, '_multiarray_umath')):
+    import sys
+    path = sys.modules['numpy'].__path__
+    msg = ("Something is wrong with the numpy installation. "
+        "While importing we detected an older version of "
+        "numpy in {}. One method of fixing this is to repeatedly uninstall "
+        "numpy until none is found, then reinstall this version.")
+    raise ImportError(msg.format(path))
+
 from . import numerictypes as nt
 multiarray.set_typeDict(nt.sctypeDict)
 from . import numeric
@@ -83,6 +119,11 @@ from .numeric import absolute as abs
 # do this after everything else, to minimize the chance of this misleadingly
 # appearing in an import-time traceback
 from . import _add_newdocs
+# add these for module-freeze analysis (like PyInstaller)
+from . import _dtype_ctypes
+from . import _internal
+from . import _dtype
+from . import _methods
 
 __all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__

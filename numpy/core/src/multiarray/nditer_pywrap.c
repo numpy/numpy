@@ -2355,6 +2355,8 @@ npyiter_close(NewNpyArrayIterObject *self)
     }
     ret = NpyIter_Deallocate(iter);
     self->iter = NULL;
+    Py_XDECREF(self->nested_child);
+    self->nested_child = NULL;
     if (ret < 0) {
         return NULL;
     }

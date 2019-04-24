@@ -34,6 +34,14 @@ datatype is implemented as ``struct { float real, imag; }``. This has "true"
 alignment of 4 and "uint" alignment of 8 (equal to the true alignment of
 ``uint64``).
 
+Some cases where uint and true alignment are different (default gcc linux):
+   arch     type        true-aln    uint-aln
+   ----     ----        --------    --------
+   x86_64   complex64          4           8
+   x86_64   float128          16           8
+   x86      float96            4           -
+
+
 Variables in Numpy which control and describe alignment
 -------------------------------------------------------
 
@@ -82,17 +90,15 @@ Here is how the variables above are used:
     appropriate N. Otherwise numpy copies by doing ``memcpy(dst, src, N)``.
  5. Nditer code: Since this often calls the strided copy code, it must
     check for "uint alignment".
- 6. Cast code: if the array is "uint aligned" this will essentially do
-    ``*dst = CASTFUNC(*src)``. If not, it does
+ 6. Cast code: This checks for "true" alignment, as it does
+    ``*dst = CASTFUNC(*src)`` if aligned. Otherwise, it does
     ``memmove(srcval, src); dstval = CASTFUNC(srcval); memmove(dst, dstval)``
     where dstval/srcval are aligned.
 
-Note that in principle, only "true alignment" is required for casting code.
-However, because the casting code and copy code are deeply intertwined they
-both use "uint" alignment. This should be safe assuming uint alignment is
-always larger than true alignment, though it can cause unnecessary buffering if
-an array is "true aligned" but not "uint aligned". If there is ever a big
-rewrite of this code it would be good to allow them to use different
-alignments.
+Note that the strided-copy and strided-cast code are deeply intertwined and so
+any arrays being processed by them must be both uint and true aligned, even
+though the copy-code only needs uint alignment and the cast code only true
+alignment.  If there is ever a big rewrite of this code it would be good to
+allow them to use different alignments.
 
 

@@ -1,7 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import warnings
-
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_allclose, suppress_warnings
@@ -84,3 +82,8 @@ class TestRegression(object):
         assert_(a.mask.shape == (2,))
         assert_(b.shape == (2, 2))
         assert_(b.mask.shape == (2, 2))
+
+    def test_empty_list_on_structured(self):
+        # See gh-12464. Indexing with empty list should give empty result.
+        ma = np.ma.MaskedArray([(1, 1.), (2, 2.), (3, 3.)], dtype='i4,f4')
+        assert_array_equal(ma[[]], ma[:0])

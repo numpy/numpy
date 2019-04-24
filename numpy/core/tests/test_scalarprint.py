@@ -10,7 +10,7 @@ import pytest
 
 from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, suppress_warnings, dec
+from numpy.testing import assert_, assert_equal, suppress_warnings
 
 class TestRealScalars(object):
     def test_str(self):

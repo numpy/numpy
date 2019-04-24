@@ -1064,7 +1064,8 @@ array_boolean_subscript(PyArrayObject *self,
 
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
-        if (PyArray_GetDTypeTransferFunction(IsUintAligned(self),
+        if (PyArray_GetDTypeTransferFunction(
+                        IsUintAligned(self) && IsAligned(self),
                         fixed_strides[0], itemsize,
                         dtype, dtype,
                         0,
@@ -1253,7 +1254,8 @@ array_assign_boolean_subscript(PyArrayObject *self,
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
         if (PyArray_GetDTypeTransferFunction(
-                        IsUintAligned(self) && IsUintAligned(v),
+                        IsUintAligned(self) && IsAligned(self) &&
+                        IsUintAligned(v) && IsAligned(v),
                         v_stride, fixed_strides[0],
                         PyArray_DESCR(v), PyArray_DESCR(self),
                         0,
@@ -1389,54 +1391,14 @@ array_subscript_asarray(PyArrayObject *self, PyObject *op)
 }
 
 /*
- * Helper function for _get_field_view which turns a multifield
- * view into a "packed" copy, as done in numpy 1.15 and before.
- * In numpy 1.16 this function should be removed.
- */
-NPY_NO_EXPORT int
-_multifield_view_to_copy(PyArrayObject **view) {
-    static PyObject *copyfunc = NULL;
-    PyObject *viewcopy;
-
-    /* return a repacked copy of the view */
-    npy_cache_import("numpy.lib.recfunctions", "repack_fields", &copyfunc);
-    if (copyfunc == NULL) {
-        goto view_fail;
-    }
-
-    PyArray_CLEARFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
-    viewcopy = PyObject_CallFunction(copyfunc, "O", *view);
-    if (viewcopy == NULL) {
-        goto view_fail;
-    }
-    Py_DECREF(*view);
-    *view = (PyArrayObject*)viewcopy;
-
-    /* warn when writing to the copy */
-    PyArray_ENABLEFLAGS(*view, NPY_ARRAY_WARN_ON_WRITE);
-    return 0;
-
-view_fail:
-    Py_DECREF(*view);
-    *view = NULL;
-    return 0;
-}
-
-/*
  * Attempts to subscript an array using a field name or list of field names.
  *
  * If an error occurred, return 0 and set view to NULL. If the subscript is not
  * a string or list of strings, return -1 and set view to NULL. Otherwise
  * return 0 and set view to point to a new view into arr for the given fields.
- *
- * In numpy 1.15 and before, in the case of a list of field names the returned
- * view will actually be a copy by default, with fields packed together.
- * The `force_view` argument causes a view to be returned. This argument can be
- * removed in 1.16 when we plan to return a view always.
  */
 NPY_NO_EXPORT int
-_get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view,
-                int force_view)
+_get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
 {
     *view = NULL;
 
@@ -1597,11 +1559,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view,
             return 0;
         }
 
-        /* the code below can be replaced by "return 0" in 1.16 */
-        if (force_view) {
-            return 0;
-        }
-        return _multifield_view_to_copy(view);
+        return 0;
     }
     return -1;
 }
@@ -1629,7 +1587,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     /* return fields if op is a string index */
     if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
         PyArrayObject *view;
-        int ret = _get_field_view(self, op, &view, 0);
+        int ret = _get_field_view(self, op, &view);
         if (ret == 0){
             if (view == NULL) {
                 return NULL;
@@ -1911,7 +1869,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     /* field access */
     if (PyDataType_HASFIELDS(PyArray_DESCR(self))){
         PyArrayObject *view;
-        int ret = _get_field_view(self, ind, &view, 1);
+        int ret = _get_field_view(self, ind, &view);
         if (ret == 0){
             if (view == NULL) {
                 return -1;

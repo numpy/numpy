@@ -1104,8 +1104,7 @@ static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_add,                     /*nb_add*/
     (binaryfunc)gentype_subtract,                /*nb_subtract*/
     (binaryfunc)gentype_multiply,                /*nb_multiply*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     (binaryfunc)gentype_divide,                  /*nb_divide*/
 #endif
     (binaryfunc)gentype_remainder,               /*nb_remainder*/
@@ -1121,8 +1120,7 @@ static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_and,                     /*nb_and*/
     (binaryfunc)gentype_xor,                     /*nb_xor*/
     (binaryfunc)gentype_or,                      /*nb_or*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     0,                                           /*nb_coerce*/
 #endif
     (unaryfunc)gentype_int,                      /*nb_int*/
@@ -1132,16 +1130,14 @@ static PyNumberMethods gentype_as_number = {
     (unaryfunc)gentype_long,                     /*nb_long*/
 #endif
     (unaryfunc)gentype_float,                    /*nb_float*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     (unaryfunc)gentype_oct,                      /*nb_oct*/
     (unaryfunc)gentype_hex,                      /*nb_hex*/
 #endif
     0,                                           /*inplace_add*/
     0,                                           /*inplace_subtract*/
     0,                                           /*inplace_multiply*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     0,                                           /*inplace_divide*/
 #endif
     0,                                           /*inplace_remainder*/
@@ -1156,6 +1152,10 @@ static PyNumberMethods gentype_as_number = {
     0,                                           /*nb_inplace_floor_divide*/
     0,                                           /*nb_inplace_true_divide*/
     (unaryfunc)NULL,                             /*nb_index*/
+#if PY_VERSION_HEX >= 0x03050000
+    0,                                           /*np_matmul*/
+    0,                                           /*np_inplace_matmul*/
+#endif
 };
 
 
@@ -2599,6 +2599,8 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
+    _dealloc_cached_buffer_info((PyObject *)v);
+
     if (v->flags & NPY_ARRAY_OWNDATA) {
         npy_free_cache(v->obval, Py_SIZE(v));
     }

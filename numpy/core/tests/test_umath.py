@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
 import platform
 import warnings
 import fnmatch
@@ -14,7 +13,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_warns
+    _gen_alignment_data
     )
 
 
@@ -274,6 +273,12 @@ class TestDivision(object):
         y = np.floor_divide(x**2, x)
         assert_equal(y, [1.e+110, 0], err_msg=msg)
 
+    def test_floor_division_signed_zero(self):
+        # Check that the sign bit is correctly set when dividing positive and
+        # negative zero by one.
+        x = np.zeros(10)
+        assert_equal(np.signbit(x//1), 0)
+        assert_equal(np.signbit((-x)//1), 1)
 
 def floor_divide_and_remainder(x, y):
     return (np.floor_divide(x, y), np.remainder(x, y))
@@ -1298,6 +1303,7 @@ class TestSign(object):
         # In reference to github issue #6229
         def test_nan():
             foo = np.array([np.nan])
+            # FIXME: a not used
             a = np.sign(foo.astype(object))
 
         assert_raises(TypeError, test_nan)

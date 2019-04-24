@@ -1,0 +1,402 @@
+/* -*- c -*- */
+
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "Python.h"
+
+#include "npy_config.h"
+#include "numpy/npy_common.h"
+#include "numpy/arrayobject.h"
+#include "numpy/ufuncobject.h"
+#include "numpy/npy_math.h"
+#include "numpy/halffloat.h"
+#include "lowlevel_strided_loops.h"
+
+#include "npy_pycompat.h"
+
+#include "npy_cblas.h"
+#include "arraytypes.h" /* For TYPE_dot functions */
+
+#include <assert.h>
+
+/*
+ *****************************************************************************
+ **                            BASICS                                       **
+ *****************************************************************************
+ */
+
+/*
+ * -1 to be conservative, in case blas internally uses a for loop with an
+ * inclusive upper bound
+ */
+#define BLAS_MAXSIZE (NPY_MAX_INT - 1)
+
+/*
+ * Determine if a 2d matrix can be used by BLAS
+ * 1. Strides must not alias or overlap
+ * 2. The faster (second) axis must be contiguous
+ * 3. The slower (first) axis stride, in unit steps, must be larger than
+ *    the faster axis dimension
+ */
+static NPY_INLINE npy_bool
+is_blasable2d(npy_intp byte_stride1, npy_intp byte_stride2,
+              npy_intp d1, npy_intp d2,  npy_intp itemsize)
+{
+    npy_intp unit_stride1 = byte_stride1 / itemsize;
+    if (byte_stride2 != itemsize) {
+        return NPY_FALSE;
+    }
+    if ((byte_stride1 % itemsize ==0) &&
+        (unit_stride1 >= d2) &&
+        (unit_stride1 <= BLAS_MAXSIZE))
+    {
+        return NPY_TRUE;
+    }
+    return NPY_FALSE;
+}
+
+#if defined(HAVE_CBLAS)
+static const npy_cdouble oneD = {1.0, 0.0}, zeroD = {0.0, 0.0};
+static const npy_cfloat  oneF = {1.0, 0.0}, zeroF = {0.0, 0.0};
+
+/**begin repeat
+ *
+ * #name = FLOAT, DOUBLE, CFLOAT, CDOUBLE#
+ * #ctype = npy_float, npy_double, npy_cfloat, npy_cdouble#
+ * #typ = npy_float, npy_double, npy_cfloat, npy_cdouble#
+ * #prefix = s, d, c, z#
+ * #step1 = 1.F, 1., &oneF, &oneD#
+ * #step0 = 0.F, 0., &zeroF, &zeroD#
+ */
+NPY_NO_EXPORT void
+@name@_gemv(void *ip1, npy_intp is1_m, npy_intp is1_n,
+            void *ip2, npy_intp is2_n, npy_intp NPY_UNUSED(is2_p),
+            void *op, npy_intp op_m, npy_intp NPY_UNUSED(op_p),
+            npy_intp m, npy_intp n, npy_intp NPY_UNUSED(p))
+{
+    /*
+     * Vector matrix multiplication -- Level 2 BLAS
+     * arguments
+     * ip1: contiguous data, m*n shape
+     * ip2: data in c order, n*1 shape
+     * op:  data in c order, m shape
+     */
+    enum CBLAS_ORDER order;
+    int M, N, lda;
+
+    assert(m <= BLAS_MAXSIZE && n <= BLAS_MAXSIZE);
+    assert (is_blasable2d(is2_n, sizeof(@typ@), n, 1, sizeof(@typ@)));
+    M = (int)m;
+    N = (int)n;
+
+    if (is_blasable2d(is1_m, is1_n, m, n, sizeof(@typ@))) {
+        order = CblasColMajor;
+        lda = (int)(is1_m / sizeof(@typ@));
+    }
+    else {
+        /* If not ColMajor, caller should have ensured we are RowMajor */
+        /* will not assert in release mode */
+        order = CblasRowMajor;
+        assert(is_blasable2d(is1_n, is1_m, n, m, sizeof(@typ@)));
+        lda = (int)(is1_n / sizeof(@typ@));
+    }
+    cblas_@prefix@gemv(order, CblasTrans, N, M, @step1@, ip1, lda, ip2,
+                                     is2_n / sizeof(@typ@), @step0@, op, op_m / sizeof(@typ@));
+}
+
+NPY_NO_EXPORT void
+@name@_matmul_matrixmatrix(void *ip1, npy_intp is1_m, npy_intp is1_n,
+                           void *ip2, npy_intp is2_n, npy_intp is2_p,
+                           void *op, npy_intp os_m, npy_intp os_p,
+                           npy_intp m, npy_intp n, npy_intp p)
+{
+    /*
+     * matrix matrix multiplication -- Level 3 BLAS
+     */
+    enum CBLAS_ORDER order = CblasRowMajor;
+    enum CBLAS_TRANSPOSE trans1, trans2;
+    int M, N, P, lda, ldb, ldc;
+    assert(m <= BLAS_MAXSIZE && n <= BLAS_MAXSIZE && p <= BLAS_MAXSIZE);
+    M = (int)m;
+    N = (int)n;
+    P = (int)p;
+
+    assert(is_blasable2d(os_m, os_p, m, p, sizeof(@typ@)));
+    ldc = (int)(os_m / sizeof(@typ@));
+
+    if (is_blasable2d(is1_m, is1_n, m, n, sizeof(@typ@))) {
+        trans1 = CblasNoTrans;
+        lda = (int)(is1_m / sizeof(@typ@));
+    }
+    else {
+        /* If not ColMajor, caller should have ensured we are RowMajor */
+        /* will not assert in release mode */
+        assert(is_blasable2d(is1_n, is1_m, n, m, sizeof(@typ@)));
+        trans1 = CblasTrans;
+        lda = (int)(is1_n / sizeof(@typ@));
+    }
+
+    if (is_blasable2d(is2_n, is2_p, n, p, sizeof(@typ@))) {
+        trans2 = CblasNoTrans;
+        ldb = (int)(is2_n / sizeof(@typ@));
+    }
+    else {
+        /* If not ColMajor, caller should have ensured we are RowMajor */
+        /* will not assert in release mode */
+        assert(is_blasable2d(is2_p, is2_n, p, n, sizeof(@typ@)));
+        trans2 = CblasTrans;
+        ldb = (int)(is2_p / sizeof(@typ@));
+    }
+    /*
+     * Use syrk if we have a case of a matrix times its transpose.
+     * Otherwise, use gemm for all other cases.
+     */
+    if (
+        (ip1 == ip2) &&
+        (m == p) &&
+        (is1_m == is2_p) &&
+        (is1_n == is2_n) &&
+        (trans1 != trans2)
+    ) {
+        npy_intp i,j;
+        if (trans1 == CblasNoTrans) {
+            cblas_@prefix@syrk(order, CblasUpper, trans1, P, N, @step1@,
+                               ip1, lda, @step0@, op, ldc);
+        }
+        else {
+            cblas_@prefix@syrk(order, CblasUpper, trans1, P, N, @step1@,
+                               ip1, ldb, @step0@, op, ldc);
+        }
+        /* Copy the triangle */
+        for (i = 0; i < P; i++) {
+            for (j = i + 1; j < P; j++) {
+                ((@typ@*)op)[j * ldc + i] = ((@typ@*)op)[i * ldc + j];
+            }
+        }
+
+    }
+    else {
+        cblas_@prefix@gemm(order, trans1, trans2, M, P, N, @step1@, ip1, lda,
+                           ip2, ldb, @step0@, op, ldc);
+    }
+}
+
+/**end repeat**/
+#endif
+
+/*
+ * matmul loops
+ * signature is (m?,n),(n,p?)->(m?,p?)
+ */
+
+/**begin repeat
+ *  #TYPE = LONGDOUBLE,
+ *          FLOAT, DOUBLE, HALF,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          BOOL#
+ *  #typ = npy_longdouble,
+ *         npy_float,npy_double,npy_half,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_bool#
+ * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*11#
+ * #IS_HALF = 0, 0, 0, 1, 0*14#
+ */
+
+NPY_NO_EXPORT void
+@TYPE@_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
+                           void *_ip2, npy_intp is2_n, npy_intp is2_p,
+                           void *_op, npy_intp os_m, npy_intp os_p,
+                           npy_intp dm, npy_intp dn, npy_intp dp)
+                           
+{
+    npy_intp m, n, p;
+    npy_intp ib1_n, ib2_n, ib2_p, ob_p;
+    char *ip1 = (char *)_ip1, *ip2 = (char *)_ip2, *op = (char *)_op;
+
+    ib1_n = is1_n * dn;
+    ib2_n = is2_n * dn;
+    ib2_p = is2_p * dp;
+    ob_p  = os_p * dp;
+
+    for (m = 0; m < dm; m++) {
+        for (p = 0; p < dp; p++) {
+#if @IS_COMPLEX@ == 1
+            (*(@typ@ *)op).real = 0;
+            (*(@typ@ *)op).imag = 0;
+#elif @IS_HALF@
+            float sum = 0;
+#else
+            *(@typ@ *)op = 0;
+#endif
+            for (n = 0; n < dn; n++) {
+                @typ@ val1 = (*(@typ@ *)ip1);
+                @typ@ val2 = (*(@typ@ *)ip2);
+#if @IS_HALF@
+                sum += npy_half_to_float(val1) * npy_half_to_float(val2);
+#elif @IS_COMPLEX@ == 1
+                (*(@typ@ *)op).real += (val1.real * val2.real) -
+                                       (val1.imag * val2.imag);
+                (*(@typ@ *)op).imag += (val1.real * val2.imag) +
+                                       (val1.imag * val2.real);
+#else
+                *(@typ@ *)op += val1 * val2;
+#endif
+                ip2 += is2_n;
+                ip1 += is1_n;
+            }
+#if @IS_HALF@
+            *(@typ@ *)op = npy_float_to_half(sum);
+#endif
+            ip1 -= ib1_n;
+            ip2 -= ib2_n;
+            op  +=  os_p;
+            ip2 += is2_p;
+        }
+        op -= ob_p;
+        ip2 -= ib2_p;
+        ip1 += is1_m;
+        op  +=  os_m;
+    }
+}
+
+/**end repeat**/
+
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          BOOL#
+ *  #typ = npy_float,npy_double,npy_longdouble, npy_half,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_bool#
+ * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*11#
+ * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*12#
+ */
+
+
+NPY_NO_EXPORT void
+@TYPE@_matmul(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    npy_intp dOuter = *dimensions++;
+    npy_intp iOuter;
+    npy_intp s0 = *steps++;
+    npy_intp s1 = *steps++;
+    npy_intp s2 = *steps++;
+    npy_intp dm = dimensions[0];
+    npy_intp dn = dimensions[1];
+    npy_intp dp = dimensions[2];
+    npy_intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
+         os_m=steps[4], os_p=steps[5];
+#if @USEBLAS@ && defined(HAVE_CBLAS)
+    npy_intp sz = sizeof(@typ@);
+    npy_bool special_case = (dm == 1 || dn == 1 || dp == 1);
+    npy_bool any_zero_dim = (dm == 0 || dn == 0 || dp == 0);
+    npy_bool scalar_out = (dm == 1 && dp == 1);
+    npy_bool scalar_vec = (dn == 1 && (dp == 1 || dm == 1));
+    npy_bool too_big_for_blas = (dm > BLAS_MAXSIZE || dn > BLAS_MAXSIZE ||
+                                 dp > BLAS_MAXSIZE);
+    npy_bool i1_c_blasable = is_blasable2d(is1_m, is1_n, dm, dn, sz);
+    npy_bool i2_c_blasable = is_blasable2d(is2_n, is2_p, dn, dp, sz);
+    npy_bool i1_f_blasable = is_blasable2d(is1_n, is1_m, dn, dm, sz);
+    npy_bool i2_f_blasable = is_blasable2d(is2_p, is2_n, dp, dn, sz);
+    npy_bool i1blasable = i1_c_blasable || i1_f_blasable;
+    npy_bool i2blasable = i2_c_blasable || i2_f_blasable;
+    npy_bool o_c_blasable = is_blasable2d(os_m, os_p, dm, dp, sz);
+    npy_bool o_f_blasable = is_blasable2d(os_p, os_m, dp, dm, sz);
+    npy_bool vector_matrix = ((dm == 1) && i2blasable &&
+                              is_blasable2d(is1_n, sz, dn, 1, sz));
+    npy_bool matrix_vector = ((dp == 1)  && i1blasable &&
+                              is_blasable2d(is2_n, sz, dn, 1, sz));
+#endif
+
+    for (iOuter = 0; iOuter < dOuter; iOuter++,
+                         args[0] += s0, args[1] += s1, args[2] += s2) {
+        void *ip1=args[0], *ip2=args[1], *op=args[2];
+#if @USEBLAS@ && defined(HAVE_CBLAS)
+        /*
+         * TODO: refactor this out to a inner_loop_selector, in
+         * PyUFunc_MatmulLoopSelector. But that call does not have access to
+         * n, m, p and strides.
+         */
+        if (too_big_for_blas || any_zero_dim) {
+            @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                                       ip2, is2_n, is2_p,
+                                       op, os_m, os_p, dm, dn, dp);
+        }
+        else if (special_case) {
+            /* Special case variants that have a 1 in the core dimensions */
+            if (scalar_out) {
+                /* row @ column, 1,1 output */
+                @TYPE@_dot(ip1, is1_n, ip2, is2_n, op, dn, NULL);
+            } else if (scalar_vec){
+                /*
+                 * 1,1d @ vector or vector @ 1,1d
+                 * could use cblas_Xaxy, but that requires 0ing output
+                 * and would not be faster (XXX prove it)
+                 */
+                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                                           ip2, is2_n, is2_p,
+                                           op, os_m, os_p, dm, dn, dp);
+            } else if (vector_matrix) {
+                /* vector @ matrix, switch ip1, ip2, p and m */
+                @TYPE@_gemv(ip2, is2_p, is2_n, ip1, is1_n, is1_m,
+                            op, os_p, os_m, dp, dn, dm);
+            } else if  (matrix_vector) {
+                /* matrix @ vector */
+                @TYPE@_gemv(ip1, is1_m, is1_n, ip2, is2_n, is2_p,
+
+                            op, os_m, os_p, dm, dn, dp);
+            } else {
+                /* column @ row, 2d output, no blas needed or non-blas-able input */
+                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                                           ip2, is2_n, is2_p,
+                                           op, os_m, os_p, dm, dn, dp);
+            }
+        } else {
+            /* matrix @ matrix */
+            if (i1blasable && i2blasable && o_c_blasable) {
+                @TYPE@_matmul_matrixmatrix(ip1, is1_m, is1_n,
+                                           ip2, is2_n, is2_p,
+                                           op, os_m, os_p,
+                                           dm, dn, dp);
+            } else if (i1blasable && i2blasable && o_f_blasable) {
+                /*
+                 * Use transpose equivalence:
+                 * matmul(a, b, o) == matmul(b.T, a.T, o.T)
+                 */
+                @TYPE@_matmul_matrixmatrix(ip2, is2_p, is2_n,
+                                           ip1, is1_n, is1_m,
+                                           op, os_p, os_m,
+                                           dp, dn, dm);
+            } else {
+                /*
+                 * If parameters are castable to int and we copy the
+                 * non-blasable (or non-ccontiguous output)
+                 * we could still use BLAS, see gh-12365.
+                 */
+                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                                           ip2, is2_n, is2_p,
+                                           op, os_m, os_p, dm, dn, dp);
+            }
+        }
+#else
+        @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                                   ip2, is2_n, is2_p,
+                                   op, os_m, os_p, dm, dn, dp);
+
+#endif
+    }
+}
+
+/**end repeat**/
+
+

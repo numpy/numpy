@@ -45,10 +45,13 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
 
     NPY_BEGIN_THREADS_DEF;
 
-    /* Check alignment */
+    /* Check both uint and true alignment */
     aligned = raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
                                    npy_uint_alignment(dst_dtype->elsize)) &&
-              npy_is_aligned(src_data, npy_uint_alignment(src_dtype->elsize));
+              raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
+                                   dst_dtype->alignment) &&
+              npy_is_aligned(src_data, npy_uint_alignment(src_dtype->elsize) &&
+              npy_is_aligned(src_data, src_dtype->alignment));
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareOneRawArrayIter(
@@ -116,10 +119,13 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
 
     NPY_BEGIN_THREADS_DEF;
 
-    /* Check alignment */
+    /* Check both uint and true alignment */
     aligned = raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
                                    npy_uint_alignment(dst_dtype->elsize)) &&
-              npy_is_aligned(src_data, npy_uint_alignment(src_dtype->elsize));
+              raw_array_is_aligned(ndim, shape, dst_data, dst_strides,
+                                   dst_dtype->alignment) &&
+              npy_is_aligned(src_data, npy_uint_alignment(src_dtype->elsize) &&
+              npy_is_aligned(src_data, src_dtype->alignment));
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareTwoRawArrayIter(
@@ -220,7 +226,8 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
      * we also skip this if 'dst' has an object dtype.
      */
     if ((!PyArray_EquivTypes(PyArray_DESCR(dst), src_dtype) ||
-            !npy_is_aligned(src_data, npy_uint_alignment(src_dtype->elsize))) &&
+            !(npy_is_aligned(src_data, npy_uint_alignment(src_dtype->elsize)) &&
+              npy_is_aligned(src_data, src_dtype->alignment))) &&
                     PyArray_SIZE(dst) > 1 &&
                     !PyDataType_REFCHK(PyArray_DESCR(dst))) {
         char *tmp_src_data;

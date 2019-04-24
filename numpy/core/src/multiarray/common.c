@@ -164,7 +164,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
-                    return -1;
+                    goto fail;
                 }
 #if defined(NPY_PY3K)
     #if PY_VERSION_HEX >= 0x03030000
@@ -182,7 +182,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #else
                 if ((temp = PyObject_Unicode(obj)) == NULL) {
 #endif
-                    return -1;
+                    goto fail;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
 #ifndef Py_UNICODE_WIDE
@@ -216,7 +216,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
-                    return -1;
+                    goto fail;
                 }
 #if defined(NPY_PY3K)
     #if PY_VERSION_HEX >= 0x03030000
@@ -234,7 +234,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #else
                 if ((temp = PyObject_Unicode(obj)) == NULL) {
 #endif
-                    return -1;
+                    goto fail;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
 #ifndef Py_UNICODE_WIDE
@@ -343,7 +343,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             typestr = PyDict_GetItemString(ip, "typestr");
 #if defined(NPY_PY3K)
             /* Allow unicode type strings */
-            if (PyUnicode_Check(typestr)) {
+            if (typestr && PyUnicode_Check(typestr)) {
                 tmp = PyUnicode_AsASCIIString(typestr);
                 typestr = tmp;
             }
@@ -440,12 +440,18 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         return 0;
     }
 
-    /* Recursive case, first check the sequence contains only one type */
+    /*
+     * The C-API recommends calling PySequence_Fast before any of the other
+     * PySequence_Fast* functions. This is required for PyPy
+     */
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
     if (seq == NULL) {
         goto fail;
     }
+
+    /* Recursive case, first check the sequence contains only one type */
     size = PySequence_Fast_GET_SIZE(seq);
+    /* objects is borrowed, do not release seq */
     objects = PySequence_Fast_ITEMS(seq);
     common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
     for (i = 1; i < size; ++i) {
@@ -505,7 +511,7 @@ promote_types:
         PyArray_Descr *res_dtype = PyArray_PromoteTypes(dtype, *out_dtype);
         Py_DECREF(dtype);
         if (res_dtype == NULL) {
-            return -1;
+            goto fail;
         }
         if (!string_type &&
                 res_dtype->type_num == NPY_UNICODE &&
@@ -609,12 +615,6 @@ _IsWriteable(PyArrayObject *ap)
      * If it is a writeable array, then return TRUE
      * If we can find an array object
      * or a writeable buffer object as the final base object
-     * or a string object (for pickling support memory savings).
-     * - this last could be removed if a proper pickleable
-     * buffer was added to Python.
-     *
-     * MW: I think it would better to disallow switching from READONLY
-     *     to WRITEABLE like this...
      */
 
     while(PyArray_Check(base)) {
@@ -622,15 +622,6 @@ _IsWriteable(PyArrayObject *ap)
             return (npy_bool) (PyArray_ISWRITEABLE((PyArrayObject *)base));
         }
         base = PyArray_BASE((PyArrayObject *)base);
-    }
-
-    /*
-     * here so pickle support works seamlessly
-     * and unpickled array can be set and reset writeable
-     * -- could be abused --
-     */
-    if (PyString_Check(base)) {
-        return NPY_TRUE;
     }
 #if defined(NPY_PY3K)
     if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {

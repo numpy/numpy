@@ -169,7 +169,7 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
     Examples
     --------
     >>> isets = [set('abd'), set('ac'), set('bdc')]
-    >>> oset = set('')
+    >>> oset = set()
     >>> idx_sizes = {'a': 1, 'b':2, 'c':3, 'd':4}
     >>> _path__optimal_path(isets, oset, idx_sizes, 5000)
     [(0, 2), (0, 1)]
@@ -340,7 +340,7 @@ def _greedy_path(input_sets, output_set, idx_dict, memory_limit):
     Examples
     --------
     >>> isets = [set('abd'), set('ac'), set('bdc')]
-    >>> oset = set('')
+    >>> oset = set()
     >>> idx_sizes = {'a': 1, 'b':2, 'c':3, 'd':4}
     >>> _path__greedy_path(isets, oset, idx_sizes, 5000)
     [(0, 2), (0, 1)]
@@ -849,7 +849,6 @@ def einsum_path(*operands, **kwargs):
 
     # Python side parsing
     input_subscripts, output_subscript, operands = _parse_einsum_input(operands)
-    subscripts = input_subscripts + '->' + output_subscript
 
     # Build a few useful list and sets
     input_list = input_subscripts.split(',')
@@ -888,9 +887,8 @@ def einsum_path(*operands, **kwargs):
     broadcast_indices = [set(x) for x in broadcast_indices]
 
     # Compute size of each input array plus the output array
-    size_list = []
-    for term in input_list + [output_subscript]:
-        size_list.append(_compute_size_by_dict(term, dimension_dict))
+    size_list = [_compute_size_by_dict(term, dimension_dict)
+                 for term in input_list + [output_subscript]]
     max_size = max(size_list)
 
     if memory_limit is None:
@@ -1375,9 +1373,7 @@ def einsum(*operands, **kwargs):
     # Start contraction loop
     for num, contraction in enumerate(contraction_list):
         inds, idx_rm, einsum_str, remaining, blas = contraction
-        tmp_operands = []
-        for x in inds:
-            tmp_operands.append(operands.pop(x))
+        tmp_operands = [operands.pop(x) for x in inds]
 
         # Do we need to deal with the output?
         handle_out = specified_out and ((num + 1) == len(contraction_list))

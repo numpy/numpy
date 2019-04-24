@@ -11,17 +11,15 @@ from numpy import ma
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose,
-    assert_array_max_ulp, assert_warns, assert_raises_regex, suppress_warnings,
-    HAS_REFCOUNT,
+    assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT,
     )
 import numpy.lib.function_base as nfb
 from numpy.random import rand
 from numpy.lib import (
     add_newdoc_ufunc, angle, average, bartlett, blackman, corrcoef, cov,
     delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
-    histogram, histogramdd, i0, insert, interp, kaiser, meshgrid, msort,
-    piecewise, place, rot90, select, setxor1d, sinc, split, trapz, trim_zeros,
-    unwrap, unique, vectorize
+    i0, insert, interp, kaiser, meshgrid, msort, piecewise, place, rot90,
+    select, setxor1d, sinc, trapz, trim_zeros, unwrap, unique, vectorize
     )
 
 from numpy.compat import long

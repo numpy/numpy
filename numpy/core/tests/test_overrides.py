@@ -7,7 +7,7 @@ import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex)
 from numpy.core.overrides import (
-    get_overloaded_types_and_args, array_function_dispatch,
+    _get_implementing_args, array_function_dispatch,
     verify_matching_signatures, ENABLE_ARRAY_FUNCTION)
 from numpy.core.numeric import pickle
 import pytest
@@ -18,36 +18,40 @@ requires_array_function = pytest.mark.skipif(
     reason="__array_function__ dispatch not enabled.")
 
 
-def _get_overloaded_args(relevant_args):
-    types, args = get_overloaded_types_and_args(relevant_args)
-    return args
-
-
 def _return_not_implemented(self, *args, **kwargs):
     return NotImplemented
 
 
-class TestGetOverloadedTypesAndArgs(object):
+# need to define this at the top level to test pickling
+@array_function_dispatch(lambda array: (array,))
+def dispatched_one_arg(array):
+    """Docstring."""
+    return 'original'
+
+
+@array_function_dispatch(lambda array1, array2: (array1, array2))
+def dispatched_two_arg(array1, array2):
+    """Docstring."""
+    return 'original'
+
+
+@requires_array_function
+class TestGetImplementingArgs(object):
 
     def test_ndarray(self):
         array = np.array(1)
 
-        types, args = get_overloaded_types_and_args([array])
-        assert_equal(set(types), {np.ndarray})
-        assert_equal(list(args), [])
+        args = _get_implementing_args([array])
+        assert_equal(list(args), [array])
 
-        types, args = get_overloaded_types_and_args([array, array])
-        assert_equal(len(types), 1)
-        assert_equal(set(types), {np.ndarray})
-        assert_equal(list(args), [])
+        args = _get_implementing_args([array, array])
+        assert_equal(list(args), [array])
 
-        types, args = get_overloaded_types_and_args([array, 1])
-        assert_equal(set(types), {np.ndarray})
-        assert_equal(list(args), [])
+        args = _get_implementing_args([array, 1])
+        assert_equal(list(args), [array])
 
-        types, args = get_overloaded_types_and_args([1, array])
-        assert_equal(set(types), {np.ndarray})
-        assert_equal(list(args), [])
+        args = _get_implementing_args([1, array])
+        assert_equal(list(args), [array])
 
     def test_ndarray_subclasses(self):
 
@@ -61,18 +65,15 @@ class TestGetOverloadedTypesAndArgs(object):
         override_sub = np.array(1).view(OverrideSub)
         no_override_sub = np.array(1).view(NoOverrideSub)
 
-        types, args = get_overloaded_types_and_args([array, override_sub])
-        assert_equal(set(types), {np.ndarray, OverrideSub})
-        assert_equal(list(args), [override_sub])
+        args = _get_implementing_args([array, override_sub])
+        assert_equal(list(args), [override_sub, array])
 
-        types, args = get_overloaded_types_and_args([array, no_override_sub])
-        assert_equal(set(types), {np.ndarray, NoOverrideSub})
-        assert_equal(list(args), [])
+        args = _get_implementing_args([array, no_override_sub])
+        assert_equal(list(args), [no_override_sub, array])
 
-        types, args = get_overloaded_types_and_args(
+        args = _get_implementing_args(
             [override_sub, no_override_sub])
-        assert_equal(set(types), {OverrideSub, NoOverrideSub})
-        assert_equal(list(args), [override_sub])
+        assert_equal(list(args), [override_sub, no_override_sub])
 
     def test_ndarray_and_duck_array(self):
 
@@ -82,13 +83,11 @@ class TestGetOverloadedTypesAndArgs(object):
         array = np.array(1)
         other = Other()
 
-        types, args = get_overloaded_types_and_args([other, array])
-        assert_equal(set(types), {np.ndarray, Other})
-        assert_equal(list(args), [other])
+        args = _get_implementing_args([other, array])
+        assert_equal(list(args), [other, array])
 
-        types, args = get_overloaded_types_and_args([array, other])
-        assert_equal(set(types), {np.ndarray, Other})
-        assert_equal(list(args), [other])
+        args = _get_implementing_args([array, other])
+        assert_equal(list(args), [array, other])
 
     def test_ndarray_subclass_and_duck_array(self):
 
@@ -102,10 +101,10 @@ class TestGetOverloadedTypesAndArgs(object):
         subarray = np.array(1).view(OverrideSub)
         other = Other()
 
-        assert_equal(_get_overloaded_args([array, subarray, other]),
-                     [subarray, other])
-        assert_equal(_get_overloaded_args([array, other, subarray]),
-                     [subarray, other])
+        assert_equal(_get_implementing_args([array, subarray, other]),
+                     [subarray, array, other])
+        assert_equal(_get_implementing_args([array, other, subarray]),
+                     [subarray, array, other])
 
     def test_many_duck_arrays(self):
 
@@ -126,50 +125,85 @@ class TestGetOverloadedTypesAndArgs(object):
         c = C()
         d = D()
 
-        assert_equal(_get_overloaded_args([1]), [])
-        assert_equal(_get_overloaded_args([a]), [a])
-        assert_equal(_get_overloaded_args([a, 1]), [a])
-        assert_equal(_get_overloaded_args([a, a, a]), [a])
-        assert_equal(_get_overloaded_args([a, d, a]), [a, d])
-        assert_equal(_get_overloaded_args([a, b]), [b, a])
-        assert_equal(_get_overloaded_args([b, a]), [b, a])
-        assert_equal(_get_overloaded_args([a, b, c]), [b, c, a])
-        assert_equal(_get_overloaded_args([a, c, b]), [c, b, a])
+        assert_equal(_get_implementing_args([1]), [])
+        assert_equal(_get_implementing_args([a]), [a])
+        assert_equal(_get_implementing_args([a, 1]), [a])
+        assert_equal(_get_implementing_args([a, a, a]), [a])
+        assert_equal(_get_implementing_args([a, d, a]), [a, d])
+        assert_equal(_get_implementing_args([a, b]), [b, a])
+        assert_equal(_get_implementing_args([b, a]), [b, a])
+        assert_equal(_get_implementing_args([a, b, c]), [b, c, a])
+        assert_equal(_get_implementing_args([a, c, b]), [c, b, a])
+
+    def test_too_many_duck_arrays(self):
+        namespace = dict(__array_function__=_return_not_implemented)
+        types = [type('A' + str(i), (object,), namespace) for i in range(33)]
+        relevant_args = [t() for t in types]
+
+        actual = _get_implementing_args(relevant_args[:32])
+        assert_equal(actual, relevant_args[:32])
+
+        with assert_raises_regex(TypeError, 'distinct argument types'):
+            _get_implementing_args(relevant_args)
 
 
+@requires_array_function
 class TestNDArrayArrayFunction(object):
 
     def test_method(self):
 
-        class SubOverride(np.ndarray):
+        class Other(object):
             __array_function__ = _return_not_implemented
 
         class NoOverrideSub(np.ndarray):
             pass
 
-        array = np.array(1)
+        class OverrideSub(np.ndarray):
+            __array_function__ = _return_not_implemented
 
-        def func():
-            return 'original'
+        array = np.array([1])
+        other = Other()
+        no_override_sub = array.view(NoOverrideSub)
+        override_sub = array.view(OverrideSub)
 
-        result = array.__array_function__(
-            func=func, types=(np.ndarray,), args=(), kwargs={})
+        result = array.__array_function__(func=dispatched_two_arg,
+                                          types=(np.ndarray,),
+                                          args=(array, 1.), kwargs={})
         assert_equal(result, 'original')
 
-        result = array.__array_function__(
-            func=func, types=(np.ndarray, SubOverride), args=(), kwargs={})
+        result = array.__array_function__(func=dispatched_two_arg,
+                                          types=(np.ndarray, Other),
+                                          args=(array, other), kwargs={})
         assert_(result is NotImplemented)
 
-        result = array.__array_function__(
-            func=func, types=(np.ndarray, NoOverrideSub), args=(), kwargs={})
+        result = array.__array_function__(func=dispatched_two_arg,
+                                          types=(np.ndarray, NoOverrideSub),
+                                          args=(array, no_override_sub),
+                                          kwargs={})
         assert_equal(result, 'original')
 
+        result = array.__array_function__(func=dispatched_two_arg,
+                                          types=(np.ndarray, OverrideSub),
+                                          args=(array, override_sub),
+                                          kwargs={})
+        assert_equal(result, 'original')
 
-# need to define this at the top level to test pickling
-@array_function_dispatch(lambda array: (array,))
-def dispatched_one_arg(array):
-    """Docstring."""
-    return 'original'
+        with assert_raises_regex(TypeError, 'no implementation found'):
+            np.concatenate((array, other))
+
+        expected = np.concatenate((array, array))
+        result = np.concatenate((array, no_override_sub))
+        assert_equal(result, expected.view(NoOverrideSub))
+        result = np.concatenate((array, override_sub))
+        assert_equal(result, expected.view(OverrideSub))
+
+    def test_no_wrapper(self):
+        array = np.array(1)
+        func = dispatched_one_arg.__wrapped__
+        with assert_raises_regex(AttributeError, '__wrapped__'):
+            array.__array_function__(func=func,
+                                     types=(np.ndarray,),
+                                     args=(array,), kwargs={})
 
 
 @requires_array_function

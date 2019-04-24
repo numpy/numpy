@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
 import time
 from datetime import date
 
@@ -246,7 +245,7 @@ class TestStringConverter(object):
         converter = StringConverter(int, default=0,
                                     missing_values="N/A")
         assert_equal(
-            converter.missing_values, set(['', 'N/A']))
+            converter.missing_values, {'', 'N/A'})
 
     def test_int64_dtype(self):
         "Check that int64 integer types can be specified"

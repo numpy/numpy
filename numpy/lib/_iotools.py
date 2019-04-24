@@ -8,7 +8,7 @@ __docformat__ = "restructuredtext en"
 import sys
 import numpy as np
 import numpy.core.numeric as nx
-from numpy.compat import asbytes, asunicode, bytes, asbytes_nested, basestring
+from numpy.compat import asbytes, asunicode, bytes, basestring
 
 if sys.version_info[0] >= 3:
     from builtins import bool, int, float, complex, object, str
@@ -693,7 +693,7 @@ class StringConverter(object):
                     self.func = lambda x: int(float(x))
         # Store the list of strings corresponding to missing values.
         if missing_values is None:
-            self.missing_values = set([''])
+            self.missing_values = {''}
         else:
             if isinstance(missing_values, basestring):
                 missing_values = missing_values.split(",")

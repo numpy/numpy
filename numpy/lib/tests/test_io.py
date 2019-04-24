@@ -6,7 +6,6 @@ import os
 import threading
 import time
 import warnings
-import gc
 import io
 import re
 import pytest
@@ -18,7 +17,7 @@ import locale
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, unicode, Path
+from numpy.compat import asbytes, bytes, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
@@ -88,7 +87,7 @@ class RoundtripTest(object):
 
         """
         save_kwds = kwargs.get('save_kwds', {})
-        load_kwds = kwargs.get('load_kwds', {})
+        load_kwds = kwargs.get('load_kwds', {"allow_pickle": True})
         file_on_disk = kwargs.get('file_on_disk', False)
 
         if file_on_disk:
@@ -348,12 +347,32 @@ class TestSaveTxt(object):
         assert_raises(ValueError, np.savetxt, c, np.array(1))
         assert_raises(ValueError, np.savetxt, c, np.array([[[1], [2]]]))
 
-    def test_record(self):
+    def test_structured(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         c = BytesIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
+
+    def test_structured_padded(self):
+        # gh-13297
+        a = np.array([(1, 2, 3),(4, 5, 6)], dtype=[
+            ('foo', 'i4'), ('bar', 'i4'), ('baz', 'i4')
+        ])
+        c = BytesIO()
+        np.savetxt(c, a[['foo', 'baz']], fmt='%d')
+        c.seek(0)
+        assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
+
+    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
+    def test_multifield_view(self):
+        a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
+        v = a[['x', 'z']]
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            np.save(path, v)
+            data = np.load(path)
+            assert_array_equal(data, v)
 
     def test_delimiter(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -2049,7 +2068,6 @@ M   33  21.99
 
     def test_utf8_file(self):
         utf8 = b"\xcf\x96"
-        latin1 = b"\xf6\xfc\xf6"
         with temppath() as path:
             with open(path, "wb") as f:
                 f.write((b"test1,testNonethe" + utf8 + b",test3\n") * 2)

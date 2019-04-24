@@ -290,10 +290,8 @@ class record(nt.void):
         # pretty-print all fields
         names = self.dtype.names
         maxlen = max(len(name) for name in names)
-        rows = []
         fmt = '%% %ds: %%s' % maxlen
-        for name in names:
-            rows.append(fmt % (name, getattr(self, name)))
+        rows = [fmt % (name, getattr(self, name)) for name in names]
         return "\n".join(rows)
 
 # The recarray is almost identical to a standard array (which supports
@@ -713,7 +711,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     a string"""
 
     if dtype is None and formats is None:
-        raise ValueError("Must have dtype= or formats=")
+        raise TypeError("fromstring() needs a 'dtype' or 'formats' argument")
 
     if dtype is not None:
         descr = sb.dtype(dtype)
@@ -760,6 +758,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> r.shape
     (10,)
     """
+    
+    if dtype is None and formats is None:
+        raise TypeError("fromfile() needs a 'dtype' or 'formats' argument")
 
     if (shape is None or shape == 0):
         shape = (-1,)
@@ -785,13 +786,13 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     itemsize = descr.itemsize
 
-    shapeprod = sb.array(shape).prod()
+    shapeprod = sb.array(shape).prod(dtype=nt.intp)
     shapesize = shapeprod * itemsize
     if shapesize < 0:
         shape = list(shape)
-        shape[shape.index(-1)] = size / -shapesize
+        shape[shape.index(-1)] = size // -shapesize
         shape = tuple(shape)
-        shapeprod = sb.array(shape).prod()
+        shapeprod = sb.array(shape).prod(dtype=nt.intp)
 
     nbytes = shapeprod * itemsize
 

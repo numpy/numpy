@@ -4,7 +4,6 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-import sys
 
 from numpy.testing import (assert_array_equal, assert_equal,
                            assert_raises, assert_raises_regex)
@@ -137,8 +136,8 @@ class TestSetOps(object):
          np.nan),
         # should fail because attempting
         # to downcast to smaller int type:
-        (np.array([1, 2, 3], dtype=np.int32),
-         np.array([5, 7, 2], dtype=np.int64),
+        (np.array([1, 2, 3], dtype=np.int16),
+         np.array([5, 1<<20, 2], dtype=np.int32),
          None),
         # should fail because attempting to cast
         # two special floating point values
@@ -153,8 +152,8 @@ class TestSetOps(object):
         # specifically, raise an appropriate
         # Exception when attempting to append or
         # prepend with an incompatible type
-        msg = 'must be compatible'
-        with assert_raises_regex(TypeError, msg):
+        msg = 'cannot convert'
+        with assert_raises_regex(ValueError, msg):
             ediff1d(ary=ary,
                     to_end=append,
                     to_begin=prepend)
