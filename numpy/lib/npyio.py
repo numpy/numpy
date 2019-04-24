@@ -1572,6 +1572,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         column, individually.
     comments : str, optional
         The character used to indicate the start of a comment.
+        By default, the character '#' starts a comment.
         All the characters occurring on a line after a comment are discarded
     delimiter : str, int, or sequence, optional
         The string used to separate values.  By default, any consecutive
