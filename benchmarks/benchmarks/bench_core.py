@@ -10,6 +10,7 @@ class Core(Benchmark):
         self.l100 = range(100)
         self.l50 = range(50)
         self.l = [np.arange(1000), np.arange(1000)]
+        self.l_view = [memoryview(a) for a in self.l]
         self.l10x10 = np.ones((10, 10))
 
     def time_array_1(self):
@@ -26,6 +27,9 @@ class Core(Benchmark):
 
     def time_array_l(self):
         np.array(self.l)
+
+    def time_array_l_view(self):
+        np.array(self.l_view)
 
     def time_vstack_l(self):
         np.vstack(self.l)

@@ -919,6 +919,29 @@ class TestCreation(object):
         assert_equal(np.array([long(4), 2**80, long(4)]).dtype, object)
         assert_equal(np.array([2**80, long(4)]).dtype, object)
 
+    def test_sequence_of_array_like(self):
+        class ArrayLike:
+            def __init__(self):
+                self.__array_interface__ = {
+                    "shape": (42,),
+                    "typestr": "<i1",
+                    "data": bytes(42)
+                }
+
+            # Make sure __array_*__ is used instead of Sequence methods.
+            def __iter__(self):
+                raise AssertionError("__iter__ was called")
+
+            def __getitem__(self, idx):
+                raise AssertionError("__getitem__ was called")
+
+            def __len__(self):
+                return 42
+
+        assert_equal(
+            np.array([ArrayLike()]),
+            np.zeros((1, 42), dtype=np.byte))
+
     def test_non_sequence_sequence(self):
         """Should not segfault.
 
