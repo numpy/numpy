@@ -4681,15 +4681,16 @@ class TestIO(object):
             assert_array_equal(y, self.x.flat)
 
         with open(self.filename, 'rb') as f:
+            count_items = len(self.x.flat) // 8
             offset_items = len(self.x.flat) // 4
             offset_bytes = self.dtype.itemsize * offset_items
-            y = np.fromfile(f, dtype=self.dtype, count=offset_items, offset=offset_bytes)
-            assert_array_equal(y, self.x.flat[offset_items:2*offset_items])
+            y = np.fromfile(f, dtype=self.dtype, count=count_items, offset=offset_bytes)
+            assert_array_equal(y, self.x.flat[offset_items:offset_items+count_items])
 
             # subsequent seeks should stack
-            offset_bytes = self.dtype.itemsize * 1
+            offset_bytes = self.dtype.itemsize
             z = np.fromfile(f, dtype=self.dtype, offset=offset_bytes)
-            assert_array_equal(z, self.x.flat[2*offset_items+1:])
+            assert_array_equal(z, self.x.flat[offset_items+count_items+1:])
         
         with open(self.filename, 'wb') as f:
             self.x.tofile(f, sep=",")
