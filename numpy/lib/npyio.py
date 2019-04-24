@@ -1572,7 +1572,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         column, individually.
     comments : str, optional
         The character used to indicate the start of a comment.
-        By default, the character '#' starts a comment.
+        By default, the character '#' starts a comment. If some other
+        character is used, override `deletechars` to preserve
+        special characters in the header names.
         All the characters occurring on a line after a comment are discarded
     delimiter : str, int, or sequence, optional
         The string used to separate values.  By default, any consecutive
@@ -1611,7 +1613,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         for example, `file` would become `file_`.
     deletechars : str, optional
         A string combining invalid characters that must be deleted from the
-        names.
+        names. In case `comments` is something other than '#', this must be
+        an empty string in order to preserve special characters in the names.
     defaultfmt : str, optional
         A format used to define default field names, such as "f%i" or "f_%02i".
     autostrip : bool, optional
