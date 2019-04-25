@@ -56,7 +56,7 @@ NumFOCUS Subcommittee
 Institutional Partners
 ----------------------
 
-* UC Berkeley (Stefan van der Walt, Matti Picus, Tyler Reddy)
+* UC Berkeley (Stefan van der Walt, Matti Picus, Tyler Reddy, Sebastian Berg)
 
 * Quansight (Ralf Gommers, Hameer Abbasi)
 
