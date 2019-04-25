@@ -198,15 +198,21 @@ returns an appropriate infinity.
 
 Specialized ``np.isnan``, ``np.isinf``, and ``np.isfinite`` ufuncs for bool and int types
 -----------------------------------------------------------------------------------------
-The boolean and integer types are incapable of storing ``np.nan`` and ``np.inf`` values,
-which allows us to provide specialized ufuncs that are up to 250x faster than the current
-approach.
+The boolean and integer types are incapable of storing ``np.nan`` and
+``np.inf`` values, which allows us to provide specialized ufuncs that are up to
+250x faster than the current approach.
 
 New keywords added to ``np.nan_to_num``
 ---------------------------------------
-``np.nan_to_num`` now accepts keywords ``nan``, ``posinf`` and ``neginf`` allowing the
-user to define the value to replace the ``nan``, positive and negative ``np.inf`` values 
-respectively.
+``np.nan_to_num`` now accepts keywords ``nan``, ``posinf`` and ``neginf``
+allowing the user to define the value to replace the ``nan``, positive and
+negative ``np.inf`` values respectively.
+
+MemoryErrors caused by allocated overly large arrays are more descriptive
+-------------------------------------------------------------------------
+Often the cause of a MemoryError is incorrect broadcasting, which results in a
+very large and incorrect shape. The message of the error now includes this
+shape to help diagnose the cause of failure.
 
 
 Changes
