@@ -134,6 +134,16 @@ New mode "empty" for ``np.pad``
 This mode pads an array to a desired shape without initializing the new
 entries.
 
+
+``np.empty_like`` and related functions now accept a ``shape`` argument
+-----------------------------------------------------------------------
+``np.empty_like``, ``np.full_like``, ``np.ones_like`` and ``np.zeros_like`` now
+accept a ``shape`` keyword argument, which can be used to create a new array
+as the prototype, overriding its shape as well. This is particularly useful
+when combined with the ``__array_function__`` protocol, allowing the creation
+of new arbitrary-shape arrays from NumPy-like libraries when such an array
+is used as the prototype.
+
 Floating point scalars implement ``as_integer_ratio`` to match the builtin float
 --------------------------------------------------------------------------------
 This returns a (numerator, denominator) pair, which can be used to construct a
