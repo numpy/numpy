@@ -73,13 +73,13 @@ def git_version():
         env['LANGUAGE'] = 'C'
         env['LANG'] = 'C'
         env['LC_ALL'] = 'C'
-        out = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env).communicate()[0]
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
         return out
 
     try:
         out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
         GIT_REVISION = out.strip().decode('ascii')
-    except OSError:
+    except subprocess.SubprocessError:
         GIT_REVISION = "Unknown"
 
     return GIT_REVISION
