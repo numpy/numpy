@@ -980,7 +980,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     arr = arr.astype(packed_fields, copy=copy, casting=casting)
 
     # finally is it safe to view the packed fields as the unstructured type
-    return arr.view((out_dtype, sum(counts)))
+    return arr.view((out_dtype, (sum(counts),)))
 
 def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
                                            align=None, copy=None, casting=None):

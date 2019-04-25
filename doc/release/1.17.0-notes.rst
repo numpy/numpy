@@ -263,6 +263,14 @@ of NumPy functions on non-NumPy arrays, as described in `NEP 18`_. The feature
 was available for testing with NumPy 1.16 if appropriate environment variables
 are set, but is now always enabled.
 
+`numpy.lib.recfunctions.structured_to_unstructured` does not squeeze single-field views
+---------------------------------------------------------------------------------------
+Previously ``structured_to_unstructured(arr[['a']])`` would produce a squeezed
+result inconsistent with ``structured_to_unstructured(arr[['a', b']])``. This
+was accidental. The old behavior can be retained with
+``structured_to_unstructured(arr[['a']]).squeeze(axis=-1)`` or far more simply,
+``arr['a']``.
+
 ``__array_interface__`` offset now works as documented
 ------------------------------------------------------
 The interface may use an ``offset`` value that was mistakenly ignored.
