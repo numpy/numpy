@@ -1441,10 +1441,9 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     Raises an AssertionError if two objects are not equal up to desired
     tolerance.
 
-    The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (but
-    note that ``allclose`` has with ``rtol=1e-05`` and ``atol=1e-08`` different
-    default values). It compares the difference between `actual` and `desired`
-    to ``atol + rtol * abs(desired)``.
+    The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (note
+    that ``allclose`` has different default values). It compares the difference
+    between `actual` and `desired` to ``atol + rtol * abs(desired)``.
 
     .. versionadded:: 1.5.0
 
