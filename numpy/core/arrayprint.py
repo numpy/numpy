@@ -163,7 +163,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         - 'str_kind' : sets 'str' and 'numpystr'
     floatmode : str, optional
         Controls the interpretation of the `precision` option for
-        floating-point types. Can take the following values:
+        floating-point types. Can take the following values
+        (default maxprec_equal):
 
         * 'fixed': Always print exactly `precision` fractional digits,
                 even if this would print more or fewer digits than
@@ -532,14 +533,16 @@ def array2string(a, max_line_width=None, precision=None,
     max_line_width : int, optional
         The maximum number of columns the string should span. Newline
         characters splits the string appropriately after array elements.
+        See `linewidth` in `set_printoptions` for defaults.
     precision : int or None, optional
-        Floating point precision. Default is the current printing
-        precision (usually 8), which can be altered using `set_printoptions`.
+        Floating point precision. Default is the current printing precision
+        (usually 8), which can be altered using `set_printoptions`.
     suppress_small : bool, optional
         Represent very small numbers as zero. A number is "very small" if it
         is smaller than the current printing precision.
+        See `suppress` in `set_printoptions` for defaults.
     separator : str, optional
-        Inserted between elements.
+        Inserted between elements (default ' ').
     prefix : str, optional
     suffix: str, optional
         The length of the prefix and suffix strings are used to respectively
@@ -584,17 +587,21 @@ def array2string(a, max_line_width=None, precision=None,
     threshold : int, optional
         Total number of array elements which trigger summarization
         rather than full repr.
+        See `set_printoptions` for defaults.
     edgeitems : int, optional
         Number of array items in summary at beginning and end of
         each dimension.
+        See `set_printoptions` for defaults.
     sign : string, either '-', '+', or ' ', optional
         Controls printing of the sign of floating-point types. If '+', always
         print the sign of positive values. If ' ', always prints a space
         (whitespace character) in the sign position of positive values.  If
         '-', omit the sign character of positive values.
+        See `set_printoptions` for defaults.
     floatmode : str, optional
         Controls the interpretation of the `precision` option for
-        floating-point types. Can take the following values:
+        floating-point types. See `set_printoptions` for defaults.
+        Can take the following values:
 
         - 'fixed': Always print exactly `precision` fractional digits,
           even if this would print more or fewer digits than
@@ -1460,6 +1467,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     max_line_width : int, optional
         The maximum number of columns the string should span. Newline
         characters split the string appropriately after array elements.
+        See `linewidth` in `set_printoptions` for defaults.
     precision : int, optional
         Floating point precision. Default is the current printing precision
         (usually 8), which can be altered using `set_printoptions`.
@@ -1467,6 +1475,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         Represent very small numbers as zero, default is False. Very small
         is defined by `precision`, if the precision is 8 then
         numbers smaller than 5e-9 are represented as zero.
+        See `suppress` in `set_printoptions` for defaults.
 
     Returns
     -------
@@ -1537,16 +1546,16 @@ def array_str(a, max_line_width=None, precision=None, suppress_small=None):
     a : ndarray
         Input array.
     max_line_width : int, optional
-        Inserts newlines if text is longer than `max_line_width`.  The
-        default is, indirectly, 75.
+        Inserts newlines if text is longer than `max_line_width`.
+        See `linewidth` in `set_printoptions` for defaults.
     precision : int, optional
-        Floating point precision.  Default is the current printing precision
+        Floating point precision. Default is the current printing precision
         (usually 8), which can be altered using `set_printoptions`.
     suppress_small : bool, optional
         Represent numbers "very close" to zero as zero; default is False.
         Very close is defined by precision: if the precision is 8, e.g.,
         numbers smaller (in absolute value) than 5e-9 are represented as
-        zero.
+        zero. See `suppress` in `set_printoptions` for defaults.
 
     See Also
     --------
