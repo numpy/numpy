@@ -129,7 +129,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     }
     seq->len = len;
     nd = PyArray_IntpFromIndexSequence(obj, (npy_intp *)seq->ptr, len);
-    if (nd == -1 || nd != len) {
+    assert(len == nd);
+    if (nd == -1) {
         npy_free_cache_dim_obj(*seq);
         seq->ptr = NULL;
         return NPY_FAIL;
