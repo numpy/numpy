@@ -561,6 +561,19 @@ class TestSaveTxt(object):
         s.seek(0)
         assert_equal(s.read(), utf8 + '\n')
 
+    @pytest.mark.parametrize("fmt", [u"%f", b"%f"])
+    @pytest.mark.parametrize("iotype", [StringIO, BytesIO])
+    def test_unicode_and_bytes_fmt(self, fmt, iotype):
+        # string type of fmt should not matter, see also gh-4053
+        a = np.array([1.])
+        s = iotype()
+        np.savetxt(s, a, fmt=fmt)
+        s.seek(0)
+        if iotype is StringIO:
+            assert_equal(s.read(), u"%f\n" % 1.)
+        else:
+            assert_equal(s.read(), b"%f\n" % 1.)
+
 
 class LoadTxtBase(object):
     def check_compressed(self, fopen, suffixes):
