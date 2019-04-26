@@ -1072,8 +1072,30 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             data = npy_alloc_cache(nbytes);
         }
         if (data == NULL) {
-            PyErr_NoMemory();
-            goto fail;
+            static PyObject *exc_type = NULL;
+            
+            npy_cache_import(
+                "numpy.core._exceptions", "_ArrayMemoryError",
+                &exc_type);
+            if (exc_type == NULL) {
+                return NULL;
+            }
+            
+            PyObject *shape = PyArray_IntTupleFromIntp(fa->nd,fa->dimensions);
+            if (shape == NULL) {
+                return NULL;
+            }
+            
+            /* produce an error object */
+            PyObject *exc_value = PyTuple_Pack(2, shape, descr);
+            Py_DECREF(shape);
+            if (exc_value == NULL){
+                return NULL;
+            }
+            PyErr_SetObject(exc_type, exc_value);
+            Py_DECREF(exc_value);
+            return NULL;
+
         }
         fa->flags |= NPY_ARRAY_OWNDATA;
 
