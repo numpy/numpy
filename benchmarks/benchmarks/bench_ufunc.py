@@ -60,6 +60,31 @@ class UFunc(Benchmark):
         [self.f(*arg) for arg in self.args]
 
 
+class UFuncBenchmark(Benchmark):
+    params = ['bool', 'uint8', 'int8', 'int32', 'uint64', 'int64', 'float16',
+              'float32', 'float64', 'complex128', 'datetime64[ns]',
+              'timedelta64[ns]']
+    param_names = ['dtype']
+
+    def setup(self, dtype):
+        self.arr = np.full(100000, 1, dtype=dtype)
+        self.val = self.arr[0]
+
+
+class MinMax(UFuncBenchmark):
+    def time_fmax(self, dtype):
+        np.fmax(self.arr, self.arr)
+
+    def time_fmin(self, dtype):
+        np.fmin(self.arr, self.arr)
+
+    def time_maximum(self, dtype):
+        np.maximum(self.arr, self.arr)
+
+    def time_minimum(self, dtype):
+        np.minimum(self.arr, self.arr)
+
+
 class Custom(Benchmark):
     def setup(self):
         self.b = np.ones(20000, dtype=bool)

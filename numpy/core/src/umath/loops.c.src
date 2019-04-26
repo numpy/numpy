@@ -814,7 +814,7 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
  * #OP =  >, <#
  **/
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if (IS_BINARY_REDUCE) {
@@ -825,11 +825,8 @@ NPY_NO_EXPORT void
         *((@type@ *)iop1) = io1;
     }
     else {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            *((@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
-        }
+        BINARY_LOOP_FAST(@type@, @type@,
+                         *out = (in1 @OP@ in2) ? in1 : in2);
     }
 }
 
@@ -1826,7 +1823,7 @@ NPY_NO_EXPORT void
  * #kind = maximum, minimum#
  * #OP =  >=, <=#
  **/
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
@@ -1841,13 +1838,9 @@ NPY_NO_EXPORT void
         }
     }
     else {
-        BINARY_LOOP {
-            @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            /* Order of operations important for MSVC 2015 */
-            in1 = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2;
-            *((@type@ *)op1) = in1;
-        }
+        BINARY_LOOP_FAST(@type@, @type@,
+                         /* Order of operations important for MSVC 2015 */
+                         *out = (in1 @OP@ in2 || npy_isnan(in1)) ? in1 : in2);
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
@@ -1857,7 +1850,7 @@ NPY_NO_EXPORT void
  * #kind = fmax, fmin#
  * #OP =  >=, <=#
  **/
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     /*  */
@@ -1870,12 +1863,10 @@ NPY_NO_EXPORT void
         *((@type@ *)iop1) = io1;
     }
     else {
-        BINARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            const @type@ in2 = *(@type@ *)ip2;
-            /* Order of operations important for MSVC 2015 */
-            *((@type@ *)op1) = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
-        }
+        BINARY_LOOP_FAST(@type@, @type@,
+                         /* Order of operations important for MSVC 2015 */
+                         *out = (in1 @OP@ in2 || npy_isnan(in2)) ? in1 : in2;
+                         );
     }
     npy_clear_floatstatus_barrier((char*)dimensions);
 }
