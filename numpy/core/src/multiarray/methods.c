@@ -1918,9 +1918,29 @@ array_setstate(PyArrayObject *self, PyObject *args)
     Py_XDECREF(PyArray_DESCR(self));
     fa->descr = typecode;
     Py_INCREF(typecode);
-    nd = PyArray_IntpFromSequence(shape, dimensions, NPY_MAXDIMS);
-    if (nd < 0) {
+    nd = PyTuple_GET_SIZE(shape);
+    if (nd > NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError, "Too many dimensions");
         return NULL;
+    }
+
+    /* Parse the shape argument. This is like PyArray_IntpConverter, but does
+     * not attempt int -> tuple promotion, and allocates them on the stack.
+     */
+    {
+        PyObject *fast_seq;
+        int ret;
+
+        fast_seq = PySequence_Fast(shape, "shape should be a tuple");
+        if (fast_seq == NULL){
+            return NULL;
+        }
+        ret = PyArray_IntpFromIndexArray(
+                PySequence_Fast_ITEMS(fast_seq), dimensions, nd);
+        Py_DECREF(fast_seq);
+        if (ret < 0) {
+            return NULL;
+        }
     }
     size = PyArray_MultiplyList(dimensions, nd);
     if (size < 0) {

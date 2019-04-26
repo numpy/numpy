@@ -2241,13 +2241,13 @@ class TestCreationFuncs(object):
         dim = 1
         beg = sys.getrefcount(dim)
         np.zeros([dim]*10)
-        assert_(sys.getrefcount(dim) == beg)
+        assert_equal(sys.getrefcount(dim), beg)
         np.ones([dim]*10)
-        assert_(sys.getrefcount(dim) == beg)
+        assert_equal(sys.getrefcount(dim), beg)
         np.empty([dim]*10)
-        assert_(sys.getrefcount(dim) == beg)
+        assert_equal(sys.getrefcount(dim), beg)
         np.full([dim]*10, 0)
-        assert_(sys.getrefcount(dim) == beg)
+        assert_equal(sys.getrefcount(dim), beg)
 
 
 class TestLikeFuncs(object):

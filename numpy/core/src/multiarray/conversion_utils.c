@@ -78,6 +78,36 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
     }
 }
 
+/* Convert non-sequences to sequences of length 1.
+ *
+ * @param      obj    the object to convert into a sequence
+ * @param[out] items  written with a pointer to the (immutable) array of objects
+ * @param[out] len    number of items in the resulting array
+ *
+ * @retval Py_None if obj was not a sequence
+ * @retval An object that must be kept alive while `*items` is used if it was
+ */
+static PyObject *
+wrap_into_fast_sequence(PyObject *obj, PyObject *const **items, Py_ssize_t *len)
+{
+    PyObject *fast_seq = PySequence_Fast(obj, "");  /* message is immediately cleared */
+    if (fast_seq == NULL) {
+        if (!PyErr_ExceptionMatches(PyExc_TypeError)) {
+            return NULL;
+        }
+        PyErr_Clear();
+        *len = 1;
+        *items = &obj;
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+    else {
+        *len = PySequence_Fast_GET_SIZE(fast_seq);
+        *items = PySequence_Fast_ITEMS(fast_seq);
+        return fast_seq;
+    }
+}
+
 /*NUMPY_API
  * Get intp chunk from sequence
  *
@@ -91,50 +121,40 @@ NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 {
     Py_ssize_t len;
-    int nd;
+    PyObject *const *items;
+    PyObject *fast_seq = NULL;
 
     seq->ptr = NULL;
     seq->len = 0;
     if (obj == Py_None) {
         return NPY_SUCCEED;
     }
-    len = PySequence_Size(obj);
-    if (len == -1) {
-        /* Check to see if it is an integer number */
-        if (PyNumber_Check(obj)) {
-            /*
-             * After the deprecation the PyNumber_Check could be replaced
-             * by PyIndex_Check.
-             * FIXME 1.9 ?
-             */
-            len = 1;
-        }
+
+    /* Convert either a single item or a sequence into a pointer and length */
+    fast_seq = wrap_into_fast_sequence(obj, &items, &len);
+    if (fast_seq == NULL) {
+        return NULL;
     }
-    if (len < 0) {
-        PyErr_SetString(PyExc_TypeError,
-                "expected sequence object with len >= 0 or a single integer");
-        return NPY_FAIL;
-    }
+
     if (len > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError, "maximum supported dimension for an ndarray is %d"
                      ", found %d", NPY_MAXDIMS, len);
-        return NPY_FAIL;
+        goto fail;
     }
-    if (len > 0) {
-        seq->ptr = npy_alloc_cache_dim(len);
-        if (seq->ptr == NULL) {
-            PyErr_NoMemory();
-            return NPY_FAIL;
+    if (PyArray_DimsFromIndexArray(items, seq, len) < 0) {
+        /* if not a sequence, produce a clearer message */
+        if (fast_seq == Py_None && PyErr_ExceptionMatches(PyExc_TypeError)) {
+            PyErr_SetString(PyExc_TypeError,
+                "expected sequence object or a single integer");
         }
+        goto fail;
     }
-    seq->len = len;
-    nd = PyArray_IntpFromIndexSequence(obj, (npy_intp *)seq->ptr, len);
-    if (nd == -1 || nd != len) {
-        npy_free_cache_dim_obj(*seq);
-        seq->ptr = NULL;
-        return NPY_FAIL;
-    }
+
+    Py_DECREF(fast_seq);
     return NPY_SUCCEED;
+fail:
+    Py_DECREF(fast_seq);
+    return NPY_FAIL;
 }
 
 /*NUMPY_API
@@ -909,68 +929,60 @@ PyArray_PyIntAsIntp(PyObject *o)
     return PyArray_PyIntAsIntp_ErrMsg(o, "an integer is required");
 }
 
-
 /*
- * PyArray_IntpFromIndexSequence
- * Returns the number of dimensions or -1 if an error occurred.
- * vals must be large enough to hold maxvals.
- * Opposed to PyArray_IntpFromSequence it uses and returns npy_intp
- * for the number of values.
+ * Convert an array of objects into an array of dimension integers.
+ * Arguments in the same order as memcpy.
  */
-NPY_NO_EXPORT npy_intp
-PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
+NPY_NO_EXPORT int
+PyArray_IntpFromIndexArray(PyObject *const *items, npy_intp *vals, npy_intp nd)
 {
-    Py_ssize_t nd;
     npy_intp i;
-    PyObject *op, *err;
 
-    /*
-     * Check to see if sequence is a single integer first.
-     * or, can be made into one
-     */
-    nd = PySequence_Length(seq);
-    if (nd == -1) {
-        if (PyErr_Occurred()) {
-            PyErr_Clear();
-        }
+    for (i = 0; i <nd; i++) {
+        PyObject *op = items[i];
 
-        vals[0] = PyArray_PyIntAsIntp(seq);
-        if(vals[0] == -1) {
-            err = PyErr_Occurred();
-            if (err &&
-                    PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+        vals[i] = PyArray_PyIntAsIntp(op);
+
+        if (error_converting(vals[i])) {
+            if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
                 PyErr_SetString(PyExc_ValueError,
                         "Maximum allowed dimension exceeded");
             }
-            if(err != NULL) {
-                return -1;
-            }
+            return -1;
         }
-        nd = 1;
     }
-    else {
-        for (i = 0; i < PyArray_MIN(nd,maxvals); i++) {
-            op = PySequence_GetItem(seq, i);
-            if (op == NULL) {
-                return -1;
-            }
+    return 0;
+}
 
-            vals[i] = PyArray_PyIntAsIntp(op);
-            Py_DECREF(op);
-            if(vals[i] == -1) {
-                err = PyErr_Occurred();
-                if (err &&
-                        PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "Maximum allowed dimension exceeded");
-                }
-                if(err != NULL) {
-                    return -1;
-                }
-            }
-        }
+/*
+ * Wraps PyArray_IntpFromIndexArray, and allocates the dimensions into
+ * a PyArray_Dims object.
+ *
+ * If successful, the result should be freed with PyDimMem_FREE.
+ */
+NPY_NO_EXPORT int
+PyArray_DimsFromIndexArray(
+    PyObject *const *items, PyArray_Dims *seq, npy_intp nd)
+{
+    seq->ptr = NULL;
+    seq->len = 0;
+    if (nd == 0) {
+        return 0;
     }
-    return nd;
+    seq->ptr = npy_alloc_cache_dim(nd);
+    if (seq->ptr == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    seq->len = nd;
+    if (PyArray_IntpFromIndexArray(items, seq->ptr, nd) < 0) {
+        npy_free_cache_dim_obj(*seq);
+        seq->ptr = NULL;
+        return -1;
+    }
+
+    return 0;
 }
 
 /*NUMPY_API
@@ -981,7 +993,30 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
-    return PyArray_IntpFromIndexSequence(seq, vals, (npy_intp)maxvals);
+    Py_ssize_t len;
+    PyObject *const *items;
+    PyObject *fast_seq;
+
+    fast_seq = wrap_into_fast_sequence(seq, &items, &len);
+    if (fast_seq == NULL) {
+        return -1;
+    }
+
+    len = PyArray_MIN(len, (npy_intp)maxvals);
+
+    if (PyArray_IntpFromIndexArray(items, vals, len) < 0) {
+        if (fast_seq == Py_None && PyErr_ExceptionMatches(PyExc_TypeError)) {
+            /* if not a sequence, produce a clearer message */
+            PyErr_SetString(PyExc_TypeError,
+                "expected sequence object or a single integer");
+        }
+        goto fail;
+    }
+    Py_DECREF(fast_seq);
+    return (npy_intp)len;
+fail:
+    Py_DECREF(fast_seq);
+    return -1;
 }
 
 
