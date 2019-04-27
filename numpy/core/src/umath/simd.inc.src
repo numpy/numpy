@@ -40,7 +40,6 @@ abs_ptrdiff(char *a, char *b)
     return (a > b) ? (a - b) : (b - a);
 }
 
-
 /*
  * stride is equal to element size and input and destination are equal or
  * don't overlap within one register. The check of the steps against
@@ -133,7 +132,7 @@ abs_ptrdiff(char *a, char *b)
  */
 
 static void
-@ISA@_@func@_FLOAT(npy_float *, npy_float *, const npy_int n);
+@ISA@_@func@_FLOAT(npy_float *, npy_float *, const npy_intp n);
 
 /**end repeat1**/
 #endif
@@ -1261,7 +1260,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
  * #BYTES = 32, 64#
  * #mask = __m256, __mmask16#
  * #vsub = , _mask#
- * #and_masks =_mm256_and_ps, _mm512_kand#
+ * #or_masks =_mm256_or_ps, _mm512_kor#
  * #fmadd = avx2_fmadd,_mm512_fmadd_ps#
  * #mask_to_int = _mm256_movemask_ps, #
  * #full_mask= 0xFF, 0xFFFF#
@@ -1287,7 +1286,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
 
 #if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS
 static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
-@ISA@_exp_FLOAT(npy_float * op, npy_float * ip, const npy_int array_size)
+@ISA@_exp_FLOAT(npy_float * op, npy_float * ip, const npy_intp array_size)
 {
     const npy_int num_lanes = @BYTES@/sizeof(npy_float);
     npy_float xmax = 88.72283935546875f;
@@ -1312,9 +1311,10 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     @vtype@ poly, num_poly, denom_poly, quadrant;
     @vtype@i exponent;
 
-    @mask@ xmax_mask, xmin_mask;
+    @mask@ xmax_mask, xmin_mask, nan_mask, inf_mask;
     @mask@ load_mask = @isa@_get_full_load_mask();
-    npy_int num_remaining_elements = array_size;
+    npy_intp num_remaining_elements = array_size;
+    npy_intp set_overflow = 0;
 
     while (num_remaining_elements > 0) {
 
@@ -1322,11 +1322,13 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
             load_mask = @isa@_get_partial_load_mask(num_remaining_elements,
                                                          num_lanes);
         @vtype@ x  = @isa@_masked_load(load_mask, ip);
+
         xmax_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmax), _CMP_GE_OQ);
         xmin_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmin), _CMP_LE_OQ);
-
-        x = @isa@_set_masked_lanes(x, zeros_f,
-                                   @and_masks@(xmax_mask,xmin_mask));
+        nan_mask = _mm@vsize@_cmp_ps@vsub@(x, x, _CMP_NEQ_UQ);
+        inf_mask = _mm@vsize@_cmp_ps@vsub@(x, inf, _CMP_EQ_OQ);
+        x = @isa@_set_masked_lanes(x, zeros_f, @or_masks@(
+                                    @or_masks@(nan_mask, xmin_mask), xmax_mask));
 
         quadrant = _mm@vsize@_mul_ps(x, log2e);
 
@@ -1335,8 +1337,7 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         quadrant = _mm@vsize@_sub_ps(quadrant, cvt_magic);
 
         /* Cody-Waite's range reduction algorithm */
-        x = @isa@_range_reduction(x, quadrant,
-                                  codyw_c1, codyw_c2, zeros_f);
+        x = @isa@_range_reduction(x, quadrant, codyw_c1, codyw_c2, zeros_f);
 
         num_poly = @fmadd@(exp_p5, x, exp_p4);
         num_poly = @fmadd@(num_poly, x, exp_p3);
@@ -1357,16 +1358,27 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                     _mm@vsize@_add_epi32(
                         _mm@vsize@_castps_si@vsize@(poly), exponent));
 
-        /* elem > xmax; return inf, elem < xmin; return 0.0f */
+        /*
+         * elem > xmax; return inf
+         * elem < xmin; return 0.0f
+         * elem = +/- nan, return nan
+         */
+        poly = @isa@_set_masked_lanes(poly, _mm@vsize@_set1_ps(NPY_NANF), nan_mask);
         poly = @isa@_set_masked_lanes(poly, inf, xmax_mask);
         poly = @isa@_set_masked_lanes(poly, zeros_f, xmin_mask);
 
         @masked_store@(op, @cvtps_epi32@(load_mask), poly);
 
+        set_overflow += _mm_popcnt_u32(
+                        @mask_to_int@(xmax_mask) ^ @mask_to_int@(inf_mask));
+
         ip += num_lanes;
         op += num_lanes;
         num_remaining_elements -= num_lanes;
     }
+
+    if (set_overflow)
+        _mm_setcsr(_mm_getcsr() | (0x1 << 3));
 }
 
 /*
@@ -1384,7 +1396,7 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
  */
 
 static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
-@ISA@_log_FLOAT(npy_float * op, npy_float * ip, const npy_int array_size)
+@ISA@_log_FLOAT(npy_float * op, npy_float * ip, const npy_intp array_size)
 {
     const npy_int num_lanes = @BYTES@/sizeof(npy_float);
 
@@ -1410,7 +1422,7 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 
     @mask@ inf_nan_mask, sqrt2_mask, zero_mask, negx_mask;
     @mask@ load_mask = @isa@_get_full_load_mask();
-    npy_int num_remaining_elements = array_size;
+    npy_intp num_remaining_elements = array_size;
 
     while (num_remaining_elements > 0) {
 
