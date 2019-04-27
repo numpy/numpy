@@ -198,9 +198,10 @@ double rk_beta(rk_state *state, double a, double b)
             X = pow(U, 1.0/a);
             Y = pow(V, 1.0/b);
 
-            if ((X + Y) <= 1.0)
+            /* Reject if both U and V are 0.0, which is approx 1 in 10^106 */
+            if (((X + Y) <= 1.0) && ((U + V) > 0.0))
             {
-                if (X +Y > 0)
+                if (X + Y > 0)
                 {
                     return X / (X + Y);
                 }
@@ -329,13 +330,15 @@ long rk_binomial_btpe(rk_state *state, long n, double p)
   Step30:
     if (u > p3) goto Step40;
     y = (long)floor(xl + log(v)/laml);
-    if (y < 0) goto Step10;
+    /* Reject if v == 0.0 since cast of inf not well defined */
+    if ((y < 0) || (v == 0.0)) goto Step10;
     v = v*(u-p2)*laml;
     goto Step50;
 
   Step40:
     y = (long)floor(xr - log(v)/lamr);
-    if (y > n) goto Step10;
+    /* Reject if v == 0.0 since cast of inf not well defined */
+    if ((y > n) || (v == 0.0)) goto Step10;
     v = v*(u-p3)*lamr;
 
   Step50:
@@ -666,12 +669,17 @@ double rk_laplace(rk_state *state, double loc, double scale)
     double U;
 
     U = rk_double(state);
-    if (U < 0.5)
+    if (U >= 0.5)
+    {
+        U = loc - scale * log(2.0 - U - U);
+
+    } else if (U > 0.0)
     {
         U = loc + scale * log(U + U);
     } else
     {
-        U = loc - scale * log(2.0 - U - U);
+        /* Reject if U == 0.0 */
+        return rk_laplace(state, loc, scale);
     }
     return U;
 }
@@ -681,7 +689,9 @@ double rk_gumbel(rk_state *state, double loc, double scale)
     double U;
 
     U = 1.0 - rk_double(state);
-    return loc - scale * log(-log(U));
+    if (U < 1.0)
+        return loc - scale * log(-log(U));
+    return rk_gumbel(state, loc, scale);
 }
 
 double rk_logistic(rk_state *state, double loc, double scale)
@@ -689,7 +699,9 @@ double rk_logistic(rk_state *state, double loc, double scale)
     double U;
 
     U = rk_double(state);
-    return loc + scale * log(U/(1.0 - U));
+    if (U > 0.0)
+        return loc + scale * log(U/(1.0 - U));
+    return rk_logistic(state, loc, scale);
 }
 
 double rk_lognormal(rk_state *state, double mean, double sigma)
@@ -914,7 +926,8 @@ long rk_logseries(rk_state *state, double p)
         q = 1.0 - exp(r*U);
         if (V <= q*q) {
             result = (long)floor(1 + log(V)/log(q));
-            if (result < 1) {
+            /* Reject if v == 0.0 since cast of inf not well defined */
+            if ((result < 1) || (V == 0.0)) {
                 continue;
             }
             else {
