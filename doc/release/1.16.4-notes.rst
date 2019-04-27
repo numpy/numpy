@@ -50,3 +50,12 @@ Improvements
 
 Changes
 =======
+
+`numpy.lib.recfunctions.structured_to_unstructured` does not squeeze single-field views
+---------------------------------------------------------------------------------------
+Previously ``structured_to_unstructured(arr[['a']])`` would produce a squeezed
+result inconsistent with ``structured_to_unstructured(arr[['a', b']])``. This
+was accidental. The old behavior can be retained with
+``structured_to_unstructured(arr[['a']]).squeeze(axis=-1)`` or far more simply,
+``arr['a']``.
+
