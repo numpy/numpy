@@ -9,7 +9,7 @@ The N-dimensional array (:class:`ndarray`)
 An :class:`ndarray` is a (usually fixed-size) multidimensional
 container of items of the same type and size. The number of dimensions
 and items in an array is defined by its :attr:`shape <ndarray.shape>`,
-which is a :class:`tuple` of *N* positive integers that specify the
+which is a :class:`tuple` of *N* non-negative integers that specify the
 sizes of each dimension. The type of items in the array is specified by
 a separate :ref:`data-type object (dtype) <arrays.dtypes>`, one of which
 is associated with each ndarray.
