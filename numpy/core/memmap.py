@@ -104,7 +104,7 @@ class memmap(ndarray):
 
     See also
     --------
-    lib.format.open_memmap : Create or load a memory-mapped ``.npy`` file.
+    `lib.format.open_memmap <https://github.com/numpy/numpy/blob/v1.16.1/numpy/lib/format.py>`_ : Create or load a memory-mapped ``.npy`` file.
 
     Notes
     -----
