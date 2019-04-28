@@ -1261,6 +1261,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
  * #mask = __m256, __mmask16#
  * #vsub = , _mask#
  * #or_masks =_mm256_or_ps, _mm512_kor#
+ * #xor_masks =_mm256_xor_ps, _mm512_kxor#
  * #fmadd = avx2_fmadd,_mm512_fmadd_ps#
  * #mask_to_int = _mm256_movemask_ps, #
  * #full_mask= 0xFF, 0xFFFF#
@@ -1312,9 +1313,9 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     @vtype@i exponent;
 
     @mask@ xmax_mask, xmin_mask, nan_mask, inf_mask;
+    @mask@ overflow_mask = @isa@_get_partial_load_mask(0, num_lanes);
     @mask@ load_mask = @isa@_get_full_load_mask();
     npy_intp num_remaining_elements = array_size;
-    npy_intp set_overflow = 0;
 
     while (num_remaining_elements > 0) {
 
@@ -1327,6 +1328,9 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         xmin_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmin), _CMP_LE_OQ);
         nan_mask = _mm@vsize@_cmp_ps@vsub@(x, x, _CMP_NEQ_UQ);
         inf_mask = _mm@vsize@_cmp_ps@vsub@(x, inf, _CMP_EQ_OQ);
+        overflow_mask = @or_masks@(overflow_mask,
+                                    @xor_masks@(xmax_mask, inf_mask));
+
         x = @isa@_set_masked_lanes(x, zeros_f, @or_masks@(
                                     @or_masks@(nan_mask, xmin_mask), xmax_mask));
 
@@ -1369,15 +1373,12 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 
         @masked_store@(op, @cvtps_epi32@(load_mask), poly);
 
-        set_overflow += _mm_popcnt_u32(
-                        @mask_to_int@(xmax_mask) ^ @mask_to_int@(inf_mask));
-
         ip += num_lanes;
         op += num_lanes;
         num_remaining_elements -= num_lanes;
     }
 
-    if (set_overflow)
+    if (@mask_to_int@(overflow_mask))
         _mm_setcsr(_mm_getcsr() | (0x1 << 3));
 }
 
