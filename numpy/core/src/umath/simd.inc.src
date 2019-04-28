@@ -1149,7 +1149,10 @@ avx2_get_exponent(__m256 x)
 
     __m256 two_power_100 = _mm256_castsi256_ps(_mm256_set1_epi32(0x71800000));
     __m256 denormal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_LT_OQ);
-    __m256 temp = _mm256_mul_ps(x, two_power_100);
+    __m256 normal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_GE_OQ);
+
+    __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
+    __m256 temp = _mm256_mul_ps(temp1, two_power_100);
     x = _mm256_blendv_ps(x, temp, denormal_mask);
 
     __m256 exp = _mm256_cvtepi32_ps(
@@ -1173,7 +1176,10 @@ avx2_get_mantissa(__m256 x)
 
     __m256 two_power_100 = _mm256_castsi256_ps(_mm256_set1_epi32(0x71800000));
     __m256 denormal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_LT_OQ);
-    __m256 temp = _mm256_mul_ps(x, two_power_100);
+    __m256 normal_mask = _mm256_cmp_ps(x, _mm256_set1_ps(FLT_MIN), _CMP_GE_OQ);
+
+    __m256 temp1 = _mm256_blendv_ps(x, _mm256_set1_ps(0.0f), normal_mask);
+    __m256 temp = _mm256_mul_ps(temp1, two_power_100);
     x = _mm256_blendv_ps(x, temp, denormal_mask);
 
     __m256i mantissa_bits = _mm256_set1_epi32(0x7fffff);
@@ -1261,6 +1267,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
  * #mask = __m256, __mmask16#
  * #vsub = , _mask#
  * #or_masks =_mm256_or_ps, _mm512_kor#
+ * #and_masks =_mm256_and_ps, _mm512_kand#
  * #xor_masks =_mm256_xor_ps, _mm512_kxor#
  * #fmadd = avx2_fmadd,_mm512_fmadd_ps#
  * #mask_to_int = _mm256_movemask_ps, #
@@ -1379,7 +1386,7 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     }
 
     if (@mask_to_int@(overflow_mask))
-        _mm_setcsr(_mm_getcsr() | (0x1 << 3));
+        npy_set_floatstatus_overflow();
 }
 
 /*
@@ -1415,13 +1422,16 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     @vtype@ log_q4 = _mm@vsize@_set1_ps(NPY_COEFF_Q4_LOGf);
     @vtype@ log_q5 = _mm@vsize@_set1_ps(NPY_COEFF_Q5_LOGf);
     @vtype@ loge2 = _mm@vsize@_set1_ps(NPY_LOGE2f);
-    @vtype@ neg_nan = _mm@vsize@_set1_ps(-NPY_NANF);
+    @vtype@ nan = _mm@vsize@_set1_ps(NPY_NANF);
     @vtype@ neg_inf = _mm@vsize@_set1_ps(-NPY_INFINITYF);
+    @vtype@ inf = _mm@vsize@_set1_ps(NPY_INFINITYF);
     @vtype@ zeros_f = _mm@vsize@_set1_ps(0.0f);
     @vtype@ ones_f = _mm@vsize@_set1_ps(1.0f);
     @vtype@ poly, num_poly, denom_poly, exponent;
 
-    @mask@ inf_nan_mask, sqrt2_mask, zero_mask, negx_mask;
+    @mask@ inf_mask, nan_mask, sqrt2_mask, zero_mask, negx_mask;
+    @mask@ invalid_mask = @isa@_get_partial_load_mask(0, num_lanes);
+    @mask@ divide_by_zero_mask = invalid_mask;
     @mask@ load_mask = @isa@_get_full_load_mask();
     npy_intp num_remaining_elements = array_size;
 
@@ -1434,7 +1444,11 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 
         negx_mask = _mm@vsize@_cmp_ps@vsub@(x_in, zeros_f, _CMP_LT_OQ);
         zero_mask = _mm@vsize@_cmp_ps@vsub@(x_in, zeros_f, _CMP_EQ_OQ);
-        inf_nan_mask = _mm@vsize@_cmp_ps@vsub@(x_in, _mm@vsize@_set1_ps(FLT_MAX), _CMP_GT_OQ);
+        inf_mask = _mm@vsize@_cmp_ps@vsub@(x_in, inf, _CMP_EQ_OQ);
+        nan_mask = _mm@vsize@_cmp_ps@vsub@(x_in, x_in, _CMP_NEQ_UQ);
+        divide_by_zero_mask = @or_masks@(divide_by_zero_mask,
+                                        @and_masks@(zero_mask, load_mask));
+        invalid_mask = @or_masks@(invalid_mask, negx_mask);
 
         @vtype@ x = @isa@_set_masked_lanes(x_in, zeros_f, negx_mask);
 
@@ -1466,13 +1480,13 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         poly = @fmadd@(exponent, loge2, poly);
 
         /*
-         * x < 0.0f; return -NAN
+         * x < 0.0f; return NAN
+         * x = +/- NAN; return NAN
          * x = 0.0f; return -INF
-         * x > FLT_MAX; return x
          */
-        poly = @isa@_set_masked_lanes(poly, neg_nan, negx_mask);
+        poly = @isa@_set_masked_lanes(poly, nan, @or_masks@(negx_mask, nan_mask));
         poly = @isa@_set_masked_lanes(poly, neg_inf, zero_mask);
-        poly = @isa@_set_masked_lanes(poly, x_in, inf_nan_mask);
+        poly = @isa@_set_masked_lanes(poly, inf, inf_mask);
 
         @masked_store@(op, @cvtps_epi32@(load_mask), poly);
 
@@ -1480,6 +1494,11 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         op += num_lanes;
         num_remaining_elements -= num_lanes;
     }
+
+    if (@mask_to_int@(invalid_mask))
+        npy_set_floatstatus_invalid();
+    if (@mask_to_int@(divide_by_zero_mask))
+        npy_set_floatstatus_divbyzero();
 }
 #endif
 /**end repeat**/
