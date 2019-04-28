@@ -66,6 +66,15 @@ class TestNonarrayArgs(object):
         out = np.clip(arr, 2, 7)
         tgt = [2, 5, 2, 3, 7, 2, 2]
         assert_equal(out, tgt)
+        #check that refer variable overrides value of arr1 and arr2
+        arr1 = np.array([-1, 5, 2, 3, 10, -4, -9])
+        arr2 = np.array([7, 3, 4, -3, 10, -6])
+        for refer in [arr1, arr2]:
+            np.clip(refer, 2, 7, out=refer)
+        tgt = [2, 5, 2, 3, 7, 2, 2]
+        assert_equal(arr1, tgt)
+        tgt = [7, 3, 4, 2, 7, 2]
+        assert_equal(arr2, tgt)
 
     def test_compress(self):
         arr = [[0, 1, 2, 3, 4],
