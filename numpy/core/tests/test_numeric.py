@@ -66,7 +66,7 @@ class TestNonarrayArgs(object):
         out = np.clip(arr, 2, 7)
         tgt = [2, 5, 2, 3, 7, 2, 2]
         assert_equal(out, tgt)
-        #check that refer variable overrides value of arr1 and arr2
+        #check usage of out parameter of clip() and check that refer variable overrides value of arr1 and arr2
         arr1 = np.array([-1, 5, 2, 3, 10, -4, -9])
         arr2 = np.array([7, 3, 4, -3, 10, -6])
         for refer in [arr1, arr2]:
