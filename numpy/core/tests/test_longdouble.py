@@ -205,3 +205,17 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
     def test_fromstring_foreign_value(self):
         b = np.fromstring("1,234", dtype=np.longdouble, sep=" ")
         assert_array_equal(b[0], 1)
+
+@pytest.mark.parametrize("int_val", [
+    # cases discussed in gh-10723
+    # and gh-9968
+    2 ** 1024, 0])
+def test_longdouble_from_int(int_val):
+    # for issue gh-9968
+    str_val = str(int_val)
+    assert np.longdouble(int_val) == np.longdouble(str_val)
+
+@pytest.mark.parametrize("bool_val", [
+    True, False])
+def test_longdouble_from_bool(bool_val):
+    assert np.longdouble(bool_val) == np.longdouble(int(bool_val))

@@ -172,8 +172,5 @@ npy_longdouble_from_PyLong(PyObject *long_obj) {
         return -1;
     }
 
-    // Without this line, MSVC produces garbage (optimizes out result!?)
-    printf("Double form is %f\n", (double) result);
-
     return result;
 }
