@@ -473,6 +473,13 @@ class LapackSrcNotFoundError(LapackNotFoundError):
     the LAPACK_SRC environment variable."""
 
 
+class BlasOptNotFoundError(NotFoundError):
+    """
+    Optimized (vendor) Blas libraries are not found.
+    Falls back to netlib Blas library which has worse performance.
+    A better performance should be easily gained by switching
+    Blas library."""
+
 class BlasNotFoundError(NotFoundError):
     """
     Blas (http://www.netlib.org/blas/) libraries not found.
@@ -1593,8 +1600,7 @@ class lapack_opt_info(system_info):
         return False
 
     def _get_info_blas(self):
-        # TODO this was previously blas? Using blas_opt allows NetLIB lapack and BLIS, for instance.
-        #      However, does this break anything!?!?
+        # Default to get the optimized BLAS implementation
         info = get_info('blas_opt')
         if not info:
             warnings.warn(BlasNotFoundError.__doc__, stacklevel=3)
@@ -1618,9 +1624,6 @@ class lapack_opt_info(system_info):
 
     def _calc_info_lapack(self):
         info = self._get_info_lapack()
-        # TODO check whether this is actually necessary to warn about?
-        #      I think the warning is superfluous!
-        # warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
         if info:
             info_blas = self._get_info_blas()
             dict_append(info, **info_blas)
@@ -1645,7 +1648,9 @@ class lapack_opt_info(system_info):
                 elif len(order) > 0:
                     non_existing.append(order)
             if len(non_existing) > 0:
-                raise ValueError("lapack_opt_info user defined LAPACK order has unacceptable values: {}".format(non_existing))
+                raise ValueError("lapack_opt_info user defined "
+                                 "LAPACK order has unacceptable "
+                                 "values: {}".format(non_existing))
 
         for lapack in lapack_order:
             if getattr(self, '_calc_info_{}'.format(lapack))():
@@ -1706,9 +1711,8 @@ class blas_opt_info(system_info):
         return False
 
     def _calc_info_blas(self):
-        # When one is finally asking for BLAS we need to report
-        # of insufficient usage of optimized BLAS
-        warnings.warn(AtlasNotFoundError.__doc__, stacklevel=3)
+        # Warn about a non-optimized BLAS library
+        warnings.warn(BlasOptNotFoundError.__doc__, stacklevel=3)
         info = {}
         dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
 
