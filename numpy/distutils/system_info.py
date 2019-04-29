@@ -1712,7 +1712,7 @@ class blas_opt_info(system_info):
 
     def _calc_info_blas(self):
         # Warn about a non-optimized BLAS library
-        warnings.warn(BlasOptNotFoundError.__doc__, stacklevel=3)
+        warnings.warn(BlasOptNotFoundError.__doc__ or '', stacklevel=3)
         info = {}
         dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
 
