@@ -93,8 +93,6 @@ search_static_first = 0
 
 [fftw]
 libraries = rfftw, fftw
-fftw_opt_libs = rfftw_threaded, fftw_threaded
-# if the above aren't found, look for {s,d}fftw_libs and {s,d}fftw_opt_libs
 
 [atlas]
 library_dirs = /usr/lib/3dnow:/usr/lib/3dnow/atlas
@@ -105,6 +103,8 @@ libraries = lapack, f77blas, cblas, atlas
 library_dirs = /usr/X11R6/lib
 include_dirs = /usr/X11R6/include
 ----------
+
+Note that the ``libraries`` key is the default setting for libraries.
 
 Authors:
   Pearu Peterson <pearu@cens.ioc.ee>, February 2002
