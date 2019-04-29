@@ -548,6 +548,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     Examples
     --------
+    >>> import warnings
     >>> x = np.array([0.0, 1.0, 2.0, 3.0,  4.0,  5.0])
     >>> y = np.array([0.0, 0.8, 0.9, 0.1, -0.8, -1.0])
     >>> z = np.polyfit(x, y, 3)
@@ -566,9 +567,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     High-order polynomials may oscillate wildly:
 
-    >>> p30 = np.poly1d(np.polyfit(x, y, 30))
-    ... 
-    >>> # RankWarning: Polyfit may be poorly conditioned...
+    >>> with warnings.catch_warnings():
+    ...     warnings.simplefilter('ignore', np.RankWarning)
+    ...     p30 = np.poly1d(np.polyfit(x, y, 30))
+    ...
     >>> p30(4)
     -0.80000000000000204 # may vary
     >>> p30(5)
@@ -632,7 +634,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:
         msg = "Polyfit may be poorly conditioned"
-        warnings.warn(msg, RankWarning, stacklevel=2)
+        warnings.warn(msg, RankWarning, stacklevel=3)
 
     if full:
         return c, resids, rank, s, rcond
@@ -874,8 +876,7 @@ def polymul(a1, a2):
     See Also
     --------
     poly1d : A one-dimensional polynomial class.
-    poly, polyadd, polyder, polydiv, polyfit, polyint, polysub,
-    polyval
+    poly, polyadd, polyder, polydiv, polyfit, polyint, polysub, polyval
     convolve : Array convolution. Same output as polymul, but has parameter
                for overlap mode.
 
@@ -937,7 +938,7 @@ def polydiv(u, v):
 
     See Also
     --------
-    poly, polyadd, polyder, polydiv, polyfit, polyint, polymul, polysub,
+    poly, polyadd, polyder, polydiv, polyfit, polyint, polymul, polysub
     polyval
 
     Notes
@@ -1110,8 +1111,14 @@ class poly1d(object):
 
     @property
     def coeffs(self):
-        """ A copy of the polynomial coefficients """
-        return self._coeffs.copy()
+        """ The polynomial coefficients """
+        return self._coeffs
+
+    @coeffs.setter
+    def coeffs(self, value):
+        # allowing this makes p.coeffs *= 2 legal
+        if value is not self._coeffs:
+            raise AttributeError("Cannot set attribute")
 
     @property
     def variable(self):

@@ -1072,8 +1072,30 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             data = npy_alloc_cache(nbytes);
         }
         if (data == NULL) {
-            PyErr_NoMemory();
-            goto fail;
+            static PyObject *exc_type = NULL;
+            
+            npy_cache_import(
+                "numpy.core._exceptions", "_ArrayMemoryError",
+                &exc_type);
+            if (exc_type == NULL) {
+                return NULL;
+            }
+            
+            PyObject *shape = PyArray_IntTupleFromIntp(fa->nd,fa->dimensions);
+            if (shape == NULL) {
+                return NULL;
+            }
+            
+            /* produce an error object */
+            PyObject *exc_value = PyTuple_Pack(2, shape, descr);
+            Py_DECREF(shape);
+            if (exc_value == NULL){
+                return NULL;
+            }
+            PyErr_SetObject(exc_type, exc_value);
+            Py_DECREF(exc_value);
+            return NULL;
+
         }
         fa->flags |= NPY_ARRAY_OWNDATA;
 
@@ -1183,9 +1205,9 @@ PyArray_NewFromDescrAndBase(
                                     flags, obj, base, 0, 0);
 }
 
-/*NUMPY_API
+/*
  * Creates a new array with the same shape as the provided one,
- * with possible memory layout order and data type changes.
+ * with possible memory layout order, data type and shape changes.
  *
  * prototype - The array the new one should be like.
  * order     - NPY_CORDER - C-contiguous result.
@@ -1193,6 +1215,8 @@ PyArray_NewFromDescrAndBase(
  *             NPY_ANYORDER - Fortran if prototype is Fortran, C otherwise.
  *             NPY_KEEPORDER - Keeps the axis ordering of prototype.
  * dtype     - If not NULL, overrides the data type of the result.
+ * ndim      - If not 0 and dims not NULL, overrides the shape of the result.
+ * dims      - If not NULL and ndim not 0, overrides the shape of the result.
  * subok     - If 1, use the prototype's array subtype, otherwise
  *             always create a base-class array.
  *
@@ -1200,11 +1224,18 @@ PyArray_NewFromDescrAndBase(
  * dtype->subarray is true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
-                     PyArray_Descr *dtype, int subok)
+PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
+                              PyArray_Descr *dtype, int ndim, npy_intp *dims, int subok)
 {
     PyObject *ret = NULL;
-    int ndim = PyArray_NDIM(prototype);
+
+    if (dims == NULL) {
+        ndim = PyArray_NDIM(prototype);
+        dims = PyArray_DIMS(prototype);
+    }
+    else if (order == NPY_KEEPORDER && (ndim != PyArray_NDIM(prototype))) {
+        order = NPY_CORDER;
+    }
 
     /* If no override data type, use the one from the prototype */
     if (dtype == NULL) {
@@ -1237,7 +1268,7 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
         ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
                                         dtype,
                                         ndim,
-                                        PyArray_DIMS(prototype),
+                                        dims,
                                         NULL,
                                         NULL,
                                         order,
@@ -1246,11 +1277,10 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
     /* KEEPORDER needs some analysis of the strides */
     else {
         npy_intp strides[NPY_MAXDIMS], stride;
-        npy_intp *shape = PyArray_DIMS(prototype);
         npy_stride_sort_item strideperm[NPY_MAXDIMS];
         int idim;
 
-        PyArray_CreateSortedStridePerm(PyArray_NDIM(prototype),
+        PyArray_CreateSortedStridePerm(ndim,
                                         PyArray_STRIDES(prototype),
                                         strideperm);
 
@@ -1259,14 +1289,14 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
         for (idim = ndim-1; idim >= 0; --idim) {
             npy_intp i_perm = strideperm[idim].perm;
             strides[i_perm] = stride;
-            stride *= shape[i_perm];
+            stride *= dims[i_perm];
         }
 
         /* Finally, allocate the array */
         ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
                                         dtype,
                                         ndim,
-                                        shape,
+                                        dims,
                                         strides,
                                         NULL,
                                         0,
@@ -1274,6 +1304,29 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
     }
 
     return ret;
+}
+
+/*NUMPY_API
+ * Creates a new array with the same shape as the provided one,
+ * with possible memory layout order and data type changes.
+ *
+ * prototype - The array the new one should be like.
+ * order     - NPY_CORDER - C-contiguous result.
+ *             NPY_FORTRANORDER - Fortran-contiguous result.
+ *             NPY_ANYORDER - Fortran if prototype is Fortran, C otherwise.
+ *             NPY_KEEPORDER - Keeps the axis ordering of prototype.
+ * dtype     - If not NULL, overrides the data type of the result.
+ * subok     - If 1, use the prototype's array subtype, otherwise
+ *             always create a base-class array.
+ *
+ * NOTE: If dtype is not NULL, steals the dtype reference.  On failure or when
+ * dtype->subarray is true, dtype will be decrefed.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
+                     PyArray_Descr *dtype, int subok)
+{
+    return PyArray_NewLikeArrayWithShape(prototype, order, dtype, 0, NULL, subok);
 }
 
 /*NUMPY_API

@@ -697,6 +697,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.exp'),
           None,
+          TD('f', simd=[('avx2', 'f'), ('avx512f', 'f')]),
           TD(inexact, f='exp', astype={'e':'f'}),
           TD(P, f='exp'),
           ),
@@ -718,6 +719,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.log'),
           None,
+          TD('f', simd=[('avx2', 'f'), ('avx512f', 'f')]),
           TD(inexact, f='log', astype={'e':'f'}),
           TD(P, f='log'),
           ),
@@ -763,14 +765,14 @@ defdict = {
           docstrings.get('numpy.core.umath.ceil'),
           None,
           TD(flts, f='ceil', astype={'e':'f'}),
-          TD(P, f='ceil'),
+          TD(O, f='npy_ObjectCeil'),
           ),
 'trunc':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.trunc'),
           None,
           TD(flts, f='trunc', astype={'e':'f'}),
-          TD(P, f='trunc'),
+          TD(O, f='npy_ObjectTrunc'),
           ),
 'fabs':
     Ufunc(1, 1, None,
@@ -784,7 +786,7 @@ defdict = {
           docstrings.get('numpy.core.umath.floor'),
           None,
           TD(flts, f='floor', astype={'e':'f'}),
-          TD(P, f='floor'),
+          TD(O, f='npy_ObjectFloor'),
           ),
 'rint':
     Ufunc(1, 1, None,
@@ -844,8 +846,8 @@ defdict = {
 'isfinite':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
-          None,
-          TD(nodatetime_or_obj, out='?'),
+          'PyUFunc_IsFiniteTypeResolver',
+          TD(noobj, out='?'),
           ),
 'signbit':
     Ufunc(1, 1, None,

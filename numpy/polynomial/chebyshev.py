@@ -528,8 +528,7 @@ def chebfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, lagfromroots, hermfromroots,
-    hermefromroots.
+    polyfromroots, legfromroots, lagfromroots, hermfromroots, hermefromroots
 
     Examples
     --------
@@ -1461,7 +1460,7 @@ def chebvander2d(x, y, deg):
 
     See Also
     --------
-    chebvander, chebvander3d. chebval2d, chebval3d
+    chebvander, chebvander3d, chebval2d, chebval3d
 
     Notes
     -----
@@ -1515,7 +1514,7 @@ def chebvander3d(x, y, z, deg):
 
     See Also
     --------
-    chebvander, chebvander3d. chebval2d, chebval3d
+    chebvander, chebvander3d, chebval2d, chebval3d
 
     Notes
     -----

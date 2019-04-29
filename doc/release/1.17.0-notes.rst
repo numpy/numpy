@@ -77,6 +77,11 @@ non-functional. This code was removed. If needed, use
 If the out argument to these functions is provided and has memory overlap with
 the other arguments, it is now buffered to avoid order-dependent behavior.
 
+Unpickling while loading requires explicit opt-in
+-------------------------------------------------
+The functions ``np.load``, and ``np.lib.format.read_array`` take an
+`allow_pickle` keyword which now defaults to ``False`` in response to
+`CVE-2019-6446 <https://nvd.nist.gov/vuln/detail/CVE-2019-6446>`_.
 
 C API changes
 =============
@@ -129,6 +134,22 @@ New mode "empty" for ``np.pad``
 This mode pads an array to a desired shape without initializing the new
 entries.
 
+
+``np.empty_like`` and related functions now accept a ``shape`` argument
+-----------------------------------------------------------------------
+``np.empty_like``, ``np.full_like``, ``np.ones_like`` and ``np.zeros_like`` now
+accept a ``shape`` keyword argument, which can be used to create a new array
+as the prototype, overriding its shape as well. This is particularly useful
+when combined with the ``__array_function__`` protocol, allowing the creation
+of new arbitrary-shape arrays from NumPy-like libraries when such an array
+is used as the prototype.
+
+Floating point scalars implement ``as_integer_ratio`` to match the builtin float
+--------------------------------------------------------------------------------
+This returns a (numerator, denominator) pair, which can be used to construct a
+`fractions.Fraction`.
+
+
 Improvements
 ============
 
@@ -152,9 +173,9 @@ lengths has improved and is on par with complex-valued FFTs.
 
 Further improvements to ``ctypes`` support in ``np.ctypeslib``
 --------------------------------------------------------------
-A new ``np.ctypeslib.as_ctypes_type`` function has been added, which can be
+A new `numpy.ctypeslib.as_ctypes_type` function has been added, which can be
 used to converts a `dtype` into a best-guess `ctypes` type. Thanks to this
-new function, ``np.ctypeslib.as_ctypes`` now supports a much wider range of
+new function, `numpy.ctypeslib.as_ctypes` now supports a much wider range of
 array types, including structures, booleans, and integers of non-native
 endianness.
 
@@ -180,6 +201,12 @@ but with this change, you can do::
 
 thereby saving a level of indentation
 
+`numpy.exp and numpy.log` speed up for float32 implementation
+-------------------------------------------------------------
+float32 implementation of numpy.exp and numpy.log now benefit from AVX2/AVX512
+instruction set which are detected during runtime. numpy.exp has a max ulp
+error of 2.52 and numpy.log has a max ulp error or 3.83.
+
 Improve performance of ``np.pad``
 ---------------------------------
 The performance of the function has been improved for most cases by filling in
@@ -193,15 +220,37 @@ returns an appropriate infinity.
 
 Specialized ``np.isnan``, ``np.isinf``, and ``np.isfinite`` ufuncs for bool and int types
 -----------------------------------------------------------------------------------------
-The boolean and integer types are incapable of storing ``np.nan`` and ``np.inf`` values,
-which allows us to provide specialized ufuncs that are up to 250x faster than the current
-approach.
+The boolean and integer types are incapable of storing ``np.nan`` and
+``np.inf`` values, which allows us to provide specialized ufuncs that are up to
+250x faster than the current approach.
+
+``np.isfinite`` supports ``datetime64`` and ``timedelta64`` types
+-----------------------------------------------------------------
+Previously, `np.isfinite` used to raise a ``TypeError`` on being used on these
+two types.
 
 New keywords added to ``np.nan_to_num``
 ---------------------------------------
-``np.nan_to_num`` now accepts keywords ``nan``, ``posinf`` and ``neginf`` allowing the
-user to define the value to replace the ``nan``, positive and negative ``np.inf`` values 
-respectively.
+``np.nan_to_num`` now accepts keywords ``nan``, ``posinf`` and ``neginf``
+allowing the user to define the value to replace the ``nan``, positive and
+negative ``np.inf`` values respectively.
+
+MemoryErrors caused by allocated overly large arrays are more descriptive
+-------------------------------------------------------------------------
+Often the cause of a MemoryError is incorrect broadcasting, which results in a
+very large and incorrect shape. The message of the error now includes this
+shape to help diagnose the cause of failure.
+
+`floor`, `ceil`, and `trunc` now respect builtin magic methods
+--------------------------------------------------------------
+These ufuncs now call the ``__floor__``, ``__ceil__``, and ``__trunc__``
+methods when called on object arrays, making them compatible with
+`decimal.Decimal` and `fractions.Fraction` objects.
+
+`quantile` now works on `fraction.Fraction` and `decimal.Decimal` objects
+-------------------------------------------------------------------------
+In general, this handles object arrays more gracefully, and avoids floating-
+point operations if exact arithmetic types are used.
 
 
 Changes
@@ -224,6 +273,14 @@ NumPy now always checks the ``__array_function__`` method to implement overrides
 of NumPy functions on non-NumPy arrays, as described in `NEP 18`_. The feature
 was available for testing with NumPy 1.16 if appropriate environment variables
 are set, but is now always enabled.
+
+`numpy.lib.recfunctions.structured_to_unstructured` does not squeeze single-field views
+---------------------------------------------------------------------------------------
+Previously ``structured_to_unstructured(arr[['a']])`` would produce a squeezed
+result inconsistent with ``structured_to_unstructured(arr[['a', b']])``. This
+was accidental. The old behavior can be retained with
+``structured_to_unstructured(arr[['a']]).squeeze(axis=-1)`` or far more simply,
+``arr['a']``.
 
 ``__array_interface__`` offset now works as documented
 ------------------------------------------------------

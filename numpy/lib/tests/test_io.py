@@ -22,7 +22,7 @@ from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles,
+    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings
     )
 
 
@@ -87,7 +87,7 @@ class RoundtripTest(object):
 
         """
         save_kwds = kwargs.get('save_kwds', {})
-        load_kwds = kwargs.get('load_kwds', {})
+        load_kwds = kwargs.get('load_kwds', {"allow_pickle": True})
         file_on_disk = kwargs.get('file_on_disk', False)
 
         if file_on_disk:
@@ -347,12 +347,22 @@ class TestSaveTxt(object):
         assert_raises(ValueError, np.savetxt, c, np.array(1))
         assert_raises(ValueError, np.savetxt, c, np.array([[[1], [2]]]))
 
-    def test_record(self):
+    def test_structured(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         c = BytesIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
+
+    def test_structured_padded(self):
+        # gh-13297
+        a = np.array([(1, 2, 3),(4, 5, 6)], dtype=[
+            ('foo', 'i4'), ('bar', 'i4'), ('baz', 'i4')
+        ])
+        c = BytesIO()
+        np.savetxt(c, a[['foo', 'baz']], fmt='%d')
+        c.seek(0)
+        assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
 
     @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
     def test_multifield_view(self):
@@ -550,6 +560,19 @@ class TestSaveTxt(object):
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
         assert_equal(s.read(), utf8 + '\n')
+
+    @pytest.mark.parametrize("fmt", [u"%f", b"%f"])
+    @pytest.mark.parametrize("iotype", [StringIO, BytesIO])
+    def test_unicode_and_bytes_fmt(self, fmt, iotype):
+        # string type of fmt should not matter, see also gh-4053
+        a = np.array([1.])
+        s = iotype()
+        np.savetxt(s, a, fmt=fmt)
+        s.seek(0)
+        if iotype is StringIO:
+            assert_equal(s.read(), u"%f\n" % 1.)
+        else:
+            assert_equal(s.read(), b"%f\n" % 1.)
 
 
 class LoadTxtBase(object):
@@ -1380,6 +1403,19 @@ M   33  21.99
         test = np.genfromtxt(data, dtype=(int, int), comments=None, names=True)
         control = np.array([(1, 2), (3, 4)], dtype=[('col1', int), ('col2', int)])
         assert_equal(test, control)
+
+    def test_file_is_closed_on_error(self):
+        # gh-13200
+        with tempdir() as tmpdir:
+            fpath = os.path.join(tmpdir, "test.csv")
+            with open(fpath, "wb") as f:
+                f.write(u'\N{GREEK PI SYMBOL}'.encode('utf8'))
+
+            # ResourceWarnings are emitted from a destructor, so won't be
+            # detected by regular propagation to errors.
+            with assert_no_warnings():
+                with pytest.raises(UnicodeDecodeError):
+                    np.genfromtxt(fpath, encoding="ascii")
 
     def test_autonames_and_usecols(self):
         # Tests names and usecols

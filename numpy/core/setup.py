@@ -171,6 +171,11 @@ def check_math_capabilities(config, moredefs, mathlibs):
         if config.check_gcc_function_attribute(dec, fn):
             moredefs.append((fname2def(fn), 1))
 
+    for dec, fn, code, header in OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS:
+        if config.check_gcc_function_attribute_with_intrinsics(dec, fn, code,
+                                                               header):
+            moredefs.append((fname2def(fn), 1))
+
     for fn in OPTIONAL_VARIABLE_ATTRIBUTES:
         if config.check_gcc_variable_attribute(fn):
             m = fn.replace("(", "_").replace(")", "_")
@@ -680,7 +685,9 @@ def configuration(parent_package='',top_path=None):
                        ]
 
     # Must be true for CRT compilers but not MinGW/cygwin. See gh-9977.
-    is_msvc = platform.system() == 'Windows'
+    # Intel and Clang also don't seem happy with /GL
+    is_msvc = (platform.platform().startswith('Windows') and
+               platform.python_compiler().startswith('MS'))
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',

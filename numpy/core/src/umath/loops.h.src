@@ -178,6 +178,22 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
+ *  #func = exp, log#
+ */
+NPY_NO_EXPORT void
+FLOAT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat1
+ * #isa = avx512f, avx2#
+ */
+
+NPY_NO_EXPORT void
+FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
  * Float types
  *  #TYPE = HALF, FLOAT, DOUBLE, LONGDOUBLE#
  *  #c = f, f, , l#
@@ -426,6 +442,9 @@ TIMEDELTA_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
 
 NPY_NO_EXPORT void
 @TYPE@_isnat(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@TYPE@_isfinite(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
