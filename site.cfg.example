@@ -21,8 +21,7 @@
 #       with. Note that these should be just the names, not the filenames. For
 #       example, the file "libfoo.so" would become simply "foo".
 #           libraries = lapack,f77blas,cblas,atlas
-#       This setting is available for *all* sections, if not it should be
-#       considered a bug.
+#       This setting is available for *all* sections.
 #
 #   library_dirs
 #       List of directories to add to the library search path when compiling
