@@ -411,6 +411,7 @@ record_arrays = [
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('<')),
     np.array(PbufferT, dtype=np.dtype(Pdescr).newbyteorder('>')),
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('>')),
+    np.zeros(1, dtype=[('c', ('<f8', (5,)), (2,))])
 ]
 
 
