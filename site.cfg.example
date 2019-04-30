@@ -21,6 +21,7 @@
 #       with. Note that these should be just the names, not the filenames. For
 #       example, the file "libfoo.so" would become simply "foo".
 #           libraries = lapack,f77blas,cblas,atlas
+#       This setting is available for *all* sections.
 #
 #   library_dirs
 #       List of directories to add to the library search path when compiling
@@ -162,23 +163,20 @@
 # [mkl] 
 # library_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/lib/intel64
 # include_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/include 
-# mkl_libs = mkl_rt 
-# lapack_libs =  
+# libraries = mkl_rt
 # 
 # For 32 bit code at Linux: 
 # [mkl]
 # library_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/lib/ia32
 # include_dirs = /opt/intel/compilers_and_libraries_2018/linux/mkl/include 
-# mkl_libs = mkl_rt 
-# lapack_libs =  
+# libraries = mkl_rt
 # 
 # On win-64, the following options compiles NumPy with the MKL library 
 # dynamically linked. 
 # [mkl] 
 # include_dirs = C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018\windows\mkl\include
 # library_dirs = C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018\windows\mkl\lib\intel64
-# mkl_libs = mkl_rt 
-# lapack_libs =
+# libraries = mkl_rt
 
 # Accelerate
 # ----------
@@ -202,10 +200,10 @@
 #   https://scikit-umfpack.github.io/scikit-umfpack/
 #
 #[amd]
-#amd_libs = amd
+#libraries = amd
 #
 #[umfpack]
-#umfpack_libs = umfpack
+#libraries = umfpack
 
 # FFT libraries
 # -------------
