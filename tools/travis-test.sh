@@ -26,6 +26,7 @@ fi
 
 # make some warnings fatal, mostly to match windows compilers
 werrors="-Werror=vla -Werror=nonnull -Werror=pointer-arith"
+werrors="$werrors -Werror=implicit-function-declaration"
 
 # build with c99 by default
 
