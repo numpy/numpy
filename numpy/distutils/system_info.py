@@ -1603,10 +1603,10 @@ class lapack_opt_info(system_info):
         # Default to get the optimized BLAS implementation
         info = get_info('blas_opt')
         if not info:
-            warnings.warn(BlasNotFoundError.__doc__, stacklevel=3)
+            warnings.warn(BlasNotFoundError.__doc__ or '', stacklevel=3)
             info_src = get_info('blas_src')
             if not info_src:
-                warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=3)
+                warnings.warn(BlasSrcNotFoundError.__doc__ or '', stacklevel=3)
                 return {}
             dict_append(info, libraries=[('fblas_src', info_src)])
         return info
@@ -1614,10 +1614,10 @@ class lapack_opt_info(system_info):
     def _get_info_lapack(self):
         info = get_info('lapack')
         if not info:
-            warnings.warn(LapackNotFoundError.__doc__, stacklevel=3)
+            warnings.warn(LapackNotFoundError.__doc__ or '', stacklevel=3)
             info_src = get_info('lapack_src')
             if not info_src:
-                warnings.warn(LapackSrcNotFoundError.__doc__, stacklevel=3)
+                warnings.warn(LapackSrcNotFoundError.__doc__ or '', stacklevel=3)
                 return {}
             dict_append(info, libraries=[('flapack_src', info_src)])
         return info
@@ -1659,8 +1659,8 @@ class lapack_opt_info(system_info):
         if 'lapack' not in lapack_order:
             # Since the user may request *not* to use any library, we still need
             # to raise warnings to signal missing packages!
-            warnings.warn(LapackNotFoundError.__doc__, stacklevel=2)
-            warnings.warn(LapackSrcNotFoundError.__doc__, stacklevel=2)
+            warnings.warn(LapackNotFoundError.__doc__ or '', stacklevel=2)
+            warnings.warn(LapackSrcNotFoundError.__doc__ or '', stacklevel=2)
 
 
 class blas_opt_info(system_info):
@@ -1721,11 +1721,11 @@ class blas_opt_info(system_info):
             dict_append(info, **blas)
         else:
             # Not even BLAS was found!
-            warnings.warn(BlasNotFoundError.__doc__, stacklevel=3)
+            warnings.warn(BlasNotFoundError.__doc__ or '', stacklevel=3)
 
             blas_src = get_info('blas_src')
             if not blas_src:
-                warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=3)
+                warnings.warn(BlasSrcNotFoundError.__doc__ or '', stacklevel=3)
                 return False
             dict_append(info, libraries=[('fblas_src', blas_src)])
 
@@ -1757,8 +1757,8 @@ class blas_opt_info(system_info):
         if 'blas' not in blas_order:
             # Since the user may request *not* to use any library, we still need
             # to raise warnings to signal missing packages!
-            warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
-            warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
+            warnings.warn(BlasNotFoundError.__doc__ or '', stacklevel=2)
+            warnings.warn(BlasSrcNotFoundError.__doc__ or '', stacklevel=2)
 
 
 class blas_info(system_info):
