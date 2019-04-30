@@ -832,7 +832,7 @@ def block(arrays):
 
 # Theses helper functions are mostly used for testing.
 # They allow us to write tests that directly call `_block_slicing`
-# or `_block_concatenate` wtihout blocking large arrays to forse the wisdom
+# or `_block_concatenate` without blocking large arrays to forse the wisdom
 # to trigger the desired path.
 def _block_setup(arrays):
     """
