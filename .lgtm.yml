@@ -7,6 +7,9 @@ path_classifiers:
     # "undefined export" alerts
     - numpy/random/__init__.py
 
+queries:
+  - include: py/file-not-closed
+
 extraction:
   python:
     python_setup:
