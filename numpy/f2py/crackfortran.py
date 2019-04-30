@@ -2512,7 +2512,7 @@ def _eval_scalar(value, params):
         value = value.split('_')[0]
     try:
         value = str(eval(value, {}, params))
-    except (NameError, SyntaxError):
+    except (NameError, SyntaxError, TypeError):
         return value
     except Exception as msg:
         errmess('"%s" in evaluating %r '
