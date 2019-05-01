@@ -1154,7 +1154,7 @@ unravel_index_loop(int unravel_ndim, npy_intp *unravel_dims,
 
     NPY_BEGIN_ALLOW_THREADS;
     /* NPY_KEEPORDER or NPY_ANYORDER have no meaning in this setting */
-    assert (order == NPY_CORDER || order == NPY_FORTRANORDER);
+    assert(order == NPY_CORDER || order == NPY_FORTRANORDER);
     while (count--) {
         val = *(npy_intp *)indices;
         if (val < 0 || val >= unravel_size) {
@@ -1321,7 +1321,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
                 goto fail;
             }
             coordsptr += count * dimensions.len;
-        } while(iternext(iter));
+        } while (iternext(iter));
     }
 
 
