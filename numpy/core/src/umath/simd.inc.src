@@ -1473,7 +1473,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
 
 #if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS
 static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
-@ISA@_sincos_FLOAT(npy_float * op, npy_float * ip, const npy_int array_size,
+@ISA@_sincos_FLOAT(npy_float * op, npy_float * ip, const npy_intp array_size,
                                                    char* operation)
 {
     const npy_int num_lanes = @BYTES@/sizeof(npy_float);
@@ -1505,9 +1505,9 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     @vtype@ zero_f = _mm@vsize@_set1_ps(0.0f);
     @vtype@ quadrant, reduced_x, reduced_x2, cos, sin;
     @vtype@i iquadrant;
-    @mask@ glibc_mask, sine_mask, negate_mask;
+    @mask@ nan_mask, glibc_mask, sine_mask, negate_mask;
     @mask@ load_mask = @isa@_get_full_load_mask();
-    npy_int num_remaining_elements = array_size;
+    npy_intp num_remaining_elements = array_size;
 
     while (num_remaining_elements > 0) {
 
@@ -1524,7 +1524,8 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 
         glibc_mask = @isa@_in_range_mask(x, large_number,-large_number);
         glibc_mask = @and_masks@(load_mask, glibc_mask);
-        x = @isa@_set_masked_lanes(x, zero_f, glibc_mask);
+        nan_mask = _mm@vsize@_cmp_ps@vsub@(x, x, _CMP_NEQ_UQ);
+        x = @isa@_set_masked_lanes(x, zero_f, @or_masks@(nan_mask, glibc_mask));
         npy_int iglibc_mask = @mask_to_int@(glibc_mask);
 
         if (iglibc_mask != @full_mask@) {
@@ -1556,6 +1557,7 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
             /* multiply by -1 for appropriate elements */
             negate_mask = @isa@_should_negate(iquadrant, twos, twos);
             cos = @isa@_blend(cos, _mm@vsize@_sub_ps(zero_f, cos), negate_mask);
+            cos = @isa@_set_masked_lanes(cos, _mm@vsize@_set1_ps(NPY_NANF), nan_mask);
 
             @masked_store@(op, @cvtps_epi32@(load_mask), cos);
         }
