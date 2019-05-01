@@ -678,6 +678,23 @@ class TestSpecialFloats(object):
             assert_raises(FloatingPointError, np.log, np.float32(-np.inf))
             assert_raises(FloatingPointError, np.log, np.float32(-1.0))
 
+    def test_sincos_values(self):
+        with np.errstate(all='ignore'):
+            x = [np.nan,  np.nan, np.nan, np.nan]
+            y = [np.nan, -np.nan, np.inf, -np.inf]
+            for dt in ['f', 'd', 'g']:
+                xf = np.array(x, dtype=dt)
+                yf = np.array(y, dtype=dt)
+                assert_equal(np.sin(yf), xf)
+                assert_equal(np.cos(yf), xf)
+
+        with np.errstate(invalid='raise'):
+            assert_raises(FloatingPointError, np.sin, np.float32(-np.inf))
+            assert_raises(FloatingPointError, np.sin, np.float32(np.inf))
+            assert_raises(FloatingPointError, np.cos, np.float32(-np.inf))
+            assert_raises(FloatingPointError, np.cos, np.float32(np.inf))
+
+
 class TestExpLogFloat32(object):
     def test_exp_float32(self):
         np.random.seed(42)
