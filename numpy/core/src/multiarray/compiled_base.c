@@ -1187,7 +1187,6 @@ unravel_index_loop(int unravel_ndim, npy_intp *unravel_dims,
     return NPY_SUCCEED;
 }
 
-
 /* unravel_index implementation - see add_newdocs.py */
 NPY_NO_EXPORT PyObject *
 arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
