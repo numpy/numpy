@@ -267,10 +267,15 @@ def descr_to_dtype(descr):
 
     This function reverses the process, eliminating the empty padding fields.
     '''
-    if isinstance(descr, (str, dict, tuple)):
+    if isinstance(descr, (str, dict)):
         # No padding removal needed
         return numpy.dtype(descr)
-
+    elif isinstance(descr, tuple):
+        if isinstance(descr[0], list):
+            # subtype, will always have a shape descr[1]
+            dt = descr_to_dtype(descr[0])
+            return numpy.dtype((dt, descr[1]))
+        return numpy.dtype(descr)
     fields = []
     offset = 0
     for field in descr:
