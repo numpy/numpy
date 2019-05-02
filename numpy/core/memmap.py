@@ -104,14 +104,14 @@ class memmap(ndarray):
 
     See also
     --------
-    `lib.format.open_memmap <https://github.com/numpy/numpy/blob/v1.16.1/numpy/lib/format.py>`_ : Create or load a memory-mapped ``.npy`` file.
+    lib.format.open_memmap: Create or load a memory-mapped ``.npy`` file.
 
     Notes
     -----
     The memmap object can be used anywhere an ndarray is accepted.
     Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
     ``True``.
-    
+
     Memory-mapped files cannot be larger than 2GB on 32-bit systems.
 
     When a memmap causes a file to be created or extended beyond its

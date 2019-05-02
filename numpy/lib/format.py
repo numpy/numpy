@@ -165,6 +165,12 @@ from numpy.compat import (
     asbytes, asstr, isfileobj, long, os_fspath, pickle
     )
 
+__all__ = ['magic', 'read_magic', 'dtype_to_descr', 'descr_to_detype',
+           'header_data_from_array_1_0', 'write_array_header_1_0',
+           'write_array_header_2_0', 'read_array_header_1_0',
+           'read_array_header_2_0', 'write_array', 'read_array',
+           'open_memmap']
+
 
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
