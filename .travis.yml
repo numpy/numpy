@@ -53,6 +53,11 @@ matrix:
     - python: 3.6
       env:
        - PYTHONOPTIMIZE=2
+       - BLAS=None
+       - LAPACK=None
+       - ATLAS=None
+       - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas
+       - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
        - USE_ASV=1
     - python: 3.5
       dist: trusty # remove after April 2019

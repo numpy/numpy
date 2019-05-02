@@ -92,19 +92,19 @@ src_dirs = /usr/local/src:/opt/src
 search_static_first = 0
 
 [fftw]
-fftw_libs = rfftw, fftw
-fftw_opt_libs = rfftw_threaded, fftw_threaded
-# if the above aren't found, look for {s,d}fftw_libs and {s,d}fftw_opt_libs
+libraries = rfftw, fftw
 
 [atlas]
 library_dirs = /usr/lib/3dnow:/usr/lib/3dnow/atlas
 # for overriding the names of the atlas libraries
-atlas_libs = lapack, f77blas, cblas, atlas
+libraries = lapack, f77blas, cblas, atlas
 
 [x11]
 library_dirs = /usr/X11R6/lib
 include_dirs = /usr/X11R6/include
 ----------
+
+Note that the ``libraries`` key is the default setting for libraries.
 
 Authors:
   Pearu Peterson <pearu@cens.ioc.ee>, February 2002
@@ -449,6 +449,12 @@ class NotFoundError(DistutilsError):
     """Some third-party program or library is not found."""
 
 
+class AliasedOptionError(DistutilsError):
+    """
+    Aliases entries in config files should not be existing.
+    In section '{section}' we found multiple appearances of options {options}."""
+
+
 class AtlasNotFoundError(NotFoundError):
     """
     Atlas (http://math-atlas.sourceforge.net/) libraries not found.
@@ -472,6 +478,13 @@ class LapackSrcNotFoundError(LapackNotFoundError):
     numpy/distutils/site.cfg file (section [lapack_src]) or by setting
     the LAPACK_SRC environment variable."""
 
+
+class BlasOptNotFoundError(NotFoundError):
+    """
+    Optimized (vendor) Blas libraries are not found.
+    Falls back to netlib Blas library which has worse performance.
+    A better performance should be easily gained by switching
+    Blas library."""
 
 class BlasNotFoundError(NotFoundError):
     """
@@ -606,6 +619,39 @@ class system_info(object):
             extra_info = self.calc_extra_info()
             dict_append(info, **extra_info)
         self.saved_results[self.__class__.__name__] = info
+
+    def get_option_single(self, *options):
+        """ Ensure that only one of `options` are found in the section
+
+        Parameters
+        ----------
+        *options : list of str
+           a list of options to be found in the section (``self.section``)
+
+        Returns
+        -------
+        str :
+            the option that is uniquely found in the section
+
+        Raises
+        ------
+        AliasedOptionError :
+            in case more than one of the options are found
+        """
+        found = map(lambda opt: self.cp.has_option(self.section, opt), options)
+        found = list(found)
+        if sum(found) == 1:
+            return options[found.index(True)]
+        elif sum(found) == 0:
+            # nothing is found anyways
+            return options[0]
+
+        # Else we have more than 1 key found
+        if AliasedOptionError.__doc__ is None:
+            raise AliasedOptionError()
+        raise AliasedOptionError(AliasedOptionError.__doc__.format(
+            section=self.section, options='[{}]'.format(', '.join(options))))
+
 
     def has_info(self):
         return self.__class__.__name__ in self.saved_results
@@ -897,7 +943,9 @@ class fftw_info(system_info):
         """Returns True on successful version detection, else False"""
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
-        libs = self.get_libs(self.section + '_libs', ver_param['libs'])
+
+        opt = self.get_option_single(self.section + '_libs', 'libraries')
+        libs = self.get_libs(opt, ver_param['libs'])
         info = self.check_libs(lib_dirs, libs)
         if info is not None:
             flag = 0
@@ -1082,7 +1130,8 @@ class mkl_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
-        mkl_libs = self.get_libs('mkl_libs', self._lib_mkl)
+        opt = self.get_option_single('mkl_libs', 'libraries')
+        mkl_libs = self.get_libs(opt, self._lib_mkl)
         info = self.check_libs2(lib_dirs, mkl_libs)
         if info is None:
             return
@@ -1129,8 +1178,8 @@ class atlas_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         info = {}
-        atlas_libs = self.get_libs('atlas_libs',
-                                   self._lib_names + self._lib_atlas)
+        opt = self.get_option_single('atlas_libs', 'libraries')
+        atlas_libs = self.get_libs(opt, self._lib_names + self._lib_atlas)
         lapack_libs = self.get_libs('lapack_libs', self._lib_lapack)
         atlas = None
         lapack = None
@@ -1222,8 +1271,8 @@ class atlas_blas_info(atlas_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         info = {}
-        atlas_libs = self.get_libs('atlas_libs',
-                                   self._lib_names + self._lib_atlas)
+        opt = self.get_option_single('atlas_libs', 'libraries')
+        atlas_libs = self.get_libs(opt, self._lib_names + self._lib_atlas)
         atlas = self.check_libs2(lib_dirs, atlas_libs, [])
         if atlas is None:
             return
@@ -1275,8 +1324,8 @@ class atlas_3_10_blas_info(atlas_3_10_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         info = {}
-        atlas_libs = self.get_libs('atlas_libs',
-                                   self._lib_names)
+        opt = self.get_option_single('atlas_lib', 'libraries')
+        atlas_libs = self.get_libs(opt, self._lib_names)
         atlas = self.check_libs2(lib_dirs, atlas_libs, [])
         if atlas is None:
             return
@@ -1327,7 +1376,8 @@ class lapack_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        lapack_libs = self.get_libs('lapack_libs', self._lib_names)
+        opt = self.get_option_single('lapack_libs', 'libraries')
+        lapack_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs(lib_dirs, lapack_libs, [])
         if info is None:
             return
@@ -1539,139 +1589,219 @@ Make sure that -lgfortran is used for C++ extensions.
 class lapack_opt_info(system_info):
 
     notfounderror = LapackNotFoundError
+    # Default order of LAPACK checks
+    lapack_order = ['mkl', 'openblas', 'atlas', 'accelerate', 'lapack']
+
+    def _calc_info_mkl(self):
+        info = get_info('lapack_mkl')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_openblas(self):
+        info = get_info('openblas_lapack')
+        if info:
+            self.set_info(**info)
+            return True
+        info = get_info('openblas_clapack')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_atlas(self):
+        info = get_info('atlas_3_10_threads')
+        if not info:
+            info = get_info('atlas_3_10')
+        if not info:
+            info = get_info('atlas_threads')
+        if not info:
+            info = get_info('atlas')
+        if info:
+            # Figure out if ATLAS has lapack...
+            # If not we need the lapack library, but not BLAS!
+            l = info.get('define_macros', [])
+            if ('ATLAS_WITH_LAPACK_ATLAS', None) in l \
+               or ('ATLAS_WITHOUT_LAPACK', None) in l:
+                # Get LAPACK (with possible warnings)
+                # If not found we don't accept anything
+                # since we can't use ATLAS with LAPACK!
+                lapack_info = self._get_info_lapack()
+                if not lapack_info:
+                    return False
+                dict_append(info, **lapack_info)
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_accelerate(self):
+        info = get_info('accelerate')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
+
+    def _get_info_blas(self):
+        # Default to get the optimized BLAS implementation
+        info = get_info('blas_opt')
+        if not info:
+            warnings.warn(BlasNotFoundError.__doc__ or '', stacklevel=3)
+            info_src = get_info('blas_src')
+            if not info_src:
+                warnings.warn(BlasSrcNotFoundError.__doc__ or '', stacklevel=3)
+                return {}
+            dict_append(info, libraries=[('fblas_src', info_src)])
+        return info
+
+    def _get_info_lapack(self):
+        info = get_info('lapack')
+        if not info:
+            warnings.warn(LapackNotFoundError.__doc__ or '', stacklevel=3)
+            info_src = get_info('lapack_src')
+            if not info_src:
+                warnings.warn(LapackSrcNotFoundError.__doc__ or '', stacklevel=3)
+                return {}
+            dict_append(info, libraries=[('flapack_src', info_src)])
+        return info
+
+    def _calc_info_lapack(self):
+        info = self._get_info_lapack()
+        if info:
+            info_blas = self._get_info_blas()
+            dict_append(info, **info_blas)
+            dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
+            self.set_info(**info)
+            return True
+        return False
 
     def calc_info(self):
-
-        lapack_mkl_info = get_info('lapack_mkl')
-        if lapack_mkl_info:
-            self.set_info(**lapack_mkl_info)
-            return
-
-        openblas_info = get_info('openblas_lapack')
-        if openblas_info:
-            self.set_info(**openblas_info)
-            return
-
-        openblas_info = get_info('openblas_clapack')
-        if openblas_info:
-            self.set_info(**openblas_info)
-            return
-
-        atlas_info = get_info('atlas_3_10_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas_3_10')
-        if not atlas_info:
-            atlas_info = get_info('atlas_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas')
-
-        accelerate_info = get_info('accelerate')
-        if accelerate_info and not atlas_info:
-            self.set_info(**accelerate_info)
-            return
-
-        need_lapack = 0
-        need_blas = 0
-        info = {}
-        if atlas_info:
-            l = atlas_info.get('define_macros', [])
-            if ('ATLAS_WITH_LAPACK_ATLAS', None) in l \
-                   or ('ATLAS_WITHOUT_LAPACK', None) in l:
-                need_lapack = 1
-            info = atlas_info
-
+        user_order = os.environ.get('NPY_LAPACK_ORDER', None)
+        if user_order is None:
+            lapack_order = self.lapack_order
         else:
-            warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
-            need_blas = 1
-            need_lapack = 1
-            dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
+            # the user has requested the order of the
+            # check they are all in the available list, a COMMA SEPARATED list
+            user_order = user_order.lower().split(',')
+            non_existing = []
+            lapack_order = []
+            for order in user_order:
+                if order in self.lapack_order:
+                    lapack_order.append(order)
+                elif len(order) > 0:
+                    non_existing.append(order)
+            if len(non_existing) > 0:
+                raise ValueError("lapack_opt_info user defined "
+                                 "LAPACK order has unacceptable "
+                                 "values: {}".format(non_existing))
 
-        if need_lapack:
-            lapack_info = get_info('lapack')
-            #lapack_info = {} ## uncomment for testing
-            if lapack_info:
-                dict_append(info, **lapack_info)
-            else:
-                warnings.warn(LapackNotFoundError.__doc__, stacklevel=2)
-                lapack_src_info = get_info('lapack_src')
-                if not lapack_src_info:
-                    warnings.warn(LapackSrcNotFoundError.__doc__, stacklevel=2)
-                    return
-                dict_append(info, libraries=[('flapack_src', lapack_src_info)])
+        for lapack in lapack_order:
+            if getattr(self, '_calc_info_{}'.format(lapack))():
+                return
 
-        if need_blas:
-            blas_info = get_info('blas')
-            if blas_info:
-                dict_append(info, **blas_info)
-            else:
-                warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
-                blas_src_info = get_info('blas_src')
-                if not blas_src_info:
-                    warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
-                    return
-                dict_append(info, libraries=[('fblas_src', blas_src_info)])
-
-        self.set_info(**info)
-        return
+        if 'lapack' not in lapack_order:
+            # Since the user may request *not* to use any library, we still need
+            # to raise warnings to signal missing packages!
+            warnings.warn(LapackNotFoundError.__doc__ or '', stacklevel=2)
+            warnings.warn(LapackSrcNotFoundError.__doc__ or '', stacklevel=2)
 
 
 class blas_opt_info(system_info):
 
     notfounderror = BlasNotFoundError
+    # Default order of BLAS checks
+    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'accelerate', 'blas']
 
-    def calc_info(self):
+    def _calc_info_mkl(self):
+        info = get_info('blas_mkl')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
-        blas_mkl_info = get_info('blas_mkl')
-        if blas_mkl_info:
-            self.set_info(**blas_mkl_info)
-            return
+    def _calc_info_blis(self):
+        info = get_info('blis')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
-        blis_info = get_info('blis')
-        if blis_info:
-            self.set_info(**blis_info)
-            return
+    def _calc_info_openblas(self):
+        info = get_info('openblas')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
-        openblas_info = get_info('openblas')
-        if openblas_info:
-            self.set_info(**openblas_info)
-            return
+    def _calc_info_atlas(self):
+        info = get_info('atlas_3_10_blas_threads')
+        if not info:
+            info = get_info('atlas_3_10_blas')
+        if not info:
+            info = get_info('atlas_blas_threads')
+        if not info:
+            info = get_info('atlas_blas')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
-        atlas_info = get_info('atlas_3_10_blas_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas_3_10_blas')
-        if not atlas_info:
-            atlas_info = get_info('atlas_blas_threads')
-        if not atlas_info:
-            atlas_info = get_info('atlas_blas')
+    def _calc_info_accelerate(self):
+        info = get_info('accelerate')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
 
-        accelerate_info = get_info('accelerate')
-        if accelerate_info and not atlas_info:
-            self.set_info(**accelerate_info)
-            return
-
-        need_blas = 0
+    def _calc_info_blas(self):
+        # Warn about a non-optimized BLAS library
+        warnings.warn(BlasOptNotFoundError.__doc__ or '', stacklevel=3)
         info = {}
-        if atlas_info:
-            info = atlas_info
-        else:
-            warnings.warn(AtlasNotFoundError.__doc__, stacklevel=2)
-            need_blas = 1
-            dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
+        dict_append(info, define_macros=[('NO_ATLAS_INFO', 1)])
 
-        if need_blas:
-            blas_info = get_info('blas')
-            if blas_info:
-                dict_append(info, **blas_info)
-            else:
-                warnings.warn(BlasNotFoundError.__doc__, stacklevel=2)
-                blas_src_info = get_info('blas_src')
-                if not blas_src_info:
-                    warnings.warn(BlasSrcNotFoundError.__doc__, stacklevel=2)
-                    return
-                dict_append(info, libraries=[('fblas_src', blas_src_info)])
+        blas = get_info('blas')
+        if blas:
+            dict_append(info, **blas)
+        else:
+            # Not even BLAS was found!
+            warnings.warn(BlasNotFoundError.__doc__ or '', stacklevel=3)
+
+            blas_src = get_info('blas_src')
+            if not blas_src:
+                warnings.warn(BlasSrcNotFoundError.__doc__ or '', stacklevel=3)
+                return False
+            dict_append(info, libraries=[('fblas_src', blas_src)])
 
         self.set_info(**info)
-        return
+        return True
+
+    def calc_info(self):
+        user_order = os.environ.get('NPY_BLAS_ORDER', None)
+        if user_order is None:
+            blas_order = self.blas_order
+        else:
+            # the user has requested the order of the
+            # check they are all in the available list
+            user_order = user_order.lower().split(',')
+            non_existing = []
+            blas_order = []
+            for order in user_order:
+                if order in self.blas_order:
+                    blas_order.append(order)
+                elif len(order) > 0:
+                    non_existing.append(order)
+            if len(non_existing) > 0:
+                raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(non_existing))
+
+        for blas in blas_order:
+            if getattr(self, '_calc_info_{}'.format(blas))():
+                return
+
+        if 'blas' not in blas_order:
+            # Since the user may request *not* to use any library, we still need
+            # to raise warnings to signal missing packages!
+            warnings.warn(BlasNotFoundError.__doc__ or '', stacklevel=2)
+            warnings.warn(BlasSrcNotFoundError.__doc__ or '', stacklevel=2)
 
 
 class blas_info(system_info):
@@ -1682,7 +1812,8 @@ class blas_info(system_info):
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
-        blas_libs = self.get_libs('blas_libs', self._lib_names)
+        opt = self.get_option_single('blas_libs', 'libraries')
+        blas_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs(lib_dirs, blas_libs, [])
         if info is None:
             return
@@ -1783,9 +1914,9 @@ class openblas_info(blas_info):
 
         lib_dirs = self.get_lib_dirs()
 
-        openblas_libs = self.get_libs('libraries', self._lib_names)
-        if openblas_libs == self._lib_names: # backward compat with 1.8.0
-            openblas_libs = self.get_libs('openblas_libs', self._lib_names)
+        # Prefer to use libraries over openblas_libs
+        opt = self.get_option_single('openblas_libs', 'libraries')
+        openblas_libs = self.get_libs(opt, self._lib_names)
 
         info = self.check_libs(lib_dirs, openblas_libs, [])
 
@@ -1897,10 +2028,8 @@ class blis_info(blas_info):
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
-        blis_libs = self.get_libs('libraries', self._lib_names)
-        if blis_libs == self._lib_names:
-            blis_libs = self.get_libs('blis_libs', self._lib_names)
-
+        opt = self.get_option_single('blis_libs', 'libraries')
+        blis_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs2(lib_dirs, blis_libs, [])
         if info is None:
             return
@@ -1915,6 +2044,7 @@ class blis_info(blas_info):
 
 class accelerate_info(system_info):
     section = 'accelerate'
+    _lib_names = ['accelerate', 'veclib']
     notfounderror = BlasNotFoundError
 
     def calc_info(self):
@@ -1923,7 +2053,7 @@ class accelerate_info(system_info):
         if libraries:
             libraries = [libraries]
         else:
-            libraries = self.get_libs('libraries', ['accelerate', 'veclib'])
+            libraries = self.get_libs('libraries', self._lib_names)
         libraries = [lib.strip().lower() for lib in libraries]
 
         if (sys.platform == 'darwin' and
@@ -2021,6 +2151,7 @@ class blas_src_info(system_info):
 class x11_info(system_info):
     section = 'x11'
     notfounderror = X11NotFoundError
+    _lib_names = ['X11']
 
     def __init__(self):
         system_info.__init__(self,
@@ -2032,7 +2163,8 @@ class x11_info(system_info):
             return
         lib_dirs = self.get_lib_dirs()
         include_dirs = self.get_include_dirs()
-        x11_libs = self.get_libs('x11_libs', ['X11'])
+        opt = self.get_option_single('x11_libs', 'libraries')
+        x11_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs(lib_dirs, x11_libs, [])
         if info is None:
             return
@@ -2423,7 +2555,8 @@ class amd_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        amd_libs = self.get_libs('amd_libs', self._lib_names)
+        opt = self.get_option_single('amd_libs', 'libraries')
+        amd_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs(lib_dirs, amd_libs, [])
         if info is None:
             return
@@ -2454,7 +2587,8 @@ class umfpack_info(system_info):
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
 
-        umfpack_libs = self.get_libs('umfpack_libs', self._lib_names)
+        opt = self.get_option_single('umfpack_libs', 'libraries')
+        umfpack_libs = self.get_libs(opt, self._lib_names)
         info = self.check_libs(lib_dirs, umfpack_libs, [])
         if info is None:
             return
