@@ -106,6 +106,9 @@ class TestRavelUnravelIndex(object):
                 np.ravel_multi_index(arr, (41, 7, 120, 36, 2706, 8, 6)),
                 [5627771580, 117259570957])
 
+        # test unravel_index for big indices (issue #9538)
+        assert_raises(ValueError, np.unravel_index, 1, (2**32-1, 2**31+1))
+
         # test overflow checking for too big array (issue #7546)
         dummy_arr = ([0],[0])
         half_max = np.iinfo(np.intp).max // 2

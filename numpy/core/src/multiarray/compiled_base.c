@@ -1239,7 +1239,13 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-    unravel_size = PyArray_MultiplyList(dimensions.ptr, dimensions.len);
+    unravel_size = PyArray_OverflowMultiplyList(dimensions.ptr, dimensions.len);
+    if (unravel_size == -1) {
+        PyErr_SetString(PyExc_ValueError,
+                        "dimensions are too large; arrays and shapes with "
+                        "a total size greater than 'intp' are not supported.");
+        goto fail;
+    }
 
     indices = astype_anyint(indices0);
     if (indices == NULL) {
