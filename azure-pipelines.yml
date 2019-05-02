@@ -28,8 +28,8 @@ jobs:
            F77=gfortran-5 F90=gfortran-5 \
            CFLAGS='-UNDEBUG -std=c99' python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
-    continueOnError: true
   - task: PublishTestResults@2
+    condition: succeededOrFailed()
     inputs:
       testResultsFiles: '**/test-*.xml'
       failTaskOnFailedTests: true
@@ -101,8 +101,8 @@ jobs:
     displayName: 'Run Refuide Check'
   - script: python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
-    continueOnError: true
   - task: PublishTestResults@2
+    condition: succeededOrFailed()
     inputs:
       testResultsFiles: '**/test-*.xml'
       failTaskOnFailedTests: true
@@ -204,8 +204,8 @@ jobs:
     displayName: 'For gh-12667; Windows DLL resolution'
   - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run NumPy Test Suite'
-    continueOnError: true
   - task: PublishTestResults@2
+    condition: succeededOrFailed()
     inputs:
       testResultsFiles: '**/test-*.xml'
       failTaskOnFailedTests: true
@@ -217,8 +217,8 @@ jobs:
   steps:
   - script: source tools/pypy-test.sh
     displayName: 'Run PyPy3 Build / Tests'
-    continueOnError: true
   - task: PublishTestResults@2
+    condition: succeededOrFailed()
     inputs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for PyPy3'
