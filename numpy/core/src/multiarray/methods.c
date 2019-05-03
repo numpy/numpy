@@ -2546,6 +2546,22 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (write_flag != Py_None) {
         if (PyObject_IsTrue(write_flag)) {
             if (_IsWriteable(self)) {
+                /*
+                 * _IsWritable (and PyArray_UpdateFlags) allows flipping this,
+                 * although the C-Api user who created the array may have
+                 * chosen to make it non-writable for a good reason, so
+                 * deprecate.
+                 */
+                if ((PyArray_BASE(self) == NULL) &&
+                            !PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA) &&
+                            !PyArray_CHKFLAGS(self, NPY_ARRAY_WRITEABLE)) {
+                    /* 2017-05-03, NumPy 1.17.0 */
+                    if (DEPRECATE("making a non-writeable array writeable "
+                                  "is deprecated for arrays without a base "
+                                  "which do not own their data.") < 0) {
+                        return NULL;
+                    }
+                }
                 PyArray_ENABLEFLAGS(self, NPY_ARRAY_WRITEABLE);
             }
             else {

@@ -142,6 +142,47 @@ class TestFlags(object):
             assert_(vals.flags.writeable)
             assert_(isinstance(vals.base, bytes))
 
+    def test_writeable_from_c_data(self):
+        # Test that the writeable flag can be changed for an array wrapping
+        # low level C-data, but not owning its data.
+        # Also see that this is deprecated to change from python.
+        from numpy.core._multiarray_tests import get_c_wrapping_array
+
+        arr_writeable = get_c_wrapping_array(True)
+        assert not arr_writeable.flags.owndata
+        assert arr_writeable.flags.writeable
+        view = arr_writeable[...]
+
+        # Toggling the writeable flag works on the view:
+        view.flags.writeable = False
+        assert not view.flags.writeable
+        view.flags.writeable = True
+        assert view.flags.writeable
+        # Flag can be unset on the arr_writeable:
+        arr_writeable.flags.writeable = False
+
+        arr_readonly = get_c_wrapping_array(False)
+        assert not arr_readonly.flags.owndata
+        assert not arr_readonly.flags.writeable
+
+        for arr in [arr_writeable, arr_readonly]:
+            view = arr[...]
+            view.flags.writeable = False  # make sure it is readonly
+            arr.flags.writeable = False
+            assert not arr.flags.writeable
+
+            with assert_raises(ValueError):
+                view.flags.writeable = True
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", DeprecationWarning)
+                with assert_raises(DeprecationWarning):
+                    arr.flags.writeable = True
+
+            with assert_warns(DeprecationWarning):
+                arr.flags.writeable = True
+
+
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
         assert_equal(self.a.flags['C'], True)
