@@ -1235,6 +1235,8 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
 
     a = asanyarray(a)
     nd = a.ndim
+    if nd == 0:
+        raise ValueError("diff requires input that is at least one dimensional")
     axis = normalize_axis_index(axis, nd)
 
     combined = []
