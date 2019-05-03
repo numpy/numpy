@@ -145,7 +145,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         /* if not a sequence, produce a clearer message */
         if (fast_seq == Py_None && PyErr_ExceptionMatches(PyExc_TypeError)) {
             PyErr_SetString(PyExc_TypeError,
-                "expected sequence object or a single integer");
+                "expected an integer or a sequence of integers");
         }
         goto fail;
     }
@@ -1008,7 +1008,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
         if (fast_seq == Py_None && PyErr_ExceptionMatches(PyExc_TypeError)) {
             /* if not a sequence, produce a clearer message */
             PyErr_SetString(PyExc_TypeError,
-                "expected sequence object or a single integer");
+                "expected an integer or a sequence of integers");
         }
         goto fail;
     }

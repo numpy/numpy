@@ -1924,7 +1924,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
-    /* Parse the shape argument. This is like PyArray_IntpConverter, but does
+    /*
+     * Parse the shape argument. This is like PyArray_IntpConverter, but does
      * not attempt int -> tuple promotion, and allocates them on the stack.
      */
     {
