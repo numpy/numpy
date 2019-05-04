@@ -259,7 +259,7 @@ and co.
 Half-precision functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 2.0.0
+.. versionadded:: 1.6.0
 
 The header file <numpy/halffloat.h> provides functions to work with
 IEEE 754-2008 16-bit floating point values. While this format is
