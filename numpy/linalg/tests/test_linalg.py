@@ -2002,3 +2002,10 @@ def test_unsupported_commontype():
     arr = np.array([[1, -2], [2, 5]], dtype='float16')
     with assert_raises_regex(TypeError, "unsupported in linalg"):
         linalg.cholesky(arr)
+
+def test_issue_13401():
+    np.random.seed(0)
+    X = np.random.randn(100, 100) * 10
+    u, s, v = np.linalg.svd(X)
+    assert np.mean(X - u @ np.diag(s) @ v) < 1.0
+    assert np.std(X - u @ np.diag(s) @ v) < 1.0

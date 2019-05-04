@@ -223,3 +223,54 @@ jobs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for PyPy3'
       failTaskOnFailedTests: true
+
+- job: Intel_SDE
+  pool:
+    # have to use Mac to reproduce
+    # issue in 13401 because manylinux1
+    # gcc too old to enable our ecosystem OpenBLAS
+    # binaries to switch to SkylakeX kernel
+    vmImage: 'macOS-10.13'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+        versionSpec: '3.7'
+        architecture: 'x64'
+  - script: /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
+    displayName: 'select Xcode version'
+  - script: |
+      python -m pip install --upgrade pip cython pytest setuptools wheel
+    displayName: 'install NumPy dependencies'
+  - script: |
+      brew install gcc49
+      ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libgfortran.3.dylib /usr/local/lib/libgfortran.3.dylib
+      ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libquadmath.0.dylib /usr/local/lib/libquadmath.0.dylib
+    displayName: 'install gfortran'
+  - script: |
+       mkdir openblas && cd openblas
+       wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz
+       tar -zxvf openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz
+       cp ./usr/local/lib/* /usr/local/lib/
+       cp ./usr/local/include/* /usr/local/include/
+       cd ..
+    displayName: 'install OpenBLAS'
+  - script: |
+      python -m pip wheel -v -v -v --wheel-dir=dist .
+      ls -tlrh dist
+      python -m pip install dist/numpy*.whl
+    displayName: 'Build / Install NumPy'
+  - script: |
+      pushd ..
+      python -c "import numpy, ctypes, os; dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__); get_config = dll.openblas_get_config; get_config.restype=ctypes.c_char_p; res = get_config(); print('OpenBLAS get_config returned', str(res)); assert b'OpenBLAS 0.3.5.dev' in res"
+      popd
+    displayName: 'verify OpenBLAS version'
+  - script: |
+      mkdir SDE && cd SDE
+      wget -O sde-external-8.35.0-2019-03-11-mac.tar.bz2 https://www.dropbox.com/s/rkgx577cb7pxc8c/sde-external-8.35.0-2019-03-11-mac.tar.bz2?dl=0
+      tar -xjvf sde-external-8.35.0-2019-03-11-mac.tar.bz2
+      # check that Skylake X is actually reported by OpenBLAS:
+      ./sde-external-8.35.0-2019-03-11-mac/sde64 -cpuid_in ./sde-external-8.35.0-2019-03-11-mac/misc/cpuid/skx/cpuid.def -- python -c "import numpy, ctypes, os; dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__); get_config = dll.openblas_get_config; get_config.restype=ctypes.c_char_p; res = get_config(); print('OpenBLAS get_config returned', str(res)); assert b'SkylakeX' in res"
+      cd ..
+      # will only report 1 failure beyond my new test, even in full mode
+      ./SDE/sde-external-8.35.0-2019-03-11-mac/sde64 -cpuid_in ./SDE/sde-external-8.35.0-2019-03-11-mac/misc/cpuid/skx/cpuid.def -- python runtests.py -n -s "linalg"
+    displayName: 'Intel SDE testing for linalg / OpenBLAS'
