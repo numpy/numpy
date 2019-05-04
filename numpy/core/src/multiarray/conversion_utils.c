@@ -116,8 +116,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return NPY_FAIL;
     }
     if (len > NPY_MAXDIMS) {
-        PyErr_Format(PyExc_ValueError, "sequence too large; "
-                     "cannot be greater than %d", NPY_MAXDIMS);
+        PyErr_Format(PyExc_ValueError, "maximum supported dimension for an ndarray is %d"
+                     ", found %d", NPY_MAXDIMS, len);
         return NPY_FAIL;
     }
     if (len > 0) {
