@@ -635,14 +635,6 @@ def test_pickle_disallow():
                        ('c', np.int32),
                       ], align=True),
              (3,)),
-    np.dtype([('x', ([('a', '|i1'),
-                      ('', '|V3'),
-                      ('b', '|i1'),
-                      ('', '|V3'),
-                     ],
-                     (3,)),
-               (4,),
-             )]),
     np.dtype([('x', np.dtype({'names':['a','b'],
                               'formats':['i1','i1'],
                               'offsets':[0,4],
@@ -665,8 +657,27 @@ def test_pickle_disallow():
             )),
         (4,)
         )))
-        ])
+        ]),
+    np.dtype([
+        ('a', np.dtype((
+            np.dtype((
+                np.dtype((
+                    np.dtype([
+                        ('a', int),
+                        ('b', np.dtype({'names':['a','b'],
+                                        'formats':['i1','i1'],
+                                        'offsets':[0,4],
+                                        'itemsize':8})),
+                    ]),
+                    (3,),
+                )),
+                (4,),
+            )),
+            (5,),
+        )))
+        ]),
     ])
+
 def test_descr_to_dtype(dt):
     dt1 = format.descr_to_dtype(dt.descr)
     assert_equal_(dt1, dt)
