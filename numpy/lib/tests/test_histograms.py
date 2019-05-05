@@ -430,7 +430,7 @@ class TestHistogramOptimBinNums(object):
     """
 
     def test_empty(self):
-        estimator_list = ['fd', 'scott', 'rice', 'sturges',
+        estimator_list = ['fd', 'FD', 'scott', 'rice', 'sturges',
                           'doane', 'sqrt', 'auto', 'stone']
         # check it can deal with empty data
         for estimator in estimator_list:

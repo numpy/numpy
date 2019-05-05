@@ -374,7 +374,7 @@ def _get_bin_edges(a, bins, range, weights):
     bin_edges = None
 
     if isinstance(bins, basestring):
-        bin_name = bins
+        bin_name = bins.lower()
         # if `bins` is a string for an automatic method,
         # this will replace it with the number of bins calculated
         if bin_name not in _hist_bin_selectors:
