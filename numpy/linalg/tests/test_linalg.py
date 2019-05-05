@@ -1828,6 +1828,7 @@ def test_xerbla_override():
             pytest.skip('Numpy xerbla not linked in.')
 
 
+@pytest.mark.skip(reason='gh-13478')
 def test_sdot_bug_8577():
     # Regression test that loading certain other libraries does not
     # result to wrong results in float32 linear algebra.
@@ -2007,5 +2008,5 @@ def test_issue_13401():
     np.random.seed(0)
     X = np.random.randn(100, 100) * 10
     u, s, v = np.linalg.svd(X)
-    assert np.mean(X - u @ np.diag(s) @ v) < 1.0
-    assert np.std(X - u @ np.diag(s) @ v) < 1.0
+    assert np.abs(np.mean(X - u @ np.diag(s) @ v)) < 1e-12
+    assert np.std(X - u @ np.diag(s) @ v) < 1e-12

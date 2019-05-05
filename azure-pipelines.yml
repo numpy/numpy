@@ -264,13 +264,12 @@ jobs:
       python -c "import numpy, ctypes, os; dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__); get_config = dll.openblas_get_config; get_config.restype=ctypes.c_char_p; res = get_config(); print('OpenBLAS get_config returned', str(res)); assert b'OpenBLAS 0.3.5.dev' in res"
       popd
     displayName: 'verify OpenBLAS version'
-  - script: |
+  - bash: |
       mkdir SDE && cd SDE
       wget -O sde-external-8.35.0-2019-03-11-mac.tar.bz2 https://www.dropbox.com/s/rkgx577cb7pxc8c/sde-external-8.35.0-2019-03-11-mac.tar.bz2?dl=0
       tar -xjvf sde-external-8.35.0-2019-03-11-mac.tar.bz2
       # check that Skylake X is actually reported by OpenBLAS:
       ./sde-external-8.35.0-2019-03-11-mac/sde64 -cpuid_in ./sde-external-8.35.0-2019-03-11-mac/misc/cpuid/skx/cpuid.def -- python -c "import numpy, ctypes, os; dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__); get_config = dll.openblas_get_config; get_config.restype=ctypes.c_char_p; res = get_config(); print('OpenBLAS get_config returned', str(res)); assert b'SkylakeX' in res"
       cd ..
-      # will only report 1 failure beyond my new test, even in full mode
-      ./SDE/sde-external-8.35.0-2019-03-11-mac/sde64 -cpuid_in ./SDE/sde-external-8.35.0-2019-03-11-mac/misc/cpuid/skx/cpuid.def -- python runtests.py -n -s "linalg"
+      ./SDE/sde-external-8.35.0-2019-03-11-mac/sde64 -cpuid_in ./SDE/sde-external-8.35.0-2019-03-11-mac/misc/cpuid/skx/cpuid.def -- python runtests.py -n -s "linalg" --mode=full
     displayName: 'Intel SDE testing for linalg / OpenBLAS'
