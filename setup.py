@@ -207,15 +207,10 @@ class concat_license_files():
                 f1.write('\n\n')
                 f1.write(self.bundled_text)
 
-        os.remove(self.f2)
-
     def __exit__(self, exception_type, exception_value, traceback):
         """Restore content of both files"""
         with open(self.f1, 'w') as f:
             f.write(self.bsd_text)
-
-        with open(self.f2, 'w') as f:
-            f.write(self.bundled_text)
 
 
 from distutils.command.sdist import sdist
