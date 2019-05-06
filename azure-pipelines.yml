@@ -20,8 +20,8 @@ jobs:
            apt-get -y install gfortran-5 wget && \
            cd .. && \
            mkdir openblas && cd openblas && \
-           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-manylinux1_i686.tar.gz && \
-           tar zxvf openblas-v0.3.3-186-g701ea883-manylinux1_i686.tar.gz && \
+           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-267-g3f427c0c-manylinux1_i686.tar.gz && \
+           tar zxvf openblas-v0.3.5-267-g3f427c0c-manylinux1_i686.tar.gz && \
            cp -r ./usr/local/lib/* /usr/lib && \
            cp ./usr/local/include/* /usr/include && \
            cd ../numpy && \
@@ -75,8 +75,8 @@ jobs:
   # matches our MacOS wheel builds -- currently based
   # primarily on file size / name details
   - script: |
-      wget "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz"
-      tar -zxvf openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz
+      wget "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-267-g3f427c0c-macosx_10_9_x86_64-gf_1becaaa.tar.gz"
+      tar -zxvf openblas-v0.3.5-267-g3f427c0c-macosx_10_9_x86_64-gf_1becaaa.tar.gz
       # manually link to appropriate system paths
       cp ./usr/local/lib/* /usr/local/lib/
       cp ./usr/local/include/* /usr/local/include/
@@ -113,8 +113,8 @@ jobs:
   variables:
       # openblas URLs from numpy-wheels
       # appveyor / Windows config
-      OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win32-gcc_7_1_0.zip"
-      OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win_amd64-gcc_7_1_0.zip"
+      OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-267-g3f427c0c-win32-gcc_7_1_0.zip"
+      OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-267-g3f427c0c-win_amd64-gcc_7_1_0.zip"
   strategy:
     maxParallel: 6
     matrix:
@@ -167,7 +167,7 @@ jobs:
       Write-Host "Python Version: $pyversion"
       $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
       Write-Host "target path: $target"
-      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target
+      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.5-267-g3f427c0c-gcc_7_1_0.a $target
     displayName: 'Download / Install OpenBLAS'
   - powershell: |
       choco install -y mingw --forcex86 --force --version=5.3.0
@@ -248,8 +248,8 @@ jobs:
     displayName: 'install gfortran'
   - script: |
        mkdir openblas && cd openblas
-       wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz
-       tar -zxvf openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz
+       wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-267-g3f427c0c-macosx_10_9_x86_64-gf_1becaaa.tar.gz
+       tar -zxvf openblas-v0.3.5-267-g3f427c0c-macosx_10_9_x86_64-gf_1becaaa.tar.gz
        cp ./usr/local/lib/* /usr/local/lib/
        cp ./usr/local/include/* /usr/local/include/
        cd ..
@@ -261,7 +261,7 @@ jobs:
     displayName: 'Build / Install NumPy'
   - script: |
       pushd ..
-      python -c "import numpy, ctypes, os; dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__); get_config = dll.openblas_get_config; get_config.restype=ctypes.c_char_p; res = get_config(); print('OpenBLAS get_config returned', str(res)); assert b'OpenBLAS 0.3.5.dev' in res"
+      python -c "import numpy, ctypes, os; dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__); get_config = dll.openblas_get_config; get_config.restype=ctypes.c_char_p; res = get_config(); print('OpenBLAS get_config returned', str(res)); assert b'OpenBLAS 0.3.7.dev' in res"
       popd
     displayName: 'verify OpenBLAS version'
   - bash: |
