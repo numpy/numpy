@@ -212,4 +212,4 @@ info:
 	$(SPHINXBUILD) -b texinfo $(ALLSPHINXOPTS) build/texinfo
 	@echo "Running Texinfo files through makeinfo..."
 	make -C build/texinfo info
-	@echo "makeinfo finished; the Info files are in build/texinfo."
+	@echo "makeinfo finished; the Info files are in build/texinfo"
