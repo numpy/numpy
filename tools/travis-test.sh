@@ -83,9 +83,9 @@ run_test()
   export PYTHONWARNINGS=default
   if [ -n "$RUN_FULL_TESTS" ]; then
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    $PYTHON ../tools/test-installed-numpy.py -v --mode=full $COVERAGE_FLAG
+    $PYTHON ../tools/test-installed-numpy.py -v --durations 10 --mode=full $COVERAGE_FLAG
   else
-    $PYTHON ../tools/test-installed-numpy.py -v
+    $PYTHON ../tools/test-installed-numpy.py -v --durations 10
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
