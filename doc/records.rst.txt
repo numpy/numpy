@@ -4,7 +4,7 @@ descriptors have fields defined, but you can create new descriptors
 easily.  The ndarray even supports nested arrays of records inside of
 a record.  Any record that the array protocol can describe can be
 represented.  The ndarray also supports partial field descriptors.
-Not every byte has to be accounted for.
+Not every byte has to be accounted for
 
 This was done by adding to the established ``PyArray_Descr *`` structure:
 
