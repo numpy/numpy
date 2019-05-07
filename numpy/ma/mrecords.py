@@ -659,13 +659,12 @@ def openfile(fname):
         return fname
     # Try to open the file and guess its type
     try:
-        f = open(fname)
+        with open(fname) as f:
+            if f.readline()[:2] != "\\x":
+                f.seek(0, 0)
+                return f
     except IOError:
         raise IOError("No such file: '%s'" % fname)
-    if f.readline()[:2] != "\\x":
-        f.seek(0, 0)
-        return f
-    f.close()
     raise NotImplementedError("Wow, binary file")
 
 

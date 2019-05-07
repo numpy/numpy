@@ -267,22 +267,19 @@ include_src_re = re.compile(r"(\n|\A)#include\s*['\"]"
 
 def resolve_includes(source):
     d = os.path.dirname(source)
-    fid = open(source)
-    lines = []
-    for line in fid:
-        m = include_src_re.match(line)
-        if m:
-            fn = m.group('name')
-            if not os.path.isabs(fn):
-                fn = os.path.join(d, fn)
-            if os.path.isfile(fn):
-                print('Including file', fn)
-                lines.extend(resolve_includes(fn))
-            else:
-                lines.append(line)
-        else:
-            lines.append(line)
-    fid.close()
+    with open(source) as fid:
+        lines = []
+        for line in fid:
+            m = include_src_re.match(line)
+            if m:
+                fn = m.group('name')
+                if not os.path.isabs(fn):
+                    fn = os.path.join(d, fn)
+                if os.path.isfile(fn):
+                    print('Including file', fn)
+                    lines.extend(resolve_includes(fn))
+                else:
+                    lines.append(line)
     return lines
 
 def process_file(source):
@@ -331,7 +328,10 @@ def main():
     except ValueError:
         e = get_exception()
         raise ValueError("In %s loop at %s" % (file, e))
+    finally:
+        fid.close()
     outfile.write(writestr)
+    outfile.close()
 
 if __name__ == "__main__":
     main()

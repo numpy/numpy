@@ -2002,7 +2002,8 @@ def load(file):
         "np.core.numeric.load is deprecated, use pickle.load instead",
         DeprecationWarning, stacklevel=2)
     if isinstance(file, type("")):
-        file = open(file, "rb")
+        with open(file, "rb") as file_pointer:
+            return pickle.load(file_pointer)
     return pickle.load(file)
 
 
