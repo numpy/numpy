@@ -87,3 +87,7 @@ class TestRegression(object):
         # See gh-12464. Indexing with empty list should give empty result.
         ma = np.ma.MaskedArray([(1, 1.), (2, 2.), (3, 3.)], dtype='i4,f4')
         assert_array_equal(ma[[]], ma[:0])
+
+    def test_masked_array_tostring_fortran(self):
+        ma = np.ma.arange(4).reshape((2,2))
+        assert_array_equal(ma.tostring(order='F'), ma.T.tostring())
