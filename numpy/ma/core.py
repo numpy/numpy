@@ -5935,7 +5935,7 @@ class MaskedArray(ndarray):
         returns bytes not strings.
         """
 
-        return self.tobytes(fill_value, order='C')
+        return self.tobytes(fill_value, order=order)
 
     def tobytes(self, fill_value=None, order='C'):
         """
