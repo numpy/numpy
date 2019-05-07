@@ -149,6 +149,11 @@ Floating point scalars implement ``as_integer_ratio`` to match the builtin float
 This returns a (numerator, denominator) pair, which can be used to construct a
 `fractions.Fraction`.
 
+``.npy`` files support unicode field names
+------------------------------------------
+A new format version of 3.0 has been introduced, which enables structured types
+with non-latin1 field names. This is used automatically when needed.
+
 
 Improvements
 ============

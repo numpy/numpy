@@ -146,6 +146,13 @@ The description of the fourth element of the header therefore has become:
 "The next 4 bytes form a little-endian unsigned int: the length of the header
 data HEADER_LEN."
 
+Format Version 3.0
+------------------
+
+This version replaces the ASCII string (which in practice was latin1) with
+a utf8-encoded string, so supports structured types with any unicode field
+names.
+
 Notes
 -----
 The ``.npy`` format, including motivation for creating it and a comparison of
@@ -162,7 +169,7 @@ import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
-    asbytes, asstr, isfileobj, long, os_fspath, pickle
+    isfileobj, long, os_fspath, pickle
     )
 
 
@@ -173,15 +180,16 @@ BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
-_header_size_formats = {
-    (1, 0): '<H',
-    (2, 0): '<I',
+_header_size_info = {
+    (1, 0): ('<H', 'latin1'),
+    (2, 0): ('<I', 'latin1'),
+    (3, 0): ('<I', 'utf8'),
 }
 
 
 def _check_version(version):
-    if version not in [(1, 0), (2, 0), None]:
-        msg = "we only support format version (1,0) and (2, 0), not %s"
+    if version not in [(1, 0), (2, 0), (3, 0), None]:
+        msg = "we only support format version (1,0), (2,0), and (3,0), not %s"
         raise ValueError(msg % (version,))
 
 def magic(major, minor):
@@ -334,8 +342,9 @@ def _wrap_header(header, version):
     """
     import struct
     assert version is not None
-    header = asbytes(header)
-    fmt = _header_size_formats[version]
+    fmt, encoding = _header_size_info[version]
+    if not isinstance(header, bytes):  # always true on python 3
+        header = header.encode(encoding)
     hlen = len(header) + 1
     padlen = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize(fmt) + hlen) % ARRAY_ALIGN)
     try:
@@ -360,9 +369,19 @@ def _wrap_header_guess_version(header):
         return _wrap_header(header, (1, 0))
     except ValueError:
         pass
-    header = _wrap_header(header, (2, 0))
-    warnings.warn("Stored array in format 2.0. It can only be"
-                  "read by NumPy >= 1.9", UserWarning, stacklevel=2)
+
+    try:
+        ret = _wrap_header(header, (2, 0))
+    except UnicodeEncodeError:
+        pass
+    else:
+        warnings.warn("Stored array in format 2.0. It can only be"
+                      "read by NumPy >= 1.9", UserWarning, stacklevel=2)
+        return ret
+
+    header = _wrap_header(header, (3, 0))
+    warnings.warn("Stored array in format 3.0. It can only be"
+                  "read by NumPy >= 1.17", UserWarning, stacklevel=2)
     return header
 
 
@@ -494,7 +513,7 @@ def _filter_header(s):
 
     Parameters
     ----------
-    s : byte string
+    s : string
         Npy file header.
 
     Returns
@@ -512,7 +531,7 @@ def _filter_header(s):
     tokens = []
     last_token_was_number = False
     # adding newline as python 2.7.5 workaround
-    string = asstr(s) + "\n"
+    string = s + "\n"
     for token in tokenize.generate_tokens(StringIO(string).readline):
         token_type = token[0]
         token_string = token[1]
@@ -534,13 +553,15 @@ def _read_array_header(fp, version):
     # Read an unsigned, little-endian short int which has the length of the
     # header.
     import struct
-    hlength_type = _header_size_formats.get(version)
-    if hlength_type is None:
+    hinfo = _header_size_info.get(version)
+    if hinfo is None:
         raise ValueError("Invalid version {!r}".format(version))
+    hlength_type, encoding = hinfo
 
     hlength_str = _read_bytes(fp, struct.calcsize(hlength_type), "array header length")
     header_length = struct.unpack(hlength_type, hlength_str)[0]
     header = _read_bytes(fp, header_length, "array header")
+    header = header.decode(encoding)
 
     # The header is a pretty-printed string representation of a literal
     # Python dictionary with trailing newlines padded to a ARRAY_ALIGN byte
