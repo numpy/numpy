@@ -54,6 +54,11 @@ C API changes
 New Features
 ============
 
+``.npy`` files support unicode field names
+------------------------------------------
+A new format version of 3.0 has been introduced, which enables structured types
+with non-latin1 field names. This is used automatically when needed.
+
 
 Improvements
 ============
