@@ -287,6 +287,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
+    assert_warns
     )
 from numpy.lib import format
 
@@ -938,3 +939,27 @@ def test_empty_npz():
     fname = os.path.join(tempdir, "nothing.npz")
     np.savez(fname)
     np.load(fname)
+
+
+def test_unicode_field_names():
+    # gh-7391
+    arr = np.array([
+        (1, 3),
+        (1, 2),
+        (1, 3),
+        (1, 2)
+    ], dtype=[
+        ('int', int),
+        (u'\N{CJK UNIFIED IDEOGRAPH-6574}\N{CJK UNIFIED IDEOGRAPH-5F62}', int)
+    ])
+    fname = os.path.join(tempdir, "unicode.npy")
+    with open(fname, 'wb') as f:
+        format.write_array(f, arr, version=(3, 0))
+    with open(fname, 'rb') as f:
+        arr2 = format.read_array(f)
+    assert_array_equal(arr, arr2)
+
+    # notifies the user that 3.0 is selected
+    with open(fname, 'wb') as f:
+        with assert_warns(UserWarning):
+            format.write_array(f, arr, version=None)
