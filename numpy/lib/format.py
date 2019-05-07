@@ -173,6 +173,11 @@ BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 
 # difference between version 1.0 and 2.0 is a 4 byte (I) header length
 # instead of 2 bytes (H) allowing storage of large structured arrays
+_header_size_formats = {
+    (1, 0): '<H',
+    (2, 0): '<I',
+}
+
 
 def _check_version(version):
     if version not in [(1, 0), (2, 0), None]:
@@ -322,6 +327,45 @@ def header_data_from_array_1_0(array):
     d['descr'] = dtype_to_descr(array.dtype)
     return d
 
+
+def _wrap_header(header, version):
+    """
+    Takes a stringified header, and attaches the prefix and padding to it
+    """
+    import struct
+    assert version is not None
+    header = asbytes(header)
+    fmt = _header_size_formats[version]
+    hlen = len(header) + 1
+    padlen = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize(fmt) + hlen) % ARRAY_ALIGN)
+    try:
+        header_prefix = magic(*version) + struct.pack(fmt, hlen + padlen)
+    except struct.error:
+        msg = "Header length {} too big for version={}".format(hlen, version)
+        raise ValueError(msg)
+
+    # Pad the header with spaces and a final newline such that the magic
+    # string, the header-length short and the header are aligned on a
+    # ARRAY_ALIGN byte boundary.  This supports memory mapping of dtypes
+    # aligned up to ARRAY_ALIGN on systems like Linux where mmap()
+    # offset must be page-aligned (i.e. the beginning of the file).
+    return header_prefix + header + b' '*padlen + b'\n'
+
+
+def _wrap_header_guess_version(header):
+    """
+    Like `_wrap_header`, but chooses an appropriate version given the contents
+    """
+    try:
+        return _wrap_header(header, (1, 0))
+    except ValueError:
+        pass
+    header = _wrap_header(header, (2, 0))
+    warnings.warn("Stored array in format 2.0. It can only be"
+                  "read by NumPy >= 1.9", UserWarning, stacklevel=2)
+    return header
+
+
 def _write_array_header(fp, d, version=None):
     """ Write the header for an array and returns the version used
 
@@ -335,48 +379,19 @@ def _write_array_header(fp, d, version=None):
         None means use oldest that works
         explicit version will raise a ValueError if the format does not
         allow saving this data.  Default: None
-    Returns
-    -------
-    version : tuple of int
-        the file version which needs to be used to store the data
     """
-    import struct
     header = ["{"]
     for key, value in sorted(d.items()):
         # Need to use repr here, since we eval these when reading
         header.append("'%s': %s, " % (key, repr(value)))
     header.append("}")
     header = "".join(header)
-    header = asbytes(_filter_header(header))
-
-    hlen = len(header) + 1 # 1 for newline
-    padlen_v1 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<H') + hlen) % ARRAY_ALIGN)
-    padlen_v2 = ARRAY_ALIGN - ((MAGIC_LEN + struct.calcsize('<I') + hlen) % ARRAY_ALIGN)
-
-    # Which version(s) we write depends on the total header size; v1 has a max of 65535
-    if hlen + padlen_v1 < 2**16 and version in (None, (1, 0)):
-        version = (1, 0)
-        header_prefix = magic(1, 0) + struct.pack('<H', hlen + padlen_v1)
-        topad = padlen_v1
-    elif hlen + padlen_v2 < 2**32 and version in (None, (2, 0)):
-        version = (2, 0)
-        header_prefix = magic(2, 0) + struct.pack('<I', hlen + padlen_v2)
-        topad = padlen_v2
+    header = _filter_header(header)
+    if version is None:
+        header = _wrap_header_guess_version(header)
     else:
-        msg = "Header length %s too big for version=%s"
-        msg %= (hlen, version)
-        raise ValueError(msg)
-
-    # Pad the header with spaces and a final newline such that the magic
-    # string, the header-length short and the header are aligned on a
-    # ARRAY_ALIGN byte boundary.  This supports memory mapping of dtypes
-    # aligned up to ARRAY_ALIGN on systems like Linux where mmap()
-    # offset must be page-aligned (i.e. the beginning of the file).
-    header = header + b' '*topad + b'\n'
-
-    fp.write(header_prefix)
+        header = _wrap_header(header, version)
     fp.write(header)
-    return version
 
 def write_array_header_1_0(fp, d):
     """ Write the header for an array using the 1.0 format.
@@ -519,11 +534,8 @@ def _read_array_header(fp, version):
     # Read an unsigned, little-endian short int which has the length of the
     # header.
     import struct
-    if version == (1, 0):
-        hlength_type = '<H'
-    elif version == (2, 0):
-        hlength_type = '<I'
-    else:
+    hlength_type = _header_size_formats.get(version)
+    if hlength_type is None:
         raise ValueError("Invalid version {!r}".format(version))
 
     hlength_str = _read_bytes(fp, struct.calcsize(hlength_type), "array header length")
@@ -603,12 +615,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
 
     """
     _check_version(version)
-    used_ver = _write_array_header(fp, header_data_from_array_1_0(array),
-                                   version)
-    # this warning can be removed when 1.9 has aged enough
-    if version != (2, 0) and used_ver == (2, 0):
-        warnings.warn("Stored array in format 2.0. It can only be"
-                      "read by NumPy >= 1.9", UserWarning, stacklevel=2)
+    _write_array_header(fp, header_data_from_array_1_0(array), version)
 
     if array.itemsize == 0:
         buffersize = 0
@@ -811,11 +818,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         # If we got here, then it should be safe to create the file.
         fp = open(os_fspath(filename), mode+'b')
         try:
-            used_ver = _write_array_header(fp, d, version)
-            # this warning can be removed when 1.9 has aged enough
-            if version != (2, 0) and used_ver == (2, 0):
-                warnings.warn("Stored array in format 2.0. It can only be"
-                              "read by NumPy >= 1.9", UserWarning, stacklevel=2)
+            _write_array_header(fp, d, version)
             offset = fp.tell()
         finally:
             fp.close()
