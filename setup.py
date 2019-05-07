@@ -187,17 +187,17 @@ def check_submodules():
 
 
 class concat_license_files():
-    """Merge LICENSE.txt and LICENSE_bundled.txt for sdist creation
+    """Merge LICENSE.txt and LICENSES_bundled.txt for sdist creation
 
     Done this way to keep LICENSE.txt in repo as exact BSD 3-clause (see
     gh-13447).  This makes GitHub state correctly how NumPy is licensed.
     """
     def __init__(self):
         self.f1 = 'LICENSE.txt'
-        self.f2 = 'LICENSE_bundled.txt'
+        self.f2 = 'LICENSES_bundled.txt'
 
     def __enter__(self):
-        """Concatenate files and remove LICENSE_bundled.txt"""
+        """Concatenate files and remove LICENSES_bundled.txt"""
         with open(self.f1, 'r') as f1:
             self.bsd_text = f1.read()
 
