@@ -1274,12 +1274,12 @@ def buildmodule(m, um):
             options['buildpath'], vrd['modulename'] + 'module.tex')
         ret['ltx'] = fn
         with open(fn, 'w') as f:
-                f.write(
+            f.write(
                 '%% This file is auto-generated with f2py (version:%s)\n' % (f2py_version))
             if 'shortlatex' not in options:
                 f.write(
                     '\\documentclass{article}\n\\usepackage{a4wide}\n\\begin{document}\n\\tableofcontents\n\n')
-            f.write('\n'.join(ar['latexdoc']))
+                f.write('\n'.join(ar['latexdoc']))
             if 'shortlatex' not in options:
                 f.write('\\end{document}')
         outmess('\tDocumentation is saved to file "%s/%smodule.tex"\n' %

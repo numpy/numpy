@@ -225,6 +225,8 @@ def resolve_includes(source):
                     lines.extend(resolve_includes(fn))
                 else:
                     lines.append(line)
+            else:
+                lines.append(line)
     return lines
 
 def process_file(source):
