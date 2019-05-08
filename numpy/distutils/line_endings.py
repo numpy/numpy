@@ -13,18 +13,18 @@ def dos2unix(file):
 
     with open(file, "rb") as fp:
         data = fp.read()
-        if '\0' in data:
-            print(file, "Binary!")
-            return
+    if '\0' in data:
+        print(file, "Binary!")
+        return
 
-        newdata = re.sub("\r\n", "\n", data)
-        if newdata != data:
-            print('dos2unix:', file)
-            with open(file, "wb") as f:
-                f.write(newdata)
-            return file
-        else:
-            print(file, 'ok')
+    newdata = re.sub("\r\n", "\n", data)
+    if newdata != data:
+        print('dos2unix:', file)
+        with open(file, "wb") as f:
+            f.write(newdata)
+        return file
+    else:
+        print(file, 'ok')
 
 def dos2unix_one_dir(modified_files, dir_name, file_names):
     for file in file_names:
@@ -47,18 +47,18 @@ def unix2dos(file):
 
     with open(file, "rb") as fp:
         data = fp.read()
-        if '\0' in data:
-            print(file, "Binary!")
-            return
-        newdata = re.sub("\r\n", "\n", data)
-        newdata = re.sub("\n", "\r\n", newdata)
-        if newdata != data:
-            print('unix2dos:', file)
-            with open(file, "wb") as f:
-                f.write(newdata)
-            return file
-        else:
-            print(file, 'ok')
+    if '\0' in data:
+        print(file, "Binary!")
+        return
+    newdata = re.sub("\r\n", "\n", data)
+    newdata = re.sub("\n", "\r\n", newdata)
+    if newdata != data:
+        print('unix2dos:', file)
+        with open(file, "wb") as f:
+            f.write(newdata)
+        return file
+    else:
+        print(file, 'ok')
 
 def unix2dos_one_dir(modified_files, dir_name, file_names):
     for file in file_names:
