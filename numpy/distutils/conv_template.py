@@ -316,24 +316,24 @@ def main():
     try:
         file = sys.argv[1]
     except IndexError:
-        fid = sys.stdin
-        outfile = sys.stdout
+        fid = contextlib_nullcontext(sys.stdin)
+        outfile = contextlib_nullcontext(sys.stdout)
     else:
         fid = open(file, 'r')
         (base, ext) = os.path.splitext(file)
         newname = base
         outfile = open(newname, 'w')
 
-    allstr = fid.read()
+    with fid:
+        allstr = fid.read()
     try:
         writestr = process_str(allstr)
     except ValueError:
         e = get_exception()
         raise ValueError("In %s loop at %s" % (file, e))
-    finally:
-        fid.close()
-    outfile.write(writestr)
-    outfile.close()
+
+    with outfile:
+        outfile.write(writestr)
 
 if __name__ == "__main__":
     main()

@@ -269,8 +269,9 @@ def scaninputline(inputline):
             options["f2py_wrapper_output"] = l
         elif f == 1:
             try:
-                with open(l) as f:
-                    files.append(l)
+                with open(l):
+                    pass
+                files.append(l)
             except IOError as detail:
                 errmess('IOError: %s. Skipping file "%s".\n' %
                         (str(detail), l))
