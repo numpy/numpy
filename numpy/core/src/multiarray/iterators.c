@@ -1388,7 +1388,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
     PyArrayMultiIterObject *multi;
     PyObject *arr;
 
-    if (kwds != NULL) {
+    if (kwds != NULL && PyDict_Size(kwds) > 0) {
         PyErr_SetString(PyExc_ValueError,
                         "keyword arguments not accepted.");
         return NULL;
