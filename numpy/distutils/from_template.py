@@ -53,6 +53,8 @@ import os
 import sys
 import re
 
+from numpy.compat import contextlib_nullcontext
+
 routine_start_re = re.compile(r'(\n|\A)((     (\$|\*))|)\s*(subroutine|function)\b', re.I)
 routine_end_re = re.compile(r'\n\s*end\s*(subroutine|function)\b.*(\n|\Z)', re.I)
 function_start_re = re.compile(r'\n     (\$|\*)\s*function\b', re.I)
