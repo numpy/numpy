@@ -920,6 +920,7 @@ defdict = {
           docstrings.get('numpy.core.umath.matmul'),
           "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(notimes_or_obj),
+          TD(O),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
 }
