@@ -87,6 +87,7 @@ import os
 import sys
 import re
 
+from numpy.compat import contextlib_nullcontext
 from numpy.distutils.compat import get_exception
 
 # names for replacement that are already global.
