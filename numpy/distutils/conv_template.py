@@ -87,7 +87,6 @@ import os
 import sys
 import re
 
-from numpy.compat import contextlib_nullcontext
 from numpy.distutils.compat import get_exception
 
 # names for replacement that are already global.
@@ -317,24 +316,22 @@ def main():
     try:
         file = sys.argv[1]
     except IndexError:
-        fid = contextlib_nullcontext(sys.stdin)
-        outfile = contextlib_nullcontext(sys.stdout)
+        fid = sys.stdin
+        outfile = sys.stdout
     else:
         fid = open(file, 'r')
         (base, ext) = os.path.splitext(file)
         newname = base
         outfile = open(newname, 'w')
 
-    with fid:
-        allstr = fid.read()
+    allstr = fid.read()
     try:
         writestr = process_str(allstr)
     except ValueError:
         e = get_exception()
         raise ValueError("In %s loop at %s" % (file, e))
 
-    with outfile:
-        outfile.write(writestr)
+    outfile.write(writestr)
 
 if __name__ == "__main__":
     main()

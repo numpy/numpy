@@ -53,8 +53,6 @@ import os
 import sys
 import re
 
-from numpy.compat import contextlib_nullcontext
-
 routine_start_re = re.compile(r'(\n|\A)((     (\$|\*))|)\s*(subroutine|function)\b', re.I)
 routine_end_re = re.compile(r'\n\s*end\s*(subroutine|function)\b.*(\n|\Z)', re.I)
 function_start_re = re.compile(r'\n     (\$|\*)\s*function\b', re.I)
@@ -249,19 +247,17 @@ def main():
     try:
         file = sys.argv[1]
     except IndexError:
-        fid = contextlib_nullcontext(sys.stdin)
-        outfile = contextlib_nullcontext(sys.stdout)
+        fid = sys.stdin
+        outfile = sys.stdout
     else:
         fid = open(file, 'r')
         (base, ext) = os.path.splitext(file)
         newname = base
         outfile = open(newname, 'w')
 
-    with fid:
-        allstr = fid.read()
+    allstr = fid.read()
     writestr = process_str(allstr)
-    with outfile:
-        outfile.write(writestr)
+    outfile.write(writestr)
 
 
 if __name__ == "__main__":
