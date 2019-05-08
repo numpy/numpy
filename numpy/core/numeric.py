@@ -1139,7 +1139,7 @@ def roll(a, shift, axis=None):
     array([8, 9, 0, 1, 2, 3, 4, 5, 6, 7])
     >>> np.roll(x, -2)
     array([2, 3, 4, 5, 6, 7, 8, 9, 0, 1])
-    
+
     >>> x2 = np.reshape(x, (2,5))
     >>> x2
     array([[0, 1, 2, 3, 4],
@@ -1606,7 +1606,7 @@ little_endian = (sys.byteorder == 'little')
 
 
 @set_module('numpy')
-def indices(dimensions, dtype=int):
+def indices(dimensions, dtype=int, sparse=False):
     """
     Return an array representing the indices of a grid.
 
@@ -1619,22 +1619,30 @@ def indices(dimensions, dtype=int):
         The shape of the grid.
     dtype : dtype, optional
         Data type of the result.
+    sparse : boolean, optional
+        Return a sparse representation of the grid instead of a dense
+        representation
 
     Returns
     -------
-    grid : ndarray
-        The array of grid indices,
-        ``grid.shape = (len(dimensions),) + tuple(dimensions)``.
+    grid : one ndarray or tuple of ndarrays
+        If sparse is False:
+            Returns one array of grid indices,
+            ``grid.shape = (len(dimensions),) + tuple(dimensions)``.
+        If sparse is True:
+            Returns a tuple of arrays, with
+            ``grid[i].shape = (1,...,1,dimensions[i],1,...,1)`` with
+            dimensions[i] in the ith place
 
     See Also
     --------
-    mgrid, meshgrid
+    mgrid, ogrid, meshgrid
 
     Notes
     -----
-    The output shape is obtained by prepending the number of dimensions
-    in front of the tuple of dimensions, i.e. if `dimensions` is a tuple
-    ``(r0, ..., rN-1)`` of length ``N``, the output shape is
+    The output shape in the dense case is obtained by prepending the number
+    of dimensions in front of the tuple of dimensions, i.e. if `dimensions`
+    is a tuple ``(r0, ..., rN-1)`` of length ``N``, the output shape is
     ``(N,r0,...,rN-1)``.
 
     The subarrays ``grid[k]`` contains the N-D array of indices along the
@@ -1654,7 +1662,7 @@ def indices(dimensions, dtype=int):
     array([[0, 1, 2],
            [0, 1, 2]])
 
-    The indices can be used as an index into an array.
+    The indices can be used as an index into an array, if sparse is False.
 
     >>> x = np.arange(20).reshape(5, 4)
     >>> row, col = np.indices((2, 3))
@@ -1665,15 +1673,36 @@ def indices(dimensions, dtype=int):
     Note that it would be more straightforward in the above example to
     extract the required elements directly with ``x[:2, :3]``.
 
+    If sparse is set to true, the grid will be returned in a sparse
+    representation.
+
+    >>> i, j = np.indices((2, 3), sparse=True)
+    >>> i.shape
+    (2, 1)
+    >>> j.shape
+    (1, 3)
+    >>> i        # row indices
+    array([[0],
+           [1]])
+    >>> j        # column indices
+    array([[0, 1, 2]])
+
     """
     dimensions = tuple(dimensions)
     N = len(dimensions)
     shape = (1,)*N
-    res = empty((N,)+dimensions, dtype=dtype)
+    if sparse:
+        res = tuple()
+    else:
+        res = empty((N,)+dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):
-        res[i] = arange(dim, dtype=dtype).reshape(
+        idx = arange(dim, dtype=dtype).reshape(
             shape[:i] + (dim,) + shape[i+1:]
         )
+        if sparse:
+            res = res + (idx,)
+        else:
+            res[i] = idx
     return res
 
 
