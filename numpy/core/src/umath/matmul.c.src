@@ -267,19 +267,71 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
+
+NPY_NO_EXPORT void
+OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
+                           void *_ip2, npy_intp is2_n, npy_intp is2_p,
+                           void *_op, npy_intp os_m, npy_intp os_p,
+                           npy_intp dm, npy_intp dn, npy_intp dp)                         
+{
+    npy_intp m, n, p;
+    npy_intp ib1_n, ib2_n, ib2_p, ob_p;
+    char *ip1 = (char *)_ip1, *ip2 = (char *)_ip2, *op = (char *)_op;
+
+    ib1_n = is1_n * dn;
+    ib2_n = is2_n * dn;
+    ib2_p = is2_p * dp;
+    ob_p  = os_p * dp;
+
+    PyObject *tmp1, *tmp2 = NULL;
+
+    for (m = 0; m < dm; m++) {
+        for (p = 0; p < dp; p++) {
+            if ( 0 == dn ) return;
+            // The first pass where n == 0 has to be separated from n>0 because
+            // there might not be a "zero" for objects, and even if there is we don't know it.
+            // This also means the degenerate case is not really well-defined.
+
+            // n == 0 case
+            PyObject *tmp = PyNumber_Multiply(*((PyObject **)ip1), *((PyObject **)ip2));
+            ip2 += is2_n;
+            ip1 += is1_n;
+            // n > 0 cases
+            for (n = 1; n < dn; n++) {
+                tmp1 = PyNumber_Multiply(*((PyObject **)ip1), *((PyObject **)ip2));
+                tmp2 = PyNumber_Add(tmp, tmp1);
+                tmp = tmp2;
+                Py_XDECREF(tmp1);
+                ip2 += is2_n;
+                ip1 += is1_n;
+            }
+            *((PyObject **)op) = tmp;
+            ip1 -= ib1_n;
+            ip2 -= ib2_n;
+            op  +=  os_p;
+            ip2 += is2_p;
+        }
+        op -= ob_p;
+        ip2 -= ib2_p;
+        ip1 += is1_m;
+        op  +=  os_m;
+    }
+}
+
+
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
  *          CFLOAT, CDOUBLE, CLONGDOUBLE,
  *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
  *          BYTE, SHORT, INT, LONG, LONGLONG,
- *          BOOL#
+ *          BOOL,OBJECT#
  *  #typ = npy_float,npy_double,npy_longdouble, npy_half,
  *         npy_cfloat, npy_cdouble, npy_clongdouble,
  *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
  *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *         npy_bool#
- * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*11#
- * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*12#
+ *         npy_bool,npy_object#
+ * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*12#
+ * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*13#
  */
 
 
@@ -398,5 +450,3 @@ NPY_NO_EXPORT void
 }
 
 /**end repeat**/
-
-
