@@ -122,20 +122,36 @@ abs_ptrdiff(char *a, char *b)
 
 /**begin repeat
  * #ISA = AVX2, AVX512F#
+ * #isa = avx2, avx512f#
+ * #REGISTER_SIZE = 32, 64#
  */
 
 /* prototypes */
-#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
 
 /**begin repeat1
  * #func = exp, log#
  */
 
+#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
 static NPY_INLINE void
 @ISA@_@func@_FLOAT(npy_float *, npy_float *, const npy_intp n);
+#endif
+
+static NPY_INLINE int
+run_unary_@isa@_@func@_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps)
+{
+#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+    if (IS_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
+        @ISA@_@func@_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0]);
+        return 1;
+    }
+    else
+        return 0;
+#endif
+    return 0;
+}
 
 /**end repeat1**/
-#endif
 
 /**end repeat**/
 
