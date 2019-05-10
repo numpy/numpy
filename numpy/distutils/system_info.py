@@ -2409,6 +2409,7 @@ class _pkg_config_info(system_info):
         return self.default_config_exe
 
     def get_config_output(self, config_exe, option):
+        import subprocess
         cmd = config_exe + ' ' + self.append_config_exe + ' ' + option
         try:
             o = subprocess.check_output(cmd)
