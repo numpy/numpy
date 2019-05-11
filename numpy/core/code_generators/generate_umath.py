@@ -1154,6 +1154,6 @@ def make_code(funcdict, filename):
 
 if __name__ == "__main__":
     filename = __file__
+    code = make_code(defdict, filename)
     with open('__umath_generated.c', 'w') as fid:
-        code = make_code(defdict, filename)
         fid.write(code)
