@@ -16,7 +16,7 @@ jobs:
            apt-get -y update && \
            apt-get -y install python3.6-dev python3-pip locales && \
            locale-gen fr_FR && update-locale && \
-           pip3 install setuptools nose cython==0.29.0 pytest pytz pickle5 && \
+           pip3 install setuptools nose cython==0.29.0 pytest==4.4 pytz pickle5 && \
            apt-get -y install gfortran-5 wget && \
            cd .. && \
            mkdir openblas && cd openblas && \
@@ -83,7 +83,7 @@ jobs:
     displayName: 'install pre-built openblas'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
-  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx==1.8.5 numpydoc matplotlib
+  - script: python -m pip install cython nose pytz pytest==4.4 pickle5 vulture docutils sphinx==1.8.5 numpydoc matplotlib
     displayName: 'Install dependencies; some are optional to avoid test skips'
   - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
     displayName: 'Check for unreachable code paths in Python modules'
@@ -173,7 +173,7 @@ jobs:
       choco install -y mingw --forcex86 --force --version=5.3.0
     displayName: 'Install 32-bit mingw for 32-bit builds'
     condition: eq(variables['BITS'], 32)
-  - script: python -m pip install cython nose pytz pytest
+  - script: python -m pip install cython nose pytz pytest==4.4
     displayName: 'Install dependencies; some are optional to avoid test skips'
   # NOTE: for Windows builds it seems much more tractable to use runtests.py
   # vs. manual setup.py and then runtests.py for testing only

@@ -150,7 +150,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   $PIP install --pre --no-index --upgrade --find-links=. numpy
-  $PIP install nose pytest
+  $PIP install nose pytest==4.4
 
   if [ -n "$INSTALL_PICKLE5" ]; then
     $PIP install pickle5
@@ -174,7 +174,7 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   $PIP install numpy*
-  $PIP install nose pytest
+  $PIP install nose pytest==4.4
   if [ -n "$INSTALL_PICKLE5" ]; then
     $PIP install pickle5
   fi

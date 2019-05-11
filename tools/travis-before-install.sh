@@ -37,6 +37,6 @@ if [ -n "$PPC64_LE" ]; then
 fi
 
 pip install --upgrade pip setuptools
-pip install nose pytz cython pytest
+pip install nose pytz cython pytest==4.4
 if [ -n "$USE_ASV" ]; then pip install asv; fi
 popd

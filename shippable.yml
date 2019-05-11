@@ -42,6 +42,7 @@ build:
     - pip install pytz
     # install pytest-xdist to leverage a second core
     # for unit tests
+    - pip install pytest==4.4
     - pip install pytest-xdist
 
     # build and test numpy
