@@ -382,8 +382,8 @@ If no ``__array_function__`` methods exist, NumPy will default to calling its
 own implementation, intended for use on NumPy arrays. This case arises, for
 example, when all array-like arguments are Python numbers or lists.
 (NumPy arrays do have a ``__array_function__`` method, given below, but it
-always returns ``NotImplemented`` if another argument implements
-``__array_function__``.)
+always returns ``NotImplemented`` if any argument other than a NumPy array
+subclass implements ``__array_function__``.)
 
 One deviation from the current behavior of ``__array_ufunc__`` is that NumPy
 will only call ``__array_function__`` on the *first* argument of each unique
@@ -415,12 +415,21 @@ overrides:
             return NotImplemented
         return func.__skip_array_function__(*args, **kwargs)
 
-Notice that the ``__skip_array_function__`` function attribute allowed us
-to avoid the special cases for NumPy arrays that were needed in
-``ndarray.__array_ufunc__``.
-
 This method matches NumPy's dispatching rules, so for most part it is
 possible to pretend that ``ndarray.__array_function__`` does not exist.
+
+The ``__array_function__`` protocol always calls subclasses before
+superclasses, so if any ``ndarray`` subclasses are involved in an operation,
+they will get the chance to override it, just as if any other argument
+overrides ``__array_function__``. However, the default behavior in an operation
+that combines a base NumPy array and a subclass is different: if the subclass
+returns ``NotImplemented``, NumPy's implementation of the function will be
+called instead of raising an exception. This is appropriate since subclasses
+are `expected to be substitutable <https://en.wikipedia.org/wiki/Liskov_substitution_principle>`_.
+
+Notice that the ``__skip_array_function__`` function attribute allows us
+to avoid the special cases for NumPy arrays that were needed in the
+``__array_ufunc__`` protocol.
 
 Changes within NumPy functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
