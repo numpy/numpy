@@ -30,6 +30,7 @@
 #include <emmintrin.h>
 #endif
 
+#include "npy_longdouble.h"
 #include "numpyos.h"
 #include <string.h>
 
@@ -327,6 +328,17 @@ string_to_long_double(PyObject*op)
     char *end;
     npy_longdouble temp;
     PyObject* b;
+
+    /* Convert python long objects to a longdouble, without precision or range
+     * loss via a double.
+     */
+    if ((PyLong_Check(op) && !PyBool_Check(op))
+#if !defined(NPY_PY3K)
+        || (PyInt_Check(op) && !PyBool_Check(op))
+#endif
+    ) {
+        return npy_longdouble_from_PyLong(op);
+    }
 
     if (PyUnicode_Check(op)) {
         b = PyUnicode_AsUTF8String(op);
