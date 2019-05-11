@@ -1616,8 +1616,22 @@ class TestMethods(object):
         # of sorted items must be greater than ~50 to check the actual
         # algorithm because quick and merge sort fall over to insertion
         # sort for small arrays.
-        for dtype in [np.int32, np.uint32, np.float32]:
+        # Test unsigned dtypes and nonnegative numbers
+        for dtype in [np.uint8, np.uint16, np.uint32, np.uint64, np.float16, np.float32, np.float64, np.longdouble]:
             a = np.arange(101, dtype=dtype)
+            b = a[::-1].copy()
+            for kind in self.sort_kinds:
+                msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
+                c = a.copy()
+                c.sort(kind=kind)
+                assert_equal(c, a, msg)
+                c = b.copy()
+                c.sort(kind=kind)
+                assert_equal(c, a, msg)
+
+        # Test signed dtypes and negative numbers as well
+        for dtype in [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64, np.longdouble]:
+            a = np.arange(-50, 51, dtype=dtype)
             b = a[::-1].copy()
             for kind in self.sort_kinds:
                 msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
