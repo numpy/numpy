@@ -190,8 +190,8 @@ class TestNDArrayArrayFunction(object):
         result = np.concatenate((array, override_sub))
         assert_equal(result, expected.view(OverrideSub))
 
-    def test_numpy_implementation(self):
-        assert_(dispatched_one_arg.__numpy_implementation__
+    def test_skip_array_function(self):
+        assert_(dispatched_one_arg.__skip_array_function__
                 is dispatched_one_arg.__wrapped__)
 
     def test_no_wrapper(self):
@@ -199,8 +199,8 @@ class TestNDArrayArrayFunction(object):
         # __array_function__ with invalid arguments, but check that we raise
         # an appropriate error all the same.
         array = np.array(1)
-        func = dispatched_one_arg.__numpy_implementation__
-        with assert_raises_regex(AttributeError, '__numpy_implementation__'):
+        func = dispatched_one_arg.__skip_array_function__
+        with assert_raises_regex(AttributeError, '__skip_array_function__'):
             array.__array_function__(func=func, types=(np.ndarray,),
                                      args=(array,), kwargs={})
 
@@ -386,7 +386,7 @@ class TestNumPyFunctions(object):
         assert_equal(np.sum(MyArray()), 'yes')
 
     def test_sum_implementation_on_list(self):
-        assert_equal(np.sum.__numpy_implementation__([1, 2, 3]), 6)
+        assert_equal(np.sum.__skip_array_function__([1, 2, 3]), 6)
 
     def test_sum_on_mock_array(self):
 
@@ -410,7 +410,7 @@ class TestNumPyFunctions(object):
 
         proxy = ArrayProxy(mock.Mock(spec=ArrayProxy))
         proxy.value.__array__.return_value = np.array(2)
-        result = np.sum.__numpy_implementation__(proxy)
+        result = np.sum.__skip_array_function__(proxy)
         assert_equal(result, 2)
         # TODO: switch to proxy.value.__array__.assert_called() and
         # proxy.value.__array_function__.assert_not_called() once we drop
@@ -426,7 +426,7 @@ class TestNumPyFunctions(object):
                 return 'summed'
 
             def __array_function__(self, func, types, args, kwargs):
-                return func.__numpy_implementation__(*args, **kwargs)
+                return func.__skip_array_function__(*args, **kwargs)
 
         # note: the internal implementation of np.sum() calls the .sum() method
         assert_equal(np.sum(MyArray()), 'summed')
