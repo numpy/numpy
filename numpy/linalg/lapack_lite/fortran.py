@@ -110,9 +110,9 @@ def getDependencies(filename):
     """For a Fortran source file, return a list of routines declared as EXTERNAL
     in it.
     """
+    external_pat = re.compile(r'^\s*EXTERNAL\s', re.I)
+    routines = []
     with open(filename) as fo:
-        external_pat = re.compile(r'^\s*EXTERNAL\s', re.I)
-        routines = []
         for lineno, line in fortranSourceLines(fo):
             m = external_pat.match(line)
             if m:
