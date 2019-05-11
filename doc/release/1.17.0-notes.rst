@@ -319,6 +319,31 @@ was accidental. The old behavior can be retained with
 ``structured_to_unstructured(arr[['a']]).squeeze(axis=-1)`` or far more simply,
 ``arr['a']``.
 
+``clip`` now uses a ufunc under the hood
+----------------------------------------
+This means that registering clip functions for custom dtypes in C via
+`descr->f->fastclip` is deprecated - they should use the ufunc registration
+mechanism instead, attaching to the ``np.core.umath.clip`` ufunc.
+
+It also means that ``clip`` accepts ``where`` and ``casting`` arguments,
+and can be override with ``__array_ufunc__``.
+
+A consequence of this change is that some behaviors of the old ``clip`` have
+been deprecated:
+
+* Passing ``nan`` to mean "do not clip" as one or both bounds. This didn't work
+  in all cases anyway, and can be better handled by passing infinities of the
+  appropriate sign.
+* Using "unsafe" casting by default when an ``out`` argument is passed. Using
+  ``casting="unsafe"`` explicitly will silence this warning.
+
+Additionally, there are some corner cases with behavior changes:
+
+* Padding ``max < min`` has changed to be more consistent across dtypes, but
+  should not be relied upon.
+* Scalar ``min`` and ``max`` take part in promotion rules like they do in all
+  other ufuncs.
+
 ``__array_interface__`` offset now works as documented
 ------------------------------------------------------
 The interface may use an ``offset`` value that was mistakenly ignored.
