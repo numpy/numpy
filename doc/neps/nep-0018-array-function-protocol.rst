@@ -208,8 +208,25 @@ were explicitly used in the NumPy function call.
     be impossible to correctly override NumPy functions from another object
     if the operation also includes one of your objects.
 
-Defaulting to NumPy's implementation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Avoiding nested ``__array_function__`` overrides
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The special ``__skip_array_function__`` attribute found on NumPy functions that
+support overrides with ``__array_function__`` allows for calling these
+functions without any override checks.
+
+``__skip_array_function__`` always points back to the original NumPy-array
+specific implementation of a function. These functions do not check for
+``__array_function__`` overrides, and instead usually coerce all of their
+array-like arguments to NumPy arrays.
+
+.. note::
+
+    ``__skip_array_function__`` was not included as part of the initial
+    opt-in-only preview of ``__array_function__`` in NumPy 1.16.
+
+Defaulting to NumPy's coercive implementations
+''''''''''''''''''''''''''''''''''''''''''''''
 
 Some projects may prefer to default to NumPy's implementation, rather than
 explicitly defining implementing a supported API. This allows for incrementally
@@ -218,13 +235,6 @@ allowing their objects to be converted into NumPy arrays (e.g., because they
 implemented special methods such as ``__array__``). We don't recommend this
 for most new projects ("Explicit is better than implicit"), but in some cases
 it is the most expedient option.
-
-This is possible by making use of the special ``__numpy_implementation__``
-attribute found on NumPy functions that that support overrides with
-``__array_function__``. ``__numpy_implementation__`` always points back to
-the original NumPy-array specific implementation of a function. These functions
-do not check for a overrides, and instead usually coerce all of their
-array-like arguments to NumPy arrays.
 
 Adapting the previous example:
 
@@ -238,7 +248,7 @@ Adapting the previous example:
 
             my_func = HANDLED_FUNCTIONS.get(func)
             if my_func is None:
-                return func.__numpy_implementation__(*args, **kwargs)
+                return func.__skip_array_function__(*args, **kwargs)
             return my_func(*args, **kwargs)
 
         def __array__(self, dtype):
@@ -248,16 +258,24 @@ Now, if a NumPy function that isn't explicitly handled is called on
 ``MyArray`` object, the operation will act (almost) as if MyArray's
 ``__array_function__`` method never existed.
 
-The name ``__numpy_implementation__`` refers to this being the implementation
-intended to be used *on* NumPy arrays. It does not necessarily imply that the
-implementation is also implemented *by* the NumPy library, though of course
-this will be the case unless external projects such as SciPy adopt the same
-protocol for their own APIs.
+Explicitly reusing NumPy's implementation
+'''''''''''''''''''''''''''''''''''''''''
 
-.. note::
+``__skip_array_function__`` is also convenient for cases where an explicit
+set of NumPy functions should still use NumPy's implementation, by
+calling ``func.__skip__array_function__(*args, **kwargs)`` inside
+``__array_function__`` instead of ``func(*args, **kwargs)`` (which would
+lead to infinite recursion). For example, to explicitly reuse NumPy's
+``array_repr()`` function on a custom array type:
 
-    ``__numpy_implementation__`` was not included as part of the initial
-    opt-in-only preview of ``__array_function__`` in NumPy 1.16.
+.. code:: python
+
+    class MyArray:
+        def __array_function__(self, func, types, args, kwargs):
+            ...
+            if func is np.array_repr:
+                return np.array_repr.__skip_array_function__(*args, **kwargs)
+            ...
 
 Necessary changes within the NumPy codebase itself
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -395,9 +413,9 @@ overrides:
         if not all(issubclass(t, ndarray) for t in types):
             # Defer to any non-subclasses that implement __array_function__
             return NotImplemented
-        return func.__numpy_implementation__(*args, **kwargs)
+        return func.__skip_array_function__(*args, **kwargs)
 
-Notice that the ``__numpy_implementation__`` function attribute allowed us
+Notice that the ``__skip_array_function__`` function attribute allowed us
 to avoid the special cases for NumPy arrays that were needed in
 ``ndarray.__array_ufunc__``.
 
@@ -430,7 +448,7 @@ core implementation looks like:
                     implementation, public_api, relevant_args, args, kwargs)
             if module is not None:
                 public_api.__module__ = module
-            public_api.__numpy_implementation__ = implementation
+            public_api.__skip_array_function__ = implementation
             return public_api
         return decorator
 
@@ -575,12 +593,13 @@ microsecond.
 
 For rare cases where NumPy functions are called in performance critical inner
 loops on small arrays or scalars, it is possible to avoid the overhead of
-dispatching by calling the un-dispatched *implementations* of NumPy functions
-available in the ``__numpy_implementation__`` attribute. For example:
+dispatching by calling the versions of NumPy functions skipping
+``__array_function__`` checks available in the ``__skip_array_function__``
+attribute. For example:
 
 .. code:: python
 
-    dot = getattr(np.dot, '__numpy_implementation__', np.dot)
+    dot = getattr(np.dot, '__skip_array_function__', np.dot)
 
     def naive_matrix_power(x, n):
         x = np.array(x)
@@ -593,9 +612,10 @@ defined in terms of other NumPy functions, but
 **we do not recommend it for most users**:
 
 - The specific implementation of overrides is still provisional, so the
-  ``__numpy_implementation__`` attribute on particular functions might go away.
-  For this reason, access to ``__numpy_implementation__`` attribute outside of
-  ``__array_function__`` methods should always be guarded by using
+  ``__skip_array_function__`` attribute on particular functions could be
+  removed in any NumPy release without warning.
+  For this reason, access to ``__skip_array_function__`` attribute outside of
+  ``__array_function__`` methods should *always* be guarded by using
   ``getattr()`` with a default value.
 - In cases where this makes a difference, you will get far greater speed-ups
   rewriting your inner loops in a compiled language, e.g., with Cython or
@@ -668,7 +688,7 @@ Backward compatibility
 ----------------------
 
 This proposal does not change existing semantics, except for those arguments
-that currently have ``__array_function__`` methods, which should be rare.
+that currently have ``__array_function__`` attributes, which should be rare.
 
 
 Alternatives
@@ -786,7 +806,7 @@ Coercion to a NumPy array as a catch-all fallback
 
 With the current design, classes that implement ``__array_function__``
 to overload at least one function can opt-out of overriding other functions
-by using the ``__numpy_implementation__`` function, as described above under
+by using the ``__skip_array_function__`` function, as described above under
 "Defaulting to NumPy's implementation."
 
 However, this still results in different behavior than not implementing
@@ -797,7 +817,7 @@ defined ``__array_function__`` methods it would attempt to coerce all of them
 to NumPy arrays.
 
 Alternatively, this could be "fixed" by writing a ``__array_function__``
-method that always calls ``__numpy_implementation__()`` instead of returning
+method that always calls ``__skip_array_function__()`` instead of returning
 ``NotImplemented`` for some functions, but that would result in a type
 whose implementation cannot be overriden by over argumetns -- like NumPy
 arrays themselves prior to the introduction of this protocol.
@@ -835,7 +855,7 @@ handling of return values in ``__array_function__`` in either of two ways:
    definitely get more complex and harder to reason about.
 
 At present, neither of these alternatives looks like a good idea. Reusing
-``__numpy_implementation__()`` looks like it should suffice for most purposes.
+``__skip_array_function__()`` looks like it should suffice for most purposes.
 Arguably this loss in flexibility is a virtue: fallback implementations often
 result in unpredictable and undesired behavior.
 
@@ -937,7 +957,7 @@ There are two other arguments that we think *might* be important to pass to
   ``array_function_dispatch``) in ``ndarray.__array_function__`` would allow
   us to drop special case logic for that method from
   ``implement_array_function``. *Update: This has been implemented, as the
-  ``__numpy_implementation__`` attributes.*
+  ``__skip_array_function__`` attributes.*
 - Access to the ``dispatcher`` function passed into
   ``array_function_dispatch()`` would allow ``__array_function__``
   implementations to determine the list of "array-like" arguments in a generic
