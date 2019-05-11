@@ -1981,9 +1981,9 @@ def test_ufunc_noncontiguous(ufunc):
         args_c = [np.empty(6, t) for t in inp]
         args_n = [np.empty(18, t)[::3] for t in inp]
         for a in args_c:
-            a.flat = range(6)
+            a.flat = range(1,7)
         for a in args_n:
-            a.flat = range(6)
+            a.flat = range(1,7)
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res_c = ufunc(*args_c)

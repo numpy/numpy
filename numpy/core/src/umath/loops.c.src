@@ -1623,6 +1623,13 @@ FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY
 {
     if (!run_unary_@isa@_@func@_FLOAT(args, dimensions, steps)) {
         UNARY_LOOP {
+            /*
+             * We use the AVX function to compute exp/log for scalar elements as well.
+             * This is needed to ensure the output of strided and non-strided
+             * cases match. But this worsens the performance of strided arrays.
+             * There is plan to fix this in a subsequent patch by using gather
+             * instructions for strided arrays in the AVX function.
+             */
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
             @ISA@_@func@_FLOAT((npy_float *)op1, (npy_float *)ip1, 1);
 #else
