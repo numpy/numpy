@@ -4405,6 +4405,7 @@ static PyArray_Descr @from@_Descr = {
  *             npy_half, npy_float, npy_double, npy_longdouble,
  *             npy_cfloat, npy_cdouble, npy_clongdouble,
  *             PyObject *, npy_datetime, npy_timedelta#
+ * #rsort = 1*5, 0*16#
  * #NAME = Bool,
  *         Byte, UByte, Short, UShort, Int, UInt,
  *         Long, ULong, LongLong, ULongLong,
@@ -4461,12 +4462,20 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     {
         quicksort_@suff@,
         heapsort_@suff@,
-        timsort_@suff@
+        #if @rsort@
+            radixsort_@suff@
+        #else
+            timsort_@suff@
+        #endif
     },
     {
         aquicksort_@suff@,
         aheapsort_@suff@,
-        atimsort_@suff@
+        #if @rsort@
+            aradixsort_@suff@
+        #else
+            atimsort_@suff@            
+        #endif
     },
 #else
     {

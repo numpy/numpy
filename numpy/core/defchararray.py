@@ -2124,7 +2124,7 @@ class chararray(ndarray):
     def __rmod__(self, other):
         return NotImplemented
 
-    def argsort(self, axis=-1, kind='quicksort', order=None):
+    def argsort(self, axis=-1, kind=None, order=None):
         """
         Return the indices that sort the array lexicographically.
 
