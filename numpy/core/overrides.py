@@ -157,13 +157,15 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
                 implementation, {name}, relevant_args, args, kwargs)
         """).format(name=implementation.__name__)
 
+        source_object = compile(
+            source, filename='<__array_function__ internals>', mode='exec')
         scope = {
             'implementation': implementation,
             'dispatcher': dispatcher,
             'functools': functools,
             'implement_array_function': implement_array_function,
         }
-        exec(source, scope)
+        exec(source_object, scope)
 
         public_api = scope[implementation.__name__]
 
