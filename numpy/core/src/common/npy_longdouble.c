@@ -138,39 +138,41 @@ npy_longdouble_from_PyLong(PyObject *long_obj) {
 
     cstr = PyBytes_AsString(bytes);
     if (cstr == NULL) {
-        Py_DECREF(bytes);
-        return -1;
+        goto fail;
     }
     end = NULL;
 
     /* convert the string to a long double and capture errors */
     errno = 0;
     result = NumPyOS_ascii_strtold(cstr, &end);
-    int errno_save = errno;
-
-    Py_DECREF(bytes);
-    if (errno_save == ERANGE) {
+    if (errno == ERANGE) {
         /* strtold returns INFINITY of the correct sign. */
         if (PyErr_Warn(PyExc_RuntimeWarning,
                 "overflow encountered in conversion from python long") < 0) {
-            return -1;
+            goto fail;
         }
     }
-    else if (errno_save) {
+    else if (errno) {
         PyErr_Format(PyExc_RuntimeError,
                      "Could not parse python long as longdouble: %s (%s)",
                      cstr,
-                     strerror(errno_save));
-        return -1;
+                     strerror(errno));
+        goto fail;
     }
 
     /* Extra characters at the end of the string, or nothing parsed */
-    if (end == cstr || *end) {
+    if (end == cstr || *end != '\0') {
         PyErr_Format(PyExc_RuntimeError,
                      "Could not parse long as longdouble: %s",
                      cstr);
-        return -1;
+        goto fail;
     }
 
+    /* finally safe to decref now that we're done with `end` */
+    Py_DECREF(bytes);
     return result;
+
+fail:
+    Py_DECREF(bytes);
+    return -1;
 }
