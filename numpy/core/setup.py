@@ -710,6 +710,7 @@ def configuration(parent_package='',top_path=None):
                        join('src', 'npysort', 'mergesort.c.src'),
                        join('src', 'npysort', 'timsort.c.src'),
                        join('src', 'npysort', 'heapsort.c.src'),
+                       join('src', 'npysort', 'radixsort.c.src'),
                        join('src', 'common', 'npy_partition.h.src'),
                        join('src', 'npysort', 'selection.c.src'),
                        join('src', 'common', 'npy_binsearch.h.src'),

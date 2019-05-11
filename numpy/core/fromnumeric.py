@@ -824,7 +824,7 @@ def _sort_dispatcher(a, axis=None, kind=None, order=None):
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind='quicksort', order=None):
+def sort(a, axis=-1, kind=None, order=None):
     """
     Return a sorted copy of an array.
 
@@ -837,8 +837,8 @@ def sort(a, axis=-1, kind='quicksort', order=None):
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
-        and 'mergesort' use timsort under the covers and, in general, the
-        actual implementation will vary with data type. The 'mergesort' option
+        and 'mergesort' use timsort or radix sort under the covers and, in general,
+        the actual implementation will vary with data type. The 'mergesort' option
         is retained for backwards compatibility.
 
         .. versionchanged:: 1.15.0.
@@ -914,7 +914,8 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 
     'stable' automatically choses the best stable sorting algorithm
     for the data type being sorted. It, along with 'mergesort' is
-    currently mapped to timsort. API forward compatibility currently limits the
+    currently mapped to timsort or radix sort depending on the
+    data type. API forward compatibility currently limits the
     ability to select the implementation and it is hardwired for the different
     data types.
 
@@ -925,7 +926,8 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     mergesort. It is now used for stable sort while quicksort is still the
     default sort if none is chosen. For details of timsort, refer to
     `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
-
+    'mergesort' and 'stable' are mapped to radix sort for integer data types. Radix sort is an
+    O(n) sort instead of O(n log n).
 
     Examples
     --------
@@ -974,7 +976,7 @@ def _argsort_dispatcher(a, axis=None, kind=None, order=None):
 
 
 @array_function_dispatch(_argsort_dispatcher)
-def argsort(a, axis=-1, kind='quicksort', order=None):
+def argsort(a, axis=-1, kind=None, order=None):
     """
     Returns the indices that would sort an array.
 
@@ -997,8 +999,6 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
         .. versionchanged:: 1.15.0.
            The 'stable' option was added.
-
-
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
