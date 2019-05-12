@@ -1900,9 +1900,9 @@ def pinv(a, rcond=1e-15, hermitian=False):
         Matrix or stack of matrices to be pseudo-inverted.
     rcond : (...) array_like of float
         Cutoff for small singular values.
-        Singular values smaller (in modulus) than
-        `rcond` * largest_singular_value (again, in modulus)
-        are set to zero. Broadcasts against the stack of matrices
+        Singular values less than or equal to
+        ``rcond * largest_singular_value`` are set to zero.
+        Broadcasts against the stack of matrices.
     hermitian : bool, optional
         If True, `a` is assumed to be Hermitian (symmetric if real-valued),
         enabling a more efficient method for finding singular values.

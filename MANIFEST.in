@@ -7,6 +7,7 @@
 include MANIFEST.in
 include pytest.ini
 include *.txt
+include README.md
 include site.cfg.example
 recursive-include numpy/random/mtrand *.pyx *.pxd
 # Add build support that should go in sdist, but not go in bdist/be installed
@@ -39,3 +40,6 @@ prune benchmarks/numpy
 # Exclude generated files
 prune */__pycache__
 global-exclude *.pyc *.pyo *.pyd *.swp *.bak *~
+# Exclude license file that we append to the main license when running
+# `python setup.py sdist`
+exclude LICENSES_bundled.txt

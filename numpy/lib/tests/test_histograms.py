@@ -554,15 +554,11 @@ class TestHistogramOptimBinNums(object):
             return a / (a + b)
 
         ll = [[nbins_ratio(seed, size) for size in np.geomspace(start=10, stop=100, num=4).round().astype(int)]
-              for seed in range(256)]
+              for seed in range(10)]
 
         # the average difference between the two methods decreases as the dataset size increases.
-        assert_almost_equal(abs(np.mean(ll, axis=0) - 0.5),
-                            [0.1065248,
-                             0.0968844,
-                             0.0331818,
-                             0.0178057],
-                            decimal=3)
+        avg = abs(np.mean(ll, axis=0) - 0.5)
+        assert_almost_equal(avg, [0.15, 0.09, 0.08, 0.03], decimal=2)
 
     def test_simple_range(self):
         """

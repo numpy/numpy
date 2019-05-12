@@ -1498,6 +1498,7 @@ class TestAssertNoGcCycles(object):
         with assert_raises(AssertionError):
             assert_no_gc_cycles(make_cycle)
 
+    @pytest.mark.slow
     def test_fails(self):
         """
         Test that in cases where the garbage cannot be collected, we raise an

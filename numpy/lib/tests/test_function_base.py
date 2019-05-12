@@ -696,6 +696,9 @@ class TestDiff(object):
         assert_raises(np.AxisError, diff, x, axis=3)
         assert_raises(np.AxisError, diff, x, axis=-4)
 
+        x = np.array(1.11111111111, np.float64)
+        assert_raises(ValueError, diff, x)
+
     def test_nd(self):
         x = 20 * rand(10, 20, 30)
         out1 = x[:, :, 1:] - x[:, :, :-1]

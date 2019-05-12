@@ -83,6 +83,17 @@ The functions ``np.load``, and ``np.lib.format.read_array`` take an
 `allow_pickle` keyword which now defaults to ``False`` in response to
 `CVE-2019-6446 <https://nvd.nist.gov/vuln/detail/CVE-2019-6446>`_.
 
+Potential changes to the random stream
+--------------------------------------
+Due to bugs in the application of log to random floating point numbers,
+the stream may change when sampling from ``np.random.beta``, ``np.random.binomial``,
+``np.random.laplace``, ``np.random.logistic``, ``np.random.logseries`` or
+``np.random.multinomial`` if a 0 is generated in the underlying MT19937 random stream.
+There is a 1 in :math:`10^{53}` chance of this occurring, and so the probability that
+the stream changes for any given seed is extremely small. If a 0 is encountered in the
+underlying generator, then the incorrect value produced (either ``np.inf``
+or ``np.nan``) is now dropped.
+
 C API changes
 =============
 
@@ -109,6 +120,9 @@ performace on already or nearly sorted data and performs like mergesort on
 random data.  The algorithm is stable and requires O(n/2) working space.  For
 details of the algorithm, refer to
 `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
+
+In addition, for very small dtypes, radix sort is used instead of timsort. In
+general, we attempt to use the fastest possible implementation.
 
 ``np.unpackbits`` now accepts a ``count`` parameter
 ---------------------------------------------------
@@ -161,6 +175,11 @@ has the same `itemsize` as the original, but only keeps a subset of the fields.
 This means that `arr[['a', 'b']]` and ``arr.view(arr.dtype[['a', 'b']])`` are
 equivalent.
 
+`numpy.packbits` and `numpy.unpackbits` accept an ``order`` keyword
+-------------------------------------------------------------------
+The ``order`` keyword defaults to ``big``, and will order the **bits**
+accordingly. For ``'big'`` 3 will become ``[0, 0, 0, 0, 0, 0, 1, 1]``, and
+``[1, 1, 0, 0, 0, 0, 0, 0]`` for ``little``
 
 Improvements
 ============
@@ -182,6 +201,14 @@ containing large prime factors, `pocketfft` uses Bluestein's algorithm, which
 maintains `O(N log N)` run time complexity instead of deteriorating towards
 `O(N*N)` for prime lengths. Also, accuracy for real-valued FFTs with near-prime
 lengths has improved and is on par with complex-valued FFTs.
+
+Performance improvements for integer sorts
+------------------------------------------
+
+``sort``, ``argsort``, ``ndarray.sort`` and ``ndarray.argsort`` now use radix
+sort as the default stable sort for integers and booleans. This is faster than
+the old default, mergesort, in the vast majority of cases.
+
 
 Further improvements to ``ctypes`` support in ``np.ctypeslib``
 --------------------------------------------------------------
