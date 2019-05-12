@@ -1511,7 +1511,8 @@ pack_inner(const char *inptr,
            npy_intp in_stride,
            char *outptr,
            npy_intp n_out,
-           npy_intp out_stride)
+           npy_intp out_stride,
+           char order)
 {
     /*
      * Loop through the elements of inptr.
@@ -1531,9 +1532,13 @@ pack_inner(const char *inptr,
         vn_out -= (vn_out & 1);
         for (index = 0; index < vn_out; index += 2) {
             unsigned int r;
-            /* swap as packbits is "big endian", note x86 can load unaligned */
-            npy_uint64 a = npy_bswap8(*(npy_uint64*)inptr);
-            npy_uint64 b = npy_bswap8(*(npy_uint64*)(inptr + 8));
+            npy_uint64 a = *(npy_uint64*)inptr;
+            npy_uint64 b = *(npy_uint64*)(inptr + 8);
+            if (order == 'b') {
+                a = npy_bswap8(a);
+                b = npy_bswap8(b);
+            }
+            /* note x86 can load unaligned */
             __m128i v = _mm_set_epi64(_m_from_int64(b), _m_from_int64(a));
             /* false -> 0x00 and true -> 0xFF (there is no cmpneq) */
             v = _mm_cmpeq_epi8(v, zero);
@@ -1553,30 +1558,45 @@ pack_inner(const char *inptr,
     if (remain == 0) {                  /* assumes n_in > 0 */
         remain = 8;
     }
-    /* don't reset index to handle remainder of above block */
+    /* Don't reset index. Just handle remainder of above block */
     for (; index < n_out; index++) {
-        char build = 0;
+        unsigned char build = 0;
         int i, maxi;
         npy_intp j;
 
         maxi = (index == n_out - 1) ? remain : 8;
-        for (i = 0; i < maxi; i++) {
-            build <<= 1;
-            for (j = 0; j < element_size; j++) {
-                build |= (inptr[j] != 0);
+        if (order == 'b') {
+            for (i = 0; i < maxi; i++) {
+                build <<= 1;
+                for (j = 0; j < element_size; j++) {
+                    build |= (inptr[j] != 0);
+                }
+                inptr += in_stride;
             }
-            inptr += in_stride;
+            if (index == n_out - 1) {
+                build <<= 8 - remain;
+            }
         }
-        if (index == n_out - 1) {
-            build <<= 8 - remain;
+        else
+        {
+            for (i = 0; i < maxi; i++) {
+                build >>= 1;
+                for (j = 0; j < element_size; j++) {
+                    build |= (inptr[j] != 0) ? 128 : 0;
+                }
+                inptr += in_stride;
+            }
+            if (index == n_out - 1) {
+                build >>= 8 - remain;
+            }
         }
-        *outptr = build;
+        *outptr = (char)build;
         outptr += out_stride;
     }
 }
 
 static PyObject *
-pack_bits(PyObject *input, int axis)
+pack_bits(PyObject *input, int axis, char order)
 {
     PyArrayObject *inp;
     PyArrayObject *new = NULL;
@@ -1661,7 +1681,7 @@ pack_bits(PyObject *input, int axis)
         pack_inner(PyArray_ITER_DATA(it), PyArray_ITEMSIZE(new),
                    PyArray_DIM(new, axis), PyArray_STRIDE(new, axis),
                    PyArray_ITER_DATA(ot), PyArray_DIM(out, axis),
-                   PyArray_STRIDE(out, axis));
+                   PyArray_STRIDE(out, axis), order);
         PyArray_ITER_NEXT(it);
         PyArray_ITER_NEXT(ot);
     }
@@ -1681,10 +1701,8 @@ fail:
 }
 
 static PyObject *
-unpack_bits(PyObject *input, int axis, PyObject *count_obj)
+unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 {
-    static int unpack_init = 0;
-    static char unpack_lookup[256][8];
     PyArrayObject *inp;
     PyArrayObject *new = NULL;
     PyArrayObject *out = NULL;
@@ -1770,28 +1788,6 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj)
         goto fail;
     }
 
-    /* setup lookup table under GIL, big endian 0..256 as bytes */
-    if (unpack_init == 0) {
-        npy_uint64 j;
-        npy_uint64 * unpack_lookup_64 = (npy_uint64 *)unpack_lookup;
-        for (j=0; j < 256; j++) {
-            npy_uint64 v = 0;
-            v |= (npy_uint64)((j &   1) ==   1);
-            v |= (npy_uint64)((j &   2) ==   2) << 8;
-            v |= (npy_uint64)((j &   4) ==   4) << 16;
-            v |= (npy_uint64)((j &   8) ==   8) << 24;
-            v |= (npy_uint64)((j &  16) ==  16) << 32;
-            v |= (npy_uint64)((j &  32) ==  32) << 40;
-            v |= (npy_uint64)((j &  64) ==  64) << 48;
-            v |= (npy_uint64)((j & 128) == 128) << 56;
-#if NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
-            v = npy_bswap8(v);
-#endif
-            unpack_lookup_64[j] = v;
-        }
-        unpack_init = 1;
-    }
-
     count = PyArray_DIM(new, axis) * 8;
     if (outdims[axis] > count) {
         in_n = count / 8;
@@ -1814,45 +1810,40 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj)
         unsigned const char *inptr = PyArray_ITER_DATA(it);
         char *outptr = PyArray_ITER_DATA(ot);
 
-        if (out_stride == 1) {
-            /* for unity stride we can just copy out of the lookup table */
+        if (order == 'b') {
             for (index = 0; index < in_n; index++) {
-                memcpy(outptr, unpack_lookup[*inptr], 8);
-                outptr += 8;
-                inptr += in_stride;
-            }
-            /* Clean up the tail portion */
-            if (in_tail) {
-                memcpy(outptr, unpack_lookup[*inptr], in_tail);
-            }
-            /* Add padding */
-            else if (out_pad) {
-                memset(outptr, 0, out_pad);
-            }
-        }
-        else {
-            unsigned char mask;
-
-            for (index = 0; index < in_n; index++) {
-                for (mask = 128; mask; mask >>= 1) {
-                    *outptr = ((mask & (*inptr)) != 0);
+                for (i = 0; i < 8; i++) {
+                    *outptr = ((*inptr & (128 >> i)) != 0);
                     outptr += out_stride;
                 }
                 inptr += in_stride;
             }
             /* Clean up the tail portion */
-            mask = 128;
             for (i = 0; i < in_tail; i++) {
-                *outptr = ((mask & (*inptr)) != 0);
-                outptr += out_stride;
-                mask >>= 1;
-            }
-            /* Add padding */
-            for (index = 0; index < out_pad; index++) {
-                *outptr = 0;
+                *outptr = ((*inptr & (128 >> i)) != 0);
                 outptr += out_stride;
             }
         }
+        else {
+            for (index = 0; index < in_n; index++) {
+                for (i = 0; i < 8; i++) {
+                    *outptr = ((*inptr & (1 << i)) != 0);
+                    outptr += out_stride;
+                }
+                inptr += in_stride;
+            }
+            /* Clean up the tail portion */
+            for (i = 0; i < in_tail; i++) {
+                *outptr = ((*inptr & (1 << i)) != 0);
+                outptr += out_stride;
+            }
+        }
+        /* Add padding */
+        for (index = 0; index < out_pad; index++) {
+            *outptr = 0;
+            outptr += out_stride;
+        }
+
         PyArray_ITER_NEXT(it);
         PyArray_ITER_NEXT(ot);
     }
@@ -1876,13 +1867,26 @@ io_pack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
     int axis = NPY_MAXDIMS;
-    static char *kwlist[] = {"a", "axis", NULL};
+    static char *kwlist[] = {"in", "axis", "bitorder", NULL};
+    char c = 'b';
+    const char * order_str = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:pack" , kwlist,
-                                     &obj, PyArray_AxisConverter, &axis)) {
+    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&s:pack" , kwlist,
+                &obj, PyArray_AxisConverter, &axis, &order_str)) {
         return NULL;
     }
-    return pack_bits(obj, axis);
+    if (order_str != NULL) {
+        if (strncmp(order_str, "little", 6) == 0)
+            c = 'l';
+        else if (strncmp(order_str, "big", 3) == 0)
+            c = 'b';
+        else {
+            PyErr_SetString(PyExc_ValueError,
+                    "'order' must be either 'little' or 'big'");
+            return NULL;
+        }
+    }
+    return pack_bits(obj, axis, c);
 }
 
 
@@ -1892,12 +1896,20 @@ io_unpack(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     PyObject *obj;
     int axis = NPY_MAXDIMS;
     PyObject *count = Py_None;
-    static char *kwlist[] = {"a", "axis", "count", NULL};
+    static char *kwlist[] = {"in", "axis", "count", "bitorder", NULL};
+    const char * c = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:unpack" , kwlist,
-                                     &obj, PyArray_AxisConverter, &axis,
-                                     &count)) {
+    if (!PyArg_ParseTupleAndKeywords( args, kwds, "O|O&Os:unpack" , kwlist,
+                &obj, PyArray_AxisConverter, &axis, &count, &c)) {
         return NULL;
     }
-    return unpack_bits(obj, axis, count);
+    if (c == NULL) {
+        c = "b";
+    }
+    if (c[0] != 'l' && c[0] != 'b') {
+        PyErr_SetString(PyExc_ValueError,
+                    "'order' must begin with 'l' or 'b'");
+        return NULL;
+    }
+    return unpack_bits(obj, axis, count, c[0]);
 }
