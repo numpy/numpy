@@ -1116,7 +1116,7 @@ def putmask(a, mask, values):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
 def packbits(a, axis=None, bitorder='big'):
     """
-    packbits(a, axis=None)
+    packbits(a, axis=None, bitorder='big')
 
     Packs the elements of a binary-valued array into bits in a uint8 array.
 
@@ -1174,7 +1174,7 @@ def packbits(a, axis=None, bitorder='big'):
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
 def unpackbits(a, axis=None, count=None, bitorder='big'):
     """
-    unpackbits(a, axis=None, count=None)
+    unpackbits(a, axis=None, count=None, bitorder='big')
 
     Unpacks elements of a uint8 array into a binary-valued output array.
 
