@@ -765,7 +765,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             raise AssertionError(msg)
 
         flagged = bool_(False)
-        if issubdtype(x.dtype, inexact) and issubdtype(y.dtype, inexact):
+        if isnumber(x) and isnumber(y) and (
+                issubdtype(x.dtype, inexact) or issubdtype(y.dtype, inexact)):
             if equal_nan:
                 flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
 
