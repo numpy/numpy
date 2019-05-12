@@ -20,8 +20,7 @@ from warnings import WarningMessage
 import pprint
 
 from numpy.core import(
-     intp, float32, empty, arange, array_repr, ndarray, isnat, array,
-     logical_not)
+     intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
@@ -785,7 +784,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
 
         if isinstance(val, bool):
             cond = val
-            reduced = array([0])
+            reduced = array(val)
         else:
             reduced = val.ravel()
             cond = reduced.all()
@@ -795,8 +794,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # do not trigger a failure (np.ma.masked != True evaluates as
         # np.ma.masked, which is falsy).
         if cond != True:
-            logical_not(reduced, out=reduced)
-            mismatch = 100.0 * reduced.sum(dtype=intp) / ox.size
+            mismatch = 100. * (reduced.size - reduced.sum(dtype=intp)) / ox.size
             remarks = ['Mismatch: {:.3g}%'.format(mismatch)]
 
             with errstate(invalid='ignore', divide='ignore'):
