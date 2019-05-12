@@ -1573,9 +1573,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         column, individually.
     comments : str, optional
         The character used to indicate the start of a comment.
-        By default, the character '#' starts a comment. If some other
-        character is used, override `deletechars` to preserve
-        special characters in the header names.
         All the characters occurring on a line after a comment are discarded
     delimiter : str, int, or sequence, optional
         The string used to separate values.  By default, any consecutive
@@ -1614,8 +1611,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         for example, `file` would become `file_`.
     deletechars : str, optional
         A string combining invalid characters that must be deleted from the
-        names. In case `comments` is something other than '#', this must be
-        an empty string in order to preserve special characters in the names.
+        names.
     defaultfmt : str, optional
         A format used to define default field names, such as "f%i" or "f_%02i".
     autostrip : bool, optional
@@ -1720,6 +1716,14 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data
     array((1, 1.3, b'abcde'),
           dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', 'S5')])
+
+    An example to show comments
+
+    >>> f = StringIO('''
+    ... text,# of chars
+    ... hello world,11
+    ... numpy,5''')
+    >>> np.genfromtxt(f, dtype='S12,S12', delimiter=',')
 
     """
     if max_rows is not None:
