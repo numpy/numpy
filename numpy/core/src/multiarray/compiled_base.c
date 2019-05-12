@@ -1704,8 +1704,14 @@ static PyObject *
 unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 {
     static int unpack_init = 0;
-    static npy_uint8 unpack_lookup_l[256][8];
-    static npy_uint8 unpack_lookup_b[256][8];
+    /*
+     * lookuptable for bitorder big as it has been around longer
+     * bitorder little is handled via byteswapping in the loop
+     */
+    static union {
+        npy_uint8  bytes[8];
+        npy_uint64 uint64;
+    } unpack_lookup_big[256];
     PyArrayObject *inp;
     PyArrayObject *new = NULL;
     PyArrayObject *out = NULL;
@@ -1801,9 +1807,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             npy_intp k;
             for (k=0; k < 8; k++) {
                 npy_uint8 v = (j & (1 << k)) == (1 << k);
-                unpack_lookup_b[j][7 - k] = v;
-                /* for bitorder little the lookup table is byte swapped */
-                unpack_lookup_l[j][k] = v;
+                unpack_lookup_big[j].bytes[7 - k] = v;
             }
         }
         unpack_init = 1;
@@ -1832,17 +1836,33 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
         char *outptr = PyArray_ITER_DATA(ot);
 
         if (out_stride == 1) {
-            const npy_uint8 (*unpack_lookup)[8] = (order == 'b') ?
-                unpack_lookup_b : unpack_lookup_l;
             /* for unity stride we can just copy out of the lookup table */
-            for (index = 0; index < in_n; index++) {
-                memcpy(outptr, &unpack_lookup[*inptr], 8);
-                outptr += 8;
-                inptr += in_stride;
+            if (order == 'b') {
+                for (index = 0; index < in_n; index++) {
+                    npy_uint64 v = unpack_lookup_big[*inptr].uint64;
+                    memcpy(outptr, &v, 8);
+                    outptr += 8;
+                    inptr += in_stride;
+                }
+            }
+            else {
+                for (index = 0; index < in_n; index++) {
+                    npy_uint64 v = unpack_lookup_big[*inptr].uint64;
+                    if (order != 'b') {
+                        v = npy_bswap8(v);
+                    }
+                    memcpy(outptr, &v, 8);
+                    outptr += 8;
+                    inptr += in_stride;
+                }
             }
             /* Clean up the tail portion */
             if (in_tail) {
-                memcpy(outptr, &unpack_lookup[*inptr], in_tail);
+                npy_uint64 v = unpack_lookup_big[*inptr].uint64;
+                if (order != 'b') {
+                    v = npy_bswap8(v);
+                }
+                memcpy(outptr, &v, in_tail);
             }
             /* Add padding */
             else if (out_pad) {
