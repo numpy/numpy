@@ -1399,7 +1399,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             if len(fmt) != ncol:
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
             format = asstr(delimiter).join(map(asstr, fmt))
-        elif isinstance(fmt, str):
+        elif isinstance(fmt, basestring):
             n_fmt_chars = fmt.count('%')
             error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
             if n_fmt_chars == 1:
@@ -1549,7 +1549,8 @@ def fromregex(file, regexp, dtype, encoding=None):
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
                missing_values=None, filling_values=None, usecols=None,
-               names=None, excludelist=None, deletechars=None,
+               names=None, excludelist=None,
+               deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
                invalid_raise=True, max_rows=None, encoding='bytes'):

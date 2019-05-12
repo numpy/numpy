@@ -108,7 +108,7 @@ Here's the short summary, complete TOC links are below:
 
    If your change introduces a deprecation, make sure to discuss this first on
    GitHub or the mailing list first. If agreement on the deprecation is
-   reached, follow `NEP 23 `deprecation policy <http://www.numpy.org/neps/
+   reached, follow `NEP 23 deprecation policy <http://www.numpy.org/neps/
    nep-0023-backwards-compatibility.html>`_  to add the deprecation.
 
 6. Cross referencing issues
@@ -175,11 +175,9 @@ and then run::
 
   $ python runtests.py --coverage
 
-This will create a report in `build/coverage`, which can be viewed with
+This will create a report in `build/coverage`, which can be viewed with::
 
-```
-firefox build/coverage/index.html
-```
+  $ firefox build/coverage/index.html
 
 Building docs
 -------------

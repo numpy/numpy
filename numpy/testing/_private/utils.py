@@ -301,6 +301,11 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     check that all elements of these objects are equal. An exception is raised
     at the first conflicting values.
 
+    This function handles NaN comparisons as if NaN was a "normal" number.
+    That is, no assertion is raised if both objects have NaNs in the same
+    positions.  This is in contrast to the IEEE standard on NaNs, which says
+    that NaN compared to anything must return False.
+
     Parameters
     ----------
     actual : array_like
@@ -327,6 +332,11 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     item=1
      ACTUAL: 5
      DESIRED: 6
+
+    The following comparison does not raise an exception.  There are NaNs
+    in the inputs, but they are in the same positions.
+
+    >>> np.testing.assert_equal(np.array([1.0, 2.0, np.nan]), [1, 2, np.nan])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -1441,9 +1451,9 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     Raises an AssertionError if two objects are not equal up to desired
     tolerance.
 
-    The test is equivalent to ``allclose(actual, desired, rtol, atol)``.
-    It compares the difference between `actual` and `desired` to
-    ``atol + rtol * abs(desired)``.
+    The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (note
+    that ``allclose`` has different default values). It compares the difference
+    between `actual` and `desired` to ``atol + rtol * abs(desired)``.
 
     .. versionadded:: 1.5.0
 

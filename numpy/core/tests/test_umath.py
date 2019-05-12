@@ -17,7 +17,6 @@ from numpy.testing import (
     _gen_alignment_data
     )
 
-
 def on_powerpc():
     """ True if we are running on a Power PC platform."""
     return platform.processor() == 'powerpc' or \
@@ -650,6 +649,34 @@ class TestExp(object):
             yf = np.array(y, dtype=dt)*log2_
             assert_almost_equal(np.exp(yf), xf)
 
+class TestSpecialFloats(object):
+    def test_exp_values(self):
+        x = [np.nan,  np.nan, np.inf, 0.]
+        y = [np.nan, -np.nan, np.inf, -np.inf]
+        for dt in ['f', 'd', 'g']:
+            xf = np.array(x, dtype=dt)
+            yf = np.array(y, dtype=dt)
+            assert_equal(np.exp(yf), xf)
+
+        with np.errstate(over='raise'):
+            assert_raises(FloatingPointError, np.exp, np.float32(100.))
+            assert_raises(FloatingPointError, np.exp, np.float32(1E19))
+
+    def test_log_values(self):
+        with np.errstate(all='ignore'):
+            x = [np.nan,  np.nan, np.inf, np.nan, -np.inf, np.nan]
+            y = [np.nan, -np.nan, np.inf, -np.inf, 0., -1.0]
+            for dt in ['f', 'd', 'g']:
+                xf = np.array(x, dtype=dt)
+                yf = np.array(y, dtype=dt)
+                assert_equal(np.log(yf), xf)
+
+        with np.errstate(divide='raise'):
+            assert_raises(FloatingPointError, np.log, np.float32(0.))
+
+        with np.errstate(invalid='raise'):
+            assert_raises(FloatingPointError, np.log, np.float32(-np.inf))
+            assert_raises(FloatingPointError, np.log, np.float32(-1.0))
 
 class TestLogAddExp(_FilterInvalids):
     def test_logaddexp_values(self):

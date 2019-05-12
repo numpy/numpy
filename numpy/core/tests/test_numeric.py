@@ -2157,6 +2157,7 @@ class TestLikeFuncs(object):
                 (np.arange(24).reshape(2, 3, 4).swapaxes(0, 1), None),
                 (np.arange(24).reshape(4, 3, 2).swapaxes(0, 1), '?'),
                      ]
+        self.shapes = [(5,), (5,6,), (5,6,7,)]
 
     def compare_array_value(self, dz, value, fill_value):
         if value is not None:
@@ -2221,6 +2222,34 @@ class TestLikeFuncs(object):
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
             self.compare_array_value(dz, value, fill_value)
+
+            # Test the 'shape' parameter
+            for s in self.shapes:
+                for o in 'CFA':
+                    sz = like_function(d, dtype=dtype, shape=s, order=o,
+                                       **fill_kwarg)
+                    assert_equal(sz.shape, s)
+                    if dtype is None:
+                        assert_equal(sz.dtype, d.dtype)
+                    else:
+                        assert_equal(sz.dtype, np.dtype(dtype))
+                    if o == 'C' or (o == 'A' and d.flags.c_contiguous):
+                        assert_(sz.flags.c_contiguous)
+                    elif o == 'F' or (o == 'A' and d.flags.f_contiguous):
+                        assert_(sz.flags.f_contiguous)
+                    self.compare_array_value(sz, value, fill_value)
+
+                if (d.ndim != len(s)):
+                    assert_equal(np.argsort(like_function(d, dtype=dtype,
+                                                          shape=s, order='K',
+                                                          **fill_kwarg).strides),
+                                 np.argsort(np.empty(s, dtype=dtype,
+                                                     order='C').strides))
+                else:
+                    assert_equal(np.argsort(like_function(d, dtype=dtype,
+                                                          shape=s, order='K',
+                                                          **fill_kwarg).strides),
+                                 np.argsort(d.strides))
 
         # Test the 'subok' parameter
         class MyNDArray(np.ndarray):
@@ -2737,6 +2766,18 @@ class TestBroadcast(object):
                 mit = np.broadcast(*arrs)
                 assert_equal(mit.numiter, j)
 
+    def test_broadcast_error_kwargs(self):
+        #gh-13455
+        arrs = [np.empty((5, 6, 7))]
+        mit  = np.broadcast(*arrs)
+        mit2 = np.broadcast(*arrs, **{})
+        assert_equal(mit.shape, mit2.shape)
+        assert_equal(mit.ndim, mit2.ndim)
+        assert_equal(mit.nd, mit2.nd)
+        assert_equal(mit.numiter, mit2.numiter)
+        assert_(mit.iters[0].base is mit2.iters[0].base)
+
+        assert_raises(ValueError, np.broadcast, 1, **{'x': 1})
 
 class TestKeepdims(object):
 
