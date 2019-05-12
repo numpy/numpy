@@ -1704,8 +1704,8 @@ static PyObject *
 unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 {
     static int unpack_init = 0;
-    static npy_uint64 unpack_lookup_l[256];
-    static npy_uint64 unpack_lookup_b[256];
+    static npy_uint8 unpack_lookup_l[256][8];
+    static npy_uint8 unpack_lookup_b[256][8];
     PyArrayObject *inp;
     PyArrayObject *new = NULL;
     PyArrayObject *out = NULL;
@@ -1792,36 +1792,19 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
     }
 
     /*
-     * setup lookup table under GIL, 256 64 bit integers
-     * one integer represents 8 bits expanded to 0/1 bytes
+     * setup lookup table under GIL, 256 8 byte blocks representing 8 bits
+     * expanded to 1/0 bytes
      */
     if (unpack_init == 0) {
-        npy_uint64 j;
+        npy_intp j;
         for (j=0; j < 256; j++) {
-            npy_uint64 v_b = 0;
-            npy_uint64 v_l;
-            v_b |= (npy_uint64)((j &   1) ==   1) << 56;
-            v_b |= (npy_uint64)((j &   2) ==   2) << 48;
-            v_b |= (npy_uint64)((j &   4) ==   4) << 40;
-            v_b |= (npy_uint64)((j &   8) ==   8) << 32;
-            v_b |= (npy_uint64)((j &  16) ==  16) << 24;
-            v_b |= (npy_uint64)((j &  32) ==  32) << 16;
-            v_b |= (npy_uint64)((j &  64) ==  64) << 8;
-            v_b |= (npy_uint64)((j & 128) == 128);
-
-            /* for bitorder little the lookup table is just byte swapped */
-            v_l = npy_bswap8(v_b);
-
-#if NPY_BYTE_ORDER == NPY_BIG_ENDIAN
-            /*
-             * the byte pattern must be fixed on all platforms so bigendian has
-             * to be swapped
-             */
-            v_l = npy_bswap8(v_l);
-            v_b = npy_bswap8(v_b);
-#endif
-            unpack_lookup_b[j] = v_b;
-            unpack_lookup_l[j] = v_l;
+            npy_intp k;
+            for (k=0; k < 8; k++) {
+                npy_uint8 v = (j & (1 << k)) == (1 << k);
+                unpack_lookup_b[j][7 - k] = v;
+                /* for bitorder little the lookup table is byte swapped */
+                unpack_lookup_l[j][k] = v;
+            }
         }
         unpack_init = 1;
     }
@@ -1849,7 +1832,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
         char *outptr = PyArray_ITER_DATA(ot);
 
         if (out_stride == 1) {
-            const npy_uint64 * const unpack_lookup = (order == 'b') ?
+            const npy_uint8 (*unpack_lookup)[8] = (order == 'b') ?
                 unpack_lookup_b : unpack_lookup_l;
             /* for unity stride we can just copy out of the lookup table */
             for (index = 0; index < in_n; index++) {
