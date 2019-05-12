@@ -784,7 +784,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
 
         if isinstance(val, bool):
             cond = val
-            reduced = array(val)
+            reduced = array([val])
         else:
             reduced = val.ravel()
             cond = reduced.all()
