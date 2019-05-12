@@ -20,7 +20,8 @@ from warnings import WarningMessage
 import pprint
 
 from numpy.core import(
-     float32, empty, arange, array_repr, ndarray, isnat, array)
+     float32, empty, arange, array_repr, ndarray, isnat, array,
+     issubdtype, inexact)
 from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
@@ -764,7 +765,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             raise AssertionError(msg)
 
         flagged = bool_(False)
-        if isnumber(x) and isnumber(y):
+        if issubdtype(x.dtype, inexact) and issubdtype(y.dtype, inexact):
             if equal_nan:
                 flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
 
@@ -983,7 +984,6 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import number, float_, result_type, array
-    from numpy.core.numerictypes import issubdtype
     from numpy.core.fromnumeric import any as npany
 
     def compare(x, y):
