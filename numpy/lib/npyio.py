@@ -1724,6 +1724,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     ... hello world,11
     ... numpy,5''')
     >>> np.genfromtxt(f, dtype='S12,S12', delimiter=',')
+    array([(b'text', b''), (b'hello world', b'11'), (b'numpy', b'5')],
+      dtype=[('f0', 'S12'), ('f1', 'S12')])
 
     """
     if max_rows is not None:
