@@ -6028,7 +6028,7 @@ class TestMatmul(MatmulCommon):
 
         f = np.vectorize(fractions.Fraction)
         def random_ints():
-            return np.random.randint(1000, size=(10, 3, 3))
+            return np.random.randint(1, 1000, size=(10, 3, 3))
         M1 = f(random_ints(), random_ints()) 
         M2 = f(random_ints(), random_ints())
 
@@ -6043,6 +6043,25 @@ class TestMatmul(MatmulCommon):
         v = np.array([F(2,3), F(5,7)])
         res = self.matmul(v, v)
         assert_(type(res) is F)
+
+    def test_matmul_empty(self):
+        a = np.empty((3, 0), dtype=object)
+        b = np.empty((0, 3), dtype=object)
+        c = np.zeros((3, 3))
+        assert_array_equal(np.matmul(a, b), c)
+
+    def test_matmul_exception_multiply(self):
+        with assert_raises(TypeError):
+            a = np.full((3,3), None)  
+            b = np.matmul(a, a)
+
+    def test_matmul_exception_add(self):
+        class multiply_not_add():
+            def __mul__(self, other):
+                return self
+        with assert_raises(TypeError):
+            a = np.full((3,3), multiply_not_add())
+            b = np.matmul(a, a)
 
 
 
