@@ -186,8 +186,6 @@ def _broadcast_shape(*args):
     """Returns the shape of the arrays that would result from broadcasting the
     supplied arrays against each other.
     """
-    if not args:
-        return ()
     # use the old-iterator because np.nditer does not handle size 0 arrays
     # consistently
     b = np.broadcast(*args[:32])

@@ -1262,10 +1262,14 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
     int i, ntot, err=0;
 
     ntot = n + nadd;
-    if (ntot < 1 || ntot > NPY_MAXARGS) {
+    if (ntot < 0) {
         PyErr_Format(PyExc_ValueError,
-                     "Need at least 1 and at most %d "
-                     "array objects.", NPY_MAXARGS);
+                     "n and nadd arguments must be non-negative", NPY_MAXARGS);
+        return NULL;
+    }
+    if (ntot > NPY_MAXARGS) {
+        PyErr_Format(PyExc_ValueError,
+                     "At most %d array objects are supported.", NPY_MAXARGS);
         return NULL;
     }
     multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
@@ -1328,10 +1332,14 @@ PyArray_MultiIterNew(int n, ...)
 
     int i, err = 0;
 
-    if (n < 1 || n > NPY_MAXARGS) {
+    if (n < 0) {
         PyErr_Format(PyExc_ValueError,
-                     "Need at least 1 and at most %d "
-                     "array objects.", NPY_MAXARGS);
+                     "n argument must be non-negative", NPY_MAXARGS);
+        return NULL;
+    }
+    if (n > NPY_MAXARGS) {
+        PyErr_Format(PyExc_ValueError,
+                     "At most %d array objects are supported.", NPY_MAXARGS);
         return NULL;
     }
 
@@ -1409,13 +1417,12 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
             ++n;
         }
     }
-    if (n < 1 || n > NPY_MAXARGS) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    if (n > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
-                     "Need at least 1 and at most %d "
-                     "array objects.", NPY_MAXARGS);
+                     "At most %d array objects are supported.", NPY_MAXARGS);
         return NULL;
     }
 
