@@ -2736,6 +2736,8 @@ class TestBroadcast(object):
         arrs = [np.empty((6, 7)), np.empty((5, 6, 1)), np.empty((7,)),
                 np.empty((5, 1, 7))]
         mits = [np.broadcast(*arrs),
+                np.broadcast(np.broadcast(*arrs[:0]), np.broadcast(*arrs[0:])),
+                np.broadcast(np.broadcast(*arrs[:1]), np.broadcast(*arrs[1:])),
                 np.broadcast(np.broadcast(*arrs[:2]), np.broadcast(*arrs[2:])),
                 np.broadcast(arrs[0], np.broadcast(*arrs[1:-1]), arrs[-1])]
         for mit in mits:
@@ -2760,7 +2762,7 @@ class TestBroadcast(object):
         arr = np.empty((5,))
         for j in range(35):
             arrs = [arr] * j
-            if j < 1 or j > 32:
+            if j > 32:
                 assert_raises(ValueError, np.broadcast, *arrs)
             else:
                 mit = np.broadcast(*arrs)
