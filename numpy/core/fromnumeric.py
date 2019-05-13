@@ -1761,8 +1761,6 @@ def nonzero(a):
     """
     Return the indices of the elements that are non-zero.
 
-    NOTE - In place of using x[y.nonzero()], it is recommended to use x[y.astype(bool)].
-
     Returns a tuple of arrays, one for each dimension of `a`,
     containing the indices of the non-zero elements in that
     dimension. The values in `a` are always tested and returned in
@@ -1797,6 +1795,11 @@ def nonzero(a):
         Equivalent ndarray method.
     count_nonzero :
         Counts the number of non-zero elements in the input array.
+        
+    Notes
+    -----
+    To obtain the non-zero values, it is recommended to use ``x[y.astype(bool)]`` 
+    which will correctly handle 0-d arrays.    
 
     Examples
     --------
