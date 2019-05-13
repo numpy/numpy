@@ -287,6 +287,9 @@ OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
         for (npy_intp p = 0; p < dp; p++) {
             if ( 0 == dn ) {
                 sum_of_products = PyLong_FromLong(0);
+                if (sum_of_products == NULL) {
+                    return;
+                }
             }
 
             for (npy_intp n = 0; n < dn; n++) {
