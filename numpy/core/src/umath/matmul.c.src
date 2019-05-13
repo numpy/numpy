@@ -295,7 +295,7 @@ OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
                     obj1 = Py_None;
                 }
                 if (obj2 == NULL) {
-                    ip2 = Py_None;
+                    obj2 = Py_None;
                 }
 
                 product = PyNumber_Multiply(obj1, obj2);
