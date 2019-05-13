@@ -6051,16 +6051,21 @@ class TestMatmul(MatmulCommon):
         assert_array_equal(np.matmul(a, b), c)
 
     def test_matmul_exception_multiply(self):
+        # test that matmul fails if `__mul__` is missing
+        class add_not_multiply():
+            def __add__(self, other):
+                return self
+        a = np.full((3,3), add_not_multiply())
         with assert_raises(TypeError):
-            a = np.full((3,3), None)  
             b = np.matmul(a, a)
 
     def test_matmul_exception_add(self):
+        # test that matmul fails if `__add__` is missing
         class multiply_not_add():
             def __mul__(self, other):
                 return self
+        a = np.full((3,3), multiply_not_add())
         with assert_raises(TypeError):
-            a = np.full((3,3), multiply_not_add())
             b = np.matmul(a, a)
 
 
