@@ -292,7 +292,7 @@ OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
             for (npy_intp n = 0; n < dn; n++) {
                 PyObject *obj1 = *(PyObject**)ip1, *obj2 = *(PyObject**)ip2;
                 if (obj1 == NULL) {
-                    ip1 = Py_None;
+                    obj1 = Py_None;
                 }
                 if (obj2 == NULL) {
                     ip2 = Py_None;
