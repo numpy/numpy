@@ -1,34 +1,3 @@
-/*
- * PCG Random Number Generation for C.
- *
- * Copyright 2014 Melissa O'Neill <oneill@pcg-random.org>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * For additional information about the PCG random number generation scheme,
- * including its license and other licensing options, visit
- *
- *     http://www.pcg-random.org
- */
-
-/* This code provides a mechanism for getting external randomness for
- * seeding purposes.  Usually, it's just a wrapper around reading
- * /dev/random.
- *
- * Alas, because not every system provides /dev/random, we need a fallback.
- * We also need to try to test whether or not to use the fallback.
- */
-
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,38 +16,12 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
-#endif
-
-#ifndef IS_UNIX
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) ||               \
-                         (defined(__APPLE__) && defined(__MACH__)))
-#define IS_UNIX 1
-#else
-#define IS_UNIX 0
-#endif
-#endif
-
-// If HAVE_DEV_RANDOM is set, we use that value, otherwise we guess
-#ifndef HAVE_DEV_RANDOM
-#define HAVE_DEV_RANDOM IS_UNIX
-#endif
-
-#if HAVE_DEV_RANDOM
 #include <fcntl.h>
-#include <unistd.h>
 #endif
-
-#if HAVE_DEV_RANDOM
-/* entropy_getbytes(dest, size):
- *     Use /dev/random to get some external entropy for seeding purposes.
- *
- * Note:
- *     If reading /dev/random fails (which ought to never happen), it returns
- *     false, otherwise it returns true.  If it fails, you could instead call
- *     fallback_entropy_getbytes which always succeeds.
- */
 
 bool entropy_getbytes(void *dest, size_t size) {
+#ifndef _WIN32
+
   int fd = open("/dev/urandom", O_RDONLY);
   if (fd < 0)
     return false;
@@ -86,11 +29,9 @@ bool entropy_getbytes(void *dest, size_t size) {
   if ((sz < 0) || ((size_t)sz < size))
     return false;
   return close(fd) == 0;
-}
-#endif
 
-#ifdef _WIN32
-bool entropy_getbytes(void *dest, size_t size) {
+#else
+
   HCRYPTPROV hCryptProv;
   BOOL done;
 
@@ -106,8 +47,8 @@ bool entropy_getbytes(void *dest, size_t size) {
   }
 
   return true;
-}
 #endif
+}
 
 /* Thomas Wang 32/64 bits integer hash function */
 uint32_t entropy_hash_32(uint32_t key) {
@@ -155,7 +96,6 @@ uint32_t entropy_randombytes(void) {
 bool entropy_fallback_getbytes(void *dest, size_t size) {
   int hashes = (int)size;
   uint32_t *hash = malloc(hashes * sizeof(uint32_t));
-  // uint32_t hash[hashes];
   int i;
   for (i = 0; i < hashes; i++) {
     hash[i] = entropy_randombytes();

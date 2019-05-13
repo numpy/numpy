@@ -1,103 +1,88 @@
-from .generator import RandomGenerator
-from .dsfmt import DSFMT
-from .mt19937 import MT19937
-from .pcg32 import PCG32
-from .pcg64 import PCG64
+from .mtrand import RandomState
 from .philox import Philox
 from .threefry import ThreeFry
 from .threefry32 import ThreeFry32
 from .xoroshiro128 import Xoroshiro128
 from .xorshift1024 import Xorshift1024
-from .xoshiro256starstar import Xoshiro256StarStar
-from .xoshiro512starstar import Xoshiro512StarStar
-from .mtrand import RandomState
+from .xoshiro256 import Xoshiro256
+from .xoshiro512 import Xoshiro512
 
-BasicRNGS = {'MT19937': MT19937,
+from .dsfmt import DSFMT
+from .generator import Generator
+from .mt19937 import MT19937
+
+BitGenerators = {'MT19937': MT19937,
              'DSFMT': DSFMT,
-             'PCG32': PCG32,
-             'PCG64': PCG64,
              'Philox': Philox,
              'ThreeFry': ThreeFry,
              'ThreeFry32': ThreeFry32,
              'Xorshift1024': Xorshift1024,
              'Xoroshiro128': Xoroshiro128,
-             'Xoshiro256StarStar': Xoshiro256StarStar,
-             'Xoshiro512StarStar': Xoshiro512StarStar,
+             'Xoshiro256': Xoshiro256,
+             'Xoshiro512': Xoshiro512,
              }
 
 
-def __generator_ctor(brng_name='mt19937'):
+def __generator_ctor(bit_generator_name='mt19937'):
     """
-    Pickling helper function that returns a RandomGenerator object
+    Pickling helper function that returns a Generator object
 
     Parameters
     ----------
-    brng_name: str
-        String containing the core PRNG
+    bit_generator_name: str
+        String containing the core BitGenerator
 
     Returns
     -------
-    rg: RandomGenerator
-        RandomGenerator using the named core PRNG
+    rg: Generator
+        Generator using the named core BitGenerator
     """
-    try:
-        brng_name = brng_name.decode('ascii')
-    except AttributeError:
-        pass
-    if brng_name in PRNGS:
-        brng = PRNGS[brng_name]
+    if bit_generator_name in BitGenerators:
+        bit_generator = BitGenerators[bit_generator_name]
     else:
-        raise ValueError(str(brng_name) + ' is not a known PRNG module.')
+        raise ValueError(str(bit_generator_name) + ' is not a known BitGenerator module.')
 
-    return RandomGenerator(brng())
+    return Generator(bit_generator())
 
 
-def __brng_ctor(brng_name='mt19937'):
+def __bit_generator_ctor(bit_generator_name='mt19937'):
     """
-    Pickling helper function that returns a basic RNG object
+    Pickling helper function that returns a bit generator object
 
     Parameters
     ----------
-    brng_name: str
-        String containing the name of the Basic RNG
+    bit_generator_name: str
+        String containing the name of the BitGenerator
 
     Returns
     -------
-    brng: BasicRNG
-        Basic RNG instance
+    bit_generator: BitGenerator
+        BitGenerator instance
     """
-    try:
-        brng_name = brng_name.decode('ascii')
-    except AttributeError:
-        pass
-    if brng_name in PRNGS:
-        brng = PRNGS[brng_name]
+    if bit_generator_name in BitGenerators:
+        bit_generator = BitGenerators[bit_generator_name]
     else:
-        raise ValueError(str(brng_name) + ' is not a known PRNG module.')
+        raise ValueError(str(bit_generator_name) + ' is not a known BitGenerator module.')
 
-    return brng()
+    return bit_generator()
 
-def __randomstate_ctor(brng_name='mt19937'):
+def __randomstate_ctor(bit_generator_name='mt19937'):
     """
     Pickling helper function that returns a legacy RandomState-like object
 
     Parameters
     ----------
-    brng_name: str
-        String containing the core BasicRNG
+    bit_generator_name: str
+        String containing the core BitGenerator
 
     Returns
     -------
     rs: RandomState
-        Legacy RandomState using the named core BasicRNG
+        Legacy RandomState using the named core BitGenerator
     """
-    try:
-        brng_name = brng_name.decode('ascii')
-    except AttributeError:
-        pass
-    if brng_name in BasicRNGS:
-        brng = BasicRNGS[brng_name]
+    if bit_generator_name in BitGenerators:
+        bit_generator = BitGenerators[bit_generator_name]
     else:
-        raise ValueError(str(brng_name) + ' is not a known BasicRNG module.')
+        raise ValueError(str(bit_generator_name) + ' is not a known BitGenerator module.')
 
-    return RandomState(brng())
+    return RandomState(bit_generator())

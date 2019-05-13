@@ -11,25 +11,26 @@ from .common cimport *
 np.import_array()
 
 interface = namedtuple('interface', ['state_address', 'state', 'next_uint64',
-                                     'next_uint32', 'next_double', 'brng'])
+                                     'next_uint32', 'next_double',
+                                     'bit_generator'])
 
 
-cdef object benchmark(brng_t *brng, object lock, Py_ssize_t cnt, object method):
-    """Benchmark command used by BasicRNG"""
+cdef object benchmark(bitgen_t *bitgen, object lock, Py_ssize_t cnt, object method):
+    """Benchmark command used by BitGenerator"""
     cdef Py_ssize_t i
     if method==u'uint64':
         with lock, nogil:
             for i in range(cnt):
-                brng.next_uint64(brng.state)
+                bitgen.next_uint64(bitgen.state)
     elif method==u'double':
         with lock, nogil:
             for i in range(cnt):
-                brng.next_double(brng.state)
+                bitgen.next_double(bitgen.state)
     else:
         raise ValueError('Unknown method')
 
 
-cdef object random_raw(brng_t *brng, object lock, object size, object output):
+cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output):
     """
     random_raw(self, size=None)
 
@@ -65,17 +66,17 @@ cdef object random_raw(brng_t *brng, object lock, object size, object output):
     if not output:
         if size is None:
             with lock:
-                brng.next_raw(brng.state)
+                bitgen.next_raw(bitgen.state)
             return None
         n = np.asarray(size).sum()
         with lock, nogil:
             for i in range(n):
-                brng.next_raw(brng.state)
+                bitgen.next_raw(bitgen.state)
         return None
 
     if size is None:
         with lock:
-            return brng.next_raw(brng.state)
+            return bitgen.next_raw(bitgen.state)
 
     randoms = <np.ndarray>np.empty(size, np.uint64)
     randoms_data = <uint64_t*>np.PyArray_DATA(randoms)
@@ -83,29 +84,29 @@ cdef object random_raw(brng_t *brng, object lock, object size, object output):
 
     with lock, nogil:
         for i in range(n):
-            randoms_data[i] = brng.next_raw(brng.state)
+            randoms_data[i] = bitgen.next_raw(bitgen.state)
     return randoms
 
-cdef object prepare_cffi(brng_t *brng):
+cdef object prepare_cffi(bitgen_t *bitgen):
     """
-    Bundles the interfaces to interact with a Basic RNG using cffi
+    Bundles the interfaces to interact with a BitGenerator using cffi
     
     Parameters
     ----------
-    brng : pointer
-        A pointer to a Basic RNG instance
+    bitgen : pointer
+        A pointer to a BitGenerator instance
     
     Returns
     -------
     interface : namedtuple
-        The functions required to interface with the Basic RNG using cffi
+        The functions required to interface with the BitGenerator using cffi
 
         * state_address - Memory address of the state struct
         * state - pointer to the state struct
         * next_uint64 - function pointer to produce 64 bit integers
         * next_uint32 - function pointer to produce 32 bit integers
         * next_double - function pointer to produce doubles
-        * brng - pointer to the Basic RNG struct
+        * bit_generator - pointer to the BitGenerator struct
     """
     try:
         import cffi
@@ -113,49 +114,49 @@ cdef object prepare_cffi(brng_t *brng):
         raise ImportError('cffi cannot be imported.')
 
     ffi = cffi.FFI()
-    _cffi = interface(<uintptr_t>brng.state,
-                      ffi.cast('void *', <uintptr_t>brng.state),
-                      ffi.cast('uint64_t (*)(void *)', <uintptr_t>brng.next_uint64),
-                      ffi.cast('uint32_t (*)(void *)', <uintptr_t>brng.next_uint32),
-                      ffi.cast('double (*)(void *)', <uintptr_t>brng.next_double),
-                      ffi.cast('void *', <uintptr_t>brng))
+    _cffi = interface(<uintptr_t>bitgen.state,
+                      ffi.cast('void *', <uintptr_t>bitgen.state),
+                      ffi.cast('uint64_t (*)(void *)', <uintptr_t>bitgen.next_uint64),
+                      ffi.cast('uint32_t (*)(void *)', <uintptr_t>bitgen.next_uint32),
+                      ffi.cast('double (*)(void *)', <uintptr_t>bitgen.next_double),
+                      ffi.cast('void *', <uintptr_t>bitgen))
     return _cffi
 
-cdef object prepare_ctypes(brng_t *brng):
+cdef object prepare_ctypes(bitgen_t *bitgen):
     """
-    Bundles the interfaces to interact with a Basic RNG using ctypes
+    Bundles the interfaces to interact with a BitGenerator using ctypes
     
     Parameters
     ----------
-    brng : pointer
-        A pointer to a Basic RNG instance
+    bitgen : pointer
+        A pointer to a BitGenerator instance
     
     Returns
     -------
     interface : namedtuple
-        The functions required to interface with the Basic RNG using ctypes:
+        The functions required to interface with the BitGenerator using ctypes:
 
         * state_address - Memory address of the state struct
         * state - pointer to the state struct
         * next_uint64 - function pointer to produce 64 bit integers
         * next_uint32 - function pointer to produce 32 bit integers
         * next_double - function pointer to produce doubles
-        * brng - pointer to the Basic RNG struct
+        * bit_generator - pointer to the BitGenerator struct
     """
     import ctypes
 
-    _ctypes = interface(<uintptr_t>brng.state,
-                        ctypes.c_void_p(<uintptr_t>brng.state),
-                        ctypes.cast(<uintptr_t>brng.next_uint64,
+    _ctypes = interface(<uintptr_t>bitgen.state,
+                        ctypes.c_void_p(<uintptr_t>bitgen.state),
+                        ctypes.cast(<uintptr_t>bitgen.next_uint64,
                                     ctypes.CFUNCTYPE(ctypes.c_uint64,
                                                      ctypes.c_void_p)),
-                        ctypes.cast(<uintptr_t>brng.next_uint32,
+                        ctypes.cast(<uintptr_t>bitgen.next_uint32,
                                     ctypes.CFUNCTYPE(ctypes.c_uint32,
                                                      ctypes.c_void_p)),
-                        ctypes.cast(<uintptr_t>brng.next_double,
+                        ctypes.cast(<uintptr_t>bitgen.next_double,
                                     ctypes.CFUNCTYPE(ctypes.c_double,
                                                      ctypes.c_void_p)),
-                        ctypes.c_void_p(<uintptr_t>brng))
+                        ctypes.c_void_p(<uintptr_t>bitgen))
     return _ctypes
 
 cdef double kahan_sum(double *darr, np.npy_intp n):
@@ -218,7 +219,7 @@ cdef check_output(object out, object dtype, object size):
             raise ValueError('size must match out.shape when used together')
 
 
-cdef object double_fill(void *func, brng_t *state, object size, object lock, object out):
+cdef object double_fill(void *func, bitgen_t *state, object size, object lock, object out):
     cdef random_double_fill random_func = (<random_double_fill>func)
     cdef double out_val
     cdef double *out_array_data
@@ -242,7 +243,7 @@ cdef object double_fill(void *func, brng_t *state, object size, object lock, obj
         random_func(state, n, out_array_data)
     return out_array
 
-cdef object float_fill(void *func, brng_t *state, object size, object lock, object out):
+cdef object float_fill(void *func, bitgen_t *state, object size, object lock, object out):
     cdef random_float_0 random_func = (<random_float_0>func)
     cdef float *out_array_data
     cdef np.ndarray out_array
@@ -265,7 +266,7 @@ cdef object float_fill(void *func, brng_t *state, object size, object lock, obje
             out_array_data[i] = random_func(state)
     return out_array
 
-cdef object float_fill_from_double(void *func, brng_t *state, object size, object lock, object out):
+cdef object float_fill_from_double(void *func, bitgen_t *state, object size, object lock, object out):
     cdef random_double_0 random_func = (<random_double_0>func)
     cdef float *out_array_data
     cdef np.ndarray out_array
@@ -871,7 +872,7 @@ cdef object disc(void *func, void *state, object size, object lock,
     return randoms
 
 
-cdef object cont_broadcast_1_f(void *func, brng_t *state, object size, object lock,
+cdef object cont_broadcast_1_f(void *func, bitgen_t *state, object size, object lock,
                                np.ndarray a_arr, object a_name, constraint_type a_constraint,
                                object out):
 
@@ -907,7 +908,7 @@ cdef object cont_broadcast_1_f(void *func, brng_t *state, object size, object lo
 
     return randoms
 
-cdef object cont_f(void *func, brng_t *state, object size, object lock,
+cdef object cont_f(void *func, bitgen_t *state, object size, object lock,
                    object a, object a_name, constraint_type a_constraint,
                    object out):
 

@@ -9,11 +9,11 @@ from numpy.testing import (
         suppress_warnings
         )
 
-from numpy.random import MT19937, Xoshiro256StarStar, mtrand as random
+from numpy.random import MT19937, Xoshiro256, mtrand as random
 
 
 def assert_mt19937_state_equal(a, b):
-    assert_equal(a['brng'], b['brng'])
+    assert_equal(a['bit_generator'], b['bit_generator'])
     assert_array_equal(a['state']['key'], b['state']['key'])
     assert_array_equal(a['state']['pos'], b['state']['pos'])
     assert_equal(a['has_gauss'], b['has_gauss'])
@@ -166,13 +166,13 @@ class TestSetState(object):
         self.random_state.negative_binomial(0.5, 0.5)
 
     def test_get_state_warning(self):
-        rs = random.RandomState(Xoshiro256StarStar())
+        rs = random.RandomState(Xoshiro256())
         with suppress_warnings() as sup:
             w = sup.record(RuntimeWarning)
             state = rs.get_state()
             assert_(len(w) == 1)
             assert isinstance(state, dict)
-            assert state['brng'] == 'Xoshiro256StarStar'
+            assert state['bit_generator'] == 'Xoshiro256'
 
     def test_invalid_legacy_state_setting(self):
         state = self.random_state.get_state()
@@ -181,7 +181,7 @@ class TestSetState(object):
         assert_raises(TypeError, self.random_state.set_state,
                       np.array(new_state, dtype=np.object))
         state = self.random_state.get_state(legacy=False)
-        del state['brng']
+        del state['bit_generator']
         assert_raises(ValueError, self.random_state.set_state, state)
 
     def test_pickle(self):
