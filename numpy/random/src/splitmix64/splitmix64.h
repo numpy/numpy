@@ -1,13 +1,4 @@
-#ifdef _WIN32
-#if _MSC_VER == 1500
-#include "../common/inttypes.h"
-#define inline __forceinline
-#else
 #include <inttypes.h>
-#endif
-#else
-#include <inttypes.h>
-#endif
 
 typedef struct s_splitmix64_state {
   uint64_t state;

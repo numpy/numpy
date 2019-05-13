@@ -1,14 +1,6 @@
 #pragma once
 #include <math.h>
-#ifdef _WIN32
-#if _MSC_VER == 1500
-#include "../common/stdint.h"
-#else
 #include <stdint.h>
-#endif
-#else
-#include <stdint.h>
-#endif
 
 #ifdef _WIN32
 #define inline __forceinline

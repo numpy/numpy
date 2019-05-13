@@ -1,10 +1,10 @@
 #include "distributions-boxmuller.h"
 
-static NPY_INLINE double legacy_double(aug_brng_t *aug_state) {
-  return aug_state->basicrng->next_double(aug_state->basicrng->state);
+static NPY_INLINE double legacy_double(aug_bitgen_t *aug_state) {
+  return aug_state->bit_generator->next_double(aug_state->bit_generator->state);
 }
 
-double legacy_gauss(aug_brng_t *aug_state) {
+double legacy_gauss(aug_bitgen_t *aug_state) {
   if (aug_state->has_gauss) {
     const double temp = aug_state->gauss;
     aug_state->has_gauss = false;
@@ -28,12 +28,12 @@ double legacy_gauss(aug_brng_t *aug_state) {
   }
 }
 
-double legacy_standard_exponential(aug_brng_t *aug_state) {
+double legacy_standard_exponential(aug_bitgen_t *aug_state) {
   /* We use -log(1-U) since U is [0, 1) */
   return -log(1.0 - legacy_double(aug_state));
 }
 
-double legacy_standard_gamma(aug_brng_t *aug_state, double shape) {
+double legacy_standard_gamma(aug_bitgen_t *aug_state, double shape) {
   double b, c;
   double U, V, X, Y;
 
@@ -78,30 +78,30 @@ double legacy_standard_gamma(aug_brng_t *aug_state, double shape) {
   }
 }
 
-double legacy_gamma(aug_brng_t *aug_state, double shape, double scale) {
+double legacy_gamma(aug_bitgen_t *aug_state, double shape, double scale) {
   return scale * legacy_standard_gamma(aug_state, shape);
 }
 
-double legacy_pareto(aug_brng_t *aug_state, double a) {
+double legacy_pareto(aug_bitgen_t *aug_state, double a) {
   return exp(legacy_standard_exponential(aug_state) / a) - 1;
 }
 
-double legacy_weibull(aug_brng_t *aug_state, double a) {
+double legacy_weibull(aug_bitgen_t *aug_state, double a) {
   if (a == 0.0) {
     return 0.0;
   }
   return pow(legacy_standard_exponential(aug_state), 1. / a);
 }
 
-double legacy_power(aug_brng_t *aug_state, double a) {
+double legacy_power(aug_bitgen_t *aug_state, double a) {
   return pow(1 - exp(-legacy_standard_exponential(aug_state)), 1. / a);
 }
 
-double legacy_chisquare(aug_brng_t *aug_state, double df) {
+double legacy_chisquare(aug_bitgen_t *aug_state, double df) {
   return 2.0 * legacy_standard_gamma(aug_state, df / 2.0);
 }
 
-double legacy_noncentral_chisquare(aug_brng_t *aug_state, double df,
+double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
                                    double nonc) {
   double out;
   if (nonc == 0) {
@@ -112,7 +112,7 @@ double legacy_noncentral_chisquare(aug_brng_t *aug_state, double df,
     const double n = legacy_gauss(aug_state) + sqrt(nonc);
     return Chi2 + n * n;
   } else {
-    const long i = random_poisson(aug_state->basicrng, nonc / 2.0);
+    const long i = random_poisson(aug_state->bit_generator, nonc / 2.0);
     out = legacy_chisquare(aug_state, df + 2 * i);
     /* Insert nan guard here to avoid changing the stream */
     if (npy_isnan(nonc)){
@@ -123,13 +123,13 @@ double legacy_noncentral_chisquare(aug_brng_t *aug_state, double df,
   }
 }
 
-double legacy_noncentral_f(aug_brng_t *aug_state, double dfnum, double dfden,
+double legacy_noncentral_f(aug_bitgen_t *aug_state, double dfnum, double dfden,
                            double nonc) {
   double t = legacy_noncentral_chisquare(aug_state, dfnum, nonc) * dfden;
   return t / (legacy_chisquare(aug_state, dfden) * dfnum);
 }
 
-double legacy_wald(aug_brng_t *aug_state, double mean, double scale) {
+double legacy_wald(aug_bitgen_t *aug_state, double mean, double scale) {
   double U, X, Y;
   double mu_2l;
 
@@ -145,15 +145,15 @@ double legacy_wald(aug_brng_t *aug_state, double mean, double scale) {
   }
 }
 
-double legacy_normal(aug_brng_t *aug_state, double loc, double scale) {
+double legacy_normal(aug_bitgen_t *aug_state, double loc, double scale) {
   return loc + scale * legacy_gauss(aug_state);
 }
 
-double legacy_lognormal(aug_brng_t *aug_state, double mean, double sigma) {
+double legacy_lognormal(aug_bitgen_t *aug_state, double mean, double sigma) {
   return exp(legacy_normal(aug_state, mean, sigma));
 }
 
-double legacy_standard_t(aug_brng_t *aug_state, double df) {
+double legacy_standard_t(aug_bitgen_t *aug_state, double df) {
   double num, denom;
 
   num = legacy_gauss(aug_state);
@@ -161,16 +161,16 @@ double legacy_standard_t(aug_brng_t *aug_state, double df) {
   return sqrt(df / 2) * num / sqrt(denom);
 }
 
-int64_t legacy_negative_binomial(aug_brng_t *aug_state, double n, double p) {
+int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) {
   double Y = legacy_gamma(aug_state, n, (1 - p) / p);
-  return random_poisson(aug_state->basicrng, Y);
+  return random_poisson(aug_state->bit_generator, Y);
 }
 
-double legacy_standard_cauchy(aug_brng_t *aug_state) {
+double legacy_standard_cauchy(aug_bitgen_t *aug_state) {
   return legacy_gauss(aug_state) / legacy_gauss(aug_state);
 }
 
-double legacy_beta(aug_brng_t *aug_state, double a, double b) {
+double legacy_beta(aug_bitgen_t *aug_state, double a, double b) {
   double Ga, Gb;
 
   if ((a <= 1.0) && (b <= 1.0)) {
@@ -204,11 +204,11 @@ double legacy_beta(aug_brng_t *aug_state, double a, double b) {
   }
 }
 
-double legacy_f(aug_brng_t *aug_state, double dfnum, double dfden) {
+double legacy_f(aug_bitgen_t *aug_state, double dfnum, double dfden) {
   return ((legacy_chisquare(aug_state, dfnum) * dfden) /
           (legacy_chisquare(aug_state, dfden) * dfnum));
 }
 
-double legacy_exponential(aug_brng_t *aug_state, double scale) {
+double legacy_exponential(aug_bitgen_t *aug_state, double scale) {
   return scale * legacy_standard_exponential(aug_state);
 }

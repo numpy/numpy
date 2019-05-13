@@ -3,9 +3,9 @@ from numpy.testing import (assert_, assert_array_equal)
 from numpy.compat import long
 import numpy as np
 import pytest
-from numpy.random import RandomGenerator, MT19937
+from numpy.random import Generator, MT19937
 
-mt19937 = RandomGenerator(MT19937())
+mt19937 = Generator(MT19937())
 
 
 class TestRegression(object):
@@ -36,7 +36,7 @@ class TestRegression(object):
     def test_logseries_convergence(self):
         # Test for ticket #923
         N = 1000
-        mt19937.brng.seed(0)
+        mt19937.bit_generator.seed(0)
         rvsn = mt19937.logseries(0.8, size=N)
         # these two frequency counts should be close to theoretical
         # numbers with this large sample
@@ -50,9 +50,9 @@ class TestRegression(object):
         assert_(freq < 0.23, msg)
 
     def test_permutation_longs(self):
-        mt19937.brng.seed(1234)
+        mt19937.bit_generator.seed(1234)
         a = mt19937.permutation(12)
-        mt19937.brng.seed(1234)
+        mt19937.bit_generator.seed(1234)
         b = mt19937.permutation(long(12))
         assert_array_equal(a, b)
 
@@ -62,18 +62,18 @@ class TestRegression(object):
                   [(1, 1), (2, 2), (3, 3), None],
                   [1, (2, 2), (3, 3), None],
                   [(1, 1), 2, 3, None]]:
-            mt19937.brng.seed(12345)
+            mt19937.bit_generator.seed(12345)
             shuffled = list(t)
             mt19937.shuffle(shuffled)
             assert_array_equal(shuffled, [t[0], t[3], t[1], t[2]])
 
     def test_call_within_randomstate(self):
         # Check that custom RandomState does not call into global state
-        m = RandomGenerator(MT19937())  # mt19937.RandomState()
+        m = Generator(MT19937())  # mt19937.RandomState()
         res = np.array([0, 8, 7, 2, 1, 9, 4, 7, 0, 3])
         for i in range(3):
-            mt19937.brng.seed(i)
-            m.brng.seed(4321)
+            mt19937.bit_generator.seed(i)
+            m.bit_generator.seed(4321)
             # If m.state is not honored, the result will change
             assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
 
@@ -88,7 +88,7 @@ class TestRegression(object):
     def test_beta_small_parameters(self):
         # Test that beta with small a and b parameters does not produce
         # NaNs due to roundoff errors causing 0 / 0, gh-5851
-        mt19937.brng.seed(1234567890)
+        mt19937.bit_generator.seed(1234567890)
         x = mt19937.beta(0.0001, 0.0001, size=100)
         assert_(not np.any(np.isnan(x)), 'Nans in mt19937.beta')
 
@@ -96,7 +96,7 @@ class TestRegression(object):
         # The sum of probs should be 1.0 with some tolerance.
         # For low precision dtypes the tolerance was too tight.
         # See numpy github issue 6123.
-        mt19937.brng.seed(1234)
+        mt19937.bit_generator.seed(1234)
         a = [1, 2, 3]
         counts = [4, 4, 2]
         for dt in np.float16, np.float32, np.float64:
@@ -110,7 +110,7 @@ class TestRegression(object):
         # Test that permuting an array of different length strings
         # will not cause a segfault on garbage collection
         # Tests gh-7710
-        mt19937.brng.seed(1234)
+        mt19937.bit_generator.seed(1234)
 
         a = np.array(['a', 'a' * 1000])
 
@@ -125,7 +125,7 @@ class TestRegression(object):
         # Test that permuting an array of objects will not cause
         # a segfault on garbage collection.
         # See gh-7719
-        mt19937.brng.seed(1234)
+        mt19937.bit_generator.seed(1234)
         a = np.array([np.arange(1), np.arange(4)])
 
         for _ in range(1000):
@@ -139,7 +139,7 @@ class TestRegression(object):
         class N(np.ndarray):
             pass
 
-        mt19937.brng.seed(1)
+        mt19937.bit_generator.seed(1)
         orig = np.arange(3).view(N)
         perm = mt19937.permutation(orig)
         assert_array_equal(perm, np.array([0, 2, 1]))
@@ -151,7 +151,7 @@ class TestRegression(object):
             def __array__(self):
                 return self.a
 
-        mt19937.brng.seed(1)
+        mt19937.bit_generator.seed(1)
         m = M()
         perm = mt19937.permutation(m)
         assert_array_equal(perm, np.array([2, 1, 4, 0, 3]))

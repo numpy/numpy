@@ -4,18 +4,8 @@ Adapted from random123's threefry.h
 #ifndef _RANDOMDGEN__THREEFRY_H_
 #define _RANDOMDGEN__THREEFRY_H_
 
-#ifdef _WIN32
-#if _MSC_VER == 1500
-#include "../common/inttypes.h"
-#define INLINE __forceinline
-#else
 #include <inttypes.h>
-#define INLINE __inline __forceinline
-#endif
-#else
-#include <inttypes.h>
-#define INLINE inline
-#endif
+#include "numpy/npy_common.h"
 
 #define THREEFRY_BUFFER_SIZE 4L
 
@@ -47,15 +37,15 @@ struct r123array4x64 {
 typedef struct r123array4x64 threefry4x64_key_t;
 typedef struct r123array4x64 threefry4x64_ctr_t;
 
-static INLINE uint64_t RotL_64(uint64_t x, unsigned int N);
-static INLINE uint64_t RotL_64(uint64_t x, unsigned int N) {
+static NPY_INLINE uint64_t RotL_64(uint64_t x, unsigned int N);
+static NPY_INLINE uint64_t RotL_64(uint64_t x, unsigned int N) {
   return (x << (N & 63)) | (x >> ((64 - N) & 63));
 }
 
-static INLINE threefry4x64_ctr_t threefry4x64_R(unsigned int Nrounds,
+static NPY_INLINE threefry4x64_ctr_t threefry4x64_R(unsigned int Nrounds,
                                                 threefry4x64_ctr_t in,
                                                 threefry4x64_key_t k);
-static INLINE threefry4x64_ctr_t threefry4x64_R(unsigned int Nrounds,
+static NPY_INLINE threefry4x64_ctr_t threefry4x64_R(unsigned int Nrounds,
                                                 threefry4x64_ctr_t in,
                                                 threefry4x64_key_t k) {
   threefry4x64_ctr_t X;
@@ -288,7 +278,7 @@ typedef struct s_threefry_state {
   uint32_t uinteger;
 } threefry_state;
 
-static INLINE uint64_t threefry_next(threefry_state *state) {
+static NPY_INLINE uint64_t threefry_next(threefry_state *state) {
   int i;
   threefry4x64_ctr_t ct;
   uint64_t out;
@@ -317,11 +307,11 @@ static INLINE uint64_t threefry_next(threefry_state *state) {
   return state->buffer[0];
 }
 
-static INLINE uint64_t threefry_next64(threefry_state *state) {
+static NPY_INLINE uint64_t threefry_next64(threefry_state *state) {
   return threefry_next(state);
 }
 
-static INLINE uint32_t threefry_next32(threefry_state *state) {
+static NPY_INLINE uint32_t threefry_next32(threefry_state *state) {
   uint64_t next;
   if (state->has_uint32) {
     state->has_uint32 = 0;

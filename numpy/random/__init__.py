@@ -3,37 +3,41 @@
 Random Number Generation
 ========================
 
-Instantiate a RandomNumberGenerator (RNG) and wrap it in a RandomGenerator
-which will convert the uniform stream to a number of distributions. For
-covenience, the module provides an instantiated instance of a RandomGenerator
-available as ``gen``. 
+Instantiate a BitGenerator and wrap it in a Generator
+which will convert the uniform stream to a number of distributions. The "bare"
+functions are kept for legacy code, they should be called with the newer API
+via ``np.random.Generator().function`` instead
 
 ==================== =========================================================
 Utility functions
-==============================================================================
-random_sample        Uniformly distributed floats over ``[0, 1)``.
-random               Alias for `random_sample`.
+-------------------- ---------------------------------------------------------
+random               Uniformly distributed floats over ``[0, 1)``
+integers             Uniformly distributed integers, replaces ``randint``
 bytes                Uniformly distributed random bytes.
-random_integers      Uniformly distributed integers in a given range.
 permutation          Randomly permute a sequence / generate a random sequence.
 shuffle              Randomly permute a sequence in place.
 seed                 Seed the random number generator.
 choice               Random sample from 1-D array.
-
 ==================== =========================================================
 
 ==================== =========================================================
-Compatibility functions
-==============================================================================
+Compatibility
+functions - removed
+in the new API
+-------------------- ---------------------------------------------------------
 rand                 Uniformly distributed values.
 randn                Normally distributed values.
 ranf                 Uniformly distributed floating point numbers.
-randint              Uniformly distributed integers in a given range.
+random_integers      Uniformly distributed integers in a given range.
+                     (deprecated, use ``integers(..., closed=True)`` instead)
+random_sample        Alias for `random_sample`
+randint              Uniformly distributed integers in a given range
 ==================== =========================================================
 
 ==================== =========================================================
-Univariate distributions
-==============================================================================
+Univariate
+distributions
+-------------------- ---------------------------------------------------------
 beta                 Beta distribution over ``[0, 1]``.
 binomial             Binomial distribution.
 chisquare            :math:`\\chi^2` distribution.
@@ -63,17 +67,19 @@ weibull              Weibull distribution.
 zipf                 Zipf's distribution over ranked data.
 ==================== =========================================================
 
-==================== =========================================================
-Multivariate distributions
-==============================================================================
+==================== ==========================================================
+Multivariate
+distributions
+-------------------- ----------------------------------------------------------
 dirichlet            Multivariate generalization of Beta distribution.
 multinomial          Multivariate generalization of the binomial distribution.
 multivariate_normal  Multivariate generalization of the normal distribution.
-==================== =========================================================
+==================== ==========================================================
 
 ==================== =========================================================
-Standard distributions
-==============================================================================
+Standard
+distributions
+-------------------- ---------------------------------------------------------
 standard_cauchy      Standard Cauchy-Lorentz distribution.
 standard_exponential Standard exponential distribution.
 standard_gamma       Standard Gamma distribution.
@@ -83,26 +89,24 @@ standard_t           Standard Student's t-distribution.
 
 ==================== =========================================================
 Internal functions
-==============================================================================
+-------------------- ---------------------------------------------------------
 get_state            Get tuple representing internal state of generator.
 set_state            Set state of generator.
 ==================== =========================================================
 
-==================== =========================================================
-Random Number Streams that work with RandomGenerator
-==============================================================================
+============================================= ===
+BitGenerator Streams that work with Generator
+--------------------------------------------- ---
 MT19937
 DSFMT
-PCG32
-PCG64
 Philox
 ThreeFry
 ThreeFry32
 Xoroshiro128
 Xoroshift1024
-Xoshiro256StarStar
-Xoshiro512StarStar
-==================== =========================================================
+Xoshiro256
+Xoshiro512
+============================================= ===
 
 """
 from __future__ import division, absolute_import, print_function
@@ -160,24 +164,20 @@ __all__ = [
 from . import mtrand
 from .mtrand import *
 from .dsfmt import DSFMT
-from .generator import RandomGenerator
+from .generator import Generator
 from .mt19937 import MT19937
-from .pcg32 import PCG32
-from .pcg64 import PCG64
 from .philox import Philox
 from .threefry import ThreeFry
 from .threefry32 import ThreeFry32
 from .xoroshiro128 import Xoroshiro128
 from .xorshift1024 import Xorshift1024
-from .xoshiro256starstar import Xoshiro256StarStar
-from .xoshiro512starstar import Xoshiro512StarStar
+from .xoshiro256 import Xoshiro256
+from .xoshiro512 import Xoshiro512
 from .mtrand import RandomState
 
-gen = RandomGenerator(Xoshiro512StarStar())
-
-__all__ += ['RandomGenerator', 'DSFMT', 'MT19937', 'PCG64', 'PCG32', 'Philox',
+__all__ += ['Generator', 'DSFMT', 'MT19937', 'Philox',
            'ThreeFry', 'ThreeFry32', 'Xoroshiro128', 'Xorshift1024',
-           'Xoshiro256StarStar', 'Xoshiro512StarStar', 'RandomState', 'gen']
+           'Xoshiro256', 'Xoshiro512', 'RandomState']
 
 # Some aliases:
 ranf = random = sample = random_sample

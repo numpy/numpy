@@ -2,12 +2,7 @@
 #define _RANDOMDGEN__PHILOX_H_
 
 #include <inttypes.h>
-
-#ifdef _WIN32
-#define INLINE __inline __forceinline
-#else
-#define INLINE inline
-#endif
+#include "numpy/npy_common.h"
 
 #define PHILOX_BUFFER_SIZE 4L
 
@@ -23,7 +18,7 @@ typedef struct r123array4x64 philox4x64_ctr_t;
 typedef struct r123array2x64 philox4x64_key_t;
 typedef struct r123array2x64 philox4x64_ukey_t;
 
-static INLINE struct r123array2x64
+static NPY_INLINE struct r123array2x64
 _philox4x64bumpkey(struct r123array2x64 key) {
   key.v[0] += (0x9E3779B97F4A7C15ULL);
   key.v[1] += (0xBB67AE8584CAA73BULL);
@@ -37,7 +32,7 @@ _philox4x64bumpkey(struct r123array2x64 key) {
 #pragma intrinsic(_umul128)
 #else
 #pragma intrinsic(__emulu)
-static INLINE uint64_t _umul128(uint64_t a, uint64_t b, uint64_t *high) {
+static NPY_INLINE uint64_t _umul128(uint64_t a, uint64_t b, uint64_t *high) {
 
   uint64_t a_lo, a_hi, b_lo, b_hi, a_x_b_hi, a_x_b_mid, a_x_b_lo, b_x_a_mid,
       carry_bit;
@@ -60,18 +55,18 @@ static INLINE uint64_t _umul128(uint64_t a, uint64_t b, uint64_t *high) {
   return a_x_b_lo + ((a_x_b_mid + b_x_a_mid) << 32);
 }
 #endif
-static INLINE uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
+static NPY_INLINE uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
   return _umul128(a, b, hip);
 }
 #else
 #if __SIZEOF_INT128__
-static INLINE uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
+static NPY_INLINE uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
   __uint128_t product = ((__uint128_t)a) * ((__uint128_t)b);
   *hip = product >> 64;
   return (uint64_t)product;
 }
 #else
-static INLINE uint64_t _umul128(uint64_t a, uint64_t b, uint64_t *high) {
+static NPY_INLINE uint64_t _umul128(uint64_t a, uint64_t b, uint64_t *high) {
 
   uint64_t a_lo, a_hi, b_lo, b_hi, a_x_b_hi, a_x_b_mid, a_x_b_lo, b_x_a_mid,
       carry_bit;
@@ -93,16 +88,16 @@ static INLINE uint64_t _umul128(uint64_t a, uint64_t b, uint64_t *high) {
 
   return a_x_b_lo + ((a_x_b_mid + b_x_a_mid) << 32);
 }
-static INLINE uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
+static NPY_INLINE uint64_t mulhilo64(uint64_t a, uint64_t b, uint64_t *hip) {
   return _umul128(a, b, hip);
 }
 #endif
 #endif
 
-static INLINE struct r123array4x64 _philox4x64round(struct r123array4x64 ctr,
+static NPY_INLINE struct r123array4x64 _philox4x64round(struct r123array4x64 ctr,
                                                     struct r123array2x64 key);
 
-static INLINE struct r123array4x64 _philox4x64round(struct r123array4x64 ctr,
+static NPY_INLINE struct r123array4x64 _philox4x64round(struct r123array4x64 ctr,
                                                     struct r123array2x64 key) {
   uint64_t hi0;
   uint64_t hi1;
@@ -113,14 +108,14 @@ static INLINE struct r123array4x64 _philox4x64round(struct r123array4x64 ctr,
   return out;
 }
 
-static INLINE philox4x64_key_t philox4x64keyinit(philox4x64_ukey_t uk) {
+static NPY_INLINE philox4x64_key_t philox4x64keyinit(philox4x64_ukey_t uk) {
   return uk;
 }
-static INLINE philox4x64_ctr_t philox4x64_R(unsigned int R,
+static NPY_INLINE philox4x64_ctr_t philox4x64_R(unsigned int R,
                                             philox4x64_ctr_t ctr,
                                             philox4x64_key_t key);
 
-static INLINE philox4x64_ctr_t philox4x64_R(unsigned int R,
+static NPY_INLINE philox4x64_ctr_t philox4x64_R(unsigned int R,
                                             philox4x64_ctr_t ctr,
                                             philox4x64_key_t key) {
   if (R > 0) {
@@ -198,7 +193,7 @@ typedef struct s_philox_state {
   uint32_t uinteger;
 } philox_state;
 
-static INLINE uint64_t philox_next(philox_state *state) {
+static NPY_INLINE uint64_t philox_next(philox_state *state) {
   uint64_t out;
   int i;
   philox4x64_ctr_t ct;
@@ -228,11 +223,11 @@ static INLINE uint64_t philox_next(philox_state *state) {
   return state->buffer[0];
 }
 
-static INLINE uint64_t philox_next64(philox_state *state) {
+static NPY_INLINE uint64_t philox_next64(philox_state *state) {
   return philox_next(state);
 }
 
-static INLINE uint32_t philox_next32(philox_state *state) {
+static NPY_INLINE uint32_t philox_next32(philox_state *state) {
   uint64_t next;
 
   if (state->has_uint32) {

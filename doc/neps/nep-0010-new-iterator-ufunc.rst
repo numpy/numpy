@@ -1877,8 +1877,8 @@ the new iterator.
 Here is one of the original functions, for reference, and some
 random image data.::
 
-    In [5]: rand1 = np.random.random_sample(1080*1920*4).astype(np.float32)
-    In [6]: rand2 = np.random.random_sample(1080*1920*4).astype(np.float32)
+    In [5]: rand1 = np.random.random(1080*1920*4).astype(np.float32)
+    In [6]: rand2 = np.random.random(1080*1920*4).astype(np.float32)
     In [7]: image1 = rand1.reshape(1080,1920,4).swapaxes(0,1)
     In [8]: image2 = rand2.reshape(1080,1920,4).swapaxes(0,1)
 

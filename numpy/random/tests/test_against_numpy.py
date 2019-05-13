@@ -5,7 +5,7 @@ from numpy.testing import (assert_allclose, assert_array_equal, assert_equal,
 
 import pytest
 
-from numpy.random import RandomGenerator, MT19937, generator
+from numpy.random import Generator, MT19937, generator
 from numpy.random import RandomState
 
 
@@ -93,17 +93,17 @@ class TestAgainstNumPy(object):
     @classmethod
     def setup_class(cls):
         cls.np = numpy.random
-        cls.brng = MT19937
+        cls.bit_generator = MT19937
         cls.seed = [2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
-        cls.rg = RandomGenerator(cls.brng(*cls.seed))
-        cls.rs = RandomState(cls.brng(*cls.seed))
+        cls.rg = Generator(cls.bit_generator(*cls.seed))
+        cls.rs = RandomState(cls.bit_generator(*cls.seed))
         cls.nprs = cls.np.RandomState(*cls.seed)
-        cls.initial_state = cls.rg.brng.state
+        cls.initial_state = cls.rg.bit_generator.state
         cls._set_common_state()
 
     @classmethod
     def _set_common_state(cls):
-        state = cls.rg.brng.state
+        state = cls.rg.bit_generator.state
         st = [[]] * 5
         st[0] = 'MT19937'
         st[1] = state['state']['key']
@@ -125,7 +125,7 @@ class TestAgainstNumPy(object):
 
     def _is_state_common(self):
         state = self.nprs.get_state()
-        state2 = self.rg.brng.state
+        state2 = self.rg.bit_generator.state
         assert (state[1] == state2['state']['key']).all()
         assert (state[2] == state2['state']['pos'])
 
@@ -138,10 +138,10 @@ class TestAgainstNumPy(object):
         assert_allclose(state[4], state2['gauss'], atol=1e-10)
 
     def test_common_seed(self):
-        self.rg.brng.seed(1234)
+        self.rg.bit_generator.seed(1234)
         self.nprs.seed(1234)
         self._is_state_common()
-        self.rg.brng.seed(23456)
+        self.rg.bit_generator.seed(23456)
         self.nprs.seed(23456)
         self._is_state_common()
 
@@ -149,8 +149,8 @@ class TestAgainstNumPy(object):
         nprs = np.random.RandomState()
         nprs.standard_normal(99)
         state = nprs.get_state()
-        self.rg.brng.state = state
-        state2 = self.rg.brng.state
+        self.rg.bit_generator.state = state
+        state2 = self.rg.bit_generator.state
         assert (state[1] == state2['state']['key']).all()
         assert (state[2] == state2['state']['pos'])
 
@@ -158,7 +158,7 @@ class TestAgainstNumPy(object):
         self._set_common_state()
         self._is_state_common()
         v1 = self.nprs.random_sample(10)
-        v2 = self.rg.random_sample(10)
+        v2 = self.rg.random(10)
 
         assert_array_equal(v1, v2)
 
@@ -263,16 +263,6 @@ class TestAgainstNumPy(object):
                         self.rg.vonmises)
         self._is_state_common()
 
-    def test_random_integers(self):
-        self._set_common_state()
-        self._is_state_common()
-        with suppress_warnings() as sup:
-            sup.record(DeprecationWarning)
-            compare_2_input(self.nprs.random_integers,
-                            self.rg.random_integers,
-                            is_scalar=True)
-        self._is_state_common()
-
     def test_binomial(self):
         self._set_common_state()
         self._is_state_common()
@@ -280,14 +270,6 @@ class TestAgainstNumPy(object):
                         self.rg.binomial,
                         is_np=True)
         self._is_state_common()
-
-    def test_rand(self):
-        self._set_common_state()
-        self._is_state_common()
-        f = self.rg.rand
-        g = self.nprs.rand
-        assert_allclose(f(10), g(10))
-        assert_allclose(f(3, 4, 5), g(3, 4, 5))
 
     def test_poisson_lam_max(self):
         assert_allclose(self.rg.poisson_lam_max, self.nprs.poisson_lam_max)
@@ -367,40 +349,40 @@ class TestAgainstNumPy(object):
     def test_randint(self):
         self._set_common_state()
         self._is_state_common()
-        compare_2_input(self.rg.randint,
+        compare_2_input(self.rg.integers,
                         self.nprs.randint,
                         is_scalar=True)
         self._is_state_common()
 
     def test_scalar(self):
-        s = RandomGenerator(MT19937(0))
-        assert_equal(s.randint(1000), 684)
+        s = Generator(MT19937(0))
+        assert_equal(s.integers(1000), 684)
         s1 = np.random.RandomState(0)
         assert_equal(s1.randint(1000), 684)
-        assert_equal(s1.randint(1000), s.randint(1000))
+        assert_equal(s1.randint(1000), s.integers(1000))
 
-        s = RandomGenerator(MT19937(4294967295))
-        assert_equal(s.randint(1000), 419)
+        s = Generator(MT19937(4294967295))
+        assert_equal(s.integers(1000), 419)
         s1 = np.random.RandomState(4294967295)
         assert_equal(s1.randint(1000), 419)
-        assert_equal(s1.randint(1000), s.randint(1000))
+        assert_equal(s1.randint(1000), s.integers(1000))
 
-        self.rg.brng.seed(4294967295)
+        self.rg.bit_generator.seed(4294967295)
         self.nprs.seed(4294967295)
         self._is_state_common()
 
     def test_array(self):
-        s = RandomGenerator(MT19937(range(10)))
-        assert_equal(s.randint(1000), 468)
+        s = Generator(MT19937(range(10)))
+        assert_equal(s.integers(1000), 468)
         s = np.random.RandomState(range(10))
         assert_equal(s.randint(1000), 468)
 
-        s = RandomGenerator(MT19937(np.arange(10)))
-        assert_equal(s.randint(1000), 468)
-        s = RandomGenerator(MT19937([0]))
-        assert_equal(s.randint(1000), 973)
-        s = RandomGenerator(MT19937([4294967295]))
-        assert_equal(s.randint(1000), 265)
+        s = Generator(MT19937(np.arange(10)))
+        assert_equal(s.integers(1000), 468)
+        s = Generator(MT19937([0]))
+        assert_equal(s.integers(1000), 973)
+        s = Generator(MT19937([4294967295]))
+        assert_equal(s.integers(1000), 265)
 
     # Tests using legacy generator
     def test_chisquare(self):

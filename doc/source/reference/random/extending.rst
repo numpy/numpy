@@ -2,16 +2,15 @@
 
 Extending
 ---------
-The basic RNGs have been designed to be extendable using standard tools for
-high-performance Python -- numba and Cython.
-The `~RandomGenerator` object can also be used with
-user-provided basic RNGs as long as these export a small set of required
-functions.
+The BitGenerators have been designed to be extendable using standard tools for
+high-performance Python -- numba and Cython.  The `~Generator` object can also
+be used with user-provided BitGenerators as long as these export a small set of
+required functions.
 
 Numba
 =====
 Numba can be used with either CTypes or CFFI.  The current iteration of the
-basic RNGs all export a small set of functions through both interfaces.
+BitGenerators all export a small set of functions through both interfaces.
 
 This example shows how numba can be used to produce Box-Muller normals using
 a pure Python implementation which is then compiled.  The random numbers are
@@ -66,7 +65,7 @@ examples folder.
 Cython
 ======
 
-Cython can be used to unpack the ``PyCapsule`` provided by a basic RNG.
+Cython can be used to unpack the ``PyCapsule`` provided by a BitGenerator.
 This example uses `~xoroshiro128.Xoroshiro128` and
 ``random_gauss_zig``, the Ziggurat-based generator for normals, to fill an
 array.  The usual caveats for writing high-performance code using Cython --
@@ -81,33 +80,29 @@ removing bounds checks and wrap around, providing array alignment information
     from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
     from numpy.random.common cimport *
     from numpy.random.distributions cimport random_gauss_zig
-    from numpy.random.xoroshiro128 import Xoroshiro128
+    from numpy.random import Xoroshiro128
 
 
    @cython.boundscheck(False)
    @cython.wraparound(False)
    def normals_zig(Py_ssize_t n):
        cdef Py_ssize_t i
-       cdef brng_t *rng
-       cdef const char *capsule_name = "BasicRNG"
+       cdef bitgen_t *rng
+       cdef const char *capsule_name = "BitGenerator"
        cdef double[::1] random_values
 
        x = Xoroshiro128()
        capsule = x.capsule
-       # Optional check that the capsule if from a Basic RNG
        if not PyCapsule_IsValid(capsule, capsule_name):
            raise ValueError("Invalid pointer to anon_func_state")
-       # Cast the pointer
-       rng = <brng_t *> PyCapsule_GetPointer(capsule, capsule_name)
+       rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
        random_values = np.empty(n)
        for i in range(n):
-           # Call the function
            random_values[i] = random_gauss_zig(rng)
        randoms = np.asarray(random_values)
        return randoms
 
-
-The basic RNG can also be directly accessed using the members of the basic
+The BitGenerator can also be directly accessed using the members of the basic
 RNG structure.
 
 .. code-block:: cython
@@ -116,8 +111,8 @@ RNG structure.
    @cython.wraparound(False)
    def uniforms(Py_ssize_t n):
        cdef Py_ssize_t i
-       cdef brng_t *rng
-       cdef const char *capsule_name = "BasicRNG"
+       cdef bitgen_t *rng
+       cdef const char *capsule_name = "BitGenerator"
        cdef double[::1] random_values
 
        x = Xoroshiro128()
@@ -126,7 +121,7 @@ RNG structure.
        if not PyCapsule_IsValid(capsule, capsule_name):
            raise ValueError("Invalid pointer to anon_func_state")
        # Cast the pointer
-       rng = <brng_t *> PyCapsule_GetPointer(capsule, capsule_name)
+       rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
        random_values = np.empty(n)
        for i in range(n):
            # Call the function
@@ -139,29 +134,29 @@ examples folder.
 
 New Basic RNGs
 ==============
-`~RandomGenerator` can be used with other
-user-provided basic RNGs.  The simplest way to write a new basic RNG is to
-examine the pyx file of one of the existing basic RNGs. The key structure
-that must be provided is the ``capsule`` which contains a ``PyCapsule`` to a
-struct pointer of type ``brng_t``,
+`~Generator` can be used with other user-provided BitGenerators. The simplest
+way to write a new BitGenerator is to examine the pyx file of one of the
+existing BitGenerators. The key structure that must be provided is the
+``capsule`` which contains a ``PyCapsule`` to a struct pointer of type
+``bitgen_t``,
 
 .. code-block:: c
 
-  typedef struct brng {
+  typedef struct bitgen {
     void *state;
     uint64_t (*next_uint64)(void *st);
     uint32_t (*next_uint32)(void *st);
     double (*next_double)(void *st);
     uint64_t (*next_raw)(void *st);
-  } brng_t;
+  } bitgen_t;
 
 which provides 5 pointers. The first is an opaque pointer to the data structure
-used by the basic RNG.  The next three are function pointers which return the
-next 64- and 32-bit unsigned integers, the next random double and the next
+used by the BitGenerators.  The next three are function pointers which return
+the next 64- and 32-bit unsigned integers, the next random double and the next
 raw value.  This final function is used for testing and so can be set to
 the next 64-bit unsigned integer function if not needed. Functions inside
-``RandomGenerator`` use this structure as in
+``Generator`` use this structure as in
 
 .. code-block:: c
 
-  brng_state->next_uint64(brng_state->state)
+  bitgen_state->next_uint64(bitgen_state->state)

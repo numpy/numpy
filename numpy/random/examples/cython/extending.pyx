@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 #cython: language_level=3
+
 from libc.stdint cimport uint32_t
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 
@@ -6,16 +8,16 @@ import numpy as np
 cimport numpy as np
 cimport cython
 
-from numpy.random.randomgen.common cimport brng_t
-from numpy.random.randomgen import Xoroshiro128
+from numpy.random.common cimport bitgen_t
+from numpy.random import Xoroshiro128
 
 np.import_array()
 
 
 def uniform_mean(Py_ssize_t N):
     cdef Py_ssize_t i
-    cdef brng_t *rng
-    cdef const char *capsule_name = "BasicRNG"
+    cdef bitgen_t *rng
+    cdef const char *capsule_name = "BitGenerator"
     cdef double[::1] random_values
     cdef np.ndarray randoms
 
@@ -23,7 +25,7 @@ def uniform_mean(Py_ssize_t N):
     capsule = x.capsule
     if not PyCapsule_IsValid(capsule, capsule_name):
         raise ValueError("Invalid pointer to anon_func_state")
-    rng = <brng_t *> PyCapsule_GetPointer(capsule, capsule_name)
+    rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
     random_values = np.empty(N)
     for i in range(N):
         random_values[i] = rng.next_double(rng.state)
@@ -31,7 +33,7 @@ def uniform_mean(Py_ssize_t N):
     return randoms.mean()
 
 
-cdef uint32_t bounded_uint(uint32_t lb, uint32_t ub, brng_t *rng):
+cdef uint32_t bounded_uint(uint32_t lb, uint32_t ub, bitgen_t *rng):
     cdef uint32_t mask, delta, val
     mask = delta = ub - lb
     mask |= mask >> 1
@@ -51,9 +53,9 @@ cdef uint32_t bounded_uint(uint32_t lb, uint32_t ub, brng_t *rng):
 @cython.wraparound(False)
 def bounded_uints(uint32_t lb, uint32_t ub, Py_ssize_t n):
     cdef Py_ssize_t i
-    cdef brng_t *rng
+    cdef bitgen_t *rng
     cdef uint32_t[::1] out
-    cdef const char *capsule_name = "BasicRNG"
+    cdef const char *capsule_name = "BitGenerator"
 
     x = Xoroshiro128()
     out = np.empty(n, dtype=np.uint32)
@@ -61,7 +63,7 @@ def bounded_uints(uint32_t lb, uint32_t ub, Py_ssize_t n):
 
     if not PyCapsule_IsValid(capsule, capsule_name):
         raise ValueError("Invalid pointer to anon_func_state")
-    rng = <brng_t *>PyCapsule_GetPointer(capsule, capsule_name)
+    rng = <bitgen_t *>PyCapsule_GetPointer(capsule, capsule_name)
 
     for i in range(n):
         out[i] = bounded_uint(lb, ub, rng)

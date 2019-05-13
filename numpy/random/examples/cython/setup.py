@@ -1,4 +1,10 @@
-# python setup.py build_ext -i
+#!/usr/bin/env python3
+"""
+Build the demos
+
+Usage: python setup.py build_ext -i
+"""
+
 import numpy as np
 from distutils.core import setup
 from Cython.Build import cythonize
@@ -10,7 +16,7 @@ extending = Extension("extending",
                       include_dirs=[np.get_include()])
 distributions = Extension("extending_distributions",
                           sources=['extending_distributions.pyx',
-                                   join('..', '..', '..', 'randomgen', 'src',
+                                   join('..', '..', 'src',
                                         'distributions', 'distributions.c')],
                           include_dirs=[np.get_include()])
 

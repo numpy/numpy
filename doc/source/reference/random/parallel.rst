@@ -12,20 +12,20 @@ or distributed).
 Independent Streams
 -------------------
 
-:class:`~pcg64.PCG64`, :class:`~threefry.ThreeFry`
-and :class:`~philox.Philox` support independent streams.  This
-example shows how many streams can be created by passing in different index
-values in the second input while using the same seed in the first.
+:class:`~threefry.ThreeFry` and :class:`~philox.Philox` support independent
+streams.  This example shows how many streams can be created by passing in
+different index values in the second input while using the same seed in the
+first.
 
 .. code-block:: python
 
   from numpy.random.entropy import random_entropy
-  from numpy.random import PCG64
+  from numpy.random import ThreeFry
 
   entropy = random_entropy(4)
   # 128-bit number as a seed
   seed = sum([int(entropy[i]) * 2 ** (32 * i) for i in range(4)])
-  streams = [PCG64(seed, stream) for stream in range(10)]
+  streams = [ThreeFry(seed, stream) for stream in range(10)]
 
 
 :class:`~philox.Philox` and :class:`~threefry.ThreeFry` are
@@ -49,8 +49,8 @@ to produce independent streams.
 Jump/Advance the BitGenerator state
 -----------------------------------
 
-Jump
-****
+Jumped
+******
 
 ``jumped`` advances the state of the BitGenerator *as-if* a large number of
 random numbers have been drawn, and returns a new instance with this state.
@@ -68,8 +68,6 @@ are listed below.
 +-----------------+-------------------------+-------------------------+-------------------------+
 | MT19937         | :math:`2^{19937}`       | :math:`2^{128}`         | 32                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
-| PCG64           | :math:`2^{128}`         | :math:`2^{64}`          | 64                      |
-+-----------------+-------------------------+-------------------------+-------------------------+
 | Philox          | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
 | ThreeFry        | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
@@ -77,6 +75,10 @@ are listed below.
 | Xoroshiro128    | :math:`2^{128}`         | :math:`2^{64}`          | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
 | Xorshift1024    | :math:`2^{1024}`        | :math:`2^{512}`         | 64                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+| Xoshiro256**    | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
++-----------------+-------------------------+-------------------------+-------------------------+
+| Xoshiro512**    | :math:`2^{512}`         | :math:`2^{256}`         | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
 
 ``jumped`` can be used to produce long blocks which should be long enough to not
@@ -93,16 +95,14 @@ overlap.
   blocked_rng = []
   rng = Xorshift1024(seed)
   for i in range(10):
-      blocked_rng.append(rng.jumped())
-
+      blocked_rng.append(rng.jumped(i))
 
 Advance
 *******
 ``advance`` can be used to jump the state an arbitrary number of steps, and so
-is a more general approach than ``jump``.  :class:`~pcg64.PCG64`,
-:class:`~threefry.ThreeFry` and :class:`~philox.Philox`
-support ``advance``, and since these also support independent
-streams, it is not usually necessary to use ``advance``.
+is a more general approach than ``jumped``.  :class:`~threefry.ThreeFry` and
+:class:`~philox.Philox` support ``advance``, and since these also support
+independent streams, it is not usually necessary to use ``advance``.
 
 Advancing a BitGenerator updates the underlying state as-if a given number of
 calls to the BitGenerator have been made. In general there is not a
@@ -120,23 +120,23 @@ This occurs for two reasons:
 Advancing the BitGenerator state resets any pre-computed random numbers. This
 is required to ensure exact reproducibility.
 
-This example uses ``advance`` to advance a :class:`~pcg64.PCG64`
+This example uses ``advance`` to advance a :class:`~threefry.ThreeFry`
 generator 2 ** 127 steps to set a sequence of random number generators.
 
 .. code-block:: python
 
-   from numpy.random import PCG64
-   brng = PCG64()
-   brng_copy = PCG64()
-   brng_copy.state = brng.state
+   from numpy.random import ThreeFry
+   bit_generator = ThreeFry()
+   bit_generator_copy = ThreeFry()
+   bit_generator_copy.state = bit_generator.state
 
    advance = 2**127
-   brngs = [brng]
+   bit_generators = [bit_generator]
    for _ in range(9):
-       brng_copy.advance(advance)
-       brng = PCG64()
-       brng.state = brng_copy.state
-       brngs.append(brng)
+       bit_generator_copy.advance(advance)
+       bit_generator = ThreeFry()
+       bit_generator.state = bit_generator_copy.state
+       bit_generators.append(bit_generator)
 
 .. end block
 

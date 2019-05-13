@@ -3,55 +3,59 @@
 import operator
 import warnings
 
+import numpy as np
+
+from .bounded_integers import _integers_types
+from .mt19937 import MT19937 as _MT19937
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
 from libc cimport string
-from libc.stdlib cimport malloc, free
-cimport numpy as np
-import numpy as np
+
 cimport cython
+cimport numpy as np
 
 from .bounded_integers cimport *
-from .bounded_integers import _randint_types
 from .common cimport *
 from .distributions cimport *
 from .legacy_distributions cimport *
-from .mt19937 import MT19937 as _MT19937
 
 np.import_array()
 
 cdef class RandomState:
     """
-    RandomState(brng=None)
+    RandomState(bit_generator=None)
 
-    Container for the Mersenne Twister pseudo-random number generator.
+    Container for the slow Mersenne Twister pseudo-random number generator.
+    Consider using a different BitGenerator with the Generator container
+    instead.
 
-    `RandomState` exposes a number of methods for generating random numbers
-    drawn from a variety of probability distributions. In addition to the
-    distribution-specific arguments, each method takes a keyword argument
-    `size` that defaults to ``None``. If `size` is ``None``, then a single
-    value is generated and returned. If `size` is an integer, then a 1-D
-    array filled with generated values is returned. If `size` is a tuple,
-    then an array with that shape is filled and returned.
+    `RandomState` and `Generator` expose a number of methods for generating
+    random numbers drawn from a variety of probability distributions. In
+    addition to the distribution-specific arguments, each method takes a
+    keyword argument `size` that defaults to ``None``. If `size` is ``None``,
+    then a single value is generated and returned. If `size` is an integer,
+    then a 1-D array filled with generated values is returned. If `size` is a
+    tuple, then an array with that shape is filled and returned.
 
-    *Compatibility Guarantee*
-    A fixed seed and a fixed series of calls to 'RandomState' methods using
-    the same parameters will always produce the same results up to roundoff
-    error except when the values were incorrect. Incorrect values will be
-    fixed and the NumPy version in which the fix was made will be noted in
-    the relevant docstring. Extension of existing parameter ranges and the
-    addition of new parameters is allowed as long the previous behavior
-    remains unchanged.
+    **Compatibility Guarantee**
+
+    A fixed bit generator using a fixed seed and a fixed series of calls to
+    'RandomState' methods using the same parameters will always produce the
+    same results up to roundoff error except when the values were incorrect.
+    `RandomState` is effectively frozen and will only recieve updates that
+    are required by changes in the the internals of Numpy. More substantial
+    changes, including algorithmic improvements, are reserved for
+    `Generator`.
 
     Parameters
     ----------
-    brng : {None, int, array_like, BasicRNG}, optional
+    bit_generator : {None, int, array_like, BitGenerator}, optional
         Random seed used to initialize the pseudo-random number generator or
-        an instantized BasicRNG.  If an integer or array, used as a seed for
-        the MT19937 BasicRNG. Values can be any integer between 0 and
+        an instantized BitGenerator.  If an integer or array, used as a seed for
+        the MT19937 BitGenerator. Values can be any integer between 0 and
         2**32 - 1 inclusive, an array (or other sequence) of such integers,
         or ``None`` (the default).  If `seed` is ``None``, then the `MT19937`
-        BasicRNG is initialized by reading data from ``/dev/urandom``
+        BitGenerator is initialized by reading data from ``/dev/urandom``
         (or the Windows analogue) if available or seed from the clock
         otherwise.
 
@@ -63,44 +67,43 @@ cdef class RandomState:
     NumPy-aware, has the advantage that it provides a much larger number
     of probability distributions to choose from.
 
+    See Also
+    --------
+    Generator
+    mt19937.MT19937
+    Bit_Generators
+
     """
-    cdef public object _basicrng
-    cdef brng_t *_brng
-    cdef aug_brng_t *_aug_state
-    cdef binomial_t *_binomial
+    cdef public object _bit_generator
+    cdef bitgen_t _bitgen
+    cdef aug_bitgen_t _aug_state
+    cdef binomial_t _binomial
     cdef object lock
     poisson_lam_max = POISSON_LAM_MAX
 
-    def __init__(self, brng=None):
-        if brng is None:
-            brng = _MT19937()
-        elif not hasattr(brng, 'capsule'):
-            brng = _MT19937(brng)
+    def __init__(self, bit_generator=None):
+        if bit_generator is None:
+            bit_generator = _MT19937()
+        elif not hasattr(bit_generator, 'capsule'):
+            bit_generator = _MT19937(bit_generator)
 
-        self._basicrng = brng
-        capsule = brng.capsule
-        cdef const char *name = "BasicRNG"
+        self._bit_generator = bit_generator
+        capsule = bit_generator.capsule
+        cdef const char *name = "BitGenerator"
         if not PyCapsule_IsValid(capsule, name):
-            raise ValueError("Invalid brng. The brng must be instantized.")
-        self._brng = <brng_t *> PyCapsule_GetPointer(capsule, name)
-        self._aug_state = <aug_brng_t *>malloc(sizeof(aug_brng_t))
-        self._aug_state.basicrng = self._brng
-        self._binomial = <binomial_t *>malloc(sizeof(binomial_t))
+            raise ValueError("Invalid bit generator. The bit generator must "
+                             "be instantized.")
+        self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
+        self._aug_state.bit_generator = &self._bitgen
         self._reset_gauss()
-        self.lock = brng.lock
-
-    def __dealloc__(self):
-        if self._binomial:
-            free(self._binomial)
-        if self._aug_state:
-            free(self._aug_state)
+        self.lock = bit_generator.lock
 
     def __repr__(self):
         return self.__str__() + ' at 0x{:X}'.format(id(self))
 
     def __str__(self):
         _str = self.__class__.__name__
-        _str += '(' + self._basicrng.__class__.__name__ + ')'
+        _str += '(' + self._bit_generator.__class__.__name__ + ')'
         return _str
 
     # Pickling support:
@@ -113,7 +116,7 @@ cdef class RandomState:
     def __reduce__(self):
         state = self.get_state(legacy=False)
         from ._pickle import __randomstate_ctor
-        return __randomstate_ctor, (state['brng'],), state
+        return __randomstate_ctor, (state['bit_generator'],), state
 
     cdef _reset_gauss(self):
         self._aug_state.has_gauss = 0
@@ -123,30 +126,28 @@ cdef class RandomState:
         """
         seed(self, *args, **kwargs)
 
-        Reseed the basic RNG.
-
-        Parameters depend on the basic RNG used.
+        Reseed the BitGenerator.
 
         Notes
         -----
-        Arguments are directly passed to the basic RNG. This is a convenience
+        Arguments are directly passed to the BitGenerator. This is a convenience
         function.
 
-        The best method to access seed is to directly use a basic RNG instance.
-        This example demonstrates this best practice.
+        The best method to access seed is to directly use a BitGenerator
+        instance. This example demonstrates this best practice.
 
         >>> from numpy.random import MT19937
         >>> from numpy.random import RandomState
-        >>> brng = MT19937(123456789)
-        >>> rs = RandomState(brng)
-        >>> brng.seed(987654321)
+        >>> bit_generator = MT19937(123456789)
+        >>> rs = RandomState(bit_generator)
+        >>> bit_generator.seed(987654321)
 
         These best practice examples are equivalent to
 
         >>> rs = RandomState(MT19937())
         >>> rs.seed(987654321)
         """
-        self._basicrng.seed(*args, **kwargs)
+        self._bit_generator.seed(*args, **kwargs)
         self._reset_gauss()
 
     def get_state(self, legacy=True):
@@ -168,11 +169,11 @@ cdef class RandomState:
             4. an integer ``has_gauss``.
             5. a float ``cached_gaussian``.
 
-            If `legacy` is False, or the basic RNG is not NT19937, then
+            If `legacy` is False, or the BitGenerator is not NT19937, then
             state is returned as a dictionary.
 
         legacy : bool
-            Flag indicating the return a legacy tuple state when the basic RNG
+            Flag indicating the return a legacy tuple state when the BitGenerator
             is MT19937.
 
         See Also
@@ -186,16 +187,16 @@ cdef class RandomState:
         the user should know exactly what he/she is doing.
 
         """
-        st = self._basicrng.state
-        if st['brng'] != 'MT19937' and legacy:
+        st = self._bit_generator.state
+        if st['bit_generator'] != 'MT19937' and legacy:
             warnings.warn('get_state and legacy can only be used with the '
-                          'MT19937 basic RNG. To silence this warning, '
+                          'MT19937 BitGenerator. To silence this warning, '
                           'set `legacy` to False.', RuntimeWarning)
             legacy = False
         st['has_gauss'] = self._aug_state.has_gauss
         st['gauss'] = self._aug_state.gauss
         if legacy:
-            return (st['brng'], st['state']['key'], st['state']['pos'],
+            return (st['bit_generator'], st['state']['key'], st['state']['pos'],
                     st['has_gauss'], st['gauss'])
         return st
 
@@ -205,9 +206,10 @@ cdef class RandomState:
 
         Set the internal state of the generator from a tuple.
 
-        For use if one has reason to manually (re-)set the internal state of the
-        Basic RNG used by the RandomState instance. By default, RandomState uses
-        the "Mersenne Twister"[1]_ pseudo-random number generating algorithm.
+        For use if one has reason to manually (re-)set the internal state of
+        the bit generator used by the RandomState instance. By default,
+        RandomState uses the "Mersenne Twister"[1]_ pseudo-random number
+        generating algorithm.
 
         Parameters
         ----------
@@ -220,7 +222,7 @@ cdef class RandomState:
             4. an integer ``has_gauss``.
             5. a float ``cached_gaussian``.
 
-            If state is a dictionary, it is directly set using the BasicRNGs
+            If state is a dictionary, it is directly set using the BitGenerators
             `state` property.
 
         Returns
@@ -251,7 +253,7 @@ cdef class RandomState:
 
         """
         if isinstance(state, dict):
-            if 'brng' not in state or 'state' not in state:
+            if 'bit_generator' not in state or 'state' not in state:
                 raise ValueError('state dictionary is not valid.')
             st = state
         else:
@@ -260,7 +262,7 @@ cdef class RandomState:
             if state[0] != 'MT19937':
                 raise ValueError('set_state can only be used with legacy MT19937'
                                  'state instances.')
-            st = {'brng': state[0],
+            st = {'bit_generator': state[0],
                   'state': {'key': state[1], 'pos': state[2]}}
             if len(state) > 3:
                 st['has_gauss'] = state[3]
@@ -269,7 +271,7 @@ cdef class RandomState:
 
         self._aug_state.gauss = st.get('gauss', 0.0)
         self._aug_state.has_gauss = st.get('has_gauss', 0)
-        self._basicrng.state = st
+        self._bit_generator.state = st
 
     def random_sample(self, size=None):
         """
@@ -314,7 +316,16 @@ cdef class RandomState:
 
         """
         cdef double temp
-        return double_fill(&random_double_fill, self._brng, size, self.lock, None)
+        return double_fill(&random_double_fill, &self._bitgen, size, self.lock, None)
+
+    def random(self, size=None):
+        """
+        random(size=None)
+
+        Return random floats in the half-open interval [0.0, 1.0). Alias for
+        `random_sample` to ease forward-porting to the new random API.
+        """
+        return self.random_sample(size=size)
 
     def beta(self, a, b, size=None):
         """
@@ -354,7 +365,7 @@ cdef class RandomState:
             Drawn samples from the parameterized beta distribution.
 
         """
-        return cont(&legacy_beta, self._aug_state, size, self.lock, 2,
+        return cont(&legacy_beta, &self._aug_state, size, self.lock, 2,
                     a, 'a', CONS_POSITIVE,
                     b, 'b', CONS_POSITIVE,
                     0.0, '', CONS_NONE, None)
@@ -405,7 +416,7 @@ cdef class RandomState:
                https://en.wikipedia.org/wiki/Exponential_distribution
 
         """
-        return cont(&legacy_exponential, self._aug_state, size, self.lock, 1,
+        return cont(&legacy_exponential, &self._aug_state, size, self.lock, 1,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE,
@@ -439,7 +450,7 @@ cdef class RandomState:
         >>> n = np.random.standard_exponential((3, 8000))
 
         """
-        return cont(&legacy_standard_exponential, self._aug_state, size, self.lock, 0,
+        return cont(&legacy_standard_exponential, &self._aug_state, size, self.lock, 0,
                     None, None, CONS_NONE,
                     None, None, CONS_NONE,
                     None, None, CONS_NONE,
@@ -492,7 +503,7 @@ cdef class RandomState:
 
         if size is None:
             with self.lock:
-                return random_positive_int(self._brng)
+                return random_positive_int(&self._bitgen)
 
         randoms = <np.ndarray>np.empty(size, dtype=np.int64)
         randoms_data = <int64_t*>np.PyArray_DATA(randoms)
@@ -500,7 +511,7 @@ cdef class RandomState:
 
         for i in range(n):
             with self.lock, nogil:
-                randoms_data[i] = random_positive_int(self._brng)
+                randoms_data[i] = random_positive_int(&self._bitgen)
         return randoms
 
     def randint(self, low, high=None, size=None, dtype=int):
@@ -577,34 +588,40 @@ cdef class RandomState:
         array([[ 8,  6,  9,  7], # random
                [ 1, 16,  9, 12]], dtype=uint8)
         """
-        cdef bint use_masked=1
 
         if high is None:
             high = low
             low = 0
 
         key = np.dtype(dtype).name
-        if key not in _randint_types:
+        if key not in _integers_types:
             raise TypeError('Unsupported dtype "%s" for randint' % key)
 
+        # Implementation detail: the use a masked method to generate
+        # bounded uniform integers. Lemire's method is preferrable since it is
+        # faster. randomgen allows a choice, we will always use the slower but
+        # backward compatible one.
+        cdef bint _masked = True
+        cdef bint _endpoint = False
+
         if key == 'int32':
-            ret = _rand_int32(low, high, size, use_masked, False, self._brng, self.lock)
+            ret = _rand_int32(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif key == 'int64':
-            ret = _rand_int64(low, high, size, use_masked, False, self._brng, self.lock)
+            ret = _rand_int64(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif key == 'int16':
-            ret = _rand_int16(low, high, size, use_masked, False, self._brng, self.lock)
+            ret = _rand_int16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif key == 'int8':
-            ret = _rand_int8(low, high, size, use_masked, False, self._brng, self.lock)
+            ret = _rand_int8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif key == 'uint64':
-            ret = _rand_uint64(low, high, size, use_masked, False, self._brng, self.lock)
+            ret = _rand_uint64(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif key == 'uint32':
-            ret = _rand_uint32(low, high, size, use_masked, False, self._brng, self.lock)
+            ret = _rand_uint32(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif key == 'uint16':
-            ret = _rand_uint16(low, high, size, use_masked, False, self._brng, self.lock)
+            ret = _rand_uint16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif key == 'uint8':
-            ret = _rand_uint8(low, high, size, use_masked, False, self._brng, self.lock)
+            ret = _rand_uint8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
         elif key == 'bool':
-            ret = _rand_bool(low, high, size, use_masked, False, self._brng, self.lock)
+            ret = _rand_bool(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
 
         if size is None and dtype in (np.bool, np.int, np.long):
             if np.array(ret).shape == ():
@@ -915,7 +932,7 @@ cdef class RandomState:
             if not np.isfinite(range):
                 raise OverflowError('Range exceeds valid bounds')
 
-            return cont(&random_uniform, self._brng, size, self.lock, 2,
+            return cont(&random_uniform, &self._bitgen, size, self.lock, 2,
                         _low, '', CONS_NONE,
                         range, '', CONS_NONE,
                         0.0, '', CONS_NONE,
@@ -928,7 +945,7 @@ cdef class RandomState:
         arange = <np.ndarray>np.PyArray_EnsureArray(temp)
         if not np.all(np.isfinite(arange)):
             raise OverflowError('Range exceeds valid bounds')
-        return cont(&random_uniform, self._brng, size, self.lock, 2,
+        return cont(&random_uniform, &self._bitgen, size, self.lock, 2,
                     alow, '', CONS_NONE,
                     arange, '', CONS_NONE,
                     0.0, '', CONS_NONE,
@@ -1187,7 +1204,7 @@ cdef class RandomState:
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
-        return cont(&legacy_gauss, self._aug_state, size, self.lock, 0,
+        return cont(&legacy_gauss, &self._aug_state, size, self.lock, 0,
                     None, None, CONS_NONE,
                     None, None, CONS_NONE,
                     None, None, CONS_NONE,
@@ -1289,7 +1306,7 @@ cdef class RandomState:
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
-        return cont(&legacy_normal, self._aug_state, size, self.lock, 2,
+        return cont(&legacy_normal, &self._aug_state, size, self.lock, 2,
                     loc, '', CONS_NONE,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
@@ -1364,7 +1381,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&legacy_standard_gamma, self._aug_state, size, self.lock, 1,
+        return cont(&legacy_standard_gamma, &self._aug_state, size, self.lock, 1,
                     shape, 'shape', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE,
@@ -1443,7 +1460,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&legacy_gamma, self._aug_state, size, self.lock, 2,
+        return cont(&legacy_gamma, &self._aug_state, size, self.lock, 2,
                     shape, 'shape', CONS_NON_NEGATIVE,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE, None)
@@ -1531,7 +1548,7 @@ cdef class RandomState:
         level.
 
         """
-        return cont(&legacy_f, self._aug_state, size, self.lock, 2,
+        return cont(&legacy_f, &self._aug_state, size, self.lock, 2,
                     dfnum, 'dfnum', CONS_POSITIVE,
                     dfden, 'dfden', CONS_POSITIVE,
                     0.0, '', CONS_NONE, None)
@@ -1608,7 +1625,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&legacy_noncentral_f, self._aug_state, size, self.lock, 3,
+        return cont(&legacy_noncentral_f, &self._aug_state, size, self.lock, 3,
                     dfnum, 'dfnum', CONS_POSITIVE,
                     dfden, 'dfden', CONS_POSITIVE,
                     nonc, 'nonc', CONS_NON_NEGATIVE, None)
@@ -1676,7 +1693,7 @@ cdef class RandomState:
         array([ 1.89920014,  9.00867716,  3.13710533,  5.62318272]) # random
 
         """
-        return cont(&legacy_chisquare, self._aug_state, size, self.lock, 1,
+        return cont(&legacy_chisquare, &self._aug_state, size, self.lock, 1,
                     df, 'df', CONS_POSITIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)
@@ -1755,7 +1772,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&legacy_noncentral_chisquare, self._aug_state, size, self.lock, 2,
+        return cont(&legacy_noncentral_chisquare, &self._aug_state, size, self.lock, 2,
                     df, 'df', CONS_POSITIVE,
                     nonc, 'nonc', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE, None)
@@ -1822,7 +1839,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&legacy_standard_cauchy, self._aug_state, size, self.lock, 0,
+        return cont(&legacy_standard_cauchy, &self._aug_state, size, self.lock, 0,
                     0.0, '', CONS_NONE, 0.0, '', CONS_NONE, 0.0, '', CONS_NONE, None)
 
     def standard_t(self, df, size=None):
@@ -1913,7 +1930,7 @@ cdef class RandomState:
         probability of about 99% of being true.
 
         """
-        return cont(&legacy_standard_t, self._aug_state, size, self.lock, 1,
+        return cont(&legacy_standard_t, &self._aug_state, size, self.lock, 1,
                     df, 'df', CONS_POSITIVE,
                     0, '', CONS_NONE,
                     0, '', CONS_NONE,
@@ -1997,7 +2014,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&random_vonmises, self._brng, size, self.lock, 2,
+        return cont(&random_vonmises, &self._bitgen, size, self.lock, 2,
                     mu, 'mu', CONS_NONE,
                     kappa, 'kappa', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE, None)
@@ -2067,7 +2084,6 @@ cdef class RandomState:
         projects in Sourceforge [1]_.  It is one of the so-called
         "fat-tailed" distributions.
 
-
         References
         ----------
         .. [1] Francis Hunt and Paul Johnson, On the Pareto Distribution of
@@ -2095,7 +2111,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&legacy_pareto, self._aug_state, size, self.lock, 1,
+        return cont(&legacy_pareto, &self._aug_state, size, self.lock, 1,
                     a, 'a', CONS_POSITIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)
@@ -2193,7 +2209,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&legacy_weibull, self._aug_state, size, self.lock, 1,
+        return cont(&legacy_weibull, &self._aug_state, size, self.lock, 1,
                     a, 'a', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)
@@ -2293,7 +2309,7 @@ cdef class RandomState:
         >>> plt.title('inverse of stats.pareto(5)')
 
         """
-        return cont(&legacy_power, self._aug_state, size, self.lock, 1,
+        return cont(&legacy_power, &self._aug_state, size, self.lock, 1,
                     a, 'a', CONS_POSITIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)
@@ -2378,7 +2394,7 @@ cdef class RandomState:
         >>> plt.plot(x,g)
 
         """
-        return cont(&random_laplace, self._brng, size, self.lock, 2,
+        return cont(&random_laplace, &self._bitgen, size, self.lock, 2,
                     loc, 'loc', CONS_NONE,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE, None)
@@ -2496,7 +2512,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&random_gumbel, self._brng, size, self.lock, 2,
+        return cont(&random_gumbel, &self._bitgen, size, self.lock, 2,
                     loc, 'loc', CONS_NONE,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE, None)
@@ -2576,7 +2592,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&random_logistic, self._brng, size, self.lock, 2,
+        return cont(&random_logistic, &self._bitgen, size, self.lock, 2,
                     loc, 'loc', CONS_NONE,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE, None)
@@ -2686,7 +2702,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&legacy_lognormal, self._aug_state, size, self.lock, 2,
+        return cont(&legacy_lognormal, &self._aug_state, size, self.lock, 2,
                     mean, 'mean', CONS_NONE,
                     sigma, 'sigma', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE, None)
@@ -2754,7 +2770,7 @@ cdef class RandomState:
         0.087300000000000003 # random
 
         """
-        return cont(&random_rayleigh, self._brng, size, self.lock, 1,
+        return cont(&random_rayleigh, &self._bitgen, size, self.lock, 1,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE, None)
@@ -2822,7 +2838,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return cont(&legacy_wald, self._aug_state, size, self.lock, 2,
+        return cont(&legacy_wald, &self._aug_state, size, self.lock, 2,
                     mean, 'mean', CONS_POSITIVE,
                     scale, 'scale', CONS_POSITIVE,
                     0.0, '', CONS_NONE, None)
@@ -2909,7 +2925,7 @@ cdef class RandomState:
                 raise ValueError("mode > right")
             if fleft == fright:
                 raise ValueError("left == right")
-            return cont(&random_triangular, self._brng, size, self.lock, 3,
+            return cont(&random_triangular, &self._bitgen, size, self.lock, 3,
                         fleft, '', CONS_NONE,
                         fmode, '', CONS_NONE,
                         fright, '', CONS_NONE, None)
@@ -2921,7 +2937,7 @@ cdef class RandomState:
         if np.any(np.equal(oleft, oright)):
             raise ValueError("left == right")
 
-        return cont_broadcast_3(&random_triangular, self._brng, size, self.lock,
+        return cont_broadcast_3(&random_triangular, &self._bitgen, size, self.lock,
                             oleft, '', CONS_NONE,
                             omode, '', CONS_NONE,
                             oright, '', CONS_NONE)
@@ -3044,7 +3060,7 @@ cdef class RandomState:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
                     _in = (<int64_t*>np.PyArray_MultiIter_DATA(it, 2))[0]
-                    (<int64_t*>np.PyArray_MultiIter_DATA(it, 0))[0] = random_binomial(self._brng, _dp, _in, self._binomial)
+                    (<int64_t*>np.PyArray_MultiIter_DATA(it, 0))[0] = random_binomial(&self._bitgen, _dp, _in, &self._binomial)
 
                     np.PyArray_MultiIter_NEXT(it)
 
@@ -3057,7 +3073,7 @@ cdef class RandomState:
 
         if size is None:
             with self.lock:
-                return random_binomial(self._brng, _dp, _in, self._binomial)
+                return random_binomial(&self._bitgen, _dp, _in, &self._binomial)
 
         randoms = <np.ndarray>np.empty(size, np.int64)
         cnt = np.PyArray_SIZE(randoms)
@@ -3065,8 +3081,8 @@ cdef class RandomState:
 
         with self.lock, nogil:
             for i in range(cnt):
-                randoms_data[i] = random_binomial(self._brng, _dp, _in,
-                                                  self._binomial)
+                randoms_data[i] = random_binomial(&self._bitgen, _dp, _in,
+                                                  &self._binomial)
 
         return randoms
 
@@ -3141,7 +3157,7 @@ cdef class RandomState:
         ...    print(i, "wells drilled, probability of one success =", probability)
 
         """
-        return disc(&legacy_negative_binomial, self._aug_state, size, self.lock, 2, 0,
+        return disc(&legacy_negative_binomial, &self._aug_state, size, self.lock, 2, 0,
                     n, 'n', CONS_POSITIVE,
                     p, 'p', CONS_BOUNDED_0_1,
                     0.0, '', CONS_NONE)
@@ -3212,7 +3228,7 @@ cdef class RandomState:
         >>> s = np.random.poisson(lam=(100., 500.), size=(100, 2))
 
         """
-        return disc(&random_poisson, self._brng, size, self.lock, 1, 0,
+        return disc(&random_poisson, &self._bitgen, size, self.lock, 1, 0,
                     lam, 'lam', CONS_POISSON,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE)
@@ -3291,7 +3307,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return disc(&random_zipf, self._brng, size, self.lock, 1, 0,
+        return disc(&random_zipf, &self._bitgen, size, self.lock, 1, 0,
                     a, 'a', CONS_GT_1,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE)
@@ -3342,7 +3358,7 @@ cdef class RandomState:
         0.34889999999999999 #random
 
         """
-        return disc(&random_geometric, self._brng, size, self.lock, 1, 0,
+        return disc(&random_geometric, &self._bitgen, size, self.lock, 1, 0,
                     p, 'p', CONS_BOUNDED_GT_0_1,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE)
@@ -3454,14 +3470,14 @@ cdef class RandomState:
 
             if lngood + lnbad < lnsample:
                 raise ValueError("ngood + nbad < nsample")
-            return disc(&random_hypergeometric, self._brng, size, self.lock, 0, 3,
+            return disc(&random_hypergeometric, &self._bitgen, size, self.lock, 0, 3,
                         lngood, 'ngood', CONS_NON_NEGATIVE,
                         lnbad, 'nbad', CONS_NON_NEGATIVE,
                         lnsample, 'nsample', CONS_GTE_1)
 
         if np.any(np.less(np.add(ongood, onbad), onsample)):
             raise ValueError("ngood + nbad < nsample")
-        return discrete_broadcast_iii(&random_hypergeometric, self._brng, size, self.lock,
+        return discrete_broadcast_iii(&random_hypergeometric, &self._bitgen, size, self.lock,
                                       ongood, 'ngood', CONS_NON_NEGATIVE,
                                       onbad, 'nbad', CONS_NON_NEGATIVE,
                                       onsample, 'nsample', CONS_GTE_1)
@@ -3541,7 +3557,7 @@ cdef class RandomState:
         >>> plt.show()
 
         """
-        return disc(&random_logseries, self._brng, size, self.lock, 1, 0,
+        return disc(&random_logseries, &self._bitgen, size, self.lock, 1, 0,
                  p, 'p', CONS_BOUNDED_0_1,
                  0.0, '', CONS_NONE,
                  0.0, '', CONS_NONE)
@@ -3819,7 +3835,7 @@ cdef class RandomState:
         offset = 0
         with self.lock, nogil:
             for i in range(sz // d):
-                random_multinomial(self._brng, ni, &mnix[offset], pix, d, self._binomial)
+                random_multinomial(&self._bitgen, ni, &mnix[offset], pix, d, &self._binomial)
                 offset += d
 
         return multin
@@ -3951,7 +3967,7 @@ cdef class RandomState:
             while i < totsize:
                 acc = 0.0
                 for j in range(k):
-                    val_data[i+j] = legacy_standard_gamma(self._aug_state,
+                    val_data[i+j] = legacy_standard_gamma(&self._aug_state,
                                                           alpha_data[j])
                     acc = acc + val_data[i + j]
                 invacc = 1/acc
@@ -4028,7 +4044,7 @@ cdef class RandomState:
             buf = np.empty_like(x[0, ...])
             with self.lock:
                 for i in reversed(range(1, n)):
-                    j = random_interval(self._brng, i)
+                    j = random_interval(&self._bitgen, i)
                     if i == j:
                         continue  # i == j is not needed and memcpy is undefined.
                     buf[...] = x[j]
@@ -4038,14 +4054,14 @@ cdef class RandomState:
             # Untyped path.
             with self.lock:
                 for i in reversed(range(1, n)):
-                    j = random_interval(self._brng, i)
+                    j = random_interval(&self._bitgen, i)
                     x[i], x[j] = x[j], x[i]
 
     cdef inline _shuffle_raw(self, np.npy_intp n, np.npy_intp itemsize,
                              np.npy_intp stride, char* data, char* buf):
         cdef np.npy_intp i, j
         for i in reversed(range(1, n)):
-            j = random_interval(self._brng, i)
+            j = random_interval(&self._bitgen, i)
             string.memcpy(buf, data + j * stride, itemsize)
             string.memcpy(data + j * stride, data + i * stride, itemsize)
             string.memcpy(data + i * stride, buf, itemsize)
@@ -4224,4 +4240,5 @@ __all__ = [
     'zipf',
     'RandomState',
 ]
+
 
