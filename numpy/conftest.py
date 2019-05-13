@@ -13,6 +13,13 @@ _old_fpu_mode = None
 _collect_results = {}
 
 
+def pytest_configure(config):
+    config.addinivalue_line("markers",
+        "valgrind_error: Tests that are known to error under valgrind.")
+    config.addinivalue_line("markers",
+        "slow: Tests that are very slow.")
+
+
 #FIXME when yield tests are gone.
 @pytest.hookimpl()
 def pytest_itemcollected(item):
