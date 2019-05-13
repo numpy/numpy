@@ -1662,7 +1662,7 @@ def indices(dimensions, dtype=int, sparse=False):
     array([[0, 1, 2],
            [0, 1, 2]])
 
-    The indices can be used as an index into an array, if sparse is False.
+    The indices can be used as an index into an array.
 
     >>> x = np.arange(20).reshape(5, 4)
     >>> row, col = np.indices((2, 3))
