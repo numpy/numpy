@@ -13,7 +13,7 @@ import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_allclose, assert_no_warnings, suppress_warnings,
+    assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data
     )
 
@@ -677,6 +677,31 @@ class TestSpecialFloats(object):
         with np.errstate(invalid='raise'):
             assert_raises(FloatingPointError, np.log, np.float32(-np.inf))
             assert_raises(FloatingPointError, np.log, np.float32(-1.0))
+
+class TestExpLogFloat32(object):
+    def test_exp_float32(self):
+        np.random.seed(42)
+        x_f32 = np.float32(np.random.uniform(low=0.0,high=88.1,size=1000000))
+        x_f64 = np.float64(x_f32)
+        assert_array_max_ulp(np.exp(x_f32), np.float32(np.exp(x_f64)), maxulp=2.6)
+
+    def test_log_float32(self):
+        np.random.seed(42)
+        x_f32 = np.float32(np.random.uniform(low=0.0,high=1000,size=1000000))
+        x_f64 = np.float64(x_f32)
+        assert_array_max_ulp(np.log(x_f32), np.float32(np.log(x_f64)), maxulp=3.9)
+
+    def test_strided_exp_log_float32(self):
+        np.random.seed(42)
+        strides = np.random.randint(low=-100, high=100, size=100)
+        sizes = np.random.randint(low=1, high=2000, size=100)
+        for ii in sizes:
+            x_f32 = np.float32(np.random.uniform(low=0.01,high=88.1,size=ii))
+            exp_true = np.exp(x_f32)
+            log_true = np.log(x_f32)
+            for jj in strides:
+                assert_equal(np.exp(x_f32[::jj]), exp_true[::jj])
+                assert_equal(np.log(x_f32[::jj]), log_true[::jj])
 
 class TestLogAddExp(_FilterInvalids):
     def test_logaddexp_values(self):
