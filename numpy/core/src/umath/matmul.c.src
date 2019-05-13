@@ -281,44 +281,45 @@ OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
     npy_intp ib2_p = is2_p * dp;
     npy_intp ob_p  = os_p * dp;
 
-    PyObject *tmp1, *tmp2, *tmp = NULL;
-    PyObject **tmp3;
+    PyObject *product, *sum_of_products = NULL;
 
     for (npy_intp m = 0; m < dm; m++) {
         for (npy_intp p = 0; p < dp; p++) {
-            if ( 0 == dn ) return;
+            if ( 0 == dn ) {
+                sum_of_products = PyLong_FromLong(0);
+            }
+
             for (npy_intp n = 0; n < dn; n++) {
-                if ((*((PyObject **)ip1) == NULL) || (*((PyObject **)ip2) == NULL)) {
-                    tmp1 = Py_False;
-                    Py_INCREF(Py_False);
+                PyObject *obj1 = *(PyObject**)ip1, *obj2 = *(PyObject**)ip2;
+                if (obj1 == NULL) {
+                    ip1 = Py_None;
                 }
-                else {
-                    tmp1 = PyNumber_Multiply(*((PyObject **)ip1), *((PyObject **)ip2));
-                    if (!tmp1) {
-                        Py_XDECREF(tmp);
-                        return;
-                    }
+                if (obj2 == NULL) {
+                    ip2 = Py_None;
                 }
+
+                product = PyNumber_Multiply(obj1, obj2);
+                if (product == NULL) {
+                    Py_XDECREF(sum_of_products);
+                    return;
+                }
+
                 if (n == 0) {
-                    tmp = tmp1;
+                    sum_of_products = product;
                 }
                 else {
-                    tmp2 = PyNumber_Add(tmp, tmp1);
-                    Py_XDECREF(tmp);
-                    Py_XDECREF(tmp1);
-                    if (!tmp2) {
+                    Py_SETREF(sum_of_products, PyNumber_Add(sum_of_products, product));
+                    Py_DECREF(product);
+                    if (sum_of_products == NULL) {
                         return;
                     }
-                    tmp = tmp2;
                 }
 
                 ip2 += is2_n;
                 ip1 += is1_n;
             }
-            tmp3 = (PyObject**) op;
-            tmp2 = *tmp3;
-            *((PyObject **)op) = tmp;
-            Py_XDECREF(tmp2);
+
+            *((PyObject **)op) = sum_of_products;
             ip1 -= ib1_n;
             ip2 -= ib2_n;
             op  +=  os_p;
