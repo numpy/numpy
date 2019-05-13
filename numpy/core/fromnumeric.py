@@ -1761,6 +1761,8 @@ def nonzero(a):
     """
     Return the indices of the elements that are non-zero.
 
+    NOTE - In place of using x[y.nonzero()], it is recommended to use x[y.astype(bool)].
+
     Returns a tuple of arrays, one for each dimension of `a`,
     containing the indices of the non-zero elements in that
     dimension. The values in `a` are always tested and returned in
