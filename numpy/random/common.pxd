@@ -5,7 +5,7 @@ from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           uintptr_t)
 from libc.math cimport sqrt
 
-from .distributions cimport brng_t 
+from .distributions cimport bitgen_t 
 import numpy as np
 cimport numpy as np
 
@@ -26,10 +26,10 @@ cdef enum ConstraintType:
 
 ctypedef ConstraintType constraint_type
 
-cdef object benchmark(brng_t *brng, object lock, Py_ssize_t cnt, object method)
-cdef object random_raw(brng_t *brng, object lock, object size, object output)
-cdef object prepare_cffi(brng_t *brng)
-cdef object prepare_ctypes(brng_t *brng)
+cdef object benchmark(bitgen_t *bitgen, object lock, Py_ssize_t cnt, object method)
+cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output)
+cdef object prepare_cffi(bitgen_t *bitgen)
+cdef object prepare_ctypes(bitgen_t *bitgen)
 cdef int check_constraint(double val, object name, constraint_type cons) except -1
 cdef int check_array_constraint(np.ndarray val, object name, constraint_type cons) except -1
 
@@ -39,14 +39,14 @@ cdef extern from "src/aligned_malloc/aligned_malloc.h":
     cdef void *PyArray_calloc_aligned(size_t n, size_t s)
     cdef void PyArray_free_aligned(void *p)
 
-ctypedef double (*random_double_fill)(brng_t *state, np.npy_intp count, double* out) nogil
+ctypedef double (*random_double_fill)(bitgen_t *state, np.npy_intp count, double* out) nogil
 ctypedef double (*random_double_0)(void *state) nogil
 ctypedef double (*random_double_1)(void *state, double a) nogil
 ctypedef double (*random_double_2)(void *state, double a, double b) nogil
 ctypedef double (*random_double_3)(void *state, double a, double b, double c) nogil
 
-ctypedef float (*random_float_0)(brng_t *state) nogil
-ctypedef float (*random_float_1)(brng_t *state, float a) nogil
+ctypedef float (*random_float_0)(bitgen_t *state) nogil
+ctypedef float (*random_float_1)(bitgen_t *state, float a) nogil
 
 ctypedef int64_t (*random_uint_0)(void *state) nogil
 ctypedef int64_t (*random_uint_d)(void *state, double a) nogil
@@ -55,22 +55,22 @@ ctypedef int64_t (*random_uint_di)(void *state, double a, uint64_t b) nogil
 ctypedef int64_t (*random_uint_i)(void *state, int64_t a) nogil
 ctypedef int64_t (*random_uint_iii)(void *state, int64_t a, int64_t b, int64_t c) nogil
 
-ctypedef uint32_t (*random_uint_0_32)(brng_t *state) nogil
-ctypedef uint32_t (*random_uint_1_i_32)(brng_t *state, uint32_t a) nogil
+ctypedef uint32_t (*random_uint_0_32)(bitgen_t *state) nogil
+ctypedef uint32_t (*random_uint_1_i_32)(bitgen_t *state, uint32_t a) nogil
 
-ctypedef int32_t (*random_int_2_i_32)(brng_t *state, int32_t a, int32_t b) nogil
-ctypedef int64_t (*random_int_2_i)(brng_t *state, int64_t a, int64_t b) nogil
+ctypedef int32_t (*random_int_2_i_32)(bitgen_t *state, int32_t a, int32_t b) nogil
+ctypedef int64_t (*random_int_2_i)(bitgen_t *state, int64_t a, int64_t b) nogil
 
 cdef double kahan_sum(double *darr, np.npy_intp n)
 
 cdef inline double uint64_to_double(uint64_t rnd) nogil:
     return (rnd >> 11) * (1.0 / 9007199254740992.0)
 
-cdef object double_fill(void *func, brng_t *state, object size, object lock, object out)
+cdef object double_fill(void *func, bitgen_t *state, object size, object lock, object out)
 
-cdef object float_fill(void *func, brng_t *state, object size, object lock, object out)
+cdef object float_fill(void *func, bitgen_t *state, object size, object lock, object out)
 
-cdef object float_fill_from_double(void *func, brng_t *state, object size, object lock, object out)
+cdef object float_fill_from_double(void *func, bitgen_t *state, object size, object lock, object out)
 
 cdef np.ndarray int_to_array(object value, object name, object bits, object uint_size)
 
@@ -86,7 +86,7 @@ cdef object disc(void *func, void *state, object size, object lock,
                  object b, object b_name, constraint_type b_constraint,
                  object c, object c_name, constraint_type c_constraint)
 
-cdef object cont_f(void *func, brng_t *state, object size, object lock,
+cdef object cont_f(void *func, bitgen_t *state, object size, object lock,
                    object a, object a_name, constraint_type a_constraint,
                    object out)
 

@@ -349,9 +349,9 @@ class TestRandomDist(object):
                           np.random.random_integers,
                           np.iinfo('l').max, np.iinfo('l').max)
 
-    def test_random_sample(self):
+    def test_random(self):
         np.random.seed(self.seed)
-        actual = np.random.random_sample((3, 2))
+        actual = np.random.random((3, 2))
         desired = np.array([[0.61879477158567997, 0.59162362775974664],
                             [0.88868358904449662, 0.89165480011560816],
                             [0.4575674820298663, 0.7781880808593471]])

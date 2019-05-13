@@ -4,16 +4,15 @@ from timeit import repeat
 import numpy as np
 import pandas as pd
 
-from randomgen import MT19937, DSFMT, ThreeFry, PCG64, Xoroshiro128, \
-    Xorshift1024, Philox, Xoshiro256StarStar, Xoshiro512StarStar
+from numpy.random import MT19937, DSFMT, ThreeFry, Xoroshiro128, \
+    Xorshift1024, Philox, Xoshiro256, Xoshiro512
 
-PRNGS = [DSFMT, MT19937, Philox, PCG64, ThreeFry, Xoroshiro128, Xorshift1024,
-         Xoshiro256StarStar, Xoshiro512StarStar]
+PRNGS = [DSFMT, MT19937, Philox, ThreeFry, Xoroshiro128, Xorshift1024,
+         Xoshiro256, Xoshiro512]
 
-funcs = {'32-bit Unsigned Ints': 'random_uintegers(size=1000000,bits=32)',
-         '64-bit Unsigned Ints': 'random_uintegers(size=1000000,bits=32)',
-         'Uniforms': 'random_sample(size=1000000)',
-         'Complex Normals': 'complex_normal(size=1000000)',
+funcs = {'32-bit Unsigned Ints': 'integers(0, 2**32,size=1000000, dtype="uint32")',
+         '64-bit Unsigned Ints': 'integers(0, 2**64,size=1000000, dtype="uint64")',
+         'Uniforms': 'random(size=1000000)',
          'Normals': 'standard_normal(size=1000000)',
          'Exponentials': 'standard_exponential(size=1000000)',
          'Gammas': 'standard_gamma(3.0,size=1000000)',
@@ -22,8 +21,8 @@ funcs = {'32-bit Unsigned Ints': 'random_uintegers(size=1000000,bits=32)',
          'Poissons': 'poisson(3.0, size=1000000)', }
 
 setup = """
-from randomgen import {prng}
-rg = {prng}().generator
+from numpy.random import {prng}, Generator
+rg = Generator({prng}())
 """
 
 test = "rg.{func}"
@@ -43,7 +42,6 @@ npfuncs = OrderedDict()
 npfuncs.update(funcs)
 npfuncs['32-bit Unsigned Ints'] = 'randint(2**32,dtype="uint32",size=1000000)'
 npfuncs['64-bit Unsigned Ints'] = 'tomaxint(size=1000000)'
-del npfuncs['Complex Normals']
 setup = """
 from numpy.random import RandomState
 rg = RandomState()

@@ -4,7 +4,7 @@ from .common import Benchmark
 
 import numpy as np
 
-from numpy.random import RandomState, RandomGenerator
+from numpy.random import RandomState, Generator
 
 class Random(Benchmark):
     params = ['normal', 'uniform', 'weibull 1', 'binomial 10 0.5',
@@ -70,14 +70,14 @@ class Randint_dtype(Benchmark):
 class Permutation(Benchmark):
     def setup(self):
         self.n = 10000
-        self.a_1d = np.random.random_sample(self.n)
-        self.a_2d = np.random.random_sample((self.n, 2))
-    
+        self.a_1d = np.random.random(self.n)
+        self.a_2d = np.random.random((self.n, 2))
+
     def time_permutation_1d(self):
         np.random.permutation(self.a_1d)
 
     def time_permutation_2d(self):
-        np.random.permutation(self.a_2d)        
+        np.random.permutation(self.a_2d)
 
     def time_permutation_int(self):
         np.random.permutation(self.n)
@@ -86,33 +86,39 @@ nom_size = 100000
 
 class RNG(Benchmark):
     param_names = ['rng']
-    params = ['DSFMT', 'PCG64', 'PCG32', 'MT19937', 'Xoroshiro128',
-              'Xorshift1024', 'Xoshiro256StarStar', 'Xoshiro512StarStar',
+    params = ['DSFMT', 'MT19937', 'Xoroshiro128',
+              'Xorshift1024', 'Xoshiro256', 'Xoshiro512',
               'Philox', 'ThreeFry', 'ThreeFry32', 'numpy']
 
     def setup(self, brng):
         if brng == 'numpy':
             self.rg = np.random.RandomState()
         else:
-            self.rg = RandomGenerator(getattr(np.random, brng)())
-        self.rg.random_sample()
+            self.rg = Generator(getattr(np.random, brng)())
+        self.rg.random()
         self.int32info = np.iinfo(np.int32)
         self.uint32info = np.iinfo(np.uint32)
         self.uint64info = np.iinfo(np.uint64)
-    
+
     def time_raw(self, brng):
         if brng == 'numpy':
             self.rg.random_integers(self.int32info.max, size=nom_size)
         else:
-            self.rg.random_integers(self.int32info.max, size=nom_size)
+            self.rg.integers(self.int32info.max, size=nom_size, endpoint=True)
 
     def time_32bit(self, brng):
         min, max = self.uint32info.min, self.uint32info.max
-        self.rg.randint(min, max + 1, nom_size, dtype=np.uint32)
+        if brng == 'numpy':
+            self.rg.randint(min, max + 1, nom_size, dtype=np.uint32)
+        else:
+            self.rg.integers(min, max + 1, nom_size, dtype=np.uint32)
 
     def time_64bit(self, brng):
         min, max = self.uint64info.min, self.uint64info.max
-        self.rg.randint(min, max + 1, nom_size, dtype=np.uint64)
+        if brng == 'numpy':
+            self.rg.randint(min, max + 1, nom_size, dtype=np.uint64)
+        else:
+            self.rg.integers(min, max + 1, nom_size, dtype=np.uint64)
 
     def time_normal_zig(self, brng):
         self.rg.standard_normal(nom_size)
@@ -122,34 +128,32 @@ class Bounded(Benchmark):
     u16 = np.uint16
     u32 = np.uint32
     u64 = np.uint64
-    param_names = ['rng', 'dt_max_masked']
-    params = [['DSFMT', 'PCG64', 'PCG32', 'MT19937', 'Xoroshiro128',
-               'Xorshift1024', 'Xoshiro256StarStar', 'Xoshiro512StarStar',
+    param_names = ['rng', 'dt_max']
+    params = [['DSFMT', 'MT19937', 'Xoroshiro128',
+               'Xorshift1024', 'Xoshiro256', 'Xoshiro512',
                'Philox', 'ThreeFry', 'ThreeFry32', 'numpy'],
-              [[u8,  95, True],
-               [u8,  64, False],  # Worst case for legacy
-               [u8,  95, False],   # Typ. avg. case for legacy
-               [u8, 127, False],  # Best case for legacy
-               [u16,   95, True],
-               [u16, 1024, False],  # Worst case for legacy
-               [u16, 1535, False],   # Typ. avg. case for legacy
-               [u16, 2047, False],  # Best case for legacy
-               [u32,   95, True],
-               [u32, 1024, False],  # Worst case for legacy
-               [u32, 1535, False],   # Typ. avg. case for legacy
-               [u32, 2047, False],  # Best case for legacy
-               [u64,   95, True],
-               [u64, 1024, False],  # Worst case for legacy
-               [u64, 1535, False],   # Typ. avg. case for legacy
-               [u64, 2047, False],  # Best case for legacy
+              [[u8,    95],
+               [u8,    64],  # Worst case for legacy
+               [u8,   127],  # Best case for legacy
+               [u16,   95],
+               [u16, 1024],  # Worst case for legacy
+               [u16, 1535],   # Typ. avg. case for legacy
+               [u16, 2047],  # Best case for legacy
+               [u32, 1024],  # Worst case for legacy
+               [u32, 1535],   # Typ. avg. case for legacy
+               [u32, 2047],  # Best case for legacy
+               [u64,   95],
+               [u64, 1024],  # Worst case for legacy
+               [u64, 1535],   # Typ. avg. case for legacy
+               [u64, 2047],  # Best case for legacy
              ]]
 
     def setup(self, brng, args):
         if brng == 'numpy':
             self.rg = np.random.RandomState()
         else:
-            self.rg = RandomGenerator(getattr(np.random, brng)())
-        self.rg.random_sample()
+            self.rg = Generator(getattr(np.random, brng)())
+        self.rg.random()
 
     def time_bounded(self, brng, args):
             """
@@ -161,20 +165,9 @@ class Bounded(Benchmark):
                 output dtype
             max : int
                 Upper bound for range. Lower is always 0.  Must be <= 2**bits.
-            use_masked: bool
-                If True, masking and rejection sampling is used to generate a random
-                number in an interval. If False, Lemire's algorithm is used if
-                available to generate a random number in an interval.
-
-            Notes
-            -----
-            Lemire's algorithm has improved performance when max+1 is not a
-            power of two.
             """
-            dt, max, use_masked = args
+            dt, max = args
             if brng == 'numpy':
                 self.rg.randint(0, max + 1, nom_size, dtype=dt)
             else:
-                self.rg.randint(0, max + 1, nom_size, dtype=dt,
-                                use_masked=use_masked)
-        
+                self.rg.integers(0, max + 1, nom_size, dtype=dt)

@@ -3,16 +3,18 @@
 Legacy Random Generation
 ------------------------
 The `~mtrand.RandomState` provides access to
-legacy generators.  These all depend on Box-Muller normals or
-inverse CDF exponentials or gammas. This class should only be used
+legacy generators. This generator is considered frozen and will have
+no further improvements.  It is guaranteed to produce the same values
+as the final point release of NumPy v1.16. These all depend on Box-Muller
+normals or inverse CDF exponentials or gammas. This class should only be used
 if it is essential to have randoms that are identical to what
 would have been produced by NumPy.
 
 `~mtrand.RandomState` adds additional information
 to the state which is required when using Box-Muller normals since these
 are produced in pairs. It is important to use
-`~mtrand.RandomState.get_state`
-when accessing the state so that these extra values are saved.
+`~mtrand.RandomState.get_state`, and not the underlying bit generators
+`state`, when accessing the state so that these extra values are saved.
 
 .. warning::
 
@@ -30,20 +32,19 @@ when accessing the state so that these extra values are saved.
 .. code-block:: python
 
    from numpy.random import MT19937
-   from numpy.random._mtrand import RandomState as LegacyGenerator
    from numpy.random import RandomState
-      # Use same seed
+
+   # Use same seed
    rs = RandomState(12345)
    mt19937 = MT19937(12345)
-   rg = RandomGenerator(mt19937)
-   lg = LegacyGenerator(mt19937)
+   lg = RandomState(mt19937)
 
    # Identical output
    rs.standard_normal()
    lg.standard_normal()
 
-   rs.random_sample()
-   rg.random_sample()
+   rs.random()
+   lg.random()
 
    rs.standard_exponential()
    lg.standard_exponential()

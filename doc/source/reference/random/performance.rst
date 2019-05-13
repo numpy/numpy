@@ -10,21 +10,19 @@ Recommendation
 The recommended generator for single use is
 :class:`~xoroshiro128.Xoroshiro128`.  The recommended generator
 for use in large-scale parallel applications is
-:class:`~xorshift1024.Xorshift1024`
-where the `jump` method is used to advance the state. For very large scale
+:class:`~.xoshiro256.Xoshiro256`
+where the `jumped` method is used to advance the state. For very large scale
 applications -- requiring 1,000+ independent streams,
-:class:`~pcg64.PCG64` or :class:`~threefry.ThreeFry` are
-the best choices.
+:class:`~.philox.Philox` is the best choice.
 
 Timings
 *******
 
-The timings below are the time in ms to produce 1,000,000 random values from a
+The timings below are the time in ns to produce 1 random value from a
 specific distribution.  :class:`~xoroshiro128.Xoroshiro128` is the
-fastest, followed by :class:`~xorshift1024.Xorshift1024` and
-:class:`~pcg64.PCG64`.  The original :class:`~mt19937.MT19937`
-generator is much slower since it requires 2 32-bit values to equal the output
-of the faster generators.
+fastest, followed by :class:`~xorshift1024.Xorshift1024`.  The original
+:class:`~mt19937.MT19937` generator is much slower since it requires 2 32-bit
+values to equal the output of the faster generators.
 
 Integer performance has a similar ordering although `dSFMT` is slower since
 it generates 53-bit floating point values rather than integer values. On the
@@ -37,40 +35,38 @@ performance gap for Exponentials is also large due to the cost of computing
 the log function to invert the CDF.
 
 .. csv-table::
-    :header: ,Xoroshiro128,Xorshift1024,PCG64,DSFMT,MT19937,Philox,ThreeFry,NumPy
-    :widths: 14,14,14,14,14,14,14,14,14
+    :header: ,Xoroshiro128,Xoshiro256**,Xorshift1024,MT19937,Philox,ThreeFry,NumPy
+    :widths: 14,14,14,14,14,14,14,14
 
-    32-bit Unsigned Ints,3.0,3.0,3.0,3.5,3.7,6.8,6.6,3.3
-    64-bit Unsigned Ints,2.6,3.0,3.1,3.4,3.8,6.9,6.6,8.8
-    Uniforms,3.2,3.8,4.4,5.0,7.4,8.9,9.9,8.8
-    Normals,11.0,13.9,13.7,15.8,16.9,17.8,18.8,63.0
-    Exponentials,7.0,8.4,9.0,11.2,12.5,14.1,15.0,102.2
-    Binomials,20.9,22.6,22.0,21.2,26.7,27.7,29.2,26.5
-    Complex Normals,23.2,28.7,29.1,33.2,35.4,37.6,38.6,
-    Gammas,35.3,38.6,39.2,41.3,46.7,49.4,51.2,98.8
-    Laplaces,97.8,99.9,99.8,96.2,104.1,104.6,104.8,104.1
-    Poissons,104.8,113.2,113.3,107.6,129.7,135.6,138.1,131.9
+    64-bit Unsigned Ints,11.9,13.6,14.9,18.0,22.0,25.9,42.0
+    Uniforms,16.3,15.6,16.0,19.1,23.5,25.5,44.1
+    32-bit Unsigned Ints,21.6,23.7,23.1,23.6,27.9,32.3,17.9
+    Exponentials,21.2,22.4,23.8,26.7,30.8,33.0,115.3
+    Normals,25.1,26.9,26.2,31.7,32.6,37.8,106.8
+    Binomials,72.4,73.0,71.9,77.4,80.0,83.1,101.9
+    Complex Normals,80.4,86.4,81.1,93.4,96.3,105.5,
+    Laplaces,97.0,97.4,99.6,109.8,102.3,105.1,125.3
+    Gammas,91.3,91.2,94.8,101.7,108.7,113.8,187.9
+    Poissons,136.7,137.6,139.7,161.9,171.0,181.0,265.1
 
 
 The next table presents the performance relative to `xoroshiro128+` in
 percentage. The overall performance was computed using a geometric mean.
 
 .. csv-table::
-    :header: ,Xorshift1024,PCG64,DSFMT,MT19937,Philox,ThreeFry,NumPy
-    :widths: 14,14,14,14,14,14,14,14
+    :header: ,Xoroshiro128,Xoshiro256**,Xorshift1024,MT19937,Philox,ThreeFry
+    :widths: 14,14,14,14,14,14,14
     
-    32-bit Unsigned Ints,102,99,118,125,229,221,111
-    64-bit Unsigned Ints,114,116,129,143,262,248,331
-    Uniforms,116,137,156,231,275,306,274
-    Normals,126,124,143,153,161,170,572
-    Exponentials,121,130,161,179,203,215,1467
-    Binomials,108,105,101,128,133,140,127
-    Complex Normals,124,125,143,153,162,166,
-    Gammas,109,111,117,132,140,145,280
-    Laplaces,102,102,98,106,107,107,106
-    Poissons,108,108,103,124,129,132,126
-    Overall,113,115,125,144,172,177,251
-
+    64-bit Unsigned Ints,353,309,283,233,191,162
+    Uniforms,271,283,276,232,188,173
+    32-bit Unsigned Ints,83,76,78,76,64,56
+    Exponentials,544,514,485,432,375,350
+    Normals,425,397,407,337,328,283
+    Binomials,141,140,142,132,127,123
+    Laplaces,129,129,126,114,123,119
+    Gammas,206,206,198,185,173,165
+    Poissons,194,193,190,164,155,146
+    Overall,223,215,210,186,170,156
 
 .. note::
 

@@ -4,23 +4,13 @@ Adapted from random123's threefry.h
 #ifndef _RANDOMDGEN__THREEFRY32_H_
 #define _RANDOMDGEN__THREEFRY32_H_
 
-#ifdef _WIN32
-#if _MSC_VER == 1500
-#include "../common/inttypes.h"
-#define INLINE __forceinline
-#else
 #include <inttypes.h>
-#define INLINE __inline __forceinline
-#endif
-#else
-#include <inttypes.h>
-#define INLINE inline
-#endif
+#include "numpy/npy_common.h"
 
 #define THREEFRY_BUFFER_SIZE 4L
 
-static INLINE uint32_t RotL_32(uint32_t x, unsigned int N);
-static INLINE uint32_t RotL_32(uint32_t x, unsigned int N) {
+static NPY_INLINE uint32_t RotL_32(uint32_t x, unsigned int N);
+static NPY_INLINE uint32_t RotL_32(uint32_t x, unsigned int N) {
   return (x << (N & 31)) | (x >> ((32 - N) & 31));
 }
 
@@ -52,13 +42,13 @@ enum r123_enum_threefry32x4 {
 typedef struct r123array4x32 threefry4x32_ctr_t;
 typedef struct r123array4x32 threefry4x32_key_t;
 typedef struct r123array4x32 threefry4x32_ukey_t;
-static INLINE threefry4x32_key_t threefry4x32keyinit(threefry4x32_ukey_t uk) {
+static NPY_INLINE threefry4x32_key_t threefry4x32keyinit(threefry4x32_ukey_t uk) {
   return uk;
 };
-static INLINE threefry4x32_ctr_t threefry4x32_R(unsigned int Nrounds,
+static NPY_INLINE threefry4x32_ctr_t threefry4x32_R(unsigned int Nrounds,
                                                 threefry4x32_ctr_t in,
                                                 threefry4x32_key_t k);
-static INLINE threefry4x32_ctr_t threefry4x32_R(unsigned int Nrounds,
+static NPY_INLINE threefry4x32_ctr_t threefry4x32_R(unsigned int Nrounds,
                                                 threefry4x32_ctr_t in,
                                                 threefry4x32_key_t k) {
   threefry4x32_ctr_t X;
@@ -779,9 +769,9 @@ static INLINE threefry4x32_ctr_t threefry4x32_R(unsigned int Nrounds,
   return X;
 }
 enum r123_enum_threefry4x32 { threefry4x32_rounds = 20 };
-static INLINE threefry4x32_ctr_t threefry4x32(threefry4x32_ctr_t in,
+static NPY_INLINE threefry4x32_ctr_t threefry4x32(threefry4x32_ctr_t in,
                                               threefry4x32_key_t k);
-static INLINE threefry4x32_ctr_t threefry4x32(threefry4x32_ctr_t in,
+static NPY_INLINE threefry4x32_ctr_t threefry4x32(threefry4x32_ctr_t in,
                                               threefry4x32_key_t k) {
   return threefry4x32_R(threefry4x32_rounds, in, k);
 }
@@ -793,7 +783,7 @@ typedef struct s_threefry32_state {
   uint32_t buffer[THREEFRY_BUFFER_SIZE];
 } threefry32_state;
 
-static INLINE uint32_t threefry32_next(threefry32_state *state) {
+static NPY_INLINE uint32_t threefry32_next(threefry32_state *state) {
   int i;
   threefry4x32_ctr_t ct;
   uint32_t out;
@@ -822,15 +812,15 @@ static INLINE uint32_t threefry32_next(threefry32_state *state) {
   return state->buffer[0];
 }
 
-static INLINE uint64_t threefry32_next64(threefry32_state *state) {
+static NPY_INLINE uint64_t threefry32_next64(threefry32_state *state) {
   return ((uint64_t)threefry32_next(state) << 32) | threefry32_next(state);
 }
 
-static INLINE uint32_t threefry32_next32(threefry32_state *state) {
+static NPY_INLINE uint32_t threefry32_next32(threefry32_state *state) {
   return threefry32_next(state);
 }
 
-static INLINE double threefry32_next_double(threefry32_state *state) {
+static NPY_INLINE double threefry32_next_double(threefry32_state *state) {
   int32_t a = threefry32_next(state) >> 5, b = threefry32_next(state) >> 6;
   return (a * 67108864.0 + b) / 9007199254740992.0;
 }
