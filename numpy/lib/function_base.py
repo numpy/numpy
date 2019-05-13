@@ -1235,6 +1235,8 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
 
     a = asanyarray(a)
     nd = a.ndim
+    if nd == 0:
+        raise ValueError("diff requires input that is at least one dimensional")
     axis = normalize_axis_index(axis, nd)
 
     combined = []
@@ -3706,7 +3708,8 @@ def percentile(a, q, axis=None, out=None,
         plt.show()
 
     """
-    q = np.true_divide(q, 100.0)  # handles the asarray for us too
+    q = np.true_divide(q, 100)
+    q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
     return _quantile_unchecked(
@@ -3924,7 +3927,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             indices_above = concatenate((indices_above, [-1]))
 
         weights_above = indices - indices_below
-        weights_below = 1.0 - weights_above
+        weights_below = 1 - weights_above
 
         weights_shape = [1, ] * ap.ndim
         weights_shape[axis] = len(indices)

@@ -104,8 +104,10 @@ PyArray_typeinforanged(
     return entry;
 }
 
-/* Backport, only needed here */
-#if PY_VERSION_HEX < 0x03040000
+/* Python version only needed for backport to 2.7 */
+#if (PY_VERSION_HEX < 0x03040000) \
+    || (defined(PYPY_VERSION_NUM) && (PYPY_VERSION_NUM < 0x07020000))
+
     static int
     PyStructSequence_InitType2(PyTypeObject *type, PyStructSequence_Desc *desc) {
         PyStructSequence_InitType(type, desc);

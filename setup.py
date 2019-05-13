@@ -73,13 +73,13 @@ def git_version():
         env['LANGUAGE'] = 'C'
         env['LANG'] = 'C'
         env['LC_ALL'] = 'C'
-        out = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env).communicate()[0]
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
         return out
 
     try:
         out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
         GIT_REVISION = out.strip().decode('ascii')
-    except OSError:
+    except (subprocess.SubprocessError, OSError):
         GIT_REVISION = "Unknown"
 
     return GIT_REVISION
@@ -186,12 +186,40 @@ def check_submodules():
             raise ValueError('Submodule not clean: %s' % line)
 
 
+class concat_license_files():
+    """Merge LICENSE.txt and LICENSES_bundled.txt for sdist creation
+
+    Done this way to keep LICENSE.txt in repo as exact BSD 3-clause (see
+    gh-13447).  This makes GitHub state correctly how NumPy is licensed.
+    """
+    def __init__(self):
+        self.f1 = 'LICENSE.txt'
+        self.f2 = 'LICENSES_bundled.txt'
+
+    def __enter__(self):
+        """Concatenate files and remove LICENSES_bundled.txt"""
+        with open(self.f1, 'r') as f1:
+            self.bsd_text = f1.read()
+
+        with open(self.f1, 'a') as f1:
+            with open(self.f2, 'r') as f2:
+                self.bundled_text = f2.read()
+                f1.write('\n\n')
+                f1.write(self.bundled_text)
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        """Restore content of both files"""
+        with open(self.f1, 'w') as f:
+            f.write(self.bsd_text)
+
+
 from distutils.command.sdist import sdist
 class sdist_checked(sdist):
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
         check_submodules()
-        sdist.run(self)
+        with concat_license_files():
+            sdist.run(self)
 
 
 def generate_cython():

@@ -1126,7 +1126,7 @@ fail:
 NPY_NO_EXPORT int
 PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
-    PyArray_SortFunc *sort;
+    PyArray_SortFunc *sort = NULL;
     int n = PyArray_NDIM(op);
 
     if (check_and_adjust_axis(&axis, n) < 0) {
@@ -1143,6 +1143,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
 
     sort = PyArray_DESCR(op)->f->sort[which];
+
     if (sort == NULL) {
         if (PyArray_DESCR(op)->f->compare) {
             switch (which) {
@@ -1284,16 +1285,11 @@ NPY_NO_EXPORT PyObject *
 PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
     PyArrayObject *op2;
-    PyArray_ArgSortFunc *argsort;
+    PyArray_ArgSortFunc *argsort = NULL;
     PyObject *ret;
 
-    if (which < 0 || which >= NPY_NSORTS) {
-        PyErr_SetString(PyExc_ValueError,
-                        "not a valid sort kind");
-        return NULL;
-    }
-
     argsort = PyArray_DESCR(op)->f->argsort[which];
+
     if (argsort == NULL) {
         if (PyArray_DESCR(op)->f->compare) {
             switch (which) {

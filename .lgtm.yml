@@ -16,3 +16,6 @@ extraction:
     index:
       build_command:
         - python3 setup.py build
+
+queries:
+  - include: py/file-not-closed

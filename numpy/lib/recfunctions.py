@@ -976,11 +976,11 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
 
     # next cast to a packed format with all fields converted to new dtype
     packed_fields = np.dtype({'names': names,
-                              'formats': [(out_dtype, c) for c in counts]})
+                              'formats': [(out_dtype, dt.shape) for dt in dts]})
     arr = arr.astype(packed_fields, copy=copy, casting=casting)
 
     # finally is it safe to view the packed fields as the unstructured type
-    return arr.view((out_dtype, sum(counts)))
+    return arr.view((out_dtype, (sum(counts),)))
 
 def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
                                            align=None, copy=None, casting=None):
@@ -1069,7 +1069,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
 
     # first view as a packed structured array of one dtype
     packed_fields = np.dtype({'names': names,
-                              'formats': [(arr.dtype, c) for c in counts]})
+                              'formats': [(arr.dtype, dt.shape) for dt in dts]})
     arr = np.ascontiguousarray(arr).view(packed_fields)
 
     # next cast to an unpacked but flattened format with varied dtypes

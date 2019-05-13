@@ -81,7 +81,7 @@ def get_api_versions(apiversion, codegen_dir):
     return curapi_hash, apis_hash[apiversion]
 
 def check_api_version(apiversion, codegen_dir):
-    """Emits a MismacthCAPIWarning if the C API version needs updating."""
+    """Emits a MismatchCAPIWarning if the C API version needs updating."""
     curapi_hash, api_hash = get_api_versions(apiversion, codegen_dir)
 
     # If different hash, it means that the api .txt files in
