@@ -515,7 +515,7 @@ class TestRandomDist(object):
 
     def test_binomial(self):
         np.random.seed(self.seed)
-        actual = np.random.binomial(100.123, .456, size=(3, 2))
+        actual = np.random.binomial(100, .456, size=(3, 2))
         desired = np.array([[37, 43],
                             [42, 48],
                             [46, 45]])
@@ -612,7 +612,7 @@ class TestRandomDist(object):
 
     def test_hypergeometric(self):
         np.random.seed(self.seed)
-        actual = np.random.hypergeometric(10.1, 5.5, 14, size=(3, 2))
+        actual = np.random.hypergeometric(10, 5, 14, size=(3, 2))
         desired = np.array([[10, 10],
                             [10, 10],
                             [9, 9]])
@@ -922,6 +922,8 @@ class TestRandomDist(object):
         class ThrowingInteger(np.ndarray):
             def __int__(self):
                 raise TypeError
+
+            __index__ = __int__
 
         throwing_int = np.array(1).view(ThrowingInteger)
         assert_raises(TypeError, np.random.hypergeometric, throwing_int, 1, 1)

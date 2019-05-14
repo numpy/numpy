@@ -44,7 +44,7 @@ if sys.version_info >= (3, 4):
             if p.ls[-1] == 'warn' and (
                     len(p.ls) == 1 or p.ls[-2] == 'warnings'):
 
-                if "testing/tests/test_warnings.py" is self.__filename:
+                if "testing/tests/test_warnings.py" == self.__filename:
                     # This file
                     return
 
