@@ -3702,17 +3702,6 @@ class TestSubscripting(object):
 
 
 class TestPickling(object):
-    def test_highest_available_pickle_protocol(self):
-        try:
-            import pickle5
-        except ImportError:
-            pickle5 = None
-
-        if sys.version_info[:2] >= (3, 8) or pickle5 is not None:
-            assert pickle.HIGHEST_PROTOCOL >= 5
-        else:
-            assert pickle.HIGHEST_PROTOCOL < 5
-
     @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL >= 5,
                         reason=('this tests the error messages when trying to'
                                 'protocol 5 although it is not available'))
