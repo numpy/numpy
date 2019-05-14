@@ -2,13 +2,20 @@ from __future__ import division, absolute_import, print_function
 
 import platform
 
+from distutils.spawn import find_executable as find_exe
 from distutils.unixccompiler import UnixCCompiler
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils.ccompiler import simple_version_match
 if platform.system() == 'Windows':
     from numpy.distutils._msvccompiler import MSVCCompiler
-    from distutils._msvccompiler import _find_exe
 
+def _find_exe(exe, paths=None):
+    executable = find_exe(exe, paths)
+    if not executable:
+        """If the executable is not found just return the original
+        program name,'exe'. """
+        executable = exe
+    return executable
 
 class IntelCCompiler(UnixCCompiler):
     """A modified Intel compiler compatible with a GCC-built Python."""
