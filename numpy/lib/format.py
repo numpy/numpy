@@ -262,15 +262,19 @@ def dtype_to_descr(dtype):
 def descr_to_dtype(descr):
     '''
     descr may be stored as dtype.descr, which is a list of
-    (name, format, [shape]) tuples. Offsets are not explicitly saved, rather
-    empty fields with name,format == '', '|Vn' are added as padding.
+    (name, format, [shape]) tuples where format may be a str or a tuple.
+    Offsets are not explicitly saved, rather empty fields with
+    name, format == '', '|Vn' are added as padding.
 
     This function reverses the process, eliminating the empty padding fields.
     '''
-    if isinstance(descr, (str, dict)):
+    if isinstance(descr, str):
         # No padding removal needed
         return numpy.dtype(descr)
-
+    elif isinstance(descr, tuple):
+        # subtype, will always have a shape descr[1]
+        dt = descr_to_dtype(descr[0])
+        return numpy.dtype((dt, descr[1]))
     fields = []
     offset = 0
     for field in descr:
