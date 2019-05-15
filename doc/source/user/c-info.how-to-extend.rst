@@ -504,7 +504,7 @@ writeable). The syntax is
 Creating a brand-new ndarray
 ----------------------------
 
-Quite often new arrays must be created from within extension-module
+Quite often, new arrays must be created from within extension-module
 code. Perhaps an output array is needed and you don't want the caller
 to have to supply it. Perhaps only a temporary array is needed to hold
 an intermediate calculation. Whatever the need there are simple ways
@@ -512,42 +512,9 @@ to get an ndarray object of whatever data-type is needed. The most
 general function for doing this is :c:func:`PyArray_NewFromDescr`. All array
 creation functions go through this heavily re-used code. Because of
 its flexibility, it can be somewhat confusing to use. As a result,
-simpler forms exist that are easier to use.
-
-:c:func:`PyArray_SimpleNew`
-
-    This function allocates new memory and places it in an ndarray
-    with *nd* dimensions whose shape is determined by the array of
-    at least *nd* items pointed to by *dims*. The memory for the
-    array is uninitialized (unless typenum is :c:data:`NPY_OBJECT` in
-    which case each element in the array is set to NULL). The
-    *typenum* argument allows specification of any of the builtin
-    data-types such as :c:data:`NPY_FLOAT` or :c:data:`NPY_LONG`. The
-    memory for the array can be set to zero if desired using
-    :c:func:`PyArray_FILLWBYTE` (return_object, 0).
-
-:c:func:`PyArray_SimpleNewFromData`
-
-    Sometimes, you want to wrap memory allocated elsewhere into an
-    ndarray object for downstream use. This routine makes it
-    straightforward to do that. The first three arguments are the same
-    as in :c:func:`PyArray_SimpleNew`, the final argument is a pointer to a
-    block of contiguous memory that the ndarray should use as it's
-    data-buffer which will be interpreted in C-style contiguous
-    fashion. A new reference to an ndarray is returned, but the
-    ndarray will not own its data. When this ndarray is deallocated,
-    the pointer will not be freed.
-
-    You should ensure that the provided memory is not freed while the
-    returned array is in existence. The easiest way to handle this is
-    if data comes from another reference-counted Python object. The
-    reference count on this object should be increased after the
-    pointer is passed in, and the base member of the returned ndarray
-    should point to the Python object that owns the data. Then, when
-    the ndarray is deallocated, the base-member will be DECREF'd
-    appropriately. If you want the memory to be freed as soon as the
-    ndarray is deallocated then simply set the OWNDATA flag on the
-    returned ndarray.
+simpler forms exist that are easier to use. These forms are part of the
+:c:func:`PyArray_SimpleNew` family of functions, which simplify the interface
+by providing default values for common use cases.
 
 
 Getting at ndarray memory and accessing elements of the ndarray
