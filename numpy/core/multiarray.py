@@ -315,7 +315,7 @@ def where(condition, x=None, y=None):
 
     .. note::
         When only `condition` is provided, this function is a shorthand for
-        ``np.asarray(condition).nonzero()``. Using `nonzero` directly should be
+        ``np.asarray((condition).nonzero())``. Using `nonzero` directly should be
         preferred, as it behaves correctly for subclasses. The rest of this
         documentation covers only the case where all three arguments are
         provided.
