@@ -5,6 +5,12 @@ trigger:
     include:
       - master
       - maintenance/*
+variables:
+  # OpenBLAS_version should be updated
+  # to match numpy-wheels repo
+  OpenBLAS_version: 0.3.7.dev
+  TEST_GET_CONFIG: import numpy, ctypes; dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__); get_config = dll.openblas_get_config; get_config.restype=ctypes.c_char_p; res = get_config(); print('OpenBLAS get_config returned', str(res)); assert b'OpenBLAS $(OpenBLAS_version)' in res
+
 jobs:
 - job: Linux_Python_36_32bit_full_with_asserts
   pool:
@@ -20,13 +26,15 @@ jobs:
            apt-get -y install gfortran-5 wget && \
            cd .. && \
            mkdir openblas && cd openblas && \
-           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-manylinux1_i686.tar.gz && \
-           tar zxvf openblas-v0.3.3-186-g701ea883-manylinux1_i686.tar.gz && \
+           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-274-g6a8b4269-manylinux1_i686.tar.gz && \
+           tar zxvf openblas-v0.3.5-274-g6a8b4269-manylinux1_i686.tar.gz && \
            cp -r ./usr/local/lib/* /usr/lib && \
            cp ./usr/local/include/* /usr/include && \
            cd ../numpy && \
+           python3 -m pip install . && \
            F77=gfortran-5 F90=gfortran-5 \
-           CFLAGS='-UNDEBUG -std=c99' python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
+           CFLAGS='-UNDEBUG -std=c99' python3 runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+           cd ../openblas && python3 -c \"$(TEST_GET_CONFIG)\""
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
@@ -75,15 +83,15 @@ jobs:
   # matches our MacOS wheel builds -- currently based
   # primarily on file size / name details
   - script: |
-      wget "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz"
-      tar -zxvf openblas-v0.3.3-186-g701ea883-macosx_10_9_intel-gf_1becaaa.tar.gz
+      wget "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-274-g6a8b4269-macosx_10_9_x86_64-gf_1becaaa.tar.gz"
+      tar -zxvf openblas-v0.3.5-274-g6a8b4269-macosx_10_9_x86_64-gf_1becaaa.tar.gz
       # manually link to appropriate system paths
       cp ./usr/local/lib/* /usr/local/lib/
       cp ./usr/local/include/* /usr/local/include/
     displayName: 'install pre-built openblas'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
-  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx==1.8.5 numpydoc matplotlib
+  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx==1.8.5 numpydoc
     displayName: 'Install dependencies; some are optional to avoid test skips'
   - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
     displayName: 'Check for unreachable code paths in Python modules'
@@ -97,10 +105,16 @@ jobs:
       ATLAS: None
       ACCELERATE: None
       CC: /usr/bin/clang
+  # wait until after dev build of NumPy to pip
+  # install matplotlib to avoid pip install of older numpy
+  - script: python -m pip install matplotlib
+    displayName: 'Install matplotlib before refguide run'
   - script: python runtests.py -g --refguide-check
     displayName: 'Run Refuide Check'
-  - script: python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
+  - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
+  - bash: pushd . && cd .. && python -c "$(TEST_GET_CONFIG)" && popd
+    displayName: 'Verify OpenBLAS version'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
     inputs:
@@ -113,8 +127,8 @@ jobs:
   variables:
       # openblas URLs from numpy-wheels
       # appveyor / Windows config
-      OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win32-gcc_7_1_0.zip"
-      OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win_amd64-gcc_7_1_0.zip"
+      OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-274-g6a8b4269-win32-gcc_7_1_0.zip"
+      OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-274-g6a8b4269-win_amd64-gcc_7_1_0.zip"
   strategy:
     maxParallel: 6
     matrix:
@@ -167,7 +181,7 @@ jobs:
       Write-Host "Python Version: $pyversion"
       $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
       Write-Host "target path: $target"
-      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target
+      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.5-274-g6a8b4269-gcc_7_1_0.a $target
     displayName: 'Download / Install OpenBLAS'
   - powershell: |
       choco install -y mingw --forcex86 --force --version=5.3.0
