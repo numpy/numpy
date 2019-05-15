@@ -131,7 +131,7 @@ abs_ptrdiff(char *a, char *b)
  * #func = exp, log#
  */
 
-static void
+static NPY_INLINE void
 @ISA@_@func@_FLOAT(npy_float *, npy_float *, const npy_intp n);
 
 /**end repeat1**/

@@ -42,14 +42,20 @@ subst = {
 def add_newdoc(place, name, doc):
     doc = textwrap.dedent(doc).strip()
 
-    if name[0] != '_' and name != 'matmul':
-        # matmul is special, it does not use the OUT_SCALAR replacement strings
+    skip = (
+        # gufuncs do not use the OUT_SCALAR replacement strings
+        'matmul',
+        # clip has 3 inputs, which is not handled by this
+        'clip',
+    )
+    if name[0] != '_' and name not in skip:
         if '\nx :' in doc:
             assert '$OUT_SCALAR_1' in doc, "in {}".format(name)
         elif '\nx2 :' in doc or '\nx1, x2 :' in doc:
             assert '$OUT_SCALAR_2' in doc, "in {}".format(name)
         else:
             assert False, "Could not detect number of inputs in {}".format(name)
+
     for k, v in subst.items():
         doc = doc.replace('$' + k, v)
 
@@ -2533,6 +2539,46 @@ add_newdoc('numpy.core.umath', 'fmin',
     >>> np.fmin([np.nan, 0, np.nan],[0, np.nan, np.nan])
     array([ 0.,  0., nan])
 
+    """)
+
+add_newdoc('numpy.core.umath', 'clip',
+    """
+    Clip (limit) the values in an array.
+
+    Given an interval, values outside the interval are clipped to
+    the interval edges.  For example, if an interval of ``[0, 1]``
+    is specified, values smaller than 0 become 0, and values larger
+    than 1 become 1.
+
+    Equivalent to but faster than ``np.minimum(np.maximum(a, a_min), a_max)``.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing elements to clip.
+    a_min : array_like
+        Minimum value.
+    a_max : array_like
+        Maximum value.
+    out : ndarray, optional
+        The results will be placed in this array. It may be the input
+        array for in-place clipping.  `out` must be of the right shape
+        to hold the output.  Its type is preserved.
+    $PARAMS
+
+    See Also
+    --------
+    numpy.clip :
+        Wrapper that makes the ``a_min`` and ``a_max`` arguments optional,
+        dispatching to one of `~numpy.core.umath.clip`,
+        `~numpy.core.umath.minimum`, and `~numpy.core.umath.maximum`.
+
+    Returns
+    -------
+    clipped_array : ndarray
+        An array with the elements of `a`, but where values
+        < `a_min` are replaced with `a_min`, and those > `a_max`
+        with `a_max`.
     """)
 
 add_newdoc('numpy.core.umath', 'matmul',
