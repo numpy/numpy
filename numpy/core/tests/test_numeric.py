@@ -2679,6 +2679,8 @@ class TestIndices(object):
     def test_scalar_input(self):
         assert_array_equal([], np.indices(()))
         assert_array_equal([], np.indices((), sparse=True))
+        assert_array_equal([[]], np.indices((0,)))
+        assert_array_equal([[]], np.indices((0,), sparse=True))
 
     def test_sparse(self):
         [X, Y] = np.indices((4,3), sparse=True)

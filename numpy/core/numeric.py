@@ -1691,19 +1691,14 @@ def indices(dimensions, dtype=int, sparse=False):
     dimensions = tuple(dimensions)
     N = len(dimensions)
     shape = (1,)*N
+    indices = tuple(arange(dim, dtype=dtype).reshape(
+                shape[:i] + (dim,) + shape[i+1:]) for i, dim in enumerate(dimensions))
     if sparse:
-        res = tuple()
+        return indices
     else:
-        res = empty((N,)+dimensions, dtype=dtype)
-    for i, dim in enumerate(dimensions):
-        idx = arange(dim, dtype=dtype).reshape(
-            shape[:i] + (dim,) + shape[i+1:]
-        )
-        if sparse:
-            res = res + (idx,)
-        else:
-            res[i] = idx
-    return res
+        if indices == ():
+            return np.array([])
+        return np.stack(np.broadcast_arrays(*indices))
 
 
 @set_module('numpy')
