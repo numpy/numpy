@@ -532,8 +532,7 @@ def expand_dims(a, axis):
     Returns
     -------
     res : ndarray
-        Output array. The number of dimensions is one greater than that of
-        the input array. This is a view on the original array `a`.
+        View of `a` with the number of dimensions increased by one.
 
     See Also
     --------
