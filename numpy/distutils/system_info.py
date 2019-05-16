@@ -126,6 +126,8 @@ import os
 import re
 import copy
 import warnings
+import subprocess
+
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
@@ -298,13 +300,12 @@ else:
             default_x11_include_dirs.extend(['/usr/lib/X11/include',
                                              '/usr/include/X11'])
 
-    import subprocess as sp
     tmp = None
     try:
         # Explicitly open/close file to avoid ResourceWarning when
         # tests are run in debug mode Python 3.
         tmp = open(os.devnull, 'w')
-        p = sp.Popen(["gcc", "-print-multiarch"], stdout=sp.PIPE,
+        p = subprocess.Popen(["gcc", "-print-multiarch"], stdout=subprocess.PIPE,
                      stderr=tmp)
     except (OSError, DistutilsError):
         # OSError if gcc is not installed, or SandboxViolation (DistutilsError
@@ -2409,7 +2410,6 @@ class _pkg_config_info(system_info):
         return self.default_config_exe
 
     def get_config_output(self, config_exe, option):
-        import subprocess
         cmd = config_exe + ' ' + self.append_config_exe + ' ' + option
         try:
             o = subprocess.check_output(cmd)
