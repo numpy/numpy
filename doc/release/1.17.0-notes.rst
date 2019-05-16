@@ -289,6 +289,15 @@ methods when called on object arrays, making them compatible with
 In general, this handles object arrays more gracefully, and avoids floating-
 point operations if exact arithmetic types are used.
 
+Support of object arrays in ``np.matmul``
+-----------------------------------------
+It is now possible to use ``np.matmul`` (or the ``@`` operator) with object arrays.
+For instance, it is now possible to do::
+
+    from fractions import Fraction
+    a = np.array([[Fraction(1, 2), Fraction(1, 3)], [Fraction(1, 3), Fraction(1, 2)]])
+    b = a @ a
+
 
 Changes
 =======

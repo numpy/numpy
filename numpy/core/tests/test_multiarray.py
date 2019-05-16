@@ -5756,7 +5756,7 @@ class MatmulCommon(object):
     """
     # Should work with these types. Will want to add
     # "O" at some point
-    types = "?bhilqBHILQefdgFDG"
+    types = "?bhilqBHILQefdgFDGO"
 
     def test_exceptions(self):
         dims = [
@@ -5807,8 +5807,9 @@ class MatmulCommon(object):
                 assert_(res.dtype == dt)
 
             # vector vector returns scalars
-            res = self.matmul(v, v)
-            assert_(type(res) is np.dtype(dt).type)
+            if dt != "O":
+                res = self.matmul(v, v)
+                assert_(type(res) is np.dtype(dt).type)
 
     def test_scalar_output(self):
         vec1 = np.array([2])
@@ -6059,7 +6060,52 @@ class TestMatmul(MatmulCommon):
 
         r3 = np.matmul(args[0].copy(), args[1].copy())
         assert_equal(r1, r3)
-        
+    
+    def test_matmul_object(self):
+        import fractions
+
+        f = np.vectorize(fractions.Fraction)
+        def random_ints():
+            return np.random.randint(1, 1000, size=(10, 3, 3))
+        M1 = f(random_ints(), random_ints()) 
+        M2 = f(random_ints(), random_ints())
+
+        M3 = self.matmul(M1, M2)
+
+        [N1, N2, N3] = [a.astype(float) for a in [M1, M2, M3]]
+
+        assert_allclose(N3, self.matmul(N1, N2))
+
+    def test_matmul_object_type_scalar(self):
+        from fractions import Fraction as F
+        v = np.array([F(2,3), F(5,7)])
+        res = self.matmul(v, v)
+        assert_(type(res) is F)
+
+    def test_matmul_empty(self):
+        a = np.empty((3, 0), dtype=object)
+        b = np.empty((0, 3), dtype=object)
+        c = np.zeros((3, 3))
+        assert_array_equal(np.matmul(a, b), c)
+
+    def test_matmul_exception_multiply(self):
+        # test that matmul fails if `__mul__` is missing
+        class add_not_multiply():
+            def __add__(self, other):
+                return self
+        a = np.full((3,3), add_not_multiply())
+        with assert_raises(TypeError):
+            b = np.matmul(a, a)
+
+    def test_matmul_exception_add(self):
+        # test that matmul fails if `__add__` is missing
+        class multiply_not_add():
+            def __mul__(self, other):
+                return self
+        a = np.full((3,3), multiply_not_add())
+        with assert_raises(TypeError):
+            b = np.matmul(a, a)
+
 
 
 if sys.version_info[:2] >= (3, 5):
