@@ -111,67 +111,76 @@ class TestUfunc(object):
         just looked at the signatures registered in the build directory to find
         relevant functions.
 
-        Fixme, currently untested:
-
-            PyUFunc_ff_f_As_dd_d
-            PyUFunc_FF_F_As_DD_D
-            PyUFunc_f_f_As_d_d
-            PyUFunc_F_F_As_D_D
-            PyUFunc_On_Om
-
         """
         fone = np.exp
         ftwo = lambda x, y: x**y
         fone_val = 1
         ftwo_val = 1
+
+        # check unary PyUFunc_f_f_As_d_d
+        msg = "PyUFunc_f_f_As_d_d"
+        x = np.full(10, np.single(0), dtype=np.double)
+        assert_almost_equal(fone(x), fone_val, err_msg=msg)
+        # check unary PyUFunc_F_F_As_D_D
+        msg = "PyUFunc_F_F_As_D_D"
+        x = np.full(10, np.csingle(0), dtype=np.cdouble)
+        assert_almost_equal(fone(x), fone_val, err_msg=msg)
         # check unary PyUFunc_f_f.
         msg = "PyUFunc_f_f"
-        x = np.zeros(10, dtype=np.single)[0::2]
+        x = np.zeros(10, dtype=np.single)
         assert_almost_equal(fone(x), fone_val, err_msg=msg)
         # check unary PyUFunc_d_d.
         msg = "PyUFunc_d_d"
-        x = np.zeros(10, dtype=np.double)[0::2]
+        x = np.zeros(10, dtype=np.double)
         assert_almost_equal(fone(x), fone_val, err_msg=msg)
         # check unary PyUFunc_g_g.
         msg = "PyUFunc_g_g"
-        x = np.zeros(10, dtype=np.longdouble)[0::2]
+        x = np.zeros(10, dtype=np.longdouble)
         assert_almost_equal(fone(x), fone_val, err_msg=msg)
         # check unary PyUFunc_F_F.
         msg = "PyUFunc_F_F"
-        x = np.zeros(10, dtype=np.csingle)[0::2]
+        x = np.zeros(10, dtype=np.csingle)
         assert_almost_equal(fone(x), fone_val, err_msg=msg)
         # check unary PyUFunc_D_D.
         msg = "PyUFunc_D_D"
-        x = np.zeros(10, dtype=np.cdouble)[0::2]
+        x = np.zeros(10, dtype=np.cdouble)
         assert_almost_equal(fone(x), fone_val, err_msg=msg)
         # check unary PyUFunc_G_G.
         msg = "PyUFunc_G_G"
-        x = np.zeros(10, dtype=np.clongdouble)[0::2]
+        x = np.zeros(10, dtype=np.clongdouble)
         assert_almost_equal(fone(x), fone_val, err_msg=msg)
 
+        # check binary PyUFunc_FF_F_As_DD_D
+        msg = "PyUFunc_FF_F_As_DD_D"
+        x = np.full(10, np.csingle(1), dtype=np.cdouble)
+        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
+        # check binary PyUFunc_ff_f_As_dd_d
+        msg = "PyUFunc_ff_f_As_dd_d"
+        x = np.full(10, np.single(1), dtype=np.double)
+        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
         # check binary PyUFunc_ff_f.
         msg = "PyUFunc_ff_f"
-        x = np.ones(10, dtype=np.single)[0::2]
+        x = np.ones(10, dtype=np.single)
         assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
         # check binary PyUFunc_dd_d.
         msg = "PyUFunc_dd_d"
-        x = np.ones(10, dtype=np.double)[0::2]
+        x = np.ones(10, dtype=np.double)
         assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
         # check binary PyUFunc_gg_g.
         msg = "PyUFunc_gg_g"
-        x = np.ones(10, dtype=np.longdouble)[0::2]
+        x = np.ones(10, dtype=np.longdouble)
         assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
         # check binary PyUFunc_FF_F.
         msg = "PyUFunc_FF_F"
-        x = np.ones(10, dtype=np.csingle)[0::2]
+        x = np.ones(10, dtype=np.csingle)
         assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
         # check binary PyUFunc_DD_D.
         msg = "PyUFunc_DD_D"
-        x = np.ones(10, dtype=np.cdouble)[0::2]
+        x = np.ones(10, dtype=np.cdouble)
         assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
         # check binary PyUFunc_GG_G.
         msg = "PyUFunc_GG_G"
-        x = np.ones(10, dtype=np.clongdouble)[0::2]
+        x = np.ones(10, dtype=np.clongdouble)
         assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
 
         # class to use in testing object method loops
@@ -184,28 +193,25 @@ class TestUfunc(object):
 
         # check unary PyUFunc_O_O
         msg = "PyUFunc_O_O"
-        x = np.ones(10, dtype=object)[0::2]
+        x = np.ones(10, dtype=object)
         assert_(np.all(np.abs(x) == 1), msg)
         # check unary PyUFunc_O_O_method
         msg = "PyUFunc_O_O_method"
-        x = np.zeros(10, dtype=object)[0::2]
-        for i in range(len(x)):
-            x[i] = foo()
+        x = np.full(10, foo(), dtype=object)
         assert_(np.all(np.conjugate(x) == True), msg)
 
         # check binary PyUFunc_OO_O
         msg = "PyUFunc_OO_O"
-        x = np.ones(10, dtype=object)[0::2]
+        x = np.ones(10, dtype=object)
         assert_(np.all(np.add(x, x) == 2), msg)
         # check binary PyUFunc_OO_O_method
         msg = "PyUFunc_OO_O_method"
-        x = np.zeros(10, dtype=object)[0::2]
-        for i in range(len(x)):
-            x[i] = foo()
+        x = np.full(10, foo(), dtype=object)
         assert_(np.all(np.logical_xor(x, x)), msg)
-
-        # check PyUFunc_On_Om
-        # fixme -- I don't know how to do this yet
+        # check binary PyUFunc_On_Om_method
+        msg = "PyUFunc_On_Om_method"
+        x = np.full((10, 2, 3), foo(), dtype=object)
+        assert_(np.all(np.logical_xor(x, x)), msg)
 
     def test_all_ufunc(self):
         """Try to check presence and results of all ufuncs.
@@ -381,45 +387,21 @@ class TestUfunc(object):
         assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
         assert_equal(sizes, (3, -1, 9))
 
-    def test_signature_failure0(self):
-        # in the following calls, a ValueError should be raised because
-        # of error in core signature
-        # FIXME These should be using assert_raises
+    def test_signature_failure_extra_parenthesis(self):
+        with assert_raises(ValueError):
+            umt.test_signature(2, 1, "((i)),(i)->()")
 
-        # error: extra parenthesis
-        msg = "core_sig: extra parenthesis"
-        try:
-            ret = umt.test_signature(2, 1, "((i)),(i)->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError:
-            pass
+    def test_signature_failure_mismatching_parenthesis(self):
+        with assert_raises(ValueError):
+            umt.test_signature(2, 1, "(i),)i(->()")
 
-    def test_signature_failure1(self):
-        # error: parenthesis matching
-        msg = "core_sig: parenthesis matching"
-        try:
-            ret = umt.test_signature(2, 1, "(i),)i(->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError:
-            pass
+    def test_signature_failure_signature_missing_input_arg(self):
+        with assert_raises(ValueError):
+            umt.test_signature(2, 1, "(i),->()")
 
-    def test_signature_failure2(self):
-        # error: incomplete signature. letters outside of parenthesis are ignored
-        msg = "core_sig: incomplete signature"
-        try:
-            ret = umt.test_signature(2, 1, "(i),->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError:
-            pass
-
-    def test_signature_failure3(self):
-        # error: incomplete signature. 2 output arguments are specified
-        msg = "core_sig: incomplete signature"
-        try:
-            ret = umt.test_signature(2, 2, "(i),(i)->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError:
-            pass
+    def test_signature_failure_signature_missing_output_arg(self):
+        with assert_raises(ValueError):
+            umt.test_signature(2, 2, "(i),(i)->()")
 
     def test_get_signature(self):
         assert_equal(umt.inner1d.signature, "(i),(i)->()")
