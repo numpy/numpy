@@ -1279,7 +1279,7 @@ def searchsorted(a, v, side='left', sorter=None):
     As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
 
-    This function is a faster version of the builtin python `bisect.bisect_left`
+    This function is a version of the builtin python `bisect.bisect_left`
     (``side='left'``) and `bisect.bisect_right` (``side='right'``) functions,
     which is also vectorized in the `v` argument.
 
