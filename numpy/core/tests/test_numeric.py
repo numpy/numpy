@@ -2659,7 +2659,7 @@ def test_outer_out_param():
 class TestIndices(object):
 
     def test_simple(self):
-        [X, Y] = np.indices((4,3))
+        X, Y = np.indices((4, 3))
         assert_array_equal(X, np.array([[0, 0, 0],
                                         [1, 1, 1],
                                         [2, 2, 2],
@@ -2689,7 +2689,7 @@ class TestIndices(object):
 
     def test_return_type(self):
         for dtype in (np.int, np.float32, np.float64):
-            I = np.indices((4,3), dtype=dtype)
+            I = np.indices((4, 3), dtype=dtype)
 
             assert_(I.dtype == dtype)
 

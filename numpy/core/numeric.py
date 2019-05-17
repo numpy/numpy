@@ -1621,7 +1621,7 @@ def indices(dimensions, dtype=int, sparse=False):
         Data type of the result.
     sparse : boolean, optional
         Return a sparse representation of the grid instead of a dense
-        representation
+        representation. Default is False.
 
     Returns
     -------
@@ -1631,7 +1631,7 @@ def indices(dimensions, dtype=int, sparse=False):
             ``grid.shape = (len(dimensions),) + tuple(dimensions)``.
         If sparse is True:
             Returns a tuple of arrays, with
-            ``grid[i].shape = (1,...,1,dimensions[i],1,...,1)`` with
+            ``grid[i].shape = (1, ..., 1, dimensions[i], 1, ..., 1)`` with
             dimensions[i] in the ith place
 
     See Also
@@ -1643,7 +1643,7 @@ def indices(dimensions, dtype=int, sparse=False):
     The output shape in the dense case is obtained by prepending the number
     of dimensions in front of the tuple of dimensions, i.e. if `dimensions`
     is a tuple ``(r0, ..., rN-1)`` of length ``N``, the output shape is
-    ``(N,r0,...,rN-1)``.
+     ``(N, r0, ..., rN-1)``.
 
     The subarrays ``grid[k]`` contains the N-D array of indices along the
     ``k-th`` axis. Explicitly::
