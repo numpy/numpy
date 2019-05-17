@@ -1648,7 +1648,7 @@ def indices(dimensions, dtype=int, sparse=False):
     The subarrays ``grid[k]`` contains the N-D array of indices along the
     ``k-th`` axis. Explicitly::
 
-        grid[k,i0,i1,...,iN-1] = ik
+        grid[k, i0, i1, ..., iN-1] = ik
 
     Examples
     --------

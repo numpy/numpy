@@ -2659,22 +2659,22 @@ def test_outer_out_param():
 class TestIndices(object):
 
     def test_simple(self):
-        X, Y = np.indices((4, 3))
-        assert_array_equal(X, np.array([[0, 0, 0],
+        [x, y] = np.indices((4, 3))
+        assert_array_equal(x, np.array([[0, 0, 0],
                                         [1, 1, 1],
                                         [2, 2, 2],
                                         [3, 3, 3]]))
-        assert_array_equal(Y, np.array([[0, 1, 2],
+        assert_array_equal(y, np.array([[0, 1, 2],
                                         [0, 1, 2],
                                         [0, 1, 2],
                                         [0, 1, 2]]))
 
     def test_single_input(self):
-        [X] = np.indices((4,))
-        assert_array_equal(X, np.array([0, 1, 2, 3]))
+        [x] = np.indices((4,))
+        assert_array_equal(x, np.array([0, 1, 2, 3]))
 
-        [X] = np.indices((4,), sparse=True)
-        assert_array_equal(X, np.array([0, 1, 2, 3]))
+        [x] = np.indices((4,), sparse=True)
+        assert_array_equal(x, np.array([0, 1, 2, 3]))
 
     def test_scalar_input(self):
         assert_array_equal([], np.indices(()))
@@ -2683,20 +2683,21 @@ class TestIndices(object):
         assert_array_equal([[]], np.indices((0,), sparse=True))
 
     def test_sparse(self):
-        [X, Y] = np.indices((4,3), sparse=True)
-        assert_array_equal(X, np.array([[0], [1], [2], [3]]))
-        assert_array_equal(Y, np.array([[0, 1, 2]]))
+        [x, y] = np.indices((4,3), sparse=True)
+        assert_array_equal(x, np.array([[0], [1], [2], [3]]))
+        assert_array_equal(y, np.array([[0, 1, 2]]))
 
     def test_return_type(self):
         for dtype in (np.int, np.float32, np.float64):
-            I = np.indices((4, 3), dtype=dtype)
+            for dims in [(), (0,), (4, 3)]:
+                inds = np.indices(dims, dtype=dtype)
 
-            assert_(I.dtype == dtype)
+                assert_(inds.dtype == dtype)
 
-            X, Y = np.indices((4,3), dtype=dtype, sparse=True)
+                inds = np.indices(dims, dtype=dtype, sparse=True)
 
-            assert_(X.dtype == dtype)
-            assert_(Y.dtype == dtype)
+                for arr in inds:
+                    assert_(arr.dtype == dtype)
 
 
 class TestRequire(object):
