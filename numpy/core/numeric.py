@@ -1610,7 +1610,7 @@ def indices(dimensions, dtype=int, sparse=False):
     """
     Return an array representing the indices of a grid.
 
-    Compute an array where the subarrays contain index values 0,1,...
+    Compute an array where the subarrays contain index values 0, 1, ...
     varying only along the corresponding axis.
 
     Parameters
@@ -1643,7 +1643,7 @@ def indices(dimensions, dtype=int, sparse=False):
     The output shape in the dense case is obtained by prepending the number
     of dimensions in front of the tuple of dimensions, i.e. if `dimensions`
     is a tuple ``(r0, ..., rN-1)`` of length ``N``, the output shape is
-     ``(N, r0, ..., rN-1)``.
+    ``(N, r0, ..., rN-1)``.
 
     The subarrays ``grid[k]`` contains the N-D array of indices along the
     ``k-th`` axis. Explicitly::
