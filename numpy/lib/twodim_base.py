@@ -280,7 +280,7 @@ def diag(v, k=0):
         res[:n-k].flat[i::n+1] = v
         return res
     elif len(s) == 2:
-        return diagonal(v, k)
+        return diagonal.__skip_array_function__(v, k)
     else:
         raise ValueError("Input must be 1- or 2-d.")
 
@@ -699,7 +699,8 @@ def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
     if N != 1 and N != 2:
         xedges = yedges = asarray(bins)
         bins = [xedges, yedges]
-    hist, edges = histogramdd([x, y], bins, range, normed, weights, density)
+    hist, edges = histogramdd.__skip_array_function__(
+        [x, y], bins, range, normed, weights, density)
     return hist, edges[0], edges[1]
 
 

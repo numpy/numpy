@@ -241,7 +241,7 @@ def transpose(a):
     -------
     aT : (...,N,M) ndarray
     """
-    return swapaxes(a, -1, -2)
+    return swapaxes.__skip_array_function__(a, -1, -2)
 
 # Linear equations
 
@@ -315,7 +315,7 @@ def tensorsolve(a, b, axes=None):
 
     a = a.reshape(-1, prod)
     b = b.ravel()
-    res = wrap(solve(a, b))
+    res = wrap(solve.__skip_array_function__(a, b))
     res.shape = oldshape
     return res
 
@@ -473,7 +473,7 @@ def tensorinv(a, ind=2):
     else:
         raise ValueError("Invalid ind argument.")
     a = a.reshape(prod, -1)
-    ia = inv(a)
+    ia = inv.__skip_array_function__(a)
     return ia.reshape(*invshape)
 
 
@@ -635,7 +635,7 @@ def matrix_power(a, n):
     if a.dtype != object:
         fmatmul = matmul
     elif a.ndim == 2:
-        fmatmul = dot
+        fmatmul = dot.__skip_array_function__
     else:
         raise NotImplementedError(
             "matrix_power not supported for stacks of object arrays")
@@ -2676,6 +2676,9 @@ def multi_dot(arrays):
         return result
 
 
+_dot = dot.__skip_array_function__
+
+
 def _multi_dot_three(A, B, C):
     """
     Find the best order for three arrays and do the multiplication.
@@ -2692,9 +2695,9 @@ def _multi_dot_three(A, B, C):
     cost2 = a1b0 * c1 * (a0 + b1c0)
 
     if cost1 < cost2:
-        return dot(dot(A, B), C)
+        return _dot(_dot(A, B), C)
     else:
-        return dot(A, dot(B, C))
+        return _dot(A, _dot(B, C))
 
 
 def _multi_dot_matrix_chain_order(arrays, return_costs=False):
@@ -2743,5 +2746,5 @@ def _multi_dot(arrays, order, i, j):
     if i == j:
         return arrays[i]
     else:
-        return dot(_multi_dot(arrays, order, i, order[i, j]),
-                   _multi_dot(arrays, order, order[i, j] + 1, j))
+        return _dot(_multi_dot(arrays, order, i, order[i, j]),
+                    _multi_dot(arrays, order, order[i, j] + 1, j))

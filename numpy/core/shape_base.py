@@ -273,7 +273,8 @@ def vstack(tup):
            [4]])
 
     """
-    return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
+    return _nx.concatenate.__skip_array_function__(
+        [atleast_2d.__skip_array_function__(_m) for _m in tup], 0)
 
 
 @array_function_dispatch(_vhstack_dispatcher)
@@ -324,12 +325,12 @@ def hstack(tup):
            [3, 4]])
 
     """
-    arrs = [atleast_1d(_m) for _m in tup]
+    arrs = [atleast_1d.__skip_array_function__(_m) for _m in tup]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
-        return _nx.concatenate(arrs, 0)
+        return _nx.concatenate.__skip_array_function__(arrs, 0)
     else:
-        return _nx.concatenate(arrs, 1)
+        return _nx.concatenate.__skip_array_function__(arrs, 1)
 
 
 def _stack_dispatcher(arrays, axis=None, out=None):
@@ -413,7 +414,8 @@ def stack(arrays, axis=0, out=None):
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]
-    return _nx.concatenate(expanded_arrays, axis=axis, out=out)
+    return _nx.concatenate.__skip_array_function__(
+        expanded_arrays, axis=axis, out=out)
 
 
 def _block_format_index(index):
@@ -496,8 +498,8 @@ def _block_check_depths_match(arrays, parent_index=[]):
         return parent_index + [None], 0, 0
     else:
         # We've 'bottomed out' - arrays is either a scalar or an array
-        size = _nx.size(arrays)
-        return parent_index, _nx.ndim(arrays), size
+        size = _nx.size.__skip_array_function__(arrays)
+        return parent_index, _nx.ndim.__skip_array_function__(arrays), size
 
 
 def _atleast_nd(a, ndim):
@@ -640,7 +642,8 @@ def _block(arrays, max_depth, result_ndim, depth=0):
     if depth < max_depth:
         arrs = [_block(arr, max_depth, result_ndim, depth+1)
                 for arr in arrays]
-        return _nx.concatenate(arrs, axis=-(max_depth-depth))
+        return _nx.concatenate.__skip_array_function__(
+            arrs, axis=-(max_depth-depth))
     else:
         # We've 'bottomed out' - arrays is either a scalar or an array
         # type(arrays) is not list
@@ -858,7 +861,7 @@ def _block_slicing(arrays, list_ndim, result_ndim):
 
     # Test preferring F only in the case that all input arrays are F
     F_order = all(arr.flags['F_CONTIGUOUS'] for arr in arrays)
-    C_order =  all(arr.flags['C_CONTIGUOUS'] for arr in arrays)
+    C_order = all(arr.flags['C_CONTIGUOUS'] for arr in arrays)
     order = 'F' if F_order and not C_order else 'C'
     result = _nx.empty(shape=shape, dtype=dtype, order=order)
     # Note: In a c implementation, the function

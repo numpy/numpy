@@ -7,7 +7,7 @@ import numpy.core.numeric as _nx
 from numpy.core.numeric import (
     asarray, zeros, outer, concatenate, array, asanyarray
     )
-from numpy.core.fromnumeric import product, reshape, transpose
+from numpy.core.fromnumeric import reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
@@ -634,7 +634,7 @@ def column_stack(tup):
         if arr.ndim < 2:
             arr = array(arr, copy=False, subok=True, ndmin=2).T
         arrays.append(arr)
-    return _nx.concatenate(arrays, 1)
+    return _nx.concatenate.__skip_array_function__(arrays, 1)
 
 
 def _dstack_dispatcher(tup):
@@ -692,7 +692,8 @@ def dstack(tup):
            [[3, 4]]])
 
     """
-    return _nx.concatenate([atleast_3d(_m) for _m in tup], 2)
+    return _nx.concatenate.__skip_array_function__(
+        [atleast_3d.__skip_array_function__(_m) for _m in tup], 2)
 
 
 def _replace_zero_by_x_arrays(sub_arys):
@@ -755,11 +756,12 @@ def array_split(ary, indices_or_sections, axis=0):
         div_points = _nx.array(section_sizes, dtype=_nx.intp).cumsum()
 
     sub_arys = []
-    sary = _nx.swapaxes(ary, axis, 0)
+    swapaxes = _nx.swapaxes.__skip_array_function__
+    sary = swapaxes(ary, axis, 0)
     for i in range(Nsections):
         st = div_points[i]
         end = div_points[i + 1]
-        sub_arys.append(_nx.swapaxes(sary[st:end], axis, 0))
+        sub_arys.append(swapaxes(sary[st:end], axis, 0))
 
     return sub_arys
 
@@ -843,7 +845,7 @@ def split(ary, indices_or_sections, axis=0):
         if N % sections:
             raise ValueError(
                 'array split does not result in an equal division')
-    res = array_split(ary, indices_or_sections, axis)
+    res = array_split.__skip_array_function__(ary, indices_or_sections, axis)
     return res
 
 
@@ -907,12 +909,12 @@ def hsplit(ary, indices_or_sections):
            [[6.,  7.]]])]
 
     """
-    if _nx.ndim(ary) == 0:
+    if _nx.ndim.__skip_array_function__(ary) == 0:
         raise ValueError('hsplit only works on arrays of 1 or more dimensions')
     if ary.ndim > 1:
-        return split(ary, indices_or_sections, 1)
+        return split.__skip_array_function__(ary, indices_or_sections, 1)
     else:
-        return split(ary, indices_or_sections, 0)
+        return split.__skip_array_function__(ary, indices_or_sections, 0)
 
 
 @array_function_dispatch(_hvdsplit_dispatcher)
@@ -959,9 +961,9 @@ def vsplit(ary, indices_or_sections):
             [6., 7.]]])]
 
     """
-    if _nx.ndim(ary) < 2:
+    if _nx.ndim.__skip_array_function__(ary) < 2:
         raise ValueError('vsplit only works on arrays of 2 or more dimensions')
-    return split(ary, indices_or_sections, 0)
+    return split.__skip_array_function__(ary, indices_or_sections, 0)
 
 
 @array_function_dispatch(_hvdsplit_dispatcher)
@@ -1004,9 +1006,9 @@ def dsplit(ary, indices_or_sections):
             [15.]]]),
     array([], shape=(2, 2, 0), dtype=float64)]
     """
-    if _nx.ndim(ary) < 3:
+    if _nx.ndim.__skip_array_function__(ary) < 3:
         raise ValueError('dsplit only works on arrays of 3 or more dimensions')
-    return split(ary, indices_or_sections, 2)
+    return split.__skip_array_function__(ary, indices_or_sections, 2)
 
 def get_array_prepare(*args):
     """Find the wrapper for the array with the highest priority.

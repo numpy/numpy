@@ -804,7 +804,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
             # function operates inplace on the padded array.
 
             # view with the iteration axis at the end
-            view = np.moveaxis(padded, axis, -1)
+            view = np.moveaxis.__skip_array_function__(padded, axis, -1)
 
             # compute indices for the iteration axes, and append a trailing
             # ellipsis to prevent 0d arrays decaying to scalars (gh-8642)

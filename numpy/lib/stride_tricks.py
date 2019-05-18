@@ -194,7 +194,7 @@ def _broadcast_shape(*args):
         # ironically, np.broadcast does not properly handle np.broadcast
         # objects (it treats them as scalars)
         # use broadcasting to avoid allocating the full array
-        b = broadcast_to(0, b.shape)
+        b = broadcast_to.__skip_array_function__(0, b.shape)
         b = np.broadcast(b, *args[pos:(pos + 31)])
     return b.shape
 

@@ -134,26 +134,29 @@ def rot90(m, k=1, axes=(0,1)):
         raise ValueError("Axes must be different.")
 
     if (axes[0] >= m.ndim or axes[0] < -m.ndim
-        or axes[1] >= m.ndim or axes[1] < -m.ndim):
+            or axes[1] >= m.ndim or axes[1] < -m.ndim):
         raise ValueError("Axes={} out of range for array of ndim={}."
-            .format(axes, m.ndim))
+                         .format(axes, m.ndim))
 
     k %= 4
 
     if k == 0:
         return m[:]
     if k == 2:
-        return flip(flip(m, axes[0]), axes[1])
+        return flip.__skip_array_function__(
+            flip.__skip_array_function__(m, axes[0]), axes[1])
 
     axes_list = arange(0, m.ndim)
     (axes_list[axes[0]], axes_list[axes[1]]) = (axes_list[axes[1]],
                                                 axes_list[axes[0]])
 
     if k == 1:
-        return transpose(flip(m,axes[1]), axes_list)
+        return transpose.__skip_array_function__(
+            flip.__skip_array_function__(m, axes[1]), axes_list)
     else:
         # k == 3
-        return flip(transpose(m, axes_list), axes[1])
+        return flip.__skip_array_function__(
+            transpose.__skip_array_function__(m, axes_list), axes[1])
 
 
 def _flip_dispatcher(m, axis=None):
@@ -393,9 +396,11 @@ def average(a, axis=None, weights=None, returned=False):
         wgt = np.asanyarray(weights)
 
         if issubclass(a.dtype.type, (np.integer, np.bool_)):
-            result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
+            result_dtype = np.result_type.__skip_array_function__(
+                a.dtype, wgt.dtype, 'f8')
         else:
-            result_dtype = np.result_type(a.dtype, wgt.dtype)
+            result_dtype = np.result_type.__skip_array_function__(
+                a.dtype, wgt.dtype)
 
         # Sanity checks
         if a.shape != wgt.shape:
@@ -606,7 +611,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     if n == n2 - 1:  # compute the "otherwise" condition.
         condelse = ~np.any(condlist, axis=0, keepdims=True)
-        condlist = np.concatenate([condlist, condelse], axis=0)
+        condlist = np.concatenate.__skip_array_function__(
+            [condlist, condelse], axis=0)
         n += 1
     elif n != n2:
         raise ValueError(
@@ -690,13 +696,13 @@ def select(condlist, choicelist, default=0):
 
     # need to get the result type before broadcasting for correct scalar
     # behaviour
-    dtype = np.result_type(*choicelist)
+    dtype = np.result_type.__skip_array_function__(*choicelist)
 
     # Convert conditions to arrays and broadcast conditions and choices
     # as the shape is needed for the result. Doing it separately optimizes
     # for example when all choices are scalars.
-    condlist = np.broadcast_arrays(*condlist)
-    choicelist = np.broadcast_arrays(*choicelist)
+    condlist = np.broadcast_arrays.__skip_array_function__(*condlist)
+    choicelist = np.broadcast_arrays.__skip_array_function__(*choicelist)
 
     # If cond array is not an ndarray in boolean format or scalar bool, abort.
     deprecated_ints = False
@@ -733,7 +739,7 @@ def select(condlist, choicelist, default=0):
     choicelist = choicelist[-2::-1]
     condlist = condlist[::-1]
     for choice, cond in zip(choicelist, condlist):
-        np.copyto(result, choice, where=cond)
+        np.copyto.__skip_array_function__(result, choice, where=cond)
 
     return result
 
@@ -1512,14 +1518,16 @@ def unwrap(p, discont=pi, axis=-1):
     """
     p = asarray(p)
     nd = p.ndim
-    dd = diff(p, axis=axis)
+    dd = diff.__skip_array_function__(p, axis=axis)
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
     ddmod = mod(dd + pi, 2*pi) - pi
-    _nx.copyto(ddmod, pi, where=(ddmod == -pi) & (dd > 0))
+    _nx.copyto.__skip_array_function__(
+        ddmod, pi, where=(ddmod == -pi) & (dd > 0))
     ph_correct = ddmod - dd
-    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
+    _nx.copyto.__skip_array_function__(
+        ph_correct, 0, where=abs(dd) < discont)
     up = array(p, copy=True, dtype='d')
     up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
@@ -1674,7 +1682,10 @@ def extract(condition, arr):
     array([0, 3, 6, 9])
 
     """
-    return _nx.take(ravel(arr), nonzero(ravel(condition))[0])
+    return _nx.take.__skip_array_function__(
+        ravel.__skip_array_function__(arr),
+        nonzero.__skip_array_function__(
+            ravel.__skip_array_function__(condition))[0])
 
 
 def _place_dispatcher(arr, mask, vals):
@@ -4697,9 +4708,9 @@ def append(arr, values, axis=None):
     if axis is None:
         if arr.ndim != 1:
             arr = arr.ravel()
-        values = ravel(values)
+        values = ravel.__skip_array_function__(values)
         axis = arr.ndim-1
-    return concatenate((arr, values), axis=axis)
+    return concatenate.__skip_array_function__((arr, values), axis=axis)
 
 
 def _digitize_dispatcher(x, bins, right=None):

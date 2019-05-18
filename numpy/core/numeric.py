@@ -156,10 +156,11 @@ def zeros_like(a, dtype=None, order='K', subok=True, shape=None):
     array([0.,  0.,  0.])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
+    res = empty_like.__skip_array_function__(
+        a, dtype=dtype, order=order, subok=subok, shape=shape)
     # needed instead of a 0 to get same result as zeros for for string dtypes
     z = zeros(1, dtype=res.dtype)
-    multiarray.copyto(res, z, casting='unsafe')
+    multiarray.copyto.__skip_array_function__(res, z, casting='unsafe')
     return res
 
 
@@ -212,7 +213,7 @@ def ones(shape, dtype=None, order='C'):
 
     """
     a = empty(shape, dtype, order)
-    multiarray.copyto(a, 1, casting='unsafe')
+    multiarray.copyto.__skip_array_function__(a, 1, casting='unsafe')
     return a
 
 
@@ -282,8 +283,9 @@ def ones_like(a, dtype=None, order='K', subok=True, shape=None):
     array([1.,  1.,  1.])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
-    multiarray.copyto(res, 1, casting='unsafe')
+    res = empty_like.__skip_array_function__(
+        a, dtype=dtype, order=order, subok=subok, shape=shape)
+    multiarray.copyto.__skip_array_function__(res, 1, casting='unsafe')
     return res
 
 
@@ -330,7 +332,7 @@ def full(shape, fill_value, dtype=None, order='C'):
     if dtype is None:
         dtype = array(fill_value).dtype
     a = empty(shape, dtype, order)
-    multiarray.copyto(a, fill_value, casting='unsafe')
+    multiarray.copyto.__skip_array_function__(a, fill_value, casting='unsafe')
     return a
 
 
@@ -397,8 +399,10 @@ def full_like(a, fill_value, dtype=None, order='K', subok=True, shape=None):
     array([0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok, shape=shape)
-    multiarray.copyto(res, fill_value, casting='unsafe')
+    res = empty_like.__skip_array_function__(
+        a, dtype=dtype, order=order, subok=subok, shape=shape)
+    multiarray.copyto.__skip_array_function__(
+        res, fill_value, casting='unsafe')
     return res
 
 
@@ -575,7 +579,8 @@ def argwhere(a):
            [1, 2]])
 
     """
-    return transpose(nonzero(a))
+    return transpose.__skip_array_function__(
+        nonzero.__skip_array_function__(a))
 
 
 def _flatnonzero_dispatcher(a):
@@ -620,7 +625,8 @@ def flatnonzero(a):
     array([-2, -1,  1,  2])
 
     """
-    return np.nonzero(np.ravel(a))[0]
+    return np.nonzero.__skip_array_function__(
+        np.ravel.__skip_array_function__(a))[0]
 
 
 _mode_from_name_dict = {'v': 0,
@@ -2127,7 +2133,8 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     True
 
     """
-    res = all(isclose(a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
+    res = all(isclose.__skip_array_function__(
+        a, b, rtol=rtol, atol=atol, equal_nan=equal_nan))
     return bool(res)
 
 
@@ -2231,12 +2238,12 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         return within_tol(x, y, atol, rtol)
     else:
         finite = xfin & yfin
-        cond = zeros_like(finite, subok=True)
+        cond = zeros_like.__skip_array_function__(finite, subok=True)
         # Because we're using boolean indexing, x & y must be the same shape.
         # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
         # lib.stride_tricks, though, so we can't import it here.
-        x = x * ones_like(cond)
-        y = y * ones_like(cond)
+        x = x * ones_like.__skip_array_function__(cond)
+        y = y * ones_like.__skip_array_function__(cond)
         # Avoid subtraction with infinite/nan values...
         cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
         # Check for equality of infinite values...

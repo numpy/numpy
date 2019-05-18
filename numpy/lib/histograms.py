@@ -448,7 +448,7 @@ def _search_sorted_inclusive(a, v):
 
     In the context of a histogram, this makes the last bin edge inclusive
     """
-    return np.concatenate((
+    return np.concatenate.__skip_array_function__((
         a.searchsorted(v[:-1], 'left'),
         a.searchsorted(v[-1:], 'right')
     ))
@@ -865,17 +865,18 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
         cum_n = np.zeros(bin_edges.shape, ntype)
         if weights is None:
             for i in _range(0, len(a), BLOCK):
-                sa = np.sort(a[i:i+BLOCK])
+                sa = np.sort.__skip_array_function__(a[i:i+BLOCK])
                 cum_n += _search_sorted_inclusive(sa, bin_edges)
         else:
             zero = np.zeros(1, dtype=ntype)
             for i in _range(0, len(a), BLOCK):
                 tmp_a = a[i:i+BLOCK]
                 tmp_w = weights[i:i+BLOCK]
-                sorting_index = np.argsort(tmp_a)
+                sorting_index = np.argsort.__skip_array_function__(tmp_a)
                 sa = tmp_a[sorting_index]
                 sw = tmp_w[sorting_index]
-                cw = np.concatenate((zero, sw.cumsum()))
+                cw = np.concatenate.__skip_array_function__(
+                    (zero, sw.cumsum()))
                 bin_index = _search_sorted_inclusive(sa, bin_edges)
                 cum_n += cw[bin_index]
 
@@ -1000,7 +1001,7 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
         N, D = sample.shape
     except (AttributeError, ValueError):
         # Sample is a sequence of 1D arrays.
-        sample = np.atleast_2d(sample).T
+        sample = np.atleast_2d.__skip_array_function__(sample).T
         N, D = sample.shape
 
     nbin = np.empty(D, int)
@@ -1027,12 +1028,13 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
 
     # Create edge arrays
     for i in _range(D):
-        if np.ndim(bins[i]) == 0:
+        if np.ndim.__skip_array_function__(bins[i]) == 0:
             if bins[i] < 1:
                 raise ValueError(
                     '`bins[{}]` must be positive, when an integer'.format(i))
             smin, smax = _get_outer_edges(sample[:,i], range[i])
-            edges[i] = np.linspace(smin, smax, bins[i] + 1)
+            edges[i] = np.linspace.__skip_array_function__(
+                smin, smax, bins[i] + 1)
         elif np.ndim(bins[i]) == 1:
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):
@@ -1044,12 +1046,13 @@ def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
                 '`bins[{}]` must be a scalar or 1d array'.format(i))
 
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
-        dedges[i] = np.diff(edges[i])
+        dedges[i] = np.diff.__skip_array_function__(edges[i])
 
     # Compute the bin number each sample falls into.
     Ncount = tuple(
         # avoid np.digitize to work around gh-11022
-        np.searchsorted(edges[i], sample[:, i], side='right')
+        np.searchsorted.__skip_array_function__(
+            edges[i], sample[:, i], side='right')
         for i in _range(D)
     )
 
