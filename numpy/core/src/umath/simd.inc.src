@@ -1148,10 +1148,9 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_masked_gather(__m256 src,
                    npy_float* addr,
                    __m256i vindex,
-                   __m256 mask,
-                   const int scale)
+                   __m256 mask)
 {
-    return _mm256_mask_i32gather_ps(src, addr, vindex, mask, scale);
+    return _mm256_mask_i32gather_ps(src, addr, vindex, mask, 4);
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
@@ -1243,10 +1242,9 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
 avx512_masked_gather(__m512 src,
                      npy_float* addr,
                      __m512i vindex,
-                     __mmask16 kmask,
-                     const int scale)
+                     __mmask16 kmask)
 {
-    return _mm512_mask_i32gather_ps(src, kmask, vindex, addr, scale);
+    return _mm512_mask_i32gather_ps(src, kmask, vindex, addr, 4);
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX512F __m512
@@ -1349,8 +1347,9 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     npy_float xmax = 88.72283935546875f;
     npy_float xmin = -87.3365478515625f;
     npy_int indexarr[16];
-    for (npy_int ii = 0; ii < 16; ii++)
+    for (npy_int ii = 0; ii < 16; ii++) {
         indexarr[ii] = ii*stride;
+    }
 
     /* Load up frequently used constants */
     @vtype@ codyw_c1 = _mm@vsize@_set1_ps(NPY_CODY_WAITE_LOGE_2_HIGHf);
@@ -1379,14 +1378,18 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 
     while (num_remaining_elements > 0) {
 
-        if (num_remaining_elements < num_lanes)
+        if (num_remaining_elements < num_lanes) {
             load_mask = @isa@_get_partial_load_mask(num_remaining_elements,
                                                     num_lanes);
+        }
+
         @vtype@ x;
-        if (stride == 1)
+        if (stride == 1) {
             x = @isa@_masked_load(load_mask, ip);
-        else
-            x = @isa@_masked_gather(zeros_f, ip, vindex, load_mask, 4);
+        }
+        else {
+            x = @isa@_masked_gather(zeros_f, ip, vindex, load_mask);
+        }
 
         xmax_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmax), _CMP_GE_OQ);
         xmin_mask = _mm@vsize@_cmp_ps@vsub@(x, _mm@vsize@_set1_ps(xmin), _CMP_LE_OQ);
@@ -1442,8 +1445,9 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         num_remaining_elements -= num_lanes;
     }
 
-    if (@mask_to_int@(overflow_mask))
+    if (@mask_to_int@(overflow_mask)) {
         npy_set_floatstatus_overflow();
+    }
 }
 
 /*
@@ -1469,8 +1473,9 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     const npy_intp stride = steps/sizeof(npy_float);
     const npy_int num_lanes = @BYTES@/sizeof(npy_float);
     npy_int indexarr[16];
-    for (npy_int ii = 0; ii < 16; ii++)
+    for (npy_int ii = 0; ii < 16; ii++) {
         indexarr[ii] = ii*stride;
+    }
 
     /* Load up frequently used constants */
     @vtype@ log_p0 = _mm@vsize@_set1_ps(NPY_COEFF_P0_LOGf);
@@ -1502,14 +1507,18 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 
     while (num_remaining_elements > 0) {
 
-        if (num_remaining_elements < num_lanes)
+        if (num_remaining_elements < num_lanes) {
             load_mask = @isa@_get_partial_load_mask(num_remaining_elements,
                                                     num_lanes);
+        }
+
         @vtype@ x_in;
-        if (stride == 1)
+        if (stride == 1) {
             x_in = @isa@_masked_load(load_mask, ip);
-        else
-            x_in  = @isa@_masked_gather(zeros_f, ip, vindex, load_mask, 4);
+        }
+        else {
+            x_in  = @isa@_masked_gather(zeros_f, ip, vindex, load_mask);
+        }
 
         negx_mask = _mm@vsize@_cmp_ps@vsub@(x_in, zeros_f, _CMP_LT_OQ);
         zero_mask = _mm@vsize@_cmp_ps@vsub@(x_in, zeros_f, _CMP_EQ_OQ);
@@ -1564,10 +1573,12 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         num_remaining_elements -= num_lanes;
     }
 
-    if (@mask_to_int@(invalid_mask))
+    if (@mask_to_int@(invalid_mask)) {
         npy_set_floatstatus_invalid();
-    if (@mask_to_int@(divide_by_zero_mask))
+    }
+    if (@mask_to_int@(divide_by_zero_mask)) {
         npy_set_floatstatus_divbyzero();
+    }
 }
 #endif
 /**end repeat**/
