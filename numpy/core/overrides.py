@@ -172,6 +172,8 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         if module is not None:
             public_api.__module__ = module
 
+        public_api.__skip_array_function__ = implementation
+
         return public_api
 
     return decorator
