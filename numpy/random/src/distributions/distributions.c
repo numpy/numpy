@@ -646,8 +646,8 @@ double random_standard_t(bitgen_t *bitgen_state, double df) {
   return sqrt(df / 2) * num / sqrt(denom);
 }
 
-static int64_t random_poisson_mult(bitgen_t *bitgen_state, double lam) {
-  int64_t X;
+static RAND_INT_TYPE random_poisson_mult(bitgen_t *bitgen_state, double lam) {
+  RAND_INT_TYPE X;
   double prod, U, enlam;
 
   enlam = exp(-lam);
@@ -671,8 +671,8 @@ static int64_t random_poisson_mult(bitgen_t *bitgen_state, double lam) {
  */
 #define LS2PI 0.91893853320467267
 #define TWELFTH 0.083333333333333333333333
-static int64_t random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
-  int64_t k;
+static RAND_INT_TYPE random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
+  RAND_INT_TYPE k;
   double U, V, slam, loglam, a, b, invalpha, vr, us;
 
   slam = sqrt(lam);
@@ -686,7 +686,7 @@ static int64_t random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
     U = next_double(bitgen_state) - 0.5;
     V = next_double(bitgen_state);
     us = 0.5 - fabs(U);
-    k = (int64_t)floor((2 * a / us + b) * U + lam + 0.43);
+    k = (RAND_INT_TYPE)floor((2 * a / us + b) * U + lam + 0.43);
     if ((us >= 0.07) && (V <= vr)) {
       return k;
     }
@@ -702,7 +702,7 @@ static int64_t random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
   }
 }
 
-int64_t random_poisson(bitgen_t *bitgen_state, double lam) {
+RAND_INT_TYPE random_poisson(bitgen_t *bitgen_state, double lam) {
   if (lam >= 10) {
     return random_poisson_ptrs(bitgen_state, lam);
   } else if (lam == 0) {
@@ -712,16 +712,17 @@ int64_t random_poisson(bitgen_t *bitgen_state, double lam) {
   }
 }
 
-int64_t random_negative_binomial(bitgen_t *bitgen_state, double n, double p) {
+RAND_INT_TYPE random_negative_binomial(bitgen_t *bitgen_state, double n,
+                                       double p) {
   double Y = random_gamma(bitgen_state, n, (1 - p) / p);
   return random_poisson(bitgen_state, Y);
 }
 
-int64_t random_binomial_btpe(bitgen_t *bitgen_state, int64_t n, double p,
-                             binomial_t *binomial) {
+RAND_INT_TYPE random_binomial_btpe(bitgen_t *bitgen_state, RAND_INT_TYPE n,
+                                   double p, binomial_t *binomial) {
   double r, q, fm, p1, xm, xl, xr, c, laml, lamr, p2, p3, p4;
   double a, u, v, s, F, rho, t, A, nrq, x1, x2, f1, f2, z, z2, w, w2, x;
-  int64_t m, y, k, i;
+  RAND_INT_TYPE m, y, k, i;
 
   if (!(binomial->has_binomial) || (binomial->nsave != n) ||
       (binomial->psave != p)) {
@@ -732,7 +733,7 @@ int64_t random_binomial_btpe(bitgen_t *bitgen_state, int64_t n, double p,
     binomial->r = r = MIN(p, 1.0 - p);
     binomial->q = q = 1.0 - r;
     binomial->fm = fm = n * r + r;
-    binomial->m = m = (int64_t)floor(binomial->fm);
+    binomial->m = m = (RAND_INT_TYPE)floor(binomial->fm);
     binomial->p1 = p1 = floor(2.195 * sqrt(n * r * q) - 4.6 * q) + 0.5;
     binomial->xm = xm = m + 0.5;
     binomial->xl = xl = xm - p1;
@@ -769,7 +770,7 @@ Step10:
   v = next_double(bitgen_state);
   if (u > p1)
     goto Step20;
-  y = (int64_t)floor(xm - p1 * v + u);
+  y = (RAND_INT_TYPE)floor(xm - p1 * v + u);
   goto Step60;
 
 Step20:
@@ -779,13 +780,13 @@ Step20:
   v = v * c + 1.0 - fabs(m - x + 0.5) / p1;
   if (v > 1.0)
     goto Step10;
-  y = (int64_t)floor(x);
+  y = (RAND_INT_TYPE)floor(x);
   goto Step50;
 
 Step30:
   if (u > p3)
     goto Step40;
-  y = (int64_t)floor(xl + log(v) / laml);
+  y = (RAND_INT_TYPE)floor(xl + log(v) / laml);
   /* Reject if v==0.0 since previous cast is undefined */
   if ((y < 0) || (v == 0.0))
     goto Step10;
@@ -793,7 +794,7 @@ Step30:
   goto Step50;
 
 Step40:
-  y = (int64_t)floor(xr - log(v) / lamr);
+  y = (RAND_INT_TYPE)floor(xr - log(v) / lamr);
   /* Reject if v==0.0 since previous cast is undefined */
   if ((y > n) || (v == 0.0))
     goto Step10;
@@ -860,10 +861,10 @@ Step60:
   return y;
 }
 
-int64_t random_binomial_inversion(bitgen_t *bitgen_state, int64_t n, double p,
-                                  binomial_t *binomial) {
+RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state, RAND_INT_TYPE n,
+                                        double p, binomial_t *binomial) {
   double q, qn, np, px, U;
-  int64_t X, bound;
+  RAND_INT_TYPE X, bound;
 
   if (!(binomial->has_binomial) || (binomial->nsave != n) ||
       (binomial->psave != p)) {
@@ -873,7 +874,7 @@ int64_t random_binomial_inversion(bitgen_t *bitgen_state, int64_t n, double p,
     binomial->q = q = 1.0 - p;
     binomial->r = qn = exp(n * log(q));
     binomial->c = np = n * p;
-    binomial->m = bound = (int64_t)MIN(n, np + 10.0 * sqrt(np * q + 1));
+    binomial->m = bound = (RAND_INT_TYPE)MIN(n, np + 10.0 * sqrt(np * q + 1));
   } else {
     q = binomial->q;
     qn = binomial->r;
@@ -897,8 +898,8 @@ int64_t random_binomial_inversion(bitgen_t *bitgen_state, int64_t n, double p,
   return X;
 }
 
-int64_t random_binomial(bitgen_t *bitgen_state, double p, int64_t n,
-                        binomial_t *binomial) {
+RAND_INT_TYPE random_binomial(bitgen_t *bitgen_state, double p, RAND_INT_TYPE n,
+                              binomial_t *binomial) {
   double q;
 
   if ((n == 0LL) || (p == 0.0f))
@@ -933,7 +934,7 @@ double random_noncentral_chisquare(bitgen_t *bitgen_state, double df,
     const double n = random_gauss_zig(bitgen_state) + sqrt(nonc);
     return Chi2 + n * n;
   } else {
-    const int64_t i = random_poisson(bitgen_state, nonc / 2.0);
+    const RAND_INT_TYPE i = random_poisson(bitgen_state, nonc / 2.0);
     return random_chisquare(bitgen_state, df + 2 * i);
   }
 }
@@ -1017,9 +1018,15 @@ double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) {
   }
 }
 
-int64_t random_logseries(bitgen_t *bitgen_state, double p) {
+/*
+ * RAND_INT_TYPE is used to share integer generators with RandomState which
+ * used long in place of int64_t. If changing a distribution that uses
+ * RAND_INT_TYPE, then the original unmodified copy must be retained for
+ * use in RandomState by copying to the legacy distributions source file.
+ */
+RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p) {
   double q, r, U, V;
-  int64_t result;
+  RAND_INT_TYPE result;
 
   r = log(1.0 - p);
 
@@ -1031,7 +1038,7 @@ int64_t random_logseries(bitgen_t *bitgen_state, double p) {
     U = next_double(bitgen_state);
     q = 1.0 - exp(r * U);
     if (V <= q * q) {
-      result = (int64_t)floor(1 + log(V) / log(q));
+      result = (RAND_INT_TYPE)floor(1 + log(V) / log(q));
       if ((result < 1) || (V == 0.0)) {
         continue;
       } else {
@@ -1045,9 +1052,9 @@ int64_t random_logseries(bitgen_t *bitgen_state, double p) {
   }
 }
 
-int64_t random_geometric_search(bitgen_t *bitgen_state, double p) {
+RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
   double U;
-  int64_t X;
+  RAND_INT_TYPE X;
   double sum, prod, q;
 
   X = 1;
@@ -1062,11 +1069,11 @@ int64_t random_geometric_search(bitgen_t *bitgen_state, double p) {
   return X;
 }
 
-int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (int64_t)ceil(log(1.0 - next_double(bitgen_state)) / log(1.0 - p));
+RAND_INT_TYPE random_geometric_inversion(bitgen_t *bitgen_state, double p) {
+  return (RAND_INT_TYPE)ceil(log(1.0 - next_double(bitgen_state)) / log(1.0 - p));
 }
 
-int64_t random_geometric(bitgen_t *bitgen_state, double p) {
+RAND_INT_TYPE random_geometric(bitgen_t *bitgen_state, double p) {
   if (p >= 0.333333333333333333333333) {
     return random_geometric_search(bitgen_state, p);
   } else {
@@ -1074,7 +1081,7 @@ int64_t random_geometric(bitgen_t *bitgen_state, double p) {
   }
 }
 
-int64_t random_zipf(bitgen_t *bitgen_state, double a) {
+RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a) {
   double am1, b;
 
   am1 = a - 1.0;
@@ -1091,13 +1098,13 @@ int64_t random_zipf(bitgen_t *bitgen_state, double a) {
      * just reject this value. This function then models a Zipf
      * distribution truncated to sys.maxint.
      */
-    if (X > LONG_MAX || X < 1.0) {
+    if (X > RAND_INT_MAX || X < 1.0) {
       continue;
     }
 
     T = pow(1.0 + 1.0 / X, am1);
     if (V * X * (T - 1.0) / (b - 1.0) <= T / b) {
-      return (int64_t)X;
+      return (RAND_INT_TYPE)X;
     }
   }
 }
@@ -1121,9 +1128,10 @@ double random_triangular(bitgen_t *bitgen_state, double left, double mode,
   }
 }
 
-int64_t random_hypergeometric_hyp(bitgen_t *bitgen_state, int64_t good,
-                                  int64_t bad, int64_t sample) {
-  int64_t d1, k, z;
+RAND_INT_TYPE random_hypergeometric_hyp(bitgen_t *bitgen_state,
+                                        RAND_INT_TYPE good, RAND_INT_TYPE bad,
+                                        RAND_INT_TYPE sample) {
+  RAND_INT_TYPE d1, k, z;
   double d2, u, y;
 
   d1 = bad + good - sample;
@@ -1133,12 +1141,12 @@ int64_t random_hypergeometric_hyp(bitgen_t *bitgen_state, int64_t good,
   k = sample;
   while (y > 0.0) {
     u = next_double(bitgen_state);
-    y -= (int64_t)floor(u + y / (d1 + k));
+    y -= (RAND_INT_TYPE)floor(u + y / (d1 + k));
     k--;
     if (k == 0)
       break;
   }
-  z = (int64_t)(d2 - y);
+  z = (RAND_INT_TYPE)(d2 - y);
   if (good > bad)
     z = sample - z;
   return z;
@@ -1148,11 +1156,12 @@ int64_t random_hypergeometric_hyp(bitgen_t *bitgen_state, int64_t good,
 /* D2 = 3 - 2*sqrt(3/e) */
 #define D1 1.7155277699214135
 #define D2 0.8989161620588988
-int64_t random_hypergeometric_hrua(bitgen_t *bitgen_state, int64_t good,
-                                   int64_t bad, int64_t sample) {
-  int64_t mingoodbad, maxgoodbad, popsize, m, d9;
+RAND_INT_TYPE random_hypergeometric_hrua(bitgen_t *bitgen_state,
+                                         RAND_INT_TYPE good, RAND_INT_TYPE bad,
+                                         RAND_INT_TYPE sample) {
+  RAND_INT_TYPE mingoodbad, maxgoodbad, popsize, m, d9;
   double d4, d5, d6, d7, d8, d10, d11;
-  int64_t Z;
+  RAND_INT_TYPE Z;
   double T, W, X, Y;
 
   mingoodbad = MIN(good, bad);
@@ -1164,7 +1173,7 @@ int64_t random_hypergeometric_hrua(bitgen_t *bitgen_state, int64_t good,
   d6 = m * d4 + 0.5;
   d7 = sqrt((double)(popsize - m) * sample * d4 * d5 / (popsize - 1) + 0.5);
   d8 = D1 * d7 + D2;
-  d9 = (int64_t)floor((double)(m + 1) * (mingoodbad + 1) / (popsize + 2));
+  d9 = (RAND_INT_TYPE)floor((double)(m + 1) * (mingoodbad + 1) / (popsize + 2));
   d10 = (loggam(d9 + 1) + loggam(mingoodbad - d9 + 1) + loggam(m - d9 + 1) +
          loggam(maxgoodbad - m + d9 + 1));
   d11 = MIN(MIN(m, mingoodbad) + 1.0, floor(d6 + 16 * d7));
@@ -1179,7 +1188,7 @@ int64_t random_hypergeometric_hrua(bitgen_t *bitgen_state, int64_t good,
     if ((W < 0.0) || (W >= d11))
       continue;
 
-    Z = (int64_t)floor(W);
+    Z = (RAND_INT_TYPE)floor(W);
     T = d10 - (loggam(Z + 1) + loggam(mingoodbad - Z + 1) + loggam(m - Z + 1) +
                loggam(maxgoodbad - m + Z + 1));
 
@@ -1208,8 +1217,8 @@ int64_t random_hypergeometric_hrua(bitgen_t *bitgen_state, int64_t good,
 #undef D1
 #undef D2
 
-int64_t random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad,
-                              int64_t sample) {
+RAND_INT_TYPE random_hypergeometric(bitgen_t *bitgen_state, RAND_INT_TYPE good,
+                                    RAND_INT_TYPE bad, RAND_INT_TYPE sample) {
   if (sample > 10) {
     return random_hypergeometric_hrua(bitgen_state, good, bad, sample);
   } else if (sample > 0) {
@@ -1849,11 +1858,12 @@ void random_bounded_bool_fill(bitgen_t *bitgen_state, npy_bool off,
   }
 }
 
-void random_multinomial(bitgen_t *bitgen_state, int64_t n, int64_t *mnix,
-                        double *pix, npy_intp d, binomial_t *binomial) {
+void random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
+                        RAND_INT_TYPE *mnix, double *pix, npy_intp d,
+                        binomial_t *binomial) {
   double remaining_p = 1.0;
   npy_intp j;
-  int64_t dn = n;
+  RAND_INT_TYPE dn = n;
   for (j = 0; j < (d - 1); j++) {
     mnix[j] = random_binomial(bitgen_state, pix[j] / remaining_p, dn, binomial);
     dn = dn - mnix[j];
@@ -1861,8 +1871,8 @@ void random_multinomial(bitgen_t *bitgen_state, int64_t n, int64_t *mnix,
       break;
     }
     remaining_p -= pix[j];
-    if (dn > 0) {
+  }
+  if (dn > 0) {
       mnix[d - 1] = dn;
-    }
   }
 }

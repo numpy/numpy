@@ -84,9 +84,8 @@ def configuration(parent_package='',top_path=None):
         if DEBUG:
             EXTRA_LINK_ARGS += ['-debug']
             EXTRA_COMPILE_ARGS += ["-Zi", "/Od"]
-        if sys.version_info < (3, 0):
-            EXTRA_INCLUDE_DIRS += [join(MOD_DIR, 'src', 'common')]
 
+    LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
     DSFMT_DEFS = [('DSFMT_MEXP', '19937')]
     if USE_SSE2:
         if os.name == 'nt':
@@ -180,7 +179,7 @@ def configuration(parent_package='',top_path=None):
                         extra_compile_args=EXTRA_COMPILE_ARGS,
                         extra_link_args=EXTRA_LINK_ARGS,
                         depends=['mtrand.pyx'],
-                        define_macros=defs + DSFMT_DEFS,
+                        define_macros=defs + DSFMT_DEFS + LEGACY_DEFS,
                         )
     return config
 

@@ -5,7 +5,7 @@ from libc.stdint cimport int64_t
 import numpy as np
 cimport numpy as np
 
-from .distributions cimport bitgen_t
+from .distributions cimport bitgen_t, binomial_t
 
 cdef extern from "distributions-boxmuller.h":
 
@@ -35,6 +35,12 @@ cdef extern from "distributions-boxmuller.h":
     double legacy_wald(aug_bitgen_t *aug_state, double mean, double scale) nogil
     double legacy_lognormal(aug_bitgen_t *aug_state, double mean, double sigma) nogil
     int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) nogil
+    int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad, int64_t sample) nogil
+    int64_t legacy_random_logseries(bitgen_t *bitgen_state, double p) nogil
+    int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) nogil
+    int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) nogil
+    int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) nogil
+    void legacy_random_multinomial(bitgen_t *bitgen_state, long n, long *mnix, double *pix, np.npy_intp d, binomial_t *binomial) nogil
     double legacy_standard_cauchy(aug_bitgen_t *state) nogil
     double legacy_beta(aug_bitgen_t *aug_state, double a, double b) nogil
     double legacy_f(aug_bitgen_t *aug_state, double dfnum, double dfden) nogil

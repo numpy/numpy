@@ -96,6 +96,6 @@ cdef object cont_broadcast_3(void *func, void *state, object size, object lock,
                              np.ndarray c_arr, object c_name, constraint_type c_constraint)
 
 cdef object discrete_broadcast_iii(void *func, void *state, object size, object lock,
-                                  np.ndarray a_arr, object a_name, constraint_type a_constraint,
-                                  np.ndarray b_arr, object b_name, constraint_type b_constraint,
-                                  np.ndarray c_arr, object c_name, constraint_type c_constraint)
+                                   np.ndarray a_arr, object a_name, constraint_type a_constraint,
+                                   np.ndarray b_arr, object b_name, constraint_type b_constraint,
+                                   np.ndarray c_arr, object c_name, constraint_type c_constraint)
