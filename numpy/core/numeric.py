@@ -1623,6 +1623,8 @@ def indices(dimensions, dtype=int, sparse=False):
         Return a sparse representation of the grid instead of a dense
         representation. Default is False.
 
+        .. versionadded:: 1.17
+
     Returns
     -------
     grid : one ndarray or tuple of ndarrays
