@@ -163,7 +163,7 @@ double legacy_standard_t(aug_bitgen_t *aug_state, double df) {
 
 int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) {
   double Y = legacy_gamma(aug_state, n, (1 - p) / p);
-  return random_poisson(aug_state->bit_generator, Y);
+  return (int64_t)random_poisson(aug_state->bit_generator, Y);
 }
 
 double legacy_standard_cauchy(aug_bitgen_t *aug_state) {
@@ -211,4 +211,41 @@ double legacy_f(aug_bitgen_t *aug_state, double dfnum, double dfden) {
 
 double legacy_exponential(aug_bitgen_t *aug_state, double scale) {
   return scale * legacy_standard_exponential(aug_state);
+}
+
+/*
+ * This is a wrapper function that matches the expected template. In the legacy
+ * generator, all int types are long, so this accepts int64 and then converts
+ * them to longs. These values must be in bounds for long and this is checked
+ * outside this function
+ *
+ * The remaining are included for the return type only
+ */
+int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good,
+                                     int64_t bad, int64_t sample) {
+  return (int64_t)random_hypergeometric(bitgen_state, (RAND_INT_TYPE)good,
+                                        (RAND_INT_TYPE)bad,
+                                        (RAND_INT_TYPE)sample);
+}
+
+ int64_t legacy_random_logseries(bitgen_t *bitgen_state, double p) {
+  return (int64_t)random_logseries(bitgen_state, p);
+}
+
+ int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) {
+  return (int64_t)random_poisson(bitgen_state, lam);
+}
+
+ int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) {
+  return (int64_t)random_zipf(bitgen_state, a);
+}
+
+ int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) {
+  return (int64_t)random_geometric(bitgen_state, p);
+}
+
+ void legacy_random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n,
+                               RAND_INT_TYPE *mnix, double *pix, npy_intp d,
+                               binomial_t *binomial) {
+  return random_multinomial(bitgen_state, n, mnix, pix, d, binomial);
 }

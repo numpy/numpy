@@ -182,10 +182,10 @@ class TestIntegers(object):
             lbnd = 0 if dt is bool else np.iinfo(dt).min
             ubnd = 2 if dt is bool else np.iinfo(dt).max + (not endpoint)
 
-            assert_raises(ValueError, self.rfunc, [
-                          lbnd - 1] * 2, [ubnd] * 2, endpoint=endpoint, dtype=dt)
-            assert_raises(ValueError, self.rfunc, [
-                          lbnd] * 2, [ubnd + 1] * 2, endpoint=endpoint, dtype=dt)
+            assert_raises(ValueError, self.rfunc, [lbnd - 1] * 2, [ubnd] * 2,
+                          endpoint=endpoint, dtype=dt)
+            assert_raises(ValueError, self.rfunc, [lbnd] * 2,
+                          [ubnd + 1] * 2, endpoint=endpoint, dtype=dt)
             assert_raises(ValueError, self.rfunc, ubnd, [lbnd] * 2,
                           endpoint=endpoint, dtype=dt)
             assert_raises(ValueError, self.rfunc, [1] * 2, 0,
@@ -1895,7 +1895,7 @@ class TestBroadcast(object):
                              [4, 5, 1, 4, 3, 3]],
                             [[1, 1, 1, 0, 0, 2],
                              [2, 0, 4, 3, 7, 4]],
-                            [[1, 2, 0, 0, 2, 2],
+                            [[1, 2, 0, 0, 2, 0],
                              [3, 2, 3, 4, 2, 6]]], dtype=np.int64)
         assert_array_equal(actual, desired)
 
