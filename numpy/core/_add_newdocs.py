@@ -2614,7 +2614,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argmin',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     """
-    a.argsort(axis=-1, kind='quicksort', order=None)
+    a.argsort(axis=-1, kind=None, order=None)
 
     Returns the indices that would sort this array.
 
@@ -2771,7 +2771,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('choose',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('clip',
     """
-    a.clip(min=None, max=None, out=None)
+    a.clip(min=None, max=None, out=None, **kwargs)
 
     Return an array whose values are limited to ``[min, max]``.
     One of max or min must be given.
@@ -3800,7 +3800,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     """
-    a.sort(axis=-1, kind='quicksort', order=None)
+    a.sort(axis=-1, kind=None, order=None)
 
     Sort an array in-place. Refer to `numpy.sort` for full documentation.
 

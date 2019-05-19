@@ -2399,21 +2399,7 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *min = NULL, *max = NULL;
-    PyArrayObject *out = NULL;
-    static char *kwlist[] = {"min", "max", "out", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO&:clip", kwlist,
-                                     &min,
-                                     &max,
-                                     PyArray_OutputConverter, &out)) {
-        return NULL;
-    }
-    if (max == NULL && min == NULL) {
-        PyErr_SetString(PyExc_ValueError, "One of max or min must be given.");
-        return NULL;
-    }
-    return PyArray_Return((PyArrayObject *)PyArray_Clip(self, min, max, out));
+    NPY_FORWARD_NDARRAY_METHOD("_clip");
 }
 
 

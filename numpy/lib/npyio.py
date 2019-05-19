@@ -1549,7 +1549,8 @@ def fromregex(file, regexp, dtype, encoding=None):
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
                missing_values=None, filling_values=None, usecols=None,
-               names=None, excludelist=None, deletechars=None,
+               names=None, excludelist=None,
+               deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
                invalid_raise=True, max_rows=None, encoding='bytes'):
@@ -1715,6 +1716,16 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data
     array((1, 1.3, b'abcde'),
           dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', 'S5')])
+
+    An example to show comments
+
+    >>> f = StringIO('''
+    ... text,# of chars
+    ... hello world,11
+    ... numpy,5''')
+    >>> np.genfromtxt(f, dtype='S12,S12', delimiter=',')
+    array([(b'text', b''), (b'hello world', b'11'), (b'numpy', b'5')],
+      dtype=[('f0', 'S12'), ('f1', 'S12')])
 
     """
     if max_rows is not None:

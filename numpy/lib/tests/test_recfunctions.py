@@ -243,6 +243,15 @@ class TestRecFunctions(object):
         assert_(dd.base is d)
         assert_(ddd.base is d)
 
+        # including uniform fields with subarrays unpacked
+        d = np.array([(1, [2,  3], [[ 4,  5], [ 6,  7]]),
+                      (8, [9, 10], [[11, 12], [13, 14]])],
+                     dtype=[('x0', 'i4'), ('x1', ('i4', 2)), ('x2', ('i4', (2, 2)))])
+        dd = structured_to_unstructured(d)
+        ddd = unstructured_to_structured(dd, d.dtype)
+        assert_(dd.base is d)
+        assert_(ddd.base is d)
+
         # test that nested fields with identical names don't break anything
         point = np.dtype([('x', int), ('y', int)])
         triangle = np.dtype([('a', point), ('b', point), ('c', point)])

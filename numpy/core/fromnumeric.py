@@ -824,7 +824,7 @@ def _sort_dispatcher(a, axis=None, kind=None, order=None):
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind='quicksort', order=None):
+def sort(a, axis=-1, kind=None, order=None):
     """
     Return a sorted copy of an array.
 
@@ -837,8 +837,8 @@ def sort(a, axis=-1, kind='quicksort', order=None):
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
-        and 'mergesort' use timsort under the covers and, in general, the
-        actual implementation will vary with data type. The 'mergesort' option
+        and 'mergesort' use timsort or radix sort under the covers and, in general,
+        the actual implementation will vary with data type. The 'mergesort' option
         is retained for backwards compatibility.
 
         .. versionchanged:: 1.15.0.
@@ -914,7 +914,8 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 
     'stable' automatically choses the best stable sorting algorithm
     for the data type being sorted. It, along with 'mergesort' is
-    currently mapped to timsort. API forward compatibility currently limits the
+    currently mapped to timsort or radix sort depending on the
+    data type. API forward compatibility currently limits the
     ability to select the implementation and it is hardwired for the different
     data types.
 
@@ -925,7 +926,8 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     mergesort. It is now used for stable sort while quicksort is still the
     default sort if none is chosen. For details of timsort, refer to
     `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
-
+    'mergesort' and 'stable' are mapped to radix sort for integer data types. Radix sort is an
+    O(n) sort instead of O(n log n).
 
     Examples
     --------
@@ -974,7 +976,7 @@ def _argsort_dispatcher(a, axis=None, kind=None, order=None):
 
 
 @array_function_dispatch(_argsort_dispatcher)
-def argsort(a, axis=-1, kind='quicksort', order=None):
+def argsort(a, axis=-1, kind=None, order=None):
     """
     Returns the indices that would sort an array.
 
@@ -997,8 +999,6 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
         .. versionchanged:: 1.15.0.
            The 'stable' option was added.
-
-
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
@@ -1961,12 +1961,12 @@ def compress(condition, a, axis=None, out=None):
     return _wrapfunc(a, 'compress', condition, axis=axis, out=out)
 
 
-def _clip_dispatcher(a, a_min, a_max, out=None):
+def _clip_dispatcher(a, a_min, a_max, out=None, **kwargs):
     return (a, a_min, a_max)
 
 
 @array_function_dispatch(_clip_dispatcher)
-def clip(a, a_min, a_max, out=None):
+def clip(a, a_min, a_max, out=None, **kwargs):
     """
     Clip (limit) the values in an array.
 
@@ -1974,6 +1974,9 @@ def clip(a, a_min, a_max, out=None):
     the interval edges.  For example, if an interval of ``[0, 1]``
     is specified, values smaller than 0 become 0, and values larger
     than 1 become 1.
+
+    Equivalent to but faster than ``np.maximum(a_min, np.minimum(a, a_max))``.
+    No check is performed to ensure ``a_min < a_max``.
 
     Parameters
     ----------
@@ -1992,6 +1995,11 @@ def clip(a, a_min, a_max, out=None):
         The results will be placed in this array. It may be the input
         array for in-place clipping.  `out` must be of the right shape
         to hold the output.  Its type is preserved.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -2020,7 +2028,7 @@ def clip(a, a_min, a_max, out=None):
     array([3, 4, 2, 3, 4, 5, 6, 7, 8, 8])
 
     """
-    return _wrapfunc(a, 'clip', a_min, a_max, out=out)
+    return _wrapfunc(a, 'clip', a_min, a_max, out=out, **kwargs)
 
 
 def _sum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,

@@ -696,6 +696,9 @@ class TestDiff(object):
         assert_raises(np.AxisError, diff, x, axis=3)
         assert_raises(np.AxisError, diff, x, axis=-4)
 
+        x = np.array(1.11111111111, np.float64)
+        assert_raises(ValueError, diff, x)
+
     def test_nd(self):
         x = 20 * rand(10, 20, 30)
         out1 = x[:, :, 1:] - x[:, :, :-1]
@@ -945,7 +948,7 @@ class TestGradient(object):
         assert_equal(type(out), type(x))
         # And make sure that the output and input don't have aliased mask
         # arrays
-        assert_(x.mask is not out.mask)
+        assert_(x._mask is not out._mask)
         # Also check that edge_order=2 doesn't alter the original mask
         x2 = np.ma.arange(5)
         x2[2] = np.ma.masked

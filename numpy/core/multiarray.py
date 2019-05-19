@@ -8,6 +8,7 @@ by importing from the extension module.
 
 import functools
 import warnings
+import sys
 
 from . import overrides
 from . import _multiarray_umath
@@ -1113,7 +1114,7 @@ def putmask(a, mask, values):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
-def packbits(a, axis=None):
+def packbits(a, axis=None, bitorder='big'):
     """
     packbits(a, axis=None)
 
@@ -1129,6 +1130,13 @@ def packbits(a, axis=None):
     axis : int, optional
         The dimension over which bit-packing is done.
         ``None`` implies packing the flattened array.
+    bitorder : {'big', 'little'}, optional
+        The order of the input bits. 'big' will mimic bin(val),
+        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011 => ``, 'little' will
+        reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
+        Defaults to 'big'.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1164,7 +1172,7 @@ def packbits(a, axis=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
-def unpackbits(a, axis=None, count=None):
+def unpackbits(a, axis=None, count=None, bitorder='big'):
     """
     unpackbits(a, axis=None, count=None)
 
@@ -1191,6 +1199,14 @@ def unpackbits(a, axis=None, count=None):
         default). Counts larger than the available number of bits will
         add zero padding to the output. Negative counts must not
         exceed the available number of bits.
+
+        .. versionadded:: 1.17.0
+
+    bitorder : {'big', 'little'}, optional
+        The order of the returned bits. 'big' will mimic bin(val),
+        ``3 = 0b00000011 => [0, 0, 0, 0, 0, 0, 1, 1]``, 'little' will reverse
+        the order to ``[1, 1, 0, 0, 0, 0, 0, 0]``.
+        Defaults to 'big'.
 
         .. versionadded:: 1.17.0
 

@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import inspect
 import sys
+from unittest import mock
 
 import numpy as np
 from numpy.testing import (
@@ -10,7 +11,6 @@ from numpy.core.overrides import (
     _get_implementing_args, array_function_dispatch,
     verify_matching_signatures)
 from numpy.compat import pickle
-import pytest
 
 
 def _return_not_implemented(self, *args, **kwargs):
@@ -190,12 +190,18 @@ class TestNDArrayArrayFunction(object):
         result = np.concatenate((array, override_sub))
         assert_equal(result, expected.view(OverrideSub))
 
+    def test_skip_array_function(self):
+        assert_(dispatched_one_arg.__skip_array_function__
+                is dispatched_one_arg.__wrapped__)
+
     def test_no_wrapper(self):
+        # This shouldn't happen unless a user intentionally calls
+        # __array_function__ with invalid arguments, but check that we raise
+        # an appropriate error all the same.
         array = np.array(1)
-        func = dispatched_one_arg.__wrapped__
-        with assert_raises_regex(AttributeError, '__wrapped__'):
-            array.__array_function__(func=func,
-                                     types=(np.ndarray,),
+        func = dispatched_one_arg.__skip_array_function__
+        with assert_raises_regex(AttributeError, '__skip_array_function__'):
+            array.__array_function__(func=func, types=(np.ndarray,),
                                      args=(array,), kwargs={})
 
 
@@ -378,3 +384,49 @@ class TestNumPyFunctions(object):
             return 'yes'
 
         assert_equal(np.sum(MyArray()), 'yes')
+
+    def test_sum_implementation_on_list(self):
+        assert_equal(np.sum.__skip_array_function__([1, 2, 3]), 6)
+
+    def test_sum_on_mock_array(self):
+
+        # We need a proxy for mocks because __array_function__ is only looked
+        # up in the class dict
+        class ArrayProxy:
+            def __init__(self, value):
+                self.value = value
+            def __array_function__(self, *args, **kwargs):
+                return self.value.__array_function__(*args, **kwargs)
+            def __array__(self, *args, **kwargs):
+                return self.value.__array__(*args, **kwargs)
+
+        proxy = ArrayProxy(mock.Mock(spec=ArrayProxy))
+        proxy.value.__array_function__.return_value = 1
+        result = np.sum(proxy)
+        assert_equal(result, 1)
+        proxy.value.__array_function__.assert_called_once_with(
+            np.sum, (ArrayProxy,), (proxy,), {})
+        proxy.value.__array__.assert_not_called()
+
+        proxy = ArrayProxy(mock.Mock(spec=ArrayProxy))
+        proxy.value.__array__.return_value = np.array(2)
+        result = np.sum.__skip_array_function__(proxy)
+        assert_equal(result, 2)
+        # TODO: switch to proxy.value.__array__.assert_called() and
+        # proxy.value.__array_function__.assert_not_called() once we drop
+        # Python 3.5 support.
+        ((called_method_name, _, _),) = proxy.value.mock_calls
+        assert_equal(called_method_name, '__array__')
+
+    def test_sum_forwarding_implementation(self):
+
+        class MyArray(object):
+
+            def sum(self, axis, out):
+                return 'summed'
+
+            def __array_function__(self, func, types, args, kwargs):
+                return func.__skip_array_function__(*args, **kwargs)
+
+        # note: the internal implementation of np.sum() calls the .sum() method
+        assert_equal(np.sum(MyArray()), 'summed')
