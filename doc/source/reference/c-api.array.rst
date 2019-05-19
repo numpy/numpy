@@ -291,9 +291,14 @@ From scratch
 .. c:function:: PyObject* PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
 
     Create a new uninitialized array of type, *typenum*, whose size in
-    each of *nd* dimensions is given by the integer array, *dims*.
-    This function cannot be used to create a flexible-type array (no
-    itemsize given).
+    each of *nd* dimensions is given by the integer array, *dims*.The memory
+    for the array is uninitialized (unless typenum is :c:data:`NPY_OBJECT`
+    in which case each element in the array is set to NULL). The
+    *typenum* argument allows specification of any of the builtin
+    data-types such as :c:data:`NPY_FLOAT` or :c:data:`NPY_LONG`. The
+    memory for the array can be set to zero if desired using
+    :c:func:`PyArray_FILLWBYTE` (return_object, 0).This function cannot be
+    used to create a flexible-type array (no itemsize given).
 
 .. c:function:: PyObject* PyArray_SimpleNewFromData( \
         int nd, npy_intp* dims, int typenum, void* data)
@@ -302,7 +307,13 @@ From scratch
     pointer. The array flags will have a default that the data area is
     well-behaved and C-style contiguous. The shape of the array is
     given by the *dims* c-array of length *nd*. The data-type of the
-    array is indicated by *typenum*.
+    array is indicated by *typenum*. If data comes from another
+    reference-counted Python object, the reference count on this object
+    should be increased after the pointer is passed in, and the base member
+    of the returned ndarray should point to the Python object that owns
+    the data. This will ensure that the provided memory is not
+    freed while the returned array is in existence. To free memory as soon
+    as the ndarray is deallocated, set the OWNDATA flag on the returned ndarray.
 
 .. c:function:: PyObject* PyArray_SimpleNewFromDescr( \
         int nd, npy_intp* dims, PyArray_Descr* descr)
