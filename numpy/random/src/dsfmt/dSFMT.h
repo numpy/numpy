@@ -41,6 +41,12 @@ extern "C" {
 #include <assert.h>
 #include <stdio.h>
 
+/* Use NumPy config to determine if SSE2 is present */
+#include "numpy/npy_common.h"
+#if defined NPY_HAVE_SSE2_INTRINSICS
+#define HAVE_SSE2 1
+#endif
+
 #if !defined(DSFMT_MEXP)
 #ifdef __GNUC__
 #warning "DSFMT_MEXP is not defined. I assume DSFMT_MEXP is 19937."
