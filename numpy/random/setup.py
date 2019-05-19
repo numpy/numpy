@@ -65,15 +65,6 @@ def configuration(parent_package='',top_path=None):
     ##############################
 
     # Make a guess as to whether SSE2 is present for now, TODO: Improve
-    USE_SSE2 = False
-    for k in platform.uname():
-        for val in ('x86', 'i686', 'i386', 'amd64'):
-            USE_SSE2 = USE_SSE2 or val in k.lower()
-    print('Building with SSE?: {0}'.format(USE_SSE2))
-    if '--no-sse2' in sys.argv:
-        USE_SSE2 = False
-        sys.argv.remove('--no-sse2')
-
     DEBUG = False
     EXTRA_LINK_ARGS = []
     EXTRA_LIBRARIES = ['m'] if os.name != 'nt' else []
@@ -86,15 +77,15 @@ def configuration(parent_package='',top_path=None):
             EXTRA_COMPILE_ARGS += ["-Zi", "/Od"]
 
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
-    DSFMT_DEFS = [('DSFMT_MEXP', '19937')]
-    if USE_SSE2:
-        if os.name == 'nt':
-            EXTRA_COMPILE_ARGS += ['/wd4146', '/GL']
-            if struct.calcsize('P') < 8:
-                EXTRA_COMPILE_ARGS += ['/arch:SSE2']
-        else:
-            EXTRA_COMPILE_ARGS += ['-msse2']
-        DSFMT_DEFS += [('HAVE_SSE2', '1')]
+    DSFMT_DEFS = [('DSFMT_MEXP', '19937'), ("HAVE_NPY_CONFIG_H", "1")]
+    INTEL_LIKE = any([val in k.lower() for k in platform.uname()
+                      for val in ('x86', 'i686', 'i386', 'amd64')])
+    if os.name == 'nt':
+        EXTRA_COMPILE_ARGS += ['/wd4146', '/GL']
+        if struct.calcsize('P') < 8:
+            EXTRA_COMPILE_ARGS += ['/arch:SSE2']
+    elif INTEL_LIKE:
+        EXTRA_COMPILE_ARGS += ['-msse2']
 
     config.add_extension('entropy',
                         sources=['entropy.c', 'src/entropy/entropy.c'],
