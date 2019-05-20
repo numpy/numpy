@@ -80,8 +80,10 @@ array_shape_set(PyArrayObject *self, PyObject *val)
             return -1;
         }
         ((PyArrayObject_fields *)self)->strides = PyArray_DIMS(self) + nd;
-        memcpy(PyArray_DIMS(self), PyArray_DIMS(ret), nd*sizeof(npy_intp));
-        memcpy(PyArray_STRIDES(self), PyArray_STRIDES(ret), nd*sizeof(npy_intp));
+        if (nd) {
+            memcpy(PyArray_DIMS(self), PyArray_DIMS(ret), nd*sizeof(npy_intp));
+            memcpy(PyArray_STRIDES(self), PyArray_STRIDES(ret), nd*sizeof(npy_intp));
+        }
     }
     else {
         ((PyArrayObject_fields *)self)->dimensions = NULL;
@@ -172,7 +174,9 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
                         "compatible with available memory");
         goto fail;
     }
-    memcpy(PyArray_STRIDES(self), newstrides.ptr, sizeof(npy_intp)*newstrides.len);
+    if (newstrides.len) {
+        memcpy(PyArray_STRIDES(self), newstrides.ptr, sizeof(npy_intp)*newstrides.len);
+    }
     PyArray_UpdateFlags(self, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS |
                               NPY_ARRAY_ALIGNED);
     npy_free_cache_dim_obj(newstrides);
@@ -664,8 +668,10 @@ array_struct_get(PyArrayObject *self)
             return PyErr_NoMemory();
         }
         inter->strides = inter->shape + PyArray_NDIM(self);
-        memcpy(inter->shape, PyArray_DIMS(self), sizeof(npy_intp)*PyArray_NDIM(self));
-        memcpy(inter->strides, PyArray_STRIDES(self), sizeof(npy_intp)*PyArray_NDIM(self));
+        if (PyArray_NDIM(self)) {
+            memcpy(inter->shape, PyArray_DIMS(self), sizeof(npy_intp)*PyArray_NDIM(self));
+            memcpy(inter->strides, PyArray_STRIDES(self), sizeof(npy_intp)*PyArray_NDIM(self));
+        }
     }
     else {
         inter->shape = NULL;
