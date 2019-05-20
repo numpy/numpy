@@ -3,13 +3,12 @@ import sys
 from os.path import join
 
 import numpy as np
-from numpy.testing import assert_equal, assert_allclose, assert_array_equal, \
-    assert_raises
+from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
+                           assert_raises)
 import pytest
 
-from numpy.random import Generator, MT19937, DSFMT, ThreeFry32, ThreeFry, \
-    Philox, Xoroshiro128, Xorshift1024, Xoshiro256, \
-    Xoshiro512, RandomState
+from numpy.random import (Generator, MT19937, DSFMT, ThreeFry,
+    Philox, Xoshiro256, Xoshiro512, RandomState)
 from numpy.random.common import interface
 
 try:
@@ -311,21 +310,6 @@ class Base(object):
         assert_state_equal(state, alt_state)
 
 
-class TestXoroshiro128(Base):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = Xoroshiro128
-        cls.bits = 64
-        cls.dtype = np.uint64
-        cls.data1 = cls._read_csv(
-            join(pwd, './data/xoroshiro128-testset-1.csv'))
-        cls.data2 = cls._read_csv(
-            join(pwd, './data/xoroshiro128-testset-2.csv'))
-        cls.seed_error_type = TypeError
-        cls.invalid_seed_types = [('apple',), (2 + 3j,), (3.1,)]
-        cls.invalid_seed_values = [(-2,), (np.empty((2, 2), dtype=np.int64),)]
-
-
 class TestXoshiro256(Base):
     @classmethod
     def setup_class(cls):
@@ -351,21 +335,6 @@ class TestXoshiro512(Base):
             join(pwd, './data/xoshiro512-testset-1.csv'))
         cls.data2 = cls._read_csv(
             join(pwd, './data/xoshiro512-testset-2.csv'))
-        cls.seed_error_type = TypeError
-        cls.invalid_seed_types = [('apple',), (2 + 3j,), (3.1,)]
-        cls.invalid_seed_values = [(-2,), (np.empty((2, 2), dtype=np.int64),)]
-
-
-class TestXorshift1024(Base):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = Xorshift1024
-        cls.bits = 64
-        cls.dtype = np.uint64
-        cls.data1 = cls._read_csv(
-            join(pwd, './data/xorshift1024-testset-1.csv'))
-        cls.data2 = cls._read_csv(
-            join(pwd, './data/xorshift1024-testset-2.csv'))
         cls.seed_error_type = TypeError
         cls.invalid_seed_types = [('apple',), (2 + 3j,), (3.1,)]
         cls.invalid_seed_values = [(-2,), (np.empty((2, 2), dtype=np.int64),)]
@@ -551,24 +520,3 @@ class TestDSFMT(Base):
         assert rs.bit_generator.state['buffer_loc'] != 382
         rs.bit_generator.seed(*self.data1['seed'])
         assert rs.bit_generator.state['buffer_loc'] == 382
-
-
-class TestThreeFry32(Base):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = ThreeFry32
-        cls.bits = 32
-        cls.dtype = np.uint32
-        cls.data1 = cls._read_csv(join(pwd, './data/threefry32-testset-1.csv'))
-        cls.data2 = cls._read_csv(join(pwd, './data/threefry32-testset-2.csv'))
-        cls.seed_error_type = TypeError
-        cls.invalid_seed_types = []
-        cls.invalid_seed_values = [(1, None, 1), (-1,), (2 ** 257 + 1,),
-                                   (None, None, 2 ** 129 + 1)]
-
-    def test_set_key(self):
-        bit_generator = self.bit_generator(*self.data1['seed'])
-        state = bit_generator.state
-        keyed = self.bit_generator(counter=state['state']['counter'],
-                          key=state['state']['key'])
-        assert_state_equal(bit_generator.state, keyed.state)

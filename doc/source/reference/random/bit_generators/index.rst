@@ -22,18 +22,6 @@ Stable RNGs
    MT19937 <mt19937>
    Philox <philox>
    ThreeFry <threefry>
-   XoroShiro128+ <xoroshiro128>
-   Xorshift1024*φ <xorshift1024>
    Xoshiro256** <xoshiro256>
    Xoshiro512** <xoshiro512>
 
-
-Experimental RNGs
-=================
-
-These BitGenerators are currently included but are may not be permanent.
-
-.. toctree::
-   :maxdepth: 1
-
-   ThreeFry32 <threefry32>

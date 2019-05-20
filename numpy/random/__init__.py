@@ -101,9 +101,6 @@ MT19937
 DSFMT
 Philox
 ThreeFry
-ThreeFry32
-Xoroshiro128
-Xoroshift1024
 Xoshiro256
 Xoshiro512
 ============================================= ===
@@ -168,16 +165,12 @@ from .generator import Generator
 from .mt19937 import MT19937
 from .philox import Philox
 from .threefry import ThreeFry
-from .threefry32 import ThreeFry32
-from .xoroshiro128 import Xoroshiro128
-from .xorshift1024 import Xorshift1024
 from .xoshiro256 import Xoshiro256
 from .xoshiro512 import Xoshiro512
 from .mtrand import RandomState
 
 __all__ += ['Generator', 'DSFMT', 'MT19937', 'Philox',
-           'ThreeFry', 'ThreeFry32', 'Xoroshiro128', 'Xorshift1024',
-           'Xoshiro256', 'Xoshiro512', 'RandomState']
+           'ThreeFry', 'Xoshiro256', 'Xoshiro512', 'RandomState']
 
 # Some aliases:
 ranf = random = sample = random_sample
