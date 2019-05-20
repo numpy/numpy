@@ -123,10 +123,7 @@ def configuration(parent_package='',top_path=None):
                         depends=['%s.pyx' % gen],
                         define_macros=defs,
                         )
-    for gen in ['philox', 'threefry', 'threefry32',
-                'xoroshiro128', 'xorshift1024', 'xoshiro256',
-                'xoshiro512',
-               ]:
+    for gen in ['philox', 'threefry', 'xoshiro256', 'xoshiro512']:
         # gen.pyx, src/gen/gen.c
         config.add_extension(gen,
                         sources=['{0}.c'.format(gen), 'src/{0}/{0}.c'.format(gen)],
