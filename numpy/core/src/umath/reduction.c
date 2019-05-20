@@ -54,7 +54,9 @@ allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
 
     /* Build the new strides and shape */
     stride = dtype->elsize;
-    memcpy(shape, arr_shape, ndim * sizeof(shape[0]));
+    if (ndim) {
+        memcpy(shape, arr_shape, ndim * sizeof(shape[0]));
+    }
     for (idim = ndim-1; idim >= 0; --idim) {
         npy_intp i_perm = strideperm[idim].perm;
         if (axis_flags[i_perm]) {
@@ -325,7 +327,9 @@ PyArray_InitializeReduceResult(
      */
     shape = PyArray_SHAPE(op_view);
     nreduce_axes = 0;
-    memcpy(shape_orig, shape, ndim * sizeof(npy_intp));
+    if (ndim) {
+        memcpy(shape_orig, shape, ndim * sizeof(npy_intp));
+    }
     for (idim = 0; idim < ndim; ++idim) {
         if (axis_flags[idim]) {
             if (shape[idim] == 0) {
