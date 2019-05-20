@@ -2145,7 +2145,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         warnings.warn(
             "Calling np.sum(generator) is deprecated, and in the future will give a different result. "
             "Use np.sum(np.fromiter(generator)) or the python sum builtin instead.",
-            DeprecationWarning, stacklevel=2)
+            DeprecationWarning, stacklevel=3)
 
         res = _sum_(a)
         if out is not None:
@@ -3569,5 +3569,5 @@ def rank(a):
     warnings.warn(
         "`rank` is deprecated; use the `ndim` attribute or function instead. "
         "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
-        VisibleDeprecationWarning, stacklevel=2)
+        VisibleDeprecationWarning, stacklevel=3)
     return ndim(a)
