@@ -890,12 +890,12 @@ def qr(a, mode='reduced'):
             msg = "".join((
                     "The 'full' option is deprecated in favor of 'reduced'.\n",
                     "For backward compatibility let mode default."))
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            warnings.warn(msg, DeprecationWarning, stacklevel=3)
             mode = 'reduced'
         elif mode in ('e', 'economic'):
             # 2013-04-01, 1.8
             msg = "The 'economic' option is deprecated."
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            warnings.warn(msg, DeprecationWarning, stacklevel=3)
             mode = 'economic'
         else:
             raise ValueError("Unrecognized mode '%s'" % mode)
@@ -2245,7 +2245,7 @@ def lstsq(a, b, rcond="warn"):
                       "To use the future default and silence this warning "
                       "we advise to pass `rcond=None`, to keep using the old, "
                       "explicitly pass `rcond=-1`.",
-                      FutureWarning, stacklevel=2)
+                      FutureWarning, stacklevel=3)
         rcond = -1
     if rcond is None:
         rcond = finfo(t).eps * max(n, m)
