@@ -164,7 +164,7 @@ run_unary_@isa@_@func@_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps)
 
 #if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
 static NPY_INLINE void
-@ISA@_sincos_FLOAT(npy_float *, npy_float *, const npy_int n, char*);
+@ISA@_sincos_FLOAT(npy_float *, npy_float *, const npy_intp n, char*);
 #endif
 
 /**end repeat**/
