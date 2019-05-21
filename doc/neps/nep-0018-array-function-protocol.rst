@@ -217,8 +217,8 @@ functions without any override checks.
 
 ``__skip_array_function__`` always points back to the original NumPy-array
 specific implementation of a function. These functions do not check for
-``__array_function__`` overrides, and instead usually coerce all of their
-array-like arguments to NumPy arrays.
+``__array_function__`` overrides, either when called directly or internally,
+and instead usually coerce all of their array-like arguments to NumPy arrays.
 
 .. note::
 
@@ -258,8 +258,8 @@ Now, if a NumPy function that isn't explicitly handled is called on
 ``MyArray`` object, the operation will act (almost) as if MyArray's
 ``__array_function__`` method never existed.
 
-Explicitly reusing NumPy's implementation
-'''''''''''''''''''''''''''''''''''''''''
+Explicitly reusing NumPy's coercise implementation
+''''''''''''''''''''''''''''''''''''''''''''''''''
 
 ``__skip_array_function__`` is also convenient for cases where an explicit
 set of NumPy functions should still use NumPy's implementation, by
@@ -276,6 +276,9 @@ lead to infinite recursion). For example, to explicitly reuse NumPy's
             if func is np.array_repr:
                 return np.array_repr.__skip_array_function__(*args, **kwargs)
             ...
+
+This implies that you are happy with ``np.array_repr()`` being defined in an
+equivalent fashion to ``np.array_repr(np.asarray(my_array))``.
 
 Necessary changes within the NumPy codebase itself
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
