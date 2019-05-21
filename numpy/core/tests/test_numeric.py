@@ -2687,17 +2687,14 @@ class TestIndices(object):
         assert_array_equal(x, np.array([[0], [1], [2], [3]]))
         assert_array_equal(y, np.array([[0, 1, 2]]))
 
-    def test_return_type(self):
-        for dtype in (np.int, np.float32, np.float64):
-            for dims in [(), (0,), (4, 3)]:
-                inds = np.indices(dims, dtype=dtype)
+    @pytest.mark.parametrize("dtype", [np.int, np.float32, np.float64])
+    @pytest.mark.parametrize("dims", [(), (0,), (4, 3)])
+    def test_return_type(self, dtype, dims):
+        inds = np.indices(dims, dtype=dtype)
+        assert_(inds.dtype == dtype)
 
-                assert_(inds.dtype == dtype)
-
-                inds = np.indices(dims, dtype=dtype, sparse=True)
-
-                for arr in inds:
-                    assert_(arr.dtype == dtype)
+        for arr in np.indices(dims, dtype=dtype, sparse=True):
+            assert_(arr.dtype == dtype)
 
 
 class TestRequire(object):
