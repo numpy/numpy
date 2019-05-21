@@ -598,7 +598,7 @@ _zerofill(PyArrayObject *ret)
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap)
 {
-    PyObject *base=PyArray_BASE(ap);
+    PyObject *base = PyArray_BASE(ap);
 #if defined(NPY_PY3K)
     Py_buffer view;
 #else
@@ -606,23 +606,38 @@ _IsWriteable(PyArrayObject *ap)
     Py_ssize_t n;
 #endif
 
-    /* If we own our own data, then no-problem */
-    if ((base == NULL) || (PyArray_FLAGS(ap) & NPY_ARRAY_OWNDATA)) {
+    /*
+     * C-data wrapping arrays may not own their data while not having a base;
+     * WRITEBACKIFCOPY arrays have a base, but do own their data.
+     */
+    if (base == NULL || PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA)) {
+        /*
+         * This is somewhat unsafe for directly wrapped non-writable C-arrays,
+         * which do not know whether the memory area is writable or not and
+         * do not own their data (but have no base).
+         * It would be better if this returned PyArray_ISWRITEABLE(ap).
+         * Since it is hard to deprecate, this is deprecated only on the Python
+         * side, but not on in PyArray_UpdateFlags.
+         */
         return NPY_TRUE;
     }
-    /*
-     * Get to the final base object
-     * If it is a writeable array, then return TRUE
-     * If we can find an array object
-     * or a writeable buffer object as the final base object
-     */
 
-    while(PyArray_Check(base)) {
-        if (PyArray_CHKFLAGS((PyArrayObject *)base, NPY_ARRAY_OWNDATA)) {
-            return (npy_bool) (PyArray_ISWRITEABLE((PyArrayObject *)base));
+    /*
+     * Get to the final base object.
+     * If it is a writeable array, then return True if we can
+     * find an array object or a writeable buffer object as
+     * the final base object.
+     */
+    while (PyArray_Check(base)) {
+        ap = (PyArrayObject *)base;
+        base = PyArray_BASE(ap);
+
+        if (base == NULL || PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA)) {
+            return (npy_bool) PyArray_ISWRITEABLE(ap);
         }
-        base = PyArray_BASE((PyArrayObject *)base);
+        assert(!PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA));
     }
+
 #if defined(NPY_PY3K)
     if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         PyErr_Clear();
