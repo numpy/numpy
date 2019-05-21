@@ -94,7 +94,7 @@ def take_along_axis(arr, indices, axis):
 
         Ni, M, Nk = a.shape[:axis], a.shape[axis], a.shape[axis+1:]
         J = indices.shape[axis]  # Need not equal M
-        out = np.empty(Nk + (J,) + Nk)
+        out = np.empty(Ni + (J,) + Nk)
 
         for ii in ndindex(Ni):
             for kk in ndindex(Nk):
