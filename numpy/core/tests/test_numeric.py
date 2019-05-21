@@ -2776,6 +2776,47 @@ def test_outer_out_param():
     assert_equal(np.outer(arr2, arr3, out2), out2)
 
 
+class TestIndices(object):
+
+    def test_simple(self):
+        [x, y] = np.indices((4, 3))
+        assert_array_equal(x, np.array([[0, 0, 0],
+                                        [1, 1, 1],
+                                        [2, 2, 2],
+                                        [3, 3, 3]]))
+        assert_array_equal(y, np.array([[0, 1, 2],
+                                        [0, 1, 2],
+                                        [0, 1, 2],
+                                        [0, 1, 2]]))
+
+    def test_single_input(self):
+        [x] = np.indices((4,))
+        assert_array_equal(x, np.array([0, 1, 2, 3]))
+
+        [x] = np.indices((4,), sparse=True)
+        assert_array_equal(x, np.array([0, 1, 2, 3]))
+
+    def test_scalar_input(self):
+        assert_array_equal([], np.indices(()))
+        assert_array_equal([], np.indices((), sparse=True))
+        assert_array_equal([[]], np.indices((0,)))
+        assert_array_equal([[]], np.indices((0,), sparse=True))
+
+    def test_sparse(self):
+        [x, y] = np.indices((4,3), sparse=True)
+        assert_array_equal(x, np.array([[0], [1], [2], [3]]))
+        assert_array_equal(y, np.array([[0, 1, 2]]))
+
+    @pytest.mark.parametrize("dtype", [np.int, np.float32, np.float64])
+    @pytest.mark.parametrize("dims", [(), (0,), (4, 3)])
+    def test_return_type(self, dtype, dims):
+        inds = np.indices(dims, dtype=dtype)
+        assert_(inds.dtype == dtype)
+
+        for arr in np.indices(dims, dtype=dtype, sparse=True):
+            assert_(arr.dtype == dtype)
+
+
 class TestRequire(object):
     flag_names = ['C', 'C_CONTIGUOUS', 'CONTIGUOUS',
                   'F', 'F_CONTIGUOUS', 'FORTRAN',
@@ -2922,7 +2963,7 @@ class TestTensordot(object):
         td = np.tensordot(a, b, (1, 0))
         assert_array_equal(td, np.dot(a, b))
         assert_array_equal(td, np.einsum('ij,jk', a, b))
-        
+
     def test_zero_dimensional(self):
         # gh-12130
         arr_0d = np.array(1)
