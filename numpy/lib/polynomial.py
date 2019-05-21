@@ -441,6 +441,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     method is recommended for new code as it is more stable numerically. See
     the documentation of the method for more information.
 
+    Note that we generally recommend the very similar function
+    `numpy.polynomial.polynomial.polyfit`, which returns its coefficients in
+    increasing order of degree, and organizes its `full` output differently.
+    Returning the coefficients in decreasing order is an historical accident.
+
     Parameters
     ----------
     x : array_like, shape (M,)
@@ -676,6 +681,12 @@ def polyval(p, x):
     If `x` is a sequence, then `p(x)` is returned for each element of `x`.
     If `x` is another polynomial then the composite polynomial `p(x(t))`
     is returned.
+
+    Note that we generally recommend the very similar function
+    `numpy.polynomial.polynomial.polyval`, which takes its coefficients in
+    the preferred order (increasing degree).
+    Handling coefficients in decreasing order of degree is an historical
+    accident.
 
     Parameters
     ----------

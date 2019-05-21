@@ -662,6 +662,10 @@ def polyval(x, c, tensor=True):
     Trailing zeros in the coefficients will be used in the evaluation, so
     they should be avoided if efficiency is a concern.
 
+    This function is preferred over the very similar `numpy.polyval`, which
+    takes its coefficients in decreasing order of degree due to an historical
+    accident.
+
     Parameters
     ----------
     x : array_like, compatible object
@@ -1204,6 +1208,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     .. math::  p(x) = c_0 + c_1 * x + ... + c_n * x^n,
 
     where `n` is `deg`.
+
+    This function is preferred over the very similar `numpy.polyfit`, which
+    returns its coefficients in decreasing order of degree (due to an historical
+    accident), and organizes its `full` output differently.
 
     Parameters
     ----------
