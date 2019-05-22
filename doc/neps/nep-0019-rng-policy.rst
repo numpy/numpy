@@ -6,6 +6,7 @@ NEP 19 — Random Number Generator Policy
 :Status: Accepted
 :Type: Standards Track
 :Created: 2018-05-24
+:Updated: 2019-05-21
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2018-June/078126.html
 
 Abstract
@@ -91,12 +92,13 @@ those contributors simply walked away.
 Implementation
 --------------
 
-Work on a proposed new pseudorandom number generator (PRNG) subsystem is
-already underway in the randomgen_ project.  The specifics of the new design
-are out of scope for this NEP and up for much discussion, but we will discuss
-general policies that will guide the evolution of whatever code is adopted.  We
-will also outline just a few of the requirements that such a new system must
-have to support the policy proposed in this NEP.
+Work on a proposed new Pseudo Random Number Generator (PRNG) subsystem is
+already underway in the randomgen_
+project.  The specifics of the new design are out of scope for this NEP and up
+for much discussion, but we will discuss general policies that will guide the
+evolution of whatever code is adopted.  We will also outline just a few of the
+requirements that such a new system must have to support the policy proposed in
+this NEP.
 
 First, we will maintain API source compatibility just as we do with the rest of
 ``numpy``.  If we *must* make a breaking change, we will only do so with an
@@ -119,21 +121,22 @@ Gaussian variate generation to the faster `Ziggurat algorithm
 discouraged improvement would be tweaking the Ziggurat tables just a little bit
 for a small performance improvement.
 
-Any new design for the RNG subsystem will provide a choice of different core
+Any new design for the random subsystem will provide a choice of different core
 uniform PRNG algorithms.  A promising design choice is to make these core
 uniform PRNGs their own lightweight objects with a minimal set of methods
 (randomgen_ calls them “BitGenerators”).  The broader set of non-uniform
-distributions will be its own class "Generator" that holds a reference to one
-of these BitGenerator objects and simply delegates to the BitGenerator object
-when it needs uniform random numbers.  To borrow an example from randomgen_, the
+distributions will be its own class that holds a reference to one of these core
+uniform PRNG objects and simply delegates to the core uniform PRNG object when
+it needs uniform random numbers (randomgen_ calls this the Generator).  To
+borrow an example from randomgen_, the
 class ``MT19937`` is a BitGenerator that implements the classic Mersenne Twister
 algorithm.  The class ``Generator`` wraps around the BitGenerator to provide
 all of the non-uniform distribution methods::
 
     # This is not the only way to instantiate this object.
     # This is just handy for demonstrating the delegation.
-    >>> brng = MT19937(seed)
-    >>> rg = Generator(brng)
+    >>> bg = MT19937(seed)
+    >>> rg = Generator(bg)
     >>> x = rg.standard_normal(10)
 
 We will be more strict about a select subset of methods on these BitGenerator
@@ -143,14 +146,14 @@ distributions and which are needed to abstract over the implementation details
 of the variety of BitGenerator algorithms.  Namely,
 
     * ``.bytes()``
-    * ``.integers()`` (which replaces ``randint`` and ``random_integers``
-    * ``.random()`` (which replaces ``.random_sample()``
+    * ``integers()`` (formerly ``.random_integers()``)
+    * ``random()`` (formerly ``.random_sample()``)
 
 The distributions class (``Generator``) SHOULD have all of the same
 distribution methods as ``RandomState`` with close-enough function signatures
 such that almost all code that currently works with ``RandomState`` instances
-will work with ``Generator`` instances (ignoring the precise stream values).
-Some variance will be allowed for integer distributions: in order to
+will work with ``Generator`` instances (ignoring the precise stream
+values).  Some variance will be allowed for integer distributions: in order to
 avoid some of the cross-platform problems described above, these SHOULD be
 rewritten to work with ``uint64`` numbers on all platforms.
 
@@ -185,12 +188,13 @@ This legacy distributions class MUST be accessible under the name
 instantiating ``numpy.random.RandomState`` with a given state should
 instantiate the Mersenne Twister BitGenerator with the same state.  The legacy
 distributions class MUST be capable of accepting other BitGenerators.  The
-purpose here is to ensure that one can write a program with a consistent
-BitGenerator state with a mixture of libraries that may or may not have
-upgraded from ``RandomState``.  Instances of the legacy distributions class
-MUST respond ``True`` to ``isinstance(rg, numpy.random.RandomState)`` because
-there is current utility code that relies on that check.  Similarly, old
-pickles of ``numpy.random.RandomState`` instances MUST unpickle correctly.
+purpose
+here is to ensure that one can write a program with a consistent BitGenerator
+state with a mixture of libraries that may or may not have upgraded from
+``RandomState``.  Instances of the legacy distributions class MUST respond
+``True`` to ``isinstance(rg, numpy.random.RandomState)`` because there is
+current utility code that relies on that check.  Similarly, old pickles of
+``numpy.random.RandomState`` instances MUST unpickle correctly.
 
 
 ``numpy.random.*``
@@ -209,7 +213,8 @@ consistently and usefully, but a very common usage is in unit tests where many
 of the problems of global state are less likely.
 
 This NEP does not propose removing these functions or changing them to use the
-less-stable ``Generator`` distribution implementations.  Future NEPs might.
+less-stable ``Generator`` distribution implementations.  Future NEPs
+might.
 
 Specifically, the initial release of the new PRNG subsystem SHALL leave these
 convenience functions as aliases to the methods on a global ``RandomState``
@@ -224,11 +229,11 @@ BitGenerator underneath the global ``RandomState`` with any other BitGenerator
 object (we leave the precise API details up to the new subsystem).  Calling
 ``numpy.random.seed()`` thereafter SHOULD just pass the given seed to the
 current BitGenerator object and not attempt to reset the BitGenerator to the
-Mersenne Twister.  The set of ``numpy.random.*`` convenience functions SHALL remain the
-same as they currently are.  They SHALL be aliases to the ``RandomState``
-methods and not the new less-stable distributions class (``Generator``, in the
-examples above). Users who want to get the fastest, best distributions can
-follow best practices and instantiate Generator objects explicitly.
+Mersenne Twister.  The set of ``numpy.random.*`` convenience functions SHALL
+remain the same as they currently are.  They SHALL be aliases to the
+``RandomState`` methods and not the new less-stable distributions class
+(``Generator``, in the examples above). Users who want to get the fastest, best
+distributions can follow best practices and instantiate generator objects explicitly.
 
 This NEP does not propose that these requirements remain in perpetuity.  After
 we have experience with the new PRNG subsystem, we can and should revisit these
@@ -309,7 +314,7 @@ The current proposal solves all of these problems.  All current usages of
 discouraged through documentation.  Unit tests can continue to use the full
 complement of ``RandomState`` methods.  Mixed ``RandomState/Generator``
 code can safely share the common BitGenerator state.  Unmodified ``RandomState``
-code can make use of the new features of alternative BitGenerators like settable
+code can make use of the new features of alternative BitGenerator-like settable
 streams.
 
 

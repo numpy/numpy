@@ -94,7 +94,7 @@ def take_along_axis(arr, indices, axis):
 
         Ni, M, Nk = a.shape[:axis], a.shape[axis], a.shape[axis+1:]
         J = indices.shape[axis]  # Need not equal M
-        out = np.empty(Nk + (J,) + Nk)
+        out = np.empty(Ni + (J,) + Nk)
 
         for ii in ndindex(Ni):
             for kk in ndindex(Nk):
@@ -578,7 +578,7 @@ def expand_dims(a, axis):
         # 2017-05-17, 1.13.0
         warnings.warn("Both axis > a.ndim and axis < -a.ndim - 1 are "
                       "deprecated and will raise an AxisError in the future.",
-                      DeprecationWarning, stacklevel=2)
+                      DeprecationWarning, stacklevel=3)
     # When the deprecation period expires, delete this if block,
     if axis < 0:
         axis = axis + a.ndim + 1

@@ -33,6 +33,16 @@ The internal use of these functions has been refactored and there are better
 alternatives. Relace ``exec_command`` with `subprocess.Popen` and
 ``temp_file_name`` with `tempfile.mkstemp`.
 
+Writeable flag of C-API wrapped arrays
+--------------------------------------
+When an array is created from the C-API to wrap a pointer to data, the only
+indication we have of the read-write nature of the data is the ``writeable``
+flag set during creation. It is dangerous to force the flag to writeable.
+In the future it will not be possible to switch the writeable flag to ``True``
+from python.
+This deprecation should not affect many users since arrays created in such
+a manner are very rare in practice and only available through the NumPy C-API.
+
 
 Future Changes
 ==============
