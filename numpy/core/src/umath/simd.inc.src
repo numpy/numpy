@@ -164,8 +164,22 @@ run_unary_@isa@_@func@_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps)
 
 #if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
 static NPY_INLINE void
-@ISA@_sincos_FLOAT(npy_float *, npy_float *, const npy_intp n, char*);
+@ISA@_sincos_FLOAT(npy_float *, npy_float *, const npy_intp n, const npy_intp steps, char*);
 #endif
+
+static NPY_INLINE int
+run_unary_@isa@_sincos_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps, char* mychar)
+{
+#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+    if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
+        @ISA@_sincos_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0], steps[0], mychar);
+        return 1;
+    }
+    else
+        return 0;
+#endif
+    return 0;
+}
 
 /**end repeat**/
 
@@ -1473,9 +1487,13 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
 
 #if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS
 static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
-@ISA@_sincos_FLOAT(npy_float * op, npy_float * ip, const npy_intp array_size,
-                                                   char* operation)
+@ISA@_sincos_FLOAT(npy_float * op,
+                   npy_float * ip,
+                   const npy_intp array_size,
+                   const npy_intp steps,
+                   char* operation)
 {
+    const npy_intp stride = steps/sizeof(npy_float);
     const npy_int num_lanes = @BYTES@/sizeof(npy_float);
     npy_int compute_cos = 1;
     npy_float large_number = 71476.0625f;
@@ -1508,13 +1526,26 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
     @mask@ nan_mask, glibc_mask, sine_mask, negate_mask;
     @mask@ load_mask = @isa@_get_full_load_mask();
     npy_intp num_remaining_elements = array_size;
+    npy_int indexarr[16];
+    for (npy_int ii = 0; ii < 16; ii++) {
+        indexarr[ii] = ii*stride;
+    }
+    @vtype@i vindex = _mm@vsize@_loadu_si@vsize@((@vtype@i*)&indexarr[0]);
 
     while (num_remaining_elements > 0) {
 
-        if (num_remaining_elements < num_lanes)
+        if (num_remaining_elements < num_lanes) {
             load_mask = @isa@_get_partial_load_mask(num_remaining_elements,
                                                          num_lanes);
-        @vtype@ x  = @isa@_masked_load(load_mask, ip);
+        }
+
+        @vtype@ x;
+        if (stride == 1) {
+            x = @isa@_masked_load(load_mask, ip);
+        }
+        else {
+            x = @isa@_masked_gather(zero_f, ip, vindex, load_mask);
+        }
 
         /*
          * For elements outside of this range, Cody-Waite's range reduction
@@ -1565,19 +1596,21 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         /* process elements using glibc for large elements */
         if (compute_cos) {
             for (int ii = 0; iglibc_mask != 0; ii++) {
-                if (iglibc_mask & 0x01)
+                if (iglibc_mask & 0x01) {
                     op[ii] = npy_cosf(ip[ii]);
+                }
                 iglibc_mask  = iglibc_mask >> 1;
             }
         }
         else {
             for (int ii = 0; iglibc_mask != 0; ii++) {
-                if (iglibc_mask & 0x01)
+                if (iglibc_mask & 0x01) {
                     op[ii] = npy_sinf(ip[ii]);
+                }
                 iglibc_mask  = iglibc_mask >> 1;
             }
         }
-        ip += num_lanes;
+        ip += num_lanes*stride;
         op += num_lanes;
         num_remaining_elements -= num_lanes;
     }
