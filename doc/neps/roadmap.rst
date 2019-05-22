@@ -55,11 +55,8 @@ We want to further improve NumPy's performance, through:
 - Optimizations in individual functions.
 
 Furthermore we would like to improve the benchmarking system, in terms of coverage,
-easy of use, and publication of the results as part of the docs or website:
-
-- Hardware: find a machine that can reliably run serial benchmarks
-- ASV produces graphs, could we set up a site? Currently at
-  https://pv.github.io/numpy-bench/, should that become a community resource?
+easy of use, and publication of the results (now
+`here <https://pv.github.io/numpy-bench>`__) as part of the docs or website.
 
 Website and documentation
 -------------------------
@@ -105,7 +102,7 @@ Other functionality
 - A backend system for ``numpy.fft`` (so that e.g. ``fft-mkl`` doesn't need to monkeypatch numpy)
 - Write a strategy on how to deal with overlap between NumPy and SciPy for ``linalg``
   and ``fft`` (and implement it).
-- Deprecate ``np.matrix``
+- Deprecate ``np.matrix`` (very slowly)
 
 
 .. _`NEP 19`: https://www.numpy.org/neps/nep-0019-rng-policy.html
