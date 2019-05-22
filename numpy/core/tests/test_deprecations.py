@@ -10,11 +10,15 @@ import sys
 import operator
 import warnings
 import pytest
+import shutil
+import tempfile
 
 import numpy as np
 from numpy.testing import (
-    assert_raises, assert_warns, assert_
+    assert_raises, assert_warns, assert_, assert_array_equal
     )
+
+from numpy.core._multiarray_tests import fromstring_null_term_c_api
 
 try:
     import pytz
@@ -514,10 +518,64 @@ class TestPositiveOnNonNumerical(_DeprecationTestCase):
     def test_positive_on_non_number(self):
         self.assert_deprecated(operator.pos, args=(np.array('foo'),))
 
+
 class TestFromstring(_DeprecationTestCase):
     # 2017-10-19, 1.14
     def test_fromstring(self):
         self.assert_deprecated(np.fromstring, args=('\x00'*80,))
+
+
+class TestFromStringAndFileInvalidData(_DeprecationTestCase):
+    # 2019-06-08, 1.17.0
+    # Tests should be moved to real tests when deprecation is done.
+    message = "string or file could not be read to its end"
+
+    @pytest.mark.parametrize("invalid_str", [",invalid_data", "invalid_sep"])
+    def test_deprecate_unparsable_data_file(self, invalid_str):
+        x = np.array([1.51, 2, 3.51, 4], dtype=float)
+
+        with tempfile.TemporaryFile(mode="w") as f:
+            x.tofile(f, sep=',', format='%.2f')
+            f.write(invalid_str)
+
+            f.seek(0)
+            self.assert_deprecated(lambda: np.fromfile(f, sep=","))
+            f.seek(0)
+            self.assert_deprecated(lambda: np.fromfile(f, sep=",", count=5))
+            # Should not raise:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", DeprecationWarning)
+                f.seek(0)
+                res = np.fromfile(f, sep=",", count=4)
+                assert_array_equal(res, x)
+
+    @pytest.mark.parametrize("invalid_str", [",invalid_data", "invalid_sep"])
+    def test_deprecate_unparsable_string(self, invalid_str):
+        x = np.array([1.51, 2, 3.51, 4], dtype=float)
+        x_str = "1.51,2,3.51,4{}".format(invalid_str)
+
+        self.assert_deprecated(lambda: np.fromstring(x_str, sep=","))
+        self.assert_deprecated(lambda: np.fromstring(x_str, sep=",", count=5))
+
+        # The C-level API can use not fixed size, but 0 terminated strings,
+        # so test that as well:
+        bytestr = x_str.encode("ascii")
+        self.assert_deprecated(lambda: fromstring_null_term_c_api(bytestr))
+
+        with assert_warns(DeprecationWarning):
+            # this is slightly strange, in that fromstring leaves data
+            # potentially uninitialized (would be good to error when all is
+            # read, but count is larger then actual data maybe).
+            res = np.fromstring(x_str, sep=",", count=5)
+            assert_array_equal(res[:-1], x)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+
+            # Should not raise:
+            res = np.fromstring(x_str, sep=",", count=4)
+            assert_array_equal(res, x)
+
 
 class Test_GetSet_NumericOps(_DeprecationTestCase):
     # 2018-09-20, 1.16.0

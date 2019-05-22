@@ -593,6 +593,25 @@ fail:
     return NULL;
 }
 
+/*
+ * Helper to test fromstring of 0 terminated strings, as the C-API supports
+ * the -1 length identifier.
+ */
+static PyObject *
+fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
+{
+    char *string;
+
+    string = PyBytes_AsString(byte_obj);
+    if (string == NULL) {
+        return NULL;
+    }
+
+    return PyArray_FromString(
+                    string, -1, PyArray_DescrFromType(NPY_FLOAT64), -1, " ");
+}
+
+
 /* check no elison for avoided increfs */
 static PyObject *
 incref_elide(PyObject *dummy, PyObject *args)
@@ -1927,6 +1946,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_inplace_increment",
         inplace_increment,
         METH_VARARGS, NULL},
+    {"fromstring_null_term_c_api",
+        fromstring_null_term_c_api,
+        METH_O, NULL},
     {"incref_elide",
         incref_elide,
         METH_VARARGS, NULL},
