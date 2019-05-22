@@ -1513,7 +1513,8 @@ class TestRegression(object):
 
     def test_fromstring_crash(self):
         # Ticket #1345: the following should not cause a crash
-        np.fromstring(b'aa, aa, 1.0', sep=',')
+        with assert_warns(DeprecationWarning):
+            np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):
         dtypes = [x for x in np.typeDict.values()

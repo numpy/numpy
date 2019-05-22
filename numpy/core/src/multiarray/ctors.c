@@ -40,8 +40,30 @@
  * regards to the handling of text representations.
  */
 
+/*
+ * Scanning function for next element parsing and seperator skipping.
+ * These functions return:
+ *   - 0 to indicate more data to read
+ *   - -1 when reading stopped at the end of the string/file
+ *   - -2 when reading stopped before the end was reached.
+ *
+ * The dtype specific parsing functions may set the python error state
+ * (they have to get the GIL first) additionally.
+ */
 typedef int (*next_element)(void **, void *, PyArray_Descr *, void *);
 typedef int (*skip_separator)(void **, const char *, void *);
+
+
+static npy_bool
+string_is_fully_read(char const* start, char const* end) {
+    if (end == NULL) {
+        return *start == '\0';  /* null terminated */
+    }
+    else {
+        return start >= end;  /* fixed length */
+    }
+}
+
 
 static int
 fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
@@ -50,19 +72,23 @@ fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
     char *e = *s;
     int r = dtype->f->fromstr(*s, dptr, &e, dtype);
     /*
-     * fromstr always returns 0 for basic dtypes
-     * s points to the end of the parsed string
-     * if an error occurs s is not changed
+     * fromstr always returns 0 for basic dtypes; s points to the end of the
+     * parsed string. If s is not changed an error occurred or the end was
+     * reached.
      */
-    if (*s == e) {
-        /* Nothing read */
-        return -1;
+    if (*s == e || r < 0) {
+        /* Nothing read, could be end of string or an error (or both) */
+        if (string_is_fully_read(*s, end)) {
+            return -1;
+        }
+        return -2;
     }
     *s = e;
     if (end != NULL && *s > end) {
+        /* Stop the iteration if we read far enough */
         return -1;
     }
-    return r;
+    return 0;
 }
 
 static int
@@ -75,8 +101,12 @@ fromfile_next_element(FILE **fp, void *dptr, PyArray_Descr *dtype,
     if (r == 1) {
         return 0;
     }
-    else {
+    else if (r == EOF) {
         return -1;
+    }
+    else {
+        /* unable to read more, but EOF not reached indicating an error. */
+        return -2;
     }
 }
 
@@ -143,9 +173,10 @@ fromstr_skip_separator(char **s, const char *sep, const char *end)
 {
     char *string = *s;
     int result = 0;
+
     while (1) {
         char c = *string;
-        if (c == '\0' || (end != NULL && string >= end)) {
+        if (string_is_fully_read(string, end)) {
             result = -1;
             break;
         }
@@ -3625,6 +3656,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     npy_intp i;
     char *dptr, *clean_sep, *tmp;
     int err = 0;
+    int stop_reading_flag;  /* -1 indicates end reached; -2 a parsing error */
     npy_intp thisbuf = 0;
     npy_intp size;
     npy_intp bytes, totalbytes;
@@ -3652,9 +3684,9 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     NPY_BEGIN_ALLOW_THREADS;
     totalbytes = bytes = size * dtype->elsize;
     dptr = PyArray_DATA(r);
-    for (i= 0; num < 0 || i < num; i++) {
-        if (next(&stream, dptr, dtype, stream_data) < 0) {
-            /* EOF */
+    for (i = 0; num < 0 || i < num; i++) {
+        stop_reading_flag = next(&stream, dptr, dtype, stream_data);
+        if (stop_reading_flag < 0) {
             break;
         }
         *nread += 1;
@@ -3671,7 +3703,12 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
             dptr = tmp + (totalbytes - bytes);
             thisbuf = 0;
         }
-        if (skip_sep(&stream, clean_sep, stream_data) < 0) {
+        stop_reading_flag = skip_sep(&stream, clean_sep, stream_data);
+        if (stop_reading_flag < 0) {
+            if (num == i + 1) {
+                /* if we read as much as requested sep is optional */
+                stop_reading_flag = -1;
+            }
             break;
         }
     }
@@ -3690,6 +3727,21 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
         }
     }
     NPY_END_ALLOW_THREADS;
+
+    if (stop_reading_flag == -2) {
+        if (PyErr_Occurred()) {
+            /* If an error is already set (unlikely), do not create new one */
+            Py_DECREF(r);
+            return NULL;
+        }
+        /* 2019-09-12, NumPy 1.18 */
+        if (DEPRECATE(
+                "string or file could not be read to its end due to unmatched "
+                "data; this will raise a ValueError in the future.") < 0) {
+            goto fail;
+        }
+    }
+
     free(clean_sep);
 
 fail:

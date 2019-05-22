@@ -4958,7 +4958,8 @@ class TestIO(object):
         self._check_from(b'1,2,3,4', [1., 2., 3., 4.], dtype=float, sep=',')
 
     def test_malformed(self):
-        self._check_from(b'1.234 1,234', [1.234, 1.], sep=' ')
+        with assert_warns(DeprecationWarning):
+            self._check_from(b'1.234 1,234', [1.234, 1.], sep=' ')
 
     def test_long_sep(self):
         self._check_from(b'1_x_3_x_4_x_5', [1, 3, 4, 5], sep='_x_')
