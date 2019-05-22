@@ -1610,8 +1610,8 @@ FLOAT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSE
 /**end repeat**/
 
 /**begin repeat
- * #isa = avx512f, avx2#
- * #ISA = AVX512F, AVX2#
+ * #isa = avx512f, fma#
+ * #ISA = AVX512F, FMA#
  * #CHK = HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS, HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS#
  */
 

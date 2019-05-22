@@ -184,7 +184,7 @@ NPY_NO_EXPORT void
 FLOAT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 /**begin repeat1
- * #isa = avx512f, avx2#
+ * #isa = avx512f, fma#
  */
 
 NPY_NO_EXPORT void

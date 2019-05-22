@@ -44,9 +44,13 @@
 #else
 #define NPY_GCC_TARGET_AVX
 #endif
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS
+#define HAVE_ATTRIBUTE_TARGET_FMA
+#define NPY_GCC_TARGET_FMA __attribute__((target("avx2,fma")))
+#endif
+
 #if defined HAVE_ATTRIBUTE_TARGET_AVX2 && defined HAVE_LINK_AVX2
-#define NPY_GCC_TARGET_AVX2 __attribute__((target("avx2")))
-#elif defined HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS
 #define NPY_GCC_TARGET_AVX2 __attribute__((target("avx2")))
 #else
 #define NPY_GCC_TARGET_AVX2

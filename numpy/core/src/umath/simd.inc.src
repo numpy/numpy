@@ -130,8 +130,9 @@ abs_ptrdiff(char *a, char *b)
  */
 
 /**begin repeat
- * #ISA = AVX2, AVX512F#
- * #isa = avx2, avx512f#
+ * #ISA = FMA, AVX512F#
+ * #isa = fma, avx512f#
+ * #CHK = HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS, HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS#
  * #REGISTER_SIZE = 32, 64#
  */
 
@@ -141,7 +142,7 @@ abs_ptrdiff(char *a, char *b)
  * #func = exp, log#
  */
 
-#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
 static NPY_INLINE void
 @ISA@_@func@_FLOAT(npy_float *, npy_float *, const npy_intp n, const npy_intp stride);
 #endif
@@ -149,7 +150,7 @@ static NPY_INLINE void
 static NPY_INLINE int
 run_unary_@isa@_@func@_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps)
 {
-#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
         @ISA@_@func@_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0], steps[0]);
         return 1;
@@ -162,7 +163,7 @@ run_unary_@isa@_@func@_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps)
 
 /**end repeat1**/
 
-#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
 static NPY_INLINE void
 @ISA@_sincos_FLOAT(npy_float *, npy_float *, const npy_intp n, const npy_intp steps, char*);
 #endif
@@ -170,7 +171,7 @@ static NPY_INLINE void
 static NPY_INLINE int
 run_unary_@isa@_sincos_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps, char* mychar)
 {
-#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS
+#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
         @ISA@_sincos_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0], steps[0], mychar);
         return 1;
@@ -1142,20 +1143,14 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
 /* bunch of helper functions used in ISA_exp/log_FLOAT*/
 
 #if defined HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_fmadd(__m256 a, __m256 b, __m256 c)
-{
-    return _mm256_add_ps(_mm256_mul_ps(a, b), c);
-}
-
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_get_full_load_mask(void)
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+fma_get_full_load_mask(void)
 {
     return _mm256_set1_ps(-1.0);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_get_partial_load_mask(const npy_int num_lanes, const npy_int total_elem)
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+fma_get_partial_load_mask(const npy_int num_lanes, const npy_int total_elem)
 {
     float maskint[16] = {-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,
                             1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0};
@@ -1163,8 +1158,8 @@ avx2_get_partial_load_mask(const npy_int num_lanes, const npy_int total_elem)
     return _mm256_loadu_ps(addr);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_masked_gather(__m256 src,
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+fma_masked_gather(__m256 src,
                    npy_float* addr,
                    __m256i vindex,
                    __m256 mask)
@@ -1172,39 +1167,39 @@ avx2_masked_gather(__m256 src,
     return _mm256_mask_i32gather_ps(src, addr, vindex, mask, 4);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_masked_load(__m256 mask, npy_float* addr)
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+fma_masked_load(__m256 mask, npy_float* addr)
 {
     return _mm256_maskload_ps(addr, _mm256_cvtps_epi32(mask));
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_set_masked_lanes(__m256 x, __m256 val, __m256 mask)
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+fma_set_masked_lanes(__m256 x, __m256 val, __m256 mask)
 {
     return _mm256_blendv_ps(x, val, mask);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_blend(__m256 x, __m256 y, __m256 ymask)
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+fma_blend(__m256 x, __m256 y, __m256 ymask)
 {
     return _mm256_blendv_ps(x, y, ymask);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_should_calculate_sine(__m256i k, __m256i andop, __m256i cmp)
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+fma_should_calculate_sine(__m256i k, __m256i andop, __m256i cmp)
 {
    return _mm256_cvtepi32_ps(
                 _mm256_cmpeq_epi32(_mm256_and_si256(k, andop), cmp));
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_should_negate(__m256i k, __m256i andop, __m256i cmp)
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+fma_should_negate(__m256i k, __m256i andop, __m256i cmp)
 {
-    return avx2_should_calculate_sine(k, andop, cmp);
+    return fma_should_calculate_sine(k, andop, cmp);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_get_exponent(__m256 x)
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+fma_get_exponent(__m256 x)
 {
     /*
      * Special handling of denormals:
@@ -1230,8 +1225,8 @@ avx2_get_exponent(__m256 x)
     return _mm256_blendv_ps(exp, denorm_exp, denormal_mask);
 }
 
-static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_get_mantissa(__m256 x)
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_FMA __m256
+fma_get_mantissa(__m256 x)
 {
     /*
      * Special handling of denormals:
@@ -1369,17 +1364,18 @@ avx512_scalef_ps(__m512 poly, __m512 quadrant)
 #endif
 
 /**begin repeat
- * #ISA = AVX2, AVX512F#
- * #isa = avx2, avx512#
+ * #ISA = FMA, AVX512F#
+ * #isa = fma, avx512#
  * #vtype = __m256, __m512#
  * #vsize = 256, 512#
  * #or = or_ps, kor#
  * #vsub = , _mask#
  * #mask = __m256, __mmask16#
- * #fmadd = avx2_fmadd,_mm512_fmadd_ps#
+ * #fmadd = _mm256_fmadd_ps, _mm512_fmadd_ps#
+ * #CHK = HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS, HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS#
  **/
 
-#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS
+#if defined @CHK@
 
 /*
  * Vectorized Cody-Waite range reduction technique
@@ -1446,8 +1442,8 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
 /**end repeat**/
 
 /**begin repeat
- * #ISA = AVX2, AVX512F#
- * #isa = avx2, avx512#
+ * #ISA = FMA, AVX512F#
+ * #isa = fma, avx512#
  * #vtype = __m256, __m512#
  * #vsize = 256, 512#
  * #BYTES = 32, 64#
@@ -1456,11 +1452,12 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
  * #or_masks =_mm256_or_ps, _mm512_kor#
  * #and_masks =_mm256_and_ps, _mm512_kand#
  * #xor_masks =_mm256_xor_ps, _mm512_kxor#
- * #fmadd = avx2_fmadd,_mm512_fmadd_ps#
+ * #fmadd = _mm256_fmadd_ps, _mm512_fmadd_ps#
  * #mask_to_int = _mm256_movemask_ps, #
  * #full_mask= 0xFF, 0xFFFF#
  * #masked_store = _mm256_maskstore_ps, _mm512_mask_storeu_ps#
  * #cvtps_epi32 = _mm256_cvtps_epi32, #
+ * #CHK = HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS, HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS#
  */
 
 
@@ -1485,7 +1482,7 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@
  * performance.
  */
 
-#if defined HAVE_ATTRIBUTE_TARGET_@ISA@_WITH_INTRINSICS
+#if defined @CHK@
 static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
 @ISA@_sincos_FLOAT(npy_float * op,
                    npy_float * ip,
