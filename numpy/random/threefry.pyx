@@ -11,6 +11,8 @@ from .common cimport *
 from .distributions cimport bitgen_t
 from .entropy import random_entropy, seed_by_array
 
+__all__ = ['ThreeFry']
+
 np.import_array()
 
 DEF THREEFRY_BUFFER_SIZE=4
@@ -73,6 +75,14 @@ cdef class ThreeFry:
         another RNG before use, the value in key is directly set. Can be either
         a Python int in [0, 2**256) or a 4-element uint64 array.
         key and seed cannot both be used.
+
+    Attributes
+    ----------
+    lock: threading.Lock
+        Lock instance that is shared so that the same bit git generator can
+        be used in multiple Generators without corrupting the state. Code that
+        generates values from a bit generator should hold the bit generator's
+        lock.
 
     Notes
     -----

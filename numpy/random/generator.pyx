@@ -19,6 +19,18 @@ from .bounded_integers cimport *
 from .common cimport *
 from .distributions cimport *
 
+
+__all__ = ['Generator', 'beta', 'binomial', 'bytes', 'chisquare', 'choice',
+           'dirichlet', 'exponential', 'f', 'gamma',
+           'geometric', 'gumbel', 'hypergeometric', 'integers', 'laplace',
+           'logistic', 'lognormal', 'logseries', 'multinomial',
+           'multivariate_normal', 'negative_binomial', 'noncentral_chisquare',
+           'noncentral_f', 'normal', 'pareto', 'permutation',
+           'poisson', 'power', 'random',  'rayleigh', 'shuffle',
+           'standard_cauchy', 'standard_exponential', 'standard_gamma',
+           'standard_normal', 'standard_t', 'triangular',
+           'uniform', 'vonmises', 'wald', 'weibull', 'zipf']
+
 np.import_array()
 
 

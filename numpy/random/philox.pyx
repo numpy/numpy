@@ -11,6 +11,8 @@ from .common cimport *
 from .distributions cimport bitgen_t
 from .entropy import random_entropy, seed_by_array
 
+__all__ = ['Philox']
+
 np.import_array()
 
 DEF PHILOX_BUFFER_SIZE=4
@@ -77,6 +79,14 @@ cdef class Philox:
         another RNG before use, the value in key is directly set. Can be either
         a Python int (long in 2.x) in [0, 2**128) or a 2-element uint64 array.
         key and seed cannot both be used.
+
+    Attributes
+    ----------
+    lock: threading.Lock
+        Lock instance that is shared so that the same bit git generator can
+        be used in multiple Generators without corrupting the state. Code that
+        generates values from a bit generator should hold the bit generator's
+        lock.
 
     Notes
     -----

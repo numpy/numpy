@@ -8,6 +8,8 @@ cimport numpy as np
 
 from .common cimport *
 
+__all__ = ['interface']
+
 np.import_array()
 
 interface = namedtuple('interface', ['state_address', 'state', 'next_uint64',
@@ -929,7 +931,6 @@ cdef object cont_f(void *func, bitgen_t *state, object size, object lock,
     cdef int requirements = np.NPY_ALIGNED | np.NPY_FORCECAST
     check_output(out, np.float32, size)
     a_arr = <np.ndarray>np.PyArray_FROMANY(a, np.NPY_FLOAT32, 0, 0, requirements)
-    # a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_FLOAT32, np.NPY_ALIGNED)
     is_scalar = np.PyArray_NDIM(a_arr) == 0
 
     if not is_scalar:
