@@ -45,19 +45,6 @@ def configuration(parent_package='',top_path=None):
 
     libs = []
     defs.append(('NPY_NO_DEPRECATED_API', 0))
-    # Configure mtrand
-    config.add_extension('_mtrand',
-                         sources=[join('_mtrand', x) for x in
-                                  ['_mtrand.c', 'randomkit.c', 'initarray.c',
-                                   'distributions.c']]+[generate_libraries],
-                         libraries=libs,
-                         depends=[join('_mtrand', '*.h'),
-                                  join('_mtrand', '*.pyx'),
-                                  join('_mtrand', '*.pxi'),],
-                         define_macros=defs,
-                         )
-
-    config.add_data_files(('.', join('_mtrand', 'randomkit.h')))
     config.add_data_dir('tests')
 
     ##############################

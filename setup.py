@@ -225,7 +225,7 @@ class sdist_checked(sdist):
 def generate_cython():
     cwd = os.path.abspath(os.path.dirname(__file__))
     print("Cythonizing sources")
-    for d in ('random/_mtrand', 'random'):
+    for d in ('random',):
         p = subprocess.call([sys.executable,
                               os.path.join(cwd, 'tools', 'cythonize.py'),
                               'numpy/{0}'.format(d)],
