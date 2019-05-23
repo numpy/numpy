@@ -51,9 +51,9 @@ int os_avx512_support(void)
 static NPY_INLINE
 int cpu_supports_fma(void)
 {
+#ifdef __x86_64__
     unsigned int feature = 0x01;
     unsigned int a, b, c, d;
-#ifdef __x86_64__
     __asm__ volatile (
         "cpuid"				"\n\t"
 	: "=a" (a), "=b" (b), "=c" (c), "=d" (d)
