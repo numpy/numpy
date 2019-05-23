@@ -153,6 +153,22 @@
 # include_dirs = /home/username/blis/include/blis
 # runtime_library_dirs = /home/username/blis/lib
 
+# libFLAME
+# --------
+# libFLAME (https://www.cs.utexas.edu/~flame/web/libFLAME.html) provides a
+# LAPACK interface.  It's a relatively new library, its performance in some
+# cases seems to match that of MKL and OpenBLAS.
+# It hasn't been benchmarked with NumPy or SciPy yet.
+#
+# Notes on compiling libFLAME itself:
+#   - the LAPACK interface (needed by NumPy) isn't built by default; please
+#     configure with ``./configure --enable-lapack2flame``.
+#
+# [flame]
+# libraries = flame
+# library_dirs = /home/username/flame/lib
+# runtime_library_dirs = /home/username/flame/lib
+
 # MKL
 #---- 
 # Intel MKL is Intel's very optimized yet proprietary implementation of BLAS and 

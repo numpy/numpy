@@ -155,9 +155,10 @@ The default order for the libraries are:
 
 1. MKL
 2. OpenBLAS
-3. ATLAS
-4. Accelerate (MacOS)
-5. LAPACK (NetLIB)
+3. libFLAME
+4. ATLAS
+5. Accelerate (MacOS)
+6. LAPACK (NetLIB)
 
 
 If you wish to build against OpenBLAS but you also have MKL available one

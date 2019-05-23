@@ -121,6 +121,38 @@ C API changes
 New Features
 ============
 
+libFLAME
+--------
+Support for building NumPy with the libFLAME linear algebra package as the LAPACK,
+implementation, see
+`libFLAME <https://www.cs.utexas.edu/~flame/web/libFLAME.html>`_ for details.
+
+User-defined BLAS detection order
+---------------------------------
+``numpy.distutils`` now uses an environment variable, comma-separated and case
+insensitive, to determine the detection order for BLAS libraries.
+By default ``NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas``.
+However, to force the use of OpenBLAS simply do::
+
+   NPY_BLAS_ORDER=openblas python setup.py build
+
+which forces the use of OpenBLAS.
+This may be helpful for users which have a MKL installation but wishes to try
+out different implementations.
+
+User-defined LAPACK detection order
+-----------------------------------
+``numpy.distutils`` now uses an environment variable, comma-separated and case
+insensitive, to determine the detection order for LAPAK libraries.
+By default ``NPY_BLAS_ORDER=mkl,openblas,flame,atlas,accelerate,lapack``.
+However, to force the use of OpenBLAS simply do::
+
+   NPY_LAPACK_ORDER=openblas python setup.py build
+
+which forces the use of OpenBLAS.
+This may be helpful for users which have a MKL installation but wishes to try
+out different implementations.
+
 ``np.ufunc.reduce`` and related functions now accept a ``where`` mask
 ---------------------------------------------------------------------
 ``np.ufunc.reduce``, ``np.sum``, ``np.prod``, ``np.min``, ``np.max`` all

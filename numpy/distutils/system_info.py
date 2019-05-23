@@ -17,6 +17,7 @@ classes are available:
   atlas_3_10_blas_threads_info,
   lapack_atlas_3_10_info
   lapack_atlas_3_10_threads_info
+  flame_info
   blas_info
   lapack_info
   openblas_info
@@ -389,6 +390,7 @@ def get_info(name, notfound_action=0):
           'atlas_3_10_blas_threads': atlas_3_10_blas_threads_info,
           'lapack_atlas_3_10': lapack_atlas_3_10_info,  # use lapack_opt instead
           'lapack_atlas_3_10_threads': lapack_atlas_3_10_threads_info,  # ditto
+          'flame': flame_info,          # use lapack_opt instead
           'mkl': mkl_info,
           # openblas which may or may not have embedded lapack
           'openblas': openblas_info,          # use blas_opt instead
@@ -462,6 +464,13 @@ class AtlasNotFoundError(NotFoundError):
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [atlas]) or by setting
     the ATLAS environment variable."""
+
+
+class FlameNotFoundError(NotFoundError):
+    """
+    FLAME (http://www.cs.utexas.edu/~flame/web/) libraries not found.
+    Directories to search for the libraries can be specified in the
+    numpy/distutils/site.cfg file (section [flame])."""
 
 
 class LapackNotFoundError(NotFoundError):
@@ -1591,7 +1600,7 @@ class lapack_opt_info(system_info):
 
     notfounderror = LapackNotFoundError
     # Default order of LAPACK checks
-    lapack_order = ['mkl', 'openblas', 'atlas', 'accelerate', 'lapack']
+    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'accelerate', 'lapack']
 
     def _calc_info_mkl(self):
         info = get_info('lapack_mkl')
@@ -1606,6 +1615,13 @@ class lapack_opt_info(system_info):
             self.set_info(**info)
             return True
         info = get_info('openblas_clapack')
+        if info:
+            self.set_info(**info)
+            return True
+        return False
+
+    def _calc_info_flame(self):
+        info = get_info('flame')
         if info:
             self.set_info(**info)
             return True
@@ -2042,6 +2058,82 @@ class blis_info(blas_info):
                     define_macros=[('HAVE_CBLAS', None)],
                     include_dirs=incl_dirs)
         self.set_info(**info)
+
+
+class flame_info(system_info):
+    """ Usage of libflame for LAPACK operations
+
+    This requires libflame to be compiled with lapack wrappers:
+
+    ./configure --enable-lapack2flame ...
+
+    Be aware that libflame 5.1.0 has some missing names in the shared library, so
+    if you have problems, try the static flame library.
+    """
+    section = 'flame'
+    _lib_names = ['flame']
+    notfounderror = FlameNotFoundError
+
+    def check_embedded_lapack(self, info):
+        """ libflame does not necessarily have a wrapper for fortran LAPACK, we need to check """
+        c = customized_ccompiler()
+
+        tmpdir = tempfile.mkdtemp()
+        s = """void zungqr_();
+        int main(int argc, const char *argv[])
+        {
+            zungqr_();
+            return 0;
+        }"""
+        src = os.path.join(tmpdir, 'source.c')
+        out = os.path.join(tmpdir, 'a.out')
+        # Add the additional "extra" arguments
+        extra_args = info.get('extra_link_args', [])
+        try:
+            with open(src, 'wt') as f:
+                f.write(s)
+            obj = c.compile([src], output_dir=tmpdir)
+            try:
+                c.link_executable(obj, out, libraries=info['libraries'],
+                                  library_dirs=info['library_dirs'],
+                                  extra_postargs=extra_args)
+                return True
+            except distutils.ccompiler.LinkError:
+                return False
+        finally:
+            shutil.rmtree(tmpdir)
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+        flame_libs = self.get_libs('libraries', self._lib_names)
+
+        info = self.check_libs2(lib_dirs, flame_libs, [])
+        if info is None:
+            return
+
+        if self.check_embedded_lapack(info):
+            # check if the user has supplied all information required
+            self.set_info(**info)
+        else:
+            # Try and get the BLAS lib to see if we can get it to work
+            blas_info = get_info('blas_opt')
+            if not blas_info:
+                # since we already failed once, this ain't going to work either
+                return
+
+            # Now we need to merge the two dictionaries
+            for key in blas_info:
+                if isinstance(blas_info[key], list):
+                    info[key] = info.get(key, []) + blas_info[key]
+                elif isinstance(blas_info[key], tuple):
+                    info[key] = info.get(key, ()) + blas_info[key]
+                else:
+                    info[key] = info.get(key, '') + blas_info[key]
+
+            # Now check again
+            if self.check_embedded_lapack(info):
+                self.set_info(**info)
+
 
 class accelerate_info(system_info):
     section = 'accelerate'
