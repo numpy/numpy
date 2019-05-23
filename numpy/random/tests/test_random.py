@@ -1447,7 +1447,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, neg_binom, n, bad_p_two * 3)
 
     def test_poisson(self):
-        max_lam = np.random.RandomState().poisson_lam_max
+        max_lam = np.random.RandomState()._poisson_lam_max
 
         lam = [1]
         bad_lam_one = [-1]
