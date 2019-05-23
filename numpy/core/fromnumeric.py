@@ -1764,7 +1764,10 @@ def nonzero(a):
     Returns a tuple of arrays, one for each dimension of `a`,
     containing the indices of the non-zero elements in that
     dimension. The values in `a` are always tested and returned in
-    row-major, C-style order. 
+    row-major, C-style order. The corresponding non-zero  
+    values can be obtained with::
+    
+         a[nonzero(a)]
 
     To group the indices by element, rather than dimension, use::
 
@@ -1796,7 +1799,9 @@ def nonzero(a):
     Notes
     -----
     To obtain the non-zero values, it is recommended to use ``x[y.astype(bool)]`` 
-    which will correctly handle 0-d arrays.    
+    which will correctly handle 0-d arrays. In most cases y is already a boolean 
+    array, so astype is not necessary. Also a.nonzero() returns a tuple of length 1
+    when a has zero dimensions. 
 
     Examples
     --------
