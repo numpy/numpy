@@ -2088,8 +2088,6 @@ class flame_info(system_info):
         out = os.path.join(tmpdir, 'a.out')
         # Add the additional "extra" arguments
         extra_args = info.get('extra_link_args', [])
-        if sys.version_info < (3, 5) and sys.version_info > (3, 0) and c.compiler_type == "msvc":
-            extra_args.append("/MANIFEST")
         try:
             with open(src, 'wt') as f:
                 f.write(s)
@@ -2103,7 +2101,6 @@ class flame_info(system_info):
                 return False
         finally:
             shutil.rmtree(tmpdir)
-        return False
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
