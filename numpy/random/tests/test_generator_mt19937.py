@@ -114,12 +114,6 @@ class TestSetState(object):
                              self.state['state']['key'],
                              self.state['state']['pos'])
 
-    def test_basic(self):
-        old = self.rg.tomaxint(16)
-        self.bit_generator.state = self.state
-        new = self.rg.tomaxint(16)
-        assert_(np.all(old == new))
-
     def test_gaussian_reset(self):
         # Make sure the cached every-other-Gaussian is reset.
         old = self.rg.standard_normal(size=3)

@@ -119,14 +119,6 @@ cdef class Generator:
         """
         return self._bit_generator
 
-    def random_sample(self, *args, **kwargs):
-        """
-        Deprecated, renamed to ``random``
-        """
-        warnings.warn("Renamed to random", RuntimeWarning)
-        return self.random(*args, **kwargs)
-
-
     def random(self, size=None, dtype=np.float64, out=None):
         """
         random(size=None, dtype='d', out=None)
@@ -334,47 +326,6 @@ cdef class Generator:
         else:
             raise TypeError('Unsupported dtype "%s" for standard_exponential'
                             % key)
-
-    def tomaxint(self, size=None):
-        """
-        tomaxint(size=None)
-
-        Return a sample of uniformly distributed random integers in the interval
-        [0, ``np.iinfo(np.int).max``]. The np.int type translates to the C long
-        integer type and its precision is platform dependent.
-
-        Parameters
-        ----------
-        size : int or tuple of ints, optional
-            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
-
-        Returns
-        -------
-        out : ndarray
-            Drawn samples, with shape `size`.
-
-        See Also
-        --------
-        integers : Uniform sampling over a given half-open interval of integers.
-
-        Examples
-        --------
-        >>> rg = np.random.Generator() # need a Generator object
-        >>> rg.tomaxint((2,2,2))
-        array([[[1170048599, 1600360186], # random
-                [ 739731006, 1947757578]],
-               [[1871712945,  752307660],
-                [1601631370, 1479324245]]])
-        >>> rg.tomaxint((2,2,2)) < np.iinfo(np.int).max
-        array([[[ True,  True],
-                [ True,  True]],
-               [[ True,  True],
-                [ True,  True]]])
-
-        """
-        return self.integers(0, np.iinfo(np.int).max + 1, dtype=np.int, size=size)
 
     def integers(self, low, high=None, size=None, dtype=np.int64, endpoint=False):
         """
@@ -3966,7 +3917,6 @@ standard_exponential = _random_generator.standard_exponential
 standard_gamma = _random_generator.standard_gamma
 standard_normal = _random_generator.standard_normal
 standard_t = _random_generator.standard_t
-tomaxint = _random_generator.tomaxint
 triangular = _random_generator.triangular
 uniform = _random_generator.uniform
 vonmises = _random_generator.vonmises
