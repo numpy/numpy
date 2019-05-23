@@ -191,13 +191,6 @@ class Base(object):
         assert_allclose(uniforms, vals)
         assert_equal(uniforms.dtype, np.float64)
 
-        rs = Generator(self.bit_generator(*self.data2['seed']))
-        vals = uniform_from_uint(self.data2['data'], self.bits)
-        with assert_warns(RuntimeWarning):
-            uniforms = rs.random_sample(len(vals))
-        assert_allclose(uniforms, vals)
-        assert_equal(uniforms.dtype, np.float64)
-
     def test_uniform_float(self):
         rs = Generator(self.bit_generator(*self.data1['seed']))
         vals = uniform32_from_uint(self.data1['data'], self.bits)

@@ -280,21 +280,6 @@ class RNG(object):
         permuted = self.rg.permutation(original)
         assert_((original != permuted).any())
 
-    def test_tomaxint(self):
-        vals = self.rg.tomaxint(size=100000)
-        maxsize = 0
-        if os.name == 'nt':
-            maxsize = 2 ** 31 - 1
-        else:
-            try:
-                maxsize = sys.maxint
-            except AttributeError:
-                maxsize = sys.maxsize
-        if maxsize < 2 ** 32:
-            assert_((vals < sys.maxsize).all())
-        else:
-            assert_((vals >= 2 ** 32).any())
-
     def test_beta(self):
         vals = self.rg.beta(2.0, 2.0, 10)
         assert_(len(vals) == 10)
