@@ -1766,7 +1766,7 @@ def nonzero(a):
     dimension. The values in `a` are always tested and returned in
     row-major, C-style order. The corresponding non-zero  
     values can be obtained with::
-    
+        
         a[nonzero(a)]
 
     To group the indices by element, rather than dimension, use::
