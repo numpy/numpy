@@ -14,6 +14,11 @@ interface = namedtuple('interface', ['state_address', 'state', 'next_uint64',
                                      'next_uint32', 'next_double',
                                      'bit_generator'])
 
+cdef double LEGACY_POISSON_LAM_MAX = <double>np.iinfo('l').max - np.sqrt(np.iinfo('l').max)*10
+cdef double POISSON_LAM_MAX = <double>np.iinfo('int64').max - np.sqrt(np.iinfo('int64').max)*10
+
+cdef uint64_t MAXSIZE = <uint64_t>sys.maxsize
+
 
 cdef object benchmark(bitgen_t *bitgen, object lock, Py_ssize_t cnt, object method):
     """Benchmark command used by BitGenerator"""
@@ -290,10 +295,6 @@ cdef object float_fill_from_double(void *func, bitgen_t *state, object size, obj
     return out_array
 
 
-cdef double POISSON_LAM_MAX = <double>np.iinfo('l').max - np.sqrt(np.iinfo('l').max)*10
-
-cdef uint64_t MAXSIZE = <uint64_t>sys.maxsize
-
 cdef int check_array_constraint(np.ndarray val, object name, constraint_type cons) except -1:
     if cons == CONS_NON_NEGATIVE:
         if np.any(np.logical_and(np.logical_not(np.isnan(val)), np.signbit(val))):
@@ -318,6 +319,11 @@ cdef int check_array_constraint(np.ndarray val, object name, constraint_type con
             raise ValueError("{0} < 1 or {0} contains NaNs".format(name))
     elif cons == CONS_POISSON:
         if not np.all(np.less_equal(val, POISSON_LAM_MAX)):
+            raise ValueError("{0} value too large".format(name))
+        elif not np.all(np.greater_equal(val, 0.0)):
+            raise ValueError("{0} < 0 or {0} contains NaNs".format(name))
+    elif cons == LEGACY_CONS_POISSON:
+        if not np.all(np.less_equal(val, LEGACY_POISSON_LAM_MAX)):
             raise ValueError("{0} value too large".format(name))
         elif not np.all(np.greater_equal(val, 0.0)):
             raise ValueError("{0} < 0 or {0} contains NaNs".format(name))
@@ -351,6 +357,11 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
         if not (val >= 0):
             raise ValueError("{0} < 0 or {0} is NaN".format(name))
         elif not (val <= POISSON_LAM_MAX):
+            raise ValueError(name + " value too large")
+    elif cons == LEGACY_CONS_POISSON:
+        if not (val >= 0):
+            raise ValueError("{0} < 0 or {0} is NaN".format(name))
+        elif not (val <= LEGACY_POISSON_LAM_MAX):
             raise ValueError(name + " value too large")
 
     return 0

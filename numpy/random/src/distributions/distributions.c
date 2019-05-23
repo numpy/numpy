@@ -472,7 +472,7 @@ uint64_t random_uint(bitgen_t *bitgen_state) {
  */
 static double loggam(double x) {
   double x0, x2, xp, gl, gl0;
-  int64_t k, n;
+  RAND_INT_TYPE k, n;
 
   static double a[10] = {8.333333333333333e-02, -2.777777777777778e-03,
                          7.936507936507937e-04, -5.952380952380952e-04,
@@ -484,7 +484,7 @@ static double loggam(double x) {
   if ((x == 1.0) || (x == 2.0)) {
     return 0.0;
   } else if (x <= 7.0) {
-    n = (int64_t)(7 - x);
+    n = (RAND_INT_TYPE)(7 - x);
     x0 = x + n;
   }
   x2 = 1.0 / (x0 * x0);

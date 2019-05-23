@@ -73,7 +73,7 @@ cdef class Generator:
     cdef bitgen_t _bitgen
     cdef binomial_t _binomial
     cdef object lock
-    poisson_lam_max = POISSON_LAM_MAX
+    _poisson_lam_max = POISSON_LAM_MAX
 
     def __init__(self, bit_generator=None):
         if bit_generator is None:

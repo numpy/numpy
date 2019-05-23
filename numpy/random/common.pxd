@@ -10,6 +10,7 @@ import numpy as np
 cimport numpy as np
 
 cdef double POISSON_LAM_MAX
+cdef double LEGACY_POISSON_LAM_MAX
 cdef uint64_t MAXSIZE
 
 cdef enum ConstraintType:
@@ -23,6 +24,7 @@ cdef enum ConstraintType:
     CONS_GT_1
     CONS_GTE_1
     CONS_POISSON
+    LEGACY_CONS_POISSON
 
 ctypedef ConstraintType constraint_type
 
