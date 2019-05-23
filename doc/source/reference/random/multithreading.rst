@@ -10,21 +10,21 @@ these requirements.
 This example makes use of Python 3 :mod:`concurrent.futures` to fill an array
 using multiple threads.  Threads are long-lived so that repeated calls do not
 require any additional overheads from thread creation. The underlying
-BitGenerator is `Xorshift1024` which is fast, has a long period and supports
-using `Xorshift1024.jumped` to return a new generator while advancing the
+BitGenerator is `Xoshiro256` which is fast, has a long period and supports
+using `Xoshiro256.jumped` to return a new generator while advancing the
 state. The random numbers generated are reproducible in the sense that the same
 seed will produce the same outputs.
 
 .. code-block:: ipython
 
-    from numpy.random import Generator, Xorshift1024
+    from numpy.random import Generator, Xoshiro256
     import multiprocessing
     import concurrent.futures
     import numpy as np
     
     class MultithreadedRNG(object):
         def __init__(self, n, seed=None, threads=None):
-            rg = Xorshift1024(seed)
+            rg = Xoshiro256(seed)
             if threads is None:
                 threads = multiprocessing.cpu_count()
             self.threads = threads
@@ -89,7 +89,7 @@ The single threaded call directly uses the BitGenerator.
 .. code-block:: ipython
 
     In [5]: values = np.empty(10000000)
-        ...: rg = Generator(Xorshift1024())
+        ...: rg = Generator(Xoshiro256())
         ...: %timeit rg.standard_normal(out=values)
 
     99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
@@ -100,7 +100,7 @@ that does not use an existing array due to array creation overhead.
 
 .. code-block:: ipython
 
-    In [6]: rg = Generator(Xorshift1024())
+    In [6]: rg = Generator(Xoshiro256())
         ...: %timeit rg.standard_normal(10000000)
 
     125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)

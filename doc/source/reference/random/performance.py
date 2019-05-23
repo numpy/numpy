@@ -4,11 +4,10 @@ from timeit import repeat
 import numpy as np
 import pandas as pd
 
-from numpy.random import MT19937, DSFMT, ThreeFry, Xoroshiro128, \
-    Xorshift1024, Philox, Xoshiro256, Xoshiro512
+from numpy.random import MT19937, DSFMT, ThreeFry, Philox, Xoshiro256, \
+    Xoshiro512
 
-PRNGS = [DSFMT, MT19937, Philox, ThreeFry, Xoroshiro128, Xorshift1024,
-         Xoshiro256, Xoshiro512]
+PRNGS = [DSFMT, MT19937, Philox, ThreeFry, Xoshiro256, Xoshiro512]
 
 funcs = {'32-bit Unsigned Ints': 'integers(0, 2**32,size=1000000, dtype="uint32")',
          '64-bit Unsigned Ints': 'integers(0, 2**64,size=1000000, dtype="uint64")',

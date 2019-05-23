@@ -72,10 +72,6 @@ are listed below.
 +-----------------+-------------------------+-------------------------+-------------------------+
 | ThreeFry        | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
-| Xoroshiro128    | :math:`2^{128}`         | :math:`2^{64}`          | 64                      |
-+-----------------+-------------------------+-------------------------+-------------------------+
-| Xorshift1024    | :math:`2^{1024}`        | :math:`2^{512}`         | 64                      |
-+-----------------+-------------------------+-------------------------+-------------------------+
 | Xoshiro256**    | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
 | Xoshiro512**    | :math:`2^{512}`         | :math:`2^{256}`         | 64                      |
@@ -87,13 +83,13 @@ overlap.
 .. code-block:: python
 
   from numpy.random.entropy import random_entropy
-  from numpy.random import Xorshift1024
+  from numpy.random import Xoshiro256
 
   entropy = random_entropy(2).astype(np.uint64)
   # 64-bit number as a seed
   seed = entropy[0] * 2**32 + entropy[1]
   blocked_rng = []
-  rng = Xorshift1024(seed)
+  rng = Xoshiro256(seed)
   for i in range(10):
       blocked_rng.append(rng.jumped(i))
 

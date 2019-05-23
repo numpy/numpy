@@ -18,11 +18,11 @@ provided by ``ctypes.next_double``.
 
 .. code-block:: python
 
-    from numpy.random import Xoroshiro128
+    from numpy.random import Xoshiro256
     import numpy as np
     import numba as nb
 
-    x = Xoroshiro128()
+    x = Xoshiro256()
     f = x.ctypes.next_double
     s = x.ctypes.state
     state_addr = x.ctypes.state_address
@@ -50,7 +50,7 @@ provided by ``ctypes.next_double``.
     # Must use state address not state with numba
     normalsj(1, state_addr)
     %timeit normalsj(1000000, state_addr)
-    print('1,000,000 Box-Muller (numba/Xoroshiro128) randoms')
+    print('1,000,000 Box-Muller (numba/Xoshiro256) randoms')
     %timeit np.random.standard_normal(1000000)
     print('1,000,000 Box-Muller (NumPy) randoms')
 
@@ -66,7 +66,7 @@ Cython
 ======
 
 Cython can be used to unpack the ``PyCapsule`` provided by a BitGenerator.
-This example uses `~xoroshiro128.Xoroshiro128` and
+This example uses `~xoshiro256.Xoshiro256` and
 ``random_gauss_zig``, the Ziggurat-based generator for normals, to fill an
 array.  The usual caveats for writing high-performance code using Cython --
 removing bounds checks and wrap around, providing array alignment information
@@ -80,54 +80,57 @@ removing bounds checks and wrap around, providing array alignment information
     from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
     from numpy.random.common cimport *
     from numpy.random.distributions cimport random_gauss_zig
-    from numpy.random import Xoroshiro128
+    from numpy.random import Xoshiro256
 
 
-   @cython.boundscheck(False)
-   @cython.wraparound(False)
-   def normals_zig(Py_ssize_t n):
-       cdef Py_ssize_t i
-       cdef bitgen_t *rng
-       cdef const char *capsule_name = "BitGenerator"
-       cdef double[::1] random_values
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def normals_zig(Py_ssize_t n):
+        cdef Py_ssize_t i
+        cdef bitgen_t *rng
+        cdef const char *capsule_name = "BitGenerator"
+        cdef double[::1] random_values
 
-       x = Xoroshiro128()
-       capsule = x.capsule
-       if not PyCapsule_IsValid(capsule, capsule_name):
-           raise ValueError("Invalid pointer to anon_func_state")
-       rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
-       random_values = np.empty(n)
-       for i in range(n):
-           random_values[i] = random_gauss_zig(rng)
-       randoms = np.asarray(random_values)
-       return randoms
+        x = Xoshiro256()
+        capsule = x.capsule
+        if not PyCapsule_IsValid(capsule, capsule_name):
+            raise ValueError("Invalid pointer to anon_func_state")
+        rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
+        random_values = np.empty(n)
+        # Best practice is to release GIL and acquire the lock
+        with x.lock, nogil:
+            for i in range(n):
+                random_values[i] = random_gauss_zig(rng)
+        randoms = np.asarray(random_values)
+        return randoms
 
 The BitGenerator can also be directly accessed using the members of the basic
 RNG structure.
 
 .. code-block:: cython
 
-   @cython.boundscheck(False)
-   @cython.wraparound(False)
-   def uniforms(Py_ssize_t n):
-       cdef Py_ssize_t i
-       cdef bitgen_t *rng
-       cdef const char *capsule_name = "BitGenerator"
-       cdef double[::1] random_values
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def uniforms(Py_ssize_t n):
+        cdef Py_ssize_t i
+        cdef bitgen_t *rng
+        cdef const char *capsule_name = "BitGenerator"
+        cdef double[::1] random_values
 
-       x = Xoroshiro128()
-       capsule = x.capsule
-       # Optional check that the capsule if from a Basic RNG
-       if not PyCapsule_IsValid(capsule, capsule_name):
-           raise ValueError("Invalid pointer to anon_func_state")
-       # Cast the pointer
-       rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
-       random_values = np.empty(n)
-       for i in range(n):
-           # Call the function
-           random_values[i] = rng.next_double(rng.state)
-       randoms = np.asarray(random_values)
-       return randoms
+        x = Xoshiro256()
+        capsule = x.capsule
+        # Optional check that the capsule if from a BitGenerator
+        if not PyCapsule_IsValid(capsule, capsule_name):
+            raise ValueError("Invalid pointer to anon_func_state")
+        # Cast the pointer
+        rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
+        random_values = np.empty(n)
+        with x.lock, nogil:
+            for i in range(n):
+                # Call the function
+                random_values[i] = rng.next_double(rng.state)
+        randoms = np.asarray(random_values)
+        return randoms
 
 These functions along with a minimal setup file are included in the
 examples folder.

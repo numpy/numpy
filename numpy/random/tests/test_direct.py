@@ -128,7 +128,7 @@ class Base(object):
 
     @classmethod
     def setup_class(cls):
-        cls.bit_generator = Xoroshiro128
+        cls.bit_generator = Xoshiro256
         cls.bits = 64
         cls.dtype = np.uint64
         cls.seed_error_type = TypeError

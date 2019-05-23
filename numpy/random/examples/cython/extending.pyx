@@ -9,31 +9,38 @@ cimport numpy as np
 cimport cython
 
 from numpy.random.common cimport bitgen_t
-from numpy.random import Xoroshiro128
+from numpy.random import Xoshiro256
 
 np.import_array()
 
 
-def uniform_mean(Py_ssize_t N):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def uniform_mean(Py_ssize_t n):
     cdef Py_ssize_t i
     cdef bitgen_t *rng
     cdef const char *capsule_name = "BitGenerator"
     cdef double[::1] random_values
     cdef np.ndarray randoms
 
-    x = Xoroshiro128()
+    x = Xoshiro256()
     capsule = x.capsule
     if not PyCapsule_IsValid(capsule, capsule_name):
         raise ValueError("Invalid pointer to anon_func_state")
     rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
-    random_values = np.empty(N)
-    for i in range(N):
-        random_values[i] = rng.next_double(rng.state)
+    random_values = np.empty(n)
+    # Best practice is to acquire the lock whenever generating random values.
+    # This prevents other threads from modifying the state. Acquiring the lock
+    # is only necessary if if the GIL is also released, as in this example.
+    with x.lock, nogil:
+        for i in range(n):
+            random_values[i] = rng.next_double(rng.state)
     randoms = np.asarray(random_values)
     return randoms.mean()
 
 
-cdef uint32_t bounded_uint(uint32_t lb, uint32_t ub, bitgen_t *rng):
+# This function is declated nogil so it can be used without the GIL below
+cdef uint32_t bounded_uint(uint32_t lb, uint32_t ub, bitgen_t *rng) nogil:
     cdef uint32_t mask, delta, val
     mask = delta = ub - lb
     mask |= mask >> 1
@@ -57,7 +64,7 @@ def bounded_uints(uint32_t lb, uint32_t ub, Py_ssize_t n):
     cdef uint32_t[::1] out
     cdef const char *capsule_name = "BitGenerator"
 
-    x = Xoroshiro128()
+    x = Xoshiro256()
     out = np.empty(n, dtype=np.uint32)
     capsule = x.capsule
 
@@ -65,6 +72,7 @@ def bounded_uints(uint32_t lb, uint32_t ub, Py_ssize_t n):
         raise ValueError("Invalid pointer to anon_func_state")
     rng = <bitgen_t *>PyCapsule_GetPointer(capsule, capsule_name)
 
-    for i in range(n):
-        out[i] = bounded_uint(lb, ub, rng)
+    with x.lock, nogil:
+        for i in range(n):
+            out[i] = bounded_uint(lb, ub, rng)
     return np.asarray(out)
