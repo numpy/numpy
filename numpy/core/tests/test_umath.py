@@ -700,20 +700,20 @@ class TestSIMDFloat32(object):
         np.random.seed(42)
         x_f32 = np.float32(np.random.uniform(low=0.0,high=88.1,size=1000000))
         x_f64 = np.float64(x_f32)
-        assert_array_max_ulp(np.exp(x_f32), np.float32(np.exp(x_f64)), maxulp=2.6)
+        assert_array_max_ulp(np.exp(x_f32), np.float32(np.exp(x_f64)), maxulp=3)
 
     def test_log_float32(self):
         np.random.seed(42)
         x_f32 = np.float32(np.random.uniform(low=0.0,high=1000,size=1000000))
         x_f64 = np.float64(x_f32)
-        assert_array_max_ulp(np.log(x_f32), np.float32(np.log(x_f64)), maxulp=3.9)
+        assert_array_max_ulp(np.log(x_f32), np.float32(np.log(x_f64)), maxulp=4)
 
     def test_sincos_float32(self):
         np.random.seed(42)
         x_f32 = np.float32(np.random.uniform(low=-100.,high=100.,size=1000000))
         x_f64 = np.float64(x_f32)
-        assert_array_max_ulp(np.sin(x_f32), np.float32(np.sin(x_f64)), maxulp=1.5)
-        assert_array_max_ulp(np.cos(x_f32), np.float32(np.cos(x_f64)), maxulp=1.5)
+        assert_array_max_ulp(np.sin(x_f32), np.float32(np.sin(x_f64)), maxulp=2)
+        assert_array_max_ulp(np.cos(x_f32), np.float32(np.cos(x_f64)), maxulp=2)
 
     def test_strided_float32(self):
         np.random.seed(42)
