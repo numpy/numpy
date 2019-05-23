@@ -3,6 +3,8 @@ import numpy as np
 
 from libc.stdint cimport uint32_t, uint64_t
 
+__all__ = ['random_entropy', 'seed_by_array']
+
 np.import_array()
 
 cdef extern from "src/splitmix64/splitmix64.h":
