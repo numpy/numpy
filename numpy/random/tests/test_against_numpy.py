@@ -271,6 +271,7 @@ class TestAgainstNumPy(object):
                         is_np=True)
         self._is_state_common()
 
+    @pytest.mark.xfail(reason='Definition of poisson_lam_max changed')
     def test_poisson_lam_max(self):
         assert_allclose(self.rg.poisson_lam_max, self.nprs.poisson_lam_max)
 

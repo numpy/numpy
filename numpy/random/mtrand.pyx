@@ -92,7 +92,7 @@ cdef class RandomState:
     cdef aug_bitgen_t _aug_state
     cdef binomial_t _binomial
     cdef object lock
-    poisson_lam_max = POISSON_LAM_MAX
+    _poisson_lam_max = POISSON_LAM_MAX
 
     def __init__(self, bit_generator=None):
         if bit_generator is None:
@@ -3244,7 +3244,7 @@ cdef class RandomState:
 
         """
         out = disc(&legacy_random_poisson, &self._bitgen, size, self.lock, 1, 0,
-                   lam, 'lam', CONS_POISSON,
+                   lam, 'lam', LEGACY_CONS_POISSON,
                    0.0, '', CONS_NONE,
                    0.0, '', CONS_NONE)
         # Match historical output type

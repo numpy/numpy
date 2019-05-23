@@ -1074,7 +1074,7 @@ class TestRandomDist(object):
         assert_array_equal(actual, desired)
 
     def test_poisson_exceptions(self):
-        lambig = np.iinfo('l').max
+        lambig = np.iinfo('int64').max
         lamneg = -1
         assert_raises(ValueError, random.poisson, lamneg)
         assert_raises(ValueError, random.poisson, [lamneg] * 10)
@@ -1788,7 +1788,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, neg_binom, n, bad_p_two * 3)
 
     def test_poisson(self):
-        max_lam = random.poisson_lam_max
+        max_lam = random._poisson_lam_max
 
         lam = [1]
         bad_lam_one = [-1]
