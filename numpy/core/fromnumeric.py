@@ -1764,7 +1764,7 @@ def nonzero(a):
     Returns a tuple of arrays, one for each dimension of `a`,
     containing the indices of the non-zero elements in that
     dimension. The values in `a` are always tested and returned in
-    row-major, C-style order. The corresponding non-zero  
+    row-major, C-style order. The corresponding non-zero
     values can be obtained with::
     
         a[nonzero(a)]
