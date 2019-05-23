@@ -1767,7 +1767,7 @@ def nonzero(a):
     row-major, C-style order. The corresponding non-zero  
     values can be obtained with::
     
-         a[nonzero(a)]
+        a[nonzero(a)]
 
     To group the indices by element, rather than dimension, use::
 
