@@ -76,8 +76,8 @@ cdef class Xoshiro512:
     directly consumable in Python and must be consumed by a ``Generator``
     or similar object that supports low-level access.
 
-    See ``Xorshift1024`` for a related PRNG with a different period
-    (:math:`2^{1024} - 1`) and jumped size (:math:`2^{512} - 1`).
+    See ``Xorshift256`` for a related PRNG with a different period
+    (:math:`2^{256} - 1`) and jumped size (:math:`2^{128} - 1`).
 
     **State and Seeding**
 
@@ -262,7 +262,7 @@ cdef class Xoshiro512:
 
         Returns
         -------
-        bit_generator : Xoroshiro128
+        bit_generator : Xoshiro512
             New instance of generator jumped iter times
         """
         cdef Xoshiro512 bit_generator

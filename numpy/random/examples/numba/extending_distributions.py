@@ -5,8 +5,7 @@ export PYTHON_INCLUDE=#path to Python's include folder, usually \
     ${PYTHON_HOME}/include/python${PYTHON_VERSION}m
 export NUMPY_INCLUDE=#path to numpy's include folder, usually \
     ${PYTHON_HOME}/lib/python${PYTHON_VERSION}/site-packages/numpy/core/include
-gcc -shared -o libdistributions.so -fPIC distributions.c -I${NUMPY_INCLUDE} \
-    -I${PYTHON_INCLUDE}
+gcc -shared -o libdistributions.so -fPIC distributions.c -I${NUMPY_INCLUDE} -I${PYTHON_INCLUDE}
 mv libdistributions.so ../../examples/numba/
 
 On Windows
@@ -24,7 +23,7 @@ import numba as nb
 import numpy as np
 from cffi import FFI
 
-from randomgen import Xoroshiro128
+from numpy.random import Xoshiro256
 
 ffi = FFI()
 if os.path.exists('./distributions.dll'):
@@ -37,9 +36,9 @@ else:
 ffi.cdef("""
 double random_gauss_zig(void *bitgen_state);
 """)
-x = Xoroshiro128()
+x = Xoshiro256()
 xffi = x.cffi
-bit_generator = xffi.bitgen
+bit_generator = xffi.bit_generator
 
 random_gauss_zig = lib.random_gauss_zig
 
@@ -58,3 +57,4 @@ normalsj = nb.jit(normals, nopython=True)
 bit_generator_address = int(ffi.cast('uintptr_t', bit_generator))
 
 norm = normalsj(1000, bit_generator_address)
+print(norm[:12])

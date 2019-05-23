@@ -372,7 +372,7 @@ cdef class Philox:
 
         Returns
         -------
-        bit_generator : Xoroshiro128
+        bit_generator : Philox
             New instance of generator jumped iter times
         """
         cdef Philox bit_generator
