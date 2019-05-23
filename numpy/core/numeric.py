@@ -26,6 +26,7 @@ if sys.version_info[0] < 3:
 
 from . import overrides
 from . import umath
+from . import shape_base
 from .overrides import set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
@@ -545,8 +546,10 @@ def argwhere(a):
 
     Returns
     -------
-    index_array : ndarray
+    index_array : (N, a.ndim) ndarray
         Indices of elements that are non-zero. Indices are grouped by element.
+        This array will have shape ``(N, a.ndim)`` where ``N`` is the number of
+        non-zero items.
 
     See Also
     --------
@@ -554,7 +557,8 @@ def argwhere(a):
 
     Notes
     -----
-    ``np.argwhere(a)`` is the same as ``np.transpose(np.nonzero(a))``.
+    ``np.argwhere(a)`` is almost the same as ``np.transpose(np.nonzero(a))``,
+    but produces a result of the correct shape for a 0D array.
 
     The output of ``argwhere`` is not suitable for indexing arrays.
     For this purpose use ``nonzero(a)`` instead.
@@ -572,6 +576,11 @@ def argwhere(a):
            [1, 2]])
 
     """
+    # nonzero does not behave well on 0d, so promote to 1d
+    if np.ndim(a) == 0:
+        a = shape_base.atleast_1d(a)
+        # then remove the added dimension
+        return argwhere(a)[:,:0]
     return transpose(nonzero(a))
 
 
