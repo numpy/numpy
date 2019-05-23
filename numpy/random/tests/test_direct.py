@@ -4,7 +4,7 @@ from os.path import join
 
 import numpy as np
 from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
-                           assert_raises)
+                           assert_raises, assert_warns)
 import pytest
 
 from numpy.random import (Generator, MT19937, DSFMT, ThreeFry,
@@ -188,6 +188,13 @@ class Base(object):
         rs = Generator(self.bit_generator(*self.data2['seed']))
         vals = uniform_from_uint(self.data2['data'], self.bits)
         uniforms = rs.random(len(vals))
+        assert_allclose(uniforms, vals)
+        assert_equal(uniforms.dtype, np.float64)
+
+        rs = Generator(self.bit_generator(*self.data2['seed']))
+        vals = uniform_from_uint(self.data2['data'], self.bits)
+        with assert_warns(RuntimeWarning):
+            uniforms = rs.random_sample(len(vals))
         assert_allclose(uniforms, vals)
         assert_equal(uniforms.dtype, np.float64)
 

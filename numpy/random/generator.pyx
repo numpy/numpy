@@ -124,7 +124,7 @@ cdef class Generator:
         Deprecated, renamed to ``random``
         """
         warnings.warn("Renamed to random", RuntimeWarning)
-        self.random(*args, **kwargs)
+        return self.random(*args, **kwargs)
 
 
     def random(self, size=None, dtype=np.float64, out=None):
