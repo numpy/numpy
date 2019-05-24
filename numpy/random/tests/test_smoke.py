@@ -1,15 +1,13 @@
-import os
 import pickle
-import sys
 import time
 from functools import partial
 
 import numpy as np
 import pytest
-from numpy.testing import (assert_almost_equal, assert_equal, assert_,
-    assert_array_equal, suppress_warnings)
+from numpy.testing import assert_equal, assert_, assert_array_equal
 from numpy.random import (Generator, MT19937, DSFMT, ThreeFry,
-    PCG32, PCG64, Philox, Xoshiro256, Xoshiro512, entropy)
+                          PCG32, PCG64, Philox, Xoshiro256, Xoshiro512,
+                          entropy)
 
 
 @pytest.fixture(scope='module',
@@ -35,10 +33,10 @@ def params_0(f):
 def params_1(f, bounded=False):
     a = 5.0
     b = np.arange(2.0, 12.0)
-    c = np.arange(2.0, 102.0).reshape(10, 10)
-    d = np.arange(2.0, 1002.0).reshape(10, 10, 10)
+    c = np.arange(2.0, 102.0).reshape((10, 10))
+    d = np.arange(2.0, 1002.0).reshape((10, 10, 10))
     e = np.array([2.0, 3.0])
-    g = np.arange(2.0, 12.0).reshape(1, 10, 1)
+    g = np.arange(2.0, 12.0).reshape((1, 10, 1))
     if bounded:
         a = 0.5
         b = b / (1.5 * b.max())
@@ -134,8 +132,8 @@ class RNG(object):
             self.rg.bit_generator.advance(self.advance)
             assert_(not comp_state(state, self.rg.bit_generator.state))
         else:
-            brng_name = self.rg.bit_generator.__class__.__name__
-            pytest.skip('Advance is not supported by {0}'.format(brng_name))
+            bitgen_name = self.rg.bit_generator.__class__.__name__
+            pytest.skip('Advance is not supported by {0}'.format(bitgen_name))
 
     def test_jump(self):
         state = self.rg.bit_generator.state
@@ -149,10 +147,10 @@ class RNG(object):
             rejumped_state = bit_gen3.state
             assert_(comp_state(jumped_state, rejumped_state))
         else:
-            brng_name = self.rg.bit_generator.__class__.__name__
-            if name not in ('',):
-                raise AttributeError('no "jumped" in %s' % brng_name)
-            pytest.skip('Jump is not supported by {0}'.format(brng_name))
+            bitgen_name = self.rg.bit_generator.__class__.__name__
+            if bitgen_name not in ('',):
+                raise AttributeError('no "jumped" in %s' % bitgen_name)
+            pytest.skip('Jump is not supported by {0}'.format(bitgen_name))
 
     def test_uniform(self):
         r = self.rg.uniform(-1.0, 0.0, size=10)
@@ -231,7 +229,8 @@ class RNG(object):
     def test_entropy_init(self):
         rg = Generator(self.bit_generator())
         rg2 = Generator(self.bit_generator())
-        assert_(not comp_state(rg.bit_generator.state, rg2.bit_generator.state))
+        assert_(not comp_state(rg.bit_generator.state,
+                               rg2.bit_generator.state))
 
     def test_seed(self):
         rg = Generator(self.bit_generator(*self.seed))
@@ -440,18 +439,20 @@ class RNG(object):
         pick = pickle.dumps(self.rg)
         unpick = pickle.loads(pick)
         assert_((type(self.rg) == type(unpick)))
-        assert_(comp_state(self.rg.bit_generator.state, unpick.bit_generator.state))
+        assert_(comp_state(self.rg.bit_generator.state,
+                           unpick.bit_generator.state))
 
         pick = pickle.dumps(self.rg)
         unpick = pickle.loads(pick)
         assert_((type(self.rg) == type(unpick)))
-        assert_(comp_state(self.rg.bit_generator.state, unpick.bit_generator.state))
+        assert_(comp_state(self.rg.bit_generator.state,
+                           unpick.bit_generator.state))
 
     def test_seed_array(self):
         if self.seed_vector_bits is None:
-            brng_name = self.bit_generator.__name__
+            bitgen_name = self.bit_generator.__name__
             pytest.skip('Vector seeding is not supported by '
-                        '{0}'.format(brng_name))
+                        '{0}'.format(bitgen_name))
 
         if self.seed_vector_bits == 32:
             dtype = np.uint32

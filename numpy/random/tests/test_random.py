@@ -43,7 +43,8 @@ class TestSeed(object):
 
     def test_invalid_array_shape(self):
         # gh-9832
-        assert_raises(ValueError, np.random.RandomState, np.array([], dtype=np.int64))
+        assert_raises(ValueError, np.random.RandomState,
+                      np.array([], dtype=np.int64))
         assert_raises(ValueError, np.random.RandomState, [[1, 2, 3]])
         assert_raises(ValueError, np.random.RandomState, [[1, 2, 3],
                                                           [4, 5, 6]])
@@ -449,7 +450,8 @@ class TestRandomDist(object):
         assert_equal(np.random.randint(10, 10, size=0).shape, (0,))
         assert_equal(np.random.choice(0, size=0).shape, (0,))
         assert_equal(np.random.choice([], size=(0,)).shape, (0,))
-        assert_equal(np.random.choice(['a', 'b'], size=(3, 0, 4)).shape, (3, 0, 4))
+        assert_equal(np.random.choice(['a', 'b'], size=(3, 0, 4)).shape,
+                     (3, 0, 4))
         assert_raises(ValueError, np.random.choice, [], 10)
 
     def test_choice_nan_probabilities(self):
@@ -693,7 +695,7 @@ class TestRandomDist(object):
         cov = [[1, 0], [0, 1]]
         size = (3, 2)
         actual = np.random.multivariate_normal(mean, cov, size)
-        desired = np.array([[[1.463620246718631, 11.73759122771936 ],
+        desired = np.array([[[1.463620246718631, 11.73759122771936],
                              [1.622445133300628, 9.771356667546383]],
                             [[2.154490787682787, 12.170324946056553],
                              [1.719909438201865, 9.230548443648306]],
@@ -721,7 +723,7 @@ class TestRandomDist(object):
         assert_raises(ValueError, np.random.multivariate_normal, mean, cov,
                       check_valid='raise')
 
-        cov = np.array([[1, 0.1],[0.1, 1]], dtype=np.float32)
+        cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
         with suppress_warnings() as sup:
             np.random.multivariate_normal(mean, cov)
             w = sup.record(RuntimeWarning)
@@ -917,7 +919,8 @@ class TestRandomDist(object):
                 raise TypeError
 
         throwing_float = np.array(1.0).view(ThrowingFloat)
-        assert_raises(TypeError, np.random.uniform, throwing_float, throwing_float)
+        assert_raises(TypeError, np.random.uniform, throwing_float,
+                      throwing_float)
 
         class ThrowingInteger(np.ndarray):
             def __int__(self):
@@ -1384,21 +1387,24 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one * 3, mode, right)
         assert_raises(ValueError, triangular, left * 3, bad_mode_one, right)
-        assert_raises(ValueError, triangular, bad_left_two * 3, bad_mode_two, right)
+        assert_raises(ValueError, triangular, bad_left_two * 3, bad_mode_two,
+                      right)
 
         self.setSeed()
         actual = triangular(left, mode * 3, right)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one, mode * 3, right)
         assert_raises(ValueError, triangular, left, bad_mode_one * 3, right)
-        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two * 3, right)
+        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two * 3,
+                      right)
 
         self.setSeed()
         actual = triangular(left, mode, right * 3)
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, triangular, bad_left_one, mode, right * 3)
         assert_raises(ValueError, triangular, left, bad_mode_one, right * 3)
-        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two, right * 3)
+        assert_raises(ValueError, triangular, bad_left_two, bad_mode_two,
+                      right * 3)
 
     def test_binomial(self):
         n = [1]
@@ -1536,6 +1542,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, logseries, bad_p_one * 3)
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
+
 class TestThread(object):
     # make sure each state produces the same sequence even in threads
     def setup(self):
@@ -1577,6 +1584,7 @@ class TestThread(object):
         def gen_random(state, out):
             out[...] = state.multinomial(10, [1/6.]*6, size=10000)
         self.check_function(gen_random, sz=(10000, 6))
+
 
 # See Issue #4263
 class TestSingleEltArrayInput(object):

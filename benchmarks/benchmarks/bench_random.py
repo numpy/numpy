@@ -89,37 +89,37 @@ class RNG(Benchmark):
     params = ['DSFMT', 'PCG64', 'PCG32', 'MT19937', 'Xoshiro256',
               'Xoshiro512', 'Philox', 'ThreeFry', 'numpy']
 
-    def setup(self, brng):
-        if brng == 'numpy':
+    def setup(self, bitgen):
+        if bitgen == 'numpy':
             self.rg = np.random.RandomState()
         else:
-            self.rg = Generator(getattr(np.random, brng)())
+            self.rg = Generator(getattr(np.random, bitgen)())
         self.rg.random()
         self.int32info = np.iinfo(np.int32)
         self.uint32info = np.iinfo(np.uint32)
         self.uint64info = np.iinfo(np.uint64)
 
-    def time_raw(self, brng):
-        if brng == 'numpy':
+    def time_raw(self, bitgen):
+        if bitgen == 'numpy':
             self.rg.random_integers(self.int32info.max, size=nom_size)
         else:
             self.rg.integers(self.int32info.max, size=nom_size, endpoint=True)
 
-    def time_32bit(self, brng):
+    def time_32bit(self, bitgen):
         min, max = self.uint32info.min, self.uint32info.max
-        if brng == 'numpy':
+        if bitgen == 'numpy':
             self.rg.randint(min, max + 1, nom_size, dtype=np.uint32)
         else:
             self.rg.integers(min, max + 1, nom_size, dtype=np.uint32)
 
-    def time_64bit(self, brng):
+    def time_64bit(self, bitgen):
         min, max = self.uint64info.min, self.uint64info.max
-        if brng == 'numpy':
+        if bitgen == 'numpy':
             self.rg.randint(min, max + 1, nom_size, dtype=np.uint64)
         else:
             self.rg.integers(min, max + 1, nom_size, dtype=np.uint64)
 
-    def time_normal_zig(self, brng):
+    def time_normal_zig(self, bitgen):
         self.rg.standard_normal(nom_size)
 
 class Bounded(Benchmark):
@@ -146,14 +146,14 @@ class Bounded(Benchmark):
                [u64, 2047],  # Best case for legacy
              ]]
 
-    def setup(self, brng, args):
-        if brng == 'numpy':
+    def setup(self, bitgen, args):
+        if bitgen == 'numpy':
             self.rg = np.random.RandomState()
         else:
-            self.rg = Generator(getattr(np.random, brng)())
+            self.rg = Generator(getattr(np.random, bitgen)())
         self.rg.random()
 
-    def time_bounded(self, brng, args):
+    def time_bounded(self, bitgen, args):
             """
             Timer for 8-bit bounded values.
 
@@ -165,7 +165,7 @@ class Bounded(Benchmark):
                 Upper bound for range. Lower is always 0.  Must be <= 2**bits.
             """
             dt, max = args
-            if brng == 'numpy':
+            if bitgen == 'numpy':
                 self.rg.randint(0, max + 1, nom_size, dtype=dt)
             else:
                 self.rg.integers(0, max + 1, nom_size, dtype=dt)

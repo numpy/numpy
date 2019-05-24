@@ -3872,7 +3872,7 @@ cdef class Generator:
                [3, 4, 5]])
 
         """
-        if isinstance(x, (int, long, np.integer)):
+        if isinstance(x, (int, np.integer)):
             arr = np.arange(x)
             self.shuffle(arr)
             return arr

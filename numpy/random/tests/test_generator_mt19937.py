@@ -1,5 +1,4 @@
 import sys
-import warnings
 
 import pytest
 
@@ -208,7 +207,8 @@ class TestIntegers(object):
             assert_equal(self.rfunc(tgt, tgt + is_open, size=1000,
                                     endpoint=endpoint, dtype=dt), tgt)
             assert_equal(self.rfunc([tgt], [tgt + is_open],
-                                    size=1000, endpoint=endpoint, dtype=dt), tgt)
+                                    size=1000, endpoint=endpoint, dtype=dt),
+                         tgt)
 
     def test_rng_zero_and_extremes_array(self, endpoint):
         size = 1000
@@ -295,7 +295,8 @@ class TestIntegers(object):
 
             size = 1000
             random.bit_generator.seed(1234)
-            scalar = self.rfunc(lbnd, ubnd, size=size, endpoint=endpoint, dtype=dt)
+            scalar = self.rfunc(lbnd, ubnd, size=size, endpoint=endpoint,
+                                dtype=dt)
 
             random.bit_generator.seed(1234)
             scalar_array = self.rfunc([lbnd], [ubnd], size=size,
@@ -352,16 +353,18 @@ class TestIntegers(object):
 
             # view as little endian for hash
             random.bit_generator.seed(1234)
-            val = self.rfunc(lbnd, ubnd, size=1000, endpoint=endpoint, dtype=dt)
+            val = self.rfunc(lbnd, ubnd, size=1000, endpoint=endpoint,
+                             dtype=dt)
 
             random.bit_generator.seed(1234)
-            val_bc = self.rfunc([lbnd] * 1000, ubnd, endpoint=endpoint, dtype=dt)
+            val_bc = self.rfunc([lbnd] * 1000, ubnd, endpoint=endpoint,
+                                dtype=dt)
 
             assert_array_equal(val, val_bc)
 
             random.bit_generator.seed(1234)
-            val_bc = self.rfunc([lbnd] * 1000, [ubnd] * 1000, endpoint=endpoint,
-                                dtype=dt)
+            val_bc = self.rfunc([lbnd] * 1000, [ubnd] * 1000,
+                                endpoint=endpoint, dtype=dt)
 
             assert_array_equal(val, val_bc)
 
@@ -457,8 +460,10 @@ class TestIntegers(object):
             sample = self.rfunc(0, 0, (3, 0, 4), endpoint=endpoint, dtype=dt)
             assert sample.shape == (3, 0, 4)
             assert sample.dtype == dt
-            assert self.rfunc(0, -10, 0, endpoint=endpoint, dtype=dt).shape == (0,)
-            assert_equal(random.integers(0, 0, size=(3, 0, 4)).shape, (3, 0, 4))
+            assert self.rfunc(0, -10, 0, endpoint=endpoint,
+                              dtype=dt).shape == (0,)
+            assert_equal(random.integers(0, 0, size=(3, 0, 4)).shape,
+                         (3, 0, 4))
             assert_equal(random.integers(0, -10, size=0).shape, (0,))
             assert_equal(random.integers(10, 10, size=0).shape, (0,))
 
@@ -502,8 +507,8 @@ class TestRandomDist(object):
         # into a C long. Previous implementations of this
         # method have thrown an OverflowError when attempting
         # to generate this integer.
-        actual = random.integers(np.iinfo('l').max,
-                                        np.iinfo('l').max, endpoint=True)
+        actual = random.integers(np.iinfo('l').max, np.iinfo('l').max,
+                                 endpoint=True)
 
         desired = np.iinfo('l').max
         assert_equal(actual, desired)

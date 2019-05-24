@@ -3,7 +3,6 @@ try:
 except ImportError:
     from dummy_threading import Lock
 
-from libc.string cimport memcpy
 from cpython.pycapsule cimport PyCapsule_New
 
 import numpy as np
