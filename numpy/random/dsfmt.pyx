@@ -1,6 +1,5 @@
 import operator
 from cpython.pycapsule cimport PyCapsule_New
-from libc.string cimport memcpy
 
 try:
     from threading import Lock

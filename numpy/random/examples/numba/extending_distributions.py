@@ -5,7 +5,8 @@ export PYTHON_INCLUDE=#path to Python's include folder, usually \
     ${PYTHON_HOME}/include/python${PYTHON_VERSION}m
 export NUMPY_INCLUDE=#path to numpy's include folder, usually \
     ${PYTHON_HOME}/lib/python${PYTHON_VERSION}/site-packages/numpy/core/include
-gcc -shared -o libdistributions.so -fPIC distributions.c -I${NUMPY_INCLUDE} -I${PYTHON_INCLUDE}
+gcc -shared -o libdistributions.so -fPIC distributions.c \
+    -I${NUMPY_INCLUDE} -I${PYTHON_INCLUDE}
 mv libdistributions.so ../../examples/numba/
 
 On Windows

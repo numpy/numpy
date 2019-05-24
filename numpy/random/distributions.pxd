@@ -1,7 +1,7 @@
 #cython: language_level=3
 
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
-                          int8_t, int16_t, int32_t, int64_t, intptr_t)
+                          int32_t, int64_t)
 import numpy as np
 cimport numpy as np
 

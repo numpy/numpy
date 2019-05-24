@@ -45,6 +45,10 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
 
     Parameters
     ----------
+    bitgen : BitGenerator
+        Address of the bit generator struct
+    lock : Threading.Lock
+        Lock provided by the bit generator
     size : int or tuple of ints, optional
         Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
         ``m * n * k`` samples are drawn.  Default is None, in which case a
