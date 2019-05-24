@@ -1,6 +1,8 @@
 from .mtrand import RandomState
 from .philox import Philox
 from .threefry import ThreeFry
+from .pcg32 import PCG32
+from .pcg64 import PCG64
 from .xoshiro256 import Xoshiro256
 from .xoshiro512 import Xoshiro512
 
@@ -9,12 +11,14 @@ from .generator import Generator
 from .mt19937 import MT19937
 
 BitGenerators = {'MT19937': MT19937,
-             'DSFMT': DSFMT,
-             'Philox': Philox,
-             'ThreeFry': ThreeFry,
-             'Xoshiro256': Xoshiro256,
-             'Xoshiro512': Xoshiro512,
-             }
+                 'DSFMT': DSFMT,
+                 'PCG32': PCG32,
+                 'PCG64': PCG64,
+                 'Philox': Philox,
+                 'ThreeFry': ThreeFry,
+                 'Xoshiro256': Xoshiro256,
+                 'Xoshiro512': Xoshiro512
+                 }
 
 
 def __generator_ctor(bit_generator_name='mt19937'):

@@ -58,6 +58,10 @@ def configuration(parent_package='', top_path=None):
     # Required defined for DSFMT size and to allow it to detect SSE2 using
     # config file information
     DSFMT_DEFS = [('DSFMT_MEXP', '19937'), ("HAVE_NPY_CONFIG_H", "1")]
+    PCG64_DEFS = []
+    if 1 or sys.maxsize < 2 ** 32 or os.name == 'nt':
+        # Force emulated mode here
+        PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
 
     config.add_extension('entropy',
                          sources=['entropy.c', 'src/entropy/entropy.c'] +
@@ -97,8 +101,10 @@ def configuration(parent_package='', top_path=None):
                              depends=['%s.pyx' % gen],
                              define_macros=defs,
                              )
-    for gen in ['philox', 'threefry', 'xoshiro256', 'xoshiro512']:
+    for gen in ['philox', 'threefry', 'xoshiro256', 'xoshiro512',
+                'pcg64', 'pcg32']:
         # gen.pyx, src/gen/gen.c
+        _defs = defs + PCG64_DEFS if gen == 'pcg64' else defs
         config.add_extension(gen,
                              sources=['{0}.c'.format(gen),
                                       'src/{0}/{0}.c'.format(gen)],
@@ -107,7 +113,7 @@ def configuration(parent_package='', top_path=None):
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
                              depends=['%s.pyx' % gen],
-                             define_macros=defs,
+                             define_macros=_defs,
                              )
     for gen in ['common']:
         # gen.pyx

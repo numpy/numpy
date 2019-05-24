@@ -9,7 +9,7 @@ import pytest
 from numpy.testing import (assert_almost_equal, assert_equal, assert_,
     assert_array_equal, suppress_warnings)
 from numpy.random import (Generator, MT19937, DSFMT, ThreeFry,
-    Philox, Xoshiro256, Xoshiro512, entropy)
+    PCG32, PCG64, Philox, Xoshiro256, Xoshiro512, entropy)
 
 
 @pytest.fixture(scope='module',
@@ -841,3 +841,53 @@ class TestEntropy(object):
         time.sleep(0.1)
         e2 = entropy.random_entropy(source='fallback')
         assert_((e1 != e2))
+
+
+class TestPCG64(RNG):
+    @classmethod
+    def setup_class(cls):
+        cls.bit_generator = PCG64
+        cls.advance = 2 ** 96 + 2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1
+        cls.seed = [2 ** 96 + 2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1,
+                    2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
+        cls.rg = Generator(cls.bit_generator(*cls.seed))
+        cls.initial_state = cls.rg.bit_generator.state
+        cls.seed_vector_bits = None
+        cls._extra_setup()
+
+    def test_seed_array_error(self):
+        # GH #82 for error type changes
+        if self.seed_vector_bits == 32:
+            out_of_bounds = 2 ** 32
+        else:
+            out_of_bounds = 2 ** 64
+
+        seed = -1
+        with pytest.raises(ValueError):
+            self.rg.bit_generator.seed(seed)
+
+        error_type = ValueError if self.seed_vector_bits else TypeError
+        seed = np.array([-1], dtype=np.int32)
+        with pytest.raises(error_type):
+            self.rg.bit_generator.seed(seed)
+
+        seed = np.array([1, 2, 3, -5], dtype=np.int32)
+        with pytest.raises(error_type):
+            self.rg.bit_generator.seed(seed)
+
+        seed = np.array([1, 2, 3, out_of_bounds])
+        with pytest.raises(error_type):
+            self.rg.bit_generator.seed(seed)
+
+
+class TestPCG32(TestPCG64):
+    @classmethod
+    def setup_class(cls):
+        cls.bit_generator = PCG32
+        cls.advance = 2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1
+        cls.seed = [2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1,
+                    2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
+        cls.rg = Generator(cls.bit_generator(*cls.seed))
+        cls.initial_state = cls.rg.bit_generator.state
+        cls.seed_vector_bits = None
+        cls._extra_setup()

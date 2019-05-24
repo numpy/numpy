@@ -168,6 +168,7 @@ The included BitGenerators are:
   `Random123`_ page for more details about this class of bit generators.
 
 .. _`dSFMT authors' page`: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/
+.. _`PCG author's page`: http://www.pcg-random.org/
 .. _`xorshift, xoroshiro and xoshiro authors' page`:  http://xoroshiro.di.unimi.it/
 .. _`Random123`: https://www.deshawresearch.com/resources_random123.html
 
