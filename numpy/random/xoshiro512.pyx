@@ -203,7 +203,7 @@ cdef class Xoshiro512:
 
         Seed the generator.
 
-        This method is called at initialized. It can be called again to
+        This method is called at initialization. It can be called again to
         re-seed the generator.
 
         Parameters

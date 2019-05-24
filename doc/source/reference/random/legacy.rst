@@ -19,8 +19,8 @@ are produced in pairs. It is important to use
 .. warning::
 
   :class:`~randomgen.legacy.LegacyGenerator` only contains functions
-  that have changed.  Since it does not contain other functions, it 
-  is not direclty possible to replace :class:`~numpy.random.RandomState`.
+  that have changed.  Since it does not contain other functions, it
+  is not directly possible to replace :class:`~numpy.random.RandomState`.
   In order to full replace :class:`~numpy.random.RandomState`, it is
   necessary to use both :class:`~randomgen.legacy.LegacyGenerator`
   and :class:`~randomgen.generator.RandomGenerator` both driven

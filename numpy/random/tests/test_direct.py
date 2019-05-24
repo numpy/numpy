@@ -8,7 +8,7 @@ from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
 import pytest
 
 from numpy.random import (Generator, MT19937, DSFMT, ThreeFry,
-    Philox, Xoshiro256, Xoshiro512, RandomState)
+    PCG32, PCG64, Philox, Xoshiro256, Xoshiro512, RandomState)
 from numpy.random.common import interface
 
 try:
@@ -384,6 +384,56 @@ class TestPhilox(Base):
         keyed = self.bit_generator(counter=state['state']['counter'],
                           key=state['state']['key'])
         assert_state_equal(bit_generator.state, keyed.state)
+
+
+
+class TestPCG64(Base):
+    @classmethod
+    def setup_class(cls):
+        cls.bit_generator = PCG64
+        cls.bits = 64
+        cls.dtype = np.uint64
+        cls.data1 = cls._read_csv(join(pwd, './data/pcg64-testset-1.csv'))
+        cls.data2 = cls._read_csv(join(pwd, './data/pcg64-testset-2.csv'))
+        cls.seed_error_type = TypeError
+        cls.invalid_seed_types = [(np.array([1, 2]),), (3.2,),
+                                  (None, np.zeros(1))]
+        cls.invalid_seed_values = [(-1,), (2 ** 129 + 1,), (None, -1),
+                                   (None, 2 ** 129 + 1)]
+
+    def test_seed_float_array(self):
+        rs = Generator(self.bit_generator(*self.data1['seed']))
+        assert_raises(self.seed_error_type, rs.bit_generator.seed,
+                      np.array([np.pi]))
+        assert_raises(self.seed_error_type, rs.bit_generator.seed,
+                      np.array([-np.pi]))
+        assert_raises(self.seed_error_type, rs.bit_generator.seed,
+                      np.array([np.pi, -np.pi]))
+        assert_raises(self.seed_error_type, rs.bit_generator.seed,
+                      np.array([0, np.pi]))
+        assert_raises(self.seed_error_type, rs.bit_generator.seed, [np.pi])
+        assert_raises(self.seed_error_type, rs.bit_generator.seed, [0, np.pi])
+
+    def test_seed_out_of_range_array(self):
+        rs = Generator(self.bit_generator(*self.data1['seed']))
+        assert_raises(self.seed_error_type, rs.bit_generator.seed,
+                      [2 ** (2 * self.bits + 1)])
+        assert_raises(self.seed_error_type, rs.bit_generator.seed, [-1])
+
+
+class TestPCG32(TestPCG64):
+    @classmethod
+    def setup_class(cls):
+        cls.bit_generator = PCG32
+        cls.bits = 32
+        cls.dtype = np.uint32
+        cls.data1 = cls._read_csv(join(pwd, './data/pcg32-testset-1.csv'))
+        cls.data2 = cls._read_csv(join(pwd, './data/pcg32-testset-2.csv'))
+        cls.seed_error_type = TypeError
+        cls.invalid_seed_types = [(np.array([1, 2]),), (3.2,),
+                                  (None, np.zeros(1))]
+        cls.invalid_seed_values = [(-1,), (2 ** 129 + 1,), (None, -1),
+                                   (None, 2 ** 129 + 1)]
 
 
 class TestMT19937(Base):

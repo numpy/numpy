@@ -21,14 +21,14 @@ seed will produce the same outputs.
     import multiprocessing
     import concurrent.futures
     import numpy as np
-    
+
     class MultithreadedRNG(object):
         def __init__(self, n, seed=None, threads=None):
             rg = Xoshiro256(seed)
             if threads is None:
                 threads = multiprocessing.cpu_count()
             self.threads = threads
-    
+
             self._random_generators = [rg]
             last_rg = rg
             for _ in range(0, threads-1):
@@ -40,21 +40,21 @@ seed will produce the same outputs.
             self.executor = concurrent.futures.ThreadPoolExecutor(threads)
             self.values = np.empty(n)
             self.step = np.ceil(n / threads).astype(np.int)
-    
+
         def fill(self):
             def _fill(random_state, out, first, last):
                 random_state.standard_normal(out=out[first:last])
-    
+
             futures = {}
             for i in range(self.threads):
-                args = (_fill, 
+                args = (_fill,
                         self._random_generators[i],
-                        self.values, 
-                        i * self.step, 
+                        self.values,
+                        i * self.step,
                         (i + 1) * self.step)
                 futures[self.executor.submit(*args)] = i
             concurrent.futures.wait(futures)
-    
+
         def __del__(self):
             self.executor.shutdown(False)
 
@@ -80,7 +80,7 @@ the time required to generate using a single thread.
 
     In [4]: print(mrng.threads)
         ...: %timeit mrng.fill()
-    
+
     4
     32.8 ms ± 2.71 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
 

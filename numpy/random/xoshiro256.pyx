@@ -3,7 +3,6 @@ try:
 except ImportError:
     from dummy_threading import Lock
 
-from libc.string cimport memcpy
 from cpython.pycapsule cimport PyCapsule_New
 
 import numpy as np
@@ -202,7 +201,7 @@ cdef class Xoshiro256:
 
         Seed the generator.
 
-        This method is called at initialized. It can be called again to
+        This method is called at initialization. It can be called again to
         re-seed the generator.
 
         Parameters
