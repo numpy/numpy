@@ -98,12 +98,15 @@ A prototype implementation can be found in
 
 .. note::
 
-  Dispatch with the ``__array_function__`` protocol has been implemented on
-  NumPy's master branch but is not yet enabled by default. In NumPy 1.16,
-  you will need to set the environment variable
-  ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to test
-  NumPy function overrides. We anticipate the protocol will be enabled by
-  default in NumPy 1.17.
+  Dispatch with the ``__array_function__`` protocol has been implemented but is
+  not yet enabled by default:
+
+  - In NumPy 1.16, you need to set the environment variable
+    ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to test
+    NumPy function overrides.
+  - In NumPy 1.17, the protocol will be enabled by default, but can be disabled
+    with ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0``.
+  - Eventually, expect to ``__array_function__`` to always be enabled.
 
 The interface
 ~~~~~~~~~~~~~
