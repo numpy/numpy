@@ -146,16 +146,9 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         def decorator(implementation):
             if docs_from_dispatcher:
                 add_docstring(implementation, dispatcher.__doc__)
-
-            public_api = implementation
-
             if module is not None:
-                public_api.__module__ = module
-
-            public_api._implementation = implementation
-
-            return public_api
-
+                implementation.__module__ = module
+            return implementation
         return decorator
 
     def decorator(implementation):
