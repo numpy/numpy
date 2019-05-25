@@ -472,17 +472,22 @@ def count_nonzero(a, axis=None):
 @set_module('numpy')
 def isfortran(a):
     """
-    Returns True if the array is Fortran contiguous but *not* C contiguous.
-
+    Check if the array is Fortran contiguous but *not* C contiguous.
+    
     This function is obsolete and, because of changes due to relaxed stride
     checking, its return value for the same array may differ for versions
     of NumPy >= 1.10.0 and previous versions. If you only want to check if an
     array is Fortran contiguous use ``a.flags.f_contiguous`` instead.
-
+    
     Parameters
     ----------
     a : ndarray
         Input array.
+    
+    Returns
+    -------
+    isfortran : bool
+        Returns True if the array is Fortran contiguous but *not* C contiguous.
 
 
     Examples
