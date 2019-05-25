@@ -65,6 +65,8 @@ matrix:
     - python: 3.6
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
     - python: 3.6
+      env: NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
+    - python: 3.6
       env:
        - BLAS=None
        - LAPACK=None
