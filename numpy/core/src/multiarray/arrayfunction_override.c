@@ -173,7 +173,7 @@ array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
         }
     }
 
-    implementation = PyObject_GetAttr(func, npy_ma_str_skip_array_function);
+    implementation = PyObject_GetAttr(func, npy_ma_str_implementation);
     if (implementation == NULL) {
         return NULL;
     }
