@@ -246,6 +246,11 @@ def require(a, dtype=None, requirements=None):
        * 'OWNDATA' ('O')      - ensure an array that owns its own data
        * 'ENSUREARRAY', ('E') - ensure a base array, instead of a subclass
 
+    Returns
+    -------
+    out : ndarray
+        Array with specified requirements and type if given.
+
     See Also
     --------
     asarray : Convert input to an ndarray.
