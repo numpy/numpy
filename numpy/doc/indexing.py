@@ -295,6 +295,13 @@ to produce a resultant array of shape (3,2).
 
 Likewise, slicing can be combined with broadcasted boolean indices: ::
 
+ >>> b = y > 20
+ >>> b
+ array([[False, False, False, False, False, False, False],
+       [False, False, False, False, False, False, False],
+       [False, False, False, False, False, False, False],
+       [ True,  True,  True,  True,  True,  True,  True],
+       [ True,  True,  True,  True,  True,  True,  True]])
  >>> y[b[:,5],1:3]
  array([[22, 23],
         [29, 30]])
