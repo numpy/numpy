@@ -17,6 +17,13 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
+# Internal functions that elimainate the overhead of repeated dispatch.
+# Use getattr to protect against __array_function__ being disabled.
+_size = getattr(_nx.size, '__wrapped__', _nx.size)
+_ndim = getattr(_nx.ndim, '__wrapped__', _nx.ndim)
+_concatenate = getattr(_nx.concatenate, '__wrapped__', _nx.concatenate)
+
+
 def _atleast_1d_dispatcher(*arys):
     return arys
 
@@ -123,7 +130,7 @@ def atleast_2d(*arys):
         if ary.ndim == 0:
             result = ary.reshape(1, 1)
         elif ary.ndim == 1:
-            result = ary[newaxis,:]
+            result = ary[newaxis, :]
         else:
             result = ary
         res.append(result)
@@ -193,9 +200,9 @@ def atleast_3d(*arys):
         if ary.ndim == 0:
             result = ary.reshape(1, 1, 1)
         elif ary.ndim == 1:
-            result = ary[newaxis,:, newaxis]
+            result = ary[newaxis, :, newaxis]
         elif ary.ndim == 2:
-            result = ary[:,:, newaxis]
+            result = ary[:, :, newaxis]
         else:
             result = ary
         res.append(result)
@@ -203,6 +210,13 @@ def atleast_3d(*arys):
         return res[0]
     else:
         return res
+
+
+# More aliases to undispatched functions.
+# Use getattr to protect against __array_function__ being disabled.
+_atleast_1d = getattr(atleast_1d, '__wrapped__', atleast_1d)
+_atleast_2d = getattr(atleast_2d, '__wrapped__', atleast_2d)
+_atleast_3d = getattr(atleast_3d, '__wrapped__', atleast_3d)
 
 
 def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
@@ -273,7 +287,7 @@ def vstack(tup):
            [4]])
 
     """
-    return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
+    return _concatenate([_atleast_2d(_m) for _m in tup], 0)
 
 
 @array_function_dispatch(_vhstack_dispatcher)
@@ -324,12 +338,12 @@ def hstack(tup):
            [3, 4]])
 
     """
-    arrs = [atleast_1d(_m) for _m in tup]
+    arrs = [_atleast_1d(_m) for _m in tup]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
-        return _nx.concatenate(arrs, 0)
+        return _concatenate(arrs, 0)
     else:
-        return _nx.concatenate(arrs, 1)
+        return _concatenate(arrs, 1)
 
 
 def _stack_dispatcher(arrays, axis=None, out=None):
@@ -413,7 +427,7 @@ def stack(arrays, axis=0, out=None):
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]
-    return _nx.concatenate(expanded_arrays, axis=axis, out=out)
+    return _concatenate(expanded_arrays, axis=axis, out=out)
 
 
 def _block_format_index(index):
@@ -496,8 +510,8 @@ def _block_check_depths_match(arrays, parent_index=[]):
         return parent_index + [None], 0, 0
     else:
         # We've 'bottomed out' - arrays is either a scalar or an array
-        size = _nx.size(arrays)
-        return parent_index, _nx.ndim(arrays), size
+        size = _size(arrays)
+        return parent_index, _ndim(arrays), size
 
 
 def _atleast_nd(a, ndim):
@@ -640,7 +654,7 @@ def _block(arrays, max_depth, result_ndim, depth=0):
     if depth < max_depth:
         arrs = [_block(arr, max_depth, result_ndim, depth+1)
                 for arr in arrays]
-        return _nx.concatenate(arrs, axis=-(max_depth-depth))
+        return _concatenate(arrs, axis=-(max_depth-depth))
     else:
         # We've 'bottomed out' - arrays is either a scalar or an array
         # type(arrays) is not list
@@ -858,7 +872,7 @@ def _block_slicing(arrays, list_ndim, result_ndim):
 
     # Test preferring F only in the case that all input arrays are F
     F_order = all(arr.flags['F_CONTIGUOUS'] for arr in arrays)
-    C_order =  all(arr.flags['C_CONTIGUOUS'] for arr in arrays)
+    C_order = all(arr.flags['C_CONTIGUOUS'] for arr in arrays)
     order = 'F' if F_order and not C_order else 'C'
     result = _nx.empty(shape=shape, dtype=dtype, order=order)
     # Note: In a c implementation, the function
