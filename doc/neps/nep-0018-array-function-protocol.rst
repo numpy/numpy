@@ -349,19 +349,27 @@ with ``__array_ufunc__``, so ``numpy.ndarray`` also defines a
 
 This method matches NumPy's dispatching rules, so for most part it is
 possible to pretend that ``ndarray.__array_function__`` does not exist.
+The private ``_implementation`` attribute, defined below in the
+``array_function_dispatch`` decorator, allows us to avoid the special cases for
+NumPy arrays that were needed in the ``__array_ufunc__`` protocol.
 
 The ``__array_function__`` protocol always calls subclasses before
 superclasses, so if any ``ndarray`` subclasses are involved in an operation,
 they will get the chance to override it, just as if any other argument
-overrides ``__array_function__``. However, the default behavior in an operation
+overrides ``__array_function__``. But the default behavior in an operation
 that combines a base NumPy array and a subclass is different: if the subclass
 returns ``NotImplemented``, NumPy's implementation of the function will be
 called instead of raising an exception. This is appropriate since subclasses
 are `expected to be substitutable <https://en.wikipedia.org/wiki/Liskov_substitution_principle>`_.
 
-Note that the private ``_implementation`` attribute, defined below in the
-``array_function_dispatch`` decorator, allows us to avoid the special cases for
-NumPy arrays that were needed in the ``__array_ufunc__`` protocol.
+We still caution authors of subclasses to exercise caution when relying
+upon details of NumPy's internal implementations. It is not always possible to
+write a perfectly substitutable ndarray subclass, e.g., in cases involving the
+creation of new arrays, not least because NumPy makes use of internal
+optimizations specialized to base NumPy arrays, e.g., code written in C. Even
+if NumPy's implementation happens to work today, it may not work in the future.
+In these cases, your recourse is to re-implement top-level NumPy functions via
+``__array_function__`` on your subclass.
 
 Changes within NumPy functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
