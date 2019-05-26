@@ -273,6 +273,9 @@ def vstack(tup):
            [4]])
 
     """
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # raise warning if necessary
+        _arrays_for_stack_dispatcher(tup, stacklevel=2)
     return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
 
 
@@ -324,6 +327,10 @@ def hstack(tup):
            [3, 4]])
 
     """
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # raise warning if necessary
+        _arrays_for_stack_dispatcher(tup, stacklevel=2)
+
     arrs = [atleast_1d(_m) for _m in tup]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
@@ -400,6 +407,10 @@ def stack(arrays, axis=0, out=None):
            [3, 4]])
 
     """
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # raise warning if necessary
+        _arrays_for_stack_dispatcher(arrays, stacklevel=2)
+
     arrays = [asanyarray(arr) for arr in arrays]
     if not arrays:
         raise ValueError('need at least one array to stack')

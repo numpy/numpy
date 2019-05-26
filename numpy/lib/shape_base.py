@@ -7,7 +7,7 @@ import numpy.core.numeric as _nx
 from numpy.core.numeric import (
     asarray, zeros, outer, concatenate, array, asanyarray
     )
-from numpy.core.fromnumeric import product, reshape, transpose
+from numpy.core.fromnumeric import reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
@@ -628,6 +628,10 @@ def column_stack(tup):
            [3, 4]])
 
     """
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # raise warning if necessary
+        _arrays_for_stack_dispatcher(tup, stacklevel=2)
+
     arrays = []
     for v in tup:
         arr = array(v, copy=False, subok=True)
@@ -692,6 +696,10 @@ def dstack(tup):
            [[3, 4]]])
 
     """
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # raise warning if necessary
+        _arrays_for_stack_dispatcher(tup, stacklevel=2)
+
     return _nx.concatenate([atleast_3d(_m) for _m in tup], 2)
 
 

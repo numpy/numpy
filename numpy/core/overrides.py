@@ -9,7 +9,7 @@ from numpy.core._multiarray_umath import (
 from numpy.compat._inspect import getargspec
 
 
-ENABLE_ARRAY_FUNCTION = bool(
+ARRAY_FUNCTION_ENABLED = bool(
     int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
 
 
@@ -142,7 +142,7 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
     Function suitable for decorating the implementation of a NumPy function.
     """
 
-    if not ENABLE_ARRAY_FUNCTION:
+    if not ARRAY_FUNCTION_ENABLED:
         def decorator(implementation):
             if docs_from_dispatcher:
                 add_docstring(implementation, dispatcher.__doc__)
