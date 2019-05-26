@@ -533,3 +533,11 @@ class Test_GetSet_NumericOps(_DeprecationTestCase):
         # other tests.
         self.assert_deprecated(np.set_numeric_ops, kwargs={})
         assert_raises(ValueError, np.set_numeric_ops, add='abc')
+
+
+class TestShape1Fields(_DeprecationTestCase):
+    warning_cls = FutureWarning
+
+    # 2019-05-20, 1.17.0
+    def test_shape_1_fields(self):
+        self.assert_deprecated(np.dtype, args=([('a', int, 1)],))
