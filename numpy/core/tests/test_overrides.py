@@ -9,13 +9,13 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex)
 from numpy.core.overrides import (
     _get_implementing_args, array_function_dispatch,
-    verify_matching_signatures, ENABLE_ARRAY_FUNCTION)
+    verify_matching_signatures, ARRAY_FUNCTION_ENABLED)
 from numpy.compat import pickle
 import pytest
 
 
 requires_array_function = pytest.mark.skipif(
-    not ENABLE_ARRAY_FUNCTION,
+    not ARRAY_FUNCTION_ENABLED,
     reason="__array_function__ dispatch not enabled.")
 
 
