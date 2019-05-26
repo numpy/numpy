@@ -2207,8 +2207,6 @@ PyArray_Nonzero(PyArrayObject *self)
     NpyIter_IterNextFunc *iternext;
     NpyIter_GetMultiIndexFunc *get_multi_index;
     char **dataptr;
-    int is_empty = 0;
-
 
     /* Special case - nonzero(zero_d) is nonzero(atleast1d(zero_d)) */
     if (ndim == 0) {
@@ -2373,18 +2371,11 @@ finish:
         return NULL;
     }
 
-    for (i = 0; i < PyArray_NDIM(ret); ++i) {
-        if (PyArray_DIMS(ret)[i] == 0) {
-            is_empty = 1;
-            break;
-        }
-    }
-
     /* Create views into ret, one for each dimension */
     for (i = 0; i < ndim; ++i) {
         npy_intp stride = ndim * NPY_SIZEOF_INTP;
         /* the result is an empty array, the view must point to valid memory */
-        npy_intp data_offset = is_empty ? 0 : i * NPY_SIZEOF_INTP;
+        npy_intp data_offset = nonzero_count == 0 ? 0 : i * NPY_SIZEOF_INTP;
 
         PyArrayObject *view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             Py_TYPE(ret), PyArray_DescrFromType(NPY_INTP),
