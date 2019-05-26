@@ -541,3 +541,10 @@ class TestShape1Fields(_DeprecationTestCase):
     # 2019-05-20, 1.17.0
     def test_shape_1_fields(self):
         self.assert_deprecated(np.dtype, args=([('a', int, 1)],))
+
+
+class TestNonZero(_DeprecationTestCase):
+    # 2019-05-26, 1.17.0
+    def test_zerod(self):
+        self.assert_deprecated(lambda: np.nonzero(np.array(0)))
+        self.assert_deprecated(lambda: np.nonzero(np.array(1)))
