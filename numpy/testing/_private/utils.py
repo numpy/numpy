@@ -812,14 +812,22 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                 with contextlib.suppress(TypeError):
                     error = abs(x - y)
                     max_abs_error = error.max()
-                    remarks.append('Max absolute difference: '
-                                   + array2string(max_abs_error))
+                    if error.dtype == 'object':
+                        remarks.append('Max absolute difference: '
+                                        + str(max_abs_error))
+                    else:
+                        remarks.append('Max absolute difference: '
+                                        + array2string(max_abs_error))
 
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     max_rel_error = (error / abs(y)).max()
-                    remarks.append('Max relative difference: '
-                                   + array2string(max_rel_error))
+                    if error.dtype == 'object':
+                        remarks.append('Max relative difference: '
+                                        + str(max_rel_error))
+                    else:
+                        remarks.append('Max relative difference: '
+                                        + array2string(max_rel_error))
 
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
