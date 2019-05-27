@@ -571,7 +571,7 @@ def matrix_power(a, n):
     Parameters
     ----------
     a : (..., M, M) array_like
-        Matrix to be "powered."
+        Matrix to be "powered".
     n : int
         The exponent can be any integer or long integer, positive,
         negative, or zero.
@@ -1790,9 +1790,9 @@ def matrix_rank(M, tol=None, hermitian=False):
     Parameters
     ----------
     M : {(M,), (..., M, N)} array_like
-        input vector or stack of matrices
+        Input vector or stack of matrices.
     tol : (...) array_like, float, optional
-        threshold below which SVD values are considered zero. If `tol` is
+        Threshold below which SVD values are considered zero. If `tol` is
         None, and ``S`` is an array with singular values for `M`, and
         ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
         set to ``S.max() * max(M.shape) * eps``.
@@ -1805,6 +1805,11 @@ def matrix_rank(M, tol=None, hermitian=False):
         Defaults to False.
 
         .. versionadded:: 1.14
+
+    Returns
+    -------
+    rank : (...) array_like
+        Rank of M.
 
     Notes
     -----

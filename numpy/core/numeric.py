@@ -934,6 +934,11 @@ def tensordot(a, b, axes=2):
           Or, a list of axes to be summed over, first sequence applying to `a`,
           second to `b`. Both elements array_like must be of the same length.
 
+    Returns
+    -------
+    output : ndarray
+        The tensor dot product of the input.  
+
     See Also
     --------
     dot, einsum
