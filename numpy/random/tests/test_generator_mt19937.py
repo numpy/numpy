@@ -700,8 +700,8 @@ class TestRandomDist(object):
                                 .view(np.recarray)),
                      # gh-4270
                      lambda x: np.asarray([(i, i) for i in x],
-                                          [("a", object, 1),
-                                           ("b", np.int32, 1)])]:
+                                          [("a", object, (1,)),
+                                           ("b", np.int32, (1,))])]:
             random.bit_generator.seed(self.seed)
             alist = conv([1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
             random.shuffle(alist)
