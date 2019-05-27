@@ -44,6 +44,99 @@ class TestUfuncKwargs(object):
         assert_raises(TypeError, np.add, 1, 2, extobj=[4096], parrot=True)
 
 
+class TestUfuncGenericLoops(object):
+    """Test generic loops.
+
+    The loops to be tested are:
+
+        PyUFunc_ff_f_As_dd_d
+        PyUFunc_ff_f
+        PyUFunc_dd_d
+        PyUFunc_gg_g
+        PyUFunc_FF_F_As_DD_D
+        PyUFunc_DD_D
+        PyUFunc_FF_F
+        PyUFunc_GG_G
+        PyUFunc_OO_O
+        PyUFunc_OO_O_method
+        PyUFunc_f_f_As_d_d
+        PyUFunc_d_d
+        PyUFunc_f_f
+        PyUFunc_g_g
+        PyUFunc_F_F_As_D_D
+        PyUFunc_F_F
+        PyUFunc_D_D
+        PyUFunc_G_G
+        PyUFunc_O_O
+        PyUFunc_O_O_method
+        PyUFunc_On_Om
+
+    Where:
+
+        f -- float
+        d -- double
+        g -- long double
+        F -- complex float
+        D -- complex double
+        G -- complex long double
+        O -- python object
+
+    It is difficult to assure that each of these loops is entered from the
+    Python level as the special cased loops are a moving target and the
+    corresponding types are architecture dependent. We probably need to
+    define C level testing ufuncs to get at them. For the time being, I've
+    just looked at the signatures registered in the build directory to find
+    relevant functions.
+
+    """
+    np_dtypes = [
+        (np.single, np.single), (np.single, np.double),
+        (np.csingle, np.csingle), (np.csingle, np.cdouble),
+        (np.double, np.double), (np.longdouble, np.longdouble),
+        (np.cdouble, np.cdouble), (np.clongdouble, np.clongdouble)]
+
+    @pytest.mark.parametrize('input_dtype,output_dtype', np_dtypes)
+    def test_unary_PyUFunc(self, input_dtype, output_dtype, f=np.exp, x=0, y=1):
+        xs = np.full(10, input_dtype(x), dtype=output_dtype)
+        assert_almost_equal(f(xs), y)
+
+    def f2(x, y):
+        return x**y
+
+    @pytest.mark.parametrize('input_dtype,output_dtype', np_dtypes)
+    def test_binary_PyUFunc(self, input_dtype, output_dtype, f=f2, x=0, y=1):
+        xs = np.full(10, input_dtype(x), dtype=output_dtype)
+        assert_almost_equal(f(xs, xs), y)
+
+    # class to use in testing object method loops
+    class foo(object):
+        def conjugate(self):
+            return np.bool_(1)
+
+        def logical_xor(self, obj):
+            return np.bool_(1)
+
+    def test_unary_PyUFunc_O_O(self):
+        x = np.ones(10, dtype=object)
+        assert_(np.all(np.abs(x) == 1))
+
+    def test_unary_PyUFunc_O_O_method(self, foo=foo):
+        x = np.full(10, foo(), dtype=object)
+        assert_(np.all(np.conjugate(x) == True))
+
+    def test_binary_PyUFunc_OO_O(self):
+        x = np.ones(10, dtype=object)
+        assert_(np.all(np.add(x, x) == 2))
+
+    def test_binary_PyUFunc_OO_O_method(self, foo=foo):
+        x = np.full(10, foo(), dtype=object)
+        assert_(np.all(np.logical_xor(x, x)))
+
+    def test_binary_PyUFunc_On_Om_method(self, foo=foo):
+        x = np.full((10, 2, 3), foo(), dtype=object)
+        assert_(np.all(np.logical_xor(x, x)))
+
+
 class TestUfunc(object):
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
@@ -66,152 +159,6 @@ class TestUfunc(object):
         x = np.arange(L)
         idx = np.array(list(zip(np.arange(L - 2), np.arange(L - 2) + 2))).ravel()
         assert_array_equal(np.add.reduceat(x, idx)[::2], [1, 3, 5, 7])
-
-    def test_generic_loops(self):
-        """Test generic loops.
-
-        The loops to be tested are:
-
-            PyUFunc_ff_f_As_dd_d
-            PyUFunc_ff_f
-            PyUFunc_dd_d
-            PyUFunc_gg_g
-            PyUFunc_FF_F_As_DD_D
-            PyUFunc_DD_D
-            PyUFunc_FF_F
-            PyUFunc_GG_G
-            PyUFunc_OO_O
-            PyUFunc_OO_O_method
-            PyUFunc_f_f_As_d_d
-            PyUFunc_d_d
-            PyUFunc_f_f
-            PyUFunc_g_g
-            PyUFunc_F_F_As_D_D
-            PyUFunc_F_F
-            PyUFunc_D_D
-            PyUFunc_G_G
-            PyUFunc_O_O
-            PyUFunc_O_O_method
-            PyUFunc_On_Om
-
-        Where:
-
-            f -- float
-            d -- double
-            g -- long double
-            F -- complex float
-            D -- complex double
-            G -- complex long double
-            O -- python object
-
-        It is difficult to assure that each of these loops is entered from the
-        Python level as the special cased loops are a moving target and the
-        corresponding types are architecture dependent. We probably need to
-        define C level testing ufuncs to get at them. For the time being, I've
-        just looked at the signatures registered in the build directory to find
-        relevant functions.
-
-        """
-        fone = np.exp
-        ftwo = lambda x, y: x**y
-        fone_val = 1
-        ftwo_val = 1
-
-        # check unary PyUFunc_f_f_As_d_d
-        msg = "PyUFunc_f_f_As_d_d"
-        x = np.full(10, np.single(0), dtype=np.double)
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_F_F_As_D_D
-        msg = "PyUFunc_F_F_As_D_D"
-        x = np.full(10, np.csingle(0), dtype=np.cdouble)
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_f_f.
-        msg = "PyUFunc_f_f"
-        x = np.zeros(10, dtype=np.single)
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_d_d.
-        msg = "PyUFunc_d_d"
-        x = np.zeros(10, dtype=np.double)
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_g_g.
-        msg = "PyUFunc_g_g"
-        x = np.zeros(10, dtype=np.longdouble)
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_F_F.
-        msg = "PyUFunc_F_F"
-        x = np.zeros(10, dtype=np.csingle)
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_D_D.
-        msg = "PyUFunc_D_D"
-        x = np.zeros(10, dtype=np.cdouble)
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_G_G.
-        msg = "PyUFunc_G_G"
-        x = np.zeros(10, dtype=np.clongdouble)
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-
-        # check binary PyUFunc_FF_F_As_DD_D
-        msg = "PyUFunc_FF_F_As_DD_D"
-        x = np.full(10, np.csingle(1), dtype=np.cdouble)
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_ff_f_As_dd_d
-        msg = "PyUFunc_ff_f_As_dd_d"
-        x = np.full(10, np.single(1), dtype=np.double)
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_ff_f.
-        msg = "PyUFunc_ff_f"
-        x = np.ones(10, dtype=np.single)
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_dd_d.
-        msg = "PyUFunc_dd_d"
-        x = np.ones(10, dtype=np.double)
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_gg_g.
-        msg = "PyUFunc_gg_g"
-        x = np.ones(10, dtype=np.longdouble)
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_FF_F.
-        msg = "PyUFunc_FF_F"
-        x = np.ones(10, dtype=np.csingle)
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_DD_D.
-        msg = "PyUFunc_DD_D"
-        x = np.ones(10, dtype=np.cdouble)
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_GG_G.
-        msg = "PyUFunc_GG_G"
-        x = np.ones(10, dtype=np.clongdouble)
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-
-        # class to use in testing object method loops
-        class foo(object):
-            def conjugate(self):
-                return np.bool_(1)
-
-            def logical_xor(self, obj):
-                return np.bool_(1)
-
-        # check unary PyUFunc_O_O
-        msg = "PyUFunc_O_O"
-        x = np.ones(10, dtype=object)
-        assert_(np.all(np.abs(x) == 1), msg)
-        # check unary PyUFunc_O_O_method
-        msg = "PyUFunc_O_O_method"
-        x = np.full(10, foo(), dtype=object)
-        assert_(np.all(np.conjugate(x) == True), msg)
-
-        # check binary PyUFunc_OO_O
-        msg = "PyUFunc_OO_O"
-        x = np.ones(10, dtype=object)
-        assert_(np.all(np.add(x, x) == 2), msg)
-        # check binary PyUFunc_OO_O_method
-        msg = "PyUFunc_OO_O_method"
-        x = np.full(10, foo(), dtype=object)
-        assert_(np.all(np.logical_xor(x, x)), msg)
-        # check binary PyUFunc_On_Om_method
-        msg = "PyUFunc_On_Om_method"
-        x = np.full((10, 2, 3), foo(), dtype=object)
-        assert_(np.all(np.logical_xor(x, x)), msg)
 
     def test_all_ufunc(self):
         """Try to check presence and results of all ufuncs.
