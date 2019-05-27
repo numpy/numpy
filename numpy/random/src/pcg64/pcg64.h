@@ -62,7 +62,7 @@
 extern "C" {
 #endif
 
-#if __SIZEOF_INT128__ && !defined(PCG_FORCE_EMULATED_128BIT_MATH)
+#if defined(__SIZEOF_INT128__) && !defined(PCG_FORCE_EMULATED_128BIT_MATH)
 typedef __uint128_t pcg128_t;
 #define PCG_128BIT_CONSTANT(high, low) (((pcg128_t)(high) << 64) + low)
 #else
