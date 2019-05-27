@@ -344,6 +344,13 @@ class TestEqual(TestArrayEqual):
         except AssertionError:
             assert_equal(msg2, msg_reference)
 
+    def test_object(self):
+        #gh-12942
+        import datetime
+        a = np.array([datetime.datetime(2000, 1, 1),
+                      datetime.datetime(2000, 1, 2)])
+        self._test_not_equal(a, a[::-1])
+
 
 class TestArrayAlmostEqual(_GenericTest):
 
