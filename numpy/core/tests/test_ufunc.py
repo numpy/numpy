@@ -98,7 +98,9 @@ class TestUfuncGenericLoops(object):
     @pytest.mark.parametrize('input_dtype,output_dtype', np_dtypes)
     def test_unary_PyUFunc(self, input_dtype, output_dtype, f=np.exp, x=0, y=1):
         xs = np.full(10, input_dtype(x), dtype=output_dtype)
-        assert_almost_equal(f(xs), y)
+        ys = f(xs)[::2]
+        assert_allclose(ys, y)
+        assert_equal(ys.dtype, output_dtype)
 
     def f2(x, y):
         return x**y
@@ -106,7 +108,9 @@ class TestUfuncGenericLoops(object):
     @pytest.mark.parametrize('input_dtype,output_dtype', np_dtypes)
     def test_binary_PyUFunc(self, input_dtype, output_dtype, f=f2, x=0, y=1):
         xs = np.full(10, input_dtype(x), dtype=output_dtype)
-        assert_almost_equal(f(xs, xs), y)
+        ys = f(xs, xs)[::2]
+        assert_allclose(ys, y)
+        assert_equal(ys.dtype, output_dtype)
 
     # class to use in testing object method loops
     class foo(object):
