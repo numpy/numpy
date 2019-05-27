@@ -253,10 +253,8 @@ combined to make a 2-D array.
 In general, when the boolean array has fewer dimensions than the array
 being indexed, this is equivalent to y[b, ...], which means
 y is indexed by b followed by as many : as are needed to fill
-out the rank of y. 
-
-Thus the shape of the result is one dimension containing the number
-of True elements of the boolean array, followed by the remaining
+out the rank of y. Thus the shape of the result is one dimension containing the
+number of True elements of the boolean array, followed by the remaining
 dimensions of the array being indexed.
 
 For example, using a 2-D boolean array of shape (2,3)
