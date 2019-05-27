@@ -29,6 +29,7 @@ Alok Singhal <gandalf013@gmail.com> Alok Singhal <alok@merfinllc.com>
 Alyssa Quek <alyssaquek@gmail.com> alyssaq <alyssaquek@gmail.com>
 Amir Sarabadani <ladsgroup@gmail.com> amir <ladsgroup@gmail.com>
 Anatoly Techtonik <techtonik@gmail.com> anatoly techtonik <techtonik@gmail.com>
+Andras Deak <deak.andris@gmail.com> adeak <adeak@users.noreply.github.com>
 Andrei Kucharavy <ank@andreikucharavy.com> chiffa <ank@andreikucharavy.com>
 Anne Archibald <peridot.faceted@gmail.com> aarchiba <peridot.faceted@gmail.com>
 Anne Archibald <peridot.faceted@gmail.com> Anne Archibald <archibald@astron.nl>
@@ -45,6 +46,8 @@ Benjamin Root <ben.v.root@gmail.com> weathergod <?@?>
 Bertrand Lefebvre <bertrand.l3f@gmail.com> bertrand <bertrand.l3f@gmail.com>
 Bertrand Lefebvre <bertrand.l3f@gmail.com> Bertrand <bertrand.l3f@gmail.com>
 Bharat Raghunathan <bharatr@symphonyai.com> Bharat123Rox <bharatr@symphonyai.com>
+Bill Spotz <wfspotz@sandia.gov> William Spotz <wfspotz@sandia.gov@localhost>
+Bill Spotz <wfspotz@sandia.gov> wfspotz@sandia.gov <wfspotz@sandia.gov@localhost>
 Bob Eldering <eldering@jive.eu> bobeldering <eldering@jive.eu>
 Brett R Murphy <bmurphy@enthought.com> brettrmurphy <bmurphy@enthought.com>
 Bryan Van de Ven <bryanv@continuum.io> Bryan Van de Ven <bryan@Laptop-3.local>
@@ -125,8 +128,11 @@ Julian Taylor <juliantaylor108@gmail.com> Julian Taylor <jtaylor.debian@googlema
 Julian Taylor <juliantaylor108@gmail.com> Julian Taylor <juliantaylor108@googlemail.com>
 Julien Lhermitte <jrmlhermitte@gmail.com> Julien Lhermitte <lhermitte@bnl.gov>
 Julien Schueller <julien.schueller@gmail.com> jschueller <julien.schueller@gmail.com>
+Kai Striega <kaistriega@gmail.com> kai <kaistriega@gmail.com>
 Khaled Ben Abdallah Okuda <khaled.ben.okuda@gmail.com> KhaledTo <khaled.ben.okuda@gmail.com>
+Kiko Correoso <kikocorreoso@gmail.com> kikocorreoso <kikocorreoso@gmail.com>
 Konrad Kapp <k_kapp@yahoo.com> k_kapp@yahoo.com <k_kapp@yahoo.com>
+Kriti Singh <kritisingh1.ks@gmail.com> kritisingh1 <kritisingh1.ks@gmail.com>
 Lars Buitinck <larsmans@gmail.com> Lars Buitinck <l.buitinck@esciencecenter.nl>
 Lars Buitinck <larsmans@gmail.com> Lars Buitinck <L.J.Buitinck@uva.nl>
 Lars Grüter <lagru@mailbox.org> Lars G <lagru@mailbox.org>
@@ -172,6 +178,7 @@ Ralf Gommers <ralf.gommers@gmail.com> Ralf Gommers <ralf.gommers@googlemail.com>
 Ralf Gommers <ralf.gommers@gmail.com> rgommers <ralf.gommers@googlemail.com>
 Rehas Sachdeva <aquannie@gmail.com> rehassachdeva <aquannie@gmail.com>
 Ritta Narita <narittan@gmail.com> RittaNarita <narittan@gmail.com>
+Riya Sharma <navneet.nmk@gmail.com> ayir <navneet.nmk@gmail.com>
 Robert Kern <rkern@enthought.com> Robert Kern <robert.kern@gmail.com>
 Robert LU <robberphex@gmail.com> RobberPhex <robberphex@gmail.com>
 Ronan Lamy <ronan.lamy@gmail.com> Ronan Lamy <Ronan.Lamy@normalesup.org>
@@ -190,6 +197,8 @@ Stefan van der Walt <stefanv@berkeley.edu> Stefan van der Walt <sjvdwalt@gmail.c
 Stefan van der Walt <stefanv@berkeley.edu> Stefan van der Walt <stefan@sun.ac.za>
 Stephan Hoyer <shoyer@gmail.com> Stephan Hoyer <shoyer@climate.com>
 Steven J Kern <kern.steven0@gmail.com>
+SuryaChand P <psschand@gmail.com> Surya P <psschand@gmail.com>
+SuryaChand P <psschand@gmail.com> psschand <psschand@gmail.com>
 Thomas A Caswell <tcaswell@gmail.com> Thomas A Caswell <tcaswell@bnl.gov>
 Tim Cera <tim@cerazone.net> tim cera <tcera@sjrwmd.com>
 Tim Teichmann <t.teichmann@dashdos.com> tteichmann <t.teichmann@dashdos.com>
@@ -200,12 +209,11 @@ Tony LaTorre <tlatorre@uchicago.edu> tlatorre <tlatorre@uchicago.edu>
 Travis Oliphant <travis@continuum.io> Travis E. Oliphant <teoliphant@gmail.com>
 Travis Oliphant <travis@continuum.io> Travis Oliphant <oliphant@enthought.com>
 Valentin Haenel <valentin@haenel.co> Valentin Haenel <valentin.haenel@gmx.de>
+Vrinda Narayan <talk2vrinda@gmail.com> vrindaaa <48102157+vrindaaa@users.noreply.github.com>
 Warren Weckesser <warren.weckesser@enthought.com> Warren Weckesser <warren.weckesser@gmail.com>
 Weitang Li <liwt31@163.com> wtli@Dirac <liwt31@163.com>
 Weitang Li <liwt31@163.com> wtli <liwt31@163.com>
 Wendell Smith <wendellwsmith@gmail.com> Wendell Smith <wackywendell@gmail.com>
-Bill Spotz <wfspotz@sandia.gov> William Spotz <wfspotz@sandia.gov@localhost>
-Bill Spotz <wfspotz@sandia.gov> wfspotz@sandia.gov <wfspotz@sandia.gov@localhost>
 Wim Glenn <wim.glenn@melbourneit.com.au> wim glenn <wim.glenn@melbourneit.com.au>
 Wojtek Ruszczewski <git@wr.waw.pl> wrwrwr <git@wr.waw.pl>
 Yuji Kanagawa <yuji.kngw.80s.revive@gmail.com> kngwyu <yuji.kngw.80s.revive@gmail.com>
@@ -213,3 +221,4 @@ Zixu Zhao <zixu.zhao.tireless@gmail.com> ZZhaoTireless <zixu.zhao.tireless@gmail
 Ziyan Zhou<ziyan.zhou@mujin.co.jp> Ziyan <ziyan.zhou@mujin.co.jp>
 luzpaz <kunda@scribus.net> luz.paz <luzpaz@users.noreply.github.com>
 luzpaz <kunda@scribus.net> luzpaz <luzpaz@users.noreply.github.com>
+spacescientist <aspacescientist@protonmail.com> spacescientist <spacescientist@pm.me>
