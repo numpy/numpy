@@ -422,9 +422,9 @@ PyArray_CanCastSafely(int fromtype, int totype)
         case NPY_BOOL:
         case NPY_DATETIME:
         case NPY_TIMEDELTA:
+        case NPY_VOID:
             return 0;
         case NPY_OBJECT:
-        case NPY_VOID:
             return 1;
     }
 

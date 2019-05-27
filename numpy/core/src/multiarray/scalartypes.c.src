@@ -4008,8 +4008,10 @@ initialize_casting_tables(void)
     memset(_npy_can_cast_safely_table, 0, sizeof(_npy_can_cast_safely_table));
 
     for (i = 0; i < NPY_NTYPES; ++i) {
-        /* Identity */
-        _npy_can_cast_safely_table[i][i] = 1;
+        /* Identity, OK except for VOID, where it depends on the fields */
+        if (i != NPY_VOID) {
+            _npy_can_cast_safely_table[i][i] = 1;
+        }
         if (i != NPY_DATETIME) {
             /*
              * Bool -> <Anything> except datetime (since
@@ -4017,14 +4019,12 @@ initialize_casting_tables(void)
              */
             _npy_can_cast_safely_table[NPY_BOOL][i] = 1;
         }
-        /* <Anything> -> Object */
+        /* <Anything> -> Object is possible */
         _npy_can_cast_safely_table[i][NPY_OBJECT] = 1;
-        /* <Anything> -> Void */
-        _npy_can_cast_safely_table[i][NPY_VOID] = 1;
+        /* <Anything> -> Void is not possible without further checks */
     }
 
     _npy_can_cast_safely_table[NPY_STRING][NPY_UNICODE] = 1;
-    _npy_can_cast_safely_table[NPY_BOOL][NPY_TIMEDELTA] = 1;
 
 #ifndef NPY_SIZEOF_BYTE
 #define NPY_SIZEOF_BYTE 1
