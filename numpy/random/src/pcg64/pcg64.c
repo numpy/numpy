@@ -97,17 +97,17 @@ pcg128_t pcg_advance_lcg_128(pcg128_t state, pcg128_t delta, pcg128_t cur_mult,
   pcg128_t acc_plus = PCG_128BIT_CONSTANT(0u, 0u);
   while ((delta.high > 0) || (delta.low > 0)) {
     if (delta.low & 1) {
-      acc_mult = _pcg128_mult(acc_mult, cur_mult);
-      acc_plus = _pcg128_add(_pcg128_mult(acc_plus, cur_mult), cur_plus);
+      acc_mult = pcg128_mult(acc_mult, cur_mult);
+      acc_plus = pcg128_add(pcg128_mult(acc_plus, cur_mult), cur_plus);
     }
-    cur_plus = _pcg128_mult(_pcg128_add(cur_mult, PCG_128BIT_CONSTANT(0u, 1u)),
+    cur_plus = pcg128_mult(pcg128_add(cur_mult, PCG_128BIT_CONSTANT(0u, 1u)),
                             cur_plus);
-    cur_mult = _pcg128_mult(cur_mult, cur_mult);
+    cur_mult = pcg128_mult(cur_mult, cur_mult);
     delta.low >>= 1;
     delta.low += delta.high & 1;
     delta.high >>= 1;
   }
-  return _pcg128_add(_pcg128_mult(acc_mult, state), acc_plus);
+  return pcg128_add(pcg128_mult(acc_mult, state), acc_plus);
 }
 
 #endif
