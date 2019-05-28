@@ -4,6 +4,7 @@ from .common import Benchmark
 
 import numpy as np
 
+from numpy.random import RandomState, Generator
 
 class Random(Benchmark):
     params = ['normal', 'uniform', 'weibull 1', 'binomial 10 0.5',
@@ -69,14 +70,102 @@ class Randint_dtype(Benchmark):
 class Permutation(Benchmark):
     def setup(self):
         self.n = 10000
-        self.a_1d = np.random.random_sample(self.n)
-        self.a_2d = np.random.random_sample((self.n, 2))
-    
+        self.a_1d = np.random.random(self.n)
+        self.a_2d = np.random.random((self.n, 2))
+
     def time_permutation_1d(self):
         np.random.permutation(self.a_1d)
 
     def time_permutation_2d(self):
-        np.random.permutation(self.a_2d)        
+        np.random.permutation(self.a_2d)
 
     def time_permutation_int(self):
         np.random.permutation(self.n)
+
+nom_size = 100000
+
+class RNG(Benchmark):
+    param_names = ['rng']
+    params = ['DSFMT', 'PCG64', 'PCG32', 'MT19937', 'Xoshiro256',
+              'Xoshiro512', 'Philox', 'ThreeFry', 'numpy']
+
+    def setup(self, bitgen):
+        if bitgen == 'numpy':
+            self.rg = np.random.RandomState()
+        else:
+            self.rg = Generator(getattr(np.random, bitgen)())
+        self.rg.random()
+        self.int32info = np.iinfo(np.int32)
+        self.uint32info = np.iinfo(np.uint32)
+        self.uint64info = np.iinfo(np.uint64)
+
+    def time_raw(self, bitgen):
+        if bitgen == 'numpy':
+            self.rg.random_integers(self.int32info.max, size=nom_size)
+        else:
+            self.rg.integers(self.int32info.max, size=nom_size, endpoint=True)
+
+    def time_32bit(self, bitgen):
+        min, max = self.uint32info.min, self.uint32info.max
+        if bitgen == 'numpy':
+            self.rg.randint(min, max + 1, nom_size, dtype=np.uint32)
+        else:
+            self.rg.integers(min, max + 1, nom_size, dtype=np.uint32)
+
+    def time_64bit(self, bitgen):
+        min, max = self.uint64info.min, self.uint64info.max
+        if bitgen == 'numpy':
+            self.rg.randint(min, max + 1, nom_size, dtype=np.uint64)
+        else:
+            self.rg.integers(min, max + 1, nom_size, dtype=np.uint64)
+
+    def time_normal_zig(self, bitgen):
+        self.rg.standard_normal(nom_size)
+
+class Bounded(Benchmark):
+    u8 = np.uint8
+    u16 = np.uint16
+    u32 = np.uint32
+    u64 = np.uint64
+    param_names = ['rng', 'dt_max']
+    params = [['DSFMT', 'PCG64', 'PCG32', 'MT19937','Xoshiro256',
+               'Xoshiro512', 'Philox', 'ThreeFry', 'numpy'],
+              [[u8,    95],
+               [u8,    64],  # Worst case for legacy
+               [u8,   127],  # Best case for legacy
+               [u16,   95],
+               [u16, 1024],  # Worst case for legacy
+               [u16, 1535],   # Typ. avg. case for legacy
+               [u16, 2047],  # Best case for legacy
+               [u32, 1024],  # Worst case for legacy
+               [u32, 1535],   # Typ. avg. case for legacy
+               [u32, 2047],  # Best case for legacy
+               [u64,   95],
+               [u64, 1024],  # Worst case for legacy
+               [u64, 1535],   # Typ. avg. case for legacy
+               [u64, 2047],  # Best case for legacy
+             ]]
+
+    def setup(self, bitgen, args):
+        if bitgen == 'numpy':
+            self.rg = np.random.RandomState()
+        else:
+            self.rg = Generator(getattr(np.random, bitgen)())
+        self.rg.random()
+
+    def time_bounded(self, bitgen, args):
+            """
+            Timer for 8-bit bounded values.
+
+            Parameters (packed as args)
+            ----------
+            dt : {uint8, uint16, uint32, unit64}
+                output dtype
+            max : int
+                Upper bound for range. Lower is always 0.  Must be <= 2**bits.
+            """
+            dt, max = args
+            if bitgen == 'numpy':
+                self.rg.randint(0, max + 1, nom_size, dtype=dt)
+            else:
+                self.rg.integers(0, max + 1, nom_size, dtype=dt)
