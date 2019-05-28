@@ -1798,7 +1798,7 @@ def nonzero(a):
         
     Notes
     -----
-    To obtain the non-zero values, it is recommended to use ``x[y.astype(bool)]`` 
+    To obtain the non-zero values, it is recommended to use ``x[x.astype(bool)]`` 
     which will correctly handle 0-d arrays. In most cases y is already a boolean 
     array, so astype is not necessary. 
 
