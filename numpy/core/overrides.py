@@ -1,11 +1,16 @@
 """Implementation of __array_function__ overrides from NEP-18."""
 import collections
 import functools
+import os
 import textwrap
 
 from numpy.core._multiarray_umath import (
     add_docstring, implement_array_function, _get_implementing_args)
 from numpy.compat._inspect import getargspec
+
+
+ARRAY_FUNCTION_ENABLED = bool(
+    int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
 
 
 add_docstring(
@@ -137,6 +142,15 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
     Function suitable for decorating the implementation of a NumPy function.
     """
 
+    if not ARRAY_FUNCTION_ENABLED:
+        def decorator(implementation):
+            if docs_from_dispatcher:
+                add_docstring(implementation, dispatcher.__doc__)
+            if module is not None:
+                implementation.__module__ = module
+            return implementation
+        return decorator
+
     def decorator(implementation):
         if verify:
             verify_matching_signatures(implementation, dispatcher)
@@ -172,7 +186,7 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         if module is not None:
             public_api.__module__ = module
 
-        public_api.__skip_array_function__ = implementation
+        public_api._implementation = implementation
 
         return public_api
 

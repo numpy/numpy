@@ -9,8 +9,14 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex)
 from numpy.core.overrides import (
     _get_implementing_args, array_function_dispatch,
-    verify_matching_signatures)
+    verify_matching_signatures, ARRAY_FUNCTION_ENABLED)
 from numpy.compat import pickle
+import pytest
+
+
+requires_array_function = pytest.mark.skipif(
+    not ARRAY_FUNCTION_ENABLED,
+    reason="__array_function__ dispatch not enabled.")
 
 
 def _return_not_implemented(self, *args, **kwargs):
@@ -143,6 +149,7 @@ class TestGetImplementingArgs(object):
 
 class TestNDArrayArrayFunction(object):
 
+    @requires_array_function
     def test_method(self):
 
         class Other(object):
@@ -190,21 +197,18 @@ class TestNDArrayArrayFunction(object):
         result = np.concatenate((array, override_sub))
         assert_equal(result, expected.view(OverrideSub))
 
-    def test_skip_array_function(self):
-        assert_(dispatched_one_arg.__skip_array_function__
-                is dispatched_one_arg.__wrapped__)
-
     def test_no_wrapper(self):
         # This shouldn't happen unless a user intentionally calls
         # __array_function__ with invalid arguments, but check that we raise
         # an appropriate error all the same.
         array = np.array(1)
-        func = dispatched_one_arg.__skip_array_function__
-        with assert_raises_regex(AttributeError, '__skip_array_function__'):
+        func = lambda x: x
+        with assert_raises_regex(AttributeError, '_implementation'):
             array.__array_function__(func=func, types=(np.ndarray,),
                                      args=(array,), kwargs={})
 
 
+@requires_array_function
 class TestArrayFunctionDispatch(object):
 
     def test_pickle(self):
@@ -244,6 +248,7 @@ class TestArrayFunctionDispatch(object):
             dispatched_one_arg(array)
 
 
+@requires_array_function
 class TestVerifyMatchingSignatures(object):
 
     def test_verify_matching_signatures(self):
@@ -296,6 +301,7 @@ def _new_duck_type_and_implements():
     return (MyArray, implements)
 
 
+@requires_array_function
 class TestArrayFunctionImplementation(object):
 
     def test_one_arg(self):
@@ -376,6 +382,7 @@ class TestNumPyFunctions(object):
         signature = inspect.signature(np.sum)
         assert_('axis' in signature.parameters)
 
+    @requires_array_function
     def test_override_sum(self):
         MyArray, implements = _new_duck_type_and_implements()
 
@@ -385,9 +392,7 @@ class TestNumPyFunctions(object):
 
         assert_equal(np.sum(MyArray()), 'yes')
 
-    def test_sum_implementation_on_list(self):
-        assert_equal(np.sum.__skip_array_function__([1, 2, 3]), 6)
-
+    @requires_array_function
     def test_sum_on_mock_array(self):
 
         # We need a proxy for mocks because __array_function__ is only looked
@@ -408,25 +413,17 @@ class TestNumPyFunctions(object):
             np.sum, (ArrayProxy,), (proxy,), {})
         proxy.value.__array__.assert_not_called()
 
-        proxy = ArrayProxy(mock.Mock(spec=ArrayProxy))
-        proxy.value.__array__.return_value = np.array(2)
-        result = np.sum.__skip_array_function__(proxy)
-        assert_equal(result, 2)
-        # TODO: switch to proxy.value.__array__.assert_called() and
-        # proxy.value.__array_function__.assert_not_called() once we drop
-        # Python 3.5 support.
-        ((called_method_name, _, _),) = proxy.value.mock_calls
-        assert_equal(called_method_name, '__array__')
-
+    @requires_array_function
     def test_sum_forwarding_implementation(self):
 
-        class MyArray(object):
+        class MyArray(np.ndarray):
 
             def sum(self, axis, out):
                 return 'summed'
 
             def __array_function__(self, func, types, args, kwargs):
-                return func.__skip_array_function__(*args, **kwargs)
+                return super().__array_function__(func, types, args, kwargs)
 
         # note: the internal implementation of np.sum() calls the .sum() method
-        assert_equal(np.sum(MyArray()), 'summed')
+        array = np.array(1).view(MyArray)
+        assert_equal(np.sum(array), 'summed')

@@ -6,7 +6,7 @@ NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_array_prepare;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_array_wrap;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_array_finalize;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_ufunc;
-NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_skip_array_function;
+NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_implementation;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_order;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_copy;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_dtype;
