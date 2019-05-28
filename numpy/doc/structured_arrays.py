@@ -335,10 +335,9 @@ structured datatype has just a single field::
  >>> onefield = np.zeros(2, dtype=[('A', 'i4')])
  >>> nostruct = np.zeros(2, dtype='i4')
  >>> nostruct[:] = twofield
- ValueError: Can't cast from structure to non-structure, except if the structure only has a single field.
- >>> nostruct[:] = onefield
- >>> nostruct
- array([0, 0], dtype=int32)
+ Traceback (most recent call last):
+ ...
+ TypeError: Cannot cast scalar from dtype([('A', '<i4'), ('B', '<i4')]) to dtype('int32') according to the rule 'unsafe'
 
 Assignment from other Structured Arrays
 ```````````````````````````````````````

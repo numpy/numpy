@@ -888,6 +888,41 @@ class TestTypes(object):
         # Also test keyword arguments
         assert_(np.can_cast(from_=np.int32, to=np.int64))
 
+    def test_can_cast_simple_to_structured(self):
+        # Non-structured can only be cast to structured in 'unsafe' mode.
+        assert_(not np.can_cast('i4', 'i4,i4'))
+        assert_(not np.can_cast('i4', 'i4,i2'))
+        assert_(np.can_cast('i4', 'i4,i4', casting='unsafe'))
+        assert_(np.can_cast('i4', 'i4,i2', casting='unsafe'))
+        # Even if there is just a single field which is OK.
+        assert_(not np.can_cast('i2', [('f1', 'i4')]))
+        assert_(not np.can_cast('i2', [('f1', 'i4')], casting='same_kind'))
+        assert_(np.can_cast('i2', [('f1', 'i4')], casting='unsafe'))
+        # It should be the same for recursive structured or subarrays.
+        assert_(not np.can_cast('i2', [('f1', 'i4,i4')]))
+        assert_(np.can_cast('i2', [('f1', 'i4,i4')], casting='unsafe'))
+        assert_(not np.can_cast('i2', [('f1', '(2,3)i4')]))
+        assert_(np.can_cast('i2', [('f1', '(2,3)i4')], casting='unsafe'))
+
+    def test_can_cast_structured_to_simple(self):
+        # Need unsafe casting for structured to simple.
+        assert_(not np.can_cast([('f1', 'i4')], 'i4'))
+        assert_(np.can_cast([('f1', 'i4')], 'i4', casting='unsafe'))
+        assert_(np.can_cast([('f1', 'i4')], 'i2', casting='unsafe'))
+        # Since it is unclear what is being cast, multiple fields to
+        # single should not work even for unsafe casting.
+        assert_(not np.can_cast('i4,i4', 'i4', casting='unsafe'))
+        # But a single field inside a single field is OK.
+        assert_(not np.can_cast([('f1', [('x', 'i4')])], 'i4'))
+        assert_(np.can_cast([('f1', [('x', 'i4')])], 'i4', casting='unsafe'))
+        # And a subarray is fine too - it will just take the first element
+        # (arguably not very consistently; might also take the first field).
+        assert_(not np.can_cast([('f0', '(3,)i4')], 'i4'))
+        assert_(np.can_cast([('f0', '(3,)i4')], 'i4', casting='unsafe'))
+        # But a structured subarray with multiple fields should fail.
+        assert_(not np.can_cast([('f0', ('i4,i4'), (2,))], 'i4',
+                                casting='unsafe'))
+
     def test_can_cast_values(self):
         # gh-5917
         for dt in np.sctypes['int'] + np.sctypes['uint']:
