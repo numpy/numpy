@@ -95,7 +95,7 @@ def warmup(rg, n=None):
     rg.random(n, dtype=np.float32)
 
 
-class RNG(object):
+class RNG_default(object):
     @classmethod
     def setup_class(cls):
         # Overridden in test classes. Place holder to silence IDE noise
@@ -113,44 +113,6 @@ class RNG(object):
         cls.vec_2d = np.arange(2.0, 102.0)[None, :]
         cls.mat = np.arange(2.0, 102.0, 0.01).reshape((100, 100))
         cls.seed_error = TypeError
-
-    def _reset_state(self):
-        self.rg.bit_generator.state = self.initial_state
-
-    def test_init(self):
-        rg = Generator(self.bit_generator())
-        state = rg.bit_generator.state
-        rg.standard_normal(1)
-        rg.standard_normal(1)
-        rg.bit_generator.state = state
-        new_state = rg.bit_generator.state
-        assert_(comp_state(state, new_state))
-
-    def test_advance(self):
-        state = self.rg.bit_generator.state
-        if hasattr(self.rg.bit_generator, 'advance'):
-            self.rg.bit_generator.advance(self.advance)
-            assert_(not comp_state(state, self.rg.bit_generator.state))
-        else:
-            bitgen_name = self.rg.bit_generator.__class__.__name__
-            pytest.skip('Advance is not supported by {0}'.format(bitgen_name))
-
-    def test_jump(self):
-        state = self.rg.bit_generator.state
-        if hasattr(self.rg.bit_generator, 'jumped'):
-            bit_gen2 = self.rg.bit_generator.jumped()
-            jumped_state = bit_gen2.state
-            assert_(not comp_state(state, jumped_state))
-            self.rg.random(2 * 3 * 5 * 7 * 11 * 13 * 17)
-            self.rg.bit_generator.state = state
-            bit_gen3 = self.rg.bit_generator.jumped()
-            rejumped_state = bit_gen3.state
-            assert_(comp_state(jumped_state, rejumped_state))
-        else:
-            bitgen_name = self.rg.bit_generator.__class__.__name__
-            if bitgen_name not in ('',):
-                raise AttributeError('no "jumped" in %s' % bitgen_name)
-            pytest.skip('Jump is not supported by {0}'.format(bitgen_name))
 
     def test_uniform(self):
         r = self.rg.uniform(-1.0, 0.0, size=10)
@@ -219,55 +181,16 @@ class RNG(object):
         assert_(self.rg.binomial(10, .5) >= 0)
         assert_(self.rg.binomial(1000, .5) >= 0)
 
-    def test_reset_state(self):
-        state = self.rg.bit_generator.state
-        int_1 = self.rg.integers(2**31)
-        self.rg.bit_generator.state = state
-        int_2 = self.rg.integers(2**31)
-        assert_(int_1 == int_2)
-
     def test_entropy_init(self):
-        rg = Generator(self.bit_generator())
-        rg2 = Generator(self.bit_generator())
-        assert_(not comp_state(rg.bit_generator.state,
-                               rg2.bit_generator.state))
-
-    def test_seed(self):
-        rg = Generator(self.bit_generator(*self.seed))
-        rg2 = Generator(self.bit_generator(*self.seed))
-        rg.random()
-        rg2.random()
-        assert_(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
-
-    def test_reset_state_gauss(self):
-        rg = Generator(self.bit_generator(*self.seed))
-        rg.standard_normal()
-        state = rg.bit_generator.state
-        n1 = rg.standard_normal(size=10)
-        rg2 = Generator(self.bit_generator())
-        rg2.bit_generator.state = state
-        n2 = rg2.standard_normal(size=10)
-        assert_array_equal(n1, n2)
-
-    def test_reset_state_uint32(self):
-        rg = Generator(self.bit_generator(*self.seed))
-        rg.integers(0, 2 ** 24, 120, dtype=np.uint32)
-        state = rg.bit_generator.state
-        n1 = rg.integers(0, 2 ** 24, 10, dtype=np.uint32)
-        rg2 = Generator(self.bit_generator())
-        rg2.bit_generator.state = state
-        n2 = rg2.integers(0, 2 ** 24, 10, dtype=np.uint32)
-        assert_array_equal(n1, n2)
-
-    def test_reset_state_float(self):
-        rg = Generator(self.bit_generator(*self.seed))
-        rg.random(dtype='float32')
-        state = rg.bit_generator.state
-        n1 = rg.random(size=10, dtype='float32')
-        rg2 = Generator(self.bit_generator())
-        rg2.bit_generator.state = state
-        n2 = rg2.random(size=10, dtype='float32')
-        assert_((n1 == n2).all())
+        if self.bit_generator:
+            rg1 = Generator(self.bit_generator())
+            rg2 = Generator(self.bit_generator())
+        else:
+            rg1 = Generator()
+            rg2 = Generator()
+        int_1 = rg1.integers(2**31)
+        int_2 = rg2.integers(2**31)
+        assert_(np.all(int_1 != int_2))
 
     def test_shuffle(self):
         original = np.arange(200, 0, -1)
@@ -439,14 +362,149 @@ class RNG(object):
         pick = pickle.dumps(self.rg)
         unpick = pickle.loads(pick)
         assert_((type(self.rg) == type(unpick)))
-        assert_(comp_state(self.rg.bit_generator.state,
-                           unpick.bit_generator.state))
+        vals1 = self.rg.multinomial(100, [1.0 / 3, 2.0 / 3])
+        vals2 = unpick.multinomial(100, [1.0 / 3, 2.0 / 3])
+        assert_equal(vals1, vals2)
 
-        pick = pickle.dumps(self.rg)
-        unpick = pickle.loads(pick)
-        assert_((type(self.rg) == type(unpick)))
-        assert_(comp_state(self.rg.bit_generator.state,
-                           unpick.bit_generator.state))
+    def test_output_fill_error(self):
+        rg = self.rg
+        size = (31, 7, 97)
+        existing = np.empty(size)
+        with pytest.raises(TypeError):
+            rg.standard_normal(out=existing, dtype=np.float32)
+        with pytest.raises(ValueError):
+            rg.standard_normal(out=existing[::3])
+        existing = np.empty(size, dtype=np.float32)
+        with pytest.raises(TypeError):
+            rg.standard_normal(out=existing, dtype=np.float64)
+
+        existing = np.zeros(size, dtype=np.float32)
+        with pytest.raises(TypeError):
+            rg.standard_gamma(1.0, out=existing, dtype=np.float64)
+        with pytest.raises(ValueError):
+            rg.standard_gamma(1.0, out=existing[::3], dtype=np.float32)
+        existing = np.zeros(size, dtype=np.float64)
+        with pytest.raises(TypeError):
+            rg.standard_gamma(1.0, out=existing, dtype=np.float32)
+        with pytest.raises(ValueError):
+            rg.standard_gamma(1.0, out=existing[::3])
+
+    def test_integers_numpy(self, dtype):
+        high = np.array([1])
+        low = np.array([0])
+
+        out = self.rg.integers(low, high, dtype=dtype)
+        assert out.shape == (1,)
+
+        out = self.rg.integers(low[0], high, dtype=dtype)
+        assert out.shape == (1,)
+
+        out = self.rg.integers(low, high[0], dtype=dtype)
+        assert out.shape == (1,)
+
+    def test_integers_broadcast_errors(self, dtype):
+        if dtype == np.bool:
+            upper = 2
+            lower = 0
+        else:
+            info = np.iinfo(dtype)
+            upper = int(info.max) + 1
+            lower = info.min
+        with pytest.raises(ValueError):
+            self.rg.integers(lower, [upper + 1] * 10, dtype=dtype)
+        with pytest.raises(ValueError):
+            self.rg.integers(lower - 1, [upper] * 10, dtype=dtype)
+        with pytest.raises(ValueError):
+            self.rg.integers([lower - 1], [upper] * 10, dtype=dtype)
+        with pytest.raises(ValueError):
+            self.rg.integers([0], [0], dtype=dtype)
+
+
+class RNG(RNG_default):
+    '''
+    Tests that require access to the rg.bit_generator
+    '''
+    def _reset_state(self):
+        self.rg.bit_generator.state = self.initial_state
+
+    def test_init(self):
+        rg = Generator(self.bit_generator())
+        state = rg.bit_generator.state
+        rg.standard_normal(1)
+        rg.standard_normal(1)
+        rg.bit_generator.state = state
+        new_state = rg.bit_generator.state
+        assert_(comp_state(state, new_state))
+
+    def test_advance(self):
+        state = self.rg.bit_generator.state
+        if hasattr(self.rg.bit_generator, 'advance'):
+            self.rg.bit_generator.advance(self.advance)
+            assert_(not comp_state(state, self.rg.bit_generator.state))
+        else:
+            bitgen_name = self.rg.bit_generator.__class__.__name__
+            pytest.skip('Advance is not supported by {0}'.format(bitgen_name))
+
+    def test_jump(self):
+        state = self.rg.bit_generator.state
+        if hasattr(self.rg.bit_generator, 'jumped'):
+            bit_gen2 = self.rg.bit_generator.jumped()
+            jumped_state = bit_gen2.state
+            assert_(not comp_state(state, jumped_state))
+            self.rg.random(2 * 3 * 5 * 7 * 11 * 13 * 17)
+            self.rg.bit_generator.state = state
+            bit_gen3 = self.rg.bit_generator.jumped()
+            rejumped_state = bit_gen3.state
+            assert_(comp_state(jumped_state, rejumped_state))
+        else:
+            bitgen_name = self.rg.bit_generator.__class__.__name__
+            if bitgen_name not in ('',):
+                raise AttributeError('no "jumped" in %s' % bitgen_name)
+            pytest.skip('Jump is not supported by {0}'.format(bitgen_name))
+
+    def test_reset_state(self):
+        state = self.rg.bit_generator.state
+        int_1 = self.rg.integers(2**31)
+        self.rg.bit_generator.state = state
+        int_2 = self.rg.integers(2**31)
+        assert_(int_1 == int_2)
+
+    def test_seed(self):
+        rg = Generator(self.bit_generator(*self.seed))
+        rg2 = Generator(self.bit_generator(*self.seed))
+        rg.random()
+        rg2.random()
+        assert_(comp_state(rg.bit_generator.state, rg2.bit_generator.state))
+
+    def test_reset_state_gauss(self):
+        rg = Generator(self.bit_generator(*self.seed))
+        rg.standard_normal()
+        state = rg.bit_generator.state
+        n1 = rg.standard_normal(size=10)
+        rg2 = Generator(self.bit_generator())
+        rg2.bit_generator.state = state
+        n2 = rg2.standard_normal(size=10)
+        assert_array_equal(n1, n2)
+
+    def test_reset_state_uint32(self):
+        rg = Generator(self.bit_generator(*self.seed))
+        rg.integers(0, 2 ** 24, 120, dtype=np.uint32)
+        state = rg.bit_generator.state
+        n1 = rg.integers(0, 2 ** 24, 10, dtype=np.uint32)
+        rg2 = Generator(self.bit_generator())
+        rg2.bit_generator.state = state
+        n2 = rg2.integers(0, 2 ** 24, 10, dtype=np.uint32)
+        assert_array_equal(n1, n2)
+
+    def test_reset_state_float(self):
+        rg = Generator(self.bit_generator(*self.seed))
+        rg.random(dtype='float32')
+        state = rg.bit_generator.state
+        n1 = rg.random(size=10, dtype='float32')
+        rg2 = Generator(self.bit_generator())
+        rg2.bit_generator.state = state
+        n2 = rg2.random(size=10, dtype='float32')
+        assert_((n1 == n2).all())
 
     def test_seed_array(self):
         if self.seed_vector_bits is None:
@@ -656,29 +714,6 @@ class RNG(object):
         direct = rg.standard_gamma(mu, size=size, dtype=np.float32)
         assert_equal(direct, existing)
 
-    def test_output_fill_error(self):
-        rg = self.rg
-        size = (31, 7, 97)
-        existing = np.empty(size)
-        with pytest.raises(TypeError):
-            rg.standard_normal(out=existing, dtype=np.float32)
-        with pytest.raises(ValueError):
-            rg.standard_normal(out=existing[::3])
-        existing = np.empty(size, dtype=np.float32)
-        with pytest.raises(TypeError):
-            rg.standard_normal(out=existing, dtype=np.float64)
-
-        existing = np.zeros(size, dtype=np.float32)
-        with pytest.raises(TypeError):
-            rg.standard_gamma(1.0, out=existing, dtype=np.float64)
-        with pytest.raises(ValueError):
-            rg.standard_gamma(1.0, out=existing[::3], dtype=np.float32)
-        existing = np.zeros(size, dtype=np.float64)
-        with pytest.raises(TypeError):
-            rg.standard_gamma(1.0, out=existing, dtype=np.float32)
-        with pytest.raises(ValueError):
-            rg.standard_gamma(1.0, out=existing[::3])
-
     def test_integers_broadcast(self, dtype):
         if dtype == np.bool:
             upper = 2
@@ -711,37 +746,7 @@ class RNG(object):
         self._reset_state()
         b = self.rg.integers([upper] * 10, dtype=dtype)
         assert_equal(a, b)
-
-    def test_integers_numpy(self, dtype):
-        high = np.array([1])
-        low = np.array([0])
-
-        out = self.rg.integers(low, high, dtype=dtype)
-        assert out.shape == (1,)
-
-        out = self.rg.integers(low[0], high, dtype=dtype)
-        assert out.shape == (1,)
-
-        out = self.rg.integers(low, high[0], dtype=dtype)
-        assert out.shape == (1,)
-
-    def test_integers_broadcast_errors(self, dtype):
-        if dtype == np.bool:
-            upper = 2
-            lower = 0
-        else:
-            info = np.iinfo(dtype)
-            upper = int(info.max) + 1
-            lower = info.min
-        with pytest.raises(ValueError):
-            self.rg.integers(lower, [upper + 1] * 10, dtype=dtype)
-        with pytest.raises(ValueError):
-            self.rg.integers(lower - 1, [upper] * 10, dtype=dtype)
-        with pytest.raises(ValueError):
-            self.rg.integers([lower - 1], [upper] * 10, dtype=dtype)
-        with pytest.raises(ValueError):
-            self.rg.integers([0], [0], dtype=dtype)
-
+   
 
 class TestMT19937(RNG):
     @classmethod
@@ -892,3 +897,16 @@ class TestPCG32(TestPCG64):
         cls.initial_state = cls.rg.bit_generator.state
         cls.seed_vector_bits = None
         cls._extra_setup()
+
+class TestDefault(RNG_default):
+    @classmethod
+    def setup_class(cls):
+        cls.bit_generator = None
+        cls.advance = None
+        cls.seed = None
+        cls.rg = Generator()
+        cls.initial_state = None
+        cls.seed_vector_bits = None
+        cls._extra_setup()
+
+       

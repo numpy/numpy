@@ -56,8 +56,10 @@ cdef class Generator:
     Parameters
     ----------
     bit_generator : BitGenerator, optional
-        BitGenerator to use as the core generator. If none is provided, uses
-        Xoshiro256.
+        BitGenerator to use as the core generator. The default is Xoshiro256.
+        If the default is used, access to the BitGenerator will be disabled to
+        prevent inadvertently seeding or jumping a BitGenerator with wrong
+        values.
 
     Notes
     -----
@@ -81,15 +83,19 @@ cdef class Generator:
     >>> rg = Generator(MT19937())
 
     """
-    cdef public object _bit_generator
+    cdef object _bit_generator
     cdef bitgen_t _bitgen
     cdef binomial_t _binomial
     cdef object lock
+    cdef bint default
     _poisson_lam_max = POISSON_LAM_MAX
 
     def __init__(self, bit_generator=None):
         if bit_generator is None:
             bit_generator = Xoshiro256()
+            self.default = True
+        else:
+            self.default = False
         self._bit_generator = bit_generator
 
         capsule = bit_generator.capsule
@@ -105,19 +111,20 @@ cdef class Generator:
 
     def __str__(self):
         _str = self.__class__.__name__
-        _str += '(' + self.bit_generator.__class__.__name__ + ')'
+        _str += '(' + self._bit_generator.__class__.__name__ + ')'
         return _str
 
     # Pickling support:
     def __getstate__(self):
-        return self.bit_generator.state
+        return self._bit_generator.state
 
     def __setstate__(self, state):
-        self.bit_generator.state = state
+        self._bit_generator.state = state
 
     def __reduce__(self):
         from ._pickle import __generator_ctor
-        return __generator_ctor, (self.bit_generator.state['bit_generator'],), self.bit_generator.state
+        return (__generator_ctor, (self._bit_generator.state['bit_generator'],),
+                                 self._bit_generator.state)
 
     @property
     def bit_generator(self):
@@ -129,6 +136,10 @@ cdef class Generator:
         bit_generator : BitGenerator
             The bit generator instance used by the generator
         """
+        if self.default:
+            raise AttributeError("cannot access default bit_generator, "
+                "instatiate with a BitGenerator instance (we recommend %s)"
+                % self._bit_generator.__class__.__name__)
         return self._bit_generator
 
     def random(self, size=None, dtype=np.float64, out=None):
