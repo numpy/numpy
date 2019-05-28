@@ -139,7 +139,7 @@ environment.
 Generate the README files
 -------------------------
 
-This needs to be done after all installers are present, but before the pavement
+This needs to be done after all installers are downloaded, but before the pavement
 file is updated for continued development::
 
     $ cd ../numpy
@@ -151,7 +151,7 @@ Tag the release
 
 Once the wheels have been built and downloaded without errors, go back to your
 numpy repository in the maintenance branch and tag the ``REL`` commit, signing
-it with your gpg key, and build the source distribution archives::
+it with your gpg key::
 
     $ git tag -s v1.14.5
 
@@ -171,9 +171,22 @@ Reset the maintenance branch into a development state
 -----------------------------------------------------
 
 Add another ``REL`` commit to the numpy maintenance branch, which resets the
-``ISREALEASED`` flag to ``False`` and increments the version counter.::
+``ISREALEASED`` flag to ``False`` and increments the version counter.:
 
     $ gvim pavement.py setup.py
+
+Create release notes for next release and edit them to set the version.:
+
+    $ cp doc/release/template.rst doc/release/1.14.6-notes.rst
+    $ gvim doc/release/1.14.6-notes.rst
+    $ git add doc/release/1.14.6-notes.rst
+
+Add new release notes to the documentation release list.:
+
+    $ gvim doc/source/release.rst
+
+Commit the result.:
+
     $ git commit -a -m"REL: prepare 1.14.x for further development"
     $ git push upstream maintenance/1.14.x
 
@@ -182,7 +195,7 @@ Upload to PyPI
 --------------
 
 Upload to PyPI using ``twine``. A recent version of ``twine`` of is needed
-after recent PyPI changes, version ``1.11.0`` was used here.::
+after recent PyPI changes, version ``1.11.0`` was used here.:
 
     $ cd ../numpy
     $ twine upload release/installers/*.whl
