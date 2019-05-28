@@ -109,7 +109,7 @@ static inline uint64_t pcg_rotr_64(uint64_t value, unsigned int rot) {
 
 #ifdef PCG_EMULATED_128BIT_MATH
 
-static inline pcg128_t _pcg128_add(pcg128_t a, pcg128_t b) {
+static inline pcg128_t pcg128_add(pcg128_t a, pcg128_t b) {
   pcg128_t result;
 
   result.low = a.low + b.low;
@@ -141,7 +141,7 @@ static inline void _pcg_mult64(uint64_t x, uint64_t y, uint64_t *z1,
 #endif
 }
 
-static inline pcg128_t _pcg128_mult(pcg128_t a, pcg128_t b) {
+static inline pcg128_t pcg128_mult(pcg128_t a, pcg128_t b) {
   uint64_t h1;
   pcg128_t result;
 
@@ -152,7 +152,7 @@ static inline pcg128_t _pcg128_mult(pcg128_t a, pcg128_t b) {
 }
 
 static inline void pcg_setseq_128_step_r(pcg_state_setseq_128 *rng) {
-  rng->state = _pcg128_add(_pcg128_mult(rng->state, PCG_DEFAULT_MULTIPLIER_128),
+  rng->state = pcg128_add(pcg128_mult(rng->state, PCG_DEFAULT_MULTIPLIER_128),
                            rng->inc);
 }
 
@@ -168,7 +168,7 @@ static inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
   rng->inc.high |= initseq.low & 0x800000000000ULL;
   rng->inc.low = (initseq.low << 1u) | 1u;
   pcg_setseq_128_step_r(rng);
-  rng->state = _pcg128_add(rng->state, initstate);
+  rng->state = pcg128_add(rng->state, initstate);
   pcg_setseq_128_step_r(rng);
 }
 
