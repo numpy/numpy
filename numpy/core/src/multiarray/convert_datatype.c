@@ -679,15 +679,82 @@ NPY_NO_EXPORT npy_bool
 PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                                                     NPY_CASTING casting)
 {
-    /* Fast path for unsafe casts or basic types */
-    if (casting == NPY_UNSAFE_CASTING ||
-            (NPY_LIKELY(from->type_num < NPY_OBJECT) &&
-             NPY_LIKELY(from->type_num == to->type_num) &&
-             NPY_LIKELY(from->byteorder == to->byteorder))) {
+    /*
+     * Fast paths for equality and for basic types.
+     */
+    if (from == to ||
+        ((NPY_LIKELY(PyDataType_ISNUMBER(from)) ||
+          PyDataType_ISOBJECT(from)) &&
+         NPY_LIKELY(from->type_num == to->type_num) &&
+         NPY_LIKELY(from->byteorder == to->byteorder))) {
         return 1;
     }
-    /* Equivalent types can be cast with any value of 'casting'  */
-    else if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
+    /*
+     * Cases with subarrays and fields need special treatment.
+     */
+    if (PyDataType_HASFIELDS(from)) {
+        /*
+         * If from is a structured data type, then it can be cast to a simple
+         * non-object one only for unsafe casting *and* if it has a single
+         * field; recurse just in case the single field is itself structured.
+         */
+        if (!PyDataType_HASFIELDS(to) && !PyDataType_ISOBJECT(to)) {
+            if (casting == NPY_UNSAFE_CASTING &&
+                    PyDict_Size(from->fields) == 1) {
+                Py_ssize_t ppos = 0;
+                PyObject *tuple;
+                PyArray_Descr *field;
+                PyDict_Next(from->fields, &ppos, NULL, &tuple);
+                field = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
+                /*
+                 * For a subarray, we need to get the underlying type;
+                 * since we already are casting unsafely, we can ignore
+                 * the shape.
+                 */
+                if (PyDataType_HASSUBARRAY(field)) {
+                    field = field->subarray->base;
+                }
+                return PyArray_CanCastTypeTo(field, to, casting);
+            }
+            else {
+                return 0;
+            }
+        }
+        /*
+         * Casting from one structured data type to another depends on the fields;
+         * we pass that case on to the EquivTypenums case below.
+         *
+         * TODO: move that part up here? Need to check whether equivalent type
+         * numbers is an addition constraint that is needed.
+         *
+         * TODO/FIXME: For now, always allow structured to structured for unsafe
+         * casting; this is not correct, but needed since the treatment in can_cast
+         * below got out of sync with astype; see gh-13667.
+         */
+        if (casting == NPY_UNSAFE_CASTING) {
+            return 1;
+        }
+    }
+    else if (PyDataType_HASFIELDS(to)) {
+        /*
+         * If "from" is a simple data type and "to" has fields, then only
+         * unsafe casting works (and that works always, even to multiple fields).
+         */
+        return casting == NPY_UNSAFE_CASTING;
+    }
+    /*
+     * Everything else we consider castable for unsafe for now.
+     * FIXME: ensure what we do here is consistent with "astype",
+     * i.e., deal more correctly with subarrays and user-defined dtype.
+     */
+    else if (casting == NPY_UNSAFE_CASTING) {
+        return 1;
+    }
+    /*
+     * Equivalent simple types can be cast with any value of 'casting', but
+     * we need to be careful about structured to structured.
+     */
+    if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
         /* For complicated case, use EquivTypes (for now) */
         if (PyTypeNum_ISUSERDEF(from->type_num) ||
                         from->subarray != NULL) {

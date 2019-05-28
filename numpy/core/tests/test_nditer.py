@@ -1864,7 +1864,7 @@ def test_iter_buffered_cast_structured_type():
     # make sure multi-field struct type -> simple doesn't work
     sdt = [('a', 'f4'), ('b', 'i8'), ('d', 'O')]
     a = np.array([(5.5, 7, 'test'), (8, 10, 11)], dtype=sdt)
-    assert_raises(ValueError, lambda: (
+    assert_raises(TypeError, lambda: (
         nditer(a, ['buffered', 'refs_ok'], ['readonly'],
                casting='unsafe',
                op_dtypes='i4')))
