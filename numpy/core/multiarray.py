@@ -496,11 +496,15 @@ def can_cast(from_, to, casting=None):
 
     Notes
     -----
-    Starting in NumPy 1.9, can_cast function now returns False in 'safe'
-    casting mode for integer/float dtype and string dtype if the string dtype
-    length is not long enough to store the max integer/float value converted
-    to a string. Previously can_cast in 'safe' mode returned True for
-    integer/float dtype and a string dtype of any length.
+    .. versionchanged:: 1.17.0
+       Casting between a simple data type and a structured one is possible only
+       for "unsafe" casting.  Casting to multiple fields is allowed, but
+       casting from multiple fields is not.
+
+    .. versionchanged:: 1.9.0
+       Casting from numeric to string types in 'safe' casting mode requires
+       that the string dtype length is long enough to store the maximum
+       integer/float value converted.
 
     See also
     --------

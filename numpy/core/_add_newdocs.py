@@ -2699,10 +2699,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
 
     Notes
     -----
-    Starting in NumPy 1.9, astype method now returns an error if the string
-    dtype to cast to is not long enough in 'safe' casting mode to hold the max
-    value of integer/float array that is being casted. Previously the casting
-    was allowed even if the result was truncated.
+    .. versionchanged:: 1.17.0
+       Casting between a simple data type and a structured one is possible only
+       for "unsafe" casting.  Casting to multiple fields is allowed, but
+       casting from multiple fields is not.
+
+    .. versionchanged:: 1.9.0
+       Casting from numeric to string types in 'safe' casting mode requires
+       that the string dtype length is long enough to store the max
+       integer/float value converted.
 
     Raises
     ------
