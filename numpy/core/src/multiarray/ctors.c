@@ -3166,7 +3166,7 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
  * Empty
  *
  * accepts NULL type
- * steals referenct to type
+ * steals referenced to type
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
