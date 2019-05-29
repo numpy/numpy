@@ -429,9 +429,15 @@ cdef class Generator:
             high = low
             low = 0
 
-        key = np.dtype(dtype).name
+        dt = np.dtype(dtype)
+        key = dt.name
         if key not in _integers_types:
             raise TypeError('Unsupported dtype "%s" for integers' % key)
+        if not dt.isnative:
+            raise ValueError('Providing a dtype with a non-native byteorder '
+                             'is not supported. If you require '
+                             'platform-independent byteorder, call byteswap '
+                             'when required.')
 
         # Implementation detail: the old API used a masked method to generate
         # bounded uniform integers. Lemire's method is preferrable since it is

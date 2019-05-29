@@ -467,6 +467,10 @@ class TestIntegers(object):
             assert_equal(random.integers(0, -10, size=0).shape, (0,))
             assert_equal(random.integers(10, 10, size=0).shape, (0,))
 
+    def test_error_byteorder(self):
+        other_byteord_dt = '<i4' if sys.byteorder == 'big' else '>i4'
+        with pytest.raises(ValueError):
+            random.integers(0, 200, size=10, dtype=other_byteord_dt)
 
 class TestRandomDist(object):
     # Make sure the random distribution returns the correct value for a

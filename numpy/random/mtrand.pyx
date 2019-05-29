@@ -606,9 +606,17 @@ cdef class RandomState:
             high = low
             low = 0
 
-        key = np.dtype(dtype).name
+        dt = np.dtype(dtype)
+        key = dt.name
         if key not in _integers_types:
             raise TypeError('Unsupported dtype "%s" for randint' % key)
+        if not dt.isnative:
+            # numpy 1.17.0, 2019-05-28
+            warnings.warn('Providing a dtype with a non-native byteorder is '
+                          'not supported. If you require platform-independent '
+                          'byteorder, call byteswap when required.\nIn future '
+                          'version, providing byteorder will raise a '
+                          'ValueError', DeprecationWarning)
 
         # Implementation detail: the use a masked method to generate
         # bounded uniform integers. Lemire's method is preferrable since it is
@@ -4272,5 +4280,3 @@ __all__ = [
     'zipf',
     'RandomState',
 ]
-
-
