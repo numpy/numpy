@@ -439,18 +439,12 @@ static int
 setArrayFromSequence(PyArrayObject *a, PyObject *s,
                         int dim, PyArrayObject * dst)
 {
-    PyObject *tmp;
     Py_ssize_t i, slen;
     int res = -1;
 
     /* first recursion, view equal destination */
     if (dst == NULL)
         dst = a;
-
-    /*
-     * This code is to ensure that the sequence access below will
-     * return a lower-dimensional sequence.
-     */
 
     /* INCREF on entry DECREF on exit */
     Py_INCREF(s);
@@ -477,32 +471,39 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
         return 0;
     }
 
+    /*
+     * This code is to ensure that the sequence access below will
+     * return a lower-dimensional sequence.
+     */
+
     if (dim > PyArray_NDIM(a)) {
         PyErr_Format(PyExc_ValueError,
                  "setArrayFromSequence: sequence/array dimensions mismatch.");
         goto fail;
     }
 
-    tmp = _array_from_array_like(s, /*dtype*/NULL, /*writeable*/0, /*context*/NULL);
-    if (tmp == NULL) {
-        goto fail;
-    }
-    else if (tmp != Py_NotImplemented) {
-        if (PyArray_CopyInto(dst, (PyArrayObject *)tmp) < 0) {
-            goto fail;
-        }
-
-        Py_DECREF(s);
-        return 0;
-    }
-    else {
-        Py_DECREF(Py_NotImplemented);
-    }
-
     slen = PySequence_Length(s);
     if (slen < 0) {
         goto fail;
     }
+    if (slen > 0) {
+        /* gh-13659: objects with 0 len can still have ndim > ndim(dst) */
+        PyObject *tmp = _array_from_array_like(s, /*dtype*/NULL, /*writeable*/0,
+                                               /*context*/NULL);
+        if (tmp == NULL) {
+            goto fail;
+        }
+        else if (tmp != Py_NotImplemented) {
+            if (PyArray_CopyInto(dst, (PyArrayObject *)tmp) < 0) {
+                goto fail;
+            }
+
+            Py_DECREF(s);
+            return 0;
+        }
+        Py_DECREF(tmp);
+    }
+
     /*
      * Either the dimensions match, or the sequence has length 1 and can
      * be broadcast to the destination.
