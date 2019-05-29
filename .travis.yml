@@ -15,15 +15,9 @@ addons:
       # Speedup builds, particularly when USE_CHROOT=1
       - eatmydata
 
-branches:
-  only:
-    - master      
-
 cache:
   directories:
     - $HOME/.cache/pip
-    - $HOME/.cache/tb-bazel-repo
-    - $HOME/.cache/tb-bazel-disk
 
 env:
   global:
@@ -34,12 +28,6 @@ env:
                XrbCVRhp4AP8JYZT0ptoBpmZWWGjmKBndB68QlMiUjQPow\
                iFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAM\
                ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
-    # Keep this Bazel version in sync with the `versions.check` directive
-    # near the top of our WORKSPACE file.
-    # Grab the BAZEL_SHA256SUM from the Bazel releases page; e.g.:
-    # bazel-0.20.0-linux-x86_64.sha256
-    - BAZEL=0.22.0
-    - BAZEL_SHA256SUM=8474ed28ed4998e2f5671ddf3a9a80ae9e484a5de3b8b70c8b654c017c65d363           
 
 python:
   - 3.5
@@ -77,6 +65,8 @@ matrix:
     - python: 3.6
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
     - python: 3.6
+      env: NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
+    - python: 3.6
       env:
        - BLAS=None
        - LAPACK=None
@@ -91,15 +81,6 @@ matrix:
 
 before_install:
   - ./tools/travis-before-install.sh
-  - elapsed() { TZ=UTC printf "Time %(%T)T %s\n" "$SECONDS" "$*"; }
-  - elapsed "before_install"
-  - ci/download_bazel.sh "${BAZEL}" "${BAZEL_SHA256SUM}" ~/bazel
-  - sudo mv ~/bazel /usr/local/bin/bazel
-  - cp ci/bazelrc ~/.bazelrc
-  - elapsed "before_install (done)"
-
-install:
-  - elapsed "install"  
 
 script:
   - ./tools/travis-test.sh

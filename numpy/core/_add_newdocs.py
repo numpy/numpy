@@ -793,8 +793,7 @@ add_newdoc('numpy.core.multiarray', 'array',
     dtype : data-type, optional
         The desired data-type for the array.  If not given, then the type will
         be determined as the minimum type required to hold the objects in the
-        sequence.  This argument can only be used to 'upcast' the array.  For
-        downcasting, use the .astype(t) method.
+        sequence.
     copy : bool, optional
         If true (default), then the object is copied.  Otherwise, a copy will
         only be made if __array__ returns a copy, if obj is a nested sequence,
