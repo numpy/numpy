@@ -164,3 +164,9 @@ class TestRegression(object):
         other_byteord_dt = '<i4' if sys.byteorder == 'big' else '>i4'
         with pytest.deprecated_call(match='non-native byteorder is not'):
             random.randint(0, 200, size=10, dtype=other_byteord_dt)
+
+    def test_named_argument_initialization(self):
+        # GH 13669
+        rs1 = np.random.RandomState(123456789)
+        rs2 = np.random.RandomState(seed=123456789)
+        assert rs1.randint(0, 100) == rs2.randint(0, 100)
