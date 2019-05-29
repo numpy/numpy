@@ -165,15 +165,15 @@ run_unary_@isa@_@func@_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps)
 
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
 static NPY_INLINE void
-@ISA@_sincos_FLOAT(npy_float *, npy_float *, const npy_intp n, const npy_intp steps, char*);
+@ISA@_sincos_FLOAT(npy_float *, npy_float *, const npy_intp n, const npy_intp steps, NPY_TRIG_OP);
 #endif
 
 static NPY_INLINE int
-run_unary_@isa@_sincos_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps, char* mychar)
+run_unary_@isa@_sincos_FLOAT(char **args, npy_intp *dimensions, npy_intp *steps, NPY_TRIG_OP my_trig_op)
 {
 #if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
     if (IS_OUTPUT_BLOCKABLE_UNARY(sizeof(npy_float), @REGISTER_SIZE@)) {
-        @ISA@_sincos_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0], steps[0], mychar);
+        @ISA@_sincos_FLOAT((npy_float*)args[1], (npy_float*)args[0], dimensions[0], steps[0], my_trig_op);
         return 1;
     }
     else
@@ -1488,14 +1488,12 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                    npy_float * ip,
                    const npy_intp array_size,
                    const npy_intp steps,
-                   char* operation)
+                   NPY_TRIG_OP my_trig_op)
 {
     const npy_intp stride = steps/sizeof(npy_float);
     const npy_int num_lanes = @BYTES@/sizeof(npy_float);
-    npy_int compute_cos = 1;
     npy_float large_number = 71476.0625f;
-    if (*operation == 's') {
-        compute_cos = 0;
+    if (my_trig_op == npy_compute_sin) {
         large_number = 117435.992f;
     }
 
@@ -1575,8 +1573,9 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                                              sin_invf5, sin_invf3, zero_f);
 
             iquadrant = _mm@vsize@_cvtps_epi32(quadrant);
-            if (compute_cos)
+            if (my_trig_op == npy_compute_cos) {
                 iquadrant = _mm@vsize@_add_epi32(iquadrant, ones);
+            }
 
             /* blend sin and cos based on the quadrant */
             sine_mask = @isa@_should_calculate_sine(iquadrant, ones, zeros);
@@ -1591,7 +1590,7 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
         }
 
         /* process elements using glibc for large elements */
-        if (compute_cos) {
+        if (my_trig_op == npy_compute_cos) {
             for (int ii = 0; iglibc_mask != 0; ii++) {
                 if (iglibc_mask & 0x01) {
                     op[ii] = npy_cosf(ip[ii]);
