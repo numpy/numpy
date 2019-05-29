@@ -302,7 +302,7 @@ Template files
 
 NumPy Distutils preprocesses C source files (extension: :file:`.c.src`) written
 in a custom templating language to generate C code. The :c:data:`@` symbol is
-used to wrap macro-style variables to empower a string substitution mechansim
+used to wrap macro-style variables to empower a string substitution mechanism
 that might describe (for instance) a set of data types.
 
 As a more detailed scenario, a loop in the NumPy C source code may

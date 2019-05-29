@@ -64,7 +64,7 @@ class TestAsIntegerRatio(object):
                      R(*np.double(2.1).as_integer_ratio()))
         assert_equal(R(-4728779608739021, 2251799813685248),
                      R(*np.double(-2.1).as_integer_ratio()))
-        # longdouble is platform depedent
+        # longdouble is platform dependent
 
     @pytest.mark.parametrize("ftype, frac_vals, exp_vals", [
         # dtype test cases generated using hypothesis

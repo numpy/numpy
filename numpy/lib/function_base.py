@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 try:
-    # Accessing collections abstact classes from collections
+    # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
     import collections.abc as collections_abc
 except ImportError:
@@ -4341,7 +4341,7 @@ def delete(arr, obj, axis=None):
         else:
             slobj[axis] = slice(None, start)
             new[tuple(slobj)] = arr[tuple(slobj)]
-        # copy end chunck
+        # copy end chunk
         if stop == N:
             pass
         else:

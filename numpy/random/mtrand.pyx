@@ -55,7 +55,7 @@ cdef class RandomState:
     A fixed bit generator using a fixed seed and a fixed series of calls to
     'RandomState' methods using the same parameters will always produce the
     same results up to roundoff error except when the values were incorrect.
-    `RandomState` is effectively frozen and will only recieve updates that
+    `RandomState` is effectively frozen and will only receive updates that
     are required by changes in the the internals of Numpy. More substantial
     changes, including algorithmic improvements, are reserved for
     `Generator`.
@@ -611,7 +611,7 @@ cdef class RandomState:
             raise TypeError('Unsupported dtype "%s" for randint' % key)
 
         # Implementation detail: the use a masked method to generate
-        # bounded uniform integers. Lemire's method is preferrable since it is
+        # bounded uniform integers. Lemire's method is preferable since it is
         # faster. randomgen allows a choice, we will always use the slower but
         # backward compatible one.
         cdef bint _masked = True
