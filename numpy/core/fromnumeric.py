@@ -1795,6 +1795,11 @@ def nonzero(a):
         Equivalent ndarray method.
     count_nonzero :
         Counts the number of non-zero elements in the input array.
+        
+    Notes
+    -----
+    To obtain the non-zero values, it is recommended to use ``x[x.astype(bool)]`` 
+    which will correctly handle 0-d arrays. 
 
     Examples
     --------
