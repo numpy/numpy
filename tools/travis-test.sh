@@ -111,6 +111,7 @@ run_test()
 
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
+    $PYTHON `which asv` check --python=same
     $PYTHON `which asv` machine --machine travis
     $PYTHON `which asv` dev 2>&1| tee asv-output.log
     if grep -q Traceback asv-output.log; then
