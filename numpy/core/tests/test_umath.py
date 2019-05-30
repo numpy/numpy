@@ -710,7 +710,12 @@ class TestSIMDFloat32(object):
 
     def test_sincos_float32(self):
         np.random.seed(42)
-        x_f32 = np.float32(np.random.uniform(low=-100.,high=100.,size=1000000))
+        N = 1000000
+        M = np.int(N/20)
+        index = np.random.randint(low=0, high=N, size=M)
+        x_f32 = np.float32(np.random.uniform(low=-100.,high=100.,size=N))
+        # test coverage for elements > 117435.992f for which glibc is used
+        x_f32[index] = np.float32(10E+10*np.random.rand(M))
         x_f64 = np.float64(x_f32)
         assert_array_max_ulp(np.sin(x_f32), np.float32(np.sin(x_f64)), maxulp=2)
         assert_array_max_ulp(np.cos(x_f32), np.float32(np.cos(x_f64)), maxulp=2)
