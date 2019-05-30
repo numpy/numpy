@@ -4,7 +4,13 @@ from .common import Benchmark
 
 import numpy as np
 
-from numpy.random import RandomState, Generator
+from numpy.random import RandomState
+
+try:
+    from numpy.random import Generator
+except ImportError:
+    pass
+
 
 class Random(Benchmark):
     params = ['normal', 'uniform', 'weibull 1', 'binomial 10 0.5',
