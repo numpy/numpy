@@ -487,21 +487,24 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
         goto fail;
     }
     if (slen > 0) {
-        /* gh-13659: objects with 0 len can still have ndim > ndim(dst) */
+        /* gh-13659: try __array__ before using s as a sequence */
         PyObject *tmp = _array_from_array_like(s, /*dtype*/NULL, /*writeable*/0,
                                                /*context*/NULL);
         if (tmp == NULL) {
             goto fail;
         }
-        else if (tmp != Py_NotImplemented) {
-            if (PyArray_CopyInto(dst, (PyArrayObject *)tmp) < 0) {
+        else if (tmp == Py_NotImplemented) {
+            Py_DECREF(tmp);
+        }
+        else {
+            int r = PyArray_CopyInto(dst, (PyArrayObject *)tmp);
+            Py_DECREF(tmp);
+            if (r < 0) {
                 goto fail;
             }
-
             Py_DECREF(s);
             return 0;
         }
-        Py_DECREF(tmp);
     }
 
     /*
