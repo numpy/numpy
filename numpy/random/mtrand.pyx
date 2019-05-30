@@ -36,7 +36,7 @@ cdef object int64_to_long(object x):
 
 cdef class RandomState:
     """
-    RandomState(bit_generator=None)
+    RandomState(seed=None)
 
     Container for the slow Mersenne Twister pseudo-random number generator.
     Consider using a different BitGenerator with the Generator container
@@ -55,14 +55,14 @@ cdef class RandomState:
     A fixed bit generator using a fixed seed and a fixed series of calls to
     'RandomState' methods using the same parameters will always produce the
     same results up to roundoff error except when the values were incorrect.
-    `RandomState` is effectively frozen and will only recieve updates that
+    `RandomState` is effectively frozen and will only receive updates that
     are required by changes in the the internals of Numpy. More substantial
     changes, including algorithmic improvements, are reserved for
     `Generator`.
 
     Parameters
     ----------
-    bit_generator : {None, int, array_like, BitGenerator}, optional
+    seed : {None, int, array_like, BitGenerator}, optional
         Random seed used to initialize the pseudo-random number generator or
         an instantized BitGenerator.  If an integer or array, used as a seed for
         the MT19937 BitGenerator. Values can be any integer between 0 and
@@ -94,11 +94,13 @@ cdef class RandomState:
     cdef object lock
     _poisson_lam_max = POISSON_LAM_MAX
 
-    def __init__(self, bit_generator=None):
-        if bit_generator is None:
+    def __init__(self, seed=None):
+        if seed is None:
             bit_generator = _MT19937()
-        elif not hasattr(bit_generator, 'capsule'):
-            bit_generator = _MT19937(bit_generator)
+        elif not hasattr(seed, 'capsule'):
+            bit_generator = _MT19937(seed)
+        else:
+            bit_generator = seed
 
         self._bit_generator = bit_generator
         capsule = bit_generator.capsule
