@@ -1,19 +1,11 @@
+.. _numpy-random-performance:
+
 Performance
 -----------
 
 .. py:module:: numpy.random
 
 .. currentmodule:: numpy.random
-
-Recommendation
-**************
-The recommended generator for single use is :class:`~.xoshiro256.Xoshiro256`.
-The recommended generator for use in large-scale parallel applications is
-:class:`~.xoshiro512.Xoshiro512` where the `jumped` method is used to advance
-the state. For very large scale applications -- requiring 1,000+ independent
-streams -- is the best choice. For very large scale applications -- requiring
-1,000+ independent streams, :class:`~pcg64.PCG64` or :class:`~.philox.Philox`
-are the best choices.
 
 Timings
 *******

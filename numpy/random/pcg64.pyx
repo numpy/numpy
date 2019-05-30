@@ -88,7 +88,8 @@ cdef class PCG64:
     steps. The state of the PCG-64 RNG is represented by 2 128-bit unsigned
     integers.
 
-    See ``PCG32`` for a similar implementation with a smaller period.
+    See ``PCG32`` for a similar implementation with a smaller period but is more
+    performant on 32-bit systems.
 
     **State and Seeding**
 

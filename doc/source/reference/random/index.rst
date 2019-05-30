@@ -146,32 +146,6 @@ one of two ways:
 * :ref:`independent-streams`
 * :ref:`jump-and-advance`
 
-Supported BitGenerators
------------------------
-The included BitGenerators are:
-
-* MT19937 - The standard Python BitGenerator. Produces identical results to
-  Python using the same seed/state. Adds a `~mt19937.MT19937.jumped` function
-  that returns a new generator with state as-if ``2**128`` draws have been made.
-* dSFMT - SSE2 enabled versions of the MT19937 generator.  Theoretically
-  the same, but with a different state and so it is not possible to produce a
-  sequence identical to MT19937. Supports ``jumped`` and so can
-  be used in parallel applications. See the `dSFMT authors' page`_.
-* Xorshiro256** and Xorshiro512** - The most recently introduced XOR,
-  shift, and rotate generator. Supports ``jumped`` and so can be used in
-  parallel applications. See the documentation for
-  `~xoshiro256.Xoshirt256.jumped` for details. More information about these bit
-  generators is available at the `xorshift, xoroshiro and xoshiro authors'
-  page`_.
-* ThreeFry and Philox - counter-based generators capable of being advanced an
-  arbitrary number of steps or generating independent streams. See the
-  `Random123`_ page for more details about this class of bit generators.
-
-.. _`dSFMT authors' page`: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/
-.. _`PCG author's page`: http://www.pcg-random.org/
-.. _`xorshift, xoroshiro and xoshiro authors' page`:  http://xoroshiro.di.unimi.it/
-.. _`Random123`: https://www.deshawresearch.com/resources_random123.html
-
 Generator
 ---------
 .. toctree::
@@ -180,25 +154,23 @@ Generator
    generator
    legacy mtrand <legacy>
 
-BitGenerators
--------------
+.. include:: bit_generators/index.rst
+   :start-line: 4
+   :end-before: Summary
 
-.. toctree::
-   :maxdepth: 1
+see :ref:`bitgenerators` for more information
 
-   BitGenerators <bit_generators/index>
-
-Features
---------
+Other Features
+--------------
 .. toctree::
    :maxdepth: 2
 
    Parallel Applications <parallel>
    Multithreaded Generation <multithreading>
-   new-or-different
-   Comparing Performance <performance>
+   BitGenerator Performance <performance>
    extending
    Reading System Entropy <entropy>
+   new-or-different
 
 Original Source
 ~~~~~~~~~~~~~~~

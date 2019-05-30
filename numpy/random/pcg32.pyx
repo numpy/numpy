@@ -92,7 +92,8 @@ cdef class PCG32:
     steps. The state of the PCG-32 PRNG is represented by 2 64-bit unsigned
     integers.
 
-    See ``PCG64`` for a similar implementation with a smaller period.
+    See ``PCG64`` for a similar implementation with a larger period, better for
+    64-bit systems.
 
     **State and Seeding**
 
