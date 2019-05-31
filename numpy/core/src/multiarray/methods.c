@@ -2098,37 +2098,22 @@ array_setstate(PyArrayObject *self, PyObject *args)
 NPY_NO_EXPORT int
 PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 {
-    PyObject *cpick = NULL;
+    static PyObject *method = NULL;
     PyObject *ret;
-    if (protocol < 0) {
-        protocol = 2;
-    }
-
-#if defined(NPY_PY3K)
-    cpick = PyImport_ImportModule("pickle");
-#else
-    cpick = PyImport_ImportModule("cPickle");
-#endif
-    if (cpick == NULL) {
+    npy_cache_import("numpy.core._methods", "_dump", &method);
+    if (method == NULL) {
         return -1;
     }
-    if (PyBytes_Check(file) || PyUnicode_Check(file)) {
-        file = npy_PyFile_OpenFile(file, "wb");
-        if (file == NULL) {
-            Py_DECREF(cpick);
-            return -1;
-        }
+    if (protocol < 0) {
+        ret = PyObject_CallFunction(method, "OO", self, file);
     }
     else {
-        Py_INCREF(file);
+        ret = PyObject_CallFunction(method, "OOi", self, file, protocol);
     }
-    ret = PyObject_CallMethod(cpick, "dump", "OOi", self, file, protocol);
-    Py_XDECREF(ret);
-    Py_DECREF(file);
-    Py_DECREF(cpick);
-    if (PyErr_Occurred()) {
+    if (ret == NULL) {
         return -1;
     }
+    Py_DECREF(ret);
     return 0;
 }
 
@@ -2136,49 +2121,31 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 NPY_NO_EXPORT PyObject *
 PyArray_Dumps(PyObject *self, int protocol)
 {
-    PyObject *cpick = NULL;
-    PyObject *ret;
+    static PyObject *method = NULL;
+    npy_cache_import("numpy.core._methods", "_dumps", &method);
+    if (method == NULL) {
+        return NULL;
+    }
     if (protocol < 0) {
-        protocol = 2;
+        return PyObject_CallFunction(method, "O", self);
     }
-#if defined(NPY_PY3K)
-    cpick = PyImport_ImportModule("pickle");
-#else
-    cpick = PyImport_ImportModule("cPickle");
-#endif
-    if (cpick == NULL) {
-        return NULL;
+    else {
+        return PyObject_CallFunction(method, "Oi", self, protocol);
     }
-    ret = PyObject_CallMethod(cpick, "dumps", "Oi", self, protocol);
-    Py_DECREF(cpick);
-    return ret;
 }
 
 
 static PyObject *
-array_dump(PyArrayObject *self, PyObject *args)
+array_dump(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *file = NULL;
-    int ret;
-
-    if (!PyArg_ParseTuple(args, "O:dump", &file)) {
-        return NULL;
-    }
-    ret = PyArray_Dump((PyObject *)self, file, 2);
-    if (ret < 0) {
-        return NULL;
-    }
-    Py_RETURN_NONE;
+    NPY_FORWARD_NDARRAY_METHOD("_dump");
 }
 
 
 static PyObject *
-array_dumps(PyArrayObject *self, PyObject *args)
+array_dumps(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    if (!PyArg_ParseTuple(args, "")) {
-        return NULL;
-    }
-    return PyArray_Dumps((PyObject *)self, 2);
+    NPY_FORWARD_NDARRAY_METHOD("_dumps");
 }
 
 
@@ -2753,10 +2720,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"dumps",
         (PyCFunction) array_dumps,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"dump",
         (PyCFunction) array_dump,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
 
     {"__complex__",
         (PyCFunction) array_complex,

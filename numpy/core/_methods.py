@@ -13,6 +13,7 @@ from numpy.core._asarray import asanyarray
 from numpy.core import numerictypes as nt
 from numpy.core import _exceptions
 from numpy._globals import _NoValue
+from numpy.compat import pickle, os_fspath, contextlib_nullcontext
 
 # save those O(100) nanoseconds!
 umr_maximum = um.maximum.reduce
@@ -230,3 +231,14 @@ def _ptp(a, axis=None, out=None, keepdims=False):
         umr_minimum(a, axis, None, None, keepdims),
         out
     )
+
+def _dump(self, file, protocol=2):
+    if hasattr(file, 'write'):
+        ctx = contextlib_nullcontext(file)
+    else:
+        ctx = open(os_fspath(file), "wb")
+    with ctx as f:
+        pickle.dump(self, f, protocol=protocol)
+
+def _dumps(self, protocol=2):
+    return pickle.dumps(self, protocol=protocol)
