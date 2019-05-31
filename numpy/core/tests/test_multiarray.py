@@ -4654,10 +4654,7 @@ class TestIO(object):
     def test_roundtrip_dump_pathlib(self):
         p = pathlib.Path(self.filename)
         self.x.dump(p)
-        if sys.version_info[:2] >= (3, 6):
-            y = np.load(p)
-        else:
-            y = np.load(str(p))
+        y = np.load(p, allow_pickle=True)
         assert_array_equal(y, self.x)
 
     def test_roundtrip_binary_str(self):

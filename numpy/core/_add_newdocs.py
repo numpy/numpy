@@ -1152,8 +1152,12 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
 
     Parameters
     ----------
-    file : file or str
+    file : file or str or Path
         Open file object or filename.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
+
     dtype : data-type
         Data type of the returned array.
         For binary files, it is used to determine the size and byte-order
@@ -2957,8 +2961,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
 
     Parameters
     ----------
-    file : str
+    file : str or Path
         A string naming the dump file.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
 
     """))
 
@@ -4004,8 +4011,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
 
     Parameters
     ----------
-    fid : file or str
+    fid : file or str or Path
         An open file object, or a string containing a filename.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
+
     sep : str
         Separator between array items for text output.
         If "" (empty), a binary file is written, equivalent to
