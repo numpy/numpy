@@ -72,6 +72,9 @@ typedef struct {
   uint64_t low;
 } pcg128_t;
 
+#define PCG_DEFAULT_MULTIPLIER_HIGH 2549297995355413924ULL
+#define PCG_DEFAULT_MULTIPLIER_LOW 4865540595714422341ULL
+
 static inline pcg128_t PCG_128BIT_CONSTANT(uint64_t high, uint64_t low) {
   pcg128_t result;
   result.high = high;
@@ -90,7 +93,7 @@ typedef struct {
 } pcg_state_setseq_128;
 
 #define PCG_DEFAULT_MULTIPLIER_128                                             \
-  PCG_128BIT_CONSTANT(2549297995355413924ULL, 4865540595714422341ULL)
+  PCG_128BIT_CONSTANT(PCG_DEFAULT_MULTIPLIER_HIGH, PCG_DEFAULT_MULTIPLIER_LOW)
 #define PCG_DEFAULT_INCREMENT_128                                              \
   PCG_128BIT_CONSTANT(6364136223846793005ULL, 1442695040888963407ULL)
 #define PCG_STATE_SETSEQ_128_INITIALIZER                                       \
@@ -172,6 +175,27 @@ static inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
   pcg_setseq_128_step_r(rng);
 }
 
+static inline uint64_t
+pcg_setseq_128_xsl_rr_64_random_r(pcg_state_setseq_128 *rng) {
+#if defined _WIN32 && _MSC_VER >= 1900 && _M_AMD64
+  uint64_t h1;
+  pcg128_t product;
+
+  /* Manually inline the multiplication and addition using intrinsics */
+  h1 = rng->state.high * PCG_DEFAULT_MULTIPLIER_LOW +
+       rng->state.low * PCG_DEFAULT_MULTIPLIER_HIGH;
+  product.low =
+      _umul128(rng->state.low, PCG_DEFAULT_MULTIPLIER_LOW, &(product.high));
+  product.high += h1;
+  _addcarry_u64(_addcarry_u64(0, product.low, rng->inc.low, &(rng->state.low)),
+                product.high, rng->inc.high, &(rng->state.high));
+  return _rotr64(rng->state.high ^ rng->state.low, rng->state.high >> 58u);
+#else
+  pcg_setseq_128_step_r(rng);
+  return pcg_output_xsl_rr_128_64(rng->state);
+#endif
+}
+
 #else /* PCG_EMULATED_128BIT_MATH */
 
 static inline void pcg_setseq_128_step_r(pcg_state_setseq_128 *rng) {
@@ -194,12 +218,6 @@ static inline void pcg_setseq_128_srandom_r(pcg_state_setseq_128 *rng,
 }
 
 #endif /* PCG_EMULATED_128BIT_MATH */
-
-static inline uint64_t
-pcg_setseq_128_xsl_rr_64_random_r(pcg_state_setseq_128 *rng) {
-  pcg_setseq_128_step_r(rng);
-  return pcg_output_xsl_rr_128_64(rng->state);
-}
 
 static inline uint64_t
 pcg_setseq_128_xsl_rr_64_boundedrand_r(pcg_state_setseq_128 *rng,
