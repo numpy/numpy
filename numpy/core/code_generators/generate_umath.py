@@ -938,7 +938,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sinc'),
           None,
-          TD(inexact, f='sinc', astype={'e':'f'}),
+          TD(inexact, f='sinc', astype={'e': 'f'}),
           ),
 }
 
