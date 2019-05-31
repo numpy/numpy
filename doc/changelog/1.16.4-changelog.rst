@@ -1,0 +1,39 @@
+
+Contributors
+============
+
+A total of 10 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Eric Wieser
+* Dennis Zollo +
+* Hunter Damron +
+* Jingbei Li +
+* Kevin Sheppard
+* Matti Picus
+* Nicola Soranzo +
+* Sebastian Berg
+* Tyler Reddy
+
+Pull requests merged
+====================
+
+A total of 16 pull requests were merged for this release.
+
+* `#13392 <https://github.com/numpy/numpy/pull/13392>`__: BUG: Some PyPy versions lack PyStructSequence_InitType2.
+* `#13394 <https://github.com/numpy/numpy/pull/13394>`__: MAINT, DEP: Fix deprecated ``assertEquals()``
+* `#13396 <https://github.com/numpy/numpy/pull/13396>`__: BUG: Fix structured_to_unstructured on single-field types (backport)
+* `#13549 <https://github.com/numpy/numpy/pull/13549>`__: BLD: Make CI pass again with pytest 4.5
+* `#13552 <https://github.com/numpy/numpy/pull/13552>`__: TST: Register markers in conftest.py.
+* `#13559 <https://github.com/numpy/numpy/pull/13559>`__: BUG: Removes ValueError for empty kwargs in arraymultiter_new
+* `#13560 <https://github.com/numpy/numpy/pull/13560>`__: BUG: Add TypeError to accepted exceptions in crackfortran.
+* `#13561 <https://github.com/numpy/numpy/pull/13561>`__: BUG: Handle subarrays in descr_to_dtype
+* `#13562 <https://github.com/numpy/numpy/pull/13562>`__: BUG: Protect generators from log(0.0)
+* `#13563 <https://github.com/numpy/numpy/pull/13563>`__: BUG: Always return views from structured_to_unstructured when...
+* `#13564 <https://github.com/numpy/numpy/pull/13564>`__: BUG: Catch stderr when checking compiler version
+* `#13565 <https://github.com/numpy/numpy/pull/13565>`__: BUG: longdouble(int) does not work
+* `#13587 <https://github.com/numpy/numpy/pull/13587>`__: BUG: distutils/system_info.py fix missing subprocess import (#13523)
+* `#13620 <https://github.com/numpy/numpy/pull/13620>`__: BUG,DEP: Fix writeable flag setting for arrays without base
+* `#13641 <https://github.com/numpy/numpy/pull/13641>`__: MAINT: Prepare for the 1.16.4 release.
+* `#13644 <https://github.com/numpy/numpy/pull/13644>`__: BUG: special case object arrays when printing rel-, abs-error

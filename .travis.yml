@@ -53,12 +53,19 @@ matrix:
     - python: 3.6
       env:
        - PYTHONOPTIMIZE=2
+       - BLAS=None
+       - LAPACK=None
+       - ATLAS=None
+       - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas
+       - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
        - USE_ASV=1
     - python: 3.5
       dist: trusty # remove after April 2019
       env: NPY_RELAXED_STRIDES_CHECKING=0
     - python: 3.6
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
+    - python: 3.6
+      env: NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
     - python: 3.6
       env:
        - BLAS=None
@@ -69,6 +76,8 @@ matrix:
       env:
        # for matrix annotation only
        - PPC64_LE=1
+       # use POWER8 OpenBLAS build, not system ATLAS
+       - ATLAS=None
 
 before_install:
   - ./tools/travis-before-install.sh

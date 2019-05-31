@@ -390,7 +390,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     i[axis] = slice(None, None)
     outshape = np.asarray(arr.shape).take(indlist)
     i.put(indlist, ind)
-    j = i.copy()
     res = func1d(arr[tuple(i.tolist())], *args, **kwargs)
     #  if res is a number, then we have a smaller output array
     asscalar = np.isscalar(res)
@@ -1533,7 +1532,7 @@ def flatnotmasked_edges(a):
 
     See Also
     --------
-    flatnotmasked_contiguous, notmasked_contiguous, notmasked_edges,
+    flatnotmasked_contiguous, notmasked_contiguous, notmasked_edges
     clump_masked, clump_unmasked
 
     Notes
@@ -1594,7 +1593,7 @@ def notmasked_edges(a, axis=None):
 
     See Also
     --------
-    flatnotmasked_contiguous, flatnotmasked_edges, notmasked_contiguous,
+    flatnotmasked_contiguous, flatnotmasked_edges, notmasked_contiguous
     clump_masked, clump_unmasked
 
     Examples
@@ -1639,7 +1638,7 @@ def flatnotmasked_contiguous(a):
 
     See Also
     --------
-    flatnotmasked_edges, notmasked_contiguous, notmasked_edges,
+    flatnotmasked_edges, notmasked_contiguous, notmasked_edges
     clump_masked, clump_unmasked
 
     Notes
@@ -1699,7 +1698,7 @@ def notmasked_contiguous(a, axis=None):
 
     See Also
     --------
-    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges,
+    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges
     clump_masked, clump_unmasked
 
     Notes
@@ -1804,7 +1803,7 @@ def clump_unmasked(a):
 
     See Also
     --------
-    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges,
+    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges
     notmasked_contiguous, clump_masked
 
     Examples
@@ -1843,7 +1842,7 @@ def clump_masked(a):
 
     See Also
     --------
-    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges,
+    flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges
     notmasked_contiguous, clump_unmasked
 
     Examples

@@ -357,7 +357,7 @@ def solve(a, b):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    The solutions are computed using LAPACK routine _gesv
+    The solutions are computed using LAPACK routine ``_gesv``.
 
     `a` must be square and of full-rank, i.e., all rows (or, equivalently,
     columns) must be linearly independent; if either is not true, use
@@ -571,7 +571,7 @@ def matrix_power(a, n):
     Parameters
     ----------
     a : (..., M, M) array_like
-        Matrix to be "powered."
+        Matrix to be "powered".
     n : int
         The exponent can be any integer or long integer, positive,
         negative, or zero.
@@ -820,8 +820,8 @@ def qr(a, mode='reduced'):
 
     Notes
     -----
-    This is an interface to the LAPACK routines dgeqrf, zgeqrf,
-    dorgqr, and zungqr.
+    This is an interface to the LAPACK routines ``dgeqrf``, ``zgeqrf``,
+    ``dorgqr``, and ``zungqr``.
 
     For more information on the qr factorization, see for example:
     https://en.wikipedia.org/wiki/QR_factorization
@@ -890,12 +890,12 @@ def qr(a, mode='reduced'):
             msg = "".join((
                     "The 'full' option is deprecated in favor of 'reduced'.\n",
                     "For backward compatibility let mode default."))
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            warnings.warn(msg, DeprecationWarning, stacklevel=3)
             mode = 'reduced'
         elif mode in ('e', 'economic'):
             # 2013-04-01, 1.8
             msg = "The 'economic' option is deprecated."
-            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            warnings.warn(msg, DeprecationWarning, stacklevel=3)
             mode = 'economic'
         else:
             raise ValueError("Unrecognized mode '%s'" % mode)
@@ -1023,7 +1023,7 @@ def eigvals(a):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    This is implemented using the _geev LAPACK routines which compute
+    This is implemented using the ``_geev`` LAPACK routines which compute
     the eigenvalues and eigenvectors of general square arrays.
 
     Examples
@@ -1041,7 +1041,7 @@ def eigvals(a):
     >>> LA.norm(Q[0, :]), LA.norm(Q[1, :]), np.dot(Q[0, :],Q[1, :])
     (1.0, 1.0, 0.0)
 
-    Now multiply a diagonal matrix by Q on one side and by Q.T on the other:
+    Now multiply a diagonal matrix by ``Q`` on one side and by ``Q.T`` on the other:
 
     >>> D = np.diag((-1,1))
     >>> LA.eigvals(D)
@@ -1124,7 +1124,7 @@ def eigvalsh(a, UPLO='L'):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    The eigenvalues are computed using LAPACK routines _syevd, _heevd
+    The eigenvalues are computed using LAPACK routines ``_syevd``, ``_heevd``.
 
     Examples
     --------
@@ -1228,7 +1228,7 @@ def eig(a):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    This is implemented using the _geev LAPACK routines which compute
+    This is implemented using the ``_geev`` LAPACK routines which compute
     the eigenvalues and eigenvectors of general square arrays.
 
     The number `w` is an eigenvalue of `a` if there exists a vector
@@ -1279,7 +1279,7 @@ def eig(a):
            [0.        -0.70710678j, 0.        +0.70710678j]])
 
     Complex-valued matrix with real e-values (but complex-valued e-vectors);
-    note that a.conj().T = a, i.e., a is Hermitian.
+    note that ``a.conj().T == a``, i.e., `a` is Hermitian.
 
     >>> a = np.array([[1, 1j], [-1j, 1]])
     >>> w, v = LA.eig(a)
@@ -1374,8 +1374,8 @@ def eigh(a, UPLO='L'):
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
-    The eigenvalues/eigenvectors are computed using LAPACK routines _syevd,
-    _heevd
+    The eigenvalues/eigenvectors are computed using LAPACK routines ``_syevd``,
+    ``_heevd``.
 
     The eigenvalues of real symmetric or complex Hermitian matrices are
     always real. [1]_ The array `v` of (column) eigenvectors is unitary
@@ -1790,9 +1790,9 @@ def matrix_rank(M, tol=None, hermitian=False):
     Parameters
     ----------
     M : {(M,), (..., M, N)} array_like
-        input vector or stack of matrices
+        Input vector or stack of matrices.
     tol : (...) array_like, float, optional
-        threshold below which SVD values are considered zero. If `tol` is
+        Threshold below which SVD values are considered zero. If `tol` is
         None, and ``S`` is an array with singular values for `M`, and
         ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
         set to ``S.max() * max(M.shape) * eps``.
@@ -1805,6 +1805,11 @@ def matrix_rank(M, tol=None, hermitian=False):
         Defaults to False.
 
         .. versionadded:: 1.14
+
+    Returns
+    -------
+    rank : (...) array_like
+        Rank of M.
 
     Notes
     -----
@@ -1900,9 +1905,9 @@ def pinv(a, rcond=1e-15, hermitian=False):
         Matrix or stack of matrices to be pseudo-inverted.
     rcond : (...) array_like of float
         Cutoff for small singular values.
-        Singular values smaller (in modulus) than
-        `rcond` * largest_singular_value (again, in modulus)
-        are set to zero. Broadcasts against the stack of matrices
+        Singular values less than or equal to
+        ``rcond * largest_singular_value`` are set to zero.
+        Broadcasts against the stack of matrices.
     hermitian : bool, optional
         If True, `a` is assumed to be Hermitian (symmetric if real-valued),
         enabling a more efficient method for finding singular values.
@@ -2019,7 +2024,7 @@ def slogdet(a):
     .. versionadded:: 1.6.0
 
     The determinant is computed via LU factorization using the LAPACK
-    routine z/dgetrf.
+    routine ``z/dgetrf``.
 
 
     Examples
@@ -2093,7 +2098,7 @@ def det(a):
     details.
 
     The determinant is computed via LU factorization using the LAPACK
-    routine z/dgetrf.
+    routine ``z/dgetrf``.
 
     Examples
     --------
@@ -2245,7 +2250,7 @@ def lstsq(a, b, rcond="warn"):
                       "To use the future default and silence this warning "
                       "we advise to pass `rcond=None`, to keep using the old, "
                       "explicitly pass `rcond=-1`.",
-                      FutureWarning, stacklevel=2)
+                      FutureWarning, stacklevel=3)
         rcond = -1
     if rcond is None:
         rcond = finfo(t).eps * max(n, m)
@@ -2288,7 +2293,7 @@ def lstsq(a, b, rcond="warn"):
 def _multi_svd_norm(x, row_axis, col_axis, op):
     """Compute a function of the singular values of the 2-D matrices in `x`.
 
-    This is a private utility function used by numpy.linalg.norm().
+    This is a private utility function used by `numpy.linalg.norm()`.
 
     Parameters
     ----------
@@ -2296,7 +2301,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
     row_axis, col_axis : int
         The axes of `x` that hold the 2-D matrices.
     op : callable
-        This should be either numpy.amin or numpy.amax or numpy.sum.
+        This should be either numpy.amin or `numpy.amax` or `numpy.sum`.
 
     Returns
     -------

@@ -73,7 +73,7 @@ class SuperTensorTestCase(unittest.TestCase):
         print(self.typeStr, "... ", file=sys.stderr)
         max = SuperTensor.__dict__[self.typeStr + "Max"]
         supertensor = [[[[1, 2], [3, 4]], [[5, 6], [7, 8]]], [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]]
-        self.assertEquals(max(supertensor), 8)
+        self.assertEqual(max(supertensor), 8)
 
     # Test (type* IN_ARRAY3, int DIM1, int DIM2, int DIM3) typemap
     def testMaxBadList(self):
@@ -103,7 +103,7 @@ class SuperTensorTestCase(unittest.TestCase):
         print(self.typeStr, "... ", file=sys.stderr)
         min = SuperTensor.__dict__[self.typeStr + "Min"]
         supertensor = [[[[9, 8], [7, 6]], [[5, 4], [3, 2]]], [[[9, 8], [7, 6]], [[5, 4], [3, 2]]]]
-        self.assertEquals(min(supertensor), 2)
+        self.assertEqual(min(supertensor), 2)
 
     # Test (int DIM1, int DIM2, int DIM3, type* IN_ARRAY3) typemap
     def testMinBadList(self):
@@ -135,7 +135,7 @@ class SuperTensorTestCase(unittest.TestCase):
         supertensor = np.arange(3*3*3*3, dtype=self.typeCode).reshape((3, 3, 3, 3))
         answer = supertensor.copy()*4
         scale(supertensor, 4)
-        self.assertEquals((supertensor == answer).all(), True)
+        self.assertEqual((supertensor == answer).all(), True)
 
     # Test (type INPLACE_ARRAY3[ANY][ANY][ANY]) typemap
     def testScaleWrongType(self):
@@ -252,8 +252,8 @@ class SuperTensorTestCase(unittest.TestCase):
         answer_upper = [[[[0, 0], [0, 1]], [[0, 1], [1, 1]]], [[[0, 1], [1, 1]], [[1, 1], [1, 1]]]]
         answer_lower = [[[[1, 1], [1, 0]], [[1, 0], [0, 0]]], [[[1, 0], [0, 0]], [[0, 0], [0, 0]]]]
         lower, upper = luSplit(supertensor)
-        self.assertEquals((lower == answer_lower).all(), True)
-        self.assertEquals((upper == answer_upper).all(), True)
+        self.assertEqual((lower == answer_lower).all(), True)
+        self.assertEqual((upper == answer_upper).all(), True)
 
 ######################################################################
 

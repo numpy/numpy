@@ -563,14 +563,14 @@ _get_size(const char* str)
 
     if (stop == str || _is_alpha_underscore(*stop)) {
         /* not a well formed number */
-         return -1;
+        return -1;
     }
     if (size >= NPY_MAX_INTP || size <= NPY_MIN_INTP) {
         /* len(str) too long */
         return -1;
     }
     return size;
- }
+}
 
 /*
  * Return the ending position of a variable name including optional modifier
@@ -4535,11 +4535,17 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
 
     /* Convert the 'axis' parameter into a list of axes */
     if (axes_in == NULL) {
-        naxes = 1;
-        axes[0] = 0;
+        /* apply defaults */
+        if (ndim == 0) {
+            naxes = 0;
+        }
+        else {
+            naxes = 1;
+            axes[0] = 0;
+        }
     }
-    /* Convert 'None' into all the axes */
     else if (axes_in == Py_None) {
+        /* Convert 'None' into all the axes */
         naxes = ndim;
         for (i = 0; i < naxes; ++i) {
             axes[i] = i;
@@ -4564,39 +4570,27 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             axes[i] = (int)axis;
         }
     }
-    /* Try to interpret axis as an integer */
     else {
+        /* Try to interpret axis as an integer */
         int axis = PyArray_PyIntAsInt(axes_in);
         /* TODO: PyNumber_Index would be good to use here */
         if (error_converting(axis)) {
             goto fail;
         }
-        /* Special case letting axis={0 or -1} slip through for scalars */
+        /*
+         * As a special case for backwards compatibility in 'sum',
+         * 'prod', et al, also allow a reduction for scalars even
+         * though this is technically incorrect.
+         */
         if (ndim == 0 && (axis == 0 || axis == -1)) {
-            axis = 0;
+            naxes = 0;
         }
         else if (check_and_adjust_axis(&axis, ndim) < 0) {
             goto fail;
         }
-        axes[0] = (int)axis;
-        naxes = 1;
-    }
-
-    /* Check to see if input is zero-dimensional. */
-    if (ndim == 0) {
-        /*
-         * A reduction with no axes is still valid but trivial.
-         * As a special case for backwards compatibility in 'sum',
-         * 'prod', et al, also allow a reduction where axis=0, even
-         * though this is technically incorrect.
-         */
-        naxes = 0;
-
-        if (!(operation == UFUNC_REDUCE &&
-                    (naxes == 0 || (naxes == 1 && axes[0] == 0)))) {
-            PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
-                         _reduce_type[operation]);
-            goto fail;
+        else {
+            axes[0] = (int)axis;
+            naxes = 1;
         }
     }
 
@@ -4640,6 +4634,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         Py_XDECREF(wheremask);
         break;
     case UFUNC_ACCUMULATE:
+        if (ndim == 0) {
+            PyErr_SetString(PyExc_TypeError, "cannot accumulate on a scalar");
+            goto fail;
+        }
         if (naxes != 1) {
             PyErr_SetString(PyExc_ValueError,
                         "accumulate does not allow multiple axes");
@@ -4649,6 +4647,10 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                                                   otype->type_num);
         break;
     case UFUNC_REDUCEAT:
+        if (ndim == 0) {
+            PyErr_SetString(PyExc_TypeError, "cannot reduceat on a scalar");
+            goto fail;
+        }
         if (naxes != 1) {
             PyErr_SetString(PyExc_ValueError,
                         "reduceat does not allow multiple axes");
@@ -5394,6 +5396,8 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyArrayObject *ap1 = NULL, *ap2 = NULL, *ap_new = NULL;
     PyObject *new_args, *tmp;
     PyObject *shape1, *shape2, *newshape;
+    static PyObject *_numpy_matrix;
+
 
     errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override);
     if (errval) {
@@ -5426,7 +5430,18 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (tmp == NULL) {
         return NULL;
     }
-    ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
+
+    npy_cache_import(
+        "numpy",
+        "matrix",
+        &_numpy_matrix);
+
+    if (PyObject_IsInstance(tmp, _numpy_matrix)) {
+        ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
+    }
+    else {
+        ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
+    }
     Py_DECREF(tmp);
     if (ap1 == NULL) {
         return NULL;
@@ -5435,7 +5450,12 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (tmp == NULL) {
         return NULL;
     }
-    ap2 = (PyArrayObject *)PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
+    if (PyObject_IsInstance(tmp, _numpy_matrix)) {
+        ap2 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
+    }
+    else {
+        ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
+    }
     Py_DECREF(tmp);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
@@ -5572,7 +5592,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
-    int i;
+    npy_intp i;
     int nop;
 
     /* override vars */

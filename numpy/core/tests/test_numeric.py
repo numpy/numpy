@@ -13,7 +13,7 @@ from numpy.random import rand, randint, randn
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    HAS_REFCOUNT
+    assert_warns, HAS_REFCOUNT
     )
 
 
@@ -43,7 +43,7 @@ class TestResize(object):
 
     def test_reshape_from_zero(self):
         # See also gh-6740
-        A = np.zeros(0, dtype=[('a', np.float32, 1)])
+        A = np.zeros(0, dtype=[('a', np.float32)])
         Ar = np.resize(A, (2, 1))
         assert_array_equal(Ar, np.zeros((2, 1), Ar.dtype))
         assert_equal(A.dtype, Ar.dtype)
@@ -216,6 +216,9 @@ class TestNonarrayArgs(object):
             assert_(np.isnan(np.var([])))
             assert_(w[0].category is RuntimeWarning)
 
+        B = np.array([None, 0])
+        B[0] = 1j
+        assert_almost_equal(np.var(B), 0.25)
 
 class TestIsscalar(object):
     def test_isscalar(self):
@@ -1333,11 +1336,17 @@ class TestClip(object):
         self.nr = 5
         self.nc = 3
 
-    def fastclip(self, a, m, M, out=None):
+    def fastclip(self, a, m, M, out=None, casting=None):
         if out is None:
-            return a.clip(m, M)
+            if casting is None:
+                return a.clip(m, M)
+            else:
+                return a.clip(m, M, casting=casting)
         else:
-            return a.clip(m, M, out)
+            if casting is None:
+                return a.clip(m, M, out)
+            else:
+                return a.clip(m, M, out, casting=casting)
 
     def clip(self, a, m, M, out=None):
         # use slow-clip
@@ -1375,6 +1384,20 @@ class TestClip(object):
         return (10 * rand(n, m)).astype(np.int32)
 
     # Now the real test cases
+
+    @pytest.mark.parametrize("dtype", '?bhilqpBHILQPefdgFDGO')
+    def test_ones_pathological(self, dtype):
+        # for preservation of behavior described in
+        # gh-12519; amin > amax behavior may still change
+        # in the future
+        arr = np.ones(10, dtype=dtype)
+        expected = np.zeros(10, dtype=dtype)
+        actual = np.clip(arr, 1, 0)
+        if dtype == 'O':
+            assert actual.tolist() == expected.tolist()
+        else:
+            assert_equal(actual, expected)
+
     def test_simple_double(self):
         # Test native double input with scalar min/max.
         a = self._generate_data(self.nr, self.nc)
@@ -1473,14 +1496,21 @@ class TestClip(object):
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
-    def test_simple_int32_inout(self):
+    @pytest.mark.parametrize("casting", [None, "unsafe"])
+    def test_simple_int32_inout(self, casting):
         # Test native int32 input with double min/max and int32 out.
         a = self._generate_int32_data(self.nr, self.nc)
         m = np.float64(0)
         M = np.float64(2)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        if casting is None:
+            with assert_warns(DeprecationWarning):
+                # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+                self.fastclip(a, m, M, ac, casting=casting)
+        else:
+            # explicitly passing "unsafe" will silence warning
+            self.fastclip(a, m, M, ac, casting=casting)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1502,7 +1532,9 @@ class TestClip(object):
         M = np.float64(1)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1513,7 +1545,9 @@ class TestClip(object):
         M = 2.0
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1689,7 +1723,9 @@ class TestClip(object):
         M = np.float64(2)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1711,7 +1747,9 @@ class TestClip(object):
         M = np.float64(1)
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1722,7 +1760,9 @@ class TestClip(object):
         M = 2.0
         ac = np.zeros(a.shape, dtype=np.int32)
         act = ac.copy()
-        self.fastclip(a, m, M, ac)
+        with assert_warns(DeprecationWarning):
+            # NumPy 1.17.0, 2018-02-24 - casting is unsafe
+            self.fastclip(a, m, M, ac)
         self.clip(a, m, M, act)
         assert_array_strict_equal(ac, act)
 
@@ -1775,11 +1815,94 @@ class TestClip(object):
 
     def test_clip_nan(self):
         d = np.arange(7.)
-        assert_equal(d.clip(min=np.nan), d)
-        assert_equal(d.clip(max=np.nan), d)
-        assert_equal(d.clip(min=np.nan, max=np.nan), d)
-        assert_equal(d.clip(min=-2, max=np.nan), d)
-        assert_equal(d.clip(min=np.nan, max=10), d)
+        with assert_warns(DeprecationWarning):
+            assert_equal(d.clip(min=np.nan), d)
+        with assert_warns(DeprecationWarning):
+            assert_equal(d.clip(max=np.nan), d)
+        with assert_warns(DeprecationWarning):
+            assert_equal(d.clip(min=np.nan, max=np.nan), d)
+        with assert_warns(DeprecationWarning):
+            assert_equal(d.clip(min=-2, max=np.nan), d)
+        with assert_warns(DeprecationWarning):
+            assert_equal(d.clip(min=np.nan, max=10), d)
+
+    def test_object_clip(self):
+        a = np.arange(10, dtype=object)
+        actual = np.clip(a, 1, 5)
+        expected = np.array([1, 1, 2, 3, 4, 5, 5, 5, 5, 5])
+        assert actual.tolist() == expected.tolist()
+
+    def test_clip_all_none(self):
+        a = np.arange(10, dtype=object)
+        with assert_raises_regex(ValueError, 'max or min'):
+            np.clip(a, None, None)
+
+    def test_clip_invalid_casting(self):
+        a = np.arange(10, dtype=object)
+        with assert_raises_regex(ValueError,
+                                 'casting must be one of'):
+            self.fastclip(a, 1, 8, casting="garbage")
+
+    @pytest.mark.parametrize("amin, amax", [
+        # two scalars
+        (1, 0),
+        # mix scalar and array
+        (1, np.zeros(10)),
+        # two arrays
+        (np.ones(10), np.zeros(10)),
+        ])
+    def test_clip_value_min_max_flip(self, amin, amax):
+        a = np.arange(10, dtype=np.int64)
+        # requirement from ufunc_docstrings.py
+        expected = np.minimum(np.maximum(a, amin), amax)
+        actual = np.clip(a, amin, amax)
+        assert_equal(actual, expected)
+
+    @pytest.mark.parametrize("arr, amin, amax, exp", [
+        # for a bug in npy_ObjectClip, based on a
+        # case produced by hypothesis
+        (np.zeros(10, dtype=np.int64),
+         0,
+         -2**64+1,
+         np.full(10, -2**64+1, dtype=object)),
+        # for bugs in NPY_TIMEDELTA_MAX, based on a case
+        # produced by hypothesis
+        (np.zeros(10, dtype='m8') - 1,
+         0,
+         0,
+         np.zeros(10, dtype='m8')),
+    ])
+    def test_clip_problem_cases(self, arr, amin, amax, exp):
+        actual = np.clip(arr, amin, amax)
+        assert_equal(actual, exp)
+
+    @pytest.mark.xfail(reason="no scalar nan propagation yet")
+    @pytest.mark.parametrize("arr, amin, amax", [
+        # problematic scalar nan case from hypothesis
+        (np.zeros(10, dtype=np.int64),
+         np.array(np.nan),
+         np.zeros(10, dtype=np.int32)),
+    ])
+    def test_clip_scalar_nan_propagation(self, arr, amin, amax):
+        # enforcement of scalar nan propagation for comparisons
+        # called through clip()
+        expected = np.minimum(np.maximum(a, amin), amax)
+        with assert_warns(DeprecationWarning):
+            actual = np.clip(arr, amin, amax)
+            assert_equal(actual, expected)
+
+    @pytest.mark.xfail(reason="propagation doesn't match spec")
+    @pytest.mark.parametrize("arr, amin, amax", [
+        (np.array([1] * 10, dtype='m8'),
+         np.timedelta64('NaT'),
+         np.zeros(10, dtype=np.int32)),
+    ])
+    def test_NaT_propagation(self, arr, amin, amax):
+        # NOTE: the expected function spec doesn't
+        # propagate NaT, but clip() now does
+        expected = np.minimum(np.maximum(a, amin), amax)
+        actual = np.clip(arr, amin, amax)
+        assert_equal(actual, expected)
 
 
 class TestAllclose(object):
@@ -2154,6 +2277,7 @@ class TestLikeFuncs(object):
                 (np.arange(24).reshape(2, 3, 4).swapaxes(0, 1), None),
                 (np.arange(24).reshape(4, 3, 2).swapaxes(0, 1), '?'),
                      ]
+        self.shapes = [(5,), (5,6,), (5,6,7,)]
 
     def compare_array_value(self, dz, value, fill_value):
         if value is not None:
@@ -2218,6 +2342,34 @@ class TestLikeFuncs(object):
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
             self.compare_array_value(dz, value, fill_value)
+
+            # Test the 'shape' parameter
+            for s in self.shapes:
+                for o in 'CFA':
+                    sz = like_function(d, dtype=dtype, shape=s, order=o,
+                                       **fill_kwarg)
+                    assert_equal(sz.shape, s)
+                    if dtype is None:
+                        assert_equal(sz.dtype, d.dtype)
+                    else:
+                        assert_equal(sz.dtype, np.dtype(dtype))
+                    if o == 'C' or (o == 'A' and d.flags.c_contiguous):
+                        assert_(sz.flags.c_contiguous)
+                    elif o == 'F' or (o == 'A' and d.flags.f_contiguous):
+                        assert_(sz.flags.f_contiguous)
+                    self.compare_array_value(sz, value, fill_value)
+
+                if (d.ndim != len(s)):
+                    assert_equal(np.argsort(like_function(d, dtype=dtype,
+                                                          shape=s, order='K',
+                                                          **fill_kwarg).strides),
+                                 np.argsort(np.empty(s, dtype=dtype,
+                                                     order='C').strides))
+                else:
+                    assert_equal(np.argsort(like_function(d, dtype=dtype,
+                                                          shape=s, order='K',
+                                                          **fill_kwarg).strides),
+                                 np.argsort(d.strides))
 
         # Test the 'subok' parameter
         class MyNDArray(np.ndarray):
@@ -2624,6 +2776,47 @@ def test_outer_out_param():
     assert_equal(np.outer(arr2, arr3, out2), out2)
 
 
+class TestIndices(object):
+
+    def test_simple(self):
+        [x, y] = np.indices((4, 3))
+        assert_array_equal(x, np.array([[0, 0, 0],
+                                        [1, 1, 1],
+                                        [2, 2, 2],
+                                        [3, 3, 3]]))
+        assert_array_equal(y, np.array([[0, 1, 2],
+                                        [0, 1, 2],
+                                        [0, 1, 2],
+                                        [0, 1, 2]]))
+
+    def test_single_input(self):
+        [x] = np.indices((4,))
+        assert_array_equal(x, np.array([0, 1, 2, 3]))
+
+        [x] = np.indices((4,), sparse=True)
+        assert_array_equal(x, np.array([0, 1, 2, 3]))
+
+    def test_scalar_input(self):
+        assert_array_equal([], np.indices(()))
+        assert_array_equal([], np.indices((), sparse=True))
+        assert_array_equal([[]], np.indices((0,)))
+        assert_array_equal([[]], np.indices((0,), sparse=True))
+
+    def test_sparse(self):
+        [x, y] = np.indices((4,3), sparse=True)
+        assert_array_equal(x, np.array([[0], [1], [2], [3]]))
+        assert_array_equal(y, np.array([[0, 1, 2]]))
+
+    @pytest.mark.parametrize("dtype", [np.int, np.float32, np.float64])
+    @pytest.mark.parametrize("dims", [(), (0,), (4, 3)])
+    def test_return_type(self, dtype, dims):
+        inds = np.indices(dims, dtype=dtype)
+        assert_(inds.dtype == dtype)
+
+        for arr in np.indices(dims, dtype=dtype, sparse=True):
+            assert_(arr.dtype == dtype)
+
+
 class TestRequire(object):
     flag_names = ['C', 'C_CONTIGUOUS', 'CONTIGUOUS',
                   'F', 'F_CONTIGUOUS', 'FORTRAN',
@@ -2704,6 +2897,8 @@ class TestBroadcast(object):
         arrs = [np.empty((6, 7)), np.empty((5, 6, 1)), np.empty((7,)),
                 np.empty((5, 1, 7))]
         mits = [np.broadcast(*arrs),
+                np.broadcast(np.broadcast(*arrs[:0]), np.broadcast(*arrs[0:])),
+                np.broadcast(np.broadcast(*arrs[:1]), np.broadcast(*arrs[1:])),
                 np.broadcast(np.broadcast(*arrs[:2]), np.broadcast(*arrs[2:])),
                 np.broadcast(arrs[0], np.broadcast(*arrs[1:-1]), arrs[-1])]
         for mit in mits:
@@ -2728,12 +2923,24 @@ class TestBroadcast(object):
         arr = np.empty((5,))
         for j in range(35):
             arrs = [arr] * j
-            if j < 1 or j > 32:
+            if j > 32:
                 assert_raises(ValueError, np.broadcast, *arrs)
             else:
                 mit = np.broadcast(*arrs)
                 assert_equal(mit.numiter, j)
 
+    def test_broadcast_error_kwargs(self):
+        #gh-13455
+        arrs = [np.empty((5, 6, 7))]
+        mit  = np.broadcast(*arrs)
+        mit2 = np.broadcast(*arrs, **{})
+        assert_equal(mit.shape, mit2.shape)
+        assert_equal(mit.ndim, mit2.ndim)
+        assert_equal(mit.nd, mit2.nd)
+        assert_equal(mit.numiter, mit2.numiter)
+        assert_(mit.iters[0].base is mit2.iters[0].base)
+
+        assert_raises(ValueError, np.broadcast, 1, **{'x': 1})
 
 class TestKeepdims(object):
 
@@ -2756,7 +2963,7 @@ class TestTensordot(object):
         td = np.tensordot(a, b, (1, 0))
         assert_array_equal(td, np.dot(a, b))
         assert_array_equal(td, np.einsum('ij,jk', a, b))
-        
+
     def test_zero_dimensional(self):
         # gh-12130
         arr_0d = np.array(1)

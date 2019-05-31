@@ -586,6 +586,7 @@ Math operations
     sign
     heaviside
     conj
+    conjugate
     exp
     exp2
     log

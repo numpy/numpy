@@ -180,27 +180,27 @@ def _get_compiler_status():
 
     # XXX: this is really ugly. But I don't know how to invoke Distutils
     #      in a safer way...
-    code = """
-import os
-import sys
-sys.path = %(syspath)s
+    code = textwrap.dedent("""\
+        import os
+        import sys
+        sys.path = %(syspath)s
 
-def configuration(parent_name='',top_path=None):
-    global config
-    from numpy.distutils.misc_util import Configuration
-    config = Configuration('', parent_name, top_path)
-    return config
+        def configuration(parent_name='',top_path=None):
+            global config
+            from numpy.distutils.misc_util import Configuration
+            config = Configuration('', parent_name, top_path)
+            return config
 
-from numpy.distutils.core import setup
-setup(configuration=configuration)
+        from numpy.distutils.core import setup
+        setup(configuration=configuration)
 
-config_cmd = config.get_config_cmd()
-have_c = config_cmd.try_compile('void foo() {}')
-print('COMPILERS:%%d,%%d,%%d' %% (have_c,
-                                  config.have_f77c(),
-                                  config.have_f90c()))
-sys.exit(99)
-"""
+        config_cmd = config.get_config_cmd()
+        have_c = config_cmd.try_compile('void foo() {}')
+        print('COMPILERS:%%d,%%d,%%d' %% (have_c,
+                                          config.have_f77c(),
+                                          config.have_f90c()))
+        sys.exit(99)
+        """)
     code = code % dict(syspath=repr(sys.path))
 
     with temppath(suffix='.py') as script:
@@ -259,21 +259,21 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
     # Build script
     config_code = textwrap.dedent(config_code).replace("\n", "\n    ")
 
-    code = """\
-import os
-import sys
-sys.path = %(syspath)s
+    code = textwrap.dedent("""\
+        import os
+        import sys
+        sys.path = %(syspath)s
 
-def configuration(parent_name='',top_path=None):
-    from numpy.distutils.misc_util import Configuration
-    config = Configuration('', parent_name, top_path)
-    %(config_code)s
-    return config
+        def configuration(parent_name='',top_path=None):
+            from numpy.distutils.misc_util import Configuration
+            config = Configuration('', parent_name, top_path)
+            %(config_code)s
+            return config
 
-if __name__ == "__main__":
-    from numpy.distutils.core import setup
-    setup(configuration=configuration)
-""" % dict(config_code=config_code, syspath=repr(sys.path))
+        if __name__ == "__main__":
+            from numpy.distutils.core import setup
+            setup(configuration=configuration)
+        """) % dict(config_code=config_code, syspath=repr(sys.path))
 
     script = os.path.join(d, get_temp_module_name() + '.py')
     dst_sources.append(script)

@@ -291,9 +291,14 @@ From scratch
 .. c:function:: PyObject* PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
 
     Create a new uninitialized array of type, *typenum*, whose size in
-    each of *nd* dimensions is given by the integer array, *dims*.
-    This function cannot be used to create a flexible-type array (no
-    itemsize given).
+    each of *nd* dimensions is given by the integer array, *dims*.The memory
+    for the array is uninitialized (unless typenum is :c:data:`NPY_OBJECT`
+    in which case each element in the array is set to NULL). The
+    *typenum* argument allows specification of any of the builtin
+    data-types such as :c:data:`NPY_FLOAT` or :c:data:`NPY_LONG`. The
+    memory for the array can be set to zero if desired using
+    :c:func:`PyArray_FILLWBYTE` (return_object, 0).This function cannot be
+    used to create a flexible-type array (no itemsize given).
 
 .. c:function:: PyObject* PyArray_SimpleNewFromData( \
         int nd, npy_intp* dims, int typenum, void* data)
@@ -302,7 +307,13 @@ From scratch
     pointer. The array flags will have a default that the data area is
     well-behaved and C-style contiguous. The shape of the array is
     given by the *dims* c-array of length *nd*. The data-type of the
-    array is indicated by *typenum*.
+    array is indicated by *typenum*. If data comes from another
+    reference-counted Python object, the reference count on this object
+    should be increased after the pointer is passed in, and the base member
+    of the returned ndarray should point to the Python object that owns
+    the data. This will ensure that the provided memory is not
+    freed while the returned array is in existence. To free memory as soon
+    as the ndarray is deallocated, set the OWNDATA flag on the returned ndarray.
 
 .. c:function:: PyObject* PyArray_SimpleNewFromDescr( \
         int nd, npy_intp* dims, PyArray_Descr* descr)
@@ -509,6 +520,11 @@ From other objects
 
         :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
         :c:data:`NPY_ARRAY_ALIGNED`
+
+    .. c:var:: NPY_ARRAY_OUT_ARRAY
+
+        :c:data:`NPY_ARRAY_C_CONTIGUOUS` \| :c:data:`NPY_ARRAY_ALIGNED` \|
+        :c:data:`NPY_ARRAY_WRITEABLE`
 
     .. c:var:: NPY_ARRAY_OUT_FARRAY
 
@@ -789,7 +805,7 @@ From other objects
         PyObject* obj, int typenum, int requirements)
 
     Combination of :c:func:`PyArray_FROM_OF` and :c:func:`PyArray_FROM_OT`
-    allowing both a *typenum* and a *flags* argument to be provided..
+    allowing both a *typenum* and a *flags* argument to be provided.
 
 .. c:function:: PyObject* PyArray_FROMANY( \
         PyObject* obj, int typenum, int min, int max, int requirements)
@@ -821,17 +837,17 @@ Dealing with types
 General check of Python Type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. c:function:: PyArray_Check(op)
+.. c:function:: PyArray_Check(PyObject *op)
 
     Evaluates true if *op* is a Python object whose type is a sub-type
     of :c:data:`PyArray_Type`.
 
-.. c:function:: PyArray_CheckExact(op)
+.. c:function:: PyArray_CheckExact(PyObject *op)
 
     Evaluates true if *op* is a Python object with type
     :c:data:`PyArray_Type`.
 
-.. c:function:: PyArray_HasArrayInterface(op, out)
+.. c:function:: PyArray_HasArrayInterface(PyObject *op, PyObject *out)
 
     If ``op`` implements any part of the array interface, then ``out``
     will contain a new reference to the newly created ndarray using
@@ -3261,19 +3277,19 @@ Memory management
     Macros to allocate, free, and reallocate memory. These macros are used
     internally to create arrays.
 
-.. c:function:: npy_intp*  PyDimMem_NEW(nd)
+.. c:function:: npy_intp*  PyDimMem_NEW(int nd)
 
-.. c:function:: PyDimMem_FREE(npy_intp* ptr)
+.. c:function:: PyDimMem_FREE(char* ptr)
 
-.. c:function:: npy_intp* PyDimMem_RENEW(npy_intp* ptr, npy_intp newnd)
+.. c:function:: npy_intp* PyDimMem_RENEW(void* ptr, size_t newnd)
 
     Macros to allocate, free, and reallocate dimension and strides memory.
 
-.. c:function:: PyArray_malloc(nbytes)
+.. c:function:: void* PyArray_malloc(size_t nbytes)
 
-.. c:function:: PyArray_free(ptr)
+.. c:function:: PyArray_free(void* ptr)
 
-.. c:function:: PyArray_realloc(ptr, nbytes)
+.. c:function:: void* PyArray_realloc(npy_intp* ptr, size_t nbytes)
 
     These macros use different memory allocators, depending on the
     constant :c:data:`NPY_USE_PYMEM`. The system malloc is used when
@@ -3475,31 +3491,31 @@ Other constants
 Miscellaneous Macros
 ^^^^^^^^^^^^^^^^^^^^
 
-.. c:function:: PyArray_SAMESHAPE(a1, a2)
+.. c:function:: PyArray_SAMESHAPE(PyArrayObject *a1, PyArrayObject *a2)
 
     Evaluates as True if arrays *a1* and *a2* have the same shape.
 
-.. c:function:: PyArray_MAX(a,b)
+.. c:macro:: PyArray_MAX(a,b)
 
     Returns the maximum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
 
-.. c:function:: PyArray_MIN(a,b)
+.. c:macro:: PyArray_MIN(a,b)
 
     Returns the minimum of *a* and *b*. If (*a*) or (*b*) are
     expressions they are evaluated twice.
 
-.. c:function:: PyArray_CLT(a,b)
+.. c:macro:: PyArray_CLT(a,b)
 
-.. c:function:: PyArray_CGT(a,b)
+.. c:macro:: PyArray_CGT(a,b)
 
-.. c:function:: PyArray_CLE(a,b)
+.. c:macro:: PyArray_CLE(a,b)
 
-.. c:function:: PyArray_CGE(a,b)
+.. c:macro:: PyArray_CGE(a,b)
 
-.. c:function:: PyArray_CEQ(a,b)
+.. c:macro:: PyArray_CEQ(a,b)
 
-.. c:function:: PyArray_CNE(a,b)
+.. c:macro:: PyArray_CNE(a,b)
 
     Implements the complex comparisons between two complex numbers
     (structures with a real and imag member) using NumPy's definition

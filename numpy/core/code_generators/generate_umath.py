@@ -511,6 +511,13 @@ defdict = {
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
+'clip':
+    Ufunc(3, 1, ReorderableNone,
+          docstrings.get('numpy.core.umath.clip'),
+          'PyUFunc_SimpleUniformOperationTypeResolver',
+          TD(noobj),
+          [TypeDescription('O', 'npy_ObjectClip', 'OOO', 'O')]
+          ),
 'fmax':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmax'),
@@ -697,6 +704,8 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.exp'),
           None,
+          TD('e', f='exp', astype={'e':'f'}),
+          TD('f', simd=[('avx2', 'f'), ('avx512f', 'f')]),
           TD(inexact, f='exp', astype={'e':'f'}),
           TD(P, f='exp'),
           ),
@@ -718,6 +727,8 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.log'),
           None,
+          TD('e', f='log', astype={'e':'f'}),
+          TD('f', simd=[('avx2', 'f'), ('avx512f', 'f')]),
           TD(inexact, f='log', astype={'e':'f'}),
           TD(P, f='log'),
           ),
@@ -763,14 +774,14 @@ defdict = {
           docstrings.get('numpy.core.umath.ceil'),
           None,
           TD(flts, f='ceil', astype={'e':'f'}),
-          TD(P, f='ceil'),
+          TD(O, f='npy_ObjectCeil'),
           ),
 'trunc':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.trunc'),
           None,
           TD(flts, f='trunc', astype={'e':'f'}),
-          TD(P, f='trunc'),
+          TD(O, f='npy_ObjectTrunc'),
           ),
 'fabs':
     Ufunc(1, 1, None,
@@ -784,7 +795,7 @@ defdict = {
           docstrings.get('numpy.core.umath.floor'),
           None,
           TD(flts, f='floor', astype={'e':'f'}),
-          TD(P, f='floor'),
+          TD(O, f='npy_ObjectFloor'),
           ),
 'rint':
     Ufunc(1, 1, None,
@@ -827,7 +838,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isnan'),
           None,
-          TD(inexact, out='?'),
+          TD(nodatetime_or_obj, out='?'),
           ),
 'isnat':
     Ufunc(1, 1, None,
@@ -839,13 +850,13 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isinf'),
           None,
-          TD(inexact, out='?'),
+          TD(nodatetime_or_obj, out='?'),
           ),
 'isfinite':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isfinite'),
-          None,
-          TD(inexact, out='?'),
+          'PyUFunc_IsFiniteTypeResolver',
+          TD(noobj, out='?'),
           ),
 'signbit':
     Ufunc(1, 1, None,
@@ -920,6 +931,7 @@ defdict = {
           docstrings.get('numpy.core.umath.matmul'),
           "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(notimes_or_obj),
+          TD(O),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
 }
@@ -959,6 +971,9 @@ arity_lookup = {
         'O': 'OO_O',
         'P': 'OO_O_method',
     },
+    (3, 1): {
+        'O': 'OOO_O',
+    }
 }
 
 #for each name
@@ -1135,6 +1150,7 @@ def make_code(funcdict, filename):
     #include "ufunc_type_resolution.h"
     #include "loops.h"
     #include "matmul.h"
+    #include "clip.h"
     %s
 
     static int
@@ -1152,7 +1168,6 @@ def make_code(funcdict, filename):
 
 if __name__ == "__main__":
     filename = __file__
-    fid = open('__umath_generated.c', 'w')
     code = make_code(defdict, filename)
-    fid.write(code)
-    fid.close()
+    with open('__umath_generated.c', 'w') as fid:
+        fid.write(code)

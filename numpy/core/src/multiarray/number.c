@@ -113,6 +113,7 @@ _PyArray_SetNumericOps(PyObject *dict)
     SET(rint);
     SET(conjugate);
     SET(matmul);
+    SET(clip);
     return 0;
 }
 
@@ -179,6 +180,7 @@ _PyArray_GetNumericOps(void)
     GET(rint);
     GET(conjugate);
     GET(matmul);
+    GET(clip);
     return dict;
 
  fail:

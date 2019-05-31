@@ -280,15 +280,22 @@ _convert_from_tuple(PyObject *obj, int align)
                     "invalid shape in fixed-type tuple.");
             goto fail;
         }
-        /*
-         * If (type, 1) was given, it is equivalent to type...
-         * or (type, ()) was given it is equivalent to type...
-         */
-        if ((shape.len == 1
-                    && shape.ptr[0] == 1
-                    && PyNumber_Check(val))
-                || (shape.len == 0
-                    && PyTuple_Check(val))) {
+        /* if (type, ()) was given it is equivalent to type... */
+        if (shape.len == 0 && PyTuple_Check(val)) {
+            npy_free_cache_dim_obj(shape);
+            return type;
+        }
+        /* (type, 1) use to be equivalent to type, but is deprecated */
+        if (shape.len == 1
+                && shape.ptr[0] == 1
+                && PyNumber_Check(val)) {
+            /* 2019-05-20, 1.17 */
+            if (DEPRECATE_FUTUREWARNING(
+                        "Passing (type, 1) or '1type' as a synonym of type is "
+                        "deprecated; in a future version of numpy, it will be "
+                        "understood as (type, (1,)) / '(1,)type'.") < 0) {
+                goto fail;
+            }
             npy_free_cache_dim_obj(shape);
             return type;
         }

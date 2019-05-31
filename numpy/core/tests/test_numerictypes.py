@@ -5,7 +5,7 @@ import itertools
 
 import pytest
 import numpy as np
-from numpy.testing import assert_, assert_equal, assert_raises
+from numpy.testing import assert_, assert_equal, assert_raises, IS_PYPY
 
 # This is the structure of the table used for plain objects:
 #
@@ -491,6 +491,7 @@ def test_issctype(rep, expected):
 
 @pytest.mark.skipif(sys.flags.optimize > 1,
                     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestDocStrings(object):
     def test_platform_dependent_aliases(self):
         if np.int64 is np.int_:

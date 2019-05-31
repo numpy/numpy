@@ -214,6 +214,8 @@ class TestRecFunctions(object):
                      dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
         out = np.mean(structured_to_unstructured(b[['x', 'z']]), axis=-1)
         assert_equal(out, np.array([ 3. ,  5.5,  9. , 11. ]))
+        out = np.mean(structured_to_unstructured(b[['x']]), axis=-1)
+        assert_equal(out, np.array([ 1. ,  4. ,  7. , 10. ]))
 
         c = np.arange(20).reshape((4,5))
         out = unstructured_to_structured(c, a.dtype)
@@ -236,6 +238,15 @@ class TestRecFunctions(object):
         # check that for uniform field dtypes we get a view, not a copy:
         d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'i4')])
+        dd = structured_to_unstructured(d)
+        ddd = unstructured_to_structured(dd, d.dtype)
+        assert_(dd.base is d)
+        assert_(ddd.base is d)
+
+        # including uniform fields with subarrays unpacked
+        d = np.array([(1, [2,  3], [[ 4,  5], [ 6,  7]]),
+                      (8, [9, 10], [[11, 12], [13, 14]])],
+                     dtype=[('x0', 'i4'), ('x1', ('i4', 2)), ('x2', ('i4', (2, 2)))])
         dd = structured_to_unstructured(d)
         ddd = unstructured_to_structured(dd, d.dtype)
         assert_(dd.base is d)

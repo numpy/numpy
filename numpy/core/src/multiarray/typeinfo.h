@@ -1,17 +1,19 @@
 #ifndef _NPY_PRIVATE_TYPEINFO_H_
 #define _NPY_PRIVATE_TYPEINFO_H_
 
-void typeinfo_init_structsequences(void);
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+#include "npy_config.h"
 
-extern PyTypeObject PyArray_typeinfoType;
-extern PyTypeObject PyArray_typeinforangedType;
+NPY_VISIBILITY_HIDDEN int
+typeinfo_init_structsequences(PyObject *multiarray_dict);
 
-PyObject *
+NPY_VISIBILITY_HIDDEN PyObject *
 PyArray_typeinfo(
     char typechar, int typenum, int nbits, int align,
     PyTypeObject *type_obj);
 
-PyObject *
+NPY_VISIBILITY_HIDDEN PyObject *
 PyArray_typeinforanged(
     char typechar, int typenum, int nbits, int align,
     PyObject *max, PyObject *min, PyTypeObject *type_obj);

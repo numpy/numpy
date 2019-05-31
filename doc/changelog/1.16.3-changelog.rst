@@ -1,0 +1,55 @@
+
+Contributors
+============
+
+A total of 16 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Andreas Schwab
+* Bharat Raghunathan +
+* Bran +
+* Charles Harris
+* Eric Wieser
+* Jakub Wilk
+* Kevin Sheppard
+* Marten van Kerkwijk
+* Matti Picus
+* Paul Ivanov
+* Ralf Gommers
+* Sebastian Berg
+* Tyler Reddy
+* Warren Weckesser
+* Yu Feng
+* adeak +
+
+Pull requests merged
+====================
+
+A total of 26 pull requests were merged for this release.
+
+* `#13072 <https://github.com/numpy/numpy/pull/13072>`__: BUG: Fixes to numpy.distutils.Configuration.get_version (#13056)
+* `#13082 <https://github.com/numpy/numpy/pull/13082>`__: BUG: Fix errors in string formatting while producing an error
+* `#13083 <https://github.com/numpy/numpy/pull/13083>`__: BUG: Convert fortran flags in environment variable
+* `#13084 <https://github.com/numpy/numpy/pull/13084>`__: BUG: Remove error-prone borrowed reference handling
+* `#13085 <https://github.com/numpy/numpy/pull/13085>`__: BUG: Add error checks when converting integers to datetime types
+* `#13091 <https://github.com/numpy/numpy/pull/13091>`__: BUG: Remove our patched version of `distutils.split_quoted`
+* `#13141 <https://github.com/numpy/numpy/pull/13141>`__: BUG: Fix testsuite failures on ppc and riscv
+* `#13142 <https://github.com/numpy/numpy/pull/13142>`__: BUG: Fix parameter validity checks in ``random.choice``
+* `#13143 <https://github.com/numpy/numpy/pull/13143>`__: BUG: Ensure linspace works on object input.
+* `#13144 <https://github.com/numpy/numpy/pull/13144>`__: BLD: fix include list for sdist building.
+* `#13145 <https://github.com/numpy/numpy/pull/13145>`__: BUG: __array_interface__ offset was always ignored
+* `#13274 <https://github.com/numpy/numpy/pull/13274>`__: MAINT: f2py: Add a cast to avoid a compiler warning.
+* `#13275 <https://github.com/numpy/numpy/pull/13275>`__: BUG, MAINT: fix reference count error on invalid input to ndarray.flat
+* `#13276 <https://github.com/numpy/numpy/pull/13276>`__: ENH: Cast covariance to double in random mvnormal
+* `#13278 <https://github.com/numpy/numpy/pull/13278>`__: BUG: Fix null pointer dereference in PyArray_DTypeFromObjectHelper
+* `#13339 <https://github.com/numpy/numpy/pull/13339>`__: BUG: Use C call to sysctlbyname for AVX detection on MacOS.
+* `#13340 <https://github.com/numpy/numpy/pull/13340>`__: BUG: Fix crash when calling savetxt on a padded array
+* `#13341 <https://github.com/numpy/numpy/pull/13341>`__: BUG: ufunc.at iteration variable size fix
+* `#13342 <https://github.com/numpy/numpy/pull/13342>`__: DOC: Add as_ctypes_type to the documentation
+* `#13350 <https://github.com/numpy/numpy/pull/13350>`__: BUG: Return the coefficients array directly
+* `#13351 <https://github.com/numpy/numpy/pull/13351>`__: BUG/MAINT: Tidy typeinfo.h and .c
+* `#13359 <https://github.com/numpy/numpy/pull/13359>`__: BUG: Make allow_pickle=False the default for loading
+* `#13360 <https://github.com/numpy/numpy/pull/13360>`__: DOC: fix some doctest failures
+* `#13363 <https://github.com/numpy/numpy/pull/13363>`__: BUG/MAINT: Tidy typeinfo.h and .c
+* `#13381 <https://github.com/numpy/numpy/pull/13381>`__: BLD: address mingw-w64 issue. Follow-up to gh-9977
+* `#13382 <https://github.com/numpy/numpy/pull/13382>`__: REL: Prepare for the NumPy release.

@@ -13,7 +13,8 @@ from . import multiarray as mu
 from . import overrides
 from . import umath as um
 from . import numerictypes as nt
-from .numeric import asarray, array, asanyarray, concatenate
+from ._asarray import asarray, array, asanyarray
+from .multiarray import concatenate
 from . import _methods
 
 _dt_ = nt.sctype2char
@@ -52,17 +53,20 @@ def _wrapit(obj, method, *args, **kwds):
 
 
 def _wrapfunc(obj, method, *args, **kwds):
+    bound = getattr(obj, method, None)
+    if bound is None:
+        return _wrapit(obj, method, *args, **kwds)
+
     try:
-        return getattr(obj, method)(*args, **kwds)
-
-    # An AttributeError occurs if the object does not have
-    # such a method in its class.
-
-    # A TypeError occurs if the object does have such a method
-    # in its class, but its signature is not identical to that
-    # of NumPy's. This situation has occurred in the case of
-    # a downstream library like 'pandas'.
-    except (AttributeError, TypeError):
+        return bound(*args, **kwds)
+    except TypeError:
+        # A TypeError occurs if the object does have such a method in its
+        # class, but its signature is not identical to that of NumPy's. This
+        # situation has occurred in the case of a downstream library like
+        # 'pandas'.
+        #
+        # Call _wrapit from within the except clause to ensure a potential
+        # exception has a traceback chain.
         return _wrapit(obj, method, *args, **kwds)
 
 
@@ -127,7 +131,8 @@ def take(a, indices, axis=None, out=None, mode='raise'):
         input array is used.
     out : ndarray, optional (Ni..., Nj..., Nk...)
         If provided, the result will be placed in this array. It should
-        be of the appropriate shape and dtype.
+        be of the appropriate shape and dtype. Note that `out` is always
+        buffered if `mode='raise'`; use other modes for better performance.
     mode : {'raise', 'wrap', 'clip'}, optional
         Specifies how out-of-bounds indices will behave.
 
@@ -352,7 +357,8 @@ def choose(a, choices, out=None, mode='raise'):
         ``choices.shape[0]``) is taken as defining the "sequence".
     out : array, optional
         If provided, the result will be inserted into this array. It should
-        be of the appropriate shape and dtype.
+        be of the appropriate shape and dtype. Note that `out` is always
+        buffered if `mode='raise'`; use other modes for better performance.
     mode : {'raise' (default), 'wrap', 'clip'}, optional
         Specifies how indices outside `[0, n-1]` will be treated:
 
@@ -509,7 +515,8 @@ def put(a, ind, v, mode='raise'):
 
         'clip' mode means that all indices that are too large are replaced
         by the index that addresses the last element along that axis. Note
-        that this disables indexing with negative numbers.
+        that this disables indexing with negative numbers. In 'raise' mode,
+        if an exception occurs the target array may still be modified.
 
     See Also
     --------
@@ -817,7 +824,7 @@ def _sort_dispatcher(a, axis=None, kind=None, order=None):
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind='quicksort', order=None):
+def sort(a, axis=-1, kind=None, order=None):
     """
     Return a sorted copy of an array.
 
@@ -830,8 +837,8 @@ def sort(a, axis=-1, kind='quicksort', order=None):
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
         Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
-        and 'mergesort' use timsort under the covers and, in general, the
-        actual implementation will vary with data type. The 'mergesort' option
+        and 'mergesort' use timsort or radix sort under the covers and, in general,
+        the actual implementation will vary with data type. The 'mergesort' option
         is retained for backwards compatibility.
 
         .. versionchanged:: 1.15.0.
@@ -907,7 +914,8 @@ def sort(a, axis=-1, kind='quicksort', order=None):
 
     'stable' automatically choses the best stable sorting algorithm
     for the data type being sorted. It, along with 'mergesort' is
-    currently mapped to timsort. API forward compatibility currently limits the
+    currently mapped to timsort or radix sort depending on the
+    data type. API forward compatibility currently limits the
     ability to select the implementation and it is hardwired for the different
     data types.
 
@@ -918,7 +926,8 @@ def sort(a, axis=-1, kind='quicksort', order=None):
     mergesort. It is now used for stable sort while quicksort is still the
     default sort if none is chosen. For details of timsort, refer to
     `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
-
+    'mergesort' and 'stable' are mapped to radix sort for integer data types. Radix sort is an
+    O(n) sort instead of O(n log n).
 
     Examples
     --------
@@ -967,7 +976,7 @@ def _argsort_dispatcher(a, axis=None, kind=None, order=None):
 
 
 @array_function_dispatch(_argsort_dispatcher)
-def argsort(a, axis=-1, kind='quicksort', order=None):
+def argsort(a, axis=-1, kind=None, order=None):
     """
     Returns the indices that would sort an array.
 
@@ -990,8 +999,6 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
         .. versionchanged:: 1.15.0.
            The 'stable' option was added.
-
-
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
@@ -1272,7 +1279,7 @@ def searchsorted(a, v, side='left', sorter=None):
     As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
 
-    This function is a faster version of the builtin python `bisect.bisect_left`
+    This function uses the same algorithm as the builtin python `bisect.bisect_left`
     (``side='left'``) and `bisect.bisect_right` (``side='right'``) functions,
     which is also vectorized in the `v` argument.
 
@@ -1525,9 +1532,9 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
             [2, 3]],
            [[4, 5],
             [6, 7]]])
-    >>> a.diagonal(0, # Main diagonals of two arrays created by skipping
-    ...            0, # across the outer(left)-most axis last and
-    ...            1) # the "middle" (row) axis first.
+    >>> a.diagonal(0,  # Main diagonals of two arrays created by skipping
+    ...            0,  # across the outer(left)-most axis last and
+    ...            1)  # the "middle" (row) axis first.
     array([[0, 6],
            [1, 7]])
 
@@ -1535,13 +1542,28 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     corresponds to fixing the right-most (column) axis, and that the
     diagonals are "packed" in rows.
 
-    >>> a[:,:,0] # main diagonal is [0 6]
+    >>> a[:,:,0]  # main diagonal is [0 6]
     array([[0, 2],
            [4, 6]])
-    >>> a[:,:,1] # main diagonal is [1 7]
+    >>> a[:,:,1]  # main diagonal is [1 7]
     array([[1, 3],
            [5, 7]])
 
+    The anti-diagonal can be obtained by reversing the order of elements
+    using either `numpy.flipud` or `numpy.fliplr`.
+
+    >>> a = np.arange(9).reshape(3, 3)
+    >>> a
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> np.fliplr(a).diagonal()  # Horizontal flip
+    array([2, 4, 6])
+    >>> np.flipud(a).diagonal()  # Vertical flip
+    array([6, 4, 2])
+
+    Note that the order in which the diagonal is retrieved varies depending
+    on the flip function.
     """
     if isinstance(a, np.matrix):
         # Make diagonal of matrix 1-D to preserve backward compatibility.
@@ -1773,6 +1795,11 @@ def nonzero(a):
         Equivalent ndarray method.
     count_nonzero :
         Counts the number of non-zero elements in the input array.
+        
+    Notes
+    -----
+    To obtain the non-zero values, it is recommended to use ``x[x.astype(bool)]`` 
+    which will correctly handle 0-d arrays. 
 
     Examples
     --------
@@ -1939,12 +1966,12 @@ def compress(condition, a, axis=None, out=None):
     return _wrapfunc(a, 'compress', condition, axis=axis, out=out)
 
 
-def _clip_dispatcher(a, a_min, a_max, out=None):
+def _clip_dispatcher(a, a_min, a_max, out=None, **kwargs):
     return (a, a_min, a_max)
 
 
 @array_function_dispatch(_clip_dispatcher)
-def clip(a, a_min, a_max, out=None):
+def clip(a, a_min, a_max, out=None, **kwargs):
     """
     Clip (limit) the values in an array.
 
@@ -1952,6 +1979,9 @@ def clip(a, a_min, a_max, out=None):
     the interval edges.  For example, if an interval of ``[0, 1]``
     is specified, values smaller than 0 become 0, and values larger
     than 1 become 1.
+
+    Equivalent to but faster than ``np.maximum(a_min, np.minimum(a, a_max))``.
+    No check is performed to ensure ``a_min < a_max``.
 
     Parameters
     ----------
@@ -1970,6 +2000,11 @@ def clip(a, a_min, a_max, out=None):
         The results will be placed in this array. It may be the input
         array for in-place clipping.  `out` must be of the right shape
         to hold the output.  Its type is preserved.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1998,7 +2033,7 @@ def clip(a, a_min, a_max, out=None):
     array([3, 4, 2, 3, 4, 5, 6, 7, 8, 8])
 
     """
-    return _wrapfunc(a, 'clip', a_min, a_max, out=out)
+    return _wrapfunc(a, 'clip', a_min, a_max, out=out, **kwargs)
 
 
 def _sum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
@@ -2115,7 +2150,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         warnings.warn(
             "Calling np.sum(generator) is deprecated, and in the future will give a different result. "
             "Use np.sum(np.fromiter(generator)) or the python sum builtin instead.",
-            DeprecationWarning, stacklevel=2)
+            DeprecationWarning, stacklevel=3)
 
         res = _sum_(a)
         if out is not None:
@@ -3384,7 +3419,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
 
     See Also
     --------
-    std , mean, nanmean, nanstd, nanvar
+    std, mean, nanmean, nanstd, nanvar
     numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
@@ -3539,5 +3574,5 @@ def rank(a):
     warnings.warn(
         "`rank` is deprecated; use the `ndim` attribute or function instead. "
         "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
-        VisibleDeprecationWarning, stacklevel=2)
+        VisibleDeprecationWarning, stacklevel=3)
     return ndim(a)
