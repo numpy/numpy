@@ -49,7 +49,7 @@ from numpy.ma.core import (
     ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort, sqrt,
     subtract, sum, take, tan, tanh, transpose, where, zeros,
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 pi = np.pi
 
@@ -374,12 +374,12 @@ class TestMaskedArray(object):
 
         y2a = array(x1, mask=m, copy=1)
         assert_(y2a._data.__array_interface__ != x1.__array_interface__)
-        #assert_( y2a.mask is not m)
+        #assert_( y2a._mask is not m)
         assert_(y2a._mask.__array_interface__ != m.__array_interface__)
         assert_(y2a[2] is masked)
         y2a[2] = 9
         assert_(y2a[2] is not masked)
-        #assert_( y2a.mask is not m)
+        #assert_( y2a._mask is not m)
         assert_(y2a._mask.__array_interface__ != m.__array_interface__)
         assert_(allequal(y2a.mask, 0))
 
@@ -5203,3 +5203,10 @@ def test_fieldless_void():
     mx = np.ma.array(x, mask=x)
     assert_equal(mx.dtype, x.dtype)
     assert_equal(mx.shape, x.shape)
+
+
+def test_mask_shape_assignment_does_not_break_masked():
+    a = np.ma.masked
+    b = np.ma.array(1, mask=a.mask)
+    b.shape = (1,)
+    assert_equal(a.mask.shape, ())

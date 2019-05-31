@@ -5,7 +5,6 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
 
 import functools
 import operator
-import types
 import warnings
 
 from . import numeric as _nx
@@ -274,6 +273,9 @@ def vstack(tup):
            [4]])
 
     """
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # raise warning if necessary
+        _arrays_for_stack_dispatcher(tup, stacklevel=2)
     return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
 
 
@@ -325,6 +327,10 @@ def hstack(tup):
            [3, 4]])
 
     """
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # raise warning if necessary
+        _arrays_for_stack_dispatcher(tup, stacklevel=2)
+
     arrs = [atleast_1d(_m) for _m in tup]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
@@ -347,9 +353,9 @@ def stack(arrays, axis=0, out=None):
     """
     Join a sequence of arrays along a new axis.
 
-    The `axis` parameter specifies the index of the new axis in the dimensions
-    of the result. For example, if ``axis=0`` it will be the first dimension
-    and if ``axis=-1`` it will be the last dimension.
+    The ``axis`` parameter specifies the index of the new axis in the
+    dimensions of the result. For example, if ``axis=0`` it will be the first
+    dimension and if ``axis=-1`` it will be the last dimension.
 
     .. versionadded:: 1.10.0
 
@@ -357,8 +363,10 @@ def stack(arrays, axis=0, out=None):
     ----------
     arrays : sequence of array_like
         Each array must have the same shape.
+
     axis : int, optional
         The axis in the result array along which the input arrays are stacked.
+
     out : ndarray, optional
         If provided, the destination to place the result. The shape must be
         correct, matching that of what stack would have returned if no
@@ -399,6 +407,10 @@ def stack(arrays, axis=0, out=None):
            [3, 4]])
 
     """
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # raise warning if necessary
+        _arrays_for_stack_dispatcher(arrays, stacklevel=2)
+
     arrays = [asanyarray(arr) for arr in arrays]
     if not arrays:
         raise ValueError('need at least one array to stack')
@@ -831,7 +843,7 @@ def block(arrays):
 
 # Theses helper functions are mostly used for testing.
 # They allow us to write tests that directly call `_block_slicing`
-# or `_block_concatenate` wtihout blocking large arrays to forse the wisdom
+# or `_block_concatenate` without blocking large arrays to forse the wisdom
 # to trigger the desired path.
 def _block_setup(arrays):
     """

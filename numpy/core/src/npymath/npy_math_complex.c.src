@@ -1430,19 +1430,14 @@ npy_casinh@c@(@ctype@ z)
 #if @precision@ == 1
     /* this is sqrt(6*EPS) */
     const npy_float SQRT_6_EPSILON = 8.4572793338e-4f;
-    /* chosen such that pio2_hi + pio2_lo == pio2_hi but causes FE_INEXACT. */
-    const volatile npy_float pio2_lo = 7.5497899549e-9f;
 #endif
 #if @precision@ == 2
     const npy_double SQRT_6_EPSILON = 3.65002414998885671e-08;
-    const volatile npy_double pio2_lo = 6.1232339957367659e-17;
 #endif
 #if @precision@ == 3
     const npy_longdouble SQRT_6_EPSILON = 8.0654900873493277169e-10l;
-    const volatile npy_longdouble pio2_lo = 2.710505431213761085e-20l;
 #endif
     const @type@ RECIP_EPSILON = 1.0@c@ / @TEPS@;
-    const @type@ pio2_hi = NPY_PI_2@c@;
     @type@ x, y, ax, ay, wx, wy, rx, ry, B, sqrt_A2my2, new_y;
     npy_int B_is_usable;
 

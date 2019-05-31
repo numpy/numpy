@@ -2399,7 +2399,7 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith(('aarch64', 'power', 'ppc64', 's390x', 'sparc')):
+    if machine.startswith(('aarch64', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
         if p <= 20:
             return 16
     else:
@@ -2512,7 +2512,7 @@ def _eval_scalar(value, params):
         value = value.split('_')[0]
     try:
         value = str(eval(value, {}, params))
-    except (NameError, SyntaxError):
+    except (NameError, SyntaxError, TypeError):
         return value
     except Exception as msg:
         errmess('"%s" in evaluating %r '

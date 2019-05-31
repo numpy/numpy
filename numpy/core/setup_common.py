@@ -81,7 +81,7 @@ def get_api_versions(apiversion, codegen_dir):
     return curapi_hash, apis_hash[apiversion]
 
 def check_api_version(apiversion, codegen_dir):
-    """Emits a MismacthCAPIWarning if the C API version needs updating."""
+    """Emits a MismatchCAPIWarning if the C API version needs updating."""
     curapi_hash, api_hash = get_api_versions(apiversion, codegen_dir)
 
     # If different hash, it means that the api .txt files in
@@ -118,6 +118,7 @@ OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
                 "xmmintrin.h",  # SSE
                 "emmintrin.h",  # SSE2
+                "immintrin.h",  # AVX
                 "features.h",  # for glibc version linux
                 "xlocale.h",  # see GH#8367
                 "dlfcn.h", # dladdr
@@ -149,6 +150,8 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                         "stdio.h", "LINK_AVX"),
                        ("__asm__ volatile", '"vpand %ymm1, %ymm2, %ymm3"',
                         "stdio.h", "LINK_AVX2"),
+                       ("__asm__ volatile", '"vpaddd %zmm1, %zmm2, %zmm3"',
+                        "stdio.h", "LINK_AVX512F"),
                        ("__asm__ volatile", '"xgetbv"', "stdio.h", "XGETBV"),
                        ]
 
@@ -165,6 +168,23 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                  'attribute_target_avx'),
                                 ('__attribute__((target ("avx2")))',
                                  'attribute_target_avx2'),
+                                ('__attribute__((target ("avx512f")))',
+                                 'attribute_target_avx512f'),
+                                ]
+
+# function attributes with intrinsics
+# To ensure your compiler can compile avx intrinsics with just the attributes
+# gcc 4.8.4 support attributes but not with intrisics
+# tested via "#include<%s> int %s %s(void *){code; return 0;};" % (header, attribute, name, code)
+# function name will be converted to HAVE_<upper-case-name> preprocessor macro
+OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2")))',
+                                'attribute_target_avx2_with_intrinsics',
+                                '__m256 temp = _mm256_set1_ps(1.0)',
+                                'immintrin.h'),
+                                ('__attribute__((target("avx512f")))',
+                                'attribute_target_avx512f_with_intrinsics',
+                                '__m512 temp = _mm512_set1_ps(1.0)',
+                                'immintrin.h'),
                                 ]
 
 # variable attributes tested via "int %s a" % attribute

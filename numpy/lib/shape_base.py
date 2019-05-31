@@ -7,7 +7,7 @@ import numpy.core.numeric as _nx
 from numpy.core.numeric import (
     asarray, zeros, outer, concatenate, array, asanyarray
     )
-from numpy.core.fromnumeric import product, reshape, transpose
+from numpy.core.fromnumeric import reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
 from numpy.core import vstack, atleast_3d
@@ -94,7 +94,7 @@ def take_along_axis(arr, indices, axis):
 
         Ni, M, Nk = a.shape[:axis], a.shape[axis], a.shape[axis+1:]
         J = indices.shape[axis]  # Need not equal M
-        out = np.empty(Nk + (J,) + Nk)
+        out = np.empty(Ni + (J,) + Nk)
 
         for ii in ndindex(Ni):
             for kk in ndindex(Nk):
@@ -532,8 +532,7 @@ def expand_dims(a, axis):
     Returns
     -------
     res : ndarray
-        Output array. The number of dimensions is one greater than that of
-        the input array.
+        View of `a` with the number of dimensions increased by one.
 
     See Also
     --------
@@ -579,7 +578,7 @@ def expand_dims(a, axis):
         # 2017-05-17, 1.13.0
         warnings.warn("Both axis > a.ndim and axis < -a.ndim - 1 are "
                       "deprecated and will raise an AxisError in the future.",
-                      DeprecationWarning, stacklevel=2)
+                      DeprecationWarning, stacklevel=3)
     # When the deprecation period expires, delete this if block,
     if axis < 0:
         axis = axis + a.ndim + 1
@@ -629,6 +628,10 @@ def column_stack(tup):
            [3, 4]])
 
     """
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # raise warning if necessary
+        _arrays_for_stack_dispatcher(tup, stacklevel=2)
+
     arrays = []
     for v in tup:
         arr = array(v, copy=False, subok=True)
@@ -693,6 +696,10 @@ def dstack(tup):
            [[3, 4]]])
 
     """
+    if not overrides.ARRAY_FUNCTION_ENABLED:
+        # raise warning if necessary
+        _arrays_for_stack_dispatcher(tup, stacklevel=2)
+
     return _nx.concatenate([atleast_3d(_m) for _m in tup], 2)
 
 

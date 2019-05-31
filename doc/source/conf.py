@@ -19,11 +19,19 @@ needs_sphinx = '1.0'
 
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
-extensions = ['sphinx.ext.autodoc', 'numpydoc',
-              'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest', 'sphinx.ext.autosummary',
-              'sphinx.ext.graphviz', 'sphinx.ext.ifconfig',
-              'matplotlib.sphinxext.plot_directive']
+extensions = [
+    'sphinx.ext.autodoc',
+    'numpydoc',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.coverage',
+    'sphinx.ext.doctest',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.ifconfig',
+    'matplotlib.sphinxext.plot_directive',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive',
+]
 
 if sphinx.__version__ >= "1.4":
     extensions.append('sphinx.ext.imgmath')
@@ -234,7 +242,7 @@ numpydoc_use_plots = True
 # -----------------------------------------------------------------------------
 
 import glob
-autosummary_generate = glob.glob("reference/*.rst")
+autosummary_generate = True
 
 # -----------------------------------------------------------------------------
 # Coverage checker
@@ -355,3 +363,4 @@ def linkcode_resolve(domain, info):
     else:
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
+

@@ -791,7 +791,8 @@ class matrix(N.ndarray):
         """
         return N.ndarray.ptp(self, axis, out)._align(axis)
 
-    def getI(self):
+    @property
+    def I(self):
         """
         Returns the (multiplicative) inverse of invertible `self`.
 
@@ -835,7 +836,8 @@ class matrix(N.ndarray):
             from numpy.dual import pinv as func
         return asmatrix(func(self))
 
-    def getA(self):
+    @property
+    def A(self):
         """
         Return `self` as an `ndarray` object.
 
@@ -864,7 +866,8 @@ class matrix(N.ndarray):
         """
         return self.__array__()
 
-    def getA1(self):
+    @property
+    def A1(self):
         """
         Return `self` as a flattened `ndarray`.
 
@@ -931,8 +934,8 @@ class matrix(N.ndarray):
         """
         return N.ndarray.ravel(self, order=order)
 
-
-    def getT(self):
+    @property
+    def T(self):
         """
         Returns the transpose of the matrix.
 
@@ -964,7 +967,8 @@ class matrix(N.ndarray):
         """
         return self.transpose()
 
-    def getH(self):
+    @property
+    def H(self):
         """
         Returns the (complex) conjugate transpose of `self`.
 
@@ -998,11 +1002,12 @@ class matrix(N.ndarray):
         else:
             return self.transpose()
 
-    T = property(getT, None)
-    A = property(getA, None)
-    A1 = property(getA1, None)
-    H = property(getH, None)
-    I = property(getI, None)
+    # kept for compatibility
+    getT = T.fget
+    getA = A.fget
+    getA1 = A1.fget
+    getH = H.fget
+    getI = I.fget
 
 def _from_string(str, gdict, ldict):
     rows = str.split(';')

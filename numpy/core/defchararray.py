@@ -29,7 +29,7 @@ from numpy.compat import asbytes, long
 import numpy
 
 __all__ = [
-    'chararray', 'equal', 'not_equal', 'greater_equal', 'less_equal',
+    'equal', 'not_equal', 'greater_equal', 'less_equal',
     'greater', 'less', 'str_len', 'add', 'multiply', 'mod', 'capitalize',
     'center', 'count', 'decode', 'encode', 'endswith', 'expandtabs',
     'find', 'index', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace',
@@ -2124,7 +2124,7 @@ class chararray(ndarray):
     def __rmod__(self, other):
         return NotImplemented
 
-    def argsort(self, axis=-1, kind='quicksort', order=None):
+    def argsort(self, axis=-1, kind=None, order=None):
         """
         Return the indices that sort the array lexicographically.
 

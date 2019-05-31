@@ -26,8 +26,12 @@ subst = {
             a freshly-allocated array is returned. A tuple (possible only as a
             keyword argument) must have length equal to the number of outputs.
         where : array_like, optional
-            Values of True indicate to calculate the ufunc at that position, values
-            of False indicate to leave the value in the output alone.
+            This condition is broadcast over the input. At locations where the
+            condition is True, the `out` array will be set to the ufunc result.
+            Elsewhere, the `out` array will retain its original value.
+            Note that if an uninitialized `out` array is created via the default
+            ``out=None``, locations within it where the condition is False will
+            remain uninitialized.
         **kwargs
             For other keyword-only arguments, see the
             :ref:`ufunc docs <ufuncs.kwargs>`.
@@ -42,14 +46,20 @@ subst = {
 def add_newdoc(place, name, doc):
     doc = textwrap.dedent(doc).strip()
 
-    if name[0] != '_' and name != 'matmul':
-        # matmul is special, it does not use the OUT_SCALAR replacement strings
+    skip = (
+        # gufuncs do not use the OUT_SCALAR replacement strings
+        'matmul',
+        # clip has 3 inputs, which is not handled by this
+        'clip',
+    )
+    if name[0] != '_' and name not in skip:
         if '\nx :' in doc:
             assert '$OUT_SCALAR_1' in doc, "in {}".format(name)
         elif '\nx2 :' in doc or '\nx1, x2 :' in doc:
             assert '$OUT_SCALAR_2' in doc, "in {}".format(name)
         else:
             assert False, "Could not detect number of inputs in {}".format(name)
+
     for k, v in subst.items():
         doc = doc.replace('$' + k, v)
 
@@ -793,6 +803,13 @@ add_newdoc('numpy.core.umath', 'conjugate',
         The complex conjugate of `x`, with same dtype as `y`.
         $OUT_SCALAR_1
 
+    Notes
+    -----
+    `conj` is an alias for `conjugate`:
+
+    >>> np.conj is np.conjugate
+    True
+
     Examples
     --------
     >>> np.conjugate(1+2j)
@@ -1313,7 +1330,7 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     """
     Return the largest integer smaller or equal to the division of the inputs.
     It is equivalent to the Python ``//`` operator and pairs with the
-    Python ``%`` (`remainder`), function so that ``b = a % b + b * (a // b)``
+    Python ``%`` (`remainder`), function so that ``a = a % b + b * (a // b)``
     up to roundoff.
 
     Parameters
@@ -2528,6 +2545,46 @@ add_newdoc('numpy.core.umath', 'fmin',
 
     """)
 
+add_newdoc('numpy.core.umath', 'clip',
+    """
+    Clip (limit) the values in an array.
+
+    Given an interval, values outside the interval are clipped to
+    the interval edges.  For example, if an interval of ``[0, 1]``
+    is specified, values smaller than 0 become 0, and values larger
+    than 1 become 1.
+
+    Equivalent to but faster than ``np.minimum(np.maximum(a, a_min), a_max)``.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing elements to clip.
+    a_min : array_like
+        Minimum value.
+    a_max : array_like
+        Maximum value.
+    out : ndarray, optional
+        The results will be placed in this array. It may be the input
+        array for in-place clipping.  `out` must be of the right shape
+        to hold the output.  Its type is preserved.
+    $PARAMS
+
+    See Also
+    --------
+    numpy.clip :
+        Wrapper that makes the ``a_min`` and ``a_max`` arguments optional,
+        dispatching to one of `~numpy.core.umath.clip`,
+        `~numpy.core.umath.minimum`, and `~numpy.core.umath.maximum`.
+
+    Returns
+    -------
+    clipped_array : ndarray
+        An array with the elements of `a`, but where values
+        < `a_min` are replaced with `a_min`, and those > `a_max`
+        with `a_max`.
+    """)
+
 add_newdoc('numpy.core.umath', 'matmul',
     """
     Matrix product of two arrays.
@@ -2607,7 +2664,7 @@ add_newdoc('numpy.core.umath', 'matmul',
 
     >>> a = np.array([[1, 0],
     ...               [0, 1]])
-    >>> b = np.array([[4, 1], 
+    >>> b = np.array([[4, 1],
     ...               [2, 2]])
     >>> np.matmul(a, b)
     array([[4, 1],
@@ -3079,6 +3136,7 @@ add_newdoc('numpy.core.umath', 'remainder',
     -----
     Returns 0 when `x2` is 0 and both `x1` and `x2` are (arrays of)
     integers.
+    ``mod`` is an alias of ``remainder``.
 
     Examples
     --------

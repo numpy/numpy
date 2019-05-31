@@ -5,13 +5,14 @@ import warnings
 import sys
 import decimal
 import types
+from fractions import Fraction
 import pytest
 
 import numpy as np
 from numpy import ma
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose,
+    assert_array_almost_equal, assert_raises, assert_allclose, IS_PYPY,
     assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT,
     )
 import numpy.lib.function_base as nfb
@@ -31,6 +32,17 @@ def get_mat(n):
     data = np.arange(n)
     data = np.add.outer(data, data)
     return data
+
+
+def _make_complex(real, imag):
+    """
+    Like real + 1j * imag, but behaves as expected when imag contains non-finite
+    values
+    """
+    ret = np.zeros(np.broadcast(real, imag).shape, np.complex_)
+    ret.real = real
+    ret.imag = imag
+    return ret
 
 
 class TestRot90(object):
@@ -684,6 +696,9 @@ class TestDiff(object):
         assert_raises(np.AxisError, diff, x, axis=3)
         assert_raises(np.AxisError, diff, x, axis=-4)
 
+        x = np.array(1.11111111111, np.float64)
+        assert_raises(ValueError, diff, x)
+
     def test_nd(self):
         x = 20 * rand(10, 20, 30)
         out1 = x[:, :, 1:] - x[:, :, :-1]
@@ -933,7 +948,7 @@ class TestGradient(object):
         assert_equal(type(out), type(x))
         # And make sure that the output and input don't have aliased mask
         # arrays
-        assert_(x.mask is not out.mask)
+        assert_(x._mask is not out._mask)
         # Also check that edge_order=2 doesn't alter the original mask
         x2 = np.ma.arange(5)
         x2[2] = np.ma.masked
@@ -2354,13 +2369,71 @@ class TestInterp(object):
         x0 = np.nan
         assert_almost_equal(np.interp(x0, x, y), x0)
 
-    def test_non_finite_behavior(self):
+    def test_non_finite_behavior_exact_x(self):
         x = [1, 2, 2.5, 3, 4]
         xp = [1, 2, 3, 4]
         fp = [1, 2, np.inf, 4]
         assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.inf, np.inf, 4])
         fp = [1, 2, np.nan, 4]
         assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.nan, np.nan, 4])
+
+    @pytest.fixture(params=[
+        lambda x: np.float_(x),
+        lambda x: _make_complex(x, 0),
+        lambda x: _make_complex(0, x),
+        lambda x: _make_complex(x, np.multiply(x, -2))
+    ], ids=[
+        'real',
+        'complex-real',
+        'complex-imag',
+        'complex-both'
+    ])
+    def sc(self, request):
+        """ scale function used by the below tests """
+        return request.param
+
+    def test_non_finite_any_nan(self, sc):
+        """ test that nans are propagated """
+        assert_equal(np.interp(0.5, [np.nan,      1], sc([     0,     10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [     0, np.nan], sc([     0,     10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [     0,      1], sc([np.nan,     10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [     0,      1], sc([     0, np.nan])), sc(np.nan))
+
+    def test_non_finite_inf(self, sc):
+        """ Test that interp between opposite infs gives nan """
+        assert_equal(np.interp(0.5, [-np.inf, +np.inf], sc([      0,      10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0,       1], sc([-np.inf, +np.inf])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0,       1], sc([+np.inf, -np.inf])), sc(np.nan))
+
+        # unless the y values are equal
+        assert_equal(np.interp(0.5, [-np.inf, +np.inf], sc([     10,      10])), sc(10))
+
+    def test_non_finite_half_inf_xf(self, sc):
+        """ Test that interp where both axes have a bound at inf gives nan """
+        assert_equal(np.interp(0.5, [-np.inf,       1], sc([-np.inf,      10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [-np.inf,       1], sc([+np.inf,      10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [-np.inf,       1], sc([      0, -np.inf])), sc(np.nan))
+        assert_equal(np.interp(0.5, [-np.inf,       1], sc([      0, +np.inf])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0, +np.inf], sc([-np.inf,      10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0, +np.inf], sc([+np.inf,      10])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0, +np.inf], sc([      0, -np.inf])), sc(np.nan))
+        assert_equal(np.interp(0.5, [      0, +np.inf], sc([      0, +np.inf])), sc(np.nan))
+
+    def test_non_finite_half_inf_x(self, sc):
+        """ Test interp where the x axis has a bound at inf """
+        assert_equal(np.interp(0.5, [-np.inf, -np.inf], sc([0, 10])), sc(10))
+        assert_equal(np.interp(0.5, [-np.inf, 1      ], sc([0, 10])), sc(10))
+        assert_equal(np.interp(0.5, [      0, +np.inf], sc([0, 10])), sc(0))
+        assert_equal(np.interp(0.5, [+np.inf, +np.inf], sc([0, 10])), sc(0))
+
+    def test_non_finite_half_inf_f(self, sc):
+        """ Test interp where the f axis has a bound at inf """
+        assert_equal(np.interp(0.5, [0, 1], sc([      0, -np.inf])), sc(-np.inf))
+        assert_equal(np.interp(0.5, [0, 1], sc([      0, +np.inf])), sc(+np.inf))
+        assert_equal(np.interp(0.5, [0, 1], sc([-np.inf,      10])), sc(-np.inf))
+        assert_equal(np.interp(0.5, [0, 1], sc([+np.inf,      10])), sc(+np.inf))
+        assert_equal(np.interp(0.5, [0, 1], sc([-np.inf, -np.inf])), sc(-np.inf))
+        assert_equal(np.interp(0.5, [0, 1], sc([+np.inf, +np.inf])), sc(+np.inf))
 
     def test_complex_interp(self):
         # test complex interpolation
@@ -2438,6 +2511,21 @@ class TestPercentile(object):
         x[1] = np.nan
         assert_equal(np.percentile(x, 0), np.nan)
         assert_equal(np.percentile(x, 0, interpolation='nearest'), np.nan)
+
+    def test_fraction(self):
+        x = [Fraction(i, 2) for i in np.arange(8)]
+
+        p = np.percentile(x, Fraction(0))
+        assert_equal(p, Fraction(0))
+        assert_equal(type(p), Fraction)
+
+        p = np.percentile(x, Fraction(100))
+        assert_equal(p, Fraction(7, 2))
+        assert_equal(type(p), Fraction)
+
+        p = np.percentile(x, Fraction(50))
+        assert_equal(p, Fraction(7, 4))
+        assert_equal(type(p), Fraction)
 
     def test_api(self):
         d = np.ones(5)
@@ -2843,6 +2931,26 @@ class TestQuantile(object):
         assert_equal(np.quantile(x, 1), 3.5)
         assert_equal(np.quantile(x, 0.5), 1.75)
 
+    def test_fraction(self):
+        # fractional input, integral quantile
+        x = [Fraction(i, 2) for i in np.arange(8)]
+
+        q = np.quantile(x, 0)
+        assert_equal(q, 0)
+        assert_equal(type(q), Fraction)
+
+        q = np.quantile(x, 1)
+        assert_equal(q, Fraction(7, 2))
+        assert_equal(type(q), Fraction)
+
+        q = np.quantile(x, Fraction(1, 2))
+        assert_equal(q, Fraction(7, 4))
+        assert_equal(type(q), Fraction)
+
+        # repeat with integral input but fractional quantile
+        x = np.arange(8)
+        assert_equal(np.quantile(x, Fraction(1, 2)), Fraction(7, 2))
+
     def test_no_p_overwrite(self):
         # this is worth retesting, because quantile does not make a copy
         p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
@@ -3108,6 +3216,7 @@ class TestAdd_newdoc_ufunc(object):
 class TestAdd_newdoc(object):
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_doc(self):
         # test np.add_newdoc
         tgt = "Current flat index into the array."

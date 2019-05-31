@@ -46,200 +46,9 @@
  */
 #include "simd.inc"
 
+/** Provides the various *_LOOP macros */
+#include "fast_loop_macros.h"
 
-/*
- *****************************************************************************
- **                             UFUNC LOOPS                                 **
- *****************************************************************************
- */
-
-/* unary loop input and output contiguous */
-#define IS_UNARY_CONT(tin, tout) (steps[0] == sizeof(tin) && \
-                                  steps[1] == sizeof(tout))
-
-#define IS_BINARY_REDUCE ((args[0] == args[2])\
-        && (steps[0] == steps[2])\
-        && (steps[0] == 0))
-
-/* binary loop input and output contiguous */
-#define IS_BINARY_CONT(tin, tout) (steps[0] == sizeof(tin) && \
-                                   steps[1] == sizeof(tin) && \
-                                   steps[2] == sizeof(tout))
-/* binary loop input and output contiguous with first scalar */
-#define IS_BINARY_CONT_S1(tin, tout) (steps[0] == 0 && \
-                                   steps[1] == sizeof(tin) && \
-                                   steps[2] == sizeof(tout))
-/* binary loop input and output contiguous with second scalar */
-#define IS_BINARY_CONT_S2(tin, tout) (steps[0] == sizeof(tin) && \
-                                   steps[1] == 0 && \
-                                   steps[2] == sizeof(tout))
-
-#define OUTPUT_LOOP\
-    char *op1 = args[1];\
-    npy_intp os1 = steps[1];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, op1 += os1)
-
-#define UNARY_LOOP\
-    char *ip1 = args[0], *op1 = args[1];\
-    npy_intp is1 = steps[0], os1 = steps[1];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, op1 += os1)
-
-/*
- * loop with contiguous specialization
- * op should be the code working on `tin in` and
- * storing the result in `tout * out`
- * combine with NPY_GCC_OPT_3 to allow autovectorization
- * should only be used where its worthwhile to avoid code bloat
- */
-#define BASE_UNARY_LOOP(tin, tout, op) \
-    UNARY_LOOP { \
-        const tin in = *(tin *)ip1; \
-        tout * out = (tout *)op1; \
-        op; \
-    }
-#define UNARY_LOOP_FAST(tin, tout, op) \
-    do { \
-    /* condition allows compiler to optimize the generic macro */ \
-    if (IS_UNARY_CONT(tin, tout)) { \
-        if (args[0] == args[1]) { \
-            BASE_UNARY_LOOP(tin, tout, op) \
-        } \
-        else { \
-            BASE_UNARY_LOOP(tin, tout, op) \
-        } \
-    } \
-    else { \
-        BASE_UNARY_LOOP(tin, tout, op) \
-    } \
-    } \
-    while (0)
-
-#define UNARY_LOOP_TWO_OUT\
-    char *ip1 = args[0], *op1 = args[1], *op2 = args[2];\
-    npy_intp is1 = steps[0], os1 = steps[1], os2 = steps[2];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2)
-
-#define BINARY_LOOP\
-    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
-    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1)
-
-/*
- * loop with contiguous specialization
- * op should be the code working on `tin in1`, `tin in2` and
- * storing the result in `tout * out`
- * combine with NPY_GCC_OPT_3 to allow autovectorization
- * should only be used where its worthwhile to avoid code bloat
- */
-#define BASE_BINARY_LOOP(tin, tout, op) \
-    BINARY_LOOP { \
-        const tin in1 = *(tin *)ip1; \
-        const tin in2 = *(tin *)ip2; \
-        tout * out = (tout *)op1; \
-        op; \
-    }
-/*
- * unfortunately gcc 6/7 regressed and we need to give it additional hints to
- * vectorize inplace operations (PR80198)
- * must only be used after op1 == ip1 or ip2 has been checked
- * TODO: using ivdep might allow other compilers to vectorize too
- */
-#if __GNUC__ >= 6
-#define IVDEP_LOOP _Pragma("GCC ivdep")
-#else
-#define IVDEP_LOOP
-#endif
-#define BASE_BINARY_LOOP_INP(tin, tout, op) \
-    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
-    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    IVDEP_LOOP \
-    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1) { \
-        const tin in1 = *(tin *)ip1; \
-        const tin in2 = *(tin *)ip2; \
-        tout * out = (tout *)op1; \
-        op; \
-    }
-#define BASE_BINARY_LOOP_S(tin, tout, cin, cinp, vin, vinp, op) \
-    const tin cin = *(tin *)cinp; \
-    BINARY_LOOP { \
-        const tin vin = *(tin *)vinp; \
-        tout * out = (tout *)op1; \
-        op; \
-    }
-/* PR80198 again, scalar works without the pragma */
-#define BASE_BINARY_LOOP_S_INP(tin, tout, cin, cinp, vin, vinp, op) \
-    const tin cin = *(tin *)cinp; \
-    BINARY_LOOP { \
-        const tin vin = *(tin *)vinp; \
-        tout * out = (tout *)vinp; \
-        op; \
-    }
-#define BINARY_LOOP_FAST(tin, tout, op) \
-    do { \
-    /* condition allows compiler to optimize the generic macro */ \
-    if (IS_BINARY_CONT(tin, tout)) { \
-        if (abs_ptrdiff(args[2], args[0]) == 0 && \
-                abs_ptrdiff(args[2], args[1]) >= NPY_MAX_SIMD_SIZE) { \
-            BASE_BINARY_LOOP_INP(tin, tout, op) \
-        } \
-        else if (abs_ptrdiff(args[2], args[1]) == 0 && \
-                     abs_ptrdiff(args[2], args[0]) >= NPY_MAX_SIMD_SIZE) { \
-            BASE_BINARY_LOOP_INP(tin, tout, op) \
-        } \
-        else { \
-            BASE_BINARY_LOOP(tin, tout, op) \
-        } \
-    } \
-    else if (IS_BINARY_CONT_S1(tin, tout)) { \
-        if (abs_ptrdiff(args[2], args[1]) == 0) { \
-            BASE_BINARY_LOOP_S_INP(tin, tout, in1, args[0], in2, ip2, op) \
-        } \
-        else { \
-            BASE_BINARY_LOOP_S(tin, tout, in1, args[0], in2, ip2, op) \
-        } \
-    } \
-    else if (IS_BINARY_CONT_S2(tin, tout)) { \
-        if (abs_ptrdiff(args[2], args[0]) == 0) { \
-            BASE_BINARY_LOOP_S_INP(tin, tout, in2, args[1], in1, ip1, op) \
-        } \
-        else { \
-            BASE_BINARY_LOOP_S(tin, tout, in2, args[1], in1, ip1, op) \
-        }\
-    } \
-    else { \
-        BASE_BINARY_LOOP(tin, tout, op) \
-    } \
-    } \
-    while (0)
-
-#define BINARY_REDUCE_LOOP_INNER\
-    char *ip2 = args[1]; \
-    npy_intp is2 = steps[1]; \
-    npy_intp n = dimensions[0]; \
-    npy_intp i; \
-    for(i = 0; i < n; i++, ip2 += is2)
-
-#define BINARY_REDUCE_LOOP(TYPE)\
-    char *iop1 = args[0]; \
-    TYPE io1 = *(TYPE *)iop1; \
-    BINARY_REDUCE_LOOP_INNER
-
-#define BINARY_LOOP_TWO_OUT\
-    char *ip1 = args[0], *ip2 = args[1], *op1 = args[2], *op2 = args[3];\
-    npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2], os2 = steps[3];\
-    npy_intp n = dimensions[0];\
-    npy_intp i;\
-    for(i = 0; i < n; i++, ip1 += is1, ip2 += is2, op1 += os1, op2 += os2)
 
 /******************************************************************************
  **                          GENERIC FLOAT LOOPS                             **
@@ -616,6 +425,28 @@ PyUFunc_OO_O(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
     }
 }
 
+NPY_NO_EXPORT void
+PyUFunc_OOO_O(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
+{
+    ternaryfunc f = (ternaryfunc)func;
+    TERNARY_LOOP {
+        PyObject *in1 = *(PyObject **)ip1;
+        PyObject *in2 = *(PyObject **)ip2;
+        PyObject *in3 = *(PyObject **)ip3;
+        PyObject **out = (PyObject **)op1;
+        PyObject *ret = f(
+            in1 ? in1 : Py_None,
+            in2 ? in2 : Py_None,
+            in3 ? in3 : Py_None
+        );
+        if (ret == NULL) {
+            return;
+        }
+        Py_XDECREF(*out);
+        *out = ret;
+    }
+}
+
 /*UFUNC_API*/
 NPY_NO_EXPORT void
 PyUFunc_OO_O_method(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
@@ -834,6 +665,23 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
     }
 }
 
+
+/**begin repeat
+ * #kind = isnan, isinf, isfinite#
+ * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
+ **/
+NPY_NO_EXPORT void
+BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    /*
+     * The (void)in; suppresses an unused variable warning raised by gcc and allows
+     * us to re-use this macro even though we do not depend on in
+     */
+    UNARY_LOOP_FAST(npy_bool, npy_bool, (void)in; *out = @val@);
+}
+
+/**end repeat**/
 
 /*
  *****************************************************************************
@@ -1066,6 +914,22 @@ NPY_NO_EXPORT void
     }
 }
 
+/**begin repeat1
+ * #kind = isnan, isinf, isfinite#
+ * #func = npy_isnan, npy_isinf, npy_isfinite#
+ * #val = NPY_FALSE, NPY_FALSE, NPY_TRUE#
+ **/
+NPY_NO_EXPORT void
+@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    /*
+     * The (void)in; suppresses an unused variable warning raised by gcc and allows
+     * us to re-use this macro even though we do not depend on in
+     */
+    UNARY_LOOP_FAST(@type@, npy_bool, (void)in; *out = @val@);
+}
+/**end repeat1**/
+
 /**end repeat**/
 
 /**begin repeat
@@ -1185,13 +1049,10 @@ NPY_NO_EXPORT void
  * #c    = u,u,u,ul,ull#
  */
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 @TYPE@_absolute(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        *((@type@ *)op1) = in1;
-    }
+    UNARY_LOOP_FAST(@type@, @type@, *out = in);
 }
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
@@ -1329,6 +1190,15 @@ NPY_NO_EXPORT void
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         *((npy_bool *)op1) = (in1 == NPY_DATETIME_NAT);
+    }
+}
+
+NPY_NO_EXPORT void
+@TYPE@_isfinite(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((npy_bool *)op1) = (in1 != NPY_DATETIME_NAT);
     }
 }
 
@@ -1721,6 +1591,56 @@ NPY_NO_EXPORT void
 
 /**end repeat**/
 
+/**begin repeat
+ *  #func = exp, log#
+ *  #scalarf = npy_expf, npy_logf#
+ */
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+FLOAT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+	const npy_float in1 = *(npy_float *)ip1;
+	*(npy_float *)op1 = @scalarf@(in1);
+    }
+}
+
+/**end repeat**/
+
+/**begin repeat
+ * #isa = avx512f, avx2#
+ * #ISA = AVX512F, AVX2#
+ * #CHK = HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS, HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS#
+ */
+
+/**begin repeat1
+ *  #func = exp, log#
+ *  #scalarf = npy_expf, npy_logf#
+ */
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    if (!run_unary_@isa@_@func@_FLOAT(args, dimensions, steps)) {
+        UNARY_LOOP {
+            /*
+             * We use the AVX function to compute exp/log for scalar elements as well.
+             * This is needed to ensure the output of strided and non-strided
+             * cases match. SIMD code handles strided input cases, but not
+             * strided output.
+             */
+#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
+            @ISA@_@func@_FLOAT((npy_float *)op1, (npy_float *)ip1, 1, steps[0]);
+#else
+            const npy_float in1 = *(npy_float *)ip1;
+            *(npy_float *)op1 = @scalarf@(in1);
+#endif
+        }
+    }
+}
+
+/**end repeat1**/
+/**end repeat**/
 
 /**begin repeat
  * Float types
@@ -2389,13 +2309,10 @@ HALF_conjugate(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
     }
 }
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
 HALF_absolute(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const npy_half in1 = *(npy_half *)ip1;
-        *((npy_half *)op1) = in1&0x7fffu;
-    }
+    UNARY_LOOP_FAST(npy_half, npy_half, *out = in&0x7fffu);
 }
 
 NPY_NO_EXPORT void

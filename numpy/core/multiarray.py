@@ -8,6 +8,7 @@ by importing from the extension module.
 
 import functools
 import warnings
+import sys
 
 from . import overrides
 from . import _multiarray_umath
@@ -71,9 +72,9 @@ array_function_from_c_func_and_dispatcher = functools.partial(
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.empty_like)
-def empty_like(prototype, dtype=None, order=None, subok=None):
+def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
     """
-    empty_like(prototype, dtype=None, order='K', subok=True)
+    empty_like(prototype, dtype=None, order='K', subok=True, shape=None)
 
     Return a new array with the same shape and type as a given array.
 
@@ -97,6 +98,12 @@ def empty_like(prototype, dtype=None, order=None, subok=None):
         If True, then the newly created array will use the sub-class
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
+    shape : int or sequence of ints, optional.
+        Overrides the shape of the result. If order='K' and the number of
+        dimensions is unchanged, will try to keep order, otherwise,
+        order='C' is implied.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1107,9 +1114,9 @@ def putmask(a, mask, values):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
-def packbits(myarray, axis=None):
+def packbits(a, axis=None, bitorder='big'):
     """
-    packbits(myarray, axis=None)
+    packbits(a, axis=None, bitorder='big')
 
     Packs the elements of a binary-valued array into bits in a uint8 array.
 
@@ -1117,12 +1124,19 @@ def packbits(myarray, axis=None):
 
     Parameters
     ----------
-    myarray : array_like
+    a : array_like
         An array of integers or booleans whose elements should be packed to
         bits.
     axis : int, optional
         The dimension over which bit-packing is done.
         ``None`` implies packing the flattened array.
+    bitorder : {'big', 'little'}, optional
+        The order of the input bits. 'big' will mimic bin(val),
+        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011 => ``, 'little' will
+        reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
+        Defaults to 'big'.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1154,28 +1168,47 @@ def packbits(myarray, axis=None):
     and 32 = 0010 0000.
 
     """
-    return (myarray,)
+    return (a,)
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
-def unpackbits(myarray, axis=None):
+def unpackbits(a, axis=None, count=None, bitorder='big'):
     """
-    unpackbits(myarray, axis=None)
+    unpackbits(a, axis=None, count=None, bitorder='big')
 
     Unpacks elements of a uint8 array into a binary-valued output array.
 
-    Each element of `myarray` represents a bit-field that should be unpacked
-    into a binary-valued output array. The shape of the output array is either
-    1-D (if `axis` is None) or the same shape as the input array with unpacking
-    done along the axis specified.
+    Each element of `a` represents a bit-field that should be unpacked
+    into a binary-valued output array. The shape of the output array is
+    either 1-D (if `axis` is ``None``) or the same shape as the input
+    array with unpacking done along the axis specified.
 
     Parameters
     ----------
-    myarray : ndarray, uint8 type
+    a : ndarray, uint8 type
        Input array.
     axis : int, optional
         The dimension over which bit-unpacking is done.
         ``None`` implies unpacking the flattened array.
+    count : int or None, optional
+        The number of elements to unpack along `axis`, provided as a way
+        of undoing the effect of packing a size that is not a multiple
+        of eight. A non-negative number means to only unpack `count`
+        bits. A negative number means to trim off that many bits from
+        the end. ``None`` means to unpack the entire array (the
+        default). Counts larger than the available number of bits will
+        add zero padding to the output. Negative counts must not
+        exceed the available number of bits.
+
+        .. versionadded:: 1.17.0
+
+    bitorder : {'big', 'little'}, optional
+        The order of the returned bits. 'big' will mimic bin(val),
+        ``3 = 0b00000011 => [0, 0, 0, 0, 0, 0, 1, 1]``, 'little' will reverse
+        the order to ``[1, 1, 0, 0, 0, 0, 0, 0]``.
+        Defaults to 'big'.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1184,8 +1217,8 @@ def unpackbits(myarray, axis=None):
 
     See Also
     --------
-    packbits : Packs the elements of a binary-valued array into bits in a uint8
-               array.
+    packbits : Packs the elements of a binary-valued array into bits in
+               a uint8 array.
 
     Examples
     --------
@@ -1199,9 +1232,27 @@ def unpackbits(myarray, axis=None):
     array([[0, 0, 0, 0, 0, 0, 1, 0],
            [0, 0, 0, 0, 0, 1, 1, 1],
            [0, 0, 0, 1, 0, 1, 1, 1]], dtype=uint8)
+    >>> c = np.unpackbits(a, axis=1, count=-3)
+    >>> c
+    array([[0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0],
+           [0, 0, 0, 1, 0]], dtype=uint8)
+
+    >>> p = np.packbits(b, axis=0)
+    >>> np.unpackbits(p, axis=0)
+    array([[0, 0, 0, 0, 0, 0, 1, 0],
+           [0, 0, 0, 0, 0, 1, 1, 1],
+           [0, 0, 0, 1, 0, 1, 1, 1],
+           [0, 0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0, 0]], dtype=uint8)
+    >>> np.array_equal(b, np.unpackbits(p, axis=0, count=b.shape[0]))
+    True
 
     """
-    return (myarray,)
+    return (a,)
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.shares_memory)

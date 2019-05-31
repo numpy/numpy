@@ -273,7 +273,9 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         }
         *((char ****)ptr) = ptr3;
     }
-    memcpy(dims, PyArray_DIMS(ap), nd*sizeof(npy_intp));
+    if (nd) {
+        memcpy(dims, PyArray_DIMS(ap), nd*sizeof(npy_intp));
+    }
     *op = (PyObject *)ap;
     return 0;
 }
@@ -1758,7 +1760,7 @@ static PyObject *
 array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"dst","src","casting","where",NULL};
+    static char *kwlist[] = {"dst", "src", "casting", "where", NULL};
     PyObject *wheremask_in = NULL;
     PyArrayObject *dst = NULL, *src = NULL, *wheremask = NULL;
     NPY_CASTING casting = NPY_SAME_KIND_CASTING;
@@ -1803,7 +1805,7 @@ static PyObject *
 array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"shape","dtype","order",NULL};
+    static char *kwlist[] = {"shape", "dtype", "order", NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
@@ -1846,23 +1848,28 @@ static PyObject *
 array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"prototype","dtype","order","subok",NULL};
+    static char *kwlist[] = {"prototype", "dtype", "order", "subok", "shape", NULL};
     PyArrayObject *prototype = NULL;
     PyArray_Descr *dtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
     PyArrayObject *ret = NULL;
     int subok = 1;
+    PyArray_Dims shape = {NULL, 0};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&i:empty_like", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&iO&:empty_like", kwlist,
                 &PyArray_Converter, &prototype,
                 &PyArray_DescrConverter2, &dtype,
                 &PyArray_OrderConverter, &order,
-                &subok)) {
+                &subok,
+                &PyArray_IntpConverter, &shape)) {
         goto fail;
     }
     /* steals the reference to dtype if it's not NULL */
-    ret = (PyArrayObject *)PyArray_NewLikeArray(prototype,
-                                            order, dtype, subok);
+    ret = (PyArrayObject *)PyArray_NewLikeArrayWithShape(prototype, order, dtype,
+                                                         shape.len, shape.ptr, subok);
+    if (!ret) {
+        goto fail;
+    }
     Py_DECREF(prototype);
 
     return (PyObject *)ret;
@@ -1881,7 +1888,7 @@ static PyObject *
 array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"dtype","obj", NULL};
+    static char *kwlist[] = {"dtype", "obj", NULL};
     PyArray_Descr *typecode;
     PyObject *obj = NULL, *tmpobj = NULL;
     int alloc = 0;
@@ -1957,7 +1964,7 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 static PyObject *
 array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"shape","dtype","order",NULL};
+    static char *kwlist[] = {"shape", "dtype", "order", NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
@@ -4024,7 +4031,7 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     }
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
-            npy_cache_import("numpy.core._internal", "TooHardError",
+            npy_cache_import("numpy.core._exceptions", "TooHardError",
                              &too_hard_cls);
             if (too_hard_cls) {
                 PyErr_SetString(too_hard_cls, "Exceeded max_work");
@@ -4501,9 +4508,8 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_prepare = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_buffer = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ufunc = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_wrapped = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_implementation = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_order = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_copy = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
@@ -4518,9 +4524,8 @@ intern_strings(void)
     npy_ma_str_array_prepare = PyUString_InternFromString("__array_prepare__");
     npy_ma_str_array_wrap = PyUString_InternFromString("__array_wrap__");
     npy_ma_str_array_finalize = PyUString_InternFromString("__array_finalize__");
-    npy_ma_str_buffer = PyUString_InternFromString("__buffer__");
     npy_ma_str_ufunc = PyUString_InternFromString("__array_ufunc__");
-    npy_ma_str_wrapped = PyUString_InternFromString("__wrapped__");
+    npy_ma_str_implementation = PyUString_InternFromString("_implementation");
     npy_ma_str_order = PyUString_InternFromString("order");
     npy_ma_str_copy = PyUString_InternFromString("copy");
     npy_ma_str_dtype = PyUString_InternFromString("dtype");
@@ -4530,7 +4535,7 @@ intern_strings(void)
 
     return npy_ma_str_array && npy_ma_str_array_prepare &&
            npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
-           npy_ma_str_buffer && npy_ma_str_ufunc && npy_ma_str_wrapped &&
+           npy_ma_str_ufunc && npy_ma_str_implementation &&
            npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
            npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
 }
@@ -4736,11 +4741,9 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
     set_flaginfo(d);
 
     /* Create the typeinfo types */
-    typeinfo_init_structsequences();
-    PyDict_SetItemString(d,
-        "typeinfo", (PyObject *)&PyArray_typeinfoType);
-    PyDict_SetItemString(d,
-        "typeinforanged", (PyObject *)&PyArray_typeinforangedType);
+    if (typeinfo_init_structsequences(d) < 0) {
+        goto err;
+    }
 
     if (!intern_strings()) {
         goto err;

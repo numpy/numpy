@@ -142,6 +142,7 @@ numpy/core/src/npysort/binsearch.c
 numpy/core/src/npysort/heapsort.c
 numpy/core/src/npysort/mergesort.c
 numpy/core/src/npysort/quicksort.c
+numpy/core/src/npysort/radixsort.c
 numpy/core/src/npysort/selection.c
 numpy/core/src/npysort/timsort.c
 numpy/core/src/npysort/sort.c
@@ -167,12 +168,16 @@ numpy/core/src/umath/test_rational.c
 numpy/core/src/umath/umath_tests.c
 numpy/distutils/__config__.py
 numpy/linalg/umath_linalg.c
-doc/source/reference/generated
+doc/source/**/generated/
 benchmarks/results
 benchmarks/html
 benchmarks/env
 benchmarks/numpy
 # cythonized files
 cythonize.dat
-numpy/random/mtrand/mtrand.c
-numpy/random/mtrand/randint_helpers.pxi
+numpy/random/_mtrand/_mtrand.c
+numpy/random/*.c
+numpy/random/legacy/*.c
+numpy/random/_mtrand/randint_helpers.pxi
+numpy/random/bounded_integers.pyx
+numpy/random/bounded_integers.pxd

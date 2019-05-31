@@ -31,7 +31,6 @@ from numpy.core.overrides import set_module
 from numpy.core import overrides
 from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
-from .utils import deprecate
 from numpy.core.multiarray import (
     _insert, add_docstring, bincount, normalize_axis_index, _monotonicity,
     interp as compiled_interp, interp_complex as compiled_interp_complex
@@ -378,7 +377,7 @@ def average(a, axis=None, weights=None, returned=False):
     Traceback (most recent call last):
         ...
     TypeError: Axis must be specified when shapes of a and weights differ.
-    
+
     >>> a = np.ones(5, dtype=np.float128)
     >>> w = np.ones(5, dtype=np.complex64)
     >>> avg = np.average(a, weights=w)
@@ -683,7 +682,7 @@ def select(condlist, choicelist, default=0):
         # 2014-02-24, 1.9
         warnings.warn("select with an empty condition list is not possible"
                       "and will be deprecated",
-                      DeprecationWarning, stacklevel=2)
+                      DeprecationWarning, stacklevel=3)
         return np.asarray(default)[()]
 
     choicelist = [np.asarray(choice) for choice in choicelist]
@@ -718,7 +717,7 @@ def select(condlist, choicelist, default=0):
         msg = "select condlists containing integer ndarrays is deprecated " \
             "and will be removed in the future. Use `.astype(bool)` to " \
             "convert to bools."
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        warnings.warn(msg, DeprecationWarning, stacklevel=3)
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -1236,6 +1235,8 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
 
     a = asanyarray(a)
     nd = a.ndim
+    if nd == 0:
+        raise ValueError("diff requires input that is at least one dimensional")
     axis = normalize_axis_index(axis, nd)
 
     combined = []
@@ -1430,9 +1431,9 @@ def angle(z, deg=False):
     Returns
     -------
     angle : ndarray or scalar
-        The counterclockwise angle from the positive real axis on
-        the complex plane, with dtype as numpy.float64.
-        
+        The counterclockwise angle from the positive real axis on the complex
+        plane in the range ``(-pi, pi]``, with dtype as numpy.float64.
+
         ..versionchanged:: 1.16.0
             This function works on subclasses of ndarray like `ma.array`.
 
@@ -1930,6 +1931,30 @@ class vectorize(object):
     vectorized : callable
         Vectorized function.
 
+    See Also
+    --------
+    frompyfunc : Takes an arbitrary Python function and returns a ufunc
+
+    Notes
+    -----
+    The `vectorize` function is provided primarily for convenience, not for
+    performance. The implementation is essentially a for loop.
+
+    If `otypes` is not specified, then a call to the function with the
+    first argument will be used to determine the number of outputs.  The
+    results of this call will be cached if `cache` is `True` to prevent
+    calling the function twice.  However, to implement the cache, the
+    original function must be wrapped which will slow down subsequent
+    calls, so only do this if your function is expensive.
+
+    The new keyword argument interface and `excluded` argument support
+    further degrades performance.
+
+    References
+    ----------
+    .. [1] NumPy Reference, section `Generalized Universal Function API
+           <https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
+
     Examples
     --------
     >>> def myfunc(a, b):
@@ -1989,8 +2014,8 @@ class vectorize(object):
 
     >>> import scipy.stats
     >>> pearsonr = np.vectorize(scipy.stats.pearsonr,
-    ...                 signature='(n),(n)->(),()') 
-    >>> pearsonr([[0, 1, 2, 3]], [[1, 2, 3, 4], [4, 3, 2, 1]]) 
+    ...                 signature='(n),(n)->(),()')
+    >>> pearsonr([[0, 1, 2, 3]], [[1, 2, 3, 4], [4, 3, 2, 1]])
     (array([ 1., -1.]), array([ 0.,  0.]))
 
     Or for a vectorized convolution:
@@ -2002,31 +2027,7 @@ class vectorize(object):
            [0., 0., 1., 2., 1., 0.],
            [0., 0., 0., 1., 2., 1.]])
 
-    See Also
-    --------
-    frompyfunc : Takes an arbitrary Python function and returns a ufunc
-
-    Notes
-    -----
-    The `vectorize` function is provided primarily for convenience, not for
-    performance. The implementation is essentially a for loop.
-
-    If `otypes` is not specified, then a call to the function with the
-    first argument will be used to determine the number of outputs.  The
-    results of this call will be cached if `cache` is `True` to prevent
-    calling the function twice.  However, to implement the cache, the
-    original function must be wrapped which will slow down subsequent
-    calls, so only do this if your function is expensive.
-
-    The new keyword argument interface and `excluded` argument support
-    further degrades performance.
-
-    References
-    ----------
-    .. [1] NumPy Reference, section `Generalized Universal Function API
-           <https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html>`_.
     """
-
     def __init__(self, pyfunc, otypes=None, doc=None, excluded=None,
                  cache=False, signature=None):
         self.pyfunc = pyfunc
@@ -2442,7 +2443,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     if fact <= 0:
         warnings.warn("Degrees of freedom <= 0 for slice",
-                      RuntimeWarning, stacklevel=2)
+                      RuntimeWarning, stacklevel=3)
         fact = 0.0
 
     X -= avg[:, None]
@@ -2521,7 +2522,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
-                      DeprecationWarning, stacklevel=2)
+                      DeprecationWarning, stacklevel=3)
     c = cov(x, y, rowvar)
     try:
         d = diag(c)
@@ -2619,7 +2620,9 @@ def blackman(M):
     >>> A = fft(window, 2048) / 25.5
     >>> mag = np.abs(fftshift(A))
     >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
+    >>> with np.errstate(divide='ignore', invalid='ignore'):
+    ...     response = 20 * np.log10(mag)
+    ...
     >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -2726,7 +2729,9 @@ def bartlett(M):
     >>> A = fft(window, 2048) / 25.5
     >>> mag = np.abs(fftshift(A))
     >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
+    >>> with np.errstate(divide='ignore', invalid='ignore'):
+    ...     response = 20 * np.log10(mag)
+    ...
     >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -2827,7 +2832,9 @@ def hanning(M):
     >>> A = fft(window, 2048) / 25.5
     >>> mag = np.abs(fftshift(A))
     >>> freq = np.linspace(-0.5, 0.5, len(A))
-    >>> response = 20 * np.log10(mag)
+    >>> with np.errstate(divide='ignore', invalid='ignore'):
+    ...     response = 20 * np.log10(mag)
+    ...
     >>> response = np.clip(response, -100, 100)
     >>> plt.plot(freq, response)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -3701,7 +3708,8 @@ def percentile(a, q, axis=None, out=None,
         plt.show()
 
     """
-    q = np.true_divide(q, 100.0)  # handles the asarray for us too
+    q = np.true_divide(q, 100)
+    q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
     return _quantile_unchecked(
@@ -3919,7 +3927,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             indices_above = concatenate((indices_above, [-1]))
 
         weights_above = indices - indices_below
-        weights_below = 1.0 - weights_above
+        weights_below = 1 - weights_above
 
         weights_shape = [1, ] * ap.ndim
         weights_shape[axis] = len(indices)
@@ -4296,7 +4304,7 @@ def delete(arr, obj, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
-            "from delete and raise an error", DeprecationWarning, stacklevel=2)
+            "from delete and raise an error", DeprecationWarning, stacklevel=3)
         if wrap:
             return wrap(arr)
         else:
@@ -4365,7 +4373,7 @@ def delete(arr, obj, axis=None):
     if obj.dtype == bool:
         warnings.warn("in the future insert will treat boolean arrays and "
                       "array-likes as boolean index instead of casting it "
-                      "to integer", FutureWarning, stacklevel=2)
+                      "to integer", FutureWarning, stacklevel=3)
         obj = obj.astype(intp)
     if isinstance(_obj, (int, long, integer)):
         # optimization for a single value
@@ -4393,7 +4401,7 @@ def delete(arr, obj, axis=None):
             # 2013-09-24, 1.9
             warnings.warn(
                 "using a non-integer array as obj in delete will result in an "
-                "error in the future", DeprecationWarning, stacklevel=2)
+                "error in the future", DeprecationWarning, stacklevel=3)
             obj = obj.astype(intp)
         keep = ones(N, dtype=bool)
 
@@ -4404,13 +4412,13 @@ def delete(arr, obj, axis=None):
             warnings.warn(
                 "in the future out of bounds indices will raise an error "
                 "instead of being ignored by `numpy.delete`.",
-                DeprecationWarning, stacklevel=2)
+                DeprecationWarning, stacklevel=3)
             obj = obj[inside_bounds]
         positive_indices = obj >= 0
         if not positive_indices.all():
             warnings.warn(
                 "in the future negative indices will not be ignored by "
-                "`numpy.delete`.", FutureWarning, stacklevel=2)
+                "`numpy.delete`.", FutureWarning, stacklevel=3)
             obj = obj[positive_indices]
 
         keep[obj, ] = False
@@ -4535,7 +4543,7 @@ def insert(arr, obj, values, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
-            "from insert and raise an error", DeprecationWarning, stacklevel=2)
+            "from insert and raise an error", DeprecationWarning, stacklevel=3)
         arr = arr.copy(order=arrorder)
         arr[...] = values
         if wrap:
@@ -4559,7 +4567,7 @@ def insert(arr, obj, values, axis=None):
             warnings.warn(
                 "in the future insert will treat boolean arrays and "
                 "array-likes as a boolean index instead of casting it to "
-                "integer", FutureWarning, stacklevel=2)
+                "integer", FutureWarning, stacklevel=3)
             indices = indices.astype(intp)
             # Code after warning period:
             #if obj.ndim != 1:
@@ -4609,7 +4617,7 @@ def insert(arr, obj, values, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "using a non-integer array as obj in insert will result in an "
-            "error in the future", DeprecationWarning, stacklevel=2)
+            "error in the future", DeprecationWarning, stacklevel=3)
         indices = indices.astype(intp)
 
     indices[indices < 0] += N

@@ -10,7 +10,7 @@ import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT)
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -215,7 +215,6 @@ class TestRecord(object):
         assert_equal(dt1.descr, [('a', '|i1'), ('', '|V3'),
                                  ('b', [('f0', '<i2'), ('', '|V2'),
                                  ('f1', '<f4')], (2,))])
-        
 
     def test_union_struct(self):
         # Should be able to create union dtypes
@@ -321,6 +320,11 @@ class TestRecord(object):
 
         assert_equal(dt[1], dt[np.int8(1)])
 
+    def test_partial_dict(self):
+        # 'names' is missing
+        assert_raises(ValueError, np.dtype,
+                {'formats': ['i4', 'i4'], 'f0': ('i4', 0), 'f1':('i4', 4)})
+        
 
 class TestSubarray(object):
     def test_single_subarray(self):
@@ -354,7 +358,10 @@ class TestSubarray(object):
     def test_shape_equal(self):
         """Test some data types that are equal"""
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', tuple())))
-        assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
+        # FutureWarning during deprecation period; after it is passed this
+        # should instead check that "(1)f8" == "1f8" == ("f8", 1).
+        with pytest.warns(FutureWarning):
+            assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
         assert_dtype_equal(np.dtype((int, 2)), np.dtype((int, (2,))))
         assert_dtype_equal(np.dtype(('<f4', (3, 2))), np.dtype(('<f4', (3, 2))))
         d = ([('a', 'f4', (1, 2)), ('b', 'f8', (3, 1))], (3, 2))
@@ -443,7 +450,7 @@ class TestSubarray(object):
 
     def test_alignment(self):
         #Check that subarrays are aligned
-        t1 = np.dtype('1i4', align=True)
+        t1 = np.dtype('(1,)i4', align=True)
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
 

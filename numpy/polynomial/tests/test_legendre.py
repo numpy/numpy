@@ -210,12 +210,12 @@ class TestIntegral(object):
 
     def test_legint(self):
         # check exceptions
-        assert_raises(ValueError, leg.legint, [0], .5)
+        assert_raises(TypeError, leg.legint, [0], .5)
         assert_raises(ValueError, leg.legint, [0], -1)
         assert_raises(ValueError, leg.legint, [0], 1, [0, 0])
         assert_raises(ValueError, leg.legint, [0], lbnd=[0])
         assert_raises(ValueError, leg.legint, [0], scl=[0])
-        assert_raises(ValueError, leg.legint, [0], axis=.5)
+        assert_raises(TypeError, leg.legint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -312,7 +312,7 @@ class TestDerivative(object):
 
     def test_legder(self):
         # check exceptions
-        assert_raises(ValueError, leg.legder, [0], .5)
+        assert_raises(TypeError, leg.legder, [0], .5)
         assert_raises(ValueError, leg.legder, [0], -1)
 
         # check that zeroth derivative does nothing
