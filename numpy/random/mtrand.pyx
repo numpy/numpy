@@ -621,7 +621,7 @@ cdef class RandomState:
                           'ValueError', DeprecationWarning)
 
         # Implementation detail: the use a masked method to generate
-        # bounded uniform integers. Lemire's method is preferrable since it is
+        # bounded uniform integers. Lemire's method is preferable since it is
         # faster. randomgen allows a choice, we will always use the slower but
         # backward compatible one.
         cdef bint _masked = True

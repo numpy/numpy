@@ -603,7 +603,7 @@ class TestStructuredDtypeSparseFields(object):
                                     'offsets':[4]}, (2, 3))])
 
     @pytest.mark.xfail(reason="inaccessible data is changed see gh-12686.")
-    @pytest.mark.valgrind_error(reason="reads from unitialized buffers.")
+    @pytest.mark.valgrind_error(reason="reads from uninitialized buffers.")
     def test_sparse_field_assignment(self):
         arr = np.zeros(3, self.dtype)
         sparse_arr = arr.view(self.sparse_dtype)

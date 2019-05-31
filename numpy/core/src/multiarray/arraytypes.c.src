@@ -2260,7 +2260,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         char *dstptr, *srcptr;
         /*
          * In certain cases subarray copy can be optimized. This is when
-         * swapping is unecessary and the subarrays data type can certainly
+         * swapping is unnecessary and the subarrays data type can certainly
          * be simply copied (no object, fields, subarray, and not a user dtype).
          */
         npy_bool can_optimize_subarray = (!swap &&
@@ -2347,7 +2347,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         int subitemsize;
         /*
          * In certain cases subarray copy can be optimized. This is when
-         * swapping is unecessary and the subarrays data type can certainly
+         * swapping is unnecessary and the subarrays data type can certainly
          * be simply copied (no object, fields, subarray, and not a user dtype).
          */
         npy_bool can_optimize_subarray = (!swap &&

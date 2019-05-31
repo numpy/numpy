@@ -555,10 +555,10 @@ def _concatenate_shapes(shapes, axis):
         ret[(slice(None),) * axis + sl_c] == c
         ```
 
-        Thses are called slice prefixes since they are used in the recursive
+        These are called slice prefixes since they are used in the recursive
         blocking algorithm to compute the left-most slices during the
         recursion. Therefore, they must be prepended to rest of the slice
-        that was computed deeper in the recusion.
+        that was computed deeper in the recursion.
 
         These are returned as tuples to ensure that they can quickly be added
         to existing slice tuple without creating a new tuple everytime.
@@ -841,9 +841,9 @@ def block(arrays):
         return _block_concatenate(arrays, list_ndim, result_ndim)
 
 
-# Theses helper functions are mostly used for testing.
+# These helper functions are mostly used for testing.
 # They allow us to write tests that directly call `_block_slicing`
-# or `_block_concatenate` without blocking large arrays to forse the wisdom
+# or `_block_concatenate` without blocking large arrays to force the wisdom
 # to trigger the desired path.
 def _block_setup(arrays):
     """
