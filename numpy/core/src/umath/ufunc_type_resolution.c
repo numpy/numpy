@@ -1737,7 +1737,7 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
         }
         /*
          * For outputs, copy the dtype from op[0] if the type_num
-         * matches, similarly to preserve metdata.
+         * matches, similarly to preserve metadata.
          */
         else if (i >= nin && op[0] != NULL &&
                             PyArray_DESCR(op[0])->type_num == type_nums[i]) {

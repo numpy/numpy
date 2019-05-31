@@ -8,7 +8,7 @@
  * threefry-test-data-gen
  *  ./threefry-test-data-gen
  *
- * Requres the Random123 directory containing header files to be located in the
+ * Requires the Random123 directory containing header files to be located in the
  * same directory (not included).
  *
  */

@@ -1246,7 +1246,7 @@ _clog_for_large_values@c@(@type@ x, @type@ y,
      * Divide x and y by E, and then add 1 to the logarithm.  This depends
      * on E being larger than sqrt(2).
      * Dividing by E causes an insignificant loss of accuracy; however
-     * this method is still poor since it is uneccessarily slow.
+     * this method is still poor since it is unnecessarily slow.
      */
     if (ax > @TMAX@ / 2) {
         *rr = npy_log@c@(npy_hypot@c@(x / NPY_E@c@, y / NPY_E@c@)) + 1;

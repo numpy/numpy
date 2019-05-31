@@ -219,7 +219,7 @@ From scratch
 
     If *data* is ``NULL``, then new unitinialized memory will be allocated and
     *flags* can be non-zero to indicate a Fortran-style contiguous array. Use
-    :c:func:`PyArray_FILLWBYTE` to initialze the memory.
+    :c:func:`PyArray_FILLWBYTE` to initialize the memory.
 
     If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the

@@ -1903,7 +1903,7 @@ class TestSingleEltArrayInput(object):
             assert_equal(out.shape, self.tgtShape)
 
 
-# Ensure returned array dtype is corect for platform
+# Ensure returned array dtype is correct for platform
 def test_integer_dtype(int_func):
     random.seed(123456789)
     fname, args, md5 = int_func

@@ -440,7 +440,7 @@ cdef class Generator:
                              'when required.')
 
         # Implementation detail: the old API used a masked method to generate
-        # bounded uniform integers. Lemire's method is preferrable since it is
+        # bounded uniform integers. Lemire's method is preferable since it is
         # faster. randomgen allows a choice, we will always use the faster one.
         cdef bint _masked = True
 

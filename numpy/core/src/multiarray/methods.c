@@ -1687,7 +1687,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 
        Notice because Python does not describe a mechanism to write
        raw data to the pickle, this performs a copy to a string first
-       This issue is now adressed in protocol 5, where a buffer is serialized
+       This issue is now addressed in protocol 5, where a buffer is serialized
        instead of a string,
     */
 

@@ -7,7 +7,7 @@
  *  gcc philox-test-data-gen.c -o philox-test-data-gen
  *  ./philox-test-data-gen
  *
- * Requres the Random123 directory containing header files to be located in the
+ * Requires the Random123 directory containing header files to be located in the
  * same directory (not included).
  *
  */

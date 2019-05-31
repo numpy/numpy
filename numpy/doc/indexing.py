@@ -1,4 +1,5 @@
-"""==============
+"""
+==============
 Array indexing
 ==============
 
@@ -107,7 +108,7 @@ arrays and thus greatly improve performance.
 
 It is possible to use special features to effectively increase the
 number of dimensions in an array through indexing so the resulting
-array aquires the shape needed for use in an expression or with a
+array acquires the shape needed for use in an expression or with a
 specific function.
 
 Index arrays

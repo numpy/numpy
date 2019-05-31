@@ -54,7 +54,7 @@ And in more detail:
   `~.Generator.standard_gamma`.
 * `~.Generator.integers` is now the canonical way to generate integer
   random numbers from a discrete uniform distribution. The ``rand`` and
-  ``randn`` methods are only availabe through the legacy `~.RandomState`.
+  ``randn`` methods are only available through the legacy `~.RandomState`.
   This replaces both ``randint`` and the deprecated ``random_integers``.
 * The Box-Muller used to produce NumPy's normals is no longer available.
 * All bit generators can produce doubles, uint64s and

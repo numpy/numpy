@@ -276,7 +276,7 @@ but gives 1874919424 (incorrect) for a 32-bit integer.
 The behaviour of NumPy and Python integer types differs significantly for
 integer overflows and may confuse users expecting NumPy integers to behave
 similar to Python's ``int``. Unlike NumPy, the size of Python's ``int`` is
-flexible. This means Python integers may expand to accomodate any integer and
+flexible. This means Python integers may expand to accommodate any integer and
 will not overflow.
 
 NumPy provides `numpy.iinfo` and `numpy.finfo` to verify the
