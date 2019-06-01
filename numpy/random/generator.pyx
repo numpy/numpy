@@ -370,9 +370,6 @@ cdef class Generator:
             name, i.e., 'int64', 'int', etc, so byteorder is not available
             and a specific precision may have different C types depending
             on the platform. The default value is 'np.int'.
-
-            .. versionadded:: 1.11.0
-
         endpoint : bool, optional
             If true, sample from the interval [low, high] instead of the
             default [low, high)
@@ -507,8 +504,6 @@ cdef class Generator:
         choice(a, size=None, replace=True, p=None, axis=0):
 
         Generates a random sample from a given 1-D array
-
-        .. versionadded:: 1.7.0
 
         Parameters
         ----------
