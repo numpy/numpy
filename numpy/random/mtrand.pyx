@@ -807,7 +807,9 @@ cdef class RandomState:
                 cdf /= cdf[-1]
                 uniform_samples = self.random_sample(shape)
                 idx = cdf.searchsorted(uniform_samples, side='right')
-                idx = np.array(idx, copy=False)  # searchsorted returns a scalar
+                # searchsorted returns a scalar
+                # force cast to int for LLP64
+                idx = np.array(idx, copy=False).astype(int, casting='unsafe')
             else:
                 idx = self.randint(0, pop_size, size=shape)
         else:
@@ -822,7 +824,7 @@ cdef class RandomState:
                     raise ValueError("Fewer non-zero entries in p than size")
                 n_uniq = 0
                 p = p.copy()
-                found = np.zeros(shape, dtype=np.int64)
+                found = np.zeros(shape, dtype=int)
                 flat_found = found.ravel()
                 while n_uniq < size:
                     x = self.rand(size - n_uniq)
