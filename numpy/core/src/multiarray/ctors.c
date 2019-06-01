@@ -944,10 +944,11 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
  * be decrefed.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-                         npy_intp *dims, npy_intp *strides, void *data,
-                         int flags, PyObject *obj, PyObject *base, int zeroed,
-                         int allow_emptystring)
+PyArray_NewFromDescr_int(
+        PyTypeObject *subtype, PyArray_Descr *descr, int nd,
+        npy_intp const *dims, npy_intp const *strides, void *data,
+        int flags, PyObject *obj, PyObject *base, int zeroed,
+        int allow_emptystring)
 {
     PyArrayObject_fields *fa;
     int i, is_empty;
@@ -1223,9 +1224,10 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
  * true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr,
-                     int nd, npy_intp *dims, npy_intp *strides, void *data,
-                     int flags, PyObject *obj)
+PyArray_NewFromDescr(
+        PyTypeObject *subtype, PyArray_Descr *descr,
+        int nd, npy_intp const *dims, npy_intp const *strides, void *data,
+        int flags, PyObject *obj)
 {
     return PyArray_NewFromDescrAndBase(
             subtype, descr,
@@ -1239,7 +1241,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr,
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescrAndBase(
         PyTypeObject *subtype, PyArray_Descr *descr,
-        int nd, npy_intp *dims, npy_intp *strides, void *data,
+        int nd, npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj, PyObject *base)
 {
     return PyArray_NewFromDescr_int(subtype, descr, nd,
@@ -1267,7 +1269,7 @@ PyArray_NewFromDescrAndBase(
  */
 NPY_NO_EXPORT PyObject *
 PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
-                              PyArray_Descr *dtype, int ndim, npy_intp *dims, int subok)
+                              PyArray_Descr *dtype, int ndim, npy_intp const *dims, int subok)
 {
     PyObject *ret = NULL;
 
@@ -1375,9 +1377,10 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
  * Generic new array creation routine.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_New(PyTypeObject *subtype, int nd, npy_intp *dims, int type_num,
-            npy_intp *strides, void *data, int itemsize, int flags,
-            PyObject *obj)
+PyArray_New(
+        PyTypeObject *subtype, int nd, npy_intp const *dims, int type_num,
+        npy_intp const *strides, void *data, int itemsize, int flags,
+        PyObject *obj)
 {
     PyArray_Descr *descr;
     PyObject *new;
@@ -3135,7 +3138,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
  * accepts NULL type
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
+PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
     PyArrayObject *ret;
 
@@ -3173,7 +3176,7 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
  * steals a reference to type
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
+PyArray_Empty(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
     PyArrayObject *ret;
 
@@ -4140,7 +4143,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
  */
 
 NPY_NO_EXPORT void
-_array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
+_array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t itemsize,
                     int inflag, int *objflags)
 {
     int i;

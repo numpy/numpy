@@ -127,6 +127,16 @@ or ``np.nan``) is now dropped.
 C API changes
 =============
 
+dimension or stride input arguments are now passed by ``npy_intp const*``
+-------------------------------------------------------------------------
+Previously these function arguments were declared as the more strict
+``npy_intp*``, which prevented the caller passing constant data.
+This change is backwards compatible, but now allows code like::
+
+    npy_intp const fixed_dims[] = {1, 2, 3};
+    // no longer complains that the const-qualifier is discarded
+    npy_intp size = PyArray_MultiplyList(fixed_dims, 3);
+
 
 New Features
 ============
