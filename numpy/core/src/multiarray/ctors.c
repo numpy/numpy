@@ -4031,7 +4031,16 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
                 "Must specify length when using variable-size data-type.");
         goto done;
     }
-    elcount = (count < 0) ? 0 : count;
+    if (count < 0) {
+        elcount = PyObject_LengthHint(obj, 0);
+        if (elcount < 0) {
+            goto done;
+        }
+    }
+    else {
+        elcount = count;
+    }
+
     elsize = dtype->elsize;
 
     /*
