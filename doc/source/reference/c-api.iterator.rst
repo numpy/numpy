@@ -630,7 +630,7 @@ Construction and Destruction
 .. c:function:: NpyIter* NpyIter_AdvancedNew( \
         npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, \
         NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, \
-        int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
+        int oa_ndim, int** op_axes, npy_intp const* itershape, npy_intp buffersize)
 
     Extends :c:func:`NpyIter_MultiNew` with several advanced options providing
     more control over broadcasting and buffering.
@@ -867,7 +867,7 @@ Construction and Destruction
             } while (iternext2(iter2));
         } while (iternext1(iter1));
 
-.. c:function:: int NpyIter_GotoMultiIndex(NpyIter* iter, npy_intp* multi_index)
+.. c:function:: int NpyIter_GotoMultiIndex(NpyIter* iter, npy_intp const* multi_index)
 
     Adjusts the iterator to point to the ``ndim`` indices
     pointed to by ``multi_index``.  Returns an error if a multi-index
