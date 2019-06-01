@@ -4016,7 +4016,7 @@ add_newdoc('numpy.core.umath', 'sinc',
     --------
     It is zero at all nonzero integers.
 
-    >>> np.sinc([-2, -1, 0, 1, 2]))
+    >>> np.sinc([-2, -1, 0, 1, 2])
     array([0., 0., 1., 0., 0.])
 
     >>> import matplotlib.pyplot as plt
