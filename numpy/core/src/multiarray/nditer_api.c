@@ -406,7 +406,7 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
  * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
  */
 NPY_NO_EXPORT int
-NpyIter_GotoMultiIndex(NpyIter *iter, npy_intp *multi_index)
+NpyIter_GotoMultiIndex(NpyIter *iter, npy_intp const *multi_index)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);

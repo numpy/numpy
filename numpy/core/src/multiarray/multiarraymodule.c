@@ -130,7 +130,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
  * Multiply a List of ints
  */
 NPY_NO_EXPORT int
-PyArray_MultiplyIntList(int *l1, int n)
+PyArray_MultiplyIntList(int const *l1, int n)
 {
     int s = 1;
 
@@ -144,7 +144,7 @@ PyArray_MultiplyIntList(int *l1, int n)
  * Multiply a List
  */
 NPY_NO_EXPORT npy_intp
-PyArray_MultiplyList(npy_intp *l1, int n)
+PyArray_MultiplyList(npy_intp const *l1, int n)
 {
     npy_intp s = 1;
 
@@ -180,7 +180,7 @@ PyArray_OverflowMultiplyList(npy_intp *l1, int n)
  * Produce a pointer into array
  */
 NPY_NO_EXPORT void *
-PyArray_GetPtr(PyArrayObject *obj, npy_intp* ind)
+PyArray_GetPtr(PyArrayObject *obj, npy_intp const* ind)
 {
     int n = PyArray_NDIM(obj);
     npy_intp *strides = PyArray_STRIDES(obj);
@@ -196,7 +196,7 @@ PyArray_GetPtr(PyArrayObject *obj, npy_intp* ind)
  * Compare Lists
  */
 NPY_NO_EXPORT int
-PyArray_CompareLists(npy_intp *l1, npy_intp *l2, int n)
+PyArray_CompareLists(npy_intp const *l1, npy_intp const *l2, int n)
 {
     int i;
 
