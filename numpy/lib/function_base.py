@@ -21,7 +21,7 @@ from numpy.core.numeric import (
     )
 from numpy.core.umath import (
     pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, not_equal, subtract
+    mod, exp, not_equal, subtract, sinc,
     )
 from numpy.core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
