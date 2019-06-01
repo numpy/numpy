@@ -17,13 +17,6 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-# Internal functions that elimainate the overhead of repeated dispatch.
-# Use getattr to protect against __array_function__ being disabled.
-_size = getattr(_nx.size, '__wrapped__', _nx.size)
-_ndim = getattr(_nx.ndim, '__wrapped__', _nx.ndim)
-_concatenate = getattr(_nx.concatenate, '__wrapped__', _nx.concatenate)
-
-
 def _atleast_1d_dispatcher(*arys):
     return arys
 
@@ -212,13 +205,6 @@ def atleast_3d(*arys):
         return res
 
 
-# More aliases to undispatched functions.
-# Use getattr to protect against __array_function__ being disabled.
-_atleast_1d = getattr(atleast_1d, '__wrapped__', atleast_1d)
-_atleast_2d = getattr(atleast_2d, '__wrapped__', atleast_2d)
-_atleast_3d = getattr(atleast_3d, '__wrapped__', atleast_3d)
-
-
 def _arrays_for_stack_dispatcher(arrays, stacklevel=4):
     if not hasattr(arrays, '__getitem__') and hasattr(arrays, '__iter__'):
         warnings.warn('arrays to stack must be passed as a "sequence" type '
@@ -287,7 +273,7 @@ def vstack(tup):
            [4]])
 
     """
-    return _concatenate([_atleast_2d(_m) for _m in tup], 0)
+    return _nx.concatenate([atleast_2d(_m) for _m in tup], 0)
 
 
 @array_function_dispatch(_vhstack_dispatcher)
@@ -338,12 +324,12 @@ def hstack(tup):
            [3, 4]])
 
     """
-    arrs = [_atleast_1d(_m) for _m in tup]
+    arrs = [atleast_1d(_m) for _m in tup]
     # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
     if arrs and arrs[0].ndim == 1:
-        return _concatenate(arrs, 0)
+        return _nx.concatenate(arrs, 0)
     else:
-        return _concatenate(arrs, 1)
+        return _nx.concatenate(arrs, 1)
 
 
 def _stack_dispatcher(arrays, axis=None, out=None):
@@ -427,7 +413,14 @@ def stack(arrays, axis=0, out=None):
 
     sl = (slice(None),) * axis + (_nx.newaxis,)
     expanded_arrays = [arr[sl] for arr in arrays]
-    return _concatenate(expanded_arrays, axis=axis, out=out)
+    return _nx.concatenate(expanded_arrays, axis=axis, out=out)
+
+
+# Internal functions to elimainate the overhead of repeated dispatch inside
+# np.block. Use getattr to protect against __array_function__ being disabled.
+_size = getattr(_nx.size, '__wrapped__', _nx.size)
+_ndim = getattr(_nx.ndim, '__wrapped__', _nx.ndim)
+_concatenate = getattr(_nx.concatenate, '__wrapped__', _nx.concatenate)
 
 
 def _block_format_index(index):
