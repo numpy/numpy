@@ -2062,20 +2062,24 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
 static PyObject *
 array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
-    PyObject *file = NULL, *ret;
+    PyObject *file = NULL, *ret = NULL;
     PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
     char *sep = "";
     Py_ssize_t nin = -1;
-    static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
+    static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", NULL};
     PyArray_Descr *type = NULL;
     int own;
-    npy_off_t orig_pos = 0;
+    npy_off_t orig_pos = 0, offset = 0;
     FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT "s:fromfile", kwlist,
-                &file, PyArray_DescrConverter, &type, &nin, &sep)) {
+                "O|O&" NPY_SSIZE_T_PYFMT "s" NPY_OFF_T_PYFMT ":fromfile", kwlist,
+                &file, PyArray_DescrConverter, &type, &nin, &sep, &offset)) {
         Py_XDECREF(type);
+        return NULL;
+    }
+    if (offset != 0 && strcmp(sep, "") != 0) {
+        PyErr_SetString(PyExc_TypeError, "'offset' argument only permitted for binary files");
         return NULL;
     }
     if (PyString_Check(file) || PyUnicode_Check(file)) {
@@ -2094,6 +2098,10 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_DECREF(file);
         return NULL;
     }
+    if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
+        PyErr_SetFromErrno(PyExc_IOError);
+        goto cleanup;
+    }
     if (type == NULL) {
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
@@ -2103,6 +2111,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
      * we need to clear it, and restore it later to ensure that
      * we can cleanup the duplicated file descriptor properly.
      */
+cleanup:
     PyErr_Fetch(&err_type, &err_value, &err_traceback);
     if (npy_PyFile_DupClose2(file, fp, orig_pos) < 0) {
         npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
