@@ -22,196 +22,13 @@ constants = []
 def add_newdoc(module, name, doc):
     constants.append((name, doc))
 
-add_newdoc('numpy', 'Inf',
+add_newdoc('numpy', 'pi',
     """
-    IEEE 754 floating point representation of (positive) infinity.
+    ``pi = 3.1415926535897932384626433...``
 
-    Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
-    `inf`. For more details, see `inf`.
-
-    See Also
-    --------
-    inf
-
-    """)
-
-add_newdoc('numpy', 'Infinity',
-    """
-    IEEE 754 floating point representation of (positive) infinity.
-
-    Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
-    `inf`. For more details, see `inf`.
-
-    See Also
-    --------
-    inf
-
-    """)
-
-add_newdoc('numpy', 'NAN',
-    """
-    IEEE 754 floating point representation of Not a Number (NaN).
-
-    `NaN` and `NAN` are equivalent definitions of `nan`. Please use
-    `nan` instead of `NAN`.
-
-    See Also
-    --------
-    nan
-
-    """)
-
-add_newdoc('numpy', 'NINF',
-    """
-    IEEE 754 floating point representation of negative infinity.
-
-    Returns
-    -------
-    y : float
-        A floating point representation of negative infinity.
-
-    See Also
-    --------
-    isinf : Shows which elements are positive or negative infinity
-
-    isposinf : Shows which elements are positive infinity
-
-    isneginf : Shows which elements are negative infinity
-
-    isnan : Shows which elements are Not a Number
-
-    isfinite : Shows which elements are finite (not one of Not a Number,
-    positive infinity and negative infinity)
-
-    Notes
-    -----
-    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
-    (IEEE 754). This means that Not a Number is not equivalent to infinity.
-    Also that positive infinity is not equivalent to negative infinity. But
-    infinity is equivalent to positive infinity.
-
-    Examples
-    --------
-    >>> np.NINF
-    -inf
-    >>> np.log(0)
-    -inf
-
-    """)
-
-add_newdoc('numpy', 'NZERO',
-    """
-    IEEE 754 floating point representation of negative zero.
-
-    Returns
-    -------
-    y : float
-        A floating point representation of negative zero.
-
-    See Also
-    --------
-    PZERO : Defines positive zero.
-
-    isinf : Shows which elements are positive or negative infinity.
-
-    isposinf : Shows which elements are positive infinity.
-
-    isneginf : Shows which elements are negative infinity.
-
-    isnan : Shows which elements are Not a Number.
-
-    isfinite : Shows which elements are finite - not one of
-               Not a Number, positive infinity and negative infinity.
-
-    Notes
-    -----
-    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
-    (IEEE 754). Negative zero is considered to be a finite number.
-
-    Examples
-    --------
-    >>> np.NZERO
-    -0.0
-    >>> np.PZERO
-    0.0
-
-    >>> np.isfinite([np.NZERO])
-    array([ True])
-    >>> np.isnan([np.NZERO])
-    array([False])
-    >>> np.isinf([np.NZERO])
-    array([False])
-
-    """)
-
-add_newdoc('numpy', 'NaN',
-    """
-    IEEE 754 floating point representation of Not a Number (NaN).
-
-    `NaN` and `NAN` are equivalent definitions of `nan`. Please use
-    `nan` instead of `NaN`.
-
-    See Also
-    --------
-    nan
-
-    """)
-
-add_newdoc('numpy', 'PINF',
-    """
-    IEEE 754 floating point representation of (positive) infinity.
-
-    Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
-    `inf`. For more details, see `inf`.
-
-    See Also
-    --------
-    inf
-
-    """)
-
-add_newdoc('numpy', 'PZERO',
-    """
-    IEEE 754 floating point representation of positive zero.
-
-    Returns
-    -------
-    y : float
-        A floating point representation of positive zero.
-
-    See Also
-    --------
-    NZERO : Defines negative zero.
-
-    isinf : Shows which elements are positive or negative infinity.
-
-    isposinf : Shows which elements are positive infinity.
-
-    isneginf : Shows which elements are negative infinity.
-
-    isnan : Shows which elements are Not a Number.
-
-    isfinite : Shows which elements are finite - not one of
-               Not a Number, positive infinity and negative infinity.
-
-    Notes
-    -----
-    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
-    (IEEE 754). Positive zero is considered to be a finite number.
-
-    Examples
-    --------
-    >>> np.PZERO
-    0.0
-    >>> np.NZERO
-    -0.0
-
-    >>> np.isfinite([np.PZERO])
-    array([ True])
-    >>> np.isnan([np.PZERO])
-    array([False])
-    >>> np.isinf([np.PZERO])
-    array([False])
+    References
+    ----------
+    https://en.wikipedia.org/wiki/Pi
 
     """)
 
@@ -229,6 +46,16 @@ add_newdoc('numpy', 'e',
     References
     ----------
     https://en.wikipedia.org/wiki/E_%28mathematical_constant%29
+
+    """)
+
+add_newdoc('numpy', 'euler_gamma',
+    """
+    ``γ = 0.5772156649015328606065120900824024310421...``
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/Euler-Mascheroni_constant
 
     """)
 
@@ -269,19 +96,6 @@ add_newdoc('numpy', 'inf',
     inf
     >>> np.array([1]) / 0.
     array([ Inf])
-
-    """)
-
-add_newdoc('numpy', 'infty',
-    """
-    IEEE 754 floating point representation of (positive) infinity.
-
-    Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
-    `inf`. For more details, see `inf`.
-
-    See Also
-    --------
-    inf
 
     """)
 
@@ -367,25 +181,212 @@ add_newdoc('numpy', 'newaxis',
 
     """)
 
-add_newdoc('numpy', 'pi',
+add_newdoc('numpy', 'NZERO',
     """
-    ``pi = 3.1415926535897932384626433...``
+    IEEE 754 floating point representation of negative zero.
 
-    References
-    ----------
-    https://en.wikipedia.org/wiki/Pi
+    Returns
+    -------
+    y : float
+        A floating point representation of negative zero.
+
+    See Also
+    --------
+    PZERO : Defines positive zero.
+
+    isinf : Shows which elements are positive or negative infinity.
+
+    isposinf : Shows which elements are positive infinity.
+
+    isneginf : Shows which elements are negative infinity.
+
+    isnan : Shows which elements are Not a Number.
+
+    isfinite : Shows which elements are finite - not one of
+               Not a Number, positive infinity and negative infinity.
+
+    Notes
+    -----
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). Negative zero is considered to be a finite number.
+
+    Examples
+    --------
+    >>> np.NZERO
+    -0.0
+    >>> np.PZERO
+    0.0
+
+    >>> np.isfinite([np.NZERO])
+    array([ True])
+    >>> np.isnan([np.NZERO])
+    array([False])
+    >>> np.isinf([np.NZERO])
+    array([False])
 
     """)
 
-add_newdoc('numpy', 'euler_gamma',
+add_newdoc('numpy', 'PZERO',
     """
-    ``γ = 0.5772156649015328606065120900824024310421...``
+    IEEE 754 floating point representation of positive zero.
 
-    References
-    ----------
-    https://en.wikipedia.org/wiki/Euler-Mascheroni_constant
+    Returns
+    -------
+    y : float
+        A floating point representation of positive zero.
+
+    See Also
+    --------
+    NZERO : Defines negative zero.
+
+    isinf : Shows which elements are positive or negative infinity.
+
+    isposinf : Shows which elements are positive infinity.
+
+    isneginf : Shows which elements are negative infinity.
+
+    isnan : Shows which elements are Not a Number.
+
+    isfinite : Shows which elements are finite - not one of
+               Not a Number, positive infinity and negative infinity.
+
+    Notes
+    -----
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). Positive zero is considered to be a finite number.
+
+    Examples
+    --------
+    >>> np.PZERO
+    0.0
+    >>> np.NZERO
+    -0.0
+
+    >>> np.isfinite([np.PZERO])
+    array([ True])
+    >>> np.isnan([np.PZERO])
+    array([False])
+    >>> np.isinf([np.PZERO])
+    array([False])
 
     """)
+
+add_newdoc('numpy', 'NAN',
+    """
+    IEEE 754 floating point representation of Not a Number (NaN).
+
+    `NaN` and `NAN` are equivalent definitions of `nan`. Please use
+    `nan` instead of `NAN`.
+
+    See Also
+    --------
+    nan
+
+    """)
+
+add_newdoc('numpy', 'NaN',
+    """
+    IEEE 754 floating point representation of Not a Number (NaN).
+
+    `NaN` and `NAN` are equivalent definitions of `nan`. Please use
+    `nan` instead of `NaN`.
+
+    See Also
+    --------
+    nan
+
+    """)
+
+add_newdoc('numpy', 'NINF',
+    """
+    IEEE 754 floating point representation of negative infinity.
+
+    Returns
+    -------
+    y : float
+        A floating point representation of negative infinity.
+
+    See Also
+    --------
+    isinf : Shows which elements are positive or negative infinity
+
+    isposinf : Shows which elements are positive infinity
+
+    isneginf : Shows which elements are negative infinity
+
+    isnan : Shows which elements are Not a Number
+
+    isfinite : Shows which elements are finite (not one of Not a Number,
+    positive infinity and negative infinity)
+
+    Notes
+    -----
+    NumPy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+    Also that positive infinity is not equivalent to negative infinity. But
+    infinity is equivalent to positive infinity.
+
+    Examples
+    --------
+    >>> np.NINF
+    -inf
+    >>> np.log(0)
+    -inf
+
+    """)
+
+add_newdoc('numpy', 'PINF',
+    """
+    IEEE 754 floating point representation of (positive) infinity.
+
+    Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
+    `inf`. For more details, see `inf`.
+
+    See Also
+    --------
+    inf
+
+    """)
+
+add_newdoc('numpy', 'infty',
+    """
+    IEEE 754 floating point representation of (positive) infinity.
+
+    Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
+    `inf`. For more details, see `inf`.
+
+    See Also
+    --------
+    inf
+
+    """)
+
+add_newdoc('numpy', 'Inf',
+    """
+    IEEE 754 floating point representation of (positive) infinity.
+
+    Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
+    `inf`. For more details, see `inf`.
+
+    See Also
+    --------
+    inf
+
+    """)
+
+add_newdoc('numpy', 'Infinity',
+    """
+    IEEE 754 floating point representation of (positive) infinity.
+
+    Use `inf` because `Inf`, `Infinity`, `PINF` and `infty` are aliases for
+    `inf`. For more details, see `inf`.
+
+    See Also
+    --------
+    inf
+
+    """)
+
 
 if __doc__:
     constants_str = []
