@@ -576,6 +576,10 @@ npy_sinc@c@(@type@ x)
 	x = -x;
     }
 
+    /*
+     * Use the same argument reduction as `sinpi`; compare to the
+     * `sinpi` implementations in e.g. mpmath or Boost.
+     */
     r = npy_fmod@c@(x, 2);
     if (r < 0.5@c@) {
 	return npy_sin@c@(NPY_PI@c@*r) / (NPY_PI@c@*x);
