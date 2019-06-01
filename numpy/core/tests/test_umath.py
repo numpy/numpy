@@ -15,7 +15,7 @@ from numpy.testing import (
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
     _gen_alignment_data
-    )
+)
 
 def on_powerpc():
     """ True if we are running on a Power PC platform."""
@@ -1341,16 +1341,36 @@ class TestSinc:
         # Test a large zero
         assert_(ncu.sinc(1e10) == 0)
 
-    def test_real(self):
-        x = np.linspace(-5, 5, 100)
-        assert_allclose(ncu.sinc(x), ncu.sin(np.pi*x)/(np.pi*x), atol=1e-16)
+    @pytest.mark.parametrize('dtype', [np.float64, np.float32, np.float16])
+    def test_real(self, dtype):
+        x = np.linspace(-5, 5, 100, dtype=dtype)
+        # The naive implementation will have large absolute error
+        # around the zeros, so give a nonzero `atol` here.
+        assert_allclose(
+            ncu.sinc(x),
+            ncu.sin(np.pi*x)/(np.pi*x),
+            atol=np.finfo(dtype=dtype).eps,
+        )
 
-    def test_complex(self):
-        x = np.linspace(-5, 5, 100)
-        y = np.linspace(-5, 5, 100)
+    @pytest.mark.parametrize('dtype', [np.complex128, np.complex64])
+    def test_complex(self, dtype):
+        x = np.linspace(-5, 5, 100, dtype=dtype)
+        y = np.linspace(-5, 5, 100, dtype=dtype)
         x, y = np.meshgrid(x, y)
         z = x + 1j*y
         assert_allclose(ncu.sinc(z), ncu.sin(np.pi*z)/(np.pi*z))
+
+    def test_relative_error_near_zeros(self):
+        x = 2 + 0.1**np.arange(10, 15)
+        # Exact values generated from mpmath
+        exact = np.array([
+            5.00000041345185516e-11,
+            5.00000041367685459e-12,
+            5.00044450290920494e-13,
+            4.99600361081295452e-14,
+            5.10702591327569405e-15,
+        ])
+        assert_array_max_ulp(ncu.sinc(x), exact, maxulp=1)
 
 
 class TestSign(object):
