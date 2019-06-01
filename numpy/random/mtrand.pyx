@@ -4196,7 +4196,7 @@ power = _rand.power
 rand = _rand.rand
 randint = _rand.randint
 randn = _rand.randn
-random = _rand.random_sample
+random = _rand.random
 random_integers = _rand.random_integers
 random_sample = _rand.random_sample
 rayleigh = _rand.rayleigh
@@ -4261,6 +4261,7 @@ __all__ = [
     'rand',
     'randint',
     'randn',
+    'random',
     'random_integers',
     'random_sample',
     'ranf',
