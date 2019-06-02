@@ -1,4 +1,4 @@
- # Script to download Bazel binary directly onto a build machine.
+# Script to download Bazel binary directly onto a build machine.
 
 set -e
 
