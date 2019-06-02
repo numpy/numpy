@@ -700,7 +700,10 @@ def dstack(tup):
         # raise warning if necessary
         _arrays_for_stack_dispatcher(tup, stacklevel=2)
 
-    return _nx.concatenate([atleast_3d(_m) for _m in tup], 2)
+    arrs = atleast_3d(*tup)
+    if not isinstance(arrs, list):
+        arrs = [arrs]
+    return _nx.concatenate(arrs, 2)
 
 
 def _replace_zero_by_x_arrays(sub_arys):
