@@ -602,8 +602,10 @@ def filled(a, fill_value=None):
     ----------
     a : MaskedArray or array_like
         An input object.
-    fill_value : scalar, optional
-        Filling value. Default is None.
+    fill_value : array_like, optional. Can be
+        scalar or non-scalar. If non-scalar, the
+        resulting filled_array should be broadcastable
+        over input array. Default is None.
 
     Returns
     -------
@@ -626,6 +628,11 @@ def filled(a, fill_value=None):
 
     """
     if hasattr(a, 'filled'):
+        # NumPy 1.17.0, gh-4363
+        warnings.warn(
+            "Non-scalar arrays for fill values are deprecated. Use "
+            "arrays with scalar values instead",
+            DeprecationWarning, stacklevel=2)
         return a.filled(fill_value)
     elif isinstance(a, ndarray):
         # Should we check for contiguity ? and a.flags['CONTIGUOUS']:
@@ -3673,9 +3680,11 @@ class MaskedArray(ndarray):
 
         Parameters
         ----------
-        fill_value : scalar, optional
-            The value to use for invalid entries (None by default).
-            If None, the `fill_value` attribute of the array is used instead.
+        fill_value : array_like, optional
+            The value to use for invalid entries. Can be scalar or non-scalar.
+            If non-scalar, the resulting ndarray must be broadcastable over
+            input array. Default is None, in which case, the `fill_value`
+            attribute of the array is used instead.
 
         Returns
         -------
@@ -6220,9 +6229,11 @@ class mvoid(MaskedArray):
 
         Parameters
         ----------
-        fill_value : scalar, optional
-            The value to use for invalid entries (None by default).
-            If None, the `fill_value` attribute is used instead.
+        fill_value : array_like, optional
+            The value to use for invalid entries. Can be scalar or
+            non-scalar. If latter is the case, the filled_array should
+            be broadcastable over input array. Default is None, in
+            which case the `fill_value` attribute is used instead.
 
         Returns
         -------
