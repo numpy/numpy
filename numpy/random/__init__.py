@@ -141,9 +141,12 @@ __all__ = [
     'rand',
     'randint',
     'randn',
+    'random',
     'random_integers',
     'random_sample',
+    'ranf',
     'rayleigh',
+    'sample',
     'seed',
     'set_state',
     'shuffle',
@@ -175,10 +178,6 @@ from .mtrand import RandomState
 
 __all__ += ['Generator', 'DSFMT', 'MT19937', 'Philox', 'PCG64', 'PCG32',
             'ThreeFry', 'Xoshiro256', 'Xoshiro512', 'RandomState']
-
-# Some aliases:
-ranf = random = sample = random_sample
-__all__.extend(['ranf', 'random', 'sample'])
 
 
 def __RandomState_ctor():
