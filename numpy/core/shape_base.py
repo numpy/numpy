@@ -416,8 +416,9 @@ def stack(arrays, axis=0, out=None):
     return _nx.concatenate(expanded_arrays, axis=axis, out=out)
 
 
-# Internal functions to elimainate the overhead of repeated dispatch inside
-# np.block. Use getattr to protect against __array_function__ being disabled.
+# Internal functions to eliminate the overhead of repeated dispatch in one of
+# the two possible paths inside np.block.
+# Use getattr to protect against __array_function__ being disabled.
 _size = getattr(_nx.size, '__wrapped__', _nx.size)
 _ndim = getattr(_nx.ndim, '__wrapped__', _nx.ndim)
 _concatenate = getattr(_nx.concatenate, '__wrapped__', _nx.concatenate)
