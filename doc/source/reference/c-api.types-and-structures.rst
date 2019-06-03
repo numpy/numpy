@@ -530,20 +530,19 @@ PyArrayDescr_Type
         and ``is2`` *bytes*, respectively. This function requires
         behaved (though not necessarily contiguous) memory.
 
-    .. c:member:: int scanfunc(FILE* fd, void* ip , void* sep , void* arr)
+    .. c:member:: int scanfunc(FILE* fd, void* ip, void* arr)
 
         A pointer to a function that scans (scanf style) one element
         of the corresponding type from the file descriptor ``fd`` into
         the array memory pointed to by ``ip``. The array is assumed
-        to be behaved. If ``sep`` is not NULL, then a separator string
-        is also scanned from the file before returning. The last
-        argument ``arr`` is the array to be scanned into. A 0 is
-        returned if the scan is successful. A negative number
-        indicates something went wrong: -1 means the end of file was
-        reached before the separator string could be scanned, -4 means
-        that the end of file was reached before the element could be
-        scanned, and -3 means that the element could not be
-        interpreted from the format string. Requires a behaved array.
+        to be behaved. 
+        The last argument ``arr`` is the array to be scanned into.
+        Returns number of receiving arguments successfully assigned (which
+        may be zero in case a matching failure occurred before the first
+        receiving argument was assigned), or EOF if input failure occurs 
+        before the first receiving argument was assigned.
+        This function should be called without holding the Python GIL, and
+        has to grab it for error reporting.
 
     .. c:member:: int fromstr(char* str, void* ip, char** endptr, void* arr)
 
@@ -554,6 +553,8 @@ PyArrayDescr_Type
         string. The last argument ``arr`` is the array into which ip
         points (needed for variable-size data- types). Returns 0 on
         success or -1 on failure. Requires a behaved array.
+        This function should be called without holding the Python GIL, and
+        has to grab it for error reporting.
 
     .. c:member:: Bool nonzero(void* data, void* arr)
 
