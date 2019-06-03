@@ -33,7 +33,7 @@ sub-types).
 
     Returns a pointer to the dimensions/shape of the array. The
     number of elements matches the number of dimensions
-    of the array.
+    of the array. Can return ``NULL`` for 0-dimensional arrays.
 
 .. c:function:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
 
