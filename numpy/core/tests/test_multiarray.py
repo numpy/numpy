@@ -1488,6 +1488,10 @@ class TestZeroSizeFlexible(object):
             # viewing as any non-empty type gives an empty result
             assert_equal(zs.view((dt, 1)).shape, (0,))
 
+    def test_dumps(self):
+        zs = self._zeros(10, int)
+        assert_equal(zs, pickle.loads(zs.dumps()))
+
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             for dt in [bytes, np.void, unicode]:
