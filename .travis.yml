@@ -36,10 +36,10 @@ env:
                ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
     # Keep this Bazel version in sync with the `versions.check` directive
     # near the top of our WORKSPACE file.
-    # Grab the BAZEL_SHA256SUM from the Bazel releases page; e.g.:
-    # bazel-0.20.0-linux-x86_64.sha256
+    # Grab the BAZEL_MD5SUM from the Bazel releases page; e.g.:
+    # bazel-0.20.0-linux-x86_64.md5
     - BAZEL=0.22.0
-    - BAZEL_SHA256SUM=8474ed28ed4998e2f5671ddf3a9a80ae9e484a5de3b8b70c8b654c017c65d363           
+    - BAZEL_MD5SUM=8c8240b178a35c0f3c1bc03017550270          
 
 python:
   - 3.5
@@ -93,7 +93,7 @@ before_install:
   - ./tools/travis-before-install.sh
   - elapsed() { TZ=UTC printf "Time %(%T)T %s\n" "$SECONDS" "$*"; }
   - elapsed "before_install"
-  - ci/download_bazel.sh "${BAZEL}" "${BAZEL_SHA256SUM}" ~/bazel
+  - ci/download_bazel.sh "${BAZEL}" "${BAZEL_MD5SUM}" ~/bazel
   - sudo mv ~/bazel /usr/local/bin/bazel
   - cp ci/bazelrc ~/.bazelrc
   - elapsed "before_install (done)"
