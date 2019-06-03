@@ -8,7 +8,7 @@ die() {
 }
 
 if [ "$#" -ne 3 ]; then
-  die "Usage: ${0} <version> <sha256sum> <destination-file>"
+  die "Usage: ${0} <version> <md5sum> <destination-file>"
 fi
 
 version="$1"
@@ -23,7 +23,7 @@ github_url="https://github.com/bazelbuild/bazel/releases/download/${version}/baz
 
  for url in "${mirror_url}" "${github_url}"; do
   wget -t 3 -O "${temp_dest}" "${url}" \
-    && printf "%s  %s\n" "${checksum}" "${temp_dest}" | shasum -a 256 --check \
+    && printf "%s  %s\n" "${checksum}" "${temp_dest}" | md5 -a 128 --check \
   mv "${temp_dest}" "${dest}"
   break
 done
