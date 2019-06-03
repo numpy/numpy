@@ -1516,6 +1516,9 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         char *valbuffer, *indbuffer;
         int *swaps;
 
+        if (N == 0 || maxelsize == 0 || sizeof(npy_intp) == 0) {
+            goto fail;
+        }
         valbuffer = PyDataMem_NEW(N * maxelsize);
         if (valbuffer == NULL) {
             goto fail;

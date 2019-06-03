@@ -218,6 +218,7 @@ PyDataMem_NEW(size_t size)
 {
     void *result;
 
+    assert(size != 0);
     result = malloc(size);
     if (_PyDataMem_eventhook != NULL) {
         NPY_ALLOW_C_API_DEF
@@ -281,6 +282,7 @@ PyDataMem_RENEW(void *ptr, size_t size)
 {
     void *result;
 
+    assert(size != 0);
     result = realloc(ptr, size);
     if (result != ptr) {
         PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);

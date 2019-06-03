@@ -2033,6 +2033,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (!IsAligned(self) || swap || (len <= 1000)) {
 #endif
             npy_intp num = PyArray_NBYTES(self);
+            if (num == 0) {
+                Py_RETURN_NONE;
+            }
             fa->data = PyDataMem_NEW(num);
             if (PyArray_DATA(self) == NULL) {
                 Py_DECREF(rawdata);
@@ -2076,7 +2079,12 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
     else {
-        fa->data = PyDataMem_NEW(PyArray_NBYTES(self));
+        npy_intp num = PyArray_NBYTES(self);
+        int elsize = PyArray_DESCR(self)->elsize;
+        if (num == 0 || elsize == 0) {
+            Py_RETURN_NONE;
+        }
+        fa->data = PyDataMem_NEW(num);
         if (PyArray_DATA(self) == NULL) {
             return PyErr_NoMemory();
         }

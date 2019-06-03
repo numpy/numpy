@@ -3701,13 +3701,17 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
         }
     }
     if (num < 0) {
-        tmp = PyDataMem_RENEW(PyArray_DATA(r), PyArray_MAX(*nread,1)*dtype->elsize);
-        if (tmp == NULL) {
-            err = 1;
-        }
-        else {
-            PyArray_DIMS(r)[0] = *nread;
-            ((PyArrayObject_fields *)r)->data = tmp;
+        const size_t nsize = PyArray_MAX(*nread,1)*dtype->elsize;
+
+        if (nsize != 0) {
+            tmp = PyDataMem_RENEW(PyArray_DATA(r), nsize);
+            if (tmp == NULL) {
+                err = 1;
+            }
+            else {
+                PyArray_DIMS(r)[0] = *nread;
+                ((PyArrayObject_fields *)r)->data = tmp;
+            }
         }
     }
     NPY_END_ALLOW_THREADS;
@@ -4110,9 +4114,9 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
      * Realloc the data so that don't keep extra memory tied up
      * (assuming realloc is reasonably good about reusing space...)
      */
-    if (i == 0) {
+    if (i == 0 || elsize == 0) {
         /* The size cannot be zero for PyDataMem_RENEW. */
-        i = 1;
+        goto done;
     }
     new_data = PyDataMem_RENEW(PyArray_DATA(ret), i * elsize);
     if (new_data == NULL) {

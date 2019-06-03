@@ -802,6 +802,9 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
                     return obj;
                 }
             }
+            if (itemsize == 0) {
+                return obj;
+            }
             destptr = PyDataMem_NEW(itemsize);
             if (destptr == NULL) {
                 Py_DECREF(obj);
