@@ -127,6 +127,16 @@ or ``np.nan``) is now dropped.
 C API changes
 =============
 
+dimension or stride input arguments are now passed by ``npy_intp const*``
+-------------------------------------------------------------------------
+Previously these function arguments were declared as the more strict
+``npy_intp*``, which prevented the caller passing constant data.
+This change is backwards compatible, but now allows code like::
+
+    npy_intp const fixed_dims[] = {1, 2, 3};
+    // no longer complains that the const-qualifier is discarded
+    npy_intp size = PyArray_MultiplyList(fixed_dims, 3);
+
 
 New Features
 ============
@@ -205,11 +215,16 @@ divmod operation is now supported for two ``timedelta64`` operands
 The divmod operator now handles two ``np.timedelta64`` operands, with
 type signature mm->qm.
 
+``np.fromfile`` now takes an ``offset`` argument
+------------------------------------------------
+This function now takes an ``offset`` keyword argument for binary files,
+which specifics the offset (in bytes) from the file's current position.
+Defaults to 0.
+
 New mode "empty" for ``np.pad``
 -------------------------------
 This mode pads an array to a desired shape without initializing the new
 entries.
-
 
 ``np.empty_like`` and related functions now accept a ``shape`` argument
 -----------------------------------------------------------------------

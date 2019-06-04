@@ -708,7 +708,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
-    # original array for output formating
+    # original array for output formatting
     ox, oy = x, y
 
     def isnumber(x):
@@ -733,7 +733,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # (2) __eq__ on some ndarray subclasses returns Python booleans
         #     instead of element-wise comparisons, so we cast to bool_() and
         #     use isinstance(..., bool) checks
-        # (3) subclasses with bare-bones __array_function__ implemenations may
+        # (3) subclasses with bare-bones __array_function__ implementations may
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting such subclasses, but it's nice to
         # support them if possible.

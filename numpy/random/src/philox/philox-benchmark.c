@@ -5,7 +5,7 @@
  *
  *  gcc philox-benchmark.c -O3 -o philox-benchmark
  *
- * Requres the Random123 directory containing header files to be located in the
+ * Requires the Random123 directory containing header files to be located in the
  * same directory (not included).
  */
 #include "Random123/philox.h"

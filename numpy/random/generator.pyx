@@ -370,9 +370,6 @@ cdef class Generator:
             name, i.e., 'int64', 'int', etc, so byteorder is not available
             and a specific precision may have different C types depending
             on the platform. The default value is 'np.int'.
-
-            .. versionadded:: 1.11.0
-
         endpoint : bool, optional
             If true, sample from the interval [low, high] instead of the
             default [low, high)
@@ -440,7 +437,7 @@ cdef class Generator:
                              'when required.')
 
         # Implementation detail: the old API used a masked method to generate
-        # bounded uniform integers. Lemire's method is preferrable since it is
+        # bounded uniform integers. Lemire's method is preferable since it is
         # faster. randomgen allows a choice, we will always use the faster one.
         cdef bint _masked = True
 
@@ -507,8 +504,6 @@ cdef class Generator:
         choice(a, size=None, replace=True, p=None, axis=0):
 
         Generates a random sample from a given 1-D array
-
-        .. versionadded:: 1.7.0
 
         Parameters
         ----------

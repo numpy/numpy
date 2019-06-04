@@ -571,8 +571,7 @@ cdef class RandomState:
         --------
         random.random_integers : similar to `randint`, only for the closed
             interval [`low`, `high`], and 1 is the lowest value if `high` is
-            omitted. In particular, this other one is the one to use to generate
-            uniformly distributed discrete non-integers.
+            omitted.
 
         Examples
         --------
@@ -621,7 +620,7 @@ cdef class RandomState:
                           'ValueError', DeprecationWarning)
 
         # Implementation detail: the use a masked method to generate
-        # bounded uniform integers. Lemire's method is preferrable since it is
+        # bounded uniform integers. Lemire's method is preferable since it is
         # faster. randomgen allows a choice, we will always use the slower but
         # backward compatible one.
         cdef bint _masked = True
@@ -808,7 +807,9 @@ cdef class RandomState:
                 cdf /= cdf[-1]
                 uniform_samples = self.random_sample(shape)
                 idx = cdf.searchsorted(uniform_samples, side='right')
-                idx = np.array(idx, copy=False)  # searchsorted returns a scalar
+                # searchsorted returns a scalar
+                # force cast to int for LLP64
+                idx = np.array(idx, copy=False).astype(int, casting='unsafe')
             else:
                 idx = self.randint(0, pop_size, size=shape)
         else:
@@ -823,7 +824,7 @@ cdef class RandomState:
                     raise ValueError("Fewer non-zero entries in p than size")
                 n_uniq = 0
                 p = p.copy()
-                found = np.zeros(shape, dtype=np.int64)
+                found = np.zeros(shape, dtype=int)
                 flat_found = found.ravel()
                 while n_uniq < size:
                     x = self.rand(size - n_uniq)
@@ -4196,7 +4197,7 @@ power = _rand.power
 rand = _rand.rand
 randint = _rand.randint
 randn = _rand.randn
-random = _rand.random_sample
+random = _rand.random
 random_integers = _rand.random_integers
 random_sample = _rand.random_sample
 rayleigh = _rand.rayleigh
@@ -4261,6 +4262,7 @@ __all__ = [
     'rand',
     'randint',
     'randn',
+    'random',
     'random_integers',
     'random_sample',
     'ranf',

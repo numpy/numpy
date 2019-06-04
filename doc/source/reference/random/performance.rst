@@ -72,3 +72,72 @@ performance was computed using a geometric mean.
 .. note::
 
    All timings were taken using Linux on a i5-3570 processor.
+
+Performance on different Operating Systems
+******************************************
+Performance differs across platforms due to compiler and hardware availability
+(e.g., register width) differences. The default bit generator has been chosen
+to perform well on 64-bit platforms.  Performance on 32-bit operating systems
+is very different.
+
+The values reported are normalized relative to the speed of MT19937 in
+each table. A value of 100 indicates that the performance matches the MT19937.
+Higher values indicate improved performance. These values cannot be compared
+across tables.
+
+64-bit Linux
+~~~~~~~~~~~~
+
+===================  =======  =========  =======  ========  ==========  ============
+Distribution           DSFMT    MT19937    PCG64    Philox    ThreeFry    Xoshiro256
+===================  =======  =========  =======  ========  ==========  ============
+32-bit Unsigned Int     99.3        100    113.9      72.1        48.3         117.1
+64-bit Unsigned Int    105.7        100    143.3      89.7        48.1         161.7
+Uniform                222.1        100    181.5      90.8        59.9         204.7
+Exponential            110.8        100    145.5      92.5        55.0         177.1
+Normal                 113.2        100    121.4      98.3        71.9         162.0
+**Overall**            123.9        100    139.3      88.2        56.0         161.9
+===================  =======  =========  =======  ========  ==========  ============
+
+
+64-bit Windows
+~~~~~~~~~~~~~~
+The performance on 64-bit Linux and 64-bit Windows is broadly similar.
+
+
+===================  =======  =========  =======  ========  ==========  ============
+Distribution           DSFMT    MT19937    PCG64    Philox    ThreeFry    Xoshiro256
+===================  =======  =========  =======  ========  ==========  ============
+32-bit Unsigned Int    122.8        100    134.9      44.1        72.3         133.1
+64-bit Unsigned Int    130.4        100    162.7      41.0        77.7         142.3
+Uniform                273.2        100    200.0      44.8        84.6         175.8
+Exponential            135.0        100    167.8      47.4        84.5         166.9
+Normal                 115.3        100    135.6      60.3        93.6         169.6
+**Overall**            146.7        100    158.4      47.1        82.2         156.5
+===================  =======  =========  =======  ========  ==========  ============
+
+32-bit Windows
+~~~~~~~~~~~~~~
+
+The performance of 64-bit generators on 32-bit Windows is much lower than on 64-bit
+operating systems due to register width. DSFMT uses SSE2 when available, and so is less
+affected by the size of the operating system's register. MT19937, the generator that has been
+in NumPy since 2005, operates on 32-bit integers and so is close to DSFMT.
+
+===================  =======  =========  =======  ========  ==========  ============
+Distribution           DSFMT    MT19937    PCG64    Philox    ThreeFry    Xoshiro256
+===================  =======  =========  =======  ========  ==========  ============
+32-bit Unsigned Int    110.9        100     30.6      28.1        29.2          74.4
+64-bit Unsigned Int    104.7        100     24.2      23.7        22.7          72.7
+Uniform                247.0        100     26.7      28.4        27.8          78.8
+Exponential            110.1        100     32.1      32.6        30.5          89.6
+Normal                 107.2        100     36.3      37.5        35.2          93.0
+**Overall**            127.6        100     29.7      29.7        28.8          81.3
+===================  =======  =========  =======  ========  ==========  ============
+
+
+.. note::
+
+   Linux timings used Ubuntu 18.04 and GCC 7.4.  Windows timings were made on Windows 10
+   using Microsoft C/C++ Optimizing Compiler Version 19 (Visual Studio 2015). All timings
+   were produced on a i5-3570 processor.
