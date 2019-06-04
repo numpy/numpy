@@ -328,6 +328,11 @@ concatenation.
 In some cases where ``np.interp`` would previously return ``np.nan``, it now
 returns an appropriate infinity.
 
+Pathlib support for ``np.fromfile``, ``ndarray.tofile`` and ``ndarray.dump``
+----------------------------------------------------------------------------
+``np.fromfile``, ``np.ndarray.tofile`` and ``np.ndarray.dump`` now support
+the `pathlib.Path` type for the ``file``/``fid`` parameter.
+
 Specialized ``np.isnan``, ``np.isinf``, and ``np.isfinite`` ufuncs for bool and int types
 -----------------------------------------------------------------------------------------
 The boolean and integer types are incapable of storing ``np.nan`` and
