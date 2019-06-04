@@ -779,7 +779,9 @@ cdef class RandomState:
                 if np.issubdtype(p.dtype, np.floating):
                     atol = max(atol, np.sqrt(np.finfo(p.dtype).eps))
 
-            p = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
+            p = <np.ndarray>np.PyArray_FROM_OTF(
+                p, np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS
+            )
             pix = <double*>np.PyArray_DATA(p)
 
             if p.ndim != 1:
