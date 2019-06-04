@@ -459,6 +459,10 @@ class TestRandomDist(object):
         p = [None, None, None]
         assert_raises(ValueError, np.random.choice, a, p=p)
 
+    def test_choice_probas_not_contiguous(self):
+        p = np.repeat(np.array([[0.1, 0, 0.3, 0.6, 0]]).T, 3, axis=1)                        
+        random.choice(5, 3, p=p[:, 1])
+
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
