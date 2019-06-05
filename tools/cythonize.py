@@ -52,7 +52,7 @@ except NameError:
 # Rules
 #
 def process_pyx(fromfile, tofile):
-    flags = ['--fast-fail']
+    flags = ['-3', '--fast-fail']
     if tofile.endswith('.cxx'):
         flags += ['--cplus']
 
@@ -99,6 +99,17 @@ def process_tempita_pyx(fromfile, tofile):
     process_pyx(pyxfile, tofile)
 
 
+def process_tempita_pyd(fromfile, tofile):
+    import npy_tempita as tempita
+
+    assert fromfile.endswith('.pxd.in')
+    assert tofile.endswith('.pxd')
+    with open(fromfile, "r") as f:
+        tmpl = f.read()
+    pyxcontent = tempita.sub(tmpl)
+    with open(tofile, "w") as f:
+        f.write(pyxcontent)
+
 def process_tempita_pxi(fromfile, tofile):
     import npy_tempita as tempita
 
@@ -110,10 +121,24 @@ def process_tempita_pxi(fromfile, tofile):
     with open(tofile, "w") as f:
         f.write(pyxcontent)
 
+def process_tempita_pxd(fromfile, tofile):
+    import npy_tempita as tempita
+
+    assert fromfile.endswith('.pxd.in')
+    assert tofile.endswith('.pxd')
+    with open(fromfile, "r") as f:
+        tmpl = f.read()
+    pyxcontent = tempita.sub(tmpl)
+    with open(tofile, "w") as f:
+        f.write(pyxcontent)
+
 rules = {
-    # fromext : function
-    '.pyx' : process_pyx,
-    '.pyx.in' : process_tempita_pyx
+    # fromext : function, toext
+    '.pyx' : (process_pyx, '.c'),
+    '.pyx.in' : (process_tempita_pyx, '.c'),
+    '.pxi.in' : (process_tempita_pxi, '.pxi'),
+    '.pxd.in' : (process_tempita_pxd, '.pxd'),
+    '.pyd.in' : (process_tempita_pyd, '.pyd'),
     }
 #
 # Hash db
@@ -179,38 +204,32 @@ def process(path, fromfile, tofile, processor_function, hash_db):
 
 def find_process_files(root_dir):
     hash_db = load_hashes(HASH_FILE)
-    for cur_dir, dirs, files in os.walk(root_dir):
-        # .pxi or .pxi.in files are most likely dependencies for
-        # .pyx files, so we need to process them first
-        files.sort(key=lambda name: (name.endswith('.pxi') or
-                                     name.endswith('.pxi.in')),
-                   reverse=True)
+    files  = [x for x in os.listdir(root_dir) if not os.path.isdir(x)]
+    # .pxi or .pxi.in files are most likely dependencies for
+    # .pyx files, so we need to process them first
+    files.sort(key=lambda name: (name.endswith('.pxi') or
+                                 name.endswith('.pxi.in') or
+                                 name.endswith('.pxd.in')),
+               reverse=True)
 
-        for filename in files:
-            in_file = os.path.join(cur_dir, filename + ".in")
-            if filename.endswith('.pyx') and os.path.isfile(in_file):
-                continue
-            elif filename.endswith('.pxi.in'):
-                toext = '.pxi'
-                fromext = '.pxi.in'
+    for filename in files:
+        in_file = os.path.join(root_dir, filename + ".in")
+        for fromext, value in rules.items():
+            if filename.endswith(fromext):
+                if not value:
+                    break
+                function, toext = value
+                if toext == '.c':
+                    with open(os.path.join(root_dir, filename), 'rb') as f:
+                        data = f.read()
+                        m = re.search(br"^\s*#\s*distutils:\s*language\s*=\s*c\+\+\s*$", data, re.I|re.M)
+                        if m:
+                            toext = ".cxx"
                 fromfile = filename
-                function = process_tempita_pxi
                 tofile = filename[:-len(fromext)] + toext
-                process(cur_dir, fromfile, tofile, function, hash_db)
+                process(root_dir, fromfile, tofile, function, hash_db)
                 save_hashes(hash_db, HASH_FILE)
-            else:
-                for fromext, function in rules.items():
-                    if filename.endswith(fromext):
-                        toext = ".c"
-                        with open(os.path.join(cur_dir, filename), 'rb') as f:
-                            data = f.read()
-                            m = re.search(br"^\s*#\s*distutils:\s*language\s*=\s*c\+\+\s*$", data, re.I|re.M)
-                            if m:
-                                toext = ".cxx"
-                        fromfile = filename
-                        tofile = filename[:-len(fromext)] + toext
-                        process(cur_dir, fromfile, tofile, function, hash_db)
-                        save_hashes(hash_db, HASH_FILE)
+                break
 
 def main():
     try:

@@ -20,7 +20,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install cython sphinx==1.8.5 matplotlib
+            pip install cython sphinx==1.8.5 matplotlib ipython
             sudo apt-get update
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
 

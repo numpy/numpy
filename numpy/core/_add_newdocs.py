@@ -1142,7 +1142,7 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
 
 add_newdoc('numpy.core.multiarray', 'fromfile',
     """
-    fromfile(file, dtype=float, count=-1, sep='')
+    fromfile(file, dtype=float, count=-1, sep='', offset=0)
 
     Construct an array from data in a text or binary file.
 
@@ -1152,8 +1152,12 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
 
     Parameters
     ----------
-    file : file or str
+    file : file or str or Path
         Open file object or filename.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
+
     dtype : data-type
         Data type of the returned array.
         For binary files, it is used to determine the size and byte-order
@@ -1167,6 +1171,11 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
         Spaces (" ") in the separator match zero or more whitespace characters.
         A separator consisting only of spaces must match at least one
         whitespace.
+    offset : int
+        The offset (in bytes) from the file's current position. Defaults to 0.
+        Only permitted for binary files.
+
+        .. versionadded:: 1.17.0
 
     See also
     --------
@@ -2771,7 +2780,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('choose',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('clip',
     """
-    a.clip(min=None, max=None, out=None)
+    a.clip(min=None, max=None, out=None, **kwargs)
 
     Return an array whose values are limited to ``[min, max]``.
     One of max or min must be given.
@@ -2957,8 +2966,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
 
     Parameters
     ----------
-    file : str
+    file : str or Path
         A string naming the dump file.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
 
     """))
 
@@ -4004,8 +4016,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
 
     Parameters
     ----------
-    fid : file or str
+    fid : file or str or Path
         An open file object, or a string containing a filename.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
+
     sep : str
         Separator between array items for text output.
         If "" (empty), a binary file is written, equivalent to
@@ -4618,10 +4634,12 @@ add_newdoc('numpy.core', 'ufunc',
         number of outputs; use `None` for uninitialized outputs to be
         allocated by the ufunc.
     where : array_like, optional
-        Values of True indicate to calculate the ufunc at that position, values
-        of False indicate to leave the value in the output alone.  Note that if
-        an uninitialized return array is created via the default ``out=None``,
-        then the elements where the values are False will remain uninitialized.
+        This condition is broadcast over the input. At locations where the
+        condition is True, the `out` array will be set to the ufunc result.
+        Elsewhere, the `out` array will retain its original value.
+        Note that if an uninitialized `out` array is created via the default
+        ``out=None``, locations within it where the condition is False will
+        remain uninitialized.
     **kwargs
         For other keyword-only arguments, see the :ref:`ufunc docs <ufuncs.kwargs>`.
 

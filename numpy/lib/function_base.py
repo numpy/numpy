@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 try:
-    # Accessing collections abstact classes from collections
+    # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
     import collections.abc as collections_abc
 except ImportError:
@@ -682,7 +682,7 @@ def select(condlist, choicelist, default=0):
         # 2014-02-24, 1.9
         warnings.warn("select with an empty condition list is not possible"
                       "and will be deprecated",
-                      DeprecationWarning, stacklevel=2)
+                      DeprecationWarning, stacklevel=3)
         return np.asarray(default)[()]
 
     choicelist = [np.asarray(choice) for choice in choicelist]
@@ -717,7 +717,7 @@ def select(condlist, choicelist, default=0):
         msg = "select condlists containing integer ndarrays is deprecated " \
             "and will be removed in the future. Use `.astype(bool)` to " \
             "convert to bools."
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        warnings.warn(msg, DeprecationWarning, stacklevel=3)
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -2443,7 +2443,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     if fact <= 0:
         warnings.warn("Degrees of freedom <= 0 for slice",
-                      RuntimeWarning, stacklevel=2)
+                      RuntimeWarning, stacklevel=3)
         fact = 0.0
 
     X -= avg[:, None]
@@ -2522,7 +2522,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
     if bias is not np._NoValue or ddof is not np._NoValue:
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
-                      DeprecationWarning, stacklevel=2)
+                      DeprecationWarning, stacklevel=3)
     c = cov(x, y, rowvar)
     try:
         d = diag(c)
@@ -4304,7 +4304,7 @@ def delete(arr, obj, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
-            "from delete and raise an error", DeprecationWarning, stacklevel=2)
+            "from delete and raise an error", DeprecationWarning, stacklevel=3)
         if wrap:
             return wrap(arr)
         else:
@@ -4341,7 +4341,7 @@ def delete(arr, obj, axis=None):
         else:
             slobj[axis] = slice(None, start)
             new[tuple(slobj)] = arr[tuple(slobj)]
-        # copy end chunck
+        # copy end chunk
         if stop == N:
             pass
         else:
@@ -4373,7 +4373,7 @@ def delete(arr, obj, axis=None):
     if obj.dtype == bool:
         warnings.warn("in the future insert will treat boolean arrays and "
                       "array-likes as boolean index instead of casting it "
-                      "to integer", FutureWarning, stacklevel=2)
+                      "to integer", FutureWarning, stacklevel=3)
         obj = obj.astype(intp)
     if isinstance(_obj, (int, long, integer)):
         # optimization for a single value
@@ -4401,7 +4401,7 @@ def delete(arr, obj, axis=None):
             # 2013-09-24, 1.9
             warnings.warn(
                 "using a non-integer array as obj in delete will result in an "
-                "error in the future", DeprecationWarning, stacklevel=2)
+                "error in the future", DeprecationWarning, stacklevel=3)
             obj = obj.astype(intp)
         keep = ones(N, dtype=bool)
 
@@ -4412,13 +4412,13 @@ def delete(arr, obj, axis=None):
             warnings.warn(
                 "in the future out of bounds indices will raise an error "
                 "instead of being ignored by `numpy.delete`.",
-                DeprecationWarning, stacklevel=2)
+                DeprecationWarning, stacklevel=3)
             obj = obj[inside_bounds]
         positive_indices = obj >= 0
         if not positive_indices.all():
             warnings.warn(
                 "in the future negative indices will not be ignored by "
-                "`numpy.delete`.", FutureWarning, stacklevel=2)
+                "`numpy.delete`.", FutureWarning, stacklevel=3)
             obj = obj[positive_indices]
 
         keep[obj, ] = False
@@ -4543,7 +4543,7 @@ def insert(arr, obj, values, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "in the future the special handling of scalars will be removed "
-            "from insert and raise an error", DeprecationWarning, stacklevel=2)
+            "from insert and raise an error", DeprecationWarning, stacklevel=3)
         arr = arr.copy(order=arrorder)
         arr[...] = values
         if wrap:
@@ -4567,7 +4567,7 @@ def insert(arr, obj, values, axis=None):
             warnings.warn(
                 "in the future insert will treat boolean arrays and "
                 "array-likes as a boolean index instead of casting it to "
-                "integer", FutureWarning, stacklevel=2)
+                "integer", FutureWarning, stacklevel=3)
             indices = indices.astype(intp)
             # Code after warning period:
             #if obj.ndim != 1:
@@ -4617,7 +4617,7 @@ def insert(arr, obj, values, axis=None):
         # 2013-09-24, 1.9
         warnings.warn(
             "using a non-integer array as obj in insert will result in an "
-            "error in the future", DeprecationWarning, stacklevel=2)
+            "error in the future", DeprecationWarning, stacklevel=3)
         indices = indices.astype(intp)
 
     indices[indices < 0] += N

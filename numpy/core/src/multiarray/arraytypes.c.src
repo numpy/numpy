@@ -2260,7 +2260,7 @@ VOID_copyswapn (char *dst, npy_intp dstride, char *src, npy_intp sstride,
         char *dstptr, *srcptr;
         /*
          * In certain cases subarray copy can be optimized. This is when
-         * swapping is unecessary and the subarrays data type can certainly
+         * swapping is unnecessary and the subarrays data type can certainly
          * be simply copied (no object, fields, subarray, and not a user dtype).
          */
         npy_bool can_optimize_subarray = (!swap &&
@@ -2347,7 +2347,7 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
         int subitemsize;
         /*
          * In certain cases subarray copy can be optimized. This is when
-         * swapping is unecessary and the subarrays data type can certainly
+         * swapping is unnecessary and the subarrays data type can certainly
          * be simply copied (no object, fields, subarray, and not a user dtype).
          */
         npy_bool can_optimize_subarray = (!swap &&
@@ -3810,176 +3810,6 @@ static void
 
 /*
  *****************************************************************************
- **                               FASTCLIP                                  **
- *****************************************************************************
- */
-
-#define _LESS_THAN(a, b) ((a) < (b))
-#define _GREATER_THAN(a, b) ((a) > (b))
-
-/*
- * In fastclip, 'b' was already checked for NaN, so the half comparison
- * only needs to check 'a' for NaN.
- */
-
-#define _HALF_LESS_THAN(a, b) (!npy_half_isnan(a) && npy_half_lt_nonan(a, b))
-#define _HALF_GREATER_THAN(a, b) (!npy_half_isnan(a) && npy_half_lt_nonan(b, a))
-
-/**begin repeat
- *
- * #name = BOOL,
- *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *         LONG, ULONG, LONGLONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *         DATETIME, TIMEDELTA#
- * #type = npy_bool,
- *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_longdouble,
- *         npy_datetime, npy_timedelta#
- * #isfloat = 0*11, 1*4, 0*2#
- * #isnan = nop*11, npy_half_isnan, npy_isnan*3, nop*2#
- * #lt = _LESS_THAN*11, _HALF_LESS_THAN, _LESS_THAN*5#
- * #gt = _GREATER_THAN*11, _HALF_GREATER_THAN, _GREATER_THAN*5#
- */
-static void
-@name@_fastclip(@type@ *in, npy_intp ni, @type@ *min, @type@ *max, @type@ *out)
-{
-    npy_intp i;
-    @type@ max_val = 0, min_val = 0;
-
-    if (max != NULL) {
-        max_val = *max;
-#if @isfloat@
-        /* NaNs result in no clipping, so optimize the case away */
-        if (@isnan@(max_val)) {
-            if (min == NULL) {
-                memmove(out, in, ni * sizeof(@type@));
-                return;
-            }
-            max = NULL;
-        }
-#endif
-    }
-    if (min != NULL) {
-        min_val = *min;
-#if @isfloat@
-        if (@isnan@(min_val)) {
-            if (max == NULL) {
-                memmove(out, in, ni * sizeof(@type@));
-                return;
-            }
-            min = NULL;
-        }
-#endif
-    }
-    if (max == NULL) {
-        for (i = 0; i < ni; i++) {
-            if (@lt@(in[i], min_val)) {
-                out[i] = min_val;
-            }
-            else {
-                out[i] = in[i];
-            }
-        }
-    }
-    else if (min == NULL) {
-        for (i = 0; i < ni; i++) {
-            if (@gt@(in[i], max_val)) {
-                out[i] = max_val;
-            }
-            else {
-                out[i] = in[i];
-            }
-        }
-    }
-    else {
-        /*
-         * Visual Studio 2015 loop vectorizer handles NaN in an unexpected
-         * manner, see: https://github.com/numpy/numpy/issues/7601
-         */
-        #if (_MSC_VER == 1900)
-        #pragma loop( no_vector )
-        #endif
-        for (i = 0; i < ni; i++) {
-            if (@lt@(in[i], min_val)) {
-                out[i]   = min_val;
-            }
-            else if (@gt@(in[i], max_val)) {
-                out[i]   = max_val;
-            }
-            else {
-                out[i] = in[i];
-            }
-        }
-    }
-}
-/**end repeat**/
-
-#undef _LESS_THAN
-#undef _GREATER_THAN
-#undef _HALF_LESS_THAN
-#undef _HALF_GREATER_THAN
-
-/**begin repeat
- *
- * #name = CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
- */
-static void
-@name@_fastclip(@type@ *in, npy_intp ni, @type@ *min, @type@ *max, @type@ *out)
-{
-    npy_intp i;
-    @type@ max_val, min_val;
-
-    if (max != NULL) {
-        max_val = *max;
-    }
-    if (min != NULL) {
-        min_val = *min;
-    }
-    if (max == NULL) {
-        for (i = 0; i < ni; i++) {
-            if (PyArray_CLT(in[i],min_val)) {
-                out[i] = min_val;
-            }
-            else {
-                out[i] = in[i];
-            }
-        }
-    }
-    else if (min == NULL) {
-        for (i = 0; i < ni; i++) {
-            if (PyArray_CGT(in[i], max_val)) {
-                out[i] = max_val;
-            }
-            else {
-                out[i] = in[i];
-            }
-        }
-    }
-    else {
-        for (i = 0; i < ni; i++) {
-            if (PyArray_CLT(in[i], min_val)) {
-                out[i] = min_val;
-            }
-            else if (PyArray_CGT(in[i], max_val)) {
-                out[i] = max_val;
-            }
-            else {
-                out[i] = in[i];
-            }
-        }
-    }
-}
-
-/**end repeat**/
-
-#define OBJECT_fastclip NULL
-
-
-/*
- *****************************************************************************
  **                              FASTPUTMASK                                **
  *****************************************************************************
  */
@@ -4501,7 +4331,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_ScalarKindFunc*)NULL,
     NULL,
     NULL,
-    (PyArray_FastClipFunc*)@from@_fastclip,
+    (PyArray_FastClipFunc*)NULL,
     (PyArray_FastPutmaskFunc*)@from@_fastputmask,
     (PyArray_FastTakeFunc*)@from@_fasttake,
     (PyArray_ArgFunc*)@from@_argmin

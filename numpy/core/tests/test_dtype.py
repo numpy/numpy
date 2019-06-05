@@ -409,7 +409,10 @@ class TestSubarray(object):
     def test_shape_equal(self):
         """Test some data types that are equal"""
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', tuple())))
-        assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
+        # FutureWarning during deprecation period; after it is passed this
+        # should instead check that "(1)f8" == "1f8" == ("f8", 1).
+        with pytest.warns(FutureWarning):
+            assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
         assert_dtype_equal(np.dtype((int, 2)), np.dtype((int, (2,))))
         assert_dtype_equal(np.dtype(('<f4', (3, 2))), np.dtype(('<f4', (3, 2))))
         d = ([('a', 'f4', (1, 2)), ('b', 'f8', (3, 1))], (3, 2))
@@ -498,7 +501,7 @@ class TestSubarray(object):
 
     def test_alignment(self):
         #Check that subarrays are aligned
-        t1 = np.dtype('1i4', align=True)
+        t1 = np.dtype('(1,)i4', align=True)
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
 
@@ -651,7 +654,7 @@ class TestStructuredDtypeSparseFields(object):
                                     'offsets':[4]}, (2, 3))])
 
     @pytest.mark.xfail(reason="inaccessible data is changed see gh-12686.")
-    @pytest.mark.valgrind_error(reason="reads from unitialized buffers.")
+    @pytest.mark.valgrind_error(reason="reads from uninitialized buffers.")
     def test_sparse_field_assignment(self):
         arr = np.zeros(3, self.dtype)
         sparse_arr = arr.view(self.sparse_dtype)

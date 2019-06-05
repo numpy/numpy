@@ -1279,7 +1279,7 @@ def searchsorted(a, v, side='left', sorter=None):
     As of NumPy 1.4.0 `searchsorted` works with real/complex arrays containing
     `nan` values. The enhanced sort order is documented in `sort`.
 
-    This function is a faster version of the builtin python `bisect.bisect_left`
+    This function uses the same algorithm as the builtin python `bisect.bisect_left`
     (``side='left'``) and `bisect.bisect_right` (``side='right'``) functions,
     which is also vectorized in the `v` argument.
 
@@ -1795,6 +1795,11 @@ def nonzero(a):
         Equivalent ndarray method.
     count_nonzero :
         Counts the number of non-zero elements in the input array.
+        
+    Notes
+    -----
+    To obtain the non-zero values, it is recommended to use ``x[x.astype(bool)]`` 
+    which will correctly handle 0-d arrays. 
 
     Examples
     --------
@@ -1961,12 +1966,12 @@ def compress(condition, a, axis=None, out=None):
     return _wrapfunc(a, 'compress', condition, axis=axis, out=out)
 
 
-def _clip_dispatcher(a, a_min, a_max, out=None):
+def _clip_dispatcher(a, a_min, a_max, out=None, **kwargs):
     return (a, a_min, a_max)
 
 
 @array_function_dispatch(_clip_dispatcher)
-def clip(a, a_min, a_max, out=None):
+def clip(a, a_min, a_max, out=None, **kwargs):
     """
     Clip (limit) the values in an array.
 
@@ -1974,6 +1979,9 @@ def clip(a, a_min, a_max, out=None):
     the interval edges.  For example, if an interval of ``[0, 1]``
     is specified, values smaller than 0 become 0, and values larger
     than 1 become 1.
+
+    Equivalent to but faster than ``np.maximum(a_min, np.minimum(a, a_max))``.
+    No check is performed to ensure ``a_min < a_max``.
 
     Parameters
     ----------
@@ -1992,6 +2000,11 @@ def clip(a, a_min, a_max, out=None):
         The results will be placed in this array. It may be the input
         array for in-place clipping.  `out` must be of the right shape
         to hold the output.  Its type is preserved.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -2020,7 +2033,7 @@ def clip(a, a_min, a_max, out=None):
     array([3, 4, 2, 3, 4, 5, 6, 7, 8, 8])
 
     """
-    return _wrapfunc(a, 'clip', a_min, a_max, out=out)
+    return _wrapfunc(a, 'clip', a_min, a_max, out=out, **kwargs)
 
 
 def _sum_dispatcher(a, axis=None, dtype=None, out=None, keepdims=None,
@@ -2137,7 +2150,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         warnings.warn(
             "Calling np.sum(generator) is deprecated, and in the future will give a different result. "
             "Use np.sum(np.fromiter(generator)) or the python sum builtin instead.",
-            DeprecationWarning, stacklevel=2)
+            DeprecationWarning, stacklevel=3)
 
         res = _sum_(a)
         if out is not None:
@@ -3561,5 +3574,5 @@ def rank(a):
     warnings.warn(
         "`rank` is deprecated; use the `ndim` attribute or function instead. "
         "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
-        VisibleDeprecationWarning, stacklevel=2)
+        VisibleDeprecationWarning, stacklevel=3)
     return ndim(a)

@@ -17,6 +17,7 @@ from numpy.testing import (
     clear_and_catch_warnings, suppress_warnings, assert_string_equal, assert_,
     tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
     )
+from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
 
 
 class _GenericTest(object):
@@ -179,6 +180,8 @@ class TestArrayEqual(_GenericTest):
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)
 
+    @pytest.mark.skipif(
+        not ARRAY_FUNCTION_ENABLED, reason='requires __array_function__')
     def test_subclass_that_does_not_implement_npall(self):
         class MyArray(np.ndarray):
             def __array_function__(self, *args, **kwargs):
@@ -342,6 +345,13 @@ class TestEqual(TestArrayEqual):
             assert_equal(msg, msg_reference)
         except AssertionError:
             assert_equal(msg2, msg_reference)
+
+    def test_object(self):
+        #gh-12942
+        import datetime
+        a = np.array([datetime.datetime(2000, 1, 1),
+                      datetime.datetime(2000, 1, 2)])
+        self._test_not_equal(a, a[::-1])
 
 
 class TestArrayAlmostEqual(_GenericTest):

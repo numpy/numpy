@@ -5,7 +5,7 @@
 # issues with the amendments to PYTHONPATH and install paths (see DIST_VARS).
 
 # Use explicit "version_info" indexing since make cannot handle colon characters, and
-# evaluate it now to allow easier debugging when printing the varaible
+# evaluate it now to allow easier debugging when printing the variable
 
 PYVER:=$(shell python3 -c 'from sys import version_info as v; print("{0}.{1}".format(v[0], v[1]))')
 PYTHON = python$(PYVER)
@@ -46,7 +46,8 @@ help:
 	@echo "  upload USERNAME=... RELEASE=... to upload built docs to docs.scipy.org"
 
 clean:
-	-rm -rf build/* source/reference/generated
+	-rm -rf build/* 
+	find . -name generated -type d -prune -exec rm -rf "{}" ";"
 
 version-check:
 ifeq "$(GITVER)" "Unknown"

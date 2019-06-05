@@ -33,10 +33,30 @@ The internal use of these functions has been refactored and there are better
 alternatives. Relace ``exec_command`` with `subprocess.Popen` and
 ``temp_file_name`` with `tempfile.mkstemp`.
 
+Writeable flag of C-API wrapped arrays
+--------------------------------------
+When an array is created from the C-API to wrap a pointer to data, the only
+indication we have of the read-write nature of the data is the ``writeable``
+flag set during creation. It is dangerous to force the flag to writeable.
+In the future it will not be possible to switch the writeable flag to ``True``
+from python.
+This deprecation should not affect many users since arrays created in such
+a manner are very rare in practice and only available through the NumPy C-API.
+
 
 Future Changes
 ==============
 
+Shape-1 fields in dtypes won't be collapsed to scalars in a future version
+--------------------------------------------------------------------------
+
+Currently, a field specified as ``[(name, dtype, 1)]`` or ``"1type"`` is
+interpreted as a scalar field (i.e., the same as ``[(name, dtype)]`` or
+``[(name, dtype, ()]``). This now raises a FutureWarning; in a future version,
+it will be interpreted as a shape-(1,) field, i.e. the same as ``[(name,
+dtype, (1,))]`` or ``"(1,)type"`` (consistently with ``[(name, dtype, n)]``
+/ ``"ntype"`` with ``n>1``, which is already equivalent to ``[(name, dtype,
+(n,)]`` / ``"(n,)type"``).
 
 Expired deprecations
 ====================
@@ -65,6 +85,16 @@ zero::
 
    >>> np.zeros(10)//1
    array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+
+``MaskedArray.mask`` now returns a view of the mask, not the mask itself
+------------------------------------------------------------------------
+Returning the mask itself was unsafe, as it could be reshaped in place which
+would violate expectations of the masked array code. It's behavior is now
+consistent with the ``.data`` attribute, which also returns a view.
+
+The underlying mask can still be accessed with ``._mask`` if it is needed.
+Tests that contain ``assert x.mask is not y.mask`` or similar will need to be
+updated.
 
 Do not lookup ``__buffer__`` attribute in `numpy.frombuffer`
 ------------------------------------------------------------
@@ -97,9 +127,51 @@ or ``np.nan``) is now dropped.
 C API changes
 =============
 
+dimension or stride input arguments are now passed by ``npy_intp const*``
+-------------------------------------------------------------------------
+Previously these function arguments were declared as the more strict
+``npy_intp*``, which prevented the caller passing constant data.
+This change is backwards compatible, but now allows code like::
+
+    npy_intp const fixed_dims[] = {1, 2, 3};
+    // no longer complains that the const-qualifier is discarded
+    npy_intp size = PyArray_MultiplyList(fixed_dims, 3);
+
 
 New Features
 ============
+
+libFLAME
+--------
+Support for building NumPy with the libFLAME linear algebra package as the LAPACK,
+implementation, see
+`libFLAME <https://www.cs.utexas.edu/~flame/web/libFLAME.html>`_ for details.
+
+User-defined BLAS detection order
+---------------------------------
+``numpy.distutils`` now uses an environment variable, comma-separated and case
+insensitive, to determine the detection order for BLAS libraries.
+By default ``NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas``.
+However, to force the use of OpenBLAS simply do::
+
+   NPY_BLAS_ORDER=openblas python setup.py build
+
+which forces the use of OpenBLAS.
+This may be helpful for users which have a MKL installation but wishes to try
+out different implementations.
+
+User-defined LAPACK detection order
+-----------------------------------
+``numpy.distutils`` now uses an environment variable, comma-separated and case
+insensitive, to determine the detection order for LAPAK libraries.
+By default ``NPY_BLAS_ORDER=mkl,openblas,flame,atlas,accelerate,lapack``.
+However, to force the use of OpenBLAS simply do::
+
+   NPY_LAPACK_ORDER=openblas python setup.py build
+
+which forces the use of OpenBLAS.
+This may be helpful for users which have a MKL installation but wishes to try
+out different implementations.
 
 ``np.ufunc.reduce`` and related functions now accept a ``where`` mask
 ---------------------------------------------------------------------
@@ -143,11 +215,16 @@ divmod operation is now supported for two ``timedelta64`` operands
 The divmod operator now handles two ``np.timedelta64`` operands, with
 type signature mm->qm.
 
+``np.fromfile`` now takes an ``offset`` argument
+------------------------------------------------
+This function now takes an ``offset`` keyword argument for binary files,
+which specifics the offset (in bytes) from the file's current position.
+Defaults to 0.
+
 New mode "empty" for ``np.pad``
 -------------------------------
 This mode pads an array to a desired shape without initializing the new
 entries.
-
 
 ``np.empty_like`` and related functions now accept a ``shape`` argument
 -----------------------------------------------------------------------
@@ -175,11 +252,17 @@ has the same `itemsize` as the original, but only keeps a subset of the fields.
 This means that `arr[['a', 'b']]` and ``arr.view(arr.dtype[['a', 'b']])`` are
 equivalent.
 
+``.npy`` files support unicode field names
+------------------------------------------
+A new format version of 3.0 has been introduced, which enables structured types
+with non-latin1 field names. This is used automatically when needed.
+
 `numpy.packbits` and `numpy.unpackbits` accept an ``order`` keyword
 -------------------------------------------------------------------
 The ``order`` keyword defaults to ``big``, and will order the **bits**
 accordingly. For ``'big'`` 3 will become ``[0, 0, 0, 0, 0, 0, 1, 1]``, and
 ``[1, 1, 0, 0, 0, 0, 0, 0]`` for ``little``
+
 
 Improvements
 ============
@@ -257,6 +340,11 @@ concatenation.
 In some cases where ``np.interp`` would previously return ``np.nan``, it now
 returns an appropriate infinity.
 
+Pathlib support for ``np.fromfile``, ``ndarray.tofile`` and ``ndarray.dump``
+----------------------------------------------------------------------------
+``np.fromfile``, ``np.ndarray.tofile`` and ``np.ndarray.dump`` now support
+the `pathlib.Path` type for the ``file``/``fid`` parameter.
+
 Specialized ``np.isnan``, ``np.isinf``, and ``np.isfinite`` ufuncs for bool and int types
 -----------------------------------------------------------------------------------------
 The boolean and integer types are incapable of storing ``np.nan`` and
@@ -291,6 +379,15 @@ methods when called on object arrays, making them compatible with
 In general, this handles object arrays more gracefully, and avoids floating-
 point operations if exact arithmetic types are used.
 
+Support of object arrays in ``np.matmul``
+-----------------------------------------
+It is now possible to use ``np.matmul`` (or the ``@`` operator) with object arrays.
+For instance, it is now possible to do::
+
+    from fractions import Fraction
+    a = np.array([[Fraction(1, 2), Fraction(1, 3)], [Fraction(1, 3), Fraction(1, 2)]])
+    b = a @ a
+
 
 Changes
 =======
@@ -320,6 +417,31 @@ result inconsistent with ``structured_to_unstructured(arr[['a', b']])``. This
 was accidental. The old behavior can be retained with
 ``structured_to_unstructured(arr[['a']]).squeeze(axis=-1)`` or far more simply,
 ``arr['a']``.
+
+``clip`` now uses a ufunc under the hood
+----------------------------------------
+This means that registering clip functions for custom dtypes in C via
+`descr->f->fastclip` is deprecated - they should use the ufunc registration
+mechanism instead, attaching to the ``np.core.umath.clip`` ufunc.
+
+It also means that ``clip`` accepts ``where`` and ``casting`` arguments,
+and can be override with ``__array_ufunc__``.
+
+A consequence of this change is that some behaviors of the old ``clip`` have
+been deprecated:
+
+* Passing ``nan`` to mean "do not clip" as one or both bounds. This didn't work
+  in all cases anyway, and can be better handled by passing infinities of the
+  appropriate sign.
+* Using "unsafe" casting by default when an ``out`` argument is passed. Using
+  ``casting="unsafe"`` explicitly will silence this warning.
+
+Additionally, there are some corner cases with behavior changes:
+
+* Padding ``max < min`` has changed to be more consistent across dtypes, but
+  should not be relied upon.
+* Scalar ``min`` and ``max`` take part in promotion rules like they do in all
+  other ufuncs.
 
 ``__array_interface__`` offset now works as documented
 ------------------------------------------------------

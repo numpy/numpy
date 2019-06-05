@@ -287,6 +287,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
+    assert_warns
     )
 from numpy.lib import format
 
@@ -411,6 +412,7 @@ record_arrays = [
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('<')),
     np.array(PbufferT, dtype=np.dtype(Pdescr).newbyteorder('>')),
     np.array(NbufferT, dtype=np.dtype(Ndescr).newbyteorder('>')),
+    np.zeros(1, dtype=[('c', ('<f8', (5,)), (2,))])
 ]
 
 
@@ -628,6 +630,61 @@ def test_pickle_disallow():
     assert_raises(ValueError, np.save, path, np.array([None], dtype=object),
                   allow_pickle=False)
 
+@pytest.mark.parametrize('dt', [
+    np.dtype(np.dtype([('a', np.int8),
+                       ('b', np.int16),
+                       ('c', np.int32),
+                      ], align=True),
+             (3,)),
+    np.dtype([('x', np.dtype({'names':['a','b'],
+                              'formats':['i1','i1'],
+                              'offsets':[0,4],
+                              'itemsize':8,
+                             },
+                    (3,)),
+               (4,),
+             )]),
+    np.dtype([('x',
+                   ('<f8', (5,)),
+                   (2,),
+               )]),
+    np.dtype([('x', np.dtype((
+        np.dtype((
+            np.dtype({'names':['a','b'],
+                      'formats':['i1','i1'],
+                      'offsets':[0,4],
+                      'itemsize':8}),
+            (3,)
+            )),
+        (4,)
+        )))
+        ]),
+    np.dtype([
+        ('a', np.dtype((
+            np.dtype((
+                np.dtype((
+                    np.dtype([
+                        ('a', int),
+                        ('b', np.dtype({'names':['a','b'],
+                                        'formats':['i1','i1'],
+                                        'offsets':[0,4],
+                                        'itemsize':8})),
+                    ]),
+                    (3,),
+                )),
+                (4,),
+            )),
+            (5,),
+        )))
+        ]),
+    ])
+
+def test_descr_to_dtype(dt):
+    dt1 = format.descr_to_dtype(dt.descr)
+    assert_equal_(dt1, dt)
+    arr1 = np.zeros(3, dt)
+    arr2 = roundtrip(arr1)
+    assert_array_equal(arr1, arr2)
 
 def test_version_2_0():
     f = BytesIO()
@@ -882,3 +939,27 @@ def test_empty_npz():
     fname = os.path.join(tempdir, "nothing.npz")
     np.savez(fname)
     np.load(fname)
+
+
+def test_unicode_field_names():
+    # gh-7391
+    arr = np.array([
+        (1, 3),
+        (1, 2),
+        (1, 3),
+        (1, 2)
+    ], dtype=[
+        ('int', int),
+        (u'\N{CJK UNIFIED IDEOGRAPH-6574}\N{CJK UNIFIED IDEOGRAPH-5F62}', int)
+    ])
+    fname = os.path.join(tempdir, "unicode.npy")
+    with open(fname, 'wb') as f:
+        format.write_array(f, arr, version=(3, 0))
+    with open(fname, 'rb') as f:
+        arr2 = format.read_array(f)
+    assert_array_equal(arr, arr2)
+
+    # notifies the user that 3.0 is selected
+    with open(fname, 'wb') as f:
+        with assert_warns(UserWarning):
+            format.write_array(f, arr, version=None)

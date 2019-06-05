@@ -3449,7 +3449,9 @@ class MaskedArray(ndarray):
 
         # We could try to force a reshape, but that wouldn't work in some
         # cases.
-        return self._mask
+        # Return a view so that the dtype and shape cannot be changed in place
+        # This still preserves nomask by identity
+        return self._mask.view()
 
     @mask.setter
     def mask(self, value):

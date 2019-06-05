@@ -20,7 +20,7 @@ from warnings import WarningMessage
 import pprint
 
 from numpy.core import(
-     float32, empty, arange, array_repr, ndarray, isnat, array)
+     intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
@@ -708,7 +708,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
-    # original array for output formating
+    # original array for output formatting
     ox, oy = x, y
 
     def isnumber(x):
@@ -733,7 +733,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # (2) __eq__ on some ndarray subclasses returns Python booleans
         #     instead of element-wise comparisons, so we cast to bool_() and
         #     use isinstance(..., bool) checks
-        # (3) subclasses with bare-bones __array_function__ implemenations may
+        # (3) subclasses with bare-bones __array_function__ implementations may
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting such subclasses, but it's nice to
         # support them if possible.
@@ -794,18 +794,17 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
 
         if isinstance(val, bool):
             cond = val
-            reduced = [0]
+            reduced = array([val])
         else:
             reduced = val.ravel()
             cond = reduced.all()
-            reduced = reduced.tolist()
 
         # The below comparison is a hack to ensure that fully masked
         # results, for which val.ravel().all() returns np.ma.masked,
         # do not trigger a failure (np.ma.masked != True evaluates as
         # np.ma.masked, which is falsy).
         if cond != True:
-            mismatch = 100.0 * reduced.count(0) / ox.size
+            mismatch = 100. * (reduced.size - reduced.sum(dtype=intp)) / ox.size
             remarks = ['Mismatch: {:.3g}%'.format(mismatch)]
 
             with errstate(invalid='ignore', divide='ignore'):
@@ -813,14 +812,22 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                 with contextlib.suppress(TypeError):
                     error = abs(x - y)
                     max_abs_error = error.max()
-                    remarks.append('Max absolute difference: '
-                                   + array2string(max_abs_error))
+                    if error.dtype == 'object':
+                        remarks.append('Max absolute difference: '
+                                        + str(max_abs_error))
+                    else:
+                        remarks.append('Max absolute difference: '
+                                        + array2string(max_abs_error))
 
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     max_rel_error = (error / abs(y)).max()
-                    remarks.append('Max relative difference: '
-                                   + array2string(max_rel_error))
+                    if error.dtype == 'object':
+                        remarks.append('Max relative difference: '
+                                        + str(max_rel_error))
+                    else:
+                        remarks.append('Max relative difference: '
+                                        + array2string(max_rel_error))
 
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
