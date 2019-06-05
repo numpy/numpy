@@ -74,18 +74,28 @@ npy_casting_to_string(NPY_CASTING casting)
  */
 static int
 raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
-    PyObject *errmsg;
-    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
-    errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
-                        "with types ", ufunc_name);
-    PyUString_ConcatAndDel(&errmsg,
-            PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
-    PyUString_ConcatAndDel(&errmsg,
-            PyUString_FromString(" and "));
-    PyUString_ConcatAndDel(&errmsg,
-            PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
-    PyErr_SetObject(PyExc_TypeError, errmsg);
-    Py_DECREF(errmsg);
+    static PyObject *exc_type = NULL;
+    PyObject *exc_value;
+
+    npy_cache_import(
+        "numpy.core._exceptions", "_UFuncBinaryResolutionError",
+        &exc_type);
+    if (exc_type == NULL) {
+        return -1;
+    }
+
+    /* produce an error object */
+    exc_value = Py_BuildValue(
+        "O(OO)", ufunc,
+        (PyObject *)PyArray_DESCR(operands[0]),
+        (PyObject *)PyArray_DESCR(operands[1])
+    );
+    if (exc_value == NULL){
+        return -1;
+    }
+    PyErr_SetObject(exc_type, exc_value);
+    Py_DECREF(exc_value);
+
     return -1;
 }
 

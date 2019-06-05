@@ -1825,7 +1825,7 @@ class TestDateTime(object):
         # NOTE: some of the operations may be supported
         # in the future
         with assert_raises_regex(TypeError,
-                                 "remainder cannot use operands with types"):
+                                 "'remainder' cannot use operands with types"):
             val1 % val2
 
     def test_timedelta_arange_no_dtype(self):
