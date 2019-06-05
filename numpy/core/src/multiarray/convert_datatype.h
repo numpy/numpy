@@ -38,4 +38,10 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                             PyArray_Descr *flex_dtype);
 
+NPY_NO_EXPORT int
+type_num_unsigned_to_signed(int type_num);
+
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_MinScalarType_internal(PyArrayObject *arr, int *is_small_unsigned);
+
 #endif

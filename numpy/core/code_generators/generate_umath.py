@@ -1126,8 +1126,8 @@ def make_ufuncs(funcdict):
 
         mlist.append(fmt.format(**args))
         if uf.typereso is not None:
-            mlist.append(
-                r"((PyUFuncObject *)f)->type_resolver = &%s;" % uf.typereso)
+            mlist.append(r"((PyUFuncObject *)f)->noops_type_resolver = &%s;" %
+                                uf.typereso)
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
         mlist.append(r"""Py_DECREF(f);""")
         code3list.append('\n'.join(mlist))

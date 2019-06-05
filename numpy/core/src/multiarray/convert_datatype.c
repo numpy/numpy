@@ -606,7 +606,7 @@ dtype_kind_to_ordering(char kind)
 }
 
 /* Converts a type number from unsigned to signed */
-static int
+NPY_NO_EXPORT int
 type_num_unsigned_to_signed(int type_num)
 {
     switch (type_num) {

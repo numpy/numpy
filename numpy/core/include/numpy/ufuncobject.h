@@ -55,14 +55,26 @@ struct _tagPyUFuncObject;
  *                    dtypes, one for each input and output. These
  *                    dtypes should all be in native-endian format.
  *
- * Should return 0 on success, -1 on failure (with exception set),
- * or -2 if Py_NotImplemented should be returned.
+ * Should return 0 on success, -1 on failure (with exception set).
  */
 typedef int (PyUFunc_TypeResolutionFunc)(
                                 struct _tagPyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
+                                PyArray_Descr **out_dtypes);
+
+/*
+ * Similar to the previous type resolver, but used internally of numpy
+ * now. (Deprecating the other one). Will be provided only the operand
+ * dtypes. Unlike the above signature, out_dtypes may already be partially
+ * populated with non-NULL elements, in which case only the NULL elements
+ * may be set/modified.
+ */
+typedef int (PyUFunc_NoOpsTypeResolutionFunc)(
+                                struct _tagPyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArray_Descr **op_dtypes,
                                 PyArray_Descr **out_dtypes);
 
 /*
@@ -178,8 +190,7 @@ typedef struct _tagPyUFuncObject {
         char *core_signature;
 
         /*
-         * A function which resolves the types and fills an array
-         * with the dtypes for the inputs and outputs.
+         * Required to be NULL (used to be a TypeResolver).
          */
         PyUFunc_TypeResolutionFunc *type_resolver;
         /*
@@ -230,6 +241,12 @@ typedef struct _tagPyUFuncObject {
         /* Identity for reduction, when identity == PyUFunc_IdentityValue */
         PyObject *identity_value;
 
+        /*
+         * Simplified new type resolution function, will eventually be replaced
+         * with a dispatching to resolve functions that return new UFuncImpl
+         * objects (which are the type specialized ufuncs).
+         */
+        PyUFunc_NoOpsTypeResolutionFunc *noops_type_resolver;
 } PyUFuncObject;
 
 #include "arrayobject.h"

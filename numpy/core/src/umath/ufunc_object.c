@@ -40,6 +40,7 @@
 #include "ufunc_type_resolution.h"
 #include "reduction.h"
 #include "mem_overlap.h"
+#include "convert_datatype.h"
 
 #include "ufunc_object.h"
 #include "override.h"
@@ -513,6 +514,75 @@ _apply_array_wrap(
         Py_DECREF(obj);
         return NULL;
     }
+}
+
+
+/*
+ * Provides an ordering for the dtype 'kind' character codes, to help
+ * determine when to use the min_scalar_type function. This groups
+ * 'kind' into boolean, integer, floating point, and everything else.
+ */
+static int
+dtype_kind_to_simplified_ordering(char kind)
+{
+    switch (kind) {
+        /* Boolean kind */
+        case 'b':
+            return 0;
+        /* Unsigned int kind */
+        case 'u':
+        /* Signed int kind */
+        case 'i':
+            return 1;
+        /* Float kind */
+        case 'f':
+        /* Complex kind */
+        case 'c':
+            return 2;
+        /* Anything else */
+        default:
+            return 3;
+    }
+}
+
+
+static int
+should_use_min_scalar(int nop, PyArrayObject **op)
+{
+    int i, use_min_scalar, kind;
+    int all_scalars = 1, max_scalar_kind = -1, max_array_kind = -1;
+
+    /*
+     * Determine if there are any scalars, and if so, whether
+     * the maximum "kind" of the scalars surpasses the maximum
+     * "kind" of the arrays
+     */
+    use_min_scalar = 0;
+    if (nop > 1) {
+        for(i = 0; i < nop; ++i) {
+            kind = dtype_kind_to_simplified_ordering(
+                                PyArray_DESCR(op[i])->kind);
+            if (PyArray_NDIM(op[i]) == 0) {
+                if (kind > max_scalar_kind) {
+                    max_scalar_kind = kind;
+                }
+            }
+            else {
+                all_scalars = 0;
+                if (kind > max_array_kind) {
+                    max_array_kind = kind;
+                }
+
+            }
+        }
+
+        /* Indicate whether to use the min_scalar_type function */
+        if (!all_scalars && max_array_kind >= max_scalar_kind) {
+            use_min_scalar = 1;
+        }
+    }
+
+    return use_min_scalar;
 }
 
 
@@ -1021,6 +1091,118 @@ _borrowed_reference(PyObject *obj, PyObject **out)
     return NPY_SUCCEED;
 }
 
+
+static int
+_parse_signature_obj(PyUFuncObject *ufunc,
+                 PyObject *type_tup,
+                 PyArray_Descr **specified_types)
+{
+    int i = 0;
+    int n, n_specified;
+    int nop = ufunc->nargs, nin = ufunc->nin;
+
+    /* Fill in specified_types from the tuple or string */
+    if (PyTuple_Check(type_tup)) {
+        int nonecount = 0;
+        n = PyTuple_GET_SIZE(type_tup);
+        if (n != 1 && n != nop) {
+            PyErr_Format(PyExc_ValueError,
+                         "a type-tuple must be specified "
+                         "of length 1 or %d for ufunc '%s'", (int)nop,
+                         ufunc_get_name_cstr(ufunc));
+            return -1;
+        }
+
+        for (i = 0; i < n; ++i) {
+            PyObject *item = PyTuple_GET_ITEM(type_tup, i);
+            specified_types[i] = NULL;
+            if (item == Py_None) {
+                ++nonecount;
+            }
+            else if (!PyArray_DescrConverter(item, &specified_types[i])) {
+                goto fail;
+            }
+        }
+
+        if (nonecount == n) {
+            PyErr_SetString(PyExc_ValueError,
+                    "the type-tuple provided to the ufunc "
+                    "must specify at least one none-None dtype");
+            goto fail;
+        }
+
+        n_specified = n - nonecount;
+    }
+    else if (PyBytes_Check(type_tup) || PyUnicode_Check(type_tup)) {
+        Py_ssize_t length;
+        char *str;
+        PyObject *str_obj = NULL;
+
+        if (PyUnicode_Check(type_tup)) {
+            str_obj = PyUnicode_AsASCIIString(type_tup);
+            if (str_obj == NULL) {
+                goto fail;
+            }
+            type_tup = str_obj;
+        }
+
+        if (PyBytes_AsStringAndSize(type_tup, &str, &length) < 0) {
+            Py_XDECREF(str_obj);
+            goto fail;
+        }
+        if (length != 1 && (length != nop + 2 ||
+                                str[nin] != '-' || str[nin+1] != '>')) {
+            PyErr_Format(PyExc_ValueError,
+                                 "a type-string for %s, "   \
+                                 "requires 1 typecode, or "
+                                 "%d typecode(s) before " \
+                                 "and %d after the -> sign",
+                                 ufunc_get_name_cstr(ufunc),
+                                 ufunc->nin, ufunc->nout);
+            Py_XDECREF(str_obj);
+            goto fail;
+        }
+        if (length == 1) {
+            /*
+             * The current logic is to force the first output dtype, note
+             * that reductions force the inputs.
+             */
+            n_specified = 1;
+            for (i = 0; i < nop; i++) {
+                specified_types[i] = NULL;
+            }
+            specified_types[ufunc->nin] = PyArray_DescrFromType(str[0]);
+            if (specified_types[ufunc->nin] == NULL) {
+                goto fail;
+            }
+        }
+        else {
+            PyArray_Descr *dtype;
+            n_specified = (int)nop;
+
+            for (i = 0; i < nop; ++i) {
+                npy_intp istr = i < nin ? i : i+2;  /* skip "->" */
+
+                specified_types[i] = PyArray_DescrFromType(str[istr]);
+                if (dtype == NULL) {
+                    goto fail;
+                }
+            }
+        }
+        Py_XDECREF(str_obj);
+    }
+    return n_specified;
+
+fail:
+    nop = i + 1;
+    for (i =0 ; i < nop; i++) {
+        Py_XDECREF(specified_types[i]);
+        specified_types[i] = NULL;
+    }
+    return -1;
+}
+
+
 /*
  * Parses the positional and keyword arguments for a generic ufunc call.
  * All returned arguments are new references (with optional ones NULL
@@ -1033,7 +1215,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                     NPY_ORDER *out_order,
                     NPY_CASTING *out_casting,
                     PyObject **out_extobj,
-                    PyObject **out_typetup,  /* type: Tuple[np.dtype] */
+                    PyArray_Descr **specified_types,  /* specified dtypes */
                     int *out_subok,  /* bool */
                     PyArrayObject **out_wheremask, /* PyArray of bool */
                     PyObject **out_axes,  /* type: List[Tuple[T]] */
@@ -1046,6 +1228,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     int nop = ufunc->nargs;
     PyObject *obj, *context;
     PyArray_Descr *dtype = NULL;
+
     /*
      * Initialize output objects so caller knows when outputs and optional
      * arguments are set (also means we can safely XDECREF on failure).
@@ -1054,7 +1237,6 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
         out_op[i] = NULL;
     }
     *out_extobj = NULL;
-    *out_typetup = NULL;
     if (out_axes != NULL) {
         *out_axes = NULL;
     }
@@ -1118,7 +1300,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
      */
     if (kwds) {
         PyObject *out_kwd = NULL;
-        PyObject *sig = NULL;
+        PyObject *dtype_signature = NULL, *dtype_sig = NULL;
         static PyObject *kwnames[13] = {NULL};
         if (kwnames[0] == NULL) {
             kwnames[0] = npy_um_str_out;
@@ -1150,8 +1332,8 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                 PyArray_OrderConverter, out_order,
                 PyArray_DescrConverter2, &dtype,   /* new reference */
                 _subok_converter, out_subok,
-                _new_reference, out_typetup,
-                _borrowed_reference, &sig,
+                _borrowed_reference, &dtype_signature,
+                _borrowed_reference, &dtype_sig,
                 _new_reference, out_extobj) < 0) {
             goto fail;
         }
@@ -1233,30 +1415,36 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                             "cannot specify both 'axis' and 'axes'");
             goto fail;
         }
-        if (sig) {  /* borrowed reference */
-            if (*out_typetup != NULL) {
+        if (dtype_sig) {
+            if (dtype_signature != NULL) {
                 PyErr_SetString(PyExc_ValueError,
                                 "cannot specify both 'sig' and 'signature'");
                 goto fail;
             }
-            Py_INCREF(sig);
-            *out_typetup = sig;
+            dtype_signature = dtype_sig;
+        }
+        if (dtype_signature != NULL) {
+            if (_parse_signature_obj(
+                        ufunc, dtype_signature, specified_types) < 0) {
+                goto fail;
+            }
         }
         if (dtype) {  /* new reference */
-            if (*out_typetup != NULL) {
+            if (dtype_signature != NULL) {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "cannot specify both 'signature' and 'dtype'");
                 goto fail;
             }
-            /* Note: "N" uses the reference */
-            *out_typetup = Py_BuildValue("(N)", dtype);
+            specified_types[0] = dtype;
+            for (i = 1; i < nop; i++) {
+                specified_types[i] = NULL;
+            }
         }
     }
     return 0;
 
 fail:
     Py_XDECREF(dtype);
-    Py_XDECREF(*out_typetup);
     Py_XDECREF(*out_extobj);
     if (out_wheremask != NULL) {
         Py_XDECREF(*out_wheremask);
@@ -1269,6 +1457,104 @@ fail:
     }
     for (i = 0; i < nop; i++) {
         Py_XDECREF(out_op[i]);
+    }
+    for (i = 0; i < nop; i++) {
+        Py_XSETREF(specified_types[i], NULL);
+    }
+    return -1;
+}
+
+
+/*
+ * This function extracts the datatypes from all arrays.
+ * It fills dtypes with new data.
+  * When an error occurs it return -1 and dtypes is guaranteed
+ * to be NULL initialized.
+ */
+static int
+get_op_dtypes(int nop, int nin, PyArrayObject **arrs, PyArray_Descr **dtypes)
+{
+    int use_min_scalar = should_use_min_scalar(nin, arrs);
+    int nset = 0;
+    int prefer_signed = 0;
+    int num_arrs = 0;
+
+    if (!use_min_scalar) {
+        /* Everything is nice and simple. */
+        for (nset = 0; nset < nop; nset++) {
+            if (arrs[nset] != NULL) {
+                dtypes[nset] = PyArray_DESCR(arrs[nset]);
+                Py_INCREF(dtypes[nset]);
+            }
+            else {
+                dtypes[nset] = NULL;
+            }
+        }
+        return 0;
+    }
+    /*
+     * TODO:
+     *
+     * We have to demote the scalars to the most minimal type possible.
+     * But, we have a problem. We should check whether they are compatible
+     * with respect to the actual loops, but that is not very nice, because
+     * the type resolution should not know about scalars.
+     * To get this right, we would need an "uint8" but small dtype, could
+     * say a uint7...
+     * This here sould work OK for numpy users, the only possible problem
+     * could be numba or numexpr?
+     * The reason why it should work for numpy users, is that we have
+     * almost only homogeneous type loops, so that result type is actually
+     * a correct approximation:
+     */
+    PyArray_Descr *common_type = PyArray_ResultType(nin, arrs, 0, NULL);
+    if (common_type == NULL) {
+        goto fail;
+    }
+    prefer_signed = !PyDataType_ISUNSIGNED(common_type);
+    Py_DECREF(common_type);
+
+    for (nset = 0; nset < nop; nset++) {
+        if (nset < nin) {
+            /*
+             * Use the minimum scalar type instead for loop discovery
+             * for all input types (function checks ndim).
+             */
+            int is_small_unsigned;
+            dtypes[nset] = PyArray_MinScalarType_internal(
+                                        arrs[nset], &is_small_unsigned);
+            if (dtypes[nset] == NULL) {
+                goto fail;
+            }
+
+            int type_num = dtypes[nset]->type_num;
+            if (prefer_signed && is_small_unsigned) {
+                int new_type_num = type_num_unsigned_to_signed(type_num);
+                if (new_type_num == type_num) {
+                    continue;
+                }
+                PyArray_Descr *tmp = PyArray_DescrFromType(type_num);
+                if (tmp == NULL) {
+                    goto fail;
+                }
+                Py_SETREF(dtypes[nset], tmp);
+            }
+        }
+        else if (arrs[nset] == NULL) {
+            dtypes[nset] = NULL;
+        }
+        else {
+            dtypes[nset] = PyArray_DESCR(arrs[nset]);
+        }
+    }
+    return 0;
+
+fail:
+    for (int i = 0; i < nop; i++) {
+        if (i < nset) {
+            Py_XDECREF(dtypes[i]);
+        }
+        dtypes[i] = NULL;
     }
     return -1;
 }
@@ -2515,6 +2801,55 @@ _initialize_variable_parts(PyUFuncObject *ufunc,
     return 0;
 }
 
+
+static int
+call_oldstyle_resolver(PyUFuncObject *ufunc, NPY_CASTING casting,
+                       PyArrayObject **op, PyArray_Descr **dtypes)
+{
+    int i, count = 0;
+    int retval;
+    PyObject *type_tup = NULL;
+
+    for (i = 0; i < ufunc->nargs; i++) {
+        if (dtypes[i] != NULL) {
+            count++;
+        }
+    }
+    if (count == 1 && dtypes[0] != NULL) {
+        /* Often, old style would only pass a single dtype here, so do that: */
+        type_tup = PyTuple_Pack(1, (PyObject *)dtypes[0]);
+        Py_SETREF(dtypes[0], NULL);
+
+        if (type_tup == NULL) {
+            return -1;
+        }
+    }
+    else {
+        PyObject *type_tup = PyTuple_New(ufunc->nargs);
+        if (type_tup == NULL) {
+            return -1;
+        }
+
+        for (i = 0; i < ufunc->nargs; i++) {
+            PyObject *tmp;
+            if (dtypes[i] == NULL) {
+                tmp = Py_None;
+                Py_INCREF(Py_None);
+            }
+            else {
+                tmp = (PyObject *)dtypes[i];
+            }
+            PyTuple_SET_ITEM(type_tup, i, tmp);
+            dtypes[i] = NULL;  /* SET_ITEM stole the reference */
+        }
+    }
+
+    retval = ufunc->type_resolver(ufunc, casting, op, type_tup, dtypes);
+    Py_DECREF(type_tup);
+    return retval;
+}
+
+
 static int
 PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                         PyObject *args, PyObject *kwds,
@@ -2527,6 +2862,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int needs_api = 0;
 
     PyArray_Descr *dtypes[NPY_MAXARGS];
+    PyArray_Descr *op_dtypes[NPY_MAXARGS];
 
     /* Use remapped axes for generalized ufunc */
     int broadcast_ndim, iter_ndim;
@@ -2567,7 +2903,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     /* Use the default assignment casting rule */
     NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
     /* other possible keyword arguments */
-    PyObject *extobj, *type_tup, *axes, *axis;
+    PyObject *extobj, *axes, *axis;
     int keepdims = -1;
 
     if (ufunc == NULL) {
@@ -2585,7 +2921,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /* Initialize all dtypes and __array_prepare__ call-backs to NULL */
     for (i = 0; i < nop; ++i) {
-        dtypes[i] = NULL;
+        dtypes[i] = NULL;  // TODO: Right now not strictly necessary.
         arr_prep[i] = NULL;
     }
     /* Initialize possibly variable parts to the values from the ufunc */
@@ -2602,11 +2938,17 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     retval = get_ufunc_arguments(ufunc, args, kwds,
                 op, &order, &casting, &extobj,
-                &type_tup, &subok, NULL, &axes, &axis, &keepdims);
+                dtypes, &subok, NULL, &axes, &axis, &keepdims);
     if (retval < 0) {
         NPY_UF_DBG_PRINT("Failure in getting arguments\n");
         return retval;
     }
+
+    /* Find the operand dtypes, mostly interesting to handle scalar logic */
+    if (get_op_dtypes(nop, nin, op, op_dtypes) < 0) {
+        goto fail;
+    }
+
     /*
      * If keepdims was passed in (and thus changed from the initial value
      * on top), check the gufunc is suitable, i.e., that its inputs share
@@ -2796,8 +3138,13 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
 
-    retval = ufunc->type_resolver(ufunc, casting,
-                            op, type_tup, dtypes);
+    if (ufunc->type_resolver != NULL) {
+        /* Use old-style type resolver */
+        retval = call_oldstyle_resolver(ufunc, casting, op, dtypes);
+    }
+    else {
+        retval = ufunc->noops_type_resolver(ufunc, casting, op_dtypes, dtypes);
+    }
     if (retval < 0) {
         goto fail;
     }
@@ -3054,10 +3401,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /* The caller takes ownership of all the references in op */
     for (i = 0; i < nop; ++i) {
+        Py_XDECREF(op_dtypes[i]);
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
-    Py_XDECREF(type_tup);
     Py_XDECREF(extobj);
     Py_XDECREF(axes);
     Py_XDECREF(axis);
@@ -3078,9 +3425,9 @@ fail:
         Py_XDECREF(op[i]);
         op[i] = NULL;
         Py_XDECREF(dtypes[i]);
+        Py_XDECREF(op_dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
-    Py_XDECREF(type_tup);
     Py_XDECREF(extobj);
     Py_XDECREF(axes);
     Py_XDECREF(axis);
@@ -3111,6 +3458,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     npy_intp default_op_out_flags;
 
     PyArray_Descr *dtypes[NPY_MAXARGS];
+    PyArray_Descr *op_dtypes[NPY_MAXARGS];
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -3131,7 +3479,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     NPY_ORDER order = NPY_KEEPORDER;
     /* Use the default assignment casting rule */
     NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
-    PyObject *extobj, *type_tup;
+    PyObject *extobj;
 
     if (ufunc == NULL) {
         PyErr_SetString(PyExc_ValueError, "function not supported");
@@ -3144,7 +3492,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
 
     nin = ufunc->nin;
     nout = ufunc->nout;
-    nop = nin + nout;
+    nop = ufunc->nargs;
 
     ufunc_name = ufunc_get_name_cstr(ufunc);
 
@@ -3161,10 +3509,15 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     /* Get all the arguments */
     retval = get_ufunc_arguments(ufunc, args, kwds,
                 op, &order, &casting, &extobj,
-                &type_tup, &subok, &wheremask, NULL, NULL, NULL);
+                dtypes, &subok, &wheremask, NULL, NULL, NULL);
     if (retval < 0) {
         NPY_UF_DBG_PRINT("Failure in getting arguments\n");
         return retval;
+    }
+
+    /* Find the operand dtypes, mostly interesting to handle scalar logic */
+    if (get_op_dtypes(nop, nin, op, op_dtypes) < 0) {
+        goto fail;
     }
 
     /* Get the buffersize and errormask */
@@ -3175,8 +3528,14 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
 
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
-    retval = ufunc->type_resolver(ufunc, casting,
-                            op, type_tup, dtypes);
+    if (ufunc->type_resolver != NULL) {
+        /* Use old-style type resolver */
+        retval = call_oldstyle_resolver(ufunc, casting, op, dtypes);
+    }
+    else {
+        retval = ufunc->noops_type_resolver(ufunc, casting,
+                                            op_dtypes, dtypes);
+    }
     if (retval < 0) {
         goto fail;
     }
@@ -3278,9 +3637,9 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     /* The caller takes ownership of all the references in op */
     for (i = 0; i < nop; ++i) {
         Py_XDECREF(dtypes[i]);
+        Py_XDECREF(op_dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
-    Py_XDECREF(type_tup);
     Py_XDECREF(extobj);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
@@ -3296,9 +3655,9 @@ fail:
         Py_XDECREF(op[i]);
         op[i] = NULL;
         Py_XDECREF(dtypes[i]);
+        Py_XDECREF(op_dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
-    Py_XDECREF(type_tup);
     Py_XDECREF(extobj);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
@@ -3405,35 +3764,59 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     int i, retcode;
     PyArrayObject *op[3] = {arr, arr, NULL};
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
+    PyArray_Descr *op_dtypes[3] = {NULL, NULL, NULL};
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     PyObject *type_tup = NULL;
 
+    /* Using borrowed references here! */
+    op_dtypes[0] = PyArray_DESCR(arr);
+    op_dtypes[1] = op_dtypes[0];
+
     *out_dtype = NULL;
 
-    /*
-     * If odtype is specified, make a type tuple for the type
-     * resolution.
-     */
-    if (odtype != NULL) {
-        type_tup = PyTuple_Pack(3, odtype, odtype, Py_None);
-        if (type_tup == NULL) {
-            return -1;
-        }
-    }
-
     /* Use the type resolution function to find our loop */
-    retcode = ufunc->type_resolver(
-                        ufunc, NPY_UNSAFE_CASTING,
-                        op, type_tup, dtypes);
-    Py_DECREF(type_tup);
+    if (ufunc->type_resolver != NULL) {
+        /*
+         * If odtype is specified, make a type tuple for the type
+         * resolution.
+         * Behaviour is slightly strange but unused within numpy now.
+         */
+        PyObject *type_tup;
+        if (odtype != NULL) {
+            type_tup = PyTuple_Pack(3, odtype, odtype, Py_None);
+            if (type_tup == NULL) {
+                return -1;
+            }
+        }
+
+        retcode = ufunc->type_resolver(
+                            ufunc, NPY_UNSAFE_CASTING,
+                            op, type_tup, dtypes);
+        Py_DECREF(type_tup);
+    }
+    else {
+        /*
+         * Unlike above, this forces the output dtype alrady; resolver is thus
+         * mostly an error checker?
+         */
+        dtypes[0] = odtype;
+        Py_INCREF(dtypes[0]);
+        dtypes[2] = odtype;
+        Py_INCREF(dtypes[2]);
+
+        retcode = ufunc->noops_type_resolver(
+                            ufunc, NPY_UNSAFE_CASTING,
+                            op_dtypes, dtypes);
+    }
     if (retcode == -1) {
         return -1;
     }
     else if (retcode == -2) {
+        assert(0);  /* This path was documented but seems removed. */
         PyErr_Format(PyExc_RuntimeError,
                 "type resolution returned NotImplemented to "
-                "reduce ufunc %s", ufunc_name);
-        return -1;
+                "reduce ufunc %s. This is a likely bug in numpy!", ufunc_name);
+        goto fail;
     }
 
     /*
@@ -3443,13 +3826,10 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
      * reduction occurs.
      */
     if (!PyArray_EquivTypes(dtypes[0], dtypes[1])) {
-        for (i = 0; i < 3; ++i) {
-            Py_DECREF(dtypes[i]);
-        }
         PyErr_Format(PyExc_RuntimeError,
                 "could not find a type resolution appropriate for "
                 "reduce ufunc %s", ufunc_name);
-        return -1;
+        goto fail;
     }
 
     Py_DECREF(dtypes[0]);
@@ -3457,6 +3837,13 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     *out_dtype = dtypes[2];
 
     return 0;
+
+fail:
+    Py_DECREF(dtypes[0]);
+    Py_XDECREF(dtypes[1]);
+    Py_DECREF(dtypes[2]);
+
+    return -1;
 }
 
 static int
@@ -4972,9 +5359,11 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->iter_flags = 0;
 
     /* Type resolution and inner loop selection functions */
-    ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
+    ufunc->type_resolver = NULL;
     ufunc->legacy_inner_loop_selector = &PyUFunc_DefaultLegacyInnerLoopSelector;
     ufunc->masked_inner_loop_selector = &PyUFunc_DefaultMaskedInnerLoopSelector;
+
+    ufunc->noops_type_resolver = &PyUFunc_DefaultTypeResolver;
 
     if (name == NULL) {
         ufunc->name = "?";
@@ -5586,6 +5975,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArrayIterObject *iter2 = NULL;
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
     PyArrayObject *operands[3] = {NULL, NULL, NULL};
+    PyArray_Descr *op_dtypes[3] = {NULL, NULL, NULL};
     PyArrayObject *array_operands[3] = {NULL, NULL, NULL};
 
     int needs_api = 0;
@@ -5693,29 +6083,40 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
      * Create dtypes array for either one or two input operands.
      * The output operand is set to the first input operand
      */
-    dtypes[0] = PyArray_DESCR(op1_array);
+    op_dtypes[0] = PyArray_DESCR(op1_array);
     operands[0] = op1_array;
     if (op2_array != NULL) {
-        dtypes[1] = PyArray_DESCR(op2_array);
-        dtypes[2] = dtypes[0];
+        op_dtypes[1] = PyArray_DESCR(op2_array);
+        op_dtypes[2] = op_dtypes[0];
+        Py_INCREF(op_dtypes[3]);
         operands[1] = op2_array;
         operands[2] = op1_array;
         nop = 3;
     }
     else {
-        dtypes[1] = dtypes[0];
-        dtypes[2] = NULL;
+        op_dtypes[1] = op_dtypes[0];
+        Py_INCREF(op_dtypes[1]);
+        op_dtypes[2] = NULL;
         operands[1] = op1_array;
         operands[2] = NULL;
         nop = 2;
     }
 
-    if (ufunc->type_resolver(ufunc, NPY_UNSAFE_CASTING,
-                            operands, NULL, dtypes) < 0) {
-        goto fail;
+    if (ufunc->type_resolver != NULL) {
+        /* Use old-style type resolver */
+        if (call_oldstyle_resolver(ufunc, NPY_UNSAFE_CASTING,
+                                   array_operands, dtypes) < 0) {
+            goto fail;
+        }
     }
-    if (ufunc->legacy_inner_loop_selector(ufunc, dtypes,
-        &innerloop, &innerloopdata, &needs_api) < 0) {
+    else {
+        if (ufunc->noops_type_resolver(ufunc, NPY_UNSAFE_CASTING,
+                                       op_dtypes, dtypes) < 0) {
+            goto fail;
+        }
+    }
+    if (ufunc->legacy_inner_loop_selector(
+                ufunc, dtypes, &innerloop, &innerloopdata, &needs_api) < 0) {
         goto fail;
     }
 
@@ -5861,9 +6262,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
-    Py_XDECREF(array_operands[0]);
-    Py_XDECREF(array_operands[1]);
-    Py_XDECREF(array_operands[2]);
+
+    for (i = 0; i < 3; i++) {
+        Py_XDECREF(op_dtypes[i]);
+        Py_XDECREF(dtypes[i]);
+        Py_XDECREF(array_operands[i]);
+    }
 
     if (needs_api && PyErr_Occurred()) {
         return NULL;
@@ -5880,9 +6284,11 @@ fail:
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
-    Py_XDECREF(array_operands[0]);
-    Py_XDECREF(array_operands[1]);
-    Py_XDECREF(array_operands[2]);
+    for (i = 0; i < 3; i++) {
+        Py_XDECREF(op_dtypes[i]);
+        Py_XDECREF(dtypes[i]);
+        Py_XDECREF(array_operands[i]);
+    }
 
     return NULL;
 }
