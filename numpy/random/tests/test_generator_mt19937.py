@@ -106,9 +106,9 @@ class TestMultinomial(object):
         p = np.arange(15.)
         p /= np.sum(p[1::3])
         pvals = p[1::3]
-        random.seed(1432985819)
+        random.bit_generator.seed(1432985819)
         non_contig = random.multinomial(100, pvals=pvals)
-        random.seed(1432985819)
+        random.bit_generator.seed(1432985819)
         contig = random.multinomial(100, pvals=np.ascontiguousarray(pvals))
         assert_array_equal(non_contig, contig)
 
@@ -670,9 +670,9 @@ class TestRandomDist(object):
     def test_choice_p_non_contiguous(self):
         p = np.ones(10) / 5
         p[1::2] = 3.0
-        random.seed(self.seed)
+        random.bit_generator.seed(self.seed)
         non_contig = random.choice(5, 3, p=p[::2])
-        random.seed(self.seed)
+        random.bit_generator.seed(self.seed)
         contig = random.choice(5, 3, p=np.ascontiguousarray(p[::2]))
         assert_array_equal(non_contig, contig)
 
@@ -827,9 +827,9 @@ class TestRandomDist(object):
     def test_dirichlet_alpha_non_contiguous(self):
         a = np.array([51.72840233779265162, -1.0, 39.74494232180943953])
         alpha = a[::2]
-        random.seed(self.seed)
+        random.bit_generator.seed(self.seed)
         non_contig = random.dirichlet(alpha, size=(3, 2))
-        random.seed(self.seed)
+        random.bit_generator.seed(self.seed)
         contig = random.dirichlet(np.ascontiguousarray(alpha),
                                   size=(3, 2))
         assert_array_almost_equal(non_contig, contig)
