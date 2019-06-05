@@ -249,6 +249,15 @@ class TestIndexing(object):
                          [4, 0, 6],
                          [0, 8, 0]])
 
+    def test_boolean_indexing_list(self):
+        # Regression test for #13715. It's a use-after-free bug which the
+        # test won't directly catch, but it will show up in valgrind.
+        a = np.array([1, 2, 3])
+        b = [True, False, True]
+        # Two variants of the test because the first takes a fast path
+        assert_equal(a[b], [1, 3])
+        assert_equal(a[None, b], [[1, 3]])
+
     def test_reverse_strides_and_subspace_bufferinit(self):
         # This tests that the strides are not reversed for simple and
         # subspace fancy indexing.
