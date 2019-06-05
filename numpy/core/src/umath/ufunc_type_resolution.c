@@ -94,7 +94,7 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
  */
 static int
 raise_no_loop_found_error(
-        PyUFuncObject *ufunc, PyArray_Descr **dtypes, npy_intp n_dtypes)
+        PyUFuncObject *ufunc, PyArray_Descr **dtypes)
 {
     static PyObject *exc_type = NULL;
     PyObject *exc_value;
@@ -109,11 +109,11 @@ raise_no_loop_found_error(
     }
 
     /* convert dtypes to a tuple */
-    dtypes_tup = PyTuple_New(n_dtypes);
+    dtypes_tup = PyTuple_New(ufunc->nargs);
     if (dtypes_tup == NULL) {
         return -1;
     }
-    for (i = 0; i < n_dtypes; ++i) {
+    for (i = 0; i < ufunc->nargs; ++i) {
         Py_INCREF(dtypes[i]);
         PyTuple_SET_ITEM(dtypes_tup, i, (PyObject *)dtypes[i]);
     }
@@ -1472,7 +1472,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         types += nargs;
     }
 
-    return raise_no_loop_found_error(ufunc, dtypes, nargs);
+    return raise_no_loop_found_error(ufunc, dtypes);
 }
 
 typedef struct {
