@@ -301,26 +301,21 @@ else:
             default_x11_include_dirs.extend(['/usr/lib/X11/include',
                                              '/usr/include/X11'])
 
-    tmp = None
-    try:
-        # Explicitly open/close file to avoid ResourceWarning when
-        # tests are run in debug mode Python 3.
-        tmp = open(os.devnull, 'w')
-        p = subprocess.Popen(["gcc", "-print-multiarch"], stdout=subprocess.PIPE,
-                     stderr=tmp)
-    except (OSError, DistutilsError):
-        # OSError if gcc is not installed, or SandboxViolation (DistutilsError
-        # subclass) if an old setuptools bug is triggered (see gh-3160).
-        pass
-    else:
-        triplet = str(p.communicate()[0].decode().strip())
-        if p.returncode == 0:
-            # gcc supports the "-print-multiarch" option
-            default_x11_lib_dirs += [os.path.join("/usr/lib/", triplet)]
-            default_lib_dirs += [os.path.join("/usr/lib/", triplet)]
-    finally:
-        if tmp is not None:
-            tmp.close()
+    with open(os.devnull, 'w') as tmp:
+        try:
+            p = subprocess.Popen(["gcc", "-print-multiarch"], stdout=subprocess.PIPE,
+                         stderr=tmp)
+        except (OSError, DistutilsError):
+            # OSError if gcc is not installed, or SandboxViolation (DistutilsError
+            # subclass) if an old setuptools bug is triggered (see gh-3160).
+            pass
+        else:
+            triplet = str(p.communicate()[0].decode().strip())
+            if p.returncode == 0:
+                # gcc supports the "-print-multiarch" option
+                default_x11_lib_dirs += [os.path.join("/usr/lib/", triplet)]
+                default_lib_dirs += [os.path.join("/usr/lib/", triplet)]
+
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0, os.path.join(sys.prefix, 'lib'))
