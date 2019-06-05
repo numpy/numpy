@@ -244,8 +244,14 @@ PyUFunc_ValidateCastingDtypes(PyUFuncObject *ufunc,
 {
     int i, nin = ufunc->nin, nop = nin + ufunc->nout;
 
-    for (i = 0; i < nop; ++i) {
-        if (op_dtypes[i] != NULL) {
+    for (i = 0; i < nop; i++) {
+        if (i < nin) {
+            if (!PyArray_CanCastTypeTo(op_dtypes[i], dtypes[i], casting)) {
+                return raise_input_casting_error(
+                    ufunc, casting, op_dtypes[i], dtypes[i], i);
+            }
+        }
+        else if (op_dtypes[i] != NULL) {
             if (!PyArray_CanCastTypeTo(dtypes[i], op_dtypes[i], casting)) {
                 return raise_output_casting_error(
                     ufunc, casting, dtypes[i], op_dtypes[i], i);
@@ -350,6 +356,8 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
         return PyUFunc_DefaultTypeResolver(ufunc, casting,
                                            op_dtypes, out_dtypes);
     }
+
+    // TODO: DELETED TOO MUCH HERE, IT NEEDS TO FILL out_dtypes!
 
     /* Output type is always boolean */
     if (out_dtypes[2] != NULL) {
@@ -813,26 +821,26 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
     if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] - m8[<B>] => m8[gcd(<A>,<B>)] - m8[gcd(<A>,<B>)] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_PromoteTypes(op_dtypes[0],
-                                                op_dtypes[1]);
+            Py_XSETREF(out_dtypes[0],
+                       PyArray_PromoteTypes(op_dtypes[0], op_dtypes[1]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = out_dtypes[0];
+            Py_XSETREF(out_dtypes[1], out_dtypes[0]);
             Py_INCREF(out_dtypes[1]);
-            out_dtypes[2] = out_dtypes[0];
+            Py_XSETREF(out_dtypes[2], out_dtypes[0]);
             Py_INCREF(out_dtypes[2]);
         }
         /* m8[<A>] - int => m8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                         PyTypeNum_ISBOOL(type_num2)) {
-            out_dtypes[0] = ensure_dtype_nbo(op_dtypes[0]);
+            Py_XSETREF(out_dtypes[0], ensure_dtype_nbo(op_dtypes[0]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = out_dtypes[0];
+            Py_XSETREF(out_dtypes[1], out_dtypes[0]);
             Py_INCREF(out_dtypes[1]);
-            out_dtypes[2] = out_dtypes[0];
+            Py_XSETREF(out_dtypes[2], out_dtypes[0]);
             Py_INCREF(out_dtypes[2]);
 
             type_num2 = NPY_TIMEDELTA;
@@ -927,6 +935,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
             Py_DECREF(out_dtypes[i]);
             out_dtypes[i] = NULL;
         }
+        printf("raising errors from here\n");
         return -1;
     }
 
@@ -1592,10 +1601,6 @@ ufunc_loop_matches(PyUFuncObject *self,
             if (tmp == NULL) {
                 return -1;
             }
-            PyObject_Print(tmp, stdout, 0);
-            printf("\n");
-            PyObject_Print(op_dtypes[i], stdout, 0);
-            printf("\n");
             if (!PyArray_CanCastTypeTo(tmp, op_dtypes[i], output_casting)) {
                 if (!(*out_no_castable_output)) {
                     *out_no_castable_output = 1;
