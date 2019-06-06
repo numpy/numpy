@@ -343,7 +343,7 @@ cdef class Philox:
         self.rng_state.uinteger = value['uinteger']
         self.rng_state.buffer_pos = value['buffer_pos']
 
-    cdef jump_inplace(self, np.npy_intp iter):
+    cdef jump_inplace(self, iter):
         """
         Jump state in-place
 
@@ -354,9 +354,9 @@ cdef class Philox:
         iter : integer, positive
             Number of times to jump the state of the rng.
         """
-        self.advance(iter * 2 ** 128)
+        self.advance(iter * int(2 ** 128))
 
-    def jumped(self, np.npy_intp iter=1):
+    def jumped(self, iter=1):
         """
         jumped(iter=1)
 
@@ -419,6 +419,8 @@ cdef class Philox:
         Advancing the RNG state resets any pre-computed random numbers.
         This is required to ensure exact reproducibility.
         """
+        delta = wrap_int(delta, 256)
+
         cdef np.ndarray delta_a
         delta_a = int_to_array(delta, 'step', 256, 64)
         philox_advance(<uint64_t *> delta_a.data, &self.rng_state)

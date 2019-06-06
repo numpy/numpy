@@ -74,6 +74,8 @@ cdef object float_fill(void *func, bitgen_t *state, object size, object lock, ob
 
 cdef object float_fill_from_double(void *func, bitgen_t *state, object size, object lock, object out)
 
+cdef object wrap_int(object val, object bits)
+
 cdef np.ndarray int_to_array(object value, object name, object bits, object uint_size)
 
 cdef object cont(void *func, void *state, object size, object lock, int narg,
