@@ -311,6 +311,15 @@ PyUFunc_DefaultTypeResolver(PyUFuncObject *ufunc,
      * loop for float64 inputs.
      */
     input_casting = (casting > NPY_SAFE_CASTING) ? NPY_SAFE_CASTING : casting;
+    // TODO: Previously, we did *not* do this strictly if dtype/signature is used.
+    //       This can be seen as correct, to choose the best match and not the
+    //       first match. But it also seems inconsistent...
+    for (i = 0; i < nop; ++i) {
+        if (out_dtypes[i] != NULL) {
+            input_casting = casting;
+            break;
+        }
+    }
 
     /* Find the best ufunc inner loop, and fill in the dtypes */
     retval = linear_search_type_resolver(ufunc, op_dtypes,
@@ -467,7 +476,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
                 ufunc_name);
         return -1;
     }
-    int nop = ufunc->nin + ufunc->nout;
+    int nin = ufunc->nin, nop = nin + ufunc->nout;
 
     /*
      * There's a custom data type or an object array
@@ -485,6 +494,16 @@ PyUFunc_SimpleUniformOperationTypeResolver(
         return PyUFunc_DefaultTypeResolver(ufunc, casting, op_dtypes, out_dtypes);
     }
 
+    // TODO: I changed signature to fill in the result dtype, instead of first
+    //       so check result here as well. In principle this should detect
+    //       errors in the provided signature!
+    if (out_dtypes[nin] != NULL) {
+        if (out_dtypes[0] == NULL) {
+            Py_INCREF(out_dtypes[nin]);
+            out_dtypes[0] = out_dtypes[nin];
+        }
+    }
+
     if (out_dtypes[0] == NULL) {
         /* PyArray_ResultType forgets to force a byte order when n == 1 */
         if (ufunc->nin == 1){
@@ -499,14 +518,17 @@ PyUFunc_SimpleUniformOperationTypeResolver(
     }
     else {
         /* Code used to ensure native byte order on the out_dtype[0] */
+        Py_SETREF(out_dtypes[0], ensure_dtype_nbo(out_dtypes[0]));
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
     }
 
     /* All types are the same - copy the first one to the rest */
     for (int iop = 1; iop < nop; iop++) {
-        if (out_dtypes[iop] == NULL) {
-            out_dtypes[iop] = out_dtypes[0];
-            Py_INCREF(out_dtypes[iop]);
-        }
+        Py_XDECREF(out_dtypes[iop]);  // TODO: see also above, should check...
+        out_dtypes[iop] = out_dtypes[0];
+        Py_INCREF(out_dtypes[iop]);
     }
 
     /* Check against the casting rules */
@@ -952,7 +974,6 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
             Py_DECREF(out_dtypes[i]);
             out_dtypes[i] = NULL;
         }
-        printf("raising errors from here\n");
         return -1;
     }
 
@@ -1583,6 +1604,7 @@ ufunc_loop_matches(PyUFuncObject *self,
          * use struct dtype object. Otherwise create new dtype object
          * from type num.
          */
+        // TODO: This limited to void seems useless.
         if (types[i] == NPY_VOID && dtypes != NULL) {
             tmp = dtypes[i];
             Py_INCREF(tmp);
@@ -1636,7 +1658,7 @@ ufunc_loop_matches(PyUFuncObject *self,
 
 static int
 set_ufunc_loop_data_types(PyUFuncObject *self, PyArray_Descr **op_dtypes,
-                    PyArray_Descr **out_dtypes, int *type_nums)
+                          PyArray_Descr **out_dtypes, int *type_nums)
 {
     int i, nin = self->nin, nop = nin + self->nout;
 
@@ -1652,8 +1674,13 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArray_Descr **op_dtypes,
          * to preserve metadata.
          */
         if (out_dtypes[i] != NULL) {
-            /* TODO: Preserving explicit input is new here (likely unused) */
-            continue;
+            // TODO: Preserving output dtype here and ensure_dtype_nbo
+            //       this probably has no test coverage, especially with the
+            //       NBO code!.
+            Py_SETREF(out_dtypes[i], ensure_dtype_nbo(out_dtypes[i]));
+            if (out_dtypes[i] == NULL) {
+                goto fail;
+            }
         }
         else if (op_dtypes[i] != NULL &&
                  op_dtypes[i]->type_num == type_nums[i]) {
@@ -1696,7 +1723,7 @@ userloop_type_resolver(PyUFuncObject *self,
                        PyArray_Descr **op_dtypes,
                        NPY_CASTING casting,
                        int any_object,
-                       PyArray_Descr **out_dtype)
+                       PyArray_Descr **out_dtypes)
 {
     int i, j, nin = self->nin, nop = nin + self->nout;
     PyUFunc_Loop1d *funcdata;
@@ -1707,9 +1734,18 @@ userloop_type_resolver(PyUFuncObject *self,
     int no_castable_output = 0;
     char err_src_typecode = '-', err_dst_typecode = '-';
 
-    for (i = 0; i < nin; ++i) {
+    // TODO: There used to be a bug here, if dtype/signature was given, output was not searched?!
+    // or maybe the code assumed that output was known then, so even input is enough?
+    for (i = 0; i < nop; ++i) {
+        if (op_dtypes[i] == NULL) {
+            // TODO: Further incorrect assumption in old code would need to check all out dtypes.
+            continue;
+        }
         int type_num = op_dtypes[i]->type_num;
-        if (type_num != last_userdef && PyTypeNum_ISUSERDEF(type_num)) {
+
+        if (type_num != last_userdef && (
+                // TODO: Void was missing when type tuple was given:
+                PyTypeNum_ISUSERDEF(type_num) || type_num == NPY_VOID)) {
             PyObject *key, *obj;
 
             last_userdef = type_num;
@@ -1718,6 +1754,7 @@ userloop_type_resolver(PyUFuncObject *self,
             if (key == NULL) {
                 return -1;
             }
+
             obj = PyDict_GetItem(self->userloops, key);
             Py_DECREF(key);
             if (obj == NULL) {
@@ -1731,8 +1768,8 @@ userloop_type_resolver(PyUFuncObject *self,
                 int matched = 1;
 
                 for (j = 0; j < nop; ++j) {
-                    if (out_dtype[j] != NULL &&
-                                types[j] != out_dtype[j]->type_num) {
+                    if (out_dtypes[j] != NULL &&
+                                types[j] != out_dtypes[j]->type_num) {
                         matched = 0;
                         break;
                     }
@@ -1744,13 +1781,24 @@ userloop_type_resolver(PyUFuncObject *self,
                 switch (ufunc_loop_matches(self, op_dtypes,
                             casting, casting,
                             any_object,
-                            types, NULL,
+                            types, funcdata->arg_dtypes,
                             &no_castable_output, &err_src_typecode,
                             &err_dst_typecode)) {
                     /* It works */
                     case 1:
-                        set_ufunc_loop_data_types(self, op_dtypes,
-                                                  out_dtype, types);
+                        /* Ufunc loop matched, so ensure dtypes */
+                        if (funcdata->arg_dtypes != NULL) {
+                            for (int j = 0; j < nop; j++) {
+                                // TODO: This probably needs to copy!
+                                Py_XSETREF(out_dtypes[j], funcdata->arg_dtypes[j]);
+                                // TODO: Not sure we need to see why we support NULL (old code did)
+                                // TODO: This code forces NBO later on, which in principle could be seen as incorrect,
+                                //       as the exact dtype was provided. And is a behaviour change currently.
+                                Py_XINCREF(out_dtypes[j]);
+                            }
+                        }
+                        set_ufunc_loop_data_types(self, op_dtypes, out_dtypes,
+                                                  types);
                         return 1;
                     /* Didn't match */
                     case 0:
@@ -1827,10 +1875,10 @@ linear_search_type_resolver(PyUFuncObject *self,
                     types[j] != out_dtypes[j]->type_num) {
                 break;
             }
-            if (j < nop) {
-                /* no match */
-                continue;
-            }
+        }
+        if (j < nop) {
+            /* no match */
+            continue;
         }
 
         switch (ufunc_loop_matches(self, op_dtypes,

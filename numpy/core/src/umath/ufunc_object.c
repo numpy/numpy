@@ -1177,7 +1177,6 @@ _parse_signature_obj(PyUFuncObject *ufunc,
             }
         }
         else {
-            PyArray_Descr *dtype;
             n_specified = (int)nop;
 
             for (i = 0; i < nop; ++i) {
@@ -1436,10 +1435,10 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                                 "cannot specify both 'signature' and 'dtype'");
                 goto fail;
             }
-            specified_types[0] = dtype;
-            for (i = 1; i < nop; i++) {
+            for (i = 0; i < nop; i++) {
                 specified_types[i] = NULL;
             }
+            specified_types[nin] = dtype;
         }
     }
     return 0;
@@ -1478,7 +1477,6 @@ get_op_dtypes(int nop, int nin, PyArrayObject **arrs, PyArray_Descr **dtypes)
     int use_min_scalar = should_use_min_scalar(nin, arrs);
     int nset = 0;
     int prefer_signed = 0;
-    int num_arrs = 0;
 
     if (!use_min_scalar) {
         /* Everything is nice and simple. */
@@ -3766,12 +3764,11 @@ static int
 reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
                         PyArray_Descr *odtype, PyArray_Descr **out_dtype)
 {
-    int i, retcode;
+    int retcode;
     PyArrayObject *op[3] = {arr, arr, NULL};
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
     PyArray_Descr *op_dtypes[3] = {NULL, NULL, NULL};
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
-    PyObject *type_tup = NULL;
 
     /* Using borrowed references */
     op_dtypes[0] = PyArray_DESCR(arr);
@@ -3804,10 +3801,14 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
          * Unlike above, this forces the output dtype alrady; resolver is thus
          * mostly an error checker?
          */
-        dtypes[0] = odtype;
-        Py_INCREF(dtypes[0]);
-        dtypes[1] = odtype; // TODO: feels like should be dtypes[2]...
-        Py_INCREF(dtypes[1]);
+        if (odtype != NULL) {
+            dtypes[0] = odtype;
+            Py_INCREF(dtypes[0]);
+            dtypes[1] = odtype;
+            Py_INCREF(dtypes[1]);
+            // TODO: Why does it make a difference if we force output instead?
+            //       which strictly speaking is more correct?
+        }
 
         retcode = ufunc->noops_type_resolver(
                             ufunc, NPY_UNSAFE_CASTING,
@@ -5001,9 +5002,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
          * is used for add and multiply reduction to avoid overflow
          */
         int typenum = PyArray_TYPE(mp);
-        if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum))
-            && ((strcmp(ufunc->name,"add") == 0)
-                || (strcmp(ufunc->name,"multiply") == 0))) {
+        if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum)) &&
+                    ((strcmp(ufunc->name,"add") == 0) ||
+                        (strcmp(ufunc->name,"multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
                 typenum = NPY_LONG;
             }
@@ -5015,8 +5016,12 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                     typenum = NPY_LONG;
                 }
             }
+            otype = PyArray_DescrFromType(typenum);
         }
-        otype = PyArray_DescrFromType(typenum);
+        else {
+            otype = PyArray_DESCR(mp);
+            Py_INCREF(otype);
+        }
     }
 
 
@@ -5055,7 +5060,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         break;
     }
     Py_DECREF(mp);
-    Py_DECREF(otype);
+    Py_XDECREF(otype);
 
     if (ret == NULL) {
         return NULL;
@@ -6109,7 +6114,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     if (ufunc->type_resolver != NULL) {
         /* Use old-style type resolver */
         if (call_oldstyle_resolver(ufunc, NPY_UNSAFE_CASTING,
-                                   array_operands, dtypes) < 0) {
+                                   operands, dtypes) < 0) {
             goto fail;
         }
     }
