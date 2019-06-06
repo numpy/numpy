@@ -155,12 +155,16 @@ class Scalar(Benchmark):
 class MixedArrayScalar(Benchmark):
     def setup(self):
         self.ax = np.asarray([1.0])
+        self.ax_float32 = np.asarray([1.0], dtype=np.float32)
         self.ay = np.asarray([(1.0 + 1j)])
         self.x = np.asarray(1.0)
         self.z = complex(1.0, 1.0)
 
     def time_add_scalar(self):
         (self.ax + self.x)
+
+    def time_add_scalar_min_scalar_logic(self):
+        (self.ax_float32 + self.x)
 
     def time_add_scalar_conv(self):
         (self.ax + 1.0)
