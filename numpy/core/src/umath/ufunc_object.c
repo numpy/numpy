@@ -1184,7 +1184,7 @@ _parse_signature_obj(PyUFuncObject *ufunc,
                 npy_intp istr = i < nin ? i : i+2;  /* skip "->" */
 
                 specified_types[i] = PyArray_DescrFromType(str[istr]);
-                if (dtype == NULL) {
+                if (specified_types[i] == NULL) {
                     goto fail;
                 }
             }
@@ -1426,10 +1426,11 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
         if (dtype_signature != NULL) {
             if (_parse_signature_obj(
                         ufunc, dtype_signature, specified_types) < 0) {
+                printf("sig parsing failed?!\n");
                 goto fail;
             }
         }
-        if (dtype) {  /* new reference */
+        if (dtype != NULL) {
             if (dtype_signature != NULL) {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "cannot specify both 'signature' and 'dtype'");
@@ -1509,10 +1510,14 @@ get_op_dtypes(int nop, int nin, PyArrayObject **arrs, PyArray_Descr **dtypes)
      */
     PyArray_Descr *common_type = PyArray_ResultType(nin, arrs, 0, NULL);
     if (common_type == NULL) {
-        goto fail;
+        /* Most likely the promotion is invalid, and we jus make some call... */
+        PyErr_Clear();
+        prefer_signed = 1;
     }
-    prefer_signed = !PyDataType_ISUNSIGNED(common_type);
-    Py_DECREF(common_type);
+    else {
+        prefer_signed = !PyDataType_ISUNSIGNED(common_type);
+        Py_DECREF(common_type);
+    }
 
     for (nset = 0; nset < nop; nset++) {
         if (nset < nin) {
@@ -1533,7 +1538,7 @@ get_op_dtypes(int nop, int nin, PyArrayObject **arrs, PyArray_Descr **dtypes)
                 if (new_type_num == type_num) {
                     continue;
                 }
-                PyArray_Descr *tmp = PyArray_DescrFromType(type_num);
+                PyArray_Descr *tmp = PyArray_DescrFromType(new_type_num);
                 if (tmp == NULL) {
                     goto fail;
                 }
@@ -1545,6 +1550,7 @@ get_op_dtypes(int nop, int nin, PyArrayObject **arrs, PyArray_Descr **dtypes)
         }
         else {
             dtypes[nset] = PyArray_DESCR(arrs[nset]);
+            Py_INCREF(dtypes[nset]);
         }
     }
     return 0;
@@ -2817,8 +2823,8 @@ call_oldstyle_resolver(PyUFuncObject *ufunc, NPY_CASTING casting,
     }
     if (count == 1 && dtypes[0] != NULL) {
         /* Often, old style would only pass a single dtype here, so do that: */
+        Py_INCREF(dtypes[0]);
         type_tup = PyTuple_Pack(1, (PyObject *)dtypes[0]);
-        Py_SETREF(dtypes[0], NULL);
 
         if (type_tup == NULL) {
             return -1;
@@ -2834,18 +2840,17 @@ call_oldstyle_resolver(PyUFuncObject *ufunc, NPY_CASTING casting,
             PyObject *tmp;
             if (dtypes[i] == NULL) {
                 tmp = Py_None;
-                Py_INCREF(Py_None);
             }
             else {
                 tmp = (PyObject *)dtypes[i];
             }
+            Py_INCREF(tmp);
             PyTuple_SET_ITEM(type_tup, i, tmp);
-            dtypes[i] = NULL;  /* SET_ITEM stole the reference */
         }
     }
 
     retval = ufunc->type_resolver(ufunc, casting, op, type_tup, dtypes);
-    Py_DECREF(type_tup);
+    Py_XDECREF(type_tup);
     return retval;
 }
 
@@ -3768,7 +3773,7 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     PyObject *type_tup = NULL;
 
-    /* Using borrowed references here! */
+    /* Using borrowed references */
     op_dtypes[0] = PyArray_DESCR(arr);
     op_dtypes[1] = op_dtypes[0];
 
@@ -3801,8 +3806,8 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
          */
         dtypes[0] = odtype;
         Py_INCREF(dtypes[0]);
-        dtypes[2] = odtype;
-        Py_INCREF(dtypes[2]);
+        dtypes[1] = odtype; // TODO: feels like should be dtypes[2]...
+        Py_INCREF(dtypes[1]);
 
         retcode = ufunc->noops_type_resolver(
                             ufunc, NPY_UNSAFE_CASTING,
@@ -3842,6 +3847,7 @@ fail:
     Py_DECREF(dtypes[0]);
     Py_XDECREF(dtypes[1]);
     Py_DECREF(dtypes[2]);
+    *out_dtype = NULL;
 
     return -1;
 }
@@ -6088,14 +6094,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     if (op2_array != NULL) {
         op_dtypes[1] = PyArray_DESCR(op2_array);
         op_dtypes[2] = op_dtypes[0];
-        Py_INCREF(op_dtypes[3]);
         operands[1] = op2_array;
         operands[2] = op1_array;
         nop = 3;
     }
     else {
         op_dtypes[1] = op_dtypes[0];
-        Py_INCREF(op_dtypes[1]);
         op_dtypes[2] = NULL;
         operands[1] = op1_array;
         operands[2] = NULL;
@@ -6198,7 +6202,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     /*
      * Iterate over first and second operands and call ufunc
-     * for each pair of inputs
+     * for each pair of in        Py_XDECREF(op_dtypes[i]);
+puts
      */
     i = iter->size;
     while (i > 0)
@@ -6264,7 +6269,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     Py_XDECREF(iter2);
 
     for (i = 0; i < 3; i++) {
-        Py_XDECREF(op_dtypes[i]);
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(array_operands[i]);
     }
@@ -6285,7 +6289,6 @@ fail:
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
     for (i = 0; i < 3; i++) {
-        Py_XDECREF(op_dtypes[i]);
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(array_operands[i]);
     }

@@ -347,17 +347,30 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
 
     /*
      * Use the default type resolution if there's a custom data type
-     * or object arrays.
+     * or object arrays. Or more dtypes were specified.
      */
     type_num1 = op_dtypes[0]->type_num;
     type_num2 = op_dtypes[1]->type_num;
     if (type_num1 >= NPY_NTYPES || type_num2 >= NPY_NTYPES ||
-            type_num1 == NPY_OBJECT || type_num2 == NPY_OBJECT) {
+            type_num1 == NPY_OBJECT || type_num2 == NPY_OBJECT ||
+            out_dtypes[1] != NULL || out_dtypes[2] != NULL) {
         return PyUFunc_DefaultTypeResolver(ufunc, casting,
                                            op_dtypes, out_dtypes);
     }
 
-    // TODO: DELETED TOO MUCH HERE, IT NEEDS TO FILL out_dtypes!
+    // TODO: A more general change is that sig=(dtype, None, None)
+    //       will not take this route, while before it probably did not.
+    // TODO: Change in behaviour, before did ensure NBO for specified dtype
+    if (out_dtypes[0] == NULL) {
+        out_dtypes[0] = PyArray_ResultType(0, NULL, 2, op_dtypes);
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
+    }
+    if (out_dtypes[1] == NULL) {
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[1]);
+    }
 
     /* Output type is always boolean */
     if (out_dtypes[2] != NULL) {
@@ -547,8 +560,8 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
         return -1;
     }
 
-    out_dtypes[0] = ensure_dtype_nbo(op_dtypes[0]);
-    out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
+    Py_XSETREF(out_dtypes[0], ensure_dtype_nbo(op_dtypes[0]));
+    Py_XSETREF(out_dtypes[1], PyArray_DescrFromType(NPY_BOOL));
 
     return 0;
 }
@@ -565,8 +578,8 @@ PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
                                            op_dtypes, out_dtypes);
     }
 
-    out_dtypes[0] = ensure_dtype_nbo(op_dtypes[0]);
-    out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
+    Py_XSETREF(out_dtypes[0], ensure_dtype_nbo(op_dtypes[0]));
+    Py_XSETREF(out_dtypes[1], PyArray_DescrFromType(NPY_BOOL));
 
     return 0;
 }
@@ -623,7 +636,6 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
 {
     int type_num1, type_num2;
     int i;
-
     type_num1 = op_dtypes[0]->type_num;
     type_num2 = op_dtypes[1]->type_num;
 
@@ -631,6 +643,12 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
         return PyUFunc_SimpleUniformOperationTypeResolver(ufunc, casting,
                     op_dtypes, out_dtypes);
+    }
+
+    /* TODO: Dtypes are currently simply ignored, this is nothing new... */
+    for (i = 0; i < 3; i++) {
+        Py_XDECREF(out_dtypes[i]); // TODO make a helper for such mini-loops?
+        out_dtypes[i] = 0;
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
@@ -707,14 +725,13 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
                 return -1;
             }
             /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
-            out_dtypes[1] = timedelta_dtype_with_copied_meta(
-                                            op_dtypes[0]);
+            out_dtypes[1] = timedelta_dtype_with_copied_meta(op_dtypes[0]);
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
                 return -1;
             }
-            out_dtypes[2] = out_dtypes[0];
+            Py_XSETREF(out_dtypes[2], out_dtypes[0]);
             Py_INCREF(out_dtypes[2]);
 
             type_num2 = NPY_TIMEDELTA;
@@ -726,7 +743,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int + m8[<A>] => m8[<A>] + m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = ensure_dtype_nbo(op_dtypes[1]);
+            Py_XSETREF(out_dtypes[0], ensure_dtype_nbo(op_dtypes[1]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
@@ -739,12 +756,12 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
         }
         else if (type_num2 == NPY_DATETIME) {
             /* Make a new NPY_TIMEDELTA, and copy type2's metadata */
-            out_dtypes[0] = timedelta_dtype_with_copied_meta(
-                                            op_dtypes[1]);
+             Py_XSETREF(out_dtypes[0],
+                        timedelta_dtype_with_copied_meta(op_dtypes[1]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = ensure_dtype_nbo(op_dtypes[1]);
+            Py_XSETREF(out_dtypes[1], ensure_dtype_nbo(op_dtypes[1]));
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
