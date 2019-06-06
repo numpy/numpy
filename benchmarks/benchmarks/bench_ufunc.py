@@ -152,6 +152,23 @@ class Scalar(Benchmark):
         (self.y + self.z)
 
 
+class MixedArrayScalar(Benchmark):
+    def setup(self):
+        self.ax = np.asarray([1.0])
+        self.ay = np.asarray([(1.0 + 1j)])
+        self.x = np.asarray(1.0)
+        self.z = complex(1.0, 1.0)
+
+    def time_add_scalar(self):
+        (self.ax + self.x)
+
+    def time_add_scalar_conv(self):
+        (self.ax + 1.0)
+
+    def time_add_scalar_conv_complex(self):
+        (self.ay + self.z)
+
+
 class ArgPack(object):
     __slots__ = ['args', 'kwargs']
     def __init__(self, *args, **kwargs):
