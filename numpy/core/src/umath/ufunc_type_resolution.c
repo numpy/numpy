@@ -50,6 +50,26 @@ npy_casting_to_py_object(NPY_CASTING casting)
 }
 
 
+static const char *
+npy_casting_to_string(NPY_CASTING casting)
+{
+    switch (casting) {
+        case NPY_NO_CASTING:
+            return "'no'";
+        case NPY_EQUIV_CASTING:
+            return "'equiv'";
+        case NPY_SAFE_CASTING:
+            return "'safe'";
+        case NPY_SAME_KIND_CASTING:
+            return "'same_kind'";
+        case NPY_UNSAFE_CASTING:
+            return "'unsafe'";
+        default:
+            return "<unknown>";
+    }
+}
+
+
 /**
  * Always returns -1 to indicate the exception was raised, for convenience
  */
@@ -1832,11 +1852,11 @@ NPY_NO_EXPORT int
 linear_search_type_resolver(PyUFuncObject *self,
                             PyArray_Descr **op_dtypes,
                             NPY_CASTING input_casting,
-                            NPY_CASTING casting,
+                            NPY_CASTING output_casting,
                             int any_object,
                             PyArray_Descr **out_dtypes)
 {
-    npy_intp i, j, n, nin = self->nin, nop = nin + self->nout;
+    npy_intp i, j, nin = self->nin, nop = nin + self->nout;
     int types[NPY_MAXARGS];
     const char *ufunc_name;
     int no_castable_output;
@@ -1844,12 +1864,10 @@ linear_search_type_resolver(PyUFuncObject *self,
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
-    ufunc_name = ufunc_get_name_cstr(self);
-
     /* If the ufunc has userloops, search for them. */
     if (self->userloops) {
         switch (userloop_type_resolver(self,
-                        op_dtypes, casting,
+                        op_dtypes, output_casting,
                         any_object,
                         out_dtypes)) {
             /* Error */
@@ -1882,7 +1900,7 @@ linear_search_type_resolver(PyUFuncObject *self,
         }
 
         switch (ufunc_loop_matches(self, op_dtypes,
-                    input_casting, casting,
+                    input_casting, output_casting,
                     any_object,
                     types, NULL,
                     &no_castable_output, &err_src_typecode,
@@ -1900,10 +1918,29 @@ linear_search_type_resolver(PyUFuncObject *self,
         }
     }
 
+    ufunc_name = ufunc_get_name_cstr(self);
+
     /* If no function was found, throw an error */
-    PyErr_Format(PyExc_TypeError,
-            "No loop matching the specified signature and casting "
-            "was found for ufunc %s", ufunc_name);
+    if (no_castable_output) {
+        PyErr_Format(PyExc_TypeError,
+                "ufunc '%s' output (typecode '%c') could not be coerced to "
+                "provided output parameter (typecode '%c') according "
+                "to the casting rule '%s'",
+                ufunc_name, err_src_typecode, err_dst_typecode,
+                npy_casting_to_string(output_casting));
+    }
+    else {
+        /*
+         * TODO: We should try again if the casting rule is same_kind
+         *       or unsafe, and look for a function more liberally.
+         */
+        PyErr_Format(PyExc_TypeError,
+                "ufunc '%s' not supported for the input types, and the "
+                "inputs could not be safely coerced to any supported "
+                "types according to the casting rule '%s'",
+                ufunc_name,
+                npy_casting_to_string(input_casting));
+    }
 
     return -1;
 }
