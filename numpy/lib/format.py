@@ -841,16 +841,12 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        fp = open(os_fspath(filename), mode+'b')
-        try:
+        with open(os_fspath(filename), mode+'b') as fp:
             _write_array_header(fp, d, version)
             offset = fp.tell()
-        finally:
-            fp.close()
     else:
         # Read the header of the file first.
-        fp = open(os_fspath(filename), 'rb')
-        try:
+        with open(os_fspath(filename), 'rb') as fp:
             version = read_magic(fp)
             _check_version(version)
 
@@ -859,8 +855,6 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
                 msg = "Array can't be memory-mapped: Python objects in dtype."
                 raise ValueError(msg)
             offset = fp.tell()
-        finally:
-            fp.close()
 
     if fortran_order:
         order = 'F'

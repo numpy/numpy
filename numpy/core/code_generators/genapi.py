@@ -483,14 +483,11 @@ def get_versions_hash():
     d = []
 
     file = os.path.join(os.path.dirname(__file__), 'cversions.txt')
-    fid = open(file, 'r')
-    try:
+    with open(file, 'r') as fid:
         for line in fid:
             m = VERRE.match(line)
             if m:
                 d.append((int(m.group(1), 16), m.group(2)))
-    finally:
-        fid.close()
 
     return dict(d)
 
