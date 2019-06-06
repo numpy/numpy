@@ -101,12 +101,12 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
 cdef object prepare_cffi(bitgen_t *bitgen):
     """
     Bundles the interfaces to interact with a BitGenerator using cffi
-    
+
     Parameters
     ----------
     bitgen : pointer
         A pointer to a BitGenerator instance
-    
+
     Returns
     -------
     interface : namedtuple
@@ -136,12 +136,12 @@ cdef object prepare_cffi(bitgen_t *bitgen):
 cdef object prepare_ctypes(bitgen_t *bitgen):
     """
     Bundles the interfaces to interact with a BitGenerator using ctypes
-    
+
     Parameters
     ----------
     bitgen : pointer
         A pointer to a BitGenerator instance
-    
+
     Returns
     -------
     interface : namedtuple
