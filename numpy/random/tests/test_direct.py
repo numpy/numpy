@@ -420,6 +420,20 @@ class TestPCG64(Base):
                       [2 ** (2 * self.bits + 1)])
         assert_raises(self.seed_error_type, rs.bit_generator.seed, [-1])
 
+    def test_advance_symmetry(self):
+        rs = Generator(self.bit_generator(*self.data1['seed']))
+        state = rs.bit_generator.state
+        step = -0x9e3779b97f4a7c150000000000000000
+        rs.bit_generator.advance(step)
+        val_neg = rs.integers(10)
+        rs.bit_generator.state = state
+        rs.bit_generator.advance(2**128 + step)
+        val_pos = rs.integers(10)
+        rs.bit_generator.state = state
+        rs.bit_generator.advance(10 * 2**128 + step)
+        val_big = rs.integers(10)
+        assert val_neg == val_pos
+        assert val_big == val_pos
 
 class TestPCG32(TestPCG64):
     @classmethod

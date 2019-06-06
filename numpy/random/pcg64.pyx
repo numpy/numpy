@@ -264,8 +264,17 @@ cdef class PCG64:
         ----------
         iter : integer, positive
             Number of times to jump the state of the rng.
+
+        Notes
+        -----
+        The step size is phi-1 when divided by 2**128 where phi is the
+        golden number.
         """
-        self.advance(iter * 2**64)
+        step = 0x9e3779b97f4a7c15f39cc0605cedc834
+        step *= int(iter)
+        divisor = step // 2**128
+        step -= 2**128 * divisor
+        self.advance(step)
 
     def jumped(self, iter=1):
         """
@@ -273,8 +282,8 @@ cdef class PCG64:
 
         Returns a new bit generator with the state jumped
 
-        The state of the returned big generator is jumped as-if
-        2**(64 * iter) random numbers have been generated.
+        Jumps the state as-if 210306068529402873165736369884012333108
+        random numbers have been generated.
 
         Parameters
         ----------
@@ -285,6 +294,11 @@ cdef class PCG64:
         -------
         bit_generator : PCG64
             New instance of generator jumped iter times
+
+        Notes
+        -----
+        The step size is phi-1 when divided by 2**128 where phi is the
+        golden number.
         """
         cdef PCG64 bit_generator
 
@@ -379,6 +393,8 @@ cdef class PCG64:
         Advancing the RNG state resets any pre-computed random numbers.
         This is required to ensure exact reproducibility.
         """
+        delta = wrap_int(delta, 128)
+
         cdef np.ndarray d = np.empty(2, dtype=np.uint64)
         d[0] = delta // 2**64
         d[1] = delta % 2**64
