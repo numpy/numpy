@@ -185,11 +185,8 @@ cdef double kahan_sum(double *darr, np.npy_intp n):
 
 cdef object wrap_int(object val, object bits):
     """Wraparound to place an integer into the interval [0, 2**bits)"""
-    upper = int(2)**int(bits)
-    if not 0<= val < upper:
-        divisor = val // upper
-        val = val - upper * divisor
-    return val
+    mask = ~(~int(0) << bits)
+    return val & mask
 
 
 cdef np.ndarray int_to_array(object value, object name, object bits, object uint_size):
