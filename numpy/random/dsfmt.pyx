@@ -294,18 +294,18 @@ cdef class DSFMT:
         # Clear the buffer
         self._reset_state_variables()
 
-    def jumped(self, np.npy_intp iter=1):
+    def jumped(self, np.npy_intp jumps=1):
         """
-        jumped(iter=1)
+        jumped(jumps=1)
 
         Returns a new bit generator with the state jumped
 
         The state of the returned big generator is jumped as-if
-        2**(128 * iter) random numbers have been generated.
+        2**(128 * jumps) random numbers have been generated.
 
         Parameters
         ----------
-        iter : integer, positive
+        jumps : integer, positive
             Number of times to jump the state of the bit generator returned
 
         Returns
@@ -317,7 +317,7 @@ cdef class DSFMT:
 
         bit_generator = self.__class__()
         bit_generator.state = self.state
-        bit_generator.jump_inplace(iter)
+        bit_generator.jump_inplace(jumps)
 
         return bit_generator
 

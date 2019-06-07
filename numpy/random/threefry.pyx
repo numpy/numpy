@@ -350,14 +350,14 @@ cdef class ThreeFry:
         """
         self.advance(iter * int(2**128))
 
-    def jumped(self, iter=1):
+    def jumped(self, jumps=1):
         """
-        jumped(iter=1)
+        jumped(jumps=1)
 
         Returns a new bit generator with the state jumped
 
         The state of the returned big generator is jumped as-if
-        2**(128 * iter) random numbers have been generated.
+        2**(128 * jumps) random numbers have been generated.
 
         Parameters
         ----------
@@ -373,7 +373,7 @@ cdef class ThreeFry:
 
         bit_generator = self.__class__()
         bit_generator.state = self.state
-        bit_generator.jump_inplace(iter)
+        bit_generator.jump_inplace(jumps)
 
         return bit_generator
 
