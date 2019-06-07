@@ -73,7 +73,7 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     ((PyArrayObject_fields *)self)->nd = nd;
     if (nd > 0) {
         /* create new dimensions and strides */
-        ((PyArrayObject_fields *)self)->dimensions = npy_alloc_cache_dim(3*nd);
+        ((PyArrayObject_fields *)self)->dimensions = npy_alloc_cache_dim(2 * nd);
         if (PyArray_DIMS(self) == NULL) {
             Py_DECREF(ret);
             PyErr_SetString(PyExc_MemoryError,"");
