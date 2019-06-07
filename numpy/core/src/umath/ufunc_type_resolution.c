@@ -74,7 +74,7 @@ npy_casting_to_string(NPY_CASTING casting)
  * Always returns -1 to indicate the exception was raised, for convenience
  */
 static int
-raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
+raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArray_Descr **op_dtypes) {
     static PyObject *exc_type = NULL;
     PyObject *exc_value;
 
@@ -86,11 +86,7 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
     }
 
     /* produce an error object */
-    exc_value = Py_BuildValue(
-        "O(OO)", ufunc,
-        (PyObject *)PyArray_DESCR(operands[0]),
-        (PyObject *)PyArray_DESCR(operands[1])
-    );
+    exc_value = Py_BuildValue("O(OO)", ufunc, op_dtypes[0], op_dtypes[1]);
     if (exc_value == NULL){
         return -1;
     }
