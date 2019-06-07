@@ -3370,6 +3370,117 @@ _subscript_by_index(PyArray_Descr *self, Py_ssize_t i)
     return ret;
 }
 
+static npy_bool
+_is_list_of_strings(PyObject *obj)
+{
+    int seqlen, i;
+    if (!PyList_CheckExact(obj)) {
+        return NPY_FALSE;
+    }
+    seqlen = PyList_GET_SIZE(obj);
+    for (i = 0; i < seqlen; i++) {
+        PyObject *item = PyList_GET_ITEM(obj, i);
+        if (!PyBaseString_Check(item)) {
+            return NPY_FALSE;
+        }
+    }
+
+    return NPY_TRUE;
+}
+
+NPY_NO_EXPORT PyArray_Descr *
+arraydescr_field_subset_view(PyArray_Descr *self, PyObject *ind)
+{
+    int seqlen, i;
+    PyObject *fields = NULL;
+    PyObject *names = NULL;
+    PyArray_Descr *view_dtype;
+
+    seqlen = PySequence_Size(ind);
+    if (seqlen == -1) {
+        return NULL;
+    }
+
+    fields = PyDict_New();
+    if (fields == NULL) {
+        goto fail;
+    }
+    names = PyTuple_New(seqlen);
+    if (names == NULL) {
+        goto fail;
+    }
+
+    for (i = 0; i < seqlen; i++) {
+        PyObject *name;
+        PyObject *tup;
+
+        name = PySequence_GetItem(ind, i);
+        if (name == NULL) {
+            goto fail;
+        }
+
+        /* Let the names tuple steal a reference now, so we don't need to
+         * decref name if an error occurs further on.
+         */
+        PyTuple_SET_ITEM(names, i, name);
+
+        tup = PyDict_GetItem(self->fields, name);
+        if (tup == NULL) {
+            PyErr_SetObject(PyExc_KeyError, name);
+            goto fail;
+        }
+
+        /* disallow use of titles as index */
+        if (PyTuple_Size(tup) == 3) {
+            PyObject *title = PyTuple_GET_ITEM(tup, 2);
+            int titlecmp = PyObject_RichCompareBool(title, name, Py_EQ);
+            if (titlecmp < 0) {
+                goto fail;
+            }
+            if (titlecmp == 1) {
+                /* if title == name, we were given a title, not a field name */
+                PyErr_SetString(PyExc_KeyError,
+                            "cannot use field titles in multi-field index");
+                goto fail;
+            }
+            if (PyDict_SetItem(fields, title, tup) < 0) {
+                goto fail;
+            }
+        }
+        /* disallow duplicate field indices */
+        if (PyDict_Contains(fields, name)) {
+            PyObject *msg = NULL;
+            PyObject *fmt = PyUString_FromString(
+                                   "duplicate field of name {!r}");
+            if (fmt != NULL) {
+                msg = PyObject_CallMethod(fmt, "format", "O", name);
+                Py_DECREF(fmt);
+            }
+            PyErr_SetObject(PyExc_ValueError, msg);
+            Py_XDECREF(msg);
+            goto fail;
+        }
+        if (PyDict_SetItem(fields, name, tup) < 0) {
+            goto fail;
+        }
+    }
+
+    view_dtype = PyArray_DescrNewFromType(NPY_VOID);
+    if (view_dtype == NULL) {
+        goto fail;
+    }
+    view_dtype->elsize = self->elsize;
+    view_dtype->names = names;
+    view_dtype->fields = fields;
+    view_dtype->flags = self->flags;
+    return view_dtype;
+
+fail:
+    Py_XDECREF(fields);
+    Py_XDECREF(names);
+    return NULL;
+}
+
 static PyObject *
 descr_subscript(PyArray_Descr *self, PyObject *op)
 {
@@ -3380,6 +3491,9 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
     if (PyBaseString_Check(op)) {
         return _subscript_by_name(self, op);
     }
+    else if (_is_list_of_strings(op)) {
+        return (PyObject *)arraydescr_field_subset_view(self, op);
+    }
     else {
         Py_ssize_t i = PyArray_PyIntAsIntp(op);
         if (error_converting(i)) {
@@ -3387,7 +3501,8 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
             PyObject *err = PyErr_Occurred();
             if (PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
                 PyErr_SetString(PyExc_TypeError,
-                        "Field key must be an integer, string, or unicode.");
+                        "Field key must be an integer field offset, "
+                        "single field name, or list of field names.");
             }
             return NULL;
         }
