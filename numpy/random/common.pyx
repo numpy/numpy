@@ -101,12 +101,12 @@ cdef object random_raw(bitgen_t *bitgen, object lock, object size, object output
 cdef object prepare_cffi(bitgen_t *bitgen):
     """
     Bundles the interfaces to interact with a BitGenerator using cffi
-    
+
     Parameters
     ----------
     bitgen : pointer
         A pointer to a BitGenerator instance
-    
+
     Returns
     -------
     interface : namedtuple
@@ -136,12 +136,12 @@ cdef object prepare_cffi(bitgen_t *bitgen):
 cdef object prepare_ctypes(bitgen_t *bitgen):
     """
     Bundles the interfaces to interact with a BitGenerator using ctypes
-    
+
     Parameters
     ----------
     bitgen : pointer
         A pointer to a BitGenerator instance
-    
+
     Returns
     -------
     interface : namedtuple
@@ -181,6 +181,13 @@ cdef double kahan_sum(double *darr, np.npy_intp n):
         c = (t-sum) - y
         sum = t
     return sum
+
+
+cdef object wrap_int(object val, object bits):
+    """Wraparound to place an integer into the interval [0, 2**bits)"""
+    mask = ~(~int(0) << bits)
+    return val & mask
+
 
 cdef np.ndarray int_to_array(object value, object name, object bits, object uint_size):
     """Convert a large integer to an array of unsigned integers"""

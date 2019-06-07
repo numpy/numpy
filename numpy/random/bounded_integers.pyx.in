@@ -254,9 +254,9 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
     Notes
     -----
     The internal integer generator produces values from the closed
-    interval [low, high-(not closed)].  This requires some care since 
-    high can be out-of-range for {{utype}}. The scalar path leaves 
-    integers as Python integers until the 1 has been subtracted to 
+    interval [low, high-(not closed)].  This requires some care since
+    high can be out-of-range for {{utype}}. The scalar path leaves
+    integers as Python integers until the 1 has been subtracted to
     avoid needing to cast to a larger type.
     """
     cdef np.ndarray out_arr, low_arr, high_arr

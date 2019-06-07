@@ -255,8 +255,13 @@ cdef class PCG32:
         ----------
         iter : integer, positive
             Number of times to jump the state of the rng.
+
+        Notes
+        -----
+        The step size is phi when divided by the period 2**64
         """
-        self.advance(iter * 2**32)
+        step = int(0x9e3779b97f4a7c16)
+        self.advance(iter * step)
 
     def jumped(self, iter=1):
         """
@@ -264,8 +269,8 @@ cdef class PCG32:
 
         Returns a new bit generator with the state jumped
 
-        The state of the returned big generator is jumped as-if
-        2**(32 * iter) random numbers have been generated.
+        Jumps the state as-if 11400714819323198486 random numbers
+        have been generated.
 
         Parameters
         ----------
@@ -276,6 +281,10 @@ cdef class PCG32:
         -------
         bit_generator : PCG32
             New instance of generator jumped iter times
+
+        Notes
+        -----
+        The jump size is phi-1 when divided by the period 2**64
         """
         cdef PCG32 bit_generator
 
@@ -344,6 +353,7 @@ cdef class PCG32:
           RNG.  For example, two 16-bit integer values can be simulated
           from a single draw of a 32-bit RNG.
         """
+        delta = wrap_int(delta, 64)
         pcg32_advance_state(&self.rng_state, <uint64_t>delta)
         return self
 
