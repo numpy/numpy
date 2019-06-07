@@ -1461,7 +1461,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         for (i = 0; i < seqlen; i++) {
             npy_bool is_string;
             PyObject *item = PySequence_GetItem(ind, i);
-            if(item == NULL) {
+            if (item == NULL) {
                 PyErr_Clear();
                 return -1;
             }
