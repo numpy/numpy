@@ -39,6 +39,9 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                             PyArray_Descr *flex_dtype);
 
 NPY_NO_EXPORT int
+dtype_kind_to_simplified_ordering(char kind);
+
+NPY_NO_EXPORT int
 type_num_unsigned_to_signed(int type_num);
 
 NPY_NO_EXPORT PyArray_Descr *

@@ -1677,26 +1677,26 @@ PyArray_MinScalarType(PyArrayObject *arr)
  * determine when to use the min_scalar_type function. This groups
  * 'kind' into boolean, integer, floating point, and everything else.
  */
-static int
+NPY_NO_EXPORT int
 dtype_kind_to_simplified_ordering(char kind)
 {
     switch (kind) {
         /* Boolean kind */
         case 'b':
-            return 0;
+            return 1;
         /* Unsigned int kind */
         case 'u':
         /* Signed int kind */
         case 'i':
-            return 1;
+            return 2;
         /* Float kind */
         case 'f':
         /* Complex kind */
         case 'c':
-            return 2;
+            return 3;
         /* Anything else */
         default:
-            return 3;
+            return 4;
     }
 }
 

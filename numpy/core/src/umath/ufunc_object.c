@@ -518,34 +518,15 @@ _apply_array_wrap(
 
 
 /*
- * Provides an ordering for the dtype 'kind' character codes, to help
- * determine when to use the min_scalar_type function. This groups
- * 'kind' into boolean, integer, floating point, and everything else.
+ * TODO: Refactor this to be reused by ResultType, which includes the same.
+ *
+ * Checks if arrays (and "scalars"/O-d arrays) are in the same category.
+ * If the arrays are in the same or a larger category, we allow demotion
+ * of scalars to the lowest possible dtype.
+ * In that case, it returns the category defined above. The integer
+ * category is interesting. If we have a mixed loop, we may want
+ * to prefer the signed integer?
  */
-static int
-dtype_kind_to_simplified_ordering(char kind)
-{
-    switch (kind) {
-        /* Boolean kind */
-        case 'b':
-            return 0;
-        /* Unsigned int kind */
-        case 'u':
-        /* Signed int kind */
-        case 'i':
-            return 1;
-        /* Float kind */
-        case 'f':
-        /* Complex kind */
-        case 'c':
-            return 2;
-        /* Anything else */
-        default:
-            return 3;
-    }
-}
-
-
 static int
 should_use_min_scalar(int nop, PyArrayObject **op)
 {
@@ -577,7 +558,7 @@ should_use_min_scalar(int nop, PyArrayObject **op)
 
         /* Indicate whether to use the min_scalar_type function */
         if (!all_scalars && max_array_kind >= max_scalar_kind) {
-            use_min_scalar = 1;
+            use_min_scalar = max_array_kind;
         }
     }
 
@@ -1488,29 +1469,40 @@ get_op_dtypes(int nop, int nin, PyArrayObject **arrs, PyArray_Descr **dtypes)
         return 0;
     }
     /*
-     * TODO:
+     * TODO: This is not strictly correct!
      *
      * We have to demote the scalars to the most minimal type possible.
      * But, we have a problem. We should check whether they are compatible
      * with respect to the actual loops, but that is not very nice, because
      * the type resolution should not know about scalars.
-     * To get this right, we would need an "uint8" but small dtype, could
+     * To get this right, we would need an "uint8" but small dtype, one could
      * say a uint7...
-     * This here sould work OK for numpy users, the only possible problem
+     * This here should work OK for numpy users, the only possible problem
      * could be numba or numexpr?
      * The reason why it should work for numpy users, is that we have
-     * almost only homogeneous type loops, so that result type is actually
-     * a correct approximation:
+     * almost only homogeneous type loops.
+     * But if you were to define a mixed type loop which handles different
+     * integers differently, things would break!
      */
-    PyArray_Descr *common_type = PyArray_ResultType(nin, arrs, 0, NULL);
-    if (common_type == NULL) {
-        /* Most likely the promotion is invalid, and we jus make some call... */
-        PyErr_Clear();
-        prefer_signed = 1;
+    if (use_min_scalar == 2) {
+        /*
+         * We are dealing with integers, and it is tricky to tell whether
+         * or not unsigned integers should be used.
+         */
+        PyArray_Descr *common_type = PyArray_ResultType(nin, arrs, 0, NULL);
+        if (common_type == NULL) {
+            /* Most likely the promotion is invalid, and we jus make some call... */
+            PyErr_Clear();
+            prefer_signed = 1;
+        }
+        else {
+            prefer_signed = !PyDataType_ISUNSIGNED(common_type);
+            Py_DECREF(common_type);
+        }
     }
     else {
-        prefer_signed = !PyDataType_ISUNSIGNED(common_type);
-        Py_DECREF(common_type);
+        /* NOTE: This is OK, but we could prefer signed for pyints here... */
+        prefer_signed = 0;
     }
 
     for (nset = 0; nset < nop; nset++) {
