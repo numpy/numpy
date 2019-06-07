@@ -1764,17 +1764,17 @@ def nonzero(a):
     Returns a tuple of arrays, one for each dimension of `a`,
     containing the indices of the non-zero elements in that
     dimension. The values in `a` are always tested and returned in
-    row-major, C-style order. The corresponding non-zero
-    values can be obtained with::
+    row-major, C-style order.
 
-        a[nonzero(a)]
+    To group the indices by element, rather than dimension, use `argwhere`,
+    which returns a row for each non-zero element.
 
-    To group the indices by element, rather than dimension, use::
+    .. note::
+        When called on a zero-d array or scalar, ``nonzero(a)`` is treated
+        as ``nonzero(atleast1d(a))``.
 
-        transpose(nonzero(a))
-
-    The result of this is always a 2-D array, with a row for
-    each non-zero element.
+        ..deprecated:: 1.17.0
+            Use `atleast1d` explicitly if this behavior is deliberate.
 
     Parameters
     ----------
@@ -1795,11 +1795,12 @@ def nonzero(a):
         Equivalent ndarray method.
     count_nonzero :
         Counts the number of non-zero elements in the input array.
-        
+
     Notes
     -----
-    To obtain the non-zero values, it is recommended to use ``x[x.astype(bool)]`` 
-    which will correctly handle 0-d arrays. 
+    While the nonzero values can be obtained with ``a[nonzero(a)]``, it is
+    recommended to use ``x[x.astype(bool)]`` or ``x[x != 0]`` instead, which
+    will correctly handle 0-d arrays.
 
     Examples
     --------
