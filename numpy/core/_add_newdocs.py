@@ -5632,6 +5632,41 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('subdtype',
     then the extra dimensions implied by *shape* are tacked on to
     the end of the retrieved array.
 
+    See Also
+    --------
+    dtype.base
+
+    Examples
+    --------
+    >>> x = numpy.dtype('8f')
+    >>> x.subdtype
+    (dtype('float32'), (8,))
+
+    >>> x =  numpy.dtype('i2')
+    >>> x.subdtype
+    >>>
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('base',
+    """
+    Returns dtype for the base element of the subarrays,
+    regardless of their dimension or shape.
+
+    See Also
+    --------
+    dtype.subdtype
+
+    Examples
+    --------
+    >>> x = numpy.dtype('8f')
+    >>> x.base
+    dtype('float32')
+
+    >>> x =  numpy.dtype('i2')
+    >>> x.base
+    dtype('int16')
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('type',
