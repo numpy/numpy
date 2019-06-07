@@ -2226,7 +2226,10 @@ def ndfromtxt(fname, **kwargs):
     Load ASCII data stored in a file and return it as a single array.
 
     .. deprecated:: 1.17
-        np.ndfromtxt is deprecated
+        ndfromtxt` is a deprecated alias of `genfromtxt` which
+        overwrites the ``usemask`` argument with `False` even when
+        explicitly called as ``ndfromtxt(..., usemask=True)``.
+        Use `genfromtxt` instead.
 
     Parameters
     ----------
@@ -2240,7 +2243,8 @@ def ndfromtxt(fname, **kwargs):
     kwargs['usemask'] = False
     # Numpy 1.17
     warnings.warn(
-        "np.ndfromtxt is deprecated",
+        "np.ndfromtxt is a deprecated alias of np.genfromtxt, "
+        "prefer the latter.",
         DeprecationWarning, stacklevel=2)
     return genfromtxt(fname, **kwargs)
 
@@ -2250,7 +2254,10 @@ def mafromtxt(fname, **kwargs):
     Load ASCII data stored in a text file and return a masked array.
 
     .. deprecated:: 1.17
-        np.mafromtxt is deprecated
+        np.mafromtxt is a deprecated alias of `genfromtxt` which
+        overwrites the ``usemask`` argument with `True` even when
+        explicitly called as ``mafromtxt(..., usemask=False)``.
+        Use `genfromtxt` instead.
 
     Parameters
     ----------
@@ -2264,7 +2271,8 @@ def mafromtxt(fname, **kwargs):
     kwargs['usemask'] = True
     # Numpy 1.17
     warnings.warn(
-        "np.mafromtxt is deprecated",
+        "np.mafromtxt is a deprecated alias of np.genfromtxt, "
+        "prefer the latter.",
         DeprecationWarning, stacklevel=2)
     return genfromtxt(fname, **kwargs)
 

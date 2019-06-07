@@ -1098,9 +1098,6 @@ def safe_eval(source):
     Evaluate a string containing a Python literal expression without
     allowing the execution of arbitrary non-literal code.
 
-    .. deprecate:: 1.17
-        safe_eval is deprecated
-
     Parameters
     ----------
     source : str
