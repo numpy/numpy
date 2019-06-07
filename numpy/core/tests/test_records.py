@@ -435,7 +435,7 @@ class TestRecord(object):
     def test_missing_field(self):
         # https://github.com/numpy/numpy/issues/4806
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
-        assert_raises(ValueError, lambda: arr[['nofield']])
+        assert_raises(KeyError, lambda: arr[['nofield']])
 
     def test_fromarrays_nested_structured_arrays(self):
         arrays = [
