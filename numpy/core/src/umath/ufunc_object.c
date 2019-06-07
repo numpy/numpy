@@ -1170,6 +1170,12 @@ _parse_signature_obj(PyUFuncObject *ufunc,
         }
         Py_XDECREF(str_obj);
     }
+    else {
+        // TODO: no test failed for this path missing (n_specified returned
+        //       uninitialized).
+        return -1;
+    }
+
     return n_specified;
 
 fail:
@@ -3771,7 +3777,7 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
          * resolution.
          * Behaviour is slightly strange but unused within numpy now.
          */
-        PyObject *type_tup;
+        PyObject *type_tup = NULL;
         if (odtype != NULL) {
             type_tup = PyTuple_Pack(3, odtype, odtype, Py_None);
             if (type_tup == NULL) {
