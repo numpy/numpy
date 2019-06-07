@@ -572,7 +572,6 @@ should_use_min_scalar(int nop, PyArrayObject **op)
                 if (kind > max_array_kind) {
                     max_array_kind = kind;
                 }
-
             }
         }
 
@@ -1214,7 +1213,7 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                     NPY_ORDER *out_order,
                     NPY_CASTING *out_casting,
                     PyObject **out_extobj,
-                    PyArray_Descr **specified_types,  /* specified dtypes */
+                    PyArray_Descr **specified_types,  /* specified dtypes must be NULL initialized */
                     int *out_subok,  /* bool */
                     PyArrayObject **out_wheremask, /* PyArray of bool */
                     PyObject **out_axes,  /* type: List[Tuple[T]] */
@@ -1434,9 +1433,6 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                 PyErr_SetString(PyExc_RuntimeError,
                                 "cannot specify both 'signature' and 'dtype'");
                 goto fail;
-            }
-            for (i = 0; i < nop; i++) {
-                specified_types[i] = NULL;
             }
             specified_types[nin] = dtype;
         }
@@ -2924,7 +2920,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /* Initialize all dtypes and __array_prepare__ call-backs to NULL */
     for (i = 0; i < nop; ++i) {
-        dtypes[i] = NULL;  // TODO: Right now not strictly necessary.
+        dtypes[i] = NULL;
         arr_prep[i] = NULL;
     }
     /* Initialize possibly variable parts to the values from the ufunc */

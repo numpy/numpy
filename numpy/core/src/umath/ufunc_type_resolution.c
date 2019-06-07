@@ -352,8 +352,11 @@ PyUFunc_DefaultTypeResolver(PyUFuncObject *ufunc,
 /*
  * This function applies special type resolution rules for the case
  * where all the functions have the pattern XX->bool, using
- * PyArray_ResultType instead of a linear search to get the best
+ * PyArray_PromoteTypes instead of a linear search to get the best
  * loop.
+ * NOTE: This function used to use (and arguably should in a sense use
+ *       ResultType logic instead (which is value based).
+ *       This logic is moved to into `op_dtypes` preparation.
  *
  * Returns 0 on success, -1 on error.
  */
@@ -391,7 +394,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
     //       will not take this route, while before it probably did not.
     // TODO: Change in behaviour, before did ensure NBO for specified dtype
     if (out_dtypes[0] == NULL) {
-        out_dtypes[0] = PyArray_ResultType(0, NULL, 2, op_dtypes);
+        out_dtypes[0] = PyArray_PromoteTypes(op_dtypes[0], op_dtypes[1]);
         if (out_dtypes[0] == NULL) {
             return -1;
         }
@@ -471,7 +474,7 @@ PyUFunc_OnesLikeTypeResolver(PyUFuncObject *ufunc,
 /*
  * This function applies special type resolution rules for the case
  * where all of the types in the signature are the same, eg XX->X or XX->XX.
- * It uses PyArray_ResultType instead of a linear search to get the best
+ * It uses PyArray_PromoteTypeSequence instead of a linear search to get the best
  * loop.
  *
  * Note that a simpler linear search through the functions loop
@@ -487,9 +490,9 @@ PyUFunc_SimpleUniformOperationTypeResolver(
         PyArray_Descr **op_dtypes,
         PyArray_Descr **out_dtypes)
 {
-    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
-
     if (ufunc->nin < 1) {
+        const char *ufunc_name = ufunc_get_name_cstr(ufunc);
+
         PyErr_Format(PyExc_RuntimeError, "ufunc %s is configured "
                 "to use uniform operation type resolution but has "
                 "no inputs",
@@ -525,12 +528,20 @@ PyUFunc_SimpleUniformOperationTypeResolver(
     }
 
     if (out_dtypes[0] == NULL) {
-        /* PyArray_ResultType forgets to force a byte order when n == 1 */
+        /* promotion does not force native byte order when n == 1 */
         if (ufunc->nin == 1){
             out_dtypes[0] = ensure_dtype_nbo(op_dtypes[0]);
         }
         else {
-            out_dtypes[0] = PyArray_ResultType(0, NULL, ufunc->nin, op_dtypes);
+            // TODO: SHOULD USE PromoteTypeSequence, but crashes for me
+            //       for no apparent reason (runs fine in valgrind even)...
+            // out_dtypes[0] = PyArray_PromoteTypeSequence(op_dtypes, ufunc->nin);
+            if (ufunc->nin == 2) {
+                out_dtypes[0] = PyArray_PromoteTypes(op_dtypes[0], op_dtypes[1]);
+            }
+            else {
+                out_dtypes[0] = PyArray_ResultType(0, NULL, ufunc->nin, op_dtypes);
+            }
         }
         if (out_dtypes[0] == NULL) {
             return -1;
@@ -546,9 +557,9 @@ PyUFunc_SimpleUniformOperationTypeResolver(
 
     /* All types are the same - copy the first one to the rest */
     for (int iop = 1; iop < nop; iop++) {
-        Py_XDECREF(out_dtypes[iop]);  // TODO: see also above, should check...
+        Py_INCREF(out_dtypes[0]);
+        Py_XDECREF(out_dtypes[iop]);
         out_dtypes[iop] = out_dtypes[0];
-        Py_INCREF(out_dtypes[iop]);
     }
 
     /* Check against the casting rules */
@@ -912,7 +923,7 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
         /* M8[<A>] - m8[<B>] => M8[gcd(<A>,<B>)] - m8[gcd(<A>,<B>)] */
         if (type_num2 == NPY_TIMEDELTA) {
             out_dtypes[0] = PyArray_PromoteTypes(op_dtypes[0],
-                                                op_dtypes[1]);
+                                                 op_dtypes[1]);
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
