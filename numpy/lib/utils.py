@@ -7,7 +7,9 @@ import re
 import warnings
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
+from numpy.core.overrides import set_module
 from numpy.core import ndarray, ufunc, asarray
+import numpy as np
 
 # getargspec and formatargspec were removed in Python 3.6
 from numpy.compat import getargspec, formatargspec
@@ -79,7 +81,6 @@ class _Deprecate(object):
         new_name = self.new_name
         message = self.message
 
-        import warnings
         if old_name is None:
             try:
                 old_name = func.__name__
@@ -96,7 +97,7 @@ class _Deprecate(object):
 
         def newfunc(*args,**kwds):
             """`arrayrange` is deprecated, use `arange` instead!"""
-            warnings.warn(depdoc, DeprecationWarning)
+            warnings.warn(depdoc, DeprecationWarning, stacklevel=2)
             return func(*args, **kwds)
 
         newfunc = _set_function_name(newfunc, old_name)
@@ -152,7 +153,7 @@ def deprecate(*args, **kwargs):
     >>> olduint(6)
     /usr/lib/python2.5/site-packages/numpy/lib/utils.py:114:
     DeprecationWarning: uint32 is deprecated
-      warnings.warn(str1, DeprecationWarning)
+      warnings.warn(str1, DeprecationWarning, stacklevel=2)
     6
 
     """
@@ -163,13 +164,6 @@ def deprecate(*args, **kwargs):
     if args:
         fn = args[0]
         args = args[1:]
-
-        # backward compatibility -- can be removed
-        # after next release
-        if 'newname' in kwargs:
-            kwargs['new_name'] = kwargs.pop('newname')
-        if 'oldname' in kwargs:
-            kwargs['old_name'] = kwargs.pop('oldname')
 
         return _Deprecate(*args, **kwargs)(fn)
     else:
@@ -241,10 +235,10 @@ def byte_bounds(a):
 
 def who(vardict=None):
     """
-    Print the Numpy arrays in the given dictionary.
+    Print the NumPy arrays in the given dictionary.
 
     If there is no dictionary passed in or `vardict` is None then returns
-    Numpy arrays in the globals() dictionary (all Numpy arrays in the
+    NumPy arrays in the globals() dictionary (all NumPy arrays in the
     namespace).
 
     Parameters
@@ -338,7 +332,7 @@ def who(vardict=None):
 #-----------------------------------------------------------------------------
 
 
-# NOTE:  pydoc defines a help function which works simliarly to this
+# NOTE:  pydoc defines a help function which works similarly to this
 #  except it uses a pager to take over the screen.
 
 # combine name and arguments and split to multiple lines of width
@@ -393,9 +387,9 @@ def _info(obj, output=sys.stdout):
 
     Parameters
     ----------
-    obj: ndarray
+    obj : ndarray
         Must be ndarray, not checked.
-    output:
+    output
         Where printed output goes.
 
     Notes
@@ -439,6 +433,7 @@ def _info(obj, output=sys.stdout):
     print("type: %s" % obj.dtype, file=output)
 
 
+@set_module('numpy')
 def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
     """
     Get help information for a function, class, or module.
@@ -556,7 +551,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                 if len(arglist) > 1:
                     arglist[1] = "("+arglist[1]
                     arguments = ", ".join(arglist[1:])
-        except:
+        except Exception:
             pass
 
         if len(name+arguments) > maxwidth:
@@ -644,9 +639,10 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
         print(inspect.getdoc(object), file=output)
 
 
+@set_module('numpy')
 def source(object, output=sys.stdout):
     """
-    Print or write to a file the source code for a Numpy object.
+    Print or write to a file the source code for a NumPy object.
 
     The source code is only returned for objects written in Python. Many
     functions and classes are defined in C and will therefore not return
@@ -688,7 +684,7 @@ def source(object, output=sys.stdout):
     try:
         print("In file: %s\n" % inspect.getsourcefile(object), file=output)
         print(inspect.getsource(object), file=output)
-    except:
+    except Exception:
         print("Not available for this object.", file=output)
 
 
@@ -701,12 +697,14 @@ _lookfor_caches = {}
 # signature
 _function_signature_re = re.compile(r"[a-z0-9_]+\(.*[,=].*\)", re.I)
 
+
+@set_module('numpy')
 def lookfor(what, module=None, import_modules=True, regenerate=False,
             output=None):
     """
     Do a keyword search on docstrings.
 
-    A list of of objects that matched the search is displayed,
+    A list of objects that matched the search is displayed,
     sorted by relevance. All given keywords need to be found in the
     docstring for it to be returned as a result, but the order does
     not matter.
@@ -917,13 +915,6 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             continue
 
                         try:
-                            # Catch SystemExit, too
-                            base_exc = BaseException
-                        except NameError:
-                            # Python 2.4 doesn't have BaseException
-                            base_exc = Exception
-
-                        try:
                             old_stdout = sys.stdout
                             old_stderr = sys.stderr
                             try:
@@ -933,7 +924,8 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
                             finally:
                                 sys.stdout = old_stdout
                                 sys.stderr = old_stderr
-                        except base_exc:
+                        # Catch SystemExit, too
+                        except BaseException:
                             continue
 
             for n, v in _getmembers(item):
@@ -987,12 +979,12 @@ def _getmembers(item):
 #-----------------------------------------------------------------------------
 
 # The following SafeEval class and company are adapted from Michael Spencer's
-# ASPN Python Cookbook recipe:
-#   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/364469
+# ASPN Python Cookbook recipe: https://code.activestate.com/recipes/364469/
+#
 # Accordingly it is mostly Copyright 2006 by Michael Spencer.
 # The recipe, like most of the other ASPN Python Cookbook recipes was made
 # available under the Python license.
-#   http://www.python.org/license
+#   https://en.wikipedia.org/wiki/Python_License
 
 # It has been modified to:
 #   * handle unary -/+
@@ -1016,7 +1008,7 @@ class SafeEval(object):
     def __init__(self):
         # 2014-10-15, 1.10
         warnings.warn("SafeEval is deprecated in 1.10 and will be removed.",
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
 
     def visit(self, node):
         cls = node.__class__
@@ -1119,4 +1111,49 @@ def safe_eval(source):
     import ast
 
     return ast.literal_eval(source)
+
+
+def _median_nancheck(data, result, axis, out):
+    """
+    Utility function to check median result from data for NaN values at the end
+    and return NaN in that case. Input result can also be a MaskedArray.
+
+    Parameters
+    ----------
+    data : array
+        Input data to median function
+    result : Array or MaskedArray
+        Result of median function
+    axis : {int, sequence of int, None}, optional
+        Axis or axes along which the median was computed.
+    out : ndarray, optional
+        Output array in which to place the result.
+    Returns
+    -------
+    median : scalar or ndarray
+        Median or NaN in axes which contained NaN in the input.
+    """
+    if data.size == 0:
+        return result
+    data = np.moveaxis(data, axis, -1)
+    n = np.isnan(data[..., -1])
+    # masked NaN values are ok
+    if np.ma.isMaskedArray(n):
+        n = n.filled(False)
+    if result.ndim == 0:
+        if n == True:
+            warnings.warn("Invalid value encountered in median",
+                          RuntimeWarning, stacklevel=3)
+            if out is not None:
+                out[...] = data.dtype.type(np.nan)
+                result = out
+            else:
+                result = data.dtype.type(np.nan)
+    elif np.count_nonzero(n.ravel()) > 0:
+        warnings.warn("Invalid value encountered in median for" +
+                      " %d results" % np.count_nonzero(n.ravel()),
+                      RuntimeWarning, stacklevel=3)
+        result[n] = np.nan
+    return result
+
 #-----------------------------------------------------------------------------

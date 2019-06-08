@@ -3,17 +3,21 @@ from __future__ import division, absolute_import, print_function
 import sys
 import os
 import shutil
+import mmap
+import pytest
 from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 
-from numpy import memmap
+from numpy import (
+    memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
+from numpy.compat import Path
+
 from numpy import arange, allclose, asarray
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_array_equal,
-    dec
-)
+    assert_, assert_equal, assert_array_equal, suppress_warnings
+    )
 
-class TestMemmap(TestCase):
-    def setUp(self):
+class TestMemmap(object):
+    def setup(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
         self.tempdir = mkdtemp()
         self.shape = (3, 4)
@@ -21,7 +25,7 @@ class TestMemmap(TestCase):
         self.data = arange(12, dtype=self.dtype)
         self.data.resize(self.shape)
 
-    def tearDown(self):
+    def teardown(self):
         self.tmpfp.close()
         shutil.rmtree(self.tempdir)
 
@@ -37,6 +41,7 @@ class TestMemmap(TestCase):
                        shape=self.shape)
         assert_(allclose(self.data, newfp))
         assert_array_equal(self.data, newfp)
+        assert_equal(newfp.flags.writeable, False)
 
     def test_open_with_filename(self):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
@@ -55,8 +60,8 @@ class TestMemmap(TestCase):
         mode = "w+"
         fp = memmap(self.tmpfp, dtype=self.dtype, mode=mode,
                     shape=self.shape, offset=offset)
-        self.assertEqual(offset, fp.offset)
-        self.assertEqual(mode, fp.mode)
+        assert_equal(offset, fp.offset)
+        assert_equal(mode, fp.mode)
         del fp
 
     def test_filename(self):
@@ -65,18 +70,35 @@ class TestMemmap(TestCase):
                        shape=self.shape)
         abspath = os.path.abspath(tmpname)
         fp[:] = self.data[:]
-        self.assertEqual(abspath, fp.filename)
+        assert_equal(abspath, fp.filename)
         b = fp[:1]
-        self.assertEqual(abspath, b.filename)
+        assert_equal(abspath, b.filename)
+        del b
+        del fp
+
+    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
+    def test_path(self):
+        tmpname = mktemp('', 'mmap', dir=self.tempdir)
+        fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
+                       shape=self.shape)
+        # os.path.realpath does not resolve symlinks on Windows
+        # see: https://bugs.python.org/issue9949
+        # use Path.resolve, just as memmap class does internally
+        abspath = str(Path(tmpname).resolve())
+        fp[:] = self.data[:]
+        assert_equal(abspath, str(fp.filename.resolve()))
+        b = fp[:1]
+        assert_equal(abspath, str(b.filename.resolve()))
         del b
         del fp
 
     def test_filename_fileobj(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+",
                     shape=self.shape)
-        self.assertEqual(fp.filename, self.tmpfp.name)
+        assert_equal(fp.filename, self.tmpfp.name)
 
-    @dec.knownfailureif(sys.platform == 'gnu0', "This test is known to fail on hurd")
+    @pytest.mark.skipif(sys.platform == 'gnu0',
+                        reason="Known to fail on hurd")
     def test_flush(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
@@ -108,7 +130,7 @@ class TestMemmap(TestCase):
     def test_indexing_drops_references(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
-        tmp = fp[[(1, 2), (2, 3)]]
+        tmp = fp[(1, 2), (2, 3)]
         if isinstance(tmp, memmap):
             assert_(tmp._mmap is not fp._mmap)
 
@@ -126,5 +148,59 @@ class TestMemmap(TestCase):
         new_array = asarray(fp)
         assert_(new_array.base is fp)
 
-if __name__ == "__main__":
-    run_module_suite()
+    def test_ufunc_return_ndarray(self):
+        fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
+        fp[:] = self.data
+
+        with suppress_warnings() as sup:
+            sup.filter(FutureWarning, "np.average currently does not preserve")
+            for unary_op in [sum, average, product]:
+                result = unary_op(fp)
+                assert_(isscalar(result))
+                assert_(result.__class__ is self.data[0, 0].__class__)
+
+                assert_(unary_op(fp, axis=0).__class__ is ndarray)
+                assert_(unary_op(fp, axis=1).__class__ is ndarray)
+
+        for binary_op in [add, subtract, multiply]:
+            assert_(binary_op(fp, self.data).__class__ is ndarray)
+            assert_(binary_op(self.data, fp).__class__ is ndarray)
+            assert_(binary_op(fp, fp).__class__ is ndarray)
+
+        fp += 1
+        assert(fp.__class__ is memmap)
+        add(fp, 1, out=fp)
+        assert(fp.__class__ is memmap)
+
+    def test_getitem(self):
+        fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
+        fp[:] = self.data
+
+        assert_(fp[1:, :-1].__class__ is memmap)
+        # Fancy indexing returns a copy that is not memmapped
+        assert_(fp[[0, 1]].__class__ is ndarray)
+
+    def test_memmap_subclass(self):
+        class MemmapSubClass(memmap):
+            pass
+
+        fp = MemmapSubClass(self.tmpfp, dtype=self.dtype, shape=self.shape)
+        fp[:] = self.data
+
+        # We keep previous behavior for subclasses of memmap, i.e. the
+        # ufunc and __getitem__ output is never turned into a ndarray
+        assert_(sum(fp, axis=0).__class__ is MemmapSubClass)
+        assert_(sum(fp).__class__ is MemmapSubClass)
+        assert_(fp[1:, :-1].__class__ is MemmapSubClass)
+        assert(fp[[0, 1]].__class__ is MemmapSubClass)
+
+    def test_mmap_offset_greater_than_allocation_granularity(self):
+        size = 5 * mmap.ALLOCATIONGRANULARITY
+        offset = mmap.ALLOCATIONGRANULARITY + 1
+        fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
+        assert_(fp.offset == offset)
+
+    def test_no_shape(self):
+        self.tmpfp.write(b'a'*16)
+        mm = memmap(self.tmpfp, dtype='float64')
+        assert_equal(mm.shape, (2,))

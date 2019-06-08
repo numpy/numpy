@@ -1,10 +1,12 @@
+.. _c-api.generalized-ufuncs:
+
 ==================================
 Generalized Universal Function API
 ==================================
 
 There is a general need for looping over not only functions on scalars
 but also over functions on vectors (or arrays).
-This concept is realized in Numpy by generalizing the universal functions
+This concept is realized in NumPy by generalizing the universal functions
 (ufuncs).  In regular ufuncs, the elementary function is limited to
 element-by-element operations, whereas the generalized version (gufuncs)
 supports "sub-array" by "sub-array" operations.  The Perl vector library PDL
@@ -60,7 +62,7 @@ output array of the right size. If the size of a core dimension of an output
 cannot be determined from a passed in input or output array, an error will be
 raised.
 
-Note: Prior to Numpy 1.10.0, less strict checks were in place: missing core
+Note: Prior to NumPy 1.10.0, less strict checks were in place: missing core
 dimensions were created by prepending 1's to the shape as necessary, core
 dimensions with the same label were broadcast together, and undetermined
 dimensions were created with size 1.
@@ -99,6 +101,7 @@ Dimension Index
     enumerates the dimension names according to the order of the first
     occurrence of each name in the signature.
 
+.. _details-of-signature:
 
 Details of Signature
 --------------------
@@ -124,34 +127,56 @@ The formal syntax of signatures is as follows::
     <Output arguments>     ::= <Argument list>
     <Argument list>        ::= nil | <Argument> | <Argument> "," <Argument list>
     <Argument>             ::= "(" <Core dimension list> ")"
-    <Core dimension list>  ::= nil | <Dimension name> |
-                               <Dimension name> "," <Core dimension list>
-    <Dimension name>       ::= valid Python variable name
-
+    <Core dimension list>  ::= nil | <Core dimension> |
+                               <Core dimension> "," <Core dimension list>
+    <Core dimension>       ::= <Dimension name> <Dimension modifier>
+    <Dimension name>       ::= valid Python variable name | valid integer
+    <Dimension modifier>   ::= nil | "?"
 
 Notes:
 
 #. All quotes are for clarity.
-#. Core dimensions that share the same name must have the exact same size.
+#. Unmodified core dimensions that share the same name must have the same size.
    Each dimension name typically corresponds to one level of looping in the
    elementary function's implementation.
 #. White spaces are ignored.
+#. An integer as a dimension name freezes that dimension to the value.
+#. If the name is suffixed with the "?" modifier, the dimension is a core
+   dimension only if it exists on all inputs and outputs that share it;
+   otherwise it is ignored (and replaced by a dimension of size 1 for the
+   elementary function).
 
 Here are some examples of signatures:
 
-+-------------+------------------------+-----------------------------------+
-| add         | ``(),()->()``          |                                   |
-+-------------+------------------------+-----------------------------------+
-| inner1d     | ``(i),(i)->()``        |                                   |
-+-------------+------------------------+-----------------------------------+
-| sum1d       | ``(i)->()``            |                                   |
-+-------------+------------------------+-----------------------------------+
-| dot2d       | ``(m,n),(n,p)->(m,p)`` | matrix multiplication             |
-+-------------+------------------------+-----------------------------------+
-| outer_inner | ``(i,t),(j,t)->(i,j)`` | inner over the last dimension,    |
-|             |                        | outer over the second to last,    |
-|             |                        | and loop/broadcast over the rest. |
-+-------------+------------------------+-----------------------------------+
++-------------+----------------------------+-----------------------------------+
+| name        | signature                  | common usage                      |
++=============+============================+===================================+
+| add         | ``(),()->()``              | binary ufunc                      |
++-------------+----------------------------+-----------------------------------+
+| sum1d       | ``(i)->()``                | reduction                         |
++-------------+----------------------------+-----------------------------------+
+| inner1d     | ``(i),(i)->()``            | vector-vector multiplication      |
++-------------+----------------------------+-----------------------------------+
+| matmat      | ``(m,n),(n,p)->(m,p)``     | matrix multiplication             |
++-------------+----------------------------+-----------------------------------+
+| vecmat      | ``(n),(n,p)->(p)``         | vector-matrix multiplication      |
++-------------+----------------------------+-----------------------------------+
+| matvec      | ``(m,n),(n)->(m)``         | matrix-vector multiplication      |
++-------------+----------------------------+-----------------------------------+
+| matmul      | ``(m?,n),(n,p?)->(m?,p?)`` | combination of the four above     |
++-------------+----------------------------+-----------------------------------+
+| outer_inner | ``(i,t),(j,t)->(i,j)``     | inner over the last dimension,    |
+|             |                            | outer over the second to last,    |
+|             |                            | and loop/broadcast over the rest. |
++-------------+----------------------------+-----------------------------------+
+|  cross1d    | ``(3),(3)->(3)``           | cross product where the last      |
+|             |                            | dimension is frozen and must be 3 |
++-------------+----------------------------+-----------------------------------+
+
+.. _frozen:
+
+The last is an instance of freezing a core dimension and can be used to
+improve ufunc performance
 
 C-API for implementing Elementary Functions
 -------------------------------------------

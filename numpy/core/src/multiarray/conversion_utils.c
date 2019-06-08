@@ -15,6 +15,8 @@
 #include "arraytypes.h"
 
 #include "conversion_utils.h"
+#include "alloc.h"
+#include "buffer.h"
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
@@ -45,8 +47,7 @@ PyArray_Converter(PyObject *object, PyObject **address)
         return NPY_SUCCEED;
     }
     else {
-        *address = PyArray_FromAny(object, NULL, 0, 0,
-                                NPY_ARRAY_CARRAY, NULL);
+        *address = PyArray_FROM_OF(object, NPY_ARRAY_CARRAY);
         if (*address == NULL) {
             return NPY_FAIL;
         }
@@ -120,7 +121,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return NPY_FAIL;
     }
     if (len > 0) {
-        seq->ptr = PyDimMem_NEW(len);
+        seq->ptr = npy_alloc_cache_dim(len);
         if (seq->ptr == NULL) {
             PyErr_NoMemory();
             return NPY_FAIL;
@@ -129,7 +130,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     seq->len = len;
     nd = PyArray_IntpFromIndexSequence(obj, (npy_intp *)seq->ptr, len);
     if (nd == -1 || nd != len) {
-        PyDimMem_FREE(seq->ptr);
+        npy_free_cache_dim_obj(*seq);
         seq->ptr = NULL;
         return NPY_FAIL;
     }
@@ -165,10 +166,12 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     }
 
 #if defined(NPY_PY3K)
-    if (PyObject_GetBuffer(obj, &view, PyBUF_ANY_CONTIGUOUS|PyBUF_WRITABLE) != 0) {
+    if (PyObject_GetBuffer(obj, &view,
+                PyBUF_ANY_CONTIGUOUS|PyBUF_WRITABLE|PyBUF_SIMPLE) != 0) {
         PyErr_Clear();
         buf->flags &= ~NPY_ARRAY_WRITEABLE;
-        if (PyObject_GetBuffer(obj, &view, PyBUF_ANY_CONTIGUOUS) != 0) {
+        if (PyObject_GetBuffer(obj, &view,
+                PyBUF_ANY_CONTIGUOUS|PyBUF_SIMPLE) != 0) {
             return NPY_FAIL;
         }
     }
@@ -177,10 +180,13 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     buf->len = (npy_intp) view.len;
 
     /*
-     * XXX: PyObject_AsWriteBuffer does also this, but it is unsafe, as there is
-     * no strict guarantee that the buffer sticks around after being released.
+     * In Python 3 both of the deprecated functions PyObject_AsWriteBuffer and
+     * PyObject_AsReadBuffer that this code replaces release the buffer. It is
+     * up to the object that supplies the buffer to guarantee that the buffer
+     * sticks around after the release.
      */
     PyBuffer_Release(&view);
+    _dealloc_cached_buffer_info(obj);
 
     /* Point to the base of the buffer object if present */
     if (PyMemoryView_Check(obj)) {
@@ -259,17 +265,10 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
             PyObject *tmp = PyTuple_GET_ITEM(axis_in, i);
             int axis = PyArray_PyIntAsInt_ErrMsg(tmp,
                           "integers are required for the axis tuple elements");
-            int axis_orig = axis;
             if (error_converting(axis)) {
                 return NPY_FAIL;
             }
-            if (axis < 0) {
-                axis += ndim;
-            }
-            if (axis < 0 || axis >= ndim) {
-                PyErr_Format(PyExc_ValueError,
-                        "'axis' entry %d is out of bounds [-%d, %d)",
-                        axis_orig, ndim, ndim);
+            if (check_and_adjust_axis(&axis, ndim) < 0) {
                 return NPY_FAIL;
             }
             if (out_axis_flags[axis]) {
@@ -284,19 +283,15 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
     }
     /* Try to interpret axis as an integer */
     else {
-        int axis, axis_orig;
+        int axis;
 
         memset(out_axis_flags, 0, ndim);
 
         axis = PyArray_PyIntAsInt_ErrMsg(axis_in,
                                    "an integer is required for the axis");
-        axis_orig = axis;
 
         if (error_converting(axis)) {
             return NPY_FAIL;
-        }
-        if (axis < 0) {
-            axis += ndim;
         }
         /*
          * Special case letting axis={-1,0} slip through for scalars,
@@ -306,10 +301,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
             return NPY_SUCCEED;
         }
 
-        if (axis < 0 || axis >= ndim) {
-            PyErr_Format(PyExc_ValueError,
-                    "'axis' entry %d is out of bounds [-%d, %d)",
-                    axis_orig, ndim, ndim);
+        if (check_and_adjust_axis(&axis, ndim) < 0) {
             return NPY_FAIL;
         }
 
@@ -429,6 +421,10 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
     else if (str[0] == 'm' || str[0] == 'M') {
         *sortkind = NPY_MERGESORT;
     }
+    else if (str[0] == 's' || str[0] == 'S') {
+        /* mergesort is the only stable sorting method in numpy */
+        *sortkind = NPY_MERGESORT;
+    }
     else {
         PyErr_Format(PyExc_ValueError,
                      "%s is an unrecognized kind of sort",
@@ -535,6 +531,13 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
         PyObject *tmp;
         int ret;
         tmp = PyUnicode_AsASCIIString(object);
+        if (tmp == NULL) {
+            PyErr_SetString(PyExc_ValueError, "Invalid unicode string passed in "
+                                              "for the array ordering. "
+                                              "Please pass in 'C', 'F', 'A' "
+                                              "or 'K' instead");
+            return NPY_FAIL;
+        }
         ret = PyArray_OrderConverter(tmp, val);
         Py_DECREF(tmp);
         return ret;

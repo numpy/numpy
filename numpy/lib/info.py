@@ -67,9 +67,9 @@ Shape Manipulation
 ------------------
 ================ ===================
 squeeze          Return a with length-one dimensions removed.
-atleast_1d       Force arrays to be > 1D
-atleast_2d       Force arrays to be > 2D
-atleast_3d       Force arrays to be > 3D
+atleast_1d       Force arrays to be >= 1D
+atleast_2d       Force arrays to be >= 2D
+atleast_3d       Force arrays to be >= 3D
 vstack           Stack arrays vertically (row on row)
 hstack           Stack arrays horizontally (column on column)
 column_stack     Stack 1D arrays as columns into 2D array
@@ -103,7 +103,7 @@ roots            Find roots of polynomial given coefficients
 polyint          Integrate polynomial
 polyder          Differentiate polynomial
 polyadd          Add polynomials
-polysub          Substract polynomials
+polysub          Subtract polynomials
 polymul          Multiply polynomials
 polydiv          Divide polynomials
 polyval          Evaluate polynomial at given argument
@@ -136,13 +136,15 @@ Threading Tricks
 ParallelExec     Execute commands in parallel thread.
 ================ ===================
 
-1D Array Set Operations
+Array Set Operations
 -----------------------
-Set operations for 1D numeric arrays based on sort() function.
+Set operations for numeric arrays based on sort() function.
 
 ================ ===================
-ediff1d          Array difference (auxiliary function).
 unique           Unique elements of an array.
+isin             Test whether each element of an ND array is present 
+                 anywhere within a second array.
+ediff1d          Array difference (auxiliary function).
 intersect1d      Intersection of 1D arrays with unique elements.
 setxor1d         Set exclusive-or of 1D arrays with unique elements.
 in1d             Test whether elements in a 1D array are also present in

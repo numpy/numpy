@@ -5,14 +5,14 @@ import re
 import os
 
 if sys.version_info[0] < 3:
-    from ConfigParser import SafeConfigParser, NoOptionError
+    from ConfigParser import RawConfigParser
 else:
-    from configparser import ConfigParser, SafeConfigParser, NoOptionError
+    from configparser import RawConfigParser
 
 __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
         'read_config', 'parse_flags']
 
-_VAR = re.compile('\$\{([a-zA-Z0-9_-]+)\}')
+_VAR = re.compile(r'\$\{([a-zA-Z0-9_-]+)\}')
 
 class FormatError(IOError):
     """
@@ -222,9 +222,7 @@ def parse_meta(config):
     if not config.has_section('meta'):
         raise FormatError("No meta section found !")
 
-    d = {}
-    for name, value in config.items('meta'):
-        d[name] = value
+    d = dict(config.items('meta'))
 
     for k in ['name', 'description', 'version']:
         if not k in d:
@@ -259,11 +257,7 @@ def parse_config(filename, dirs=None):
     else:
         filenames = [filename]
 
-    if sys.version[:3] > '3.1':
-        # SafeConfigParser is deprecated in py-3.2 and renamed to ConfigParser
-        config = ConfigParser()
-    else:
-        config = SafeConfigParser()
+    config = RawConfigParser()
 
     n = config.read(filenames)
     if not len(n) >= 1:
@@ -418,7 +412,6 @@ if __name__ == '__main__':
             print("%s\t%s - %s" % (info.name, info.name, info.description))
 
     pkg_name = args[1]
-    import os
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d:
         info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.', d])
@@ -431,7 +424,7 @@ if __name__ == '__main__':
         section = "default"
 
     if options.define_variable:
-        m = re.search('([\S]+)=([\S]+)', options.define_variable)
+        m = re.search(r'([\S]+)=([\S]+)', options.define_variable)
         if not m:
             raise ValueError("--define-variable option should be of " \
                              "the form --define-variable=foo=bar")

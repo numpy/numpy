@@ -1,5 +1,5 @@
-* text=auto
-tools/win32build/nsis_scripts/*.nsi.in eol=crlf
-
 # Numerical data files
 numpy/lib/tests/data/*.npy binary
+
+# Release notes, reduce number of conflicts.
+doc/release/*.rst merge=union

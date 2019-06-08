@@ -1,12 +1,7 @@
 # :Author:    Travis Oliphant
+from cpython.exc cimport PyErr_Print
 
 cdef extern from "numpy/npy_no_deprecated_api.h": pass
-
-cdef extern from "mt_compat.h":
-
-    object NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(object o))
-    void * NpyCapsule_AsVoidPtr(object o)
-    
 
 cdef extern from "numpy/arrayobject.h":
 
@@ -46,7 +41,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_ARRAY_ALIGNED
         NPY_ARRAY_NOTSWAPPED
         NPY_ARRAY_WRITEABLE
-        NPY_ARRAY_UPDATEIFCOPY
+        NPY_ARRAY_WRITEBACKIFCOPY
         NPY_ARR_HAS_DESCR
 
         NPY_ARRAY_BEHAVED
@@ -136,10 +131,11 @@ cdef extern from "numpy/arrayobject.h":
 
     object PyArray_IterNew(object arr)
     void PyArray_ITER_NEXT(flatiter it) nogil
+    void* PyArray_ITER_DATA(flatiter it) nogil
 
     dtype PyArray_DescrFromType(int)
 
-    void import_array()
+    int _import_array() except -1
 
 # include functions that were once macros in the new api
 
@@ -156,3 +152,12 @@ cdef extern from "numpy/arrayobject.h":
     int PyArray_TYPE(ndarray arr)
     int PyArray_CHKFLAGS(ndarray arr, int flags)
     object PyArray_GETITEM(ndarray arr, char *itemptr)
+
+
+# copied from cython version with addition of PyErr_Print.
+cdef inline int import_array() except -1:
+    try:
+        _import_array()
+    except Exception:
+        PyErr_Print()
+        raise ImportError("numpy.core.multiarray failed to import")

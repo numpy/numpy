@@ -3,11 +3,13 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy.testing import (
-    TestCase, assert_almost_equal, assert_raises,
-    assert_equal, assert_, run_module_suite)
+    assert_almost_equal, assert_raises, assert_equal, assert_,
+    )
 
 
 def trim(x):
@@ -27,7 +29,7 @@ T9 = [0, 9, 0, -120, 0, 432, 0, -576, 0, 256]
 Tlist = [T0, T1, T2, T3, T4, T5, T6, T7, T8, T9]
 
 
-class TestConstants(TestCase):
+class TestConstants(object):
 
     def test_polydomain(self):
         assert_equal(poly.polydomain, [-1, 1])
@@ -42,7 +44,7 @@ class TestConstants(TestCase):
         assert_equal(poly.polyx, [0, 1])
 
 
-class TestArithmetic(TestCase):
+class TestArithmetic(object):
 
     def test_polyadd(self):
         for i in range(5):
@@ -102,8 +104,17 @@ class TestArithmetic(TestCase):
                 res = poly.polyadd(poly.polymul(quo, ci), rem)
                 assert_equal(res, tgt, err_msg=msg)
 
+    def test_polypow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(poly.polymul, [c]*j, np.array([1]))
+                res = poly.polypow(c, j) 
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
 
-class TestEvaluation(TestCase):
+
+class TestEvaluation(object):
     # coefficients of 1 + 2*x + 3*x**2
     c1d = np.array([1., 2., 3.])
     c2d = np.einsum('i,j->ij', c1d, c1d)
@@ -135,6 +146,70 @@ class TestEvaluation(TestCase):
             assert_equal(poly.polyval(x, [1]).shape, dims)
             assert_equal(poly.polyval(x, [1, 0]).shape, dims)
             assert_equal(poly.polyval(x, [1, 0, 0]).shape, dims)
+
+    def test_polyvalfromroots(self):
+        # check exception for broadcasting x values over root array with
+        # too few dimensions
+        assert_raises(ValueError, poly.polyvalfromroots,
+                      [1], [1], tensor=False)
+
+        # check empty input
+        assert_equal(poly.polyvalfromroots([], [1]).size, 0)
+        assert_(poly.polyvalfromroots([], [1]).shape == (0,))
+
+        # check empty input + multidimensional roots
+        assert_equal(poly.polyvalfromroots([], [[1] * 5]).size, 0)
+        assert_(poly.polyvalfromroots([], [[1] * 5]).shape == (5, 0))
+
+        # check scalar input
+        assert_equal(poly.polyvalfromroots(1, 1), 0)
+        assert_(poly.polyvalfromroots(1, np.ones((3, 3))).shape == (3,))
+
+        # check normal input)
+        x = np.linspace(-1, 1)
+        y = [x**i for i in range(5)]
+        for i in range(1, 5):
+            tgt = y[i]
+            res = poly.polyvalfromroots(x, [0]*i)
+            assert_almost_equal(res, tgt)
+        tgt = x*(x - 1)*(x + 1)
+        res = poly.polyvalfromroots(x, [-1, 0, 1])
+        assert_almost_equal(res, tgt)
+
+        # check that shape is preserved
+        for i in range(3):
+            dims = [2]*i
+            x = np.zeros(dims)
+            assert_equal(poly.polyvalfromroots(x, [1]).shape, dims)
+            assert_equal(poly.polyvalfromroots(x, [1, 0]).shape, dims)
+            assert_equal(poly.polyvalfromroots(x, [1, 0, 0]).shape, dims)
+
+        # check compatibility with factorization
+        ptest = [15, 2, -16, -2, 1]
+        r = poly.polyroots(ptest)
+        x = np.linspace(-1, 1)
+        assert_almost_equal(poly.polyval(x, ptest),
+                            poly.polyvalfromroots(x, r))
+
+        # check multidimensional arrays of roots and values
+        # check tensor=False
+        rshape = (3, 5)
+        x = np.arange(-3, 2)
+        r = np.random.randint(-5, 5, size=rshape)
+        res = poly.polyvalfromroots(x, r, tensor=False)
+        tgt = np.empty(r.shape[1:])
+        for ii in range(tgt.size):
+            tgt[ii] = poly.polyvalfromroots(x[ii], r[:, ii])
+        assert_equal(res, tgt)
+
+        # check tensor=True
+        x = np.vstack([x, 2*x])
+        res = poly.polyvalfromroots(x, r, tensor=True)
+        tgt = np.empty(r.shape[1:] + x.shape)
+        for ii in range(r.shape[1]):
+            for jj in range(x.shape[0]):
+                tgt[ii, jj, :] = poly.polyvalfromroots(x[jj], r[:, ii])
+        assert_equal(res, tgt)
 
     def test_polyval2d(self):
         x1, x2, x3 = self.x
@@ -199,13 +274,16 @@ class TestEvaluation(TestCase):
         assert_(res.shape == (2, 3)*3)
 
 
-class TestIntegral(TestCase):
+class TestIntegral(object):
 
     def test_polyint(self):
         # check exceptions
         assert_raises(ValueError, poly.polyint, [0], .5)
         assert_raises(ValueError, poly.polyint, [0], -1)
         assert_raises(ValueError, poly.polyint, [0], 1, [0, 0])
+        assert_raises(ValueError, poly.polyint, [0], lbnd=[0])
+        assert_raises(ValueError, poly.polyint, [0], scl=[0])
+        assert_raises(ValueError, poly.polyint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -293,7 +371,7 @@ class TestIntegral(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestDerivative(TestCase):
+class TestDerivative(object):
 
     def test_polyder(self):
         # check exceptions
@@ -333,7 +411,7 @@ class TestDerivative(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestVander(TestCase):
+class TestVander(object):
     # some random values in [-1, 1)
     x = np.random.random((3, 5))*2 - 1
 
@@ -381,7 +459,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestCompanion(TestCase):
+class TestCompanion(object):
 
     def test_raises(self):
         assert_raises(ValueError, poly.polycompanion, [])
@@ -396,7 +474,7 @@ class TestCompanion(TestCase):
         assert_(poly.polycompanion([1, 2])[0, 0] == -.5)
 
 
-class TestMisc(TestCase):
+class TestMisc(object):
 
     def test_polyfromroots(self):
         res = poly.polyfromroots([])
@@ -498,7 +576,3 @@ class TestMisc(TestCase):
 
     def test_polyline(self):
         assert_equal(poly.polyline(3, 4), [3, 4])
-
-
-if __name__ == "__main__":
-    run_module_suite()

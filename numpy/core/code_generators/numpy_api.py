@@ -5,7 +5,8 @@ Each dictionary contains name -> index pair.
 
 Whenever you change one index, you break the ABI (and the ABI version number
 should be incremented). Whenever you add an item to one of the dict, the API
-needs to be updated.
+needs to be updated in both setup_common.py and by adding an appropriate
+entry to cversion.txt (generate the hash via "python cversions.py").
 
 When adding a function, make sure to use the next integer not used as an index
 (in case you use an existing index or jump, the build will stop and raise an
@@ -344,6 +345,11 @@ multiarray_funcs_api = {
     # End 1.9 API
     'PyArray_CheckAnyScalarExact':          (300, NonNull(1)),
     # End 1.10 API
+    'PyArray_MapIterArrayCopyIfOverlap':    (301,),
+    # End 1.13 API
+    'PyArray_ResolveWritebackIfCopy':       (302,),
+    'PyArray_SetWritebackIfCopyBase':       (303,),
+    # End 1.14 API
 }
 
 ufunc_types_api = {
@@ -396,6 +402,8 @@ ufunc_funcs_api = {
     # End 1.7 API
     'PyUFunc_RegisterLoopForDescr':             (41,),
     # End 1.8 API
+    'PyUFunc_FromFuncAndDataAndSignatureAndIdentity': (42,),
+    # End 1.16 API
 }
 
 # List of all the dicts which define the C API

@@ -46,11 +46,10 @@ static int
 _import_array(void)
 {
   int st;
-  PyObject *numpy = PyImport_ImportModule("numpy.core.multiarray");
+  PyObject *numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
   PyObject *c_api = NULL;
 
   if (numpy == NULL) {
-      PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
       return -1;
   }
   c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
@@ -151,7 +150,7 @@ void *PyArray_API[] = {
 
 c_api_header = """
 ===========
-Numpy C-API
+NumPy C-API
 ===========
 """
 
@@ -193,7 +192,9 @@ def do_generate_api(targets, sources):
     genapi.check_api_dict(multiarray_api_index)
 
     numpyapi_list = genapi.get_api_functions('NUMPY_API',
-                                              multiarray_funcs)
+                                             multiarray_funcs)
+
+    # FIXME: ordered_funcs_api is unused
     ordered_funcs_api = genapi.order_dict(multiarray_funcs)
 
     # Create dict name -> *Api instance
@@ -220,8 +221,13 @@ def do_generate_api(targets, sources):
         multiarray_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
 
     if len(multiarray_api_dict) != len(multiarray_api_index):
-        raise AssertionError("Multiarray API size mismatch %d %d" %
-                        (len(multiarray_api_dict), len(multiarray_api_index)))
+        keys_dict = set(multiarray_api_dict.keys())
+        keys_index = set(multiarray_api_index.keys())
+        raise AssertionError(
+            "Multiarray API size mismatch - "
+            "index has extra keys {}, dict has extra keys {}"
+            .format(keys_index - keys_dict, keys_dict - keys_index)
+        )
 
     extension_list = []
     for name, index in genapi.order_dict(multiarray_api_index):
@@ -231,23 +237,18 @@ def do_generate_api(targets, sources):
         module_list.append(api_item.internal_define())
 
     # Write to header
-    fid = open(header_file, 'w')
     s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
-    fid.write(s)
-    fid.close()
+    genapi.write_file(header_file, s)
 
     # Write to c-code
-    fid = open(c_file, 'w')
     s = c_template % ',\n'.join(init_list)
-    fid.write(s)
-    fid.close()
+    genapi.write_file(c_file, s)
 
     # write to documentation
-    fid = open(doc_file, 'w')
-    fid.write(c_api_header)
+    s = c_api_header
     for func in numpyapi_list:
-        fid.write(func.to_ReST())
-        fid.write('\n\n')
-    fid.close()
+        s += func.to_ReST()
+        s += '\n\n'
+    genapi.write_file(doc_file, s)
 
     return targets

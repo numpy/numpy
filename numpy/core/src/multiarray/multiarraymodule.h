@@ -11,5 +11,7 @@ NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_order;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_copy;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_dtype;
 NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_ndmin;
+NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_axis1;
+NPY_VISIBILITY_HIDDEN extern PyObject * npy_ma_str_axis2;
 
 #endif

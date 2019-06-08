@@ -11,12 +11,14 @@ Matrix and vector products
    :toctree: generated/
 
    dot
+   linalg.multi_dot
    vdot
    inner
    outer
    matmul
    tensordot
    einsum
+   einsum_path
    linalg.matrix_power
    kron
 
@@ -69,6 +71,8 @@ Exceptions
    :toctree: generated/
 
    linalg.LinAlgError
+
+.. _routines.linalg-broadcasting:
 
 Linear algebra on several matrices at once
 ------------------------------------------

@@ -35,7 +35,7 @@ import matplotlib.pyplot as plt
 
 from my_module import my_func, other_func
 
-def foo(var1, var2, long_var_name='hi') :
+def foo(var1, var2, long_var_name='hi'):
     r"""A one-line summary that does not use variable names or the
     function name.
 
@@ -111,7 +111,7 @@ def foo(var1, var2, long_var_name='hi') :
     These are written in doctest format, and should illustrate how to
     use the function.
 
-    >>> a=[1,2,3]
+    >>> a = [1, 2, 3]
     >>> print [x + 3 for x in a]
     [4, 5, 6]
     >>> print "a\n\nb"

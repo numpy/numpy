@@ -1,7 +1,7 @@
 About NumPy
 ===========
 
-`NumPy <http://www.scipy.org/NumpPy/>`__ is the fundamental package
+NumPy is the fundamental package
 needed for scientific computing with Python. This package contains:
 
 - a powerful N-dimensional :ref:`array object <arrays>`
@@ -18,34 +18,29 @@ data types can be defined. This allows *NumPy* to seamlessly and
 speedily integrate with a wide variety of databases.
 
 NumPy is a successor for two earlier scientific Python libraries:
-NumPy derives from the old *Numeric* code base and can be used
-as a replacement for *Numeric*.  It also adds the features introduced
-by *Numarray* and can also be used to replace *Numarray*.
+Numeric and Numarray.
 
 NumPy community
 ---------------
 
-Numpy is a distributed, volunteer, open-source project. *You* can help
+NumPy is a distributed, volunteer, open-source project. *You* can help
 us make it better; if you believe something should be improved either
 in functionality or in documentation, don't hesitate to contact us --- or
 even better, contact us and participate in fixing the problem.
 
 Our main means of communication are:
 
-- `scipy.org website <http://scipy.org/>`__
+- `scipy.org website <https://scipy.org/>`__
 
-- `Mailing lists <http://scipy.org/Mailing_Lists>`__
+- `Mailing lists <https://scipy.org/scipylib/mailing-lists.html>`__
 
-- `Numpy Issues <https://github.com/numpy/numpy/issues>`__ (bug reports go here)
+- `NumPy Issues <https://github.com/numpy/numpy/issues>`__ (bug reports go here)
 
-- `Old Numpy Trac <http://projects.scipy.org/numpy>`__ (no longer used)
+- `Old NumPy Trac <http://projects.scipy.org/numpy>`__ (dead link)
 
-More information about the development of Numpy can be found at
-http://scipy.org/Developer_Zone
+More information about the development of NumPy can be found at our `Developer Zone <https://scipy.scipy.org/scipylib/dev-zone.html>`__.
 
-If you want to fix issues in this documentation, the easiest way
-is to participate in `our ongoing documentation marathon
-<http://scipy.org/Developer_Zone/DocMarathon2008>`__.
+The project management structure can be found at our :doc:`governance page <dev/governance/index>`
 
 
 About this documentation

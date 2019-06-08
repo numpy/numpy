@@ -12,11 +12,11 @@ import operator
 import numpy as np
 from numpy import ndarray, float_
 import numpy.core.umath as umath
+import numpy.testing
 from numpy.testing import (
-    TestCase, assert_, assert_allclose, assert_array_almost_equal_nulp,
-    assert_raises, build_err_msg, run_module_suite,
+    assert_, assert_allclose, assert_array_almost_equal_nulp,
+    assert_raises, build_err_msg
     )
-import numpy.testing.utils as utils
 from .core import mask_or, getmask, masked_array, nomask, masked, filled
 
 __all__masked = [
@@ -31,9 +31,10 @@ __all__masked = [
 # have mistakenly included them from this file. SciPy is one. That is
 # unfortunate, as some of these functions are not intended to work with
 # masked arrays. But there was no way to tell before.
+from unittest import TestCase
 __some__from_testing = [
-    'TestCase', 'assert_', 'assert_allclose',
-    'assert_array_almost_equal_nulp', 'assert_raises', 'run_module_suite',
+    'TestCase', 'assert_', 'assert_allclose', 'assert_array_almost_equal_nulp',
+    'assert_raises'
     ]
 
 __all__ = __all__masked + __some__from_testing
@@ -211,11 +212,11 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                             header=header, names=('x', 'y'))
         raise ValueError(msg)
     # OK, now run the basic tests on filled versions
-    return utils.assert_array_compare(comparison,
-                                      x.filled(fill_value),
-                                      y.filled(fill_value),
-                                      err_msg=err_msg,
-                                      verbose=verbose, header=header)
+    return np.testing.assert_array_compare(comparison,
+                                           x.filled(fill_value),
+                                           y.filled(fill_value),
+                                           err_msg=err_msg,
+                                           verbose=verbose, header=header)
 
 
 def assert_array_equal(x, y, err_msg='', verbose=True):

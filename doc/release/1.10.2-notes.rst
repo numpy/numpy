@@ -1,5 +1,6 @@
+==========================
 NumPy 1.10.2 Release Notes
-**************************
+==========================
 
 This release deals with a number of bugs that turned up in 1.10.1 and
 adds various build and release improvements.
@@ -11,20 +12,20 @@ Compatibility notes
 ===================
 
 Relaxed stride checking is no longer the default
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------
 There were back compatibility problems involving views changing the dtype of
 multidimensional Fortran arrays that need to be dealt with over a longer
 timeframe.
 
 Fix swig bug in ``numpy.i``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 Relaxed stride checking revealed a bug in ``array_is_fortran(a)``, that was
 using PyArray_ISFORTRAN to check for Fortran contiguity instead of
 PyArray_IS_F_CONTIGUOUS. You may want to regenerate swigged files using the
 updated numpy.i
 
 Deprecate views changing dimensions in fortran order
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------------
 This deprecates assignment of a new descriptor to the dtype attribute of
 a non-C-contiguous array if it result in changing the shape. This
 effectively bars viewing a multidimensional Fortran array using a dtype

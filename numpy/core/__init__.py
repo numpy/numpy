@@ -11,9 +11,43 @@ for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
     if envkey not in os.environ:
         os.environ[envkey] = '1'
         env_added.append(envkey)
-from . import multiarray
-for envkey in env_added:
-    del os.environ[envkey]
+
+try:
+    from . import multiarray
+except ImportError as exc:
+    import sys
+    msg = """
+
+IMPORTANT: PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!
+
+Importing the multiarray numpy extension module failed.  Most
+likely you are trying to import a failed build of numpy.
+Here is how to proceed:
+- If you're working with a numpy git repository, try `git clean -xdf`
+  (removes all files not under version control) and rebuild numpy.
+- If you are simply trying to use the numpy version that you have installed:
+  your installation is broken - please reinstall numpy.
+- If you have already reinstalled and that did not fix the problem, then:
+  1. Check that you are using the Python you expect (you're using %s),
+     and that you have no directories in your PATH or PYTHONPATH that can
+     interfere with the Python and numpy versions you're trying to use.
+  2. If (1) looks fine, you can open a new issue at
+     https://github.com/numpy/numpy/issues.  Please include details on:
+     - how you installed Python
+     - how you installed numpy
+     - your operating system
+     - whether or not you have multiple versions of Python installed
+     - if you built from source, your compiler versions and ideally a build log
+
+     Note: this error has many possible causes, so please don't comment on
+     an existing issue about this - open a new one instead.
+
+Original error was: %s
+""" % (sys.executable, exc)
+    raise ImportError(msg)
+finally:
+    for envkey in env_added:
+        del os.environ[envkey]
 del envkey
 del env_added
 del os
@@ -39,10 +73,16 @@ from . import getlimits
 from .getlimits import *
 from . import shape_base
 from .shape_base import *
+from . import einsumfunc
+from .einsumfunc import *
 del nt
 
 from .fromnumeric import amax as max, amin as min, round_ as round
 from .numeric import absolute as abs
+
+# do this after everything else, to minimize the chance of this misleadingly
+# appearing in an import-time traceback
+from . import _add_newdocs
 
 __all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__
@@ -53,11 +93,7 @@ __all__ += function_base.__all__
 __all__ += machar.__all__
 __all__ += getlimits.__all__
 __all__ += shape_base.__all__
-
-
-from numpy.testing.nosetester import _numpy_tester
-test = _numpy_tester().test
-bench = _numpy_tester().bench
+__all__ += einsumfunc.__all__
 
 # Make it possible so that ufuncs can be pickled
 #  Here are the loading and unloading functions
@@ -88,3 +124,7 @@ copyreg.pickle(ufunc, _ufunc_reduce, _ufunc_reconstruct)
 del copyreg
 del sys
 del _ufunc_reduce
+
+from numpy._pytesttester import PytestTester
+test = PytestTester(__name__)
+del PytestTester

@@ -3,13 +3,100 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import pytest
+
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_raises, assert_allclose,
-                           TestCase)
+                           assert_equal)
 from numpy.lib import pad
+from numpy.lib.arraypad import _as_pairs
 
 
-class TestConditionalShortcuts(TestCase):
+class TestAsPairs(object):
+
+    def test_single_value(self):
+        """Test casting for a single value."""
+        expected = np.array([[3, 3]] * 10)
+        for x in (3, [3], [[3]]):
+            result = _as_pairs(x, 10)
+            assert_equal(result, expected)
+        # Test with dtype=object
+        obj = object()
+        assert_equal(
+            _as_pairs(obj, 10),
+            np.array([[obj, obj]] * 10)
+        )
+
+    def test_two_values(self):
+        """Test proper casting for two different values."""
+        # Broadcasting in the first dimension with numbers
+        expected = np.array([[3, 4]] * 10)
+        for x in ([3, 4], [[3, 4]]):
+            result = _as_pairs(x, 10)
+            assert_equal(result, expected)
+        # and with dtype=object
+        obj = object()
+        assert_equal(
+            _as_pairs(["a", obj], 10),
+            np.array([["a", obj]] * 10)
+        )
+
+        # Broadcasting in the second / last dimension with numbers
+        assert_equal(
+            _as_pairs([[3], [4]], 2),
+            np.array([[3, 3], [4, 4]])
+        )
+        # and with dtype=object
+        assert_equal(
+            _as_pairs([["a"], [obj]], 2),
+            np.array([["a", "a"], [obj, obj]])
+        )
+
+    def test_with_none(self):
+        expected = ((None, None), (None, None), (None, None))
+        assert_equal(
+            _as_pairs(None, 3, as_index=False),
+            expected
+        )
+        assert_equal(
+            _as_pairs(None, 3, as_index=True),
+            expected
+        )
+
+    def test_pass_through(self):
+        """Test if `x` already matching desired output are passed through."""
+        expected = np.arange(12).reshape((6, 2))
+        assert_equal(
+            _as_pairs(expected, 6),
+            expected
+        )
+
+    def test_as_index(self):
+        """Test results if `as_index=True`."""
+        assert_equal(
+            _as_pairs([2.6, 3.3], 10, as_index=True),
+            np.array([[3, 3]] * 10, dtype=np.intp)
+        )
+        assert_equal(
+            _as_pairs([2.6, 4.49], 10, as_index=True),
+            np.array([[3, 4]] * 10, dtype=np.intp)
+        )
+        for x in (-3, [-3], [[-3]], [-3, 4], [3, -4], [[-3, 4]], [[4, -3]],
+                  [[1, 2]] * 9 + [[1, -2]]):
+            with pytest.raises(ValueError, match="negative values"):
+                _as_pairs(x, 10, as_index=True)
+
+    def test_exceptions(self):
+        """Ensure faulty usage is discovered."""
+        with pytest.raises(ValueError, match="more dimensions than allowed"):
+            _as_pairs([[[3]]], 10)
+        with pytest.raises(ValueError, match="could not be broadcast"):
+            _as_pairs([[1, 2], [3, 4]], 3)
+        with pytest.raises(ValueError, match="could not be broadcast"):
+            _as_pairs(np.ones((2, 3)), 3)
+
+
+class TestConditionalShortcuts(object):
     def test_zero_padding_shortcuts(self):
         test = np.arange(120).reshape(4, 5, 6)
         pad_amt = [(0, 0) for axis in test.shape]
@@ -52,7 +139,7 @@ class TestConditionalShortcuts(TestCase):
                                pad(test, pad_amt, mode=mode, stat_length=30))
 
 
-class TestStatistic(TestCase):
+class TestStatistic(object):
     def test_check_mean_stat_length(self):
         a = np.arange(100).astype('f')
         a = pad(a, ((25, 20), ), 'mean', stat_length=((2, 3), ))
@@ -345,8 +432,22 @@ class TestStatistic(TestCase):
             )
         assert_array_equal(a, b)
 
+    @pytest.mark.parametrize("mode", [
+        pytest.param("mean", marks=pytest.mark.xfail(reason="gh-11216")),
+        "median",
+        "minimum",
+        "maximum"
+    ])
+    def test_same_prepend_append(self, mode):
+        """ Test that appended and prepended values are equal """
+        # This test is constructed to trigger floating point rounding errors in
+        # a way that caused gh-11216 for mode=='mean'
+        a = np.array([-1, 2, -1]) + np.array([0, 1e-12, 0], dtype=np.float64)
+        a = np.pad(a, (1, 1), mode)
+        assert_equal(a[0], a[-1])
 
-class TestConstant(TestCase):
+
+class TestConstant(object):
     def test_check_constant(self):
         a = np.arange(100)
         a = pad(a, (25, 20), 'constant', constant_values=(10, 20))
@@ -490,8 +591,37 @@ class TestConstant(TestCase):
         )
         assert_allclose(test, expected)
 
+    def test_check_large_integers(self):
+        uint64_max = 2 ** 64 - 1
+        arr = np.full(5, uint64_max, dtype=np.uint64)
+        test = np.pad(arr, 1, mode="constant", constant_values=arr.min())
+        expected = np.full(7, uint64_max, dtype=np.uint64)
+        assert_array_equal(test, expected)
 
-class TestLinearRamp(TestCase):
+        int64_max = 2 ** 63 - 1
+        arr = np.full(5, int64_max, dtype=np.int64)
+        test = np.pad(arr, 1, mode="constant", constant_values=arr.min())
+        expected = np.full(7, int64_max, dtype=np.int64)
+        assert_array_equal(test, expected)
+
+    def test_check_object_array(self):
+        arr = np.empty(1, dtype=object)
+        obj_a = object()
+        arr[0] = obj_a
+        obj_b = object()
+        obj_c = object()
+        arr = np.pad(arr, pad_width=1, mode='constant',
+                     constant_values=(obj_b, obj_c))
+
+        expected = np.empty((3,), dtype=object)
+        expected[0] = obj_b
+        expected[1] = obj_a
+        expected[2] = obj_c
+
+        assert_array_equal(arr, expected)
+
+
+class TestLinearRamp(object):
     def test_check_simple(self):
         a = np.arange(100).astype('f')
         a = pad(a, (25, 20), 'linear_ramp', end_values=(4, 5))
@@ -530,8 +660,27 @@ class TestLinearRamp(TestCase):
              [0.,   0.,   0.,   0.,   0.,   0.,   0.,    0.,   0.]])
         assert_allclose(test, expected)
 
+    @pytest.mark.xfail(exceptions=(AssertionError,))
+    def test_object_array(self):
+        from fractions import Fraction
+        arr = np.array([Fraction(1, 2), Fraction(-1, 2)])
+        actual = np.pad(arr, (2, 3), mode='linear_ramp', end_values=0)
 
-class TestReflect(TestCase):
+        # deliberately chosen to have a non-power-of-2 denominator such that
+        # rounding to floats causes a failure.
+        expected = np.array([
+            Fraction( 0, 12),
+            Fraction( 3, 12),
+            Fraction( 6, 12),
+            Fraction(-6, 12),
+            Fraction(-4, 12),
+            Fraction(-2, 12),
+            Fraction(-0, 12),
+        ])
+        assert_equal(actual, expected)
+
+
+class TestReflect(object):
     def test_check_simple(self):
         a = np.arange(100)
         a = pad(a, (25, 20), 'reflect')
@@ -640,8 +789,13 @@ class TestReflect(TestCase):
         b = np.array([1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3])
         assert_array_equal(a, b)
 
+    def test_check_padding_an_empty_array(self):
+        a = pad(np.zeros((0, 3)), ((0,), (1,)), mode='reflect')
+        b = np.zeros((0, 5))
+        assert_array_equal(a, b)
 
-class TestSymmetric(TestCase):
+
+class TestSymmetric(object):
     def test_check_simple(self):
         a = np.arange(100)
         a = pad(a, (25, 20), 'symmetric')
@@ -775,7 +929,7 @@ class TestSymmetric(TestCase):
         assert_array_equal(a, b)
 
 
-class TestWrap(TestCase):
+class TestWrap(object):
     def test_check_simple(self):
         a = np.arange(100)
         a = pad(a, (25, 20), 'wrap')
@@ -870,8 +1024,13 @@ class TestWrap(TestCase):
         b = np.array([3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1])
         assert_array_equal(a, b)
 
+    def test_pad_with_zero(self):
+        a = np.ones((3, 5))
+        b = np.pad(a, (0, 5), mode="wrap")
+        assert_array_equal(a, b[:-5, :-5])
 
-class TestStatLen(TestCase):
+
+class TestStatLen(object):
     def test_check_simple(self):
         a = np.arange(30)
         a = np.reshape(a, (6, 5))
@@ -894,7 +1053,7 @@ class TestStatLen(TestCase):
         assert_array_equal(a, b)
 
 
-class TestEdge(TestCase):
+class TestEdge(object):
     def test_check_simple(self):
         a = np.arange(12)
         a = np.reshape(a, (4, 3))
@@ -914,8 +1073,26 @@ class TestEdge(TestCase):
             )
         assert_array_equal(a, b)
 
+    def test_check_width_shape_1_2(self):
+        # Check a pad_width of the form ((1, 2),).
+        # Regression test for issue gh-7808.
+        a = np.array([1, 2, 3])
+        padded = pad(a, ((1, 2),), 'edge')
+        expected = np.array([1, 1, 2, 3, 3, 3])
+        assert_array_equal(padded, expected)
 
-class TestZeroPadWidth(TestCase):
+        a = np.array([[1, 2, 3], [4, 5, 6]])
+        padded = pad(a, ((1, 2),), 'edge')
+        expected = pad(a, ((1, 2), (1, 2)), 'edge')
+        assert_array_equal(padded, expected)
+
+        a = np.arange(24).reshape(2, 3, 4)
+        padded = pad(a, ((1, 2),), 'edge')
+        expected = pad(a, ((1, 2), (1, 2), (1, 2)), 'edge')
+        assert_array_equal(padded, expected)
+
+
+class TestZeroPadWidth(object):
     def test_zero_pad_width(self):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
@@ -923,7 +1100,7 @@ class TestZeroPadWidth(TestCase):
             assert_array_equal(arr, pad(arr, pad_width, mode='constant'))
 
 
-class TestLegacyVectorFunction(TestCase):
+class TestLegacyVectorFunction(object):
     def test_legacy_vector_functionality(self):
         def _padwithtens(vector, pad_width, iaxis, kwargs):
             vector[:pad_width[0]] = 10
@@ -945,7 +1122,7 @@ class TestLegacyVectorFunction(TestCase):
         assert_array_equal(a, b)
 
 
-class TestNdarrayPadWidth(TestCase):
+class TestNdarrayPadWidth(object):
     def test_check_simple(self):
         a = np.arange(12)
         a = np.reshape(a, (4, 3))
@@ -966,18 +1143,30 @@ class TestNdarrayPadWidth(TestCase):
         assert_array_equal(a, b)
 
 
-class TestUnicodeInput(TestCase):
+class TestUnicodeInput(object):
     def test_unicode_mode(self):
-        try:
-            constant_mode = unicode('constant')
-        except NameError:
-            constant_mode = 'constant'
+        constant_mode = u'constant'
         a = np.pad([1], 2, mode=constant_mode)
         b = np.array([0, 0, 1, 0, 0])
         assert_array_equal(a, b)
 
 
-class ValueError1(TestCase):
+class TestObjectInput(object):
+    def test_object_input(self):
+        # Regression test for issue gh-11395.
+        a = np.full((4, 3), None)
+        pad_amt = ((2, 3), (3, 2))
+        b = np.full((9, 8), None)
+        modes = ['edge',
+                 'symmetric',
+                 'reflect',
+                 'wrap',
+                 ]
+        for mode in modes:
+            assert_array_equal(pad(a, pad_amt, mode=mode), b)
+
+
+class TestValueError1(object):
     def test_check_simple(self):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
@@ -999,8 +1188,14 @@ class ValueError1(TestCase):
         assert_raises(ValueError, pad, arr, ((-2, 3), (3, 2)),
                       **kwargs)
 
+    def test_check_empty_array(self):
+        assert_raises(ValueError, pad, [], 4, mode='reflect')
+        assert_raises(ValueError, pad, np.ndarray(0), 4, mode='reflect')
+        assert_raises(ValueError, pad, np.zeros((0, 3)), ((1,), (0,)),
+                      mode='reflect')
 
-class ValueError2(TestCase):
+
+class TestValueError2(object):
     def test_check_negative_pad_amount(self):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
@@ -1009,7 +1204,7 @@ class ValueError2(TestCase):
                       **kwargs)
 
 
-class ValueError3(TestCase):
+class TestValueError3(object):
     def test_check_kwarg_not_allowed(self):
         arr = np.arange(30).reshape(5, 6)
         assert_raises(ValueError, pad, arr, 4, mode='mean',
@@ -1037,7 +1232,7 @@ class ValueError3(TestCase):
                       mode='constant')
 
 
-class TypeError1(TestCase):
+class TestTypeError1(object):
     def test_float(self):
         arr = np.arange(30)
         assert_raises(TypeError, pad, arr, ((-2.1, 3), (3, 2)))
@@ -1065,7 +1260,3 @@ class TypeError1(TestCase):
         kwargs = dict(mode='mean', stat_length=(3, ))
         assert_raises(TypeError, pad, arr, ((2, 3, 4), (3, 2)),
                       **kwargs)
-
-
-if __name__ == "__main__":
-    np.testing.run_module_suite()

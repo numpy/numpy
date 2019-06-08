@@ -1,0 +1,77 @@
+"""
+Template for each `dtype` helper function in `np.random.randint`.
+"""
+
+{{py:
+
+dtypes = (
+    ('bool', 'bool', 'bool_'),
+    ('int8', 'uint8', 'int8'),
+    ('int16', 'uint16', 'int16'),
+    ('int32', 'uint32', 'int32'),
+    ('int64', 'uint64', 'int64'),
+    ('uint8', 'uint8', 'uint8'),
+    ('uint16', 'uint16', 'uint16'),
+    ('uint32', 'uint32', 'uint32'),
+    ('uint64', 'uint64', 'uint64'),
+)
+
+def get_dispatch(dtypes):
+    for npy_dt, npy_udt, np_dt in dtypes:
+        yield npy_dt, npy_udt, np_dt
+}}
+
+{{for npy_dt, npy_udt, np_dt in get_dispatch(dtypes)}}
+
+def _rand_{{npy_dt}}(npy_{{npy_dt}} low, npy_{{npy_dt}} high, size, rngstate):
+    """
+    _rand_{{npy_dt}}(low, high, size, rngstate)
+
+    Return random np.{{np_dt}} integers between ``low`` and ``high``, inclusive.
+
+    Return random integers from the "discrete uniform" distribution in the
+    closed interval [``low``, ``high``). On entry the arguments are presumed
+    to have been validated for size and order for the np.{{np_dt}} type.
+
+    Parameters
+    ----------
+    low : int
+        Lowest (signed) integer to be drawn from the distribution.
+    high : int
+        Highest (signed) integer to be drawn from the distribution.
+    size : int or tuple of ints
+        Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+        ``m * n * k`` samples are drawn.  Default is None, in which case a
+        single value is returned.
+    rngstate : encapsulated pointer to rk_state
+        The specific type depends on the python version. In Python 2 it is
+        a PyCObject, in Python 3 a PyCapsule object.
+
+    Returns
+    -------
+    out : python integer or ndarray of np.{{np_dt}}
+          `size`-shaped array of random integers from the appropriate
+          distribution, or a single such random int if `size` not provided.
+
+    """
+    cdef npy_{{npy_udt}} off, rng, buf
+    cdef npy_{{npy_udt}} *out
+    cdef ndarray array "arrayObject"
+    cdef npy_intp cnt
+    cdef rk_state *state = <rk_state *>PyCapsule_GetPointer(rngstate, NULL)
+
+    off = <npy_{{npy_udt}}>(low)
+    rng = <npy_{{npy_udt}}>(high) - <npy_{{npy_udt}}>(low)
+
+    if size is None:
+        rk_random_{{npy_udt}}(off, rng, 1, &buf, state)
+        return np.{{np_dt}}(<npy_{{npy_dt}}>buf)
+    else:
+        array = <ndarray>np.empty(size, np.{{np_dt}})
+        cnt = PyArray_SIZE(array)
+        array_data = <npy_{{npy_udt}} *>PyArray_DATA(array)
+        with nogil:
+            rk_random_{{npy_udt}}(off, rng, cnt, array_data, state)
+        return array
+
+{{endfor}}

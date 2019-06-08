@@ -9,7 +9,7 @@ abc module from the stdlib, hence it is only available for Python >= 2.6.
 from __future__ import division, absolute_import, print_function
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-from numbers import Number
+import numbers
 
 import numpy as np
 from . import polyutils as pu
@@ -17,7 +17,7 @@ from . import polyutils as pu
 __all__ = ['ABCPolyBase']
 
 class ABCPolyBase(object):
-    """An abstract base class for series classes.
+    """An abstract base class for immutable series classes.
 
     ABCPolyBase provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' along with the
@@ -64,8 +64,8 @@ class ABCPolyBase(object):
     # Not hashable
     __hash__ = None
 
-    # Don't let participate in array operations. Value doesn't matter.
-    __array_priority__ = 1000
+    # Opt out of numpy ufuncs and Python ops with ndarray subclasses.
+    __array_ufunc__ = None
 
     # Limit runaway size. T_n^m has degree n*m
     maxpower = 100
@@ -80,6 +80,10 @@ class ABCPolyBase(object):
 
     @abstractproperty
     def nickname(self):
+        pass
+
+    @abstractproperty
+    def basis_name(self):
         pass
 
     @abstractmethod
@@ -223,13 +227,13 @@ class ABCPolyBase(object):
 
         Returns
         -------
-        coef:
+        coef
             The coefficients of`other` if it is a compatible instance,
             of ABCPolyBase, otherwise `other`.
 
         Raises
         ------
-        TypeError:
+        TypeError
             When `other` is an incompatible instance of ABCPolyBase.
 
         """
@@ -260,7 +264,7 @@ class ABCPolyBase(object):
             self.window = window
 
     def __repr__(self):
-        format = "%s(%s, %s, %s)"
+        format = "%s(%s, domain=%s, window=%s)"
         coef = repr(self.coef)[6:-1]
         domain = repr(self.domain)[6:-1]
         window = repr(self.window)[6:-1]
@@ -272,6 +276,82 @@ class ABCPolyBase(object):
         coef = str(self.coef)
         name = self.nickname
         return format % (name, coef)
+
+    @classmethod
+    def _repr_latex_term(cls, i, arg_str, needs_parens):
+        if cls.basis_name is None:
+            raise NotImplementedError(
+                "Subclasses must define either a basis name, or override "
+                "_repr_latex_term(i, arg_str, needs_parens)")
+        # since we always add parens, we don't care if the expression needs them
+        return "{{{basis}}}_{{{i}}}({arg_str})".format(
+            basis=cls.basis_name, i=i, arg_str=arg_str
+        )
+
+    @staticmethod
+    def _repr_latex_scalar(x):
+        # TODO: we're stuck with disabling math formatting until we handle
+        # exponents in this function
+        return r'\text{{{}}}'.format(x)
+
+    def _repr_latex_(self):
+        # get the scaled argument string to the basis functions
+        off, scale = self.mapparms()
+        if off == 0 and scale == 1:
+            term = 'x'
+            needs_parens = False
+        elif scale == 1:
+            term = '{} + x'.format(
+                self._repr_latex_scalar(off)
+            )
+            needs_parens = True
+        elif off == 0:
+            term = '{}x'.format(
+                self._repr_latex_scalar(scale)
+            )
+            needs_parens = True
+        else:
+            term = '{} + {}x'.format(
+                self._repr_latex_scalar(off),
+                self._repr_latex_scalar(scale)
+            )
+            needs_parens = True
+
+        mute = r"\color{{LightGray}}{{{}}}".format
+
+        parts = []
+        for i, c in enumerate(self.coef):
+            # prevent duplication of + and - signs
+            if i == 0:
+                coef_str = '{}'.format(self._repr_latex_scalar(c))
+            elif not isinstance(c, numbers.Real):
+                coef_str = ' + ({})'.format(self._repr_latex_scalar(c))
+            elif not np.signbit(c):
+                coef_str = ' + {}'.format(self._repr_latex_scalar(c))
+            else:
+                coef_str = ' - {}'.format(self._repr_latex_scalar(-c))
+
+            # produce the string for the term
+            term_str = self._repr_latex_term(i, term, needs_parens)
+            if term_str == '1':
+                part = coef_str
+            else:
+                part = r'{}\,{}'.format(coef_str, term_str)
+
+            if c == 0:
+                part = mute(part)
+
+            parts.append(part)
+
+        if parts:
+            body = ''.join(parts)
+        else:
+            # in case somehow there are no coefficients at all
+            body = '0'
+
+        return r'$x \mapsto {}$'.format(body)
+
+
 
     # Pickle and copy
 
@@ -307,44 +387,38 @@ class ABCPolyBase(object):
         return self
 
     def __add__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             coef = self._add(self.coef, othercoef)
-        except TypeError as e:
-            raise e
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __sub__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             coef = self._sub(self.coef, othercoef)
-        except TypeError as e:
-            raise e
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __mul__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             coef = self._mul(self.coef, othercoef)
-        except TypeError as e:
-            raise e
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __div__(self, other):
-        # set to __floordiv__,  /, for now.
+        # this can be removed when python 2 support is dropped.
         return self.__floordiv__(other)
 
     def __truediv__(self, other):
         # there is no true divide if the rhs is not a Number, although it
         # could return the first n elements of an infinite series.
         # It is hard to see where n would come from, though.
-        if not isinstance(other, Number) or isinstance(other, bool):
+        if not isinstance(other, numbers.Number) or isinstance(other, bool):
             form = "unsupported types for true division: '%s', '%s'"
             raise TypeError(form % (type(self), type(other)))
         return self.__floordiv__(other)
@@ -362,12 +436,12 @@ class ABCPolyBase(object):
         return res[1]
 
     def __divmod__(self, other):
+        othercoef = self._get_coefficients(other)
         try:
-            othercoef = self._get_coefficients(other)
             quo, rem = self._div(self.coef, othercoef)
-        except (TypeError, ZeroDivisionError) as e:
+        except ZeroDivisionError as e:
             raise e
-        except:
+        except Exception:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
@@ -381,21 +455,21 @@ class ABCPolyBase(object):
     def __radd__(self, other):
         try:
             coef = self._add(other, self.coef)
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __rsub__(self, other):
         try:
             coef = self._sub(other, self.coef)
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
     def __rmul__(self, other):
         try:
             coef = self._mul(other, self.coef)
-        except:
+        except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window)
 
@@ -425,14 +499,11 @@ class ABCPolyBase(object):
             quo, rem = self._div(other, self.coef)
         except ZeroDivisionError as e:
             raise e
-        except:
+        except Exception:
             return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
         return quo, rem
-
-    # Enhance me
-    # some augmented arithmetic operations could be added here
 
     def __eq__(self, other):
         res = (isinstance(other, self.__class__) and
@@ -742,7 +813,7 @@ class ABCPolyBase(object):
         deg : int or 1-D array_like
             Degree(s) of the fitting polynomials. If `deg` is a single integer
             all terms up to and including the `deg`'th term are included in the
-            fit. For Numpy versions >= 1.11 a list of integers specifying the
+            fit. For NumPy versions >= 1.11.0 a list of integers specifying the
             degrees of the terms to include may be used instead.
         domain : {None, [beg, end], []}, optional
             Domain to use for the returned series. If ``None``,
@@ -779,7 +850,9 @@ class ABCPolyBase(object):
         -------
         new_series : series
             A series that represents the least squares fit to the data and
-            has the domain specified in the call.
+            has the domain and window specified in the call. If the
+            coefficients for the unscaled and unshifted basis polynomials are
+            of interest, do ``new_series.convert().coef``.
 
         [resid, rank, sv, rcond] : list
             These values are only returned if `full` = True

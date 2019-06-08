@@ -6,7 +6,7 @@ Python Types and C-Structures
 
 Several new types are defined in the C-code. Most of these are
 accessible from Python, but a few are not exposed due to their limited
-use. Every new Python type has an associated :c:type:`PyObject *` with an
+use. Every new Python type has an associated :c:type:`PyObject *<PyObject>` with an
 internal structure that includes a pointer to a "method table" that
 defines how the new object behaves in Python. When you receive a
 Python object into C code, you always get a pointer to a
@@ -60,7 +60,7 @@ hierarchy of actual Python types.
 PyArray_Type
 ------------
 
-.. c:var: PyArray_Type
+.. c:var:: PyArray_Type
 
    The Python type of the ndarray is :c:data:`PyArray_Type`. In C, every
    ndarray is a pointer to a :c:type:`PyArrayObject` structure. The ob_type
@@ -133,10 +133,11 @@ PyArray_Type
     is related to this array. There are two use cases: 1) If this array
     does not own its own memory, then base points to the Python object
     that owns it (perhaps another array object), 2) If this array has
-    the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag set, then this array is
-    a working copy of a "misbehaved" array. As soon as this array is
-    deleted, the array pointed to by base will be updated with the
-    contents of this array.
+    the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or
+    :c:data:NPY_ARRAY_WRITEBACKIFCOPY`: flag set, then this array is
+    a working copy of a "misbehaved" array. When
+    ``PyArray_ResolveWritebackIfCopy`` is called, the array pointed to by base
+    will be updated with the contents of this array.
 
 .. c:member:: PyArray_Descr *PyArrayObject.descr
 
@@ -153,8 +154,8 @@ PyArray_Type
     Flags indicating how the memory pointed to by data is to be
     interpreted. Possible flags are :c:data:`NPY_ARRAY_C_CONTIGUOUS`,
     :c:data:`NPY_ARRAY_F_CONTIGUOUS`, :c:data:`NPY_ARRAY_OWNDATA`,
-    :c:data:`NPY_ARRAY_ALIGNED`, :c:data:`NPY_ARRAY_WRITEABLE`, and
-    :c:data:`NPY_ARRAY_UPDATEIFCOPY`.
+    :c:data:`NPY_ARRAY_ALIGNED`, :c:data:`NPY_ARRAY_WRITEABLE`,
+    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`, and :c:data:`NPY_ARRAY_UPDATEIFCOPY`.
 
 .. c:member:: PyObject *PyArrayObject.weakreflist
 
@@ -165,7 +166,7 @@ PyArray_Type
 PyArrayDescr_Type
 -----------------
 
-.. c:var: PyArrayDescr_Type
+.. c:var:: PyArrayDescr_Type
 
    The :c:data:`PyArrayDescr_Type` is the built-in type of the
    data-type-descriptor objects used to describe how the bytes comprising
@@ -181,8 +182,18 @@ PyArrayDescr_Type
 
 .. c:type:: PyArray_Descr
 
-   The format of the :c:type:`PyArray_Descr` structure that lies at the
-   heart of the :c:data:`PyArrayDescr_Type` is
+   The :c:type:`PyArray_Descr` structure lies at the heart of the
+   :c:data:`PyArrayDescr_Type`. While it is described here for
+   completeness, it should be considered internal to NumPy and manipulated via
+   ``PyArrayDescr_*`` or ``PyDataType*`` functions and macros. The size of this
+   structure is subject to change across versions of NumPy. To ensure
+   compatibility:
+
+   - Never declare a non-pointer instance of the struct
+   - Never perform pointer arithmatic
+   - Never use ``sizof(PyArray_Descr)``
+
+   It has the following structure:
 
    .. code-block:: c
 
@@ -218,7 +229,7 @@ PyArrayDescr_Type
     interface typestring notation). A 'b' represents Boolean, a 'i'
     represents signed integer, a 'u' represents unsigned integer, 'f'
     represents floating point, 'c' represents complex floating point, 'S'
-    represents 8-bit character string, 'U' represents 32-bit/character
+    represents 8-bit zero-terminated bytes, 'U' represents 32-bit/character
     unicode string, and 'V' represents arbitrary.
 
 .. c:member:: char PyArray_Descr.type
@@ -237,55 +248,55 @@ PyArrayDescr_Type
     array like behavior. Each bit in this member is a flag which are named
     as:
 
-    .. c:var: NPY_ITEM_REFCOUNT
+    .. c:var:: NPY_ITEM_REFCOUNT
 
-    .. c:var: NPY_ITEM_HASOBJECT
+    .. c:var:: NPY_ITEM_HASOBJECT
 
         Indicates that items of this data-type must be reference
         counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
 
-    .. c:var: NPY_LIST_PICKLE
+    .. c:var:: NPY_LIST_PICKLE
 
         Indicates arrays of this data-type must be converted to a list
         before pickling.
 
-    .. c:var: NPY_ITEM_IS_POINTER
+    .. c:var:: NPY_ITEM_IS_POINTER
 
         Indicates the item is a pointer to some other data-type
 
-    .. c:var: NPY_NEEDS_INIT
+    .. c:var:: NPY_NEEDS_INIT
 
         Indicates memory for this data-type must be initialized (set
         to 0) on creation.
 
-    .. c:var: NPY_NEEDS_PYAPI
+    .. c:var:: NPY_NEEDS_PYAPI
 
         Indicates this data-type requires the Python C-API during
         access (so don't give up the GIL if array access is going to
         be needed).
 
-    .. c:var: NPY_USE_GETITEM
+    .. c:var:: NPY_USE_GETITEM
 
         On array access use the ``f->getitem`` function pointer
         instead of the standard conversion to an array scalar. Must
         use if you don't define an array scalar to go along with
         the data-type.
 
-    .. c:var: NPY_USE_SETITEM
+    .. c:var:: NPY_USE_SETITEM
 
         When creating a 0-d array from an array scalar use
         ``f->setitem`` instead of the standard copy from an array
         scalar. Must use if you don't define an array scalar to go
         along with the data-type.
 
-    .. c:var: NPY_FROM_FIELDS
+    .. c:var:: NPY_FROM_FIELDS
 
         The bits that are inherited for the parent data-type if these
         bits are set in any field of the data-type. Currently (
         :c:data:`NPY_NEEDS_INIT` \| :c:data:`NPY_LIST_PICKLE` \|
         :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_PYAPI` ).
 
-    .. c:var: NPY_OBJECT_DTYPE_FLAGS
+    .. c:var:: NPY_OBJECT_DTYPE_FLAGS
 
         Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
         \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
@@ -300,7 +311,7 @@ PyArrayDescr_Type
     .. c:function:: PyDataType_REFCHK(PyArray_Descr *dtype)
 
         Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
- 	:c:data:`NPY_ITEM_REFCOUNT`).
+        :c:data:`NPY_ITEM_REFCOUNT`).
 
 .. c:member:: int PyArray_Descr.type_num
 
@@ -420,7 +431,8 @@ PyArrayDescr_Type
     functions can (and must) deal with mis-behaved arrays. The other
     functions require behaved memory segments.
 
-    .. c:member:: void cast(void *from, void *to, npy_intp n, void *fromarr, void *toarr)
+    .. c:member:: void cast( \
+            void *from, void *to, npy_intp n, void *fromarr, void *toarr)
 
         An array of function pointers to cast from the current type to
         all of the other builtin types. Each function casts a
@@ -446,7 +458,9 @@ PyArrayDescr_Type
         a zero is returned, otherwise, a negative one is returned (and
         a Python error set).
 
-    .. c:member:: void copyswapn(void *dest, npy_intp dstride, void *src, npy_intp sstride, npy_intp n, int swap, void *arr)
+    .. c:member:: void copyswapn( \
+            void *dest, npy_intp dstride, void *src, npy_intp sstride, \
+            npy_intp n, int swap, void *arr)
 
     .. c:member:: void copyswap(void *dest, void *src, int swap, void *arr)
 
@@ -472,7 +486,8 @@ PyArrayDescr_Type
         ``d2``, and -1 if * ``d1`` < * ``d2``. The array object ``arr`` is
         used to retrieve itemsize and field information for flexible arrays.
 
-    .. c:member:: int argmax(void* data, npy_intp n, npy_intp* max_ind, void* arr)
+    .. c:member:: int argmax( \
+            void* data, npy_intp n, npy_intp* max_ind, void* arr)
 
         A pointer to a function that retrieves the index of the
         largest of ``n`` elements in ``arr`` beginning at the element
@@ -481,7 +496,9 @@ PyArrayDescr_Type
         always 0. The index of the largest element is returned in
         ``max_ind``.
 
-    .. c:member:: void dotfunc(void* ip1, npy_intp is1, void* ip2, npy_intp is2, void* op, npy_intp n, void* arr)
+    .. c:member:: void dotfunc( \
+            void* ip1, npy_intp is1, void* ip2, npy_intp is2, void* op, \
+            npy_intp n, void* arr)
 
         A pointer to a function that multiplies two ``n`` -length
         sequences together, adds them, and places the result in
@@ -531,7 +548,8 @@ PyArrayDescr_Type
         computed by repeatedly adding this computed delta. The data
         buffer must be well-behaved.
 
-    .. c:member:: void fillwithscalar(void* buffer, npy_intp length, void* value, void* arr)
+    .. c:member:: void fillwithscalar( \
+            void* buffer, npy_intp length, void* value, void* arr)
 
         A pointer to a function that fills a contiguous ``buffer`` of
         the given ``length`` with a single scalar ``value`` whose
@@ -546,7 +564,8 @@ PyArrayDescr_Type
         and :c:data:`NPY_MERGESORT` are defined). These sorts are done
         in-place assuming contiguous and aligned data.
 
-    .. c:member:: int argsort(void* start, npy_intp* result, npy_intp length, void *arr)
+    .. c:member:: int argsort( \
+            void* start, npy_intp* result, npy_intp length, void *arr)
 
         An array of function pointers to sorting algorithms for this
         data type. The same sorting algorithms as for sort are
@@ -584,7 +603,8 @@ PyArrayDescr_Type
         can be cast to safely (this usually means without losing
         precision).
 
-    .. c:member:: void fastclip(void *in, npy_intp n_in, void *min, void *max, void *out)
+    .. c:member:: void fastclip( \
+            void *in, npy_intp n_in, void *min, void *max, void *out)
 
         A function that reads ``n_in`` items from ``in``, and writes to
         ``out`` the read value if it is within the limits pointed to by
@@ -592,7 +612,8 @@ PyArrayDescr_Type
         memory segments must be contiguous and behaved, and either
         ``min`` or ``max`` may be ``NULL``, but not both.
 
-    .. c:member:: void fastputmask(void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
+    .. c:member:: void fastputmask( \
+            void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
 
         A function that takes a pointer ``in`` to an array of ``n_in``
         items, a pointer ``mask`` to an array of ``n_in`` boolean
@@ -601,7 +622,10 @@ PyArrayDescr_Type
         in ``mask`` is non-zero, tiling ``vals`` as needed if
         ``nv < n_in``. All arrays must be contiguous and behaved.
 
-    .. c:member:: void fasttake(void *dest, void *src, npy_intp *indarray, npy_intp nindarray, npy_intp n_outer, npy_intp m_middle, npy_intp nelem, NPY_CLIPMODE clipmode)
+    .. c:member:: void fasttake( \
+            void *dest, void *src, npy_intp *indarray, npy_intp nindarray, \
+            npy_intp n_outer, npy_intp m_middle, npy_intp nelem, \
+            NPY_CLIPMODE clipmode)
 
         A function that takes a pointer ``src`` to a C contiguous,
         behaved segment, interpreted as a 3-dimensional array of shape
@@ -617,7 +641,8 @@ PyArrayDescr_Type
         indices smaller than 0 or larger than ``nindarray`` will be
         handled.
 
-    .. c:member:: int argmin(void* data, npy_intp n, npy_intp* min_ind, void* arr)
+    .. c:member:: int argmin( \
+            void* data, npy_intp n, npy_intp* min_ind, void* arr)
 
         A pointer to a function that retrieves the index of the
         smallest of ``n`` elements in ``arr`` beginning at the element
@@ -648,7 +673,7 @@ for methods (tp_methods) and properties (tp_getset). The
 PyUFunc_Type
 ------------
 
-.. c:var: PyUFunc_Type
+.. c:var:: PyUFunc_Type
 
    The ufunc object is implemented by creation of the
    :c:data:`PyUFunc_Type`. It is a very simple type that implements only
@@ -668,7 +693,16 @@ PyUFunc_Type
 
    The core of the ufunc is the :c:type:`PyUFuncObject` which contains all
    the information needed to call the underlying C-code loops that
-   perform the actual work. It has the following structure:
+   perform the actual work. While it is described here for completeness, it
+   should be considered internal to NumPy and manipulated via ``PyUFunc_*``
+   functions. The size of this structure is subject to change across versions
+   of NumPy. To ensure compatibility:
+
+   - Never declare a non-pointer instance of the struct
+   - Never perform pointer arithmetic
+   - Never use ``sizeof(PyUFuncObject)``
+
+   It has the following structure:
 
    .. code-block:: c
 
@@ -688,8 +722,21 @@ PyUFunc_Type
           void *ptr;
           PyObject *obj;
           PyObject *userloops;
+          int core_enabled;
+          int core_num_dim_ix;
+          int *core_num_dims;
+          int *core_dim_ixs;
+          int *core_offsets;
+          char *core_signature;
+          PyUFunc_TypeResolutionFunc *type_resolver;
+          PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
+          PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
+          /* new in API version 0x0000000D */
+          npy_intp *core_dim_sizes;
+          npy_intp *core_dim_flags;
+
       } PyUFuncObject;
 
    .. c:macro: PyUFuncObject.PyObject_HEAD
@@ -749,6 +796,10 @@ PyUFunc_Type
        specifies how many different 1-d loops (of the builtin data
        types) are available.
 
+   .. c:member:: int PyUFuncObject.reserved1
+
+       Unused.
+
    .. c:member:: char *PyUFuncObject.name
 
        A string name for the ufunc. This is used dynamically to build
@@ -789,6 +840,51 @@ PyUFunc_Type
        User defined type numbers are always larger than
        :c:data:`NPY_USERDEF`.
 
+   .. c:member:: int PyUFuncObject.core_enabled
+
+       0 for scalar ufuncs; 1 for generalized ufuncs
+
+   .. c:member:: int PyUFuncObject.core_num_dim_ix
+
+       Number of distinct core dimension names in the signature
+
+   .. c:member:: int *PyUFuncObject.core_num_dims
+
+       Number of core dimensions of each argument
+
+   .. c:member:: int *PyUFuncObject.core_dim_ixs
+
+       Dimension indices in a flattened form; indices of argument ``k`` are
+       stored in ``core_dim_ixs[core_offsets[k] : core_offsets[k] +
+       core_numdims[k]]``
+
+   .. c:member:: int *PyUFuncObject.core_offsets
+
+       Position of 1st core dimension of each argument in ``core_dim_ixs``,
+       equivalent to cumsum(``core_num_dims``)
+
+   .. c:member:: char *PyUFuncObject.core_signature
+
+       Core signature string
+
+   .. c:member:: PyUFunc_TypeResolutionFunc *PyUFuncObject.type_resolver
+
+       A function which resolves the types and fills an array with the dtypes
+       for the inputs and outputs
+
+   .. c:member:: PyUFunc_LegacyInnerLoopSelectionFunc *PyUFuncObject.legacy_inner_loop_selector
+
+       A function which returns an inner loop. The ``legacy`` in the name arises
+       because for NumPy 1.6 a better variant had been planned. This variant
+       has not yet come about.
+
+   .. c:member:: void *PyUFuncObject.reserved2
+
+       For a possible future loop selector with a different signature.
+
+   .. c:member:: PyUFunc_MaskedInnerLoopSelectionFunc *PyUFuncObject.masked_inner_loop_selector
+
+       Function which returns a masked inner loop for the ufunc
 
    .. c:member:: npy_uint32 PyUFuncObject.op_flags
 
@@ -798,10 +894,25 @@ PyUFunc_Type
 
        Override the default nditer flags for the ufunc.
 
+   Added in API version 0x0000000D
+
+   .. c:member:: npy_intp *PyUFuncObject.core_dim_sizes
+
+       For each distinct core dimension, the possible
+       :ref:`frozen <frozen>` size if :c:data:`UFUNC_CORE_DIM_SIZE_INFERRED` is 0
+
+   .. c:member:: npy_uint32 *PyUFuncObject.core_dim_flags
+
+       For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
+
+       - :c:data:`UFUNC_CORE_DIM_CAN_IGNORE` if the dim name ends in ``?``
+       - :c:data:`UFUNC_CORE_DIM_SIZE_INFERRED` if the dim size will be
+         determined from the operands and not from a :ref:`frozen <frozen>` signature
+
 PyArrayIter_Type
 ----------------
 
-.. c:var: PyArrayIter_Type
+.. c:var:: PyArrayIter_Type
 
    This is an iterator object that makes it easy to loop over an
    N-dimensional array. It is the object returned from the flat
@@ -911,7 +1022,7 @@ with it through the use of the macros :c:func:`PyArray_ITER_NEXT` (it),
 PyArrayMultiIter_Type
 ---------------------
 
-.. c:var: PyArrayMultiIter_Type
+.. c:var:: PyArrayMultiIter_Type
 
    This type provides an iterator that encapsulates the concept of
    broadcasting. It allows :math:`N` arrays to be broadcast together
@@ -973,7 +1084,7 @@ PyArrayMultiIter_Type
 PyArrayNeighborhoodIter_Type
 ----------------------------
 
-.. c:var: PyArrayNeighborhoodIter_Type
+.. c:var:: PyArrayNeighborhoodIter_Type
 
    This is an iterator object that makes it easy to loop over an
    N-dimensional neighborhood.
@@ -987,7 +1098,7 @@ PyArrayNeighborhoodIter_Type
 PyArrayFlags_Type
 -----------------
 
-.. c:var: PyArrayFlags_Type
+.. c:var:: PyArrayFlags_Type
 
    When the flags attribute is retrieved from Python, a special
    builtin object of this type is constructed. This special type makes
@@ -1226,7 +1337,7 @@ for completeness and assistance in understanding the code.
    to define a 1-d loop for a ufunc for every defined signature of a
    user-defined data-type.
 
-.. c:var: PyArrayMapIter_Type
+.. c:var:: PyArrayMapIter_Type
 
    Advanced indexing is handled with this Python type. It is simply a
    loose wrapper around the C-structure containing the variables

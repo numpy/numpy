@@ -45,9 +45,9 @@ to run
 
 ::
 
-  f2py -c fib1.f -m fib1
+  python -m numpy.f2py -c fib1.f -m fib1
 
-This command builds (see ``-c`` flag, execute ``f2py`` without
+This command builds (see ``-c`` flag, execute ``python -m numpy.f2py`` without
 arguments to see the explanation of command line options) an extension
 module ``fib1.so`` (see ``-m`` flag) to the current directory. Now, in
 Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
@@ -95,7 +95,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     F2PY implements basic compatibility checks between related
     arguments in order to avoid any unexpected crashes.
 
-  * When a Numpy array, that is Fortran contiguous and has a dtype
+  * When a NumPy array, that is Fortran contiguous and has a dtype
     corresponding to presumed Fortran type, is used as an input array
     argument, then its C pointer is directly passed to Fortran.
 
@@ -162,7 +162,7 @@ one.
 
   ::
 
-    f2py fib1.f -m fib2 -h fib1.pyf
+    python -m numpy.f2py fib1.f -m fib2 -h fib1.pyf
 
   The signature file is saved to ``fib1.pyf`` (see ``-h`` flag) and
   its contents is shown below.
@@ -170,7 +170,7 @@ one.
   .. include:: fib1.pyf
      :literal:
 
-* Next, we'll teach F2PY that the argument ``n`` is a input argument
+* Next, we'll teach F2PY that the argument ``n`` is an input argument
   (use ``intent(in)`` attribute) and that the result, i.e. the
   contents of ``a`` after calling Fortran function ``FIB``, should be
   returned to Python (use ``intent(out)`` attribute). In addition, an
@@ -188,7 +188,7 @@ one.
 
   ::
 
-    f2py -c fib2.pyf fib1.f
+    python -m numpy.f2py -c fib2.pyf fib1.f
 
 In Python::
 
@@ -209,7 +209,7 @@ In Python::
   * Clearly, the signature of ``fib2.fib`` now corresponds to the
     intention of Fortran subroutine ``FIB`` more closely: given the
     number ``n``, ``fib2.fib`` returns the first ``n`` Fibonacci numbers
-    as a Numpy array. Also, the new Python signature ``fib2.fib``
+    as a NumPy array. Also, the new Python signature ``fib2.fib``
     rules out any surprises that we experienced with ``fib1.fib``.
 
   * Note that by default using single ``intent(out)`` also implies
@@ -243,7 +243,7 @@ __ fib3.f
 
 Building the extension module can be now carried out in one command::
 
-  f2py -c -m fib3 fib3.f
+  python -m numpy.f2py -c -m fib3 fib3.f
 
 Notice that the resulting wrapper to ``FIB`` is as "smart" as in
 previous case::

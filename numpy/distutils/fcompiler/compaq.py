@@ -58,8 +58,8 @@ class CompaqVisualFCompiler(FCompiler):
 
     compiler_type = 'compaqv'
     description = 'DIGITAL or Compaq Visual Fortran Compiler'
-    version_pattern = r'(DIGITAL|Compaq) Visual Fortran Optimizing Compiler'\
-                      ' Version (?P<version>[^\s]*).*'
+    version_pattern = (r'(DIGITAL|Compaq) Visual Fortran Optimizing Compiler'
+                       r' Version (?P<version>[^\s]*).*')
 
     compile_switch = '/compile_only'
     object_switch = '/object:'
@@ -122,7 +122,5 @@ class CompaqVisualFCompiler(FCompiler):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
-    from numpy.distutils.fcompiler import new_fcompiler
-    compiler = new_fcompiler(compiler='compaq')
-    compiler.customize()
-    print(compiler.get_version())
+    from numpy.distutils import customized_fcompiler
+    print(customized_fcompiler(compiler='compaq').get_version())

@@ -11,6 +11,7 @@ from numpy.core import multiarray as mu
 from numpy.core import umath as um
 from numpy.core.numeric import asanyarray
 from numpy.core import numerictypes as nt
+from numpy._globals import _NoValue
 
 # save those O(100) nanoseconds!
 umr_maximum = um.maximum.reduce
@@ -22,17 +23,21 @@ umr_all = um.logical_and.reduce
 
 # avoid keyword arguments to speed up parsing, saves about 15%-20% for very
 # small reductions
-def _amax(a, axis=None, out=None, keepdims=False):
-    return umr_maximum(a, axis, None, out, keepdims)
+def _amax(a, axis=None, out=None, keepdims=False,
+          initial=_NoValue):
+    return umr_maximum(a, axis, None, out, keepdims, initial)
 
-def _amin(a, axis=None, out=None, keepdims=False):
-    return umr_minimum(a, axis, None, out, keepdims)
+def _amin(a, axis=None, out=None, keepdims=False,
+          initial=_NoValue):
+    return umr_minimum(a, axis, None, out, keepdims, initial)
 
-def _sum(a, axis=None, dtype=None, out=None, keepdims=False):
-    return umr_sum(a, axis, dtype, out, keepdims)
+def _sum(a, axis=None, dtype=None, out=None, keepdims=False,
+         initial=_NoValue):
+    return umr_sum(a, axis, dtype, out, keepdims, initial)
 
-def _prod(a, axis=None, dtype=None, out=None, keepdims=False):
-    return umr_prod(a, axis, dtype, out, keepdims)
+def _prod(a, axis=None, dtype=None, out=None, keepdims=False,
+          initial=_NoValue):
+    return umr_prod(a, axis, dtype, out, keepdims, initial)
 
 def _any(a, axis=None, dtype=None, out=None, keepdims=False):
     return umr_any(a, axis, dtype, out, keepdims)
@@ -53,21 +58,31 @@ def _count_reduce_items(arr, axis):
 def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     arr = asanyarray(a)
 
+    is_float16_result = False
     rcount = _count_reduce_items(arr, axis)
     # Make this warning show up first
     if rcount == 0:
-        warnings.warn("Mean of empty slice.", RuntimeWarning)
+        warnings.warn("Mean of empty slice.", RuntimeWarning, stacklevel=2)
 
     # Cast bool, unsigned int, and int to float64 by default
-    if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
-        dtype = mu.dtype('f8')
+    if dtype is None:
+        if issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
+            dtype = mu.dtype('f8')
+        elif issubclass(arr.dtype.type, nt.float16):
+            dtype = mu.dtype('f4')
+            is_float16_result = True
 
     ret = umr_sum(arr, axis, dtype, out, keepdims)
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(
                 ret, rcount, out=ret, casting='unsafe', subok=False)
+        if is_float16_result and out is None:
+            ret = arr.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
-        ret = ret.dtype.type(ret / rcount)
+        if is_float16_result:
+            ret = arr.dtype.type(ret / rcount)
+        else:
+            ret = ret.dtype.type(ret / rcount)
     else:
         ret = ret / rcount
 
@@ -79,7 +94,8 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     rcount = _count_reduce_items(arr, axis)
     # Make this warning show up on top.
     if ddof >= rcount:
-        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning,
+                      stacklevel=2)
 
     # Cast bool, unsigned int, and int to float64 by default
     if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
@@ -131,3 +147,22 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
         ret = um.sqrt(ret)
 
     return ret
+
+def _ptp(a, axis=None, out=None, keepdims=False):
+    return um.subtract(
+        umr_maximum(a, axis, None, out, keepdims),
+        umr_minimum(a, axis, None, None, keepdims),
+        out
+    )
+
+_NDARRAY_ARRAY_FUNCTION = mu.ndarray.__array_function__
+
+def _array_function(self, func, types, args, kwargs):
+    # TODO: rewrite this in C
+    # Cannot handle items that have __array_function__ other than our own.
+    for t in types:
+        if not issubclass(t, mu.ndarray) and hasattr(t, '__array_function__'):
+            return NotImplemented
+
+    # The regular implementation can handle this, so we call it directly.
+    return func.__wrapped__(*args, **kwargs)

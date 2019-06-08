@@ -110,7 +110,7 @@ lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
     PyObject *iwork;
     int lwork;
     int info;
-    TRY(PyArg_ParseTuple(args,"iiiOiOiOdiOiOi",
+    TRY(PyArg_ParseTuple(args,"iiiOiOiOdiOiOi:dgelsd",
                          &m,&n,&nrhs,&a,&lda,&b,&ldb,&s,&rcond,
                          &rank,&work,&lwork,&iwork,&info));
 
@@ -143,7 +143,7 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"iiOiOOii",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
+        TRY(PyArg_ParseTuple(args,"iiOiOOii:dgeqrf",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
         /* check objects and convert to right storage order */
         TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgeqrf"));
@@ -153,9 +153,9 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         lapack_lite_status =
                 FNAME(dgeqrf)(&m, &n, DDATA(a), &lda, DDATA(tau),
                               DDATA(work), &lwork, &info);
-	if (PyErr_Occurred()) {
+        if (PyErr_Occurred()) {
             return NULL;
-	}
+        }
 
         return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","dgeqrf_",
                              lapack_lite_status,"m",m,"n",n,"lda",lda,
@@ -172,16 +172,16 @@ lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"iiiOiOOii",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
+        TRY(PyArg_ParseTuple(args,"iiiOiOOii:dorgqr",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
         TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dorgqr"));
         TRY(check_object(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dorgqr"));
         TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dorgqr"));
         lapack_lite_status =
             FNAME(dorgqr)(&m, &n, &k, DDATA(a), &lda, DDATA(tau), DDATA(work),
                           &lwork, &info);
-	if (PyErr_Occurred()) {
+        if (PyErr_Occurred()) {
             return NULL;
-	}
+        }
 
         return Py_BuildValue("{s:i,s:i}","dorgqr_",lapack_lite_status,
                              "info",info);
@@ -207,7 +207,7 @@ lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
     PyObject *rwork;
     PyObject *iwork;
     int info;
-    TRY(PyArg_ParseTuple(args,"iiiOiOiOdiOiOOi",
+    TRY(PyArg_ParseTuple(args,"iiiOiOiOdiOiOOi:zgelsd",
                          &m,&n,&nrhs,&a,&lda,&b,&ldb,&s,&rcond,
                          &rank,&work,&lwork,&rwork,&iwork,&info));
 
@@ -239,7 +239,7 @@ lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"iiOiOOii",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
+        TRY(PyArg_ParseTuple(args,"iiOiOOii:zgeqrf",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
 /* check objects and convert to right storage order */
         TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgeqrf"));
@@ -249,9 +249,9 @@ lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         lapack_lite_status =
             FNAME(zgeqrf)(&m, &n, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
                           &lwork, &info);
-	if (PyErr_Occurred()) {
+        if (PyErr_Occurred()) {
             return NULL;
-	}
+        }
 
         return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","zgeqrf_",lapack_lite_status,"m",m,"n",n,"lda",lda,"lwork",lwork,"info",info);
 }
@@ -266,7 +266,7 @@ lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
         int lda;
         int info;
 
-        TRY(PyArg_ParseTuple(args,"iiiOiOOii",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
+        TRY(PyArg_ParseTuple(args,"iiiOiOOii:zungqr",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
         TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zungqr"));
         TRY(check_object(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zungqr"));
         TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zungqr"));
@@ -275,9 +275,9 @@ lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
         lapack_lite_status =
             FNAME(zungqr)(&m, &n, &k, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
                           &lwork, &info);
-	if (PyErr_Occurred()) {
+        if (PyErr_Occurred()) {
             return NULL;
-	}
+        }
 
         return Py_BuildValue("{s:i,s:i}","zungqr_",lapack_lite_status,
                              "info",info);
@@ -331,10 +331,10 @@ static struct PyModuleDef moduledef = {
 
 /* Initialization function for the module */
 #if PY_MAJOR_VERSION >= 3
-#define RETVAL m
+#define RETVAL(x) x
 PyMODINIT_FUNC PyInit_lapack_lite(void)
 #else
-#define RETVAL
+#define RETVAL(x)
 PyMODINIT_FUNC
 initlapack_lite(void)
 #endif
@@ -347,12 +347,12 @@ initlapack_lite(void)
                        "", (PyObject*)NULL,PYTHON_API_VERSION);
 #endif
     if (m == NULL) {
-        return RETVAL;
+        return RETVAL(NULL);
     }
     import_array();
     d = PyModule_GetDict(m);
     LapackError = PyErr_NewException("lapack_lite.LapackError", NULL, NULL);
     PyDict_SetItemString(d, "LapackError", LapackError);
 
-    return RETVAL;
+    return RETVAL(m);
 }

@@ -12,7 +12,7 @@ as_array : Create an ndarray from a ctypes array.
 
 References
 ----------
-.. [1] "SciPy Cookbook: ctypes", http://www.scipy.org/Cookbook/Ctypes
+.. [1] "SciPy Cookbook: ctypes", https://scipy-cookbook.readthedocs.io/items/Ctypes.html
 
 Examples
 --------
@@ -54,8 +54,10 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
            'c_intp', 'as_ctypes', 'as_array']
 
-import sys, os
-from numpy import integer, ndarray, dtype as _dtype, deprecate, array
+import os
+from numpy import (
+    integer, ndarray, dtype as _dtype, deprecate, array, frombuffer
+)
 from numpy.core.multiarray import _flagdict, flagsobj
 
 try:
@@ -95,7 +97,7 @@ else:
 
         But there are cross-platform considerations, such as library file extensions,
         plus the fact Windows will just load the first library it finds with that name.  
-        Numpy supplies the load_library function as a convenience.
+        NumPy supplies the load_library function as a convenience.
 
         Parameters
         ----------
@@ -119,7 +121,7 @@ else:
         if ctypes.__version__ < '1.0.1':
             import warnings
             warnings.warn("All features of ctypes interface may not work " \
-                          "with ctypes < 1.0.1")
+                          "with ctypes < 1.0.1", stacklevel=2)
 
         ext = os.path.splitext(libname)[1]
         if not ext:
@@ -164,7 +166,7 @@ def _num_fromflags(flaglist):
     return num
 
 _flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
-              'OWNDATA', 'UPDATEIFCOPY']
+              'OWNDATA', 'UPDATEIFCOPY', 'WRITEBACKIFCOPY']
 def _flags_fromnum(num):
     res = []
     for key in _flagnames:
@@ -175,24 +177,6 @@ def _flags_fromnum(num):
 
 
 class _ndptr(_ndptr_base):
-
-    def _check_retval_(self):
-        """This method is called when this class is used as the .restype
-        asttribute for a shared-library function.   It constructs a numpy
-        array from a void pointer."""
-        return array(self)
-
-    @property
-    def __array_interface__(self):
-        return {'descr': self._dtype_.descr,
-                '__ref': self,
-                'strides': None,
-                'shape': self._shape_,
-                'version': 3,
-                'typestr': self._dtype_.descr[0][1],
-                'data': (self.value, False),
-                }
-
     @classmethod
     def from_param(cls, obj):
         if not isinstance(obj, ndarray):
@@ -211,6 +195,34 @@ class _ndptr(_ndptr_base):
             raise TypeError("array must have flags %s" %
                     _flags_fromnum(cls._flags_))
         return obj.ctypes
+
+
+class _concrete_ndptr(_ndptr):
+    """
+    Like _ndptr, but with `_shape_` and `_dtype_` specified.
+
+    Notably, this means the pointer has enough information to reconstruct
+    the array, which is not generally true.
+    """
+    def _check_retval_(self):
+        """
+        This method is called when this class is used as the .restype
+        attribute for a shared-library function, to automatically wrap the
+        pointer into an array.
+        """
+        return self.contents
+
+    @property
+    def contents(self):
+        """
+        Get an ndarray viewing the data pointed to by this pointer.
+
+        This mirrors the `contents` attribute of a normal ctypes pointer
+        """
+        full_dtype = _dtype((self._dtype_, self._shape_))
+        full_ctype = ctypes.c_char * full_dtype.itemsize
+        buffer = ctypes.cast(self, ctypes.POINTER(full_ctype)).contents
+        return frombuffer(buffer, dtype=full_dtype).squeeze(axis=0)
 
 
 # Factory for an array-checking class with from_param defined for
@@ -244,6 +256,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
           - OWNDATA / O
           - WRITEABLE / W
           - ALIGNED / A
+          - WRITEBACKIFCOPY / X
           - UPDATEIFCOPY / U
 
     Returns
@@ -268,8 +281,11 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
 
     """
 
+    # normalize dtype to an Optional[dtype]
     if dtype is not None:
         dtype = _dtype(dtype)
+
+    # normalize flags to an Optional[int]
     num = None
     if flags is not None:
         if isinstance(flags, str):
@@ -283,13 +299,26 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         if num is None:
             try:
                 flags = [x.strip().upper() for x in flags]
-            except:
+            except Exception:
                 raise TypeError("invalid flags specification")
             num = _num_fromflags(flags)
+
+    # normalize shape to an Optional[tuple]
+    if shape is not None:
+        try:
+            shape = tuple(shape)
+        except TypeError:
+            # single integer -> 1-tuple
+            shape = (shape,)
+
+    cache_key = (dtype, ndim, shape, num)
+
     try:
-        return _pointer_type_cache[(dtype, ndim, shape, num)]
+        return _pointer_type_cache[cache_key]
     except KeyError:
         pass
+
+    # produce a name for the new type
     if dtype is None:
         name = 'any'
     elif dtype.names:
@@ -299,139 +328,64 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     if ndim is not None:
         name += "_%dd" % ndim
     if shape is not None:
-        try:
-            strshape = [str(x) for x in shape]
-        except TypeError:
-            strshape = [str(shape)]
-            shape = (shape,)
-        shape = tuple(shape)
-        name += "_"+"x".join(strshape)
+        name += "_"+"x".join(str(x) for x in shape)
     if flags is not None:
         name += "_"+"_".join(flags)
+
+    if dtype is not None and shape is not None:
+        base = _concrete_ndptr
     else:
-        flags = []
-    klass = type("ndpointer_%s"%name, (_ndptr,),
+        base = _ndptr
+
+    klass = type("ndpointer_%s"%name, (base,),
                  {"_dtype_": dtype,
                   "_shape_" : shape,
                   "_ndim_" : ndim,
                   "_flags_" : num})
-    _pointer_type_cache[(dtype, shape, ndim, num)] = klass
+    _pointer_type_cache[cache_key] = klass
     return klass
 
-if ctypes is not None:
+
+def _get_typecodes():
+    """ Return a dictionary mapping __array_interface__ formats to ctypes types """
     ct = ctypes
-    ################################################################
-    # simple types
-
-    # maps the numpy typecodes like '<f8' to simple ctypes types like
-    # c_double. Filled in by prep_simple.
-    _typecodes = {}
-
-    def prep_simple(simple_type, dtype):
-        """Given a ctypes simple type, construct and attach an
-        __array_interface__ property to it if it does not yet have one.
-        """
-        try: simple_type.__array_interface__
-        except AttributeError: pass
-        else: return
-
-        typestr = _dtype(dtype).str
-        _typecodes[typestr] = simple_type
-
-        def __array_interface__(self):
-            return {'descr': [('', typestr)],
-                    '__ref': self,
-                    'strides': None,
-                    'shape': (),
-                    'version': 3,
-                    'typestr': typestr,
-                    'data': (ct.addressof(self), False),
-                    }
-
-        simple_type.__array_interface__ = property(__array_interface__)
-
     simple_types = [
-        ((ct.c_byte, ct.c_short, ct.c_int, ct.c_long, ct.c_longlong), "i"),
-        ((ct.c_ubyte, ct.c_ushort, ct.c_uint, ct.c_ulong, ct.c_ulonglong), "u"),
-        ((ct.c_float, ct.c_double), "f"),
+        ct.c_byte, ct.c_short, ct.c_int, ct.c_long, ct.c_longlong,
+        ct.c_ubyte, ct.c_ushort, ct.c_uint, ct.c_ulong, ct.c_ulonglong,
+        ct.c_float, ct.c_double,
     ]
 
-    # Prep that numerical ctypes types:
-    for types, code in simple_types:
-        for tp in types:
-            prep_simple(tp, "%c%d" % (code, ct.sizeof(tp)))
+    return {_dtype(ctype).str: ctype for ctype in simple_types}
 
-    ################################################################
-    # array types
 
-    _ARRAY_TYPE = type(ct.c_int * 1)
+def _ctype_ndarray(element_type, shape):
+    """ Create an ndarray of the given element type and shape """
+    for dim in shape[::-1]:
+        element_type = element_type * dim
+    return element_type
 
-    def prep_array(array_type):
-        """Given a ctypes array type, construct and attach an
-        __array_interface__ property to it if it does not yet have one.
-        """
-        try: array_type.__array_interface__
-        except AttributeError: pass
-        else: return
 
-        shape = []
-        ob = array_type
-        while type(ob) is _ARRAY_TYPE:
-            shape.append(ob._length_)
-            ob = ob._type_
-        shape = tuple(shape)
-        ai = ob().__array_interface__
-        descr = ai['descr']
-        typestr = ai['typestr']
-
-        def __array_interface__(self):
-            return {'descr': descr,
-                    '__ref': self,
-                    'strides': None,
-                    'shape': shape,
-                    'version': 3,
-                    'typestr': typestr,
-                    'data': (ct.addressof(self), False),
-                    }
-
-        array_type.__array_interface__ = property(__array_interface__)
-
-    def prep_pointer(pointer_obj, shape):
-        """Given a ctypes pointer object, construct and
-        attach an __array_interface__ property to it if it does not
-        yet have one.
-        """
-        try: pointer_obj.__array_interface__
-        except AttributeError: pass
-        else: return
-
-        contents = pointer_obj.contents
-        dtype = _dtype(type(contents))
-
-        inter = {'version': 3,
-                 'typestr': dtype.str,
-                 'data': (ct.addressof(contents), False),
-                 'shape': shape}
-
-        pointer_obj.__array_interface__ = inter
-
-    ################################################################
-    # public functions
+if ctypes is not None:
+    _typecodes = _get_typecodes()
 
     def as_array(obj, shape=None):
-        """Create a numpy array from a ctypes array or a ctypes POINTER.
+        """
+        Create a numpy array from a ctypes array or POINTER.
+
         The numpy array shares the memory with the ctypes object.
 
-        The size parameter must be given if converting from a ctypes POINTER.
-        The size parameter is ignored if converting from a ctypes array
+        The shape parameter must be given if converting from a ctypes POINTER.
+        The shape parameter is ignored if converting from a ctypes array
         """
-        tp = type(obj)
-        try: tp.__array_interface__
-        except AttributeError:
-            if hasattr(obj, 'contents'):
-                prep_pointer(obj, shape)
-            else:
-                prep_array(tp)
+        if isinstance(obj, ctypes._Pointer):
+            # convert pointers to an array of the desired shape
+            if shape is None:
+                raise TypeError(
+                    'as_array() requires a shape argument when called on a '
+                    'pointer')
+            p_arr_type = ctypes.POINTER(_ctype_ndarray(obj._type_, shape))
+            obj = ctypes.cast(obj, p_arr_type).contents
+
         return array(obj, copy=False)
 
     def as_ctypes(obj):
@@ -445,9 +399,7 @@ if ctypes is not None:
         addr, readonly = ai["data"]
         if readonly:
             raise TypeError("readonly arrays unsupported")
-        tp = _typecodes[ai["typestr"]]
-        for dim in ai["shape"][::-1]:
-            tp = tp * dim
+        tp = _ctype_ndarray(_typecodes[ai["typestr"]], ai["shape"])
         result = tp.from_address(addr)
         result.__keep = ai
         return result

@@ -41,10 +41,11 @@
  *   SOFTWARE OR ITS DOCUMENTATION.
  */
 
-#include <math.h>
-#include <stdlib.h>
 #include "distributions.h"
 #include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <limits.h>
 
 #ifndef min
 #define min(x,y) ((x<y)?x:y)
@@ -500,6 +501,11 @@ long rk_poisson_mult(rk_state *state, double lam)
     }
 }
 
+/*
+ * The transformed rejection method for generating Poisson random variables
+ * W. Hoermann
+ * Insurance: Mathematics and Economics 12, 39-45 (1993)
+ */
 #define LS2PI 0.91893853320467267
 #define TWELFTH 0.083333333333333333333333
 long rk_poisson_ptrs(rk_state *state, double lam)
@@ -644,6 +650,9 @@ double rk_pareto(rk_state *state, double a)
 
 double rk_weibull(rk_state *state, double a)
 {
+    if (a == 0.0) {
+        return 0.0;
+    }
     return pow(rk_standard_exponential(state), 1./a);
 }
 
@@ -714,26 +723,31 @@ double rk_wald(rk_state *state, double mean, double scale)
 
 long rk_zipf(rk_state *state, double a)
 {
-    double T, U, V;
-    long X;
     double am1, b;
 
     am1 = a - 1.0;
     b = pow(2.0, am1);
-    do
-    {
-        U = 1.0-rk_double(state);
+    while (1) {
+        double T, U, V, X;
+
+        U = 1.0 - rk_double(state);
         V = rk_double(state);
-        X = (long)floor(pow(U, -1.0/am1));
-        /* The real result may be above what can be represented in a signed
-         * long. It will get casted to -sys.maxint-1. Since this is
-         * a straightforward rejection algorithm, we can just reject this value
-         * in the rejection condition below. This function then models a Zipf
+        X = floor(pow(U, -1.0/am1));
+        /*
+         * The real result may be above what can be represented in a signed
+         * long. Since this is a straightforward rejection algorithm, we can
+         * just reject this value. This function then models a Zipf
          * distribution truncated to sys.maxint.
          */
+        if (X > LONG_MAX || X < 1.0) {
+            continue;
+        }
+
         T = pow(1.0 + 1.0/X, am1);
-    } while (((V*X*(T-1.0)/(b-1.0)) > (T/b)) || X < 1);
-    return X;
+        if (V*X*(T - 1.0)/(b - 1.0) <= T/b) {
+            return (long)X;
+        }
+    }
 }
 
 long rk_geometric_search(rk_state *state, double p)

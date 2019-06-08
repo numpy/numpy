@@ -15,16 +15,16 @@ import shutil
 import atexit
 import textwrap
 import re
-import random
+import pytest
 
 from numpy.compat import asbytes, asstr
-import numpy.f2py
-from numpy.testing import SkipTest, temppath
+from numpy.testing import temppath
+from importlib import import_module
 
 try:
     from hashlib import md5
 except ImportError:
-    from md5 import new as md5
+    from md5 import new as md5  # noqa: F401
 
 #
 # Maintaining a temporary module directory
@@ -146,8 +146,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
             os.unlink(fn)
 
     # Import
-    __import__(module_name)
-    return sys.modules[module_name]
+    return import_module(module_name)
 
 
 @_memoize
@@ -213,7 +212,7 @@ sys.exit(99)
                              stderr=subprocess.STDOUT)
         out, err = p.communicate()
 
-    m = re.search(asbytes(r'COMPILERS:(\d+),(\d+),(\d+)'), out)
+    m = re.search(br'COMPILERS:(\d+),(\d+),(\d+)', out)
     if m:
         _compiler_status = (bool(int(m.group(1))), bool(int(m.group(2))),
                             bool(int(m.group(3))))
@@ -319,13 +318,16 @@ class F2PyTest(object):
     module = None
     module_name = None
 
-    def setUp(self):
+    def setup(self):
+        if sys.platform == 'win32':
+            pytest.skip('Fails with MinGW64 Gfortran (Issue #9673)')
+
         if self.module is not None:
             return
 
         # Check compiler availability first
         if not has_c_compiler():
-            raise SkipTest("No C compiler available")
+            pytest.skip("No C compiler available")
 
         codes = []
         if self.sources:
@@ -341,9 +343,9 @@ class F2PyTest(object):
             elif fn.endswith('.f90'):
                 needs_f90 = True
         if needs_f77 and not has_f77_compiler():
-            raise SkipTest("No Fortran 77 compiler available")
+            pytest.skip("No Fortran 77 compiler available")
         if needs_f90 and not has_f90_compiler():
-            raise SkipTest("No Fortran 90 compiler available")
+            pytest.skip("No Fortran 90 compiler available")
 
         # Build the module
         if self.code is not None:

@@ -35,17 +35,27 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
+import functools
+
 from numpy.core import (array, asarray, zeros, swapaxes, shape, conjugate,
                         take, sqrt)
+from numpy.core.multiarray import normalize_axis_index
+from numpy.core import overrides
 from . import fftpack_lite as fftpack
+from .helper import _FFTCache
 
-_fft_cache = {}
-_real_fft_cache = {}
+_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
+_real_fft_cache = _FFTCache(max_size_in_mb=100, max_item_count=32)
+
+
+array_function_dispatch = functools.partial(
+    overrides.array_function_dispatch, module='numpy.fft')
 
 
 def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
              work_function=fftpack.cfftf, fft_cache=_fft_cache):
     a = asarray(a)
+    axis = normalize_axis_index(axis, a.ndim)
 
     if n is None:
         n = a.shape[axis]
@@ -54,12 +64,13 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         raise ValueError("Invalid number of FFT data points (%d) specified."
                          % n)
 
-    try:
-        # Thread-safety note: We rely on list.pop() here to atomically
-        # retrieve-and-remove a wsave from the cache.  This ensures that no
-        # other thread can get the same wsave while we're using it.
-        wsave = fft_cache.setdefault(n, []).pop()
-    except (IndexError):
+    # We have to ensure that only a single thread can access a wsave array
+    # at any given time. Thus we remove it from the cache and insert it
+    # again after it has been used. Multiple threads might create multiple
+    # copies of the wsave array. This is intentional and a limitation of
+    # the current C code.
+    wsave = fft_cache.pop_twiddle_factors(n)
+    if wsave is None:
         wsave = init_function(n)
 
     if a.shape[axis] != n:
@@ -67,25 +78,25 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         if s[axis] > n:
             index = [slice(None)]*len(s)
             index[axis] = slice(0, n)
-            a = a[index]
+            a = a[tuple(index)]
         else:
             index = [slice(None)]*len(s)
             index[axis] = slice(0, s[axis])
             s[axis] = n
             z = zeros(s, a.dtype.char)
-            z[index] = a
+            z[tuple(index)] = a
             a = z
 
-    if axis != -1:
+    if axis != a.ndim - 1:
         a = swapaxes(a, axis, -1)
     r = work_function(a, wsave)
-    if axis != -1:
+    if axis != a.ndim - 1:
         r = swapaxes(r, axis, -1)
 
     # As soon as we put wsave back into the cache, another thread could pick it
     # up and start using it, so we must not do this until after we're
     # completely done using it ourselves.
-    fft_cache[n].append(wsave)
+    fft_cache.put_twiddle_factors(n, wsave)
 
     return r
 
@@ -97,6 +108,11 @@ def _unitary(norm):
     return norm is not None
 
 
+def _fft_dispatcher(a, n=None, axis=None, norm=None):
+    return (a,)
+
+
+@array_function_dispatch(_fft_dispatcher)
 def fft(a, n=None, axis=-1, norm=None):
     """
     Compute the one-dimensional discrete Fourier Transform.
@@ -193,6 +209,7 @@ def fft(a, n=None, axis=-1, norm=None):
     return output
 
 
+@array_function_dispatch(_fft_dispatcher)
 def ifft(a, n=None, axis=-1, norm=None):
     """
     Compute the one-dimensional inverse discrete Fourier Transform.
@@ -286,6 +303,8 @@ def ifft(a, n=None, axis=-1, norm=None):
     return output * (1 / (sqrt(n) if unitary else n))
 
 
+
+@array_function_dispatch(_fft_dispatcher)
 def rfft(a, n=None, axis=-1, norm=None):
     """
     Compute the one-dimensional discrete Fourier Transform for real input.
@@ -369,10 +388,13 @@ def rfft(a, n=None, axis=-1, norm=None):
     output = _raw_fft(a, n, axis, fftpack.rffti, fftpack.rfftf,
                       _real_fft_cache)
     if _unitary(norm):
-        output *= 1 / sqrt(a.shape[axis])
+        if n is None:
+            n = a.shape[axis]
+        output *= 1 / sqrt(n)
     return output
 
 
+@array_function_dispatch(_fft_dispatcher)
 def irfft(a, n=None, axis=-1, norm=None):
     """
     Compute the inverse of the n-point DFT for real input.
@@ -463,27 +485,29 @@ def irfft(a, n=None, axis=-1, norm=None):
     return output * (1 / (sqrt(n) if unitary else n))
 
 
+@array_function_dispatch(_fft_dispatcher)
 def hfft(a, n=None, axis=-1, norm=None):
     """
-    Compute the FFT of a signal which has Hermitian symmetry (real spectrum).
+    Compute the FFT of a signal that has Hermitian symmetry, i.e., a real
+    spectrum.
 
     Parameters
     ----------
     a : array_like
         The input array.
     n : int, optional
-        Length of the transformed axis of the output.
-        For `n` output points, ``n//2+1`` input points are necessary.  If the
-        input is longer than this, it is cropped.  If it is shorter than this,
-        it is padded with zeros.  If `n` is not given, it is determined from
-        the length of the input along the axis specified by `axis`.
+        Length of the transformed axis of the output. For `n` output
+        points, ``n//2 + 1`` input points are necessary.  If the input is
+        longer than this, it is cropped.  If it is shorter than this, it is
+        padded with zeros.  If `n` is not given, it is determined from the
+        length of the input along the axis specified by `axis`.
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last
         axis is used.
     norm : {None, "ortho"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.10.0
 
     Returns
     -------
@@ -491,8 +515,9 @@ def hfft(a, n=None, axis=-1, norm=None):
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
         The length of the transformed axis is `n`, or, if `n` is not given,
-        ``2*(m-1)`` where ``m`` is the length of the transformed axis of the
-        input. To get an odd number of output points, `n` must be specified.
+        ``2*m - 2`` where ``m`` is the length of the transformed axis of
+        the input. To get an odd number of output points, `n` must be
+        specified, for instance as ``2*m - 1`` in the typical case,
 
     Raises
     ------
@@ -507,10 +532,12 @@ def hfft(a, n=None, axis=-1, norm=None):
     Notes
     -----
     `hfft`/`ihfft` are a pair analogous to `rfft`/`irfft`, but for the
-    opposite case: here the signal has Hermitian symmetry in the time domain
-    and is real in the frequency domain. So here it's `hfft` for which
-    you must supply the length of the result if it is to be odd:
-    ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
+    opposite case: here the signal has Hermitian symmetry in the time
+    domain and is real in the frequency domain. So here it's `hfft` for
+    which you must supply the length of the result if it is to be odd.
+
+    * even: ``ihfft(hfft(a, 2*len(a) - 2) == a``, within roundoff error,
+    * odd: ``ihfft(hfft(a, 2*len(a) - 1) == a``, within roundoff error.
 
     Examples
     --------
@@ -541,35 +568,35 @@ def hfft(a, n=None, axis=-1, norm=None):
     return irfft(conjugate(a), n, axis) * (sqrt(n) if unitary else n)
 
 
+@array_function_dispatch(_fft_dispatcher)
 def ihfft(a, n=None, axis=-1, norm=None):
     """
-    Compute the inverse FFT of a signal which has Hermitian symmetry.
+    Compute the inverse FFT of a signal that has Hermitian symmetry.
 
     Parameters
     ----------
     a : array_like
         Input array.
     n : int, optional
-        Length of the inverse FFT.
-        Number of points along transformation axis in the input to use.
-        If `n` is smaller than the length of the input, the input is cropped.
-        If it is larger, the input is padded with zeros. If `n` is not given,
-        the length of the input along the axis specified by `axis` is used.
+        Length of the inverse FFT, the number of points along
+        transformation axis in the input to use.  If `n` is smaller than
+        the length of the input, the input is cropped.  If it is larger,
+        the input is padded with zeros. If `n` is not given, the length of
+        the input along the axis specified by `axis` is used.
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
     norm : {None, "ortho"}, optional
-        .. versionadded:: 1.10.0
-
         Normalization mode (see `numpy.fft`). Default is None.
+
+        .. versionadded:: 1.10.0
 
     Returns
     -------
     out : complex ndarray
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
-        If `n` is even, the length of the transformed axis is ``(n/2)+1``.
-        If `n` is odd, the length is ``(n+1)/2``.
+        The length of the transformed axis is ``n//2 + 1``.
 
     See also
     --------
@@ -578,10 +605,12 @@ def ihfft(a, n=None, axis=-1, norm=None):
     Notes
     -----
     `hfft`/`ihfft` are a pair analogous to `rfft`/`irfft`, but for the
-    opposite case: here the signal has Hermitian symmetry in the time domain
-    and is real in the frequency domain. So here it's `hfft` for which
-    you must supply the length of the result if it is to be odd:
-    ``ihfft(hfft(a), len(a)) == a``, within numerical accuracy.
+    opposite case: here the signal has Hermitian symmetry in the time
+    domain and is real in the frequency domain. So here it's `hfft` for
+    which you must supply the length of the result if it is to be odd:
+
+    * even: ``ihfft(hfft(a, 2*len(a) - 2) == a``, within roundoff error,
+    * odd: ``ihfft(hfft(a, 2*len(a) - 1) == a``, within roundoff error.
 
     Examples
     --------
@@ -630,6 +659,11 @@ def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None):
     return a
 
 
+def _fftn_dispatcher(a, s=None, axes=None, norm=None):
+    return (a,)
+
+
+@array_function_dispatch(_fftn_dispatcher)
 def fftn(a, s=None, axes=None, norm=None):
     """
     Compute the N-dimensional discrete Fourier Transform.
@@ -727,6 +761,7 @@ def fftn(a, s=None, axes=None, norm=None):
     return _raw_fftnd(a, s, axes, fft, norm)
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def ifftn(a, s=None, axes=None, norm=None):
     """
     Compute the N-dimensional inverse discrete Fourier Transform.
@@ -824,6 +859,7 @@ def ifftn(a, s=None, axes=None, norm=None):
     return _raw_fftnd(a, s, axes, ifft, norm)
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def fft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional discrete Fourier Transform
@@ -914,6 +950,7 @@ def fft2(a, s=None, axes=(-2, -1), norm=None):
     return _raw_fftnd(a, s, axes, fft, norm)
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def ifft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional inverse discrete Fourier Transform.
@@ -1001,6 +1038,7 @@ def ifft2(a, s=None, axes=(-2, -1), norm=None):
     return _raw_fftnd(a, s, axes, ifft, norm)
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def rfftn(a, s=None, axes=None, norm=None):
     """
     Compute the N-dimensional discrete Fourier Transform for real input.
@@ -1093,6 +1131,7 @@ def rfftn(a, s=None, axes=None, norm=None):
     return a
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def rfft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional FFT of a real array.
@@ -1130,6 +1169,7 @@ def rfft2(a, s=None, axes=(-2, -1), norm=None):
     return rfftn(a, s, axes, norm)
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def irfftn(a, s=None, axes=None, norm=None):
     """
     Compute the inverse of the N-dimensional FFT of real input.
@@ -1224,6 +1264,7 @@ def irfftn(a, s=None, axes=None, norm=None):
     return a
 
 
+@array_function_dispatch(_fftn_dispatcher)
 def irfft2(a, s=None, axes=(-2, -1), norm=None):
     """
     Compute the 2-dimensional inverse FFT of a real array.

@@ -5,7 +5,7 @@
  * $Revision: 1.2 $
  * $Date: 2000/09/17 16:10:27 $
  */
-#ifdef __CPLUSPLUS__
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -116,8 +116,6 @@ static PyMethodDef foo_module_methods[] = {
 void initfoo() {
     int i;
     PyObject *m, *d, *s;
-    PyTypeObject *t;
-    PyObject *f;
     import_array();
 
     m = Py_InitModule("foo", foo_module_methods);
@@ -139,6 +137,6 @@ void initfoo() {
         Py_FatalError("can't initialize module foo");
 }
 
-#ifdef __CPLUSCPLUS__
+#ifdef __cplusplus
 }
 #endif

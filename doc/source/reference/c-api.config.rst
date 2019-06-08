@@ -4,14 +4,14 @@ System configuration
 .. sectionauthor:: Travis E. Oliphant
 
 When NumPy is built, information about system configuration is
-recorded, and is made available for extension modules using Numpy's C
+recorded, and is made available for extension modules using NumPy's C
 API.  These are mostly defined in ``numpyconfig.h`` (included in
 ``ndarrayobject.h``). The public symbols are prefixed by ``NPY_*``.
-Numpy also offers some functions for querying information about the
+NumPy also offers some functions for querying information about the
 platform in use.
 
-For private use, Numpy also constructs a ``config.h`` in the NumPy
-include directory, which is not exported by Numpy (that is a python
+For private use, NumPy also constructs a ``config.h`` in the NumPy
+include directory, which is not exported by NumPy (that is a python
 extension which use the numpy C API will not see those symbols), to
 avoid namespace pollution.
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 
 process_file(filename)
@@ -93,10 +93,15 @@ def find_repl_patterns(astr):
     names = {}
     for rep in reps:
         name = rep[0].strip() or unique_key(names)
-        repl = rep[1].replace('\,', '@comma@')
+        repl = rep[1].replace(r'\,', '@comma@')
         thelist = conv(repl)
         names[name] = thelist
     return names
+
+def find_and_remove_repl_patterns(astr):
+    names = find_repl_patterns(astr)
+    astr = re.subn(named_re, '', astr)[0]
+    return astr, names
 
 item_re = re.compile(r"\A\\(?P<index>\d+)\Z")
 def conv(astr):
@@ -125,13 +130,13 @@ def unique_key(adict):
 
 template_name_re = re.compile(r'\A\s*(\w[\w\d]*)\s*\Z')
 def expand_sub(substr, names):
-    substr = substr.replace('\>', '@rightarrow@')
-    substr = substr.replace('\<', '@leftarrow@')
+    substr = substr.replace(r'\>', '@rightarrow@')
+    substr = substr.replace(r'\<', '@leftarrow@')
     lnames = find_repl_patterns(substr)
     substr = named_re.sub(r"<\1>", substr)  # get rid of definition templates
 
     def listrepl(mobj):
-        thelist = conv(mobj.group(1).replace('\,', '@comma@'))
+        thelist = conv(mobj.group(1).replace(r'\,', '@comma@'))
         if template_name_re.match(thelist):
             return "<%s>" % (thelist)
         name = None
@@ -186,7 +191,7 @@ def expand_sub(substr, names):
 
 def process_str(allstr):
     newstr = allstr
-    writestr = '' #_head # using _head will break free-format files
+    writestr = ''
 
     struct = parse_structure(newstr)
 
@@ -194,8 +199,9 @@ def process_str(allstr):
     names = {}
     names.update(_special_names)
     for sub in struct:
-        writestr += newstr[oldend:sub[0]]
-        names.update(find_repl_patterns(newstr[oldend:sub[0]]))
+        cleanedstr, defs = find_and_remove_repl_patterns(newstr[oldend:sub[0]])
+        writestr += cleanedstr
+        names.update(defs)
         writestr += expand_sub(newstr[sub[0]:sub[1]], names)
         oldend =  sub[1]
     writestr += newstr[oldend:]
@@ -238,8 +244,7 @@ _special_names = find_repl_patterns('''
 <ctypereal=float,double,\\0,\\1>
 ''')
 
-if __name__ == "__main__":
-
+def main():
     try:
         file = sys.argv[1]
     except IndexError:
@@ -254,3 +259,6 @@ if __name__ == "__main__":
     allstr = fid.read()
     writestr = process_str(allstr)
     outfile.write(writestr)
+
+if __name__ == "__main__":
+    main()

@@ -71,12 +71,14 @@ def _dict_append(d, **kws):
         else:
             raise TypeError(repr(type(dv)))
 
-def _command_line_ok(_cache=[]):
+def _command_line_ok(_cache=None):
     """ Return True if command line does not contain any
     help or display requests.
     """
     if _cache:
         return _cache[0]
+    elif _cache is None:
+        _cache = []
     ok = True
     display_opts = ['--'+n for n in Distribution.display_option_names]
     for o in Distribution.display_options:
@@ -176,18 +178,21 @@ def _check_append_library(libraries, item):
                     if item[1] is libitem[1]:
                         return
                     warnings.warn("[0] libraries list contains %r with"
-                                  " different build_info" % (item[0],))
+                                  " different build_info" % (item[0],),
+                                  stacklevel=2)
                     break
             else:
                 if item==libitem[0]:
                     warnings.warn("[1] libraries list contains %r with"
-                                  " no build_info" % (item[0],))
+                                  " no build_info" % (item[0],),
+                                  stacklevel=2)
                     break
         else:
             if is_sequence(item):
                 if item[0]==libitem:
                     warnings.warn("[2] libraries list contains %r with"
-                                  " no build_info" % (item[0],))
+                                  " no build_info" % (item[0],),
+                                  stacklevel=2)
                     break
             else:
                 if item==libitem:
@@ -201,10 +206,12 @@ def _check_append_ext_library(libraries, lib_name, build_info):
                 if item[1] is build_info:
                     return
                 warnings.warn("[3] libraries list contains %r with"
-                              " different build_info" % (lib_name,))
+                              " different build_info" % (lib_name,),
+                              stacklevel=2)
                 break
         elif item==lib_name:
             warnings.warn("[4] libraries list contains %r with"
-                          " no build_info" % (lib_name,))
+                          " no build_info" % (lib_name,),
+                          stacklevel=2)
             break
     libraries.append((lib_name, build_info))

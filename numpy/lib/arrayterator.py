@@ -106,7 +106,7 @@ class Arrayterator(object):
         if not isinstance(index, tuple):
             index = (index,)
         fixed = []
-        length, dims = len(index), len(self.shape)
+        length, dims = len(index), self.ndim
         for slice_ in index:
             if slice_ is Ellipsis:
                 fixed.extend([slice(None)] * (dims-length+1))
@@ -186,7 +186,7 @@ class Arrayterator(object):
         start = self.start[:]
         stop = self.stop[:]
         step = self.step[:]
-        ndims = len(self.var.shape)
+        ndims = self.var.ndim
 
         while True:
             count = self.buf_size or reduce(mul, self.shape)

@@ -1,0 +1,556 @@
+==========================
+NumPy 1.13.0 Release Notes
+==========================
+
+This release supports Python 2.7 and 3.4 - 3.6.
+
+
+Highlights
+==========
+
+ * Operations like ``a + b + c`` will reuse temporaries on some platforms,
+   resulting in less memory use and faster execution.
+ * Inplace operations check if inputs overlap outputs and create temporaries
+   to avoid problems.
+ * New ``__array_ufunc__`` attribute provides improved ability for classes to
+   override default ufunc behavior.
+ * New ``np.block`` function for creating blocked arrays.
+
+
+New functions
+=============
+
+* New ``np.positive`` ufunc.
+* New ``np.divmod`` ufunc provides more efficient divmod.
+* New ``np.isnat`` ufunc tests for NaT special values.
+* New ``np.heaviside`` ufunc computes the Heaviside function.
+* New ``np.isin`` function, improves on ``in1d``.
+* New ``np.block`` function for creating blocked arrays.
+* New ``PyArray_MapIterArrayCopyIfOverlap`` added to NumPy C-API.
+
+See below for details.
+
+
+Deprecations
+============
+
+* Calling ``np.fix``, ``np.isposinf``, and ``np.isneginf`` with ``f(x, y=out)``
+  is deprecated - the argument should be passed as ``f(x, out=out)``, which
+  matches other ufunc-like interfaces.
+* Use of the C-API ``NPY_CHAR`` type number deprecated since version 1.7 will
+  now raise deprecation warnings at runtime. Extensions built with older f2py
+  versions need to be recompiled to remove the warning.
+* ``np.ma.argsort``, ``np.ma.minimum.reduce``, and ``np.ma.maximum.reduce``
+  should be called with an explicit `axis` argument when applied to arrays with
+  more than 2 dimensions, as the default value of this argument (``None``) is
+  inconsistent with the rest of numpy (``-1``, ``0``, and ``0``, respectively).
+* ``np.ma.MaskedArray.mini`` is deprecated, as it almost duplicates the
+  functionality of ``np.MaskedArray.min``. Exactly equivalent behaviour
+  can be obtained with ``np.ma.minimum.reduce``.
+* The single-argument form of ``np.ma.minimum`` and ``np.ma.maximum`` is
+  deprecated. ``np.maximum``. ``np.ma.minimum(x)`` should now be spelt
+  ``np.ma.minimum.reduce(x)``, which is consistent with how this would be done
+  with ``np.minimum``.
+* Calling ``ndarray.conjugate`` on non-numeric dtypes is deprecated (it
+  should match the behavior of ``np.conjugate``, which throws an error).
+* Calling ``expand_dims`` when the ``axis`` keyword does not satisfy
+  ``-a.ndim - 1 <= axis <= a.ndim``, where ``a`` is the array being reshaped,
+  is deprecated.
+
+
+Future Changes
+==============
+
+* Assignment between structured arrays with different field names will change
+  in NumPy 1.14. Previously, fields in the dst would be set to the value of the
+  identically-named field in the src. In numpy 1.14 fields will instead be
+  assigned 'by position': The n-th field of the dst will be set to the n-th
+  field of the src array. Note that the ``FutureWarning`` raised in NumPy 1.12
+  incorrectly reported this change as scheduled for NumPy 1.13 rather than
+  NumPy 1.14.
+
+
+Build System Changes
+====================
+
+* ``numpy.distutils`` now automatically determines C-file dependencies with
+  GCC compatible compilers.
+
+
+Compatibility notes
+===================
+
+Error type changes
+------------------
+
+* ``numpy.hstack()`` now throws ``ValueError`` instead of ``IndexError`` when
+  input is empty.
+* Functions taking an axis argument, when that argument is out of range, now
+  throw ``np.AxisError`` instead of a mixture of ``IndexError`` and
+  ``ValueError``. For backwards compatibility, ``AxisError`` subclasses both of
+  these.
+
+Tuple object dtypes
+-------------------
+
+Support has been removed for certain obscure dtypes that were unintentionally
+allowed, of the form ``(old_dtype, new_dtype)``, where either of the dtypes
+is or contains the ``object`` dtype. As an exception, dtypes of the form
+``(object, [('name', object)])`` are still supported due to evidence of
+existing use.
+
+DeprecationWarning to error
+---------------------------
+See Changes section for more detail.
+
+* ``partition``, TypeError when non-integer partition index is used.
+* ``NpyIter_AdvancedNew``, ValueError when ``oa_ndim == 0`` and ``op_axes`` is NULL
+* ``negative(bool_)``, TypeError when negative applied to booleans.
+* ``subtract(bool_, bool_)``, TypeError when subtracting boolean from boolean.
+* ``np.equal, np.not_equal``, object identity doesn't override failed comparison.
+* ``np.equal, np.not_equal``, object identity doesn't override non-boolean comparison.
+* Deprecated boolean indexing behavior dropped. See Changes below for details.
+* Deprecated ``np.alterdot()`` and ``np.restoredot()`` removed.
+
+FutureWarning to changed behavior
+---------------------------------
+See Changes section for more detail.
+
+* ``numpy.average`` preserves subclasses
+* ``array == None`` and ``array != None`` do element-wise comparison.
+* ``np.equal, np.not_equal``, object identity doesn't override comparison result.
+
+dtypes are now always true
+--------------------------
+
+Previously ``bool(dtype)`` would fall back to the default python
+implementation, which checked if ``len(dtype) > 0``. Since ``dtype`` objects
+implement ``__len__`` as the number of record fields, ``bool`` of scalar dtypes
+would evaluate to ``False``, which was unintuitive. Now ``bool(dtype) == True``
+for all dtypes.
+
+``__getslice__`` and ``__setslice__`` are no longer needed in ``ndarray`` subclasses
+------------------------------------------------------------------------------------
+When subclassing np.ndarray in Python 2.7, it is no longer _necessary_ to
+implement ``__*slice__`` on the derived class, as ``__*item__`` will intercept
+these calls correctly.
+
+Any code that did implement these will work exactly as before. Code that
+invokes``ndarray.__getslice__`` (e.g. through ``super(...).__getslice__``) will
+now issue a DeprecationWarning - ``.__getitem__(slice(start, end))`` should be
+used instead.
+
+Indexing MaskedArrays/Constants with ``...`` (ellipsis) now returns MaskedArray
+-------------------------------------------------------------------------------
+This behavior mirrors that of np.ndarray, and accounts for nested arrays in
+MaskedArrays of object dtype, and ellipsis combined with other forms of
+indexing.
+
+C API changes
+=============
+
+GUfuncs on empty arrays and NpyIter axis removal
+------------------------------------------------
+It is now allowed to remove a zero-sized axis from NpyIter. Which may mean
+that code removing axes from NpyIter has to add an additional check when
+accessing the removed dimensions later on.
+
+The largest followup change is that gufuncs are now allowed to have zero-sized
+inner dimensions. This means that a gufunc now has to anticipate an empty inner
+dimension, while this was never possible and an error raised instead.
+
+For most gufuncs no change should be necessary. However, it is now possible
+for gufuncs with a signature such as ``(..., N, M) -> (..., M)`` to return
+a valid result if ``N=0`` without further wrapping code.
+
+``PyArray_MapIterArrayCopyIfOverlap`` added to NumPy C-API
+----------------------------------------------------------
+Similar to ``PyArray_MapIterArray`` but with an additional ``copy_if_overlap``
+argument. If ``copy_if_overlap != 0``,  checks if input has memory overlap with
+any of the other arrays and make copies as appropriate to avoid problems if the
+input is modified during the iteration. See the documentation for more complete
+documentation.
+
+
+New Features
+============
+
+``__array_ufunc__`` added
+-------------------------
+This is the renamed and redesigned ``__numpy_ufunc__``. Any class, ndarray
+subclass or not, can define this method or set it to ``None`` in order to
+override the behavior of NumPy's ufuncs. This works quite similarly to Python's
+``__mul__`` and other binary operation routines. See the documentation for a
+more detailed description of the implementation and behavior of this new
+option. The API is provisional, we do not yet guarantee backward compatibility
+as modifications may be made pending feedback. See `NEP 13`_  and
+documentation_ for more details.
+
+.. _`NEP 13`: http://www.numpy.org/neps/nep-0013-ufunc-overrides.html
+.. _documentation: https://github.com/numpy/numpy/blob/master/doc/source/reference/arrays.classes.rst
+
+New ``positive`` ufunc
+----------------------
+This ufunc corresponds to unary `+`, but unlike `+` on an ndarray it will raise
+an error if array values do not support numeric operations.
+
+New ``divmod`` ufunc
+--------------------
+This ufunc corresponds to the Python builtin `divmod`, and is used to implement
+`divmod` when called on numpy arrays. ``np.divmod(x, y)`` calculates a result
+equivalent to ``(np.floor_divide(x, y), np.remainder(x, y))`` but is
+approximately twice as fast as calling the functions separately.
+
+``np.isnat`` ufunc tests for NaT special datetime and timedelta values
+----------------------------------------------------------------------
+The new ufunc ``np.isnat`` finds the positions of special NaT values
+within datetime and timedelta arrays. This is analogous to ``np.isnan``.
+
+``np.heaviside`` ufunc computes the Heaviside function
+------------------------------------------------------
+The new function ``np.heaviside(x, h0)`` (a ufunc) computes the Heaviside
+function:
+
+.. code::
+
+                       { 0   if x < 0,
+    heaviside(x, h0) = { h0  if x == 0,
+                       { 1   if x > 0.
+
+``np.block`` function for creating blocked arrays
+-------------------------------------------------
+Add a new ``block`` function to the current stacking functions ``vstack``,
+``hstack``, and ``stack``. This allows concatenation across multiple axes
+simultaneously, with a similar syntax to array creation, but where elements
+can themselves be arrays. For instance::
+
+    >>> A = np.eye(2) * 2
+    >>> B = np.eye(3) * 3
+    >>> np.block([
+    ...     [A,               np.zeros((2, 3))],
+    ...     [np.ones((3, 2)), B               ]
+    ... ])
+    array([[ 2.,  0.,  0.,  0.,  0.],
+           [ 0.,  2.,  0.,  0.,  0.],
+           [ 1.,  1.,  3.,  0.,  0.],
+           [ 1.,  1.,  0.,  3.,  0.],
+           [ 1.,  1.,  0.,  0.,  3.]])
+
+While primarily useful for block matrices, this works for arbitrary dimensions
+of arrays.
+
+It is similar to Matlab's square bracket notation for creating block matrices.
+
+``isin`` function, improving on ``in1d``
+----------------------------------------
+The new function ``isin`` tests whether each element of an N-dimensonal
+array is present anywhere within a second array. It is an enhancement
+of ``in1d`` that preserves the shape of the first array.
+
+Temporary elision
+-----------------
+On platforms providing the ``backtrace`` function NumPy will try to avoid
+creating temporaries in expression involving basic numeric types.
+For example ``d = a + b + c`` is transformed to ``d = a + b; d += c`` which can
+improve performance for large arrays as less memory bandwidth is required to
+perform the operation.
+
+``axes`` argument for ``unique``
+--------------------------------
+In an N-dimensional array, the user can now choose the axis along which to look
+for duplicate N-1-dimensional elements using ``numpy.unique``. The original
+behaviour is recovered if ``axis=None`` (default).
+
+``np.gradient`` now supports unevenly spaced data
+-------------------------------------------------
+Users can now specify a not-constant spacing for data.
+In particular ``np.gradient`` can now take:
+
+1. A single scalar to specify a sample distance for all dimensions.
+2. N scalars to specify a constant sample distance for each dimension.
+   i.e. ``dx``, ``dy``, ``dz``, ...
+3. N arrays to specify the coordinates of the values along each dimension of F.
+   The length of the array must match the size of the corresponding dimension
+4. Any combination of N scalars/arrays with the meaning of 2. and 3.
+
+This means that, e.g., it is now possible to do the following::
+
+    >>> f = np.array([[1, 2, 6], [3, 4, 5]], dtype=np.float)
+    >>> dx = 2.
+    >>> y = [1., 1.5, 3.5]
+    >>> np.gradient(f, dx, y)
+    [array([[ 1. ,  1. , -0.5], [ 1. ,  1. , -0.5]]),
+     array([[ 2. ,  2. ,  2. ], [ 2. ,  1.7,  0.5]])]
+
+Support for returning arrays of arbitrary dimensions in ``apply_along_axis``
+----------------------------------------------------------------------------
+Previously, only scalars or 1D arrays could be returned by the function passed
+to ``apply_along_axis``. Now, it can return an array of any dimensionality
+(including 0D), and the shape of this array replaces the axis of the array
+being iterated over.
+
+``.ndim`` property added to ``dtype`` to complement ``.shape``
+--------------------------------------------------------------
+For consistency with ``ndarray`` and ``broadcast``, ``d.ndim`` is a shorthand
+for ``len(d.shape)``.
+
+Support for tracemalloc in Python 3.6
+-------------------------------------
+NumPy now supports memory tracing with tracemalloc_ module of Python 3.6 or
+newer. Memory allocations from NumPy are placed into the domain defined by
+``numpy.lib.tracemalloc_domain``.
+Note that NumPy allocation will not show up in tracemalloc_ of earlier Python
+versions.
+
+.. _tracemalloc: https://docs.python.org/3/library/tracemalloc.html
+
+NumPy may be built with relaxed stride checking debugging
+---------------------------------------------------------
+Setting NPY_RELAXED_STRIDES_DEBUG=1 in the environment when relaxed stride
+checking is enabled will cause NumPy to be compiled with the affected strides
+set to the maximum value of npy_intp in order to help detect invalid usage of
+the strides in downstream projects. When enabled, invalid usage often results
+in an error being raised, but the exact type of error depends on the details of
+the code. TypeError and OverflowError have been observed in the wild.
+
+It was previously the case that this option was disabled for releases and
+enabled in master and changing between the two required editing the code. It is
+now disabled by default but can be enabled for test builds.
+
+
+Improvements
+============
+
+Ufunc behavior for overlapping inputs
+-------------------------------------
+
+Operations where ufunc input and output operands have memory overlap
+produced undefined results in previous NumPy versions, due to data
+dependency issues. In NumPy 1.13.0, results from such operations are
+now defined to be the same as for equivalent operations where there is
+no memory overlap.
+
+Operations affected now make temporary copies, as needed to eliminate
+data dependency. As detecting these cases is computationally
+expensive, a heuristic is used, which may in rare cases result to
+needless temporary copies.  For operations where the data dependency
+is simple enough for the heuristic to analyze, temporary copies will
+not be made even if the arrays overlap, if it can be deduced copies
+are not necessary.  As an example,``np.add(a, b, out=a)`` will not
+involve copies.
+
+To illustrate a previously undefined operation::
+
+    >>> x = np.arange(16).astype(float)
+    >>> np.add(x[1:], x[:-1], out=x[1:])
+
+In NumPy 1.13.0 the last line is guaranteed to be equivalent to::
+
+    >>> np.add(x[1:].copy(), x[:-1].copy(), out=x[1:])
+
+A similar operation with simple non-problematic data dependence is::
+
+    >>> x = np.arange(16).astype(float)
+    >>> np.add(x[1:], x[:-1], out=x[:-1])
+
+It will continue to produce the same results as in previous NumPy
+versions, and will not involve unnecessary temporary copies.
+
+The change applies also to in-place binary operations, for example::
+
+    >>> x = np.random.rand(500, 500)
+    >>> x += x.T
+
+This statement is now guaranteed to be equivalent to ``x[...] = x + x.T``,
+whereas in previous NumPy versions the results were undefined.
+
+Partial support for 64-bit f2py extensions with MinGW
+-----------------------------------------------------
+Extensions that incorporate Fortran libraries can now be built using the free
+MinGW_ toolset, also under Python 3.5. This works best for extensions that only
+do calculations and uses the runtime modestly (reading and writing from files,
+for instance). Note that this does not remove the need for Mingwpy; if you make
+extensive use of the runtime, you will most likely run into issues_. Instead,
+it should be regarded as a band-aid until Mingwpy is fully functional.
+
+Extensions can also be compiled using the MinGW toolset using the runtime
+library from the (moveable) WinPython 3.4 distribution, which can be useful for
+programs with a PySide1/Qt4 front-end.
+
+.. _MinGW: https://sf.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/6.2.0/threads-win32/seh/
+
+.. _issues: https://mingwpy.github.io/issues.html
+
+Performance improvements for ``packbits`` and ``unpackbits``
+------------------------------------------------------------
+The functions ``numpy.packbits`` with boolean input and ``numpy.unpackbits`` have
+been optimized to be a significantly faster for contiguous data.
+
+Fix for PPC long double floating point information
+--------------------------------------------------
+In previous versions of NumPy, the ``finfo`` function returned invalid
+information about the `double double`_ format of the ``longdouble`` float type
+on Power PC (PPC).  The invalid values resulted from the failure of the NumPy
+algorithm to deal with the variable number of digits in the significand
+that are a feature of `PPC long doubles`.  This release by-passes the failing
+algorithm by using heuristics to detect the presence of the PPC double double
+format.  A side-effect of using these heuristics is that the ``finfo``
+function is faster than previous releases.
+
+.. _PPC long doubles: https://www.ibm.com/support/knowledgecenter/en/ssw_aix_71/com.ibm.aix.genprogc/128bit_long_double_floating-point_datatype.htm
+
+.. _double double: https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format#Double-double_arithmetic
+
+Better default repr for ``ndarray`` subclasses
+----------------------------------------------
+Subclasses of ndarray with no ``repr`` specialization now correctly indent
+their data and type lines.
+
+More reliable comparisons of masked arrays
+------------------------------------------
+Comparisons of masked arrays were buggy for masked scalars and failed for
+structured arrays with dimension higher than one. Both problems are now
+solved. In the process, it was ensured that in getting the result for a
+structured array, masked fields are properly ignored, i.e., the result is equal
+if all fields that are non-masked in both are equal, thus making the behaviour
+identical to what one gets by comparing an unstructured masked array and then
+doing ``.all()`` over some axis.
+
+np.matrix with booleans elements can now be created using the string syntax
+---------------------------------------------------------------------------
+``np.matrix`` failed whenever one attempts to use it with booleans, e.g.,
+``np.matrix('True')``. Now, this works as expected.
+
+More ``linalg`` operations now accept empty vectors and matrices
+----------------------------------------------------------------
+All of the following functions in ``np.linalg`` now work when given input
+arrays with a 0 in the last two dimensions: ``det``, ``slogdet``, ``pinv``,
+``eigvals``, ``eigvalsh``, ``eig``, ``eigh``.
+
+Bundled version of LAPACK is now 3.2.2
+--------------------------------------
+NumPy comes bundled with a minimal implementation of lapack for systems without
+a lapack library installed, under the name of ``lapack_lite``. This has been
+upgraded from LAPACK 3.0.0 (June 30, 1999) to LAPACK 3.2.2 (June 30, 2010). See
+the `LAPACK changelogs`_ for details on the all the changes this entails.
+
+While no new features are exposed through ``numpy``, this fixes some bugs
+regarding "workspace" sizes, and in some places may use faster algorithms.
+
+.. _`LAPACK changelogs`: http://www.netlib.org/lapack/release_notes.html#_4_history_of_lapack_releases
+
+``reduce`` of ``np.hypot.reduce`` and ``np.logical_xor`` allowed in more cases
+------------------------------------------------------------------------------
+This now works on empty arrays, returning 0, and can reduce over multiple axes.
+Previously, a ``ValueError`` was thrown in these cases.
+
+Better ``repr`` of object arrays
+--------------------------------
+Object arrays that contain themselves no longer cause a recursion error.
+
+Object arrays that contain ``list`` objects are now printed in a way that makes
+clear the difference between a 2d object array, and a 1d object array of lists.
+
+Changes
+=======
+
+``argsort`` on masked arrays takes the same default arguments as ``sort``
+-------------------------------------------------------------------------
+By default, ``argsort`` now places the masked values at the end of the sorted
+array, in the same way that ``sort`` already did. Additionally, the
+``end_with`` argument is added to ``argsort``, for consistency with ``sort``.
+Note that this argument is not added at the end, so breaks any code that
+passed ``fill_value`` as a positional argument.
+
+``average`` now preserves subclasses
+------------------------------------
+For ndarray subclasses, ``numpy.average`` will now return an instance of the
+subclass, matching the behavior of most other NumPy functions such as ``mean``.
+As a consequence, also calls that returned a scalar may now return a subclass
+array scalar.
+
+``array == None`` and ``array != None`` do element-wise comparison
+------------------------------------------------------------------
+Previously these operations returned scalars ``False`` and ``True`` respectively.
+
+``np.equal, np.not_equal`` for object arrays ignores object identity
+--------------------------------------------------------------------
+Previously, these functions always treated identical objects as equal. This had
+the effect of overriding comparison failures, comparison of objects that did
+not return booleans, such as np.arrays, and comparison of objects where the
+results differed from object identity, such as NaNs.
+
+Boolean indexing changes
+------------------------
+* Boolean array-likes (such as lists of python bools) are always treated as
+  boolean indexes.
+
+* Boolean scalars (including python ``True``) are legal boolean indexes and
+  never treated as integers.
+
+* Boolean indexes must match the dimension of the axis that they index.
+
+* Boolean indexes used on the lhs of an assignment must match the dimensions of
+  the rhs.
+
+* Boolean indexing into scalar arrays return a new 1-d array.  This means that
+  ``array(1)[array(True)]`` gives ``array([1])`` and not the original array.
+
+``np.random.multivariate_normal`` behavior with bad covariance matrix
+---------------------------------------------------------------------
+
+It is now possible to adjust the behavior the function will have when dealing
+with the covariance matrix by using two new keyword arguments:
+
+* ``tol`` can be used to specify a tolerance to use when checking that
+  the covariance matrix is positive semidefinite.
+
+* ``check_valid`` can be used to configure what the function will do in the
+  presence of a matrix that is not positive semidefinite. Valid options are
+  ``ignore``, ``warn`` and ``raise``. The default value, ``warn`` keeps the
+  the behavior used on previous releases.
+
+``assert_array_less`` compares ``np.inf`` and ``-np.inf`` now
+-------------------------------------------------------------
+Previously, ``np.testing.assert_array_less`` ignored all infinite values. This
+is not the expected behavior both according to documentation and intuitively.
+Now, -inf < x < inf is considered ``True`` for any real number x and all
+other cases fail.
+
+``assert_array_`` and masked arrays ``assert_equal`` hide less warnings
+-----------------------------------------------------------------------
+Some warnings that were previously hidden by the ``assert_array_``
+functions are not hidden anymore. In most cases the warnings should be
+correct and, should they occur, will require changes to the tests using
+these functions.
+For the masked array ``assert_equal`` version, warnings may occur when
+comparing NaT. The function presently does not handle NaT or NaN
+specifically and it may be best to avoid it at this time should a warning
+show up due to this change.
+
+``offset`` attribute value in ``memmap`` objects
+------------------------------------------------
+The ``offset`` attribute in a ``memmap`` object is now set to the
+offset into the file. This is a behaviour change only for offsets
+greater than ``mmap.ALLOCATIONGRANULARITY``.
+
+``np.real`` and ``np.imag`` return scalars for scalar inputs
+------------------------------------------------------------
+Previously, ``np.real`` and ``np.imag`` used to return array objects when
+provided a scalar input, which was inconsistent with other functions like
+``np.angle`` and ``np.conj``.
+
+The polynomial convenience classes cannot be passed to ufuncs
+-------------------------------------------------------------
+The ABCPolyBase class, from which the convenience classes are derived, sets
+``__array_ufun__ = None`` in order of opt out of ufuncs. If a polynomial
+convenience class instance is passed as an argument to a ufunc, a ``TypeError``
+will now be raised.
+
+Output arguments to ufuncs can be tuples also for ufunc methods
+---------------------------------------------------------------
+For calls to ufuncs, it was already possible, and recommended, to use an
+``out`` argument with a tuple for ufuncs with multiple outputs. This has now
+been extended to output arguments in the ``reduce``, ``accumulate``, and
+``reduceat`` methods. This is mostly for compatibility with ``__array_ufunc``;
+there are no ufuncs yet that have more than one output.

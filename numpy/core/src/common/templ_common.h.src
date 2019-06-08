@@ -1,0 +1,46 @@
+#ifndef __NPY_TYPED_COMMON_INC
+#define __NPY_TYPED_COMMON_INC
+
+/* utility functions that profit from templates */
+
+#include "numpy/npy_common.h"
+
+/**begin repeat
+ *  #name = int, uint, long, ulong,
+ *          longlong, ulonglong, intp#
+ *  #type = npy_int, npy_uint, npy_long, npy_ulong,
+ *          npy_longlong, npy_ulonglong, npy_intp#
+ *  #MAX = NPY_MAX_INT, NPY_MAX_UINT, NPY_MAX_LONG, NPY_MAX_ULONG,
+ *         NPY_MAX_LONGLONG, NPY_MAX_ULONGLONG, NPY_MAX_INTP#
+ */
+
+/*
+ * writes result of a * b into r
+ * returns 1 if a * b overflowed else returns 0
+ * 
+ * These functions are not designed to work if either a or b is negative, but
+ * that is not checked. Could use absolute values and adjust the sign if that
+ * functionality was desired.
+ */
+static NPY_INLINE int
+npy_mul_with_overflow_@name@(@type@ * r, @type@ a, @type@ b)
+{
+#ifdef HAVE___BUILTIN_MUL_OVERFLOW
+    return __builtin_mul_overflow(a, b, r);
+#else
+    const @type@ half_sz = ((@type@)1 << ((sizeof(a) * 8 - 1 ) / 2));
+
+    *r = a * b;
+    /*
+     * avoid expensive division on common no overflow case
+     */
+    if (NPY_UNLIKELY((a | b) >= half_sz) &&
+            a != 0 && b > @MAX@ / a) {
+        return 1;
+    }
+    return 0;
+#endif
+}
+/**end repeat**/
+
+#endif

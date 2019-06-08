@@ -6,9 +6,14 @@
  * endian.h
  */
 
-#ifdef NPY_HAVE_ENDIAN_H
+#if defined(NPY_HAVE_ENDIAN_H) || defined(NPY_HAVE_SYS_ENDIAN_H)
     /* Use endian.h if available */
+
+    #if defined(NPY_HAVE_ENDIAN_H)
     #include <endian.h>
+    #elif defined(NPY_HAVE_SYS_ENDIAN_H)
+    #include <sys/endian.h>
+    #endif
 
     #if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && defined(LITTLE_ENDIAN)
         #define NPY_BYTE_ORDER    BYTE_ORDER
@@ -32,26 +37,32 @@
     #define NPY_LITTLE_ENDIAN 1234
     #define NPY_BIG_ENDIAN 4321
 
-    #if defined(NPY_CPU_X86)            \
-            || defined(NPY_CPU_AMD64)   \
-            || defined(NPY_CPU_IA64)    \
-            || defined(NPY_CPU_ALPHA)   \
-            || defined(NPY_CPU_ARMEL)   \
-            || defined(NPY_CPU_AARCH64) \
-            || defined(NPY_CPU_SH_LE)   \
-            || defined(NPY_CPU_MIPSEL)  \
-            || defined(NPY_CPU_PPC64LE)
+    #if defined(NPY_CPU_X86)                  \
+            || defined(NPY_CPU_AMD64)         \
+            || defined(NPY_CPU_IA64)          \
+            || defined(NPY_CPU_ALPHA)         \
+            || defined(NPY_CPU_ARMEL)         \
+            || defined(NPY_CPU_ARMEL_AARCH32) \
+            || defined(NPY_CPU_ARMEL_AARCH64) \
+            || defined(NPY_CPU_SH_LE)         \
+            || defined(NPY_CPU_MIPSEL)        \
+            || defined(NPY_CPU_PPC64LE)       \
+            || defined(NPY_CPU_ARCEL)         \
+            || defined(NPY_CPU_RISCV64)
         #define NPY_BYTE_ORDER NPY_LITTLE_ENDIAN
-    #elif defined(NPY_CPU_PPC)          \
-            || defined(NPY_CPU_SPARC)   \
-            || defined(NPY_CPU_S390)    \
-            || defined(NPY_CPU_HPPA)    \
-            || defined(NPY_CPU_PPC64)   \
-            || defined(NPY_CPU_ARMEB)   \
-            || defined(NPY_CPU_SH_BE)   \
-            || defined(NPY_CPU_MIPSEB)  \
-            || defined(NPY_CPU_OR1K)    \
-            || defined(NPY_CPU_M68K)
+    #elif defined(NPY_CPU_PPC)                \
+            || defined(NPY_CPU_SPARC)         \
+            || defined(NPY_CPU_S390)          \
+            || defined(NPY_CPU_HPPA)          \
+            || defined(NPY_CPU_PPC64)         \
+            || defined(NPY_CPU_ARMEB)         \
+            || defined(NPY_CPU_ARMEB_AARCH32) \
+            || defined(NPY_CPU_ARMEB_AARCH64) \
+            || defined(NPY_CPU_SH_BE)         \
+            || defined(NPY_CPU_MIPSEB)        \
+            || defined(NPY_CPU_OR1K)          \
+            || defined(NPY_CPU_M68K)          \
+            || defined(NPY_CPU_ARCEB)
         #define NPY_BYTE_ORDER NPY_BIG_ENDIAN
     #else
         #error Unknown CPU: can not set endianness

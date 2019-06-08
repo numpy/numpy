@@ -33,7 +33,7 @@ Returns
 -------
 out : ndarray
     The drawn samples, arranged according to `shape`.  If the
-    shape given is (m,n,...), then the shape of `out` is is
+    shape given is (m,n,...), then the shape of `out` is
     (m,n,...,N).
 
     In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
@@ -42,9 +42,8 @@ out : ndarray
 See Also
 --------
 normal
-scipy.stats.distributions.norm : Provides random variates, as well as
-                                 probability density function, cumulative
-                                 density function, etc.
+scipy.stats.norm : Provides random variates, as well as probability density
+                   function, cumulative density function, etc.
 
 Notes
 -----

@@ -41,43 +41,42 @@ Exported symbols include:
 
    generic
      +-> bool_                                  (kind=b)
-     +-> number                                 (kind=i)
-     |     integer
-     |     signedinteger   (intxx)
-     |     byte
-     |     short
-     |     intc
-     |     intp           int0
-     |     int_
-     |     longlong
-     +-> unsignedinteger  (uintxx)              (kind=u)
-     |     ubyte
-     |     ushort
-     |     uintc
-     |     uintp          uint0
-     |     uint_
-     |     ulonglong
-     +-> inexact
-     |   +-> floating           (floatxx)       (kind=f)
-     |   |     half
-     |   |     single
-     |   |     float_  (double)
-     |   |     longfloat
-     |   \\-> complexfloating    (complexxx)     (kind=c)
-     |         csingle  (singlecomplex)
-     |         complex_ (cfloat, cdouble)
-     |         clongfloat (longcomplex)
+     +-> number
+     |   +-> integer
+     |   |   +-> signedinteger     (intxx)      (kind=i)
+     |   |   |     byte
+     |   |   |     short
+     |   |   |     intc
+     |   |   |     intp            int0
+     |   |   |     int_
+     |   |   |     longlong
+     |   |   \\-> unsignedinteger  (uintxx)     (kind=u)
+     |   |         ubyte
+     |   |         ushort
+     |   |         uintc
+     |   |         uintp           uint0
+     |   |         uint_
+     |   |         ulonglong
+     |   +-> inexact
+     |       +-> floating          (floatxx)    (kind=f)
+     |       |     half
+     |       |     single
+     |       |     float_          (double)
+     |       |     longfloat
+     |       \\-> complexfloating  (complexxx)  (kind=c)
+     |             csingle         (singlecomplex)
+     |             complex_        (cfloat, cdouble)
+     |             clongfloat      (longcomplex)
      +-> flexible
-     |     character
-     |     void                                 (kind=V)
-     |
-     |     str_     (string_, bytes_)           (kind=S)    [Python 2]
-     |     unicode_                             (kind=U)    [Python 2]
-     |
-     |     bytes_   (string_)                   (kind=S)    [Python 3]
-     |     str_     (unicode_)                  (kind=U)    [Python 3]
-     |
-     \\-> object_ (not used much)                (kind=O)
+     |   +-> character
+     |   |     str_     (string_, bytes_)       (kind=S)    [Python 2]
+     |   |     unicode_                         (kind=U)    [Python 2]
+     |   |
+     |   |     bytes_   (string_)               (kind=S)    [Python 3]
+     |   |     str_     (unicode_)              (kind=U)    [Python 3]
+     |   |
+     |   \\-> void                              (kind=V)
+     \\-> object_ (not used much)               (kind=O)
 
 """
 from __future__ import division, absolute_import, print_function
@@ -85,6 +84,7 @@ from __future__ import division, absolute_import, print_function
 import types as _types
 import sys
 import numbers
+import warnings
 
 from numpy.compat import bytes, long
 from numpy.core.multiarray import (
@@ -92,7 +92,7 @@ from numpy.core.multiarray import (
         datetime_as_string, busday_offset, busday_count, is_busday,
         busdaycalendar
         )
-
+from numpy.core.overrides import set_module
 
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
@@ -102,6 +102,23 @@ __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
            ]
 
+# we don't need all these imports, but we need to keep them for compatibility
+# for users using np.core.numerictypes.UPPER_TABLE
+from ._string_helpers import (
+    english_lower, english_upper, english_capitalize, LOWER_TABLE, UPPER_TABLE
+)
+
+from ._type_aliases import (
+    sctypeDict,
+    sctypeNA,
+    allTypes,
+    bitname,
+    sctypes,
+    _concrete_types,
+    _concrete_typeinfo,
+    _bits_of,
+)
+from ._dtype import _kind_name
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
@@ -112,364 +129,8 @@ else:
     from __builtin__ import bool, int, float, complex, object, unicode, str
 
 
-# String-handling utilities to avoid locale-dependence.
-
-# "import string" is costly to import!
-# Construct the translation tables directly
-#   "A" = chr(65), "a" = chr(97)
-_all_chars = [chr(_m) for _m in range(256)]
-_ascii_upper = _all_chars[65:65+26]
-_ascii_lower = _all_chars[97:97+26]
-LOWER_TABLE = "".join(_all_chars[:65] + _ascii_lower + _all_chars[65+26:])
-UPPER_TABLE = "".join(_all_chars[:97] + _ascii_upper + _all_chars[97+26:])
-
-
-def english_lower(s):
-    """ Apply English case rules to convert ASCII strings to all lower case.
-
-    This is an internal utility function to replace calls to str.lower() such
-    that we can avoid changing behavior with changing locales. In particular,
-    Turkish has distinct dotted and dotless variants of the Latin letter "I" in
-    both lowercase and uppercase. Thus, "I".lower() != "i" in a "tr" locale.
-
-    Parameters
-    ----------
-    s : str
-
-    Returns
-    -------
-    lowered : str
-
-    Examples
-    --------
-    >>> from numpy.core.numerictypes import english_lower
-    >>> english_lower('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
-    'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0123456789_'
-    >>> english_lower('')
-    ''
-    """
-    lowered = s.translate(LOWER_TABLE)
-    return lowered
-
-def english_upper(s):
-    """ Apply English case rules to convert ASCII strings to all upper case.
-
-    This is an internal utility function to replace calls to str.upper() such
-    that we can avoid changing behavior with changing locales. In particular,
-    Turkish has distinct dotted and dotless variants of the Latin letter "I" in
-    both lowercase and uppercase. Thus, "i".upper() != "I" in a "tr" locale.
-
-    Parameters
-    ----------
-    s : str
-
-    Returns
-    -------
-    uppered : str
-
-    Examples
-    --------
-    >>> from numpy.core.numerictypes import english_upper
-    >>> english_upper('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_')
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_'
-    >>> english_upper('')
-    ''
-    """
-    uppered = s.translate(UPPER_TABLE)
-    return uppered
-
-def english_capitalize(s):
-    """ Apply English case rules to convert the first character of an ASCII
-    string to upper case.
-
-    This is an internal utility function to replace calls to str.capitalize()
-    such that we can avoid changing behavior with changing locales.
-
-    Parameters
-    ----------
-    s : str
-
-    Returns
-    -------
-    capitalized : str
-
-    Examples
-    --------
-    >>> from numpy.core.numerictypes import english_capitalize
-    >>> english_capitalize('int8')
-    'Int8'
-    >>> english_capitalize('Int8')
-    'Int8'
-    >>> english_capitalize('')
-    ''
-    """
-    if s:
-        return english_upper(s[0]) + s[1:]
-    else:
-        return s
-
-
-sctypeDict = {}      # Contains all leaf-node scalar types with aliases
-sctypeNA = {}        # Contails all leaf-node types -> numarray type equivalences
-allTypes = {}      # Collect the types we will add to the module here
-
-def _evalname(name):
-    k = 0
-    for ch in name:
-        if ch in '0123456789':
-            break
-        k += 1
-    try:
-        bits = int(name[k:])
-    except ValueError:
-        bits = 0
-    base = name[:k]
-    return base, bits
-
-def bitname(obj):
-    """Return a bit-width name for a given type object"""
-    name = obj.__name__
-    base = ''
-    char = ''
-    try:
-        if name[-1] == '_':
-            newname = name[:-1]
-        else:
-            newname = name
-        info = typeinfo[english_upper(newname)]
-        assert(info[-1] == obj)  # sanity check
-        bits = info[2]
-
-    except KeyError:     # bit-width name
-        base, bits = _evalname(name)
-        char = base[0]
-
-    if name == 'bool_':
-        char = 'b'
-        base = 'bool'
-    elif name == 'void':
-        char = 'V'
-        base = 'void'
-    elif name == 'object_':
-        char = 'O'
-        base = 'object'
-        bits = 0
-    elif name == 'datetime64':
-        char = 'M'
-    elif name == 'timedelta64':
-        char = 'm'
-
-    if sys.version_info[0] >= 3:
-        if name == 'bytes_':
-            char = 'S'
-            base = 'bytes'
-        elif name == 'str_':
-            char = 'U'
-            base = 'str'
-    else:
-        if name == 'string_':
-            char = 'S'
-            base = 'string'
-        elif name == 'unicode_':
-            char = 'U'
-            base = 'unicode'
-
-    bytes = bits // 8
-
-    if char != '' and bytes != 0:
-        char = "%s%d" % (char, bytes)
-
-    return base, bits, char
-
-
-def _add_types():
-    for a in typeinfo.keys():
-        name = english_lower(a)
-        if isinstance(typeinfo[a], tuple):
-            typeobj = typeinfo[a][-1]
-
-            # define C-name and insert typenum and typechar references also
-            allTypes[name] = typeobj
-            sctypeDict[name] = typeobj
-            sctypeDict[typeinfo[a][0]] = typeobj
-            sctypeDict[typeinfo[a][1]] = typeobj
-
-        else:  # generic class
-            allTypes[name] = typeinfo[a]
-_add_types()
-
-def _add_aliases():
-    for a in typeinfo.keys():
-        name = english_lower(a)
-        if not isinstance(typeinfo[a], tuple):
-            continue
-        typeobj = typeinfo[a][-1]
-        # insert bit-width version for this class (if relevant)
-        base, bit, char = bitname(typeobj)
-        if base[-3:] == 'int' or char[0] in 'ui':
-            continue
-        if base != '':
-            myname = "%s%d" % (base, bit)
-            if ((name != 'longdouble' and name != 'clongdouble') or
-                   myname not in allTypes.keys()):
-                allTypes[myname] = typeobj
-                sctypeDict[myname] = typeobj
-                if base == 'complex':
-                    na_name = '%s%d' % (english_capitalize(base), bit//2)
-                elif base == 'bool':
-                    na_name = english_capitalize(base)
-                    sctypeDict[na_name] = typeobj
-                else:
-                    na_name = "%s%d" % (english_capitalize(base), bit)
-                    sctypeDict[na_name] = typeobj
-                sctypeNA[na_name] = typeobj
-                sctypeDict[na_name] = typeobj
-                sctypeNA[typeobj] = na_name
-                sctypeNA[typeinfo[a][0]] = na_name
-        if char != '':
-            sctypeDict[char] = typeobj
-            sctypeNA[char] = na_name
-_add_aliases()
-
-# Integers are handled so that the int32 and int64 types should agree
-# exactly with NPY_INT32, NPY_INT64. We need to enforce the same checking
-# as is done in arrayobject.h where the order of getting a bit-width match
-# is long, longlong, int, short, char.
-def _add_integer_aliases():
-    _ctypes = ['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']
-    for ctype in _ctypes:
-        val = typeinfo[ctype]
-        bits = val[2]
-        charname = 'i%d' % (bits//8,)
-        ucharname = 'u%d' % (bits//8,)
-        intname = 'int%d' % bits
-        UIntname = 'UInt%d' % bits
-        Intname = 'Int%d' % bits
-        uval = typeinfo['U'+ctype]
-        typeobj = val[-1]
-        utypeobj = uval[-1]
-        if intname not in allTypes.keys():
-            uintname = 'uint%d' % bits
-            allTypes[intname] = typeobj
-            allTypes[uintname] = utypeobj
-            sctypeDict[intname] = typeobj
-            sctypeDict[uintname] = utypeobj
-            sctypeDict[Intname] = typeobj
-            sctypeDict[UIntname] = utypeobj
-            sctypeDict[charname] = typeobj
-            sctypeDict[ucharname] = utypeobj
-            sctypeNA[Intname] = typeobj
-            sctypeNA[UIntname] = utypeobj
-            sctypeNA[charname] = typeobj
-            sctypeNA[ucharname] = utypeobj
-        sctypeNA[typeobj] = Intname
-        sctypeNA[utypeobj] = UIntname
-        sctypeNA[val[0]] = Intname
-        sctypeNA[uval[0]] = UIntname
-_add_integer_aliases()
-
-# We use these later
-void = allTypes['void']
+# We use this later
 generic = allTypes['generic']
-
-#
-# Rework the Python names (so that float and complex and int are consistent
-#                            with Python usage)
-#
-def _set_up_aliases():
-    type_pairs = [('complex_', 'cdouble'),
-                  ('int0', 'intp'),
-                  ('uint0', 'uintp'),
-                  ('single', 'float'),
-                  ('csingle', 'cfloat'),
-                  ('singlecomplex', 'cfloat'),
-                  ('float_', 'double'),
-                  ('intc', 'int'),
-                  ('uintc', 'uint'),
-                  ('int_', 'long'),
-                  ('uint', 'ulong'),
-                  ('cfloat', 'cdouble'),
-                  ('longfloat', 'longdouble'),
-                  ('clongfloat', 'clongdouble'),
-                  ('longcomplex', 'clongdouble'),
-                  ('bool_', 'bool'),
-                  ('unicode_', 'unicode'),
-                  ('object_', 'object')]
-    if sys.version_info[0] >= 3:
-        type_pairs.extend([('bytes_', 'string'),
-                           ('str_', 'unicode'),
-                           ('string_', 'string')])
-    else:
-        type_pairs.extend([('str_', 'string'),
-                           ('string_', 'string'),
-                           ('bytes_', 'string')])
-    for alias, t in type_pairs:
-        allTypes[alias] = allTypes[t]
-        sctypeDict[alias] = sctypeDict[t]
-    # Remove aliases overriding python types and modules
-    to_remove = ['ulong', 'object', 'unicode', 'int', 'long', 'float',
-                 'complex', 'bool', 'string', 'datetime', 'timedelta']
-    if sys.version_info[0] >= 3:
-        # Py3K
-        to_remove.append('bytes')
-        to_remove.append('str')
-        to_remove.remove('unicode')
-        to_remove.remove('long')
-    for t in to_remove:
-        try:
-            del allTypes[t]
-            del sctypeDict[t]
-        except KeyError:
-            pass
-_set_up_aliases()
-
-# Now, construct dictionary to lookup character codes from types
-_sctype2char_dict = {}
-def _construct_char_code_lookup():
-    for name in typeinfo.keys():
-        tup = typeinfo[name]
-        if isinstance(tup, tuple):
-            if tup[0] not in ['p', 'P']:
-                _sctype2char_dict[tup[-1]] = tup[0]
-_construct_char_code_lookup()
-
-
-sctypes = {'int': [],
-           'uint':[],
-           'float':[],
-           'complex':[],
-           'others':[bool, object, str, unicode, void]}
-
-def _add_array_type(typename, bits):
-    try:
-        t = allTypes['%s%d' % (typename, bits)]
-    except KeyError:
-        pass
-    else:
-        sctypes[typename].append(t)
-
-def _set_array_types():
-    ibytes = [1, 2, 4, 8, 16, 32, 64]
-    fbytes = [2, 4, 8, 10, 12, 16, 32, 64]
-    for bytes in ibytes:
-        bits = 8*bytes
-        _add_array_type('int', bits)
-        _add_array_type('uint', bits)
-    for bytes in fbytes:
-        bits = 8*bytes
-        _add_array_type('float', bits)
-        _add_array_type('complex', 2*bits)
-    _gi = dtype('p')
-    if _gi.type not in sctypes['int']:
-        indx = 0
-        sz = _gi.itemsize
-        _lst = sctypes['int']
-        while (indx < len(_lst) and sz >= _lst[indx](0).itemsize):
-            indx += 1
-        sctypes['int'].insert(indx, _gi.type)
-        sctypes['uint'].insert(indx, dtype('P').type)
-_set_array_types()
-
 
 genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
                    'int32', 'uint32', 'int64', 'uint64', 'int128',
@@ -501,11 +162,11 @@ def maximum_sctype(t):
 
     Examples
     --------
-    >>> np.maximum_sctype(np.int)
+    >>> np.maximum_sctype(int)
     <type 'numpy.int64'>
     >>> np.maximum_sctype(np.uint8)
     <type 'numpy.uint64'>
-    >>> np.maximum_sctype(np.complex)
+    >>> np.maximum_sctype(complex)
     <type 'numpy.complex192'>
 
     >>> np.maximum_sctype(str)
@@ -521,41 +182,14 @@ def maximum_sctype(t):
     if g is None:
         return t
     t = g
-    name = t.__name__
-    base, bits = _evalname(name)
-    if bits == 0:
-        return t
-    else:
+    base = _kind_name(dtype(t))
+    if base in sctypes:
         return sctypes[base][-1]
+    else:
+        return t
 
-try:
-    buffer_type = _types.BufferType
-except AttributeError:
-    # Py3K
-    buffer_type = memoryview
 
-_python_types = {int: 'int_',
-                 float: 'float_',
-                 complex: 'complex_',
-                 bool: 'bool_',
-                 bytes: 'bytes_',
-                 unicode: 'unicode_',
-                 buffer_type: 'void',
-                 }
-
-if sys.version_info[0] >= 3:
-    def _python_type(t):
-        """returns the type corresponding to a certain Python type"""
-        if not isinstance(t, type):
-            t = type(t)
-        return allTypes[_python_types.get(t, 'object_')]
-else:
-    def _python_type(t):
-        """returns the type corresponding to a certain Python type"""
-        if not isinstance(t, _types.TypeType):
-            t = type(t)
-        return allTypes[_python_types.get(t, 'object_')]
-
+@set_module('numpy')
 def issctype(rep):
     """
     Determines whether the given object represents a scalar data-type.
@@ -597,9 +231,11 @@ def issctype(rep):
         if res and res != object_:
             return True
         return False
-    except:
+    except Exception:
         return False
 
+
+@set_module('numpy')
 def obj2sctype(rep, default=None):
     """
     Return the scalar dtype or NumPy equivalent of Python type of an object.
@@ -639,24 +275,22 @@ def obj2sctype(rep, default=None):
     <type 'list'>
 
     """
-    try:
-        if issubclass(rep, generic):
-            return rep
-    except TypeError:
-        pass
-    if isinstance(rep, dtype):
-        return rep.type
-    if isinstance(rep, type):
-        return _python_type(rep)
+    # prevent abtract classes being upcast
+    if isinstance(rep, type) and issubclass(rep, generic):
+        return rep
+    # extract dtype from arrays
     if isinstance(rep, ndarray):
         return rep.dtype.type
+    # fall back on dtype to convert
     try:
         res = dtype(rep)
-    except:
+    except Exception:
         return default
-    return res.type
+    else:
+        return res.type
 
 
+@set_module('numpy')
 def issubclass_(arg1, arg2):
     """
     Determine if a class is a subclass of a second class.
@@ -684,9 +318,9 @@ def issubclass_(arg1, arg2):
 
     Examples
     --------
-    >>> np.issubclass_(np.int32, np.int)
+    >>> np.issubclass_(np.int32, int)
     True
-    >>> np.issubclass_(np.int32, np.float)
+    >>> np.issubclass_(np.int32, float)
     False
 
     """
@@ -695,6 +329,8 @@ def issubclass_(arg1, arg2):
     except TypeError:
         return False
 
+
+@set_module('numpy')
 def issubsctype(arg1, arg2):
     """
     Determine if the first argument is a subclass of the second argument.
@@ -717,14 +353,16 @@ def issubsctype(arg1, arg2):
     --------
     >>> np.issubsctype('S8', str)
     True
-    >>> np.issubsctype(np.array([1]), np.int)
+    >>> np.issubsctype(np.array([1]), int)
     True
-    >>> np.issubsctype(np.array([1]), np.float)
+    >>> np.issubsctype(np.array([1]), float)
     False
 
     """
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
+
+@set_module('numpy')
 def issubdtype(arg1, arg2):
     """
     Returns True if first argument is a typecode lower/equal in type hierarchy.
@@ -745,20 +383,46 @@ def issubdtype(arg1, arg2):
 
     Examples
     --------
-    >>> np.issubdtype('S1', str)
+    >>> np.issubdtype('S1', np.string_)
     True
     >>> np.issubdtype(np.float64, np.float32)
     False
 
     """
-    if issubclass_(arg2, generic):
-        return issubclass(dtype(arg1).type, arg2)
-    mro = dtype(arg2).type.mro()
-    if len(mro) > 1:
-        val = mro[1]
-    else:
-        val = mro[0]
-    return issubclass(dtype(arg1).type, val)
+    if not issubclass_(arg1, generic):
+        arg1 = dtype(arg1).type
+    if not issubclass_(arg2, generic):
+        arg2_orig = arg2
+        arg2 = dtype(arg2).type
+        if not isinstance(arg2_orig, dtype):
+            # weird deprecated behaviour, that tried to infer np.floating from
+            # float, and similar less obvious things, such as np.generic from
+            # basestring
+            mro = arg2.mro()
+            arg2 = mro[1] if len(mro) > 1 else mro[0]
+
+            def type_repr(x):
+                """ Helper to produce clear error messages """
+                if not isinstance(x, type):
+                    return repr(x)
+                elif issubclass(x, generic):
+                    return "np.{}".format(x.__name__)
+                else:
+                    return x.__name__
+
+            # 1.14, 2017-08-01
+            warnings.warn(
+                "Conversion of the second argument of issubdtype from `{raw}` "
+                "to `{abstract}` is deprecated. In future, it will be treated "
+                "as `{concrete} == np.dtype({raw}).type`.".format(
+                    raw=type_repr(arg2_orig),
+                    abstract=type_repr(arg2),
+                    concrete=type_repr(dtype(arg2_orig).type)
+                ),
+                FutureWarning, stacklevel=2
+            )
+
+    return issubclass(arg1, arg2)
 
 
 # This dictionary allows look up based on any alias for an array data-type
@@ -779,21 +443,21 @@ _alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
-    for name, val in typeinfo.items():
-        if not isinstance(val, tuple):
-            continue
-        obj = val[-1]
-        nbytes[obj] = val[2] // 8
-        _alignment[obj] = val[3]
-        if (len(val) > 5):
-            _maxvals[obj] = val[4]
-            _minvals[obj] = val[5]
+    for name, info in _concrete_typeinfo.items():
+        obj = info.type
+        nbytes[obj] = info.bits // 8
+        _alignment[obj] = info.alignment
+        if len(info) > 5:
+            _maxvals[obj] = info.max
+            _minvals[obj] = info.min
         else:
             _maxvals[obj] = None
             _minvals[obj] = None
 
 _construct_lookups()
 
+
+@set_module('numpy')
 def sctype2char(sctype):
     """
     Return the string representation of a scalar dtype.
@@ -821,7 +485,7 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> for sctype in [np.int32, np.float, np.complex, np.string_, np.ndarray]:
+    >>> for sctype in [np.int32, float, complex, np.string_, np.ndarray]:
     ...     print(np.sctype2char(sctype))
     l
     d
@@ -839,13 +503,17 @@ def sctype2char(sctype):
     sctype = obj2sctype(sctype)
     if sctype is None:
         raise ValueError("unrecognized type")
-    return _sctype2char_dict[sctype]
+    if sctype not in _concrete_types:
+        # for compatibility
+        raise KeyError(sctype)
+    return dtype(sctype).char
 
 # Create dictionary of casting functions that wrap sequences
 # indexed by type or type character
-
-
 cast = _typedict()
+for key in _concrete_types:
+    cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
+
 try:
     ScalarType = [_types.IntType, _types.FloatType, _types.ComplexType,
                   _types.LongType, _types.BooleanType,
@@ -854,41 +522,9 @@ except AttributeError:
     # Py3K
     ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
 
-ScalarType.extend(_sctype2char_dict.keys())
+ScalarType.extend(_concrete_types)
 ScalarType = tuple(ScalarType)
-for key in _sctype2char_dict.keys():
-    cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
 
-# Create the typestring lookup dictionary
-_typestr = _typedict()
-for key in _sctype2char_dict.keys():
-    if issubclass(key, allTypes['flexible']):
-        _typestr[key] = _sctype2char_dict[key]
-    else:
-        _typestr[key] = empty((1,), key).dtype.str[1:]
-
-# Make sure all typestrings are in sctypeDict
-for key, val in _typestr.items():
-    if val not in sctypeDict:
-        sctypeDict[val] = key
-
-# Add additional strings to the sctypeDict
-
-if sys.version_info[0] >= 3:
-    _toadd = ['int', 'float', 'complex', 'bool', 'object',
-              'str', 'bytes', 'object', ('a', allTypes['bytes_'])]
-else:
-    _toadd = ['int', 'float', 'complex', 'bool', 'object', 'string',
-              ('str', allTypes['string_']),
-              'unicode', 'object', ('a', allTypes['string_'])]
-
-for name in _toadd:
-    if isinstance(name, tuple):
-        sctypeDict[name[0]] = name[1]
-    else:
-        sctypeDict[name] = allTypes['%s_' % name]
-
-del _toadd, name
 
 # Now add the types we've determined to this module
 for key in allTypes:
@@ -958,9 +594,12 @@ def _register_types():
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)
     numbers.Real.register(floating)
+    numbers.Number.register(number)
 
 _register_types()
 
+
+@set_module('numpy')
 def find_common_type(array_types, scalar_types):
     """
     Determine common type following standard coercion rules.
@@ -986,7 +625,7 @@ def find_common_type(array_types, scalar_types):
 
     Examples
     --------
-    >>> np.find_common_type([], [np.int64, np.float32, np.complex])
+    >>> np.find_common_type([], [np.int64, np.float32, complex])
     dtype('complex128')
     >>> np.find_common_type([np.int64, np.float32], [])
     dtype('float64')
@@ -1002,7 +641,7 @@ def find_common_type(array_types, scalar_types):
     Complex is of a different type, so it up-casts the float in the
     `array_types` argument:
 
-    >>> np.find_common_type([np.float32], [np.complex])
+    >>> np.find_common_type([np.float32], [complex])
     dtype('complex128')
 
     Type specifier strings are convertible to dtypes and can therefore

@@ -16,11 +16,12 @@ Constants
 
 Arithmetic
 ----------
-- `hermmulx` -- multiply a Hermite series in ``P_i(x)`` by ``x``.
 - `hermadd` -- add two Hermite series.
 - `hermsub` -- subtract one Hermite series from another.
+- `hermmulx` -- multiply a Hermite series in ``P_i(x)`` by ``x``.
 - `hermmul` -- multiply two Hermite series.
 - `hermdiv` -- divide one Hermite series by another.
+- `hermpow` -- raise a Hermite series to a positive integer power.
 - `hermval` -- evaluate a Hermite series at given points.
 - `hermval2d` -- evaluate a 2D Hermite series at given points.
 - `hermval3d` -- evaluate a 3D Hermite series at given points.
@@ -62,6 +63,7 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import numpy as np
 import numpy.linalg as la
+from numpy.core.multiarray import normalize_axis_index
 
 from . import polyutils as pu
 from ._polybase import ABCPolyBase
@@ -322,7 +324,7 @@ def hermadd(c1, c2):
 
     See Also
     --------
-    hermsub, hermmul, hermdiv, hermpow
+    hermsub, hermmulx, hermmul, hermdiv, hermpow
 
     Notes
     -----
@@ -370,7 +372,7 @@ def hermsub(c1, c2):
 
     See Also
     --------
-    hermadd, hermmul, hermdiv, hermpow
+    hermadd, hermmulx, hermmul, hermdiv, hermpow
 
     Notes
     -----
@@ -415,6 +417,10 @@ def hermmulx(c):
     -------
     out : ndarray
         Array representing the result of the multiplication.
+
+    See Also
+    --------
+    hermadd, hermsub, hermmul, hermdiv, hermpow
 
     Notes
     -----
@@ -468,7 +474,7 @@ def hermmul(c1, c2):
 
     See Also
     --------
-    hermadd, hermsub, hermdiv, hermpow
+    hermadd, hermsub, hermmulx, hermdiv, hermpow
 
     Notes
     -----
@@ -536,7 +542,7 @@ def hermdiv(c1, c2):
 
     See Also
     --------
-    hermadd, hermsub, hermmul, hermpow
+    hermadd, hermsub, hermmulx, hermmul, hermpow
 
     Notes
     -----
@@ -605,7 +611,7 @@ def hermpow(c, pow, maxpower=16):
 
     See Also
     --------
-    hermadd, hermsub, hermmul, hermdiv
+    hermadd, hermsub, hermmulx, hermmul, hermdiv
 
     Examples
     --------
@@ -700,15 +706,12 @@ def hermder(c, m=1, scl=1, axis=0):
         raise ValueError("The order of derivation must be non-negative")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     n = len(c)
     if cnt >= n:
         c = c[:1]*0
@@ -720,7 +723,7 @@ def hermder(c, m=1, scl=1, axis=0):
             for j in range(n, 0, -1):
                 der[j - 1] = (2*j)*c[j]
             c = der
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -772,8 +775,8 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Raises
     ------
     ValueError
-        If ``m < 0``, ``len(k) > m``, ``np.isscalar(lbnd) == False``, or
-        ``np.isscalar(scl) == False``.
+        If ``m < 0``, ``len(k) > m``, ``np.ndim(lbnd) != 0``, or
+        ``np.ndim(scl) != 0``.
 
     See Also
     --------
@@ -784,7 +787,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Note that the result of each integration is *multiplied* by `scl`.
     Why is this important to note?  Say one is making a linear change of
     variable :math:`u = ax + b` in an integral relative to `x`.  Then
-    .. math::`dx = du/a`, so one will need to set `scl` equal to
+    :math:`dx = du/a`, so one will need to set `scl` equal to
     :math:`1/a` - perhaps not what one would have first thought.
 
     Also note that, in general, the result of integrating a C-series needs
@@ -820,17 +823,18 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt:
         raise ValueError("Too many integration constants")
+    if np.ndim(lbnd) != 0:
+        raise ValueError("lbnd must be a scalar.")
+    if np.ndim(scl) != 0:
+        raise ValueError("scl must be a scalar.")
     if iaxis != axis:
         raise ValueError("The axis must be integer")
-    if not -c.ndim <= iaxis < c.ndim:
-        raise ValueError("The axis is out of range")
-    if iaxis < 0:
-        iaxis += c.ndim
+    iaxis = normalize_axis_index(iaxis, c.ndim)
 
     if cnt == 0:
         return c
 
-    c = np.rollaxis(c, iaxis)
+    c = np.moveaxis(c, iaxis, 0)
     k = list(k) + [0]*(cnt - len(k))
     for i in range(cnt):
         n = len(c)
@@ -845,7 +849,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
                 tmp[j + 1] = c[j]/(2*(j + 1))
             tmp[0] += k[i] - hermval(lbnd, tmp)
             c = tmp
-    c = np.rollaxis(c, 0, iaxis + 1)
+    c = np.moveaxis(c, 0, iaxis)
     return c
 
 
@@ -988,12 +992,12 @@ def hermval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
         x, y = np.array((x, y), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y are incompatible')
 
     c = hermval(x, c)
@@ -1007,7 +1011,7 @@ def hermgrid2d(x, y, c):
 
     This function returns the values:
 
-    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * H_i(a) * H_j(b)
+    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * H_i(a) * H_j(b)
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -1048,7 +1052,7 @@ def hermgrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = hermval(x, c)
@@ -1101,12 +1105,12 @@ def hermval3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
-    except:
+    except Exception:
         raise ValueError('x, y, z are incompatible')
 
     c = hermval(x, c)
@@ -1165,7 +1169,7 @@ def hermgrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     c = hermval(x, c)
@@ -1234,7 +1238,7 @@ def hermvander(x, deg):
         v[1] = x2
         for i in range(2, ideg + 1):
             v[i] = (v[i-1]*x2 - v[i-2]*(2*(i - 1)))
-    return np.rollaxis(v, 0, v.ndim)
+    return np.moveaxis(v, 0, -1)
 
 
 def hermvander2d(x, y, deg):
@@ -1243,7 +1247,7 @@ def hermvander2d(x, y, deg):
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = H_i(x) * H_j(y),
+    .. math:: V[..., (deg[1] + 1)*i + j] = H_i(x) * H_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
@@ -1284,7 +1288,7 @@ def hermvander2d(x, y, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1348,7 +1352,7 @@ def hermvander3d(x, y, z, deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1391,7 +1395,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
     deg : int or 1-D array_like
         Degree(s) of the fitting polynomials. If `deg` is a single integer
         all terms up to and including the `deg`'th term are included in the
-        fit. For Numpy versions >= 1.11 a list of integers specifying the
+        fit. For NumPy versions >= 1.11.0 a list of integers specifying the
         degrees of the terms to include may be used instead.
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
@@ -1477,7 +1481,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
     References
     ----------
     .. [1] Wikipedia, "Curve fitting",
-           http://en.wikipedia.org/wiki/Curve_fitting
+           https://en.wikipedia.org/wiki/Curve_fitting
 
     Examples
     --------
@@ -1558,7 +1562,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
     # warn on rank reduction
     if rank != order and not full:
         msg = "The fit may be poorly conditioned"
-        warnings.warn(msg, pu.RankWarning)
+        warnings.warn(msg, pu.RankWarning, stacklevel=2)
 
     if full:
         return c, [resids, rank, s, rcond]
@@ -1589,7 +1593,7 @@ def hermcompanion(c):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     # c is a trimmed copy
@@ -1700,7 +1704,7 @@ def _normed_hermite_n(x, n):
 
     """
     if n == 0:
-        return np.ones(x.shape)/np.sqrt(np.sqrt(np.pi))
+        return np.full(x.shape, 1/np.sqrt(np.sqrt(np.pi)))
 
     c0 = 0.
     c1 = 1./np.sqrt(np.sqrt(np.pi))
@@ -1719,8 +1723,8 @@ def hermgauss(deg):
 
     Computes the sample points and weights for Gauss-Hermite quadrature.
     These sample points and weights will correctly integrate polynomials of
-    degree :math:`2*deg - 1` or less over the interval :math:`[-\inf, \inf]`
-    with the weight function :math:`f(x) = \exp(-x^2)`.
+    degree :math:`2*deg - 1` or less over the interval :math:`[-\\inf, \\inf]`
+    with the weight function :math:`f(x) = \\exp(-x^2)`.
 
     Parameters
     ----------
@@ -1737,7 +1741,7 @@ def hermgauss(deg):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
@@ -1784,8 +1788,8 @@ def hermweight(x):
     """
     Weight function of the Hermite polynomials.
 
-    The weight function is :math:`\exp(-x^2)` and the interval of
-    integration is :math:`[-\inf, \inf]`. the Hermite polynomials are
+    The weight function is :math:`\\exp(-x^2)` and the interval of
+    integration is :math:`[-\\inf, \\inf]`. the Hermite polynomials are
     orthogonal, but not normalized, with respect to this weight function.
 
     Parameters
@@ -1801,7 +1805,7 @@ def hermweight(x):
     Notes
     -----
 
-    .. versionadded::1.7.0
+    .. versionadded:: 1.7.0
 
     """
     w = np.exp(-x**2)
@@ -1852,3 +1856,4 @@ class Hermite(ABCPolyBase):
     nickname = 'herm'
     domain = np.array(hermdomain)
     window = np.array(hermdomain)
+    basis_name = 'H'
