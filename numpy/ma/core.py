@@ -625,6 +625,14 @@ def filled(a, fill_value=None):
     array([[999999,      1,      2],
            [999999,      4,      5],
            [     6,      7,      8]])
+    >>> x.filled(fill_value=333)
+    array([[333,   1,   2],
+           [333,   4,   5],
+           [  6,   7,   8]])
+    >>> x.filled(fill_value=np.arange(3))
+    array([[0, 1, 2],
+           [0, 4, 5],
+           [6, 7, 8]])
 
     """
     if hasattr(a, 'filled'):
@@ -3703,6 +3711,8 @@ class MaskedArray(ndarray):
         >>> x = np.ma.array([1,2,3,4,5], mask=[0,0,1,0,1], fill_value=-999)
         >>> x.filled()
         array([   1,    2, -999,    4, -999])
+        >>> x.filled(fill_value=1000)
+        array([   1,    2, 1000,    4, 1000])
         >>> type(x.filled())
         <class 'numpy.ndarray'>
 
