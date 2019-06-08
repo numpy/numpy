@@ -4,26 +4,26 @@ import sys
 import gzip
 import os
 import threading
-from tempfile import NamedTemporaryFile
 import time
 import warnings
-import gc
 import io
+import re
+import pytest
+from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
-import re
 
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, unicode, Path
+from numpy.compat import asbytes, bytes, Path
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    run_module_suite, assert_warns, assert_, SkipTest,
-    assert_raises_regex, assert_raises, assert_allclose,
-    assert_array_equal, temppath, tempdir, dec, IS_PYPY, suppress_warnings
-)
+    assert_warns, assert_, assert_raises_regex, assert_raises,
+    assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
+    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings
+    )
 
 
 class TextIO(BytesIO):
@@ -87,7 +87,7 @@ class RoundtripTest(object):
 
         """
         save_kwds = kwargs.get('save_kwds', {})
-        load_kwds = kwargs.get('load_kwds', {})
+        load_kwds = kwargs.get('load_kwds', {"allow_pickle": True})
         file_on_disk = kwargs.get('file_on_disk', False)
 
         if file_on_disk:
@@ -156,7 +156,7 @@ class RoundtripTest(object):
         a = np.array([1, 2, 3, 4], int)
         self.roundtrip(a)
 
-    @dec.knownfailureif(sys.platform == 'win32', "Fail on Win32")
+    @pytest.mark.skipif(sys.platform == 'win32', reason="Fails on Win32")
     def test_mmap(self):
         a = np.array([[1, 2.5], [4, 7.3]])
         self.roundtrip(a, file_on_disk=True, load_kwds={'mmap_mode': 'r'})
@@ -168,7 +168,7 @@ class RoundtripTest(object):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         self.check_roundtrips(a)
 
-    @dec.slow
+    @pytest.mark.slow
     def test_format_2_0(self):
         dt = [(("%d" % i) * 100, float) for i in range(500)]
         a = np.ones(1000, dtype=dt)
@@ -200,8 +200,8 @@ class TestSavezLoad(RoundtripTest):
                 self.arr_reloaded.fid.close()
                 os.remove(self.arr_reloaded.fid.name)
 
-    @dec.skipif(not IS_64BIT, "Works only with 64bit systems")
-    @dec.slow
+    @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
+    @pytest.mark.slow
     def test_big_arrays(self):
         L = (1 << 31) + 100000
         a = np.empty(L, dtype=np.uint8)
@@ -277,7 +277,8 @@ class TestSavezLoad(RoundtripTest):
                 fp.seek(0)
                 assert_(not fp.closed)
 
-    @dec.skipif(IS_PYPY, "context manager required on PyPy")
+    #FIXME: Is this still true?
+    @pytest.mark.skipif(IS_PYPY, reason="Missing context manager on PyPy")
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
@@ -346,13 +347,32 @@ class TestSaveTxt(object):
         assert_raises(ValueError, np.savetxt, c, np.array(1))
         assert_raises(ValueError, np.savetxt, c, np.array([[[1], [2]]]))
 
-
-    def test_record(self):
+    def test_structured(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         c = BytesIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
+
+    def test_structured_padded(self):
+        # gh-13297
+        a = np.array([(1, 2, 3),(4, 5, 6)], dtype=[
+            ('foo', 'i4'), ('bar', 'i4'), ('baz', 'i4')
+        ])
+        c = BytesIO()
+        np.savetxt(c, a[['foo', 'baz']], fmt='%d')
+        c.seek(0)
+        assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
+
+    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
+    def test_multifield_view(self):
+        a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
+        v = a[['x', 'z']]
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            np.save(path, v)
+            data = np.load(path)
+            assert_array_equal(data, v)
 
     def test_delimiter(self):
         a = np.array([[1., 2.], [3., 4.]])
@@ -466,6 +486,26 @@ class TestSaveTxt(object):
             [b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n',
              b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n'])
 
+    def test_complex_negative_exponent(self):
+        # Previous to 1.15, some formats generated x+-yj, gh 7895
+        ncols = 2
+        nrows = 2
+        a = np.zeros((ncols, nrows), dtype=np.complex128)
+        re = np.pi
+        im = np.e
+        a[:] = re - 1.0j * im
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%.3e')
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(
+            lines,
+            [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n',
+             b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n'])
+
+
+        
+
     def test_custom_writer(self):
 
         class CustomWriter(list):
@@ -521,6 +561,19 @@ class TestSaveTxt(object):
         s.seek(0)
         assert_equal(s.read(), utf8 + '\n')
 
+    @pytest.mark.parametrize("fmt", [u"%f", b"%f"])
+    @pytest.mark.parametrize("iotype", [StringIO, BytesIO])
+    def test_unicode_and_bytes_fmt(self, fmt, iotype):
+        # string type of fmt should not matter, see also gh-4053
+        a = np.array([1.])
+        s = iotype()
+        np.savetxt(s, a, fmt=fmt)
+        s.seek(0)
+        if iotype is StringIO:
+            assert_equal(s.read(), u"%f\n" % 1.)
+        else:
+            assert_equal(s.read(), b"%f\n" % 1.)
+
 
 class LoadTxtBase(object):
     def check_compressed(self, fopen, suffixes):
@@ -540,16 +593,18 @@ class LoadTxtBase(object):
                     assert_array_equal(res, wanted)
 
     # Python2 .open does not support encoding
-    @dec.skipif(MAJVER == 2)
+    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_gzip(self):
         self.check_compressed(gzip.open, ('.gz',))
 
-    @dec.skipif(MAJVER == 2 or not HAS_BZ2)
-    def test_compressed_gzip(self):
+    @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
+    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
+    def test_compressed_bz2(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
-    @dec.skipif(MAJVER == 2 or not HAS_LZMA)
-    def test_compressed_gzip(self):
+    @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
+    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
+    def test_compressed_lzma(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
     def test_encoding(self):
@@ -599,11 +654,11 @@ class LoadTxtBase(object):
 class TestLoadTxt(LoadTxtBase):
     loadfunc = staticmethod(np.loadtxt)
 
-    def setUp(self):
+    def setup(self):
         # lower chunksize for testing
         self.orig_chunk = np.lib.npyio._loadtxt_chunksize
         np.lib.npyio._loadtxt_chunksize = 1
-    def tearDown(self):
+    def teardown(self):
         np.lib.npyio._loadtxt_chunksize = self.orig_chunk
 
     def test_record(self):
@@ -912,6 +967,26 @@ class TestLoadTxt(LoadTxtBase):
         res = np.loadtxt(c, dtype=complex)
         assert_equal(res, tgt)
 
+    def test_complex_misformatted(self):
+        # test for backward compatibility
+        # some complex formats used to generate x+-yj
+        a = np.zeros((2, 2), dtype=np.complex128)
+        re = np.pi
+        im = np.e
+        a[:] = re - 1.0j * im
+        c = BytesIO()
+        np.savetxt(c, a, fmt='%.16e')
+        c.seek(0)
+        txt = c.read()
+        c.seek(0)
+        # misformat the sign on the imaginary part, gh 7895
+        txt_bad = txt.replace(b'e+00-', b'e00+-')
+        assert_(txt_bad != txt)
+        c.write(txt_bad)
+        c.seek(0)
+        res = np.loadtxt(c, dtype=complex)
+        assert_equal(res, a)
+
     def test_universal_newline(self):
         with temppath() as name:
             with open(name, 'w') as f:
@@ -1007,7 +1082,8 @@ class TestLoadTxt(LoadTxtBase):
         dt = np.dtype([('x', int), ('a', 'S10'), ('y', int)])
         np.loadtxt(c, delimiter=',', dtype=dt, comments=None)  # Should succeed
 
-    @dec.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968')
+    @pytest.mark.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968',
+                        reason="Wrong preferred encoding")
     def test_binary_load(self):
         butf8 = b"5,6,7,\xc3\x95scarscar\n\r15,2,3,hello\n\r"\
                 b"20,2,3,\xc3\x95scar\n\r"
@@ -1023,6 +1099,55 @@ class TestLoadTxt(LoadTxtBase):
                 x = np.loadtxt(f, encoding="UTF-8", dtype="S")
             x = [b'5,6,7,\xc3\x95scarscar', b'15,2,3,hello', b'20,2,3,\xc3\x95scar']
             assert_array_equal(x, np.array(x, dtype="S"))
+
+    def test_max_rows(self):
+        c = TextIO()
+        c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       max_rows=1)
+        a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_with_skiprows(self):
+        c = TextIO()
+        c.write('comments\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=1)
+        a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+
+        c = TextIO()
+        c.write('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=2)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8]], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_with_read_continuation(self):
+        c = TextIO()
+        c.write('1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       max_rows=2)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8]], int)
+        assert_array_equal(x, a)
+        # test continuation
+        x = np.loadtxt(c, dtype=int, delimiter=',')
+        a = np.array([2,1,4,5], int)
+        assert_array_equal(x, a)
+
+    def test_max_rows_larger(self):
+        #test max_rows > num rows
+        c = TextIO()
+        c.write('comment\n1,2,3,5\n4,5,7,8\n2,1,4,5')
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',',
+                       skiprows=1, max_rows=6)
+        a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
+        assert_array_equal(x, a)
 
 class Testfromregex(object):
     def test_record(self):
@@ -1073,6 +1198,13 @@ class Testfromregex(object):
             x = np.fromregex(path, regexp, dt, encoding='UTF-8')
             assert_array_equal(x, a)
 
+    def test_compiled_bytes(self):
+        regexp = re.compile(b'(\\d)')
+        c = BytesIO(b'123')
+        dt = [('num', np.float64)]
+        a = np.array([1, 2, 3], dtype=dt)
+        x = np.fromregex(c, regexp, dt)
+        assert_array_equal(x, a)
 
 #####--------------------------------------------------------------------------
 
@@ -1265,6 +1397,26 @@ M   33  21.99
             assert_(w[0].category is np.VisibleDeprecationWarning)
         assert_equal(test, ctrl)
 
+    def test_names_and_comments_none(self):
+        # Tests case when names is true but comments is None (gh-10780)
+        data = TextIO('col1 col2\n 1 2\n 3 4')
+        test = np.genfromtxt(data, dtype=(int, int), comments=None, names=True)
+        control = np.array([(1, 2), (3, 4)], dtype=[('col1', int), ('col2', int)])
+        assert_equal(test, control)
+
+    def test_file_is_closed_on_error(self):
+        # gh-13200
+        with tempdir() as tmpdir:
+            fpath = os.path.join(tmpdir, "test.csv")
+            with open(fpath, "wb") as f:
+                f.write(u'\N{GREEK PI SYMBOL}'.encode('utf8'))
+
+            # ResourceWarnings are emitted from a destructor, so won't be
+            # detected by regular propagation to errors.
+            with assert_no_warnings():
+                with pytest.raises(UnicodeDecodeError):
+                    np.genfromtxt(fpath, encoding="ascii")
+
     def test_autonames_and_usecols(self):
         # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
@@ -1396,14 +1548,10 @@ M   33  21.99
         assert_equal(test, control)
 
         ndtype = [('nest', [('idx', int), ('code', object)])]
-        try:
+        with assert_raises_regex(NotImplementedError,
+                                 'Nested fields.* not supported.*'):
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
-        except NotImplementedError:
-            pass
-        else:
-            errmsg = "Nested dtype involving objects should be supported."
-            raise AssertionError(errmsg)
 
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
@@ -1946,7 +2094,6 @@ M   33  21.99
 
     def test_utf8_file(self):
         utf8 = b"\xcf\x96"
-        latin1 = b"\xf6\xfc\xf6"
         with temppath() as path:
             with open(path, "wb") as f:
                 f.write((b"test1,testNonethe" + utf8 + b",test3\n") * 2)
@@ -1966,7 +2113,6 @@ M   33  21.99
             assert_equal(test['f0'], 0)
             assert_equal(test['f1'], "testNonethe" + utf8.decode("UTF-8"))
 
-
     def test_utf8_file_nodtype_unicode(self):
         # bytes encoding with non-latin1 -> unicode upcast
         utf8 = u'\u03d6'
@@ -1977,12 +2123,11 @@ M   33  21.99
         # encoding of io.open. Will need to change this for PyTest, maybe
         # using pytest.mark.xfail(raises=***).
         try:
-            import locale
             encoding = locale.getpreferredencoding()
             utf8.encode(encoding)
         except (UnicodeError, ImportError):
-            raise SkipTest('Skipping test_utf8_file_nodtype_unicode, '
-                           'unable to encode utf8 in preferred encoding') 
+            pytest.skip('Skipping test_utf8_file_nodtype_unicode, '
+                        'unable to encode utf8 in preferred encoding')
 
         with temppath() as path:
             with io.open(path, "wt") as f:
@@ -2054,6 +2199,13 @@ M   33  21.99
         control = np.array([(0, 1), (2, 3)],
                            dtype=dtype)
         assert_(isinstance(test, np.recarray))
+        assert_equal(test, control)
+
+        #gh-10394
+        data = TextIO('color\n"red"\n"blue"')
+        test = np.recfromcsv(data, converters={0: lambda x: x.strip(b'\"')})
+        control = np.array([('red',), ('blue',)], dtype=[('color', (bytes, 4))])
+        assert_equal(test.dtype, control.dtype)
         assert_equal(test, control)
 
     def test_max_rows(self):
@@ -2175,9 +2327,9 @@ M   33  21.99
         assert_equal(test['f2'], 1024)
 
 
+@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
 class TestPathUsage(object):
     # Test that pathlib.Path can be used
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_loadtxt(self):
         with temppath(suffix='.txt') as path:
             path = Path(path)
@@ -2186,9 +2338,8 @@ class TestPathUsage(object):
             x = np.loadtxt(path)
             assert_array_equal(x, a)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_save_load(self):
-        # Test that pathlib.Path instances can be used with savez.
+        # Test that pathlib.Path instances can be used with save.
         with temppath(suffix='.npy') as path:
             path = Path(path)
             a = np.array([[1, 2], [3, 4]], int)
@@ -2196,7 +2347,30 @@ class TestPathUsage(object):
             data = np.load(path)
             assert_array_equal(data, a)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
+    def test_save_load_memmap(self):
+        # Test that pathlib.Path instances can be loaded mem-mapped.
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            a = np.array([[1, 2], [3, 4]], int)
+            np.save(path, a)
+            data = np.load(path, mmap_mode='r')
+            assert_array_equal(data, a)
+            # close the mem-mapped file
+            del data
+
+    def test_save_load_memmap_readwrite(self):
+        # Test that pathlib.Path instances can be written mem-mapped.
+        with temppath(suffix='.npy') as path:
+            path = Path(path)
+            a = np.array([[1, 2], [3, 4]], int)
+            np.save(path, a)
+            b = np.load(path, mmap_mode='r+')
+            a[0][0] = 5
+            b[0][0] = 5
+            del b  # closes the file
+            data = np.load(path)
+            assert_array_equal(data, a)
+
     def test_savez_load(self):
         # Test that pathlib.Path instances can be used with savez.
         with temppath(suffix='.npz') as path:
@@ -2204,8 +2378,7 @@ class TestPathUsage(object):
             np.savez(path, lab='place holder')
             with np.load(path) as data:
                 assert_array_equal(data['lab'], 'place holder')
-
-    @dec.skipif(Path is None, "No pathlib.Path")
+    
     def test_savez_compressed_load(self):
         # Test that pathlib.Path instances can be used with savez.
         with temppath(suffix='.npz') as path:
@@ -2215,7 +2388,6 @@ class TestPathUsage(object):
             assert_array_equal(data['lab'], 'place holder')
             data.close()
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_genfromtxt(self):
         with temppath(suffix='.txt') as path:
             path = Path(path)
@@ -2224,7 +2396,6 @@ class TestPathUsage(object):
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_ndfromtxt(self):
         # Test outputting a standard ndarray
         with temppath(suffix='.txt') as path:
@@ -2236,7 +2407,6 @@ class TestPathUsage(object):
             test = np.ndfromtxt(path, dtype=int)
             assert_array_equal(test, control)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_mafromtxt(self):
         # From `test_fancy_dtype_alt` above
         with temppath(suffix='.txt') as path:
@@ -2248,7 +2418,6 @@ class TestPathUsage(object):
             control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
             assert_equal(test, control)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_recfromtxt(self):
         with temppath(suffix='.txt') as path:
             path = Path(path)
@@ -2262,7 +2431,6 @@ class TestPathUsage(object):
             assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
-    @dec.skipif(Path is None, "No pathlib.Path")
     def test_recfromcsv(self):
         with temppath(suffix='.txt') as path:
             path = Path(path)
@@ -2350,6 +2518,7 @@ def test_npzfile_dict():
     assert_('x' in z.keys())
 
 
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_load_refcount():
     # Check that objects returned by np.load are directly freed based on
     # their refcount, rather than needing the gc to collect them.
@@ -2358,17 +2527,11 @@ def test_load_refcount():
     np.savez(f, [1, 2, 3])
     f.seek(0)
 
-    assert_(gc.isenabled())
-    gc.disable()
-    try:
-        gc.collect()
+    with assert_no_gc_cycles():
         np.load(f)
-        # gc.collect returns the number of unreachable objects in cycles that
-        # were found -- we are checking that no cycles were created by np.load
-        n_objects_in_cycles = gc.collect()
-    finally:
-        gc.enable()
-    assert_equal(n_objects_in_cycles, 0)
 
-if __name__ == "__main__":
-    run_module_suite()
+    f.seek(0)
+    dt = [("a", 'u1', 2), ("b", 'u1', 2)]
+    with assert_no_gc_cycles():
+        x = np.loadtxt(TextIO("0 1 2 3"), dtype=dt)
+        assert_equal(x, np.array([((0, 1), (2, 3))], dtype=dt))

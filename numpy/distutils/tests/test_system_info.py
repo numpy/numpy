@@ -2,16 +2,17 @@ from __future__ import division, print_function
 
 import os
 import shutil
+import pytest
 from tempfile import mkstemp, mkdtemp
 from subprocess import Popen, PIPE
 from distutils.errors import DistutilsError
 
+from numpy.testing import assert_, assert_equal, assert_raises
 from numpy.distutils import ccompiler, customized_ccompiler
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, dec
-    )
 from numpy.distutils.system_info import system_info, ConfigParser
+from numpy.distutils.system_info import AliasedOptionError
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
+from numpy.distutils import _shell_utils
 
 
 def get_class(name, notfound_action=1):
@@ -22,7 +23,8 @@ def get_class(name, notfound_action=1):
       2 - raise error
     """
     cl = {'temp1': Temp1Info,
-          'temp2': Temp2Info
+          'temp2': Temp2Info,
+          'duplicate_options': DuplicateOptionInfo,
           }.get(name.lower(), _system_info)
     return cl()
 
@@ -30,7 +32,7 @@ simple_site = """
 [ALL]
 library_dirs = {dir1:s}{pathsep:s}{dir2:s}
 libraries = {lib1:s},{lib2:s}
-extra_compile_args = -I/fake/directory
+extra_compile_args = -I/fake/directory -I"/path with/spaces" -Os
 runtime_library_dirs = {dir1:s}
 
 [temp1]
@@ -41,8 +43,12 @@ runtime_library_dirs = {dir1:s}
 [temp2]
 library_dirs = {dir2:s}
 libraries = {lib2:s}
-extra_link_args = -Wl,-rpath={lib2:s}
+extra_link_args = -Wl,-rpath={lib2_escaped:s}
 rpath = {dir2:s}
+
+[duplicate_options]
+mylib_libs = {lib1:s}
+libraries = {lib2:s}
 """
 site_cfg = simple_site
 
@@ -119,6 +125,10 @@ class Temp2Info(_system_info):
     """For testing purposes"""
     section = 'temp2'
 
+class DuplicateOptionInfo(_system_info):
+    """For testing purposes"""
+    section = 'duplicate_options'
+
 
 class TestSystemInfoReading(object):
 
@@ -138,7 +148,8 @@ class TestSystemInfoReading(object):
             'lib1': self._lib1,
             'dir2': self._dir2,
             'lib2': self._lib2,
-            'pathsep': os.pathsep
+            'pathsep': os.pathsep,
+            'lib2_escaped': _shell_utils.NativeParser.join([self._lib2])
         })
         # Write site.cfg
         fd, self._sitecfg = mkstemp()
@@ -159,8 +170,11 @@ class TestSystemInfoReading(object):
         self.c_default = site_and_parse(get_class('default'), self._sitecfg)
         self.c_temp1 = site_and_parse(get_class('temp1'), self._sitecfg)
         self.c_temp2 = site_and_parse(get_class('temp2'), self._sitecfg)
+        self.c_dup_options = site_and_parse(get_class('duplicate_options'),
+                                            self._sitecfg)
 
-    def tearDown(self):
+
+    def teardown(self):
         # Do each removal separately
         try:
             shutil.rmtree(self._dir1)
@@ -182,7 +196,7 @@ class TestSystemInfoReading(object):
         assert_equal(tsi.get_libraries(), [self._lib1, self._lib2])
         assert_equal(tsi.get_runtime_lib_dirs(), [self._dir1])
         extra = tsi.calc_extra_info()
-        assert_equal(extra['extra_compile_args'], ['-I/fake/directory'])
+        assert_equal(extra['extra_compile_args'], ['-I/fake/directory', '-I/path with/spaces', '-Os'])
 
     def test_temp1(self):
         # Read in all information in the temp1 block
@@ -201,7 +215,14 @@ class TestSystemInfoReading(object):
         extra = tsi.calc_extra_info()
         assert_equal(extra['extra_link_args'], ['-Wl,-rpath=' + self._lib2])
 
-    @dec.skipif(not HAVE_COMPILER)
+    def test_duplicate_options(self):
+        # Ensure that duplicates are raising an AliasedOptionError
+        tsi = self.c_dup_options
+        assert_raises(AliasedOptionError, tsi.get_option_single, "mylib_libs", "libraries")
+        assert_equal(tsi.get_libs("mylib_libs", [self._lib1]), [self._lib1])
+        assert_equal(tsi.get_libs("libraries", [self._lib2]), [self._lib2])
+
+    @pytest.mark.skipif(not HAVE_COMPILER, reason="Missing compiler")
     def test_compile1(self):
         # Compile source and link the first source
         c = customized_ccompiler()
@@ -216,8 +237,9 @@ class TestSystemInfoReading(object):
         finally:
             os.chdir(previousDir)
 
-    @dec.skipif(not HAVE_COMPILER)
-    @dec.skipif('msvc' in repr(ccompiler.new_compiler()))
+    @pytest.mark.skipif(not HAVE_COMPILER, reason="Missing compiler")
+    @pytest.mark.skipif('msvc' in repr(ccompiler.new_compiler()),
+                         reason="Fails with MSVC compiler ")
     def test_compile2(self):
         # Compile source and link the second source
         tsi = self.c_temp2
@@ -233,7 +255,3 @@ class TestSystemInfoReading(object):
             assert_(os.path.isfile(self._src2.replace('.c', '.o')))
         finally:
             os.chdir(previousDir)
-
-
-if __name__ == '__main__':
-    run_module_suite()

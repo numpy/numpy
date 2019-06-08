@@ -33,7 +33,7 @@ Required arguments:\n"
 "Return objects:\n"
 "  arr : array";
 static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
-				     PyObject *capi_args) {
+                                     PyObject *capi_args) {
   PyObject * volatile capi_buildvalue = NULL;
   int type_num = 0;
   npy_intp *dims = NULL;
@@ -45,7 +45,7 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
   int i;
 
   if (!PyArg_ParseTuple(capi_args,"iOiO|:wrap.call",\
-			&type_num,&dims_capi,&intent,&arr_capi))
+                        &type_num,&dims_capi,&intent,&arr_capi))
     return NULL;
   rank = PySequence_Length(dims_capi);
   dims = malloc(rank*sizeof(npy_intp));
@@ -78,7 +78,7 @@ Required arguments:\n"
 "  itemsize : int\n"
 ;
 static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
-				      PyObject *capi_args) {
+                                      PyObject *capi_args) {
   PyObject *arr_capi = Py_None;
   PyArrayObject *arr = NULL;
   PyObject *dimensions = NULL;
@@ -87,7 +87,7 @@ static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
   int i;
   memset(s,0,100*sizeof(char));
   if (!PyArg_ParseTuple(capi_args,"O!|:wrap.attrs",
-			&PyArray_Type,&arr_capi))
+                        &PyArray_Type,&arr_capi))
     return NULL;
   arr = (PyArrayObject *)arr_capi;
   sprintf(s,"%p",PyArray_DATA(arr));
@@ -98,15 +98,15 @@ static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
     PyTuple_SetItem(strides,i,PyInt_FromLong(PyArray_STRIDE(arr,i)));
   }
   return Py_BuildValue("siOOO(cciii)ii",s,PyArray_NDIM(arr),
-		       dimensions,strides,
-		       (PyArray_BASE(arr)==NULL?Py_None:PyArray_BASE(arr)),
-		       PyArray_DESCR(arr)->kind,
-		       PyArray_DESCR(arr)->type,
-		       PyArray_TYPE(arr),
-		       PyArray_ITEMSIZE(arr),
-		       PyArray_DESCR(arr)->alignment,
-		       PyArray_FLAGS(arr),
-		       PyArray_ITEMSIZE(arr));
+                       dimensions,strides,
+                       (PyArray_BASE(arr)==NULL?Py_None:PyArray_BASE(arr)),
+                       PyArray_DESCR(arr)->kind,
+                       PyArray_DESCR(arr)->type,
+                       PyArray_TYPE(arr),
+                       PyArray_ITEMSIZE(arr),
+                       PyArray_DESCR(arr)->alignment,
+                       PyArray_FLAGS(arr),
+                       PyArray_ITEMSIZE(arr));
 }
 
 static PyMethodDef f2py_module_methods[] = {

@@ -27,11 +27,14 @@ parser.add_option("--doctests",
                   help="Run doctests in module")
 parser.add_option("--coverage",
                   action="store_true", dest="coverage", default=False,
-                  help="report coverage of NumPy code (requires 'coverage' module")
+                  help="report coverage of NumPy code (requires 'pytest-cov' module")
 parser.add_option("-m", "--mode",
                   action="store", dest="mode", default="fast",
                   help="'fast', 'full', or something that could be "
-                       "passed to nosetests -A [default: %default]")
+                       "passed to pytest [default: %default]")
+parser.add_option("-n", "--durations",
+                  dest="durations", default=-1,
+                  help="show time to run slowest N tests [default: -1]")
 (options, args) = parser.parse_args()
 
 import numpy
@@ -46,13 +49,18 @@ elif numpy.ones((10, 1), order='C').flags.f_contiguous:
     print('NPY_RELAXED_STRIDES_CHECKING not set, but active.')
     sys.exit(1)
 
+if options.coverage:
+    # Produce code coverage XML report for codecov.io
+    args += ["--cov-report=xml"]
+
 result = numpy.test(options.mode,
                     verbose=options.verbose,
                     extra_argv=args,
                     doctests=options.doctests,
+                    durations=int(options.durations),
                     coverage=options.coverage)
 
-if result.wasSuccessful():
+if result:
     sys.exit(0)
 else:
     sys.exit(1)

@@ -28,20 +28,14 @@ def subst_vars(target, source, d):
     """Substitute any occurrence of @foo@ by d['foo'] from source file into
     target."""
     var = re.compile('@([a-zA-Z_]+)@')
-    fs = open(source, 'r')
-    try:
-        ft = open(target, 'w')
-        try:
+    with open(source, 'r') as fs:
+        with open(target, 'w') as ft:
             for l in fs:
                 m = var.search(l)
                 if m:
                     ft.write(l.replace('@%s@' % m.group(1), d[m.group(1)]))
                 else:
                     ft.write(l)
-        finally:
-            ft.close()
-    finally:
-        fs.close()
 
 class build_src(build_ext.build_ext):
 
@@ -204,7 +198,6 @@ class build_src(build_ext.build_ext):
 
 
     def _build_npy_pkg_config(self, info, gd):
-        import shutil
         template, install_dir, subst_dict = info
         template_dir = os.path.dirname(template)
         for k, v in gd.items():
@@ -239,7 +232,6 @@ class build_src(build_ext.build_ext):
         if not install_cmd.finalized == 1:
             install_cmd.finalize_options()
         build_npkg = False
-        gd = {}
         if self.inplace == 1:
             top_prefix = '.'
             build_npkg = True
@@ -427,9 +419,8 @@ class build_src(build_ext.build_ext):
                     else:
                         log.info("conv_template:> %s" % (target_file))
                         outstr = process_c_file(source)
-                    fid = open(target_file, 'w')
-                    fid.write(outstr)
-                    fid.close()
+                    with open(target_file, 'w') as fid:
+                        fid.write(outstr)
                 if _header_ext_match(target_file):
                     d = os.path.dirname(target_file)
                     if d not in include_dirs:
@@ -725,25 +716,23 @@ _has_c_header = re.compile(r'-[*]-\s*c\s*-[*]-', re.I).search
 _has_cpp_header = re.compile(r'-[*]-\s*c[+][+]\s*-[*]-', re.I).search
 
 def get_swig_target(source):
-    f = open(source, 'r')
-    result = None
-    line = f.readline()
-    if _has_cpp_header(line):
-        result = 'c++'
-    if _has_c_header(line):
-        result = 'c'
-    f.close()
+    with open(source, 'r') as f:
+        result = None
+        line = f.readline()
+        if _has_cpp_header(line):
+            result = 'c++'
+        if _has_c_header(line):
+            result = 'c'
     return result
 
 def get_swig_modulename(source):
-    f = open(source, 'r')
-    name = None
-    for line in f:
-        m = _swig_module_name_match(line)
-        if m:
-            name = m.group('name')
-            break
-    f.close()
+    with open(source, 'r') as f:
+        name = None
+        for line in f:
+            m = _swig_module_name_match(line)
+            if m:
+                name = m.group('name')
+                break
     return name
 
 def _find_swig_target(target_dir, name):
@@ -762,15 +751,14 @@ _f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*
 
 def get_f2py_modulename(source):
     name = None
-    f = open(source)
-    for line in f:
-        m = _f2py_module_name_match(line)
-        if m:
-            if _f2py_user_module_name_match(line): # skip *__user__* names
-                continue
-            name = m.group('name')
-            break
-    f.close()
+    with open(source) as f:
+        for line in f:
+            m = _f2py_module_name_match(line)
+            if m:
+                if _f2py_user_module_name_match(line): # skip *__user__* names
+                    continue
+                name = m.group('name')
+                break
     return name
 
 ##########################################

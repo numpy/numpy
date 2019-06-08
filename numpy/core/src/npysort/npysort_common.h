@@ -273,10 +273,10 @@ STRING_SWAP(char *s1, char *s2, size_t len)
 
 
 NPY_INLINE static int
-STRING_LT(char *s1, char *s2, size_t len)
+STRING_LT(const char *s1, const char *s2, size_t len)
 {
-    const unsigned char *c1 = (unsigned char *)s1;
-    const unsigned char *c2 = (unsigned char *)s2;
+    const unsigned char *c1 = (const unsigned char *)s1;
+    const unsigned char *c2 = (const unsigned char *)s2;
     size_t i;
     int ret = 0;
 
@@ -311,7 +311,7 @@ UNICODE_SWAP(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 
 
 NPY_INLINE static int
-UNICODE_LT(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
+UNICODE_LT(const npy_ucs4 *s1, const npy_ucs4 *s2, size_t len)
 {
     size_t i;
     int ret = 0;

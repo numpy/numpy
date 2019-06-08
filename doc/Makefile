@@ -1,23 +1,34 @@
 # Makefile for Sphinx documentation
 #
 
-PYVER = 2.7
+# PYVER needs to be major.minor, just "3" doesn't work - it will result in
+# issues with the amendments to PYTHONPATH and install paths (see DIST_VARS).
+
+# Use explicit "version_info" indexing since make cannot handle colon characters, and
+# evaluate it now to allow easier debugging when printing the variable
+
+PYVER:=$(shell python3 -c 'from sys import version_info as v; print("{0}.{1}".format(v[0], v[1]))')
 PYTHON = python$(PYVER)
 
+NUMPYVER:=$(shell python3 -c "import numpy; print(numpy.version.git_revision[:10])")
+GITVER ?= $(shell cd ..; python3 -c "from setup import git_version; \
+				print(git_version()[:10])")
+
 # You can set these variables from the command line.
-SPHINXOPTS    =
-SPHINXBUILD   = LANG=C sphinx-build
-PAPER         =
+SPHINXOPTS    ?=
+SPHINXBUILD   ?= LANG=C sphinx-build
+PAPER         ?=
 
 FILES=
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
+ALLSPHINXOPTS   = -WT --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
+  $(SPHINXOPTS) source
 
 .PHONY: help clean html web pickle htmlhelp latex changes linkcheck \
-        dist dist-build gitwash-update
+        dist dist-build gitwash-update version-check
 
 #------------------------------------------------------------------------------
 
@@ -35,7 +46,20 @@ help:
 	@echo "  upload USERNAME=... RELEASE=... to upload built docs to docs.scipy.org"
 
 clean:
-	-rm -rf build/* source/reference/generated
+	-rm -rf build/* 
+	find . -name generated -type d -prune -exec rm -rf "{}" ";"
+
+version-check:
+ifeq "$(GITVER)" "Unknown"
+	# @echo sdist build with unlabeled sources
+else ifneq ($(NUMPYVER),$(GITVER))
+	@echo installed numpy $(NUMPYVER) != current repo git version \'$(GITVER)\'
+	@echo use '"make dist"' or '"GITVER=$(NUMPYVER) make $(MAKECMDGOALS) ..."'
+	@exit 1
+else
+	# for testing
+	# @echo installed numpy $(NUMPYVER) matches git version $(GITVER); exit 1
+endif
 
 gitwash-update:
 	rm -rf source/dev/gitwash
@@ -58,7 +82,7 @@ gitwash-update:
 #
 
 
-INSTALL_DIR = $(CURDIR)/build/inst-dist/
+INSTALL_DIR = $(CURDIR)/build/inst-dist
 INSTALL_PPH = $(INSTALL_DIR)/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/lib/python$(PYVER)/dist-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/dist-packages
 UPLOAD_DIR=/srv/docs_scipy_org/doc/numpy-$(RELEASE)
 
@@ -112,7 +136,7 @@ build/generate-stamp: $(wildcard source/reference/*.rst)
 	mkdir -p build
 	touch build/generate-stamp
 
-html: generate
+html: generate version-check
 	mkdir -p build/html build/doctrees
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html $(FILES)
 	$(PYTHON) postprocess.py html build/html/*.html
@@ -125,7 +149,7 @@ html-scipyorg:
 	@echo
 	@echo "Build finished. The HTML pages are in build/html."
 
-pickle: generate
+pickle: generate version-check
 	mkdir -p build/pickle build/doctrees
 	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) build/pickle $(FILES)
 	@echo
@@ -135,7 +159,7 @@ pickle: generate
 
 web: pickle
 
-htmlhelp: generate
+htmlhelp: generate version-check
 	mkdir -p build/htmlhelp build/doctrees
 	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) build/htmlhelp $(FILES)
 	@echo
@@ -146,11 +170,11 @@ htmlhelp-build: htmlhelp build/htmlhelp/numpy.chm
 %.chm: %.hhp
 	-hhc.exe $^
 
-qthelp: generate
+qthelp: generate version-check
 	mkdir -p build/qthelp build/doctrees
 	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) build/qthelp $(FILES)
 
-latex: generate
+latex: generate version-check
 	mkdir -p build/latex build/doctrees
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex $(FILES)
 	$(PYTHON) postprocess.py tex build/latex/*.tex
@@ -160,18 +184,18 @@ latex: generate
 	@echo "Run \`make all-pdf' or \`make all-ps' in that directory to" \
 	      "run these through (pdf)latex."
 
-coverage: build
+coverage: build version-check
 	mkdir -p build/coverage build/doctrees
 	$(SPHINXBUILD) -b coverage $(ALLSPHINXOPTS) build/coverage $(FILES)
 	@echo "Coverage finished; see c.txt and python.txt in build/coverage"
 
-changes: generate
+changes: generate version-check
 	mkdir -p build/changes build/doctrees
 	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) build/changes $(FILES)
 	@echo
 	@echo "The overview file is in build/changes."
 
-linkcheck: generate
+linkcheck: generate version-check
 	mkdir -p build/linkcheck build/doctrees
 	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) build/linkcheck $(FILES)
 	@echo

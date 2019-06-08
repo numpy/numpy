@@ -8,6 +8,7 @@ NumPy reference guide.
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
+from numpy.core.overrides import array_function_dispatch
 
 __all__ = ['broadcast_to', 'broadcast_arrays']
 
@@ -123,15 +124,23 @@ def _broadcast_to(array, shape, subok, readonly):
     needs_writeable = not readonly and array.flags.writeable
     extras = ['reduce_ok'] if needs_writeable else []
     op_flag = 'readwrite' if needs_writeable else 'readonly'
-    broadcast = np.nditer(
+    it = np.nditer(
         (array,), flags=['multi_index', 'refs_ok', 'zerosize_ok'] + extras,
-        op_flags=[op_flag], itershape=shape, order='C').itviews[0]
+        op_flags=[op_flag], itershape=shape, order='C')
+    with it:
+        # never really has writebackifcopy semantics
+        broadcast = it.itviews[0]
     result = _maybe_view_as_subclass(array, broadcast)
     if needs_writeable and not result.flags.writeable:
         result.flags.writeable = True
     return result
 
 
+def _broadcast_to_dispatcher(array, shape, subok=None):
+    return (array,)
+
+
+@array_function_dispatch(_broadcast_to_dispatcher, module='numpy')
 def broadcast_to(array, shape, subok=False):
     """Broadcast an array to a new shape.
 
@@ -177,8 +186,6 @@ def _broadcast_shape(*args):
     """Returns the shape of the arrays that would result from broadcasting the
     supplied arrays against each other.
     """
-    if not args:
-        return ()
     # use the old-iterator because np.nditer does not handle size 0 arrays
     # consistently
     b = np.broadcast(*args[:32])
@@ -192,6 +199,11 @@ def _broadcast_shape(*args):
     return b.shape
 
 
+def _broadcast_arrays_dispatcher(*args, **kwargs):
+    return args
+
+
+@array_function_dispatch(_broadcast_arrays_dispatcher, module='numpy')
 def broadcast_arrays(*args, **kwargs):
     """
     Broadcast any number of arrays against each other.
@@ -216,23 +228,19 @@ def broadcast_arrays(*args, **kwargs):
     Examples
     --------
     >>> x = np.array([[1,2,3]])
-    >>> y = np.array([[1],[2],[3]])
+    >>> y = np.array([[4],[5]])
     >>> np.broadcast_arrays(x, y)
     [array([[1, 2, 3],
-           [1, 2, 3],
-           [1, 2, 3]]), array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])]
+           [1, 2, 3]]), array([[4, 4, 4],
+           [5, 5, 5]])]
 
     Here is a useful idiom for getting contiguous copies instead of
     non-contiguous views.
 
     >>> [np.array(a) for a in np.broadcast_arrays(x, y)]
     [array([[1, 2, 3],
-           [1, 2, 3],
-           [1, 2, 3]]), array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])]
+           [1, 2, 3]]), array([[4, 4, 4],
+           [5, 5, 5]])]
 
     """
     # nditer is not used here to avoid the limit of 32 arrays.
@@ -243,7 +251,7 @@ def broadcast_arrays(*args, **kwargs):
     subok = kwargs.pop('subok', False)
     if kwargs:
         raise TypeError('broadcast_arrays() got an unexpected keyword '
-                        'argument {!r}'.format(kwargs.keys()[0]))
+                        'argument {!r}'.format(list(kwargs.keys())[0]))
     args = [np.array(_m, copy=False, subok=subok) for _m in args]
 
     shape = _broadcast_shape(*args)

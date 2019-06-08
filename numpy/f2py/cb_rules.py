@@ -44,6 +44,7 @@ jmp_buf #name#_jmpbuf;
 \tPyTupleObject *capi_arglist = #name#_args_capi;
 \tPyObject *capi_return = NULL;
 \tPyObject *capi_tmp = NULL;
+\tPyObject *capi_arglist_list = NULL;
 \tint capi_j,capi_i = 0;
 \tint capi_longjmp_ok = 1;
 #decl#
@@ -85,13 +86,31 @@ f2py_cb_start_clock();
 \t\tgoto capi_fail;
 \t}
 #setdims#
+#ifdef PYPY_VERSION
+#define CAPI_ARGLIST_SETITEM(idx, value) PyList_SetItem((PyObject *)capi_arglist_list, idx, value)
+\tcapi_arglist_list = PySequence_List(capi_arglist);
+\tif (capi_arglist_list == NULL) goto capi_fail;
+#else
+#define CAPI_ARGLIST_SETITEM(idx, value) PyTuple_SetItem((PyObject *)capi_arglist, idx, value)
+#endif
 #pyobjfrom#
+#undef CAPI_ARGLIST_SETITEM
+#ifdef PYPY_VERSION
+\tCFUNCSMESSPY(\"cb:capi_arglist=\",capi_arglist_list);
+#else
 \tCFUNCSMESSPY(\"cb:capi_arglist=\",capi_arglist);
+#endif
 \tCFUNCSMESS(\"cb:Call-back calling Python function #argname#.\\n\");
 #ifdef F2PY_REPORT_ATEXIT
 f2py_cb_start_call_clock();
 #endif
+#ifdef PYPY_VERSION
+\tcapi_return = PyObject_CallObject(#name#_capi,(PyObject *)capi_arglist_list);
+\tPy_DECREF(capi_arglist_list);
+\tcapi_arglist_list = NULL;
+#else
 \tcapi_return = PyObject_CallObject(#name#_capi,(PyObject *)capi_arglist);
+#endif
 #ifdef F2PY_REPORT_ATEXIT
 f2py_cb_stop_call_clock();
 #endif
@@ -119,6 +138,7 @@ f2py_cb_stop_clock();
 capi_fail:
 \tfprintf(stderr,\"Call-back #name# failed.\\n\");
 \tPy_XDECREF(capi_return);
+\tPy_XDECREF(capi_arglist_list);
 \tif (capi_longjmp_ok)
 \t\tlongjmp(#name#_jmpbuf,-1);
 capi_return_pt:
@@ -318,11 +338,11 @@ cb_arg_rules = [
     }, {
         'pyobjfrom': [{isintent_in: """\
 \tif (#name#_nofargs>capi_i)
-\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyobj_from_#ctype#1(#varname_i#)))
+\t\tif (CAPI_ARGLIST_SETITEM(capi_i++,pyobj_from_#ctype#1(#varname_i#)))
 \t\t\tgoto capi_fail;"""},
                       {isintent_inout: """\
 \tif (#name#_nofargs>capi_i)
-\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyarr_from_p_#ctype#1(#varname_i#_cb_capi)))
+\t\tif (CAPI_ARGLIST_SETITEM(capi_i++,pyarr_from_p_#ctype#1(#varname_i#_cb_capi)))
 \t\t\tgoto capi_fail;"""}],
         'need': [{isintent_in: 'pyobj_from_#ctype#1'},
                  {isintent_inout: 'pyarr_from_p_#ctype#1'},
@@ -343,12 +363,12 @@ cb_arg_rules = [
         'pyobjfrom': [{debugcapi: '\tfprintf(stderr,"debug-capi:cb:#varname#=\\"#showvalueformat#\\":%d:\\n",#varname_i#,#varname_i#_cb_len);'},
                       {isintent_in: """\
 \tif (#name#_nofargs>capi_i)
-\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyobj_from_#ctype#1size(#varname_i#,#varname_i#_cb_len)))
+\t\tif (CAPI_ARGLIST_SETITEM(capi_i++,pyobj_from_#ctype#1size(#varname_i#,#varname_i#_cb_len)))
 \t\t\tgoto capi_fail;"""},
                       {isintent_inout: """\
 \tif (#name#_nofargs>capi_i) {
 \t\tint #varname_i#_cb_dims[] = {#varname_i#_cb_len};
-\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,pyarr_from_p_#ctype#1(#varname_i#,#varname_i#_cb_dims)))
+\t\tif (CAPI_ARGLIST_SETITEM(capi_i++,pyarr_from_p_#ctype#1(#varname_i#,#varname_i#_cb_dims)))
 \t\t\tgoto capi_fail;
 \t}"""}],
         'need': [{isintent_in: 'pyobj_from_#ctype#1size'},
@@ -381,7 +401,7 @@ cb_arg_rules = [
                       """
 \t\tif (tmp_arr==NULL)
 \t\t\tgoto capi_fail;
-\t\tif (PyTuple_SetItem((PyObject *)capi_arglist,capi_i++,(PyObject *)tmp_arr))
+\t\tif (CAPI_ARGLIST_SETITEM(capi_i++,(PyObject *)tmp_arr))
 \t\t\tgoto capi_fail;
 }"""],
         '_check': l_and(isarray, isintent_nothide, l_or(isintent_in, isintent_inout)),

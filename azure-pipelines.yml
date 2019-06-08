@@ -1,0 +1,239 @@
+trigger:
+  # start a new build for every push
+  batch: False
+  branches:
+    include:
+      - master
+      - maintenance/*
+variables:
+  # OpenBLAS_version should be updated
+  # to match numpy-wheels repo
+  OpenBLAS_version: 0.3.7.dev
+  TEST_GET_CONFIG: import numpy, ctypes; dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__); get_config = dll.openblas_get_config; get_config.restype=ctypes.c_char_p; res = get_config(); print('OpenBLAS get_config returned', str(res)); assert b'OpenBLAS $(OpenBLAS_version)' in res
+
+jobs:
+- job: Linux_Python_36_32bit_full_with_asserts
+  pool:
+    vmImage: 'ubuntu-16.04'
+  steps:
+  - script: |
+           docker pull i386/ubuntu:bionic
+           docker run -v $(pwd):/numpy i386/ubuntu:bionic /bin/bash -c "cd numpy && \
+           apt-get -y update && \
+           apt-get -y install python3.6-dev python3-pip locales && \
+           locale-gen fr_FR && update-locale && \
+           pip3 install setuptools nose cython==0.29.0 pytest pytz pickle5 && \
+           apt-get -y install gfortran-5 wget && \
+           cd .. && \
+           mkdir openblas && cd openblas && \
+           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-274-g6a8b4269-manylinux1_i686.tar.gz && \
+           tar zxvf openblas-v0.3.5-274-g6a8b4269-manylinux1_i686.tar.gz && \
+           cp -r ./usr/local/lib/* /usr/lib && \
+           cp ./usr/local/include/* /usr/include && \
+           cd ../numpy && \
+           python3 -m pip install . && \
+           F77=gfortran-5 F90=gfortran-5 \
+           CFLAGS='-UNDEBUG -std=c99' python3 runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+           cd ../openblas && python3 -c \"$(TEST_GET_CONFIG)\""
+    displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      failTaskOnFailedTests: true
+      testRunTitle: 'Publish test results for Python 3.6-32 bit full Linux'
+- job: macOS
+  pool:
+    # NOTE: at time of writing, there is a danger
+    # that using an invalid vmIMage string for macOS
+    # image silently redirects to a Windows build on Azure;
+    # for now, use the only image name officially present in
+    # the docs even though i.e., numba uses another in their
+    # azure config for mac os -- Microsoft has indicated
+    # they will patch this issue
+    vmImage: macOS-10.13
+  steps:
+  # the @0 refers to the (major) version of the *task* on Microsoft's
+  # end, not the order in the build matrix nor anything to do
+  # with version of Python selected
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.6'
+      addToPath: true
+      architecture: 'x64'
+  # NOTE: do we have a compelling reason to use older / newer
+  # versions of Xcode toolchain for testing?
+  - script: /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
+    displayName: 'select Xcode version'
+  # NOTE: might be better if we could avoid installing
+  # two C compilers, but with homebrew looks like we're
+  # now stuck getting the full gcc toolchain instead of
+  # just pulling in gfortran
+  - script: |
+      # same version of gfortran as the wheel builds
+      brew install gcc49
+      # manually link critical gfortran libraries
+      ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libgfortran.3.dylib /usr/local/lib/libgfortran.3.dylib
+      ln -s /usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9/libquadmath.0.dylib /usr/local/lib/libquadmath.0.dylib
+      # manually symlink gfortran-4.9 to plain gfortran
+      # for f2py
+      ln -s /usr/local/bin/gfortran-4.9 /usr/local/bin/gfortran
+    displayName: 'make gfortran available on mac os vm'
+  # use the pre-built openblas binary that most closely
+  # matches our MacOS wheel builds -- currently based
+  # primarily on file size / name details
+  - script: |
+      wget "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-274-g6a8b4269-macosx_10_9_x86_64-gf_1becaaa.tar.gz"
+      tar -zxvf openblas-v0.3.5-274-g6a8b4269-macosx_10_9_x86_64-gf_1becaaa.tar.gz
+      # manually link to appropriate system paths
+      cp ./usr/local/lib/* /usr/local/lib/
+      cp ./usr/local/include/* /usr/local/include/
+    displayName: 'install pre-built openblas'
+  - script: python -m pip install --upgrade pip setuptools wheel
+    displayName: 'Install tools'
+  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx==1.8.5 numpydoc
+    displayName: 'Install dependencies; some are optional to avoid test skips'
+  - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
+    displayName: 'Check for unreachable code paths in Python modules'
+  # prefer usage of clang over gcc proper
+  # to match likely scenario on many user mac machines
+  - script: python setup.py build -j 4 install
+    displayName: 'Build NumPy'
+    env:
+      BLAS: None
+      LAPACK: None
+      ATLAS: None
+      ACCELERATE: None
+      CC: /usr/bin/clang
+  # wait until after dev build of NumPy to pip
+  # install matplotlib to avoid pip install of older numpy
+  - script: python -m pip install matplotlib
+    displayName: 'Install matplotlib before refguide run'
+  - script: python runtests.py -g --refguide-check
+    displayName: 'Run Refuide Check'
+  - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
+    displayName: 'Run Full NumPy Test Suite'
+  - bash: pushd . && cd .. && python -c "$(TEST_GET_CONFIG)" && popd
+    displayName: 'Verify OpenBLAS version'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      failTaskOnFailedTests: true
+      testRunTitle: 'Publish test results for Python 3.6 64-bit full Mac OS'
+- job: Windows
+  pool:
+    vmImage: 'VS2017-Win2016'
+  variables:
+      # openblas URLs from numpy-wheels
+      # appveyor / Windows config
+      OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-274-g6a8b4269-win32-gcc_7_1_0.zip"
+      OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.5-274-g6a8b4269-win_amd64-gcc_7_1_0.zip"
+  strategy:
+    maxParallel: 6
+    matrix:
+        Python36-32bit-fast:
+          PYTHON_VERSION: '3.6'
+          PYTHON_ARCH: 'x86'
+          TEST_MODE: fast
+          OPENBLAS: $(OPENBLAS_32)
+          BITS: 32
+        Python37-32bit-fast:
+          PYTHON_VERSION: '3.7'
+          PYTHON_ARCH: 'x86'
+          TEST_MODE: fast
+          OPENBLAS: $(OPENBLAS_32)
+          BITS: 32
+        Python35-64bit-full:
+          PYTHON_VERSION: '3.5'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: full
+          OPENBLAS: $(OPENBLAS_64)
+          BITS: 64
+        Python36-64bit-full:
+          PYTHON_VERSION: '3.6'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: full
+          INSTALL_PICKLE5: 1
+          OPENBLAS: $(OPENBLAS_64)
+          BITS: 64
+        Python37-64bit-full:
+          PYTHON_VERSION: '3.7'
+          PYTHON_ARCH: 'x64'
+          TEST_MODE: full
+          INSTALL_PICKLE5: 1
+          OPENBLAS: $(OPENBLAS_64)
+          BITS: 64
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: $(PYTHON_VERSION)
+      addToPath: true
+      architecture: $(PYTHON_ARCH)
+  - script: python -m pip install --upgrade pip setuptools wheel
+    displayName: 'Install tools'
+  - powershell: |
+      $wc = New-Object net.webclient
+      $wc.Downloadfile("$(OPENBLAS)", "openblas.zip")
+      $tmpdir = New-TemporaryFile | %{ rm $_; mkdir $_ }
+      Expand-Archive "openblas.zip" $tmpdir
+      $pyversion = python -c "from __future__ import print_function; import sys; print(sys.version.split()[0])"
+      Write-Host "Python Version: $pyversion"
+      $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
+      Write-Host "target path: $target"
+      cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.5-274-g6a8b4269-gcc_7_1_0.a $target
+    displayName: 'Download / Install OpenBLAS'
+  - powershell: |
+      choco install -y mingw --forcex86 --force --version=5.3.0
+    displayName: 'Install 32-bit mingw for 32-bit builds'
+    condition: eq(variables['BITS'], 32)
+  - script: python -m pip install cython nose pytz pytest
+    displayName: 'Install dependencies; some are optional to avoid test skips'
+  # NOTE: for Windows builds it seems much more tractable to use runtests.py
+  # vs. manual setup.py and then runtests.py for testing only
+  - script: if [%INSTALL_PICKLE5%]==[1] python -m pip install pickle5
+    displayName: 'Install optional pickle5 backport (only for python3.6 and 3.7)'
+  - powershell: |
+      If ($(BITS) -eq 32) {
+         $env:NPY_DISTUTILS_APPEND_FLAGS = 1
+         $env:CFLAGS = "-m32"
+         $env:LDFLAGS = "-m32"
+         $env:PATH = "C:\\tools\\mingw32\\bin;" + $env:PATH
+         refreshenv
+      }
+      pip wheel -v -v -v --wheel-dir=dist .
+
+      ls dist -r | Foreach-Object {
+          pip install $_.FullName
+      }
+    displayName: 'Build NumPy'
+  - bash: |
+      pushd . && cd .. && target=$(python -c "import numpy, os; print(os.path.abspath(os.path.join(os.path.dirname(numpy.__file__), '.libs')))") && popd
+      pip download -d destination --only-binary --no-deps numpy==1.14
+      cd destination && unzip numpy*.whl && cp numpy/.libs/*.dll $target
+      ls $target
+    displayName: 'Add extraneous & older DLL to numpy/.libs to probe DLL handling robustness'
+    condition: eq(variables['PYTHON_VERSION'], '3.6')
+  - script: pushd . && cd .. && python -c "from ctypes import windll; windll.kernel32.SetDefaultDllDirectories(0x00000800); import numpy" && popd
+    displayName: 'For gh-12667; Windows DLL resolution'
+  - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
+    displayName: 'Run NumPy Test Suite'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      failTaskOnFailedTests: true
+      testRunTitle: 'Publish test results for Python $(PYTHON_VERSION) $(BITS)-bit $(TEST_MODE) Windows'
+
+- job: Linux_PyPy3
+  pool:
+    vmIMage: 'ubuntu-16.04'
+  steps:
+  - script: source tools/pypy-test.sh
+    displayName: 'Run PyPy3 Build / Tests'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for PyPy3'
+      failTaskOnFailedTests: true

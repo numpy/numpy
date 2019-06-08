@@ -1,11 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
 import warnings
+import pytest
 
 import numpy as np
+from numpy.lib.nanfunctions import _nan_mask
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_almost_equal,
-    assert_no_warnings, assert_raises, assert_array_equal, suppress_warnings
+    assert_, assert_equal, assert_almost_equal, assert_no_warnings,
+    assert_raises, assert_array_equal, suppress_warnings
     )
 
 
@@ -113,42 +115,46 @@ class TestNanFunctions_MinMax(object):
         for f in self.nanfuncs:
             assert_(f(0.) == 0.)
 
-    def test_matrices(self):
+    def test_subclass(self):
+        class MyNDArray(np.ndarray):
+            pass
+
         # Check that it works and that type and
         # shape are preserved
-        mat = np.matrix(np.eye(3))
+        mine = np.eye(3).view(MyNDArray)
         for f in self.nanfuncs:
-            res = f(mat, axis=0)
-            assert_(isinstance(res, np.matrix))
-            assert_(res.shape == (1, 3))
-            res = f(mat, axis=1)
-            assert_(isinstance(res, np.matrix))
-            assert_(res.shape == (3, 1))
-            res = f(mat)
-            assert_(np.isscalar(res))
+            res = f(mine, axis=0)
+            assert_(isinstance(res, MyNDArray))
+            assert_(res.shape == (3,))
+            res = f(mine, axis=1)
+            assert_(isinstance(res, MyNDArray))
+            assert_(res.shape == (3,))
+            res = f(mine)
+            assert_(res.shape == ())
+
         # check that rows of nan are dealt with for subclasses (#4628)
-        mat[1] = np.nan
+        mine[1] = np.nan
         for f in self.nanfuncs:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter('always')
-                res = f(mat, axis=0)
-                assert_(isinstance(res, np.matrix))
+                res = f(mine, axis=0)
+                assert_(isinstance(res, MyNDArray))
                 assert_(not np.any(np.isnan(res)))
                 assert_(len(w) == 0)
 
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter('always')
-                res = f(mat, axis=1)
-                assert_(isinstance(res, np.matrix))
-                assert_(np.isnan(res[1, 0]) and not np.isnan(res[0, 0])
-                        and not np.isnan(res[2, 0]))
+                res = f(mine, axis=1)
+                assert_(isinstance(res, MyNDArray))
+                assert_(np.isnan(res[1]) and not np.isnan(res[0])
+                        and not np.isnan(res[2]))
                 assert_(len(w) == 1, 'no warning raised')
                 assert_(issubclass(w[0].category, RuntimeWarning))
 
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter('always')
-                res = f(mat)
-                assert_(np.isscalar(res))
+                res = f(mine)
+                assert_(res.shape == ())
                 assert_(res != np.nan)
                 assert_(len(w) == 0)
 
@@ -209,19 +215,22 @@ class TestNanFunctions_ArgminArgmax(object):
         for f in self.nanfuncs:
             assert_(f(0.) == 0.)
 
-    def test_matrices(self):
+    def test_subclass(self):
+        class MyNDArray(np.ndarray):
+            pass
+
         # Check that it works and that type and
         # shape are preserved
-        mat = np.matrix(np.eye(3))
+        mine = np.eye(3).view(MyNDArray)
         for f in self.nanfuncs:
-            res = f(mat, axis=0)
-            assert_(isinstance(res, np.matrix))
-            assert_(res.shape == (1, 3))
-            res = f(mat, axis=1)
-            assert_(isinstance(res, np.matrix))
-            assert_(res.shape == (3, 1))
-            res = f(mat)
-            assert_(np.isscalar(res))
+            res = f(mine, axis=0)
+            assert_(isinstance(res, MyNDArray))
+            assert_(res.shape == (3,))
+            res = f(mine, axis=1)
+            assert_(isinstance(res, MyNDArray))
+            assert_(res.shape == (3,))
+            res = f(mine)
+            assert_(res.shape == ())
 
 
 class TestNanFunctions_IntTypes(object):
@@ -381,19 +390,27 @@ class SharedNanFunctionsTestsMixin(object):
         for f in self.nanfuncs:
             assert_(f(0.) == 0.)
 
-    def test_matrices(self):
+    def test_subclass(self):
+        class MyNDArray(np.ndarray):
+            pass
+
         # Check that it works and that type and
         # shape are preserved
-        mat = np.matrix(np.eye(3))
+        array = np.eye(3)
+        mine = array.view(MyNDArray)
         for f in self.nanfuncs:
-            res = f(mat, axis=0)
-            assert_(isinstance(res, np.matrix))
-            assert_(res.shape == (1, 3))
-            res = f(mat, axis=1)
-            assert_(isinstance(res, np.matrix))
-            assert_(res.shape == (3, 1))
-            res = f(mat)
-            assert_(np.isscalar(res))
+            expected_shape = f(array, axis=0).shape
+            res = f(mine, axis=0)
+            assert_(isinstance(res, MyNDArray))
+            assert_(res.shape == expected_shape)
+            expected_shape = f(array, axis=1).shape
+            res = f(mine, axis=1)
+            assert_(isinstance(res, MyNDArray))
+            assert_(res.shape == expected_shape)
+            expected_shape = f(array).shape
+            res = f(mine)
+            assert_(isinstance(res, MyNDArray))
+            assert_(res.shape == expected_shape)
 
 
 class TestNanFunctions_SumProd(SharedNanFunctionsTestsMixin):
@@ -480,18 +497,6 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
             for axis in np.arange(4):
                 res = f(d, axis=axis)
                 assert_equal(res.shape, (3, 5, 7, 11))
-
-    def test_matrices(self):
-        # Check that it works and that type and
-        # shape are preserved
-        mat = np.matrix(np.eye(3))
-        for f in self.nanfuncs:
-            for axis in np.arange(2):
-                res = f(mat, axis=axis)
-                assert_(isinstance(res, np.matrix))
-                assert_(res.shape == (3, 3))
-            res = f(mat)
-            assert_(res.shape == (1, 3*3))
 
     def test_result_values(self):
         for axis in (-2, -1, 0, 1, None):
@@ -888,5 +893,63 @@ class TestNanFunctions_Percentile(object):
         assert_equal(np.nanpercentile(megamat, perc, axis=(1, 2)).shape, (2, 3, 6))
 
 
-if __name__ == "__main__":
-    run_module_suite()
+class TestNanFunctions_Quantile(object):
+    # most of this is already tested by TestPercentile
+
+    def test_regression(self):
+        ar = np.arange(24).reshape(2, 3, 4).astype(float)
+        ar[0][1] = np.nan
+
+        assert_equal(np.nanquantile(ar, q=0.5), np.nanpercentile(ar, q=50))
+        assert_equal(np.nanquantile(ar, q=0.5, axis=0),
+                     np.nanpercentile(ar, q=50, axis=0))
+        assert_equal(np.nanquantile(ar, q=0.5, axis=1),
+                     np.nanpercentile(ar, q=50, axis=1))
+        assert_equal(np.nanquantile(ar, q=[0.5], axis=1),
+                     np.nanpercentile(ar, q=[50], axis=1))
+        assert_equal(np.nanquantile(ar, q=[0.25, 0.5, 0.75], axis=1),
+                     np.nanpercentile(ar, q=[25, 50, 75], axis=1))
+
+    def test_basic(self):
+        x = np.arange(8) * 0.5
+        assert_equal(np.nanquantile(x, 0), 0.)
+        assert_equal(np.nanquantile(x, 1), 3.5)
+        assert_equal(np.nanquantile(x, 0.5), 1.75)
+
+    def test_no_p_overwrite(self):
+        # this is worth retesting, because quantile does not make a copy
+        p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
+        p = p0.copy()
+        np.nanquantile(np.arange(100.), p, interpolation="midpoint")
+        assert_array_equal(p, p0)
+
+        p0 = p0.tolist()
+        p = p.tolist()
+        np.nanquantile(np.arange(100.), p, interpolation="midpoint")
+        assert_array_equal(p, p0)
+
+@pytest.mark.parametrize("arr, expected", [
+    # array of floats with some nans
+    (np.array([np.nan, 5.0, np.nan, np.inf]),
+     np.array([False, True, False, True])),
+    # int64 array that can't possibly have nans
+    (np.array([1, 5, 7, 9], dtype=np.int64),
+     True),
+    # bool array that can't possibly have nans
+    (np.array([False, True, False, True]),
+     True),
+    # 2-D complex array with nans
+    (np.array([[np.nan, 5.0],
+               [np.nan, np.inf]], dtype=np.complex64),
+     np.array([[False, True],
+               [False, True]])),
+    ])
+def test__nan_mask(arr, expected):
+    for out in [None, np.empty(arr.shape, dtype=np.bool_)]:
+        actual = _nan_mask(arr, out=out)
+        assert_equal(actual, expected)
+        # the above won't distinguish between True proper
+        # and an array of True values; we want True proper
+        # for types that can't possibly contain NaN
+        if type(expected) is not np.ndarray:
+            assert actual is True

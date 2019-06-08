@@ -48,7 +48,7 @@ Glossary
          array([(1, 2.0), (3, 4.0)],
                dtype=[('x', '<i4'), ('y', '<f8')])
 
-       Fast element-wise operations, called :term:`ufuncs`, operate on arrays.
+       Fast element-wise operations, called a :term:`ufunc`, operate on arrays.
 
    array_like
        Any sequence that can be interpreted as an ndarray.  This includes
@@ -62,8 +62,14 @@ Glossary
          >>> x.shape
          (3,)
 
+   big-endian
+       When storing a multi-byte value in memory as a sequence of bytes, the
+       sequence addresses/sends/stores the most significant byte first (lowest
+       address) and the least significant byte last (highest address). Common in
+       micro-processors and used for transmission of data over network protocols.
+
    BLAS
-       `Basic Linear Algebra Subprograms <http://en.wikipedia.org/wiki/BLAS>`_
+       `Basic Linear Algebra Subprograms <https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_
 
    broadcast
        NumPy can do operations on arrays whose shapes are mismatched::
@@ -149,7 +155,12 @@ Glossary
        be used as keys.
 
        For more information on dictionaries, read the
-       `Python tutorial <http://docs.python.org/tut>`_.
+       `Python tutorial <https://docs.python.org/tutorial/>`_.
+
+   field
+       In a :term:`structured data type`, each sub-type is called a `field`.
+       The `field` has a name (a string), a type (any valid dtype, and
+       an optional `title`. See :ref:`arrays.dtypes`
 
    Fortran order
        See `column-major`
@@ -157,6 +168,12 @@ Glossary
    flattened
        Collapsed to a one-dimensional array. See `numpy.ndarray.flatten`
        for details.
+
+   homogenous
+       Describes a block of memory comprised of blocks, each block comprised of 
+       items and of the same size, and blocks are interpreted in exactly the
+       same way. In the simplest case each block contains a single item, for
+       instance int32 or float64.
 
    immutable
        An object that cannot be modified after execution is called
@@ -192,6 +209,9 @@ Glossary
          Key 1: b
          Key 2: c
 
+   itemsize
+       The size of the dtype element in bytes.
+
    list
        A Python container that can hold any number of objects or items.
        The items do not have to be of the same type, and can even be
@@ -221,8 +241,14 @@ Glossary
                 [3, 4]])
 
        For more information, read the section on lists in the `Python
-       tutorial <http://docs.python.org/tut>`_.  For a mapping
+       tutorial <https://docs.python.org/tutorial/>`_.  For a mapping
        type (key-value), see *dictionary*.
+
+   little-endian
+       When storing a multi-byte value in memory as a sequence of bytes, the
+       sequence addresses/sends/stores the least significant byte first (lowest
+       address) and the most significant byte last (highest address). Common in
+       x86 processors.
 
    mask
        A boolean array, used to select only certain elements for an operation::
@@ -247,13 +273,11 @@ Glossary
          masked_array(data = [-- 2.0 --],
                       mask = [ True False  True],
                 fill_value = 1e+20)
-         <BLANKLINE>
 
          >>> x + [1, 2, 3]
          masked_array(data = [-- 4.0 --],
                       mask = [ True False  True],
                 fill_value = 1e+20)
-         <BLANKLINE>
 
 
        Masked arrays are often used when operating on arrays containing
@@ -285,7 +309,7 @@ Glossary
        See *array*.
 
    record array
-       An :term:`ndarray` with :term:`structured data type`_ which has been
+       An :term:`ndarray` with :term:`structured data type` which has been
        subclassed as ``np.recarray`` and whose dtype is of type ``np.record``,
        making the fields of its data type to be accessible by attribute.
 
@@ -324,34 +348,51 @@ Glossary
          Painting the city red!
 
    slice
-       Used to select only certain elements from a sequence::
+       Used to select only certain elements from a sequence:
 
-         >>> x = range(5)
-         >>> x
-         [0, 1, 2, 3, 4]
+       >>> x = range(5)
+       >>> x
+       [0, 1, 2, 3, 4]
 
-         >>> x[1:3] # slice from 1 to 3 (excluding 3 itself)
-         [1, 2]
+       >>> x[1:3] # slice from 1 to 3 (excluding 3 itself)
+       [1, 2]
 
-         >>> x[1:5:2] # slice from 1 to 5, but skipping every second element
-         [1, 3]
+       >>> x[1:5:2] # slice from 1 to 5, but skipping every second element
+       [1, 3]
 
-         >>> x[::-1] # slice a sequence in reverse
-         [4, 3, 2, 1, 0]
+       >>> x[::-1] # slice a sequence in reverse
+       [4, 3, 2, 1, 0]
 
        Arrays may have more than one dimension, each which can be sliced
-       individually::
+       individually:
 
-         >>> x = np.array([[1, 2], [3, 4]])
-         >>> x
-         array([[1, 2],
-                [3, 4]])
+       >>> x = np.array([[1, 2], [3, 4]])
+       >>> x
+       array([[1, 2],
+              [3, 4]])
 
-         >>> x[:, 1]
-         array([2, 4])
+       >>> x[:, 1]
+       array([2, 4])
+
+   structure
+       See :term:`structured data type`
 
    structured data type
        A data type composed of other datatypes
+
+   subarray data type
+       A :term:`structured data type` may contain a :term:`ndarray` with its
+       own dtype and shape:
+
+       >>> dt = np.dtype([('a', np.int32), ('b', np.float32, (3,))])
+       >>> np.zeros(3, dtype=dt)
+       array([(0, [0., 0., 0.]), (0, [0., 0., 0.]), (0, [0., 0., 0.])],
+             dtype=[('a', '<i4'), ('b', '<f4', (3,))])
+
+   title
+       In addition to field names, structured array fields may have an
+       associated :ref:`title <titles>` which is an alias to the name and is
+       commonly used for plotting.
 
    tuple
        A sequence that may contain a variable number of types of any
@@ -389,8 +430,19 @@ Glossary
          'alpha'
 
    ufunc
-       Universal function.  A fast element-wise array operation.  Examples include
-       ``add``, ``sin`` and ``logical_or``.
+       Universal function.  A fast element-wise, :term:`vectorized
+       <vectorization>` array operation.  Examples include ``add``, ``sin`` and
+       ``logical_or``.
+
+   vectorization
+       Optimizing a looping block by specialized code. In a traditional sense,
+       vectorization performs the same operation on multiple elements with
+       fixed strides between them via specialized hardware. Compilers know how
+       to take advantage of well-constructed loops to implement such
+       optimizations. NumPy uses :ref:`vectorization <whatis-vectorization>`
+       to mean any optimization via specialized code performing the same
+       operations on multiple elements, typically achieving speedups by
+       avoiding some of the overhead in looking up and converting the elements.
 
    view
        An array that does not own its data, but refers to another array's

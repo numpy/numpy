@@ -6,9 +6,8 @@ import numpy as np
 import numpy.core.umath as umath
 import numpy.core.fromnumeric as fromnumeric
 from numpy.testing import (
-    run_module_suite, assert_, assert_raises, assert_equal,
+    assert_, assert_raises, assert_equal,
     )
-from numpy.ma.testutils import assert_array_equal
 from numpy.ma import (
     MaskType, MaskedArray, absolute, add, all, allclose, allequal, alltrue,
     arange, arccos, arcsin, arctan, arctan2, array, average, choose,
@@ -22,6 +21,7 @@ from numpy.ma import (
     repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
     take, tan, tanh, transpose, where, zeros,
     )
+from numpy.compat import pickle
 
 pi = np.pi
 
@@ -270,25 +270,29 @@ class TestMa(object):
         y1 = array(x1, mask=m)
         assert_(y1._data is not x1)
         assert_(allequal(x1, y1._data))
-        assert_(y1.mask is m)
+        assert_(y1._mask is m)
 
         y1a = array(y1, copy=0)
-        assert_(y1a.mask is y1.mask)
+        # For copy=False, one might expect that the array would just
+        # passed on, i.e., that it would be "is" instead of "==".
+        # See gh-4043 for discussion.
+        assert_(y1a._mask.__array_interface__ ==
+                y1._mask.__array_interface__)
 
         y2 = array(x1, mask=m3, copy=0)
-        assert_(y2.mask is m3)
+        assert_(y2._mask is m3)
         assert_(y2[2] is masked)
         y2[2] = 9
         assert_(y2[2] is not masked)
-        assert_(y2.mask is m3)
+        assert_(y2._mask is m3)
         assert_(allequal(y2.mask, 0))
 
         y2a = array(x1, mask=m, copy=1)
-        assert_(y2a.mask is not m)
+        assert_(y2a._mask is not m)
         assert_(y2a[2] is masked)
         y2a[2] = 9
         assert_(y2a[2] is not masked)
-        assert_(y2a.mask is not m)
+        assert_(y2a._mask is not m)
         assert_(allequal(y2a.mask, 0))
 
         y3 = array(x1 * 1.0, mask=m)
@@ -314,14 +318,14 @@ class TestMa(object):
         assert_(x[3] is masked)
         assert_(x[4] is masked)
         x[[1, 4]] = [10, 40]
-        assert_(x.mask is m)
+        assert_(x._mask is m)
         assert_(x[3] is masked)
         assert_(x[4] is not masked)
         assert_(eq(x, [0, 10, 2, -1, 40]))
 
         x = array(d, mask=m2, copy=True)
         x.put([0, 1, 2], [-1, 100, 200])
-        assert_(x.mask is not m2)
+        assert_(x._mask is not m2)
         assert_(x[3] is masked)
         assert_(x[4] is masked)
         assert_(eq(x, [-1, 100, 200, 0, 0]))
@@ -545,13 +549,13 @@ class TestMa(object):
 
     def test_testPickle(self):
         # Test of pickling
-        import pickle
         x = arange(12)
         x[4:10:2] = masked
         x = x.reshape(4, 3)
-        s = pickle.dumps(x)
-        y = pickle.loads(s)
-        assert_(eq(x, y))
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            s = pickle.dumps(x, protocol=proto)
+            y = pickle.loads(s)
+            assert_(eq(x, y))
 
     def test_testMasked(self):
         # Test of masked element
@@ -854,6 +858,3 @@ def eqmask(m1, m2):
     if m2 is nomask:
         return m1 is nomask
     return (m1 == m2).all()
-
-if __name__ == "__main__":
-    run_module_suite()

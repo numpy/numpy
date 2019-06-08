@@ -3,12 +3,13 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.hermite as herm
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite
     )
 
 H0 = np.array([1])
@@ -98,6 +99,15 @@ class TestArithmetic(object):
                 tgt = herm.hermadd(ci, cj)
                 quo, rem = herm.hermdiv(tgt, ci)
                 res = herm.hermadd(herm.hermmul(quo, ci), rem)
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_hermpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(herm.hermmul, [c]*j, np.array([1]))
+                res = herm.hermpow(c, j) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
@@ -199,12 +209,12 @@ class TestIntegral(object):
 
     def test_hermint(self):
         # check exceptions
-        assert_raises(ValueError, herm.hermint, [0], .5)
+        assert_raises(TypeError, herm.hermint, [0], .5)
         assert_raises(ValueError, herm.hermint, [0], -1)
         assert_raises(ValueError, herm.hermint, [0], 1, [0, 0])
         assert_raises(ValueError, herm.hermint, [0], lbnd=[0])
         assert_raises(ValueError, herm.hermint, [0], scl=[0])
-        assert_raises(ValueError, herm.hermint, [0], axis=.5)
+        assert_raises(TypeError, herm.hermint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -301,7 +311,7 @@ class TestDerivative(object):
 
     def test_hermder(self):
         # check exceptions
-        assert_raises(ValueError, herm.hermder, [0], .5)
+        assert_raises(TypeError, herm.hermder, [0], .5)
         assert_raises(ValueError, herm.hermder, [0], -1)
 
         # check that zeroth derivative does nothing
@@ -545,7 +555,3 @@ class TestMisc(object):
         tgt = np.exp(-x**2)
         res = herm.hermweight(x)
         assert_almost_equal(res, tgt)
-
-
-if __name__ == "__main__":
-    run_module_suite()

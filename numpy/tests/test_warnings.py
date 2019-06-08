@@ -2,18 +2,16 @@
 Tests which scan for certain occurrences in the code, they may not find
 all of these occurrences but should catch almost all.
 """
-
-
 from __future__ import division, absolute_import, print_function
 
-
 import sys
+import pytest
+
 if sys.version_info >= (3, 4):
     from pathlib import Path
     import ast
     import tokenize
     import numpy
-    from numpy.testing import run_module_suite, dec
 
     class ParseCall(ast.NodeVisitor):
         def __init__(self):
@@ -46,7 +44,7 @@ if sys.version_info >= (3, 4):
             if p.ls[-1] == 'warn' and (
                     len(p.ls) == 1 or p.ls[-2] == 'warnings'):
 
-                if "testing/tests/test_warnings.py" is self.__filename:
+                if "testing/tests/test_warnings.py" == self.__filename:
                     # This file
                     return
 
@@ -61,7 +59,7 @@ if sys.version_info >= (3, 4):
                     "{} on line {}".format(self.__filename, node.lineno))
 
 
-    @dec.slow
+    @pytest.mark.slow
     def test_warning_calls():
         # combined "ignore" and stacklevel error
         base = Path(numpy.__file__).parent
@@ -78,7 +76,3 @@ if sys.version_info >= (3, 4):
             with tokenize.open(str(path)) as file:
                 tree = ast.parse(file.read())
                 FindFuncs(path).visit(tree)
-
-
-    if __name__ == "__main__":
-        run_module_suite()

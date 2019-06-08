@@ -5,9 +5,9 @@ import re
 import os
 
 if sys.version_info[0] < 3:
-    from ConfigParser import RawConfigParser, NoOptionError
+    from ConfigParser import RawConfigParser
 else:
-    from configparser import RawConfigParser, NoOptionError
+    from configparser import RawConfigParser
 
 __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
         'read_config', 'parse_flags']
@@ -222,9 +222,7 @@ def parse_meta(config):
     if not config.has_section('meta'):
         raise FormatError("No meta section found !")
 
-    d = {}
-    for name, value in config.items('meta'):
-        d[name] = value
+    d = dict(config.items('meta'))
 
     for k in ['name', 'description', 'version']:
         if not k in d:
@@ -414,7 +412,6 @@ if __name__ == '__main__':
             print("%s\t%s - %s" % (info.name, info.name, info.description))
 
     pkg_name = args[1]
-    import os
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d:
         info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.', d])

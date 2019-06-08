@@ -133,9 +133,9 @@ PyArray_Type
     is related to this array. There are two use cases: 1) If this array
     does not own its own memory, then base points to the Python object
     that owns it (perhaps another array object), 2) If this array has
-    the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or 
+    the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or
     :c:data:NPY_ARRAY_WRITEBACKIFCOPY`: flag set, then this array is
-    a working copy of a "misbehaved" array. When 
+    a working copy of a "misbehaved" array. When
     ``PyArray_ResolveWritebackIfCopy`` is called, the array pointed to by base
     will be updated with the contents of this array.
 
@@ -182,8 +182,18 @@ PyArrayDescr_Type
 
 .. c:type:: PyArray_Descr
 
-   The format of the :c:type:`PyArray_Descr` structure that lies at the
-   heart of the :c:data:`PyArrayDescr_Type` is
+   The :c:type:`PyArray_Descr` structure lies at the heart of the
+   :c:data:`PyArrayDescr_Type`. While it is described here for
+   completeness, it should be considered internal to NumPy and manipulated via
+   ``PyArrayDescr_*`` or ``PyDataType*`` functions and macros. The size of this
+   structure is subject to change across versions of NumPy. To ensure
+   compatibility:
+
+   - Never declare a non-pointer instance of the struct
+   - Never perform pointer arithmatic
+   - Never use ``sizof(PyArray_Descr)``
+
+   It has the following structure:
 
    .. code-block:: c
 
@@ -193,14 +203,17 @@ PyArrayDescr_Type
           char kind;
           char type;
           char byteorder;
-          char unused;
-          int flags;
+          char flags;
           int type_num;
           int elsize;
           int alignment;
           PyArray_ArrayDescr *subarray;
           PyObject *fields;
+          PyObject *names;
           PyArray_ArrFuncs *f;
+          PyObject *metadata;
+          NpyAuxData *c_metadata;
+          npy_hash_t hash;
       } PyArray_Descr;
 
 .. c:member:: PyTypeObject *PyArray_Descr.typeobj
@@ -232,7 +245,7 @@ PyArrayDescr_Type
     endian), '=' (native), '\|' (irrelevant, ignore). All builtin data-
     types have byteorder '='.
 
-.. c:member:: int PyArray_Descr.flags
+.. c:member:: char PyArray_Descr.flags
 
     A data-type bit-flag that determines if the data-type exhibits object-
     array like behavior. Each bit in this member is a flag which are named
@@ -367,12 +380,31 @@ PyArrayDescr_Type
     normally a Python string. These tuples are placed in this
     dictionary keyed by name (and also title if given).
 
+.. c:member:: PyObject *PyArray_Descr.names
+
+    An ordered tuple of field names. It is NULL if no field is
+    defined.
+
 .. c:member:: PyArray_ArrFuncs *PyArray_Descr.f
 
     A pointer to a structure containing functions that the type needs
     to implement internal features. These functions are not the same
     thing as the universal functions (ufuncs) described later. Their
     signatures can vary arbitrarily.
+
+.. c:member:: PyObject *PyArray_Descr.metadata
+
+    Metadata about this dtype.
+
+.. c:member:: NpyAuxData *PyArray_Descr.c_metadata
+
+    Metadata specific to the C implementation
+    of the particular dtype. Added for NumPy 1.7.0.
+
+.. c:member:: Npy_hash_t *PyArray_Descr.hash
+
+    Currently unused. Reserved for future use in caching
+    hash values.
 
 .. c:type:: PyArray_ArrFuncs
 
@@ -498,20 +530,19 @@ PyArrayDescr_Type
         and ``is2`` *bytes*, respectively. This function requires
         behaved (though not necessarily contiguous) memory.
 
-    .. c:member:: int scanfunc(FILE* fd, void* ip , void* sep , void* arr)
+    .. c:member:: int scanfunc(FILE* fd, void* ip, void* arr)
 
         A pointer to a function that scans (scanf style) one element
         of the corresponding type from the file descriptor ``fd`` into
         the array memory pointed to by ``ip``. The array is assumed
-        to be behaved. If ``sep`` is not NULL, then a separator string
-        is also scanned from the file before returning. The last
-        argument ``arr`` is the array to be scanned into. A 0 is
-        returned if the scan is successful. A negative number
-        indicates something went wrong: -1 means the end of file was
-        reached before the separator string could be scanned, -4 means
-        that the end of file was reached before the element could be
-        scanned, and -3 means that the element could not be
-        interpreted from the format string. Requires a behaved array.
+        to be behaved. 
+        The last argument ``arr`` is the array to be scanned into.
+        Returns number of receiving arguments successfully assigned (which
+        may be zero in case a matching failure occurred before the first
+        receiving argument was assigned), or EOF if input failure occurs 
+        before the first receiving argument was assigned.
+        This function should be called without holding the Python GIL, and
+        has to grab it for error reporting.
 
     .. c:member:: int fromstr(char* str, void* ip, char** endptr, void* arr)
 
@@ -522,6 +553,8 @@ PyArrayDescr_Type
         string. The last argument ``arr`` is the array into which ip
         points (needed for variable-size data- types). Returns 0 on
         success or -1 on failure. Requires a behaved array.
+        This function should be called without holding the Python GIL, and
+        has to grab it for error reporting.
 
     .. c:member:: Bool nonzero(void* data, void* arr)
 
@@ -683,7 +716,16 @@ PyUFunc_Type
 
    The core of the ufunc is the :c:type:`PyUFuncObject` which contains all
    the information needed to call the underlying C-code loops that
-   perform the actual work. It has the following structure:
+   perform the actual work. While it is described here for completeness, it
+   should be considered internal to NumPy and manipulated via ``PyUFunc_*``
+   functions. The size of this structure is subject to change across versions
+   of NumPy. To ensure compatibility:
+
+   - Never declare a non-pointer instance of the struct
+   - Never perform pointer arithmetic
+   - Never use ``sizeof(PyUFuncObject)``
+
+   It has the following structure:
 
    .. code-block:: c
 
@@ -703,8 +745,21 @@ PyUFunc_Type
           void *ptr;
           PyObject *obj;
           PyObject *userloops;
+          int core_enabled;
+          int core_num_dim_ix;
+          int *core_num_dims;
+          int *core_dim_ixs;
+          int *core_offsets;
+          char *core_signature;
+          PyUFunc_TypeResolutionFunc *type_resolver;
+          PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
+          PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
+          /* new in API version 0x0000000D */
+          npy_intp *core_dim_sizes;
+          npy_intp *core_dim_flags;
+
       } PyUFuncObject;
 
    .. c:macro: PyUFuncObject.PyObject_HEAD
@@ -764,6 +819,10 @@ PyUFunc_Type
        specifies how many different 1-d loops (of the builtin data
        types) are available.
 
+   .. c:member:: int PyUFuncObject.reserved1
+
+       Unused.
+
    .. c:member:: char *PyUFuncObject.name
 
        A string name for the ufunc. This is used dynamically to build
@@ -804,6 +863,51 @@ PyUFunc_Type
        User defined type numbers are always larger than
        :c:data:`NPY_USERDEF`.
 
+   .. c:member:: int PyUFuncObject.core_enabled
+
+       0 for scalar ufuncs; 1 for generalized ufuncs
+
+   .. c:member:: int PyUFuncObject.core_num_dim_ix
+
+       Number of distinct core dimension names in the signature
+
+   .. c:member:: int *PyUFuncObject.core_num_dims
+
+       Number of core dimensions of each argument
+
+   .. c:member:: int *PyUFuncObject.core_dim_ixs
+
+       Dimension indices in a flattened form; indices of argument ``k`` are
+       stored in ``core_dim_ixs[core_offsets[k] : core_offsets[k] +
+       core_numdims[k]]``
+
+   .. c:member:: int *PyUFuncObject.core_offsets
+
+       Position of 1st core dimension of each argument in ``core_dim_ixs``,
+       equivalent to cumsum(``core_num_dims``)
+
+   .. c:member:: char *PyUFuncObject.core_signature
+
+       Core signature string
+
+   .. c:member:: PyUFunc_TypeResolutionFunc *PyUFuncObject.type_resolver
+
+       A function which resolves the types and fills an array with the dtypes
+       for the inputs and outputs
+
+   .. c:member:: PyUFunc_LegacyInnerLoopSelectionFunc *PyUFuncObject.legacy_inner_loop_selector
+
+       A function which returns an inner loop. The ``legacy`` in the name arises
+       because for NumPy 1.6 a better variant had been planned. This variant
+       has not yet come about.
+
+   .. c:member:: void *PyUFuncObject.reserved2
+
+       For a possible future loop selector with a different signature.
+
+   .. c:member:: PyUFunc_MaskedInnerLoopSelectionFunc *PyUFuncObject.masked_inner_loop_selector
+
+       Function which returns a masked inner loop for the ufunc
 
    .. c:member:: npy_uint32 PyUFuncObject.op_flags
 
@@ -812,6 +916,21 @@ PyUFunc_Type
    .. c:member:: npy_uint32 PyUFuncObject.iter_flags
 
        Override the default nditer flags for the ufunc.
+
+   Added in API version 0x0000000D
+
+   .. c:member:: npy_intp *PyUFuncObject.core_dim_sizes
+
+       For each distinct core dimension, the possible
+       :ref:`frozen <frozen>` size if :c:data:`UFUNC_CORE_DIM_SIZE_INFERRED` is 0
+
+   .. c:member:: npy_uint32 *PyUFuncObject.core_dim_flags
+
+       For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
+
+       - :c:data:`UFUNC_CORE_DIM_CAN_IGNORE` if the dim name ends in ``?``
+       - :c:data:`UFUNC_CORE_DIM_SIZE_INFERRED` if the dim size will be
+         determined from the operands and not from a :ref:`frozen <frozen>` signature
 
 PyArrayIter_Type
 ----------------

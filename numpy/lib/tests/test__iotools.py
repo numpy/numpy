@@ -1,12 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
 import time
 from datetime import date
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_allclose, assert_raises,
+    assert_, assert_equal, assert_allclose, assert_raises,
     )
 from numpy.lib._iotools import (
     LineSplitter, NameValidator, StringConverter,
@@ -51,6 +50,11 @@ class TestLineSplitter(object):
         #
         strg = " 1,2,3,4,,5 # test"
         test = LineSplitter(',')(strg)
+        assert_equal(test, ['1', '2', '3', '4', '', '5'])
+
+        # gh-11028 bytes comment/delimiters should get encoded
+        strg = b" 1,2,3,4,,5 % test"
+        test = LineSplitter(delimiter=b',', comments=b'%')(strg)
         assert_equal(test, ['1', '2', '3', '4', '', '5'])
 
     def test_constant_fixed_width(self):
@@ -241,7 +245,7 @@ class TestStringConverter(object):
         converter = StringConverter(int, default=0,
                                     missing_values="N/A")
         assert_equal(
-            converter.missing_values, set(['', 'N/A']))
+            converter.missing_values, {'', 'N/A'})
 
     def test_int64_dtype(self):
         "Check that int64 integer types can be specified"
@@ -346,6 +350,3 @@ class TestMiscFunctions(object):
         dt = np.dtype([(("a", "A"), "f8"), (("b", "B"), "f8")])
         dt_flat = flatten_dtype(dt)
         assert_equal(dt_flat, [float, float])
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -1,0 +1,119 @@
+/**
+ * This module provides the inner loops for the clip ufunc
+ */
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "Python.h"
+
+#include "numpy/halffloat.h"
+#include "numpy/npy_math.h"
+#include "numpy/ndarraytypes.h"
+#include "numpy/npy_common.h"
+#include "numpy/utils.h"
+#include "fast_loop_macros.h"
+
+/*
+ * Produce macros that perform nan/nat-propagating min and max
+ */
+
+/**begin repeat
+ * #name = BOOL,
+ *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG#
+ */
+#define _NPY_@name@_MIN(a, b) PyArray_MIN(a, b)
+#define _NPY_@name@_MAX(a, b) PyArray_MAX(a, b)
+/**end repeat**/
+
+#define _NPY_HALF_MIN(a, b) (npy_half_isnan(a) || npy_half_le(a, b) ? (a) : (b))
+#define _NPY_HALF_MAX(a, b) (npy_half_isnan(a) || npy_half_ge(a, b) ? (a) : (b))
+
+/**begin repeat
+ * #name = FLOAT, DOUBLE, LONGDOUBLE#
+ */
+#define _NPY_@name@_MIN(a, b) (npy_isnan(a) ? (a) : PyArray_MIN(a, b))
+#define _NPY_@name@_MAX(a, b) (npy_isnan(a) ? (a) : PyArray_MAX(a, b))
+/**end repeat**/
+
+/**begin repeat
+ * #name = CFLOAT, CDOUBLE, CLONGDOUBLE#
+ */
+#define _NPY_@name@_MIN(a, b) (npy_isnan((a).real) || npy_isnan((a).imag) || PyArray_CLT(a, b) ? (a) : (b))
+#define _NPY_@name@_MAX(a, b) (npy_isnan((a).real) || npy_isnan((a).imag) || PyArray_CGT(a, b) ? (a) : (b))
+/**end repeat**/
+
+/**begin repeat
+ * #name = DATETIME, TIMEDELTA#
+ */
+#define _NPY_@name@_MIN(a, b) ( \
+    (a) == NPY_DATETIME_NAT ? (a) : \
+    (b) == NPY_DATETIME_NAT ? (b) : \
+    (a) < (b) ? (a) : (b) \
+)
+#define _NPY_@name@_MAX(a, b) ( \
+    (a) == NPY_DATETIME_NAT ? (a) : \
+    (b) == NPY_DATETIME_NAT ? (b) : \
+    (a) > (b) ? (a) : (b) \
+)
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #name = BOOL,
+ *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
+ *         LONG, ULONG, LONGLONG, ULONGLONG,
+ *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *         DATETIME, TIMEDELTA#
+ * #type = npy_bool,
+ *         npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *         npy_half, npy_float, npy_double, npy_longdouble,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble,
+ *         npy_datetime, npy_timedelta#
+ */
+
+#define _NPY_CLIP(x, min, max) \
+    _NPY_@name@_MIN(_NPY_@name@_MAX((x), (min)), (max))
+
+NPY_NO_EXPORT void
+@name@_clip(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    if (steps[1] == 0 && steps[2] == 0) {
+        /* min and max are constant throughout the loop, the most common case */
+        /* NOTE: it may be possible to optimize these checks for nan */
+        @type@ min_val = *(@type@ *)args[1];
+        @type@ max_val = *(@type@ *)args[2];
+
+        char *ip1 = args[0], *op1 = args[3];
+        npy_intp is1 = steps[0], os1 = steps[3];
+        npy_intp n = dimensions[0];
+
+        /* contiguous, branch to let the compiler optimize */
+        if (is1 == sizeof(@type@) && os1 == sizeof(@type@)) {
+            for(npy_intp i = 0; i < n; i++, ip1 += is1, op1 += os1) {
+                *(@type@ *)op1 = _NPY_CLIP(*(@type@ *)ip1, min_val, max_val);
+            }
+        }
+        else {
+            for(npy_intp i = 0; i < n; i++, ip1 += is1, op1 += os1) {
+                *(@type@ *)op1 = _NPY_CLIP(*(@type@ *)ip1, min_val, max_val);
+            }
+        }
+    }
+    else {
+        TERNARY_LOOP {
+            *(@type@ *)op1 = _NPY_CLIP(*(@type@ *)ip1, *(@type@ *)ip2, *(@type@ *)ip3);
+        }
+    }
+    npy_clear_floatstatus_barrier((char*)dimensions);
+}
+
+// clean up the macros we defined above
+#undef _NPY_CLIP
+#undef _NPY_@name@_MAX
+#undef _NPY_@name@_MIN
+
+/**end repeat**/

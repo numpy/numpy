@@ -17,6 +17,8 @@ Order statistics
    ptp
    percentile
    nanpercentile
+   quantile
+   nanquantile
 
 Averages and variances
 ----------------------
@@ -54,4 +56,5 @@ Histograms
    histogram2d
    histogramdd
    bincount
+   histogram_bin_edges
    digitize

@@ -3,34 +3,41 @@
 Random Number Generation
 ========================
 
+Instantiate a BitGenerator and wrap it in a Generator
+which will convert the uniform stream to a number of distributions. The "bare"
+functions are kept for legacy code, they should be called with the newer API
+via ``np.random.Generator().function`` instead
+
 ==================== =========================================================
 Utility functions
-==============================================================================
-random               Uniformly distributed values of a given shape.
+-------------------- ---------------------------------------------------------
+random               Uniformly distributed floats over ``[0, 1)``
+integers             Uniformly distributed integers, replaces ``randint``
 bytes                Uniformly distributed random bytes.
-random_integers      Uniformly distributed integers in a given range.
-random_sample        Uniformly distributed floats in a given range.
-random               Alias for random_sample
-ranf                 Alias for random_sample
-sample               Alias for random_sample
-choice               Generate a weighted random sample from a given array-like
 permutation          Randomly permute a sequence / generate a random sequence.
 shuffle              Randomly permute a sequence in place.
 seed                 Seed the random number generator.
+choice               Random sample from 1-D array.
 ==================== =========================================================
 
 ==================== =========================================================
-Compatibility functions
-==============================================================================
+Compatibility
+functions - removed
+in the new API
+-------------------- ---------------------------------------------------------
 rand                 Uniformly distributed values.
 randn                Normally distributed values.
 ranf                 Uniformly distributed floating point numbers.
-randint              Uniformly distributed integers in a given range.
+random_integers      Uniformly distributed integers in a given range.
+                     (deprecated, use ``integers(..., closed=True)`` instead)
+random_sample        Alias for `random_sample`
+randint              Uniformly distributed integers in a given range
 ==================== =========================================================
 
 ==================== =========================================================
-Univariate distributions
-==============================================================================
+Univariate
+distributions
+-------------------- ---------------------------------------------------------
 beta                 Beta distribution over ``[0, 1]``.
 binomial             Binomial distribution.
 chisquare            :math:`\\chi^2` distribution.
@@ -60,17 +67,19 @@ weibull              Weibull distribution.
 zipf                 Zipf's distribution over ranked data.
 ==================== =========================================================
 
-==================== =========================================================
-Multivariate distributions
-==============================================================================
+==================== ==========================================================
+Multivariate
+distributions
+-------------------- ----------------------------------------------------------
 dirichlet            Multivariate generalization of Beta distribution.
 multinomial          Multivariate generalization of the binomial distribution.
 multivariate_normal  Multivariate generalization of the normal distribution.
-==================== =========================================================
+==================== ==========================================================
 
 ==================== =========================================================
-Standard distributions
-==============================================================================
+Standard
+distributions
+-------------------- ---------------------------------------------------------
 standard_cauchy      Standard Cauchy-Lorentz distribution.
 standard_exponential Standard exponential distribution.
 standard_gamma       Standard Gamma distribution.
@@ -80,27 +89,96 @@ standard_t           Standard Student's t-distribution.
 
 ==================== =========================================================
 Internal functions
-==============================================================================
+-------------------- ---------------------------------------------------------
 get_state            Get tuple representing internal state of generator.
 set_state            Set state of generator.
 ==================== =========================================================
 
+============================================= ===
+BitGenerator Streams that work with Generator
+--------------------------------------------- ---
+MT19937
+DSFMT
+PCG32
+PCG64
+Philox
+ThreeFry
+Xoshiro256
+Xoshiro512
+============================================= ===
+
 """
 from __future__ import division, absolute_import, print_function
 
-import warnings
+__all__ = [
+    'beta',
+    'binomial',
+    'bytes',
+    'chisquare',
+    'choice',
+    'dirichlet',
+    'exponential',
+    'f',
+    'gamma',
+    'geometric',
+    'get_state',
+    'gumbel',
+    'hypergeometric',
+    'laplace',
+    'logistic',
+    'lognormal',
+    'logseries',
+    'multinomial',
+    'multivariate_normal',
+    'negative_binomial',
+    'noncentral_chisquare',
+    'noncentral_f',
+    'normal',
+    'pareto',
+    'permutation',
+    'poisson',
+    'power',
+    'rand',
+    'randint',
+    'randn',
+    'random',
+    'random_integers',
+    'random_sample',
+    'ranf',
+    'rayleigh',
+    'sample',
+    'seed',
+    'set_state',
+    'shuffle',
+    'standard_cauchy',
+    'standard_exponential',
+    'standard_gamma',
+    'standard_normal',
+    'standard_t',
+    'triangular',
+    'uniform',
+    'vonmises',
+    'wald',
+    'weibull',
+    'zipf',
+]
 
-# To get sub-modules
-from .info import __doc__, __all__
+from . import mtrand
+from .mtrand import *
+from .dsfmt import DSFMT
+from .generator import Generator
+from .mt19937 import MT19937
+from .pcg32 import PCG32
+from .pcg64 import PCG64
+from .philox import Philox
+from .threefry import ThreeFry
+from .xoshiro256 import Xoshiro256
+from .xoshiro512 import Xoshiro512
+from .mtrand import RandomState
 
+__all__ += ['Generator', 'DSFMT', 'MT19937', 'Philox', 'PCG64', 'PCG32',
+            'ThreeFry', 'Xoshiro256', 'Xoshiro512', 'RandomState']
 
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
-    from .mtrand import *
-
-# Some aliases:
-ranf = random = sample = random_sample
-__all__.extend(['ranf', 'random', 'sample'])
 
 def __RandomState_ctor():
     """Return a RandomState instance.
@@ -117,6 +195,7 @@ def __RandomState_ctor():
     """
     return RandomState(seed=0)
 
-from numpy.testing import _numpy_tester
-test = _numpy_tester().test
-bench = _numpy_tester().bench
+
+from numpy._pytesttester import PytestTester
+test = PytestTester(__name__)
+del PytestTester
