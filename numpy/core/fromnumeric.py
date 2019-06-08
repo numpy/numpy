@@ -2122,9 +2122,9 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     >>> np.sum([])
     0.0
 
-    The numerical precision of sum (and ``np.add.reduce``) is in general
-    limited by directly adding each number individually to the result
-    causing rounding errors in every step.
+    For floating point numbers the numerical precision of sum (and
+    ``np.add.reduce``) is in general limited by directly adding each number
+    individually to the result causing rounding errors in every step.
     However, often numpy will use a  numerically better approach
     (pairwise summation) leading to improved precision in many use cases.
     This improved precision is always provided when no ``axis`` is given.
@@ -2132,8 +2132,8 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     Technically, to provide the best speed possible, the improved precision
     is only used when the summation is along the fast axis in memory.
     Note that the exact precision may vary depending on other parameters.
-    In contrast to NumPy, Python's ``sum`` function uses a slower but more
-    precise approach to summation.
+    In contrast to NumPy, Python's ``math.fsum`` function uses a slower but
+    more precise approach to summation.
 
     Examples
     --------
