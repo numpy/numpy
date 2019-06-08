@@ -1130,7 +1130,7 @@ def polyvander2d(x, y, deg):
 
     See Also
     --------
-    polyvander, polyvander3d. polyval2d, polyval3d
+    polyvander, polyvander3d, polyval2d, polyval3d
 
     """
     return pu._vander2d(polyvander, x, y, deg)
@@ -1179,7 +1179,7 @@ def polyvander3d(x, y, z, deg):
 
     See Also
     --------
-    polyvander, polyvander3d. polyval2d, polyval3d
+    polyvander, polyvander3d, polyval2d, polyval3d
 
     Notes
     -----
@@ -1428,7 +1428,8 @@ def polyroots(c):
     if len(c) == 2:
         return np.array([-c[0]/c[1]])
 
-    m = polycompanion(c)
+    # rotated companion matrix reduces error
+    m = polycompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r

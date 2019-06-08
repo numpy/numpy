@@ -362,7 +362,7 @@ class FCompiler(CCompiler):
         set_exe('archiver')
         set_exe('ranlib')
 
-    def update_executables(elf):
+    def update_executables(self):
         """Called at the beginning of customisation. Subclasses should
         override this if they need to set up the executables dictionary.
 
@@ -484,11 +484,11 @@ class FCompiler(CCompiler):
         # XXX Assuming that free format is default for f90 compiler.
         fix = self.command_vars.compiler_fix
         # NOTE: this and similar examples are probably just
-        # exluding --coverage flag when F90 = gfortran --coverage
+        # excluding --coverage flag when F90 = gfortran --coverage
         # instead of putting that flag somewhere more appropriate
         # this and similar examples where a Fortran compiler
         # environment variable has been customized by CI or a user
-        # should perhaps eventually be more throughly tested and more
+        # should perhaps eventually be more thoroughly tested and more
         # robustly handled
         if fix:
             fix = _shell_utils.NativeParser.split(fix)

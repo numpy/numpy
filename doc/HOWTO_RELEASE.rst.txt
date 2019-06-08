@@ -5,7 +5,7 @@ Current build and release info
 ==============================
 
 The current info on building and releasing NumPy and SciPy is scattered in
-several places. It should be summarized in one place, updated and where
+several places. It should be summarized in one place, updated, and where
 necessary described in more detail. The sections below list all places where
 useful info can be found.
 
@@ -37,8 +37,8 @@ Supported platforms and versions
 ================================
 
 Python 2.7 and >=3.4 are the currently supported versions when building from
-source.  We test numpy against all these versions every time we merge code to
-trunk.  Binary installers may be available for a subset of these versions (see
+source.  We test NumPy against all these versions every time we merge code to
+master.  Binary installers may be available for a subset of these versions (see
 below).
 
 OS X
@@ -54,7 +54,7 @@ Windows
 -------
 
 We build 32- and 64-bit wheels for Python 2.7, 3.4, 3.5 on Windows. Windows
-XP, Vista, 7, 8 and 10 are supported.  We build numpy using the MSVC compilers
+XP, Vista, 7, 8 and 10 are supported.  We build NumPy using the MSVC compilers
 on Appveyor, but we are hoping to update to a `mingw-w64 toolchain
 <https://mingwpy.github.io>`_.  The Windows wheels use ATLAS for BLAS / LAPACK.
 
@@ -62,7 +62,7 @@ Linux
 -----
 
 We build and ship `manylinux1 <https://www.python.org/dev/peps/pep-0513>`_
-wheels for numpy.  Many Linux distributions include their own binary builds
+wheels for NumPy.  Many Linux distributions include their own binary builds
 of NumPy.
 
 BSD / Solaris
@@ -93,7 +93,7 @@ each platform. At the moment this means:
 * Manylinux1 wheels use the gcc provided on the Manylinux docker images.
 
 You will need Cython for building the binaries.  Cython compiles the ``.pyx``
-files in the numpy distribution to ``.c`` files.
+files in the NumPy distribution to ``.c`` files.
 
 Building source archives and wheels
 -----------------------------------
@@ -130,9 +130,9 @@ Uploading to PyPI
 Generating author/pr lists
 --------------------------
 
-You will need an personal access token
+You will need a personal access token
 `<https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/>`_
-so that scripts can access the github numpy repository
+so that scripts can access the github NumPy repository.
 
 * gitpython (pip)
 * pygithub (pip)
@@ -182,8 +182,8 @@ After a date is set, create a new maintenance/x.y.z branch, add new empty
 release notes for the next version in the master branch and update the Trac
 Milestones.
 
-Make sure current trunk builds a package correctly
---------------------------------------------------
+Make sure current branch builds a package correctly
+---------------------------------------------------
 ::
 
     git clean -fxd
@@ -191,7 +191,7 @@ Make sure current trunk builds a package correctly
     python setup.py sdist
 
 To actually build the binaries after everything is set up correctly, the
-release.sh script can be used. For details of the build process itself it is
+release.sh script can be used. For details of the build process itself, it is
 best to read the pavement.py script.
 
 .. note:: The following steps are repeated for the beta(s), release
@@ -233,7 +233,7 @@ There are three steps to the process.
 
 2. If the C_API_VERSION in the first step has changed, or if the hash of
    the API has changed, the cversions.txt file needs to be updated. To check
-   the hash, run the script numpy/core/cversions.py and note the api hash that
+   the hash, run the script numpy/core/cversions.py and note the API hash that
    is printed. If that hash does not match the last hash in
    numpy/core/code_generators/cversions.txt the hash has changed. Using both
    the appropriate C_API_VERSION and hash, add a new entry to cversions.txt.
@@ -244,7 +244,7 @@ There are three steps to the process.
    definitive.
 
    If steps 1 and 2 are done correctly, compiling the release should not give
-   a warning "API mismatch detect at the beginning of the build.
+   a warning "API mismatch detect at the beginning of the build".
 
 3. The numpy/core/include/numpy/numpyconfig.h will need a new
    NPY_X_Y_API_VERSION macro, where X and Y are the major and minor version
@@ -271,7 +271,7 @@ Mention at least the following:
   - outlook for the near future
 
 Also make sure that as soon as the branch is made, there is a new release
-notes file in trunk for the next release.
+notes file in the master branch for the next release.
 
 Update the release status and create a release "tag"
 ----------------------------------------------------
@@ -318,10 +318,10 @@ The ``-s`` flag makes a PGP (usually GPG) signed tag.  Please do sign the
 release tags.
 
 The release tag should have the release number in the annotation (tag
-message).  Unfortunately the name of a tag can be changed without breaking the
+message).  Unfortunately, the name of a tag can be changed without breaking the
 signature, the contents of the message cannot.
 
-See : https://github.com/scipy/scipy/issues/4919 for a discussion of signing
+See: https://github.com/scipy/scipy/issues/4919 for a discussion of signing
 release tags, and https://keyring.debian.org/creating-key.html for instructions
 on creating a GPG key if you do not have one.
 
@@ -479,9 +479,9 @@ Announce to the lists
 
 The release should be announced on the mailing lists of
 NumPy and SciPy, to python-announce, and possibly also those of
-Matplotlib,IPython and/or Pygame.
+Matplotlib, IPython and/or Pygame.
 
-During the beta/RC phase an explicit request for testing the binaries with
+During the beta/RC phase, an explicit request for testing the binaries with
 several other libraries (SciPy/Matplotlib/Pygame) should be posted on the
 mailing list.
 
@@ -497,5 +497,5 @@ After the final release is announced, a few administrative tasks are left to be
 done:
 
   - Forward port changes in the release branch to release notes and release
-    scripts, if any, to trunk.
+    scripts, if any, to master branch.
   - Update the Milestones in Trac.

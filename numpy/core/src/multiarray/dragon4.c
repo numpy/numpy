@@ -874,7 +874,7 @@ BigInt_Pow2(BigInt *result, npy_uint32 exponent)
     result->length = blockIdx + 1;
 
     bitIdx = (exponent % 32);
-    result->blocks[blockIdx] |= (1 << bitIdx);
+    result->blocks[blockIdx] |= ((npy_uint32)1 << bitIdx);
 }
 
 /*

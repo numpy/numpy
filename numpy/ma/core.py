@@ -3449,7 +3449,9 @@ class MaskedArray(ndarray):
 
         # We could try to force a reshape, but that wouldn't work in some
         # cases.
-        return self._mask
+        # Return a view so that the dtype and shape cannot be changed in place
+        # This still preserves nomask by identity
+        return self._mask.view()
 
     @mask.setter
     def mask(self, value):
@@ -5354,7 +5356,7 @@ class MaskedArray(ndarray):
             out.__setmask__(self._mask)
         return out
 
-    def argsort(self, axis=np._NoValue, kind='quicksort', order=None,
+    def argsort(self, axis=np._NoValue, kind=None, order=None,
                 endwith=True, fill_value=None):
         """
         Return an ndarray of indices that sort the array along the
@@ -5374,7 +5376,7 @@ class MaskedArray(ndarray):
                 Until then, the axis should be given explicitly when
                 ``arr.ndim > 1``, to avoid a FutureWarning.
         kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
-            Sorting algorithm.
+            The sorting algorithm used.
         order : list, optional
             When `a` is an array with fields defined, this argument specifies
             which fields to compare first, second, etc.  Not all fields need be
@@ -5516,7 +5518,7 @@ class MaskedArray(ndarray):
         d = self.filled(fill_value).view(ndarray)
         return d.argmax(axis, out=out)
 
-    def sort(self, axis=-1, kind='quicksort', order=None,
+    def sort(self, axis=-1, kind=None, order=None,
              endwith=True, fill_value=None):
         """
         Sort the array, in-place
@@ -5529,7 +5531,7 @@ class MaskedArray(ndarray):
             Axis along which to sort. If None, the array is flattened before
             sorting. The default is -1, which sorts along the last axis.
         kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
-            Sorting algorithm. Default is 'quicksort'.
+            The sorting algorithm used.
         order : list, optional
             When `a` is a structured array, this argument specifies which fields
             to compare first, second, and so on.  This list does not need to
@@ -5537,7 +5539,7 @@ class MaskedArray(ndarray):
         endwith : {True, False}, optional
             Whether missing values (if any) should be treated as the largest values
             (True) or the smallest values (False)
-            When the array contains unmasked values at the same extremes of the
+            When the array contains unmasked values sorting at the same extremes of the
             datatype, the ordering of these values and the masked values is
             undefined.
         fill_value : {var}, optional
@@ -5935,7 +5937,7 @@ class MaskedArray(ndarray):
         returns bytes not strings.
         """
 
-        return self.tobytes(fill_value, order='C')
+        return self.tobytes(fill_value, order=order)
 
     def tobytes(self, fill_value=None, order='C'):
         """
@@ -6734,7 +6736,7 @@ def power(a, b, third=None):
 argmin = _frommethod('argmin')
 argmax = _frommethod('argmax')
 
-def argsort(a, axis=np._NoValue, kind='quicksort', order=None, endwith=True, fill_value=None):
+def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True, fill_value=None):
     "Function version of the eponymous method."
     a = np.asanyarray(a)
 
@@ -6749,7 +6751,7 @@ def argsort(a, axis=np._NoValue, kind='quicksort', order=None, endwith=True, fil
         return a.argsort(axis=axis, kind=kind, order=order)
 argsort.__doc__ = MaskedArray.argsort.__doc__
 
-def sort(a, axis=-1, kind='quicksort', order=None, endwith=True, fill_value=None):
+def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None):
     "Function version of the eponymous method."
     a = np.array(a, copy=True, subok=True)
     if axis is None:

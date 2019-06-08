@@ -33,10 +33,30 @@ The internal use of these functions has been refactored and there are better
 alternatives. Relace ``exec_command`` with `subprocess.Popen` and
 ``temp_file_name`` with `tempfile.mkstemp`.
 
+Writeable flag of C-API wrapped arrays
+--------------------------------------
+When an array is created from the C-API to wrap a pointer to data, the only
+indication we have of the read-write nature of the data is the ``writeable``
+flag set during creation. It is dangerous to force the flag to writeable.
+In the future it will not be possible to switch the writeable flag to ``True``
+from python.
+This deprecation should not affect many users since arrays created in such
+a manner are very rare in practice and only available through the NumPy C-API.
+
 
 Future Changes
 ==============
 
+Shape-1 fields in dtypes won't be collapsed to scalars in a future version
+--------------------------------------------------------------------------
+
+Currently, a field specified as ``[(name, dtype, 1)]`` or ``"1type"`` is
+interpreted as a scalar field (i.e., the same as ``[(name, dtype)]`` or
+``[(name, dtype, ()]``). This now raises a FutureWarning; in a future version,
+it will be interpreted as a shape-(1,) field, i.e. the same as ``[(name,
+dtype, (1,))]`` or ``"(1,)type"`` (consistently with ``[(name, dtype, n)]``
+/ ``"ntype"`` with ``n>1``, which is already equivalent to ``[(name, dtype,
+(n,)]`` / ``"(n,)type"``).
 
 Expired deprecations
 ====================
@@ -66,6 +86,16 @@ zero::
    >>> np.zeros(10)//1
    array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
 
+``MaskedArray.mask`` now returns a view of the mask, not the mask itself
+------------------------------------------------------------------------
+Returning the mask itself was unsafe, as it could be reshaped in place which
+would violate expectations of the masked array code. It's behavior is now
+consistent with the ``.data`` attribute, which also returns a view.
+
+The underlying mask can still be accessed with ``._mask`` if it is needed.
+Tests that contain ``assert x.mask is not y.mask`` or similar will need to be
+updated.
+
 Do not lookup ``__buffer__`` attribute in `numpy.frombuffer`
 ------------------------------------------------------------
 Looking up ``__buffer__`` attribute in `numpy.frombuffer` was undocumented and
@@ -77,13 +107,71 @@ non-functional. This code was removed. If needed, use
 If the out argument to these functions is provided and has memory overlap with
 the other arguments, it is now buffered to avoid order-dependent behavior.
 
+Unpickling while loading requires explicit opt-in
+-------------------------------------------------
+The functions ``np.load``, and ``np.lib.format.read_array`` take an
+`allow_pickle` keyword which now defaults to ``False`` in response to
+`CVE-2019-6446 <https://nvd.nist.gov/vuln/detail/CVE-2019-6446>`_.
+
+Potential changes to the random stream
+--------------------------------------
+Due to bugs in the application of log to random floating point numbers,
+the stream may change when sampling from ``np.random.beta``, ``np.random.binomial``,
+``np.random.laplace``, ``np.random.logistic``, ``np.random.logseries`` or
+``np.random.multinomial`` if a 0 is generated in the underlying MT19937 random stream.
+There is a 1 in :math:`10^{53}` chance of this occurring, and so the probability that
+the stream changes for any given seed is extremely small. If a 0 is encountered in the
+underlying generator, then the incorrect value produced (either ``np.inf``
+or ``np.nan``) is now dropped.
 
 C API changes
 =============
 
+dimension or stride input arguments are now passed by ``npy_intp const*``
+-------------------------------------------------------------------------
+Previously these function arguments were declared as the more strict
+``npy_intp*``, which prevented the caller passing constant data.
+This change is backwards compatible, but now allows code like::
+
+    npy_intp const fixed_dims[] = {1, 2, 3};
+    // no longer complains that the const-qualifier is discarded
+    npy_intp size = PyArray_MultiplyList(fixed_dims, 3);
+
 
 New Features
 ============
+
+libFLAME
+--------
+Support for building NumPy with the libFLAME linear algebra package as the LAPACK,
+implementation, see
+`libFLAME <https://www.cs.utexas.edu/~flame/web/libFLAME.html>`_ for details.
+
+User-defined BLAS detection order
+---------------------------------
+``numpy.distutils`` now uses an environment variable, comma-separated and case
+insensitive, to determine the detection order for BLAS libraries.
+By default ``NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas``.
+However, to force the use of OpenBLAS simply do::
+
+   NPY_BLAS_ORDER=openblas python setup.py build
+
+which forces the use of OpenBLAS.
+This may be helpful for users which have a MKL installation but wishes to try
+out different implementations.
+
+User-defined LAPACK detection order
+-----------------------------------
+``numpy.distutils`` now uses an environment variable, comma-separated and case
+insensitive, to determine the detection order for LAPAK libraries.
+By default ``NPY_BLAS_ORDER=mkl,openblas,flame,atlas,accelerate,lapack``.
+However, to force the use of OpenBLAS simply do::
+
+   NPY_LAPACK_ORDER=openblas python setup.py build
+
+which forces the use of OpenBLAS.
+This may be helpful for users which have a MKL installation but wishes to try
+out different implementations.
 
 ``np.ufunc.reduce`` and related functions now accept a ``where`` mask
 ---------------------------------------------------------------------
@@ -105,6 +193,9 @@ random data.  The algorithm is stable and requires O(n/2) working space.  For
 details of the algorithm, refer to
 `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
 
+In addition, for very small dtypes, radix sort is used instead of timsort. In
+general, we attempt to use the fastest possible implementation.
+
 ``np.unpackbits`` now accepts a ``count`` parameter
 ---------------------------------------------------
 ``count`` allows subsetting the number of bits that will be unpacked up-front,
@@ -124,10 +215,54 @@ divmod operation is now supported for two ``timedelta64`` operands
 The divmod operator now handles two ``np.timedelta64`` operands, with
 type signature mm->qm.
 
+``np.fromfile`` now takes an ``offset`` argument
+------------------------------------------------
+This function now takes an ``offset`` keyword argument for binary files,
+which specifics the offset (in bytes) from the file's current position.
+Defaults to 0.
+
 New mode "empty" for ``np.pad``
 -------------------------------
 This mode pads an array to a desired shape without initializing the new
 entries.
+
+``np.empty_like`` and related functions now accept a ``shape`` argument
+-----------------------------------------------------------------------
+``np.empty_like``, ``np.full_like``, ``np.ones_like`` and ``np.zeros_like`` now
+accept a ``shape`` keyword argument, which can be used to create a new array
+as the prototype, overriding its shape as well. This is particularly useful
+when combined with the ``__array_function__`` protocol, allowing the creation
+of new arbitrary-shape arrays from NumPy-like libraries when such an array
+is used as the prototype.
+
+Floating point scalars implement ``as_integer_ratio`` to match the builtin float
+--------------------------------------------------------------------------------
+This returns a (numerator, denominator) pair, which can be used to construct a
+`fractions.Fraction`.
+
+structured ``dtype`` objects can be indexed with multiple fields names
+----------------------------------------------------------------------
+``arr.dtype[['a', 'b']]`` now returns a dtype that is equivalent to
+``arr[['a', 'b']].dtype``, for consistency with
+``arr.dtype['a'] == arr['a'].dtype``.
+
+Like the dtype of structured arrays indexed with a list of fields, this dtype
+has the same `itemsize` as the original, but only keeps a subset of the fields.
+
+This means that `arr[['a', 'b']]` and ``arr.view(arr.dtype[['a', 'b']])`` are
+equivalent.
+
+``.npy`` files support unicode field names
+------------------------------------------
+A new format version of 3.0 has been introduced, which enables structured types
+with non-latin1 field names. This is used automatically when needed.
+
+`numpy.packbits` and `numpy.unpackbits` accept an ``order`` keyword
+-------------------------------------------------------------------
+The ``order`` keyword defaults to ``big``, and will order the **bits**
+accordingly. For ``'big'`` 3 will become ``[0, 0, 0, 0, 0, 0, 1, 1]``, and
+``[1, 1, 0, 0, 0, 0, 0, 0]`` for ``little``
+
 
 Improvements
 ============
@@ -150,11 +285,19 @@ maintains `O(N log N)` run time complexity instead of deteriorating towards
 `O(N*N)` for prime lengths. Also, accuracy for real-valued FFTs with near-prime
 lengths has improved and is on par with complex-valued FFTs.
 
+Performance improvements for integer sorts
+------------------------------------------
+
+``sort``, ``argsort``, ``ndarray.sort`` and ``ndarray.argsort`` now use radix
+sort as the default stable sort for integers and booleans. This is faster than
+the old default, mergesort, in the vast majority of cases.
+
+
 Further improvements to ``ctypes`` support in ``np.ctypeslib``
 --------------------------------------------------------------
-A new ``np.ctypeslib.as_ctypes_type`` function has been added, which can be
+A new `numpy.ctypeslib.as_ctypes_type` function has been added, which can be
 used to converts a `dtype` into a best-guess `ctypes` type. Thanks to this
-new function, ``np.ctypeslib.as_ctypes`` now supports a much wider range of
+new function, `numpy.ctypeslib.as_ctypes` now supports a much wider range of
 array types, including structures, booleans, and integers of non-native
 endianness.
 
@@ -180,6 +323,12 @@ but with this change, you can do::
 
 thereby saving a level of indentation
 
+`numpy.exp and numpy.log` speed up for float32 implementation
+-------------------------------------------------------------
+float32 implementation of numpy.exp and numpy.log now benefit from AVX2/AVX512
+instruction set which are detected during runtime. numpy.exp has a max ulp
+error of 2.52 and numpy.log has a max ulp error or 3.83.
+
 Improve performance of ``np.pad``
 ---------------------------------
 The performance of the function has been improved for most cases by filling in
@@ -191,11 +340,53 @@ concatenation.
 In some cases where ``np.interp`` would previously return ``np.nan``, it now
 returns an appropriate infinity.
 
+Pathlib support for ``np.fromfile``, ``ndarray.tofile`` and ``ndarray.dump``
+----------------------------------------------------------------------------
+``np.fromfile``, ``np.ndarray.tofile`` and ``np.ndarray.dump`` now support
+the `pathlib.Path` type for the ``file``/``fid`` parameter.
+
 Specialized ``np.isnan``, ``np.isinf``, and ``np.isfinite`` ufuncs for bool and int types
 -----------------------------------------------------------------------------------------
-The boolean and integer types are incapable of storing ``np.nan`` and ``np.inf`` values,
-which allows us to provide specialized ufuncs that are up to 250x faster than the current
-approach.
+The boolean and integer types are incapable of storing ``np.nan`` and
+``np.inf`` values, which allows us to provide specialized ufuncs that are up to
+250x faster than the current approach.
+
+``np.isfinite`` supports ``datetime64`` and ``timedelta64`` types
+-----------------------------------------------------------------
+Previously, `np.isfinite` used to raise a ``TypeError`` on being used on these
+two types.
+
+New keywords added to ``np.nan_to_num``
+---------------------------------------
+``np.nan_to_num`` now accepts keywords ``nan``, ``posinf`` and ``neginf``
+allowing the user to define the value to replace the ``nan``, positive and
+negative ``np.inf`` values respectively.
+
+MemoryErrors caused by allocated overly large arrays are more descriptive
+-------------------------------------------------------------------------
+Often the cause of a MemoryError is incorrect broadcasting, which results in a
+very large and incorrect shape. The message of the error now includes this
+shape to help diagnose the cause of failure.
+
+`floor`, `ceil`, and `trunc` now respect builtin magic methods
+--------------------------------------------------------------
+These ufuncs now call the ``__floor__``, ``__ceil__``, and ``__trunc__``
+methods when called on object arrays, making them compatible with
+`decimal.Decimal` and `fractions.Fraction` objects.
+
+`quantile` now works on `fraction.Fraction` and `decimal.Decimal` objects
+-------------------------------------------------------------------------
+In general, this handles object arrays more gracefully, and avoids floating-
+point operations if exact arithmetic types are used.
+
+Support of object arrays in ``np.matmul``
+-----------------------------------------
+It is now possible to use ``np.matmul`` (or the ``@`` operator) with object arrays.
+For instance, it is now possible to do::
+
+    from fractions import Fraction
+    a = np.array([[Fraction(1, 2), Fraction(1, 3)], [Fraction(1, 3), Fraction(1, 2)]])
+    b = a @ a
 
 
 Changes
@@ -219,8 +410,46 @@ of NumPy functions on non-NumPy arrays, as described in `NEP 18`_. The feature
 was available for testing with NumPy 1.16 if appropriate environment variables
 are set, but is now always enabled.
 
+`numpy.lib.recfunctions.structured_to_unstructured` does not squeeze single-field views
+---------------------------------------------------------------------------------------
+Previously ``structured_to_unstructured(arr[['a']])`` would produce a squeezed
+result inconsistent with ``structured_to_unstructured(arr[['a', b']])``. This
+was accidental. The old behavior can be retained with
+``structured_to_unstructured(arr[['a']]).squeeze(axis=-1)`` or far more simply,
+``arr['a']``.
+
+``clip`` now uses a ufunc under the hood
+----------------------------------------
+This means that registering clip functions for custom dtypes in C via
+`descr->f->fastclip` is deprecated - they should use the ufunc registration
+mechanism instead, attaching to the ``np.core.umath.clip`` ufunc.
+
+It also means that ``clip`` accepts ``where`` and ``casting`` arguments,
+and can be override with ``__array_ufunc__``.
+
+A consequence of this change is that some behaviors of the old ``clip`` have
+been deprecated:
+
+* Passing ``nan`` to mean "do not clip" as one or both bounds. This didn't work
+  in all cases anyway, and can be better handled by passing infinities of the
+  appropriate sign.
+* Using "unsafe" casting by default when an ``out`` argument is passed. Using
+  ``casting="unsafe"`` explicitly will silence this warning.
+
+Additionally, there are some corner cases with behavior changes:
+
+* Padding ``max < min`` has changed to be more consistent across dtypes, but
+  should not be relied upon.
+* Scalar ``min`` and ``max`` take part in promotion rules like they do in all
+  other ufuncs.
+
 ``__array_interface__`` offset now works as documented
 ------------------------------------------------------
 The interface may use an ``offset`` value that was mistakenly ignored.
+
+Structured arrays indexed with non-existent fields raise ``KeyError`` not ``ValueError``
+----------------------------------------------------------------------------------------
+``arr['bad_field']`` on a structured type raises ``KeyError``, for consistency
+with ``dict['bad_field']``.
 
 .. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html

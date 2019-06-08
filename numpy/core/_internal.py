@@ -8,14 +8,16 @@ from __future__ import division, absolute_import, print_function
 
 import re
 import sys
+import platform
 
 from numpy.compat import unicode
-from numpy.core.overrides import set_module
 from .multiarray import dtype, array, ndarray
 try:
     import ctypes
 except ImportError:
     ctypes = None
+
+IS_PYPY = platform.python_implementation() == 'PyPy'
 
 if (sys.byteorder == 'little'):
     _nbo = b'<'
@@ -795,29 +797,6 @@ def _gcd(a, b):
 def _lcm(a, b):
     return a // _gcd(a, b) * b
 
-# Exception used in shares_memory()
-@set_module('numpy')
-class TooHardError(RuntimeError):
-    pass
-
-@set_module('numpy')
-class AxisError(ValueError, IndexError):
-    """ Axis supplied was invalid. """
-    def __init__(self, axis, ndim=None, msg_prefix=None):
-        # single-argument form just delegates to base class
-        if ndim is None and msg_prefix is None:
-            msg = axis
-
-        # do the string formatting here, to save work in the C code
-        else:
-            msg = ("axis {} is out of bounds for array of dimension {}"
-                   .format(axis, ndim))
-            if msg_prefix is not None:
-                msg = "{}: {}".format(msg_prefix, msg)
-
-        super(AxisError, self).__init__(msg)
-
-
 def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     """ Format the error message for when __array_ufunc__ gives up. """
     args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
@@ -889,7 +868,12 @@ def npy_ctypes_check(cls):
     try:
         # ctypes class are new-style, so have an __mro__. This probably fails
         # for ctypes classes with multiple inheritance.
-        ctype_base = cls.__mro__[-2]
+        if IS_PYPY:
+            # (..., _ctypes.basics._CData, Bufferable, object)
+            ctype_base = cls.__mro__[-3]
+        else:
+            # # (..., _ctypes._CData, object)
+            ctype_base = cls.__mro__[-2]
         # right now, they're part of the _ctypes module
         return 'ctypes' in ctype_base.__module__
     except Exception:

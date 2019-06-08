@@ -301,8 +301,7 @@ def legfromroots(roots):
 
     See Also
     --------
-    polyfromroots, chebfromroots, lagfromroots, hermfromroots,
-    hermefromroots.
+    polyfromroots, chebfromroots, lagfromroots, hermfromroots, hermefromroots
 
     Examples
     --------
@@ -1222,7 +1221,7 @@ def legvander2d(x, y, deg):
 
     See Also
     --------
-    legvander, legvander3d. legval2d, legval3d
+    legvander, legvander3d, legval2d, legval3d
 
     Notes
     -----
@@ -1276,7 +1275,7 @@ def legvander3d(x, y, z, deg):
 
     See Also
     --------
-    legvander, legvander3d. legval2d, legval3d
+    legvander, legvander3d, legval2d, legval3d
 
     Notes
     -----
@@ -1505,7 +1504,8 @@ def legroots(c):
     if len(c) == 2:
         return np.array([-c[0]/c[1]])
 
-    m = legcompanion(c)
+    # rotated companion matrix reduces error
+    m = legcompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r

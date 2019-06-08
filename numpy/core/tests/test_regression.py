@@ -98,7 +98,7 @@ class TestRegression(object):
             f = BytesIO()
             pickle.dump(ca, f, protocol=proto)
             f.seek(0)
-            ca = np.load(f)
+            ca = np.load(f, allow_pickle=True)
             f.close()
 
     def test_noncontiguous_fill(self):
@@ -2448,3 +2448,29 @@ class TestRegression(object):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             dumped = pickle.dumps(arr, protocol=proto)
             assert_equal(pickle.loads(dumped), arr)
+
+    def test_bad_array_interface(self):
+        class T(object):
+            __array_interface__ = {}
+
+        np.array([T()])
+
+    def test_2d__array__shape(self):
+        class T(object):
+            def __array__(self):
+                return np.ndarray(shape=(0,0))
+
+            # Make sure __array__ is used instead of Sequence methods.
+            def __iter__(self):
+                return iter([])
+
+            def __getitem__(self, idx):
+                raise AssertionError("__getitem__ was called")
+
+            def __len__(self):
+                return 0
+
+
+        t = T()
+        #gh-13659, would raise in broadcasting [x=t for x in result]
+        np.array([t])

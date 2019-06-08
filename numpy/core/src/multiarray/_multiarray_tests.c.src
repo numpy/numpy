@@ -847,6 +847,29 @@ get_buffer_info(PyObject *NPY_UNUSED(self), PyObject *args)
 
 #undef GET_PYBUF_FLAG
 
+/*
+ * Return a new array object wrapping existing C-allocated (dummy) data.
+ * Such an array does not own its data (must not free it), but because it
+ * wraps C data, it also has no base object. Used to test arr.flags.writeable
+ * setting behaviour.
+ */
+static PyObject*
+get_c_wrapping_array(PyObject* NPY_UNUSED(self), PyObject* arg)
+{
+    int writeable, flags;
+    npy_intp zero = 0;
+
+    writeable = PyObject_IsTrue(arg);
+    if (error_converting(writeable)) {
+        return NULL;
+    }
+
+    flags = writeable ? NPY_ARRAY_WRITEABLE : 0;
+    /* Create an empty array (which points to a random place) */
+    return PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(NPY_INTP),
+                                1, &zero, NULL, &zero, flags, NULL);
+}
+
 
 /*
  * Test C-api level item getting.
@@ -1932,6 +1955,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_buffer_info",
         get_buffer_info,
         METH_VARARGS, NULL},
+    {"get_c_wrapping_array",
+        get_c_wrapping_array,
+        METH_O, NULL},
     {"array_indexing",
         array_indexing,
         METH_VARARGS, NULL},

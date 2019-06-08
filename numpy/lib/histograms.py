@@ -148,7 +148,8 @@ def _hist_bin_stone(x, range):
     nbins_upper_bound = max(100, int(np.sqrt(n)))
     nbins = min(_range(1, nbins_upper_bound + 1), key=jhat)
     if nbins == nbins_upper_bound:
-        warnings.warn("The number of bins estimated may be suboptimal.", RuntimeWarning, stacklevel=2)
+        warnings.warn("The number of bins estimated may be suboptimal.",
+                      RuntimeWarning, stacklevel=3)
     return ptp_x / nbins
 
 
@@ -279,7 +280,7 @@ def _ravel_and_check_weights(a, weights):
     if a.dtype == np.bool_:
         warnings.warn("Converting input from {} to {} for compatibility."
                       .format(a.dtype, np.uint8),
-                      RuntimeWarning, stacklevel=2)
+                      RuntimeWarning, stacklevel=3)
         a = a.astype(np.uint8)
 
     if weights is not None:
@@ -555,14 +556,14 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     using the `ptp` of the data. The final bin count is obtained from
     ``np.round(np.ceil(range / h))``.
 
-    'Auto' (maximum of the 'Sturges' and 'FD' estimators)
+    'auto' (maximum of the 'sturges' and 'fd' estimators)
         A compromise to get a good value. For small datasets the Sturges
         value will usually be chosen, while larger datasets will usually
         default to FD.  Avoids the overly conservative behaviour of FD
         and Sturges for small and large datasets respectively.
         Switchover point is usually :math:`a.size \approx 1000`.
 
-    'FD' (Freedman Diaconis Estimator)
+    'fd' (Freedman Diaconis Estimator)
         .. math:: h = 2 \frac{IQR}{n^{1/3}}
 
         The binwidth is proportional to the interquartile range (IQR)
@@ -570,7 +571,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         conservative for small datasets, but is quite good for large
         datasets. The IQR is very robust to outliers.
 
-    'Scott'
+    'scott'
         .. math:: h = \sigma \sqrt[3]{\frac{24 * \sqrt{\pi}}{n}}
 
         The binwidth is proportional to the standard deviation of the
@@ -580,14 +581,14 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         outliers. Values are very similar to the Freedman-Diaconis
         estimator in the absence of outliers.
 
-    'Rice'
+    'rice'
         .. math:: n_h = 2n^{1/3}
 
         The number of bins is only proportional to cube root of
         ``a.size``. It tends to overestimate the number of bins and it
         does not take into account data variability.
 
-    'Sturges'
+    'sturges'
         .. math:: n_h = \log _{2}n+1
 
         The number of bins is the base 2 log of ``a.size``.  This
@@ -595,7 +596,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         larger, non-normal datasets. This is the default method in R's
         ``hist`` method.
 
-    'Doane'
+    'doane'
         .. math:: n_h = 1 + \log_{2}(n) +
                         \log_{2}(1 + \frac{|g_1|}{\sigma_{g_1}})
 
@@ -607,7 +608,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         estimates for non-normal datasets. This estimator attempts to
         account for the skew of the data.
 
-    'Sqrt'
+    'sqrt'
         .. math:: n_h = \sqrt n
 
         The simplest and fastest estimator. Only takes into account the
@@ -888,7 +889,7 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
             warnings.warn(
                     "The normed argument is ignored when density is provided. "
                     "In future passing both will result in an error.",
-                    DeprecationWarning, stacklevel=2)
+                    DeprecationWarning, stacklevel=3)
         normed = None
 
     if density:
@@ -904,7 +905,7 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
                 "density=True will produce the same result anyway. "
                 "The argument will be removed in a future version of "
                 "numpy.",
-                np.VisibleDeprecationWarning, stacklevel=2)
+                np.VisibleDeprecationWarning, stacklevel=3)
 
         # this normalization is incorrect, but
         db = np.array(np.diff(bin_edges), float)
@@ -915,7 +916,7 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
             warnings.warn(
                     "Passing normed=False is deprecated, and has no effect. "
                     "Consider passing the density argument instead.",
-                    DeprecationWarning, stacklevel=2)
+                    DeprecationWarning, stacklevel=3)
         return n, bin_edges
 
 

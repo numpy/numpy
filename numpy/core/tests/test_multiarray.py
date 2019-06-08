@@ -23,6 +23,14 @@ from contextlib import contextmanager
 
 from numpy.compat import pickle
 
+try:
+    import pathlib
+except ImportError:
+    try:
+        import pathlib2 as pathlib
+    except ImportError:
+        pathlib = None
+
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -36,7 +44,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
-    temppath, suppress_warnings
+    temppath, suppress_warnings, break_cycles,
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
@@ -131,6 +139,7 @@ class TestFlags(object):
         assert_(vals.flags.writeable)
 
     @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 2 always copies")
+    @pytest.mark.skipif(IS_PYPY, reason="PyPy always copies")
     def test_writeable_pickle(self):
         import pickle
         # Small arrays will be copied without setting base.
@@ -141,6 +150,47 @@ class TestFlags(object):
             vals = pickle.loads(pickle.dumps(a, v))
             assert_(vals.flags.writeable)
             assert_(isinstance(vals.base, bytes))
+
+    def test_writeable_from_c_data(self):
+        # Test that the writeable flag can be changed for an array wrapping
+        # low level C-data, but not owning its data.
+        # Also see that this is deprecated to change from python.
+        from numpy.core._multiarray_tests import get_c_wrapping_array
+
+        arr_writeable = get_c_wrapping_array(True)
+        assert not arr_writeable.flags.owndata
+        assert arr_writeable.flags.writeable
+        view = arr_writeable[...]
+
+        # Toggling the writeable flag works on the view:
+        view.flags.writeable = False
+        assert not view.flags.writeable
+        view.flags.writeable = True
+        assert view.flags.writeable
+        # Flag can be unset on the arr_writeable:
+        arr_writeable.flags.writeable = False
+
+        arr_readonly = get_c_wrapping_array(False)
+        assert not arr_readonly.flags.owndata
+        assert not arr_readonly.flags.writeable
+
+        for arr in [arr_writeable, arr_readonly]:
+            view = arr[...]
+            view.flags.writeable = False  # make sure it is readonly
+            arr.flags.writeable = False
+            assert not arr.flags.writeable
+
+            with assert_raises(ValueError):
+                view.flags.writeable = True
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", DeprecationWarning)
+                with assert_raises(DeprecationWarning):
+                    arr.flags.writeable = True
+
+            with assert_warns(DeprecationWarning):
+                arr.flags.writeable = True
+
 
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
@@ -877,6 +927,29 @@ class TestCreation(object):
         assert_equal(np.array([long(4), 2**80, long(4)]).dtype, object)
         assert_equal(np.array([2**80, long(4)]).dtype, object)
 
+    def test_sequence_of_array_like(self):
+        class ArrayLike:
+            def __init__(self):
+                self.__array_interface__ = {
+                    "shape": (42,),
+                    "typestr": "<i1",
+                    "data": bytes(42)
+                }
+
+            # Make sure __array_*__ is used instead of Sequence methods.
+            def __iter__(self):
+                raise AssertionError("__iter__ was called")
+
+            def __getitem__(self, idx):
+                raise AssertionError("__getitem__ was called")
+
+            def __len__(self):
+                return 42
+
+        assert_equal(
+            np.array([ArrayLike()]),
+            np.zeros((1, 42), dtype=np.byte))
+
     def test_non_sequence_sequence(self):
         """Should not segfault.
 
@@ -1423,6 +1496,10 @@ class TestZeroSizeFlexible(object):
             # viewing as any non-empty type gives an empty result
             assert_equal(zs.view((dt, 1)).shape, (0,))
 
+    def test_dumps(self):
+        zs = self._zeros(10, int)
+        assert_equal(zs, pickle.loads(zs.dumps()))
+
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             for dt in [bytes, np.void, unicode]:
@@ -1615,16 +1692,31 @@ class TestMethods(object):
         # of sorted items must be greater than ~50 to check the actual
         # algorithm because quick and merge sort fall over to insertion
         # sort for small arrays.
-        a = np.arange(101)
-        b = a[::-1].copy()
-        for kind in self.sort_kinds:
-            msg = "scalar sort, kind=%s" % kind
-            c = a.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
-            c = b.copy()
-            c.sort(kind=kind)
-            assert_equal(c, a, msg)
+        # Test unsigned dtypes and nonnegative numbers
+        for dtype in [np.uint8, np.uint16, np.uint32, np.uint64, np.float16, np.float32, np.float64, np.longdouble]:
+            a = np.arange(101, dtype=dtype)
+            b = a[::-1].copy()
+            for kind in self.sort_kinds:
+                msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
+                c = a.copy()
+                c.sort(kind=kind)
+                assert_equal(c, a, msg)
+                c = b.copy()
+                c.sort(kind=kind)
+                assert_equal(c, a, msg)
+
+        # Test signed dtypes and negative numbers as well
+        for dtype in [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64, np.longdouble]:
+            a = np.arange(-50, 51, dtype=dtype)
+            b = a[::-1].copy()
+            for kind in self.sort_kinds:
+                msg = "scalar sort, kind=%s, dtype=%s" % (kind, dtype)
+                c = a.copy()
+                c.sort(kind=kind)
+                assert_equal(c, a, msg)
+                c = b.copy()
+                c.sort(kind=kind)
+                assert_equal(c, a, msg)
 
         # test complex sorts. These use the same code as the scalars
         # but the compare function differs.
@@ -1880,12 +1972,14 @@ class TestMethods(object):
         # of sorted items must be greater than ~50 to check the actual
         # algorithm because quick and merge sort fall over to insertion
         # sort for small arrays.
-        a = np.arange(101)
-        b = a[::-1].copy()
-        for kind in self.sort_kinds:
-            msg = "scalar argsort, kind=%s" % kind
-            assert_equal(a.copy().argsort(kind=kind), a, msg)
-            assert_equal(b.copy().argsort(kind=kind), b, msg)
+
+        for dtype in [np.int32, np.uint32, np.float32]:
+            a = np.arange(101, dtype=dtype)
+            b = a[::-1].copy()
+            for kind in self.sort_kinds:
+                msg = "scalar argsort, kind=%s, dtype=%s" % (kind, dtype)
+                assert_equal(a.copy().argsort(kind=kind), a, msg)
+                assert_equal(b.copy().argsort(kind=kind), b, msg)
 
         # test complex argsorts. These use the same code as the scalars
         # but the compare function differs.
@@ -3684,17 +3778,6 @@ class TestSubscripting(object):
 
 
 class TestPickling(object):
-    def test_highest_available_pickle_protocol(self):
-        try:
-            import pickle5
-        except ImportError:
-            pickle5 = None
-
-        if sys.version_info[:2] >= (3, 8) or pickle5 is not None:
-            assert pickle.HIGHEST_PROTOCOL >= 5
-        else:
-            assert pickle.HIGHEST_PROTOCOL < 5
-
     @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL >= 5,
                         reason=('this tests the error messages when trying to'
                                 'protocol 5 although it is not available'))
@@ -3783,7 +3866,7 @@ class TestPickling(object):
                         a, pickle.loads(pickle.dumps(a, protocol=proto)),
                         err_msg="%r" % a)
             del a, DATA, carray
-            gc.collect()
+            break_cycles()
             # check for reference leaks (gh-12793)
             for ref in refs:
                 assert ref() is None
@@ -4269,7 +4352,11 @@ class TestClip(object):
 
                 x = (np.random.random(1000) * array_max).astype(dtype)
                 if inplace:
-                    x.clip(clip_min, clip_max, x)
+                    # The tests that call us pass clip_min and clip_max that
+                    # might not fit in the destination dtype. They were written
+                    # assuming the previous unsafe casting, which now must be
+                    # passed explicitly to avoid a warning.
+                    x.clip(clip_min, clip_max, x, casting='unsafe')
                 else:
                     x = x.clip(clip_min, clip_max)
                     byteorder = '='
@@ -4288,7 +4375,7 @@ class TestClip(object):
                 'float', 1024, 0, 0, inplace=inplace)
 
             self._clip_type(
-                'int', 1024, -120, 100.5, inplace=inplace)
+                'int', 1024, -120, 100, inplace=inplace)
             self._clip_type(
                 'int', 1024, 0, 0, inplace=inplace)
 
@@ -4560,6 +4647,20 @@ class TestIO(object):
         y = np.fromfile(self.filename, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
+    @pytest.mark.skipif(pathlib is None, reason="pathlib not found")
+    def test_roundtrip_pathlib(self):
+        p = pathlib.Path(self.filename)
+        self.x.tofile(p)
+        y = np.fromfile(p, dtype=self.dtype)
+        assert_array_equal(y, self.x.flat)
+
+    @pytest.mark.skipif(pathlib is None, reason="pathlib not found")
+    def test_roundtrip_dump_pathlib(self):
+        p = pathlib.Path(self.filename)
+        self.x.dump(p)
+        y = np.load(p, allow_pickle=True)
+        assert_array_equal(y, self.x)
+
     def test_roundtrip_binary_str(self):
         s = self.x.tobytes()
         y = np.frombuffer(s, dtype=self.dtype)
@@ -4691,6 +4792,36 @@ class TestIO(object):
 
         assert_raises_regex(ValueError, "Cannot read into object array",
                             np.fromfile, self.filename, dtype=object)
+
+    def test_fromfile_offset(self):
+        with open(self.filename, 'wb') as f:
+            self.x.tofile(f)
+
+        with open(self.filename, 'rb') as f:
+            y = np.fromfile(f, dtype=self.dtype, offset=0)
+            assert_array_equal(y, self.x.flat)
+
+        with open(self.filename, 'rb') as f:
+            count_items = len(self.x.flat) // 8
+            offset_items = len(self.x.flat) // 4
+            offset_bytes = self.dtype.itemsize * offset_items
+            y = np.fromfile(f, dtype=self.dtype, count=count_items, offset=offset_bytes)
+            assert_array_equal(y, self.x.flat[offset_items:offset_items+count_items])
+
+            # subsequent seeks should stack
+            offset_bytes = self.dtype.itemsize
+            z = np.fromfile(f, dtype=self.dtype, offset=offset_bytes)
+            assert_array_equal(z, self.x.flat[offset_items+count_items+1:])
+        
+        with open(self.filename, 'wb') as f:
+            self.x.tofile(f, sep=",")
+
+        with open(self.filename, 'rb') as f:
+            assert_raises_regex(
+                    TypeError,
+                    "'offset' argument only permitted for binary files",
+                    np.fromfile, self.filename, dtype=self.dtype,
+                    sep=",", offset=1)
 
     def _check_from(self, s, value, **kw):
         if 'sep' not in kw:
@@ -5734,7 +5865,7 @@ class MatmulCommon(object):
     """
     # Should work with these types. Will want to add
     # "O" at some point
-    types = "?bhilqBHILQefdgFDG"
+    types = "?bhilqBHILQefdgFDGO"
 
     def test_exceptions(self):
         dims = [
@@ -5785,8 +5916,9 @@ class MatmulCommon(object):
                 assert_(res.dtype == dt)
 
             # vector vector returns scalars
-            res = self.matmul(v, v)
-            assert_(type(res) is np.dtype(dt).type)
+            if dt != "O":
+                res = self.matmul(v, v)
+                assert_(type(res) is np.dtype(dt).type)
 
     def test_scalar_output(self):
         vec1 = np.array([2])
@@ -6037,7 +6169,52 @@ class TestMatmul(MatmulCommon):
 
         r3 = np.matmul(args[0].copy(), args[1].copy())
         assert_equal(r1, r3)
-        
+    
+    def test_matmul_object(self):
+        import fractions
+
+        f = np.vectorize(fractions.Fraction)
+        def random_ints():
+            return np.random.randint(1, 1000, size=(10, 3, 3))
+        M1 = f(random_ints(), random_ints()) 
+        M2 = f(random_ints(), random_ints())
+
+        M3 = self.matmul(M1, M2)
+
+        [N1, N2, N3] = [a.astype(float) for a in [M1, M2, M3]]
+
+        assert_allclose(N3, self.matmul(N1, N2))
+
+    def test_matmul_object_type_scalar(self):
+        from fractions import Fraction as F
+        v = np.array([F(2,3), F(5,7)])
+        res = self.matmul(v, v)
+        assert_(type(res) is F)
+
+    def test_matmul_empty(self):
+        a = np.empty((3, 0), dtype=object)
+        b = np.empty((0, 3), dtype=object)
+        c = np.zeros((3, 3))
+        assert_array_equal(np.matmul(a, b), c)
+
+    def test_matmul_exception_multiply(self):
+        # test that matmul fails if `__mul__` is missing
+        class add_not_multiply():
+            def __add__(self, other):
+                return self
+        a = np.full((3,3), add_not_multiply())
+        with assert_raises(TypeError):
+            b = np.matmul(a, a)
+
+    def test_matmul_exception_add(self):
+        # test that matmul fails if `__add__` is missing
+        class multiply_not_add():
+            def __mul__(self, other):
+                return self
+        a = np.full((3,3), multiply_not_add())
+        with assert_raises(TypeError):
+            b = np.matmul(a, a)
+
 
 
 if sys.version_info[:2] >= (3, 5):
@@ -7180,7 +7357,7 @@ class TestMemEventHook(object):
         # needs to be larger then limit of small memory cacher in ctors.c
         a = np.zeros(1000)
         del a
-        gc.collect()
+        break_cycles()
         _multiarray_tests.test_pydatamem_seteventhook_end()
 
 class TestMapIter(object):
@@ -7752,12 +7929,12 @@ class TestCTypes(object):
 
         # `ctypes_ptr` should hold onto `arr`
         del arr
-        gc.collect()
+        break_cycles()
         assert_(arr_ref() is not None, "ctypes pointer did not hold onto a reference")
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
-        gc.collect()
+        break_cycles()
         assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
 
 
@@ -7774,13 +7951,6 @@ class TestWritebackIfCopy(object):
         out = np.empty(5, dtype='i2')
         res = np.argmin(mat, 0, out=out)
         assert_equal(res, range(5))
-
-    def test_clip_with_out(self):
-        mat = np.eye(5)
-        out = np.eye(5, dtype='i2')
-        res = np.clip(mat, a_min=-10, a_max=0, out=out)
-        assert_(res is out)
-        assert_equal(np.sum(out), 0)
 
     def test_insert_noncontiguous(self):
         a = np.arange(6).reshape(2,3).T # force non-c-contiguous
@@ -7939,15 +8109,15 @@ class TestArrayFinalize(object):
         assert_(isinstance(obj_subarray, RaisesInFinalize))
 
         # reference should still be held by obj_arr
-        gc.collect()
+        break_cycles()
         assert_(obj_ref() is not None, "object should not already be dead")
 
         del obj_arr
-        gc.collect()
+        break_cycles()
         assert_(obj_ref() is not None, "obj_arr should not hold the last reference")
 
         del obj_subarray
-        gc.collect()
+        break_cycles()
         assert_(obj_ref() is None, "no references should remain")
 
 

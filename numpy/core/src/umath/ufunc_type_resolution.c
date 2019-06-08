@@ -74,18 +74,28 @@ npy_casting_to_string(NPY_CASTING casting)
  */
 static int
 raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
-    PyObject *errmsg;
-    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
-    errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
-                        "with types ", ufunc_name);
-    PyUString_ConcatAndDel(&errmsg,
-            PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
-    PyUString_ConcatAndDel(&errmsg,
-            PyUString_FromString(" and "));
-    PyUString_ConcatAndDel(&errmsg,
-            PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
-    PyErr_SetObject(PyExc_TypeError, errmsg);
-    Py_DECREF(errmsg);
+    static PyObject *exc_type = NULL;
+    PyObject *exc_value;
+
+    npy_cache_import(
+        "numpy.core._exceptions", "_UFuncBinaryResolutionError",
+        &exc_type);
+    if (exc_type == NULL) {
+        return -1;
+    }
+
+    /* produce an error object */
+    exc_value = Py_BuildValue(
+        "O(OO)", ufunc,
+        (PyObject *)PyArray_DESCR(operands[0]),
+        (PyObject *)PyArray_DESCR(operands[1])
+    );
+    if (exc_value == NULL){
+        return -1;
+    }
+    PyErr_SetObject(exc_type, exc_value);
+    Py_DECREF(exc_value);
+
     return -1;
 }
 
@@ -94,7 +104,7 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
  */
 static int
 raise_no_loop_found_error(
-        PyUFuncObject *ufunc, PyArray_Descr **dtypes, npy_intp n_dtypes)
+        PyUFuncObject *ufunc, PyArray_Descr **dtypes)
 {
     static PyObject *exc_type = NULL;
     PyObject *exc_value;
@@ -109,11 +119,11 @@ raise_no_loop_found_error(
     }
 
     /* convert dtypes to a tuple */
-    dtypes_tup = PyTuple_New(n_dtypes);
+    dtypes_tup = PyTuple_New(ufunc->nargs);
     if (dtypes_tup == NULL) {
         return -1;
     }
-    for (i = 0; i < n_dtypes; ++i) {
+    for (i = 0; i < ufunc->nargs; ++i) {
         Py_INCREF(dtypes[i]);
         PyTuple_SET_ITEM(dtypes_tup, i, (PyObject *)dtypes[i]);
     }
@@ -610,6 +620,26 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
 
     return 0;
 }
+
+
+NPY_NO_EXPORT int
+PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
+                          NPY_CASTING casting,
+                          PyArrayObject **operands,
+                          PyObject *type_tup,
+                          PyArray_Descr **out_dtypes)
+{
+    if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                                    type_tup, out_dtypes);
+    }
+
+    out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+    out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
+
+    return 0;
+}
+
 
 /*
  * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
@@ -1452,7 +1482,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         types += nargs;
     }
 
-    return raise_no_loop_found_error(ufunc, dtypes, nargs);
+    return raise_no_loop_found_error(ufunc, dtypes);
 }
 
 typedef struct {
@@ -1717,7 +1747,7 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
         }
         /*
          * For outputs, copy the dtype from op[0] if the type_num
-         * matches, similarly to preserve metdata.
+         * matches, similarly to preserve metadata.
          */
         else if (i >= nin && op[0] != NULL &&
                             PyArray_DESCR(op[0])->type_num == type_nums[i]) {

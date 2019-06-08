@@ -203,14 +203,17 @@ PyArrayDescr_Type
           char kind;
           char type;
           char byteorder;
-          char unused;
-          int flags;
+          char flags;
           int type_num;
           int elsize;
           int alignment;
           PyArray_ArrayDescr *subarray;
           PyObject *fields;
+          PyObject *names;
           PyArray_ArrFuncs *f;
+          PyObject *metadata;
+          NpyAuxData *c_metadata;
+          npy_hash_t hash;
       } PyArray_Descr;
 
 .. c:member:: PyTypeObject *PyArray_Descr.typeobj
@@ -242,7 +245,7 @@ PyArrayDescr_Type
     endian), '=' (native), '\|' (irrelevant, ignore). All builtin data-
     types have byteorder '='.
 
-.. c:member:: int PyArray_Descr.flags
+.. c:member:: char PyArray_Descr.flags
 
     A data-type bit-flag that determines if the data-type exhibits object-
     array like behavior. Each bit in this member is a flag which are named
@@ -377,12 +380,31 @@ PyArrayDescr_Type
     normally a Python string. These tuples are placed in this
     dictionary keyed by name (and also title if given).
 
+.. c:member:: PyObject *PyArray_Descr.names
+
+    An ordered tuple of field names. It is NULL if no field is
+    defined.
+
 .. c:member:: PyArray_ArrFuncs *PyArray_Descr.f
 
     A pointer to a structure containing functions that the type needs
     to implement internal features. These functions are not the same
     thing as the universal functions (ufuncs) described later. Their
     signatures can vary arbitrarily.
+
+.. c:member:: PyObject *PyArray_Descr.metadata
+
+    Metadata about this dtype.
+
+.. c:member:: NpyAuxData *PyArray_Descr.c_metadata
+
+    Metadata specific to the C implementation
+    of the particular dtype. Added for NumPy 1.7.0.
+
+.. c:member:: Npy_hash_t *PyArray_Descr.hash
+
+    Currently unused. Reserved for future use in caching
+    hash values.
 
 .. c:type:: PyArray_ArrFuncs
 
@@ -508,20 +530,19 @@ PyArrayDescr_Type
         and ``is2`` *bytes*, respectively. This function requires
         behaved (though not necessarily contiguous) memory.
 
-    .. c:member:: int scanfunc(FILE* fd, void* ip , void* sep , void* arr)
+    .. c:member:: int scanfunc(FILE* fd, void* ip, void* arr)
 
         A pointer to a function that scans (scanf style) one element
         of the corresponding type from the file descriptor ``fd`` into
         the array memory pointed to by ``ip``. The array is assumed
-        to be behaved. If ``sep`` is not NULL, then a separator string
-        is also scanned from the file before returning. The last
-        argument ``arr`` is the array to be scanned into. A 0 is
-        returned if the scan is successful. A negative number
-        indicates something went wrong: -1 means the end of file was
-        reached before the separator string could be scanned, -4 means
-        that the end of file was reached before the element could be
-        scanned, and -3 means that the element could not be
-        interpreted from the format string. Requires a behaved array.
+        to be behaved. 
+        The last argument ``arr`` is the array to be scanned into.
+        Returns number of receiving arguments successfully assigned (which
+        may be zero in case a matching failure occurred before the first
+        receiving argument was assigned), or EOF if input failure occurs 
+        before the first receiving argument was assigned.
+        This function should be called without holding the Python GIL, and
+        has to grab it for error reporting.
 
     .. c:member:: int fromstr(char* str, void* ip, char** endptr, void* arr)
 
@@ -532,6 +553,8 @@ PyArrayDescr_Type
         string. The last argument ``arr`` is the array into which ip
         points (needed for variable-size data- types). Returns 0 on
         success or -1 on failure. Requires a behaved array.
+        This function should be called without holding the Python GIL, and
+        has to grab it for error reporting.
 
     .. c:member:: Bool nonzero(void* data, void* arr)
 

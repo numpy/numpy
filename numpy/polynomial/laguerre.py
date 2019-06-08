@@ -269,8 +269,7 @@ def lagfromroots(roots):
 
     See Also
     --------
-    polyfromroots, legfromroots, chebfromroots, hermfromroots,
-    hermefromroots.
+    polyfromroots, legfromroots, chebfromroots, hermfromroots, hermefromroots
 
     Examples
     --------
@@ -1186,7 +1185,7 @@ def lagvander2d(x, y, deg):
 
     See Also
     --------
-    lagvander, lagvander3d. lagval2d, lagval3d
+    lagvander, lagvander3d, lagval2d, lagval3d
 
     Notes
     -----
@@ -1240,7 +1239,7 @@ def lagvander3d(x, y, z, deg):
 
     See Also
     --------
-    lagvander, lagvander3d. lagval2d, lagval3d
+    lagvander, lagvander3d, lagval2d, lagval3d
 
     Notes
     -----
@@ -1475,7 +1474,8 @@ def lagroots(c):
     if len(c) == 2:
         return np.array([1 + c[0]/c[1]])
 
-    m = lagcompanion(c)
+    # rotated companion matrix reduces error
+    m = lagcompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r

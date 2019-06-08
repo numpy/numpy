@@ -149,7 +149,7 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
         PyObject *exc;
 
         if (AxisError_cls == NULL) {
-            PyObject *mod = PyImport_ImportModule("numpy.core._internal");
+            PyObject *mod = PyImport_ImportModule("numpy.core._exceptions");
 
             if (mod != NULL) {
                 AxisError_cls = PyObject_GetAttrString(mod, "AxisError");
