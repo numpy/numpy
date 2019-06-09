@@ -254,7 +254,7 @@ cdef class PCG64:
                        <uint64_t *>np.PyArray_DATA(_inc))
         self._reset_state_variables()
 
-    cdef jump_inplace(self, iter):
+    cdef jump_inplace(self, jumps):
         """
         Jump state in-place
 
@@ -262,7 +262,7 @@ cdef class PCG64:
 
         Parameters
         ----------
-        iter : integer, positive
+        jumps : integer, positive
             Number of times to jump the state of the rng.
 
         Notes
@@ -271,23 +271,20 @@ cdef class PCG64:
         golden number.
         """
         step = 0x9e3779b97f4a7c15f39cc0605cedc834
-        step *= int(iter)
-        divisor = step // 2**128
-        step -= 2**128 * divisor
-        self.advance(step)
+        self.advance(step * int(jumps))
 
-    def jumped(self, iter=1):
+    def jumped(self, jumps=1):
         """
-        jumped(iter=1)
+        jumped(jumps=1)
 
         Returns a new bit generator with the state jumped
 
-        Jumps the state as-if 210306068529402873165736369884012333108
+        Jumps the state as-if jumps * 210306068529402873165736369884012333108
         random numbers have been generated.
 
         Parameters
         ----------
-        iter : integer, positive
+        jumps : integer, positive
             Number of times to jump the state of the bit generator returned
 
         Returns
@@ -304,7 +301,7 @@ cdef class PCG64:
 
         bit_generator = self.__class__()
         bit_generator.state = self.state
-        bit_generator.jump_inplace(iter)
+        bit_generator.jump_inplace(jumps)
 
         return bit_generator
 

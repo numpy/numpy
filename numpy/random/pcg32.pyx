@@ -263,18 +263,18 @@ cdef class PCG32:
         step = int(0x9e3779b97f4a7c16)
         self.advance(iter * step)
 
-    def jumped(self, iter=1):
+    def jumped(self, jumps=1):
         """
-        jumped(iter=1)
+        jumped(jumps=1)
 
         Returns a new bit generator with the state jumped
 
-        Jumps the state as-if 11400714819323198486 random numbers
+        Jumps the state as-if 11400714819323198486 * jumps random numbers
         have been generated.
 
         Parameters
         ----------
-        iter : integer, positive
+        jumps : integer, positive
             Number of times to jump the state of the bit generator returned
 
         Returns
@@ -290,7 +290,7 @@ cdef class PCG32:
 
         bit_generator = self.__class__()
         bit_generator.state = self.state
-        bit_generator.jump_inplace(iter)
+        bit_generator.jump_inplace(jumps)
 
         return bit_generator
 
