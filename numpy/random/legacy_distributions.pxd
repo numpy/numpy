@@ -7,7 +7,7 @@ cimport numpy as np
 
 from .distributions cimport bitgen_t, binomial_t
 
-cdef extern from "distributions-boxmuller.h":
+cdef extern from "legacy-distributions.h":
 
     struct aug_bitgen:
         bitgen_t *bit_generator

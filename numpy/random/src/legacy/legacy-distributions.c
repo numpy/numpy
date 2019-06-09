@@ -1,4 +1,4 @@
-#include "distributions-boxmuller.h"
+#include "legacy-distributions.h"
 
 static NPY_INLINE double legacy_double(aug_bitgen_t *aug_state) {
   return aug_state->bit_generator->next_double(aug_state->bit_generator->state);
