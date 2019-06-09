@@ -141,7 +141,7 @@ def configuration(parent_package='', top_path=None):
                              )
     config.add_extension('mtrand',
                          sources=['mtrand.c',
-                                  'src/legacy/distributions-boxmuller.c',
+                                  'src/legacy/legacy-distributions.c',
                                   'src/distributions/distributions.c'],
                          include_dirs=['.', 'src', 'src/legacy'],
                          libraries=EXTRA_LIBRARIES,
