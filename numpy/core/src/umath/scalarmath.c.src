@@ -263,38 +263,40 @@ static void
 
 /**end repeat1**/
 
-#define @name@_ctype_lshift(arg1, arg2, out)           \
-    do {                                               \
-        if (NPY_LIKELY((arg2) < sizeof(@type@) * 8)) { \
-            *(out) = (arg1) << (arg2);                 \
-        }                                              \
-        else {                                         \
-            *(out) = 0;                                \
-        }                                              \
+/* Note: these need to be kept in sync with the shift ufuncs */
+
+#define @name@_ctype_lshift(arg1, arg2, out)                  \
+    do {                                                      \
+        if (NPY_LIKELY((arg2) < sizeof(@type@) * CHAR_BIT)) { \
+            *(out) = (arg1) << (arg2);                        \
+        }                                                     \
+        else {                                                \
+            *(out) = 0;                                       \
+        }                                                     \
     } while (0)
 
 #if @issigned@
-    #define @name@_ctype_rshift(arg1, arg2, out)           \
-        do {                                               \
-            if (NPY_LIKELY((arg2) < sizeof(@type@) * 8)) { \
-                *(out) = (arg1) >> (arg2);                 \
-            }                                              \
-            else if ((arg1) < 0) {                         \
-                *(out) = -1;                               \
-            }                                              \
-            else {                                         \
-                *(out) = 0;                                \
-            }                                              \
+    #define @name@_ctype_rshift(arg1, arg2, out)                  \
+        do {                                                      \
+            if (NPY_LIKELY((arg2) < sizeof(@type@) * CHAR_BIT)) { \
+                *(out) = (arg1) >> (arg2);                        \
+            }                                                     \
+            else if ((arg1) < 0) {                                \
+                *(out) = -1;                                      \
+            }                                                     \
+            else {                                                \
+                *(out) = 0;                                       \
+            }                                                     \
         } while (0)
 #else
-    #define @name@_ctype_rshift(arg1, arg2, out)           \
-        do {                                               \
-            if (NPY_LIKELY((arg2) < sizeof(@type@) * 8)) { \
-                *(out) = (arg1) >> (arg2);                 \
-            }                                              \
-            else {                                         \
-                *(out) = 0;                                \
-            }                                              \
+    #define @name@_ctype_rshift(arg1, arg2, out)                  \
+        do {                                                      \
+            if (NPY_LIKELY((arg2) < sizeof(@type@) * CHAR_BIT)) { \
+                *(out) = (arg1) >> (arg2);                        \
+            }                                                     \
+            else {                                                \
+                *(out) = 0;                                       \
+            }                                                     \
         } while (0)
 #endif
 
