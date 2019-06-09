@@ -420,15 +420,15 @@ are specified as ``@name@``
 6. "/\**end repeat**/ "on a line by itself marks the previous line
 as the last line of the block to be repeated.
 
-7. A loop in the NumPy C source code may have a ``@TYPE@`` variable, targeted for
-string substitution, which is preprocessed to a number of otherwise identical
-loops with several strings such as INT, LONG, UINT, ULONG. The ``@TYPE@`` style syntax
-thus reduces code duplication and maintenance burden by mimicking languages that
-have generic type support.
+7. A loop in the NumPy C source code may have a ``@TYPE@`` variable, targeted
+for string substitution, which is preprocessed to a number of otherwise
+identical loops with several strings such as INT, LONG, UINT, ULONG. The
+``@TYPE@`` style syntax thus reduces code duplication and maintenance burden by
+mimicking languages that have generic type support.
 
-The above rules may be clearer in the following template source example::
+The above rules may be clearer in the following template source example:
 
-.. code-block:: C
+.. code-block:: NumPyC
    :linenos:
    :emphasize-lines: 3, 13, 29, 31
 

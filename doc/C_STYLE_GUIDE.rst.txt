@@ -10,9 +10,6 @@ to achieve uniformity. Because the NumPy conventions are very close to
 those in PEP-0007, that PEP is used as a template below with the NumPy
 additions and variations in the appropriate spots.
 
-NumPy modified PEP-0007
-=======================
-
 Introduction
 ------------
 
