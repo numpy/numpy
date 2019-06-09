@@ -24,6 +24,7 @@
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"
 #include "common.h"
+#include "convert_datatype.h"
 
 #include "mem_overlap.h"
 #if defined(HAVE_CBLAS)
@@ -529,15 +530,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
             out_dtypes[0] = ensure_dtype_nbo(op_dtypes[0]);
         }
         else {
-            // TODO: SHOULD USE PromoteTypeSequence, but crashes for me
-            //       for no apparent reason (runs fine in valgrind even)...
-            // out_dtypes[0] = PyArray_PromoteTypeSequence(op_dtypes, ufunc->nin);
-            if (ufunc->nin == 2) {
-                out_dtypes[0] = PyArray_PromoteTypes(op_dtypes[0], op_dtypes[1]);
-            }
-            else {
-                out_dtypes[0] = PyArray_ResultType(0, NULL, ufunc->nin, op_dtypes);
-            }
+            out_dtypes[0] = PyArray_PromoteTypeSequence(op_dtypes, ufunc->nin);
         }
         if (out_dtypes[0] == NULL) {
             return -1;

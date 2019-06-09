@@ -47,4 +47,7 @@ type_num_unsigned_to_signed(int type_num);
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_MinScalarType_internal(PyArrayObject *arr, int *is_small_unsigned);
 
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_PromoteTypeSequence(PyArray_Descr **types, npy_intp ntypes);
+
 #endif
