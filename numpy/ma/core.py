@@ -637,11 +637,14 @@ def filled(a, fill_value=None):
     """
     if hasattr(a, 'filled'):
         # NumPy 1.17.0, gh-4363
-        warnings.warn(
-            "Non-scalar arrays for fill values are deprecated. Use "
-            "arrays with scalar values instead",
-            DeprecationWarning, stacklevel=2)
-        return a.filled(fill_value)
+        if ((np.isscalar(fill_value) == True) or (fill_value == None) or (a.shape == fill_value.shape)):
+            return a.filled(fill_value)
+        else:
+            warnings.warn(
+                "Non-scalar arrays for fill values are deprecated. Use "
+                "arrays with scalar values instead",
+                DeprecationWarning, stacklevel=2)
+
     elif isinstance(a, ndarray):
         # Should we check for contiguity ? and a.flags['CONTIGUOUS']:
         return a
@@ -3732,7 +3735,13 @@ class MaskedArray(ndarray):
         if fill_value is None:
             fill_value = self.fill_value
         else:
-            fill_value = _check_fill_value(fill_value, self.dtype)
+            if ((np.isscalar(fill_value) == True) or (self.shape == fill_value.shape)):
+                fill_value = _check_fill_value(fill_value, self.dtype)
+            else:
+                warnings.warn(
+                    "Non-scalar arrays for fill values are deprecated. Use "
+                    "arrays with scalar values instead",
+                    DeprecationWarning, stacklevel=2)
 
         if self is masked_singleton:
             return np.asanyarray(fill_value)
