@@ -44,21 +44,21 @@ The included BitGenerators are:
 
 Summary:
 
-============== ==================== ================ ======== ======= 
+============== ==================== ================ ======= =======
 BitGenerator   period               jumped distance  speed relative
                                                      to MT19937 [1]_
--------------- -------------------- ---------------- ---------------- 
-                                                     linux64  win32
-============== ==================== ================ ======== ======= 
-``MT19937``                          :math:`2^{128}`  1x      1x      
-``dSFMT``                            :math:`2^{128}`  1.2x    1.3x    
-``Xoshiro256`` :math:`2^{256} - 1`  :math:`2^{128}`   1.6x    0.8x    
+-------------- -------------------- ---------------- ---------------
+\                                                    linux64 win32
+============== ==================== ================ ======= =======
+``MT19937``                         :math:`2^{128}`  1x      1x
+``dSFMT``                           :math:`2^{128}`  1.2x    1.3x
+``Xoshiro256`` :math:`2^{256} - 1`  :math:`2^{128}`  1.6x    0.8x
 ``Xoshiro512`` :math:`2^{1024} - 1` :math:`2^{512}`
-``ThreeFry``   :math:`2^{256} - 1`  :math:`2^{128}`   0.6x    0.3x    
-``PHilox``     :math:`2^{256} - 1`  :math:`2^{128}`   0.9x    0.3x    
-``PCG32``      :math:`2^{64}`       :math:`2^{32}`                    
-``PCG64``      :math:`2^{128}`      :math:`2^{64}`    1.4x    0.3x    
-============== ==================== ================ ======== ======= 
+``ThreeFry``   :math:`2^{256} - 1`  :math:`2^{128}`  0.6x    0.3x
+``PHilox``     :math:`2^{256} - 1`  :math:`2^{128}`  0.9x    0.3x
+``PCG32``      :math:`2^{64}`       :math:`2^{32}`
+``PCG64``      :math:`2^{128}`      :math:`2^{64}`   1.4x    0.3x
+============== ==================== ================ ======= =======
 
 .. rubric:: Footnotes
 
@@ -74,7 +74,7 @@ The recommended generator for use in large-scale parallel applications is
 :class:`~.xoshiro512.Xoshiro512` where the `~.xoshiro512.Xoshiro512.jumped`
 method is used to advance the state. For very large scale applications --
 requiring 1,000+ independent streams, :class:`~pcg64.PCG64` or
-:class:`~.philox.Philox` are the best choices. 
+:class:`~.philox.Philox` are the best choices.
 
 
 Details
