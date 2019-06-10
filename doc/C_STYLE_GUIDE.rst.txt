@@ -28,10 +28,7 @@ Two good reasons to break a particular rule:
 C dialect
 ---------
 
-* Use ANSI/ISO standard C (the 1989 version of the standard).
-  This means, amongst many other things, that all declarations
-  must be at the top of a block (not necessarily at the top of
-  function).
+* Use C99 (that is, the standard defined by ISO/IEC 9899:1999).
 
 * Don't use GCC extensions (e.g. don't write multi-line strings
   without trailing backslashes). Preferably break long strings
@@ -45,9 +42,6 @@ C dialect
 
 * All function declarations and definitions must use full
   prototypes (i.e. specify the types of all arguments).
-
-* Do not use C++ style // one line comments, they aren't portable.
-  Note: this will change with the proposed transition to C++.
 
 * No compiler warnings with major compilers (gcc, VC++, a few others).
   Note: NumPy still produces compiler warnings that need to be addressed.
@@ -176,12 +170,12 @@ Code lay-out
 
   Trailing comments should be used sparingly. Instead of ::
 
-        if (yes) {/* Success! */
+        if (yes) { // Success!
 
   do ::
 
         if (yes) {
-            /* Success! */
+            // Success!
 
 * All functions and global variables should be declared static
   when they aren't needed outside the current compilation unit.
