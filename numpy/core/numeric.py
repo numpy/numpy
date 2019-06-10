@@ -2391,6 +2391,7 @@ def array_equiv(a1, a2):
     return bool(asarray(a1 == a2).all())
 
 
+@set_module('numpy')
 def array_view_root(a1):
     """
     If the array is a view of another's data, it will return
