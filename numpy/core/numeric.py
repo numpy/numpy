@@ -2398,12 +2398,12 @@ def array_view_root(a1):
 
     Parameters
     ----------
-    a1 : ndarray
+    a1 : array_like
         Input array.
 
     Returns
     -------
-    out : ndarray
+    out : array_like
         The root array
 
     >>> a = np.array([[1, 2], [3, 4]])
