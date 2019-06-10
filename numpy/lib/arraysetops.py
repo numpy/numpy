@@ -144,7 +144,9 @@ def _unpack_tuple(x):
 
 
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None):
+                       return_counts=None, axis=None, return_mask=None,
+                       return_data=None, assume_sorted=None,
+                       sort_inplace=None):
     return (ar,)
 
 
