@@ -2289,8 +2289,15 @@ PyArray_Nonzero(PyArrayObject *self)
         }
         else {
             npy_intp j;
+            npy_intp added_count = 0;
             for (j = 0; j < count; ++j) {
                 if (nonzero(data, self)) {
+                    if (++added_count > nonzero_count) {
+                        PyErr_SetString(PyExc_RuntimeError,
+                            "Aborted: Number of non-zero array elements "
+                            "changed during function execution.");
+                        break;
+                    }
                     *multi_index++ = j;
                 }
                 data += stride;
@@ -2298,6 +2305,11 @@ PyArray_Nonzero(PyArrayObject *self)
         }
 
         NPY_END_THREADS;
+
+        if (PyErr_Occurred()) {
+            NpyIter_Deallocate(iter);
+            return NULL;
+        }
 
         goto finish;
     }
@@ -2351,8 +2363,16 @@ PyArray_Nonzero(PyArrayObject *self)
             } while(iternext(iter));
         }
         else {
+            npy_intp added_count = 0;
             do {
                 if (nonzero(*dataptr, self)) {
+                    if (++added_count > nonzero_count) {
+                        PyErr_SetString(PyExc_RuntimeError,
+                            "Aborted: Number of non-zero array elements "
+                            "changed during function execution.");
+                        break;
+                    }
+
                     get_multi_index(iter, multi_index);
                     multi_index += ndim;
                 }
@@ -2360,6 +2380,12 @@ PyArray_Nonzero(PyArrayObject *self)
         }
 
         NPY_END_THREADS;
+
+        if (PyErr_Occurred()) {
+            NpyIter_Deallocate(iter);
+            Py_DECREF(ret);
+            return NULL;
+        }
     }
 
     NpyIter_Deallocate(iter);
