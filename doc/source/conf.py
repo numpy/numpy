@@ -364,3 +364,20 @@ def linkcode_resolve(domain, info):
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
 
+from pygments.lexers import CLexer
+from pygments import token
+from sphinx.highlighting import lexers
+import copy
+
+class NumPyLexer(CLexer):
+    name = 'NUMPYLEXER'
+
+    tokens = copy.deepcopy(lexers['c'].tokens)
+    # Extend the regex for valid identifiers with @
+    for k, val in tokens.items():
+        for i, v in enumerate(val):
+            if isinstance(v, tuple):
+                if isinstance(v[0], str):
+                    val[i] =  (v[0].replace('a-zA-Z', 'a-zA-Z@'),) + v[1:]
+
+lexers['NumPyC'] = NumPyLexer(stripnl=False)
