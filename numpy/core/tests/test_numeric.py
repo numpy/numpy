@@ -1193,18 +1193,21 @@ class TestNonzero(object):
                 finally:
                     self._val = False
 
+        # result grows on the second pass
         a = np.array([True, FalseThenTrue()])
         assert_raises(RuntimeError, np.nonzero, a)
 
         a = np.array([[True], [FalseThenTrue()]])
         assert_raises(RuntimeError, np.nonzero, a)
 
+        # result shrinks on the second pass
         a = np.array([False, TrueThenFalse()])
         assert_raises(RuntimeError, np.nonzero, a)
 
         a = np.array([[False], [TrueThenFalse()]])
         assert_raises(RuntimeError, np.nonzero, a)
 
+        
 class TestIndex(object):
     def test_boolean(self):
         a = rand(3, 5, 8)
