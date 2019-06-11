@@ -2205,6 +2205,8 @@ PyArray_Nonzero(PyArrayObject *self)
     npy_intp ret_dims[2];
     PyArray_NonzeroFunc *nonzero = PyArray_DESCR(self)->f->nonzero;
     npy_intp nonzero_count;
+    npy_intp added_count = 0;
+    int is_bool;
 
     NpyIter *iter;
     NpyIter_IterNextFunc *iternext;
@@ -2234,6 +2236,8 @@ PyArray_Nonzero(PyArrayObject *self)
         return NULL;
     }
 
+    is_bool = PyArray_ISBOOL(self);
+
     /* Allocate the result as a 2D array */
     ret_dims[0] = nonzero_count;
     ret_dims[1] = ndim;
@@ -2261,7 +2265,7 @@ PyArray_Nonzero(PyArrayObject *self)
         NPY_BEGIN_THREADS_THRESHOLDED(count);
 
         /* avoid function call for bool */
-        if (PyArray_ISBOOL(self)) {
+        if (is_bool) {
             /*
              * use fast memchr variant for sparse data, see gh-4370
              * the fast bool count is followed by this sparse path is faster
@@ -2294,6 +2298,9 @@ PyArray_Nonzero(PyArrayObject *self)
             npy_intp j;
             for (j = 0; j < count; ++j) {
                 if (nonzero(data, self)) {
+                    if (++added_count > nonzero_count) {
+                        break;
+                    }
                     *multi_index++ = j;
                 }
                 data += stride;
@@ -2344,7 +2351,7 @@ PyArray_Nonzero(PyArrayObject *self)
         multi_index = (npy_intp *)PyArray_DATA(ret);
 
         /* Get the multi-index for each non-zero element */
-        if (PyArray_ISBOOL(self)) {
+        if (is_bool) {
             /* avoid function call for bool */
             do {
                 if (**dataptr != 0) {
@@ -2356,6 +2363,9 @@ PyArray_Nonzero(PyArrayObject *self)
         else {
             do {
                 if (nonzero(*dataptr, self)) {
+                    if (++added_count > nonzero_count) {
+                        break;
+                    }
                     get_multi_index(iter, multi_index);
                     multi_index += ndim;
                 }
@@ -2368,6 +2378,15 @@ PyArray_Nonzero(PyArrayObject *self)
     NpyIter_Deallocate(iter);
 
 finish:
+    /* if executed `nonzero()` check for miscount due to side-effect */
+    if (!is_bool && added_count != nonzero_count) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "number of non-zero array elements "
+            "changed during function execution.");
+        Py_DECREF(ret);
+        return NULL;
+    }
+
     ret_tuple = PyTuple_New(ndim);
     if (ret_tuple == NULL) {
         Py_DECREF(ret);

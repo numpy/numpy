@@ -1175,7 +1175,39 @@ class TestNonzero(object):
 
         assert_raises(ValueError, np.nonzero, np.array([BoolErrors()]))
 
+    def test_nonzero_sideeffect_safety(self):
+        # gh-13631
+        class FalseThenTrue:
+            _val = False
+            def __bool__(self):
+                try:
+                    return self._val
+                finally:
+                    self._val = True
 
+        class TrueThenFalse:
+            _val = True
+            def __bool__(self):
+                try:
+                    return self._val
+                finally:
+                    self._val = False
+
+        # result grows on the second pass
+        a = np.array([True, FalseThenTrue()])
+        assert_raises(RuntimeError, np.nonzero, a)
+
+        a = np.array([[True], [FalseThenTrue()]])
+        assert_raises(RuntimeError, np.nonzero, a)
+
+        # result shrinks on the second pass
+        a = np.array([False, TrueThenFalse()])
+        assert_raises(RuntimeError, np.nonzero, a)
+
+        a = np.array([[False], [TrueThenFalse()]])
+        assert_raises(RuntimeError, np.nonzero, a)
+
+        
 class TestIndex(object):
     def test_boolean(self):
         a = rand(3, 5, 8)
