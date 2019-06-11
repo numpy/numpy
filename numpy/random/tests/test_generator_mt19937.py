@@ -897,9 +897,9 @@ class TestRandomDist(object):
     def test_hypergeometric(self):
         random.bit_generator.seed(self.seed)
         actual = random.hypergeometric(10.1, 5.5, 14, size=(3, 2))
-        desired = np.array([[10, 10],
-                            [10, 10],
-                            [9, 9]])
+        desired = np.array([[9, 9],
+                            [10, 9],
+                            [9, 10]])
         assert_array_equal(actual, desired)
 
         # Test nbad = 0
@@ -1875,7 +1875,7 @@ class TestBroadcast(object):
         bad_nsample_one = [-1]
         bad_nsample_two = [4]
         hypergeom = random.hypergeometric
-        desired = np.array([1, 1, 1])
+        desired = np.array([0, 0, 1])
 
         self.set_seed()
         actual = hypergeom(ngood * 3, nbad, nsample)
@@ -1905,6 +1905,11 @@ class TestBroadcast(object):
         assert_raises(ValueError, hypergeom, 10, -1, 20)
         assert_raises(ValueError, hypergeom, 10, 10, -1)
         assert_raises(ValueError, hypergeom, 10, 10, 25)
+
+        # ValueError for arguments that are too big.
+        assert_raises(ValueError, hypergeom, 2**30, 10, 20)
+        assert_raises(ValueError, hypergeom, 999, 2**31, 50)
+        assert_raises(ValueError, hypergeom, 999, [2**29, 2**30], 1000)
 
     def test_logseries(self):
         p = [0.5]
