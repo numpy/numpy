@@ -126,12 +126,15 @@ def configuration(parent_package='', top_path=None):
                              depends=['%s.pyx' % gen],
                              define_macros=defs,
                              )
+    other_srcs = [
+        'src/distributions/logfactorial.c',
+        'src/distributions/distributions.c',
+        'src/distributions/random_hypergeometric.c',
+    ]
     for gen in ['generator', 'bounded_integers']:
         # gen.pyx, src/distributions/distributions.c
         config.add_extension(gen,
-                             sources=['{0}.c'.format(gen),
-                                      join('src', 'distributions',
-                                           'distributions.c')],
+                             sources=['{0}.c'.format(gen)] + other_srcs,
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              include_dirs=['.', 'src'],
@@ -140,8 +143,10 @@ def configuration(parent_package='', top_path=None):
                              define_macros=defs,
                              )
     config.add_extension('mtrand',
+                         # mtrand does not depend on random_hypergeometric.c.
                          sources=['mtrand.c',
                                   'src/legacy/legacy-distributions.c',
+                                  'src/distributions/logfactorial.c',
                                   'src/distributions/distributions.c'],
                          include_dirs=['.', 'src', 'src/legacy'],
                          libraries=EXTRA_LIBRARIES,

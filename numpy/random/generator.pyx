@@ -3095,9 +3095,11 @@ cdef class Generator:
         Parameters
         ----------
         ngood : int or array_like of ints
-            Number of ways to make a good selection.  Must be nonnegative.
+            Number of ways to make a good selection.  Must be nonnegative and
+            less than 10**9.
         nbad : int or array_like of ints
-            Number of ways to make a bad selection.  Must be nonnegative.
+            Number of ways to make a bad selection.  Must be nonnegative and
+            less than 10**9.
         nsample : int or array_like of ints
             Number of items sampled.  Must be nonnegative and less than
             ``ngood + nbad``.
@@ -3142,6 +3144,13 @@ cdef class Generator:
         replacement (or the sample space is infinite). As the sample space
         becomes large, this distribution approaches the binomial.
 
+        The arguments `ngood` and `nbad` each must be less than `10**9`. For
+        extremely large arguments, the algorithm that is used to compute the
+        samples [4]_ breaks down because of loss of precision in floating point
+        calculations.  For such large values, if `nsample` is not also large,
+        the distribution can be approximated with the binomial distribution,
+        `binomial(n=nsample, p=ngood/(ngood + nbad))`.
+
         References
         ----------
         .. [1] Lentner, Marvin, "Elementary Applied Statistics", Bogden
@@ -3151,6 +3160,9 @@ cdef class Generator:
                http://mathworld.wolfram.com/HypergeometricDistribution.html
         .. [3] Wikipedia, "Hypergeometric distribution",
                https://en.wikipedia.org/wiki/Hypergeometric_distribution
+        .. [4] Stadlober, Ernst, "The ratio of uniforms approach for generating
+               discrete random variates", Journal of Computational and Applied
+               Mathematics, 31, pp. 181-189 (1990).
 
         Examples
         --------
@@ -3172,6 +3184,7 @@ cdef class Generator:
         #   answer = 0.003 ... pretty unlikely!
 
         """
+        DEF HYPERGEOM_MAX = 10**9
         cdef bint is_scalar = True
         cdef np.ndarray ongood, onbad, onsample
         cdef int64_t lngood, lnbad, lnsample
@@ -3186,6 +3199,9 @@ cdef class Generator:
             lnbad = <int64_t>nbad
             lnsample = <int64_t>nsample
 
+            if lngood >= HYPERGEOM_MAX or lnbad >= HYPERGEOM_MAX:
+                raise ValueError("both ngood and nbad must be less than %d" %
+                                 HYPERGEOM_MAX)
             if lngood + lnbad < lnsample:
                 raise ValueError("ngood + nbad < nsample")
             return disc(&random_hypergeometric, &self._bitgen, size, self.lock, 0, 3,
@@ -3193,8 +3209,13 @@ cdef class Generator:
                         lnbad, 'nbad', CONS_NON_NEGATIVE,
                         lnsample, 'nsample', CONS_NON_NEGATIVE)
 
+        if np.any(ongood >= HYPERGEOM_MAX) or np.any(onbad >= HYPERGEOM_MAX):
+            raise ValueError("both ngood and nbad must be less than %d" %
+                             HYPERGEOM_MAX)
+
         if np.any(np.less(np.add(ongood, onbad), onsample)):
             raise ValueError("ngood + nbad < nsample")
+
         return discrete_broadcast_iii(&random_hypergeometric, &self._bitgen, size, self.lock,
                                       ongood, 'ngood', CONS_NON_NEGATIVE,
                                       onbad, 'nbad', CONS_NON_NEGATIVE,
