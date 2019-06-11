@@ -1209,9 +1209,12 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     where `n` is `deg`.
 
-    This function is preferred over the very similar `numpy.polyfit`, which
-    returns its coefficients in decreasing order of degree (due to an historical
-    accident), and organizes its `full` output differently.
+    N.B. This function is distinct from (and preferred over, due to its numerical stability)
+    `numpy.polyfit`.
+
+    Note also that the `Polynomial.fit <numpy.polynomial.polynomial.Polynomial.fit>` class
+    method (which uses the same implementation) is recommended for new code as a single
+    point of access to polynomial fitting.
 
     Parameters
     ----------
