@@ -91,17 +91,51 @@ class TestTake(object):
         class FalseThenTrue:
             _val = False
             def __bool__(self):
-                try: return self._val
-                finally: self._val = True
+                try:
+                    return self._val
+                finally:
+                    self._val = True
+        class TrueThenFalse:
+            _val = True
+            def __bool__(self):
+                try:
+                    return self._val
+                finally:
+                    self._val = False
 
         try:
             np.array([True, FalseThenTrue()]).nonzero()
             assert_(False)
         except RuntimeError:
-            assert_(True)
+            pass
+
         try:
             np.array([[True], [FalseThenTrue()]]).nonzero()
             assert_(False)
         except RuntimeError:
-            assert_(True)
+            pass
 
+        try:
+            np.array([False, TrueThenFalse()]).nonzero()
+            assert_(False)
+        except RuntimeError:
+            pass
+
+        try:
+            np.array([[False], [TrueThenFalse()]]).nonzero()
+            assert_(False)
+        except RuntimeError:
+            pass
+
+        a = np.array([True, False]).nonzero()[0]
+        b = np.array([0])
+        assert_array_equal(a, b)
+
+        a = np.array([0, 2, 1, 0]).nonzero()[0]
+        b = np.array([1, 2])
+        assert_array_equal(a, b)
+
+        a = np.array([[0, 2], [1, 0]]).nonzero()
+        b = (np.array([0, 1]), np.array([1, 0]))
+        assert_array_equal(a[0], b[0])
+        assert_array_equal(a[1], b[1])
