@@ -134,6 +134,12 @@ input.
 Note that we generally recommend the scipy implementation over the numpy one:
 it is a proper ufunc written in C, and more than an order of magnitude faster.
 
+``np.can_cast`` no longer assumes all unsafe casting is allowed
+---------------------------------------------------------------
+Previously, ``can_cast`` returned `True` for almost all inputs for
+``casting='unsafe'``, even for cases where casting was not possible, such as
+from a structured dtype to a regular one.  This has been fixed, making it
+more consistent with actual casting using, e.g., the ``.astype`` method.
 
 C API changes
 =============
