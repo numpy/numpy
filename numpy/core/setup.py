@@ -463,6 +463,12 @@ def configuration(parent_package='',top_path=None):
             rep = check_long_double_representation(config_cmd)
             moredefs.append(('HAVE_LDOUBLE_%s' % rep, 1))
 
+            if check_for_right_shift_internal_compiler_error(config_cmd):
+                moredefs.append('NPY_DO_NOT_OPTIMIZE_LONG_right_shift')
+                moredefs.append('NPY_DO_NOT_OPTIMIZE_ULONG_right_shift')
+                moredefs.append('NPY_DO_NOT_OPTIMIZE_LONGLONG_right_shift')
+                moredefs.append('NPY_DO_NOT_OPTIMIZE_ULONGLONG_right_shift')
+
             # Py3K check
             if sys.version_info[0] >= 3:
                 moredefs.append(('NPY_PY3K', 1))

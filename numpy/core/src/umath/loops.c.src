@@ -828,7 +828,11 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
 #undef INT_left_shift_needs_clear_floatstatus
 #undef UINT_left_shift_needs_clear_floatstatus
 
-NPY_NO_EXPORT NPY_GCC_OPT_3 void
+NPY_NO_EXPORT
+#ifndef NPY_DO_NOT_OPTIMIZE_@TYPE@_right_shift
+NPY_GCC_OPT_3
+#endif
+void
 @TYPE@_right_shift@isa@(char **args, npy_intp *dimensions, npy_intp *steps,
                    void *NPY_UNUSED(func))
 {
