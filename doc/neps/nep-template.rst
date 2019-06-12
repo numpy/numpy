@@ -13,15 +13,20 @@ Abstract
 
 The abstract should be a short description of what the NEP will achieve.
 
-
-Detailed description
---------------------
+Motivation
+----------
 
 This section describes the need for the NEP.  It should describe the existing
-problem that it is trying to solve and why this NEP makes the situation better.
-It should include examples of how the new functionality would be used and
-perhaps some use cases.
+problem, who it affects, what it is trying to solve, and why.
+It should include examples of how the new functionality would be used, intended
+use-cases and psuedo-code describing its use.
 
+Literature Review
+-----------------
+
+This section should list relevant and/or similar technologies, possibly in other
+libraries. It does not need to be comprehensive, just list the major examples of
+prior and relevant art.
 
 Implementation
 --------------
@@ -34,7 +39,6 @@ include a link related pull requests as the implementation progresses.
 Any pull requests or development branches containing work on this NEP should
 be linked to from here.  (A NEP does not need to be implemented in a single
 pull request if it makes sense to implement it in discrete phases).
-
 
 Backward compatibility
 ----------------------
