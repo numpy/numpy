@@ -327,7 +327,7 @@ To skip a test, simply use ``skipif``::
 
   from numpy.testing import dec
 
-  @dec.skipif(SkipMyTest, "Skipping this test because...")
+  @pytest.mark.skipif(SkipMyTest, reason="Skipping this test because...")
   def test_something(foo):
       ...
 
