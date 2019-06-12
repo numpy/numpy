@@ -567,11 +567,18 @@ def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
                             weights=None, density=None):
     yield x
     yield y
-    if hasattr(bins, 'shape'):  # same condition as used in histogramdd
-        yield bins
+
+    # This terrible logic is adapted from the checks in histogram2d
+    try:
+        N = len(bins)
+    except TypeError:
+        N = 1
+    if N != 1 and N != 2:
+        yield from bins  # bins=[x, y]
     else:
-        yield from bins
-    return weights
+        yield bins
+
+    yield weights
 
 
 @array_function_dispatch(_histogram2d_dispatcher)
