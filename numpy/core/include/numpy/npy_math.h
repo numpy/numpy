@@ -162,6 +162,28 @@ NPY_INPLACE npy_long npy_lcml(npy_long a, npy_long b);
 NPY_INPLACE npy_longlong npy_gcdll(npy_longlong a, npy_longlong b);
 NPY_INPLACE npy_longlong npy_lcmll(npy_longlong a, npy_longlong b);
 
+NPY_INPLACE npy_ubyte npy_rshiftuhh(npy_ubyte a, npy_ubyte b);
+NPY_INPLACE npy_ubyte npy_lshiftuhh(npy_ubyte a, npy_ubyte b);
+NPY_INPLACE npy_ushort npy_rshiftuh(npy_ushort a, npy_ushort b);
+NPY_INPLACE npy_ushort npy_lshiftuh(npy_ushort a, npy_ushort b);
+NPY_INPLACE npy_uint npy_rshiftu(npy_uint a, npy_uint b);
+NPY_INPLACE npy_uint npy_lshiftu(npy_uint a, npy_uint b);
+NPY_INPLACE npy_ulong npy_rshiftul(npy_ulong a, npy_ulong b);
+NPY_INPLACE npy_ulong npy_lshiftul(npy_ulong a, npy_ulong b);
+NPY_INPLACE npy_ulonglong npy_rshiftull(npy_ulonglong a, npy_ulonglong b);
+NPY_INPLACE npy_ulonglong npy_lshiftull(npy_ulonglong a, npy_ulonglong b);
+
+NPY_INPLACE npy_byte npy_rshifthh(npy_byte a, npy_byte b);
+NPY_INPLACE npy_byte npy_lshifthh(npy_byte a, npy_byte b);
+NPY_INPLACE npy_short npy_rshifth(npy_short a, npy_short b);
+NPY_INPLACE npy_short npy_lshifth(npy_short a, npy_short b);
+NPY_INPLACE npy_int npy_rshift(npy_int a, npy_int b);
+NPY_INPLACE npy_int npy_lshift(npy_int a, npy_int b);
+NPY_INPLACE npy_long npy_rshiftl(npy_long a, npy_long b);
+NPY_INPLACE npy_long npy_lshiftl(npy_long a, npy_long b);
+NPY_INPLACE npy_longlong npy_rshiftll(npy_longlong a, npy_longlong b);
+NPY_INPLACE npy_longlong npy_lshiftll(npy_longlong a, npy_longlong b);
+
 /*
  * C99 double math funcs
  */

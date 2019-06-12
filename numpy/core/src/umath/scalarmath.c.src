@@ -251,7 +251,7 @@ static void
  *         long, ulong, longlong, ulonglong#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
- * #issigned = 1, 0, 1, 0, 1, 0, 1, 0, 1, 0#
+ * #suffix = hh,uhh,h,uh,,u,l,ul,ll,ull#
  */
 
 /**begin repeat1
@@ -263,42 +263,8 @@ static void
 
 /**end repeat1**/
 
-/* Note: these need to be kept in sync with the shift ufuncs */
-
-#define @name@_ctype_lshift(arg1, arg2, out)                  \
-    do {                                                      \
-        if (NPY_LIKELY((arg2) < sizeof(@type@) * CHAR_BIT)) { \
-            *(out) = (arg1) << (arg2);                        \
-        }                                                     \
-        else {                                                \
-            *(out) = 0;                                       \
-        }                                                     \
-    } while (0)
-
-#if @issigned@
-    #define @name@_ctype_rshift(arg1, arg2, out)                  \
-        do {                                                      \
-            if (NPY_LIKELY((arg2) < sizeof(@type@) * CHAR_BIT)) { \
-                *(out) = (arg1) >> (arg2);                        \
-            }                                                     \
-            else if ((arg1) < 0) {                                \
-                *(out) = -1;                                      \
-            }                                                     \
-            else {                                                \
-                *(out) = 0;                                       \
-            }                                                     \
-        } while (0)
-#else
-    #define @name@_ctype_rshift(arg1, arg2, out)                  \
-        do {                                                      \
-            if (NPY_LIKELY((arg2) < sizeof(@type@) * CHAR_BIT)) { \
-                *(out) = (arg1) >> (arg2);                        \
-            }                                                     \
-            else {                                                \
-                *(out) = 0;                                       \
-            }                                                     \
-        } while (0)
-#endif
+#define @name@_ctype_lshift(arg1, arg2, out) *(out) = npy_lshift@suffix@(arg1, arg2)
+#define @name@_ctype_rshift(arg1, arg2, out) *(out) = npy_rshift@suffix@(arg1, arg2)
 
 /**end repeat**/
 
