@@ -565,7 +565,13 @@ def vander(x, N=None, increasing=False):
 
 def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
                             weights=None, density=None):
-    return (x, y, bins, weights)
+    yield x
+    yield y
+    if hasattr(bins, 'shape'):  # same condition as used in histogramdd
+        yield bins
+    else:
+        yield from bins
+    return weights
 
 
 @array_function_dispatch(_histogram2d_dispatcher)
