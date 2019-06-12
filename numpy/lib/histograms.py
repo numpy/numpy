@@ -927,7 +927,7 @@ def _histogramdd_dispatcher(sample, bins=None, range=None, normed=None,
         yield sample
     else:
         yield from sample
-    with contextlib.supress(TypeError):
+    with contextlib.suppress(TypeError):
         yield from bins
     yield weights
 
