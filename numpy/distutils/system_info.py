@@ -128,6 +128,7 @@ import re
 import copy
 import warnings
 import subprocess
+import textwrap
 
 from glob import glob
 from functools import reduce
@@ -1224,11 +1225,11 @@ class atlas_info(system_info):
         else:
             dict_append(info, **atlas)
             dict_append(info, define_macros=[('ATLAS_WITHOUT_LAPACK', None)])
-            message = """
-*********************************************************************
-    Could not find lapack library within the ATLAS installation.
-*********************************************************************
-"""
+            message = textwrap.dedent("""
+                *********************************************************************
+                    Could not find lapack library within the ATLAS installation.
+                *********************************************************************
+                """)
             warnings.warn(message, stacklevel=2)
             self.set_info(**info)
             return
@@ -1251,15 +1252,15 @@ class atlas_info(system_info):
         if lapack_lib is not None:
             sz = os.stat(lapack_lib)[6]
             if sz <= 4000 * 1024:
-                message = """
-*********************************************************************
-    Lapack library (from ATLAS) is probably incomplete:
-      size of %s is %sk (expected >4000k)
+                message = textwrap.dedent("""
+                    *********************************************************************
+                        Lapack library (from ATLAS) is probably incomplete:
+                          size of %s is %sk (expected >4000k)
 
-    Follow the instructions in the KNOWN PROBLEMS section of the file
-    numpy/INSTALL.txt.
-*********************************************************************
-""" % (lapack_lib, sz / 1024)
+                        Follow the instructions in the KNOWN PROBLEMS section of the file
+                        numpy/INSTALL.txt.
+                    *********************************************************************
+                    """) % (lapack_lib, sz / 1024)
                 warnings.warn(message, stacklevel=2)
             else:
                 info['language'] = 'f77'
@@ -1537,16 +1538,16 @@ def get_atlas_version(**config):
                                 library_dirs=library_dirs,
                                 use_tee=(system_info.verbosity > 0))
             if not s:
-                warnings.warn("""
-*****************************************************
-Linkage with ATLAS requires gfortran. Use
+                warnings.warn(textwrap.dedent("""
+                    *****************************************************
+                    Linkage with ATLAS requires gfortran. Use
 
-  python setup.py config_fc --fcompiler=gnu95 ...
+                      python setup.py config_fc --fcompiler=gnu95 ...
 
-when building extension libraries that use ATLAS.
-Make sure that -lgfortran is used for C++ extensions.
-*****************************************************
-""", stacklevel=2)
+                    when building extension libraries that use ATLAS.
+                    Make sure that -lgfortran is used for C++ extensions.
+                    *****************************************************
+                    """), stacklevel=2)
                 dict_append(info, language='f90',
                             define_macros=[('ATLAS_REQUIRES_GFORTRAN', None)])
     except Exception:  # failed to get version from file -- maybe on Windows
@@ -1874,13 +1875,14 @@ class blas_info(system_info):
         # cblas or blas
         c = customized_ccompiler()
         tmpdir = tempfile.mkdtemp()
-        s = """#include <cblas.h>
-        int main(int argc, const char *argv[])
-        {
-            double a[4] = {1,2,3,4};
-            double b[4] = {5,6,7,8};
-            return cblas_ddot(4, a, 1, b, 1) > 10;
-        }"""
+        s = textwrap.dedent("""\
+            #include <cblas.h>
+            int main(int argc, const char *argv[])
+            {
+                double a[4] = {1,2,3,4};
+                double b[4] = {5,6,7,8};
+                return cblas_ddot(4, a, 1, b, 1) > 10;
+            }""")
         src = os.path.join(tmpdir, 'source.c')
         try:
             with open(src, 'wt') as f:
@@ -1999,12 +2001,13 @@ class openblas_lapack_info(openblas_info):
         c = customized_ccompiler()
 
         tmpdir = tempfile.mkdtemp()
-        s = """void zungqr_();
-        int main(int argc, const char *argv[])
-        {
-            zungqr_();
-            return 0;
-        }"""
+        s = textwrap.dedent("""\
+            void zungqr_();
+            int main(int argc, const char *argv[])
+            {
+                zungqr_();
+                return 0;
+            }""")
         src = os.path.join(tmpdir, 'source.c')
         out = os.path.join(tmpdir, 'a.out')
         # Add the additional "extra" arguments
@@ -2074,12 +2077,13 @@ class flame_info(system_info):
         c = customized_ccompiler()
 
         tmpdir = tempfile.mkdtemp()
-        s = """void zungqr_();
-        int main(int argc, const char *argv[])
-        {
-            zungqr_();
-            return 0;
-        }"""
+        s = textwrap.dedent("""\
+            void zungqr_();
+            int main(int argc, const char *argv[])
+            {
+                zungqr_();
+                return 0;
+            }""")
         src = os.path.join(tmpdir, 'source.c')
         out = os.path.join(tmpdir, 'a.out')
         # Add the additional "extra" arguments

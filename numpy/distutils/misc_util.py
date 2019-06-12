@@ -10,6 +10,7 @@ import tempfile
 import subprocess
 import shutil
 import multiprocessing
+import textwrap
 
 import distutils
 from distutils.errors import DistutilsError
@@ -2273,38 +2274,37 @@ def generate_config_py(target):
         f.write('__all__ = ["get_info","show"]\n\n')
 
         # For gfortran+msvc combination, extra shared libraries may exist
-        f.write("""
+        f.write(textwrap.dedent("""
+            import os
+            import sys
 
-import os
-import sys
+            extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 
-extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
+            if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
+                os.environ.setdefault('PATH', '')
+                os.environ['PATH'] += os.pathsep + extra_dll_dir
 
-if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
-    os.environ.setdefault('PATH', '')
-    os.environ['PATH'] += os.pathsep + extra_dll_dir
-
-""")
+            """))
 
         for k, i in system_info.saved_results.items():
             f.write('%s=%r\n' % (k, i))
-        f.write(r'''
-def get_info(name):
-    g = globals()
-    return g.get(name, g.get(name + "_info", {}))
+        f.write(textwrap.dedent(r'''
+            def get_info(name):
+                g = globals()
+                return g.get(name, g.get(name + "_info", {}))
 
-def show():
-    for name,info_dict in globals().items():
-        if name[0] == "_" or type(info_dict) is not type({}): continue
-        print(name + ":")
-        if not info_dict:
-            print("  NOT AVAILABLE")
-        for k,v in info_dict.items():
-            v = str(v)
-            if k == "sources" and len(v) > 200:
-                v = v[:60] + " ...\n... " + v[-60:]
-            print("    %s = %s" % (k,v))
-        ''')
+            def show():
+                for name,info_dict in globals().items():
+                    if name[0] == "_" or type(info_dict) is not type({}): continue
+                    print(name + ":")
+                    if not info_dict:
+                        print("  NOT AVAILABLE")
+                    for k,v in info_dict.items():
+                        v = str(v)
+                        if k == "sources" and len(v) > 200:
+                            v = v[:60] + " ...\n... " + v[-60:]
+                        print("    %s = %s" % (k,v))
+                    '''))
 
     return target
 
