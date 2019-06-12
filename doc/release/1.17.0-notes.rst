@@ -124,6 +124,17 @@ the stream changes for any given seed is extremely small. If a 0 is encountered 
 underlying generator, then the incorrect value produced (either ``np.inf``
 or ``np.nan``) is now dropped.
 
+``i0`` now always returns a result with the same shape as the input
+-------------------------------------------------------------------
+Previously, the output was squeezed, such that, e.g., input with just a single
+element would lead to an array scalar being returned, and inputs with shapes
+such as ``(10, 1)`` would yield results that would not broadcast against the
+input.
+
+Note that we generally recommend the scipy implementation over the numpy one:
+it is a proper ufunc written in C, and more than an order of magnitude faster.
+
+
 C API changes
 =============
 

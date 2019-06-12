@@ -3070,10 +3070,13 @@ def i0(x):
 
     See Also
     --------
-    scipy.special.iv, scipy.special.ive
+    scipy.special.i0, scipy.special.iv, scipy.special.ive
 
     Notes
     -----
+    The scipy implementation is recommended over this function: it is a
+    proper ufunc written in C, and more than an order of magnitude faster.
+
     We use the algorithm published by Clenshaw [1]_ and referenced by
     Abramowitz and Stegun [2]_, for which the function domain is
     partitioned into the two intervals [0,8] and (8,inf), and Chebyshev
@@ -3093,21 +3096,14 @@ def i0(x):
 
     Examples
     --------
-    >>> np.i0([0.])
-    array(1.0) # may vary
+    >>> np.i0(0.)
+    array(1.0)  # may vary
     >>> np.i0([0., 1. + 2j])
-    array([ 1.00000000+0.j        ,  0.18785373+0.64616944j]) # may vary
+    array([ 1.00000000+0.j        ,  0.18785373+0.64616944j])  # may vary
 
     """
-    x = atleast_1d(x).copy()
-    y = empty_like(x)
-    ind = (x < 0)
-    x[ind] = -x[ind]
-    ind = (x <= 8.0)
-    y[ind] = _i0_1(x[ind])
-    ind2 = ~ind
-    y[ind2] = _i0_2(x[ind2])
-    return y.squeeze()
+    x = np.abs(x)
+    return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 
 ## End of cephes code for i0
 
