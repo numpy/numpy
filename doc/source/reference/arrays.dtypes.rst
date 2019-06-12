@@ -538,6 +538,7 @@ Attributes providing additional information:
    dtype.isnative
    dtype.descr
    dtype.alignment
+   dtype.base
 
 
 Methods
