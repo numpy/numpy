@@ -172,6 +172,10 @@ jobs:
       architecture: $(PYTHON_ARCH)
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
+  - script: python -m pip install cython nose pytz pytest
+    displayName: 'Install dependencies; some are optional to avoid test skips'
+  - script: if [%INSTALL_PICKLE5%]==[1] python -m pip install pickle5
+    displayName: 'Install optional pickle5 backport (only for python3.6 and 3.7)'
   - powershell: |
       $wc = New-Object net.webclient
       $wc.Downloadfile("$(OPENBLAS)", "openblas.zip")
@@ -187,12 +191,15 @@ jobs:
       choco install -y mingw --forcex86 --force --version=5.3.0
     displayName: 'Install 32-bit mingw for 32-bit builds'
     condition: eq(variables['BITS'], 32)
-  - script: python -m pip install cython nose pytz pytest
-    displayName: 'Install dependencies; some are optional to avoid test skips'
+  - powershell: |
+      $wc = New-Object net.webclient
+      $gh_base = "https://raw.githubusercontent.com/MacPython/numpy-wheels/master/"
+      $wc.Downloadfile($gh_base + "openblas_support.py", "$pwd\openblas_support.py")
+      python -c "import openblas_support; openblas_support.make_init('numpy')"
+      del openblas_support.py
+    displayName: 'Create _distributor_init.py for OpenBlas'
   # NOTE: for Windows builds it seems much more tractable to use runtests.py
   # vs. manual setup.py and then runtests.py for testing only
-  - script: if [%INSTALL_PICKLE5%]==[1] python -m pip install pickle5
-    displayName: 'Install optional pickle5 backport (only for python3.6 and 3.7)'
   - powershell: |
       If ($(BITS) -eq 32) {
          $env:NPY_DISTUTILS_APPEND_FLAGS = 1
