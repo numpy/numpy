@@ -1,5 +1,4 @@
 #include "distributions.h"
-#include "ziggurat.h"
 #include "ziggurat_constants.h"
 
 #if defined(_MSC_VER) && defined(_WIN64)

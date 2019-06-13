@@ -1194,3 +1194,13 @@ static const float fe_float[] = {
     4.87765598e-03F, 4.15729512e-03F, 3.46026478e-03F, 2.78879879e-03F,
     2.14596774e-03F, 1.53629978e-03F, 9.67269282e-04F, 4.54134354e-04F,
 };
+
+
+static const double ziggurat_nor_r = 3.6541528853610087963519472518;
+static const double ziggurat_nor_inv_r =
+    0.27366123732975827203338247596; // 1.0 / ziggurat_nor_r;
+static const double ziggurat_exp_r = 7.6971174701310497140446280481;
+
+static const float ziggurat_nor_r_f = 3.6541528853610087963519472518f;
+static const float ziggurat_nor_inv_r_f = 0.27366123732975827203338247596f;
+static const float ziggurat_exp_r_f = 7.6971174701310497140446280481f;
