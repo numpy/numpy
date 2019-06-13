@@ -439,7 +439,7 @@ cdef class Generator:
         # Implementation detail: the old API used a masked method to generate
         # bounded uniform integers. Lemire's method is preferable since it is
         # faster. randomgen allows a choice, we will always use the faster one.
-        cdef bint _masked = True
+        cdef bint _masked = False
 
         if key == 'int32':
             ret = _rand_int32(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
