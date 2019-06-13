@@ -24,6 +24,7 @@
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"
 #include "common.h"
+#include "convert_datatype.h"
 
 #include "mem_overlap.h"
 #if defined(HAVE_CBLAS)
@@ -1938,73 +1939,6 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
     return 0;
 }
 
-/*
- * Provides an ordering for the dtype 'kind' character codes, to help
- * determine when to use the min_scalar_type function. This groups
- * 'kind' into boolean, integer, floating point, and everything else.
- */
-
-static int
-dtype_kind_to_simplified_ordering(char kind)
-{
-    switch (kind) {
-        /* Boolean kind */
-        case 'b':
-            return 0;
-        /* Unsigned int kind */
-        case 'u':
-        /* Signed int kind */
-        case 'i':
-            return 1;
-        /* Float kind */
-        case 'f':
-        /* Complex kind */
-        case 'c':
-            return 2;
-        /* Anything else */
-        default:
-            return 3;
-    }
-}
-
-static int
-should_use_min_scalar(PyArrayObject **op, int nop)
-{
-    int i, use_min_scalar, kind;
-    int all_scalars = 1, max_scalar_kind = -1, max_array_kind = -1;
-
-    /*
-     * Determine if there are any scalars, and if so, whether
-     * the maximum "kind" of the scalars surpasses the maximum
-     * "kind" of the arrays
-     */
-    use_min_scalar = 0;
-    if (nop > 1) {
-        for(i = 0; i < nop; ++i) {
-            kind = dtype_kind_to_simplified_ordering(
-                                PyArray_DESCR(op[i])->kind);
-            if (PyArray_NDIM(op[i]) == 0) {
-                if (kind > max_scalar_kind) {
-                    max_scalar_kind = kind;
-                }
-            }
-            else {
-                all_scalars = 0;
-                if (kind > max_array_kind) {
-                    max_array_kind = kind;
-                }
-
-            }
-        }
-
-        /* Indicate whether to use the min_scalar_type function */
-        if (!all_scalars && max_array_kind >= max_scalar_kind) {
-            use_min_scalar = 1;
-        }
-    }
-
-    return use_min_scalar;
-}
 
 /*
  * Does a linear search for the best inner loop of the ufunc.
@@ -2030,7 +1964,7 @@ linear_search_type_resolver(PyUFuncObject *self,
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    use_min_scalar = should_use_min_scalar(op, nin);
+    use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
 
     /* If the ufunc has userloops, search for them. */
     if (self->userloops) {
@@ -2139,7 +2073,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    use_min_scalar = should_use_min_scalar(op, nin);
+    use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
 
     /* Fill in specified_types from the tuple or string */
     if (PyTuple_Check(type_tup)) {
