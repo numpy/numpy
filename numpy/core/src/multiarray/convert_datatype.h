@@ -18,6 +18,10 @@ NPY_NO_EXPORT npy_bool
 can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
                     PyArray_Descr *to, NPY_CASTING casting);
 
+NPY_NO_EXPORT int
+should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
+                      npy_intp ndtypes, PyArray_Descr **dtypes);
+
 /*
  * This function calls Py_DECREF on flex_dtype, and replaces it with
  * a new dtype that has been adapted based on the values in data_dtype

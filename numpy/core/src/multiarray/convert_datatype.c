@@ -1767,46 +1767,22 @@ dtype_kind_to_simplified_ordering(char kind)
     }
 }
 
-/*NUMPY_API
- * Produces the result type of a bunch of inputs, using the UFunc
- * type promotion rules. Use this function when you have a set of
- * input arrays, and need to determine an output array dtype.
- *
- * If all the inputs are scalars (have 0 dimensions) or the maximum "kind"
- * of the scalars is greater than the maximum "kind" of the arrays, does
- * a regular type promotion.
- *
- * Otherwise, does a type promotion on the MinScalarType
- * of all the inputs.  Data types passed directly are treated as array
- * types.
- *
+
+/*
+ * Determine if there is a mix of scalars and arrays/dtypes.
+ * If this is the case, the scalars should be handled as the minimum type
+ * capable of holding the value when the maximum "category" of the scalars
+ * surpasses the maximum "category" of the arrays/dtypes.
+ * If the scalars are of a lower or same category as the arrays, they may be
+ * demoted to a lower type within their category (the lowest type they can
+ * be cast to safely according to scalar casting rules).
  */
-NPY_NO_EXPORT PyArray_Descr *
-PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
-                    npy_intp ndtypes, PyArray_Descr **dtypes)
+NPY_NO_EXPORT int
+should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
+                      npy_intp ndtypes, PyArray_Descr **dtypes)
 {
-    npy_intp i;
-    int use_min_scalar;
+    int use_min_scalar = 0;
 
-    /* If there's just one type, pass it through */
-    if (narrs + ndtypes == 1) {
-        PyArray_Descr *ret = NULL;
-        if (narrs == 1) {
-            ret = PyArray_DESCR(arr[0]);
-        }
-        else {
-            ret = dtypes[0];
-        }
-        Py_INCREF(ret);
-        return ret;
-    }
-
-    /*
-     * Determine if there are any scalars, and if so, whether
-     * the maximum "kind" of the scalars surpasses the maximum
-     * "kind" of the arrays
-     */
-    use_min_scalar = 0;
     if (narrs > 0) {
         int all_scalars;
         int max_scalar_kind = -1;
@@ -1815,7 +1791,7 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
         all_scalars = (ndtypes > 0) ? 0 : 1;
 
         /* Compute the maximum "kinds" and whether everything is scalar */
-        for (i = 0; i < narrs; ++i) {
+        for (npy_intp i = 0; i < narrs; ++i) {
             if (PyArray_NDIM(arr[i]) == 0) {
                 int kind = dtype_kind_to_simplified_ordering(
                                     PyArray_DESCR(arr[i])->kind);
@@ -1836,7 +1812,7 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
          * If the max scalar kind is bigger than the max array kind,
          * finish computing the max array kind
          */
-        for (i = 0; i < ndtypes; ++i) {
+        for (npy_intp i = 0; i < ndtypes; ++i) {
             int kind = dtype_kind_to_simplified_ordering(dtypes[i]->kind);
             if (kind > max_array_kind) {
                 max_array_kind = kind;
@@ -1848,6 +1824,44 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
             use_min_scalar = 1;
         }
     }
+    return use_min_scalar;
+}
+
+
+/*NUMPY_API
+ * Produces the result type of a bunch of inputs, using the UFunc
+ * type promotion rules. Use this function when you have a set of
+ * input arrays, and need to determine an output array dtype.
+ *
+ * If all the inputs are scalars (have 0 dimensions) or the maximum "kind"
+ * of the scalars is greater than the maximum "kind" of the arrays, does
+ * a regular type promotion.
+ *
+ * Otherwise, does a type promotion on the MinScalarType
+ * of all the inputs.  Data types passed directly are treated as array
+ * types.
+ *
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
+                    npy_intp ndtypes, PyArray_Descr **dtypes)
+{
+    npy_intp i;
+
+    /* If there's just one type, pass it through */
+    if (narrs + ndtypes == 1) {
+        PyArray_Descr *ret = NULL;
+        if (narrs == 1) {
+            ret = PyArray_DESCR(arr[0]);
+        }
+        else {
+            ret = dtypes[0];
+        }
+        Py_INCREF(ret);
+        return ret;
+    }
+
+    int use_min_scalar = should_use_min_scalar(narrs, arr, ndtypes, dtypes);
 
     /* Loop through all the types, promoting them */
     if (!use_min_scalar) {
