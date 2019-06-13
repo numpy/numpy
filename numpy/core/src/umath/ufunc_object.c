@@ -518,9 +518,10 @@ _apply_array_wrap(
 
 
 /*
- * TODO: Refactor this to be reused by ResultType, which includes the same.
+ * TODO: Refactor this to be reused by ResultType, which includes the
+ *        same in convert_datatype.c lines 1742ff after `use_min_scalar = 0;`
  *
- * Checks if arrays (and "scalars"/O-d arrays) are in the same category.
+ * Checks if arrays (and "scalars"/0-d arrays) are in the same category.
  * If the arrays are in the same or a larger category, we allow demotion
  * of scalars to the lowest possible dtype.
  * In that case, it returns the category defined above. The integer
@@ -530,7 +531,7 @@ _apply_array_wrap(
 static int
 should_use_min_scalar(int nop, PyArrayObject **op)
 {
-    int i, use_min_scalar, kind;
+    int use_min_scalar;
     int all_scalars = 1, max_scalar_kind = -1, max_array_kind = -1;
 
     /*
@@ -540,8 +541,8 @@ should_use_min_scalar(int nop, PyArrayObject **op)
      */
     use_min_scalar = 0;
     if (nop > 1) {
-        for(i = 0; i < nop; ++i) {
-            kind = dtype_kind_to_simplified_ordering(
+        for (int i = 0; i < nop; ++i) {
+            int kind = dtype_kind_to_simplified_ordering(
                                 PyArray_DESCR(op[i])->kind);
             if (PyArray_NDIM(op[i]) == 0) {
                 if (kind > max_scalar_kind) {
@@ -3788,7 +3789,7 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
         retcode = ufunc->type_resolver(
                             ufunc, NPY_UNSAFE_CASTING,
                             op, type_tup, dtypes);
-        Py_DECREF(type_tup);
+        Py_XDECREF(type_tup);
     }
     else {
         /*

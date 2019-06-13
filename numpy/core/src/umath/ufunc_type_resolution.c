@@ -574,12 +574,12 @@ PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc,
 {
     /* Use the default for complex types, to find the loop producing float */
     if (PyTypeNum_ISCOMPLEX(op_dtypes[0]->type_num)) {
-        return PyUFunc_DefaultTypeResolver(ufunc, casting, op_dtypes,
-                                           out_dtypes);
+        return PyUFunc_DefaultTypeResolver(
+                ufunc, casting, op_dtypes, out_dtypes);
     }
     else {
-        return PyUFunc_SimpleUniformOperationTypeResolver(ufunc, casting,
-                                                          op_dtypes, out_dtypes);
+        return PyUFunc_SimpleUniformOperationTypeResolver(
+                ufunc, casting, op_dtypes, out_dtypes);
     }
 }
 
@@ -690,7 +690,7 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
     /* TODO: Dtypes are currently simply ignored, this is nothing new... */
     for (i = 0; i < 3; i++) {
         Py_XDECREF(out_dtypes[i]); // TODO make a helper for such mini-loops?
-        out_dtypes[i] = 0;
+        out_dtypes[i] = NULL;
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
