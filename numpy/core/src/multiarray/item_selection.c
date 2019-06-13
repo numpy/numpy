@@ -2213,8 +2213,26 @@ PyArray_Nonzero(PyArrayObject *self)
     NpyIter_GetMultiIndexFunc *get_multi_index;
     char **dataptr;
 
-    /* Special case - nonzero(zero_d) is nonzero(atleast1d(zero_d)) */
+    /* Special case - nonzero(zero_d) is nonzero(atleast_1d(zero_d)) */
     if (ndim == 0) {
+        char const* msg;
+        if (PyArray_ISBOOL(self)) {
+            msg =
+                "Calling nonzero on 0d arrays is deprecated, as it behaves "
+                "surprisingly. Use `atleast_1d(cond).nonzero()` if the old "
+                "behavior was intended. If the context of this warning is of "
+                "the form `arr[nonzero(cond)]`, just use `arr[cond]`.";
+        }
+        else {
+            msg =
+                "Calling nonzero on 0d arrays is deprecated, as it behaves "
+                "surprisingly. Use `atleast_1d(arr).nonzero()` if the old "
+                "behavior was intended.";
+        }
+        if (DEPRECATE(msg) < 0) {
+            return NULL;
+        }
+
         static npy_intp const zero_dim_shape[1] = {1};
         static npy_intp const zero_dim_strides[1] = {0};
 

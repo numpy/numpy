@@ -1011,12 +1011,24 @@ class TestNonzero(object):
         assert_equal(np.count_nonzero(np.array([], dtype='?')), 0)
         assert_equal(np.nonzero(np.array([])), ([],))
 
+        assert_equal(np.count_nonzero(np.array([0])), 0)
+        assert_equal(np.count_nonzero(np.array([0], dtype='?')), 0)
+        assert_equal(np.nonzero(np.array([0])), ([],))
+
+        assert_equal(np.count_nonzero(np.array([1])), 1)
+        assert_equal(np.count_nonzero(np.array([1], dtype='?')), 1)
+        assert_equal(np.nonzero(np.array([1])), ([0],))
+
+    def test_nonzero_zerod(self):
         assert_equal(np.count_nonzero(np.array(0)), 0)
         assert_equal(np.count_nonzero(np.array(0, dtype='?')), 0)
-        assert_equal(np.nonzero(np.array(0)), ([],))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.nonzero(np.array(0)), ([],))
+
         assert_equal(np.count_nonzero(np.array(1)), 1)
         assert_equal(np.count_nonzero(np.array(1, dtype='?')), 1)
-        assert_equal(np.nonzero(np.array(1)), ([0],))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.nonzero(np.array(1)), ([0],))
 
     def test_nonzero_onedim(self):
         x = np.array([1, 0, 2, -1, 0, 0, 8])
