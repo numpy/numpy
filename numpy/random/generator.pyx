@@ -419,7 +419,8 @@ cdef class Generator:
         References
         ----------
         .. [1] Daniel Lemire., "Fast Random Integer Generation in an Interval",
-               ACM Transactions on Modeling and Computer Simulation 29 (1), 2019, http://arxiv.org/abs/1805.10941.
+               ACM Transactions on Modeling and Computer Simulation 29 (1), 2019,
+               http://arxiv.org/abs/1805.10941.
 
         """
         if high is None:
