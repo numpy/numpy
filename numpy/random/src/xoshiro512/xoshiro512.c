@@ -6,6 +6,7 @@ worldwide. This software is distributed without any warranty.
 
 See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 
+#include <stddef.h>
 #include "xoshiro512.h"
 
 /* This is xoshiro512** 1.0, an all-purpose, rock-solid generator. It has
@@ -32,7 +33,7 @@ static uint64_t s_placeholder[8];
 
 void xoshiro512_jump(xoshiro512_state *state) {
 
-  int i, b, w;
+  size_t i, b, w;
   static const uint64_t JUMP[] = {0x33ed89b6e7a353f9, 0x760083d7955323be,
                                   0x2837f2fbb5f22fae, 0x4b8c5674d309511c,
                                   0xb11ac47a7ba28c25, 0xf1be7667092bcc1c,
