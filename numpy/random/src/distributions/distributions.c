@@ -169,7 +169,7 @@ float random_standard_exponential_zig_f(bitgen_t *bitgen_state) {
 static NPY_INLINE double next_gauss_zig(bitgen_t *bitgen_state) {
   uint64_t r;
   int sign;
-  int64_t rabs;
+  uint64_t rabs;
   int idx;
   double x, xx, yy;
   for (;;) {
@@ -178,7 +178,7 @@ static NPY_INLINE double next_gauss_zig(bitgen_t *bitgen_state) {
     idx = r & 0xff;
     r >>= 8;
     sign = r & 0x1;
-    rabs = (int64_t)((r >> 1) & 0x000fffffffffffff);
+    rabs = (r >> 1) & 0x000fffffffffffff;
     x = rabs * wi_double[idx];
     if (sign & 0x1)
       x = -x;
@@ -215,7 +215,7 @@ void random_gauss_zig_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out) {
 float random_gauss_zig_f(bitgen_t *bitgen_state) {
   uint32_t r;
   int sign;
-  int32_t rabs;
+  uint32_t rabs;
   int idx;
   float x, xx, yy;
   for (;;) {
@@ -223,7 +223,7 @@ float random_gauss_zig_f(bitgen_t *bitgen_state) {
     r = next_uint32(bitgen_state);
     idx = r & 0xff;
     sign = (r >> 8) & 0x1;
-    rabs = (int32_t)((r >> 9) & 0x0007fffff);
+    rabs = (r >> 9) & 0x0007fffff;
     x = rabs * wi_float[idx];
     if (sign & 0x1)
       x = -x;
