@@ -11,6 +11,7 @@ from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT)
 from numpy.compat import pickle
+from itertools import permutations
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -1178,3 +1179,18 @@ class TestFromCTypes(object):
         self.check(ctypes.c_uint16.__ctype_be__, np.dtype('>u2'))
         self.check(ctypes.c_uint8.__ctype_le__, np.dtype('u1'))
         self.check(ctypes.c_uint8.__ctype_be__, np.dtype('u1'))
+
+    all_types = set(np.typecodes['All'])
+    all_pairs = permutations(all_types, 2)
+
+    @pytest.mark.parametrize("pair", all_pairs)
+    def test_pairs(self, pair):
+        """
+        Check that np.dtype('x,y') matches [np.dtype('x'), np.dtype('y')]
+        Example: np.dtype('d,I') -> dtype([('f0', '<f8'), ('f1', '<u4')])
+        """
+        # gh-5645: check that np.dtype('i,L') can be used
+        pair_type = np.dtype('{},{}'.format(*pair))
+        expected = np.dtype([('f0', pair[0]), ('f1', pair[1])])
+        assert_equal(pair_type, expected)
+
