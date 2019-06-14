@@ -1062,9 +1062,9 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
 
     Examples
     --------
-    >>> np.fromstring('1 2', dtype=int, sep=' ')
+    >>> np.fromstring('1 2', dtype=int)
     array([1, 2])
-    >>> np.fromstring('1, 2', dtype=int, sep=',')
+    >>> np.fromstring('1, 2', dtype=int)
     array([1, 2])
 
     """)
