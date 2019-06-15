@@ -3722,7 +3722,8 @@ def quantile(a, q, axis=None, out=None,
              overwrite_input=False, interpolation='linear', keepdims=False):
     """
     Compute the q-th quantile of the data along the specified axis.
-    ..versionadded:: 1.15.0
+    
+    .. versionadded:: 1.15.0
 
     Parameters
     ----------
