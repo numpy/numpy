@@ -472,7 +472,7 @@ def is_sequence(seq):
     return True
 
 def is_glob_pattern(s):
-    return is_string(s) and ('*' in s or '?' is s)
+    return is_string(s) and ('*' in s or '?' in s)
 
 def as_list(seq):
     if is_sequence(seq):
