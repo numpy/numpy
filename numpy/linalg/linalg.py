@@ -1509,7 +1509,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         enabling a more efficient method for finding singular values.
         Defaults to False.
 
-        ..versionadded:: 1.17.0
+        .. versionadded:: 1.17.0
 
     Raises
     ------
