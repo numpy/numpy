@@ -1257,6 +1257,7 @@ def nanquantile(a, q, axis=None, out=None, overwrite_input=False,
     Compute the qth quantile of the data along the specified axis,
     while ignoring nan values.
     Returns the qth quantile(s) of the array elements.
+    
     .. versionadded:: 1.15.0
 
     Parameters
