@@ -50,9 +50,10 @@ nth_byte_@suff@(@type@ key, npy_intp l) {
 radixsort0_@suff@(@type@ *arr, @type@ *aux, npy_intp num)
 {
     npy_intp cnt[sizeof(@type@)][1 << 8] = { { 0 } };
-    npy_intp i, l;
+    npy_intp i;
+    size_t l;
     @type@ key0 = KEY_OF(arr[0]);
-    npy_intp ncols = 0;
+    size_t ncols = 0;
     npy_ubyte cols[sizeof(@type@)];
 
     for (i = 0; i < num; i++) {
@@ -139,9 +140,10 @@ npy_intp*
 aradixsort0_@suff@(@type@ *arr, npy_intp *aux, npy_intp *tosort, npy_intp num)
 {
     npy_intp cnt[sizeof(@type@)][1 << 8] = { { 0 } };
-    npy_intp i, l;
+    npy_intp i;
+    size_t l;
     @type@ key0 = KEY_OF(arr[0]);
-    npy_intp ncols = 0;
+    size_t ncols = 0;
     npy_ubyte cols[sizeof(@type@)];
 
     for (i = 0; i < num; i++) {
