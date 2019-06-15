@@ -2601,8 +2601,8 @@ add_newdoc('numpy.core.umath', 'matmul',
         For other keyword-only arguments, see the
         :ref:`ufunc docs <ufuncs.kwargs>`.
 
-        ..versionadded:: 1.16
-          Now handles ufunc kwargs
+        .. versionadded:: 1.16
+           Now handles ufunc kwargs
 
     Returns
     -------
