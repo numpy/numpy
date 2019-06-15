@@ -505,7 +505,8 @@ class Checker(doctest.OutputChecker):
     obj_pattern = re.compile('at 0x[0-9a-fA-F]+>')
     int_pattern = re.compile('^[0-9]+L?$')
     vanilla = doctest.OutputChecker()
-    rndm_markers = {'# random', '# Random', '#random', '#Random', "# may vary"}
+    rndm_markers = {'# random', '# Random', '#random', '#Random', "# may vary",
+                    "# uninitialized", "#uninitialized"}
     stopwords = {'plt.', '.hist', '.show', '.ylim', '.subplot(',
                  'set_title', 'imshow', 'plt.show', '.axis(', '.plot(',
                  '.bar(', '.title', '.ylabel', '.xlabel', 'set_ylim', 'set_xlim',

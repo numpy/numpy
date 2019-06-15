@@ -128,11 +128,11 @@ def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
     --------
     >>> a = ([1,2,3], [4,5,6])                         # a is array-like
     >>> np.empty_like(a)
-    array([[-1073741821, -1073741821,           3],    # random
+    array([[-1073741821, -1073741821,           3],    # uninitialized
            [          0,           0, -1073741821]])
     >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
     >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # random
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninitialized
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """

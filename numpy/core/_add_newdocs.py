@@ -936,11 +936,11 @@ add_newdoc('numpy.core.multiarray', 'empty',
     --------
     >>> np.empty([2, 2])
     array([[ -9.74499359e+001,   6.69583040e-309],
-           [  2.13182611e-314,   3.06959433e-309]])         #random
+           [  2.13182611e-314,   3.06959433e-309]])         #uninitialized
 
     >>> np.empty([2, 2], dtype=int)
     array([[-1073741821, -1067949133],
-           [  496041986,    19249760]])                     #random
+           [  496041986,    19249760]])                     #uninitialized
 
     """)
 
