@@ -23,15 +23,8 @@ class TestRegression(object):
         assert_(np.all(mt19937.hypergeometric(18, 3, 11, size=10) > 0))
 
         # Test for ticket #5623
-        args = [
-            (2**20 - 2, 2**20 - 2, 2**20 - 2),  # Check for 32-bit systems
-        ]
-        is_64bits = sys.maxsize > 2**32
-        if is_64bits and sys.platform != 'win32':
-            # Check for 64-bit systems
-            args.append((2**40 - 2, 2**40 - 2, 2**40 - 2))
-        for arg in args:
-            assert_(mt19937.hypergeometric(*arg) > 0)
+        args = (2**20 - 2, 2**20 - 2, 2**20 - 2)  # Check for 32-bit systems
+        assert_(mt19937.hypergeometric(*args) > 0)
 
     def test_logseries_convergence(self):
         # Test for ticket #923

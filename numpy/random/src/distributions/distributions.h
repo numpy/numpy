@@ -84,6 +84,8 @@ static NPY_INLINE double next_double(bitgen_t *bitgen_state) {
   return bitgen_state->next_double(bitgen_state->state);
 }
 
+DECLDIR double loggam(double x);
+
 DECLDIR float random_float(bitgen_t *bitgen_state);
 DECLDIR double random_double(bitgen_t *bitgen_state);
 DECLDIR void random_double_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out);
@@ -160,8 +162,8 @@ DECLDIR RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p);
 DECLDIR RAND_INT_TYPE random_geometric_inversion(bitgen_t *bitgen_state, double p);
 DECLDIR RAND_INT_TYPE random_geometric(bitgen_t *bitgen_state, double p);
 DECLDIR RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a);
-DECLDIR RAND_INT_TYPE random_hypergeometric(bitgen_t *bitgen_state, RAND_INT_TYPE good,
-                                      RAND_INT_TYPE bad, RAND_INT_TYPE sample);
+DECLDIR int64_t random_hypergeometric(bitgen_t *bitgen_state,
+                                      int64_t good, int64_t bad, int64_t sample);
 
 DECLDIR uint64_t random_interval(bitgen_t *bitgen_state, uint64_t max);
 
