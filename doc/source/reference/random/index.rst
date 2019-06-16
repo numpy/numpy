@@ -153,10 +153,6 @@ The included BitGenerators are:
 * MT19937 - The standard Python BitGenerator. Produces identical results to
   Python using the same seed/state. Adds a `~mt19937.MT19937.jumped` function
   that returns a new generator with state as-if ``2**128`` draws have been made.
-* dSFMT - SSE2 enabled versions of the MT19937 generator.  Theoretically
-  the same, but with a different state and so it is not possible to produce a
-  sequence identical to MT19937. Supports ``jumped`` and so can
-  be used in parallel applications. See the `dSFMT authors' page`_.
 * Xorshiro256** and Xorshiro512** - The most recently introduced XOR,
   shift, and rotate generator. Supports ``jumped`` and so can be used in
   parallel applications. See the documentation for
@@ -167,7 +163,6 @@ The included BitGenerators are:
   arbitrary number of steps or generating independent streams. See the
   `Random123`_ page for more details about this class of bit generators.
 
-.. _`dSFMT authors' page`: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/
 .. _`PCG author's page`: http://www.pcg-random.org/
 .. _`xorshift, xoroshiro and xoshiro authors' page`:  http://xoroshiro.di.unimi.it/
 .. _`Random123`: https://www.deshawresearch.com/resources_random123.html

@@ -5,7 +5,7 @@ from functools import partial
 import numpy as np
 import pytest
 from numpy.testing import assert_equal, assert_, assert_array_equal
-from numpy.random import (Generator, MT19937, DSFMT, ThreeFry,
+from numpy.random import (Generator, MT19937, ThreeFry,
                           PCG32, PCG64, Philox, Xoshiro256, Xoshiro512,
                           entropy)
 
@@ -811,18 +811,6 @@ class TestXoshiro512(RNG):
         cls.initial_state = cls.rg.bit_generator.state
         cls.seed_vector_bits = 64
         cls._extra_setup()
-
-
-class TestDSFMT(RNG):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = DSFMT
-        cls.advance = None
-        cls.seed = [12345]
-        cls.rg = Generator(cls.bit_generator(*cls.seed))
-        cls.initial_state = cls.rg.bit_generator.state
-        cls._extra_setup()
-        cls.seed_vector_bits = 32
 
 
 class TestEntropy(object):

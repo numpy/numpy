@@ -4,10 +4,10 @@ from timeit import repeat
 import pandas as pd
 
 import numpy as np
-from numpy.random import MT19937, DSFMT, ThreeFry, PCG64, Philox, \
+from numpy.random import MT19937, ThreeFry, PCG64, Philox, \
     Xoshiro256, Xoshiro512
 
-PRNGS = [DSFMT, MT19937, PCG64, Philox, ThreeFry, Xoshiro256, Xoshiro512]
+PRNGS = [MT19937, PCG64, Philox, ThreeFry, Xoshiro256, Xoshiro512]
 
 funcs = OrderedDict()
 integers = 'integers(0, 2**{bits},size=1000000, dtype="uint{bits}")'
