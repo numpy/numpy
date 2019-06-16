@@ -8,7 +8,7 @@ a wide range of distributions, and served as a replacement for
 the two is that ``Generator`` relies on an additional BitGenerator to
 manage state and generate the random bits, which are then transformed into
 random values from useful distributions. The default BitGenerator used by
-``Generator`` is :class:`~xoshiro256.Xoshiro256`.  The BitGenerator
+``Generator`` is `~PCG64`.  The BitGenerator
 can be changed by passing an instantized BitGenerator to ``Generator``.
 
 

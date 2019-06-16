@@ -5,10 +5,7 @@ from functools import partial
 import numpy as np
 import pytest
 from numpy.testing import assert_equal, assert_, assert_array_equal
-from numpy.random import (Generator, MT19937,
-                          PCG64, Philox, Xoshiro256, Xoshiro512,
-                          entropy)
-
+from numpy.random import (Generator, MT19937, PCG64, Philox, entropy)
 
 @pytest.fixture(scope='module',
                 params=(np.bool, np.int8, np.int16, np.int32, np.int64,
@@ -99,7 +96,7 @@ class RNG(object):
     @classmethod
     def setup_class(cls):
         # Overridden in test classes. Place holder to silence IDE noise
-        cls.bit_generator = Xoshiro256
+        cls.bit_generator = PCG64
         cls.advance = None
         cls.seed = [12345]
         cls.rg = Generator(cls.bit_generator(*cls.seed))
@@ -770,30 +767,6 @@ class TestPhilox(RNG):
     def setup_class(cls):
         cls.bit_generator = Philox
         cls.advance = 2**63 + 2**31 + 2**15 + 1
-        cls.seed = [12345]
-        cls.rg = Generator(cls.bit_generator(*cls.seed))
-        cls.initial_state = cls.rg.bit_generator.state
-        cls.seed_vector_bits = 64
-        cls._extra_setup()
-
-
-class TestXoshiro256(RNG):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = Xoshiro256
-        cls.advance = None
-        cls.seed = [12345]
-        cls.rg = Generator(cls.bit_generator(*cls.seed))
-        cls.initial_state = cls.rg.bit_generator.state
-        cls.seed_vector_bits = 64
-        cls._extra_setup()
-
-
-class TestXoshiro512(RNG):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = Xoshiro512
-        cls.advance = None
         cls.seed = [12345]
         cls.rg = Generator(cls.bit_generator(*cls.seed))
         cls.initial_state = cls.rg.bit_generator.state

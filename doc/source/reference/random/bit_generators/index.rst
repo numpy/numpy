@@ -21,6 +21,4 @@ Stable RNGs
    MT19937 <mt19937>
    PCG64 <pcg64>
    Philox <philox>
-   Xoshiro256** <xoshiro256>
-   Xoshiro512** <xoshiro512>
 

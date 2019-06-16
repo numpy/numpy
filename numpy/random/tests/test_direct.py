@@ -6,8 +6,7 @@ from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
                            assert_raises)
 import pytest
 
-from numpy.random import (Generator, MT19937, PCG64,
-                          Philox, Xoshiro256, Xoshiro512, RandomState)
+from numpy.random import (Generator, MT19937, PCG64, Philox, RandomState)
 from numpy.random.common import interface
 
 try:
@@ -124,7 +123,7 @@ class Base(object):
 
     @classmethod
     def setup_class(cls):
-        cls.bit_generator = Xoshiro256
+        cls.bit_generator = PCG64
         cls.bits = 64
         cls.dtype = np.uint64
         cls.seed_error_type = TypeError
@@ -309,36 +308,6 @@ class Base(object):
         state = bit_generator.state
         alt_state = bit_generator.__getstate__()
         assert_state_equal(state, alt_state)
-
-
-class TestXoshiro256(Base):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = Xoshiro256
-        cls.bits = 64
-        cls.dtype = np.uint64
-        cls.data1 = cls._read_csv(
-            join(pwd, './data/xoshiro256-testset-1.csv'))
-        cls.data2 = cls._read_csv(
-            join(pwd, './data/xoshiro256-testset-2.csv'))
-        cls.seed_error_type = TypeError
-        cls.invalid_seed_types = [('apple',), (2 + 3j,), (3.1,)]
-        cls.invalid_seed_values = [(-2,), (np.empty((2, 2), dtype=np.int64),)]
-
-
-class TestXoshiro512(Base):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = Xoshiro512
-        cls.bits = 64
-        cls.dtype = np.uint64
-        cls.data1 = cls._read_csv(
-            join(pwd, './data/xoshiro512-testset-1.csv'))
-        cls.data2 = cls._read_csv(
-            join(pwd, './data/xoshiro512-testset-2.csv'))
-        cls.seed_error_type = TypeError
-        cls.invalid_seed_types = [('apple',), (2 + 3j,), (3.1,)]
-        cls.invalid_seed_values = [(-2,), (np.empty((2, 2), dtype=np.int64),)]
 
 
 class TestPhilox(Base):
