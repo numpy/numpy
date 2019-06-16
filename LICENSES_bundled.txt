@@ -23,5 +23,5 @@ License: BSD derived
 
 Name: dragon4
 Files: numpy/core/src/multiarray/dragon4.c
-License: One of a kind
+License: MIT
   For license text, see numpy/core/src/multiarray/dragon4.c
