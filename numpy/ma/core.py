@@ -602,9 +602,9 @@ def filled(a, fill_value=None):
     ----------
     a : MaskedArray or array_like
         An input object.
-    fill_value : array_like, optional. Can be
-        scalar or non-scalar. If non-scalar, the
-        resulting filled_array should be broadcastable
+    fill_value : array_like, optional.
+        Can be scalar or non-scalar. If non-scalar, the
+        resulting filled array should be broadcastable
         over input array. Default is None.
 
     Returns
@@ -6250,7 +6250,7 @@ class mvoid(MaskedArray):
         ----------
         fill_value : array_like, optional
             The value to use for invalid entries. Can be scalar or
-            non-scalar. If latter is the case, the filled_array should
+            non-scalar. If latter is the case, the filled array should
             be broadcastable over input array. Default is None, in
             which case the `fill_value` attribute is used instead.
 
