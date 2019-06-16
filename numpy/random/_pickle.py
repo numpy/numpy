@@ -1,8 +1,6 @@
 from .mtrand import RandomState
 from .philox import Philox
 from .pcg64 import PCG64
-from .xoshiro256 import Xoshiro256
-from .xoshiro512 import Xoshiro512
 
 from .generator import Generator
 from .mt19937 import MT19937
@@ -10,8 +8,6 @@ from .mt19937 import MT19937
 BitGenerators = {'MT19937': MT19937,
                  'PCG64': PCG64,
                  'Philox': Philox,
-                 'Xoshiro256': Xoshiro256,
-                 'Xoshiro512': Xoshiro512
                  }
 
 

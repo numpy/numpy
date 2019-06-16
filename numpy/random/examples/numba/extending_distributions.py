@@ -24,7 +24,7 @@ import numba as nb
 import numpy as np
 from cffi import FFI
 
-from numpy.random import Xoshiro256
+from numpy.random import PCG64
 
 ffi = FFI()
 if os.path.exists('./distributions.dll'):
@@ -37,7 +37,7 @@ else:
 ffi.cdef("""
 double random_gauss_zig(void *bitgen_state);
 """)
-x = Xoshiro256()
+x = PCG64()
 xffi = x.cffi
 bit_generator = xffi.bit_generator
 

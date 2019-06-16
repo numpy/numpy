@@ -18,11 +18,11 @@ provided by ``ctypes.next_double``.
 
 .. code-block:: python
 
-    from numpy.random import Xoshiro256
+    from numpy.random import PCG64
     import numpy as np
     import numba as nb
 
-    x = Xoshiro256()
+    x = PCG64()
     f = x.ctypes.next_double
     s = x.ctypes.state
     state_addr = x.ctypes.state_address
@@ -50,7 +50,7 @@ provided by ``ctypes.next_double``.
     # Must use state address not state with numba
     normalsj(1, state_addr)
     %timeit normalsj(1000000, state_addr)
-    print('1,000,000 Box-Muller (numba/Xoshiro256) randoms')
+    print('1,000,000 Box-Muller (numba/PCG64) randoms')
     %timeit np.random.standard_normal(1000000)
     print('1,000,000 Box-Muller (NumPy) randoms')
 
@@ -66,7 +66,7 @@ Cython
 ======
 
 Cython can be used to unpack the ``PyCapsule`` provided by a BitGenerator.
-This example uses `~xoshiro256.Xoshiro256` and
+This example uses `~pcg64.PCG64` and
 ``random_gauss_zig``, the Ziggurat-based generator for normals, to fill an
 array.  The usual caveats for writing high-performance code using Cython --
 removing bounds checks and wrap around, providing array alignment information
@@ -80,7 +80,7 @@ removing bounds checks and wrap around, providing array alignment information
     from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
     from numpy.random.common cimport *
     from numpy.random.distributions cimport random_gauss_zig
-    from numpy.random import Xoshiro256
+    from numpy.random import PCG64
 
 
     @cython.boundscheck(False)
@@ -91,7 +91,7 @@ removing bounds checks and wrap around, providing array alignment information
         cdef const char *capsule_name = "BitGenerator"
         cdef double[::1] random_values
 
-        x = Xoshiro256()
+        x = PCG64()
         capsule = x.capsule
         if not PyCapsule_IsValid(capsule, capsule_name):
             raise ValueError("Invalid pointer to anon_func_state")
@@ -117,7 +117,7 @@ RNG structure.
         cdef const char *capsule_name = "BitGenerator"
         cdef double[::1] random_values
 
-        x = Xoshiro256()
+        x = PCG64()
         capsule = x.capsule
         # Optional check that the capsule if from a BitGenerator
         if not PyCapsule_IsValid(capsule, capsule_name):

@@ -3,9 +3,9 @@ import datetime as dt
 import numpy as np
 import numba as nb
 
-from numpy.random import Xoshiro256
+from numpy.random import PCG64
 
-x = Xoshiro256()
+x = PCG64()
 f = x.ctypes.next_uint32
 s = x.ctypes.state
 
@@ -68,7 +68,7 @@ normalsj(1, state_addr)
 start = dt.datetime.now()
 normalsj(1000000, state_addr)
 ms = 1000 * (dt.datetime.now() - start).total_seconds()
-print('1,000,000 Polar-transform (numba/Xoshiro256) randoms in '
+print('1,000,000 Polar-transform (numba/PCG64) randoms in '
       '{ms:0.1f}ms'.format(ms=ms))
 
 start = dt.datetime.now()
