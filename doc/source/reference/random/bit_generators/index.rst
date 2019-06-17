@@ -22,8 +22,6 @@ Stable RNGs
    MT19937 <mt19937>
    PCG32 <pcg32>
    PCG64 <pcg64>
-   Philox <philox>
-   ThreeFry <threefry>
    Xoshiro256** <xoshiro256>
    Xoshiro512** <xoshiro512>
 

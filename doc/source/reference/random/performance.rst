@@ -12,8 +12,7 @@ The recommended generator for use in large-scale parallel applications is
 :class:`~.xoshiro512.Xoshiro512` where the `jumped` method is used to advance
 the state. For very large scale applications -- requiring 1,000+ independent
 streams -- is the best choice. For very large scale applications -- requiring
-1,000+ independent streams, :class:`~pcg64.PCG64` or :class:`~.philox.Philox`
-are the best choices.
+1,000+ independent streams, :class:`~pcg64.PCG64` is the best choice.
 
 Timings
 *******

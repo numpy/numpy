@@ -12,8 +12,7 @@ or distributed).
 Independent Streams
 -------------------
 
-:class:`~pcg64.PCG64`, :class:`~threefry.ThreeFry`
-and :class:`~philox.Philox` support independent streams.  This
+:class:`~pcg64.PCG64` supports independent streams.  This
 example shows how many streams can be created by passing in different index
 values in the second input while using the same seed in the first.
 
@@ -27,22 +26,6 @@ values in the second input while using the same seed in the first.
   seed = sum([int(entropy[i]) * 2 ** (32 * i) for i in range(4)])
   streams = [PCG64(seed, stream) for stream in range(10)]
 
-
-:class:`~philox.Philox` and :class:`~threefry.ThreeFry` are
-counter-based RNGs which use a counter and key.  Different keys can be used
-to produce independent streams.
-
-.. code-block:: python
-
-  import numpy as np
-  from numpy.random import ThreeFry
-
-  key = random_entropy(8)
-  key = key.view(np.uint64)
-  key[0] = 0
-  step = np.zeros(4, dtype=np.uint64)
-  step[0] = 1
-  streams = [ThreeFry(key=key + stream * step) for stream in range(10)]
 
 .. _jump-and-advance:
 
@@ -70,10 +53,6 @@ are listed below.
 +-----------------+-------------------------+-------------------------+-------------------------+
 | PCG64           | :math:`2^{128}`         | :math:`2^{64}`          | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
-| Philox          | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
-+-----------------+-------------------------+-------------------------+-------------------------+
-| ThreeFry        | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
-+-----------------+-------------------------+-------------------------+-------------------------+
 | Xoshiro256**    | :math:`2^{256}`         | :math:`2^{128}`         | 64                      |
 +-----------------+-------------------------+-------------------------+-------------------------+
 | Xoshiro512**    | :math:`2^{512}`         | :math:`2^{256}`         | 64                      |
@@ -98,9 +77,8 @@ overlap.
 Advance
 *******
 ``advance`` can be used to jump the state an arbitrary number of steps, and so
-is a more general approach than ``jumped``.  :class:`~pcg64.PCG64`,
-:class:`~threefry.ThreeFry` and :class:`~philox.Philox`
-support ``advance``, and since these also support
+is a more general approach than ``jumped``.  :class:`~pcg64.PCG64`
+supports ``advance``, and since it also support
 independent streams, it is not usually necessary to use ``advance``.
 
 Advancing a BitGenerator updates the underlying state as-if a given number of

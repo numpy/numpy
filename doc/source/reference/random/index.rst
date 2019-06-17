@@ -163,14 +163,10 @@ The included BitGenerators are:
   `~xoshiro256.Xoshirt256.jumped` for details. More information about these bit
   generators is available at the `xorshift, xoroshiro and xoshiro authors'
   page`_.
-* ThreeFry and Philox - counter-based generators capable of being advanced an
-  arbitrary number of steps or generating independent streams. See the
-  `Random123`_ page for more details about this class of bit generators.
 
 .. _`dSFMT authors' page`: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT/
 .. _`PCG author's page`: http://www.pcg-random.org/
 .. _`xorshift, xoroshiro and xoshiro authors' page`:  http://xoroshiro.di.unimi.it/
-.. _`Random123`: https://www.deshawresearch.com/resources_random123.html
 
 Generator
 ---------
