@@ -25,6 +25,8 @@ to the instructions at http://help.github.com/forking/ - please see that
 page for more detail.  We're repeating some of it here just to give the
 specifics for the NumPy_ project, and to suggest some default names.
 
+.. _set-up-and-configure-a-github-account:
+
 Set up and configure a github_ account
 ======================================
 
