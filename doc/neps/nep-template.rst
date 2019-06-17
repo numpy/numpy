@@ -13,16 +13,23 @@ Abstract
 
 The abstract should be a short description of what the NEP will achieve.
 
-Motivation
-----------
+Motivation and Scope
+--------------------
 
 This section describes the need for the NEP.  It should describe the existing
-problem, who it affects, what it is trying to solve, and why.
+problem, who it affects, what it is trying to solve, and why. This section
+should explicitly address the scope and requirements of the proposed change.
+
+Detailed description
+--------------------
+
+This section describes the need for the NEP.  It should describe the existing
+problem that it is trying to solve and why this NEP makes the situation better.
 It should include examples of how the new functionality would be used, intended
 use-cases and psuedo-code describing its use.
 
-Literature Review
------------------
+Related Work
+------------
 
 This section should list relevant and/or similar technologies, possibly in other
 libraries. It does not need to be comprehensive, just list the major examples of
