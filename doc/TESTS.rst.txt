@@ -324,7 +324,7 @@ meant to test, or if a test only fails on a particular architecture.
 
 To skip a test, simply use ``skipif``::
 
-  import pytest.mark
+  import pytest
 
   @pytest.mark.skipif(SkipMyTest, reason="Skipping this test because...")
   def test_something(foo):
@@ -335,15 +335,14 @@ and the message in verbose test output is the second argument given to
 ``skipif``.  Similarly, a test can be marked as a known failure by
 using ``xfail``::
 
-  from numpy.testing import dec
+  import pytest
 
   @pytest.mark.xfail(MyTestFails, reason="This test is known to fail because...")
   def test_something_else(foo):
       ...
 
 Of course, a test can be unconditionally skipped or marked as a known
-failure by passing ``True`` as the first argument to ``skipif`` or
-``xfail``, respectively.
+failure by using ``skip`` or ``xfail`` without argument, respectively.
 
 A total of the number of skipped and known failing tests is displayed
 at the end of the test run.  Skipped tests are marked as ``'S'`` in
