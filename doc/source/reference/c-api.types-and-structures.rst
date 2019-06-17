@@ -133,10 +133,10 @@ PyArray_Type and PyArrayObject
     is related to this array. There are two use cases:
 
     - If this array does not own its own memory, then base points to the
-    Python object that owns it (perhaps another array object)
+      Python object that owns it (perhaps another array object)
     - If this array has the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or
-    :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag set, then this array is a working
-    copy of a "misbehaved" array.
+      :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag set, then this array is a working
+      copy of a "misbehaved" array.
 
     When ``PyArray_ResolveWritebackIfCopy`` is called, the array pointed to
     by base will be updated with the contents of this array.
