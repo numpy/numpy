@@ -636,14 +636,7 @@ def filled(a, fill_value=None):
 
     """
     if hasattr(a, 'filled'):
-        # NumPy 1.17.0, gh-4363
-        if ((np.isscalar(fill_value) == True) or (fill_value == None) or (a.shape == fill_value.shape)):
-            return a.filled(fill_value)
-        else:
-            warnings.warn(
-                "Non-scalar arrays for fill values are deprecated. Use "
-                "arrays with scalar values instead",
-                DeprecationWarning, stacklevel=2)
+        return a.filled(fill_value)
 
     elif isinstance(a, ndarray):
         # Should we check for contiguity ? and a.flags['CONTIGUOUS']:
@@ -3735,9 +3728,8 @@ class MaskedArray(ndarray):
         if fill_value is None:
             fill_value = self.fill_value
         else:
-            if ((np.isscalar(fill_value) == True) or (self.shape == fill_value.shape)):
-                fill_value = _check_fill_value(fill_value, self.dtype)
-            else:
+            fill_value = _check_fill_value(fill_value, self.dtype)
+            if not (fill_value.ndim == 0 or self.shape == fill_value.shape):
                 warnings.warn(
                     "Non-scalar arrays for fill values are deprecated. Use "
                     "arrays with scalar values instead",
