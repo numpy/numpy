@@ -680,21 +680,24 @@ PyArrayDescr_Type and PyArray_Descr
 
 
 The :c:data:`PyArray_Type` typeobject implements many of the features of
-Python objects including the :py:`c.tp_as_number`, :py:`c.tp_as_sequence`,
-:py:`c.tp_as_mapping`, and :py:`c.tp_as_buffer` interfaces. The rich comparison
-(:py:`c.tp_richcompare`) is also used along with new-style attribute lookup
-for methods (:py:`c.tp_methods`) and properties (:py:`c.tp_getset`). The
-:c:data:`PyArray_Type` can also be sub-typed.
+:c:type:`Python objects <PyTypeObject>` including the :c:member:`tp_as_number
+<PyTypeObject.tp_as_number>`, :c:member:`tp_as_sequence
+<PyTypeObject.tp_as_sequence>`, :c:member:`tp_as_mapping
+<PyTypeObject.tp_as_mapping>`, and :c:member:`tp_as_buffer
+<PyTypeObject.tp_as_buffer>` interfaces. The `rich comparison
+<:c:type:`richcmpfunc>`) is also used along with new-style attribute lookup for
+member (:c:member:`tp_members <PyTypeObject.tp_members>`) and properties
+(:c:member:`tp_getset <PyTypeObject.tp_getset>`).
+The :c:data:`PyArray_Type` can also be sub-typed.
 
 .. tip::
 
-    The `tp_as_number` methods use a generic approach to call whatever
-    function has been registered for handling the operation. The
-    function `PyNumeric_SetOps(..)` (deprecated) can be used to register
-    functions to handle particular mathematical operations (for all arrays).
-    When the _multiarray_umath module is imported, it sets the numeric operations for
-    all arrays to the corresponding ufuncs.  The `tp_str` and `tp_repr`
-    methods can also be altered using `PyString_SetStringFunction(...)`.
+    The ``tp_as_number`` methods use a generic approach to call whatever
+    function has been registered for handling the operation.  When the
+    ``_multiarray_umath module`` is imported, it sets the numeric operations
+    for all arrays to the corresponding ufuncs. This choice can be changed with
+    `PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr`` methods can
+    also be altered using `PyArray_SetStringFunction`.
 
 
 PyUFunc_Type and PyUFuncObject
