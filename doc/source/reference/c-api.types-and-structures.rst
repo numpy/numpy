@@ -57,8 +57,8 @@ types are place holders that allow the array scalars to fit into a
 hierarchy of actual Python types.
 
 
-PyArray_Type
-------------
+PyArray_Type and PyArrayObject
+------------------------------
 
 .. c:var:: PyArray_Type
 
@@ -74,7 +74,7 @@ PyArray_Type
    subclasses) will have this structure.  For future compatibility,
    these structure members should normally be accessed using the
    provided macros. If you need a shorter name, then you can make use
-   of :c:type:`NPY_AO` which is defined to be equivalent to
+   of :c:type:`NPY_AO` (deprecated) which is defined to be equivalent to
    :c:type:`PyArrayObject`.
 
    .. code-block:: c
@@ -91,7 +91,7 @@ PyArray_Type
           PyObject *weakreflist;
       } PyArrayObject;
 
-.. c:macro: PyArrayObject.PyObject_HEAD
+.. c:macro:: PyArrayObject.PyObject_HEAD
 
     This is needed by all Python objects. It consists of (at least)
     a reference count member ( ``ob_refcnt`` ) and a pointer to the
@@ -130,14 +130,16 @@ PyArray_Type
 .. c:member:: PyObject *PyArrayObject.base
 
     This member is used to hold a pointer to another Python object that
-    is related to this array. There are two use cases: 1) If this array
-    does not own its own memory, then base points to the Python object
-    that owns it (perhaps another array object), 2) If this array has
-    the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or
-    :c:data:NPY_ARRAY_WRITEBACKIFCOPY`: flag set, then this array is
-    a working copy of a "misbehaved" array. When
-    ``PyArray_ResolveWritebackIfCopy`` is called, the array pointed to by base
-    will be updated with the contents of this array.
+    is related to this array. There are two use cases:
+
+    - If this array does not own its own memory, then base points to the
+      Python object that owns it (perhaps another array object)
+    - If this array has the (deprecated) :c:data:`NPY_ARRAY_UPDATEIFCOPY` or
+      :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag set, then this array is a working
+      copy of a "misbehaved" array.
+
+    When ``PyArray_ResolveWritebackIfCopy`` is called, the array pointed to
+    by base will be updated with the contents of this array.
 
 .. c:member:: PyArray_Descr *PyArrayObject.descr
 
@@ -163,8 +165,8 @@ PyArray_Type
     weakref module).
 
 
-PyArrayDescr_Type
------------------
+PyArrayDescr_Type and PyArray_Descr
+-----------------------------------
 
 .. c:var:: PyArrayDescr_Type
 
@@ -253,10 +255,12 @@ PyArrayDescr_Type
 
     .. c:var:: NPY_ITEM_REFCOUNT
 
-    .. c:var:: NPY_ITEM_HASOBJECT
-
         Indicates that items of this data-type must be reference
         counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
+
+    .. c:var:: NPY_ITEM_HASOBJECT
+
+        Same as :c:data:`NPY_ITEM_REFCOUNT`.
 
     .. c:var:: NPY_LIST_PICKLE
 
@@ -676,25 +680,28 @@ PyArrayDescr_Type
 
 
 The :c:data:`PyArray_Type` typeobject implements many of the features of
-Python objects including the tp_as_number, tp_as_sequence,
-tp_as_mapping, and tp_as_buffer interfaces. The rich comparison
-(tp_richcompare) is also used along with new-style attribute lookup
-for methods (tp_methods) and properties (tp_getset). The
-:c:data:`PyArray_Type` can also be sub-typed.
+:c:type:`Python objects <PyTypeObject>` including the :c:member:`tp_as_number
+<PyTypeObject.tp_as_number>`, :c:member:`tp_as_sequence
+<PyTypeObject.tp_as_sequence>`, :c:member:`tp_as_mapping
+<PyTypeObject.tp_as_mapping>`, and :c:member:`tp_as_buffer
+<PyTypeObject.tp_as_buffer>` interfaces. The :c:type:`rich comparison
+<richcmpfunc>`) is also used along with new-style attribute lookup for
+member (:c:member:`tp_members <PyTypeObject.tp_members>`) and properties
+(:c:member:`tp_getset <PyTypeObject.tp_getset>`).
+The :c:data:`PyArray_Type` can also be sub-typed.
 
 .. tip::
 
-    The tp_as_number methods use a generic approach to call whatever
-    function has been registered for handling the operation. The
-    function PyNumeric_SetOps(..) can be used to register functions to
-    handle particular mathematical operations (for all arrays). When
-    the umath module is imported, it sets the numeric operations for
-    all arrays to the corresponding ufuncs.  The tp_str and tp_repr
-    methods can also be altered using PyString_SetStringFunction(...).
+    The ``tp_as_number`` methods use a generic approach to call whatever
+    function has been registered for handling the operation.  When the
+    ``_multiarray_umath module`` is imported, it sets the numeric operations
+    for all arrays to the corresponding ufuncs. This choice can be changed with
+    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
+    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
 
 
-PyUFunc_Type
-------------
+PyUFunc_Type and PyUFuncObject
+------------------------------
 
 .. c:var:: PyUFunc_Type
 
@@ -786,8 +793,8 @@ PyUFunc_Type
        the identity for this operation. It is only used for a
        reduce-like call on an empty array.
 
-   .. c:member:: void PyUFuncObject.functions(char** args, npy_intp* dims,
-      npy_intp* steps, void* extradata)
+   .. c:member:: void PyUFuncObject.functions( \
+          char** args, npy_intp* dims, npy_intp* steps, void* extradata)
 
        An array of function pointers --- one for each data type
        supported by the ufunc. This is the vector loop that is called
@@ -932,8 +939,8 @@ PyUFunc_Type
        - :c:data:`UFUNC_CORE_DIM_SIZE_INFERRED` if the dim size will be
          determined from the operands and not from a :ref:`frozen <frozen>` signature
 
-PyArrayIter_Type
-----------------
+PyArrayIter_Type and PyArrayIterObject
+--------------------------------------
 
 .. c:var:: PyArrayIter_Type
 
@@ -1042,8 +1049,8 @@ with it through the use of the macros :c:func:`PyArray_ITER_NEXT` (it),
 :c:type:`PyArrayIterObject *`.
 
 
-PyArrayMultiIter_Type
----------------------
+PyArrayMultiIter_Type and PyArrayMultiIterObject
+------------------------------------------------
 
 .. c:var:: PyArrayMultiIter_Type
 
@@ -1104,8 +1111,8 @@ PyArrayMultiIter_Type
        arrays to be broadcast together. On return, the iterators are
        adjusted for broadcasting.
 
-PyArrayNeighborhoodIter_Type
-----------------------------
+PyArrayNeighborhoodIter_Type and PyArrayNeighborhoodIterObject
+--------------------------------------------------------------
 
 .. c:var:: PyArrayNeighborhoodIter_Type
 
@@ -1118,8 +1125,33 @@ PyArrayNeighborhoodIter_Type
    :c:data:`PyArrayNeighborhoodIter_Type` is the
    :c:type:`PyArrayNeighborhoodIterObject`.
 
-PyArrayFlags_Type
------------------
+   .. code-block:: c
+
+      typedef struct {
+          PyObject_HEAD
+          int nd_m1;
+          npy_intp index, size;
+          npy_intp coordinates[NPY_MAXDIMS]
+          npy_intp dims_m1[NPY_MAXDIMS];
+          npy_intp strides[NPY_MAXDIMS];
+          npy_intp backstrides[NPY_MAXDIMS];
+          npy_intp factors[NPY_MAXDIMS];
+          PyArrayObject *ao;
+          char *dataptr;
+          npy_bool contiguous;
+          npy_intp bounds[NPY_MAXDIMS][2];
+          npy_intp limits[NPY_MAXDIMS][2];
+          npy_intp limits_sizes[NPY_MAXDIMS];
+          npy_iter_get_dataptr_t translate;
+          npy_intp nd;
+          npy_intp dimensions[NPY_MAXDIMS];
+          PyArrayIterObject* _internal_iter;
+          char* constant;
+          int mode;
+      } PyArrayNeighborhoodIterObject;
+
+PyArrayFlags_Type and PyArrayFlagsObject
+----------------------------------------
 
 .. c:var:: PyArrayFlags_Type
 
@@ -1128,6 +1160,16 @@ PyArrayFlags_Type
    it easier to work with the different flags by accessing them as
    attributes or by accessing them as if the object were a dictionary
    with the flag names as entries.
+
+.. c:type:: PyArrayFlagsObject
+
+   .. code-block:: c
+
+      typedef struct PyArrayFlagsObject {
+              PyObject_HEAD
+              PyObject *arr;
+              int flags;
+      } PyArrayFlagsObject;
 
 
 ScalarArrayTypes
