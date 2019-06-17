@@ -6,6 +6,7 @@ worldwide. This software is distributed without any warranty.
 
 See <http://creativecommons.org/publicdomain/zero/1.0/>. */
 
+#include <stddef.h>
 #include "xoshiro256.h"
 
 /* This is xoshiro256** 1.0, our all-purpose, rock-solid generator. It has
@@ -29,7 +30,7 @@ extern NPY_INLINE uint32_t xoshiro256_next32(xoshiro256_state *state);
 
 void xoshiro256_jump(xoshiro256_state *state)
 {
-	int i, b;
+	size_t i, b;
 	static const uint64_t JUMP[] = {0x180ec6d33cfd0aba, 0xd5a61266f0c9392c, 0xa9582618e03fc9aa, 0x39abdc4529b1661c};
 
 	uint64_t s0 = 0;
