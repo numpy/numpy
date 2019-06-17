@@ -684,8 +684,8 @@ The :c:data:`PyArray_Type` typeobject implements many of the features of
 <PyTypeObject.tp_as_number>`, :c:member:`tp_as_sequence
 <PyTypeObject.tp_as_sequence>`, :c:member:`tp_as_mapping
 <PyTypeObject.tp_as_mapping>`, and :c:member:`tp_as_buffer
-<PyTypeObject.tp_as_buffer>` interfaces. The `rich comparison
-<:c:type:`richcmpfunc>`) is also used along with new-style attribute lookup for
+<PyTypeObject.tp_as_buffer>` interfaces. The :c:type:`rich comparison
+<richcmpfunc>`) is also used along with new-style attribute lookup for
 member (:c:member:`tp_members <PyTypeObject.tp_members>`) and properties
 (:c:member:`tp_getset <PyTypeObject.tp_getset>`).
 The :c:data:`PyArray_Type` can also be sub-typed.
@@ -696,8 +696,8 @@ The :c:data:`PyArray_Type` can also be sub-typed.
     function has been registered for handling the operation.  When the
     ``_multiarray_umath module`` is imported, it sets the numeric operations
     for all arrays to the corresponding ufuncs. This choice can be changed with
-    `PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr`` methods can
-    also be altered using `PyArray_SetStringFunction`.
+    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
+    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
 
 
 PyUFunc_Type and PyUFuncObject
