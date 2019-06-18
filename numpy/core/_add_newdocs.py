@@ -1041,9 +1041,14 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         elements is also ignored.
 
         .. deprecated:: 1.14
-            If this argument is not provided, `fromstring` falls back on the
-            behaviour of `frombuffer` after encoding unicode string inputs as
-            either utf-8 (python 3), or the default encoding (python 2).
+            Passing ``sep=''``, the default, is deprecated since it will
+            trigger the deprecated binary mode of this function. This mode
+            interprets `string` as binary bytes, rather than ASCII text with
+            decimal numbers, an operation which is better spelt
+            ``frombuffer(string, dtype, count)``. If `string` contains unicode
+            text, the binary mode of `fromstring` will first encode it into
+            bytes using either utf-8 (python 3) or the default encoding
+            (python 2), neither of which produce sane results.
 
     Returns
     -------
