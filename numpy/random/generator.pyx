@@ -11,6 +11,9 @@ from .pcg64 import PCG64
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
 from libc cimport string
+from libc.stdlib cimport malloc, free
+from libc.stdio cimport printf
+from libc.string cimport memset
 
 cimport cython
 cimport numpy as np
@@ -601,6 +604,8 @@ cdef class Generator:
         cdef int64_t val, t, loc, size_i, pop_size_i
         cdef int64_t *idx_data
         cdef np.npy_intp j
+        cdef uint64_t set_size, mask
+        cdef uint64_t *hash_set
         # Format and Verify input
         a = np.array(a, copy=False)
         if a.ndim == 0:
@@ -687,7 +692,7 @@ cdef class Generator:
                 size_i = size
                 pop_size_i = pop_size
                 # This is a heuristic tuning. should be improvable
-                if pop_size_i > 200 and (size > 200 or size > (10 * pop_size // size)):
+                if pop_size_i > 10000 and (size_i > (pop_size_i // 10)):
                     # Tail shuffle size elements
                     idx = np.arange(pop_size, dtype=np.int64)
                     idx_ptr = np.PyArray_BYTES(<np.ndarray>idx)
@@ -697,26 +702,31 @@ cdef class Generator:
                     # Copy to allow potentially large array backing idx to be gc
                     idx = idx[(pop_size - size):].copy()
                 else:
-                    # Floyds's algorithm with precomputed indices
-                    # Worst case, O(n**2) when size is close to pop_size
+                    # Floyd's algorithm
                     idx = np.empty(size, dtype=np.int64)
                     idx_data = <int64_t*>np.PyArray_DATA(<np.ndarray>idx)
-                    idx_set = set()
-                    loc = 0
-                    # Sample indices with one pass to avoid reacquiring the lock
+                    # smallest power of 2 larger than 1.2 * size
+                    set_size = <uint64_t>(1.2 * size_i)
+                    mask = _gen_mask(set_size)
+                    set_size = 1 + mask
+                    hash_set = <uint64_t*>malloc(sizeof(uint64_t) * set_size)
+                    memset(hash_set, 0xffff, sizeof(uint64_t) * set_size)
                     with self.lock:
                         for j in range(pop_size_i - size_i, pop_size_i):
-                            idx_data[loc] = random_interval(&self._bitgen, j)
-                            loc += 1
-                    loc = 0
-                    while len(idx_set) < size_i:
-                        for j in range(pop_size_i - size_i, pop_size_i):
-                            if idx_data[loc] not in idx_set:
-                                val = idx_data[loc]
-                            else:
-                                idx_data[loc] = val = j
-                            idx_set.add(val)
-                            loc += 1
+                            val = random_interval(&self._bitgen, j)
+                            loc = val & mask
+                            while hash_set[loc] != -1 and hash_set[loc] != val:
+                                loc = (loc + 1) & mask
+                            if hash_set[loc] == -1: # then val not in hash_set
+                                hash_set[loc] = val
+                                idx_data[j - pop_size_i + size_i] = val
+                            else: # we need to insert j instead
+                                loc = j & mask
+                                while hash_set[loc] != -1:
+                                    loc = (loc + 1) & mask
+                                hash_set[loc] = j
+                                idx_data[j - pop_size_i + size_i] = j
+                    free(hash_set)
                 if shape is not None:
                     idx.shape = shape
 
