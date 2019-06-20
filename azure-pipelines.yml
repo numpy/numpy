@@ -191,13 +191,6 @@ jobs:
       choco install -y mingw --forcex86 --force --version=5.3.0
     displayName: 'Install 32-bit mingw for 32-bit builds'
     condition: eq(variables['BITS'], 32)
-  - powershell: |
-      $wc = New-Object net.webclient
-      $gh_base = "https://raw.githubusercontent.com/MacPython/numpy-wheels/master/"
-      $wc.Downloadfile($gh_base + "openblas_support.py", "$pwd\openblas_support.py")
-      python -c "import openblas_support; openblas_support.make_init('numpy')"
-      del openblas_support.py
-    displayName: 'Create _distributor_init.py for OpenBlas'
   # NOTE: for Windows builds it seems much more tractable to use runtests.py
   # vs. manual setup.py and then runtests.py for testing only
   - powershell: |
@@ -208,6 +201,7 @@ jobs:
          $env:PATH = "C:\\tools\\mingw32\\bin;" + $env:PATH
          refreshenv
       }
+      python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
       pip wheel -v -v -v --wheel-dir=dist .
 
       ls dist -r | Foreach-Object {
