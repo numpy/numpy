@@ -55,9 +55,6 @@ def configuration(parent_package='', top_path=None):
 
     # Use legacy integer variable sizes
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
-    # Required defined for DSFMT size and to allow it to detect SSE2 using
-    # config file information
-    DSFMT_DEFS = [('DSFMT_MEXP', '19937'), ("HAVE_NPY_CONFIG_H", "1")]
     PCG64_DEFS = []
     if 1 or sys.maxsize < 2 ** 32 or os.name == 'nt':
         # Force emulated mode here
@@ -74,19 +71,6 @@ def configuration(parent_package='', top_path=None):
                                   'entropy.pyx',
                                   ],
                          define_macros=defs,
-                         )
-    config.add_extension('dsfmt',
-                         sources=['dsfmt.c', 'src/dsfmt/dSFMT.c',
-                                  'src/dsfmt/dSFMT-jump.c',
-                                  'src/aligned_malloc/aligned_malloc.c'],
-                         include_dirs=['.', 'src', join('src', 'dsfmt')],
-                         libraries=EXTRA_LIBRARIES,
-                         extra_compile_args=EXTRA_COMPILE_ARGS,
-                         extra_link_args=EXTRA_LINK_ARGS,
-                         depends=[join('src', 'dsfmt', 'dsfmt.h'),
-                                  'dsfmt.pyx',
-                                  ],
-                         define_macros=defs + DSFMT_DEFS,
                          )
     for gen in ['mt19937']:
         # gen.pyx, src/gen/gen.c, src/gen/gen-jump.c
@@ -153,7 +137,7 @@ def configuration(parent_package='', top_path=None):
                          extra_compile_args=EXTRA_COMPILE_ARGS,
                          extra_link_args=EXTRA_LINK_ARGS,
                          depends=['mtrand.pyx'],
-                         define_macros=defs + DSFMT_DEFS + LEGACY_DEFS,
+                         define_macros=defs + LEGACY_DEFS,
                          )
     return config
 

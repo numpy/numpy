@@ -18,7 +18,6 @@ Stable RNGs
 .. toctree::
    :maxdepth: 1
 
-   DSFMT <dsfmt>
    MT19937 <mt19937>
    PCG32 <pcg32>
    PCG64 <pcg64>

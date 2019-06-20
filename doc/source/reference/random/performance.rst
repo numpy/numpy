@@ -23,8 +23,7 @@ specific distribution.  The original :class:`~mt19937.MT19937` generator is
 much slower since it requires 2 32-bit values to equal the output of the
 faster generators.
 
-Integer performance has a similar ordering although `dSFMT` is slower since
-it generates 53-bit floating point values rather than integer values.
+Integer performance has a similar ordering.
 
 The pattern is similar for other, more complex generators. The normal
 performance of the legacy :class:`~mtrand.RandomState` generator is much
@@ -120,9 +119,8 @@ Normal                 115.3        100    135.6      60.3        93.6         1
 ~~~~~~~~~~~~~~
 
 The performance of 64-bit generators on 32-bit Windows is much lower than on 64-bit
-operating systems due to register width. DSFMT uses SSE2 when available, and so is less
-affected by the size of the operating system's register. MT19937, the generator that has been
-in NumPy since 2005, operates on 32-bit integers and so is close to DSFMT.
+operating systems due to register width. MT19937, the generator that has been
+in NumPy since 2005, operates on 32-bit integers.
 
 ===================  =======  =========  =======  ========  ==========  ============
 Distribution           DSFMT    MT19937    PCG64    Philox    ThreeFry    Xoshiro256
