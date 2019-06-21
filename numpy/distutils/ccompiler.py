@@ -706,6 +706,8 @@ compiler_class['intelw'] = ('intelccompiler', 'IntelCCompilerW',
                             "Intel C Compiler for 32-bit applications on Windows")
 compiler_class['intelemw'] = ('intelccompiler', 'IntelEM64TCCompilerW',
                               "Intel C Compiler for 64-bit applications on Windows")
+compiler_class['clang-cl'] = ('clang_cl', 'ClangCL',
+                              "Clang CL Compiler for 64-bit Windows")
 compiler_class['pathcc'] = ('pathccompiler', 'PathScaleCCompiler',
                             "PathScale Compiler for SiCortex-based applications")
 compiler_class['arm'] = ('armccompiler', 'ArmCCompiler',
@@ -716,7 +718,8 @@ ccompiler._default_compilers += (('linux.*', 'intel'),
                                  ('linux.*', 'intelem'),
                                  ('linux.*', 'pathcc'),
                                  ('nt', 'intelw'),
-                                 ('nt', 'intelemw'))
+                                 ('nt', 'intelemw'),
+                                 ('nt', 'clangcl'))
 
 if sys.platform == 'win32':
     compiler_class['mingw32'] = ('mingw32ccompiler', 'Mingw32CCompiler',
