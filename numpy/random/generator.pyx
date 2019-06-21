@@ -11,9 +11,6 @@ from .pcg64 import PCG64
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
 from libc cimport string
-from libc.stdlib cimport malloc, free
-from libc.stdio cimport printf
-from libc.string cimport memset
 
 cimport cython
 cimport numpy as np
@@ -605,7 +602,7 @@ cdef class Generator:
         cdef int64_t *idx_data
         cdef np.npy_intp j
         cdef uint64_t set_size, mask
-        cdef uint64_t *hash_set
+        cdef uint64_t[::1] hash_set
         # Format and Verify input
         a = np.array(a, copy=False)
         if a.ndim == 0:
@@ -709,11 +706,10 @@ cdef class Generator:
                     set_size = <uint64_t>(1.2 * size_i)
                     mask = _gen_mask(set_size)
                     set_size = 1 + mask
-                    hash_set = <uint64_t*>malloc(sizeof(uint64_t) * set_size)
-                    memset(hash_set, 0xffff, sizeof(uint64_t) * set_size)
+                    hash_set = np.full(set_size, -1, np.uint64)
                     with self.lock:
                         for j in range(pop_size_i - size_i, pop_size_i):
-                            val = random_interval(&self._bitgen, j)
+                            val = random_bounded_uint64(&self._bitgen, 0, j, 0, 0)
                             loc = val & mask
                             while hash_set[loc] != -1 and hash_set[loc] != val:
                                 loc = (loc + 1) & mask
@@ -726,7 +722,6 @@ cdef class Generator:
                                     loc = (loc + 1) & mask
                                 hash_set[loc] = j
                                 idx_data[j - pop_size_i + size_i] = j
-                    free(hash_set)
                 if shape is not None:
                     idx.shape = shape
 
