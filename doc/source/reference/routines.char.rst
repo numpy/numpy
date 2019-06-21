@@ -3,8 +3,9 @@ String operations
 
 .. currentmodule:: numpy.core.defchararray
 
-`numpy.core.defchararray` module provides a set of vectorized string
-operations for arrays of type `numpy.string_` or `numpy.unicode_`.   All of them are based on the string methods in the Python standard library.
+The `numpy.core.defchararray` module provides a set of vectorized string
+operations for arrays of type `numpy.string_` or `numpy.unicode_`.
+All of them are based on the string methods in the Python standard library.
 
 String operations
 -----------------
