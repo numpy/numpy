@@ -654,8 +654,8 @@ _parse_signature(PyUFuncObject *ufunc, const char *signature)
         PyErr_NoMemory();
         goto fail;
     }
-    for (i = 0; i < len; i++) {
-        ufunc->core_dim_flags[i] = 0;
+    for (size_t j = 0; j < len; j++) {
+        ufunc->core_dim_flags[j] = 0;
     }
 
     i = _next_non_white_space(signature, 0);
