@@ -568,7 +568,7 @@ class TestRandomDist(object):
     def test_choice_uniform_noreplace(self):
         random = Generator(MT19937(self.seed))
         actual = random.choice(4, 3, replace=False)
-        desired = np.array([0, 1, 3], dtype=np.int64)
+        desired = np.array([0, 2, 3], dtype=np.int64)
         assert_array_equal(actual, desired)
 
     def test_choice_nonuniform_noreplace(self):
@@ -688,7 +688,7 @@ class TestRandomDist(object):
     def test_choice_large_sample(self):
         import hashlib
 
-        choice_hash = '5ca163da624c938bb3bc93e89a7dec4c'
+        choice_hash = '9420df83972c186bdde8696cb9bd594a'
         random = Generator(MT19937(self.seed))
         actual = random.choice(10000, 5000, replace=False)
         if sys.byteorder != 'little':
