@@ -51,7 +51,7 @@ However there are some important differences:
 
 * Array scalars are immutable
 * Array scalars have different python type for different data types
- 
+
 Motivation for Array Scalars
 ----------------------------
 
@@ -62,7 +62,7 @@ we will try to explain why it is necessary to have three different ways to
 represent a number.
 
 There were several numpy-discussion threads:
-   
+
 
 * `rank-0 arrays`_ in a 2002 mailing list thread.
 * Thoughts about zero dimensional arrays vs Python scalars in a `2005 mailing list thread`_]
@@ -71,7 +71,7 @@ It has been suggested several times that NumPy just use rank-0 arrays to
 represent scalar quantities in all case.  Pros and cons of converting rank-0
 arrays to scalars were summarized as follows:
 
-- Pros: 
+- Pros:
 
   - Some cases when Python expects an integer (the most
     dramatic is when slicing and indexing a sequence:
@@ -94,15 +94,15 @@ arrays to scalars were summarized as follows:
     files (though this could also be done by a special case
     in the pickling code for arrays)
 
-- Cons:  
+- Cons:
 
   - It is difficult to write generic code because scalars
     do not have the same methods and attributes as arrays.
     (such as ``.type``  or ``.shape``).  Also Python scalars have
-    different numeric behavior as well. 
+    different numeric behavior as well.
 
-  - This results in a special-case checking that is not 
-    pleasant.  Fundamentally it lets the user believe that 
+  - This results in a special-case checking that is not
+    pleasant.  Fundamentally it lets the user believe that
     somehow multidimensional homoegeneous arrays
     are something like Python lists (which except for
     Object arrays they are not).
@@ -117,7 +117,7 @@ The Need for Zero-Rank Arrays
 -----------------------------
 
 Once the idea to use zero-rank arrays to represent scalars was rejected, it was
-natural to consider whether zero-rank arrays can be eliminated alltogether.
+natural to consider whether zero-rank arrays can be eliminated altogether.
 However there are some important use cases where zero-rank arrays cannot be
 replaced by array scalars.  See also `A case for rank-0 arrays`_ from February
 2006.
@@ -164,12 +164,12 @@ Alexander started a `Jan 2006 discussion`_ on scipy-dev
 with the following proposal:
 
     ... it may be reasonable to allow ``a[...]``.  This way
-    ellipsis can be interpereted as any number of  ``:`` s including zero. 
+    ellipsis can be interpereted as any number of  ``:`` s including zero.
     Another subscript operation that makes sense for scalars would be
-    ``a[...,newaxis]`` or even ``a[{newaxis, }* ..., {newaxis,}*]``, where 
-    ``{newaxis,}*`` stands for any number of comma-separated newaxis tokens. 
+    ``a[...,newaxis]`` or even ``a[{newaxis, }* ..., {newaxis,}*]``, where
+    ``{newaxis,}*`` stands for any number of comma-separated newaxis tokens.
     This will allow one to use ellipsis in generic code that would work on
-    any numpy type. 
+    any numpy type.
 
 Francesc Altet supported the idea of ``[...]`` on zero-rank arrays and
 `suggested`_ that ``[()]`` be supported as well.
@@ -204,7 +204,7 @@ remains on what should be the type of the result - zero rank ndarray or ``x.dtyp
         1
 
 Since most if not all numpy function automatically convert zero-rank arrays to scalars on return, there is no reason for
-``[...]`` and ``[()]`` operations to be different. 
+``[...]`` and ``[()]`` operations to be different.
 
 See SVN changeset 1864 (which became git commit `9024ff0`_) for
 implementation of ``x[...]`` and ``x[()]`` returning numpy scalars.
@@ -234,7 +234,7 @@ Currently all indexing on zero-rank arrays is implemented in a special ``if (nd
 that the changes do not affect any existing usage (except, the usage that
 relies on exceptions).  On the other hand part of motivation for these changes
 was to make behavior of ndarrays more uniform and this should allow to
-eliminate  ``if (nd == 0)`` checks alltogether.
+eliminate  ``if (nd == 0)`` checks altogether.
 
 Copyright
 ---------

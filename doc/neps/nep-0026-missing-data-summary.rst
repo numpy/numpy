@@ -669,7 +669,7 @@ NumPy could more easily be overtaken by another project.
 
 In the case of the existing NA contribution at issue, how we resolve
 this disagreement represents a decision about how NumPy's
-developers, contributers, and users should interact. If we create
+developers, contributors, and users should interact. If we create
 a document describing a dispute resolution process, how do we
 design it so that it doesn't introduce a large burden and excessive
 uncertainty on developers that could prevent them from productively
@@ -677,7 +677,7 @@ contributing code?
 
 If we go this route of writing up a decision process which includes
 such a dispute resolution mechanism, I think the meat of it should
-be a roadmap that potential contributers and developers can follow
+be a roadmap that potential contributors and developers can follow
 to gain influence over NumPy. NumPy development needs broad support
 beyond code contributions, and tying influence in the project to
 contributions seems to me like it would be a good way to encourage
