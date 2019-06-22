@@ -707,7 +707,7 @@ cdef class Generator:
                     mask = _gen_mask(set_size)
                     set_size = 1 + mask
                     hash_set = np.full(set_size, -1, np.uint64)
-                    with self.lock:
+                    with self.lock, cython.wraparound(False):
                         for j in range(pop_size_i - size_i, pop_size_i):
                             val = random_bounded_uint64(&self._bitgen, 0, j, 0, 0)
                             loc = val & mask
