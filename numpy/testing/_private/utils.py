@@ -6,6 +6,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import sys
+import platform
 import re
 import gc
 import operator
@@ -39,6 +40,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
         '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles',
+        'break_cycles',
         ]
 
 
@@ -50,7 +52,7 @@ class KnownFailureException(Exception):
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
-IS_PYPY = '__pypy__' in sys.modules
+IS_PYPY = platform.python_implementation() == 'PyPy'
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
 
 
@@ -2255,6 +2257,7 @@ def _assert_no_gc_cycles_context(name=None):
 
     # not meaningful to test if there is no refcounting
     if not HAS_REFCOUNT:
+        yield
         return
 
     assert_(gc.isenabled())
@@ -2333,3 +2336,19 @@ def assert_no_gc_cycles(*args, **kwargs):
     args = args[1:]
     with _assert_no_gc_cycles_context(name=func.__name__):
         func(*args, **kwargs)
+
+def break_cycles():
+    """
+    Break reference cycles by calling gc.collect
+    Objects can call other objects' methods (for instance, another object's
+     __del__) inside their own __del__. On PyPy, the interpreter only runs
+    between calls to gc.collect, so multiple calls are needed to completely
+    release all cycles.
+    """
+
+    gc.collect()
+    if IS_PYPY:
+        # interpreter runs now, to call deleted objects' __del__ methods
+        gc.collect()
+        # one more, just to make sure
+        gc.collect()

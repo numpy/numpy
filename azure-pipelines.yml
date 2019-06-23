@@ -198,3 +198,16 @@ jobs:
     inputs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for Python $(python.version)'
+
+- job: Linux_PyPy
+  pool:
+    vmIMage: 'ubuntu-16.04'
+  steps:
+  - script: source tools/pypy-test.sh
+    displayName: 'Run PyPy Build / Tests'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for PyPy'
+      failTaskOnFailedTests: true
