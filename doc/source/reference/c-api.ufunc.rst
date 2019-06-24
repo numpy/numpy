@@ -23,6 +23,12 @@ Constants
 
     ``{VALUE}`` can be **One** (1), **Zero** (0), or **None** (-1)
 
+    .. c:var:: PyUFunc_One
+
+    .. c:var:: PyUFunc_Zero
+
+    .. c:var:: PyUFunc_None
+
 
 Macros
 ------

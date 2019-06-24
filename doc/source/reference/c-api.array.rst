@@ -3466,6 +3466,10 @@ Other constants
 
     The maximum number of dimensions allowed in arrays.
 
+.. c:var:: NPY_MAXARGS
+
+    The maximum number of arguments that can be used in arrays.
+
 .. c:var:: NPY_VERSION
 
     The current version of the ndarray object (check to see if this
@@ -3558,10 +3562,17 @@ Enumerated Types
 
 .. c:type:: NPY_SORTKIND
 
-    A special variable-type which can take on the values :c:data:`NPY_{KIND}`
-    where ``{KIND}`` is
+    A special variable-type which can take on the following values
 
-        **QUICKSORT**, **HEAPSORT**, **MERGESORT**, **STABLESORT**
+    .. c:var:: NPY_QUICKSORT
+
+    .. c:var:: NPY_HEAPSORT
+
+    .. c:var:: NPY_MERGESORT
+
+    .. c:var:: NPY_STABLESORT
+
+        Used as an alias of :c:data:`NPY_MERGESORT` and vica versa.
 
     .. c:var:: NPY_NSORTS
 
