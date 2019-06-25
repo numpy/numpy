@@ -8,6 +8,7 @@ from __future__ import division, absolute_import, print_function
 
 import re
 import sys
+import platform
 
 from numpy.compat import unicode
 from numpy.core.overrides import set_module
@@ -16,6 +17,8 @@ try:
     import ctypes
 except ImportError:
     ctypes = None
+
+IS_PYPY = platform.python_implementation() == 'PyPy'
 
 if (sys.byteorder == 'little'):
     _nbo = b'<'
@@ -889,7 +892,12 @@ def npy_ctypes_check(cls):
     try:
         # ctypes class are new-style, so have an __mro__. This probably fails
         # for ctypes classes with multiple inheritance.
-        ctype_base = cls.__mro__[-2]
+        if IS_PYPY:
+            # (..., _ctypes.basics._CData, Bufferable, object)
+            ctype_base = cls.__mro__[-3]
+        else:
+            # # (..., _ctypes._CData, object)
+            ctype_base = cls.__mro__[-2]
         # right now, they're part of the _ctypes module
         return 'ctypes' in ctype_base.__module__
     except Exception:
