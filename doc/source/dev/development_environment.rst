@@ -147,9 +147,9 @@ That also takes extra arguments, like ``--pdb`` which drops you into the Python
 debugger when a test fails or an exception is raised.
 
 Running tests with `tox`_ is also supported.  For example, to build NumPy and
-run the test suite with Python 3.4, use::
+run the test suite with Python 3.7, use::
 
-    $ tox -e py34
+    $ tox -e py37
 
 For more extensive information, see :ref:`testing-guidelines`
 
