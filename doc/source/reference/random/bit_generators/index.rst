@@ -19,7 +19,6 @@ Stable RNGs
    :maxdepth: 1
 
    MT19937 <mt19937>
-   PCG32 <pcg32>
    PCG64 <pcg64>
    Philox <philox>
    ThreeFry <threefry>
