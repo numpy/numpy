@@ -162,6 +162,7 @@ Previously, ``can_cast`` returned `True` for almost all inputs for
 ``casting='unsafe'``, even for cases where casting was not possible, such as
 from a structured dtype to a regular one.  This has been fixed, making it
 more consistent with actual casting using, e.g., the ``.astype`` method.
+
 ``arr.writeable`` can be switched to true slightly more often
 -------------------------------------------------------------
 
