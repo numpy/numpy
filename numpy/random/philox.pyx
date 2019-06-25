@@ -102,8 +102,6 @@ cdef class Philox:
     directly consumable in Python and must be consumed by a ``Generator``
     or similar object that supports low-level access.
 
-    See ``ThreeFry`` for a closely related PRNG.
-
     **State and Seeding**
 
     The ``Philox`` state vector consists of a 2 256-bit values encoded as
