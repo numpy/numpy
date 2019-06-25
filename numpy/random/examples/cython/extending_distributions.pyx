@@ -10,7 +10,7 @@ cimport cython
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from numpy.random.common cimport *
 from numpy.random.distributions cimport random_gauss_zig
-from numpy.random import Xoshiro256
+from numpy.random import PCG64
 
 
 @cython.boundscheck(False)
@@ -21,7 +21,7 @@ def normals_zig(Py_ssize_t n):
     cdef const char *capsule_name = "BitGenerator"
     cdef double[::1] random_values
 
-    x = Xoshiro256()
+    x = PCG64()
     capsule = x.capsule
     if not PyCapsule_IsValid(capsule, capsule_name):
         raise ValueError("Invalid pointer to anon_func_state")
@@ -43,7 +43,7 @@ def uniforms(Py_ssize_t n):
     cdef const char *capsule_name = "BitGenerator"
     cdef double[::1] random_values
 
-    x = Xoshiro256()
+    x = PCG64()
     capsule = x.capsule
     # Optional check that the capsule if from a BitGenerator
     if not PyCapsule_IsValid(capsule, capsule_name):

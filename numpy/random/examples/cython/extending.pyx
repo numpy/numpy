@@ -9,7 +9,7 @@ cimport numpy as np
 cimport cython
 
 from numpy.random.common cimport bitgen_t
-from numpy.random import Xoshiro256
+from numpy.random import PCG64
 
 np.import_array()
 
@@ -23,7 +23,7 @@ def uniform_mean(Py_ssize_t n):
     cdef double[::1] random_values
     cdef np.ndarray randoms
 
-    x = Xoshiro256()
+    x = PCG64()
     capsule = x.capsule
     if not PyCapsule_IsValid(capsule, capsule_name):
         raise ValueError("Invalid pointer to anon_func_state")
@@ -64,7 +64,7 @@ def bounded_uints(uint32_t lb, uint32_t ub, Py_ssize_t n):
     cdef uint32_t[::1] out
     cdef const char *capsule_name = "BitGenerator"
 
-    x = Xoshiro256()
+    x = PCG64()
     out = np.empty(n, dtype=np.uint32)
     capsule = x.capsule
 

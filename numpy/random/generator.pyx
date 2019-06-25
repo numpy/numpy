@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 
 from .bounded_integers import _integers_types
-from .xoshiro256 import Xoshiro256
+from .pcg64 import PCG64
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
@@ -89,7 +89,7 @@ cdef class Generator:
 
     def __init__(self, bit_generator=None):
         if bit_generator is None:
-            bit_generator = Xoshiro256()
+            bit_generator = PCG64()
         self._bit_generator = bit_generator
 
         capsule = bit_generator.capsule

@@ -58,8 +58,7 @@ And in more detail:
   This replaces both ``randint`` and the deprecated ``random_integers``.
 * The Box-Muller used to produce NumPy's normals is no longer available.
 * All bit generators can produce doubles, uint64s and
-  uint32s via CTypes (`~.xoshiro256.Xoshiro256.
-  ctypes`) and CFFI (`~.xoshiro256.Xoshiro256.cffi`).
+  uint32s via CTypes (`~PCG64.ctypes`) and CFFI (`~PCG64.cffi`).
   This allows these bit generators to be used in numba.
 * The bit generators can be used in downstream projects via
   Cython.
@@ -67,9 +66,9 @@ And in more detail:
 
 .. ipython:: python
 
-  from  numpy.random import Generator, Xoshiro256
+  from  numpy.random import Generator, PCG64
   import numpy.random
-  rg = Generator(Xoshiro256())
+  rg = Generator(PCG64())
   %timeit rg.standard_normal(100000)
   %timeit numpy.random.standard_normal(100000)
 
