@@ -16,7 +16,6 @@ integers             Uniformly distributed integers, replaces ``randint``
 bytes                Uniformly distributed random bytes.
 permutation          Randomly permute a sequence / generate a random sequence.
 shuffle              Randomly permute a sequence in place.
-seed                 Seed the random number generator.
 choice               Random sample from 1-D array.
 ==================== =========================================================
 
@@ -32,6 +31,7 @@ random_integers      Uniformly distributed integers in a given range.
                      (deprecated, use ``integers(..., closed=True)`` instead)
 random_sample        Alias for `random_sample`
 randint              Uniformly distributed integers in a given range
+seed                 Seed the legacy random number generator.
 ==================== =========================================================
 
 ==================== =========================================================
@@ -102,6 +102,12 @@ PCG64
 Philox
 ============================================= ===
 
+============================================= ===
+Getting entropy to initialize a BitGenerator
+--------------------------------------------- ---
+SeedSequence
+============================================= ===
+
 """
 from __future__ import division, absolute_import, print_function
 
@@ -161,22 +167,25 @@ __all__ = [
 from . import mtrand
 from .mtrand import *
 from .generator import Generator
+from .bit_generator import SeedSequence
 from .mt19937 import MT19937
 from .pcg64 import PCG64
 from .philox import Philox
 from .mtrand import RandomState
 
-__all__ += ['Generator', 'MT19937', 'Philox', 'PCG64', 'RandomState']
+__all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',
+            'Philox', 'PCG64']
+
 
 def __RandomState_ctor():
     """Return a RandomState instance.
 
     This function exists solely to assist (un)pickling.
 
-    Note that the state of the RandomState returned here is irrelevant, as this function's
-    entire purpose is to return a newly allocated RandomState whose state pickle can set.
-    Consequently the RandomState returned by this function is a freshly allocated copy
-    with a seed=0.
+    Note that the state of the RandomState returned here is irrelevant, as this
+    function's entire purpose is to return a newly allocated RandomState whose
+    state pickle can set.  Consequently the RandomState returned by this function
+    is a freshly allocated copy with a seed=0.
 
     See https://github.com/numpy/numpy/issues/4763 for a detailed discussion
 

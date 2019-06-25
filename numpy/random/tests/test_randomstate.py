@@ -98,11 +98,10 @@ class TestSeed(object):
         assert_raises(ValueError, random.RandomState, [[1, 2, 3],
                                                        [4, 5, 6]])
 
-    def test_seed_equivalency(self):
-        rs = random.RandomState(0)
-        rs2 = random.RandomState(MT19937(0))
-        assert_mt19937_state_equal(rs.get_state(legacy=False),
-                                   rs2.get_state(legacy=False))
+    def test_cannot_seed(self):
+        rs = random.RandomState(PCG64(0))
+        with assert_raises(TypeError):
+            rs.seed(1234)
 
     def test_invalid_initialization(self):
         assert_raises(ValueError, random.RandomState, MT19937)

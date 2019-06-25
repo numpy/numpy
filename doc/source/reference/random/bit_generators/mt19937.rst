@@ -8,13 +8,12 @@ Mersenne Twister (MT19937)
 .. autoclass:: MT19937
 	:exclude-members:
 
-Seeding and State
-=================
+State
+=====
 
 .. autosummary::
    :toctree: generated/
 
-   ~MT19937.seed
    ~MT19937.state
 
 Parallel generation

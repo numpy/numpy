@@ -8,13 +8,12 @@ Philox Counter-based RNG
 .. autoclass:: Philox
 	:exclude-members:
 
-Seeding and State
-=================
+State
+=====
 
 .. autosummary::
    :toctree: generated/
 
-   ~Philox.seed
    ~Philox.state
 
 Parallel generation

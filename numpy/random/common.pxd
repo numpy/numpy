@@ -5,7 +5,16 @@ from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           uintptr_t)
 from libc.math cimport sqrt
 
-from .distributions cimport bitgen_t 
+cdef extern from "src/bitgen.h":
+    struct bitgen:
+        void *state
+        uint64_t (*next_uint64)(void *st) nogil
+        uint32_t (*next_uint32)(void *st) nogil
+        double (*next_double)(void *st) nogil
+        uint64_t (*next_raw)(void *st) nogil
+
+    ctypedef bitgen bitgen_t
+
 import numpy as np
 cimport numpy as np
 
