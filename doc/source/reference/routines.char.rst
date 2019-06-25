@@ -1,11 +1,11 @@
 String operations
 *****************
 
-.. currentmodule:: numpy.core.defchararray
+.. currentmodule:: numpy.char
 
-.. module:: numpy.core.defchararray
+.. module:: numpy.char
 
-The :mod:`numpy.char <numpy.core.defchararray>` module provides a set of vectorized string
+The `numpy.char` module provides a set of vectorized string
 operations for arrays of type `numpy.string_` or `numpy.unicode_`.
 All of them are based on the string methods in the Python standard library.
 
