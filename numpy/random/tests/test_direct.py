@@ -6,13 +6,7 @@ from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
                            assert_raises)
 import pytest
 
-<<<<<<< HEAD
 from numpy.random import (Generator, MT19937, PCG64, Philox, RandomState)
-=======
-from numpy.random import (Generator, MT19937, PCG64,
-                          Philox, Xoshiro256, Xoshiro512, RandomState,
-                          SeedSequence)
->>>>>>> ENH: use SeedSequence to generate entropy for seeding
 from numpy.random.common import interface
 
 try:
