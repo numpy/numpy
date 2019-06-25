@@ -49,6 +49,7 @@ The behavior of nonzero on 0d arrays was surprising, making uses of it almost
 always incorrect. If the old behavior was intended, it can be preserved without
 a warning by using ``nonzero(atleast_1d(arr))`` instead of ``nonzero(arr)``.
 In a future release, it is most likely this will raise a `ValueError`.
+
 Writing to the result of `numpy.broadcast_arrays` will warn
 -----------------------------------------------------------
 
