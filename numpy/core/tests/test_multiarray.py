@@ -234,7 +234,6 @@ class TestFlags(object):
             # only warn once
             assert_(len(w) == 1)
 
-
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
         assert_equal(self.a.flags['C'], True)
