@@ -21,13 +21,17 @@ Constants
 
 .. c:var:: PyUFunc_{VALUE}
 
-    ``{VALUE}`` can be **One** (1), **Zero** (0), or **None** (-1)
-
     .. c:var:: PyUFunc_One
 
     .. c:var:: PyUFunc_Zero
 
+    .. c:var:: PyUFunc_MinusOne
+
+    .. c:var:: PyUFunc_ReorderableNone
+
     .. c:var:: PyUFunc_None
+
+    .. c:var:: PyUFunc_IdentityValue
 
 
 Macros

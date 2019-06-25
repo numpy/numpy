@@ -3468,7 +3468,7 @@ Other constants
 
 .. c:var:: NPY_MAXARGS
 
-    The maximum number of arguments that can be used in arrays.
+    The maximum number of array arguments that can be used in functions.
 
 .. c:var:: NPY_VERSION
 
@@ -3562,7 +3562,8 @@ Enumerated Types
 
 .. c:type:: NPY_SORTKIND
 
-    A special variable-type which can take on the following values
+    A special variable-type which can take on different values to indicate
+    the sorting algorithm being used.
 
     .. c:var:: NPY_QUICKSORT
 
