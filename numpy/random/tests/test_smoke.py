@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_equal, assert_, assert_array_equal
 from numpy.random import (Generator, MT19937, ThreeFry,
-                          PCG32, PCG64, Philox, Xoshiro256, Xoshiro512,
+                          PCG64, Philox, Xoshiro256, Xoshiro512,
                           entropy)
 
 
@@ -867,16 +867,3 @@ class TestPCG64(RNG):
         seed = np.array([1, 2, 3, out_of_bounds])
         with pytest.raises(error_type):
             self.rg.bit_generator.seed(seed)
-
-
-class TestPCG32(TestPCG64):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = PCG32
-        cls.advance = 2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1
-        cls.seed = [2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1,
-                    2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
-        cls.rg = Generator(cls.bit_generator(*cls.seed))
-        cls.initial_state = cls.rg.bit_generator.state
-        cls.seed_vector_bits = None
-        cls._extra_setup()

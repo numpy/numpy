@@ -6,7 +6,7 @@ from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
                            assert_raises)
 import pytest
 
-from numpy.random import (Generator, MT19937, ThreeFry, PCG32, PCG64,
+from numpy.random import (Generator, MT19937, ThreeFry, PCG64,
                           Philox, Xoshiro256, Xoshiro512, RandomState)
 from numpy.random.common import interface
 
@@ -434,20 +434,6 @@ class TestPCG64(Base):
         val_big = rs.integers(10)
         assert val_neg == val_pos
         assert val_big == val_pos
-
-class TestPCG32(TestPCG64):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = PCG32
-        cls.bits = 32
-        cls.dtype = np.uint32
-        cls.data1 = cls._read_csv(join(pwd, './data/pcg32-testset-1.csv'))
-        cls.data2 = cls._read_csv(join(pwd, './data/pcg32-testset-2.csv'))
-        cls.seed_error_type = TypeError
-        cls.invalid_seed_types = [(np.array([1, 2]),), (3.2,),
-                                  (None, np.zeros(1))]
-        cls.invalid_seed_values = [(-1,), (2 ** 129 + 1,), (None, -1),
-                                   (None, 2 ** 129 + 1)]
 
 
 class TestMT19937(Base):
