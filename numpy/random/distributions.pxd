@@ -1,7 +1,7 @@
 #cython: language_level=3
 
-from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
-                          int32_t, int64_t)
+from .common cimport (uint8_t, uint16_t, uint32_t, uint64_t,
+                          int32_t, int64_t, bitgen_t)
 import numpy as np
 cimport numpy as np
 
@@ -27,15 +27,6 @@ cdef extern from "src/distributions/distributions.h":
         double p4
 
     ctypedef s_binomial_t binomial_t
-
-    struct bitgen:
-        void *state
-        uint64_t (*next_uint64)(void *st) nogil
-        uint32_t (*next_uint32)(void *st) nogil
-        double (*next_double)(void *st) nogil
-        uint64_t (*next_raw)(void *st) nogil
-
-    ctypedef bitgen bitgen_t
 
     double random_double(bitgen_t *bitgen_state) nogil
     void random_double_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil

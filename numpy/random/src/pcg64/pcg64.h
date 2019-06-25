@@ -53,10 +53,6 @@
 #ifdef _WIN32
 #include <stdlib.h>
 #define inline __forceinline
-#if _MSC_VER >= 1900 && _M_AMD64
-#include <intrin.h>
-#pragma intrinsic(_umul128)
-#endif
 #endif
 
 #if __GNUC_GNU_INLINE__ && !defined(__cplusplus)
