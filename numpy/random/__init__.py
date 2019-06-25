@@ -100,7 +100,6 @@ BitGenerator Streams that work with Generator
 MT19937
 PCG64
 Philox
-ThreeFry
 Xoshiro256
 Xoshiro512
 ============================================= ===
@@ -167,13 +166,12 @@ from .generator import Generator
 from .mt19937 import MT19937
 from .pcg64 import PCG64
 from .philox import Philox
-from .threefry import ThreeFry
 from .xoshiro256 import Xoshiro256
 from .xoshiro512 import Xoshiro512
 from .mtrand import RandomState
 
 __all__ += ['Generator', 'MT19937', 'Philox', 'PCG64',
-            'ThreeFry', 'Xoshiro256', 'Xoshiro512', 'RandomState']
+            'Xoshiro256', 'Xoshiro512', 'RandomState']
 
 
 def __RandomState_ctor():

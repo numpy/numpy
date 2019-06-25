@@ -6,7 +6,7 @@ from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
                            assert_raises)
 import pytest
 
-from numpy.random import (Generator, MT19937, ThreeFry, PCG64,
+from numpy.random import (Generator, MT19937, PCG64,
                           Philox, Xoshiro256, Xoshiro512, RandomState)
 from numpy.random.common import interface
 
@@ -339,29 +339,6 @@ class TestXoshiro512(Base):
         cls.seed_error_type = TypeError
         cls.invalid_seed_types = [('apple',), (2 + 3j,), (3.1,)]
         cls.invalid_seed_values = [(-2,), (np.empty((2, 2), dtype=np.int64),)]
-
-
-class TestThreeFry(Base):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = ThreeFry
-        cls.bits = 64
-        cls.dtype = np.uint64
-        cls.data1 = cls._read_csv(
-            join(pwd, './data/threefry-testset-1.csv'))
-        cls.data2 = cls._read_csv(
-            join(pwd, './data/threefry-testset-2.csv'))
-        cls.seed_error_type = TypeError
-        cls.invalid_seed_types = []
-        cls.invalid_seed_values = [(1, None, 1), (-1,), (2 ** 257 + 1,),
-                                   (None, None, 2 ** 257 + 1)]
-
-    def test_set_key(self):
-        bit_generator = self.bit_generator(*self.data1['seed'])
-        state = bit_generator.state
-        keyed = self.bit_generator(counter=state['state']['counter'],
-                                   key=state['state']['key'])
-        assert_state_equal(bit_generator.state, keyed.state)
 
 
 class TestPhilox(Base):

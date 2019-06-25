@@ -1,4 +1,4 @@
-# THREEFRY
+# PHILOX
 
 Copyright 2010-2012, D. E. Shaw Research.
 All rights reserved.
