@@ -7160,6 +7160,7 @@ def test_array_interface_empty_shape():
     assert_equal(arr1, arr2)
     assert_equal(arr1, arr3)
 
+@pytest.mark.skipif(IS_PYPY, reason='PyDict_GetItemString(.., "data") segfaults')
 def test_array_interface_offset():
     arr = np.array([1, 2, 3], dtype='int32')
     interface = dict(arr.__array_interface__)
