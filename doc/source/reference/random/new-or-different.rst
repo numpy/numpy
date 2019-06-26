@@ -23,11 +23,11 @@ Feature            Older Equivalent     Notes
                                         source, called a `BitGenerator
                                         <bit_generators>` A number of these
                                         are provided.  ``RandomState`` uses
-                                        only the Box- Muller method.
+                                        only the Mersenne Twister.
 ------------------ -------------------- -------------
-``np.random.``     ``np.random.``       Access the values in a BitGenerator,
-``Generator().``   ``random_sample()``  convert them to ``float64`` in the
-``random()``                            interval ``[0.0.,`` `` 1.0)``.
+``Generator.``     ``RandomState.``     Access the values in a BitGenerator,
+``random()``       ``random_sample()``  convert them to ``float64`` in the
+                                        interval ``[0.0.,`` `` 1.0)``.
                                         In addition to the ``size`` kwarg, now
                                         supports ``dtype='d'`` or ``dtype='f'``,
                                         and an ``out`` kwarg to fill a user-
@@ -36,7 +36,7 @@ Feature            Older Equivalent     Notes
                                         Many other distributions are also
                                         supported.
 ------------------ -------------------- -------------
-``Generator().``   ``randint``,         Use the ``endpoint`` kwarg to adjust
+``Generator.``     ``randint``,         Use the ``endpoint`` kwarg to adjust
 ``integers()``     ``random_integers``  the inclusion or exclution of the
                                         ``high`` interval endpoint
 ================== ==================== =============
@@ -56,7 +56,7 @@ And in more detail:
   random numbers from a discrete uniform distribution. The ``rand`` and
   ``randn`` methods are only available through the legacy `~.RandomState`.
   This replaces both ``randint`` and the deprecated ``random_integers``.
-* The Box-Muller used to produce NumPy's normals is no longer available.
+* The Box-Muller method used to produce NumPy's normals is no longer available.
 * All bit generators can produce doubles, uint64s and
   uint32s via CTypes (`~PCG64.ctypes`) and CFFI (`~PCG64.cffi`).
   This allows these bit generators to be used in numba.
