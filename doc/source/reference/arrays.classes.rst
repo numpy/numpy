@@ -43,10 +43,6 @@ NumPy provides several hooks that classes can customize:
 
    .. versionadded:: 1.13
 
-   .. note:: The API is `provisional
-             <https://docs.python.org/3/glossary.html#term-provisional-api>`_,
-             i.e., we do not yet guarantee backward compatibility.
-
    Any class, ndarray subclass or not, can define this method or set it to
    :obj:`None` in order to override the behavior of NumPy's ufuncs. This works
    quite similarly to Python's ``__mul__`` and other binary operation routines.
