@@ -159,28 +159,6 @@ one of two ways:
 * :ref:`independent-streams`
 * :ref:`jump-and-advance`
 
-Supported BitGenerators
------------------------
-The included BitGenerators are:
-
-* MT19937 - The standard Python BitGenerator. Adds a `~mt19937.MT19937.jumped`
-  function that returns a new generator with state as-if ``2**128`` draws have
-  been made.
-* PCG-64 - Fast generator that support many parallel streams and
-  can be advanced by an arbitrary amount. See the documentation for
-  :meth:`~.PCG64.advance`. PCG-64 has a period of
-  :math:`2^{128}`. See the `PCG author's page`_ for more details about
-  this class of PRNG.
-* Xorshiro256** and Xorshiro512** - The most recently introduced XOR,
-  shift, and rotate generator. Supports ``jumped`` and so can be used in
-  parallel applications. See the documentation for
-* ThreeFry and Philox - counter-based generators capable of being advanced an
-  arbitrary number of steps or generating independent streams. See the
-  `Random123`_ page for more details about this class of bit generators.
-
-.. _`PCG author's page`: http://www.pcg-random.org/
-.. _`Random123`: https://www.deshawresearch.com/resources_random123.html
-
 Concepts
 --------
 .. toctree::
