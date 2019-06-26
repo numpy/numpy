@@ -116,7 +116,7 @@ def _coerce_to_uint32_array(x):
     Examples
     --------
     >>> import numpy as np
-    >>> from seed_seq import _coerce_to_uint32_array
+    >>> from np.random.bit_generator import _coerce_to_uint32_array
     >>> _coerce_to_uint32_array(12345)
     array([12345], dtype=uint32)
     >>> _coerce_to_uint32_array('12345')
@@ -467,17 +467,20 @@ ISpawnableSeedSequence.register(SeedSequence)
 
 cdef class BitGenerator():
     """
-    BitGenerator(seed_seq=None)
+    BitGenerator(seed=None)
 
     Base Class for generic BitGenerators, which provide a stream
     of random bits based on different algorithms. Must be overridden.
 
     Parameters
     ----------
-    seed_seq : {None, ISeedSequence, int, sequence[int]}, optional
-        A ISeedSequence to initialize the BitGenerator. If None, one will be
-        created. If an int or a sequence of ints, it will be used as the
-        entropy for creating a SeedSequence.
+    seed : {None, int, array_like[ints], ISeedSequence}, optional
+        A seed to initialize the `BitGenerator`. If None, then fresh,
+        unpredictable entropy will be pulled from the OS. If an ``int`` or
+        ``array_like[ints]`` is passed, then it will be passed to
+        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        pass in an implementor of the `ISeedSequence` interface like
+        `SeedSequence`.
 
     Attributes
     ----------
@@ -492,7 +495,7 @@ cdef class BitGenerator():
     SeedSequence
     """
 
-    def __init__(self, seed_seq=None):
+    def __init__(self, seed=None):
         self.lock = Lock()
         self._bitgen.state = <void *>0
         if type(self) is BitGenerator:
@@ -503,9 +506,9 @@ cdef class BitGenerator():
 
         cdef const char *name = "BitGenerator"
         self.capsule = PyCapsule_New(<void *>&self._bitgen, name, NULL)
-        if not isinstance(seed_seq, ISeedSequence):
-            seed_seq = SeedSequence(seed_seq)
-        self._seed_seq = seed_seq
+        if not isinstance(seed, ISeedSequence):
+            seed = SeedSequence(seed)
+        self._seed_seq = seed
 
     # Pickling support:
     def __getstate__(self):

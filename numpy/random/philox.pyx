@@ -62,18 +62,21 @@ cdef class Philox(BitGenerator):
 
     Parameters
     ----------
-    seed_seq : {None, SeedSequence, int, array_like[ints]}, optional
-        A SeedSequence to initialize the BitGenerator. If None, one will be
-        created. If an int or array_like[ints], it will be used as the entropy
-        for creating a SeedSequence.
+    seed : {None, int, array_like[ints], ISeedSequence}, optional
+        A seed to initialize the `BitGenerator`. If None, then fresh,
+        unpredictable entropy will be pulled from the OS. If an ``int`` or
+        ``array_like[ints]`` is passed, then it will be passed to
+        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        pass in an implementor of the `ISeedSequence` interface like
+        `SeedSequence`.
     counter : {None, int, array_like}, optional
         Counter to use in the Philox state. Can be either
         a Python int (long in 2.x) in [0, 2**256) or a 4-element uint64 array.
         If not provided, the RNG is initialized at 0.
     key : {None, int, array_like}, optional
         Key to use in the Philox state.  Unlike seed, the value in key is
-        directly set. Can be either a Python int (long in 2.x) in [0, 2**128)
-        or a 2-element uint64 array. `key` and `seed` cannot both be used.
+        directly set. Can be either a Python int in [0, 2**128) or a 2-element
+        uint64 array. `key` and `seed` cannot both be used.
 
     Attributes
     ----------
@@ -99,18 +102,16 @@ cdef class Philox(BitGenerator):
 
     **State and Seeding**
 
-    The ``Philox`` state vector consists of a 2 256-bit values encoded as
-    4-element uint64 arrays. One is a counter which is incremented by 1 for
-    every 4 64-bit randoms produced.  The second is a key which determined
-    the sequence produced.  Using different keys produces independent
-    sequences.
+    The ``Philox`` state vector consists of a 256-bit counter encoded as
+    a 4-element uint64 array and a 128-bit key encoded as a 2-element uint64
+    array. The counter is incremented by 1 for every 4 64-bit randoms produced.
+    The key which determines the sequence produced. Using different keys
+    produces independent sequences.
 
-    ``Philox`` is seeded using either a single 64-bit unsigned integer
-    or a vector of 64-bit unsigned integers.  In either case, the seed is
-    used as an input for a second random number generator,
-    SplitMix64, and the output of this PRNG function is used as the initial state.
-    Using a single 64-bit value for the seed can only initialize a small range of
-    the possible initial state values.
+    By default, providing a ``seed`` value will derive the 128-bit key using
+    `SeedSequence`; the counter will be initialized to 0. On the other hand,
+    one may omit the ``seed`` and provide the ``key`` and/or ``counter``
+    directly if one wishes to manually control the key.
 
     **Parallel Features**
 
@@ -136,7 +137,7 @@ cdef class Philox(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``Philox`` makes a guarantee that a fixed seed and will always produce
+    ``Philox`` makes a guarantee that a fixed seed will always produce
     the same random integer stream.
 
     Examples
@@ -157,16 +158,18 @@ cdef class Philox(BitGenerator):
     cdef philox4x64_key_t philox_key
     cdef philox4x64_ctr_t philox_ctr
 
-    def __init__(self, seed_seq=None, counter=None, key=None):
-        if seed_seq is not None and key is not None:
+    def __init__(self, seed=None, counter=None, key=None):
+        if seed is not None and key is not None:
             raise ValueError('seed and key cannot be both used')
-        BitGenerator.__init__(self, seed_seq)
+        BitGenerator.__init__(self, seed)
         self.rng_state.ctr = &self.philox_ctr
         self.rng_state.key = &self.philox_key
         if key is not None:
             key = int_to_array(key, 'key', 128, 64)
             for i in range(2):
                 self.rng_state.key.v[i] = key[i]
+            # The seed sequence is invalid.
+            self._seed_seq = None
         else:
             key = self._seed_seq.generate_state(2, np.uint64)
             for i in range(2):
