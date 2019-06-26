@@ -19,6 +19,7 @@ access the functions provided, e.g., `numba <https://numba.pydata.org>`_.
    MT19937 <mt19937>
    PCG64 <pcg64>
    Philox <philox>
+   SFC64 <sfc64>
 
 Seeding and Entropy
 -------------------
