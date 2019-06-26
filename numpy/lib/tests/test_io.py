@@ -504,8 +504,6 @@ class TestSaveTxt(object):
              b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n'])
 
 
-        
-
     def test_custom_writer(self):
 
         class CustomWriter(list):
@@ -574,6 +572,20 @@ class TestSaveTxt(object):
         else:
             assert_equal(s.read(), b"%f\n" % 1.)
 
+    @pytest.mark.skipif(sys.platform=='win32',
+                        reason="large files cause problems")
+    @pytest.mark.slow
+    def test_large_zip(self):
+        # The test takes at least 6GB of memory, writes a file larger than 4GB
+        try:
+            a = 'a' * 6 * 1024 * 1024 * 1024
+            del a
+        except (MemoryError, OverflowError):
+            pytest.skip("Cannot allocate enough memory for test")
+        test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
+                               for i in range(800000)])
+        with tempdir() as tmpdir:
+            np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
 
 class LoadTxtBase(object):
     def check_compressed(self, fopen, suffixes):
@@ -2379,7 +2391,7 @@ class TestPathUsage(object):
             np.savez(path, lab='place holder')
             with np.load(path) as data:
                 assert_array_equal(data['lab'], 'place holder')
-    
+
     def test_savez_compressed_load(self):
         # Test that pathlib.Path instances can be used with savez.
         with temppath(suffix='.npz') as path:
