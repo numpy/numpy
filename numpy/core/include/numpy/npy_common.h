@@ -131,7 +131,12 @@
 #endif
 
 #ifdef HAVE___THREAD
-    #define NPY_TLS __thread
+    /* __thread doesn't work on QNX */
+    #ifndef __QNX__
+        #define NPY_TLS __thread
+    #else
+        #define NPY_TLS
+    #endif
 #else
     #ifdef HAVE___DECLSPEC_THREAD_
         #define NPY_TLS __declspec(thread)
