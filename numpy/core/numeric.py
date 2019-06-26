@@ -472,7 +472,7 @@ def count_nonzero(a, axis=None):
 @set_module('numpy')
 def isfortran(a):
     """
-    Returns True if the array is Fortran contiguous but *not* C contiguous.
+    Check if the array is Fortran contiguous but *not* C contiguous.
 
     This function is obsolete and, because of changes due to relaxed stride
     checking, its return value for the same array may differ for versions
@@ -483,6 +483,11 @@ def isfortran(a):
     ----------
     a : ndarray
         Input array.
+
+    Returns
+    -------
+    isfortran : bool
+        Returns True if the array is Fortran contiguous but *not* C contiguous.
 
 
     Examples
@@ -928,6 +933,11 @@ def tensordot(a, b, axes=2):
         * (2,) array_like
           Or, a list of axes to be summed over, first sequence applying to `a`,
           second to `b`. Both elements array_like must be of the same length.
+
+    Returns
+    -------
+    output : ndarray
+        The tensor dot product of the input.  
 
     See Also
     --------

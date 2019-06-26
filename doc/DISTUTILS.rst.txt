@@ -297,29 +297,140 @@ in writing setup scripts:
 
 + ``config.get_info(*names)`` ---
 
-Template files
---------------
+
+.. _templating:
+
+Conversion of ``.src`` files using Templates
+--------------------------------------------
+
+NumPy distutils supports automatic conversion of source files named
+<somefile>.src. This facility can be used to maintain very similar
+code blocks requiring only simple changes between blocks. During the
+build phase of setup, if a template file named <somefile>.src is
+encountered, a new file named <somefile> is constructed from the
+template and placed in the build directory to be used instead. Two
+forms of template conversion are supported. The first form occurs for
+files named <file>.ext.src where ext is a recognized Fortran
+extension (f, f90, f95, f77, for, ftn, pyf). The second form is used
+for all other cases.
+
+.. index::
+   single: code generation
+
+Fortran files
+-------------
+
+This template converter will replicate all **function** and
+**subroutine** blocks in the file with names that contain '<...>'
+according to the rules in '<...>'. The number of comma-separated words
+in '<...>' determines the number of times the block is repeated. What
+these words are indicates what that repeat rule, '<...>', should be
+replaced with in each block. All of the repeat rules in a block must
+contain the same number of comma-separated words indicating the number
+of times that block should be repeated. If the word in the repeat rule
+needs a comma, leftarrow, or rightarrow, then prepend it with a
+backslash ' \'. If a word in the repeat rule matches ' \\<index>' then
+it will be replaced with the <index>-th word in the same repeat
+specification. There are two forms for the repeat rule: named and
+short.
+
+Named repeat rule
+^^^^^^^^^^^^^^^^^
+
+A named repeat rule is useful when the same set of repeats must be
+used several times in a block. It is specified using <rule1=item1,
+item2, item3,..., itemN>, where N is the number of times the block
+should be repeated. On each repeat of the block, the entire
+expression, '<...>' will be replaced first with item1, and then with
+item2, and so forth until N repeats are accomplished. Once a named
+repeat specification has been introduced, the same repeat rule may be
+used **in the current block** by referring only to the name
+(i.e. <rule1>.
+
+
+Short repeat rule
+^^^^^^^^^^^^^^^^^
+
+A short repeat rule looks like <item1, item2, item3, ..., itemN>. The
+rule specifies that the entire expression, '<...>' should be replaced
+first with item1, and then with item2, and so forth until N repeats
+are accomplished.
+
+
+Pre-defined names
+^^^^^^^^^^^^^^^^^
+
+The following predefined named repeat rules are available:
+
+- <prefix=s,d,c,z>
+
+- <_c=s,d,c,z>
+
+- <_t=real, double precision, complex, double complex>
+
+- <ftype=real, double precision, complex, double complex>
+
+- <ctype=float, double, complex_float, complex_double>
+
+- <ftypereal=float, double precision, \\0, \\1>
+
+- <ctypereal=float, double, \\0, \\1>
+
+
+Other files
+------------
+
+Non-Fortran files use a separate syntax for defining template blocks
+that should be repeated using a variable expansion similar to the
+named repeat rules of the Fortran-specific repeats.
 
 NumPy Distutils preprocesses C source files (extension: :file:`.c.src`) written
 in a custom templating language to generate C code. The :c:data:`@` symbol is
-used to wrap macro-style variables to empower a string substitution mechansim
+used to wrap macro-style variables to empower a string substitution mechanism
 that might describe (for instance) a set of data types.
-
-As a more detailed scenario, a loop in the NumPy C source code may
-have a :c:data:`@TYPE@` variable, targeted for string substitution,
-which is preprocessed to a number of otherwise identical loops with
-several strings such as :c:data:`INT, LONG, UINT, ULONG`. The :c:data:`@TYPE@`
-style syntax thus reduces code duplication and maintenance burden by
-mimicking languages that have generic type support. By convention,
-and as required by the preprocessor, generically typed blocks are preceded
-by comment blocks that enumerate the intended string substitutions.
 
 The template language blocks are delimited by :c:data:`/**begin repeat`
 and :c:data:`/**end repeat**/` lines, which may also be nested using
 consecutively numbered delimiting lines such as :c:data:`/**begin repeat1`
-and :c:data:`/**end repeat1**/`. String replacement specifications are started
-and terminated using :c:data:`#`. This may be clearer in the following
-template source example::
+and :c:data:`/**end repeat1**/`:
+
+1. "/\**begin repeat "on a line by itself marks the beginning of
+a segment that should be repeated.
+
+2. Named variable expansions are defined using ``#name=item1, item2, item3,
+..., itemN#`` and placed on successive lines. These variables are
+replaced in each repeat block with corresponding word. All named
+variables in the same repeat block must define the same number of
+words.
+
+3. In specifying the repeat rule for a named variable, ``item*N`` is short-
+hand for ``item, item, ..., item`` repeated N times. In addition,
+parenthesis in combination with \*N can be used for grouping several
+items that should be repeated. Thus, #name=(item1, item2)*4# is
+equivalent to #name=item1, item2, item1, item2, item1, item2, item1,
+item2#
+
+4. "\*/ "on a line by itself marks the end of the variable expansion
+naming. The next line is the first line that will be repeated using
+the named rules.
+
+5. Inside the block to be repeated, the variables that should be expanded
+are specified as ``@name@``
+
+6. "/\**end repeat**/ "on a line by itself marks the previous line
+as the last line of the block to be repeated.
+
+7. A loop in the NumPy C source code may have a ``@TYPE@`` variable, targeted
+for string substitution, which is preprocessed to a number of otherwise
+identical loops with several strings such as INT, LONG, UINT, ULONG. The
+``@TYPE@`` style syntax thus reduces code duplication and maintenance burden by
+mimicking languages that have generic type support.
+
+The above rules may be clearer in the following template source example:
+
+.. code-block:: NumPyC
+   :linenos:
+   :emphasize-lines: 3, 13, 29, 31
 
     /* TIMEDELTA to non-float types */
 
@@ -356,10 +467,10 @@ template source example::
 The preprocessing of generically typed C source files (whether in NumPy
 proper or in any third party package using NumPy Distutils) is performed
 by `conv_template.py`_.
-The type specific C files generated (extension: :file:`.c`) by these modules
-during the build process are ready to be compiled. This form
-of generic typing is also supported for C header files (preprocessed to
-produce :file:`.h` files).
+The type specific C files generated (extension: .c)
+by these modules during the build process are ready to be compiled. This
+form of generic typing is also supported for C header files (preprocessed
+to produce .h files).
 
 .. _conv_template.py: https://github.com/numpy/numpy/blob/master/numpy/distutils/conv_template.py
 

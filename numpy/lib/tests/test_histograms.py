@@ -798,7 +798,7 @@ class TestHistogramdd(object):
         hist, edges = histogramdd((y, x), bins=(y_edges, x_edges))
         assert_equal(hist, relative_areas)
 
-        # resulting histogram should be uniform, since counts and areas are propotional
+        # resulting histogram should be uniform, since counts and areas are proportional
         hist, edges = histogramdd((y, x), bins=(y_edges, x_edges), density=True)
         assert_equal(hist, 1 / (8*8))
 

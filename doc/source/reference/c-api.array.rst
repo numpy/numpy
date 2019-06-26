@@ -33,7 +33,7 @@ sub-types).
 
     Returns a pointer to the dimensions/shape of the array. The
     number of elements matches the number of dimensions
-    of the array.
+    of the array. Can return ``NULL`` for 0-dimensional arrays.
 
 .. c:function:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
 
@@ -199,8 +199,8 @@ From scratch
 ^^^^^^^^^^^^
 
 .. c:function:: PyObject* PyArray_NewFromDescr( \
-        PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, \
-        npy_intp* strides, void* data, int flags, PyObject* obj)
+        PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp const* dims, \
+        npy_intp const* strides, void* data, int flags, PyObject* obj)
 
     This function steals a reference to *descr*. The easiest way to get one
     is using :c:func:`PyArray_DescrFromType`.
@@ -219,7 +219,7 @@ From scratch
 
     If *data* is ``NULL``, then new unitinialized memory will be allocated and
     *flags* can be non-zero to indicate a Fortran-style contiguous array. Use
-    :c:func:`PyArray_FILLWBYTE` to initialze the memory.
+    :c:func:`PyArray_FILLWBYTE` to initialize the memory.
 
     If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the
@@ -266,8 +266,9 @@ From scratch
     base-class array.
 
 .. c:function:: PyObject* PyArray_New( \
-        PyTypeObject* subtype, int nd, npy_intp* dims, int type_num, \
-        npy_intp* strides, void* data, int itemsize, int flags, PyObject* obj)
+        PyTypeObject* subtype, int nd, npy_intp const* dims, int type_num, \
+        npy_intp const* strides, void* data, int itemsize, int flags, \
+        PyObject* obj)
 
     This is similar to :c:func:`PyArray_NewFromDescr` (...) except you
     specify the data-type descriptor with *type_num* and *itemsize*,
@@ -288,7 +289,7 @@ From scratch
     are passed in they must be consistent with the dimensions, the
     itemsize, and the data of the array.
 
-.. c:function:: PyObject* PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
+.. c:function:: PyObject* PyArray_SimpleNew(int nd, npy_intp const* dims, int typenum)
 
     Create a new uninitialized array of type, *typenum*, whose size in
     each of *nd* dimensions is given by the integer array, *dims*.The memory
@@ -301,7 +302,7 @@ From scratch
     used to create a flexible-type array (no itemsize given).
 
 .. c:function:: PyObject* PyArray_SimpleNewFromData( \
-        int nd, npy_intp* dims, int typenum, void* data)
+        int nd, npy_intp const* dims, int typenum, void* data)
 
     Create an array wrapper around *data* pointed to by the given
     pointer. The array flags will have a default that the data area is
@@ -316,7 +317,7 @@ From scratch
     as the ndarray is deallocated, set the OWNDATA flag on the returned ndarray.
 
 .. c:function:: PyObject* PyArray_SimpleNewFromDescr( \
-        int nd, npy_intp* dims, PyArray_Descr* descr)
+        int nd, npy_int const* dims, PyArray_Descr* descr)
 
     This function steals a reference to *descr*.
 
@@ -330,7 +331,7 @@ From scratch
     This macro calls memset, so obj must be contiguous.
 
 .. c:function:: PyObject* PyArray_Zeros( \
-        int nd, npy_intp* dims, PyArray_Descr* dtype, int fortran)
+        int nd, npy_intp const* dims, PyArray_Descr* dtype, int fortran)
 
     Construct a new *nd* -dimensional array with shape given by *dims*
     and data type given by *dtype*. If *fortran* is non-zero, then a
@@ -339,13 +340,13 @@ From scratch
     corresponds to :c:type:`NPY_OBJECT` ).
 
 .. c:function:: PyObject* PyArray_ZEROS( \
-        int nd, npy_intp* dims, int type_num, int fortran)
+        int nd, npy_intp const* dims, int type_num, int fortran)
 
     Macro form of :c:func:`PyArray_Zeros` which takes a type-number instead
     of a data-type object.
 
 .. c:function:: PyObject* PyArray_Empty( \
-        int nd, npy_intp* dims, PyArray_Descr* dtype, int fortran)
+        int nd, npy_intp const* dims, PyArray_Descr* dtype, int fortran)
 
     Construct a new *nd* -dimensional array with shape given by *dims*
     and data type given by *dtype*. If *fortran* is non-zero, then a
@@ -355,7 +356,7 @@ From scratch
     filled with :c:data:`Py_None`.
 
 .. c:function:: PyObject* PyArray_EMPTY( \
-        int nd, npy_intp* dims, int typenum, int fortran)
+        int nd, npy_intp const* dims, int typenum, int fortran)
 
     Macro form of :c:func:`PyArray_Empty` which takes a type-number,
     *typenum*, instead of a data-type object.
@@ -1671,11 +1672,13 @@ Conversion
 .. c:function:: PyObject* PyArray_GetField( \
         PyArrayObject* self, PyArray_Descr* dtype, int offset)
 
-    Equivalent to :meth:`ndarray.getfield<numpy.ndarray.getfield>` (*self*, *dtype*, *offset*). Return
-    a new array of the given *dtype* using the data in the current
-    array at a specified *offset* in bytes. The *offset* plus the
-    itemsize of the new array type must be less than *self*
-    ->descr->elsize or an error is raised. The same shape and strides
+    Equivalent to :meth:`ndarray.getfield<numpy.ndarray.getfield>`
+    (*self*, *dtype*, *offset*). This function `steals a reference
+    <https://docs.python.org/3/c-api/intro.html?reference-count-details>`_
+    to `PyArray_Descr` and returns a new array of the given `dtype` using
+    the data in the current array at a specified `offset` in bytes. The
+    `offset` plus the itemsize of the new array type must be less than ``self
+    ->descr->elsize`` or an error is raised. The same shape and strides
     as the original array are used. Therefore, this function has the
     effect of returning a field from a structured array. But, it can also
     be used to select specific bytes or groups of bytes from any array
@@ -2355,8 +2358,8 @@ Other functions
 ^^^^^^^^^^^^^^^
 
 .. c:function:: Bool PyArray_CheckStrides( \
-        int elsize, int nd, npy_intp numbytes, npy_intp* dims, \
-        npy_intp* newstrides)
+        int elsize, int nd, npy_intp numbytes, npy_intp const* dims, \
+        npy_intp const* newstrides)
 
     Determine if *newstrides* is a strides array consistent with the
     memory of an *nd* -dimensional array with shape ``dims`` and
@@ -2368,14 +2371,14 @@ Other functions
     *elsize* refer to a single-segment array. Return :c:data:`NPY_TRUE` if
     *newstrides* is acceptable, otherwise return :c:data:`NPY_FALSE`.
 
-.. c:function:: npy_intp PyArray_MultiplyList(npy_intp* seq, int n)
+.. c:function:: npy_intp PyArray_MultiplyList(npy_intp const* seq, int n)
 
-.. c:function:: int PyArray_MultiplyIntList(int* seq, int n)
+.. c:function:: int PyArray_MultiplyIntList(int const* seq, int n)
 
     Both of these routines multiply an *n* -length array, *seq*, of
     integers and return the result. No overflow checking is performed.
 
-.. c:function:: int PyArray_CompareLists(npy_intp* l1, npy_intp* l2, int n)
+.. c:function:: int PyArray_CompareLists(npy_intp const* l1, npy_intp const* l2, int n)
 
     Given two *n* -length arrays of integers, *l1*, and *l2*, return
     1 if the lists are identical; otherwise, return 0.

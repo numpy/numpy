@@ -936,11 +936,11 @@ add_newdoc('numpy.core.multiarray', 'empty',
     --------
     >>> np.empty([2, 2])
     array([[ -9.74499359e+001,   6.69583040e-309],
-           [  2.13182611e-314,   3.06959433e-309]])         #random
+           [  2.13182611e-314,   3.06959433e-309]])         #uninitialized
 
     >>> np.empty([2, 2], dtype=int)
     array([[-1073741821, -1067949133],
-           [  496041986,    19249760]])                     #random
+           [  496041986,    19249760]])                     #uninitialized
 
     """)
 
@@ -1041,9 +1041,14 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         elements is also ignored.
 
         .. deprecated:: 1.14
-            If this argument is not provided, `fromstring` falls back on the
-            behaviour of `frombuffer` after encoding unicode string inputs as
-            either utf-8 (python 3), or the default encoding (python 2).
+            Passing ``sep=''``, the default, is deprecated since it will
+            trigger the deprecated binary mode of this function. This mode
+            interprets `string` as binary bytes, rather than ASCII text with
+            decimal numbers, an operation which is better spelt
+            ``frombuffer(string, dtype, count)``. If `string` contains unicode
+            text, the binary mode of `fromstring` will first encode it into
+            bytes using either utf-8 (python 3) or the default encoding
+            (python 2), neither of which produce sane results.
 
     Returns
     -------
@@ -1142,7 +1147,7 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
 
 add_newdoc('numpy.core.multiarray', 'fromfile',
     """
-    fromfile(file, dtype=float, count=-1, sep='')
+    fromfile(file, dtype=float, count=-1, sep='', offset=0)
 
     Construct an array from data in a text or binary file.
 
@@ -1152,8 +1157,12 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
 
     Parameters
     ----------
-    file : file or str
+    file : file or str or Path
         Open file object or filename.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
+
     dtype : data-type
         Data type of the returned array.
         For binary files, it is used to determine the size and byte-order
@@ -1167,6 +1176,11 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
         Spaces (" ") in the separator match zero or more whitespace characters.
         A separator consisting only of spaces must match at least one
         whitespace.
+    offset : int
+        The offset (in bytes) from the file's current position. Defaults to 0.
+        Only permitted for binary files.
+
+        .. versionadded:: 1.17.0
 
     See also
     --------
@@ -2690,10 +2704,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
 
     Notes
     -----
-    Starting in NumPy 1.9, astype method now returns an error if the string
-    dtype to cast to is not long enough in 'safe' casting mode to hold the max
-    value of integer/float array that is being casted. Previously the casting
-    was allowed even if the result was truncated.
+    .. versionchanged:: 1.17.0
+       Casting between a simple data type and a structured one is possible only
+       for "unsafe" casting.  Casting to multiple fields is allowed, but
+       casting from multiple fields is not.
+
+    .. versionchanged:: 1.9.0
+       Casting from numeric to string types in 'safe' casting mode requires
+       that the string dtype length is long enough to store the max
+       integer/float value converted.
 
     Raises
     ------
@@ -2957,8 +2976,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
 
     Parameters
     ----------
-    file : str
+    file : str or Path
         A string naming the dump file.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
 
     """))
 
@@ -4004,8 +4026,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
 
     Parameters
     ----------
-    fid : file or str
+    fid : file or str or Path
         An open file object, or a string containing a filename.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
+
     sep : str
         Separator between array items for text output.
         If "" (empty), a binary file is written, equivalent to
@@ -5369,6 +5395,17 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('alignment',
 
     More information is available in the C-API section of the manual.
 
+    Examples
+    --------
+
+    >>> x = np.dtype('i4')
+    >>> x.alignment
+    4
+
+    >>> x = np.dtype(float)
+    >>> x.alignment
+    8
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
@@ -5415,7 +5452,16 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('char',
-    """A unique character code for each of the 21 different built-in types."""))
+    """A unique character code for each of the 21 different built-in types.
+
+    Examples
+    --------
+
+    >>> x = np.dtype(float)
+    >>> x.char
+    'd'
+
+    """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
     """
@@ -5426,6 +5472,18 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
 
     Warning: This attribute exists specifically for `__array_interface__`,
     and is not a datatype description compatible with `np.dtype`.
+
+    Examples
+    --------
+
+    >>> x = np.dtype(float)
+    >>> x.descr
+    [('', '<f8')]
+
+    >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+    >>> dt.descr
+    [('name', '<U16'), ('grades', '<f8', (2,))]
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
@@ -5465,6 +5523,18 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('flags',
     `NEEDS_PYAPI`, `USE_GETITEM`, `USE_SETITEM`. A full explanation
     of these flags is in C-API documentation; they are largely useful
     for user-defined data-types.
+
+    The following example demonstrates that operations on this particular
+    dtype requires Python C-API.
+
+    Examples
+    --------
+
+    >>> x = np.dtype([('a', np.int32, 8), ('b', np.float64, 6)])
+    >>> x.flags
+    16
+    >>> np.core.multiarray.NEEDS_PYAPI
+    16
 
     """))
 
@@ -5523,6 +5593,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('isalignedstruct',
     field alignment. This flag is sticky, so when combining multiple
     structs together, it is preserved and produces new dtypes which
     are also aligned.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('itemsize',
@@ -5531,6 +5602,19 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('itemsize',
 
     For 18 of the 21 types this number is fixed by the data-type.
     For the flexible data-types, this number can be anything.
+
+    Examples
+    --------
+
+    >>> arr = np.array([[1, 2], [3, 4]])
+    >>> arr.dtype
+    dtype('int64')
+    >>> arr.itemsize
+    8
+
+    >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+    >>> dt.itemsize
+    80
 
     """))
 
@@ -5552,6 +5636,19 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('kind',
     V  void
     =  ======================
 
+    Examples
+    --------
+
+    >>> dt = np.dtype('i4')
+    >>> dt.kind
+    'i'
+    >>> dt = np.dtype('f8')
+    >>> dt.kind
+    'f'
+    >>> dt = np.dtype([('field1', 'f8')])
+    >>> dt.kind
+    'V'
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('name',
@@ -5559,6 +5656,16 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('name',
     A bit-width name for this data-type.
 
     Un-sized flexible data-type objects do not have this attribute.
+
+    Examples
+    --------
+
+    >>> x = np.dtype(float)
+    >>> x.name
+    'float64'
+    >>> x = np.dtype([('a', np.int32, 8), ('b', np.float64, 6)])
+    >>> x.name
+    'void640'
 
     """))
 
@@ -5583,12 +5690,34 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('num',
 
     These are roughly ordered from least-to-most precision.
 
+    Examples
+    --------
+
+    >>> dt = np.dtype(str)
+    >>> dt.num
+    19
+
+    >>> dt = np.dtype(float)
+    >>> dt.num
+    12
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('shape',
     """
     Shape tuple of the sub-array if this data type describes a sub-array,
     and ``()`` otherwise.
+
+    Examples
+    --------
+
+    >>> dt = np.dtype(('i4', 4))
+    >>> dt.shape
+    (4,)
+
+    >>> dt = np.dtype(('i4', (2, 3)))
+    >>> dt.shape
+    (2, 3)
 
     """))
 
@@ -5598,6 +5727,20 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('ndim',
     sub-array, and ``0`` otherwise.
 
     .. versionadded:: 1.13.0
+
+    Examples
+    --------
+    >>> x = np.dtype(float)
+    >>> x.ndim
+    0
+
+    >>> x = np.dtype((float, 8))
+    >>> x.ndim
+    1
+
+    >>> x = np.dtype(('i4', (3, 4)))
+    >>> x.ndim
+    2
 
     """))
 
@@ -5615,6 +5758,41 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('subdtype',
     If a field whose dtype object has this attribute is retrieved,
     then the extra dimensions implied by *shape* are tacked on to
     the end of the retrieved array.
+
+    See Also
+    --------
+    dtype.base
+
+    Examples
+    --------
+    >>> x = numpy.dtype('8f')
+    >>> x.subdtype
+    (dtype('float32'), (8,))
+
+    >>> x =  numpy.dtype('i2')
+    >>> x.subdtype
+    >>>
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('base',
+    """
+    Returns dtype for the base element of the subarrays,
+    regardless of their dimension or shape.
+
+    See Also
+    --------
+    dtype.subdtype
+
+    Examples
+    --------
+    >>> x = numpy.dtype('8f')
+    >>> x.base
+    dtype('float32')
+
+    >>> x =  numpy.dtype('i2')
+    >>> x.base
+    dtype('int16')
 
     """))
 

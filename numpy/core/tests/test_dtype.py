@@ -11,6 +11,7 @@ from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT)
 from numpy.compat import pickle
+from itertools import permutations
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -316,15 +317,66 @@ class TestRecord(object):
         assert_raises(IndexError, lambda: dt[-3])
 
         assert_raises(TypeError, operator.getitem, dt, 3.0)
-        assert_raises(TypeError, operator.getitem, dt, [])
 
         assert_equal(dt[1], dt[np.int8(1)])
+
+    @pytest.mark.parametrize('align_flag',[False, True])
+    def test_multifield_index(self, align_flag):
+        # indexing with a list produces subfields
+        # the align flag should be preserved
+        dt = np.dtype([
+            (('title', 'col1'), '<U20'), ('A', '<f8'), ('B', '<f8')
+        ], align=align_flag)
+
+        dt_sub = dt[['B', 'col1']]
+        assert_equal(
+            dt_sub,
+            np.dtype({
+                'names': ['B', 'col1'],
+                'formats': ['<f8', '<U20'],
+                'offsets': [88, 0],
+                'titles': [None, 'title'],
+                'itemsize': 96
+            })
+        )
+        assert_equal(dt_sub.isalignedstruct, align_flag)
+
+        dt_sub = dt[['B']]
+        assert_equal(
+            dt_sub,
+            np.dtype({
+                'names': ['B'],
+                'formats': ['<f8'],
+                'offsets': [88],
+                'itemsize': 96
+            })
+        )
+        assert_equal(dt_sub.isalignedstruct, align_flag)
+
+        dt_sub = dt[[]]
+        assert_equal(
+            dt_sub,
+            np.dtype({
+                'names': [],
+                'formats': [],
+                'offsets': [],
+                'itemsize': 96
+            })
+        )
+        assert_equal(dt_sub.isalignedstruct, align_flag)
+
+        assert_raises(TypeError, operator.getitem, dt, ())
+        assert_raises(TypeError, operator.getitem, dt, [1, 2, 3])
+        assert_raises(TypeError, operator.getitem, dt, ['col1', 2])
+        assert_raises(KeyError, operator.getitem, dt, ['fake'])
+        assert_raises(KeyError, operator.getitem, dt, ['title'])
+        assert_raises(ValueError, operator.getitem, dt, ['col1', 'col1'])
 
     def test_partial_dict(self):
         # 'names' is missing
         assert_raises(ValueError, np.dtype,
                 {'formats': ['i4', 'i4'], 'f0': ('i4', 0), 'f1':('i4', 4)})
-        
+
 
 class TestSubarray(object):
     def test_single_subarray(self):
@@ -358,7 +410,10 @@ class TestSubarray(object):
     def test_shape_equal(self):
         """Test some data types that are equal"""
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', tuple())))
-        assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
+        # FutureWarning during deprecation period; after it is passed this
+        # should instead check that "(1)f8" == "1f8" == ("f8", 1).
+        with pytest.warns(FutureWarning):
+            assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
         assert_dtype_equal(np.dtype((int, 2)), np.dtype((int, (2,))))
         assert_dtype_equal(np.dtype(('<f4', (3, 2))), np.dtype(('<f4', (3, 2))))
         d = ([('a', 'f4', (1, 2)), ('b', 'f8', (3, 1))], (3, 2))
@@ -447,7 +502,7 @@ class TestSubarray(object):
 
     def test_alignment(self):
         #Check that subarrays are aligned
-        t1 = np.dtype('1i4', align=True)
+        t1 = np.dtype('(1,)i4', align=True)
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
 
@@ -600,7 +655,7 @@ class TestStructuredDtypeSparseFields(object):
                                     'offsets':[4]}, (2, 3))])
 
     @pytest.mark.xfail(reason="inaccessible data is changed see gh-12686.")
-    @pytest.mark.valgrind_error(reason="reads from unitialized buffers.")
+    @pytest.mark.valgrind_error(reason="reads from uninitialized buffers.")
     def test_sparse_field_assignment(self):
         arr = np.zeros(3, self.dtype)
         sparse_arr = arr.view(self.sparse_dtype)
@@ -1124,3 +1179,18 @@ class TestFromCTypes(object):
         self.check(ctypes.c_uint16.__ctype_be__, np.dtype('>u2'))
         self.check(ctypes.c_uint8.__ctype_le__, np.dtype('u1'))
         self.check(ctypes.c_uint8.__ctype_be__, np.dtype('u1'))
+
+    all_types = set(np.typecodes['All'])
+    all_pairs = permutations(all_types, 2)
+
+    @pytest.mark.parametrize("pair", all_pairs)
+    def test_pairs(self, pair):
+        """
+        Check that np.dtype('x,y') matches [np.dtype('x'), np.dtype('y')]
+        Example: np.dtype('d,I') -> dtype([('f0', '<f8'), ('f1', '<u4')])
+        """
+        # gh-5645: check that np.dtype('i,L') can be used
+        pair_type = np.dtype('{},{}'.format(*pair))
+        expected = np.dtype([('f0', pair[0]), ('f1', pair[1])])
+        assert_equal(pair_type, expected)
+

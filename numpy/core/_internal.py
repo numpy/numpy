@@ -146,7 +146,7 @@ def _reconstruct(subtype, shape, dtype):
 # format_re was originally from numarray by J. Todd Miller
 
 format_re = re.compile(br'(?P<order1>[<>|=]?)'
-                       br'(?P<repeats> *[(]?[ ,0-9L]*[)]? *)'
+                       br'(?P<repeats> *[(]?[ ,0-9]*[)]? *)'
                        br'(?P<order2>[<>|=]?)'
                        br'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)')
 sep_re = re.compile(br'\s*,\s*')

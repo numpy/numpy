@@ -15,6 +15,7 @@
 
 #include "common.h"
 #include "ctors.h"
+#include "descriptor.h"
 #include "iterators.h"
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
@@ -611,9 +612,9 @@ prepare_index(PyArrayObject *self, PyObject *index,
 
             /* Convert the boolean array into multiple integer ones */
             n = _nonzero_indices((PyObject *)arr, nonzero_result);
-            Py_DECREF(arr);
 
             if (n < 0) {
+                Py_DECREF(arr);
                 goto failed_building_indices;
             }
 
@@ -624,6 +625,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 for (i=0; i < n; i++) {
                     Py_DECREF(nonzero_result[i]);
                 }
+                Py_DECREF(arr);
                 goto failed_building_indices;
             }
 
@@ -637,6 +639,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
                 used_ndim += 1;
                 curr_idx += 1;
             }
+            Py_DECREF(arr);
 
             /* All added indices have 1 dimension */
             if (fancy_ndim < 1) {
@@ -1393,9 +1396,9 @@ array_subscript_asarray(PyArrayObject *self, PyObject *op)
 /*
  * Attempts to subscript an array using a field name or list of field names.
  *
- * If an error occurred, return 0 and set view to NULL. If the subscript is not
- * a string or list of strings, return -1 and set view to NULL. Otherwise
- * return 0 and set view to point to a new view into arr for the given fields.
+ * ret =  0, view != NULL: view points to the requested fields of arr
+ * ret =  0, view == NULL: an error occurred
+ * ret = -1, view == NULL: unrecognized input, this is not a field index.
  */
 NPY_NO_EXPORT int
 _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
@@ -1438,111 +1441,44 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         }
         return 0;
     }
+
     /* next check for a list of field names */
     else if (PySequence_Check(ind) && !PyTuple_Check(ind)) {
-        int seqlen, i;
-        PyObject *name = NULL, *tup;
-        PyObject *fields, *names;
+        npy_intp seqlen, i;
         PyArray_Descr *view_dtype;
 
         seqlen = PySequence_Size(ind);
 
-        /* quit if have a 0-d array (seqlen==-1) or a 0-len array */
+        /* quit if have a fake sequence-like, which errors on len()*/
         if (seqlen == -1) {
             PyErr_Clear();
             return -1;
         }
+        /* 0-len list is handled elsewhere as an integer index */
         if (seqlen == 0) {
             return -1;
         }
 
-        fields = PyDict_New();
-        if (fields == NULL) {
-            return 0;
-        }
-        names = PyTuple_New(seqlen);
-        if (names == NULL) {
-            Py_DECREF(fields);
-            return 0;
-        }
-
+        /* check the items are strings */
         for (i = 0; i < seqlen; i++) {
-            name = PySequence_GetItem(ind, i);
-            if (name == NULL) {
-                /* only happens for strange sequence objects */
+            npy_bool is_string;
+            PyObject *item = PySequence_GetItem(ind, i);
+            if (item == NULL) {
                 PyErr_Clear();
-                Py_DECREF(fields);
-                Py_DECREF(names);
                 return -1;
             }
-
-            if (!PyBaseString_Check(name)) {
-                Py_DECREF(name);
-                Py_DECREF(fields);
-                Py_DECREF(names);
+            is_string = PyBaseString_Check(item);
+            Py_DECREF(item);
+            if (!is_string) {
                 return -1;
-            }
-
-            tup = PyDict_GetItem(PyArray_DESCR(arr)->fields, name);
-            if (tup == NULL){
-                PyObject *errmsg = PyUString_FromString("no field of name ");
-                PyUString_ConcatAndDel(&errmsg, name);
-                PyErr_SetObject(PyExc_ValueError, errmsg);
-                Py_DECREF(errmsg);
-                Py_DECREF(fields);
-                Py_DECREF(names);
-                return 0;
-            }
-            /* disallow use of titles as index */
-            if (PyTuple_Size(tup) == 3) {
-                PyObject *title = PyTuple_GET_ITEM(tup, 2);
-                int titlecmp = PyObject_RichCompareBool(title, name, Py_EQ);
-                if (titlecmp == 1) {
-                    /* if title == name, we got a title, not a field name */
-                    PyErr_SetString(PyExc_KeyError,
-                                "cannot use field titles in multi-field index");
-                }
-                if (titlecmp != 0 || PyDict_SetItem(fields, title, tup) < 0) {
-                    Py_DECREF(name);
-                    Py_DECREF(fields);
-                    Py_DECREF(names);
-                    return 0;
-                }
-            }
-            /* disallow duplicate field indices */
-            if (PyDict_Contains(fields, name)) {
-                PyObject *errmsg = PyUString_FromString(
-                                       "duplicate field of name ");
-                PyUString_ConcatAndDel(&errmsg, name);
-                PyErr_SetObject(PyExc_ValueError, errmsg);
-                Py_DECREF(errmsg);
-                Py_DECREF(fields);
-                Py_DECREF(names);
-                return 0;
-            }
-            if (PyDict_SetItem(fields, name, tup) < 0) {
-                Py_DECREF(name);
-                Py_DECREF(fields);
-                Py_DECREF(names);
-                return 0;
-            }
-            if (PyTuple_SetItem(names, i, name) < 0) {
-                Py_DECREF(fields);
-                Py_DECREF(names);
-                return 0;
             }
         }
 
-        view_dtype = PyArray_DescrNewFromType(NPY_VOID);
+        /* Call into the dtype subscript */
+        view_dtype = arraydescr_field_subset_view(PyArray_DESCR(arr), ind);
         if (view_dtype == NULL) {
-            Py_DECREF(fields);
-            Py_DECREF(names);
             return 0;
         }
-        view_dtype->elsize = PyArray_DESCR(arr)->elsize;
-        view_dtype->names = names;
-        view_dtype->fields = fields;
-        view_dtype->flags = PyArray_DESCR(arr)->flags;
 
         *view = (PyArrayObject*)PyArray_NewFromDescr_int(
                 Py_TYPE(arr),

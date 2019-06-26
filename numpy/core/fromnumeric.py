@@ -1764,17 +1764,17 @@ def nonzero(a):
     Returns a tuple of arrays, one for each dimension of `a`,
     containing the indices of the non-zero elements in that
     dimension. The values in `a` are always tested and returned in
-    row-major, C-style order. The corresponding non-zero
-    values can be obtained with::
+    row-major, C-style order.
 
-        a[nonzero(a)]
+    To group the indices by element, rather than dimension, use `argwhere`,
+    which returns a row for each non-zero element.
 
-    To group the indices by element, rather than dimension, use::
+    .. note::
+        When called on a zero-d array or scalar, ``nonzero(a)`` is treated
+        as ``nonzero(atleast1d(a))``.
 
-        transpose(nonzero(a))
-
-    The result of this is always a 2-D array, with a row for
-    each non-zero element.
+        ..deprecated:: 1.17.0
+            Use `atleast1d` explicitly if this behavior is deliberate.
 
     Parameters
     ----------
@@ -1795,6 +1795,12 @@ def nonzero(a):
         Equivalent ndarray method.
     count_nonzero :
         Counts the number of non-zero elements in the input array.
+
+    Notes
+    -----
+    While the nonzero values can be obtained with ``a[nonzero(a)]``, it is
+    recommended to use ``x[x.astype(bool)]`` or ``x[x != 0]`` instead, which
+    will correctly handle 0-d arrays.
 
     Examples
     --------
@@ -2099,6 +2105,8 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     --------
     ndarray.sum : Equivalent method.
 
+    add.reduce : Equivalent functionality of `add`.
+
     cumsum : Cumulative sum of array elements.
 
     trapz : Integration of array values using the composite trapezoidal rule.
@@ -2114,6 +2122,23 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     >>> np.sum([])
     0.0
+
+    For floating point numbers the numerical precision of sum (and
+    ``np.add.reduce``) is in general limited by directly adding each number
+    individually to the result causing rounding errors in every step.
+    However, often numpy will use a  numerically better approach (partial
+    pairwise summation) leading to improved precision in many use-cases.
+    This improved precision is always provided when no ``axis`` is given.
+    When ``axis`` is given, it will depend on which axis is summed.
+    Technically, to provide the best speed possible, the improved precision
+    is only used when the summation is along the fast axis in memory.
+    Note that the exact precision may vary depending on other parameters.
+    In contrast to NumPy, Python's ``math.fsum`` function uses a slower but
+    more precise approach to summation.
+    Especially when summing a large number of lower precision floating point
+    numbers, such as ``float32``, numerical errors can become significant.
+    In such cases it can be advisable to use `dtype="float64"` to use a higher
+    precision for the output.
 
     Examples
     --------

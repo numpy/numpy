@@ -146,7 +146,7 @@ def get_names(adtype):
 def get_names_flat(adtype):
     """
     Returns the field names of the input datatype as a tuple. Nested structure
-    are flattend beforehand.
+    are flattened beforehand.
 
     Parameters
     ----------

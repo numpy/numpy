@@ -1227,7 +1227,7 @@ class TestFromTxt(LoadTxtBase):
     def test_record(self):
         # Test w/ explicit dtype
         data = TextIO('1 2\n3 4')
-        test = np.ndfromtxt(data, dtype=[('x', np.int32), ('y', np.int32)])
+        test = np.genfromtxt(data, dtype=[('x', np.int32), ('y', np.int32)])
         control = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         assert_equal(test, control)
         #
@@ -1236,14 +1236,14 @@ class TestFromTxt(LoadTxtBase):
                       'formats': ('S1', 'i4', 'f4')}
         control = np.array([('M', 64.0, 75.0), ('F', 25.0, 60.0)],
                            dtype=descriptor)
-        test = np.ndfromtxt(data, dtype=descriptor)
+        test = np.genfromtxt(data, dtype=descriptor)
         assert_equal(test, control)
 
     def test_array(self):
         # Test outputting a standard ndarray
         data = TextIO('1 2\n3 4')
         control = np.array([[1, 2], [3, 4]], dtype=int)
-        test = np.ndfromtxt(data, dtype=int)
+        test = np.genfromtxt(data, dtype=int)
         assert_array_equal(test, control)
         #
         data.seek(0)
@@ -1256,11 +1256,11 @@ class TestFromTxt(LoadTxtBase):
         control = np.array([1, 2, 3, 4], int)
         #
         data = TextIO('1\n2\n3\n4\n')
-        test = np.ndfromtxt(data, dtype=int)
+        test = np.genfromtxt(data, dtype=int)
         assert_array_equal(test, control)
         #
         data = TextIO('1,2,3,4\n')
-        test = np.ndfromtxt(data, dtype=int, delimiter=',')
+        test = np.genfromtxt(data, dtype=int, delimiter=',')
         assert_array_equal(test, control)
 
     def test_comments(self):
@@ -1268,11 +1268,11 @@ class TestFromTxt(LoadTxtBase):
         control = np.array([1, 2, 3, 5], int)
         # Comment on its own line
         data = TextIO('# comment\n1,2,3,5\n')
-        test = np.ndfromtxt(data, dtype=int, delimiter=',', comments='#')
+        test = np.genfromtxt(data, dtype=int, delimiter=',', comments='#')
         assert_equal(test, control)
         # Comment at the end of a line
         data = TextIO('1,2,3,5# comment\n')
-        test = np.ndfromtxt(data, dtype=int, delimiter=',', comments='#')
+        test = np.genfromtxt(data, dtype=int, delimiter=',', comments='#')
         assert_equal(test, control)
 
     def test_skiprows(self):
@@ -1281,7 +1281,7 @@ class TestFromTxt(LoadTxtBase):
         kwargs = dict(dtype=int, delimiter=',')
         #
         data = TextIO('comment\n1,2,3,5\n')
-        test = np.ndfromtxt(data, skip_header=1, **kwargs)
+        test = np.genfromtxt(data, skip_header=1, **kwargs)
         assert_equal(test, control)
         #
         data = TextIO('# comment\n1,2,3,5\n')
@@ -1328,7 +1328,7 @@ class TestFromTxt(LoadTxtBase):
         data = TextIO('gender age weight\nM 64.0 75.0\nF 25.0 60.0')
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
-            test = np.ndfromtxt(data, dtype=None, names=True)
+            test = np.genfromtxt(data, dtype=None, names=True)
             assert_(w[0].category is np.VisibleDeprecationWarning)
         control = {'gender': np.array([b'M', b'F']),
                    'age': np.array([64.0, 25.0]),
@@ -1342,7 +1342,7 @@ class TestFromTxt(LoadTxtBase):
         data = TextIO('A 64 75.0 3+4j True\nBCD 25 60.0 5+6j False')
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
-            test = np.ndfromtxt(data, dtype=None)
+            test = np.genfromtxt(data, dtype=None)
             assert_(w[0].category is np.VisibleDeprecationWarning)
         control = [np.array([b'A', b'BCD']),
                    np.array([64, 25]),
@@ -1356,7 +1356,7 @@ class TestFromTxt(LoadTxtBase):
     def test_auto_dtype_uniform(self):
         # Tests whether the output dtype can be uniformized
         data = TextIO('1 2 3 4\n5 6 7 8\n')
-        test = np.ndfromtxt(data, dtype=None)
+        test = np.genfromtxt(data, dtype=None)
         control = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
         assert_equal(test, control)
 
@@ -1364,7 +1364,7 @@ class TestFromTxt(LoadTxtBase):
         # Check that a nested dtype isn't MIA
         data = TextIO('1,2,3.0\n4,5,6.0\n')
         fancydtype = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
-        test = np.ndfromtxt(data, dtype=fancydtype, delimiter=',')
+        test = np.genfromtxt(data, dtype=fancydtype, delimiter=',')
         control = np.array([(1, (2, 3.0)), (4, (5, 6.0))], dtype=fancydtype)
         assert_equal(test, control)
 
@@ -1374,7 +1374,7 @@ class TestFromTxt(LoadTxtBase):
                       'formats': ('S1', 'i4', 'f4')}
         data = TextIO(b'M 64.0 75.0\nF 25.0 60.0')
         names = ('gender', 'age', 'weight')
-        test = np.ndfromtxt(data, dtype=descriptor, names=names)
+        test = np.genfromtxt(data, dtype=descriptor, names=names)
         descriptor['names'] = names
         control = np.array([('M', 64.0, 75.0),
                             ('F', 25.0, 60.0)], dtype=descriptor)
@@ -1434,7 +1434,7 @@ M   33  21.99
         data = TextIO('A B C D\n aaaa 121 45 9.1')
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
-            test = np.ndfromtxt(data, usecols=('A', 'C', 'D'),
+            test = np.genfromtxt(data, usecols=('A', 'C', 'D'),
                                 names=True, dtype=None)
             assert_(w[0].category is np.VisibleDeprecationWarning)
         control = np.array(('aaaa', 45, 9.1),
@@ -1444,7 +1444,7 @@ M   33  21.99
     def test_converters_with_usecols(self):
         # Test the combination user-defined converters and usecol
         data = TextIO('1,2,3,,5\n6,7,8,9,10\n')
-        test = np.ndfromtxt(data, dtype=int, delimiter=',',
+        test = np.genfromtxt(data, dtype=int, delimiter=',',
                             converters={3: lambda s: int(s or - 999)},
                             usecols=(1, 3,))
         control = np.array([[2, -999], [7, 9]], int)
@@ -1455,7 +1455,7 @@ M   33  21.99
         data = TextIO('A B C D\n aaaa 121 45 9.1')
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
-            test = np.ndfromtxt(data, usecols=('A', 'C', 'D'), names=True,
+            test = np.genfromtxt(data, usecols=('A', 'C', 'D'), names=True,
                                 dtype=None,
                                 converters={'C': lambda s: 2 * int(s)})
             assert_(w[0].category is np.VisibleDeprecationWarning)
@@ -1468,7 +1468,7 @@ M   33  21.99
         converter = {
             'date': lambda s: strptime(s, '%Y-%m-%d %H:%M:%SZ')}
         data = TextIO('2009-02-03 12:00:00Z, 72214.0')
-        test = np.ndfromtxt(data, delimiter=',', dtype=None,
+        test = np.genfromtxt(data, delimiter=',', dtype=None,
                             names=['date', 'stid'], converters=converter)
         control = np.array((datetime(2009, 2, 3), 72214.),
                            dtype=[('date', np.object_), ('stid', float)])
@@ -1479,7 +1479,7 @@ M   33  21.99
         converter = {
             'date': lambda s: np.datetime64(strptime(s, '%Y-%m-%d %H:%M:%SZ'))}
         data = TextIO('2009-02-03 12:00:00Z, 72214.0')
-        test = np.ndfromtxt(data, delimiter=',', dtype=None,
+        test = np.genfromtxt(data, delimiter=',', dtype=None,
                             names=['date', 'stid'], converters=converter)
         control = np.array((datetime(2009, 2, 3), 72214.),
                            dtype=[('date', 'datetime64[us]'), ('stid', float)])
@@ -1488,12 +1488,12 @@ M   33  21.99
     def test_unused_converter(self):
         # Test whether unused converters are forgotten
         data = TextIO("1 21\n  3 42\n")
-        test = np.ndfromtxt(data, usecols=(1,),
+        test = np.genfromtxt(data, usecols=(1,),
                             converters={0: lambda s: int(s, 16)})
         assert_equal(test, [21, 42])
         #
         data.seek(0)
-        test = np.ndfromtxt(data, usecols=(1,),
+        test = np.genfromtxt(data, usecols=(1,),
                             converters={1: lambda s: int(s, 16)})
         assert_equal(test, [33, 66])
 
@@ -1520,12 +1520,12 @@ M   33  21.99
 
     def test_dtype_with_converters(self):
         dstr = "2009; 23; 46"
-        test = np.ndfromtxt(TextIO(dstr,),
+        test = np.genfromtxt(TextIO(dstr,),
                             delimiter=";", dtype=float, converters={0: bytes})
         control = np.array([('2009', 23., 46)],
                            dtype=[('f0', '|S4'), ('f1', float), ('f2', float)])
         assert_equal(test, control)
-        test = np.ndfromtxt(TextIO(dstr,),
+        test = np.genfromtxt(TextIO(dstr,),
                             delimiter=";", dtype=float, converters={0: float})
         control = np.array([2009., 23., 46],)
         assert_equal(test, control)
@@ -1589,7 +1589,7 @@ M   33  21.99
     def test_spacedelimiter(self):
         # Test space delimiter
         data = TextIO("1  2  3  4   5\n6  7  8  9  10")
-        test = np.ndfromtxt(data)
+        test = np.genfromtxt(data)
         control = np.array([[1., 2., 3., 4., 5.],
                             [6., 7., 8., 9., 10.]])
         assert_equal(test, control)
@@ -1603,7 +1603,7 @@ M   33  21.99
 
     def test_missing(self):
         data = TextIO('1,2,3,,5\n')
-        test = np.ndfromtxt(data, dtype=int, delimiter=',',
+        test = np.genfromtxt(data, dtype=int, delimiter=',',
                             converters={3: lambda s: int(s or - 999)})
         control = np.array([1, 2, 3, -999, 5], int)
         assert_equal(test, control)
@@ -1625,18 +1625,18 @@ M   33  21.99
         data = TextIO()
         np.savetxt(data, control)
         data.seek(0)
-        test = np.ndfromtxt(data, dtype=float, usecols=(1,))
+        test = np.genfromtxt(data, dtype=float, usecols=(1,))
         assert_equal(test, control[:, 1])
         #
         control = np.array([[1, 2, 3], [3, 4, 5]], float)
         data = TextIO()
         np.savetxt(data, control)
         data.seek(0)
-        test = np.ndfromtxt(data, dtype=float, usecols=(1, 2))
+        test = np.genfromtxt(data, dtype=float, usecols=(1, 2))
         assert_equal(test, control[:, 1:])
         # Testing with arrays instead of tuples.
         data.seek(0)
-        test = np.ndfromtxt(data, dtype=float, usecols=np.array([1, 2]))
+        test = np.genfromtxt(data, dtype=float, usecols=np.array([1, 2]))
         assert_equal(test, control[:, 1:])
 
     def test_usecols_as_css(self):
@@ -1652,7 +1652,7 @@ M   33  21.99
         data = TextIO("JOE 70.1 25.3\nBOB 60.5 27.9")
         names = ['stid', 'temp']
         dtypes = ['S4', 'f8']
-        test = np.ndfromtxt(
+        test = np.genfromtxt(
             data, usecols=(0, 2), dtype=list(zip(names, dtypes)))
         assert_equal(test['stid'], [b"JOE", b"BOB"])
         assert_equal(test['temp'], [25.3, 27.9])
@@ -1685,7 +1685,7 @@ M   33  21.99
         # Check that a nested dtype isn't MIA
         data = TextIO('1,2,3.0\n4,5,6.0\n')
         fancydtype = np.dtype([('x', int), ('y', [('t', int), ('s', float)])])
-        test = np.mafromtxt(data, dtype=fancydtype, delimiter=',')
+        test = np.genfromtxt(data, dtype=fancydtype, delimiter=',', usemask=True)
         control = ma.array([(1, (2, 3.0)), (4, (5, 6.0))], dtype=fancydtype)
         assert_equal(test, control)
 
@@ -1693,7 +1693,7 @@ M   33  21.99
         c = TextIO("aaaa  1.0  8.0  1 2 3 4 5 6")
         dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
                        ('block', int, (2, 3))])
-        x = np.ndfromtxt(c, dtype=dt)
+        x = np.genfromtxt(c, dtype=dt)
         a = np.array([('aaaa', 1.0, 8.0, [[1, 2, 3], [4, 5, 6]])],
                      dtype=dt)
         assert_array_equal(x, a)
@@ -1701,7 +1701,7 @@ M   33  21.99
     def test_withmissing(self):
         data = TextIO('A,B\n0,1\n2,N/A')
         kwargs = dict(delimiter=",", missing_values="N/A", names=True)
-        test = np.mafromtxt(data, dtype=None, **kwargs)
+        test = np.genfromtxt(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', int), ('B', int)])
@@ -1709,7 +1709,7 @@ M   33  21.99
         assert_equal(test.mask, control.mask)
         #
         data.seek(0)
-        test = np.mafromtxt(data, **kwargs)
+        test = np.genfromtxt(data, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', float), ('B', float)])
@@ -1721,7 +1721,7 @@ M   33  21.99
         basekwargs = dict(dtype=None, delimiter=",", names=True,)
         mdtype = [('A', int), ('B', float), ('C', complex)]
         #
-        test = np.mafromtxt(TextIO(data), missing_values="N/A",
+        test = np.genfromtxt(TextIO(data), missing_values="N/A",
                             **basekwargs)
         control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
                             (-9, 2.2, -999j), (3, -99, 3j)],
@@ -1730,16 +1730,17 @@ M   33  21.99
         assert_equal(test, control)
         #
         basekwargs['dtype'] = mdtype
-        test = np.mafromtxt(TextIO(data),
-                            missing_values={0: -9, 1: -99, 2: -999j}, **basekwargs)
+        test = np.genfromtxt(TextIO(data),
+                            missing_values={0: -9, 1: -99, 2: -999j}, usemask=True, **basekwargs)
         control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
                             (-9, 2.2, -999j), (3, -99, 3j)],
                            mask=[(0, 0, 0), (0, 1, 0), (1, 0, 1), (0, 1, 0)],
                            dtype=mdtype)
         assert_equal(test, control)
         #
-        test = np.mafromtxt(TextIO(data),
+        test = np.genfromtxt(TextIO(data),
                             missing_values={0: -9, 'B': -99, 'C': -999j},
+                            usemask=True,
                             **basekwargs)
         control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
                             (-9, 2.2, -999j), (3, -99, 3j)],
@@ -1777,8 +1778,8 @@ M   33  21.99
 
     def test_withmissing_float(self):
         data = TextIO('A,B\n0,1.5\n2,-999.00')
-        test = np.mafromtxt(data, dtype=None, delimiter=',',
-                            missing_values='-999.0', names=True,)
+        test = np.genfromtxt(data, dtype=None, delimiter=',',
+                            missing_values='-999.0', names=True, usemask=True)
         control = ma.array([(0, 1.5), (2, -1.)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', int), ('B', float)])
@@ -1817,14 +1818,14 @@ M   33  21.99
         ret = {}
 
         def f(_ret={}):
-            _ret['mtest'] = np.ndfromtxt(mdata, invalid_raise=False, **kwargs)
+            _ret['mtest'] = np.genfromtxt(mdata, invalid_raise=False, **kwargs)
         assert_warns(ConversionWarning, f, _ret=ret)
         mtest = ret['mtest']
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
         #
         mdata.seek(0)
-        assert_raises(ValueError, np.ndfromtxt, mdata,
+        assert_raises(ValueError, np.genfromtxt, mdata,
                       delimiter=",", names=True)
 
     def test_invalid_raise_with_usecols(self):
@@ -1841,14 +1842,14 @@ M   33  21.99
         ret = {}
 
         def f(_ret={}):
-            _ret['mtest'] = np.ndfromtxt(mdata, usecols=(0, 4), **kwargs)
+            _ret['mtest'] = np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
         assert_warns(ConversionWarning, f, _ret=ret)
         mtest = ret['mtest']
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
         #
         mdata.seek(0)
-        mtest = np.ndfromtxt(mdata, usecols=(0, 1), **kwargs)
+        mtest = np.genfromtxt(mdata, usecols=(0, 1), **kwargs)
         assert_equal(len(mtest), 50)
         control = np.ones(50, dtype=[(_, int) for _ in 'ab'])
         control[[10 * _ for _ in range(5)]] = (2, 2)
@@ -1867,7 +1868,7 @@ M   33  21.99
     def test_default_field_format(self):
         # Test default format
         data = "0, 1, 2.3\n4, 5, 6.7"
-        mtest = np.ndfromtxt(TextIO(data),
+        mtest = np.genfromtxt(TextIO(data),
                              delimiter=",", dtype=None, defaultfmt="f%02i")
         ctrl = np.array([(0, 1, 2.3), (4, 5, 6.7)],
                         dtype=[("f00", int), ("f01", int), ("f02", float)])
@@ -1876,7 +1877,7 @@ M   33  21.99
     def test_single_dtype_wo_names(self):
         # Test single dtype w/o names
         data = "0, 1, 2.3\n4, 5, 6.7"
-        mtest = np.ndfromtxt(TextIO(data),
+        mtest = np.genfromtxt(TextIO(data),
                              delimiter=",", dtype=float, defaultfmt="f%02i")
         ctrl = np.array([[0., 1., 2.3], [4., 5., 6.7]], dtype=float)
         assert_equal(mtest, ctrl)
@@ -1884,7 +1885,7 @@ M   33  21.99
     def test_single_dtype_w_explicit_names(self):
         # Test single dtype w explicit names
         data = "0, 1, 2.3\n4, 5, 6.7"
-        mtest = np.ndfromtxt(TextIO(data),
+        mtest = np.genfromtxt(TextIO(data),
                              delimiter=",", dtype=float, names="a, b, c")
         ctrl = np.array([(0., 1., 2.3), (4., 5., 6.7)],
                         dtype=[(_, float) for _ in "abc"])
@@ -1893,7 +1894,7 @@ M   33  21.99
     def test_single_dtype_w_implicit_names(self):
         # Test single dtype w implicit names
         data = "a, b, c\n0, 1, 2.3\n4, 5, 6.7"
-        mtest = np.ndfromtxt(TextIO(data),
+        mtest = np.genfromtxt(TextIO(data),
                              delimiter=",", dtype=float, names=True)
         ctrl = np.array([(0., 1., 2.3), (4., 5., 6.7)],
                         dtype=[(_, float) for _ in "abc"])
@@ -1902,7 +1903,7 @@ M   33  21.99
     def test_easy_structured_dtype(self):
         # Test easy structured dtype
         data = "0, 1, 2.3\n4, 5, 6.7"
-        mtest = np.ndfromtxt(TextIO(data), delimiter=",",
+        mtest = np.genfromtxt(TextIO(data), delimiter=",",
                              dtype=(int, float, float), defaultfmt="f_%02i")
         ctrl = np.array([(0, 1., 2.3), (4, 5., 6.7)],
                         dtype=[("f_00", int), ("f_01", float), ("f_02", float)])
@@ -1914,14 +1915,14 @@ M   33  21.99
         kwargs = dict(delimiter=",", dtype=None)
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
-            mtest = np.ndfromtxt(TextIO(data), **kwargs)
+            mtest = np.genfromtxt(TextIO(data), **kwargs)
             assert_(w[0].category is np.VisibleDeprecationWarning)
         ctrl = np.array([('01/01/2003  ', 1.3, '   abcde')],
                         dtype=[('f0', '|S12'), ('f1', float), ('f2', '|S8')])
         assert_equal(mtest, ctrl)
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
-            mtest = np.ndfromtxt(TextIO(data), autostrip=True, **kwargs)
+            mtest = np.genfromtxt(TextIO(data), autostrip=True, **kwargs)
             assert_(w[0].category is np.VisibleDeprecationWarning)
         ctrl = np.array([('01/01/2003', 1.3, 'abcde')],
                         dtype=[('f0', '|S10'), ('f1', float), ('f2', '|S5')])
@@ -1982,12 +1983,12 @@ M   33  21.99
         # w/ dtype=None
         ctrl = np.array([(0, 1, 2), (3, 4, 5)],
                         dtype=[(_, int) for _ in ('A', 'f0', 'C')])
-        test = np.ndfromtxt(TextIO(data), dtype=None, **kwargs)
+        test = np.genfromtxt(TextIO(data), dtype=None, **kwargs)
         assert_equal(test, ctrl)
         # w/ default dtype
         ctrl = np.array([(0, 1, 2), (3, 4, 5)],
                         dtype=[(_, float) for _ in ('A', 'f0', 'C')])
-        test = np.ndfromtxt(TextIO(data), **kwargs)
+        test = np.genfromtxt(TextIO(data), **kwargs)
 
     def test_names_auto_completion(self):
         # Make sure that names are properly completed
@@ -2023,13 +2024,13 @@ M   33  21.99
         kwargs = dict(delimiter=(5, 5, 4), names=True, dtype=None)
         ctrl = np.array([(0, 1, 2.3), (45, 67, 9.)],
                         dtype=[('A', int), ('B', int), ('C', float)])
-        test = np.ndfromtxt(TextIO(data), **kwargs)
+        test = np.genfromtxt(TextIO(data), **kwargs)
         assert_equal(test, ctrl)
         #
         kwargs = dict(delimiter=5, names=True, dtype=None)
         ctrl = np.array([(0, 1, 2.3), (45, 67, 9.)],
                         dtype=[('A', int), ('B', int), ('C', float)])
-        test = np.ndfromtxt(TextIO(data), **kwargs)
+        test = np.genfromtxt(TextIO(data), **kwargs)
         assert_equal(test, ctrl)
 
     def test_filling_values(self):
@@ -2037,7 +2038,7 @@ M   33  21.99
         data = b"1, 2, 3\n1, , 5\n0, 6, \n"
         kwargs = dict(delimiter=",", dtype=None, filling_values=-999)
         ctrl = np.array([[1, 2, 3], [1, -999, 5], [0, 6, -999]], dtype=int)
-        test = np.ndfromtxt(TextIO(data), **kwargs)
+        test = np.genfromtxt(TextIO(data), **kwargs)
         assert_equal(test, ctrl)
 
     def test_comments_is_none(self):
@@ -2326,7 +2327,7 @@ M   33  21.99
 
         data = TextIO('73786976294838206464 17179869184 1024')
 
-        test = np.ndfromtxt(data, dtype=None)
+        test = np.genfromtxt(data, dtype=None)
 
         assert_equal(test.dtype.names, ['f0', 'f1', 'f2'])
 
@@ -2416,7 +2417,7 @@ class TestPathUsage(object):
                 f.write(u'1 2\n3 4')
 
             control = np.array([[1, 2], [3, 4]], dtype=int)
-            test = np.ndfromtxt(path, dtype=int)
+            test = np.genfromtxt(path, dtype=int)
             assert_array_equal(test, control)
 
     def test_mafromtxt(self):
@@ -2426,7 +2427,7 @@ class TestPathUsage(object):
             with path.open('w') as f:
                 f.write(u'1,2,3.0\n4,5,6.0\n')
 
-            test = np.mafromtxt(path, delimiter=',')
+            test = np.genfromtxt(path, delimiter=',', usemask=True)
             control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
             assert_equal(test, control)
 

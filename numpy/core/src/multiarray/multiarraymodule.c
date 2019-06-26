@@ -130,7 +130,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
  * Multiply a List of ints
  */
 NPY_NO_EXPORT int
-PyArray_MultiplyIntList(int *l1, int n)
+PyArray_MultiplyIntList(int const *l1, int n)
 {
     int s = 1;
 
@@ -144,7 +144,7 @@ PyArray_MultiplyIntList(int *l1, int n)
  * Multiply a List
  */
 NPY_NO_EXPORT npy_intp
-PyArray_MultiplyList(npy_intp *l1, int n)
+PyArray_MultiplyList(npy_intp const *l1, int n)
 {
     npy_intp s = 1;
 
@@ -180,7 +180,7 @@ PyArray_OverflowMultiplyList(npy_intp *l1, int n)
  * Produce a pointer into array
  */
 NPY_NO_EXPORT void *
-PyArray_GetPtr(PyArrayObject *obj, npy_intp* ind)
+PyArray_GetPtr(PyArrayObject *obj, npy_intp const* ind)
 {
     int n = PyArray_NDIM(obj);
     npy_intp *strides = PyArray_STRIDES(obj);
@@ -196,7 +196,7 @@ PyArray_GetPtr(PyArrayObject *obj, npy_intp* ind)
  * Compare Lists
  */
 NPY_NO_EXPORT int
-PyArray_CompareLists(npy_intp *l1, npy_intp *l2, int n)
+PyArray_CompareLists(npy_intp const *l1, npy_intp const *l2, int n)
 {
     int i;
 
@@ -273,7 +273,9 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         }
         *((char ****)ptr) = ptr3;
     }
-    memcpy(dims, PyArray_DIMS(ap), nd*sizeof(npy_intp));
+    if (nd) {
+        memcpy(dims, PyArray_DIMS(ap), nd*sizeof(npy_intp));
+    }
     *op = (PyObject *)ap;
     return 0;
 }
@@ -2060,20 +2062,30 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
 static PyObject *
 array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
-    PyObject *file = NULL, *ret;
+    PyObject *file = NULL, *ret = NULL;
     PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
     char *sep = "";
     Py_ssize_t nin = -1;
-    static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
+    static char *kwlist[] = {"file", "dtype", "count", "sep", "offset", NULL};
     PyArray_Descr *type = NULL;
     int own;
-    npy_off_t orig_pos = 0;
+    npy_off_t orig_pos = 0, offset = 0;
     FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
-                "O|O&" NPY_SSIZE_T_PYFMT "s:fromfile", kwlist,
-                &file, PyArray_DescrConverter, &type, &nin, &sep)) {
+                "O|O&" NPY_SSIZE_T_PYFMT "s" NPY_OFF_T_PYFMT ":fromfile", kwlist,
+                &file, PyArray_DescrConverter, &type, &nin, &sep, &offset)) {
         Py_XDECREF(type);
+        return NULL;
+    }
+
+    file = NpyPath_PathlikeToFspath(file);
+    if (file == NULL) {
+        return NULL;
+    }
+    
+    if (offset != 0 && strcmp(sep, "") != 0) {
+        PyErr_SetString(PyExc_TypeError, "'offset' argument only permitted for binary files");
         return NULL;
     }
     if (PyString_Check(file) || PyUnicode_Check(file)) {
@@ -2092,6 +2104,10 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         Py_DECREF(file);
         return NULL;
     }
+    if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
+        PyErr_SetFromErrno(PyExc_IOError);
+        goto cleanup;
+    }
     if (type == NULL) {
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
@@ -2101,6 +2117,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
      * we need to clear it, and restore it later to ensure that
      * we can cleanup the duplicated file descriptor properly.
      */
+cleanup:
     PyErr_Fetch(&err_type, &err_value, &err_traceback);
     if (npy_PyFile_DupClose2(file, fp, orig_pos) < 0) {
         npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
@@ -4498,7 +4515,7 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_prepare = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ufunc = NULL;
-NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_skip_array_function = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_implementation = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_order = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_copy = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
@@ -4514,8 +4531,7 @@ intern_strings(void)
     npy_ma_str_array_wrap = PyUString_InternFromString("__array_wrap__");
     npy_ma_str_array_finalize = PyUString_InternFromString("__array_finalize__");
     npy_ma_str_ufunc = PyUString_InternFromString("__array_ufunc__");
-    npy_ma_str_skip_array_function = PyUString_InternFromString(
-        "__skip_array_function__");
+    npy_ma_str_implementation = PyUString_InternFromString("_implementation");
     npy_ma_str_order = PyUString_InternFromString("order");
     npy_ma_str_copy = PyUString_InternFromString("copy");
     npy_ma_str_dtype = PyUString_InternFromString("dtype");
@@ -4525,7 +4541,7 @@ intern_strings(void)
 
     return npy_ma_str_array && npy_ma_str_array_prepare &&
            npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
-           npy_ma_str_ufunc && npy_ma_str_skip_array_function &&
+           npy_ma_str_ufunc && npy_ma_str_implementation &&
            npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
            npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
 }

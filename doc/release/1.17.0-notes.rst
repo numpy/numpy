@@ -43,10 +43,27 @@ from python.
 This deprecation should not affect many users since arrays created in such
 a manner are very rare in practice and only available through the NumPy C-API.
 
+`numpy.nonzero` should no longer be called on 0d arrays
+-------------------------------------------------------
+The behavior of nonzero on 0d arrays was surprising, making uses of it almost
+always incorrect. If the old behavior was intended, it can be preserved without
+a warning by using ``nonzero(atleast_1d(arr))`` instead of ``nonzero(arr)``.
+In a future release, it is most likely this will raise a `ValueError`.
+
 
 Future Changes
 ==============
 
+Shape-1 fields in dtypes won't be collapsed to scalars in a future version
+--------------------------------------------------------------------------
+
+Currently, a field specified as ``[(name, dtype, 1)]`` or ``"1type"`` is
+interpreted as a scalar field (i.e., the same as ``[(name, dtype)]`` or
+``[(name, dtype, ()]``). This now raises a FutureWarning; in a future version,
+it will be interpreted as a shape-(1,) field, i.e. the same as ``[(name,
+dtype, (1,))]`` or ``"(1,)type"`` (consistently with ``[(name, dtype, n)]``
+/ ``"ntype"`` with ``n>1``, which is already equivalent to ``[(name, dtype,
+(n,)]`` / ``"(n,)type"``).
 
 Expired deprecations
 ====================
@@ -114,12 +131,71 @@ the stream changes for any given seed is extremely small. If a 0 is encountered 
 underlying generator, then the incorrect value produced (either ``np.inf``
 or ``np.nan``) is now dropped.
 
+``i0`` now always returns a result with the same shape as the input
+-------------------------------------------------------------------
+Previously, the output was squeezed, such that, e.g., input with just a single
+element would lead to an array scalar being returned, and inputs with shapes
+such as ``(10, 1)`` would yield results that would not broadcast against the
+input.
+
+Note that we generally recommend the scipy implementation over the numpy one:
+it is a proper ufunc written in C, and more than an order of magnitude faster.
+
+``np.can_cast`` no longer assumes all unsafe casting is allowed
+---------------------------------------------------------------
+Previously, ``can_cast`` returned `True` for almost all inputs for
+``casting='unsafe'``, even for cases where casting was not possible, such as
+from a structured dtype to a regular one.  This has been fixed, making it
+more consistent with actual casting using, e.g., the ``.astype`` method.
+
 C API changes
 =============
+
+dimension or stride input arguments are now passed by ``npy_intp const*``
+-------------------------------------------------------------------------
+Previously these function arguments were declared as the more strict
+``npy_intp*``, which prevented the caller passing constant data.
+This change is backwards compatible, but now allows code like::
+
+    npy_intp const fixed_dims[] = {1, 2, 3};
+    // no longer complains that the const-qualifier is discarded
+    npy_intp size = PyArray_MultiplyList(fixed_dims, 3);
 
 
 New Features
 ============
+
+libFLAME
+--------
+Support for building NumPy with the libFLAME linear algebra package as the LAPACK,
+implementation, see
+`libFLAME <https://www.cs.utexas.edu/~flame/web/libFLAME.html>`_ for details.
+
+User-defined BLAS detection order
+---------------------------------
+``numpy.distutils`` now uses an environment variable, comma-separated and case
+insensitive, to determine the detection order for BLAS libraries.
+By default ``NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas``.
+However, to force the use of OpenBLAS simply do::
+
+   NPY_BLAS_ORDER=openblas python setup.py build
+
+which forces the use of OpenBLAS.
+This may be helpful for users which have a MKL installation but wishes to try
+out different implementations.
+
+User-defined LAPACK detection order
+-----------------------------------
+``numpy.distutils`` now uses an environment variable, comma-separated and case
+insensitive, to determine the detection order for LAPAK libraries.
+By default ``NPY_BLAS_ORDER=mkl,openblas,flame,atlas,accelerate,lapack``.
+However, to force the use of OpenBLAS simply do::
+
+   NPY_LAPACK_ORDER=openblas python setup.py build
+
+which forces the use of OpenBLAS.
+This may be helpful for users which have a MKL installation but wishes to try
+out different implementations.
 
 ``np.ufunc.reduce`` and related functions now accept a ``where`` mask
 ---------------------------------------------------------------------
@@ -163,11 +239,16 @@ divmod operation is now supported for two ``timedelta64`` operands
 The divmod operator now handles two ``np.timedelta64`` operands, with
 type signature mm->qm.
 
+``np.fromfile`` now takes an ``offset`` argument
+------------------------------------------------
+This function now takes an ``offset`` keyword argument for binary files,
+which specifics the offset (in bytes) from the file's current position.
+Defaults to 0.
+
 New mode "empty" for ``np.pad``
 -------------------------------
 This mode pads an array to a desired shape without initializing the new
 entries.
-
 
 ``np.empty_like`` and related functions now accept a ``shape`` argument
 -----------------------------------------------------------------------
@@ -182,6 +263,18 @@ Floating point scalars implement ``as_integer_ratio`` to match the builtin float
 --------------------------------------------------------------------------------
 This returns a (numerator, denominator) pair, which can be used to construct a
 `fractions.Fraction`.
+
+structured ``dtype`` objects can be indexed with multiple fields names
+----------------------------------------------------------------------
+``arr.dtype[['a', 'b']]`` now returns a dtype that is equivalent to
+``arr[['a', 'b']].dtype``, for consistency with
+``arr.dtype['a'] == arr['a'].dtype``.
+
+Like the dtype of structured arrays indexed with a list of fields, this dtype
+has the same `itemsize` as the original, but only keeps a subset of the fields.
+
+This means that `arr[['a', 'b']]` and ``arr.view(arr.dtype[['a', 'b']])`` are
+equivalent.
 
 ``.npy`` files support unicode field names
 ------------------------------------------
@@ -270,6 +363,11 @@ concatenation.
 ----------------------------------------------
 In some cases where ``np.interp`` would previously return ``np.nan``, it now
 returns an appropriate infinity.
+
+Pathlib support for ``np.fromfile``, ``ndarray.tofile`` and ``ndarray.dump``
+----------------------------------------------------------------------------
+``np.fromfile``, ``np.ndarray.tofile`` and ``np.ndarray.dump`` now support
+the `pathlib.Path` type for the ``file``/``fid`` parameter.
 
 Specialized ``np.isnan``, ``np.isinf``, and ``np.isfinite`` ufuncs for bool and int types
 -----------------------------------------------------------------------------------------
@@ -377,9 +475,14 @@ The interface may use an ``offset`` value that was mistakenly ignored.
 
 Pickle protocol in ``np.savez`` set to 3 for ``force zip64`` flag
 -----------------------------------------------------------------
-
 ``np.savez`` was not using the ``force_zip64`` flag, which limited the size of
 the archive to 2GB. But using the flag requires us to use pickle protocol 3 to
 write ``object`` arrays. The protocol used was bumped to 3, meaning the archive
 will be unreadable by Python2.
 
+Structured arrays indexed with non-existent fields raise ``KeyError`` not ``ValueError``
+----------------------------------------------------------------------------------------
+``arr['bad_field']`` on a structured type raises ``KeyError``, for consistency
+with ``dict['bad_field']``.
+
+.. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html

@@ -269,7 +269,7 @@ class SortWorst(Benchmark):
     def time_sort_worst(self):
         np.sort(self.worst)
 
-    # Retain old benchmark name for backward compatability
+    # Retain old benchmark name for backward compatibility
     time_sort_worst.benchmark_name = "bench_function_base.Sort.time_sort_worst"
 
 

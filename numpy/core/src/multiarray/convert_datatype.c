@@ -679,15 +679,82 @@ NPY_NO_EXPORT npy_bool
 PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                                                     NPY_CASTING casting)
 {
-    /* Fast path for unsafe casts or basic types */
-    if (casting == NPY_UNSAFE_CASTING ||
-            (NPY_LIKELY(from->type_num < NPY_OBJECT) &&
-             NPY_LIKELY(from->type_num == to->type_num) &&
-             NPY_LIKELY(from->byteorder == to->byteorder))) {
+    /*
+     * Fast paths for equality and for basic types.
+     */
+    if (from == to ||
+        ((NPY_LIKELY(PyDataType_ISNUMBER(from)) ||
+          PyDataType_ISOBJECT(from)) &&
+         NPY_LIKELY(from->type_num == to->type_num) &&
+         NPY_LIKELY(from->byteorder == to->byteorder))) {
         return 1;
     }
-    /* Equivalent types can be cast with any value of 'casting'  */
-    else if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
+    /*
+     * Cases with subarrays and fields need special treatment.
+     */
+    if (PyDataType_HASFIELDS(from)) {
+        /*
+         * If from is a structured data type, then it can be cast to a simple
+         * non-object one only for unsafe casting *and* if it has a single
+         * field; recurse just in case the single field is itself structured.
+         */
+        if (!PyDataType_HASFIELDS(to) && !PyDataType_ISOBJECT(to)) {
+            if (casting == NPY_UNSAFE_CASTING &&
+                    PyDict_Size(from->fields) == 1) {
+                Py_ssize_t ppos = 0;
+                PyObject *tuple;
+                PyArray_Descr *field;
+                PyDict_Next(from->fields, &ppos, NULL, &tuple);
+                field = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
+                /*
+                 * For a subarray, we need to get the underlying type;
+                 * since we already are casting unsafely, we can ignore
+                 * the shape.
+                 */
+                if (PyDataType_HASSUBARRAY(field)) {
+                    field = field->subarray->base;
+                }
+                return PyArray_CanCastTypeTo(field, to, casting);
+            }
+            else {
+                return 0;
+            }
+        }
+        /*
+         * Casting from one structured data type to another depends on the fields;
+         * we pass that case on to the EquivTypenums case below.
+         *
+         * TODO: move that part up here? Need to check whether equivalent type
+         * numbers is an addition constraint that is needed.
+         *
+         * TODO/FIXME: For now, always allow structured to structured for unsafe
+         * casting; this is not correct, but needed since the treatment in can_cast
+         * below got out of sync with astype; see gh-13667.
+         */
+        if (casting == NPY_UNSAFE_CASTING) {
+            return 1;
+        }
+    }
+    else if (PyDataType_HASFIELDS(to)) {
+        /*
+         * If "from" is a simple data type and "to" has fields, then only
+         * unsafe casting works (and that works always, even to multiple fields).
+         */
+        return casting == NPY_UNSAFE_CASTING;
+    }
+    /*
+     * Everything else we consider castable for unsafe for now.
+     * FIXME: ensure what we do here is consistent with "astype",
+     * i.e., deal more correctly with subarrays and user-defined dtype.
+     */
+    else if (casting == NPY_UNSAFE_CASTING) {
+        return 1;
+    }
+    /*
+     * Equivalent simple types can be cast with any value of 'casting', but
+     * we need to be careful about structured to structured.
+     */
+    if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
         /* For complicated case, use EquivTypes (for now) */
         if (PyTypeNum_ISUSERDEF(from->type_num) ||
                         from->subarray != NULL) {
@@ -1700,46 +1767,22 @@ dtype_kind_to_simplified_ordering(char kind)
     }
 }
 
-/*NUMPY_API
- * Produces the result type of a bunch of inputs, using the UFunc
- * type promotion rules. Use this function when you have a set of
- * input arrays, and need to determine an output array dtype.
- *
- * If all the inputs are scalars (have 0 dimensions) or the maximum "kind"
- * of the scalars is greater than the maximum "kind" of the arrays, does
- * a regular type promotion.
- *
- * Otherwise, does a type promotion on the MinScalarType
- * of all the inputs.  Data types passed directly are treated as array
- * types.
- *
+
+/*
+ * Determine if there is a mix of scalars and arrays/dtypes.
+ * If this is the case, the scalars should be handled as the minimum type
+ * capable of holding the value when the maximum "category" of the scalars
+ * surpasses the maximum "category" of the arrays/dtypes.
+ * If the scalars are of a lower or same category as the arrays, they may be
+ * demoted to a lower type within their category (the lowest type they can
+ * be cast to safely according to scalar casting rules).
  */
-NPY_NO_EXPORT PyArray_Descr *
-PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
-                    npy_intp ndtypes, PyArray_Descr **dtypes)
+NPY_NO_EXPORT int
+should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
+                      npy_intp ndtypes, PyArray_Descr **dtypes)
 {
-    npy_intp i;
-    int use_min_scalar;
+    int use_min_scalar = 0;
 
-    /* If there's just one type, pass it through */
-    if (narrs + ndtypes == 1) {
-        PyArray_Descr *ret = NULL;
-        if (narrs == 1) {
-            ret = PyArray_DESCR(arr[0]);
-        }
-        else {
-            ret = dtypes[0];
-        }
-        Py_INCREF(ret);
-        return ret;
-    }
-
-    /*
-     * Determine if there are any scalars, and if so, whether
-     * the maximum "kind" of the scalars surpasses the maximum
-     * "kind" of the arrays
-     */
-    use_min_scalar = 0;
     if (narrs > 0) {
         int all_scalars;
         int max_scalar_kind = -1;
@@ -1748,7 +1791,7 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
         all_scalars = (ndtypes > 0) ? 0 : 1;
 
         /* Compute the maximum "kinds" and whether everything is scalar */
-        for (i = 0; i < narrs; ++i) {
+        for (npy_intp i = 0; i < narrs; ++i) {
             if (PyArray_NDIM(arr[i]) == 0) {
                 int kind = dtype_kind_to_simplified_ordering(
                                     PyArray_DESCR(arr[i])->kind);
@@ -1769,7 +1812,7 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
          * If the max scalar kind is bigger than the max array kind,
          * finish computing the max array kind
          */
-        for (i = 0; i < ndtypes; ++i) {
+        for (npy_intp i = 0; i < ndtypes; ++i) {
             int kind = dtype_kind_to_simplified_ordering(dtypes[i]->kind);
             if (kind > max_array_kind) {
                 max_array_kind = kind;
@@ -1781,6 +1824,44 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
             use_min_scalar = 1;
         }
     }
+    return use_min_scalar;
+}
+
+
+/*NUMPY_API
+ * Produces the result type of a bunch of inputs, using the UFunc
+ * type promotion rules. Use this function when you have a set of
+ * input arrays, and need to determine an output array dtype.
+ *
+ * If all the inputs are scalars (have 0 dimensions) or the maximum "kind"
+ * of the scalars is greater than the maximum "kind" of the arrays, does
+ * a regular type promotion.
+ *
+ * Otherwise, does a type promotion on the MinScalarType
+ * of all the inputs.  Data types passed directly are treated as array
+ * types.
+ *
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
+                    npy_intp ndtypes, PyArray_Descr **dtypes)
+{
+    npy_intp i;
+
+    /* If there's just one type, pass it through */
+    if (narrs + ndtypes == 1) {
+        PyArray_Descr *ret = NULL;
+        if (narrs == 1) {
+            ret = PyArray_DESCR(arr[0]);
+        }
+        else {
+            ret = dtypes[0];
+        }
+        Py_INCREF(ret);
+        return ret;
+    }
+
+    int use_min_scalar = should_use_min_scalar(narrs, arr, ndtypes, dtypes);
 
     /* Loop through all the types, promoting them */
     if (!use_min_scalar) {

@@ -143,11 +143,11 @@ We will be more strict about a select subset of methods on these BitGenerator
 objects.  They MUST guarantee stream-compatibility for a specified set
 of methods which are chosen to make it easier to compose them to build other
 distributions and which are needed to abstract over the implementation details
-of the variety of core PRNG algorithms.  Namely,
+of the variety of BitGenerator algorithms.  Namely,
 
     * ``.bytes()``
-    * ``integers`` (formerly ``.random_uintegers()``)
-    * ``random`` (formerly ``.random_sample()``)
+    * ``integers()`` (formerly ``.random_integers()``)
+    * ``random()`` (formerly ``.random_sample()``)
 
 The distributions class (``Generator``) SHOULD have all of the same
 distribution methods as ``RandomState`` with close-enough function signatures
@@ -296,7 +296,7 @@ satisfactory subset.  At least some projects used a fairly broad selection of
 the ``RandomState`` methods in unit tests.
 
 Downstream project owners would have been forced to modify their code to
-accomodate the new PRNG subsystem.  Some modifications might be simply
+accommodate the new PRNG subsystem.  Some modifications might be simply
 mechanical, but the bulk of the work would have been tedious churn for no
 positive improvement to the downstream project, just avoiding being broken.
 

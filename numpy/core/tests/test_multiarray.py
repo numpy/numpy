@@ -23,6 +23,14 @@ from contextlib import contextmanager
 
 from numpy.compat import pickle
 
+try:
+    import pathlib
+except ImportError:
+    try:
+        import pathlib2 as pathlib
+    except ImportError:
+        pathlib = None
+
 if sys.version_info[0] >= 3:
     import builtins
 else:
@@ -919,6 +927,29 @@ class TestCreation(object):
         assert_equal(np.array([long(4), 2**80, long(4)]).dtype, object)
         assert_equal(np.array([2**80, long(4)]).dtype, object)
 
+    def test_sequence_of_array_like(self):
+        class ArrayLike:
+            def __init__(self):
+                self.__array_interface__ = {
+                    "shape": (42,),
+                    "typestr": "<i1",
+                    "data": bytes(42)
+                }
+
+            # Make sure __array_*__ is used instead of Sequence methods.
+            def __iter__(self):
+                raise AssertionError("__iter__ was called")
+
+            def __getitem__(self, idx):
+                raise AssertionError("__getitem__ was called")
+
+            def __len__(self):
+                return 42
+
+        assert_equal(
+            np.array([ArrayLike()]),
+            np.zeros((1, 42), dtype=np.byte))
+
     def test_non_sequence_sequence(self):
         """Should not segfault.
 
@@ -1464,6 +1495,10 @@ class TestZeroSizeFlexible(object):
 
             # viewing as any non-empty type gives an empty result
             assert_equal(zs.view((dt, 1)).shape, (0,))
+
+    def test_dumps(self):
+        zs = self._zeros(10, int)
+        assert_equal(zs, pickle.loads(zs.dumps()))
 
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
@@ -3887,6 +3922,17 @@ class TestPickling(object):
         p = self._loads(s)
         assert_equal(a, p)
 
+    def test_datetime64_byteorder(self):
+        original = np.array([['2015-02-24T00:00:00.000000000']], dtype='datetime64[ns]')
+    
+        original_byte_reversed = original.copy(order='K')
+        original_byte_reversed.dtype = original_byte_reversed.dtype.newbyteorder('S')
+        original_byte_reversed.byteswap(inplace=True)
+
+        new = pickle.loads(pickle.dumps(original_byte_reversed))
+    
+        assert_equal(original.dtype, new.dtype)
+
 
 class TestFancyIndexing(object):
     def test_list(self):
@@ -4612,6 +4658,20 @@ class TestIO(object):
         y = np.fromfile(self.filename, dtype=self.dtype)
         assert_array_equal(y, self.x.flat)
 
+    @pytest.mark.skipif(pathlib is None, reason="pathlib not found")
+    def test_roundtrip_pathlib(self):
+        p = pathlib.Path(self.filename)
+        self.x.tofile(p)
+        y = np.fromfile(p, dtype=self.dtype)
+        assert_array_equal(y, self.x.flat)
+
+    @pytest.mark.skipif(pathlib is None, reason="pathlib not found")
+    def test_roundtrip_dump_pathlib(self):
+        p = pathlib.Path(self.filename)
+        self.x.dump(p)
+        y = np.load(p, allow_pickle=True)
+        assert_array_equal(y, self.x)
+
     def test_roundtrip_binary_str(self):
         s = self.x.tobytes()
         y = np.frombuffer(s, dtype=self.dtype)
@@ -4743,6 +4803,36 @@ class TestIO(object):
 
         assert_raises_regex(ValueError, "Cannot read into object array",
                             np.fromfile, self.filename, dtype=object)
+
+    def test_fromfile_offset(self):
+        with open(self.filename, 'wb') as f:
+            self.x.tofile(f)
+
+        with open(self.filename, 'rb') as f:
+            y = np.fromfile(f, dtype=self.dtype, offset=0)
+            assert_array_equal(y, self.x.flat)
+
+        with open(self.filename, 'rb') as f:
+            count_items = len(self.x.flat) // 8
+            offset_items = len(self.x.flat) // 4
+            offset_bytes = self.dtype.itemsize * offset_items
+            y = np.fromfile(f, dtype=self.dtype, count=count_items, offset=offset_bytes)
+            assert_array_equal(y, self.x.flat[offset_items:offset_items+count_items])
+
+            # subsequent seeks should stack
+            offset_bytes = self.dtype.itemsize
+            z = np.fromfile(f, dtype=self.dtype, offset=offset_bytes)
+            assert_array_equal(z, self.x.flat[offset_items+count_items+1:])
+        
+        with open(self.filename, 'wb') as f:
+            self.x.tofile(f, sep=",")
+
+        with open(self.filename, 'rb') as f:
+            assert_raises_regex(
+                    TypeError,
+                    "'offset' argument only permitted for binary files",
+                    np.fromfile, self.filename, dtype=self.dtype,
+                    sep=",", offset=1)
 
     def _check_from(self, s, value, **kw):
         if 'sep' not in kw:

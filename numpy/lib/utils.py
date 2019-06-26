@@ -1136,7 +1136,6 @@ def safe_eval(source):
     """
     # Local import to speed up numpy's import time.
     import ast
-
     return ast.literal_eval(source)
 
 

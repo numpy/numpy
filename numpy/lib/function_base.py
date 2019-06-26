@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 try:
-    # Accessing collections abstact classes from collections
+    # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
     import collections.abc as collections_abc
 except ImportError:
@@ -3070,10 +3070,13 @@ def i0(x):
 
     See Also
     --------
-    scipy.special.iv, scipy.special.ive
+    scipy.special.i0, scipy.special.iv, scipy.special.ive
 
     Notes
     -----
+    The scipy implementation is recommended over this function: it is a
+    proper ufunc written in C, and more than an order of magnitude faster.
+
     We use the algorithm published by Clenshaw [1]_ and referenced by
     Abramowitz and Stegun [2]_, for which the function domain is
     partitioned into the two intervals [0,8] and (8,inf), and Chebyshev
@@ -3093,21 +3096,14 @@ def i0(x):
 
     Examples
     --------
-    >>> np.i0([0.])
-    array(1.0) # may vary
+    >>> np.i0(0.)
+    array(1.0)  # may vary
     >>> np.i0([0., 1. + 2j])
-    array([ 1.00000000+0.j        ,  0.18785373+0.64616944j]) # may vary
+    array([ 1.00000000+0.j        ,  0.18785373+0.64616944j])  # may vary
 
     """
-    x = atleast_1d(x).copy()
-    y = empty_like(x)
-    ind = (x < 0)
-    x[ind] = -x[ind]
-    ind = (x <= 8.0)
-    y[ind] = _i0_1(x[ind])
-    ind2 = ~ind
-    y[ind2] = _i0_2(x[ind2])
-    return y.squeeze()
+    x = np.abs(x)
+    return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 
 ## End of cephes code for i0
 
@@ -3726,7 +3722,8 @@ def quantile(a, q, axis=None, out=None,
              overwrite_input=False, interpolation='linear', keepdims=False):
     """
     Compute the q-th quantile of the data along the specified axis.
-    ..versionadded:: 1.15.0
+    
+    .. versionadded:: 1.15.0
 
     Parameters
     ----------
@@ -4341,7 +4338,7 @@ def delete(arr, obj, axis=None):
         else:
             slobj[axis] = slice(None, start)
             new[tuple(slobj)] = arr[tuple(slobj)]
-        # copy end chunck
+        # copy end chunk
         if stop == N:
             pass
         else:

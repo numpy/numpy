@@ -43,7 +43,7 @@ class TestResize(object):
 
     def test_reshape_from_zero(self):
         # See also gh-6740
-        A = np.zeros(0, dtype=[('a', np.float32, 1)])
+        A = np.zeros(0, dtype=[('a', np.float32)])
         Ar = np.resize(A, (2, 1))
         assert_array_equal(Ar, np.zeros((2, 1), Ar.dtype))
         assert_equal(A.dtype, Ar.dtype)
@@ -899,6 +899,41 @@ class TestTypes(object):
         # Also test keyword arguments
         assert_(np.can_cast(from_=np.int32, to=np.int64))
 
+    def test_can_cast_simple_to_structured(self):
+        # Non-structured can only be cast to structured in 'unsafe' mode.
+        assert_(not np.can_cast('i4', 'i4,i4'))
+        assert_(not np.can_cast('i4', 'i4,i2'))
+        assert_(np.can_cast('i4', 'i4,i4', casting='unsafe'))
+        assert_(np.can_cast('i4', 'i4,i2', casting='unsafe'))
+        # Even if there is just a single field which is OK.
+        assert_(not np.can_cast('i2', [('f1', 'i4')]))
+        assert_(not np.can_cast('i2', [('f1', 'i4')], casting='same_kind'))
+        assert_(np.can_cast('i2', [('f1', 'i4')], casting='unsafe'))
+        # It should be the same for recursive structured or subarrays.
+        assert_(not np.can_cast('i2', [('f1', 'i4,i4')]))
+        assert_(np.can_cast('i2', [('f1', 'i4,i4')], casting='unsafe'))
+        assert_(not np.can_cast('i2', [('f1', '(2,3)i4')]))
+        assert_(np.can_cast('i2', [('f1', '(2,3)i4')], casting='unsafe'))
+
+    def test_can_cast_structured_to_simple(self):
+        # Need unsafe casting for structured to simple.
+        assert_(not np.can_cast([('f1', 'i4')], 'i4'))
+        assert_(np.can_cast([('f1', 'i4')], 'i4', casting='unsafe'))
+        assert_(np.can_cast([('f1', 'i4')], 'i2', casting='unsafe'))
+        # Since it is unclear what is being cast, multiple fields to
+        # single should not work even for unsafe casting.
+        assert_(not np.can_cast('i4,i4', 'i4', casting='unsafe'))
+        # But a single field inside a single field is OK.
+        assert_(not np.can_cast([('f1', [('x', 'i4')])], 'i4'))
+        assert_(np.can_cast([('f1', [('x', 'i4')])], 'i4', casting='unsafe'))
+        # And a subarray is fine too - it will just take the first element
+        # (arguably not very consistently; might also take the first field).
+        assert_(not np.can_cast([('f0', '(3,)i4')], 'i4'))
+        assert_(np.can_cast([('f0', '(3,)i4')], 'i4', casting='unsafe'))
+        # But a structured subarray with multiple fields should fail.
+        assert_(not np.can_cast([('f0', ('i4,i4'), (2,))], 'i4',
+                                casting='unsafe'))
+
     def test_can_cast_values(self):
         # gh-5917
         for dt in np.sctypes['int'] + np.sctypes['uint']:
@@ -976,12 +1011,24 @@ class TestNonzero(object):
         assert_equal(np.count_nonzero(np.array([], dtype='?')), 0)
         assert_equal(np.nonzero(np.array([])), ([],))
 
+        assert_equal(np.count_nonzero(np.array([0])), 0)
+        assert_equal(np.count_nonzero(np.array([0], dtype='?')), 0)
+        assert_equal(np.nonzero(np.array([0])), ([],))
+
+        assert_equal(np.count_nonzero(np.array([1])), 1)
+        assert_equal(np.count_nonzero(np.array([1], dtype='?')), 1)
+        assert_equal(np.nonzero(np.array([1])), ([0],))
+
+    def test_nonzero_zerod(self):
         assert_equal(np.count_nonzero(np.array(0)), 0)
         assert_equal(np.count_nonzero(np.array(0, dtype='?')), 0)
-        assert_equal(np.nonzero(np.array(0)), ([],))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.nonzero(np.array(0)), ([],))
+
         assert_equal(np.count_nonzero(np.array(1)), 1)
         assert_equal(np.count_nonzero(np.array(1, dtype='?')), 1)
-        assert_equal(np.nonzero(np.array(1)), ([0],))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.nonzero(np.array(1)), ([0],))
 
     def test_nonzero_onedim(self):
         x = np.array([1, 0, 2, -1, 0, 0, 8])
@@ -1174,6 +1221,38 @@ class TestNonzero(object):
                 raise ValueError("Not allowed")
 
         assert_raises(ValueError, np.nonzero, np.array([BoolErrors()]))
+
+    def test_nonzero_sideeffect_safety(self):
+        # gh-13631
+        class FalseThenTrue:
+            _val = False
+            def __bool__(self):
+                try:
+                    return self._val
+                finally:
+                    self._val = True
+
+        class TrueThenFalse:
+            _val = True
+            def __bool__(self):
+                try:
+                    return self._val
+                finally:
+                    self._val = False
+
+        # result grows on the second pass
+        a = np.array([True, FalseThenTrue()])
+        assert_raises(RuntimeError, np.nonzero, a)
+
+        a = np.array([[True], [FalseThenTrue()]])
+        assert_raises(RuntimeError, np.nonzero, a)
+
+        # result shrinks on the second pass
+        a = np.array([False, TrueThenFalse()])
+        assert_raises(RuntimeError, np.nonzero, a)
+
+        a = np.array([[False], [TrueThenFalse()]])
+        assert_raises(RuntimeError, np.nonzero, a)
 
 
 class TestIndex(object):

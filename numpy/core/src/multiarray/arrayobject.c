@@ -1163,8 +1163,10 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 
                     newdims.ptr = dimensions;
                     newdims.len = result_ndim+1;
-                    memcpy(dimensions, PyArray_DIMS((PyArrayObject *)temp),
-                           sizeof(npy_intp)*result_ndim);
+                    if (result_ndim) {
+                        memcpy(dimensions, PyArray_DIMS((PyArrayObject *)temp),
+                               sizeof(npy_intp)*result_ndim);
+                    }
                     dimensions[result_ndim] = -1;
                     temp2 = PyArray_Newshape((PyArrayObject *)temp,
                                              &newdims, NPY_ANYORDER);
