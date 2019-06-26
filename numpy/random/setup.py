@@ -88,7 +88,7 @@ def configuration(parent_package='', top_path=None):
                              depends=['%s.pyx' % gen],
                              define_macros=defs,
                              )
-    for gen in ['philox', 'pcg64']:
+    for gen in ['philox', 'pcg64', 'sfc64']:
         # gen.pyx, src/gen/gen.c
         _defs = defs + PCG64_DEFS if gen == 'pcg64' else defs
         config.add_extension(gen,
