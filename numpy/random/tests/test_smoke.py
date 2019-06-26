@@ -456,55 +456,33 @@ class RNG(object):
         else:
             dtype = np.uint64
         seed = np.array([1], dtype=dtype)
-        self.rg.bit_generator.seed(seed)
-        state1 = self.rg.bit_generator.state
-        self.rg.bit_generator.seed(1)
-        state2 = self.rg.bit_generator.state
+        bg = self.bit_generator(seed)
+        state1 = bg.state
+        bg = self.bit_generator(1)
+        state2 = bg.state
         assert_(comp_state(state1, state2))
 
         seed = np.arange(4, dtype=dtype)
-        self.rg.bit_generator.seed(seed)
-        state1 = self.rg.bit_generator.state
-        self.rg.bit_generator.seed(seed[0])
-        state2 = self.rg.bit_generator.state
+        bg = self.bit_generator(seed)
+        state1 = bg.state
+        bg = self.bit_generator(seed[0])
+        state2 = bg.state
         assert_(not comp_state(state1, state2))
 
         seed = np.arange(1500, dtype=dtype)
-        self.rg.bit_generator.seed(seed)
-        state1 = self.rg.bit_generator.state
-        self.rg.bit_generator.seed(seed[0])
-        state2 = self.rg.bit_generator.state
+        bg = self.bit_generator(seed)
+        state1 = bg.state
+        bg = self.bit_generator(seed[0])
+        state2 = bg.state
         assert_(not comp_state(state1, state2))
 
         seed = 2 ** np.mod(np.arange(1500, dtype=dtype),
                            self.seed_vector_bits - 1) + 1
-        self.rg.bit_generator.seed(seed)
-        state1 = self.rg.bit_generator.state
-        self.rg.bit_generator.seed(seed[0])
-        state2 = self.rg.bit_generator.state
+        bg = self.bit_generator(seed)
+        state1 = bg.state
+        bg  = self.bit_generator(seed[0])
+        state2 = bg.state
         assert_(not comp_state(state1, state2))
-
-    def test_seed_array_error(self):
-        if self.seed_vector_bits == 32:
-            out_of_bounds = 2 ** 32
-        else:
-            out_of_bounds = 2 ** 64
-
-        seed = -1
-        with pytest.raises(ValueError):
-            self.rg.bit_generator.seed(seed)
-
-        seed = np.array([-1], dtype=np.int32)
-        with pytest.raises(ValueError):
-            self.rg.bit_generator.seed(seed)
-
-        seed = np.array([1, 2, 3, -5], dtype=np.int32)
-        with pytest.raises(ValueError):
-            self.rg.bit_generator.seed(seed)
-
-        seed = np.array([1, 2, 3, out_of_bounds])
-        with pytest.raises(ValueError):
-            self.rg.bit_generator.seed(seed)
 
     def test_uniform_float(self):
         rg = Generator(self.bit_generator(12345))
@@ -792,39 +770,3 @@ class TestEntropy(object):
         e2 = entropy.random_entropy(source='fallback')
         assert_((e1 != e2))
 
-
-class TestPCG64(RNG):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = PCG64
-        cls.advance = 2 ** 96 + 2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1
-        cls.seed = [2 ** 96 + 2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1,
-                    2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
-        cls.rg = Generator(cls.bit_generator(*cls.seed))
-        cls.initial_state = cls.rg.bit_generator.state
-        cls.seed_vector_bits = None
-        cls._extra_setup()
-
-    def test_seed_array_error(self):
-        # GH #82 for error type changes
-        if self.seed_vector_bits == 32:
-            out_of_bounds = 2 ** 32
-        else:
-            out_of_bounds = 2 ** 64
-
-        seed = -1
-        with pytest.raises(ValueError):
-            self.rg.bit_generator.seed(seed)
-
-        error_type = ValueError if self.seed_vector_bits else TypeError
-        seed = np.array([-1], dtype=np.int32)
-        with pytest.raises(error_type):
-            self.rg.bit_generator.seed(seed)
-
-        seed = np.array([1, 2, 3, -5], dtype=np.int32)
-        with pytest.raises(error_type):
-            self.rg.bit_generator.seed(seed)
-
-        seed = np.array([1, 2, 3, out_of_bounds])
-        with pytest.raises(error_type):
-            self.rg.bit_generator.seed(seed)

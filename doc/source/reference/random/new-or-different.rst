@@ -93,9 +93,8 @@ And in more detail:
 
 .. ipython:: python
 
-  rg.bit_generator.seed(0)
+  rg = Generator(PCG64(0))
   rg.random(3, dtype='d')
-  rg.bit_generator.seed(0)
   rg.random(3, dtype='f')
 
 * Optional ``out`` argument that allows existing arrays to be filled for
