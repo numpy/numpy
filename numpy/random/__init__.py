@@ -100,6 +100,7 @@ BitGenerator Streams that work with Generator
 MT19937
 PCG64
 Philox
+SFC64
 ============================================= ===
 
 ============================================= ===
@@ -171,10 +172,11 @@ from .bit_generator import SeedSequence
 from .mt19937 import MT19937
 from .pcg64 import PCG64
 from .philox import Philox
+from .sfc64 import SFC64
 from .mtrand import RandomState
 
 __all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',
-            'Philox', 'PCG64']
+            'Philox', 'PCG64', 'SFC64']
 
 
 def __RandomState_ctor():

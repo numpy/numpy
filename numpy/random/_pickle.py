@@ -1,6 +1,7 @@
 from .mtrand import RandomState
 from .philox import Philox
 from .pcg64 import PCG64
+from .sfc64 import SFC64
 
 from .generator import Generator
 from .mt19937 import MT19937
@@ -8,6 +9,7 @@ from .mt19937 import MT19937
 BitGenerators = {'MT19937': MT19937,
                  'PCG64': PCG64,
                  'Philox': Philox,
+                 'SFC64': SFC64,
                  }
 
 

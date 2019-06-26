@@ -7,7 +7,7 @@ from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
 import pytest
 
 from numpy.random import (
-  Generator, MT19937, PCG64, Philox, RandomState, SeedSequence
+  Generator, MT19937, PCG64, Philox, RandomState, SeedSequence, SFC64
 )
 from numpy.random.common import interface
 
@@ -385,3 +385,18 @@ class TestMT19937(Base):
         bit_generator.state = tup
         actual = rs.integers(2 ** 16)
         assert_equal(actual, desired)
+
+
+class TestSFC64(Base):
+    @classmethod
+    def setup_class(cls):
+        cls.bit_generator = SFC64
+        cls.bits = 64
+        cls.dtype = np.uint64
+        cls.data1 = cls._read_csv(
+            join(pwd, './data/sfc64-testset-1.csv'))
+        cls.data2 = cls._read_csv(
+            join(pwd, './data/sfc64-testset-2.csv'))
+        cls.seed_error_type = (ValueError, TypeError)
+        cls.invalid_init_types = [(3.2,), ([None],), (1, None)]
+        cls.invalid_init_values = [(-1,)]
