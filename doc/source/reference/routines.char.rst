@@ -56,6 +56,7 @@ comparison.
    less_equal
    greater
    less
+   compare_chararrays
 
 String information
 ------------------
