@@ -134,7 +134,7 @@ What's New or Different
 * `~.Generator.random` is now the canonical way to generate floating-point
   random numbers, which replaces `random_sample`, `sample`, and `ranf`. This
   is consistent with Python's `random.random`.
-* All BitGenerators in numpy use `~SeedSequence` to process convert seeds into
+* All BitGenerators in numpy use `~SeedSequence` to convert seeds into
   initialized states.
 
 See :ref:`new-or-different` for a complete list of improvements and
