@@ -706,19 +706,19 @@ cdef class Generator:
                     set_size = <uint64_t>(1.2 * size_i)
                     mask = _gen_mask(set_size)
                     set_size = 1 + mask
-                    hash_set = np.full(set_size, -1, np.uint64)
+                    hash_set = np.full(set_size, <uint64_t>-1, np.uint64)
                     with self.lock, cython.wraparound(False):
                         for j in range(pop_size_i - size_i, pop_size_i):
                             val = random_bounded_uint64(&self._bitgen, 0, j, 0, 0)
                             loc = val & mask
-                            while hash_set[loc] != -1 and hash_set[loc] != val:
+                            while hash_set[loc] != <uint64_t>-1 and hash_set[loc] != <uint64_t>val:
                                 loc = (loc + 1) & mask
-                            if hash_set[loc] == -1: # then val not in hash_set
+                            if hash_set[loc] == <uint64_t>-1: # then val not in hash_set
                                 hash_set[loc] = val
                                 idx_data[j - pop_size_i + size_i] = val
                             else: # we need to insert j instead
                                 loc = j & mask
-                                while hash_set[loc] != -1:
+                                while hash_set[loc] != <uint64_t>-1:
                                     loc = (loc + 1) & mask
                                 hash_set[loc] = j
                                 idx_data[j - pop_size_i + size_i] = j
