@@ -23,7 +23,7 @@ even on 32-bit processes, this is your choice.
 
 :class:`~mt19937.MT19937` `fails some statistical tests`_ and is not especially
 fast compared to modern PRNGs. For these reasons, we mostly do not recommend
-using it on its own, only through the legacy `~mtrand.RandomState` for
+using it on its own, only through the legacy `~.RandomState` for
 reproducing old results. That said, it has a very long history as a default in
 many systems.
 
@@ -40,13 +40,13 @@ faster generators.
 Integer performance has a similar ordering.
 
 The pattern is similar for other, more complex generators. The normal
-performance of the legacy :class:`~mtrand.RandomState` generator is much
+performance of the legacy :class:`~.RandomState` generator is much
 lower than the other since it uses the Box-Muller transformation rather
 than the Ziggurat generator. The performance gap for Exponentials is also
 large due to the cost of computing the log function to invert the CDF.
 The column labeled MT19973 is used the same 32-bit generator as
-:class:`~mtrand.RandomState` but produces random values using
-:class:`~generator.Generator`.
+:class:`~.RandomState` but produces random values using
+:class:`~Generator`.
 
 .. csv-table::
     :header: ,PCG64,MT19937,Philox,RandomState
