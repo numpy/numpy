@@ -34,6 +34,15 @@ __all__ = ['Generator', 'beta', 'binomial', 'bytes', 'chisquare', 'choice',
 np.import_array()
 
 
+cdef bint _check_bit_generator(object bitgen):
+    """Check if an object satisfies the BitGenerator interface.
+    """
+    if not hasattr(bitgen, "capsule"):
+        return False
+    cdef const char *name = "BitGenerator"
+    return PyCapsule_IsValid(bitgen.capsule, name)
+
+
 cdef class Generator:
     """
     Generator(bit_generator)
@@ -3936,17 +3945,28 @@ def default_gen(seed=None):
 
     Parameters
     ----------
-    seed : {None, int, array_like[ints], ISeedSequence}, optional
+    seed : {None, int, array_like[ints], ISeedSequence, BitGenerator, Generator}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
         `SeedSequence` to derive the initial `BitGenerator` state. One may also
         pass in an implementor of the `ISeedSequence` interface like
         `SeedSequence`.
+        Additionally, when passed a `BitGenerator`, it will be wrapped by
+        `Generator`. If passed a `Generator`, it will be returned unaltered.
 
     Notes
     -----
-    A new `BitGenerator` and `Generator` will be instantiated each time. This
-    function does not manage a default global instance.
+    When `seed` is omitted or `None`, a new `BitGenerator` and `Generator` will
+    be instantiated each time. This function does not manage a default global
+    instance.
     """
+    if _check_bit_generator(seed):
+        # We were passed a BitGenerator, so just wrap it up.
+        return Generator(seed)
+    elif isinstance(seed, Generator):
+        # Pass through a Generator.
+        return seed
+    # Otherwise we need to instantiate a new BitGenerator and Generator as
+    # normal.
     return Generator(PCG64(seed))
