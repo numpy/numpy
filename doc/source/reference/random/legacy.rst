@@ -23,27 +23,28 @@ Although we provide the `~mt19937.MT19937` BitGenerator for use independent of
 rather than the legacy seeding algorithm. `~mtrand.RandomState` will use the
 legacy seeding algorithm. The methods to use the legacy seeding algorithm are
 currently private as the main reason to use them is just to implement
-`~mtrand.RandomState`.
+`~mtrand.RandomState`. However, one can reset the state of `~mt19937.MT19937`
+using the state of the `~mtrand.RandomState`:
 
 .. code-block:: python
 
    from numpy.random import MT19937
    from numpy.random import RandomState
 
-   # Use same seed
    rs = RandomState(12345)
-   mt19937 = MT19937(12345)
-   lg = RandomState(mt19937)
+   mt19937 = MT19937()
+   mt19937.state = rs.get_state()
+   rs2 = RandomState(mt19937)
 
-   # Different output, sorry.
+   # Same output
    rs.standard_normal()
-   lg.standard_normal()
+   rs2.standard_normal()
 
    rs.random()
-   lg.random()
+   rs2.random()
 
    rs.standard_exponential()
-   lg.standard_exponential()
+   rs2.standard_exponential()
 
 
 .. currentmodule:: numpy.random.mtrand

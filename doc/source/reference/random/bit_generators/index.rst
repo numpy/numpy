@@ -81,7 +81,7 @@ user, which is up to you.
   # If the user did not provide a seed, it should return `None`.
   seed = get_user_seed()
   ss = SeedSequence(seed)
-  print(f'seed = {ss.entropy}')
+  print('seed = {}'.format(ss.entropy))
   bg = PCG64(ss)
 
 .. end_block
