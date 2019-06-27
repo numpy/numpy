@@ -21,6 +21,7 @@ Memory ranges
 
    shares_memory
    may_share_memory
+   byte_bounds
 
 Array mixins
 ------------
@@ -35,3 +36,20 @@ NumPy version comparison
    :toctree: generated/
 
    lib.NumpyVersion
+
+Utility
+-------
+
+.. autosummary::
+   :toctree: generated/
+
+   get_include
+   deprecate
+   deprecate_with_doc
+
+Matlab-like Functions
+---------------------
+.. autosummary::
+   :toctree: generated/
+
+   who

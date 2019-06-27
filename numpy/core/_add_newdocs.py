@@ -10,8 +10,6 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 from __future__ import division, absolute_import, print_function
 
-import sys
-
 from numpy.core import numerictypes as _numerictypes
 from numpy.core import dtype
 from numpy.core.function_base import add_newdoc
@@ -94,7 +92,7 @@ add_newdoc('numpy.core', 'flatiter', ('coords',
     >>> fl = x.flat
     >>> fl.coords
     (0, 0)
-    >>> next(fl)
+    >>> fl.next()
     0
     >>> fl.coords
     (0, 1)
@@ -113,7 +111,7 @@ add_newdoc('numpy.core', 'flatiter', ('index',
     >>> fl = x.flat
     >>> fl.index
     0
-    >>> next(fl)
+    >>> fl.next()
     0
     >>> fl.index
     1
@@ -666,7 +664,7 @@ add_newdoc('numpy.core', 'broadcast', ('iters',
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
     >>> row, col = b.iters
-    >>> next(row), next(col)
+    >>> row.next(), col.next()
     (1, 4)
 
     """))
@@ -1473,58 +1471,57 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     """)
 
-if sys.version_info.major < 3:
-    add_newdoc('numpy.core.multiarray', 'newbuffer',
-        """
-        newbuffer(size)
+add_newdoc('numpy.core.multiarray', 'newbuffer',
+    """
+    newbuffer(size)
 
-        Return a new uninitialized buffer object.
+    Return a new uninitialized buffer object.
 
-        Parameters
-        ----------
-        size : int
-            Size in bytes of returned buffer object.
+    Parameters
+    ----------
+    size : int
+        Size in bytes of returned buffer object.
 
-        Returns
-        -------
-        newbuffer : buffer object
-            Returned, uninitialized buffer object of `size` bytes.
+    Returns
+    -------
+    newbuffer : buffer object
+        Returned, uninitialized buffer object of `size` bytes.
 
-        """)
+    """)
 
-    add_newdoc('numpy.core.multiarray', 'getbuffer',
-        """
-        getbuffer(obj [,offset[, size]])
+add_newdoc('numpy.core.multiarray', 'getbuffer',
+    """
+    getbuffer(obj [,offset[, size]])
 
-        Create a buffer object from the given object referencing a slice of
-        length size starting at offset.
+    Create a buffer object from the given object referencing a slice of
+    length size starting at offset.
 
-        Default is the entire buffer. A read-write buffer is attempted followed
-        by a read-only buffer.
+    Default is the entire buffer. A read-write buffer is attempted followed
+    by a read-only buffer.
 
-        Parameters
-        ----------
-        obj : object
+    Parameters
+    ----------
+    obj : object
 
-        offset : int, optional
+    offset : int, optional
 
-        size : int, optional
+    size : int, optional
 
-        Returns
-        -------
-        buffer_obj : buffer
+    Returns
+    -------
+    buffer_obj : buffer
 
-        Examples
-        --------
-        >>> buf = np.getbuffer(np.ones(5), 1, 3)
-        >>> len(buf)
-        3
-        >>> buf[0]
-        '\\x00'
-        >>> buf
-        <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
+    Examples
+    --------
+    >>> buf = np.getbuffer(np.ones(5), 1, 3)
+    >>> len(buf)
+    3
+    >>> buf[0]
+    '\\x00'
+    >>> buf
+    <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
 
-        """)
+    """)
 
 add_newdoc('numpy.core.multiarray', 'c_einsum',
     """
@@ -1990,6 +1987,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_struct__',
     """Array protocol: C-struct side."""))
 
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('_as_parameter_',
+    """Allow the array to be interpreted as a ctypes object by returning the
+    data-memory location as an integer
+
+    """))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('base',
     """
     Base object if memory is from some other object.
@@ -2058,14 +2062,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ctypes',
 
     .. automethod:: numpy.core._internal._ctypes.strides_as
         :noindex:
-
-    Be careful using the ctypes attribute - especially on temporary
-    arrays or arrays constructed on the fly. For example, calling
-    ``(a+b).ctypes.data_as(ctypes.c_void_p)`` returns a pointer to memory
-    that is invalid because the array created as (a+b) is deallocated
-    before the next Python statement. You can avoid this problem using
-    either ``c=a+b`` or ``ct=(a+b).ctypes``. In the latter case, ct will
-    hold a reference to the array until ct is deleted or re-assigned.
 
     If the ctypes module is not available, then the ctypes attribute
     of array objects still returns something useful, but ctypes objects
@@ -3259,6 +3255,122 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
     """))
 
 
+add_newdoc('numpy.core.multiarray', 'shares_memory',
+    """
+    shares_memory(a, b, max_work=None)
+
+    Determine if two arrays share memory
+
+    Parameters
+    ----------
+    a, b : ndarray
+        Input arrays
+    max_work : int, optional
+        Effort to spend on solving the overlap problem (maximum number
+        of candidate solutions to consider). The following special
+        values are recognized:
+
+        max_work=MAY_SHARE_EXACT  (default)
+            The problem is solved exactly. In this case, the function returns
+            True only if there is an element shared between the arrays.
+        max_work=MAY_SHARE_BOUNDS
+            Only the memory bounds of a and b are checked.
+
+    Raises
+    ------
+    numpy.TooHardError
+        Exceeded max_work.
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    may_share_memory
+
+    Examples
+    --------
+    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    False
+
+    """)
+
+
+add_newdoc('numpy.core.multiarray', 'may_share_memory',
+    """
+    may_share_memory(a, b, max_work=None)
+
+    Determine if two arrays might share memory
+
+    A return of True does not necessarily mean that the two arrays
+    share any element.  It just means that they *might*.
+
+    Only the memory bounds of a and b are checked by default.
+
+    Parameters
+    ----------
+    a, b : ndarray
+        Input arrays
+    max_work : int, optional
+        Effort to spend on solving the overlap problem.  See
+        `shares_memory` for details.  Default for ``may_share_memory``
+        is to do a bounds check.
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    shares_memory
+
+    Examples
+    --------
+    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    False
+    >>> x = np.zeros([3, 4])
+    >>> np.may_share_memory(x[:,0], x[:,1])
+    True
+
+    """)
+
+
+add_newdoc('numpy.lib.utils', 'byte_bounds',
+    """
+    byte_bounds(a)
+
+    Returns pointers to the end-points of an array in the form of tuple
+    of two integers. The first integer is the first byte of the array,
+    the second integer is just past the last byte of the array.
+
+    If `a` is not contiguous it will not use every byte between the
+    returned integer values.
+
+    Parameters
+    ----------
+    a : ndarray
+        Input array. It must conform to the Python-side of the array
+        interface.
+
+    Returns
+    -------
+    (low, high) : tuple of 2 integers
+
+    Examples
+    --------
+    >>> x = np.array([1,2,4])
+    >>> np.byte_bounds(x)
+    (32030368, 32030392)
+    >>> I = np.eye(2, dtype='f'); I.dtype
+    dtype('float32')
+    >>> low, high = np.byte_bounds(I)
+    >>> high - low == I.size*I.itemsize
+    True
+
+    """)
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
     """
     arr.newbyteorder(new_order='S')
@@ -3359,6 +3471,81 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
     numpy.put : equivalent function
 
     """))
+
+add_newdoc('numpy.core.multiarray', 'copyto',
+    """
+    copyto(dst, src, casting='same_kind', where=True)
+
+    Copies values from one array to another, broadcasting as necessary.
+
+    Raises a TypeError if the `casting` rule is violated, and if
+    `where` is provided, it selects which elements to copy.
+
+    .. versionadded:: 1.7.0
+
+    Parameters
+    ----------
+    dst : ndarray
+        The array into which values are copied.
+    src : array_like
+        The array from which values are copied.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur when copying.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
+    where : array_like of bool, optional
+        A boolean array which is broadcasted to match the dimensions
+        of `dst`, and selects elements to copy from `src` to `dst`
+        wherever it contains the value True.
+
+    """)
+
+add_newdoc('numpy.core.multiarray', 'putmask',
+    """
+    putmask(a, mask, values)
+
+    Changes elements of an array based on conditional and input values.
+
+    Sets ``a.flat[n] = values[n]`` for each n where ``mask.flat[n]==True``.
+
+    If `values` is not the same size as `a` and `mask` then it will repeat.
+    This gives behavior different from ``a[mask] = values``.
+
+    Parameters
+    ----------
+    a : array_like
+        Target array.
+    mask : array_like
+        Boolean mask array. It has to be the same shape as `a`.
+    values : array_like
+        Values to put into `a` where `mask` is True. If `values` is smaller
+        than `a` it will be repeated.
+
+    See Also
+    --------
+    place, put, take, copyto
+
+    Examples
+    --------
+    >>> x = np.arange(6).reshape(2, 3)
+    >>> np.putmask(x, x>2, x**2)
+    >>> x
+    array([[ 0,  1,  2],
+           [ 9, 16, 25]])
+
+    If `values` is smaller than `a` it is repeated:
+
+    >>> x = np.arange(5)
+    >>> np.putmask(x, x>1, [-33, -44])
+    >>> x
+    array([  0,   1, -33, -44, -33])
+
+    """)
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('ravel',
@@ -4195,6 +4382,53 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     array([[(1, 2)],
            [(4, 5)]], dtype=[('width', '<i2'), ('length', '<i2')])
     """))
+
+add_newdoc('numpy.lib.utils', 'who',
+    """
+    who(verdict=None)
+
+    Print the NumPy arrays in the given dictionary.
+
+    If there is no dictionary passed in or `vardict` is None then returns
+    NumPy arrays in the globals() dictionary (all NumPy arrays in the
+    namespace).
+
+    Parameters
+    ----------
+    vardict : dict, optional
+        A dictionary possibly containing ndarrays.  Default is globals().
+
+    Returns
+    -------
+    out : None
+        Returns 'None'.
+
+    Notes
+    -----
+    Prints out the name, shape, bytes and type of all of the ndarrays
+    present in `vardict`.
+
+    Examples
+    --------
+    >>> a = np.arange(10)
+    >>> b = np.ones(20)
+    >>> np.who()
+    Name            Shape            Bytes            Type
+    ===========================================================
+    a               10               80               int64
+    b               20               160              float64
+    Upper bound on total bytes  =       240
+
+    >>> d = {'x': np.arange(2.0), 'y': np.arange(3.0), 'txt': 'Some str',
+    ... 'idx':5}
+    >>> np.who(d)
+    Name            Shape            Bytes            Type
+    ===========================================================
+    x               2                16               float64
+    y               3                24               float64
+    Upper bound on total bytes  =       40
+
+    """)
 
 
 ##############################################################################
@@ -6845,3 +7079,81 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         >>> np.{ftype}(-.25).as_integer_ratio()
         (-1, 4)
         """.format(ftype=float_name)))
+
+##############################################################################
+#
+# Miscellaneous utility routines
+#
+##############################################################################
+
+add_newdoc('numpy.lib.utils', 'get_include',
+    """
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    Directory that contains the NumPy \\*.h header files.
+
+    Extension modules that need to compile against NumPy should use this
+    function to locate the appropriate include directory.
+
+    """)
+
+add_newdoc('numpy.lib.utils', 'deprecate',
+    """
+
+    deprecate(func, old_name, new_name, message)
+
+    Parameters
+    ----------
+    func : function
+        The function to be deprecated.
+    old_name : str, optional
+        The name of the function to be deprecated. Default is None, in
+        which case the name of `func` is used.
+    new_name : str, optional
+        The new name for the function. Default is None, in which case the
+        deprecation message is that `old_name` is deprecated. If given, the
+        deprecation message is that `old_name` is deprecated and `new_name`
+        should be used instead.
+    message : str, optional
+        Additional explanation of the deprecation.  Displayed in the
+        docstring after the warning.
+
+    Returns
+    -------
+    old_func : function
+        The deprecated function.
+
+    Examples
+    --------
+    Note that ``olduint`` returns a value after printing Deprecation
+    Warning:
+
+    >>> olduint = np.deprecate(np.uint)
+    DeprecationWarning: `uint64` is deprecated! # may vary
+    >>> olduint(6)
+    6
+
+    Notes
+    -----
+    Deprecate may be run as a function or as a decorator
+    If run as a function, we initialise the decorator class
+    and execute its __call__ method.
+
+    """)
+
+add_newdoc('numpy.lib.utils', 'deprecate_with_doc',
+    """
+
+    Lambda function which calls the ``_Deprecate`` with a predefined
+    message.
+
+    Parameters
+    ----------
+    message : str
+
+    """)
