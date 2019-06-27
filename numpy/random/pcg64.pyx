@@ -131,17 +131,17 @@ cdef class PCG64(BitGenerator):
 
         Notes
         -----
-        The step size is phi-1 when divided by 2**128 where phi is the
-        golden number.
+        The step size is phi-1 when multiplied by 2**128 where phi is the
+        golden ratio.
         """
-        step = 0x9e3779b97f4a7c15f39cc0605cedc834
+        step = 0x9e3779b97f4a7c15f39cc0605cedc835
         self.advance(step * int(jumps))
 
     def jumped(self, jumps=1):
         """
         jumped(jumps=1)
         Returns a new bit generator with the state jumped
-        Jumps the state as-if jumps * 210306068529402873165736369884012333108
+        Jumps the state as-if jumps * 210306068529402873165736369884012333109
         random numbers have been generated.
 
         Parameters
@@ -156,8 +156,8 @@ cdef class PCG64(BitGenerator):
 
         Notes
         -----
-        The step size is phi-1 when divided by 2**128 where phi is the
-        golden number.
+        The step size is phi-1 when multiplied by 2**128 where phi is the
+        golden ratio.
         """
         cdef PCG64 bit_generator
 
