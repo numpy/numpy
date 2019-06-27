@@ -1440,7 +1440,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
     }
     /* next check for a list of field names */
     else if (PySequence_Check(ind) && !PyTuple_Check(ind)) {
-        int seqlen, i;
+        npy_intp seqlen, i;
         PyObject *name = NULL, *tup;
         PyObject *fields, *names;
         PyArray_Descr *view_dtype;
