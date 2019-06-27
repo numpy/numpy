@@ -1294,6 +1294,12 @@ _convert_from_dict(PyObject *obj, int align)
             goto fail;
         }
     }
+
+    Py_XDECREF(fields);
+    Py_XDECREF(names);
+    Py_XDECREF(descrs);
+    Py_XDECREF(offsets);
+    Py_XDECREF(titles);
     return new;
 
  fail:

@@ -138,6 +138,18 @@ class TestRecord(object):
                       'titles': ['RRed pixel', 'Blue pixel']})
         assert_dtype_not_equal(a, b)
 
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test_refcount_dictionary_setting(self):
+        names = ["name1"]
+        formats = ["f8"]
+        titles = ["t1"]
+        offsets = [0]
+        d = dict(names=names, formats=formats, titles=titles, offsets=offsets)
+        refcounts = {k: sys.getrefcount(i) for k, i in d.items()}
+        np.dtype(d)
+        refcounts_new = {k: sys.getrefcount(i) for k, i in d.items()}
+        assert refcounts == refcounts_new
+
     def test_mutate(self):
         # Mutating a dtype should reset the cached hash value
         a = np.dtype([('yo', int)])
