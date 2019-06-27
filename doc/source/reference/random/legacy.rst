@@ -1,3 +1,5 @@
+.. currentmodule:: numpy.random
+
 .. _legacy:
 
 Legacy Random Generation
@@ -8,7 +10,7 @@ no further improvements.  It is guaranteed to produce the same values
 as the final point release of NumPy v1.16. These all depend on Box-Muller
 normals or inverse CDF exponentials or gammas. This class should only be used
 if it is essential to have randoms that are identical to what
-would have been produced by NumPy.
+would have been produced by previous versions of NumPy.
 
 `~mtrand.RandomState` adds additional information
 to the state which is required when using Box-Muller normals since these
@@ -16,18 +18,12 @@ are produced in pairs. It is important to use
 `~mtrand.RandomState.get_state`, and not the underlying bit generators
 `state`, when accessing the state so that these extra values are saved.
 
-.. warning::
-
-  :class:`~randomgen.legacy.LegacyGenerator` only contains functions
-  that have changed.  Since it does not contain other functions, it
-  is not directly possible to replace :class:`~numpy.random.RandomState`.
-  In order to full replace :class:`~numpy.random.RandomState`, it is
-  necessary to use both :class:`~randomgen.legacy.LegacyGenerator`
-  and :class:`~randomgen.generator.RandomGenerator` both driven
-  by the same basic RNG. Methods present in :class:`~randomgen.legacy.LegacyGenerator`
-  must be called from :class:`~randomgen.legacy.LegacyGenerator`.  Other Methods
-  should be called from :class:`~randomgen.generator.RandomGenerator`.
-
+Although we provide the `~mt19937.MT19937` BitGenerator for use independent of
+`~mtrand.RandomState`, note that its default seeding uses `~SeedSequence`
+rather than the legacy seeding algorithm. `~mtrand.RandomState` will use the
+legacy seeding algorithm. The methods to use the legacy seeding algorithm are
+currently private as the main reason to use them is just to implement
+`~mtrand.RandomState`.
 
 .. code-block:: python
 
@@ -39,7 +35,7 @@ are produced in pairs. It is important to use
    mt19937 = MT19937(12345)
    lg = RandomState(mt19937)
 
-   # Identical output
+   # Different output, sorry.
    rs.standard_normal()
    lg.standard_normal()
 

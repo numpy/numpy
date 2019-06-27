@@ -1,9 +1,11 @@
 Multithreaded Generation
 ========================
 
-The four core distributions all allow existing arrays to be filled using the
-``out`` keyword argument.  Existing arrays need to be contiguous and
-well-behaved (writable and aligned).  Under normal circumstances, arrays
+The four core distributions (:meth:`~.Generator.random`,
+:meth:`~.Generator.standard_normal`, :meth:`~.Generator.standard_exponential`,
+and :meth:`~.Generator.standard_gamma`) all allow existing arrays to be filled
+using the ``out`` keyword argument. Existing arrays need to be contiguous and
+well-behaved (writable and aligned). Under normal circumstances, arrays
 created using the common constructors such as :meth:`numpy.empty` will satisfy
 these requirements.
 

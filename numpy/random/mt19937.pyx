@@ -74,16 +74,12 @@ cdef class MT19937(BitGenerator):
 
     **State and Seeding**
 
-    The ``MT19937`` state vector consists of a 768-element array of
-    32-bit unsigned integers plus a single integer value between 0 and 768
+    The ``MT19937`` state vector consists of a 624-element array of
+    32-bit unsigned integers plus a single integer value between 0 and 624
     that indexes the current position within the main array.
 
-    ``MT19937`` is seeded using either a single 32-bit unsigned integer
-    or a vector of 32-bit unsigned integers.  In either case, the input seed is
-    used as an input (or inputs) for a hashing function, and the output of the
-    hashing function is used as the initial state. Using a single 32-bit value
-    for the seed can only initialize a small range of the possible initial
-    state values.
+    The input seed is processed by `SeedSequence` to fill the whole state. The
+    first element is reset such that only its most significant bit is set.
 
     **Parallel Features**
 
