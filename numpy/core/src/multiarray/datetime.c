@@ -1832,6 +1832,7 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
                 return -1;
             }
             equal_one = PyObject_RichCompareBool(event, one, Py_EQ);
+            Py_DECREF(one);
             if (equal_one == -1) {
                 return -1;
             }

@@ -2264,7 +2264,6 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
             out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
-            Py_INCREF(out_dtypes[2]);
             out_dtypes[3] = out_dtypes[0];
             Py_INCREF(out_dtypes[3]);
         }
