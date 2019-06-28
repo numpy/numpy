@@ -2516,6 +2516,7 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
                 indval = *((npy_intp*)data);
                 if (check_and_adjust_index(&indval,
                                            outer_dim, outer_axis, _save) < 0) {
+                    Py_DECREF(intp_type);
                     return -1;
                 }
                 data += stride;
