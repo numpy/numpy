@@ -99,20 +99,27 @@ cdef class Philox(BitGenerator):
 
     **State and Seeding**
 
-    The ``Philox`` state vector consists of a 2 256-bit values encoded as
-    4-element uint64 arrays. One is a counter which is incremented by 1 for
-    every 4 64-bit randoms produced.  The second is a key which determined
-    the sequence produced.  Using different keys produces independent
-    sequences.
+    The ``Philox`` state vector consists of a 256-bit value encoded as
+    a 4-element uint64 array and a 128-bit value encoded as a 2-element uint64
+    array. The former is a counter which is incremented by 1 for every 4 64-bit
+    randoms produced. The second is a key which determined the sequence
+    produced. Using different keys produces independent sequences.
 
-    ``Philox`` is seeded using either a single 64-bit unsigned integer
-    or a vector of 64-bit unsigned integers.  In either case, the seed is
-    used as an input for a second random number generator,
-    SplitMix64, and the output of this PRNG function is used as the initial state.
-    Using a single 64-bit value for the seed can only initialize a small range of
-    the possible initial state values.
+    The input seed is processed by `SeedSequence` to generate the key. The
+    counter is set to 0.
+
+    Alternately, one can omit the seed parameter and set the ``key`` and
+    ``counter`` directly.
 
     **Parallel Features**
+
+    The preferred way to use a BitGenerator in parallel applications is to use
+    the `SeedSequence.spawn` method to obtain entropy values, and to use these
+    to generate new BitGenerators:
+
+    >>> from numpy.random import Generator, Philox, SeedSequence
+    >>> sg = SeedSequence(1234)
+    >>> rg = [Generator(Philox(s)) for s in sg.spawn(10)]
 
     ``Philox`` can be used in parallel applications by calling the ``jumped``
     method  to advances the state as-if :math:`2^{128}` random numbers have

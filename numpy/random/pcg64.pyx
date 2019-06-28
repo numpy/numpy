@@ -59,18 +59,19 @@ cdef class PCG64(BitGenerator):
     directly consumable in Python and must be consumed by a ``Generator``
     or similar object that supports low-level access.
 
-    Supports the method advance to advance the RNG an arbitrary number of
+    Supports the method :meth:`advance` to advance the RNG an arbitrary number of
     steps. The state of the PCG-64 RNG is represented by 2 128-bit unsigned
     integers.
-
-    See ``PCG32`` for a similar implementation with a smaller period.
 
     **State and Seeding**
 
     The ``PCG64`` state vector consists of 2 unsigned 128-bit values,
-    which are represented externally as Python ints.
-    ``PCG64`` is seeded using a single 128-bit unsigned integer.
-    In addition, a second 128-bit unsigned integer is used to set the stream.
+    which are represented externally as Python ints. One is the state of the
+    PRNG, which is advanced by a linear congruential generator (LCG). The
+    second is a fixed odd increment used in the LCG.
+
+    The input seed is processed by `SeedSequence` to generate both values. The
+    increment is not independently settable.
 
     **Parallel Features**
 
@@ -130,17 +131,17 @@ cdef class PCG64(BitGenerator):
 
         Notes
         -----
-        The step size is phi-1 when divided by 2**128 where phi is the
-        golden number.
+        The step size is phi-1 when multiplied by 2**128 where phi is the
+        golden ratio.
         """
-        step = 0x9e3779b97f4a7c15f39cc0605cedc834
+        step = 0x9e3779b97f4a7c15f39cc0605cedc835
         self.advance(step * int(jumps))
 
     def jumped(self, jumps=1):
         """
         jumped(jumps=1)
         Returns a new bit generator with the state jumped
-        Jumps the state as-if jumps * 210306068529402873165736369884012333108
+        Jumps the state as-if jumps * 210306068529402873165736369884012333109
         random numbers have been generated.
 
         Parameters
@@ -155,8 +156,8 @@ cdef class PCG64(BitGenerator):
 
         Notes
         -----
-        The step size is phi-1 when divided by 2**128 where phi is the
-        golden number.
+        The step size is phi-1 when multiplied by 2**128 where phi is the
+        golden ratio.
         """
         cdef PCG64 bit_generator
 
