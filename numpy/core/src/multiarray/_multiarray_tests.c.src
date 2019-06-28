@@ -1263,7 +1263,9 @@ pylong_from_int128(npy_extint128_t value)
     }
 
     Py_DECREF(val);
+    Py_DECREF(val_64);
     val = tmp;
+    val_64 = NULL;
 
     tmp = PyLong_FromUnsignedLongLong(value.lo);
     if (tmp == NULL) {
