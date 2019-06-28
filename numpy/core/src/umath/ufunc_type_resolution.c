@@ -548,6 +548,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
         }
 
         out_dtypes[0] = ensure_dtype_nbo(dtype);
+        Py_DECREF(dtype);
         if (out_dtypes[0] == NULL) {
             return -1;
         }
