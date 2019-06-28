@@ -12,6 +12,8 @@ random values from useful distributions. The default BitGenerator used by
 can be changed by passing an instantized BitGenerator to ``Generator``.
 
 
+.. autofunction:: default_gen
+
 .. autoclass:: Generator
 	:exclude-members:
 

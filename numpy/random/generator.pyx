@@ -85,6 +85,10 @@ cdef class Generator:
     >>> rg = Generator(PCG64())
     >>> rg.standard_normal()
     -0.203  # random
+
+    See Also
+    --------
+    default_gen : Recommended constructor for `Generator`.
     """
     cdef public object _bit_generator
     cdef bitgen_t _bitgen
@@ -3957,7 +3961,7 @@ def default_gen(seed=None):
 
     Notes
     -----
-    When `seed` is omitted or `None`, a new `BitGenerator` and `Generator` will
+    When `seed` is omitted or ``None``, a new `BitGenerator` and `Generator` will
     be instantiated each time. This function does not manage a default global
     instance.
     """
