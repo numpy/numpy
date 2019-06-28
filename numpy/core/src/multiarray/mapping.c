@@ -2617,7 +2617,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     PyArrayObject *original_extra_op = extra_op;
 
     PyArrayObject *index_arrays[NPY_MAXDIMS];
-    PyArray_Descr *dtypes[NPY_MAXDIMS];
+    PyArray_Descr *intp_descr = PyArray_DescrFromType(NPY_INTP);
+    PyArray_Descr *dtypes[NPY_MAXDIMS];  /* borrowed references */
 
     npy_uint32 op_flags[NPY_MAXDIMS];
     npy_uint32 outer_flags;
@@ -2633,6 +2634,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     /* create new MapIter object */
     mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
     if (mit == NULL) {
+        Py_DECREF(intp_descr);
         return NULL;
     }
     /* set all attributes of mapiter to zero */
@@ -2662,6 +2664,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     mit->nd_fancy = fancy_ndim;
     if (mapiter_fill_info(mit, indices, index_num, arr) < 0) {
         Py_DECREF(mit);
+        Py_DECREF(intp_descr);
         return NULL;
     }
 
@@ -2671,7 +2674,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     for (i=0; i < index_num; i++) {
         if (indices[i].type & HAS_FANCY) {
             index_arrays[mit->numiter] = (PyArrayObject *)indices[i].object;
-            dtypes[mit->numiter] = PyArray_DescrFromType(NPY_INTP);
+            dtypes[mit->numiter] = intp_descr;
 
             op_flags[mit->numiter] = (NPY_ITER_NBO |
                                       NPY_ITER_ALIGNED |
@@ -2694,9 +2697,10 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
                                         PyArray_DescrFromType(NPY_INTP), 0);
         if (index_arrays[0] == NULL) {
             Py_DECREF(mit);
+            Py_DECREF(intp_descr);
             return NULL;
         }
-        dtypes[0] = PyArray_DescrFromType(NPY_INTP);
+        dtypes[0] = intp_descr;
         op_flags[0] = NPY_ITER_NBO | NPY_ITER_ALIGNED | NPY_ITER_READONLY;
 
         mit->fancy_dims[0] = 1;
@@ -2926,7 +2930,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         nops += 1;
         index_arrays[mit->numiter] = extra_op;
 
-        Py_INCREF(extra_op_dtype);
         dtypes[mit->numiter] = extra_op_dtype;
         op_flags[mit->numiter] = (extra_op_flags |
                                   NPY_ITER_ALLOCATE |
@@ -2952,9 +2955,6 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     /* NpyIter cleanup and information: */
-    for (i=0; i < nops; i++) {
-        Py_DECREF(dtypes[i]);
-    }
     if (dummy_array) {
         Py_DECREF(index_arrays[0]);
     }
@@ -3040,6 +3040,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     /* Can now return early if no subspace is being used */
     if (!uses_subspace) {
         Py_XDECREF(extra_op);
+        Py_DECREF(intp_descr);
         return (PyObject *)mit;
     }
 
@@ -3109,6 +3110,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     }
 
     Py_XDECREF(extra_op);
+    Py_DECREF(intp_descr);
     return (PyObject *)mit;
 
   fail:
@@ -3177,6 +3179,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 
   finish:
     Py_XDECREF(extra_op);
+    Py_DECREF(intp_descr);
     Py_DECREF(mit);
     return NULL;
 }
