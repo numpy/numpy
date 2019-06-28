@@ -1,5 +1,7 @@
 .. _numpyrandom:
 
+.. py:module:: numpy.random
+
 .. currentmodule:: numpy.random
 
 Random sampling (:mod:`numpy.random`)
