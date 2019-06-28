@@ -31,13 +31,11 @@ build:
     - tar zxvf openblas-v0.3.5-armv8.tar.gz
     - sudo cp -r ./64/lib/* /usr/lib
     - sudo cp ./64/include/* /usr/include
-    # add pathlib for Python 2, otherwise many tests are skipped
     - pip install --upgrade pip
     # we will pay the ~13 minute cost of compiling Cython only when a new
     # version is scraped in by pip; otherwise, use the cached
     # wheel shippable places on Amazon S3 after we build it once
     - pip install cython --cache-dir=/root/.cache/pip/wheels/$SHIPPABLE_PYTHON_VERSION
-    - pip install pathlib
     # install pytz for datetime testing
     - pip install pytz
     # install pytest-xdist to leverage a second core
@@ -60,7 +58,7 @@ build:
     cache_dir_list:
         # the NumPy project uses a single Amazon S3 cache
         # so upload the parent path of the Python-specific
-        # version paths to avoid i.e., 2.7 overwriting
+        # version paths to avoid i.e., 3.6 overwriting
         # 3.7 pip cache (seems to be an issue)
         - /root/.cache/pip/wheels
 

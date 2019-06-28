@@ -650,14 +650,13 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
 
     if array.dtype.hasobject:
         # We contain Python objects so we cannot write out the data
-        # directly.  Instead, we will pickle it out with version 2 of the
-        # pickle protocol.
+        # directly.  Instead, we will pickle it out
         if not allow_pickle:
             raise ValueError("Object arrays cannot be saved when "
                              "allow_pickle=False")
         if pickle_kwargs is None:
             pickle_kwargs = {}
-        pickle.dump(array, fp, protocol=2, **pickle_kwargs)
+        pickle.dump(array, fp, protocol=3, **pickle_kwargs)
     elif array.flags.f_contiguous and not array.flags.c_contiguous:
         if isfileobj(fp):
             array.T.tofile(fp)

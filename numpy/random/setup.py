@@ -36,7 +36,6 @@ def configuration(parent_package='', top_path=None):
     config.add_data_dir('tests')
     config.add_data_files('common.pxd')
     config.add_data_files('bit_generator.pxd')
-    config.add_data_files('src/bitgen.h')
 
     EXTRA_LINK_ARGS = []
     # Math lib

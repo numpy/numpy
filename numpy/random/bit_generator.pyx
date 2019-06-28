@@ -174,7 +174,10 @@ cdef uint32_t mix(uint32_t x, uint32_t y):
 
 class ISeedSequence(abc.ABC):
     """
-    ISeedSequence() is the abstract base class for SeedSequences.
+    Abstract base class for seed sequences.
+
+    ``BitGenerator`` implementations should treat any object that adheres to
+    this interface as a seed sequence.
 
     See Also
     --------
@@ -208,6 +211,9 @@ class ISeedSequence(abc.ABC):
 
 
 class ISpawnableSeedSequence(ISeedSequence):
+    """
+    Abstract base class for seed sequences that can spawn.
+    """
 
     @abc.abstractmethod
     def spawn(self, n_children):
@@ -229,7 +235,7 @@ class ISpawnableSeedSequence(ISeedSequence):
 
 cdef class SeedlessSeedSequence():
     """
-    SeedlessSeedSequence() is used for BitGenerators with no need for seed state.
+    A seed sequence for BitGenerators with no need for seed state.
 
     See Also
     --------
