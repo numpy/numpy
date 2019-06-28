@@ -32,6 +32,7 @@ npy_ctypes_check(PyTypeObject *obj)
     }
 
     ret = PyObject_IsTrue(ret_obj);
+    Py_DECREF(ret_obj);
     if (ret == -1) {
         goto fail;
     }
