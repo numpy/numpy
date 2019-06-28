@@ -2086,22 +2086,25 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     
     if (offset != 0 && strcmp(sep, "") != 0) {
         PyErr_SetString(PyExc_TypeError, "'offset' argument only permitted for binary files");
+        Py_XDECREF(type);
+        Py_DECREF(file);
         return NULL;
     }
     if (PyString_Check(file) || PyUnicode_Check(file)) {
-        file = npy_PyFile_OpenFile(file, "rb");
+        Py_SETREF(file, npy_PyFile_OpenFile(file, "rb"));
         if (file == NULL) {
+            Py_XDECREF(type);
             return NULL;
         }
         own = 1;
     }
     else {
-        Py_INCREF(file);
         own = 0;
     }
     fp = npy_PyFile_Dup2(file, "rb", &orig_pos);
     if (fp == NULL) {
         Py_DECREF(file);
+        Py_XDECREF(type);
         return NULL;
     }
     if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
