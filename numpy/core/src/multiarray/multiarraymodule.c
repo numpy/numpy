@@ -3825,9 +3825,11 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     else {
         PyErr_SetString(PyExc_TypeError,
                 "string operation on non-string array");
+        Py_DECREF(type);
         goto err;
     }
     if (method == NULL) {
+        Py_DECREF(type);
         goto err;
     }
 
