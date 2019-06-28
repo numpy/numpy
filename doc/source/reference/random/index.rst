@@ -2,8 +2,8 @@
 
 .. currentmodule:: numpy.random
 
-numpy.random
-============
+Random sampling (:mod:`numpy.random`)
+=====================================
 
 Numpy's random number routines produce pseudo random numbers using
 combinations of a `BitGenerator` to create sequences and a `Generator`
