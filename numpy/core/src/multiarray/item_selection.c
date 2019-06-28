@@ -2236,6 +2236,7 @@ PyArray_Nonzero(PyArrayObject *self)
         static npy_intp const zero_dim_shape[1] = {1};
         static npy_intp const zero_dim_strides[1] = {0};
 
+        Py_INCREF(PyArray_DESCR(self));
         PyArrayObject *self_1d = (PyArrayObject *)PyArray_NewFromDescrAndBase(
             Py_TYPE(self), PyArray_DESCR(self),
             1, zero_dim_shape, zero_dim_strides, PyArray_BYTES(self),
@@ -2243,7 +2244,9 @@ PyArray_Nonzero(PyArrayObject *self)
         if (self_1d == NULL) {
             return NULL;
         }
-        return PyArray_Nonzero(self_1d);
+        ret_tuple = PyArray_Nonzero(self_1d);
+        Py_DECREF(self_1d);
+        return ret_tuple;
     }
 
     /*
