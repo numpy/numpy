@@ -7200,6 +7200,13 @@ class TestNewBufferProtocol(object):
             RuntimeError, "ndim",
             np.array, m)
 
+        # The above seems to create some deep cycles, clean them up for
+        # easier reference count debugging:
+        del c_u8_33d, m
+        for i in range(33):
+            if gc.collect() == 0:
+                break
+
     def test_error_pointer_type(self):
         # gh-6741
         m = memoryview(ctypes.pointer(ctypes.c_uint8()))
