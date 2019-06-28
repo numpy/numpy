@@ -440,7 +440,7 @@ cdef class SeedSequence():
         if out_dtype == np.dtype(np.uint64):
             # For consistency across different endiannesses, view first as
             # little-endian then convert the values to the native endianness.
-            state = state.view('<u8').astype(np.uint64)
+            state = state.astype('<u4').view('<u8').astype(np.uint64)
         return state
 
     def spawn(self, n_children):
