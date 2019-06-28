@@ -33,8 +33,22 @@ def test_reference_data():
         [3978441347, 432478529, 3223635119, 138903045],
         [296367413, 4262059219, 13109864, 3283683422],
     ]
-    for seed, expected in zip(inputs, outputs):
+    outputs64 = [
+        [2477551240072187391, 9577394838764454085],
+        [15854241394484835714, 11398914698975566411],
+        [13708282465491374871, 16007308345579681096],
+        [15424829579845884309, 1898028439751125927],
+        [9411697742461147792, 15714068361935982142],
+        [10079222287618677782, 12870437757549876199],
+        [17326737873898640088, 729039288628699544],
+        [16644868984619524261, 1544825456798124994],
+        [1857481142255628931, 596584038813451439],
+        [18305404959516669237, 14103312907920476776],
+    ]
+    for seed, expected, expected64 in zip(inputs, outputs, outputs64):
         expected = np.array(expected, dtype=np.uint32)
         ss = SeedSequence(seed)
         state = ss.generate_state(len(expected))
         assert_array_equal(state, expected)
+        state64 = ss.generate_state(len(expected64), dtype=np.uint64)
+        assert_array_equal(state64, expected64)
