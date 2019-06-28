@@ -3,16 +3,42 @@
 Random Number Generation
 ========================
 
-Instantiate a BitGenerator and wrap it in a Generator
-which will convert the uniform stream to a number of distributions. The "bare"
-functions are kept for legacy code, they should be called with the newer API
-via ``np.random.Generator().function`` instead
+Use ``default_gen()`` to create a `Generator` and call its methods.
+
+=============== =========================================================
+Generator
+--------------- ---------------------------------------------------------
+Generator       Class implementing all of the random number distributions
+default_gen     Default constructor for ``Generator``
+=============== =========================================================
+
+============================================= ===
+BitGenerator Streams that work with Generator
+--------------------------------------------- ---
+MT19937
+PCG64
+Philox
+SFC64
+============================================= ===
+
+============================================= ===
+Getting entropy to initialize a BitGenerator
+--------------------------------------------- ---
+SeedSequence
+============================================= ===
+
+
+Legacy
+------
+
+For backwards compatibility with previous versions of numpy before 1.17, the
+various aliases to the global `RandomState` methods are left alone and do not
+use the new `Generator` API.
 
 ==================== =========================================================
 Utility functions
 -------------------- ---------------------------------------------------------
 random               Uniformly distributed floats over ``[0, 1)``
-integers             Uniformly distributed integers, replaces ``randint``
 bytes                Uniformly distributed random bytes.
 permutation          Randomly permute a sequence / generate a random sequence.
 shuffle              Randomly permute a sequence in place.
@@ -94,20 +120,6 @@ get_state            Get tuple representing internal state of generator.
 set_state            Set state of generator.
 ==================== =========================================================
 
-============================================= ===
-BitGenerator Streams that work with Generator
---------------------------------------------- ---
-MT19937
-PCG64
-Philox
-SFC64
-============================================= ===
-
-============================================= ===
-Getting entropy to initialize a BitGenerator
---------------------------------------------- ---
-SeedSequence
-============================================= ===
 
 """
 from __future__ import division, absolute_import, print_function
@@ -167,7 +179,7 @@ __all__ = [
 
 from . import mtrand
 from .mtrand import *
-from .generator import Generator
+from .generator import Generator, default_gen
 from .bit_generator import SeedSequence
 from .mt19937 import MT19937
 from .pcg64 import PCG64
@@ -176,7 +188,7 @@ from .sfc64 import SFC64
 from .mtrand import RandomState
 
 __all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',
-            'Philox', 'PCG64', 'SFC64']
+            'Philox', 'PCG64', 'SFC64', 'default_gen']
 
 
 def __RandomState_ctor():

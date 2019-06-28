@@ -43,10 +43,13 @@ cdef class PCG64(BitGenerator):
 
     Parameters
     ----------
-    seed_seq : {None, SeedSequence, int, array_like[ints]}, optional
-        A SeedSequence to initialize the BitGenerator. If None, one will be
-        created. If an int or array_like[ints], it will be used as the entropy
-        for creating a SeedSequence.
+    seed : {None, int, array_like[ints], ISeedSequence}, optional
+        A seed to initialize the `BitGenerator`. If None, then fresh,
+        unpredictable entropy will be pulled from the OS. If an ``int`` or
+        ``array_like[ints]`` is passed, then it will be passed to
+        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        pass in an implementor of the `ISeedSequence` interface like
+        `SeedSequence`.
 
     Notes
     -----
@@ -99,8 +102,8 @@ cdef class PCG64(BitGenerator):
     cdef pcg64_state rng_state
     cdef pcg64_random_t pcg64_random_state
 
-    def __init__(self, seed_seq=None):
-        BitGenerator.__init__(self, seed_seq)
+    def __init__(self, seed=None):
+        BitGenerator.__init__(self, seed)
         self.rng_state.pcg_state = &self.pcg64_random_state
 
         self._bitgen.state = <void *>&self.rng_state

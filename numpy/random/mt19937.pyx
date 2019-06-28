@@ -43,16 +43,19 @@ cdef uint64_t mt19937_raw(void *st) nogil:
 
 cdef class MT19937(BitGenerator):
     """
-    MT19937(seed_seq=None)
+    MT19937(seed=None)
 
     Container for the Mersenne Twister pseudo-random number generator.
 
     Parameters
     ----------
-    seed_seq : {None, SeedSequence, int, array_like[ints]}, optional
-        A SeedSequence to initialize the BitGenerator. If None, one will be
-        created. If an int or array_like[ints], it will be used as the entropy
-        for creating a SeedSequence.
+    seed : {None, int, array_like[ints], ISeedSequence}, optional
+        A seed to initialize the `BitGenerator`. If None, then fresh,
+        unpredictable entropy will be pulled from the OS. If an ``int`` or
+        ``array_like[ints]`` is passed, then it will be passed to
+        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        pass in an implementor of the `ISeedSequence` interface like
+        `SeedSequence`.
 
     Attributes
     ----------

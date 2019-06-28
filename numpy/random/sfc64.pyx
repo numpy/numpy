@@ -32,16 +32,19 @@ cdef double sfc64_double(void* st) nogil:
 
 cdef class SFC64(BitGenerator):
     """
-    SFC64(seed_seq=None)
+    SFC64(seed=None)
 
     BitGenerator for Chris Doty-Humphrey's Small Fast Chaotic PRNG.
 
     Parameters
     ----------
-    seed_seq : {None, ISeedSequence, int, array_like[ints]}, optional
-        A SeedSequence to initialize the BitGenerator. If None, one will be
-        created. If an int or array_like[ints], it will be used as the entropy
-        for creating a SeedSequence.
+    seed : {None, int, array_like[ints], ISeedSequence}, optional
+        A seed to initialize the `BitGenerator`. If None, then fresh,
+        unpredictable entropy will be pulled from the OS. If an ``int`` or
+        ``array_like[ints]`` is passed, then it will be passed to
+        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        pass in an implementor of the `ISeedSequence` interface like
+        `SeedSequence`.
 
     Notes
     -----
@@ -81,8 +84,8 @@ cdef class SFC64(BitGenerator):
 
     cdef sfc64_state rng_state
 
-    def __init__(self, seed_seq=None):
-        BitGenerator.__init__(self, seed_seq)
+    def __init__(self, seed=None):
+        BitGenerator.__init__(self, seed)
         self._bitgen.state = <void *>&self.rng_state
         self._bitgen.next_uint64 = &sfc64_uint64
         self._bitgen.next_uint32 = &sfc64_uint32

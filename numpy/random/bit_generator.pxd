@@ -13,7 +13,6 @@ cdef class BitGenerator():
 
 cdef class SeedSequence():
     cdef readonly object entropy
-    cdef readonly object program_entropy
     cdef readonly tuple spawn_key
     cdef readonly int pool_size
     cdef readonly object pool
