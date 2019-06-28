@@ -2384,7 +2384,6 @@ array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_conjugate(PyArrayObject *self, PyObject *args)
 {
-
     PyArrayObject *out = NULL;
     if (!PyArg_ParseTuple(args, "|O&:conjugate",
                           PyArray_OutputConverter,
