@@ -147,7 +147,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (dtype == NULL) {
             goto fail;
         }
-        Py_INCREF(dtype);
         goto promote_types;
     }
     /* Check if it's a NumPy scalar */
