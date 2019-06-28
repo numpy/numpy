@@ -764,6 +764,50 @@ class TestSFC64(RNG):
         cls._extra_setup()
 
 
+class TestPCG64(RNG):
+    @classmethod
+    def setup_class(cls):
+        cls.bit_generator = PCG64
+        cls.advance = 2**63 + 2**31 + 2**15 + 1
+        cls.seed = [12345]
+        cls.rg = Generator(cls.bit_generator(*cls.seed))
+        cls.initial_state = cls.rg.bit_generator.state
+        cls.seed_vector_bits = 64
+        cls._extra_setup()
+
+
+class TestDefaultGen(RNG):
+    @classmethod
+    def setup_class(cls):
+        # This will duplicate some tests that directly instantiate a fresh
+        # Generator(), but that's okay.
+        cls.bit_generator = PCG64
+        cls.advance = 2**63 + 2**31 + 2**15 + 1
+        cls.seed = [12345]
+        cls.rg = np.random.default_gen(*cls.seed)
+        cls.initial_state = cls.rg.bit_generator.state
+        cls.seed_vector_bits = 64
+        cls._extra_setup()
+
+    def test_default_is_pcg64(self):
+        # In order to change the default BitGenerator, we'll go through
+        # a deprecation cycle to move to a different function.
+        assert_(isinstance(self.rg.bit_generator, PCG64))
+
+    def test_seed(self):
+        np.random.default_gen()
+        np.random.default_gen(None)
+        np.random.default_gen(12345)
+        np.random.default_gen(0)
+        np.random.default_gen(43660444402423911716352051725018508569)
+        np.random.default_gen([43660444402423911716352051725018508569,
+                               279705150948142787361475340226491943209])
+        with pytest.raises(ValueError):
+            np.random.default_gen(-1)
+        with pytest.raises(ValueError):
+            np.random.default_gen([12345, -1])
+
+
 class TestEntropy(object):
     def test_entropy(self):
         e1 = entropy.random_entropy()
