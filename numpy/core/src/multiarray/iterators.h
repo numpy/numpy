@@ -7,4 +7,7 @@ NPY_NO_EXPORT PyObject
 NPY_NO_EXPORT int
 iter_ass_subscript(PyArrayIterObject *, PyObject *, PyObject *);
 
+NPY_NO_EXPORT void
+PyArray_RawIterBaseInit(PyArrayIterObject *it, PyArrayObject *ao);
+
 #endif
