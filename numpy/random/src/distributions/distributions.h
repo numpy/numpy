@@ -9,7 +9,7 @@
 #include "Python.h"
 #include "numpy/npy_common.h"
 #include "numpy/npy_math.h"
-#include "src/bitgen.h"
+#include "numpy/random/bitgen.h"
 
 /*
  * RAND_INT_TYPE is used to share integer generators with RandomState which

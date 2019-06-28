@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/* Must match the declaration in numpy/random/common.pxd */
+
 typedef struct bitgen {
   void *state;
   uint64_t (*next_uint64)(void *st);
