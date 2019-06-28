@@ -1,8 +1,6 @@
 Performance
 -----------
 
-.. py:module:: numpy.random
-
 .. currentmodule:: numpy.random
 
 Recommendation
