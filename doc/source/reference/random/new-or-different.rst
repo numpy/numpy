@@ -19,14 +19,14 @@ Quick comparison of legacy `mtrand <legacy>`_ to the new `Generator`
 ================== ==================== =============
 Feature            Older Equivalent     Notes
 ------------------ -------------------- -------------
-`Generator`        `RandomState`        ``Generator`` requires a stream
+`~.Generator`      `~.RandomState`      ``Generator`` requires a stream
                                         source, called a `BitGenerator
                                         <bit_generators>` A number of these
                                         are provided.  ``RandomState`` uses
                                         only the Mersenne Twister.
 ------------------ -------------------- -------------
-``Generator.``     ``RandomState.``     Access the values in a BitGenerator,
-``random()``       ``random_sample()``  convert them to ``float64`` in the
+``random``         ``random_sample``    Access the values in a BitGenerator,
+                                        convert them to ``float64`` in the
                                         interval ``[0.0.,`` `` 1.0)``.
                                         In addition to the ``size`` kwarg, now
                                         supports ``dtype='d'`` or ``dtype='f'``,
@@ -36,8 +36,8 @@ Feature            Older Equivalent     Notes
                                         Many other distributions are also
                                         supported.
 ------------------ -------------------- -------------
-``Generator.``     ``randint``,         Use the ``endpoint`` kwarg to adjust
-``integers()``     ``random_integers``  the inclusion or exclution of the
+``integers``       ``randint``,         Use the ``endpoint`` kwarg to adjust
+                   ``random_integers``  the inclusion or exclution of the
                                         ``high`` interval endpoint
 ================== ==================== =============
 
