@@ -213,6 +213,13 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             int itemsize;
             PyObject *temp;
 
+            /*
+             * For this branch, _array_find_python_scalar is only good for
+             * finding that it is a scalar.
+             */
+            Py_DECREF(dtype);
+            dtype = NULL;
+
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
                     goto fail;
