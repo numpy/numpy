@@ -58,9 +58,8 @@ def configuration(parent_package='', top_path=None):
     # Use legacy integer variable sizes
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
     PCG64_DEFS = []
-    if 1 or sys.maxsize < 2 ** 32 or os.name == 'nt':
-        # Force emulated mode here
-        PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
+    # One can force emulated 128-bit arithmetic if one wants.
+    #PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
 
     config.add_extension('entropy',
                          sources=['entropy.c', 'src/entropy/entropy.c'] +

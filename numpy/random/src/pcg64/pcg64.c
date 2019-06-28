@@ -32,7 +32,9 @@
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -117,7 +119,7 @@ extern inline uint32_t pcg64_next32(pcg64_state *state);
 
 extern void pcg64_advance(pcg64_state *state, uint64_t *step) {
   pcg128_t delta;
-#if __SIZEOF_INT128__ && !defined(PCG_FORCE_EMULATED_128BIT_MATH)
+#ifndef PCG_EMULATED_128BIT_MATH
   delta = (((pcg128_t)step[0]) << 64) | step[1];
 #else
   delta.high = step[0];
@@ -128,7 +130,7 @@ extern void pcg64_advance(pcg64_state *state, uint64_t *step) {
 
 extern void pcg64_set_seed(pcg64_state *state, uint64_t *seed, uint64_t *inc) {
   pcg128_t s, i;
-#if __SIZEOF_INT128__ && !defined(PCG_FORCE_EMULATED_128BIT_MATH)
+#ifndef PCG_EMULATED_128BIT_MATH
   s = (((pcg128_t)seed[0]) << 64) | seed[1];
   i = (((pcg128_t)inc[0]) << 64) | inc[1];
 #else
@@ -148,7 +150,7 @@ extern void pcg64_get_state(pcg64_state *state, uint64_t *state_arr,
    *    64 bits of a uint128_t variable
    *
    */
-#if __SIZEOF_INT128__ && !defined(PCG_FORCE_EMULATED_128BIT_MATH)
+#ifndef PCG_EMULATED_128BIT_MATH
   state_arr[0] = (uint64_t)(state->pcg_state->state >> 64);
   state_arr[1] = (uint64_t)(state->pcg_state->state & 0xFFFFFFFFFFFFFFFFULL);
   state_arr[2] = (uint64_t)(state->pcg_state->inc >> 64);
@@ -171,7 +173,7 @@ extern void pcg64_set_state(pcg64_state *state, uint64_t *state_arr,
    *    64 bits of a uint128_t variable
    *
    */
-#if __SIZEOF_INT128__ && !defined(PCG_FORCE_EMULATED_128BIT_MATH)
+#ifndef PCG_EMULATED_128BIT_MATH
   state->pcg_state->state = (((pcg128_t)state_arr[0]) << 64) | state_arr[1];
   state->pcg_state->inc = (((pcg128_t)state_arr[2]) << 64) | state_arr[3];
 #else
