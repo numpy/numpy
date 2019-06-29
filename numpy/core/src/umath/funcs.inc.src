@@ -228,7 +228,8 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
             return NULL;
         }
         /* _gcd has some unusual behaviour regarding sign */
-        return PyNumber_Absolute(gcd);
+        Py_SETREF(gcd, PyNumber_Absolute(gcd));
+        return gcd;
     }
 }
 
@@ -246,17 +247,19 @@ npy_ObjectLCM(PyObject *i1, PyObject *i2)
      * no remainder
      */
     tmp = PyNumber_FloorDivide(i1, gcd);
+    Py_DECREF(gcd);
     if(tmp == NULL) {
         return NULL;
     }
 
-    tmp = PyNumber_Multiply(tmp, i2);
+    Py_SETREF(tmp, PyNumber_Multiply(tmp, i2));
     if(tmp == NULL) {
         return NULL;
     }
 
     /* even though we fix gcd to be positive, we need to do it again here */
-    return PyNumber_Absolute(tmp);
+    Py_SETREF(tmp,  PyNumber_Absolute(tmp));
+    return tmp;
 }
 
 
