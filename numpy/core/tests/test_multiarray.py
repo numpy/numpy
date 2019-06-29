@@ -110,6 +110,39 @@ class TestFlags(object):
         self.a[0] = 5
         self.a[0] = 0
 
+    def test_writeable_any_base(self):
+        # Ensure that any base being writeable is sufficient to change flag;
+        # this is especially interesting for arrays from an array interface.
+        arr = np.arange(10)
+        
+        class subclass(np.ndarray):
+            pass
+
+        # Create subclass so base will not be collapsed, this is OK to change
+        view1 = arr.view(subclass)
+        view2 = view1[...]
+        arr.flags.writeable = False
+        view2.flags.writeable = False
+        view2.flags.writeable = True  # Can be set to True again.
+
+        arr = np.arange(10)
+
+        class frominterface:
+            def __init__(self, arr):
+                self.arr = arr
+                self.__array_interface__ = arr.__array_interface__
+
+        view1 = np.asarray(frominterface)
+        view2 = view1[...]
+        view2.flags.writeable = False
+        view2.flags.writeable = True
+
+        view1.flags.writeable = False
+        view2.flags.writeable = False
+        with assert_raises(ValueError):
+            # Must assume not writeable, since only base is not:
+            view2.flags.writeable = True
+
     def test_writeable_from_readonly(self):
         # gh-9440 - make sure fromstring, from buffer on readonly buffers
         # set writeable False
@@ -191,6 +224,15 @@ class TestFlags(object):
             with assert_warns(DeprecationWarning):
                 arr.flags.writeable = True
 
+    def test_warnonwrite(self):
+        a = np.arange(10)
+        a.flags._warn_on_write = True
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always')
+            a[1] = 10
+            a[2] = 10
+            # only warn once
+            assert_(len(w) == 1)
 
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
@@ -2961,8 +3003,6 @@ class TestMethods(object):
         assert_equal(b.diagonal(0, 2, 1), [[0, 3], [4, 7]])
 
     def test_diagonal_view_notwriteable(self):
-        # this test is only for 1.9, the diagonal view will be
-        # writeable in 1.10.
         a = np.eye(3).diagonal()
         assert_(not a.flags.writeable)
         assert_(not a.flags.owndata)

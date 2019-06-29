@@ -6,6 +6,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
+#include "arrayobject.h"
 #include "numpy/arrayscalars.h"
 
 #include "arrayfunction_override.h"
@@ -2527,6 +2528,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
                     }
                 }
                 PyArray_ENABLEFLAGS(self, NPY_ARRAY_WRITEABLE);
+                PyArray_CLEARFLAGS(self, NPY_ARRAY_WARN_ON_WRITE);
             }
             else {
                 fa->flags = flagback;
@@ -2539,9 +2541,9 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
         else {
             PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_WARN_ON_WRITE);
         }
     }
-
     Py_RETURN_NONE;
 }
 

@@ -564,6 +564,18 @@ class TestUfunc(object):
         b = np.arange(3).reshape((3, 1, 1))
         assert_raises(ValueError, umt.inner1d, a, b)
 
+        # Writing to a broadcasted array with overlap should warn, gh-2705
+        a = np.arange(2)
+        b = np.arange(4).reshape((2, 2))
+        u, v = np.broadcast_arrays(a, b)
+        assert_equal(u.strides[0], 0)
+        x = u + v
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            u += v
+            assert_equal(len(w), 1)
+            assert_(x[0,0]  != u[0, 0])
+
     def test_type_cast(self):
         msg = "type cast"
         a = np.arange(6, dtype='short').reshape((2, 3))
