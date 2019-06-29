@@ -1859,7 +1859,7 @@ class TestUfunc(object):
         # gh-7961
         exc = pytest.raises(TypeError, np.sqrt, None)
         # minimally check the exception text
-        assert 'loop of ufunc does not support' in str(exc)
+        assert exc.match('loop of ufunc does not support')
 
     @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
     def test_nat_is_not_finite(self, nat):
