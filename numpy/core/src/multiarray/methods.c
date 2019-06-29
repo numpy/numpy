@@ -365,6 +365,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         npy_cache_import("numpy.core._internal", "_getfield_is_safe",
                          &checkfunc);
         if (checkfunc == NULL) {
+            Py_DECREF(typed);
             return NULL;
         }
 
@@ -372,6 +373,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         safe = PyObject_CallFunction(checkfunc, "OOi", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
+            Py_DECREF(typed);
             return NULL;
         }
         Py_DECREF(safe);
@@ -382,14 +384,17 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     /* check that values are valid */
     if (typed_elsize > self_elsize) {
         PyErr_SetString(PyExc_ValueError, "new type is larger than original type");
+        Py_DECREF(typed);
         return NULL;
     }
     if (offset < 0) {
         PyErr_SetString(PyExc_ValueError, "offset is negative");
+        Py_DECREF(typed);
         return NULL;
     }
     if (offset > self_elsize - typed_elsize) {
         PyErr_SetString(PyExc_ValueError, "new type plus offset is larger than original type");
+        Py_DECREF(typed);
         return NULL;
     }
 
@@ -434,6 +439,7 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
     int retval = 0;
 
     if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
+        Py_DECREF(dtype);
         return -1;
     }
 

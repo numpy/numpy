@@ -17,7 +17,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers",
         "valgrind_error: Tests that are known to error under valgrind.")
     config.addinivalue_line("markers",
-        "valgrind_error: Tests that are known to leak references.")
+        "leaks_references: Tests that are known to leak references.")
     config.addinivalue_line("markers",
         "slow: Tests that are very slow.")
 
