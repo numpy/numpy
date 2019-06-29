@@ -498,8 +498,10 @@ cdef class Generator:
 
         """
         cdef Py_ssize_t n_uint32 = ((length - 1) // 4 + 1)
+        # Interpret the uint32s as little-endian to convert them to bytes
+        # consistently.
         return self.integers(0, 4294967296, size=n_uint32,
-                             dtype=np.uint32).tobytes()[:length]
+                             dtype=np.uint32).astype('<u4').tobytes()[:length]
 
     def randint(self, low, high=None, size=None, dtype=np.int64, endpoint=False):
         """

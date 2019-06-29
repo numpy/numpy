@@ -671,7 +671,10 @@ cdef class RandomState:
 
         """
         cdef Py_ssize_t n_uint32 = ((length - 1) // 4 + 1)
-        return self.randint(0, 4294967296, size=n_uint32, dtype=np.uint32).tobytes()[:length]
+        # Interpret the uint32s as little-endian to convert them to bytes
+        # consistently.
+        return self.randint(0, 4294967296, size=n_uint32,
+                            dtype=np.uint32).astype('<u4').tobytes()[:length]
 
     @cython.wraparound(True)
     def choice(self, a, size=None, replace=True, p=None):

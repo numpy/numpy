@@ -438,7 +438,9 @@ cdef class SeedSequence():
             data_val ^= data_val >> XSHIFT
             state[i_dst] = data_val
         if out_dtype == np.dtype(np.uint64):
-            state = state.view(np.uint64)
+            # For consistency across different endiannesses, view first as
+            # little-endian then convert the values to the native endianness.
+            state = state.astype('<u4').view('<u8').astype(np.uint64)
         return state
 
     def spawn(self, n_children):
