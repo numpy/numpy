@@ -50,6 +50,21 @@ always incorrect. If the old behavior was intended, it can be preserved without
 a warning by using ``nonzero(atleast_1d(arr))`` instead of ``nonzero(arr)``.
 In a future release, it is most likely this will raise a `ValueError`.
 
+Writing to the result of `numpy.broadcast_arrays` will warn
+-----------------------------------------------------------
+
+Commonly `numpy.broadcast_arrays` returns a writeable array with internal
+overlap, making it unsafe to write to. A future version will set the
+``writeable`` flag to ``False``, and require users to manually set it to
+``True`` if they are sure that is what they want to do. Now writing to it will
+emit a deprecation warning with instructions to set the ``writeable`` flag
+``True``.  Note that if one were to inspect the flag before setting it, one
+would find it would already be ``True``.  Explicitly setting it, though, as one
+will need to do in future versions, clears an internal flag that is used to
+produce the deprecation warning. To help alleviate confusion, an additional
+`FutureWarning` will be emitted when accessing the ``writeable`` flag state to
+clarify the contradiction.
+
 
 Future Changes
 ==============
@@ -147,6 +162,17 @@ Previously, ``can_cast`` returned `True` for almost all inputs for
 ``casting='unsafe'``, even for cases where casting was not possible, such as
 from a structured dtype to a regular one.  This has been fixed, making it
 more consistent with actual casting using, e.g., the ``.astype`` method.
+
+``arr.writeable`` can be switched to true slightly more often
+-------------------------------------------------------------
+
+In rare cases, it was not possible to switch an array from not writeable
+to writeable, although a base array is writeable. This can happen if an
+intermediate ``arr.base`` object is writeable. Previously, only the deepest
+base object was considered for this decision. However, in rare cases this
+object does not have the necessary information. In that case switching to
+writeable was never allowed. This has now been fixed.
+
 
 C API changes
 =============

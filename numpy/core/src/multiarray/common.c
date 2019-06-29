@@ -632,8 +632,18 @@ _IsWriteable(PyArrayObject *ap)
         ap = (PyArrayObject *)base;
         base = PyArray_BASE(ap);
 
+        if (PyArray_ISWRITEABLE(ap)) {
+            /*
+             * If any base is writeable, it must be OK to switch, note that
+             * bases are typically collapsed to always point to the most
+             * general one.
+             */
+            return NPY_TRUE;
+        }
+
         if (base == NULL || PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA)) {
-            return (npy_bool) PyArray_ISWRITEABLE(ap);
+            /* there is no further base to test the writeable flag for */
+            return NPY_FALSE;
         }
         assert(!PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA));
     }

@@ -4,7 +4,7 @@ import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_raises, assert_,
-    assert_raises_regex
+    assert_raises_regex, assert_warns,
     )
 from numpy.lib.stride_tricks import (
     as_strided, broadcast_arrays, _broadcast_shape, broadcast_to
@@ -415,12 +415,28 @@ def test_writeable():
     assert_equal(result.flags.writeable, False)
     assert_raises(ValueError, result.__setitem__, slice(None), 0)
 
-    # but the result of broadcast_arrays needs to be writeable (for now), to
+    # but the result of broadcast_arrays needs to be writeable, to
     # preserve backwards compatibility
     for results in [broadcast_arrays(original),
                     broadcast_arrays(0, original)]:
         for result in results:
+            # This will change to False in a future version
+            if any([s == 0 for s in result.strides]):
+                with assert_warns(FutureWarning):
+                    assert_equal(result.flags.writeable, True)
+                with assert_warns(DeprecationWarning):
+                    result[:] = 0
+                # Warning not emitted, writing to the array resets it
+                assert_equal(result.flags.writeable, True)
+    for results in [broadcast_arrays(original),
+                    broadcast_arrays(0, original)]:
+        for result in results:
+            # resets the warn_on_write DeprecationWarning
+            result.flags.writeable = True
+            # check: no warning emitted
             assert_equal(result.flags.writeable, True)
+            result[:] = 0
+            
     # keep readonly input readonly
     original.flags.writeable = False
     _, result = broadcast_arrays(0, original)
