@@ -4183,6 +4183,7 @@ class TestArgmax(object):
         assert_equal(a.argmax(out=out1, axis=0), np.argmax(a, out=out2, axis=0))
         assert_equal(out1, out2)
 
+    @pytest.mark.leaks_references(reason="replaces None with NULL.")
     def test_object_argmax_with_NULLs(self):
         # See gh-6032
         a = np.empty(4, dtype='O')
@@ -4331,6 +4332,7 @@ class TestArgmin(object):
         assert_equal(a.argmin(out=out1, axis=0), np.argmin(a, out=out2, axis=0))
         assert_equal(out1, out2)
 
+    @pytest.mark.leaks_references(reason="replaces None with NULL.")
     def test_object_argmin_with_NULLs(self):
         # See gh-6032
         a = np.empty(4, dtype='O')
