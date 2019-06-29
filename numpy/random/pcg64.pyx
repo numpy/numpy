@@ -56,6 +56,8 @@ cdef class PCG64(BitGenerator):
     PCG-64 is a 128-bit implementation of O'Neill's permutation congruential
     generator ([1]_, [2]_). PCG-64 has a period of :math:`2^{128}` and supports
     advancing an arbitrary number of steps as well as :math:`2^{127}` streams.
+    The specific member of the PCG family that we use is PCG XSL RR 128/64
+    as described in the paper ([2]_).
 
     ``PCG64`` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers. These are not
@@ -93,10 +95,11 @@ cdef class PCG64(BitGenerator):
 
     References
     ----------
-    .. [1] "PCG, A Family of Better Random Number Generators",
-           http://www.pcg-random.org/
-    .. [2] O'Neill, Melissa E. "PCG: A Family of Simple Fast Space-Efficient
+    .. [1] `"PCG, A Family of Better Random Number Generators"
+           <http://www.pcg-random.org/>`_
+    .. [2] O'Neill, Melissa E. `"PCG: A Family of Simple Fast Space-Efficient
            Statistically Good Algorithms for Random Number Generation"
+           <https://www.cs.hmc.edu/tr/hmc-cs-2014-0905.pdf>`_
     """
 
     cdef pcg64_state rng_state
@@ -143,7 +146,9 @@ cdef class PCG64(BitGenerator):
     def jumped(self, jumps=1):
         """
         jumped(jumps=1)
-        Returns a new bit generator with the state jumped
+
+        Returns a new bit generator with the state jumped.
+
         Jumps the state as-if jumps * 210306068529402873165736369884012333109
         random numbers have been generated.
 
