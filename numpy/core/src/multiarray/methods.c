@@ -2034,6 +2034,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
 #endif
             npy_intp num = PyArray_NBYTES(self);
             if (num == 0) {
+                Py_DECREF(rawdata);
                 Py_RETURN_NONE;
             }
             fa->data = PyDataMem_NEW(num);
