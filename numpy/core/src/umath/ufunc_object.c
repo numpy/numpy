@@ -4766,6 +4766,9 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         wrapped = _apply_array_wrap(wraparr[i], mps[j], &context);
         mps[j] = NULL;  /* Prevent fail double-freeing this */
         if (wrapped == NULL) {
+            for (j = 0; j < i; j++) {
+                Py_DECREF(retobj[j]);
+            }
             goto fail;
         }
 
