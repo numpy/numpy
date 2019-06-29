@@ -76,10 +76,10 @@ cdef class SFC64(BitGenerator):
 
     References
     ----------
-    .. [1] "PractRand"
-            http://pracrand.sourceforge.net/RNG_engines.txt
-    .. [2] "Random Invertible Mapping Statistics",
-            http://www.pcg-random.org/posts/random-invertible-mapping-statistics.html
+    .. [1] `"PractRand"
+            <http://pracrand.sourceforge.net/RNG_engines.txt>`_
+    .. [2] `"Random Invertible Mapping Statistics"
+            <http://www.pcg-random.org/posts/random-invertible-mapping-statistics.html>`_
     """
 
     cdef sfc64_state rng_state
