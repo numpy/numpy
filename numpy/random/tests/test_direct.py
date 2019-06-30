@@ -403,7 +403,7 @@ class TestSFC64(Base):
         cls.invalid_init_values = [(-1,)]
 
 
-class TestDefaultGen(object):
+class TestDefaultRNG(object):
     def test_seed(self):
         for args in [(), (None,), (1234,), ([1234, 5678],)]:
             rg = default_rng(*args)
