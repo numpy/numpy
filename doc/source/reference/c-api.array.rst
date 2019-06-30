@@ -20,10 +20,11 @@ Array API
 Array structure and data access
 -------------------------------
 
-These macros all access the :c:type:`PyArrayObject` structure members. The input
-argument, arr, can be any :c:type:`PyObject *<PyObject>` that is directly interpretable
-as a :c:type:`PyArrayObject *` (any instance of the :c:data:`PyArray_Type` and its
-sub-types).
+These macros access the :c:type:`PyArrayObject` structure members and are
+defined in ``ndarraytypes.h``. The input argument, *arr*, can be any
+:c:type:`PyObject *<PyObject>` that is directly interpretable as a
+:c:type:`PyArrayObject *` (any instance of the :c:data:`PyArray_Type`
+and itssub-types).
 
 .. c:function:: int PyArray_NDIM(PyArrayObject *arr)
 
