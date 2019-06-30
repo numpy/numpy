@@ -57,7 +57,7 @@ cdef class Generator:
     array filled with generated values is returned. If `size` is a tuple,
     then an array with that shape is filled and returned.
 
-    The function :func:`numpy.random.default_gen` will instantiate
+    The function :func:`numpy.random.default_rng` will instantiate
     a `Generator` with numpy's default `BitGenerator`.
 
     **No Compatibility Guarantee**
@@ -88,7 +88,7 @@ cdef class Generator:
 
     See Also
     --------
-    default_gen : Recommended constructor for `Generator`.
+    default_rng : Recommended constructor for `Generator`.
     """
     cdef public object _bit_generator
     cdef bitgen_t _bitgen
@@ -173,7 +173,7 @@ cdef class Generator:
 
         Examples
         --------
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> rng.random()
         0.47108547995356098 # random
         >>> type(rng.random())
@@ -329,7 +329,7 @@ cdef class Generator:
         --------
         Output a 3x8000 array:
 
-        >>> n = np.random.default_gen().standard_exponential((3, 8000))
+        >>> n = np.random.default_rng().standard_exponential((3, 8000))
 
         """
         key = np.dtype(dtype).name
@@ -397,7 +397,7 @@ cdef class Generator:
 
         Examples
         --------
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> rng.integers(2, size=10)
         array([1, 0, 0, 0, 1, 1, 0, 0, 1, 0])  # random
         >>> rng.integers(1, size=10)
@@ -493,7 +493,7 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.default_gen().bytes(10)
+        >>> np.random.default_rng().bytes(10)
         ' eh\\x85\\x022SZ\\xbf\\xa4' #random
 
         """
@@ -561,7 +561,7 @@ cdef class Generator:
         --------
         Generate a uniform random sample from np.arange(5) of size 3:
 
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> rng.choice(5, 3)
         array([0, 3, 4]) # random
         >>> #This is equivalent to rng.integers(0,5,3)
@@ -796,7 +796,7 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> s = np.random.default_gen().uniform(-1,0,1000)
+        >>> s = np.random.default_rng().uniform(-1,0,1000)
 
         All values are within the given interval:
 
@@ -892,7 +892,7 @@ cdef class Generator:
 
         Examples
         --------
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> rng.standard_normal()
         2.1923875335537315 #random
 
@@ -991,7 +991,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> mu, sigma = 0, 0.1 # mean and standard deviation
-        >>> s = np.random.default_gen().normal(mu, sigma, 1000)
+        >>> s = np.random.default_rng().normal(mu, sigma, 1000)
 
         Verify the mean and the variance:
 
@@ -1013,7 +1013,7 @@ cdef class Generator:
 
         Two-by-four array of samples from N(3, 6.25):
 
-        >>> np.random.default_gen().normal(3, 2.5, size=(2, 4))
+        >>> np.random.default_rng().normal(3, 2.5, size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
@@ -1087,7 +1087,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> shape, scale = 2., 1. # mean and width
-        >>> s = np.random.default_gen().standard_gamma(shape, 1000000)
+        >>> s = np.random.default_rng().standard_gamma(shape, 1000000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1175,7 +1175,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> shape, scale = 2., 2.  # mean=4, std=2*sqrt(2)
-        >>> s = np.random.default_gen().gamma(shape, scale, 1000)
+        >>> s = np.random.default_rng().gamma(shape, scale, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1265,7 +1265,7 @@ cdef class Generator:
 
         >>> dfnum = 1. # between group degrees of freedom
         >>> dfden = 48. # within groups degrees of freedom
-        >>> s = np.random.default_gen().f(dfnum, dfden, 1000)
+        >>> s = np.random.default_rng().f(dfnum, dfden, 1000)
 
         The lower bound for the top 1% of the samples is :
 
@@ -1341,7 +1341,7 @@ cdef class Generator:
         distribution for the null hypothesis.  We'll plot the two probability
         distributions for comparison.
 
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> dfnum = 3 # between group deg of freedom
         >>> dfden = 20 # within groups degrees of freedom
         >>> nonc = 3.0
@@ -1419,7 +1419,7 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.default_gen().chisquare(2,4)
+        >>> np.random.default_rng().chisquare(2,4)
         array([ 1.89920014,  9.00867716,  3.13710533,  5.62318272]) # random
 
         """
@@ -1477,7 +1477,7 @@ cdef class Generator:
         --------
         Draw values from the distribution and plot the histogram
 
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> import matplotlib.pyplot as plt
         >>> values = plt.hist(rng.noncentral_chisquare(3, 20, 100000),
         ...                   bins=200, density=True)
@@ -1564,7 +1564,7 @@ cdef class Generator:
         Draw samples and plot the distribution:
 
         >>> import matplotlib.pyplot as plt
-        >>> s = np.random.default_gen().standard_cauchy(1000000)
+        >>> s = np.random.default_rng().standard_cauchy(1000000)
         >>> s = s[(s>-25) & (s<25)]  # truncate distribution so it plots well
         >>> plt.hist(s, bins=100)
         >>> plt.show()
@@ -1637,7 +1637,7 @@ cdef class Generator:
         We have 10 degrees of freedom, so is the sample mean within 95% of the
         recommended value?
 
-        >>> s = np.random.default_gen().standard_t(10, size=100000)
+        >>> s = np.random.default_rng().standard_t(10, size=100000)
         >>> np.mean(intake)
         6753.636363636364
         >>> intake.std(ddof=1)
@@ -1731,7 +1731,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> mu, kappa = 0.0, 4.0 # mean and dispersion
-        >>> s = np.random.default_gen().vonmises(mu, kappa, 1000)
+        >>> s = np.random.default_rng().vonmises(mu, kappa, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1831,7 +1831,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> a, m = 3., 2.  # shape and mode
-        >>> s = (np.random.default_gen().pareto(a, 1000) + 1) * m
+        >>> s = (np.random.default_rng().pareto(a, 1000) + 1) * m
 
         Display the histogram of the samples, along with the probability
         density function:
@@ -1923,7 +1923,7 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> a = 5. # shape
         >>> s = rng.weibull(a, 1000)
 
@@ -2003,7 +2003,7 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> a = 5. # shape
         >>> samples = 1000
         >>> s = rng.power(a, samples)
@@ -2110,7 +2110,7 @@ cdef class Generator:
         Draw samples from the distribution
 
         >>> loc, scale = 0., 1.
-        >>> s = np.random.default_gen().laplace(loc, scale, 1000)
+        >>> s = np.random.default_rng().laplace(loc, scale, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -2212,7 +2212,7 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> mu, beta = 0, 0.1 # location and scale
         >>> s = rng.gumbel(mu, beta, 1000)
 
@@ -2314,7 +2314,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> loc, scale = 10, 1
-        >>> s = np.random.default_gen().logistic(loc, scale, 10000)
+        >>> s = np.random.default_rng().logistic(loc, scale, 10000)
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, bins=50)
 
@@ -2396,7 +2396,7 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> mu, sigma = 3., 1. # mean and standard deviation
         >>> s = rng.lognormal(mu, sigma, 1000)
 
@@ -2491,7 +2491,7 @@ cdef class Generator:
         Draw values from the distribution and plot the histogram
 
         >>> from matplotlib.pyplot import hist
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> values = hist(rng.rayleigh(3, 100000), bins=200, density=True)
 
         Wave heights tend to follow a Rayleigh distribution. If the mean wave
@@ -2572,7 +2572,7 @@ cdef class Generator:
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(np.random.default_gen().wald(3, 2, 100000), bins=200, density=True)
+        >>> h = plt.hist(np.random.default_rng().wald(3, 2, 100000), bins=200, density=True)
         >>> plt.show()
 
         """
@@ -2639,7 +2639,7 @@ cdef class Generator:
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(np.random.default_gen().triangular(-3, 0, 8, 100000), bins=200,
+        >>> h = plt.hist(np.random.default_rng().triangular(-3, 0, 8, 100000), bins=200,
         ...              density=True)
         >>> plt.show()
 
@@ -2751,7 +2751,7 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> n, p = 10, .5  # number of trials, probability of each trial
         >>> s = rng.binomial(n, p, 1000)
         # result of flipping a coin 10 times, tested 1000 times.
@@ -2890,7 +2890,7 @@ cdef class Generator:
         for each successive well, that is what is the probability of a
         single success after drilling 5 wells, after 6 wells, etc.?
 
-        >>> s = np.random.default_gen().negative_binomial(1, 0.1, 100000)
+        >>> s = np.random.default_rng().negative_binomial(1, 0.1, 100000)
         >>> for i in range(1, 11): # doctest: +SKIP
         ...    probability = sum(s<i) / 100000.
         ...    print(i, "wells drilled, probability of one success =", probability)
@@ -2954,7 +2954,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> import numpy as np
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> s = rng.poisson(5, 10000)
 
         Display histogram of the sample:
@@ -3030,7 +3030,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> a = 2. # parameter
-        >>> s = np.random.default_gen().zipf(a, 1000)
+        >>> s = np.random.default_rng().zipf(a, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -3091,7 +3091,7 @@ cdef class Generator:
         Draw ten thousand values from the geometric distribution,
         with the probability of an individual success equal to 0.35:
 
-        >>> z = np.random.default_gen().geometric(p=0.35, size=10000)
+        >>> z = np.random.default_rng().geometric(p=0.35, size=10000)
 
         How many trials succeeded after a single run?
 
@@ -3191,7 +3191,7 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> ngood, nbad, nsamp = 100, 2, 10
         # number of good, number of bad, and number of samples
         >>> s = rng.hypergeometric(ngood, nbad, nsamp, 1000)
@@ -3307,7 +3307,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> a = .6
-        >>> s = np.random.default_gen().logseries(a, 10000)
+        >>> s = np.random.default_rng().logseries(a, 10000)
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s)
 
@@ -3397,7 +3397,7 @@ cdef class Generator:
         Diagonal covariance means that points are oriented along x or y-axis:
 
         >>> import matplotlib.pyplot as plt
-        >>> x, y = np.random.default_gen().multivariate_normal(mean, cov, 5000).T
+        >>> x, y = np.random.default_rng().multivariate_normal(mean, cov, 5000).T
         >>> plt.plot(x, y, 'x')
         >>> plt.axis('equal')
         >>> plt.show()
@@ -3417,7 +3417,7 @@ cdef class Generator:
         --------
         >>> mean = (1, 2)
         >>> cov = [[1, 0], [0, 1]]
-        >>> x = np.random.default_gen().multivariate_normal(mean, cov, (3, 3))
+        >>> x = np.random.default_rng().multivariate_normal(mean, cov, (3, 3))
         >>> x.shape
         (3, 3, 2)
 
@@ -3531,7 +3531,7 @@ cdef class Generator:
         --------
         Throw a dice 20 times:
 
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> rng.multinomial(20, [1/6.]*6, size=1)
         array([[4, 1, 7, 5, 2, 1]])  # random
 
@@ -3708,7 +3708,7 @@ cdef class Generator:
         average length, but allowing some variation in the relative sizes of
         the pieces.
 
-        >>> s = np.random.default_gen().dirichlet((10, 5, 3), 20).transpose()
+        >>> s = np.random.default_rng().dirichlet((10, 5, 3), 20).transpose()
 
         >>> import matplotlib.pyplot as plt
         >>> plt.barh(range(20), s[0])
@@ -3800,7 +3800,7 @@ cdef class Generator:
 
         Examples
         --------
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> arr = np.arange(10)
         >>> rng.shuffle(arr)
         >>> arr
@@ -3911,7 +3911,7 @@ cdef class Generator:
 
         Examples
         --------
-        >>> rng = np.random.default_gen()
+        >>> rng = np.random.default_rng()
         >>> rng.permutation(10)
         array([1, 7, 4, 3, 0, 9, 2, 5, 8, 6]) # random
 
@@ -3946,7 +3946,7 @@ cdef class Generator:
         return arr[idx]
 
 
-def default_gen(seed=None):
+def default_rng(seed=None):
     """Construct a new Generator with the default BitGenerator (PCG64).
 
     Parameters

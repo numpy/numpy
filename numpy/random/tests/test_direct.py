@@ -8,7 +8,7 @@ import pytest
 
 from numpy.random import (
     Generator, MT19937, PCG64, Philox, RandomState, SeedSequence, SFC64,
-    default_gen
+    default_rng
 )
 from numpy.random.common import interface
 
@@ -406,13 +406,13 @@ class TestSFC64(Base):
 class TestDefaultGen(object):
     def test_seed(self):
         for args in [(), (None,), (1234,), ([1234, 5678],)]:
-            rg = default_gen(*args)
+            rg = default_rng(*args)
             assert isinstance(rg.bit_generator, PCG64)
 
     def test_passthrough(self):
         bg = Philox()
-        rg = default_gen(bg)
+        rg = default_rng(bg)
         assert rg.bit_generator is bg
-        rg2 = default_gen(rg)
+        rg2 = default_rng(rg)
         assert rg2 is rg
         assert rg2.bit_generator is bg

@@ -43,13 +43,13 @@ wrap this together into an API that is easy to use and difficult to misuse.
 
 .. code-block:: python
 
-  from numpy.random import SeedSequence, default_gen
+  from numpy.random import SeedSequence, default_rng
 
   ss = SeedSequence(12345)
 
   # Spawn off 10 child SeedSequences to pass to child processes.
   child_seeds = ss.spawn(10)
-  streams = [default_gen(s) for s in child_seeds]
+  streams = [default_rng(s) for s in child_seeds]
 
 .. end_block
 
@@ -61,7 +61,7 @@ high probability) streams.
 .. code-block:: python
 
   grandchildren = child_seeds[0].spawn(4)
-  grand_streams = [default_gen(s) for s in grandchildren]
+  grand_streams = [default_rng(s) for s in grandchildren]
 
 .. end_block
 
