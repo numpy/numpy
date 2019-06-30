@@ -776,7 +776,7 @@ class TestPCG64(RNG):
         cls._extra_setup()
 
 
-class TestDefaultGen(RNG):
+class TestDefaultRNG(RNG):
     @classmethod
     def setup_class(cls):
         # This will duplicate some tests that directly instantiate a fresh
