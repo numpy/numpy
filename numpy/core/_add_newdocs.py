@@ -10,6 +10,8 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 from __future__ import division, absolute_import, print_function
 
+import sys
+
 from numpy.core import numerictypes as _numerictypes
 from numpy.core import dtype
 from numpy.core.function_base import add_newdoc
@@ -1461,57 +1463,58 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     """)
 
-add_newdoc('numpy.core.multiarray', 'newbuffer',
-    """
-    newbuffer(size)
+if sys.version_info.major < 3:
+    add_newdoc('numpy.core.multiarray', 'newbuffer',
+        """
+        newbuffer(size)
 
-    Return a new uninitialized buffer object.
+        Return a new uninitialized buffer object.
 
-    Parameters
-    ----------
-    size : int
-        Size in bytes of returned buffer object.
+        Parameters
+        ----------
+        size : int
+            Size in bytes of returned buffer object.
 
-    Returns
-    -------
-    newbuffer : buffer object
-        Returned, uninitialized buffer object of `size` bytes.
+        Returns
+        -------
+        newbuffer : buffer object
+            Returned, uninitialized buffer object of `size` bytes.
 
-    """)
+        """)
 
-add_newdoc('numpy.core.multiarray', 'getbuffer',
-    """
-    getbuffer(obj [,offset[, size]])
+    add_newdoc('numpy.core.multiarray', 'getbuffer',
+        """
+        getbuffer(obj [,offset[, size]])
 
-    Create a buffer object from the given object referencing a slice of
-    length size starting at offset.
+        Create a buffer object from the given object referencing a slice of
+        length size starting at offset.
 
-    Default is the entire buffer. A read-write buffer is attempted followed
-    by a read-only buffer.
+        Default is the entire buffer. A read-write buffer is attempted followed
+        by a read-only buffer.
 
-    Parameters
-    ----------
-    obj : object
+        Parameters
+        ----------
+        obj : object
 
-    offset : int, optional
+        offset : int, optional
 
-    size : int, optional
+        size : int, optional
 
-    Returns
-    -------
-    buffer_obj : buffer
+        Returns
+        -------
+        buffer_obj : buffer
 
-    Examples
-    --------
-    >>> buf = np.getbuffer(np.ones(5), 1, 3)
-    >>> len(buf)
-    3
-    >>> buf[0]
-    '\\x00'
-    >>> buf
-    <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
+        Examples
+        --------
+        >>> buf = np.getbuffer(np.ones(5), 1, 3)
+        >>> len(buf)
+        3
+        >>> buf[0]
+        '\\x00'
+        >>> buf
+        <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
 
-    """)
+        """)
 
 add_newdoc('numpy.core.multiarray', 'c_einsum',
     """
