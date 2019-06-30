@@ -928,7 +928,7 @@ test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
 
     num_dims = PyArray_NDIM(array_obj);
     descr = PyArray_DESCR(array_obj);
-    Py_INCREF(descr);
+    Py_INCREF(descr);  /* PyArray_AsCArray steals a reference to this */
 
     switch (num_dims) {
         case 1:
