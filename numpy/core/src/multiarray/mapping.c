@@ -2617,7 +2617,7 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     PyArrayObject *original_extra_op = extra_op;
 
     PyArrayObject *index_arrays[NPY_MAXDIMS];
-    PyArray_Descr *intp_descr = PyArray_DescrFromType(NPY_INTP);
+    PyArray_Descr *intp_descr;
     PyArray_Descr *dtypes[NPY_MAXDIMS];  /* borrowed references */
 
     npy_uint32 op_flags[NPY_MAXDIMS];
@@ -2630,6 +2630,11 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
     int i, j, dummy_array = 0;
     int nops;
     int uses_subspace;
+
+    intp_descr = PyArray_DescrFromType(NPY_INTP);
+    if (intp_descr == NULL) {
+        return NULL;
+    }
 
     /* create new MapIter object */
     mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
