@@ -1980,13 +1980,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_struct__',
     """Array protocol: C-struct side."""))
 
 
-add_newdoc('numpy.core.multiarray', 'ndarray', ('_as_parameter_',
-    """Allow the array to be interpreted as a ctypes object by returning the
-    data-memory location as an integer
-
-    """))
-
-
 add_newdoc('numpy.core.multiarray', 'ndarray', ('base',
     """
     Base object if memory is from some other object.
