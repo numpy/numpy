@@ -3,13 +3,13 @@
 Random Number Generation
 ========================
 
-Use ``default_gen()`` to create a `Generator` and call its methods.
+Use ``default_rng()`` to create a `Generator` and call its methods.
 
 =============== =========================================================
 Generator
 --------------- ---------------------------------------------------------
 Generator       Class implementing all of the random number distributions
-default_gen     Default constructor for ``Generator``
+default_rng     Default constructor for ``Generator``
 =============== =========================================================
 
 ============================================= ===
@@ -179,7 +179,7 @@ __all__ = [
 
 from . import mtrand
 from .mtrand import *
-from .generator import Generator, default_gen
+from .generator import Generator, default_rng
 from .bit_generator import SeedSequence
 from .mt19937 import MT19937
 from .pcg64 import PCG64
@@ -188,7 +188,7 @@ from .sfc64 import SFC64
 from .mtrand import RandomState
 
 __all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',
-            'Philox', 'PCG64', 'SFC64', 'default_gen']
+            'Philox', 'PCG64', 'SFC64', 'default_rng']
 
 
 def __RandomState_ctor():

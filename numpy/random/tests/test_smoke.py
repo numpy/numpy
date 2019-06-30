@@ -784,7 +784,7 @@ class TestDefaultGen(RNG):
         cls.bit_generator = PCG64
         cls.advance = 2**63 + 2**31 + 2**15 + 1
         cls.seed = [12345]
-        cls.rg = np.random.default_gen(*cls.seed)
+        cls.rg = np.random.default_rng(*cls.seed)
         cls.initial_state = cls.rg.bit_generator.state
         cls.seed_vector_bits = 64
         cls._extra_setup()
@@ -795,17 +795,17 @@ class TestDefaultGen(RNG):
         assert_(isinstance(self.rg.bit_generator, PCG64))
 
     def test_seed(self):
-        np.random.default_gen()
-        np.random.default_gen(None)
-        np.random.default_gen(12345)
-        np.random.default_gen(0)
-        np.random.default_gen(43660444402423911716352051725018508569)
-        np.random.default_gen([43660444402423911716352051725018508569,
+        np.random.default_rng()
+        np.random.default_rng(None)
+        np.random.default_rng(12345)
+        np.random.default_rng(0)
+        np.random.default_rng(43660444402423911716352051725018508569)
+        np.random.default_rng([43660444402423911716352051725018508569,
                                279705150948142787361475340226491943209])
         with pytest.raises(ValueError):
-            np.random.default_gen(-1)
+            np.random.default_rng(-1)
         with pytest.raises(ValueError):
-            np.random.default_gen([12345, -1])
+            np.random.default_rng([12345, -1])
 
 
 class TestEntropy(object):
