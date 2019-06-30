@@ -951,7 +951,7 @@ PyArray_NewFromDescr_int(
         int allow_emptystring)
 {
     PyArrayObject_fields *fa;
-    int i, is_empty;
+    int i;
     npy_intp nbytes;
 
     if (descr->subarray) {
@@ -1005,7 +1005,6 @@ PyArray_NewFromDescr_int(
     }
 
     /* Check dimensions and multiply them to nbytes */
-    is_empty = 0;
     for (i = 0; i < nd; i++) {
         npy_intp dim = dims[i];
 
@@ -1014,7 +1013,6 @@ PyArray_NewFromDescr_int(
              * Compare to PyArray_OverflowMultiplyList that
              * returns 0 in this case.
              */
-            is_empty = 1;
             continue;
         }
 
@@ -1101,8 +1099,8 @@ PyArray_NewFromDescr_int(
          * (a.data) doesn't work as it should.
          * Could probably just allocate a few bytes here. -- Chuck
          */
-        if (is_empty) {
-            nbytes = descr->elsize;
+        if (nbytes == 0) {
+            nbytes = descr->elsize ? descr->elsize : 1;
         }
         /*
          * It is bad to have uninitialized OBJECT pointers
