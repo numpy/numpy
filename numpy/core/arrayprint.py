@@ -1641,5 +1641,5 @@ def set_string_function(f, repr=True):
     else:
         return multiarray.set_string_function(f, repr)
 
-set_string_function(_default_array_str, 0)
-set_string_function(_default_array_repr, 1)
+set_string_function(_default_array_str, False)
+set_string_function(_default_array_repr, True)

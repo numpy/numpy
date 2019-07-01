@@ -347,7 +347,7 @@ class TestMaskedArray(object):
         m = make_mask(n)
         m2 = make_mask(m)
         assert_(m is m2)
-        m3 = make_mask(m, copy=1)
+        m3 = make_mask(m, copy=True)
         assert_(m is not m3)
 
         x1 = np.arange(5)

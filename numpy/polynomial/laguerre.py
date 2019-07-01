@@ -624,7 +624,7 @@ def lagder(c, m=1, scl=1, axis=0):
     array([1.,  2.,  3.])
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
 
@@ -739,7 +739,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     array([ 11.16666667,  -5.        ,  -3.        ,   2.        ]) # may vary
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     if not np.iterable(k):
@@ -848,7 +848,7 @@ def lagval(x, c, tensor=True):
            [-4.5, -2. ]])
 
     """
-    c = np.array(c, ndmin=1, copy=0)
+    c = np.array(c, ndmin=1, copy=False)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -1131,7 +1131,7 @@ def lagvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=0, ndmin=1) + 0.0
+    x = np.array(x, copy=False, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)

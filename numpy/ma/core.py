@@ -1060,7 +1060,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         if t.shape == ():
             t = t.reshape(1)
             if m is not nomask:
-                m = make_mask(m, copy=1)
+                m = make_mask(m, copy=True)
                 m.shape = (1,)
 
         if m is nomask:
@@ -7293,7 +7293,7 @@ def choose(indices, choices, out=None, mode='raise'):
     # Construct the mask
     outputmask = np.choose(c, masks, mode=mode)
     outputmask = make_mask(mask_or(outputmask, getmask(indices)),
-                           copy=0, shrink=True)
+                           copy=False, shrink=True)
     # Get the choices.
     d = np.choose(c, data, mode=mode, out=out).view(MaskedArray)
     if out is not None:
@@ -7545,7 +7545,7 @@ def outer(a, b):
         return masked_array(d)
     ma = getmaskarray(a)
     mb = getmaskarray(b)
-    m = make_mask(1 - np.outer(1 - ma, 1 - mb), copy=0)
+    m = make_mask(1 - np.outer(1 - ma, 1 - mb), copy=False)
     return masked_array(d, mask=m)
 outer.__doc__ = doc_note(np.outer.__doc__,
                          "Masked values are replaced by 0.")

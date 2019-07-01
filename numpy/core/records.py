@@ -163,7 +163,7 @@ class format_parser(object):
         self._createdescr(byteorder)
         self.dtype = self._descr
 
-    def _parseFormats(self, formats, aligned=0):
+    def _parseFormats(self, formats, aligned=False):
         """ Parse the field formats """
 
         if formats is None:

@@ -148,7 +148,7 @@ class TestAverage(object):
         ott = array([0., 1., 2., 3.], mask=[True, False, False, False])
         assert_equal(2.0, average(ott, axis=0))
         assert_equal(2.0, average(ott, weights=[1., 1., 2., 1.]))
-        result, wts = average(ott, weights=[1., 1., 2., 1.], returned=1)
+        result, wts = average(ott, weights=[1., 1., 2., 1.], returned=True)
         assert_equal(2.0, result)
         assert_(wts == 4.0)
         ott[:] = masked
@@ -159,7 +159,7 @@ class TestAverage(object):
         assert_equal(average(ott, axis=0), [2.0, 0.0])
         assert_equal(average(ott, axis=1).mask[0], [True])
         assert_equal([2., 0.], average(ott, axis=0))
-        result, wts = average(ott, axis=0, returned=1)
+        result, wts = average(ott, axis=0, returned=True)
         assert_equal(wts, [1., 0.])
 
     def test_testAverage2(self):
@@ -200,14 +200,14 @@ class TestAverage(object):
         # Yet more tests of average!
         a = arange(6)
         b = arange(6) * 3
-        r1, w1 = average([[a, b], [b, a]], axis=1, returned=1)
+        r1, w1 = average([[a, b], [b, a]], axis=1, returned=True)
         assert_equal(shape(r1), shape(w1))
         assert_equal(r1.shape, w1.shape)
-        r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=1)
+        r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=True)
         assert_equal(shape(w2), shape(r2))
-        r2, w2 = average(ones((2, 2, 3)), returned=1)
+        r2, w2 = average(ones((2, 2, 3)), returned=True)
         assert_equal(shape(w2), shape(r2))
-        r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=1)
+        r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=True)
         assert_equal(shape(w2), shape(r2))
         a2d = array([[1, 2], [0, 4]], float)
         a2dm = masked_array(a2d, [[False, False], [True, False]])

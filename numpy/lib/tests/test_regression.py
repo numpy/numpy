@@ -21,8 +21,8 @@ class TestRegression(object):
         # Ticket #91
         x = np.random.random((3, 3))
         y = x.copy()
-        np.cov(x, rowvar=1)
-        np.cov(y, rowvar=0)
+        np.cov(x, rowvar=True)
+        np.cov(y, rowvar=False)
         assert_array_equal(x, y)
 
     def test_mem_digitize(self):
@@ -56,7 +56,7 @@ class TestRegression(object):
 
     def test_poly1d_nan_roots(self):
         # Ticket #396
-        p = np.poly1d([np.nan, np.nan, 1], r=0)
+        p = np.poly1d([np.nan, np.nan, 1], r=False)
         assert_raises(np.linalg.LinAlgError, getattr, p, "r")
 
     def test_mem_polymul(self):

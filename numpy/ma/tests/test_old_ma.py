@@ -263,7 +263,7 @@ class TestMa(object):
         m = make_mask(n)
         m2 = make_mask(m)
         assert_(m is m2)
-        m3 = make_mask(m, copy=1)
+        m3 = make_mask(m, copy=True)
         assert_(m is not m3)
 
         x1 = np.arange(5)
@@ -570,7 +570,7 @@ class TestMa(object):
         ott = array([0., 1., 2., 3.], mask=[1, 0, 0, 0])
         assert_(eq(2.0, average(ott, axis=0)))
         assert_(eq(2.0, average(ott, weights=[1., 1., 2., 1.])))
-        result, wts = average(ott, weights=[1., 1., 2., 1.], returned=1)
+        result, wts = average(ott, weights=[1., 1., 2., 1.], returned=True)
         assert_(eq(2.0, result))
         assert_(wts == 4.0)
         ott[:] = masked
@@ -581,7 +581,7 @@ class TestMa(object):
         assert_(eq(average(ott, axis=0), [2.0, 0.0]))
         assert_(average(ott, axis=1)[0] is masked)
         assert_(eq([2., 0.], average(ott, axis=0)))
-        result, wts = average(ott, axis=0, returned=1)
+        result, wts = average(ott, axis=0, returned=True)
         assert_(eq(wts, [1., 0.]))
 
     def test_testAverage2(self):
@@ -622,14 +622,14 @@ class TestMa(object):
 
         a = arange(6)
         b = arange(6) * 3
-        r1, w1 = average([[a, b], [b, a]], axis=1, returned=1)
+        r1, w1 = average([[a, b], [b, a]], axis=1, returned=True)
         assert_equal(shape(r1), shape(w1))
         assert_equal(r1.shape, w1.shape)
-        r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=1)
+        r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=True)
         assert_equal(shape(w2), shape(r2))
-        r2, w2 = average(ones((2, 2, 3)), returned=1)
+        r2, w2 = average(ones((2, 2, 3)), returned=True)
         assert_equal(shape(w2), shape(r2))
-        r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=1)
+        r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=True)
         assert_(shape(w2) == shape(r2))
         a2d = array([[1, 2], [0, 4]], float)
         a2dm = masked_array(a2d, [[0, 0], [1, 0]])

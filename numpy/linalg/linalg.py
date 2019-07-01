@@ -1730,7 +1730,7 @@ def cond(x, p=None):
     1.4142135623730951
     >>> LA.cond(a, -2)
     0.70710678118654746 # may vary
-    >>> min(LA.svd(a, compute_uv=0))*min(LA.svd(LA.inv(a), compute_uv=0))
+    >>> min(LA.svd(a, compute_uv=False))*min(LA.svd(LA.inv(a), compute_uv=False))
     0.70710678118654746 # may vary
 
     """
@@ -2314,7 +2314,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
 
     """
     y = moveaxis(x, (row_axis, col_axis), (-2, -1))
-    result = op(svd(y, compute_uv=0), axis=-1)
+    result = op(svd(y, compute_uv=False), axis=-1)
     return result
 
 

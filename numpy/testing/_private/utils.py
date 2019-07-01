@@ -1145,7 +1145,7 @@ def assert_string_equal(actual, desired):
     if desired == actual:
         return
 
-    diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
+    diff = list(difflib.Differ().compare(actual.splitlines(True), desired.splitlines(True)))
     diff_list = []
     while diff:
         d1 = diff.pop(0)

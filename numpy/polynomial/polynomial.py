@@ -491,7 +491,7 @@ def polyder(c, m=1, scl=1, axis=0):
     array([  6.,  24.])
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype fails with NA
         c = c + 0.0
@@ -599,7 +599,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     array([ 0., -2., -2., -2.])
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype doesn't preserve mask attribute.
         c = c + 0.0
@@ -721,7 +721,7 @@ def polyval(x, c, tensor=True):
     array([2.,  7.])
 
     """
-    c = np.array(c, ndmin=1, copy=0)
+    c = np.array(c, ndmin=1, copy=False)
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype fails with NA
         c = c + 0.0
@@ -811,7 +811,7 @@ def polyvalfromroots(x, r, tensor=True):
     >>> polyvalfromroots(b, r, tensor=False)
     array([-0.,  0.])
     """
-    r = np.array(r, ndmin=1, copy=0)
+    r = np.array(r, ndmin=1, copy=False)
     if r.dtype.char in '?bBhHiIlLqQpP':
         r = r.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -1076,7 +1076,7 @@ def polyvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=0, ndmin=1) + 0.0
+    x = np.array(x, copy=False, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)

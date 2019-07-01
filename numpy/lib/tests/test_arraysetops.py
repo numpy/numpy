@@ -422,41 +422,41 @@ class TestUnique(object):
             assert_array_equal(v, b, msg)
 
             msg = base_msg.format('return_index', dt)
-            v, j = unique(a, 1, 0, 0)
+            v, j = unique(a, True, False, False)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, i1, msg)
 
             msg = base_msg.format('return_inverse', dt)
-            v, j = unique(a, 0, 1, 0)
+            v, j = unique(a, False, True, False)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, i2, msg)
 
             msg = base_msg.format('return_counts', dt)
-            v, j = unique(a, 0, 0, 1)
+            v, j = unique(a, False, False, True)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, c, msg)
 
             msg = base_msg.format('return_index and return_inverse', dt)
-            v, j1, j2 = unique(a, 1, 1, 0)
+            v, j1, j2 = unique(a, True, True, False)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, i2, msg)
 
             msg = base_msg.format('return_index and return_counts', dt)
-            v, j1, j2 = unique(a, 1, 0, 1)
+            v, j1, j2 = unique(a, True, False, True)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, c, msg)
 
             msg = base_msg.format('return_inverse and return_counts', dt)
-            v, j1, j2 = unique(a, 0, 1, 1)
+            v, j1, j2 = unique(a, False, True, True)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i2, msg)
             assert_array_equal(j2, c, msg)
 
             msg = base_msg.format(('return_index, return_inverse '
                                    'and return_counts'), dt)
-            v, j1, j2, j3 = unique(a, 1, 1, 1)
+            v, j1, j2, j3 = unique(a, True, True, True)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, i2, msg)
