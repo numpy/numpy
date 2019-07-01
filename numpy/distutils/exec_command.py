@@ -217,7 +217,7 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
     # 2019-01-30, 1.17
     warnings.warn('exec_command is deprecated since NumPy v1.17, use '
                   'subprocess.Popen instead', DeprecationWarning, stacklevel=1)
-    log.debug('exec_command(%r,%s)' % (command,\
+    log.debug('exec_command(%r,%s)' % (command,
          ','.join(['%s=%r'%kv for kv in env.items()])))
 
     if use_tee is None:

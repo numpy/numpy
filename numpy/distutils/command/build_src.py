@@ -362,7 +362,7 @@ class build_src(build_ext.build_ext):
             #    incl_dirs = extension.include_dirs
             #if self.build_src not in incl_dirs:
             #    incl_dirs.append(self.build_src)
-            build_dir = os.path.join(*([self.build_src]\
+            build_dir = os.path.join(*([self.build_src]
                                        +name.split('.')[:-1]))
         self.mkpath(build_dir)
         for func in func_sources:
@@ -540,7 +540,7 @@ class build_src(build_ext.build_ext):
             if is_sequence(extension):
                 name = extension[0]
             else: name = extension.name
-            target_dir = os.path.join(*([self.build_src]\
+            target_dir = os.path.join(*([self.build_src]
                                         +name.split('.')[:-1]))
             target_file = os.path.join(target_dir, ext_name + 'module.c')
             new_sources.append(target_file)

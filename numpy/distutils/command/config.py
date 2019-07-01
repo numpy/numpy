@@ -442,10 +442,10 @@ class config(old_config):
         of the program and its output.
         """
         # 2008-11-16, RemoveMe
-        warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n" \
-                      "Usage of get_output is deprecated: please do not \n" \
-                      "use it anymore, and avoid configuration checks \n" \
-                      "involving running executable on the target machine.\n" \
+        warnings.warn("\n+++++++++++++++++++++++++++++++++++++++++++++++++\n"
+                      "Usage of get_output is deprecated: please do not \n"
+                      "use it anymore, and avoid configuration checks \n"
+                      "involving running executable on the target machine.\n"
                       "+++++++++++++++++++++++++++++++++++++++++++++++++\n",
                       DeprecationWarning, stacklevel=2)
         self._check_compiler()
