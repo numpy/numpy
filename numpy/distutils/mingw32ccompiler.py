@@ -18,10 +18,7 @@ import textwrap
 # Overwrite certain distutils.ccompiler functions:
 import numpy.distutils.ccompiler
 
-if sys.version_info[0] < 3:
-    from . import log
-else:
-    from numpy.distutils import log
+from numpy.distutils import log
 # NT stuff
 # 1. Make sure libpython<version>.a exists for gcc.  If not, build it.
 # 2. Force windows to use gcc (we're struggling with MSVC and g77 support)

@@ -330,7 +330,6 @@ def test_array_equal_error_message_matrix():
         assert_equal(np.array([1, 2]), np.matrix([1, 2]))
     except AssertionError as e:
         msg = str(e)
-        msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
         msg_reference = textwrap.dedent("""\
 
         Arrays are not equal
@@ -338,10 +337,7 @@ def test_array_equal_error_message_matrix():
         (shapes (2,), (1, 2) mismatch)
          x: array([1, 2])
          y: matrix([[1, 2]])""")
-        try:
-            assert_equal(msg, msg_reference)
-        except AssertionError:
-            assert_equal(msg2, msg_reference)
+        assert_equal(msg, msg_reference)
     else:
         raise AssertionError("Did not raise")
 

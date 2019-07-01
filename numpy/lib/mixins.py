@@ -1,8 +1,6 @@
 """Mixin classes for custom array types that don't inherit from ndarray."""
 from __future__ import division, absolute_import, print_function
 
-import sys
-
 from numpy.core import umath as um
 
 # Nothing should be exposed in the top-level NumPy module.
@@ -154,9 +152,7 @@ class NDArrayOperatorsMixin(object):
     __mul__, __rmul__, __imul__ = _numeric_methods(um.multiply, 'mul')
     __matmul__, __rmatmul__, __imatmul__ = _numeric_methods(
         um.matmul, 'matmul')
-    if sys.version_info.major < 3:
-        # Python 3 uses only __truediv__ and __floordiv__
-        __div__, __rdiv__, __idiv__ = _numeric_methods(um.divide, 'div')
+    # Python 3 does not use __div__, __rdiv__, or __idiv__
     __truediv__, __rtruediv__, __itruediv__ = _numeric_methods(
         um.true_divide, 'truediv')
     __floordiv__, __rfloordiv__, __ifloordiv__ = _numeric_methods(

@@ -308,10 +308,7 @@ class ReadValuesNested(object):
         h = np.array(self._buffer, dtype=self._descr)
         assert_(h.dtype['Info']['value'].name == 'complex128')
         assert_(h.dtype['Info']['y2'].name == 'float64')
-        if sys.version_info[0] >= 3:
-            assert_(h.dtype['info']['Name'].name == 'str256')
-        else:
-            assert_(h.dtype['info']['Name'].name == 'unicode256')
+        assert_(h.dtype['info']['Name'].name == 'str256')
         assert_(h.dtype['info']['Value'].name == 'complex128')
 
     def test_nested2_descriptor(self):

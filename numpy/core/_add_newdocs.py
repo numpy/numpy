@@ -2082,7 +2082,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('ctypes',
     >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_long)).contents
     c_long(0)
     >>> x.ctypes.data_as(ctypes.POINTER(ctypes.c_longlong)).contents
-    c_longlong(4294967296L)
+    c_longlong(0)
     >>> x.ctypes.shape
     <numpy.core._internal.c_long_Array_2 object at 0x01FFD580>
     >>> x.ctypes.shape_as(ctypes.c_long)

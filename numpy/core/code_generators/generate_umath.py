@@ -152,12 +152,8 @@ class Ufunc(object):
 # String-handling utilities to avoid locale-dependence.
 
 import string
-if sys.version_info[0] < 3:
-    UPPER_TABLE = string.maketrans(string.ascii_lowercase,
-                                   string.ascii_uppercase)
-else:
-    UPPER_TABLE = bytes.maketrans(bytes(string.ascii_lowercase, "ascii"),
-                                  bytes(string.ascii_uppercase, "ascii"))
+UPPER_TABLE = bytes.maketrans(bytes(string.ascii_lowercase, "ascii"),
+                              bytes(string.ascii_uppercase, "ascii"))
 
 def english_upper(s):
     """ Apply English case rules to convert ASCII strings to all upper case.
@@ -306,17 +302,7 @@ defdict = {
           ],
           TD(O, f='PyNumber_Multiply'),
           ),
-'divide':
-    Ufunc(2, 1, None, # One is only a unit to the right, not the left
-          docstrings.get('numpy.core.umath.divide'),
-          'PyUFunc_MixedDivisionTypeResolver',
-          TD(intfltcmplx),
-          [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
-           TypeDescription('m', FullTypeDescr, 'md', 'm'),
-           TypeDescription('m', FullTypeDescr, 'mm', 'd'),
-          ],
-          TD(O, f='PyNumber_Divide'),
-          ),
+# 'divide' : aliased to true_divide in umathmodule.c.src:InitOtherOperators
 'floor_divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.floor_divide'),
@@ -936,10 +922,6 @@ defdict = {
           ),
 }
 
-if sys.version_info[0] >= 3:
-    # Will be aliased to true_divide in umathmodule.c.src:InitOtherOperators
-    del defdict['divide']
-
 def indent(st, spaces):
     indentation = ' '*spaces
     indented = indentation + st.replace('\n', '\n'+indentation)
@@ -1074,15 +1056,11 @@ def make_ufuncs(funcdict):
         uf = funcdict[name]
         mlist = []
         docstring = textwrap.dedent(uf.docstring).strip()
-        if sys.version_info[0] < 3:
-            docstring = docstring.encode('string-escape')
-            docstring = docstring.replace(r'"', r'\"')
-        else:
-            docstring = docstring.encode('unicode-escape').decode('ascii')
-            docstring = docstring.replace(r'"', r'\"')
-            # XXX: I don't understand why the following replace is not
-            # necessary in the python 2 case.
-            docstring = docstring.replace(r"'", r"\'")
+        docstring = docstring.encode('unicode-escape').decode('ascii')
+        docstring = docstring.replace(r'"', r'\"')
+        # XXX: I don't understand why the following replace was not
+        # necessary for python 2.
+        docstring = docstring.replace(r"'", r"\'")
         # Split the docstring because some compilers (like MS) do not like big
         # string literal in C code. We split at endlines because textwrap.wrap
         # do not play well with \n

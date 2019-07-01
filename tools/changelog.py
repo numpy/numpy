@@ -36,15 +36,9 @@ From the bash command line with $GITHUB token::
 from __future__ import print_function, division
 
 import os
-import sys
 import re
-import codecs
 from git import Repo
 from github import Github
-
-if sys.version_info.major < 3:
-    UTF8Writer = codecs.getwriter('utf8')
-    sys.stdout = UTF8Writer(sys.stdout)
 
 this_repo = Repo(os.path.join(os.path.dirname(__file__), ".."))
 

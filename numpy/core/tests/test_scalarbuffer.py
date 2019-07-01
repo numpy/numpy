@@ -1,7 +1,6 @@
 """
 Test scalar buffer interface adheres to PEP 3118
 """
-import sys
 import numpy as np
 import pytest
 
@@ -31,8 +30,6 @@ scalars_and_codes = [
 scalars_only, codes_only = zip(*scalars_and_codes)
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
-                    reason="Python 2 scalars lack a buffer interface")
 class TestScalarPEP3118(object):
 
     @pytest.mark.parametrize('scalar', scalars_only, ids=codes_only)

@@ -4,10 +4,7 @@ import sys
 import re
 import os
 
-if sys.version_info[0] < 3:
-    from ConfigParser import RawConfigParser
-else:
-    from configparser import RawConfigParser
+from configparser import RawConfigParser
 
 __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
         'read_config', 'parse_flags']

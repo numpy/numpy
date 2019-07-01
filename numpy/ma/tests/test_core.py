@@ -5001,11 +5001,6 @@ class TestMaskedConstant(object):
         assert_raises(MaskError, operator.setitem, a_i, (), np.ma.masked)
         assert_raises(MaskError, int, np.ma.masked)
 
-    @pytest.mark.skipif(sys.version_info.major == 3,
-                        reason="long doesn't exist in Python 3")
-    def test_coercion_long(self):
-        assert_raises(MaskError, long, np.ma.masked)
-
     def test_coercion_float(self):
         a_f = np.zeros((), float)
         assert_warns(UserWarning, operator.setitem, a_f, (), np.ma.masked)

@@ -164,7 +164,6 @@ evolved with time and this document is more current.
 from __future__ import division, absolute_import, print_function
 
 import numpy
-import sys
 import io
 import warnings
 from numpy.lib.utils import safe_eval
@@ -212,10 +211,7 @@ def magic(major, minor):
         raise ValueError("major version must be 0 <= major < 256")
     if minor < 0 or minor > 255:
         raise ValueError("minor version must be 0 <= minor < 256")
-    if sys.version_info[0] < 3:
-        return MAGIC_PREFIX + chr(major) + chr(minor)
-    else:
-        return MAGIC_PREFIX + bytes([major, minor])
+    return MAGIC_PREFIX + bytes([major, minor])
 
 def read_magic(fp):
     """ Read the magic string to get the version of the file format.
@@ -233,10 +229,7 @@ def read_magic(fp):
     if magic_str[:-2] != MAGIC_PREFIX:
         msg = "the magic string is not correct; expected %r, got %r"
         raise ValueError(msg % (MAGIC_PREFIX, magic_str[:-2]))
-    if sys.version_info[0] < 3:
-        major, minor = map(ord, magic_str[-2:])
-    else:
-        major, minor = magic_str[-2:]
+    major, minor = magic_str[-2:]
     return major, minor
 
 def dtype_to_descr(dtype):
@@ -527,10 +520,7 @@ def _filter_header(s):
 
     """
     import tokenize
-    if sys.version_info[0] >= 3:
-        from io import StringIO
-    else:
-        from StringIO import StringIO
+    from io import StringIO
 
     tokens = []
     last_token_was_number = False
@@ -726,12 +716,10 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
         try:
             array = pickle.load(fp, **pickle_kwargs)
         except UnicodeError as err:
-            if sys.version_info[0] >= 3:
-                # Friendlier error message
-                raise UnicodeError("Unpickling a python object failed: %r\n"
-                                   "You may need to pass the encoding= option "
-                                   "to numpy.load" % (err,))
-            raise
+            # Friendlier error message
+            raise UnicodeError("Unpickling a python object failed: %r\n"
+                               "You may need to pass the encoding= option "
+                               "to numpy.load" % (err,))
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.

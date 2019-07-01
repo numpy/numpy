@@ -1,11 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
-try:
-    # Accessing collections abstract classes from collections
-    # has been deprecated since Python 3.3
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import builtins
+import collections.abc as collections_abc
 import functools
 import re
 import sys
@@ -37,13 +33,6 @@ from numpy.core.multiarray import (
     )
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
-
-if sys.version_info[0] < 3:
-    # Force range to be a generator, for np.delete's usage.
-    range = xrange
-    import __builtin__ as builtins
-else:
-    import builtins
 
 
 array_function_dispatch = functools.partial(

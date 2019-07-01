@@ -847,11 +847,6 @@ class TestString(object):
         assert_equal(repr(dt), "dtype(('<i2', (1,)))")
         assert_equal(str(dt), "('<i2', (1,))")
 
-    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Python 2 only")
-    def test_dtype_str_with_long_in_shape(self):
-        # Pull request #376, should not error
-        np.dtype('(1L,)i4')
-
     def test_base_dtype_with_object_type(self):
         # Issue gh-2798, should not error.
         np.array(['a'], dtype="O").astype(("O", [("name", "O")]))

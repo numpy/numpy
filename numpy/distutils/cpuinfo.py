@@ -19,10 +19,7 @@ __all__ = ['cpu']
 import sys, re, types
 import os
 
-if sys.version_info[0] >= 3:
-    from subprocess import getstatusoutput
-else:
-    from commands import getstatusoutput
+from subprocess import getstatusoutput
 
 import warnings
 import platform
@@ -490,10 +487,7 @@ class Win32CPUInfo(CPUInfoBase):
         info = []
         try:
             #XXX: Bad style to use so long `try:...except:...`. Fix it!
-            if sys.version_info[0] >= 3:
-                import winreg
-            else:
-                import _winreg as winreg
+            import winreg
 
             prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"
                               r"\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)

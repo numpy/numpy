@@ -415,8 +415,7 @@ class Gnu95FCompiler(GnuFCompiler):
                         break
                     h.update(block)
         text = base64.b32encode(h.digest())
-        if sys.version_info[0] >= 3:
-            text = text.decode('ascii')
+        text = text.decode('ascii')
         return text.rstrip('=')
 
     def _link_wrapper_lib(self, objects, output_dir, extra_dll_dir,

@@ -14,6 +14,7 @@ import warnings
 from functools import partial, wraps
 import shutil
 import contextlib
+from io import StringIO
 from tempfile import mkdtemp, mkstemp
 from unittest.case import SkipTest
 from warnings import WarningMessage
@@ -23,10 +24,6 @@ from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy.lib.utils import deprecate
 
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
@@ -1323,13 +1320,7 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-
-    if sys.version_info.major >= 3:
-        funcname = _d.assertRaisesRegex
-    else:
-        # Only present in Python 2.7, missing from unittest in 2.6
-        funcname = _d.assertRaisesRegexp
-
+    funcname = _d.assertRaisesRegex
     return funcname(exception_class, expected_regexp, *args, **kwargs)
 
 

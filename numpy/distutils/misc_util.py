@@ -926,18 +926,8 @@ class Configuration(object):
             else:
                 pn = dot_join(*([parent_name] + subpackage_name.split('.')[:-1]))
                 args = (pn,)
-                def fix_args_py2(args):
-                    if setup_module.configuration.__code__.co_argcount > 1:
-                        args = args + (self.top_path,)
-                    return args
-                def fix_args_py3(args):
-                    if setup_module.configuration.__code__.co_argcount > 1:
-                        args = args + (self.top_path,)
-                    return args
-                if sys.version_info[0] < 3:
-                    args = fix_args_py2(args)
-                else:
-                    args = fix_args_py3(args)
+                if setup_module.configuration.__code__.co_argcount > 1:
+                    args = args + (self.top_path,)
                 config = setup_module.configuration(*args)
             if config.name!=dot_join(parent_name, subpackage_name):
                 self.warn('Subpackage %r configuration returned as %r' % \
@@ -2198,10 +2188,7 @@ def get_info(pkgname, dirs=None):
     return info
 
 def is_bootstrapping():
-    if sys.version_info[0] >= 3:
-        import builtins
-    else:
-        import __builtin__ as builtins
+    import builtins
 
     try:
         builtins.__NUMPY_SETUP__

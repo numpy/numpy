@@ -607,41 +607,6 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
                             )
                 print("  %s  --  %s" % (meth, methstr), file=output)
 
-    elif (sys.version_info[0] < 3
-            and isinstance(object, types.InstanceType)):
-        # check for __call__ method
-        # types.InstanceType is the type of the instances of oldstyle classes
-        print("Instance of class: ", object.__class__.__name__, file=output)
-        print(file=output)
-        if hasattr(object, '__call__'):
-            arguments = formatargspec(
-                    *getargspec(object.__call__.__func__)
-                    )
-            arglist = arguments.split(', ')
-            if len(arglist) > 1:
-                arglist[1] = "("+arglist[1]
-                arguments = ", ".join(arglist[1:])
-            else:
-                arguments = "()"
-
-            if hasattr(object, 'name'):
-                name = "%s" % object.name
-            else:
-                name = "<name>"
-            if len(name+arguments) > maxwidth:
-                argstr = _split_line(name, arguments, maxwidth)
-            else:
-                argstr = name + arguments
-
-            print(" " + argstr + "\n", file=output)
-            doc = inspect.getdoc(object.__call__)
-            if doc is not None:
-                print(inspect.getdoc(object.__call__), file=output)
-            print(inspect.getdoc(object), file=output)
-
-        else:
-            print(inspect.getdoc(object), file=output)
-
     elif inspect.ismethod(object):
         name = object.__name__
         arguments = formatargspec(
@@ -877,12 +842,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
     global _lookfor_caches
     # Local import to speed up numpy's import time.
     import inspect
-
-    if sys.version_info[0] >= 3:
-        # In Python3 stderr, stdout are text files.
-        from io import StringIO
-    else:
-        from StringIO import StringIO
+    from io import StringIO
 
     if module is None:
         module = "numpy"

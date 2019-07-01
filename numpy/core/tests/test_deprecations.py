@@ -6,7 +6,6 @@ to document how deprecations should eventually be turned into errors.
 from __future__ import division, absolute_import, print_function
 
 import datetime
-import sys
 import operator
 import warnings
 import pytest
@@ -235,15 +234,10 @@ class TestComparisonDeprecations(_DeprecationTestCase):
             struct = np.zeros(2, dtype="i4,i4")
             for arg2 in [struct, "a"]:
                 for f in [operator.lt, operator.le, operator.gt, operator.ge]:
-                    if sys.version_info[0] >= 3:
-                        # py3
-                        with warnings.catch_warnings() as l:
-                            warnings.filterwarnings("always")
-                            assert_raises(TypeError, f, arg1, arg2)
-                            assert_(not l)
-                    else:
-                        # py2
-                        assert_warns(DeprecationWarning, f, arg1, arg2)
+                    with warnings.catch_warnings() as l:
+                        warnings.filterwarnings("always")
+                        assert_raises(TypeError, f, arg1, arg2)
+                        assert_(not l)
 
 
 class TestDatetime64Timezone(_DeprecationTestCase):
@@ -386,8 +380,6 @@ class TestNumericStyleTypecodes(_DeprecationTestCase):
             'Int8', 'Int16', 'Int32', 'Int64', 'Object0', 'Timedelta64',
             'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Void0'
             ]
-        if sys.version_info[0] < 3:
-            deprecated_types.extend(['Unicode0', 'String0'])
 
         for dt in deprecated_types:
             self.assert_deprecated(np.dtype, exceptions=(TypeError,),
@@ -421,14 +413,6 @@ class TestClassicIntDivision(_DeprecationTestCase):
            'bool_', 'int_', 'intc', 'uint8', 'int8', 'uint64', 'int32', 'uint16',
            'intp', 'int64', 'uint32', 'int16'
             ]
-        if sys.version_info[0] < 3 and sys.py3kwarning:
-            import operator as op
-            dt2 = 'bool_'
-            for dt1 in deprecated_types:
-                a = np.array([1,2,3], dtype=dt1)
-                b = np.array([1,2,3], dtype=dt2)
-                self.assert_deprecated(op.div, args=(a,b))
-                dt2 = dt1
 
 
 class TestNonNumericConjugate(_DeprecationTestCase):

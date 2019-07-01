@@ -16,8 +16,6 @@ from . import util
 
 
 def setup_module():
-    if sys.platform == 'win32' and sys.version_info[0] < 3:
-        pytest.skip('Fails with MinGW64 Gfortran (Issue #9673)')
     if not util.has_c_compiler():
         pytest.skip("Needs C compiler")
     if not util.has_f77_compiler():

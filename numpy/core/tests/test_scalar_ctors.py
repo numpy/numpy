@@ -42,19 +42,6 @@ class TestFromString(object):
         flongdouble = assert_warns(RuntimeWarning, np.longdouble, '-1e10000')
         assert_equal(flongdouble, -np.inf)
 
-    @pytest.mark.skipif((sys.version_info[0] >= 3)
-                        or (sys.platform == "win32"
-                            and platform.architecture()[0] == "64bit"),
-                        reason="numpy.intp('0xff', 16) not supported on Py3 "
-                               "or 64 bit Windows")
-    def test_intp(self):
-        # Ticket #99
-        i_width = np.int_(0).nbytes*2 - 1
-        np.intp('0x' + 'f'*i_width, 16)
-        assert_raises(OverflowError, np.intp, '0x' + 'f'*(i_width+1), 16)
-        assert_raises(ValueError, np.intp, '0x1', 32)
-        assert_equal(255, np.intp('0xFF', 16))
-
 
 class TestFromInt(object):
     def test_intp(self):

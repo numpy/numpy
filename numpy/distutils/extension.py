@@ -8,12 +8,10 @@ Overridden to support f2py.
 """
 from __future__ import division, absolute_import, print_function
 
-import sys
 import re
 from distutils.extension import Extension as old_Extension
 
-if sys.version_info[0] >= 3:
-    basestring = str
+basestring = str
 
 
 cxx_ext_re = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match

@@ -63,9 +63,6 @@ class looper_iter(object):
         self.pos += 1
         return result
 
-    if sys.version < "3":
-        next = __next__
-
 
 class loop_pos(object):
 
@@ -95,9 +92,6 @@ class loop_pos(object):
             return self.seq[self.pos + 1]
         except IndexError:
             return None
-
-    if sys.version < "3":
-        next = __next__
 
     @property
     def previous(self):

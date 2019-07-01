@@ -2,18 +2,13 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import sys
+from io import StringIO
 from tempfile import TemporaryFile
 
 from numpy.distutils import exec_command
 from numpy.distutils.exec_command import get_pythonexe
 from numpy.testing import tempdir, assert_, assert_warns
 
-# In python 3 stdout, stderr are text (unicode compliant) devices, so to
-# emulate them import StringIO from the io module.
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
 
 class redirect_stdout(object):
     """Context manager to redirect stdout for exec_command test."""

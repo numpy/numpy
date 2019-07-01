@@ -4,8 +4,6 @@ from .common import Benchmark
 
 import numpy as np
 
-from six.moves import xrange
-
 
 class LaplaceInplace(Benchmark):
     params = ['inplace', 'normal']
@@ -61,7 +59,7 @@ class MaxesOfDots(Benchmark):
         ntime = 200
 
         self.arrays = [np.random.normal(size=(ntime, nfeat))
-                       for i in xrange(nsubj)]
+                       for i in range(nsubj)]
 
     def maxes_of_dots(self, arrays):
         """

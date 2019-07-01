@@ -21,12 +21,7 @@ import shutil
 import fortran
 import clapack_scrub
 
-PY2 = sys.version_info < (3, 0)
-
-if PY2:
-    from distutils.spawn import find_executable as which
-else:
-    from shutil import which
+from shutil import which
 
 # Arguments to pass to f2c. You'll always want -A for ANSI C prototypes
 # Others of interest: -a to not make variables static by default

@@ -48,7 +48,7 @@ import os
 import tokenize
 from ._looper import looper
 from .compat3 import (
-    PY3, bytes, basestring_, next, is_unicode, coerce_text, iteritems)
+    bytes, basestring_, next, is_unicode, coerce_text, iteritems)
 
 
 __all__ = ['TemplateError', 'Template', 'sub', 'HTMLTemplate',
@@ -157,8 +157,7 @@ class Template(object):
             c = f.read()
         if encoding:
             c = c.decode(encoding)
-        elif PY3:
-            c = c.decode('latin-1')
+        c = c.decode('latin-1')
         return cls(content=c, name=filename, namespace=namespace,
                    default_inherit=default_inherit, get_template=get_template)
 
@@ -319,11 +318,8 @@ class Template(object):
                 arg0 = e_value.args[0]
             else:
                 arg0 = coerce_text(e_value)
-            e_value.args = (self._add_line_info(arg0, pos),)            
-            if PY3:
-                raise e_value
-            else:
-                exec('raise e_type, e_value, e_traceback')
+            e_value.args = (self._add_line_info(arg0, pos),)
+            raise e_value
 
     def _exec(self, code, ns, pos):
         # __traceback_hide__ = True
@@ -335,10 +331,7 @@ class Template(object):
                 e_value.args = (self._add_line_info(e_value.args[0], pos),)
             else:
                 e_value.args = (self._add_line_info(None, pos),)
-            if PY3:
-                raise e_value
-            else:
-                exec('raise e_type, e_value, e_traceback')
+            raise e_value
 
     def _repr(self, value, pos):
         # __traceback_hide__ = True
@@ -357,10 +350,7 @@ class Template(object):
         except:
             e_type, e_value, e_traceback = sys.exc_info()
             e_value.args = (self._add_line_info(e_value.args[0], pos),)
-            if PY3:
-                raise e_value
-            else:
-                exec('raise e_type, e_value, e_traceback')
+            raise e_value
         else:
             if self._unicode and isinstance(value, bytes):
                 if not self.default_encoding:
@@ -463,14 +453,13 @@ def html_quote(value, force=True):
         return ''
     if not isinstance(value, basestring_):
         value = coerce_text(value)
-    if sys.version >= "3" and isinstance(value, bytes):
+    if isinstance(value, bytes):
         value = html_escape(value.decode('latin1'), 1)
         value = value.encode('latin1')
     else:
         value = html_escape(value, 1)
-    if sys.version < "3":
-        if is_unicode(value):
-            value = value.encode('ascii', 'xmlcharrefreplace')
+    if is_unicode(value):
+        value = value.encode('ascii', 'xmlcharrefreplace')
     return value
 
 
@@ -633,7 +622,7 @@ class _Empty(object):
         return 'Empty'
 
     def __unicode__(self):
-        return '' if PY3 else u''
+        return ''
 
     def __iter__(self):
         return iter(())
@@ -641,8 +630,6 @@ class _Empty(object):
     def __bool__(self):
         return False
 
-    if sys.version < "3":
-        __nonzero__ = __bool__
 
 Empty = _Empty()
 del _Empty
@@ -653,6 +640,27 @@ del _Empty
 
 
 def lex(s, name=None, trim_whitespace=True, line_offset=0, delimeters=None):
+    """
+    Lex a string into chunks:
+
+        >>> lex('hey')
+        ['hey']
+        >>> lex('hey {{you}}')
+        ['hey ', ('you', (1, 7))]
+        >>> lex('hey {{')
+        Traceback (most recent call last):
+            ...
+        tempita.TemplateError: No }} to finish last expression at line 1 column 7
+        >>> lex('hey }}')
+        Traceback (most recent call last):
+            ...
+        tempita.TemplateError: }} outside expression at line 1 column 7
+        >>> lex('hey {{ {{')
+        Traceback (most recent call last):
+            ...
+        tempita.TemplateError: {{ inside expression at line 1 column 10
+
+    """
     if delimeters is None:
         delimeters = (Template.default_namespace['start_braces'],
                       Template.default_namespace['end_braces'])
@@ -693,47 +701,6 @@ def lex(s, name=None, trim_whitespace=True, line_offset=0, delimeters=None):
         chunks = trim_lex(chunks)
     return chunks
 
-lex.__doc__ = """
-Lex a string into chunks:
-
-    >>> lex('hey')
-    ['hey']
-    >>> lex('hey {{you}}')
-    ['hey ', ('you', (1, 7))]
-    >>> lex('hey {{')
-    Traceback (most recent call last):
-        ...
-    tempita.TemplateError: No }} to finish last expression at line 1 column 7
-    >>> lex('hey }}')
-    Traceback (most recent call last):
-        ...
-    tempita.TemplateError: }} outside expression at line 1 column 7
-    >>> lex('hey {{ {{')
-    Traceback (most recent call last):
-        ...
-    tempita.TemplateError: {{ inside expression at line 1 column 10
-
-""" if PY3 else """
-Lex a string into chunks:
-
-    >>> lex('hey')
-    ['hey']
-    >>> lex('hey {{you}}')
-    ['hey ', ('you', (1, 7))]
-    >>> lex('hey {{')
-    Traceback (most recent call last):
-        ...
-    TemplateError: No }} to finish last expression at line 1 column 7
-    >>> lex('hey }}')
-    Traceback (most recent call last):
-        ...
-    TemplateError: }} outside expression at line 1 column 7
-    >>> lex('hey {{ {{')
-    Traceback (most recent call last):
-        ...
-    TemplateError: {{ inside expression at line 1 column 10
-
-"""
 
 statement_re = re.compile(r'^(?:if |elif |for |def |inherit |default |py:)')
 single_statements = ['else', 'endif', 'endfor', 'enddef', 'continue', 'break']
@@ -742,6 +709,16 @@ lead_whitespace_re = re.compile(r'^[\t ]*\n')
 
 
 def trim_lex(tokens):
+    r"""
+    Takes a lexed set of tokens, and removes whitespace when there is
+    a directive on a line by itself:
+
+       >>> tokens = lex('{{if x}}\nx\n{{endif}}\ny', trim_whitespace=False)
+       >>> tokens
+       [('if x', (1, 3)), '\nx\n', ('endif', (3, 3)), '\ny']
+       >>> trim_lex(tokens)
+       [('if x', (1, 3)), 'x\n', ('endif', (3, 3)), 'y']
+    """
     last_trim = None
     for i in range(len(tokens)):
         current = tokens[i]
@@ -789,26 +766,6 @@ def trim_lex(tokens):
                     tokens[i + 1] = next_chunk
     return tokens
 
-trim_lex.__doc__ = r"""
-    Takes a lexed set of tokens, and removes whitespace when there is
-    a directive on a line by itself:
-
-       >>> tokens = lex('{{if x}}\nx\n{{endif}}\ny', trim_whitespace=False)
-       >>> tokens
-       [('if x', (1, 3)), '\nx\n', ('endif', (3, 3)), '\ny']
-       >>> trim_lex(tokens)
-       [('if x', (1, 3)), 'x\n', ('endif', (3, 3)), 'y']
-    """ if PY3 else r"""
-    Takes a lexed set of tokens, and removes whitespace when there is
-    a directive on a line by itself:
-
-       >>> tokens = lex('{{if x}}\nx\n{{endif}}\ny', trim_whitespace=False)
-       >>> tokens
-       [('if x', (1, 3)), '\nx\n', ('endif', (3, 3)), '\ny']
-       >>> trim_lex(tokens)
-       [('if x', (1, 3)), 'x\n', ('endif', (3, 3)), 'y']
-    """
-
 
 def find_position(string, index, last_index, last_pos):
     """
@@ -823,18 +780,7 @@ def find_position(string, index, last_index, last_pos):
 
 
 def parse(s, name=None, line_offset=0, delimeters=None):
-
-    if delimeters is None:
-        delimeters = (Template.default_namespace['start_braces'],
-                      Template.default_namespace['end_braces'])
-    tokens = lex(s, name=name, line_offset=line_offset, delimeters=delimeters)
-    result = []
-    while tokens:
-        next_chunk, tokens = parse_expr(tokens, name)
-        result.append(next_chunk)
-    return result
-
-parse.__doc__ = r"""
+    r"""
     Parses a string into a kind of AST
 
         >>> parse('{{x}}')
@@ -889,62 +835,16 @@ parse.__doc__ = r"""
             ...
         tempita.TemplateError: Multi-line py blocks must start
             with a newline at line 1 column 3
-    """ if PY3 else r"""
-    Parses a string into a kind of AST
-
-        >>> parse('{{x}}')
-        [('expr', (1, 3), 'x')]
-        >>> parse('foo')
-        ['foo']
-        >>> parse('{{if x}}test{{endif}}')
-        [('cond', (1, 3), ('if', (1, 3), 'x', ['test']))]
-        >>> parse(
-        ...    'series->{{for x in y}}x={{x}}{{endfor}}'
-        ... )  #doctest: +NORMALIZE_WHITESPACE
-        ['series->',
-            ('for', (1, 11), ('x',), 'y', ['x=', ('expr', (1, 27), 'x')])]
-        >>> parse('{{for x, y in z:}}{{continue}}{{endfor}}')
-        [('for', (1, 3), ('x', 'y'), 'z', [('continue', (1, 21))])]
-        >>> parse('{{py:x=1}}')
-        [('py', (1, 3), 'x=1')]
-        >>> parse(
-        ...    '{{if x}}a{{elif y}}b{{else}}c{{endif}}'
-        ... )  #doctest: +NORMALIZE_WHITESPACE
-        [('cond', (1, 3), ('if', (1, 3), 'x', ['a']),
-            ('elif', (1, 12), 'y', ['b']), ('else', (1, 23), None, ['c']))]
-
-    Some exceptions::
-
-        >>> parse('{{continue}}')
-        Traceback (most recent call last):
-            ...
-        TemplateError: continue outside of for loop at line 1 column 3
-        >>> parse('{{if x}}foo')
-        Traceback (most recent call last):
-            ...
-        TemplateError: No {{endif}} at line 1 column 3
-        >>> parse('{{else}}')
-        Traceback (most recent call last):
-            ...
-        TemplateError: else outside of an if block at line 1 column 3
-        >>> parse('{{if x}}{{for x in y}}{{endif}}{{endfor}}')
-        Traceback (most recent call last):
-            ...
-        TemplateError: Unexpected endif at line 1 column 25
-        >>> parse('{{if}}{{endif}}')
-        Traceback (most recent call last):
-            ...
-        TemplateError: if with no expression at line 1 column 3
-        >>> parse('{{for x y}}{{endfor}}')
-        Traceback (most recent call last):
-            ...
-        TemplateError: Bad for (no "in") in 'x y' at line 1 column 3
-        >>> parse('{{py:x=1\ny=2}}')  #doctest: +NORMALIZE_WHITESPACE
-        Traceback (most recent call last):
-            ...
-        TemplateError: Multi-line py blocks must start
-            with a newline at line 1 column 3
     """
+    if delimeters is None:
+        delimeters = (Template.default_namespace['start_braces'],
+                      Template.default_namespace['end_braces'])
+    tokens = lex(s, name=name, line_offset=line_offset, delimeters=delimeters)
+    result = []
+    while tokens:
+        next_chunk, tokens = parse_expr(tokens, name)
+        result.append(next_chunk)
+    return result
 
 
 def parse_expr(tokens, name, context=()):

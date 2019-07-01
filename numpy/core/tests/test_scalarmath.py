@@ -86,7 +86,7 @@ class TestBaseMath(object):
                 assert_almost_equal(np.square(inp2),
                                     np.multiply(inp2, inp2),  err_msg=msg)
                 # skip true divide for ints
-                if dt != np.int32 or (sys.version_info.major < 3 and not sys.py3kwarning):
+                if dt != np.int32:
                     assert_almost_equal(np.reciprocal(inp2),
                                         np.divide(1, inp2),  err_msg=msg)
 

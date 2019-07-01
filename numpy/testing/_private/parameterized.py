@@ -31,7 +31,6 @@ either expressed or implied, of David Wolever.
 
 """
 import re
-import sys
 import inspect
 import warnings
 from functools import wraps
@@ -45,30 +44,18 @@ except ImportError:
 
 from unittest import TestCase
 
-PY3 = sys.version_info[0] == 3
-PY2 = sys.version_info[0] == 2
 
-
-if PY3:
-    # Python 3 doesn't have an InstanceType, so just use a dummy type.
-    class InstanceType():
-        pass
-    lzip = lambda *a: list(zip(*a))
-    text_type = str
-    string_types = str,
-    bytes_type = bytes
-    def make_method(func, instance, type):
-        if instance is None:
-            return func
-        return MethodType(func, instance)
-else:
-    from types import InstanceType
-    lzip = zip
-    text_type = unicode
-    bytes_type = str
-    string_types = basestring,
-    def make_method(func, instance, type):
-        return MethodType(func, instance, type)
+# Python 3 doesn't have an InstanceType, so just use a dummy type.
+class InstanceType():
+    pass
+lzip = lambda *a: list(zip(*a))
+text_type = str
+string_types = str,
+bytes_type = bytes
+def make_method(func, instance, type):
+    if instance is None:
+        return func
+    return MethodType(func, instance)
 
 _param = namedtuple("param", "args kwargs")
 
@@ -366,14 +353,7 @@ class parameterized(object):
         # Python 3 doesn't let us pull the function out of a bound method.
         unbound_func = nose_func
         if test_self is not None:
-            # Under nose on Py2 we need to return an unbound method to make
-            # sure that the `self` in the method is properly shared with the
-            # `self` used in `setUp` and `tearDown`. But only there. Everyone
-            # else needs a bound method.
-            func_self = (
-                None if PY2 and detect_runner() == "nose" else
-                test_self
-            )
+            func_self = test_self
             nose_func = make_method(nose_func, func_self, type(test_self))
         return unbound_func, (nose_func, ) + p.args + (p.kwargs or {}, )
 

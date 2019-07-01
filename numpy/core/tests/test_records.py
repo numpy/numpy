@@ -1,18 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
-try:
-    # Accessing collections abstract classes from collections
-    # has been deprecated since Python 3.3
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc as collections_abc
 import textwrap
 from os import path
+from pathlib import Path
 import pytest
 
 import numpy as np
-from numpy.compat import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, temppath
@@ -26,12 +20,8 @@ class TestFromrecords(object):
                             names='col1,col2,col3')
         assert_equal(r[0].item(), (456, 'dbe', 1.2))
         assert_equal(r['col1'].dtype.kind, 'i')
-        if sys.version_info[0] >= 3:
-            assert_equal(r['col2'].dtype.kind, 'U')
-            assert_equal(r['col2'].dtype.itemsize, 12)
-        else:
-            assert_equal(r['col2'].dtype.kind, 'S')
-            assert_equal(r['col2'].dtype.itemsize, 3)
+        assert_equal(r['col2'].dtype.kind, 'U')
+        assert_equal(r['col2'].dtype.itemsize, 12)
         assert_equal(r['col3'].dtype.kind, 'f')
 
     def test_fromrecords_0len(self):
@@ -325,7 +315,6 @@ class TestFromrecords(object):
         assert_equal(rec['f1'], [b'', b'', b''])
 
 
-@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
 class TestPathUsage(object):
     # Test that pathlib.Path can be used
     def test_tofile_fromfile(self):

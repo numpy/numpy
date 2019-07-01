@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import builtins
 import functools
 import itertools
 import operator
@@ -21,8 +22,6 @@ from .multiarray import (
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
     zeros, normalize_axis_index)
-if sys.version_info[0] < 3:
-    from .multiarray import newbuffer, getbuffer
 
 from . import overrides
 from . import umath
@@ -37,11 +36,6 @@ from ._ufunc_config import errstate
 bitwise_not = invert
 ufunc = type(sin)
 newaxis = None
-
-if sys.version_info[0] >= 3:
-    import builtins
-else:
-    import __builtin__ as builtins
 
 
 array_function_dispatch = functools.partial(
@@ -73,9 +67,6 @@ __all__ = [
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
     'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
-
-if sys.version_info[0] < 3:
-    __all__.extend(['getbuffer', 'newbuffer'])
 
 
 @set_module('numpy')

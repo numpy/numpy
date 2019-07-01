@@ -1,6 +1,5 @@
 from __future__ import division, absolute_import, print_function
 
-import sys
 import itertools
 import pytest
 
@@ -12,9 +11,6 @@ from numpy.compat import long
 from numpy.testing import (
     assert_, assert_raises, assert_equal, assert_array_equal
     )
-
-if sys.version_info[0] >= 3:
-    xrange = range
 
 
 ndims = 2
@@ -141,9 +137,9 @@ def test_diophantine_fuzz():
                 # small enough so that brute force checking doesn't
                 # take too long)
                 try:
-                    ranges = tuple(xrange(0, a*ub+1, a) for a, ub in zip(A, U))
+                    ranges = tuple(range(0, a*ub+1, a) for a, ub in zip(A, U))
                 except OverflowError:
-                    # xrange on 32-bit Python 2 may overflow
+                    # range on 32-bit Python 2 may overflow
                     continue
 
                 size = 1
@@ -477,7 +473,7 @@ def check_internal_overlap(a, manual_expected=None):
 
     # Brute-force check
     m = set()
-    ranges = tuple(xrange(n) for n in a.shape)
+    ranges = tuple(range(n) for n in a.shape)
     for v in itertools.product(*ranges):
         offset = sum(s*w for s, w in zip(a.strides, v))
         if offset in m:

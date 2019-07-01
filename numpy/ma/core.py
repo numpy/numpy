@@ -22,17 +22,12 @@ Released for unlimited redistribution.
 # pylint: disable-msg=E1002
 from __future__ import division, absolute_import, print_function
 
-import sys
+import builtins
 import operator
 import warnings
 import textwrap
 import re
 from functools import reduce
-
-if sys.version_info[0] >= 3:
-    import builtins
-else:
-    import __builtin__ as builtins
 
 import numpy as np
 import numpy.core.umath as umath
@@ -3869,10 +3864,6 @@ class MaskedArray(ndarray):
     def __str__(self):
         return str(self._insert_masked_print())
 
-    if sys.version_info.major < 3:
-        def __unicode__(self):
-            return unicode(self._insert_masked_print())
-
     def __repr__(self):
         """
         Literal string representation.
@@ -4722,7 +4713,7 @@ class MaskedArray(ndarray):
 
         >>> x = np.ma.array([1, 2, 3])
         >>> x.ids()
-        (166691080, 3083169284L) # may vary
+        (166691080, 3083169284) # may vary
 
         """
         if self._mask is nomask:
@@ -6354,10 +6345,6 @@ class MaskedConstant(MaskedArray):
 
     def __str__(self):
         return str(masked_print_option._display)
-
-    if sys.version_info.major < 3:
-        def __unicode__(self):
-            return unicode(masked_print_option._display)
 
     def __repr__(self):
         if self is MaskedConstant.__singleton:

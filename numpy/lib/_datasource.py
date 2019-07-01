@@ -37,7 +37,6 @@ Example::
 from __future__ import division, absolute_import, print_function
 
 import os
-import sys
 import warnings
 import shutil
 import io
@@ -176,19 +175,13 @@ class _FileOpeners(object):
 
         try:
             import bz2
-            if sys.version_info[0] >= 3:
-                self._file_openers[".bz2"] = bz2.open
-            else:
-                self._file_openers[".bz2"] = _python2_bz2open
+            self._file_openers[".bz2"] = bz2.open
         except ImportError:
             pass
 
         try:
             import gzip
-            if sys.version_info[0] >= 3:
-                self._file_openers[".gz"] = gzip.open
-            else:
-                self._file_openers[".gz"] = _python2_gzipopen
+            self._file_openers[".gz"] = gzip.open
         except ImportError:
             pass
 
@@ -377,10 +370,7 @@ class DataSource(object):
         """Test if path is a net location.  Tests the scheme and netloc."""
 
         # We do this here to reduce the 'import numpy' initial import time.
-        if sys.version_info[0] >= 3:
-            from urllib.parse import urlparse
-        else:
-            from urlparse import urlparse
+        from urllib.parse import urlparse
 
         # BUG : URLs require a scheme string ('http://') to be used.
         #       www.google.com will fail.
@@ -397,14 +387,10 @@ class DataSource(object):
         Creates a copy of the file in the datasource cache.
 
         """
-        # We import these here because importing urllib2 is slow and
+        # We import these here because importing urllib is slow and
         # a significant fraction of numpy's total import time.
-        if sys.version_info[0] >= 3:
-            from urllib.request import urlopen
-            from urllib.error import URLError
-        else:
-            from urllib2 import urlopen
-            from urllib2 import URLError
+        from urllib.request import urlopen
+        from urllib.error import URLError
 
         upath = self.abspath(path)
 
@@ -479,10 +465,7 @@ class DataSource(object):
 
         """
         # We do this here to reduce the 'import numpy' initial import time.
-        if sys.version_info[0] >= 3:
-            from urllib.parse import urlparse
-        else:
-            from urlparse import urlparse
+        from urllib.parse import urlparse
 
         # TODO:  This should be more robust.  Handles case where path includes
         #        the destpath, but not other sub-paths. Failing case:
@@ -549,14 +532,10 @@ class DataSource(object):
         if os.path.exists(path):
             return True
 
-        # We import this here because importing urllib2 is slow and
+        # We import this here because importing urllib is slow and
         # a significant fraction of numpy's total import time.
-        if sys.version_info[0] >= 3:
-            from urllib.request import urlopen
-            from urllib.error import URLError
-        else:
-            from urllib2 import urlopen
-            from urllib2 import URLError
+        from urllib.request import urlopen
+        from urllib.error import URLError
 
         # Test cached url
         upath = self.abspath(path)

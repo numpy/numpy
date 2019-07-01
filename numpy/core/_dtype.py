@@ -19,18 +19,10 @@ _kind_to_stem = {
     'V': 'void',
     'O': 'object',
     'M': 'datetime',
-    'm': 'timedelta'
+    'm': 'timedelta',
+    'S': 'bytes',
+    'U': 'str',
 }
-if sys.version_info[0] >= 3:
-    _kind_to_stem.update({
-        'S': 'bytes',
-        'U': 'str'
-    })
-else:
-    _kind_to_stem.update({
-        'S': 'string',
-        'U': 'unicode'
-    })
 
 
 def _kind_name(dtype):

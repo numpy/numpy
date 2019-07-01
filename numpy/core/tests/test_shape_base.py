@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import pytest
-import sys
 import numpy as np
 from numpy.core import (
     array, arange, atleast_1d, atleast_2d, atleast_3d, block, vstack, hstack,
@@ -159,10 +158,8 @@ class TestHstack(object):
     def test_generator(self):
         with assert_warns(FutureWarning):
             hstack((np.arange(3) for _ in range(2)))
-        if sys.version_info.major > 2:
-            # map returns a list on Python 2
-            with assert_warns(FutureWarning):
-                hstack(map(lambda x: x, np.ones((3, 2))))
+        with assert_warns(FutureWarning):
+            hstack(map(lambda x: x, np.ones((3, 2))))
 
 
 class TestVstack(object):

@@ -9,6 +9,7 @@ import warnings
 import io
 import re
 import pytest
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
@@ -17,7 +18,7 @@ import locale
 import numpy as np
 import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, Path
+from numpy.compat import asbytes, bytes
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
@@ -45,7 +46,6 @@ class TextIO(BytesIO):
         BytesIO.writelines(self, [asbytes(s) for s in lines])
 
 
-MAJVER, MINVER = sys.version_info[:2]
 IS_64BIT = sys.maxsize > 2**32
 try:
     import bz2
@@ -364,7 +364,6 @@ class TestSaveTxt(object):
         c.seek(0)
         assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
 
-    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
     def test_multifield_view(self):
         a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
         v = a[['x', 'z']]
@@ -530,11 +529,10 @@ class TestSaveTxt(object):
         # our gz wrapper support encoding
         suffixes = ['', '.gz']
         # stdlib 2 versions do not support encoding
-        if MAJVER > 2:
-            if HAS_BZ2:
-                suffixes.append('.bz2')
-            if HAS_LZMA:
-                suffixes.extend(['.xz', '.lzma'])
+        if HAS_BZ2:
+            suffixes.append('.bz2')
+        if HAS_LZMA:
+            suffixes.extend(['.xz', '.lzma'])
         with tempdir() as tmpdir:
             for suffix in suffixes:
                 np.savetxt(os.path.join(tmpdir, 'test.csv' + suffix), a,
@@ -605,17 +603,14 @@ class LoadTxtBase(object):
                     assert_array_equal(res, wanted)
 
     # Python2 .open does not support encoding
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_gzip(self):
         self.check_compressed(gzip.open, ('.gz',))
 
     @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_bz2(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
     @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_lzma(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
@@ -2340,7 +2335,6 @@ M   33  21.99
         assert_equal(test['f2'], 1024)
 
 
-@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
 class TestPathUsage(object):
     # Test that pathlib.Path can be used
     def test_loadtxt(self):

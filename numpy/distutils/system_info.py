@@ -132,12 +132,8 @@ import textwrap
 
 from glob import glob
 from functools import reduce
-if sys.version_info[0] < 3:
-    from ConfigParser import NoOptionError
-    from ConfigParser import RawConfigParser as ConfigParser
-else:
-    from configparser import NoOptionError
-    from configparser import RawConfigParser as ConfigParser
+from configparser import NoOptionError
+from configparser import RawConfigParser as ConfigParser
 # It seems that some people are importing ConfigParser from here so is
 # good to keep its class name. Use of RawConfigParser is needed in
 # order to be able to load path names with percent in them, like
@@ -250,32 +246,29 @@ if sys.platform == 'win32':
         default_include_dirs.extend(
             os.path.join(library_root, d) for d in _include_dirs)
 
-    if sys.version_info >= (3, 3):
-        # VCpkg is the de-facto package manager on windows for C/C++
-        # libraries. If it is on the PATH, then we append its paths here.
-        # We also don't re-implement shutil.which for Python 2.7 because
-        # vcpkg doesn't support MSVC 2008.
-        vcpkg = shutil.which('vcpkg')
-        if vcpkg:
-            vcpkg_dir = os.path.dirname(vcpkg)
-            if platform.architecture() == '32bit':
-                specifier = 'x86'
-            else:
-                specifier = 'x64'
+    # VCpkg is the de-facto package manager on windows for C/C++
+    # libraries. If it is on the PATH, then we append its paths here.
+    vcpkg = shutil.which('vcpkg')
+    if vcpkg:
+        vcpkg_dir = os.path.dirname(vcpkg)
+        if platform.architecture() == '32bit':
+            specifier = 'x86'
+        else:
+            specifier = 'x64'
 
-            vcpkg_installed = os.path.join(vcpkg_dir, 'installed')
-            for vcpkg_root in [
-                os.path.join(vcpkg_installed, specifier + '-windows'),
-                os.path.join(vcpkg_installed, specifier + '-windows-static'),
-            ]:
-                add_system_root(vcpkg_root)
+        vcpkg_installed = os.path.join(vcpkg_dir, 'installed')
+        for vcpkg_root in [
+            os.path.join(vcpkg_installed, specifier + '-windows'),
+            os.path.join(vcpkg_installed, specifier + '-windows-static'),
+        ]:
+            add_system_root(vcpkg_root)
 
-        # Conda is another popular package manager that provides libraries
-        conda = shutil.which('conda')
-        if conda:
-            conda_dir = os.path.dirname(conda)
-            add_system_root(os.path.join(conda_dir, '..', 'Library'))
-            add_system_root(os.path.join(conda_dir, 'Library'))
+    # Conda is another popular package manager that provides libraries
+    conda = shutil.which('conda')
+    if conda:
+        conda_dir = os.path.dirname(conda)
+        add_system_root(os.path.join(conda_dir, '..', 'Library'))
+        add_system_root(os.path.join(conda_dir, 'Library'))
 
 else:
     default_lib_dirs = libpaths(['/usr/local/lib', '/opt/lib', '/usr/lib',
@@ -2015,8 +2008,6 @@ class openblas_lapack_info(openblas_info):
             extra_args = info['extra_link_args']
         except Exception:
             extra_args = []
-        if sys.version_info < (3, 5) and sys.version_info > (3, 0) and c.compiler_type == "msvc":
-            extra_args.append("/MANIFEST")
         try:
             with open(src, 'wt') as f:
                 f.write(s)

@@ -1,8 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-import sys
 import pytest
+import urllib.request as urllib_request
+from urllib.parse import urlparse
+from urllib.error import URLError
 from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
 
@@ -10,16 +12,6 @@ import numpy.lib._datasource as datasource
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns
     )
-
-if sys.version_info[0] >= 3:
-    import urllib.request as urllib_request
-    from urllib.parse import urlparse
-    from urllib.error import URLError
-else:
-    import urllib2 as urllib_request
-    from urlparse import urlparse
-    from urllib2 import URLError
-
 
 def urlopen_stub(url, data=None):
     '''Stub to replace urlopen for testing.'''
@@ -162,24 +154,6 @@ class TestDataSourceOpen(object):
         fp = self.ds.open(filepath)
         result = fp.readline()
         fp.close()
-        assert_equal(magic_line, result)
-
-    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Python 2 only")
-    def test_Bz2File_text_mode_warning(self):
-        try:
-            import bz2
-        except ImportError:
-            # We don't have the bz2 capabilities to test.
-            pytest.skip()
-        # Test datasource's internal file_opener for BZip2 files.
-        filepath = os.path.join(self.tmpdir, 'foobar.txt.bz2')
-        fp = bz2.BZ2File(filepath, 'w')
-        fp.write(magic_line)
-        fp.close()
-        with assert_warns(RuntimeWarning):
-            fp = self.ds.open(filepath, 'rt')
-            result = fp.readline()
-            fp.close()
         assert_equal(magic_line, result)
 
 

@@ -7,11 +7,7 @@ from numpy.testing import (
         assert_array_almost_equal, assert_array_equal, assert_raises,
         )
 import threading
-import sys
-if sys.version_info[0] >= 3:
-    import queue
-else:
-    import Queue as queue
+import queue
 
 
 def fft1(x):

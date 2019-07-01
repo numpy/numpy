@@ -42,12 +42,8 @@ __all__ = [
 
 
 _globalvar = 0
-if sys.version_info[0] >= 3:
-    _unicode = str
-    _bytes = bytes
-else:
-    _unicode = unicode
-    _bytes = str
+_unicode = str
+_bytes = bytes
 _len = len
 
 array_function_dispatch = functools.partial(
@@ -1962,22 +1958,11 @@ class chararray(ndarray):
         # strings in the new array.
         itemsize = long(itemsize)
 
-        if sys.version_info[0] >= 3 and isinstance(buffer, _unicode):
-            # On Py3, unicode objects do not have the buffer interface
-            filler = buffer
-            buffer = None
-        else:
-            filler = None
-
+        # On Py3, unicode objects do not have the buffer interface
+        filler = buffer
         _globalvar = 1
-        if buffer is None:
-            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
-                                   order=order)
-        else:
-            self = ndarray.__new__(subtype, shape, (dtype, itemsize),
-                                   buffer=buffer,
-                                   offset=offset, strides=strides,
-                                   order=order)
+        self = ndarray.__new__(subtype, shape, (dtype, itemsize),
+                               order=order)
         if filler is not None:
             self[...] = filler
         _globalvar = 0

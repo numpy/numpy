@@ -5,16 +5,12 @@ from __future__ import division, absolute_import, print_function
 
 __docformat__ = "restructuredtext en"
 
-import sys
 import numpy as np
 import numpy.core.numeric as nx
 from numpy.compat import asbytes, asunicode, bytes, basestring
 
-if sys.version_info[0] >= 3:
-    from builtins import bool, int, float, complex, object, str
-    unicode = str
-else:
-    from __builtin__ import bool, int, float, complex, object, unicode, str
+from builtins import bool, int, float, complex, object, str
+unicode = str
 
 
 def _decode_line(line, encoding=None):

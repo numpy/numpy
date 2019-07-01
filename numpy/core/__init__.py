@@ -130,16 +130,11 @@ def _ufunc_reduce(func):
     return _ufunc_reconstruct, (whichmodule(func, name), name)
 
 
-import sys
-if sys.version_info[0] >= 3:
-    import copyreg
-else:
-    import copy_reg as copyreg
+import copyreg
 
 copyreg.pickle(ufunc, _ufunc_reduce, _ufunc_reconstruct)
 # Unclutter namespace (must keep _ufunc_reconstruct for unpickling)
 del copyreg
-del sys
 del _ufunc_reduce
 
 from numpy._pytesttester import PytestTester

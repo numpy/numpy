@@ -332,7 +332,6 @@ class TestEqual(TestArrayEqual):
         with pytest.raises(AssertionError) as exc_info:
             self._assert_func(np.array([1, 2]), np.array([[1, 2]]))
         msg = str(exc_info.value)
-        msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
         msg_reference = textwrap.dedent("""\
 
         Arrays are not equal
@@ -341,10 +340,7 @@ class TestEqual(TestArrayEqual):
          x: array([1, 2])
          y: array([[1, 2]])""")
 
-        try:
-            assert_equal(msg, msg_reference)
-        except AssertionError:
-            assert_equal(msg2, msg_reference)
+        assert_equal(msg, msg_reference)
 
     def test_object(self):
         #gh-12942

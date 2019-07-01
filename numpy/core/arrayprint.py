@@ -24,19 +24,12 @@ __docformat__ = 'restructuredtext'
 # scalars are printed inside an ndarray. Only the latter strs are currently
 # user-customizable.
 
-import sys
 import functools
 import numbers
-if sys.version_info[0] >= 3:
-    try:
-        from _thread import get_ident
-    except ImportError:
-        from _dummy_thread import get_ident
-else:
-    try:
-        from thread import get_ident
-    except ImportError:
-        from dummy_thread import get_ident
+try:
+    from _thread import get_ident
+except ImportError:
+    from _dummy_thread import get_ident
 
 import numpy as np
 from . import numerictypes as _nt

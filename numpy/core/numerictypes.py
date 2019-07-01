@@ -82,7 +82,6 @@ Exported symbols include:
 from __future__ import division, absolute_import, print_function
 
 import types as _types
-import sys
 import numbers
 import warnings
 
@@ -122,11 +121,8 @@ from ._dtype import _kind_name
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-if sys.version_info[0] >= 3:
-    from builtins import bool, int, float, complex, object, str
-    unicode = str
-else:
-    from __builtin__ import bool, int, float, complex, object, unicode, str
+from builtins import bool, int, float, complex, object, str
+unicode = str
 
 
 # We use this later

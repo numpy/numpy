@@ -173,7 +173,7 @@ def main(argv):
             sys.modules['__main__'] = types.ModuleType('__main__')
             ns = dict(__name__='__main__',
                       __file__=extra_argv[0])
-            exec_(script, ns)
+            exec(script, ns)
             sys.exit(0)
         else:
             import code
@@ -466,26 +466,6 @@ def lcov_generate():
     else:
         print("HTML output generated under build/lcov/")
 
-
-#
-# Python 3 support
-#
-
-if sys.version_info[0] >= 3:
-    import builtins
-    exec_ = getattr(builtins, "exec")
-else:
-    def exec_(code, globs=None, locs=None):
-        """Execute code in a namespace."""
-        if globs is None:
-            frame = sys._getframe(1)
-            globs = frame.f_globals
-            if locs is None:
-                locs = frame.f_locals
-            del frame
-        elif locs is None:
-            locs = globs
-        exec("""exec code in globs, locs""")
 
 if __name__ == "__main__":
     main(argv=sys.argv[1:])

@@ -9,10 +9,7 @@ from numpy.testing import assert_, assert_equal, assert_raises_regex
 from numpy.lib import deprecate
 import numpy.lib.utils as utils
 
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
 
 @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")

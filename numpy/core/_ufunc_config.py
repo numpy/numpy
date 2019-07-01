@@ -5,12 +5,7 @@ This provides helpers which wrap `umath.geterrobj` and `umath.seterrobj`
 """
 from __future__ import division, absolute_import, print_function
 
-try:
-    # Accessing collections abstract classes from collections
-    # has been deprecated since Python 3.3
-    import collections.abc as collections_abc
-except ImportError:
-    import collections as collections_abc
+import collections.abc as collections_abc
 import contextlib
 
 from .overrides import set_module
