@@ -5616,6 +5616,10 @@ class MaskedArray(ndarray):
         fill_value : {var}, optional
             Value used to fill in the masked values.
             If None, use the output of `minimum_fill_value`.
+        keepdims : bool, optional
+            If this is set to True, the axes which are reduced are left
+            in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the array.
 
         Returns
         -------
@@ -5746,6 +5750,10 @@ class MaskedArray(ndarray):
         fill_value : {var}, optional
             Value used to fill in the masked values.
             If None, use the output of maximum_fill_value().
+        keepdims : bool, optional
+            If this is set to True, the axes which are reduced are left
+            in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the array.
 
         Returns
         -------
@@ -5810,6 +5818,10 @@ class MaskedArray(ndarray):
             but the type will be cast if necessary.
         fill_value : {var}, optional
             Value used to fill in the masked values.
+        keepdims : bool, optional
+            If this is set to True, the axes which are reduced are left
+            in the result as dimensions with size one. With this option,
+            the result will broadcast correctly against the array.
 
         Returns
         -------
