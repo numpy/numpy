@@ -426,7 +426,7 @@ if __name__ == '__main__':
     if options.define_variable:
         m = re.search(r'([\S]+)=([\S]+)', options.define_variable)
         if not m:
-            raise ValueError("--define-variable option should be of " \
+            raise ValueError("--define-variable option should be of "
                              "the form --define-variable=foo=bar")
         else:
             name = m.group(1)
