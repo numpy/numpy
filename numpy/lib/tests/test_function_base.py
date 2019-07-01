@@ -1105,7 +1105,7 @@ class TestAngle(object):
             np.arctan(3.0 / 1.0),
             np.arctan(1.0), 0, np.pi / 2, np.pi, -np.pi / 2.0,
             -np.arctan(3.0 / 1.0), np.pi - np.arctan(3.0 / 1.0)]
-        z = angle(x, deg=1)
+        z = angle(x, deg=True)
         zo = np.array(yo) * 180 / np.pi
         assert_array_almost_equal(y, yo, 11)
         assert_array_almost_equal(z, zo, 11)
@@ -1920,9 +1920,9 @@ class TestCov(object):
                                          [-np.inf, np.inf]]))
 
     def test_1D_rowvar(self):
-        assert_allclose(cov(self.x3), cov(self.x3, rowvar=0))
+        assert_allclose(cov(self.x3), cov(self.x3, rowvar=False))
         y = np.array([0.0780, 0.3107, 0.2111, 0.0334, 0.8501])
-        assert_allclose(cov(self.x3, y), cov(self.x3, y, rowvar=0))
+        assert_allclose(cov(self.x3, y), cov(self.x3, y, rowvar=False))
 
     def test_1D_variance(self):
         assert_allclose(cov(self.x3, ddof=1), np.var(self.x3, ddof=1))
