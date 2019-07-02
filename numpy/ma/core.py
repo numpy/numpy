@@ -3664,6 +3664,13 @@ class MaskedArray(ndarray):
     @fill_value.setter
     def fill_value(self, value=None):
         target = _check_fill_value(value, self.dtype)
+        if not target.ndim == 0:
+            warnings.warn(
+                "Non-scalar arrays for the fill value are deprecated. Use "
+                "arrays with scalar values instead. The filled function "
+                "still supports any array as `fill_value`.",
+                DeprecationWarning, stacklevel=2)
+
         _fill_value = self._fill_value
         if _fill_value is None:
             # Create the attribute if it was undefined
@@ -3729,11 +3736,6 @@ class MaskedArray(ndarray):
             fill_value = self.fill_value
         else:
             fill_value = _check_fill_value(fill_value, self.dtype)
-            if not (fill_value.ndim == 0 or self.shape == fill_value.shape):
-                warnings.warn(
-                    "Non-scalar arrays for fill values are deprecated. Use "
-                    "arrays with scalar values instead",
-                    DeprecationWarning, stacklevel=2)
 
         if self is masked_singleton:
             return np.asanyarray(fill_value)
