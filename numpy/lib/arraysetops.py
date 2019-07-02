@@ -144,22 +144,29 @@ def _unpack_tuple(x):
 
 
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None):
+                       return_counts=None, axis=None, return_mask=None,
+                       return_data=None, assume_sorted=None,
+                       sort_inplace=None):
     return (ar,)
 
 
 @array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None):
+           return_counts=False, axis=None, return_mask=False,
+           return_data=True, assume_sorted=False, sort_inplace=False):
     """
     Find the unique elements of an array.
 
-    Returns the sorted unique elements of an array. There are three optional
+    Returns the sorted unique elements of an array. There are four optional
     outputs in addition to the unique elements:
 
-    * the indices of the input array that give the unique values
-    * the indices of the unique array that reconstruct the input array
-    * the number of times each unique value comes up in the input array
+    * The indices of the input array that give the unique values
+    * The indices of the unique array that reconstruct the input array
+    * The number of times each unique value comes up in the input array
+    * The mask of the input array that gives the unique values
+
+    If data comes presorted, some operations may be skipped, which can speed
+    up the process and require less memory for temporary storage.
 
     Parameters
     ----------
@@ -188,8 +195,29 @@ def unique(ar, return_index=False, return_inverse=False,
 
         .. versionadded:: 1.13.0
 
+    return_mask : bool, optional
+        If True, also return a mask of `ar` (along the specified axis,
+        if provided, or in the flattened array) that result in the unique array.
+    return_data : bool, optional
+        If False, do not return the unique contents of the array. Useful only
+        in conjunction with one of the other optional returns to avoid computing
+        the actual unique data if not required by the caller.
+    assume_sorted : bool, optional
+        if True, the input will be assumed to be sorted in the relevant axis,
+        and the sort operation will be skipped.
+    sort_inplace : bool, optional
+        if True, the input will be sorted in-place if needed to compute the
+        result (ie: if neither unique_indices nor unique_inverse 
+        is specified, and if the shape of the input allows it), avoiding one
+        temporary copy. For multi-dimensional arrays, a copy may still be
+        needed, so the original array may still end up unsorted.
+
+
     Returns
     -------
+    The return value will be a tuple iff more than one of the following
+    is requested. Otherwise, it will simply return the result.
+
     unique : ndarray
         The sorted unique values.
     unique_indices : ndarray, optional
@@ -203,6 +231,9 @@ def unique(ar, return_index=False, return_inverse=False,
         original array. Only provided if `return_counts` is True.
 
         .. versionadded:: 1.9.0
+    unique_mask : ndarray, optional
+        The mask of the original array that yields the unique values.
+        Only provided if `return_mask` is True.
 
     See Also
     --------
@@ -245,6 +276,17 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> a[indices]
     array(['a', 'b', 'c'], dtype='<U1')
 
+    Return a mask of the original array that give the unique values:
+
+    >>> a = np.array(['a', 'b', 'b', 'c', 'a'])
+    >>> indices = np.unique(a, return_mask=True, return_data=False)
+    >>> indices
+    array([True, True, False, True, False],
+           dtype=bool)
+    >>> a[indices]
+    array(['a', 'b', 'c'],
+           dtype='|S1')
+
     Reconstruct the input array from the unique values:
 
     >>> a = np.array([1, 2, 6, 4, 2, 3, 2])
@@ -256,10 +298,35 @@ def unique(ar, return_index=False, return_inverse=False,
     >>> u[indices]
     array([1, 2, 6, ..., 2, 3, 2])
 
+    Obtain unique occurrences with the least amount of overhead
+    (sort in-place, instead on a temporary copy):
+
+    >>> a = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3])
+    >>> a.sort()
+    >>> u = np.unique(a, assume_sorted=True)
+    >>> u
+    array([1,2,3])
+
+    >>> a = np.array([1, 2, 3, 1, 2, 3, 1, 2, 3])
+    >>> u = np.unique(a, sort_inplace=True)
+    >>> u
+    array([1,2,3])
+    >>> a
+    array([1,1,1,2,2,2,3,3,3])
+
     """
+    orig_ar = ar
     ar = np.asanyarray(ar)
+
+    indirect_sort = return_index or return_inverse
+    if indirect_sort:
+        # We won't perform an in-place sort even if requested
+        sort_inplace = False
+
     if axis is None:
-        ret = _unique1d(ar, return_index, return_inverse, return_counts)
+        ret = _unique1d(ar, return_index, return_inverse, return_counts,
+                        return_mask, return_data, assume_sorted,
+                        sort_inplace, assume_sorted or sort_inplace)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -288,42 +355,95 @@ def unique(ar, return_index=False, return_inverse=False,
         uniq = np.swapaxes(uniq, 0, axis)
         return uniq
 
+    consolidated_base = np.array_view_root(consolidated)
+    orig_base = np.array_view_root(orig_ar)
+    if not indirect_sort and orig_base is not consolidated_base:
+        # We're operating on a copy, so we might as well
+        # do an in-place sort on that copy
+        sort_inplace = True
+
+    # The mask is sorted iff the input ends up sorted
+    mask_is_sorted = assume_sorted or (sort_inplace
+        and orig_base is consolidated_base)
+
     output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts)
-    output = (reshape_uniq(output[0]),) + output[1:]
+                       return_inverse, return_counts,
+                       return_mask, return_data, assume_sorted,
+                       sort_inplace, mask_is_sorted)
+
+    if return_data:
+        uniq = reshape_uniq(output[0])
+        output = (uniq,) + output[1:]
+
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False):
+              return_counts=False, return_mask=False,
+              return_data=True, assume_sorted=False,
+              sort_inplace=False, mask_is_sorted=False):
     """
     Find the unique elements of an array, ignoring shape.
     """
-    ar = np.asanyarray(ar).flatten()
+    ar = np.asanyarray(ar)
 
     optional_indices = return_index or return_inverse
 
+    if (not assume_sorted and return_mask and not mask_is_sorted):
+        # Will need the permutation to compute masks
+        optional_indices = True
+
+    if ((not optional_indices and not assume_sorted and not sort_inplace)
+        or ar.ndim != 1):
+        # Otherwise, we don't need to make a copy
+        if sort_inplace and ar.ndim == 2 and ar.shape[1] == 1:
+            # consolidated (n x 1) matrix, no need to copy
+            ar = ar.ravel()
+        else:
+            ar = ar.flatten()
+            if mask_is_sorted and not assume_sorted:
+                # We'll work on a copy, so mask cannot be sorted
+                mask_is_sorted = False
+                if return_mask:
+                    optional_indices = True
+
     if optional_indices:
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
-        aux = ar[perm]
-    else:
+        ar = ar[perm]
+    elif not assume_sorted:
         ar.sort()
-        aux = ar
-    mask = np.empty(aux.shape, dtype=np.bool_)
+    mask = np.empty(ar.shape, dtype=np.bool_)
     mask[:1] = True
-    mask[1:] = aux[1:] != aux[:-1]
+    mask[1:] = ar[1:] != ar[:-1]
 
-    ret = (aux[mask],)
-    if return_index:
-        ret += (perm[mask],)
+    ret = ()
+    if return_data:
+        ret += (ar[mask],)
+    del ar
+    if return_index or (return_mask and not assume_sorted
+                        and not mask_is_sorted):
+        idx = perm[mask]
+        if return_index:
+            ret += (idx,)
     if return_inverse:
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)
         inv_idx[perm] = imask
         ret += (inv_idx,)
+    perm = None
     if return_counts:
-        idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
-        ret += (np.diff(idx),)
+        cidx = np.concatenate(np.nonzero(mask) + ([mask.size],))
+        ret += (np.diff(cidx),)
+        del cidx
+    if return_mask:
+        if assume_sorted or mask_is_sorted:
+            # Mask is already in input order
+            imask = mask
+        else:
+            # Build a mask in input order
+            imask = np.zeros(mask.shape, np.bool_)
+            imask[idx] = True
+        ret += (imask,)
     return ret
 
 

@@ -422,45 +422,86 @@ class TestUnique(object):
             assert_array_equal(v, b, msg)
 
             msg = base_msg.format('return_index', dt)
-            v, j = unique(a, 1, 0, 0)
+            v, j = unique(a, 1, 0, 0, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, i1, msg)
 
             msg = base_msg.format('return_inverse', dt)
-            v, j = unique(a, 0, 1, 0)
+            v, j = unique(a, 0, 1, 0, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, i2, msg)
 
             msg = base_msg.format('return_counts', dt)
-            v, j = unique(a, 0, 0, 1)
+            v, j = unique(a, 0, 0, 1, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, c, msg)
 
+            msg = base_msg.format('return_mask', dt)
+            v, j = unique(a, 0, 0, 0, None, 1, 1)
+            assert_array_equal(v, b, msg)
+            assert_array_equal(np.sort(np.array(a)[j]), b, msg)
+
             msg = base_msg.format('return_index and return_inverse', dt)
-            v, j1, j2 = unique(a, 1, 1, 0)
+            v, j1, j2 = unique(a, 1, 1, 0, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, i2, msg)
 
             msg = base_msg.format('return_index and return_counts', dt)
-            v, j1, j2 = unique(a, 1, 0, 1)
+            v, j1, j2 = unique(a, 1, 0, 1, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, c, msg)
 
             msg = base_msg.format('return_inverse and return_counts', dt)
-            v, j1, j2 = unique(a, 0, 1, 1)
+            v, j1, j2 = unique(a, 0, 1, 1, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i2, msg)
             assert_array_equal(j2, c, msg)
 
             msg = base_msg.format(('return_index, return_inverse '
                                    'and return_counts'), dt)
-            v, j1, j2, j3 = unique(a, 1, 1, 1)
+            v, j1, j2, j3 = unique(a, 1, 1, 1, None, 0, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, i2, msg)
             assert_array_equal(j3, c, msg)
+
+            msg = base_msg.format('return_index and not return_data', dt)
+            v = unique(a, 1, 0, 0, None, 0, 0)
+            assert_array_equal(v, i1, msg)
+
+            msg = base_msg.format('return_inverse and not return_data', dt)
+            v = unique(a, 0, 1, 0, None, 0, 0)
+            assert_array_equal(v, i2, msg)
+
+            msg = base_msg.format('return_counts and not return_data', dt)
+            v = unique(a, 0, 0, 1, None, 0, 0)
+            assert_array_equal(v, c, msg)
+
+            msg = base_msg.format('return_mask and not return_data', dt)
+            v = unique(a, 0, 0, 0, None, 1, 0)
+            assert_array_equal(np.sort(np.array(a)[v]), b, msg)
+
+            msg = base_msg.format('assume_sorted', dt)
+            sa = np.sort(np.array(a))
+            v = unique(sa, 0, 0, 0, None, 0, 1, 1)
+            assert_array_equal(v, b, msg)
+
+            msg = base_msg.format('assume_sorted and return_mask '
+                                  'and not return_data', dt)
+            v = unique(sa, 0, 0, 0, None, 1, 0, 1)
+            assert_array_equal(sa[v], b, msg)
+
+            msg = base_msg.format('sort_inplace', dt)
+            sa = np.array(a)
+            v = unique(sa, 0, 0, 0, None, 0, 1, 0, 1)
+            assert_array_equal(v, b, msg)
+
+            msg = base_msg.format('assume_sorted after sort_inplace '
+                                  'and return_mask and not return_data', dt)
+            v = unique(sa, 0, 0, 0, None, 1, 0, 1)
+            assert_array_equal(sa[v], b, msg)
 
         a = [5, 7, 1, 2, 1, 5, 7]*10
         b = [1, 2, 5, 7]
@@ -604,20 +645,91 @@ class TestUnique(object):
         result = data3d[..., :1]
         assert_array_equal(unique(data3d, axis=2), result, msg)
 
-        uniq, idx, inv, cnt = unique(data, axis=0, return_index=True,
-                                     return_inverse=True, return_counts=True)
+        uniq, idx, inv, cnt, msk = unique(data, axis=0, return_index=True,
+                                          return_inverse=True, return_counts=True,
+                                          return_mask=True)
         msg = "Unique's return_index=True failed with axis=0"
         assert_array_equal(data[idx], uniq, msg)
         msg = "Unique's return_inverse=True failed with axis=0"
         assert_array_equal(uniq[inv], data)
         msg = "Unique's return_counts=True failed with axis=0"
         assert_array_equal(cnt, np.array([2, 2]), msg)
+        msg = "Unique's return_mask=True failed with axis=0"
+        assert_array_equal(np.sort(data[msk], axis=0),
+                           np.sort(uniq, axis=0), msg)
 
-        uniq, idx, inv, cnt = unique(data, axis=1, return_index=True,
-                                     return_inverse=True, return_counts=True)
+        msg = "Unique's return_mask=True return_data=False failed with axis=0"
+        msk = unique(data, axis=0, return_mask=True, return_data=False)
+        assert_array_equal(np.sort(data[msk], axis=0),
+                           np.sort(uniq, axis=0), msg)
+
+        uniq, idx, inv, cnt, msk = unique(data, axis=1, return_index=True,
+                                          return_inverse=True, return_counts=True,
+                                          return_mask=True)
         msg = "Unique's return_index=True failed with axis=1"
         assert_array_equal(data[:, idx], uniq)
         msg = "Unique's return_inverse=True failed with axis=1"
         assert_array_equal(uniq[:, inv], data)
         msg = "Unique's return_counts=True failed with axis=1"
         assert_array_equal(cnt, np.array([2, 1, 1]), msg)
+
+        msg = "Unique's return_mask=True failed with axis=1"
+        assert_array_equal(np.sort(data[:, msk], axis=1),
+                           np.sort(uniq, axis=1), msg)
+
+        msg = "Unique's return_mask=True return_data=False failed with axis=1"
+        msk = unique(data, axis=1, return_mask=True, return_data=False)
+        assert_array_equal(np.sort(data[:, msk], axis=1),
+                           np.sort(uniq, axis=1), msg)
+
+        # Sort in-place, but not really (return_index inhibits it)
+        # Sorted along axis=0
+        odata = data.copy()
+        uniq, idx, inv, cnt, msk = unique(data, axis=0, return_index=True,
+                                          return_inverse=True, return_counts=True,
+                                          return_mask=True, sort_inplace=True)
+        msg = "Unique's sort_inplace=True return_index=True failed with axis=0"
+        assert_array_equal(data[idx], uniq, msg)
+        msg = "Unique's sort_inplace=True return_inverse=True failed with axis=0"
+        assert_array_equal(uniq[inv], data)
+        msg = "Unique's sort_inplace=True return_counts=True failed with axis=0"
+        assert_array_equal(cnt, np.array([2, 2]), msg)
+        msg = "Unique's sort_inplace=True return_mask=True failed with axis=0"
+        assert_array_equal(np.sort(data[msk], axis=0),
+                           np.sort(uniq, axis=0), msg)
+
+        # Sorted along axis=1
+        data = odata.copy()
+        uniq, idx, inv, cnt, msk = unique(data, axis=1, return_index=True,
+                                          return_inverse=True, return_counts=True,
+                                          return_mask=True, sort_inplace=True)
+        msg = "Unique's sort_inplace=True return_index=True failed with axis=1"
+        assert_array_equal(data[:, idx], uniq, msg)
+        msg = "Unique's sort_inplace=True return_inverse=True failed with axis=1"
+        assert_array_equal(uniq[:, inv], data)
+        msg = "Unique's sort_inplace=True return_counts=True failed with axis=1"
+        assert_array_equal(cnt, np.array([2, 1, 1]), msg)
+        msg = "Unique's sort_inplace=True return_mask=True failed with axis=1"
+        assert_array_equal(np.sort(data[:, msk], axis=1),
+                           np.sort(uniq, axis=1), msg)
+
+        # Sort in-place
+        # Sorted along axis=0
+        odata = data.copy()
+        uniq, cnt, msk = unique(data, axis=0, return_counts=True,
+                                return_mask=True, sort_inplace=True)
+        msg = "Unique's sort_inplace=True return_counts=True failed with axis=0"
+        assert_array_equal(cnt, np.array([2, 2]), msg)
+        msg = "Unique's sort_inplace=True return_mask=True failed with axis=0"
+        assert_array_equal(np.sort(data[msk], axis=0),
+                           np.sort(uniq, axis=0), msg)
+
+        # Sorted along axis=1
+        data = odata.copy()
+        uniq, cnt, msk = unique(data, axis=1, return_counts=True,
+                                return_mask=True, sort_inplace=True)
+        msg = "Unique's sort_inplace=True return_counts=True failed with axis=1"
+        assert_array_equal(cnt, np.array([2, 1, 1]), msg)
+        msg = "Unique's sort_inplace=True return_mask=True failed with axis=1"
+        assert_array_equal(np.sort(data[:, msk], axis=1),
+                           np.sort(uniq, axis=1), msg)

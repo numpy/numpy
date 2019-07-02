@@ -72,7 +72,7 @@ __all__ = [
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
+    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError', 'array_view_root' ]
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -2389,6 +2389,39 @@ def array_equiv(a1, a2):
         return False
 
     return bool(asarray(a1 == a2).all())
+
+
+@set_module('numpy')
+def array_view_root(a1):
+    """
+    If the array is a view of another's data, it will return
+    the root array in the chain. Otherwise, it returns a1.
+
+    Parameters
+    ----------
+    a1 : array_like
+        Input array.
+
+    Returns
+    -------
+    out : array_like
+        The root array
+
+    >>> a = np.array([[1, 2], [3, 4]])
+    >>> b = a.ravel()
+    >>> c = b.reshape((2, 2), order = 'F')
+    >>> np.array_view_root(a) is a
+    True
+    >>> np.array_view_root(b) is a
+    True
+    >>> np.array_view_root(c) is a
+    True
+
+    """
+    base = a1
+    while isinstance(base, ndarray) and base.base is not None:
+        base = base.base
+    return base
 
 
 Inf = inf = infty = Infinity = PINF
