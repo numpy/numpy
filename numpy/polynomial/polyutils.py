@@ -173,7 +173,7 @@ def as_series(alist, trim=True):
     [array([2.]), array([1.1, 0. ])]
 
     """
-    arrays = [np.array(a, ndmin=1, copy=0) for a in alist]
+    arrays = [np.array(a, ndmin=1, copy=False) for a in alist]
     if min([a.size for a in arrays]) == 0:
         raise ValueError("Coefficient array is empty")
     if any([a.ndim != 1 for a in arrays]):
@@ -195,7 +195,7 @@ def as_series(alist, trim=True):
             dtype = np.common_type(*arrays)
         except Exception:
             raise ValueError("Coefficient arrays have no common type")
-        ret = [np.array(a, copy=1, dtype=dtype) for a in arrays]
+        ret = [np.array(a, copy=True, dtype=dtype) for a in arrays]
     return ret
 
 
@@ -429,7 +429,7 @@ def _vander2d(vander_f, x, y, deg):
         _deprecate_as_int(d, "degrees")
         for d in deg
     ]
-    x, y = np.array((x, y), copy=0) + 0.0
+    x, y = np.array((x, y), copy=False) + 0.0
 
     vx = vander_f(x, degx)
     vy = vander_f(y, degy)
@@ -452,7 +452,7 @@ def _vander3d(vander_f, x, y, z, deg):
         _deprecate_as_int(d, "degrees")
         for d in deg
     ]
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
+    x, y, z = np.array((x, y, z), copy=False) + 0.0
 
     vx = vander_f(x, degx)
     vy = vander_f(y, degy)

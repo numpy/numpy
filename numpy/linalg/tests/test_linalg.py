@@ -650,7 +650,7 @@ class SVDBaseTests(object):
 class SVDCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
-        u, s, vt = linalg.svd(a, 0)
+        u, s, vt = linalg.svd(a, False)
         assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
                         rtol=get_rtol(u.dtype))
@@ -677,7 +677,7 @@ class TestSVD(SVDCases, SVDBaseTests):
 class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
 
     def do(self, a, b, tags):
-        u, s, vt = linalg.svd(a, 0, hermitian=True)
+        u, s, vt = linalg.svd(a, False, hermitian=True)
         assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
                         rtol=get_rtol(u.dtype))
@@ -897,7 +897,7 @@ class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
     def do(self, a, b, tags):
         arr = np.asarray(a)
         m, n = arr.shape
-        u, s, vt = linalg.svd(a, 0)
+        u, s, vt = linalg.svd(a, False)
         x, residuals, rank, sv = linalg.lstsq(a, b, rcond=-1)
         if m == 0:
             assert_((x == 0).all())
