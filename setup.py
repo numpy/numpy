@@ -108,8 +108,8 @@ def get_version_info():
         try:
             from numpy.version import git_revision as GIT_REVISION
         except ImportError:
-            raise ImportError("Unable to import git_revision. Try removing " \
-                              "numpy/version.py and the build directory " \
+            raise ImportError("Unable to import git_revision. Try removing "
+                              "numpy/version.py and the build directory "
                               "before building.")
     else:
         GIT_REVISION = "Unknown"
