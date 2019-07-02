@@ -30,18 +30,34 @@ and itssub-types).
 
     The number of dimensions in the array.
 
-.. c:function:: npy_intp *PyArray_DIMS(PyArrayObject *arr)
+.. c:function:: int PyArray_FLAGS(PyArrayObject* arr)
 
-    Returns a pointer to the dimensions/shape of the array. The
-    number of elements matches the number of dimensions
-    of the array. Can return ``NULL`` for 0-dimensional arrays.
+    Returns an integer representing the :ref:`array-flags<array-flags>`.
 
-.. c:function:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
+.. c:function:: int PyArray_TYPE(PyArrayObject* arr)
+
+    Return the (builtin) typenumber for the elements of this array.
+
+.. c:function:: int PyArray_SETITEM( \
+        PyArrayObject* arr, void* itemptr, PyObject* obj)
+
+    Convert obj and place it in the ndarray, *arr*, at the place
+    pointed to by itemptr. Return -1 if an error occurs or 0 on
+    success.
+
+.. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
 
     .. versionadded:: 1.7
 
-    A synonym for PyArray_DIMS, named to be consistent with the
-    'shape' usage within Python.
+    Enables the specified array flags. This function does no validation,
+    and assumes that you know what you're doing.
+
+.. c:function:: void PyArray_CLEARFLAGS(PyArrayObject* arr, int flags)
+
+    .. versionadded:: 1.7
+
+    Clears the specified array flags. This function does no validation,
+    and assumes that you know what you're doing.
 
 .. c:function:: void *PyArray_DATA(PyArrayObject *arr)
 
@@ -53,6 +69,19 @@ and itssub-types).
     processing. If you have not guaranteed a contiguous and/or aligned
     array then be sure you understand how to access the data in the
     array to avoid memory and/or alignment problems.
+
+.. c:function:: npy_intp *PyArray_DIMS(PyArrayObject *arr)
+
+    Returns a pointer to the dimensions/shape of the array. The
+    number of elements matches the number of dimensions
+    of the array. Can return ``NULL`` for 0-dimensional arrays.
+
+.. c:function:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
+
+    .. versionadded:: 1.7
+
+    A synonym for :c:func:`PyArray_DIMS`, named to be consistent with the
+    `shape <numpy.ndarray.shape>` usage within Python.
 
 .. c:function:: npy_intp *PyArray_STRIDES(PyArrayObject* arr)
 
@@ -67,6 +96,27 @@ and itssub-types).
 .. c:function:: npy_intp PyArray_STRIDE(PyArrayObject* arr, int n)
 
     Return the stride in the *n* :math:`^{\textrm{th}}` dimension.
+
+.. c:function:: npy_intp PyArray_ITEMSIZE(PyArrayObject* arr)
+
+    Return the itemsize for the elements of this array.
+
+    Note that, in the old API that was deprecated in version 1.7, this function
+    had the return type ``int``.
+
+.. c:function:: npy_intp PyArray_SIZE(PyArrayObject* arr)
+
+    Returns the total size (in number of elements) of the array.
+
+.. c:function:: npy_intp PyArray_Size(PyArrayObject* obj)
+
+    Returns 0 if *obj* is not a sub-class of ndarray. Otherwise,
+    returns the total number of elements in the array. Safer version
+    of :c:func:`PyArray_SIZE` (*obj*).
+
+.. c:function:: npy_intp PyArray_NBYTES(PyArrayObject* arr)
+
+    Returns the total number of bytes consumed by the array.
 
 .. c:function:: PyObject *PyArray_BASE(PyArrayObject* arr)
 
@@ -94,60 +144,12 @@ and itssub-types).
     A synonym for PyArray_DESCR, named to be consistent with the
     'dtype' usage within Python.
 
-.. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
-
-    .. versionadded:: 1.7
-
-    Enables the specified array flags. This function does no validation,
-    and assumes that you know what you're doing.
-
-.. c:function:: void PyArray_CLEARFLAGS(PyArrayObject* arr, int flags)
-
-    .. versionadded:: 1.7
-
-    Clears the specified array flags. This function does no validation,
-    and assumes that you know what you're doing.
-
-.. c:function:: int PyArray_FLAGS(PyArrayObject* arr)
-
-.. c:function:: npy_intp PyArray_ITEMSIZE(PyArrayObject* arr)
-
-    Return the itemsize for the elements of this array.
-
-    Note that, in the old API that was deprecated in version 1.7, this function
-    had the return type ``int``.
-
-.. c:function:: int PyArray_TYPE(PyArrayObject* arr)
-
-    Return the (builtin) typenumber for the elements of this array.
-
 .. c:function:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
     Get a Python object of a builtin type from the ndarray, *arr*, 
     at the location pointed to by itemptr. Return ``NULL`` on failure.
     
     `numpy.ndarray.item` is identical to PyArray_GETITEM.
-    
-.. c:function:: int PyArray_SETITEM( \
-        PyArrayObject* arr, void* itemptr, PyObject* obj)
-
-    Convert obj and place it in the ndarray, *arr*, at the place
-    pointed to by itemptr. Return -1 if an error occurs or 0 on
-    success.
-
-.. c:function:: npy_intp PyArray_SIZE(PyArrayObject* arr)
-
-    Returns the total size (in number of elements) of the array.
-
-.. c:function:: npy_intp PyArray_Size(PyArrayObject* obj)
-
-    Returns 0 if *obj* is not a sub-class of ndarray. Otherwise,
-    returns the total number of elements in the array. Safer version
-    of :c:func:`PyArray_SIZE` (*obj*).
-
-.. c:function:: npy_intp PyArray_NBYTES(PyArrayObject* arr)
-
-    Returns the total number of bytes consumed by the array.
 
 
 Data access
@@ -1398,6 +1400,7 @@ Special functions for NPY_OBJECT
 
     Returns 0 for success, -1 for failure.
 
+.. _array-flags:
 
 Array flags
 -----------
