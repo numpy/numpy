@@ -761,7 +761,7 @@ class TestAVXUfuncs(object):
                 x_f32 = np.float32(np.random.uniform(low=minval, high=maxval,
                     size=size))
                 x_f64 = np.float64(x_f32)
-                x_f128 = np.float128(x_f32)
+                x_f128 = np.longdouble(x_f32)
                 y_true128 = myfunc(x_f128)
                 if maxulperr == 0:
                     assert_equal(myfunc(x_f32), np.float32(y_true128))
