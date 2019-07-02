@@ -1554,7 +1554,7 @@ def make_mask(m, copy=False, shrink=True, dtype=MaskType):
     Return `m` as a boolean mask, creating a copy if necessary or requested.
     The function can accept any sequence that is convertible to integers,
     or ``nomask``.  Does not require that contents must be 0s and 1s, values
-    of 0 are interepreted as False, everything else as True.
+    of 0 are interpreted as False, everything else as True.
 
     Parameters
     ----------
