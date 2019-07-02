@@ -3,6 +3,8 @@
 Setting up and using your development environment
 =================================================
 
+.. _recommended-development-setup:
+
 Recommended development setup
 -----------------------------
 
