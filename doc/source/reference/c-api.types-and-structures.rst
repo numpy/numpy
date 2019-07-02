@@ -1,3 +1,4 @@
+
 *****************************
 Python Types and C-Structures
 *****************************
@@ -75,7 +76,8 @@ PyArray_Type and PyArrayObject
    these structure members should normally be accessed using the
    provided macros. If you need a shorter name, then you can make use
    of :c:type:`NPY_AO` (deprecated) which is defined to be equivalent to
-   :c:type:`PyArrayObject`.
+   :c:type:`PyArrayObject`. Direct access to the struct fields are
+   deprecated. Use the `PyArray_*(arr)` form instead.
 
    .. code-block:: c
 
@@ -103,7 +105,8 @@ PyArray_Type and PyArrayObject
 
 .. c:member:: char *PyArrayObject.data
 
-    A pointer to the first element of the array. This pointer can
+    Accessible via :c:data:`PyArray_DATA`, this data member is a
+    pointer to the first element of the array. This pointer can
     (and normally should) be recast to the data type of the array.
 
 .. c:member:: int PyArrayObject.nd
@@ -111,26 +114,29 @@ PyArray_Type and PyArrayObject
     An integer providing the number of dimensions for this
     array. When nd is 0, the array is sometimes called a rank-0
     array. Such arrays have undefined dimensions and strides and
-    cannot be accessed. :c:data:`NPY_MAXDIMS` is the largest number of
-    dimensions for any array.
+    cannot be accessed. Macro :c:data:`PyArray_NDIM` defined in
+    ``ndarraytypes.h`` points to this data member. :c:data:`NPY_MAXDIMS`
+    is the largest number of dimensions for any array.
 
 .. c:member:: npy_intp PyArrayObject.dimensions
 
     An array of integers providing the shape in each dimension as
     long as nd :math:`\geq` 1. The integer is always large enough
     to hold a pointer on the platform, so the dimension size is
-    only limited by memory.
+    only limited by memory. :c:data:`PyArray_DIMS` is the macro
+    associated with this data member.
 
 .. c:member:: npy_intp *PyArrayObject.strides
 
     An array of integers providing for each dimension the number of
     bytes that must be skipped to get to the next element in that
-    dimension.
+    dimension. Associated with macro :c:data:`PyArray_STRIDES`.
 
 .. c:member:: PyObject *PyArrayObject.base
 
-    This member is used to hold a pointer to another Python object that
-    is related to this array. There are two use cases:
+    Pointed to by :c:data:`PyArray_BASE`, this member is used to hold a
+    pointer to another Python object that is related to this array.
+    There are two use cases:
 
     - If this array does not own its own memory, then base points to the
       Python object that owns it (perhaps another array object)
@@ -149,11 +155,13 @@ PyArray_Type and PyArrayObject
     descriptor structure for each data type supported. This
     descriptor structure contains useful information about the type
     as well as a pointer to a table of function pointers to
-    implement specific functionality.
+    implement specific functionality. As the name suggests, it is
+    associated with the macro :c:data:`PyArray_DESCR`.
 
 .. c:member:: int PyArrayObject.flags
 
-    Flags indicating how the memory pointed to by data is to be
+    Pointed to by the macro :c:data:`PyArray_FLAGS`, this data member represents
+    the flags indicating how the memory pointed to by data is to be
     interpreted. Possible flags are :c:data:`NPY_ARRAY_C_CONTIGUOUS`,
     :c:data:`NPY_ARRAY_F_CONTIGUOUS`, :c:data:`NPY_ARRAY_OWNDATA`,
     :c:data:`NPY_ARRAY_ALIGNED`, :c:data:`NPY_ARRAY_WRITEABLE`,
