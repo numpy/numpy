@@ -1684,6 +1684,7 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 void
             *((@type@ *)op1) = tmp + 0;
         }
     }
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
