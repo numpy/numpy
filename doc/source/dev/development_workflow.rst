@@ -28,7 +28,7 @@ In short:
 
    - *Core developers* If you want to push changes without
      further review, see the notes :ref:`below <pushing-to-main>`.
-     
+
 This way of working helps to keep work well organized and the history
 as clear as possible.
 
@@ -69,7 +69,7 @@ Overview
    git status # Optional
    git diff # Optional
    git add modified_file
-   git commit 
+   git commit
    # push the branch to your own Github repo
    git push origin my-new-feature
 
@@ -112,38 +112,38 @@ In more detail
    properly formatted and sufficiently detailed commit message. After saving
    your message and closing the editor, your commit will be saved. For trivial
    commits, a short commit message can be passed in through the command line
-   using the ``-m`` flag. For example, ``git commit -am "ENH: Some message"``. 
-   
+   using the ``-m`` flag. For example, ``git commit -am "ENH: Some message"``.
+
    In some cases, you will see this form of the commit command: ``git commit
    -a``. The extra ``-a`` flag automatically commits all modified files and
    removes all deleted files. This can save you some typing of numerous ``git
    add`` commands; however, it can add unwanted changes to a commit if you're
    not careful. For more information, see `why the -a flag?`_ - and the
-   helpful use-case description in the `tangled working copy problem`_.  
+   helpful use-case description in the `tangled working copy problem`_.
 
 #. Push the changes to your forked repo on github_::
 
       git push origin my-new-feature
 
    For more information, see `git push`_.
-    
+
 .. note::
-    
+
    Assuming you have followed the instructions in these pages, git will create
    a default link to your github_ repo called ``origin``.  In git >= 1.7 you
    can ensure that the link to origin is permanently set by using the
    ``--set-upstream`` option::
-   
+
       git push --set-upstream origin my-new-feature
-   
+
    From now on git_ will know that ``my-new-feature`` is related to the
    ``my-new-feature`` branch in your own github_ repo. Subsequent push calls
    are then simplified to the following::
 
       git push
-   
+
    You have to use ``--set-upstream`` for each new branch that you create.
-    
+
 
 It may be the case that while you were working on your edits, new commits have
 been added to ``upstream`` that affect your work. In this case, follow the
@@ -194,12 +194,17 @@ Asking for your changes to be merged with the main repo
 =======================================================
 
 When you feel your work is finished, you can create a pull request (PR). Github
-has a nice help page that outlines the process for `filing pull requests`_. 
+has a nice help page that outlines the process for `filing pull requests`_.
 
 If your changes involve modifications to the API or addition/modification of a
-function, you should initiate a code review. This involves sending an email to
-the `NumPy mailing list`_ with a link to your PR along with a description of
-and a motivation for your changes.
+function, you should
+
+- send an email to the `NumPy mailing list`_ with a link to your PR along with
+  a description of and a motivation for your changes. This may generate
+  changes and feedback. It might be prudent to start with this step if your
+  change may be controversial.
+- add a release note to the ``changelog`` directory, following the instructions
+  and format in the ``changelog/README.rst`` file.
 
 .. _rebasing-on-master:
 
@@ -500,7 +505,7 @@ them to ``upstream`` as follows:
 
         git push upstream my-feature-branch:master
 
-.. note:: 
+.. note::
 
     It's usually a good idea to use the ``-n`` flag to ``git push`` to check
     first that you're about to push the changes you want to the place you

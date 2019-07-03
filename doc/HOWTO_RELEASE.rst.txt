@@ -11,7 +11,7 @@ useful info can be found.
 
 Source tree
 -----------
-* INSTALL.txt
+* INSTALL.rst.txt
 * release.sh
 * pavement.py
 
@@ -257,12 +257,19 @@ updated for a major release.
 
 Check the release notes
 -----------------------
+Use `towncrier`_ to build the release note, copy it to the proper name, and
+commit the changes. This will remove all the fragments from ``changelog/*.rst``
+and add ``doc/release/latest-note.rst`` which must be renamed with the proper
+version number::
+
+    python -mtowncrier --version "Numpy 1.11.0"
+    git mv doc/release/latest-note.rst doc/release/1.11.0-notes.rst
+    git commit -m"Create release note"
+
 Check that the release notes are up-to-date.
 
-Write or update the release notes in a file named for the release, such as
-``doc/release/1.11.0-notes.rst``.
-
-Mention at least the following:
+Update the release notes with a Highlights section. Mention some of the
+following:
 
   - major new features
   - deprecated and removed features
@@ -270,8 +277,7 @@ Mention at least the following:
   - for SciPy, supported NumPy version(s)
   - outlook for the near future
 
-Also make sure that as soon as the branch is made, there is a new release
-notes file in the master branch for the next release.
+.. _towncrier: https://github.com/hawkowl/towncrier
 
 Update the release status and create a release "tag"
 ----------------------------------------------------
