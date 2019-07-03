@@ -1832,6 +1832,7 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
                 return -1;
             }
             equal_one = PyObject_RichCompareBool(event, one, Py_EQ);
+            Py_DECREF(one);
             if (equal_one == -1) {
                 return -1;
             }
@@ -2250,6 +2251,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
             if (DEPRECATE(
                     "parsing timezone aware datetimes is deprecated; "
                     "this will raise an error in the future") < 0) {
+                Py_DECREF(tmp);
                 return -1;
             }
 
@@ -2266,6 +2268,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
              * which contains the value we want.
              */
             tmp = PyObject_CallMethod(offset, "total_seconds", "");
+            Py_DECREF(offset);
             if (tmp == NULL) {
                 return -1;
             }

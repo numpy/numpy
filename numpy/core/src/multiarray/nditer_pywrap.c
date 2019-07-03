@@ -572,6 +572,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
                 if (*oa_ndim > NPY_MAXDIMS) {
                     PyErr_SetString(PyExc_ValueError,
                             "Too many dimensions in op_axes");
+                    Py_DECREF(a);
                     return 0;
                 }
             }
@@ -602,8 +603,8 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
                 }
                 Py_DECREF(v);
             }
-            Py_DECREF(a);
         }
+        Py_DECREF(a);
     }
 
     if (*oa_ndim == -1) {

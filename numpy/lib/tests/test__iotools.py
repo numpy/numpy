@@ -204,14 +204,18 @@ class TestStringConverter(object):
     def test_upgrademapper(self):
         "Tests updatemapper"
         dateparser = _bytes_to_date
-        StringConverter.upgrade_mapper(dateparser, date(2000, 1, 1))
-        convert = StringConverter(dateparser, date(2000, 1, 1))
-        test = convert('2001-01-01')
-        assert_equal(test, date(2001, 1, 1))
-        test = convert('2009-01-01')
-        assert_equal(test, date(2009, 1, 1))
-        test = convert('')
-        assert_equal(test, date(2000, 1, 1))
+        _original_mapper = StringConverter._mapper[:]
+        try:
+            StringConverter.upgrade_mapper(dateparser, date(2000, 1, 1))
+            convert = StringConverter(dateparser, date(2000, 1, 1))
+            test = convert('2001-01-01')
+            assert_equal(test, date(2001, 1, 1))
+            test = convert('2009-01-01')
+            assert_equal(test, date(2009, 1, 1))
+            test = convert('')
+            assert_equal(test, date(2000, 1, 1))
+        finally:
+            StringConverter._mapper = _original_mapper
 
     def test_string_to_object(self):
         "Make sure that string-to-object functions are properly recognized"
