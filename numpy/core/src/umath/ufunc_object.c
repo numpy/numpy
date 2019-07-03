@@ -4766,6 +4766,9 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         wrapped = _apply_array_wrap(wraparr[i], mps[j], &context);
         mps[j] = NULL;  /* Prevent fail double-freeing this */
         if (wrapped == NULL) {
+            for (j = 0; j < i; j++) {
+                Py_DECREF(retobj[j]);
+            }
             goto fail;
         }
 
@@ -5693,18 +5696,13 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
      * Create dtypes array for either one or two input operands.
      * The output operand is set to the first input operand
      */
-    dtypes[0] = PyArray_DESCR(op1_array);
     operands[0] = op1_array;
     if (op2_array != NULL) {
-        dtypes[1] = PyArray_DESCR(op2_array);
-        dtypes[2] = dtypes[0];
         operands[1] = op2_array;
         operands[2] = op1_array;
         nop = 3;
     }
     else {
-        dtypes[1] = dtypes[0];
-        dtypes[2] = NULL;
         operands[1] = op1_array;
         operands[2] = NULL;
         nop = 2;
@@ -5861,9 +5859,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
-    Py_XDECREF(array_operands[0]);
-    Py_XDECREF(array_operands[1]);
-    Py_XDECREF(array_operands[2]);
+    for (i = 0; i < 3; i++) {
+        Py_XDECREF(dtypes[i]);
+        Py_XDECREF(array_operands[i]);
+    }
 
     if (needs_api && PyErr_Occurred()) {
         return NULL;
@@ -5880,9 +5879,10 @@ fail:
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
-    Py_XDECREF(array_operands[0]);
-    Py_XDECREF(array_operands[1]);
-    Py_XDECREF(array_operands[2]);
+    for (i = 0; i < 3; i++) {
+        Py_XDECREF(dtypes[i]);
+        Py_XDECREF(array_operands[i]);
+    }
 
     return NULL;
 }

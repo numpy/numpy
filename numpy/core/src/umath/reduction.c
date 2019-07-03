@@ -528,7 +528,9 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                   NPY_ITER_ALIGNED;
     if (wheremask != NULL) {
         op[2] = wheremask;
-        op_dtypes[2] = PyArray_DescrFromType(NPY_BOOL);
+        /* wheremask is guaranteed to be NPY_BOOL, so borrow its reference */
+        op_dtypes[2] = PyArray_DESCR(wheremask);
+        assert(op_dtypes[2]->type_num == NPY_BOOL);
         if (op_dtypes[2] == NULL) {
             goto fail;
         }

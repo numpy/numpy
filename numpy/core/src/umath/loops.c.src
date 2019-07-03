@@ -394,9 +394,11 @@ PyUFunc_O_O_method(char **args, npy_intp *dimensions, npy_intp *steps, void *fun
                          i, type->tp_name, meth);
             npy_PyErr_ChainExceptionsCause(exc, val, tb);
             Py_DECREF(tup);
+            Py_XDECREF(func);
             return;
         }
         ret = PyObject_Call(func, tup, NULL);
+        Py_DECREF(func);
         if (ret == NULL) {
             Py_DECREF(tup);
             return;

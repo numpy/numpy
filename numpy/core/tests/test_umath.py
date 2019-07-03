@@ -1655,7 +1655,6 @@ class TestSpecialMethods(object):
 
         ok = np.empty(1).view(Ok)
         bad = np.empty(1).view(Bad)
-
         # double-free (segfault) of "ok" if "bad" raises an exception
         for i in range(10):
             assert_raises(RuntimeError, ncu.frexp, 1, ok, bad)

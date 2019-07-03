@@ -8,7 +8,10 @@ extern NPY_NO_EXPORT PyMethodDef array_methods[];
 NPY_NO_EXPORT const char *
 npy_casting_to_string(NPY_CASTING casting);
 
-/* Pathlib support */
+/*
+ * Pathlib support, takes a borrowed reference and returns a new one.
+ * The new object may be the same as the old.
+ */
 static inline PyObject *
 NpyPath_PathlikeToFspath(PyObject *file)
 {
@@ -24,6 +27,7 @@ NpyPath_PathlikeToFspath(PyObject *file)
     }
 
     if (!PyObject_IsInstance(file, os_PathLike)) {
+        Py_INCREF(file);
         return file;
     }
     return PyObject_CallFunctionObjArgs(os_fspath, file, NULL);

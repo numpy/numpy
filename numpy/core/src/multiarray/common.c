@@ -147,7 +147,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (dtype == NULL) {
             goto fail;
         }
-        Py_INCREF(dtype);
         goto promote_types;
     }
     /* Check if it's a NumPy scalar */
@@ -213,6 +212,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (string_type) {
             int itemsize;
             PyObject *temp;
+
+            /* dtype is not used in this (string discovery) branch */
+            Py_DECREF(dtype);
+            dtype = NULL;
 
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
