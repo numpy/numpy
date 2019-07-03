@@ -88,6 +88,36 @@ class TestBuiltin(object):
             assert_raises(TypeError, np.dtype, 'q8')
             assert_raises(TypeError, np.dtype, 'Q8')
 
+    @pytest.mark.parametrize(
+        'value',
+        ['m8', 'M8', 'datetime64', 'timedelta64',
+         'i4, (2,3)f8, f4', 'a3, 3u8, (3,4)a10',
+         '>f', '<f', '=f', '|f',
+        ])
+    def test_dtype_bytes_str_equivalence(self, value):
+        bytes_value = value.encode('ascii')
+        from_bytes = np.dtype(bytes_value)
+        from_str = np.dtype(value)
+        assert_dtype_equal(from_bytes, from_str)
+
+    def test_dtype_from_bytes(self):
+        # Empty bytes object
+        assert_raises(TypeError, np.dtype, b'')
+        # Byte order indicator, but no type
+        assert_raises(TypeError, np.dtype, b'|')
+
+        # Single character with ordinal < NPY_NTYPES returns
+        # type by index into _builtin_descrs
+        assert_dtype_equal(np.dtype(bytes([0])), np.dtype('bool'))
+        assert_dtype_equal(np.dtype(bytes([17])), np.dtype(object))
+
+        # Single character where value is a valid type code
+        assert_dtype_equal(np.dtype(b'f'), np.dtype('float32'))
+
+        # Bytes with non-ascii values raise errors
+        assert_raises(TypeError, np.dtype, bytes([255]))
+        assert_raises(TypeError, np.dtype, b's\xff')
+
     def test_bad_param(self):
         # Can't give a size that's too small
         assert_raises(ValueError, np.dtype,
