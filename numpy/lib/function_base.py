@@ -3102,6 +3102,7 @@ def i0(x):
     array([ 1.00000000+0.j        ,  0.18785373+0.64616944j])  # may vary
 
     """
+    x = np.asanyarray(x)
     x = np.abs(x)
     return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 
