@@ -2736,6 +2736,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
 
     Toggle between low-endian and big-endian data representation by
     returning a byteswapped array, optionally swapped in-place.
+    Arrays of byte-strings are not swapped. The real and imaginary
+    parts of a complex number are swapped individually.
 
     Parameters
     ----------
@@ -2758,13 +2760,24 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     >>> list(map(hex, A))
     ['0x100', '0x1', '0x3322']
 
-    Arrays of strings are not swapped
+    Arrays of byte-strings are not swapped
 
-    >>> A = np.array(['ceg', 'fac'])
+    >>> A = np.array([b'ceg', b'fac'])
     >>> A.byteswap()
-    Traceback (most recent call last):
-        ...
-    UnicodeDecodeError: ...
+    array([b'ceg', b'fac'], dtype='|S3')
+
+    ``A.newbyteorder().byteswap()`` produces an array with the same values
+      but different representation in memory
+
+    >>> A = np.array([1, 2, 3])
+    >>> A.view(np.uint8)
+    array([1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0,
+           0, 0], dtype=uint8)
+    >>> A.newbyteorder().byteswap(inplace=True)
+    array([1, 2, 3])
+    >>> A.view(np.uint8)
+    array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0,
+           0, 3], dtype=uint8)
 
     """))
 
