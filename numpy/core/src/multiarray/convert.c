@@ -500,7 +500,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         }
 
         if (PyArray_NDIM(src_arr) != 0) {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(PyExc_TypeError,
                     "Input object to FillWithScalar is not a scalar");
             Py_DECREF(src_arr);
             return -1;

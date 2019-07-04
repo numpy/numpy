@@ -3003,12 +3003,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('fill',
     """
     a.fill(value)
 
-    Fill the array with a scalar value.
+    Fill the array with a value.
 
     Parameters
     ----------
     value : scalar
-        All elements of `a` will be assigned this value.
+        All elements of `a` will be assigned this value. If `a` is not a
+        (Python) object, `value` must be a scalar value.
 
     Examples
     --------

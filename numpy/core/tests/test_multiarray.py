@@ -398,6 +398,8 @@ class TestAttributes(object):
             x.fill(1)
             y[...] = 1
             assert_equal(x, y)
+            if t != "O":
+                assert_raises(TypeError, x.fill, np.array([1]))
 
     def test_fill_max_uint64(self):
         x = np.empty((3, 2, 1), dtype=np.uint64)
