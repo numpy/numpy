@@ -2005,6 +2005,22 @@ class Test_I0(object):
         assert_equal(i0_0.shape, (1,))
         assert_array_equal(np.i0([0.]), np.array([1.]))
 
+    def test_non_array(self):
+        a = np.arange(4)
+
+        class array_like:
+            __array_interface__ = a.__array_interface__
+
+            def __array_wrap__(self, arr):
+                return self
+
+        # E.g. pandas series survive ufunc calls through array-wrap:
+        assert isinstance(np.abs(array_like()), array_like)
+        exp = np.i0(a)
+        res = np.i0(array_like())
+
+        assert_array_equal(exp, res)
+
 
 class TestKaiser(object):
 
