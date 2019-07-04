@@ -1522,7 +1522,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         /* A typecode like 'd' */
         if (len == 1) {
             /* Python byte string characters are unsigned */
-            check_num = ((unsigned char *)type)[0];
+            check_num = (unsigned char) type[0];
         }
         /* A kind + size like 'f8' */
         else {
