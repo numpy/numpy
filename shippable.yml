@@ -23,9 +23,12 @@ runtime:
 build:
     ci:
     # install dependencies
-    - sudo apt-get install gcc gfortran libblas-dev liblapack-dev
-    # add pathlib for Python 2, otherwise many tests are skipped
+    - sudo apt-get install gcc gfortran
+    - target=$(python tools/openblas_support.py)
+    - sudo cp -r "${target}"/64/lib/* /usr/lib
+    - sudo cp "${target}"/64/include/* /usr/include
     - pip install --upgrade pip
+
     # we will pay the ~13 minute cost of compiling Cython only when a new
     # version is scraped in by pip; otherwise, use the cached
     # wheel shippable places on Amazon S3 after we build it once
