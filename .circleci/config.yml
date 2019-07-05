@@ -63,17 +63,17 @@ jobs:
       -  run:
           name: deploy devdocs
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            if [[ "${CIRCLE_BRANCH}" =~ ^master$|^maintenance/[0-9]+\.[0-9]+\.x$ ]]; then
               touch doc/build/html/.nojekyll
 
               ./tools/ci/push_docs_to_repo.py doc/build/html \
-                  git@github.com:numpy/devdocs.git \
+                  $CIRCLE_BRANCH \
+                  git@github.com:numpy/doc.git \
                   --committer "numpy-circleci-bot" \
                   --email "numpy-circleci-bot@nomail" \
-                  --message "Docs build of $CIRCLE_SHA1" \
-                  --force
+                  --message "Docs build of $CIRCLE_SHA1" 
             else
-              echo "Not on the master branch; skipping deployment"
+              echo "Not on the correct branch; skipping deployment"
             fi
 
       - add_ssh_keys:
@@ -96,11 +96,12 @@ jobs:
               touch doc/neps/_build/html/.nojekyll
 
               ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
+                  $CIRCLE_BRANCH \
                   git@github.com:numpy/neps.git \
                   --committer "numpy-circleci-bot" \
                   --email "numpy-circleci-bot@nomail" \
                   --message "Docs build of $CIRCLE_SHA1" \
-                  --force
+                  --target neps
             else
               echo "Not on the master branch; skipping deployment"
             fi
