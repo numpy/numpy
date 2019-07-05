@@ -11,22 +11,19 @@ sudo apt-get -yq install libatlas-base-dev liblapack-dev gfortran-5
 F77=gfortran-5 F90=gfortran-5 \
 
 # Download the proper OpenBLAS x64 precompiled library
-OPENBLAS=openblas-v0.3.5-274-g6a8b4269-manylinux1_x86_64.tar.gz
-echo getting $OPENBLAS
-wget -q https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/$OPENBLAS -O openblas.tar.gz
-mkdir -p openblas
-(cd openblas; tar -xf ../openblas.tar.gz)
-export LD_LIBRARY_PATH=$PWD/openblas/usr/local/lib
-export LIB=$PWD/openblas/usr/local/lib
-export INCLUDE=$PWD/openblas/usr/local/include
+target=$(python tools/openblas_support.py)
+echo getting OpenBLAS into $target
+export LD_LIBRARY_PATH=$target/usr/local/lib
+export LIB=$target/usr/local/lib
+export INCLUDE=$target/usr/local/include
 
 # Use a site.cfg to build with local openblas
 cat << EOF > site.cfg
 [openblas]
 libraries = openblas
-library_dirs = $PWD/openblas/usr/local/lib:$LIB
-include_dirs = $PWD/openblas/usr/local/lib:$LIB
-runtime_library_dirs = $PWD/openblas/usr/local/lib
+library_dirs = $target/usr/local/lib:$LIB
+include_dirs = $target/usr/local/lib:$LIB
+runtime_library_dirs = $target/usr/local/lib
 EOF
 
 echo getting PyPy 3.6 nightly
