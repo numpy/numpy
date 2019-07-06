@@ -68,7 +68,7 @@ jobs:
 
               ./tools/ci/push_docs_to_repo.py doc/build/html \
                   $CIRCLE_BRANCH \
-                  git@github.com:numpy/doc.git \
+                  git@github.com:numpy/numpy.github.com.git \
                   --committer "numpy-circleci-bot" \
                   --email "numpy-circleci-bot@nomail" \
                   --message "Docs build of $CIRCLE_SHA1" 
@@ -97,10 +97,10 @@ jobs:
 
               ./tools/ci/push_docs_to_repo.py doc/neps/_build/html \
                   $CIRCLE_BRANCH \
-                  git@github.com:numpy/neps.git \
+                  git@github.com:numpy/numpy.github.com.git \
                   --committer "numpy-circleci-bot" \
                   --email "numpy-circleci-bot@nomail" \
-                  --message "Docs build of $CIRCLE_SHA1" \
+                  --message "Neps build of $CIRCLE_SHA1" \
                   --target neps
             else
               echo "Not on the master branch; skipping deployment"

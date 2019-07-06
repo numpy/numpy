@@ -30,10 +30,10 @@ if not os.path.exists(args.dir):
     sys.exit(1)
 
 m = re.search('maintenance/([\d.]*)\.x', args.branch)
-if args.target == 'neps':
-    target = '.'
-if args.branch == 'master':
-    target = 'dev'
+if args.target:
+    target = args.target
+elif args.branch == 'master':
+    target = 'devdocs'
 elif m:
     target = m.groups()[0]
 else:
