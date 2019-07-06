@@ -53,3 +53,4 @@ Matlab-like Functions
    :toctree: generated/
 
    who
+   disp
