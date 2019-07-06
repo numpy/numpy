@@ -593,9 +593,6 @@ cdef class Generator:
               dtype='<U11')
 
         """
-        cdef char* idx_ptr
-        cdef int64_t buf
-        cdef char* buf_ptr
 
         cdef set idx_set
         cdef int64_t val, t, loc, size_i, pop_size_i
@@ -691,11 +688,11 @@ cdef class Generator:
                 # This is a heuristic tuning. should be improvable
                 if pop_size_i > 10000 and (size_i > (pop_size_i // 10)):
                     # Tail shuffle size elements
-                    idx = np.arange(pop_size, dtype=np.int64)
-                    idx_ptr = np.PyArray_BYTES(<np.ndarray>idx)
-                    buf_ptr = <char*>&buf
-                    self._shuffle_raw(pop_size_i, max(pop_size_i - size_i,1),
-                                      8, 8, idx_ptr, buf_ptr)
+                    idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
+                    idx_data = <int64_t*>(<np.ndarray>idx).data
+                    with self.lock, nogil:
+                        self._shuffle_int(pop_size_i, max(pop_size_i - size_i, 1),
+                                          idx_data)
                     # Copy to allow potentially large array backing idx to be gc
                     idx = idx[(pop_size - size):].copy()
                 else:
@@ -3892,6 +3889,28 @@ cdef class Generator:
             string.memcpy(buf, data + j * stride, itemsize)
             string.memcpy(data + j * stride, data + i * stride, itemsize)
             string.memcpy(data + i * stride, buf, itemsize)
+
+    cdef inline void _shuffle_int(self, np.npy_intp n, np.npy_intp first,
+                             int64_t* data) nogil:
+        """
+        Parameters
+        ----------
+        n
+            Number of elements in data
+        first
+            First observation to shuffle.  Shuffles n-1,
+            n-2, ..., first, so that when first=1 the entire
+            array is shuffled
+        data
+            Location of data
+        """
+        cdef np.npy_intp i, j
+        cdef int64_t temp
+        for i in reversed(range(first, n)):
+            j = random_bounded_uint64(&self._bitgen, 0, i, 0, 0)
+            temp = data[j]
+            data[j] = data[i]
+            data[i] = temp
 
     def permutation(self, object x):
         """
