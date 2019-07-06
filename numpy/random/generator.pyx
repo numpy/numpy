@@ -686,7 +686,7 @@ cdef class Generator:
                 size_i = size
                 pop_size_i = pop_size
                 # This is a heuristic tuning. should be improvable
-                if pop_size_i > 10000 and (size_i > (pop_size_i // 10)):
+                if pop_size_i > 10000 and (size_i > (pop_size_i // 50)):
                     # Tail shuffle size elements
                     idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
                     idx_data = <int64_t*>(<np.ndarray>idx).data
@@ -719,6 +719,7 @@ cdef class Generator:
                                     loc = (loc + 1) & mask
                                 hash_set[loc] = j
                                 idx_data[j - pop_size_i + size_i] = j
+                        self._shuffle_int(size_i, 1, idx_data)
                 if shape is not None:
                     idx.shape = shape
 
