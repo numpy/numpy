@@ -800,7 +800,7 @@ class _DomainCheckInterval(object):
 
     def __init__(self, a, b):
         "domain_check_interval(a,b)(x) = true where x < a or y > b"
-        if (a > b):
+        if a > b:
             (a, b) = (b, a)
         self.a = a
         self.b = b
@@ -1165,7 +1165,7 @@ class _DomainedBinaryOperation(_MaskedUFunc):
         if domain is not None:
             m |= domain(da, db)
         # Take care of the scalar case first
-        if (not m.ndim):
+        if not m.ndim:
             if m:
                 return masked
             else:
@@ -1743,7 +1743,7 @@ def mask_or(m1, m2, copy=False, shrink=True):
     if m1 is m2 and is_mask(m1):
         return m1
     (dtype1, dtype2) = (getattr(m1, 'dtype', None), getattr(m2, 'dtype', None))
-    if (dtype1 != dtype2):
+    if dtype1 != dtype2:
         raise ValueError("Incompatible dtypes '%s'<>'%s'" % (dtype1, dtype2))
     if dtype1.names is not None:
         # Allocate an output mask array with the properly broadcast shape.
@@ -3143,7 +3143,7 @@ class MaskedArray(ndarray):
         # also make the mask be a view (so attr changes to the view's
         # mask do no affect original object's mask)
         # (especially important to avoid affecting np.masked singleton)
-        if (getmask(output) is not nomask):
+        if getmask(output) is not nomask:
             output._mask = output._mask.view()
 
         # Make sure to reset the _fill_value if needed
@@ -3382,7 +3382,7 @@ class MaskedArray(ndarray):
         if mask is masked:
             mask = True
 
-        if (current_mask is nomask):
+        if current_mask is nomask:
             # Make sure the mask is set
             # Just don't do anything if there's nothing to do.
             if mask is nomask:
@@ -5036,7 +5036,7 @@ class MaskedArray(ndarray):
         result = self.filled(0).sum(axis, dtype=dtype, out=out, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
-            if (outmask is nomask):
+            if outmask is nomask:
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
         return out
@@ -5118,7 +5118,7 @@ class MaskedArray(ndarray):
         result = self.filled(1).prod(axis, dtype=dtype, out=out, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
-            if (outmask is nomask):
+            if outmask is nomask:
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
         return out
@@ -5197,7 +5197,7 @@ class MaskedArray(ndarray):
             out.flat = result
             if isinstance(out, MaskedArray):
                 outmask = getmask(out)
-                if (outmask is nomask):
+                if outmask is nomask:
                     outmask = out._mask = make_mask_none(out.shape)
                 outmask.flat = getmask(result)
             return out
@@ -5239,9 +5239,9 @@ class MaskedArray(ndarray):
             return m
 
         if not axis:
-            return (self - m)
+            return self - m
         else:
-            return (self - expand_dims(m, axis))
+            return self - expand_dims(m, axis)
 
     def var(self, axis=None, dtype=None, out=None, ddof=0,
             keepdims=np._NoValue):
@@ -5656,7 +5656,7 @@ class MaskedArray(ndarray):
         result = self.filled(fill_value).min(axis=axis, out=out, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
-            if (outmask is nomask):
+            if outmask is nomask:
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
         else:
@@ -5790,7 +5790,7 @@ class MaskedArray(ndarray):
         result = self.filled(fill_value).max(axis=axis, out=out, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
-            if (outmask is nomask):
+            if outmask is nomask:
                 outmask = out._mask = make_mask_none(out.shape)
             outmask.flat = newmask
         else:
@@ -6733,7 +6733,7 @@ def power(a, b, third=None):
     invalid = np.logical_not(np.isfinite(result.view(ndarray)))
     # Add the initial mask
     if m is not nomask:
-        if not (result.ndim):
+        if not result.ndim:
             return masked
         result._mask = np.logical_or(m, invalid)
     # Fix the invalid parts
