@@ -72,7 +72,7 @@ __all__ = [
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
+    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError', 'mvgavg']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -2389,6 +2389,66 @@ def array_equiv(a1, a2):
         return False
 
     return bool(asarray(a1 == a2).all())
+
+
+def _mvgavg_dispatcher(a, n, **kwargs):
+    return (a, out)
+
+
+def mvgavg(a,n,**kwargs):
+    """
+    Performs a moving average along a single axis
+
+    Parameters
+    ----------
+    a : array_like
+        Array to be averaged
+    n : int
+        Width of the moving average
+    axis: int
+        Axis along which the moving average is to take place, 0 if unspecified
+
+    Returns
+    -------
+    mvgavg : nd_array
+        An array with the elements averaged over a length of n.  The array will be
+        of a length n-1 shorter than the original along the chosen axis
+    
+    See Also
+    --------
+    ndarray.mean : equivalent to setting n equal to the length of data along
+        the specified axis
+
+    Notes
+    -----
+    Consider the list [a, b, c, d, e....] with a moving average of length 3.  The
+    First element in the list will be (a+b+c)/3.  The next (b+c+d)/3.  And so on.
+    The result is a smoothed version of the original data with length n-1 shorther
+    than the original data.
+
+    
+    """
+
+
+    if 'axis' in kwargs:
+        axis = kwargs['axis']
+        # if an axis is defined, the strategy is to transpose that layer to the
+        # top, take a zero-axis moving average, and then reverse that 
+        # transposition.
+    else:
+        axis = 0
+
+    a = array(a).swapaxes(0,axis)
+    try:
+        a = sum(array([a[m:len(a)-n+1+m] for m in range(n)]),axis=0)/n
+    except:
+        print('your array is ragged or otherwise of an unsuitable type')
+    else:
+        return a.swapaxes(axis,0)    
+
+
+
+
 
 
 Inf = inf = infty = Infinity = PINF
