@@ -2423,10 +2423,30 @@ def mvgavg(a,n,**kwargs):
     -----
     Consider the list [a, b, c, d, e....] with a moving average of length 3.  The
     First element in the list will be (a+b+c)/3.  The next (b+c+d)/3.  And so on.
-    The result is a smoothed version of the original data with length n-1 shorther
-    than the original data.
+    The result is a smoothed version of the original data with length (n-1) shorther
+    than the original data.  This works with arrays of any dimension, summing along
+    as it goes. This function will usually fail for a ragged array.  Use a list
+    comprehension with np.mvgavg embedded in it instead.
 
-    
+    N.B. np.mvgavg(np.array, 1, axis=x) is the identity operation for any valid 
+    array and any x.
+
+
+    Examples
+    --------
+    >>> example_array=[[i,(-1)**i] for i in np.arange(5)]
+    >>> np.mvgavg(example_array,2)
+    array([[0.5, 0. ],
+           [1.5, 0. ],
+           [2.5, 0. ],
+           [3.5, 0. ]])
+    >>> np.mvgavg(example_array,2,axis=1)
+    array([[0.5],
+           [0. ],
+           [1.5],
+           [1. ],
+           [2.5]])
+
     """
 
 
