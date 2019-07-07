@@ -115,7 +115,7 @@ class TestBuiltin(object):
         assert_dtype_equal(np.dtype(b'f'), np.dtype('float32'))
 
         # Bytes with non-ascii values raise errors
-        assert_raises(TypeError, np.dtype, bytes([255]))
+        assert_raises(TypeError, np.dtype, b'\xff')
         assert_raises(TypeError, np.dtype, b's\xff')
 
     def test_bad_param(self):
