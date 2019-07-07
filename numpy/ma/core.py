@@ -3075,7 +3075,7 @@ class MaskedArray(ndarray):
 
     def view(self, dtype=None, type=None, fill_value=None):
         """
-        Return a view of the MaskedArray data
+        Return a view of the MaskedArray data.
 
         Parameters
         ----------
@@ -3089,6 +3089,14 @@ class MaskedArray(ndarray):
         type : Python type, optional
             Type of the returned view, either ndarray or a subclass.  The
             default None results in type preservation.
+        fill_value : scalar, optional
+            The value to use for invalid entries (None by default).
+            If None, then this argument is inferred from the passed `dtype`, or
+            in its absence the original array, as discussed in the notes below.
+
+        See Also
+        --------
+        numpy.ndarray.view : Equivalent method on ndarray object.
 
         Notes
         -----
@@ -3154,7 +3162,6 @@ class MaskedArray(ndarray):
             else:
                 output.fill_value = fill_value
         return output
-    view.__doc__ = ndarray.view.__doc__
 
     def __getitem__(self, indx):
         """
