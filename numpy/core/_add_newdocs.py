@@ -94,7 +94,7 @@ add_newdoc('numpy.core', 'flatiter', ('coords',
     >>> fl = x.flat
     >>> fl.coords
     (0, 0)
-    >>> fl.next()
+    >>> next(fl)
     0
     >>> fl.coords
     (0, 1)
@@ -113,7 +113,7 @@ add_newdoc('numpy.core', 'flatiter', ('index',
     >>> fl = x.flat
     >>> fl.index
     0
-    >>> fl.next()
+    >>> next(fl)
     0
     >>> fl.index
     1
@@ -666,7 +666,7 @@ add_newdoc('numpy.core', 'broadcast', ('iters',
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
     >>> row, col = b.iters
-    >>> row.next(), col.next()
+    >>> next(row), next(col)
     (1, 4)
 
     """))

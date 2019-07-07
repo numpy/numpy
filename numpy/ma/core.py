@@ -2681,15 +2681,13 @@ class MaskedIterator(object):
         --------
         >>> x = np.ma.array([3, 2], mask=[0, 1])
         >>> fl = x.flat
-        >>> fl.next()
+        >>> next(fl)
         3
-        >>> fl.next()
+        >>> next(fl)
         masked
-        >>> fl.next()
+        >>> next(fl)
         Traceback (most recent call last):
-          File "<stdin>", line 1, in <module>
-          File "/home/ralf/python/numpy/numpy/ma/core.py", line 2243, in next
-            d = self.dataiter.next()
+          ...
         StopIteration
 
         """

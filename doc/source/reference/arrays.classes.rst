@@ -448,7 +448,7 @@ object, then the Python code::
         some code involving val
         ...
 
-calls ``val = myiter.next()`` repeatedly until :exc:`StopIteration` is
+calls ``val = next(myiter)`` repeatedly until :exc:`StopIteration` is
 raised by the iterator. There are several ways to iterate over an
 array that may be useful: default iteration, flat iteration, and
 :math:`N`-dimensional enumeration.

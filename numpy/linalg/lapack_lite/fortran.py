@@ -54,7 +54,7 @@ class PushbackIterator(object):
 
     Return an iterator for which items can be pushed back into.
     Call the .pushback(item) method to have item returned as the next
-    value of .next().
+    value of next().
     """
     def __init__(self, iterable):
         object.__init__(self)
