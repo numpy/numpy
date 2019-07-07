@@ -2391,11 +2391,12 @@ def array_equiv(a1, a2):
     return bool(asarray(a1 == a2).all())
 
 
-def _mvgavg_dispatcher(a, n, **kwargs):
+def _mvgavg_dispatcher(a, n, axis=0):
     return (a, out)
 
 
-def mvgavg(a,n,**kwargs):
+@array_function_dispatch(_mvgavg_dispatcher)
+def mvgavg(a,n,axis=0):
     """
     Performs a moving average along a single axis
 
@@ -2450,24 +2451,13 @@ def mvgavg(a,n,**kwargs):
     """
 
 
-    if 'axis' in kwargs:
-        axis = kwargs['axis']
-        # if an axis is defined, the strategy is to transpose that layer to the
-        # top, take a zero-axis moving average, and then reverse that 
-        # transposition.
-    else:
-        axis = 0
-
-    a = array(a).swapaxes(0,axis)
+    a = asarray(a).swapaxes(0,axis)
     try:
         a = sum(array([a[m:len(a)-n+1+m] for m in range(n)]),axis=0)/n
     except:
         print('your array is ragged or otherwise of an unsuitable type')
     else:
         return a.swapaxes(axis,0)    
-
-
-
 
 
 
