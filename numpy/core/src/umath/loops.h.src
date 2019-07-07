@@ -36,6 +36,9 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 /**end repeat**/
 
 NPY_NO_EXPORT void
+BOOL_spacing(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
 BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
 
 /**begin repeat
@@ -70,6 +73,9 @@ NPY_NO_EXPORT void
 
 NPY_NO_EXPORT void
 @S@@TYPE@_positive(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+@S@@TYPE@_spacing(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 /**begin repeat2
  * #isa = , _avx2#

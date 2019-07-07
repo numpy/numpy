@@ -2883,6 +2883,16 @@ def test_spacing():
 def test_spacingf():
     return _test_spacing(np.float32)
 
+def test_spacingi():
+    for dtype in np.typecodes['AllInteger']:
+        one = np.array(1, dtype=dtype)
+        ones = np.ones(5, dtype=dtype)
+        assert_(np.spacing(one) == one)
+        assert_array_equal(np.spacing(ones), ones)
+
+def test_spacingb():
+    assert_raises(TypeError, np.spacing, np.bool_(1))
+    assert_raises(TypeError, np.spacing, np.array([1, 0], dtype=np.bool_))
 
 @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
                     reason="long double is same as double")

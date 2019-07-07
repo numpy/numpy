@@ -880,7 +880,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.spacing'),
           None,
-          TD(flts),
+          TD('?' + intflt),
           ),
 'modf':
     Ufunc(1, 2, None,
