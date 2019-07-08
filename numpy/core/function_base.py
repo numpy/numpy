@@ -428,6 +428,13 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
 
 #always succeed
+def _add_docstring(obj, doc):
+    try:
+        add_docstring(obj, doc)
+    except Exception:
+        pass
+
+
 def add_newdoc(place, obj, doc):
     """
     Adds documentation to obj which is in module place.
@@ -442,21 +449,19 @@ def add_newdoc(place, obj, doc):
        sequence of length two --> [(method1, docstring1),
        (method2, docstring2), ...]
 
-    This routine never raises an error.
+    This routine never raises an error if the docstring can't be written, but
+    will raise an error if the object being documented does not exist.
 
     This routine cannot modify read-only docstrings, as appear
     in new-style classes or built-in functions. Because this
     routine never raises an error the caller must check manually
     that the docstrings were changed.
     """
-    try:
-        new = getattr(__import__(place, globals(), {}, [obj]), obj)
-        if isinstance(doc, str):
-            add_docstring(new, doc.strip())
-        elif isinstance(doc, tuple):
-            add_docstring(getattr(new, doc[0]), doc[1].strip())
-        elif isinstance(doc, list):
-            for val in doc:
-                add_docstring(getattr(new, val[0]), val[1].strip())
-    except Exception:
-        pass
+    new = getattr(__import__(place, globals(), {}, [obj]), obj)
+    if isinstance(doc, str):
+        _add_docstring(new, doc.strip())
+    elif isinstance(doc, tuple):
+        _add_docstring(getattr(new, doc[0]), doc[1].strip())
+    elif isinstance(doc, list):
+        for val in doc:
+            _add_docstring(getattr(new, val[0]), val[1].strip())

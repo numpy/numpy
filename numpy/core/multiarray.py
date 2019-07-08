@@ -7,6 +7,7 @@ by importing from the extension module.
 """
 
 import functools
+import sys
 import warnings
 
 from . import overrides
@@ -15,7 +16,7 @@ import numpy as np
 from numpy.core._multiarray_umath import *
 from numpy.core._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity
+    _ARRAY_API, _monotonicity, _get_ndarray_c_version
     )
 
 __all__ = [
@@ -30,15 +31,17 @@ __all__ = [
     'count_nonzero', 'c_einsum', 'datetime_as_string', 'datetime_data',
     'digitize', 'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
-    'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'getbuffer', 'inner',
+    'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'inner',
     'int_asbuffer', 'interp', 'interp_complex', 'is_busday', 'lexsort',
     'matmul', 'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer',
-    'nested_iters', 'newbuffer', 'normalize_axis_index', 'packbits',
+    'nested_iters', 'normalize_axis_index', 'packbits',
     'promote_types', 'putmask', 'ravel_multi_index', 'result_type', 'scalar',
     'set_datetimeparse_function', 'set_legacy_print_mode', 'set_numeric_ops',
     'set_string_function', 'set_typeDict', 'shares_memory', 'test_interrupt',
     'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
     'where', 'zeros']
+if sys.version_info.major < 3:
+    __all__ += ['newbuffer', 'getbuffer']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
