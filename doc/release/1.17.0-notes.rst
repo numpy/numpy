@@ -91,6 +91,12 @@ produce the deprecation warning. To help alleviate confusion, an additional
 `FutureWarning` will be emitted when accessing the ``writeable`` flag state to
 clarify the contradiction.
 
+Note that for the C-side buffer protocol such an array will return a
+readonly buffer immediately unless a writable buffer is requested. If
+a writeable buffer is requested a warning will be given. When using
+cython, the `const` attribute should be used with such arrays to avoid
+the warning.
+
 
 Future Changes
 ==============
