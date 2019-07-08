@@ -417,17 +417,21 @@ def test_writeable():
 
     # but the result of broadcast_arrays needs to be writeable, to
     # preserve backwards compatibility
-    for results in [broadcast_arrays(original),
-                    broadcast_arrays(0, original)]:
+    for is_broadcast, results in [(False, broadcast_arrays(original,)),
+                                  (True, broadcast_arrays(0, original))]:
         for result in results:
             # This will change to False in a future version
-            if any([s == 0 for s in result.strides]):
+            if is_broadcast:
                 with assert_warns(FutureWarning):
                     assert_equal(result.flags.writeable, True)
                 with assert_warns(DeprecationWarning):
                     result[:] = 0
                 # Warning not emitted, writing to the array resets it
                 assert_equal(result.flags.writeable, True)
+            else:
+                # No warning:
+                assert_equal(result.flags.writeable, True)
+
     for results in [broadcast_arrays(original),
                     broadcast_arrays(0, original)]:
         for result in results:
@@ -449,6 +453,25 @@ def test_writeable():
     other = np.zeros((1,))
     first, second = broadcast_arrays(tricky_array, other)
     assert_(first.shape == second.shape)
+
+
+def test_writeable_memoryview():
+    # The result of broadcast_arrays exports as a non-writeable memoryview
+    # because otherwise there is no good way to opt in to the new behaviour
+    # (i.e. you would need to set writeable to False explicitly).
+    # See gh-13929.
+    original = np.array([1, 2, 3])
+
+    for is_broadcast, results in [(False, broadcast_arrays(original,)),
+                                  (True, broadcast_arrays(0, original))]:
+        for result in results:
+            # This will change to False in a future version
+            if is_broadcast:
+                # memoryview(result, writable=True) will give warning but cannot
+                # be tested using the python API.
+                assert memoryview(result).readonly
+            else:
+                assert not memoryview(result).readonly
 
 
 def test_reference_types():
