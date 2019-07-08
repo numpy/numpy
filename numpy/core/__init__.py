@@ -3,9 +3,10 @@ from __future__ import division, absolute_import, print_function
 from .info import __doc__
 from numpy.version import version as __version__
 
+import os
+
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
-import os
 env_added = []
 for envkey in ['OPENBLAS_MAIN_FREE', 'GOTOBLAS_MAIN_FREE']:
     if envkey not in os.environ:
@@ -20,17 +21,12 @@ except ImportError as exc:
 
 IMPORTANT: PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!
 
-Importing the multiarray numpy extension module failed.  Most
-likely you are trying to import a failed build of numpy.
-Here is how to proceed:
-- If you're working with a numpy git repository, try `git clean -xdf`
-  (removes all files not under version control) and rebuild numpy.
-- If you are simply trying to use the numpy version that you have installed:
-  your installation is broken - please reinstall numpy.
-- If you have already reinstalled and that did not fix the problem, then:
-  1. Check that you are using the Python you expect (you're using %s),
+Importing the numpy c-extensions failed.
+- Try uninstalling and reinstalling numpy.
+- If you have already done that, then:
+  1. Check that you expected to use Python%d.%d from "%s",
      and that you have no directories in your PATH or PYTHONPATH that can
-     interfere with the Python and numpy versions you're trying to use.
+     interfere with the Python and numpy version "%s" you're trying to use.
   2. If (1) looks fine, you can open a new issue at
      https://github.com/numpy/numpy/issues.  Please include details on:
      - how you installed Python
@@ -39,11 +35,15 @@ Here is how to proceed:
      - whether or not you have multiple versions of Python installed
      - if you built from source, your compiler versions and ideally a build log
 
-     Note: this error has many possible causes, so please don't comment on
-     an existing issue about this - open a new one instead.
+- If you're working with a numpy git repository, try `git clean -xdf`
+  (removes all files not under version control) and rebuild numpy.
+
+Note: this error has many possible causes, so please don't comment on
+an existing issue about this - open a new one instead.
 
 Original error was: %s
-""" % (sys.executable, exc)
+""" % (sys.version_info[0], sys.version_info[1], sys.executable,
+        __version__, exc)
     raise ImportError(msg)
 finally:
     for envkey in env_added:
@@ -53,7 +53,19 @@ del env_added
 del os
 
 from . import umath
-from . import _internal  # for freeze programs
+
+# Check that multiarray,umath are pure python modules wrapping
+# _multiarray_umath and not either of the old c-extension modules
+if not (hasattr(multiarray, '_multiarray_umath') and
+        hasattr(umath, '_multiarray_umath')):
+    import sys
+    path = sys.modules['numpy'].__path__
+    msg = ("Something is wrong with the numpy installation. "
+        "While importing we detected an older version of "
+        "numpy in {}. One method of fixing this is to repeatedly uninstall "
+        "numpy until none is found, then reinstall this version.")
+    raise ImportError(msg.format(path))
+
 from . import numerictypes as nt
 multiarray.set_typeDict(nt.sctypeDict)
 from . import numeric
@@ -83,6 +95,11 @@ from .numeric import absolute as abs
 # do this after everything else, to minimize the chance of this misleadingly
 # appearing in an import-time traceback
 from . import _add_newdocs
+# add these for module-freeze analysis (like PyInstaller)
+from . import _dtype_ctypes
+from . import _internal
+from . import _dtype
+from . import _methods
 
 __all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__

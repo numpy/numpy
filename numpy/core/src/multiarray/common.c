@@ -147,7 +147,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (dtype == NULL) {
             goto fail;
         }
-        Py_INCREF(dtype);
         goto promote_types;
     }
     /* Check if it's a NumPy scalar */
@@ -164,7 +163,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
-                    return -1;
+                    goto fail;
                 }
 #if defined(NPY_PY3K)
     #if PY_VERSION_HEX >= 0x03030000
@@ -182,7 +181,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #else
                 if ((temp = PyObject_Unicode(obj)) == NULL) {
 #endif
-                    return -1;
+                    goto fail;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
 #ifndef Py_UNICODE_WIDE
@@ -214,9 +213,13 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             int itemsize;
             PyObject *temp;
 
+            /* dtype is not used in this (string discovery) branch */
+            Py_DECREF(dtype);
+            dtype = NULL;
+
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
-                    return -1;
+                    goto fail;
                 }
 #if defined(NPY_PY3K)
     #if PY_VERSION_HEX >= 0x03030000
@@ -234,7 +237,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #else
                 if ((temp = PyObject_Unicode(obj)) == NULL) {
 #endif
-                    return -1;
+                    goto fail;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
 #ifndef Py_UNICODE_WIDE
@@ -343,7 +346,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             typestr = PyDict_GetItemString(ip, "typestr");
 #if defined(NPY_PY3K)
             /* Allow unicode type strings */
-            if (PyUnicode_Check(typestr)) {
+            if (typestr && PyUnicode_Check(typestr)) {
                 tmp = PyUnicode_AsASCIIString(typestr);
                 typestr = tmp;
             }
@@ -440,12 +443,18 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         return 0;
     }
 
-    /* Recursive case, first check the sequence contains only one type */
+    /*
+     * The C-API recommends calling PySequence_Fast before any of the other
+     * PySequence_Fast* functions. This is required for PyPy
+     */
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
     if (seq == NULL) {
         goto fail;
     }
+
+    /* Recursive case, first check the sequence contains only one type */
     size = PySequence_Fast_GET_SIZE(seq);
+    /* objects is borrowed, do not release seq */
     objects = PySequence_Fast_ITEMS(seq);
     common_type = size > 0 ? Py_TYPE(objects[0]) : NULL;
     for (i = 1; i < size; ++i) {
@@ -505,7 +514,7 @@ promote_types:
         PyArray_Descr *res_dtype = PyArray_PromoteTypes(dtype, *out_dtype);
         Py_DECREF(dtype);
         if (res_dtype == NULL) {
-            return -1;
+            goto fail;
         }
         if (!string_type &&
                 res_dtype->type_num == NPY_UNICODE &&
@@ -592,7 +601,7 @@ _zerofill(PyArrayObject *ret)
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap)
 {
-    PyObject *base=PyArray_BASE(ap);
+    PyObject *base = PyArray_BASE(ap);
 #if defined(NPY_PY3K)
     Py_buffer view;
 #else
@@ -600,23 +609,48 @@ _IsWriteable(PyArrayObject *ap)
     Py_ssize_t n;
 #endif
 
-    /* If we own our own data, then no-problem */
-    if ((base == NULL) || (PyArray_FLAGS(ap) & NPY_ARRAY_OWNDATA)) {
+    /*
+     * C-data wrapping arrays may not own their data while not having a base;
+     * WRITEBACKIFCOPY arrays have a base, but do own their data.
+     */
+    if (base == NULL || PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA)) {
+        /*
+         * This is somewhat unsafe for directly wrapped non-writable C-arrays,
+         * which do not know whether the memory area is writable or not and
+         * do not own their data (but have no base).
+         * It would be better if this returned PyArray_ISWRITEABLE(ap).
+         * Since it is hard to deprecate, this is deprecated only on the Python
+         * side, but not on in PyArray_UpdateFlags.
+         */
         return NPY_TRUE;
     }
-    /*
-     * Get to the final base object
-     * If it is a writeable array, then return TRUE
-     * If we can find an array object
-     * or a writeable buffer object as the final base object
-     */
 
-    while(PyArray_Check(base)) {
-        if (PyArray_CHKFLAGS((PyArrayObject *)base, NPY_ARRAY_OWNDATA)) {
-            return (npy_bool) (PyArray_ISWRITEABLE((PyArrayObject *)base));
+    /*
+     * Get to the final base object.
+     * If it is a writeable array, then return True if we can
+     * find an array object or a writeable buffer object as
+     * the final base object.
+     */
+    while (PyArray_Check(base)) {
+        ap = (PyArrayObject *)base;
+        base = PyArray_BASE(ap);
+
+        if (PyArray_ISWRITEABLE(ap)) {
+            /*
+             * If any base is writeable, it must be OK to switch, note that
+             * bases are typically collapsed to always point to the most
+             * general one.
+             */
+            return NPY_TRUE;
         }
-        base = PyArray_BASE((PyArrayObject *)base);
+
+        if (base == NULL || PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA)) {
+            /* there is no further base to test the writeable flag for */
+            return NPY_FALSE;
+        }
+        assert(!PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA));
     }
+
 #if defined(NPY_PY3K)
     if (PyObject_GetBuffer(base, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         PyErr_Clear();

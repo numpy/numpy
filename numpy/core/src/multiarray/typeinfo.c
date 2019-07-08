@@ -3,8 +3,7 @@
  * Unfortunately, we need two different types to cover the cases where min/max
  * do and do not appear in the tuple.
  */
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
+#include "typeinfo.h"
 
 /* In python 2, this is not exported from Python.h */
 #include <structseq.h>
@@ -14,8 +13,8 @@
 #include "npy_pycompat.h"
 
 
-PyTypeObject PyArray_typeinfoType;
-PyTypeObject PyArray_typeinforangedType;
+static PyTypeObject PyArray_typeinfoType;
+static PyTypeObject PyArray_typeinforangedType;
 
 static PyStructSequence_Field typeinfo_fields[] = {
     {"char",      "The character used to represent the type"},
@@ -51,7 +50,7 @@ static PyStructSequence_Desc typeinforanged_desc = {
     7,                                                     /* n_in_sequence */
 };
 
-PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_typeinfo(
     char typechar, int typenum, int nbits, int align,
     PyTypeObject *type_obj)
@@ -77,7 +76,7 @@ PyArray_typeinfo(
     return entry;
 }
 
-PyObject *
+NPY_NO_EXPORT PyObject *
 PyArray_typeinforanged(
     char typechar, int typenum, int nbits, int align,
     PyObject *max, PyObject *min, PyTypeObject *type_obj)
@@ -105,10 +104,38 @@ PyArray_typeinforanged(
     return entry;
 }
 
-void typeinfo_init_structsequences(void)
+/* Python version only needed for backport to 2.7 */
+#if (PY_VERSION_HEX < 0x03040000) \
+    || (defined(PYPY_VERSION_NUM) && (PYPY_VERSION_NUM < 0x07020000))
+
+    static int
+    PyStructSequence_InitType2(PyTypeObject *type, PyStructSequence_Desc *desc) {
+        PyStructSequence_InitType(type, desc);
+        if (PyErr_Occurred()) {
+            return -1;
+        }
+        return 0;
+    }
+#endif
+
+NPY_NO_EXPORT int
+typeinfo_init_structsequences(PyObject *multiarray_dict)
 {
-    PyStructSequence_InitType(
-        &PyArray_typeinfoType, &typeinfo_desc);
-    PyStructSequence_InitType(
-        &PyArray_typeinforangedType, &typeinforanged_desc);
+    if (PyStructSequence_InitType2(
+            &PyArray_typeinfoType, &typeinfo_desc) < 0) {
+        return -1;
+    }
+    if (PyStructSequence_InitType2(
+            &PyArray_typeinforangedType, &typeinforanged_desc) < 0) {
+        return -1;
+    }
+    if (PyDict_SetItemString(multiarray_dict,
+            "typeinfo", (PyObject *)&PyArray_typeinfoType) < 0) {
+        return -1;
+    }
+    if (PyDict_SetItemString(multiarray_dict,
+            "typeinforanged", (PyObject *)&PyArray_typeinforangedType) < 0) {
+        return -1;
+    }
+    return 0;
 }

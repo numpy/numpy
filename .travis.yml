@@ -2,8 +2,7 @@
 #   http://lint.travis-ci.org/
 language: python
 group: travis_latest
-# Run jobs on container-based infrastructure, can be overridden per job
-sudo: false
+dist: xenial
 
 # Travis whitelists the installable packages, additions can be requested
 #   https://github.com/travis-ci/apt-package-whitelist
@@ -31,27 +30,13 @@ env:
                ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
 
 python:
-  - 2.7
   - 3.5
   - 3.6
 matrix:
   include:
     - python: 3.7
-      dist: xenial  # Required for Python 3.7
-      sudo: true    # travis-ci/travis-ci#9069
       env: INSTALL_PICKLE5=1
-    - python: 3.6
-      env: USE_CHROOT=1 ARCH=i386 DIST=bionic
-      sudo: true
-      addons:
-        apt:
-          update: true
-          packages:
-            - dpkg
-            - debootstrap
     - python: 3.5
-      dist: xenial  # Required for python3.5-dbg
-      sudo: true    # travis-ci/travis-ci#9069
       env: USE_DEBUG=1
       addons:
         apt:
@@ -63,26 +48,35 @@ matrix:
             - python3-setuptools
     - python: 3.6
       env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1 INSTALL_PICKLE5=1
-    - python: 2.7
-      env: USE_WHEEL=1 RUN_FULL_TESTS=1 PYTHON_OPTS="-3 -OO"
     - python: 3.6
       env: USE_SDIST=1
     - python: 3.6
       env:
        - PYTHONOPTIMIZE=2
+       - BLAS=None
+       - LAPACK=None
+       - ATLAS=None
+       - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas
+       - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
        - USE_ASV=1
     - python: 3.5
       env: NPY_RELAXED_STRIDES_CHECKING=0
     - python: 3.6
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
     - python: 3.6
+      env: NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
+    - python: 3.6
       env:
        - BLAS=None
        - LAPACK=None
        - ATLAS=None
-    - python: 3.6
+    - os: linux-ppc64le
+      python: 3.6
       env:
-       - NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1
+       # for matrix annotation only
+       - PPC64_LE=1
+       # use POWER8 OpenBLAS build, not system ATLAS
+       - ATLAS=None
 
 before_install:
   - ./tools/travis-before-install.sh

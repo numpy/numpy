@@ -21,7 +21,7 @@ from numpy.ma import (
     repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
     take, tan, tanh, transpose, where, zeros,
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 pi = np.pi
 
@@ -263,14 +263,14 @@ class TestMa(object):
         m = make_mask(n)
         m2 = make_mask(m)
         assert_(m is m2)
-        m3 = make_mask(m, copy=1)
+        m3 = make_mask(m, copy=True)
         assert_(m is not m3)
 
         x1 = np.arange(5)
         y1 = array(x1, mask=m)
         assert_(y1._data is not x1)
         assert_(allequal(x1, y1._data))
-        assert_(y1.mask is m)
+        assert_(y1._mask is m)
 
         y1a = array(y1, copy=0)
         # For copy=False, one might expect that the array would just
@@ -280,19 +280,19 @@ class TestMa(object):
                 y1._mask.__array_interface__)
 
         y2 = array(x1, mask=m3, copy=0)
-        assert_(y2.mask is m3)
+        assert_(y2._mask is m3)
         assert_(y2[2] is masked)
         y2[2] = 9
         assert_(y2[2] is not masked)
-        assert_(y2.mask is m3)
+        assert_(y2._mask is m3)
         assert_(allequal(y2.mask, 0))
 
         y2a = array(x1, mask=m, copy=1)
-        assert_(y2a.mask is not m)
+        assert_(y2a._mask is not m)
         assert_(y2a[2] is masked)
         y2a[2] = 9
         assert_(y2a[2] is not masked)
-        assert_(y2a.mask is not m)
+        assert_(y2a._mask is not m)
         assert_(allequal(y2a.mask, 0))
 
         y3 = array(x1 * 1.0, mask=m)
@@ -318,14 +318,14 @@ class TestMa(object):
         assert_(x[3] is masked)
         assert_(x[4] is masked)
         x[[1, 4]] = [10, 40]
-        assert_(x.mask is m)
+        assert_(x._mask is m)
         assert_(x[3] is masked)
         assert_(x[4] is not masked)
         assert_(eq(x, [0, 10, 2, -1, 40]))
 
         x = array(d, mask=m2, copy=True)
         x.put([0, 1, 2], [-1, 100, 200])
-        assert_(x.mask is not m2)
+        assert_(x._mask is not m2)
         assert_(x[3] is masked)
         assert_(x[4] is masked)
         assert_(eq(x, [-1, 100, 200, 0, 0]))
@@ -570,7 +570,7 @@ class TestMa(object):
         ott = array([0., 1., 2., 3.], mask=[1, 0, 0, 0])
         assert_(eq(2.0, average(ott, axis=0)))
         assert_(eq(2.0, average(ott, weights=[1., 1., 2., 1.])))
-        result, wts = average(ott, weights=[1., 1., 2., 1.], returned=1)
+        result, wts = average(ott, weights=[1., 1., 2., 1.], returned=True)
         assert_(eq(2.0, result))
         assert_(wts == 4.0)
         ott[:] = masked
@@ -581,7 +581,7 @@ class TestMa(object):
         assert_(eq(average(ott, axis=0), [2.0, 0.0]))
         assert_(average(ott, axis=1)[0] is masked)
         assert_(eq([2., 0.], average(ott, axis=0)))
-        result, wts = average(ott, axis=0, returned=1)
+        result, wts = average(ott, axis=0, returned=True)
         assert_(eq(wts, [1., 0.]))
 
     def test_testAverage2(self):
@@ -622,14 +622,14 @@ class TestMa(object):
 
         a = arange(6)
         b = arange(6) * 3
-        r1, w1 = average([[a, b], [b, a]], axis=1, returned=1)
+        r1, w1 = average([[a, b], [b, a]], axis=1, returned=True)
         assert_equal(shape(r1), shape(w1))
         assert_equal(r1.shape, w1.shape)
-        r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=1)
+        r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=True)
         assert_equal(shape(w2), shape(r2))
-        r2, w2 = average(ones((2, 2, 3)), returned=1)
+        r2, w2 = average(ones((2, 2, 3)), returned=True)
         assert_equal(shape(w2), shape(r2))
-        r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=1)
+        r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=True)
         assert_(shape(w2) == shape(r2))
         a2d = array([[1, 2], [0, 4]], float)
         a2dm = masked_array(a2d, [[0, 0], [1, 0]])

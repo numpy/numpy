@@ -40,6 +40,7 @@ typedef struct {
     PyObject *rint;
     PyObject *conjugate;
     PyObject *matmul;
+    PyObject *clip;
 } NumericOps;
 
 extern NPY_NO_EXPORT NumericOps n_ops;

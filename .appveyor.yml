@@ -30,11 +30,6 @@ environment:
       PYTHON_ARCH: 32
       TEST_MODE: fast
 
-    - PYTHON: C:\Python27-x64
-      PYTHON_VERSION: 2.7
-      PYTHON_ARCH: 64
-      TEST_MODE: fast
-
     - PYTHON: C:\Python36-x64
       PYTHON_VERSION: 3.6
       PYTHON_ARCH: 64
@@ -91,7 +86,7 @@ install:
       $clnt.DownloadFile($env:OPENBLAS, $file)
       Get-FileHash $file | Format-List
 
-      Expand-Archive $file $tmpdir      
+      Expand-Archive $file $tmpdir
 
       rm $tmpdir\$env:PYTHON_ARCH\lib\*.dll.a
       $lib = ls $tmpdir\$env:PYTHON_ARCH\lib\*.a | ForEach { ls $_ } | Select-Object -first 1

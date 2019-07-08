@@ -22,7 +22,6 @@ import os
 import sys
 import re
 import types
-import shlex
 
 from numpy.compat import open_latin1
 
@@ -38,6 +37,7 @@ from numpy.distutils.misc_util import is_string, all_strings, is_sequence, \
     make_temp_file, get_shared_lib_extension
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils.compat import get_exception
+from numpy.distutils import _shell_utils
 
 from .environment import EnvironmentConfig
 
@@ -362,7 +362,7 @@ class FCompiler(CCompiler):
         set_exe('archiver')
         set_exe('ranlib')
 
-    def update_executables(elf):
+    def update_executables(self):
         """Called at the beginning of customisation. Subclasses should
         override this if they need to set up the executables dictionary.
 
@@ -466,10 +466,8 @@ class FCompiler(CCompiler):
         noarch = self.distutils_vars.get('noarch', noopt)
         debug = self.distutils_vars.get('debug', False)
 
-        f77 = shlex.split(self.command_vars.compiler_f77,
-                          posix=(os.name == 'posix'))
-        f90 = shlex.split(self.command_vars.compiler_f90,
-                          posix=(os.name == 'posix'))
+        f77 = self.command_vars.compiler_f77
+        f90 = self.command_vars.compiler_f90
 
         f77flags = []
         f90flags = []
@@ -477,21 +475,23 @@ class FCompiler(CCompiler):
         fixflags = []
 
         if f77:
+            f77 = _shell_utils.NativeParser.split(f77)
             f77flags = self.flag_vars.f77
         if f90:
+            f90 = _shell_utils.NativeParser.split(f90)
             f90flags = self.flag_vars.f90
             freeflags = self.flag_vars.free
         # XXX Assuming that free format is default for f90 compiler.
         fix = self.command_vars.compiler_fix
         # NOTE: this and similar examples are probably just
-        # exluding --coverage flag when F90 = gfortran --coverage
+        # excluding --coverage flag when F90 = gfortran --coverage
         # instead of putting that flag somewhere more appropriate
         # this and similar examples where a Fortran compiler
         # environment variable has been customized by CI or a user
-        # should perhaps eventually be more throughly tested and more
+        # should perhaps eventually be more thoroughly tested and more
         # robustly handled
-        fix = shlex.split(fix, posix=(os.name == 'posix'))
         if fix:
+            fix = _shell_utils.NativeParser.split(fix)
             fixflags = self.flag_vars.fix + f90flags
 
         oflags, aflags, dflags = [], [], []

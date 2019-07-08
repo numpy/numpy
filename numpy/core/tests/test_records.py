@@ -17,7 +17,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, temppath
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 
 class TestFromrecords(object):
@@ -435,7 +435,14 @@ class TestRecord(object):
     def test_missing_field(self):
         # https://github.com/numpy/numpy/issues/4806
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
-        assert_raises(ValueError, lambda: arr[['nofield']])
+        assert_raises(KeyError, lambda: arr[['nofield']])
+
+    def test_fromarrays_nested_structured_arrays(self):
+        arrays = [
+            np.arange(10),
+            np.ones(10, dtype=[('a', '<u2'), ('b', '<f4')]),
+        ]
+        arr = np.rec.fromarrays(arrays)  # ValueError?
 
 
 def test_find_duplicate():

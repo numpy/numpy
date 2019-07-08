@@ -160,6 +160,39 @@ npy_ObjectLogicalNot(PyObject *i1)
 }
 
 static PyObject *
+npy_ObjectFloor(PyObject *obj) {
+    static PyObject *math_floor_func = NULL;
+
+    npy_cache_import("math", "floor", &math_floor_func);
+    if (math_floor_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_floor_func, "O", obj);
+}
+
+static PyObject *
+npy_ObjectCeil(PyObject *obj) {
+    static PyObject *math_ceil_func = NULL;
+
+    npy_cache_import("math", "ceil", &math_ceil_func);
+    if (math_ceil_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_ceil_func, "O", obj);
+}
+
+static PyObject *
+npy_ObjectTrunc(PyObject *obj) {
+    static PyObject *math_trunc_func = NULL;
+
+    npy_cache_import("math", "trunc", &math_trunc_func);
+    if (math_trunc_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_trunc_func, "O", obj);
+}
+
+static PyObject *
 npy_ObjectGCD(PyObject *i1, PyObject *i2)
 {
     PyObject *gcd = NULL;
@@ -195,7 +228,8 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
             return NULL;
         }
         /* _gcd has some unusual behaviour regarding sign */
-        return PyNumber_Absolute(gcd);
+        Py_SETREF(gcd, PyNumber_Absolute(gcd));
+        return gcd;
     }
 }
 
@@ -213,17 +247,30 @@ npy_ObjectLCM(PyObject *i1, PyObject *i2)
      * no remainder
      */
     tmp = PyNumber_FloorDivide(i1, gcd);
+    Py_DECREF(gcd);
     if(tmp == NULL) {
         return NULL;
     }
 
-    tmp = PyNumber_Multiply(tmp, i2);
+    Py_SETREF(tmp, PyNumber_Multiply(tmp, i2));
     if(tmp == NULL) {
         return NULL;
     }
 
     /* even though we fix gcd to be positive, we need to do it again here */
-    return PyNumber_Absolute(tmp);
+    Py_SETREF(tmp,  PyNumber_Absolute(tmp));
+    return tmp;
+}
+
+
+static PyObject *
+npy_ObjectClip(PyObject *arr, PyObject *min, PyObject *max) {
+    PyObject *o = npy_ObjectMax(arr, min);
+    if (o == NULL) {
+        return NULL;
+    }
+    Py_SETREF(o, npy_ObjectMin(o, max));
+    return o;
 }
 
 /*

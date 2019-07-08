@@ -49,7 +49,7 @@ class TestLogspace(object):
         assert_(len(y) == 50)
         y = logspace(0, 6, num=100)
         assert_(y[-1] == 10 ** 6)
-        y = logspace(0, 6, endpoint=0)
+        y = logspace(0, 6, endpoint=False)
         assert_(y[-1] < 10 ** 6)
         y = logspace(0, 6, num=7)
         assert_array_equal(y, [1, 10, 100, 1e3, 1e4, 1e5, 1e6])
@@ -229,7 +229,7 @@ class TestLinspace(object):
         assert_(len(y) == 50)
         y = linspace(2, 10, num=100)
         assert_(y[-1] == 10)
-        y = linspace(2, 10, endpoint=0)
+        y = linspace(2, 10, endpoint=False)
         assert_(y[-1] < 10)
         assert_raises(ValueError, linspace, 0, 10, num=-1)
 
@@ -362,3 +362,9 @@ class TestLinspace(object):
                 assert_(isinstance(y, tuple) and len(y) == 2 and
                         len(y[0]) == num and isnan(y[1]),
                         'num={0}, endpoint={1}'.format(num, ept))
+
+    def test_object(self):
+        start = array(1, dtype='O')
+        stop = array(2, dtype='O')
+        y = linspace(start, stop, 3)
+        assert_array_equal(y, array([1., 1.5, 2.]))

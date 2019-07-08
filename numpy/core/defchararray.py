@@ -29,7 +29,7 @@ from numpy.compat import asbytes, long
 import numpy
 
 __all__ = [
-    'chararray', 'equal', 'not_equal', 'greater_equal', 'less_equal',
+    'equal', 'not_equal', 'greater_equal', 'less_equal',
     'greater', 'less', 'str_len', 'add', 'multiply', 'mod', 'capitalize',
     'center', 'count', 'decode', 'encode', 'endswith', 'expandtabs',
     'find', 'index', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isspace',
@@ -498,8 +498,7 @@ def count(a, sub, start=0, end=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.char.count(c, 'A')
     array([3, 1, 1])
     >>> np.char.count(c, 'aA')
@@ -552,8 +551,7 @@ def decode(a, encoding=None, errors=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.char.encode(c, encoding='cp037')
     array(['\\x81\\xc1\\x81\\xc1\\x81\\xc1', '@@\\x81\\xc1@@',
         '\\x81\\x82\\xc2\\xc1\\xc2\\x82\\x81'],
@@ -637,8 +635,7 @@ def endswith(a, suffix, start=0, end=None):
     >>> s[0] = 'foo'
     >>> s[1] = 'bar'
     >>> s
-    array(['foo', 'bar'],
-        dtype='|S3')
+    array(['foo', 'bar'], dtype='<U3')
     >>> np.char.endswith(s, 'ar')
     array([False,  True])
     >>> np.char.endswith(s, 'a', start=1, end=2)
@@ -1036,11 +1033,9 @@ def lower(a):
     Examples
     --------
     >>> c = np.array(['A1B C', '1BCA', 'BCA1']); c
-    array(['A1B C', '1BCA', 'BCA1'],
-          dtype='|S5')
+    array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
     >>> np.char.lower(c)
-    array(['a1b c', '1bca', 'bca1'],
-          dtype='|S5')
+    array(['a1b c', '1bca', 'bca1'], dtype='<U5')
 
     """
     a_arr = numpy.asarray(a)
@@ -1084,23 +1079,20 @@ def lstrip(a, chars=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
 
     The 'a' variable is unstripped from c[1] because whitespace leading.
 
     >>> np.char.lstrip(c, 'a')
-    array(['AaAaA', '  aA  ', 'bBABba'],
-        dtype='|S7')
+    array(['AaAaA', '  aA  ', 'bBABba'], dtype='<U7')
 
 
     >>> np.char.lstrip(c, 'A') # leaves c unchanged
-    array(['aAaAaA', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, '')).all()
-    ... # XXX: is this a regression? this line now returns False
+    ... # XXX: is this a regression? This used to return True
     ... # np.char.lstrip(c,'') does not modify c at all.
-    True
+    False
     >>> (np.char.lstrip(c, ' ') == np.char.lstrip(c, None)).all()
     True
 
@@ -1400,10 +1392,10 @@ def rstrip(a, chars=None):
     >>> c = np.array(['aAaAaA', 'abBABba'], dtype='S7'); c
     array(['aAaAaA', 'abBABba'],
         dtype='|S7')
-    >>> np.char.rstrip(c, 'a')
+    >>> np.char.rstrip(c, b'a')
     array(['aAaAaA', 'abBABb'],
         dtype='|S7')
-    >>> np.char.rstrip(c, 'A')
+    >>> np.char.rstrip(c, b'A')
     array(['aAaAa', 'abBABba'],
         dtype='|S7')
 
@@ -1549,17 +1541,13 @@ def strip(a, chars=None):
     --------
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
-    array(['aAaAaA', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
     >>> np.char.strip(c)
-    array(['aAaAaA', 'aA', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAaA', 'aA', 'abBABba'], dtype='<U7')
     >>> np.char.strip(c, 'a') # 'a' unstripped from c[1] because whitespace leads
-    array(['AaAaA', '  aA  ', 'bBABb'],
-        dtype='|S7')
+    array(['AaAaA', '  aA  ', 'bBABb'], dtype='<U7')
     >>> np.char.strip(c, 'A') # 'A' unstripped from c[1] because (unprinted) ws trails
-    array(['aAaAa', '  aA  ', 'abBABba'],
-        dtype='|S7')
+    array(['aAaAa', '  aA  ', 'abBABba'], dtype='<U7')
 
     """
     a_arr = numpy.asarray(a)
@@ -1711,11 +1699,9 @@ def upper(a):
     Examples
     --------
     >>> c = np.array(['a1b c', '1bca', 'bca1']); c
-    array(['a1b c', '1bca', 'bca1'],
-        dtype='|S5')
+    array(['a1b c', '1bca', 'bca1'], dtype='<U5')
     >>> np.char.upper(c)
-    array(['A1B C', '1BCA', 'BCA1'],
-        dtype='|S5')
+    array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
 
     """
     a_arr = numpy.asarray(a)
@@ -1950,18 +1936,16 @@ class chararray(ndarray):
     >>> charar = np.chararray((3, 3))
     >>> charar[:] = 'a'
     >>> charar
-    chararray([['a', 'a', 'a'],
-           ['a', 'a', 'a'],
-           ['a', 'a', 'a']],
-          dtype='|S1')
+    chararray([[b'a', b'a', b'a'],
+               [b'a', b'a', b'a'],
+               [b'a', b'a', b'a']], dtype='|S1')
 
     >>> charar = np.chararray(charar.shape, itemsize=5)
     >>> charar[:] = 'abc'
     >>> charar
-    chararray([['abc', 'abc', 'abc'],
-           ['abc', 'abc', 'abc'],
-           ['abc', 'abc', 'abc']],
-          dtype='|S5')
+    chararray([[b'abc', b'abc', b'abc'],
+               [b'abc', b'abc', b'abc'],
+               [b'abc', b'abc', b'abc']], dtype='|S5')
 
     """
     def __new__(subtype, shape, itemsize=1, unicode=False, buffer=None,
@@ -2140,7 +2124,7 @@ class chararray(ndarray):
     def __rmod__(self, other):
         return NotImplemented
 
-    def argsort(self, axis=-1, kind='quicksort', order=None):
+    def argsort(self, axis=-1, kind=None, order=None):
         """
         Return the indices that sort the array lexicographically.
 

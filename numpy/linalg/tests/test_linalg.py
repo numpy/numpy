@@ -633,18 +633,9 @@ class TestEig(EigCases):
         assert_(isinstance(a, np.ndarray))
 
 
-class SVDCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
+class SVDBaseTests(object):
+    hermitian = False
 
-    def do(self, a, b, tags):
-        u, s, vt = linalg.svd(a, 0)
-        assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
-                                           np.asarray(vt)),
-                        rtol=get_rtol(u.dtype))
-        assert_(consistent_subclass(u, a))
-        assert_(consistent_subclass(vt, a))
-
-
-class TestSVD(SVDCases):
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
@@ -652,22 +643,50 @@ class TestSVD(SVDCases):
         assert_equal(u.dtype, dtype)
         assert_equal(s.dtype, get_real_dtype(dtype))
         assert_equal(vh.dtype, dtype)
-        s = linalg.svd(x, compute_uv=False)
+        s = linalg.svd(x, compute_uv=False, hermitian=self.hermitian)
         assert_equal(s.dtype, get_real_dtype(dtype))
 
+
+class SVDCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
+
+    def do(self, a, b, tags):
+        u, s, vt = linalg.svd(a, False)
+        assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
+                                           np.asarray(vt)),
+                        rtol=get_rtol(u.dtype))
+        assert_(consistent_subclass(u, a))
+        assert_(consistent_subclass(vt, a))
+
+
+class TestSVD(SVDCases, SVDBaseTests):
     def test_empty_identity(self):
         """ Empty input should put an identity matrix in u or vh """
         x = np.empty((4, 0))
-        u, s, vh = linalg.svd(x, compute_uv=True)
+        u, s, vh = linalg.svd(x, compute_uv=True, hermitian=self.hermitian)
         assert_equal(u.shape, (4, 4))
         assert_equal(vh.shape, (0, 0))
         assert_equal(u, np.eye(4))
 
         x = np.empty((0, 4))
-        u, s, vh = linalg.svd(x, compute_uv=True)
+        u, s, vh = linalg.svd(x, compute_uv=True, hermitian=self.hermitian)
         assert_equal(u.shape, (0, 0))
         assert_equal(vh.shape, (4, 4))
         assert_equal(vh, np.eye(4))
+
+
+class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
+
+    def do(self, a, b, tags):
+        u, s, vt = linalg.svd(a, False, hermitian=True)
+        assert_allclose(a, dot_generalized(np.asarray(u) * np.asarray(s)[..., None, :],
+                                           np.asarray(vt)),
+                        rtol=get_rtol(u.dtype))
+        assert_(consistent_subclass(u, a))
+        assert_(consistent_subclass(vt, a))
+
+
+class TestSVDHermitian(SVDHermitianCases, SVDBaseTests):
+    hermitian = True
 
 
 class CondCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
@@ -797,6 +816,20 @@ class TestPinv(PinvCases):
     pass
 
 
+class PinvHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
+
+    def do(self, a, b, tags):
+        a_ginv = linalg.pinv(a, hermitian=True)
+        # `a @ a_ginv == I` does not hold if a is singular
+        dot = dot_generalized
+        assert_almost_equal(dot(dot(a, a_ginv), a), a, single_decimal=5, double_decimal=11)
+        assert_(consistent_subclass(a_ginv, a))
+
+
+class TestPinvHermitian(PinvHermitianCases):
+    pass
+
+
 class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
     def do(self, a, b, tags):
@@ -864,7 +897,7 @@ class LstsqCases(LinalgSquareTestCase, LinalgNonsquareTestCase):
     def do(self, a, b, tags):
         arr = np.asarray(a)
         m, n = arr.shape
-        u, s, vt = linalg.svd(a, 0)
+        u, s, vt = linalg.svd(a, False)
         x, residuals, rank, sv = linalg.lstsq(a, b, rcond=-1)
         if m == 0:
             assert_((x == 0).all())
@@ -1962,3 +1995,10 @@ class TestTensorinv(object):
         ainv = linalg.tensorinv(a, ind=1)
         b = np.ones(24)
         assert_allclose(np.tensordot(ainv, b, 1), np.linalg.tensorsolve(a, b))
+
+
+def test_unsupported_commontype():
+    # linalg gracefully handles unsupported type
+    arr = np.array([[1, -2], [2, 5]], dtype='float16')
+    with assert_raises_regex(TypeError, "unsupported in linalg"):
+        linalg.cholesky(arr)

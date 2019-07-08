@@ -91,6 +91,11 @@ idiom is even simpler!  This last example illustrates two of NumPy's
 features which are the basis of much of its power: vectorization and
 broadcasting.
 
+.. _whatis-vectorization:
+
+Why is NumPy Fast?
+------------------
+
 Vectorization describes the absence of any explicit looping, indexing,
 etc., in the code - these things are taking place, of course, just
 "behind the scenes" in optimized, pre-compiled C code.  Vectorized
@@ -120,9 +125,13 @@ the shape of the larger in such a way that the resulting broadcast is
 unambiguous. For detailed "rules" of broadcasting see
 `numpy.doc.broadcasting`.
 
+Who Else Uses NumPy?
+--------------------
+
 NumPy fully supports an object-oriented approach, starting, once
 again, with `ndarray`.  For example, `ndarray` is a class, possessing
-numerous methods and attributes.  Many of its methods mirror
-functions in the outer-most NumPy namespace, giving the programmer
-complete freedom to code in whichever paradigm she prefers and/or
-which seems most appropriate to the task at hand.
+numerous methods and attributes.  Many of its methods are mirrored by
+functions in the outer-most NumPy namespace, allowing the programmer
+to code in whichever paradigm they prefer. This flexibility has allowed the
+NumPy array dialect and NumPy `ndarray` class to become the *de-facto* language
+of multi-dimensional data interchange used in Python.

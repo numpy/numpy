@@ -104,9 +104,9 @@ class matrix(N.ndarray):
     Examples
     --------
     >>> a = np.matrix('1 2; 3 4')
-    >>> print(a)
-    [[1 2]
-     [3 4]]
+    >>> a
+    matrix([[1, 2],
+            [3, 4]])
 
     >>> np.matrix([[1, 2], [3, 4]])
     matrix([[1, 2],
@@ -310,12 +310,12 @@ class matrix(N.ndarray):
         matrix([[3],
                 [7]])
         >>> x.sum(axis=1, dtype='float')
-        matrix([[ 3.],
-                [ 7.]])
-        >>> out = np.zeros((1, 2), dtype='float')
-        >>> x.sum(axis=1, dtype='float', out=out)
-        matrix([[ 3.],
-                [ 7.]])
+        matrix([[3.],
+                [7.]])
+        >>> out = np.zeros((2, 1), dtype='float')
+        >>> x.sum(axis=1, dtype='float', out=np.asmatrix(out))
+        matrix([[3.],
+                [7.]])
 
         """
         return N.ndarray.sum(self, axis, dtype, out, keepdims=True)._collapse(axis)
@@ -437,7 +437,7 @@ class matrix(N.ndarray):
         >>> x.mean()
         5.5
         >>> x.mean(0)
-        matrix([[ 4.,  5.,  6.,  7.]])
+        matrix([[4., 5., 6., 7.]])
         >>> x.mean(1)
         matrix([[ 1.5],
                 [ 5.5],
@@ -469,9 +469,9 @@ class matrix(N.ndarray):
                 [ 4,  5,  6,  7],
                 [ 8,  9, 10, 11]])
         >>> x.std()
-        3.4520525295346629
+        3.4520525295346629 # may vary
         >>> x.std(0)
-        matrix([[ 3.26598632,  3.26598632,  3.26598632,  3.26598632]])
+        matrix([[ 3.26598632,  3.26598632,  3.26598632,  3.26598632]]) # may vary
         >>> x.std(1)
         matrix([[ 1.11803399],
                 [ 1.11803399],
@@ -505,11 +505,11 @@ class matrix(N.ndarray):
         >>> x.var()
         11.916666666666666
         >>> x.var(0)
-        matrix([[ 10.66666667,  10.66666667,  10.66666667,  10.66666667]])
+        matrix([[ 10.66666667,  10.66666667,  10.66666667,  10.66666667]]) # may vary
         >>> x.var(1)
-        matrix([[ 1.25],
-                [ 1.25],
-                [ 1.25]])
+        matrix([[1.25],
+                [1.25],
+                [1.25]])
 
         """
         return N.ndarray.var(self, axis, dtype, out, ddof, keepdims=True)._collapse(axis)
@@ -791,7 +791,8 @@ class matrix(N.ndarray):
         """
         return N.ndarray.ptp(self, axis, out)._align(axis)
 
-    def getI(self):
+    @property
+    def I(self):
         """
         Returns the (multiplicative) inverse of invertible `self`.
 
@@ -824,7 +825,7 @@ class matrix(N.ndarray):
         matrix([[-2. ,  1. ],
                 [ 1.5, -0.5]])
         >>> m.getI() * m
-        matrix([[ 1.,  0.],
+        matrix([[ 1.,  0.], # may vary
                 [ 0.,  1.]])
 
         """
@@ -835,7 +836,8 @@ class matrix(N.ndarray):
             from numpy.dual import pinv as func
         return asmatrix(func(self))
 
-    def getA(self):
+    @property
+    def A(self):
         """
         Return `self` as an `ndarray` object.
 
@@ -864,7 +866,8 @@ class matrix(N.ndarray):
         """
         return self.__array__()
 
-    def getA1(self):
+    @property
+    def A1(self):
         """
         Return `self` as a flattened `ndarray`.
 
@@ -886,7 +889,8 @@ class matrix(N.ndarray):
                 [ 4,  5,  6,  7],
                 [ 8,  9, 10, 11]])
         >>> x.getA1()
-        array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11])
+        array([ 0,  1,  2, ...,  9, 10, 11])
+
 
         """
         return self.__array__().ravel()
@@ -930,8 +934,8 @@ class matrix(N.ndarray):
         """
         return N.ndarray.ravel(self, order=order)
 
-
-    def getT(self):
+    @property
+    def T(self):
         """
         Returns the transpose of the matrix.
 
@@ -963,7 +967,8 @@ class matrix(N.ndarray):
         """
         return self.transpose()
 
-    def getH(self):
+    @property
+    def H(self):
         """
         Returns the (complex) conjugate transpose of `self`.
 
@@ -986,10 +991,10 @@ class matrix(N.ndarray):
                 [  4. -4.j,   5. -5.j,   6. -6.j,   7. -7.j],
                 [  8. -8.j,   9. -9.j,  10.-10.j,  11.-11.j]])
         >>> z.getH()
-        matrix([[  0. +0.j,   4. +4.j,   8. +8.j],
-                [  1. +1.j,   5. +5.j,   9. +9.j],
-                [  2. +2.j,   6. +6.j,  10.+10.j],
-                [  3. +3.j,   7. +7.j,  11.+11.j]])
+        matrix([[ 0. -0.j,  4. +4.j,  8. +8.j],
+                [ 1. +1.j,  5. +5.j,  9. +9.j],
+                [ 2. +2.j,  6. +6.j, 10.+10.j],
+                [ 3. +3.j,  7. +7.j, 11.+11.j]])
 
         """
         if issubclass(self.dtype.type, N.complexfloating):
@@ -997,11 +1002,12 @@ class matrix(N.ndarray):
         else:
             return self.transpose()
 
-    T = property(getT, None)
-    A = property(getA, None)
-    A1 = property(getA1, None)
-    H = property(getH, None)
-    I = property(getI, None)
+    # kept for compatibility
+    getT = T.fget
+    getA = A.fget
+    getA1 = A1.fget
+    getH = H.fget
+    getI = I.fget
 
 def _from_string(str, gdict, ldict):
     rows = str.split(';')
