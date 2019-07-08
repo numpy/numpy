@@ -13,9 +13,9 @@ example is the addition operator: ::
  >>> np.array([0,2,3,4]) + np.array([1,1,-1,2])
  array([1, 3, 2, 6])
 
-The unfunc module lists all the available ufuncs in numpy. Documentation on
+The ufunc module lists all the available ufuncs in numpy. Documentation on
 the specific ufuncs may be found in those modules. This documentation is
-intended to address the more general aspects of unfuncs common to most of
+intended to address the more general aspects of ufuncs common to most of
 them. All of the ufuncs that make use of Python operators (e.g., +, -, etc.)
 have equivalent functions defined (e.g. add() for +)
 
