@@ -25,7 +25,7 @@ The Basics
 
 NumPy's main object is the homogeneous multidimensional array. It is a
 table of elements (usually numbers), all of the same type, indexed by a
-tuple of positive integers. In NumPy dimensions are called *axes*.
+tuple of non-negative integers. In NumPy dimensions are called *axes*.
 
 For example, the coordinates of a point in 3D space ``[1, 2, 1]`` has
 one axis. That axis has 3 elements in it, so we say it has a length
