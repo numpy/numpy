@@ -270,7 +270,7 @@ can change the printing options using ``set_printoptions``.
 
 ::
 
-    >>> np.set_printoptions(threshold=np.nan)
+    >>> np.set_printoptions(threshold=sys.maxsize)       # sys module should be imported
 
 
 Basic Operations
