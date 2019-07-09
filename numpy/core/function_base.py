@@ -467,6 +467,16 @@ def add_newdoc(place, obj, doc):
     in new-style classes or built-in functions. Because this
     routine never raises an error the caller must check manually
     that the docstrings were changed.
+
+    Since this function grabs the ``char *`` from a c-level str object and puts
+    it into the ``tp_doc`` slot of the type of `obj`, it violates a number of
+    C-API best-practices, by:
+
+    - modifying a `PyTypeObject` after calling `PyType_Ready`
+    - calling `Py_INCREF` on the str and losing the reference, so the str
+      will never be released
+
+    If possible it should be avoided.
     """
     new = getattr(__import__(place, globals(), {}, [obj]), obj)
     if isinstance(doc, str):
