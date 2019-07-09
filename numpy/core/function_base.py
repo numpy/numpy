@@ -437,18 +437,29 @@ def _add_docstring(obj, doc):
 
 def add_newdoc(place, obj, doc):
     """
-    Adds documentation to obj which is in module place.
+    Add documentation to an existing object, typically one defined in C
 
-    If doc is a string add it to obj as a docstring
+    The purpose is to allow easier editing of the docstrings without requiring
+    a re-compile. This exists primarily for internal use within numpy itself.
 
-    If doc is a tuple, then the first element is interpreted as
-       an attribute of obj and the second as the docstring
-          (method, docstring)
+    Parameters
+    ----------
+    place : str
+        The absolute name of the module to import from
+    obj : str
+        The name of the object to add documentation to, typically a class or
+        function name
+    doc : {str, Tuple[str, str], List[Tuple[str, str]]}
+        If a string, the documentation to apply to `obj`
 
-    If doc is a list, then each element of the list should be a
-       sequence of length two --> [(method1, docstring1),
-       (method2, docstring2), ...]
+        If a tuple, then the first element is interpreted as an attribute of
+        `obj` and the second as the docstring to apply - ``(method, docstring)``
 
+        If a list, then each element of the list should be a tuple of length
+        two - ``[(method1, docstring1), (method2, docstring2), ...]``
+
+    Notes
+    -----
     This routine never raises an error if the docstring can't be written, but
     will raise an error if the object being documented does not exist.
 
