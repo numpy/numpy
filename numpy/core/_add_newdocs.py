@@ -3255,6 +3255,87 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
     """))
 
 
+add_newdoc('numpy.core.multiarray', 'shares_memory',
+    """
+    shares_memory(a, b, max_work=None)
+
+    Determine if two arrays share memory
+
+    Parameters
+    ----------
+    a, b : ndarray
+        Input arrays
+    max_work : int, optional
+        Effort to spend on solving the overlap problem (maximum number
+        of candidate solutions to consider). The following special
+        values are recognized:
+
+        max_work=MAY_SHARE_EXACT  (default)
+            The problem is solved exactly. In this case, the function returns
+            True only if there is an element shared between the arrays.
+        max_work=MAY_SHARE_BOUNDS
+            Only the memory bounds of a and b are checked.
+
+    Raises
+    ------
+    numpy.TooHardError
+        Exceeded max_work.
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    may_share_memory
+
+    Examples
+    --------
+    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    False
+
+    """)
+
+
+add_newdoc('numpy.core.multiarray', 'may_share_memory',
+    """
+    may_share_memory(a, b, max_work=None)
+
+    Determine if two arrays might share memory
+
+    A return of True does not necessarily mean that the two arrays
+    share any element.  It just means that they *might*.
+
+    Only the memory bounds of a and b are checked by default.
+
+    Parameters
+    ----------
+    a, b : ndarray
+        Input arrays
+    max_work : int, optional
+        Effort to spend on solving the overlap problem.  See
+        `shares_memory` for details.  Default for ``may_share_memory``
+        is to do a bounds check.
+
+    Returns
+    -------
+    out : bool
+
+    See Also
+    --------
+    shares_memory
+
+    Examples
+    --------
+    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
+    False
+    >>> x = np.zeros([3, 4])
+    >>> np.may_share_memory(x[:,0], x[:,1])
+    True
+
+    """)
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
     """
     arr.newbyteorder(new_order='S')
