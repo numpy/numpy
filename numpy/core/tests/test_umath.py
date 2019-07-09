@@ -742,10 +742,14 @@ class TestSpecialFloats(object):
                 assert_raises(FloatingPointError, np.reciprocal, np.array(-0.0, dtype=dt))
 
 # func : [maxulperror, low, high]
-avx_ufuncs = {'sqrt'        :[1, 0., 100.],
+avx_ufuncs = {'sqrt'        :[1,  0.,   100.],
               'absolute'    :[0, -100., 100.],
-              'reciprocal'  :[1, 1., 100.],
-              'square'      :[1, -100., 100.]}
+              'reciprocal'  :[1,  1.,   100.],
+              'square'      :[1, -100., 100.],
+              'rint'        :[0, -100., 100.],
+              'floor'       :[0, -100., 100.],
+              'ceil'        :[0, -100., 100.],
+              'trunc'       :[0, -100., 100.]}
 
 class TestAVXUfuncs(object):
     def test_avx_based_ufunc(self):
