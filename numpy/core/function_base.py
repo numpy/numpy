@@ -472,7 +472,8 @@ def add_newdoc(place, obj, doc):
     if isinstance(doc, str):
         _add_docstring(new, doc.strip())
     elif isinstance(doc, tuple):
-        _add_docstring(getattr(new, doc[0]), doc[1].strip())
+        attr, docstring = doc
+        _add_docstring(getattr(new, attr), docstring.strip())
     elif isinstance(doc, list):
-        for val in doc:
-            _add_docstring(getattr(new, val[0]), val[1].strip())
+        for attr, docstring in doc:
+            _add_docstring(getattr(new, attr), docstring.strip())
