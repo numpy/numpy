@@ -95,7 +95,7 @@ class CompaqVisualFCompiler(FCompiler):
                 raise e
         except ValueError:
             e = get_exception()
-            if not "path']" in str(e):
+            if not "'path'" in str(e):
                 print("Unexpected ValueError in", __file__)
                 raise e
 
