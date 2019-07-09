@@ -314,8 +314,8 @@ compiler's ``long double`` available as ``np.longdouble`` (and
 ``np.clongdouble`` for the complex numbers). You can find out what your
 numpy provides with ``np.finfo(np.longdouble)``.
 
-NumPy does not provide a dtype with more precision than C
-``long double``\\s; in particular, the 128-bit IEEE quad precision
+NumPy does not provide a dtype with more precision than C's
+``long double``; in particular, the 128-bit IEEE quad precision
 data type (FORTRAN's ``REAL*16``\\) is not available.
 
 For efficient memory alignment, ``np.longdouble`` is usually stored
