@@ -114,7 +114,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     threshold : int, optional
         Total number of array elements which trigger summarization
         rather than full repr (default 1000).
-	To always use the full repr without summarization, pass `sys.maxsize`.
+        To always use the full repr without summarization, pass `sys.maxsize`.
     edgeitems : int, optional
         Number of array items in summary at beginning and end of
         each dimension (default 3).
