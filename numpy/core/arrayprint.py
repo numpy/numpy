@@ -1,3 +1,17 @@
+import contextlib
+import warnings
+from .overrides import array_function_dispatch, set_module
+from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
+                           flexible)
+from .numeric import concatenate, asarray, errstate
+from .fromnumeric import ravel, any
+from .multiarray import (array, dragon4_positional, dragon4_scientific,
+                         datetime_as_string, datetime_data, ndarray,
+                         set_legacy_print_mode)
+from . import multiarray
+from .umath import absolute, not_equal, isnan, isinf, isfinite, isnat
+from . import numerictypes as _nt
+import numpy as np
 """Array printing function
 
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
@@ -38,20 +52,6 @@ else:
     except ImportError:
         from dummy_thread import get_ident
 
-import numpy as np
-from . import numerictypes as _nt
-from .umath import absolute, not_equal, isnan, isinf, isfinite, isnat
-from . import multiarray
-from .multiarray import (array, dragon4_positional, dragon4_scientific,
-                         datetime_as_string, datetime_data, ndarray,
-                         set_legacy_print_mode)
-from .fromnumeric import ravel, any
-from .numeric import concatenate, asarray, errstate
-from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
-                           flexible)
-from .overrides import array_function_dispatch, set_module
-import warnings
-import contextlib
 
 _format_options = {
     'edgeitems': 3,  # repr N leading and trailing items of each dimension
@@ -65,6 +65,7 @@ _format_options = {
     'sign': '-',
     'formatter': None,
     'legacy': False}
+
 
 def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                        linewidth=None, suppress=None, nanstr=None, infstr=None,
@@ -114,6 +115,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     threshold : int, optional
         Total number of array elements which trigger summarization
         rather than full repr (default 1000).
+        Preferred max value to be used is sys.maxsize.
     edgeitems : int, optional
         Number of array items in summary at beginning and end of
         each dimension (default 3).
@@ -336,7 +338,7 @@ def _leading_trailing(a, edgeitems, index=()):
 
     if a.shape[axis] > 2*edgeitems:
         return concatenate((
-            _leading_trailing(a, edgeitems, index + np.index_exp[ :edgeitems]),
+            _leading_trailing(a, edgeitems, index + np.index_exp[:edgeitems]),
             _leading_trailing(a, edgeitems, index + np.index_exp[-edgeitems:])
         ), axis=axis)
     else:
@@ -351,11 +353,14 @@ def _object_format(o):
         fmt = '{!r}'
     return fmt.format(o)
 
+
 def repr_format(x):
     return repr(x)
 
+
 def str_format(x):
     return str(x)
+
 
 def _get_formatdict(data, **opt):
     prec, fmode = opt['precision'], opt['floatmode']
@@ -409,6 +414,7 @@ def _get_formatdict(data, **opt):
                 formatdict[key] = indirect(formatter[key])
 
     return formatdict
+
 
 def _get_format_function(data, **options):
     """
@@ -703,7 +709,7 @@ def array2string(a, max_line_width=None, precision=None,
 def _extendLine(s, line, word, line_width, next_line_prefix, legacy):
     needs_wrap = len(line) + len(word) > line_width
     if legacy != '1.13':
-        s# don't wrap lines if it won't help
+        s  # don't wrap lines if it won't help
         if len(line) <= len(next_line_prefix):
             needs_wrap = False
 
@@ -832,6 +838,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
         # performance and PyPy friendliness, we break the cycle:
         recurser = None
 
+
 def _none_or_positive_arg(x, name):
     if x is None:
         return -1
@@ -839,8 +846,10 @@ def _none_or_positive_arg(x, name):
         raise ValueError("{} must be >= 0".format(name))
     return x
 
+
 class FloatingFormat(object):
     """ Formatter for subtypes of np.floating """
+
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
                  **kwarg):
         # for backcompatibility, accept bools
@@ -879,7 +888,7 @@ class FloatingFormat(object):
             min_val = np.min(abs_non_zero)
             with errstate(over='ignore'):  # division can overflow
                 if max_val >= 1.e8 or (not self.suppress_small and
-                        (min_val < 0.0001 or max_val/min_val > 1000.)):
+                                       (min_val < 0.0001 or max_val/min_val > 1000.)):
                     self.exp_format = True
 
         # do a first pass of printing all the numbers, to determine sizes
@@ -894,7 +903,7 @@ class FloatingFormat(object):
             if self.floatmode == 'fixed' or self._legacy == '1.13':
                 trim, unique = 'k', False
             strs = (dragon4_scientific(x, precision=self.precision,
-                               unique=unique, trim=trim, sign=self.sign == '+')
+                                       unique=unique, trim=trim, sign=self.sign == '+')
                     for x in finite_vals)
             frac_strs, _, exp_strs = zip(*(s.partition('e') for s in strs))
             int_part, frac_part = zip(*(s.split('.') for s in frac_strs))
@@ -982,6 +991,8 @@ class FloatingFormat(object):
                                       pad_right=self.pad_right)
 
 # for back-compatibility, we keep the classes for each float type too
+
+
 class FloatFormat(FloatingFormat):
     def __init__(self, *args, **kwargs):
         warnings.warn("FloatFormat has been replaced by FloatingFormat",
@@ -1167,6 +1178,7 @@ class BoolFormat(object):
 
 class ComplexFloatingFormat(object):
     """ Formatter for subtypes of np.complexfloating """
+
     def __init__(self, x, precision, floatmode, suppress_small,
                  sign=False, **kwarg):
         # for backcompatibility, accept bools
@@ -1194,12 +1206,15 @@ class ComplexFloatingFormat(object):
         return r + i
 
 # for back-compatibility, we keep the classes for each complex type too
+
+
 class ComplexFormat(ComplexFloatingFormat):
     def __init__(self, *args, **kwargs):
         warnings.warn(
             "ComplexFormat has been replaced by ComplexFloatingFormat",
             DeprecationWarning, stacklevel=2)
         super(ComplexFormat, self).__init__(*args, **kwargs)
+
 
 class LongComplexFormat(ComplexFloatingFormat):
     def __init__(self, *args, **kwargs):
@@ -1262,9 +1277,9 @@ class DatetimeFormat(_TimelikeFormat):
 
     def _format_non_nat(self, x):
         return "'%s'" % datetime_as_string(x,
-                                    unit=self.unit,
-                                    timezone=self.timezone,
-                                    casting=self.casting)
+                                           unit=self.unit,
+                                           timezone=self.timezone,
+                                           casting=self.casting)
 
 
 class TimedeltaFormat(_TimelikeFormat):
@@ -1290,6 +1305,7 @@ class StructuredVoidFormat(object):
     as alias scalars lose their field information, and the implementation
     relies upon np.void.__getitem__.
     """
+
     def __init__(self, format_functions):
         self.format_functions = format_functions
 
@@ -1640,6 +1656,7 @@ def set_string_function(f, repr=True):
             return multiarray.set_string_function(_default_array_str, 0)
     else:
         return multiarray.set_string_function(f, repr)
+
 
 set_string_function(_default_array_str, False)
 set_string_function(_default_array_repr, True)
