@@ -26,10 +26,12 @@ _check_fill_value = np.ma.core._check_fill_value
 
 
 __all__ = [
-    'append_fields', 'drop_fields', 'find_duplicates',
-    'get_fieldstructure', 'join_by', 'merge_arrays',
-    'rec_append_fields', 'rec_drop_fields', 'rec_join',
-    'recursive_fill_fields', 'rename_fields', 'stack_arrays',
+    'append_fields', 'apply_along_fields', 'assign_fields_by_name',
+    'drop_fields', 'find_duplicates', 'get_fieldstructure',
+    'join_by', 'merge_arrays', 'rec_append_fields',
+    'rec_drop_fields', 'rec_join', 'recursive_fill_fields',
+    'rename_fields', 'require_fields', 'stack_arrays',
+    'structured_to_unstructured',
     ]
 
 
@@ -932,12 +934,13 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     Examples
     --------
 
+    >>> from numpy.lib import recfunctions as rfn
     >>> a = np.zeros(4, dtype=[('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
     >>> a
     array([(0, (0., 0), [0., 0.]), (0, (0., 0), [0., 0.]),
            (0, (0., 0), [0., 0.]), (0, (0., 0), [0., 0.])],
           dtype=[('a', '<i4'), ('b', [('f0', '<f4'), ('f1', '<u2')]), ('c', '<f4', (2,))])
-    >>> structured_to_unstructured(arr)
+    >>> rfn.structured_to_unstructured(a)
     array([[0., 0., 0., 0., 0.],
            [0., 0., 0., 0., 0.],
            [0., 0., 0., 0., 0.],
@@ -945,7 +948,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
 
     >>> b = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
     ...              dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
-    >>> np.mean(structured_to_unstructured(b[['x', 'z']]), axis=-1)
+    >>> np.mean(rfn.structured_to_unstructured(b[['x', 'z']]), axis=-1)
     array([ 3. ,  5.5,  9. , 11. ])
 
     """
@@ -1111,11 +1114,12 @@ def apply_along_fields(func, arr):
     Examples
     --------
 
+    >>> from numpy.lib import recfunctions as rfn
     >>> b = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
     ...              dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
-    >>> apply_along_fields(np.mean, b)
+    >>> rfn.apply_along_fields(np.mean, b)
     array([ 2.66666667,  5.33333333,  8.66666667, 11.        ])
-    >>> apply_along_fields(np.mean, b[['x', 'z']])
+    >>> rfn.apply_along_fields(np.mean, b[['x', 'z']])
     array([ 3. ,  5.5,  9. , 11. ])
 
     """
@@ -1200,14 +1204,15 @@ def require_fields(array, required_dtype):
     Examples
     --------
 
+    >>> from numpy.lib import recfunctions as rfn
     >>> a = np.ones(4, dtype=[('a', 'i4'), ('b', 'f8'), ('c', 'u1')])
-    >>> require_fields(a, [('b', 'f4'), ('c', 'u1')])
+    >>> rfn.require_fields(a, [('b', 'f4'), ('c', 'u1')])
     array([(1., 1), (1., 1), (1., 1), (1., 1)],
       dtype=[('b', '<f4'), ('c', 'u1')])
-    >>> require_fields(a, [('b', 'f4'), ('newf', 'u1')])
+    >>> rfn.require_fields(a, [('b', 'f4'), ('newf', 'u1')])
     array([(1., 0), (1., 0), (1., 0), (1., 0)],
       dtype=[('b', '<f4'), ('newf', 'u1')])
- 
+
     """
     out = np.empty(array.shape, dtype=required_dtype)
     assign_fields_by_name(out, array)
