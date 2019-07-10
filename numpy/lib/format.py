@@ -384,7 +384,7 @@ def _wrap_header_guess_version(header):
         return ret
 
     header = _wrap_header(header, (3, 0))
-    warnings.warn("Stored array in format 3.0. It can only be"
+    warnings.warn("Stored array in format 3.0. It can only be "
                   "read by NumPy >= 1.17", UserWarning, stacklevel=2)
     return header
 
