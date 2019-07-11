@@ -908,11 +908,12 @@ def sort(a, axis=-1, kind=None, order=None):
 
     .. versionadded:: 1.12.0
 
-    quicksort has been changed to an introsort which will switch
-    heapsort when it does not make enough progress. This makes its
-    worst case O(n*log(n)).
+    quicksort has been changed to an introsort algorithm. 
+    When sorting does not make enough progress it switches to
+    a heapsort algorithm. 
+    This implementation makes quicksort O(n*log(n)) in the worst case.
 
-    'stable' automatically choses the best stable sorting algorithm
+    'stable' automatically chooses the best stable sorting algorithm
     for the data type being sorted. It, along with 'mergesort' is
     currently mapped to timsort or radix sort depending on the
     data type. API forward compatibility currently limits the
@@ -924,7 +925,7 @@ def sort(a, axis=-1, kind=None, order=None):
     Timsort is added for better performance on already or nearly
     sorted data. On random data timsort is almost identical to
     mergesort. It is now used for stable sort while quicksort is still the
-    default sort if none is chosen. For details of timsort, refer to
+    default sort if none is chosen. For timsort details, refer to
     `CPython listsort.txt <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_.
     'mergesort' and 'stable' are mapped to radix sort for integer data types. Radix sort is an
     O(n) sort instead of O(n log n).
