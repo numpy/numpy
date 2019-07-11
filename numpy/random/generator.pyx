@@ -511,7 +511,7 @@ cdef class Generator:
         self.integers(low, high, size, dtype, endpoint)
 
     @cython.wraparound(True)
-    def choice(self, a, size=None, replace=True, p=None, axis=0):
+    def choice(self, a, size=None, replace=True, p=None, axis=0, bint shuffle=True):
         """
         choice(a, size=None, replace=True, p=None, axis=0):
 
@@ -538,6 +538,9 @@ cdef class Generator:
         axis : int, optional
             The axis along which the selection is performed. The default, 0,
             selects by row.
+        shuffle : boolean, optional
+            Whether the sample is shuffled when sampling without replacement.
+            Default is True, False provides a speedup.
 
         Returns
         -------
@@ -594,7 +597,6 @@ cdef class Generator:
 
         """
 
-        cdef set idx_set
         cdef int64_t val, t, loc, size_i, pop_size_i
         cdef int64_t *idx_data
         cdef np.npy_intp j
@@ -686,7 +688,11 @@ cdef class Generator:
                 size_i = size
                 pop_size_i = pop_size
                 # This is a heuristic tuning. should be improvable
-                if pop_size_i > 10000 and (size_i > (pop_size_i // 50)):
+                if shuffle:
+                    cutoff = 50
+                else:
+                    cutoff = 20
+                if pop_size_i > 10000 and (size_i > (pop_size_i // cutoff)):
                     # Tail shuffle size elements
                     idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
                     idx_data = <int64_t*>(<np.ndarray>idx).data
@@ -719,7 +725,8 @@ cdef class Generator:
                                     loc = (loc + 1) & mask
                                 hash_set[loc] = j
                                 idx_data[j - pop_size_i + size_i] = j
-                        self._shuffle_int(size_i, 1, idx_data)
+                        if shuffle:
+                            self._shuffle_int(size_i, 1, idx_data)
                 if shape is not None:
                     idx.shape = shape
 
