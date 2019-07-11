@@ -570,6 +570,9 @@ class TestRandomDist(object):
         actual = random.choice(4, 3, replace=False)
         desired = np.array([2, 0, 3], dtype=np.int64)
         assert_array_equal(actual, desired)
+        actual = random.choice(4, 4, replace=False, shuffle=False)
+        desired = np.arange(4, dtype=np.int64)
+        assert_array_equal(actual, desired)
 
     def test_choice_nonuniform_noreplace(self):
         random = Generator(MT19937(self.seed))
