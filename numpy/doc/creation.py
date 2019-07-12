@@ -9,7 +9,7 @@ Introduction
 There are 5 general mechanisms for creating arrays:
 
 1) Conversion from other Python structures (e.g., lists, tuples)
-2) Intrinsic numpy array array creation objects (e.g., arange, ones, zeros,
+2) Intrinsic numpy array creation objects (e.g., arange, ones, zeros,
    etc.)
 3) Reading arrays from disk, either from standard or custom formats
 4) Creating arrays from raw bytes through the use of strings or buffers
@@ -44,10 +44,10 @@ Intrinsic NumPy Array Creation
 NumPy has built-in functions for creating arrays from scratch:
 
 zeros(shape) will create an array filled with 0 values with the specified
-shape. The default dtype is float64.
+shape. The default dtype is float64. ::
 
-``>>> np.zeros((2, 3))
-array([[ 0., 0., 0.], [ 0., 0., 0.]])``
+ >>> np.zeros((2, 3))
+ array([[ 0., 0., 0.], [ 0., 0., 0.]])
 
 ones(shape) will create an array filled with 1 values. It is identical to
 zeros in all other respects.

@@ -63,7 +63,7 @@ class TestDomain(object):
         dom1 = [0, 4]
         dom2 = [1, 3]
         tgt = dom2
-        res = pu. mapdomain(dom1, dom1, dom2)
+        res = pu.mapdomain(dom1, dom1, dom2)
         assert_almost_equal(res, tgt)
 
         # test for complex values
@@ -83,11 +83,14 @@ class TestDomain(object):
         assert_almost_equal(res, tgt)
 
         # test that subtypes are preserved.
+        class MyNDArray(np.ndarray):
+            pass
+
         dom1 = [0, 4]
         dom2 = [1, 3]
-        x = np.matrix([dom1, dom1])
+        x = np.array([dom1, dom1]).view(MyNDArray)
         res = pu.mapdomain(x, dom1, dom2)
-        assert_(isinstance(res, np.matrix))
+        assert_(isinstance(res, MyNDArray))
 
     def test_mapparms(self):
         # test for real values

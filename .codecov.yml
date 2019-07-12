@@ -1,0 +1,15 @@
+codecov:
+  ci:
+    - !appveyor
+  notify:
+    require_ci_to_pass: no
+    after_n_builds: 1
+coverage:
+  status:
+    project:
+      default:
+        # Require 1% coverage, i.e., always succeed
+        target: 1
+    patch: false
+    changes: false
+comment: off

@@ -1,10 +1,10 @@
-===================================
-Missing Data Functionality in NumPy
-===================================
+============================================
+NEP 12 — Missing Data Functionality in NumPy
+============================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>
 :Copyright: Copyright 2011 by Enthought, Inc
-:License: CC By-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
+:License: CC By-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/)
 :Date: 2011-06-23
 :Status: Deferred
 
@@ -224,7 +224,7 @@ but with semantics reflecting its status as a missing value. In particular,
 trying to treat it as a boolean will raise an exception, and comparisons
 with it will produce numpy.NA instead of True or False. These basics are
 adopted from the behavior of the NA value in the R project. To dig
-deeper into the ideas, http://en.wikipedia.org/wiki/Ternary_logic#Kleene_logic
+deeper into the ideas, https://en.wikipedia.org/wiki/Ternary_logic#Kleene_logic
 provides a starting point.
 
 For example,::
@@ -857,7 +857,7 @@ Shared Masks
 
 One feature of numpy.ma is called 'shared masks'.
 
-http://docs.scipy.org/doc/numpy/reference/maskedarray.baseclass.html#numpy.ma.MaskedArray.sharedmask
+https://docs.scipy.org/doc/numpy/reference/maskedarray.baseclass.html#numpy.ma.MaskedArray.sharedmask
 
 This feature cannot be supported by a masked implementation of
 missing values without directly violating the missing value abstraction.
@@ -888,7 +888,7 @@ found from doing google searches of numpy C API array access.
 NumPy Documentation - How to extend NumPy
 -----------------------------------------
 
-http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html#dealing-with-array-objects
+https://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html#dealing-with-array-objects
 
 This page has a section "Dealing with array objects" which has some advice for how
 to access numpy arrays from C. When accepting arrays, the first step it suggests is
@@ -898,7 +898,7 @@ advice will properly fail when given an NA-masked array it doesn't know how to h
 The way this is handled is that PyArray_FromAny requires a special flag, NPY_ARRAY_ALLOWNA,
 before it will allow NA-masked arrays to flow through.
 
-http://docs.scipy.org/doc/numpy/reference/c-api.array.html#NPY_ARRAY_ALLOWNA
+https://docs.scipy.org/doc/numpy/reference/c-api.array.html#NPY_ARRAY_ALLOWNA
 
 Code which does not follow this advice, and instead just calls PyArray_Check() to verify
 its an ndarray and checks some flags, will silently produce incorrect results. This style

@@ -436,7 +436,7 @@ Linear Algebra Equivalents
        ``a``
 
    * - ``rand(3,4)``
-     - ``random.rand(3,4)``
+     - ``random.rand(3,4)`` or ``random.random_sample((3, 4))``
      - random 3x4 matrix
 
    * - ``linspace(1,3,4)``
@@ -547,7 +547,7 @@ Linear Algebra Equivalents
      - eigenvalues and eigenvectors of ``a``
 
    * - ``[V,D]=eig(a,b)``
-     - ``V,D = np.linalg.eig(a,b)``
+     - ``D,V = scipy.linalg.eig(a,b)``
      - eigenvalues and eigenvectors of ``a``, ``b``
 
    * - ``[V,D]=eigs(a,k)``
@@ -618,9 +618,9 @@ initial element of a sequence has index 0. Confusion and flamewars arise
 because each has advantages and disadvantages. One based indexing is
 consistent with common human language usage, where the "first" element
 of a sequence has index 1. Zero based indexing `simplifies
-indexing <http://groups.google.com/group/comp.lang.python/msg/1bf4d925dfbf368?q=g:thl3498076713d&hl=en>`__.
+indexing <https://groups.google.com/group/comp.lang.python/msg/1bf4d925dfbf368?q=g:thl3498076713d&hl=en>`__.
 See also `a text by prof.dr. Edsger W.
-Dijkstra <http://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html>`__.
+Dijkstra <https://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html>`__.
 
 \ **RANGES**: In MATLAB®, ``0:5`` can be used as both a range literal
 and a 'slice' index (inside parentheses); however, in Python, constructs
@@ -693,19 +693,19 @@ this is just an example, not a statement of "best practices"):
 
 ::
 
-    # Make all numpy available via shorter 'num' prefix
-    import numpy as num
+    # Make all numpy available via shorter 'np' prefix
+    import numpy as np
     # Make all matlib functions accessible at the top level via M.func()
     import numpy.matlib as M
     # Make some matlib functions accessible directly at the top level via, e.g. rand(3,3)
     from numpy.matlib import rand,zeros,ones,empty,eye
     # Define a Hermitian function
     def hermitian(A, **kwargs):
-        return num.transpose(A,**kwargs).conj()
+        return np.transpose(A,**kwargs).conj()
     # Make some shortcuts for transpose,hermitian:
-    #    num.transpose(A) --> T(A)
+    #    np.transpose(A) --> T(A)
     #    hermitian(A) --> H(A)
-    T = num.transpose
+    T = np.transpose
     H = hermitian
 
 Links
@@ -715,6 +715,6 @@ See http://mathesaurus.sf.net/ for another MATLAB®/NumPy
 cross-reference.
 
 An extensive list of tools for scientific work with python can be
-found in the `topical software page <http://scipy.org/topical-software.html>`__.
+found in the `topical software page <https://scipy.org/topical-software.html>`__.
 
 MATLAB® and SimuLink® are registered trademarks of The MathWorks.

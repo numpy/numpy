@@ -33,7 +33,7 @@ Note: f2py directive: <commentchar>f2py<line> is read as <line>
 Note: pythonmodule is introduced to represent Python module
 
 Usage:
-  `postlist=crackfortran(files,funcs)`
+  `postlist=crackfortran(files)`
   `postlist` contains declaration information read from the list of files `files`.
   `crack2fortran(postlist)` returns a fortran code to be saved to pyf-file
 
@@ -1849,10 +1849,8 @@ def postcrack2(block, tab='', param_map=None):
     if not f90modulevars:
         return block
     if isinstance(block, list):
-        ret = []
-        for g in block:
-            g = postcrack2(g, tab=tab + '\t', param_map=param_map)
-            ret.append(g)
+        ret = [postcrack2(g, tab=tab + '\t', param_map=param_map)
+               for g in block]
         return ret
     setmesstext(block)
     outmess('%sBlock: %s\n' % (tab, block['name']), 0)
@@ -1870,10 +1868,8 @@ def postcrack2(block, tab='', param_map=None):
                     val = kind['kind']
                     if val in param_map:
                         kind['kind'] = param_map[val]
-    new_body = []
-    for b in block['body']:
-        b = postcrack2(b, tab=tab + '\t', param_map=param_map)
-        new_body.append(b)
+    new_body = [postcrack2(b, tab=tab + '\t', param_map=param_map)
+                for b in block['body']]
     block['body'] = new_body
 
     return block
@@ -2403,7 +2399,7 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if p < 16:
         return 8
     machine = platform.machine().lower()
-    if machine.startswith('power') or machine.startswith('ppc64'):
+    if machine.startswith(('aarch64', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
         if p <= 20:
             return 16
     else:
@@ -2516,7 +2512,7 @@ def _eval_scalar(value, params):
         value = value.split('_')[0]
     try:
         value = str(eval(value, {}, params))
-    except (NameError, SyntaxError):
+    except (NameError, SyntaxError, TypeError):
         return value
     except Exception as msg:
         errmess('"%s" in evaluating %r '
@@ -3211,10 +3207,8 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
                 vardef = '%s(kind=%s)' % (vardef, selector['kind'])
         c = ' '
         if 'attrspec' in vars[a]:
-            attr = []
-            for l in vars[a]['attrspec']:
-                if l not in ['external']:
-                    attr.append(l)
+            attr = [l for l in vars[a]['attrspec']
+                    if l not in ['external']]
             if attr:
                 vardef = '%s, %s' % (vardef, ','.join(attr))
                 c = ','
@@ -3341,7 +3335,7 @@ if __name__ == "__main__":
   and also be sure that the files do not contain programs without program statement).
 """, 0)
 
-    postlist = crackfortran(files, funcs)
+    postlist = crackfortran(files)
     if pyffilename:
         outmess('Writing fortran code to file %s\n' % repr(pyffilename), 0)
         pyf = crack2fortran(postlist)

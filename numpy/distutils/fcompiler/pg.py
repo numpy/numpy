@@ -2,7 +2,6 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import os
 
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
 from sys import platform
@@ -34,7 +33,7 @@ class PGroupFCompiler(FCompiler):
             'compiler_f77': ["pgfortran"],
             'compiler_fix': ["pgfortran", "-Mfixed"],
             'compiler_f90': ["pgfortran"],
-            'linker_so': ["pgfortran", "-shared", "-fpic"],
+            'linker_so': ["pgfortran"],
             'archiver': ["ar", "-cr"],
             'ranlib': ["ranlib"]
         }
@@ -57,13 +56,15 @@ class PGroupFCompiler(FCompiler):
         def get_flags_linker_so(self):
             return ["-dynamic", '-undefined', 'dynamic_lookup']
 
+    else:
+        def get_flags_linker_so(self):
+            return ["-shared", '-fpic']
+
     def runtime_library_dir_option(self, dir):
-        return '-R"%s"' % dir
+        return '-R%s' % dir
 
 
 if sys.version_info >= (3, 5):
-    import subprocess
-    import shlex
     import functools
 
     class PGroupFlangCompiler(FCompiler):

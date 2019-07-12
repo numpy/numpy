@@ -22,7 +22,7 @@ The Array Interface
    described here.
 
 __ http://cython.org/
-__ http://wiki.cython.org/tutorials/numpy
+__ https://github.com/cython/cython/wiki/tutorials-numpy
 
 :version: 3
 

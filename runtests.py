@@ -34,7 +34,7 @@ from __future__ import division, print_function
 
 PROJECT_MODULE = "numpy"
 PROJECT_ROOT_FILES = ['numpy', 'LICENSE.txt', 'setup.py']
-SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py:test_byteorder_check"
+SAMPLE_TEST = "numpy/linalg/tests/test_linalg.py::test_byteorder_check"
 SAMPLE_SUBMODULE = "linalg"
 
 EXTRA_PATH = ['/usr/lib/ccache', '/usr/lib/f90cache',
@@ -73,8 +73,8 @@ def main(argv):
                         help="just build, do not run any tests")
     parser.add_argument("--doctests", action="store_true", default=False,
                         help="Run doctests in module")
-    #parser.add_argument("--refguide-check", action="store_true", default=False,
-                        #help="Run refguide check (do not run regular tests.)")
+    parser.add_argument("--refguide-check", action="store_true", default=False,
+                        help="Run refguide (doctest) check (do not run regular tests.)")
     parser.add_argument("--coverage", action="store_true", default=False,
                         help=("report coverage of project code. HTML output goes "
                               "under build/coverage"))
@@ -202,6 +202,14 @@ def main(argv):
             shutil.rmtree(dst_dir)
         extra_argv += ['--cov-report=html:' + dst_dir]
 
+    if args.refguide_check:
+        cmd = [os.path.join(ROOT_DIR, 'tools', 'refguide_check.py'),
+               '--doctests']
+        if args.submodule:
+            cmd += [args.submodule]
+        os.execv(sys.executable, [sys.executable] + cmd)
+        sys.exit(0)
+
     if args.bench:
         # Run ASV
         items = extra_argv
@@ -250,8 +258,6 @@ def main(argv):
                    commit_a, commit_b] + bench_args
             ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
             sys.exit(ret)
-
-    test_dir = os.path.join(ROOT_DIR, 'build', 'test')
 
     if args.build_only:
         sys.exit(0)
@@ -311,6 +317,8 @@ def build_project(args):
 
     """
 
+    import distutils.sysconfig
+
     root_ok = [os.path.exists(os.path.join(ROOT_DIR, fn))
                for fn in PROJECT_ROOT_FILES]
     if not all(root_ok):
@@ -325,14 +333,27 @@ def build_project(args):
 
     # Always use ccache, if installed
     env['PATH'] = os.pathsep.join(EXTRA_PATH + env.get('PATH', '').split(os.pathsep))
-
+    cvars = distutils.sysconfig.get_config_vars()
+    compiler = env.get('CC') or cvars.get('CC', '')
+    if 'gcc' in compiler:
+        # Check that this isn't clang masquerading as gcc.
+        if sys.platform != 'darwin' or 'gnu-gcc' in compiler:
+            # add flags used as werrors
+            warnings_as_errors = ' '.join([
+                # from tools/travis-test.sh
+                '-Werror=vla',
+                '-Werror=nonnull',
+                '-Werror=pointer-arith',
+                '-Wlogical-op',
+                # from sysconfig
+                '-Werror=unused-function',
+            ])
+            env['CFLAGS'] = warnings_as_errors + ' ' + env.get('CFLAGS', '')
     if args.debug or args.gcov:
         # assume everyone uses gcc/gfortran
         env['OPT'] = '-O0 -ggdb'
         env['FOPT'] = '-O0 -ggdb'
         if args.gcov:
-            import distutils.sysconfig
-            cvars = distutils.sysconfig.get_config_vars()
             env['OPT'] = '-O0 -ggdb'
             env['FOPT'] = '-O0 -ggdb'
             env['CC'] = cvars['CC'] + ' --coverage'
@@ -371,23 +392,27 @@ def build_project(args):
         with open(log_filename, 'w') as log:
             p = subprocess.Popen(cmd, env=env, stdout=log, stderr=log,
                                  cwd=ROOT_DIR)
+        try:
+            # Wait for it to finish, and print something to indicate the
+            # process is alive, but only if the log file has grown (to
+            # allow continuous integration environments kill a hanging
+            # process accurately if it produces no output)
+            last_blip = time.time()
+            last_log_size = os.stat(log_filename).st_size
+            while p.poll() is None:
+                time.sleep(0.5)
+                if time.time() - last_blip > 60:
+                    log_size = os.stat(log_filename).st_size
+                    if log_size > last_log_size:
+                        print("    ... build in progress")
+                        last_blip = time.time()
+                        last_log_size = log_size
 
-        # Wait for it to finish, and print something to indicate the
-        # process is alive, but only if the log file has grown (to
-        # allow continuous integration environments kill a hanging
-        # process accurately if it produces no output)
-        last_blip = time.time()
-        last_log_size = os.stat(log_filename).st_size
-        while p.poll() is None:
-            time.sleep(0.5)
-            if time.time() - last_blip > 60:
-                log_size = os.stat(log_filename).st_size
-                if log_size > last_log_size:
-                    print("    ... build in progress")
-                    last_blip = time.time()
-                    last_log_size = log_size
-
-        ret = p.wait()
+            ret = p.wait()
+        except:
+            p.kill()
+            p.wait()
+            raise
 
     if ret == 0:
         print("Build OK")

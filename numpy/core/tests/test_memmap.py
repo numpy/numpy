@@ -81,7 +81,10 @@ class TestMemmap(object):
         tmpname = mktemp('', 'mmap', dir=self.tempdir)
         fp = memmap(Path(tmpname), dtype=self.dtype, mode='w+',
                        shape=self.shape)
-        abspath = os.path.realpath(os.path.abspath(tmpname))
+        # os.path.realpath does not resolve symlinks on Windows
+        # see: https://bugs.python.org/issue9949
+        # use Path.resolve, just as memmap class does internally
+        abspath = str(Path(tmpname).resolve())
         fp[:] = self.data[:]
         assert_equal(abspath, str(fp.filename.resolve()))
         b = fp[:1]
@@ -196,3 +199,18 @@ class TestMemmap(object):
         offset = mmap.ALLOCATIONGRANULARITY + 1
         fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
         assert_(fp.offset == offset)
+
+    def test_no_shape(self):
+        self.tmpfp.write(b'a'*16)
+        mm = memmap(self.tmpfp, dtype='float64')
+        assert_equal(mm.shape, (2,))
+
+    def test_empty_array(self):
+        # gh-12653
+        with pytest.raises(ValueError, match='empty file'):
+            memmap(self.tmpfp, shape=(0,4), mode='w+')
+
+        self.tmpfp.write(b'\0')
+
+        # ok now the file is not empty
+        memmap(self.tmpfp, shape=(0,4), mode='w+')

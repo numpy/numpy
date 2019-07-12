@@ -2,7 +2,8 @@ from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal, assert_raises
-
+import pytest
+from itertools import chain
 
 def test_packbits():
     # Copied from the docstring.
@@ -50,8 +51,8 @@ def test_packbits_empty_with_axis():
                 assert_equal(b.dtype, np.uint8)
                 assert_equal(b.shape, out_shape)
 
-
-def test_packbits_large():
+@pytest.mark.parametrize('bitorder', ('little', 'big'))
+def test_packbits_large(bitorder):
     # test data large enough for 16 byte vectorization
     a = np.array([1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0,
                   0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1,
@@ -71,7 +72,7 @@ def test_packbits_large():
     a = a.repeat(3)
     for dtype in '?bBhHiIlLqQ':
         arr = np.array(a, dtype=dtype)
-        b = np.packbits(arr, axis=None)
+        b = np.packbits(arr, axis=None, bitorder=bitorder)
         assert_equal(b.dtype, np.uint8)
         r = [252, 127, 192, 3, 254, 7, 252, 0, 7, 31, 240, 0, 28, 1, 255, 252,
              113, 248, 3, 255, 192, 28, 15, 192, 28, 126, 0, 224, 127, 255,
@@ -81,9 +82,10 @@ def test_packbits_large():
              255, 224, 1, 255, 252, 126, 63, 0, 1, 192, 252, 14, 63, 0, 15,
              199, 252, 113, 255, 3, 128, 56, 252, 14, 7, 0, 113, 255, 255, 142, 56, 227,
              129, 248, 227, 129, 199, 31, 128]
-        assert_array_equal(b, r)
+        if bitorder == 'big':
+            assert_array_equal(b, r)
         # equal for size being multiple of 8
-        assert_array_equal(np.unpackbits(b)[:-4], a)
+        assert_array_equal(np.unpackbits(b, bitorder=bitorder)[:-4], a)
 
         # check last byte of different remainders (16 byte vectorization)
         b = [np.packbits(arr[:-i], axis=None)[-1] for i in range(1, 16)]
@@ -229,6 +231,20 @@ def test_unpackbits():
                                     [0, 0, 0, 0, 0, 1, 1, 1],
                                     [0, 0, 0, 1, 0, 1, 1, 1]]))
 
+def test_pack_unpack_order():
+    a = np.array([[2], [7], [23]], dtype=np.uint8)
+    b = np.unpackbits(a, axis=1)
+    assert_equal(b.dtype, np.uint8)
+    b_little = np.unpackbits(a, axis=1, bitorder='little')
+    b_big = np.unpackbits(a, axis=1, bitorder='big')
+    assert_array_equal(b, b_big)
+    assert_array_equal(a, np.packbits(b_little, axis=1, bitorder='little'))
+    assert_array_equal(b[:,::-1], b_little)
+    assert_array_equal(a, np.packbits(b_big, axis=1, bitorder='big'))
+    assert_raises(ValueError, np.unpackbits, a, bitorder='r')
+    assert_raises(TypeError, np.unpackbits, a, bitorder=10)
+
+
 
 def test_unpackbits_empty():
     a = np.empty((0,), dtype=np.uint8)
@@ -266,3 +282,97 @@ def test_unpackbits_large():
     assert_array_equal(np.packbits(np.unpackbits(d, axis=1), axis=1), d)
     d = d.T.copy()
     assert_array_equal(np.packbits(np.unpackbits(d, axis=0), axis=0), d)
+
+
+class TestCount():
+    x = np.array([
+        [1, 0, 1, 0, 0, 1, 0],
+        [0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0, 1, 1],
+        [1, 1, 0, 0, 0, 1, 1],
+        [1, 0, 1, 0, 1, 0, 1],
+        [0, 0, 1, 1, 1, 0, 0],
+        [0, 1, 0, 1, 0, 1, 0],
+    ], dtype=np.uint8)
+    padded1 = np.zeros(57, dtype=np.uint8)
+    padded1[:49] = x.ravel()
+    padded1b = np.zeros(57, dtype=np.uint8)
+    padded1b[:49] = x[::-1].copy().ravel()
+    padded2 = np.zeros((9, 9), dtype=np.uint8)
+    padded2[:7, :7] = x
+
+    @pytest.mark.parametrize('bitorder', ('little', 'big'))
+    @pytest.mark.parametrize('count', chain(range(58), range(-1, -57, -1)))
+    def test_roundtrip(self, bitorder, count):
+        if count < 0:
+            # one extra zero of padding
+            cutoff = count - 1
+        else:
+            cutoff = count
+        # test complete invertibility of packbits and unpackbits with count
+        packed = np.packbits(self.x, bitorder=bitorder)
+        unpacked = np.unpackbits(packed, count=count, bitorder=bitorder)
+        assert_equal(unpacked.dtype, np.uint8)
+        assert_array_equal(unpacked, self.padded1[:cutoff])
+
+    @pytest.mark.parametrize('kwargs', [
+                    {}, {'count': None},
+                    ])
+    def test_count(self, kwargs):
+        packed = np.packbits(self.x)
+        unpacked = np.unpackbits(packed, **kwargs)
+        assert_equal(unpacked.dtype, np.uint8)
+        assert_array_equal(unpacked, self.padded1[:-1])
+
+    @pytest.mark.parametrize('bitorder', ('little', 'big'))
+    # delta==-1 when count<0 because one extra zero of padding
+    @pytest.mark.parametrize('count', chain(range(8), range(-1, -9, -1)))
+    def test_roundtrip_axis(self, bitorder, count):
+        if count < 0:
+            # one extra zero of padding
+            cutoff = count - 1
+        else:
+            cutoff = count
+        packed0 = np.packbits(self.x, axis=0, bitorder=bitorder)
+        unpacked0 = np.unpackbits(packed0, axis=0, count=count,
+                                  bitorder=bitorder)
+        assert_equal(unpacked0.dtype, np.uint8)
+        assert_array_equal(unpacked0, self.padded2[:cutoff, :self.x.shape[1]])
+
+        packed1 = np.packbits(self.x, axis=1, bitorder=bitorder)
+        unpacked1 = np.unpackbits(packed1, axis=1, count=count,
+                                  bitorder=bitorder)
+        assert_equal(unpacked1.dtype, np.uint8)
+        assert_array_equal(unpacked1, self.padded2[:self.x.shape[0], :cutoff])
+
+    @pytest.mark.parametrize('kwargs', [
+                    {}, {'count': None},
+                    {'bitorder' : 'little'},
+                    {'bitorder': 'little', 'count': None},
+                    {'bitorder' : 'big'},
+                    {'bitorder': 'big', 'count': None},
+                    ])
+    def test_axis_count(self, kwargs):
+        packed0 = np.packbits(self.x, axis=0)
+        unpacked0 = np.unpackbits(packed0, axis=0, **kwargs)
+        assert_equal(unpacked0.dtype, np.uint8)
+        if kwargs.get('bitorder', 'big') == 'big':
+            assert_array_equal(unpacked0, self.padded2[:-1, :self.x.shape[1]])
+        else:
+            assert_array_equal(unpacked0[::-1, :], self.padded2[:-1, :self.x.shape[1]])
+
+        packed1 = np.packbits(self.x, axis=1)
+        unpacked1 = np.unpackbits(packed1, axis=1, **kwargs)
+        assert_equal(unpacked1.dtype, np.uint8)
+        if kwargs.get('bitorder', 'big') == 'big':
+            assert_array_equal(unpacked1, self.padded2[:self.x.shape[0], :-1])
+        else:
+            assert_array_equal(unpacked1[:, ::-1], self.padded2[:self.x.shape[0], :-1])
+
+    def test_bad_count(self):
+        packed0 = np.packbits(self.x, axis=0)
+        assert_raises(ValueError, np.unpackbits, packed0, axis=0, count=-9)
+        packed1 = np.packbits(self.x, axis=1)
+        assert_raises(ValueError, np.unpackbits, packed1, axis=1, count=-9)
+        packed = np.packbits(self.x)
+        assert_raises(ValueError, np.unpackbits, packed, count=-57)

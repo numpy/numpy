@@ -1,6 +1,6 @@
-=========================
-Deferred UFunc Evaluation
-=========================
+==================================
+NEP 11 — Deferred UFunc Evaluation
+==================================
 
 :Author: Mark Wiebe <mwwiebe@gmail.com>
 :Content-Type: text/x-rst

@@ -3,6 +3,8 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.hermite_e as herme
 from numpy.polynomial.polynomial import polyval
@@ -97,6 +99,15 @@ class TestArithmetic(object):
                 tgt = herme.hermeadd(ci, cj)
                 quo, rem = herme.hermediv(tgt, ci)
                 res = herme.hermeadd(herme.hermemul(quo, ci), rem)
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_hermepow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(herme.hermemul, [c]*j, np.array([1]))
+                res = herme.hermepow(c, j)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
@@ -198,12 +209,12 @@ class TestIntegral(object):
 
     def test_hermeint(self):
         # check exceptions
-        assert_raises(ValueError, herme.hermeint, [0], .5)
+        assert_raises(TypeError, herme.hermeint, [0], .5)
         assert_raises(ValueError, herme.hermeint, [0], -1)
         assert_raises(ValueError, herme.hermeint, [0], 1, [0, 0])
         assert_raises(ValueError, herme.hermeint, [0], lbnd=[0])
         assert_raises(ValueError, herme.hermeint, [0], scl=[0])
-        assert_raises(ValueError, herme.hermeint, [0], axis=.5)
+        assert_raises(TypeError, herme.hermeint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -300,7 +311,7 @@ class TestDerivative(object):
 
     def test_hermeder(self):
         # check exceptions
-        assert_raises(ValueError, herme.hermeder, [0], .5)
+        assert_raises(TypeError, herme.hermeder, [0], .5)
         assert_raises(ValueError, herme.hermeder, [0], -1)
 
         # check that zeroth derivative does nothing

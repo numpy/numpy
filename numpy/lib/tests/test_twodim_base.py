@@ -5,7 +5,7 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.testing import (
     assert_equal, assert_array_equal, assert_array_max_ulp,
-    assert_array_almost_equal, assert_raises,
+    assert_array_almost_equal, assert_raises, assert_
     )
 
 from numpy import (
@@ -15,6 +15,9 @@ from numpy import (
     )
 
 import numpy as np
+
+
+from numpy.core.tests.test_overrides import requires_array_function
 
 
 def get_mat(n):
@@ -208,7 +211,7 @@ class TestHistogram2d(object):
         x = array([1, 1, 2, 3, 4, 4, 4, 5])
         y = array([1, 3, 2, 0, 1, 2, 3, 4])
         H, xed, yed = histogram2d(
-            x, y, (6, 5), range=[[0, 6], [0, 5]], normed=True)
+            x, y, (6, 5), range=[[0, 6], [0, 5]], density=True)
         answer = array(
             [[0., 0, 0, 0, 0],
              [0, 1, 0, 1, 0],
@@ -220,11 +223,11 @@ class TestHistogram2d(object):
         assert_array_equal(xed, np.linspace(0, 6, 7))
         assert_array_equal(yed, np.linspace(0, 5, 6))
 
-    def test_norm(self):
+    def test_density(self):
         x = array([1, 2, 3, 1, 2, 3, 1, 2, 3])
         y = array([1, 1, 1, 2, 2, 2, 3, 3, 3])
         H, xed, yed = histogram2d(
-            x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], normed=True)
+            x, y, [[1, 2, 3, 5], [1, 2, 3, 5]], density=True)
         answer = array([[1, 1, .5],
                         [1, 1, .5],
                         [.5, .5, .25]])/9.
@@ -272,6 +275,27 @@ class TestHistogram2d(object):
              [0., 0., 0., 0., 0., 0., 0., 0., 0., 1.]])
         assert_array_equal(H, answer)
         assert_array_equal(xe, array([0., 0.25, 0.5, 0.75, 1]))
+
+    @requires_array_function
+    def test_dispatch(self):
+        class ShouldDispatch:
+            def __array_function__(self, function, types, args, kwargs):
+                return types, args, kwargs
+
+        xy = [1, 2]
+        s_d = ShouldDispatch()
+        r = histogram2d(s_d, xy)
+        # Cannot use assert_equal since that dispatches...
+        assert_(r == ((ShouldDispatch,), (s_d, xy), {}))
+        r = histogram2d(xy, s_d)
+        assert_(r == ((ShouldDispatch,), (xy, s_d), {}))
+        r = histogram2d(xy, xy, bins=s_d)
+        assert_(r, ((ShouldDispatch,), (xy, xy), dict(bins=s_d)))
+        r = histogram2d(xy, xy, bins=[s_d, 5])
+        assert_(r, ((ShouldDispatch,), (xy, xy), dict(bins=[s_d, 5])))
+        assert_raises(Exception, histogram2d, xy, xy, bins=[s_d])
+        r = histogram2d(xy, xy, weights=s_d)
+        assert_(r, ((ShouldDispatch,), (xy, xy), dict(weights=s_d)))
 
 
 class TestTri(object):

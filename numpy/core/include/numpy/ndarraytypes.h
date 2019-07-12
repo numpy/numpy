@@ -156,12 +156,20 @@ enum NPY_TYPECHAR {
         NPY_COMPLEXLTR = 'c'
 };
 
+/*
+ * Changing this may break Numpy API compatibility
+ * due to changing offsets in PyArray_ArrFuncs, so be
+ * careful. Here we have reused the mergesort slot for
+ * any kind of stable sort, the actual implementation will
+ * depend on the data type.
+ */
 typedef enum {
         NPY_QUICKSORT=0,
         NPY_HEAPSORT=1,
-        NPY_MERGESORT=2
+        NPY_MERGESORT=2,
+        NPY_STABLESORT=2,
 } NPY_SORTKIND;
-#define NPY_NSORTS (NPY_MERGESORT + 1)
+#define NPY_NSORTS (NPY_STABLESORT + 1)
 
 
 typedef enum {
@@ -505,7 +513,8 @@ typedef struct {
         PyArray_NonzeroFunc *nonzero;
 
         /*
-         * Used for arange.
+         * Used for arange. Should return 0 on success
+         * and -1 on failure.
          * Can be NULL.
          */
         PyArray_FillFunc *fill;
@@ -949,12 +958,12 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 
 
-#define PyArray_ISCONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)
-#define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, NPY_ARRAY_WRITEABLE)
-#define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, NPY_ARRAY_ALIGNED)
+#define PyArray_ISCONTIGUOUS(m) PyArray_CHKFLAGS((m), NPY_ARRAY_C_CONTIGUOUS)
+#define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS((m), NPY_ARRAY_WRITEABLE)
+#define PyArray_ISALIGNED(m) PyArray_CHKFLAGS((m), NPY_ARRAY_ALIGNED)
 
-#define PyArray_IS_C_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)
-#define PyArray_IS_F_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS)
+#define PyArray_IS_C_CONTIGUOUS(m) PyArray_CHKFLAGS((m), NPY_ARRAY_C_CONTIGUOUS)
+#define PyArray_IS_F_CONTIGUOUS(m) PyArray_CHKFLAGS((m), NPY_ARRAY_F_CONTIGUOUS)
 
 /* the variable is used in some places, so always define it */
 #define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
@@ -964,15 +973,15 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS do {_save = PyEval_SaveThread();} while (0);
 #define NPY_END_THREADS   do { if (_save) \
                 { PyEval_RestoreThread(_save); _save = NULL;} } while (0);
-#define NPY_BEGIN_THREADS_THRESHOLDED(loop_size) do { if (loop_size > 500) \
+#define NPY_BEGIN_THREADS_THRESHOLDED(loop_size) do { if ((loop_size) > 500) \
                 { _save = PyEval_SaveThread();} } while (0);
 
 #define NPY_BEGIN_THREADS_DESCR(dtype) \
-        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI))) \
+        do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
                 NPY_BEGIN_THREADS;} while (0);
 
 #define NPY_END_THREADS_DESCR(dtype) \
-        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI))) \
+        do {if (!(PyDataType_FLAGCHK((dtype), NPY_NEEDS_PYAPI))) \
                 NPY_END_THREADS; } while (0);
 
 #define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
@@ -1109,7 +1118,7 @@ struct PyArrayIterObject_tag {
 
 
 /* Iterator API */
-#define PyArrayIter_Check(op) PyObject_TypeCheck(op, &PyArrayIter_Type)
+#define PyArrayIter_Check(op) PyObject_TypeCheck((op), &PyArrayIter_Type)
 
 #define _PyAIT(it) ((PyArrayIterObject *)(it))
 #define PyArray_ITER_RESET(it) do { \
@@ -1187,7 +1196,7 @@ struct PyArrayIterObject_tag {
 
 #define PyArray_ITER_GOTO1D(it, ind) do { \
         int __npy_i; \
-        npy_intp __npy_ind = (npy_intp) (ind); \
+        npy_intp __npy_ind = (npy_intp)(ind); \
         if (__npy_ind < 0) __npy_ind += _PyAIT(it)->size; \
         _PyAIT(it)->index = __npy_ind; \
         if (_PyAIT(it)->nd_m1 == 0) { \
@@ -1670,7 +1679,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyTypeNum_ISOBJECT(type) ((type) == NPY_OBJECT)
 
 
-#define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(_PyADt(obj))
+#define PyDataType_ISBOOL(obj) PyTypeNum_ISBOOL(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISSIGNED(obj) PyTypeNum_ISSIGNED(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISINTEGER(obj) PyTypeNum_ISINTEGER(((PyArray_Descr*)(obj))->type_num )
@@ -1759,7 +1768,7 @@ typedef struct {
 /************************************************************
  * This is the form of the struct that's returned pointed by the
  * PyCObject attribute of an array __array_struct__. See
- * http://docs.scipy.org/doc/numpy/reference/arrays.interface.html for the full
+ * https://docs.scipy.org/doc/numpy/reference/arrays.interface.html for the full
  * documentation.
  ************************************************************/
 typedef struct {

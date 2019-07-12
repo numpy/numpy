@@ -242,16 +242,16 @@ class LinuxCPUInfo(CPUInfoBase):
         return self.is_PentiumIV() and self.has_sse3()
 
     def _is_Nocona(self):
-        return self.is_Intel() \
-               and (self.info[0]['cpu family'] == '6' \
-                    or self.info[0]['cpu family'] == '15' ) \
-               and (self.has_sse3() and not self.has_ssse3())\
-               and re.match(r'.*?\blm\b', self.info[0]['flags']) is not None
+        return (self.is_Intel()
+                and (self.info[0]['cpu family'] == '6'
+                     or self.info[0]['cpu family'] == '15')
+                and (self.has_sse3() and not self.has_ssse3())
+                and re.match(r'.*?\blm\b', self.info[0]['flags']) is not None)
 
     def _is_Core2(self):
-        return self.is_64bit() and self.is_Intel() and \
-               re.match(r'.*?Core\(TM\)2\b', \
-                        self.info[0]['model name']) is not None
+        return (self.is_64bit() and self.is_Intel() and
+                re.match(r'.*?Core\(TM\)2\b',
+                         self.info[0]['model name']) is not None)
 
     def _is_Itanium(self):
         return re.match(r'.*?Itanium\b',
@@ -632,13 +632,13 @@ class Win32CPUInfo(CPUInfoBase):
 
     def _has_sse(self):
         if self.is_Intel():
-            return (self.info[0]['Family']==6 and \
-                    self.info[0]['Model'] in [7, 8, 9, 10, 11]) \
-                    or self.info[0]['Family']==15
+            return ((self.info[0]['Family']==6 and
+                     self.info[0]['Model'] in [7, 8, 9, 10, 11])
+                     or self.info[0]['Family']==15)
         elif self.is_AMD():
-            return (self.info[0]['Family']==6 and \
-                    self.info[0]['Model'] in [6, 7, 8, 10]) \
-                    or self.info[0]['Family']==15
+            return ((self.info[0]['Family']==6 and
+                     self.info[0]['Model'] in [6, 7, 8, 10])
+                     or self.info[0]['Family']==15)
         else:
             return False
 

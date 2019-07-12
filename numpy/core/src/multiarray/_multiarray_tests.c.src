@@ -3,10 +3,20 @@
 #include <Python.h>
 #define _NPY_NO_DEPRECATIONS /* for NPY_CHAR */
 #include "numpy/arrayobject.h"
+#include "numpy/arrayscalars.h"
 #include "numpy/npy_math.h"
+#include "numpy/halffloat.h"
+#include "common.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
 #include "common.h"
+
+
+#if defined(MS_WIN32) || defined(__CYGWIN__)
+#define EXPORT(x) __declspec(dllexport) x
+#else
+#define EXPORT(x) x
+#endif
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
@@ -27,6 +37,12 @@ IsPythonScalar(PyObject * dummy, PyObject *args)
 }
 
 #include "npy_pycompat.h"
+
+/** Function to test calling via ctypes */
+EXPORT(void*) forward_pointer(void *x)
+{
+    return x;
+}
 
 /*
  * TODO:
@@ -831,6 +847,29 @@ get_buffer_info(PyObject *NPY_UNUSED(self), PyObject *args)
 
 #undef GET_PYBUF_FLAG
 
+/*
+ * Return a new array object wrapping existing C-allocated (dummy) data.
+ * Such an array does not own its data (must not free it), but because it
+ * wraps C data, it also has no base object. Used to test arr.flags.writeable
+ * setting behaviour.
+ */
+static PyObject*
+get_c_wrapping_array(PyObject* NPY_UNUSED(self), PyObject* arg)
+{
+    int writeable, flags;
+    npy_intp zero = 0;
+
+    writeable = PyObject_IsTrue(arg);
+    if (error_converting(writeable)) {
+        return NULL;
+    }
+
+    flags = writeable ? NPY_ARRAY_WRITEABLE : 0;
+    /* Create an empty array (which points to a random place) */
+    return PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(NPY_INTP),
+                                1, &zero, NULL, &zero, flags, NULL);
+}
+
 
 /*
  * Test C-api level item getting.
@@ -889,6 +928,7 @@ test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
 
     num_dims = PyArray_NDIM(array_obj);
     descr = PyArray_DESCR(array_obj);
+    Py_INCREF(descr);  /* PyArray_AsCArray steals a reference to this */
 
     switch (num_dims) {
         case 1:
@@ -931,6 +971,7 @@ test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
             PyArray_Free((PyObject *) array_obj, (void *) array3);
             break;
         default:
+            Py_DECREF(descr);
             PyErr_SetString(PyExc_ValueError, "array.ndim not in [1, 3]");
             return NULL;
     }
@@ -1036,76 +1077,6 @@ test_nditer_too_large(PyObject *NPY_UNUSED(self), PyObject *args) {
     Py_RETURN_NONE;
   fail:
     NpyIter_Deallocate(iter);
-    return NULL;
-}
-
-static PyObject *
-test_nditer_writeback(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
-{
-    /* like npyiter_init */
-    PyObject *op_in = NULL, *op_dtypes_in = NULL, *value = NULL;
-    PyArrayObject * opview;
-    int iop, nop = 0;
-    PyArrayObject *op[NPY_MAXARGS];
-    npy_uint32 flags = 0;
-    NPY_ORDER order = NPY_KEEPORDER;
-    NPY_CASTING casting = NPY_EQUIV_CASTING;
-    npy_uint32 op_flags[NPY_MAXARGS];
-    PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
-    int retval;
-    unsigned char do_close;
-    int buffersize = 0;
-    NpyIter *iter = NULL;
-    static char *kwlist[] = {"value", "do_close", "input", "op_dtypes", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                    "ObO|O:test_nditer_writeback", kwlist,
-                    &value,
-                    &do_close,
-                    &op_in,
-                    &op_dtypes_in)) {
-        return NULL;
-    }
-    /* op and op_flags */
-    if (! PyArray_Check(op_in)) {
-        return NULL;
-    }
-    nop = 1;
-    op[0] = (PyArrayObject*)op_in;
-    op_flags[0] = NPY_ITER_READWRITE|NPY_ITER_UPDATEIFCOPY;
-
-    /* Set the dtypes */
-    for (iop=0; iop<nop; iop++) {
-        PyObject *dtype = PySequence_GetItem(op_dtypes_in, iop);
-        PyArray_DescrConverter2(dtype, &op_request_dtypes[iop]);
-    }
-
-    iter = NpyIter_AdvancedNew(nop, op, flags, order, casting, op_flags,
-                                  op_request_dtypes,
-                                  -1, NULL, NULL,
-                                  buffersize);
-    if (iter == NULL) {
-        goto fail;
-    }
-
-    opview = NpyIter_GetIterView(iter, 0);
-    retval = PyArray_FillWithScalar(opview, value);
-    Py_DECREF(opview);
-    if (retval < 0) {
-        NpyIter_Deallocate(iter);
-        return NULL;
-    }
-    if (do_close != 0) {
-        NpyIter_Close(iter);
-    }
-    NpyIter_Deallocate(iter);
-    Py_RETURN_NONE;
-
-fail:
-    for (iop = 0; iop < nop; ++iop) {
-        Py_XDECREF(op[iop]);
-        Py_XDECREF(op_request_dtypes[iop]);
-    }
     return NULL;
 }
 
@@ -1294,7 +1265,9 @@ pylong_from_int128(npy_extint128_t value)
     }
 
     Py_DECREF(val);
+    Py_DECREF(val_64);
     val = tmp;
+    val_64 = NULL;
 
     tmp = PyLong_FromUnsignedLongLong(value.lo);
     if (tmp == NULL) {
@@ -1709,6 +1682,42 @@ extint_ceildiv_128_64(PyObject *NPY_UNUSED(self), PyObject *args) {
     return pylong_from_int128(c);
 }
 
+struct TestStruct1 {
+    npy_uint8 a;
+    npy_complex64 b;
+};
+
+struct TestStruct2 {
+    npy_uint32 a;
+    npy_complex64 b;
+};
+
+struct TestStruct3 {
+    npy_uint8 a;
+    struct TestStruct1 b;
+};
+
+static PyObject *
+get_struct_alignments(PyObject *NPY_UNUSED(self), PyObject *args) {
+    PyObject *ret = PyTuple_New(3);
+    PyObject *alignment, *size, *val;
+
+/**begin repeat
+ * #N = 1,2,3#
+ */
+    alignment = PyInt_FromLong(_ALIGN(struct TestStruct@N@));
+    size = PyInt_FromLong(sizeof(struct TestStruct@N@));
+    val = PyTuple_Pack(2, alignment, size);
+    Py_DECREF(alignment);
+    Py_DECREF(size);
+    if (val == NULL) {
+        return NULL;
+    }
+    PyTuple_SET_ITEM(ret, @N@-1, val);
+/**end repeat**/
+    return ret;
+}
+
 
 static char get_fpu_mode_doc[] = (
     "get_fpu_mode()\n"
@@ -1828,6 +1837,76 @@ call_npy_@name@@suffix@(PyObject *NPY_UNUSED(self), PyObject *args)
 
 /**end repeat**/
 
+/*
+ * For development/testing purposes, it's convenient to have access to the
+ * system printf for floats. This is a very simple printf interface.
+ */
+PyObject *
+PrintFloat_Printf_g(PyObject *obj, int precision)
+{
+    char str[1024];
+
+    if (PyArray_IsScalar(obj, Half)) {
+        npy_half x = ((PyHalfScalarObject *)obj)->obval;
+        PyOS_snprintf(str, sizeof(str), "%.*g", precision,
+                      npy_half_to_double(x));
+    }
+    else if (PyArray_IsScalar(obj, Float)) {
+        npy_float x = ((PyFloatScalarObject *)obj)->obval;
+        PyOS_snprintf(str, sizeof(str), "%.*g", precision, x);
+    }
+    else if (PyArray_IsScalar(obj, Double)) {
+        npy_double x = ((PyDoubleScalarObject *)obj)->obval;
+        PyOS_snprintf(str, sizeof(str), "%.*g", precision, x);
+        /* would be better to use lg, but not available in C90 */
+    }
+    else if (PyArray_IsScalar(obj, LongDouble)) {
+        npy_longdouble x = ((PyLongDoubleScalarObject *)obj)->obval;
+        PyOS_snprintf(str, sizeof(str), "%.*Lg", precision, x);
+    }
+    else{
+        double val = PyFloat_AsDouble(obj);
+        if (error_converting(val)) {
+            return NULL;
+        }
+        PyOS_snprintf(str, sizeof(str), "%.*g", precision, val);
+    }
+
+    return PyUString_FromString(str);
+}
+
+
+static PyObject *
+printf_float_g(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    PyObject *obj;
+    int precision;
+
+    if (!PyArg_ParseTuple(args,"Oi:format_float_OSprintf_g", &obj,
+                                                             &precision)) {
+        return NULL;
+    }
+
+    if (precision < 0) {
+        PyErr_SetString(PyExc_TypeError, "precision must be non-negative");
+        return NULL;
+    }
+
+    return PrintFloat_Printf_g(obj, precision);
+}
+
+static PyObject *
+getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
+{
+    PyObject *ret;
+    PyObject *ops = PyArray_GetNumericOps();
+    if (ops == NULL) {
+        return NULL;
+    }
+    ret = PyLong_FromLong(PyArray_SetNumericOps(ops));
+    Py_DECREF(ops);
+    return ret;
+}
 
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
@@ -1880,6 +1959,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_buffer_info",
         get_buffer_info,
         METH_VARARGS, NULL},
+    {"get_c_wrapping_array",
+        get_c_wrapping_array,
+        METH_O, NULL},
     {"array_indexing",
         array_indexing,
         METH_VARARGS, NULL},
@@ -1889,9 +1971,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_nditer_too_large",
         test_nditer_too_large,
         METH_VARARGS, NULL},
-    {"test_nditer_writeback",
-        (PyCFunction)test_nditer_writeback,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"solve_diophantine",
         (PyCFunction)array_solve_diophantine,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -1940,6 +2019,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_fpu_mode",
         get_fpu_mode,
         METH_VARARGS, get_fpu_mode_doc},
+    {"getset_numericops",
+        getset_numericops,
+        METH_NOARGS, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */
@@ -1967,7 +2049,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
 /**end repeat1**/
 
 /**end repeat**/
-
+    {"format_float_OSprintf_g",
+        (PyCFunction)printf_float_g,
+        METH_VARARGS , NULL},
+    {"get_struct_alignments",
+        get_struct_alignments,
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -2011,4 +2098,10 @@ init_multiarray_tests(void)
                         "cannot load _multiarray_tests module.");
     }
     return RETVAL;
+}
+
+NPY_NO_EXPORT int
+test_not_exported(void)
+{
+    return 1;
 }

@@ -8,6 +8,7 @@ import pytest
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
+    assert_raises_regex,
     )
 import textwrap
 
@@ -89,6 +90,7 @@ class TestArrayRepr(object):
         assert_equal(repr(x),
             'sub(sub(sub(..., dtype=object), dtype=object), dtype=object)')
         assert_equal(str(x), '...')
+        x[()] = 0  # resolve circular references for garbage collector
 
         # nested 0d-subclass-object
         x = sub(None)
@@ -123,11 +125,13 @@ class TestArrayRepr(object):
         arr0d[()] = arr0d
         assert_equal(repr(arr0d),
             'array(array(..., dtype=object), dtype=object)')
+        arr0d[()] = 0  # resolve recursion for garbage collector
 
         arr1d = np.array([None, None])
         arr1d[1] = arr1d
         assert_equal(repr(arr1d),
             'array([None, array(..., dtype=object)], dtype=object)')
+        arr1d[1] = 0  # resolve recursion for garbage collector
 
         first = np.array(None)
         second = np.array(None)
@@ -135,6 +139,7 @@ class TestArrayRepr(object):
         second[()] = first
         assert_equal(repr(first),
             'array(array(array(..., dtype=object), dtype=object), dtype=object)')
+        first[()] = 0  # resolve circular references for garbage collector
 
     def test_containing_list(self):
         # printing square brackets directly would be ambiguuous
@@ -209,6 +214,15 @@ class TestArray2String(object):
         assert_(np.array2string(a) == '[0 1 2]')
         assert_(np.array2string(a, max_line_width=4, legacy='1.13') == '[0 1\n 2]')
         assert_(np.array2string(a, max_line_width=4) == '[0\n 1\n 2]')
+
+    def test_unexpected_kwarg(self):
+        # ensure than an appropriate TypeError
+        # is raised when array2string receives
+        # an unexpected kwarg
+
+        with assert_raises_regex(TypeError, 'nonsense'):
+            np.array2string(np.array([1, 2, 3]),
+                            nonsense=None)
 
     def test_format_function(self):
         """Test custom format function for each element in array."""
@@ -832,6 +846,10 @@ class TestPrintOptions(object):
                     [[ 0.]]]])""")
         )
 
+    def test_bad_args(self):
+        assert_raises(ValueError, np.set_printoptions, threshold='nan')
+        assert_raises(ValueError, np.set_printoptions, threshold=u'1')
+        assert_raises(ValueError, np.set_printoptions, threshold=b'1')
 
 def test_unicode_object_array():
     import sys

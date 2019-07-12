@@ -350,8 +350,6 @@ multiarray_funcs_api = {
     'PyArray_ResolveWritebackIfCopy':       (302,),
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
-    'NpyIter_Close':                        (304,),
-    # End 1.15 API
 }
 
 ufunc_types_api = {
@@ -404,6 +402,8 @@ ufunc_funcs_api = {
     # End 1.7 API
     'PyUFunc_RegisterLoopForDescr':             (41,),
     # End 1.8 API
+    'PyUFunc_FromFuncAndDataAndSignatureAndIdentity': (42,),
+    # End 1.16 API
 }
 
 # List of all the dicts which define the C API

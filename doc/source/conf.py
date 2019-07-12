@@ -19,11 +19,19 @@ needs_sphinx = '1.0'
 
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
-extensions = ['sphinx.ext.autodoc', 'numpydoc',
-              'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest', 'sphinx.ext.autosummary',
-              'sphinx.ext.graphviz', 'sphinx.ext.ifconfig',
-              'matplotlib.sphinxext.plot_directive']
+extensions = [
+    'sphinx.ext.autodoc',
+    'numpydoc',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.coverage',
+    'sphinx.ext.doctest',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.ifconfig',
+    'matplotlib.sphinxext.plot_directive',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive',
+]
 
 if sphinx.__version__ >= "1.4":
     extensions.append('sphinx.ext.imgmath')
@@ -39,7 +47,7 @@ source_suffix = '.rst'
 
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2018, The SciPy community'
+copyright = '2008-2019, The SciPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -104,8 +112,8 @@ if 'scipyorg' in tags:
         "edit_link": True,
         "sidebar": "right",
         "scipy_org_logo": True,
-        "rootlinks": [("http://scipy.org/", "Scipy.org"),
-                      ("http://docs.scipy.org/", "Docs")]
+        "rootlinks": [("https://scipy.org/", "Scipy.org"),
+                      ("https://docs.scipy.org/", "Docs")]
     }
 else:
     # Default build
@@ -234,7 +242,7 @@ numpydoc_use_plots = True
 # -----------------------------------------------------------------------------
 
 import glob
-autosummary_generate = glob.glob("reference/*.rst")
+autosummary_generate = True
 
 # -----------------------------------------------------------------------------
 # Coverage checker
@@ -321,6 +329,15 @@ def linkcode_resolve(domain, info):
         except Exception:
             return None
 
+    # strip decorators, which would resolve to the source of the decorator
+    # possibly an upstream bug in getsourcefile, bpo-1764286
+    try:
+        unwrap = inspect.unwrap
+    except AttributeError:
+        pass
+    else:
+        obj = unwrap(obj)
+
     try:
         fn = inspect.getsourcefile(obj)
     except Exception:
@@ -341,8 +358,26 @@ def linkcode_resolve(domain, info):
     fn = relpath(fn, start=dirname(numpy.__file__))
 
     if 'dev' in numpy.__version__:
-        return "http://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
            fn, linespec)
     else:
-        return "http://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
+
+from pygments.lexers import CLexer
+from pygments import token
+from sphinx.highlighting import lexers
+import copy
+
+class NumPyLexer(CLexer):
+    name = 'NUMPYLEXER'
+
+    tokens = copy.deepcopy(lexers['c'].tokens)
+    # Extend the regex for valid identifiers with @
+    for k, val in tokens.items():
+        for i, v in enumerate(val):
+            if isinstance(v, tuple):
+                if isinstance(v[0], str):
+                    val[i] =  (v[0].replace('a-zA-Z', 'a-zA-Z@'),) + v[1:]
+
+lexers['NumPyC'] = NumPyLexer(stripnl=False)

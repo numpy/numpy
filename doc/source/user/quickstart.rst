@@ -14,18 +14,18 @@ Prerequisites
 
 Before reading this tutorial you should know a bit of Python. If you
 would like to refresh your memory, take a look at the `Python
-tutorial <http://docs.python.org/tut/>`__.
+tutorial <https://docs.python.org/tutorial/>`__.
 
 If you wish to work the examples in this tutorial, you must also have
 some software installed on your computer. Please see
-http://scipy.org/install.html for instructions.
+https://scipy.org/install.html for instructions.
 
 The Basics
 ==========
 
 NumPy's main object is the homogeneous multidimensional array. It is a
 table of elements (usually numbers), all of the same type, indexed by a
-tuple of positive integers. In NumPy dimensions are called *axes*.
+tuple of non-negative integers. In NumPy dimensions are called *axes*.
 
 For example, the coordinates of a point in 3D space ``[1, 2, 1]`` has
 one axis. That axis has 3 elements in it, so we say it has a length
@@ -270,7 +270,7 @@ can change the printing options using ``set_printoptions``.
 
 ::
 
-    >>> np.set_printoptions(threshold=np.nan)
+    >>> np.set_printoptions(threshold=sys.maxsize)       # sys module should be imported
 
 
 Basic Operations
@@ -569,7 +569,7 @@ first axis::
 
 However, if one wants to perform an operation on each element in the
 array, one can use the ``flat`` attribute which is an
-`iterator <https://docs.python.org/2/tutorial/classes.html#iterators>`__
+`iterator <https://docs.python.org/tutorial/classes.html#iterators>`__
 over all the elements of the array::
 
     >>> for element in b.flat:
@@ -884,6 +884,17 @@ The ``copy`` method makes a complete copy of the array and its data.
            [   8,   10,   10,   11]])
 
 
+Sometimes ``copy`` should be called after slicing if the original array is not required anymore.
+For example, suppose ``a`` is a huge intermediate result and the final result ``b`` only contains
+a small fraction of ``a``, a deep copy should be made when constructing ``b`` with slicing::
+
+    >>> a = np.arange(int(1e8))
+    >>> b = a[:100].copy()
+    >>> del a  # the memory of ``a`` can be released.
+
+If ``b = a[:100]`` is used instead, ``a`` is referenced by ``b`` and will persist in memory
+even if ``del a`` is executed.
+
 Functions and Methods Overview
 ------------------------------
 
@@ -1191,7 +1202,7 @@ This property can be very useful in assignments::
 You can look at the following
 example to see
 how to use boolean indexing to generate an image of the `Mandelbrot
-set <http://en.wikipedia.org/wiki/Mandelbrot_set>`__:
+set <https://en.wikipedia.org/wiki/Mandelbrot_set>`__:
 
 .. plot::
 
@@ -1462,8 +1473,8 @@ that ``pylab.hist`` plots the histogram automatically, while
 Further reading
 ===============
 
--  The `Python tutorial <http://docs.python.org/tutorial/>`__
+-  The `Python tutorial <https://docs.python.org/tutorial/>`__
 -  :ref:`reference`
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
--  `SciPy Lecture Notes <http://www.scipy-lectures.org>`__
+-  `SciPy Lecture Notes <https://scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__

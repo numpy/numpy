@@ -1,6 +1,6 @@
-===============================
-Generalized Universal Functions
-===============================
+=======================================
+NEP 5 — Generalized Universal Functions
+=======================================
 
 :Status: Final
 

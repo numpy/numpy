@@ -43,10 +43,6 @@ NumPy provides several hooks that classes can customize:
 
    .. versionadded:: 1.13
 
-   .. note:: The API is `provisional
-             <https://docs.python.org/3/glossary.html#term-provisional-api>`_,
-             i.e., we do not yet guarantee backward compatibility.
-
    Any class, ndarray subclass or not, can define this method or set it to
    :obj:`None` in order to override the behavior of NumPy's ufuncs. This works
    quite similarly to Python's ``__mul__`` and other binary operation routines.
@@ -452,7 +448,7 @@ object, then the Python code::
         some code involving val
         ...
 
-calls ``val = myiter.next()`` repeatedly until :exc:`StopIteration` is
+calls ``val = next(myiter)`` repeatedly until :exc:`StopIteration` is
 raised by the iterator. There are several ways to iterate over an
 array that may be useful: default iteration, flat iteration, and
 :math:`N`-dimensional enumeration.

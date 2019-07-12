@@ -20,25 +20,27 @@ environment:
       NPY_NUM_BUILD_JOBS: 4
 
   matrix:
-    - PYTHON: C:\Python34-x64
-      PYTHON_VERSION: 3.4
-      PYTHON_ARCH: 64
-      TEST_MODE: fast
-
     - PYTHON: C:\Python36
       PYTHON_VERSION: 3.6
       PYTHON_ARCH: 32
       TEST_MODE: fast
 
-    - PYTHON: C:\Python27-x64
-      PYTHON_VERSION: 2.7
-      PYTHON_ARCH: 64
+    - PYTHON: C:\Python37
+      PYTHON_VERSION: 3.7
+      PYTHON_ARCH: 32
       TEST_MODE: fast
 
     - PYTHON: C:\Python36-x64
       PYTHON_VERSION: 3.6
       PYTHON_ARCH: 64
       TEST_MODE: full
+      INSTALL_PICKLE5: 1
+
+    - PYTHON: C:\Python37-x64
+      PYTHON_VERSION: 3.7
+      PYTHON_ARCH: 64
+      TEST_MODE: full
+      INSTALL_PICKLE5: 1
 
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
@@ -84,7 +86,7 @@ install:
       $clnt.DownloadFile($env:OPENBLAS, $file)
       Get-FileHash $file | Format-List
 
-      Expand-Archive $file $tmpdir      
+      Expand-Archive $file $tmpdir
 
       rm $tmpdir\$env:PYTHON_ARCH\lib\*.dll.a
       $lib = ls $tmpdir\$env:PYTHON_ARCH\lib\*.a | ForEach { ls $_ } | Select-Object -first 1
@@ -95,6 +97,8 @@ install:
 
   # Upgrade to the latest pip.
   - 'python -m pip install -U pip setuptools wheel'
+
+  - if [%INSTALL_PICKLE5%]==[1] echo pickle5 >> tools/ci/appveyor/requirements.txt
 
   # Install the numpy test dependencies.
   - 'pip install -U --timeout 5 --retries 2 -r tools/ci/appveyor/requirements.txt'

@@ -16,7 +16,7 @@ A universal function (or :term:`ufunc` for short) is a function that
 operates on :class:`ndarrays <ndarray>` in an element-by-element fashion,
 supporting :ref:`array broadcasting <ufuncs.broadcasting>`, :ref:`type
 casting <ufuncs.casting>`, and several other standard features. That
-is, a ufunc is a ":term:`vectorized`" wrapper for a function that
+is, a ufunc is a ":term:`vectorized <vectorization>`" wrapper for a function that
 takes a fixed number of specific inputs and produces a fixed number of
 specific outputs.
 
@@ -59,7 +59,7 @@ understood by four rules:
    entry in that dimension will be used for all calculations along
    that dimension. In other words, the stepping machinery of the
    :term:`ufunc` will simply not step along that dimension (the
-   :term:`stride` will be 0 for that dimension).
+   :ref:`stride <memory-layout>` will be 0 for that dimension).
 
 Broadcasting is used throughout NumPy to decide how to handle
 disparately shaped arrays; for example, all arithmetic operations (``+``,
@@ -70,7 +70,7 @@ arrays before operation.
 
 .. index:: broadcastable
 
-A set of arrays is called ":term:`broadcastable`" to the same shape if
+A set of arrays is called "broadcastable" to the same shape if
 the above rules produce a valid result, *i.e.*, one of the following
 is true:
 
@@ -118,7 +118,7 @@ all output arrays will be passed to the :obj:`~class.__array_prepare__` and
 the highest :obj:`~class.__array_priority__` of any other input to the
 universal function. The default :obj:`~class.__array_priority__` of the
 ndarray is 0.0, and the default :obj:`~class.__array_priority__` of a subtype
-is 1.0. Matrices have :obj:`~class.__array_priority__` equal to 10.0.
+is 0.0. Matrices have :obj:`~class.__array_priority__` equal to 10.0.
 
 All ufuncs can also take output arguments. If necessary, output will
 be cast to the data-type(s) of the provided output array(s). If a class
@@ -327,6 +327,13 @@ advanced usage and will not typically be used.
     multiple outputs is deprecated, and will raise a warning in numpy 1.10,
     and an error in a future release.
 
+    If 'out' is None (the default), a uninitialized return array is created.
+    The output array is then filled with the results of the ufunc in the places
+    that the broadcast 'where' is True. If 'where' is the scalar True (the
+    default), then this corresponds to the entire output being filled.
+    Note that outputs not explicitly filled are left with their
+    uninitialized values.
+
 *where*
 
     .. versionadded:: 1.7
@@ -335,6 +342,9 @@ advanced usage and will not typically be used.
     Values of True indicate to calculate the ufunc at that position, values
     of False indicate to leave the value in the output alone. This argument
     cannot be used for generalized ufuncs as those take non-scalar input.
+
+    Note that if an uninitialized return array is created, values of False
+    will leave those values **uninitialized**.
 
 *axes*
 
@@ -349,6 +359,29 @@ advanced usage and will not typically be used.
     (vectors), a single integer is accepted instead of a single-element tuple,
     and for generalized ufuncs for which all outputs are scalars, the output
     tuples can be omitted.
+
+*axis*
+
+    .. versionadded:: 1.15
+
+    A single axis over which a generalized ufunc should operate. This is a
+    short-cut for ufuncs that operate over a single, shared core dimension,
+    equivalent to passing in ``axes`` with entries of ``(axis,)`` for each
+    single-core-dimension argument and ``()`` for all others.  For instance,
+    for a signature ``(i),(i)->()``, it is equivalent to passing in
+    ``axes=[(axis,), (axis,), ()]``.
+
+*keepdims*
+
+    .. versionadded:: 1.15
+
+    If this is set to `True`, axes which are reduced over will be left in the
+    result as a dimension with size one, so that the result will broadcast
+    correctly against the inputs. This option can only be used for generalized
+    ufuncs that operate on inputs that all have the same number of core
+    dimensions and with outputs that have no core dimensions , i.e., with
+    signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
+    the dimensions in the output can be controlled with ``axes`` and ``axis``.
 
 *casting*
 
@@ -402,8 +435,8 @@ advanced usage and will not typically be used.
     provided by the **types** attribute of the ufunc object. For backwards
     compatibility this argument can also be provided as *sig*, although
     the long form is preferred. Note that this should not be confused with
-    the generalized ufunc signature that is stored in the **signature**
-    attribute of the of the ufunc object.
+    the generalized ufunc :ref:`signature <details-of-signature>` that is
+    stored in the **signature** attribute of the of the ufunc object.
 
 *extobj*
 
@@ -553,6 +586,7 @@ Math operations
     sign
     heaviside
     conj
+    conjugate
     exp
     exp2
     log
