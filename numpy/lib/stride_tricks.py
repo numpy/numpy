@@ -111,16 +111,16 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     return view
 
 
-def sliding_window_view(x, shape, subok=False, readonly=True):
+def sliding_window_view(x, shape, subok=False, writeable=False):
     """
     Creates sliding window views of the N dimensional array with the given window
-    shape. Window slides across each dimension of `x` and extract subsets of `x`
-    at any window position.
+    shape. Window slides across each dimension of the array and extract subsets of
+    the array at any window position.
 
     Parameters
     ----------
     x : array_like
-        Array to create sliding window views of.
+        Array to create sliding window views from.
 
     shape : sequence of int
         The shape of the window. Must have same length as the number of input array dimensions.
@@ -129,14 +129,15 @@ def sliding_window_view(x, shape, subok=False, readonly=True):
         If True, then sub-classes will be passed-through, otherwise the returned
         array will be forced to be a base-class array (default).
 
-    readonly : bool, optional
-        If set to True, the returned array will always be readonly view.
-        Otherwise it will return writable copies(see Notes).
+    writeable : bool
+        When true, allow writing to the returned view. The default is false, as this should be used
+        with caution: the returned view contains the same memory location multiple times, so
+        writing to one location will cause others to change.
 
     Returns
     -------
     view : ndarray
-        Sliding window views (or copies) of `x`. view.shape = x.shape - shape + 1
+        Sliding window views of the array. (view.shape[i] = x.shape[i] - shape[i] + 1)
 
     See also
     --------
@@ -145,13 +146,6 @@ def sliding_window_view(x, shape, subok=False, readonly=True):
 
     Notes
     -----
-    ``sliding_window_view`` create sliding window views of the N dimensions array
-    with the given window shape and its implementation based on ``as_strided``.
-    Please note that if readonly set to True, views are returned, not copies
-    of array. In this case, write operations could be unpredictable, so the returned
-    views are readonly. Bear in mind that returned copies (readonly=False) will
-    take more memory than the original array, due to overlapping windows.
-
     For some cases there may be more efficient approaches to calculate transformations
     across multi-dimensional arrays, for instance `scipy.signal.fftconvolve`, where combining
     the iterating step with the calculation itself while storing partial results can result
@@ -191,31 +185,25 @@ def sliding_window_view(x, shape, subok=False, readonly=True):
     except:
         raise TypeError('`shape` must be a sequence of integer')
     else:
-        if shape.ndim > 1:
+        if shape.ndim != 1:
             raise ValueError('`shape` must be one-dimensional sequence of integer')
         if len(x.shape) != len(shape):
             raise ValueError("`shape` length doesn't match with input array dimensions")
-        if np.any(shape <= 0):
-            raise ValueError('`shape` cannot contain non-positive value')
+        if np.any(shape < 0):
+            raise ValueError('`shape` cannot contain negative value')
 
     o = np.array(x.shape) - shape  + 1 # output shape
     if np.any(o <= 0):
         raise ValueError('window shape cannot larger than input array shape')
 
-    if type(readonly) != bool:
-        raise TypeError('readonly must be a boolean')
-
     strides = x.strides
     view_strides = strides
 
-    view_shape = np.concatenate((o, shape), axis=0)
-    view_strides = np.concatenate((view_strides, strides), axis=0)
-    view = as_strided(x, view_shape, view_strides, subok=subok, writeable=not readonly)
+    view_shape = tuple(o) + tuple(shape)
+    view_strides = tuple(view_strides) + tuple(strides)
+    view = as_strided(x, view_shape, view_strides, subok=subok, writeable=writeable)
 
-    if not readonly:
-        return view.copy()
-    else:
-        return view
+    return view
 
 
 def _broadcast_to(array, shape, subok, readonly):

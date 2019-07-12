@@ -524,7 +524,7 @@ def test_writeable():
             # check: no warning emitted
             assert_equal(result.flags.writeable, True)
             result[:] = 0
-            
+
     # keep readonly input readonly
     original.flags.writeable = False
     _, result = broadcast_arrays(0, original)
