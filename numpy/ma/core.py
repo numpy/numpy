@@ -2723,8 +2723,8 @@ class MaskedArray(ndarray):
     mask : sequence, optional
         Mask. Must be convertible to an array of booleans with the same
         shape as `data`. True indicates a masked (i.e. invalid) data. A 
-	known issue is that mask=numpy.bool_(False) will erase the data 
-	shape, see more at notes.
+        known issue is that mask=numpy.bool_(False) will erase the data 
+        shape, see more at notes.
     dtype : dtype, optional
         Data type of the output.
         If `dtype` is None, the type of the data argument (``data.dtype``)
@@ -2760,7 +2760,7 @@ class MaskedArray(ndarray):
 
     Notes
     -----
-    Boolean strings are recommended for the mask parameter, because the usage 
+    Boolean strings are recommended here for the mask parameter, because the usage 
     of numpy.bool_() has an issue here:
     >>> np.ma.MaskedArray([1,2], mask=np.bool_(False)).mask
     False
