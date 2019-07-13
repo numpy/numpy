@@ -2378,8 +2378,7 @@ PyArray_Nonzero(PyArrayObject *self)
             return NULL;
         }
         
-        /* See if we need to check the error state due to iternext() */
-        needs_api |= NpyIter_IterationNeedsAPI(iter);
+        needs_api = NpyIter_IterationNeedsAPI(iter);
 
         NPY_BEGIN_THREADS_NDITER(iter);
 
