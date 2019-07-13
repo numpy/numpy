@@ -908,9 +908,9 @@ def sort(a, axis=-1, kind=None, order=None):
 
     .. versionadded:: 1.12.0
 
-    quicksort has been changed to an `introsort algorithm <https://en.wikipedia.org/wiki/Introsort>`_. 
+    quicksort has been changed to `introsort <https://en.wikipedia.org/wiki/Introsort>`_. 
     When sorting does not make enough progress it switches to
-    a `heapsort algorithm <https://en.wikipedia.org/wiki/Heapsort>`_. 
+    `heapsort <https://en.wikipedia.org/wiki/Heapsort>`_. 
     This implementation makes quicksort O(n*log(n)) in the worst case.
 
     'stable' automatically chooses the best stable sorting algorithm
