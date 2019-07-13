@@ -505,7 +505,7 @@ cdef class Generator:
                              dtype=np.uint32).astype('<u4').tobytes()[:length]
 
     @cython.wraparound(True)
-    def choice(self, a, size=None, replace=True, p=None, axis=0):
+    def choice(self, a, size=None, replace=True, p=None, axis=0, bint shuffle=True):
         """
         choice(a, size=None, replace=True, p=None, axis=0):
 
@@ -532,6 +532,9 @@ cdef class Generator:
         axis : int, optional
             The axis along which the selection is performed. The default, 0,
             selects by row.
+        shuffle : boolean, optional
+            Whether the sample is shuffled when sampling without replacement.
+            Default is True, False provides a speedup.
 
         Returns
         -------
@@ -587,14 +590,12 @@ cdef class Generator:
               dtype='<U11')
 
         """
-        cdef char* idx_ptr
-        cdef int64_t buf
-        cdef char* buf_ptr
 
-        cdef set idx_set
         cdef int64_t val, t, loc, size_i, pop_size_i
         cdef int64_t *idx_data
         cdef np.npy_intp j
+        cdef uint64_t set_size, mask
+        cdef uint64_t[::1] hash_set
         # Format and Verify input
         a = np.array(a, copy=False)
         if a.ndim == 0:
@@ -681,36 +682,45 @@ cdef class Generator:
                 size_i = size
                 pop_size_i = pop_size
                 # This is a heuristic tuning. should be improvable
-                if pop_size_i > 200 and (size > 200 or size > (10 * pop_size // size)):
+                if shuffle:
+                    cutoff = 50
+                else:
+                    cutoff = 20
+                if pop_size_i > 10000 and (size_i > (pop_size_i // cutoff)):
                     # Tail shuffle size elements
-                    idx = np.arange(pop_size, dtype=np.int64)
-                    idx_ptr = np.PyArray_BYTES(<np.ndarray>idx)
-                    buf_ptr = <char*>&buf
-                    self._shuffle_raw(pop_size_i, max(pop_size_i - size_i,1),
-                                      8, 8, idx_ptr, buf_ptr)
+                    idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
+                    idx_data = <int64_t*>(<np.ndarray>idx).data
+                    with self.lock, nogil:
+                        self._shuffle_int(pop_size_i, max(pop_size_i - size_i, 1),
+                                          idx_data)
                     # Copy to allow potentially large array backing idx to be gc
                     idx = idx[(pop_size - size):].copy()
                 else:
-                    # Floyds's algorithm with precomputed indices
-                    # Worst case, O(n**2) when size is close to pop_size
+                    # Floyd's algorithm
                     idx = np.empty(size, dtype=np.int64)
                     idx_data = <int64_t*>np.PyArray_DATA(<np.ndarray>idx)
-                    idx_set = set()
-                    loc = 0
-                    # Sample indices with one pass to avoid reacquiring the lock
-                    with self.lock:
+                    # smallest power of 2 larger than 1.2 * size
+                    set_size = <uint64_t>(1.2 * size_i)
+                    mask = _gen_mask(set_size)
+                    set_size = 1 + mask
+                    hash_set = np.full(set_size, <uint64_t>-1, np.uint64)
+                    with self.lock, cython.wraparound(False), nogil:
                         for j in range(pop_size_i - size_i, pop_size_i):
-                            idx_data[loc] = random_interval(&self._bitgen, j)
-                            loc += 1
-                    loc = 0
-                    while len(idx_set) < size_i:
-                        for j in range(pop_size_i - size_i, pop_size_i):
-                            if idx_data[loc] not in idx_set:
-                                val = idx_data[loc]
-                            else:
-                                idx_data[loc] = val = j
-                            idx_set.add(val)
-                            loc += 1
+                            val = random_bounded_uint64(&self._bitgen, 0, j, 0, 0)
+                            loc = val & mask
+                            while hash_set[loc] != <uint64_t>-1 and hash_set[loc] != <uint64_t>val:
+                                loc = (loc + 1) & mask
+                            if hash_set[loc] == <uint64_t>-1: # then val not in hash_set
+                                hash_set[loc] = val
+                                idx_data[j - pop_size_i + size_i] = val
+                            else: # we need to insert j instead
+                                loc = j & mask
+                                while hash_set[loc] != <uint64_t>-1:
+                                    loc = (loc + 1) & mask
+                                hash_set[loc] = j
+                                idx_data[j - pop_size_i + size_i] = j
+                        if shuffle:
+                            self._shuffle_int(size_i, 1, idx_data)
                 if shape is not None:
                     idx.shape = shape
 
@@ -3881,6 +3891,28 @@ cdef class Generator:
             string.memcpy(buf, data + j * stride, itemsize)
             string.memcpy(data + j * stride, data + i * stride, itemsize)
             string.memcpy(data + i * stride, buf, itemsize)
+
+    cdef inline void _shuffle_int(self, np.npy_intp n, np.npy_intp first,
+                             int64_t* data) nogil:
+        """
+        Parameters
+        ----------
+        n
+            Number of elements in data
+        first
+            First observation to shuffle.  Shuffles n-1,
+            n-2, ..., first, so that when first=1 the entire
+            array is shuffled
+        data
+            Location of data
+        """
+        cdef np.npy_intp i, j
+        cdef int64_t temp
+        for i in reversed(range(first, n)):
+            j = random_bounded_uint64(&self._bitgen, 0, i, 0, 0)
+            temp = data[j]
+            data[j] = data[i]
+            data[i] = temp
 
     def permutation(self, object x):
         """
