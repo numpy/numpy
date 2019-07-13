@@ -2781,7 +2781,7 @@ class MaskedArray(ndarray):
     ...       np.ones([1,2])) # See if data and masked array matches the shape
     False [[1. 1.]]
 
-    This is because
+    The reason is
 
     >>> np.False_ is np.ma.nomask
     True
