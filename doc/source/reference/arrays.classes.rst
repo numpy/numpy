@@ -8,8 +8,12 @@ Standard array subclasses
 
 The :class:`ndarray` in NumPy is a "new-style" Python
 built-in-type. Therefore, it can be inherited from (in Python or in C)
-if desired. Therefore, it can form a foundation for many useful
-classes. Often whether to sub-class the array object or to simply use
+if desired. If your goal is to create an array with *modified* behavior,
+as do dask arrays for distributed computation and cupy arrays for GPU-based
+computation, subclassing is discouraged. Instead, using numpy's
+:ref:`dispatch mechanism <dispatch_mechanism>`_ is recommended.
+
+Often whether to sub-class the array object or to simply use
 the core array component as an internal part of a new class is a
 difficult decision, and can be simply a matter of choice. NumPy has
 several tools for simplifying how your new object interacts with other
