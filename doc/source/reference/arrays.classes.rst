@@ -151,6 +151,121 @@ NumPy provides several hooks that classes can customize:
       :func:`__array_prepare__`, :data:`__array_priority__` mechanism
       described below for ufuncs (which may eventually be deprecated).
 
+.. py:method:: class.__array_function__(func, types, args, kwargs)
+
+   .. versionadded:: 1.16
+
+   .. note::
+
+       - In NumPy 1.17, the protocol is enabled by default, but can be disabled
+         with ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0``.
+       - In NumPy 1.16, you need to set the environment variable
+         ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to use
+         NumPy function overrides.
+       - Eventually, expect to ``__array_function__`` to always be enabled.
+
+   -  ``func`` is an arbitrary callable exposed by NumPy's public API,
+      which was called in the form ``func(*args, **kwargs)``.
+   -  ``types`` is a `collection <https://docs.python.org/3/library/collections.abc.html#collections.abc.Collection>`_
+      of unique argument types from the original NumPy function call that
+      implement ``__array_function__``.
+   -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
+      original call.
+
+   As a convenience for ``__array_function__`` implementors, ``types``
+   provides all argument types with an ``'__array_function__'`` attribute.
+   This allows implementors to quickly identify cases where they should defer
+   to ``__array_function__`` implementations on other arguments.
+   Implementaitons should not rely on the iteration order of ``types``.
+
+   Most implementations of ``__array_function__`` will start with two
+   checks:
+
+   1.  Is the given function something that we know how to overload?
+   2.  Are all arguments of a type that we know how to handle?
+
+   If these conditions hold, ``__array_function__`` should return the result
+   from calling its implementation for ``func(*args, **kwargs)``.  Otherwise,
+   it should return the sentinel value ``NotImplemented``, indicating that the
+   function is not implemented by these types.
+
+   There are no general requirements on the return value from
+   ``__array_function__``, although most sensible implementations should
+   probably return array(s) with the same type as one of the function's
+   arguments.
+
+   It may also be convenient to define a custom decorators (``implements``
+   below) for registering ``__array_function__`` implementations.
+
+   .. code:: python
+
+       HANDLED_FUNCTIONS = {}
+
+       class MyArray:
+           def __array_function__(self, func, types, args, kwargs):
+               if func not in HANDLED_FUNCTIONS:
+                   return NotImplemented
+               # Note: this allows subclasses that don't override
+               # __array_function__ to handle MyArray objects
+               if not all(issubclass(t, MyArray) for t in types):
+                   return NotImplemented
+               return HANDLED_FUNCTIONS[func](*args, **kwargs)
+
+       def implements(numpy_function):
+           """Register an __array_function__ implementation for MyArray objects."""
+           def decorator(func):
+               HANDLED_FUNCTIONS[numpy_function] = func
+               return func
+           return decorator
+
+       @implements(np.concatenate)
+       def concatenate(arrays, axis=0, out=None):
+           ...  # implementation of concatenate for MyArray objects
+
+       @implements(np.broadcast_to)
+       def broadcast_to(array, shape):
+           ...  # implementation of broadcast_to for MyArray objects
+
+   Note that it is not required for ``__array_function__`` implementations to
+   include *all* of the corresponding NumPy function's optional arguments
+   (e.g., ``broadcast_to`` above omits the irrelevant ``subok`` argument).
+   Optional arguments are only passed in to ``__array_function__`` if they
+   were explicitly used in the NumPy function call.
+
+   Just like the case for builtin special methods like ``__add__``, properly
+   written ``__array_function__`` methods should always return
+   ``NotImplemented`` when an unknown type is encountered. Otherwise, it will
+   be impossible to correctly override NumPy functions from another object
+   if the operation also includes one of your objects.
+
+   For the most part, the rules for dispatch with ``__array_function__``
+   match those for ``__array_ufunc__``. In particular:
+
+   -  NumPy will gather implementations of ``__array_function__`` from all
+      specified inputs and call them in order: subclasses before
+      superclasses, and otherwise left to right. Note that in some edge cases
+      involving subclasses, this differs slightly from the
+      `current behavior <https://bugs.python.org/issue30140>`_ of Python.
+   -  Implementations of ``__array_function__`` indicate that they can
+      handle the operation by returning any value other than
+      ``NotImplemented``.
+   -  If all ``__array_function__`` methods return ``NotImplemented``,
+      NumPy will raise ``TypeError``.
+
+   If no ``__array_function__`` methods exist, NumPy will default to calling
+   its own implementation, intended for use on NumPy arrays. This case arises,
+   for example, when all array-like arguments are Python numbers or lists.
+   (NumPy arrays do have a ``__array_function__`` method, given below, but it
+   always returns ``NotImplemented`` if any argument other than a NumPy array
+   subclass implements ``__array_function__``.)
+
+   One deviation from the current behavior of ``__array_ufunc__`` is that
+   NumPy will only call ``__array_function__`` on the *first* argument of each
+   unique type. This matches Python's `rule for calling reflected methods
+   <https://docs.python.org/3/reference/datamodel.html#object.__ror__>`_, and
+   this ensures that checking overloads has acceptable performance even when
+   there are a large number of overloaded arguments.
+
 .. py:method:: class.__array_finalize__(obj)
 
    This method is called whenever the system internally allocates a
