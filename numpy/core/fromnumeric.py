@@ -908,15 +908,18 @@ def sort(a, axis=-1, kind=None, order=None):
 
     .. versionadded:: 1.12.0
 
-    quicksort has been changed to an introsort algorithm. 
+    quicksort has been changed to an `introsort algorithm <https://en.wikipedia.org/wiki/Introsort>`_. 
     When sorting does not make enough progress it switches to
-    a heapsort algorithm. 
+    a `heapsort algorithm <https://en.wikipedia.org/wiki/Heapsort>`_. 
     This implementation makes quicksort O(n*log(n)) in the worst case.
 
     'stable' automatically chooses the best stable sorting algorithm
-    for the data type being sorted. It, along with 'mergesort' is
-    currently mapped to timsort or radix sort depending on the
-    data type. API forward compatibility currently limits the
+    for the data type being sorted. 
+    It, along with 'mergesort' is currently mapped to 
+    `timsort <https://en.wikipedia.org/wiki/Timsort>`_ 
+    or `radix sort <https://en.wikipedia.org/wiki/Radix_sort>`_ 
+    depending on the data type. 
+    API forward compatibility currently limits the
     ability to select the implementation and it is hardwired for the different
     data types.
 
