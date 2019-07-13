@@ -33,6 +33,8 @@ from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._exceptions import TooHardError, AxisError
 from ._asarray import asarray, asanyarray
 from ._ufunc_config import errstate
+from .mvgavg import fnjn_mvgavg, cumsum_mvgavg, binning_mvgavg
+
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -2391,12 +2393,12 @@ def array_equiv(a1, a2):
     return bool(asarray(a1 == a2).all())
 
 
-def _mvgavg_dispatcher(a, n, axis=0):
-    return (a, out)
+#def _mvgavg_dispatcher(a, n, weights=None, binning=None):
+#    return (a, out)
 
 
-@array_function_dispatch(_mvgavg_dispatcher)
-def mvgavg(a,n,axis=0):
+#@array_function_dispatch(_mvgavg_dispatcher)
+def mvgavg(a, n, axis=0, weights=False, binning=False):
     """
     Performs a moving average along a single axis
 
@@ -2408,12 +2410,18 @@ def mvgavg(a,n,axis=0):
         Width of the moving average
     axis: int
         Axis along which the moving average is to take place, 0 if unspecified
+    weights: 'pascal', 'triangle', 'quadratic', or a list
+        weights to multiply the moving average by
+    binning:
+        Bins the values rather than 
 
     Returns
     -------
     mvgavg : nd_array
         An array with the elements averaged over a length of n.  The array will be
-        of a length n-1 shorter than the original along the chosen axis
+        of a length n-1 shorter than the original along the chosen axis, unless 
+        binning=True, in which case it will return an array n times shorter along
+        the chosen axis.
     
     See Also
     --------
@@ -2426,22 +2434,51 @@ def mvgavg(a,n,axis=0):
     First element in the list will be (a+b+c)/3.  The next (b+c+d)/3.  And so on.
     The result is a smoothed version of the original data with length (n-1) shorther
     than the original data.  This works with arrays of any dimension, summing along
-    as it goes. This function will usually fail for a ragged array.  Use a list
+    as it goes. This function will sometimes fail for a ragged array.  Use a list
     comprehension with np.mvgavg embedded in it instead.
 
-    N.B. np.mvgavg(np.array, 1, axis=x) is the identity operation for any valid 
-    array and any x.
+    If you have any doubts of how a moving average works, try it out with an array of
+    symbols in sympy.
 
+    axis
+    -----
+    The axis parameter controls the axis over which the moving average happens. In a
+    2D array, for instance, for axis=0, the array will average along the columns, and
+    axis=1 will average along the rows.
+
+    Binning vs Unbinned
+    --------------------
+    Consider the array [a b c d e... ] that is being averaged to the product array,
+    [A B C D... ] over a distance of 3. If binning = False:
+
+        A = [a b c]/3
+        B =   [b c d]/3
+        C =     [c d e]/3 
+        D =       [d e f]/3
+        ....
+
+    but if binning = True:
+
+        A = [a b c]/3
+        B =       [d e f]/3
+        C =             [g h i]/3
+        .....
+
+    Thus, a binned moving average decreases the array length by a factor of n. This
+    throws out some precision but greatly decreases computational time for very 
+    long arrays.
 
     Examples
     --------
+    >>> from mvgavg import mvgavg
+    >>> 
     >>> example_array=[[i,(-1)**i] for i in np.arange(5)]
-    >>> np.mvgavg(example_array,2)
+    >>> mvgavg(example_array,2)
     array([[0.5, 0. ],
            [1.5, 0. ],
            [2.5, 0. ],
            [3.5, 0. ]])
-    >>> np.mvgavg(example_array,2,axis=1)
+    >>> mvgavg(example_array,2,axis=1)
     array([[0.5],
            [0. ],
            [1.5],
@@ -2449,15 +2486,17 @@ def mvgavg(a,n,axis=0):
            [2.5]])
 
     """
-
-
-    a = asarray(a).swapaxes(0,axis)
-    try:
-        a = sum(array([a[m:len(a)-n+1+m] for m in range(n)]),axis=0)/n
-    except:
-        print('your array is ragged or otherwise of an unsuitable type')
+    if axis == None:
+        axis = 0
+    if binning:
+        return binning_mvgavg(np.asarray(a),n,axis=axis)
     else:
-        return a.swapaxes(axis,0)    
+        if weights:
+            return fnjn_mvgavg(np.asarray(a),n,axis=axis,weights=weights)
+        else:
+            return cumsum_mvgavg(np.asarray(a),n,axis=axis)
+
+
 
 
 
