@@ -2779,7 +2779,7 @@ class MaskedArray(ndarray):
     However, np.bool_(False) will return a scalar boolean instead of keeping 
     the shape of `data` as follows:
     
-    >>> print(np.ma.MaskedArray(np.ones([1,2]), mask=np.bool_(False)).mask,\
+    >>> print(np.ma.MaskedArray(np.ones([1,2]), mask=np.bool_(False)).mask,
     ...       np.ones([1,2])) # See if data and masked array matches the shape
     False [[1. 1.]]
 
