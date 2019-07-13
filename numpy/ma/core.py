@@ -2760,7 +2760,7 @@ class MaskedArray(ndarray):
 
     Notes
     -----
-    Boolean strings are recommended here for the mask parameter, because the usage 
+    Boolean strings are recommended for the mask parameter, because the usage 
     of numpy.bool_() has an issue here:
     >>> np.ma.MaskedArray([1,2], mask=np.bool_(False)).mask
     False
