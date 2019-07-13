@@ -13,10 +13,10 @@ import numpy as np
 from numpy.polynomial import (
     Polynomial, Legendre, Chebyshev, Laguerre, Hermite, HermiteE)
 from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
+    assert_almost_equal, assert_raises, assert_equal, assert_, assert_warns,
     )
 from numpy.compat import long
-
+from numpy.polynomial.polyutils import RankWarning
 
 #
 # fixtures
@@ -131,6 +131,16 @@ def test_fromroots(Poly):
     pwin = Polynomial.window
     p2 = Polynomial.cast(p1, domain=pdom, window=pwin)
     assert_almost_equal(p2.coef[-1], 1)
+
+
+def test_bad_conditioned_fit(Poly):
+
+    x = [0., 0., 1.]
+    y = [1., 2., 3.]
+
+    # check RankWarning is raised
+    with assert_warns(RankWarning):
+        Poly.fit(x, y, 2)
 
 
 def test_fit(Poly):
