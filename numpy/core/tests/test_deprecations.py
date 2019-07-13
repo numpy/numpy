@@ -548,3 +548,14 @@ class TestNonZero(_DeprecationTestCase):
     def test_zerod(self):
         self.assert_deprecated(lambda: np.nonzero(np.array(0)))
         self.assert_deprecated(lambda: np.nonzero(np.array(1)))
+
+
+class TestInterpNaN(_DeprecationTestCase):
+    # 2019-07-13, 1.17.0
+    def test_xp_nan(self):
+        self.assert_deprecated(lambda: np.interp(
+            [1,3,1], [0, 2, np.nan, np.nan], [10, 20, 30, 40]
+            ))
+        self.assert_deprecated(lambda: np.interp(
+            [1,3,1], [0, 2, np.nan, np.nan, np.nan], [10, 20, 30, 40, 50]
+            ))

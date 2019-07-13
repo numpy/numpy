@@ -1287,6 +1287,10 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     Returns the one-dimensional piecewise linear interpolant to a function
     with given discrete data points (`xp`, `fp`), evaluated at `x`.
 
+    .. deprecated:: 1.18.0
+        `np.interp` found NaN in xp. This will raise an error starting in 
+        NumPy 1.19.0.
+
     Parameters
     ----------
     x : array_like

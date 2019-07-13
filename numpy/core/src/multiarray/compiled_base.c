@@ -562,6 +562,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         npy_intp j = 0;
+        npy_bool found_nan = NPY_FALSE;
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
@@ -589,6 +590,9 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             }
 
             j = binary_search_with_guess(x_val, dx, lenxp, j);
+            if (npy_isnan(dx[j]) || (j < lenxp && npy_isnan(dx[j+1]) )) {
+                found_nan = NPY_TRUE;
+            }
             if (j == -1) {
                 dres[i] = lval;
             }
@@ -619,6 +623,14 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
 
         NPY_END_THREADS;
+
+        if (found_nan) {
+            // 2019-07-13, NumPy 1.18.0
+            if (DEPRECATE("`np.interp` found NaN in xp. This will raise an "
+                    "error starting in NumPy 1.19.0.") < 0) {
+                goto fail;
+            }
+        }
     }
 
     PyArray_free(slopes);
