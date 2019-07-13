@@ -2723,8 +2723,8 @@ class MaskedArray(ndarray):
     mask : sequence, optional
         Mask. Must be convertible to an array of booleans with the same
         shape as `data`. True indicates a masked (i.e. invalid) data. A 
-        known issue is that mask=numpy.bool_(False) will erase the data 
-        shape, see more at notes.
+        known issue is that the `mask` will not keep the same shape as `data`
+        if numpy.bool_(False) is used, see more at examples.
     dtype : dtype, optional
         Data type of the output.
         If `dtype` is None, the type of the data argument (``data.dtype``)
@@ -2758,16 +2758,30 @@ class MaskedArray(ndarray):
         in any order (either C-, Fortran-contiguous, or even discontiguous),
         unless a copy is required, in which case it will be C-contiguous.
 
-    Notes
-    -----
-    Boolean strings are recommended for the mask parameter, because the usage 
-    of numpy.bool_() has an issue here:
-    >>> np.ma.MaskedArray([1,2], mask=np.bool_(False)).mask
-    False
-    >>> np.ma.MaskedArray([1,2], mask=False).mask
-    array([False, False])
-    >>> np.ma.MaskedArray([1,2], mask=np.bool_(True)).mask
-    array([ True,  True])
+    Examples
+    --------
+
+    >>> np.ma.MaskedArray([1,2])
+    masked_array(data=[1, 2],
+                 mask=False,
+           fill_value=999999)
+
+    For most cases, we want the `mask` attribute to have the same shape
+    as `data`, like:
+
+    >>> print(np.ma.MaskedArray(np.ones([1,2]), mask=False).mask,
+    ...       np.ones([1,2])) # See if data and mask matches the shape
+    [[False False]] [[1. 1.]]
+    >>> print(np.ma.MaskedArray(np.ones([1,2]), mask=np.bool_(True)).mask,
+    ...       np.ones([1,2])) # See if data and mask matches the shape
+    [[ True  True]] [[1. 1.]]
+    
+    However, np.bool_(False) will return a scalar boolean instead of keeping 
+    the shape of `data` as follows:
+    
+    >>> print(np.ma.MaskedArray(np.ones([1,2]), mask=np.bool_(False)).mask,\
+    ...       np.ones([1,2])) # See if data and masked array matches the shape
+    False [[1. 1.]]
 
     """
 
