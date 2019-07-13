@@ -2722,9 +2722,7 @@ class MaskedArray(ndarray):
         Input data.
     mask : sequence, optional
         Mask. Must be convertible to an array of booleans with the same
-        shape as `data`. True indicates a masked (i.e. invalid) data. A 
-        known issue is that the `mask` will not keep the same shape as `data`
-        if numpy.bool_(False) is used, see more at examples.
+        shape as `data`. True indicates a masked (i.e. invalid) data.
     dtype : dtype, optional
         Data type of the output.
         If `dtype` is None, the type of the data argument (``data.dtype``)
@@ -2776,7 +2774,7 @@ class MaskedArray(ndarray):
     ...       np.ones([1,2])) # See if data and mask matches the shape
     [[ True  True]] [[1. 1.]]
     
-    However, np.bool_(False) will return a scalar boolean instead of keeping 
+    However, ``mask=np.bool_(False)`` will return a scalar boolean instead of keeping 
     the shape of `data` as follows:
     
     >>> print(np.ma.MaskedArray(np.ones([1,2]), mask=np.bool_(False)).mask,
