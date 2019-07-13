@@ -2755,6 +2755,36 @@ class MaskedArray(ndarray):
         If order is 'A' (default), then the returned array may be
         in any order (either C-, Fortran-contiguous, or even discontiguous),
         unless a copy is required, in which case it will be C-contiguous.
+    
+    Examples
+    --------
+
+    >>> np.ma.MaskedArray([1,2])
+    masked_array(data=[1, 2],
+                 mask=False,
+           fill_value=999999)
+
+    For most cases, we want the `mask` attribute to have the same shape
+    as `data`, like:
+
+    >>> print(np.ma.MaskedArray(np.ones([1,2]), mask=False).mask,
+    ...       np.ones([1,2])) # See if data and mask matches the shape
+    [[False False]] [[1. 1.]]
+    >>> print(np.ma.MaskedArray(np.ones([1,2]), mask=np.True_).mask,
+    ...       np.ones([1,2])) # See if data and mask matches the shape
+    [[ True  True]] [[1. 1.]]
+    
+    However, ``mask=np.False_`` will return a scalar boolean instead of keeping 
+    the shape of `data` as follows:
+    
+    >>> print(np.ma.MaskedArray(np.ones([1,2]), mask=np.False_).mask,
+    ...       np.ones([1,2])) # See if data and masked array matches the shape
+    False [[1. 1.]]
+
+    This is because
+
+    >>> np.False_ is np.ma.nomask
+    True
 
     """
 
