@@ -23,10 +23,12 @@ Feature            Older Equivalent     Notes
                                         source, called a `BitGenerator
                                         <bit_generators>` A number of these
                                         are provided.  ``RandomState`` uses
-                                        only the Mersenne Twister.
+                                        the Mersenne Twister `~.MT19937` by
+                                        default, but can also be instantiated
+                                        with any BitGenerator.
 ------------------ -------------------- -------------
-``random``         ``random_sample``    Access the values in a BitGenerator,
-                                        convert them to ``float64`` in the
+``random``         ``random_sample``,   Access the values in a BitGenerator,
+                   ``rand``             convert them to ``float64`` in the
                                         interval ``[0.0.,`` `` 1.0)``.
                                         In addition to the ``size`` kwarg, now
                                         supports ``dtype='d'`` or ``dtype='f'``,
