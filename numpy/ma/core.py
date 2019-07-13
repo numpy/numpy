@@ -2722,7 +2722,9 @@ class MaskedArray(ndarray):
         Input data.
     mask : sequence, optional
         Mask. Must be convertible to an array of booleans with the same
-        shape as `data`. True indicates a masked (i.e. invalid) data.
+        shape as `data`. True indicates a masked (i.e. invalid) data. A 
+	known issue is that mask=numpy.bool_(False) will erase the data 
+	shape, see more at notes.
     dtype : dtype, optional
         Data type of the output.
         If `dtype` is None, the type of the data argument (``data.dtype``)
@@ -2755,6 +2757,17 @@ class MaskedArray(ndarray):
         If order is 'A' (default), then the returned array may be
         in any order (either C-, Fortran-contiguous, or even discontiguous),
         unless a copy is required, in which case it will be C-contiguous.
+
+    Notes
+    -----
+    Boolean strings are recommended for the mask parameter, because the usage 
+    of numpy.bool_() has an issue here:
+    >>> np.ma.MaskedArray([1,2], mask=np.bool_(False)).mask
+    False
+    >>> np.ma.MaskedArray([1,2], mask=False).mask
+    array([False, False])
+    >>> np.ma.MaskedArray([1,2], mask=np.bool_(True)).mask
+    array([ True,  True])
 
     """
 
