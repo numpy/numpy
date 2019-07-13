@@ -353,7 +353,8 @@ cdef class Generator:
 
         Return random integers from `low` (inclusive) to `high` (exclusive), or
         if endpoint=True, `low` (inclusive) to `high` (inclusive). Replaces
-        randint (with endpoint=False) and random_integers (with endpoint=True)
+        `RandomState.randint` (with endpoint=False) and
+        `RandomState.random_integers` (with endpoint=True)
 
         Return random integers from the "discrete uniform" distribution of
         the specified dtype. If `high` is None (the default), then results are
@@ -502,13 +503,6 @@ cdef class Generator:
         # consistently.
         return self.integers(0, 4294967296, size=n_uint32,
                              dtype=np.uint32).astype('<u4').tobytes()[:length]
-
-    def randint(self, low, high=None, size=None, dtype=np.int64, endpoint=False):
-        """
-        Deprecated, renamed to ``integers``
-        """
-        warnings.warn("Renamed to integers", RuntimeWarning)
-        self.integers(low, high, size, dtype, endpoint)
 
     @cython.wraparound(True)
     def choice(self, a, size=None, replace=True, p=None, axis=0):
