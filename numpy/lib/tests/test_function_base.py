@@ -2414,8 +2414,9 @@ class TestInterp(object):
 
     def test_non_finite_any_nan(self, sc):
         """ test that nans are propagated """
-        assert_equal(np.interp(0.5, [np.nan,      1], sc([     0,     10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [     0, np.nan], sc([     0,     10])), sc(np.nan))
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.interp(0.5, [np.nan,      1], sc([     0,     10])), sc(np.nan))
+            assert_equal(np.interp(0.5, [     0, np.nan], sc([     0,     10])), sc(np.nan))
         assert_equal(np.interp(0.5, [     0,      1], sc([np.nan,     10])), sc(np.nan))
         assert_equal(np.interp(0.5, [     0,      1], sc([     0, np.nan])), sc(np.nan))
 

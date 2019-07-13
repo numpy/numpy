@@ -547,10 +547,15 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
     }
 
+    npy_bool found_nan = NPY_FALSE;
     /* binary_search_with_guess needs at least a 3 item long array */
     if (lenxp == 1) {
         const npy_double xp_val = dx[0];
         const npy_double fp_val = dy[0];
+
+        if (npy_isnan(dx[0])) {
+            found_nan = NPY_TRUE;
+        }
 
         NPY_BEGIN_THREADS_THRESHOLDED(lenx);
         for (i = 0; i < lenx; ++i) {
@@ -562,7 +567,6 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
     else {
         npy_intp j = 0;
-        npy_bool found_nan = NPY_FALSE;
 
         /* only pre-calculate slopes if there are relatively few of them. */
         if (lenxp <= lenx) {
@@ -624,12 +628,13 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
         NPY_END_THREADS;
 
-        if (found_nan) {
-            // 2019-07-13, NumPy 1.18.0
-            if (DEPRECATE("`np.interp` found NaN in xp. This will raise an "
-                    "error starting in NumPy 1.19.0.") < 0) {
-                goto fail;
-            }
+    }
+
+    if (found_nan) {
+        // 2019-07-13, NumPy 1.18.0
+        if (DEPRECATE("`np.interp` found NaN in xp. This will raise an "
+                "error starting in NumPy 1.19.0.") < 0) {
+            goto fail;
         }
     }
 
@@ -738,10 +743,15 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
     }
 
+    npy_bool found_nan = NPY_FALSE;
     /* binary_search_with_guess needs at least a 3 item long array */
     if (lenxp == 1) {
         const npy_double xp_val = dx[0];
         const npy_cdouble fp_val = dy[0];
+
+        if (npy_isnan(dx[0])) {
+            found_nan = NPY_TRUE;
+        }
 
         NPY_BEGIN_THREADS_THRESHOLDED(lenx);
         for (i = 0; i < lenx; ++i) {
@@ -783,6 +793,9 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             }
 
             j = binary_search_with_guess(x_val, dx, lenxp, j);
+            if (npy_isnan(dx[j]) || (j < lenxp && npy_isnan(dx[j+1]) )) {
+                found_nan = NPY_TRUE;
+            }
             if (j == -1) {
                 dres[i] = lval;
             }
@@ -830,6 +843,14 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         NPY_END_THREADS;
     }
     PyArray_free(slopes);
+
+    if (found_nan) {
+        // 2019-07-13, NumPy 1.18.0
+        if (DEPRECATE("`np.interp` found NaN in xp. This will raise an "
+                "error starting in NumPy 1.19.0.") < 0) {
+            goto fail;
+        }
+    }
 
     Py_DECREF(afp);
     Py_DECREF(axp);

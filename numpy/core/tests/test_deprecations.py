@@ -552,10 +552,29 @@ class TestNonZero(_DeprecationTestCase):
 
 class TestInterpNaN(_DeprecationTestCase):
     # 2019-07-13, 1.17.0
-    def test_xp_nan(self):
+
+    @pytest.fixture(params=[
+        lambda x: np.float_(x),
+        lambda x: np.complex_(x),
+    ], ids=[
+        'real',
+        'complex'
+    ])
+    def sc(self, request):
+        """ scale function used by the below tests """
+        return request.param
+
+    def test_xp_nan(self, sc):
+        self.assert_deprecated(lambda: np.interp([1], [np.nan], sc([10])))
         self.assert_deprecated(lambda: np.interp(
-            [1,3,1], [0, 2, np.nan, np.nan], [10, 20, 30, 40]
+            [2], [1, np.nan], sc([10, 20])
             ))
         self.assert_deprecated(lambda: np.interp(
-            [1,3,1], [0, 2, np.nan, np.nan, np.nan], [10, 20, 30, 40, 50]
+            [1,3,1], [0, 2, np.nan, np.nan], sc([10, 20, 30, 40])
+            ))
+        self.assert_deprecated(lambda: np.interp(
+            [1,3,1], [0, 2, np.nan, np.nan, np.nan], sc([10, 20, 30, 40, 50])
+            ))
+        self.assert_deprecated(lambda: np.interp(
+            [1,3,1], [0, 2, np.nan, np.nan, np.nan], sc([10, 20, 30, 40, 50])
             ))
