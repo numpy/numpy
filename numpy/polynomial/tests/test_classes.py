@@ -13,7 +13,7 @@ import numpy as np
 from numpy.polynomial import (
     Polynomial, Legendre, Chebyshev, Laguerre, Hermite, HermiteE)
 from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_, assert_warns,
+    assert_almost_equal, assert_raises, assert_equal, assert_,
     )
 from numpy.compat import long
 from numpy.polynomial.polyutils import RankWarning
@@ -139,8 +139,9 @@ def test_bad_conditioned_fit(Poly):
     y = [1., 2., 3.]
 
     # check RankWarning is raised
-    with assert_warns(RankWarning):
+    with pytest.warns(RankWarning) as record:
         Poly.fit(x, y, 2)
+    assert record[0].message.args[0] == "The fit may be poorly conditioned"
 
 
 def test_fit(Poly):
