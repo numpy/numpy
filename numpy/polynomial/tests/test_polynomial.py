@@ -9,7 +9,7 @@ import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    assert_array_equal)
+    assert_warns, assert_array_equal)
 
 
 def trim(x):
@@ -297,6 +297,8 @@ class TestIntegral(object):
         assert_raises(ValueError, poly.polyint, [0], lbnd=[0])
         assert_raises(ValueError, poly.polyint, [0], scl=[0])
         assert_raises(TypeError, poly.polyint, [0], axis=.5)
+        with assert_warns(DeprecationWarning):
+            poly.polyint([1, 1], 1.)
 
         # test integration of zero polynomial
         for i in range(2, 5):
