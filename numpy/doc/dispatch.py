@@ -218,14 +218,12 @@ For completeness, to support the usage ``arr.sum()`` add a method ``sum`` that
 calls ``numpy.sum(self)``, and the same for ``mean``.
 
 >>> @implements(np.sum)
-... def sum(a, axis=None, out=None):
+... def sum(a):
 ...     "Implementation of np.sum for DiagonalArray objects"
-...     if axis is not None:
-...         raise TypeError("DiagonalArrays cannot be summed along one axis.")
 ...     return arr._i * arr._N
 ...
 >>> @implements(np.mean)
-... def sum(a, axis=None, out=None):
+... def sum(a):
 ...     "Implementation of np.mean for DiagonalArray objects"
 ...     return arr._i / arr._N
 ...
@@ -244,8 +242,14 @@ supported.
 >>> np.concatenate([arr, arr])
 TypeError: no implementation found for 'numpy.concatenate' on types that implement __array_function__: [<class '__main__.DiagonalArray'>]
 
-The user always has the option of converting to a normal
-``numpy.ndarray`` with :func:`numpy.asarray` and using standard numpy from there.
+Additionally, our implementations of ``sum`` and ``mean`` do not accept the
+optional arguments that numpy's implementation does.
+
+>>> np.sum(arr, axis=0)
+TypeError: sum() got an unexpected keyword argument 'axis'
+
+The user always has the option of converting to a normal ``numpy.ndarray`` with
+:func:`numpy.asarray` and using standard numpy from there.
 
 >>> np.concatenate([np.asarray(arr), np.asarray(arr)])
 array([[1., 0., 0., 0., 0.],
