@@ -173,7 +173,7 @@ NumPy provides several hooks that classes can customize:
 
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.
-   -  ``types`` is a `collection <https://docs.python.org/3/library/collections.abc.html#collections.abc.Collection>`_
+   -  ``types`` is a `collection <collections.abc.Collection>`_
       of unique argument types from the original NumPy function call that
       implement ``__array_function__``.
    -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
@@ -183,7 +183,7 @@ NumPy provides several hooks that classes can customize:
    provides all argument types with an ``'__array_function__'`` attribute.
    This allows implementors to quickly identify cases where they should defer
    to ``__array_function__`` implementations on other arguments.
-   Implementaitons should not rely on the iteration order of ``types``.
+   Implementations should not rely on the iteration order of ``types``.
 
    Most implementations of ``__array_function__`` will start with two
    checks:
@@ -259,7 +259,7 @@ NumPy provides several hooks that classes can customize:
    -  If all ``__array_function__`` methods return ``NotImplemented``,
       NumPy will raise ``TypeError``.
 
-   If no ``__array_function__`` methods exist, NumPy will default to calling
+   If no ``__array_function__`` methods exists, NumPy will default to calling
    its own implementation, intended for use on NumPy arrays. This case arises,
    for example, when all array-like arguments are Python numbers or lists.
    (NumPy arrays do have a ``__array_function__`` method, given below, but it
