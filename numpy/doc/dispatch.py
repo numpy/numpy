@@ -214,6 +214,8 @@ to add functions to ``HANDLED_FUNCTIONS``.
 ...
 
 Now we write implementations of numpy functions for ``DiagonalArray``.
+For completeness, to support the usage ``arr.sum()`` add a method ``sum`` that
+calls ``numpy.sum(self)``, and the same for ``mean``.
 
 >>> @implements(np.sum)
 ... def sum(a, axis=None, out=None):
@@ -232,9 +234,6 @@ Now we write implementations of numpy functions for ``DiagonalArray``.
 5
 >>> np.mean(arr)
 0.2
-
-For completeness, to support the usage ``arr.sum()`` add a method ``sum`` that
-calls ``numpy.sum(self)``, and the same for ``mean``.
 
 If the user tries to use any numpy functions not included in
 ``HANDLED_FUNCTIONS``, a ``TypeError`` will be raised by numpy, indicating that
