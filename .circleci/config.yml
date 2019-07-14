@@ -19,6 +19,7 @@ jobs:
           name: install dependencies
           command: |
             python3 -m venv venv
+            ln -s $(which python3) venv/bin/python3.6
             . venv/bin/activate
             pip install cython sphinx==1.8.5 matplotlib ipython
             sudo apt-get update
