@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import functools
 import warnings
 import operator
+import types
 
 from . import numeric as _nx
 from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
@@ -430,15 +431,39 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     return result.astype(dtype, copy=False)
 
 
-#always succeed
-def _add_docstring(obj, doc):
+def _needs_add_docstring(obj):
+    """
+    Returns true if the only way to set the docstring of `obj` from python is
+    via add_docstring.
+
+    This function errs on the side of being overly conservative.
+    """
+    Py_TPFLAGS_HEAPTYPE = 1 << 9
+
+    if isinstance(obj, (types.FunctionType, types.MethodType, property)):
+        return False
+
+    if isinstance(obj, type) and obj.__flags__ & Py_TPFLAGS_HEAPTYPE:
+        return False
+
+    return True
+
+
+def _add_docstring(obj, doc, warn_on_python):
+    if warn_on_python and not _needs_add_docstring(obj):
+        warnings.warn(
+            "add_newdoc was used on a pure-python object {}. "
+            "Prefer to attach it directly to the source."
+            .format(obj),
+            UserWarning,
+            stacklevel=3)
     try:
         add_docstring(obj, doc)
     except Exception:
         pass
 
 
-def add_newdoc(place, obj, doc):
+def add_newdoc(place, obj, doc, warn_on_python=True):
     """
     Add documentation to an existing object, typically one defined in C
 
@@ -460,6 +485,9 @@ def add_newdoc(place, obj, doc):
 
         If a list, then each element of the list should be a tuple of length
         two - ``[(method1, docstring1), (method2, docstring2), ...]``
+    warn_on_python : bool
+        If True, the default, emit `UserWarning` if this is used to attach
+        documentation to a pure-python object.
 
     Notes
     -----
@@ -483,10 +511,10 @@ def add_newdoc(place, obj, doc):
     """
     new = getattr(__import__(place, globals(), {}, [obj]), obj)
     if isinstance(doc, str):
-        _add_docstring(new, doc.strip())
+        _add_docstring(new, doc.strip(), warn_on_python)
     elif isinstance(doc, tuple):
         attr, docstring = doc
-        _add_docstring(getattr(new, attr), docstring.strip())
+        _add_docstring(getattr(new, attr), docstring.strip(), warn_on_python)
     elif isinstance(doc, list):
         for attr, docstring in doc:
-            _add_docstring(getattr(new, attr), docstring.strip())
+            _add_docstring(getattr(new, attr), docstring.strip(), warn_on_python)
