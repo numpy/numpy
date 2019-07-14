@@ -73,6 +73,18 @@ See `new-or-different` for more information
   rg.standard_normal()
   rg.bit_generator
 
+Something like the following code can be used to support both ``RandomState``
+and ``Generator``, with the understanding that the interfaces are slightly
+different
+
+.. code-block:: python
+
+    try:
+        rg_integers = rg.integers
+    except AttributeError:
+        rg_integers = rg.randint
+    a = rg_integers(1000)
+
 Seeds can be passed to any of the BitGenerators. The provided value is mixed
 via `~.SeedSequence` to spread a possible sequence of seeds across a wider
 range of initialization states for the BitGenerator. Here `~.PCG64` is used and
