@@ -4414,7 +4414,17 @@ PyArray_DescrFromType(int type)
 {
     PyArray_Descr *ret = NULL;
 
-    if (type < NPY_NTYPES) {
+    if (type < 0) {
+        /*
+         * It's not valid for type to be less than 0.
+         * If that happens, then no other branch of
+         * this if/else chain should be followed.
+         * This is effectively a no-op that ensures
+         * the default error is raised.
+         */
+        ret = NULL;
+    }
+    else if (type < NPY_NTYPES) {
         ret = _builtin_descrs[type];
     }
     else if (type == NPY_NOTYPE) {
