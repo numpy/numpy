@@ -45,4 +45,4 @@ pypy3/bin/pypy3 runtests.py --show-build-log -- -rsx \
 echo Make sure the correct openblas has been linked in
 
 pypy3/bin/pip install .
-(cd pypy3; bin/pypy3 -c "$TEST_GET_CONFIG")
+pypy3/bin/pypy3 tools/openblas_support.py --check_version "$OpenBLAS_version"

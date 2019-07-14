@@ -21,6 +21,7 @@ cache:
 
 env:
   global:
+    - OpenBLAS_version=0.3.5
     - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
     # The following is generated with the command:
     # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY

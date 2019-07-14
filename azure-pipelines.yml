@@ -9,7 +9,6 @@ variables:
   # OpenBLAS_version should be updated
   # to match numpy-wheels repo
   OpenBLAS_version: 0.3.7.dev
-  TEST_GET_CONFIG: import numpy, ctypes; dll = ctypes.CDLL(numpy.core._multiarray_umath.__file__); get_config = dll.openblas_get_config; get_config.restype=ctypes.c_char_p; res = get_config(); print('OpenBLAS get_config returned', str(res)); assert b'OpenBLAS $(OpenBLAS_version)' in res
 
 jobs:
 - job: Linux_Python_36_32bit_full_with_asserts
@@ -30,7 +29,7 @@ jobs:
            python3 -m pip install . && \
            F77=gfortran-5 F90=gfortran-5 \
            CFLAGS='-UNDEBUG -std=c99' python3 runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml && \
-           cd .. && python3 -c \"$(TEST_GET_CONFIG)\""
+           python3 tools/openblas_support.py --check_version $(OpenBLAS_version)"
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
@@ -108,7 +107,7 @@ jobs:
     displayName: 'Run Refuide Check'
   - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
-  - bash: pushd . && cd .. && python -c "$(TEST_GET_CONFIG)" && popd
+  - bash: python tools/openblas_support.py --check_version $(OpenBLAS_version)
     displayName: 'Verify OpenBLAS version'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
