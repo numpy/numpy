@@ -87,7 +87,7 @@ def process_pyx(fromfile, tofile):
 
 
 def process_tempita_pyx(fromfile, tofile):
-    import npy_tempita as tempita
+    from Cython import Tempita as tempita
 
     assert fromfile.endswith('.pyx.in')
     with open(fromfile, "r") as f:
@@ -100,7 +100,7 @@ def process_tempita_pyx(fromfile, tofile):
 
 
 def process_tempita_pyd(fromfile, tofile):
-    import npy_tempita as tempita
+    from Cython import Tempita as tempita
 
     assert fromfile.endswith('.pxd.in')
     assert tofile.endswith('.pxd')
@@ -111,7 +111,7 @@ def process_tempita_pyd(fromfile, tofile):
         f.write(pyxcontent)
 
 def process_tempita_pxi(fromfile, tofile):
-    import npy_tempita as tempita
+    from Cython import Tempita as tempita
 
     assert fromfile.endswith('.pxi.in')
     assert tofile.endswith('.pxi')
@@ -122,7 +122,7 @@ def process_tempita_pxi(fromfile, tofile):
         f.write(pyxcontent)
 
 def process_tempita_pxd(fromfile, tofile):
-    import npy_tempita as tempita
+    from Cython import Tempita as tempita
 
     assert fromfile.endswith('.pxd.in')
     assert tofile.endswith('.pxd')
