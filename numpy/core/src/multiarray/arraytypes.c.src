@@ -221,9 +221,7 @@ static int
         if (PySequence_NoString_Check(op)) {
             PyErr_SetString(PyExc_ValueError,
                     "setting an array element with a sequence.");
-            Py_DECREF(type);
-            Py_XDECREF(value);
-            Py_XDECREF(traceback);
+            npy_PyErr_ChainExceptionsCause(type, value, traceback);
         }
         else {
             PyErr_Restore(type, value, traceback);
