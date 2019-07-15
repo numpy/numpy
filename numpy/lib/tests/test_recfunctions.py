@@ -10,11 +10,13 @@ from numpy.testing import assert_, assert_raises
 from numpy.lib.recfunctions import (
     drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by,
-    repack_fields, unstructured_to_structured, structured_to_unstructured,
+    repack_fields, _unstructured_to_structured, structured_to_unstructured,
     apply_along_fields, require_fields, assign_fields_by_name)
+get_fieldspec = np.lib.recfunctions._get_fieldspec
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
-zip_descr = np.lib.recfunctions.zip_descr
+zip_descr = np.lib.recfunctions._zip_descr
+zip_dtype = np.lib.recfunctions._zip_dtype
 
 
 class TestRecFunctions(object):
@@ -218,7 +220,7 @@ class TestRecFunctions(object):
         assert_equal(out, np.array([ 1. ,  4. ,  7. , 10. ]))
 
         c = np.arange(20).reshape((4,5))
-        out = unstructured_to_structured(c, a.dtype)
+        out = _unstructured_to_structured(c, a.dtype)
         want = np.array([( 0, ( 1.,  2), [ 3.,  4.]),
                          ( 5, ( 6.,  7), [ 8.,  9.]),
                          (10, (11., 12), [13., 14.]),
@@ -239,7 +241,7 @@ class TestRecFunctions(object):
         d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'i4')])
         dd = structured_to_unstructured(d)
-        ddd = unstructured_to_structured(dd, d.dtype)
+        ddd = _unstructured_to_structured(dd, d.dtype)
         assert_(dd.base is d)
         assert_(ddd.base is d)
 
@@ -248,7 +250,7 @@ class TestRecFunctions(object):
                       (8, [9, 10], [[11, 12], [13, 14]])],
                      dtype=[('x0', 'i4'), ('x1', ('i4', 2)), ('x2', ('i4', (2, 2)))])
         dd = structured_to_unstructured(d)
-        ddd = unstructured_to_structured(dd, d.dtype)
+        ddd = _unstructured_to_structured(dd, d.dtype)
         assert_(dd.base is d)
         assert_(ddd.base is d)
 
