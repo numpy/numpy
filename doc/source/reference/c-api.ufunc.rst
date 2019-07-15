@@ -49,28 +49,6 @@ Macros
     Used in universal function code to re-acquire the Python GIL if it
     was released (because loop->obj was not true).
 
-.. c:function:: UFUNC_CHECK_ERROR(loop)
-
-    A macro used internally to check for errors and goto fail if
-    found.  This macro requires a fail label in the current code
-    block. The *loop* variable must have at least members (obj,
-    errormask, and errorobj). If *loop* ->obj is nonzero, then
-    :c:func:`PyErr_Occurred` () is called (meaning the GIL must be held). If
-    *loop* ->obj is zero, then if *loop* ->errormask is nonzero,
-    :c:func:`PyUFunc_checkfperr` is called with arguments *loop* ->errormask
-    and *loop* ->errobj. If the result of this check of the IEEE
-    floating point registers is true then the code redirects to the
-    fail label which must be defined.
-
-.. c:function:: UFUNC_CHECK_STATUS(ret)
-
-    Deprecated: use npy_clear_floatstatus from npy_math.h instead.
-
-    A macro that expands to platform-dependent code. The *ret*
-    variable can be any integer. The :c:data:`UFUNC_FPE_{ERR}` bits are
-    set in *ret* according to the status of the corresponding error
-    flags of the floating point processor.
-
 
 Functions
 ---------
