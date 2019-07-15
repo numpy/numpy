@@ -1578,7 +1578,7 @@ Flag checking
 ^^^^^^^^^^^^^
 
 For all of these macros *arr* must be an instance of a (subclass of)
-:c:data:`PyArray_Type`, but no checking is done.
+:c:data:`PyArray_Type`.
 
 .. c:function:: PyArray_CHKFLAGS(arr, flags)
 
@@ -2052,6 +2052,17 @@ Calculation
     effect that is obtained by passing in *axis* = :const:`None` in Python
     (treating the array as a 1-d array).
 
+
+.. note::
+
+    The out argument specifies where to place the result. If out is
+    NULL, then the output array is created, otherwise the output is
+    placed in out which must be the correct size and type. A new
+    reference to the output array is always returned even when out
+    is not NULL. The caller of the routine has the responsibility
+    to ``DECREF`` out if not NULL or a memory-leak will occur.
+
+
 .. c:function:: PyObject* PyArray_ArgMax( \
         PyArrayObject* self, int axis, PyArrayObject* out)
 
@@ -2063,18 +2074,6 @@ Calculation
 
     Equivalent to :meth:`ndarray.argmin<numpy.ndarray.argmin>` (*self*, *axis*). Return the index of
     the smallest element of *self* along *axis*.
-
-
-
-
-.. note::
-
-    The out argument specifies where to place the result. If out is
-    NULL, then the output array is created, otherwise the output is
-    placed in out which must be the correct size and type. A new
-    reference to the output array is always returned even when out
-    is not NULL. The caller of the routine has the responsibility
-    to ``DECREF`` out if not NULL or a memory-leak will occur.
 
 .. c:function:: PyObject* PyArray_Max( \
         PyArrayObject* self, int axis, PyArrayObject* out)
@@ -2655,22 +2654,22 @@ cost of a slight overhead.
 
     The mode should be one of:
 
-    * NPY_NEIGHBORHOOD_ITER_ZERO_PADDING: zero padding. Outside bounds values
+    * **NPY_NEIGHBORHOOD_ITER_ZERO_PADDING**: zero padding. Outside bounds values
       will be 0.
-    * NPY_NEIGHBORHOOD_ITER_ONE_PADDING: one padding, Outside bounds values
+    * **NPY_NEIGHBORHOOD_ITER_ONE_PADDING**: one padding, Outside bounds values
       will be 1.
-    * NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING: constant padding. Outside bounds
+    * **NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING**: constant padding. Outside bounds
       values will be the same as the first item in fill_value.
-    * NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING: mirror padding. Outside bounds
+    * **NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING**: mirror padding. Outside bounds
       values will be as if the array items were mirrored. For example, for the
       array [1, 2, 3, 4], x[-2] will be 2, x[-2] will be 1, x[4] will be 4,
       x[5] will be 1, etc...
-    * NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING: circular padding. Outside bounds
+    * **NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING**: circular padding. Outside bounds
       values will be as if the array was repeated. For example, for the
       array [1, 2, 3, 4], x[-2] will be 3, x[-2] will be 4, x[4] will be 1,
       x[5] will be 2, etc...
 
-    If the mode is constant filling (NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING),
+    If the mode is constant filling (**NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING**),
     fill_value should point to an array object which holds the filling value
     (the first item will be the filling value if the array contains more than
     one item). For other cases, fill_value may be NULL.
