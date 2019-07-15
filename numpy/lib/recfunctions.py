@@ -27,11 +27,12 @@ _check_fill_value = np.ma.core._check_fill_value
 
 __all__ = [
     'append_fields', 'apply_along_fields', 'assign_fields_by_name',
-    'drop_fields', 'find_duplicates', 'get_fieldstructure',
+    'drop_fields', 'find_duplicates', 'flatten_descr',
+    'get_fieldstructure', 'get_names', 'get_names_flat',
     'join_by', 'merge_arrays', 'rec_append_fields',
     'rec_drop_fields', 'rec_join', 'recursive_fill_fields',
-    'rename_fields', 'require_fields', 'stack_arrays',
-    'structured_to_unstructured',
+    'rename_fields', 'repack_fields', 'require_fields',
+    'stack_arrays', 'structured_to_unstructured',
     ]
 
 
@@ -78,7 +79,7 @@ def recursive_fill_fields(input, output):
     return output
 
 
-def get_fieldspec(dtype):
+def _get_fieldspec(dtype):
     """
     Produce a list of name/dtype pairs corresponding to the dtype fields
 
@@ -93,7 +94,7 @@ def get_fieldspec(dtype):
     >>> dt = np.dtype([(('a', 'A'), np.int64), ('b', np.double, 3)])
     >>> dt.descr
     [(('a', 'A'), '<i8'), ('b', '<f8', (3,))]
-    >>> get_fieldspec(dt)
+    >>> _get_fieldspec(dt)
     [(('a', 'A'), dtype('int64')), ('b', dtype(('<f8', (3,))))]
 
     """
@@ -211,7 +212,7 @@ def _zip_dtype_dispatcher(seqarrays, flatten=None):
 
 
 @array_function_dispatch(_zip_dtype_dispatcher)
-def zip_dtype(seqarrays, flatten=False):
+def _zip_dtype(seqarrays, flatten=False):
     newdtype = []
     if flatten:
         for a in seqarrays:
@@ -221,14 +222,14 @@ def zip_dtype(seqarrays, flatten=False):
             current = a.dtype
             if current.names and len(current.names) <= 1:
                 # special case - dtypes of 0 or 1 field are flattened
-                newdtype.extend(get_fieldspec(current))
+                newdtype.extend(_get_fieldspec(current))
             else:
                 newdtype.append(('', current))
     return np.dtype(newdtype)
 
 
 @array_function_dispatch(_zip_dtype_dispatcher)
-def zip_descr(seqarrays, flatten=False):
+def _zip_descr(seqarrays, flatten=False):
     """
     Combine the dtype description of a series of arrays.
 
@@ -239,7 +240,7 @@ def zip_descr(seqarrays, flatten=False):
     flatten : {boolean}, optional
         Whether to collapse nested descriptions.
     """
-    return zip_dtype(seqarrays, flatten=flatten).descr
+    return _zip_dtype(seqarrays, flatten=flatten).descr
 
 
 def get_fieldstructure(adtype, lastname=None, parents=None,):
@@ -325,7 +326,7 @@ def _izip_records_dispatcher(seqarrays, fill_value=None, flatten=None):
 
 
 @array_function_dispatch(_izip_records_dispatcher)
-def izip_records(seqarrays, fill_value=None, flatten=True):
+def _izip_records(seqarrays, fill_value=None, flatten=True):
     """
     Returns an iterator of concatenated items from a sequence of arrays.
 
@@ -447,7 +448,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
         # Make sure we have named fields
         if not seqdtype.names:
             seqdtype = np.dtype([('', seqdtype)])
-        if not flatten or zip_dtype((seqarrays,), flatten=True) == seqdtype:
+        if not flatten or _zip_dtype((seqarrays,), flatten=True) == seqdtype:
             # Minimal processing needed: just make sure everythng's a-ok
             seqarrays = seqarrays.ravel()
             # Find what type of array we must return
@@ -470,7 +471,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     sizes = tuple(a.size for a in seqarrays)
     maxlength = max(sizes)
     # Get the dtype of the output (flattening if needed)
-    newdtype = zip_dtype(seqarrays, flatten=flatten)
+    newdtype = _zip_dtype(seqarrays, flatten=flatten)
     # Initialize the sequences for data and mask
     seqdata = []
     seqmask = []
@@ -498,9 +499,9 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
             seqdata.append(itertools.chain(data, [fval] * nbmissing))
             seqmask.append(itertools.chain(mask, [fmsk] * nbmissing))
         # Create an iterator for the data
-        data = tuple(izip_records(seqdata, flatten=flatten))
+        data = tuple(_izip_records(seqdata, flatten=flatten))
         output = ma.array(np.fromiter(data, dtype=newdtype, count=maxlength),
-                          mask=list(izip_records(seqmask, flatten=flatten)))
+                          mask=list(_izip_records(seqmask, flatten=flatten)))
         if asrecarray:
             output = output.view(MaskedRecords)
     else:
@@ -518,7 +519,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
             else:
                 fval = None
             seqdata.append(itertools.chain(data, [fval] * nbmissing))
-        output = np.fromiter(tuple(izip_records(seqdata, flatten=flatten)),
+        output = np.fromiter(tuple(_izip_records(seqdata, flatten=flatten)),
                              dtype=newdtype, count=maxlength)
         if asrecarray:
             output = output.view(recarray)
@@ -745,7 +746,7 @@ def append_fields(base, names, data, dtypes=None,
     #
     output = ma.masked_all(
         max(len(base), len(data)),
-        dtype=get_fieldspec(base.dtype) + get_fieldspec(data.dtype))
+        dtype=_get_fieldspec(base.dtype) + _get_fieldspec(data.dtype))
     output = recursive_fill_fields(base, output)
     output = recursive_fill_fields(data, output)
     #
@@ -836,17 +837,18 @@ def repack_fields(a, align=False, recurse=False):
     Examples
     --------
 
+    >>> from numpy.lib import recfunctions as rfn
     >>> def print_offsets(d):
     ...     print("offsets:", [d.fields[name][1] for name in d.names])
     ...     print("itemsize:", d.itemsize)
     ...
-    >>> dt = np.dtype('u1,<i4,<f4', align=True)
+    >>> dt = np.dtype('u1, <i8, <f8', align=True)
     >>> dt
     dtype({'names':['f0','f1','f2'], 'formats':['u1','<i8','<f8'], 'offsets':[0,8,16], 'itemsize':24}, align=True)
     >>> print_offsets(dt)
     offsets: [0, 8, 16]
     itemsize: 24
-    >>> packed_dt = repack_fields(dt)
+    >>> packed_dt = rfn.repack_fields(dt)
     >>> packed_dt
     dtype([('f0', 'u1'), ('f1', '<i8'), ('f2', '<f8')])
     >>> print_offsets(packed_dt)
@@ -990,7 +992,7 @@ def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
     return (arr,)
 
 @array_function_dispatch(_unstructured_to_structured_dispatcher)
-def unstructured_to_structured(arr, dtype=None, names=None, align=False,
+def _unstructured_to_structured(arr, dtype=None, names=None, align=False,
                                copy=False, casting='unsafe'):
     """
     Converts and n-D unstructured array into an (n-1)-D structured array.
@@ -1037,7 +1039,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
            [ 5,  6,  7,  8,  9],
            [10, 11, 12, 13, 14],
            [15, 16, 17, 18, 19]])
-    >>> unstructured_to_structured(a, dt)
+    >>> _unstructured_to_structured(a, dt)
     array([( 0, ( 1.,  2), [ 3.,  4.]), ( 5, ( 6.,  7), [ 8.,  9.]),
            (10, (11., 12), [13., 14.]), (15, (16., 17), [18., 19.])],
           dtype=[('a', '<i4'), ('b', [('f0', '<f4'), ('f1', '<u2')]), ('c', '<f4', (2,))])
@@ -1275,10 +1277,10 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
     fldnames = [d.names for d in ndtype]
     #
     dtype_l = ndtype[0]
-    newdescr = get_fieldspec(dtype_l)
+    newdescr = _get_fieldspec(dtype_l)
     names = [n for n, d in newdescr]
     for dtype_n in ndtype[1:]:
-        for fname, fdtype in get_fieldspec(dtype_n):
+        for fname, fdtype in _get_fieldspec(dtype_n):
             if fname not in names:
                 newdescr.append((fname, fdtype))
                 names.append(fname)
@@ -1501,15 +1503,15 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     #
     # Build the new description of the output array .......
     # Start with the key fields
-    ndtype = get_fieldspec(r1k.dtype)
+    ndtype = _get_fieldspec(r1k.dtype)
 
     # Add the fields from r1
-    for fname, fdtype in get_fieldspec(r1.dtype):
+    for fname, fdtype in _get_fieldspec(r1.dtype):
         if fname not in key:
             ndtype.append((fname, fdtype))
 
     # Add the fields from r2
-    for fname, fdtype in get_fieldspec(r2.dtype):
+    for fname, fdtype in _get_fieldspec(r2.dtype):
         # Have we seen the current name already ?
         # we need to rebuild this list every time
         names = list(name for name, dtype in ndtype)
