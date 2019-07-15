@@ -1851,8 +1851,8 @@ def isscalar(num):
     True
 
     """
-    return (isinstance(num, generic)
-            or type(num) in ScalarType
+    return (type(num) in ScalarType
+            or isinstance(num, generic)
             or isinstance(num, numbers.Number))
 
 

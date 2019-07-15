@@ -523,7 +523,7 @@ except AttributeError:
     ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
 
 ScalarType.extend(_concrete_types)
-ScalarType = tuple(ScalarType)
+ScalarType = frozenset(ScalarType)
 
 
 # Now add the types we've determined to this module
