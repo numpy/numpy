@@ -32,7 +32,7 @@ instance's methods are imported into the numpy.random namespace, see
 Quick Start
 -----------
 
-By default, `~Generator` uses normals provided by `~pcg64.PCG64` which will be
+By default, `~Generator` uses sequences provided by `~pcg64.PCG64` which will be
 statistically more reliable than the legacy methods in `~.RandomState`
 
 .. code-block:: python
