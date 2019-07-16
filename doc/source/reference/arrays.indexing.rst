@@ -5,7 +5,7 @@ Indexing
 
 .. seealso::
 
-   :doc:`/source/user/basics.indexing`
+   :ref:`<basics.indexing>`
 
 .. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
