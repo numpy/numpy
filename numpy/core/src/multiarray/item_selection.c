@@ -2394,9 +2394,6 @@ PyArray_Nonzero(PyArrayObject *self)
                     get_multi_index(iter, multi_index);
                     multi_index += ndim;
                 }
-                if (needs_api && PyErr_Occurred()) {
-                    break;
-                }
             } while(iternext(iter));
         }
         else {

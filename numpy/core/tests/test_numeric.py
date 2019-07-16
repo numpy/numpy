@@ -1254,6 +1254,37 @@ class TestNonzero(object):
         a = np.array([[False], [TrueThenFalse()]])
         assert_raises(RuntimeError, np.nonzero, a)
 
+    def test_nonzero_exception_safe(self):
+        # gh-13930
+
+        class ThrowsAfter:
+            def __init__(self, iters):
+                ThrowsAfter.iters_left = iters
+
+            def __bool__(self):
+                if ThrowsAfter.iters_left == 0:
+                    raise ValueError("called `iters` times")
+                ThrowsAfter.iters_left -= 1
+                return True
+
+        """
+        Test that a ValueError is raised instead of a SystemError
+
+        If the __bool__ function is called after the error state is set,
+        Python (cpython) will raise a SystemError.
+        """
+
+        # assert that an exception in first pass is handled correctly
+        a = np.array([ThrowsAfter(5) for i in range(5)])
+        assert_raises(ValueError, np.nonzero, a)
+
+        # raise exception in second pass for 1-dimensional loop
+        a = np.array([ThrowsAfter(15) for i in range(10)])
+        assert_raises(ValueError, np.nonzero, a)
+
+        # raise exception in second pass for n-dimensional loop
+        a = np.array([[ThrowsAfter(15) for i in range(10)]])
+        assert_raises(ValueError, np.nonzero, a)
 
 class TestIndex(object):
     def test_boolean(self):
