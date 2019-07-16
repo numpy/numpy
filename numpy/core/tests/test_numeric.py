@@ -1259,12 +1259,13 @@ class TestNonzero(object):
 
         class ThrowsAfter:
             def __init__(self, iters):
-                ThrowsAfter.iters_left = iters
+                self.iters_left = iters
 
             def __bool__(self):
-                if ThrowsAfter.iters_left == 0:
+                if self.iters_left == 0:
                     raise ValueError("called `iters` times")
-                ThrowsAfter.iters_left -= 1
+
+                self.iters_left -= 1
                 return True
 
         """
@@ -1275,16 +1276,17 @@ class TestNonzero(object):
         """
 
         # assert that an exception in first pass is handled correctly
-        a = np.array([ThrowsAfter(5) for i in range(5)])
+        a = np.array([ThrowsAfter(5)]*10)
         assert_raises(ValueError, np.nonzero, a)
 
         # raise exception in second pass for 1-dimensional loop
-        a = np.array([ThrowsAfter(15) for i in range(10)])
+        a = np.array([ThrowsAfter(15)]*10)
         assert_raises(ValueError, np.nonzero, a)
 
         # raise exception in second pass for n-dimensional loop
-        a = np.array([[ThrowsAfter(15) for i in range(10)]])
+        a = np.array([[ThrowsAfter(15)]]*10)
         assert_raises(ValueError, np.nonzero, a)
+
 
 class TestIndex(object):
     def test_boolean(self):
