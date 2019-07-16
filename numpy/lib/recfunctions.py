@@ -207,11 +207,6 @@ def flatten_descr(ndtype):
         return tuple(descr)
 
 
-def _zip_dtype_dispatcher(seqarrays, flatten=None):
-    return seqarrays
-
-
-@array_function_dispatch(_zip_dtype_dispatcher)
 def _zip_dtype(seqarrays, flatten=False):
     newdtype = []
     if flatten:
@@ -228,7 +223,6 @@ def _zip_dtype(seqarrays, flatten=False):
     return np.dtype(newdtype)
 
 
-@array_function_dispatch(_zip_dtype_dispatcher)
 def _zip_descr(seqarrays, flatten=False):
     """
     Combine the dtype description of a series of arrays.
@@ -321,11 +315,6 @@ def _izip_fields(iterable):
             yield element
 
 
-def _izip_records_dispatcher(seqarrays, fill_value=None, flatten=None):
-    return seqarrays
-
-
-@array_function_dispatch(_izip_records_dispatcher)
 def _izip_records(seqarrays, fill_value=None, flatten=True):
     """
     Returns an iterator of concatenated items from a sequence of arrays.
@@ -987,11 +976,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     # finally is it safe to view the packed fields as the unstructured type
     return arr.view((out_dtype, (sum(counts),)))
 
-def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
-                                           align=None, copy=None, casting=None):
-    return (arr,)
 
-@array_function_dispatch(_unstructured_to_structured_dispatcher)
 def _unstructured_to_structured(arr, dtype=None, names=None, align=False,
                                copy=False, casting='unsafe'):
     """
