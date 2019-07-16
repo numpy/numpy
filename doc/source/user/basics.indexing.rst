@@ -6,7 +6,7 @@ Indexing
 
 .. seealso::
 
+   :ref:`Indexing <arrays.indexing>`
    :ref:`Indexing routines <routines.indexing>`
-   :ref:`<arrays.indexing>`
 
 .. automodule:: numpy.doc.indexing
