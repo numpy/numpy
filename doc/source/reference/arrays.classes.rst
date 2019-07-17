@@ -82,7 +82,7 @@ NumPy provides several hooks that classes can customize:
        :func:`~numpy.matmul`, which currently is not a Ufunc, but could be
        relatively easily be rewritten as a (set of) generalized Ufuncs. The
        same may happen with functions such as :func:`~numpy.median`,
-       :func:`~numpy.min`, and :func:`~numpy.argsort`.
+       :func:`~numpy.amin`, and :func:`~numpy.argsort`.
 
    Like with some other special methods in python, such as ``__hash__`` and
    ``__iter__``, it is possible to indicate that your class does *not*
