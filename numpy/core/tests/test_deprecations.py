@@ -149,16 +149,6 @@ class TestNonTupleNDIndexDeprecation(object):
             a[[0, 1]]
 
 
-class TestRankDeprecation(_DeprecationTestCase):
-    """Test that np.rank is deprecated. The function should simply be
-    removed. The VisibleDeprecationWarning may become unnecessary.
-    """
-
-    def test(self):
-        a = np.arange(10)
-        assert_warns(np.VisibleDeprecationWarning, np.rank, a)
-
-
 class TestComparisonDeprecations(_DeprecationTestCase):
     """This tests the deprecation, for non-element-wise comparison logic.
     This used to mean that when an error occurred during element-wise comparison
