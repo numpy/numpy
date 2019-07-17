@@ -32,8 +32,9 @@ instance's methods are imported into the numpy.random namespace, see
 Quick Start
 -----------
 
-By default, `~Generator` uses sequences provided by `~pcg64.PCG64` which will be
-statistically more reliable than the legacy methods in `~.RandomState`
+By default, `~Generator` uses bits provided by `~pcg64.PCG64` which
+has better statistical properties than the legacy mt19937 random
+number generator in `~.RandomState`
 
 .. code-block:: python
 
