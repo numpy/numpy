@@ -1,0 +1,2 @@
+* The deprecation of ``expand_dims`` out-of-range axes in 1.13.0 has
+  expired.
