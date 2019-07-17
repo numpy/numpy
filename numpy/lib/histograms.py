@@ -922,9 +922,11 @@ def _histogramdd_dispatcher(sample, bins=None, range=None, normed=None,
     if hasattr(sample, 'shape'):  # same condition as used in histogramdd
         yield sample
     else:
-        yield from sample
+        for s in sample:
+            yield s
     with contextlib.suppress(TypeError):
-        yield from bins
+        for b in bins:
+            yield b
     yield weights
 
 

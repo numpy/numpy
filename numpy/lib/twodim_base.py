@@ -574,7 +574,8 @@ def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
     except TypeError:
         N = 1
     if N != 1 and N != 2:
-        yield from bins  # bins=[x, y]
+        for b in bins:
+            yield b
     else:
         yield bins
 
