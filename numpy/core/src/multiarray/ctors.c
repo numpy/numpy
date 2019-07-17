@@ -746,6 +746,14 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             _dealloc_cached_buffer_info(obj);
             return 0;
         }
+        else if (PyErr_Occurred()) {
+            if (PyErr_ExceptionMatches(PyExc_BufferError) ||
+                    PyErr_ExceptionMatches(PyExc_TypeError)) {
+                PyErr_Clear();
+            } else {
+                return -1;
+            }
+        }
         else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
             d[0] = buffer_view.len;
             *maxndim = 1;
@@ -753,8 +761,13 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             _dealloc_cached_buffer_info(obj);
             return 0;
         }
-        else {
-            PyErr_Clear();
+        else if (PyErr_Occurred()) {
+            if (PyErr_ExceptionMatches(PyExc_BufferError) ||
+                    PyErr_ExceptionMatches(PyExc_TypeError)) {
+                PyErr_Clear();
+            } else {
+                return -1;
+            }
         }
     }
 
