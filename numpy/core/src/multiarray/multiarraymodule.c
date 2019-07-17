@@ -1566,143 +1566,200 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
                  ((order) == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(op)) || \
                  ((order) == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(op)))
 
+#define FAST_PARSE(string_obj, converter, value)                            \
+    do {                                                                    \
+        if (kwargs_parsed == kwargs_size) {                                 \
+            goto parsed_all_arguments;                                      \
+        }                                                                   \
+                                                                            \
+        PyObject *tmp = PyDict_GetItem(kwargs, string_obj);                 \
+                                                                            \
+        if (tmp != NULL) {                                                  \
+            kwargs_parsed++;                                                \
+            if (converter(tmp, &value) == NPY_FAIL) {                       \
+                goto finish;                                                \
+            }                                                               \
+            if (kwargs_parsed == kwargs_size) {                             \
+                goto parsed_all_arguments;                                  \
+            }                                                               \
+            num_arguments -= 1;                                             \
+            /* Make sure we expect more kwargs */                           \
+            if (num_arguments < 1) {                                        \
+                goto finish;                                                \
+            }                                                               \
+        }                                                                   \
+    } while (0)
+
+
+/*
+ * Small wrapper converting to array just like CPython does, we could
+ * use our own PyArray_PyIntAsInt function, but it deprecates floats
+ * differently.
+ * Function should thus be replaced at some point.
+ */
+static int
+int_converter(PyObject *obj, int *value) {
+    int overflow;
+    long result = PyLong_AsLongAndOverflow(obj, &overflow);
+    if (overflow || (result > INT_MAX) || (result < INT_MIN)) {
+        PyErr_SetString(PyExc_OverflowError,
+                        "Python int too large to convert to C int");
+        return NPY_FAIL;
+    }
+    if (error_converting(result)) {
+        return NPY_FAIL;
+    }
+    else {
+        *value = (int)result;
+        return NPY_SUCCEED;
+    }
+}
+
+/*
+ * Internal function to handle all `array` and `as[...]array` calls.
+ * These calls differ in default kwargs and the number of kwargs (however,
+ * if kwargs are given they are identical, with `dtype` and `order` being
+ * different. The only difference is the order of `copy` which only exists
+ * for `np.array(object, dtype=None, copy=True, order="K")`.
+ * In that case the default for `copy` is True, in all other cases it is False
+ *
+ * The function returns a new array object on success and NULL on failure.
+ * If NULL is returned, it is possible for now error to be set, in this case
+ * the argument names/number were incorrect and the callee has to do argument
+ * parsing (without any actual conversion) to allow python to create the correct
+ * error message.
+ */
 static PyObject *
-_array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
+npy_generic_frompyobject(
+        PyObject *args, PyObject *kwargs,
+        PyObject *object_argument_string,
+        npy_bool copy, NPY_ORDER order,
+        npy_bool subok, int ndmin,
+        int num_arguments, npy_bool is_np_array)
 {
-    PyObject *op;
-    PyArrayObject *oparr = NULL, *ret = NULL;
-    npy_bool subok = NPY_FALSE;
-    npy_bool copy = NPY_TRUE;
-    int ndmin = 0, nd;
-    PyArray_Descr *type = NULL;
-    PyArray_Descr *oldtype = NULL;
-    NPY_ORDER order = NPY_KEEPORDER;
+    PyObject *op = NULL;
+    PyArrayObject *ret = NULL;
+    PyArray_Descr *dtype = NULL;
+    npy_bool parsed_order = NPY_FALSE;
     int flags = 0;
 
-    static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
-                         "ndmin", NULL};
-
-    if (PyTuple_GET_SIZE(args) > 2) {
-        PyErr_SetString(PyExc_ValueError,
-                        "only 2 non-keyword arguments accepted");
-        return NULL;
+    if (PyTuple_GET_SIZE(args) > 0) {
+        op = PyTuple_GET_ITEM(args, 0);
+        num_arguments -= 1;
     }
-
-    /* super-fast path for ndarray argument calls */
-    if (PyTuple_GET_SIZE(args) == 0) {
-        goto full_path;
-    }
-    op = PyTuple_GET_ITEM(args, 0);
-    if (PyArray_CheckExact(op)) {
-        PyObject * dtype_obj = Py_None;
-        oparr = (PyArrayObject *)op;
-        /* get dtype which can be positional */
-        if (PyTuple_GET_SIZE(args) == 2) {
-            dtype_obj = PyTuple_GET_ITEM(args, 1);
-        }
-        else if (kws) {
-            dtype_obj = PyDict_GetItem(kws, npy_ma_str_dtype);
-            if (dtype_obj == NULL) {
-                dtype_obj = Py_None;
+    if (PyTuple_GET_SIZE(args) > 1) {
+        /* Parse any non-kwargs if necessary */
+        if (PyTuple_GET_SIZE(args) > 2) {
+            if (is_np_array) {
+                /* np.array traditionally only accepts dtype as non-kwarg */
+                PyErr_SetString(PyExc_ValueError,
+                                "only 2 non-keyword arguments accepted");
+                goto finish;
+            }
+            if (PyTuple_GET_SIZE(args) > num_arguments) {
+                goto finish;
             }
         }
-        if (dtype_obj != Py_None) {
-            goto full_path;
+        /* The only possible arguments are object, dtype and order */
+        assert(PyTuple_GET_SIZE(args) < 4);
+
+        /* Parse dtype (first kwarg) and order (second kwarg if accepted) */
+        if (PyArray_DescrConverter2(
+                    PyTuple_GET_ITEM(args, 1), &dtype) == NPY_FAIL) {
+            goto finish;
+        }
+        num_arguments -= 1;
+
+        if (PyTuple_GET_SIZE(args) > 2) {
+            if (PyArray_OrderConverter(
+                        PyTuple_GET_ITEM(args, 2), &order) == NPY_FAIL) {
+                goto finish;
+            }
+            parsed_order = NPY_TRUE;
+            num_arguments -= 1;
+        }
+    }
+
+    if (kwargs != NULL) {
+        /*
+         * We have to inspect the kwargs as fast as possible
+         * Start checking kwargs that are most likely/common first, this
+         * is fairly convoluted for micro-optimization of this very common
+         * call.
+         */
+        Py_ssize_t kwargs_size = PyDict_Size(kwargs);
+        Py_ssize_t kwargs_parsed = 0;
+
+        if (op == NULL) {
+            op = PyDict_GetItem(kwargs, object_argument_string);
+            if (op == NULL) {
+                /* at least the object to convert has to be given */
+                goto finish;
+            }
         }
 
-        /* array(ndarray) */
-        if (kws == NULL) {
-            ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
+        /*
+         * NOTE: The FAST_PARSE macro can goto parsed_all_arguments or finish
+         *       No error will be set if parsing is invalid, but no conversion
+         *       error occurred (e.g. wrong kwarg names).
+         */
+        if (dtype == NULL) {
+            FAST_PARSE(npy_ma_str_dtype, PyArray_DescrConverter2, dtype);
+        }
+        if (is_np_array) {
+            /* Only np.array has the copy kwarg. */
+            FAST_PARSE(npy_ma_str_copy, PyArray_BoolConverter, copy);
+        }
+
+        if (!parsed_order) {
+            FAST_PARSE(npy_ma_str_order, PyArray_OrderConverter, order);
+        }
+        FAST_PARSE(npy_ma_str_subok, PyArray_BoolConverter, subok);
+        FAST_PARSE(npy_ma_str_ndmin, int_converter, ndmin);
+
+        if (ndmin > NPY_MAXDIMS) {
+            PyErr_Format(PyExc_ValueError,
+                    "ndmin bigger than allowable number of dimensions "
+                    "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
             goto finish;
+        }
+
+        if (kwargs_parsed != kwargs_size) {
+            /* More keyword arguments than should be given. */
+            goto finish;
+        }
+    }
+
+ parsed_all_arguments:
+    /*
+     * Fast exit if simple call (input is already an array), input must already
+     * be an array and the dtype must be equivalent or not given.
+     */
+    if ((PyArray_CheckExact(op) || (subok && PyArray_Check(op))) &&
+            ((dtype == NULL) ||
+             PyArray_EquivTypes(dtype, PyArray_DESCR((PyArrayObject *)op)))) {
+
+        if (!copy && STRIDING_OK((PyArrayObject *)op, order)) {
+            ret = (PyArrayObject *)op;
+            Py_INCREF(ret);
         }
         else {
-            /* fast path for copy=False rest default (np.asarray) */
-            PyObject * copy_obj, * order_obj, *ndmin_obj;
-            copy_obj = PyDict_GetItem(kws, npy_ma_str_copy);
-            if (copy_obj != Py_False) {
-                goto full_path;
-            }
-            copy = NPY_FALSE;
-
-            /* order does not matter for contiguous 1d arrays */
-            if (PyArray_NDIM((PyArrayObject*)op) > 1 ||
-                !PyArray_IS_C_CONTIGUOUS((PyArrayObject*)op)) {
-                order_obj = PyDict_GetItem(kws, npy_ma_str_order);
-                if (order_obj != Py_None && order_obj != NULL) {
-                    goto full_path;
-                }
-            }
-
-            ndmin_obj = PyDict_GetItem(kws, npy_ma_str_ndmin);
-            if (ndmin_obj) {
-                long t = PyLong_AsLong(ndmin_obj);
-                if (error_converting(t)) {
-                    goto clean_type;
-                }
-                else if (t > NPY_MAXDIMS) {
-                    goto full_path;
-                }
-                ndmin = t;
-            }
-
-            /* copy=False with default dtype, order (any is OK) and ndim */
-            ret = oparr;
-            Py_INCREF(ret);
-            goto finish;
-        }
-    }
-
-full_path:
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
-                &op,
-                PyArray_DescrConverter2, &type,
-                PyArray_BoolConverter, &copy,
-                PyArray_OrderConverter, &order,
-                PyArray_BoolConverter, &subok,
-                &ndmin)) {
-        goto clean_type;
-    }
-
-    if (ndmin > NPY_MAXDIMS) {
-        PyErr_Format(PyExc_ValueError,
-                "ndmin bigger than allowable number of dimensions "
-                "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
-        goto clean_type;
-    }
-    /* fast exit if simple call */
-    if ((subok && PyArray_Check(op)) ||
-        (!subok && PyArray_CheckExact(op))) {
-        oparr = (PyArrayObject *)op;
-        if (type == NULL) {
-            if (!copy && STRIDING_OK(oparr, order)) {
-                ret = oparr;
-                Py_INCREF(ret);
+            ret = (PyArrayObject *)PyArray_NewCopy((PyArrayObject *)op, order);
+            if (ret == NULL) {
                 goto finish;
             }
-            else {
-                ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
-                goto finish;
-            }
-        }
-        /* One more chance */
-        oldtype = PyArray_DESCR(oparr);
-        if (PyArray_EquivTypes(oldtype, type)) {
-            if (!copy && STRIDING_OK(oparr, order)) {
-                Py_INCREF(op);
-                ret = oparr;
-                goto finish;
-            }
-            else {
-                ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
-                if (oldtype == type || ret == NULL) {
-                    goto finish;
-                }
+            if (dtype != NULL) {
+                /*
+                 * Make sure we use the original type, because this is how
+                 * it was before. This can likely be changed.
+                 */
+                PyArray_Descr *oldtype = PyArray_DESCR((PyArrayObject *)op);
                 Py_INCREF(oldtype);
                 Py_DECREF(PyArray_DESCR(ret));
                 ((PyArrayObject_fields *)ret)->descr = oldtype;
-                goto finish;
             }
         }
+        goto finish;
     }
 
     if (copy) {
@@ -1722,17 +1779,17 @@ full_path:
     }
 
     flags |= NPY_ARRAY_FORCECAST;
-    Py_XINCREF(type);
-    ret = (PyArrayObject *)PyArray_CheckFromAny(op, type,
-                                                0, 0, flags, NULL);
+    Py_XINCREF(dtype);
+    ret = (PyArrayObject *)PyArray_CheckFromAny(
+            op, dtype,0, 0, flags, NULL);
 
  finish:
-    Py_XDECREF(type);
+    Py_XDECREF(dtype);
     if (ret == NULL) {
         return NULL;
     }
 
-    nd = PyArray_NDIM(ret);
+    int nd = PyArray_NDIM(ret);
     if (nd >= ndmin) {
         return (PyObject *)ret;
     }
@@ -1741,11 +1798,131 @@ full_path:
      * steals a reference to ret
      */
     return _prepend_ones(ret, nd, ndmin, order);
-
-clean_type:
-    Py_XDECREF(type);
-    return NULL;
 }
+
+#undef FAST_PARSE
+#undef STRIDING_OK
+
+/*
+ * The following functions define the array coercion functions from python.
+ * They do manual parsing since they are ubiquitous and the micro-optimization
+ * thus is worth the trouble.
+ */
+static PyObject *
+array_array(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwargs)
+{
+    PyObject *tmp;
+    static char *kwd[] = {"object", "dtype", "copy", "order", "subok",
+                          "ndmin", NULL};
+    tmp = npy_generic_frompyobject(
+            args, kwargs, npy_ma_str_object_object,
+            /* copy */ NPY_TRUE, NPY_KEEPORDER,
+            /* subok */ NPY_FALSE, /* ndmin */ 0,
+            /* num_arguments */ 6, /* is np.array() */ NPY_TRUE);
+
+    if (tmp == NULL && !PyErr_Occurred()) {
+        /* there was an error with the parsing, use python parsing to raise */
+        PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOOO:array", kwd,
+                                    &tmp, &tmp, &tmp, &tmp, &tmp, &tmp);
+        /* the above call must have failed and set an error */
+        return NULL;
+    }
+    return tmp;
+}
+
+
+static PyObject *
+array_asarray(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwargs)
+{
+    PyObject *tmp;
+    static char *kwd[] = {"a", "dtype", "order", NULL};
+
+    tmp = npy_generic_frompyobject(
+            args, kwargs, npy_ma_str_object_a,
+            /* copy */ NPY_FALSE, NPY_KEEPORDER,
+            /* subok */ NPY_FALSE, /* ndmin */ 0,
+            /* num_arguments */ 3, /* is np.array() */ NPY_FALSE);
+
+    if (tmp == NULL && !PyErr_Occurred()) {
+        /* there was an error with the parsing, use python parsing to raise */
+        PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO:asarray", kwd,
+                                    &tmp, &tmp, &tmp);
+        /* the above call must have failed and set an error */
+        return NULL;
+    }
+    return tmp;
+}
+
+
+static PyObject *
+array_asanyarray(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwargs)
+{
+    PyObject *tmp;
+    static char *kwd[] = {"a", "dtype", "order", NULL};
+
+    tmp = npy_generic_frompyobject(
+            args, kwargs, npy_ma_str_object_a,
+            /* copy */ NPY_FALSE, NPY_KEEPORDER,
+            /* subok */ NPY_TRUE, /* ndmin */ 0,
+            /* num_arguments */ 3, /* is np.array() */ NPY_FALSE);
+
+    if (tmp == NULL && !PyErr_Occurred()) {
+        /* there was an error with the parsing, use python parsing to raise */
+        PyArg_ParseTupleAndKeywords(args, kwargs, "O|OO:asarray", kwd,
+                                    &tmp, &tmp, &tmp);
+        /* the above call must have failed and set an error */
+        return NULL;
+    }
+    return tmp;
+}
+
+
+static PyObject *
+array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
+                        PyObject *args, PyObject *kwargs)
+{
+    PyObject *tmp;
+    static char *kwd[] = {"a", "dtype", "order", NULL};
+    tmp = npy_generic_frompyobject(
+            args, kwargs, npy_ma_str_object_a,
+            /* copy */ NPY_FALSE, NPY_CORDER,
+            /* subok */ NPY_FALSE, /* ndmin */ 1,
+            /* num_arguments */ 2, /* is np.array() */ NPY_FALSE);
+
+    if (tmp == NULL && !PyErr_Occurred()) {
+        /* there was an error with the parsing, use python parsing to raise */
+        PyArg_ParseTupleAndKeywords(args, kwargs, "O|O:ascontiguousarray", kwd,
+                                    &tmp, &tmp);
+        /* the above call must have failed and set an error */
+        return NULL;
+    }
+    return tmp;
+}
+
+
+static PyObject *
+array_asfortranarray(PyObject *NPY_UNUSED(ignored),
+                     PyObject *args, PyObject *kwargs)
+{
+    PyObject *tmp;
+    static char *kwd[] = {"a", "dtype", "order", NULL};
+
+    tmp = npy_generic_frompyobject(
+            args, kwargs, npy_ma_str_object_a,
+            /* copy */ NPY_FALSE, NPY_FORTRANORDER,
+            /* subok */ NPY_FALSE, /* ndmin */ 1,
+            /* num_arguments */ 2, /* is np.array() */ NPY_FALSE);
+
+    if (tmp == NULL && !PyErr_Occurred()) {
+        /* there was an error with the parsing, use python parsing to raise */
+        PyArg_ParseTupleAndKeywords(args, kwargs, "O|O:asfortranarray", kwd,
+                                    &tmp, &tmp);
+        /* the above call must have failed and set an error */
+        return NULL;
+    }
+    return tmp;
+}
+
 
 static PyObject *
 array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
@@ -4114,7 +4291,19 @@ static struct PyMethodDef array_module_methods[] = {
         (PyCFunction)array_set_typeDict,
         METH_VARARGS, NULL},
     {"array",
-        (PyCFunction)_array_fromobject,
+        (PyCFunction)array_array,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"asarray",
+        (PyCFunction)array_asarray,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"asanyarray",
+        (PyCFunction)array_asanyarray,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"ascontiguousarray",
+        (PyCFunction)array_ascontiguousarray,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"asfortranarray",
+        (PyCFunction)array_asfortranarray,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"copyto",
         (PyCFunction)array_copyto,
@@ -4512,9 +4701,12 @@ NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_wrap = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_array_finalize = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ufunc = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_implementation = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_object_object = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_object_a = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_order = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_copy = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_dtype = NULL;
+NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_subok = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_ndmin = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis1 = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_ma_str_axis2 = NULL;
@@ -4528,9 +4720,12 @@ intern_strings(void)
     npy_ma_str_array_finalize = PyUString_InternFromString("__array_finalize__");
     npy_ma_str_ufunc = PyUString_InternFromString("__array_ufunc__");
     npy_ma_str_implementation = PyUString_InternFromString("_implementation");
+    npy_ma_str_object_object = PyUString_InternFromString("object");
+    npy_ma_str_object_a = PyUString_InternFromString("a");
     npy_ma_str_order = PyUString_InternFromString("order");
     npy_ma_str_copy = PyUString_InternFromString("copy");
     npy_ma_str_dtype = PyUString_InternFromString("dtype");
+    npy_ma_str_subok = PyUString_InternFromString("subok");
     npy_ma_str_ndmin = PyUString_InternFromString("ndmin");
     npy_ma_str_axis1 = PyUString_InternFromString("axis1");
     npy_ma_str_axis2 = PyUString_InternFromString("axis2");
@@ -4538,7 +4733,9 @@ intern_strings(void)
     return npy_ma_str_array && npy_ma_str_array_prepare &&
            npy_ma_str_array_wrap && npy_ma_str_array_finalize &&
            npy_ma_str_ufunc && npy_ma_str_implementation &&
+           npy_ma_str_object_object && npy_ma_str_object_a &&
            npy_ma_str_order && npy_ma_str_copy && npy_ma_str_dtype &&
+           npy_ma_str_subok &&
            npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
 }
 
