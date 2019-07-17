@@ -594,9 +594,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             }
 
             j = binary_search_with_guess(x_val, dx, lenxp, j);
-            if (npy_isnan(dx[j]) || (j < lenxp && npy_isnan(dx[j+1]) )) {
-                found_nan = NPY_TRUE;
-            }
+
             if (j == -1) {
                 dres[i] = lval;
             }
@@ -622,6 +620,10 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                     if (NPY_UNLIKELY(npy_isnan(dres[i])) && dy[j] == dy[j+1]) {
                         dres[i] = dy[j];
                     }
+                }
+
+                if (npy_isnan(dx[j]) || npy_isnan(dx[j+1])) {
+                    found_nan = NPY_TRUE;
                 }
             }
         }
@@ -793,9 +795,6 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             }
 
             j = binary_search_with_guess(x_val, dx, lenxp, j);
-            if (npy_isnan(dx[j]) || (j < lenxp && npy_isnan(dx[j+1]) )) {
-                found_nan = NPY_TRUE;
-            }
             if (j == -1) {
                 dres[i] = lval;
             }
@@ -837,7 +836,11 @@ arr_interp_complex(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
                         dres[i].imag = dy[j].imag;
                     }
                 }
+                if (npy_isnan(dx[j]) || npy_isnan(dx[j+1])) {
+                    found_nan = NPY_TRUE;
+                }
             }
+
         }
 
         NPY_END_THREADS;

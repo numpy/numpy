@@ -556,25 +556,33 @@ class TestInterpNaN(_DeprecationTestCase):
     @pytest.fixture(params=[
         lambda x: np.float_(x),
         lambda x: np.complex_(x),
+        lambda x: np.zeros_like(x) + 1j* np.float_(x),
     ], ids=[
         'real',
-        'complex'
+        'complex-real',
+        'complex-imag',
     ])
     def sc(self, request):
         """ scale function used by the below tests """
         return request.param
 
     def test_xp_nan(self, sc):
-        self.assert_deprecated(lambda: np.interp([1], [np.nan], sc([10])))
-        self.assert_deprecated(lambda: np.interp(
-            [2], [1, np.nan], sc([10, 20])
-            ))
-        self.assert_deprecated(lambda: np.interp(
-            [1,3,1], [0, 2, np.nan, np.nan], sc([10, 20, 30, 40])
-            ))
-        self.assert_deprecated(lambda: np.interp(
-            [1,3,1], [0, 2, np.nan, np.nan, np.nan], sc([10, 20, 30, 40, 50])
-            ))
-        self.assert_deprecated(lambda: np.interp(
-            [1,3,1], [0, 2, np.nan, np.nan, np.nan], sc([10, 20, 30, 40, 50])
-            ))
+        # Only raise warning when the x lies in nan region
+
+        # Precalculated slope
+        np.interp([0, 1.5, 2], [1, 2, np.nan, np.nan], sc([10, 20, 30, 40]))
+        self.assert_deprecated(
+            np.interp,
+            args=([3, np.nan], [1, 2, np.nan, np.nan], sc([10, 20, 30, 40]))
+            )
+        # Slope not precalculated
+        np.interp([0, 0.5, 1], [1, np.nan], sc([10, 20]))
+        self.assert_deprecated(
+            np.interp, args=([0, 1.5], [1, np.nan], sc([10, 20]))
+            )
+        # Without binary search
+        np.interp([0, 0.5, 1], [1], sc([10]))
+        self.assert_deprecated(
+            np.interp, args=([0, 0.5, 1], [np.nan], sc([10]))
+            )
+
