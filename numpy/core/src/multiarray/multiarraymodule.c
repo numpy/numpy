@@ -273,7 +273,9 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         }
         *((char ****)ptr) = ptr3;
     }
-    memcpy(dims, PyArray_DIMS(ap), nd*sizeof(npy_intp));
+    if (nd) {
+        memcpy(dims, PyArray_DIMS(ap), nd*sizeof(npy_intp));
+    }
     *op = (PyObject *)ap;
     return 0;
 }
