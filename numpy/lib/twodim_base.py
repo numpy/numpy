@@ -565,7 +565,21 @@ def vander(x, N=None, increasing=False):
 
 def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
                             weights=None, density=None):
-    return (x, y, bins, weights)
+    yield x
+    yield y
+
+    # This terrible logic is adapted from the checks in histogram2d
+    try:
+        N = len(bins)
+    except TypeError:
+        N = 1
+    if N != 1 and N != 2:
+        for b in bins:
+            yield b
+    else:
+        yield bins
+
+    yield weights
 
 
 @array_function_dispatch(_histogram2d_dispatcher)
