@@ -2098,9 +2098,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     `atol` are added together to compare against the absolute difference
     between `a` and `b`.
 
-    If either array contains one or more NaNs, False is returned.
-    Infs are treated as equal if they are in the same place and of the same
-    sign in both arrays.
+    NaNs are treated as equal if they are in the same place and if
+    ``equal_nan=True``.  Infs are treated as equal if they are in the same
+    place and of the same sign in both arrays.
 
     Parameters
     ----------
@@ -2112,7 +2112,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
-        considered equal to NaN's in `b`.
+        considered equal to NaN's in `b` in the output array.
 
         .. versionadded:: 1.10.0
 
