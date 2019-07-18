@@ -3,7 +3,6 @@ Histogram-related functions
 """
 from __future__ import division, absolute_import, print_function
 
-import contextlib
 import functools
 import operator
 import warnings
@@ -924,9 +923,11 @@ def _histogramdd_dispatcher(sample, bins=None, range=None, normed=None,
     else:
         for s in sample:
             yield s
-    with contextlib.suppress(TypeError):
+    try:
         for b in bins:
             yield b
+    except TypeError:
+        pass
     yield weights
 
 
