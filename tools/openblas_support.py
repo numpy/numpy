@@ -14,7 +14,7 @@ from tempfile import mkstemp, gettempdir
 import zipfile
 import tarfile
 
-OPENBLAS_V = 'v0.3.5'
+OPENBLAS_V = '6a8b426'
 OPENBLAS_LONG = 'v0.3.5-274-g6a8b4269'
 BASE_LOC = ''
 RACKSPACE = 'https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com'
@@ -47,7 +47,7 @@ def download_openblas(target, arch):
         # https://github.com/tylerjereddy/openblas-static-gcc/tree/master/ARMv8
         # build done on GCC compile farm machine named gcc115
         # tarball uploaded manually to an unshared Dropbox location
-        filename = ('https://www.dropbox.com/s/pbqkxzlmih4cky1/'
+        filename = ('https://www.dropbox.com/s/zsp1wb3tq4n9g0b/'
                     'openblas-{}-armv8.tar.gz?dl=1'.format(OPENBLAS_V))
         typ = 'tar.gz'
     elif arch == 'ppc64':
@@ -55,7 +55,7 @@ def download_openblas(target, arch):
         # https://github.com/tylerjereddy/openblas-static-gcc/blob/master/power8
         # built on GCC compile farm machine named gcc112
         # manually uploaded tarball to an unshared Dropbox location
-        filename = ('https://www.dropbox.com/s/zcwhk7c2zptwy0s/'
+        filename = ('https://www.dropbox.com/s/k9uabwoi8bekjwe/'
                     'openblas-{}-ppc64le-power8.tar.gz?dl=1'.format(OPENBLAS_V))
         typ = 'tar.gz'
     elif arch == 'darwin':
