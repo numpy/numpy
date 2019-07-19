@@ -12,7 +12,10 @@ def convert(s):
     return fp.contents.value         # dereference the pointer, get the float
 
 str_to_float = np.vectorize(convert)
-files = ['umath-validation-set-exp']
+files = ['umath-validation-set-exp',
+         'umath-validation-set-log',
+         'umath-validation-set-sin',
+         'umath-validation-set-cos']
 
 class TestAccuracy(object):
     def test_validate_transcendentals(self):
@@ -20,7 +23,8 @@ class TestAccuracy(object):
             for filename in files:
                 data_dir = path.join(path.dirname(__file__), 'data')
                 filepath = path.join(data_dir, filename)
-                data = np.genfromtxt(filepath,
+                file_without_comments = (r for r in open(filepath) if not r[0] in ('$', '#'))
+                data = np.genfromtxt(file_without_comments,
                                      dtype=('|S39','|S39','|S39',np.int),
                                      names=('type','input','output','ulperr'),
                                      delimiter=',',
@@ -30,5 +34,8 @@ class TestAccuracy(object):
                     data_subset = data[ data['type'] == datatype ]
                     inval  = np.array(str_to_float(data_subset['input'].astype(str)), dtype=eval(datatype))
                     outval = np.array(str_to_float(data_subset['output'].astype(str)), dtype=eval(datatype))
+                    perm = np.random.permutation(len(inval))
+                    inval = inval[perm]
+                    outval = outval[perm]
                     maxulperr = data_subset['ulperr'].max()
                     assert_array_max_ulp(npfunc(inval), outval, maxulperr)

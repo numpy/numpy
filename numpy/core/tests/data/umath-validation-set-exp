@@ -1,4 +1,5 @@
 dtype,input,output,ulperrortol
+## +ve denormals ##
 np.float32,0x004b4716,0x3f800000,3
 np.float32,0x007b2490,0x3f800000,3
 np.float32,0x007c99fa,0x3f800000,3
@@ -9,6 +10,7 @@ np.float32,0x006894f6,0x3f800000,3
 np.float32,0x00555a76,0x3f800000,3
 np.float32,0x004e1fb8,0x3f800000,3
 np.float32,0x00687de9,0x3f800000,3
+## -ve denormals ##
 np.float32,0x805b59af,0x3f800000,3
 np.float32,0x807ed8ed,0x3f800000,3
 np.float32,0x807142ad,0x3f800000,3
@@ -19,6 +21,7 @@ np.float32,0x805f01c2,0x3f800000,3
 np.float32,0x80506432,0x3f800000,3
 np.float32,0x8060089d,0x3f800000,3
 np.float32,0x8071292f,0x3f800000,3
+## floats that output a denormal ##
 np.float32,0xc2cf3fc1,0x00000001,3
 np.float32,0xc2c79726,0x00000021,3
 np.float32,0xc2cb295d,0x00000005,3
@@ -29,6 +32,7 @@ np.float32,0xc2cb69c0,0x00000005,3
 np.float32,0xc2cc1f4d,0x00000003,3
 np.float32,0xc2ae094e,0x00affc4c,3
 np.float32,0xc2c86c44,0x00000015,3
+## random floats between -87.0f and 88.0f ##
 np.float32,0x4030d7e0,0x417d9a05,3
 np.float32,0x426f60e8,0x6aa1be2c,3
 np.float32,0x41a1b220,0x4e0efc11,3
@@ -40,6 +44,7 @@ np.float32,0x42a678a4,0x7b87a383,3
 np.float32,0xc20f3cfd,0x25a1c304,3
 np.float32,0x423ff34c,0x6216467f,3
 np.float32,0x00000000,0x3f800000,3
+## floats that cause an overflow ##
 np.float32,0x7f06d8c1,0x7f800000,3
 np.float32,0x7f451912,0x7f800000,3
 np.float32,0x7ecceac3,0x7f800000,3
