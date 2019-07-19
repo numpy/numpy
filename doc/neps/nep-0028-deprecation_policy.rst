@@ -24,34 +24,35 @@ Detailed description
 --------------------
 
 When making a new major or minor release, projects should support all
-minor versions of ``CPython`` initially released in the prior 40
+minor versions of ``CPython`` initially released in the prior 42
 months from their anticipated release date and all minor version of
-``numpy`` released in the prior 24 months.
+NumPy released in the prior 24 months.
 
 
 The diagram::
 
-       Jan 16       Jan 17       Jan 18       Jan 19       Jan 20
-       |            |            |            |            |
-  +++++|++++++++++++|++++++++++++|++++++++++++|++++++++++++|++++++++++++
-   |               |                   |                |
-   py 3.5.0        py 3.6.0            py 3.7.0         py 3.8.0
-        |---------------------------------------> Feb19
-                 |----------------------------------------> Dec19
-                        |----------------------------------------> Jul20
+       Jan 16      Jan 17      Jan 18      Jan 19      Jan 20
+       |           |           |           |           |
+  +++++|+++++++++++|+++++++++++|+++++++++++|+++++++++++|++++++++++++
+   |              |                  |               |
+   py 3.5.0       py 3.6.0           py 3.7.0        py 3.8.0
+  |-----------------------------------------> Feb19
+            |-----------------------------------------> Dec19
+                      |-----------------------------------------> Nov20
 
 shows the support windows for ``CPython``.  A project with a minor
-release in Feb19 or Dec19 should support py36 and newer whereas a
-project released in Jul20 should support py37 and newer.
+release in Feb19 should support py35 and newer, a project with a minor
+release in Dec19 should support py36 and newer, and a project
+with a minor release in Nov20 should support py37 and newer.
 
-The current CPython release cadence is 18 months so a 40 month window
+The current CPython release cadence is 18 months so a 42 month window
 ensures that there will always be at least two versions of ``CPython``
-in the window.  By padding the window by 4 months from the anticipated
+in the window.  By padding the window by 6 months from the anticipated
 ``CPython`` cadence we avoid the edge cases where a project releases
 the month after ``CPython`` and would effectively only support one
-version of ``CPython`` that has an install base.  This buffer
-also makes us resilient to minor fluctuations / delays in the
-``CPython`` release schedule.
+version of ``CPython`` that has an install base (and then the window
+is 42).  This buffer also makes us resilient to minor fluctuations /
+delays in the ``CPython`` release schedule.
 
 Because the threshold for dropping a version of ``CPython`` is based
 on historical release dates and a project's plans, the decision to drop
@@ -75,7 +76,7 @@ development guidelines:
 
 
    - support minor versions of ``CPython`` initially released
-     40 months prior to our planned release date
+     42 months prior to our planned release date
    - always support at least the 2 latest versions of ``CPython``
    - support minor versions of ``numpy`` initially released in the 24
      months prior to our planned release date or oldest that supports the
@@ -142,7 +143,7 @@ N minor versions of Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Given the current release cadence of the CPython, the proposed time
-(40 months) is roughly equivalent to "the last two" CPython minor
+(42 months) is roughly equivalent to "the last two" CPython minor
 versions.  However, if CPython changes their release cadence, any rule
 based on the number of minor releases will need to be changed.
 
