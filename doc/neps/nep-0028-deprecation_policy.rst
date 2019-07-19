@@ -2,7 +2,7 @@
 NEP 28 - A standard community policy for dropping support of old Python and Numpy versions
 ==========================================================================================
 
-:Author: Thomas A Caswell <tcaswell@gmail.com>, Andreas Mueller, Brian Granger, Madicken Munk, Ralf Gommers, Matt Haberland, Mattias Bussonier, Stefan van der Walt
+:Author: Thomas A Caswell <tcaswell@gmail.com>, Andreas Mueller, Brian Granger, Madicken Munk, Ralf Gommers, Matt Haberland, Matthias Bussonnier <bussonniermatthias@gmail.com>, Stefan van der Walt
 :Status: Draft
 :Type: Informational Track
 :Created: 2019-07-13
