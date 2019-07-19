@@ -1,5 +1,5 @@
 ==========================================================================================
-NEP 28 - A standard community policy for dropping support of old Python and Numpy versions
+NEP 28 - A standard community policy for dropping support of old Python and NumPy versions
 ==========================================================================================
 
 
@@ -13,7 +13,7 @@ Abstract
 --------
 
 All projects across the ecosystem should adopt a common time window
-based policy for increasing the minimum version of Python and numpy
+based policy for increasing the minimum version of Python and NumPy
 that downstream projects support.  By standardizing this policy
 across community we will make it easier for down stream projects to
 plan.
@@ -82,11 +82,15 @@ development guidelines:
      months prior to our planned release date or oldest that supports the
      minimum Python version (whichever is higher)
 
-   We will bump the minimum Python and numpy versions as we can on
+   The minimum supported version of ``CPython`` will be set to
+   ``python_requires`` in ``setup`` and all supported versions of
+   Python will be in the test matrix and have binary artifacts built
+   for releases.
+
+   We will bump the minimum Python and NumPy versions as we can on
    every minor and major release, but never on a patch release.
 
-For other dependencies, adopt similar time windows of the same length
-or shorter than 24 months.
+For other dependencies, adopt similar time windows 24 months shorter.
 
 
 Backward compatibility
@@ -119,9 +123,9 @@ language and when the projects are able to use them.  Additionally,
 for projects that have a significant component of compiled extensions
 this requires building many binary artifacts for each release.
 
-For the case of numpy, many projects carry workarounds to bugs that
-are fixed in subsequent versions of numpy.  Being proactive about
-increasing the minimum version of numpy will allow downstream
+For the case of NumPy, many projects carry workarounds to bugs that
+are fixed in subsequent versions of NumPy.  Being proactive about
+increasing the minimum version of NumPy will allow downstream
 packages to carry fewer version-specific patches.
 
 
@@ -129,7 +133,7 @@ packages to carry fewer version-specific patches.
 Default version on Linux distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The policy could be to support the version of Python that ships by
+The policy could be support the version of Python that ships by
 default in the latest Ubuntu LTS or CentOS/RHEL release.  However, we
 would still have to standardize across the community which
 distribution we are following.
@@ -151,8 +155,9 @@ based on the number of minor releases will need to be changed.
 Time window on the X.Y.1 CPython release
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can achieve the same name effect by making the window longer which is
-easier to explain.
+As the first bug fix release is typically a few months after the
+initial release, you can achieve the same name effect by making the
+window longer which is easier to explain.
 
 
 Discussion
