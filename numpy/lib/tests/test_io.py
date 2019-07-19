@@ -2472,6 +2472,44 @@ def test_gzip_load():
     assert_array_equal(np.load(f), a)
 
 
+# These next two classes encode the minimal API needed to save()/load() arrays.
+# The `test_ducktyping` ensures they work correctly
+class JustWriter(object):
+    def __init__(self, base):
+        self.base = base
+
+    def write(self, s):
+        return self.base.write(s)
+
+    def flush(self):
+        return self.base.flush()
+
+class JustReader(object):
+    def __init__(self, base):
+        self.base = base
+
+    def read(self, n):
+        return self.base.read(n)
+
+    def seek(self, off, whence=0):
+        return self.base.seek(off, whence)
+
+
+def test_ducktyping():
+    a = np.random.random((5, 5))
+
+    s = BytesIO()
+    f = JustWriter(s)
+
+    np.save(f, a)
+    f.flush()
+    s.seek(0)
+
+    f = JustReader(s)
+    assert_array_equal(np.load(f), a)
+
+
+
 def test_gzip_loadtxt():
     # Thanks to another windows brokenness, we can't use
     # NamedTemporaryFile: a file created from this function cannot be
