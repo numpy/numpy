@@ -521,7 +521,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
     """
     own_fid = False
-    if hasattr(file, 'read'):
+    if hasattr(file, 'write'):
         fid = file
     else:
         file = os_fspath(file)
@@ -709,7 +709,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     # component of the so-called standard library.
     import zipfile
 
-    if not hasattr(file, 'read'):
+    if not hasattr(file, 'write'):
         file = os_fspath(file)
         if not file.endswith('.npz'):
             file = file + '.npz'
