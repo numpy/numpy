@@ -34,7 +34,7 @@ Quick Start
 
 By default, `~Generator` uses bits provided by `~pcg64.PCG64` which
 has better statistical properties than the legacy mt19937 random
-number generator in `~.RandomState`
+number generator in `~.RandomState`.
 
 .. code-block:: python
 
