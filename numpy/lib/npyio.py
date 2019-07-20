@@ -507,6 +507,8 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     -----
     For a description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
+    
+
     Examples
     --------
     >>> from tempfile import TemporaryFile
