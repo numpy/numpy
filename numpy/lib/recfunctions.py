@@ -32,7 +32,7 @@ __all__ = [
     'join_by', 'merge_arrays', 'rec_append_fields',
     'rec_drop_fields', 'rec_join', 'recursive_fill_fields',
     'rename_fields', 'repack_fields', 'require_fields',
-    'stack_arrays', 'structured_to_unstructured',
+    'stack_arrays', 'structured_to_unstructured', 'unstructured_to_structured',
     ]
 
 
@@ -977,7 +977,12 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     return arr.view((out_dtype, (sum(counts),)))
 
 
-def _unstructured_to_structured(arr, dtype=None, names=None, align=False,
+def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
+                                           align=None, copy=None, casting=None):
+    return (arr,)
+
+@array_function_dispatch(_unstructured_to_structured_dispatcher)
+def unstructured_to_structured(arr, dtype=None, names=None, align=False,
                                copy=False, casting='unsafe'):
     """
     Converts and n-D unstructured array into an (n-1)-D structured array.
@@ -1017,6 +1022,7 @@ def _unstructured_to_structured(arr, dtype=None, names=None, align=False,
     Examples
     --------
 
+    >>> from numpy.lib import recfunctions as rfn
     >>> dt = np.dtype([('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
     >>> a = np.arange(20).reshape((4,5))
     >>> a
@@ -1024,7 +1030,7 @@ def _unstructured_to_structured(arr, dtype=None, names=None, align=False,
            [ 5,  6,  7,  8,  9],
            [10, 11, 12, 13, 14],
            [15, 16, 17, 18, 19]])
-    >>> _unstructured_to_structured(a, dt)
+    >>> rfn.unstructured_to_structured(a, dt)
     array([( 0, ( 1.,  2), [ 3.,  4.]), ( 5, ( 6.,  7), [ 8.,  9.]),
            (10, (11., 12), [13., 14.]), (15, (16., 17), [18., 19.])],
           dtype=[('a', '<i4'), ('b', [('f0', '<f4'), ('f1', '<u2')]), ('c', '<f4', (2,))])
