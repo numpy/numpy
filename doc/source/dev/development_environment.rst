@@ -19,6 +19,11 @@ sources needs some additional steps, which are explained below.  For the rest
 of this chapter we assume that you have set up your git repo as described in
 :ref:`using-git`.
 
+.. _testing-builds:
+
+Testing builds
+--------------
+
 To build the development version of NumPy and run tests, spawn
 interactive shells with the Python import paths properly set up etc.,
 do one of::
@@ -46,6 +51,10 @@ When using pytest as a target (the default), you can
 `match test names using python operators`_ by passing the ``-k`` argument to pytest::
 
     $ python runtests.py -v -t numpy/core/tests/test_multiarray.py -- -k "MatMul and not vector"
+
+.. note::
+
+    Remember that all tests of NumPy should pass before commiting your changes.
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
