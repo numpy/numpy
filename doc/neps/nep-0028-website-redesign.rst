@@ -4,6 +4,7 @@ NEP 28 — numpy.org website redesign
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
 :Author: Joe LaChance <joe@boldmetrics.com>
+:Author: Shekhar Rajak <shekharrajak.1994@gmail.com>
 :Status: Draft
 :Type: Informational
 :Created: 2019-07-16
@@ -32,7 +33,7 @@ At a high level, what we're aiming for is:
 This website serves a couple of roles:
 
 - it's the entry point to the project for new users
-- it should link to the documentation (which is hosted separately, now on 
+- it should link to the documentation (which is hosted separately, now on
   http://docs.scipy.org/ and in the near future on http://numpy.org/doc).
 - it should address various aspects of the project (e.g. what NumPy is and
   why you'd want to use it, community, project organization, funding,
@@ -114,6 +115,8 @@ Possible options for static site generators
    that should be a requirement. Jekyll uses a combination of liquid templating
    and YAML to render HTML, and content is written in Markdown. i18n
    functionality is not native to Jekyll, but can be added easily.
+   One nice benefit of Jekyll is that it can be run automatically by GitHub
+   Pages, so deployment via a CI system doesn't need to be implemented.
 2. *Hugo.* This is another well maintained option with 554 contributors, with
    contributions within the last month. Hugo is written in Go, and similar to
    Jekyll, has a simple to use CLI interface to generate static sites. Again,
@@ -155,8 +158,8 @@ significant drain on the time of maintainers.
    ease of deployment.
 
 All of the above options are appropriate for the NumPy site based on current
-traffic. Updating to a new deployment strategy, if needed, should take
-several hours at most and is inconsequential. If a provider such as
+traffic. Updating to a new deployment strategy, if needed, is a minor amount of
+work compared to developing the website itself. If a provider such as
 Cloudflare is chosen, additional CI may be required, such as CircleCI, to
 have a similar deployment to GitHub Pages or Netlify.
 
@@ -239,12 +242,17 @@ We propose the following requirements for adding a language:
 - The language must have a reasonable size target audience (to be
   assessed by the NumPy maintainers)
 
-Benefits include:
+Furthermore we propose a policy for when to remove support for a language again
+(preferably by hiding it rather than deleting content). This may be done when
+the language no longer has a maintainer, and coverage of translations falls
+below an acceptable threshold (say 80%).
+
+Benefits of having translations include:
 
 - Better serve many existing and potential users
 - Potentially attract a culturally and geographically more diverse set of contributors
 
-Tradeoffs:
+The tradeoffs are:
 
 - Cost of maintaining a more complex code base
 - Cost of making decisions about whether or not to add a new language
@@ -281,6 +289,8 @@ Alternatives we considered:
    take the least amount of resources initially, however, Sphinx does not have
    the features we are looking for moving forward such as i18n, responsive design,
    and a clean, modern look.
+   Note that updating the docs Sphinx theme is likely still a good idea - it's
+   orthogonal to this NEP though.
 2. *Create custom site.* This would take the most amount of resources, and is
    likely to have additional benefit in comparison to a static site generator.
    All features would be able to be added at the cost of developer time.
