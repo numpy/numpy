@@ -1839,6 +1839,11 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     return (PyObject *)ret;
 
 fail:
+    if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_TypeError)) {
+        PyErr_SetString(PyExc_TypeError,
+                "data type not understood, "
+                "did you mean to use a tuple for size?");
+    }
     Py_XDECREF(typecode);
     npy_free_cache_dim_obj(shape);
     return NULL;
@@ -1875,6 +1880,11 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     return (PyObject *)ret;
 
 fail:
+    if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_TypeError)) {
+        PyErr_SetString(PyExc_TypeError,
+                "data type not understood, "
+                "did you mean to use a tuple for size?");
+    }
     Py_XDECREF(prototype);
     Py_XDECREF(dtype);
     return NULL;
@@ -1998,6 +2008,11 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     return (PyObject *)ret;
 
 fail:
+    if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_TypeError)) {
+        PyErr_SetString(PyExc_TypeError,
+                "data type not understood, "
+                "did you mean to use a tuple for size?");
+    }
     Py_XDECREF(typecode);
     npy_free_cache_dim_obj(shape);
     return (PyObject *)ret;

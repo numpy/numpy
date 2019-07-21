@@ -524,3 +524,18 @@ def test_broadcast_arrays():
     result = np.broadcast_arrays(a, b)
     assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
     assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
+
+@pytest.mark.parametrize('fn', [np.ones, np.ones_like, np.zeros, np.empty, np.empty_like])
+def test_homogenous_array_creation_returns_descriptive_errror(fn):
+    # These functions have signatures fn(shape, dtype=None, order='C')
+    # where `shape` may be either an integer or a tuple. For higher
+    # dimensional shapes this is often confused e.g. np.ones(5, 5) when
+    # np.ones((5, 5)) is desired.
+    # e.g.: https://twitter.com/karpathy/status/1099793055853375489
+    message = (
+        "data type not understood,"
+        " did you mean to use a tuple for size?")
+    with pytest.raises(TypeError) as e:
+        fn(1, 1)
+    assert_equal(str(e.value), message)
+
