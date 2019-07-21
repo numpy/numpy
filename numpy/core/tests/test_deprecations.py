@@ -101,7 +101,7 @@ class _DeprecationTestCase(object):
                         (self.warning_cls.__name__, warning.category))
         if num is not None and num_found != num:
             msg = "%i warnings found but %i expected." % (len(self.log), num)
-            lst = [str(w.category) for w in self.log]
+            lst = [str(w) for w in self.log]
             raise AssertionError("\n".join([msg] + lst))
 
         with warnings.catch_warnings():
