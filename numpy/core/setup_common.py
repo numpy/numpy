@@ -138,6 +138,8 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        # broken on OSX 10.11, make sure its not optimized away
                        ("volatile int r = __builtin_cpu_supports", '"sse"',
                         "stdio.h", "__BUILTIN_CPU_SUPPORTS"),
+                       ("volatile int r = __builtin_cpu_supports", '"avx512f"',
+                        "stdio.h", "__BUILTIN_CPU_SUPPORTS_AVX512F"),
                        # MMX only needed for icc, but some clangs don't have it
                        ("_m_from_int64", '0', "emmintrin.h"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
