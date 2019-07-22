@@ -10,7 +10,8 @@ from numpy.testing import (
 from numpy.core.overrides import (
     _get_implementing_args, array_function_dispatch,
     verify_matching_signatures, ARRAY_FUNCTION_ENABLED)
-from numpy.compat import pickle
+from numpy.compat import get_pickle
+pickle = get_pickle()
 import pytest
 
 

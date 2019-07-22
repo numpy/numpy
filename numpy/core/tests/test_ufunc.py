@@ -15,8 +15,8 @@ from numpy.testing import (
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
     assert_allclose,
     )
-from numpy.compat import pickle
-
+from numpy.compat import get_pickle
+pickle = get_pickle()
 
 class TestUfuncKwargs(object):
     def test_kwarg_exact(self):

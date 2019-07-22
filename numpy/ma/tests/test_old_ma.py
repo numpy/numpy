@@ -21,7 +21,8 @@ from numpy.ma import (
     repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
     take, tan, tanh, transpose, where, zeros,
     )
-from numpy.compat import pickle
+from numpy.compat import get_pickle
+pickle = get_pickle()
 
 pi = np.pi
 

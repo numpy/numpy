@@ -169,7 +169,7 @@ import io
 import warnings
 from numpy.lib.utils import safe_eval
 from numpy.compat import (
-    isfileobj, long, os_fspath, pickle
+    isfileobj, long, os_fspath, get_pickle
     )
 
 
@@ -656,6 +656,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
                              "allow_pickle=False")
         if pickle_kwargs is None:
             pickle_kwargs = {}
+        pickle = get_pickle()
         pickle.dump(array, fp, protocol=3, **pickle_kwargs)
     elif array.flags.f_contiguous and not array.flags.c_contiguous:
         if isfileobj(fp):
@@ -724,6 +725,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None):
         if pickle_kwargs is None:
             pickle_kwargs = {}
         try:
+            pickle = get_pickle()
             array = pickle.load(fp, **pickle_kwargs)
         except UnicodeError as err:
             if sys.version_info[0] >= 3:

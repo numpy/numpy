@@ -7,7 +7,8 @@ from numpy.ma.core import (masked_array, masked_values, masked, allequal,
                            MaskType, getmask, MaskedArray, nomask,
                            log, add, hypot, divide)
 from numpy.ma.extras import mr_
-from numpy.compat import pickle
+from numpy.compat import get_pickle
+pickle = get_pickle()
 
 
 class MMatrix(MaskedArray, np.matrix,):

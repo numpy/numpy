@@ -10,7 +10,8 @@ import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT)
-from numpy.compat import pickle
+from numpy.compat import get_pickle
+pickle = get_pickle()
 from itertools import permutations
 
 def assert_dtype_equal(a, b):
@@ -138,11 +139,11 @@ class TestBuiltin(object):
                          'offsets':[0, 2]}, align=True)
 
     def test_field_order_equality(self):
-        x = np.dtype({'names': ['A', 'B'], 
-                      'formats': ['i4', 'f4'], 
+        x = np.dtype({'names': ['A', 'B'],
+                      'formats': ['i4', 'f4'],
                       'offsets': [0, 4]})
-        y = np.dtype({'names': ['B', 'A'], 
-                      'formats': ['f4', 'i4'], 
+        y = np.dtype({'names': ['B', 'A'],
+                      'formats': ['f4', 'i4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
 
@@ -1279,4 +1280,3 @@ class TestFromCTypes(object):
         pair_type = np.dtype('{},{}'.format(*pair))
         expected = np.dtype([('f0', pair[0]), ('f1', pair[1])])
         assert_equal(pair_type, expected)
-

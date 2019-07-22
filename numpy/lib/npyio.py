@@ -25,7 +25,7 @@ from ._iotools import (
 
 from numpy.compat import (
     asbytes, asstr, asunicode, bytes, basestring, os_fspath, os_PathLike,
-    pickle, contextlib_nullcontext
+    get_pickle, contextlib_nullcontext
     )
 
 if sys.version_info[0] >= 3:
@@ -37,6 +37,7 @@ else:
 
 @set_module('numpy')
 def loads(*args, **kwargs):
+    pickle = get_pickle()
     # NumPy 1.15.0, 2017-12-10
     warnings.warn(
         "np.loads is deprecated, use pickle.loads instead",
@@ -457,6 +458,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
                 raise ValueError("Cannot load file containing pickled data "
                                  "when allow_pickle=False")
             try:
+                pickle = get_pickle()
                 return pickle.load(fid, **pickle_kwargs)
             except Exception:
                 raise IOError(
@@ -680,7 +682,7 @@ def savez_compressed(file, *args, **kwds):
     The ``.npz`` file format is a zipped archive of files named after the
     variables they contain.  The archive is compressed with
     ``zipfile.ZIP_DEFLATED`` and each file in the archive contains one variable
-    in ``.npy`` format. For a description of the ``.npy`` format, see 
+    in ``.npy`` format. For a description of the ``.npy`` format, see
     :py:mod:`numpy.lib.format`.
 
 

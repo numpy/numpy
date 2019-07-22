@@ -21,7 +21,8 @@ import weakref
 import pytest
 from contextlib import contextmanager
 
-from numpy.compat import pickle
+from numpy.compat import get_pickle
+pickle = get_pickle()
 
 try:
     import pathlib
@@ -114,7 +115,7 @@ class TestFlags(object):
         # Ensure that any base being writeable is sufficient to change flag;
         # this is especially interesting for arrays from an array interface.
         arr = np.arange(10)
-        
+
         class subclass(np.ndarray):
             pass
 
@@ -3967,13 +3968,13 @@ class TestPickling(object):
 
     def test_datetime64_byteorder(self):
         original = np.array([['2015-02-24T00:00:00.000000000']], dtype='datetime64[ns]')
-    
+
         original_byte_reversed = original.copy(order='K')
         original_byte_reversed.dtype = original_byte_reversed.dtype.newbyteorder('S')
         original_byte_reversed.byteswap(inplace=True)
 
         new = pickle.loads(pickle.dumps(original_byte_reversed))
-    
+
         assert_equal(original.dtype, new.dtype)
 
 
@@ -4868,7 +4869,7 @@ class TestIO(object):
             offset_bytes = self.dtype.itemsize
             z = np.fromfile(f, dtype=self.dtype, offset=offset_bytes)
             assert_array_equal(z, self.x.flat[offset_items+count_items+1:])
-        
+
         with open(self.filename, 'wb') as f:
             self.x.tofile(f, sep=",")
 
@@ -6225,14 +6226,14 @@ class TestMatmul(MatmulCommon):
 
         r3 = np.matmul(args[0].copy(), args[1].copy())
         assert_equal(r1, r3)
-    
+
     def test_matmul_object(self):
         import fractions
 
         f = np.vectorize(fractions.Fraction)
         def random_ints():
             return np.random.randint(1, 1000, size=(10, 3, 3))
-        M1 = f(random_ints(), random_ints()) 
+        M1 = f(random_ints(), random_ints())
         M2 = f(random_ints(), random_ints())
 
         M3 = self.matmul(M1, M2)

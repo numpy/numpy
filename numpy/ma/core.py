@@ -46,7 +46,7 @@ from numpy.compat import (
 from numpy import expand_dims
 from numpy.core.numeric import normalize_axis_tuple
 from numpy.core._internal import recursive
-from numpy.compat import pickle
+from numpy.compat import get_pickle
 
 
 __all__ = [
@@ -7919,6 +7919,7 @@ def dump(a, F):
 
     """
     _pickle_warn('dump')
+    pickle = get_pickle()
     if not hasattr(F, 'readline'):
         with open(F, 'w') as F:
             pickle.dump(a, F)
@@ -7940,6 +7941,7 @@ def dumps(a):
 
     """
     _pickle_warn('dumps')
+    pickle = get_pickle()
     return pickle.dumps(a)
 
 

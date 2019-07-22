@@ -909,4 +909,3 @@ class recursive(object):
         self.func = func
     def __call__(self, *args, **kwargs):
         return self.func(self, *args, **kwargs)
-

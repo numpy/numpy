@@ -9,7 +9,7 @@ import numbers
 import contextlib
 
 import numpy as np
-from numpy.compat import pickle, basestring
+from numpy.compat import get_pickle, basestring
 from . import multiarray
 from .multiarray import (
     _fastCopyAndTranspose as fastCopyAndTranspose, ALLOW_THREADS,
@@ -49,6 +49,7 @@ array_function_dispatch = functools.partial(
 
 
 def loads(*args, **kwargs):
+    pickle = get_pickle()
     # NumPy 1.15.0, 2017-12-10
     warnings.warn(
         "np.core.numeric.loads is deprecated, use pickle.loads instead",
@@ -937,7 +938,7 @@ def tensordot(a, b, axes=2):
     Returns
     -------
     output : ndarray
-        The tensor dot product of the input.  
+        The tensor dot product of the input.
 
     See Also
     --------
@@ -2038,6 +2039,7 @@ def load(file):
     load, save
 
     """
+    pickle = get_pickle()
     # NumPy 1.15.0, 2017-12-10
     warnings.warn(
         "np.core.numeric.load is deprecated, use pickle.load instead",
