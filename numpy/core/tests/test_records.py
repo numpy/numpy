@@ -12,7 +12,7 @@ from os import path
 import pytest
 
 import numpy as np
-from numpy.compat import Path
+from pathlib import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, temppath

@@ -9,7 +9,7 @@ from tempfile import NamedTemporaryFile, TemporaryFile, mktemp, mkdtemp
 
 from numpy import (
     memmap, sum, average, product, ndarray, isscalar, add, subtract, multiply)
-from numpy.compat import Path
+from pathlib import Path
 
 from numpy import arange, allclose, asarray
 from numpy.testing import (
