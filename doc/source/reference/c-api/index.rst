@@ -40,12 +40,12 @@ code.
 .. toctree::
    :maxdepth: 2
 
-   c-api.types-and-structures
-   c-api.config
-   c-api.dtype
-   c-api.array
-   c-api.iterator
-   c-api.ufunc
-   c-api.generalized-ufuncs
-   c-api.coremath
-   c-api.deprecations
+   types-and-structures
+   config
+   dtype
+   array
+   iterator
+   ufunc
+   generalized-ufuncs
+   coremath
+   deprecations
