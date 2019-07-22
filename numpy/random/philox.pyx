@@ -1,10 +1,5 @@
 from cpython.pycapsule cimport PyCapsule_New
 
-try:
-    from threading import Lock
-except ImportError:
-    from dummy_threading import Lock
-
 import numpy as np
 
 from .common cimport *
