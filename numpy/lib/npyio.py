@@ -6,7 +6,6 @@ import re
 import functools
 import itertools
 import warnings
-import weakref
 import contextlib
 from operator import itemgetter, index as opindex
 
@@ -87,6 +86,7 @@ class BagObj(object):
     """
 
     def __init__(self, obj):
+        import weakref
         # Use weakref to make NpzFile objects collectable by refcount
         self._obj = weakref.proxy(obj)
 
