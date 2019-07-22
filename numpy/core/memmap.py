@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 import numpy as np
 from .numeric import uint8, ndarray, dtype
 from numpy.compat import (
-    long, basestring, os_fspath, contextlib_nullcontext, is_pathlib_path
+    long, basestring, os_fspath, contextlib_nullcontext, os_PathLike
 )
 from numpy.core.overrides import set_module
 
@@ -111,7 +111,7 @@ class memmap(ndarray):
     The memmap object can be used anywhere an ndarray is accepted.
     Given a memmap ``fp``, ``isinstance(fp, numpy.ndarray)`` returns
     ``True``.
-    
+
     Memory-mapped files cannot be larger than 2GB on 32-bit systems.
 
     When a memmap causes a file to be created or extended beyond its
@@ -269,7 +269,7 @@ class memmap(ndarray):
             self.offset = offset
             self.mode = mode
 
-            if is_pathlib_path(filename):
+            if isinstance(filename, os_PathLike):
                 # special case - if we were constructed with a pathlib.path,
                 # then filename is a path object, not a string
                 self.filename = filename.resolve()

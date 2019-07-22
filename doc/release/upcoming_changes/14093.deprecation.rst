@@ -1,0 +1,5 @@
+* The `numpy.compat.is_pathlib_like` function is deprecated. For Python 3.6 and
+  above, users are encouraged to use ``isinstance(obj, os.PathLike)``. For code
+  supporting Python 3.5, the snippet ``isinstance(obj,
+  numpy.compat.os_PathLike)`` can be used. 
+  This function will be removed in v1.20 of numpy.
