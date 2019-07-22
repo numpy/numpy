@@ -28,7 +28,6 @@ def check_dir(module, module_name=None):
 def test_numpy_namespace():
     # None of these objects are publicly documented.
     undocumented = {
-        'Tester': 'numpy.testing._private.nosetester.NoseTester',
         '_add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
         'add_docstring': 'numpy.core._multiarray_umath.add_docstring',
         'add_newdoc': 'numpy.core.function_base.add_newdoc',

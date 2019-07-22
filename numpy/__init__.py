@@ -182,10 +182,6 @@ else:
     oldnumeric = 'removed'
     numarray = 'removed'
 
-    # We don't actually use this ourselves anymore, but I'm not 100% sure that
-    # no-one else in the world is using it (though I hope not)
-    from .testing import Tester
-
     # Pytest testing
     from numpy._pytesttester import PytestTester
     test = PytestTester(__name__)
