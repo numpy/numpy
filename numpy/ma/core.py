@@ -25,7 +25,6 @@ from __future__ import division, absolute_import, print_function
 import sys
 import operator
 import warnings
-import textwrap
 import re
 from functools import reduce
 
@@ -2445,32 +2444,32 @@ def _recursive_printoption(result, mask, printopt):
 
 # For better or worse, these end in a newline
 _legacy_print_templates = dict(
-    long_std=textwrap.dedent("""\
-        masked_%(name)s(data =
-         %(data)s,
-        %(nlen)s        mask =
-         %(mask)s,
-        %(nlen)s  fill_value = %(fill)s)
-        """),
-    long_flx=textwrap.dedent("""\
-        masked_%(name)s(data =
-         %(data)s,
-        %(nlen)s        mask =
-         %(mask)s,
-        %(nlen)s  fill_value = %(fill)s,
-        %(nlen)s       dtype = %(dtype)s)
-        """),
-    short_std=textwrap.dedent("""\
-        masked_%(name)s(data = %(data)s,
-        %(nlen)s        mask = %(mask)s,
-        %(nlen)s  fill_value = %(fill)s)
-        """),
-    short_flx=textwrap.dedent("""\
-        masked_%(name)s(data = %(data)s,
-        %(nlen)s        mask = %(mask)s,
-        %(nlen)s  fill_value = %(fill)s,
-        %(nlen)s       dtype = %(dtype)s)
-        """)
+    long_std="""\
+masked_%(name)s(data =
+ %(data)s,
+%(nlen)s        mask =
+ %(mask)s,
+%(nlen)s  fill_value = %(fill)s)
+""",
+    long_flx="""\
+masked_%(name)s(data =
+ %(data)s,
+%(nlen)s        mask =
+ %(mask)s,
+%(nlen)s  fill_value = %(fill)s,
+%(nlen)s       dtype = %(dtype)s)
+""",
+    short_std="""\
+masked_%(name)s(data = %(data)s,
+%(nlen)s        mask = %(mask)s,
+%(nlen)s  fill_value = %(fill)s)
+""",
+    short_flx="""\
+masked_%(name)s(data = %(data)s,
+%(nlen)s        mask = %(mask)s,
+%(nlen)s  fill_value = %(fill)s,
+%(nlen)s       dtype = %(dtype)s)
+"""
 )
 
 ###############################################################################
