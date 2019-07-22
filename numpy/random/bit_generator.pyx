@@ -249,6 +249,11 @@ cdef class SeedlessSeedSequence():
 # we must register it after the fact.
 ISpawnableSeedSequence.register(SeedlessSeedSequence)
 
+# Taken from https://github.com/python/cpython/blob/3.7/Lib/secrets.py#L24
+# secret imports many things we don't need
+from random import SystemRandom
+_sysrand = SystemRandom()
+randbits = _sysrand.getrandbits
 
 cdef class SeedSequence():
     """
