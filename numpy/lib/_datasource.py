@@ -39,7 +39,6 @@ from __future__ import division, absolute_import, print_function
 import os
 import sys
 import warnings
-import shutil
 import io
 from contextlib import closing
 
@@ -330,6 +329,7 @@ class DataSource(object):
             self._istmpdest = True
 
     def __del__(self):
+        import shutil
         # Remove temp directories
         if hasattr(self, '_istmpdest') and self._istmpdest:
             shutil.rmtree(self._destpath)
@@ -413,6 +413,7 @@ class DataSource(object):
             os.makedirs(os.path.dirname(upath))
 
         # TODO: Doesn't handle compressed files!
+        import shutil
         if self._isurl(path):
             try:
                 with closing(urlopen(path)) as openedurl:
