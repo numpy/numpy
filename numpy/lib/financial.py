@@ -12,7 +12,6 @@ otherwise stated.
 """
 from __future__ import division, absolute_import, print_function
 
-from decimal import Decimal
 import functools
 
 import numpy as np
@@ -621,6 +620,8 @@ def rate(nper, pmt, pv, fv, when='end', guess=None, tol=None, maxiter=100):
     OpenDocument-formula-20090508.odt
 
     """
+    from decimal import Decimal
+
     when = _convert_when(when)
     default_type = Decimal if isinstance(pmt, Decimal) else float
 
@@ -812,6 +813,8 @@ def mirr(values, finance_rate, reinvest_rate):
         Modified internal rate of return
 
     """
+    from decimal import Decimal
+
     values = np.asarray(values)
     n = values.size
 
