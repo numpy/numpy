@@ -36,6 +36,6 @@ fi
 
 
 pip install --upgrade pip setuptools
-pip install nose pytz cython pytest
+pip install nose pytz cython pytest fastrlock
 if [ -n "$USE_ASV" ]; then pip install asv; fi
 popd

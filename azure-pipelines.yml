@@ -21,7 +21,7 @@ jobs:
            apt-get -y update && \
            apt-get -y install python3.6-dev python3-pip locales python3-certifi && \
            locale-gen fr_FR && update-locale && \
-           pip3 install setuptools nose cython==0.29.0 pytest pytz pickle5 && \
+           pip3 install setuptools nose cython==0.29.0 pytest pytz pickle5 fastrlock && \
            apt-get -y install gfortran-5 wget && \
            target=\$(python3 tools/openblas_support.py) && \
            cp -r \$target/usr/local/lib/* /usr/lib && \
@@ -85,7 +85,7 @@ jobs:
     displayName: 'install pre-built openblas'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
-  - script: python -m pip install cython nose pytz pytest pickle5 vulture docutils sphinx==1.8.5 numpydoc
+  - script: python -m pip install cython fastrlock nose pytz pytest pickle5 vulture docutils sphinx==1.8.5 numpydoc
     displayName: 'Install dependencies; some are optional to avoid test skips'
   - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
     displayName: 'Check for unreachable code paths in Python modules'
@@ -156,13 +156,13 @@ jobs:
       architecture: $(PYTHON_ARCH)
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
-  - script: python -m pip install cython nose pytz pytest
+  - script: python -m pip install cython fastrlock nose pytz pytest
     displayName: 'Install dependencies; some are optional to avoid test skips'
   - script: if [%INSTALL_PICKLE5%]==[1] python -m pip install pickle5
     displayName: 'Install optional pickle5 backport (only for python3.6 and 3.7)'
 
   - powershell: |
-      $pyversion = python -c "from __future__ import print_function; import sys; print(sys.version.split()[0])"
+      $pyversion = python -c "
       Write-Host "Python Version: $pyversion"
       $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
       Write-Host "target path: $target"

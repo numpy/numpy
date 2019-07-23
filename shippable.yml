@@ -32,6 +32,8 @@ build:
     # version is scraped in by pip; otherwise, use the cached
     # wheel shippable places on Amazon S3 after we build it once
     - pip install cython --cache-dir=/root/.cache/pip/wheels/$SHIPPABLE_PYTHON_VERSION
+    # Install fastrlock for locks in random
+    - pip install fastrlock
     # install pytz for datetime testing
     - pip install pytz
     # install pytest-xdist to leverage a second core
