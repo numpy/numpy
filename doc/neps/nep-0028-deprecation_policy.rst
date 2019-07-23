@@ -1,6 +1,6 @@
-==========================================================================================
-NEP 28 — A standard community policy for dropping support of old Python and NumPy versions
-==========================================================================================
+===========================================================================================
+NEP 28 — A standard community policy for dropping support of old CPython and NumPy versions
+===========================================================================================
 
 
 :Author: Thomas A Caswell <tcaswell@gmail.com>, Andreas Mueller, Brian Granger, Madicken Munk, Ralf Gommers, Matt Haberland <mhaberla@calpoly.edu>, Matthias Bussonnier <bussonniermatthias@gmail.com>, Stefan van der Walt
@@ -13,7 +13,7 @@ Abstract
 --------
 
 All projects across the ecosystem should adopt a common time window
-based policy for increasing the minimum version of Python and NumPy
+based policy for increasing the minimum version of CPython and NumPy
 that downstream projects support.  By standardizing this policy
 across community we will make it easier for down stream projects to
 plan.
@@ -94,10 +94,10 @@ development guidelines:
 
    The minimum supported version of ``CPython`` will be set to
    ``python_requires`` in ``setup`` and all supported versions of
-   Python will be in the test matrix and have binary artifacts built
+   CPython will be in the test matrix and have binary artifacts built
    for releases.
 
-   We will bump the minimum Python and NumPy versions as we can on
+   We will bump the minimum CPython and NumPy versions as we can on
    every minor and major release, but never on a patch release.
 
 For other dependencies, adopt similar time windows 24 months shorter.
@@ -117,7 +117,7 @@ Ad-Hoc
 ~~~~~~
 
 Projects could on every release evaluate if they want to increase
-the minimum version of Python supported.  While this is a notionally
+the minimum version of CPython supported.  While this is a notionally
 simple policy, it makes it hard for downstream users to predict what
 the future minimum versions will be.  As there is no objective threshold
 to when the minimum version should be dropped, it is easy for these
@@ -143,7 +143,7 @@ packages to carry fewer version-specific patches.
 Default version on Linux distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The policy could be support the version of Python that ships by
+The policy could be support the version of CPython that ships by
 default in the latest Ubuntu LTS or CentOS/RHEL release.  However, we
 would still have to standardize across the community which
 distribution we are following.
@@ -153,8 +153,8 @@ are giving up technical control of our projects to external
 organizations that may have different motivations and concerns than we
 do.
 
-N minor versions of Python
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+N minor versions of CPython
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Given the current release cadence of the CPython, the proposed time
 (42 months) is roughly equivalent to "the last two" CPython minor
