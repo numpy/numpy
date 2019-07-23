@@ -102,6 +102,7 @@ _arraydescr_from_dtype_attr(PyObject *obj, PyArray_Descr **newdescr)
     if (Py_EnterRecursiveCall(
             " while trying to convert the given data type from its "
             "`.dtype` attribute.") != 0) {
+        Py_DECREF(dtypedescr);
         return 1;
     }
 
