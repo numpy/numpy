@@ -168,8 +168,8 @@ Time window on the X.Y.1 CPython release
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As the first bug fix release is typically a few months after the
-initial release, you can achieve the same name effect by making the
-window longer which is easier to explain.
+initial release, you can achieve the same effect by using a large delay
+from the X.Y.0 release which seems simpler to explain.
 
 
 Discussion
