@@ -1,5 +1,5 @@
 ==========================================================================================
-NEP 28 - A standard community policy for dropping support of old Python and NumPy versions
+NEP 28 — A standard community policy for dropping support of old Python and NumPy versions
 ==========================================================================================
 
 
