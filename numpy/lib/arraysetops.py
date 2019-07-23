@@ -383,6 +383,7 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
 
     To return the indices of the values common to the input arrays
     along with the intersected values:
+
     >>> x = np.array([1, 1, 2, 3, 4])
     >>> y = np.array([2, 1, 4, 6])
     >>> xy, x_ind, y_ind = np.intersect1d(x, y, return_indices=True)
