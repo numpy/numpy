@@ -1241,8 +1241,8 @@ avx2_scalef_ps(__m256 poly, __m256 quadrant)
      __m256 minquadrant = _mm256_set1_ps(-125.0f);
      __m256 denormal_mask = _mm256_cmp_ps(quadrant, minquadrant, _CMP_LE_OQ);
      if (_mm256_movemask_ps(denormal_mask) != 0x0000) {
-        __m256 quad_diff = _mm256_sub_ps(quadrant, minquadrant); // use negate
-        quad_diff = _mm256_sub_ps(_mm256_setzero_ps(), quad_diff); // make it +ve
+        __m256 quad_diff = _mm256_sub_ps(quadrant, minquadrant);
+        quad_diff = _mm256_sub_ps(_mm256_setzero_ps(), quad_diff);
         quad_diff = _mm256_blendv_ps(_mm256_setzero_ps(), quad_diff, denormal_mask);
         __m256i two_power_diff = _mm256_sllv_epi32(
                                    _mm256_set1_epi32(1), _mm256_cvtps_epi32(quad_diff));

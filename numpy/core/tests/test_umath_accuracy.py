@@ -1,7 +1,18 @@
 import numpy as np
+import platform
 from os import path
+import sys
+import pytest
 from ctypes import *
 from numpy.testing import assert_array_max_ulp
+
+windows32bit = (sys.platform.startswith('win32') and sys.maxsize <= 2*32)
+arm = platform.uname()[4].startswith('arm')
+platform_skip = pytest.mark.skipif(windows32bit or arm,
+                                   reason="""
+                                   AVX not supported by ARM and
+                                   libc on windows 32 bit fail these ULP tests
+                                   """)
 
 # convert string to hex function taken from:
 # https://stackoverflow.com/questions/1592158/convert-hex-to-float #
@@ -18,6 +29,7 @@ files = ['umath-validation-set-exp',
          'umath-validation-set-cos']
 
 class TestAccuracy(object):
+    @platform_skip
     def test_validate_transcendentals(self):
         with np.errstate(all='ignore'):
             for filename in files:
@@ -31,7 +43,7 @@ class TestAccuracy(object):
                                      skip_header=1)
                 npfunc = getattr(np, filename.split('-')[3])
                 for datatype in np.unique(data['type']):
-                    data_subset = data[ data['type'] == datatype ]
+                    data_subset = data[data['type'] == datatype]
                     inval  = np.array(str_to_float(data_subset['input'].astype(str)), dtype=eval(datatype))
                     outval = np.array(str_to_float(data_subset['output'].astype(str)), dtype=eval(datatype))
                     perm = np.random.permutation(len(inval))
