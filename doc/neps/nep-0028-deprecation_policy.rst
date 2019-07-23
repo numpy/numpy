@@ -21,7 +21,7 @@ plan.
 This is an unusual NEP in that it is recommendations for community
 wide policy and not for changes to NumPy itself.  However, we do not
 currently have a place for SPEEPs (Scientific Python Ecosystem
-Enhancement Proposals) and given NumPy's central roll in our community
+Enhancement Proposals) and given NumPy's central role in our community
 this seems like the proper place to document this.
 
 
