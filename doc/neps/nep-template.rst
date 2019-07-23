@@ -1,6 +1,6 @@
-=============================
-NEP Template and Instructions
-=============================
+=================================
+NEP X — Template and Instructions
+=================================
 
 :Author: <list of authors' real names and optionally, email addresses>
 :Status: <Draft | Active | Accepted | Deferred | Rejected | Withdrawn | Final | Superseded>
