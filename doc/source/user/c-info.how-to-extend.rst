@@ -342,7 +342,7 @@ The method is to
 
 4. If you are writing the algorithm, then I recommend that you use the
    stride information contained in the array to access the elements of
-   the array (the :c:func:`PyArray_GETPTR` macros make this painless). Then,
+   the array (the :c:func:`PyArray_GetPtr` macros make this painless). Then,
    you can relax your requirements so as not to force a single-segment
    array and the data-copying that might result.
 
@@ -463,7 +463,7 @@ writeable). The syntax is
 
             This flag is useful to specify an array that will be used for both
             input and output. :c:func:`PyArray_ResolveWritebackIfCopy`
-            must be called before :func:`Py_DECREF` at
+            must be called before :c:func:`Py_DECREF` at
             the end of the interface routine to write back the temporary data
             into the original array passed in. Use
             of the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or
@@ -530,7 +530,7 @@ specific element of the array is determined only by the array of
 npy_intp variables, :c:func:`PyArray_STRIDES` (obj). In particular, this
 c-array of integers shows how many **bytes** must be added to the
 current element pointer to get to the next element in each dimension.
-For arrays less than 4-dimensions there are :c:func:`PyArray_GETPTR{k}`
+For arrays less than 4-dimensions there are ``PyArray_GETPTR{k}``
 (obj, ...) macros where {k} is the integer 1, 2, 3, or 4 that make
 using the array strides easier. The arguments .... represent {k} non-
 negative integer indices into the array. For example, suppose ``E`` is
@@ -543,7 +543,7 @@ contiguous arrays have particular striding patterns. Two array flags
 whether or not the striding pattern of a particular array matches the
 C-style contiguous or Fortran-style contiguous or neither. Whether or
 not the striding pattern matches a standard C or Fortran one can be
-tested Using :c:func:`PyArray_ISCONTIGUOUS` (obj) and
+tested Using :c:func:`PyArray_IS_C_CONTIGUOUS` (obj) and
 :c:func:`PyArray_ISFORTRAN` (obj) respectively. Most third-party
 libraries expect contiguous arrays.  But, often it is not difficult to
 support general-purpose striding. I encourage you to use the striding

@@ -206,8 +206,8 @@ of elements that we want, instead of the step::
     `empty_like`,
     `arange`,
     `linspace`,
-    `numpy.random.rand`,
-    `numpy.random.randn`,
+    `numpy.random.mtrand.RandomState.rand`,
+    `numpy.random.mtrand.RandomState.randn`,
     `fromfunction`,
     `fromfile`
 
@@ -732,7 +732,7 @@ stacks 1D arrays as columns into a 2D array. It is equivalent to
     array([[ 4.,  3.],
            [ 2.,  8.]])
 
-On the other hand, the function `row_stack` is equivalent to `vstack`
+On the other hand, the function `ma.row_stack` is equivalent to `vstack`
 for any input arrays.
 In general, for arrays of with more than two dimensions,
 `hstack` stacks along their second
