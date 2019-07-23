@@ -100,7 +100,8 @@ development guidelines:
    We will bump the minimum CPython and NumPy versions as we can on
    every minor and major release, but never on a patch release.
 
-For other dependencies, adopt similar time windows 24 months shorter.
+For other dependencies, adopt similar time windows of 24 months or
+shorter.
 
 
 Backward compatibility
