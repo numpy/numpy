@@ -3,7 +3,7 @@
 setup.py for installing F2PY
 
 Usage:
-   python setup.py install
+   pip install .
 
 Copyright 2001-2005 Pearu Peterson all rights reserved,
 Pearu Peterson <pearu@cens.ioc.ee>
