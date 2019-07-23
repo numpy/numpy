@@ -1840,6 +1840,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
 fail:
     if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_TypeError)) {
+        PyErr_Clear();
         PyErr_SetString(PyExc_TypeError,
                 "data type not understood, "
                 "did you mean to use a tuple for size?");
@@ -1881,6 +1882,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
 fail:
     if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_TypeError)) {
+        PyErr_Clear();
         PyErr_SetString(PyExc_TypeError,
                 "data type not understood, "
                 "did you mean to use a tuple for size?");
@@ -2009,6 +2011,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
 fail:
     if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_TypeError)) {
+        PyErr_Clear();
         PyErr_SetString(PyExc_TypeError,
                 "data type not understood, "
                 "did you mean to use a tuple for size?");
