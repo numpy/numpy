@@ -1,6 +1,6 @@
-===========================================================================================
-NEP 28 — A standard community policy for dropping support of old CPython and NumPy versions
-===========================================================================================
+==========================================================================================
+NEP 28 — A standard community policy for dropping support of old Python and NumPy versions
+==========================================================================================
 
 
 :Author: Thomas A Caswell <tcaswell@gmail.com>, Andreas Mueller, Brian Granger, Madicken Munk, Ralf Gommers, Matt Haberland <mhaberla@calpoly.edu>, Matthias Bussonnier <bussonniermatthias@gmail.com>, Stefan van der Walt
@@ -13,7 +13,7 @@ Abstract
 --------
 
 All projects across the ecosystem should adopt a common time window
-based policy for increasing the minimum version of CPython and NumPy
+based policy for increasing the minimum version of Python and NumPy
 that downstream projects support.  By standardizing this policy
 across the community we will make it easier for downstream projects to
 plan.
@@ -34,7 +34,7 @@ Detailed description
 --------------------
 
 When making a new major or minor release, projects should support all
-minor versions of ``CPython`` initially released in the prior 42
+minor versions of ``Python`` initially released in the prior 42
 months from their anticipated release date and all minor version of
 NumPy released in the prior 24 months.
 
@@ -50,33 +50,33 @@ The diagram::
             |-----------------------------------------> Dec19
                       |-----------------------------------------> Nov20
 
-shows the support windows for ``CPython``.  A project with a major or
+shows the support windows for ``Python``.  A project with a major or
 minor release in Feb19 should support py35 and newer, a project with a
 major or minor release in Dec19 should support py36 and newer, and a
 project with a major or minor release in Nov20 should support py37 and
 newer.
 
-The current CPython release cadence is 18 months so a 42 month window
-ensures that there will always be at least two versions of ``CPython``
+The current Python release cadence is 18 months so a 42 month window
+ensures that there will always be at least two versions of ``Python``
 in the window.  By padding the window by 6 months from the anticipated
-``CPython`` cadence we avoid the edge cases where a project releases
-the month after ``CPython`` and would effectively only support one
-version of ``CPython`` that has an install base (and then the window
+``Python`` cadence we avoid the edge cases where a project releases
+the month after ``Python`` and would effectively only support one
+version of ``Python`` that has an install base (and then the window
 is 42).  This buffer also makes us resilient to minor fluctuations /
-delays in the ``CPython`` release schedule.
+delays in the ``Python`` release schedule.
 
-Because the threshold for dropping a version of ``CPython`` is based
+Because the threshold for dropping a version of ``Python`` is based
 on historical release dates and a project's plans, the decision to drop
-support for a given version of ``CPython`` can be made very early in
+support for a given version of ``Python`` can be made very early in
 the release process.
 
 There will be some unavoidable mismatch in supported version of
-``CPython`` between packages immediately after a version of
-``CPython`` ages out.  However this should not last longer than one
+``Python`` between packages immediately after a version of
+``Python`` ages out.  However this should not last longer than one
 release cycle of each of the projects, and when a given project
 does a minor or major release, it is guaranteed that there will be a
 stable release of all other projects that support the set of
-``CPython`` the new release will support.
+``Python`` the new release will support.
 
 
 Implementation
@@ -86,19 +86,19 @@ We suggest that all projects adopt the following language into their
 development guidelines:
 
 
-   - support minor versions of ``CPython`` initially released
+   - support minor versions of ``Python`` initially released
      42 months prior to our planned release date
-   - always support at least the 2 latest versions of ``CPython``
+   - always support at least the 2 latest versions of ``Python``
    - support minor versions of ``numpy`` initially released in the 24
      months prior to our planned release date or oldest that supports the
      minimum Python version (whichever is higher)
 
-   The minimum supported version of ``CPython`` will be set to
+   The minimum supported version of ``Python`` will be set to
    ``python_requires`` in ``setup`` and all supported versions of
-   CPython will be in the test matrix and have binary artifacts built
+   Python will be in the test matrix and have binary artifacts built
    for releases.
 
-   We will bump the minimum CPython and NumPy versions as we can on
+   We will bump the minimum Python and NumPy versions as we can on
    every minor and major release, but never on a patch release.
 
 For other dependencies, adopt similar time windows of 24 months or
@@ -109,7 +109,7 @@ Backward compatibility
 ----------------------
 
 No issues other than the intentional dropping of old version of
-``CPython`` and dependencies.
+``Python`` and dependencies.
 
 
 Alternatives
@@ -119,7 +119,7 @@ Ad-Hoc
 ~~~~~~
 
 Projects could on every release evaluate if they want to increase
-the minimum version of CPython supported.  While this is a notionally
+the minimum version of Python supported.  While this is a notionally
 simple policy, it makes it hard for downstream users to predict what
 the future minimum versions will be.  As there is no objective threshold
 to when the minimum version should be dropped, it is easy for these
@@ -145,7 +145,7 @@ packages to carry fewer version-specific patches.
 Default version on Linux distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The policy could be support the version of CPython that ships by
+The policy could be support the version of Python that ships by
 default in the latest Ubuntu LTS or CentOS/RHEL release.  However, we
 would still have to standardize across the community which
 distribution we are following.
@@ -155,17 +155,17 @@ are giving up technical control of our projects to external
 organizations that may have different motivations and concerns than we
 do.
 
-N minor versions of CPython
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+N minor versions of Python
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Given the current release cadence of the CPython, the proposed time
-(42 months) is roughly equivalent to "the last two" CPython minor
-versions.  However, if CPython changes their release cadence, any rule
+Given the current release cadence of the Python, the proposed time
+(42 months) is roughly equivalent to "the last two" Python minor
+versions.  However, if Python changes their release cadence, any rule
 based on the number of minor releases will need to be changed.
 
 
-Time window on the X.Y.1 CPython release
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Time window on the X.Y.1 Python release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As the first bug fix release is typically a few months after the
 initial release, you can achieve the same effect by using a large delay
