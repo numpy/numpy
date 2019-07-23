@@ -12,9 +12,11 @@ from numpy.lib.recfunctions import (
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by,
     repack_fields, unstructured_to_structured, structured_to_unstructured,
     apply_along_fields, require_fields, assign_fields_by_name)
+get_fieldspec = np.lib.recfunctions._get_fieldspec
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
-zip_descr = np.lib.recfunctions.zip_descr
+zip_descr = np.lib.recfunctions._zip_descr
+zip_dtype = np.lib.recfunctions._zip_dtype
 
 
 class TestRecFunctions(object):
