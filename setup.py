@@ -364,7 +364,7 @@ def parse_setuppy_commands():
 
 
 def setup_package():
-    src_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    src_path = os.path.dirname(os.path.abspath(__file__))
     old_path = os.getcwd()
     os.chdir(src_path)
     sys.path.insert(0, src_path)
