@@ -18,6 +18,16 @@ that downstream projects support.  By standardizing this policy
 across community we will make it easier for down stream projects to
 plan.
 
+This is an unusual NEP in that it is recommendations for community
+wide policy and not for changes to NumPy itself.  However, we do not
+currently have a place for SPEEPs (Scientific Python Ecosystem
+Enhancement Proposals) and given NumPy's central roll in our community
+this seems like the proper place to document this.
+
+
+This is being put forward by maintainers of Matplotlib, scikit-learn,
+IPython, Jupyter, yt, SciPy, NumPy, and scikit-image.
+
 
 
 Detailed description
