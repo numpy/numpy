@@ -15,11 +15,11 @@ Abstract
 All projects across the ecosystem should adopt a common time window
 based policy for increasing the minimum version of CPython and NumPy
 that downstream projects support.  By standardizing this policy
-across community we will make it easier for down stream projects to
+across the community we will make it easier for downstream projects to
 plan.
 
-This is an unusual NEP in that it is recommendations for community
-wide policy and not for changes to NumPy itself.  However, we do not
+This is an unusual NEP in that it is recommendations for community-wide
+policy and not for changes to NumPy itself.  However, we do not
 currently have a place for SPEEPs (Scientific Python Ecosystem
 Enhancement Proposals) and given NumPy's central role in our community
 this seems like the proper place to document this.
