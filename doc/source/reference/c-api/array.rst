@@ -146,9 +146,9 @@ and itssub-types).
 
 .. c:function:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
-    Get a Python object of a builtin type from the ndarray, *arr*, 
+    Get a Python object of a builtin type from the ndarray, *arr*,
     at the location pointed to by itemptr. Return ``NULL`` on failure.
-    
+
     `numpy.ndarray.item` is identical to PyArray_GETITEM.
 
 
@@ -3377,7 +3377,7 @@ Group 1
 
         Useful to release the GIL only if *dtype* does not contain
         arbitrary Python objects which may need the Python interpreter
-        during execution of the loop. Equivalent to
+        during execution of the loop.
 
     .. c:function:: NPY_END_THREADS_DESCR(PyArray_Descr *dtype)
 
