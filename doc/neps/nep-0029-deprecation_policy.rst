@@ -88,7 +88,7 @@ development guidelines:
 
    - support minor versions of ``Python`` initially released
      42 months prior to our planned release date
-   - always support at least the 2 latest versions of ``Python``
+   - always support at least the 2 latest minor versions of ``Python``
    - support minor versions of ``numpy`` initially released in the 24
      months prior to our planned release date or oldest that supports the
      minimum Python version (whichever is higher)
