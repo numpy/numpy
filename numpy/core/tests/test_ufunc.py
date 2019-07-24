@@ -13,7 +13,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose,
+    assert_allclose, assert_array_almost_equal_nulp
     )
 from numpy.compat import pickle
 
@@ -1933,13 +1933,17 @@ def test_ufunc_noncontiguous(ufunc):
             warnings.filterwarnings("always")
             res_c = ufunc(*args_c)
             res_n = ufunc(*args_n)
-        dt = np.find_common_type([np.dtype(c) for c in out], [])
-        if np.issubdtype(dt, np.floating):
-            # for floating point results allow a small fuss in comparisons
-            # since different algorithms (libm vs. intrinsics) can be used
-            # for different input strides
-            res_eps = np.finfo(dt).eps
-            tol = 4*res_eps
-            assert_allclose(res_c, res_n, atol=tol, rtol=tol)
-        else:
-            assert_equal(res_c, res_n)
+        if len(out) == 1:
+            res_c = (res_c,)
+            res_n = (res_n,)
+        for c_ar, n_ar in zip(res_c, res_n):
+            dt = c_ar.dtype
+            if np.issubdtype(dt, np.floating):
+                # for floating point results allow a small fuss in comparisons
+                # since different algorithms (libm vs. intrinsics) can be used
+                # for different input strides
+                res_eps = np.finfo(dt).eps
+                tol = 2*res_eps
+                assert_allclose(res_c, res_n, atol=tol, rtol=tol)
+            else:
+                assert_equal(c_ar, n_ar)
