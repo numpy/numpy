@@ -2522,8 +2522,6 @@ init_@lapack_func@(GESDD_PARAMS_t *params,
     params->VT = vt;
     params->RWORK = NULL;
     params->IWORK = iwork;
-    params->M = m;
-    params->N = n;
     params->LDA = ld;
     params->LDU = ld;
     params->LDVT = vt_column_count;
