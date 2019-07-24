@@ -44,7 +44,9 @@ except ImportError:
     randbits = SystemRandom().getrandbits
 
 try:
-    from threading import Lock
+    # Threading isn't the cheapest import. Import from the lightweight
+    # _thread module,
+    from _thread import allocate_lock as Lock
 except ImportError:
     from dummy_threading import Lock
 
