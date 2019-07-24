@@ -2484,26 +2484,6 @@ class TestRegression(object):
 
         np.array([T()])
 
-    def test_2d__array__shape(self):
-        class T(object):
-            def __array__(self):
-                return np.ndarray(shape=(0,0))
-
-            # Make sure __array__ is used instead of Sequence methods.
-            def __iter__(self):
-                return iter([])
-
-            def __getitem__(self, idx):
-                raise AssertionError("__getitem__ was called")
-
-            def __len__(self):
-                return 0
-
-
-        t = T()
-        #gh-13659, would raise in broadcasting [x=t for x in result]
-        np.array([t])
-
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
     @pytest.mark.skipif(sys.platform == 'win32' and sys.version_info[:2] < (3, 8),
                         reason='overflows on windows, fixed in bpo-16865')
