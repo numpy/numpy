@@ -422,10 +422,6 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
     }
 }
 
-NPY_NO_EXPORT PyObject *
-_array_from_array_like(PyObject *op, PyArray_Descr *requested_dtype,
-                       npy_bool writeable, PyObject *context);
-
 /*
  * adapted from Numarray,
  * a: destination array
@@ -445,6 +441,11 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     /* first recursion, view equal destination */
     if (dst == NULL)
         dst = a;
+
+    /*
+     * This code is to ensure that the sequence access below will
+     * return a lower-dimensional sequence.
+     */
 
     /* INCREF on entry DECREF on exit */
     Py_INCREF(s);
@@ -471,11 +472,6 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
         return 0;
     }
 
-    /*
-     * This code is to ensure that the sequence access below will
-     * return a lower-dimensional sequence.
-     */
-
     if (dim > PyArray_NDIM(a)) {
         PyErr_Format(PyExc_ValueError,
                  "setArrayFromSequence: sequence/array dimensions mismatch.");
@@ -486,27 +482,6 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     if (slen < 0) {
         goto fail;
     }
-    if (slen > 0) {
-        /* gh-13659: try __array__ before using s as a sequence */
-        PyObject *tmp = _array_from_array_like(s, /*dtype*/NULL, /*writeable*/0,
-                                               /*context*/NULL);
-        if (tmp == NULL) {
-            goto fail;
-        }
-        else if (tmp == Py_NotImplemented) {
-            Py_DECREF(tmp);
-        }
-        else {
-            int r = PyArray_CopyInto(dst, (PyArrayObject *)tmp);
-            Py_DECREF(tmp);
-            if (r < 0) {
-                goto fail;
-            }
-            Py_DECREF(s);
-            return 0;
-        }
-    }
-
     /*
      * Either the dimensions match, or the sequence has length 1 and can
      * be broadcast to the destination.
@@ -1577,90 +1552,6 @@ fail:
 
 }
 
-
-/*
- * Attempts to extract an array from an array-like object.
- *
- * array-like is defined as either
- *
- * * an object implementing the PEP 3118 buffer interface;
- * * an object with __array_struct__ or __array_interface__ attributes;
- * * an object with an __array__ function.
- *
- * Returns Py_NotImplemented if a given object is not array-like;
- * PyArrayObject* in case of success and NULL in case of failure.
- */
-NPY_NO_EXPORT PyObject *
-_array_from_array_like(PyObject *op, PyArray_Descr *requested_dtype,
-                       npy_bool writeable, PyObject *context) {
-    PyObject* tmp;
-
-    /* If op supports the PEP 3118 buffer interface */
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op)) {
-        PyObject *memoryview = PyMemoryView_FromObject(op);
-        if (memoryview == NULL) {
-            PyErr_Clear();
-        }
-        else {
-          tmp = _array_from_buffer_3118(memoryview);
-          Py_DECREF(memoryview);
-          if (tmp == NULL) {
-              return NULL;
-          }
-
-          if (writeable
-                  && PyArray_FailUnlessWriteable((PyArrayObject *) tmp, "PEP 3118 buffer") < 0) {
-              Py_DECREF(tmp);
-              return NULL;
-          }
-
-          return tmp;
-        }
-    }
-
-    /* If op supports the __array_struct__ or __array_interface__ interface */
-    tmp = PyArray_FromStructInterface(op);
-    if (tmp == NULL) {
-        return NULL;
-    }
-    if (tmp == Py_NotImplemented) {
-        tmp = PyArray_FromInterface(op);
-        if (tmp == NULL) {
-            return NULL;
-        }
-    }
-
-    /*
-     * If op supplies the __array__ function.
-     * The documentation says this should produce a copy, so
-     * we skip this method if writeable is true, because the intent
-     * of writeable is to modify the operand.
-     * XXX: If the implementation is wrong, and/or if actual
-     *      usage requires this behave differently,
-     *      this should be changed!
-     */
-    if (!writeable && tmp == Py_NotImplemented) {
-        tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
-        if (tmp == NULL) {
-            return NULL;
-        }
-    }
-
-    if (tmp != Py_NotImplemented) {
-        if (writeable
-                && PyArray_FailUnlessWriteable((PyArrayObject *) tmp,
-                                               "array interface object") < 0) {
-            Py_DECREF(tmp);
-            return NULL;
-        }
-        return tmp;
-    }
-
-    Py_INCREF(Py_NotImplemented);
-    return Py_NotImplemented;
-}
-
-
 /*NUMPY_API
  * Retrieves the array parameters for viewing/converting an arbitrary
  * PyObject* to a NumPy array. This allows the "innate type and shape"
@@ -1768,20 +1659,69 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         return 0;
     }
 
-    /* If op is an array-like */
-    tmp = _array_from_array_like(op, requested_dtype, writeable, context);
+    /* If op supports the PEP 3118 buffer interface */
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op)) {
+
+        PyObject *memoryview = PyMemoryView_FromObject(op);
+        if (memoryview == NULL) {
+            PyErr_Clear();
+        }
+        else {
+            PyObject *arr = _array_from_buffer_3118(memoryview);
+            Py_DECREF(memoryview);
+            if (arr == NULL) {
+                return -1;
+            }
+            if (writeable
+                    && PyArray_FailUnlessWriteable((PyArrayObject *)arr, "PEP 3118 buffer") < 0) {
+                Py_DECREF(arr);
+                return -1;
+            }
+            *out_arr = (PyArrayObject *)arr;
+            return 0;
+        }
+    }
+
+    /* If op supports the __array_struct__ or __array_interface__ interface */
+    tmp = PyArray_FromStructInterface(op);
     if (tmp == NULL) {
         return -1;
     }
-    else if (tmp != Py_NotImplemented) {
-        *out_arr = (PyArrayObject*) tmp;
-        return 0;
+    if (tmp == Py_NotImplemented) {
+        tmp = PyArray_FromInterface(op);
+        if (tmp == NULL) {
+            return -1;
+        }
     }
-    else {
-        Py_DECREF(Py_NotImplemented);
+    if (tmp != Py_NotImplemented) {
+        if (writeable
+            && PyArray_FailUnlessWriteable((PyArrayObject *)tmp,
+                                           "array interface object") < 0) {
+            Py_DECREF(tmp);
+            return -1;
+        }
+        *out_arr = (PyArrayObject *)tmp;
+        return (*out_arr) == NULL ? -1 : 0;
     }
 
-    /* Try to treat op as a list of lists or array-like objects. */
+    /*
+     * If op supplies the __array__ function.
+     * The documentation says this should produce a copy, so
+     * we skip this method if writeable is true, because the intent
+     * of writeable is to modify the operand.
+     * XXX: If the implementation is wrong, and/or if actual
+     *      usage requires this behave differently,
+     *      this should be changed!
+     */
+    if (!writeable) {
+        tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
+        if (tmp != Py_NotImplemented) {
+            *out_arr = (PyArrayObject *)tmp;
+            return (*out_arr) == NULL ? -1 : 0;
+        }
+    }
+
+    /* Try to treat op as a list of lists */
     if (!writeable && PySequence_Check(op)) {
         int check_it, stop_at_string, stop_at_tuple, is_object;
         int type_num, type;
