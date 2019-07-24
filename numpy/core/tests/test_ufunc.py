@@ -13,7 +13,7 @@ import numpy.core._rational_tests as _rational_tests
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, assert_array_almost_equal_nulp
+    assert_allclose,
     )
 from numpy.compat import pickle
 
