@@ -8,7 +8,6 @@ from __future__ import division, absolute_import, print_function
 
 import re
 import sys
-import platform
 
 from numpy.compat import unicode
 from .multiarray import dtype, array, ndarray
@@ -17,7 +16,7 @@ try:
 except ImportError:
     ctypes = None
 
-IS_PYPY = platform.python_implementation() == 'PyPy'
+IS_PYPY = 'PyPy' in sys.version
 
 if (sys.byteorder == 'little'):
     _nbo = b'<'
