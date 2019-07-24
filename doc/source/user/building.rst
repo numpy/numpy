@@ -74,7 +74,7 @@ Testing
 
 Make sure to test your builds. To ensure everything stays in shape, see if all tests pass::
 
-    $ python runtests.py -m full
+    $ python runtests.py -v -m full
 
 For detailed info on testing, see :ref:`testing-builds`.
 
