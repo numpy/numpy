@@ -11,7 +11,7 @@ platform_skip = pytest.mark.skipif(not runtest,
                                    reason="""
                                    stick to x86_64 and linux platforms.
                                    test seems to fail on some of ARM and power
-                                   archictures.
+                                   architectures.
                                    """)
 
 # convert string to hex function taken from:
