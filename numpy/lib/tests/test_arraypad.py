@@ -469,6 +469,29 @@ class TestStatistic(object):
             )
         assert_array_equal(a, b)
 
+    @pytest.mark.filterwarnings("ignore:Mean of empty slice:RuntimeWarning")
+    @pytest.mark.filterwarnings(
+        "ignore:invalid value encountered in (true_divide|double_scalars):"
+        "RuntimeWarning"
+    )
+    @pytest.mark.parametrize("mode", ["mean", "median"])
+    def test_zero_stat_length_valid(self, mode):
+        arr = np.pad([1., 2.], (1, 2), mode, stat_length=0)
+        expected = np.array([np.nan, 1., 2., np.nan, np.nan])
+        assert_equal(arr, expected)
+
+    @pytest.mark.parametrize("mode", ["minimum", "maximum"])
+    def test_zero_stat_length_invalid(self, mode):
+        match = "stat_length of 0 yields no value for padding"
+        with pytest.raises(ValueError, match=match):
+            np.pad([1., 2.], 0, mode, stat_length=0)
+        with pytest.raises(ValueError, match=match):
+            np.pad([1., 2.], 0, mode, stat_length=(1, 0))
+        with pytest.raises(ValueError, match=match):
+            np.pad([1., 2.], 1, mode, stat_length=0)
+        with pytest.raises(ValueError, match=match):
+            np.pad([1., 2.], 1, mode, stat_length=(1, 0))
+
 
 class TestConstant(object):
     def test_check_constant(self):
