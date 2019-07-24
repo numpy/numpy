@@ -123,7 +123,7 @@ the minimum version of Python supported.  While this is a notionally
 simple policy, it makes it hard for downstream users to predict what
 the future minimum versions will be.  As there is no objective threshold
 to when the minimum version should be dropped, it is easy for these
-discussions to devolve into bike shedding and acrimony.
+discussions to devolve into [bike shedding](https://en.wikipedia.org/wiki/Wikipedia:Avoid_Parkinson%27s_bicycle-shed_effect) and acrimony.
 
 
 All Python Software Foundation supported versions
@@ -145,7 +145,7 @@ packages to carry fewer version-specific patches.
 Default version on Linux distribution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The policy could be support the version of Python that ships by
+The policy could be to support the version of Python that ships by
 default in the latest Ubuntu LTS or CentOS/RHEL release.  However, we
 would still have to standardize across the community which
 distribution we are following.
