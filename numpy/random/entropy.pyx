@@ -58,6 +58,8 @@ def seed_by_array(object seed, Py_ssize_t n):
         if int_seed < 0 or int_seed > 2**64 - 1:
             raise ValueError(err_msg)
         seed_array = np.array([int_seed], dtype=np.uint64)
+    elif issubclass(arr.dtype.type, np.inexact):
+        raise TypeError('seed array must be integers')
     else:
         err_msg = "Seed values must be integers between 0 and 2**64 - 1"
         obj = np.asarray(seed).astype(np.object)

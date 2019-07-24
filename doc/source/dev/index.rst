@@ -44,11 +44,11 @@ Here's the short summary, complete TOC links are below:
       git checkout -b linspace-speedups
 
    * Commit locally as you progress (``git add`` and ``git commit``)
-     Use a `properly formatted <writing-the-commit-message>` commit message,
+     Use a :ref:`properly formatted<writing-the-commit-message>` commit message,
      write tests that fail before your change and pass afterward, run all the
-     `tests locally <development-environment>`. Be sure to document any
+     :ref:`tests locally<development-environment>`. Be sure to document any
      changed behavior in docstrings, keeping to the NumPy docstring
-     `standard <howto-document>`.
+     :ref:`standard<howto-document>`.
 
 3. To submit your contribution:
 
@@ -57,8 +57,8 @@ Here's the short summary, complete TOC links are below:
       git push origin linspace-speedups
 
    * Enter your GitHub username and password (repeat contributors or advanced
-     users can remove this step by connecting to GitHub with `SSH <set-up-and-
-     configure-a-github-account>`.
+     users can remove this step by connecting to GitHub with
+     :ref:`SSH<set-up-and-configure-a-github-account>` .
 
    * Go to GitHub. The new branch will show up with a green Pull Request
      button. Make sure the title and message are clear, concise, and self-
@@ -92,8 +92,9 @@ Here's the short summary, complete TOC links are below:
      coding style of your branch. The CI tests must pass before your PR can be
      merged. If CI fails, you can find out why by clicking on the "failed"
      icon (red cross) and inspecting the build and test log. To avoid overuse
-     and waste of this resource, `test your work <recommended-development-
-     setup>` locally before committing.
+     and waste of this resource,
+     :ref:`test your work<recommended-development-setup>` locally before
+     committing.
 
    * A PR must be **approved** by at least one core team member before merging.
      Approval means the core team member has carefully reviewed the changes,
@@ -131,13 +132,14 @@ Divergence between ``upstream/master`` and your feature branch
 If GitHub indicates that the branch of your Pull Request can no longer
 be merged automatically, you have to incorporate changes that have been made
 since you started into your branch. Our recommended way to do this is to
-`rebase on master <rebasing-on-master>`.
+:ref:`rebase on master<rebasing-on-master>`.
 
 Guidelines
 ----------
 
 * All code should have tests (see `test coverage`_ below for more details).
-* All code should be `documented <docstring-standard>`.
+* All code should be `documented <https://numpydoc.readthedocs.io/
+  en/latest/format.html#docstring-standard>`_.
 * No changes are ever committed without review and approval by a core
   team member.Please ask politely on the PR or on the `mailing list`_ if you
   get no response to your pull request within a week.
@@ -156,14 +158,14 @@ Stylistic Guidelines
 
    import numpy as np
 
-* For C code, see the `numpy-c-style-guide`
+* For C code, see the :ref:`numpy-c-style-guide<style_guide>`
 
 
 Test coverage
 -------------
 
 Pull requests (PRs) that modify code should either have new tests, or modify existing
-tests to fail before the PR and pass afterwards. You should `run the tests
+tests to fail before the PR and pass afterwards. You should :ref:`run the tests
 <development-environment>` before pushing a PR.
 
 Tests for a module should ideally cover all code in that module,
@@ -175,7 +177,7 @@ and then run::
 
   $ python runtests.py --coverage
 
-This will create a report in `build/coverage`, which can be viewed with::
+This will create a report in ``build/coverage``, which can be viewed with::
 
   $ firefox build/coverage/index.html
 
@@ -226,6 +228,7 @@ The rest of the story
    releasing
    governance/index
 
-NumPy-specific workflow is in `numpy-development-workflow`.
+NumPy-specific workflow is in :ref:`numpy-development-workflow
+<development-workflow>`.
 
 .. _`mailing list`: https://mail.python.org/mailman/listinfo/numpy-devel

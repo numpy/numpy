@@ -8,8 +8,7 @@ except ImportError:
 import numpy as np
 
 from .common cimport *
-from .distributions cimport bitgen_t
-from .entropy import random_entropy, seed_by_array
+from .bit_generator cimport BitGenerator
 
 __all__ = ['Philox']
 
@@ -55,7 +54,7 @@ cdef uint32_t philox_uint32(void *st) nogil:
 cdef double philox_double(void*st) nogil:
     return uint64_to_double(philox_next64(<philox_state *> st))
 
-cdef class Philox:
+cdef class Philox(BitGenerator):
     """
     Philox(seed=None, counter=None, key=None)
 
@@ -63,22 +62,21 @@ cdef class Philox:
 
     Parameters
     ----------
-    seed : {None, int, array_like}, optional
-        Random seed initializing the pseudo-random number generator.
-        Can be an integer in [0, 2**64-1], array of integers in
-        [0, 2**64-1] or ``None`` (the default). If `seed` is ``None``,
-        data will be read from ``/dev/urandom`` (or the Windows analog)
-        if available.  If unavailable, a hash of the time and process ID is
-        used.
+    seed : {None, int, array_like[ints], ISeedSequence}, optional
+        A seed to initialize the `BitGenerator`. If None, then fresh,
+        unpredictable entropy will be pulled from the OS. If an ``int`` or
+        ``array_like[ints]`` is passed, then it will be passed to
+        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        pass in an implementor of the `ISeedSequence` interface like
+        `SeedSequence`.
     counter : {None, int, array_like}, optional
         Counter to use in the Philox state. Can be either
         a Python int (long in 2.x) in [0, 2**256) or a 4-element uint64 array.
         If not provided, the RNG is initialized at 0.
     key : {None, int, array_like}, optional
-        Key to use in the Philox state.  Unlike seed, which is run through
-        another RNG before use, the value in key is directly set. Can be either
-        a Python int (long in 2.x) in [0, 2**128) or a 2-element uint64 array.
-        key and seed cannot both be used.
+        Key to use in the Philox state.  Unlike seed, the value in key is
+        directly set. Can be either a Python int in [0, 2**128) or a 2-element
+        uint64 array. `key` and `seed` cannot both be used.
 
     Attributes
     ----------
@@ -102,24 +100,29 @@ cdef class Philox:
     directly consumable in Python and must be consumed by a ``Generator``
     or similar object that supports low-level access.
 
-    See ``ThreeFry`` for a closely related PRNG.
-
     **State and Seeding**
 
-    The ``Philox`` state vector consists of a 2 256-bit values encoded as
-    4-element uint64 arrays. One is a counter which is incremented by 1 for
-    every 4 64-bit randoms produced.  The second is a key which determined
-    the sequence produced.  Using different keys produces independent
-    sequences.
+    The ``Philox`` state vector consists of a 256-bit value encoded as
+    a 4-element uint64 array and a 128-bit value encoded as a 2-element uint64
+    array. The former is a counter which is incremented by 1 for every 4 64-bit
+    randoms produced. The second is a key which determined the sequence
+    produced. Using different keys produces independent sequences.
 
-    ``Philox`` is seeded using either a single 64-bit unsigned integer
-    or a vector of 64-bit unsigned integers.  In either case, the seed is
-    used as an input for a second random number generator,
-    SplitMix64, and the output of this PRNG function is used as the initial state.
-    Using a single 64-bit value for the seed can only initialize a small range of
-    the possible initial state values.
+    The input seed is processed by `SeedSequence` to generate the key. The
+    counter is set to 0.
+
+    Alternately, one can omit the seed parameter and set the ``key`` and
+    ``counter`` directly.
 
     **Parallel Features**
+
+    The preferred way to use a BitGenerator in parallel applications is to use
+    the `SeedSequence.spawn` method to obtain entropy values, and to use these
+    to generate new BitGenerators:
+
+    >>> from numpy.random import Generator, Philox, SeedSequence
+    >>> sg = SeedSequence(1234)
+    >>> rg = [Generator(Philox(s)) for s in sg.spawn(10)]
 
     ``Philox`` can be used in parallel applications by calling the ``jumped``
     method  to advances the state as-if :math:`2^{128}` random numbers have
@@ -143,7 +146,7 @@ cdef class Philox:
 
     **Compatibility Guarantee**
 
-    ``Philox`` makes a guarantee that a fixed seed and will always produce
+    ``Philox`` makes a guarantee that a fixed seed will always produce
     the same random integer stream.
 
     Examples
@@ -163,129 +166,21 @@ cdef class Philox:
     cdef philox_state rng_state
     cdef philox4x64_key_t philox_key
     cdef philox4x64_ctr_t philox_ctr
-    cdef bitgen_t _bitgen
-    cdef public object capsule
-    cdef object _ctypes
-    cdef object _cffi
-    cdef public object lock
 
     def __init__(self, seed=None, counter=None, key=None):
-        self.rng_state.ctr = &self.philox_ctr
-        self.rng_state.key = &self.philox_key
-        self.seed(seed, counter, key)
-        self.lock = Lock()
-
-        self._bitgen.state = <void *>&self.rng_state
-        self._bitgen.next_uint64 = &philox_uint64
-        self._bitgen.next_uint32 = &philox_uint32
-        self._bitgen.next_double = &philox_double
-        self._bitgen.next_raw = &philox_uint64
-
-        self._ctypes = None
-        self._cffi = None
-
-        cdef const char *name = 'BitGenerator'
-        self.capsule = PyCapsule_New(<void *>&self._bitgen, name, NULL)
-
-    # Pickling support:
-    def __getstate__(self):
-        return self.state
-
-    def __setstate__(self, state):
-        self.state = state
-
-    def __reduce__(self):
-        from ._pickle import __bit_generator_ctor
-        return __bit_generator_ctor, (self.state['bit_generator'],), self.state
-
-    cdef _reset_state_variables(self):
-        self.rng_state.has_uint32 = 0
-        self.rng_state.uinteger = 0
-        self.rng_state.buffer_pos = PHILOX_BUFFER_SIZE
-        for i in range(PHILOX_BUFFER_SIZE):
-            self.rng_state.buffer[i] = 0
-
-    def random_raw(self, size=None, output=True):
-        """
-        random_raw(self, size=None)
-
-        Return randoms as generated by the underlying BitGenerator
-
-        Parameters
-        ----------
-        size : int or tuple of ints, optional
-            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
-        output : bool, optional
-            Output values.  Used for performance testing since the generated
-            values are not returned.
-
-        Returns
-        -------
-        out : uint or ndarray
-            Drawn samples.
-
-        Notes
-        -----
-        This method directly exposes the the raw underlying pseudo-random
-        number generator. All values are returned as unsigned 64-bit
-        values irrespective of the number of bits produced by the PRNG.
-
-        See the class docstring for the number of bits returned.
-        """
-        return random_raw(&self._bitgen, self.lock, size, output)
-
-    def _benchmark(self, Py_ssize_t cnt, method=u'uint64'):
-        return benchmark(&self._bitgen, self.lock, cnt, method)
-
-    def seed(self, seed=None, counter=None, key=None):
-        """
-        seed(seed=None, counter=None, key=None)
-
-        Seed the generator.
-
-        This method is called when ``Philox`` is initialized. It can be
-        called again to re-seed the generator. For details, see
-        ``Philox``.
-
-        Parameters
-        ----------
-        seed : int, optional
-            Seed for ``Philox``.
-        counter : {int array}, optional
-            Positive integer less than 2**256 containing the counter position
-            or a 4 element array of uint64 containing the counter
-        key : {int, array}, options
-            Positive integer less than 2**128 containing the key
-            or a 2 element array of uint64 containing the key
-
-        Raises
-        ------
-        ValueError
-            If values are out of range for the PRNG.
-
-        Notes
-        -----
-        The two representation of the counter and key are related through
-        array[i] = (value // 2**(64*i)) % 2**64.
-        """
         if seed is not None and key is not None:
             raise ValueError('seed and key cannot be both used')
-        ub = 2 ** 64
-        if key is None:
-            if seed is None:
-                try:
-                    state = random_entropy(4)
-                except RuntimeError:
-                    state = random_entropy(4, 'fallback')
-                state = state.view(np.uint64)
-            else:
-                state = seed_by_array(seed, 2)
-            for i in range(2):
-                self.rng_state.key.v[i] = state[i]
-        else:
+        BitGenerator.__init__(self, seed)
+        self.rng_state.ctr = &self.philox_ctr
+        self.rng_state.key = &self.philox_key
+        if key is not None:
             key = int_to_array(key, 'key', 128, 64)
+            for i in range(2):
+                self.rng_state.key.v[i] = key[i]
+            # The seed sequence is invalid.
+            self._seed_seq = None
+        else:
+            key = self._seed_seq.generate_state(2, np.uint64)
             for i in range(2):
                 self.rng_state.key.v[i] = key[i]
         counter = 0 if counter is None else counter
@@ -294,6 +189,19 @@ cdef class Philox:
             self.rng_state.ctr.v[i] = counter[i]
 
         self._reset_state_variables()
+
+        self._bitgen.state = <void *>&self.rng_state
+        self._bitgen.next_uint64 = &philox_uint64
+        self._bitgen.next_uint32 = &philox_uint32
+        self._bitgen.next_double = &philox_double
+        self._bitgen.next_raw = &philox_uint64
+
+    cdef _reset_state_variables(self):
+        self.rng_state.has_uint32 = 0
+        self.rng_state.uinteger = 0
+        self.rng_state.buffer_pos = PHILOX_BUFFER_SIZE
+        for i in range(PHILOX_BUFFER_SIZE):
+            self.rng_state.buffer[i] = 0
 
     @property
     def state(self):
@@ -426,47 +334,3 @@ cdef class Philox:
         philox_advance(<uint64_t *> delta_a.data, &self.rng_state)
         self._reset_state_variables()
         return self
-
-    @property
-    def ctypes(self):
-        """
-        ctypes interface
-
-        Returns
-        -------
-        interface : namedtuple
-            Named tuple containing ctypes wrapper
-
-            * state_address - Memory address of the state struct
-            * state - pointer to the state struct
-            * next_uint64 - function pointer to produce 64 bit integers
-            * next_uint32 - function pointer to produce 32 bit integers
-            * next_double - function pointer to produce doubles
-            * bitgen - pointer to the BitGenerator struct
-        """
-        if self._ctypes is None:
-            self._ctypes = prepare_ctypes(&self._bitgen)
-
-        return self._ctypes
-
-    @property
-    def cffi(self):
-        """
-        CFFI interface
-
-        Returns
-        -------
-        interface : namedtuple
-            Named tuple containing CFFI wrapper
-
-            * state_address - Memory address of the state struct
-            * state - pointer to the state struct
-            * next_uint64 - function pointer to produce 64 bit integers
-            * next_uint32 - function pointer to produce 32 bit integers
-            * next_double - function pointer to produce doubles
-            * bitgen - pointer to the BitGenerator struct
-        """
-        if self._cffi is not None:
-            return self._cffi
-        self._cffi = prepare_cffi(&self._bitgen)
-        return self._cffi

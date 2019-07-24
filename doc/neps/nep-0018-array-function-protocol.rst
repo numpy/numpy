@@ -642,7 +642,7 @@ layer, separating NumPy's high level API from default implementations on
 
 The downsides are that this would require an explicit opt-in from all
 existing code, e.g., ``import numpy.api as np``, and in the long term
-would result in the maintainence of two separate NumPy APIs. Also, many
+would result in the maintenance of two separate NumPy APIs. Also, many
 functions from ``numpy`` itself are already overloaded (but
 inadequately), so confusion about high vs. low level APIs in NumPy would
 still persist.

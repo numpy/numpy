@@ -1905,8 +1905,6 @@ class blas_info(system_info):
                                       library_dirs=info['library_dirs'],
                                       extra_postargs=info.get('extra_link_args', []))
                     return libs
-                    # This breaks the for loop
-                    break
                 except distutils.ccompiler.LinkError:
                     pass
         finally:

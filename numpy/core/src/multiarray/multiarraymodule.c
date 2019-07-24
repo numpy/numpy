@@ -288,20 +288,10 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
 NPY_NO_EXPORT int
 PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
 {
-    npy_intp newd1;
-    PyArray_Descr *descr;
-    static const char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
-
     /* 2008-07-14, 1.5 */
-    if (DEPRECATE(msg) < 0) {
-        return -1;
-    }
-    descr = PyArray_DescrFromType(typecode);
-    if (PyArray_AsCArray(op, (void *)ptr, &newd1, 1, descr) == -1) {
-        return -1;
-    }
-    *d1 = (int) newd1;
-    return 0;
+    PyErr_SetString(PyExc_NotImplementedError,
+                "PyArray_As1D: use PyArray_AsCArray.");
+    return -1;
 }
 
 /*NUMPY_API
@@ -310,21 +300,10 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
 NPY_NO_EXPORT int
 PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
 {
-    npy_intp newdims[2];
-    PyArray_Descr *descr;
-    static const char msg[] = "PyArray_As1D: use PyArray_AsCArray.";
-
     /* 2008-07-14, 1.5 */
-    if (DEPRECATE(msg) < 0) {
-        return -1;
-    }
-    descr = PyArray_DescrFromType(typecode);
-    if (PyArray_AsCArray(op, (void *)ptr, newdims, 2, descr) == -1) {
-        return -1;
-    }
-    *d1 = (int ) newdims[0];
-    *d2 = (int ) newdims[1];
-    return 0;
+    PyErr_SetString(PyExc_NotImplementedError,
+                "PyArray_As2D: use PyArray_AsCArray.");
+    return -1;
 }
 
 /* End Deprecated */
@@ -2086,22 +2065,25 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     
     if (offset != 0 && strcmp(sep, "") != 0) {
         PyErr_SetString(PyExc_TypeError, "'offset' argument only permitted for binary files");
+        Py_XDECREF(type);
+        Py_DECREF(file);
         return NULL;
     }
     if (PyString_Check(file) || PyUnicode_Check(file)) {
-        file = npy_PyFile_OpenFile(file, "rb");
+        Py_SETREF(file, npy_PyFile_OpenFile(file, "rb"));
         if (file == NULL) {
+            Py_XDECREF(type);
             return NULL;
         }
         own = 1;
     }
     else {
-        Py_INCREF(file);
         own = 0;
     }
     fp = npy_PyFile_Dup2(file, "rb", &orig_pos);
     if (fp == NULL) {
         Py_DECREF(file);
+        Py_XDECREF(type);
         return NULL;
     }
     if (npy_fseek(fp, offset, SEEK_CUR) != 0) {
@@ -3825,9 +3807,11 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     else {
         PyErr_SetString(PyExc_TypeError,
                 "string operation on non-string array");
+        Py_DECREF(type);
         goto err;
     }
     if (method == NULL) {
+        Py_DECREF(type);
         goto err;
     }
 

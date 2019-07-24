@@ -81,11 +81,16 @@ run_test()
   INSTALLDIR=$($PYTHON -c \
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
+
+  if [ -n "$PPC64_LE" ]; then
+    $PYTHON ../tools/openblas_support.py --check_version $OpenBLAS_version
+  fi
+
   if [ -n "$RUN_FULL_TESTS" ]; then
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    $PYTHON ../tools/test-installed-numpy.py -v --durations 10 --mode=full $COVERAGE_FLAG
+    $PYTHON ../runtests.py -n -v --durations 10 --mode=full $COVERAGE_FLAG
   else
-    $PYTHON ../tools/test-installed-numpy.py -v --durations 10
+    $PYTHON ../runtests.py -n -v --durations 10
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then

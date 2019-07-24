@@ -5,10 +5,7 @@ from functools import partial
 import numpy as np
 import pytest
 from numpy.testing import assert_equal, assert_, assert_array_equal
-from numpy.random import (Generator, MT19937, DSFMT, ThreeFry,
-                          PCG32, PCG64, Philox, Xoshiro256, Xoshiro512,
-                          entropy)
-
+from numpy.random import (Generator, MT19937, PCG64, Philox, SFC64, entropy)
 
 @pytest.fixture(scope='module',
                 params=(np.bool, np.int8, np.int16, np.int32, np.int64,
@@ -99,7 +96,7 @@ class RNG(object):
     @classmethod
     def setup_class(cls):
         # Overridden in test classes. Place holder to silence IDE noise
-        cls.bit_generator = Xoshiro256
+        cls.bit_generator = PCG64
         cls.advance = None
         cls.seed = [12345]
         cls.rg = Generator(cls.bit_generator(*cls.seed))
@@ -148,7 +145,7 @@ class RNG(object):
             assert_(comp_state(jumped_state, rejumped_state))
         else:
             bitgen_name = self.rg.bit_generator.__class__.__name__
-            if bitgen_name not in ('',):
+            if bitgen_name not in ('SFC64',):
                 raise AttributeError('no "jumped" in %s' % bitgen_name)
             pytest.skip('Jump is not supported by {0}'.format(bitgen_name))
 
@@ -459,55 +456,33 @@ class RNG(object):
         else:
             dtype = np.uint64
         seed = np.array([1], dtype=dtype)
-        self.rg.bit_generator.seed(seed)
-        state1 = self.rg.bit_generator.state
-        self.rg.bit_generator.seed(1)
-        state2 = self.rg.bit_generator.state
+        bg = self.bit_generator(seed)
+        state1 = bg.state
+        bg = self.bit_generator(1)
+        state2 = bg.state
         assert_(comp_state(state1, state2))
 
         seed = np.arange(4, dtype=dtype)
-        self.rg.bit_generator.seed(seed)
-        state1 = self.rg.bit_generator.state
-        self.rg.bit_generator.seed(seed[0])
-        state2 = self.rg.bit_generator.state
+        bg = self.bit_generator(seed)
+        state1 = bg.state
+        bg = self.bit_generator(seed[0])
+        state2 = bg.state
         assert_(not comp_state(state1, state2))
 
         seed = np.arange(1500, dtype=dtype)
-        self.rg.bit_generator.seed(seed)
-        state1 = self.rg.bit_generator.state
-        self.rg.bit_generator.seed(seed[0])
-        state2 = self.rg.bit_generator.state
+        bg = self.bit_generator(seed)
+        state1 = bg.state
+        bg = self.bit_generator(seed[0])
+        state2 = bg.state
         assert_(not comp_state(state1, state2))
 
         seed = 2 ** np.mod(np.arange(1500, dtype=dtype),
                            self.seed_vector_bits - 1) + 1
-        self.rg.bit_generator.seed(seed)
-        state1 = self.rg.bit_generator.state
-        self.rg.bit_generator.seed(seed[0])
-        state2 = self.rg.bit_generator.state
+        bg = self.bit_generator(seed)
+        state1 = bg.state
+        bg  = self.bit_generator(seed[0])
+        state2 = bg.state
         assert_(not comp_state(state1, state2))
-
-    def test_seed_array_error(self):
-        if self.seed_vector_bits == 32:
-            out_of_bounds = 2 ** 32
-        else:
-            out_of_bounds = 2 ** 64
-
-        seed = -1
-        with pytest.raises(ValueError):
-            self.rg.bit_generator.seed(seed)
-
-        seed = np.array([-1], dtype=np.int32)
-        with pytest.raises(ValueError):
-            self.rg.bit_generator.seed(seed)
-
-        seed = np.array([1, 2, 3, -5], dtype=np.int32)
-        with pytest.raises(ValueError):
-            self.rg.bit_generator.seed(seed)
-
-        seed = np.array([1, 2, 3, out_of_bounds])
-        with pytest.raises(ValueError):
-            self.rg.bit_generator.seed(seed)
 
     def test_uniform_float(self):
         rg = Generator(self.bit_generator(12345))
@@ -777,11 +752,23 @@ class TestPhilox(RNG):
         cls._extra_setup()
 
 
-class TestThreeFry(RNG):
+class TestSFC64(RNG):
     @classmethod
     def setup_class(cls):
-        cls.bit_generator = ThreeFry
-        cls.advance = 2 ** 63 + 2 ** 31 + 2 ** 15 + 1
+        cls.bit_generator = SFC64
+        cls.advance = None
+        cls.seed = [12345]
+        cls.rg = Generator(cls.bit_generator(*cls.seed))
+        cls.initial_state = cls.rg.bit_generator.state
+        cls.seed_vector_bits = 192
+        cls._extra_setup()
+
+
+class TestPCG64(RNG):
+    @classmethod
+    def setup_class(cls):
+        cls.bit_generator = PCG64
+        cls.advance = 2**63 + 2**31 + 2**15 + 1
         cls.seed = [12345]
         cls.rg = Generator(cls.bit_generator(*cls.seed))
         cls.initial_state = cls.rg.bit_generator.state
@@ -789,40 +776,36 @@ class TestThreeFry(RNG):
         cls._extra_setup()
 
 
-class TestXoshiro256(RNG):
+class TestDefaultRNG(RNG):
     @classmethod
     def setup_class(cls):
-        cls.bit_generator = Xoshiro256
-        cls.advance = None
+        # This will duplicate some tests that directly instantiate a fresh
+        # Generator(), but that's okay.
+        cls.bit_generator = PCG64
+        cls.advance = 2**63 + 2**31 + 2**15 + 1
         cls.seed = [12345]
-        cls.rg = Generator(cls.bit_generator(*cls.seed))
+        cls.rg = np.random.default_rng(*cls.seed)
         cls.initial_state = cls.rg.bit_generator.state
         cls.seed_vector_bits = 64
         cls._extra_setup()
 
+    def test_default_is_pcg64(self):
+        # In order to change the default BitGenerator, we'll go through
+        # a deprecation cycle to move to a different function.
+        assert_(isinstance(self.rg.bit_generator, PCG64))
 
-class TestXoshiro512(RNG):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = Xoshiro512
-        cls.advance = None
-        cls.seed = [12345]
-        cls.rg = Generator(cls.bit_generator(*cls.seed))
-        cls.initial_state = cls.rg.bit_generator.state
-        cls.seed_vector_bits = 64
-        cls._extra_setup()
-
-
-class TestDSFMT(RNG):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = DSFMT
-        cls.advance = None
-        cls.seed = [12345]
-        cls.rg = Generator(cls.bit_generator(*cls.seed))
-        cls.initial_state = cls.rg.bit_generator.state
-        cls._extra_setup()
-        cls.seed_vector_bits = 32
+    def test_seed(self):
+        np.random.default_rng()
+        np.random.default_rng(None)
+        np.random.default_rng(12345)
+        np.random.default_rng(0)
+        np.random.default_rng(43660444402423911716352051725018508569)
+        np.random.default_rng([43660444402423911716352051725018508569,
+                               279705150948142787361475340226491943209])
+        with pytest.raises(ValueError):
+            np.random.default_rng(-1)
+        with pytest.raises(ValueError):
+            np.random.default_rng([12345, -1])
 
 
 class TestEntropy(object):
@@ -843,52 +826,3 @@ class TestEntropy(object):
         e2 = entropy.random_entropy(source='fallback')
         assert_((e1 != e2))
 
-
-class TestPCG64(RNG):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = PCG64
-        cls.advance = 2 ** 96 + 2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1
-        cls.seed = [2 ** 96 + 2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1,
-                    2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
-        cls.rg = Generator(cls.bit_generator(*cls.seed))
-        cls.initial_state = cls.rg.bit_generator.state
-        cls.seed_vector_bits = None
-        cls._extra_setup()
-
-    def test_seed_array_error(self):
-        # GH #82 for error type changes
-        if self.seed_vector_bits == 32:
-            out_of_bounds = 2 ** 32
-        else:
-            out_of_bounds = 2 ** 64
-
-        seed = -1
-        with pytest.raises(ValueError):
-            self.rg.bit_generator.seed(seed)
-
-        error_type = ValueError if self.seed_vector_bits else TypeError
-        seed = np.array([-1], dtype=np.int32)
-        with pytest.raises(error_type):
-            self.rg.bit_generator.seed(seed)
-
-        seed = np.array([1, 2, 3, -5], dtype=np.int32)
-        with pytest.raises(error_type):
-            self.rg.bit_generator.seed(seed)
-
-        seed = np.array([1, 2, 3, out_of_bounds])
-        with pytest.raises(error_type):
-            self.rg.bit_generator.seed(seed)
-
-
-class TestPCG32(TestPCG64):
-    @classmethod
-    def setup_class(cls):
-        cls.bit_generator = PCG32
-        cls.advance = 2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1
-        cls.seed = [2 ** 48 + 2 ** 21 + 2 ** 16 + 2 ** 5 + 1,
-                    2 ** 21 + 2 ** 16 + 2 ** 5 + 1]
-        cls.rg = Generator(cls.bit_generator(*cls.seed))
-        cls.initial_state = cls.rg.bit_generator.state
-        cls.seed_vector_bits = None
-        cls._extra_setup()

@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 
 from .bounded_integers import _integers_types
-from .xoshiro256 import Xoshiro256
+from .pcg64 import PCG64
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
@@ -34,9 +34,18 @@ __all__ = ['Generator', 'beta', 'binomial', 'bytes', 'chisquare', 'choice',
 np.import_array()
 
 
+cdef bint _check_bit_generator(object bitgen):
+    """Check if an object satisfies the BitGenerator interface.
+    """
+    if not hasattr(bitgen, "capsule"):
+        return False
+    cdef const char *name = "BitGenerator"
+    return PyCapsule_IsValid(bitgen.capsule, name)
+
+
 cdef class Generator:
     """
-    Generator(bit_generator=None)
+    Generator(bit_generator)
 
     Container for the BitGenerators.
 
@@ -48,6 +57,9 @@ cdef class Generator:
     array filled with generated values is returned. If `size` is a tuple,
     then an array with that shape is filled and returned.
 
+    The function :func:`numpy.random.default_rng` will instantiate
+    a `Generator` with numpy's default `BitGenerator`.
+
     **No Compatibility Guarantee**
 
     ``Generator`` does not provide a version compatibility guarantee. In
@@ -55,9 +67,8 @@ cdef class Generator:
 
     Parameters
     ----------
-    bit_generator : BitGenerator, optional
-        BitGenerator to use as the core generator. If none is provided, uses
-        Xoshiro256.
+    bit_generator : BitGenerator
+        BitGenerator to use as the core generator.
 
     Notes
     -----
@@ -70,16 +81,14 @@ cdef class Generator:
 
     Examples
     --------
-    >>> from numpy.random import Generator
-    >>> rg = Generator()
+    >>> from numpy.random import Generator, PCG64
+    >>> rg = Generator(PCG64())
     >>> rg.standard_normal()
     -0.203  # random
 
-    Using a specific generator
-
-    >>> from numpy.random import MT19937
-    >>> rg = Generator(MT19937())
-
+    See Also
+    --------
+    default_rng : Recommended constructor for `Generator`.
     """
     cdef public object _bit_generator
     cdef bitgen_t _bitgen
@@ -87,9 +96,7 @@ cdef class Generator:
     cdef object lock
     _poisson_lam_max = POISSON_LAM_MAX
 
-    def __init__(self, bit_generator=None):
-        if bit_generator is None:
-            bit_generator = Xoshiro256()
+    def __init__(self, bit_generator):
         self._bit_generator = bit_generator
 
         capsule = bit_generator.capsule
@@ -166,16 +173,17 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.Generator().random()
+        >>> rng = np.random.default_rng()
+        >>> rng.random()
         0.47108547995356098 # random
-        >>> type(np.random.Generator().random())
+        >>> type(rng.random())
         <class 'float'>
-        >>> np.random.Generator().random((5,))
+        >>> rng.random((5,))
         array([ 0.30220482,  0.86820401,  0.1654503 ,  0.11659149,  0.54323428]) # random
 
         Three-by-two array of random numbers from [-5, 0):
 
-        >>> 5 * np.random.Generator().random((3, 2)) - 5
+        >>> 5 * rng.random((3, 2)) - 5
         array([[-3.99149989, -0.52338984], # random
                [-2.99091858, -0.79479508],
                [-1.23204345, -1.75224494]])
@@ -321,7 +329,7 @@ cdef class Generator:
         --------
         Output a 3x8000 array:
 
-        >>> n = np.random.Generator().standard_exponential((3, 8000))
+        >>> n = np.random.default_rng().standard_exponential((3, 8000))
 
         """
         key = np.dtype(dtype).name
@@ -345,7 +353,8 @@ cdef class Generator:
 
         Return random integers from `low` (inclusive) to `high` (exclusive), or
         if endpoint=True, `low` (inclusive) to `high` (inclusive). Replaces
-        randint (with endpoint=False) and random_integers (with endpoint=True)
+        `RandomState.randint` (with endpoint=False) and
+        `RandomState.random_integers` (with endpoint=True)
 
         Return random integers from the "discrete uniform" distribution of
         the specified dtype. If `high` is None (the default), then results are
@@ -389,30 +398,31 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.Generator().integers(2, size=10)
+        >>> rng = np.random.default_rng()
+        >>> rng.integers(2, size=10)
         array([1, 0, 0, 0, 1, 1, 0, 0, 1, 0])  # random
-        >>> np.random.Generator().integers(1, size=10)
+        >>> rng.integers(1, size=10)
         array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
         Generate a 2 x 4 array of ints between 0 and 4, inclusive:
 
-        >>> np.random.Generator().integers(5, size=(2, 4))
+        >>> rng.integers(5, size=(2, 4))
         array([[4, 0, 2, 1],
                [3, 2, 2, 0]])  # random
 
         Generate a 1 x 3 array with 3 different upper bounds
 
-        >>> np.random.Generator().integers(1, [3, 5, 10])
+        >>> rng.integers(1, [3, 5, 10])
         array([2, 2, 9])  # random
 
         Generate a 1 by 3 array with 3 different lower bounds
 
-        >>> np.random.Generator().integers([1, 5, 7], 10)
+        >>> rng.integers([1, 5, 7], 10)
         array([9, 8, 7])  # random
 
         Generate a 2 by 4 array using broadcasting with dtype of uint8
 
-        >>> np.random.Generator().integers([1, 3, 5, 7], [[10], [20]], dtype=np.uint8)
+        >>> rng.integers([1, 3, 5, 7], [[10], [20]], dtype=np.uint8)
         array([[ 8,  6,  9,  7],
                [ 1, 16,  9, 12]], dtype=uint8)  # random
 
@@ -484,23 +494,18 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.Generator().bytes(10)
+        >>> np.random.default_rng().bytes(10)
         ' eh\\x85\\x022SZ\\xbf\\xa4' #random
 
         """
         cdef Py_ssize_t n_uint32 = ((length - 1) // 4 + 1)
+        # Interpret the uint32s as little-endian to convert them to bytes
+        # consistently.
         return self.integers(0, 4294967296, size=n_uint32,
-                             dtype=np.uint32).tobytes()[:length]
-
-    def randint(self, low, high=None, size=None, dtype=np.int64, endpoint=False):
-        """
-        Deprecated, renamed to ``integers``
-        """
-        warnings.warn("Renamed to integers", RuntimeWarning)
-        self.integers(low, high, size, dtype, endpoint)
+                             dtype=np.uint32).astype('<u4').tobytes()[:length]
 
     @cython.wraparound(True)
-    def choice(self, a, size=None, replace=True, p=None, axis=0):
+    def choice(self, a, size=None, replace=True, p=None, axis=0, bint shuffle=True):
         """
         choice(a, size=None, replace=True, p=None, axis=0):
 
@@ -527,6 +532,9 @@ cdef class Generator:
         axis : int, optional
             The axis along which the selection is performed. The default, 0,
             selects by row.
+        shuffle : boolean, optional
+            Whether the sample is shuffled when sampling without replacement.
+            Default is True, False provides a speedup.
 
         Returns
         -------
@@ -550,45 +558,44 @@ cdef class Generator:
         --------
         Generate a uniform random sample from np.arange(5) of size 3:
 
-        >>> np.random.Generator().choice(5, 3)
+        >>> rng = np.random.default_rng()
+        >>> rng.choice(5, 3)
         array([0, 3, 4]) # random
-        >>> #This is equivalent to np.random.Generator().integers(0,5,3)
+        >>> #This is equivalent to rng.integers(0,5,3)
 
         Generate a non-uniform random sample from np.arange(5) of size 3:
 
-        >>> np.random.Generator().choice(5, 3, p=[0.1, 0, 0.3, 0.6, 0])
+        >>> rng.choice(5, 3, p=[0.1, 0, 0.3, 0.6, 0])
         array([3, 3, 0]) # random
 
         Generate a uniform random sample from np.arange(5) of size 3 without
         replacement:
 
-        >>> np.random.Generator().choice(5, 3, replace=False)
+        >>> rng.choice(5, 3, replace=False)
         array([3,1,0]) # random
-        >>> #This is equivalent to np.random.Generator().permutation(np.arange(5))[:3]
+        >>> #This is equivalent to rng.permutation(np.arange(5))[:3]
 
         Generate a non-uniform random sample from np.arange(5) of size
         3 without replacement:
 
-        >>> np.random.Generator().choice(5, 3, replace=False, p=[0.1, 0, 0.3, 0.6, 0])
+        >>> rng.choice(5, 3, replace=False, p=[0.1, 0, 0.3, 0.6, 0])
         array([2, 3, 0]) # random
 
         Any of the above can be repeated with an arbitrary array-like
         instead of just integers. For instance:
 
         >>> aa_milne_arr = ['pooh', 'rabbit', 'piglet', 'Christopher']
-        >>> np.random.Generator().choice(aa_milne_arr, 5, p=[0.5, 0.1, 0.1, 0.3])
+        >>> rng.choice(aa_milne_arr, 5, p=[0.5, 0.1, 0.1, 0.3])
         array(['pooh', 'pooh', 'pooh', 'Christopher', 'piglet'], # random
               dtype='<U11')
 
         """
-        cdef char* idx_ptr
-        cdef int64_t buf
-        cdef char* buf_ptr
 
-        cdef set idx_set
         cdef int64_t val, t, loc, size_i, pop_size_i
         cdef int64_t *idx_data
         cdef np.npy_intp j
+        cdef uint64_t set_size, mask
+        cdef uint64_t[::1] hash_set
         # Format and Verify input
         a = np.array(a, copy=False)
         if a.ndim == 0:
@@ -675,36 +682,45 @@ cdef class Generator:
                 size_i = size
                 pop_size_i = pop_size
                 # This is a heuristic tuning. should be improvable
-                if pop_size_i > 200 and (size > 200 or size > (10 * pop_size // size)):
+                if shuffle:
+                    cutoff = 50
+                else:
+                    cutoff = 20
+                if pop_size_i > 10000 and (size_i > (pop_size_i // cutoff)):
                     # Tail shuffle size elements
-                    idx = np.arange(pop_size, dtype=np.int64)
-                    idx_ptr = np.PyArray_BYTES(<np.ndarray>idx)
-                    buf_ptr = <char*>&buf
-                    self._shuffle_raw(pop_size_i, max(pop_size_i - size_i,1),
-                                      8, 8, idx_ptr, buf_ptr)
+                    idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
+                    idx_data = <int64_t*>(<np.ndarray>idx).data
+                    with self.lock, nogil:
+                        self._shuffle_int(pop_size_i, max(pop_size_i - size_i, 1),
+                                          idx_data)
                     # Copy to allow potentially large array backing idx to be gc
                     idx = idx[(pop_size - size):].copy()
                 else:
-                    # Floyds's algorithm with precomputed indices
-                    # Worst case, O(n**2) when size is close to pop_size
+                    # Floyd's algorithm
                     idx = np.empty(size, dtype=np.int64)
                     idx_data = <int64_t*>np.PyArray_DATA(<np.ndarray>idx)
-                    idx_set = set()
-                    loc = 0
-                    # Sample indices with one pass to avoid reacquiring the lock
-                    with self.lock:
+                    # smallest power of 2 larger than 1.2 * size
+                    set_size = <uint64_t>(1.2 * size_i)
+                    mask = _gen_mask(set_size)
+                    set_size = 1 + mask
+                    hash_set = np.full(set_size, <uint64_t>-1, np.uint64)
+                    with self.lock, cython.wraparound(False), nogil:
                         for j in range(pop_size_i - size_i, pop_size_i):
-                            idx_data[loc] = random_interval(&self._bitgen, j)
-                            loc += 1
-                    loc = 0
-                    while len(idx_set) < size_i:
-                        for j in range(pop_size_i - size_i, pop_size_i):
-                            if idx_data[loc] not in idx_set:
-                                val = idx_data[loc]
-                            else:
-                                idx_data[loc] = val = j
-                            idx_set.add(val)
-                            loc += 1
+                            val = random_bounded_uint64(&self._bitgen, 0, j, 0, 0)
+                            loc = val & mask
+                            while hash_set[loc] != <uint64_t>-1 and hash_set[loc] != <uint64_t>val:
+                                loc = (loc + 1) & mask
+                            if hash_set[loc] == <uint64_t>-1: # then val not in hash_set
+                                hash_set[loc] = val
+                                idx_data[j - pop_size_i + size_i] = val
+                            else: # we need to insert j instead
+                                loc = j & mask
+                                while hash_set[loc] != <uint64_t>-1:
+                                    loc = (loc + 1) & mask
+                                hash_set[loc] = j
+                                idx_data[j - pop_size_i + size_i] = j
+                        if shuffle:
+                            self._shuffle_int(size_i, 1, idx_data)
                 if shape is not None:
                     idx.shape = shape
 
@@ -784,7 +800,7 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> s = np.random.Generator().uniform(-1,0,1000)
+        >>> s = np.random.default_rng().uniform(-1,0,1000)
 
         All values are within the given interval:
 
@@ -869,8 +885,8 @@ cdef class Generator:
         -----
         For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
 
-            mu + sigma * np.random.Generator().standard_normal(size=...)
-            np.random.Generator().normal(mu, sigma, size=...)
+            mu + sigma * gen.standard_normal(size=...)
+            gen.normal(mu, sigma, size=...)
 
         See Also
         --------
@@ -880,22 +896,23 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.Generator().standard_normal()
+        >>> rng = np.random.default_rng()
+        >>> rng.standard_normal()
         2.1923875335537315 #random
 
-        >>> s = np.random.Generator().standard_normal(8000)
+        >>> s = rng.standard_normal(8000)
         >>> s
         array([ 0.6888893 ,  0.78096262, -0.89086505, ...,  0.49876311,  # random
                -0.38672696, -0.4685006 ])                                # random
         >>> s.shape
         (8000,)
-        >>> s = np.random.Generator().standard_normal(size=(3, 4, 2))
+        >>> s = rng.standard_normal(size=(3, 4, 2))
         >>> s.shape
         (3, 4, 2)
 
         Two-by-four array of samples from :math:`N(3, 6.25)`:
 
-        >>> 3 + 2.5 * np.random.Generator().standard_normal(size=(2, 4))
+        >>> 3 + 2.5 * rng.standard_normal(size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
@@ -962,8 +979,8 @@ cdef class Generator:
         The function has its peak at the mean, and its "spread" increases with
         the standard deviation (the function reaches 0.607 times its maximum at
         :math:`x + \\sigma` and :math:`x - \\sigma` [2]_).  This implies that
-        `numpy.random.Generator().normal` is more likely to return
-        samples lying close to the mean, rather than those far away.
+        :meth:`normal` is more likely to return samples lying close to the
+        mean, rather than those far away.
 
         References
         ----------
@@ -978,7 +995,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> mu, sigma = 0, 0.1 # mean and standard deviation
-        >>> s = np.random.Generator().normal(mu, sigma, 1000)
+        >>> s = np.random.default_rng().normal(mu, sigma, 1000)
 
         Verify the mean and the variance:
 
@@ -1000,7 +1017,7 @@ cdef class Generator:
 
         Two-by-four array of samples from N(3, 6.25):
 
-        >>> np.random.Generator().normal(3, 2.5, size=(2, 4))
+        >>> np.random.default_rng().normal(3, 2.5, size=(2, 4))
         array([[-4.49401501,  4.00950034, -1.81814867,  7.29718677],   # random
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
@@ -1074,7 +1091,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> shape, scale = 2., 1. # mean and width
-        >>> s = np.random.Generator().standard_gamma(shape, 1000000)
+        >>> s = np.random.default_rng().standard_gamma(shape, 1000000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1162,7 +1179,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> shape, scale = 2., 2.  # mean=4, std=2*sqrt(2)
-        >>> s = np.random.Generator().gamma(shape, scale, 1000)
+        >>> s = np.random.default_rng().gamma(shape, scale, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1252,7 +1269,7 @@ cdef class Generator:
 
         >>> dfnum = 1. # between group degrees of freedom
         >>> dfden = 48. # within groups degrees of freedom
-        >>> s = np.random.Generator().f(dfnum, dfden, 1000)
+        >>> s = np.random.default_rng().f(dfnum, dfden, 1000)
 
         The lower bound for the top 1% of the samples is :
 
@@ -1328,12 +1345,13 @@ cdef class Generator:
         distribution for the null hypothesis.  We'll plot the two probability
         distributions for comparison.
 
+        >>> rng = np.random.default_rng()
         >>> dfnum = 3 # between group deg of freedom
         >>> dfden = 20 # within groups degrees of freedom
         >>> nonc = 3.0
-        >>> nc_vals = np.random.Generator().noncentral_f(dfnum, dfden, nonc, 1000000)
+        >>> nc_vals = rng.noncentral_f(dfnum, dfden, nonc, 1000000)
         >>> NF = np.histogram(nc_vals, bins=50, density=True)
-        >>> c_vals = np.random.Generator().f(dfnum, dfden, 1000000)
+        >>> c_vals = rng.f(dfnum, dfden, 1000000)
         >>> F = np.histogram(c_vals, bins=50, density=True)
         >>> import matplotlib.pyplot as plt
         >>> plt.plot(F[1][1:], F[0])
@@ -1405,7 +1423,7 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.Generator().chisquare(2,4)
+        >>> np.random.default_rng().chisquare(2,4)
         array([ 1.89920014,  9.00867716,  3.13710533,  5.62318272]) # random
 
         """
@@ -1463,8 +1481,9 @@ cdef class Generator:
         --------
         Draw values from the distribution and plot the histogram
 
+        >>> rng = np.random.default_rng()
         >>> import matplotlib.pyplot as plt
-        >>> values = plt.hist(np.random.Generator().noncentral_chisquare(3, 20, 100000),
+        >>> values = plt.hist(rng.noncentral_chisquare(3, 20, 100000),
         ...                   bins=200, density=True)
         >>> plt.show()
 
@@ -1472,9 +1491,9 @@ cdef class Generator:
         and compare to a chisquare.
 
         >>> plt.figure()
-        >>> values = plt.hist(np.random.Generator().noncentral_chisquare(3, .0000001, 100000),
+        >>> values = plt.hist(rng.noncentral_chisquare(3, .0000001, 100000),
         ...                   bins=np.arange(0., 25, .1), density=True)
-        >>> values2 = plt.hist(np.random.Generator().chisquare(3, 100000),
+        >>> values2 = plt.hist(rng.chisquare(3, 100000),
         ...                    bins=np.arange(0., 25, .1), density=True)
         >>> plt.plot(values[1][0:-1], values[0]-values2[0], 'ob')
         >>> plt.show()
@@ -1483,7 +1502,7 @@ cdef class Generator:
         distribution.
 
         >>> plt.figure()
-        >>> values = plt.hist(np.random.Generator().noncentral_chisquare(3, 20, 100000),
+        >>> values = plt.hist(rng.noncentral_chisquare(3, 20, 100000),
         ...                   bins=200, density=True)
         >>> plt.show()
 
@@ -1549,7 +1568,7 @@ cdef class Generator:
         Draw samples and plot the distribution:
 
         >>> import matplotlib.pyplot as plt
-        >>> s = np.random.Generator().standard_cauchy(1000000)
+        >>> s = np.random.default_rng().standard_cauchy(1000000)
         >>> s = s[(s>-25) & (s<25)]  # truncate distribution so it plots well
         >>> plt.hist(s, bins=100)
         >>> plt.show()
@@ -1622,7 +1641,7 @@ cdef class Generator:
         We have 10 degrees of freedom, so is the sample mean within 95% of the
         recommended value?
 
-        >>> s = np.random.Generator().standard_t(10, size=100000)
+        >>> s = np.random.default_rng().standard_t(10, size=100000)
         >>> np.mean(intake)
         6753.636363636364
         >>> intake.std(ddof=1)
@@ -1716,7 +1735,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> mu, kappa = 0.0, 4.0 # mean and dispersion
-        >>> s = np.random.Generator().vonmises(mu, kappa, 1000)
+        >>> s = np.random.default_rng().vonmises(mu, kappa, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1816,7 +1835,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> a, m = 3., 2.  # shape and mode
-        >>> s = (np.random.Generator().pareto(a, 1000) + 1) * m
+        >>> s = (np.random.default_rng().pareto(a, 1000) + 1) * m
 
         Display the histogram of the samples, along with the probability
         density function:
@@ -1908,8 +1927,9 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
+        >>> rng = np.random.default_rng()
         >>> a = 5. # shape
-        >>> s = np.random.Generator().weibull(a, 1000)
+        >>> s = rng.weibull(a, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -1919,7 +1939,7 @@ cdef class Generator:
         >>> def weib(x,n,a):
         ...     return (a / n) * (x / n)**(a - 1) * np.exp(-(x / n)**a)
 
-        >>> count, bins, ignored = plt.hist(np.random.Generator().weibull(5.,1000))
+        >>> count, bins, ignored = plt.hist(rng.weibull(5.,1000))
         >>> x = np.arange(1,100.)/50.
         >>> scale = count.max()/weib(x, 1., 5.).max()
         >>> plt.plot(x, weib(x, 1., 5.)*scale)
@@ -1987,9 +2007,10 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
+        >>> rng = np.random.default_rng()
         >>> a = 5. # shape
         >>> samples = 1000
-        >>> s = np.random.Generator().power(a, samples)
+        >>> s = rng.power(a, samples)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -2005,20 +2026,20 @@ cdef class Generator:
         Compare the power function distribution to the inverse of the Pareto.
 
         >>> from scipy import stats  # doctest: +SKIP
-        >>> rvs = np.random.Generator().power(5, 1000000)
-        >>> rvsp = np.random.Generator().pareto(5, 1000000)
+        >>> rvs = rng.power(5, 1000000)
+        >>> rvsp = rng.pareto(5, 1000000)
         >>> xx = np.linspace(0,1,100)
         >>> powpdf = stats.powerlaw.pdf(xx,5)  # doctest: +SKIP
 
         >>> plt.figure()
         >>> plt.hist(rvs, bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')  # doctest: +SKIP
-        >>> plt.title('np.random.Generator().power(5)')
+        >>> plt.title('power(5)')
 
         >>> plt.figure()
         >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
         >>> plt.plot(xx,powpdf,'r-')  # doctest: +SKIP
-        >>> plt.title('inverse of 1 + np.random.Generator().pareto(5)')
+        >>> plt.title('inverse of 1 + Generator.pareto(5)')
 
         >>> plt.figure()
         >>> plt.hist(1./(1.+rvsp), bins=50, density=True)
@@ -2093,7 +2114,7 @@ cdef class Generator:
         Draw samples from the distribution
 
         >>> loc, scale = 0., 1.
-        >>> s = np.random.Generator().laplace(loc, scale, 1000)
+        >>> s = np.random.default_rng().laplace(loc, scale, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -2195,8 +2216,9 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
+        >>> rng = np.random.default_rng()
         >>> mu, beta = 0, 0.1 # location and scale
-        >>> s = np.random.Generator().gumbel(mu, beta, 1000)
+        >>> s = rng.gumbel(mu, beta, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -2214,7 +2236,7 @@ cdef class Generator:
         >>> means = []
         >>> maxima = []
         >>> for i in range(0,1000) :
-        ...    a = np.random.Generator().normal(mu, beta, 1000)
+        ...    a = rng.normal(mu, beta, 1000)
         ...    means.append(a.mean())
         ...    maxima.append(a.max())
         >>> count, bins, ignored = plt.hist(maxima, 30, density=True)
@@ -2296,7 +2318,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> loc, scale = 10, 1
-        >>> s = np.random.Generator().logistic(loc, scale, 10000)
+        >>> s = np.random.default_rng().logistic(loc, scale, 10000)
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s, bins=50)
 
@@ -2378,8 +2400,9 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
+        >>> rng = np.random.default_rng()
         >>> mu, sigma = 3., 1. # mean and standard deviation
-        >>> s = np.random.Generator().lognormal(mu, sigma, 1000)
+        >>> s = rng.lognormal(mu, sigma, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -2401,9 +2424,10 @@ cdef class Generator:
 
         >>> # Generate a thousand samples: each is the product of 100 random
         >>> # values, drawn from a normal distribution.
+        >>> rng = rng
         >>> b = []
         >>> for i in range(1000):
-        ...    a = 10. + np.random.Generator().standard_normal(100)
+        ...    a = 10. + rng.standard_normal(100)
         ...    b.append(np.product(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
@@ -2471,7 +2495,8 @@ cdef class Generator:
         Draw values from the distribution and plot the histogram
 
         >>> from matplotlib.pyplot import hist
-        >>> values = hist(np.random.Generator().rayleigh(3, 100000), bins=200, density=True)
+        >>> rng = np.random.default_rng()
+        >>> values = hist(rng.rayleigh(3, 100000), bins=200, density=True)
 
         Wave heights tend to follow a Rayleigh distribution. If the mean wave
         height is 1 meter, what fraction of waves are likely to be larger than 3
@@ -2479,7 +2504,7 @@ cdef class Generator:
 
         >>> meanvalue = 1
         >>> modevalue = np.sqrt(2 / np.pi) * meanvalue
-        >>> s = np.random.Generator().rayleigh(modevalue, 1000000)
+        >>> s = rng.rayleigh(modevalue, 1000000)
 
         The percentage of waves larger than 3 meters is:
 
@@ -2551,7 +2576,7 @@ cdef class Generator:
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(np.random.Generator().wald(3, 2, 100000), bins=200, density=True)
+        >>> h = plt.hist(np.random.default_rng().wald(3, 2, 100000), bins=200, density=True)
         >>> plt.show()
 
         """
@@ -2618,7 +2643,7 @@ cdef class Generator:
         Draw values from the distribution and plot the histogram:
 
         >>> import matplotlib.pyplot as plt
-        >>> h = plt.hist(np.random.Generator().triangular(-3, 0, 8, 100000), bins=200,
+        >>> h = plt.hist(np.random.default_rng().triangular(-3, 0, 8, 100000), bins=200,
         ...              density=True)
         >>> plt.show()
 
@@ -2730,8 +2755,9 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
+        >>> rng = np.random.default_rng()
         >>> n, p = 10, .5  # number of trials, probability of each trial
-        >>> s = np.random.Generator().binomial(n, p, 1000)
+        >>> s = rng.binomial(n, p, 1000)
         # result of flipping a coin 10 times, tested 1000 times.
 
         A real world example. A company drills 9 wild-cat oil exploration
@@ -2741,7 +2767,7 @@ cdef class Generator:
         Let's do 20,000 trials of the model, and count the number that
         generate zero positive results.
 
-        >>> sum(np.random.Generator().binomial(9, 0.1, 20000) == 0)/20000.
+        >>> sum(rng.binomial(9, 0.1, 20000) == 0)/20000.
         # answer = 0.38885, or 38%.
 
         """
@@ -2868,7 +2894,7 @@ cdef class Generator:
         for each successive well, that is what is the probability of a
         single success after drilling 5 wells, after 6 wells, etc.?
 
-        >>> s = np.random.Generator().negative_binomial(1, 0.1, 100000)
+        >>> s = np.random.default_rng().negative_binomial(1, 0.1, 100000)
         >>> for i in range(1, 11): # doctest: +SKIP
         ...    probability = sum(s<i) / 100000.
         ...    print(i, "wells drilled, probability of one success =", probability)
@@ -2932,7 +2958,8 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> import numpy as np
-        >>> s = np.random.Generator().poisson(5, 10000)
+        >>> rng = np.random.default_rng()
+        >>> s = rng.poisson(5, 10000)
 
         Display histogram of the sample:
 
@@ -2942,7 +2969,7 @@ cdef class Generator:
 
         Draw each 100 values for lambda 100 and 500:
 
-        >>> s = np.random.Generator().poisson(lam=(100., 500.), size=(100, 2))
+        >>> s = rng.poisson(lam=(100., 500.), size=(100, 2))
 
         """
         return disc(&random_poisson, &self._bitgen, size, self.lock, 1, 0,
@@ -3007,7 +3034,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> a = 2. # parameter
-        >>> s = np.random.Generator().zipf(a, 1000)
+        >>> s = np.random.default_rng().zipf(a, 1000)
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -3068,7 +3095,7 @@ cdef class Generator:
         Draw ten thousand values from the geometric distribution,
         with the probability of an individual success equal to 0.35:
 
-        >>> z = np.random.Generator().geometric(p=0.35, size=10000)
+        >>> z = np.random.default_rng().geometric(p=0.35, size=10000)
 
         How many trials succeeded after a single run?
 
@@ -3168,9 +3195,10 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
+        >>> rng = np.random.default_rng()
         >>> ngood, nbad, nsamp = 100, 2, 10
         # number of good, number of bad, and number of samples
-        >>> s = np.random.Generator().hypergeometric(ngood, nbad, nsamp, 1000)
+        >>> s = rng.hypergeometric(ngood, nbad, nsamp, 1000)
         >>> from matplotlib.pyplot import hist
         >>> hist(s)
         #   note that it is very unlikely to grab both bad items
@@ -3179,7 +3207,7 @@ cdef class Generator:
         If you pull 15 marbles at random, how likely is it that
         12 or more of them are one color?
 
-        >>> s = np.random.Generator().hypergeometric(15, 15, 15, 100000)
+        >>> s = rng.hypergeometric(15, 15, 15, 100000)
         >>> sum(s>=12)/100000. + sum(s<=3)/100000.
         #   answer = 0.003 ... pretty unlikely!
 
@@ -3283,7 +3311,7 @@ cdef class Generator:
         Draw samples from the distribution:
 
         >>> a = .6
-        >>> s = np.random.Generator().logseries(a, 10000)
+        >>> s = np.random.default_rng().logseries(a, 10000)
         >>> import matplotlib.pyplot as plt
         >>> count, bins, ignored = plt.hist(s)
 
@@ -3373,7 +3401,7 @@ cdef class Generator:
         Diagonal covariance means that points are oriented along x or y-axis:
 
         >>> import matplotlib.pyplot as plt
-        >>> x, y = np.random.Generator().multivariate_normal(mean, cov, 5000).T
+        >>> x, y = np.random.default_rng().multivariate_normal(mean, cov, 5000).T
         >>> plt.plot(x, y, 'x')
         >>> plt.axis('equal')
         >>> plt.show()
@@ -3393,7 +3421,7 @@ cdef class Generator:
         --------
         >>> mean = (1, 2)
         >>> cov = [[1, 0], [0, 1]]
-        >>> x = np.random.Generator().multivariate_normal(mean, cov, (3, 3))
+        >>> x = np.random.default_rng().multivariate_normal(mean, cov, (3, 3))
         >>> x.shape
         (3, 3, 2)
 
@@ -3507,14 +3535,15 @@ cdef class Generator:
         --------
         Throw a dice 20 times:
 
-        >>> np.random.Generator().multinomial(20, [1/6.]*6, size=1)
+        >>> rng = np.random.default_rng()
+        >>> rng.multinomial(20, [1/6.]*6, size=1)
         array([[4, 1, 7, 5, 2, 1]])  # random
 
         It landed 4 times on 1, once on 2, etc.
 
         Now, throw the dice 20 times, and 20 times again:
 
-        >>> np.random.Generator().multinomial(20, [1/6.]*6, size=2)
+        >>> rng.multinomial(20, [1/6.]*6, size=2)
         array([[3, 4, 3, 3, 4, 3],
                [2, 4, 3, 4, 0, 7]])  # random
 
@@ -3524,7 +3553,7 @@ cdef class Generator:
         Now, do one experiment throwing the dice 10 time, and 10 times again,
         and another throwing the dice 20 times, and 20 times again:
 
-        >>> np.random.Generator().multinomial([[10], [20]], [1/6.]*6, size=2)
+        >>> rng.multinomial([[10], [20]], [1/6.]*6, size=2)
         array([[[2, 4, 0, 1, 2, 1],
                 [1, 3, 0, 3, 1, 2]],
                [[1, 4, 4, 4, 4, 3],
@@ -3535,7 +3564,7 @@ cdef class Generator:
 
         A loaded die is more likely to land on number 6:
 
-        >>> np.random.Generator().multinomial(100, [1/7.]*5 + [2/7.])
+        >>> rng.multinomial(100, [1/7.]*5 + [2/7.])
         array([11, 16, 14, 17, 16, 26])  # random
 
         The probability inputs should be normalized. As an implementation
@@ -3544,12 +3573,12 @@ cdef class Generator:
         A biased coin which has twice as much weight on one side as on the
         other should be sampled like so:
 
-        >>> np.random.Generator().multinomial(100, [1.0 / 3, 2.0 / 3])  # RIGHT
+        >>> rng.multinomial(100, [1.0 / 3, 2.0 / 3])  # RIGHT
         array([38, 62])  # random
 
         not like:
 
-        >>> np.random.Generator().multinomial(100, [1.0, 2.0])  # WRONG
+        >>> rng.multinomial(100, [1.0, 2.0])  # WRONG
         Traceback (most recent call last):
         ValueError: pvals < 0, pvals > 1 or pvals contains NaNs
 
@@ -3683,7 +3712,7 @@ cdef class Generator:
         average length, but allowing some variation in the relative sizes of
         the pieces.
 
-        >>> s = np.random.Generator().dirichlet((10, 5, 3), 20).transpose()
+        >>> s = np.random.default_rng().dirichlet((10, 5, 3), 20).transpose()
 
         >>> import matplotlib.pyplot as plt
         >>> plt.barh(range(20), s[0])
@@ -3775,15 +3804,16 @@ cdef class Generator:
 
         Examples
         --------
+        >>> rng = np.random.default_rng()
         >>> arr = np.arange(10)
-        >>> np.random.Generator().shuffle(arr)
+        >>> rng.shuffle(arr)
         >>> arr
         [1 7 5 2 9 4 3 6 0 8] # random
 
         Multi-dimensional arrays are only shuffled along the first axis:
 
         >>> arr = np.arange(9).reshape((3, 3))
-        >>> np.random.Generator().shuffle(arr)
+        >>> rng.shuffle(arr)
         >>> arr
         array([[3, 4, 5], # random
                [6, 7, 8],
@@ -3862,6 +3892,28 @@ cdef class Generator:
             string.memcpy(data + j * stride, data + i * stride, itemsize)
             string.memcpy(data + i * stride, buf, itemsize)
 
+    cdef inline void _shuffle_int(self, np.npy_intp n, np.npy_intp first,
+                             int64_t* data) nogil:
+        """
+        Parameters
+        ----------
+        n
+            Number of elements in data
+        first
+            First observation to shuffle.  Shuffles n-1,
+            n-2, ..., first, so that when first=1 the entire
+            array is shuffled
+        data
+            Location of data
+        """
+        cdef np.npy_intp i, j
+        cdef int64_t temp
+        for i in reversed(range(first, n)):
+            j = random_bounded_uint64(&self._bitgen, 0, i, 0, 0)
+            temp = data[j]
+            data[j] = data[i]
+            data[i] = temp
+
     def permutation(self, object x):
         """
         permutation(x)
@@ -3885,14 +3937,15 @@ cdef class Generator:
 
         Examples
         --------
-        >>> np.random.Generator().permutation(10)
+        >>> rng = np.random.default_rng()
+        >>> rng.permutation(10)
         array([1, 7, 4, 3, 0, 9, 2, 5, 8, 6]) # random
 
-        >>> np.random.Generator().permutation([1, 4, 9, 12, 15])
+        >>> rng.permutation([1, 4, 9, 12, 15])
         array([15,  1,  9,  4, 12]) # random
 
         >>> arr = np.arange(9).reshape((3, 3))
-        >>> np.random.Generator().permutation(arr)
+        >>> rng.permutation(arr)
         array([[6, 7, 8], # random
                [0, 1, 2],
                [3, 4, 5]])
@@ -3918,47 +3971,34 @@ cdef class Generator:
         self.shuffle(idx)
         return arr[idx]
 
-_random_generator = Generator()
 
-beta = _random_generator.beta
-binomial = _random_generator.binomial
-bytes = _random_generator.bytes
-chisquare = _random_generator.chisquare
-choice = _random_generator.choice
-dirichlet = _random_generator.dirichlet
-exponential = _random_generator.exponential
-f = _random_generator.f
-gamma = _random_generator.gamma
-geometric = _random_generator.geometric
-gumbel = _random_generator.gumbel
-hypergeometric = _random_generator.hypergeometric
-integers = _random_generator.integers
-laplace = _random_generator.laplace
-logistic = _random_generator.logistic
-lognormal = _random_generator.lognormal
-logseries = _random_generator.logseries
-multinomial = _random_generator.multinomial
-multivariate_normal = _random_generator.multivariate_normal
-negative_binomial = _random_generator.negative_binomial
-noncentral_chisquare = _random_generator.noncentral_chisquare
-noncentral_f = _random_generator.noncentral_f
-normal = _random_generator.normal
-pareto = _random_generator.pareto
-permutation = _random_generator.permutation
-poisson = _random_generator.poisson
-power = _random_generator.power
-random = _random_generator.random
-rayleigh = _random_generator.rayleigh
-shuffle = _random_generator.shuffle
-standard_cauchy = _random_generator.standard_cauchy
-standard_exponential = _random_generator.standard_exponential
-standard_gamma = _random_generator.standard_gamma
-standard_normal = _random_generator.standard_normal
-standard_t = _random_generator.standard_t
-triangular = _random_generator.triangular
-uniform = _random_generator.uniform
-vonmises = _random_generator.vonmises
-wald = _random_generator.wald
-weibull = _random_generator.weibull
-zipf = _random_generator.zipf
+def default_rng(seed=None):
+    """Construct a new Generator with the default BitGenerator (PCG64).
 
+    Parameters
+    ----------
+    seed : {None, int, array_like[ints], ISeedSequence, BitGenerator, Generator}, optional
+        A seed to initialize the `BitGenerator`. If None, then fresh,
+        unpredictable entropy will be pulled from the OS. If an ``int`` or
+        ``array_like[ints]`` is passed, then it will be passed to
+        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        pass in an implementor of the `ISeedSequence` interface like
+        `SeedSequence`.
+        Additionally, when passed a `BitGenerator`, it will be wrapped by
+        `Generator`. If passed a `Generator`, it will be returned unaltered.
+
+    Notes
+    -----
+    When `seed` is omitted or ``None``, a new `BitGenerator` and `Generator` will
+    be instantiated each time. This function does not manage a default global
+    instance.
+    """
+    if _check_bit_generator(seed):
+        # We were passed a BitGenerator, so just wrap it up.
+        return Generator(seed)
+    elif isinstance(seed, Generator):
+        # Pass through a Generator.
+        return seed
+    # Otherwise we need to instantiate a new BitGenerator and Generator as
+    # normal.
+    return Generator(PCG64(seed))

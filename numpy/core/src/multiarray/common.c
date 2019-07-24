@@ -147,7 +147,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (dtype == NULL) {
             goto fail;
         }
-        Py_INCREF(dtype);
         goto promote_types;
     }
     /* Check if it's a NumPy scalar */
@@ -213,6 +212,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (string_type) {
             int itemsize;
             PyObject *temp;
+
+            /* dtype is not used in this (string discovery) branch */
+            Py_DECREF(dtype);
+            dtype = NULL;
 
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
@@ -632,8 +635,18 @@ _IsWriteable(PyArrayObject *ap)
         ap = (PyArrayObject *)base;
         base = PyArray_BASE(ap);
 
+        if (PyArray_ISWRITEABLE(ap)) {
+            /*
+             * If any base is writeable, it must be OK to switch, note that
+             * bases are typically collapsed to always point to the most
+             * general one.
+             */
+            return NPY_TRUE;
+        }
+
         if (base == NULL || PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA)) {
-            return (npy_bool) PyArray_ISWRITEABLE(ap);
+            /* there is no further base to test the writeable flag for */
+            return NPY_FALSE;
         }
         assert(!PyArray_CHKFLAGS(ap, NPY_ARRAY_OWNDATA));
     }

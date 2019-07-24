@@ -1,17 +1,10 @@
 import operator
 
-from cpython.pycapsule cimport PyCapsule_New
-
-try:
-    from threading import Lock
-except ImportError:
-    from dummy_threading import Lock
-
 import numpy as np
 cimport numpy as np
 
 from .common cimport *
-from .distributions cimport bitgen_t
+from .bit_generator cimport BitGenerator, SeedSequence
 from .entropy import random_entropy
 
 __all__ = ['MT19937']
@@ -33,6 +26,9 @@ cdef extern from "src/mt19937/mt19937.h":
     void mt19937_seed(mt19937_state *state, uint32_t seed)
     void mt19937_jump(mt19937_state *state)
 
+    enum:
+        RK_STATE_LEN
+
 cdef uint64_t mt19937_uint64(void *st) nogil:
     return mt19937_next64(<mt19937_state *> st)
 
@@ -45,7 +41,7 @@ cdef double mt19937_double(void *st) nogil:
 cdef uint64_t mt19937_raw(void *st) nogil:
     return <uint64_t>mt19937_next32(<mt19937_state *> st)
 
-cdef class MT19937:
+cdef class MT19937(BitGenerator):
     """
     MT19937(seed=None)
 
@@ -53,13 +49,13 @@ cdef class MT19937:
 
     Parameters
     ----------
-    seed : {None, int, array_like}, optional
-        Random seed used to initialize the pseudo-random number generator.  Can
-        be any integer between 0 and 2**32 - 1 inclusive, an array (or other
-        sequence) of unsigned 32-bit integers, or ``None`` (the default).  If
-        `seed` is ``None``, a 32-bit unsigned integer is read from
-        ``/dev/urandom`` (or the Windows analog) if available. If unavailable,
-        a 32-bit hash of the time and process ID is used.
+    seed : {None, int, array_like[ints], ISeedSequence}, optional
+        A seed to initialize the `BitGenerator`. If None, then fresh,
+        unpredictable entropy will be pulled from the OS. If an ``int`` or
+        ``array_like[ints]`` is passed, then it will be passed to
+        `SeedSequence` to derive the initial `BitGenerator` state. One may also
+        pass in an implementor of the `ISeedSequence` interface like
+        `SeedSequence`.
 
     Attributes
     ----------
@@ -81,30 +77,32 @@ cdef class MT19937:
 
     **State and Seeding**
 
-    The ``MT19937`` state vector consists of a 768-element array of
-    32-bit unsigned integers plus a single integer value between 0 and 768
+    The ``MT19937`` state vector consists of a 624-element array of
+    32-bit unsigned integers plus a single integer value between 0 and 624
     that indexes the current position within the main array.
 
-    ``MT19937`` is seeded using either a single 32-bit unsigned integer
-    or a vector of 32-bit unsigned integers.  In either case, the input seed is
-    used as an input (or inputs) for a hashing function, and the output of the
-    hashing function is used as the initial state. Using a single 32-bit value
-    for the seed can only initialize a small range of the possible initial
-    state values.
+    The input seed is processed by `SeedSequence` to fill the whole state. The
+    first element is reset such that only its most significant bit is set.
 
     **Parallel Features**
 
-    ``MT19937`` can be used in parallel applications by
-    calling the method ``jumped`` which advances the state as-if
+    The preferred way to use a BitGenerator in parallel applications is to use
+    the `SeedSequence.spawn` method to obtain entropy values, and to use these
+    to generate new BitGenerators:
+
+    >>> from numpy.random import Generator, MT19937, SeedSequence
+    >>> sg = SeedSequence(1234)
+    >>> rg = [Generator(MT19937(s)) for s in sg.spawn(10)]
+
+    Another method is to use `MT19937.jumped` which advances the state as-if
     :math:`2^{128}` random numbers have been generated ([1]_, [2]_). This
     allows the original sequence to be split so that distinct segments can be
     used in each worker process. All generators should be chained to ensure
     that the segments come from the same sequence.
 
-    >>> from numpy.random.entropy import random_entropy
-    >>> from numpy.random import Generator, MT19937
-    >>> seed = random_entropy()
-    >>> bit_generator = MT19937(seed)
+    >>> from numpy.random import Generator, MT19937, SeedSequence
+    >>> sg = SeedSequence(1234)
+    >>> bit_generator = MT19937(sg)
     >>> rg = []
     >>> for _ in range(10):
     ...    rg.append(Generator(bit_generator))
@@ -128,15 +126,15 @@ cdef class MT19937:
 
     """
     cdef mt19937_state rng_state
-    cdef bitgen_t _bitgen
-    cdef public object capsule
-    cdef object _ctypes
-    cdef object _cffi
-    cdef public object lock
 
     def __init__(self, seed=None):
-        self.seed(seed)
-        self.lock = Lock()
+        BitGenerator.__init__(self, seed)
+        val = self._seed_seq.generate_state(RK_STATE_LEN, np.uint32)
+        # MSB is 1; assuring non-zero initial array
+        self.rng_state.key[0] = 0x80000000UL
+        for i in range(1, RK_STATE_LEN):
+            self.rng_state.key[i] = val[i]
+        self.rng_state.pos = i
 
         self._bitgen.state = &self.rng_state
         self._bitgen.next_uint64 = &mt19937_uint64
@@ -144,73 +142,21 @@ cdef class MT19937:
         self._bitgen.next_double = &mt19937_double
         self._bitgen.next_raw = &mt19937_raw
 
-        self._ctypes = None
-        self._cffi = None
-
-        cdef const char *name = "BitGenerator"
-        self.capsule = PyCapsule_New(<void *>&self._bitgen, name, NULL)
-
-    # Pickling support:
-    def __getstate__(self):
-        return self.state
-
-    def __setstate__(self, state):
-        self.state = state
-
-    def __reduce__(self):
-        from ._pickle import __bit_generator_ctor
-        return __bit_generator_ctor, (self.state['bit_generator'],), self.state
-
-    def random_raw(self, size=None, output=True):
+    def _legacy_seeding(self, seed):
         """
-        random_raw(self, size=None)
+        _legacy_seeding(seed)
 
-        Return randoms as generated by the underlying BitGenerator
+        Seed the generator in a backward compatible way. For modern
+        applications, creating a new instance is preferable. Calling this
+        overrides self._seed_seq
 
         Parameters
         ----------
-        size : int or tuple of ints, optional
-            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
-            ``m * n * k`` samples are drawn.  Default is None, in which case a
-            single value is returned.
-        output : bool, optional
-            Output values.  Used for performance testing since the generated
-            values are not returned.
-
-        Returns
-        -------
-        out : uint or ndarray
-            Drawn samples.
-
-        Notes
-        -----
-        This method directly exposes the the raw underlying pseudo-random
-        number generator. All values are returned as unsigned 64-bit
-        values irrespective of the number of bits produced by the PRNG.
-
-        See the class docstring for the number of bits returned.
-        """
-        return random_raw(&self._bitgen, self.lock, size, output)
-
-    def _benchmark(self, Py_ssize_t cnt, method=u'uint64'):
-        return benchmark(&self._bitgen, self.lock, cnt, method)
-
-    def seed(self, seed=None):
-        """
-        seed(seed=None)
-
-        Seed the generator.
-
-        Parameters
-        ----------
-        seed : {None, int, array_like}, optional
+        seed : {None, int, array_like}
             Random seed initializing the pseudo-random number generator.
             Can be an integer in [0, 2**32-1], array of integers in
-            [0, 2**32-1] or ``None`` (the default). If `seed` is ``None``,
-            then ``MT19937`` will try to read entropy from ``/dev/urandom``
-            (or the Windows analog) if available to produce a 32-bit
-            seed. If unavailable, a 32-bit hash of the time and process
-            ID is used.
+            [0, 2**32-1], a `SeedSequence, or ``None``. If `seed`
+            is ``None``, then sample entropy for a seed.
 
         Raises
         ------
@@ -218,31 +164,33 @@ cdef class MT19937:
             If seed values are out of range for the PRNG.
         """
         cdef np.ndarray obj
-        try:
-            if seed is None:
-                try:
-                    seed = random_entropy(1)
-                except RuntimeError:
-                    seed = random_entropy(1, 'fallback')
-                mt19937_seed(&self.rng_state, seed[0])
-            else:
-                if hasattr(seed, 'squeeze'):
-                    seed = seed.squeeze()
-                idx = operator.index(seed)
-                if idx > int(2**32 - 1) or idx < 0:
+        with self.lock:
+            try:
+                if seed is None:
+                    val = random_entropy(RK_STATE_LEN)
+                    # MSB is 1; assuring non-zero initial array
+                    self.rng_state.key[0] = 0x80000000UL
+                    for i in range(1, RK_STATE_LEN):
+                        self.rng_state.key[i] = val[i]
+                else:
+                    if hasattr(seed, 'squeeze'):
+                        seed = seed.squeeze()
+                    idx = operator.index(seed)
+                    if idx > int(2**32 - 1) or idx < 0:
+                        raise ValueError("Seed must be between 0 and 2**32 - 1")
+                    mt19937_seed(&self.rng_state, seed)
+            except TypeError:
+                obj = np.asarray(seed)
+                if obj.size == 0:
+                    raise ValueError("Seed must be non-empty")
+                obj = obj.astype(np.int64, casting='safe')
+                if obj.ndim != 1:
+                    raise ValueError("Seed array must be 1-d")
+                if ((obj > int(2**32 - 1)) | (obj < 0)).any():
                     raise ValueError("Seed must be between 0 and 2**32 - 1")
-                mt19937_seed(&self.rng_state, seed)
-        except TypeError:
-            obj = np.asarray(seed)
-            if obj.size == 0:
-                raise ValueError("Seed must be non-empty")
-            obj = obj.astype(np.int64, casting='safe')
-            if obj.ndim != 1:
-                raise ValueError("Seed array must be 1-d")
-            if ((obj > int(2**32 - 1)) | (obj < 0)).any():
-                raise ValueError("Seed must be between 0 and 2**32 - 1")
-            obj = obj.astype(np.uint32, casting='unsafe', order='C')
-            mt19937_init_by_array(&self.rng_state, <uint32_t*> obj.data, np.PyArray_DIM(obj, 0))
+                obj = obj.astype(np.uint32, casting='unsafe', order='C')
+                mt19937_init_by_array(&self.rng_state, <uint32_t*> obj.data, np.PyArray_DIM(obj, 0))
+        self._seed_seq = None
 
     cdef jump_inplace(self, iter):
         """
@@ -323,47 +271,3 @@ cdef class MT19937:
         for i in range(624):
             self.rng_state.key[i] = key[i]
         self.rng_state.pos = value['state']['pos']
-
-    @property
-    def ctypes(self):
-        """
-        ctypes interface
-
-        Returns
-        -------
-        interface : namedtuple
-            Named tuple containing ctypes wrapper
-
-            * state_address - Memory address of the state struct
-            * state - pointer to the state struct
-            * next_uint64 - function pointer to produce 64 bit integers
-            * next_uint32 - function pointer to produce 32 bit integers
-            * next_double - function pointer to produce doubles
-            * bitgen - pointer to the bit generator struct
-        """
-        if self._ctypes is None:
-            self._ctypes = prepare_ctypes(&self._bitgen)
-
-        return self._ctypes
-
-    @property
-    def cffi(self):
-        """
-        CFFI interface
-
-        Returns
-        -------
-        interface : namedtuple
-            Named tuple containing CFFI wrapper
-
-            * state_address - Memory address of the state struct
-            * state - pointer to the state struct
-            * next_uint64 - function pointer to produce 64 bit integers
-            * next_uint32 - function pointer to produce 32 bit integers
-            * next_double - function pointer to produce doubles
-            * bitgen - pointer to the bit generator struct
-        """
-        if self._cffi is not None:
-            return self._cffi
-        self._cffi = prepare_cffi(&self._bitgen)
-        return self._cffi

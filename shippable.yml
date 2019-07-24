@@ -23,21 +23,15 @@ build:
     ci:
     # install dependencies
     - sudo apt-get install gcc gfortran
-    # ARMv8 OpenBLAS built using script available here:
-    # https://github.com/tylerjereddy/openblas-static-gcc/tree/master/ARMv8
-    # build done on GCC compile farm machine named gcc115
-    # tarball uploaded manually to an unshared Dropbox location
-    - wget -O openblas-v0.3.5-armv8.tar.gz https://www.dropbox.com/s/pbqkxzlmih4cky1/openblas-v0.3.5-armv8.tar.gz?dl=0
-    - tar zxvf openblas-v0.3.5-armv8.tar.gz
-    - sudo cp -r ./64/lib/* /usr/lib
-    - sudo cp ./64/include/* /usr/include
-    # add pathlib for Python 2, otherwise many tests are skipped
+    - target=$(python tools/openblas_support.py)
+    - sudo cp -r "${target}"/64/lib/* /usr/lib
+    - sudo cp "${target}"/64/include/* /usr/include
     - pip install --upgrade pip
+
     # we will pay the ~13 minute cost of compiling Cython only when a new
     # version is scraped in by pip; otherwise, use the cached
     # wheel shippable places on Amazon S3 after we build it once
     - pip install cython --cache-dir=/root/.cache/pip/wheels/$SHIPPABLE_PYTHON_VERSION
-    - pip install pathlib
     # install pytz for datetime testing
     - pip install pytz
     # install pytest-xdist to leverage a second core
@@ -53,6 +47,8 @@ build:
     - extra_directories=($SHIPPABLE_REPO_DIR/build/*scripts*)
     - extra_path=$(printf "%s:" "${extra_directories[@]}")
     - export PATH="${extra_path}${PATH}"
+    # check OpenBLAS version
+    - python tools/openblas_support.py --check_version 0.3.7.dev
     # run the test suite
     - python runtests.py -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
 
@@ -60,7 +56,7 @@ build:
     cache_dir_list:
         # the NumPy project uses a single Amazon S3 cache
         # so upload the parent path of the Python-specific
-        # version paths to avoid i.e., 2.7 overwriting
+        # version paths to avoid i.e., 3.6 overwriting
         # 3.7 pip cache (seems to be an issue)
         - /root/.cache/pip/wheels
 

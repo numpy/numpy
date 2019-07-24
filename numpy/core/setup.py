@@ -610,7 +610,7 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join(local_dir, "src"))
     config.add_include_dirs(join(local_dir))
 
-    config.add_data_files('include/numpy/*.h')
+    config.add_data_dir('include/numpy')
     config.add_include_dirs(join('src', 'npymath'))
     config.add_include_dirs(join('src', 'multiarray'))
     config.add_include_dirs(join('src', 'umath'))

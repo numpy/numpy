@@ -296,7 +296,7 @@ satisfactory subset.  At least some projects used a fairly broad selection of
 the ``RandomState`` methods in unit tests.
 
 Downstream project owners would have been forced to modify their code to
-accomodate the new PRNG subsystem.  Some modifications might be simply
+accommodate the new PRNG subsystem.  Some modifications might be simply
 mechanical, but the bulk of the work would have been tedious churn for no
 positive improvement to the downstream project, just avoiding being broken.
 

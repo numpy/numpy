@@ -8,13 +8,12 @@ Parallel Congruent Generator (64-bit, PCG64)
 .. autoclass:: PCG64
 	:exclude-members:
 
-Seeding and State
-=================
+State
+=====
 
 .. autosummary::
    :toctree: generated/
 
-   ~PCG64.seed
    ~PCG64.state
 
 Parallel generation

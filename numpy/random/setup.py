@@ -34,6 +34,8 @@ def configuration(parent_package='', top_path=None):
 
     defs.append(('NPY_NO_DEPRECATED_API', 0))
     config.add_data_dir('tests')
+    config.add_data_files('common.pxd')
+    config.add_data_files('bit_generator.pxd')
 
     EXTRA_LINK_ARGS = []
     # Math lib
@@ -55,13 +57,9 @@ def configuration(parent_package='', top_path=None):
 
     # Use legacy integer variable sizes
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
-    # Required defined for DSFMT size and to allow it to detect SSE2 using
-    # config file information
-    DSFMT_DEFS = [('DSFMT_MEXP', '19937'), ("HAVE_NPY_CONFIG_H", "1")]
     PCG64_DEFS = []
-    if 1 or sys.maxsize < 2 ** 32 or os.name == 'nt':
-        # Force emulated mode here
-        PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
+    # One can force emulated 128-bit arithmetic if one wants.
+    #PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
 
     config.add_extension('entropy',
                          sources=['entropy.c', 'src/entropy/entropy.c'] +
@@ -74,19 +72,6 @@ def configuration(parent_package='', top_path=None):
                                   'entropy.pyx',
                                   ],
                          define_macros=defs,
-                         )
-    config.add_extension('dsfmt',
-                         sources=['dsfmt.c', 'src/dsfmt/dSFMT.c',
-                                  'src/dsfmt/dSFMT-jump.c',
-                                  'src/aligned_malloc/aligned_malloc.c'],
-                         include_dirs=['.', 'src', join('src', 'dsfmt')],
-                         libraries=EXTRA_LIBRARIES,
-                         extra_compile_args=EXTRA_COMPILE_ARGS,
-                         extra_link_args=EXTRA_LINK_ARGS,
-                         depends=[join('src', 'dsfmt', 'dsfmt.h'),
-                                  'dsfmt.pyx',
-                                  ],
-                         define_macros=defs + DSFMT_DEFS,
                          )
     for gen in ['mt19937']:
         # gen.pyx, src/gen/gen.c, src/gen/gen-jump.c
@@ -101,8 +86,7 @@ def configuration(parent_package='', top_path=None):
                              depends=['%s.pyx' % gen],
                              define_macros=defs,
                              )
-    for gen in ['philox', 'threefry', 'xoshiro256', 'xoshiro512',
-                'pcg64', 'pcg32']:
+    for gen in ['philox', 'pcg64', 'sfc64']:
         # gen.pyx, src/gen/gen.c
         _defs = defs + PCG64_DEFS if gen == 'pcg64' else defs
         config.add_extension(gen,
@@ -112,10 +96,11 @@ def configuration(parent_package='', top_path=None):
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['%s.pyx' % gen],
+                             depends=['%s.pyx' % gen, 'bit_generator.pyx',
+                                      'bit_generator.pxd'],
                              define_macros=_defs,
                              )
-    for gen in ['common']:
+    for gen in ['common', 'bit_generator']:
         # gen.pyx
         config.add_extension(gen,
                              sources=['{0}.c'.format(gen)],
@@ -123,7 +108,7 @@ def configuration(parent_package='', top_path=None):
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
                              include_dirs=['.', 'src'],
-                             depends=['%s.pyx' % gen],
+                             depends=['%s.pyx' % gen, '%s.pxd' % gen,],
                              define_macros=defs,
                              )
     other_srcs = [
@@ -153,7 +138,7 @@ def configuration(parent_package='', top_path=None):
                          extra_compile_args=EXTRA_COMPILE_ARGS,
                          extra_link_args=EXTRA_LINK_ARGS,
                          depends=['mtrand.pyx'],
-                         define_macros=defs + DSFMT_DEFS + LEGACY_DEFS,
+                         define_macros=defs + LEGACY_DEFS,
                          )
     return config
 

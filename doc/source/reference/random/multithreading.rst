@@ -1,30 +1,32 @@
 Multithreaded Generation
 ========================
 
-The four core distributions all allow existing arrays to be filled using the
-``out`` keyword argument.  Existing arrays need to be contiguous and
-well-behaved (writable and aligned).  Under normal circumstances, arrays
+The four core distributions (:meth:`~.Generator.random`,
+:meth:`~.Generator.standard_normal`, :meth:`~.Generator.standard_exponential`,
+and :meth:`~.Generator.standard_gamma`) all allow existing arrays to be filled
+using the ``out`` keyword argument. Existing arrays need to be contiguous and
+well-behaved (writable and aligned). Under normal circumstances, arrays
 created using the common constructors such as :meth:`numpy.empty` will satisfy
 these requirements.
 
 This example makes use of Python 3 :mod:`concurrent.futures` to fill an array
 using multiple threads.  Threads are long-lived so that repeated calls do not
 require any additional overheads from thread creation. The underlying
-BitGenerator is `Xoshiro256` which is fast, has a long period and supports
-using `Xoshiro256.jumped` to return a new generator while advancing the
+BitGenerator is `PCG64` which is fast, has a long period and supports
+using `PCG64.jumped` to return a new generator while advancing the
 state. The random numbers generated are reproducible in the sense that the same
 seed will produce the same outputs.
 
 .. code-block:: ipython
 
-    from numpy.random import Generator, Xoshiro256
+    from numpy.random import Generator, PCG64
     import multiprocessing
     import concurrent.futures
     import numpy as np
 
     class MultithreadedRNG(object):
         def __init__(self, n, seed=None, threads=None):
-            rg = Xoshiro256(seed)
+            rg = PCG64(seed)
             if threads is None:
                 threads = multiprocessing.cpu_count()
             self.threads = threads
@@ -89,7 +91,7 @@ The single threaded call directly uses the BitGenerator.
 .. code-block:: ipython
 
     In [5]: values = np.empty(10000000)
-        ...: rg = Generator(Xoshiro256())
+        ...: rg = Generator(PCG64())
         ...: %timeit rg.standard_normal(out=values)
 
     99.6 ms ± 222 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
@@ -100,7 +102,7 @@ that does not use an existing array due to array creation overhead.
 
 .. code-block:: ipython
 
-    In [6]: rg = Generator(Xoshiro256())
+    In [6]: rg = Generator(PCG64())
         ...: %timeit rg.standard_normal(10000000)
 
     125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)

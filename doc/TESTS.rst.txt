@@ -321,11 +321,10 @@ Known failures & skipping tests
 Sometimes you might want to skip a test or mark it as a known failure,
 such as when the test suite is being written before the code it's
 meant to test, or if a test only fails on a particular architecture.
-The decorators from numpy.testing.dec can be used to do this.
 
 To skip a test, simply use ``skipif``::
 
-  from numpy.testing import dec
+  import pytest
 
   @pytest.mark.skipif(SkipMyTest, reason="Skipping this test because...")
   def test_something(foo):
@@ -334,22 +333,21 @@ To skip a test, simply use ``skipif``::
 The test is marked as skipped if ``SkipMyTest`` evaluates to nonzero,
 and the message in verbose test output is the second argument given to
 ``skipif``.  Similarly, a test can be marked as a known failure by
-using ``knownfailureif``::
+using ``xfail``::
 
-  from numpy.testing import dec
+  import pytest
 
-  @dec.knownfailureif(MyTestFails, "This test is known to fail because...")
+  @pytest.mark.xfail(MyTestFails, reason="This test is known to fail because...")
   def test_something_else(foo):
       ...
 
 Of course, a test can be unconditionally skipped or marked as a known
-failure by passing ``True`` as the first argument to ``skipif`` or
-``knownfailureif``, respectively.
+failure by using ``skip`` or ``xfail`` without argument, respectively.
 
 A total of the number of skipped and known failing tests is displayed
 at the end of the test run.  Skipped tests are marked as ``'S'`` in
 the test results (or ``'SKIPPED'`` for ``verbose > 1``), and known
-failing tests are marked as ``'K'`` (or ``'KNOWN'`` if ``verbose >
+failing tests are marked as ``'x'`` (or ``'XFAIL'`` if ``verbose >
 1``).
 
 Tests on random data

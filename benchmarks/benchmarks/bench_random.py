@@ -92,8 +92,7 @@ nom_size = 100000
 
 class RNG(Benchmark):
     param_names = ['rng']
-    params = ['DSFMT', 'PCG64', 'PCG32', 'MT19937', 'Xoshiro256',
-              'Xoshiro512', 'Philox', 'ThreeFry', 'numpy']
+    params = ['PCG64', 'MT19937', 'Philox', 'SFC64', 'numpy']
 
     def setup(self, bitgen):
         if bitgen == 'numpy':
@@ -134,8 +133,7 @@ class Bounded(Benchmark):
     u32 = np.uint32
     u64 = np.uint64
     param_names = ['rng', 'dt_max']
-    params = [['DSFMT', 'PCG64', 'PCG32', 'MT19937','Xoshiro256',
-               'Xoshiro512', 'Philox', 'ThreeFry', 'numpy'],
+    params = [['PCG64', 'MT19937', 'Philox', 'SFC64', 'numpy'],
               [[u8,    95],
                [u8,    64],  # Worst case for legacy
                [u8,   127],  # Best case for legacy
@@ -175,3 +173,16 @@ class Bounded(Benchmark):
                 self.rg.randint(0, max + 1, nom_size, dtype=dt)
             else:
                 self.rg.integers(0, max + 1, nom_size, dtype=dt)
+
+class Choice(Benchmark):
+    params = [1e3, 1e6, 1e8]
+
+    def setup(self, v):
+        self.a = np.arange(v)
+        self.rng = np.random.default_rng()
+
+    def time_legacy_choice(self, v):
+        np.random.choice(self.a, 1000, replace=False)
+
+    def time_choice(self, v):
+        self.rng.choice(self.a, 1000, replace=False)

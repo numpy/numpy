@@ -25,7 +25,7 @@ The Basics
 
 NumPy's main object is the homogeneous multidimensional array. It is a
 table of elements (usually numbers), all of the same type, indexed by a
-tuple of positive integers. In NumPy dimensions are called *axes*.
+tuple of non-negative integers. In NumPy dimensions are called *axes*.
 
 For example, the coordinates of a point in 3D space ``[1, 2, 1]`` has
 one axis. That axis has 3 elements in it, so we say it has a length
@@ -206,8 +206,8 @@ of elements that we want, instead of the step::
     `empty_like`,
     `arange`,
     `linspace`,
-    `numpy.random.rand`,
-    `numpy.random.randn`,
+    `numpy.random.mtrand.RandomState.rand`,
+    `numpy.random.mtrand.RandomState.randn`,
     `fromfunction`,
     `fromfile`
 
@@ -270,7 +270,7 @@ can change the printing options using ``set_printoptions``.
 
 ::
 
-    >>> np.set_printoptions(threshold=np.nan)
+    >>> np.set_printoptions(threshold=sys.maxsize)       # sys module should be imported
 
 
 Basic Operations
@@ -732,7 +732,7 @@ stacks 1D arrays as columns into a 2D array. It is equivalent to
     array([[ 4.,  3.],
            [ 2.,  8.]])
 
-On the other hand, the function `row_stack` is equivalent to `vstack`
+On the other hand, the function `ma.row_stack` is equivalent to `vstack`
 for any input arrays.
 In general, for arrays of with more than two dimensions,
 `hstack` stacks along their second

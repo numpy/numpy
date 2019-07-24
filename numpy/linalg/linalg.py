@@ -778,15 +778,13 @@ def qr(a, mode='reduced'):
     ----------
     a : array_like, shape (M, N)
         Matrix to be factored.
-    mode : {'reduced', 'complete', 'r', 'raw', 'full', 'economic'}, optional
+    mode : {'reduced', 'complete', 'r', 'raw'}, optional
         If K = min(M, N), then
 
         * 'reduced'  : returns q, r with dimensions (M, K), (K, N) (default)
         * 'complete' : returns q, r with dimensions (M, M), (M, N)
         * 'r'        : returns r only with dimensions (K, N)
         * 'raw'      : returns h, tau with dimensions (N, M), (K,)
-        * 'full'     : alias of 'reduced', deprecated
-        * 'economic' : returns h from 'raw', deprecated.
 
         The options 'reduced', 'complete, and 'raw' are new in numpy 1.8,
         see the notes for more information. The default is 'reduced', and to
@@ -848,11 +846,7 @@ def qr(a, mode='reduced'):
     >>> np.allclose(a, np.dot(q, r))  # a does equal qr
     True
     >>> r2 = np.linalg.qr(a, mode='r')
-    >>> r3 = np.linalg.qr(a, mode='economic')
     >>> np.allclose(r, r2)  # mode='r' returns the same r as mode='full'
-    True
-    >>> # But only triu parts are guaranteed equal when mode='economic'
-    >>> np.allclose(r, np.triu(r3[:6,:6], k=0))
     True
 
     Example illustrating a common use of `qr`: solving of least squares
@@ -1730,7 +1724,7 @@ def cond(x, p=None):
     1.4142135623730951
     >>> LA.cond(a, -2)
     0.70710678118654746 # may vary
-    >>> min(LA.svd(a, compute_uv=0))*min(LA.svd(LA.inv(a), compute_uv=0))
+    >>> min(LA.svd(a, compute_uv=False))*min(LA.svd(LA.inv(a), compute_uv=False))
     0.70710678118654746 # may vary
 
     """
@@ -2314,7 +2308,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
 
     """
     y = moveaxis(x, (row_axis, col_axis), (-2, -1))
-    result = op(svd(y, compute_uv=0), axis=-1)
+    result = op(svd(y, compute_uv=False), axis=-1)
     return result
 
 

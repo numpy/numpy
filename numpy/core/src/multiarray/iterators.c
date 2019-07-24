@@ -1399,6 +1399,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
     }
     n = PySequence_Fast_GET_SIZE(fast_seq);
     if (n > NPY_MAXARGS) {
+        Py_DECREF(fast_seq);
         return multiiter_wrong_number_of_args();
     }
     ret = multiiter_new_impl(n, PySequence_Fast_ITEMS(fast_seq));

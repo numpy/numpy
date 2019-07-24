@@ -368,7 +368,7 @@ def tri(N, M=None, k=0, dtype=float):
     -------
     tri : ndarray of shape (N, M)
         Array with its lower triangle filled with ones and zero elsewhere;
-        in other words ``T[i,j] == 1`` for ``i <= j + k``, 0 otherwise.
+        in other words ``T[i,j] == 1`` for ``j <= i + k``, 0 otherwise.
 
     Examples
     --------
@@ -573,7 +573,7 @@ def _histogram2d_dispatcher(x, y, bins=None, range=None, normed=None,
         N = len(bins)
     except TypeError:
         N = 1
-    if N != 1 and N != 2:
+    if N == 2:
         yield from bins  # bins=[x, y]
     else:
         yield bins

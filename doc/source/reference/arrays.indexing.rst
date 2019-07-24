@@ -3,6 +3,10 @@
 Indexing
 ========
 
+.. seealso::
+
+   :ref:`Indexing basics <basics.indexing>`
+
 .. sectionauthor:: adapted from "Guide to NumPy" by Travis E. Oliphant
 
 .. currentmodule:: numpy

@@ -11,7 +11,7 @@ from numpy.testing import (
         suppress_warnings
         )
 
-from numpy.random import MT19937, Xoshiro256, mtrand as random
+from numpy.random import MT19937, PCG64, mtrand as random
 
 INT_FUNCS = {'binomial': (100.0, 0.6),
              'geometric': (.5,),
@@ -98,11 +98,10 @@ class TestSeed(object):
         assert_raises(ValueError, random.RandomState, [[1, 2, 3],
                                                        [4, 5, 6]])
 
-    def test_seed_equivalency(self):
-        rs = random.RandomState(0)
-        rs2 = random.RandomState(MT19937(0))
-        assert_mt19937_state_equal(rs.get_state(legacy=False),
-                                   rs2.get_state(legacy=False))
+    def test_cannot_seed(self):
+        rs = random.RandomState(PCG64(0))
+        with assert_raises(TypeError):
+            rs.seed(1234)
 
     def test_invalid_initialization(self):
         assert_raises(ValueError, random.RandomState, MT19937)
@@ -216,13 +215,13 @@ class TestSetState(object):
         self.random_state.negative_binomial(0.5, 0.5)
 
     def test_get_state_warning(self):
-        rs = random.RandomState(Xoshiro256())
+        rs = random.RandomState(PCG64())
         with suppress_warnings() as sup:
             w = sup.record(RuntimeWarning)
             state = rs.get_state()
             assert_(len(w) == 1)
             assert isinstance(state, dict)
-            assert state['bit_generator'] == 'Xoshiro256'
+            assert state['bit_generator'] == 'PCG64'
 
     def test_invalid_legacy_state_setting(self):
         state = self.random_state.get_state()

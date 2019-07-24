@@ -564,6 +564,18 @@ class TestUfunc(object):
         b = np.arange(3).reshape((3, 1, 1))
         assert_raises(ValueError, umt.inner1d, a, b)
 
+        # Writing to a broadcasted array with overlap should warn, gh-2705
+        a = np.arange(2)
+        b = np.arange(4).reshape((2, 2))
+        u, v = np.broadcast_arrays(a, b)
+        assert_equal(u.strides[0], 0)
+        x = u + v
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            u += v
+            assert_equal(len(w), 1)
+            assert_(x[0,0]  != u[0, 0])
+
     def test_type_cast(self):
         msg = "type cast"
         a = np.arange(6, dtype='short').reshape((2, 3))
@@ -1847,7 +1859,7 @@ class TestUfunc(object):
         # gh-7961
         exc = pytest.raises(TypeError, np.sqrt, None)
         # minimally check the exception text
-        assert 'loop of ufunc does not support' in str(exc)
+        assert exc.match('loop of ufunc does not support')
 
     @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
     def test_nat_is_not_finite(self, nat):
@@ -1921,4 +1933,17 @@ def test_ufunc_noncontiguous(ufunc):
             warnings.filterwarnings("always")
             res_c = ufunc(*args_c)
             res_n = ufunc(*args_n)
-        assert_equal(res_c, res_n)
+        if len(out) == 1:
+            res_c = (res_c,)
+            res_n = (res_n,)
+        for c_ar, n_ar in zip(res_c, res_n):
+            dt = c_ar.dtype
+            if np.issubdtype(dt, np.floating):
+                # for floating point results allow a small fuss in comparisons
+                # since different algorithms (libm vs. intrinsics) can be used
+                # for different input strides
+                res_eps = np.finfo(dt).eps
+                tol = 2*res_eps
+                assert_allclose(res_c, res_n, atol=tol, rtol=tol)
+            else:
+                assert_equal(c_ar, n_ar)

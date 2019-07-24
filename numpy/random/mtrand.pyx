@@ -98,7 +98,8 @@ cdef class RandomState:
         if seed is None:
             bit_generator = _MT19937()
         elif not hasattr(seed, 'capsule'):
-            bit_generator = _MT19937(seed)
+            bit_generator = _MT19937()
+            bit_generator._legacy_seeding(seed)
         else:
             bit_generator = seed
 
@@ -137,32 +138,29 @@ cdef class RandomState:
         self._aug_state.has_gauss = 0
         self._aug_state.gauss = 0.0
 
-    def seed(self, *args, **kwargs):
+    def seed(self, seed=None):
         """
-        seed(self, *args, **kwargs)
+        seed(self, seed=None)
 
-        Reseed the BitGenerator.
+        Reseed a legacy MT19937 BitGenerator
 
         Notes
         -----
-        Arguments are directly passed to the BitGenerator. This is a convenience
-        function.
+        This is a convenience, legacy function.
 
-        The best method to access seed is to directly use a BitGenerator
-        instance. This example demonstrates this best practice.
+        The best practice is to **not** reseed a BitGenerator, rather to
+        recreate a new one. This method is here for legacy reasons.
+        This example demonstrates best practice.
 
         >>> from numpy.random import MT19937
-        >>> from numpy.random import RandomState
-        >>> bit_generator = MT19937(123456789)
-        >>> rs = RandomState(bit_generator)
-        >>> bit_generator.seed(987654321)
-
-        These best practice examples are equivalent to
-
-        >>> rs = RandomState(MT19937())
-        >>> rs.seed(987654321)
+        >>> from numpy.random import RandomState, SeedSequence
+        >>> rs = RandomState(MT19937(SeedSequence(123456789)))
+        # Later, you want to restart the stream
+        >>> rs = RandomState(MT19937(SeedSequence(987654321)))
         """
-        self._bit_generator.seed(*args, **kwargs)
+        if not isinstance(self._bit_generator, _MT19937):
+            raise TypeError('can only re-seed a MT19937 BitGenerator')
+        self._bit_generator._legacy_seeding(seed)
         self._reset_gauss()
 
     def get_state(self, legacy=True):
@@ -673,7 +671,10 @@ cdef class RandomState:
 
         """
         cdef Py_ssize_t n_uint32 = ((length - 1) // 4 + 1)
-        return self.randint(0, 4294967296, size=n_uint32, dtype=np.uint32).tobytes()[:length]
+        # Interpret the uint32s as little-endian to convert them to bytes
+        # consistently.
+        return self.randint(0, 4294967296, size=n_uint32,
+                            dtype=np.uint32).astype('<u4').tobytes()[:length]
 
     @cython.wraparound(True)
     def choice(self, a, size=None, replace=True, p=None):

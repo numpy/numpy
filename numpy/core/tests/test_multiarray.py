@@ -44,7 +44,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
-    temppath, suppress_warnings, break_cycles,
+    temppath, suppress_warnings, break_cycles, assert_raises_regex,
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
@@ -109,6 +109,39 @@ class TestFlags(object):
         self.a.flags.writeable = True
         self.a[0] = 5
         self.a[0] = 0
+
+    def test_writeable_any_base(self):
+        # Ensure that any base being writeable is sufficient to change flag;
+        # this is especially interesting for arrays from an array interface.
+        arr = np.arange(10)
+        
+        class subclass(np.ndarray):
+            pass
+
+        # Create subclass so base will not be collapsed, this is OK to change
+        view1 = arr.view(subclass)
+        view2 = view1[...]
+        arr.flags.writeable = False
+        view2.flags.writeable = False
+        view2.flags.writeable = True  # Can be set to True again.
+
+        arr = np.arange(10)
+
+        class frominterface:
+            def __init__(self, arr):
+                self.arr = arr
+                self.__array_interface__ = arr.__array_interface__
+
+        view1 = np.asarray(frominterface)
+        view2 = view1[...]
+        view2.flags.writeable = False
+        view2.flags.writeable = True
+
+        view1.flags.writeable = False
+        view2.flags.writeable = False
+        with assert_raises(ValueError):
+            # Must assume not writeable, since only base is not:
+            view2.flags.writeable = True
 
     def test_writeable_from_readonly(self):
         # gh-9440 - make sure fromstring, from buffer on readonly buffers
@@ -191,6 +224,15 @@ class TestFlags(object):
             with assert_warns(DeprecationWarning):
                 arr.flags.writeable = True
 
+    def test_warnonwrite(self):
+        a = np.arange(10)
+        a.flags._warn_on_write = True
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always')
+            a[1] = 10
+            a[2] = 10
+            # only warn once
+            assert_(len(w) == 1)
 
     def test_otherflags(self):
         assert_equal(self.a.flags.carray, True)
@@ -455,6 +497,9 @@ class TestArrayConstruction(object):
         assert_(np.ascontiguousarray(d).flags.c_contiguous)
         assert_(np.asfortranarray(d).flags.f_contiguous)
 
+    def test_ragged(self):
+        assert_raises_regex(ValueError, 'ragged',
+                             np.array, [[1], [2, 3]], dtype=int)
 
 class TestAssignment(object):
     def test_assignment_broadcasting(self):
@@ -2961,8 +3006,6 @@ class TestMethods(object):
         assert_equal(b.diagonal(0, 2, 1), [[0, 3], [4, 7]])
 
     def test_diagonal_view_notwriteable(self):
-        # this test is only for 1.9, the diagonal view will be
-        # writeable in 1.10.
         a = np.eye(3).diagonal()
         assert_(not a.flags.writeable)
         assert_(not a.flags.owndata)
@@ -4143,6 +4186,7 @@ class TestArgmax(object):
         assert_equal(a.argmax(out=out1, axis=0), np.argmax(a, out=out2, axis=0))
         assert_equal(out1, out2)
 
+    @pytest.mark.leaks_references(reason="replaces None with NULL.")
     def test_object_argmax_with_NULLs(self):
         # See gh-6032
         a = np.empty(4, dtype='O')
@@ -4291,6 +4335,7 @@ class TestArgmin(object):
         assert_equal(a.argmin(out=out1, axis=0), np.argmin(a, out=out2, axis=0))
         assert_equal(out1, out2)
 
+    @pytest.mark.leaks_references(reason="replaces None with NULL.")
     def test_object_argmin_with_NULLs(self):
         # See gh-6032
         a = np.empty(4, dtype='O')
@@ -7159,6 +7204,13 @@ class TestNewBufferProtocol(object):
         assert_raises_regex(
             RuntimeError, "ndim",
             np.array, m)
+
+        # The above seems to create some deep cycles, clean them up for
+        # easier reference count debugging:
+        del c_u8_33d, m
+        for i in range(33):
+            if gc.collect() == 0:
+                break
 
     def test_error_pointer_type(self):
         # gh-6741

@@ -521,7 +521,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
     """
     own_fid = False
-    if hasattr(file, 'read'):
+    if hasattr(file, 'write'):
         fid = file
     else:
         file = os_fspath(file)
@@ -709,7 +709,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     # component of the so-called standard library.
     import zipfile
 
-    if not hasattr(file, 'read'):
+    if not hasattr(file, 'write'):
         file = os_fspath(file)
         if not file.endswith('.npz'):
             file = file + '.npz'
@@ -734,8 +734,8 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
         for key, val in namedict.items():
             fname = key + '.npy'
             val = np.asanyarray(val)
-            force_zip64 = val.nbytes >= 2**30
-            with zipf.open(fname, 'w', force_zip64=force_zip64) as fid:
+            # always force zip64, gh-10776
+            with zipf.open(fname, 'w', force_zip64=True) as fid:
                 format.write_array(fid, val,
                                    allow_pickle=allow_pickle,
                                    pickle_kwargs=pickle_kwargs)

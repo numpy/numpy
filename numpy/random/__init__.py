@@ -3,20 +3,45 @@
 Random Number Generation
 ========================
 
-Instantiate a BitGenerator and wrap it in a Generator
-which will convert the uniform stream to a number of distributions. The "bare"
-functions are kept for legacy code, they should be called with the newer API
-via ``np.random.Generator().function`` instead
+Use ``default_rng()`` to create a `Generator` and call its methods.
+
+=============== =========================================================
+Generator
+--------------- ---------------------------------------------------------
+Generator       Class implementing all of the random number distributions
+default_rng     Default constructor for ``Generator``
+=============== =========================================================
+
+============================================= ===
+BitGenerator Streams that work with Generator
+--------------------------------------------- ---
+MT19937
+PCG64
+Philox
+SFC64
+============================================= ===
+
+============================================= ===
+Getting entropy to initialize a BitGenerator
+--------------------------------------------- ---
+SeedSequence
+============================================= ===
+
+
+Legacy
+------
+
+For backwards compatibility with previous versions of numpy before 1.17, the
+various aliases to the global `RandomState` methods are left alone and do not
+use the new `Generator` API.
 
 ==================== =========================================================
 Utility functions
 -------------------- ---------------------------------------------------------
 random               Uniformly distributed floats over ``[0, 1)``
-integers             Uniformly distributed integers, replaces ``randint``
 bytes                Uniformly distributed random bytes.
 permutation          Randomly permute a sequence / generate a random sequence.
 shuffle              Randomly permute a sequence in place.
-seed                 Seed the random number generator.
 choice               Random sample from 1-D array.
 ==================== =========================================================
 
@@ -32,6 +57,7 @@ random_integers      Uniformly distributed integers in a given range.
                      (deprecated, use ``integers(..., closed=True)`` instead)
 random_sample        Alias for `random_sample`
 randint              Uniformly distributed integers in a given range
+seed                 Seed the legacy random number generator.
 ==================== =========================================================
 
 ==================== =========================================================
@@ -94,18 +120,6 @@ get_state            Get tuple representing internal state of generator.
 set_state            Set state of generator.
 ==================== =========================================================
 
-============================================= ===
-BitGenerator Streams that work with Generator
---------------------------------------------- ---
-MT19937
-DSFMT
-PCG32
-PCG64
-Philox
-ThreeFry
-Xoshiro256
-Xoshiro512
-============================================= ===
 
 """
 from __future__ import division, absolute_import, print_function
@@ -165,19 +179,16 @@ __all__ = [
 
 from . import mtrand
 from .mtrand import *
-from .dsfmt import DSFMT
-from .generator import Generator
+from .generator import Generator, default_rng
+from .bit_generator import SeedSequence
 from .mt19937 import MT19937
-from .pcg32 import PCG32
 from .pcg64 import PCG64
 from .philox import Philox
-from .threefry import ThreeFry
-from .xoshiro256 import Xoshiro256
-from .xoshiro512 import Xoshiro512
+from .sfc64 import SFC64
 from .mtrand import RandomState
 
-__all__ += ['Generator', 'DSFMT', 'MT19937', 'Philox', 'PCG64', 'PCG32',
-            'ThreeFry', 'Xoshiro256', 'Xoshiro512', 'RandomState']
+__all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',
+            'Philox', 'PCG64', 'SFC64', 'default_rng']
 
 
 def __RandomState_ctor():
@@ -185,10 +196,10 @@ def __RandomState_ctor():
 
     This function exists solely to assist (un)pickling.
 
-    Note that the state of the RandomState returned here is irrelevant, as this function's
-    entire purpose is to return a newly allocated RandomState whose state pickle can set.
-    Consequently the RandomState returned by this function is a freshly allocated copy
-    with a seed=0.
+    Note that the state of the RandomState returned here is irrelevant, as this
+    function's entire purpose is to return a newly allocated RandomState whose
+    state pickle can set.  Consequently the RandomState returned by this function
+    is a freshly allocated copy with a seed=0.
 
     See https://github.com/numpy/numpy/issues/4763 for a detailed discussion
 
