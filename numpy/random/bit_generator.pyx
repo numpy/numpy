@@ -36,12 +36,10 @@ import sys
 from itertools import cycle
 import re
 
-try:
-    from secrets import randbits
-except ImportError:
-    # secrets unavailable on python 3.5 and before
-    from random import SystemRandom
-    randbits = SystemRandom().getrandbits
+# The secrets librayr does exist in Python>=3.5, but it is rather slow to load
+# use this instead since it is every so slightly faster to load.
+from random import SystemRandom
+randbits = SystemRandom().getrandbits
 
 try:
     from threading import Lock
