@@ -6,12 +6,12 @@ import pytest
 from ctypes import *
 from numpy.testing import assert_array_max_ulp
 
-windows32bit = (sys.platform.startswith('win32') and sys.maxsize <= 2*32)
-arm = platform.uname()[4].startswith('arm')
-platform_skip = pytest.mark.skipif(windows32bit or arm,
+runtest = sys.platform.startswith('linux') and (platform.machine() == 'x86_64')
+platform_skip = pytest.mark.skipif(not runtest,
                                    reason="""
-                                   AVX not supported by ARM and
-                                   libc on windows 32 bit fail these ULP tests
+                                   stick to x86_64 and linux platforms.
+                                   test seems to fail on some of ARM and power
+                                   archictures.
                                    """)
 
 # convert string to hex function taken from:
