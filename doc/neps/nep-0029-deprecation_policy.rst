@@ -33,10 +33,23 @@ IPython, Jupyter, yt, SciPy, NumPy, and scikit-image.
 Detailed description
 --------------------
 
-When a project creates a new major or minor release, we recommend that the project should support all
-minor versions of ``Python`` introduced and released in the prior 42
-months ~~from their anticipated release date~~ and all minor versions of
-NumPy released in the prior 24 months.
+For the purposes of this NEP we assume semantic versioning and define:
+
+*major version*
+   A release that change the first number (e.g. X.0.0)
+
+*minor version*
+   A release that changes the second number (e.g x.Y.0)
+
+*patch version*
+   A release that changes the third number (e.g. x.y.Z)
+
+
+When a project creates a new major or minor version, we recommend that
+the project should support all minor versions of ``Python`` introduced
+and released in the prior 42 months ~~from their anticipated release
+date~~ and all minor versions of NumPy released in the prior 24
+months.
 
 
 The diagram::
@@ -50,11 +63,11 @@ The diagram::
             |-----------------------------------------> Dec19
                       |-----------------------------------------> Nov20
 
-shows the 42 month support windows for ``Python``.  A project with a major or
-minor release in Feb19 should support py35 and newer, a project with a
-major or minor release in Dec19 should support py36 and newer, and a
-project with a major or minor release in Nov20 should support py37 and
-newer.
+shows the 42 month support windows for ``Python``.  A project with a
+major or minor version release in Feb19 should support py35 and newer,
+a project with a major or minor version release in Dec19 should
+support py36 and newer, and a project with a major or minor version
+release in Nov20 should support py37 and newer.
 
 The current Python release cadence is 18 months so a 42 month window
 ensures that there will always be at least two versions of ``Python``
