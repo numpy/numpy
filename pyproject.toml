@@ -34,7 +34,7 @@ requires = ["setuptools", "wheel", "cython"]  # PEP 508 specification
       showcontent = true
 
     [[tool.towncrier.type]]
-      directory = "coompatibility"
+      directory = "compatibility"
       name = "Compatibility notes"
       showcontent = true
 
