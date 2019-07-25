@@ -78,9 +78,8 @@ does a minor or major release, it is guaranteed that there will be a
 stable release of all other projects that support the set of
 ``Python`` the new release will support.
 
-If there is a major version bump in Python this policy will have to be
-re-addressed as we can not predict how drastic the changes will be and
-how the community will react.
+If there is a Python 4 this policy will have to be reviewed in light
+of the community's and projects' best interests.
 
 
 Implementation
