@@ -44,8 +44,12 @@ code.
    config
    dtype
    array
-   iterator
+   array-method-and-functions
+   iterators
+   iterator-api
    ufunc
    generalized-ufuncs
    coremath
    deprecations
+   miscellaneous
+   dealing-with-types
