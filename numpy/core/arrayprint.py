@@ -89,8 +89,10 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                       "`False`", stacklevel=3)
     if threshold is not None:
         # forbid the bad threshold arg suggested by stack overflow, gh-12351
-        if not isinstance(threshold, numbers.Number) or np.isnan(threshold):
-            raise ValueError("threshold must be numeric and non-NAN, try "
+        if not isinstance(threshold, numbers.Number):
+            raise TypeError("threshold must be numeric")
+        if np.isnan(threshold):
+            raise ValueError("threshold must be non-NAN, try "
                              "sys.maxsize for untruncated representation")
     return options
 
