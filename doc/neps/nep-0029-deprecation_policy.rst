@@ -132,8 +132,8 @@ No backward compatibility issues.
 Alternatives
 ------------
 
-Ad-Hoc
-~~~~~~
+Ad-Hoc version support
+~~~~~~~~~~~~~~~~~~~~~~
 
 A project could on every release evaluate whether to increase
 the minimum version of Python supported.
