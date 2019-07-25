@@ -1,6 +1,6 @@
-==========================================================================================
-NEP 29 — A standard community policy for dropping support of old Python and NumPy versions
-==========================================================================================
+==================================================================================
+NEP 29 — Recommend Python and Numpy version support as a community policy standard
+==================================================================================
 
 
 :Author: Thomas A Caswell <tcaswell@gmail.com>, Andreas Mueller, Brian Granger, Madicken Munk, Ralf Gommers, Matt Haberland <mhaberla@calpoly.edu>, Matthias Bussonnier <bussonniermatthias@gmail.com>, Stefan van der Walt
@@ -18,12 +18,12 @@ that downstream projects support.  By standardizing this policy
 across the community we will make it easier for downstream projects to
 plan.
 
-This is an unusual NEP in that it offers recommendations for community-wide
-policy and not for changes to NumPy itself.  However, we do not
-currently have a place for SPEEPs (Scientific Python Ecosystem
-Enhancement Proposals) and given NumPy's central role in our community
-this seems like the proper place to document this.
-
+This is an unusual NEP in that it offers recommendations for
+community-wide policy and not for changes to NumPy itself.  Since a
+common place for SPEEPs (Scientific Python Ecosystem Enhancement
+Proposals) does not exist and given NumPy's central role in the
+ecosystem, a NEP provides a visible place to document the proposed
+policy.
 
 This NEP is being put forward by maintainers of Matplotlib, scikit-learn,
 IPython, Jupyter, yt, SciPy, NumPy, and scikit-image.
@@ -112,9 +112,7 @@ shorter.
 Backward compatibility
 ----------------------
 
-No issues other than the intentional dropping of old version of
-``Python`` and dependencies.
-
+No backward compatibility issues.
 
 Alternatives
 ------------
@@ -131,13 +129,15 @@ version support discussions to devolve into [bike shedding](https://en.wikipedia
 
 
 All CPython supported versions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is a very clear and conservative approach.  However, it means that
-there is 4 year lag between when new language features come into the
-language and when the projects are able to use them.  Additionally,
-for projects that have a significant component of compiled extensions
-this requires building many binary artifacts for each release.
+The CPython supported versions of Python are listed in the Python
+Developers Guide and the Python PEPs. Supporting these are a very
+clear and conservative approach.  However, it means that there is 4
+year lag between when new language features come into the language and
+when the projects are able to use them.  Additionally, for projects
+that have a significant component of compiled extensions this requires
+building many binary artifacts for each release.
 
 For the case of NumPy, many projects carry workarounds to bugs that
 are fixed in subsequent versions of NumPy.  Being proactive about
