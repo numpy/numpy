@@ -26,12 +26,11 @@ Each file should be named like ``<PULL REQUEST>.<TYPE>.rst``, where
 
 So for example: ``123.new_features.rst`` would have the content:
 
-```
 my_new_feature option for `my_favorite_function`
 ------------------------------------------------
 The ``my_new_feature`` option is now available for `my_favorite_function`.
 To use it, write ``np.my_favorite_function(..., my_new_feature=True)``.
-```
+
 
 Note the use of single-backticks to get an internal link (assuming
 ``my_favorite_function`` is exported from the ``numpy`` namespace), and double-
