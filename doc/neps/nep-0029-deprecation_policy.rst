@@ -78,21 +78,21 @@ version of ``Python`` that has an installed base.
 This six month buffer provides resilience to minor fluctuations /
 delays in the ``Python`` release schedule.
 
-Because ``Python`` version support is based
-on historical release dates, a 42 month time window, and a project's plans, a project can decide to drop
-a given version of ``Python`` very early in
-the release process.
+Because ``Python`` version support is based on historical release
+dates, a 42 month time window, and a project's plans, a project can
+decide to drop a given version of ``Python`` very early in the release
+process.
 
 While there will be some unavoidable mismatch in supported version of
-``Python`` between if a project release occurs immediately after a version of
-``Python`` ages out.  This should not last longer than one
-release cycle of each of the projects, and when a given project
-does a minor or major release, it is guaranteed that there will be a
-stable release of all other projects that support the set of
-``Python`` the new release will support.
+``Python`` between if a project release occurs immediately after a
+version of ``Python`` ages out.  This should not last longer than one
+release cycle of each of the projects, and when a given project does a
+minor or major release, it is guaranteed that there will be a stable
+release of all other projects that support the set of ``Python`` the
+new release will support.
 
-If there is a Python 4 this policy will have to be reviewed in light
-of the community's and projects' best interests.
+If there is a ``Python`` 4 or a NumPy 2 this policy will have to be
+reviewed in light of the community's and projects' best interests.
 
 
 Implementation
@@ -104,18 +104,21 @@ development guidelines:
 
    - This project supports minor versions of ``Python`` initially released
      42 months prior to a planned project release date.
-   - The project will always support at least the 2 latest minor versions of ``Python``
+   - The project will always support at least the 2 latest minor
+     versions of ``Python``
    - support minor versions of ``numpy`` initially released in the 24
-     months prior to a planned project release date or the oldest version that supports the
-     minimum Python version (whichever is higher)
+     months prior to a planned project release date or the oldest
+     version that supports the minimum Python version (whichever is
+     higher)
 
    The minimum supported version of ``Python`` will be set to
    ``python_requires`` in ``setup``.  All supported versions of
    Python will be in the test matrix and have binary artifacts built
    for releases.
 
-   The project will bump (adjust upward) the minimum Python and NumPy version support on
-   every minor and major release, but never on a patch release.
+   The project will bump (adjust upward) the minimum Python and NumPy
+   version support on every minor and major release, but never on a
+   patch release.
 
 For other dependencies, adopt similar time windows of 24 months or
 shorter.
