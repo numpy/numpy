@@ -2,6 +2,7 @@
 import collections
 import functools
 import os
+import textwrap
 
 from numpy.core._multiarray_umath import (
     add_docstring, implement_array_function, _get_implementing_args)
@@ -162,13 +163,13 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         # more interpettable name. Otherwise, the original function does not
         # show up at all in many cases, e.g., if it's written in C or if the
         # dispatcher gets an invalid keyword argument.
-        source = """
-@functools.wraps(implementation)
-def {name}(*args, **kwargs):
-    relevant_args = dispatcher(*args, **kwargs)
-    return implement_array_function(
-        implementation, {name}, relevant_args, args, kwargs)
-""".format(name=implementation.__name__)
+        source = textwrap.dedent("""
+        @functools.wraps(implementation)
+        def {name}(*args, **kwargs):
+            relevant_args = dispatcher(*args, **kwargs)
+            return implement_array_function(
+                implementation, {name}, relevant_args, args, kwargs)
+        """).format(name=implementation.__name__)
 
         source_object = compile(
             source, filename='<__array_function__ internals>', mode='exec')
