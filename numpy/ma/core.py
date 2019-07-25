@@ -77,7 +77,7 @@ __all__ = [
     'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
     'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask', 'nonzero',
     'not_equal', 'ones', 'outer', 'outerproduct', 'power', 'prod',
-    'product', 'ptp', 'put', 'putmask', 'rank', 'ravel', 'remainder',
+    'product', 'ptp', 'put', 'putmask', 'ravel', 'remainder',
     'repeat', 'reshape', 'resize', 'right_shift', 'round', 'round_',
     'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'soften_mask',
     'sometrue', 'sort', 'sqrt', 'squeeze', 'std', 'subtract', 'sum',
@@ -7097,23 +7097,6 @@ def resize(x, new_shape):
     if result.ndim:
         result._mask = m
     return result
-
-
-def rank(obj):
-    """
-    maskedarray version of the numpy function.
-
-    .. note::
-        Deprecated since 1.10.0
-
-    """
-    # 2015-04-12, 1.10.0
-    warnings.warn(
-        "`rank` is deprecated; use the `ndim` function instead. ",
-        np.VisibleDeprecationWarning, stacklevel=2)
-    return np.ndim(getdata(obj))
-
-rank.__doc__ = np.rank.__doc__
 
 
 def ndim(obj):
