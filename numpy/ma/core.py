@@ -4455,7 +4455,7 @@ class MaskedArray(ndarray):
         if m is nomask:
             # compare to _count_reduce_items in _methods.py
 
-            if self.shape is ():
+            if self.shape == ():
                 if axis not in (None, 0):
                     raise np.AxisError(axis=axis, ndim=self.ndim)
                 return 1
