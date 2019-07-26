@@ -387,7 +387,7 @@ distribution of the ``add.f`` module (as part of the package
 
 Installation of the new package is easy using::
 
-    python setup.py install
+    pip install .
 
 assuming you have the proper permissions to write to the main site-
 packages directory for the version of Python you are using. For the
