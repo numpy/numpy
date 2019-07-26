@@ -734,7 +734,7 @@ stacks 1D arrays as columns into a 2D array. It is equivalent to
 
 On the other hand, the function `ma.row_stack` is equivalent to `vstack`
 for any input arrays.
-In general, for arrays of with more than two dimensions,
+In general, for arrays with more than two dimensions,
 `hstack` stacks along their second
 axes, `vstack` stacks along their
 first axes, and `concatenate`
