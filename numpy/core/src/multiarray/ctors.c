@@ -2774,8 +2774,7 @@ PyArray_DescrFromObject(PyObject *op, PyArray_Descr *mintype)
 /* steals reference to descr -- and enforces native byteorder on it.*/
 
 /*NUMPY_API
-  Deprecated, use
-  PyArray_NewFromDescr instead.
+  Deprecated, use PyArray_NewFromDescr instead.
 */
 NPY_NO_EXPORT PyObject *
 PyArray_FromDimsAndDataAndDescr(int nd, int *d,
@@ -2789,8 +2788,7 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
 }
 
 /*NUMPY_API
-  Deprecated, use
-  PyArray_SimpleNew instead.
+  Deprecated, use PyArray_SimpleNew instead.
 */
 NPY_NO_EXPORT PyObject *
 PyArray_FromDims(int nd, int *d, int type)
