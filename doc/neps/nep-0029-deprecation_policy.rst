@@ -95,6 +95,38 @@ If there is a ``Python`` 4 or a NumPy 2 this policy will have to be
 reviewed in light of the community's and projects' best interests.
 
 
+Support Table
+~~~~~~~~~~~~~
+
+============ ====== =====
+Date         Python NumPy
+------------ ------ -----
+Jan 16, 2019 3.5+   1.13+
+Mar 14, 2019 3.6+   1.13+
+Jun 08, 2019 3.6+   1.14+
+Jan 07, 2020 3.6+   1.15+
+Jun 23, 2020 3.7+   1.15+
+Jul 23, 2020 3.7+   1.16+
+Jan 13, 2021 3.7+   1.17+
+Dec 26, 2021 3.8+   1.17+
+============ ====== =====
+
+
+Drop Schedule
+~~~~~~~~~~~~~
+
+::
+
+  On Jan 16, 2019 drop support for Numpy 1.12 (initially released on Jan 15, 2017)
+  On Mar 14, 2019 drop support for Python 3.5 (initially released on Sep 13, 2015)
+  On Jun 08, 2019 drop support for Numpy 1.13 (initially released on Jun 07, 2017)
+  On Jan 07, 2020 drop support for Numpy 1.14 (initially released on Jan 06, 2018)
+  On Jun 23, 2020 drop support for Python 3.6 (initially released on Dec 23, 2016)
+  On Jul 23, 2020 drop support for Numpy 1.15 (initially released on Jul 23, 2018)
+  On Jan 13, 2021 drop support for Numpy 1.16 (initially released on Jan 13, 2019)
+  On Dec 26, 2021 drop support for Python 3.7 (initially released on Jun 27, 2018)
+
+
 Implementation
 --------------
 
@@ -197,6 +229,63 @@ Discussion
 
 References and Footnotes
 ------------------------
+
+Code to generate support and drop schedule tables ::
+
+  from datetime import datetime, timedelta
+
+  data = """Jan 15, 2017: Numpy 1.12
+  Sep 13, 2015: Python 3.5
+  Jun 27, 2018: Python 3.7
+  Dec 23, 2016: Python 3.6
+  Jun 07, 2017: Numpy 1.13
+  Jan 06, 2018: Numpy 1.14
+  Jul 23, 2018: Numpy 1.15
+  Jan 13, 2019: Numpy 1.16
+  """
+
+  releases = []
+
+  plus42 = timedelta(days=int(365*3.5 + 1))
+  plus24 = timedelta(days=int(365*2 + 1))
+
+  for line in data.splitlines():
+      date, project_version = line.split(':')
+      project, version = project_version.strip().split(' ')
+      release = datetime.strptime(date, '%b %d, %Y')
+      if project.lower() == 'numpy':
+          drop = release + plus24
+      else:
+          drop = release + plus42
+      releases.append((drop, project, version, release))
+
+  releases = sorted(releases, key=lambda x: x[0])
+
+  minpy = '3.8+'
+  minnum = '1.17+'
+
+  toprint_drop_dates = ['']
+  toprint_support_table = []
+  for d, p, v, r in releases[::-1]:
+      df = d.strftime('%b %d, %Y')
+      toprint_drop_dates.append(
+          f'On {df} drop support for {p} {v} '
+          f'(initially released on {r.strftime("%b %d, %Y")})')
+      toprint_support_table.append(f'{df} {minpy:<6} {minnum:<5}')
+      if p.lower() == 'numpy':
+          minnum = v+'+'
+      else:
+          minpy = v+'+'
+
+  for e in toprint_drop_dates[::-1]:
+      print(e)
+
+  print('============ ====== =====')
+  print('Date         Python NumPy')
+  print('------------ ------ -----')
+  for e in toprint_support_table[::-1]:
+      print(e)
+  print('============ ====== =====')
 
 
 Copyright
