@@ -90,13 +90,10 @@ Other build options
 It's possible to do a parallel build with ``numpy.distutils`` with the ``-j`` option;
 see :ref:`parallel-builds` for more details.
 
-In order to install the development version of NumPy in ``site-packages``, use
-``python setup.py install --user``.
-
 A similar approach to in-place builds and use of ``PYTHONPATH`` but outside the
 source tree is to use::
 
-    $ python setup.py install --prefix /some/owned/folder
+    $ pip install . --prefix /some/owned/folder
     $ export PYTHONPATH=/some/owned/folder/lib/python3.4/site-packages
 
 

@@ -56,7 +56,7 @@ Basic Installation
 
 To install NumPy run::
 
-    python setup.py install
+    pip install .
 
 To perform an in-place build that can be run from the source folder run::
 

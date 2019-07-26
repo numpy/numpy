@@ -148,7 +148,6 @@ NPY_INLINE static float __npy_nzerof(void)
 /*
  * Integer functions.
  */
-/*
 NPY_INPLACE npy_uint npy_gcdu(npy_uint a, npy_uint b);
 NPY_INPLACE npy_uint npy_lcmu(npy_uint a, npy_uint b);
 NPY_INPLACE npy_ulong npy_gcdul(npy_ulong a, npy_ulong b);
@@ -162,7 +161,6 @@ NPY_INPLACE npy_long npy_gcdl(npy_long a, npy_long b);
 NPY_INPLACE npy_long npy_lcml(npy_long a, npy_long b);
 NPY_INPLACE npy_longlong npy_gcdll(npy_longlong a, npy_longlong b);
 NPY_INPLACE npy_longlong npy_lcmll(npy_longlong a, npy_longlong b);
-*/
 
 /*
  * C99 double math funcs
