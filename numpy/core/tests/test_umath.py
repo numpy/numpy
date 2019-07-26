@@ -14,7 +14,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
     assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data
+    _gen_alignment_data, assert_array_almost_equal_nulp
     )
 
 def on_powerpc():
@@ -700,8 +700,8 @@ class TestExpLogFloat32(object):
             exp_true = np.exp(x_f32)
             log_true = np.log(x_f32)
             for jj in strides:
-                assert_equal(np.exp(x_f32[::jj]), exp_true[::jj])
-                assert_equal(np.log(x_f32[::jj]), log_true[::jj])
+                assert_array_almost_equal_nulp(np.exp(x_f32[::jj]), exp_true[::jj], nulp=2)
+                assert_array_almost_equal_nulp(np.log(x_f32[::jj]), log_true[::jj], nulp=2)
 
 class TestLogAddExp(_FilterInvalids):
     def test_logaddexp_values(self):
