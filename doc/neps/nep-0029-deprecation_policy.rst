@@ -12,11 +12,11 @@ NEP 29 — Recommend Python and Numpy version support as a community policy stan
 Abstract
 --------
 
-This NEP recommends and encourages all projects across the Scientific Python ecosystem to adopt a common "time window-based" policy for support of Python and NumPy versions. Standardizing a recommendation for project support of minimum Python and NumPy versions will improve downstream project planning.
-based policy for increasing the minimum version of Python and NumPy
-that downstream projects support.  By standardizing this policy
-across the community we will make it easier for downstream projects to
-plan.
+This NEP recommends and encourages all projects across the Scientific
+Python ecosystem to adopt a common "time window-based" policy for
+support of Python and NumPy versions. Standardizing a recommendation
+for project support of minimum Python and NumPy versions will improve
+downstream project planning.
 
 This is an unusual NEP in that it offers recommendations for
 community-wide policy and not for changes to NumPy itself.  Since a
