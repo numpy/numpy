@@ -109,6 +109,18 @@ def set_module(module):
     return decorator
 
 
+
+# Call textwrap.dedent here instead of in the function so as to avoid
+# calling dedent multiple times on the same text
+_wrapped_func_source = textwrap.dedent("""
+    @functools.wraps(implementation)
+    def {name}(*args, **kwargs):
+        relevant_args = dispatcher(*args, **kwargs)
+        return implement_array_function(
+            implementation, {name}, relevant_args, args, kwargs)
+    """)
+
+
 def array_function_dispatch(dispatcher, module=None, verify=True,
                             docs_from_dispatcher=False):
     """Decorator for adding dispatch with the __array_function__ protocol.
@@ -163,13 +175,7 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         # more interpettable name. Otherwise, the original function does not
         # show up at all in many cases, e.g., if it's written in C or if the
         # dispatcher gets an invalid keyword argument.
-        source = textwrap.dedent("""
-        @functools.wraps(implementation)
-        def {name}(*args, **kwargs):
-            relevant_args = dispatcher(*args, **kwargs)
-            return implement_array_function(
-                implementation, {name}, relevant_args, args, kwargs)
-        """).format(name=implementation.__name__)
+        source = _wrapped_func_source.format(name=implementation.__name__)
 
         source_object = compile(
             source, filename='<__array_function__ internals>', mode='exec')
