@@ -1933,4 +1933,17 @@ def test_ufunc_noncontiguous(ufunc):
             warnings.filterwarnings("always")
             res_c = ufunc(*args_c)
             res_n = ufunc(*args_n)
-        assert_equal(res_c, res_n)
+        if len(out) == 1:
+            res_c = (res_c,)
+            res_n = (res_n,)
+        for c_ar, n_ar in zip(res_c, res_n):
+            dt = c_ar.dtype
+            if np.issubdtype(dt, np.floating):
+                # for floating point results allow a small fuss in comparisons
+                # since different algorithms (libm vs. intrinsics) can be used
+                # for different input strides
+                res_eps = np.finfo(dt).eps
+                tol = 2*res_eps
+                assert_allclose(res_c, res_n, atol=tol, rtol=tol)
+            else:
+                assert_equal(c_ar, n_ar)
