@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 146 people contributed to this release.  People with a "+" by their
+A total of 150 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * Aaron Voelker +
@@ -38,6 +38,7 @@ names contributed a patch for the first time.
 * Christoph Gohlke
 * Christopher Whelan +
 * Chuanzhu Xu +
+* Colin Snyder +
 * Dan Allan +
 * Daniel Hrisca
 * Daniel Lawrence +
@@ -55,12 +56,14 @@ names contributed a patch for the first time.
 * Guillaume Horel +
 * Hameer Abbasi
 * Haoyu Sun +
+* Harmon +
 * He Jia +
 * Hunter Damron +
 * Ian Sanders +
 * Ilja +
 * Isaac Virshup +
 * Isaiah Norton +
+* Jackie Leng +
 * Jaime Fernandez
 * Jakub Wilk
 * Jan S. (Milania1) +
@@ -88,6 +91,7 @@ names contributed a patch for the first time.
 * Kiko Correoso +
 * Kriti Singh +
 * Lars Grueter +
+* Luis Pedro Coelho
 * Maksim Shabunin +
 * Manvi07 +
 * Mark Harfouche
@@ -155,7 +159,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 519 pull requests were merged for this release.
+A total of 531 pull requests were merged for this release.
 
 * `#4808 <https://github.com/numpy/numpy/pull/4808>`__: ENH: Make the `mode` parameter of np.pad default to 'constant'
 * `#8131 <https://github.com/numpy/numpy/pull/8131>`__: BUG: Fix help() formatting for deprecated functions.
@@ -602,7 +606,7 @@ A total of 519 pull requests were merged for this release.
 * `#13720 <https://github.com/numpy/numpy/pull/13720>`__: MAINT/BUG: Manage more files with with statements
 * `#13721 <https://github.com/numpy/numpy/pull/13721>`__: MAINT,BUG: More ufunc exception cleanup
 * `#13724 <https://github.com/numpy/numpy/pull/13724>`__: MAINT: fix use of cache_dim
-* `#13725 <https://github.com/numpy/numpy/pull/13725>`__: BUG: fix compilation of 3rdparty modules with Py_LIMITED_API...
+* `#13725 <https://github.com/numpy/numpy/pull/13725>`__: BUG: fix compilation of 3rd party modules with Py_LIMITED_API...
 * `#13726 <https://github.com/numpy/numpy/pull/13726>`__: MAINT: Update PCG jump sizes
 * `#13729 <https://github.com/numpy/numpy/pull/13729>`__: DOC: Merge together DISTUTILS.rst.txt#template-files" and distutils.r…
 * `#13730 <https://github.com/numpy/numpy/pull/13730>`__: MAINT: Change keyword from reserved word
@@ -676,3 +680,15 @@ A total of 519 pull requests were merged for this release.
 * `#13998 <https://github.com/numpy/numpy/pull/13998>`__: BUG: Missing warnings import in polyutils.
 * `#13999 <https://github.com/numpy/numpy/pull/13999>`__: DOC: Document array_function at a higher level.
 * `#14001 <https://github.com/numpy/numpy/pull/14001>`__: DOC: Show workaround for Generator.integers backward compatibility
+* `#14021 <https://github.com/numpy/numpy/pull/14021>`__: DOC: Prepare 1.17.0rc2 release.
+* `#14040 <https://github.com/numpy/numpy/pull/14040>`__: DOC: Improve quickstart documentation of new random Generator.
+* `#14041 <https://github.com/numpy/numpy/pull/14041>`__: TST, MAINT: expand OpenBLAS version checking
+* `#14080 <https://github.com/numpy/numpy/pull/14080>`__: BUG, DOC: add new recfunctions to `__all__`
+* `#14081 <https://github.com/numpy/numpy/pull/14081>`__: BUG: fix build issue on icc 2016
+* `#14082 <https://github.com/numpy/numpy/pull/14082>`__: BUG: Fix file-like object check when saving arrays
+* `#14109 <https://github.com/numpy/numpy/pull/14109>`__: REV: "ENH: Improved performance of PyArray_FromAny for sequences...
+* `#14126 <https://github.com/numpy/numpy/pull/14126>`__: BUG, TEST: Adding validation test suite to validate float32 exp
+* `#14127 <https://github.com/numpy/numpy/pull/14127>`__: DOC: Add blank line above doctest for intersect1d
+* `#14128 <https://github.com/numpy/numpy/pull/14128>`__: MAINT: adjustments to test_ufunc_noncontigous
+* `#14129 <https://github.com/numpy/numpy/pull/14129>`__: MAINT: Use equality instead of identity check with literal
+* `#14133 <https://github.com/numpy/numpy/pull/14133>`__: MAINT: Update mailmap and changelog for 1.17.0
