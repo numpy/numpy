@@ -431,6 +431,36 @@ def msvc_runtime_major():
 
 #########################
 
+class IgnoreF90ModExt(object):
+    """\
+    Conditionally suspend the usage of file extension to determine whether
+    a Fortran source file is according to Fortran 90 standard or not and
+    thus may contain a module (which must be compiled before other sources).
+    """
+    def __init__(self, override = True):
+        self.override = override
+        self.old_value = False
+
+    def __enter__(self):
+        global _f90_use_ext
+        if self.override:
+            self.old_value = _f90_use_ext
+            _f90_use_ext = False
+
+    def __exit__(self, exc_typ, exc_val, exc_trb):
+        global _f90_use_ext
+        if self.override:
+            _f90_use_ext = self.old_value
+
+# flag that determines whether the file extension should be used to determine
+# if the source file is according to Fortran 90 or not. if this flag is set
+# to False, then all source files will be scanned for modules.
+# if you are writing the extension module yourself, please consider using an
+# appropriate file name for your code instead of using this flag.
+# if you have no choice, then use the IgnoreF90ModExt context manager defined
+# above so it at least can be traced to where it was altered.
+_f90_use_ext = True
+
 #XXX need support for .C that is also C++
 cxx_ext_match = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match
 fortran_ext_match = re.compile(r'.*[.](f90|f95|f77|for|ftn|f)\Z', re.I).match
@@ -440,7 +470,7 @@ def _get_f90_modules(source):
     """Return a list of Fortran f90 module names that
     given source file defines.
     """
-    if not f90_ext_match(source):
+    if _f90_use_ext and not f90_ext_match(source):
         return []
     modules = []
     with open(source, 'r') as f:

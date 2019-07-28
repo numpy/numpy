@@ -114,6 +114,10 @@ Options:
   --include-paths <path1>:<path2>:...   Search include files from the given
                    directories.
 
+  --std=<level>    Assume that Fortran files are written according to this
+                   language standard regardless of extension. Valid values
+                   for <level> are `f77' and `f90'.
+
   --help-link [..] List system resources found by system_info.py. See also
                    --link-<resource> switch below. [..] is optional list
                    of resources names. E.g. try 'f2py --help-link lapack_opt'.
@@ -176,6 +180,7 @@ http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
 def scaninputline(inputline):
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
     f, f2, f3, f5, f6, f7, f8, f9 = 1, 0, 0, 0, 0, 0, 0, 0
+    std = ''  # unspecified
     verbose = 1
     dolc = -1
     dolatexdoc = 0
@@ -246,6 +251,15 @@ def scaninputline(inputline):
             f7 = 1
         elif l[:15] in '--include-paths':
             f7 = 1
+        elif l[:5] == '-std=' or l[:6] == '--std=':
+            # language level specification starts right after the equal sign,
+            # which is at index 5, unless we have two dashes, in which case it
+            # is at index 6
+            std = l[5+(1 if l[1]=='-' else 0):].lower()
+            # check for valid value
+            if not (std=='f77' or std=='f90'):
+                print(__usage__)
+                sys.exit()
         elif l[0] == '-':
             errmess('Unknown option %s\n' % repr(l))
             sys.exit()
@@ -312,6 +326,7 @@ def scaninputline(inputline):
     options['wrapfuncs'] = wrapfuncs
     options['buildpath'] = buildpath
     options['include_paths'] = include_paths
+    options['std'] = std
     return files, options
 
 
@@ -327,6 +342,12 @@ def callcrackfortran(files, options):
         crackfortran.onlyfuncs = options['onlyfuncs']
     crackfortran.include_paths[:] = options['include_paths']
     crackfortran.dolowercase = options['do-lower']
+
+    # if we have files that are named .f or .for but are really Fortran 90, then
+    # we want to use this option to reconfigure the parser.
+    if 'std' in options:
+        crackfortran.std = options['std']
+
     postlist = crackfortran.crackfortran(files)
     if 'signsfile' in options:
         outmess('Saving signatures to file "%s"\n' % (options['signsfile']))
@@ -513,7 +534,7 @@ def run_compile():
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
     _reg2 = re.compile(
-        r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include')
+        r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include|[-][-]?std=.*')
     f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
     sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
@@ -647,7 +668,12 @@ def run_compile():
     if flib_flags:
         sys.argv.extend(['build_ext'] + flib_flags)
 
-    setup(ext_modules=[ext])
+    # temporary disable using file extension to determine module extension and
+    # rather do a full scan, if we have set language level for all files
+    std_f90_reg = re.compile(r'[-][-]?std=[fF]90')
+    from numpy.distutils.misc_util import IgnoreF90ModExt
+    with IgnoreF90ModExt(any([std_f90_reg.match(opt) for opt in f2py_flags])):
+        setup(ext_modules=[ext])
 
     if remove_build_dir and os.path.exists(build_dir):
         import shutil
