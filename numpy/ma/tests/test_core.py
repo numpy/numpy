@@ -3035,6 +3035,13 @@ class TestMaskedArrayMethods(object):
         assert_equal(clipped._data, x.clip(2, 8))
         assert_equal(clipped._data, mx._data.clip(2, 8))
 
+    def test_clip_out(self):
+        # gh-14140
+        a = np.arange(10)
+        m = np.ma.MaskedArray(a, mask=[0, 1] * 5)
+        m.clip(0, 5, out=m)
+        assert_equal(m.mask, [0, 1] * 5)
+
     def test_compress(self):
         # test compress
         a = masked_array([1., 2., 3., 4., 5.], fill_value=9999)

@@ -5870,7 +5870,6 @@ class MaskedArray(ndarray):
         return out[()]
 
     # Array methods
-    clip = _arraymethod('clip', onmask=False)
     copy = _arraymethod('copy')
     diagonal = _arraymethod('diagonal')
     flatten = _arraymethod('flatten')
