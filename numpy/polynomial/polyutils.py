@@ -725,6 +725,279 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
     else:
         return c
 
+def _get_coeff_idx(coeff):
+    """
+    Get the powers of x and y corresponding to a 2d coefficient matrix
+    in the same order as the vandermode matrix,
+    i.e. [[0, 0], [1, 0], ...]
+
+    Parameters
+    ----------
+    coeff : array of shape (n, m)
+        coefficient matrix
+
+    Returns
+    -------
+    idx : array of shape (n * m, 2)
+        pairs of indices to the coefficient matrix
+    """
+    idx = np.indices(coeff.shape)
+    idx = idx.T.swapaxes(0, 1).reshape((-1, 2))
+    return idx
+
+
+def _scale(*args):
+    """
+    Scale inputs independently to mean 0 and variance 1
+
+    Parameters
+    ----------
+    *args : array
+        any number of arrays
+
+    Returns
+    -------
+    *x : array
+        scaled arrays
+    norm : array of shape (n,)
+        scaling factors
+    offset : array of shape (n,)
+        offsets that were subtracted
+    """
+    # Normalize x and y to avoid huge numbers
+
+    n = len(args)
+    offset = [None for _ in range(n)]
+    norm = [None for _ in range(n)]
+    out = [None for _ in range(n)]
+    for i, x in enumerate(args):
+        # need to convert to float incase its an integer
+        # Also make sure its a numpy array
+        x = np.asarray(x)
+        if np.issubdtype(x.dtype, np.integer):
+            x = x.astype(float)
+        offset[i] = np.mean(x)
+        norm[i] = np.std(x)
+        if norm[i] == 0:
+            norm[i] = 1
+        x -= offset[i]
+        x /= norm[i]
+        out[i] = x
+    return (*out, norm, offset)
+
+
+def _unscale(*args, norm, offset):
+    """
+    Invert the scaling on any number of arrays
+
+    Parameters
+    ----------
+    norm : array of shape (n,)
+        scaling factors
+    offset : array of shape (n,)
+        applied offsets
+
+    Returns
+    -------
+    *x : array
+        arrays with inverted scaling
+    """
+    n = len(args)
+    out = [None for _ in range(n)]
+    for i, x in enumerate(args):
+        x = np.asarray(x)
+        x *= norm[i]
+        x += offset[i]
+        out[i] = x
+    return out
+
+
+def polyscale2d(coeff, scale_x, scale_y, copy=True):
+    """
+    Scale the coefficients of a 2d polynomial by scaling factors
+    previously applied to the coordinates
+
+    Parameters
+    ----------
+    coeff : array_like
+        polynomial coefficents
+    scale_x : float
+        scaling factor in x direction
+    scale_y : float
+        scaling factor in y direction
+    copy : bool, optional
+        Whether to copy the coefficients, by default True
+
+    Returns
+    -------
+    coeff : array_like
+        scaled coefficients
+    """
+    if copy:
+        coeff = np.copy(coeff)
+    idx = _get_coeff_idx(coeff)
+    for k, (i, j) in enumerate(idx):
+        coeff[i, j] /= scale_x ** i * scale_y ** j
+    return coeff
+
+def _binom(x, y):
+    fac = np.math.factorial
+    try:
+        binom = fac(x) // fac(y) // fac(x - y)
+    except ValueError:
+        binom = 0
+    return binom
+
+def polyshift2d(coeff, offset_x, offset_y, copy=True):
+    """
+    Shift a 2d polynomial to a new origin
+
+    Parameters
+    ----------
+    coeff : array_like
+        polynomial coefficients
+    offset_x : float
+        offset in x direction
+    offset_y : float
+        offset in y direction
+    copy : bool, optional
+        Whether to copy the coefficients, by default True
+
+    Returns
+    -------
+    coeff : ndarray
+        Coefficients of the shifted polynomial
+    """
+    if copy:
+        coeff = np.copy(coeff)
+    idx = _get_coeff_idx(coeff)
+    # Copy coeff because it changes during the loop
+    coeff2 = np.copy(coeff)
+    for k, m in idx:
+        not_the_same = ~((idx[:, 0] == k) & (idx[:, 1] == m))
+        above = (idx[:, 0] >= k) & (idx[:, 1] >= m) & not_the_same
+        for i, j in idx[above]:
+            b = _binom(i, k) * _binom(j, m)
+            sign = (-1) ** ((i - k) + (j - m))
+            offset = offset_x ** (i - k) * offset_y ** (j - m)
+            coeff[k, m] += sign * b * coeff2[i, j] * offset
+    return coeff
+
+
+def _fit2d(vander2d_f, x, y, z, deg=1, max_degree=None, w=None, scale=True, rcond=None, full=False):
+    """A simple 2D polynomial fit to data x, y, z
+    The polynomial can be evaluated with numpy.polynomial.polynomial.polyval2d
+
+    Parameters
+    ----------
+    vander2d_f : function(array_like, array_like, int) -> ndarray
+        The 2d vander function, such as ``polyvander``
+    x : array_like
+        x coordinates
+    y : array_like
+        y coordinates
+    z : array_like
+        data values
+    degree : {int, 2-tuple}, optional
+        degree of the polynomial fit in x and y direction, by default 1
+    max_degree : {int, None}, optional
+        if given the maximum combined degree of the coefficients is limited to this value, by default None
+    scale : bool, optional
+        Wether to scale the input arrays x and y to mean 0 and variance 1, to avoid numerical overflows.
+        Especially useful at higher degrees. By default True.
+
+    Returns
+    -------
+    coeff : array of shape (deg+1, deg+1)
+        the polynomial coefficients in numpy 2d format, i.e. coeff[i, j] for x**i * y**j
+    """
+    # Flatten input
+    x = np.asarray(x) + 0.0
+    y = np.asarray(y) + 0.0
+    z = np.asarray(z) + 0.0
+    deg = np.asarray(deg)
+
+    if deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0:
+        raise TypeError("deg must be an int or non-empty 1-D array of int")
+    if deg.min() < 0:
+        raise ValueError("expected deg >= 0")
+    if x.ndim != 1 and x.ndim != 2:
+        raise TypeError("expected 1D or 2D vector for x")
+    if x.size == 0:
+        raise TypeError("expected non-empty vector for x")
+    if y.ndim != 1 and y.ndim != 2:
+        raise TypeError("expected 1D or 2D vector for y")
+    if y.size == 0:
+        raise TypeError("expected non-empty vector for y")
+    if z.ndim < 1 or z.ndim > 2:
+        raise TypeError("expected 1D or 2D array for z")
+    if z.size == 0:
+        raise TypeError("expected non-empty vector for z")
+    if len(x) != len(y) or len(x) != len(z):
+        raise TypeError("expected x, y and z to have same length")
+
+    x, y, z = x.ravel(), y.ravel(), z.ravel()
+
+    # Remove masked values
+    mask = ~(np.ma.getmask(z) | np.ma.getmask(x) | np.ma.getmask(y))
+    x, y, z = x[mask].ravel(), y[mask].ravel(), z[mask].ravel()
+
+    if deg.size == 1:
+        deg = np.array([deg, deg])
+    deg = deg[:2]
+    coeff = np.zeros((deg[0] + 1, deg[1] + 1))
+    idx = _get_coeff_idx(coeff)
+
+    # Scale coordinates to smaller values to avoid numerical problems at larger degrees
+    if scale:
+        x, y, norm, offset = _scale(x, y)
+
+    # Calculate elements 1, x, y, x*y, x**2, y**2, ...
+    A = vander2d_f(x, y, deg)
+
+    # We only want the combinations with maximum order COMBINED power
+    if max_degree is not None:
+        mask = idx[:, 0] + idx[:, 1] <= int(max_degree)
+        idx = idx[mask]
+        A = A[:, mask]
+        order = max_degree + 1
+    else:
+        order = deg[0] + deg[1] + 1
+
+    if w is not None:
+        w = np.asarray(w) + 0.0
+        if w.ndim != 1:
+            raise TypeError("expected 1D vector for w")
+        if len(x) != len(w):
+            raise TypeError("expected x and w to have same length")
+        A = A * w
+        z = z * w
+
+    if rcond is None:
+        rcond = len(x)*np.finfo(x.dtype).eps
+
+    # Do the actual least squares fit
+    C, resids, rank, s = np.linalg.lstsq(A, z, rcond)
+
+    # Reorder coefficients into numpy compatible 2d array
+    for k, (i, j) in enumerate(idx):
+        coeff[i, j] = C[k]
+
+    # Reverse the scaling, it is important to scale first and then shift
+    if scale:
+        coeff = polyscale2d(coeff, *norm, copy=False)
+        coeff = polyshift2d(coeff, *offset, copy=False)
+
+    # warn on rank reduction
+    if rank != order and not full:
+        msg = "The fit may be poorly conditioned"
+        warnings.warn(msg, RankWarning, stacklevel=2)
+
+    if full:
+        return coeff, [resids, rank, s, rcond]
+    else:
+        return coeff
+
 
 def _pow(mul_f, c, pow, maxpower):
     """
