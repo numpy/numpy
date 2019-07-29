@@ -70,22 +70,22 @@ support py36 and newer, and a project with a major or minor version
 release in Nov20 should support py37 and newer.
 
 The current Python release cadence is 18 months so a 42 month window
-ensures that there will always be at least two versions of Python
+ensures that there will always be at least two minor versions of Python
 in the window.  By padding the window by 6 months from the anticipated
 Python cadence we avoid the edge cases where a project releases
 the month after Python and would effectively only support one
-version of Python that has an installed base.
+minor version of Python that has an installed base.
 This six month buffer provides resilience to minor fluctuations /
 delays in the Python release schedule.
 
-Because Python version support is based on historical release
+Because Python minor version support is based on historical release
 dates, a 42 month time window, and a project's plans, a project can
-decide to drop a given version of Python very early in the release
+decide to drop a given minor version of Python very early in the release
 process.
 
-While there will be some unavoidable mismatch in supported version of
+While there will be some unavoidable mismatch in supported versions of
 Python between projects if releases occurs immediately after a
-version of Python ages out.  This should not last longer than one
+minor version of Python ages out.  This should not last longer than one
 release cycle of each of the projects, and when a given project does a
 minor or major release, it is guaranteed that there will be a stable
 release of all other projects that support the set of Python the
@@ -146,7 +146,7 @@ development guidelines:
      higher)
 
    The minimum supported version of Python will be set to
-   ``python_requires`` in ``setup``.  All supported versions of
+   ``python_requires`` in ``setup``.  All supported minor versions of
    Python will be in the test matrix and have binary artifacts built
    for releases.
 
@@ -181,7 +181,7 @@ All CPython supported versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The CPython supported versions of Python are listed in the Python
-Developers Guide and the Python PEPs. Supporting these are a very
+Developers Guide and the Python PEPs. Supporting these is a very
 clear and conservative approach.  However, it means that there is 4
 year lag between when new language features come into the language and
 when the projects are able to use them.  Additionally, for projects
