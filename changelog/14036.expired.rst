@@ -1,0 +1,1 @@
+* PyArray_As1D, PyArray_As2D have been removed in favor of PyArray_AsCArray
