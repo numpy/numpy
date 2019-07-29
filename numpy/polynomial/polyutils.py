@@ -725,7 +725,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
     else:
         return c
 
-def _get_coeff_idx(coeff):
+def _get_coeff_idx(shape):
     """
     Get the powers of x and y corresponding to a 2d coefficient matrix
     in the same order as the vandermode matrix,
@@ -733,15 +733,15 @@ def _get_coeff_idx(coeff):
 
     Parameters
     ----------
-    coeff : array of shape (n, m)
-        coefficient matrix
+    shape : 2-tuple
+        shape of the coefficient matrix, i.e. degree + 1
 
     Returns
     -------
     idx : array of shape (n * m, 2)
         pairs of indices to the coefficient matrix
     """
-    idx = np.indices(coeff.shape)
+    idx = np.indices(shape)
     idx = idx.T.swapaxes(0, 1).reshape((-1, 2))
     return idx
 
@@ -835,7 +835,7 @@ def polyscale2d(coeff, scale_x, scale_y, copy=True):
     """
     if copy:
         coeff = np.copy(coeff)
-    idx = _get_coeff_idx(coeff)
+    idx = _get_coeff_idx(coeff.shape)
     for k, (i, j) in enumerate(idx):
         coeff[i, j] /= scale_x ** i * scale_y ** j
     return coeff
@@ -870,7 +870,7 @@ def polyshift2d(coeff, offset_x, offset_y, copy=True):
     """
     if copy:
         coeff = np.copy(coeff)
-    idx = _get_coeff_idx(coeff)
+    idx = _get_coeff_idx(coeff.shape)
     # Copy coeff because it changes during the loop
     coeff2 = np.copy(coeff)
     for k, m in idx:
@@ -945,8 +945,7 @@ def _fit2d(vander2d_f, x, y, z, deg=1, max_degree=None, w=None, scale=True, rcon
     if deg.size == 1:
         deg = np.array([deg, deg])
     deg = deg[:2]
-    coeff = np.zeros((deg[0] + 1, deg[1] + 1))
-    idx = _get_coeff_idx(coeff)
+    idx = _get_coeff_idx(deg+1)
 
     # Scale coordinates to smaller values to avoid numerical problems at larger degrees
     if scale:
@@ -970,7 +969,7 @@ def _fit2d(vander2d_f, x, y, z, deg=1, max_degree=None, w=None, scale=True, rcon
             raise TypeError("expected 1D vector for w")
         if len(x) != len(w):
             raise TypeError("expected x and w to have same length")
-        A = A * w
+        A = A * w[:, None]
         z = z * w
 
     if rcond is None:
@@ -980,6 +979,7 @@ def _fit2d(vander2d_f, x, y, z, deg=1, max_degree=None, w=None, scale=True, rcon
     C, resids, rank, s = np.linalg.lstsq(A, z, rcond)
 
     # Reorder coefficients into numpy compatible 2d array
+    coeff = np.zeros(deg + 1, dtype=C.dtype)
     for k, (i, j) in enumerate(idx):
         coeff[i, j] = C[k]
 
