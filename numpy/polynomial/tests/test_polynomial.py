@@ -578,6 +578,102 @@ class TestMisc:
         assert_almost_equal(poly.polyval(x, coef2), y)
         assert_almost_equal(coef1, coef2)
 
+    def test_polyfit2d(self):
+        def f(x, y):
+            return x * (x - 1) * (y - 2)
+
+        def f2(x, y):
+            return x**4 + y**2 + 1
+
+        # Test exceptions
+        assert_raises(ValueError, poly.polyfit2d, [1], [1], [1], -1)
+        assert_raises(TypeError, poly.polyfit2d, [[[1]]], [[1]], [1], 0)
+        assert_raises(TypeError, poly.polyfit2d, [[[1]]], [[[1]]], [1], 0)
+        assert_raises(TypeError, poly.polyfit2d, [], [], [1], 0)
+        assert_raises(TypeError, poly.polyfit2d, [1], [1], [[[1]]], 0)
+        assert_raises(TypeError, poly.polyfit2d, [1, 2], [1, 2], [1], 0)
+        assert_raises(TypeError, poly.polyfit2d, [1], [1], [1, 2], 0)
+        assert_raises(TypeError, poly.polyfit2d, [1], [1], [1], 0, w=[[1]])
+        assert_raises(TypeError, poly.polyfit2d, [1], [1], [1], 0, w=[1, 1])
+        assert_raises(ValueError, poly.polyfit2d, [1], [1], [1], [-1,])
+        assert_raises(ValueError, poly.polyfit2d, [1], [1], [1], [2, -1, 6])
+        assert_raises(TypeError, poly.polyfit2d, [1], [1], [1], [])
+
+        # Test fit
+        x = np.linspace(0, 2)
+        y = np.linspace(0, 2)
+        z = f(x, y)
+        #
+        coef3 = poly.polyfit2d(x, y, z, 3)
+        assert_equal(coef3.shape[0], 4)
+        assert_equal(coef3.shape[1], 4)
+        assert_almost_equal(poly.polyval2d(x, y, coef3), z)
+        # coef3 = poly.polyfit(x, y, z, [0, 1, 2, 3])
+        # assert_equal(coef3.shape[0], 4)
+        # assert_equal(coef3.shape[1], 4)
+        # assert_almost_equal(poly.polyval2d(x, y, coef3), z)
+        #
+        coef4 = poly.polyfit2d(x, y, z, 4)
+        assert_equal(coef4.shape[0], 5)
+        assert_equal(coef4.shape[1], 5)
+        assert_almost_equal(poly.polyval2d(x, y, coef4), z)
+        # coef4 = poly.polyfit(x, y, z, [0, 1, 2, 3, 4])
+        # assert_equal(coef4.shape[0], 5)
+        # assert_equal(coef4.shape[1], 5)
+        # assert_almost_equal(poly.polyval(x, coef4), y)
+        #
+        # coef2d = poly.polyfit2d(x, y, np.array([z, z]).T, 3)
+        # assert_almost_equal(coef2d, np.array([coef3, coef3]).T)
+        # coef2d = poly.polyfit(x, np.array([y, y]).T, [0, 1, 2, 3])
+        # assert_almost_equal(coef2d, np.array([coef3, coef3]).T)
+        # test scaling
+        coef3_noscale = poly.polyfit2d(x, y, z, 3, scale=False)
+        assert_equal(coef3_noscale.shape[0], 4)
+        assert_equal(coef3_noscale.shape[1], 4)
+        assert_almost_equal(poly.polyval2d(x, y, coef3_noscale), z)
+        assert_almost_equal(coef3, coef3_noscale)
+        # test max degree
+        coef3_max = poly.polyfit2d(x, y, z, 3, max_degree=3)
+        assert_equal(coef3_max.shape[0], 4)
+        assert_equal(coef3_max.shape[1], 4)
+        assert_equal(coef3_max[1, 3], 0)
+        assert_equal(coef3_max[2, 2], 0)
+        assert_equal(coef3_max[2, 3], 0)
+        assert_equal(coef3_max[3, 1], 0)
+        assert_equal(coef3_max[3, 2], 0)
+        assert_equal(coef3_max[3, 3], 0)
+        assert_almost_equal(poly.polyval2d(x, y, coef3_max), z)
+        assert_almost_equal(coef3, coef3_max)
+        # test weighting
+        w = np.zeros_like(x)
+        zw = z.copy()
+        w[1::2] = 1
+        zw[0::2] = 0
+        wcoef3 = poly.polyfit2d(x, y, zw, 3, w=w)
+        assert_almost_equal(wcoef3, coef3)
+        # wcoef3 = poly.polyfit2d(x, y, zw, [0, 1, 2, 3], w=w)
+        # assert_almost_equal(wcoef3, coef3)
+        #
+        # wcoef2d = poly.polyfit2d(x, np.array([zw, zw]).T, 3, w=w)
+        # assert_almost_equal(wcoef2d, np.array([coef3, coef3]).T)
+        # wcoef2d = poly.polyfit2d(x, np.array([zw, zw]).T, [0, 1, 2, 3], w=w)
+        # assert_almost_equal(wcoef2d, np.array([coef3, coef3]).T)
+        # test scaling with complex values x points whose square
+        # is zero when summed.
+        x = [1, 1j, -1, -1j]
+        y = [1, 1j, -1, -1j]
+        assert_almost_equal(poly.polyfit2d(x, y, x, 1), [[0, 0.5], [0.5, 0]])
+        # assert_almost_equal(poly.polyfit2d(x, y, x, [0, 1]), [0, 1])
+        # test fitting only even Polyendre polynomials
+        x = np.linspace(-1, 1)
+        y = np.linspace(-1, 1)
+        z = f2(x, y)
+        coef1 = poly.polyfit2d(x, y, z, 4)
+        assert_almost_equal(poly.polyval2d(x, y, coef1), z)
+        # coef2 = poly.polyfit(x, y, [0, 2, 4])
+        # assert_almost_equal(poly.polyval(x, coef2), y)
+        # assert_almost_equal(coef1, coef2)
+
     def test_polytrim(self):
         coef = [2, -1, 1, 0]
 
