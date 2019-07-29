@@ -1224,7 +1224,7 @@ avx2_get_mantissa(__m256 x)
                         _mm256_castps_si256(x), mantissa_bits), exp_126_bits));
 }
 
-NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
+static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
 avx2_scalef_ps(__m256 poly, __m256 quadrant)
 {
     /*
