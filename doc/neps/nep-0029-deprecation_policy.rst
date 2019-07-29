@@ -218,9 +218,14 @@ based solely on the number of minor releases may need to be changed to remain se
 Time window on the X.Y.1 Python release
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As the first bug fix release is typically a few months after the
-initial release, you can achieve the same effect by using a large delay
-from the X.Y.0 release which seems simpler to explain.
+This is equivalent to a few month longer support window from the X.Y.0
+release.  This is because X.Y.1 bug-fix release is typically a few
+months after the X.Y.0 release, thus a N month window from X.Y.1 is
+roughly equivalent to a N+3 month from X.Y.0.
+
+The X.Y.0 release is naturally a special release.  If we were to
+anchor the window on X.Y.1 we would then have the discussion of why
+not X.Y.M?
 
 
 Discussion
