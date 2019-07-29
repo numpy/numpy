@@ -154,9 +154,6 @@ development guidelines:
    version support on every minor and major release, but never on a
    patch release.
 
-For other dependencies, adopt similar time windows of 24 months or
-shorter.
-
 
 Backward compatibility
 ----------------------
