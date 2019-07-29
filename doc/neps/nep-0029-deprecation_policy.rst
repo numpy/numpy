@@ -84,7 +84,7 @@ decide to drop a given version of Python very early in the release
 process.
 
 While there will be some unavoidable mismatch in supported version of
-Python between if a project release occurs immediately after a
+Python between projects if releases occurs immediately after a
 version of Python ages out.  This should not last longer than one
 release cycle of each of the projects, and when a given project does a
 minor or major release, it is guaranteed that there will be a stable
