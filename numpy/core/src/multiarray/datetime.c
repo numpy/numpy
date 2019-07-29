@@ -2269,7 +2269,10 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
             if (tmp == NULL) {
                 return -1;
             }
-            seconds_offset = PyInt_AsLong(tmp);
+            /* Rounding here is no worse than the integer division below.
+             * Only whole minute offsets are supported by numpy anyway.
+             */
+            seconds_offset = (int)PyFloat_AsDouble(tmp);
             if (error_converting(seconds_offset)) {
                 Py_DECREF(tmp);
                 return -1;
