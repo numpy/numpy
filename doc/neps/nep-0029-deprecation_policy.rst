@@ -46,7 +46,7 @@ For the purposes of this NEP we assume semantic versioning and define:
 
 
 When a project creates a new major or minor version, we recommend that
-the project should support all minor versions of ``Python`` introduced
+the project should support all minor versions of Python introduced
 and released in the prior 42 months ~~from their anticipated release
 date~~ and all minor versions of NumPy released in the prior 24
 months.
@@ -63,35 +63,35 @@ The diagram::
             |-----------------------------------------> Dec19
                       |-----------------------------------------> Nov20
 
-shows the 42 month support windows for ``Python``.  A project with a
+shows the 42 month support windows for Python.  A project with a
 major or minor version release in Feb19 should support py35 and newer,
 a project with a major or minor version release in Dec19 should
 support py36 and newer, and a project with a major or minor version
 release in Nov20 should support py37 and newer.
 
 The current Python release cadence is 18 months so a 42 month window
-ensures that there will always be at least two versions of ``Python``
+ensures that there will always be at least two versions of Python
 in the window.  By padding the window by 6 months from the anticipated
-``Python`` cadence we avoid the edge cases where a project releases
-the month after ``Python`` and would effectively only support one
-version of ``Python`` that has an installed base.
+Python cadence we avoid the edge cases where a project releases
+the month after Python and would effectively only support one
+version of Python that has an installed base.
 This six month buffer provides resilience to minor fluctuations /
-delays in the ``Python`` release schedule.
+delays in the Python release schedule.
 
-Because ``Python`` version support is based on historical release
+Because Python version support is based on historical release
 dates, a 42 month time window, and a project's plans, a project can
-decide to drop a given version of ``Python`` very early in the release
+decide to drop a given version of Python very early in the release
 process.
 
 While there will be some unavoidable mismatch in supported version of
-``Python`` between if a project release occurs immediately after a
-version of ``Python`` ages out.  This should not last longer than one
+Python between if a project release occurs immediately after a
+version of Python ages out.  This should not last longer than one
 release cycle of each of the projects, and when a given project does a
 minor or major release, it is guaranteed that there will be a stable
-release of all other projects that support the set of ``Python`` the
+release of all other projects that support the set of Python the
 new release will support.
 
-If there is a ``Python`` 4 or a NumPy 2 this policy will have to be
+If there is a Python 4 or a NumPy 2 this policy will have to be
 reviewed in light of the community's and projects' best interests.
 
 
@@ -134,16 +134,16 @@ We suggest that all projects adopt the following language into their
 development guidelines:
 
 
-   - This project supports minor versions of ``Python`` initially released
+   - This project supports minor versions of Python initially released
      42 months prior to a planned project release date.
    - The project will always support at least the 2 latest minor
-     versions of ``Python``
+     versions of Python
    - support minor versions of ``numpy`` initially released in the 24
      months prior to a planned project release date or the oldest
      version that supports the minimum Python version (whichever is
      higher)
 
-   The minimum supported version of ``Python`` will be set to
+   The minimum supported version of Python will be set to
    ``python_requires`` in ``setup``.  All supported versions of
    Python will be in the test matrix and have binary artifacts built
    for releases.
