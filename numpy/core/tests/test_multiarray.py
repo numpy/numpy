@@ -8080,6 +8080,8 @@ class TestWritebackIfCopy(object):
         arr_wb[...] = 100
         assert_equal(arr, -100)
 
+    @pytest.mark.leaks_references(
+            reason="increments self in dealloc; ignore since deprecated path.")
     def test_dealloc_warning(self):
         with suppress_warnings() as sup:
             sup.record(RuntimeWarning)
