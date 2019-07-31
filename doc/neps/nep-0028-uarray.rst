@@ -105,7 +105,7 @@ Existing and potential consumers of alternative arrays
 * TensorLy: http://tensorly.org/
 
 Existing alternate dtype implementations
-----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * ``ndtypes``: https://ndtypes.readthedocs.io/en/latest/
 * Datashape: https://datashape.readthedocs.io
