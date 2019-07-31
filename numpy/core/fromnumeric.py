@@ -25,7 +25,7 @@ __all__ = [
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
-    'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
+    'ravel', 'repeat', 'reshape', 'resize', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
 ]
@@ -3573,30 +3573,3 @@ def alltrue(*args, **kwargs):
     numpy.all : Equivalent function; see for details.
     """
     return all(*args, **kwargs)
-
-
-@array_function_dispatch(_ndim_dispatcher)
-def rank(a):
-    """
-    Return the number of dimensions of an array.
-
-    .. note::
-        This function is deprecated in NumPy 1.9 to avoid confusion with
-        `numpy.linalg.matrix_rank`. The ``ndim`` attribute or function
-        should be used instead.
-
-    See Also
-    --------
-    ndim : equivalent non-deprecated function
-
-    Notes
-    -----
-    In the old Numeric package, `rank` was the term used for the number of
-    dimensions, but in NumPy `ndim` is used instead.
-    """
-    # 2014-04-12, 1.9
-    warnings.warn(
-        "`rank` is deprecated; use the `ndim` attribute or function instead. "
-        "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
-        VisibleDeprecationWarning, stacklevel=3)
-    return ndim(a)
