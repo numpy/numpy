@@ -12,7 +12,7 @@ Abstract
 --------
 
 This NEP proposes to make all of NumPy's public API overridable via a backend
-mechanism, using a library called `uarray <https://uarray.readthedocs.io>`_.
+mechanism, using a library called ``uarray`` `[1]`_
 
 ``uarray`` provides global and context-local overrides, as well as a dispatch
 mechanism similar to NEP-18 `[2]`_. This NEP proposes to supercede NEP-18,
@@ -94,14 +94,14 @@ Existing NumPy-like array implementations
 * CuPy: https://cupy.chainer.org/
 * PyData/Sparse: https://sparse.pydata.org/
 * Xnd: https://xnd.readthedocs.io/
-* Astropy's Unit: https://docs.astropy.org/en/stable/units/
+* Astropy's Quantity: https://docs.astropy.org/en/stable/units/
 
 Existing and potential consumers of alternative arrays
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Dask: https://dask.org/
 * scikit-learn: https://scikit-learn.org/
-* XArray: https://xarray.pydata.org/
+* Xarray: https://xarray.pydata.org/
 * TensorLy: http://tensorly.org/
 
 Existing alternate dtype implementations
