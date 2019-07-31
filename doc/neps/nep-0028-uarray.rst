@@ -136,6 +136,8 @@ Discussion
 * NEP-22: https://numpy.org/neps/nep-0022-ndarray-duck-typing-overview.html
 * Dask issue #4462: https://github.com/dask/dask/issues/4462
 * PR #13046: https://github.com/numpy/numpy/pull/13046
+* Dask issue #4883: https://github.com/dask/dask/issues/4883
+* Issue #13831: https://github.com/numpy/numpy/issues/13831
 
 
 References and Footnotes
