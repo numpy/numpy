@@ -32,9 +32,11 @@ This NEP takes a more holistic approach: It assumes that there are parts of the 
 overridable, and that these will grow over time. It provides a general framework and a mechanism to
 avoid a design of a new protocol each time this is required.
 
-The second is to ease the creation of new duck-arrays, 
+The second is to ease the creation of new duck-arrays, by providing default implementations of many
+functions that can be easily expressed in terms of others, as well as a repository of utility functions
+that help in the implementation of duck-arrays that most duck-arrays would require.
 
-The second is the existence of actual, third party dtype packages, and
+The third is the existence of actual, third party dtype packages, and
 their desire to blend into the NumPy ecosystem. `[6]`_. This is a separate
 issue compared to the C-level dtype redesign proposed in `[7]`_, it's about
 allowing third-party dtype implementations to work with NumPy, much like third-party array
