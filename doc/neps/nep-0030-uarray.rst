@@ -1,5 +1,5 @@
 ============================================================
-NEP 28 — Context-local and global overrides of the NumPy API
+NEP 30 — Context-local and global overrides of the NumPy API
 ============================================================
 
 :Author: Hameer Abbasi <einstein.edison@gmail.com>
