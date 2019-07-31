@@ -94,6 +94,7 @@ Existing NumPy-like array implementations
 * CuPy: https://cupy.chainer.org/
 * PyData/Sparse: https://sparse.pydata.org/
 * Xnd: https://xnd.readthedocs.io/
+* Astropy's Unit: https://docs.astropy.org/en/stable/units/
 
 Existing and potential consumers of alternative arrays
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -102,6 +103,13 @@ Existing and potential consumers of alternative arrays
 * scikit-learn: https://scikit-learn.org/
 * XArray: https://xarray.pydata.org/
 * TensorLy: http://tensorly.org/
+
+Existing alternate dtype implementations
+----------------------------------------
+
+* ``ndtypes``: https://ndtypes.readthedocs.io/en/latest/
+* Datashape: https://datashape.readthedocs.io
+* Plum: https://plum-py.readthedocs.io/
 
 Implementation
 --------------
