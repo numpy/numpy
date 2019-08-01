@@ -192,7 +192,8 @@ def test_fft_with_order(dtype, order, fft):
     # non contiguous arrays
     rng = np.random.RandomState(42)
     X = rng.rand(8, 7, 13).astype(dtype, copy=False)
-    _tol = np.sqrt(np.log2(X.size)) * np.finfo(X.dtype).eps
+    # See discussion in pull/14178
+    _tol = 8.0 * np.sqrt(np.log2(X.size)) * np.finfo(X.dtype).eps
     if order == 'F':
         Y = np.asfortranarray(X)
     else:
