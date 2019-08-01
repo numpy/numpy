@@ -617,6 +617,19 @@ class TestSubclasses(object):
         assert_array_equal(s_bool, a[a > 0])
         assert_array_equal(s_bool.base, a[a > 0])
 
+    def test_fancy_on_read_only(self):
+        # Test that fancy indexing on read-only SubClass does not make a
+        # read-only copy (gh-14132)
+        class SubClass(np.ndarray):
+            pass
+
+        a = np.arange(5)
+        s = a.view(SubClass)
+        s.flags.writeable = False
+        s_fancy = s[[0, 1, 2]]
+        assert_(s_fancy.flags.writeable)
+
+
     def test_finalize_gets_full_info(self):
         # Array finalize should be called on the filled array.
         class SubClass(np.ndarray):
