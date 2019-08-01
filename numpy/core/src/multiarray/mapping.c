@@ -1699,7 +1699,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 PyArray_SHAPE(tmp_arr),
                 PyArray_STRIDES(tmp_arr),
                 PyArray_BYTES(tmp_arr),
-                PyArray_FLAGS(self),
+                PyArray_FLAGS(tmp_arr),
                 (PyObject *)self, (PyObject *)tmp_arr);
         Py_DECREF(tmp_arr);
         if (result == NULL) {
