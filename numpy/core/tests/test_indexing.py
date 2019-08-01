@@ -627,7 +627,7 @@ class TestSubclasses(object):
         s = a.view(SubClass)
         s.setflags(write=False)
         s_fancy = s[[0, 1, 2]]
-        assert_(s_fancy.flags['WRITEABLE'])
+        assert_(s_fancy.flags.writeable)
 
 
     def test_finalize_gets_full_info(self):
