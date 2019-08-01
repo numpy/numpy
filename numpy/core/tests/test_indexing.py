@@ -625,7 +625,7 @@ class TestSubclasses(object):
 
         a = np.arange(5)
         s = a.view(SubClass)
-        s.setflags(write=False)
+        s.flags.writeable = False
         s_fancy = s[[0, 1, 2]]
         assert_(s_fancy.flags.writeable)
 
