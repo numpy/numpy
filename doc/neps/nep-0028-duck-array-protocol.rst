@@ -1,10 +1,10 @@
 ======================================================
-NEP XX — Duck Typing for NumPy Arrays - Implementation
+NEP 28 — Duck Typing for NumPy Arrays - Implementation
 ======================================================
 
 :Author: Peter Andreas Entschev <pentschev@nvidia.com>
 :Author: Stephan Hoyer <shoyer@google.com>
-:Status: Provisional
+:Status: Draft
 :Type: Standards Track
 :Created: 2019-07-31
 :Updated: 2019-07-31
