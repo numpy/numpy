@@ -2124,7 +2124,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
-        considered equal to NaN's in `b` in the output array.
+        considered equal to NaN's in `b`.
 
         .. versionadded:: 1.10.0
 
