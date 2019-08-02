@@ -103,13 +103,14 @@ radixsort_@suff@(void *start, npy_intp num, void *NPY_UNUSED(varr))
     @type@ *arr = start;
     @type@ k1, k2;
     npy_bool all_sorted = 1;
+    npy_intp i;
 
     if (num < 2) {
         return 0;
     }
 
     k1 = KEY_OF(arr[0]);
-    for (npy_intp i = 1; i < num; i++) {
+    for (i = 1; i < num; i++) {
         k2 = KEY_OF(arr[i]);
         if (k1 > k2) {
             all_sorted = 0;
@@ -193,13 +194,14 @@ aradixsort_@suff@(void *start, npy_intp* tosort, npy_intp num, void *NPY_UNUSED(
     @type@ *arr = start;
     @type@ k1, k2;
     npy_bool all_sorted = 1;
+    npy_intp i;
 
     if (num < 2) {
         return 0;
     }
 
     k1 = KEY_OF(arr[0]);
-    for (npy_intp i = 1; i < num; i++) {
+    for (i = 1; i < num; i++) {
         k2 = KEY_OF(arr[i]);
         if (k1 > k2) {
             all_sorted = 0;
