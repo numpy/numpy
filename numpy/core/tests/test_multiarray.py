@@ -6405,8 +6405,7 @@ class TestInner(object):
 
 class TestAlen(object):
     def test_basic(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("once")
+        with pytest.warns(DeprecationWarning):
             m = np.array([1, 2, 3])
             assert_equal(np.alen(m), 3)
 
@@ -6420,8 +6419,7 @@ class TestAlen(object):
             assert_equal(np.alen(m), 2)
 
     def test_singleton(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("once")
+        with pytest.warns(DeprecationWarning):
             assert_equal(np.alen(5), 1)
 
 

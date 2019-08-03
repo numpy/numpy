@@ -2784,7 +2784,7 @@ def alen(a):
     """
     # NumPy 1.18.0, 2019-08-02
     warnings.warn(
-        "np.core.fromnumeric.alen is deprecated, use len instead",
+        "`np.alen` is deprecated, use `len` instead",
         DeprecationWarning, stacklevel=2)
     try:
         return len(a)
