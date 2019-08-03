@@ -1252,7 +1252,7 @@ fma_get_mantissa(__m256 x)
 }
 
 static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_AVX2 __m256
-avx2_scalef_ps(__m256 poly, __m256 quadrant)
+fma_scalef_ps(__m256 poly, __m256 quadrant)
 {
     /*
      * Handle denormals (which occur when quadrant <= -125):
