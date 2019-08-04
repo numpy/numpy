@@ -252,7 +252,7 @@ def _is_packed(dtype):
     from a list of the field names and dtypes with no additional
     dtype parameters.
 
-    Duplicates the C `is_dtype_struct_simple_unaligned_layout` functio.
+    Duplicates the C `is_dtype_struct_simple_unaligned_layout` function.
     """
     total_offset = 0
     for name in dtype.names:
