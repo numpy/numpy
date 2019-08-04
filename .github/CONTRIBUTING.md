@@ -18,10 +18,10 @@ Thanks for your interest in contributing code to numpy!
 through our
 [guide to contributing to numpy](https://docs.scipy.org/doc/numpy/dev/index.html)
 + If you have contributed to other projects on GitHub you can go straight to our
-[development workflow](https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html)
+[development workflow](https://docs.scipy.org/doc/numpy/dev/development_workflow.html)
 
 Either way, please be sure to follow our
-[convention for commit messages](https://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#writing-the-commit-message).
+[convention for commit messages](https://docs.scipy.org/doc/numpy/dev/development_workflow.html#writing-the-commit-message).
 
 If you are writing new C code, please follow the style described in
 ``doc/C_STYLE_GUIDE``.
