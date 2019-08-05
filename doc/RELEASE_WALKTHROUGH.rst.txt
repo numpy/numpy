@@ -41,7 +41,7 @@ Finish the Release Note
 .. note:
 
   This has changed now that we use ``towncrier``. See the instructions for
-  creating the release note in ``changelog/README.rst``.
+  creating the release note in ``doc/release/upcoming_changes/README.rst``.
 
 Fill out the release note ``doc/release/1.14.5-notes.rst`` calling out
 significant changes.

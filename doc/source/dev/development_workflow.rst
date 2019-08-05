@@ -203,8 +203,9 @@ function, you should
   a description of and a motivation for your changes. This may generate
   changes and feedback. It might be prudent to start with this step if your
   change may be controversial.
-- add a release note to the ``changelog`` directory, following the instructions
-  and format in the ``changelog/README.rst`` file.
+- add a release note to the ``doc/release/upcoming_changes/`` directory,
+  following the instructions and format in the
+  ``doc/release/upcoming_changes/README.rst`` file.
 
 .. _rebasing-on-master:
 

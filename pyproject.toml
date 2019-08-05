@@ -8,10 +8,15 @@ requires = ["setuptools", "wheel", "cython"]  # PEP 508 specification
     # Use "--version Numpy" instead
     #project = "numpy"
     filename = "doc/release/latest-note.rst"
-    directory = "changelog/"
-    issue_format = "`#{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"
-    template = "changelog/template.rst"
+    directory = "doc/release/upcoming_changes"
+    issue_format = "`gh-{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"
+    template = "doc/release/upcoming_changes/template.rst"
     underlines="~="
+
+    [[tool.towncrier.type]]
+        directory = "highlight"
+        name = "Highlights"
+        showcontent = true
 
     [[tool.towncrier.type]]
         directory = "new_function"
@@ -24,37 +29,36 @@ requires = ["setuptools", "wheel", "cython"]  # PEP 508 specification
         showcontent = true
 
     [[tool.towncrier.type]]
-      directory = "future"
-      name = "Future Changes"
-      showcontent = true
+        directory = "future"
+        name = "Future Changes"
+        showcontent = true
 
     [[tool.towncrier.type]]
-      directory = "expired"
-      name = "Expired deprecations"
-      showcontent = true
+        directory = "expired"
+        name = "Expired deprecations"
+        showcontent = true
 
     [[tool.towncrier.type]]
-      directory = "coompatibility"
-      name = "Compatibility notes"
-      showcontent = true
+        directory = "compatibility"
+        name = "Compatibility notes"
+        showcontent = true
 
     [[tool.towncrier.type]]
-      directory = "c_api"
-      name = "C API changes"
-      showcontent = true
+        directory = "c_api"
+        name = "C API changes"
+        showcontent = true
 
     [[tool.towncrier.type]]
-      directory = "new_features"
-      name = "New Features"
-      showcontent = true
+        directory = "new_feature"
+        name = "New Features"
+        showcontent = true
 
     [[tool.towncrier.type]]
-      directory = "improvements"
-      name = "Improvements"
-      showcontent = true
+        directory = "improvement"
+        name = "Improvements"
+        showcontent = true
 
     [[tool.towncrier.type]]
-      directory = "changes"
-      name = "Changes"
-      showcontent = true
-
+        directory = "change"
+        name = "Changes"
+        showcontent = true
