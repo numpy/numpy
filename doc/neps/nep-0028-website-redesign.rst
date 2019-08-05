@@ -188,11 +188,13 @@ We propose the following structure:
 0. Front page: essentials of what NumPy is (compare e.g. jupyter.org), one or
    a couple key user stories (compare e.g. julialang.org)
 1. Install
-2. About Us
-3. Community
-4. Documentation
-5. Array computing
-6. Support/Donate
+2. Documentation
+3. Array computing
+4. Community
+5. Learning
+6. About Us
+7. Contribute
+8. Donate
 
 There may be a few other pages, e.g. a page on performance, that are linked
 from one of the main pages.
@@ -267,6 +269,26 @@ To be discussed - it needs investigating, and may depend on the choice of static
 generator. One potential option is Crowdin_, which is free for open source projects.
 
 
+Style and graphic design
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Beyond the "a modern, clean look" goal we choose to not specify too much.  A
+designer may have much better ideas than the authors of this proposal, hence we
+will work with the designer(s) during the implementation phase.
+
+The NumPy logo could use a touch-up.  The logo widely recognized and its colors and
+design are good, however the look-and-feel is perhaps a little dated.
+
+
+Other aspects
+~~~~~~~~~~~~~
+
+A search box would be nice to have.  The Sphinx documentation already has a
+search box, however a search box on the main site which provides search results
+for the docs, the website, and perhaps other domains that are relevant for
+NumPy would make sense.
+
+
 Backward compatibility
 ----------------------
 
@@ -283,7 +305,7 @@ project ceases to be maintained.
 Alternatives
 ------------
 
-Alternatives we considered:
+Alternatives we considered for the overall design of the website:
 
 1. *Update current site.* A new Sphinx theme could be chosen. This would likely
    take the least amount of resources initially, however, Sphinx does not have
