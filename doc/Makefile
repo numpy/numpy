@@ -10,10 +10,6 @@
 PYVER:=$(shell python3 -c 'from sys import version_info as v; print("{0}.{1}".format(v[0], v[1]))')
 PYTHON = python$(PYVER)
 
-NUMPYVER:=$(shell python3 -c "import numpy; print(numpy.version.git_revision[:10])")
-GITVER ?= $(shell cd ..; python3 -c "from setup import git_version; \
-				print(git_version()[:10])")
-
 # You can set these variables from the command line.
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= LANG=C sphinx-build
@@ -28,7 +24,7 @@ ALLSPHINXOPTS   = -WT --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
   $(SPHINXOPTS) source
 
 .PHONY: help clean html web pickle htmlhelp latex changes linkcheck \
-        dist dist-build gitwash-update version-check
+        dist dist-build gitwash-update version-check html-build latex-build
 
 #------------------------------------------------------------------------------
 
@@ -48,18 +44,6 @@ help:
 clean:
 	-rm -rf build/* 
 	find . -name generated -type d -prune -exec rm -rf "{}" ";"
-
-version-check:
-ifeq "$(GITVER)" "Unknown"
-	# @echo sdist build with unlabeled sources
-else ifneq ($(NUMPYVER),$(GITVER))
-	@echo installed numpy $(NUMPYVER) != current repo git version \'$(GITVER)\'
-	@echo use '"make dist"' or '"GITVER=$(NUMPYVER) make $(MAKECMDGOALS) ..."'
-	@exit 1
-else
-	# for testing
-	# @echo installed numpy $(NUMPYVER) matches git version $(GITVER); exit 1
-endif
 
 gitwash-update:
 	rm -rf source/dev/gitwash
@@ -86,15 +70,34 @@ INSTALL_DIR = $(CURDIR)/build/inst-dist
 INSTALL_PPH = $(INSTALL_DIR)/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/site-packages:$(INSTALL_DIR)/lib/python$(PYVER)/dist-packages:$(INSTALL_DIR)/local/lib/python$(PYVER)/dist-packages
 UPLOAD_DIR=/srv/docs_scipy_org/doc/numpy-$(RELEASE)
 
-DIST_VARS=SPHINXBUILD="LANG=C PYTHONPATH=$(INSTALL_PPH) python$(PYVER) `which sphinx-build`" PYTHON="PYTHONPATH=$(INSTALL_PPH) python$(PYVER)" SPHINXOPTS="$(SPHINXOPTS)"
+DIST_VARS=SPHINXBUILD="LANG=C PYTHONPATH=$(INSTALL_PPH) python$(PYVER) `which sphinx-build`" PYTHON="PYTHONPATH=$(INSTALL_PPH) python$(PYVER)" 
+
+NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:10])" 2>/dev/null)
+GITVER ?= $(shell cd ..; $(PYTHON) -c "from setup import git_version; \
+				print(git_version()[:10])")
+
+version-check:
+ifeq "$(GITVER)" "Unknown"
+	# @echo sdist build with unlabeled sources
+else ifeq ("", "$(NUMPYVER)")
+	@echo numpy not found, cannot build documentation without successful \"import numpy\"
+	@exit 1
+else ifneq ($(NUMPYVER),$(GITVER))
+	@echo installed numpy $(NUMPYVER) != current repo git version \'$(GITVER)\'
+	@echo use '"make dist"' or '"GITVER=$(NUMPYVER) make $(MAKECMDGOALS) ..."'
+	@exit 1
+else
+	# for testing
+	# @echo installed numpy $(NUMPYVER) matches git version $(GITVER); exit 1
+endif
+
 
 dist:
 	make $(DIST_VARS) real-dist
 
-real-dist: dist-build html html-scipyorg
-	test -d build/latex || make latex
+real-dist: dist-build html-build html-scipyorg
+	test -d build/latex || make latex-build
 	make -C build/latex all-pdf
-	-test -d build/htmlhelp || make htmlhelp-build
 	-rm -rf build/dist
 	cp -r build/html-scipyorg build/dist
 	cd build/html && zip -9r ../dist/numpy-html.zip .
@@ -136,7 +139,8 @@ build/generate-stamp: $(wildcard source/reference/*.rst)
 	mkdir -p build
 	touch build/generate-stamp
 
-html: generate version-check
+html: version-check html-build
+html-build: generate
 	mkdir -p build/html build/doctrees
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html $(FILES)
 	$(PYTHON) postprocess.py html build/html/*.html
@@ -174,7 +178,8 @@ qthelp: generate version-check
 	mkdir -p build/qthelp build/doctrees
 	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) build/qthelp $(FILES)
 
-latex: generate version-check
+latex: version-check latex-build
+latex-build: generate
 	mkdir -p build/latex build/doctrees
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex $(FILES)
 	$(PYTHON) postprocess.py tex build/latex/*.tex
