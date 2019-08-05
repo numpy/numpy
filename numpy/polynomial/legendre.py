@@ -1405,6 +1405,129 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     return pu._fit(legvander, x, y, deg, rcond, full, w)
 
 
+def legfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
+    """
+    2D Least squares fit of Legendre series to data.
+
+    Return the coefficients of a Legendre series of degree `deg` that is the
+    least squares fit to the data values `z` given at points `(x, y)`.
+    The fitted polynomial(s) are in the form
+
+    .. math::  p(x, y) = c_00 + c_10 * L_10(x, y)  + c_01 * L_01(x, y) + ... + c_nm * L_nm(x, y),
+
+    where `n` and `m` are `deg`.
+
+    Parameters
+    ----------
+    x : array_like, shape (M,)
+        x-coordinates of the M sample points ``(x[i], y[i], z[i])``.
+    y : array_like, shape (M,)
+        y-coordinates of the M sample points ''(x[i], y[i], z[i])``.
+    z : array_like, shape (M,)
+        z-coordinates of the sample points.
+    deg : int or 1-D array_like
+        Degree(s) of the fitting polynomials. If `deg` is a single integer
+        all terms up to and including the `deg`'th term are included in the
+        fit. Otherwise the first element is the degree in `x` direction
+        and the second in `y` direction.
+    rcond : float, optional
+        Relative condition number of the fit. Singular values smaller than
+        this relative to the largest singular value will be ignored. The
+        default value is len(x)*eps, where eps is the relative precision of
+        the float type, about 2e-16 in most cases.
+    full : bool, optional
+        Switch determining nature of return value. When it is False (the
+        default) just the coefficients are returned, when True diagnostic
+        information from the singular value decomposition is also returned.
+    w : array_like, shape (`M`,), optional
+        Weights. If not None, the contribution of each point
+        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+        weights are chosen so that the errors of the products ``w[i]*y[i]``
+        all have the same variance.  The default value is None.
+
+        .. versionadded:: 1.5.0
+    max_degree : int, optional
+        If given the maximum combined degree of the coefficients is limited
+        to this value, i.e. all terms with `n` + `m` > max_degree are set to 0.
+        The default is None.
+
+    Returns
+    -------
+    coef : ndarray, shape (`deg` + 1, `deg` + 1)
+        Polynomial coefficients ordered from low to high.
+        With coefficients in `x` direction along the first
+        dimension and in `y` direction along the second dimension.
+
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
+
+    Warns
+    -----
+    RankWarning
+        The rank of the coefficient matrix in the least-squares fit is
+        deficient. The warning is only raised if `full` = False.  The
+        warnings can be turned off by
+
+        >>> import warnings
+        >>> warnings.simplefilter('ignore', np.RankWarning)
+
+    See Also
+    --------
+    legfit, chebfit, polyfit, lagfit, hermfit, hermefit
+    legval2d : Evaluates a 2d Legendre series.
+    legvander2d : Vandermonde matrix of the 2d Legendre series.
+    legweight : Legendre weight function (= 1).
+    linalg.lstsq : Computes a least-squares fit from the matrix.
+    scipy.interpolate.UnivariateSpline : Computes spline fits.
+
+    Notes
+    -----
+    The solution is the coefficients of the Legendre series `p` that
+    minimizes the sum of the weighted squared errors
+
+    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
+
+    where :math:`w_j` are the weights. This problem is solved by setting up
+    as the (typically) overdetermined matrix equation
+
+    .. math:: V(x) * c = w * y,
+
+    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    coefficients to be solved for, `w` are the weights, and `y` are the
+    observed values.  This equation is then solved using the singular value
+    decomposition of `V`.
+
+    If some of the singular values of `V` are so small that they are
+    neglected, then a `RankWarning` will be issued. This means that the
+    coefficient values may be poorly determined. Using a lower order fit
+    will usually get rid of the warning.  The `rcond` parameter can also be
+    set to a value smaller than its default, but the resulting fit may be
+    spurious and have large contributions from roundoff error.
+
+    Fits using Legendre series are usually better conditioned than fits
+    using power series, but much can depend on the distribution of the
+    sample points and the smoothness of the data. If the quality of the fit
+    is inadequate splines may be a good alternative.
+
+    References
+    ----------
+    .. [1] Wikipedia, "Curve fitting",
+           https://en.wikipedia.org/wiki/Curve_fitting
+
+    Examples
+    --------
+
+    """
+    return pu._fit2d(legvander2d, x, y, z, deg, rcond, full, w, max_degree, False)
+
+
 def legcompanion(c):
     """Return the scaled companion matrix of c.
 

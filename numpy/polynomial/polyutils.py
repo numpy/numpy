@@ -884,7 +884,7 @@ def polyshift2d(coeff, offset_x, offset_y, copy=True):
     return coeff
 
 
-def _fit2d(vander2d_f, x, y, z, deg=1, max_degree=None, w=None, scale=True, rcond=None, full=False):
+def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None, max_degree=None, scale=True):
     """A simple 2D polynomial fit to data x, y, z
     The polynomial can be evaluated with numpy.polynomial.polynomial.polyval2d
 
@@ -965,10 +965,11 @@ def _fit2d(vander2d_f, x, y, z, deg=1, max_degree=None, w=None, scale=True, rcon
 
     if w is not None:
         w = np.asarray(w) + 0.0
-        if w.ndim != 1:
-            raise TypeError("expected 1D vector for w")
-        if len(x) != len(w):
+        if w.ndim != 1 and w.ndim != 2:
+            raise TypeError("expected 1D or 2D vector for w")
+        if x.size != w.size:
             raise TypeError("expected x and w to have same length")
+        w = np.ravel(w)
         A = A * w[:, None]
         z = z * w
 

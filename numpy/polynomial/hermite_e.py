@@ -1384,6 +1384,134 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     """
     return pu._fit(hermevander, x, y, deg, rcond, full, w)
 
+def hermefit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
+    """
+    2d Least squares fit of Hermite series to data.
+
+    Return the coefficients of a HermiteE series of degree `deg` that is
+    the least squares fit to the data values `y` given at points `x`.
+    The fitted polynomial(s) are in the form
+
+    .. math::  p(x, y) = c_00 + c_10 * He_10(x, y) + ... + c_nm * He_nm(x, y),
+
+    where `n` and `m` are `deg`.
+
+    Parameters
+    ----------
+    x : array_like, shape (M,)
+        x-coordinates of the M sample points ``(x[i], y[i], z[i])``.
+    y : array_like, shape (M,)
+        y-coordinates of the M sample points ''(x[i], y[i], z[i])``.
+    z : array_like, shape (M,)
+        z-coordinates of the sample points.
+    deg : int or 1-D array_like
+        Degree(s) of the fitting polynomials. If `deg` is a single integer
+        all terms up to and including the `deg`'th term are included in the
+        fit. Otherwise the first element is the degree in `x` direction
+        and the second in `y` direction.
+    rcond : float, optional
+        Relative condition number of the fit. Singular values smaller than
+        this relative to the largest singular value will be ignored. The
+        default value is len(x)*eps, where eps is the relative precision of
+        the float type, about 2e-16 in most cases.
+    full : bool, optional
+        Switch determining nature of return value. When it is False (the
+        default) just the coefficients are returned, when True diagnostic
+        information from the singular value decomposition is also returned.
+    w : array_like, shape (`M`,), optional
+        Weights. If not None, the contribution of each point
+        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+        weights are chosen so that the errors of the products ``w[i]*y[i]``
+        all have the same variance.  The default value is None.
+    max_degree : int, optional
+        If given the maximum combined degree of the coefficients is limited
+        to this value, i.e. all terms with `n` + `m` > max_degree are set to 0.
+        The default is None.
+
+    Returns
+    -------
+    coef : ndarray, shape (`deg` + 1, `deg` + 1)
+        Polynomial coefficients ordered from low to high.
+        With coefficients in `x` direction along the first
+        dimension and in `y` direction along the second dimension.
+
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
+
+    Warns
+    -----
+    RankWarning
+        The rank of the coefficient matrix in the least-squares fit is
+        deficient. The warning is only raised if `full` = False.  The
+        warnings can be turned off by
+
+        >>> import warnings
+        >>> warnings.simplefilter('ignore', np.RankWarning)
+
+    See Also
+    --------
+    chebfit, legfit, polyfit, hermfit, polyfit
+    hermeval : Evaluates a Hermite series.
+    hermevander : pseudo Vandermonde matrix of Hermite series.
+    hermeweight : HermiteE weight function.
+    linalg.lstsq : Computes a least-squares fit from the matrix.
+    scipy.interpolate.UnivariateSpline : Computes spline fits.
+
+    Notes
+    -----
+    The solution is the coefficients of the HermiteE series `p` that
+    minimizes the sum of the weighted squared errors
+
+    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
+
+    where the :math:`w_j` are the weights. This problem is solved by
+    setting up the (typically) overdetermined matrix equation
+
+    .. math:: V(x) * c = w * y,
+
+    where `V` is the pseudo Vandermonde matrix of `x`, the elements of `c`
+    are the coefficients to be solved for, and the elements of `y` are the
+    observed values.  This equation is then solved using the singular value
+    decomposition of `V`.
+
+    If some of the singular values of `V` are so small that they are
+    neglected, then a `RankWarning` will be issued. This means that the
+    coefficient values may be poorly determined. Using a lower order fit
+    will usually get rid of the warning.  The `rcond` parameter can also be
+    set to a value smaller than its default, but the resulting fit may be
+    spurious and have large contributions from roundoff error.
+
+    Fits using HermiteE series are probably most useful when the data can
+    be approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the HermiteE
+    weight. In that case the weight ``sqrt(w(x[i])`` should be used
+    together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
+    available as `hermeweight`.
+
+    References
+    ----------
+    .. [1] Wikipedia, "Curve fitting",
+           https://en.wikipedia.org/wiki/Curve_fitting
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite_e import hermefit2d, hermeval2d
+    >>> x = np.linspace(-10, 10)
+    >>> y = np.linspace(-10, 10)
+    >>> np.random.seed(123)
+    >>> err = np.random.randn(len(x))/10
+    >>> z = hermeval(x, y, [[1, 2], [1, 2]]) + err
+    >>> hermefit2d(x, y, z, 2)
+    array([[ 1.01690445,  1.99951418], [1.01690445, 2.99948696]]) # may vary
+
+    """
+    return pu._fit2d(hermevander2d, x, y, z, deg, rcond, full, w, max_degree, False)
 
 def hermecompanion(c):
     """

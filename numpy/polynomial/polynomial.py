@@ -1352,7 +1352,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     return pu._fit(polyvander, x, y, deg, rcond, full, w)
 
 
-def polyfit2d(x, y, z, deg=1, max_degree=None, w=None, scale=True, rcond=None):
+def polyfit2d(x, y, z, deg=1, rcond=None, full=False, w=None, max_degree=None, scale=True):
     """A simple 2D polynomial fit to data x, y, z
     The polynomial can be evaluated with numpy.polynomial.polynomial.polyval2d
 
@@ -1364,25 +1364,48 @@ def polyfit2d(x, y, z, deg=1, max_degree=None, w=None, scale=True, rcond=None):
         y coordinates
     z : array_like
         data values
-    degree : {int, 2-tuple}, optional
+    deg : {int, 2-tuple}, optional
         degree of the polynomial fit in x and y direction, by default 1
-    max_degree : int, optional
-        if given the maximum combined degree of the coefficients is limited to this value, by default None
-    scale : bool, optional
-        Wether to scale the input arrays x and y to mean 0 and variance 1, to avoid numerical overflows.
-        Especially useful at higher degrees. By default True.
     rcond : float, optional
         Relative condition number of the fit.  Singular values smaller
         than `rcond`, relative to the largest singular value, will be
         ignored.  The default value is ``len(x)*eps``, where `eps` is the
         relative precision of the platform's float type, about 2e-16 in
         most cases.
+    full : bool, optional
+        Switch determining the nature of the return value.  When ``False``
+        (the default) just the coefficients are returned; when ``True``,
+        diagnostic information from the singular value decomposition (used
+        to solve the fit's matrix equation) is also returned.
+    w : array_like, shape (`M`,), optional
+        Weights. If not None, the contribution of each point
+        ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
+        weights are chosen so that the errors of the products ``w[i]*y[i]``
+        all have the same variance. The default value is None.
+    max_degree : int, optional
+        If given the maximum combined degree of the coefficients is limited
+        to this value, i.e. all terms with `n` + `m` > max_degree are set to 0.
+        The default is None.
+    scale : bool, optional
+        Wether to scale the input arrays x and y to mean 0 and variance 1, to avoid numerical overflows.
+        Especially useful at higher degrees. By default True.
 
     Returns
     -------
-    coeff : array of shape (deg+1, deg+1)
-        the polynomial coefficients in numpy 2d format, i.e. coeff[i, j] for x**i * y**j
+    coef : ndarray, shape (`deg` + 1, `deg` + 1)
+        Polynomial coefficients ordered from low to high.
+        With coefficients in `x` direction along the first
+        dimension and in `y` direction along the second dimension.
 
+    [residuals, rank, singular_values, rcond] : list
+        These values are only returned if `full` = True
+
+        resid -- sum of squared residuals of the least squares fit
+        rank -- the numerical rank of the scaled Vandermonde matrix
+        sv -- singular values of the scaled Vandermonde matrix
+        rcond -- value of `rcond`.
+
+        For more details, see `linalg.lstsq`.
     Raises
     ------
     RankWarning
@@ -1409,7 +1432,7 @@ def polyfit2d(x, y, z, deg=1, max_degree=None, w=None, scale=True, rcond=None):
      [ 1.00000000e+00  1.93986070e-12  1.00000000e+00]
      [ 3.13598612e-13 -2.30396083e-14  2.30548445e-16]]
     """
-    return pu._fit2d(polyvander2d, x, y, z, deg, max_degree, w, scale, rcond)
+    return pu._fit2d(polyvander2d, x, y, z, deg, rcond, full, w, max_degree, scale)
 
 
 def polycompanion(c):
