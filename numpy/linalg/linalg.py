@@ -1487,6 +1487,12 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     compute_uv : bool, optional
         Whether or not to compute `u` and `vh` in addition to `s`.  True
         by default.
+    hermitian : bool, optional
+        If True, `a` is assumed to be Hermitian (symmetric if real-valued),
+        enabling a more efficient method for finding singular values.
+        Defaults to False.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1504,12 +1510,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         size as those of the input `a`. The size of the last two dimensions
         depends on the value of `full_matrices`. Only returned when
         `compute_uv` is True.
-    hermitian : bool, optional
-        If True, `a` is assumed to be Hermitian (symmetric if real-valued),
-        enabling a more efficient method for finding singular values.
-        Defaults to False.
-
-        .. versionadded:: 1.17.0
 
     Raises
     ------
