@@ -337,6 +337,44 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     return res
 
 
+def _nanmax(a, axis=None, out=None, keepdims=np._NoValue):
+    """
+    Helper function for nanmax, for use in `np.testing` to avoid warnings.
+
+    Returns
+    -------
+    nanmax : ndarray
+        An array with the same shape as `a`, with the specified axis removed.
+        If `a` is a 0-d array, or if axis is None, an ndarray scalar is
+        returned.  The same dtype as `a` is returned.
+    warning_msg : {string, None}
+        None if no warning should be raised, the warning message if an all-NaN slice is encountered.
+    """
+    kwargs = {}
+    if keepdims is not np._NoValue:
+        kwargs['keepdims'] = keepdims
+    warning_msg = None
+    if type(a) is np.ndarray and a.dtype != np.object_:
+        # Fast, but not safe for subclasses of ndarray, or object arrays,
+        # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
+        res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
+        if np.isnan(res).any():
+            warning_msg = "All-NaN slice encountered"
+    else:
+        # Slow, but safe for subclasses of ndarray
+        a, mask = _replace_nan(a, -np.inf)
+        res = np.amax(a, axis=axis, out=out, **kwargs)
+        if mask is None:
+            return res, None
+
+        # Check for all-NaN axis
+        mask = np.all(mask, axis=axis, **kwargs)
+        if np.any(mask):
+            res = _copyto(res, np.nan, mask)
+            warning_msg = "All-NaN axis encountered"
+    return res, warning_msg
+
+
 def _nanmax_dispatcher(a, axis=None, out=None, keepdims=None):
     return (a, out)
 
@@ -426,29 +464,10 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     inf
 
     """
-    kwargs = {}
-    if keepdims is not np._NoValue:
-        kwargs['keepdims'] = keepdims
-    if type(a) is np.ndarray and a.dtype != np.object_:
-        # Fast, but not safe for subclasses of ndarray, or object arrays,
-        # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
-        res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
-        if np.isnan(res).any():
-            warnings.warn("All-NaN slice encountered", RuntimeWarning,
-                          stacklevel=3)
-    else:
-        # Slow, but safe for subclasses of ndarray
-        a, mask = _replace_nan(a, -np.inf)
-        res = np.amax(a, axis=axis, out=out, **kwargs)
-        if mask is None:
-            return res
-
-        # Check for all-NaN axis
-        mask = np.all(mask, axis=axis, **kwargs)
-        if np.any(mask):
-            res = _copyto(res, np.nan, mask)
-            warnings.warn("All-NaN axis encountered", RuntimeWarning,
-                          stacklevel=3)
+    res, warning_msg = _nanmax(a, axis, out, keepdims)
+    if warning_msg is not None:
+        warnings.warn(warning_msg, RuntimeWarning,
+                      stacklevel=3)
     return res
 
 
