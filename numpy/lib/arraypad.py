@@ -244,27 +244,19 @@ def _prepend_ramp(arr, pad_amt, end, axis=-1):
     if pad_amt == 0:
         return arr
 
-    # Generate shape for final concatenated array
-    padshape = tuple(x if i != axis else pad_amt
-                     for (i, x) in enumerate(arr.shape))
-
-    # Generate an n-dimensional array incrementing along `axis`
-    ramp_arr = _arange_ndarray(arr, padshape, axis,
-                               reverse=True).astype(np.float64)
-
-    # Appropriate slicing to extract n-dimensional edge along `axis`
+    # Slice a chunk from the edge to calculate stats on and extract edge
     edge_slice = _slice_first(arr.shape, 1, axis=axis)
+    edge = arr[edge_slice]
 
-    # Extract edge, and extend along `axis`
-    edge_pad = arr[edge_slice].repeat(pad_amt, axis)
+    ramp_arr = np.linspace(
+        start=end,
+        stop=edge.squeeze(axis),
+        num=pad_amt,
+        endpoint=False,
+        dtype=arr.dtype,
+        axis=axis
+    )
 
-    # Linear ramp
-    slope = (end - edge_pad) / float(pad_amt)
-    ramp_arr = ramp_arr * slope
-    ramp_arr += edge_pad
-    _round_ifneeded(ramp_arr, arr.dtype)
-
-    # Ramp values will most likely be float, cast them to the same type as arr
     return _do_prepend(arr, ramp_arr, axis)
 
 
@@ -294,27 +286,23 @@ def _append_ramp(arr, pad_amt, end, axis=-1):
     if pad_amt == 0:
         return arr
 
-    # Generate shape for final concatenated array
-    padshape = tuple(x if i != axis else pad_amt
-                     for (i, x) in enumerate(arr.shape))
-
-    # Generate an n-dimensional array incrementing along `axis`
-    ramp_arr = _arange_ndarray(arr, padshape, axis,
-                               reverse=False).astype(np.float64)
-
-    # Slice a chunk from the edge to calculate stats on
+    # Slice a chunk from the edge to calculate stats on and extract edge
     edge_slice = _slice_last(arr.shape, 1, axis=axis)
+    edge = arr[edge_slice]
 
-    # Extract edge, and extend along `axis`
-    edge_pad = arr[edge_slice].repeat(pad_amt, axis)
+    ramp_arr = np.linspace(
+        start=end,
+        stop=edge.squeeze(axis),
+        num=pad_amt,
+        endpoint=False,
+        dtype=arr.dtype,
+        axis=axis
+    )
+    # Reverse linear space in appropriate dimension
+    ramp_arr = ramp_arr[
+        _slice_at_axis(ramp_arr.shape, slice(None, None, -1), axis)
+    ]
 
-    # Linear ramp
-    slope = (end - edge_pad) / float(pad_amt)
-    ramp_arr = ramp_arr * slope
-    ramp_arr += edge_pad
-    _round_ifneeded(ramp_arr, arr.dtype)
-
-    # Ramp values will most likely be float, cast them to the same type as arr
     return _do_append(arr, ramp_arr, axis)
 
 
