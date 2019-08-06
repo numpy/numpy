@@ -704,7 +704,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import array, array2string, isnan, inf, bool_, errstate
-    from numpy.lib.nanfunctions import _nanmax
 
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
@@ -822,10 +821,12 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
 
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
-                    # NaNs are disregarded to ensure that we report correct max
-                    # relative error between two arrays with zeros in the same position
-                    rel_error = error / abs(y)
-                    max_rel_error, _ = _nanmax(rel_error)
+                    # Filter values where the divisor would be zero
+                    nonzero = y != 0
+                    if all(~nonzero):
+                        max_rel_error = array(inf)
+                    else:
+                        max_rel_error = (error[nonzero] / abs(y[nonzero])).max()
                     if error.dtype == 'object':
                         remarks.append('Max relative difference: '
                                         + str(max_rel_error))
