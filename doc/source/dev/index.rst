@@ -9,7 +9,8 @@ we list them in alphabetical order):
 - Code maintenance and development
 - Community coordination
 - DevOps
-- Developing educational content
+- Developing educational content & narrative documentation
+- Writing technical documentation
 - Fundraising
 - Project management
 - Marketing
@@ -20,11 +21,12 @@ The rest of this document discusses working on the NumPy code base and documenta
 We're in the process of updating our descriptions of other activities and roles.
 If you are interested in these other activities, please contact us!
 You can do this via
-the [numpy-discussion mailing list](https://scipy.org/scipylib/mailing-lists.html)),
+the `numpy-discussion mailing list <https://scipy.org/scipylib/mailing-lists.html>`__,
 or on GitHub (open an issue or comment on a relevant issue). These are our preferred
 communication channels (open source is open by nature!), however if you prefer
 to discuss in private first, please reach out to our community coordinators
-at (TODO: email address that's linked to a Google Group, or an individual address?).
+at `numpy-team@googlegroups.com` or `numpy-team.slack.com` (send an email to
+`numpy-team@googlegroups.com` for an invite the first time).
 
 
 Development process - summary
