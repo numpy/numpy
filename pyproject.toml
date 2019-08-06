@@ -9,13 +9,15 @@ requires = [
 
 [tool.towncrier]
     # Do no set this since it is hard to import numpy inside the source directory
-    # Use "--version Numpy" instead
-    #project = "numpy"
-    filename = "doc/release/latest-note.rst"
-    directory = "doc/release/upcoming_changes"
+    # the name is hardcoded. Use "--version 1.18.0" to set the version
+    single_file = true
+    filename = "doc/source/release/{version}-notes.rst"
+    directory = "doc/release/upcoming_changes/"
     issue_format = "`gh-{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"
     template = "doc/release/upcoming_changes/template.rst"
-    underlines="~="
+    underlines = "~="
+    all_bullets = false
+
 
     [[tool.towncrier.type]]
         directory = "highlight"
@@ -66,3 +68,4 @@ requires = [
         directory = "change"
         name = "Changes"
         showcontent = true
+

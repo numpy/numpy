@@ -35,6 +35,14 @@ jobs:
             pip install scipy
 
       - run:
+          name: create release notes
+          command: |
+            . venv/bin/activate
+            pip install git+https://github.com/hawkowl/towncrier.git@master
+            VERSION=$(python -c "import setup; print(setup.VERSION)")
+            towncrier --version $VERSION --yes
+            ./tools/ci/test_all_newsfragments_used.py
+      - run:
           name: build devdocs
           command: |
             . venv/bin/activate
