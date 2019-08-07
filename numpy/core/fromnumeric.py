@@ -380,7 +380,10 @@ def choose(a, choices, out=None, mode='raise'):
     See Also
     --------
     ndarray.choose : equivalent method
-
+    numpy.take_along_axis : Take values from the input array by matching 1d index
+                            and data slices. May be preferable in the case that
+                            'choices' is an array rather than a sequence of arrays.
+                            
     Notes
     -----
     To reduce the chance of misinterpretation, even though the following
@@ -908,17 +911,17 @@ def sort(a, axis=-1, kind=None, order=None):
 
     .. versionadded:: 1.12.0
 
-    quicksort has been changed to `introsort <https://en.wikipedia.org/wiki/Introsort>`_. 
+    quicksort has been changed to `introsort <https://en.wikipedia.org/wiki/Introsort>`_.
     When sorting does not make enough progress it switches to
-    `heapsort <https://en.wikipedia.org/wiki/Heapsort>`_. 
+    `heapsort <https://en.wikipedia.org/wiki/Heapsort>`_.
     This implementation makes quicksort O(n*log(n)) in the worst case.
 
     'stable' automatically chooses the best stable sorting algorithm
-    for the data type being sorted. 
-    It, along with 'mergesort' is currently mapped to 
-    `timsort <https://en.wikipedia.org/wiki/Timsort>`_ 
-    or `radix sort <https://en.wikipedia.org/wiki/Radix_sort>`_ 
-    depending on the data type. 
+    for the data type being sorted.
+    It, along with 'mergesort' is currently mapped to
+    `timsort <https://en.wikipedia.org/wiki/Timsort>`_
+    or `radix sort <https://en.wikipedia.org/wiki/Radix_sort>`_
+    depending on the data type.
     API forward compatibility currently limits the
     ability to select the implementation and it is hardwired for the different
     data types.
