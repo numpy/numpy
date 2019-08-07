@@ -202,7 +202,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 PyMODINIT_FUNC init#modulename#(void) {
 #endif
 \tint i;
-\tPyObject *m,*d, *s;
+\tPyObject *m,*d, *s, *tmp;
 #if PY_VERSION_HEX >= 0x03000000
 \tm = #modulename#_module = PyModule_Create(&moduledef);
 #else
@@ -224,8 +224,11 @@ PyMODINIT_FUNC init#modulename#(void) {
 \tPyDict_SetItemString(d, \"__doc__\", s);
 \t#modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
 \tPy_DECREF(s);
-\tfor(i=0;f2py_routine_defs[i].name!=NULL;i++)
-\t\tPyDict_SetItemString(d, f2py_routine_defs[i].name,PyFortranObject_NewAsAttr(&f2py_routine_defs[i]));
+\tfor(i=0;f2py_routine_defs[i].name!=NULL;i++) {
+\t\ttmp = PyFortranObject_NewAsAttr(&f2py_routine_defs[i]);
+\t\tPyDict_SetItemString(d, f2py_routine_defs[i].name, tmp);
+\t\tPy_DECREF(tmp);
+\t}
 #initf2pywraphooks#
 #initf90modhooks#
 #initcommonhooks#
