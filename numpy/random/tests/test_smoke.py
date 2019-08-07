@@ -444,6 +444,14 @@ class RNG(object):
         assert_((type(self.rg) == type(unpick)))
         assert_(comp_state(self.rg.bit_generator.state,
                            unpick.bit_generator.state))
+    
+    def test_pickle_ctor_default_parameters(self):
+        try:
+            np.random._pickle.__generator_ctor()
+            np.random._pickle.__bit_generator_ctor()
+            np.random._pickle.__randomstate_ctor()
+        except ValueError:
+            self.fail("Wrong default parameters")
 
     def test_seed_array(self):
         if self.seed_vector_bits is None:
