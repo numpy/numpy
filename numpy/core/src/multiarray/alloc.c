@@ -27,6 +27,13 @@
 
 #ifdef NPY_OS_LINUX
 #include <sys/mman.h>
+#ifndef MADV_HUGEPAGE
+/*
+ * Use code 14 (MADV_HUGEPAGE) if it isn't defined. This gives a chance of
+ * enabling huge pages even if built with linux kernel < 2.6.38
+ */
+#define MADV_HUGEPAGE 14
+#endif
 #endif
 
 #define NBUCKETS 1024 /* number of buckets for data*/
@@ -76,14 +83,7 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
         if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u)))) {
             npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
             npy_uintp length = nelem * esz - offset;
-#ifdef MADV_HUGEPAGE
             madvise((void*)((npy_uintp)p + offset), length, MADV_HUGEPAGE);
-#else
-            // Use code 14 (MADV_HUGEPAGE) if it isn't defined. This gives
-            // a chance of enabling huge pages even if build with linux
-            // kernel < 2.6.38
-            madvise((void*)((npy_uintp)p + offset), length, 14);
-#endif
         }
 #endif
     }
