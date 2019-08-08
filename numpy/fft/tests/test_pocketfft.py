@@ -45,12 +45,16 @@ class TestFFT1D(object):
         assert_allclose(fft1(x) / np.sqrt(30),
                         np.fft.fft(x, norm="ortho"), atol=1e-6)
 
-    def test_ifft(self):
+    @pytest.mark.parametrize('norm', (None, 'ortho'))
+    def test_ifft(self, norm):
         x = random(30) + 1j*random(30)
-        assert_allclose(x, np.fft.ifft(np.fft.fft(x)), atol=1e-6)
         assert_allclose(
-            x, np.fft.ifft(np.fft.fft(x, norm="ortho"), norm="ortho"),
+            x, np.fft.ifft(np.fft.fft(x, norm=norm), norm=norm),
             atol=1e-6)
+        # Ensure we get the correct error message
+        with pytest.raises(ValueError,
+                           match='Invalid number of FFT data points'):
+            np.fft.ifft([], norm=norm)
 
     def test_fft2(self):
         x = random((30, 20)) + 1j*random((30, 20))
