@@ -49,9 +49,18 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
     return NULL;
   rank = PySequence_Length(dims_capi);
   dims = malloc(rank*sizeof(npy_intp));
-  for (i=0;i<rank;++i)
-    dims[i] = (npy_intp)PyInt_AsLong(PySequence_GetItem(dims_capi,i));
-
+  for (i=0;i<rank;++i) {
+    PyObject *tmp;
+    tmp = PySequence_GetItem(dims_capi, i);
+    if (tmp == NULL) {
+        goto fail;
+    }
+    dims[i] = (npy_intp)PyInt_AsLong(tmp);
+    Py_DECREF(tmp);
+    if (dims[i] == -1 && PyErr_Occurred()) {
+        goto fail;
+    }
+  }
   capi_arr_tmp = array_from_pyobj(type_num,dims,rank,intent|F2PY_INTENT_OUT,arr_capi);
   if (capi_arr_tmp == NULL) {
     free(dims);
@@ -60,6 +69,10 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
   capi_buildvalue = Py_BuildValue("N",capi_arr_tmp);
   free(dims);
   return capi_buildvalue;
+
+fail:
+  free(dims);
+  return NULL;
 }
 
 static char doc_f2py_rout_wrap_attrs[] = "\

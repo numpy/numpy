@@ -223,8 +223,14 @@ PyMODINIT_FUNC init#modulename#(void) {
 #endif
 \t\t\"This module '#modulename#' is auto-generated with f2py (version:#f2py_version#).\\nFunctions:\\n\"\n#docs#\".\");
 \tPyDict_SetItemString(d, \"__doc__\", s);
-\t#modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
 \tPy_DECREF(s);
+\t#modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
+\t/*
+\t * Store the error object inside the dict, so that it could get deallocated.
+\t * (in practice, this is a module, so it likely will not and cannot.)
+\t */
+\tPyDict_SetItemString(d, \"_#modulename#_error\", #modulename#_error);
+\tPy_DECREF(#modulename#_error);
 \tfor(i=0;f2py_routine_defs[i].name!=NULL;i++) {
 \t\ttmp = PyFortranObject_NewAsAttr(&f2py_routine_defs[i]);
 \t\tPyDict_SetItemString(d, f2py_routine_defs[i].name, tmp);
@@ -239,7 +245,6 @@ PyMODINIT_FUNC init#modulename#(void) {
 \tif (! PyErr_Occurred())
 \t\ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
-
 \treturn RETVAL;
 }
 #ifdef __cplusplus

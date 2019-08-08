@@ -31,6 +31,7 @@ except ImportError:
 #
 
 _module_dir = None
+_module_num = 5403
 
 
 def _cleanup():
@@ -59,13 +60,14 @@ def get_module_dir():
 
 def get_temp_module_name():
     # Assume single-threaded, and the module dir usable only by this thread
+    global _module_num
     d = get_module_dir()
-    for j in range(5403, 9999999):
-        name = "_test_ext_module_%d" % j
-        fn = os.path.join(d, name)
-        if name not in sys.modules and not os.path.isfile(fn + '.py'):
-            return name
-    raise RuntimeError("Failed to create a temporary module name")
+    name = "_test_ext_module_%d" % _module_num
+    _module_num += 1
+    if name in sys.modules:
+        # this should not be possible, but check anyway
+        raise RuntimeError("Temporary module name already in use.")
+    return name
 
 
 def _memoize(func):
