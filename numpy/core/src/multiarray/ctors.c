@@ -2772,61 +2772,30 @@ PyArray_DescrFromObject(PyObject *op, PyArray_Descr *mintype)
 /* They all zero-out the memory as previously done */
 
 /* steals reference to descr -- and enforces native byteorder on it.*/
+
 /*NUMPY_API
-  Like FromDimsAndData but uses the Descr structure instead of typecode
-  as input.
+  Deprecated, use PyArray_NewFromDescr instead.
 */
 NPY_NO_EXPORT PyObject *
 PyArray_FromDimsAndDataAndDescr(int nd, int *d,
                                 PyArray_Descr *descr,
                                 char *data)
 {
-    PyObject *ret;
-    int i;
-    npy_intp newd[NPY_MAXDIMS];
-    char msg[] = "PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.";
-
-    if (DEPRECATE(msg) < 0) {
-        /* 2009-04-30, 1.5 */
-        return NULL;
-    }
-    if (!PyArray_ISNBO(descr->byteorder))
-        descr->byteorder = '=';
-    for (i = 0; i < nd; i++) {
-        newd[i] = (npy_intp) d[i];
-    }
-    ret = PyArray_NewFromDescr(&PyArray_Type, descr,
-                               nd, newd,
-                               NULL, data,
-                               (data ? NPY_ARRAY_CARRAY : 0), NULL);
-    return ret;
+    PyErr_SetString(PyExc_NotImplementedError,
+                "PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.");
+    Py_DECREF(descr);
+    return NULL;
 }
 
 /*NUMPY_API
-  Construct an empty array from dimensions and typenum
+  Deprecated, use PyArray_SimpleNew instead.
 */
 NPY_NO_EXPORT PyObject *
 PyArray_FromDims(int nd, int *d, int type)
 {
-    PyArrayObject *ret;
-    char msg[] = "PyArray_FromDims: use PyArray_SimpleNew.";
-
-    if (DEPRECATE(msg) < 0) {
-        /* 2009-04-30, 1.5 */
-        return NULL;
-    }
-    ret = (PyArrayObject *)PyArray_FromDimsAndDataAndDescr(nd, d,
-                                          PyArray_DescrFromType(type),
-                                          NULL);
-    /*
-     * Old FromDims set memory to zero --- some algorithms
-     * relied on that.  Better keep it the same. If
-     * Object type, then it's already been set to zero, though.
-     */
-    if (ret && (PyArray_DESCR(ret)->type_num != NPY_OBJECT)) {
-        memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
-    }
-    return (PyObject *)ret;
+    PyErr_SetString(PyExc_NotImplementedError,
+                "PyArray_FromDims: use PyArray_SimpleNew.");
+    return NULL;
 }
 
 /* end old calls */
