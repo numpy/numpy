@@ -1918,7 +1918,57 @@ BOOL_fromstr(char *str, void *ip, char **endptr,
 }
 
 /**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = CFLOAT, CDOUBLE#
+ * #type = npy_cfloat, npy_cdouble#
+ */
+static int
+@fname@_fromstr(char *str, void *ip, char **endptr,
+        PyArray_Descr *NPY_UNUSED(ignore))
+{
+    double result;
+
+    result = NumPyOS_ascii_strtod(str, endptr);
+
+    @type@ output;
+
+    if (endptr && (*endptr[0] == '+') || (*endptr[0] == '-')) {
+        // Imaginary component specified
+
+        output.real = result;
+
+        // Reading imaginary component
+        str = *endptr;
+        result = NumPyOS_ascii_strtod(str, endptr);
+
+        output.imag = result;
+
+        // Skip j
+        ++*endptr;
+    }
+    else if (endptr && *endptr[0] == 'j') {
+        // Real component not specified
+
+        output.real = 0;
+        output.imag = result;
+
+        // Skip j
+        ++*endptr;
+    }
+    else {
+        // Imaginary component not specified
+
+        output.real = result;
+        output.imag = 0.;
+    }
+
+    *(@type@ *)ip = output;
+    return 0;
+}
+/**end repeat**/
+
+
+/**begin repeat
+ * #fname = CLONGDOUBLE,
  *          OBJECT, STRING, UNICODE, VOID#
  */
 

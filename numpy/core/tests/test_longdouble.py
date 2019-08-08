@@ -71,6 +71,19 @@ def test_fromstring():
                  err_msg="reading '%s'" % s)
 
 
+def test_fromstring_complex():
+    for ctypes in ["cdouble", "cfloat"]:
+        # Check spacing between separator
+        assert_equal(np.fromstring("1, 2 ,  3  ,4",sep=",",dtype=ctypes),
+                     np.array([1., 2., 3., 4.]))
+        # Real component not specified
+        assert_equal(np.fromstring("1j, -2j,  3j, 4e1j",sep=",",dtype=ctypes), 
+                     np.array([1.j, -2.j, 3.j, 40.j]))
+        # Both components specified
+        assert_equal(np.fromstring("1+1j,2-2j, -3+3j,  -4e1", sep=",", dtype=ctypes),
+                     np.array([1. + 1.j, 2. - 2.j, - 3. + 3.j, - 40.]))
+
+
 def test_fromstring_bogus():
     with assert_warns(DeprecationWarning):
         assert_equal(np.fromstring("1. 2. 3. flop 4.", dtype=float, sep=" "),
