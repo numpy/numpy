@@ -6405,20 +6405,22 @@ class TestInner(object):
 
 class TestAlen(object):
     def test_basic(self):
-        m = np.array([1, 2, 3])
-        assert_equal(np.alen(m), 3)
+        with pytest.warns(DeprecationWarning):
+            m = np.array([1, 2, 3])
+            assert_equal(np.alen(m), 3)
 
-        m = np.array([[1, 2, 3], [4, 5, 7]])
-        assert_equal(np.alen(m), 2)
+            m = np.array([[1, 2, 3], [4, 5, 7]])
+            assert_equal(np.alen(m), 2)
 
-        m = [1, 2, 3]
-        assert_equal(np.alen(m), 3)
+            m = [1, 2, 3]
+            assert_equal(np.alen(m), 3)
 
-        m = [[1, 2, 3], [4, 5, 7]]
-        assert_equal(np.alen(m), 2)
+            m = [[1, 2, 3], [4, 5, 7]]
+            assert_equal(np.alen(m), 2)
 
     def test_singleton(self):
-        assert_equal(np.alen(5), 1)
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.alen(5), 1)
 
 
 class TestChoose(object):
