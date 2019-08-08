@@ -12,8 +12,7 @@ Assumes you have git and the binaries/tarballs in installers/::
     paver write_release
     paver write_note
 
-This automatically put the checksum into README.rst, and write the Changelog
-which can be uploaded to sourceforge.
+This automatically put the checksum into README.rst, and writes the Changelog.
 
 TODO
 ====
