@@ -456,7 +456,7 @@ class AliasedOptionError(DistutilsError):
 
 class AtlasNotFoundError(NotFoundError):
     """
-    Atlas (http://math-atlas.sourceforge.net/) libraries not found.
+    Atlas (http://github.com/math-atlas/math-atlas) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [atlas]) or by setting
     the ATLAS environment variable."""
