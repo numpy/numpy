@@ -489,6 +489,12 @@ class TestBincount(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.bincount([1, 2, 3], minlength=None))
 
 
+class TestAlen(_DeprecationTestCase):
+    # 2019-08-02, 1.18.0
+    def test_alen(self):
+        self.assert_deprecated(lambda: np.alen(np.array([1, 2, 3])))
+
+
 class TestGeneratorSum(_DeprecationTestCase):
     # 2018-02-25, 1.15.0
     def test_generator_sum(self):
