@@ -2,6 +2,33 @@
 Contributing to NumPy
 #####################
 
+Not a coder? Not a problem! NumPy is multi-faceted, and we can use a lot of help.
+These are all activities we'd like to get help with (they're all important, so
+we list them in alphabetical order):
+
+- Code maintenance and development
+- Community coordination
+- DevOps
+- Developing educational content & narrative documentation
+- Writing technical documentation
+- Fundraising
+- Project management
+- Marketing
+- Translating content
+- Website design and development
+
+The rest of this document discusses working on the NumPy code base and documentation.
+We're in the process of updating our descriptions of other activities and roles.
+If you are interested in these other activities, please contact us!
+You can do this via
+the `numpy-discussion mailing list <https://scipy.org/scipylib/mailing-lists.html>`__,
+or on GitHub (open an issue or comment on a relevant issue). These are our preferred
+communication channels (open source is open by nature!), however if you prefer
+to discuss in private first, please reach out to our community coordinators
+at `numpy-team@googlegroups.com` or `numpy-team.slack.com` (send an email to
+`numpy-team@googlegroups.com` for an invite the first time).
+
+
 Development process - summary
 =============================
 
