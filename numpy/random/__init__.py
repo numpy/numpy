@@ -177,7 +177,12 @@ __all__ = [
     'zipf',
 ]
 
-from . import mtrand
+# add these for module-freeze analysis (like PyInstaller)
+from . import _pickle
+from . import common
+from . import bounded_integers
+from . import entropy
+
 from .mtrand import *
 from .generator import Generator, default_rng
 from .bit_generator import SeedSequence
