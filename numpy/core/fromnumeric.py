@@ -380,9 +380,7 @@ def choose(a, choices, out=None, mode='raise'):
     See Also
     --------
     ndarray.choose : equivalent method
-    numpy.take_along_axis : Take values from the input array by matching 1d index
-                            and data slices. May be preferable in the case that 'choices'
-                            is an array rather than a sequence of arrays.
+    numpy.take_along_axis : May be preferable if 'choices' is an array
 
     Notes
     -----
