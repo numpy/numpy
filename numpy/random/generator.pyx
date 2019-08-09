@@ -3921,7 +3921,7 @@ cdef class Generator:
         Randomly permute a sequence, or return a permuted range.
 
         If `x` is a multi-dimensional array, it is only shuffled along its
-        first index.
+        first index. If `x` is a string, a the characters of `x` are shuffled. 
 
         Parameters
         ----------
@@ -3955,7 +3955,10 @@ cdef class Generator:
             arr = np.arange(x)
             self.shuffle(arr)
             return arr
-
+        elif isinstance("me", (str, np.str)):
+            x = list(x)
+            # altervatively, we can also flag an error here.  The most likely 
+            # reason for doing permutation(str) is to permute the characters but if we aren't sure, we can flag it
         arr = np.asarray(x)
 
         # shuffle has fast-path for 1-d
