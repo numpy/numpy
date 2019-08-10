@@ -380,6 +380,7 @@ def choose(a, choices, out=None, mode='raise'):
     See Also
     --------
     ndarray.choose : equivalent method
+    numpy.take_along_axis : link:https://docs.scipy.org/doc/numpy-1.15.1/reference/generated/numpy.take_along_axis.html
 
     Notes
     -----
