@@ -5,10 +5,10 @@ NEP 28 — numpy.org website redesign
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
 :Author: Joe LaChance <joe@boldmetrics.com>
 :Author: Shekhar Rajak <shekharrajak.1994@gmail.com>
-:Status: Draft
+:Status: Accepted
 :Type: Informational
 :Created: 2019-07-16
-:Resolution: <url> (required for Accepted | Rejected | Withdrawn)
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2019-August/079889.html
 
 
 Abstract
