@@ -302,12 +302,13 @@ def nper(rate, pmt, pv, fv=0, when='end'):
         except FloatingPointError:
             use_zero_rate = True
 
-    if use_zero_rate:
-        return (-fv + pv) / pmt
-    else:
-        A = -(fv + pv)/(pmt+0)
-        B = np.log((-fv+z) / (pv+z))/np.log(1+rate)
-        return np.where(rate == 0, A, B)
+    with np.errstate(divide="ignore"):
+        if use_zero_rate:
+            return (-fv + pv) / pmt
+        else:
+            A = -(fv + pv)/(pmt+0)
+            B = np.log((-fv+z) / (pv+z))/np.log(1+rate)
+            return np.where(rate == 0, A, B)
 
 
 def _ipmt_dispatcher(rate, per, nper, pv, fv=None, when=None):
