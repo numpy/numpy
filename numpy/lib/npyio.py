@@ -1776,12 +1776,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                                        replace_space=replace_space)
 
         # Skip the first `skip_header` rows
-        for i in range(skip_header):
-            next(fhd)
-
-        # Keep on until we find the first valid values
-        first_values = None
         try:
+            for i in range(skip_header):
+                next(fhd)
+
+            # Keep on until we find the first valid values
+            first_values = None
+
             while not first_values:
                 first_line = _decode_line(next(fhd), encoding)
                 if (names is True) and (comments is not None):

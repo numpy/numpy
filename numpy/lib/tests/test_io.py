@@ -1681,6 +1681,10 @@ M   33  21.99
             test = np.genfromtxt(data)
             assert_equal(test, np.array([]))
 
+            # when skip_header > 0
+            test = np.genfromtxt(data, skip_header=1)
+            assert_equal(test, np.array([]))
+
     def test_fancy_dtype_alt(self):
         # Check that a nested dtype isn't MIA
         data = TextIO('1,2,3.0\n4,5,6.0\n')
