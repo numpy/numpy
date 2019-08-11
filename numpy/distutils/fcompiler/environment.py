@@ -59,17 +59,13 @@ class EnvironmentConfig(object):
             if envvar_contents is not None:
                 envvar_contents = convert(envvar_contents)
                 if var and append:
-                    if os.environ.get('NPY_DISTUTILS_APPEND_FLAGS', '0') == '1':
+                    if os.environ.get('NPY_DISTUTILS_APPEND_FLAGS', '1') == '1':
                         var.extend(envvar_contents)
                     else:
+                        # NPY_DISTUTILS_APPEND_FLAGS was explicitly set to 0
+                        # to keep old (overwrite flags rather than append to
+                        # them) behavior
                         var = envvar_contents
-                        if 'NPY_DISTUTILS_APPEND_FLAGS' not in os.environ.keys():
-                            msg = "{} is used as is, not appended ".format(envvar) + \
-                                  "to flags already defined " + \
-                                  "by numpy.distutils! Use NPY_DISTUTILS_APPEND_FLAGS=1 " + \
-                                  "to obtain appending behavior instead (this " + \
-                                  "behavior will become default in a future release)."
-                            warnings.warn(msg, UserWarning, stacklevel=3)
                 else:
                     var = envvar_contents
         if confvar is not None and self._conf:
