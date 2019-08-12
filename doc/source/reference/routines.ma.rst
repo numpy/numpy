@@ -264,17 +264,6 @@ Conversion operations
    ma.MaskedArray.tobytes
 
 
-Pickling and unpickling
-~~~~~~~~~~~~~~~~~~~~~~~
-.. autosummary::
-   :toctree: generated/
-
-   ma.dump
-   ma.dumps
-   ma.load
-   ma.loads
-
-
 Filling a masked array
 ~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::

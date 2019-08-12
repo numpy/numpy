@@ -48,14 +48,6 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-def loads(*args, **kwargs):
-    # NumPy 1.15.0, 2017-12-10
-    warnings.warn(
-        "np.core.numeric.loads is deprecated, use pickle.loads instead",
-        DeprecationWarning, stacklevel=2)
-    return pickle.loads(*args, **kwargs)
-
-
 __all__ = [
     'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
     'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
@@ -66,7 +58,7 @@ __all__ = [
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
-    'isclose', 'load', 'loads', 'isscalar', 'binary_repr', 'base_repr', 'ones',
+    'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'compare_chararrays', 'putmask',
     'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
@@ -2026,30 +2018,6 @@ def base_repr(number, base=2, padding=0):
     if number < 0:
         res.append('-')
     return ''.join(reversed(res or '0'))
-
-
-def load(file):
-    """
-    Wrapper around cPickle.load which accepts either a file-like object or
-    a filename.
-
-    Note that the NumPy binary format is not based on pickle/cPickle anymore.
-    For details on the preferred way of loading and saving files, see `load`
-    and `save`.
-
-    See Also
-    --------
-    load, save
-
-    """
-    # NumPy 1.15.0, 2017-12-10
-    warnings.warn(
-        "np.core.numeric.load is deprecated, use pickle.load instead",
-        DeprecationWarning, stacklevel=2)
-    if isinstance(file, type("")):
-        with open(file, "rb") as file_pointer:
-            return pickle.load(file_pointer)
-    return pickle.load(file)
 
 
 # These are all essentially abbreviations
