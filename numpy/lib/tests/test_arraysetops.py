@@ -600,8 +600,11 @@ class TestUnique(object):
         assert_array_equal(unique(data, axis=1), result.astype(dtype), msg)
 
         msg = 'Unique with 3d array and axis=2 failed'
-        data3d = np.dstack([data] * 3)
-        result = data3d[..., :1]
+        data3d = np.array([[[1, 1],
+                            [1, 0]],
+                           [[0, 1],
+                            [0, 0]]]).astype(dtype)
+        result = np.take(data3d, [1, 0], axis=2)
         assert_array_equal(unique(data3d, axis=2), result, msg)
 
         uniq, idx, inv, cnt = unique(data, axis=0, return_index=True,
