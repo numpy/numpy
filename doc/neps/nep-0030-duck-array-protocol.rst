@@ -35,6 +35,19 @@ coercion of a NumPy-like array to a pure NumPy array where necessary, while
 still allowing that NumPy-like array libraries that do not wish to implement
 the protocol to coerce arrays to a pure Numpy array via ``np.asarray``.
 
+Scope
+~~~~~
+
+The concept of duck arrays is intended to be used by library developers. For
+example, suppose one wants to take the ``mean()`` of an array-like object
+``arr``. Using NumPy to achieve that, one could write ``np.asarray(arr).mean()``
+to achieve the intended result. However, libraries may expect ``arr`` to be a
+NumPy-like array, and at the same time, the array may or may not be an object
+compliant to the NumPy API (either in full or partially) such as a CuPy, Sparse
+or a Dask array. In the case where ``arr`` is already an object compliant to the
+NumPy API, we would simply return it (and prevent it from being coerced into a
+pure NumPy array), otherwise, it would then be coerced into a NumPy array.
+
 Implementation
 --------------
 
@@ -76,6 +89,47 @@ original object, and ``__array__`` solely for the purpose of raising a
 libraries that don't already implement ``__array__`` but would like to use duck
 array typing, it is advised that they they introduce both ``__array__`` and
 ``__duckarray__`` methods.
+
+Usage
+-----
+
+An example of how the ``__duckarray__`` protocol could be used to write a
+``concatenate`` function, and its produced outcome, can be seen below. Note that
+here we are assuming Dask has implemented the ``__duckarray__`` method.
+
+.. code:: python
+
+    def duckarray_concatenate(a, b):
+        a = np.duckarray(a)
+        b = np.duckarray(b)
+        return np.concatenate(a, b)
+
+    dask_arr = dask.array.arange(10)
+    np_arr = np.arange(10)
+    np_like = list(range(10))
+
+    duckarray_concatenate((dask_arr, dask_arr))     # Returns dask.array
+    duckarray_concatenate((dask_arr, numpy_arr))    # Returns dask.array
+    duckarray_concatenate((dask_arr, np_like))      # Returns dask.array
+
+In contrast, using only ``np.asarray`` (at the time of writing of this NEP, this
+is the usual method employed by library developers to ensure arrays are
+NumPy-like) has a different outcome:
+
+.. code:: python
+
+    def asarray_concatenate(a, b):
+        a = np.asarray(a)
+        b = np.asarray(b)
+        return np.concatenate(a, b)
+
+    dask_arr = dask.array.arange(10)
+    np_arr = np.arange(10)
+    np_like = list(range(10))
+
+    asarray_concatenate((dask_arr, dask_arr))   # Returns np.ndarray
+    asarray_concatenate((dask_arr, numpy_arr))  # Returns np.ndarray
+    asarray_concatenate((dask_arr, np_like))    # Returns np.ndarray
 
 Backward compatibility
 ----------------------
