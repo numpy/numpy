@@ -2062,7 +2062,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     if (file == NULL) {
         return NULL;
     }
-    
+
     if (offset != 0 && strcmp(sep, "") != 0) {
         PyErr_SetString(PyExc_TypeError, "'offset' argument only permitted for binary files");
         Py_XDECREF(type);
@@ -3264,7 +3264,7 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     meta = get_datetime_metadata_from_dtype(dtype);
-    Py_DECREF(dtype);    
+    Py_DECREF(dtype); 
     if (meta == NULL) {
         return NULL;
     }
@@ -4197,6 +4197,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"datetime_as_string",
         (PyCFunction)array_datetime_as_string,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"datetime_strftime",
+        (PyCFunction)array_datetime_strftime,
         METH_VARARGS | METH_KEYWORDS, NULL},
     /* Datetime business-day API */
     {"busday_offset",

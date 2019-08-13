@@ -1326,6 +1326,7 @@ string_too_short:
 }
 
 
+
 /*
  * This is the Python-exposed datetime_as_string function.
  */
@@ -1351,7 +1352,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
 
     static char *kwlist[] = {"arr", "unit", "timezone", "casting", NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds,
                                 "O|OOO&:datetime_as_string", kwlist,
                                 &arr_in,
                                 &unit_in,
@@ -1590,5 +1591,368 @@ fail:
         NpyIter_Deallocate(iter);
     }
 
+    return NULL;
+}
+
+/* Helper for count overflow */
+NPY_NO_EXPORT int
+_inc_countmax(int count, int max){
+    count = count + 1;
+    if (count > max){
+        return -1;
+    }
+    return count;
+}
+
+/*
+*  Format a string with datetime structure (internal helper)
+*/
+NPY_NO_EXPORT int
+strftime_from_datastruct(npy_datetimestruct dts, PyObject *timezone_obj,
+                         char *fmt, char *buff, int strsize){
+    /* convert the fmt %f to string using dts */
+    char *newfmt = NULL;
+    char ch, ch2;
+    char numstr[30];
+    int count, outcount;
+    int ndigits, ind0;
+    unsigned int ind;
+    int tzoffset;
+
+    newfmt = (char *)malloc((strsize + 1) * sizeof(char));
+    /* Get the tzoffset from the timezone if provided */
+    tzoffset = -1;
+    if (timezone_obj != NULL) {
+        tzoffset = get_tzoffset_from_pytzinfo(timezone_obj, &dts);
+    }
+
+    if (tzoffset != -1){
+        add_minutes_to_datetimestruct(&dts, tzoffset);
+    }
+
+    outcount = 0;
+    for (count=0; (fmt[count]!=0 && count<strsize); ++count){
+        ch = fmt[count];
+        ndigits = -1;
+        if (ch == '%'){
+            /* check for %(%d)f , i.e. %8f  */
+            sscanf(&fmt[count], "%%%df", &ndigits);
+            if (ndigits > 0){
+                count += 2;
+                ch = fmt[count];
+                while ((ch != 'f') && (count < strsize)){
+                    ch = fmt[++count];
+                }
+                if (count > strsize){
+                  goto failov;
+                }
+            }  /* if ndigits > 0 */
+            else{
+                /* could be %f  */
+                ch2 = fmt[++count];
+                if (ch2=='f'){
+                    ndigits = 6; /* default for microsecond */
+                }
+                else if (ch2=='Z'){
+                    /* time offset */
+                    ndigits = -1;
+                    if (timezone_obj != NULL) {
+                        get_tzname_from_pytzinfo(timezone_obj, &dts, numstr);
+                        for (ind=0; ind<strlen(numstr); ++ind){
+                            newfmt[outcount] = numstr[ind];
+                            outcount = _inc_countmax(outcount, strsize);
+                            if (outcount < 0){
+                                goto failov;
+                            }
+                        }
+                    }
+                }
+                else if (ch2=='z'){
+                    /* time offset */
+                    ndigits = -1;
+                    if (timezone_obj != NULL) {
+                        div_t output = div(tzoffset, 60);
+                        sprintf(numstr, "%+03d%02d", output.quot, output.rem);
+                        for (ind=0; ind<strlen(numstr); ++ind){
+                            newfmt[outcount] = numstr[ind];
+                            outcount = _inc_countmax(outcount, strsize);
+                            if (outcount < 0){
+                                goto failov;
+                            }
+                        }
+                    }
+                }
+                else if (ch2=='Y' || ch2=='y') {
+                    /* special case year because it can be a double and
+                    time.time can't handle doubles */
+                    ndigits = -1;
+                    sprintf(numstr, "%04ld", dts.year);
+                    if (ch2=='y'){
+                        ind0 = strlen(numstr) - 2;
+                    }
+                    else {
+                        ind0 = 0;
+                    }
+                    for (ind=ind0; ind<strlen(numstr); ++ind){
+                        newfmt[outcount] = numstr[ind];
+                        outcount = _inc_countmax(outcount, strsize);
+                        if (outcount < 0){
+                            goto failov;
+                        }
+                    }
+                }
+                else {   /* Other formats */
+                    ndigits = -1;
+                    newfmt[outcount] = ch;
+                    outcount = _inc_countmax(outcount, strsize);
+                    if (outcount < 0){
+                        goto failov;
+                    }
+                    newfmt[outcount] = ch2;
+                    outcount = _inc_countmax(outcount, strsize);
+                    if (outcount < 0){
+                        goto failov;
+                    }
+
+                }
+            }
+            if (ndigits > 0){
+                sprintf(numstr, "%06d%06d%06d", dts.us, dts.ps, dts.as);
+                for (ind=0; ind<(unsigned int)ndigits;  ++ind){
+                    newfmt[outcount] = numstr[ind];
+                    outcount = _inc_countmax(outcount, strsize);
+                    if (outcount < 0){
+                        goto failov;
+                    }
+                }
+            }
+        }  /* ch == % */
+        else {
+            newfmt[outcount] = fmt[count];
+            outcount = _inc_countmax(outcount, strsize);
+            if (outcount < 0){
+                goto failov;
+            }
+        }
+    }
+    newfmt[outcount] = 0;
+    if (dts.year == NPY_DATETIME_NAT) {
+        buff[0] = 'N';
+        buff[1] = 'a';
+        buff[2] = 'T';
+        buff[3] = '\0';
+    }
+    else {
+        /* Convert that into a string */
+        /* Gregorian calender repeats every 400 y, so
+        put within nearby epoch; note year and subsecond formatting
+        handled above, so this just formats everything else.*/
+        div_t output2 = div(dts.year, 400);
+        dts.year = output2.rem + 2000;
+        if (get_formatted_from_datetimestruct(newfmt, &dts, buff, strsize) < 0){
+            goto failov;
+        }
+    }
+    if (newfmt != NULL){
+        free(newfmt);
+    }
+    return 0;
+
+failov:
+    buff = NULL;
+    if (newfmt != NULL){
+        free(newfmt);
+    }
+    return -1;
+
+}
+
+
+/*
+ * This is the Python-exposed datetime_strftime function.
+ */
+NPY_NO_EXPORT PyObject *
+array_datetime_strftime(PyObject *NPY_UNUSED(self), PyObject *args,
+                                PyObject *kwds)
+{
+    PyObject *arr_in = NULL, *fmt_in = NULL, *timezone_obj = NULL;
+
+    PyArray_DatetimeMetaData *meta;
+    int strsize;
+    PyArrayObject *ret = NULL;
+
+    NpyIter *iter = NULL;
+    PyArrayObject *op[2] = {NULL, NULL};
+    PyArray_Descr *op_dtypes[2] = {NULL, NULL};
+    npy_uint32 flags, op_flags[2];
+    char *fmt = NULL;
+
+    static char *kwlist[] = {"arr", "fmt", "timezone", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds,
+                                "OO|O:datetime_strftime", kwlist,
+                                &arr_in,
+                                &fmt_in,
+                                &timezone_obj)) {
+        return NULL;
+    }
+
+    /* Claim a reference to timezone for later */
+    /* Py_XINCREF(timezone_obj); */
+
+    op[0] = (PyArrayObject *)PyArray_FROM_O(arr_in);
+    if (op[0] == NULL) {
+        goto fail;
+    }
+    if (PyArray_DESCR(op[0])->type_num != NPY_DATETIME) {
+        PyErr_SetString(PyExc_TypeError,
+                    "input must have type NumPy datetime");
+        goto fail;
+    }
+    /* Get the datetime metadata */
+    meta = get_datetime_metadata_from_dtype(PyArray_DESCR(op[0]));
+    if (meta == NULL) {
+        goto fail;
+    }
+
+    if (fmt_in != NULL && fmt_in != Py_None) {
+        PyObject *strobj;
+        char *str = NULL;
+        Py_ssize_t len = 0;
+
+        if (PyUnicode_Check(fmt_in)) {
+            strobj = PyUnicode_AsASCIIString(fmt_in);
+            if (strobj == NULL) {
+                goto fail;
+            }
+        }
+        else {
+            strobj = fmt_in;
+            Py_INCREF(strobj);
+        }
+
+        if (PyBytes_AsStringAndSize(strobj, &str, &len) < 0) {
+            Py_DECREF(strobj);
+            goto fail;
+        }
+        fmt = (char *)malloc((len + 1) * sizeof(char));
+        strcpy(fmt, str);
+        Py_XDECREF(strobj);
+    }
+    else {
+      PyErr_SetString(PyExc_TypeError, "fmt argument must be a string");
+      goto fail;
+    }
+
+    /* Get a string size long enough for any datetimes we're given
+    note we can't really know this ahead of time unless we format
+    all the strings because the year field can be arbitrarily
+    long, but +20 takes care of most practical overflows. */
+    strsize = strlen(fmt) + 20;
+#if defined(NPY_PY3K)
+    /*
+     * For Python3, allocate the output array as a UNICODE array, so
+     * that it will behave as strings properly
+     */
+    op_dtypes[1] = PyArray_DescrNewFromType(NPY_UNICODE);
+    if (op_dtypes[1] == NULL) {
+        goto fail;
+    }
+    op_dtypes[1]->elsize = strsize * 4;
+    /* This steals the UNICODE dtype reference in op_dtypes[1] */
+    op[1] = (PyArrayObject *)PyArray_NewLikeArray(op[0],
+                                        NPY_KEEPORDER, op_dtypes[1], 1);
+    if (op[1] == NULL) {
+        op_dtypes[1] = NULL;
+        goto fail;
+    }
+#endif
+    /* Create the iteration string data type (always ASCII string) */
+    op_dtypes[1] = PyArray_DescrNewFromType(NPY_STRING);
+    if (op_dtypes[1] == NULL) {
+        goto fail;
+    }
+    op_dtypes[1]->elsize = strsize;
+
+    flags = NPY_ITER_ZEROSIZE_OK|
+            NPY_ITER_BUFFERED;
+    op_flags[0] = NPY_ITER_READONLY|
+                  NPY_ITER_ALIGNED;
+    op_flags[1] = NPY_ITER_WRITEONLY|
+                  NPY_ITER_ALLOCATE;
+
+    iter = NpyIter_MultiNew(2, op, flags, NPY_KEEPORDER, NPY_UNSAFE_CASTING,
+                            op_flags, op_dtypes);
+    if (iter == NULL) {
+        goto fail;
+    }
+
+    if (NpyIter_GetIterSize(iter) != 0) {
+        NpyIter_IterNextFunc *iternext;
+        char **dataptr;
+        npy_datetime dt;
+        npy_datetimestruct dts;
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            goto fail;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+
+        do {
+
+            /* Get the datetime */
+            dt = *(npy_datetime *)dataptr[0];
+
+            /* Convert it to a struct */
+            if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
+                goto fail;
+            }
+
+            /* Zero the destination string completely */
+            memset(dataptr[1], 0, strsize);
+            /* format the string */
+            if (strftime_from_datastruct(dts, timezone_obj, fmt,
+                                     (char *)dataptr[1], strsize) < 0){
+                PyErr_Format(PyExc_RuntimeError,
+                            "The format string provided to datetime_strftime "
+                            "would format a string larger than the "
+                            "allowed maximum size: %"NPY_INTP_FMT"  Consider "
+                            "removing redundant elements (particularly %%Y and "
+                            "%%f)",
+                            strsize);
+                goto fail;
+            }
+        } while(iternext(iter));
+    }
+
+    ret = NpyIter_GetOperandArray(iter)[1];
+    Py_INCREF(ret);
+
+    Py_XDECREF(timezone_obj);
+    Py_XDECREF(op[0]);
+    Py_XDECREF(op[1]);
+    Py_XDECREF(op_dtypes[0]);
+    Py_XDECREF(op_dtypes[1]);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+    if (fmt != NULL){
+        free(fmt);
+    }
+    return PyArray_Return(ret);
+
+fail:
+    Py_XDECREF(timezone_obj);
+    Py_XDECREF(op[0]);
+    Py_XDECREF(op[1]);
+    Py_XDECREF(op_dtypes[0]);
+    Py_XDECREF(op_dtypes[1]);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+    if (fmt != NULL){
+        free(fmt);
+    }
     return NULL;
 }

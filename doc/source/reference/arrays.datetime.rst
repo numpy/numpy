@@ -189,6 +189,57 @@ And here are the time units:
    as      attosecond       +/- 9.2 seconds         [  1969 AD,   1970 AD]
 ======== ================ ======================= ==========================
 
+Converting to Strings
+=====================
+
+Two methods are provided for converting datetime64 arrays to strings.  The
+most basic is :func:`datetime_as_string` which yields an array of ISO 8601
+compliant string, with an optional timezone object to convert from the
+internal naive representation to the desired timezone.  Note how for
+the "US/Eastern" timezone example, the change from Daylight Savings Time to
+Standard Time is reflected in the strings.
+
+.. admonition:: Example
+
+    >>> import pytz
+    >>> d = np.arange('2002-10-27T04:30', 4*60, 60, dtype='datetime64[m]')
+    >>> np.datetime_as_string(d)
+    array(['2002-10-27T04:30', '2002-10-27T05:30', '2002-10-27T06:30',
+    '2002-10-27T07:30'], dtype='<U35')
+    >>> np.datetime_as_string(d, timezone='UTC')
+    array(['2002-10-27T04:30Z', '2002-10-27T05:30Z', '2002-10-27T06:30Z',
+           '2002-10-27T07:30Z'], dtype='<U35')
+    >>> np.datetime_as_string(d, timezone=pytz.timezone('US/Eastern'))
+    array(['2002-10-27T00:30-0400', '2002-10-27T01:30-0400',
+       '2002-10-27T01:30-0500', '2002-10-27T02:30-0500'], dtype='<U39')
+
+If more flexibility is desired, then the :func:`datetime_strftime`
+implements the flexible formatting of `datetime.datetime.strftime`, again
+accepting a timezone argument if wanted.  See `datetime.datetime` for a
+description of all the formatting codes.
+
+.. admonition:: Example
+
+    >>> d = np.arange('2002-10-27T04:30', 4*60, 60, dtype='datetime64[m]')
+    >>> np.datetime_strftime(d, "%Y yday=%j %a weekofyear=%W")
+    array(['2002 yday=300 Sun weekofyear=42',
+           '2002 yday=300 Sun weekofyear=42',
+           '2002 yday=300 Sun weekofyear=42',
+           '2002 yday=300 Sun weekofyear=42'], dtype='<U47')
+
+The only different code from `datetime.datetime` is a way to specify the
+number of decimal points in the sub-seconds specified "%f", as in "%10f"
+below.
+
+.. admonition:: Example
+
+    >>> d = np.arange('2000-10-27T04:30:00.00000003', 400, 100,
+                               dtype='datetime64[ns]')
+    >>> np.datetime_strftime(d, "%H:%M:%S.%10f")
+    array(['04:30:00.0000000300', '04:30:00.0000001300',
+           '04:30:00.0000002300', '04:30:00.0000003300'], dtype='<U33')
+
+
 Business Day Functionality
 ==========================
 

@@ -184,6 +184,12 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
  */
 NPY_NO_EXPORT int
 get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts);
+NPY_NO_EXPORT int
+get_tzname_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts,
+                         char *outstr);
+NPY_NO_EXPORT int
+get_formatted_from_datetimestruct(char *ftm, npy_datetimestruct *dts,
+                                  char *outstr, int strsize);
 
 /*
  * Converts an input object into datetime metadata. The input

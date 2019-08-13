@@ -9,6 +9,7 @@ Datetime Support Functions
    :toctree: generated/
 
    datetime_as_string
+   datetime_strftime
    datetime_data
 
 

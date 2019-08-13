@@ -81,4 +81,8 @@ NPY_NO_EXPORT PyObject *
 array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
                                 PyObject *kwds);
 
+NPY_NO_EXPORT PyObject *
+array_datetime_strftime(PyObject *NPY_UNUSED(self), PyObject *args,
+                                PyObject *kwds);
+
 #endif

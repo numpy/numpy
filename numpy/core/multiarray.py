@@ -1629,3 +1629,85 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
     datetime with units 'm' according to the rule 'safe'
     """
     return (arr,)
+
+
+@array_function_from_c_func_and_dispatcher(
+    _multiarray_umath.datetime_strftime)
+def datetime_strftime(arr, fmt=None, timezone=None):
+    """
+    datetime_strftime(arr, fmt="%Y-%m-%dT%H%M%s.%f", timezone=None)
+
+    Convert an array of datetimes into an array of strings.
+
+    Parameters
+    ----------
+    arr : array_like of datetime64
+        The array of UTC timestamps to format.
+    fmt : str
+        A string specifying the desired format of the date.  Accepted
+        formats can be found in `.datetime.datetime` documentation.  The
+        differences here are 1) "%Y" for years can return more than four-digit
+        years and can return negative years. 2) "%f" for sub-second fractions
+        can have a number of digits specified with an optional number "%10f".
+        The default "%f" is the same as "%6f".
+    timezone : tzinfo
+        Timezone information to use when displaying the datetime. If a tzinfo
+        convert the internal naive time to the timezone specified.  To see the
+        timezone in the string specify "%Z" or "%z" in *fmt* kwarg.
+
+    Returns
+    -------
+    str_arr : ndarray
+        An array of strings the same shape as `arr`.
+
+    Examples
+    --------
+    >>> import pytz
+    >>> d = np.arange('2002-10-27T04:30', 4*60, 60, dtype='datetime64[m]')
+    >>> d
+    array(['2002-10-27T04:30', '2002-10-27T05:30', '2002-10-27T06:30',
+           '2002-10-27T07:30'], dtype='datetime64[m]')
+
+    >>> np.datetime_strftime(d, '%Y-%m-%dT%H:%M:%S')
+    array(['2002-10-27T04:30:00', '2002-10-27T05:30:00',
+           '2002-10-27T06:30:00', '2002-10-27T07:30:00'], dtype='<U37')
+
+    Note that we picked datetimes that cross a DST boundary. Passing in a
+    ``pytz`` timezone object will print the appropriate offset, which we
+    specify with "%z".
+
+    >>> np.datetime_strftime(d, '%Y-%m-%dT%H:%M:%S%z',
+    ...                         timezone=pytz.timezone('US/Eastern'))
+    array(['2002-10-27T00:30:00-0400', '2002-10-27T01:30:00-0400',
+           '2002-10-27T01:30:00-0500', '2002-10-27T02:30:00-0500'],
+           dtype='<U39')
+
+    Large years can be used
+
+    >>> d = np.arange('2000002-10-27T04:30', 4*60, 60, dtype='datetime64[m]')
+    >>> np.datetime_strftime(d, '%Y-%m-%dT%H:%M')
+    array(['2000002-10-27T04:30', '2000002-10-27T05:30',
+           '2000002-10-27T06:30', '2000002-10-27T07:30'], dtype='<U34')
+
+    As can negative years (in Julian days, for illustration).
+
+    >>> d = np.arange('-2000-10-27T04:30', 4*60, 60, dtype='datetime64[m]')
+    >>> np.datetime_strftime(d, '%Y jday=%j %H:%M')
+    array(['-2000 jday=301 04:30', '-2000 jday=301 05:30',
+           '-2000 jday=301 06:30', '-2000 jday=301 07:30'], dtype='<U36')
+
+    Fractional seconds can also be specified.
+
+    >>> d = np.arange('2000-10-27T04:30:00.00000003', 400, 100,
+    ...               dtype='datetime64[ns]')
+    >>> d
+    array(['2000-10-27T04:30:00.000000030', '2000-10-27T04:30:00.000000130',
+           '2000-10-27T04:30:00.000000230', '2000-10-27T04:30:00.000000330'],
+          dtype='datetime64[ns]')
+    >>> np.datetime_strftime(d, '%Y-%m-%dT%H:%M:%S.%8f')
+    array(['2000-10-27T04:30:00.00000003', '2000-10-27T04:30:00.00000013',
+           '2000-10-27T04:30:00.00000023', '2000-10-27T04:30:00.00000033'],
+          dtype='<U41')
+
+    """
+    return (arr,)

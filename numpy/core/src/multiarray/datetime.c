@@ -2347,6 +2347,76 @@ get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
                  get_datetimestruct_minutes(dts));
 }
 
+
+/*
+ * Gets a tzname str by calling tzname() function on
+ * the Python datetime.tzinfo object.
+ */
+NPY_NO_EXPORT int
+get_tzname_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts,
+                         char *outstr)
+{
+    PyObject *dt, *str;
+    char *s;
+
+    /* Create a Python datetime to give to the timezone object */
+    dt = PyDateTime_FromDateAndTime((int)dts->year, dts->month, dts->day,
+                            dts->hour, dts->min, 0, 0);
+    if (dt == NULL) {
+        return -1;
+    }
+
+    str = PyObject_CallMethod(timezone_obj, "tzname", "O", dt);
+    if (str == NULL) {
+        return -1;
+    }
+
+    PyObject *es = PyUnicode_AsEncodedString(str, "utf-8", "~E~");
+    s = PyBytes_AS_STRING(es);
+    strcpy(outstr, s);
+    Py_DECREF(dt);
+    Py_DECREF(str);
+    Py_DECREF(es);
+
+    return 0;
+}
+
+
+/*
+ * Gets a formatted python datetime str using datetime.strftime().
+ */
+NPY_NO_EXPORT int
+get_formatted_from_datetimestruct(char *fmt, npy_datetimestruct *dts,
+                                  char *outstr, int strsize)
+{
+    PyObject *dt, *str;
+    char *s;
+
+    /* Create a Python datetime to give to the timezone object */
+    dt = PyDateTime_FromDateAndTime((int)dts->year, dts->month, dts->day,
+                            dts->hour, dts->min, dts->sec, 0);
+    if (dt == NULL) {
+        return -1;
+    }
+
+    str = PyObject_CallMethod(dt, "strftime", "s", fmt);
+    if (str == NULL) {
+        return -1;
+    }
+
+    PyObject *es = PyUnicode_AsEncodedString(str, "utf-8", "~E~");
+    s = PyBytes_AS_STRING(es);
+    if (strlen(s) > strsize || s == NULL){
+        return -1;
+    }
+    strcpy(outstr, s);
+    Py_DECREF(dt);
+    Py_DECREF(str);
+    Py_DECREF(es);
+
+    return 0;
+}
+
 /*
  * Converts a PyObject * into a datetime, in any of the forms supported.
  *

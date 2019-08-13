@@ -1694,6 +1694,67 @@ class TestDateTime(object):
                            timezone=tz('US/Central'), casting='unsafe'),
                      '2010-02-15')
 
+    def test_datetime_strftime(self):
+        a = np.array(['2001-01-02T12:00:16.12345678',
+                      '2001-01-02T13:00:17.87654321'], dtype='datetime64[ns]')
+        assert_equal(np.datetime_strftime(a, '%Y-%m-%d %H:%M:%S.%4f'),
+                     ['2001-01-02 12:00:16.1234',
+                      '2001-01-02 13:00:17.8765'])
+        # check %z %Z don't have an effect
+#        assert_equal(np.datetime_strftime(a, '%Y-%m-%d %H:%M:%S.%4f%z%Z'),
+#             ['2001-01-02 12:00:16.1234',
+#              '2001-01-02 12:00:17.8765'])
+        # check negative years; cant do [ns] because too far from 1970
+        a = np.array(['-2001-01-02T12:00:16.12345678',
+                      '-2001-01-02T12:00:17.87654321'], dtype='datetime64[us]')
+        assert_equal(np.datetime_strftime(a, '%Y-%m-%d %H:%M:%S.%4f'),
+             ['-2001-01-02 12:00:16.1234',
+              '-2001-01-02 12:00:17.8765'])
+        # test really big negative dates...
+        a = np.array(['-2000000000-01-02', '-2100000000-01-02'
+                     ], dtype='datetime64[D]')
+        assert_equal(np.datetime_strftime(a, '%Y-%m-%d'),
+             ['-2000000000-01-02', '-2100000000-01-02'])
+        # check Julian day, am/pm, day of week.
+        a = np.array(['2019-08-14T12:00:16',
+                      '2002-01-02T13:00:17'], dtype='datetime64[ns]')
+        assert_equal(np.datetime_strftime(a, '%Y %a %m %d %j %H:%M%p'),
+             ['2019 Wed 08 14 226 12:00PM', '2002 Wed 01 02 002 13:00PM'])
+
+        # Check NaT
+        a[1] = np.datetime64('NaT')
+        assert_equal(np.datetime_strftime(a, '%Y %a %m %d %j %H:%M%p'),
+             ['2019 Wed 08 14 226 12:00PM', 'NaT'])
+
+        # check %%
+        assert_equal(np.datetime_strftime(a, '%j %%'),
+             ['226 %', 'NaT'])
+
+        # check too long string
+        assert_raises(RuntimeError,
+            np.datetime_strftime, a, '%Y'*20)
+
+        # empty format:
+        assert_equal(np.datetime_strftime(a, ''), ['', 'NaT'])
+
+        # empty array:
+        assert_raises(TypeError,
+            np.datetime_strftime, np.array([]), '%Y')
+
+    @pytest.mark.skipif(not _has_pytz, reason="The pytz module is not available.")
+    def test_datetime_strftime_tz(self):
+        timezone = tz('US/Pacific')
+
+        a = np.array(['2001-01-02T12:00:16.0',
+                      '2001-01-02T12:00:17.0'], dtype='datetime64[s]')
+
+        assert_equal(np.datetime_strftime(a, '%Y-%m-%dT%H:%M:%S %Z',
+                                          timezone=timezone),
+             ['2001-01-02T04:00:16 PST', '2001-01-02T04:00:17 PST'])
+        assert_equal(np.datetime_strftime(a, '%Y-%m-%dT%H:%M:%S%z',
+                                          timezone=timezone),
+             ['2001-01-02T04:00:16-0800', '2001-01-02T04:00:17-0800'])
+
     def test_datetime_arange(self):
         # With two datetimes provided as strings
         a = np.arange('2010-01-05', '2010-01-10', dtype='M8[D]')

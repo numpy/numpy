@@ -1,0 +1,5 @@
+`datetime_strftime`
+-------------------
+The ability to format datetime objects beyond ISO-8601 is provided by
+`datetime_strftime`.  Formatting options closely follow those used by
+the standard library's `.datetime.strftime`.  
