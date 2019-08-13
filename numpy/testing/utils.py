@@ -34,7 +34,7 @@ __all__ = [
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
-        'HAS_REFCOUNT', 'suppress_warnings'
+        'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare'
         ]
 
 
