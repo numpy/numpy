@@ -227,7 +227,7 @@ cdef check_output(object out, object dtype, object size):
         raise ValueError('Supplied output array is not contiguous, writable or aligned.')
     if out_array.dtype != dtype:
         raise TypeError('Supplied output array has the wrong type. '
-                        'Expected {0}, got {0}'.format(dtype, out_array.dtype))
+                        'Expected {0}, got {1}'.format(dtype, out_array.dtype))
     if size is not None:
         try:
             tup_size = tuple(size)
