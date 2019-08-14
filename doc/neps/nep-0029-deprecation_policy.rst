@@ -221,8 +221,11 @@ predicting the release schedule of Python for the next 3-4 years.  A
 time-based rule is only depends on things that have already happened
 and the length of the support window.
 
-Time window on the X.Y.1 Python release
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+Time window from the X.Y.1 Python release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is equivalent to a few month longer support window from the X.Y.0
 release.  This is because X.Y.1 bug-fix release is typically a few
