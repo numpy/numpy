@@ -575,7 +575,7 @@ class TestHistogramOptimBinNums(object):
                       500:  {'fd': 15, 'scott': 16, 'rice': 32,
                              'sturges': 20, 'auto': 20, 'stone': 80},
                       5000: {'fd': 33, 'scott': 33, 'rice': 69,
-                             'sturges': 27, 'auto': 33, 'stone': 80}
+                             'sturges': 27, 'auto': 19, 'stone': 80}
                      }
 
         for testlen, expectedResults in basic_test.items():
