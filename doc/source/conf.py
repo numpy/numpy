@@ -123,7 +123,6 @@ else:
         "scipy_org_logo": False,
         "rootlinks": [("https://numpy.org/", "NumPy.org"),
                       ("https://numpy.org/doc", "Docs"),
-                      ("https://scipy.org/", "Scipy.org"),
                      ]
     }
     html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
