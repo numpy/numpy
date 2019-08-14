@@ -1743,6 +1743,33 @@ error:
     return NPY_FAIL;
 }
 
+/*NUMPY_API
+ * Get typenum from an object.
+ * This function takes a Python object representing a type and converts it
+ * to a the correct PyArray_Descr * structure to describe the type.
+ *
+ * Many objects can be used to represent a data-type which in NumPy is
+ * quite a flexible concept.
+ *
+ * Raises a BadArgument error if obj is an Integral type and returns NULL
+ * in *at. Otherwise returns a new reference in *at. The returned should not
+ * be modified as it may be one of the canonical immutable objects or a
+ * reference to the input obj.
+ */
+NPY_NO_EXPORT int
+PyArray_DescrConverterDetectIntegerArgument(PyObject *obj, PyArray_Descr **at)
+{
+    if (PyArray_IsIntegerScalar(obj)) {
+        *at = NULL;
+
+        PyErr_Clear();
+        PyErr_BadArgument();
+        return NPY_FAIL;
+    }
+    else {
+        return PyArray_DescrConverter(obj, at);
+    };
+}
 /** Array Descr Objects for dynamic types **/
 
 /*

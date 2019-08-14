@@ -1814,7 +1814,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&:empty", kwlist,
                 PyArray_IntpConverter, &shape,
-                PyArray_DescrConverter, &typecode,
+                PyArray_DescrConverterDetectIntegerArgument, &typecode,
                 PyArray_OrderConverter, &order)) {
         goto fail;
     }
@@ -1985,7 +1985,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&:zeros", kwlist,
                 PyArray_IntpConverter, &shape,
-                PyArray_DescrConverter, &typecode,
+                PyArray_DescrConverterDetectIntegerArgument, &typecode,
                 PyArray_OrderConverter, &order)) {
         goto fail;
     }
