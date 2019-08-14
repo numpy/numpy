@@ -87,6 +87,9 @@ from . import shape_base
 from .shape_base import *
 from . import einsumfunc
 from .einsumfunc import *
+from . import datetimeutils
+from .datetimeutils import *
+
 del nt
 
 from .fromnumeric import amax as max, amin as min, round_ as round

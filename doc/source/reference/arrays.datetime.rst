@@ -189,6 +189,23 @@ And here are the time units:
    as      attosecond       +/- 9.2 seconds         [  1969 AD,   1970 AD]
 ======== ================ ======================= ==========================
 
+Datetime Unpacking
+==================
+
+Convenience functions are provided to unpack calendar elements from datetime
+arrays: `.datetime_year`, `.datetime_month`, `.datetime_day`,
+`.datetime_hour`, `.datetime_minute`, `.datetime_second`, and
+`.datetime_microsecond`.
+
+.. admonition:: Example
+
+    >>> d = np.arange('2015-12-20', 31*3, 15, dtype='datetime64[D]')
+    >>> d
+    array(['2015-12-20', '2016-01-04', '2016-01-19', '2016-02-03',
+           '2016-02-18', '2016-03-04', '2016-03-19'], dtype='datetime64[D]')
+    >>> m = np.datetime_month(d); m
+    array([12,  1,  1,  2,  2,  3,  3])
+
 Business Day Functionality
 ==========================
 

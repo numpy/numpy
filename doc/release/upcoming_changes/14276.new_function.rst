@@ -1,0 +1,8 @@
+Datetime unpacking helper functions
+-----------------------------------
+A set of helper functions that help unpack values from datetime64 arrays
+into integer representations is now available: `.datetime_year`,
+`.datetime_month`, `.datetime_day`, `.datetime_hour`, `.datetime_minute`,
+`.datetime_second`, `.datetime_microsecond`, and `.datetime_wday`.  A
+further function computes the yearday as an array of floats:
+`.datetime_yday`.  

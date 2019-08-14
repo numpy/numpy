@@ -1694,6 +1694,33 @@ class TestDateTime(object):
                            timezone=tz('US/Central'), casting='unsafe'),
                      '2010-02-15')
 
+    def test_datetime_unpack(self):
+        # test that the unpacking functions work...
+        d = np.arange('2012-12-30T13:42', 24*5, 24, dtype='datetime64[h]')
+        assert_equal(np.datetime_year(d), [2012, 2012, 2013, 2013, 2013])
+        assert_equal(np.datetime_month(d), [12, 12, 1, 1, 1])
+        assert_equal(np.datetime_day(d), [30, 31, 1, 2, 3])
+        # double check leap year
+        d = np.arange('2012-02-27T13:42', 24*5, 24, dtype='datetime64[h]')
+        assert_equal(np.datetime_day(d), [27, 28, 29, 1, 2])
+
+        d = np.arange('2012-02-27T21:42:13', 3600*5, 3403,
+                      dtype='datetime64[s]')
+        assert_equal(np.datetime_hour(d), [21, 22, 23,  0,  1, 2])
+        assert_equal(np.datetime_minute(d), [42, 38, 35, 32, 29, 25])
+        assert_equal(np.datetime_second(d), [13, 56, 39, 22, 5, 48])
+        d = np.arange('2012-02-27T21:42:13.00125', 200000, 45032,
+                      dtype='datetime64[ns]')
+        assert_equal(np.datetime_microsecond(d), np.arange(1250, 1433, 45))
+
+        d = np.array(['2012-01-01T12:00', '2012-12-31T16:00'],
+                     dtype='datetime64[s]')
+        assert_equal(np.datetime_yday(d), np.array([0.5, 365 + 16 / 24]))
+
+        d = np.array(['2012-01-01T12:00', '2012-12-31T16:00',
+                      '2012-12-29T16:00'], dtype='datetime64[s]')
+        assert_equal(np.datetime_wday(d), np.array([0, 1, 6]))
+
     def test_datetime_arange(self):
         # With two datetimes provided as strings
         a = np.arange('2010-01-05', '2010-01-10', dtype='M8[D]')

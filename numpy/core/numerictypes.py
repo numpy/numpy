@@ -90,8 +90,8 @@ from numpy.compat import bytes, long
 from numpy.core.multiarray import (
         typeinfo, ndarray, array, empty, dtype, datetime_data,
         datetime_as_string, busday_offset, busday_count, is_busday,
-        busdaycalendar
-        )
+        busdaycalendar)
+from numpy.core.datetimeutils import *
 from numpy.core.overrides import set_module
 
 # we add more at the bottom
@@ -100,7 +100,9 @@ __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data', 'datetime_as_string',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
-           ]
+           'datetime_year', 'datetime_month', 'datetime_day',
+           'datetime_hour', 'datetime_minute', 'datetime_second',
+           'datetime_microsecond', 'datetime_yday', 'datetime_wday']
 
 # we don't need all these imports, but we need to keep them for compatibility
 # for users using np.core.numerictypes.UPPER_TABLE
