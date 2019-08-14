@@ -2833,9 +2833,56 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
                 }
             }
 #else
-            PyErr_Format(PyExc_ValueError,
-                "non-string names in Numpy dtype unpickling");
-            return NULL;
+            // This section is an adaption of the block above (which reads PY2 pickles from PY3)
+            // to enable reading PY3 pickles from PY2. See gh-2407
+            PyObject *tmp, *new_name, *field;
+
+            tmp = PyDict_New();
+            if (tmp == NULL) {
+                return NULL;
+            }
+            Py_XDECREF(self->fields);
+            self->fields = tmp;
+
+            tmp = PyTuple_New(PyTuple_GET_SIZE(names));
+            if (tmp == NULL) {
+                return NULL;
+            }
+            Py_XDECREF(self->names);
+            self->names = tmp;
+
+            for (i = 0; i < PyTuple_GET_SIZE(names); ++i) {
+                name = PyTuple_GET_ITEM(names, i);
+                field = PyDict_GetItem(fields, name);
+                if (!field) {
+                    return NULL;
+                }
+
+                if (PyString_Check(name)) {
+                    // It is a PY2 string, no transformation is needed
+                    new_name = name;
+                    Py_INCREF(new_name);
+                }
+                else if (PyUnicode_Check(name)) {
+                    // The field names of a structured dtype were pickled in PY3 as unicode strings
+                    // so, to unpickle them in PY2, we need to convert them to PY2 strings
+                    new_name = PyUnicode_AsEncodedString(name, "utf-8", "strict");
+                    if (new_name == NULL) {
+                        return NULL;
+                    }
+                }
+                else {
+                    // The field name is not a string or a unicode object, we cannot process it
+                    PyErr_Format(PyExc_ValueError,
+                        "non-string/non-unicode names in Numpy dtype unpickling");
+                    return NULL;
+                }
+
+                PyTuple_SET_ITEM(self->names, i, new_name);
+                if (PyDict_SetItem(self->fields, new_name, field) != 0) {
+                    return NULL;
+                }
+            }
 #endif
         }
     }
