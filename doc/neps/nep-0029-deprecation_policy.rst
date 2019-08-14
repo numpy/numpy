@@ -46,10 +46,12 @@ For the purposes of this NEP we assume semantic versioning and define:
 
 
 When a project creates a new major or minor version, we recommend that
-the project should support all minor versions of Python introduced
-and released in the prior 42 months ~~from their anticipated release
-date~~ and all minor versions of NumPy released in the prior 24
-months.
+the project should support at least all minor versions of Python
+introduced and released in the prior 42 months ~~from their
+anticipated release date~~ with a minimum of 2 minor versions of
+Python, and all minor versions of NumPy released in the prior 24
+months ~~from their anticipated release date~~ with a minimum of 3
+minor versions of NumPy.
 
 
 The diagram::
@@ -79,7 +81,7 @@ This six month buffer provides resilience to minor fluctuations /
 delays in the Python release schedule.
 
 Because Python minor version support is based on historical release
-dates, a 42 month time window, and a project's plans, a project can
+dates, a 36 month time window, and a project's plans, a project can
 decide to drop a given minor version of Python very early in the release
 process.
 
@@ -136,21 +138,24 @@ We suggest that all projects adopt the following language into their
 development guidelines:
 
 
-   - This project supports minor versions of Python initially released
-     42 months prior to a planned project release date.
+   - This project supports at least the minor versions of Python
+     initially released 42 months prior to a planned project release
+     date.
    - The project will always support at least the 2 latest minor
-     versions of Python
+     versions of Python.
    - support minor versions of ``numpy`` initially released in the 24
      months prior to a planned project release date or the oldest
      version that supports the minimum Python version (whichever is
-     higher)
+     higher).
+   - The project will always support at least the 3 latest minor
+     versions of NumPy.
 
    The minimum supported version of Python will be set to
    ``python_requires`` in ``setup``.  All supported minor versions of
    Python will be in the test matrix and have binary artifacts built
    for releases.
 
-   The project will bump (adjust upward) the minimum Python and NumPy
+   The project should adjust upward the minimum Python and NumPy
    version support on every minor and major release, but never on a
    patch release.
 
