@@ -208,11 +208,18 @@ do.
 N minor versions of Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Given the current release cadence of the Python, the proposed time
-(42 months) is roughly equivalent to "the last two" Python minor
-versions.  However, if Python changes their release cadence substantially, any rule
-based solely on the number of minor releases may need to be changed to remain sensible.
+Given the current release cadence of the Python, the proposed time (42
+months) is roughly equivalent to "the last two" Python minor versions.
+However, if Python changes their release cadence substantially, any
+rule based solely on the number of minor releases may need to be
+changed to remain sensible.
 
+A more fundamental problem with a policy based on number of Python
+releases is that it is hard to predict when support for a given minor
+version of Python will be dropped as that requires correctly
+predicting the release schedule of Python for the next 3-4 years.  A
+time-based rule is only depends on things that have already happened
+and the length of the support window.
 
 Time window on the X.Y.1 Python release
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
