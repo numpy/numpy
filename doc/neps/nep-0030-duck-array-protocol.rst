@@ -107,10 +107,10 @@ An example of how the ``__duckarray__`` protocol could be used to write a
 ``stack`` function based on ``concatenate``, and its produced outcome, can be
 seen below. The example here was chosen not only to demonstrate the usage of
 the ``duckarray`` function, but also to demonstrate its dependency on the NumPy
-API, demonstrated by checks on the array's ``ndim`` and ``shape`` attributes.
-Note that the example is merely a simplified version of NumPy's actualy
-implementation of ``stack``, and it is assumed that Dask has implemented the
-``__duckarray__`` method.
+API, demonstrated by checks on the array's ``shape`` attribute. Note that the
+example is merely a simplified version of NumPy's actualy implementation of
+``stack`` working on the first axis, and it is assumed that Dask has implemented
+the ``__duckarray__`` method.
 
 .. code:: python
 
@@ -121,10 +121,8 @@ implementation of ``stack``, and it is assumed that Dask has implemented the
         if len(shapes) != 1:
             raise ValueError('all input arrays must have the same shape')
 
-        result_ndim = arrays[0].ndim + 1
-
-        expanded_arrays = [arr for arr in arrays]
-        return np.concatenate(expanded_arrays)
+        expanded_arrays = [arr[np.newaxis, ...] for arr in arrays]
+        return np.concatenate(expanded_arrays, axis=0)
 
     dask_arr = dask.array.arange(10)
     np_arr = np.arange(10)
