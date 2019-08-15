@@ -600,6 +600,16 @@ class TestHistogramOptimBinNums(object):
             assert_raises(TypeError, histogram, [1, 2, 3],
                           estimator, weights=[1, 2, 3])
 
+    def test_no_memory_error(self):
+        """
+        Check that large ranges and small IQRs do not raise MemoryError
+        when the bins method is set to 'auto'
+        """
+        x = np.array([ 2, 2, 2 - 1e-15, 2 - 1e-15, 1], dtype=np.float64)
+        assert_raises(MemoryError, histogram, x, 'fd')
+        a, b = histogram(x, bins='auto')
+        assert_equal(sum(a), 5)
+        assert_equal(len(b), 4)
 
 class TestHistogramdd(object):
 
