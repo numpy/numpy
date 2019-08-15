@@ -520,7 +520,7 @@ class TestAlmostEqual(_GenericTest):
         with pytest.raises(AssertionError) as exc_info:
             self._assert_func(x, y, decimal=12)
         msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatch: 100%')
+        assert_equal(msgs[3], 'Mismatched elements: 3 / 3 (100%)')
         assert_equal(msgs[4], 'Max absolute difference: 1.e-05')
         assert_equal(msgs[5], 'Max relative difference: 3.33328889e-06')
         assert_equal(
@@ -536,7 +536,7 @@ class TestAlmostEqual(_GenericTest):
         with pytest.raises(AssertionError) as exc_info:
             self._assert_func(x, y)
         msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatch: 33.3%')
+        assert_equal(msgs[3], 'Mismatched elements: 1 / 3 (33.3%)')
         assert_equal(msgs[4], 'Max absolute difference: 1.e-05')
         assert_equal(msgs[5], 'Max relative difference: 3.33328889e-06')
         assert_equal(msgs[6], ' x: array([1.     , 2.     , 3.00003])')
@@ -548,7 +548,7 @@ class TestAlmostEqual(_GenericTest):
         with pytest.raises(AssertionError) as exc_info:
             self._assert_func(x, y)
         msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatch: 50%')
+        assert_equal(msgs[3], 'Mismatched elements: 1 / 2 (50%)')
         assert_equal(msgs[4], 'Max absolute difference: 1.')
         assert_equal(msgs[5], 'Max relative difference: 1.')
         assert_equal(msgs[6], ' x: array([inf,  0.])')
@@ -560,7 +560,7 @@ class TestAlmostEqual(_GenericTest):
         with pytest.raises(AssertionError) as exc_info:
             self._assert_func(x, y)
         msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatch: 100%')
+        assert_equal(msgs[3], 'Mismatched elements: 2 / 2 (100%)')
         assert_equal(msgs[4], 'Max absolute difference: 2')
         assert_equal(msgs[5], 'Max relative difference: inf')
 
@@ -855,7 +855,8 @@ class TestAssertAllclose(object):
         with pytest.raises(AssertionError) as exc_info:
             assert_allclose(a, b)
         msg = str(exc_info.value)
-        assert_('Mismatch: 25%\nMax absolute difference: 1\n'
+        assert_('Mismatched elements: 1 / 4 (25%)\n'
+                'Max absolute difference: 1\n'
                 'Max relative difference: 0.5' in msg)
 
     def test_equal_nan(self):
