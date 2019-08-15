@@ -606,7 +606,6 @@ class TestHistogramOptimBinNums(object):
         when the bins method is set to 'auto'
         """
         x = np.array([ 2, 2, 2 - 1e-15, 2 - 1e-15, 1], dtype=np.float64)
-        assert_raises(MemoryError, histogram, x, 'fd')
         a, b = histogram(x, bins='auto')
         assert_equal(sum(a), 5)
         assert_equal(len(b), 4)
