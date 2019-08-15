@@ -44,7 +44,7 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.fft')
 
 
-def _raw_fft(a, n, axis, is_real, is_forward, fct):
+def _raw_fft(a, n, axis, is_real, is_forward, inv_fct):
     axis = normalize_axis_index(axis, a.ndim)
     if n is None:
         n = a.shape[axis]
@@ -52,6 +52,8 @@ def _raw_fft(a, n, axis, is_real, is_forward, fct):
     if n < 1:
         raise ValueError("Invalid number of FFT data points (%d) specified."
                          % n)
+
+    fct = 1/inv_fct
 
     if a.shape[axis] != n:
         s = list(a.shape)
@@ -176,10 +178,10 @@ def fft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    fct = 1
+    inv_fct = 1
     if norm is not None and _unitary(norm):
-        fct = 1 / sqrt(n)
-    output = _raw_fft(a, n, axis, False, True, fct)
+        inv_fct = sqrt(n)
+    output = _raw_fft(a, n, axis, False, True, inv_fct)
     return output
 
 
@@ -272,10 +274,10 @@ def ifft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = a.shape[axis]
     if norm is not None and _unitary(norm):
-        fct = 1/sqrt(max(n, 1))
+        inv_fct = sqrt(max(n, 1))
     else:
-        fct = 1/max(n, 1)
-    output = _raw_fft(a, n, axis, False, False, fct)
+        inv_fct = n
+    output = _raw_fft(a, n, axis, False, False, inv_fct)
     return output
 
 
@@ -360,12 +362,12 @@ def rfft(a, n=None, axis=-1, norm=None):
 
     """
     a = asarray(a)
-    fct = 1
+    inv_fct = 1
     if norm is not None and _unitary(norm):
         if n is None:
             n = a.shape[axis]
-        fct = 1/sqrt(n)
-    output = _raw_fft(a, n, axis, True, True, fct)
+        inv_fct = sqrt(n)
+    output = _raw_fft(a, n, axis, True, True, inv_fct)
     return output
 
 
@@ -462,10 +464,10 @@ def irfft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = (a.shape[axis] - 1) * 2
-    fct = 1/n
+    inv_fct = n
     if norm is not None and _unitary(norm):
-        fct = 1/sqrt(n)
-    output = _raw_fft(a, n, axis, True, False, fct)
+        inv_fct = sqrt(n)
+    output = _raw_fft(a, n, axis, True, False, inv_fct)
     return output
 
 
