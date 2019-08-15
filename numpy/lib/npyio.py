@@ -507,8 +507,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     -----
     For a description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
         
-    Any data saved to the file is automatically added to the end if the file is still opened. 
-    It has similar behavior to append not overwrite since the file is not closed yet.
+    Any data saved to the file is appended to the end of the file. 
     Example:
     --------
     >>> with open('test.npy', 'wb') as f:
