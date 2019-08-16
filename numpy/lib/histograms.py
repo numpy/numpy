@@ -505,7 +505,7 @@ def _get_bin_edges(a, bins, range, weights):
             bin_type = np.result_type(bin_type, float)
 
         # bin edges must be computed
-        if all([bins is 'auto', auto_method is 'fd', n_equal_bins>2]):
+        if bins == 'auto' and auto_method == 'fd' and n_equal_bins > 2:
             bin_edges = _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge)
             return bin_edges, None
         
