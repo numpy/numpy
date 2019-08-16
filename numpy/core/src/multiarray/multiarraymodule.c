@@ -1881,12 +1881,6 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     return (PyObject *)ret;
 
 fail:
-    if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_TypeError)) {
-        PyErr_Clear();
-        PyErr_SetString(PyExc_TypeError,
-                "data type not understood, "
-                "did you mean to use a tuple for size?");
-    }
     Py_XDECREF(prototype);
     Py_XDECREF(dtype);
     return NULL;

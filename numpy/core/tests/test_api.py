@@ -525,8 +525,8 @@ def test_broadcast_arrays():
     assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
     assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
 
-@pytest.mark.parametrize('fn', [np.ones, np.ones_like, np.zeros, np.empty, np.empty_like])
-def test_homogenous_array_creation_returns_descriptive_errror(fn):
+@pytest.mark.parametrize('fn', [np.ones, np.zeros, np.empty])
+def test_homogenous_array_creation_returns_descriptive_error(fn):
     # These functions have signatures fn(shape, dtype=None, order='C')
     # where `shape` may be either an integer or a tuple. For higher
     # dimensional shapes this is often confused e.g. np.ones(5, 5) when
