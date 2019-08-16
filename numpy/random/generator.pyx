@@ -3333,7 +3333,7 @@ cdef class Generator:
                  0.0, '', CONS_NONE)
 
     # Multivariate distributions:
-    def _get_multivariate_instance(self):
+    def _get_multivariate_normal_instance(self):
         """
         multivariate_normal(mean, cov, size=None, check_valid='warn', tol=1e-8)
 
