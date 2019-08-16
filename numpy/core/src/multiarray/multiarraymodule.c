@@ -1816,6 +1816,12 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverterDetectIntegerArgument, &typecode,
                 PyArray_OrderConverter, &order)) {
+        if (PyErr_ExceptionMatches(PyArray_MisplacedShapeArgumentError)) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_TypeError,
+                            "data type not understood, "
+                            "did you mean to use a tuple for size?");
+        }
         goto fail;
     }
 
@@ -1839,12 +1845,6 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     return (PyObject *)ret;
 
 fail:
-    if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_TypeError)) {
-        PyErr_Clear();
-        PyErr_SetString(PyExc_TypeError,
-                "data type not understood, "
-                "did you mean to use a tuple for size?");
-    }
     Py_XDECREF(typecode);
     npy_free_cache_dim_obj(shape);
     return NULL;
@@ -1987,6 +1987,12 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverterDetectIntegerArgument, &typecode,
                 PyArray_OrderConverter, &order)) {
+        if (PyErr_ExceptionMatches(PyArray_MisplacedShapeArgumentError)) {
+            PyErr_Clear();
+            PyErr_SetString(PyExc_TypeError,
+                            "data type not understood, "
+                            "did you mean to use a tuple for size?");
+        }
         goto fail;
     }
 
@@ -2010,12 +2016,6 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     return (PyObject *)ret;
 
 fail:
-    if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_TypeError)) {
-        PyErr_Clear();
-        PyErr_SetString(PyExc_TypeError,
-                "data type not understood, "
-                "did you mean to use a tuple for size?");
-    }
     Py_XDECREF(typecode);
     npy_free_cache_dim_obj(shape);
     return (PyObject *)ret;
@@ -4714,6 +4714,12 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
      * This is for backward compatibility with existing code.
      */
     PyDict_SetItemString (d, "error", PyExc_Exception);
+
+    PyArray_MisplacedShapeArgumentError = PyErr_NewException(
+            "multiarray.PyArray_MisplacedShapeArgumentError", NULL, NULL);
+    PyDict_SetItemString(d,
+                         "PyArray_MisplacedShapeArgumentError",
+                         PyArray_MisplacedShapeArgumentError);
 
     s = PyInt_FromLong(NPY_TRACE_DOMAIN);
     PyDict_SetItemString(d, "tracemalloc_domain", s);

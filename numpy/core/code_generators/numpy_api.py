@@ -351,6 +351,7 @@ multiarray_funcs_api = {
     'PyArray_SetWritebackIfCopyBase':       (303,),
     # End 1.14 API
     'PyArray_DescrConverterDetectIntegerArgument': (304,),
+    # End 1.18 API
 }
 
 ufunc_types_api = {
