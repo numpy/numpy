@@ -1,6 +1,5 @@
 #!python
 #cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True, language_level=3
-import types
 import operator
 import warnings
 
