@@ -506,7 +506,9 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     Notes
     -----
     For a description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
-
+        
+    Any data saved to the file is appended to the end of the file. 
+    
     Examples
     --------
     >>> from tempfile import TemporaryFile
@@ -519,6 +521,15 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     >>> np.load(outfile)
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
+
+    >>> with open('test.npy', 'wb') as f:
+    ...     np.save(f, np.array([1, 2]))
+    ...     np.save(f, np.array([1, 3]))    
+    >>> with open('test.npy', 'rb') as f:
+    ...     a = np.load(f)
+    ...     b = np.load(f)
+    >>> print(a, b)
+    # [1 2] [1 3]
     """
     own_fid = False
     if hasattr(file, 'write'):
