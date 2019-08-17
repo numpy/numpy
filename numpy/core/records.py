@@ -255,7 +255,7 @@ class record(nt.void):
                 #happens if field is Object type
                 return obj
             if dt.names is not None:
-                return obj.view((self.__class__, obj.dtype.fields))
+                return obj.view((self.__class__, obj.dtype))
             return obj
         else:
             raise AttributeError("'record' object has no "
@@ -280,7 +280,7 @@ class record(nt.void):
 
         # copy behavior of record.__getattribute__,
         if isinstance(obj, nt.void) and obj.dtype.names is not None:
-            return obj.view((self.__class__, obj.dtype.fields))
+            return obj.view((self.__class__, obj.dtype))
         else:
             # return a single element
             return obj

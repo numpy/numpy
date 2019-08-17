@@ -464,6 +464,21 @@ class TestRecord(object):
         assert isinstance(data0, np.record)
         assert isinstance(data0['inner'], np.record)
 
+    def test_nested_dtype_padding(self):
+        """ test that trailing padding is preserved """
+        # construct a dtype with padding at the end
+        dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)])
+        dt_padded_end = dt[['a', 'b']]
+        assert dt_padded_end.itemsize == dt.itemsize
+
+        dt_outer = np.dtype([('inner', dt_padded_end)])
+
+        data = np.zeros(3, dt_outer).view(np.recarray)
+        assert_equal(data['inner'].dtype, dt_padded_end)
+
+        data0 = data[0]
+        assert_equal(data0['inner'].dtype, dt_padded_end)
+
 
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
