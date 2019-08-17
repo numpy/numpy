@@ -3331,7 +3331,7 @@ cdef class Generator:
 
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
-                            tol=1e-8):
+                            tol=1e-8, method='svd', use_factor=False):
         """
         multivariate_normal(mean, cov, size=None, check_valid='warn', tol=1e-8)
 
@@ -3361,6 +3361,19 @@ cdef class Generator:
         tol : float, optional
             Tolerance when checking the singular values in covariance matrix.
             cov is cast to double before the check.
+        method : { 'svd', 'eigh', 'cholesky'}, optional
+            The cov input is used to compute a factor matrix A such that
+            transpose(A) * A = cov. This argument is used to select the method
+            used to compute the factor matrix A. The default method 'svd' is
+            the slowest, while 'cholesky' is the fastest but less robust than
+            the slowest method. The method `eigh` uses eigen decomposition to
+            compute A and is faster than svd but slower than cholesky.
+        use_factor : bool, optional
+            If set to True then cov argument is treated as a precomputed factor
+            matrix A such that np.dot(A * transpose(A)) == cov is True, with the
+            assumption that A was computed with the method specified in the
+            ``method`` argument. This provides significant speedups because
+            the factorization of cov is avoided.
 
         Returns
         -------
@@ -3421,8 +3434,23 @@ cdef class Generator:
         --------
         >>> mean = (1, 2)
         >>> cov = [[1, 0], [0, 1]]
-        >>> x = np.random.default_rng().multivariate_normal(mean, cov, (3, 3))
+        >>> rng = np.random.default_rng()
+        >>> x = rng.multivariate_normal(mean, cov, (3, 3))
         >>> x.shape
+        (3, 3, 2)
+
+        We can use a different method other than the default to factorize cov:
+        >>> y = rng.multivariate_normal(mean, cov, (3, 3), method='cholesky')
+        >>> y.shape
+        (3, 3, 2)
+
+        We can also use a precomputed factor matrix of cov to speed up the
+        computation. This is very useful when one needs to generate random
+        values using the sample covariance matrix but different means.
+        >>> s, u = np.linalg.eigh(cov)
+        >>> A = u * np.sqrt(s)  # factor matrix of cov using Eigendecomposition.
+        >>> z = rng.multivariate_normal(mean, A, (3, 3), method='eigh', use_factor=True)
+        >>> z.shape
         (3, 3, 2)
 
         The following is probably true, given that 0.6 is roughly twice the
@@ -3432,7 +3460,9 @@ cdef class Generator:
         [True, True] # random
 
         """
-        from numpy.dual import svd
+        if method not in {'eigh', 'svd', 'cholesky'}:
+            raise ValueError(
+                "mode must to be one of {'eigh', 'svd', 'cholesky'}")
 
         # Check preconditions on arguments
         mean = np.array(mean)
@@ -3446,10 +3476,13 @@ cdef class Generator:
 
         if len(mean.shape) != 1:
             raise ValueError("mean must be 1 dimensional")
+        matrix_type = "factor" if use_factor else "cov"
         if (len(cov.shape) != 2) or (cov.shape[0] != cov.shape[1]):
-            raise ValueError("cov must be 2 dimensional and square")
+            raise ValueError("{} must be 2 dimensional and square"
+                             .format(matrix_type))
         if mean.shape[0] != cov.shape[0]:
-            raise ValueError("mean and cov must have same length")
+            raise ValueError("mean and {} must have same length"
+                             .format(matrix_type))
 
         # Compute shape of output and create a matrix of independent
         # standard normally distributed random numbers. The matrix has rows
@@ -3458,6 +3491,16 @@ cdef class Generator:
         final_shape = list(shape[:])
         final_shape.append(mean.shape[0])
         x = self.standard_normal(final_shape).reshape(-1, mean.shape[0])
+
+        if use_factor:
+            # check if the factor supplied is a cholesky upper triangular
+            # matrix and calculate random values accordingly.
+            if method == 'cholesky' and not np.any(np.tril(cov, k=-1)):
+                x = mean + np.dot(x, cov.T)
+            else:
+                x = mean + np.dot(x, cov)
+            x.shape = tuple(final_shape)
+            return x
 
         # Transform matrix of standard normals into matrix where each row
         # contains multivariate normals with the desired covariance.
@@ -3475,13 +3518,24 @@ cdef class Generator:
 
         # GH10839, ensure double to make tol meaningful
         cov = cov.astype(np.double)
-        (u, s, v) = svd(cov)
+        if method == 'svd':
+            from numpy.dual import svd
+            (u, s, vh) = svd(cov)
+        elif method == 'eigh':
+            from numpy.dual import eigh
+            (s, u)  = eigh(cov)
+        else:
+            from numpy.dual import cholesky
+            l = cholesky(cov)
 
-        if check_valid != 'ignore':
+        if check_valid != 'ignore' and method != 'cholesky':
             if check_valid != 'warn' and check_valid != 'raise':
-                raise ValueError("check_valid must equal 'warn', 'raise', or 'ignore'")
-
-            psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
+                raise ValueError(
+                    "check_valid must equal 'warn', 'raise', or 'ignore'")
+            if method == 'svd':
+                psd = np.allclose(np.dot(vh.T * s, vh), cov, rtol=tol, atol=tol)
+            else:
+                psd = not np.any(s < -tol)
             if not psd:
                 if check_valid == 'warn':
                     warnings.warn("covariance is not positive-semidefinite.",
@@ -3489,7 +3543,10 @@ cdef class Generator:
                 else:
                     raise ValueError("covariance is not positive-semidefinite.")
 
-        x = np.dot(x, np.sqrt(s)[:, None] * v)
+        if method == 'cholesky':
+            x = np.dot(x, l)
+        else:
+            x = np.dot(x, u * np.sqrt(s))
         x += mean
         x.shape = tuple(final_shape)
         return x
