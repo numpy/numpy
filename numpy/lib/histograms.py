@@ -274,7 +274,7 @@ def _report_auto_method(x, range):
 
     Returns
     -------
-    h : An estimate of the optimal bin width for the given data.
+    either 'fd' or 'sturges' - whichever has the smaller bin width
 
     See Also
     --------
@@ -282,7 +282,6 @@ def _report_auto_method(x, range):
     """
     fd_bw = _hist_bin_fd(x, range)
     sturges_bw = _hist_bin_sturges(x, range)
-    del range  # unused
     if fd_bw:
         if fd_bw < sturges_bw:
             return 'fd'
@@ -389,8 +388,9 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
         Ravelled data array
     first_edge, last_edge
         Forwarded arguments from `_get_outer_edges`.
-    n_equal_bins : ndarray, optional
-        Ravelled weights array, or None
+    n_equal_bins : 
+        Forwarded arugment from _get_bin_edges,
+        this function only called when n_equal_bins > 2
 
     Returns
     =======
