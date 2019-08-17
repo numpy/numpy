@@ -139,11 +139,11 @@ def get_names(adtype):
     names = adtype.names
     for name in names:
         current = adtype[name]
-        if current.names:
+        if current.names is not None:
             listnames.append((name, tuple(get_names(current))))
         else:
             listnames.append(name)
-    return tuple(listnames) or None
+    return tuple(listnames)
 
 
 def get_names_flat(adtype):
@@ -176,9 +176,9 @@ def get_names_flat(adtype):
     for name in names:
         listnames.append(name)
         current = adtype[name]
-        if current.names:
+        if current.names is not None:
             listnames.extend(get_names_flat(current))
-    return tuple(listnames) or None
+    return tuple(listnames)
 
 
 def flatten_descr(ndtype):
@@ -268,7 +268,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
     names = adtype.names
     for name in names:
         current = adtype[name]
-        if current.names:
+        if current.names is not None:
             if lastname:
                 parents[name] = [lastname, ]
             else:
@@ -281,7 +281,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
             elif lastname:
                 lastparent = [lastname, ]
             parents[name] = lastparent or []
-    return parents or None
+    return parents
 
 
 def _izip_fields_flat(iterable):

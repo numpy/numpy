@@ -115,6 +115,14 @@ class TestRecFunctions(object):
         test = get_names(ndtype)
         assert_equal(test, ('a', ('b', ('ba', 'bb'))))
 
+        ndtype = np.dtype([('a', int), ('b', [])])
+        test = get_names(ndtype)
+        assert_equal(test, ('a', ('b', ())))
+
+        ndtype = np.dtype([])
+        test = get_names(ndtype)
+        assert_equal(test, ())
+
     def test_get_names_flat(self):
         # Test get_names_flat
         ndtype = np.dtype([('A', '|S3'), ('B', float)])
@@ -124,6 +132,14 @@ class TestRecFunctions(object):
         ndtype = np.dtype([('a', int), ('b', [('ba', float), ('bb', int)])])
         test = get_names_flat(ndtype)
         assert_equal(test, ('a', 'b', 'ba', 'bb'))
+
+        ndtype = np.dtype([('a', int), ('b', [])])
+        test = get_names_flat(ndtype)
+        assert_equal(test, ('a', 'b'))
+
+        ndtype = np.dtype([])
+        test = get_names_flat(ndtype)
+        assert_equal(test, ())
 
     def test_get_fieldstructure(self):
         # Test get_fieldstructure
@@ -146,6 +162,11 @@ class TestRecFunctions(object):
         control = {'A': [], 'B': [], 'BA': ['B'], 'BB': ['B'],
                    'BBA': ['B', 'BB'], 'BBB': ['B', 'BB']}
         assert_equal(test, control)
+
+        # 0 fields
+        ndtype = np.dtype([])
+        test = get_fieldstructure(ndtype)
+        assert_equal(test, {})
 
     def test_find_duplicates(self):
         # Test find_duplicates
