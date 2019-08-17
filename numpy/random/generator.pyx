@@ -95,7 +95,6 @@ cdef class Generator:
     cdef binomial_t _binomial
     cdef object lock
     _poisson_lam_max = POISSON_LAM_MAX
-    cdef public object multivariate_normal
 
     def __init__(self, bit_generator):
         self._bit_generator = bit_generator
@@ -106,8 +105,6 @@ cdef class Generator:
             raise ValueError("Invalid bit generator'. The bit generator must "
                              "be instantiated.")
         self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
-        self.multivariate_normal = self._get_multivariate_normal_instance()
-        self.multivariate_normal.__doc__ = self._get_multivariate_normal_instance.__doc__
         self.lock = bit_generator.lock
 
     def __repr__(self):
@@ -3333,7 +3330,8 @@ cdef class Generator:
                  0.0, '', CONS_NONE)
 
     # Multivariate distributions:
-    def _get_multivariate_normal_instance(self):
+    def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
+                            tol=1e-8):
         """
         multivariate_normal(mean, cov, size=None, check_valid='warn', tol=1e-8)
 
@@ -3390,8 +3388,8 @@ cdef class Generator:
         Instead of specifying the full covariance matrix, popular
         approximations include:
 
-        - Spherical covariance (`cov` is a multiple of the identity matrix)
-        - Diagonal covariance (`cov` has non-negative elements, and only on
+          - Spherical covariance (`cov` is a multiple of the identity matrix)
+          - Diagonal covariance (`cov` has non-negative elements, and only on
             the diagonal)
 
         This geometrical property can be seen in two dimensions by plotting
@@ -3415,9 +3413,9 @@ cdef class Generator:
         References
         ----------
         .. [1] Papoulis, A., "Probability, Random Variables, and Stochastic
-            Processes," 3rd ed., New York: McGraw-Hill, 1991.
+               Processes," 3rd ed., New York: McGraw-Hill, 1991.
         .. [2] Duda, R. O., Hart, P. E., and Stork, D. G., "Pattern
-            Classification," 2nd ed., New York: Wiley, 2001.
+               Classification," 2nd ed., New York: Wiley, 2001.
 
         Examples
         --------
@@ -3434,101 +3432,67 @@ cdef class Generator:
         [True, True] # random
 
         """
-        class _MultivariateNormal:
+        from numpy.dual import svd
 
-            def __call__(inner_self, mean, cov, size=None, check_valid='warn',
-                         tol=1e-8, method='svd'):
-                """sample from a multivariate normal distribution"""
-                x, final_shape, mean, cov = inner_self.input_checks(mean, cov,
-                                                                   size, method)
+        # Check preconditions on arguments
+        mean = np.array(mean)
+        cov = np.array(cov)
+        if size is None:
+            shape = []
+        elif isinstance(size, (int, long, np.integer)):
+            shape = [size]
+        else:
+            shape = size
 
-                # GH10839, ensure double to make tol meaningful
-                cov = cov.astype(np.double)
-                if method == 'svd':
-                    from numpy.dual import svd
-                    (u, s, v) = svd(cov)
-                elif method == 'eigh':
-                    from numpy.dual import eigh
-                    (s, v)  = eigh(cov)
+        if len(mean.shape) != 1:
+            raise ValueError("mean must be 1 dimensional")
+        if (len(cov.shape) != 2) or (cov.shape[0] != cov.shape[1]):
+            raise ValueError("cov must be 2 dimensional and square")
+        if mean.shape[0] != cov.shape[0]:
+            raise ValueError("mean and cov must have same length")
+
+        # Compute shape of output and create a matrix of independent
+        # standard normally distributed random numbers. The matrix has rows
+        # with the same length as mean and as many rows are necessary to
+        # form a matrix of shape final_shape.
+        final_shape = list(shape[:])
+        final_shape.append(mean.shape[0])
+        x = self.standard_normal(final_shape).reshape(-1, mean.shape[0])
+
+        # Transform matrix of standard normals into matrix where each row
+        # contains multivariate normals with the desired covariance.
+        # Compute A such that dot(transpose(A),A) == cov.
+        # Then the matrix products of the rows of x and A has the desired
+        # covariance. Note that sqrt(s)*v where (u,s,v) is the singular value
+        # decomposition of cov is such an A.
+        #
+        # Also check that cov is positive-semidefinite. If so, the u.T and v
+        # matrices should be equal up to roundoff error if cov is
+        # symmetric and the singular value of the corresponding row is
+        # not zero. We continue to use the SVD rather than Cholesky in
+        # order to preserve current outputs. Note that symmetry has not
+        # been checked.
+
+        # GH10839, ensure double to make tol meaningful
+        cov = cov.astype(np.double)
+        (u, s, v) = svd(cov)
+
+        if check_valid != 'ignore':
+            if check_valid != 'warn' and check_valid != 'raise':
+                raise ValueError("check_valid must equal 'warn', 'raise', or 'ignore'")
+
+            psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
+            if not psd:
+                if check_valid == 'warn':
+                    warnings.warn("covariance is not positive-semidefinite.",
+                                  RuntimeWarning)
                 else:
-                    from numpy.dual import cholesky
-                    l = cholesky(cov)
+                    raise ValueError("covariance is not positive-semidefinite.")
 
-                if check_valid != 'ignore' and method != 'cholesky':
-                    if check_valid != 'warn' and check_valid != 'raise':
-                        raise ValueError(
-                            "check_valid must equal 'warn', 'raise', or 'ignore'")
-                    if method == 'svd':
-                        psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
-                    else:
-                        psd = np.all(s >= 0)
-                    if not psd:
-                        if check_valid == 'warn':
-                            warnings.warn("covariance is not positive-semidefinite.",
-                                          RuntimeWarning)
-                        else:
-                            raise ValueError(
-                                "covariance is not positive-semidefinite.")
-
-                if method == 'cholesky':
-                    x = np.dot(x, l)
-                else:
-                    x = np.dot(x, np.sqrt(s)[:, None] * v)
-                x += mean
-                x.shape = tuple(final_shape)
-                return x
-
-            def input_checks(inner_self, mean, cov, size, method):
-                """Check validity of inputs and determine shape of output
-                given the dimensions of `size` input.
-                """
-                if method not in {'eigh', 'svd', 'cholesky'}:
-                    raise ValueError(
-                        "mode must to be one of {'eigh', 'svd', 'cholesky'}")
-
-                # Check preconditions on arguments
-                mean = np.array(mean)
-                cov = np.array(cov)
-                if size is None:
-                    shape = []
-                elif isinstance(size, (int, long, np.integer)):
-                    shape = [size]
-                else:
-                    shape = size
-
-                if len(mean.shape) != 1:
-                    raise ValueError("mean must be 1 dimensional")
-                if (len(cov.shape) != 2) or (cov.shape[0] != cov.shape[1]):
-                    raise ValueError("cov must be 2 dimensional and square")
-                if mean.shape[0] != cov.shape[0]:
-                    raise ValueError("mean and cov must have same length")
-
-                # Compute shape of output and create a matrix of independent
-                # standard normally distributed random numbers. The matrix has rows
-                # with the same length as mean and as many rows are necessary to
-                # form a matrix of shape final_shape.
-                final_shape = list(shape[:])
-                final_shape.append(mean.shape[0])
-                x = self.standard_normal(final_shape).reshape(-1, mean.shape[0])
-                return x, final_shape, mean, cov
-
-            def from_factor(inner_self, mean, factor, size=None, method='svd'):
-                """sample from a multivariate normal distribution using a
-                factor matrix of its covariance.
-                """
-                x, final_shape, mean, factor = inner_self.input_checks(mean,
-                                                                       factor,
-                                                                       size,
-                                                                       method)
-
-                if method == 'cholesky' and np.tril(factor, k=-1) == 0:
-                    x = mean + np.dot(factor.T, x.T).T
-                else:
-                    x = mean + np.dot(factor, x.T).T
-                x.shape = tuple(final_shape)
-                return x
-
-        return _MultivariateNormal()
+        x = np.dot(x, np.sqrt(s)[:, None] * v)
+        x += mean
+        x.shape = tuple(final_shape)
+        return x
 
     def multinomial(self, object n, object pvals, size=None):
         """
