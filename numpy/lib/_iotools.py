@@ -121,7 +121,7 @@ def has_nested_fields(ndtype):
 
     """
     for name in ndtype.names or ():
-        if ndtype[name].names:
+        if ndtype[name].names is not None:
             return True
     return False
 
