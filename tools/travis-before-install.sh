@@ -26,6 +26,6 @@ if [ -n "$INSTALL_PICKLE5" ]; then
 fi
 
 pip install --upgrade pip setuptools
-pip install nose pytz cython pytest
+pip install nose pytz cython pytest==5.0.1
 if [ -n "$USE_ASV" ]; then pip install asv; fi
 popd
