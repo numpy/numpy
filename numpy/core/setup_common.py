@@ -178,9 +178,10 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
 # gcc 4.8.4 support attributes but not with intrisics
 # tested via "#include<%s> int %s %s(void *){code; return 0;};" % (header, attribute, name, code)
 # function name will be converted to HAVE_<upper-case-name> preprocessor macro
-OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2")))',
+OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fma")))',
                                 'attribute_target_avx2_with_intrinsics',
-                                '__m256 temp = _mm256_set1_ps(1.0)',
+                                '__m256 temp = _mm256_set1_ps(1.0); temp = \
+                                _mm256_fmadd_ps(temp, temp, temp)',
                                 'immintrin.h'),
                                 ('__attribute__((target("avx512f")))',
                                 'attribute_target_avx512f_with_intrinsics',
