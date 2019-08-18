@@ -90,7 +90,9 @@ run_test()
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
     $PYTHON ../runtests.py -n -v --durations 10 --mode=full $COVERAGE_FLAG
   else
-    $PYTHON ../runtests.py -n -v --durations 10
+    # disable --durations temporarily, pytest currently aborts
+    # when that is used with python3.6-dbg
+    $PYTHON ../runtests.py -n -v  # --durations 10
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
