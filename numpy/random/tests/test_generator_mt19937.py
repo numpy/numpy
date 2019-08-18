@@ -1052,14 +1052,12 @@ class TestRandomDist(object):
         eigh_factor = u * np.sqrt(s)
         random = Generator(MT19937(self.seed))
         actual_eigh = random.multivariate_normal(mean, eigh_factor,
-                                                 method='eigh',
                                                  use_factor=True)
         random = Generator(MT19937(self.seed))
         desired_chol = random.multivariate_normal(mean, cov, method='cholesky')
         chol_factor = cholesky(cov)
         random = Generator(MT19937(self.seed))
         actual_chol = random.multivariate_normal(mean, chol_factor,
-                                                 method='cholesky',
                                                  use_factor=True)
         assert_array_almost_equal(actual_svd, desired_svd, decimal=15)
         assert_array_almost_equal(actual_eigh, desired_eigh, decimal=15)

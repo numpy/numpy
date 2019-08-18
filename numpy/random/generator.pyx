@@ -3370,10 +3370,10 @@ cdef class Generator:
             compute A and is faster than svd but slower than cholesky.
         use_factor : bool, optional
             If set to True then cov argument is treated as a precomputed factor
-            matrix A such that A.dot(transpose(A)) = cov. with the
-            assumption that A was computed with the method specified in the
-            ``method`` argument. This provides significant speedups because
-            the factorization of cov is avoided.
+            matrix A such that A.dot(transpose(A)) = cov holds true. This
+            provides significant speedups because the factorization of cov is
+            avoided. Note that when this argument is set to True, ``method``
+            is ignored.
 
         Returns
         -------
@@ -3421,7 +3421,11 @@ cdef class Generator:
 
         Note that the covariance matrix must be positive semidefinite (a.k.a.
         nonnegative-definite). Otherwise, the behavior of this method is
-        undefined and backwards compatibility is not guaranteed.
+        undefined and backwards compatibility is not guaranteed. When supplying
+        a factor `F` in place of the full covariance matrix the user is expected
+        to ensure that F.dot(transpose(F)) recovers the covariance matrix. This
+        also implies that a factor input computed using the Cholesky method
+        must be a lower-triangular matrix.
 
         References
         ----------
@@ -3449,7 +3453,7 @@ cdef class Generator:
         values using the sample covariance matrix but different means.
         >>> s, u = np.linalg.eigh(cov)
         >>> A = u * np.sqrt(s)  # factor matrix of cov using Eigendecomposition.
-        >>> z = rng.multivariate_normal(mean, A, (3, 3), method='eigh', use_factor=True)
+        >>> z = rng.multivariate_normal(mean, A, (3, 3), use_factor=True)
         >>> z.shape
         (3, 3, 2)
 
@@ -3493,12 +3497,7 @@ cdef class Generator:
         x = self.standard_normal(final_shape).reshape(-1, mean.shape[0])
 
         if use_factor:
-            # check if the factor supplied is a cholesky upper triangular
-            # matrix and calculate random values accordingly.
-            if method == 'cholesky' and not np.any(np.tril(cov, k=-1)):
-                x = mean + np.dot(x, cov.T)
-            else:
-                x = mean + np.dot(x, cov)
+            x = mean + np.dot(x, cov)
             x.shape = tuple(final_shape)
             return x
 
