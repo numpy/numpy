@@ -1639,17 +1639,24 @@ strftime_from_datastruct(npy_datetimestruct dts, PyObject *timezone_obj,
             sscanf(&fmt[count], "%%%df", &ndigits);
             if (ndigits > 0){
                 count += 2;
+                if (count >= strsize){
+                  goto failov;
+                }
                 ch = fmt[count];
                 while ((ch != 'f') && (count < strsize)){
                     ch = fmt[++count];
                 }
-                if (count > strsize){
+                if (count >= strsize){
                   goto failov;
                 }
             }  /* if ndigits > 0 */
             else{
                 /* could be %f  */
                 ch2 = fmt[++count];
+                if (count >= strsize){
+                  goto failov;
+                }
+
                 if (ch2=='f'){
                     ndigits = 6; /* default for microsecond */
                 }
@@ -1798,7 +1805,7 @@ array_datetime_strftime(PyObject *NPY_UNUSED(self), PyObject *args,
     }
 
     /* Claim a reference to timezone for later */
-    /* Py_XINCREF(timezone_obj); */
+    Py_XINCREF(timezone_obj);
 
     op[0] = (PyArrayObject *)PyArray_FROM_O(arr_in);
     if (op[0] == NULL) {
