@@ -1935,6 +1935,10 @@ def binary_repr(num, width=None):
                 "will raise an error in the future.", DeprecationWarning,
                 stacklevel=3)
 
+    # Ensure that num is a Python integer to avoid overflow or unwanted
+    # casts to floating point.
+    num = operator.index(num)
+
     if num == 0:
         return '0' * (width or 1)
 

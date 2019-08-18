@@ -1341,6 +1341,11 @@ class TestBinaryRepr(object):
             exp = '1' + (width - 1) * '0'
             assert_equal(np.binary_repr(num, width=width), exp)
 
+    def test_large_neg_int64(self):
+        # See gh-14289.
+        assert_equal(np.binary_repr(np.int64(-2**62), width=64),
+                     '11' + '0'*62)
+
 
 class TestBaseRepr(object):
     def test_base3(self):
