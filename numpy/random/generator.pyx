@@ -3363,14 +3363,14 @@ cdef class Generator:
             cov is cast to double before the check.
         method : { 'svd', 'eigh', 'cholesky'}, optional
             The cov input is used to compute a factor matrix A such that
-            transpose(A) * A = cov. This argument is used to select the method
+            A.dot(transpose(A)) = cov. This argument is used to select the method
             used to compute the factor matrix A. The default method 'svd' is
             the slowest, while 'cholesky' is the fastest but less robust than
             the slowest method. The method `eigh` uses eigen decomposition to
             compute A and is faster than svd but slower than cholesky.
         use_factor : bool, optional
             If set to True then cov argument is treated as a precomputed factor
-            matrix A such that np.dot(A * transpose(A)) == cov is True, with the
+            matrix A such that A.dot(transpose(A)) = cov. with the
             assumption that A was computed with the method specified in the
             ``method`` argument. This provides significant speedups because
             the factorization of cov is avoided.
