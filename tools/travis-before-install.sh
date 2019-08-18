@@ -36,6 +36,6 @@ fi
 
 
 pip install --upgrade pip setuptools
-pip install pytz cython pytest
+pip install pytz cython pytest==5.0.1
 if [ -n "$USE_ASV" ]; then pip install asv; fi
 popd
