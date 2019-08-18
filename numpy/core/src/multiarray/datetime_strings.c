@@ -1617,8 +1617,9 @@ strftime_from_datastruct(npy_datetimestruct dts, PyObject *timezone_obj,
     int count, outcount;
     int ndigits, ind0;
     unsigned int ind;
-    int tzoffset;
+    int tzoffset, fmtlen;
 
+    fmtlen = strlen(fmt);
     newfmt = (char *)malloc((strsize + 1) * sizeof(char));
     /* Get the tzoffset from the timezone if provided */
     tzoffset = -1;
@@ -1631,7 +1632,7 @@ strftime_from_datastruct(npy_datetimestruct dts, PyObject *timezone_obj,
     }
 
     outcount = 0;
-    for (count=0; (fmt[count]!=0 && count<strsize); ++count){
+    for (count=0; (fmt[count]!=0 && count<fmtlen); ++count){
         ch = fmt[count];
         ndigits = -1;
         if (ch == '%'){
@@ -1639,21 +1640,21 @@ strftime_from_datastruct(npy_datetimestruct dts, PyObject *timezone_obj,
             sscanf(&fmt[count], "%%%df", &ndigits);
             if (ndigits > 0){
                 count += 2;
-                if (count >= strsize){
+                if (count >= fmtlen){
                   goto failov;
                 }
                 ch = fmt[count];
-                while ((ch != 'f') && (count < strsize)){
+                while ((ch != 'f') && (count < fmtlen)){
                     ch = fmt[++count];
                 }
-                if (count >= strsize){
+                if (count >= fmtlen){
                   goto failov;
                 }
             }  /* if ndigits > 0 */
             else{
                 /* could be %f  */
                 ch2 = fmt[++count];
-                if (count >= strsize){
+                if (count >= fmtlen){
                   goto failov;
                 }
 
@@ -1667,8 +1668,7 @@ strftime_from_datastruct(npy_datetimestruct dts, PyObject *timezone_obj,
                         get_tzname_from_pytzinfo(timezone_obj, &dts, numstr);
                         for (ind=0; ind<strlen(numstr); ++ind){
                             newfmt[outcount] = numstr[ind];
-                            outcount = _inc_countmax(outcount, strsize);
-                            if (outcount < 0){
+                            if (++outcount >= strsize){
                                 goto failov;
                             }
                         }
@@ -1682,8 +1682,7 @@ strftime_from_datastruct(npy_datetimestruct dts, PyObject *timezone_obj,
                         sprintf(numstr, "%+03d%02d", output.quot, output.rem);
                         for (ind=0; ind<strlen(numstr); ++ind){
                             newfmt[outcount] = numstr[ind];
-                            outcount = _inc_countmax(outcount, strsize);
-                            if (outcount < 0){
+                            if (++outcount >= strsize){
                                 goto failov;
                             }
                         }
@@ -1702,8 +1701,7 @@ strftime_from_datastruct(npy_datetimestruct dts, PyObject *timezone_obj,
                     }
                     for (ind=ind0; ind<strlen(numstr); ++ind){
                         newfmt[outcount] = numstr[ind];
-                        outcount = _inc_countmax(outcount, strsize);
-                        if (outcount < 0){
+                        if (++outcount >= strsize){
                             goto failov;
                         }
                     }
@@ -1711,24 +1709,20 @@ strftime_from_datastruct(npy_datetimestruct dts, PyObject *timezone_obj,
                 else {   /* Other formats */
                     ndigits = -1;
                     newfmt[outcount] = ch;
-                    outcount = _inc_countmax(outcount, strsize);
-                    if (outcount < 0){
+                    if (++outcount >= strsize){
                         goto failov;
                     }
                     newfmt[outcount] = ch2;
-                    outcount = _inc_countmax(outcount, strsize);
-                    if (outcount < 0){
+                    if (++outcount >= strsize){
                         goto failov;
                     }
-
                 }
             }
             if (ndigits > 0){
                 sprintf(numstr, "%06d%06d%06d", dts.us, dts.ps, dts.as);
                 for (ind=0; ind<(unsigned int)ndigits;  ++ind){
                     newfmt[outcount] = numstr[ind];
-                    outcount = _inc_countmax(outcount, strsize);
-                    if (outcount < 0){
+                    if (++outcount >= strsize){
                         goto failov;
                     }
                 }
@@ -1736,8 +1730,7 @@ strftime_from_datastruct(npy_datetimestruct dts, PyObject *timezone_obj,
         }  /* ch == % */
         else {
             newfmt[outcount] = fmt[count];
-            outcount = _inc_countmax(outcount, strsize);
-            if (outcount < 0){
+            if (++outcount >= strsize){
                 goto failov;
             }
         }
@@ -1771,7 +1764,6 @@ failov:
         free(newfmt);
     }
     return -1;
-
 }
 
 
