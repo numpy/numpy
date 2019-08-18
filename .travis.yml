@@ -10,7 +10,6 @@ addons:
   apt:
     packages: &common_packages
       - gfortran
-      - libatlas-dev
       - libatlas-base-dev
       # Speedup builds, particularly when USE_CHROOT=1
       - eatmydata
