@@ -321,7 +321,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     # produce a name for the new type
     if dtype is None:
         name = 'any'
-    elif dtype.names:
+    elif dtype.names is not None:
         name = str(id(dtype))
     else:
         name = dtype.str
