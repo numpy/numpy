@@ -3465,7 +3465,7 @@ cdef class Generator:
         """
         if method not in {'eigh', 'svd', 'cholesky'}:
             raise ValueError(
-                "mode must to be one of {'eigh', 'svd', 'cholesky'}")
+                "method must to be one of {'eigh', 'svd', 'cholesky'}")
 
         # Check preconditions on arguments
         mean = np.array(mean)
