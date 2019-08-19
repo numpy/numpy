@@ -766,11 +766,13 @@ class TestRandomDist(object):
 
         random = Generator(MT19937(self.seed))
         integer_val = 10
+        desired = [3, 0, 8, 7, 9, 4, 2, 5, 1, 6]
+
         actual = random.permutation(integer_val)
         assert_array_equal(actual, desired)
 
         random = Generator(MT19937(self.seed))
-        actual = random.permutation(np.array(integer_val))
+        actual = random.permutation(np.asarray(integer_val))
         assert_array_equal(actual, desired)
         
 
