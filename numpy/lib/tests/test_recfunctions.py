@@ -91,8 +91,10 @@ class TestRecFunctions(object):
         control = np.array([(1,), (4,)], dtype=[('a', int)])
         assert_equal(test, control)
 
+        # dropping all fields results in an array with no fields
         test = drop_fields(a, ['a', 'b'])
-        assert_(test is None)
+        control = np.array([(), ()], dtype=[])
+        assert_equal(test, control)
 
     def test_rename_fields(self):
         # Test rename fields
