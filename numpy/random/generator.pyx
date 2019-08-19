@@ -3935,6 +3935,10 @@ cdef class Generator:
         out : ndarray
             Permuted sequence or array range.
 
+        Raises
+        ------
+        np.AxisError: when x is a  0-dimensional array which is not an integer
+
         Examples
         --------
         >>> rng = np.random.default_rng()
@@ -3950,6 +3954,10 @@ cdef class Generator:
                [0, 1, 2],
                [3, 4, 5]])
 
+        >>> rng.permutation("abc")
+        Traceback (most recent call last):
+            ...
+        numpy.AxisError: x must be an integer or at least 1-dimensional
         """
         arr = np.asarray(x)
         if arr.ndim < 1 and arr.dtype.kind == 'i':
@@ -3958,7 +3966,7 @@ cdef class Generator:
             return arr
 
         if arr.ndim < 1:
-            raise IndexError("x must be an integer or at least 1-dimensional")
+            raise np.AxisError("x must be an integer or at least 1-dimensional")
 
         # shuffle has fast-path for 1-d
         if arr.ndim == 1:
