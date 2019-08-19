@@ -3951,17 +3951,14 @@ cdef class Generator:
                [3, 4, 5]])
 
         """
-        if isinstance(x, (int, np.integer)):
+        arr = np.asarray(x)
+        if arr.ndim < 1 and isinstance(arr.dtype, (int, np.integer)):
             arr = np.arange(x)
             self.shuffle(arr)
             return arr
-        arr = np.asarray(x)
-        
-        try:
-            np.core.multiarray.normalize_axis_index(0, arr.ndim)
-        except np.AxisError as e:
-            e.args = (e.args[0] + ". x must be an integer or an array_like object.",)
-            raise
+
+        if arr.ndim < 1:
+            raise ValueError("x must be an integer or at least 1-dimensional")
 
         # shuffle has fast-path for 1-d
         if arr.ndim == 1:
