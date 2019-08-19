@@ -459,7 +459,7 @@ def _getfield_is_safe(oldtype, newtype, offset):
     if newtype.hasobject or oldtype.hasobject:
         if offset == 0 and newtype == oldtype:
             return
-        if oldtype.names:
+        if oldtype.names is not None:
             for name in oldtype.names:
                 if (oldtype.fields[name][1] == offset and
                         oldtype.fields[name][0] == newtype):
