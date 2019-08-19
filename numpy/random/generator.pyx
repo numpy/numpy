@@ -3952,7 +3952,7 @@ cdef class Generator:
 
         """
         arr = np.asarray(x)
-        if arr.ndim < 1 and x.dtype.kind == 'i':
+        if arr.ndim < 1 and arr.dtype.kind == 'i':
             arr = np.arange(x)
             self.shuffle(arr)
             return arr
