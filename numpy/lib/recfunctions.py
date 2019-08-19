@@ -70,7 +70,7 @@ def recursive_fill_fields(input, output):
             current = input[field]
         except ValueError:
             continue
-        if current.dtype.names:
+        if current.dtype.names is not None:
             recursive_fill_fields(current, output[field])
         else:
             output[field][:len(current)] = current
@@ -437,7 +437,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     if isinstance(seqarrays, (ndarray, np.void)):
         seqdtype = seqarrays.dtype
         # Make sure we have named fields
-        if not seqdtype.names:
+        if seqdtype.names is None:
             seqdtype = np.dtype([('', seqdtype)])
         if not flatten or zip_dtype((seqarrays,), flatten=True) == seqdtype:
             # Minimal processing needed: just make sure everythng's a-ok
@@ -657,7 +657,7 @@ def rename_fields(base, namemapper):
         for name in ndtype.names:
             newname = namemapper.get(name, name)
             current = ndtype[name]
-            if current.names:
+            if current.names is not None:
                 newdtype.append(
                     (newname, _recursive_rename_fields(current, namemapper))
                     )
