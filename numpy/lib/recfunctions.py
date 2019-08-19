@@ -209,8 +209,8 @@ def zip_dtype(seqarrays, flatten=False):
     else:
         for a in seqarrays:
             current = a.dtype
-            if current.names and len(current.names) <= 1:
-                # special case - dtypes of 0 or 1 field are flattened
+            if current.names is not None and len(current.names) == 1:
+                # special case - dtypes of 1 field are flattened
                 newdtype.extend(get_fieldspec(current))
             else:
                 newdtype.append(('', current))
