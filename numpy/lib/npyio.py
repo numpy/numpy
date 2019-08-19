@@ -2197,7 +2197,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             #
             output = np.array(data, dtype)
             if usemask:
-                if dtype.names:
+                if dtype.names is not None:
                     mdtype = [(_, bool) for _ in dtype.names]
                 else:
                     mdtype = bool
