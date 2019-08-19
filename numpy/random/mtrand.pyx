@@ -4134,9 +4134,6 @@ cdef class RandomState:
         out : ndarray
             Permuted sequence or array range.
 
-        Raises:
-        -------
-        IndexError: When x is 0-dimensional and not an integer
 
         Examples
         --------
@@ -4153,12 +4150,13 @@ cdef class RandomState:
                [3, 4, 5]])
 
         """
-        arr = np.asarray(x)
-        if arr.ndim < 1 and arr.dtype.kind == 'i':
+
+        if isinstance(x, (int, np.integer)):
             arr = np.arange(x)
             self.shuffle(arr)
             return arr
 
+        arr = np.asarray(x)
         if arr.ndim < 1:
             raise IndexError("x must be an integer or at least 1-dimensional")
 

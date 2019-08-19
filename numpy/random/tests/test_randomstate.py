@@ -699,11 +699,6 @@ class TestRandomDist(object):
 
         random.seed(self.seed)
         actual = random.permutation(integer_val)
-        print(actual)
-        assert_array_equal(actual, desired)
-
-        random.seed(self.seed)
-        actual = random.permutation(np.asarray(integer_val))
         assert_array_equal(actual, desired)
 
     def test_beta(self):
