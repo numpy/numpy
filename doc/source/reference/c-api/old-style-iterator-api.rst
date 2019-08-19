@@ -1,5 +1,5 @@
-Iterators
-=========
+Old Style Iterator API
+======================
 
 Array Iterators
 ---------------

@@ -45,11 +45,11 @@ code.
    dtype
    array
    array-method-and-functions
-   iterators
+   old-style-iterator-api
    iterator-api
    ufunc
    generalized-ufuncs
    coremath
    deprecations
    miscellaneous
-   dealing-with-types
+   data-type-api

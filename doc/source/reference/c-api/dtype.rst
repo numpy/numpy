@@ -1,5 +1,5 @@
-Data Type API
-=============
+C Definitions And Data Type Enumeration
+=======================================
 
 .. sectionauthor:: Travis E. Oliphant
 

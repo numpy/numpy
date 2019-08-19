@@ -1,6 +1,76 @@
 Miscellaneous
 =============
 
+General check of Python Type
+----------------------------
+
+.. c:function:: PyArray_Check(PyObject *op)
+
+    Evaluates true if *op* is a Python object whose type is a sub-type
+    of :c:data:`PyArray_Type`.
+
+.. c:function:: PyArray_CheckExact(PyObject *op)
+
+    Evaluates true if *op* is a Python object with type
+    :c:data:`PyArray_Type`.
+
+.. c:function:: PyArray_HasArrayInterface(PyObject *op, PyObject *out)
+
+    If ``op`` implements any part of the array interface, then ``out``
+    will contain a new reference to the newly created ndarray using
+    the interface or ``out`` will contain ``NULL`` if an error during
+    conversion occurs. Otherwise, out will contain a borrowed
+    reference to :c:data:`Py_NotImplemented` and no error condition is set.
+
+.. c:function:: PyArray_HasArrayInterfaceType(op, type, context, out)
+
+    If ``op`` implements any part of the array interface, then ``out``
+    will contain a new reference to the newly created ndarray using
+    the interface or ``out`` will contain ``NULL`` if an error during
+    conversion occurs. Otherwise, out will contain a borrowed
+    reference to Py_NotImplemented and no error condition is set.
+    This version allows setting of the type and context in the part of
+    the array interface that looks for the :obj:`~numpy.class.__array__` attribute.
+
+.. c:function:: PyArray_IsZeroDim(op)
+
+    Evaluates true if *op* is an instance of (a subclass of)
+    :c:data:`PyArray_Type` and has 0 dimensions.
+
+.. c:function:: PyArray_IsScalar(op, cls)
+
+    Evaluates true if *op* is an instance of :c:data:`Py{cls}ArrType_Type`.
+
+.. c:function:: PyArray_CheckScalar(op)
+
+    Evaluates true if *op* is either an array scalar (an instance of a
+    sub-type of :c:data:`PyGenericArr_Type` ), or an instance of (a
+    sub-class of) :c:data:`PyArray_Type` whose dimensionality is 0.
+
+.. c:function:: PyArray_IsPythonNumber(op)
+
+    Evaluates true if *op* is an instance of a builtin numeric type (int,
+    float, complex, long, bool)
+
+.. c:function:: PyArray_IsPythonScalar(op)
+
+    Evaluates true if *op* is a builtin Python scalar object (int,
+    float, complex, str, unicode, long, bool).
+
+.. c:function:: PyArray_IsAnyScalar(op)
+
+    Evaluates true if *op* is either a Python scalar object (see
+    :c:func:`PyArray_IsPythonScalar`) or an array scalar (an instance of a sub-
+    type of :c:data:`PyGenericArr_Type` ).
+
+.. c:function:: PyArray_CheckAnyScalar(op)
+
+    Evaluates true if *op* is a Python scalar object (see
+    :c:func:`PyArray_IsPythonScalar`), an array scalar (an instance of a
+    sub-type of :c:data:`PyGenericArr_Type`) or an instance of a sub-type of
+    :c:data:`PyArray_Type` whose dimensionality is 0.
+
+
 Auxiliary Data With Object Semantics
 ------------------------------------
 
@@ -90,6 +160,92 @@ an element copier function as a primitive.::
 
     A macro which calls the auxdata's clone function appropriately,
     returning a deep copy of the auxiliary data.
+
+Array Scalars
+-------------
+
+.. c:function:: PyObject* PyArray_Return(PyArrayObject* arr)
+
+    This function steals a reference to *arr*.
+    This function checks to see if *arr* is a 0-dimensional array and,
+    if so, returns the appropriate array scalar. It should be used
+    whenever 0-dimensional arrays could be returned to Python.
+
+.. c:function:: PyObject* PyArray_Scalar( \
+        void* data, PyArray_Descr* dtype, PyObject* itemsize)
+
+    Return an array scalar object of the given enumerated *typenum*
+    and *itemsize* by **copying** from memory pointed to by *data*
+    . If *swap* is nonzero then this function will byteswap the data
+    if appropriate to the data-type because array scalars are always
+    in correct machine-byte order.
+
+.. c:function:: PyObject* PyArray_ToScalar(void* data, PyArrayObject* arr)
+
+    Return an array scalar object of the type and itemsize indicated
+    by the array object *arr* copied from the memory pointed to by
+    *data* and swapping if the data in *arr* is not in machine
+
+.. c:function:: PyObject* PyArray_FromScalar( \
+        PyObject* scalar, PyArray_Descr* outcode)
+
+    Return a 0-dimensional array of type determined by *outcode* from
+    *scalar* which should be an array-scalar object. If *outcode* is
+    NULL, then the type is determined from *scalar*.
+
+.. c:function:: void PyArray_ScalarAsCtype(PyObject* scalar, void* ctypeptr)
+
+    Return in *ctypeptr* a pointer to the actual value in an array
+    scalar. There is no error checking so *scalar* must be an
+    array-scalar object, and ctypeptr must have enough space to hold
+    the correct type. For flexible-sized types, a pointer to the data
+    is copied into the memory of *ctypeptr*, for all other types, the
+    actual data is copied into the address pointed to by *ctypeptr*.
+
+.. c:function:: void PyArray_CastScalarToCtype( \
+        PyObject* scalar, void* ctypeptr, PyArray_Descr* outcode)
+
+    Return the data (cast to the data type indicated by *outcode*)
+    from the array-scalar, *scalar*, into the memory pointed to by
+    *ctypeptr* (which must be large enough to handle the incoming
+    memory).
+
+.. c:function:: PyObject* PyArray_TypeObjectFromType(int type)
+
+    Returns a scalar type-object from a type-number, *type*
+    . Equivalent to :c:func:`PyArray_DescrFromType` (*type*)->typeobj
+    except for reference counting and error-checking. Returns a new
+    reference to the typeobject on success or ``NULL`` on failure.
+
+.. c:function:: NPY_SCALARKIND PyArray_ScalarKind( \
+        int typenum, PyArrayObject** arr)
+
+    See the function :c:func:`PyArray_MinScalarType` for an alternative
+    mechanism introduced in NumPy 1.6.0.
+    Return the kind of scalar represented by *typenum* and the array
+    in *\*arr* (if *arr* is not ``NULL`` ). The array is assumed to be
+    rank-0 and only used if *typenum* represents a signed integer. If
+    *arr* is not ``NULL`` and the first element is negative then
+    :c:data:`NPY_INTNEG_SCALAR` is returned, otherwise
+    :c:data:`NPY_INTPOS_SCALAR` is returned. The possible return values
+    are :c:data:`NPY_{kind}_SCALAR` where ``{kind}`` can be **INTPOS**,
+    **INTNEG**, **FLOAT**, **COMPLEX**, **BOOL**, or **OBJECT**.
+    :c:data:`NPY_NOSCALAR` is also an enumerated value
+    :c:type:`NPY_SCALARKIND` variables can take on.
+
+.. c:function:: int PyArray_CanCoerceScalar( \
+        char thistype, char neededtype, NPY_SCALARKIND scalar)
+
+    See the function :c:func:`PyArray_ResultType` for details of
+    NumPy type promotion, updated in NumPy 1.6.0.
+    Implements the rules for scalar coercion. Scalars are only
+    silently coerced from thistype to neededtype if this function
+    returns nonzero.  If scalar is :c:data:`NPY_NOSCALAR`, then this
+    function is equivalent to :c:func:`PyArray_CanCastSafely`. The rule is
+    that scalars of the same KIND can be coerced into arrays of the
+    same KIND. This rule means that high-precision scalars will never
+    cause low-precision arrays of the same KIND to be upcast.
+
 
 
 Conversion Utilities
@@ -261,12 +417,9 @@ Other conversions
     convert, for example, the string 'f4' to :c:data:`NPY_FLOAT32`.
 
 
-Miscellaneous
--------------
-
 
 Importing the API
-^^^^^^^^^^^^^^^^^
+-----------------
 
 In order to make use of the C-API from another extension module, the
 :c:func:`import_array` function must be called. If the extension module is
@@ -337,7 +490,7 @@ the C-API is needed then some additional steps must be taken.
           #defined to.
 
 Checking the API Version
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 Because python extensions are not used in the same way as usual libraries on
 most platforms, some errors cannot be automatically detected at build time or
@@ -382,7 +535,7 @@ extension with the lowest NPY_FEATURE_VERSION as possible.
     function is added). A changed value does not always require a recompile.
 
 Internal Flexibility
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 .. c:function:: int PyArray_SetNumericOps(PyObject* dict)
 
@@ -439,7 +592,7 @@ Internal Flexibility
 
 
 Memory management
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. c:function:: char* PyDataMem_NEW(size_t nbytes)
 
@@ -484,7 +637,7 @@ Memory management
     Returns 0 if nothing was done, -1 on error, and 1 if action was taken.
 
 Threading support
-^^^^^^^^^^^^^^^^^
+-----------------
 
 These macros are only meaningful if :c:data:`NPY_ALLOW_THREADS`
 evaluates True during compilation of the extension module. Otherwise,
@@ -503,7 +656,7 @@ variable :c:data:`NPY_NOSMP` is set in which case
 :c:data:`NPY_ALLOW_THREADS` is defined to be 0.
 
 Group 1
-"""""""
+^^^^^^^
 
     This group is used to call code that may take some time but does not
     use any Python C-API calls. Thus, the GIL should be released during
@@ -556,7 +709,7 @@ Group 1
         with a :c:macro:`NPY_END_THREADS` to regain the GIL.
 
 Group 2
-"""""""
+^^^^^^^
 
     This group is used to re-acquire the Python GIL after it has been
     released. For example, suppose the GIL has been released (using the
@@ -587,7 +740,7 @@ Group 2
 
 
 Priority
-^^^^^^^^
+--------
 
 .. c:var:: NPY_PRIORITY
 
@@ -610,7 +763,7 @@ Priority
 
 
 Default buffers
-^^^^^^^^^^^^^^^
+---------------
 
 .. c:var:: NPY_BUFSIZE
 
@@ -626,7 +779,7 @@ Default buffers
 
 
 Other constants
-^^^^^^^^^^^^^^^
+---------------
 
 .. c:var:: NPY_NUM_FLOATTYPE
 
@@ -666,7 +819,7 @@ Other constants
 
 
 Miscellaneous Macros
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 .. c:function:: PyArray_SAMESHAPE(PyArrayObject *a1, PyArrayObject *a2)
 
@@ -728,7 +881,7 @@ Miscellaneous Macros
 
 
 Enumerated Types
-^^^^^^^^^^^^^^^^
+----------------
 
 .. c:type:: NPY_SORTKIND
 
