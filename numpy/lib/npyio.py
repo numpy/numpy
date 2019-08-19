@@ -2147,7 +2147,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             outputmask = np.array(masks, dtype=mdtype)
     else:
         # Overwrite the initial dtype names if needed
-        if names and dtype.names:
+        if names and dtype.names is not None:
             dtype.names = names
         # Case 1. We have a structured type
         if len(dtype_flat) > 1:
