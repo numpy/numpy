@@ -3958,7 +3958,7 @@ cdef class Generator:
             return arr
 
         if arr.ndim < 1:
-            raise ValueError("x must be an integer or at least 1-dimensional")
+            raise IndexError("x must be an integer or at least 1-dimensional")
 
         # shuffle has fast-path for 1-d
         if arr.ndim == 1:

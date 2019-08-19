@@ -759,10 +759,10 @@ class TestRandomDist(object):
         assert_array_equal(actual, np.atleast_2d(desired).T)
         
         bad_x_str = "abcd"
-        assert_raises(ValueError, random.permutation, bad_x_str)
+        assert_raises(IndexError, random.permutation, bad_x_str)
 
         bad_x_float = 1.2
-        assert_raises(ValueError, random.permutation, bad_x_float)
+        assert_raises(IndexError, random.permutation, bad_x_float)
 
         random = Generator(MT19937(self.seed))
         integer_val = 10
