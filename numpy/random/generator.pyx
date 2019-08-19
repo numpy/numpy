@@ -3363,17 +3363,16 @@ cdef class Generator:
             cov is cast to double before the check.
         method : { 'svd', 'eigh', 'cholesky'}, optional
             The cov input is used to compute a factor matrix A such that
-            A.dot(transpose(A)) = cov. This argument is used to select the method
+            ``A @ A.T = cov``. This argument is used to select the method
             used to compute the factor matrix A. The default method 'svd' is
             the slowest, while 'cholesky' is the fastest but less robust than
             the slowest method. The method `eigh` uses eigen decomposition to
             compute A and is faster than svd but slower than cholesky.
         use_factor : bool, optional
             If set to True then cov argument is treated as a precomputed factor
-            matrix A such that A.dot(transpose(A)) = cov holds true. This
-            provides significant speedups because the factorization of cov is
-            avoided. Note that when this argument is set to True, ``method``
-            is ignored.
+            matrix A such that `A @ A.T = cov`` holds true. This provides
+            significant speedups because the factorization of cov is avoided.
+            Note that when this argument is set to True, ``method`` is ignored.
 
         Returns
         -------
@@ -3423,7 +3422,7 @@ cdef class Generator:
         nonnegative-definite). Otherwise, the behavior of this method is
         undefined and backwards compatibility is not guaranteed. When supplying
         a factor `F` in place of the full covariance matrix the user is expected
-        to ensure that F.dot(transpose(F)) recovers the covariance matrix. This
+        to ensure that ``F @ F.T`` recovers the covariance matrix. This
         also implies that a factor input computed using the Cholesky method
         must be a lower-triangular matrix.
 
