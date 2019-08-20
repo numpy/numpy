@@ -44,11 +44,11 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.fft')
 
 
-# `inv_fct` is a float by which the result of the transform needs to be
+# `inv_norm` is a float by which the result of the transform needs to be
 # divided. This replaces the original, more intuitive 'fct` parameter to avoid
 # divisions by zero (or alternatively additional checks) in the case of
 # zero-length axes during its computation.
-def _raw_fft(a, n, axis, is_real, is_forward, inv_fct):
+def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
     axis = normalize_axis_index(axis, a.ndim)
     if n is None:
         n = a.shape[axis]
@@ -57,7 +57,7 @@ def _raw_fft(a, n, axis, is_real, is_forward, inv_fct):
         raise ValueError("Invalid number of FFT data points (%d) specified."
                          % n)
 
-    fct = 1/inv_fct
+    fct = 1/inv_norm
 
     if a.shape[axis] != n:
         s = list(a.shape)
@@ -182,10 +182,10 @@ def fft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    inv_fct = 1
+    inv_norm = 1
     if norm is not None and _unitary(norm):
-        inv_fct = sqrt(n)
-    output = _raw_fft(a, n, axis, False, True, inv_fct)
+        inv_norm = sqrt(n)
+    output = _raw_fft(a, n, axis, False, True, inv_norm)
     return output
 
 
@@ -278,10 +278,10 @@ def ifft(a, n=None, axis=-1, norm=None):
     if n is None:
         n = a.shape[axis]
     if norm is not None and _unitary(norm):
-        inv_fct = sqrt(max(n, 1))
+        inv_norm = sqrt(max(n, 1))
     else:
-        inv_fct = n
-    output = _raw_fft(a, n, axis, False, False, inv_fct)
+        inv_norm = n
+    output = _raw_fft(a, n, axis, False, False, inv_norm)
     return output
 
 
@@ -366,12 +366,12 @@ def rfft(a, n=None, axis=-1, norm=None):
 
     """
     a = asarray(a)
-    inv_fct = 1
+    inv_norm = 1
     if norm is not None and _unitary(norm):
         if n is None:
             n = a.shape[axis]
-        inv_fct = sqrt(n)
-    output = _raw_fft(a, n, axis, True, True, inv_fct)
+        inv_norm = sqrt(n)
+    output = _raw_fft(a, n, axis, True, True, inv_norm)
     return output
 
 
@@ -468,10 +468,10 @@ def irfft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = (a.shape[axis] - 1) * 2
-    inv_fct = n
+    inv_norm = n
     if norm is not None and _unitary(norm):
-        inv_fct = sqrt(n)
-    output = _raw_fft(a, n, axis, True, False, inv_fct)
+        inv_norm = sqrt(n)
+    output = _raw_fft(a, n, axis, True, False, inv_norm)
     return output
 
 
