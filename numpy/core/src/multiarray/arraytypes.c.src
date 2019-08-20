@@ -1931,7 +1931,7 @@ static int
 
     @type@ output;
 
-    if (endptr && (*endptr[0] == '+') || (*endptr[0] == '-')) {
+    if (endptr && ((*endptr[0] == '+') || (*endptr[0] == '-'))) {
         // Imaginary component specified
 
         output.real = result;
