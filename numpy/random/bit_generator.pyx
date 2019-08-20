@@ -458,6 +458,8 @@ cdef class SeedSequence():
         -------
         seqs : list of `SeedSequence` s
         """
+        cdef uint32_t i
+
         seqs = []
         for i in range(self.n_children_spawned,
                        self.n_children_spawned + n_children):
