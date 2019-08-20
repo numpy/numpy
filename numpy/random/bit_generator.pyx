@@ -116,7 +116,7 @@ def _coerce_to_uint32_array(x):
     Examples
     --------
     >>> import numpy as np
-    >>> from np.random.bit_generator import _coerce_to_uint32_array
+    >>> from numpy.random.bit_generator import _coerce_to_uint32_array
     >>> _coerce_to_uint32_array(12345)
     array([12345], dtype=uint32)
     >>> _coerce_to_uint32_array('12345')
@@ -458,6 +458,8 @@ cdef class SeedSequence():
         -------
         seqs : list of `SeedSequence` s
         """
+        cdef uint32_t i
+
         seqs = []
         for i in range(self.n_children_spawned,
                        self.n_children_spawned + n_children):
