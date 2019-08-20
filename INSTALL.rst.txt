@@ -12,7 +12,7 @@ https://scipy.org/install.html.
 Prerequisites
 =============
 
-Building NumPy requires the following software installed:
+Building NumPy requires the following installed software:
 
 1) For Python 3, Python__ 3.5.x or newer.
 
@@ -28,6 +28,7 @@ Building NumPy requires the following software installed:
 
 2) Cython >= 0.29.2 (for development versions of numpy, not for released
                      versions)
+                     
 3) pytest__ (optional) 1.15 or later
 
    This is required for testing numpy, but not for using it.
@@ -91,7 +92,7 @@ installed then ``g77`` will be detected and used first.  To explicitly select
 Windows
 -------
 
-On Windows, building from source can be difficult.  Currently the most robust
+On Windows, building from source can be difficult.  Currently, the most robust
 option is to use the Intel compilers, or alternatively MSVC (the same version
 as used to build Python itself) with Intel ifort.  Intel itself maintains a
 good `application note <https://software.intel.com/en-us/articles/numpyscipy-with-intel-mkl>`_
@@ -131,7 +132,7 @@ ATLAS) will also work.
 Ubuntu/Debian
 -------------
 
-For best performance a development package providing BLAS and CBLAS should be
+For best performance, a development package providing BLAS and CBLAS should be
 installed.  Some of the options available are:
 
 - ``libblas-dev``: reference BLAS (not very optimized)
