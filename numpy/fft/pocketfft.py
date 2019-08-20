@@ -44,6 +44,10 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.fft')
 
 
+# `inv_fct` is a float by which the result of the transform needs to be
+# divided. This replaces the original, more intuitive 'fct` parameter to avoid
+# divisions by zero (or alternatively additional checks) in the case of
+# zero-length axes during its computation.
 def _raw_fft(a, n, axis, is_real, is_forward, inv_fct):
     axis = normalize_axis_index(axis, a.ndim)
     if n is None:
