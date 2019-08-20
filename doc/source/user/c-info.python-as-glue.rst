@@ -387,7 +387,7 @@ distribution of the ``add.f`` module (as part of the package
 
 Installation of the new package is easy using::
 
-    python setup.py install
+    pip install .
 
 assuming you have the proper permissions to write to the main site-
 packages directory for the version of Python you are using. For the
@@ -744,14 +744,14 @@ around this restriction that allow ctypes to integrate with other
 objects.
 
 1. Don't set the argtypes attribute of the function object and define an
-   :obj:`_as_parameter_` method for the object you want to pass in. The
-   :obj:`_as_parameter_` method must return a Python int which will be passed
+   ``_as_parameter_`` method for the object you want to pass in. The
+   ``_as_parameter_`` method must return a Python int which will be passed
    directly to the function.
 
 2. Set the argtypes attribute to a list whose entries contain objects
    with a classmethod named from_param that knows how to convert your
    object to an object that ctypes can understand (an int/long, string,
-   unicode, or object with the :obj:`_as_parameter_` attribute).
+   unicode, or object with the ``_as_parameter_`` attribute).
 
 NumPy uses both methods with a preference for the second method
 because it can be safer. The ctypes attribute of the ndarray returns
@@ -764,7 +764,7 @@ correct type, shape, and has the correct flags set or risk nasty
 crashes if the data-pointer to inappropriate arrays are passed in.
 
 To implement the second method, NumPy provides the class-factory
-function :func:`ndpointer` in the :mod:`ctypeslib` module. This
+function :func:`ndpointer` in the :mod:`numpy.ctypeslib` module. This
 class-factory function produces an appropriate class that can be
 placed in an argtypes attribute entry of a ctypes function. The class
 will contain a from_param method which ctypes will use to convert any

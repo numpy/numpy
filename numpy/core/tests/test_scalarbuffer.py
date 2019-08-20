@@ -65,7 +65,7 @@ class TestScalarPEP3118(object):
         assert_(isinstance(x, np.void))
         mv_x = memoryview(x)
         expected_size = 16 * np.dtype((np.unicode_, 1)).itemsize
-        expected_size += 2 * np.dtype((np.float64, 1)).itemsize
+        expected_size += 2 * np.dtype(np.float64).itemsize
         assert_equal(mv_x.itemsize, expected_size)
         assert_equal(mv_x.ndim, 0)
         assert_equal(mv_x.shape, ())

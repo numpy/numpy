@@ -4,11 +4,14 @@ import sys
 import operator
 import pytest
 import ctypes
+import gc
 
 import numpy as np
 from numpy.core._rational_tests import rational
-from numpy.testing import assert_, assert_equal, assert_raises
-from numpy.core.numeric import pickle
+from numpy.testing import (
+    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT)
+from numpy.compat import pickle
+from itertools import permutations
 
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
@@ -85,6 +88,36 @@ class TestBuiltin(object):
             assert_raises(TypeError, np.dtype, 'q8')
             assert_raises(TypeError, np.dtype, 'Q8')
 
+    @pytest.mark.parametrize(
+        'value',
+        ['m8', 'M8', 'datetime64', 'timedelta64',
+         'i4, (2,3)f8, f4', 'a3, 3u8, (3,4)a10',
+         '>f', '<f', '=f', '|f',
+        ])
+    def test_dtype_bytes_str_equivalence(self, value):
+        bytes_value = value.encode('ascii')
+        from_bytes = np.dtype(bytes_value)
+        from_str = np.dtype(value)
+        assert_dtype_equal(from_bytes, from_str)
+
+    def test_dtype_from_bytes(self):
+        # Empty bytes object
+        assert_raises(TypeError, np.dtype, b'')
+        # Byte order indicator, but no type
+        assert_raises(TypeError, np.dtype, b'|')
+
+        # Single character with ordinal < NPY_NTYPES returns
+        # type by index into _builtin_descrs
+        assert_dtype_equal(np.dtype(bytes([0])), np.dtype('bool'))
+        assert_dtype_equal(np.dtype(bytes([17])), np.dtype(object))
+
+        # Single character where value is a valid type code
+        assert_dtype_equal(np.dtype(b'f'), np.dtype('float32'))
+
+        # Bytes with non-ascii values raise errors
+        assert_raises(TypeError, np.dtype, b'\xff')
+        assert_raises(TypeError, np.dtype, b's\xff')
+
     def test_bad_param(self):
         # Can't give a size that's too small
         assert_raises(ValueError, np.dtype,
@@ -135,6 +168,18 @@ class TestRecord(object):
                       'formats': ['u1', 'u1'],
                       'titles': ['RRed pixel', 'Blue pixel']})
         assert_dtype_not_equal(a, b)
+
+    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+    def test_refcount_dictionary_setting(self):
+        names = ["name1"]
+        formats = ["f8"]
+        titles = ["t1"]
+        offsets = [0]
+        d = dict(names=names, formats=formats, titles=titles, offsets=offsets)
+        refcounts = {k: sys.getrefcount(i) for k, i in d.items()}
+        np.dtype(d)
+        refcounts_new = {k: sys.getrefcount(i) for k, i in d.items()}
+        assert refcounts == refcounts_new
 
     def test_mutate(self):
         # Mutating a dtype should reset the cached hash value
@@ -213,7 +258,6 @@ class TestRecord(object):
         assert_equal(dt1.descr, [('a', '|i1'), ('', '|V3'),
                                  ('b', [('f0', '<i2'), ('', '|V2'),
                                  ('f1', '<f4')], (2,))])
-        
 
     def test_union_struct(self):
         # Should be able to create union dtypes
@@ -315,9 +359,65 @@ class TestRecord(object):
         assert_raises(IndexError, lambda: dt[-3])
 
         assert_raises(TypeError, operator.getitem, dt, 3.0)
-        assert_raises(TypeError, operator.getitem, dt, [])
 
         assert_equal(dt[1], dt[np.int8(1)])
+
+    @pytest.mark.parametrize('align_flag',[False, True])
+    def test_multifield_index(self, align_flag):
+        # indexing with a list produces subfields
+        # the align flag should be preserved
+        dt = np.dtype([
+            (('title', 'col1'), '<U20'), ('A', '<f8'), ('B', '<f8')
+        ], align=align_flag)
+
+        dt_sub = dt[['B', 'col1']]
+        assert_equal(
+            dt_sub,
+            np.dtype({
+                'names': ['B', 'col1'],
+                'formats': ['<f8', '<U20'],
+                'offsets': [88, 0],
+                'titles': [None, 'title'],
+                'itemsize': 96
+            })
+        )
+        assert_equal(dt_sub.isalignedstruct, align_flag)
+
+        dt_sub = dt[['B']]
+        assert_equal(
+            dt_sub,
+            np.dtype({
+                'names': ['B'],
+                'formats': ['<f8'],
+                'offsets': [88],
+                'itemsize': 96
+            })
+        )
+        assert_equal(dt_sub.isalignedstruct, align_flag)
+
+        dt_sub = dt[[]]
+        assert_equal(
+            dt_sub,
+            np.dtype({
+                'names': [],
+                'formats': [],
+                'offsets': [],
+                'itemsize': 96
+            })
+        )
+        assert_equal(dt_sub.isalignedstruct, align_flag)
+
+        assert_raises(TypeError, operator.getitem, dt, ())
+        assert_raises(TypeError, operator.getitem, dt, [1, 2, 3])
+        assert_raises(TypeError, operator.getitem, dt, ['col1', 2])
+        assert_raises(KeyError, operator.getitem, dt, ['fake'])
+        assert_raises(KeyError, operator.getitem, dt, ['title'])
+        assert_raises(ValueError, operator.getitem, dt, ['col1', 'col1'])
+
+    def test_partial_dict(self):
+        # 'names' is missing
+        assert_raises(ValueError, np.dtype,
+                {'formats': ['i4', 'i4'], 'f0': ('i4', 0), 'f1':('i4', 4)})
 
 
 class TestSubarray(object):
@@ -352,7 +452,10 @@ class TestSubarray(object):
     def test_shape_equal(self):
         """Test some data types that are equal"""
         assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', tuple())))
-        assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
+        # FutureWarning during deprecation period; after it is passed this
+        # should instead check that "(1)f8" == "1f8" == ("f8", 1).
+        with pytest.warns(FutureWarning):
+            assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', 1)))
         assert_dtype_equal(np.dtype((int, 2)), np.dtype((int, (2,))))
         assert_dtype_equal(np.dtype(('<f4', (3, 2))), np.dtype(('<f4', (3, 2))))
         d = ([('a', 'f4', (1, 2)), ('b', 'f8', (3, 1))], (3, 2))
@@ -441,9 +544,176 @@ class TestSubarray(object):
 
     def test_alignment(self):
         #Check that subarrays are aligned
-        t1 = np.dtype('1i4', align=True)
+        t1 = np.dtype('(1,)i4', align=True)
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
+
+
+def iter_struct_object_dtypes():
+    """
+    Iterates over a few complex dtypes and object pattern which
+    fill the array with a given object (defaults to a singleton).
+
+    Yields
+    ------
+    dtype : dtype
+    pattern : tuple
+        Structured tuple for use with `np.array`.
+    count : int
+        Number of objects stored in the dtype.
+    singleton : object
+        A singleton object. The returned pattern is constructed so that
+        all objects inside the datatype are set to the singleton.
+    """
+    obj = object()
+
+    dt = np.dtype([('b', 'O', (2, 3))])
+    p = ([[obj] * 3] * 2,)
+    yield pytest.param(dt, p, 6, obj, id="<subarray>")
+
+    dt = np.dtype([('a', 'i4'), ('b', 'O', (2, 3))])
+    p = (0, [[obj] * 3] * 2)
+    yield pytest.param(dt, p, 6, obj, id="<subarray in field>")
+
+    dt = np.dtype([('a', 'i4'),
+                   ('b', [('ba', 'O'), ('bb', 'i1')], (2, 3))])
+    p = (0, [[(obj, 0)] * 3] * 2)
+    yield pytest.param(dt, p, 6, obj, id="<structured subarray 1>")
+
+    dt = np.dtype([('a', 'i4'),
+                   ('b', [('ba', 'O'), ('bb', 'O')], (2, 3))])
+    p = (0, [[(obj, obj)] * 3] * 2)
+    yield pytest.param(dt, p, 12, obj, id="<structured subarray 2>")
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+class TestStructuredObjectRefcounting:
+    """These tests cover various uses of complicated structured types which
+    include objects and thus require reference counting.
+    """
+    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
+                             iter_struct_object_dtypes())
+    @pytest.mark.parametrize(["creation_func", "creation_obj"], [
+        pytest.param(np.empty, None,
+             # None is probably used for too many things
+             marks=pytest.mark.skip("unreliable due to python's behaviour")),
+        (np.ones, 1),
+        (np.zeros, 0)])
+    def test_structured_object_create_delete(self, dt, pat, count, singleton,
+                                             creation_func, creation_obj):
+        """Structured object reference counting in creation and deletion"""
+        # The test assumes that 0, 1, and None are singletons.
+        gc.collect()
+        before = sys.getrefcount(creation_obj)
+        arr = creation_func(3, dt)
+
+        now = sys.getrefcount(creation_obj)
+        assert now - before == count * 3
+        del arr
+        now = sys.getrefcount(creation_obj)
+        assert now == before
+
+    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
+                             iter_struct_object_dtypes())
+    def test_structured_object_item_setting(self, dt, pat, count, singleton):
+        """Structured object reference counting for simple item setting"""
+        one = 1
+
+        gc.collect()
+        before = sys.getrefcount(singleton)
+        arr = np.array([pat] * 3, dt)
+        assert sys.getrefcount(singleton) - before == count * 3
+        # Fill with `1` and check that it was replaced correctly:
+        before2 = sys.getrefcount(one)
+        arr[...] = one
+        after2 = sys.getrefcount(one)
+        assert after2 - before2 == count * 3
+        del arr
+        gc.collect()
+        assert sys.getrefcount(one) == before2
+        assert sys.getrefcount(singleton) == before
+
+    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
+                             iter_struct_object_dtypes())
+    @pytest.mark.parametrize(
+        ['shape', 'index', 'items_changed'],
+        [((3,), ([0, 2],), 2),
+         ((3, 2), ([0, 2], slice(None)), 4),
+         ((3, 2), ([0, 2], [1]), 2),
+         ((3,), ([True, False, True]), 2)])
+    def test_structured_object_indexing(self, shape, index, items_changed,
+                                        dt, pat, count, singleton):
+        """Structured object reference counting for advanced indexing."""
+        zero = 0
+        one = 1
+
+        arr = np.zeros(shape, dt)
+
+        gc.collect()
+        before_zero = sys.getrefcount(zero)
+        before_one = sys.getrefcount(one)
+        # Test item getting:
+        part = arr[index]
+        after_zero = sys.getrefcount(zero)
+        assert after_zero - before_zero == count * items_changed
+        del part
+        # Test item setting:
+        arr[index] = one
+        gc.collect()
+        after_zero = sys.getrefcount(zero)
+        after_one = sys.getrefcount(one)
+        assert before_zero - after_zero == count * items_changed
+        assert after_one - before_one == count * items_changed
+
+    @pytest.mark.parametrize(['dt', 'pat', 'count', 'singleton'],
+                             iter_struct_object_dtypes())
+    def test_structured_object_take_and_repeat(self, dt, pat, count, singleton):
+        """Structured object reference counting for specialized functions.
+        The older functions such as take and repeat use different code paths
+        then item setting (when writing this).
+        """
+        indices = [0, 1]
+
+        arr = np.array([pat] * 3, dt)
+        gc.collect()
+        before = sys.getrefcount(singleton)
+        res = arr.take(indices)
+        after = sys.getrefcount(singleton)
+        assert after - before == count * 2
+        new = res.repeat(10)
+        gc.collect()
+        after_repeat = sys.getrefcount(singleton)
+        assert after_repeat - after == count * 2 * 10
+
+
+class TestStructuredDtypeSparseFields(object):
+    """Tests subarray fields which contain sparse dtypes so that
+    not all memory is used by the dtype work. Such dtype's should
+    leave the underlying memory unchanged.
+    """
+    dtype = np.dtype([('a', {'names':['aa', 'ab'], 'formats':['f', 'f'],
+                             'offsets':[0, 4]}, (2, 3))])
+    sparse_dtype = np.dtype([('a', {'names':['ab'], 'formats':['f'],
+                                    'offsets':[4]}, (2, 3))])
+
+    @pytest.mark.xfail(reason="inaccessible data is changed see gh-12686.")
+    @pytest.mark.valgrind_error(reason="reads from uninitialized buffers.")
+    def test_sparse_field_assignment(self):
+        arr = np.zeros(3, self.dtype)
+        sparse_arr = arr.view(self.sparse_dtype)
+
+        sparse_arr[...] = np.finfo(np.float32).max
+        # dtype is reduced when accessing the field, so shape is (3, 2, 3):
+        assert_array_equal(arr["a"]["aa"], np.zeros((3, 2, 3)))
+
+    def test_sparse_field_assignment_fancy(self):
+        # Fancy assignment goes to the copyswap function for comlex types:
+        arr = np.zeros(3, self.dtype)
+        sparse_arr = arr.view(self.sparse_dtype)
+
+        sparse_arr[[0, 1, 2]] = np.finfo(np.float32).max
+        # dtype is reduced when accessing the field, so shape is (3, 2, 3):
+        assert_array_equal(arr["a"]["aa"], np.zeros((3, 2, 3)))
 
 
 class TestMonsterType(object):
@@ -766,6 +1036,50 @@ def test_invalid_dtype_string():
     assert_raises(TypeError, np.dtype, u'Fl\xfcgel')
 
 
+class TestFromDTypeAttribute(object):
+    def test_simple(self):
+        class dt:
+            dtype = "f8"
+
+        assert np.dtype(dt) == np.float64
+        assert np.dtype(dt()) == np.float64
+
+    def test_recursion(self):
+        class dt:
+            pass
+
+        dt.dtype = dt
+        with pytest.raises(RecursionError):
+            np.dtype(dt)
+
+        dt_instance = dt()
+        dt_instance.dtype = dt
+        with pytest.raises(RecursionError):
+            np.dtype(dt_instance)
+
+    def test_void_subtype(self):
+        class dt(np.void):
+            # This code path is fully untested before, so it is unclear
+            # what this should be useful for. Note that if np.void is used
+            # numpy will think we are deallocating a base type [1.17, 2019-02].
+            dtype = np.dtype("f,f")
+            pass
+
+        np.dtype(dt)
+        np.dtype(dt(1))
+
+    def test_void_subtype_recursion(self):
+        class dt(np.void):
+            pass
+
+        dt.dtype = dt
+
+        with pytest.raises(RecursionError):
+            np.dtype(dt)
+
+        with pytest.raises(RecursionError):
+            np.dtype(dt(1))
+
 class TestFromCTypes(object):
 
     @staticmethod
@@ -951,3 +1265,18 @@ class TestFromCTypes(object):
         self.check(ctypes.c_uint16.__ctype_be__, np.dtype('>u2'))
         self.check(ctypes.c_uint8.__ctype_le__, np.dtype('u1'))
         self.check(ctypes.c_uint8.__ctype_be__, np.dtype('u1'))
+
+    all_types = set(np.typecodes['All'])
+    all_pairs = permutations(all_types, 2)
+
+    @pytest.mark.parametrize("pair", all_pairs)
+    def test_pairs(self, pair):
+        """
+        Check that np.dtype('x,y') matches [np.dtype('x'), np.dtype('y')]
+        Example: np.dtype('d,I') -> dtype([('f0', '<f8'), ('f1', '<u4')])
+        """
+        # gh-5645: check that np.dtype('i,L') can be used
+        pair_type = np.dtype('{},{}'.format(*pair))
+        expected = np.dtype([('f0', pair[0]), ('f1', pair[1])])
+        assert_equal(pair_type, expected)
+

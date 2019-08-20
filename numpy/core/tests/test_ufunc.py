@@ -3,6 +3,8 @@ from __future__ import division, absolute_import, print_function
 import warnings
 import itertools
 
+import pytest
+
 import numpy as np
 import numpy.core._umath_tests as umt
 import numpy.linalg._umath_linalg as uml
@@ -13,7 +15,7 @@ from numpy.testing import (
     assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
     assert_allclose,
     )
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 
 class TestUfuncKwargs(object):
@@ -42,6 +44,103 @@ class TestUfuncKwargs(object):
         assert_raises(TypeError, np.add, 1, 2, extobj=[4096], parrot=True)
 
 
+class TestUfuncGenericLoops(object):
+    """Test generic loops.
+
+    The loops to be tested are:
+
+        PyUFunc_ff_f_As_dd_d
+        PyUFunc_ff_f
+        PyUFunc_dd_d
+        PyUFunc_gg_g
+        PyUFunc_FF_F_As_DD_D
+        PyUFunc_DD_D
+        PyUFunc_FF_F
+        PyUFunc_GG_G
+        PyUFunc_OO_O
+        PyUFunc_OO_O_method
+        PyUFunc_f_f_As_d_d
+        PyUFunc_d_d
+        PyUFunc_f_f
+        PyUFunc_g_g
+        PyUFunc_F_F_As_D_D
+        PyUFunc_F_F
+        PyUFunc_D_D
+        PyUFunc_G_G
+        PyUFunc_O_O
+        PyUFunc_O_O_method
+        PyUFunc_On_Om
+
+    Where:
+
+        f -- float
+        d -- double
+        g -- long double
+        F -- complex float
+        D -- complex double
+        G -- complex long double
+        O -- python object
+
+    It is difficult to assure that each of these loops is entered from the
+    Python level as the special cased loops are a moving target and the
+    corresponding types are architecture dependent. We probably need to
+    define C level testing ufuncs to get at them. For the time being, I've
+    just looked at the signatures registered in the build directory to find
+    relevant functions.
+
+    """
+    np_dtypes = [
+        (np.single, np.single), (np.single, np.double),
+        (np.csingle, np.csingle), (np.csingle, np.cdouble),
+        (np.double, np.double), (np.longdouble, np.longdouble),
+        (np.cdouble, np.cdouble), (np.clongdouble, np.clongdouble)]
+
+    @pytest.mark.parametrize('input_dtype,output_dtype', np_dtypes)
+    def test_unary_PyUFunc(self, input_dtype, output_dtype, f=np.exp, x=0, y=1):
+        xs = np.full(10, input_dtype(x), dtype=output_dtype)
+        ys = f(xs)[::2]
+        assert_allclose(ys, y)
+        assert_equal(ys.dtype, output_dtype)
+
+    def f2(x, y):
+        return x**y
+
+    @pytest.mark.parametrize('input_dtype,output_dtype', np_dtypes)
+    def test_binary_PyUFunc(self, input_dtype, output_dtype, f=f2, x=0, y=1):
+        xs = np.full(10, input_dtype(x), dtype=output_dtype)
+        ys = f(xs, xs)[::2]
+        assert_allclose(ys, y)
+        assert_equal(ys.dtype, output_dtype)
+
+    # class to use in testing object method loops
+    class foo(object):
+        def conjugate(self):
+            return np.bool_(1)
+
+        def logical_xor(self, obj):
+            return np.bool_(1)
+
+    def test_unary_PyUFunc_O_O(self):
+        x = np.ones(10, dtype=object)
+        assert_(np.all(np.abs(x) == 1))
+
+    def test_unary_PyUFunc_O_O_method(self, foo=foo):
+        x = np.full(10, foo(), dtype=object)
+        assert_(np.all(np.conjugate(x) == True))
+
+    def test_binary_PyUFunc_OO_O(self):
+        x = np.ones(10, dtype=object)
+        assert_(np.all(np.add(x, x) == 2))
+
+    def test_binary_PyUFunc_OO_O_method(self, foo=foo):
+        x = np.full(10, foo(), dtype=object)
+        assert_(np.all(np.logical_xor(x, x)))
+
+    def test_binary_PyUFunc_On_Om_method(self, foo=foo):
+        x = np.full((10, 2, 3), foo(), dtype=object)
+        assert_(np.all(np.logical_xor(x, x)))
+
+
 class TestUfunc(object):
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
@@ -64,146 +163,6 @@ class TestUfunc(object):
         x = np.arange(L)
         idx = np.array(list(zip(np.arange(L - 2), np.arange(L - 2) + 2))).ravel()
         assert_array_equal(np.add.reduceat(x, idx)[::2], [1, 3, 5, 7])
-
-    def test_generic_loops(self):
-        """Test generic loops.
-
-        The loops to be tested are:
-
-            PyUFunc_ff_f_As_dd_d
-            PyUFunc_ff_f
-            PyUFunc_dd_d
-            PyUFunc_gg_g
-            PyUFunc_FF_F_As_DD_D
-            PyUFunc_DD_D
-            PyUFunc_FF_F
-            PyUFunc_GG_G
-            PyUFunc_OO_O
-            PyUFunc_OO_O_method
-            PyUFunc_f_f_As_d_d
-            PyUFunc_d_d
-            PyUFunc_f_f
-            PyUFunc_g_g
-            PyUFunc_F_F_As_D_D
-            PyUFunc_F_F
-            PyUFunc_D_D
-            PyUFunc_G_G
-            PyUFunc_O_O
-            PyUFunc_O_O_method
-            PyUFunc_On_Om
-
-        Where:
-
-            f -- float
-            d -- double
-            g -- long double
-            F -- complex float
-            D -- complex double
-            G -- complex long double
-            O -- python object
-
-        It is difficult to assure that each of these loops is entered from the
-        Python level as the special cased loops are a moving target and the
-        corresponding types are architecture dependent. We probably need to
-        define C level testing ufuncs to get at them. For the time being, I've
-        just looked at the signatures registered in the build directory to find
-        relevant functions.
-
-        Fixme, currently untested:
-
-            PyUFunc_ff_f_As_dd_d
-            PyUFunc_FF_F_As_DD_D
-            PyUFunc_f_f_As_d_d
-            PyUFunc_F_F_As_D_D
-            PyUFunc_On_Om
-
-        """
-        fone = np.exp
-        ftwo = lambda x, y: x**y
-        fone_val = 1
-        ftwo_val = 1
-        # check unary PyUFunc_f_f.
-        msg = "PyUFunc_f_f"
-        x = np.zeros(10, dtype=np.single)[0::2]
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_d_d.
-        msg = "PyUFunc_d_d"
-        x = np.zeros(10, dtype=np.double)[0::2]
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_g_g.
-        msg = "PyUFunc_g_g"
-        x = np.zeros(10, dtype=np.longdouble)[0::2]
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_F_F.
-        msg = "PyUFunc_F_F"
-        x = np.zeros(10, dtype=np.csingle)[0::2]
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_D_D.
-        msg = "PyUFunc_D_D"
-        x = np.zeros(10, dtype=np.cdouble)[0::2]
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-        # check unary PyUFunc_G_G.
-        msg = "PyUFunc_G_G"
-        x = np.zeros(10, dtype=np.clongdouble)[0::2]
-        assert_almost_equal(fone(x), fone_val, err_msg=msg)
-
-        # check binary PyUFunc_ff_f.
-        msg = "PyUFunc_ff_f"
-        x = np.ones(10, dtype=np.single)[0::2]
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_dd_d.
-        msg = "PyUFunc_dd_d"
-        x = np.ones(10, dtype=np.double)[0::2]
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_gg_g.
-        msg = "PyUFunc_gg_g"
-        x = np.ones(10, dtype=np.longdouble)[0::2]
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_FF_F.
-        msg = "PyUFunc_FF_F"
-        x = np.ones(10, dtype=np.csingle)[0::2]
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_DD_D.
-        msg = "PyUFunc_DD_D"
-        x = np.ones(10, dtype=np.cdouble)[0::2]
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-        # check binary PyUFunc_GG_G.
-        msg = "PyUFunc_GG_G"
-        x = np.ones(10, dtype=np.clongdouble)[0::2]
-        assert_almost_equal(ftwo(x, x), ftwo_val, err_msg=msg)
-
-        # class to use in testing object method loops
-        class foo(object):
-            def conjugate(self):
-                return np.bool_(1)
-
-            def logical_xor(self, obj):
-                return np.bool_(1)
-
-        # check unary PyUFunc_O_O
-        msg = "PyUFunc_O_O"
-        x = np.ones(10, dtype=object)[0::2]
-        assert_(np.all(np.abs(x) == 1), msg)
-        # check unary PyUFunc_O_O_method
-        msg = "PyUFunc_O_O_method"
-        x = np.zeros(10, dtype=object)[0::2]
-        for i in range(len(x)):
-            x[i] = foo()
-        assert_(np.all(np.conjugate(x) == True), msg)
-
-        # check binary PyUFunc_OO_O
-        msg = "PyUFunc_OO_O"
-        x = np.ones(10, dtype=object)[0::2]
-        assert_(np.all(np.add(x, x) == 2), msg)
-        # check binary PyUFunc_OO_O_method
-        msg = "PyUFunc_OO_O_method"
-        x = np.zeros(10, dtype=object)[0::2]
-        for i in range(len(x)):
-            x[i] = foo()
-        assert_(np.all(np.logical_xor(x, x)), msg)
-
-        # check PyUFunc_On_Om
-        # fixme -- I don't know how to do this yet
 
     def test_all_ufunc(self):
         """Try to check presence and results of all ufuncs.
@@ -379,45 +338,21 @@ class TestUfunc(object):
         assert_equal(flags, (self.can_ignore, self.size_inferred, 0))
         assert_equal(sizes, (3, -1, 9))
 
-    def test_signature_failure0(self):
-        # in the following calls, a ValueError should be raised because
-        # of error in core signature
-        # FIXME These should be using assert_raises
+    def test_signature_failure_extra_parenthesis(self):
+        with assert_raises(ValueError):
+            umt.test_signature(2, 1, "((i)),(i)->()")
 
-        # error: extra parenthesis
-        msg = "core_sig: extra parenthesis"
-        try:
-            ret = umt.test_signature(2, 1, "((i)),(i)->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError:
-            pass
+    def test_signature_failure_mismatching_parenthesis(self):
+        with assert_raises(ValueError):
+            umt.test_signature(2, 1, "(i),)i(->()")
 
-    def test_signature_failure1(self):
-        # error: parenthesis matching
-        msg = "core_sig: parenthesis matching"
-        try:
-            ret = umt.test_signature(2, 1, "(i),)i(->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError:
-            pass
+    def test_signature_failure_signature_missing_input_arg(self):
+        with assert_raises(ValueError):
+            umt.test_signature(2, 1, "(i),->()")
 
-    def test_signature_failure2(self):
-        # error: incomplete signature. letters outside of parenthesis are ignored
-        msg = "core_sig: incomplete signature"
-        try:
-            ret = umt.test_signature(2, 1, "(i),->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError:
-            pass
-
-    def test_signature_failure3(self):
-        # error: incomplete signature. 2 output arguments are specified
-        msg = "core_sig: incomplete signature"
-        try:
-            ret = umt.test_signature(2, 2, "(i),(i)->()")
-            assert_equal(ret, None, err_msg=msg)
-        except ValueError:
-            pass
+    def test_signature_failure_signature_missing_output_arg(self):
+        with assert_raises(ValueError):
+            umt.test_signature(2, 2, "(i),(i)->()")
 
     def test_get_signature(self):
         assert_equal(umt.inner1d.signature, "(i),(i)->()")
@@ -596,6 +531,12 @@ class TestUfunc(object):
         assert_equal(np.sum(np.ones((2, 3, 5), dtype=np.int64), axis=(0, 2), initial=2),
                      [12, 12, 12])
 
+    def test_sum_where(self):
+        # More extensive tests done in test_reduction_with_where.
+        assert_equal(np.sum([[1., 2.], [3., 4.]], where=[True, False]), 4.)
+        assert_equal(np.sum([[1., 2.], [3., 4.]], axis=0, initial=5.,
+                            where=[True, False]), [9., 5.])
+
     def test_inner1d(self):
         a = np.arange(6).reshape((2, 3))
         assert_array_equal(umt.inner1d(a, a), np.sum(a*a, axis=-1))
@@ -622,6 +563,18 @@ class TestUfunc(object):
         a = np.arange(2).reshape((2, 1, 1))
         b = np.arange(3).reshape((3, 1, 1))
         assert_raises(ValueError, umt.inner1d, a, b)
+
+        # Writing to a broadcasted array with overlap should warn, gh-2705
+        a = np.arange(2)
+        b = np.arange(4).reshape((2, 2))
+        u, v = np.broadcast_arrays(a, b)
+        assert_equal(u.strides[0], 0)
+        x = u + v
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            u += v
+            assert_equal(len(w), 1)
+            assert_(x[0,0]  != u[0, 0])
 
     def test_type_cast(self):
         msg = "type cast"
@@ -1162,6 +1115,8 @@ class TestUfunc(object):
         assert_equal(np.array([[1]], dtype=object).sum(), 1)
         assert_equal(np.array([[[1, 2]]], dtype=object).sum((0, 1)), [1, 2])
         assert_equal(np.array([1], dtype=object).sum(initial=1), 2)
+        assert_equal(np.array([[1], [2, 3]], dtype=object)
+                     .sum(initial=[0], where=[False, True]), [0, 2, 3])
 
     def test_object_array_accumulate_inplace(self):
         # Checks that in-place accumulates work, see also gh-7402
@@ -1396,6 +1351,44 @@ class TestUfunc(object):
         res = np.add.reduce(a, initial=5)
         assert_equal(res, 15)
 
+    @pytest.mark.parametrize('axis', (0, 1, None))
+    @pytest.mark.parametrize('where', (np.array([False, True, True]),
+                                       np.array([[True], [False], [True]]),
+                                       np.array([[True, False, False],
+                                                 [False, True, False],
+                                                 [False, True, True]])))
+    def test_reduction_with_where(self, axis, where):
+        a = np.arange(9.).reshape(3, 3)
+        a_copy = a.copy()
+        a_check = np.zeros_like(a)
+        np.positive(a, out=a_check, where=where)
+
+        res = np.add.reduce(a, axis=axis, where=where)
+        check = a_check.sum(axis)
+        assert_equal(res, check)
+        # Check we do not overwrite elements of a internally.
+        assert_array_equal(a, a_copy)
+
+    @pytest.mark.parametrize(('axis', 'where'),
+                             ((0, np.array([True, False, True])),
+                              (1, [True, True, False]),
+                              (None, True)))
+    @pytest.mark.parametrize('initial', (-np.inf, 5.))
+    def test_reduction_with_where_and_initial(self, axis, where, initial):
+        a = np.arange(9.).reshape(3, 3)
+        a_copy = a.copy()
+        a_check = np.full(a.shape, -np.inf)
+        np.positive(a, out=a_check, where=where)
+
+        res = np.maximum.reduce(a, axis=axis, where=where, initial=initial)
+        check = a_check.max(axis, initial=initial)
+        assert_equal(res, check)
+
+    def test_reduction_where_initial_needed(self):
+        a = np.arange(9.).reshape(3, 3)
+        m = [False, True, False]
+        assert_raises(ValueError, np.maximum.reduce, a, where=m)
+
     def test_identityless_reduction_nonreorderable(self):
         a = np.array([[8.0, 2.0, 2.0], [1.0, 0.5, 0.25]])
 
@@ -1532,6 +1525,7 @@ class TestUfunc(object):
 
         result = struct_ufunc.add_triplet(a, b)
         assert_equal(result, np.array([(2, 4, 6)], dtype='u8,u8,u8'))
+        assert_raises(RuntimeError, struct_ufunc.register_fail)
 
     def test_custom_ufunc(self):
         a = np.array(
@@ -1749,16 +1743,19 @@ class TestUfunc(object):
         assert_equal(f(d, 0, None, None, True), r.reshape((1,) + r.shape))
         assert_equal(f(d, 0, None, None, False, 0), r)
         assert_equal(f(d, 0, None, None, False, initial=0), r)
+        assert_equal(f(d, 0, None, None, False, 0, True), r)
+        assert_equal(f(d, 0, None, None, False, 0, where=True), r)
         # multiple keywords
         assert_equal(f(d, axis=0, dtype=None, out=None, keepdims=False), r)
         assert_equal(f(d, 0, dtype=None, out=None, keepdims=False), r)
         assert_equal(f(d, 0, None, out=None, keepdims=False), r)
-        assert_equal(f(d, 0, None, out=None, keepdims=False, initial=0), r)
+        assert_equal(f(d, 0, None, out=None, keepdims=False, initial=0,
+                       where=True), r)
 
         # too little
         assert_raises(TypeError, f)
         # too much
-        assert_raises(TypeError, f, d, 0, None, None, False, 0, 1)
+        assert_raises(TypeError, f, d, 0, None, None, False, 0, True, 1)
         # invalid axis
         assert_raises(TypeError, f, d, "invalid")
         assert_raises(TypeError, f, d, axis="invalid")
@@ -1857,3 +1854,96 @@ class TestUfunc(object):
     def test_no_doc_string(self):
         # gh-9337
         assert_('\n' not in umt.inner1d_no_doc.__doc__)
+
+    def test_invalid_args(self):
+        # gh-7961
+        exc = pytest.raises(TypeError, np.sqrt, None)
+        # minimally check the exception text
+        assert exc.match('loop of ufunc does not support')
+
+    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    def test_nat_is_not_finite(self, nat):
+        try:
+            assert not np.isfinite(nat)
+        except TypeError:
+            pass  # ok, just not implemented
+
+    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    def test_nat_is_nan(self, nat):
+        try:
+            assert np.isnan(nat)
+        except TypeError:
+            pass  # ok, just not implemented
+
+    @pytest.mark.parametrize('nat', [np.datetime64('nat'), np.timedelta64('nat')])
+    def test_nat_is_not_inf(self, nat):
+        try:
+            assert not np.isinf(nat)
+        except TypeError:
+            pass  # ok, just not implemented
+
+
+@pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
+                                if isinstance(getattr(np, x), np.ufunc)])
+def test_ufunc_types(ufunc):
+    '''
+    Check all ufuncs that the correct type is returned. Avoid
+    object and boolean types since many operations are not defined for
+    for them.
+
+    Choose the shape so even dot and matmul will succeed
+    '''
+    for typ in ufunc.types:
+        # types is a list of strings like ii->i
+        if 'O' in typ or '?' in typ:
+            continue
+        inp, out = typ.split('->')
+        args = [np.ones((3, 3), t) for t in inp]
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings("always")
+            res = ufunc(*args)
+        if isinstance(res, tuple):
+            outs = tuple(out)
+            assert len(res) == len(outs)
+            for r, t in zip(res, outs):
+                assert r.dtype == np.dtype(t)
+        else:
+            assert res.dtype == np.dtype(out)
+
+@pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
+                                if isinstance(getattr(np, x), np.ufunc)])
+def test_ufunc_noncontiguous(ufunc):
+    '''
+    Check that contiguous and non-contiguous calls to ufuncs
+    have the same results for values in range(9)
+    '''
+    for typ in ufunc.types:
+        # types is a list of strings like ii->i
+        if any(set('O?mM') & set(typ)):
+            # bool, object, datetime are too irregular for this simple test
+            continue
+        inp, out = typ.split('->')
+        args_c = [np.empty(6, t) for t in inp]
+        args_n = [np.empty(18, t)[::3] for t in inp]
+        for a in args_c:
+            a.flat = range(1,7)
+        for a in args_n:
+            a.flat = range(1,7)
+        with warnings.catch_warnings(record=True):
+            warnings.filterwarnings("always")
+            res_c = ufunc(*args_c)
+            res_n = ufunc(*args_n)
+        if len(out) == 1:
+            res_c = (res_c,)
+            res_n = (res_n,)
+        for c_ar, n_ar in zip(res_c, res_n):
+            dt = c_ar.dtype
+            if np.issubdtype(dt, np.floating):
+                # for floating point results allow a small fuss in comparisons
+                # since different algorithms (libm vs. intrinsics) can be used
+                # for different input strides
+                res_eps = np.finfo(dt).eps
+                tol = 2*res_eps
+                assert_allclose(res_c, res_n, atol=tol, rtol=tol)
+            else:
+                assert_equal(c_ar, n_ar)

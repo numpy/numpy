@@ -7,7 +7,7 @@ from numpy.ma.core import (masked_array, masked_values, masked, allequal,
                            MaskType, getmask, MaskedArray, nomask,
                            log, add, hypot, divide)
 from numpy.ma.extras import mr_
-from numpy.core.numeric import pickle
+from numpy.compat import pickle
 
 
 class MMatrix(MaskedArray, np.matrix,):
@@ -22,11 +22,11 @@ class MMatrix(MaskedArray, np.matrix,):
         MaskedArray.__array_finalize__(self, obj)
         return
 
-    def _get_series(self):
+    @property
+    def _series(self):
         _view = self.view(MaskedArray)
         _view._sharedmask = False
         return _view
-    _series = property(fget=_get_series)
 
 
 class TestMaskedMatrix(object):

@@ -12,9 +12,11 @@ from numpy.lib.recfunctions import (
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by,
     repack_fields, unstructured_to_structured, structured_to_unstructured,
     apply_along_fields, require_fields, assign_fields_by_name)
+get_fieldspec = np.lib.recfunctions._get_fieldspec
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
-zip_descr = np.lib.recfunctions.zip_descr
+zip_descr = np.lib.recfunctions._zip_descr
+zip_dtype = np.lib.recfunctions._zip_dtype
 
 
 class TestRecFunctions(object):
@@ -235,6 +237,8 @@ class TestRecFunctions(object):
                      dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
         out = np.mean(structured_to_unstructured(b[['x', 'z']]), axis=-1)
         assert_equal(out, np.array([ 3. ,  5.5,  9. , 11. ]))
+        out = np.mean(structured_to_unstructured(b[['x']]), axis=-1)
+        assert_equal(out, np.array([ 1. ,  4. ,  7. , 10. ]))
 
         c = np.arange(20).reshape((4,5))
         out = unstructured_to_structured(c, a.dtype)
@@ -242,9 +246,9 @@ class TestRecFunctions(object):
                          ( 5, ( 6.,  7), [ 8.,  9.]),
                          (10, (11., 12), [13., 14.]),
                          (15, (16., 17), [18., 19.])],
-                     dtype=[('a', '<i4'),
-                            ('b', [('f0', '<f4'), ('f1', '<u2')]),
-                            ('c', '<f4', (2,))])
+                     dtype=[('a', 'i4'),
+                            ('b', [('f0', 'f4'), ('f1', 'u2')]),
+                            ('c', 'f4', (2,))])
         assert_equal(out, want)
 
         d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
@@ -257,6 +261,15 @@ class TestRecFunctions(object):
         # check that for uniform field dtypes we get a view, not a copy:
         d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'i4')])
+        dd = structured_to_unstructured(d)
+        ddd = unstructured_to_structured(dd, d.dtype)
+        assert_(dd.base is d)
+        assert_(ddd.base is d)
+
+        # including uniform fields with subarrays unpacked
+        d = np.array([(1, [2,  3], [[ 4,  5], [ 6,  7]]),
+                      (8, [9, 10], [[11, 12], [13, 14]])],
+                     dtype=[('x0', 'i4'), ('x1', ('i4', 2)), ('x2', ('i4', (2, 2)))])
         dd = structured_to_unstructured(d)
         ddd = unstructured_to_structured(dd, d.dtype)
         assert_(dd.base is d)

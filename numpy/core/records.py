@@ -7,10 +7,9 @@ Most commonly, ndarrays contain elements of a single type, e.g. floats,
 integers, bools etc.  However, it is possible for elements to be combinations
 of these using structured types, such as::
 
-  >>> a = np.array([(1, 2.0), (1, 2.0)], dtype=[('x', int), ('y', float)])
+  >>> a = np.array([(1, 2.0), (1, 2.0)], dtype=[('x', np.int64), ('y', np.float64)])
   >>> a
-  array([(1, 2.0), (1, 2.0)],
-        dtype=[('x', '<i4'), ('y', '<f8')])
+  array([(1, 2.), (1, 2.)], dtype=[('x', '<i8'), ('y', '<f8')])
 
 Here, each element consists of two fields: x (and int), and y (a float).
 This is known as a structured array.  The different fields are analogous
@@ -21,7 +20,7 @@ one would a dictionary::
   array([1, 1])
 
   >>> a['y']
-  array([ 2.,  2.])
+  array([2., 2.])
 
 Record arrays allow us to access fields as properties::
 
@@ -31,7 +30,7 @@ Record arrays allow us to access fields as properties::
   array([1, 1])
 
   >>> ar.y
-  array([ 2.,  2.])
+  array([2., 2.])
 
 """
 from __future__ import division, absolute_import, print_function
@@ -39,10 +38,13 @@ from __future__ import division, absolute_import, print_function
 import sys
 import os
 import warnings
+from collections import Counter, OrderedDict
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import isfileobj, bytes, long, unicode, os_fspath
+from numpy.compat import (
+    isfileobj, bytes, long, unicode, os_fspath, contextlib_nullcontext
+)
 from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
 
@@ -74,14 +76,25 @@ _byteorderconv = {'b':'>',
 
 numfmt = nt.typeDict
 
+# taken from OrderedDict recipes in the Python documentation
+# https://docs.python.org/3.3/library/collections.html#ordereddict-examples-and-recipes
+class _OrderedCounter(Counter, OrderedDict):
+    """Counter that remembers the order elements are first encountered"""
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, OrderedDict(self))
+
+    def __reduce__(self):
+        return self.__class__, (OrderedDict(self),)
+
+
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
-    dup = []
-    for i in range(len(list)):
-        if (list[i] in list[i + 1:]):
-            if (list[i] not in dup):
-                dup.append(list[i])
-    return dup
+    return [
+        item
+        for item, counts in _OrderedCounter(list).items()
+        if counts > 1
+    ]
 
 
 @set_module('numpy')
@@ -128,10 +141,9 @@ class format_parser(object):
 
     Examples
     --------
-    >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
+    >>> np.format_parser(['<f8', '<i4', '<a5'], ['col1', 'col2', 'col3'],
     ...                  ['T1', 'T2', 'T3']).dtype
-    dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'),
-           (('T3', 'col3'), '|S5')])
+    dtype([(('T1', 'col1'), '<f8'), (('T2', 'col2'), '<i4'), (('T3', 'col3'), 'S5')])
 
     `names` and/or `titles` can be empty lists. If `titles` is an empty list,
     titles will simply not appear. If `names` is empty, default field names
@@ -139,9 +151,9 @@ class format_parser(object):
 
     >>> np.format_parser(['f8', 'i4', 'a5'], ['col1', 'col2', 'col3'],
     ...                  []).dtype
-    dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '|S5')])
-    >>> np.format_parser(['f8', 'i4', 'a5'], [], []).dtype
-    dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', '|S5')])
+    dtype([('col1', '<f8'), ('col2', '<i4'), ('col3', '<S5')])
+    >>> np.format_parser(['<f8', '<i4', '<a5'], [], []).dtype
+    dtype([('f0', '<f8'), ('f1', '<i4'), ('f2', 'S5')])
 
     """
 
@@ -151,16 +163,18 @@ class format_parser(object):
         self._createdescr(byteorder)
         self.dtype = self._descr
 
-    def _parseFormats(self, formats, aligned=0):
+    def _parseFormats(self, formats, aligned=False):
         """ Parse the field formats """
 
         if formats is None:
             raise ValueError("Need formats argument")
         if isinstance(formats, list):
-            if len(formats) < 2:
-                formats.append('')
-            formats = ','.join(formats)
-        dtype = sb.dtype(formats, aligned)
+            dtype = sb.dtype(
+                [('f{}'.format(i), format_) for i, format_ in enumerate(formats)],
+                aligned,
+            )
+        else:
+            dtype = sb.dtype(formats, aligned)
         fields = dtype.fields
         if fields is None:
             dtype = sb.dtype([('f1', dtype)], aligned)
@@ -380,20 +394,19 @@ class recarray(ndarray):
     --------
     Create an array with two fields, ``x`` and ``y``:
 
-    >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', float), ('y', int)])
+    >>> x = np.array([(1.0, 2), (3.0, 4)], dtype=[('x', '<f8'), ('y', '<i8')])
     >>> x
-    array([(1.0, 2), (3.0, 4)],
-          dtype=[('x', '<f8'), ('y', '<i4')])
+    array([(1., 2), (3., 4)], dtype=[('x', '<f8'), ('y', '<i8')])
 
     >>> x['x']
-    array([ 1.,  3.])
+    array([1., 3.])
 
     View the array as a record array:
 
     >>> x = x.view(np.recarray)
 
     >>> x.x
-    array([ 1.,  3.])
+    array([1., 3.])
 
     >>> x.y
     array([2, 4])
@@ -580,7 +593,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     >>> x3=np.array([1.1,2,3,4])
     >>> r = np.core.records.fromarrays([x1,x2,x3],names='a,b,c')
     >>> print(r[1])
-    (2, 'dd', 2.0)
+    (2, 'dd', 2.0) # may vary
     >>> x1[1]=34
     >>> r.a
     array([1, 2, 3, 4])
@@ -599,10 +612,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         # and determine the formats.
         formats = []
         for obj in arrayList:
-            if not isinstance(obj, ndarray):
-                raise ValueError("item in the array list must be an ndarray.")
-            formats.append(obj.dtype.str)
-        formats = ','.join(formats)
+            formats.append(obj.dtype)
 
     if dtype is not None:
         descr = sb.dtype(dtype)
@@ -659,11 +669,11 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     >>> r.col1
     array([456,   2])
     >>> r.col2
-    array(['dbe', 'de'],
-          dtype='|S3')
+    array(['dbe', 'de'], dtype='<U3')
     >>> import pickle
-    >>> print(pickle.loads(pickle.dumps(r)))
-    [(456, 'dbe', 1.2) (2, 'de', 1.3)]
+    >>> pickle.loads(pickle.dumps(r))
+    rec.array([(456, 'dbe', 1.2), (  2, 'de', 1.3)],
+              dtype=[('col1', '<i8'), ('col2', '<U3'), ('col3', '<f8')])
     """
 
     if formats is None and dtype is None:  # slower
@@ -711,7 +721,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     a string"""
 
     if dtype is None and formats is None:
-        raise ValueError("Must have dtype= or formats=")
+        raise TypeError("fromstring() needs a 'dtype' or 'formats' argument")
 
     if dtype is not None:
         descr = sb.dtype(dtype)
@@ -750,7 +760,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     >>> a = a.newbyteorder('<')
     >>> a.tofile(fd)
     >>>
-    >>> fd.seek(0)
+    >>> _ = fd.seek(0)
     >>> r=np.core.records.fromfile(fd, formats='f8,i4,a5', shape=10,
     ... byteorder='<')
     >>> print(r[5])
@@ -759,6 +769,9 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     (10,)
     """
 
+    if dtype is None and formats is None:
+        raise TypeError("fromfile() needs a 'dtype' or 'formats' argument")
+
     if (shape is None or shape == 0):
         shape = (-1,)
     elif isinstance(shape, (int, long)):
@@ -766,44 +779,42 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     if isfileobj(fd):
         # file already opened
-        name = 0
+        ctx = contextlib_nullcontext(fd)
     else:
         # open file
-        fd = open(os_fspath(fd), 'rb')
-        name = 1
+        ctx = open(os_fspath(fd), 'rb')
 
-    if (offset > 0):
-        fd.seek(offset, 1)
-    size = get_remaining_size(fd)
+    with ctx as fd:
+        if (offset > 0):
+            fd.seek(offset, 1)
+        size = get_remaining_size(fd)
 
-    if dtype is not None:
-        descr = sb.dtype(dtype)
-    else:
-        descr = format_parser(formats, names, titles, aligned, byteorder)._descr
+        if dtype is not None:
+            descr = sb.dtype(dtype)
+        else:
+            descr = format_parser(formats, names, titles, aligned, byteorder)._descr
 
-    itemsize = descr.itemsize
+        itemsize = descr.itemsize
 
-    shapeprod = sb.array(shape).prod(dtype=nt.intp)
-    shapesize = shapeprod * itemsize
-    if shapesize < 0:
-        shape = list(shape)
-        shape[shape.index(-1)] = size // -shapesize
-        shape = tuple(shape)
         shapeprod = sb.array(shape).prod(dtype=nt.intp)
+        shapesize = shapeprod * itemsize
+        if shapesize < 0:
+            shape = list(shape)
+            shape[shape.index(-1)] = size // -shapesize
+            shape = tuple(shape)
+            shapeprod = sb.array(shape).prod(dtype=nt.intp)
 
-    nbytes = shapeprod * itemsize
+        nbytes = shapeprod * itemsize
 
-    if nbytes > size:
-        raise ValueError(
-                "Not enough bytes left in file for specified shape and type")
+        if nbytes > size:
+            raise ValueError(
+                    "Not enough bytes left in file for specified shape and type")
 
-    # create the array
-    _array = recarray(shape, descr)
-    nbytesread = fd.readinto(_array.data)
-    if nbytesread != nbytes:
-        raise IOError("Didn't read as many bytes as expected")
-    if name:
-        fd.close()
+        # create the array
+        _array = recarray(shape, descr)
+        nbytesread = fd.readinto(_array.data)
+        if nbytesread != nbytes:
+            raise IOError("Didn't read as many bytes as expected")
 
     return _array
 

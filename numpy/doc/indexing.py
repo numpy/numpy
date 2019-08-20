@@ -1,4 +1,5 @@
-"""==============
+"""
+==============
 Array indexing
 ==============
 
@@ -93,7 +94,9 @@ well. A few examples illustrates best: ::
         [21, 24, 27]])
 
 Note that slices of arrays do not copy the internal array data but
-only produce new views of the original data.
+only produce new views of the original data. This is different from
+list or tuple slicing and an explicit ``copy()`` is recommended if
+the original data is not required anymore.
 
 It is possible to index arrays with other arrays for the purposes of
 selecting lists of values out of arrays into new arrays. There are
@@ -105,7 +108,7 @@ arrays and thus greatly improve performance.
 
 It is possible to use special features to effectively increase the
 number of dimensions in an array through indexing so the resulting
-array aquires the shape needed for use in an expression or with a
+array acquires the shape needed for use in an expression or with a
 specific function.
 
 Index arrays
@@ -293,6 +296,13 @@ to produce a resultant array of shape (3,2).
 
 Likewise, slicing can be combined with broadcasted boolean indices: ::
 
+ >>> b = y > 20
+ >>> b
+ array([[False, False, False, False, False, False, False],
+       [False, False, False, False, False, False, False],
+       [False, False, False, False, False, False, False],
+       [ True,  True,  True,  True,  True,  True,  True],
+       [ True,  True,  True,  True,  True,  True,  True]])
  >>> y[b[:,5],1:3]
  array([[22, 23],
         [29, 30]])

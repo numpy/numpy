@@ -249,6 +249,15 @@ class TestIndexing(object):
                          [4, 0, 6],
                          [0, 8, 0]])
 
+    def test_boolean_indexing_list(self):
+        # Regression test for #13715. It's a use-after-free bug which the
+        # test won't directly catch, but it will show up in valgrind.
+        a = np.array([1, 2, 3])
+        b = [True, False, True]
+        # Two variants of the test because the first takes a fast path
+        assert_equal(a[b], [1, 3])
+        assert_equal(a[None, b], [[1, 3]])
+
     def test_reverse_strides_and_subspace_bufferinit(self):
         # This tests that the strides are not reversed for simple and
         # subspace fancy indexing.
@@ -607,6 +616,19 @@ class TestSubclasses(object):
         assert_(type(s_bool.base) is np.ndarray)
         assert_array_equal(s_bool, a[a > 0])
         assert_array_equal(s_bool.base, a[a > 0])
+
+    def test_fancy_on_read_only(self):
+        # Test that fancy indexing on read-only SubClass does not make a
+        # read-only copy (gh-14132)
+        class SubClass(np.ndarray):
+            pass
+
+        a = np.arange(5)
+        s = a.view(SubClass)
+        s.flags.writeable = False
+        s_fancy = s[[0, 1, 2]]
+        assert_(s_fancy.flags.writeable)
+
 
     def test_finalize_gets_full_info(self):
         # Array finalize should be called on the filled array.

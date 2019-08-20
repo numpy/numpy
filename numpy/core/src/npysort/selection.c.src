@@ -40,7 +40,7 @@ static NPY_INLINE void store_pivot(npy_intp pivot, npy_intp kth,
     }
 
     /*
-     * If pivot is the requested kth store it, overwritting other pivots if
+     * If pivot is the requested kth store it, overwriting other pivots if
      * required. This must be done so iterative partition can work without
      * manually shifting lower data offset by kth each time
      */

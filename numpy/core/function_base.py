@@ -3,10 +3,11 @@ from __future__ import division, absolute_import, print_function
 import functools
 import warnings
 import operator
+import types
 
 from . import numeric as _nx
 from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
-                      TooHardError, asanyarray)
+                      TooHardError, asanyarray, ndim)
 from numpy.core.multiarray import add_docstring
 from numpy.core import overrides
 
@@ -102,11 +103,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     Examples
     --------
     >>> np.linspace(2.0, 3.0, num=5)
-    array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ])
+    array([2.  , 2.25, 2.5 , 2.75, 3.  ])
     >>> np.linspace(2.0, 3.0, num=5, endpoint=False)
-    array([ 2. ,  2.2,  2.4,  2.6,  2.8])
+    array([2. ,  2.2,  2.4,  2.6,  2.8])
     >>> np.linspace(2.0, 3.0, num=5, retstep=True)
-    (array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
+    (array([2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
 
     Graphical illustration:
 
@@ -140,7 +141,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         dtype = dt
 
     delta = stop - start
-    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * delta.ndim)
+    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
     # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
     # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
     # see gh-7142. Hence, we multiply in place only for standard scalar types.
@@ -252,11 +253,11 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     Examples
     --------
     >>> np.logspace(2.0, 3.0, num=4)
-    array([  100.        ,   215.443469  ,   464.15888336,  1000.        ])
+    array([ 100.        ,  215.443469  ,  464.15888336, 1000.        ])
     >>> np.logspace(2.0, 3.0, num=4, endpoint=False)
-    array([ 100.        ,  177.827941  ,  316.22776602,  562.34132519])
+    array([100.        ,  177.827941  ,  316.22776602,  562.34132519])
     >>> np.logspace(2.0, 3.0, num=4, base=2.0)
-    array([ 4.        ,  5.0396842 ,  6.34960421,  8.        ])
+    array([4.        ,  5.0396842 ,  6.34960421,  8.        ])
 
     Graphical illustration:
 
@@ -361,15 +362,15 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     Negative, decreasing, and complex inputs are allowed:
 
     >>> np.geomspace(1000, 1, num=4)
-    array([ 1000.,   100.,    10.,     1.])
+    array([1000.,  100.,   10.,    1.])
     >>> np.geomspace(-1000, -1, num=4)
     array([-1000.,  -100.,   -10.,    -1.])
     >>> np.geomspace(1j, 1000j, num=4)  # Straight line
-    array([ 0.   +1.j,  0.  +10.j,  0. +100.j,  0.+1000.j])
+    array([0.   +1.j, 0.  +10.j, 0. +100.j, 0.+1000.j])
     >>> np.geomspace(-1+0j, 1+0j, num=5)  # Circle
-    array([-1.00000000+0.j        , -0.70710678+0.70710678j,
-            0.00000000+1.j        ,  0.70710678+0.70710678j,
-            1.00000000+0.j        ])
+    array([-1.00000000e+00+1.22464680e-16j, -7.07106781e-01+7.07106781e-01j,
+            6.12323400e-17+1.00000000e+00j,  7.07106781e-01+7.07106781e-01j,
+            1.00000000e+00+0.00000000e+00j])
 
     Graphical illustration of ``endpoint`` parameter:
 
@@ -377,8 +378,11 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     >>> N = 10
     >>> y = np.zeros(N)
     >>> plt.semilogx(np.geomspace(1, 1000, N, endpoint=True), y + 1, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.semilogx(np.geomspace(1, 1000, N, endpoint=False), y + 2, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.axis([0.5, 2000, 0, 3])
+    [0.5, 2000, 0, 3]
     >>> plt.grid(True, color='0.7', linestyle='-', which='both', axis='both')
     >>> plt.show()
 
@@ -427,36 +431,90 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     return result.astype(dtype, copy=False)
 
 
-#always succeed
-def add_newdoc(place, obj, doc):
+def _needs_add_docstring(obj):
     """
-    Adds documentation to obj which is in module place.
+    Returns true if the only way to set the docstring of `obj` from python is
+    via add_docstring.
 
-    If doc is a string add it to obj as a docstring
+    This function errs on the side of being overly conservative.
+    """
+    Py_TPFLAGS_HEAPTYPE = 1 << 9
 
-    If doc is a tuple, then the first element is interpreted as
-       an attribute of obj and the second as the docstring
-          (method, docstring)
+    if isinstance(obj, (types.FunctionType, types.MethodType, property)):
+        return False
 
-    If doc is a list, then each element of the list should be a
-       sequence of length two --> [(method1, docstring1),
-       (method2, docstring2), ...]
+    if isinstance(obj, type) and obj.__flags__ & Py_TPFLAGS_HEAPTYPE:
+        return False
 
-    This routine never raises an error.
+    return True
+
+
+def _add_docstring(obj, doc, warn_on_python):
+    if warn_on_python and not _needs_add_docstring(obj):
+        warnings.warn(
+            "add_newdoc was used on a pure-python object {}. "
+            "Prefer to attach it directly to the source."
+            .format(obj),
+            UserWarning,
+            stacklevel=3)
+    try:
+        add_docstring(obj, doc)
+    except Exception:
+        pass
+
+
+def add_newdoc(place, obj, doc, warn_on_python=True):
+    """
+    Add documentation to an existing object, typically one defined in C
+
+    The purpose is to allow easier editing of the docstrings without requiring
+    a re-compile. This exists primarily for internal use within numpy itself.
+
+    Parameters
+    ----------
+    place : str
+        The absolute name of the module to import from
+    obj : str
+        The name of the object to add documentation to, typically a class or
+        function name
+    doc : {str, Tuple[str, str], List[Tuple[str, str]]}
+        If a string, the documentation to apply to `obj`
+
+        If a tuple, then the first element is interpreted as an attribute of
+        `obj` and the second as the docstring to apply - ``(method, docstring)``
+
+        If a list, then each element of the list should be a tuple of length
+        two - ``[(method1, docstring1), (method2, docstring2), ...]``
+    warn_on_python : bool
+        If True, the default, emit `UserWarning` if this is used to attach
+        documentation to a pure-python object.
+
+    Notes
+    -----
+    This routine never raises an error if the docstring can't be written, but
+    will raise an error if the object being documented does not exist.
 
     This routine cannot modify read-only docstrings, as appear
     in new-style classes or built-in functions. Because this
     routine never raises an error the caller must check manually
     that the docstrings were changed.
+
+    Since this function grabs the ``char *`` from a c-level str object and puts
+    it into the ``tp_doc`` slot of the type of `obj`, it violates a number of
+    C-API best-practices, by:
+
+    - modifying a `PyTypeObject` after calling `PyType_Ready`
+    - calling `Py_INCREF` on the str and losing the reference, so the str
+      will never be released
+
+    If possible it should be avoided.
     """
-    try:
-        new = getattr(__import__(place, globals(), {}, [obj]), obj)
-        if isinstance(doc, str):
-            add_docstring(new, doc.strip())
-        elif isinstance(doc, tuple):
-            add_docstring(getattr(new, doc[0]), doc[1].strip())
-        elif isinstance(doc, list):
-            for val in doc:
-                add_docstring(getattr(new, val[0]), val[1].strip())
-    except Exception:
-        pass
+    new = getattr(__import__(place, globals(), {}, [obj]), obj)
+    if isinstance(doc, str):
+        _add_docstring(new, doc.strip(), warn_on_python)
+    elif isinstance(doc, tuple):
+        attr, docstring = doc
+        _add_docstring(getattr(new, attr), docstring.strip(), warn_on_python)
+    elif isinstance(doc, list):
+        for attr, docstring in doc:
+            _add_docstring(getattr(new, attr), docstring.strip(), warn_on_python)

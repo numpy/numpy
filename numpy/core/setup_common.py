@@ -14,7 +14,7 @@ from numpy.distutils.misc_util import mingw32
 #-------------------
 # How to change C_API_VERSION ?
 #   - increase C_API_VERSION value
-#   - record the hash for the new C API with the script cversions.py
+#   - record the hash for the new C API with the cversions.py script
 #   and add the hash to cversions.txt
 # The hash values are used to remind developers when the C API number was not
 # updated - generates a MismatchCAPIWarning warning which is turned into an
@@ -81,21 +81,20 @@ def get_api_versions(apiversion, codegen_dir):
     return curapi_hash, apis_hash[apiversion]
 
 def check_api_version(apiversion, codegen_dir):
-    """Emits a MismacthCAPIWarning if the C API version needs updating."""
+    """Emits a MismatchCAPIWarning if the C API version needs updating."""
     curapi_hash, api_hash = get_api_versions(apiversion, codegen_dir)
 
     # If different hash, it means that the api .txt files in
     # codegen_dir have been updated without the API version being
     # updated. Any modification in those .txt files should be reflected
     # in the api and eventually abi versions.
-    # To compute the checksum of the current API, use
-    # code_generators/cversions.py script
+    # To compute the checksum of the current API, use numpy/core/cversions.py
     if not curapi_hash == api_hash:
         msg = ("API mismatch detected, the C API version "
                "numbers have to be updated. Current C api version is %d, "
-               "with checksum %s, but recorded checksum for C API version %d in "
-               "codegen_dir/cversions.txt is %s. If functions were added in the "
-               "C API, you have to update C_API_VERSION  in %s."
+               "with checksum %s, but recorded checksum for C API version %d "
+               "in core/codegen_dir/cversions.txt is %s. If functions were "
+               "added in the C API, you have to update C_API_VERSION in %s."
                )
         warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
                              __file__),
@@ -118,6 +117,7 @@ OPTIONAL_HEADERS = [
 # sse headers only enabled automatically on amd64/x32 builds
                 "xmmintrin.h",  # SSE
                 "emmintrin.h",  # SSE2
+                "immintrin.h",  # AVX
                 "features.h",  # for glibc version linux
                 "xlocale.h",  # see GH#8367
                 "dlfcn.h", # dladdr
@@ -137,6 +137,8 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        # broken on OSX 10.11, make sure its not optimized away
                        ("volatile int r = __builtin_cpu_supports", '"sse"',
                         "stdio.h", "__BUILTIN_CPU_SUPPORTS"),
+                       ("volatile int r = __builtin_cpu_supports", '"avx512f"',
+                        "stdio.h", "__BUILTIN_CPU_SUPPORTS_AVX512F"),
                        # MMX only needed for icc, but some clangs don't have it
                        ("_m_from_int64", '0', "emmintrin.h"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE
@@ -149,6 +151,8 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                         "stdio.h", "LINK_AVX"),
                        ("__asm__ volatile", '"vpand %ymm1, %ymm2, %ymm3"',
                         "stdio.h", "LINK_AVX2"),
+                       ("__asm__ volatile", '"vpaddd %zmm1, %zmm2, %zmm3"',
+                        "stdio.h", "LINK_AVX512F"),
                        ("__asm__ volatile", '"xgetbv"', "stdio.h", "XGETBV"),
                        ]
 
@@ -165,6 +169,24 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
                                  'attribute_target_avx'),
                                 ('__attribute__((target ("avx2")))',
                                  'attribute_target_avx2'),
+                                ('__attribute__((target ("avx512f")))',
+                                 'attribute_target_avx512f'),
+                                ]
+
+# function attributes with intrinsics
+# To ensure your compiler can compile avx intrinsics with just the attributes
+# gcc 4.8.4 support attributes but not with intrisics
+# tested via "#include<%s> int %s %s(void *){code; return 0;};" % (header, attribute, name, code)
+# function name will be converted to HAVE_<upper-case-name> preprocessor macro
+OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fma")))',
+                                'attribute_target_avx2_with_intrinsics',
+                                '__m256 temp = _mm256_set1_ps(1.0); temp = \
+                                _mm256_fmadd_ps(temp, temp, temp)',
+                                'immintrin.h'),
+                                ('__attribute__((target("avx512f")))',
+                                'attribute_target_avx512f_with_intrinsics',
+                                '__m512 temp = _mm512_set1_ps(1.0)',
+                                'immintrin.h'),
                                 ]
 
 # variable attributes tested via "int %s a" % attribute
@@ -292,30 +314,24 @@ def pyod(filename):
     def _pyod2():
         out = []
 
-        fid = open(filename, 'rb')
-        try:
+        with open(filename, 'rb') as fid:
             yo = [int(oct(int(binascii.b2a_hex(o), 16))) for o in fid.read()]
-            for i in range(0, len(yo), 16):
-                line = ['%07d' % int(oct(i))]
-                line.extend(['%03d' % c for c in yo[i:i+16]])
-                out.append(" ".join(line))
-            return out
-        finally:
-            fid.close()
+        for i in range(0, len(yo), 16):
+            line = ['%07d' % int(oct(i))]
+            line.extend(['%03d' % c for c in yo[i:i+16]])
+            out.append(" ".join(line))
+        return out
 
     def _pyod3():
         out = []
 
-        fid = open(filename, 'rb')
-        try:
+        with open(filename, 'rb') as fid:
             yo2 = [oct(o)[2:] for o in fid.read()]
-            for i in range(0, len(yo2), 16):
-                line = ['%07d' % int(oct(i)[2:])]
-                line.extend(['%03d' % int(c) for c in yo2[i:i+16]])
-                out.append(" ".join(line))
-            return out
-        finally:
-            fid.close()
+        for i in range(0, len(yo2), 16):
+            line = ['%07d' % int(oct(i)[2:])]
+            line.extend(['%03d' % int(c) for c in yo2[i:i+16]])
+            out.append(" ".join(line))
+        return out
 
     if sys.version_info[0] < 3:
         return _pyod2()

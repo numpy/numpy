@@ -38,6 +38,13 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 NPY_NO_EXPORT void
 BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
 
+/**begin repeat
+ * #kind = isnan, isinf, isfinite#
+ **/
+NPY_NO_EXPORT void
+BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
 /*
  *****************************************************************************
  **                           INTEGER LOOPS
@@ -146,6 +153,13 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @S@@TYPE@_lcm(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
+/**begin repeat2
+ * #kind = isnan, isinf, isfinite#
+ **/
+NPY_NO_EXPORT void
+@S@@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+/**end repeat2**/
+
 /**end repeat1**/
 
 /**end repeat**/
@@ -161,6 +175,22 @@ NPY_NO_EXPORT void
  */
 NPY_NO_EXPORT void
 @TYPE@_sqrt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
+
+/**begin repeat
+ *  #func = sin, cos, exp, log#
+ */
+NPY_NO_EXPORT void
+FLOAT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat1
+ * #isa = avx512f, fma#
+ */
+
+NPY_NO_EXPORT void
+FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
@@ -414,6 +444,9 @@ NPY_NO_EXPORT void
 @TYPE@_isnat(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
+@TYPE@_isfinite(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
 
 /**begin repeat1
@@ -474,7 +507,13 @@ NPY_NO_EXPORT void
 TIMEDELTA_mm_d_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
+TIMEDELTA_mm_q_floor_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
 TIMEDELTA_mm_m_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+TIMEDELTA_mm_qm_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 /* Special case equivalents to above functions */
 
@@ -509,6 +548,9 @@ OBJECT@suffix@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *
 
 NPY_NO_EXPORT void
 OBJECT_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+PyUFunc_OOO_O(char **args, npy_intp *dimensions, npy_intp *steps, void *func);
 
 /*
  *****************************************************************************

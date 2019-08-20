@@ -7,6 +7,7 @@ import functools
 import itertools
 import warnings
 import weakref
+import contextlib
 from operator import itemgetter, index as opindex
 
 import numpy as np
@@ -23,10 +24,9 @@ from ._iotools import (
     )
 
 from numpy.compat import (
-    asbytes, asstr, asunicode, asbytes_nested, bytes, basestring, unicode,
-    os_fspath, os_PathLike
+    asbytes, asstr, asunicode, bytes, basestring, os_fspath, os_PathLike,
+    pickle, contextlib_nullcontext
     )
-from numpy.core.numeric import pickle
 
 if sys.version_info[0] >= 3:
     from collections.abc import Mapping
@@ -146,7 +146,11 @@ class NpzFile(Mapping):
         An object on which attribute can be performed as an alternative
         to getitem access on the `NpzFile` instance itself.
     allow_pickle : bool, optional
-        Allow loading pickled data. Default: True
+        Allow loading pickled data. Default: False
+
+        .. versionchanged:: 1.16.3
+            Made default False in response to CVE-2019-6446.
+
     pickle_kwargs : dict, optional
         Additional keyword arguments to pass on to pickle.load.
         These are only useful when loading object arrays saved on
@@ -168,13 +172,13 @@ class NpzFile(Mapping):
     >>> x = np.arange(10)
     >>> y = np.sin(x)
     >>> np.savez(outfile, x=x, y=y)
-    >>> outfile.seek(0)
+    >>> _ = outfile.seek(0)
 
     >>> npz = np.load(outfile)
     >>> isinstance(npz, np.lib.io.NpzFile)
     True
-    >>> npz.files
-    ['y', 'x']
+    >>> sorted(npz.files)
+    ['x', 'y']
     >>> npz['x']  # getitem access
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     >>> npz.f.x  # attribute lookup
@@ -182,7 +186,7 @@ class NpzFile(Mapping):
 
     """
 
-    def __init__(self, fid, own_fid=False, allow_pickle=True,
+    def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
@@ -285,10 +289,16 @@ class NpzFile(Mapping):
 
 
 @set_module('numpy')
-def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
+def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
          encoding='ASCII'):
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
+
+    .. warning:: Loading files that contain object arrays uses the ``pickle``
+                 module, which is not secure against erroneous or maliciously
+                 constructed data. Consider passing ``allow_pickle=False`` to
+                 load data that is known not to contain object arrays for the
+                 safer handling of untrusted sources.
 
     Parameters
     ----------
@@ -307,8 +317,11 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
         Allow loading pickled object arrays stored in npy files. Reasons for
         disallowing pickles include security, as loading pickled data can
         execute arbitrary code. If pickles are disallowed, loading object
-        arrays will fail.
-        Default: True
+        arrays will fail. Default: False
+
+        .. versionchanged:: 1.16.3
+            Made default False in response to CVE-2019-6446.
+
     fix_imports : bool, optional
         Only useful when loading Python 2 generated pickled files on Python 3,
         which includes npy/npz files containing object arrays. If `fix_imports`
@@ -493,7 +506,9 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     Notes
     -----
     For a description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
-
+        
+    Any data saved to the file is appended to the end of the file. 
+    
     Examples
     --------
     >>> from tempfile import TemporaryFile
@@ -502,13 +517,22 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     >>> x = np.arange(10)
     >>> np.save(outfile, x)
 
-    >>> outfile.seek(0) # Only needed here to simulate closing & reopening file
+    >>> _ = outfile.seek(0) # Only needed here to simulate closing & reopening file
     >>> np.load(outfile)
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
+
+    >>> with open('test.npy', 'wb') as f:
+    ...     np.save(f, np.array([1, 2]))
+    ...     np.save(f, np.array([1, 3]))    
+    >>> with open('test.npy', 'rb') as f:
+    ...     a = np.load(f)
+    ...     b = np.load(f)
+    >>> print(a, b)
+    # [1 2] [1 3]
     """
     own_fid = False
-    if hasattr(file, 'read'):
+    if hasattr(file, 'write'):
         fid = file
     else:
         file = os_fspath(file)
@@ -597,10 +621,10 @@ def savez(file, *args, **kwds):
     Using `savez` with \\*args, the arrays are saved with default names.
 
     >>> np.savez(outfile, x, y)
-    >>> outfile.seek(0) # Only needed here to simulate closing & reopening file
+    >>> _ = outfile.seek(0) # Only needed here to simulate closing & reopening file
     >>> npzfile = np.load(outfile)
     >>> npzfile.files
-    ['arr_1', 'arr_0']
+    ['arr_0', 'arr_1']
     >>> npzfile['arr_0']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -608,10 +632,10 @@ def savez(file, *args, **kwds):
 
     >>> outfile = TemporaryFile()
     >>> np.savez(outfile, x=x, y=y)
-    >>> outfile.seek(0)
+    >>> _ = outfile.seek(0)
     >>> npzfile = np.load(outfile)
-    >>> npzfile.files
-    ['y', 'x']
+    >>> sorted(npzfile.files)
+    ['x', 'y']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -696,7 +720,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
     # component of the so-called standard library.
     import zipfile
 
-    if not hasattr(file, 'read'):
+    if not hasattr(file, 'write'):
         file = os_fspath(file)
         if not file.endswith('.npz'):
             file = file + '.npz'
@@ -721,8 +745,8 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
         for key, val in namedict.items():
             fname = key + '.npy'
             val = np.asanyarray(val)
-            force_zip64 = val.nbytes >= 2**30
-            with zipf.open(fname, 'w', force_zip64=force_zip64) as fid:
+            # always force zip64, gh-10776
+            with zipf.open(fname, 'w', force_zip64=True) as fid:
                 format.write_array(fid, val,
                                    allow_pickle=allow_pickle,
                                    pickle_kwargs=pickle_kwargs)
@@ -829,7 +853,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         `genfromtxt`): ``converters = {3: lambda s: float(s.strip() or 0)}``.
         Default: None.
     skiprows : int, optional
-        Skip the first `skiprows` lines; default: 0.
+        Skip the first `skiprows` lines, including comments; default: 0.
     usecols : int or sequence, optional
         Which columns to read, with 0 being the first. For example,
         ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
@@ -891,21 +915,21 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> from io import StringIO   # StringIO behaves like a file object
     >>> c = StringIO(u"0 1\\n2 3")
     >>> np.loadtxt(c)
-    array([[ 0.,  1.],
-           [ 2.,  3.]])
+    array([[0., 1.],
+           [2., 3.]])
 
     >>> d = StringIO(u"M 21 72\\nF 35 58")
     >>> np.loadtxt(d, dtype={'names': ('gender', 'age', 'weight'),
     ...                      'formats': ('S1', 'i4', 'f4')})
-    array([('M', 21, 72.0), ('F', 35, 58.0)],
-          dtype=[('gender', '|S1'), ('age', '<i4'), ('weight', '<f4')])
+    array([(b'M', 21, 72.), (b'F', 35, 58.)],
+          dtype=[('gender', 'S1'), ('age', '<i4'), ('weight', '<f4')])
 
     >>> c = StringIO(u"1,0,2\\n3,0,4")
     >>> x, y = np.loadtxt(c, delimiter=',', usecols=(0, 2), unpack=True)
     >>> x
-    array([ 1.,  3.])
+    array([1., 3.])
     >>> y
-    array([ 2.,  4.])
+    array([2., 4.])
 
     """
     # Type conversions for Py3 convenience
@@ -1118,7 +1142,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     if type(x) is bytes:
                         return conv(x)
                     return conv(x.encode("latin1"))
-                import functools
                 converters[i] = functools.partial(tobytes_first, conv=conv)
             else:
                 converters[i] = conv
@@ -1376,7 +1399,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
             # Complex dtype -- each field indicates a separate column
             else:
-                ncol = len(X.dtype.descr)
+                ncol = len(X.dtype.names)
         else:
             ncol = X.shape[1]
 
@@ -1387,7 +1410,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             if len(fmt) != ncol:
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
             format = asstr(delimiter).join(map(asstr, fmt))
-        elif isinstance(fmt, str):
+        elif isinstance(fmt, basestring):
             n_fmt_chars = fmt.count('%')
             error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
             if n_fmt_chars == 1:
@@ -1481,17 +1504,17 @@ def fromregex(file, regexp, dtype, encoding=None):
     Examples
     --------
     >>> f = open('test.dat', 'w')
-    >>> f.write("1312 foo\\n1534  bar\\n444   qux")
+    >>> _ = f.write("1312 foo\\n1534  bar\\n444   qux")
     >>> f.close()
 
     >>> regexp = r"(\\d+)\\s+(...)"  # match [digits, whitespace, anything]
     >>> output = np.fromregex('test.dat', regexp,
     ...                       [('num', np.int64), ('key', 'S3')])
     >>> output
-    array([(1312L, 'foo'), (1534L, 'bar'), (444L, 'qux')],
-          dtype=[('num', '<i8'), ('key', '|S3')])
+    array([(1312, b'foo'), (1534, b'bar'), ( 444, b'qux')],
+          dtype=[('num', '<i8'), ('key', 'S3')])
     >>> output['num']
-    array([1312, 1534,  444], dtype=int64)
+    array([1312, 1534,  444])
 
     """
     own_fh = False
@@ -1537,7 +1560,8 @@ def fromregex(file, regexp, dtype, encoding=None):
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
                missing_values=None, filling_values=None, usecols=None,
-               names=None, excludelist=None, deletechars=None,
+               names=None, excludelist=None,
+               deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
                invalid_raise=True, max_rows=None, encoding='bytes'):
@@ -1674,26 +1698,26 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=[('myint','i8'),('myfloat','f8'),
     ... ('mystring','S5')], delimiter=",")
     >>> data
-    array((1, 1.3, 'abcde'),
-          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
+    array((1, 1.3, b'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', 'S5')])
 
     Using dtype = None
 
-    >>> s.seek(0) # needed for StringIO example only
+    >>> _ = s.seek(0) # needed for StringIO example only
     >>> data = np.genfromtxt(s, dtype=None,
     ... names = ['myint','myfloat','mystring'], delimiter=",")
     >>> data
-    array((1, 1.3, 'abcde'),
-          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
+    array((1, 1.3, b'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', 'S5')])
 
     Specifying dtype and names
 
-    >>> s.seek(0)
+    >>> _ = s.seek(0)
     >>> data = np.genfromtxt(s, dtype="i8,f8,S5",
     ... names=['myint','myfloat','mystring'], delimiter=",")
     >>> data
-    array((1, 1.3, 'abcde'),
-          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '|S5')])
+    array((1, 1.3, b'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', 'S5')])
 
     An example with fixed-width columns
 
@@ -1701,8 +1725,18 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data
-    array((1, 1.3, 'abcde'),
-          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '|S5')])
+    array((1, 1.3, b'abcde'),
+          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', 'S5')])
+
+    An example to show comments
+
+    >>> f = StringIO('''
+    ... text,# of chars
+    ... hello world,11
+    ... numpy,5''')
+    >>> np.genfromtxt(f, dtype='S12,S12', delimiter=',')
+    array([(b'text', b''), (b'hello world', b'11'), (b'numpy', b'5')],
+      dtype=[('f0', 'S12'), ('f1', 'S12')])
 
     """
     if max_rows is not None:
@@ -1729,301 +1763,300 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         byte_converters = False
 
     # Initialize the filehandle, the LineSplitter and the NameValidator
-    own_fhd = False
     try:
         if isinstance(fname, os_PathLike):
             fname = os_fspath(fname)
         if isinstance(fname, basestring):
-            fhd = iter(np.lib._datasource.open(fname, 'rt', encoding=encoding))
-            own_fhd = True
+            fid = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+            fid_ctx = contextlib.closing(fid)
         else:
-            fhd = iter(fname)
+            fid = fname
+            fid_ctx = contextlib_nullcontext(fid)
+        fhd = iter(fid)
     except TypeError:
         raise TypeError(
             "fname must be a string, filehandle, list of strings, "
             "or generator. Got %s instead." % type(fname))
 
-    split_line = LineSplitter(delimiter=delimiter, comments=comments,
-                              autostrip=autostrip, encoding=encoding)
-    validate_names = NameValidator(excludelist=excludelist,
-                                   deletechars=deletechars,
-                                   case_sensitive=case_sensitive,
-                                   replace_space=replace_space)
+    with fid_ctx:
+        split_line = LineSplitter(delimiter=delimiter, comments=comments,
+                                  autostrip=autostrip, encoding=encoding)
+        validate_names = NameValidator(excludelist=excludelist,
+                                       deletechars=deletechars,
+                                       case_sensitive=case_sensitive,
+                                       replace_space=replace_space)
 
-    # Skip the first `skip_header` rows
-    for i in range(skip_header):
-        next(fhd)
-
-    # Keep on until we find the first valid values
-    first_values = None
-    try:
-        while not first_values:
-            first_line = _decode_line(next(fhd), encoding)
-            if (names is True) and (comments is not None):
-                if comments in first_line:
-                    first_line = (
-                        ''.join(first_line.split(comments)[1:]))
-            first_values = split_line(first_line)
-    except StopIteration:
-        # return an empty array if the datafile is empty
-        first_line = ''
-        first_values = []
-        warnings.warn('genfromtxt: Empty input file: "%s"' % fname, stacklevel=2)
-
-    # Should we take the first values as names ?
-    if names is True:
-        fval = first_values[0].strip()
-        if comments is not None:
-            if fval in comments:
-                del first_values[0]
-
-    # Check the columns to use: make sure `usecols` is a list
-    if usecols is not None:
+        # Skip the first `skip_header` rows
         try:
-            usecols = [_.strip() for _ in usecols.split(",")]
-        except AttributeError:
+            for i in range(skip_header):
+                next(fhd)
+
+            # Keep on until we find the first valid values
+            first_values = None
+
+            while not first_values:
+                first_line = _decode_line(next(fhd), encoding)
+                if (names is True) and (comments is not None):
+                    if comments in first_line:
+                        first_line = (
+                            ''.join(first_line.split(comments)[1:]))
+                first_values = split_line(first_line)
+        except StopIteration:
+            # return an empty array if the datafile is empty
+            first_line = ''
+            first_values = []
+            warnings.warn('genfromtxt: Empty input file: "%s"' % fname, stacklevel=2)
+
+        # Should we take the first values as names ?
+        if names is True:
+            fval = first_values[0].strip()
+            if comments is not None:
+                if fval in comments:
+                    del first_values[0]
+
+        # Check the columns to use: make sure `usecols` is a list
+        if usecols is not None:
             try:
-                usecols = list(usecols)
-            except TypeError:
-                usecols = [usecols, ]
-    nbcols = len(usecols or first_values)
-
-    # Check the names and overwrite the dtype.names if needed
-    if names is True:
-        names = validate_names([str(_.strip()) for _ in first_values])
-        first_line = ''
-    elif _is_string_like(names):
-        names = validate_names([_.strip() for _ in names.split(',')])
-    elif names:
-        names = validate_names(names)
-    # Get the dtype
-    if dtype is not None:
-        dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names,
-                           excludelist=excludelist,
-                           deletechars=deletechars,
-                           case_sensitive=case_sensitive,
-                           replace_space=replace_space)
-    # Make sure the names is a list (for 2.5)
-    if names is not None:
-        names = list(names)
-
-    if usecols:
-        for (i, current) in enumerate(usecols):
-            # if usecols is a list of names, convert to a list of indices
-            if _is_string_like(current):
-                usecols[i] = names.index(current)
-            elif current < 0:
-                usecols[i] = current + len(first_values)
-        # If the dtype is not None, make sure we update it
-        if (dtype is not None) and (len(dtype) > nbcols):
-            descr = dtype.descr
-            dtype = np.dtype([descr[_] for _ in usecols])
-            names = list(dtype.names)
-        # If `names` is not None, update the names
-        elif (names is not None) and (len(names) > nbcols):
-            names = [names[_] for _ in usecols]
-    elif (names is not None) and (dtype is not None):
-        names = list(dtype.names)
-
-    # Process the missing values ...............................
-    # Rename missing_values for convenience
-    user_missing_values = missing_values or ()
-    if isinstance(user_missing_values, bytes):
-        user_missing_values = user_missing_values.decode('latin1')
-
-    # Define the list of missing_values (one column: one list)
-    missing_values = [list(['']) for _ in range(nbcols)]
-
-    # We have a dictionary: process it field by field
-    if isinstance(user_missing_values, dict):
-        # Loop on the items
-        for (key, val) in user_missing_values.items():
-            # Is the key a string ?
-            if _is_string_like(key):
+                usecols = [_.strip() for _ in usecols.split(",")]
+            except AttributeError:
                 try:
-                    # Transform it into an integer
-                    key = names.index(key)
-                except ValueError:
-                    # We couldn't find it: the name must have been dropped
-                    continue
-            # Redefine the key as needed if it's a column number
-            if usecols:
-                try:
-                    key = usecols.index(key)
-                except ValueError:
-                    pass
-            # Transform the value as a list of string
-            if isinstance(val, (list, tuple)):
-                val = [str(_) for _ in val]
-            else:
-                val = [str(val), ]
-            # Add the value(s) to the current list of missing
-            if key is None:
-                # None acts as default
-                for miss in missing_values:
-                    miss.extend(val)
-            else:
-                missing_values[key].extend(val)
-    # We have a sequence : each item matches a column
-    elif isinstance(user_missing_values, (list, tuple)):
-        for (value, entry) in zip(user_missing_values, missing_values):
-            value = str(value)
-            if value not in entry:
-                entry.append(value)
-    # We have a string : apply it to all entries
-    elif isinstance(user_missing_values, basestring):
-        user_value = user_missing_values.split(",")
-        for entry in missing_values:
-            entry.extend(user_value)
-    # We have something else: apply it to all entries
-    else:
-        for entry in missing_values:
-            entry.extend([str(user_missing_values)])
+                    usecols = list(usecols)
+                except TypeError:
+                    usecols = [usecols, ]
+        nbcols = len(usecols or first_values)
 
-    # Process the filling_values ...............................
-    # Rename the input for convenience
-    user_filling_values = filling_values
-    if user_filling_values is None:
-        user_filling_values = []
-    # Define the default
-    filling_values = [None] * nbcols
-    # We have a dictionary : update each entry individually
-    if isinstance(user_filling_values, dict):
-        for (key, val) in user_filling_values.items():
-            if _is_string_like(key):
-                try:
-                    # Transform it into an integer
-                    key = names.index(key)
-                except ValueError:
-                    # We couldn't find it: the name must have been dropped,
-                    continue
-            # Redefine the key if it's a column number and usecols is defined
-            if usecols:
-                try:
-                    key = usecols.index(key)
-                except ValueError:
-                    pass
-            # Add the value to the list
-            filling_values[key] = val
-    # We have a sequence : update on a one-to-one basis
-    elif isinstance(user_filling_values, (list, tuple)):
-        n = len(user_filling_values)
-        if (n <= nbcols):
-            filling_values[:n] = user_filling_values
-        else:
-            filling_values = user_filling_values[:nbcols]
-    # We have something else : use it for all entries
-    else:
-        filling_values = [user_filling_values] * nbcols
+        # Check the names and overwrite the dtype.names if needed
+        if names is True:
+            names = validate_names([str(_.strip()) for _ in first_values])
+            first_line = ''
+        elif _is_string_like(names):
+            names = validate_names([_.strip() for _ in names.split(',')])
+        elif names:
+            names = validate_names(names)
+        # Get the dtype
+        if dtype is not None:
+            dtype = easy_dtype(dtype, defaultfmt=defaultfmt, names=names,
+                               excludelist=excludelist,
+                               deletechars=deletechars,
+                               case_sensitive=case_sensitive,
+                               replace_space=replace_space)
+        # Make sure the names is a list (for 2.5)
+        if names is not None:
+            names = list(names)
 
-    # Initialize the converters ................................
-    if dtype is None:
-        # Note: we can't use a [...]*nbcols, as we would have 3 times the same
-        # ... converter, instead of 3 different converters.
-        converters = [StringConverter(None, missing_values=miss, default=fill)
-                      for (miss, fill) in zip(missing_values, filling_values)]
-    else:
-        dtype_flat = flatten_dtype(dtype, flatten_base=True)
-        # Initialize the converters
-        if len(dtype_flat) > 1:
-            # Flexible type : get a converter from each dtype
-            zipit = zip(dtype_flat, missing_values, filling_values)
-            converters = [StringConverter(dt, locked=True,
-                                          missing_values=miss, default=fill)
-                          for (dt, miss, fill) in zipit]
-        else:
-            # Set to a default converter (but w/ different missing values)
-            zipit = zip(missing_values, filling_values)
-            converters = [StringConverter(dtype, locked=True,
-                                          missing_values=miss, default=fill)
-                          for (miss, fill) in zipit]
-    # Update the converters to use the user-defined ones
-    uc_update = []
-    for (j, conv) in user_converters.items():
-        # If the converter is specified by column names, use the index instead
-        if _is_string_like(j):
-            try:
-                j = names.index(j)
-                i = j
-            except ValueError:
-                continue
-        elif usecols:
-            try:
-                i = usecols.index(j)
-            except ValueError:
-                # Unused converter specified
-                continue
-        else:
-            i = j
-        # Find the value to test - first_line is not filtered by usecols:
-        if len(first_line):
-            testing_value = first_values[j]
-        else:
-            testing_value = None
-        if conv is bytes:
-            user_conv = asbytes
-        elif byte_converters:
-            # converters may use decode to workaround numpy's old behaviour,
-            # so encode the string again before passing to the user converter
-            def tobytes_first(x, conv):
-                if type(x) is bytes:
-                    return conv(x)
-                return conv(x.encode("latin1"))
-            import functools
-            user_conv = functools.partial(tobytes_first, conv=conv)
-        else:
-            user_conv = conv
-        converters[i].update(user_conv, locked=True,
-                             testing_value=testing_value,
-                             default=filling_values[i],
-                             missing_values=missing_values[i],)
-        uc_update.append((i, user_conv))
-    # Make sure we have the corrected keys in user_converters...
-    user_converters.update(uc_update)
-
-    # Fixme: possible error as following variable never used.
-    # miss_chars = [_.missing_values for _ in converters]
-
-    # Initialize the output lists ...
-    # ... rows
-    rows = []
-    append_to_rows = rows.append
-    # ... masks
-    if usemask:
-        masks = []
-        append_to_masks = masks.append
-    # ... invalid
-    invalid = []
-    append_to_invalid = invalid.append
-
-    # Parse each line
-    for (i, line) in enumerate(itertools.chain([first_line, ], fhd)):
-        values = split_line(line)
-        nbvalues = len(values)
-        # Skip an empty line
-        if nbvalues == 0:
-            continue
         if usecols:
-            # Select only the columns we need
-            try:
-                values = [values[_] for _ in usecols]
-            except IndexError:
+            for (i, current) in enumerate(usecols):
+                # if usecols is a list of names, convert to a list of indices
+                if _is_string_like(current):
+                    usecols[i] = names.index(current)
+                elif current < 0:
+                    usecols[i] = current + len(first_values)
+            # If the dtype is not None, make sure we update it
+            if (dtype is not None) and (len(dtype) > nbcols):
+                descr = dtype.descr
+                dtype = np.dtype([descr[_] for _ in usecols])
+                names = list(dtype.names)
+            # If `names` is not None, update the names
+            elif (names is not None) and (len(names) > nbcols):
+                names = [names[_] for _ in usecols]
+        elif (names is not None) and (dtype is not None):
+            names = list(dtype.names)
+
+        # Process the missing values ...............................
+        # Rename missing_values for convenience
+        user_missing_values = missing_values or ()
+        if isinstance(user_missing_values, bytes):
+            user_missing_values = user_missing_values.decode('latin1')
+
+        # Define the list of missing_values (one column: one list)
+        missing_values = [list(['']) for _ in range(nbcols)]
+
+        # We have a dictionary: process it field by field
+        if isinstance(user_missing_values, dict):
+            # Loop on the items
+            for (key, val) in user_missing_values.items():
+                # Is the key a string ?
+                if _is_string_like(key):
+                    try:
+                        # Transform it into an integer
+                        key = names.index(key)
+                    except ValueError:
+                        # We couldn't find it: the name must have been dropped
+                        continue
+                # Redefine the key as needed if it's a column number
+                if usecols:
+                    try:
+                        key = usecols.index(key)
+                    except ValueError:
+                        pass
+                # Transform the value as a list of string
+                if isinstance(val, (list, tuple)):
+                    val = [str(_) for _ in val]
+                else:
+                    val = [str(val), ]
+                # Add the value(s) to the current list of missing
+                if key is None:
+                    # None acts as default
+                    for miss in missing_values:
+                        miss.extend(val)
+                else:
+                    missing_values[key].extend(val)
+        # We have a sequence : each item matches a column
+        elif isinstance(user_missing_values, (list, tuple)):
+            for (value, entry) in zip(user_missing_values, missing_values):
+                value = str(value)
+                if value not in entry:
+                    entry.append(value)
+        # We have a string : apply it to all entries
+        elif isinstance(user_missing_values, basestring):
+            user_value = user_missing_values.split(",")
+            for entry in missing_values:
+                entry.extend(user_value)
+        # We have something else: apply it to all entries
+        else:
+            for entry in missing_values:
+                entry.extend([str(user_missing_values)])
+
+        # Process the filling_values ...............................
+        # Rename the input for convenience
+        user_filling_values = filling_values
+        if user_filling_values is None:
+            user_filling_values = []
+        # Define the default
+        filling_values = [None] * nbcols
+        # We have a dictionary : update each entry individually
+        if isinstance(user_filling_values, dict):
+            for (key, val) in user_filling_values.items():
+                if _is_string_like(key):
+                    try:
+                        # Transform it into an integer
+                        key = names.index(key)
+                    except ValueError:
+                        # We couldn't find it: the name must have been dropped,
+                        continue
+                # Redefine the key if it's a column number and usecols is defined
+                if usecols:
+                    try:
+                        key = usecols.index(key)
+                    except ValueError:
+                        pass
+                # Add the value to the list
+                filling_values[key] = val
+        # We have a sequence : update on a one-to-one basis
+        elif isinstance(user_filling_values, (list, tuple)):
+            n = len(user_filling_values)
+            if (n <= nbcols):
+                filling_values[:n] = user_filling_values
+            else:
+                filling_values = user_filling_values[:nbcols]
+        # We have something else : use it for all entries
+        else:
+            filling_values = [user_filling_values] * nbcols
+
+        # Initialize the converters ................................
+        if dtype is None:
+            # Note: we can't use a [...]*nbcols, as we would have 3 times the same
+            # ... converter, instead of 3 different converters.
+            converters = [StringConverter(None, missing_values=miss, default=fill)
+                          for (miss, fill) in zip(missing_values, filling_values)]
+        else:
+            dtype_flat = flatten_dtype(dtype, flatten_base=True)
+            # Initialize the converters
+            if len(dtype_flat) > 1:
+                # Flexible type : get a converter from each dtype
+                zipit = zip(dtype_flat, missing_values, filling_values)
+                converters = [StringConverter(dt, locked=True,
+                                              missing_values=miss, default=fill)
+                              for (dt, miss, fill) in zipit]
+            else:
+                # Set to a default converter (but w/ different missing values)
+                zipit = zip(missing_values, filling_values)
+                converters = [StringConverter(dtype, locked=True,
+                                              missing_values=miss, default=fill)
+                              for (miss, fill) in zipit]
+        # Update the converters to use the user-defined ones
+        uc_update = []
+        for (j, conv) in user_converters.items():
+            # If the converter is specified by column names, use the index instead
+            if _is_string_like(j):
+                try:
+                    j = names.index(j)
+                    i = j
+                except ValueError:
+                    continue
+            elif usecols:
+                try:
+                    i = usecols.index(j)
+                except ValueError:
+                    # Unused converter specified
+                    continue
+            else:
+                i = j
+            # Find the value to test - first_line is not filtered by usecols:
+            if len(first_line):
+                testing_value = first_values[j]
+            else:
+                testing_value = None
+            if conv is bytes:
+                user_conv = asbytes
+            elif byte_converters:
+                # converters may use decode to workaround numpy's old behaviour,
+                # so encode the string again before passing to the user converter
+                def tobytes_first(x, conv):
+                    if type(x) is bytes:
+                        return conv(x)
+                    return conv(x.encode("latin1"))
+                user_conv = functools.partial(tobytes_first, conv=conv)
+            else:
+                user_conv = conv
+            converters[i].update(user_conv, locked=True,
+                                 testing_value=testing_value,
+                                 default=filling_values[i],
+                                 missing_values=missing_values[i],)
+            uc_update.append((i, user_conv))
+        # Make sure we have the corrected keys in user_converters...
+        user_converters.update(uc_update)
+
+        # Fixme: possible error as following variable never used.
+        # miss_chars = [_.missing_values for _ in converters]
+
+        # Initialize the output lists ...
+        # ... rows
+        rows = []
+        append_to_rows = rows.append
+        # ... masks
+        if usemask:
+            masks = []
+            append_to_masks = masks.append
+        # ... invalid
+        invalid = []
+        append_to_invalid = invalid.append
+
+        # Parse each line
+        for (i, line) in enumerate(itertools.chain([first_line, ], fhd)):
+            values = split_line(line)
+            nbvalues = len(values)
+            # Skip an empty line
+            if nbvalues == 0:
+                continue
+            if usecols:
+                # Select only the columns we need
+                try:
+                    values = [values[_] for _ in usecols]
+                except IndexError:
+                    append_to_invalid((i + skip_header + 1, nbvalues))
+                    continue
+            elif nbvalues != nbcols:
                 append_to_invalid((i + skip_header + 1, nbvalues))
                 continue
-        elif nbvalues != nbcols:
-            append_to_invalid((i + skip_header + 1, nbvalues))
-            continue
-        # Store the values
-        append_to_rows(tuple(values))
-        if usemask:
-            append_to_masks(tuple([v.strip() in m
-                                   for (v, m) in zip(values,
-                                                     missing_values)]))
-        if len(rows) == max_rows:
-            break
-
-    if own_fhd:
-        fhd.close()
+            # Store the values
+            append_to_rows(tuple(values))
+            if usemask:
+                append_to_masks(tuple([v.strip() in m
+                                       for (v, m) in zip(values,
+                                                         missing_values)]))
+            if len(rows) == max_rows:
+                break
 
     # Upgrade the converters (if needed)
     if dtype is None:
@@ -2223,6 +2256,12 @@ def ndfromtxt(fname, **kwargs):
     """
     Load ASCII data stored in a file and return it as a single array.
 
+    .. deprecated:: 1.17
+        ndfromtxt` is a deprecated alias of `genfromtxt` which
+        overwrites the ``usemask`` argument with `False` even when
+        explicitly called as ``ndfromtxt(..., usemask=True)``.
+        Use `genfromtxt` instead.
+
     Parameters
     ----------
     fname, kwargs : For a description of input parameters, see `genfromtxt`.
@@ -2233,12 +2272,23 @@ def ndfromtxt(fname, **kwargs):
 
     """
     kwargs['usemask'] = False
+    # Numpy 1.17
+    warnings.warn(
+        "np.ndfromtxt is a deprecated alias of np.genfromtxt, "
+        "prefer the latter.",
+        DeprecationWarning, stacklevel=2)
     return genfromtxt(fname, **kwargs)
 
 
 def mafromtxt(fname, **kwargs):
     """
     Load ASCII data stored in a text file and return a masked array.
+
+    .. deprecated:: 1.17
+        np.mafromtxt is a deprecated alias of `genfromtxt` which
+        overwrites the ``usemask`` argument with `True` even when
+        explicitly called as ``mafromtxt(..., usemask=False)``.
+        Use `genfromtxt` instead.
 
     Parameters
     ----------
@@ -2250,6 +2300,11 @@ def mafromtxt(fname, **kwargs):
 
     """
     kwargs['usemask'] = True
+    # Numpy 1.17
+    warnings.warn(
+        "np.mafromtxt is a deprecated alias of np.genfromtxt, "
+        "prefer the latter.",
+        DeprecationWarning, stacklevel=2)
     return genfromtxt(fname, **kwargs)
 
 

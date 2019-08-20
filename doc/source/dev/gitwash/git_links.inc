@@ -10,10 +10,9 @@
 
 .. git stuff
 .. _git: https://git-scm.com/
-.. _github: https://github.com
+.. _github: https://github.com/numpy/numpy
 .. _github help: https://help.github.com
-.. _msysgit: https://code.google.com/p/msysgit/downloads/list
-.. _git-osx-installer: https://code.google.com/p/git-osx-installer/downloads/list
+.. _`install it`: https://git-scm.com/downloads
 .. _subversion: http://subversion.tigris.org/
 .. _git cheat sheet: http://cheat.errtheblog.com/s/git
 .. _pro git book: https://git-scm.com/book/

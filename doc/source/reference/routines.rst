@@ -41,7 +41,7 @@ indentation.
    routines.other
    routines.padding
    routines.polynomials
-   routines.random
+   random/index
    routines.set
    routines.sort
    routines.statistics

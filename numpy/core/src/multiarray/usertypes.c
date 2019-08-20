@@ -40,19 +40,27 @@ maintainer email:  oliphant.travis@ieee.org
 
 NPY_NO_EXPORT PyArray_Descr **userdescrs=NULL;
 
-static int *
-_append_new(int *types, int insert)
+static int
+_append_new(int **p_types, int insert)
 {
     int n = 0;
     int *newtypes;
+    int *types = *p_types;
 
     while (types[n] != NPY_NOTYPE) {
         n++;
     }
     newtypes = (int *)realloc(types, (n + 2)*sizeof(int));
+    if (newtypes == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
     newtypes[n] = insert;
     newtypes[n + 1] = NPY_NOTYPE;
-    return newtypes;
+
+    /* Replace the passed-in pointer */
+    *p_types = newtypes;
+    return 0;
 }
 
 static npy_bool
@@ -247,10 +255,13 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
          */
         if (descr->f->cancastto == NULL) {
             descr->f->cancastto = (int *)malloc(1*sizeof(int));
+            if (descr->f->cancastto == NULL) {
+                PyErr_NoMemory();
+                return -1;
+            }
             descr->f->cancastto[0] = NPY_NOTYPE;
         }
-        descr->f->cancastto = _append_new(descr->f->cancastto,
-                                          totype);
+        return _append_new(&descr->f->cancastto, totype);
     }
     else {
         /* register with cancastscalarkindto */
@@ -258,6 +269,10 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
             int i;
             descr->f->cancastscalarkindto =
                 (int **)malloc(NPY_NSCALARKINDS* sizeof(int*));
+            if (descr->f->cancastscalarkindto == NULL) {
+                PyErr_NoMemory();
+                return -1;
+            }
             for (i = 0; i < NPY_NSCALARKINDS; i++) {
                 descr->f->cancastscalarkindto[i] = NULL;
             }
@@ -265,11 +280,13 @@ PyArray_RegisterCanCast(PyArray_Descr *descr, int totype,
         if (descr->f->cancastscalarkindto[scalar] == NULL) {
             descr->f->cancastscalarkindto[scalar] =
                 (int *)malloc(1*sizeof(int));
+            if (descr->f->cancastscalarkindto[scalar] == NULL) {
+                PyErr_NoMemory();
+                return -1;
+            }
             descr->f->cancastscalarkindto[scalar][0] =
                 NPY_NOTYPE;
         }
-        descr->f->cancastscalarkindto[scalar] =
-            _append_new(descr->f->cancastscalarkindto[scalar], totype);
+        return _append_new(&descr->f->cancastscalarkindto[scalar], totype);
     }
-    return 0;
 }

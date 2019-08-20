@@ -80,7 +80,10 @@ PyFortranObject_NewAsAttr(FortranDataDef* defs) { /* used for calling F90 module
     PyFortranObject *fp = NULL;
     fp = PyObject_New(PyFortranObject, &PyFortran_Type);
     if (fp == NULL) return NULL;
-    if ((fp->dict = PyDict_New())==NULL) return NULL;
+    if ((fp->dict = PyDict_New())==NULL) {
+        PyObject_Del(fp);
+        return NULL;
+    }
     fp->len = 1;
     fp->defs = defs;
     return (PyObject *)fp;
@@ -91,7 +94,7 @@ PyFortranObject_NewAsAttr(FortranDataDef* defs) { /* used for calling F90 module
 static void
 fortran_dealloc(PyFortranObject *fp) {
     Py_XDECREF(fp->dict);
-    PyMem_Del(fp);
+    PyObject_Del(fp);
 }
 
 
@@ -135,7 +138,7 @@ format_def(char *buf, Py_ssize_t size, FortranDataDef def)
 
     if (def.data == NULL) {
         static const char notalloc[] = ", not allocated";
-        if (size < sizeof(notalloc)) {
+        if ((size_t) size < sizeof(notalloc)) {
             return -1;
         }
         memcpy(p, notalloc, sizeof(notalloc));

@@ -509,6 +509,10 @@ _buffer_info_new(PyObject *obj)
     PyArray_Descr *descr = NULL;
     int err = 0;
 
+    /*
+     * Note that the buffer info is cached as pyints making them appear like
+     * unreachable lost memory to valgrind.
+     */
     info = malloc(sizeof(_buffer_info_t));
     if (info == NULL) {
         PyErr_NoMemory();
@@ -579,9 +583,11 @@ _buffer_info_new(PyObject *obj)
     err = _buffer_format_string(descr, &fmt, obj, NULL, NULL);
     Py_DECREF(descr);
     if (err != 0) {
+        free(info->shape);
         goto fail;
     }
     if (_append_char(&fmt, '\0') < 0) {
+        free(info->shape);
         goto fail;
     }
     info->format = fmt.s;
@@ -765,17 +771,6 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
             goto fail;
         }
     }
-    /*
-     * If a read-only buffer is requested on a read-write array, we return a
-     * read-write buffer, which is dubious behavior. But that's why this call
-     * is guarded by PyArray_ISWRITEABLE rather than (flags &
-     * PyBUF_WRITEABLE).
-     */
-    if (PyArray_ISWRITEABLE(self)) {
-        if (array_might_be_written(self) < 0) {
-            goto fail;
-        }
-    }
 
     if (view == NULL) {
         PyErr_SetString(PyExc_ValueError, "NULL view in getbuffer");
@@ -791,7 +786,17 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     view->buf = PyArray_DATA(self);
     view->suboffsets = NULL;
     view->itemsize = PyArray_ITEMSIZE(self);
-    view->readonly = !PyArray_ISWRITEABLE(self);
+    /*
+     * If a read-only buffer is requested on a read-write array, we return a
+     * read-write buffer as per buffer protocol.
+     * We set a requested buffer to readonly also if the array will be readonly
+     * after a deprecation. This jumps the deprecation, but avoiding the
+     * warning is not convenient here. A warning is given if a writeable
+     * buffer is requested since `PyArray_FailUnlessWriteable` is called above
+     * (and clears the `NPY_ARRAY_WARN_ON_WRITE` flag).
+     */
+    view->readonly = (!PyArray_ISWRITEABLE(self) ||
+                      PyArray_CHKFLAGS(self, NPY_ARRAY_WARN_ON_WRITE));
     view->internal = NULL;
     view->len = PyArray_NBYTES(self);
     if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT) {
