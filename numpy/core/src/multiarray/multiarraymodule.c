@@ -1271,6 +1271,13 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
     typenum = PyArray_ObjectType(op2, typenum);
 
     typec = PyArray_DescrFromType(typenum);
+    if (typec == NULL) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot find a common data type.");
+        }
+        return NULL;
+    }
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
                                         NPY_ARRAY_DEFAULT, NULL);
@@ -1338,6 +1345,13 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
     typenum = PyArray_ObjectType(op2, typenum);
 
     typec = PyArray_DescrFromType(typenum);
+    if (typec == NULL) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot find a common data type.");
+        }
+        return NULL;
+    }
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
                                             NPY_ARRAY_DEFAULT, NULL);
@@ -2242,6 +2256,13 @@ array_vdot(PyObject *NPY_UNUSED(dummy), PyObject *args)
     typenum = PyArray_ObjectType(op2, typenum);
 
     type = PyArray_DescrFromType(typenum);
+    if (type == NULL) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot find a common data type.");
+        }
+        return NULL;
+    }
     Py_INCREF(type);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, type, 0, 0, 0, NULL);
     if (ap1 == NULL) {
