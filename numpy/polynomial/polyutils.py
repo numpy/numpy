@@ -741,6 +741,7 @@ def _get_coeff_idx(shape):
     idx : array of shape (n * m, 2)
         pairs of indices to the coefficient matrix
     """
+    assert len(shape) == 2, "Expected the shape of a 2d array"
     idx = np.indices(shape)
     idx = idx.T.swapaxes(0, 1).reshape((-1, 2))
     return idx
@@ -952,13 +953,14 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None, max_degre
         x, y, norm, offset = _scale(x, y)
 
     # Calculate elements 1, x, y, x*y, x**2, y**2, ...
-    A = vander2d_f(x, y, deg)
+    lhs = vander2d_f(x, y, deg)
+    rhs = z
 
     # We only want the combinations with maximum order COMBINED power
     if max_degree is not None:
         mask = idx[:, 0] + idx[:, 1] <= int(max_degree)
         idx = idx[mask]
-        A = A[:, mask]
+        lhs = lhs[:, mask]
         order = max_degree + 1
     else:
         order = deg[0] + deg[1] + 1
@@ -970,14 +972,14 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None, max_degre
         if x.size != w.size:
             raise TypeError("expected x and w to have same length")
         w = np.ravel(w)
-        A = A * w[:, None]
-        z = z * w
+        lhs = lhs * w[:, None]
+        rhs = rhs * w
 
     if rcond is None:
         rcond = len(x)*np.finfo(x.dtype).eps
 
     # Do the actual least squares fit
-    C, resids, rank, s = np.linalg.lstsq(A, z, rcond)
+    C, resids, rank, s = np.linalg.lstsq(lhs, rhs, rcond)
 
     # Reorder coefficients into numpy compatible 2d array
     coeff = np.zeros(deg + 1, dtype=C.dtype)
