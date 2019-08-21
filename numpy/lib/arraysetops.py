@@ -213,6 +213,7 @@ def unique(ar, return_index=False, return_inverse=False,
     -----
     When an axis is specified the subarrays indexed by the axis are sorted.
     This is done by making the specified axis the first dimension of the array
+    (move the axis to the first dimension to keep the order of the other axes)
     and then flattening the subarrays in C order. The flattened subarrays are
     then viewed as a structured type with each element given a label, with the
     effect that we end up with a 1-D array of structured types that can be
