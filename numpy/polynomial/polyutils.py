@@ -885,9 +885,11 @@ def polyshift2d(coeff, offset_x, offset_y, copy=True):
     return coeff
 
 
-def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None, max_degree=None, scale=True):
+def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None,
+           max_degree=None, scale=True):
     """A simple 2D polynomial fit to data x, y, z
-    The polynomial can be evaluated with numpy.polynomial.polynomial.polyval2d
+    The polynomial can be evaluated with
+    numpy.polynomial.polynomial.polyval2d
 
     Parameters
     ----------
@@ -902,15 +904,18 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None, max_degre
     degree : {int, 2-tuple}, optional
         degree of the polynomial fit in x and y direction, by default 1
     max_degree : {int, None}, optional
-        if given the maximum combined degree of the coefficients is limited to this value, by default None
+        if given the maximum combined degree of the coefficients is
+        limited to this value, by default None
     scale : bool, optional
-        Wether to scale the input arrays x and y to mean 0 and variance 1, to avoid numerical overflows.
-        Especially useful at higher degrees. By default True.
+        Wether to scale the input arrays x and y to mean 0 and variance 1,
+        to avoid numerical overflows. Especially useful at higher degrees.
+        By default True.
 
     Returns
     -------
     coeff : array of shape (deg+1, deg+1)
-        the polynomial coefficients in numpy 2d format, i.e. coeff[i, j] for x**i * y**j
+        the polynomial coefficients in numpy 2d format,
+        i.e. coeff[i, j] for x**i * y**j
     """
     # Flatten input
     x = np.asarray(x) + 0.0
@@ -946,9 +951,10 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None, max_degre
     if deg.size == 1:
         deg = np.array([deg, deg])
     deg = deg[:2]
-    idx = _get_coeff_idx(deg+1)
+    idx = _get_coeff_idx(deg + 1)
 
-    # Scale coordinates to smaller values to avoid numerical problems at larger degrees
+    # Scale coordinates to smaller values to avoid numerical
+    # problems at larger degrees
     if scale:
         x, y, norm, offset = _scale(x, y)
 
@@ -976,7 +982,7 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None, max_degre
         rhs = rhs * w
 
     if rcond is None:
-        rcond = len(x)*np.finfo(x.dtype).eps
+        rcond = len(x) * np.finfo(x.dtype).eps
 
     # Do the actual least squares fit
     C, resids, rank, s = np.linalg.lstsq(lhs, rhs, rcond)
