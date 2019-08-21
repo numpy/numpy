@@ -3368,11 +3368,16 @@ cdef class Generator:
             the slowest, while 'cholesky' is the fastest but less robust than
             the slowest method. The method `eigh` uses eigen decomposition to
             compute A and is faster than svd but slower than cholesky.
+
+            .. versionadded:: 1.18.0
+
         use_factor : bool, optional
             If set to True then cov argument is treated as a precomputed factor
             matrix A such that `A @ A.T = cov`` holds true. This provides
             significant speedups because the factorization of cov is avoided.
             Note that when this argument is set to True, ``method`` is ignored.
+
+            .. versionadded:: 1.18.0
 
         Returns
         -------
