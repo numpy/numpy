@@ -728,7 +728,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
 def _get_coeff_idx(shape):
     """
     Get the powers of x and y corresponding to a 2d coefficient matrix
-    in the same order as the vandermode matrix,
+    in the same order as the Vandermonde matrix,
     i.e. [[0, 0], [1, 0], ...]
 
     Parameters
@@ -772,7 +772,7 @@ def _scale(*args):
     norm = [None for _ in range(n)]
     out = [None for _ in range(n)]
     for i, x in enumerate(args):
-        # need to convert to float incase its an integer
+        # need to convert to float in case its an integer
         # Also make sure its a numpy array
         x = np.asarray(x)
         if np.issubdtype(x.dtype, np.integer):
@@ -821,7 +821,7 @@ def polyscale2d(coeff, scale_x, scale_y, copy=True):
     Parameters
     ----------
     coeff : array_like
-        polynomial coefficents
+        polynomial coefficients
     scale_x : float
         scaling factor in x direction
     scale_y : float
@@ -837,7 +837,7 @@ def polyscale2d(coeff, scale_x, scale_y, copy=True):
     if copy:
         coeff = np.copy(coeff)
     idx = _get_coeff_idx(coeff.shape)
-    for k, (i, j) in enumerate(idx):
+    for i, j in idx:
         coeff[i, j] /= scale_x ** i * scale_y ** j
     return coeff
 
