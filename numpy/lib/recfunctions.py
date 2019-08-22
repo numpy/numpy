@@ -72,7 +72,7 @@ def recursive_fill_fields(input, output):
             current = input[field]
         except ValueError:
             continue
-        if current.dtype.names:
+        if current.dtype.names is not None:
             recursive_fill_fields(current, output[field])
         else:
             output[field][:len(current)] = current
@@ -139,11 +139,11 @@ def get_names(adtype):
     names = adtype.names
     for name in names:
         current = adtype[name]
-        if current.names:
+        if current.names is not None:
             listnames.append((name, tuple(get_names(current))))
         else:
             listnames.append(name)
-    return tuple(listnames) or None
+    return tuple(listnames)
 
 
 def get_names_flat(adtype):
@@ -176,9 +176,9 @@ def get_names_flat(adtype):
     for name in names:
         listnames.append(name)
         current = adtype[name]
-        if current.names:
+        if current.names is not None:
             listnames.extend(get_names_flat(current))
-    return tuple(listnames) or None
+    return tuple(listnames)
 
 
 def flatten_descr(ndtype):
@@ -215,8 +215,8 @@ def _zip_dtype(seqarrays, flatten=False):
     else:
         for a in seqarrays:
             current = a.dtype
-            if current.names and len(current.names) <= 1:
-                # special case - dtypes of 0 or 1 field are flattened
+            if current.names is not None and len(current.names) == 1:
+                # special case - dtypes of 1 field are flattened
                 newdtype.extend(_get_fieldspec(current))
             else:
                 newdtype.append(('', current))
@@ -268,7 +268,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
     names = adtype.names
     for name in names:
         current = adtype[name]
-        if current.names:
+        if current.names is not None:
             if lastname:
                 parents[name] = [lastname, ]
             else:
@@ -281,7 +281,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
             elif lastname:
                 lastparent = [lastname, ]
             parents[name] = lastparent or []
-    return parents or None
+    return parents
 
 
 def _izip_fields_flat(iterable):
@@ -435,7 +435,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
     if isinstance(seqarrays, (ndarray, np.void)):
         seqdtype = seqarrays.dtype
         # Make sure we have named fields
-        if not seqdtype.names:
+        if seqdtype.names is None:
             seqdtype = np.dtype([('', seqdtype)])
         if not flatten or _zip_dtype((seqarrays,), flatten=True) == seqdtype:
             # Minimal processing needed: just make sure everythng's a-ok
@@ -653,7 +653,7 @@ def rename_fields(base, namemapper):
         for name in ndtype.names:
             newname = namemapper.get(name, name)
             current = ndtype[name]
-            if current.names:
+            if current.names is not None:
                 newdtype.append(
                     (newname, _recursive_rename_fields(current, namemapper))
                     )
