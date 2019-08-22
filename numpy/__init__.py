@@ -168,7 +168,6 @@ else:
 
     __all__.extend(['bool', 'int', 'float', 'complex', 'object', 'unicode',
                     'str'])
-
     __all__.extend(['__version__', 'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
