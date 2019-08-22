@@ -1,5 +1,5 @@
 ============================================================
-NEP 30 — Context-local and global overrides of the NumPy API
+NEP 31 — Context-local and global overrides of the NumPy API
 ============================================================
 
 :Author: Hameer Abbasi <einstein.edison@gmail.com>
@@ -26,7 +26,8 @@ dispatch of parts of the NumPy API, including (most prominently), the ``__array_
 in NEP-13 `[4]`_, and the ``__array_function__`` protocol in NEP-18 `[2]`_, but this has shown the
 need for further protocols to be developed, including a protocol for coercion. `[5]`_. The reasons
 these overrides are needed have been extensively discussed in the references, and this NEP will not
-attempt to go into the details of why these are needed.
+attempt to go into the details of why these are needed. Another pain point requiring yet another
+protocol is the duck-array protocol. `[9]`_
 
 This NEP takes a more holistic approach: It assumes that there are parts of the API that need to be
 overridable, and that these will grow over time. It provides a general framework and a mechanism to
@@ -42,12 +43,8 @@ issue compared to the C-level dtype redesign proposed in `[7]`_, it's about
 allowing third-party dtype implementations to work with NumPy, much like third-party array
 implementations.
 
-This NEP proposes the following:
-
-* A path to adopting ``uarray`` `[1]`_ as the de-facto override mechanism the NumPy API.
-* A path to the deprecation of ``__array_function__`` `[2]`_ and ``__array_ufunc__`` `[3]`_,
-  and thus, NEPs 18 and 13 being superceded.
-* The exact specifics of how to use ``uarray`` to override the NumPy API.
+This NEP proposes the following: That ``unumpy`` `[8]`_  becomes the recommended override mechanism
+for the NumPy API.
 
 
 Detailed description
@@ -66,7 +63,7 @@ The only change this NEP proposes at its acceptance, is to make ``unumpy`` the o
 way to override NumPy. ``unumpy`` will remain a separate repository/package, and will be developed
 primarily with the input of duck-array authors and secondarily, custom dtype authors, via the usual
 GitHub workflow. There are a few reasons for this:
- 
+
 * Faster iteration in the case of bugs or issues.
 * Faster design changes, in the case of needed functionality.
 * Lower likelihood to be stuck with a bad design decision.
@@ -79,6 +76,19 @@ GitHub workflow. There are a few reasons for this:
 
 Once maturity is achieved, ``unumpy`` be moved into the NumPy organization,
 and NumPy will become the reference implementation for ``unumpy``.
+
+``unumpy`` offers a number of advantanges over the approach of defining a new protocol for every
+problem encountered: Whenever there is something requiring an override, ``unumpy`` will be able to
+offer a unified API with very minor changes. For example:
+
+* ``ufunc`` objects can be overridden via their ``__call__``, ``reduce`` and other methods.
+* ``dtype`` objects can be overridden via the dispatch/backend mechanism, going as far as to allow
+  ``np.float32`` et. al. to be overridden by overriding ``__get__``.
+* Other functions can be overridden in a similar fashion.
+* ``np.asduckarray`` goes away, and becomes ``np.array`` with a backend set.
+* The same holds for array creation functions such as ``np.zeros``, ``np.empty`` and so on.
+
+This also holds for the future: Making something overridable would require only minor changes to ``unumpy``.
 
 Related Work
 ------------
@@ -126,10 +136,7 @@ The implementation of this NEP will require the following steps:
 Backward compatibility
 ----------------------
 
-This NEP proposed a deprecation path for ``__array_function__`` and ``__array_ufunc__``.
-After the maturity of the ``unumpy`` project, as decided by the status of this NEP,
-``__array_function__`` and ``__array_ufunc__`` will be deprecated and subsequently
-removed.
+There are no backward incompatible changes proposed in this NEP.
 
 
 Alternatives
@@ -184,6 +191,10 @@ References and Footnotes
 .. _[8]:
 
 [8] unumpy: NumPy, but implementation-independent: https://unumpy.readthedocs.io
+
+.. _[9]:
+
+[9] NEP 30 — Duck Typing for NumPy Arrays - Implementation: https://www.numpy.org/neps/nep-0030-duck-array-protocol.html
 
 Copyright
 ---------
