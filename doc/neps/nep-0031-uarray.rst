@@ -2,7 +2,8 @@
 NEP 31 — Context-local and global overrides of the NumPy API
 ============================================================
 
-:Author: Hameer Abbasi <einstein.edison@gmail.com>
+:Author: Hameer Abbasi <habbasi@quansight.com>
+:Author: Ralf Gommers <rgommers@quansight.com>
 :Status: Draft
 :Type: Standards Track
 :Created: 2019-07-31
@@ -89,6 +90,13 @@ offer a unified API with very minor changes. For example:
 * The same holds for array creation functions such as ``np.zeros``, ``np.empty`` and so on.
 
 This also holds for the future: Making something overridable would require only minor changes to ``unumpy``.
+
+Another promise ``unumpy`` holds is one of default implementations. Default implementations can be provided for
+any multimethod, in terms of others. This allows one to override a large part of the NumPy API by defining
+only a small part of it.
+
+The third and last benefit is a clear way to coerce to a given backend, and a protocol for coercing not only arrays,
+but also ``dtype`` objects and ``ufunc`` objects with similar ones from other libraries.
 
 Related Work
 ------------
