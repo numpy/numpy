@@ -21,7 +21,6 @@ import pprint
 
 from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
-from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
     from io import StringIO
