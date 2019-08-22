@@ -431,6 +431,7 @@ class TestRandomDist(object):
                             [-52, 41],
                             [-48, -66]])
         assert_array_equal(actual, desired)
+        assert_raises(ValueError, random.randint, 0)
 
     def test_random_integers(self):
         random.seed(self.seed)

@@ -434,6 +434,8 @@ cdef class Generator:
 
         """
         if high is None:
+            if low <= 0:
+                raise ValueError("low must be greater than 0 when high is not given.")
             high = low
             low = 0
 

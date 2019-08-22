@@ -497,6 +497,7 @@ class TestRandomDist(object):
         actual = random.integers(-99, 99, size=(3, 2))
         desired = np.array([[-80, -56], [41, 37], [-83, -16]])
         assert_array_equal(actual, desired)
+        assert_raises(ValueError, random.integers, 0)
 
     def test_integers_masked(self):
         # Test masked rejection sampling algorithm to generate array of
