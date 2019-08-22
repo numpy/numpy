@@ -686,6 +686,21 @@ class TestRandomDist(object):
         actual = random.permutation(arr_2d)
         assert_array_equal(actual, np.atleast_2d(desired).T)
 
+        random.seed(self.seed)
+        bad_x_str = "abcd"
+        assert_raises(IndexError, random.permutation, bad_x_str)
+
+        random.seed(self.seed)
+        bad_x_float = 1.2
+        assert_raises(IndexError, random.permutation, bad_x_float)
+
+        integer_val = 10
+        desired = [9, 0, 8, 5, 1, 3, 4, 7, 6, 2]
+
+        random.seed(self.seed)
+        actual = random.permutation(integer_val)
+        assert_array_equal(actual, desired)
+
     def test_beta(self):
         random.seed(self.seed)
         actual = random.beta(.1, .9, size=(3, 2))
