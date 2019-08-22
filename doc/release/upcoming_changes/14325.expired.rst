@@ -1,0 +1,2 @@
+* ``np.testing.rand`` has been removed. This was deprecated in NumPy 1.11
+  and has been replaced by ``np.random.rand``.
