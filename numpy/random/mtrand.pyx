@@ -4134,6 +4134,7 @@ cdef class RandomState:
         out : ndarray
             Permuted sequence or array range.
 
+
         Examples
         --------
         >>> np.random.permutation(10)
@@ -4149,12 +4150,15 @@ cdef class RandomState:
                [3, 4, 5]])
 
         """
+
         if isinstance(x, (int, np.integer)):
             arr = np.arange(x)
             self.shuffle(arr)
             return arr
 
         arr = np.asarray(x)
+        if arr.ndim < 1:
+            raise IndexError("x must be an integer or at least 1-dimensional")
 
         # shuffle has fast-path for 1-d
         if arr.ndim == 1:

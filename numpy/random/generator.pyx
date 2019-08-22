@@ -3919,9 +3919,8 @@ cdef class Generator:
         permutation(x)
 
         Randomly permute a sequence, or return a permuted range.
-
         If `x` is a multi-dimensional array, it is only shuffled along its
-        first index.
+        first index. 
 
         Parameters
         ----------
@@ -3950,13 +3949,20 @@ cdef class Generator:
                [0, 1, 2],
                [3, 4, 5]])
 
+        >>> rng.permutation("abc")
+        Traceback (most recent call last):
+            ...
+        numpy.AxisError: x must be an integer or at least 1-dimensional
         """
+
         if isinstance(x, (int, np.integer)):
             arr = np.arange(x)
             self.shuffle(arr)
             return arr
 
         arr = np.asarray(x)
+        if arr.ndim < 1:
+            raise np.AxisError("x must be an integer or at least 1-dimensional")
 
         # shuffle has fast-path for 1-d
         if arr.ndim == 1:
