@@ -602,7 +602,7 @@ cdef class RandomState:
         """
 
         if high is None:
-            if low <= 0:
+            if isinstance(low, (int, np.integer)) and low <= 0:
                 raise ValueError("low must be greater than 0 when high is not given.")
             high = low
             low = 0
