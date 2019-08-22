@@ -33,7 +33,7 @@ __all__ = [
         'assert_array_equal', 'assert_array_less', 'assert_string_equal',
         'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
         'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
-        'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
+        'raises', 'rundocs', 'runstring', 'verbose', 'measure',
         'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
@@ -152,22 +152,6 @@ def gisinf(x):
         if isinstance(st, type(NotImplemented)):
             raise TypeError("isinf not supported for this type")
     return st
-
-
-@deprecate(message="numpy.testing.rand is deprecated in numpy 1.11. "
-                   "Use numpy.random.rand instead.")
-def rand(*args):
-    """Returns an array of random numbers with the given shape.
-
-    This only uses the standard library, so it is useful for testing purposes.
-    """
-    import random
-    from numpy.core import zeros, float64
-    results = zeros(args, float64)
-    f = results.flat
-    for i in range(len(f)):
-        f[i] = random.random()
-    return results
 
 
 if os.name == 'nt':
