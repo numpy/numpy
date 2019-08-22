@@ -166,6 +166,8 @@ else:
     # now that numpy modules are imported, can initialize limits
     core.getlimits._register_known_types()
 
+    __all__.extend(['bool', 'int', 'float', 'complex', 'object', 'unicode',
+                    'str'])
     __all__.extend(['__version__', 'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
@@ -182,9 +184,35 @@ else:
     oldnumeric = 'removed'
     numarray = 'removed'
 
-    # We don't actually use this ourselves anymore, but I'm not 100% sure that
-    # no-one else in the world is using it (though I hope not)
-    from .testing import Tester
+    if sys.version_info[:2] >= (3, 7):
+        # Importing Tester requires importing all of UnitTest which is not a
+        # cheap import Since it is mainly used in test suits, we lazy import it
+        # here to save on the order of 10 ms of import time for most users
+        #
+        # The previous way Tester was imported also had a side effect of adding
+        # the full `numpy.testing` namespace
+        #
+        # module level getattr is only supported in 3.7 onwards
+        # https://www.python.org/dev/peps/pep-0562/
+        def __getattr__(attr):
+            if attr == 'testing':
+                import numpy.testing as testing
+                return testing
+            elif attr == 'Tester':
+                from .testing import Tester
+                return Tester
+            else:
+                raise AttributeError(
+                    "module %s has no attribute $s".format(__name__, attr))
+
+
+        def __dir__():
+            return __all__ + ['Tester', 'testing']
+
+    else:
+        # We don't actually use this ourselves anymore, but I'm not 100% sure that
+        # no-one else in the world is using it (though I hope not)
+        from .testing import Tester
 
     # Pytest testing
     from numpy._pytesttester import PytestTester
