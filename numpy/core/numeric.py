@@ -1792,10 +1792,14 @@ def isscalar(element):
 
     Notes
     -----
-    In almost all cases ``np.ndim(x) == 0`` should be used instead of this
-    function, as that will also return true for 0d arrays. This is how
-    numpy overloads functions in the style of the ``dx`` arguments to `gradient`
-    and the ``bins`` argument to `histogram`. Some key differences:
+    If you need a stricter way to identify a *numerical* scalar, use
+    ``isinstance(x, numbers.Number)``, as that returns ``False`` for most
+    non-numerical elements such as strings.
+
+    In most cases ``np.ndim(x) == 0`` should be used instead of this function,
+    as that will also return true for 0d arrays. This is how numpy overloads
+    functions in the style of the ``dx`` arguments to `gradient` and the ``bins``
+    argument to `histogram`. Some key differences:
 
     +--------------------------------------+---------------+-------------------+
     | x                                    |``isscalar(x)``|``np.ndim(x) == 0``|
