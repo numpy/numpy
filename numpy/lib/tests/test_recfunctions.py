@@ -269,7 +269,8 @@ class TestRecFunctions(object):
         # including uniform fields with subarrays unpacked
         d = np.array([(1, [2,  3], [[ 4,  5], [ 6,  7]]),
                       (8, [9, 10], [[11, 12], [13, 14]])],
-                     dtype=[('x0', 'i4'), ('x1', ('i4', 2)), ('x2', ('i4', (2, 2)))])
+                     dtype=[('x0', 'i4'), ('x1', ('i4', 2)),
+                            ('x2', ('i4', (2, 2)))])
         dd = structured_to_unstructured(d)
         ddd = unstructured_to_structured(dd, d.dtype)
         assert_(dd.base is d)
@@ -282,6 +283,40 @@ class TestRecFunctions(object):
         res = structured_to_unstructured(arr, dtype=int)
         assert_equal(res, np.zeros((10, 6), dtype=int))
 
+
+        # test nested combinations of subarrays and structured arrays, gh-13333
+        def subarray(dt, shape):
+            return np.dtype((dt, shape))
+
+        def structured(*dts):
+            return np.dtype([('x{}'.format(i), dt) for i, dt in enumerate(dts)])
+
+        def inspect(dt, dtype=None):
+            arr = np.zeros((), dt)
+            ret = structured_to_unstructured(arr, dtype=dtype)
+            backarr = unstructured_to_structured(ret, dt)
+            return ret.shape, ret.dtype, backarr.dtype
+
+        dt = structured(subarray(structured(np.int32, np.int32), 3))
+        assert_equal(inspect(dt), ((6,), np.int32, dt))
+
+        dt = structured(subarray(subarray(np.int32, 2), 2))
+        assert_equal(inspect(dt), ((4,), np.int32, dt))
+
+        dt = structured(np.int32)
+        assert_equal(inspect(dt), ((1,), np.int32, dt))
+
+        dt = structured(np.int32, subarray(subarray(np.int32, 2), 2))
+        assert_equal(inspect(dt), ((5,), np.int32, dt))
+
+        dt = structured()
+        assert_raises(ValueError, structured_to_unstructured, np.zeros(3, dt))
+
+        # these currently don't work, but we may make it work in the future
+        assert_raises(NotImplementedError, structured_to_unstructured,
+                                           np.zeros(3, dt), dtype=np.int32)
+        assert_raises(NotImplementedError, unstructured_to_structured,
+                                           np.zeros((3,0), dtype=np.int32))
 
     def test_field_assignment_by_name(self):
         a = np.ones(2, dtype=[('a', 'i4'), ('b', 'f8'), ('c', 'u1')])
