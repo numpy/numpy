@@ -1772,19 +1772,19 @@ def _frombuffer(buf, dtype, shape, order):
 
 
 @set_module('numpy')
-def isscalar(num):
+def isscalar(element):
     """
-    Returns True if the type of `num` is a scalar type.
+    Returns True if the type of `element` is a scalar type.
 
     Parameters
     ----------
-    num : any
+    element : any
         Input argument, can be of any type and shape.
 
     Returns
     -------
     val : bool
-        True if `num` is a scalar type, False if it is not.
+        True if `element` is a scalar type, False if it is not.
 
     See Also
     --------
@@ -1843,9 +1843,9 @@ def isscalar(num):
     True
 
     """
-    return (isinstance(num, generic)
-            or type(num) in ScalarType
-            or isinstance(num, numbers.Number))
+    return (isinstance(element, generic)
+            or type(element) in ScalarType
+            or isinstance(element, numbers.Number))
 
 
 @set_module('numpy')
