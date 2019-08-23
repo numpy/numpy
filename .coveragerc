@@ -1,4 +1,4 @@
 [run]
 branch = True
-include = */numpy/*
+source = numpy
 disable_warnings = include-ignored
