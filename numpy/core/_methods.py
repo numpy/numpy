@@ -154,15 +154,3 @@ def _ptp(a, axis=None, out=None, keepdims=False):
         umr_minimum(a, axis, None, None, keepdims),
         out
     )
-
-_NDARRAY_ARRAY_FUNCTION = mu.ndarray.__array_function__
-
-def _array_function(self, func, types, args, kwargs):
-    # TODO: rewrite this in C
-    # Cannot handle items that have __array_function__ other than our own.
-    for t in types:
-        if not issubclass(t, mu.ndarray) and hasattr(t, '__array_function__'):
-            return NotImplemented
-
-    # The regular implementation can handle this, so we call it directly.
-    return func.__wrapped__(*args, **kwargs)

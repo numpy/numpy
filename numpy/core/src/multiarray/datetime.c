@@ -2468,6 +2468,9 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         *out = PyLong_AsLongLong(obj);
+        if (error_converting(*out)) {
+            return -1;
+        }
         return 0;
     }
     /* Datetime scalar */
@@ -2666,6 +2669,9 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
 
         *out = PyLong_AsLongLong(obj);
+        if (error_converting(*out)) {
+            return -1;
+        }
         return 0;
     }
     /* Timedelta scalar */
@@ -2853,6 +2859,9 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
 
         *out = PyLong_AsLongLong(obj);
+        if (error_converting(*out)) {
+            return -1;
+        }
         return 0;
     }
     else {
@@ -3822,18 +3831,26 @@ recursive_find_object_timedelta64_type(PyObject *obj,
                  * single object using [()], but not by using
                  * __getitem__(integer) approaches
                  */
-                PyObject *item, *meth, *args;
+                PyObject *item, *args;
 
-                meth = PyObject_GetAttrString(obj, "__getitem__");
-                args = Py_BuildValue("(())");
-                item = PyObject_CallObject(meth, args);
+                args = PyTuple_New(0);
+                if (args == NULL) {
+                    return 0;
+                }
+                item = PyObject_GetItem(obj, args);
+                Py_DECREF(args);
+                if (item == NULL) {
+                    return 0;
+                }
                 /*
                  * NOTE: may need other type checks here in the future
                  * for expanded 0 D datetime array conversions?
                  */
                 if (PyDelta_Check(item)) {
+                    Py_DECREF(item);
                     return delta_checker(meta);
                 }
+                Py_DECREF(item);
             }
         }
     }

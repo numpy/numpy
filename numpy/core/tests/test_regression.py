@@ -46,7 +46,7 @@ class TestRegression(object):
             assert_array_equal(a, b)
 
     def test_typeNA(self):
-        # Issue gh-515 
+        # Issue gh-515
         with suppress_warnings() as sup:
             sup.filter(np.VisibleDeprecationWarning)
             assert_equal(np.typeNA[np.int64], 'Int64')
@@ -99,7 +99,7 @@ class TestRegression(object):
             f = BytesIO()
             pickle.dump(ca, f, protocol=proto)
             f.seek(0)
-            ca = np.load(f)
+            ca = np.load(f, allow_pickle=True)
             f.close()
 
     def test_noncontiguous_fill(self):
@@ -2411,7 +2411,47 @@ class TestRegression(object):
             if HAS_REFCOUNT:
                 assert_(base <= sys.getrefcount(s))
 
+    @pytest.mark.parametrize('val', [
+        # arrays and scalars
+        np.ones((10, 10), dtype='int32'),
+        np.uint64(10),
+        ])
+    @pytest.mark.parametrize('protocol',
+        range(2, pickle.HIGHEST_PROTOCOL + 1)
+        )
+    def test_pickle_module(self, protocol, val):
+        # gh-12837
+        s = pickle.dumps(val, protocol)
+        assert b'_multiarray_umath' not in s
+        if protocol == 5 and len(val.shape) > 0:
+            # unpickling ndarray goes through _frombuffer for protocol 5
+            assert b'numpy.core.numeric' in s
+        else:
+            assert b'numpy.core.multiarray' in s
+
     def test_object_casting_errors(self):
         # gh-11993
         arr = np.array(['AAAAA', 18465886.0, 18465886.0], dtype=object)
         assert_raises(TypeError, arr.astype, 'c8')
+
+    def test_eff1d_casting(self):
+        # gh-12711
+        x = np.array([1, 2, 4, 7, 0], dtype=np.int16)
+        res = np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))
+        assert_equal(res, [-99,   1,   2,   3,  -7,  88,  99])
+        assert_raises(ValueError, np.ediff1d, x, to_begin=(1<<20))
+        assert_raises(ValueError, np.ediff1d, x, to_end=(1<<20))
+
+    def test_pickle_datetime64_array(self):
+        # gh-12745 (would fail with pickle5 installed)
+        d = np.datetime64('2015-07-04 12:59:59.50', 'ns')
+        arr = np.array([d])
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            dumped = pickle.dumps(arr, protocol=proto)
+            assert_equal(pickle.loads(dumped), arr)
+
+    def test_bad_array_interface(self):
+        class T(object):
+            __array_interface__ = {}
+
+        np.array([T()])

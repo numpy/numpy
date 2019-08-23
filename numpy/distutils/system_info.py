@@ -126,6 +126,8 @@ import os
 import re
 import copy
 import warnings
+import subprocess
+
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
@@ -153,6 +155,7 @@ from numpy.distutils.misc_util import (is_sequence, is_string,
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
 from numpy.distutils import customized_ccompiler
+from numpy.distutils import _shell_utils
 import distutils.ccompiler
 import tempfile
 import shutil
@@ -162,6 +165,17 @@ import shutil
 import platform
 _bits = {'32bit': 32, '64bit': 64}
 platform_bits = _bits[platform.architecture()[0]]
+
+
+def _c_string_literal(s):
+    """
+    Convert a python string into a literal suitable for inclusion into C code
+    """
+    # only these three characters are forbidden in C strings
+    s = s.replace('\\', r'\\')
+    s = s.replace('"',  r'\"')
+    s = s.replace('\n', r'\n')
+    return '"{}"'.format(s)
 
 
 def libpaths(paths, bits):
@@ -286,13 +300,12 @@ else:
             default_x11_include_dirs.extend(['/usr/lib/X11/include',
                                              '/usr/include/X11'])
 
-    import subprocess as sp
     tmp = None
     try:
         # Explicitly open/close file to avoid ResourceWarning when
         # tests are run in debug mode Python 3.
         tmp = open(os.devnull, 'w')
-        p = sp.Popen(["gcc", "-print-multiarch"], stdout=sp.PIPE,
+        p = subprocess.Popen(["gcc", "-print-multiarch"], stdout=subprocess.PIPE,
                      stderr=tmp)
     except (OSError, DistutilsError):
         # OSError if gcc is not installed, or SandboxViolation (DistutilsError
@@ -608,8 +621,9 @@ class system_info(object):
         for key in ['extra_compile_args', 'extra_link_args']:
             # Get values
             opt = self.cp.get(self.section, key)
+            opt = _shell_utils.NativeParser.split(opt)
             if opt:
-                tmp = {key : [opt]}
+                tmp = {key: opt}
                 dict_append(info, **tmp)
         return info
 
@@ -1497,7 +1511,7 @@ Make sure that -lgfortran is used for C++ extensions.
             atlas_version = os.environ.get('ATLAS_VERSION', None)
         if atlas_version:
             dict_append(info, define_macros=[(
-                'ATLAS_INFO', '"\\"%s\\""' % atlas_version)
+                'ATLAS_INFO', _c_string_literal(atlas_version))
             ])
         else:
             dict_append(info, define_macros=[('NO_ATLAS_INFO', -1)])
@@ -1518,7 +1532,7 @@ Make sure that -lgfortran is used for C++ extensions.
         dict_append(info, define_macros=[('NO_ATLAS_INFO', -2)])
     else:
         dict_append(info, define_macros=[(
-            'ATLAS_INFO', '"\\"%s\\""' % atlas_version)
+            'ATLAS_INFO', _c_string_literal(atlas_version))
         ])
     result = _cached_atlas_version[key] = atlas_version, info
     return result
@@ -2063,7 +2077,7 @@ class _numpy_info(system_info):
             if vrs is None:
                 continue
             macros = [(self.modulename.upper() + '_VERSION',
-                      '"\\"%s\\""' % (vrs)),
+                      _c_string_literal(vrs)),
                       (self.modulename.upper(), None)]
             break
         dict_append(info, define_macros=macros)
@@ -2268,7 +2282,7 @@ class _pkg_config_info(system_info):
         version = self.get_config_output(config_exe, self.version_flag)
         if version:
             macros.append((self.__class__.__name__.split('.')[-1].upper(),
-                           '"\\"%s\\""' % (version)))
+                           _c_string_literal(version)))
             if self.version_macro_name:
                 macros.append((self.version_macro_name + '_%s'
                                % (version.replace('.', '_')), None))

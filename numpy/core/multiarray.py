@@ -7,6 +7,7 @@ by importing from the extension module.
 """
 
 import functools
+import sys
 import warnings
 
 from . import overrides
@@ -15,7 +16,7 @@ import numpy as np
 from numpy.core._multiarray_umath import *
 from numpy.core._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity
+    _ARRAY_API, _monotonicity, _get_ndarray_c_version
     )
 
 __all__ = [
@@ -30,15 +31,21 @@ __all__ = [
     'count_nonzero', 'c_einsum', 'datetime_as_string', 'datetime_data',
     'digitize', 'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
-    'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'getbuffer', 'inner',
+    'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'inner',
     'int_asbuffer', 'interp', 'interp_complex', 'is_busday', 'lexsort',
     'matmul', 'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer',
-    'nested_iters', 'newbuffer', 'normalize_axis_index', 'packbits',
+    'nested_iters', 'normalize_axis_index', 'packbits',
     'promote_types', 'putmask', 'ravel_multi_index', 'result_type', 'scalar',
     'set_datetimeparse_function', 'set_legacy_print_mode', 'set_numeric_ops',
     'set_string_function', 'set_typeDict', 'shares_memory', 'test_interrupt',
     'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
     'where', 'zeros']
+if sys.version_info.major < 3:
+    __all__ += ['newbuffer', 'getbuffer']
+
+# For backward compatibility, make sure pickle imports these functions from here
+_reconstruct.__module__ = 'numpy.core.multiarray'
+scalar.__module__ = 'numpy.core.multiarray'
 
 
 arange.__module__ = 'numpy'
@@ -211,9 +218,11 @@ def concatenate(arrays, axis=None, out=None):
            fill_value=999999)
 
     """
-    for array in arrays:
-        yield array
-    yield out
+    if out is not None:
+        # optimize for the typical case where only arrays is provided
+        arrays = list(arrays)
+        arrays.append(out)
+    return arrays
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.inner)
@@ -483,11 +492,15 @@ def can_cast(from_, to, casting=None):
 
     Notes
     -----
-    Starting in NumPy 1.9, can_cast function now returns False in 'safe'
-    casting mode for integer/float dtype and string dtype if the string dtype
-    length is not long enough to store the max integer/float value converted
-    to a string. Previously can_cast in 'safe' mode returned True for
-    integer/float dtype and a string dtype of any length.
+    .. versionchanged:: 1.17.0
+       Casting between a simple data type and a structured one is possible only
+       for "unsafe" casting.  Casting to multiple fields is allowed, but
+       casting from multiple fields is not.
+
+    .. versionchanged:: 1.9.0
+       Casting from numeric to string types in 'safe' casting mode requires
+       that the string dtype length is long enough to store the maximum
+       integer/float value converted.
 
     See also
     --------

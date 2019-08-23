@@ -918,7 +918,17 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
 
 def _histogramdd_dispatcher(sample, bins=None, range=None, normed=None,
                             weights=None, density=None):
-    return (sample, bins, weights)
+    if hasattr(sample, 'shape'):  # same condition as used in histogramdd
+        yield sample
+    else:
+        for s in sample:
+            yield s
+    try:
+        for b in bins:
+            yield b
+    except TypeError:
+        pass
+    yield weights
 
 
 @array_function_dispatch(_histogramdd_dispatcher)

@@ -328,6 +328,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         } else {
             Py_XDECREF(values);
             Py_XDECREF(mask);
+            PyArray_ResolveWritebackIfCopy(array);
             Py_XDECREF(array);
             Py_RETURN_NONE;
         }
@@ -358,6 +359,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
  fail:
     Py_XDECREF(mask);
+    PyArray_ResolveWritebackIfCopy(array);
     Py_XDECREF(array);
     Py_XDECREF(values);
     return NULL;
@@ -1575,6 +1577,7 @@ pack_bits(PyObject *input, int axis)
     if (!PyArray_ISBOOL(inp) && !PyArray_ISINTEGER(inp)) {
         PyErr_SetString(PyExc_TypeError,
                 "Expected an input array of integer or boolean data type");
+        Py_DECREF(inp);
         goto fail;
     }
 
@@ -1682,6 +1685,7 @@ unpack_bits(PyObject *input, int axis)
     if (PyArray_TYPE(inp) != NPY_UBYTE) {
         PyErr_SetString(PyExc_TypeError,
                 "Expected an input array of unsigned byte data type");
+        Py_DECREF(inp);
         goto fail;
     }
 

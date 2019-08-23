@@ -335,10 +335,9 @@ structured datatype has just a single field::
  >>> onefield = np.zeros(2, dtype=[('A', 'i4')])
  >>> nostruct = np.zeros(2, dtype='i4')
  >>> nostruct[:] = twofield
- ValueError: Can't cast from structure to non-structure, except if the structure only has a single field.
- >>> nostruct[:] = onefield
- >>> nostruct
- array([0, 0], dtype=int32)
+ Traceback (most recent call last):
+ ...
+ TypeError: Cannot cast scalar from dtype([('A', '<i4'), ('B', '<i4')]) to dtype('int32') according to the rule 'unsafe'
 
 Assignment from other Structured Arrays
 ```````````````````````````````````````
@@ -396,6 +395,15 @@ typically a non-structured array, except in the case of nested structures.
 
  >>> y.dtype, y.shape, y.strides
  (dtype('float32'), (2,), (12,))
+
+If the accessed field is a subarray, the dimensions of the subarray
+are appended to the shape of the result::
+
+   >>> x = np.zeros((2,2), dtype=[('a', np.int32), ('b', np.float64, (3,3))])
+   >>> x['a'].shape
+   (2, 2)
+   >>> x['b'].shape
+   (2, 2, 3, 3)
 
 Accessing Multiple Fields
 ```````````````````````````

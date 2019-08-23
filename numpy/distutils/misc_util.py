@@ -1833,22 +1833,16 @@ class Configuration(object):
     def _get_svn_revision(self, path):
         """Return path's SVN revision number.
         """
-        revision = None
-        m = None
-        cwd =  os.getcwd()
         try:
-            os.chdir(path or '.')
-            p = subprocess.Popen(['svnversion'], shell=True,
-                    stdout=subprocess.PIPE, stderr=None,
-                    close_fds=True)
-            sout = p.stdout
-            m = re.match(r'(?P<revision>\d+)', sout.read())
-        except Exception:
+            output = subprocess.check_output(
+                ['svnversion'], shell=True, cwd=path)
+        except (subprocess.CalledProcessError, OSError):
             pass
-        os.chdir(cwd)
-        if m:
-            revision = int(m.group('revision'))
-            return revision
+        else:
+            m = re.match(br'(?P<revision>\d+)', output)
+            if m:
+                return int(m.group('revision'))
+
         if sys.platform=='win32' and os.environ.get('SVN_ASP_DOT_NET_HACK', None):
             entries = njoin(path, '_svn', 'entries')
         else:
@@ -1860,32 +1854,26 @@ class Configuration(object):
             if fstr[:5] == '<?xml':  # pre 1.4
                 m = re.search(r'revision="(?P<revision>\d+)"', fstr)
                 if m:
-                    revision = int(m.group('revision'))
+                    return int(m.group('revision'))
             else:  # non-xml entries file --- check to be sure that
                 m = re.search(r'dir[\n\r]+(?P<revision>\d+)', fstr)
                 if m:
-                    revision = int(m.group('revision'))
-        return revision
+                    return int(m.group('revision'))
+        return None
 
     def _get_hg_revision(self, path):
         """Return path's Mercurial revision number.
         """
-        revision = None
-        m = None
-        cwd =  os.getcwd()
         try:
-            os.chdir(path or '.')
-            p = subprocess.Popen(['hg identify --num'], shell=True,
-                    stdout=subprocess.PIPE, stderr=None,
-                    close_fds=True)
-            sout = p.stdout
-            m = re.match(r'(?P<revision>\d+)', sout.read())
-        except Exception:
+            output = subprocess.check_output(
+                ['hg identify --num'], shell=True, cwd=path)
+        except (subprocess.CalledProcessError, OSError):
             pass
-        os.chdir(cwd)
-        if m:
-            revision = int(m.group('revision'))
-            return revision
+        else:
+            m = re.match(br'(?P<revision>\d+)', output)
+            if m:
+                return int(m.group('revision'))
+
         branch_fn = njoin(path, '.hg', 'branch')
         branch_cache_fn = njoin(path, '.hg', 'branch.cache')
 
@@ -1906,8 +1894,9 @@ class Configuration(object):
                     continue
                 branch_map[branch1] = revision1
 
-            revision = branch_map.get(branch0)
-        return revision
+            return branch_map.get(branch0)
+
+        return None
 
 
     def get_version(self, version_file=None, version_variable=None):

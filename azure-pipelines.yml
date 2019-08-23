@@ -6,9 +6,9 @@ trigger:
       - master
       - maintenance/*
 jobs:
-- job: Linux_Python_36_32bit_full
+- job: Linux_Python_36_32bit_full_with_asserts
   pool:
-    vmIMage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-16.04'
   steps:
   - script: |
            docker pull i386/ubuntu:bionic
@@ -19,6 +19,7 @@ jobs:
            pip3 install setuptools nose cython==0.29.0 pytest pytz pickle5 && \
            apt-get -y install libopenblas-dev gfortran && \
            NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1 \
+           F77=gfortran-5 F90=gfortran-5 CFLAGS=-UNDEBUG \
            python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
   - task: PublishTestResults@2
@@ -34,7 +35,7 @@ jobs:
     # the docs even though i.e., numba uses another in their
     # azure config for mac os -- Microsoft has indicated
     # they will patch this issue
-    vmIMage: macOS-10.13
+    vmImage: macOS-10.13
   steps:
   # the @0 refers to the (major) version of the *task* on Microsoft's
   # end, not the order in the build matrix nor anything to do
@@ -52,7 +53,7 @@ jobs:
   # two C compilers, but with homebrew looks like we're
   # now stuck getting the full gcc toolchain instead of
   # just pulling in gfortran
-  - script: brew install gcc
+  - script: HOMEBREW_NO_AUTO_UPDATE=1 brew install gcc
     displayName: 'make gfortran available on mac os vm'
   - script: python -m pip install --upgrade pip setuptools wheel
     displayName: 'Install tools'
@@ -84,7 +85,7 @@ jobs:
       testRunTitle: 'Publish test results for Python $(python.version)'
 - job: Windows
   pool:
-    vmIMage: 'VS2017-Win2016'
+    vmImage: 'VS2017-Win2016'
   variables:
       # openblas URLs from numpy-wheels
       # appveyor / Windows config
@@ -159,7 +160,7 @@ jobs:
       cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target
     displayName: 'Download / Install OpenBLAS'
   - powershell: |
-      choco install -y mingw --forcex86 --force
+      choco install -y mingw --forcex86 --force --version=5.3.0
     displayName: 'Install 32-bit mingw for 32-bit builds'
     condition: eq(variables['BITS'], 32)
   - script: python -m pip install cython nose pytz pytest
@@ -182,9 +183,31 @@ jobs:
           pip install $_.FullName
       }
     displayName: 'Build NumPy'
+  - bash: |
+      pushd . && cd .. && target=$(python -c "import numpy, os; print(os.path.abspath(os.path.join(os.path.dirname(numpy.__file__), '.libs')))") && popd
+      pip download -d destination --only-binary --no-deps numpy==1.14
+      cd destination && unzip numpy*.whl && cp numpy/.libs/*.dll $target
+      ls $target
+    displayName: 'Add extraneous & older DLL to numpy/.libs to probe DLL handling robustness'
+    condition: eq(variables['PYTHON_VERSION'], '3.6')
+  - script: pushd . && cd .. && python -c "from ctypes import windll; windll.kernel32.SetDefaultDllDirectories(0x00000800); import numpy" && popd
+    displayName: 'For gh-12667; Windows DLL resolution'
   - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run NumPy Test Suite'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for Python $(python.version)'
+
+- job: Linux_PyPy
+  pool:
+    vmIMage: 'ubuntu-16.04'
+  steps:
+  - script: source tools/pypy-test.sh
+    displayName: 'Run PyPy Build / Tests'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for PyPy'
+      failTaskOnFailedTests: true

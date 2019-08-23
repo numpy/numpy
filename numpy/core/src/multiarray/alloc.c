@@ -25,10 +25,14 @@
 
 #include <assert.h>
 
-#ifdef HAVE_SYS_MMAN_H
+#ifdef NPY_OS_LINUX
 #include <sys/mman.h>
-#if defined MADV_HUGEPAGE && defined HAVE_MADVISE
-#define HAVE_MADV_HUGEPAGE
+#ifndef MADV_HUGEPAGE
+/*
+ * Use code 14 (MADV_HUGEPAGE) if it isn't defined. This gives a chance of
+ * enabling huge pages even if built with linux kernel < 2.6.38
+ */
+#define MADV_HUGEPAGE 14
 #endif
 #endif
 
@@ -74,11 +78,15 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
 #ifdef _PyPyGC_AddMemoryPressure
         _PyPyPyGC_AddMemoryPressure(nelem * esz);
 #endif
-#ifdef HAVE_MADV_HUGEPAGE
+#ifdef NPY_OS_LINUX
         /* allow kernel allocating huge pages for large arrays */
         if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u)))) {
             npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
             npy_uintp length = nelem * esz - offset;
+            /**
+             * Intentionally not checking for errors that may be returned by
+             * older kernel versions; optimistically tries enabling huge pages.
+             */
             madvise((void*)((npy_uintp)p + offset), length, MADV_HUGEPAGE);
         }
 #endif

@@ -3063,8 +3063,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     Py_XDECREF(axis);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
+    PyArray_free(remap_axis_memory);
+    PyArray_free(remap_axis);
 
-    NPY_UF_DBG_PRINT1("Returning code %d\n", reval);
+    NPY_UF_DBG_PRINT1("Returning code %d\n", retval);
 
     return retval;
 
@@ -5279,6 +5281,8 @@ ufunc_dealloc(PyUFuncObject *ufunc)
 {
     PyArray_free(ufunc->core_num_dims);
     PyArray_free(ufunc->core_dim_ixs);
+    PyArray_free(ufunc->core_dim_sizes);
+    PyArray_free(ufunc->core_dim_flags);
     PyArray_free(ufunc->core_offsets);
     PyArray_free(ufunc->core_signature);
     PyArray_free(ufunc->ptr);
@@ -5497,7 +5501,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
-    int i;
+    npy_intp i;
     int nop;
 
     /* override vars */

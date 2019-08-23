@@ -87,7 +87,7 @@ class RoundtripTest(object):
 
         """
         save_kwds = kwargs.get('save_kwds', {})
-        load_kwds = kwargs.get('load_kwds', {})
+        load_kwds = kwargs.get('load_kwds', {"allow_pickle": True})
         file_on_disk = kwargs.get('file_on_disk', False)
 
         if file_on_disk:
@@ -347,12 +347,22 @@ class TestSaveTxt(object):
         assert_raises(ValueError, np.savetxt, c, np.array(1))
         assert_raises(ValueError, np.savetxt, c, np.array([[[1], [2]]]))
 
-    def test_record(self):
+    def test_structured(self):
         a = np.array([(1, 2), (3, 4)], dtype=[('x', 'i4'), ('y', 'i4')])
         c = BytesIO()
         np.savetxt(c, a, fmt='%d')
         c.seek(0)
         assert_equal(c.readlines(), [b'1 2\n', b'3 4\n'])
+
+    def test_structured_padded(self):
+        # gh-13297
+        a = np.array([(1, 2, 3),(4, 5, 6)], dtype=[
+            ('foo', 'i4'), ('bar', 'i4'), ('baz', 'i4')
+        ])
+        c = BytesIO()
+        np.savetxt(c, a[['foo', 'baz']], fmt='%d')
+        c.seek(0)
+        assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
 
     @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
     def test_multifield_view(self):

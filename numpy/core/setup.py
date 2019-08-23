@@ -680,7 +680,9 @@ def configuration(parent_package='',top_path=None):
                        ]
 
     # Must be true for CRT compilers but not MinGW/cygwin. See gh-9977.
-    is_msvc = platform.system() == 'Windows'
+    # Intel and Clang also don't seem happy with /GL
+    is_msvc = (platform.platform().startswith('Windows') and
+               platform.python_compiler().startswith('MS'))
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib',
@@ -775,6 +777,7 @@ def configuration(parent_package='',top_path=None):
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
+            join('src', 'multiarray', 'arrayfunction_override.h'),
             join('src', 'multiarray', 'buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
@@ -827,6 +830,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'arraytypes.c.src'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
             join('src', 'multiarray', 'array_assign_array.c'),
+            join('src', 'multiarray', 'arrayfunction_override.c'),
             join('src', 'multiarray', 'buffer.c'),
             join('src', 'multiarray', 'calculation.c'),
             join('src', 'multiarray', 'compiled_base.c'),

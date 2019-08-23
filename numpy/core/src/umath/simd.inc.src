@@ -32,13 +32,7 @@
 #include <float.h>
 #include <string.h> /* for memcpy */
 
-#if defined __AVX512F__
-#define VECTOR_SIZE_BYTES 64
-#elif defined __AVX2__
-#define VECTOR_SIZE_BYTES 32
-#else
 #define VECTOR_SIZE_BYTES 16
-#endif
 
 static NPY_INLINE npy_uintp
 abs_ptrdiff(char *a, char *b)
@@ -190,17 +184,24 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
     @type@ * ip2 = (@type@ *)args[1];
     @type@ * op = (@type@ *)args[2];
     npy_intp n = dimensions[0];
+#if defined __AVX512F__
+    const npy_intp vector_size_bytes = 64;
+#elif defined __AVX2__
+    const npy_intp vector_size_bytes = 32;
+#else
+    const npy_intp vector_size_bytes = 32;
+#endif
     /* argument one scalar */
-    if (IS_BLOCKABLE_BINARY_SCALAR1(sizeof(@type@), VECTOR_SIZE_BYTES)) {
+    if (IS_BLOCKABLE_BINARY_SCALAR1(sizeof(@type@), vector_size_bytes)) {
         sse2_binary_scalar1_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
     /* argument two scalar */
-    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), VECTOR_SIZE_BYTES)) {
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), vector_size_bytes)) {
         sse2_binary_scalar2_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
-    else if (IS_BLOCKABLE_BINARY(sizeof(@type@), VECTOR_SIZE_BYTES)) {
+    else if (IS_BLOCKABLE_BINARY(sizeof(@type@), vector_size_bytes)) {
         sse2_binary_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
@@ -427,19 +428,20 @@ static void
 sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
 #ifdef  __AVX512F__
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    const npy_intp vector_size_bytes = 64;
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[i] @OP@ ip2[i];
     /* lots of specializations, to squeeze out max performance */
-    if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES) && npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
+    if (npy_is_aligned(&ip1[i], vector_size_bytes) && npy_is_aligned(&ip2[i], vector_size_bytes)) {
         if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
                 @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, a);
                 @vpre512@_store_@vsuf@(&op[i], c);
             }
         }
         else {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
                 @vtype512@ b = @vpre512@_load_@vsuf@(&ip2[i]);
                 @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
@@ -447,16 +449,16 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
             }
         }
     }
-    else if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    else if (npy_is_aligned(&ip1[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
             @vtype512@ b = @vpre512@_loadu_@vsuf@(&ip2[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
             @vpre512@_store_@vsuf@(&op[i], c);
         }
     }
-    else if (npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    else if (npy_is_aligned(&ip2[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
             @vtype512@ b = @vpre512@_load_@vsuf@(&ip2[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
@@ -465,14 +467,14 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
     }
     else {
         if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
                 @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, a);
                 @vpre512@_store_@vsuf@(&op[i], c);
             }
         }
         else {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
                 @vtype512@ b = @vpre512@_loadu_@vsuf@(&ip2[i]);
                 @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
@@ -481,20 +483,21 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
         }
     }
 #elif __AVX2__
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    const npy_intp vector_size_bytes = 32;
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[i] @OP@ ip2[i];
     /* lots of specializations, to squeeze out max performance */
-    if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES) &&
-            npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
+    if (npy_is_aligned(&ip1[i], vector_size_bytes) &&
+            npy_is_aligned(&ip2[i], vector_size_bytes)) {
         if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
                 @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, a);
                 @vpre256@_store_@vsuf@(&op[i], c);
             }
         }
         else {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
                 @vtype256@ b = @vpre256@_load_@vsuf@(&ip2[i]);
                 @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
@@ -502,16 +505,16 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
             }
         }
     }
-    else if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    else if (npy_is_aligned(&ip1[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
             @vtype256@ b = @vpre256@_loadu_@vsuf@(&ip2[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
             @vpre256@_store_@vsuf@(&op[i], c);
         }
     }
-    else if (npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    else if (npy_is_aligned(&ip2[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
             @vtype256@ b = @vpre256@_load_@vsuf@(&ip2[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
@@ -520,14 +523,14 @@ sse2_binary_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
     }
     else {
         if (ip1 == ip2) {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
                 @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, a);
                 @vpre256@_store_@vsuf@(&op[i], c);
             }
         }
         else {
-            LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+            LOOP_BLOCKED(@type@, vector_size_bytes) {
                 @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
                 @vtype256@ b = @vpre256@_loadu_@vsuf@(&ip2[i]);
                 @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
@@ -601,18 +604,19 @@ static void
 sse2_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
 #ifdef __AVX512F__
+    const npy_intp vector_size_bytes = 64;
     const @vtype512@ a = @vpre512@_set1_@vsuf@(ip1[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[0] @OP@ ip2[i];
-    if (npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    if (npy_is_aligned(&ip2[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ b = @vpre512@_load_@vsuf@(&ip2[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
             @vpre512@_store_@vsuf@(&op[i], c);
         }
     }
     else {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ b = @vpre512@_loadu_@vsuf@(&ip2[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
             @vpre512@_store_@vsuf@(&op[i], c);
@@ -621,18 +625,19 @@ sse2_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
 
 
 #elif __AVX2__
+    const npy_intp vector_size_bytes = 32;
     const @vtype256@ a = @vpre256@_set1_@vsuf@(ip1[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[0] @OP@ ip2[i];
-    if (npy_is_aligned(&ip2[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    if (npy_is_aligned(&ip2[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ b = @vpre256@_load_@vsuf@(&ip2[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
             @vpre256@_store_@vsuf@(&op[i], c);
         }
     }
     else {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ b = @vpre256@_loadu_@vsuf@(&ip2[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
             @vpre256@_store_@vsuf@(&op[i], c);
@@ -667,18 +672,19 @@ static void
 sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
 #ifdef __AVX512F__
+    const npy_intp vector_size_bytes = 64;
     const @vtype512@ b = @vpre512@_set1_@vsuf@(ip2[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[i] @OP@ ip2[0];
-    if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    if (npy_is_aligned(&ip1[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ a = @vpre512@_load_@vsuf@(&ip1[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
             @vpre512@_store_@vsuf@(&op[i], c);
         }
     }
     else {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype512@ a = @vpre512@_loadu_@vsuf@(&ip1[i]);
             @vtype512@ c = @vpre512@_@VOP@_@vsuf@(a, b);
             @vpre512@_store_@vsuf@(&op[i], c);
@@ -686,18 +692,19 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
     }
 
 #elif __AVX2__
+    const npy_intp vector_size_bytes = 32;
     const @vtype256@ b = @vpre256@_set1_@vsuf@(ip2[0]);
-    LOOP_BLOCK_ALIGN_VAR(op, @type@, VECTOR_SIZE_BYTES)
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, vector_size_bytes)
         op[i] = ip1[i] @OP@ ip2[0];
-    if (npy_is_aligned(&ip1[i], VECTOR_SIZE_BYTES)) {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+    if (npy_is_aligned(&ip1[i], vector_size_bytes)) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ a = @vpre256@_load_@vsuf@(&ip1[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
             @vpre256@_store_@vsuf@(&op[i], c);
         }
     }
     else {
-        LOOP_BLOCKED(@type@, VECTOR_SIZE_BYTES) {
+        LOOP_BLOCKED(@type@, vector_size_bytes) {
             @vtype256@ a = @vpre256@_loadu_@vsuf@(&ip1[i]);
             @vtype256@ c = @vpre256@_@VOP@_@vsuf@(a, b);
             @vpre256@_store_@vsuf@(&op[i], c);
@@ -1029,7 +1036,8 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
 {
     const npy_intp stride = VECTOR_SIZE_BYTES / (npy_intp)sizeof(@type@);
     LOOP_BLOCK_ALIGN_VAR(ip, @type@, VECTOR_SIZE_BYTES) {
-        *op = (npy_isnan(*op) || *op @OP@ ip[i]) ? *op : ip[i];
+        /* Order of operations important for MSVC 2015 */
+        *op = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
     assert(n < (stride) || npy_is_aligned(&ip[i], VECTOR_SIZE_BYTES));
     if (i + 3 * stride <= n) {
@@ -1053,11 +1061,13 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
         }
         else {
             @type@ tmp = sse2_horizontal_@VOP@_@vtype@(c1);
-            *op  = (npy_isnan(*op) || *op @OP@ tmp) ? *op : tmp;
+            /* Order of operations important for MSVC 2015 */
+            *op  = (*op @OP@ tmp || npy_isnan(*op)) ? *op : tmp;
         }
     }
     LOOP_BLOCKED_END {
-        *op  = (npy_isnan(*op) || *op @OP@ ip[i]) ? *op : ip[i];
+        /* Order of operations important for MSVC 2015 */
+        *op  = (*op @OP@ ip[i] || npy_isnan(*op)) ? *op : ip[i];
     }
     npy_clear_floatstatus_barrier((char*)op);
 }

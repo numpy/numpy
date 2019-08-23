@@ -1081,6 +1081,133 @@ class TestDateTime(object):
                 check(np.timedelta64(0), f, nat)
                 check(nat, f, nat)
 
+    @pytest.mark.parametrize("op1, op2, exp", [
+        # m8 same units round down
+        (np.timedelta64(7, 's'),
+         np.timedelta64(4, 's'),
+         1),
+        # m8 same units round down with negative
+        (np.timedelta64(7, 's'),
+         np.timedelta64(-4, 's'),
+         -2),
+        # m8 same units negative no round down
+        (np.timedelta64(8, 's'),
+         np.timedelta64(-4, 's'),
+         -2),
+        # m8 different units
+        (np.timedelta64(1, 'm'),
+         np.timedelta64(31, 's'),
+         1),
+        # m8 generic units
+        (np.timedelta64(1890),
+         np.timedelta64(31),
+         60),
+        # Y // M works
+        (np.timedelta64(2, 'Y'),
+         np.timedelta64('13', 'M'),
+         1),
+        # handle 1D arrays
+        (np.array([1, 2, 3], dtype='m8'),
+         np.array([2], dtype='m8'),
+         np.array([0, 1, 1], dtype=np.int64)),
+        ])
+    def test_timedelta_floor_divide(self, op1, op2, exp):
+        assert_equal(op1 // op2, exp)
+
+    @pytest.mark.parametrize("op1, op2", [
+        # div by 0
+        (np.timedelta64(10, 'us'),
+         np.timedelta64(0, 'us')),
+        # div with NaT
+        (np.timedelta64('NaT'),
+         np.timedelta64(50, 'us')),
+        # special case for int64 min
+        # in integer floor division
+        (np.timedelta64(np.iinfo(np.int64).min),
+         np.timedelta64(-1)),
+        ])
+    def test_timedelta_floor_div_warnings(self, op1, op2):
+        with assert_warns(RuntimeWarning):
+            actual = op1 // op2
+            assert_equal(actual, 0)
+            assert_equal(actual.dtype, np.int64)
+
+    @pytest.mark.parametrize("val1, val2", [
+        # the smallest integer that can't be represented
+        # exactly in a double should be preserved if we avoid
+        # casting to double in floordiv operation
+        (9007199254740993, 1),
+        # stress the alternate floordiv code path where
+        # operand signs don't match and remainder isn't 0
+        (9007199254740999, -2),
+        ])
+    def test_timedelta_floor_div_precision(self, val1, val2):
+        op1 = np.timedelta64(val1)
+        op2 = np.timedelta64(val2)
+        actual = op1 // op2
+        # Python reference integer floor
+        expected = val1 // val2
+        assert_equal(actual, expected)
+
+    @pytest.mark.parametrize("val1, val2", [
+        # years and months sometimes can't be unambiguously
+        # divided for floor division operation
+        (np.timedelta64(7, 'Y'),
+         np.timedelta64(3, 's')),
+        (np.timedelta64(7, 'M'),
+         np.timedelta64(1, 'D')),
+        ])
+    def test_timedelta_floor_div_error(self, val1, val2):
+        with assert_raises_regex(TypeError, "common metadata divisor"):
+            val1 // val2
+
+    @pytest.mark.parametrize("op1, op2", [
+        # reuse the test cases from floordiv
+        (np.timedelta64(7, 's'),
+         np.timedelta64(4, 's')),
+        # m8 same units round down with negative
+        (np.timedelta64(7, 's'),
+         np.timedelta64(-4, 's')),
+        # m8 same units negative no round down
+        (np.timedelta64(8, 's'),
+         np.timedelta64(-4, 's')),
+        # m8 different units
+        (np.timedelta64(1, 'm'),
+         np.timedelta64(31, 's')),
+        # m8 generic units
+        (np.timedelta64(1890),
+         np.timedelta64(31)),
+        # Y // M works
+        (np.timedelta64(2, 'Y'),
+         np.timedelta64('13', 'M')),
+        # handle 1D arrays
+        (np.array([1, 2, 3], dtype='m8'),
+         np.array([2], dtype='m8')),
+        ])
+    def test_timedelta_divmod(self, op1, op2):
+        expected = (op1 // op2, op1 % op2)
+        assert_equal(divmod(op1, op2), expected)
+
+    @pytest.mark.parametrize("op1, op2", [
+        # reuse cases from floordiv
+        # div by 0
+        (np.timedelta64(10, 'us'),
+         np.timedelta64(0, 'us')),
+        # div with NaT
+        (np.timedelta64('NaT'),
+         np.timedelta64(50, 'us')),
+        # special case for int64 min
+        # in integer floor division
+        (np.timedelta64(np.iinfo(np.int64).min),
+         np.timedelta64(-1)),
+        ])
+    def test_timedelta_divmod_warnings(self, op1, op2):
+        with assert_warns(RuntimeWarning):
+            expected = (op1 // op2, op1 % op2)
+        with assert_warns(RuntimeWarning):
+            actual = divmod(op1, op2)
+        assert_equal(actual, expected)
+
     def test_datetime_divide(self):
         for dta, tda, tdb, tdc, tdd in \
                     [
@@ -1111,8 +1238,6 @@ class TestDateTime(object):
             assert_equal(tda / tdd, 60.0)
             assert_equal(tdd / tda, 1.0 / 60.0)
 
-            # m8 // m8
-            assert_raises(TypeError, np.floor_divide, tda, tdb)
             # int / m8
             assert_raises(TypeError, np.divide, 2, tdb)
             # float / m8
@@ -1418,6 +1543,12 @@ class TestDateTime(object):
 
         assert_equal(x[0].astype(np.int64), 322689600000000000)
 
+        # gh-13062
+        with pytest.raises(OverflowError):
+            np.datetime64(2**64, 'D')
+        with pytest.raises(OverflowError):
+            np.timedelta64(2**64, 'D')
+
     def test_datetime_as_string(self):
         # Check all the units with default string conversion
         date = '1959-10-13'
@@ -1680,7 +1811,7 @@ class TestDateTime(object):
     def test_timedelta_modulus_div_by_zero(self):
         with assert_warns(RuntimeWarning):
             actual = np.timedelta64(10, 's') % np.timedelta64(0, 's')
-            assert_equal(actual, np.timedelta64(0, 's'))
+            assert_equal(actual, np.timedelta64('NaT'))
 
     @pytest.mark.parametrize("val1, val2", [
         # cases where one operand is not

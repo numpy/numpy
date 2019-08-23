@@ -146,7 +146,11 @@ class NpzFile(Mapping):
         An object on which attribute can be performed as an alternative
         to getitem access on the `NpzFile` instance itself.
     allow_pickle : bool, optional
-        Allow loading pickled data. Default: True
+        Allow loading pickled data. Default: False
+
+        .. versionchanged:: 1.16.3
+            Made default False in response to CVE-2019-6446.
+
     pickle_kwargs : dict, optional
         Additional keyword arguments to pass on to pickle.load.
         These are only useful when loading object arrays saved on
@@ -182,7 +186,7 @@ class NpzFile(Mapping):
 
     """
 
-    def __init__(self, fid, own_fid=False, allow_pickle=True,
+    def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
@@ -285,7 +289,7 @@ class NpzFile(Mapping):
 
 
 @set_module('numpy')
-def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
+def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
          encoding='ASCII'):
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
@@ -307,8 +311,11 @@ def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
         Allow loading pickled object arrays stored in npy files. Reasons for
         disallowing pickles include security, as loading pickled data can
         execute arbitrary code. If pickles are disallowed, loading object
-        arrays will fail.
-        Default: True
+        arrays will fail. Default: False
+
+        .. versionchanged:: 1.16.3
+            Made default False in response to CVE-2019-6446.
+
     fix_imports : bool, optional
         Only useful when loading Python 2 generated pickled files on Python 3,
         which includes npy/npz files containing object arrays. If `fix_imports`
@@ -1376,7 +1383,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
             # Complex dtype -- each field indicates a separate column
             else:
-                ncol = len(X.dtype.descr)
+                ncol = len(X.dtype.names)
         else:
             ncol = X.shape[1]
 

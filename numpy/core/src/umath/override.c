@@ -86,6 +86,7 @@ get_array_ufunc_overrides(PyObject *args, PyObject *kwds,
             ++num_override_args;
         }
     }
+    Py_DECREF(out_kwd_obj);
     return num_override_args;
 
 fail:
@@ -93,6 +94,7 @@ fail:
         Py_DECREF(with_override[i]);
         Py_DECREF(methods[i]);
     }
+    Py_DECREF(out_kwd_obj);
     return -1;
 }
 
