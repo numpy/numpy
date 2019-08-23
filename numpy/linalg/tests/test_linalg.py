@@ -1655,6 +1655,7 @@ class TestQR(object):
         self.check_qr(a)
 
         h, tau = np.linalg.qr(a, mode='raw')
+        assert_raises(ValueError, np.linalg.qr, a, "full")
         assert_equal(h.dtype, np.double)
         assert_equal(tau.dtype, np.double)
         assert_equal(h.shape, (n, m))
