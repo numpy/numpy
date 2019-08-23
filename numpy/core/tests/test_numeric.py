@@ -2163,6 +2163,21 @@ class TestIsclose(object):
         for (x, y), result in zip(tests, results):
             assert_array_equal(np.isclose(x, y), result)
 
+        x = np.array([1, 2, 5, np.nan])
+        y = np.array([1, 2, np.nan, 5])
+        expected = np.array([True, True, False, False])
+        assert_array_equal(np.isclose(x, y), expected)
+
+        atol = np.array([1e-8, 1e-8, 1e-8, 1e-8])
+        rtol = np.array([1e-5, 1e-5, 1e-5, 1e-5])
+        assert_array_equal(np.isclose(x, y, rtol=rtol, atol=atol), expected)
+
+        atol = np.array([1e-8, 1e-8])
+        assert_raises(ValueError, np.isclose, x, y, atol=atol)
+
+        rtol = np.array([1e-5, 1e-5])
+        assert_raises(ValueError, np.isclose, x, y, rtol=rtol)
+
     def tst_all_isclose(self, x, y):
         assert_(np.all(np.isclose(x, y)), "%s and %s not close" % (x, y))
 
@@ -2182,6 +2197,13 @@ class TestIsclose(object):
         self.setup()
         for (x, y) in self.all_close_tests:
             self.tst_all_isclose(x, y)
+        x = np.array([1, 2, np.nan])
+        y = np.array([1, 2, np.nan])
+        expected_nan_is_equal = True
+        assert_equal(np.allclose(x, y, equal_nan=True), expected_nan_is_equal)
+
+        atol = np.array([1e-8, 1e-8, 1e-8])
+        assert_equal(np.allclose(x, y, atol=atol, equal_nan=True), expected_nan_is_equal)
 
     def test_ip_none_isclose(self):
         self.setup()
