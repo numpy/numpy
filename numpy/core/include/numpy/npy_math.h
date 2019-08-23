@@ -114,6 +114,55 @@ NPY_INLINE static float __npy_nzerof(void)
 #define NPY_SQRT1_2l  0.707106781186547524400844362104849039L /* 1/sqrt(2) */
 
 /*
+ * Constants used in vector implementation of exp(x)
+ */
+#define NPY_RINT_CVT_MAGICf 0x1.800000p+23f
+#define NPY_CODY_WAITE_LOGE_2_HIGHf -6.93145752e-1f
+#define NPY_CODY_WAITE_LOGE_2_LOWf -1.42860677e-6f
+#define NPY_COEFF_P0_EXPf 9.999999999980870924916e-01f
+#define NPY_COEFF_P1_EXPf 7.257664613233124478488e-01f
+#define NPY_COEFF_P2_EXPf 2.473615434895520810817e-01f
+#define NPY_COEFF_P3_EXPf 5.114512081637298353406e-02f
+#define NPY_COEFF_P4_EXPf 6.757896990527504603057e-03f
+#define NPY_COEFF_P5_EXPf 5.082762527590693718096e-04f
+#define NPY_COEFF_Q0_EXPf 1.000000000000000000000e+00f
+#define NPY_COEFF_Q1_EXPf -2.742335390411667452936e-01f
+#define NPY_COEFF_Q2_EXPf 2.159509375685829852307e-02f
+
+/*
+ * Constants used in vector implementation of log(x)
+ */
+#define NPY_COEFF_P0_LOGf 0.000000000000000000000e+00f
+#define NPY_COEFF_P1_LOGf 9.999999999999998702752e-01f
+#define NPY_COEFF_P2_LOGf 2.112677543073053063722e+00f
+#define NPY_COEFF_P3_LOGf 1.480000633576506585156e+00f
+#define NPY_COEFF_P4_LOGf 3.808837741388407920751e-01f
+#define NPY_COEFF_P5_LOGf 2.589979117907922693523e-02f
+#define NPY_COEFF_Q0_LOGf 1.000000000000000000000e+00f
+#define NPY_COEFF_Q1_LOGf 2.612677543073109236779e+00f
+#define NPY_COEFF_Q2_LOGf 2.453006071784736363091e+00f
+#define NPY_COEFF_Q3_LOGf 9.864942958519418960339e-01f
+#define NPY_COEFF_Q4_LOGf 1.546476374983906719538e-01f
+#define NPY_COEFF_Q5_LOGf 5.875095403124574342950e-03f
+
+/*
+ * Integer functions.
+ */
+NPY_INPLACE npy_uint npy_gcdu(npy_uint a, npy_uint b);
+NPY_INPLACE npy_uint npy_lcmu(npy_uint a, npy_uint b);
+NPY_INPLACE npy_ulong npy_gcdul(npy_ulong a, npy_ulong b);
+NPY_INPLACE npy_ulong npy_lcmul(npy_ulong a, npy_ulong b);
+NPY_INPLACE npy_ulonglong npy_gcdull(npy_ulonglong a, npy_ulonglong b);
+NPY_INPLACE npy_ulonglong npy_lcmull(npy_ulonglong a, npy_ulonglong b);
+
+NPY_INPLACE npy_int npy_gcd(npy_int a, npy_int b);
+NPY_INPLACE npy_int npy_lcm(npy_int a, npy_int b);
+NPY_INPLACE npy_long npy_gcdl(npy_long a, npy_long b);
+NPY_INPLACE npy_long npy_lcml(npy_long a, npy_long b);
+NPY_INPLACE npy_longlong npy_gcdll(npy_longlong a, npy_longlong b);
+NPY_INPLACE npy_longlong npy_lcmll(npy_longlong a, npy_longlong b);
+
+/*
  * C99 double math funcs
  */
 NPY_INPLACE double npy_sin(double x);

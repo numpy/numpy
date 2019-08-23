@@ -13,7 +13,9 @@ from numpy.testing import (
 
 
 try:
-    import nose  # noqa: F401
+    with warnings.catch_warnings():
+        warnings.simplefilter("always")
+        import nose  # noqa: F401
 except ImportError:
     HAVE_NOSE = False
 else:

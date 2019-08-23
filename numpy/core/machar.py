@@ -10,7 +10,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['MachAr']
 
 from numpy.core.fromnumeric import any
-from numpy.core.numeric import errstate
+from numpy.core._ufunc_config import errstate
 from numpy.core.overrides import set_module
 
 # Need to speed this up...especially for longfloat

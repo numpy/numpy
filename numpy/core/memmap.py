@@ -135,9 +135,9 @@ class memmap(ndarray):
 
     >>> fp = np.memmap(filename, dtype='float32', mode='w+', shape=(3,4))
     >>> fp
-    memmap([[ 0.,  0.,  0.,  0.],
-            [ 0.,  0.,  0.,  0.],
-            [ 0.,  0.,  0.,  0.]], dtype=float32)
+    memmap([[0., 0., 0., 0.],
+            [0., 0., 0., 0.],
+            [0., 0., 0., 0.]], dtype=float32)
 
     Write data to memmap array:
 
@@ -246,7 +246,7 @@ class memmap(ndarray):
 
             bytes = long(offset + size*_dbytes)
 
-            if mode == 'w+' or (mode == 'r+' and flen < bytes):
+            if mode in ('w+', 'r+') and flen < bytes:
                 fid.seek(bytes - 1, 0)
                 fid.write(b'\0')
                 fid.flush()

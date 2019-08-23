@@ -101,7 +101,7 @@ class _DeprecationTestCase(object):
                         (self.warning_cls.__name__, warning.category))
         if num is not None and num_found != num:
             msg = "%i warnings found but %i expected." % (len(self.log), num)
-            lst = [str(w.category) for w in self.log]
+            lst = [str(w) for w in self.log]
             raise AssertionError("\n".join([msg] + lst))
 
         with warnings.catch_warnings():
@@ -533,3 +533,18 @@ class Test_GetSet_NumericOps(_DeprecationTestCase):
         # other tests.
         self.assert_deprecated(np.set_numeric_ops, kwargs={})
         assert_raises(ValueError, np.set_numeric_ops, add='abc')
+
+
+class TestShape1Fields(_DeprecationTestCase):
+    warning_cls = FutureWarning
+
+    # 2019-05-20, 1.17.0
+    def test_shape_1_fields(self):
+        self.assert_deprecated(np.dtype, args=([('a', int, 1)],))
+
+
+class TestNonZero(_DeprecationTestCase):
+    # 2019-05-26, 1.17.0
+    def test_zerod(self):
+        self.assert_deprecated(lambda: np.nonzero(np.array(0)))
+        self.assert_deprecated(lambda: np.nonzero(np.array(1)))

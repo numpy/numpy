@@ -105,11 +105,11 @@ def asfarray(a, dtype=_nx.float_):
     Examples
     --------
     >>> np.asfarray([2, 3])
-    array([ 2.,  3.])
+    array([2.,  3.])
     >>> np.asfarray([2, 3], dtype='float')
-    array([ 2.,  3.])
+    array([2.,  3.])
     >>> np.asfarray([2, 3], dtype='int8')
-    array([ 2.,  3.])
+    array([2.,  3.])
 
     """
     if not _nx.issubdtype(dtype, _nx.inexact):
@@ -146,13 +146,13 @@ def real(val):
     --------
     >>> a = np.array([1+2j, 3+4j, 5+6j])
     >>> a.real
-    array([ 1.,  3.,  5.])
+    array([1.,  3.,  5.])
     >>> a.real = 9
     >>> a
-    array([ 9.+2.j,  9.+4.j,  9.+6.j])
+    array([9.+2.j,  9.+4.j,  9.+6.j])
     >>> a.real = np.array([9, 8, 7])
     >>> a
-    array([ 9.+2.j,  8.+4.j,  7.+6.j])
+    array([9.+2.j,  8.+4.j,  7.+6.j])
     >>> np.real(1 + 1j)
     1.0
 
@@ -192,10 +192,10 @@ def imag(val):
     --------
     >>> a = np.array([1+2j, 3+4j, 5+6j])
     >>> a.imag
-    array([ 2.,  4.,  6.])
+    array([2.,  4.,  6.])
     >>> a.imag = np.array([8, 10, 12])
     >>> a
-    array([ 1. +8.j,  3.+10.j,  5.+12.j])
+    array([1. +8.j,  3.+10.j,  5.+12.j])
     >>> np.imag(1 + 1j)
     1.0
 
@@ -363,18 +363,23 @@ def _getmaxmin(t):
     return f.max, f.min
 
 
-def _nan_to_num_dispatcher(x, copy=None):
+def _nan_to_num_dispatcher(x, copy=None, nan=None, posinf=None, neginf=None):
     return (x,)
 
 
 @array_function_dispatch(_nan_to_num_dispatcher)
-def nan_to_num(x, copy=True):
+def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
     """
-    Replace NaN with zero and infinity with large finite numbers.
+    Replace NaN with zero and infinity with large finite numbers (default
+    behaviour) or with the numbers defined by the user using the `nan`, 
+    `posinf` and/or `neginf` keywords.
 
-    If `x` is inexact, NaN is replaced by zero, and infinity and -infinity
-    replaced by the respectively largest and most negative finite floating
-    point values representable by ``x.dtype``.
+    If `x` is inexact, NaN is replaced by zero or by the user defined value in
+    `nan` keyword, infinity is replaced by the largest finite floating point 
+    values representable by ``x.dtype`` or by the user defined value in 
+    `posinf` keyword and -infinity is replaced by the most negative finite 
+    floating point values representable by ``x.dtype`` or by the user defined 
+    value in `neginf` keyword.
 
     For complex dtypes, the above is applied to each of the real and
     imaginary components of `x` separately.
@@ -390,6 +395,17 @@ def nan_to_num(x, copy=True):
         in-place (False). The in-place operation only occurs if
         casting to an array does not require a copy.
         Default is True.
+    nan : int, float, optional
+        Value to be used to fill NaN values. If no value is passed 
+        then NaN values will be replaced with 0.0.
+    posinf : int, float, optional
+        Value to be used to fill positive infinity values. If no value is 
+        passed then positive infinity values will be replaced with a very
+        large number.
+    neginf : int, float, optional
+        Value to be used to fill negative infinity values. If no value is 
+        passed then negative infinity values will be replaced with a very
+        small (or negative) number.
 
         .. versionadded:: 1.13
 
@@ -422,13 +438,20 @@ def nan_to_num(x, copy=True):
     0.0
     >>> x = np.array([np.inf, -np.inf, np.nan, -128, 128])
     >>> np.nan_to_num(x)
-    array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000,
-            -1.28000000e+002,   1.28000000e+002])
+    array([ 1.79769313e+308, -1.79769313e+308,  0.00000000e+000, # may vary
+           -1.28000000e+002,  1.28000000e+002])
+    >>> np.nan_to_num(x, nan=-9999, posinf=33333333, neginf=33333333)
+    array([ 3.3333333e+07,  3.3333333e+07, -9.9990000e+03, 
+           -1.2800000e+02,  1.2800000e+02])
     >>> y = np.array([complex(np.inf, np.nan), np.nan, complex(np.nan, np.inf)])
+    array([  1.79769313e+308,  -1.79769313e+308,   0.00000000e+000, # may vary
+         -1.28000000e+002,   1.28000000e+002])
     >>> np.nan_to_num(y)
-    array([  1.79769313e+308 +0.00000000e+000j,
+    array([  1.79769313e+308 +0.00000000e+000j, # may vary
              0.00000000e+000 +0.00000000e+000j,
              0.00000000e+000 +1.79769313e+308j])
+    >>> np.nan_to_num(y, nan=111111, posinf=222222)
+    array([222222.+111111.j, 111111.     +0.j, 111111.+222222.j])
     """
     x = _nx.array(x, subok=True, copy=copy)
     xtype = x.dtype.type
@@ -442,10 +465,17 @@ def nan_to_num(x, copy=True):
 
     dest = (x.real, x.imag) if iscomplex else (x,)
     maxf, minf = _getmaxmin(x.real.dtype)
+    if posinf is not None:
+        maxf = posinf
+    if neginf is not None:
+        minf = neginf
     for d in dest:
-        _nx.copyto(d, 0.0, where=isnan(d))
-        _nx.copyto(d, maxf, where=isposinf(d))
-        _nx.copyto(d, minf, where=isneginf(d))
+        idx_nan = isnan(d)
+        idx_posinf = isposinf(d)
+        idx_neginf = isneginf(d)
+        _nx.copyto(d, nan, where=idx_nan)
+        _nx.copyto(d, maxf, where=idx_posinf)
+        _nx.copyto(d, minf, where=idx_neginf)
     return x[()] if isscalar else x
 
 #-----------------------------------------------------------------------------
@@ -490,12 +520,12 @@ def real_if_close(a, tol=100):
     Examples
     --------
     >>> np.finfo(float).eps
-    2.2204460492503131e-16
+    2.2204460492503131e-16 # may vary
 
     >>> np.real_if_close([2.1 + 4e-14j], tol=1000)
-    array([ 2.1])
+    array([2.1])
     >>> np.real_if_close([2.1 + 4e-13j], tol=1000)
-    array([ 2.1 +4.00000000e-13j])
+    array([2.1+4.e-13j])
 
     """
     a = asanyarray(a)
@@ -511,6 +541,9 @@ def real_if_close(a, tol=100):
 
 
 def _asscalar_dispatcher(a):
+    # 2018-10-10, 1.16
+    warnings.warn('np.asscalar(a) is deprecated since NumPy v1.16, use '
+                  'a.item() instead', DeprecationWarning, stacklevel=3)
     return (a,)
 
 
@@ -538,12 +571,7 @@ def asscalar(a):
     --------
     >>> np.asscalar(np.array([24]))
     24
-
     """
-
-    # 2018-10-10, 1.16
-    warnings.warn('np.asscalar(a) is deprecated since NumPy v1.16, use '
-                  'a.item() instead', DeprecationWarning, stacklevel=1)
     return a.item()
 
 #-----------------------------------------------------------------------------
@@ -672,11 +700,11 @@ def common_type(*arrays):
     Examples
     --------
     >>> np.common_type(np.arange(2, dtype=np.float32))
-    <type 'numpy.float32'>
+    <class 'numpy.float32'>
     >>> np.common_type(np.arange(2, dtype=np.float32), np.arange(2))
-    <type 'numpy.float64'>
+    <class 'numpy.float64'>
     >>> np.common_type(np.arange(4), np.array([45, 6.j]), np.array([45.0]))
-    <type 'numpy.complex128'>
+    <class 'numpy.complex128'>
 
     """
     is_complex = False

@@ -177,7 +177,7 @@ Any Python object:
 
 .. note::
 
-   The data actually stored in :term:`object arrays <object array>`
+   The data actually stored in object arrays
    (*i.e.*, arrays having dtype :class:`object_`) are references to
    Python objects, not the objects themselves. Hence, object arrays
    behave more like usual Python :class:`lists <list>`, in the sense
@@ -188,8 +188,10 @@ Any Python object:
    on item access, but instead returns the actual object that
    the array item refers to.
 
-The following data types are :term:`flexible`. They have no predefined
-size: the data they describe can be of different length in different
+.. index:: flexible
+
+The following data types are **flexible**: they have no predefined
+size and the data they describe can be of different length in different
 arrays. (In the character codes ``#`` is an integer denoting how many
 elements the data type consists of.)
 

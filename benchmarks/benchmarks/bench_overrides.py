@@ -2,7 +2,15 @@ from __future__ import absolute_import, division, print_function
 
 from .common import Benchmark
 
-from numpy.core.overrides import array_function_dispatch
+try:
+    from numpy.core.overrides import array_function_dispatch
+except ImportError:
+    # Don't fail at import time with old Numpy versions
+    def array_function_dispatch(*args, **kwargs):
+        def wrap(*args, **kwargs):
+            return None
+        return wrap
+
 import numpy as np
 
 
@@ -16,10 +24,10 @@ def mock_broadcast_to(array, shape, subok=False):
 
 
 def _concatenate_dispatcher(arrays, axis=None, out=None):
-    for array in arrays:
-        yield array
     if out is not None:
-        yield out
+        arrays = list(arrays)
+        arrays.append(out)
+    return arrays
 
 
 @array_function_dispatch(_concatenate_dispatcher)

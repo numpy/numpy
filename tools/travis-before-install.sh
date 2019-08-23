@@ -4,6 +4,15 @@ uname -a
 free -m
 df -h
 ulimit -a
+
+if [ -n "$PPC64_LE" ]; then
+  pwd
+  ls -ltrh
+  target=$(python tools/openblas_support.py)
+  sudo cp -r $target/64/lib/* /usr/lib
+  sudo cp $target/64/include/* /usr/include
+fi
+
 mkdir builds
 pushd builds
 
@@ -25,7 +34,8 @@ if [ -n "$INSTALL_PICKLE5" ]; then
   pip install pickle5
 fi
 
+
 pip install --upgrade pip setuptools
-pip install nose pytz cython pytest
+pip install pytz cython pytest==5.0.1
 if [ -n "$USE_ASV" ]; then pip install asv; fi
 popd

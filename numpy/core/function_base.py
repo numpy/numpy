@@ -6,7 +6,7 @@ import operator
 
 from . import numeric as _nx
 from .numeric import (result_type, NaN, shares_memory, MAY_SHARE_BOUNDS,
-                      TooHardError, asanyarray)
+                      TooHardError, asanyarray, ndim)
 from numpy.core.multiarray import add_docstring
 from numpy.core import overrides
 
@@ -102,11 +102,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     Examples
     --------
     >>> np.linspace(2.0, 3.0, num=5)
-    array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ])
+    array([2.  , 2.25, 2.5 , 2.75, 3.  ])
     >>> np.linspace(2.0, 3.0, num=5, endpoint=False)
-    array([ 2. ,  2.2,  2.4,  2.6,  2.8])
+    array([2. ,  2.2,  2.4,  2.6,  2.8])
     >>> np.linspace(2.0, 3.0, num=5, retstep=True)
-    (array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
+    (array([2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
 
     Graphical illustration:
 
@@ -140,7 +140,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         dtype = dt
 
     delta = stop - start
-    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * delta.ndim)
+    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
     # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
     # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
     # see gh-7142. Hence, we multiply in place only for standard scalar types.
@@ -252,11 +252,11 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     Examples
     --------
     >>> np.logspace(2.0, 3.0, num=4)
-    array([  100.        ,   215.443469  ,   464.15888336,  1000.        ])
+    array([ 100.        ,  215.443469  ,  464.15888336, 1000.        ])
     >>> np.logspace(2.0, 3.0, num=4, endpoint=False)
-    array([ 100.        ,  177.827941  ,  316.22776602,  562.34132519])
+    array([100.        ,  177.827941  ,  316.22776602,  562.34132519])
     >>> np.logspace(2.0, 3.0, num=4, base=2.0)
-    array([ 4.        ,  5.0396842 ,  6.34960421,  8.        ])
+    array([4.        ,  5.0396842 ,  6.34960421,  8.        ])
 
     Graphical illustration:
 
@@ -361,15 +361,15 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     Negative, decreasing, and complex inputs are allowed:
 
     >>> np.geomspace(1000, 1, num=4)
-    array([ 1000.,   100.,    10.,     1.])
+    array([1000.,  100.,   10.,    1.])
     >>> np.geomspace(-1000, -1, num=4)
     array([-1000.,  -100.,   -10.,    -1.])
     >>> np.geomspace(1j, 1000j, num=4)  # Straight line
-    array([ 0.   +1.j,  0.  +10.j,  0. +100.j,  0.+1000.j])
+    array([0.   +1.j, 0.  +10.j, 0. +100.j, 0.+1000.j])
     >>> np.geomspace(-1+0j, 1+0j, num=5)  # Circle
-    array([-1.00000000+0.j        , -0.70710678+0.70710678j,
-            0.00000000+1.j        ,  0.70710678+0.70710678j,
-            1.00000000+0.j        ])
+    array([-1.00000000e+00+1.22464680e-16j, -7.07106781e-01+7.07106781e-01j,
+            6.12323400e-17+1.00000000e+00j,  7.07106781e-01+7.07106781e-01j,
+            1.00000000e+00+0.00000000e+00j])
 
     Graphical illustration of ``endpoint`` parameter:
 
@@ -377,8 +377,11 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     >>> N = 10
     >>> y = np.zeros(N)
     >>> plt.semilogx(np.geomspace(1, 1000, N, endpoint=True), y + 1, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.semilogx(np.geomspace(1, 1000, N, endpoint=False), y + 2, 'o')
+    [<matplotlib.lines.Line2D object at 0x...>]
     >>> plt.axis([0.5, 2000, 0, 3])
+    [0.5, 2000, 0, 3]
     >>> plt.grid(True, color='0.7', linestyle='-', which='both', axis='both')
     >>> plt.show()
 
@@ -428,6 +431,13 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
 
 #always succeed
+def _add_docstring(obj, doc):
+    try:
+        add_docstring(obj, doc)
+    except Exception:
+        pass
+
+
 def add_newdoc(place, obj, doc):
     """
     Adds documentation to obj which is in module place.
@@ -442,21 +452,19 @@ def add_newdoc(place, obj, doc):
        sequence of length two --> [(method1, docstring1),
        (method2, docstring2), ...]
 
-    This routine never raises an error.
+    This routine never raises an error if the docstring can't be written, but
+    will raise an error if the object being documented does not exist.
 
     This routine cannot modify read-only docstrings, as appear
     in new-style classes or built-in functions. Because this
     routine never raises an error the caller must check manually
     that the docstrings were changed.
     """
-    try:
-        new = getattr(__import__(place, globals(), {}, [obj]), obj)
-        if isinstance(doc, str):
-            add_docstring(new, doc.strip())
-        elif isinstance(doc, tuple):
-            add_docstring(getattr(new, doc[0]), doc[1].strip())
-        elif isinstance(doc, list):
-            for val in doc:
-                add_docstring(getattr(new, val[0]), val[1].strip())
-    except Exception:
-        pass
+    new = getattr(__import__(place, globals(), {}, [obj]), obj)
+    if isinstance(doc, str):
+        _add_docstring(new, doc.strip())
+    elif isinstance(doc, tuple):
+        _add_docstring(getattr(new, doc[0]), doc[1].strip())
+    elif isinstance(doc, list):
+        for val in doc:
+            _add_docstring(getattr(new, val[0]), val[1].strip())

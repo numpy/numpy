@@ -25,7 +25,7 @@ class TestMixed(util.F2PyTest):
 
     @pytest.mark.slow
     def test_docstring(self):
-        expected = """
+        expected = textwrap.dedent("""\
         a = bar11()
 
         Wrapper for ``bar11``.
@@ -33,6 +33,5 @@ class TestMixed(util.F2PyTest):
         Returns
         -------
         a : int
-        """
-        assert_equal(self.module.bar11.__doc__,
-                     textwrap.dedent(expected).lstrip())
+        """)
+        assert_equal(self.module.bar11.__doc__, expected)

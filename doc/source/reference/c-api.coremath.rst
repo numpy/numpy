@@ -80,8 +80,9 @@ Floating point classification
 Useful math constants
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following math constants are available in npy_math.h. Single and extended
-precision are also available by adding the F and L suffixes respectively.
+The following math constants are available in ``npy_math.h``. Single
+and extended precision are also available by adding the ``f`` and
+``l`` suffixes respectively.
 
 .. c:var:: NPY_E
 
@@ -184,7 +185,7 @@ Those can be useful for precise floating point comparison.
     * NPY_FPE_INVALID
 
     Note that :c:func:`npy_get_floatstatus_barrier` is preferable as it prevents
-    agressive compiler optimizations reordering the call relative to
+    aggressive compiler optimizations reordering the call relative to
     the code setting the status, which could lead to incorrect results.
 
     .. versionadded:: 1.9.0
@@ -192,7 +193,7 @@ Those can be useful for precise floating point comparison.
 .. c:function:: int npy_get_floatstatus_barrier(char*)
 
     Get floating point status. A pointer to a local variable is passed in to
-    prevent aggresive compiler optimizations from reodering this function call
+    prevent aggressive compiler optimizations from reodering this function call
     relative to the code setting the status, which could lead to incorrect
     results.
 
@@ -210,7 +211,7 @@ Those can be useful for precise floating point comparison.
     Clears the floating point status. Returns the previous status mask.
 
     Note that :c:func:`npy_clear_floatstatus_barrier` is preferable as it
-    prevents agressive compiler optimizations reordering the call relative to
+    prevents aggressive compiler optimizations reordering the call relative to
     the code setting the status, which could lead to incorrect results.
 
     .. versionadded:: 1.9.0
@@ -218,7 +219,7 @@ Those can be useful for precise floating point comparison.
 .. c:function:: int npy_clear_floatstatus_barrier(char*)
 
     Clears the floating point status. A pointer to a local variable is passed in to
-    prevent aggresive compiler optimizations from reodering this function call.
+    prevent aggressive compiler optimizations from reodering this function call.
     Returns the previous status mask.
 
     .. versionadded:: 1.15.0
@@ -258,7 +259,7 @@ and co.
 Half-precision functions
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. versionadded:: 2.0.0
+.. versionadded:: 1.6.0
 
 The header file <numpy/halffloat.h> provides functions to work with
 IEEE 754-2008 16-bit floating point values. While this format is

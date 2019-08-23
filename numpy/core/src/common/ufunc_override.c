@@ -71,7 +71,7 @@ PyUFunc_HasOverride(PyObject * obj)
  * Get possible out argument from kwds, and returns the number of outputs
  * contained within it: if a tuple, the number of elements in it, 1 otherwise.
  * The out argument itself is returned in out_kwd_obj, and the outputs
- * in the out_obj array (all as borrowed references).
+ * in the out_obj array (as borrowed references).
  *
  * Returns 0 if no outputs found, -1 if kwds is not a dict (with an error set).
  */
@@ -79,24 +79,42 @@ NPY_NO_EXPORT int
 PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject ***out_objs)
 {
     if (kwds == NULL) {
+        Py_INCREF(Py_None);
+        *out_kwd_obj = Py_None;
         return 0;
     }
     if (!PyDict_CheckExact(kwds)) {
         PyErr_SetString(PyExc_TypeError,
                         "Internal Numpy error: call to PyUFuncOverride_GetOutObjects "
                         "with non-dict kwds");
+        *out_kwd_obj = NULL;
         return -1;
     }
     /* borrowed reference */
     *out_kwd_obj = PyDict_GetItemString(kwds, "out");
     if (*out_kwd_obj == NULL) {
+        Py_INCREF(Py_None);
+        *out_kwd_obj = Py_None;
         return 0;
     }
     if (PyTuple_CheckExact(*out_kwd_obj)) {
-        *out_objs = PySequence_Fast_ITEMS(*out_kwd_obj);
-        return PySequence_Fast_GET_SIZE(*out_kwd_obj);
+        /*
+         * The C-API recommends calling PySequence_Fast before any of the other
+         * PySequence_Fast* functions. This is required for PyPy
+         */
+        PyObject *seq;
+        seq = PySequence_Fast(*out_kwd_obj,
+                              "Could not convert object to sequence");
+        if (seq == NULL) {
+            *out_kwd_obj = NULL;
+            return -1;
+        }
+        *out_objs = PySequence_Fast_ITEMS(seq);
+        *out_kwd_obj = seq;
+        return PySequence_Fast_GET_SIZE(seq);
     }
     else {
+        Py_INCREF(*out_kwd_obj);
         *out_objs = out_kwd_obj;
         return 1;
     }

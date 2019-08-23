@@ -92,7 +92,7 @@ def run_module_suite(file_to_run=None, argv=None):
 
     Alternatively, calling::
 
-    >>> run_module_suite(file_to_run="numpy/tests/test_matlib.py")
+    >>> run_module_suite(file_to_run="numpy/tests/test_matlib.py")  # doctest: +SKIP
 
     from an interpreter will run all the test routine in 'test_matlib.py'.
     """

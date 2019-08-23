@@ -10,6 +10,7 @@ import tempfile
 import subprocess
 import shutil
 import multiprocessing
+import textwrap
 
 import distutils
 from distutils.errors import DistutilsError
@@ -218,15 +219,14 @@ def get_mathlibs(path=None):
             raise DistutilsError('_numpyconfig.h not found in numpy include '
                 'dirs %r' % (dirs,))
 
-    fid = open(config_file)
-    mathlibs = []
-    s = '#define MATHLIB'
-    for line in fid:
-        if line.startswith(s):
-            value = line[len(s):].strip()
-            if value:
-                mathlibs.extend(value.split(','))
-    fid.close()
+    with open(config_file) as fid:
+        mathlibs = []
+        s = '#define MATHLIB'
+        for line in fid:
+            if line.startswith(s):
+                value = line[len(s):].strip()
+                if value:
+                    mathlibs.extend(value.split(','))
     return mathlibs
 
 def minrelpath(path):
@@ -443,14 +443,13 @@ def _get_f90_modules(source):
     if not f90_ext_match(source):
         return []
     modules = []
-    f = open(source, 'r')
-    for line in f:
-        m = f90_module_name_match(line)
-        if m:
-            name = m.group('name')
-            modules.append(name)
-            # break  # XXX can we assume that there is one module per file?
-    f.close()
+    with open(source, 'r') as f:
+        for line in f:
+            m = f90_module_name_match(line)
+            if m:
+                name = m.group('name')
+                modules.append(name)
+                # break  # XXX can we assume that there is one module per file?
     return modules
 
 def is_string(s):
@@ -473,7 +472,7 @@ def is_sequence(seq):
     return True
 
 def is_glob_pattern(s):
-    return is_string(s) and ('*' in s or '?' is s)
+    return is_string(s) and ('*' in s or '?' in s)
 
 def as_list(seq):
     if is_sequence(seq):
@@ -1833,67 +1832,53 @@ class Configuration(object):
     def _get_svn_revision(self, path):
         """Return path's SVN revision number.
         """
-        revision = None
-        m = None
-        cwd =  os.getcwd()
         try:
-            os.chdir(path or '.')
-            p = subprocess.Popen(['svnversion'], shell=True,
-                    stdout=subprocess.PIPE, stderr=None,
-                    close_fds=True)
-            sout = p.stdout
-            m = re.match(r'(?P<revision>\d+)', sout.read())
-        except Exception:
+            output = subprocess.check_output(
+                ['svnversion'], shell=True, cwd=path)
+        except (subprocess.CalledProcessError, OSError):
             pass
-        os.chdir(cwd)
-        if m:
-            revision = int(m.group('revision'))
-            return revision
+        else:
+            m = re.match(rb'(?P<revision>\d+)', output)
+            if m:
+                return int(m.group('revision'))
+
         if sys.platform=='win32' and os.environ.get('SVN_ASP_DOT_NET_HACK', None):
             entries = njoin(path, '_svn', 'entries')
         else:
             entries = njoin(path, '.svn', 'entries')
         if os.path.isfile(entries):
-            f = open(entries)
-            fstr = f.read()
-            f.close()
+            with open(entries) as f:
+                fstr = f.read()
             if fstr[:5] == '<?xml':  # pre 1.4
                 m = re.search(r'revision="(?P<revision>\d+)"', fstr)
                 if m:
-                    revision = int(m.group('revision'))
+                    return int(m.group('revision'))
             else:  # non-xml entries file --- check to be sure that
                 m = re.search(r'dir[\n\r]+(?P<revision>\d+)', fstr)
                 if m:
-                    revision = int(m.group('revision'))
-        return revision
+                    return int(m.group('revision'))
+        return None
 
     def _get_hg_revision(self, path):
         """Return path's Mercurial revision number.
         """
-        revision = None
-        m = None
-        cwd =  os.getcwd()
         try:
-            os.chdir(path or '.')
-            p = subprocess.Popen(['hg identify --num'], shell=True,
-                    stdout=subprocess.PIPE, stderr=None,
-                    close_fds=True)
-            sout = p.stdout
-            m = re.match(r'(?P<revision>\d+)', sout.read())
-        except Exception:
+            output = subprocess.check_output(
+                ['hg identify --num'], shell=True, cwd=path)
+        except (subprocess.CalledProcessError, OSError):
             pass
-        os.chdir(cwd)
-        if m:
-            revision = int(m.group('revision'))
-            return revision
+        else:
+            m = re.match(rb'(?P<revision>\d+)', output)
+            if m:
+                return int(m.group('revision'))
+
         branch_fn = njoin(path, '.hg', 'branch')
         branch_cache_fn = njoin(path, '.hg', 'branch.cache')
 
         if os.path.isfile(branch_fn):
             branch0 = None
-            f = open(branch_fn)
-            revision0 = f.read().strip()
-            f.close()
+            with open(branch_fn) as f:
+                revision0 = f.read().strip()
 
             branch_map = {}
             for line in file(branch_cache_fn, 'r'):
@@ -1906,8 +1891,9 @@ class Configuration(object):
                     continue
                 branch_map[branch1] = revision1
 
-            revision = branch_map.get(branch0)
-        return revision
+            return branch_map.get(branch0)
+
+        return None
 
 
     def get_version(self, version_file=None, version_variable=None):
@@ -2005,9 +1991,8 @@ class Configuration(object):
                 if not os.path.isfile(target):
                     version = str(revision)
                     self.info('Creating %s (version=%r)' % (target, version))
-                    f = open(target, 'w')
-                    f.write('version = %r\n' % (version))
-                    f.close()
+                    with open(target, 'w') as f:
+                        f.write('version = %r\n' % (version))
 
                 def rm_file(f=target,p=self.info):
                     if delete:
@@ -2046,9 +2031,8 @@ class Configuration(object):
                 if not os.path.isfile(target):
                     version = str(revision)
                     self.info('Creating %s (version=%r)' % (target, version))
-                    f = open(target, 'w')
-                    f.write('version = %r\n' % (version))
-                    f.close()
+                    with open(target, 'w') as f:
+                        f.write('version = %r\n' % (version))
 
                 def rm_file(f=target,p=self.info):
                     if delete:
@@ -2284,46 +2268,44 @@ def generate_config_py(target):
     from numpy.distutils.system_info import system_info
     from distutils.dir_util import mkpath
     mkpath(os.path.dirname(target))
-    f = open(target, 'w')
-    f.write('# This file is generated by numpy\'s %s\n' % (os.path.basename(sys.argv[0])))
-    f.write('# It contains system_info results at the time of building this package.\n')
-    f.write('__all__ = ["get_info","show"]\n\n')
+    with open(target, 'w') as f:
+        f.write('# This file is generated by numpy\'s %s\n' % (os.path.basename(sys.argv[0])))
+        f.write('# It contains system_info results at the time of building this package.\n')
+        f.write('__all__ = ["get_info","show"]\n\n')
 
-    # For gfortran+msvc combination, extra shared libraries may exist
-    f.write("""
+        # For gfortran+msvc combination, extra shared libraries may exist
+        f.write(textwrap.dedent("""
+            import os
+            import sys
 
-import os
-import sys
+            extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 
-extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
+            if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
+                os.environ.setdefault('PATH', '')
+                os.environ['PATH'] += os.pathsep + extra_dll_dir
 
-if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
-    os.environ.setdefault('PATH', '')
-    os.environ['PATH'] += os.pathsep + extra_dll_dir
+            """))
 
-""")
+        for k, i in system_info.saved_results.items():
+            f.write('%s=%r\n' % (k, i))
+        f.write(textwrap.dedent(r'''
+            def get_info(name):
+                g = globals()
+                return g.get(name, g.get(name + "_info", {}))
 
-    for k, i in system_info.saved_results.items():
-        f.write('%s=%r\n' % (k, i))
-    f.write(r'''
-def get_info(name):
-    g = globals()
-    return g.get(name, g.get(name + "_info", {}))
+            def show():
+                for name,info_dict in globals().items():
+                    if name[0] == "_" or type(info_dict) is not type({}): continue
+                    print(name + ":")
+                    if not info_dict:
+                        print("  NOT AVAILABLE")
+                    for k,v in info_dict.items():
+                        v = str(v)
+                        if k == "sources" and len(v) > 200:
+                            v = v[:60] + " ...\n... " + v[-60:]
+                        print("    %s = %s" % (k,v))
+                    '''))
 
-def show():
-    for name,info_dict in globals().items():
-        if name[0] == "_" or type(info_dict) is not type({}): continue
-        print(name + ":")
-        if not info_dict:
-            print("  NOT AVAILABLE")
-        for k,v in info_dict.items():
-            v = str(v)
-            if k == "sources" and len(v) > 200:
-                v = v[:60] + " ...\n... " + v[-60:]
-            print("    %s = %s" % (k,v))
-    ''')
-
-    f.close()
     return target
 
 def msvc_version(compiler):

@@ -8,7 +8,9 @@ Recommended development setup
 
 Since NumPy contains parts written in C and Cython that need to be
 compiled before use, make sure you have the necessary compilers and Python
-development headers installed - see :ref:`building-from-source`.
+development headers installed - see :ref:`building-from-source`. Building
+NumPy as of version ``1.17`` requires a C99 compliant compiler. For
+some older compilers this may require ``export CFLAGS='-std=c99'``.
 
 Having compiled code also means that importing NumPy from the development
 sources needs some additional steps, which are explained below.  For the rest
@@ -125,6 +127,9 @@ the interpreter, tests can be run like this::
     >>> np.test('full')   # Also run tests marked as slow
     >>> np.test('full', verbose=2)   # Additionally print test name/file
 
+    An example of a successful test :
+    ``4686 passed, 362 skipped, 9 xfailed, 5 warnings in 213.99 seconds``
+
 Or a similar way from the command line::
 
     $ python -c "import numpy as np; np.test()"
@@ -142,9 +147,9 @@ That also takes extra arguments, like ``--pdb`` which drops you into the Python
 debugger when a test fails or an exception is raised.
 
 Running tests with `tox`_ is also supported.  For example, to build NumPy and
-run the test suite with Python 3.4, use::
+run the test suite with Python 3.7, use::
 
-    $ tox -e py34
+    $ tox -e py37
 
 For more extensive information, see :ref:`testing-guidelines`
 

@@ -68,9 +68,6 @@ Inspecting the array
    ma.is_masked
    ma.is_mask
 
-   ma.MaskedArray.data
-   ma.MaskedArray.mask
-   ma.MaskedArray.recordmask
 
    ma.MaskedArray.all
    ma.MaskedArray.any
@@ -79,6 +76,12 @@ Inspecting the array
    ma.shape
    ma.size
 
+
+.. autosummary::
+
+    ma.MaskedArray.data
+    ma.MaskedArray.mask
+    ma.MaskedArray.recordmask
 
 _____
 
@@ -285,8 +288,10 @@ Filling a masked array
 
    ma.MaskedArray.get_fill_value
    ma.MaskedArray.set_fill_value
-   ma.MaskedArray.fill_value
 
+.. autosummary::
+
+    ma.MaskedArray.fill_value
 
 _____
 
