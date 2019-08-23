@@ -44,7 +44,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
-    temppath, suppress_warnings, break_cycles, assert_raises_regex,
+    temppath, suppress_warnings, break_cycles,
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
@@ -497,9 +497,6 @@ class TestArrayConstruction(object):
         assert_(np.ascontiguousarray(d).flags.c_contiguous)
         assert_(np.asfortranarray(d).flags.f_contiguous)
 
-    def test_ragged(self):
-        assert_raises_regex(ValueError, 'ragged',
-                             np.array, [[1], [2, 3]], dtype=int)
 
 class TestAssignment(object):
     def test_assignment_broadcasting(self):
