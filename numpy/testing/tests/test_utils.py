@@ -887,8 +887,7 @@ class TestAssertAllclose(object):
         with pytest.raises(AssertionError) as exc_info:
             assert_allclose(a, b)
         msg = str(exc_info.value)
-        assert_('Mismatch: 50%\nMax absolute difference: 1\n'
-                'Max relative difference: 0.5' in msg)
+        assert_('Max relative difference: 0.5' in msg)
 
 
 class TestArrayAlmostEqualNulp(object):
