@@ -6,7 +6,7 @@ NEP 31 — Context-local and global overrides of the NumPy API
 :Author: Ralf Gommers <rgommers@quansight.com>
 :Status: Draft
 :Type: Standards Track
-:Created: 2019-07-31
+:Created: 2019-08-22
 
 
 Abstract
@@ -16,19 +16,27 @@ This NEP proposes to make all of NumPy's public API overridable via a backend
 mechanism, using a library called ``uarray`` `[1]`_
 
 ``uarray`` provides global and context-local overrides, as well as a dispatch
-mechanism similar to NEP-18 `[2]`_. This NEP proposes to supercede NEP-18,
-and is intended as a comprehensive resolution to NEP-22 `[3]`_.
+mechanism similar to NEP-18 `[2]`_. First experiences with ``__array_function__``
+show that it is necessary to be able to override NumPy functions that
+*do not take an array-like argument*, and hence aren't overridable via
+``__array_function__``. The most pressing need is array creation and coercion
+functions - see e.g. NEP-30 `[9]`_.
+
+This NEP proposes to allow, in an opt-in fashion, overriding any part of the NumPy API.
+It is intended as a comprehensive resolution to NEP-22 `[3]`_, and obviates the need to
+add an ever-growing list of new protocols for each new type of function or object that needs
+to become overridable.
 
 Motivation and Scope
 --------------------
 
-The motivation behind this library is manifold: First, there have been several attempts to allow
+The motivation behind ``uarray`` is manifold: First, there have been several attempts to allow
 dispatch of parts of the NumPy API, including (most prominently), the ``__array_ufunc__`` protocol
 in NEP-13 `[4]`_, and the ``__array_function__`` protocol in NEP-18 `[2]`_, but this has shown the
-need for further protocols to be developed, including a protocol for coercion. `[5]`_. The reasons
+need for further protocols to be developed, including a protocol for coercion (see `[5]`_). The reasons
 these overrides are needed have been extensively discussed in the references, and this NEP will not
 attempt to go into the details of why these are needed. Another pain point requiring yet another
-protocol is the duck-array protocol. `[9]`_
+protocol is the duck-array protocol (see `[9]`_).
 
 This NEP takes a more holistic approach: It assumes that there are parts of the API that need to be
 overridable, and that these will grow over time. It provides a general framework and a mechanism to
@@ -39,13 +47,16 @@ functions that can be easily expressed in terms of others, as well as a reposito
 that help in the implementation of duck-arrays that most duck-arrays would require.
 
 The third is the existence of actual, third party dtype packages, and
-their desire to blend into the NumPy ecosystem. `[6]`_. This is a separate
+their desire to blend into the NumPy ecosystem (see `[6]`_). This is a separate
 issue compared to the C-level dtype redesign proposed in `[7]`_, it's about
 allowing third-party dtype implementations to work with NumPy, much like third-party array
 implementations.
 
 This NEP proposes the following: That ``unumpy`` `[8]`_  becomes the recommended override mechanism
-for the NumPy API.
+for the parts of the NumPy API not yet covered by ``__array_function__`` or ``__array_ufunc__``,
+and that ``uarray`` is vendored into a new namespace within NumPy to give users and downstream dependencies
+access to these overrides.  This vendoring mechanism is similar to what SciPy decided to do for
+making ``scipy.fft`` overridable (see `[10]`_).
 
 
 Detailed description
@@ -61,7 +72,8 @@ called ``unumpy`` `[8]`_, the implementation of which is already underway. Again
 will not be explained here, the reader should refer to its documentation for this purpose.
 
 The only change this NEP proposes at its acceptance, is to make ``unumpy`` the officially recommended
-way to override NumPy. ``unumpy`` will remain a separate repository/package, and will be developed
+way to override NumPy. ``unumpy`` will remain a separate repository/package (which we propose to vendor
+rather than depend on for the time being), and will be developed
 primarily with the input of duck-array authors and secondarily, custom dtype authors, via the usual
 GitHub workflow. There are a few reasons for this:
 
@@ -150,8 +162,9 @@ There are no backward incompatible changes proposed in this NEP.
 Alternatives
 ------------
 
-The current alternative to this problem, already implemented, is a
-combination of NEP-18 and NEP-13.
+The current alternative to this problem is NEP-30 plus adding more protocols
+(not yet specified) in addition to it.  Even then, some parts of the NumPy
+API will remain non-overridable, so it's a partial alternative.
 
 
 Discussion
@@ -203,6 +216,11 @@ References and Footnotes
 .. _[9]:
 
 [9] NEP 30 — Duck Typing for NumPy Arrays - Implementation: https://www.numpy.org/neps/nep-0030-duck-array-protocol.html
+
+.. _[10]:
+
+[10] http://scipy.github.io/devdocs/fft.html#backend-control
+
 
 Copyright
 ---------
