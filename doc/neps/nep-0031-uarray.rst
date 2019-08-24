@@ -69,12 +69,27 @@ _will be discussed on the mailing list._
 
 The way we propose the overrides will be used by end users is::
 
-    from numpy import unumpy
-    TODO
+    from numpy import unumpy as np
+    with np.set_backend(backend):
+        x = np.array(shape, dtype=dtype)
 
-And a library that implements a NumPy-like API will use it like::
+And a library that implements a NumPy-like API will use it in the following manner (as an example)::
 
-    TODO: example corresponding to NEP 30 `duckarray`
+    _ua_implementations = {}
+
+    def __ua_function__(func, args, kwargs):
+        return _ua_implementations[func](*args, **kwargs)
+
+    def implements(ua_func):
+        def inner(func):
+            _ua_implementations[ua_func] = func
+            return func
+
+        return inner
+
+    @implements(np.array)
+    def array(shape, dtype):
+        # Implementation here
 
 The only change this NEP proposes at its acceptance, is to make ``unumpy`` the officially recommended
 way to override NumPy. ``unumpy`` will remain a separate repository/package (which we propose to vendor
