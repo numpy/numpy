@@ -2236,10 +2236,10 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
          * x = +/- NAN; return NAN
          * x = 0.0f; return -INF
          */
-        poly = @isa@_set_masked_lanes(poly, nan, nan_mask);
-        poly = @isa@_set_masked_lanes(poly, neg_nan, negx_mask);
-        poly = @isa@_set_masked_lanes(poly, neg_inf, zero_mask);
-        poly = @isa@_set_masked_lanes(poly, inf, inf_mask);
+        poly = @isa@_set_masked_lanes_ps(poly, nan, nan_mask);
+        poly = @isa@_set_masked_lanes_ps(poly, neg_nan, negx_mask);
+        poly = @isa@_set_masked_lanes_ps(poly, neg_inf, zero_mask);
+        poly = @isa@_set_masked_lanes_ps(poly, inf, inf_mask);
 
         @masked_store@(op, @cvtps_epi32@(load_mask), poly);
 
