@@ -30,7 +30,7 @@ to become overridable.
 Motivation and Scope
 --------------------
 
-The motivation behind ``uarray`` is manifold: First, there have been several attempts to allow
+The motivation behind ``uarray`` is manyfold: First, there have been several attempts to allow
 dispatch of parts of the NumPy API, including (most prominently), the ``__array_ufunc__`` protocol
 in NEP-13 `[4]`_, and the ``__array_function__`` protocol in NEP-18 `[2]`_, but this has shown the
 need for further protocols to be developed, including a protocol for coercion (see `[5]`_). The reasons
@@ -62,30 +62,36 @@ making ``scipy.fft`` overridable (see `[10]`_).
 Detailed description
 --------------------
 
-This section will not attempt to explain the specifics or the mechanism of ``uarray``,
-that is explained in the ``uarray`` documentation. `[1]`_ However, the NumPy community
-will have input into the design of ``uarray``, and any backward-incompatible changes
-will be discussed on the mailing list.
+_Note that this section will not attempt to explain the specifics or the mechanism of ``uarray``,_
+_that is explained in the ``uarray`` documentation. `[1]`_ However, the NumPy community_
+_will have input into the design of ``uarray``, and any backward-incompatible changes_
+_will be discussed on the mailing list._
 
-The first goal of this NEP is as follows: To complete an overridable version of NumPy,
-called ``unumpy`` `[8]`_, the implementation of which is already underway. Again, ``unumpy``
-will not be explained here, the reader should refer to its documentation for this purpose.
+The way we propose the overrides will be used by end users is::
+
+    from numpy import unumpy
+    TODO
+
+And a library that implements a NumPy-like API will use it like::
+
+    TODO: example corresponding to NEP 30 `duckarray`
 
 The only change this NEP proposes at its acceptance, is to make ``unumpy`` the officially recommended
 way to override NumPy. ``unumpy`` will remain a separate repository/package (which we propose to vendor
+to avoid a hard dependency, and use the separate ``unumpy`` package only if it is installed)
 rather than depend on for the time being), and will be developed
 primarily with the input of duck-array authors and secondarily, custom dtype authors, via the usual
 GitHub workflow. There are a few reasons for this:
 
 * Faster iteration in the case of bugs or issues.
 * Faster design changes, in the case of needed functionality.
-* Lower likelihood to be stuck with a bad design decision.
+* ``unumpy`` will work with older versions of NumPy as well.
 * The user and library author opt-in to the override process,
   rather than breakages happening when it is least expected.
   In simple terms, bugs in ``unumpy`` mean that ``numpy`` remains
   unaffected.
-* The upgrade pathway to NumPy 2.0 becomes simpler, requiring just
-  a backend change, and allowing both to exist side-by-side.
+
+**FIXME: this section doesn't match the proposal. in the abstract and motivation anymore.**
 
 Once maturity is achieved, ``unumpy`` be moved into the NumPy organization,
 and NumPy will become the reference implementation for ``unumpy``.
@@ -165,6 +171,10 @@ Alternatives
 The current alternative to this problem is NEP-30 plus adding more protocols
 (not yet specified) in addition to it.  Even then, some parts of the NumPy
 API will remain non-overridable, so it's a partial alternative.
+
+The main alternative to vendoring ``unumpy`` is to simply move it into NumPy
+completely and not distribute it as a separate package. This would also achieve
+the proposed goals, however we prefer to keep it a separate package for now.
 
 
 Discussion
