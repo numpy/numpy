@@ -4,7 +4,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_raises, assert_equal,
+    assert_, assert_raises, assert_equal, assert_raises_regex,
     assert_warns, assert_no_warnings, assert_array_equal,
     assert_array_almost_equal, suppress_warnings)
 
@@ -497,7 +497,9 @@ class TestRandomDist(object):
         actual = random.integers(-99, 99, size=(3, 2))
         desired = np.array([[-80, -56], [41, 37], [-83, -16]])
         assert_array_equal(actual, desired)
-        assert_raises(ValueError, random.integers, 0)
+        assert_raises_regex(ValueError,
+                            "low must be greater than 0 when high is not given.",
+                            random.integers, 0)
 
     def test_integers_masked(self):
         # Test masked rejection sampling algorithm to generate array of

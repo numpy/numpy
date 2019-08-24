@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pytest
 from numpy.testing import (
-        assert_, assert_raises, assert_equal, assert_warns,
+        assert_, assert_raises, assert_equal, assert_warns, assert_raises_regex,
         assert_no_warnings, assert_array_equal, assert_array_almost_equal,
         suppress_warnings
         )
@@ -431,7 +431,9 @@ class TestRandomDist(object):
                             [-52, 41],
                             [-48, -66]])
         assert_array_equal(actual, desired)
-        assert_raises(ValueError, random.randint, 0)
+        assert_raises_regex(ValueError,
+                            "low must be greater than 0 when high is not given.",
+                            random.randint, 0)
 
     def test_random_integers(self):
         random.seed(self.seed)

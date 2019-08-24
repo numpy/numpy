@@ -600,10 +600,8 @@ cdef class RandomState:
         array([[ 8,  6,  9,  7], # random
                [ 1, 16,  9, 12]], dtype=uint8)
         """
-
-        if high is None:
-            if isinstance(low, (int, np.integer)) and low <= 0:
-                raise ValueError("low must be greater than 0 when high is not given.")
+        high_and_low_swapped = high is None
+        if high_and_low_swapped:
             high = low
             low = 0
 
@@ -626,24 +624,29 @@ cdef class RandomState:
         cdef bint _masked = True
         cdef bint _endpoint = False
 
-        if key == 'int32':
-            ret = _rand_int32(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'int64':
-            ret = _rand_int64(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'int16':
-            ret = _rand_int16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'int8':
-            ret = _rand_int8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint64':
-            ret = _rand_uint64(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint32':
-            ret = _rand_uint32(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint16':
-            ret = _rand_uint16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'uint8':
-            ret = _rand_uint8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
-        elif key == 'bool':
-            ret = _rand_bool(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+        try:
+            if key == 'int32':
+                ret = _rand_int32(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+            elif key == 'int64':
+                ret = _rand_int64(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+            elif key == 'int16':
+                ret = _rand_int16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+            elif key == 'int8':
+                ret = _rand_int8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+            elif key == 'uint64':
+                ret = _rand_uint64(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+            elif key == 'uint32':
+                ret = _rand_uint32(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+            elif key == 'uint16':
+                ret = _rand_uint16(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+            elif key == 'uint8':
+                ret = _rand_uint8(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+            elif key == 'bool':
+                ret = _rand_bool(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
+        except ValueError as e:
+            if high_and_low_swapped and 'low >= high' == str(e):
+                e.args = ("low must be greater than 0 when high is not given.", )
+            raise
 
         if size is None and dtype in (np.bool, np.int, np.long):
             if np.array(ret).shape == ():
