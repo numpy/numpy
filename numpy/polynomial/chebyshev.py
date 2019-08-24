@@ -1468,7 +1468,7 @@ def chebvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    return pu._vander2d(chebvander, x, y, deg)
+    return pu._vander_nd_flat((chebvander, chebvander), (x, y), deg)
 
 
 def chebvander3d(x, y, z, deg):
@@ -1522,7 +1522,7 @@ def chebvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    return pu._vander3d(chebvander, x, y, z, deg)
+    return pu._vander_nd_flat((chebvander, chebvander, chebvander), (x, y, z), deg)
 
 
 def chebfit(x, y, deg, rcond=None, full=False, w=None):
