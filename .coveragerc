@@ -1,4 +1,4 @@
 [run]
 branch = True
-source = numpy
+source = .
 disable_warnings = include-ignored
