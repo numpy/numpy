@@ -1229,7 +1229,7 @@ def legvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    return pu._vander2d(legvander, x, y, deg)
+    return pu._vander_nd_flat((legvander, legvander), (x, y), deg)
 
 
 def legvander3d(x, y, z, deg):
@@ -1283,7 +1283,7 @@ def legvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    return pu._vander3d(legvander, x, y, z, deg)
+    return pu._vander_nd_flat((legvander, legvander, legvander), (x, y, z), deg)
 
 
 def legfit(x, y, deg, rcond=None, full=False, w=None):

@@ -1133,7 +1133,7 @@ def polyvander2d(x, y, deg):
     polyvander, polyvander3d, polyval2d, polyval3d
 
     """
-    return pu._vander2d(polyvander, x, y, deg)
+    return pu._vander_nd_flat((polyvander, polyvander), (x, y), deg)
 
 
 def polyvander3d(x, y, z, deg):
@@ -1187,7 +1187,7 @@ def polyvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    return pu._vander3d(polyvander, x, y, z, deg)
+    return pu._vander_nd_flat((polyvander, polyvander, polyvander), (x, y, z), deg)
 
 
 def polyfit(x, y, deg, rcond=None, full=False, w=None):
