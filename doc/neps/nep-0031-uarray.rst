@@ -4,6 +4,7 @@ NEP 31 — Context-local and global overrides of the NumPy API
 
 :Author: Hameer Abbasi <habbasi@quansight.com>
 :Author: Ralf Gommers <rgommers@quansight.com>
+:Author: Peter Bell <peterbell10@live.co.uk>
 :Status: Draft
 :Type: Standards Track
 :Created: 2019-08-22
@@ -69,13 +70,16 @@ _will be discussed on the mailing list._
 
 The way we propose the overrides will be used by end users is::
 
-    from numpy import unumpy as np
+    import numpy.overridable as np
     with np.set_backend(backend):
         x = np.asarray(my_array, dtype=dtype)
 
 And a library that implements a NumPy-like API will use it in the following manner (as an example)::
 
+    import numpy.overridable as np
     _ua_implementations = {}
+
+    __ua_domain__ = "numpy"
 
     def __ua_function__(func, args, kwargs):
         return _ua_implementations[func](*args, **kwargs)
@@ -92,6 +96,12 @@ And a library that implements a NumPy-like API will use it in the following mann
         # Code here
         # Must return NotImplemented for unsupported array types
 
+    # Assuming your arrays are mutable, this also implements
+    # zeros and ones.
+    @implements(np.empty)
+    def empty(shape, dtype=float, order='C'):
+        # Code here
+
 The only change this NEP proposes at its acceptance, is to make ``unumpy`` the officially recommended
 way to override NumPy. ``unumpy`` will remain a separate repository/package (which we propose to vendor
 to avoid a hard dependency, and use the separate ``unumpy`` package only if it is installed)
@@ -107,10 +117,8 @@ GitHub workflow. There are a few reasons for this:
   In simple terms, bugs in ``unumpy`` mean that ``numpy`` remains
   unaffected.
 
-**FIXME: this section doesn't match the proposal. in the abstract and motivation anymore.**
-
-Once maturity is achieved, ``unumpy`` be moved into the NumPy organization,
-and NumPy will become the reference implementation for ``unumpy``.
+Advantanges of ``unumpy`` over other solutions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``unumpy`` offers a number of advantanges over the approach of defining a new protocol for every
 problem encountered: Whenever there is something requiring an override, ``unumpy`` will be able to
@@ -131,6 +139,22 @@ only a small part of it.
 
 The third and last benefit is a clear way to coerce to a given backend, and a protocol for coercing not only arrays,
 but also ``dtype`` objects and ``ufunc`` objects with similar ones from other libraries.
+
+Mixing NumPy and ``unumpy`` in the same file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Normally, one would only want to import one of ``unumpy`` or ``numpy``, you would import it as ``np`` for
+familiarity. However, there may be situations where one wishes to mix NumPy and the overrides, and there are
+a few ways to do this, depending on the user's style::
+
+    import numpy.overridable as unp  # Or unumpy
+    import numpy as np
+
+or::
+
+    import numpy as np
+
+    # Use unumpy via np.overridable
 
 Related Work
 ------------
@@ -190,7 +214,8 @@ API will remain non-overridable, so it's a partial alternative.
 
 The main alternative to vendoring ``unumpy`` is to simply move it into NumPy
 completely and not distribute it as a separate package. This would also achieve
-the proposed goals, however we prefer to keep it a separate package for now.
+the proposed goals, however we prefer to keep it a separate package for now,
+for reasons already stated above.
 
 
 Discussion
