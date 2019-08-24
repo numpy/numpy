@@ -1,0 +1,5 @@
+Vector ``atol`` and ``rtol`` in ``np.all_isclose`` and ``np.isclose``
+-----------------------------------------------------------------------
+The keywords ``atol`` and ``rtol`` in ``np.isclose`` and ``np.all_isclose``
+now accept both scalars and vectors. A vector if given must have the same
+length as the larger of the two input arrays ``x`` and ``y``.
