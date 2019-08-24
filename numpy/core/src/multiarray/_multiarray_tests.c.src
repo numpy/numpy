@@ -660,29 +660,37 @@ npy_updateifcopy_deprecation(PyObject* NPY_UNUSED(self), PyObject* args)
 static PyObject*
 npy_pyarrayas1d_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
 {
-    PyObject **result = Py_BuildValue("i", 42);
+    PyObject *op = Py_BuildValue("i", 42);
+    PyObject *result = op;
     int dim = 4;
     double arg[2] = {1, 2};
-    int temp = PyArray_As1D(result, (char **)&arg, &dim, NPY_DOUBLE);
+    int temp = PyArray_As1D(&result, (char **)&arg, &dim, NPY_DOUBLE);
     if (temp < 0) {
+        Py_DECREF(op);
         return NULL;
     }
-    return *result;
+    /* op != result */
+    Py_DECREF(op);
+    return result;
 }
 
 /* used to test PyArray_As2D usage emits not implemented error */
 static PyObject*
 npy_pyarrayas2d_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
 {
-    PyObject **result = Py_BuildValue("i", 42);
+    PyObject *op = Py_BuildValue("i", 42);
+    PyObject *result = op;
     int dim1 = 4;
     int dim2 = 6;
     double arg[2][2] = {{1, 2}, {3, 4}};
-    int temp = PyArray_As2D(result, (char ***)&arg, &dim1, &dim2, NPY_DOUBLE);
+    int temp = PyArray_As2D(&result, (char ***)&arg, &dim1, &dim2, NPY_DOUBLE);
     if (temp < 0) {
+        Py_DECREF(op);
         return NULL;
     }
-    return *result;
+    /* op != result */
+    Py_DECREF(op);
+    return result;
 }
 
 /* used to create array with WRITEBACKIFCOPY flag */
