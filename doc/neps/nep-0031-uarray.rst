@@ -71,7 +71,7 @@ The way we propose the overrides will be used by end users is::
 
     from numpy import unumpy as np
     with np.set_backend(backend):
-        x = np.array(shape, dtype=dtype)
+        x = np.asarray(my_array, dtype=dtype)
 
 And a library that implements a NumPy-like API will use it in the following manner (as an example)::
 
@@ -87,9 +87,10 @@ And a library that implements a NumPy-like API will use it in the following mann
 
         return inner
 
-    @implements(np.array)
-    def array(shape, dtype):
-        # Implementation here
+    @implements(np.asarray)
+    def asarray(a, dtype=None, order=None):
+        # Code here
+        # Must return NotImplemented for unsupported array types
 
 The only change this NEP proposes at its acceptance, is to make ``unumpy`` the officially recommended
 way to override NumPy. ``unumpy`` will remain a separate repository/package (which we propose to vendor
