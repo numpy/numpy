@@ -190,7 +190,7 @@ Concepts
    :maxdepth: 1
 
    generator
-   legacy mtrand <legacy>
+   Legacy generator and functions <legacy>
    BitGenerators, SeedSequences <bit_generators/index>
 
 Features

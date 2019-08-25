@@ -1,9 +1,7 @@
 Parallel Congruent Generator (64-bit, PCG64)
 --------------------------------------------
 
-.. module:: numpy.random.pcg64
-
-.. currentmodule:: numpy.random.pcg64
+.. currentmodule:: numpy.random
 
 .. autoclass:: PCG64
 	:exclude-members:

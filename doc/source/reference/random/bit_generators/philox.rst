@@ -1,9 +1,7 @@
 Philox Counter-based RNG
 ------------------------
 
-.. module:: numpy.random.philox
-
-.. currentmodule:: numpy.random.philox
+.. currentmodule:: numpy.random
 
 .. autoclass:: Philox
 	:exclude-members:
