@@ -275,7 +275,7 @@ def obj2sctype(rep, default=None):
     <class 'list'>
 
     """
-    # prevent abtract classes being upcast
+    # prevent abstract classes being upcast
     if isinstance(rep, type) and issubclass(rep, generic):
         return rep
     # extract dtype from arrays
@@ -347,7 +347,7 @@ def issubsctype(arg1, arg2):
 
     See Also
     --------
-    issctype, issubdtype,obj2sctype
+    issctype, issubdtype, obj2sctype
 
     Examples
     --------

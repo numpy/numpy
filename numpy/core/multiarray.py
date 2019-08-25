@@ -7,7 +7,9 @@ by importing from the extension module.
 """
 
 import functools
+import sys
 import warnings
+import sys
 
 from . import overrides
 from . import _multiarray_umath
@@ -15,7 +17,7 @@ import numpy as np
 from numpy.core._multiarray_umath import *
 from numpy.core._multiarray_umath import (
     _fastCopyAndTranspose, _flagdict, _insert, _reconstruct, _vec_string,
-    _ARRAY_API, _monotonicity
+    _ARRAY_API, _monotonicity, _get_ndarray_c_version
     )
 
 __all__ = [
@@ -30,15 +32,17 @@ __all__ = [
     'count_nonzero', 'c_einsum', 'datetime_as_string', 'datetime_data',
     'digitize', 'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
-    'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'getbuffer', 'inner',
+    'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'inner',
     'int_asbuffer', 'interp', 'interp_complex', 'is_busday', 'lexsort',
     'matmul', 'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer',
-    'nested_iters', 'newbuffer', 'normalize_axis_index', 'packbits',
+    'nested_iters', 'normalize_axis_index', 'packbits',
     'promote_types', 'putmask', 'ravel_multi_index', 'result_type', 'scalar',
     'set_datetimeparse_function', 'set_legacy_print_mode', 'set_numeric_ops',
     'set_string_function', 'set_typeDict', 'shares_memory', 'test_interrupt',
     'tracemalloc_domain', 'typeinfo', 'unpackbits', 'unravel_index', 'vdot',
     'where', 'zeros']
+if sys.version_info.major < 3:
+    __all__ += ['newbuffer', 'getbuffer']
 
 # For backward compatibility, make sure pickle imports these functions from here
 _reconstruct.__module__ = 'numpy.core.multiarray'
@@ -71,9 +75,9 @@ array_function_from_c_func_and_dispatcher = functools.partial(
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.empty_like)
-def empty_like(prototype, dtype=None, order=None, subok=None):
+def empty_like(prototype, dtype=None, order=None, subok=None, shape=None):
     """
-    empty_like(prototype, dtype=None, order='K', subok=True)
+    empty_like(prototype, dtype=None, order='K', subok=True, shape=None)
 
     Return a new array with the same shape and type as a given array.
 
@@ -97,6 +101,12 @@ def empty_like(prototype, dtype=None, order=None, subok=None):
         If True, then the newly created array will use the sub-class
         type of 'a', otherwise it will be a base-class array. Defaults
         to True.
+    shape : int or sequence of ints, optional.
+        Overrides the shape of the result. If order='K' and the number of
+        dimensions is unchanged, will try to keep order, otherwise,
+        order='C' is implied.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -121,11 +131,11 @@ def empty_like(prototype, dtype=None, order=None, subok=None):
     --------
     >>> a = ([1,2,3], [4,5,6])                         # a is array-like
     >>> np.empty_like(a)
-    array([[-1073741821, -1073741821,           3],    # random
+    array([[-1073741821, -1073741821,           3],    # uninitialized
            [          0,           0, -1073741821]])
     >>> a = np.array([[1., 2., 3.],[4.,5.,6.]])
     >>> np.empty_like(a)
-    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # random
+    array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninitialized
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
     """
@@ -489,11 +499,15 @@ def can_cast(from_, to, casting=None):
 
     Notes
     -----
-    Starting in NumPy 1.9, can_cast function now returns False in 'safe'
-    casting mode for integer/float dtype and string dtype if the string dtype
-    length is not long enough to store the max integer/float value converted
-    to a string. Previously can_cast in 'safe' mode returned True for
-    integer/float dtype and a string dtype of any length.
+    .. versionchanged:: 1.17.0
+       Casting between a simple data type and a structured one is possible only
+       for "unsafe" casting.  Casting to multiple fields is allowed, but
+       casting from multiple fields is not.
+
+    .. versionchanged:: 1.9.0
+       Casting from numeric to string types in 'safe' casting mode requires
+       that the string dtype length is long enough to store the maximum
+       integer/float value converted.
 
     See also
     --------
@@ -1107,9 +1121,9 @@ def putmask(a, mask, values):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.packbits)
-def packbits(a, axis=None):
+def packbits(a, axis=None, bitorder='big'):
     """
-    packbits(a, axis=None)
+    packbits(a, axis=None, bitorder='big')
 
     Packs the elements of a binary-valued array into bits in a uint8 array.
 
@@ -1123,6 +1137,13 @@ def packbits(a, axis=None):
     axis : int, optional
         The dimension over which bit-packing is done.
         ``None`` implies packing the flattened array.
+    bitorder : {'big', 'little'}, optional
+        The order of the input bits. 'big' will mimic bin(val),
+        ``[0, 0, 0, 0, 0, 0, 1, 1] => 3 = 0b00000011 => ``, 'little' will
+        reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
+        Defaults to 'big'.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1158,9 +1179,9 @@ def packbits(a, axis=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.unpackbits)
-def unpackbits(a, axis=None, count=None):
+def unpackbits(a, axis=None, count=None, bitorder='big'):
     """
-    unpackbits(a, axis=None, count=None)
+    unpackbits(a, axis=None, count=None, bitorder='big')
 
     Unpacks elements of a uint8 array into a binary-valued output array.
 
@@ -1185,6 +1206,14 @@ def unpackbits(a, axis=None, count=None):
         default). Counts larger than the available number of bits will
         add zero padding to the output. Negative counts must not
         exceed the available number of bits.
+
+        .. versionadded:: 1.17.0
+
+    bitorder : {'big', 'little'}, optional
+        The order of the returned bits. 'big' will mimic bin(val),
+        ``3 = 0b00000011 => [0, 0, 0, 0, 0, 0, 1, 1]``, 'little' will reverse
+        the order to ``[1, 1, 0, 0, 0, 0, 0, 0]``.
+        Defaults to 'big'.
 
         .. versionadded:: 1.17.0
 

@@ -1,7 +1,7 @@
 """
 Conversion from ctypes to dtype.
 
-In an ideal world, we could acheive this through the PEP3118 buffer protocol,
+In an ideal world, we could achieve this through the PEP3118 buffer protocol,
 something like::
 
     def dtype_from_ctypes_type(t):

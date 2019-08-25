@@ -246,7 +246,7 @@ class memmap(ndarray):
 
             bytes = long(offset + size*_dbytes)
 
-            if mode == 'w+' or (mode == 'r+' and flen < bytes):
+            if mode in ('w+', 'r+') and flen < bytes:
                 fid.seek(bytes - 1, 0)
                 fid.write(b'\0')
                 fid.flush()

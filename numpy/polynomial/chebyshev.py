@@ -529,8 +529,7 @@ def chebfromroots(roots):
 
     See Also
     --------
-    hermfromroots, hermefromroots, lagfromroots, legfromroots,
-    polyfromroots.
+    polyfromroots, legfromroots, lagfromroots, hermfromroots, hermefromroots
 
     Examples
     --------
@@ -828,6 +827,9 @@ def chebpow(c, pow, maxpower=16):
     array([15.5, 22. , 16. , ..., 12.5, 12. ,  8. ])
 
     """
+    # note: this is more efficient than `pu._pow(chebmul, c1, c2)`, as it
+    # avoids converting between z and c series repeatedly
+
     # c is a trimmed copy
     [c] = pu.as_series([c])
     power = int(pow)
@@ -909,7 +911,7 @@ def chebder(c, m=1, scl=1, axis=0):
     array([12.,  96.])
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     cnt = pu._deprecate_as_int(m, "the order of derivation")
@@ -1026,7 +1028,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     array([-1.,  1., -1., -1.])
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     if not np.iterable(k):
@@ -1141,7 +1143,7 @@ def chebval(x, c, tensor=True):
            [  58.,  102.]])
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -1421,7 +1423,7 @@ def chebvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=0, ndmin=1) + 0.0
+    x = np.array(x, copy=False, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
@@ -1477,7 +1479,7 @@ def chebvander2d(x, y, deg):
 
     See Also
     --------
-    chebvander, chebvander3d. chebval2d, chebval3d
+    chebvander, chebvander3d, chebval2d, chebval3d
 
     Notes
     -----
@@ -1531,7 +1533,7 @@ def chebvander3d(x, y, z, deg):
 
     See Also
     --------
-    chebvander, chebvander3d. chebval2d, chebval3d
+    chebvander, chebvander3d, chebval2d, chebval3d
 
     Notes
     -----
@@ -1775,7 +1777,8 @@ def chebroots(c):
     if len(c) == 2:
         return np.array([-c[0]/c[1]])
 
-    m = chebcompanion(c)
+    # rotated companion matrix reduces error
+    m = chebcompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r

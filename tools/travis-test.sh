@@ -26,6 +26,7 @@ fi
 
 # make some warnings fatal, mostly to match windows compilers
 werrors="-Werror=vla -Werror=nonnull -Werror=pointer-arith"
+werrors="$werrors -Werror=implicit-function-declaration"
 
 # build with c99 by default
 
@@ -80,11 +81,18 @@ run_test()
   INSTALLDIR=$($PYTHON -c \
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
+
+  if [ -n "$PPC64_LE" ]; then
+    $PYTHON ../tools/openblas_support.py --check_version $OpenBLAS_version
+  fi
+
   if [ -n "$RUN_FULL_TESTS" ]; then
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    $PYTHON ../tools/test-installed-numpy.py -v --mode=full $COVERAGE_FLAG
+    $PYTHON ../runtests.py -n -v --durations 10 --mode=full $COVERAGE_FLAG
   else
-    $PYTHON ../tools/test-installed-numpy.py -v
+    # disable --durations temporarily, pytest currently aborts
+    # when that is used with python3.6-dbg
+    $PYTHON ../runtests.py -n -v  # --durations 10
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -110,6 +118,7 @@ run_test()
 
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
+    $PYTHON `which asv` check --python=same
     $PYTHON `which asv` machine --machine travis
     $PYTHON `which asv` dev 2>&1| tee asv-output.log
     if grep -q Traceback asv-output.log; then

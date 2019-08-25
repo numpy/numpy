@@ -1,0 +1,3 @@
+* ``numeric.loads``, ``numeric.load``, ``np.ma.dump``,
+  ``np.ma.dumps``, ``np.ma.load``, ``np.ma.loads`` are removed,
+  use ``pickle`` methods instead

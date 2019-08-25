@@ -104,7 +104,7 @@ class TestHalf(object):
         # logic will be necessary, an arbitrarily small offset should cause
         # normal up/down rounding always.
 
-        # Calculate the expecte pattern:
+        # Calculate the expected pattern:
         cmp_patterns = f16s_patterns[1:-1].copy()
 
         if shift == "down" and offset != "up":

@@ -24,6 +24,7 @@
 #include "ufunc_type_resolution.h"
 #include "ufunc_object.h"
 #include "common.h"
+#include "convert_datatype.h"
 
 #include "mem_overlap.h"
 #if defined(HAVE_CBLAS)
@@ -74,18 +75,28 @@ npy_casting_to_string(NPY_CASTING casting)
  */
 static int
 raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
-    PyObject *errmsg;
-    const char *ufunc_name = ufunc_get_name_cstr(ufunc);
-    errmsg = PyUString_FromFormat("ufunc %s cannot use operands "
-                        "with types ", ufunc_name);
-    PyUString_ConcatAndDel(&errmsg,
-            PyObject_Repr((PyObject *)PyArray_DESCR(operands[0])));
-    PyUString_ConcatAndDel(&errmsg,
-            PyUString_FromString(" and "));
-    PyUString_ConcatAndDel(&errmsg,
-            PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
-    PyErr_SetObject(PyExc_TypeError, errmsg);
-    Py_DECREF(errmsg);
+    static PyObject *exc_type = NULL;
+    PyObject *exc_value;
+
+    npy_cache_import(
+        "numpy.core._exceptions", "_UFuncBinaryResolutionError",
+        &exc_type);
+    if (exc_type == NULL) {
+        return -1;
+    }
+
+    /* produce an error object */
+    exc_value = Py_BuildValue(
+        "O(OO)", ufunc,
+        (PyObject *)PyArray_DESCR(operands[0]),
+        (PyObject *)PyArray_DESCR(operands[1])
+    );
+    if (exc_value == NULL){
+        return -1;
+    }
+    PyErr_SetObject(exc_type, exc_value);
+    Py_DECREF(exc_value);
+
     return -1;
 }
 
@@ -94,7 +105,7 @@ raise_binary_type_reso_error(PyUFuncObject *ufunc, PyArrayObject **operands) {
  */
 static int
 raise_no_loop_found_error(
-        PyUFuncObject *ufunc, PyArray_Descr **dtypes, npy_intp n_dtypes)
+        PyUFuncObject *ufunc, PyArray_Descr **dtypes)
 {
     static PyObject *exc_type = NULL;
     PyObject *exc_value;
@@ -109,11 +120,11 @@ raise_no_loop_found_error(
     }
 
     /* convert dtypes to a tuple */
-    dtypes_tup = PyTuple_New(n_dtypes);
+    dtypes_tup = PyTuple_New(ufunc->nargs);
     if (dtypes_tup == NULL) {
         return -1;
     }
-    for (i = 0; i < n_dtypes; ++i) {
+    for (i = 0; i < ufunc->nargs; ++i) {
         Py_INCREF(dtypes[i]);
         PyTuple_SET_ITEM(dtypes_tup, i, (PyObject *)dtypes[i]);
     }
@@ -537,6 +548,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
         }
 
         out_dtypes[0] = ensure_dtype_nbo(dtype);
+        Py_DECREF(dtype);
         if (out_dtypes[0] == NULL) {
             return -1;
         }
@@ -610,6 +622,26 @@ PyUFunc_IsNaTTypeResolver(PyUFuncObject *ufunc,
 
     return 0;
 }
+
+
+NPY_NO_EXPORT int
+PyUFunc_IsFiniteTypeResolver(PyUFuncObject *ufunc,
+                          NPY_CASTING casting,
+                          PyArrayObject **operands,
+                          PyObject *type_tup,
+                          PyArray_Descr **out_dtypes)
+{
+    if (!PyTypeNum_ISDATETIME(PyArray_DESCR(operands[0])->type_num)) {
+        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
+                                    type_tup, out_dtypes);
+    }
+
+    out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+    out_dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
+
+    return 0;
+}
+
 
 /*
  * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
@@ -1452,7 +1484,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         types += nargs;
     }
 
-    return raise_no_loop_found_error(ufunc, dtypes, nargs);
+    return raise_no_loop_found_error(ufunc, dtypes);
 }
 
 typedef struct {
@@ -1717,7 +1749,7 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
         }
         /*
          * For outputs, copy the dtype from op[0] if the type_num
-         * matches, similarly to preserve metdata.
+         * matches, similarly to preserve metadata.
          */
         else if (i >= nin && op[0] != NULL &&
                             PyArray_DESCR(op[0])->type_num == type_nums[i]) {
@@ -1908,73 +1940,6 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
     return 0;
 }
 
-/*
- * Provides an ordering for the dtype 'kind' character codes, to help
- * determine when to use the min_scalar_type function. This groups
- * 'kind' into boolean, integer, floating point, and everything else.
- */
-
-static int
-dtype_kind_to_simplified_ordering(char kind)
-{
-    switch (kind) {
-        /* Boolean kind */
-        case 'b':
-            return 0;
-        /* Unsigned int kind */
-        case 'u':
-        /* Signed int kind */
-        case 'i':
-            return 1;
-        /* Float kind */
-        case 'f':
-        /* Complex kind */
-        case 'c':
-            return 2;
-        /* Anything else */
-        default:
-            return 3;
-    }
-}
-
-static int
-should_use_min_scalar(PyArrayObject **op, int nop)
-{
-    int i, use_min_scalar, kind;
-    int all_scalars = 1, max_scalar_kind = -1, max_array_kind = -1;
-
-    /*
-     * Determine if there are any scalars, and if so, whether
-     * the maximum "kind" of the scalars surpasses the maximum
-     * "kind" of the arrays
-     */
-    use_min_scalar = 0;
-    if (nop > 1) {
-        for(i = 0; i < nop; ++i) {
-            kind = dtype_kind_to_simplified_ordering(
-                                PyArray_DESCR(op[i])->kind);
-            if (PyArray_NDIM(op[i]) == 0) {
-                if (kind > max_scalar_kind) {
-                    max_scalar_kind = kind;
-                }
-            }
-            else {
-                all_scalars = 0;
-                if (kind > max_array_kind) {
-                    max_array_kind = kind;
-                }
-
-            }
-        }
-
-        /* Indicate whether to use the min_scalar_type function */
-        if (!all_scalars && max_array_kind >= max_scalar_kind) {
-            use_min_scalar = 1;
-        }
-    }
-
-    return use_min_scalar;
-}
 
 /*
  * Does a linear search for the best inner loop of the ufunc.
@@ -1993,14 +1958,15 @@ linear_search_type_resolver(PyUFuncObject *self,
     npy_intp i, j, nin = self->nin, nop = nin + self->nout;
     int types[NPY_MAXARGS];
     const char *ufunc_name;
-    int no_castable_output, use_min_scalar;
+    int no_castable_output = 0;
+    int use_min_scalar;
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    use_min_scalar = should_use_min_scalar(op, nin);
+    use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
 
     /* If the ufunc has userloops, search for them. */
     if (self->userloops) {
@@ -2109,7 +2075,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    use_min_scalar = should_use_min_scalar(op, nin);
+    use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
 
     /* Fill in specified_types from the tuple or string */
     if (PyTuple_Check(type_tup)) {
@@ -2300,7 +2266,6 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
             out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
-            Py_INCREF(out_dtypes[2]);
             out_dtypes[3] = out_dtypes[0];
             Py_INCREF(out_dtypes[3]);
         }

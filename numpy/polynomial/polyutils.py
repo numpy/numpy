@@ -46,6 +46,7 @@ Functions
 from __future__ import division, absolute_import, print_function
 
 import operator
+import warnings
 
 import numpy as np
 
@@ -173,7 +174,7 @@ def as_series(alist, trim=True):
     [array([2.]), array([1.1, 0. ])]
 
     """
-    arrays = [np.array(a, ndmin=1, copy=0) for a in alist]
+    arrays = [np.array(a, ndmin=1, copy=False) for a in alist]
     if min([a.size for a in arrays]) == 0:
         raise ValueError("Coefficient array is empty")
     if any([a.ndim != 1 for a in arrays]):
@@ -195,7 +196,7 @@ def as_series(alist, trim=True):
             dtype = np.common_type(*arrays)
         except Exception:
             raise ValueError("Coefficient arrays have no common type")
-        ret = [np.array(a, copy=1, dtype=dtype) for a in arrays]
+        ret = [np.array(a, copy=True, dtype=dtype) for a in arrays]
     return ret
 
 
@@ -429,7 +430,7 @@ def _vander2d(vander_f, x, y, deg):
         _deprecate_as_int(d, "degrees")
         for d in deg
     ]
-    x, y = np.array((x, y), copy=0) + 0.0
+    x, y = np.array((x, y), copy=False) + 0.0
 
     vx = vander_f(x, degx)
     vy = vander_f(y, degy)
@@ -452,7 +453,7 @@ def _vander3d(vander_f, x, y, z, deg):
         _deprecate_as_int(d, "degrees")
         for d in deg
     ]
-    x, y, z = np.array((x, y, z), copy=0) + 0.0
+    x, y, z = np.array((x, y, z), copy=False) + 0.0
 
     vx = vander_f(x, degx)
     vy = vander_f(y, degy)
@@ -688,6 +689,39 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
         return c, [resids, rank, s, rcond]
     else:
         return c
+
+
+def _pow(mul_f, c, pow, maxpower):
+    """
+    Helper function used to implement the ``<type>pow`` functions.
+
+    Parameters
+    ----------
+    vander_f : function(array_like, int) -> ndarray
+        The 1d vander function, such as ``polyvander``
+    pow, maxpower :
+        See the ``<type>pow`` functions for more detail
+    mul_f : function(array_like, array_like) -> ndarray
+        The ``<type>mul`` function, such as ``polymul``
+    """
+    # c is a trimmed copy
+    [c] = as_series([c])
+    power = int(pow)
+    if power != pow or power < 0:
+        raise ValueError("Power must be a non-negative integer.")
+    elif maxpower is not None and power > maxpower:
+        raise ValueError("Power is too large")
+    elif power == 0:
+        return np.array([1], dtype=c.dtype)
+    elif power == 1:
+        return c
+    else:
+        # This can be made more efficient by using powers of two
+        # in the usual way.
+        prd = c
+        for i in range(2, power + 1):
+            prd = mul_f(prd, c)
+        return prd
 
 
 def _deprecate_as_int(x, desc):

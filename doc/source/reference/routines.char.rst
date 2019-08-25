@@ -1,11 +1,13 @@
 String operations
 *****************
 
-.. currentmodule:: numpy.core.defchararray
+.. currentmodule:: numpy.char
 
-This module provides a set of vectorized string operations for arrays
-of type `numpy.string_` or `numpy.unicode_`.   All of them are based on
-the string methods in the Python standard library.
+.. module:: numpy.char
+
+The `numpy.char` module provides a set of vectorized string
+operations for arrays of type `numpy.string_` or `numpy.unicode_`.
+All of them are based on the string methods in the Python standard library.
 
 String operations
 -----------------
@@ -56,6 +58,7 @@ comparison.
    less_equal
    greater
    less
+   compare_chararrays
 
 String information
 ------------------

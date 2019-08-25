@@ -31,16 +31,16 @@ Let's say the two integers were in fact 1 and 770.  Because 770 = 256 *
 3 + 2, the 4 bytes in memory would contain respectively: 0, 1, 3, 2.
 The bytes I have loaded from the file would have these contents:
 
->>> big_end_str = chr(0) + chr(1) + chr(3) + chr(2)
->>> big_end_str
-'\\x00\\x01\\x03\\x02'
+>>> big_end_buffer = bytearray([0,1,3,2])
+>>> big_end_buffer
+bytearray(b'\\x00\\x01\\x03\\x02')
 
 We might want to use an ``ndarray`` to access these integers.  In that
 case, we can create an array around this memory, and tell numpy that
 there are two integers, and that they are 16 bit and big-endian:
 
 >>> import numpy as np
->>> big_end_arr = np.ndarray(shape=(2,),dtype='>i2', buffer=big_end_str)
+>>> big_end_arr = np.ndarray(shape=(2,),dtype='>i2', buffer=big_end_buffer)
 >>> big_end_arr[0]
 1
 >>> big_end_arr[1]
@@ -53,7 +53,7 @@ integer, the dtype string would be ``<u4``.
 
 In fact, why don't we try that?
 
->>> little_end_u4 = np.ndarray(shape=(1,),dtype='<u4', buffer=big_end_str)
+>>> little_end_u4 = np.ndarray(shape=(1,),dtype='<u4', buffer=big_end_buffer)
 >>> little_end_u4[0] == 1 * 256**1 + 3 * 256**2 + 2 * 256**3
 True
 
@@ -97,7 +97,7 @@ Data and dtype endianness don't match, change dtype to match data
 
 We make something where they don't match:
 
->>> wrong_end_dtype_arr = np.ndarray(shape=(2,),dtype='<i2', buffer=big_end_str)
+>>> wrong_end_dtype_arr = np.ndarray(shape=(2,),dtype='<i2', buffer=big_end_buffer)
 >>> wrong_end_dtype_arr[0]
 256
 
@@ -110,7 +110,7 @@ the correct endianness:
 
 Note the array has not changed in memory:
 
->>> fixed_end_dtype_arr.tobytes() == big_end_str
+>>> fixed_end_dtype_arr.tobytes() == big_end_buffer
 True
 
 Data and type endianness don't match, change data to match dtype
@@ -126,7 +126,7 @@ that needs a certain byte ordering.
 
 Now the array *has* changed in memory:
 
->>> fixed_end_mem_arr.tobytes() == big_end_str
+>>> fixed_end_mem_arr.tobytes() == big_end_buffer
 False
 
 Data and dtype endianness match, swap data and dtype
@@ -140,7 +140,7 @@ the previous operations:
 >>> swapped_end_arr = big_end_arr.byteswap().newbyteorder()
 >>> swapped_end_arr[0]
 1
->>> swapped_end_arr.tobytes() == big_end_str
+>>> swapped_end_arr.tobytes() == big_end_buffer
 False
 
 An easier way of casting the data to a specific dtype and byte ordering
@@ -149,7 +149,7 @@ can be achieved with the ndarray astype method:
 >>> swapped_end_arr = big_end_arr.astype('<i2')
 >>> swapped_end_arr[0]
 1
->>> swapped_end_arr.tobytes() == big_end_str
+>>> swapped_end_arr.tobytes() == big_end_buffer
 False
 
 """

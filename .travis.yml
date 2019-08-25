@@ -10,7 +10,6 @@ addons:
   apt:
     packages: &common_packages
       - gfortran
-      - libatlas-dev
       - libatlas-base-dev
       # Speedup builds, particularly when USE_CHROOT=1
       - eatmydata
@@ -21,6 +20,7 @@ cache:
 
 env:
   global:
+    - OpenBLAS_version=0.3.7
     - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
     # The following is generated with the command:
     # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
@@ -32,11 +32,14 @@ env:
 python:
   - 3.5
   - 3.6
+  - 3.7
+  - 3.8-dev
 matrix:
   include:
     - python: 3.7
       env: INSTALL_PICKLE5=1
-    - python: 3.5
+    - python: 3.6
+      dist: bionic
       env: USE_DEBUG=1
       addons:
         apt:
@@ -53,12 +56,18 @@ matrix:
     - python: 3.6
       env:
        - PYTHONOPTIMIZE=2
+       - BLAS=None
+       - LAPACK=None
+       - ATLAS=None
+       - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas
+       - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
        - USE_ASV=1
     - python: 3.5
-      dist: trusty # remove after April 2019
       env: NPY_RELAXED_STRIDES_CHECKING=0
     - python: 3.6
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
+    - python: 3.6
+      env: NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
     - python: 3.6
       env:
        - BLAS=None
@@ -69,6 +78,8 @@ matrix:
       env:
        # for matrix annotation only
        - PPC64_LE=1
+       # use POWER8 OpenBLAS build, not system ATLAS
+       - ATLAS=None
 
 before_install:
   - ./tools/travis-before-install.sh

@@ -1825,7 +1825,7 @@ class TestDateTime(object):
         # NOTE: some of the operations may be supported
         # in the future
         with assert_raises_regex(TypeError,
-                                 "remainder cannot use operands with types"):
+                                 "'remainder' cannot use operands with types"):
             val1 % val2
 
     def test_timedelta_arange_no_dtype(self):
@@ -2208,6 +2208,27 @@ class TestDateTime(object):
                 continue
             assert_raises(TypeError, np.isnat, np.zeros(10, t))
 
+    def test_isfinite(self):
+        assert_(not np.isfinite(np.datetime64('NaT', 'ms')))
+        assert_(not np.isfinite(np.datetime64('NaT', 'ns')))
+        assert_(np.isfinite(np.datetime64('2038-01-19T03:14:07')))
+
+        assert_(not np.isfinite(np.timedelta64('NaT', "ms")))
+        assert_(np.isfinite(np.timedelta64(34, "ms")))
+
+        res = np.array([True, True,  False])
+        for unit in ['Y', 'M', 'W', 'D',
+                     'h', 'm', 's', 'ms', 'us',
+                     'ns', 'ps', 'fs', 'as']:
+            arr = np.array([123, -321, "NaT"], dtype='<datetime64[%s]' % unit)
+            assert_equal(np.isfinite(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='>datetime64[%s]' % unit)
+            assert_equal(np.isfinite(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='<timedelta64[%s]' % unit)
+            assert_equal(np.isfinite(arr), res)
+            arr = np.array([123, -321, "NaT"], dtype='>timedelta64[%s]' % unit)
+            assert_equal(np.isfinite(arr), res)
+
     def test_corecursive_input(self):
         # construct a co-recursive list
         a, b = [], []
@@ -2219,6 +2240,44 @@ class TestDateTime(object):
         # gh-11154: This shouldn't cause a C stack overflow
         assert_raises(RecursionError, obj_arr.astype, 'M8')
         assert_raises(RecursionError, obj_arr.astype, 'm8')
+
+    @pytest.mark.parametrize("time_unit", [
+        "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as",
+        # compound units
+        "10D", "2M",
+    ])
+    def test_limit_symmetry(self, time_unit):
+        """
+        Dates should have symmetric limits around the unix epoch at +/-np.int64
+        """
+        epoch = np.datetime64(0, time_unit)
+        latest = np.datetime64(np.iinfo(np.int64).max, time_unit)
+        earliest = np.datetime64(-np.iinfo(np.int64).max, time_unit)
+
+        # above should not have overflowed
+        assert earliest < epoch < latest
+
+    @pytest.mark.parametrize("time_unit", [
+        "Y", "M",
+        pytest.param("W", marks=pytest.mark.xfail(reason="gh-13197")),
+        "D", "h", "m",
+        "s", "ms", "us", "ns", "ps", "fs", "as",
+        pytest.param("10D", marks=pytest.mark.xfail(reason="similar to gh-13197")),
+    ])
+    @pytest.mark.parametrize("sign", [-1, 1])
+    def test_limit_str_roundtrip(self, time_unit, sign):
+        """
+        Limits should roundtrip when converted to strings.
+
+        This tests the conversion to and from npy_datetimestruct.
+        """
+        # TODO: add absolute (gold standard) time span limit strings
+        limit = np.datetime64(np.iinfo(np.int64).max * sign, time_unit)
+
+        # Convert to string and back. Explicit unit needed since the day and
+        # week reprs are not distinguishable.
+        limit_via_str = np.datetime64(str(limit), time_unit)
+        assert limit_via_str == limit
 
 
 class TestDateTimeData(object):

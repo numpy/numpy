@@ -12,9 +12,11 @@ from numpy.lib.recfunctions import (
     find_duplicates, merge_arrays, append_fields, stack_arrays, join_by,
     repack_fields, unstructured_to_structured, structured_to_unstructured,
     apply_along_fields, require_fields, assign_fields_by_name)
+get_fieldspec = np.lib.recfunctions._get_fieldspec
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
-zip_descr = np.lib.recfunctions.zip_descr
+zip_descr = np.lib.recfunctions._zip_descr
+zip_dtype = np.lib.recfunctions._zip_dtype
 
 
 class TestRecFunctions(object):
@@ -113,6 +115,14 @@ class TestRecFunctions(object):
         test = get_names(ndtype)
         assert_equal(test, ('a', ('b', ('ba', 'bb'))))
 
+        ndtype = np.dtype([('a', int), ('b', [])])
+        test = get_names(ndtype)
+        assert_equal(test, ('a', ('b', ())))
+
+        ndtype = np.dtype([])
+        test = get_names(ndtype)
+        assert_equal(test, ())
+
     def test_get_names_flat(self):
         # Test get_names_flat
         ndtype = np.dtype([('A', '|S3'), ('B', float)])
@@ -122,6 +132,14 @@ class TestRecFunctions(object):
         ndtype = np.dtype([('a', int), ('b', [('ba', float), ('bb', int)])])
         test = get_names_flat(ndtype)
         assert_equal(test, ('a', 'b', 'ba', 'bb'))
+
+        ndtype = np.dtype([('a', int), ('b', [])])
+        test = get_names_flat(ndtype)
+        assert_equal(test, ('a', 'b'))
+
+        ndtype = np.dtype([])
+        test = get_names_flat(ndtype)
+        assert_equal(test, ())
 
     def test_get_fieldstructure(self):
         # Test get_fieldstructure
@@ -144,6 +162,11 @@ class TestRecFunctions(object):
         control = {'A': [], 'B': [], 'BA': ['B'], 'BB': ['B'],
                    'BBA': ['B', 'BB'], 'BBB': ['B', 'BB']}
         assert_equal(test, control)
+
+        # 0 fields
+        ndtype = np.dtype([])
+        test = get_fieldstructure(ndtype)
+        assert_equal(test, {})
 
     def test_find_duplicates(self):
         # Test find_duplicates
@@ -214,6 +237,8 @@ class TestRecFunctions(object):
                      dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
         out = np.mean(structured_to_unstructured(b[['x', 'z']]), axis=-1)
         assert_equal(out, np.array([ 3. ,  5.5,  9. , 11. ]))
+        out = np.mean(structured_to_unstructured(b[['x']]), axis=-1)
+        assert_equal(out, np.array([ 1. ,  4. ,  7. , 10. ]))
 
         c = np.arange(20).reshape((4,5))
         out = unstructured_to_structured(c, a.dtype)
@@ -241,6 +266,16 @@ class TestRecFunctions(object):
         assert_(dd.base is d)
         assert_(ddd.base is d)
 
+        # including uniform fields with subarrays unpacked
+        d = np.array([(1, [2,  3], [[ 4,  5], [ 6,  7]]),
+                      (8, [9, 10], [[11, 12], [13, 14]])],
+                     dtype=[('x0', 'i4'), ('x1', ('i4', 2)),
+                            ('x2', ('i4', (2, 2)))])
+        dd = structured_to_unstructured(d)
+        ddd = unstructured_to_structured(dd, d.dtype)
+        assert_(dd.base is d)
+        assert_(ddd.base is d)
+
         # test that nested fields with identical names don't break anything
         point = np.dtype([('x', int), ('y', int)])
         triangle = np.dtype([('a', point), ('b', point), ('c', point)])
@@ -248,6 +283,40 @@ class TestRecFunctions(object):
         res = structured_to_unstructured(arr, dtype=int)
         assert_equal(res, np.zeros((10, 6), dtype=int))
 
+
+        # test nested combinations of subarrays and structured arrays, gh-13333
+        def subarray(dt, shape):
+            return np.dtype((dt, shape))
+
+        def structured(*dts):
+            return np.dtype([('x{}'.format(i), dt) for i, dt in enumerate(dts)])
+
+        def inspect(dt, dtype=None):
+            arr = np.zeros((), dt)
+            ret = structured_to_unstructured(arr, dtype=dtype)
+            backarr = unstructured_to_structured(ret, dt)
+            return ret.shape, ret.dtype, backarr.dtype
+
+        dt = structured(subarray(structured(np.int32, np.int32), 3))
+        assert_equal(inspect(dt), ((6,), np.int32, dt))
+
+        dt = structured(subarray(subarray(np.int32, 2), 2))
+        assert_equal(inspect(dt), ((4,), np.int32, dt))
+
+        dt = structured(np.int32)
+        assert_equal(inspect(dt), ((1,), np.int32, dt))
+
+        dt = structured(np.int32, subarray(subarray(np.int32, 2), 2))
+        assert_equal(inspect(dt), ((5,), np.int32, dt))
+
+        dt = structured()
+        assert_raises(ValueError, structured_to_unstructured, np.zeros(3, dt))
+
+        # these currently don't work, but we may make it work in the future
+        assert_raises(NotImplementedError, structured_to_unstructured,
+                                           np.zeros(3, dt), dtype=np.int32)
+        assert_raises(NotImplementedError, unstructured_to_structured,
+                                           np.zeros((3,0), dtype=np.int32))
 
     def test_field_assignment_by_name(self):
         a = np.ones(2, dtype=[('a', 'i4'), ('b', 'f8'), ('c', 'u1')])

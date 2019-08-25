@@ -10,6 +10,8 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 from __future__ import division, absolute_import, print_function
 
+import sys
+
 from numpy.core import numerictypes as _numerictypes
 from numpy.core import dtype
 from numpy.core.function_base import add_newdoc
@@ -92,7 +94,7 @@ add_newdoc('numpy.core', 'flatiter', ('coords',
     >>> fl = x.flat
     >>> fl.coords
     (0, 0)
-    >>> fl.next()
+    >>> next(fl)
     0
     >>> fl.coords
     (0, 1)
@@ -111,7 +113,7 @@ add_newdoc('numpy.core', 'flatiter', ('index',
     >>> fl = x.flat
     >>> fl.index
     0
-    >>> fl.next()
+    >>> next(fl)
     0
     >>> fl.index
     1
@@ -664,7 +666,7 @@ add_newdoc('numpy.core', 'broadcast', ('iters',
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
     >>> row, col = b.iters
-    >>> row.next(), col.next()
+    >>> next(row), next(col)
     (1, 4)
 
     """))
@@ -793,8 +795,7 @@ add_newdoc('numpy.core.multiarray', 'array',
     dtype : data-type, optional
         The desired data-type for the array.  If not given, then the type will
         be determined as the minimum type required to hold the objects in the
-        sequence.  This argument can only be used to 'upcast' the array.  For
-        downcasting, use the .astype(t) method.
+        sequence.
     copy : bool, optional
         If true (default), then the object is copied.  Otherwise, a copy will
         only be made if __array__ returns a copy, if obj is a nested sequence,
@@ -936,11 +937,11 @@ add_newdoc('numpy.core.multiarray', 'empty',
     --------
     >>> np.empty([2, 2])
     array([[ -9.74499359e+001,   6.69583040e-309],
-           [  2.13182611e-314,   3.06959433e-309]])         #random
+           [  2.13182611e-314,   3.06959433e-309]])         #uninitialized
 
     >>> np.empty([2, 2], dtype=int)
     array([[-1073741821, -1067949133],
-           [  496041986,    19249760]])                     #random
+           [  496041986,    19249760]])                     #uninitialized
 
     """)
 
@@ -1041,9 +1042,14 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         elements is also ignored.
 
         .. deprecated:: 1.14
-            If this argument is not provided, `fromstring` falls back on the
-            behaviour of `frombuffer` after encoding unicode string inputs as
-            either utf-8 (python 3), or the default encoding (python 2).
+            Passing ``sep=''``, the default, is deprecated since it will
+            trigger the deprecated binary mode of this function. This mode
+            interprets `string` as binary bytes, rather than ASCII text with
+            decimal numbers, an operation which is better spelt
+            ``frombuffer(string, dtype, count)``. If `string` contains unicode
+            text, the binary mode of `fromstring` will first encode it into
+            bytes using either utf-8 (python 3) or the default encoding
+            (python 2), neither of which produce sane results.
 
     Returns
     -------
@@ -1142,7 +1148,7 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
 
 add_newdoc('numpy.core.multiarray', 'fromfile',
     """
-    fromfile(file, dtype=float, count=-1, sep='')
+    fromfile(file, dtype=float, count=-1, sep='', offset=0)
 
     Construct an array from data in a text or binary file.
 
@@ -1152,8 +1158,12 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
 
     Parameters
     ----------
-    file : file or str
+    file : file or str or Path
         Open file object or filename.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
+
     dtype : data-type
         Data type of the returned array.
         For binary files, it is used to determine the size and byte-order
@@ -1167,6 +1177,11 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
         Spaces (" ") in the separator match zero or more whitespace characters.
         A separator consisting only of spaces must match at least one
         whitespace.
+    offset : int
+        The offset (in bytes) from the file's current position. Defaults to 0.
+        Only permitted for binary files.
+
+        .. versionadded:: 1.17.0
 
     See also
     --------
@@ -1457,57 +1472,58 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     """)
 
-add_newdoc('numpy.core.multiarray', 'newbuffer',
-    """
-    newbuffer(size)
+if sys.version_info.major < 3:
+    add_newdoc('numpy.core.multiarray', 'newbuffer',
+        """
+        newbuffer(size)
 
-    Return a new uninitialized buffer object.
+        Return a new uninitialized buffer object.
 
-    Parameters
-    ----------
-    size : int
-        Size in bytes of returned buffer object.
+        Parameters
+        ----------
+        size : int
+            Size in bytes of returned buffer object.
 
-    Returns
-    -------
-    newbuffer : buffer object
-        Returned, uninitialized buffer object of `size` bytes.
+        Returns
+        -------
+        newbuffer : buffer object
+            Returned, uninitialized buffer object of `size` bytes.
 
-    """)
+        """)
 
-add_newdoc('numpy.core.multiarray', 'getbuffer',
-    """
-    getbuffer(obj [,offset[, size]])
+    add_newdoc('numpy.core.multiarray', 'getbuffer',
+        """
+        getbuffer(obj [,offset[, size]])
 
-    Create a buffer object from the given object referencing a slice of
-    length size starting at offset.
+        Create a buffer object from the given object referencing a slice of
+        length size starting at offset.
 
-    Default is the entire buffer. A read-write buffer is attempted followed
-    by a read-only buffer.
+        Default is the entire buffer. A read-write buffer is attempted followed
+        by a read-only buffer.
 
-    Parameters
-    ----------
-    obj : object
+        Parameters
+        ----------
+        obj : object
 
-    offset : int, optional
+        offset : int, optional
 
-    size : int, optional
+        size : int, optional
 
-    Returns
-    -------
-    buffer_obj : buffer
+        Returns
+        -------
+        buffer_obj : buffer
 
-    Examples
-    --------
-    >>> buf = np.getbuffer(np.ones(5), 1, 3)
-    >>> len(buf)
-    3
-    >>> buf[0]
-    '\\x00'
-    >>> buf
-    <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
+        Examples
+        --------
+        >>> buf = np.getbuffer(np.ones(5), 1, 3)
+        >>> len(buf)
+        3
+        >>> buf[0]
+        '\\x00'
+        >>> buf
+        <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
 
-    """)
+        """)
 
 add_newdoc('numpy.core.multiarray', 'c_einsum',
     """
@@ -1971,13 +1987,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_priority__',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_struct__',
     """Array protocol: C-struct side."""))
-
-
-add_newdoc('numpy.core.multiarray', 'ndarray', ('_as_parameter_',
-    """Allow the array to be interpreted as a ctypes object by returning the
-    data-memory location as an integer
-
-    """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('base',
@@ -2614,7 +2623,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argmin',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     """
-    a.argsort(axis=-1, kind='quicksort', order=None)
+    a.argsort(axis=-1, kind=None, order=None)
 
     Returns the indices that would sort this array.
 
@@ -2690,10 +2699,15 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
 
     Notes
     -----
-    Starting in NumPy 1.9, astype method now returns an error if the string
-    dtype to cast to is not long enough in 'safe' casting mode to hold the max
-    value of integer/float array that is being casted. Previously the casting
-    was allowed even if the result was truncated.
+    .. versionchanged:: 1.17.0
+       Casting between a simple data type and a structured one is possible only
+       for "unsafe" casting.  Casting to multiple fields is allowed, but
+       casting from multiple fields is not.
+
+    .. versionchanged:: 1.9.0
+       Casting from numeric to string types in 'safe' casting mode requires
+       that the string dtype length is long enough to store the max
+       integer/float value converted.
 
     Raises
     ------
@@ -2721,6 +2735,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
 
     Toggle between low-endian and big-endian data representation by
     returning a byteswapped array, optionally swapped in-place.
+    Arrays of byte-strings are not swapped. The real and imaginary
+    parts of a complex number are swapped individually.
 
     Parameters
     ----------
@@ -2743,13 +2759,24 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     >>> list(map(hex, A))
     ['0x100', '0x1', '0x3322']
 
-    Arrays of strings are not swapped
+    Arrays of byte-strings are not swapped
 
-    >>> A = np.array(['ceg', 'fac'])
+    >>> A = np.array([b'ceg', b'fac'])
     >>> A.byteswap()
-    Traceback (most recent call last):
-        ...
-    UnicodeDecodeError: ...
+    array([b'ceg', b'fac'], dtype='|S3')
+
+    ``A.newbyteorder().byteswap()`` produces an array with the same values
+      but different representation in memory
+
+    >>> A = np.array([1, 2, 3])
+    >>> A.view(np.uint8)
+    array([1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0,
+           0, 0], dtype=uint8)
+    >>> A.newbyteorder().byteswap(inplace=True)
+    array([1, 2, 3])
+    >>> A.view(np.uint8)
+    array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0,
+           0, 3], dtype=uint8)
 
     """))
 
@@ -2771,7 +2798,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('choose',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('clip',
     """
-    a.clip(min=None, max=None, out=None)
+    a.clip(min=None, max=None, out=None, **kwargs)
 
     Return an array whose values are limited to ``[min, max]``.
     One of max or min must be given.
@@ -2957,8 +2984,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('dump',
 
     Parameters
     ----------
-    file : str
+    file : str or Path
         A string naming the dump file.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
 
     """))
 
@@ -3233,87 +3263,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
     """))
 
 
-add_newdoc('numpy.core.multiarray', 'shares_memory',
-    """
-    shares_memory(a, b, max_work=None)
-
-    Determine if two arrays share memory
-
-    Parameters
-    ----------
-    a, b : ndarray
-        Input arrays
-    max_work : int, optional
-        Effort to spend on solving the overlap problem (maximum number
-        of candidate solutions to consider). The following special
-        values are recognized:
-
-        max_work=MAY_SHARE_EXACT  (default)
-            The problem is solved exactly. In this case, the function returns
-            True only if there is an element shared between the arrays.
-        max_work=MAY_SHARE_BOUNDS
-            Only the memory bounds of a and b are checked.
-
-    Raises
-    ------
-    numpy.TooHardError
-        Exceeded max_work.
-
-    Returns
-    -------
-    out : bool
-
-    See Also
-    --------
-    may_share_memory
-
-    Examples
-    --------
-    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
-    False
-
-    """)
-
-
-add_newdoc('numpy.core.multiarray', 'may_share_memory',
-    """
-    may_share_memory(a, b, max_work=None)
-
-    Determine if two arrays might share memory
-
-    A return of True does not necessarily mean that the two arrays
-    share any element.  It just means that they *might*.
-
-    Only the memory bounds of a and b are checked by default.
-
-    Parameters
-    ----------
-    a, b : ndarray
-        Input arrays
-    max_work : int, optional
-        Effort to spend on solving the overlap problem.  See
-        `shares_memory` for details.  Default for ``may_share_memory``
-        is to do a bounds check.
-
-    Returns
-    -------
-    out : bool
-
-    See Also
-    --------
-    shares_memory
-
-    Examples
-    --------
-    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
-    False
-    >>> x = np.zeros([3, 4])
-    >>> np.may_share_memory(x[:,0], x[:,1])
-    True
-
-    """)
-
-
 add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
     """
     arr.newbyteorder(new_order='S')
@@ -3414,81 +3363,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
     numpy.put : equivalent function
 
     """))
-
-add_newdoc('numpy.core.multiarray', 'copyto',
-    """
-    copyto(dst, src, casting='same_kind', where=True)
-
-    Copies values from one array to another, broadcasting as necessary.
-
-    Raises a TypeError if the `casting` rule is violated, and if
-    `where` is provided, it selects which elements to copy.
-
-    .. versionadded:: 1.7.0
-
-    Parameters
-    ----------
-    dst : ndarray
-        The array into which values are copied.
-    src : array_like
-        The array from which values are copied.
-    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        Controls what kind of data casting may occur when copying.
-
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
-    where : array_like of bool, optional
-        A boolean array which is broadcasted to match the dimensions
-        of `dst`, and selects elements to copy from `src` to `dst`
-        wherever it contains the value True.
-
-    """)
-
-add_newdoc('numpy.core.multiarray', 'putmask',
-    """
-    putmask(a, mask, values)
-
-    Changes elements of an array based on conditional and input values.
-
-    Sets ``a.flat[n] = values[n]`` for each n where ``mask.flat[n]==True``.
-
-    If `values` is not the same size as `a` and `mask` then it will repeat.
-    This gives behavior different from ``a[mask] = values``.
-
-    Parameters
-    ----------
-    a : array_like
-        Target array.
-    mask : array_like
-        Boolean mask array. It has to be the same shape as `a`.
-    values : array_like
-        Values to put into `a` where `mask` is True. If `values` is smaller
-        than `a` it will be repeated.
-
-    See Also
-    --------
-    place, put, take, copyto
-
-    Examples
-    --------
-    >>> x = np.arange(6).reshape(2, 3)
-    >>> np.putmask(x, x>2, x**2)
-    >>> x
-    array([[ 0,  1,  2],
-           [ 9, 16, 25]])
-
-    If `values` is smaller than `a` it is repeated:
-
-    >>> x = np.arange(5)
-    >>> np.putmask(x, x>1, [-33, -44])
-    >>> x
-    array([  0,   1, -33, -44, -33])
-
-    """)
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('ravel',
@@ -3800,7 +3674,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('setflags',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     """
-    a.sort(axis=-1, kind='quicksort', order=None)
+    a.sort(axis=-1, kind=None, order=None)
 
     Sort an array in-place. Refer to `numpy.sort` for full documentation.
 
@@ -4004,8 +3878,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tofile',
 
     Parameters
     ----------
-    fid : file or str
+    fid : file or str or Path
         An open file object, or a string containing a filename.
+
+        .. versionchanged:: 1.17.0
+            `pathlib.Path` objects are now accepted.
+
     sep : str
         Separator between array items for text output.
         If "" (empty), a binary file is written, equivalent to
@@ -4415,7 +4293,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     Examples
     --------
     >>> np.geterrobj()  # first get the defaults
-    [10000, 0, None]
+    [8192, 521, None]
 
     >>> def err_handler(type, flag):
     ...     print("Floating point error (%s), with flag %s" % (type, flag))
@@ -4424,7 +4302,7 @@ add_newdoc('numpy.core.umath', 'geterrobj',
     >>> old_err = np.seterr(divide='raise')
     >>> old_handler = np.seterrcall(err_handler)
     >>> np.geterrobj()
-    [20000, 2, <function err_handler at 0x91dcaac>]
+    [8192, 521, <function err_handler at 0x91dcaac>]
 
     >>> old_err = np.seterr(all='ignore')
     >>> np.base_repr(np.geterrobj()[1], 8)
@@ -4479,7 +4357,7 @@ add_newdoc('numpy.core.umath', 'seterrobj',
     --------
     >>> old_errobj = np.geterrobj()  # first get the defaults
     >>> old_errobj
-    [10000, 0, None]
+    [8192, 521, None]
 
     >>> def err_handler(type, flag):
     ...     print("Floating point error (%s), with flag %s" % (type, flag))
@@ -4618,10 +4496,12 @@ add_newdoc('numpy.core', 'ufunc',
         number of outputs; use `None` for uninitialized outputs to be
         allocated by the ufunc.
     where : array_like, optional
-        Values of True indicate to calculate the ufunc at that position, values
-        of False indicate to leave the value in the output alone.  Note that if
-        an uninitialized return array is created via the default ``out=None``,
-        then the elements where the values are False will remain uninitialized.
+        This condition is broadcast over the input. At locations where the
+        condition is True, the `out` array will be set to the ufunc result.
+        Elsewhere, the `out` array will retain its original value.
+        Note that if an uninitialized `out` array is created via the default
+        ``out=None``, locations within it where the condition is False will
+        remain uninitialized.
     **kwargs
         For other keyword-only arguments, see the :ref:`ufunc docs <ufuncs.kwargs>`.
 
@@ -5367,6 +5247,17 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('alignment',
 
     More information is available in the C-API section of the manual.
 
+    Examples
+    --------
+
+    >>> x = np.dtype('i4')
+    >>> x.alignment
+    4
+
+    >>> x = np.dtype(float)
+    >>> x.alignment
+    8
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
@@ -5413,7 +5304,16 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('byteorder',
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('char',
-    """A unique character code for each of the 21 different built-in types."""))
+    """A unique character code for each of the 21 different built-in types.
+
+    Examples
+    --------
+
+    >>> x = np.dtype(float)
+    >>> x.char
+    'd'
+
+    """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
     """
@@ -5424,6 +5324,18 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
 
     Warning: This attribute exists specifically for `__array_interface__`,
     and is not a datatype description compatible with `np.dtype`.
+
+    Examples
+    --------
+
+    >>> x = np.dtype(float)
+    >>> x.descr
+    [('', '<f8')]
+
+    >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+    >>> dt.descr
+    [('name', '<U16'), ('grades', '<f8', (2,))]
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
@@ -5463,6 +5375,18 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('flags',
     `NEEDS_PYAPI`, `USE_GETITEM`, `USE_SETITEM`. A full explanation
     of these flags is in C-API documentation; they are largely useful
     for user-defined data-types.
+
+    The following example demonstrates that operations on this particular
+    dtype requires Python C-API.
+
+    Examples
+    --------
+
+    >>> x = np.dtype([('a', np.int32, 8), ('b', np.float64, 6)])
+    >>> x.flags
+    16
+    >>> np.core.multiarray.NEEDS_PYAPI
+    16
 
     """))
 
@@ -5521,6 +5445,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('isalignedstruct',
     field alignment. This flag is sticky, so when combining multiple
     structs together, it is preserved and produces new dtypes which
     are also aligned.
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('itemsize',
@@ -5529,6 +5454,19 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('itemsize',
 
     For 18 of the 21 types this number is fixed by the data-type.
     For the flexible data-types, this number can be anything.
+
+    Examples
+    --------
+
+    >>> arr = np.array([[1, 2], [3, 4]])
+    >>> arr.dtype
+    dtype('int64')
+    >>> arr.itemsize
+    8
+
+    >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+    >>> dt.itemsize
+    80
 
     """))
 
@@ -5550,6 +5488,19 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('kind',
     V  void
     =  ======================
 
+    Examples
+    --------
+
+    >>> dt = np.dtype('i4')
+    >>> dt.kind
+    'i'
+    >>> dt = np.dtype('f8')
+    >>> dt.kind
+    'f'
+    >>> dt = np.dtype([('field1', 'f8')])
+    >>> dt.kind
+    'V'
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('name',
@@ -5557,6 +5508,16 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('name',
     A bit-width name for this data-type.
 
     Un-sized flexible data-type objects do not have this attribute.
+
+    Examples
+    --------
+
+    >>> x = np.dtype(float)
+    >>> x.name
+    'float64'
+    >>> x = np.dtype([('a', np.int32, 8), ('b', np.float64, 6)])
+    >>> x.name
+    'void640'
 
     """))
 
@@ -5581,12 +5542,34 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('num',
 
     These are roughly ordered from least-to-most precision.
 
+    Examples
+    --------
+
+    >>> dt = np.dtype(str)
+    >>> dt.num
+    19
+
+    >>> dt = np.dtype(float)
+    >>> dt.num
+    12
+
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('shape',
     """
     Shape tuple of the sub-array if this data type describes a sub-array,
     and ``()`` otherwise.
+
+    Examples
+    --------
+
+    >>> dt = np.dtype(('i4', 4))
+    >>> dt.shape
+    (4,)
+
+    >>> dt = np.dtype(('i4', (2, 3)))
+    >>> dt.shape
+    (2, 3)
 
     """))
 
@@ -5596,6 +5579,20 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('ndim',
     sub-array, and ``0`` otherwise.
 
     .. versionadded:: 1.13.0
+
+    Examples
+    --------
+    >>> x = np.dtype(float)
+    >>> x.ndim
+    0
+
+    >>> x = np.dtype((float, 8))
+    >>> x.ndim
+    1
+
+    >>> x = np.dtype(('i4', (3, 4)))
+    >>> x.ndim
+    2
 
     """))
 
@@ -5613,6 +5610,41 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('subdtype',
     If a field whose dtype object has this attribute is retrieved,
     then the extra dimensions implied by *shape* are tacked on to
     the end of the retrieved array.
+
+    See Also
+    --------
+    dtype.base
+
+    Examples
+    --------
+    >>> x = numpy.dtype('8f')
+    >>> x.subdtype
+    (dtype('float32'), (8,))
+
+    >>> x =  numpy.dtype('i2')
+    >>> x.subdtype
+    >>>
+
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('base',
+    """
+    Returns dtype for the base element of the subarrays,
+    regardless of their dimension or shape.
+
+    See Also
+    --------
+    dtype.subdtype
+
+    Examples
+    --------
+    >>> x = numpy.dtype('8f')
+    >>> x.base
+    dtype('float32')
+
+    >>> x =  numpy.dtype('i2')
+    >>> x.base
+    dtype('int16')
 
     """))
 
@@ -5884,9 +5916,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('T',
     albeit unimplemented, all the attributes of the ndarray class so as to
     provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -5898,9 +5928,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('base',
     albeit unimplemented, all the attributes of the ndarray class so as to
     a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -5950,9 +5978,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('all',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -5964,9 +5990,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('any',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -5978,9 +6002,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('argmax',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -5992,9 +6014,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('argmin',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6006,9 +6026,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('argsort',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6020,9 +6038,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('astype',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6034,9 +6050,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('byteswap',
     albeit unimplemented, all the attributes of the ndarray class so as to
     provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6048,9 +6062,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('choose',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6062,9 +6074,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('clip',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6076,9 +6086,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('compress',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6090,9 +6098,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('conjugate',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6104,9 +6110,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('copy',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6118,9 +6122,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('cumprod',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6132,9 +6134,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('cumsum',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6146,9 +6146,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('diagonal',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6160,9 +6158,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('dump',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6174,9 +6170,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('dumps',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6188,9 +6182,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('fill',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6202,9 +6194,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('flatten',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6216,9 +6206,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('getfield',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6230,9 +6218,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('item',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6244,9 +6230,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('itemset',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6258,9 +6242,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('max',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6272,9 +6254,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('mean',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6286,9 +6266,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('min',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6333,9 +6311,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('nonzero',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6347,9 +6323,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('prod',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6361,9 +6335,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('ptp',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6375,9 +6347,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('put',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6389,9 +6359,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('ravel',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6403,9 +6371,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('repeat',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6417,9 +6383,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('reshape',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6431,9 +6395,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('resize',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6445,9 +6407,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('round',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6459,9 +6419,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('searchsorted',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6473,9 +6431,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('setfield',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6487,9 +6443,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('setflags',
     albeit unimplemented, all the attributes of the ndarray class so as to
     provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6501,9 +6455,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('sort',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6515,9 +6467,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('squeeze',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6529,9 +6479,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('std',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6543,9 +6491,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('sum',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6557,9 +6503,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('swapaxes',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6571,9 +6515,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('take',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6585,9 +6527,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('tofile',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6599,9 +6539,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('tolist',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6613,9 +6551,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('tostring',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6627,9 +6563,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('trace',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6641,9 +6575,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('transpose',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6655,9 +6587,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('var',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6669,9 +6599,7 @@ add_newdoc('numpy.core.numerictypes', 'generic', ('view',
     albeit unimplemented, all the attributes of the ndarray class
     so as to provide a uniform API.
 
-    See Also
-    --------
-    The corresponding attribute of the derived class of interest.
+    See also the corresponding attribute of the derived class of interest.
 
     """))
 
@@ -6903,3 +6831,22 @@ add_newdoc_for_scalar_type('object_', [],
     """
     Any Python object.
     """)
+
+# TODO: work out how to put this on the base class, np.floating
+for float_name in ('half', 'single', 'double', 'longdouble'):
+    add_newdoc('numpy.core.numerictypes', float_name, ('as_integer_ratio',
+        """
+        {ftype}.as_integer_ratio() -> (int, int)
+
+        Return a pair of integers, whose ratio is exactly equal to the original
+        floating point number, and with a positive denominator.
+        Raise OverflowError on infinities and a ValueError on NaNs.
+
+        >>> np.{ftype}(10.0).as_integer_ratio()
+        (10, 1)
+        >>> np.{ftype}(0.0).as_integer_ratio()
+        (0, 1)
+        >>> np.{ftype}(-.25).as_integer_ratio()
+        (-1, 4)
+        """.format(ftype=float_name)))
+

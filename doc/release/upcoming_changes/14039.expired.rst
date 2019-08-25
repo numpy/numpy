@@ -1,0 +1,2 @@
+* ``np.rank`` has been removed. This was deprecated in NumPy 1.10
+  and has been replaced by ``np.ndim``.

@@ -2,10 +2,15 @@
 import collections
 import functools
 import os
+import textwrap
 
 from numpy.core._multiarray_umath import (
     add_docstring, implement_array_function, _get_implementing_args)
 from numpy.compat._inspect import getargspec
+
+
+ARRAY_FUNCTION_ENABLED = bool(
+    int(os.environ.get('NUMPY_EXPERIMENTAL_ARRAY_FUNCTION', 1)))
 
 
 add_docstring(
@@ -104,6 +109,18 @@ def set_module(module):
     return decorator
 
 
+
+# Call textwrap.dedent here instead of in the function so as to avoid
+# calling dedent multiple times on the same text
+_wrapped_func_source = textwrap.dedent("""
+    @functools.wraps(implementation)
+    def {name}(*args, **kwargs):
+        relevant_args = dispatcher(*args, **kwargs)
+        return implement_array_function(
+            implementation, {name}, relevant_args, args, kwargs)
+    """)
+
+
 def array_function_dispatch(dispatcher, module=None, verify=True,
                             docs_from_dispatcher=False):
     """Decorator for adding dispatch with the __array_function__ protocol.
@@ -137,6 +154,15 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
     Function suitable for decorating the implementation of a NumPy function.
     """
 
+    if not ARRAY_FUNCTION_ENABLED:
+        def decorator(implementation):
+            if docs_from_dispatcher:
+                add_docstring(implementation, dispatcher.__doc__)
+            if module is not None:
+                implementation.__module__ = module
+            return implementation
+        return decorator
+
     def decorator(implementation):
         if verify:
             verify_matching_signatures(implementation, dispatcher)
@@ -144,14 +170,29 @@ def array_function_dispatch(dispatcher, module=None, verify=True,
         if docs_from_dispatcher:
             add_docstring(implementation, dispatcher.__doc__)
 
-        @functools.wraps(implementation)
-        def public_api(*args, **kwargs):
-            relevant_args = dispatcher(*args, **kwargs)
-            return implement_array_function(
-                implementation, public_api, relevant_args, args, kwargs)
+        # Equivalently, we could define this function directly instead of using
+        # exec. This version has the advantage of giving the helper function a
+        # more interpettable name. Otherwise, the original function does not
+        # show up at all in many cases, e.g., if it's written in C or if the
+        # dispatcher gets an invalid keyword argument.
+        source = _wrapped_func_source.format(name=implementation.__name__)
+
+        source_object = compile(
+            source, filename='<__array_function__ internals>', mode='exec')
+        scope = {
+            'implementation': implementation,
+            'dispatcher': dispatcher,
+            'functools': functools,
+            'implement_array_function': implement_array_function,
+        }
+        exec(source_object, scope)
+
+        public_api = scope[implementation.__name__]
 
         if module is not None:
             public_api.__module__ = module
+
+        public_api._implementation = implementation
 
         return public_api
 

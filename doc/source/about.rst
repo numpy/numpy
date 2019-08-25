@@ -8,7 +8,7 @@ needed for scientific computing with Python. This package contains:
 - sophisticated :ref:`(broadcasting) functions <ufuncs>`
 - basic :ref:`linear algebra functions <routines.linalg>`
 - basic :ref:`Fourier transforms <routines.fft>`
-- sophisticated :ref:`random number capabilities <routines.random>`
+- sophisticated :ref:`random number capabilities <numpyrandom>`
 - tools for integrating Fortran code
 - tools for integrating C/C++ code
 

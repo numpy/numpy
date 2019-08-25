@@ -54,7 +54,7 @@ class PushbackIterator(object):
 
     Return an iterator for which items can be pushed back into.
     Call the .pushback(item) method to have item returned as the next
-    value of .next().
+    value of next().
     """
     def __init__(self, iterable):
         object.__init__(self)
@@ -110,15 +110,14 @@ def getDependencies(filename):
     """For a Fortran source file, return a list of routines declared as EXTERNAL
     in it.
     """
-    fo = open(filename)
     external_pat = re.compile(r'^\s*EXTERNAL\s', re.I)
     routines = []
-    for lineno, line in fortranSourceLines(fo):
-        m = external_pat.match(line)
-        if m:
-            names = line = line[m.end():].strip().split(',')
-            names = [n.strip().lower() for n in names]
-            names = [n for n in names if n]
-            routines.extend(names)
-    fo.close()
+    with open(filename) as fo:
+        for lineno, line in fortranSourceLines(fo):
+            m = external_pat.match(line)
+            if m:
+                names = line = line[m.end():].strip().split(',')
+                names = [n.strip().lower() for n in names]
+                names = [n for n in names if n]
+                routines.extend(names)
     return routines

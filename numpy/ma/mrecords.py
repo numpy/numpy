@@ -19,7 +19,6 @@ import sys
 import warnings
 
 import numpy as np
-import numpy.core.numerictypes as ntypes
 from numpy.compat import basestring
 from numpy import (
         bool_, dtype, ndarray, recarray, array as narray
@@ -209,7 +208,7 @@ class MaskedRecords(MaskedArray, object):
         _localdict = ndarray.__getattribute__(self, '__dict__')
         _data = ndarray.view(self, _localdict['_baseclass'])
         obj = _data.getfield(*res)
-        if obj.dtype.fields:
+        if obj.dtype.names is not None:
             raise NotImplementedError("MaskedRecords is currently limited to"
                                       "simple records.")
         # Get some special attributes
@@ -222,7 +221,8 @@ class MaskedRecords(MaskedArray, object):
             except IndexError:
                 # Couldn't find a mask: use the default (nomask)
                 pass
-            hasmasked = _mask.view((bool, (len(_mask.dtype) or 1))).any()
+            tp_len = len(_mask.dtype)
+            hasmasked = _mask.view((bool, ((tp_len,) if tp_len else ()))).any()
         if (obj.shape or hasmasked):
             obj = obj.view(MaskedArray)
             obj._baseclass = ndarray

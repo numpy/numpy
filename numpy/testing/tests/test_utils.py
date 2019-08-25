@@ -17,6 +17,7 @@ from numpy.testing import (
     clear_and_catch_warnings, suppress_warnings, assert_string_equal, assert_,
     tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
     )
+from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
 
 
 class _GenericTest(object):
@@ -179,6 +180,8 @@ class TestArrayEqual(_GenericTest):
         self._test_not_equal(a, b)
         self._test_not_equal(b, a)
 
+    @pytest.mark.skipif(
+        not ARRAY_FUNCTION_ENABLED, reason='requires __array_function__')
     def test_subclass_that_does_not_implement_npall(self):
         class MyArray(np.ndarray):
             def __array_function__(self, *args, **kwargs):
@@ -342,6 +345,13 @@ class TestEqual(TestArrayEqual):
             assert_equal(msg, msg_reference)
         except AssertionError:
             assert_equal(msg2, msg_reference)
+
+    def test_object(self):
+        #gh-12942
+        import datetime
+        a = np.array([datetime.datetime(2000, 1, 1),
+                      datetime.datetime(2000, 1, 2)])
+        self._test_not_equal(a, a[::-1])
 
 
 class TestArrayAlmostEqual(_GenericTest):
@@ -510,7 +520,7 @@ class TestAlmostEqual(_GenericTest):
         with pytest.raises(AssertionError) as exc_info:
             self._assert_func(x, y, decimal=12)
         msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatch: 100%')
+        assert_equal(msgs[3], 'Mismatched elements: 3 / 3 (100%)')
         assert_equal(msgs[4], 'Max absolute difference: 1.e-05')
         assert_equal(msgs[5], 'Max relative difference: 3.33328889e-06')
         assert_equal(
@@ -526,7 +536,7 @@ class TestAlmostEqual(_GenericTest):
         with pytest.raises(AssertionError) as exc_info:
             self._assert_func(x, y)
         msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatch: 33.3%')
+        assert_equal(msgs[3], 'Mismatched elements: 1 / 3 (33.3%)')
         assert_equal(msgs[4], 'Max absolute difference: 1.e-05')
         assert_equal(msgs[5], 'Max relative difference: 3.33328889e-06')
         assert_equal(msgs[6], ' x: array([1.     , 2.     , 3.00003])')
@@ -538,7 +548,7 @@ class TestAlmostEqual(_GenericTest):
         with pytest.raises(AssertionError) as exc_info:
             self._assert_func(x, y)
         msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatch: 50%')
+        assert_equal(msgs[3], 'Mismatched elements: 1 / 2 (50%)')
         assert_equal(msgs[4], 'Max absolute difference: 1.')
         assert_equal(msgs[5], 'Max relative difference: 1.')
         assert_equal(msgs[6], ' x: array([inf,  0.])')
@@ -550,7 +560,7 @@ class TestAlmostEqual(_GenericTest):
         with pytest.raises(AssertionError) as exc_info:
             self._assert_func(x, y)
         msgs = str(exc_info.value).split('\n')
-        assert_equal(msgs[3], 'Mismatch: 100%')
+        assert_equal(msgs[3], 'Mismatched elements: 2 / 2 (100%)')
         assert_equal(msgs[4], 'Max absolute difference: 2')
         assert_equal(msgs[5], 'Max relative difference: inf')
 
@@ -845,7 +855,8 @@ class TestAssertAllclose(object):
         with pytest.raises(AssertionError) as exc_info:
             assert_allclose(a, b)
         msg = str(exc_info.value)
-        assert_('Mismatch: 25%\nMax absolute difference: 1\n'
+        assert_('Mismatched elements: 1 / 4 (25%)\n'
+                'Max absolute difference: 1\n'
                 'Max relative difference: 0.5' in msg)
 
     def test_equal_nan(self):
@@ -1498,6 +1509,7 @@ class TestAssertNoGcCycles(object):
         with assert_raises(AssertionError):
             assert_no_gc_cycles(make_cycle)
 
+    @pytest.mark.slow
     def test_fails(self):
         """
         Test that in cases where the garbage cannot be collected, we raise an

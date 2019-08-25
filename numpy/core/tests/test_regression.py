@@ -98,7 +98,7 @@ class TestRegression(object):
             f = BytesIO()
             pickle.dump(ca, f, protocol=proto)
             f.seek(0)
-            ca = np.load(f)
+            ca = np.load(f, allow_pickle=True)
             f.close()
 
     def test_noncontiguous_fill(self):
@@ -436,6 +436,32 @@ class TestRegression(object):
 
         assert_raises(KeyError, np.lexsort, BuggySequence())
 
+    def test_lexsort_zerolen_custom_strides(self):
+        # Ticket #14228
+        xs = np.array([], dtype='i8')
+        assert xs.strides == (8,)
+        assert np.lexsort((xs,)).shape[0] == 0 # Works
+
+        xs.strides = (16,)
+        assert np.lexsort((xs,)).shape[0] == 0 # Was: MemoryError
+
+    def test_lexsort_zerolen_custom_strides_2d(self):
+        xs = np.array([], dtype='i8')
+
+        xs.shape = (0, 2)
+        xs.strides = (16, 16)
+        assert np.lexsort((xs,), axis=0).shape[0] == 0
+
+        xs.shape = (2, 0)
+        xs.strides = (16, 16)
+        assert np.lexsort((xs,), axis=0).shape[0] == 2
+
+    def test_lexsort_zerolen_element(self):
+        dt = np.dtype([])  # a void dtype with no fields
+        xs = np.empty(4, dt)
+
+        assert np.lexsort((xs,)).shape[0] == xs.shape[0]
+
     def test_pickle_py2_bytes_encoding(self):
         # Check that arrays and scalars pickled on Py2 are
         # unpickleable on Py3 using encoding='bytes'
@@ -468,7 +494,7 @@ class TestRegression(object):
                 result = pickle.loads(data, encoding='bytes')
                 assert_equal(result, original)
 
-                if isinstance(result, np.ndarray) and result.dtype.names:
+                if isinstance(result, np.ndarray) and result.dtype.names is not None:
                     for name in result.dtype.names:
                         assert_(isinstance(name, str))
 
@@ -2448,3 +2474,29 @@ class TestRegression(object):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             dumped = pickle.dumps(arr, protocol=proto)
             assert_equal(pickle.loads(dumped), arr)
+
+    def test_bad_array_interface(self):
+        class T(object):
+            __array_interface__ = {}
+
+        np.array([T()])
+
+    def test_2d__array__shape(self):
+        class T(object):
+            def __array__(self):
+                return np.ndarray(shape=(0,0))
+
+            # Make sure __array__ is used instead of Sequence methods.
+            def __iter__(self):
+                return iter([])
+
+            def __getitem__(self, idx):
+                raise AssertionError("__getitem__ was called")
+
+            def __len__(self):
+                return 0
+
+
+        t = T()
+        #gh-13659, would raise in broadcasting [x=t for x in result]
+        np.array([t])

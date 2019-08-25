@@ -42,7 +42,9 @@ from collections import Counter, OrderedDict
 
 from . import numeric as sb
 from . import numerictypes as nt
-from numpy.compat import isfileobj, bytes, long, unicode, os_fspath
+from numpy.compat import (
+    isfileobj, bytes, long, unicode, os_fspath, contextlib_nullcontext
+)
 from numpy.core.overrides import set_module
 from .arrayprint import get_printoptions
 
@@ -161,7 +163,7 @@ class format_parser(object):
         self._createdescr(byteorder)
         self.dtype = self._descr
 
-    def _parseFormats(self, formats, aligned=0):
+    def _parseFormats(self, formats, aligned=False):
         """ Parse the field formats """
 
         if formats is None:
@@ -266,8 +268,8 @@ class record(nt.void):
             except AttributeError:
                 #happens if field is Object type
                 return obj
-            if dt.fields:
-                return obj.view((self.__class__, obj.dtype.fields))
+            if dt.names is not None:
+                return obj.view((self.__class__, obj.dtype))
             return obj
         else:
             raise AttributeError("'record' object has no "
@@ -291,8 +293,8 @@ class record(nt.void):
         obj = nt.void.__getitem__(self, indx)
 
         # copy behavior of record.__getattribute__,
-        if isinstance(obj, nt.void) and obj.dtype.fields:
-            return obj.view((self.__class__, obj.dtype.fields))
+        if isinstance(obj, nt.void) and obj.dtype.names is not None:
+            return obj.view((self.__class__, obj.dtype))
         else:
             # return a single element
             return obj
@@ -442,7 +444,7 @@ class recarray(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        if self.dtype.type is not record and self.dtype.fields:
+        if self.dtype.type is not record and self.dtype.names is not None:
             # if self.dtype is not np.record, invoke __setattr__ which will
             # convert it to a record if it is a void dtype.
             self.dtype = self.dtype
@@ -470,7 +472,7 @@ class recarray(ndarray):
         # with void type convert it to the same dtype.type (eg to preserve
         # numpy.record type if present), since nested structured fields do not
         # inherit type. Don't do this for non-void structures though.
-        if obj.dtype.fields:
+        if obj.dtype.names is not None:
             if issubclass(obj.dtype.type, nt.void):
                 return obj.view(dtype=(self.dtype.type, obj.dtype))
             return obj
@@ -485,7 +487,7 @@ class recarray(ndarray):
 
         # Automatically convert (void) structured types to records
         # (but not non-void structures, subarrays, or non-structured voids)
-        if attr == 'dtype' and issubclass(val.type, nt.void) and val.fields:
+        if attr == 'dtype' and issubclass(val.type, nt.void) and val.names is not None:
             val = sb.dtype((record, val))
 
         newattr = attr not in self.__dict__
@@ -519,7 +521,7 @@ class recarray(ndarray):
         # copy behavior of getattr, except that here
         # we might also be returning a single element
         if isinstance(obj, ndarray):
-            if obj.dtype.fields:
+            if obj.dtype.names is not None:
                 obj = obj.view(type(self))
                 if issubclass(obj.dtype.type, nt.void):
                     return obj.view(dtype=(self.dtype.type, obj.dtype))
@@ -575,7 +577,7 @@ class recarray(ndarray):
 
         if val is None:
             obj = self.getfield(*res)
-            if obj.dtype.fields:
+            if obj.dtype.names is not None:
                 return obj
             return obj.view(ndarray)
         else:
@@ -777,44 +779,42 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
 
     if isfileobj(fd):
         # file already opened
-        name = 0
+        ctx = contextlib_nullcontext(fd)
     else:
         # open file
-        fd = open(os_fspath(fd), 'rb')
-        name = 1
+        ctx = open(os_fspath(fd), 'rb')
 
-    if (offset > 0):
-        fd.seek(offset, 1)
-    size = get_remaining_size(fd)
+    with ctx as fd:
+        if (offset > 0):
+            fd.seek(offset, 1)
+        size = get_remaining_size(fd)
 
-    if dtype is not None:
-        descr = sb.dtype(dtype)
-    else:
-        descr = format_parser(formats, names, titles, aligned, byteorder)._descr
+        if dtype is not None:
+            descr = sb.dtype(dtype)
+        else:
+            descr = format_parser(formats, names, titles, aligned, byteorder)._descr
 
-    itemsize = descr.itemsize
+        itemsize = descr.itemsize
 
-    shapeprod = sb.array(shape).prod(dtype=nt.intp)
-    shapesize = shapeprod * itemsize
-    if shapesize < 0:
-        shape = list(shape)
-        shape[shape.index(-1)] = size // -shapesize
-        shape = tuple(shape)
         shapeprod = sb.array(shape).prod(dtype=nt.intp)
+        shapesize = shapeprod * itemsize
+        if shapesize < 0:
+            shape = list(shape)
+            shape[shape.index(-1)] = size // -shapesize
+            shape = tuple(shape)
+            shapeprod = sb.array(shape).prod(dtype=nt.intp)
 
-    nbytes = shapeprod * itemsize
+        nbytes = shapeprod * itemsize
 
-    if nbytes > size:
-        raise ValueError(
-                "Not enough bytes left in file for specified shape and type")
+        if nbytes > size:
+            raise ValueError(
+                    "Not enough bytes left in file for specified shape and type")
 
-    # create the array
-    _array = recarray(shape, descr)
-    nbytesread = fd.readinto(_array.data)
-    if nbytesread != nbytes:
-        raise IOError("Didn't read as many bytes as expected")
-    if name:
-        fd.close()
+        # create the array
+        _array = recarray(shape, descr)
+        nbytesread = fd.readinto(_array.data)
+        if nbytesread != nbytes:
+            raise IOError("Didn't read as many bytes as expected")
 
     return _array
 

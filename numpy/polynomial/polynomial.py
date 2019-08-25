@@ -445,24 +445,9 @@ def polypow(c, pow, maxpower=None):
     array([ 1., 4., 10., 12., 9.])
 
     """
-    # c is a trimmed copy
-    [c] = pu.as_series([c])
-    power = int(pow)
-    if power != pow or power < 0:
-        raise ValueError("Power must be a non-negative integer.")
-    elif maxpower is not None and power > maxpower:
-        raise ValueError("Power is too large")
-    elif power == 0:
-        return np.array([1], dtype=c.dtype)
-    elif power == 1:
-        return c
-    else:
-        # This can be made more efficient by using powers of two
-        # in the usual way.
-        prd = c
-        for i in range(2, power + 1):
-            prd = np.convolve(prd, c)
-        return prd
+    # note: this is more efficient than `pu._pow(polymul, c1, c2)`, as it
+    # avoids calling `as_series` repeatedly
+    return pu._pow(np.convolve, c, pow, maxpower)
 
 
 def polyder(c, m=1, scl=1, axis=0):
@@ -517,7 +502,7 @@ def polyder(c, m=1, scl=1, axis=0):
     array([  6.,  24.])
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype fails with NA
         c = c + 0.0
@@ -625,7 +610,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     array([ 0., -2., -2., -2.])
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype doesn't preserve mask attribute.
         c = c + 0.0
@@ -747,7 +732,7 @@ def polyval(x, c, tensor=True):
     array([2.,  7.])
 
     """
-    c = np.array(c, ndmin=1, copy=0)
+    c = np.array(c, ndmin=1, copy=False)
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype fails with NA
         c = c + 0.0
@@ -837,7 +822,7 @@ def polyvalfromroots(x, r, tensor=True):
     >>> polyvalfromroots(b, r, tensor=False)
     array([-0.,  0.])
     """
-    r = np.array(r, ndmin=1, copy=0)
+    r = np.array(r, ndmin=1, copy=False)
     if r.dtype.char in '?bBhHiIlLqQpP':
         r = r.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -1111,7 +1096,7 @@ def polyvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=0, ndmin=1) + 0.0
+    x = np.array(x, copy=False, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
@@ -1165,7 +1150,7 @@ def polyvander2d(x, y, deg):
 
     See Also
     --------
-    polyvander, polyvander3d. polyval2d, polyval3d
+    polyvander, polyvander3d, polyval2d, polyval3d
 
     """
     return pu._vander2d(polyvander, x, y, deg)
@@ -1214,7 +1199,7 @@ def polyvander3d(x, y, z, deg):
 
     See Also
     --------
-    polyvander, polyvander3d. polyval2d, polyval3d
+    polyvander, polyvander3d, polyval2d, polyval3d
 
     Notes
     -----
@@ -1472,7 +1457,8 @@ def polyroots(c):
     if len(c) == 2:
         return np.array([-c[0]/c[1]])
 
-    m = polycompanion(c)
+    # rotated companion matrix reduces error
+    m = polycompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r

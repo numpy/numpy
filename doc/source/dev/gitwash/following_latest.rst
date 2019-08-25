@@ -1,9 +1,5 @@
 .. _following-latest:
 
-=============================
- Following the latest source
-=============================
-
 These are the instructions if you just want to follow the latest
 *NumPy* source, but you don't need to do any development for now.
 If you do want to contribute a patch (excellent!) or do more extensive

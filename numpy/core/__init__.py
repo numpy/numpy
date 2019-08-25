@@ -5,29 +5,6 @@ from numpy.version import version as __version__
 
 import os
 
-# on Windows NumPy loads an important OpenBLAS-related DLL
-# and the code below aims to alleviate issues with DLL
-# path resolution portability with an absolute path DLL load
-if os.name == 'nt':
-    from ctypes import WinDLL
-    import glob
-    # convention for storing / loading the DLL from
-    # numpy/.libs/, if present
-    libs_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             '..', '.libs'))
-    DLL_filenames = []
-    if os.path.isdir(libs_path):
-        for filename in glob.glob(os.path.join(libs_path, '*openblas*dll')):
-            # NOTE: would it change behavior to load ALL
-            # DLLs at this path vs. the name restriction?
-            WinDLL(os.path.abspath(filename))
-            DLL_filenames.append(filename)
-    if len(DLL_filenames) > 1:
-        import warnings
-        warnings.warn("loaded more than 1 DLL from .libs:\n%s" %
-                      "\n".join(DLL_filenames),
-                      stacklevel=1)
-
 # disables OpenBLAS affinity setting of the main thread that limits
 # python threads or processes to one core
 env_added = []
@@ -44,17 +21,12 @@ except ImportError as exc:
 
 IMPORTANT: PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!
 
-Importing the multiarray numpy extension module failed.  Most
-likely you are trying to import a failed build of numpy.
-Here is how to proceed:
-- If you're working with a numpy git repository, try `git clean -xdf`
-  (removes all files not under version control) and rebuild numpy.
-- If you are simply trying to use the numpy version that you have installed:
-  your installation is broken - please reinstall numpy.
-- If you have already reinstalled and that did not fix the problem, then:
-  1. Check that you are using the Python you expect (you're using %s),
+Importing the numpy c-extensions failed.
+- Try uninstalling and reinstalling numpy.
+- If you have already done that, then:
+  1. Check that you expected to use Python%d.%d from "%s",
      and that you have no directories in your PATH or PYTHONPATH that can
-     interfere with the Python and numpy versions you're trying to use.
+     interfere with the Python and numpy version "%s" you're trying to use.
   2. If (1) looks fine, you can open a new issue at
      https://github.com/numpy/numpy/issues.  Please include details on:
      - how you installed Python
@@ -63,11 +35,15 @@ Here is how to proceed:
      - whether or not you have multiple versions of Python installed
      - if you built from source, your compiler versions and ideally a build log
 
-     Note: this error has many possible causes, so please don't comment on
-     an existing issue about this - open a new one instead.
+- If you're working with a numpy git repository, try `git clean -xdf`
+  (removes all files not under version control) and rebuild numpy.
+
+Note: this error has many possible causes, so please don't comment on
+an existing issue about this - open a new one instead.
 
 Original error was: %s
-""" % (sys.executable, exc)
+""" % (sys.version_info[0], sys.version_info[1], sys.executable,
+        __version__, exc)
     raise ImportError(msg)
 finally:
     for envkey in env_added:

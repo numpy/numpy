@@ -3,6 +3,8 @@
 Setting up and using your development environment
 =================================================
 
+.. _recommended-development-setup:
+
 Recommended development setup
 -----------------------------
 
@@ -16,6 +18,11 @@ Having compiled code also means that importing NumPy from the development
 sources needs some additional steps, which are explained below.  For the rest
 of this chapter we assume that you have set up your git repo as described in
 :ref:`using-git`.
+
+.. _testing-builds:
+
+Testing builds
+--------------
 
 To build the development version of NumPy and run tests, spawn
 interactive shells with the Python import paths properly set up etc.,
@@ -44,6 +51,10 @@ When using pytest as a target (the default), you can
 `match test names using python operators`_ by passing the ``-k`` argument to pytest::
 
     $ python runtests.py -v -t numpy/core/tests/test_multiarray.py -- -k "MatMul and not vector"
+
+.. note::
+
+    Remember that all tests of NumPy should pass before commiting your changes.
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
@@ -88,13 +99,10 @@ Other build options
 It's possible to do a parallel build with ``numpy.distutils`` with the ``-j`` option;
 see :ref:`parallel-builds` for more details.
 
-In order to install the development version of NumPy in ``site-packages``, use
-``python setup.py install --user``.
-
 A similar approach to in-place builds and use of ``PYTHONPATH`` but outside the
 source tree is to use::
 
-    $ python setup.py install --prefix /some/owned/folder
+    $ pip install . --prefix /some/owned/folder
     $ export PYTHONPATH=/some/owned/folder/lib/python3.4/site-packages
 
 
@@ -127,6 +135,9 @@ the interpreter, tests can be run like this::
     >>> np.test('full')   # Also run tests marked as slow
     >>> np.test('full', verbose=2)   # Additionally print test name/file
 
+    An example of a successful test :
+    ``4686 passed, 362 skipped, 9 xfailed, 5 warnings in 213.99 seconds``
+
 Or a similar way from the command line::
 
     $ python -c "import numpy as np; np.test()"
@@ -144,9 +155,9 @@ That also takes extra arguments, like ``--pdb`` which drops you into the Python
 debugger when a test fails or an exception is raised.
 
 Running tests with `tox`_ is also supported.  For example, to build NumPy and
-run the test suite with Python 3.4, use::
+run the test suite with Python 3.7, use::
 
-    $ tox -e py34
+    $ tox -e py37
 
 For more extensive information, see :ref:`testing-guidelines`
 

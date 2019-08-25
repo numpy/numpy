@@ -233,10 +233,10 @@ static NPY_INLINE int
 NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
 {
     PyObject *title;
-    if (PyTuple_GET_SIZE(value) != 3) {
+    if (PyTuple_Size(value) != 3) {
         return 0;
     }
-    title = PyTuple_GET_ITEM(value, 2);
+    title = PyTuple_GetItem(value, 2);
     if (key == title) {
         return 1;
     }

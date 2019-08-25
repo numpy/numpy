@@ -44,10 +44,24 @@
 #else
 #define NPY_GCC_TARGET_AVX
 #endif
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS
+#define HAVE_ATTRIBUTE_TARGET_FMA
+#define NPY_GCC_TARGET_FMA __attribute__((target("avx2,fma")))
+#endif
+
 #if defined HAVE_ATTRIBUTE_TARGET_AVX2 && defined HAVE_LINK_AVX2
 #define NPY_GCC_TARGET_AVX2 __attribute__((target("avx2")))
 #else
 #define NPY_GCC_TARGET_AVX2
+#endif
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F && defined HAVE_LINK_AVX512F
+#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
+#elif defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
+#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
+#else
+#define NPY_GCC_TARGET_AVX512F
 #endif
 
 /*
@@ -68,6 +82,13 @@
 #define NPY_HAVE_SSE2_INTRINSICS
 #endif
 
+#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX2
+#define NPY_HAVE_AVX2_INTRINSICS
+#endif
+
+#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX512F
+#define NPY_HAVE_AVX512F_INTRINSICS
+#endif
 /*
  * give a hint to the compiler which branch is more likely or unlikely
  * to occur, e.g. rare error cases:

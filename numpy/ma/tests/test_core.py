@@ -347,7 +347,7 @@ class TestMaskedArray(object):
         m = make_mask(n)
         m2 = make_mask(m)
         assert_(m is m2)
-        m3 = make_mask(m, copy=1)
+        m3 = make_mask(m, copy=True)
         assert_(m is not m3)
 
         x1 = np.arange(5)
@@ -374,12 +374,12 @@ class TestMaskedArray(object):
 
         y2a = array(x1, mask=m, copy=1)
         assert_(y2a._data.__array_interface__ != x1.__array_interface__)
-        #assert_( y2a.mask is not m)
+        #assert_( y2a._mask is not m)
         assert_(y2a._mask.__array_interface__ != m.__array_interface__)
         assert_(y2a[2] is masked)
         y2a[2] = 9
         assert_(y2a[2] is not masked)
-        #assert_( y2a.mask is not m)
+        #assert_( y2a._mask is not m)
         assert_(y2a._mask.__array_interface__ != m.__array_interface__)
         assert_(allequal(y2a.mask, 0))
 
@@ -3035,6 +3035,13 @@ class TestMaskedArrayMethods(object):
         assert_equal(clipped._data, x.clip(2, 8))
         assert_equal(clipped._data, mx._data.clip(2, 8))
 
+    def test_clip_out(self):
+        # gh-14140
+        a = np.arange(10)
+        m = np.ma.MaskedArray(a, mask=[0, 1] * 5)
+        m.clip(0, 5, out=m)
+        assert_equal(m.mask, [0, 1] * 5)
+
     def test_compress(self):
         # test compress
         a = masked_array([1., 2., 3., 4., 5.], fill_value=9999)
@@ -5203,3 +5210,10 @@ def test_fieldless_void():
     mx = np.ma.array(x, mask=x)
     assert_equal(mx.dtype, x.dtype)
     assert_equal(mx.shape, x.shape)
+
+
+def test_mask_shape_assignment_does_not_break_masked():
+    a = np.ma.masked
+    b = np.ma.array(1, mask=a.mask)
+    b.shape = (1,)
+    assert_equal(a.mask.shape, ())

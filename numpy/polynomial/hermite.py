@@ -276,8 +276,7 @@ def hermfromroots(roots):
 
     See Also
     --------
-    chebfromroots, hermefromroots, lagfromroots, legfromroots,
-    polyfromroots.
+    polyfromroots, legfromroots, lagfromroots, chebfromroots, hermefromroots
 
     Examples
     --------
@@ -574,24 +573,7 @@ def hermpow(c, pow, maxpower=16):
     array([81.,  52.,  82.,  12.,   9.])
 
     """
-    # c is a trimmed copy
-    [c] = pu.as_series([c])
-    power = int(pow)
-    if power != pow or power < 0:
-        raise ValueError("Power must be a non-negative integer.")
-    elif maxpower is not None and power > maxpower:
-        raise ValueError("Power is too large")
-    elif power == 0:
-        return np.array([1], dtype=c.dtype)
-    elif power == 1:
-        return c
-    else:
-        # This can be made more efficient by using powers of two
-        # in the usual way.
-        prd = c
-        for i in range(2, power + 1):
-            prd = hermmul(prd, c)
-        return prd
+    return pu._pow(hermmul, c, pow, maxpower)
 
 
 def hermder(c, m=1, scl=1, axis=0):
@@ -649,7 +631,7 @@ def hermder(c, m=1, scl=1, axis=0):
     array([1., 2., 3.])
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     cnt = pu._deprecate_as_int(m, "the order of derivation")
@@ -760,7 +742,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     array([ 1.66666667, -0.5       ,  0.125     ,  0.08333333,  0.0625    ]) # may vary
 
     """
-    c = np.array(c, ndmin=1, copy=1)
+    c = np.array(c, ndmin=1, copy=True)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     if not np.iterable(k):
@@ -868,7 +850,7 @@ def hermval(x, c, tensor=True):
            [115.,  203.]])
 
     """
-    c = np.array(c, ndmin=1, copy=0)
+    c = np.array(c, ndmin=1, copy=False)
     if c.dtype.char in '?bBhHiIlLqQpP':
         c = c.astype(np.double)
     if isinstance(x, (tuple, list)):
@@ -1152,7 +1134,7 @@ def hermvander(x, deg):
     if ideg < 0:
         raise ValueError("deg must be non-negative")
 
-    x = np.array(x, copy=0, ndmin=1) + 0.0
+    x = np.array(x, copy=False, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
@@ -1207,7 +1189,7 @@ def hermvander2d(x, y, deg):
 
     See Also
     --------
-    hermvander, hermvander3d. hermval2d, hermval3d
+    hermvander, hermvander3d, hermval2d, hermval3d
 
     Notes
     -----
@@ -1261,7 +1243,7 @@ def hermvander3d(x, y, z, deg):
 
     See Also
     --------
-    hermvander, hermvander3d. hermval2d, hermval3d
+    hermvander, hermvander3d, hermval2d, hermval3d
 
     Notes
     -----
@@ -1506,7 +1488,8 @@ def hermroots(c):
     if len(c) == 2:
         return np.array([-.5*c[0]/c[1]])
 
-    m = hermcompanion(c)
+    # rotated companion matrix reduces error
+    m = hermcompanion(c)[::-1,::-1]
     r = la.eigvals(m)
     r.sort()
     return r

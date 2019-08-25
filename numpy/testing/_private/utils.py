@@ -6,6 +6,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import sys
+import platform
 import re
 import gc
 import operator
@@ -19,8 +20,7 @@ from warnings import WarningMessage
 import pprint
 
 from numpy.core import(
-     float32, empty, arange, array_repr, ndarray, isnat, array)
-from numpy.lib.utils import deprecate
+     intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -32,13 +32,14 @@ __all__ = [
         'assert_array_equal', 'assert_array_less', 'assert_string_equal',
         'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
         'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
-        'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
+        'raises', 'rundocs', 'runstring', 'verbose', 'measure',
         'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
         'assert_allclose', 'IgnoreException', 'clear_and_catch_warnings',
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
         '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles',
+        'break_cycles',
         ]
 
 
@@ -50,7 +51,7 @@ class KnownFailureException(Exception):
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
-IS_PYPY = '__pypy__' in sys.modules
+IS_PYPY = platform.python_implementation() == 'PyPy'
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
 
 
@@ -150,22 +151,6 @@ def gisinf(x):
         if isinstance(st, type(NotImplemented)):
             raise TypeError("isinf not supported for this type")
     return st
-
-
-@deprecate(message="numpy.testing.rand is deprecated in numpy 1.11. "
-                   "Use numpy.random.rand instead.")
-def rand(*args):
-    """Returns an array of random numbers with the given shape.
-
-    This only uses the standard library, so it is useful for testing purposes.
-    """
-    import random
-    from numpy.core import zeros, float64
-    results = zeros(args, float64)
-    f = results.flat
-    for i in range(len(f)):
-        f[i] = random.random()
-    return results
 
 
 if os.name == 'nt':
@@ -299,6 +284,11 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     check that all elements of these objects are equal. An exception is raised
     at the first conflicting values.
 
+    This function handles NaN comparisons as if NaN was a "normal" number.
+    That is, no assertion is raised if both objects have NaNs in the same
+    positions.  This is in contrast to the IEEE standard on NaNs, which says
+    that NaN compared to anything must return False.
+
     Parameters
     ----------
     actual : array_like
@@ -325,6 +315,11 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     item=1
      ACTUAL: 5
      DESIRED: 6
+
+    The following comparison does not raise an exception.  There are NaNs
+    in the inputs, but they are in the same positions.
+
+    >>> np.testing.assert_equal(np.array([1.0, 2.0, np.nan]), [1, 2, np.nan])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -696,7 +691,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
-    # original array for output formating
+    # original array for output formatting
     ox, oy = x, y
 
     def isnumber(x):
@@ -721,7 +716,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # (2) __eq__ on some ndarray subclasses returns Python booleans
         #     instead of element-wise comparisons, so we cast to bool_() and
         #     use isinstance(..., bool) checks
-        # (3) subclasses with bare-bones __array_function__ implemenations may
+        # (3) subclasses with bare-bones __array_function__ implementations may
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting such subclasses, but it's nice to
         # support them if possible.
@@ -782,33 +777,43 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
 
         if isinstance(val, bool):
             cond = val
-            reduced = [0]
+            reduced = array([val])
         else:
             reduced = val.ravel()
             cond = reduced.all()
-            reduced = reduced.tolist()
 
         # The below comparison is a hack to ensure that fully masked
         # results, for which val.ravel().all() returns np.ma.masked,
         # do not trigger a failure (np.ma.masked != True evaluates as
         # np.ma.masked, which is falsy).
         if cond != True:
-            mismatch = 100.0 * reduced.count(0) / ox.size
-            remarks = ['Mismatch: {:.3g}%'.format(mismatch)]
+            n_mismatch = reduced.size - reduced.sum(dtype=intp)
+            percent_mismatch = 100 * n_mismatch / ox.size
+            remarks = [
+                'Mismatched elements: {} / {} ({:.3g}%)'.format(
+                    n_mismatch, ox.size, percent_mismatch)]
 
             with errstate(invalid='ignore', divide='ignore'):
                 # ignore errors for non-numeric types
                 with contextlib.suppress(TypeError):
                     error = abs(x - y)
                     max_abs_error = error.max()
-                    remarks.append('Max absolute difference: '
-                                   + array2string(max_abs_error))
+                    if error.dtype == 'object':
+                        remarks.append('Max absolute difference: '
+                                        + str(max_abs_error))
+                    else:
+                        remarks.append('Max absolute difference: '
+                                        + array2string(max_abs_error))
 
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     max_rel_error = (error / abs(y)).max()
-                    remarks.append('Max relative difference: '
-                                   + array2string(max_rel_error))
+                    if error.dtype == 'object':
+                        remarks.append('Max relative difference: '
+                                        + str(max_rel_error))
+                    else:
+                        remarks.append('Max relative difference: '
+                                        + array2string(max_rel_error))
 
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
@@ -1126,7 +1131,7 @@ def assert_string_equal(actual, desired):
     if desired == actual:
         return
 
-    diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
+    diff = list(difflib.Differ().compare(actual.splitlines(True), desired.splitlines(True)))
     diff_list = []
     while diff:
         d1 = diff.pop(0)
@@ -1439,9 +1444,9 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     Raises an AssertionError if two objects are not equal up to desired
     tolerance.
 
-    The test is equivalent to ``allclose(actual, desired, rtol, atol)``.
-    It compares the difference between `actual` and `desired` to
-    ``atol + rtol * abs(desired)``.
+    The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (note
+    that ``allclose`` has different default values). It compares the difference
+    between `actual` and `desired` to ``atol + rtol * abs(desired)``.
 
     .. versionadded:: 1.5.0
 
@@ -2245,6 +2250,7 @@ def _assert_no_gc_cycles_context(name=None):
 
     # not meaningful to test if there is no refcounting
     if not HAS_REFCOUNT:
+        yield
         return
 
     assert_(gc.isenabled())
@@ -2323,3 +2329,19 @@ def assert_no_gc_cycles(*args, **kwargs):
     args = args[1:]
     with _assert_no_gc_cycles_context(name=func.__name__):
         func(*args, **kwargs)
+
+def break_cycles():
+    """
+    Break reference cycles by calling gc.collect
+    Objects can call other objects' methods (for instance, another object's
+     __del__) inside their own __del__. On PyPy, the interpreter only runs
+    between calls to gc.collect, so multiple calls are needed to completely
+    release all cycles.
+    """
+
+    gc.collect()
+    if IS_PYPY:
+        # interpreter runs now, to call deleted objects' __del__ methods
+        gc.collect()
+        # one more, just to make sure
+        gc.collect()

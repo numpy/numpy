@@ -5,13 +5,14 @@ import warnings
 import sys
 import decimal
 import types
+from fractions import Fraction
 import pytest
 
 import numpy as np
 from numpy import ma
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose,
+    assert_array_almost_equal, assert_raises, assert_allclose, IS_PYPY,
     assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT,
     )
 import numpy.lib.function_base as nfb
@@ -695,6 +696,9 @@ class TestDiff(object):
         assert_raises(np.AxisError, diff, x, axis=3)
         assert_raises(np.AxisError, diff, x, axis=-4)
 
+        x = np.array(1.11111111111, np.float64)
+        assert_raises(ValueError, diff, x)
+
     def test_nd(self):
         x = 20 * rand(10, 20, 30)
         out1 = x[:, :, 1:] - x[:, :, :-1]
@@ -944,7 +948,7 @@ class TestGradient(object):
         assert_equal(type(out), type(x))
         # And make sure that the output and input don't have aliased mask
         # arrays
-        assert_(x.mask is not out.mask)
+        assert_(x._mask is not out._mask)
         # Also check that edge_order=2 doesn't alter the original mask
         x2 = np.ma.arange(5)
         x2[2] = np.ma.masked
@@ -1101,7 +1105,7 @@ class TestAngle(object):
             np.arctan(3.0 / 1.0),
             np.arctan(1.0), 0, np.pi / 2, np.pi, -np.pi / 2.0,
             -np.arctan(3.0 / 1.0), np.pi - np.arctan(3.0 / 1.0)]
-        z = angle(x, deg=1)
+        z = angle(x, deg=True)
         zo = np.array(yo) * 180 / np.pi
         assert_array_almost_equal(y, yo, 11)
         assert_array_almost_equal(z, zo, 11)
@@ -1916,9 +1920,9 @@ class TestCov(object):
                                          [-np.inf, np.inf]]))
 
     def test_1D_rowvar(self):
-        assert_allclose(cov(self.x3), cov(self.x3, rowvar=0))
+        assert_allclose(cov(self.x3), cov(self.x3, rowvar=False))
         y = np.array([0.0780, 0.3107, 0.2111, 0.0334, 0.8501])
-        assert_allclose(cov(self.x3, y), cov(self.x3, y, rowvar=0))
+        assert_allclose(cov(self.x3, y), cov(self.x3, y, rowvar=False))
 
     def test_1D_variance(self):
         assert_allclose(cov(self.x3, ddof=1), np.var(self.x3, ddof=1))
@@ -1980,9 +1984,9 @@ class Test_I0(object):
             np.array(1.0634833707413234))
 
         A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549])
-        assert_almost_equal(
-            i0(A),
-            np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049]))
+        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049])
+        assert_almost_equal(i0(A), expected)
+        assert_almost_equal(i0(-A), expected)
 
         B = np.array([[0.827002, 0.99959078],
                       [0.89694769, 0.39298162],
@@ -1996,6 +2000,26 @@ class Test_I0(object):
                       [1.03633899, 1.00067775],
                       [1.03352052, 1.13557954],
                       [1.05884290, 1.06432317]]))
+        # Regression test for gh-11205
+        i0_0 = np.i0([0.])
+        assert_equal(i0_0.shape, (1,))
+        assert_array_equal(np.i0([0.]), np.array([1.]))
+
+    def test_non_array(self):
+        a = np.arange(4)
+
+        class array_like:
+            __array_interface__ = a.__array_interface__
+
+            def __array_wrap__(self, arr):
+                return self
+
+        # E.g. pandas series survive ufunc calls through array-wrap:
+        assert isinstance(np.abs(array_like()), array_like)
+        exp = np.i0(a)
+        res = np.i0(array_like())
+
+        assert_array_equal(exp, res)
 
 
 class TestKaiser(object):
@@ -2508,6 +2532,21 @@ class TestPercentile(object):
         assert_equal(np.percentile(x, 0), np.nan)
         assert_equal(np.percentile(x, 0, interpolation='nearest'), np.nan)
 
+    def test_fraction(self):
+        x = [Fraction(i, 2) for i in np.arange(8)]
+
+        p = np.percentile(x, Fraction(0))
+        assert_equal(p, Fraction(0))
+        assert_equal(type(p), Fraction)
+
+        p = np.percentile(x, Fraction(100))
+        assert_equal(p, Fraction(7, 2))
+        assert_equal(type(p), Fraction)
+
+        p = np.percentile(x, Fraction(50))
+        assert_equal(p, Fraction(7, 4))
+        assert_equal(type(p), Fraction)
+
     def test_api(self):
         d = np.ones(5)
         np.percentile(d, 5, None, None, False)
@@ -2912,6 +2951,26 @@ class TestQuantile(object):
         assert_equal(np.quantile(x, 1), 3.5)
         assert_equal(np.quantile(x, 0.5), 1.75)
 
+    def test_fraction(self):
+        # fractional input, integral quantile
+        x = [Fraction(i, 2) for i in np.arange(8)]
+
+        q = np.quantile(x, 0)
+        assert_equal(q, 0)
+        assert_equal(type(q), Fraction)
+
+        q = np.quantile(x, 1)
+        assert_equal(q, Fraction(7, 2))
+        assert_equal(type(q), Fraction)
+
+        q = np.quantile(x, Fraction(1, 2))
+        assert_equal(q, Fraction(7, 4))
+        assert_equal(type(q), Fraction)
+
+        # repeat with integral input but fractional quantile
+        x = np.arange(8)
+        assert_equal(np.quantile(x, Fraction(1, 2)), Fraction(7, 2))
+
     def test_no_p_overwrite(self):
         # this is worth retesting, because quantile does not make a copy
         p0 = np.array([0, 0.75, 0.25, 0.5, 1.0])
@@ -3177,6 +3236,7 @@ class TestAdd_newdoc_ufunc(object):
 class TestAdd_newdoc(object):
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
+    @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
     def test_add_doc(self):
         # test np.add_newdoc
         tgt = "Current flat index into the array."

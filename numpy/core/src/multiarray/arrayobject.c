@@ -483,10 +483,11 @@ array_dealloc(PyArrayObject *self)
             char const * msg = "WRITEBACKIFCOPY detected in array_dealloc. "
                 " Required call to PyArray_ResolveWritebackIfCopy or "
                 "PyArray_DiscardWritebackIfCopy is missing.";
-            Py_INCREF(self); /* hold on to self in next call  since if
-                              * refcount == 0 it will recurse back into
-                              *array_dealloc
-                              */
+            /*
+             * prevent reaching 0 twice and thus recursing into dealloc.
+             * Increasing sys.gettotalrefcount, but path should not be taken.
+             */
+            Py_INCREF(self);
             WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
             retval = PyArray_ResolveWritebackIfCopy(self);
             if (retval < 0)
@@ -500,10 +501,11 @@ array_dealloc(PyArrayObject *self)
             char const * msg = "UPDATEIFCOPY detected in array_dealloc. "
                 " Required call to PyArray_ResolveWritebackIfCopy or "
                 "PyArray_DiscardWritebackIfCopy is missing";
-            Py_INCREF(self); /* hold on to self in next call  since if
-                              * refcount == 0 it will recurse back into
-                              *array_dealloc
-                              */
+            /*
+             * prevent reaching 0 twice and thus recursing into dealloc.
+             * Increasing sys.gettotalrefcount, but path should not be taken.
+             */
+            Py_INCREF(self);
             /* 2017-Nov-10 1.14 */
             WARN_IN_DEALLOC(PyExc_DeprecationWarning, msg);
             retval = PyArray_ResolveWritebackIfCopy(self);
@@ -523,12 +525,7 @@ array_dealloc(PyArrayObject *self)
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
         /* Free internal references if an Object array */
         if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
-            Py_INCREF(self); /*hold on to self */
             PyArray_XDECREF(self);
-            /*
-             * Don't need to DECREF -- because we are deleting
-             * self already...
-             */
         }
         npy_free_cache(fa->data, PyArray_NBYTES(self));
     }
@@ -655,13 +652,11 @@ NPY_NO_EXPORT int
 array_might_be_written(PyArrayObject *obj)
 {
     const char *msg =
-        "Numpy has detected that you (may be) writing to an array returned\n"
-        "by numpy.diagonal. This code will likely break in a future numpy\n"
-        "release -- see numpy.diagonal docs for details. The quick fix is\n"
-        "to make an explicit copy (e.g., do arr.diagonal().copy()).";
+        "Numpy has detected that you (may be) writing to an array with\n"
+        "overlapping memory from np.broadcast_arrays. If this is intentional\n"
+        "set the WRITEABLE flag True or make a copy immediately before writing.";
     if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
-        /* 2012-07-17, 1.7 */
-        if (DEPRECATE_FUTUREWARNING(msg) < 0) {
+        if (DEPRECATE(msg) < 0) {
             return -1;
         }
         /* Only warn once per array */
@@ -1163,8 +1158,10 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
 
                     newdims.ptr = dimensions;
                     newdims.len = result_ndim+1;
-                    memcpy(dimensions, PyArray_DIMS((PyArrayObject *)temp),
-                           sizeof(npy_intp)*result_ndim);
+                    if (result_ndim) {
+                        memcpy(dimensions, PyArray_DIMS((PyArrayObject *)temp),
+                               sizeof(npy_intp)*result_ndim);
+                    }
                     dimensions[result_ndim] = -1;
                     temp2 = PyArray_Newshape((PyArrayObject *)temp,
                                              &newdims, NPY_ANYORDER);

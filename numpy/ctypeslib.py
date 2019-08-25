@@ -51,7 +51,7 @@ Then, we're ready to call ``foo_func``:
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
+__all__ = ['load_library', 'ndpointer', 'ctypes_load_library',
            'c_intp', 'as_ctypes', 'as_array']
 
 import os
@@ -120,7 +120,7 @@ else:
         """
         if ctypes.__version__ < '1.0.1':
             import warnings
-            warnings.warn("All features of ctypes interface may not work " \
+            warnings.warn("All features of ctypes interface may not work "
                           "with ctypes < 1.0.1", stacklevel=2)
 
         ext = os.path.splitext(libname)[1]
@@ -321,7 +321,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     # produce a name for the new type
     if dtype is None:
         name = 'any'
-    elif dtype.names:
+    elif dtype.names is not None:
         name = str(id(dtype))
     else:
         name = dtype.str
@@ -462,7 +462,7 @@ if ctypes is not None:
 
 
     def as_ctypes_type(dtype):
-        """
+        r"""
         Convert a dtype into a ctypes type.
 
         Parameters
@@ -472,7 +472,7 @@ if ctypes is not None:
 
         Returns
         -------
-        ctypes
+        ctype
             A ctype scalar, union, array, or struct
 
         Raises
@@ -485,13 +485,17 @@ if ctypes is not None:
         This function does not losslessly round-trip in either direction.
 
         ``np.dtype(as_ctypes_type(dt))`` will:
+
          - insert padding fields
          - reorder fields to be sorted by offset
          - discard field titles
 
         ``as_ctypes_type(np.dtype(ctype))`` will:
-         - discard the class names of ``Structure``s and ``Union``s
-         - convert single-element ``Union``s into single-element ``Structure``s
+
+         - discard the class names of `ctypes.Structure`\ s and
+           `ctypes.Union`\ s
+         - convert single-element `ctypes.Union`\ s into single-element
+           `ctypes.Structure`\ s
          - insert padding fields
 
         """

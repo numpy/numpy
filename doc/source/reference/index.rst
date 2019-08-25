@@ -24,7 +24,7 @@ For learning how to use NumPy, see also :ref:`user`.
    routines
    distutils
    distutils_guide
-   c-api
+   c-api/index
    internals
    swig
 

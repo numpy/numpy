@@ -6,6 +6,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
+#include "arrayobject.h"
 #include "numpy/arrayscalars.h"
 
 #include "arrayfunction_override.h"
@@ -364,6 +365,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         npy_cache_import("numpy.core._internal", "_getfield_is_safe",
                          &checkfunc);
         if (checkfunc == NULL) {
+            Py_DECREF(typed);
             return NULL;
         }
 
@@ -371,6 +373,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         safe = PyObject_CallFunction(checkfunc, "OOi", PyArray_DESCR(self),
                                      typed, offset);
         if (safe == NULL) {
+            Py_DECREF(typed);
             return NULL;
         }
         Py_DECREF(safe);
@@ -381,14 +384,17 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     /* check that values are valid */
     if (typed_elsize > self_elsize) {
         PyErr_SetString(PyExc_ValueError, "new type is larger than original type");
+        Py_DECREF(typed);
         return NULL;
     }
     if (offset < 0) {
         PyErr_SetString(PyExc_ValueError, "offset is negative");
+        Py_DECREF(typed);
         return NULL;
     }
     if (offset > self_elsize - typed_elsize) {
         PyErr_SetString(PyExc_ValueError, "new type plus offset is larger than original type");
+        Py_DECREF(typed);
         return NULL;
     }
 
@@ -433,6 +439,7 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
     int retval = 0;
 
     if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
+        Py_DECREF(dtype);
         return -1;
     }
 
@@ -577,15 +584,18 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    file = NpyPath_PathlikeToFspath(file);
+    if (file == NULL) {
+        return NULL;
+    }
     if (PyBytes_Check(file) || PyUnicode_Check(file)) {
-        file = npy_PyFile_OpenFile(file, "wb");
+        Py_SETREF(file, npy_PyFile_OpenFile(file, "wb"));
         if (file == NULL) {
             return NULL;
         }
         own = 1;
     }
     else {
-        Py_INCREF(file);
         own = 0;
     }
 
@@ -1687,7 +1697,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 
        Notice because Python does not describe a mechanism to write
        raw data to the pickle, this performs a copy to a string first
-       This issue is now adressed in protocol 5, where a buffer is serialized
+       This issue is now addressed in protocol 5, where a buffer is serialized
        instead of a string,
     */
 
@@ -2002,12 +2012,14 @@ array_setstate(PyArrayObject *self, PyObject *args)
     fa->nd = nd;
 
     if (nd > 0) {
-        fa->dimensions = npy_alloc_cache_dim(3*nd);
+        fa->dimensions = npy_alloc_cache_dim(2 * nd);
         if (fa->dimensions == NULL) {
             return PyErr_NoMemory();
         }
         fa->strides = PyArray_DIMS(self) + nd;
-        memcpy(PyArray_DIMS(self), dimensions, sizeof(npy_intp)*nd);
+        if (nd) {
+            memcpy(PyArray_DIMS(self), dimensions, sizeof(npy_intp)*nd);
+        }
         _array_fill_strides(PyArray_STRIDES(self), dimensions, nd,
                                PyArray_DESCR(self)->elsize,
                                (is_f_order ? NPY_ARRAY_F_CONTIGUOUS :
@@ -2027,10 +2039,12 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (!IsAligned(self) || swap || (len <= 1000)) {
 #endif
             npy_intp num = PyArray_NBYTES(self);
+            if (num == 0) {
+                Py_DECREF(rawdata);
+                Py_RETURN_NONE;
+            }
             fa->data = PyDataMem_NEW(num);
             if (PyArray_DATA(self) == NULL) {
-                fa->nd = 0;
-                npy_free_cache_dim_array(self);
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
@@ -2041,7 +2055,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
                                         PyArray_DESCR(self)->elsize,
                                         datastr, PyArray_DESCR(self)->elsize,
                                         numels, 1, self);
-                if (!PyArray_ISEXTENDED(self)) {
+                if (!(PyArray_ISEXTENDED(self) ||
+                      PyArray_DESCR(self)->metadata ||
+                      PyArray_DESCR(self)->c_metadata)) {
                     fa->descr = PyArray_DescrFromType(
                                     PyArray_DESCR(self)->type_num);
                 }
@@ -2070,11 +2086,13 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
     else {
-        fa->data = PyDataMem_NEW(PyArray_NBYTES(self));
+        npy_intp num = PyArray_NBYTES(self);
+        int elsize = PyArray_DESCR(self)->elsize;
+        if (num == 0 || elsize == 0) {
+            Py_RETURN_NONE;
+        }
+        fa->data = PyDataMem_NEW(num);
         if (PyArray_DATA(self) == NULL) {
-            fa->nd = 0;
-            fa->data = PyDataMem_NEW(PyArray_DESCR(self)->elsize);
-            npy_free_cache_dim_array(self);
             return PyErr_NoMemory();
         }
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_NEEDS_INIT)) {
@@ -2096,37 +2114,22 @@ array_setstate(PyArrayObject *self, PyObject *args)
 NPY_NO_EXPORT int
 PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 {
-    PyObject *cpick = NULL;
+    static PyObject *method = NULL;
     PyObject *ret;
-    if (protocol < 0) {
-        protocol = 2;
-    }
-
-#if defined(NPY_PY3K)
-    cpick = PyImport_ImportModule("pickle");
-#else
-    cpick = PyImport_ImportModule("cPickle");
-#endif
-    if (cpick == NULL) {
+    npy_cache_import("numpy.core._methods", "_dump", &method);
+    if (method == NULL) {
         return -1;
     }
-    if (PyBytes_Check(file) || PyUnicode_Check(file)) {
-        file = npy_PyFile_OpenFile(file, "wb");
-        if (file == NULL) {
-            Py_DECREF(cpick);
-            return -1;
-        }
+    if (protocol < 0) {
+        ret = PyObject_CallFunction(method, "OO", self, file);
     }
     else {
-        Py_INCREF(file);
+        ret = PyObject_CallFunction(method, "OOi", self, file, protocol);
     }
-    ret = PyObject_CallMethod(cpick, "dump", "OOi", self, file, protocol);
-    Py_XDECREF(ret);
-    Py_DECREF(file);
-    Py_DECREF(cpick);
-    if (PyErr_Occurred()) {
+    if (ret == NULL) {
         return -1;
     }
+    Py_DECREF(ret);
     return 0;
 }
 
@@ -2134,49 +2137,31 @@ PyArray_Dump(PyObject *self, PyObject *file, int protocol)
 NPY_NO_EXPORT PyObject *
 PyArray_Dumps(PyObject *self, int protocol)
 {
-    PyObject *cpick = NULL;
-    PyObject *ret;
+    static PyObject *method = NULL;
+    npy_cache_import("numpy.core._methods", "_dumps", &method);
+    if (method == NULL) {
+        return NULL;
+    }
     if (protocol < 0) {
-        protocol = 2;
+        return PyObject_CallFunction(method, "O", self);
     }
-#if defined(NPY_PY3K)
-    cpick = PyImport_ImportModule("pickle");
-#else
-    cpick = PyImport_ImportModule("cPickle");
-#endif
-    if (cpick == NULL) {
-        return NULL;
+    else {
+        return PyObject_CallFunction(method, "Oi", self, protocol);
     }
-    ret = PyObject_CallMethod(cpick, "dumps", "Oi", self, protocol);
-    Py_DECREF(cpick);
-    return ret;
 }
 
 
 static PyObject *
-array_dump(PyArrayObject *self, PyObject *args)
+array_dump(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *file = NULL;
-    int ret;
-
-    if (!PyArg_ParseTuple(args, "O:dump", &file)) {
-        return NULL;
-    }
-    ret = PyArray_Dump((PyObject *)self, file, 2);
-    if (ret < 0) {
-        return NULL;
-    }
-    Py_RETURN_NONE;
+    NPY_FORWARD_NDARRAY_METHOD("_dump");
 }
 
 
 static PyObject *
-array_dumps(PyArrayObject *self, PyObject *args)
+array_dumps(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    if (!PyArg_ParseTuple(args, "")) {
-        return NULL;
-    }
-    return PyArray_Dumps((PyObject *)self, 2);
+    NPY_FORWARD_NDARRAY_METHOD("_dumps");
 }
 
 
@@ -2399,28 +2384,13 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *min = NULL, *max = NULL;
-    PyArrayObject *out = NULL;
-    static char *kwlist[] = {"min", "max", "out", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO&:clip", kwlist,
-                                     &min,
-                                     &max,
-                                     PyArray_OutputConverter, &out)) {
-        return NULL;
-    }
-    if (max == NULL && min == NULL) {
-        PyErr_SetString(PyExc_ValueError, "One of max or min must be given.");
-        return NULL;
-    }
-    return PyArray_Return((PyArrayObject *)PyArray_Clip(self, min, max, out));
+    NPY_FORWARD_NDARRAY_METHOD("_clip");
 }
 
 
 static PyObject *
 array_conjugate(PyArrayObject *self, PyObject *args)
 {
-
     PyArrayObject *out = NULL;
     if (!PyArg_ParseTuple(args, "|O&:conjugate",
                           PyArray_OutputConverter,
@@ -2546,7 +2516,24 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (write_flag != Py_None) {
         if (PyObject_IsTrue(write_flag)) {
             if (_IsWriteable(self)) {
+                /*
+                 * _IsWritable (and PyArray_UpdateFlags) allows flipping this,
+                 * although the C-Api user who created the array may have
+                 * chosen to make it non-writable for a good reason, so
+                 * deprecate.
+                 */
+                if ((PyArray_BASE(self) == NULL) &&
+                            !PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA) &&
+                            !PyArray_CHKFLAGS(self, NPY_ARRAY_WRITEABLE)) {
+                    /* 2017-05-03, NumPy 1.17.0 */
+                    if (DEPRECATE("making a non-writeable array writeable "
+                                  "is deprecated for arrays without a base "
+                                  "which do not own their data.") < 0) {
+                        return NULL;
+                    }
+                }
                 PyArray_ENABLEFLAGS(self, NPY_ARRAY_WRITEABLE);
+                PyArray_CLEARFLAGS(self, NPY_ARRAY_WARN_ON_WRITE);
             }
             else {
                 fa->flags = flagback;
@@ -2559,9 +2546,9 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
         else {
             PyArray_CLEARFLAGS(self, NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(self, NPY_ARRAY_WARN_ON_WRITE);
         }
     }
-
     Py_RETURN_NONE;
 }
 
@@ -2749,10 +2736,10 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS, NULL},
     {"dumps",
         (PyCFunction) array_dumps,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"dump",
         (PyCFunction) array_dump,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
 
     {"__complex__",
         (PyCFunction) array_complex,
