@@ -94,7 +94,9 @@ And a library that implements a NumPy-like API will use it in the following mann
     @implements(np.asarray)
     def asarray(a, dtype=None, order=None):
         # Code here
-        # Must return NotImplemented for unsupported array types
+        # Either this method or __ua_convert__ must
+        # return NotImplemented for unsupported types,
+        # Or they shouldn't be marked as dispatchable.
 
     # Provides a default implementation for ones and zeros.
     @implements(np.empty)
