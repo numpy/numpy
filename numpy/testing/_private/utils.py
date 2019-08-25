@@ -703,7 +703,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header='', precision=6, equal_nan=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import array, array2string, isnan, inf, bool_, errstate
+    from numpy.core import array, array2string, isnan, inf, bool_, errstate, all
 
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
@@ -822,7 +822,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     # Filter values where the divisor would be zero
-                    nonzero = y != 0
+                    nonzero = bool_(y != 0)
                     if all(~nonzero):
                         max_rel_error = array(inf)
                     else:
