@@ -96,8 +96,7 @@ And a library that implements a NumPy-like API will use it in the following mann
         # Code here
         # Must return NotImplemented for unsupported array types
 
-    # Assuming your arrays are mutable, this also implements
-    # zeros and ones.
+    # Provides a default implementation for ones and zeros.
     @implements(np.empty)
     def empty(shape, dtype=float, order='C'):
         # Code here
