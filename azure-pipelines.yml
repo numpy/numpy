@@ -88,7 +88,7 @@ jobs:
     displayName: 'Install tools'
   - script: |
       python -m pip install -r test_requirements.txt
-      python -m pip install vulture docutils sphinx==1.8.5 numpydoc
+      python -m pip install vulture docutils sphinx==2.1.2 numpydoc
     displayName: 'Install dependencies; some are optional to avoid test skips'
   - script: /bin/bash -c "! vulture . --min-confidence 100 --exclude doc/,numpy/distutils/ | grep 'unreachable'"
     displayName: 'Check for unreachable code paths in Python modules'
