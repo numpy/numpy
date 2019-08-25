@@ -61,8 +61,7 @@ dimensions are compatible when
 If these conditions are not met, a
 ``ValueError: operands could not be broadcast together`` exception is 
 thrown, indicating that the arrays have incompatible shapes. The size of 
-the resulting array is the maximum size along each dimension of the input 
-arrays.
+the resulting array is the size that is not 1 along each axis of the inputs.
 
 Arrays do not need to have the same *number* of dimensions.  For example,
 if you have a ``256x256x3`` array of RGB values, and you want to scale
