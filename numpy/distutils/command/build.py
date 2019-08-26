@@ -38,7 +38,7 @@ class build(old_build):
                 raise ValueError("--parallel/-j argument must be an integer")
         build_scripts = self.build_scripts
         old_build.finalize_options(self)
-        plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
+        plat_specifier = ".{}-{}.{}".format(get_platform(), *sys.version_info)
         if build_scripts is None:
             self.build_scripts = os.path.join(self.build_base,
                                               'scripts' + plat_specifier)

@@ -90,7 +90,7 @@ class build_src(build_ext.build_ext):
         self.data_files = self.distribution.data_files or []
 
         if self.build_src is None:
-            plat_specifier = ".%s-%s" % (get_platform(), sys.version[0:3])
+            plat_specifier = ".{}-{}.{}".format(get_platform(), *sys.version_info)
             self.build_src = os.path.join(self.build_base, 'src'+plat_specifier)
 
         # py_modules_dict is used in build_py.find_package_modules
