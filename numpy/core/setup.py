@@ -464,7 +464,7 @@ def configuration(parent_package='',top_path=None):
             moredefs.append(('HAVE_LDOUBLE_%s' % rep, 1))
 
             # Py3K check
-            if sys.version_info[0] == 3:
+            if sys.version_info[0] >= 3:
                 moredefs.append(('NPY_PY3K', 1))
 
             # Generate the config.h file from moredefs
