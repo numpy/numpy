@@ -144,7 +144,7 @@ but also ``dtype`` objects and ``ufunc`` objects with similar ones from other li
 Mixing NumPy and ``unumpy`` in the same file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Normally, one would only want to import one of ``unumpy`` or ``numpy``, you would import it as ``np`` for
+Normally, one would only want to import only one of ``unumpy`` or ``numpy``, you would import it as ``np`` for
 familiarity. However, there may be situations where one wishes to mix NumPy and the overrides, and there are
 a few ways to do this, depending on the user's style::
 
@@ -228,6 +228,8 @@ Discussion
 * PR #13046: https://github.com/numpy/numpy/pull/13046
 * Dask issue #4883: https://github.com/dask/dask/issues/4883
 * Issue #13831: https://github.com/numpy/numpy/issues/13831
+* Discussion PR 1: https://github.com/hameerabbasi/numpy/pull/3
+* Discussion PR 2: https://github.com/hameerabbasi/numpy/pull/4
 
 
 References and Footnotes
