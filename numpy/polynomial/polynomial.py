@@ -1209,12 +1209,12 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     where `n` is `deg`.
 
-    N.B. This function is distinct from (and preferred over, due to its numerical stability)
-    `numpy.polyfit`.
+    .. note:: This function is distinct from (and preferred over, due to its numerical
+        stability) `numpy.polyfit`.
 
-    Note also that the `Polynomial.fit <numpy.polynomial.polynomial.Polynomial.fit>` class
-    method (which uses the same implementation) is recommended for new code as a single
-    point of access to polynomial fitting.
+        Note also that the `Polynomial.fit <numpy.polynomial.polynomial.Polynomial.fit>`
+        class method (which uses the same implementation) is recommended for new code as
+        a single point of access to polynomial fitting.
 
     Parameters
     ----------

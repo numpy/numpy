@@ -437,13 +437,13 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     to points `(x, y)`. Returns a vector of coefficients `p` that minimises
     the squared error in the order `deg`, `deg-1`, ... `0`.
 
-    N.B. The `Polynomial.fit <numpy.polynomial.polynomial.Polynomial.fit>` class
-    method is recommended for new code as it is more stable numerically. See
-    the documentation of the method for more information.
+    .. note:: The `Polynomial.fit <numpy.polynomial.polynomial.Polynomial.fit>` class
+        method is recommended for new code as it is more stable numerically. See
+        the documentation of the method for more information.
 
-    Note also that this function is distinct from
-    `numpy.polynomial.polynomial.polyfit`, which uses the same implementation
-    as `Polynomial.fit <numpy.polynomial.polynomial.Polynomial.fit>`.
+        Note also that this function is distinct from
+        `numpy.polynomial.polynomial.polyfit`, which uses the same implementation
+        as `Polynomial.fit <numpy.polynomial.polynomial.Polynomial.fit>`.
 
     Parameters
     ----------
