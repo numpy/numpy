@@ -2250,8 +2250,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         # lib.stride_tricks, though, so we can't import it here.
         x = x * ones_like(cond)
         y = y * ones_like(cond)
-        rtol = full(x.shape, rtol)
-        atol = full(x.shape, atol)
+        rtol = np.broadcast_to(rtol, x.shape)
+        atol = np.broadcast_to(atol, x.shape)
         # Avoid subtraction with infinite/nan values...
         cond[finite] = within_tol(x[finite], y[finite], atol[finite], rtol[finite])
         # Check for equality of infinite values...
