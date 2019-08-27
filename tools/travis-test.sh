@@ -65,12 +65,12 @@ setup_base()
 
 run_test()
 {
+  $PIP install -r test_requirements.txt
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
-    $PIP install pytest-cov
     COVERAGE_FLAG=--coverage
   fi
 
@@ -158,14 +158,10 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   $PIP install --pre --no-index --upgrade --find-links=. numpy
-  $PIP install nose pytest
-
-  if [ -n "$INSTALL_PICKLE5" ]; then
-    $PIP install pickle5
-  fi
-
   popd
+
   run_test
+
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # use an up-to-date pip / setuptools inside the venv
   $PIP install -U virtualenv
@@ -182,11 +178,6 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   $PIP install numpy*
-  $PIP install nose pytest
-  if [ -n "$INSTALL_PICKLE5" ]; then
-    $PIP install pickle5
-  fi
-
   popd
   run_test
 else

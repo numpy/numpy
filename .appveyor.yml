@@ -34,13 +34,11 @@ environment:
       PYTHON_VERSION: 3.6
       PYTHON_ARCH: 64
       TEST_MODE: full
-      INSTALL_PICKLE5: 1
 
     - PYTHON: C:\Python37-x64
       PYTHON_VERSION: 3.7
       PYTHON_ARCH: 64
       TEST_MODE: full
-      INSTALL_PICKLE5: 1
 
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
@@ -98,10 +96,8 @@ install:
   # Upgrade to the latest pip.
   - 'python -m pip install -U pip setuptools wheel'
 
-  - if [%INSTALL_PICKLE5%]==[1] echo pickle5 >> tools/ci/appveyor/requirements.txt
-
   # Install the numpy test dependencies.
-  - 'pip install -U --timeout 5 --retries 2 -r tools/ci/appveyor/requirements.txt'
+  - 'pip install -U --timeout 5 --retries 2 -r test_requirements.txt'
 
 build_script:
   # Here, we add MinGW to the path to be able to link an OpenBLAS.dll
