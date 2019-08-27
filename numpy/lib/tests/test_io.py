@@ -1871,7 +1871,7 @@ M   33  21.99
         data = ["1, 1, 1, 1, -1.1"] * 50
         mdata = TextIO("\n".join(data))
 
-        converters = {4: lambda x: "(%s)" % x}
+        converters = {4: lambda x: "(%s)" % x.decode()}
         kwargs = dict(delimiter=",", converters=converters,
                       dtype=[(_, int) for _ in 'abcde'],)
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)
