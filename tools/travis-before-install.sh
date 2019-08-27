@@ -30,12 +30,8 @@ fi
 source venv/bin/activate
 python -V
 
-if [ -n "$INSTALL_PICKLE5" ]; then
-  pip install pickle5
-fi
-
+popd
 
 pip install --upgrade pip setuptools
-pip install pytz cython pytest
+pip install -r test_requirements.txt
 if [ -n "$USE_ASV" ]; then pip install asv; fi
-popd

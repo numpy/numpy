@@ -1,0 +1,6 @@
+cython==0.29.13
+pytest==5.0.1
+pytz==2018.9
+pytest-cov==2.6.1
+pickle5; python_version == '3.7'
+pickle5; python_version == '3.6' and platform_python_implementation != 'PyPy'
