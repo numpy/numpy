@@ -1,0 +1,55 @@
+
+Contributors
+============
+
+A total of 17 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Alexander Jung +
+* Allan Haldane
+* Charles Harris
+* Eric Wieser
+* Giuseppe Cuccu +
+* Hiroyuki V. Yamazaki
+* Jérémie du Boisberranger
+* Kmol Yuan +
+* Matti Picus
+* Max Bolingbroke +
+* Maxwell Aladago +
+* Oleksandr Pavlyk
+* Peter Andreas Entschev
+* Sergei Lebedev
+* Seth Troisi +
+* Vladimir Pershin +
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 24 pull requests were merged for this release.
+
+* `#14156 <https://github.com/numpy/numpy/pull/14156>`__: TST: Allow fuss in testing strided/non-strided exp/log loops
+* `#14157 <https://github.com/numpy/numpy/pull/14157>`__: BUG: avx2_scalef_ps must be static
+* `#14158 <https://github.com/numpy/numpy/pull/14158>`__: BUG: Remove stray print that causes a SystemError on python 3.7.
+* `#14159 <https://github.com/numpy/numpy/pull/14159>`__: BUG: Fix DeprecationWarning in python 3.8.
+* `#14160 <https://github.com/numpy/numpy/pull/14160>`__: BLD: Add missing gcd/lcm definitions to npy_math.h
+* `#14161 <https://github.com/numpy/numpy/pull/14161>`__: DOC, BUILD: cleanups and fix (again) 'build dist'
+* `#14166 <https://github.com/numpy/numpy/pull/14166>`__: TST: Add 3.8-dev to travisCI testing.
+* `#14194 <https://github.com/numpy/numpy/pull/14194>`__: BUG: Remove the broken clip wrapper (Backport)
+* `#14198 <https://github.com/numpy/numpy/pull/14198>`__: DOC: Fix hermitian argument docs in svd.
+* `#14199 <https://github.com/numpy/numpy/pull/14199>`__: MAINT: Workaround for Intel compiler bug leading to failing test
+* `#14200 <https://github.com/numpy/numpy/pull/14200>`__: TST: Clean up of test_pocketfft.py
+* `#14201 <https://github.com/numpy/numpy/pull/14201>`__: BUG: Make advanced indexing result on read-only subclass writeable...
+* `#14236 <https://github.com/numpy/numpy/pull/14236>`__: BUG: Fixed default BitGenerator name
+* `#14237 <https://github.com/numpy/numpy/pull/14237>`__: ENH: add c-imported modules for freeze analysis in np.random
+* `#14296 <https://github.com/numpy/numpy/pull/14296>`__: TST: Pin pytest version to 5.0.1
+* `#14301 <https://github.com/numpy/numpy/pull/14301>`__: BUG: Fix leak in the f2py-generated module init and `PyMem_Del`...
+* `#14302 <https://github.com/numpy/numpy/pull/14302>`__: BUG: Fix formatting error in exception message
+* `#14307 <https://github.com/numpy/numpy/pull/14307>`__: MAINT: random: Match type of SeedSequence.pool_size to DEFAULT_POOL_SIZE.
+* `#14308 <https://github.com/numpy/numpy/pull/14308>`__: BUG: Fix numpy.random bug in platform detection
+* `#14309 <https://github.com/numpy/numpy/pull/14309>`__: ENH: Enable huge pages in all Linux builds
+* `#14330 <https://github.com/numpy/numpy/pull/14330>`__: BUG: Fix segfault in `random.permutation(x)` when x is a string.
+* `#14338 <https://github.com/numpy/numpy/pull/14338>`__: BUG: don't fail when lexsorting some empty arrays (#14228)
+* `#14339 <https://github.com/numpy/numpy/pull/14339>`__: BUG: Fix misuse of .names and .fields in various places (backport...
+* `#14345 <https://github.com/numpy/numpy/pull/14345>`__: BUG: fix behavior of structured_to_unstructured on non-trivial...
+* `#14350 <https://github.com/numpy/numpy/pull/14350>`__: REL: Prepare 1.17.1 release
