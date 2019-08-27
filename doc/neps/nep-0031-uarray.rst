@@ -63,10 +63,10 @@ making ``scipy.fft`` overridable (see `[10]`_).
 Detailed description
 --------------------
 
-_Note that this section will not attempt to explain the specifics or the mechanism of ``uarray``,_
-_that is explained in the ``uarray`` documentation. `[1]`_ However, the NumPy community_
-_will have input into the design of ``uarray``, and any backward-incompatible changes_
-_will be discussed on the mailing list._
+**Note:** *This section will not attempt to explain the specifics or the mechanism of ``uarray``,
+that is explained in the ``uarray`` documentation.* `[1]`_ *However, the NumPy community
+will have input into the design of ``uarray``, and any backward-incompatible changes
+will be discussed on the mailing list.*
 
 The way we propose the overrides will be used by end users is::
 
