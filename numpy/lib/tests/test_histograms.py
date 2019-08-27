@@ -8,6 +8,7 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises, assert_allclose,
     assert_array_max_ulp, assert_raises_regex, suppress_warnings,
     )
+import pytest
 
 
 class TestHistogram(object):
@@ -590,6 +591,16 @@ class TestHistogramOptimBinNums(object):
                 msg = "For the {0} estimator".format(estimator)
                 msg += " with datasize of {0}".format(testlen)
                 assert_equal(len(a), numbins, err_msg=msg)
+
+    @pytest.mark.parametrize("bins", ['auto', 'fd', 'doane', 'scott',
+                                      'stone', 'rice', 'sturges'])
+    def test_signed_integer_data(self, bins):
+        # Regression test for gh-14379.
+        a = np.array([-2, 0, 127], dtype=np.int8)
+        hist, edges = np.histogram(a, bins=bins)
+        hist32, edges32 = np.histogram(a.astype(np.int32), bins=bins)
+        assert_array_equal(hist, hist32)
+        assert_array_equal(edges, edges32)
 
     def test_simple_weighted(self):
         """
