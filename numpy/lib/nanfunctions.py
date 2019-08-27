@@ -1443,7 +1443,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         the variance of the flattened array.
     dtype : data-type, optional
         Type to use in computing the variance.  For arrays of integer type
-        the default is `float32`; for arrays of float types it is the same as
+        the default is `float64`; for arrays of float types it is the same as
         the array type.
     out : ndarray, optional
         Alternate output array in which to place the result.  It must have
