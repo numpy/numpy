@@ -1479,7 +1479,11 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         arr, max_line_width, precision, suppress_small)
 
 
-_guarded_str = _recursive_guard()(str)
+@_recursive_guard()
+def _guarded_repr_or_str(v):
+    if isinstance(v, bytes):
+        return repr(v)
+    return str(v)
 
 
 def _array_str_implementation(
@@ -1497,7 +1501,7 @@ def _array_str_implementation(
         # obtain a scalar and call str on it, avoiding problems for subclasses
         # for which indexing with () returns a 0d instead of a scalar by using
         # ndarray's getindex. Also guard against recursive 0d object arrays.
-        return _guarded_str(np.ndarray.__getitem__(a, ()))
+        return _guarded_repr_or_str(np.ndarray.__getitem__(a, ()))
 
     return array2string(a, max_line_width, precision, suppress_small, ' ', "")
 
