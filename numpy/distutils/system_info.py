@@ -128,8 +128,6 @@ this distribution for specifics.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import re

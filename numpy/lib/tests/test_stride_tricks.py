@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.core._rational_tests import rational
 from numpy.testing import (

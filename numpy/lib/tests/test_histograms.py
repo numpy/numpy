@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 
 from numpy.lib.histograms import histogram, histogramdd, histogram_bin_edges

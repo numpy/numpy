@@ -339,4 +339,3 @@ be useful to test your code with the value
 ``1 + np.finfo(np.longdouble).eps``.
 
 """
-from __future__ import division, absolute_import, print_function

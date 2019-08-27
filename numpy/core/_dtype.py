@@ -3,8 +3,6 @@ A place for code to be called from the implementation of np.dtype
 
 String handling is much easier to do correctly in python.
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 import numpy as np

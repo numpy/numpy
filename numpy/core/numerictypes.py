@@ -79,8 +79,6 @@ Exported symbols include:
      \\-> object_ (not used much)               (kind=O)
 
 """
-from __future__ import division, absolute_import, print_function
-
 import types as _types
 import sys
 import numbers

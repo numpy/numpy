@@ -2,8 +2,6 @@
 """Prints type-coercion tables for the built-in NumPy types
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 
 # Generic object that can be added, but doesn't do anything else

@@ -6,8 +6,6 @@
 :version: $Id: test_subclassing.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.testing import assert_, assert_raises
 from numpy.ma.testutils import assert_equal

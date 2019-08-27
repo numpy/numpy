@@ -3,8 +3,6 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import datetime
 import sys
 import operator

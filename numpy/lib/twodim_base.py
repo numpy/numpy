@@ -1,8 +1,6 @@
 """ Basic functions for manipulating 2d arrays
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 
 from numpy.core.numeric import (

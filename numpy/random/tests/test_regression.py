@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises,

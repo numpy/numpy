@@ -27,8 +27,6 @@ This module is imported by every numpy subpackage, so lies at the top level to
 simplify circular import issues. For the same reason, it contains no numpy
 imports at module scope, instead importing numpy within function calls.
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 
