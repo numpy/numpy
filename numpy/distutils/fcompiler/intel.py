@@ -1,6 +1,4 @@
 # http://developer.intel.com/software/products/compilers/flin/
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 from numpy.distutils.ccompiler import simple_version_match

@@ -153,4 +153,3 @@ can be achieved with the ndarray astype method:
 False
 
 """
-from __future__ import division, absolute_import, print_function

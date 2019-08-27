@@ -15,8 +15,6 @@ available in your version of Python.
 The preferred alias for `defchararray` is `numpy.char`.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 import sys
 from .numerictypes import string_, unicode_, integer, object_, bool_, character

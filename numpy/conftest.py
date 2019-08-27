@@ -1,8 +1,6 @@
 """
 Pytest configuration and fixtures for the Numpy test suite.
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 
 import pytest

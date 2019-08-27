@@ -1,8 +1,6 @@
 """Module containing non-deprecated functions borrowed from Numeric.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 import types
 import warnings

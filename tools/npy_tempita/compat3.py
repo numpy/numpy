@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 import sys
 
 __all__ = ['PY3', 'b', 'basestring_', 'bytes', 'next', 'is_unicode',

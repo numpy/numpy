@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from distutils.ccompiler import new_compiler
 
 from numpy.distutils.numpy_distribution import NumpyDistribution

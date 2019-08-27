@@ -78,8 +78,6 @@ Example:
         3, 3, jim
 
 """
-from __future__ import division, absolute_import, print_function
-
 
 __all__ = ['process_str', 'process_file']
 

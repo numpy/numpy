@@ -138,8 +138,6 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import string
 import fileinput

@@ -25,8 +25,6 @@ or in RST-based documentations::
 
     $ python refguide_check.py --rst docs
 """
-from __future__ import print_function
-
 import sys
 import os
 import re

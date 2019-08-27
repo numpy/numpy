@@ -9,7 +9,6 @@ for the ufuncs in numpy.core at the C level when the ufuncs are created
 at compile time.
 
 """
-from __future__ import division, absolute_import, print_function
 import textwrap
 
 docdict = {}
@@ -3826,12 +3825,7 @@ add_newdoc('numpy.core.umath', 'true_divide',
 
     Notes
     -----
-    The floor division operator ``//`` was added in Python 2.2 making
-    ``//`` and ``/`` equivalent operators.  The default floor division
-    operation of ``/`` can be replaced by true division with ``from
-    __future__ import division``.
-
-    In Python 3.0, ``//`` is the floor division operator and ``/`` the
+    In Python, ``//`` is the floor division operator and ``/`` the
     true division operator.  The ``true_divide(x1, x2)`` function is
     equivalent to true division in Python.
 
@@ -3844,7 +3838,6 @@ add_newdoc('numpy.core.umath', 'true_divide',
     >>> x//4
     array([0, 0, 0, 0, 1])
 
-    >>> from __future__ import division
     >>> x/4
     array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
     >>> x//4

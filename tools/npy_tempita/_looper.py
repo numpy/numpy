@@ -17,8 +17,6 @@ looper you can get a better sense of the context.  Use like::
     3 c
 
 """
-from __future__ import absolute_import, division, print_function
-
 import sys
 from .compat3 import basestring_
 

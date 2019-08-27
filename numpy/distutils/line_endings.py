@@ -1,8 +1,6 @@
 """ Functions for converting from DOS to UNIX line endings
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys, re, os
 
 def dos2unix(file):

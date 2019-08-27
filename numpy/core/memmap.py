@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from .numeric import uint8, ndarray, dtype
 from numpy.compat import (

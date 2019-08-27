@@ -1,8 +1,6 @@
 """ Modified version of build_ext that handles fortran source files.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import subprocess
 from glob import glob

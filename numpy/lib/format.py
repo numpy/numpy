@@ -161,8 +161,6 @@ alternatives, is described in the `"npy-format" NEP
 evolved with time and this document is more current.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy
 import sys
 import io

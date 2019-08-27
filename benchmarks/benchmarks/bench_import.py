@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from subprocess import call
 from sys import executable
 from timeit import default_timer

@@ -1,8 +1,6 @@
 """ Test functions for limits module.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.core import finfo, iinfo
 from numpy import half, single, double, longdouble

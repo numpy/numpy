@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
 import sys, os
 import re
 from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE

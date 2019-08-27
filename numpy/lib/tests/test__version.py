@@ -1,8 +1,6 @@
 """Tests for the NumpyVersion class.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from numpy.testing import assert_, assert_raises
 from numpy.lib import NumpyVersion
 

@@ -2,8 +2,6 @@
 Tests which scan for certain occurrences in the code, they may not find
 all of these occurrences but should catch almost all.
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import pytest
 

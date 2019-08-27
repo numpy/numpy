@@ -4,8 +4,6 @@
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
 """
-from __future__ import division, absolute_import, print_function
-
 __author__ = "Pierre GF Gerard-Marchant"
 
 import sys

@@ -5,8 +5,6 @@ significantly contributes to numpy import times. Importing this copy has almost
 no overhead.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import types
 
 __all__ = ['getargspec', 'formatargspec']

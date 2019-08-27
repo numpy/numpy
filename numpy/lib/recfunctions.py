@@ -5,8 +5,6 @@ Most of these functions were initially implemented by John Hunter for
 matplotlib.  They have been rewritten and extended for convenience.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import itertools
 import numpy as np

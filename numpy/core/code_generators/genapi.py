@@ -6,8 +6,6 @@ See ``find_function`` for how functions should be formatted, and
 specified.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from numpy.distutils.conv_template import process_file as process_c_file
 
 import sys, os, re

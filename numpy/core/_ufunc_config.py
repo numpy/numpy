@@ -3,8 +3,6 @@ Functions for changing global ufunc configuration
 
 This provides helpers which wrap `umath.geterrobj` and `umath.seterrobj`
 """
-from __future__ import division, absolute_import, print_function
-
 try:
     # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
@@ -431,8 +429,6 @@ class errstate(contextlib.ContextDecorator):
     OrderedDict([('divide', 'ignore'), ('invalid', 'ignore'), ('over', 'ignore'), ('under', 'ignore')])
 
     """
-    # Note that we don't want to run the above doctests because they will fail
-    # without a from __future__ import with_statement
 
     def __init__(self, **kwargs):
         self.call = kwargs.pop('call', _Unspecified)

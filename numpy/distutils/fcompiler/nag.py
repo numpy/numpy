@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import re
 from numpy.distutils.fcompiler import FCompiler

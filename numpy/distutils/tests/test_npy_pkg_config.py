@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 
 from numpy.distutils.npy_pkg_config import read_config, parse_flags

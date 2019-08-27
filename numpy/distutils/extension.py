@@ -6,8 +6,6 @@ modules in setup scripts.
 Overridden to support f2py.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import re
 from distutils.extension import Extension as old_Extension

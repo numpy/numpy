@@ -33,8 +33,6 @@ Record arrays allow us to access fields as properties::
   array([2., 2.])
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import warnings

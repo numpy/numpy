@@ -5,8 +5,6 @@ floating-point arithmetic system
 Author: Pearu Peterson, September 2003
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['MachAr']
 
 from numpy.core.fromnumeric import any

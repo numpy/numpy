@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 from setuptools.command.egg_info import egg_info as _egg_info

@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import warnings
 from distutils.dist import Distribution

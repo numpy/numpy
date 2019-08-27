@@ -3,8 +3,6 @@
 The API has is defined by numpy_api_order and ufunc_api_order.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from os.path import dirname
 
 from code_generators.genapi import fullapi_hash

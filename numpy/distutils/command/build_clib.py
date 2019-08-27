@@ -1,7 +1,5 @@
 """ Modified version of build_clib that handles fortran source files.
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 from glob import glob
 import shutil

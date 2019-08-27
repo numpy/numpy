@@ -577,9 +577,6 @@ The header of a typical SciPy ``__init__.py`` is::
   Package docstring, typically with a brief description and function listing.
   """
 
-  # py3k related imports
-  from __future__ import division, print_function, absolute_import
-
   # import functions into module namespace
   from .subpackage import *
   ...

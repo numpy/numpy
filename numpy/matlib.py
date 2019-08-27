@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.matrixlib.defmatrix import matrix, asmatrix
 # need * as we're copying the numpy namespace (FIXME: this makes little sense)

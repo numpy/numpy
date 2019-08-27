@@ -10,8 +10,6 @@ or arrays (or other sequences).
 Functions support the :class:`decimal.Decimal` type unless
 otherwise stated.
 """
-from __future__ import division, absolute_import, print_function
-
 import warnings
 from decimal import Decimal
 import functools

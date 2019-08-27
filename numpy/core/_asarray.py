@@ -3,8 +3,6 @@ Functions in the ``as*array`` family that promote array-likes into arrays.
 
 `require` fits this category despite its name not matching this pattern.
 """
-from __future__ import division, absolute_import, print_function
-
 from .overrides import set_module
 from .multiarray import array
 

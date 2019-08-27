@@ -32,8 +32,6 @@ This copy of tempita was taken from https://github.com/gjhiggins/tempita
 with a few changes to remove the six dependency.
 
 """
-from __future__ import absolute_import, division, print_function
-
 import re
 import sys
 try:

@@ -6,8 +6,6 @@ for the various polynomial classes. It operates as a mixin, but uses the
 abc module from the stdlib, hence it is only available for Python >= 2.6.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import abc
 import numbers
 

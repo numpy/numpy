@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark, get_squares_, get_indexes_rand, TYPES1
 
 import numpy as np

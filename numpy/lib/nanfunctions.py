@@ -20,8 +20,6 @@ Functions
 - `nanpercentile` -- qth percentile of non-NaN values
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 import warnings
 import numpy as np

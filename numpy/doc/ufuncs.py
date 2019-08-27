@@ -135,4 +135,3 @@ results in an error. There are two alternatives:
     a convenient way to apply these operators.
 
 """
-from __future__ import division, absolute_import, print_function

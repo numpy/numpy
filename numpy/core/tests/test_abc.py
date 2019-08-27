@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from numpy.testing import assert_
 
 import numbers

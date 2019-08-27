@@ -30,8 +30,6 @@ Note: this script does not check any of the dependent C libraries; it only
 operates on the Cython .pyx files.
 """
 
-from __future__ import division, print_function, absolute_import
-
 import os
 import re
 import sys

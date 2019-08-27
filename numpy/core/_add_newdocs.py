@@ -8,8 +8,6 @@ NOTE: Many of the methods of ndarray have corresponding functions.
       core/fromnumeric.py, core/defmatrix.py up-to-date.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 from numpy.core import numerictypes as _numerictypes

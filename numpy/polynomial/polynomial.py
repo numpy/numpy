@@ -55,8 +55,6 @@ See Also
 `numpy.polynomial`
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = [
     'polyzero', 'polyone', 'polyx', 'polydomain', 'polyline', 'polyadd',
     'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow', 'polyval',

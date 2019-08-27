@@ -2,8 +2,6 @@
 
 Test that we can run executable scripts that have been installed with numpy.
 """
-from __future__ import division, print_function, absolute_import
-
 import sys
 import os
 import pytest

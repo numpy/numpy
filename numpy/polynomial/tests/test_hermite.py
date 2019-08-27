@@ -1,8 +1,6 @@
 """Tests for hermite module.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from functools import reduce
 
 import numpy as np

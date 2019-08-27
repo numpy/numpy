@@ -11,8 +11,6 @@ Most contains basic functions that are used by several submodules and are
 useful to have in the main name-space.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import math
 
 from numpy.version import version as __version__

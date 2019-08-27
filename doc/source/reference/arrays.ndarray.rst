@@ -512,10 +512,6 @@ Arithmetic:
    - Any third argument to :func:`pow()` is silently ignored,
      as the underlying :func:`ufunc <power>` takes only two arguments.
 
-   - The three division operators are all defined; :obj:`div` is active
-     by default, :obj:`truediv` is active when
-     :obj:`__future__` division is in effect.
-
    - Because :class:`ndarray` is a built-in type (written in C), the
      ``__r{op}__`` special methods are not directly defined.
 
