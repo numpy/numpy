@@ -3125,10 +3125,35 @@ def around(a, decimals=0, out=None):
     -----
     For values exactly halfway between rounded decimal values, NumPy
     rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
-    -0.5 and 0.5 round to 0.0, etc. Results may also be surprising due
-    to the inexact representation of decimal fractions in the IEEE
-    floating point standard [1]_ and errors introduced when scaling
-    by powers of ten.
+    -0.5 and 0.5 round to 0.0, etc.
+
+    ``np.around`` uses a fast but sometimes inexact algorithm to round
+    floating-point datatypes. For positive `decimals` it is equivalent to
+    ``np.true_divide(np.rint(a * 10**decimals), 10**decimals)``, which is
+    inexact for large floating-point values or large values of `decimals` due
+    the inexact representation of decimal fractions in the IEEE floating point
+    standard [1]_ and errors introduced when scaling by powers of ten. For
+    instance, note the extra "1" in the following:
+
+        >>> np.round(56294995342131.5, 3)
+        56294995342131.51
+
+    If your goal is to print such values with a fixed number of decimals, it is
+    preferable to use numpy's float printing routines to limit the number of
+    printed decimals:
+
+        >>> np.format_float_positional(56294995342131.5, precision=3)
+        '56294995342131.5'
+
+    The float printing routines use an accurate but much more computationally
+    demanding algorithm to compute the number of digits after the decimal
+    point.
+
+    Alternatively, Python's builtin `round` function uses a more accurate
+    but slower algorithm for 64-bit floating point values:
+
+        >>> round(56294995342131.5, 3)
+        56294995342131.5
 
     References
     ----------
