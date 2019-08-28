@@ -232,28 +232,39 @@ add files, using an editable text window and as binary uploads.
 - Hit the ``{Publish,Update} release`` button at the bottom.
 
 
-Upload documents to docs.scipy.org
-----------------------------------
+Upload documents to numpy.org
+-----------------------------
 
 This step is only needed for final releases and can be skipped for
-pre-releases. You will also need upload permission for the document server, if
-you do not have permission ping Pauli Virtanen or Ralf Gommers to generate and
-upload the documentation. Otherwise::
+pre-releases. ``make merge-doc`` clones the ``numpy/doc`` repo into
+``doc/build/merge`` and updates it with the new documentation::
 
     $ pushd doc
     $ make dist
-    $ make upload USERNAME=<yourname> RELEASE=v1.14.5
+    $ make merge-doc
     $ popd
 
-If the release series is a new one, you will need to rebuild and upload the
-``docs.scipy.org`` front page::
+If the release series is a new one, you will need to add a new section to the
+``doc/build/merge/index.html`` front page just after the "insert here" comment::
 
-    $ cd ../docs.scipy.org
-    $ gvim index.rst
+    $ gvim doc/build/merge/index.html +/'insert here'
 
-Note: there is discussion about moving the docs to github. This section will be
-updated when/if that happens.
+Otherwise, only the ``zip`` and ``pdf`` links should be updated with the
+new tag name::
 
+    $ gvim doc/build/merge/index.html +/'tag v1.14'
+
+You can "test run" the new documentation in a browser to make sure the links
+work::
+
+    $ firefox doc/build/merge/index.html
+
+Once everything seems satisfactory, commit and upload the changes::
+
+    $ pushd doc/build/merge
+    $ git commit -am"Add documentation for v1.14.5"
+    $ git push
+    $ popd
 
 Announce the release on scipy.org
 ---------------------------------
