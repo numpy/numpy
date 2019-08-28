@@ -43,16 +43,6 @@ This NEP takes a more holistic approach: It assumes that there are parts of the 
 overridable, and that these will grow over time. It provides a general framework and a mechanism to
 avoid a design of a new protocol each time this is required.
 
-The second is to ease the creation of new duck-arrays, by providing default implementations of many
-functions that can be easily expressed in terms of others, as well as a repository of utility functions
-that help in the implementation of duck-arrays that most duck-arrays would require.
-
-The third is the existence of actual, third party dtype packages, and
-their desire to blend into the NumPy ecosystem (see `[6]`_). This is a separate
-issue compared to the C-level dtype redesign proposed in `[7]`_, it's about
-allowing third-party dtype implementations to work with NumPy, much like third-party array
-implementations.
-
 This NEP proposes the following: That ``unumpy`` `[8]`_  becomes the recommended override mechanism
 for the parts of the NumPy API not yet covered by ``__array_function__`` or ``__array_ufunc__``,
 and that ``uarray`` is vendored into a new namespace within NumPy to give users and downstream dependencies
@@ -99,8 +89,8 @@ And a library that implements a NumPy-like API will use it in the following mann
         # Or they shouldn't be marked as dispatchable.
 
     # Provides a default implementation for ones and zeros.
-    @implements(np.empty)
-    def empty(shape, dtype=float, order='C'):
+    @implements(np.full)
+    def full(shape, fill_value, dtype=None, order='C'):
         # Code here
 
 The only change this NEP proposes at its acceptance, is to make ``unumpy`` the officially recommended
@@ -129,17 +119,22 @@ offer a unified API with very minor changes. For example:
 * ``dtype`` objects can be overridden via the dispatch/backend mechanism, going as far as to allow
   ``np.float32`` et. al. to be overridden by overriding ``__get__``.
 * Other functions can be overridden in a similar fashion.
-* ``np.asduckarray`` goes away, and becomes ``np.array`` with a backend set.
+* ``np.asduckarray`` goes away, and becomes ``np.asarray`` with a backend set.
 * The same holds for array creation functions such as ``np.zeros``, ``np.empty`` and so on.
 
 This also holds for the future: Making something overridable would require only minor changes to ``unumpy``.
 
 Another promise ``unumpy`` holds is one of default implementations. Default implementations can be provided for
 any multimethod, in terms of others. This allows one to override a large part of the NumPy API by defining
-only a small part of it.
+only a small part of it. This is to ease the creation of new duck-arrays, by providing default implementations of many
+functions that can be easily expressed in terms of others, as well as a repository of utility functions
+that help in the implementation of duck-arrays that most duck-arrays would require.
 
-The third and last benefit is a clear way to coerce to a given backend, and a protocol for coercing not only arrays,
-but also ``dtype`` objects and ``ufunc`` objects with similar ones from other libraries.
+The last benefit is a clear way to coerce to a given backend, and a protocol for coercing not only arrays,
+but also ``dtype`` objects and ``ufunc`` objects with similar ones from other libraries. This is due to the existence of
+actual, third party dtype packages, and their desire to blend into the NumPy ecosystem (see `[6]`_). This is a separate
+issue compared to the C-level dtype redesign proposed in `[7]`_, it's about allowing third-party dtype implementations to
+work with NumPy, much like third-party array implementations.
 
 Mixing NumPy and ``unumpy`` in the same file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -148,7 +143,7 @@ Normally, one would only want to import only one of ``unumpy`` or ``numpy``, you
 familiarity. However, there may be situations where one wishes to mix NumPy and the overrides, and there are
 a few ways to do this, depending on the user's style::
 
-    import numpy.overridable as unp  # Or unumpy
+    import numpy.overridable as unumpy
     import numpy as np
 
 or::
