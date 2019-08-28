@@ -419,6 +419,11 @@ class TestRecord(object):
         assert_raises(ValueError, np.dtype,
                 {'formats': ['i4', 'i4'], 'f0': ('i4', 0), 'f1':('i4', 4)})
 
+    def test_fieldless_views(self):
+        a = np.zeros(2, dtype={'names':[], 'formats':[], 'offsets':[], 
+                               'itemsize':8})
+        assert_raises(ValueError, a.view, np.dtype([]))
+
 
 class TestSubarray(object):
     def test_single_subarray(self):
