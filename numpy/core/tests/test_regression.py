@@ -2501,6 +2501,8 @@ class TestRegression(object):
         #gh-13659, would raise in broadcasting [x=t for x in result]
         np.array([t])
 
+    @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
+    @pytest.mark.skipif(sys.platform == 'win32', reason='overflows on windows')
     def test_to_ctypes(self):
         #gh-14214
         arr = np.zeros((2 ** 31 + 1,), 'b')
