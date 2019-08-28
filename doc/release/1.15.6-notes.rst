@@ -1,0 +1,52 @@
+==========================
+NumPy 1.16.6 Release Notes
+==========================
+
+The NumPy 1.16.6 release fixes bugs reported against the 1.16.5 release, and
+also backports several enhancements from master that seem appropriate for a
+release series that is the last to support Python 2.7. The wheels on PyPI are
+linked with OpenBLAS v0.3.7-dev, which should fix errors on Skylake series
+cpus.
+
+Downstream developers building this release should use Cython >= 0.29.2 and,
+if using OpenBLAS, OpenBLAS >= v0.3.7. The supported Python versions are 2.7
+and 3.5-3.7.
+
+Highlights
+==========
+
+
+New functions
+=============
+
+
+New deprecations
+================
+
+
+Expired deprecations
+====================
+
+
+Future changes
+==============
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======
