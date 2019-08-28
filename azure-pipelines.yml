@@ -224,12 +224,14 @@ jobs:
     vmIMage: 'ubuntu-16.04'
   steps:
   - script: |
-        python3.6 -mvenv testenv
+        set -e
+        sudo apt-get install python3-venv
+        python3 -mvenv testenv
         source testenv/bin/activate
-        pip install --upgrade pip setuptools
-        pip list -o > /tmp/current_pkgs
-        pip install -r test_requirements.txt
-        pip list -o > /tmp/test_pkgs
+        python -m pip install --upgrade pip setuptools
+        python -m pip list -o > /tmp/current_pkgs
+        python -m pip install -r test_requirements.txt
+        python -m pip list -o > /tmp/test_pkgs
         # any newer packages should cause the diff to return 1, which fails the job
         diff /tmp/current_pkgs /tmp/test_pkgs
     displayName: 'Show any possible updates to packages'
