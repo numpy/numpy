@@ -92,11 +92,11 @@ else:
     # Adapted from Albert Strasheim
     def load_library(libname, loader_path):
         """
-        It is possible to load a library using 
+        It is possible to load a library using
         >>> lib = ctypes.cdll[<full_path_name>] # doctest: +SKIP
 
         But there are cross-platform considerations, such as library file extensions,
-        plus the fact Windows will just load the first library it finds with that name.  
+        plus the fact Windows will just load the first library it finds with that name.
         NumPy supplies the load_library function as a convenience.
 
         Parameters
@@ -110,12 +110,12 @@ else:
         Returns
         -------
         ctypes.cdll[libpath] : library object
-           A ctypes library object 
+           A ctypes library object
 
         Raises
         ------
         OSError
-            If there is no library with the expected extension, or the 
+            If there is no library with the expected extension, or the
             library is defective and cannot be loaded.
         """
         if ctypes.__version__ < '1.0.1':
@@ -535,7 +535,10 @@ if ctypes is not None:
         if readonly:
             raise TypeError("readonly arrays unsupported")
 
-        dtype = _dtype((ai["typestr"], ai["shape"]))
-        result = as_ctypes_type(dtype).from_address(addr)
+        # can't use `_dtype((ai["typestr"], ai["shape"]))` here, as it overflows
+        # dtype.itemsize (gh-14214)
+        ctype_scalar = as_ctypes_type(ai["typestr"])
+        result_type = _ctype_ndarray(ctype_scalar , ai['shape'])
+        result = result_type.from_address(addr)
         result.__keep = obj
         return result
