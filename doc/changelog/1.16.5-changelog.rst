@@ -1,0 +1,54 @@
+
+Contributors
+============
+
+A total of 18 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Alexander Shadchin
+* Allan Haldane
+* Bruce Merry +
+* Charles Harris
+* Colin Snyder +
+* Dan Allan +
+* Emile +
+* Eric Wieser
+* Grey Baker +
+* Maksim Shabunin +
+* Marten van Kerkwijk
+* Matti Picus
+* Peter Andreas Entschev +
+* Ralf Gommers
+* Richard Harris +
+* Sebastian Berg
+* Sergei Lebedev +
+* Stephan Hoyer
+
+Pull requests merged
+====================
+
+A total of 23 pull requests were merged for this release.
+
+* `#13742 <https://github.com/numpy/numpy/pull/13742>`__: ENH: Add project URLs to setup.py
+* `#13823 <https://github.com/numpy/numpy/pull/13823>`__: TEST, ENH: fix tests and ctypes code for PyPy
+* `#13845 <https://github.com/numpy/numpy/pull/13845>`__: BUG: use npy_intp instead of int for indexing array
+* `#13867 <https://github.com/numpy/numpy/pull/13867>`__: TST: Ignore DeprecationWarning during nose imports
+* `#13905 <https://github.com/numpy/numpy/pull/13905>`__: BUG: Fix use-after-free in boolean indexing
+* `#13933 <https://github.com/numpy/numpy/pull/13933>`__: MAINT/BUG/DOC: Fix errors in _add_newdocs
+* `#13984 <https://github.com/numpy/numpy/pull/13984>`__: BUG: fix byte order reversal for datetime64[ns]
+* `#13994 <https://github.com/numpy/numpy/pull/13994>`__: MAINT,BUG: Use nbytes to also catch empty descr during allocation
+* `#14042 <https://github.com/numpy/numpy/pull/14042>`__: BUG: np.array cleared errors occured in PyMemoryView_FromObject
+* `#14043 <https://github.com/numpy/numpy/pull/14043>`__: BUG: Fixes for Undefined Behavior Sanitizer (UBSan) errors.
+* `#14044 <https://github.com/numpy/numpy/pull/14044>`__: BUG: ensure that casting to/from structured is properly checked.
+* `#14045 <https://github.com/numpy/numpy/pull/14045>`__: MAINT: fix histogram*d dispatchers
+* `#14046 <https://github.com/numpy/numpy/pull/14046>`__: BUG: further fixup to histogram2d dispatcher.
+* `#14052 <https://github.com/numpy/numpy/pull/14052>`__: BUG: Replace contextlib.suppress for Python 2.7
+* `#14056 <https://github.com/numpy/numpy/pull/14056>`__: BUG: fix compilation of 3rd party modules with Py_LIMITED_API...
+* `#14057 <https://github.com/numpy/numpy/pull/14057>`__: BUG: Fix memory leak in dtype from dict contructor
+* `#14058 <https://github.com/numpy/numpy/pull/14058>`__: DOC: Document array_function at a higher level.
+* `#14084 <https://github.com/numpy/numpy/pull/14084>`__: BUG, DOC: add new recfunctions to `__all__`
+* `#14162 <https://github.com/numpy/numpy/pull/14162>`__: BUG: Remove stray print that causes a SystemError on python 3.7
+* `#14297 <https://github.com/numpy/numpy/pull/14297>`__: TST: Pin pytest version to 5.0.1.
+* `#14322 <https://github.com/numpy/numpy/pull/14322>`__: ENH: Enable huge pages in all Linux builds
+* `#14346 <https://github.com/numpy/numpy/pull/14346>`__: BUG: fix behavior of structured_to_unstructured on non-trivial...
+* `#14382 <https://github.com/numpy/numpy/pull/14382>`__: REL: Prepare for the NumPy 1.16.5 release.
