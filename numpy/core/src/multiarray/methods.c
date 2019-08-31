@@ -1861,7 +1861,7 @@ array_reduce_ex(PyArrayObject *self, PyObject *args)
         PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT) ||
         (PyType_IsSubtype(((PyObject*)self)->ob_type, &PyArray_Type) &&
          ((PyObject*)self)->ob_type != &PyArray_Type) ||
-        PyDataType_ISUNSIZED(descr)) {
+        descr->elsize == 0) {
         /* The PickleBuffer class from version 5 of the pickle protocol
          * can only be used for arrays backed by a contiguous data buffer.
          * For all other cases we fallback to the generic array_reduce

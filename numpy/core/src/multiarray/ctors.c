@@ -3843,7 +3843,13 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     s = (npy_intp)ts - offset;
     n = (npy_intp)count;
     itemsize = type->elsize;
-    if (n < 0 ) {
+    if (n < 0) {
+        if (itemsize == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                            "cannot determine count if itemsize is 0");
+            Py_DECREF(type);
+            return NULL;
+        }
         if (s % itemsize != 0) {
             PyErr_SetString(PyExc_ValueError,
                             "buffer size must be a multiple"\
@@ -4036,7 +4042,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     }
     for (i = 0; (i < count || count == -1) &&
              (value = PyIter_Next(iter)); i++) {
-        if (i >= elcount) {
+        if (i >= elcount && elsize != 0) {
             npy_intp nbytes;
             /*
               Grow PyArray_DATA(ret):
