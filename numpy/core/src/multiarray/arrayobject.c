@@ -1200,7 +1200,8 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             }
         }
         if (res == NULL && !PyErr_Occurred()) {
-            PyErr_SetString(PyExc_ValueError, "No fields found.");
+            /* these dtypes had no fields */
+            return cmp_op == Py_EQ ? Py_True : Py_False;
         }
         return res;
     }
