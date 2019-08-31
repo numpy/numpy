@@ -1201,15 +1201,17 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         }
         if (res == NULL && !PyErr_Occurred()) {
             /* these dtypes had no fields */
-            return cmp_op == Py_EQ ? Py_True : Py_False;
+            res = PyArray_NewLikeArray(self, NPY_ANYORDER,
+                                       PyArray_DescrFromType(NPY_BOOL), 1);
+            if (res) {
+                 PyArray_FILLWBYTE((PyArrayObject*)res,
+                                   cmp_op == Py_EQ ? 1 : 0);
+            }
         }
         return res;
     }
     else {
-        /*
-         * compare as a string. Assumes self and
-         * other have same descr->type
-         */
+        /* compare as a string. Assumes self and other have same descr->type */
         return _strings_richcompare(self, other, cmp_op, 0);
     }
 }
