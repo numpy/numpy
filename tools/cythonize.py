@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """ cythonize
 
 Cythonize pyx files into C files as needed.
@@ -54,7 +54,7 @@ except NameError:
 def process_pyx(fromfile, tofile):
     flags = ['-3', '--fast-fail']
     if tofile.endswith('.cxx'):
-        flags += ['--cplus']
+        flags.append('--cplus')
 
     try:
         # try the cython in the installed python first (somewhat related to scipy/scipy#2397)
@@ -71,13 +71,10 @@ def process_pyx(fromfile, tofile):
         # check the version, and invoke through python
         from distutils.version import LooseVersion
 
-        # requiring the newest version on all pythons doesn't work, since
-        # we're relying on the version of the distribution cython. Add new
-        # versions as they become required for new python versions.
-        if sys.version_info[:2] < (3, 7):
-            required_version = LooseVersion('0.19')
-        else:
-            required_version = LooseVersion('0.28')
+        # Cython 0.29.13 is required for Python 3.8 and there are
+        # other fixes in the 0.29 series that are needed even for earlier
+        # Python versions.
+        required_version = LooseVersion('0.29.13')
 
         if LooseVersion(cython_version) < required_version:
             raise RuntimeError('Building {} requires Cython >= {}'.format(
