@@ -56,7 +56,7 @@ repository::
     $ git checkout maintenance/1.14.x
     $ git pull upstream maintenance/1.14.x
     $ git submodule update
-    $ git clean -xdf > /dev/null
+    $ git clean -xdfq
 
 Edit pavement.py and setup.py as detailed in HOWTO_RELEASE::
 
@@ -83,7 +83,7 @@ Paver is used to build the source releases. It will create the ``release`` and
 ``release/installers`` directories and put the ``*.zip`` and ``*.tar.gz``
 source releases in the latter. ::
 
-    $ cython --version  # check that you have the correct cython version
+    $ python3 -m cython --version  # check for correct cython version
     $ paver sdist  # sdist will do a git clean -xdf, so we omit that
 
 
