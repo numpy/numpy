@@ -438,6 +438,12 @@ class TestRecord(object):
         assert_raises(ValueError, np.dtype, ([], 'f8'))
         assert_raises(ValueError, np.zeros(1, dtype='i4').view, [])
 
+        assert_equal(np.zeros(2, dtype=[]) == np.zeros(2, dtype=[]),
+                     np.ones(2, dtype=bool))
+
+        assert_equal(np.zeros(2, dtype=[]) == a,
+                     np.ones(2, dtype=bool))
+
 
 class TestSubarray(object):
     def test_single_subarray(self):
