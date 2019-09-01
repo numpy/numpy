@@ -441,8 +441,8 @@ class TestRecord(object):
         assert_equal(np.zeros(2, dtype=[]) == np.zeros(2, dtype=[]),
                      np.ones(2, dtype=bool))
 
-        assert_equal(np.zeros(2, dtype=[]) == a,
-                     np.ones(2, dtype=bool))
+        assert_equal(np.zeros((1, 2), dtype=[]) == a,
+                     np.ones((1, 2), dtype=bool))
 
 
 class TestSubarray(object):
