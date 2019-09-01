@@ -32,7 +32,7 @@ mkdir -p pypy3
 (cd pypy3; tar --strip-components=1 -xf ../pypy.tar.bz2)
 pypy3/bin/pypy3 -mensurepip
 pypy3/bin/pypy3 -m pip install --upgrade pip setuptools
-pypy3/bin/pypy3 -m pip install --user cython==0.29.0 pytest pytz --no-warn-script-location
+pypy3/bin/pypy3 -m pip install --user -r test_requirements.txt --no-warn-script-location
 
 echo
 echo pypy3 version 
