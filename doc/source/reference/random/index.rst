@@ -190,7 +190,7 @@ Concepts
    :maxdepth: 1
 
    generator
-   Legacy generator and functions <legacy>
+   Legacy Generator (RandomState) <legacy>
    BitGenerators, SeedSequences <bit_generators/index>
 
 Features
