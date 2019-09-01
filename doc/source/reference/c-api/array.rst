@@ -997,8 +997,9 @@ argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpret
     called on flexible dtypes. Types that are attached to an array will always
     be sized, hence the array form of this macro not existing.
 
-    ..versionchanged:: 1.18.0
-    For structured datatypes with no fields this function now return False.
+    .. versionchanged:: 1.18
+
+    For structured datatypes with no fields this function now returns False.
 
 .. c:function:: PyTypeNum_ISUSERDEF(num)
 

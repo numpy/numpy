@@ -1200,11 +1200,21 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             }
         }
         if (res == NULL && !PyErr_Occurred()) {
-            /* these dtypes had no fields */
-            res = PyArray_NewLikeArray(self, NPY_ANYORDER,
-                                       PyArray_DescrFromType(NPY_BOOL), 1);
+            /* these dtypes had no fields. Use a MultiIter to broadcast them
+             * to an output array, and fill with True (for EQ)*/
+            PyArrayMultiIterObject *mit = (PyArrayMultiIterObject *)
+                                          PyArray_MultiIterNew(2, self, other);
+            if (mit == NULL) {
+                return NULL;
+            }
+
+            res = PyArray_NewFromDescr(&PyArray_Type,
+                                       PyArray_DescrFromType(NPY_BOOL),
+                                       mit->nd, mit->dimensions,
+                                       NULL, NULL, 0, NULL);
+            Py_DECREF(mit);
             if (res) {
-                 PyArray_FILLWBYTE((PyArrayObject*)res,
+                 PyArray_FILLWBYTE((PyArrayObject *)res,
                                    cmp_op == Py_EQ ? 1 : 0);
             }
         }
