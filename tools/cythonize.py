@@ -60,13 +60,10 @@ def process_pyx(fromfile, tofile):
         # try the cython in the installed python first (somewhat related to scipy/scipy#2397)
         from Cython.Compiler.Version import version as cython_version
     except ImportError:
-        # if that fails, use the one on the path, which might be the wrong version
-        try:
-            # Try the one on the path as a last resort
-            subprocess.check_call(
-                ['cython'] + flags + ["-o", tofile, fromfile])
-        except OSError:
-            raise OSError('Cython needs to be installed')
+        # The `cython` command need not point to the version installed in the
+        # Python running this script, so raise an error to avoid the chance of
+        # using the wrong version of Cython.
+        raise OSError('Cython needs to be installed in Python as a module')
     else:
         # check the version, and invoke through python
         from distutils.version import LooseVersion
