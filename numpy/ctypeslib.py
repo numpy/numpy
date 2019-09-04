@@ -538,7 +538,7 @@ if ctypes is not None:
         # can't use `_dtype((ai["typestr"], ai["shape"]))` here, as it overflows
         # dtype.itemsize (gh-14214)
         ctype_scalar = as_ctypes_type(ai["typestr"])
-        result_type = _ctype_ndarray(ctype_scalar , ai['shape'])
+        result_type = _ctype_ndarray(ctype_scalar, ai["shape"])
         result = result_type.from_address(addr)
         result.__keep = obj
         return result
