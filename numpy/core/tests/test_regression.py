@@ -2502,10 +2502,11 @@ class TestRegression(object):
         np.array([t])
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
-    @pytest.mark.skipif(sys.platform == 'win32', reason='overflows on windows')
+    @pytest.mark.skipif(sys.platform == 'win32' and sys.version_info[:2] < (3, 8),
+                        reason='overflows on windows, fixed in bpo-16865')
     def test_to_ctypes(self):
         #gh-14214
         arr = np.zeros((2 ** 31 + 1,), 'b')
-        assert(arr.size * arr.itemsize > 2 ** 31)
+        assert arr.size * arr.itemsize > 2 ** 31
         c_arr = np.ctypeslib.as_ctypes(arr)
         assert_equal(c_arr._length_, arr.size)
