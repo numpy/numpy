@@ -468,7 +468,12 @@ class TestRecord(object):
         """ test that trailing padding is preserved """
         # construct a dtype with padding at the end
         dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)])
-        dt_padded_end = dt[['a', 'b']]
+        dt_padded_end = np.dtype(dict(
+            names=['a', 'b'],
+            formats=[np.uint8, np.uint8],
+            offsets=[0, 1],
+            itemsize=3
+        ))  # dt[['a', 'b']], but that's not supported in 1.16
         assert dt_padded_end.itemsize == dt.itemsize
 
         dt_outer = np.dtype([('inner', dt_padded_end)])
