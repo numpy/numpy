@@ -4587,18 +4587,26 @@ class TestTake(object):
         assert_equal(y, np.array([1, 2, 3]))
 
 class TestLexsort(object):
-    def test_basic(self):
-        a = [1, 2, 1, 3, 1, 5]
-        b = [0, 4, 5, 6, 2, 3]
+    @pytest.mark.parametrize('dtype',[
+        np.uint8, np.uint16, np.uint32, np.uint64,
+        np.int8, np.int16, np.int32, np.int64,
+        np.float16, np.float32, np.float64
+    ])
+    def test_basic(self, dtype):
+        a = np.array([1, 2, 1, 3, 1, 5], dtype=dtype)
+        b = np.array([0, 4, 5, 6, 2, 3], dtype=dtype)
         idx = np.lexsort((b, a))
         expected_idx = np.array([0, 4, 2, 1, 3, 5])
         assert_array_equal(idx, expected_idx)
+        assert_array_equal(a[idx], np.sort(a))
 
-        x = np.vstack((b, a))
-        idx = np.lexsort(x)
+    def test_mixed(self):
+        a = np.array([1, 2, 1, 3, 1, 5])
+        b = np.array([0, 4, 5, 6, 2, 3], dtype='datetime64[D]')
+
+        idx = np.lexsort((b, a))
+        expected_idx = np.array([0, 4, 2, 1, 3, 5])
         assert_array_equal(idx, expected_idx)
-
-        assert_array_equal(x[1][idx], np.sort(x[1]))
 
     def test_datetime(self):
         a = np.array([0,0,0], dtype='datetime64[D]')
