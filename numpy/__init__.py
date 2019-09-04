@@ -202,9 +202,8 @@ else:
                 from .testing import Tester
                 return Tester
             else:
-                raise AttributeError(
-                    "module %s has no attribute $s".format(__name__, attr))
-
+                raise AttributeError("module {!r} has no attribute "
+                                     "{!r}".format(__name__, attr))
 
         def __dir__():
             return __all__ + ['Tester', 'testing']
