@@ -672,7 +672,7 @@ def array2string(a, max_line_width=None, precision=None,
         if style is np._NoValue:
             style = repr
 
-        if a.shape == () and not a.dtype.names:
+        if a.shape == () and a.dtype.names is None:
             return style(a.item())
     elif style is not np._NoValue:
         # Deprecation 11-9-2017  v1.14

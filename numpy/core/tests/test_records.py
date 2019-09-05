@@ -437,6 +437,53 @@ class TestRecord(object):
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
         assert_raises(ValueError, lambda: arr[['nofield']])
 
+    @pytest.mark.parametrize('nfields', [0, 1, 2])
+    def test_assign_dtype_attribute(self, nfields):
+        dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)][:nfields])
+        data = np.zeros(3, dt).view(np.recarray)
+
+        # the original and resulting dtypes differ on whether they are records
+        assert data.dtype.type == np.record
+        assert dt.type != np.record
+
+        # ensure that the dtype remains a record even when assigned
+        data.dtype = dt
+        assert data.dtype.type == np.record
+
+    @pytest.mark.parametrize('nfields', [0, 1, 2])
+    def test_nested_fields_are_records(self, nfields):
+        """ Test that nested structured types are treated as records too """
+        dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)][:nfields])
+        dt_outer = np.dtype([('inner', dt)])
+
+        data = np.zeros(3, dt_outer).view(np.recarray)
+        assert isinstance(data, np.recarray)
+        assert isinstance(data['inner'], np.recarray)
+
+        data0 = data[0]
+        assert isinstance(data0, np.record)
+        assert isinstance(data0['inner'], np.record)
+
+    def test_nested_dtype_padding(self):
+        """ test that trailing padding is preserved """
+        # construct a dtype with padding at the end
+        dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)])
+        dt_padded_end = np.dtype(dict(
+            names=['a', 'b'],
+            formats=[np.uint8, np.uint8],
+            offsets=[0, 1],
+            itemsize=3
+        ))  # dt[['a', 'b']], but that's not supported in 1.16
+        assert dt_padded_end.itemsize == dt.itemsize
+
+        dt_outer = np.dtype([('inner', dt_padded_end)])
+
+        data = np.zeros(3, dt_outer).view(np.recarray)
+        assert_equal(data['inner'].dtype, dt_padded_end)
+
+        data0 = data[0]
+        assert_equal(data0['inner'].dtype, dt_padded_end)
+
 
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]

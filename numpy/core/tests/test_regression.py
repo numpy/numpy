@@ -469,7 +469,7 @@ class TestRegression(object):
                 result = pickle.loads(data, encoding='bytes')
                 assert_equal(result, original)
 
-                if isinstance(result, np.ndarray) and result.dtype.names:
+                if isinstance(result, np.ndarray) and result.dtype.names is not None:
                     for name in result.dtype.names:
                         assert_(isinstance(name, str))
 

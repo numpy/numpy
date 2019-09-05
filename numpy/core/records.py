@@ -254,8 +254,8 @@ class record(nt.void):
             except AttributeError:
                 #happens if field is Object type
                 return obj
-            if dt.fields:
-                return obj.view((self.__class__, obj.dtype.fields))
+            if dt.names is not None:
+                return obj.view((self.__class__, obj.dtype))
             return obj
         else:
             raise AttributeError("'record' object has no "
@@ -279,8 +279,8 @@ class record(nt.void):
         obj = nt.void.__getitem__(self, indx)
 
         # copy behavior of record.__getattribute__,
-        if isinstance(obj, nt.void) and obj.dtype.fields:
-            return obj.view((self.__class__, obj.dtype.fields))
+        if isinstance(obj, nt.void) and obj.dtype.names is not None:
+            return obj.view((self.__class__, obj.dtype))
         else:
             # return a single element
             return obj
@@ -431,7 +431,7 @@ class recarray(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        if self.dtype.type is not record and self.dtype.fields:
+        if self.dtype.type is not record and self.dtype.names is not None:
             # if self.dtype is not np.record, invoke __setattr__ which will
             # convert it to a record if it is a void dtype.
             self.dtype = self.dtype
@@ -459,7 +459,7 @@ class recarray(ndarray):
         # with void type convert it to the same dtype.type (eg to preserve
         # numpy.record type if present), since nested structured fields do not
         # inherit type. Don't do this for non-void structures though.
-        if obj.dtype.fields:
+        if obj.dtype.names is not None:
             if issubclass(obj.dtype.type, nt.void):
                 return obj.view(dtype=(self.dtype.type, obj.dtype))
             return obj
@@ -474,7 +474,7 @@ class recarray(ndarray):
 
         # Automatically convert (void) structured types to records
         # (but not non-void structures, subarrays, or non-structured voids)
-        if attr == 'dtype' and issubclass(val.type, nt.void) and val.fields:
+        if attr == 'dtype' and issubclass(val.type, nt.void) and val.names is not None:
             val = sb.dtype((record, val))
 
         newattr = attr not in self.__dict__
@@ -508,7 +508,7 @@ class recarray(ndarray):
         # copy behavior of getattr, except that here
         # we might also be returning a single element
         if isinstance(obj, ndarray):
-            if obj.dtype.fields:
+            if obj.dtype.names is not None:
                 obj = obj.view(type(self))
                 if issubclass(obj.dtype.type, nt.void):
                     return obj.view(dtype=(self.dtype.type, obj.dtype))
@@ -564,7 +564,7 @@ class recarray(ndarray):
 
         if val is None:
             obj = self.getfield(*res)
-            if obj.dtype.fields:
+            if obj.dtype.names is not None:
                 return obj
             return obj.view(ndarray)
         else:

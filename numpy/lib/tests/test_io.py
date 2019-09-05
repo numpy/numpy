@@ -1527,6 +1527,13 @@ M   33  21.99
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
 
+        # nested but empty fields also aren't supported
+        ndtype = [('idx', int), ('code', object), ('nest', [])]
+        with assert_raises_regex(NotImplementedError,
+                                 'Nested fields.* not supported.*'):
+            test = np.genfromtxt(TextIO(data), delimiter=";",
+                                 dtype=ndtype, converters=converters)
+
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
         data = TextIO('skip,skip,2001-01-01,1.0,skip')

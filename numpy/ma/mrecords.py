@@ -211,7 +211,7 @@ class MaskedRecords(MaskedArray, object):
         _localdict = ndarray.__getattribute__(self, '__dict__')
         _data = ndarray.view(self, _localdict['_baseclass'])
         obj = _data.getfield(*res)
-        if obj.dtype.fields:
+        if obj.dtype.names is not None:
             raise NotImplementedError("MaskedRecords is currently limited to"
                                       "simple records.")
         # Get some special attributes
