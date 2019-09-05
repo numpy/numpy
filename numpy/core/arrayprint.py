@@ -194,7 +194,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     See Also
     --------
-    get_printoptions, set_string_function, array2string
+    get_printoptions, printoptions, set_string_function, array2string
 
     Notes
     -----
@@ -285,7 +285,7 @@ def get_printoptions():
 
     See Also
     --------
-    set_printoptions, set_string_function
+    set_printoptions, printoptions, set_string_function
 
     """
     return _format_options.copy()
