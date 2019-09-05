@@ -223,7 +223,7 @@ calls ``numpy.sum(self)``, and the same for ``mean``.
 ...     return arr._i * arr._N
 ...
 >>> @implements(np.mean)
-... def sum(a):
+... def mean(arr):
 ...     "Implementation of np.mean for DiagonalArray objects"
 ...     return arr._i / arr._N
 ...
