@@ -881,6 +881,15 @@ class TestAssertAllclose(object):
         assert_array_less(a, b)
         assert_allclose(a, b)
 
+    def test_report_max_relative_error(self):
+        a = np.array([0, 1])
+        b = np.array([0, 2])
+
+        with pytest.raises(AssertionError) as exc_info:
+            assert_allclose(a, b)
+        msg = str(exc_info.value)
+        assert_('Max relative difference: 0.5' in msg)
+
 
 class TestArrayAlmostEqualNulp(object):
 
