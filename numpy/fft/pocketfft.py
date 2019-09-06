@@ -44,7 +44,11 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.fft')
 
 
-def _raw_fft(a, n, axis, is_real, is_forward, fct):
+# `inv_norm` is a float by which the result of the transform needs to be
+# divided. This replaces the original, more intuitive 'fct` parameter to avoid
+# divisions by zero (or alternatively additional checks) in the case of
+# zero-length axes during its computation.
+def _raw_fft(a, n, axis, is_real, is_forward, inv_norm):
     axis = normalize_axis_index(axis, a.ndim)
     if n is None:
         n = a.shape[axis]
@@ -52,6 +56,8 @@ def _raw_fft(a, n, axis, is_real, is_forward, fct):
     if n < 1:
         raise ValueError("Invalid number of FFT data points (%d) specified."
                          % n)
+
+    fct = 1/inv_norm
 
     if a.shape[axis] != n:
         s = list(a.shape)
@@ -176,10 +182,10 @@ def fft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    fct = 1
+    inv_norm = 1
     if norm is not None and _unitary(norm):
-        fct = 1 / sqrt(n)
-    output = _raw_fft(a, n, axis, False, True, fct)
+        inv_norm = sqrt(n)
+    output = _raw_fft(a, n, axis, False, True, inv_norm)
     return output
 
 
@@ -271,10 +277,11 @@ def ifft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    fct = 1/n
     if norm is not None and _unitary(norm):
-        fct = 1/sqrt(n)
-    output = _raw_fft(a, n, axis, False, False, fct)
+        inv_norm = sqrt(max(n, 1))
+    else:
+        inv_norm = n
+    output = _raw_fft(a, n, axis, False, False, inv_norm)
     return output
 
 
@@ -359,12 +366,12 @@ def rfft(a, n=None, axis=-1, norm=None):
 
     """
     a = asarray(a)
-    fct = 1
+    inv_norm = 1
     if norm is not None and _unitary(norm):
         if n is None:
             n = a.shape[axis]
-        fct = 1/sqrt(n)
-    output = _raw_fft(a, n, axis, True, True, fct)
+        inv_norm = sqrt(n)
+    output = _raw_fft(a, n, axis, True, True, inv_norm)
     return output
 
 
@@ -392,8 +399,9 @@ def irfft(a, n=None, axis=-1, norm=None):
         Length of the transformed axis of the output.
         For `n` output points, ``n//2+1`` input points are necessary.  If the
         input is longer than this, it is cropped.  If it is shorter than this,
-        it is padded with zeros.  If `n` is not given, it is determined from
-        the length of the input along the axis specified by `axis`.
+        it is padded with zeros.  If `n` is not given, it is taken to be
+        ``2*(m-1)`` where ``m`` is the length of the input along the axis
+        specified by `axis`.
     axis : int, optional
         Axis over which to compute the inverse FFT. If not given, the last
         axis is used.
@@ -436,6 +444,14 @@ def irfft(a, n=None, axis=-1, norm=None):
     thus resample a series to `m` points via Fourier interpolation by:
     ``a_resamp = irfft(rfft(a), m)``.
 
+    The correct interpretation of the hermitian input depends on the length of
+    the original data, as given by `n`. This is because each input shape could
+    correspond to either an odd or even length signal. By default, `irfft`
+    assumes an even output length which puts the last entry at the Nyquist
+    frequency; aliasing with its symmetric counterpart. By Hermitian symmetry,
+    the value is thus treated as purely real. To avoid losing information, the
+    correct length of the real input **must** be given.
+
     Examples
     --------
     >>> np.fft.ifft([1, -1j, -1, 1j])
@@ -452,10 +468,10 @@ def irfft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = (a.shape[axis] - 1) * 2
-    fct = 1/n
+    inv_norm = n
     if norm is not None and _unitary(norm):
-        fct = 1/sqrt(n)
-    output = _raw_fft(a, n, axis, True, False, fct)
+        inv_norm = sqrt(n)
+    output = _raw_fft(a, n, axis, True, False, inv_norm)
     return output
 
 
@@ -473,8 +489,9 @@ def hfft(a, n=None, axis=-1, norm=None):
         Length of the transformed axis of the output. For `n` output
         points, ``n//2 + 1`` input points are necessary.  If the input is
         longer than this, it is cropped.  If it is shorter than this, it is
-        padded with zeros.  If `n` is not given, it is determined from the
-        length of the input along the axis specified by `axis`.
+        padded with zeros.  If `n` is not given, it is taken to be ``2*(m-1)``
+        where ``m`` is the length of the input along the axis specified by
+        `axis`.
     axis : int, optional
         Axis over which to compute the FFT. If not given, the last
         axis is used.
@@ -512,6 +529,14 @@ def hfft(a, n=None, axis=-1, norm=None):
 
     * even: ``ihfft(hfft(a, 2*len(a) - 2) == a``, within roundoff error,
     * odd: ``ihfft(hfft(a, 2*len(a) - 1) == a``, within roundoff error.
+
+    The correct interpretation of the hermitian input depends on the length of
+    the original data, as given by `n`. This is because each input shape could
+    correspond to either an odd or even length signal. By default, `hfft`
+    assumes an even output length which puts the last entry at the Nyquist
+    frequency; aliasing with its symmetric counterpart. By Hermitian symmetry,
+    the value is thus treated as purely real. To avoid losing information, the
+    shape of the full signal **must** be given.
 
     Examples
     --------
@@ -1167,8 +1192,9 @@ def irfftn(a, s=None, axes=None, norm=None):
         where ``s[-1]//2+1`` points of the input are used.
         Along any axis, if the shape indicated by `s` is smaller than that of
         the input, the input is cropped.  If it is larger, the input is padded
-        with zeros. If `s` is not given, the shape of the input along the
-        axes specified by `axes` is used.
+        with zeros. If `s` is not given, the shape of the input along the axes
+        specified by axes is used. Except for the last axis which is taken to be
+        ``2*(m-1)`` where ``m`` is the length of the input along that axis.
     axes : sequence of ints, optional
         Axes over which to compute the inverse FFT. If not given, the last
         `len(s)` axes are used, or all axes if `s` is also not specified.
@@ -1213,6 +1239,15 @@ def irfftn(a, s=None, axes=None, norm=None):
 
     See `rfft` for definitions and conventions used for real input.
 
+    The correct interpretation of the hermitian input depends on the shape of
+    the original data, as given by `s`. This is because each input shape could
+    correspond to either an odd or even length signal. By default, `irfftn`
+    assumes an even output length which puts the last entry at the Nyquist
+    frequency; aliasing with its symmetric counterpart. When performing the
+    final complex to real transform, the last value is thus treated as purely
+    real. To avoid losing information, the correct shape of the real input
+    **must** be given.
+
     Examples
     --------
     >>> a = np.zeros((3, 2, 2))
@@ -1244,7 +1279,7 @@ def irfft2(a, s=None, axes=(-2, -1), norm=None):
     a : array_like
         The input array
     s : sequence of ints, optional
-        Shape of the inverse FFT.
+        Shape of the real output to the inverse FFT.
     axes : sequence of ints, optional
         The axes over which to compute the inverse fft.
         Default is the last two axes.
