@@ -34,6 +34,8 @@ build:
     - pip install cython --cache-dir=/root/.cache/pip/wheels/$SHIPPABLE_PYTHON_VERSION
     # install pytz for datetime testing
     - pip install pytz
+    # install hypothesis for tests that require it
+    - pip install hypothesis
     # install pytest-xdist to leverage a second core
     # for unit tests
     - pip install pytest-xdist

@@ -33,8 +33,13 @@ Building NumPy requires the following installed software:
 
    This is required for testing numpy, but not for using it.
 
+4) hypothesis__ (optional)
+
+   This is required for testing numpy, but not for using it.
+
 Python__ http://www.python.org
 pytest__ http://pytest.readthedocs.io
+hypothesis__ https://hypothesis.readthedocs.io
 
 
 .. note:: 

@@ -12,6 +12,10 @@ from numpy.testing import (
     )
 import textwrap
 
+import hypothesis
+import hypothesis.extra.numpy
+
+
 class TestArrayRepr(object):
     def test_nan_inf(self):
         x = np.array([np.nan, np.inf])
@@ -397,6 +401,15 @@ class TestArray2String(object):
         assert_equal(
             np.array2string(a, max_line_width=5, legacy='1.13'),
             "[ 'xxxxx']"
+        )
+
+    @hypothesis.given(hypothesis.extra.numpy.from_dtype(np.dtype("U")))
+    def test_any_text(self, text):
+        a = np.array([text, text, text])
+        assert_equal(a[0], text)
+        assert_equal(
+            np.array2string(a, max_line_width=len(repr(text)) * 2 + 3),
+            "[{0!r} {0!r}\n {0!r}]".format(text)
         )
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
