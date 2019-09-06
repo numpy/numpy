@@ -2583,6 +2583,30 @@ class TestConvolve(object):
 
 
 class TestArgwhere(object):
+
+    @pytest.mark.parametrize('nd', [0, 1, 2])
+    def test_nd(self, nd):
+        # get an nd array with multiple elements in every dimension
+        x = np.empty((2,)*nd, bool)
+
+        # none
+        x[...] = False
+        assert_equal(np.argwhere(x).shape, (0, nd))
+
+        # only one
+        x[...] = False
+        x.flat[0] = True
+        assert_equal(np.argwhere(x).shape, (1, nd))
+
+        # all but one
+        x[...] = True
+        x.flat[0] = False
+        assert_equal(np.argwhere(x).shape, (x.size - 1, nd))
+
+        # all
+        x[...] = True
+        assert_equal(np.argwhere(x).shape, (x.size, nd))
+
     def test_2D(self):
         x = np.arange(6).reshape((2, 3))
         assert_array_equal(np.argwhere(x > 1),
