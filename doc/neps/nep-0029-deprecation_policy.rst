@@ -143,10 +143,10 @@ development guidelines:
      date.
    - The project will always support at least the 2 latest minor
      versions of Python.
-   - support minor versions of ``numpy`` initially released in the 24
-     months prior to a planned project release date or the oldest
-     version that supports the minimum Python version (whichever is
-     higher).
+   - The project will support minor versions of ``numpy`` initially
+     released in the 24 months prior to a planned project release date
+     or the oldest version that supports the minimum Python version
+     (whichever is higher).
    - The project will always support at least the 3 latest minor
      versions of NumPy.
 
