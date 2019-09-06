@@ -564,6 +564,16 @@ class TestAlmostEqual(_GenericTest):
         assert_equal(msgs[4], 'Max absolute difference: 2')
         assert_equal(msgs[5], 'Max relative difference: inf')
 
+        # check the error message when x is scalar
+        x = 2
+        y = np.ones(20)
+        with pytest.raises(AssertionError) as exc_info:
+            self._assert_func(x, y)
+        msgs = str(exc_info.value).split('\n')
+        assert_equal(msgs[3], 'Mismatched elements: 20 / 20 (100%)')
+        assert_equal(msgs[4], 'Max absolute difference: 1.')
+        assert_equal(msgs[5], 'Max relative difference: 1.')
+
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
         # subclasses, the tests should ideally rely only on subclasses having
