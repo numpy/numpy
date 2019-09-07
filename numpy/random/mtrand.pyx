@@ -83,8 +83,8 @@ cdef class RandomState:
     See Also
     --------
     Generator
-    mt19937.MT19937
-    Bit_Generators
+    MT19937
+    :ref:`bit_generator`
 
     """
     cdef public object _bit_generator

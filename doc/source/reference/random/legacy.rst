@@ -4,7 +4,7 @@
 
 Legacy Random Generation
 ------------------------
-The `~mtrand.RandomState` provides access to
+The `RandomState` provides access to
 legacy generators. This generator is considered frozen and will have
 no further improvements.  It is guaranteed to produce the same values
 as the final point release of NumPy v1.16. These all depend on Box-Muller
@@ -12,19 +12,19 @@ normals or inverse CDF exponentials or gammas. This class should only be used
 if it is essential to have randoms that are identical to what
 would have been produced by previous versions of NumPy.
 
-`~mtrand.RandomState` adds additional information
+`RandomState` adds additional information
 to the state which is required when using Box-Muller normals since these
 are produced in pairs. It is important to use
-`~mtrand.RandomState.get_state`, and not the underlying bit generators
+`RandomState.get_state`, and not the underlying bit generators
 `state`, when accessing the state so that these extra values are saved.
 
-Although we provide the `~mt19937.MT19937` BitGenerator for use independent of
-`~mtrand.RandomState`, note that its default seeding uses `~SeedSequence`
-rather than the legacy seeding algorithm. `~mtrand.RandomState` will use the
+Although we provide the `MT19937` BitGenerator for use independent of
+`RandomState`, note that its default seeding uses `SeedSequence`
+rather than the legacy seeding algorithm. `RandomState` will use the
 legacy seeding algorithm. The methods to use the legacy seeding algorithm are
 currently private as the main reason to use them is just to implement
-`~mtrand.RandomState`. However, one can reset the state of `~mt19937.MT19937`
-using the state of the `~mtrand.RandomState`:
+`RandomState`. However, one can reset the state of `MT19937`
+using the state of the `RandomState`:
 
 .. code-block:: python
 
@@ -46,8 +46,6 @@ using the state of the `~mtrand.RandomState`:
    rs.standard_exponential()
    rs2.standard_exponential()
 
-
-.. currentmodule:: numpy.random.mtrand
 
 .. autoclass:: RandomState
 	:exclude-members:
