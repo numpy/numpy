@@ -1,0 +1,49 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.17.2 Release Notes
+==========================
+
+This release contains fixes for bugs reported against NumPy 1.17.1 along with a
+some documentation improvements. The most important fix is for lexsort when the
+keys are of type (u)int8 or (u)int16. If you are currently using 1.17 you
+should upgrade.
+
+The Python versions supported in this release are 3.5-3.7, Python 2.7 has been
+dropped.  Python 3.8b4 should work with the released source packages, but there
+are no future guarantees.
+
+Downstream developers should use Cython >= 0.29.13 for Python 3.8 support and
+OpenBLAS >= 3.7 to avoid errors on the Skylake architecture. The NumPy wheels
+on PyPI are built from the OpenBLAS development branch in order to avoid those
+errors.
+
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* CakeWithSteak +
+* Charles Harris
+* Dan Allan
+* Hameer Abbasi
+* Lars Grueter
+* Matti Picus
+* Sebastian Berg
+
+
+Pull requests merged
+====================
+
+A total of 8 pull requests were merged for this release.
+
+* `#14418 <https://github.com/numpy/numpy/pull/14418>`__: BUG: Fix aradixsort indirect indexing.
+* `#14420 <https://github.com/numpy/numpy/pull/14420>`__: DOC: Fix a minor typo in dispatch documentation.
+* `#14421 <https://github.com/numpy/numpy/pull/14421>`__: BUG: test, fix regression in converting to ctypes
+* `#14430 <https://github.com/numpy/numpy/pull/14430>`__: BUG: Do not show Override module in private error classes.
+* `#14432 <https://github.com/numpy/numpy/pull/14432>`__: BUG: Fixed maximum relative error reporting in assert_allclose.
+* `#14433 <https://github.com/numpy/numpy/pull/14433>`__: BUG: Fix uint-overflow if padding with linear_ramp and negative...
+* `#14436 <https://github.com/numpy/numpy/pull/14436>`__: BUG: Update 1.17.x with 1.18.0-dev pocketfft.py.
+* `#14446 <https://github.com/numpy/numpy/pull/14446>`__: REL: Prepare for NumPy 1.17.2 release.
