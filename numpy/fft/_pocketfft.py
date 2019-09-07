@@ -35,7 +35,7 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 import functools
 
 from numpy.core import asarray, zeros, swapaxes, conjugate, take, sqrt
-from . import pocketfft_internal as pfi
+from . import _pocketfft_internal as pfi
 from numpy.core.multiarray import normalize_axis_index
 from numpy.core import overrides
 
