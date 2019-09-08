@@ -373,6 +373,21 @@ def test_all_modules_are_expected_2():
 
         import .lib.scimath as emath
 
+    To check if something in a module is (effectively) public, one can check if
+    there's anything in that namespace that's a public function/object but is
+    not exposed in a higher-level namespace.  For example for a `numpy.lib`
+    submodule::
+
+        mod = np.lib.mixins
+        for obj in mod.__all__:
+            if obj in np.__all__:
+                continue
+            elif obj in np.lib.__all__:
+                continue
+
+            else:
+                print(obj)
+
     """
     modnames = []
 
