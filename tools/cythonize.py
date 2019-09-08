@@ -74,6 +74,7 @@ def process_pyx(fromfile, tofile):
         # Cython 0.29.13 is required for Python 3.8 and there are
         # other fixes in the 0.29 series that are needed even for earlier
         # Python versions.
+        # Note: keep in sync with that in pyproject.toml
         required_version = LooseVersion('0.29.13')
 
         if LooseVersion(cython_version) < required_version:
