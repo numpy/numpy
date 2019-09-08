@@ -193,6 +193,7 @@ PRIVATE_BUT_PRESENT_MODULES = [
     "core.einsumfunc",
     "core.fromnumeric",
     "core.function_base",
+    "core.generate_numpy_api",
     "core.getlimits",
     "core.info",
     "core.machar",
