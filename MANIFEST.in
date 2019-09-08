@@ -5,6 +5,7 @@
 # Avoid using MANIFEST.in for that.
 #
 include MANIFEST.in
+include pyproject.toml
 include pytest.ini
 include *.txt
 include README.md
