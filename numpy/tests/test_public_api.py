@@ -33,7 +33,8 @@ def check_dir(module, module_name=None):
     sys.version_info[0] < 3,
     reason="NumPy exposes slightly different functions on Python 2")
 def test_numpy_namespace():
-    # None of these objects are publicly documented.
+    # None of these objects are publicly documented to be part of the main
+    # NumPy namespace (some are useful though, others need to be cleaned up)
     undocumented = {
         'Tester': 'numpy.testing._private.nosetester.NoseTester',
         '_add_newdoc_ufunc': 'numpy.core._multiarray_umath._add_newdoc_ufunc',
@@ -144,9 +145,8 @@ PUBLIC_MODULES = [
     "f2py",
     "fft",
     "lib",
-    "lib.format",
+    "lib.format",  # was this meant to be public?
     "lib.mixins",
-    "lib.npyio",
     "lib.recfunctions",
     "lib.scimath",
     "linalg",
@@ -276,7 +276,7 @@ PRIVATE_BUT_PRESENT_MODULES = [
     "fft.info",
     "fft.pocketfft",
     "fft.pocketfft_internal",
-    "lib.arraypad",  # TODO: figure out which numpy.lib submodules are public
+    "lib.arraypad",
     "lib.arraysetops",
     "lib.arrayterator",
     "lib.financial",
@@ -285,13 +285,14 @@ PRIVATE_BUT_PRESENT_MODULES = [
     "lib.index_tricks",
     "lib.info",
     "lib.nanfunctions",
+    "lib.npyio",
     "lib.polynomial",
     "lib.shape_base",
     "lib.stride_tricks",
     "lib.twodim_base",
     "lib.type_check",
     "lib.ufunclike",
-    "lib.user_array",
+    "lib.user_array",  # note: not in np.lib, but probably should just be deleted
     "lib.utils",
     "linalg.info",
     "linalg.lapack_lite",
