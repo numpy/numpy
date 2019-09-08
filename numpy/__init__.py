@@ -143,7 +143,9 @@ else:
     from .core import *
     from . import compat
     from . import lib
+    # FIXME: why have numpy.lib if everything is imported here??
     from .lib import *
+
     from . import linalg
     from . import fft
     from . import polynomial
@@ -173,6 +175,10 @@ else:
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+
+    # Remove things that are in the numpy.lib but not in the numpy namespace
+    __all__.remove('Arrayterator')
+    del Arrayterator
 
     # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")

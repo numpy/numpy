@@ -5,10 +5,15 @@ import math
 from .info import __doc__
 from numpy.version import version as __version__
 
+# Public submodules
+# Note: recfunctions and (maybe) format are public too, but not imported
+from . import mixins
+from . import scimath as emath
+
+# Private submodules
 from .type_check import *
 from .index_tricks import *
 from .function_base import *
-from . import mixins  # public
 from .nanfunctions import *
 from .shape_base import *
 from .stride_tricks import *
@@ -16,7 +21,6 @@ from .twodim_base import *
 from .ufunclike import *
 from .histograms import *
 
-from . import scimath as emath
 from .polynomial import *
 from .utils import *
 from .arraysetops import *
@@ -27,7 +31,7 @@ from .arraypad import *
 from ._version import *
 from numpy.core._multiarray_umath import tracemalloc_domain
 
-__all__ = ['emath', 'math', 'tracemalloc_domain']
+__all__ = ['emath', 'math', 'tracemalloc_domain', 'Arrayterator']
 __all__ += type_check.__all__
 __all__ += index_tricks.__all__
 __all__ += function_base.__all__
