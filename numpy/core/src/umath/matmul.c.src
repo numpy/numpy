@@ -196,16 +196,14 @@ NPY_NO_EXPORT void
  *          FLOAT, DOUBLE, HALF,
  *          CFLOAT, CDOUBLE, CLONGDOUBLE,
  *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *          BYTE, SHORT, INT, LONG, LONGLONG,
- *          BOOL#
+ *          BYTE, SHORT, INT, LONG, LONGLONG#
  *  #typ = npy_longdouble,
  *         npy_float,npy_double,npy_half,
  *         npy_cfloat, npy_cdouble, npy_clongdouble,
  *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
- *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *         npy_bool#
- * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*11#
- * #IS_HALF = 0, 0, 0, 1, 0*14#
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong#
+ * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*10#
+ * #IS_HALF = 0, 0, 0, 1, 0*13#
  */
 
 NPY_NO_EXPORT void
@@ -213,7 +211,6 @@ NPY_NO_EXPORT void
                            void *_ip2, npy_intp is2_n, npy_intp is2_p,
                            void *_op, npy_intp os_m, npy_intp os_p,
                            npy_intp dm, npy_intp dn, npy_intp dp)
-                           
 {
     npy_intp m, n, p;
     npy_intp ib1_n, ib2_n, ib2_p, ob_p;
@@ -266,20 +263,126 @@ NPY_NO_EXPORT void
 }
 
 /**end repeat**/
+NPY_NO_EXPORT void
+BOOL_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
+                           void *_ip2, npy_intp is2_n, npy_intp is2_p,
+                           void *_op, npy_intp os_m, npy_intp os_p,
+                           npy_intp dm, npy_intp dn, npy_intp dp)
+{
+    npy_intp m, n, p;
+    npy_intp ib2_p, ob_p;
+    char *ip1 = (char *)_ip1, *ip2 = (char *)_ip2, *op = (char *)_op;
+
+    ib2_p = is2_p * dp;
+    ob_p  = os_p * dp;
+
+    for (m = 0; m < dm; m++) {
+        for (p = 0; p < dp; p++) {
+            char *ip1tmp = ip1;
+            char *ip2tmp = ip2;
+            *(npy_bool *)op = NPY_FALSE;
+            for (n = 0; n < dn; n++) {
+                npy_bool val1 = (*(npy_bool *)ip1tmp);
+                npy_bool val2 = (*(npy_bool *)ip2tmp);
+                if (val1 != 0 && val2 != 0) {
+                    *(npy_bool *)op = NPY_TRUE;
+                    break;
+                }
+                ip2tmp += is2_n;
+                ip1tmp += is1_n;
+            }
+            op  +=  os_p;
+            ip2 += is2_p;
+        }
+        op -= ob_p;
+        ip2 -= ib2_p;
+        ip1 += is1_m;
+        op  +=  os_m;
+    }
+}
+
+NPY_NO_EXPORT void
+OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
+                           void *_ip2, npy_intp is2_n, npy_intp is2_p,
+                           void *_op, npy_intp os_m, npy_intp os_p,
+                           npy_intp dm, npy_intp dn, npy_intp dp)
+{
+    char *ip1 = (char *)_ip1, *ip2 = (char *)_ip2, *op = (char *)_op;
+
+    npy_intp ib1_n = is1_n * dn;
+    npy_intp ib2_n = is2_n * dn;
+    npy_intp ib2_p = is2_p * dp;
+    npy_intp ob_p  = os_p * dp;
+    npy_intp m, p, n;
+
+    PyObject *product, *sum_of_products = NULL;
+
+    for (m = 0; m < dm; m++) {
+        for (p = 0; p < dp; p++) {
+            if ( 0 == dn ) {
+                sum_of_products = PyLong_FromLong(0);
+                if (sum_of_products == NULL) {
+                    return;
+                }
+            }
+
+            for (n = 0; n < dn; n++) {
+                PyObject *obj1 = *(PyObject**)ip1, *obj2 = *(PyObject**)ip2;
+                if (obj1 == NULL) {
+                    obj1 = Py_None;
+                }
+                if (obj2 == NULL) {
+                    obj2 = Py_None;
+                }
+
+                product = PyNumber_Multiply(obj1, obj2);
+                if (product == NULL) {
+                    Py_XDECREF(sum_of_products);
+                    return;
+                }
+
+                if (n == 0) {
+                    sum_of_products = product;
+                }
+                else {
+                    Py_SETREF(sum_of_products, PyNumber_Add(sum_of_products, product));
+                    Py_DECREF(product);
+                    if (sum_of_products == NULL) {
+                        return;
+                    }
+                }
+
+                ip2 += is2_n;
+                ip1 += is1_n;
+            }
+
+            *((PyObject **)op) = sum_of_products;
+            ip1 -= ib1_n;
+            ip2 -= ib2_n;
+            op  +=  os_p;
+            ip2 += is2_p;
+        }
+        op -= ob_p;
+        ip2 -= ib2_p;
+        ip1 += is1_m;
+        op  +=  os_m;
+    }
+}
+
 
 /**begin repeat
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
  *          CFLOAT, CDOUBLE, CLONGDOUBLE,
  *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
  *          BYTE, SHORT, INT, LONG, LONGLONG,
- *          BOOL#
+ *          BOOL, OBJECT#
  *  #typ = npy_float,npy_double,npy_longdouble, npy_half,
  *         npy_cfloat, npy_cdouble, npy_clongdouble,
  *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
  *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *         npy_bool#
- * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*11#
- * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*12#
+ *         npy_bool,npy_object#
+ * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*12#
+ * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*13#
  */
 
 
@@ -398,5 +501,3 @@ NPY_NO_EXPORT void
 }
 
 /**end repeat**/
-
-
