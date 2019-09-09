@@ -403,6 +403,7 @@ class TestArray2String(object):
             "[ 'xxxxx']"
         )
 
+    @hypothesis.seed(43)
     @hypothesis.given(hypothesis.extra.numpy.from_dtype(np.dtype("U")))
     def test_any_text(self, text):
         a = np.array([text, text, text])
