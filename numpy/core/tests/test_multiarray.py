@@ -6251,6 +6251,13 @@ class TestMatmul(MatmulCommon):
         with assert_raises(TypeError):
             b = np.matmul(a, a)
 
+    def test_matmul_bool(self):
+        # gh-14439
+        a = np.array([[1, 0],[1, 1]], dtype=bool)
+        assert np.max(a.view(np.int8)) == 1
+        b = np.matmul(a, a)
+        # matmul with boolean output should always be 0, 1
+        assert np.max(b.view(np.int8)) == 1
 
 
 if sys.version_info[:2] >= (3, 5):
