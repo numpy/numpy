@@ -282,18 +282,19 @@ BOOL_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
 
     for (m = 0; m < dm; m++) {
         for (p = 0; p < dp; p++) {
+            npy_bool *ip1tmp = ip1;
+            npy_bool *ip2tmp = ip2;
             *(npy_bool *)op = NPY_FALSE;
             for (n = 0; n < dn; n++) {
-                npy_bool val1 = (*(npy_bool *)ip1);
-                npy_bool val2 = (*(npy_bool *)ip2);
+                npy_bool val1 = (*(npy_bool *)ip1tmp);
+                npy_bool val2 = (*(npy_bool *)ip2tmp);
                 if (val1 != 0 && val2 != 0) {
                     *(npy_bool *)op = NPY_TRUE;
+                    break;
                 }
-                ip2 += is2_n;
-                ip1 += is1_n;
+                ip2tmp += is2_n;
+                ip1tmp += is1_n;
             }
-            ip1 -= ib1_n;
-            ip2 -= ib2_n;
             op  +=  os_p;
             ip2 += is2_p;
         }
