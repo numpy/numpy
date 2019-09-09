@@ -10,6 +10,10 @@ include pytest.ini
 include *.txt
 include README.md
 include site.cfg.example
+include runtests.py
+include tox.ini
+include .coveragerc
+include test_requirements.txt
 recursive-include numpy/random *.pyx *.pxd *.pyx.in *.pxd.in
 include numpy/__init__.pxd
 # Add build support that should go in sdist, but not go in bdist/be installed
@@ -18,8 +22,6 @@ include numpy/__init__.pxd
 recursive-include numpy *
 recursive-include numpy/_build_utils *
 recursive-include numpy/linalg/lapack_lite *
-include runtests.py
-include tox.ini pytest.ini .coveragerc
 recursive-include tools *
 # Add sdist files whose use depends on local configuration.
 include numpy/core/src/common/cblasfuncs.c

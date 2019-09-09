@@ -31,9 +31,7 @@ build:
     # we will pay the ~13 minute cost of compiling Cython only when a new
     # version is scraped in by pip; otherwise, use the cached
     # wheel shippable places on Amazon S3 after we build it once
-    - pip install cython --cache-dir=/root/.cache/pip/wheels/$SHIPPABLE_PYTHON_VERSION
-    # install pytz for datetime testing
-    - pip install pytz
+    - pip install -r test_requirements.txt --cache-dir=/root/.cache/pip/wheels/$SHIPPABLE_PYTHON_VERSION
     # install pytest-xdist to leverage a second core
     # for unit tests
     - pip install pytest-xdist
