@@ -486,7 +486,7 @@ class TestFitting:
         assert_raises(TypeError, herme.hermefit2d, [1], [1], [1, 2], 0)
         assert_raises(TypeError, herme.hermefit2d, [1], [1], [1], 0, w=[[[1]]])
         assert_raises(TypeError, herme.hermefit2d, [1], [1], [1], 0, w=[1, 1])
-        assert_raises(ValueError, herme.hermefit2d, [1], [1], [1], [-1,])
+        assert_raises(ValueError, herme.hermefit2d, [1], [1], [1], [-1, -1])
         assert_raises(ValueError, herme.hermefit2d, [1], [1], [1], [2, -1, 6])
         assert_raises(TypeError, herme.hermefit2d, [1], [1], [1], [])
 

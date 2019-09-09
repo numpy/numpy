@@ -768,26 +768,19 @@ def _scale(*args):
     # Normalize x and y to avoid huge numbers
 
     n = len(args)
-    offset = [None for _ in range(n)]
     norm = [None for _ in range(n)]
     out = [None for _ in range(n)]
     for i, x in enumerate(args):
         # need to convert to float in case its an integer
         # Also make sure its a numpy array
-        x = np.asarray(x)
-        if np.issubdtype(x.dtype, np.integer):
-            x = x.astype(float)
-        offset[i] = np.mean(x)
-        norm[i] = np.std(x)
+        norm[i] = np.max(np.abs(x))
         if norm[i] == 0:
             norm[i] = 1
-        x -= offset[i]
-        x /= norm[i]
-        out[i] = x
-    return (*out, norm, offset)
+        out[i] =  x / norm[i]
+    return (*out, norm)
 
 
-def _unscale(*args, norm, offset):
+def _unscale(*args, norm):
     """
     Invert the scaling on any number of arrays
 
@@ -806,9 +799,7 @@ def _unscale(*args, norm, offset):
     n = len(args)
     out = [None for _ in range(n)]
     for i, x in enumerate(args):
-        x = np.asarray(x)
         x *= norm[i]
-        x += offset[i]
         out[i] = x
     return out
 
@@ -841,49 +832,6 @@ def polyscale2d(coeff, scale_x, scale_y, copy=True):
         coeff[i, j] /= scale_x ** i * scale_y ** j
     return coeff
 
-def _binom(x, y):
-    fac = np.math.factorial
-    try:
-        binom = fac(x) // fac(y) // fac(x - y)
-    except ValueError:
-        binom = 0
-    return binom
-
-def polyshift2d(coeff, offset_x, offset_y, copy=True):
-    """
-    Shift a 2d polynomial to a new origin
-
-    Parameters
-    ----------
-    coeff : array_like
-        polynomial coefficients
-    offset_x : float
-        offset in x direction
-    offset_y : float
-        offset in y direction
-    copy : bool, optional
-        Whether to copy the coefficients, by default True
-
-    Returns
-    -------
-    coeff : ndarray
-        Coefficients of the shifted polynomial
-    """
-    if copy:
-        coeff = np.copy(coeff)
-    idx = _get_coeff_idx(coeff.shape)
-    # Copy coeff because it changes during the loop
-    coeff2 = np.copy(coeff)
-    for k, m in idx:
-        not_the_same = ~((idx[:, 0] == k) & (idx[:, 1] == m))
-        above = (idx[:, 0] >= k) & (idx[:, 1] >= m) & not_the_same
-        for i, j in idx[above]:
-            b = _binom(i, k) * _binom(j, m)
-            sign = (-1) ** ((i - k) + (j - m))
-            offset = offset_x ** (i - k) * offset_y ** (j - m)
-            coeff[k, m] += sign * b * coeff2[i, j] * offset
-    return coeff
-
 
 def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None,
            max_degree=None, scale=True):
@@ -901,8 +849,14 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None,
         y coordinates
     z : array_like
         data values
-    degree : {int, 2-tuple}, optional
-        degree of the polynomial fit in x and y direction, by default 1
+    degree : {int, 2-tuple, 2d-array}, optional
+        degree of the polynomial fit in x and y direction, by default 1.
+        If just one int, both directions use the same degree.
+        If 2-tuple or 1d array, then it specifies the two degrees in
+        each direction seperately.
+        If 2d-array, it should of of shape == (xdegree + 1, ydegree + 1),
+        i.e. like the output coefficients. With degrees that should be used in
+        the fit set to non-zero values.
     max_degree : {int, None}, optional
         if given the maximum combined degree of the coefficients is
         limited to this value, by default None
@@ -922,9 +876,17 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None,
     y = np.asarray(y) + 0.0
     z = np.asarray(z) + 0.0
     deg = np.asarray(deg)
+    if w is not None:
+        w = np.asarray(w) + 0.0
 
-    if deg.ndim > 1 or deg.dtype.kind not in 'iu' or deg.size == 0:
-        raise TypeError("deg must be an int or non-empty 1-D array of int")
+    if deg.dtype.kind not in 'iu' or deg.size == 0:
+        raise TypeError("deg must be an int or non-empty array of int")
+    if deg.ndim == 1 and not deg.size == 2:
+        raise ValueError("deg must be of length 2, if it is a 1d array")
+    if deg.ndim == 2 and np.all(deg == 0):
+        raise ValueError("deg must have at least one non-zero value")
+    if deg.ndim > 2:
+        raise TypeError("deg must be an array of dimension 2 or less")
     if deg.min() < 0:
         raise ValueError("expected deg >= 0")
     if x.ndim != 1 and x.ndim != 2:
@@ -941,26 +903,47 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None,
         raise TypeError("expected non-empty vector for z")
     if len(x) != len(y) or len(x) != len(z):
         raise TypeError("expected x, y and z to have same length")
+    if w is not None:
+        if w.ndim != 1 and w.ndim != 2:
+            raise TypeError("expected 1D or 2D vector for w")
+        if x.size != w.size:
+            raise TypeError("expected x and w to have same length")
 
     x, y, z = x.ravel(), y.ravel(), z.ravel()
+    if w is not None:
+        w = np.ravel(w)
 
     # Remove masked values
     mask = ~(np.ma.getmask(z) | np.ma.getmask(x) | np.ma.getmask(y))
     x, y, z = x[mask].ravel(), y[mask].ravel(), z[mask].ravel()
 
-    if deg.size == 1:
+    mask = None
+    if deg.ndim == 0:
+        deg = deg[()]
         deg = np.array([deg, deg])
-    deg = deg[:2]
+    elif deg.ndim == 1:
+        deg = deg[:2]
+    elif deg.ndim == 2:
+        mask = deg != 0
+        deg = np.array(deg.shape) - 1
+
     idx = _get_coeff_idx(deg + 1)
 
     # Scale coordinates to smaller values to avoid numerical
     # problems at larger degrees
     if scale:
-        x, y, norm, offset = _scale(x, y)
+        x, y, norm = _scale(x, y)
 
     # Calculate elements 1, x, y, x*y, x**2, y**2, ...
     lhs = vander2d_f(x, y, deg)
     rhs = z
+
+    # Remove degrees that were not explicitly specified
+    # Only if deg was given as a 2d array
+    if mask is not None:
+        mask = mask[idx[:, 0], idx[:, 1]]
+        idx = idx[mask]
+        lhs = lhs[:, mask]
 
     # We only want the combinations with maximum order COMBINED power
     if max_degree is not None:
@@ -972,12 +955,6 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None,
         order = deg[0] + deg[1] + 1
 
     if w is not None:
-        w = np.asarray(w) + 0.0
-        if w.ndim != 1 and w.ndim != 2:
-            raise TypeError("expected 1D or 2D vector for w")
-        if x.size != w.size:
-            raise TypeError("expected x and w to have same length")
-        w = np.ravel(w)
         lhs = lhs * w[:, None]
         rhs = rhs * w
 
@@ -995,7 +972,6 @@ def _fit2d(vander2d_f, x, y, z, deg=1, rcond=None, full=False, w=None,
     # Reverse the scaling, it is important to scale first and then shift
     if scale:
         coeff = polyscale2d(coeff, *norm, copy=False)
-        coeff = polyshift2d(coeff, *offset, copy=False)
 
     # warn on rank reduction
     if rank != order and not full:

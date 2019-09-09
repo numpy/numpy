@@ -465,7 +465,7 @@ class TestFitting:
         assert_raises(TypeError, lag.lagfit2d, [1], [1], [1, 2], 0)
         assert_raises(TypeError, lag.lagfit2d, [1], [1], [1], 0, w=[[[1]]])
         assert_raises(TypeError, lag.lagfit2d, [1], [1], [1], 0, w=[1, 1])
-        assert_raises(ValueError, lag.lagfit2d, [1], [1], [1], [-1,])
+        assert_raises(ValueError, lag.lagfit2d, [1], [1], [1], [-1, -1])
         assert_raises(ValueError, lag.lagfit2d, [1], [1], [1], [2, -1, 6])
         assert_raises(TypeError, lag.lagfit2d, [1], [1], [1], [])
 
