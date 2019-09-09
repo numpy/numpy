@@ -35,6 +35,29 @@ coercion of a NumPy-like array to a pure NumPy array where necessary, while
 still allowing that NumPy-like array libraries that do not wish to implement
 the protocol to coerce arrays to a pure Numpy array via ``np.asarray``.
 
+Usage Guidance
+~~~~~~~~~~~~~~
+
+Code that uses np.duckarray is meant for supporting other ndarray-like objects
+that "follow the NumPy API". That is an ill-defined concept at the moment --
+every known library implements the NumPy API only partly, and many deviate
+intentionally in at least some minor ways. This cannot be easily remedied, so
+for users of ``__duckarray__`` we recommend the following strategy: check if the
+NumPy functionality used by the code that follows your use of ``__duckarray__``
+is present in Dask, CuPy and Sparse. If so, it's reasonable to expect any duck
+array to work here. If not, we suggest you indicate in your docstring what kinds
+of duck arrays are accepted, or what properties they need to have.
+
+To exemplify the usage of duck arrays, suppose one wants to take the ``mean()``
+of an array-like object ``arr``. Using NumPy to achieve that, one could write
+``np.asarray(arr).mean()`` to achieve the intended result. However, libraries
+may expect ``arr`` to be a NumPy-like array, and at the same time, the array may
+or may not be an object compliant to the NumPy API (either in full or partially)
+such as a CuPy, Sparse or a Dask array. In the case where ``arr`` is already an
+object compliant to the NumPy API, we would simply return it (and prevent it
+from being coerced into a pure NumPy array), otherwise, it would then be coerced
+into a NumPy array.
+
 Implementation
 --------------
 
@@ -76,6 +99,54 @@ original object, and ``__array__`` solely for the purpose of raising a
 libraries that don't already implement ``__array__`` but would like to use duck
 array typing, it is advised that they they introduce both ``__array__`` and
 ``__duckarray__`` methods.
+
+Usage
+-----
+
+An example of how the ``__duckarray__`` protocol could be used to write a
+``stack`` function based on ``concatenate``, and its produced outcome, can be
+seen below. The example here was chosen not only to demonstrate the usage of
+the ``duckarray`` function, but also to demonstrate its dependency on the NumPy
+API, demonstrated by checks on the array's ``shape`` attribute. Note that the
+example is merely a simplified version of NumPy's actualy implementation of
+``stack`` working on the first axis, and it is assumed that Dask has implemented
+the ``__duckarray__`` method.
+
+.. code:: python
+
+    def duckarray_stack(arrays):
+        arrays = [np.duckarray(arr) for arr in arrays]
+
+        shapes = {arr.shape for arr in arrays}
+        if len(shapes) != 1:
+            raise ValueError('all input arrays must have the same shape')
+
+        expanded_arrays = [arr[np.newaxis, ...] for arr in arrays]
+        return np.concatenate(expanded_arrays, axis=0)
+
+    dask_arr = dask.array.arange(10)
+    np_arr = np.arange(10)
+    np_like = list(range(10))
+
+    duckarray_stack((dask_arr, dask_arr))   # Returns dask.array
+    duckarray_stack((dask_arr, np_arr))     # Returns dask.array
+    duckarray_stack((dask_arr, np_like))    # Returns dask.array
+
+In contrast, using only ``np.asarray`` (at the time of writing of this NEP, this
+is the usual method employed by library developers to ensure arrays are
+NumPy-like) has a different outcome:
+
+.. code:: python
+
+    def asarray_stack(arrays):
+        arrays = [np.asanyarray(arr) for arr in arrays]
+
+        # The remaining implementation is the same as that of
+        # ``duckarray_stack`` above
+
+    asarray_stack((dask_arr, dask_arr))     # Returns np.ndarray
+    asarray_stack((dask_arr, np_arr))       # Returns np.ndarray
+    asarray_stack((dask_arr, np_like))      # Returns np.ndarray
 
 Backward compatibility
 ----------------------

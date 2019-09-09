@@ -2362,7 +2362,7 @@ static struct PyMethodDef methods[] = {
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
-        "pocketfft_internal",
+        "_pocketfft_internal",
         NULL,
         -1,
         methods,
@@ -2376,11 +2376,11 @@ static struct PyModuleDef moduledef = {
 /* Initialization function for the module */
 #if PY_MAJOR_VERSION >= 3
 #define RETVAL(x) x
-PyMODINIT_FUNC PyInit_pocketfft_internal(void)
+PyMODINIT_FUNC PyInit__pocketfft_internal(void)
 #else
 #define RETVAL(x)
 PyMODINIT_FUNC
-initpocketfft_internal(void)
+init_pocketfft_internal(void)
 #endif
 {
     PyObject *m;
@@ -2389,7 +2389,7 @@ initpocketfft_internal(void)
 #else
     static const char module_documentation[] = "";
 
-    m = Py_InitModule4("pocketfft_internal", methods,
+    m = Py_InitModule4("_pocketfft_internal", methods,
             module_documentation,
             (PyObject*)NULL,PYTHON_API_VERSION);
 #endif
