@@ -196,16 +196,14 @@ NPY_NO_EXPORT void
  *          FLOAT, DOUBLE, HALF,
  *          CFLOAT, CDOUBLE, CLONGDOUBLE,
  *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
- *          BYTE, SHORT, INT, LONG, LONGLONG,
- *          BOOL#
+ *          BYTE, SHORT, INT, LONG, LONGLONG#
  *  #typ = npy_longdouble,
  *         npy_float,npy_double,npy_half,
  *         npy_cfloat, npy_cdouble, npy_clongdouble,
  *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
- *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *         npy_bool#
- * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*11#
- * #IS_HALF = 0, 0, 0, 1, 0*14#
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong#
+ * #IS_COMPLEX = 0, 0, 0, 0, 1, 1, 1, 0*10#
+ * #IS_HALF = 0, 0, 0, 1, 0*13#
  */
 
 NPY_NO_EXPORT void
@@ -266,7 +264,45 @@ NPY_NO_EXPORT void
 }
 
 /**end repeat**/
+NPY_NO_EXPORT void
+BOOL_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
+                           void *_ip2, npy_intp is2_n, npy_intp is2_p,
+                           void *_op, npy_intp os_m, npy_intp os_p,
+                           npy_intp dm, npy_intp dn, npy_intp dp)
+                           
+{
+    npy_intp m, n, p;
+    npy_intp ib1_n, ib2_n, ib2_p, ob_p;
+    char *ip1 = (char *)_ip1, *ip2 = (char *)_ip2, *op = (char *)_op;
 
+    ib1_n = is1_n * dn;
+    ib2_n = is2_n * dn;
+    ib2_p = is2_p * dp;
+    ob_p  = os_p * dp;
+
+    for (m = 0; m < dm; m++) {
+        for (p = 0; p < dp; p++) {
+            *(npy_bool *)op = NPY_FALSE;
+            for (n = 0; n < dn; n++) {
+                npy_bool val1 = (*(npy_bool *)ip1);
+                npy_bool val2 = (*(npy_bool *)ip2);
+                if (val1 != 0 && val2 != 0) {
+                    *(npy_bool *)op = NPY_TRUE;
+                }
+                ip2 += is2_n;
+                ip1 += is1_n;
+            }
+            ip1 -= ib1_n;
+            ip2 -= ib2_n;
+            op  +=  os_p;
+            ip2 += is2_p;
+        }
+        op -= ob_p;
+        ip2 -= ib2_p;
+        ip1 += is1_m;
+        op  +=  os_m;
+    }
+}
 
 NPY_NO_EXPORT void
 OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
