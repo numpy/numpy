@@ -177,6 +177,10 @@ else:
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
     # Remove things that are in the numpy.lib but not in the numpy namespace
+    # Note that there is a test (numpy/tests/test_public_api.py:test_numpy_namespace)
+    # that prevents adding more things to the main namespace by accident.
+    # The list below will grow until the `from .lib import *` fixme above is
+    # taken care of
     __all__.remove('Arrayterator')
     del Arrayterator
 
