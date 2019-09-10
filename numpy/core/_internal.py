@@ -247,55 +247,13 @@ class _missing_ctypes(object):
             self.value = ptr
 
 
-class _unsafe_first_element_pointer(object):
-    """
-    Helper to allow viewing an array as a ctypes pointer to the first element
-
-    This avoids:
-      * dealing with strides
-      * `.view` rejecting object-containing arrays
-      * `memoryview` not supporting overlapping fields
-    """
-    def __init__(self, arr):
-        self.base = arr
-
-    @property
-    def __array_interface__(self):
-        i = dict(
-            shape=(),
-            typestr='|V0',
-            data=(self.base.__array_interface__['data'][0], False),
-            strides=(),
-            version=3,
-        )
-        return i
-
-
-def _get_void_ptr(arr):
-    """
-    Get a `ctypes.c_void_p` to arr.data, that keeps a reference to the array
-    """
-    import numpy as np
-    # convert to a 0d array that has a data pointer referrign to the start
-    # of arr. This holds a reference to arr.
-    simple_arr = np.asarray(_unsafe_first_element_pointer(arr))
-
-    # create a `char[0]` using the same memory.
-    c_arr = (ctypes.c_char * 0).from_buffer(simple_arr)
-
-    # finally cast to void*
-    return ctypes.cast(ctypes.pointer(c_arr), ctypes.c_void_p)
-
-
 class _ctypes(object):
     def __init__(self, array, ptr=None):
         self._arr = array
 
         if ctypes:
             self._ctypes = ctypes
-            # get a void pointer to the buffer, which keeps the array alive
-            self._data = _get_void_ptr(array)
-            assert self._data.value == ptr
+            self._data = self._ctypes.c_void_p(ptr)
         else:
             # fake a pointer-like object that holds onto the reference
             self._ctypes = _missing_ctypes()
@@ -317,7 +275,14 @@ class _ctypes(object):
 
         The returned pointer will keep a reference to the array.
         """
-        return self._ctypes.cast(self._data, obj)
+        # _ctypes.cast function causes a circular reference of self._data in
+        # self._data._objects. Attributes of self._data cannot be released
+        # until gc.collect is called. Make a copy of the pointer first then let
+        # it hold the array reference. This is a workaround to circumvent the
+        # CPython bug https://bugs.python.org/issue12836
+        ptr = self._ctypes.cast(self._data, obj)
+        ptr._arr = self._arr
+        return ptr
 
     def shape_as(self, obj):
         """
@@ -385,7 +350,7 @@ class _ctypes(object):
 
         Enables `c_func(some_array.ctypes)`
         """
-        return self._data
+        return self.data_as(ctypes.c_void_p)
 
     # kept for compatibility
     get_data = data.fget

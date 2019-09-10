@@ -7921,6 +7921,8 @@ class TestFormat(object):
                 dst = object.__format__(a, '30')
                 assert_equal(res, dst)
 
+from numpy.testing import IS_PYPY
+
 class TestCTypes(object):
 
     def test_ctypes_is_available(self):
@@ -7987,7 +7989,29 @@ class TestCTypes(object):
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
+        if IS_PYPY:
+            # Pypy does not recycle arr objects immediately. Trigger gc to
+            # release arr. Cpython uses refcounts. An explicit call to gc
+            # should not be needed here.
+            break_cycles()
+        assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
+
+    def test_ctypes_as_parameter_holds_reference(self):
+        arr = np.array([None]).copy()
+
+        arr_ref = weakref.ref(arr)
+
+        ctypes_ptr = arr.ctypes._as_parameter_
+
+        # `ctypes_ptr` should hold onto `arr`
+        del arr
         break_cycles()
+        assert_(arr_ref() is not None, "ctypes pointer did not hold onto a reference")
+
+        # but when the `ctypes_ptr` object dies, so should `arr`
+        del ctypes_ptr
+        if IS_PYPY:
+            break_cycles()
         assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
 
 
