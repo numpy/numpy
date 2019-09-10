@@ -294,8 +294,7 @@ class _ctypes(object):
         if ctypes:
             self._ctypes = ctypes
             # get a void pointer to the buffer, which keeps the array alive
-            self._data = _get_void_ptr(array)
-            assert self._data.value == ptr
+            self._data = self._ctypes.c_void_p(ptr)
         else:
             # fake a pointer-like object that holds onto the reference
             self._ctypes = _missing_ctypes()
@@ -317,7 +316,9 @@ class _ctypes(object):
 
         The returned pointer will keep a reference to the array.
         """
-        return self._ctypes.cast(self._data, obj)
+        ptr = self._ctypes.cast(self._data, obj)
+        ptr._arr = self._arr
+        return ptr
 
     def shape_as(self, obj):
         """
