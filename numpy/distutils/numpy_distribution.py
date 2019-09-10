@@ -13,6 +13,7 @@ class NumpyDistribution(Distribution):
         self.installed_libraries = []
         # A dict of pkg_config files to generate/install
         self.installed_pkg_config = {}
+        self.define_macros = attrs.pop('define_macros', None)
         Distribution.__init__(self, attrs)
 
     def has_scons_scripts(self):

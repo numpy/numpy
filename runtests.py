@@ -385,10 +385,12 @@ def build_project(args):
     log_filename = os.path.join(ROOT_DIR, 'build.log')
 
     if args.show_build_log:
+        # XXX how can we get stdout, stderr simultaneously output to the log
+        # file and to the screen? Any simple solution using communicate and
+        # readline() is succeptable to deadlock, maybe asyncio.subprocess ...
         ret = subprocess.call(cmd, env=env, cwd=ROOT_DIR)
     else:
-        log_filename = os.path.join(ROOT_DIR, 'build.log')
-        print("Building, see build.log...")
+        print("Building, see {}...".format(log_filename))
         with open(log_filename, 'w') as log:
             p = subprocess.Popen(cmd, env=env, stdout=log, stderr=log,
                                  cwd=ROOT_DIR)
@@ -416,13 +418,32 @@ def build_project(args):
 
     if ret == 0:
         print("Build OK")
-    else:
-        if not args.show_build_log:
-            with open(log_filename, 'r') as f:
-                print(f.read())
-            print("Build failed!")
+    elif not args.show_build_log:
+        with open(log_filename, 'r') as f:
+            print(f.read())
+        print("Build failed!")
         sys.exit(1)
-
+    if sys.platform == 'linux':
+        # Parse the log file for warnings
+        warnings = []
+        with open(log_filename, 'r') as log:
+            for line in log:
+                skip = False
+                for ignore in ['_configtest', 'ld returned 1', '-c',
+                               'manifest_maker: standard file ', 'test_warnings.py',
+                               'no previously-included files matching',
+                             ]:
+                    if ignore in line:
+                        skip = True
+                        break
+                if skip is True:
+                    continue
+                if 'warning' in line:
+                    warnings.append(line)
+        if len(warnings) > 0:
+            print('Warnings found in {}'.format(log_filename))
+            print('\n'.join(warnings))
+            sys.exit(1)
     return site_dir, site_dir_noarch
 
 
