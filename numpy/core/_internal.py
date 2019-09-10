@@ -386,7 +386,7 @@ class _ctypes(object):
 
         Enables `c_func(some_array.ctypes)`
         """
-        return self._data
+        return self.data_as(ctpyes.c_void_p)
 
     # kept for compatibility
     get_data = data.fget
