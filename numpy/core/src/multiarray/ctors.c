@@ -1426,28 +1426,6 @@ _dtype_from_buffer_3118(PyObject *memoryview)
 }
 
 
-/*
- * Call the python _is_from_ctypes
- */
-NPY_NO_EXPORT int
-_is_from_ctypes(PyObject *obj) {
-    PyObject *ret_obj;
-    static PyObject *py_func = NULL;
-
-    npy_cache_import("numpy.core._internal", "_is_from_ctypes", &py_func);
-
-    if (py_func == NULL) {
-        return -1;
-    }
-    ret_obj = PyObject_CallFunctionObjArgs(py_func, obj, NULL);
-    if (ret_obj == NULL) {
-        return -1;
-    }
-
-    return PyObject_IsTrue(ret_obj);
-}
-
-
 NPY_NO_EXPORT PyObject *
 _array_from_buffer_3118(PyObject *memoryview)
 {
