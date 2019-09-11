@@ -630,7 +630,7 @@ PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 /*NUMPY_API
  */
 NPY_NO_EXPORT int
-PyArray_CompareString(char *s1, char *s2, size_t len)
+PyArray_CompareString(const char *s1, const char *s2, size_t len)
 {
     const unsigned char *c1 = (unsigned char *)s1;
     const unsigned char *c2 = (unsigned char *)s2;

@@ -3132,7 +3132,7 @@ is_any_numpy_datetime_or_timedelta(PyObject *obj)
  */
 NPY_NO_EXPORT int
 convert_pyobjects_to_datetimes(int count,
-                               PyObject **objs, int *type_nums,
+                               PyObject **objs, const int *type_nums,
                                NPY_CASTING casting,
                                npy_int64 *out_values,
                                PyArray_DatetimeMetaData *inout_meta)

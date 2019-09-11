@@ -2297,7 +2297,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
  * Returns 0 on success, and -1 on failure
  */
 static int
-_parse_axis_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axis,
+_parse_axis_arg(PyUFuncObject *ufunc, const int core_num_dims[], PyObject *axis,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
     int nop = ufunc->nargs;
     int iop, axis_int;
@@ -2368,7 +2368,7 @@ _parse_axis_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axis,
  */
 static int
 _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
-                   int *op_core_num_dims, npy_uint32 *core_dim_flags,
+                   const int *op_core_num_dims, npy_uint32 *core_dim_flags,
                    npy_intp *core_dim_sizes, int **remap_axis) {
     int i;
     int nin = ufunc->nin;
@@ -4866,7 +4866,7 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
 NPY_NO_EXPORT int
 PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
                                PyUFuncGenericFunction newfunc,
-                               int *signature,
+                               const int *signature,
                                PyUFuncGenericFunction *oldfunc)
 {
     int i, j;
@@ -4921,7 +4921,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
                                      char *types, int ntypes,
                                      int nin, int nout, int identity,
                                      const char *name, const char *doc,
-                                     int unused, const char *signature,
+                                     const int unused, const char *signature,
                                      PyObject *identity_value)
 {
     PyUFuncObject *ufunc;
@@ -5223,7 +5223,7 @@ NPY_NO_EXPORT int
 PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
                             int usertype,
                             PyUFuncGenericFunction function,
-                            int *arg_types,
+                            const int *arg_types,
                             void *data)
 {
     PyArray_Descr *descr;

@@ -149,7 +149,7 @@ array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
                              arg == '|' || arg == '=')
 
 static int
-_check_for_commastring(char *type, Py_ssize_t len)
+_check_for_commastring(const char *type, Py_ssize_t len)
 {
     Py_ssize_t i;
     int sqbracket;

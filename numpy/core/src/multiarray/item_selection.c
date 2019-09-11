@@ -2475,7 +2475,7 @@ finish:
  * array of values, which must be of length PyArray_NDIM(self).
  */
 NPY_NO_EXPORT PyObject *
-PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
+PyArray_MultiIndexGetItem(PyArrayObject *self, const npy_intp *multi_index)
 {
     int idim, ndim = PyArray_NDIM(self);
     char *data = PyArray_DATA(self);
@@ -2503,7 +2503,7 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
+PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
                                                 PyObject *obj)
 {
     int idim, ndim = PyArray_NDIM(self);

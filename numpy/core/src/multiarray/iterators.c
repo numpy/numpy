@@ -98,7 +98,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
 
 /* get the dataptr from its current coordinates for simple iterator */
 static char*
-get_ptr_simple(PyArrayIterObject* iter, npy_intp *coordinates)
+get_ptr_simple(PyArrayIterObject* iter, const npy_intp *coordinates)
 {
     npy_intp i;
     char *ret;
@@ -1666,7 +1666,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
 
 /* set the dataptr from its current coordinates */
 static char*
-get_ptr_constant(PyArrayIterObject* _iter, npy_intp *coordinates)
+get_ptr_constant(PyArrayIterObject* _iter, const npy_intp *coordinates)
 {
     int i;
     npy_intp bd, _coordinates[NPY_MAXDIMS];
@@ -1721,7 +1721,7 @@ __npy_pos_remainder(npy_intp i, npy_intp n)
 
 /* set the dataptr from its current coordinates */
 static char*
-get_ptr_mirror(PyArrayIterObject* _iter, npy_intp *coordinates)
+get_ptr_mirror(PyArrayIterObject* _iter, const npy_intp *coordinates)
 {
     int i;
     npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
@@ -1755,7 +1755,7 @@ __npy_euclidean_division(npy_intp i, npy_intp n)
     _coordinates[c] = lb + __npy_euclidean_division(bd, p->limits_sizes[c]);
 
 static char*
-get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
+get_ptr_circular(PyArrayIterObject* _iter, const npy_intp *coordinates)
 {
     int i;
     npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
@@ -1777,7 +1777,7 @@ get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
  * A Neighborhood Iterator object.
 */
 NPY_NO_EXPORT PyObject*
-PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
+PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
                             int mode, PyArrayObject* fill)
 {
     int i;
