@@ -44,7 +44,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 {
     npy_intp oldnbytes, newnbytes;
     npy_intp oldsize, newsize;
-    int new_nd=newshape->len, k, n, elsize;
+    int new_nd=newshape->len, k, elsize;
     int refcnt;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
@@ -136,8 +136,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             PyObject *zero = PyInt_FromLong(0);
             char *optr;
             optr = PyArray_BYTES(self) + oldnbytes;
-            n = newsize - oldsize;
-            for (k = 0; k < n; k++) {
+            npy_intp n_new = newsize - oldsize;
+            for (npy_intp i = 0; i < n_new; i++) {
                 _putzero((char *)optr, zero, PyArray_DESCR(self));
                 optr += elsize;
             }
