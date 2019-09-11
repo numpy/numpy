@@ -1628,14 +1628,11 @@ npyiter_coalesce_axes(NpyIter *iter)
     npy_intp istrides, nstrides = NAD_NSTRIDES();
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    NpyIter_AxisData *ad_compress;
+    NpyIter_AxisData *ad_compress = axisdata;
     npy_intp new_ndim = 1;
 
     /* The HASMULTIINDEX or IDENTPERM flags do not apply after coalescing */
     NIT_ITFLAGS(iter) &= ~(NPY_ITFLAG_IDENTPERM|NPY_ITFLAG_HASMULTIINDEX);
-
-    axisdata = NIT_AXISDATA(iter);
-    ad_compress = axisdata;
 
     for (idim = 0; idim < ndim-1; ++idim) {
         int can_coalesce = 1;

@@ -4146,7 +4146,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 #endif
 
     /* Set up the op_axes for the outer loop */
-    for (i = 0, idim = 0; idim < ndim; ++idim) {
+    for (idim = 0; idim < ndim; ++idim) {
         /* Use the i-th iteration dimension to match up ind */
         if (idim == axis) {
             op_axes_arrays[0][idim] = axis;
