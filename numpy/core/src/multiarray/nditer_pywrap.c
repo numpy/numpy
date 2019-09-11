@@ -535,7 +535,7 @@ try_single_dtype:
 }
 
 static int
-npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
+npyiter_convert_op_axes(PyObject *op_axes_in, int nop,
                         int **op_axes, int *oa_ndim)
 {
     PyObject *a;

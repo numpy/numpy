@@ -1519,7 +1519,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         int *swaps;
 
         assert(N > 0);  /* Guaranteed and assumed by indbuffer */
-        int valbufsize = N * maxelsize;
+        npy_intp valbufsize = N * maxelsize;
         if (NPY_UNLIKELY(valbufsize) == 0) {
             valbufsize = 1;  /* Ensure allocation is not empty */
         }
