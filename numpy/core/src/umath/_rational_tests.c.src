@@ -539,11 +539,11 @@ static PyObject*
 pyrational_str(PyObject* self) {
     rational x = ((PyRational*)self)->r;
     if (d(x)!=1) {
-        return PyString_FromFormat(
+        return PyUString_FromFormat(
                 "%ld/%ld",(long)x.n,(long)d(x));
     }
     else {
-        return PyString_FromFormat(
+        return PyUString_FromFormat(
                 "%ld",(long)x.n);
     }
 }
