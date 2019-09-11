@@ -462,7 +462,7 @@ WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
             PyErr_WriteUnraisable(Py_None);
         }
     }
-};
+}
 
 /* array object functions */
 
@@ -607,7 +607,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
  * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT void
-PyArray_SetDatetimeParseFunction(PyObject *op)
+PyArray_SetDatetimeParseFunction(PyObject *NPY_UNUSED(op))
 {
 }
 

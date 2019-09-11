@@ -286,7 +286,8 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
  * Convert to a 1D C-array
  */
 NPY_NO_EXPORT int
-PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
+PyArray_As1D(PyObject **NPY_UNUSED(op), char **NPY_UNUSED(ptr),
+             int *NPY_UNUSED(d1), int NPY_UNUSED(typecode))
 {
     /* 2008-07-14, 1.5 */
     PyErr_SetString(PyExc_NotImplementedError,
@@ -298,7 +299,8 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
  * Convert to a 2D C-array
  */
 NPY_NO_EXPORT int
-PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
+PyArray_As2D(PyObject **NPY_UNUSED(op), char ***NPY_UNUSED(ptr),
+             int *NPY_UNUSED(d1), int *NPY_UNUSED(d2), int NPY_UNUSED(typecode))
 {
     /* 2008-07-14, 1.5 */
     PyErr_SetString(PyExc_NotImplementedError,
@@ -3781,7 +3783,7 @@ _vec_string_no_args(PyArrayObject* char_array,
 }
 
 static PyObject *
-_vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+_vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyArrayObject* char_array = NULL;
     PyArray_Descr *type;
