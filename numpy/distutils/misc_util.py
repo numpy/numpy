@@ -859,7 +859,7 @@ class Configuration(object):
             print(message)
 
     def warn(self, message):
-        sys.stderr.write('Warning: %s' % (message,))
+        sys.stderr.write('Warning: %s\n' % (message,))
 
     def set_options(self, **options):
         """
