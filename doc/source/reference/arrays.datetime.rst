@@ -100,7 +100,9 @@ Datetime and Timedelta Arithmetic
 NumPy allows the subtraction of two Datetime values, an operation which
 produces a number with a time unit. Because NumPy doesn't have a physical
 quantities system in its core, the timedelta64 data type was created
-to complement datetime64.
+to complement datetime64. The arguments for timedelta64 are a number, 
+to represent the number of units, and a date/time unit, such as
+(D)ay, (M)onth, (Y)ear, (h)ours, (m)inutes, or (s)econds.
 
 Datetimes and Timedeltas work together to provide ways for
 simple datetime calculations.
