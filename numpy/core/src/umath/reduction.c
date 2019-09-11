@@ -36,7 +36,7 @@
  * If 'dtype' isn't NULL, this function steals its reference.
  */
 static PyArrayObject *
-allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
+allocate_reduce_result(PyArrayObject *arr, const npy_bool *axis_flags,
                         PyArray_Descr *dtype, int subok)
 {
     npy_intp strides[NPY_MAXDIMS], stride;
@@ -84,7 +84,7 @@ allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
  * The return value is a view into 'out'.
  */
 static PyArrayObject *
-conform_reduce_result(int ndim, npy_bool *axis_flags,
+conform_reduce_result(int ndim, const npy_bool *axis_flags,
                       PyArrayObject *out, int keepdims, const char *funcname,
                       int need_copy)
 {
@@ -251,7 +251,7 @@ PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
  * Count the number of dimensions selected in 'axis_flags'
  */
 static int
-count_axes(int ndim, npy_bool *axis_flags)
+count_axes(int ndim, const npy_bool *axis_flags)
 {
     int idim;
     int naxes = 0;
@@ -299,7 +299,7 @@ count_axes(int ndim, npy_bool *axis_flags)
 NPY_NO_EXPORT PyArrayObject *
 PyArray_InitializeReduceResult(
                     PyArrayObject *result, PyArrayObject *operand,
-                    npy_bool *axis_flags,
+                    const npy_bool *axis_flags,
                     npy_intp *out_skip_first_count, const char *funcname)
 {
     npy_intp *strides, *shape, shape_orig[NPY_MAXDIMS];
