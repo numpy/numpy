@@ -391,7 +391,8 @@ array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
 }
 
 static PyObject *
-array_inplace_matrix_multiply(PyArrayObject *m1, PyObject *m2)
+array_inplace_matrix_multiply(
+        PyArrayObject *NPY_UNUSED(m1), PyObject *NPY_UNUSED(m2))
 {
     PyErr_SetString(PyExc_TypeError,
                     "In-place matrix multiplication is not (yet) supported. "

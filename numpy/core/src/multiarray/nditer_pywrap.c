@@ -82,7 +82,8 @@ static int npyiter_cache_values(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
+npyiter_new(PyTypeObject *subtype, PyObject *NPY_UNUSED(args),
+            PyObject *NPY_UNUSED(kwds))
 {
     NewNpyArrayIterObject *self;
 
@@ -2365,7 +2366,7 @@ npyiter_close(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_exit(NewNpyArrayIterObject *self, PyObject *args)
+npyiter_exit(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     /* even if called via exception handling, writeback any data */
     return npyiter_close(self);

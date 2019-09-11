@@ -1051,7 +1051,7 @@ any_array_ufunc_overrides(PyObject *args, PyObject *kwds)
 
 
 NPY_NO_EXPORT PyObject *
-array_ufunc(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_ufunc(PyArrayObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyObject *ufunc, *method_name, *normal_args, *ufunc_method;
     PyObject *result = NULL;
@@ -1100,7 +1100,7 @@ cleanup:
 }
 
 static PyObject *
-array_function(PyArrayObject *self, PyObject *c_args, PyObject *c_kwds)
+array_function(PyArrayObject *NPY_UNUSED(self), PyObject *c_args, PyObject *c_kwds)
 {
     PyObject *func, *types, *args, *kwargs, *result;
     static char *kwlist[] = {"func", "types", "args", "kwargs", NULL};
@@ -1179,7 +1179,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    ret = PyArray_Resize(self, &newshape, refcheck, NPY_CORDER);
+    ret = PyArray_Resize(self, &newshape, refcheck, NPY_ANYORDER);
     npy_free_cache_dim_obj(newshape);
     if (ret == NULL) {
         return NULL;
@@ -1732,7 +1732,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 static PyObject *
-array_reduce_ex_regular(PyArrayObject *self, int protocol)
+array_reduce_ex_regular(PyArrayObject *self, int NPY_UNUSED(protocol))
 {
     PyObject *subclass_array_reduce = NULL;
     PyObject *ret;

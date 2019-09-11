@@ -259,7 +259,8 @@ def find_functions(filename, tag='API'):
             elif state == STATE_ARGS:
                 if line.startswith('{'):
                     # finished
-                    fargs_str = ' '.join(function_args).rstrip(' )')
+                    # remove any white space and the closing bracket:
+                    fargs_str = ' '.join(function_args).rstrip()[:-1].rstrip()
                     fargs = split_arguments(fargs_str)
                     f = Function(function_name, return_type, fargs,
                                  '\n'.join(doclist))

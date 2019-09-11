@@ -3277,7 +3277,7 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 }
 
 static int
-descr_nonzero(PyObject *self)
+descr_nonzero(PyObject *NPY_UNUSED(self))
 {
     /* `bool(np.dtype(...)) == True` for all dtypes. Needed to override default
      * nonzero implementation, which checks if `len(object) > 0`. */

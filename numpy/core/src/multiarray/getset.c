@@ -190,7 +190,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 
 
 static PyObject *
-array_priority_get(PyArrayObject *self)
+array_priority_get(PyArrayObject *NPY_UNUSED(self))
 {
     return PyFloat_FromDouble(NPY_PRIORITY);
 }
