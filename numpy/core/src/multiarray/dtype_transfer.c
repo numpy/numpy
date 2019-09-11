@@ -3337,7 +3337,7 @@ get_decsrcref_transfer_function(int aligned,
     /* If there are subarrays, need to wrap it */
     else if (PyDataType_HASSUBARRAY(src_dtype)) {
         PyArray_Dims src_shape = {NULL, -1};
-        npy_intp src_size = 1;
+        npy_intp src_size;
         PyArray_StridedUnaryOp *stransfer;
         NpyAuxData *data;
 
