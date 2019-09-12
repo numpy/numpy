@@ -3493,9 +3493,9 @@ cdef class RandomState:
         cdef int64_t lngood, lnbad, lnsample
 
         # This cast to long is required to ensure that the values are inbounds
-        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_INT64, np.NPY_ALIGNED)
-        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_INT64, np.NPY_ALIGNED)
-        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_INT64, np.NPY_ALIGNED)
+        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_LONG, np.NPY_ALIGNED)
+        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_LONG, np.NPY_ALIGNED)
+        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_LONG, np.NPY_ALIGNED)
 
         if np.PyArray_NDIM(ongood) == np.PyArray_NDIM(onbad) == np.PyArray_NDIM(onsample) == 0:
 
@@ -3517,7 +3517,7 @@ cdef class RandomState:
         # Convert to int64, if necessary, to use int64 infrastructure
         ongood = ongood.astype(np.int64)
         onbad = onbad.astype(np.int64)
-        onbad = onbad.astype(np.int64)
+        onsample = onsample.astype(np.int64)
         out = discrete_broadcast_iii(&legacy_random_hypergeometric,&self._bitgen, size, self.lock,
                                      ongood, 'ngood', CONS_NON_NEGATIVE,
                                      onbad, 'nbad', CONS_NON_NEGATIVE,
