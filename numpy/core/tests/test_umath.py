@@ -165,6 +165,53 @@ class TestOut:
                 # Out argument must be tuple, since there are multiple outputs.
                 r1, r2 = np.frexp(d, out=o1, subok=subok)
 
+    def test_out_scalar_ellipsis_single_out(self):
+        # Test that ellipsis works as a sentinal to signal that output
+        # should be an array.
+        assert isinstance(np.add(1, 1, out=...), np.ndarray)
+        assert isinstance(np.add(1, 1, ...), np.ndarray)
+
+        assert isinstance(np.add(1, 1, None), np.generic)
+
+    @pytest.mark.parametrize("out1", [None, Ellipsis])
+    @pytest.mark.parametrize("out2", [None, Ellipsis, np._NoValue])
+    def test_out_scalar_ellipsis_multiple_out(self, out1, out2):
+        if out2 is np._NoValue:
+            res1, res2 = np.divmod(5, 6, out1)
+        else:
+            res1, res2 = np.divmod(5, 6, out1, out2)
+
+        for out, res in zip([out1, out2], [res1, res2]):
+            if out is Ellipsis:
+                assert(isinstance(res, np.ndarray))
+            else:
+                assert(isinstance(res, np.generic))
+
+    @pytest.mark.parametrize("out1", [None, Ellipsis])
+    @pytest.mark.parametrize("out2", [None, Ellipsis])
+    def test_out_scalar_ellipsis_multiple_out_kwarg(self, out1, out2):
+        res1, res2 = np.divmod(5, 6, out=(out1, out2))
+
+        for out, res in zip([out1, out2], [res1, res2]):
+            if out is Ellipsis:
+                assert(isinstance(res, np.ndarray))
+            else:
+                assert(isinstance(res, np.generic))
+
+    def test_out_wrap_called_with_ellipsis(self):
+        # If the input wraps the output, we need to honor that even with
+        # Ellipsis
+        class myarray(np.ndarray):
+            @classmethod
+            def __array_wrap__(cls, other):
+                return other.view(cls)
+
+        arr = np.ones(()).view(myarray)
+        assert isinstance(np.add(arr, arr), myarray)
+        # And the interesting check:
+        assert isinstance(np.add(arr, arr, ...), myarray)
+        assert isinstance(np.add(arr, arr, out=...), myarray)
+
 
 class TestComparisons:
     def test_ignore_object_identity_in_equal(self):

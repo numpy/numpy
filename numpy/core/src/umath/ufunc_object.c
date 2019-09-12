@@ -223,6 +223,18 @@ _find_array_method(PyObject *args, PyObject *method_name)
 static PyObject *
 _get_output_array_method(PyObject *obj, PyObject *method,
                          PyObject *input_method) {
+    if (obj == Py_Ellipsis) {
+        /*
+         * If the inputs do not wrap, Ellipsis indicates that no wrapping should
+         * be done (meaning that it cannot be converted to scalar). `None` is
+         * used to signal that the output is returned unchanged.
+         */
+        if (input_method != NULL) {
+            Py_INCREF(input_method);
+            return input_method;
+        }
+        Py_RETURN_NONE;
+    }
     if (obj != Py_None) {
         PyObject *ometh;
 
@@ -818,8 +830,12 @@ fail:
 static int
 _set_out_array(PyObject *obj, PyArrayObject **store)
 {
-    if (obj == Py_None) {
-        /* Translate None to NULL */
+    if ((obj == Py_None) || (obj == Py_Ellipsis)) {
+        /*
+         * Translate None and Ellipsis to NULL. Both mean that we need to
+         * allocate the output array. Ellipsis indicates no conversion to
+         * before returning the output.
+         */
         return 0;
     }
     if (PyArray_Check(obj)) {
