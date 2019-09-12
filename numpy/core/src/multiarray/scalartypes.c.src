@@ -4492,6 +4492,36 @@ initialize_numeric_types(void)
 
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMapIter_Type.tp_iter = PyObject_SelfIter;
+
+    /*
+     * Give types different names when they are the same size (gh-9799).
+     * `np.intX` always refers to the first int of that size in the sequence
+     * `['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']`.
+     */
+#if (NPY_SIZEOF_BYTE == NPY_SIZEOF_SHORT)
+    PyByteArrType_Type.tp_name = "numpy.byte";
+    PyUByteArrType_Type.tp_name = "numpy.ubyte";
+#endif
+#if (NPY_SIZEOF_SHORT == NPY_SIZEOF_INT)
+    PyShortArrType_Type.tp_name = "numpy.short";
+    PyUShortArrType_Type.tp_name = "numpy.ushort";
+#endif
+#if (NPY_SIZEOF_INT == NPY_SIZEOF_LONG)
+    PyIntArrType_Type.tp_name = "numpy.intc";
+    PyUIntArrType_Type.tp_name = "numpy.uintc";
+#endif
+#if (NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG)
+    PyLongLongArrType_Type.tp_name = "numpy.longlong";
+    PyULongLongArrType_Type.tp_name = "numpy.ulonglong";
+#endif
+
+    /*
+    Do the same for longdouble
+    */
+#if (NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE)
+    PyLongDoubleArrType_Type.tp_name = "numpy.longdouble";
+    PyCLongDoubleArrType_Type.tp_name = "numpy.clongdouble";
+#endif
 }
 
 typedef struct {
