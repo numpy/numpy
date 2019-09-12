@@ -33,11 +33,12 @@ extensions = [
     'IPython.sphinxext.ipython_directive',
 ]
 
-if sphinx.__version__ >= "1.4":
-    extensions.append('sphinx.ext.imgmath')
-    imgmath_image_format = 'svg'
-else:
-    extensions.append('sphinx.ext.pngmath')
+# No more needed since mathjax script link is added in index.html in theme.
+# if sphinx.__version__ >= "1.4":
+#     extensions.append('sphinx.ext.imgmath')
+#     imgmath_image_format = 'svg'
+# else:
+#     extensions.append('sphinx.ext.pngmath')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -98,12 +99,12 @@ def setup(app):
 # HTML output
 # -----------------------------------------------------------------------------
 
-themedir = os.path.join(os.pardir, 'scipy-sphinx-theme', '_theme')
+themedir = os.path.join(os.pardir, 'scipy-sphinx-theme-v2')
 if not os.path.isdir(themedir):
     raise RuntimeError("Get the scipy-sphinx-theme first, "
                        "via git submodule init && git submodule update")
 
-html_theme = 'scipy'
+html_theme = 'custom_sphinx_theme'
 html_theme_path = [themedir]
 
 if 'scipyorg' in tags:
@@ -374,7 +375,7 @@ import copy
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'
 
-    tokens = copy.deepcopy(lexers['c'].tokens)
+    tokens = copy.deepcopy(CLexer.tokens)
     # Extend the regex for valid identifiers with @
     for k, val in tokens.items():
         for i, v in enumerate(val):
