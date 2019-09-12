@@ -57,4 +57,4 @@ jobs:
           sudo pip install -r doc/scipy-sphinx-theme/dependencies/requirements.txt
           sudo npm install
           IFS='/' read -r -a array <<< "$REF";
-          grunt deploy --domain=numpy-docs-"$SHA".surge.sh
+          grunt deploy --domain=numpy-docs-${SHA}.surge.sh
