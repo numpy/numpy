@@ -119,7 +119,19 @@ def test_NPY_NO_EXPORT():
                       "NPY_NO_EXPORT does not work")
 
 
-PUBLIC_MODULES = [
+# Historically NumPy has not used leading underscores for private submodules
+# much.  This has resulted in lots of things that look like public modules
+# (i.e. things that can be imported as `import numpy.somesubmodule.somefile`),
+# but were never intended to be public.  The PUBLIC_MODULES list contains
+# modules that are either public because they were meant to be, or because they
+# contain public functions/objects that aren't present in any other namespace
+# for whatever reason and therefore should be treated as public.
+#
+# The PRIVATE_BUT_PRESENT_MODULES list contains modules that look public (lack
+# of underscores) but should not be used.  For many of those modules the
+# current status is fine.  For others it may make sense to work on making them
+# private, to clean up our public API and avoid confusion.
+PUBLIC_MODULES = ['numpy.' + s for s in [
     "ctypeslib",
     "distutils",
     "distutils.cpuinfo",
@@ -165,17 +177,17 @@ PUBLIC_MODULES = [
     "random",
     "testing",
     "version",
-]
+]]
 
 
 PUBLIC_ALIASED_MODULES = [
-    "char",
-    "emath",
-    "rec",
+    "numpy.char",
+    "numpy.emath",
+    "numpy.rec",
 ]
 
 
-PRIVATE_BUT_PRESENT_MODULES = [
+PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "compat",
     "compat.py3k",
     "conftest",
@@ -320,7 +332,7 @@ PRIVATE_BUT_PRESENT_MODULES = [
     "testing.nosetester",
     "testing.print_coercion_tables",
     "testing.utils",
-]
+]]
 
 
 def is_unexpected(name):
@@ -328,15 +340,11 @@ def is_unexpected(name):
     if '._' in name or '.tests' in name or '.setup' in name:
         return False
 
-    if name.startswith("numpy."):
-        name = name[6:]
-
     if name in PUBLIC_MODULES:
         return False
 
     if name in PUBLIC_ALIASED_MODULES:
         return False
-
 
     if name in PRIVATE_BUT_PRESENT_MODULES:
         return False
@@ -390,10 +398,10 @@ def test_all_modules_are_expected_2():
                 print(obj)
 
     """
-    modnames = []
 
-    def check(modname):
-        module = importlib.import_module(modname)
+    def find_unexpected_members(mod_name):
+        members = []
+        module = importlib.import_module(mod_name)
         if hasattr(module, '__all__'):
             objnames = module.__all__
         else:
@@ -401,15 +409,17 @@ def test_all_modules_are_expected_2():
 
         for objname in objnames:
             if not objname.startswith('_'):
-                fullobjname = modname + '.' + objname
-                if isinstance(eval(fullobjname), types.ModuleType):
+                fullobjname = mod_name + '.' + objname
+                if isinstance(getattr(module, objname), types.ModuleType):
                     if is_unexpected(fullobjname):
-                        modnames.append(fullobjname)
+                        members.append(fullobjname)
 
-    check("numpy")
+        return members
+
+    unexpected_members = find_unexpected_members("numpy")
     for modname in PUBLIC_MODULES:
-        check("numpy." + modname)
+        unexpected_members.extend(find_unexpected_members(modname))
 
-    if modnames:
+    if unexpected_members:
         raise AssertionError("Found unexpected object(s) that look like "
-                             "modules: {}".format(modnames))
+                             "modules: {}".format(unexpected_members))
