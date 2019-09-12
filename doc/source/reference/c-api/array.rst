@@ -226,7 +226,7 @@ From scratch
 
     If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the
-    new flags for the array (except the state of :c:data:`NPY_OWNDATA`,
+    new flags for the array (except the state of :c:data:`NPY_ARRAY_OWNDATA`,
     :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and :c:data:`NPY_ARRAY_UPDATEIFCOPY`
     flags of the new array will be reset).
 
