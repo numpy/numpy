@@ -473,7 +473,7 @@ cdef class Generator:
                     ret = _rand_bool(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
         except ValueError as e:
             if high_and_low_swapped and 'low >= high' == str(e):
-                e.args = ("low must be greater than 0 when high is not given.",)
+                raise ValueError("low must be greater than 0 when high is not given.") from None
             raise
 
         if size is None and dtype in (np.bool, np.int, np.long):
