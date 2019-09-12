@@ -372,8 +372,39 @@ def test_all_modules_are_expected():
         raise AssertionError("Found unexpected modules: {}".format(modnames))
 
 
-@pytest.mark.xfail(reason="missing __all__ dicts are messing this up, "
-                          "needs work")
+# Stuff that clearly shouldn't be in the API and is detected by the next test
+# below
+SKIP_LIST = [
+    'numpy.math',
+    'numpy.distutils.log.sys',
+    'numpy.distutils.system_info.copy',
+    'numpy.distutils.system_info.distutils',
+    'numpy.distutils.system_info.log',
+    'numpy.distutils.system_info.os',
+    'numpy.distutils.system_info.platform',
+    'numpy.distutils.system_info.re',
+    'numpy.distutils.system_info.shutil',
+    'numpy.distutils.system_info.subprocess',
+    'numpy.distutils.system_info.sys',
+    'numpy.distutils.system_info.tempfile',
+    'numpy.distutils.system_info.textwrap',
+    'numpy.distutils.system_info.warnings',
+    'numpy.doc.constants.re',
+    'numpy.doc.constants.textwrap',
+    'numpy.lib.emath',
+    'numpy.lib.math',
+    'numpy.matlib.char',
+    'numpy.matlib.rec',
+    'numpy.matlib.emath',
+    'numpy.matlib.math',
+    'numpy.matlib.linalg',
+    'numpy.matlib.fft',
+    'numpy.matlib.random',
+    'numpy.matlib.ctypeslib',
+    'numpy.matlib.ma'
+]
+
+
 def test_all_modules_are_expected_2():
     """
     Method checking all objects. The pkgutil-based method in
@@ -412,7 +443,8 @@ def test_all_modules_are_expected_2():
                 fullobjname = mod_name + '.' + objname
                 if isinstance(getattr(module, objname), types.ModuleType):
                     if is_unexpected(fullobjname):
-                        members.append(fullobjname)
+                        if fullobjname not in SKIP_LIST:
+                            members.append(fullobjname)
 
         return members
 

@@ -173,6 +173,9 @@ from numpy.compat import (
     )
 
 
+__all__ = []
+
+
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
