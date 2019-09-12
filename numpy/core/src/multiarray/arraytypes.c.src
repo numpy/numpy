@@ -27,7 +27,7 @@
 #include "alloc.h"
 #include "typeinfo.h"
 #ifdef NPY_HAVE_SSE2_INTRINSICS
-#include <emmintrin.h>
+#include <immintrin.h>
 #endif
 
 #include "npy_longdouble.h"
@@ -3978,6 +3978,880 @@ static int
  *****************************************************************************
  */
 
+#if defined(__AVX512F__)
+static int
+_sc_vectorized_k3(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+    __m128d rt_10 = _mm_loadu_pd(&k[0]);                     // K1|K0
+    __m128d rt_01 = _mm_permute_pd(rt_10, 0x1);              // K0|K1
+    __m128d rt_02 = _mm_set_sd(k[2]);                        //  0|K2
+
+    __m512d rk0 = _mm512_broadcastsd_pd(rt_10);              // K0|K0|K0|K0|K0|K0|K0|K0
+    __m512d rk1 = _mm512_broadcastsd_pd(rt_01);              // K1|K1|K1|K1|K1|K1|K1|K1
+    __m512d rk2 = _mm512_broadcastsd_pd(rt_02);              // K2|K2|K2|K2|K2|K2|K2|K2
+
+    __m256d rk_special = _mm256_insertf128_pd(_mm256_castpd128_pd256(rt_01), rt_02, 1);  // 0|K2|K0|K1
+    rk_special = _mm256_permute4x64_pd(rk_special, 0x87);    // K2|K1|K0|0
+
+    // 8-way processing, no preload
+    for (i = 0; i < nd - (nd % 8); i += 8) {
+        __m512d rr = _mm512_setzero_pd();
+        __m512d rd0 = _mm512_loadu_pd(&d[i]);
+        __m512d rd1 = _mm512_loadu_pd(&d[i + 1]);
+        __m512d rd2 = _mm512_loadu_pd(&d[i + 2]);
+        rr = _mm512_fmadd_pd(rk0, rd0, rr);
+        rr = _mm512_fmadd_pd(rk1, rd1, rr);
+        rr = _mm512_fmadd_pd(rk2, rd2, rr);
+        _mm512_storeu_pd(&o[i], rr);
+    }
+
+    // 4-way processing, no preload
+    for (; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk0), rd0, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk1), rd1, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk2), rd2, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    for (; i < nd; i++) {
+        __m128d rr;
+        __m256d rd0 = _mm256_loadu_pd(&d[i-1]);              // PADD|PADD|D(i)|D(i-1)
+        __m256d rr_210 = _mm256_mul_pd(rk_special, rd0);
+        __m128d rr_210_lo  = _mm256_castpd256_pd128(rr_210);
+        __m128d rr_210_hi = _mm256_extractf128_pd(rr_210, 1);
+        __m128d rr_tmp =   _mm_add_pd(rr_210_lo, rr_210_hi);
+        __m128d rr_tmp1 = _mm_shuffle_pd(rr_tmp, rr_tmp, 0x01);
+        rr = _mm_add_pd(rr_tmp, rr_tmp1);
+        _mm_store_sd(&o[i], rr);
+    }
+
+    return 1;
+}
+
+static int
+_sc_vectorized_k4(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i = 0;
+
+    __m128d rt128_10 = _mm_loadu_pd(&k[0]);                  // K1|K0
+    __m128d rt128_32 = _mm_loadu_pd(&k[2]);                  // K3|K2
+    __m128d rt128_01 = _mm_permute_pd(rt128_10, 0x1);        // K0|K1
+    __m128d rt128_23 = _mm_permute_pd(rt128_32, 0x1);        // K2|K3
+    // also load a full kernel, use load instead of combination of permute/blender operations to leverage cache hit
+    __m256d rk = _mm256_loadu_pd(&k[0]);                     // K3|K2|K1|K0
+
+    __m512d rk512_0 = _mm512_broadcastsd_pd(rt128_10);       // K0|K0|K0|K0|K0|K0|K0|K0
+    __m512d rk512_1 = _mm512_broadcastsd_pd(rt128_01);       // K1|K1|K1|K1|K1|K1|K1|K1
+    __m512d rk512_2 = _mm512_broadcastsd_pd(rt128_32);       // K2|K2|K2|K2|K2|K2|K2|K2
+    __m512d rk512_3 = _mm512_broadcastsd_pd(rt128_23);       // K3|K3|K3|K3|K3|K3|K3|K3
+
+    if (nd > 23) {         // 8-way processing if (data lines > 23), full preload
+        __m512d rd0;
+        __m512d rdt = _mm512_loadu_pd(&d[0]);
+        __m512d rdn = _mm512_loadu_pd(&d[8]);
+        for (i = 0; i < nd - (nd % 8) - 16; i += 8) {
+            rd0 = rdt;                                                                                                        //  D7|D6|D5|D4|D3|D2|D1|D0
+            rdt = rdn;
+            rdn = _mm512_loadu_pd(&d[i + 16]);
+            __m512d rd1 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2, 0, 1), rdt); //  D8|D7|D6|D5|D4|D3|D2|D1
+            __m512d rd2 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2), rdt); //  D9|D8|D7|D6|D5|D4|D3|D2
+            __m512d rd3 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0,10, 0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3), rdt); // D10|D9|D8|D7|D6|D5|D4|D3
+
+            __m512d rr = _mm512_setzero_pd();
+            rr = _mm512_fmadd_pd(rk512_0, rd0, rr);
+            rr = _mm512_fmadd_pd(rk512_1, rd1, rr);
+            rr = _mm512_fmadd_pd(rk512_2, rd2, rr);
+            rr = _mm512_fmadd_pd(rk512_3, rd3, rr);
+            _mm512_storeu_pd(&o[i], rr);
+        }
+
+        // 8-way processing for the remaining 16~23
+        rd0 = rdt;
+        rdt = rdn;
+        __m512d rd1 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2, 0, 1), rdt);
+        __m512d rd2 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2), rdt);
+        __m512d rd3 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0,10, 0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3), rdt);
+
+        __m512d rr = _mm512_setzero_pd();
+        rr = _mm512_fmadd_pd(rk512_0, rd0, rr);
+        rr = _mm512_fmadd_pd(rk512_1, rd1, rr);
+        rr = _mm512_fmadd_pd(rk512_2, rd2, rr);
+        rr = _mm512_fmadd_pd(rk512_3, rd3, rr);
+        _mm512_storeu_pd(&o[i], rr);
+        i += 8;
+
+        // 8-way processing for the remaining 8~15
+        rd0 = rdt;
+        __m256d rd_remain_xx10 = _mm256_castpd128_pd256(_mm_loadu_pd(&d[i + 8]));                                 // X|X|D1|D0
+        __m256d rd_remain_xx22 = _mm256_castpd128_pd256(_mm_loaddup_pd(&d[i + 10]));                              // X|X|D2|D2
+        rdt = _mm512_castpd256_pd512(_mm256_permute2f128_pd(rd_remain_xx10, rd_remain_xx22, 0x20)); // X|X|X|X|D2|D2|D1|D0
+        rd1 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2, 0, 1), rdt);
+        rd2 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2), rdt);
+        rd3 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0,10, 0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3), rdt);
+
+        rr = _mm512_setzero_pd();
+        rr = _mm512_fmadd_pd(rk512_0, rd0, rr);
+        rr = _mm512_fmadd_pd(rk512_1, rd1, rr);
+        rr = _mm512_fmadd_pd(rk512_2, rd2, rr);
+        rr = _mm512_fmadd_pd(rk512_3, rd3, rr);
+        _mm512_storeu_pd(&o[i], rr);
+        i += 8;
+    } else if (nd > 15) {     // 8-way processing if (24 > data lines > 15), half preload
+        __m512d rd0;
+        __m512d rdt = _mm512_loadu_pd(&d[0]);
+        for (i = 0; i < nd - (nd % 8) - 8; i += 8) {
+            rd0 = rdt;
+            rdt = _mm512_loadu_pd(&d[i + 8]);
+            __m512d rd1 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2, 0, 1), rdt);
+            __m512d rd2 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2), rdt);
+            __m512d rd3 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0,10, 0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3), rdt);
+
+            __m512d rr = _mm512_setzero_pd();
+            rr = _mm512_fmadd_pd(rk512_0, rd0, rr);
+            rr = _mm512_fmadd_pd(rk512_1, rd1, rr);
+            rr = _mm512_fmadd_pd(rk512_2, rd2, rr);
+            rr = _mm512_fmadd_pd(rk512_3, rd3, rr);
+            _mm512_storeu_pd(&o[i], rr);
+        }
+
+        // 8-way processing for the remaining 8~15
+        rd0 = rdt;
+        __m256d rd_remain_xx10 = _mm256_castpd128_pd256(_mm_loadu_pd(&d[i + 8]));                                 // X|X|D1|D0
+        __m256d rd_remain_xx22 = _mm256_castpd128_pd256(_mm_loaddup_pd(&d[i + 10]));                              // X|X|D2|D2
+        rdt = _mm512_castpd256_pd512(_mm256_permute2f128_pd(rd_remain_xx10, rd_remain_xx22, 0x20)); // X|X|X|X|D2|D2|D1|D0
+        __m512d rd1 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2, 0, 1), rdt);
+        __m512d rd2 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2), rdt);
+        __m512d rd3 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0,10, 0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3), rdt);
+
+        __m512d rr = _mm512_setzero_pd();
+        rr = _mm512_fmadd_pd(rk512_0, rd0, rr);
+        rr = _mm512_fmadd_pd(rk512_1, rd1, rr);
+        rr = _mm512_fmadd_pd(rk512_2, rd2, rr);
+        rr = _mm512_fmadd_pd(rk512_3, rd3, rr);
+        _mm512_storeu_pd(&o[i], rr);
+        i += 8;
+    } else if (nd > 7) {        // 8-way processing if (16 > data lines > 7), no preload
+        __m512d rd0 = _mm512_loadu_pd(&d[0]);
+        __m256d rd_remain_xx10 = _mm256_castpd128_pd256(_mm_loadu_pd(&d[i + 8]));                                 // X|X|D1|D0
+        __m256d rd_remain_xx22 = _mm256_castpd128_pd256(_mm_loaddup_pd(&d[i + 10]));                              // X|X|D2|D2
+        __m512d rdt = _mm512_castpd256_pd512(_mm256_permute2f128_pd(rd_remain_xx10, rd_remain_xx22, 0x20)); // X|X|X|X|D2|D2|D1|D0
+        __m512d rd1 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2, 0, 1), rdt);
+        __m512d rd2 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3, 0, 2), rdt);
+        __m512d rd3 = _mm512_permutex2var_pd(rd0, _mm512_set_epi32(0,10, 0, 9, 0, 8, 0, 7, 0, 6, 0, 5, 0, 4, 0, 3), rdt);
+
+        __m512d rr = _mm512_setzero_pd();
+        rr = _mm512_fmadd_pd(rk512_0, rd0, rr);
+        rr = _mm512_fmadd_pd(rk512_1, rd1, rr);
+        rr = _mm512_fmadd_pd(rk512_2, rd2, rr);
+        rr = _mm512_fmadd_pd(rk512_3, rd3, rr);
+        _mm512_storeu_pd(&o[i], rr);
+        i += 8;
+    }
+
+    // 4-way processing if remaining lines > 3
+    if (nd % 8 > 3) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        __m256d rd3 = _mm256_loadu_pd(&d[i + 3]);
+        __m256d rk0 = _mm512_castpd512_pd256(rk512_0);
+        __m256d rk1 = _mm512_castpd512_pd256(rk512_1);
+        __m256d rk2 = _mm512_castpd512_pd256(rk512_2);
+        __m256d rk3 = _mm512_castpd512_pd256(rk512_3);
+        rr = _mm256_fmadd_pd(rk0, rd0, rr);
+        rr = _mm256_fmadd_pd(rk1, rd1, rr);
+        rr = _mm256_fmadd_pd(rk2, rd2, rr);
+        rr = _mm256_fmadd_pd(rk3, rd3, rr);
+        _mm256_storeu_pd(&o[i], rr);
+        i += 4;
+    }
+
+    // 2-way processing if remaining lines > 1
+    if (nd % 4 > 1) {
+        __m128d rr;
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d xy0 = _mm256_mul_pd(rk, rd0);
+        __m256d xy1 = _mm256_mul_pd(rk, rd1);
+        __m256d tmpAdd0 = _mm256_hadd_pd(xy0, xy1);
+        __m128d hi_tmpAdd0 = _mm256_extractf128_pd(tmpAdd0, 1);
+        __m128d lo_tmpAdd0  = _mm256_castpd256_pd128(tmpAdd0);
+        rr = _mm_add_pd(hi_tmpAdd0, lo_tmpAdd0);
+        _mm_storeu_pd(&o[i], rr);
+    }
+
+    // Processing the remaining 1 data line
+    if (nd % 2 == 1) {
+        i = nd - 1;
+        __m128d rr;
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d xy = _mm256_mul_pd(rk, rd0);
+        __m128d lo_xy  = _mm256_castpd256_pd128(xy);
+        __m128d hi_xy = _mm256_extractf128_pd(xy, 1);
+        __m128d tmpAdd0 =   _mm_add_pd(lo_xy, hi_xy);
+        __m128d lo_tmpAdd0 = _mm_shuffle_pd(tmpAdd0, tmpAdd0, 0x01);
+        rr = _mm_add_pd(tmpAdd0, lo_tmpAdd0);
+        _mm_store_sd(&o[i], rr);
+    }
+    return 1;
+}
+
+static int
+_sc_vectorized_k5(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+    __m256d rk_3210 = _mm256_loadu_pd(&k[0]);         // K3|K2|K1|K0
+    __m128d rt_10 = _mm256_castpd256_pd128(rk_3210);  // K1|K0
+    __m128d rt_32 = _mm_loadu_pd(&k[2]);              // K3|K2
+    __m128d rt_01 = _mm_permute_pd(rt_10, 0x1);       // K0|K1
+    __m128d rt_23 = _mm_permute_pd(rt_32, 0x1);       // K2|K3
+    __m128d rk_4 = _mm_set_sd(k[4]);                  //  0|K4
+
+    __m512d rk0 = _mm512_broadcastsd_pd(rt_10);       // K0|K0|K0|K0|K0|K0|K0|K0
+    __m512d rk1 = _mm512_broadcastsd_pd(rt_01);       // K1|K1|K1|K1|K1|K1|K1|K1
+    __m512d rk2 = _mm512_broadcastsd_pd(rt_32);       // K2|K2|K2|K2|K2|K2|K2|K2
+    __m512d rk3 = _mm512_broadcastsd_pd(rt_23);       // K3|K3|K3|K3|K3|K3|K3|K3
+    __m512d rk4 = _mm512_broadcastsd_pd(rk_4);        // K4|K4|K4|K4|K4|K4|K4|K4
+
+
+    // 8-way processing, no preload
+    for (i = 0; i < nd - (nd % 8); i += 8) {
+        __m512d rr = _mm512_setzero_pd();
+        __m512d rd0 = _mm512_loadu_pd(&d[i]);
+        __m512d rd1 = _mm512_loadu_pd(&d[i + 1]);
+        __m512d rd2 = _mm512_loadu_pd(&d[i + 2]);
+        __m512d rd3 = _mm512_loadu_pd(&d[i + 3]);
+        __m512d rd4 = _mm512_loadu_pd(&d[i + 4]);
+        rr = _mm512_fmadd_pd(rk0, rd0, rr);
+        rr = _mm512_fmadd_pd(rk1, rd1, rr);
+        rr = _mm512_fmadd_pd(rk2, rd2, rr);
+        rr = _mm512_fmadd_pd(rk3, rd3, rr);
+        rr = _mm512_fmadd_pd(rk4, rd4, rr);
+        _mm512_storeu_pd(&o[i], rr);
+    }
+
+    // 4-way processing, no preload
+    for (; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        __m256d rd3 = _mm256_loadu_pd(&d[i + 3]);
+        __m256d rd4 = _mm256_loadu_pd(&d[i + 4]);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk0), rd0, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk1), rd1, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk2), rd2, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk3), rd3, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk4), rd4, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    for (; i < nd; i++) {
+        __m128d rr;
+        __m256d rd_3210 = _mm256_loadu_pd(&d[i]);                    //  D3|D2|D1|D0
+        __m128d rd_4 = _mm_set_sd(d[i+4]);                           //   0|D4
+        __m256d rr_3210 = _mm256_mul_pd(rk_3210, rd_3210);
+        __m128d rr_3210_lo  = _mm256_castpd256_pd128(rr_3210);
+        __m128d rr_3210_hi = _mm256_extractf128_pd(rr_3210, 1);
+        __m128d rr_tmp =   _mm_add_pd(rr_3210_lo, rr_3210_hi);
+        __m128d rr_tmp1 = _mm_shuffle_pd(rr_tmp, rr_tmp, 0x01);
+        rr_tmp1 = _mm_add_pd(rr_tmp, rr_tmp1);
+        rr = _mm_mul_pd(rk_4, rd_4);
+        rr = _mm_add_pd(rr_tmp1, rr);
+        _mm_store_sd(&o[i], rr);
+    }
+
+    return 1;
+}
+
+static int
+_sc_vectorized_k6(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+    __m256d rk_3210 = _mm256_loadu_pd(&k[0]);         // K3|K2|K1|K0
+    __m128d rt_10 = _mm256_castpd256_pd128(rk_3210);  // K1|K0
+    __m128d rt_32 = _mm_loadu_pd(&k[2]);              // K3|K2
+    __m128d rt_01 = _mm_permute_pd(rt_10, 0x1);       // K0|K1
+    __m128d rt_23 = _mm_permute_pd(rt_32, 0x1);       // K2|K3
+    __m128d rt_54 = _mm_loadu_pd(&k[4]);              // K5|K4
+    __m128d rt_45 = _mm_permute_pd(rt_54, 0x1);       // K4|K5
+
+    __m512d rk0 = _mm512_broadcastsd_pd(rt_10);       // K0|K0|K0|K0|K0|K0|K0|K0
+    __m512d rk1 = _mm512_broadcastsd_pd(rt_01);       // K1|K1|K1|K1|K1|K1|K1|K1
+    __m512d rk2 = _mm512_broadcastsd_pd(rt_32);       // K2|K2|K2|K2|K2|K2|K2|K2
+    __m512d rk3 = _mm512_broadcastsd_pd(rt_23);       // K3|K3|K3|K3|K3|K3|K3|K3
+    __m512d rk4 = _mm512_broadcastsd_pd(rt_54);       // K4|K4|K4|K4|K4|K4|K4|K4
+    __m512d rk5 = _mm512_broadcastsd_pd(rt_45);       // K5|K5|K5|K5|K5|K5|K5|K5
+
+    __m256d rk_0054 = _mm256_insertf128_pd(_mm256_castpd128_pd256(rt_54), _mm_setzero_pd(), 1);  //  0| 0|K5|K4
+    // Below equivalent is better but will only be support in GCC10+
+    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83250
+    //__m256d rk_0054 = _mm256_zextpd128_pd256(rt_54); //  0| 0|K5|K4
+
+    // 8-way processing, no preload
+    for (i = 0; i < nd - (nd % 8); i += 8) {
+        __m512d rr = _mm512_setzero_pd();
+        __m512d rd0 = _mm512_loadu_pd(&d[i]);
+        __m512d rd1 = _mm512_loadu_pd(&d[i + 1]);
+        __m512d rd2 = _mm512_loadu_pd(&d[i + 2]);
+        __m512d rd3 = _mm512_loadu_pd(&d[i + 3]);
+        __m512d rd4 = _mm512_loadu_pd(&d[i + 4]);
+        __m512d rd5 = _mm512_loadu_pd(&d[i + 5]);
+        rr = _mm512_fmadd_pd(rk0, rd0, rr);
+        rr = _mm512_fmadd_pd(rk1, rd1, rr);
+        rr = _mm512_fmadd_pd(rk2, rd2, rr);
+        rr = _mm512_fmadd_pd(rk3, rd3, rr);
+        rr = _mm512_fmadd_pd(rk4, rd4, rr);
+        rr = _mm512_fmadd_pd(rk5, rd5, rr);
+        _mm512_storeu_pd(&o[i], rr);
+    }
+
+    // 4-way processing, no preload
+    for (; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        __m256d rd3 = _mm256_loadu_pd(&d[i + 3]);
+        __m256d rd4 = _mm256_loadu_pd(&d[i + 4]);
+        __m256d rd5 = _mm256_loadu_pd(&d[i + 5]);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk0), rd0, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk1), rd1, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk2), rd2, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk3), rd3, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk4), rd4, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk5), rd5, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    for (; i < nd; i++) {
+        __m256d rd_3210 = _mm256_loadu_pd(&d[i]);                        // D3|D2|D1|D0
+        __m256d rd_xx54 = _mm256_castpd128_pd256(_mm_loadu_pd(&d[i+4])); // xx|xx|D5|D4
+
+        __m256d rr_3210 = _mm256_mul_pd(rk_3210, rd_3210);
+        __m256d rr_0054 = _mm256_mul_pd(rk_0054, rd_xx54);
+        __m256d rr_hadd = _mm256_hadd_pd(rr_3210, rr_0054);
+        __m128d rr_hi128 = _mm256_extractf128_pd(rr_hadd, 1);
+        __m128d rr_lo128 = _mm256_castpd256_pd128(rr_hadd);
+        __m128d rr_tmp1 = _mm_add_pd(rr_lo128, rr_hi128);
+        __m128d rr_tmp2   = _mm_unpackhi_pd(rr_lo128, rr_lo128);
+        __m128d rr = _mm_add_pd(rr_tmp1, rr_tmp2);
+
+        _mm_store_sd(&o[i], rr);
+    }
+
+    return 1;
+}
+
+static int
+_sc_vectorized_k7(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+    __m256d rk_3210 = _mm256_loadu_pd(&k[0]);                 // K3|K2|K1|K0
+    __m128d rt_10 = _mm256_castpd256_pd128(rk_3210);          // K1|K0
+    __m128d rt_32 = _mm_loadu_pd(&k[2]);                      // K3|K2
+    __m128d rt_01 = _mm_permute_pd(rt_10, 0x1);               // K0|K1
+    __m128d rt_23 = _mm_permute_pd(rt_32, 0x1);               // K2|K3
+    __m128d rt_54 = _mm_loadu_pd(&k[4]);                      // K5|K4
+    __m128d rt_45 = _mm_permute_pd(rt_54, 0x1);               // K4|K5
+    __m128d rt_6 = _mm_set_sd(k[6]);                          //  0|K6
+
+    __m512d rk0 = _mm512_broadcastsd_pd(rt_10);               // K0|K0|K0|K0|K0|K0|K0|K0
+    __m512d rk1 = _mm512_broadcastsd_pd(rt_01);               // K1|K1|K1|K1|K1|K1|K1|K1
+    __m512d rk2 = _mm512_broadcastsd_pd(rt_32);               // K2|K2|K2|K2|K2|K2|K2|K2
+    __m512d rk3 = _mm512_broadcastsd_pd(rt_23);               // K3|K3|K3|K3|K3|K3|K3|K3
+    __m512d rk4 = _mm512_broadcastsd_pd(rt_54);               // K4|K4|K4|K4|K4|K4|K4|K4
+    __m512d rk5 = _mm512_broadcastsd_pd(rt_45);               // K5|K5|K5|K5|K5|K5|K5|K5
+    __m512d rk6 = _mm512_broadcastsd_pd(rt_6);                // K6|K6|K6|K6|K6|K6|K6|K6
+
+    __m256d rk_0654 = _mm256_insertf128_pd(_mm256_castpd128_pd256(rt_54), rt_6, 1);           //  0|K6|K5|K4
+
+    // 8-way processing, no preload
+    for (i = 0; i < nd - (nd % 8); i += 8) {
+        __m512d rr = _mm512_setzero_pd();
+        __m512d rd0 = _mm512_loadu_pd(&d[i]);
+        __m512d rd1 = _mm512_loadu_pd(&d[i + 1]);
+        __m512d rd2 = _mm512_loadu_pd(&d[i + 2]);
+        __m512d rd3 = _mm512_loadu_pd(&d[i + 3]);
+        __m512d rd4 = _mm512_loadu_pd(&d[i + 4]);
+        __m512d rd5 = _mm512_loadu_pd(&d[i + 5]);
+        __m512d rd6 = _mm512_loadu_pd(&d[i + 6]);
+        rr = _mm512_fmadd_pd(rk0, rd0, rr);
+        rr = _mm512_fmadd_pd(rk1, rd1, rr);
+        rr = _mm512_fmadd_pd(rk2, rd2, rr);
+        rr = _mm512_fmadd_pd(rk3, rd3, rr);
+        rr = _mm512_fmadd_pd(rk4, rd4, rr);
+        rr = _mm512_fmadd_pd(rk5, rd5, rr);
+        rr = _mm512_fmadd_pd(rk6, rd6, rr);
+        _mm512_storeu_pd(&o[i], rr);
+    }
+
+    // 4-way processing, no preload
+    for (; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        __m256d rd3 = _mm256_loadu_pd(&d[i + 3]);
+        __m256d rd4 = _mm256_loadu_pd(&d[i + 4]);
+        __m256d rd5 = _mm256_loadu_pd(&d[i + 5]);
+        __m256d rd6 = _mm256_loadu_pd(&d[i + 6]);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk0), rd0, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk1), rd1, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk2), rd2, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk3), rd3, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk4), rd4, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk5), rd5, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk6), rd6, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    for (; i < nd; i++) {
+        __m256d rd_3210 = _mm256_loadu_pd(&d[i]);                                  // D3|D2|D1|D0
+        __m256d rd_xx54 = _mm256_castpd128_pd256(_mm_loadu_pd(&d[i+4]));           // xx|xx|D5|D4
+        __m256d rd_0654 = _mm256_insertf128_pd(rd_xx54, _mm_set_sd(d[i+6]), 1);    //  0|D6|D5|D4
+
+        __m256d rr_3210 = _mm256_mul_pd(rk_3210, rd_3210);
+        __m256d rr_0654 = _mm256_mul_pd(rk_0654, rd_0654);
+        __m256d rr_hadd = _mm256_hadd_pd(rr_3210, rr_0654);
+        __m128d rr_hi128 = _mm256_extractf128_pd(rr_hadd, 1);
+        __m128d rr_lo128 = _mm256_castpd256_pd128(rr_hadd);
+        __m128d rr_tmp1 = _mm_add_pd(rr_lo128, rr_hi128);
+        __m128d rr_tmp2 = _mm_unpackhi_pd(rr_tmp1, rr_tmp1);
+        __m128d rr = _mm_add_pd(rr_tmp1, rr_tmp2);
+
+        _mm_store_sd(&o[i], rr);
+    }
+
+    return 1;
+}
+
+static int
+_sc_vectorized_k8(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+    __m256d rk_3210 = _mm256_loadu_pd(&k[0]);                 // K3|K2|K1|K0
+    __m128d rt_10 = _mm256_castpd256_pd128(rk_3210);          // K1|K0
+    __m128d rt_32 = _mm_loadu_pd(&k[2]);                      // K3|K2
+    __m128d rt_01 = _mm_permute_pd(rt_10, 0x1);               // K0|K1
+    __m128d rt_23 = _mm_permute_pd(rt_32, 0x1);               // K2|K3
+    __m256d rk_7654 = _mm256_loadu_pd(&k[4]);                 // K7|K6|K5|K4
+    __m128d rt_54 = _mm256_castpd256_pd128(rk_7654);          // K5|K4
+    __m128d rt_76 = _mm_loadu_pd(&k[6]);                      // K7|K6
+    __m128d rt_45 = _mm_permute_pd(rt_54, 0x1);               // K4|K5
+    __m128d rt_67 = _mm_permute_pd(rt_76, 0x1);               // K6|K7
+
+    __m512d rk0 = _mm512_broadcastsd_pd(rt_10);               // K0|K0|K0|K0|K0|K0|K0|K0
+    __m512d rk1 = _mm512_broadcastsd_pd(rt_01);               // K1|K1|K1|K1|K1|K1|K1|K1
+    __m512d rk2 = _mm512_broadcastsd_pd(rt_32);               // K2|K2|K2|K2|K2|K2|K2|K2
+    __m512d rk3 = _mm512_broadcastsd_pd(rt_23);               // K3|K3|K3|K3|K3|K3|K3|K3
+    __m512d rk4 = _mm512_broadcastsd_pd(rt_54);               // K4|K4|K4|K4|K4|K4|K4|K4
+    __m512d rk5 = _mm512_broadcastsd_pd(rt_45);               // K5|K5|K5|K5|K5|K5|K5|K5
+    __m512d rk6 = _mm512_broadcastsd_pd(rt_76);               // K6|K6|K6|K6|K6|K6|K6|K6
+    __m512d rk7 = _mm512_broadcastsd_pd(rt_67);               // K7|K7|K7|K7|K7|K7|K7|K7
+
+    // 8-way processing, no preload
+    for (i = 0; i < nd - (nd % 8); i += 8) {
+        __m512d rr = _mm512_setzero_pd();
+        __m512d rd0 = _mm512_loadu_pd(&d[i]);
+        __m512d rd1 = _mm512_loadu_pd(&d[i + 1]);
+        __m512d rd2 = _mm512_loadu_pd(&d[i + 2]);
+        __m512d rd3 = _mm512_loadu_pd(&d[i + 3]);
+        __m512d rd4 = _mm512_loadu_pd(&d[i + 4]);
+        __m512d rd5 = _mm512_loadu_pd(&d[i + 5]);
+        __m512d rd6 = _mm512_loadu_pd(&d[i + 6]);
+        __m512d rd7 = _mm512_loadu_pd(&d[i + 7]);
+        rr = _mm512_fmadd_pd(rk0, rd0, rr);
+        rr = _mm512_fmadd_pd(rk1, rd1, rr);
+        rr = _mm512_fmadd_pd(rk2, rd2, rr);
+        rr = _mm512_fmadd_pd(rk3, rd3, rr);
+        rr = _mm512_fmadd_pd(rk4, rd4, rr);
+        rr = _mm512_fmadd_pd(rk5, rd5, rr);
+        rr = _mm512_fmadd_pd(rk6, rd6, rr);
+        rr = _mm512_fmadd_pd(rk7, rd7, rr);
+        _mm512_storeu_pd(&o[i], rr);
+    }
+
+    // 4-way processing, no preload
+    for (; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        __m256d rd3 = _mm256_loadu_pd(&d[i + 3]);
+        __m256d rd4 = _mm256_loadu_pd(&d[i + 4]);
+        __m256d rd5 = _mm256_loadu_pd(&d[i + 5]);
+        __m256d rd6 = _mm256_loadu_pd(&d[i + 6]);
+        __m256d rd7 = _mm256_loadu_pd(&d[i + 7]);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk0), rd0, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk1), rd1, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk2), rd2, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk3), rd3, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk4), rd4, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk5), rd5, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk6), rd6, rr);
+        rr = _mm256_fmadd_pd(_mm512_castpd512_pd256(rk7), rd7, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    for (; i < nd; i++) {
+        __m256d rd_3210 = _mm256_loadu_pd(&d[i]);                       // D3|D2|D1|D0
+        __m256d rd_7654 = _mm256_loadu_pd(&d[i+4]);                     // D7|D6|D5|D4
+
+        __m256d rr_3210 = _mm256_mul_pd(rk_3210, rd_3210);
+        __m256d rr_7654 = _mm256_mul_pd(rk_7654, rd_7654);
+        __m256d rr_hadd = _mm256_hadd_pd(rr_3210, rr_7654);
+        __m128d rr_hi128 = _mm256_extractf128_pd(rr_hadd, 1);
+        __m128d rr_lo128 = _mm256_castpd256_pd128(rr_hadd);
+        __m128d rr_tmp1 = _mm_add_pd(rr_lo128, rr_hi128);
+        __m128d rr_tmp2 = _mm_unpackhi_pd(rr_tmp1, rr_tmp1);
+        __m128d rr = _mm_add_pd(rr_tmp1, rr_tmp2);
+
+        _mm_store_sd(&o[i], rr);
+    }
+
+    return 1;
+}
+#elif defined(__AVX2__) && defined(__FMA__)
+static int
+_sc_vectorized_k3(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+    __m128d rt_10 = _mm_loadu_pd(&k[0]);                     // K1|K0
+    __m128d rt_01 = _mm_permute_pd(rt_10, 0x1);              // K0|K1
+    __m128d rt_02 = _mm_set_sd(k[2]);                        //  0|K2
+
+    __m256d rk0 = _mm256_broadcastsd_pd(rt_10);              // K0|K0|K0|K0
+    __m256d rk1 = _mm256_broadcastsd_pd(rt_01);              // K1|K1|K1|K1
+    __m256d rk2 = _mm256_broadcastsd_pd(rt_02);              // K2|K2|K2|K2
+
+    __m256d rk_special = _mm256_insertf128_pd(_mm256_castpd128_pd256(rt_01), rt_02, 1);  // 0|K2|K0|K1
+    rk_special = _mm256_permute4x64_pd(rk_special, 0x87);    // K2|K1|K0|0
+
+    // 4-way processing, no preload
+    for (i = 0; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        rr = _mm256_fmadd_pd(rk0, rd0, rr);
+        rr = _mm256_fmadd_pd(rk1, rd1, rr);
+        rr = _mm256_fmadd_pd(rk2, rd2, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    for (; i < nd; i++) {
+        __m128d rr;
+        __m256d rd0 = _mm256_loadu_pd(&d[i-1]);              // rd0 is set to be PADD|PADD|D(i)|D(i-1)
+        __m256d rr_210 = _mm256_mul_pd(rk_special, rd0);
+        __m128d rr_210_lo = _mm256_castpd256_pd128(rr_210);
+        __m128d rr_210_hi = _mm256_extractf128_pd(rr_210, 1);
+        __m128d rr_tmp =   _mm_add_pd(rr_210_lo, rr_210_hi);
+        __m128d rr_tmp1 = _mm_shuffle_pd(rr_tmp, rr_tmp, 0x01);
+        rr = _mm_add_pd(rr_tmp, rr_tmp1);
+        _mm_store_sd(&o[i], rr);
+    }
+
+    return 1;
+}
+
+static int
+_sc_vectorized_k4(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+
+    __m256d rt0 = _mm256_broadcast_pd((__m128d*)&k[0]);      // K1|K0|K1|K0
+    __m256d rt1 = _mm256_broadcast_pd((__m128d*)&k[2]);      // K3|K2|K3|K2
+
+    __m256d rk0 = _mm256_permute_pd(rt0, 0x0);               // K0|K0|K0|K0
+    __m256d rk1 = _mm256_permute_pd(rt0, 0xf);               // K1|K1|K1|K1
+    __m256d rk2 = _mm256_permute_pd(rt1, 0x0);               // K2|K2|K2|K2
+    __m256d rk3 = _mm256_permute_pd(rt1, 0xf);               // K3|K3|K3|K3
+
+    __m256d rk = _mm256_permute2f128_pd(rt0, rt1, 0x30);     // K3|K2|K1|K0
+
+    // 4-way processing, no preload
+    for (i = 0; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        __m256d rd3 = _mm256_loadu_pd(&d[i + 3]);
+        rr = _mm256_fmadd_pd(rk0, rd0, rr);
+        rr = _mm256_fmadd_pd(rk1, rd1, rr);
+        rr = _mm256_fmadd_pd(rk2, rd2, rr);
+        rr = _mm256_fmadd_pd(rk3, rd3, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    // 2-way processing if remaining lines > 1
+    if (nd % 4 > 1) {
+        __m128d rr;
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d xy0 = _mm256_mul_pd(rk, rd0);
+        __m256d xy1 = _mm256_mul_pd(rk, rd1);
+        __m256d tmpAdd0 = _mm256_hadd_pd(xy0, xy1);
+        __m128d hi_tmpAdd0 = _mm256_extractf128_pd(tmpAdd0, 1);
+        __m128d lo_tmpAdd0  = _mm256_castpd256_pd128(tmpAdd0);
+        rr = _mm_add_pd(hi_tmpAdd0, lo_tmpAdd0);
+        _mm_storeu_pd(&o[i], rr);
+    }
+
+    // Processing the remaining 1 data line
+    if (nd % 2 == 1) {
+        i = nd - 1;
+        __m128d rr;
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d xy = _mm256_mul_pd(rk, rd0);
+        __m128d lo_xy  = _mm256_castpd256_pd128(xy);
+        __m128d hi_xy = _mm256_extractf128_pd(xy, 1);
+        __m128d tmpAdd0 =   _mm_add_pd(lo_xy, hi_xy);
+        __m128d lo_tmpAdd0 = _mm_shuffle_pd(tmpAdd0, tmpAdd0, 0x01);
+        rr = _mm_add_pd(tmpAdd0, lo_tmpAdd0);
+        _mm_store_sd(&o[i], rr);
+    }
+    return 1;
+}
+
+static int
+_sc_vectorized_k5(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+    __m256d rt0 = _mm256_broadcast_pd((__m128d*)&k[0]);                // K1|K0|K1|K0
+    __m256d rt1 = _mm256_broadcast_pd((__m128d*)&k[2]);                // K3|K2|K3|K2
+    __m128d rk_4 = _mm_set_sd(k[4]);                                   //  0|K4
+
+    __m256d rk0 = _mm256_permute_pd(rt0, 0x0);                         // K0|K0|K0|K0
+    __m256d rk1 = _mm256_permute_pd(rt0, 0xf);                         // K1|K1|K1|K1
+    __m256d rk2 = _mm256_permute_pd(rt1, 0x0);                         // K2|K2|K2|K2
+    __m256d rk3 = _mm256_permute_pd(rt1, 0xf);                         // K3|K3|K3|K3
+    __m256d rk4 = _mm256_broadcastsd_pd(rk_4);                         // K4|K4|K4|K4
+
+    __m256d rk_3210 = _mm256_permute2f128_pd(rt0, rt1, 0x30);          // K3|K2|K1|K0
+
+    // 4-way processing, no preload
+    for (i = 0; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        __m256d rd3 = _mm256_loadu_pd(&d[i + 3]);
+        __m256d rd4 = _mm256_loadu_pd(&d[i + 4]);
+        rr = _mm256_fmadd_pd(rk0, rd0, rr);
+        rr = _mm256_fmadd_pd(rk1, rd1, rr);
+        rr = _mm256_fmadd_pd(rk2, rd2, rr);
+        rr = _mm256_fmadd_pd(rk3, rd3, rr);
+        rr = _mm256_fmadd_pd(rk4, rd4, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    for (; i < nd; i++) {
+        __m128d rr;
+        __m256d rd_3210 = _mm256_loadu_pd(&d[i]);                      //  D3|D2|D1|D0
+        __m128d rd_4 = _mm_set_sd(d[i+4]);                             //   0|D4
+        __m256d rr_3210 = _mm256_mul_pd(rk_3210, rd_3210);
+        __m128d rr_3210_lo  = _mm256_castpd256_pd128(rr_3210);
+        __m128d rr_3210_hi = _mm256_extractf128_pd(rr_3210, 1);
+        __m128d rr_tmp =   _mm_add_pd(rr_3210_lo, rr_3210_hi);
+        __m128d rr_tmp1 = _mm_shuffle_pd(rr_tmp, rr_tmp, 0x01);
+        rr_tmp1 = _mm_add_pd(rr_tmp, rr_tmp1);
+        rr = _mm_mul_pd(rk_4, rd_4);
+        rr = _mm_add_pd(rr_tmp1, rr);
+        _mm_store_sd(&o[i], rr);
+    }
+
+    return 1;
+}
+
+static int
+_sc_vectorized_k6(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+    __m256d rt_1010 = _mm256_broadcast_pd((__m128d*)&k[0]);            // K1|K0|K1|K0
+    __m256d rt_3232 = _mm256_broadcast_pd((__m128d*)&k[2]);            // K3|K2|K3|K2
+    __m256d rt_5454 = _mm256_broadcast_pd((__m128d*)&k[4]);            // K5|K4|K5|K4
+
+    __m256d rk0 = _mm256_permute_pd(rt_1010, 0x0);                     // K0|K0|K0|K0
+    __m256d rk1 = _mm256_permute_pd(rt_1010, 0xf);                     // K1|K1|K1|K1
+    __m256d rk2 = _mm256_permute_pd(rt_3232, 0x0);                     // K2|K2|K2|K2
+    __m256d rk3 = _mm256_permute_pd(rt_3232, 0xf);                     // K3|K3|K3|K3
+    __m256d rk4 = _mm256_permute_pd(rt_5454, 0x0);                     // K4|K4|K4|K4
+    __m256d rk5 = _mm256_permute_pd(rt_5454, 0xf);                     // K5|K5|K5|K5
+
+    __m256d rk_3210 = _mm256_permute2f128_pd(rt_1010, rt_3232, 0x30);  // K3|K2|K1|K0
+
+    __m256d rk_0054 = _mm256_insertf128_pd(_mm256_castpd128_pd256(_mm_loadu_pd(&k[4])), _mm_setzero_pd(), 1);  //  0| 0|K5|K4
+    // Below equivalent is better but will only be support in GCC10+
+    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83250
+    //__m256d rk_0054 = _mm256_zextpd128_pd256(_mm_loadu_pd(&k[4]));   //  0| 0|K5|K4
+
+    // 4-way processing, no preload
+    for (i = 0; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        __m256d rd3 = _mm256_loadu_pd(&d[i + 3]);
+        __m256d rd4 = _mm256_loadu_pd(&d[i + 4]);
+        __m256d rd5 = _mm256_loadu_pd(&d[i + 5]);
+        rr = _mm256_fmadd_pd(rk0, rd0, rr);
+        rr = _mm256_fmadd_pd(rk1, rd1, rr);
+        rr = _mm256_fmadd_pd(rk2, rd2, rr);
+        rr = _mm256_fmadd_pd(rk3, rd3, rr);
+        rr = _mm256_fmadd_pd(rk4, rd4, rr);
+        rr = _mm256_fmadd_pd(rk5, rd5, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    for (; i < nd; i++) {
+        __m256d rd_3210 = _mm256_loadu_pd(&d[i]);                        // D3|D2|D1|D0
+        __m256d rd_xx54 = _mm256_castpd128_pd256(_mm_loadu_pd(&d[i+4])); // xx|xx|D5|D4
+
+        __m256d rr_3210 = _mm256_mul_pd(rk_3210, rd_3210);
+        __m256d rr_0054 = _mm256_mul_pd(rk_0054, rd_xx54);
+        __m256d rr_hadd = _mm256_hadd_pd(rr_3210, rr_0054);
+        __m128d rr_hi128 = _mm256_extractf128_pd(rr_hadd, 1);
+        __m128d rr_lo128 = _mm256_castpd256_pd128(rr_hadd);
+        __m128d rr_tmp1 = _mm_add_pd(rr_lo128, rr_hi128);
+        __m128d rr_tmp2   = _mm_unpackhi_pd(rr_lo128, rr_lo128);
+        __m128d rr = _mm_add_pd(rr_tmp1, rr_tmp2);
+
+        _mm_store_sd(&o[i], rr);
+    }
+
+    return 1;
+}
+
+static int
+_sc_vectorized_k7(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+    __m256d rt_1010 = _mm256_broadcast_pd((__m128d*)&k[0]);             // K1|K0|K1|K0
+    __m256d rt_3232 = _mm256_broadcast_pd((__m128d*)&k[2]);             // K3|K2|K3|K2
+    __m256d rt_5454 = _mm256_broadcast_pd((__m128d*)&k[4]);             // K5|K4|K5|K4
+    __m128d rt_6 = _mm_set_sd(k[6]);                                    //  0|K6
+
+    __m256d rk0 = _mm256_permute_pd(rt_1010, 0x0);                      // K0|K0|K0|K0
+    __m256d rk1 = _mm256_permute_pd(rt_1010, 0xf);                      // K1|K1|K1|K1
+    __m256d rk2 = _mm256_permute_pd(rt_3232, 0x0);                      // K2|K2|K2|K2
+    __m256d rk3 = _mm256_permute_pd(rt_3232, 0xf);                      // K3|K3|K3|K3
+    __m256d rk4 = _mm256_permute_pd(rt_5454, 0x0);                      // K4|K4|K4|K4
+    __m256d rk5 = _mm256_permute_pd(rt_5454, 0xf);                      // K5|K5|K5|K5
+    __m256d rk6 = _mm256_broadcastsd_pd(rt_6);                          // K6|K6|K6|K6
+
+    __m256d rk_3210 = _mm256_permute2f128_pd(rt_1010, rt_3232, 0x30);   // K3|K2|K1|K0
+    __m256d rk_0654 = _mm256_insertf128_pd(rt_5454, rt_6, 1);           //  0|K6|K5|K4
+
+    // 4-way processing, no preload
+    for (i = 0; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        __m256d rd3 = _mm256_loadu_pd(&d[i + 3]);
+        __m256d rd4 = _mm256_loadu_pd(&d[i + 4]);
+        __m256d rd5 = _mm256_loadu_pd(&d[i + 5]);
+        __m256d rd6 = _mm256_loadu_pd(&d[i + 6]);
+        rr = _mm256_fmadd_pd(rk0, rd0, rr);
+        rr = _mm256_fmadd_pd(rk1, rd1, rr);
+        rr = _mm256_fmadd_pd(rk2, rd2, rr);
+        rr = _mm256_fmadd_pd(rk3, rd3, rr);
+        rr = _mm256_fmadd_pd(rk4, rd4, rr);
+        rr = _mm256_fmadd_pd(rk5, rd5, rr);
+        rr = _mm256_fmadd_pd(rk6, rd6, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    for (; i < nd; i++) {
+        __m256d rd_3210 = _mm256_loadu_pd(&d[i]);                                  // D3|D2|D1|D0
+        __m256d rd_xx54 = _mm256_castpd128_pd256(_mm_loadu_pd(&d[i+4]));           // xx|xx|D5|D4
+        __m256d rd_0654 = _mm256_insertf128_pd(rd_xx54, _mm_set_sd(d[i+6]), 1);    //  0|D6|D5|D4
+
+        __m256d rr_3210 = _mm256_mul_pd(rk_3210, rd_3210);
+        __m256d rr_0654 = _mm256_mul_pd(rk_0654, rd_0654);
+        __m256d rr_hadd = _mm256_hadd_pd(rr_3210, rr_0654);
+        __m128d rr_hi128 = _mm256_extractf128_pd(rr_hadd, 1);
+        __m128d rr_lo128 = _mm256_castpd256_pd128(rr_hadd);
+        __m128d rr_tmp1 = _mm_add_pd(rr_lo128, rr_hi128);
+        __m128d rr_tmp2 = _mm_unpackhi_pd(rr_tmp1, rr_tmp1);
+        __m128d rr = _mm_add_pd(rr_tmp1, rr_tmp2);
+
+        _mm_store_sd(&o[i], rr);
+    }
+
+    return 1;
+}
+
+static int
+_sc_vectorized_k8(double * d, double *k, double *o, npy_uintp nd)
+{
+    npy_intp i;
+    __m256d rt_1010 = _mm256_broadcast_pd((__m128d*)&k[0]);             // K1|K0|K1|K0
+    __m256d rt_3232 = _mm256_broadcast_pd((__m128d*)&k[2]);             // K3|K2|K3|K2
+    __m256d rt_5454 = _mm256_broadcast_pd((__m128d*)&k[4]);             // K5|K4|K5|K4
+    __m256d rt_7676 = _mm256_broadcast_pd((__m128d*)&k[6]);             // K7|K6|K7|K6
+
+    __m256d rk0 = _mm256_permute_pd(rt_1010, 0x0);                      // K0|K0|K0|K0
+    __m256d rk1 = _mm256_permute_pd(rt_1010, 0xf);                      // K1|K1|K1|K1
+    __m256d rk2 = _mm256_permute_pd(rt_3232, 0x0);                      // K2|K2|K2|K2
+    __m256d rk3 = _mm256_permute_pd(rt_3232, 0xf);                      // K3|K3|K3|K3
+    __m256d rk4 = _mm256_permute_pd(rt_5454, 0x0);                      // K4|K4|K4|K4
+    __m256d rk5 = _mm256_permute_pd(rt_5454, 0xf);                      // K5|K5|K5|K5
+    __m256d rk6 = _mm256_permute_pd(rt_7676, 0x0);                      // K6|K6|K6|K6
+    __m256d rk7 = _mm256_permute_pd(rt_7676, 0xf);                      // K7|K7|K7|K7
+
+    __m256d rk_3210 = _mm256_permute2f128_pd(rt_1010, rt_3232, 0x30);   // K3|K2|K1|K0
+    __m256d rk_7654 = _mm256_permute2f128_pd(rt_5454, rt_7676, 0x30);   // K7|K6|K5|K4
+
+    // 4-way processing, no preload
+    for (i = 0; i < nd - (nd % 4); i += 4) {
+        __m256d rr = _mm256_setzero_pd();
+        __m256d rd0 = _mm256_loadu_pd(&d[i]);
+        __m256d rd1 = _mm256_loadu_pd(&d[i + 1]);
+        __m256d rd2 = _mm256_loadu_pd(&d[i + 2]);
+        __m256d rd3 = _mm256_loadu_pd(&d[i + 3]);
+        __m256d rd4 = _mm256_loadu_pd(&d[i + 4]);
+        __m256d rd5 = _mm256_loadu_pd(&d[i + 5]);
+        __m256d rd6 = _mm256_loadu_pd(&d[i + 6]);
+        __m256d rd7 = _mm256_loadu_pd(&d[i + 7]);
+        rr = _mm256_fmadd_pd(rk0, rd0, rr);
+        rr = _mm256_fmadd_pd(rk1, rd1, rr);
+        rr = _mm256_fmadd_pd(rk2, rd2, rr);
+        rr = _mm256_fmadd_pd(rk3, rd3, rr);
+        rr = _mm256_fmadd_pd(rk4, rd4, rr);
+        rr = _mm256_fmadd_pd(rk5, rd5, rr);
+        rr = _mm256_fmadd_pd(rk6, rd6, rr);
+        rr = _mm256_fmadd_pd(rk7, rd7, rr);
+        _mm256_storeu_pd(&o[i], rr);
+    }
+
+    for (; i < nd; i++) {
+        __m256d rd_3210 = _mm256_loadu_pd(&d[i]);                       // D3|D2|D1|D0
+        __m256d rd_7654 = _mm256_loadu_pd(&d[i+4]);                     // D7|D6|D5|D4
+
+        __m256d rr_3210 = _mm256_mul_pd(rk_3210, rd_3210);
+        __m256d rr_7654 = _mm256_mul_pd(rk_7654, rd_7654);
+        __m256d rr_hadd = _mm256_hadd_pd(rr_3210, rr_7654);
+        __m128d rr_hi128 = _mm256_extractf128_pd(rr_hadd, 1);
+        __m128d rr_lo128 = _mm256_castpd256_pd128(rr_hadd);
+        __m128d rr_tmp1 = _mm_add_pd(rr_lo128, rr_hi128);
+        __m128d rr_tmp2 = _mm_unpackhi_pd(rr_tmp1, rr_tmp1);
+        __m128d rr = _mm_add_pd(rr_tmp1, rr_tmp2);
+
+        _mm_store_sd(&o[i], rr);
+    }
+
+    return 1;
+}
+#endif
+
 /*
  * Compute correlation of data with with small kernels
  * Calling a BLAS dot product for the inner loop of the correlation is overkill
@@ -4005,6 +4879,24 @@ small_correlate(const char * d_, npy_intp dstride,
     if (nk > 11 || dtype != ktype) {
         return 0;
     }
+
+#if defined(__AVX512F__) || (defined(__AVX2__) && defined(__FMA__))
+    if (nd >=2 && dtype==NPY_DOUBLE && dstride==sizeof(double) && kstride==sizeof(double) && ostride==sizeof(double)) {
+        if (nk == 3) {
+            return _sc_vectorized_k3((double*)d_, (double*)k_, (double*)out_, (npy_uintp)nd);
+        } else if (nk == 4) {
+            return _sc_vectorized_k4((double*)d_, (double*)k_, (double*)out_, (npy_uintp)nd);
+        } else if (nk == 5) {
+            return _sc_vectorized_k5((double*)d_, (double*)k_, (double*)out_, (npy_uintp)nd);
+	} else if (nk == 6) {
+            return _sc_vectorized_k6((double*)d_, (double*)k_, (double*)out_, (npy_uintp)nd);
+	} else if (nk == 7) {
+            return _sc_vectorized_k7((double*)d_, (double*)k_, (double*)out_, (npy_uintp)nd);
+	} else if (nk == 8) {
+            return _sc_vectorized_k8((double*)d_, (double*)k_, (double*)out_, (npy_uintp)nd);
+        }
+    }
+#endif
 
     switch (dtype) {
 /**begin repeat
