@@ -3517,7 +3517,7 @@ cdef class RandomState:
         # Convert to int64, if necessary, to use int64 infrastructure
         ongood = ongood.astype(np.int64)
         onbad = onbad.astype(np.int64)
-        onbad = onbad.astype(np.int64)
+        onsample = onsample.astype(np.int64)
         out = discrete_broadcast_iii(&legacy_random_hypergeometric,&self._bitgen, size, self.lock,
                                      ongood, 'ngood', CONS_NON_NEGATIVE,
                                      onbad, 'nbad', CONS_NON_NEGATIVE,
