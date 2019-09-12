@@ -908,7 +908,7 @@ parse_ufunc_keywords(PyUFuncObject *ufunc, PyObject *kwds, PyObject **kwnames, .
     typedef int converter(PyObject *, void *);
 
     while (PyDict_Next(kwds, &pos, &key, &value)) {
-        int i;
+        npy_intp i;
         converter *convert;
         void *output = NULL;
         npy_intp index = locate_key(kwnames, key);
@@ -4053,14 +4053,14 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     int *op_axes[3] = {op_axes_arrays[0], op_axes_arrays[1],
                             op_axes_arrays[2]};
     npy_uint32 op_flags[3];
-    int i, idim, ndim, otype_final;
+    int idim, ndim, otype_final;
     int need_outer_iterator = 0;
 
     NpyIter *iter = NULL;
 
     /* The reduceat indices - ind must be validated outside this call */
     npy_intp *reduceat_ind;
-    npy_intp ind_size, red_axis_size;
+    npy_intp i, ind_size, red_axis_size;
     /* The selected inner loop */
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
@@ -4146,7 +4146,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 #endif
 
     /* Set up the op_axes for the outer loop */
-    for (i = 0, idim = 0; idim < ndim; ++idim) {
+    for (idim = 0; idim < ndim; ++idim) {
         /* Use the i-th iteration dimension to match up ind */
         if (idim == axis) {
             op_axes_arrays[0][idim] = axis;
