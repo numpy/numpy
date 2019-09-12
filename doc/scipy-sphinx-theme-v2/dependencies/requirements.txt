@@ -1,0 +1,7 @@
+sphinxcontrib-httpdomain
+sphinx
+matplotlib
+setuptools
+virtualenv
+numpydoc
+wheel

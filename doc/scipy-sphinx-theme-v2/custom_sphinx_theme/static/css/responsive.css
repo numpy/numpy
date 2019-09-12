@@ -1,0 +1,177 @@
+/* various device */
+
+/* Smartphones (portrait and landscape) ----------- */
+@media only screen
+and (min-device-width : 320px)
+and (max-device-width : 480px) {
+/* Styles */
+  .wy-nav-content{
+    max-width: 100%;
+  }
+
+  .wy-nav-top {
+    display: none;
+  }
+
+  .wy-nav-side{
+    display: none;
+  }
+}
+
+/* Smartphones (landscape) ----------- */
+@media only screen
+and (min-width : 321px) {
+/* Styles */
+  .wy-nav-content{
+    max-width: 100%;
+  }
+
+}
+
+/* Smartphones (portrait) ----------- */
+@media only screen
+and (max-width : 320px) {
+/* Styles */
+  .wy-nav-content{
+    max-width: 100%;
+  }
+
+  .wy-nav-top {
+    display: none;
+  }
+
+  .wy-nav-side{
+    display: none;
+  }
+
+}
+
+/* iPads (portrait and landscape) ----------- */
+@media only screen
+and (min-device-width : 768px)
+and (max-device-width : 1024px) {
+/* Styles */
+  .wy-nav-content{
+    max-width: 100%;
+  }
+
+  .wy-nav-top {
+    display: none;
+  }
+
+  .wy-nav-side{
+    display: none;
+  }
+
+}
+
+/* iPads (landscape) ----------- */
+@media only screen
+and (min-device-width : 768px)
+and (max-device-width : 1024px)
+and (orientation : landscape) {
+/* Styles */
+  .wy-nav-content{
+    max-width: 100%;
+  }
+
+  .wy-nav-top {
+    display: none;
+  }
+
+  .wy-nav-side{
+    display: none;
+  }
+
+}
+
+/* iPads (portrait) ----------- */
+@media only screen
+and (min-device-width : 768px)
+and (max-device-width : 1024px)
+and (orientation : portrait) {
+/* Styles */
+  .wy-nav-content{
+    max-width: 100%;
+  }
+
+  .wy-nav-top {
+    display: none;
+  }
+
+  .wy-nav-side{
+    display: none;
+  }
+
+}
+
+/* Desktops and laptops ----------- */
+@media only screen
+and (min-width : 1224px) {
+
+}
+
+/* Large screens ----------- */
+@media only screen
+and (min-width : 1824px) {
+
+
+}
+
+/* iPhone 4 ----------- */
+@media
+only screen and (-webkit-min-device-pixel-ratio : 1.5),
+only screen and (min-device-pixel-ratio : 1.5) {
+/* Styles */
+
+
+}
+
+/*###Desktops, big landscape tablets and laptops(Large, Extra large)####*/
+@media screen and (min-width: 1024px){
+/*Style*/
+
+}
+
+@media screen and (min-width: 1440px){
+/*Style*/
+  .wy-nav-content{
+    max-width: 100%;
+    width: 65%;
+  }
+}
+
+/*###Tablet(medium)###*/
+@media screen and (min-width : 768px) and (max-width : 1023px){
+/*Style*/
+  .wy-nav-content{
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .wy-nav-top {
+    display: none;
+  }
+
+  .wy-nav-side{
+    display: none;
+  }
+
+}
+
+/*### Smartphones (portrait and landscape)(small)### */
+@media screen and (min-width : 0px) and (max-width : 767px){
+/*Style*/
+  .wy-nav-content{
+    max-width: 100%;
+  }
+
+  .wy-nav-top {
+    display: none;
+  }
+
+  .wy-nav-side{
+    display: none;
+  }
+
+}

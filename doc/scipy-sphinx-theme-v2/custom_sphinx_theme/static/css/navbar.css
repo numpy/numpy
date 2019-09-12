@@ -1,0 +1,182 @@
+.header-logo {
+  width: 7%;
+}
+
+
+  #sidenav-left-toggle-button{
+    display: none;
+  }
+/* Smartphones (portrait and landscape) ----------- */
+@media only screen
+and (min-device-width : 320px)
+and (max-device-width : 480px) {
+/* Styles */
+  .header-logo {
+    width: 7%;
+  }
+
+  #sidenav-left-toggle-button{
+    display: block;
+  }
+}
+
+/* Smartphones (landscape) ----------- */
+@media only screen
+and (min-width : 321px) {
+/* Styles */
+  .header-logo {
+    width: 7%;
+  }
+
+
+  #sidenav-left-toggle-button{
+    display: block;
+  }
+
+}
+
+/* Smartphones (portrait) ----------- */
+@media only screen
+and (max-width : 320px) {
+/* Styles */
+  .header-logo {
+    width: 7%;
+  }
+
+
+  #sidenav-left-toggle-button{
+    display: block;
+  }
+}
+
+/* iPads (portrait and landscape) ----------- */
+@media only screen
+and (min-device-width : 768px)
+and (max-device-width : 1024px) {
+/* Styles */
+  .header-logo {
+    width: 7%;
+  }
+
+
+  #sidenav-left-toggle-button{
+    display: block;
+  }
+
+}
+
+/* iPads (landscape) ----------- */
+@media only screen
+and (min-device-width : 768px)
+and (max-device-width : 1024px)
+and (orientation : landscape) {
+/* Styles */
+  .header-logo {
+    width: 7%;
+  }
+
+
+  #sidenav-left-toggle-button{
+    display: block;
+  }
+
+}
+
+/* iPads (portrait) ----------- */
+@media only screen
+and (min-device-width : 768px)
+and (max-device-width : 1024px)
+and (orientation : portrait) {
+/* Styles */
+  .header-logo {
+    width: 7%;
+  }
+
+
+  #sidenav-left-toggle-button{
+    display: block;
+  }
+
+}
+
+/* Desktops and laptops ----------- */
+@media only screen
+and (min-width : 1224px) {
+/* Styles */
+  .header-logo {
+    width: 7%;
+  }
+
+
+  #sidenav-left-toggle-button{
+    display: none;
+  }
+}
+
+/* Large screens ----------- */
+@media only screen
+and (min-width : 1824px) {
+/* Styles */
+  .header-logo {
+    width: 7%;
+  }
+
+
+  #sidenav-left-toggle-button{
+    display: none;
+  }
+}
+
+/* iPhone 4 ----------- */
+@media
+only screen and (-webkit-min-device-pixel-ratio : 1.5),
+only screen and (min-device-pixel-ratio : 1.5) {
+/* Styles */
+  .header-logo {
+    width: 7%;
+  }
+}
+
+/*###Desktops, big landscape tablets and laptops(Large, Extra large)####*/
+/*@media screen and (min-width: 1024px){
+  .header-logo {
+    width: 7%;
+  }
+
+
+  #sidenav-left-toggle-button{
+    display: none;
+  }
+}*/
+
+/*###Tablet(medium)###*/
+/*@media screen and (min-width : 768px) and (max-width : 1023px){
+  .header-logo {
+    width: 13%;
+  }
+
+
+  #sidenav-left-toggle-button{
+    display: none;
+  }
+
+}*/
+
+/*### Smartphones (portrait and landscape)(small)### */
+@media screen and (min-width : 0px) and (max-width : 767px){
+/*Style*/
+  .header-logo {
+    width: 25%;
+  }
+
+  #sidenav-left-toggle-button{
+    display: block;
+  }
+
+}
+
+.btn-primary-outline {
+  background-color: transparent;
+  border-color: #ccc;
+  color: black;
+}

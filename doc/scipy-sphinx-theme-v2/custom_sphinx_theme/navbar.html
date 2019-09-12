@@ -1,0 +1,25 @@
+<!-- navbar -->
+<nav class="navbar navbar-expand-md navbar-light">
+    <a class="navbar-brand navbar-left header-logo" href="{{ theme_variables.external_urls['home'] }}"><img src="{{ pathto('_static/images/numpy_logo.svg', 1) }}"></a>
+    <button type="button" class="navbar-toggler bg-light" data-toggle="collapse" data-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="nav">
+        <ul class="nav navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link text-dark font-weight-bold px-3" href="{{ theme_variables.external_urls['quick_start'] }}">Quick Start</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark font-weight-bold px-3" href="{{ theme_variables.external_urls['documentation'] }}">Documentation</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark font-weight-bold px-3" href="{{ theme_variables.external_urls['neps'] }}">NumPy Enhancement Proposals (NEPs)</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+    <!-- mobile device -->
+    <div id="sidenav-left-toggle-button">
+    <a href="#mobile-sidenav-left" class="btn btn-primary btn-lg btn-block btn-primary-outline"  data-toggle="collapse"><span><i class="fa fa-arrow-circle-down"></i></span>Table of content</a>
+    </div>

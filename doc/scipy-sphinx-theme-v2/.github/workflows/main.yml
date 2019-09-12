@@ -1,0 +1,57 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - master
+
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Test run
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - macOS-latest
+          - ubuntu-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: run test
+        env:
+          REF: ${{ github.ref}}
+        run: |
+          echo Checking github env variables:
+          echo ${{ github.actor }}
+          echo ${{ github.event_name }}
+          echo ${{ github.sha }}
+          echo ${REF}
+          IFS='/' read -r -a array <<< "$REF";
+          echo PR number is :
+          echo "${array[2]}";
+  deploy:
+    name: Deploy on surge
+    runs-on: macOS-latest
+    strategy:
+      matrix:
+        node-version:
+          - 10
+        python-version:
+          - 3.7
+    steps:
+      - uses: actions/checkout@master
+      - name: deploy in surge using grunt
+        env:
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN}}
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN}}
+          REF: ${{ github.ref}}
+        run: |
+          sudo npm install -g grunt-cli
+          sudo pip install -r dependencies/requirements.txt
+          sudo npm install
+          IFS='/' read -r -a array <<< "$REF";
+          grunt deploy --domain=pr-${array[2]}-scipy-sphinx-theme-v2.surge.sh

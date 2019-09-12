@@ -1,0 +1,102 @@
+
+
+<script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable({{ 'true' if theme_sticky_navigation|tobool else 'false' }});
+      });
+</script>
+
+
+  <!-- bootstrap js -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script> -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+
+  {# Do not conflict with RTD insertion of analytics script #}
+  {% if not READTHEDOCS %}
+    {% if theme_analytics_id %}
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', '{{ theme_analytics_id }}', 'auto');
+    ga('send', 'pageview');
+    </script>
+
+    {% endif %}
+  {% endif %}
+
+  <!-- If user wants to add external js file -->
+  <!-- TODO :This is deprecated -  remove it -->
+  {% set script_files = script_files + theme_extra_scripts %}
+
+  {%- block footer %} {% endblock %}
+
+
+<script type="text/javascript">
+// If jquery is not used later on then remove the jquery and use
+// plain javascript : window.load() function instead of document.ready
+$(document).ready(function() {
+    $(".bg_loader").delay(500).fadeOut(500);
+    $(".bg_loader").css("display", "block");
+});
+</script>
+
+<!-- every anchor tag will do smooth scroll -->
+<script type="text/javascript">
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+        });
+    });
+});
+
+</script>
+
+<script>
+//Get the button
+var mybutton = document.getElementById('scrollTop');
+
+// When the user scrolls down 20px from the top of the document, show the button
+$(document).scroll(function() {
+    console.log('Scrolled to ' + $(this).scrollTop());
+  })
+
+$( window ).scroll(function() {
+  console.log('Scrolled to ' + $(this).scrollTop());
+});
+
+$("#scrollTop").on( 'scroll', function(){
+   console.log('Event Fired');
+});
+
+window.onscroll = function()  {
+  console.log(document.body.scrollTop );
+  console.log('Scroll event fired.......');
+  if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+    mybutton.style.display = "block";
+  } else {
+    mybutton.style.display = "none";
+  }
+}
+
+// When the user clicks on the button, scroll to the top of the document
+function topFunction() {
+  console.log(document.body.scrollTop );
+  console.log('Click event fired.......');
+  document.body.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+  $('html, body').animate({
+      scrollTop: 0
+    }, 800);
+
+}
+</script>
+
+

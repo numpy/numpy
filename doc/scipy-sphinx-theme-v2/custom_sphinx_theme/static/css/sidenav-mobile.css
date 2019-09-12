@@ -1,0 +1,210 @@
+.wy-nav-side-mobile{
+  display: none;
+}
+
+
+/* Smartphones (portrait and landscape) ----------- */
+@media only screen
+and (min-device-width : 320px)
+and (max-device-width : 480px) {
+/* Styles */
+  .wy-nav-side-mobile{
+    display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding: 5% 10%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    color: white;
+    background: #4dabcf;
+    z-index: 200;
+
+    position: fixed;
+    text-align: left;
+  }
+
+
+}
+
+/* Smartphones (landscape) ----------- */
+@media only screen
+and (min-width : 321px) {
+/* Styles */
+
+
+}
+
+/* Smartphones (portrait) ----------- */
+@media only screen
+and (max-width : 320px) {
+/* Styles */
+.wy-nav-side-mobile{
+  display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding: 5% 10%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    color: white;
+    background: #4dabcf;
+    z-index: 200;
+
+    position: fixed;
+    text-align: left;
+  }
+
+}
+
+/* iPads (portrait and landscape) ----------- */
+@media only screen
+and (min-device-width : 768px)
+and (max-device-width : 1024px) {
+/* Styles */
+.wy-nav-side-mobile{
+  display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding: 5% 10%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    color: white;
+    background: #4dabcf;
+    z-index: 200;
+
+    position: fixed;
+    text-align: left;
+  }
+
+}
+
+/* iPads (landscape) ----------- */
+@media only screen
+and (min-device-width : 768px)
+and (max-device-width : 1024px)
+and (orientation : landscape) {
+/* Styles */
+.wy-nav-side-mobile{
+    display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding: 5% 10%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    color: white;
+    background: #4dabcf;
+    z-index: 200;
+
+    position: fixed;
+    text-align: left;
+  }
+
+}
+
+/* iPads (portrait) ----------- */
+@media only screen
+and (min-device-width : 768px)
+and (max-device-width : 1024px)
+and (orientation : portrait) {
+/* Styles */
+.wy-nav-side-mobile{
+    display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding: 5% 10%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    color: white;
+    background: #4dabcf;
+    z-index: 200;
+
+    position: fixed;
+    text-align: left;
+  }
+
+}
+
+/* Desktops and laptops ----------- */
+@media only screen
+and (min-width : 1224px) {
+/* Styles */
+
+
+}
+
+/* Large screens ----------- */
+@media only screen
+and (min-width : 1824px) {
+/* Styles */
+
+
+}
+
+/* iPhone 4 ----------- */
+@media
+only screen and (-webkit-min-device-pixel-ratio : 1.5),
+only screen and (min-device-pixel-ratio : 1.5) {
+/* Styles */
+
+
+}
+
+/*###Desktops, big landscape tablets and laptops(Large, Extra large)####*/
+@media screen and (min-width: 1024px){
+/*Style*/
+
+
+}
+
+/*###Tablet(medium)###*/
+@media screen and (min-width : 768px) and (max-width : 1023px){
+/*Style*/
+  .wy-nav-side-mobile{
+    display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding: 5% 10%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    color: white;
+    background: #4dabcf;
+    z-index: 200;
+
+    position: fixed;
+    text-align: left;
+  }
+
+}
+
+/*### Smartphones (portrait and landscape)(small)### */
+@media screen and (min-width : 0px) and (max-width : 767px){
+/*Style*/
+  .wy-nav-side-mobile{
+    display: block;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding: 5% 10%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    color: white;
+    background: #4dabcf;
+    z-index: 200;
+
+    position: fixed;
+    text-align: left;
+  }
+
+}

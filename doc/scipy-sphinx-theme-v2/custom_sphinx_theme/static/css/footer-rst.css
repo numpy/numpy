@@ -1,0 +1,20 @@
+.footer-rst{
+  bottom: 0;
+}
+
+html{min-height:100%;
+  scroll-behavior: smooth;
+}
+body{
+    height:100%;  /*force the BODY element to match the height of the HTML element*/
+}
+#scrollTop {
+  position: fixed;
+  bottom: 20px;
+  right: 30px;
+  z-index: 99;
+}
+
+#scrollTop:hover {
+  background-color: #007bff;
+}
