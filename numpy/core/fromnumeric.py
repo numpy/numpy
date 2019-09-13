@@ -3129,11 +3129,10 @@ def around(a, decimals=0, out=None):
 
     ``np.around`` uses a fast but sometimes inexact algorithm to round
     floating-point datatypes. For positive `decimals` it is equivalent to
-    ``np.true_divide(np.rint(a * 10**decimals), 10**decimals)``, which is
-    inexact for large floating-point values or large values of `decimals` due
-    the inexact representation of decimal fractions in the IEEE floating point
-    standard [1]_ and errors introduced when scaling by powers of ten. For
-    instance, note the extra "1" in the following:
+    ``np.true_divide(np.rint(a * 10**decimals), 10**decimals)``, which has
+    error due to the inexact representation of decimal fractions in the IEEE
+    floating point standard [1]_ and errors introduced when scaling by powers
+    of ten. For instance, note the extra "1" in the following:
 
         >>> np.round(56294995342131.5, 3)
         56294995342131.51
@@ -3154,6 +3153,9 @@ def around(a, decimals=0, out=None):
 
         >>> round(56294995342131.5, 3)
         56294995342131.5
+        >>> np.round(16.055, 2), round(16.055, 2)  # equals 16.0549999999999997
+        (16.06, 16.05)
+
 
     References
     ----------
