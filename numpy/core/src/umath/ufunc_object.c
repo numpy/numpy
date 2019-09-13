@@ -4419,6 +4419,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     PyObject *obj_ind;
     PyArrayObject *indices = NULL;
     PyArray_Descr *otype = NULL;
+    PyObject *out_obj = NULL;
     PyArrayObject *out = NULL;
     int keepdims = 0;
     PyObject *initial = NULL;
@@ -4453,32 +4454,16 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                      _reduce_type[operation]);
         return NULL;
     }
-    /* if there is a tuple of 1 for `out` in kwds, unpack it */
-    if (kwds != NULL) {
-        PyObject *out_obj = PyDict_GetItemWithError(kwds, npy_um_str_out);
-        if (out_obj == NULL && PyErr_Occurred()){
-            return NULL;
-        }
-        else if (out_obj != NULL && PyTuple_CheckExact(out_obj)) {
-            if (PyTuple_GET_SIZE(out_obj) != 1) {
-                PyErr_SetString(PyExc_ValueError,
-                                "The 'out' tuple must have exactly one entry");
-                return NULL;
-            }
-            out_obj = PyTuple_GET_ITEM(out_obj, 0);
-            PyDict_SetItem(kwds, npy_um_str_out, out_obj);
-        }
-    }
 
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&:reduceat", reduceat_kwlist,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O:reduceat", reduceat_kwlist,
                                          &op,
                                          &obj_ind,
                                          &axes_in,
                                          PyArray_DescrConverter2, &otype,
-                                         PyArray_OutputConverter, &out)) {
+                                         &out_obj)) {
             goto fail;
         }
         indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype,
@@ -4488,27 +4473,46 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     else if (operation == UFUNC_ACCUMULATE) {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&:accumulate",
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O:accumulate",
                                          accumulate_kwlist,
                                          &op,
                                          &axes_in,
                                          PyArray_DescrConverter2, &otype,
-                                         PyArray_OutputConverter, &out)) {
+                                         &out_obj)) {
             goto fail;
         }
     }
     else {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&iOO&:reduce",
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&OiOO&:reduce",
                                          reduce_kwlist,
                                          &op,
                                          &axes_in,
                                          PyArray_DescrConverter2, &otype,
-                                         PyArray_OutputConverter, &out,
+                                         &out_obj,
                                          &keepdims, &initial,
                                          _wheremask_converter, &wheremask)) {
             goto fail;
         }
     }
+    /* Check for Ellipsis in out to mean no reduction to scalar */
+    if (out_obj == Py_Ellipsis) {
+        out = NULL;
+    }
+    else if (out_obj != NULL) {
+        /* if there is a tuple of 1 for `out` in kwds, unpack it */
+        if (PyTuple_CheckExact(out_obj)) {
+            if (PyTuple_GET_SIZE(out_obj) != 1) {
+                PyErr_SetString(PyExc_ValueError,
+                                "The 'out' tuple must have exactly one entry");
+                goto fail;
+            }
+            out_obj = PyTuple_GET_ITEM(out_obj, 0);
+        }
+        if (PyArray_OutputConverter(out_obj, &out) < 0) {
+            goto fail;
+        }
+    }
+
     /* Ensure input is an array */
     mp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0, NULL);
     if (mp == NULL) {
@@ -4682,7 +4686,18 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             }
         }
         else {
-            wrap = NULL;
+            /*
+             * Wrapping is not necessary due to the input array, but by default
+             * we will convert 0-D to scalar. `out=...` signals not to do that
+             * (which is signaled by setting wrap to None here).
+             */
+            if (out_obj == Py_Ellipsis) {
+                wrap = Py_None;
+                Py_INCREF(wrap);
+            }
+            else {
+                wrap = NULL;
+            }
         }
         return _apply_array_wrap(wrap, ret, NULL);
     }
