@@ -49,11 +49,11 @@ The :class:`MaskedArray` class
 
 .. class:: MaskedArray
 
-   A subclass of :class:`~numpy.ndarray` designed to manipulate numerical arrays with missing data.
+A subclass of :class:`~numpy.ndarray` designed to manipulate numerical arrays with missing data.
 
 
 
- An instance of :class:`MaskedArray` can be thought as the combination of several elements:
+An instance of :class:`MaskedArray` can be thought as the combination of several elements:
 
 * The :attr:`~MaskedArray.data`, as a regular :class:`numpy.ndarray` of any shape or datatype (the data).
 * A boolean :attr:`~numpy.ma.MaskedArray.mask` with the same shape as the data, where a ``True`` value indicates that the corresponding element of the data is invalid.
@@ -62,89 +62,26 @@ The :class:`MaskedArray` class
 
 
 
+.. _ma-attributes:
+
 Attributes and properties of masked arrays
 ------------------------------------------
 
 .. seealso:: :ref:`Array Attributes <arrays.ndarray.attributes>`
 
+.. autoattribute:: MaskedArray.data
 
-.. attribute:: MaskedArray.data
+.. autoattribute:: MaskedArray.mask
 
-   Returns the underlying data, as a view of the masked array.
-   If the underlying data is a subclass of :class:`numpy.ndarray`, it is
-   returned as such.
+.. autoattribute:: MaskedArray.recordmask
 
-      >>> x = ma.array(np.matrix([[1, 2], [3, 4]]), mask=[[0, 1], [1, 0]])
-      >>> x.data
-      matrix([[1, 2],
-              [3, 4]])
+.. autoattribute:: MaskedArray.fill_value
 
-   The type of the data can be accessed through the :attr:`baseclass`
-   attribute.
+.. autoattribute:: MaskedArray.baseclass
 
-.. attribute:: MaskedArray.mask
+.. autoattribute:: MaskedArray.sharedmask
 
-   Returns the underlying mask, as an array with the same shape and structure
-   as the data, but where all fields are atomically booleans.
-   A value of ``True`` indicates an invalid entry.
-
-
-.. attribute:: MaskedArray.recordmask
-
-   Returns the mask of the array if it has no named fields. For structured
-   arrays, returns a ndarray of booleans where entries are ``True`` if **all**
-   the fields are masked, ``False`` otherwise::
-
-      >>> x = ma.array([(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)],
-      ...         mask=[(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)],
-      ...        dtype=[('a', int), ('b', int)])
-      >>> x.recordmask
-      array([False, False,  True, False, False])
-
-
-.. attribute:: MaskedArray.fill_value
-
-   Returns the value used to fill the invalid entries of a masked array.
-   The value is either a scalar (if the masked array has no named fields),
-   or a 0-D ndarray with the same :attr:`dtype` as the masked array if it has
-   named fields.
-
-   The default filling value depends on the datatype of the array:
-
-   ========  ========
-   datatype  default
-   ========  ========
-   bool      True
-   int       999999
-   float     1.e20
-   complex   1.e20+0j
-   object    '?'
-   string    'N/A'
-   ========  ========
-
-
-
-.. attribute:: MaskedArray.baseclass
-
-   Returns the class of the underlying data.
-
-      >>> x =  ma.array(np.matrix([[1, 2], [3, 4]]), mask=[[0, 0], [1, 0]])
-      >>> x.baseclass
-      <class 'numpy.matrixlib.defmatrix.matrix'>
-
-
-.. attribute:: MaskedArray.sharedmask
-
-   Returns whether the mask of the array is shared between several masked arrays.
-   If this is the case, any modification to the mask of one array will be
-   propagated to the others.
-
-
-.. attribute:: MaskedArray.hardmask
-
-   Returns whether the mask is hard (``True``) or soft (``False``).
-   When the mask is hard, masked entries cannot be unmasked.
-
+.. autoattribute:: MaskedArray.hardmask
 
 As :class:`MaskedArray` is a subclass of :class:`~numpy.ndarray`, a masked array also inherits all the attributes and properties of a  :class:`~numpy.ndarray` instance.
 
@@ -184,10 +121,8 @@ Conversion
    :toctree: generated/
 
    MaskedArray.__float__
-   MaskedArray.__hex__
    MaskedArray.__int__
    MaskedArray.__long__
-   MaskedArray.__oct__
 
    MaskedArray.view
    MaskedArray.astype
@@ -311,7 +246,7 @@ Truth value of an array (:func:`bool()`):
 .. autosummary::
    :toctree: generated/
 
-   MaskedArray.__nonzero__
+   MaskedArray.__bool__
 
 
 Arithmetic:
@@ -328,7 +263,6 @@ Arithmetic:
    MaskedArray.__mul__
    MaskedArray.__rmul__
    MaskedArray.__div__
-   MaskedArray.__rdiv__
    MaskedArray.__truediv__
    MaskedArray.__rtruediv__
    MaskedArray.__floordiv__

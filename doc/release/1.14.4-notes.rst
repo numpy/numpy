@@ -19,7 +19,7 @@ values are now correct.
 
 Note that NumPy will error on import if it detects incorrect float32 `dot`
 results. This problem has been seen on the Mac when working in the Anaconda
-enviroment and is due to a subtle interaction between MKL and PyQt5.  It is not
+environment and is due to a subtle interaction between MKL and PyQt5.  It is not
 strictly a NumPy problem, but it is best that users be aware of it.  See the
 gh-8577 NumPy issue for more information.
 

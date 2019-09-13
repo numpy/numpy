@@ -374,7 +374,7 @@ A total of 438 pull requests were merged for this release.
 * `#10778 <https://github.com/numpy/numpy/pull/10778>`__: BUG: test, fix for missing flags['WRITEBACKIFCOPY'] key
 * `#10781 <https://github.com/numpy/numpy/pull/10781>`__: ENH: NEP index builder
 * `#10785 <https://github.com/numpy/numpy/pull/10785>`__: DOC: Fixed author name in reference to book
-* `#10786 <https://github.com/numpy/numpy/pull/10786>`__: ENH: Add "stablesort" option to inp.sort as an alias for "mergesort".
+* `#10786 <https://github.com/numpy/numpy/pull/10786>`__: ENH: Add "stable" option to np.sort as an alias for "mergesort".
 * `#10790 <https://github.com/numpy/numpy/pull/10790>`__: TST: Various fixes prior to switching to pytest
 * `#10795 <https://github.com/numpy/numpy/pull/10795>`__: BUG: Allow spaces in output string of einsum
 * `#10796 <https://github.com/numpy/numpy/pull/10796>`__: BUG: fix wrong inplace vectorization on overlapping arguments

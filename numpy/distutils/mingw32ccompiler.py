@@ -13,6 +13,7 @@ import os
 import sys
 import subprocess
 import re
+import textwrap
 
 # Overwrite certain distutils.ccompiler functions:
 import numpy.distutils.ccompiler
@@ -29,7 +30,6 @@ else:
 
 import distutils.cygwinccompiler
 from distutils.version import StrictVersion
-from numpy.distutils.ccompiler import gen_preprocess_options, gen_lib_options
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import get_build_version as get_build_msvc_version
 from distutils.errors import (DistutilsExecError, CompileError,
@@ -572,21 +572,21 @@ def msvc_manifest_xml(maj, min):
     # embedded in the binary...
     # This template was copied directly from the python 2.6 binary (using
     # strings.exe from mingw on python.exe).
-    template = """\
-<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
-    <security>
-      <requestedPrivileges>
-        <requestedExecutionLevel level="asInvoker" uiAccess="false"></requestedExecutionLevel>
-      </requestedPrivileges>
-    </security>
-  </trustInfo>
-  <dependency>
-    <dependentAssembly>
-      <assemblyIdentity type="win32" name="Microsoft.VC%(maj)d%(min)d.CRT" version="%(fullver)s" processorArchitecture="*" publicKeyToken="1fc8b3b9a1e18e3b"></assemblyIdentity>
-    </dependentAssembly>
-  </dependency>
-</assembly>"""
+    template = textwrap.dedent("""\
+        <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+          <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+            <security>
+              <requestedPrivileges>
+                <requestedExecutionLevel level="asInvoker" uiAccess="false"></requestedExecutionLevel>
+              </requestedPrivileges>
+            </security>
+          </trustInfo>
+          <dependency>
+            <dependentAssembly>
+              <assemblyIdentity type="win32" name="Microsoft.VC%(maj)d%(min)d.CRT" version="%(fullver)s" processorArchitecture="*" publicKeyToken="1fc8b3b9a1e18e3b"></assemblyIdentity>
+            </dependentAssembly>
+          </dependency>
+        </assembly>""")
 
     return template % {'fullver': fullver, 'maj': maj, 'min': min}
 

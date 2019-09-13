@@ -16,7 +16,7 @@ A universal function (or :term:`ufunc` for short) is a function that
 operates on :class:`ndarrays <ndarray>` in an element-by-element fashion,
 supporting :ref:`array broadcasting <ufuncs.broadcasting>`, :ref:`type
 casting <ufuncs.casting>`, and several other standard features. That
-is, a ufunc is a ":term:`vectorized`" wrapper for a function that
+is, a ufunc is a ":term:`vectorized <vectorization>`" wrapper for a function that
 takes a fixed number of specific inputs and produces a fixed number of
 specific outputs.
 
@@ -59,7 +59,7 @@ understood by four rules:
    entry in that dimension will be used for all calculations along
    that dimension. In other words, the stepping machinery of the
    :term:`ufunc` will simply not step along that dimension (the
-   :term:`stride` will be 0 for that dimension).
+   :ref:`stride <memory-layout>` will be 0 for that dimension).
 
 Broadcasting is used throughout NumPy to decide how to handle
 disparately shaped arrays; for example, all arithmetic operations (``+``,
@@ -70,7 +70,7 @@ arrays before operation.
 
 .. index:: broadcastable
 
-A set of arrays is called ":term:`broadcastable`" to the same shape if
+A set of arrays is called "broadcastable" to the same shape if
 the above rules produce a valid result, *i.e.*, one of the following
 is true:
 
@@ -118,7 +118,7 @@ all output arrays will be passed to the :obj:`~class.__array_prepare__` and
 the highest :obj:`~class.__array_priority__` of any other input to the
 universal function. The default :obj:`~class.__array_priority__` of the
 ndarray is 0.0, and the default :obj:`~class.__array_priority__` of a subtype
-is 1.0. Matrices have :obj:`~class.__array_priority__` equal to 10.0.
+is 0.0. Matrices have :obj:`~class.__array_priority__` equal to 10.0.
 
 All ufuncs can also take output arguments. If necessary, output will
 be cast to the data-type(s) of the provided output array(s). If a class
@@ -586,6 +586,7 @@ Math operations
     sign
     heaviside
     conj
+    conjugate
     exp
     exp2
     log

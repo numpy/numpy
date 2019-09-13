@@ -79,7 +79,7 @@ broadcast_error: {
         Py_DECREF(errmsg);
 
         return -1;
-   }
+    }
 }
 
 /* See array_assign.h for parameter documentation */
@@ -125,8 +125,12 @@ raw_array_is_aligned(int ndim, npy_intp *shape,
 
         return npy_is_aligned((void *)align_check, alignment);
     }
-    else {
+    else if (alignment == 1) {
         return 1;
+    }
+    else {
+        /* always return false for alignment == 0, which means cannot-be-aligned */
+        return 0;
     }
 }
 

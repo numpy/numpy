@@ -82,7 +82,7 @@
 /**begin repeat
  * #elsize = 1, 2, 4, 8, 16#
  * #elsize_half = 0, 1, 2, 4, 8#
- * #type = npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_uint128#
+ * #type = npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_uint64#
  */
 /**begin repeat1
  * #oper = strided_to_strided, strided_to_contig,
@@ -119,10 +119,10 @@ static void
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
                         NpyAuxData *NPY_UNUSED(data))
 {
-#if @is_aligned@ && @elsize@ != 16
+#if @is_aligned@
     /* sanity check */
-    assert(npy_is_aligned(dst, _ALIGN(@type@)));
-    assert(npy_is_aligned(src, _ALIGN(@type@)));
+    assert(N == 0 || npy_is_aligned(dst, _UINT_ALIGN(@type@)));
+    assert(N == 0 || npy_is_aligned(src, _UINT_ALIGN(@type@)));
 #endif
     /*printf("fn @prefix@_@oper@_size@elsize@\n");*/
     while (N > 0) {
@@ -201,8 +201,8 @@ static NPY_GCC_OPT_3 void
     }
 #if @is_aligned@ && @elsize@ != 16
     /* sanity check */
-    assert(npy_is_aligned(dst, _ALIGN(@type@)));
-    assert(npy_is_aligned(src, _ALIGN(@type@)));
+    assert(N == 0 || npy_is_aligned(dst, _UINT_ALIGN(@type@)));
+    assert(N == 0 || npy_is_aligned(src, _UINT_ALIGN(@type@)));
 #endif
 #if @elsize@ == 1 && @dst_contig@
     memset(dst, *src, N);
@@ -417,32 +417,31 @@ PyArray_GetStridedCopyFn(int aligned, npy_intp src_stride,
 #if !NPY_USE_UNALIGNED_ACCESS
     }
     else {
-        /* contiguous dst */
-        if (itemsize != 0 && dst_stride == itemsize) {
-            /* contiguous src */
-            if (itemsize != 0 && src_stride == itemsize) {
-                return &_contig_to_contig;
-            }
-            /* general src */
-            else {
-                switch (itemsize) {
-                    case 1:
-                        return &_aligned_strided_to_contig_size1;
+        if (itemsize != 0) {
+            if (dst_stride == itemsize) {
+                /* contiguous dst */
+                if (src_stride == itemsize) {
+                    /* contiguous src, dst */
+                    return &_contig_to_contig;
+                }
+                else {
+                    /* general src */
+                    switch (itemsize) {
+                        case 1:
+                            return &_aligned_strided_to_contig_size1;
 /**begin repeat
  * #elsize = 2, 4, 8, 16#
  */
-                    case @elsize@:
-                        return &_strided_to_contig_size@elsize@;
+                        case @elsize@:
+                            return &_strided_to_contig_size@elsize@;
 /**end repeat**/
+                    }
                 }
-            }
 
-            return &_strided_to_strided;
-        }
-        /* general dst */
-        else {
-            /* contiguous src */
-            if (itemsize != 0 && src_stride == itemsize) {
+                return &_strided_to_strided;
+            }
+            else if (src_stride == itemsize) {
+                /* contiguous src, general dst */
                 switch (itemsize) {
                     case 1:
                         return &_aligned_contig_to_strided_size1;
@@ -456,18 +455,18 @@ PyArray_GetStridedCopyFn(int aligned, npy_intp src_stride,
 
                 return &_strided_to_strided;
             }
-            /* general src */
-            else {
-                switch (itemsize) {
-                    case 1:
-                        return &_aligned_strided_to_strided_size1;
+        }
+        else {
+            /* general src, dst */
+            switch (itemsize) {
+                case 1:
+                    return &_aligned_strided_to_strided_size1;
 /**begin repeat
  * #elsize = 2, 4, 8, 16#
  */
-                    case @elsize@:
-                        return &_strided_to_strided_size@elsize@;
+                case @elsize@:
+                    return &_strided_to_strided_size@elsize@;
 /**end repeat**/
-                }
             }
         }
     }
@@ -592,7 +591,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
         /* contiguous dst */
         if (itemsize != 0 && dst_stride == itemsize) {
             /* contiguous src */
-            if (itemsize != 0 && src_stride == itemsize) {
+            if (src_stride == itemsize) {
                 switch (itemsize) {
 /**begin repeat1
  * #elsize = 2, 4, 8, 16#
@@ -808,12 +807,8 @@ static NPY_GCC_OPT_3 void
 
 #if @aligned@
    /* sanity check */
-#  if !@is_complex1@
-    assert(npy_is_aligned(src, _ALIGN(_TYPE1)));
-#  endif
-#  if !@is_complex2@
-    assert(npy_is_aligned(dst, _ALIGN(_TYPE2)));
-#  endif
+    assert(N == 0 || npy_is_aligned(src, _ALIGN(_TYPE1)));
+    assert(N == 0 || npy_is_aligned(dst, _ALIGN(_TYPE2)));
 #endif
 
     /*printf("@prefix@_cast_@name1@_to_@name2@\n");*/
@@ -1425,7 +1420,7 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
         while (itersize--) {
             char * self_ptr;
             npy_intp indval = *((npy_intp*)ind_ptr);
-            assert(npy_is_aligned(ind_ptr, _ALIGN(npy_intp)));
+            assert(npy_is_aligned(ind_ptr, _UINT_ALIGN(npy_intp)));
 #if @isget@
             if (check_and_adjust_index(&indval, fancy_dim, 0, _save) < 0 ) {
                 return -1;
@@ -1439,8 +1434,8 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 
 #if @isget@
 #if @elsize@
-            assert(npy_is_aligned(result_ptr, _ALIGN(@copytype@)));
-            assert(npy_is_aligned(self_ptr, _ALIGN(@copytype@)));
+            assert(npy_is_aligned(result_ptr, _UINT_ALIGN(@copytype@)));
+            assert(npy_is_aligned(self_ptr, _UINT_ALIGN(@copytype@)));
             *(@copytype@ *)result_ptr = *(@copytype@ *)self_ptr;
 #else
             copyswap(result_ptr, self_ptr, 0, self);
@@ -1448,8 +1443,8 @@ mapiter_trivial_@name@(PyArrayObject *self, PyArrayObject *ind,
 
 #else /* !@isget@ */
 #if @elsize@
-            assert(npy_is_aligned(result_ptr, _ALIGN(@copytype@)));
-            assert(npy_is_aligned(self_ptr, _ALIGN(@copytype@)));
+            assert(npy_is_aligned(result_ptr, _UINT_ALIGN(@copytype@)));
+            assert(npy_is_aligned(self_ptr, _UINT_ALIGN(@copytype@)));
             *(@copytype@ *)self_ptr = *(@copytype@ *)result_ptr;
 #else
             copyswap(self_ptr, result_ptr, 0, self);
@@ -1571,7 +1566,7 @@ mapiter_@name@(PyArrayMapIterObject *mit)
                         for (i=0; i < @numiter@; i++) {
                             npy_intp indval = *((npy_intp*)outer_ptrs[i]);
                             assert(npy_is_aligned(outer_ptrs[i],
-                                                  _ALIGN(npy_intp)));
+                                                  _UINT_ALIGN(npy_intp)));
 
 #if @isget@ && @one_iter@
                             if (check_and_adjust_index(&indval, fancy_dims[i],
@@ -1591,16 +1586,20 @@ mapiter_@name@(PyArrayMapIterObject *mit)
 
 #if @isget@
 #if @elsize@
-                        assert(npy_is_aligned(outer_ptrs[i], _ALIGN(@copytype@)));
-                        assert(npy_is_aligned(self_ptr, _ALIGN(@copytype@)));
+                        assert(npy_is_aligned(outer_ptrs[i],
+                                              _UINT_ALIGN(@copytype@)));
+                        assert(npy_is_aligned(self_ptr,
+                                              _UINT_ALIGN(@copytype@)));
                         *(@copytype@ *)(outer_ptrs[i]) = *(@copytype@ *)self_ptr;
 #else
                         copyswap(outer_ptrs[i], self_ptr, 0, array);
 #endif
 #else /* !@isget@ */
 #if @elsize@
-                        assert(npy_is_aligned(outer_ptrs[i], _ALIGN(@copytype@)));
-                        assert(npy_is_aligned(self_ptr, _ALIGN(@copytype@)));
+                        assert(npy_is_aligned(outer_ptrs[i],
+                               _UINT_ALIGN(@copytype@)));
+                        assert(npy_is_aligned(self_ptr,
+                               _UINT_ALIGN(@copytype@)));
                         *(@copytype@ *)self_ptr = *(@copytype@ *)(outer_ptrs[i]);
 #else
                         copyswap(self_ptr, outer_ptrs[i], 0, array);

@@ -436,7 +436,7 @@ Linear Algebra Equivalents
        ``a``
 
    * - ``rand(3,4)``
-     - ``random.rand(3,4)``
+     - ``random.rand(3,4)`` or ``random.random_sample((3, 4))``
      - random 3x4 matrix
 
    * - ``linspace(1,3,4)``
@@ -547,7 +547,7 @@ Linear Algebra Equivalents
      - eigenvalues and eigenvectors of ``a``
 
    * - ``[V,D]=eig(a,b)``
-     - ``V,D = np.linalg.eig(a,b)``
+     - ``D,V = scipy.linalg.eig(a,b)``
      - eigenvalues and eigenvectors of ``a``, ``b``
 
    * - ``[V,D]=eigs(a,k)``
@@ -693,19 +693,19 @@ this is just an example, not a statement of "best practices"):
 
 ::
 
-    # Make all numpy available via shorter 'num' prefix
-    import numpy as num
+    # Make all numpy available via shorter 'np' prefix
+    import numpy as np
     # Make all matlib functions accessible at the top level via M.func()
     import numpy.matlib as M
     # Make some matlib functions accessible directly at the top level via, e.g. rand(3,3)
     from numpy.matlib import rand,zeros,ones,empty,eye
     # Define a Hermitian function
     def hermitian(A, **kwargs):
-        return num.transpose(A,**kwargs).conj()
+        return np.transpose(A,**kwargs).conj()
     # Make some shortcuts for transpose,hermitian:
-    #    num.transpose(A) --> T(A)
+    #    np.transpose(A) --> T(A)
     #    hermitian(A) --> H(A)
-    T = num.transpose
+    T = np.transpose
     H = hermitian
 
 Links

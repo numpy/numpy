@@ -105,6 +105,20 @@ class _Deprecate(object):
         if doc is None:
             doc = depdoc
         else:
+            lines = doc.expandtabs().split('\n')
+            indent = _get_indent(lines[1:])
+            if lines[0].lstrip():
+                # Indent the original first line to let inspect.cleandoc()
+                # dedent the docstring despite the deprecation notice.
+                doc = indent * ' ' + doc
+            else:
+                # Remove the same leading blank lines as cleandoc() would.
+                skip = len(lines[0]) + 1
+                for line in lines[1:]:
+                    if len(line) > indent:
+                        break
+                    skip += len(line) + 1
+                doc = doc[skip:]
             doc = '\n\n'.join([depdoc, doc])
         newfunc.__doc__ = doc
         try:
@@ -114,6 +128,21 @@ class _Deprecate(object):
         else:
             newfunc.__dict__.update(d)
         return newfunc
+
+
+def _get_indent(lines):
+    """
+    Determines the leading whitespace that could be removed from all the lines.
+    """
+    indent = sys.maxsize
+    for line in lines:
+        content = len(line.lstrip())
+        if content:
+            indent = min(indent, len(line) - content)
+    if indent == sys.maxsize:
+        indent = 0
+    return indent
+
 
 def deprecate(*args, **kwargs):
     """
@@ -150,10 +179,8 @@ def deprecate(*args, **kwargs):
     Warning:
 
     >>> olduint = np.deprecate(np.uint)
+    DeprecationWarning: `uint64` is deprecated! # may vary
     >>> olduint(6)
-    /usr/lib/python2.5/site-packages/numpy/lib/utils.py:114:
-    DeprecationWarning: uint32 is deprecated
-      warnings.warn(str1, DeprecationWarning, stacklevel=2)
     6
 
     """
@@ -201,8 +228,8 @@ def byte_bounds(a):
     >>> low, high = np.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
-    >>> I = np.eye(2, dtype='G'); I.dtype
-    dtype('complex192')
+    >>> I = np.eye(2); I.dtype
+    dtype('float64')
     >>> low, high = np.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
@@ -263,17 +290,17 @@ def who(vardict=None):
     >>> np.who()
     Name            Shape            Bytes            Type
     ===========================================================
-    a               10               40               int32
+    a               10               80               int64
     b               20               160              float64
-    Upper bound on total bytes  =       200
+    Upper bound on total bytes  =       240
 
     >>> d = {'x': np.arange(2.0), 'y': np.arange(3.0), 'txt': 'Some str',
     ... 'idx':5}
     >>> np.who(d)
     Name            Shape            Bytes            Type
     ===========================================================
-    y               3                24               float64
     x               2                16               float64
+    y               3                24               float64
     Upper bound on total bytes  =       40
 
     """
@@ -733,7 +760,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
 
     Examples
     --------
-    >>> np.lookfor('binary representation')
+    >>> np.lookfor('binary representation') # doctest: +SKIP
     Search results for 'binary representation'
     ------------------------------------------
     numpy.binary_repr
@@ -1104,12 +1131,11 @@ def safe_eval(source):
     >>> np.safe_eval('open("/home/user/.ssh/id_dsa").read()')
     Traceback (most recent call last):
       ...
-    SyntaxError: Unsupported source construct: compiler.ast.CallFunc
+    ValueError: malformed node or string: <_ast.Call object at 0x...>
 
     """
     # Local import to speed up numpy's import time.
     import ast
-
     return ast.literal_eval(source)
 
 
@@ -1142,17 +1168,12 @@ def _median_nancheck(data, result, axis, out):
         n = n.filled(False)
     if result.ndim == 0:
         if n == True:
-            warnings.warn("Invalid value encountered in median",
-                          RuntimeWarning, stacklevel=3)
             if out is not None:
                 out[...] = data.dtype.type(np.nan)
                 result = out
             else:
                 result = data.dtype.type(np.nan)
     elif np.count_nonzero(n.ravel()) > 0:
-        warnings.warn("Invalid value encountered in median for" +
-                      " %d results" % np.count_nonzero(n.ravel()),
-                      RuntimeWarning, stacklevel=3)
         result[n] = np.nan
     return result
 

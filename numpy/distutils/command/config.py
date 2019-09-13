@@ -8,6 +8,7 @@ import os, signal
 import warnings
 import sys
 import subprocess
+import textwrap
 
 from distutils.command.config import config as old_config
 from distutils.command.config import LANG_EXT
@@ -18,6 +19,7 @@ import distutils
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.mingw32ccompiler import generate_manifest
 from numpy.distutils.command.autodist import (check_gcc_function_attribute,
+                                              check_gcc_function_attribute_with_intrinsics,
                                               check_gcc_variable_attribute,
                                               check_inline,
                                               check_restrict,
@@ -52,18 +54,18 @@ class config(old_config):
                     self.compiler.initialize()
                 except IOError:
                     e = get_exception()
-                    msg = """\
-Could not initialize compiler instance: do you have Visual Studio
-installed?  If you are trying to build with MinGW, please use "python setup.py
-build -c mingw32" instead.  If you have Visual Studio installed, check it is
-correctly installed, and the right version (VS 2008 for python 2.6, 2.7 and 3.2,
-VS 2010 for >= 3.3).
+                    msg = textwrap.dedent("""\
+                        Could not initialize compiler instance: do you have Visual Studio
+                        installed?  If you are trying to build with MinGW, please use "python setup.py
+                        build -c mingw32" instead.  If you have Visual Studio installed, check it is
+                        correctly installed, and the right version (VS 2008 for python 2.6, 2.7 and 3.2,
+                        VS 2010 for >= 3.3).
 
-Original exception was: %s, and the Compiler class was %s
-============================================================================""" \
+                        Original exception was: %s, and the Compiler class was %s
+                        ============================================================================""") \
                         % (e, self.compiler.__class__.__name__)
-                    print ("""\
-============================================================================""")
+                    print(textwrap.dedent("""\
+                        ============================================================================"""))
                     raise distutils.errors.DistutilsPlatformError(msg)
 
             # After MSVC is initialized, add an explicit /MANIFEST to linker
@@ -172,31 +174,31 @@ Original exception was: %s, and the Compiler class was %s
     def check_decl(self, symbol,
                    headers=None, include_dirs=None):
         self._check_compiler()
-        body = """
-int main(void)
-{
-#ifndef %s
-    (void) %s;
-#endif
-    ;
-    return 0;
-}""" % (symbol, symbol)
+        body = textwrap.dedent("""
+            int main(void)
+            {
+            #ifndef %s
+                (void) %s;
+            #endif
+                ;
+                return 0;
+            }""") % (symbol, symbol)
 
         return self.try_compile(body, headers, include_dirs)
 
     def check_macro_true(self, symbol,
                          headers=None, include_dirs=None):
         self._check_compiler()
-        body = """
-int main(void)
-{
-#if %s
-#else
-#error false or undefined macro
-#endif
-    ;
-    return 0;
-}""" % (symbol,)
+        body = textwrap.dedent("""
+            int main(void)
+            {
+            #if %s
+            #else
+            #error false or undefined macro
+            #endif
+                ;
+                return 0;
+            }""") % (symbol,)
 
         return self.try_compile(body, headers, include_dirs)
 
@@ -207,14 +209,14 @@ int main(void)
         self._check_compiler()
 
         # First check the type can be compiled
-        body = r"""
-int main(void) {
-  if ((%(name)s *) 0)
-    return 0;
-  if (sizeof (%(name)s))
-    return 0;
-}
-""" % {'name': type_name}
+        body = textwrap.dedent(r"""
+            int main(void) {
+              if ((%(name)s *) 0)
+                return 0;
+              if (sizeof (%(name)s))
+                return 0;
+            }
+            """) % {'name': type_name}
 
         st = False
         try:
@@ -234,33 +236,33 @@ int main(void) {
         self._check_compiler()
 
         # First check the type can be compiled
-        body = r"""
-typedef %(type)s npy_check_sizeof_type;
-int main (void)
-{
-    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) >= 0)];
-    test_array [0] = 0
+        body = textwrap.dedent(r"""
+            typedef %(type)s npy_check_sizeof_type;
+            int main (void)
+            {
+                static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) >= 0)];
+                test_array [0] = 0
 
-    ;
-    return 0;
-}
-"""
+                ;
+                return 0;
+            }
+            """)
         self._compile(body % {'type': type_name},
                 headers, include_dirs, 'c')
         self._clean()
 
         if expected:
-            body = r"""
-typedef %(type)s npy_check_sizeof_type;
-int main (void)
-{
-    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) == %(size)s)];
-    test_array [0] = 0
+            body = textwrap.dedent(r"""
+                typedef %(type)s npy_check_sizeof_type;
+                int main (void)
+                {
+                    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) == %(size)s)];
+                    test_array [0] = 0
 
-    ;
-    return 0;
-}
-"""
+                    ;
+                    return 0;
+                }
+                """)
             for size in expected:
                 try:
                     self._compile(body % {'type': type_name, 'size': size},
@@ -271,17 +273,17 @@ int main (void)
                     pass
 
         # this fails to *compile* if size > sizeof(type)
-        body = r"""
-typedef %(type)s npy_check_sizeof_type;
-int main (void)
-{
-    static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) <= %(size)s)];
-    test_array [0] = 0
+        body = textwrap.dedent(r"""
+            typedef %(type)s npy_check_sizeof_type;
+            int main (void)
+            {
+                static int test_array [1 - 2 * !(((long) (sizeof (npy_check_sizeof_type))) <= %(size)s)];
+                test_array [0] = 0
 
-    ;
-    return 0;
-}
-"""
+                ;
+                return 0;
+            }
+            """)
 
         # The principle is simple: we first find low and high bounds of size
         # for the type, where low/high are looked up on a log scale. Then, we
@@ -423,6 +425,11 @@ int main (void)
 
     def check_gcc_function_attribute(self, attribute, name):
         return check_gcc_function_attribute(self, attribute, name)
+
+    def check_gcc_function_attribute_with_intrinsics(self, attribute, name,
+                                                     code, include):
+        return check_gcc_function_attribute_with_intrinsics(self, attribute,
+                                                            name, code, include)
 
     def check_gcc_variable_attribute(self, attribute):
         return check_gcc_variable_attribute(self, attribute)
