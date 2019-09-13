@@ -26,7 +26,7 @@ Each file should be named like ``<PULL REQUEST>.<TYPE>.rst``, where
 * ``highlight``: Adds a highlight bullet point to use as a possibly highlight
   of the release.
 
-Most categories shouldl be formatted as paragraphs with a heading.
+Most categories should be formatted as paragraphs with a heading.
 So for example: ``123.new_feature.rst`` would have the content::
 
     ``my_new_feature`` option for `my_favorite_function`
