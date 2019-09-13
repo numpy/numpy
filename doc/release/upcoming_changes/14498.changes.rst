@@ -1,0 +1,7 @@
+Remove ``numpy.random.entropy`` without a deprecation
+-----------------------------------------------------
+
+``numpy.random.entropy`` was added to the `numpy.random` namespace in 1.17.0.
+It was meant to be a private c-extension module, but was exposed as public.
+It has been replaced by `numpy.random.SeedSequence` so the module was
+completely removed.
