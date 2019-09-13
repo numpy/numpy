@@ -190,7 +190,7 @@ class TestGrid(object):
         assert_almost_equal(a[1]-a[0], 2.0/9.0, 11)
 
     def test_linspace_equivalence(self):
-        y, st = np.linspace(2, 10, retstep=1)
+        y, st = np.linspace(2, 10, retstep=True)
         assert_almost_equal(st, 8/49.0)
         assert_array_almost_equal(y, mgrid[2:10:50j], 13)
 

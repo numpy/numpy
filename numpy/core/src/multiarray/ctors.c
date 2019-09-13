@@ -1849,6 +1849,13 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
             *out_arr = NULL;
             return 0;
         }
+        if (is_object && (requested_dtype != NULL) && 
+                (requested_dtype->type_num != NPY_OBJECT)) {
+            PyErr_SetString(PyExc_ValueError,
+               "cannot create an array from unequal-length (ragged) sequences");
+            Py_DECREF(*out_dtype);
+            return -1;
+        }
         /* If object arrays are forced */
         if (is_object) {
             Py_DECREF(*out_dtype);
@@ -1955,6 +1962,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     if (arr == NULL) {
         if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
             (flags & NPY_ARRAY_UPDATEIFCOPY)) {
+            Py_DECREF(dtype);
             Py_XDECREF(newtype);
             PyErr_SetString(PyExc_TypeError,
                             "WRITEBACKIFCOPY used for non-array input.");

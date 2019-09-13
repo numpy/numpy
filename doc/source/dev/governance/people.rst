@@ -48,7 +48,7 @@ NumFOCUS Subcommittee
 
 * Jaime Fernández del Río
 
-* Nathaniel Smith
+* Sebastian Berg
 
 * External member: Thomas Caswell
 

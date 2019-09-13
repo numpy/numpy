@@ -1,0 +1,60 @@
+[build-system]
+# Minimum requirements for the build system to execute.
+requires = ["setuptools", "wheel", "cython"]  # PEP 508 specification
+
+
+[tool.towncrier]
+    # Do no set this since it is hard to import numpy inside the source directory
+    # Use "--version Numpy" instead
+    #project = "numpy"
+    filename = "doc/release/latest-note.rst"
+    directory = "changelog/"
+    issue_format = "`#{issue} <https://github.com/numpy/numpy/pull/{issue}>`__"
+    template = "changelog/template.rst"
+    underlines="~="
+
+    [[tool.towncrier.type]]
+        directory = "new_function"
+        name = "New functions"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "deprecation"
+        name = "Deprecations"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+      directory = "future"
+      name = "Future Changes"
+      showcontent = true
+
+    [[tool.towncrier.type]]
+      directory = "expired"
+      name = "Expired deprecations"
+      showcontent = true
+
+    [[tool.towncrier.type]]
+      directory = "coompatibility"
+      name = "Compatibility notes"
+      showcontent = true
+
+    [[tool.towncrier.type]]
+      directory = "c_api"
+      name = "C API changes"
+      showcontent = true
+
+    [[tool.towncrier.type]]
+      directory = "new_features"
+      name = "New Features"
+      showcontent = true
+
+    [[tool.towncrier.type]]
+      directory = "improvements"
+      name = "Improvements"
+      showcontent = true
+
+    [[tool.towncrier.type]]
+      directory = "changes"
+      name = "Changes"
+      showcontent = true
+

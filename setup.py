@@ -54,7 +54,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 17
+MINOR               = 18
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -108,8 +108,8 @@ def get_version_info():
         try:
             from numpy.version import git_revision as GIT_REVISION
         except ImportError:
-            raise ImportError("Unable to import git_revision. Try removing " \
-                              "numpy/version.py and the build directory " \
+            raise ImportError("Unable to import git_revision. Try removing "
+                              "numpy/version.py and the build directory "
                               "before building.")
     else:
         GIT_REVISION = "Unknown"
@@ -364,7 +364,7 @@ def parse_setuppy_commands():
 
 
 def setup_package():
-    src_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    src_path = os.path.dirname(os.path.abspath(__file__))
     old_path = os.getcwd()
     os.chdir(src_path)
     sys.path.insert(0, src_path)

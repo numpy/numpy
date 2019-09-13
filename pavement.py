@@ -42,7 +42,7 @@ from paver.easy import Bunch, options, task, sh
 #-----------------------------------
 
 # Path to the release notes
-RELEASE_NOTES = 'doc/release/1.17.0-notes.rst'
+RELEASE_NOTES = 'doc/release/1.18.0-notes.rst'
 
 
 #-------------------------------------------------------
@@ -116,7 +116,7 @@ def sdist(options):
     # do not play well together.
     # Cython is run over all Cython files in setup.py, so generated C files
     # will be included.
-    sh('python setup.py sdist --formats=gztar,zip')
+    sh('python3 setup.py sdist --formats=gztar,zip')
 
     # Copy the superpack into installers dir
     idirs = options.installers.installersdir

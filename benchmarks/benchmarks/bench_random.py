@@ -173,3 +173,16 @@ class Bounded(Benchmark):
                 self.rg.randint(0, max + 1, nom_size, dtype=dt)
             else:
                 self.rg.integers(0, max + 1, nom_size, dtype=dt)
+
+class Choice(Benchmark):
+    params = [1e3, 1e6, 1e8]
+
+    def setup(self, v):
+        self.a = np.arange(v)
+        self.rng = np.random.default_rng()
+
+    def time_legacy_choice(self, v):
+        np.random.choice(self.a, 1000, replace=False)
+
+    def time_choice(self, v):
+        self.rng.choice(self.a, 1000, replace=False)

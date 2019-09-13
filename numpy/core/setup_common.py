@@ -14,7 +14,7 @@ from numpy.distutils.misc_util import mingw32
 #-------------------
 # How to change C_API_VERSION ?
 #   - increase C_API_VERSION value
-#   - record the hash for the new C API with the script cversions.py
+#   - record the hash for the new C API with the cversions.py script
 #   and add the hash to cversions.txt
 # The hash values are used to remind developers when the C API number was not
 # updated - generates a MismatchCAPIWarning warning which is turned into an
@@ -88,14 +88,13 @@ def check_api_version(apiversion, codegen_dir):
     # codegen_dir have been updated without the API version being
     # updated. Any modification in those .txt files should be reflected
     # in the api and eventually abi versions.
-    # To compute the checksum of the current API, use
-    # code_generators/cversions.py script
+    # To compute the checksum of the current API, use numpy/core/cversions.py
     if not curapi_hash == api_hash:
         msg = ("API mismatch detected, the C API version "
                "numbers have to be updated. Current C api version is %d, "
-               "with checksum %s, but recorded checksum for C API version %d in "
-               "codegen_dir/cversions.txt is %s. If functions were added in the "
-               "C API, you have to update C_API_VERSION  in %s."
+               "with checksum %s, but recorded checksum for C API version %d "
+               "in core/codegen_dir/cversions.txt is %s. If functions were "
+               "added in the C API, you have to update C_API_VERSION in %s."
                )
         warnings.warn(msg % (apiversion, curapi_hash, apiversion, api_hash,
                              __file__),
@@ -138,6 +137,8 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        # broken on OSX 10.11, make sure its not optimized away
                        ("volatile int r = __builtin_cpu_supports", '"sse"',
                         "stdio.h", "__BUILTIN_CPU_SUPPORTS"),
+                       ("volatile int r = __builtin_cpu_supports", '"avx512f"',
+                        "stdio.h", "__BUILTIN_CPU_SUPPORTS_AVX512F"),
                        # MMX only needed for icc, but some clangs don't have it
                        ("_m_from_int64", '0', "emmintrin.h"),
                        ("_mm_load_ps", '(float*)0', "xmmintrin.h"),  # SSE

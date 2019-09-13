@@ -20,27 +20,44 @@ Array API
 Array structure and data access
 -------------------------------
 
-These macros all access the :c:type:`PyArrayObject` structure members. The input
-argument, arr, can be any :c:type:`PyObject *<PyObject>` that is directly interpretable
-as a :c:type:`PyArrayObject *` (any instance of the :c:data:`PyArray_Type` and its
-sub-types).
+These macros access the :c:type:`PyArrayObject` structure members and are
+defined in ``ndarraytypes.h``. The input argument, *arr*, can be any
+:c:type:`PyObject *<PyObject>` that is directly interpretable as a
+:c:type:`PyArrayObject *` (any instance of the :c:data:`PyArray_Type`
+and itssub-types).
 
 .. c:function:: int PyArray_NDIM(PyArrayObject *arr)
 
     The number of dimensions in the array.
 
-.. c:function:: npy_intp *PyArray_DIMS(PyArrayObject *arr)
+.. c:function:: int PyArray_FLAGS(PyArrayObject* arr)
 
-    Returns a pointer to the dimensions/shape of the array. The
-    number of elements matches the number of dimensions
-    of the array. Can return ``NULL`` for 0-dimensional arrays.
+    Returns an integer representing the :ref:`array-flags<array-flags>`.
 
-.. c:function:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
+.. c:function:: int PyArray_TYPE(PyArrayObject* arr)
+
+    Return the (builtin) typenumber for the elements of this array.
+
+.. c:function:: int PyArray_SETITEM( \
+        PyArrayObject* arr, void* itemptr, PyObject* obj)
+
+    Convert obj and place it in the ndarray, *arr*, at the place
+    pointed to by itemptr. Return -1 if an error occurs or 0 on
+    success.
+
+.. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
 
     .. versionadded:: 1.7
 
-    A synonym for PyArray_DIMS, named to be consistent with the
-    'shape' usage within Python.
+    Enables the specified array flags. This function does no validation,
+    and assumes that you know what you're doing.
+
+.. c:function:: void PyArray_CLEARFLAGS(PyArrayObject* arr, int flags)
+
+    .. versionadded:: 1.7
+
+    Clears the specified array flags. This function does no validation,
+    and assumes that you know what you're doing.
 
 .. c:function:: void *PyArray_DATA(PyArrayObject *arr)
 
@@ -52,6 +69,19 @@ sub-types).
     processing. If you have not guaranteed a contiguous and/or aligned
     array then be sure you understand how to access the data in the
     array to avoid memory and/or alignment problems.
+
+.. c:function:: npy_intp *PyArray_DIMS(PyArrayObject *arr)
+
+    Returns a pointer to the dimensions/shape of the array. The
+    number of elements matches the number of dimensions
+    of the array. Can return ``NULL`` for 0-dimensional arrays.
+
+.. c:function:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
+
+    .. versionadded:: 1.7
+
+    A synonym for :c:func:`PyArray_DIMS`, named to be consistent with the
+    `shape <numpy.ndarray.shape>` usage within Python.
 
 .. c:function:: npy_intp *PyArray_STRIDES(PyArrayObject* arr)
 
@@ -66,6 +96,27 @@ sub-types).
 .. c:function:: npy_intp PyArray_STRIDE(PyArrayObject* arr, int n)
 
     Return the stride in the *n* :math:`^{\textrm{th}}` dimension.
+
+.. c:function:: npy_intp PyArray_ITEMSIZE(PyArrayObject* arr)
+
+    Return the itemsize for the elements of this array.
+
+    Note that, in the old API that was deprecated in version 1.7, this function
+    had the return type ``int``.
+
+.. c:function:: npy_intp PyArray_SIZE(PyArrayObject* arr)
+
+    Returns the total size (in number of elements) of the array.
+
+.. c:function:: npy_intp PyArray_Size(PyArrayObject* obj)
+
+    Returns 0 if *obj* is not a sub-class of ndarray. Otherwise,
+    returns the total number of elements in the array. Safer version
+    of :c:func:`PyArray_SIZE` (*obj*).
+
+.. c:function:: npy_intp PyArray_NBYTES(PyArrayObject* arr)
+
+    Returns the total number of bytes consumed by the array.
 
 .. c:function:: PyObject *PyArray_BASE(PyArrayObject* arr)
 
@@ -93,60 +144,12 @@ sub-types).
     A synonym for PyArray_DESCR, named to be consistent with the
     'dtype' usage within Python.
 
-.. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
-
-    .. versionadded:: 1.7
-
-    Enables the specified array flags. This function does no validation,
-    and assumes that you know what you're doing.
-
-.. c:function:: void PyArray_CLEARFLAGS(PyArrayObject* arr, int flags)
-
-    .. versionadded:: 1.7
-
-    Clears the specified array flags. This function does no validation,
-    and assumes that you know what you're doing.
-
-.. c:function:: int PyArray_FLAGS(PyArrayObject* arr)
-
-.. c:function:: npy_intp PyArray_ITEMSIZE(PyArrayObject* arr)
-
-    Return the itemsize for the elements of this array.
-
-    Note that, in the old API that was deprecated in version 1.7, this function
-    had the return type ``int``.
-
-.. c:function:: int PyArray_TYPE(PyArrayObject* arr)
-
-    Return the (builtin) typenumber for the elements of this array.
-
 .. c:function:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
-    Get a Python object of a builtin type from the ndarray, *arr*, 
+    Get a Python object of a builtin type from the ndarray, *arr*,
     at the location pointed to by itemptr. Return ``NULL`` on failure.
-    
+
     `numpy.ndarray.item` is identical to PyArray_GETITEM.
-    
-.. c:function:: int PyArray_SETITEM( \
-        PyArrayObject* arr, void* itemptr, PyObject* obj)
-
-    Convert obj and place it in the ndarray, *arr*, at the place
-    pointed to by itemptr. Return -1 if an error occurs or 0 on
-    success.
-
-.. c:function:: npy_intp PyArray_SIZE(PyArrayObject* arr)
-
-    Returns the total size (in number of elements) of the array.
-
-.. c:function:: npy_intp PyArray_Size(PyArrayObject* obj)
-
-    Returns 0 if *obj* is not a sub-class of ndarray. Otherwise,
-    returns the total number of elements in the array. Safer version
-    of :c:func:`PyArray_SIZE` (*obj*).
-
-.. c:function:: npy_intp PyArray_NBYTES(PyArrayObject* arr)
-
-    Returns the total number of bytes consumed by the array.
 
 
 Data access
@@ -1397,6 +1400,7 @@ Special functions for NPY_OBJECT
 
     Returns 0 for success, -1 for failure.
 
+.. _array-flags:
 
 Array flags
 -----------
@@ -1574,7 +1578,7 @@ Flag checking
 ^^^^^^^^^^^^^
 
 For all of these macros *arr* must be an instance of a (subclass of)
-:c:data:`PyArray_Type`, but no checking is done.
+:c:data:`PyArray_Type`.
 
 .. c:function:: PyArray_CHKFLAGS(arr, flags)
 
@@ -2048,6 +2052,17 @@ Calculation
     effect that is obtained by passing in *axis* = :const:`None` in Python
     (treating the array as a 1-d array).
 
+
+.. note::
+
+    The out argument specifies where to place the result. If out is
+    NULL, then the output array is created, otherwise the output is
+    placed in out which must be the correct size and type. A new
+    reference to the output array is always returned even when out
+    is not NULL. The caller of the routine has the responsibility
+    to ``Py_DECREF`` out if not NULL or a memory-leak will occur.
+
+
 .. c:function:: PyObject* PyArray_ArgMax( \
         PyArrayObject* self, int axis, PyArrayObject* out)
 
@@ -2059,18 +2074,6 @@ Calculation
 
     Equivalent to :meth:`ndarray.argmin<numpy.ndarray.argmin>` (*self*, *axis*). Return the index of
     the smallest element of *self* along *axis*.
-
-
-
-
-.. note::
-
-    The out argument specifies where to place the result. If out is
-    NULL, then the output array is created, otherwise the output is
-    placed in out which must be the correct size and type. A new
-    reference to the output array is always returned even when out
-    is not NULL. The caller of the routine has the responsibility
-    to ``DECREF`` out if not NULL or a memory-leak will occur.
 
 .. c:function:: PyObject* PyArray_Max( \
         PyArrayObject* self, int axis, PyArrayObject* out)
@@ -2651,22 +2654,24 @@ cost of a slight overhead.
 
     The mode should be one of:
 
-    * NPY_NEIGHBORHOOD_ITER_ZERO_PADDING: zero padding. Outside bounds values
-      will be 0.
-    * NPY_NEIGHBORHOOD_ITER_ONE_PADDING: one padding, Outside bounds values
-      will be 1.
-    * NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING: constant padding. Outside bounds
-      values will be the same as the first item in fill_value.
-    * NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING: mirror padding. Outside bounds
-      values will be as if the array items were mirrored. For example, for the
-      array [1, 2, 3, 4], x[-2] will be 2, x[-2] will be 1, x[4] will be 4,
-      x[5] will be 1, etc...
-    * NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING: circular padding. Outside bounds
-      values will be as if the array was repeated. For example, for the
-      array [1, 2, 3, 4], x[-2] will be 3, x[-2] will be 4, x[4] will be 1,
-      x[5] will be 2, etc...
+    .. c:macro:: NPY_NEIGHBORHOOD_ITER_ZERO_PADDING
+            Zero padding. Outside bounds values will be 0.
+    .. c:macro:: NPY_NEIGHBORHOOD_ITER_ONE_PADDING
+            One padding, Outside bounds values will be 1.
+    .. c:macro:: NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING
+            Constant padding. Outside bounds values will be the
+            same as the first item in fill_value.
+    .. c:macro:: NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING
+            Mirror padding. Outside bounds values will be as if the
+            array items were mirrored. For example, for the array [1, 2, 3, 4],
+            x[-2] will be 2, x[-2] will be 1, x[4] will be 4, x[5] will be 1,
+            etc...
+    .. c:macro:: NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING
+            Circular padding. Outside bounds values will be as if the array
+            was repeated. For example, for the array [1, 2, 3, 4], x[-2] will
+            be 3, x[-2] will be 4, x[4] will be 1, x[5] will be 2, etc...
 
-    If the mode is constant filling (NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING),
+    If the mode is constant filling (`NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING`),
     fill_value should point to an array object which holds the filling value
     (the first item will be the filling value if the array contains more than
     one item). For other cases, fill_value may be NULL.
@@ -3372,7 +3377,7 @@ Group 1
 
         Useful to release the GIL only if *dtype* does not contain
         arbitrary Python objects which may need the Python interpreter
-        during execution of the loop. Equivalent to
+        during execution of the loop.
 
     .. c:function:: NPY_END_THREADS_DESCR(PyArray_Descr *dtype)
 
@@ -3466,6 +3471,10 @@ Other constants
 
     The maximum number of dimensions allowed in arrays.
 
+.. c:var:: NPY_MAXARGS
+
+    The maximum number of array arguments that can be used in functions.
+
 .. c:var:: NPY_VERSION
 
     The current version of the ndarray object (check to see if this
@@ -3558,10 +3567,18 @@ Enumerated Types
 
 .. c:type:: NPY_SORTKIND
 
-    A special variable-type which can take on the values :c:data:`NPY_{KIND}`
-    where ``{KIND}`` is
+    A special variable-type which can take on different values to indicate
+    the sorting algorithm being used.
 
-        **QUICKSORT**, **HEAPSORT**, **MERGESORT**, **STABLESORT**
+    .. c:var:: NPY_QUICKSORT
+
+    .. c:var:: NPY_HEAPSORT
+
+    .. c:var:: NPY_MERGESORT
+
+    .. c:var:: NPY_STABLESORT
+
+        Used as an alias of :c:data:`NPY_MERGESORT` and vica versa.
 
     .. c:var:: NPY_NSORTS
 

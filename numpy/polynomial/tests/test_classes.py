@@ -16,7 +16,7 @@ from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
     )
 from numpy.compat import long
-
+from numpy.polynomial.polyutils import RankWarning
 
 #
 # fixtures
@@ -131,6 +131,17 @@ def test_fromroots(Poly):
     pwin = Polynomial.window
     p2 = Polynomial.cast(p1, domain=pdom, window=pwin)
     assert_almost_equal(p2.coef[-1], 1)
+
+
+def test_bad_conditioned_fit(Poly):
+
+    x = [0., 0., 1.]
+    y = [1., 2., 3.]
+
+    # check RankWarning is raised
+    with pytest.warns(RankWarning) as record:
+        Poly.fit(x, y, 2)
+    assert record[0].message.args[0] == "The fit may be poorly conditioned"
 
 
 def test_fit(Poly):

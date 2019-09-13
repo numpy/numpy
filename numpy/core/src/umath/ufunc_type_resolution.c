@@ -548,6 +548,7 @@ PyUFunc_SimpleUniformOperationTypeResolver(
         }
 
         out_dtypes[0] = ensure_dtype_nbo(dtype);
+        Py_DECREF(dtype);
         if (out_dtypes[0] == NULL) {
             return -1;
         }
@@ -1957,7 +1958,8 @@ linear_search_type_resolver(PyUFuncObject *self,
     npy_intp i, j, nin = self->nin, nop = nin + self->nout;
     int types[NPY_MAXARGS];
     const char *ufunc_name;
-    int no_castable_output, use_min_scalar;
+    int no_castable_output = 0;
+    int use_min_scalar;
 
     /* For making a better error message on coercion error */
     char err_dst_typecode = '-', err_src_typecode = '-';
@@ -2264,7 +2266,6 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
             out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
-            Py_INCREF(out_dtypes[2]);
             out_dtypes[3] = out_dtypes[0];
             Py_INCREF(out_dtypes[3]);
         }

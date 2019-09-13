@@ -358,12 +358,12 @@ def average(a, axis=None, weights=None, returned=False):
 
     Examples
     --------
-    >>> data = list(range(1,5))
+    >>> data = np.arange(1, 5)
     >>> data
-    [1, 2, 3, 4]
+    array([1, 2, 3, 4])
     >>> np.average(data)
     2.5
-    >>> np.average(range(1,11), weights=range(10,0,-1))
+    >>> np.average(np.arange(1, 11), weights=np.arange(10, 0, -1))
     4.0
 
     >>> data = np.arange(6).reshape((3,2))
@@ -3102,6 +3102,7 @@ def i0(x):
     array([ 1.00000000+0.j        ,  0.18785373+0.64616944j])  # may vary
 
     """
+    x = np.asanyarray(x)
     x = np.abs(x)
     return piecewise(x, [x <= 8.0], [_i0_1, _i0_2])
 

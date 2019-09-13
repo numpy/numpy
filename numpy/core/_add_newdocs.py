@@ -10,6 +10,8 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 from __future__ import division, absolute_import, print_function
 
+import sys
+
 from numpy.core import numerictypes as _numerictypes
 from numpy.core import dtype
 from numpy.core.function_base import add_newdoc
@@ -92,7 +94,7 @@ add_newdoc('numpy.core', 'flatiter', ('coords',
     >>> fl = x.flat
     >>> fl.coords
     (0, 0)
-    >>> fl.next()
+    >>> next(fl)
     0
     >>> fl.coords
     (0, 1)
@@ -111,7 +113,7 @@ add_newdoc('numpy.core', 'flatiter', ('index',
     >>> fl = x.flat
     >>> fl.index
     0
-    >>> fl.next()
+    >>> next(fl)
     0
     >>> fl.index
     1
@@ -664,7 +666,7 @@ add_newdoc('numpy.core', 'broadcast', ('iters',
     >>> y = np.array([[4], [5], [6]])
     >>> b = np.broadcast(x, y)
     >>> row, col = b.iters
-    >>> row.next(), col.next()
+    >>> next(row), next(col)
     (1, 4)
 
     """))
@@ -793,8 +795,7 @@ add_newdoc('numpy.core.multiarray', 'array',
     dtype : data-type, optional
         The desired data-type for the array.  If not given, then the type will
         be determined as the minimum type required to hold the objects in the
-        sequence.  This argument can only be used to 'upcast' the array.  For
-        downcasting, use the .astype(t) method.
+        sequence.
     copy : bool, optional
         If true (default), then the object is copied.  Otherwise, a copy will
         only be made if __array__ returns a copy, if obj is a nested sequence,
@@ -1471,57 +1472,58 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
 
     """)
 
-add_newdoc('numpy.core.multiarray', 'newbuffer',
-    """
-    newbuffer(size)
+if sys.version_info.major < 3:
+    add_newdoc('numpy.core.multiarray', 'newbuffer',
+        """
+        newbuffer(size)
 
-    Return a new uninitialized buffer object.
+        Return a new uninitialized buffer object.
 
-    Parameters
-    ----------
-    size : int
-        Size in bytes of returned buffer object.
+        Parameters
+        ----------
+        size : int
+            Size in bytes of returned buffer object.
 
-    Returns
-    -------
-    newbuffer : buffer object
-        Returned, uninitialized buffer object of `size` bytes.
+        Returns
+        -------
+        newbuffer : buffer object
+            Returned, uninitialized buffer object of `size` bytes.
 
-    """)
+        """)
 
-add_newdoc('numpy.core.multiarray', 'getbuffer',
-    """
-    getbuffer(obj [,offset[, size]])
+    add_newdoc('numpy.core.multiarray', 'getbuffer',
+        """
+        getbuffer(obj [,offset[, size]])
 
-    Create a buffer object from the given object referencing a slice of
-    length size starting at offset.
+        Create a buffer object from the given object referencing a slice of
+        length size starting at offset.
 
-    Default is the entire buffer. A read-write buffer is attempted followed
-    by a read-only buffer.
+        Default is the entire buffer. A read-write buffer is attempted followed
+        by a read-only buffer.
 
-    Parameters
-    ----------
-    obj : object
+        Parameters
+        ----------
+        obj : object
 
-    offset : int, optional
+        offset : int, optional
 
-    size : int, optional
+        size : int, optional
 
-    Returns
-    -------
-    buffer_obj : buffer
+        Returns
+        -------
+        buffer_obj : buffer
 
-    Examples
-    --------
-    >>> buf = np.getbuffer(np.ones(5), 1, 3)
-    >>> len(buf)
-    3
-    >>> buf[0]
-    '\\x00'
-    >>> buf
-    <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
+        Examples
+        --------
+        >>> buf = np.getbuffer(np.ones(5), 1, 3)
+        >>> len(buf)
+        3
+        >>> buf[0]
+        '\\x00'
+        >>> buf
+        <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
 
-    """)
+        """)
 
 add_newdoc('numpy.core.multiarray', 'c_einsum',
     """
@@ -1985,13 +1987,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_priority__',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array_struct__',
     """Array protocol: C-struct side."""))
-
-
-add_newdoc('numpy.core.multiarray', 'ndarray', ('_as_parameter_',
-    """Allow the array to be interpreted as a ctypes object by returning the
-    data-memory location as an integer
-
-    """))
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('base',
@@ -2740,6 +2735,8 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
 
     Toggle between low-endian and big-endian data representation by
     returning a byteswapped array, optionally swapped in-place.
+    Arrays of byte-strings are not swapped. The real and imaginary
+    parts of a complex number are swapped individually.
 
     Parameters
     ----------
@@ -2762,13 +2759,24 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
     >>> list(map(hex, A))
     ['0x100', '0x1', '0x3322']
 
-    Arrays of strings are not swapped
+    Arrays of byte-strings are not swapped
 
-    >>> A = np.array(['ceg', 'fac'])
+    >>> A = np.array([b'ceg', b'fac'])
     >>> A.byteswap()
-    Traceback (most recent call last):
-        ...
-    UnicodeDecodeError: ...
+    array([b'ceg', b'fac'], dtype='|S3')
+
+    ``A.newbyteorder().byteswap()`` produces an array with the same values
+      but different representation in memory
+
+    >>> A = np.array([1, 2, 3])
+    >>> A.view(np.uint8)
+    array([1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0,
+           0, 0], dtype=uint8)
+    >>> A.newbyteorder().byteswap(inplace=True)
+    array([1, 2, 3])
+    >>> A.view(np.uint8)
+    array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0,
+           0, 3], dtype=uint8)
 
     """))
 
@@ -3255,87 +3263,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('min',
     """))
 
 
-add_newdoc('numpy.core.multiarray', 'shares_memory',
-    """
-    shares_memory(a, b, max_work=None)
-
-    Determine if two arrays share memory
-
-    Parameters
-    ----------
-    a, b : ndarray
-        Input arrays
-    max_work : int, optional
-        Effort to spend on solving the overlap problem (maximum number
-        of candidate solutions to consider). The following special
-        values are recognized:
-
-        max_work=MAY_SHARE_EXACT  (default)
-            The problem is solved exactly. In this case, the function returns
-            True only if there is an element shared between the arrays.
-        max_work=MAY_SHARE_BOUNDS
-            Only the memory bounds of a and b are checked.
-
-    Raises
-    ------
-    numpy.TooHardError
-        Exceeded max_work.
-
-    Returns
-    -------
-    out : bool
-
-    See Also
-    --------
-    may_share_memory
-
-    Examples
-    --------
-    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
-    False
-
-    """)
-
-
-add_newdoc('numpy.core.multiarray', 'may_share_memory',
-    """
-    may_share_memory(a, b, max_work=None)
-
-    Determine if two arrays might share memory
-
-    A return of True does not necessarily mean that the two arrays
-    share any element.  It just means that they *might*.
-
-    Only the memory bounds of a and b are checked by default.
-
-    Parameters
-    ----------
-    a, b : ndarray
-        Input arrays
-    max_work : int, optional
-        Effort to spend on solving the overlap problem.  See
-        `shares_memory` for details.  Default for ``may_share_memory``
-        is to do a bounds check.
-
-    Returns
-    -------
-    out : bool
-
-    See Also
-    --------
-    shares_memory
-
-    Examples
-    --------
-    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
-    False
-    >>> x = np.zeros([3, 4])
-    >>> np.may_share_memory(x[:,0], x[:,1])
-    True
-
-    """)
-
-
 add_newdoc('numpy.core.multiarray', 'ndarray', ('newbyteorder',
     """
     arr.newbyteorder(new_order='S')
@@ -3436,81 +3363,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
     numpy.put : equivalent function
 
     """))
-
-add_newdoc('numpy.core.multiarray', 'copyto',
-    """
-    copyto(dst, src, casting='same_kind', where=True)
-
-    Copies values from one array to another, broadcasting as necessary.
-
-    Raises a TypeError if the `casting` rule is violated, and if
-    `where` is provided, it selects which elements to copy.
-
-    .. versionadded:: 1.7.0
-
-    Parameters
-    ----------
-    dst : ndarray
-        The array into which values are copied.
-    src : array_like
-        The array from which values are copied.
-    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        Controls what kind of data casting may occur when copying.
-
-          * 'no' means the data types should not be cast at all.
-          * 'equiv' means only byte-order changes are allowed.
-          * 'safe' means only casts which can preserve values are allowed.
-          * 'same_kind' means only safe casts or casts within a kind,
-            like float64 to float32, are allowed.
-          * 'unsafe' means any data conversions may be done.
-    where : array_like of bool, optional
-        A boolean array which is broadcasted to match the dimensions
-        of `dst`, and selects elements to copy from `src` to `dst`
-        wherever it contains the value True.
-
-    """)
-
-add_newdoc('numpy.core.multiarray', 'putmask',
-    """
-    putmask(a, mask, values)
-
-    Changes elements of an array based on conditional and input values.
-
-    Sets ``a.flat[n] = values[n]`` for each n where ``mask.flat[n]==True``.
-
-    If `values` is not the same size as `a` and `mask` then it will repeat.
-    This gives behavior different from ``a[mask] = values``.
-
-    Parameters
-    ----------
-    a : array_like
-        Target array.
-    mask : array_like
-        Boolean mask array. It has to be the same shape as `a`.
-    values : array_like
-        Values to put into `a` where `mask` is True. If `values` is smaller
-        than `a` it will be repeated.
-
-    See Also
-    --------
-    place, put, take, copyto
-
-    Examples
-    --------
-    >>> x = np.arange(6).reshape(2, 3)
-    >>> np.putmask(x, x>2, x**2)
-    >>> x
-    array([[ 0,  1,  2],
-           [ 9, 16, 25]])
-
-    If `values` is smaller than `a` it is repeated:
-
-    >>> x = np.arange(5)
-    >>> np.putmask(x, x>1, [-33, -44])
-    >>> x
-    array([  0,   1, -33, -44, -33])
-
-    """)
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('ravel',
@@ -6997,3 +6849,4 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         >>> np.{ftype}(-.25).as_integer_ratio()
         (-1, 4)
         """.format(ftype=float_name)))
+

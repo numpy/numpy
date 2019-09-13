@@ -21,6 +21,7 @@ cache:
 
 env:
   global:
+    - OpenBLAS_version=0.3.7.dev
     - WHEELHOUSE_UPLOADER_USERNAME=travis.numpy
     # The following is generated with the command:
     # travis encrypt -r numpy/numpy WHEELHOUSE_UPLOADER_SECRET=tH3AP1KeY
@@ -60,7 +61,6 @@ matrix:
        - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
        - USE_ASV=1
     - python: 3.5
-      dist: trusty # remove after April 2019
       env: NPY_RELAXED_STRIDES_CHECKING=0
     - python: 3.6
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
