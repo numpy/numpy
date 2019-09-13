@@ -181,7 +181,6 @@ __all__ = [
 from . import _pickle
 from . import common
 from . import bounded_integers
-from . import entropy
 
 from .mtrand import *
 from .generator import Generator, default_rng
