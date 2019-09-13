@@ -1,0 +1,6 @@
+`numpy.random.randint` produced incorrect value when the range was ``2**32``
+----------------------------------------------------------------------------
+The implementation introduced in 1.17.0 had an incorrect check when
+determining whether to use the 32-bit path or the full 64-bit
+path that incorrectly redirected random integer generation with a high - low
+range of ``2**32`` to the 64-bit generator.
