@@ -61,18 +61,6 @@ def configuration(parent_package='', top_path=None):
     # One can force emulated 128-bit arithmetic if one wants.
     #PCG64_DEFS += [('PCG_FORCE_EMULATED_128BIT_MATH', '1')]
 
-    config.add_extension('entropy',
-                         sources=['entropy.c', 'src/entropy/entropy.c'] +
-                                 [generate_libraries],
-                         libraries=EXTRA_LIBRARIES,
-                         extra_compile_args=EXTRA_COMPILE_ARGS,
-                         extra_link_args=EXTRA_LINK_ARGS,
-                         depends=[join('src', 'splitmix64', 'splitmix.h'),
-                                  join('src', 'entropy', 'entropy.h'),
-                                  'entropy.pyx',
-                                  ],
-                         define_macros=defs,
-                         )
     for gen in ['mt19937']:
         # gen.pyx, src/gen/gen.c, src/gen/gen-jump.c
         config.add_extension(gen,
