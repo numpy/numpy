@@ -45,9 +45,6 @@ Feature            Older Equivalent     Notes
 
 And in more detail:
 
-* `~.entropy.random_entropy` provides access to the system
-  source of randomness that is used in cryptographic applications (e.g.,
-  ``/dev/urandom`` on Unix).
 * Simulate from the complex normal distribution
   (`~.Generator.complex_normal`)
 * The normal, exponential and gamma generators use 256-step Ziggurat

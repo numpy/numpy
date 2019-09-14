@@ -151,9 +151,6 @@ What's New or Different
   select distributions
 * Optional ``out`` argument that allows existing arrays to be filled for
   select distributions
-* `~entropy.random_entropy` provides access to the system
-  source of randomness that is used in cryptographic applications (e.g.,
-  ``/dev/urandom`` on Unix).
 * All BitGenerators can produce doubles, uint64s and uint32s via CTypes
   (`~.PCG64.ctypes`) and CFFI (`~.PCG64.cffi`). This allows the bit generators
   to be used in numba.
@@ -203,7 +200,6 @@ Features
    new-or-different
    Comparing Performance <performance>
    extending
-   Reading System Entropy <entropy>
 
 Original Source
 ~~~~~~~~~~~~~~~
