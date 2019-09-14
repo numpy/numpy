@@ -911,6 +911,7 @@ defdict = {
           docstrings.get('numpy.core.umath.matmul'),
           "PyUFunc_SimpleBinaryOperationTypeResolver",
           TD(notimes_or_obj),
+          TD(O),
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
 }

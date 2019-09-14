@@ -1,0 +1,53 @@
+==========================
+NumPy 1.16.6 Release Notes
+==========================
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+Allow matmul (`@` operator) to work with object arrays.
+-------------------------------------------------------
+This is an enhancement that was added in NumPy 1.17 and seems reasonable to
+include in the LTS 1.16 release series.
+
+
+New deprecations
+================
+
+
+Expired deprecations
+====================
+
+
+Future changes
+==============
+
+
+Compatibility notes
+===================
+
+Fix regression in matmul (`@` operator) for boolean types
+---------------------------------------------------------
+Booleans were being treated as integers rather than booleans,
+which was a regression from previous behavior.
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======
