@@ -715,8 +715,6 @@ def irr(values):
     >>> round(np.irr([-5, 10.5, 1, -8, 1]), 5)
     0.0886
 
-    (Compare with the Example given for numpy.lib.financial.npv)
-
     """
     # `np.roots` call is why this function does not support Decimal type.
     #
@@ -785,11 +783,6 @@ def npv(rate, values):
 
     Examples
     --------
-    >>> np.npv(0.281,[-100, 39, 59, 55, 20])
-    -0.0084785916384548798 # may vary
-
-    (Compare with the Example given for numpy.lib.financial.irr)
-
     Consider a potential project with an initial investment of $40 000 and
     projected cashflows of $5 000, $8 000, $12 000 and $30 000 at the end of
     each period discounted at a rate of 8% per period. To find the project's
