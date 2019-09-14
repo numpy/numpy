@@ -763,6 +763,15 @@ def npv(rate, values):
         The NPV of the input cash flow series `values` at the discount
         `rate`.
 
+    Warnings
+    --------
+    ``npv`` considers a series of cashflows starting in the present (t = 0).
+    NPV can also be defined with a series of future cashflows, paid at the
+    end, rather than the start, of each period. If future cashflows are used,
+    the first cashflow `values[0]` must be zeroed and added to the net
+    present value of the future cashflows. This is demonstrated in the
+    examples.
+
     Notes
     -----
     Returns the result of: [G]_
@@ -780,6 +789,25 @@ def npv(rate, values):
     -0.0084785916384548798 # may vary
 
     (Compare with the Example given for numpy.lib.financial.irr)
+
+    Consider a potential project with an initial investment of $40 000 and
+    projected cashflows of $5 000, $8 000, $12 000 and $30 000 at the end of
+    each period discounted at a rate of 8% per period. To find the project's
+    net present value:
+
+    >>> rate, cashflows = 0.08, [-40_000, 5_000, 8_000, 12_000, 30_000]
+    >>> np.npv(rate, cashflows).round(5)
+    3065.22267
+
+    It may be preferable to split the projected cashflow into an initial
+    investment and expected future cashflows. In this case, the value of
+    the initial cashflow is zero and the initial investment is later added
+    to the future cashflows net present value:
+
+    >>> initial_cashflow = cashflows[0]
+    >>> cashflows[0] = 0
+    >>> np.round(np.npv(rate, cashflows) + initial_cashflow, 5)
+    3065.22267
 
     """
     values = np.asarray(values)
