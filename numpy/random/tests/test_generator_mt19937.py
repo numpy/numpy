@@ -732,6 +732,20 @@ class TestRandomDist(object):
             desired = conv([4, 1, 9, 8, 0, 5, 3, 6, 2, 7])
             assert_array_equal(actual, desired)
 
+    def test_shuffle_custom_axis(self):
+        random = Generator(MT19937(self.seed))
+        actual = np.arange(16).reshape((4, 4))
+        random.shuffle(actual, axis=1)
+        desired = np.array([[ 0,  3,  1,  2],
+                            [ 4,  7,  5,  6],
+                            [ 8, 11,  9, 10],
+                            [12, 15, 13, 14]])
+        assert_array_equal(actual, desired)
+        random = Generator(MT19937(self.seed))
+        actual = np.arange(16).reshape((4, 4))
+        random.shuffle(actual, axis=-1)
+        assert_array_equal(actual, desired)
+
     def test_shuffle_masked(self):
         # gh-3263
         a = np.ma.masked_values(np.reshape(range(20), (5, 4)) % 3 - 1, -1)
@@ -745,6 +759,16 @@ class TestRandomDist(object):
             random.shuffle(b)
             assert_equal(
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
+
+    def test_shuffle_exceptions(self):
+        random = Generator(MT19937(self.seed))
+        arr = np.arange(10)
+        assert_raises(np.AxisError, random.shuffle, arr, 1)
+        arr = np.arange(9).reshape((3, 3))
+        assert_raises(np.AxisError, random.shuffle, arr, 3)
+        assert_raises(TypeError, random.shuffle, arr, slice(1, 2, None))
+        arr = [[1, 2, 3], [4, 5, 6]]
+        assert_raises(NotImplementedError, random.shuffle, arr, 1)
 
     def test_permutation(self):
         random = Generator(MT19937(self.seed))
@@ -770,6 +794,27 @@ class TestRandomDist(object):
 
         actual = random.permutation(integer_val)
         assert_array_equal(actual, desired)
+
+    def test_permutation_custom_axis(self):
+        a = np.arange(16).reshape((4, 4))
+        desired = np.array([[ 0,  3,  1,  2],
+                            [ 4,  7,  5,  6],
+                            [ 8, 11,  9, 10],
+                            [12, 15, 13, 14]])
+        random = Generator(MT19937(self.seed))
+        actual = random.permutation(a, axis=1)
+        assert_array_equal(actual, desired)
+        random = Generator(MT19937(self.seed))
+        actual = random.permutation(a, axis=-1)
+        assert_array_equal(actual, desired)
+
+    def test_permutation_exceptions(self):
+        random = Generator(MT19937(self.seed))
+        arr = np.arange(10)
+        assert_raises(np.AxisError, random.permutation, arr, 1)
+        arr = np.arange(9).reshape((3, 3))
+        assert_raises(np.AxisError, random.permutation, arr, 3)
+        assert_raises(TypeError, random.permutation, arr, slice(1, 2, None))
 
     def test_beta(self):
         random = Generator(MT19937(self.seed))
