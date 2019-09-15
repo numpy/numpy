@@ -497,7 +497,7 @@ def configuration(parent_package='',top_path=None):
                     #endif
                     """))
 
-            log.info('File:', target)
+            log.info('File: %s' % target)
             with open(target) as target_f:
                 log.info(target_f.read())
             log.info('EOF')
