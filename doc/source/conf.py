@@ -4,7 +4,7 @@ from __future__ import division, absolute_import, print_function
 import sys, os, re
 
 # Minimum version, enforced by sphinx
-needs_sphinx = '2.1.2'
+needs_sphinx = '2.2.0'
 
 # -----------------------------------------------------------------------------
 # General configuration
