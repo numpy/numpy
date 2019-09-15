@@ -5,7 +5,6 @@ cimport numpy as np
 
 from .common cimport *
 from .bit_generator cimport BitGenerator, SeedSequence
-from .entropy import random_entropy
 
 __all__ = ['MT19937']
 
@@ -156,7 +155,8 @@ cdef class MT19937(BitGenerator):
             Random seed initializing the pseudo-random number generator.
             Can be an integer in [0, 2**32-1], array of integers in
             [0, 2**32-1], a `SeedSequence, or ``None``. If `seed`
-            is ``None``, then sample entropy for a seed.
+            is ``None``, then fresh, unpredictable entropy will be pulled from
+            the OS.
 
         Raises
         ------
@@ -167,7 +167,8 @@ cdef class MT19937(BitGenerator):
         with self.lock:
             try:
                 if seed is None:
-                    val = random_entropy(RK_STATE_LEN)
+                    seed = SeedSequence()
+                    val = seed.generate_state(RK_STATE_LEN)
                     # MSB is 1; assuring non-zero initial array
                     self.rng_state.key[0] = 0x80000000UL
                     for i in range(1, RK_STATE_LEN):
