@@ -18,7 +18,7 @@ from distutils.version import LooseVersion
 from numpy.distutils import log
 from numpy.distutils.compat import get_exception
 from numpy.distutils.exec_command import (
-    filepath_from_subprocess_output, forward_bytes_to_stdout
+    filepath_from_subprocess_output
 )
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       get_num_build_jobs, \
@@ -140,7 +140,10 @@ def CCompiler_spawn(self, cmd, display=None):
             display = ' '.join(list(display))
     log.info(display)
     try:
-        subprocess.check_output(cmd)
+        if self.verbose:
+            subprocess.check_output(cmd)
+        else:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         o = exc.output
         s = exc.returncode
@@ -162,7 +165,7 @@ def CCompiler_spawn(self, cmd, display=None):
     if is_sequence(cmd):
         cmd = ' '.join(list(cmd))
 
-    forward_bytes_to_stdout(o)
+    log.info(o)
 
     if re.search(b'Too many open files', o):
         msg = '\nTry rerunning setup command until build succeeds.'
@@ -727,10 +730,12 @@ if sys.platform == 'win32':
 _distutils_new_compiler = new_compiler
 def new_compiler (plat=None,
                   compiler=None,
-                  verbose=0,
+                  verbose=None,
                   dry_run=0,
                   force=0):
     # Try first C compilers from numpy.distutils.
+    if verbose is None:
+        verbose = log.get_threshold() <= log.INFO
     if plat is None:
         plat = os.name
     try:
@@ -763,6 +768,7 @@ def new_compiler (plat=None,
         raise DistutilsModuleError(("can't compile C/C++ code: unable to find class '%s' " +
                "in module '%s'") % (class_name, module_name))
     compiler = klass(None, dry_run, force)
+    compiler.verbose = verbose
     log.debug('new_compiler returns %s' % (klass))
     return compiler
 
