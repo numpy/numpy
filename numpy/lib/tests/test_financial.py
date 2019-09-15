@@ -9,6 +9,12 @@ from numpy.testing import (
 
 
 class TestFinancial(object):
+    def test_npv_irr_congruence(self):
+        # IRR is defined as the rate required for the present value of a
+        # a series of cashflows to be zero i.e. NPV(IRR(x), x) = 0
+        cashflows = np.array([-40000, 5000, 8000, 12000, 30000])
+        assert_allclose(np.npv(np.irr(cashflows), cashflows), 0, atol=1e-10, rtol=0)
+
     def test_rate(self):
         assert_almost_equal(
             np.rate(10, 0, -3500, 10000),
