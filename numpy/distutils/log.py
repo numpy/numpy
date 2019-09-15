@@ -67,6 +67,8 @@ def set_threshold(level, force=False):
                 ' %s to %s' % (prev_level, level))
     return prev_level
 
+def get_threshold():
+	return _global_log.threshold
 
 def set_verbosity(v, force=False):
     prev_level = _global_log.threshold

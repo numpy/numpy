@@ -28,7 +28,7 @@ def customized_fcompiler(plat=None, compiler=None):
     c.customize()
     return c
 
-def customized_ccompiler(plat=None, compiler=None):
-    c = ccompiler.new_compiler(plat=plat, compiler=compiler)
+def customized_ccompiler(plat=None, compiler=None, verbose=1):
+    c = ccompiler.new_compiler(plat=plat, compiler=compiler, verbose=verbose)
     c.customize('')
     return c

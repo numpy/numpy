@@ -639,23 +639,6 @@ def configuration(parent_package='',top_path=None):
             ]
 
     #######################################################################
-    #                            dummy module                             #
-    #######################################################################
-
-    # npymath needs the config.h and numpyconfig.h files to be generated, but
-    # build_clib cannot handle generate_config_h and generate_numpyconfig_h
-    # (don't ask). Because clib are generated before extensions, we have to
-    # explicitly add an extension which has generate_config_h and
-    # generate_numpyconfig_h as sources *before* adding npymath.
-
-    config.add_extension('_dummy',
-                         sources=[join('src', 'dummymodule.c'),
-                                  generate_config_h,
-                                  generate_numpyconfig_h,
-                                  generate_numpy_api]
-                         )
-
-    #######################################################################
     #                          npymath library                            #
     #######################################################################
 

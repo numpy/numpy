@@ -365,6 +365,15 @@ class build_src(build_ext.build_ext):
             build_dir = os.path.join(*([self.build_src]
                                        +name.split('.')[:-1]))
         self.mkpath(build_dir)
+
+        # it is unclear how to pass the cmdline options from build to here so
+        # "parse" the command line again
+        if '--debug-configure' in sys.argv:
+            new_level = log.INFO
+        else:
+            new_level = log.WARN
+        old_level = log.set_threshold(new_level)
+
         for func in func_sources:
             source = func(extension, build_dir)
             if not source:
@@ -375,7 +384,7 @@ class build_src(build_ext.build_ext):
             else:
                 log.info("  adding '%s' to sources." % (source,))
                 new_sources.append(source)
-
+        log.set_threshold(old_level)
         return new_sources
 
     def filter_py_files(self, sources):
