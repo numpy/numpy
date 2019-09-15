@@ -67,7 +67,7 @@ def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("--verbose", "-v", action="count", default=1,
                         help="more verbosity")
-    parser.add_argument("--debug_configure", action="store_true",
+    parser.add_argument("--debug-configure", action="store_true",
                         help="show all compiler output during system configuration")
     parser.add_argument("--no-build", "-n", action="store_true", default=False,
                         help="do not build the project (use system installed version)")
@@ -369,7 +369,7 @@ def build_project(args):
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
     if args.debug_configure:
-        cmd += ["--debug_configure"]
+        cmd += ["--debug-configure"]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
     cmd += ['install', '--prefix=' + dst_dir,
             '--single-version-externally-managed',
