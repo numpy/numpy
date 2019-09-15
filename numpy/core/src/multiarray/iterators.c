@@ -830,7 +830,6 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         if (check_and_adjust_index(&start, self->size, -1, NULL) < 0) {
             goto finish;
         }
-        retval = 0;
         PyArray_ITER_GOTO1D(self, start);
         retval = type->f->setitem(val, self->dataptr, self->ao);
         PyArray_ITER_RESET(self);

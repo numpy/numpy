@@ -1581,7 +1581,8 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     PyArrayObject *oparr = NULL, *ret = NULL;
     npy_bool subok = NPY_FALSE;
     npy_bool copy = NPY_TRUE;
-    int ndmin = 0, nd;
+    int nd;
+    npy_intp ndmin = 0;
     PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
@@ -1652,12 +1653,10 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
                 }
             }
 
-            /* copy=False with default dtype, order and ndim */
-            if (STRIDING_OK(oparr, order)) {
-                ret = oparr;
-                Py_INCREF(ret);
-                goto finish;
-            }
+            /* copy=False with default dtype, order (any is OK) and ndim */
+            ret = oparr;
+            Py_INCREF(ret);
+            goto finish;
         }
     }
 
