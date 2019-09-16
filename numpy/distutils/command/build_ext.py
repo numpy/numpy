@@ -33,6 +33,8 @@ class build_ext (old_build_ext):
          "specify the Fortran compiler type"),
         ('parallel=', 'j',
          "number of parallel jobs"),
+        ('warn-error', None,
+         "turn all warnings into errors (-Werror)"),
     ]
 
     help_options = old_build_ext.help_options + [
@@ -40,10 +42,13 @@ class build_ext (old_build_ext):
          show_fortran_compilers),
     ]
 
+    boolean_options = old_build_ext.boolean_options + ['warn-error']
+
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.fcompiler = None
         self.parallel = None
+        self.warn_error = None
 
     def finalize_options(self):
         if self.parallel:
@@ -69,7 +74,10 @@ class build_ext (old_build_ext):
         self.include_dirs.extend(incl_dirs)
 
         old_build_ext.finalize_options(self)
-        self.set_undefined_options('build', ('parallel', 'parallel'))
+        self.set_undefined_options('build',
+                                        ('parallel', 'parallel'),
+                                        ('warn_error', 'warn_error'),
+                                  )
 
     def run(self):
         if not self.extensions:
@@ -116,6 +124,11 @@ class build_ext (old_build_ext):
                                      force=self.force)
         self.compiler.customize(self.distribution)
         self.compiler.customize_cmd(self)
+
+        if self.warn_error:
+            self.compiler.compiler.append('-Werror')
+            self.compiler.compiler_so.append('-Werror')
+
         self.compiler.show_customization()
 
         # Setup directory for storing generated extra DLL files on Windows
