@@ -8004,7 +8004,6 @@ class TestCTypes(object):
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
-        break_cycles()
         assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
 
     def test_ctypes_as_parameter_holds_reference(self):
@@ -8021,20 +8020,7 @@ class TestCTypes(object):
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
-        break_cycles()
         assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
-
-    def test_ctypes_data_as_no_circular_reference(self):
-        # check array reference count based on the buffer the array points to
-        data = b'\x00' * 128
-        ref_count = sys.getrefcount(data)
-
-        arr = np.frombuffer(data)
-        ctypes_ptr = arr.ctypes.data_as(ctypes.c_void_p)
-
-        del arr, ctypes_ptr
-        # Do not call gc before checking circular reference
-        assert_(sys.getrefcount(data) == ref_count, "Found ctypes pointer circular reference")
 
 
 class TestWritebackIfCopy(object):
