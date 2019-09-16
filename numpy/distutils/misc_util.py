@@ -1687,8 +1687,6 @@ class Configuration(object):
 
         and will be installed as foo.ini in the 'lib' subpath.
 
-        Cross-compilation
-        -----------------
         When cross-compiling with numpy distutils, it might be necessary to
         use modified npy-pkg-config files.  Using the default/generated files
         will link with the host libraries (i.e. libnpymath.a).  For
