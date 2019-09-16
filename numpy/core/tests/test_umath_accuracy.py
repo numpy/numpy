@@ -35,7 +35,8 @@ class TestAccuracy(object):
             for filename in files:
                 data_dir = path.join(path.dirname(__file__), 'data')
                 filepath = path.join(data_dir, filename)
-                file_without_comments = (r for r in open(filepath) if not r[0] in ('$', '#'))
+                with open(filepath) as fid:
+                    file_without_comments = (r for r in fid if not r[0] in ('$', '#'))
                 data = np.genfromtxt(file_without_comments,
                                      dtype=('|S39','|S39','|S39',np.int),
                                      names=('type','input','output','ulperr'),
