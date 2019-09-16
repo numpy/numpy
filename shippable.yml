@@ -48,7 +48,7 @@ build:
     # check OpenBLAS version
     - python tools/openblas_support.py --check_version 0.3.7
     # run the test suite
-    - python runtests.py -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
+    - python runtests.py --debug-configure --show-build-log -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
 
     cache: true
     cache_dir_list:
