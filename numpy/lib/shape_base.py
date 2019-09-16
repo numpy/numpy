@@ -782,7 +782,7 @@ def _split_dispatcher(ary, indices_or_sections, axis=None):
 @array_function_dispatch(_split_dispatcher)
 def split(ary, indices_or_sections, axis=0):
     """
-    Split an array into multiple sub-arrays.
+    Split an array into multiple sub-arrays as views into `ary`.
 
     Parameters
     ----------
@@ -809,7 +809,7 @@ def split(ary, indices_or_sections, axis=0):
     Returns
     -------
     sub-arrays : list of ndarrays
-        A list of sub-arrays.
+        A list of sub-arrays as views into `ary`.
 
     Raises
     ------
@@ -854,8 +854,7 @@ def split(ary, indices_or_sections, axis=0):
         if N % sections:
             raise ValueError(
                 'array split does not result in an equal division')
-    res = array_split(ary, indices_or_sections, axis)
-    return res
+    return array_split(ary, indices_or_sections, axis)
 
 
 def _hvdsplit_dispatcher(ary, indices_or_sections):
