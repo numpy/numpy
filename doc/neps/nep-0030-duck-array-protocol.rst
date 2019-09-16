@@ -16,7 +16,7 @@ Abstract
 We propose the ``__duckarray__`` protocol, following the high-level overview
 described in NEP 22, allowing downstream libraries to return arrays of their
 defined types, in contrast to ``np.asarray``, that coerces those ``array_like``
-to NumPy arrays.
+objects to NumPy arrays.
 
 Detailed description
 --------------------
@@ -64,8 +64,9 @@ Implementation
 The implementation idea is fairly straightforward, requiring a new function
 ``duckarray`` to be introduced in NumPy, and a new method ``__duckarray__`` in
 NumPy-like array classes. The new ``__duckarray__`` method shall return the
-downstream array-like object itself, such as the ``self`` object, while the
-``__array__`` method returns ``TypeError``.
+downstream array-like object itself, such as the ``self`` object. If appropriate,
+an ``__array__`` method may be implemented that returns a NumPy array or possibly
+a TypeError with a helpful message.
 
 The new NumPy ``duckarray`` function can be implemented as follows:
 
@@ -90,15 +91,20 @@ a complete implementation would look like the following:
             return self
 
         def __array__(self):
-            return TypeError
+            return TypeError("NumPyLikeArray can not be converted to a numpy array. "
+                             "You may want to use np.duckarray.")
 
 The implementation above exemplifies the simplest case, but the overall idea
 is that libraries will implement a ``__duckarray__`` method that returns the
-original object, and ``__array__`` solely for the purpose of raising a
-``TypeError``, thus preventing unintentional NumPy-coercion. In case of existing
-libraries that don't already implement ``__array__`` but would like to use duck
-array typing, it is advised that they they introduce both ``__array__`` and
-``__duckarray__`` methods.
+original object, and an ``__array__`` method that either creates and returns an
+appropriate NumPy array, or raises a``TypeError`` to prevent unintentional use
+as an object in a numpy array (if ``np.asarray`` is called on an arbitrary
+object that does not imipiment ``__array__()``, it will create a numpy object
+scalar).
+
+In case of existing libraries that don't already implement ``__array__`` but
+would like to use duck array typing, it is advised that they they introduce
+both ``__array__`` and``__duckarray__`` methods.
 
 Usage
 -----
