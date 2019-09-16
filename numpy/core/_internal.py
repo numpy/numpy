@@ -271,29 +271,12 @@ class _unsafe_first_element_pointer(object):
         return i
 
 
-def _get_void_ptr(arr):
-    """
-    Get a `ctypes.c_void_p` to arr.data, that keeps a reference to the array
-    """
-    import numpy as np
-    # convert to a 0d array that has a data pointer referrign to the start
-    # of arr. This holds a reference to arr.
-    simple_arr = np.asarray(_unsafe_first_element_pointer(arr))
-
-    # create a `char[0]` using the same memory.
-    c_arr = (ctypes.c_char * 0).from_buffer(simple_arr)
-
-    # finally cast to void*
-    return ctypes.cast(ctypes.pointer(c_arr), ctypes.c_void_p)
-
-
 class _ctypes(object):
     def __init__(self, array, ptr=None):
         self._arr = array
 
         if ctypes:
             self._ctypes = ctypes
-            # get a void pointer to the buffer, which keeps the array alive
             self._data = self._ctypes.c_void_p(ptr)
         else:
             # fake a pointer-like object that holds onto the reference
@@ -316,6 +299,10 @@ class _ctypes(object):
 
         The returned pointer will keep a reference to the array.
         """
+        # _ctypes.cast function causes a circular reference of self._data in
+        # self._data._objects. Attributes of self._data cannot be released
+        # until gc.collect is called. Make a copy of the pointer first then let
+        # it hold the array reference.
         ptr = self._ctypes.cast(self._data, obj)
         ptr._arr = self._arr
         return ptr
