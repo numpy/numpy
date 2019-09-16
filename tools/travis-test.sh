@@ -52,7 +52,7 @@ setup_base()
   else
     # Python3.5-dbg on travis seems to need this
     export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
-    $PYTHON setup.py build --debug-configure build_ext --inplace 2>&1 | tee log
+    $PYTHON setup.py build build_src -v build_ext --inplace 2>&1 | tee log
   fi
   grep -v "_configtest" log \
     | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
@@ -151,7 +151,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
      export F90='gfortran --coverage'
      export LDFLAGS='--coverage'
   fi
-  $PYTHON setup.py build --debug-configure bdist_wheel
+  $PYTHON setup.py build build_src -v bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
   . venv-for-wheel/bin/activate
