@@ -223,13 +223,29 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     return ret
 
 def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
+    arr = asanyarray(a)
+
+    is_float16_result = False
     ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                keepdims=keepdims)
 
+    # Cast bool, unsigned int, and int to float64 by default
+    if dtype is None:
+        if issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
+            dtype = mu.dtype('f8')
+        elif issubclass(arr.dtype.type, nt.float16):
+            dtype = mu.dtype('f4')
+            is_float16_result = True
+
     if isinstance(ret, mu.ndarray):
         ret = um.sqrt(ret, out=ret)
+        if is_float16_result and out is None:
+            ret = arr.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
-        ret = ret.dtype.type(um.sqrt(ret))
+        if is_float16_result:
+            ret = arr.dtype.type(um.sqrt(ret))
+        else:
+            ret = ret.dtype.type(um.sqrt(ret))
     else:
         ret = um.sqrt(ret)
 
