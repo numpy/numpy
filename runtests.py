@@ -110,6 +110,8 @@ def main(argv):
                         help="Debug build")
     parser.add_argument("--parallel", "-j", type=int, default=0,
                         help="Number of parallel jobs during build")
+    parser.add_argument("--warn-error", action="store_true",
+                        help="Set -Werror to convert all compiler warnings to errors")
     parser.add_argument("--show-build-log", action="store_true",
                         help="Show build output rather than using a log file")
     parser.add_argument("--bench", action="store_true",
@@ -372,6 +374,8 @@ def build_project(args):
         cmd += ["-j", str(args.parallel)]
     if args.debug_configure:
         cmd += ["build_src", "--verbose"]
+    if args.warn_error:
+        cmd += ["--warn-error"]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
     cmd += ['install', '--prefix=' + dst_dir,
             '--single-version-externally-managed',

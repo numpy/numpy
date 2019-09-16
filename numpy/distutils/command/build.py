@@ -16,6 +16,8 @@ class build(old_build):
     user_options = old_build.user_options + [
         ('fcompiler=', None,
          "specify the Fortran compiler type"),
+        ('warn-error', None,
+         "turn all warnings into errors (-Werror)"),
         ]
 
     help_options = old_build.help_options + [
@@ -26,6 +28,7 @@ class build(old_build):
     def initialize_options(self):
         old_build.initialize_options(self)
         self.fcompiler = None
+        self.warn_error = False
 
     def finalize_options(self):
         build_scripts = self.build_scripts
