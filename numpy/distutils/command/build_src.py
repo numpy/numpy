@@ -53,9 +53,12 @@ class build_src(build_ext.build_ext):
         ('inplace', 'i',
          "ignore build-lib and put compiled extensions into the source " +
          "directory alongside your pure Python modules"),
+        ('verbose', 'v',
+         "change logging level from WARN to INFO which will show all " +
+         "compiler output")
         ]
 
-    boolean_options = ['force', 'inplace']
+    boolean_options = ['force', 'inplace', 'verbose']
 
     help_options = []
 
@@ -76,6 +79,7 @@ class build_src(build_ext.build_ext):
         self.swig_opts = None
         self.swig_cpp = None
         self.swig = None
+        self.verbose = False
 
     def finalize_options(self):
         self.set_undefined_options('build',
@@ -366,9 +370,7 @@ class build_src(build_ext.build_ext):
                                        +name.split('.')[:-1]))
         self.mkpath(build_dir)
 
-        # it is unclear how to pass the cmdline options from build to here so
-        # "parse" the command line again
-        if '--debug-configure' in sys.argv:
+        if self.verbose:
             new_level = log.INFO
         else:
             new_level = log.WARN
