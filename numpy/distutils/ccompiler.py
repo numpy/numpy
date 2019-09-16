@@ -18,7 +18,7 @@ from distutils.version import LooseVersion
 from numpy.distutils import log
 from numpy.distutils.compat import get_exception
 from numpy.distutils.exec_command import (
-    filepath_from_subprocess_output
+    filepath_from_subprocess_output, forward_bytes_to_stdout
 )
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
                                       get_num_build_jobs, \
@@ -165,7 +165,8 @@ def CCompiler_spawn(self, cmd, display=None):
     if is_sequence(cmd):
         cmd = ' '.join(list(cmd))
 
-    log.info(o)
+    if self.verbose:
+        forward_bytes_to_stdout(o)
 
     if re.search(b'Too many open files', o):
         msg = '\nTry rerunning setup command until build succeeds.'
