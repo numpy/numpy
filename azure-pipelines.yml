@@ -29,7 +29,7 @@ jobs:
            python3 -m pip install --user -r test_requirements.txt && \
            python3 -m pip install . && \
            F77=gfortran-5 F90=gfortran-5 \
-           CFLAGS='-UNDEBUG -std=c99' python3 runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+           CFLAGS='-UNDEBUG -std=c99' python3 runtests.py -n --debug-configure --mode=full -- -rsx --junitxml=junit/test-results.xml && \
            python3 tools/openblas_support.py --check_version $(OpenBLAS_version)"
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
   - task: PublishTestResults@2
@@ -94,7 +94,7 @@ jobs:
     displayName: 'Check for unreachable code paths in Python modules'
   # prefer usage of clang over gcc proper
   # to match likely scenario on many user mac machines
-  - script: python setup.py build -j 4 install
+  - script: python setup.py build --debug-configure -j 4 install
     displayName: 'Build NumPy'
     env:
       BLAS: None
