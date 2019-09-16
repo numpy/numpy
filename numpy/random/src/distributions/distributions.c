@@ -901,8 +901,8 @@ RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state, RAND_INT_TYPE n,
   return X;
 }
 
-RAND_INT_TYPE random_binomial(bitgen_t *bitgen_state, double p, RAND_INT_TYPE n,
-                              binomial_t *binomial) {
+int64_t random_binomial(bitgen_t *bitgen_state, double p, int64_t n,
+                        binomial_t *binomial) {
   double q;
 
   if ((n == 0LL) || (p == 0.0f))

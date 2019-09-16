@@ -34,6 +34,8 @@ cdef extern from "legacy-distributions.h":
                             double nonc) nogil
     double legacy_wald(aug_bitgen_t *aug_state, double mean, double scale) nogil
     double legacy_lognormal(aug_bitgen_t *aug_state, double mean, double sigma) nogil
+    int64_t legacy_random_binomial(bitgen_t *bitgen_state, double p,
+                                   int64_t n, binomial_t *binomial) nogil
     int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) nogil
     int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad, int64_t sample) nogil
     int64_t legacy_random_logseries(bitgen_t *bitgen_state, double p) nogil

@@ -215,6 +215,37 @@ double legacy_exponential(aug_bitgen_t *aug_state, double scale) {
 }
 
 
+static RAND_INT_TYPE legacy_random_binomial_original(bitgen_t *bitgen_state,
+                                                     double p,
+                                                     RAND_INT_TYPE n,
+                                                     binomial_t *binomial) {
+  double q;
+
+  if (p <= 0.5) {
+    if (p * n <= 30.0) {
+      return random_binomial_inversion(bitgen_state, n, p, binomial);
+    } else {
+      return random_binomial_btpe(bitgen_state, n, p, binomial);
+    }
+  } else {
+    q = 1.0 - p;
+    if (q * n <= 30.0) {
+      return n - random_binomial_inversion(bitgen_state, n, q, binomial);
+    } else {
+      return n - random_binomial_btpe(bitgen_state, n, q, binomial);
+    }
+  }
+}
+
+
+int64_t legacy_random_binomial(bitgen_t *bitgen_state, double p,
+                               int64_t n, binomial_t *binomial) {
+  return (int64_t) legacy_random_binomial_original(bitgen_state, p,
+                                                   (RAND_INT_TYPE) n,
+                                                   binomial);
+}
+
+
 static RAND_INT_TYPE random_hypergeometric_hyp(bitgen_t *bitgen_state,
                                                RAND_INT_TYPE good,
                                                RAND_INT_TYPE bad,
