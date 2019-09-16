@@ -200,7 +200,7 @@ def flatten_descr(ndtype):
         descr = []
         for field in names:
             (typ, _) = ndtype.fields[field]
-            if typ.names:
+            if typ.names is not None:
                 descr.extend(flatten_descr(typ))
             else:
                 descr.append((field, typ))

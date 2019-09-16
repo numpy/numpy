@@ -380,8 +380,8 @@ class TestMergeArrays(object):
         z = np.array(
             [('A', 1.), ('B', 2.)], dtype=[('A', '|S3'), ('B', float)])
         w = np.array(
-            [(1, (2, 3.0)), (4, (5, 6.0))],
-            dtype=[('a', int), ('b', [('ba', float), ('bb', int)])])
+            [(1, (2, 3.0, ())), (4, (5, 6.0, ()))],
+            dtype=[('a', int), ('b', [('ba', float), ('bb', int), ('bc', [])])])
         self.data = (w, x, y, z)
 
     def test_solo(self):
@@ -452,8 +452,8 @@ class TestMergeArrays(object):
         test = merge_arrays((x, w), flatten=False)
         controldtype = [('f0', int),
                                 ('f1', [('a', int),
-                                        ('b', [('ba', float), ('bb', int)])])]
-        control = np.array([(1., (1, (2, 3.0))), (2, (4, (5, 6.0)))],
+                                        ('b', [('ba', float), ('bb', int), ('bc', [])])])]
+        control = np.array([(1., (1, (2, 3.0, ()))), (2, (4, (5, 6.0, ())))],
                            dtype=controldtype)
         assert_equal(test, control)
 
