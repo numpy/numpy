@@ -1101,6 +1101,21 @@ class TestCreation(object):
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
+    def test_mapping_view(self):
+        # Test correct array creation from dict subtypes
+        d = {0: 1, 2: 3, 4: 5}
+        
+        a = np.array(d.items())
+        assert_equal(a.shape, (3,2))
+        assert_equal(a.dtype, object)
+
+        a = np.array(d.keys())
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
+
+        a = np.array(d.values())
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
 
 class TestStructured(object):
     def test_subarray_field_access(self):
