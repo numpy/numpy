@@ -593,7 +593,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
 NPY_NO_EXPORT int
 PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v)
 {
-    if (!PySequence_Check(v)) {
+    if (!NPyArray_Like_Object_Check(v)) {
         PyErr_SetString(PyExc_ValueError,
                         "assignment from non-sequence");
         return -1;
@@ -721,7 +721,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     }
 
     /* obj is not a Sequence */
-    if (!PySequence_Check(obj) ||
+    if (!NPyArray_Like_Object_Check(obj) ||
             PySequence_Length(obj) < 0) {
         *maxndim = 0;
         PyErr_Clear();
@@ -1782,7 +1782,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     }
 
     /* Try to treat op as a list of lists or array-like objects. */
-    if (!writeable && PySequence_Check(op)) {
+    if (!writeable && NPyArray_Like_Object_Check(op)) {
         int check_it, stop_at_string, stop_at_tuple, is_object;
         int type_num, type;
 

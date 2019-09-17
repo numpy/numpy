@@ -130,6 +130,35 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
 }
 
 /*
+ * Returns 1 if *obj is array-like object, otherwise returns 0
+ */
+static NPY_INLINE int
+NPyArray_Like_Object_Check(PyObject *obj) {
+    /* Check is *obj is sequence*/
+    if (PySequence_Check(obj)) {
+        return 1;
+    }
+
+    /* Check is *obj inherits collections.abc.MappingView */
+    static PyObject *mappingview = NULL;
+
+    if (mappingview == NULL) {
+        PyObject *mod = PyImport_ImportModule("collections.abc");
+
+        if (mod != NULL) {
+            mappingview = PyObject_GetAttrString(mod, "MappingView");
+            Py_DECREF(mod);
+        }
+    }
+
+    if (PyObject_IsInstance(obj, mappingview) == 1) {
+        return 1;
+    }
+
+    return 0;
+}
+
+/*
  * Returns -1 and sets an exception if *axis is an invalid axis for
  * an array of dimension ndim, otherwise adjusts it in place to be
  * 0 <= *axis < ndim, and returns 0.
