@@ -1430,21 +1430,18 @@ static PyObject *
 
 /**begin repeat
  *
- * #name = (byte, ubyte, short, ushort, int, uint,
+ * #name = byte, ubyte, short, ushort, int, uint,
  *             long, ulong, longlong, ulonglong,
  *             half, float, double, longdouble,
- *             cfloat, cdouble, clongdouble)*2#
- * #Name = (Byte, UByte, Short, UShort, Int, UInt,
+ *             cfloat, cdouble, clongdouble#
+ * #Name = Byte, UByte, Short, UShort, Int, UInt,
  *             Long, ULong, LongLong, ULongLong,
  *             Half, Float, Double, LongDouble,
- *             CFloat, CDouble, CLongDouble)*2#
- * #cmplx = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1)*2#
- * #to_ctype = (, , , , , , , , , , npy_half_to_double, , , , , , )*2#
- * #which = long*17, float*17#
- * #func = (PyLong_FromLongLong,  PyLong_FromUnsignedLongLong)*5,
- *         PyLong_FromDouble*3, npy_longdouble_to_PyLong,
- *         PyLong_FromDouble*2, npy_longdouble_to_PyLong,
- *         PyFloat_FromDouble*17#
+ *             CFloat, CDouble, CLongDouble#
+ * #cmplx = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1#
+ * #to_ctype = , , , , , , , , , , npy_half_to_double, , , , , , #
+ * #which = float*17#
+ * #func = PyFloat_FromDouble*17#
  */
 static NPY_INLINE PyObject *
 @name@_@which@(PyObject *obj)
@@ -1460,7 +1457,39 @@ static NPY_INLINE PyObject *
 }
 /**end repeat**/
 
+
 #if !defined(NPY_PY3K)
+
+/**begin repeat
+ *
+ * #name = (byte, ubyte, short, ushort, int, uint,
+ *             long, ulong, longlong, ulonglong,
+ *             half, float, double, longdouble,
+ *             cfloat, cdouble, clongdouble)#
+ * #Name = (Byte, UByte, Short, UShort, Int, UInt,
+ *             Long, ULong, LongLong, ULongLong,
+ *             Half, Float, Double, LongDouble,
+ *             CFloat, CDouble, CLongDouble)#
+ * #cmplx = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1)#
+ * #to_ctype = (, , , , , , , , , , npy_half_to_double, , , , , , )#
+ * #which = long*17#
+ * #func = (PyLong_FromLongLong,  PyLong_FromUnsignedLongLong)*5,
+ *         PyLong_FromDouble*3, npy_longdouble_to_PyLong,
+ *         PyLong_FromDouble*2, npy_longdouble_to_PyLong#
+ */
+static NPY_INLINE PyObject *
+@name@_@which@(PyObject *obj)
+{
+#if @cmplx@
+    if (emit_complexwarning() < 0) {
+        return NULL;
+    }
+    return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@).real));
+#else
+    return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@)));
+#endif
+}
+/**end repeat**/
 
 /**begin repeat
  *
