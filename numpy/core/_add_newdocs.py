@@ -1342,7 +1342,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
 add_newdoc('numpy.core.multiarray', '_get_ndarray_c_version',
     """_get_ndarray_c_version()
 
-    Return the compile time NDARRAY_VERSION number.
+    Return the compile time NPY_VERSION (formerly called NDARRAY_VERSION) number.
 
     """)
 
