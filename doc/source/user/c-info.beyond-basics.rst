@@ -300,9 +300,10 @@ An example castfunc is:
 
     static void
     double_to_float(double *from, float* to, npy_intp n,
-           void* ig1, void* ig2);
-    while (n--) {
-          (*to++) = (double) *(from++);
+                    void* ignore1, void* ignore2) {
+        while (n--) {
+              (*to++) = (double) *(from++);
+        }
     }
 
 This could then be registered to convert doubles to floats using the
