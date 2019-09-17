@@ -66,7 +66,7 @@ The implementation idea is fairly straightforward, requiring a new function
 NumPy-like array classes. The new ``__duckarray__`` method shall return the
 downstream array-like object itself, such as the ``self`` object. If appropriate,
 an ``__array__`` method may be implemented that returns a NumPy array or possibly
-a TypeError with a helpful message.
+raise a ``TypeError`` with a helpful message.
 
 The new NumPy ``duckarray`` function can be implemented as follows:
 
