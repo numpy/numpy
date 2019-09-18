@@ -859,7 +859,7 @@ astype_anyint(PyObject *obj) {
             return NULL;
         }
         if (dtype_guess == NULL) {
-            if (PySequence_Check(obj) && PySequence_Size(obj) == 0) {
+            if (PyArray_SequenceOrMappingViewCheck(obj) && PySequence_Size(obj) == 0) {
                 PyErr_SetString(PyExc_TypeError, EMPTY_SEQUENCE_ERR_MSG);
             }
             return NULL;
@@ -901,7 +901,7 @@ static int int_sequence_to_arrays(PyObject *seq,
 {
     int i;
 
-    if (!PySequence_Check(seq) || PySequence_Size(seq) != count) {
+    if (!PyArray_SequenceOrMappingViewCheck(seq) || PySequence_Size(seq) != count) {
         PyErr_Format(PyExc_ValueError,
                 "parameter %s must be a sequence of length %d",
                 paramname, count);

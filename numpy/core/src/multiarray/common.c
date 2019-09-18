@@ -429,7 +429,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
      * be treated as objects, and they expect numpy to treat it as an object if
      * __len__ is not defined.
      */
-    if (maxdims == 0 || !PySequence_Check(obj) || PySequence_Size(obj) < 0) {
+    if (maxdims == 0 || !PyArray_SequenceOrMappingViewCheck(obj) || PySequence_Size(obj) < 0) {
         /* clear any PySequence_Size error which corrupts further calls */
         PyErr_Clear();
 

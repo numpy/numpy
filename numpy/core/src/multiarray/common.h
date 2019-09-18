@@ -133,7 +133,7 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
  * Returns 1 if *obj is array-like object, otherwise returns 0
  */
 static NPY_INLINE int
-NPyArray_Like_Object_Check(PyObject *obj) {
+PyArray_SequenceOrMappingViewCheck(PyObject *obj) {
     /* Check is *obj is sequence*/
     if (PySequence_Check(obj)) {
         return 1;
