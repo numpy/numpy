@@ -98,7 +98,7 @@ The implementation above exemplifies the simplest case, but the overall idea
 is that libraries will implement a ``__duckarray__`` method that returns the
 original object, and an ``__array__`` method that either creates and returns an
 appropriate NumPy array, or raises a``TypeError`` to prevent unintentional use
-as an object in a numpy array (if ``np.asarray`` is called on an arbitrary
+as an object in a NumPy array (if ``np.asarray`` is called on an arbitrary
 object that does not imipiment ``__array__()``, it will create a numpy object
 scalar).
 
