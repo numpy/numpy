@@ -10,7 +10,7 @@ import warnings
 # 2018-04-04, numpy 1.15.0
 warnings.warn("Importing from numpy.testing.utils is deprecated "
               "since 1.15.0, import from numpy.testing instead.",
-              ImportWarning, stacklevel=2)
+              DeprecationWarning, stacklevel=2)
 
 from ._private.utils import *
 
