@@ -1,0 +1,4 @@
+Added `prepend` and `append` arguments to `numpy.cumsum`
+--------------------------------------------------------
+Arguments are based on similarly named ones to `numpy.diff` and serve the
+same purpose.
