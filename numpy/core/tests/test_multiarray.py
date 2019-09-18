@@ -1107,15 +1107,15 @@ class TestCreation(object):
         
         a = np.array(d.items())
         assert_equal(a.shape, (3,2))
-        assert_equal(a.dtype, object)
+        assert_equal(a.dtype, np.int32)
 
         a = np.array(d.keys())
         assert_equal(a.shape, (3,))
-        assert_equal(a.dtype, object)
+        assert_equal(a.dtype, np.int32)
 
         a = np.array(d.values())
         assert_equal(a.shape, (3,))
-        assert_equal(a.dtype, object)
+        assert_equal(a.dtype, np.int32)
 
 class TestStructured(object):
     def test_subarray_field_access(self):
