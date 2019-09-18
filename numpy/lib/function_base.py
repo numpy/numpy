@@ -1143,6 +1143,42 @@ def gradient(f, *varargs, **kwargs):
         return outvals
 
 
+def _frame_array(label, a, axis=-1, prepend=np._NoValue, append=np._NoValue):
+    """
+    Combine an array with `prepend` and `append` arguments.
+    """
+    a = asanyarray(a)
+    nd = a.ndim
+    if nd == 0:
+        raise ValueError("{0} requires input that is "
+                         "at least one dimensional".format(label))
+    axis = normalize_axis_index(axis, nd)
+
+    combined = []
+    if prepend is not np._NoValue:
+        prepend = np.asanyarray(prepend)
+        if prepend.ndim == 0:
+            shape = list(a.shape)
+            shape[axis] = 1
+            prepend = np.broadcast_to(prepend, tuple(shape))
+        combined.append(prepend)
+
+    combined.append(a)
+
+    if append is not np._NoValue:
+        append = np.asanyarray(append)
+        if append.ndim == 0:
+            shape = list(a.shape)
+            shape[axis] = 1
+            append = np.broadcast_to(append, tuple(shape))
+        combined.append(append)
+
+    if len(combined) > 1:
+        a = np.concatenate(combined, axis)
+
+    return a
+
+
 def _diff_dispatcher(a, n=None, axis=None, prepend=None, append=None):
     return (a, prepend, append)
 
@@ -1167,23 +1203,24 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         The axis along which the difference is taken, default is the
         last axis.
     prepend, append : array_like, optional
-        Values to prepend or append to `a` along axis prior to
-        performing the difference.  Scalar values are expanded to
-        arrays with length 1 in the direction of axis and the shape
-        of the input array in along all other axes.  Otherwise the
-        dimension and shape must match `a` except along axis.
+        Values to prepend or append to `a` along `axis` prior to
+        performing the difference. Scalar values are expanded to arrays
+        of length 1 in `axis` and the shape of `a` along all other axes.
+        Otherwise the dimension and shape must match `a` except along
+        `axis`.
 
         .. versionadded:: 1.16.0
 
     Returns
     -------
-    diff : ndarray
+    diff_along_axis : ndarray
         The n-th differences. The shape of the output is the same as `a`
-        except along `axis` where the dimension is smaller by `n`. The
-        type of the output is the same as the type of the difference
-        between any two elements of `a`. This is the same as the type of
-        `a` in most cases. A notable exception is `datetime64`, which
-        results in a `timedelta64` output array.
+        except along `axis` where the dimension is smaller by `n` and
+        greater by the sizes of `prepend` and `append`. The type of the
+        output is the same as the type of the difference between any two
+        elements of `a`. This is the same as the type of `a` in most
+        cases. A notable exception is `datetime64`, which results in a
+        `timedelta64` output array.
 
     See Also
     --------
@@ -1238,33 +1275,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         raise ValueError(
             "order must be non-negative but got " + repr(n))
 
-    a = asanyarray(a)
-    nd = a.ndim
-    if nd == 0:
-        raise ValueError("diff requires input that is at least one dimensional")
-    axis = normalize_axis_index(axis, nd)
-
-    combined = []
-    if prepend is not np._NoValue:
-        prepend = np.asanyarray(prepend)
-        if prepend.ndim == 0:
-            shape = list(a.shape)
-            shape[axis] = 1
-            prepend = np.broadcast_to(prepend, tuple(shape))
-        combined.append(prepend)
-
-    combined.append(a)
-
-    if append is not np._NoValue:
-        append = np.asanyarray(append)
-        if append.ndim == 0:
-            shape = list(a.shape)
-            shape[axis] = 1
-            append = np.broadcast_to(append, tuple(shape))
-        combined.append(append)
-
-    if len(combined) > 1:
-        a = np.concatenate(combined, axis)
+    a = _frame_array("diff", a, axis, prepend, append)
 
     slice1 = [slice(None)] * nd
     slice2 = [slice(None)] * nd

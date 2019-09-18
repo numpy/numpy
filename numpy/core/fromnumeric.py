@@ -9,6 +9,7 @@ import warnings
 
 import numpy as np
 from .. import VisibleDeprecationWarning
+from ..lib.function_base import _frame_array
 from . import multiarray as mu
 from . import overrides
 from . import umath as um
@@ -2356,12 +2357,12 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
     return _wrapreduction(a, np.logical_and, 'all', axis, None, out, keepdims=keepdims)
 
 
-def _cumsum_dispatcher(a, axis=None, dtype=None, out=None):
-    return (a, out)
+def _cumsum_dispatcher(a, axis=None, dtype=None, out=None, prepend=None, append=None):
+    return (a, out, prepend, append)
 
 
 @array_function_dispatch(_cumsum_dispatcher)
-def cumsum(a, axis=None, dtype=None, out=None):
+def cumsum(a, axis=None, dtype=None, out=None, prepend=np._NoValue, append=np._NoValue):
     """
     Return the cumulative sum of the elements along a given axis.
 
@@ -2383,15 +2384,23 @@ def cumsum(a, axis=None, dtype=None, out=None):
         have the same shape and buffer length as the expected output
         but the type will be cast if necessary. See `doc.ufuncs`
         (Section "Output arguments") for more details.
+    prepend, append : array_like, optional
+        Values to prepend or append to `a` along axis prior to
+        performing the sum. Scalar values are expanded to arrays with
+        length 1 in the direction of `axis` and the shape of `a` along
+        all other axes. Otherwise the dimension and shape must match
+        `a`, except along `axis`.
+
+        .. versionadded:: 1.18.0
 
     Returns
     -------
-    cumsum_along_axis : ndarray.
-        A new array holding the result is returned unless `out` is
-        specified, in which case a reference to `out` is returned. The
-        result has the same size as `a`, and the same shape as `a` if
-        `axis` is not None or `a` is a 1-d array.
-
+    cumsum_along_axis : ndarray
+        A new array holding the cumulative sums is returned unless `out`
+        is specified, in which case a reference to `out` is returned.
+        The result has the same size as `a` augmented by `prepend` and
+        `append`, and the same shape as the augmented array if `axis` is
+        not `None` or `a` is a 1-d array.
 
     See Also
     --------
@@ -2425,6 +2434,7 @@ def cumsum(a, axis=None, dtype=None, out=None):
            [ 4,  9, 15]])
 
     """
+    a = _frame_array('cumsum', a, axis, prepend, append)
     return _wrapfunc(a, 'cumsum', axis=axis, dtype=dtype, out=out)
 
 
