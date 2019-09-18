@@ -103,7 +103,7 @@ object that does not implement ``__array__``, it will create a NumPy array).
 scalar).
 
 In case of existing libraries that don't already implement ``__array__`` but
-would like to use duck array typing, it is advised that they they introduce
+would like to use duck array typing, it is advised that they introduce
 both ``__array__`` and``__duckarray__`` methods.
 
 Usage
