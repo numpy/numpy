@@ -52,8 +52,6 @@ This is a working outline for a future section introducing NumPy to absolute beg
   
   - (include row-wise and column-wise compute)
 
-- Sorting an array
-
 - How to concatenate two arrays
   
   - column-wise
