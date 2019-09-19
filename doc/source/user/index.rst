@@ -19,3 +19,4 @@ classes contained in the package, see the :ref:`reference`.
    numpy-for-matlab-users
    building
    c-info
+   absolute-beginners-outline
