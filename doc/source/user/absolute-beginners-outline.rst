@@ -58,7 +58,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
   - row-wise
 
-    - np.concatenate, np.vstack, np.hstack, np.r_, np.c_
+    - np.concatenate, np.vstack, np.hstack
 
 - How to sort an array 
   
