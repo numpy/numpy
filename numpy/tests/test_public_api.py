@@ -5,6 +5,7 @@ import subprocess
 import pkgutil
 import types
 import importlib
+import warnings
 
 import numpy as np
 import numpy
@@ -193,19 +194,10 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "conftest",
     "core",
     "core.arrayprint",
-    "core.code_generators",
-    "core.code_generators.genapi",
-    "core.code_generators.generate_numpy_api",
-    "core.code_generators.generate_ufunc_api",
-    "core.code_generators.generate_umath",
-    "core.code_generators.numpy_api",
-    "core.code_generators.ufunc_docstrings",
-    "core.cversions",
     "core.defchararray",
     "core.einsumfunc",
     "core.fromnumeric",
     "core.function_base",
-    "core.generate_numpy_api",
     "core.getlimits",
     "core.info",
     "core.machar",
@@ -264,7 +256,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.lib2def",
     "distutils.line_endings",
     "distutils.mingw32ccompiler",
-    "distutils.msvc9compiler",
     "distutils.msvccompiler",
     "distutils.npy_pkg_config",
     "distutils.numpy_distribution",
@@ -285,9 +276,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "f2py.rules",
     "f2py.use_rules",
     "fft.helper",
-    "fft.info",
-    "fft.pocketfft",
-    "fft.pocketfft_internal",
     "lib.arraypad",
     "lib.arraysetops",
     "lib.arrayterator",
@@ -313,7 +301,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "ma.core",
     "ma.testutils",
     "ma.timer_comparison",
-    "ma.version",
     "matrixlib",
     "matrixlib.defmatrix",
     "random.bit_generator",
@@ -351,6 +338,22 @@ def is_unexpected(name):
     return True
 
 
+# These are present in a directory with an __init__.py but cannot be imported
+# code_generators/ isn't installed, but present for an inplace build
+SKIP_LIST = [
+    "numpy.core.code_generators",
+    "numpy.core.code_generators.genapi",
+    "numpy.core.code_generators.generate_umath",
+    "numpy.core.code_generators.ufunc_docstrings",
+    "numpy.core.code_generators.generate_numpy_api",
+    "numpy.core.code_generators.generate_ufunc_api",
+    "numpy.core.code_generators.numpy_api",
+    "numpy.core.cversions",
+    "numpy.core.generate_numpy_api",
+    "numpy.distutils.msvc9compiler",
+]
+
+
 def test_all_modules_are_expected():
     """
     Test that we don't add anything that looks like a new public module by
@@ -361,7 +364,7 @@ def test_all_modules_are_expected():
     for _, modname, ispkg in pkgutil.walk_packages(path=np.__path__,
                                                    prefix=np.__name__ + '.',
                                                    onerror=None):
-        if is_unexpected(modname):
+        if is_unexpected(modname) and modname not in SKIP_LIST:
             # We have a name that is new.  If that's on purpose, add it to
             # PUBLIC_MODULES.  We don't expect to have to add anything to
             # PRIVATE_BUT_PRESENT_MODULES.  Use an underscore in the name!
@@ -373,7 +376,7 @@ def test_all_modules_are_expected():
 
 # Stuff that clearly shouldn't be in the API and is detected by the next test
 # below
-SKIP_LIST = [
+SKIP_LIST_2 = [
     'numpy.math',
     'numpy.distutils.log.sys',
     'numpy.distutils.system_info.copy',
@@ -442,7 +445,7 @@ def test_all_modules_are_expected_2():
                 fullobjname = mod_name + '.' + objname
                 if isinstance(getattr(module, objname), types.ModuleType):
                     if is_unexpected(fullobjname):
-                        if fullobjname not in SKIP_LIST:
+                        if fullobjname not in SKIP_LIST_2:
                             members.append(fullobjname)
 
         return members
@@ -454,3 +457,51 @@ def test_all_modules_are_expected_2():
     if unexpected_members:
         raise AssertionError("Found unexpected object(s) that look like "
                              "modules: {}".format(unexpected_members))
+
+
+def test_api_importable():
+    """
+    Check that all submodules listed higher up in this file can be imported
+
+    Note that if a PRIVATE_BUT_PRESENT_MODULES entry goes missing, it may
+    simply need to be removed from the list (deprecation may or may not be
+    needed - apply common sense).
+    """
+    def check_importable(module_name):
+        try:
+            importlib.import_module(module_name)
+        except (ImportError, AttributeError):
+            return False
+
+        return True
+
+    module_names = []
+    for module_name in PUBLIC_MODULES:
+        if not check_importable(module_name):
+            module_names.append(module_name)
+
+    if module_names:
+        raise AssertionError("Modules in the public API that cannot be "
+                             "imported: {}".format(module_names))
+
+    for module_name in PUBLIC_ALIASED_MODULES:
+        try:
+            eval(module_name)
+        except AttributeError:
+            module_names.append(module_name)
+
+    if module_names:
+        raise AssertionError("Modules in the public API that were not "
+                             "found: {}".format(module_names))
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.filterwarnings('always', category=DeprecationWarning)
+        warnings.filterwarnings('always', category=ImportWarning)
+        for module_name in PRIVATE_BUT_PRESENT_MODULES:
+            if not check_importable(module_name):
+                module_names.append(module_name)
+
+    if module_names:
+        raise AssertionError("Modules that are not really public but looked "
+                             "public and can not be imported: "
+                             "{}".format(module_names))
