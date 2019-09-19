@@ -99,7 +99,7 @@ is that libraries will implement a ``__duckarray__`` method that returns the
 original object, and an ``__array__`` method that either creates and returns an
 appropriate NumPy array, or raises a``TypeError`` to prevent unintentional use
 as an object in a NumPy array (if ``np.asarray`` is called on an arbitrary
-object that does not implement ``__array__``, it will create a NumPy array).
+object that does not implement ``__array__``, it will create a NumPy array
 scalar).
 
 In case of existing libraries that don't already implement ``__array__`` but
