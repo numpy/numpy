@@ -116,6 +116,7 @@ def get_version_info():
         GIT_REVISION = "Unknown"
 
     if not ISRELEASED:
+        assert GIT_REVISION, "Empty GIT_REVISION see gh-8512"
         FULLVERSION += '.dev0+' + GIT_REVISION[:7]
 
     return FULLVERSION, GIT_REVISION
