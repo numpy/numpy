@@ -243,7 +243,7 @@ in writing setup scripts:
   after processing all source generators, no extension module will
   be built. This is the recommended way to conditionally define
   extension modules. Source generator functions are called by the
-  ``build_src`` command of ``numpy.distutils``.
+  ``build_src`` sub-command of ``numpy.distutils``.
 
   For example, here is a typical source generator function::
 
