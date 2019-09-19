@@ -247,30 +247,6 @@ class _missing_ctypes(object):
             self.value = ptr
 
 
-class _unsafe_first_element_pointer(object):
-    """
-    Helper to allow viewing an array as a ctypes pointer to the first element
-
-    This avoids:
-      * dealing with strides
-      * `.view` rejecting object-containing arrays
-      * `memoryview` not supporting overlapping fields
-    """
-    def __init__(self, arr):
-        self.base = arr
-
-    @property
-    def __array_interface__(self):
-        i = dict(
-            shape=(),
-            typestr='|V0',
-            data=(self.base.__array_interface__['data'][0], False),
-            strides=(),
-            version=3,
-        )
-        return i
-
-
 class _ctypes(object):
     def __init__(self, array, ptr=None):
         self._arr = array
