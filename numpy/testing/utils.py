@@ -7,7 +7,8 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 
-# 2018-04-04, numpy 1.15.0
+# 2018-04-04, numpy 1.15.0 ImportWarning
+# 2019-09-18, numpy 1.18.0 DeprecatonWarning (changed)
 warnings.warn("Importing from numpy.testing.utils is deprecated "
               "since 1.15.0, import from numpy.testing instead.",
               DeprecationWarning, stacklevel=2)
