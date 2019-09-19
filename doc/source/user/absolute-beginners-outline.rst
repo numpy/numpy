@@ -1,6 +1,6 @@
-**************
+****************************************
 NumPy: The Absolute Basics for Beginners
-**************
+****************************************
 
 This is a working outline for a future section introducing NumPy to absolute beginners. If you have comments or suggestions, please don’t hesitate to reach out!
 
