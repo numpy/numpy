@@ -68,7 +68,9 @@ def main(argv):
     parser.add_argument("--verbose", "-v", action="count", default=1,
                         help="more verbosity")
     parser.add_argument("--debug-configure", action="store_true",
-                        help="add -v to build_src to show cconfiguration compiler output")
+                        help=("add -v to build_src to show compiler "
+                              "configuration output while creating "
+                              "_numpyconfig.h and config.h"))
     parser.add_argument("--no-build", "-n", action="store_true", default=False,
                         help="do not build the project (use system installed version)")
     parser.add_argument("--build-only", "-b", action="store_true", default=False,
