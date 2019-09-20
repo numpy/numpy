@@ -3086,7 +3086,9 @@ cdef class RandomState:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
                     _in = (<long*>np.PyArray_MultiIter_DATA(it, 2))[0]
-                    (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = random_binomial(&self._bitgen, _dp, _in, &self._binomial)
+                    (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = \
+                        legacy_random_binomial(&self._bitgen, _dp, _in,
+                                               &self._binomial)
 
                     np.PyArray_MultiIter_NEXT(it)
 
@@ -3099,7 +3101,8 @@ cdef class RandomState:
 
         if size is None:
             with self.lock:
-                return random_binomial(&self._bitgen, _dp, _in, &self._binomial)
+                return <long>legacy_random_binomial(&self._bitgen, _dp, _in,
+                                                    &self._binomial)
 
         randoms = <np.ndarray>np.empty(size, int)
         cnt = np.PyArray_SIZE(randoms)
@@ -3107,8 +3110,8 @@ cdef class RandomState:
 
         with self.lock, nogil:
             for i in range(cnt):
-                randoms_data[i] = random_binomial(&self._bitgen, _dp, _in,
-                                                  &self._binomial)
+                randoms_data[i] = legacy_random_binomial(&self._bitgen, _dp, _in,
+                                                         &self._binomial)
 
         return randoms
 
