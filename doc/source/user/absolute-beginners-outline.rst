@@ -35,7 +35,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
   - reading in a CSV
 
-  ```
+  ::
 
   import pandas as pd
 
@@ -45,7 +45,6 @@ This is a working outline for a future section introducing NumPy to absolute beg
   # otherwise, select the columns you need
   x = pd.read_csv('filename.csv', columns=['float_colname_1', ...]).values
 
-  ```
 
 - How to create a new array from an existing array
 - How to specify the datatype
