@@ -30,7 +30,7 @@ The only mandatory argument of :func:`~numpy.genfromtxt` is the source of
 the data. It can be a string, a list of strings, a generator or an open
 file-like object with a :meth:`read` method, for example, a file or 
 :class:`io.StringIO` object. If a single string is provided, it is assumed
-to be the name of a local or remote file, If a list of strings or a generator
+to be the name of a local or remote file. If a list of strings or a generator
 returning strings is provided, each string is treated as one line in a file.
 When the URL of a remote file is passed, the file is automatically downloaded
 to the current directory and opened.
