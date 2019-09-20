@@ -664,7 +664,7 @@ defdict = {
           None,
           TD('e', f='cos', astype={'e':'f'}),
           TD('f', simd=[('fma', 'f'), ('avx512f', 'f')]),
-          TD(inexact, f='cos', astype={'e':'f'}),
+          TD('fdg' + cmplx, f='cos'),
           TD(P, f='cos'),
           ),
 'sin':
@@ -673,7 +673,7 @@ defdict = {
           None,
           TD('e', f='sin', astype={'e':'f'}),
           TD('f', simd=[('fma', 'f'), ('avx512f', 'f')]),
-          TD(inexact, f='sin', astype={'e':'f'}),
+          TD('fdg' + cmplx, f='sin'),
           TD(P, f='sin'),
           ),
 'tan':
@@ -710,7 +710,7 @@ defdict = {
           None,
           TD('e', f='exp', astype={'e':'f'}),
           TD('f', simd=[('fma', 'f'), ('avx512f', 'f')]),
-          TD(inexact, f='exp', astype={'e':'f'}),
+          TD('fdg' + cmplx, f='exp'),
           TD(P, f='exp'),
           ),
 'exp2':
@@ -733,7 +733,7 @@ defdict = {
           None,
           TD('e', f='log', astype={'e':'f'}),
           TD('f', simd=[('fma', 'f'), ('avx512f', 'f')]),
-          TD(inexact, f='log', astype={'e':'f'}),
+          TD('fdg' + cmplx, f='log'),
           TD(P, f='log'),
           ),
 'log2':
@@ -763,7 +763,7 @@ defdict = {
           None,
           TD('e', f='sqrt', astype={'e':'f'}),
           TD(inexactvec),
-          TD(inexact, f='sqrt', astype={'e':'f'}),
+          TD('fdg' + cmplx, f='sqrt'),
           TD(P, f='sqrt'),
           ),
 'cbrt':
