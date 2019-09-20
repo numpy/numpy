@@ -215,6 +215,7 @@ class concat_license_files():
 
 
 from distutils.command.sdist import sdist
+from numpy.distutils.command.build_src import build_src
 class sdist_checked(sdist):
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
@@ -263,7 +264,7 @@ def parse_setuppy_commands():
     # below and not standalone.  Hence they're not added to good_commands.
     good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
                      'build_clib', 'build_scripts', 'bdist_wheel', 'bdist_rpm',
-                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg')
+                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src')
 
     for command in good_commands:
         if command in args:
@@ -403,7 +404,9 @@ def setup_package():
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
-        cmdclass={"sdist": sdist_checked},
+        cmdclass={"sdist": sdist_checked,
+                  "build_src": build_src,
+                 },
         python_requires='>=3.5',
         zip_safe=False,
         entry_points={
