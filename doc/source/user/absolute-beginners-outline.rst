@@ -35,7 +35,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
   - reading in a CSV
 
-  ::
+::
 
   import pandas as pd
 
