@@ -36,7 +36,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 - How to create a basic array
 - How to create an array from existing data
 
- - reading in a CSV
+  - reading in a CSV
 
 ::
 
@@ -77,7 +77,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
 - row-wise
 
-    - np.concatenate, np.stack, np.vstack, np.hstack
+  - np.concatenate, np.stack, np.vstack, np.hstack
 
 - How to sort an array 
   
