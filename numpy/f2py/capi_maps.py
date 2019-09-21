@@ -241,10 +241,7 @@ def getctype(var):
     """
     ctype = 'void'
     if isfunction(var):
-        if 'result' in var:
-            a = var['result']
-        else:
-            a = var['name']
+        a = var.get('result', var['name'])
         if a in var['vars']:
             return getctype(var['vars'][a])
         else:
