@@ -34,8 +34,6 @@ def configuration(parent_package='', top_path=None):
 
     defs.append(('NPY_NO_DEPRECATED_API', 0))
     config.add_data_dir('tests')
-    config.add_data_files('common.pxd')
-    config.add_data_files('bit_generator.pxd')
 
     EXTRA_LINK_ARGS = []
     # Math lib
