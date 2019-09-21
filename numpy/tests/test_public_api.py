@@ -313,9 +313,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "random.pcg64",
     "random.philox",
     "random.sfc64",
-    "testing.decorators",
-    "testing.noseclasses",
-    "testing.nosetester",
     "testing.print_coercion_tables",
     "testing.utils",
 ]]
