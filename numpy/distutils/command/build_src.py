@@ -79,7 +79,7 @@ class build_src(build_ext.build_ext):
         self.swig_opts = None
         self.swig_cpp = None
         self.swig = None
-        self.verbose = False
+        self.verbose = None
 
     def finalize_options(self):
         self.set_undefined_options('build',
