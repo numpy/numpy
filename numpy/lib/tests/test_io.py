@@ -2420,6 +2420,18 @@ class TestPathUsage(object):
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
 
+    def test_genfromtxt_quoter(self):
+        with temppath(suffix='.txt') as path:
+            path = Path(path)
+            # "This is my text, that has a comma inside","Other value","3"
+            # "Another text, with coma","More text, with comma",5
+            with path.open('w') as f:
+                a = u"\"This is my text, that has a comma inside\",\"Other value\",\"3\"\n\"Another text, with coma\",\"More text, with comma\",5"
+                f.write(a)
+
+            data = np.genfromtxt(path, delimiter=',', quoter='"', encoding=None, dtype=None)
+            assert_equal(data.shape, (2,))
+
     def test_ndfromtxt(self):
         # Test outputting a standard ndarray
         with temppath(suffix='.txt') as path:

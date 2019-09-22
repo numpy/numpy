@@ -258,23 +258,27 @@ class LineSplitter(object):
             return line.split(self.delimiter)
         else:
             out = []
+            index = 0
             isQuoted = False
-            chars = list(line)
             word = ''
 
-            for char in chars:
+            while index < len(line):
+                char = line[index]
                 if char == self.quoter:
-                    isQuoted = not isQuoted
-                else if char == self.delimiter and not isQuoted:
+                    if len(word) == 0 and not isQuoted:
+                        isQuoted = True
+                    else:
+                        isQuoted = False
+                elif char == self.delimiter and not isQuoted:
                     out.append(word)
+                    word = ''
                 else:
                     word += char
-
+                index += 1
             if word:
                 out.append(word)
             
             return out
-    #
 
     def _fixedwidth_splitter(self, line):
         if self.comments is not None:
