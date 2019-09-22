@@ -192,3 +192,19 @@ class TestRegression(object):
                              1819583497, 2678185683], dtype='int64')
         actual = random.randint(2**32, size=10)
         assert_array_equal(actual, expected)
+
+    def test_p_zero_stream(self):
+        # Regression test for gh-14522.  Ensure that future versions
+        # generate the same variates as version 1.16.
+        np.random.seed(12345)
+        assert_array_equal(random.binomial(1, [0, 0.25, 0.5, 0.75, 1]),
+                           [0, 0, 0, 1, 1])
+
+    def test_n_zero_stream(self):
+        # Regression test for gh-14522.  Ensure that future versions
+        # generate the same variates as version 1.16.
+        np.random.seed(8675309)
+        expected = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                             [3, 4, 2, 3, 3, 1, 5, 3, 1, 3]])
+        assert_array_equal(random.binomial([[0], [10]], 0.25, size=(2, 10)),
+                           expected)
