@@ -21,7 +21,6 @@ LAPACK, and for setting include paths and similar build options, please see
 
 from __future__ import division, absolute_import, print_function
 
-from .__version__ import version as __version__
 # Must import local ccompiler ASAP in order to get
 # customized CCompiler.spawn effective.
 from . import ccompiler
