@@ -305,7 +305,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "random.bounded_integers",
     "random.common",
     "random.generator",
-    "random.info",
     "random.mt19937",
     "random.mtrand",
     "random.pcg64",
