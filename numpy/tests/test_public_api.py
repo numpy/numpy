@@ -199,7 +199,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "core.fromnumeric",
     "core.function_base",
     "core.getlimits",
-    "core.info",
     "core.machar",
     "core.memmap",
     "core.multiarray",
