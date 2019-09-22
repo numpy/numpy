@@ -18,6 +18,10 @@ Run a debugger:
 
     $ gdb --args python runtests.py [...other args...]
 
+Disable pytest capturing of output by using its '-s' option:
+
+    $ python runtests.py -- -s
+
 Generate C code coverage listing under build/lcov/:
 (requires http://ltp.sourceforge.net/coverage/lcov.php)
 
