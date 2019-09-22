@@ -1,53 +1,77 @@
 """
-Core Linear Algebra Tools
-=========================
+``numpy.linalg``
+================
 
-=============== ==========================================================
-Linear algebra basics
-==========================================================================
-norm            Vector or matrix norm
-inv             Inverse of a square matrix
-solve           Solve a linear system of equations
-det             Determinant of a square matrix
-slogdet         Logarithm of the determinant of a square matrix
-lstsq           Solve linear least-squares problem
-pinv            Pseudo-inverse (Moore-Penrose) calculated using a singular
-                value decomposition
-matrix_power    Integer power of a square matrix
-matrix_rank     Calculate matrix rank using an SVD-based method
-=============== ==========================================================
+The NumPy linear algebra functions rely on BLAS and LAPACK to provide efficient
+low level implementations of standard linear algebra algorithms. Those
+libraries may be provided by NumPy itself using C versions of a subset of their
+reference implementations but, when possible, highly optimized libraries that
+take advantage of specialized processor functionality are preferred. Examples
+of such libraries are OpenBLAS, MKL (TM), and ATLAS. Because those libraries
+are multithreaded and processor dependent, environmental variables and external
+packages such as threadpoolctl may be needed to control the number of threads
+or specify the processor architecture.
 
-=============== ==========================================================
-Eigenvalues and decompositions
-==========================================================================
-eig             Eigenvalues and vectors of a square matrix
-eigh            Eigenvalues and eigenvectors of a Hermitian matrix
-eigvals         Eigenvalues of a square matrix
-eigvalsh        Eigenvalues of a Hermitian matrix
-qr              QR decomposition of a matrix
-svd             Singular value decomposition of a matrix
-cholesky        Cholesky decomposition of a matrix
-=============== ==========================================================
+- OpenBLAS: https://www.openblas.net/
+- threadpoolctl: https://github.com/joblib/threadpoolctl
 
-=============== ==========================================================
-Tensor operations
-==========================================================================
-tensorsolve     Solve a linear tensor equation
-tensorinv       Calculate an inverse of a tensor
-=============== ==========================================================
+Please note that the most-used linear algebra functions in NumPy are present in
+the main ``numpy`` namespace rather than in ``numpy.linalg``.  There are:
+``dot``, ``vdot``, ``inner``, ``outer``, ``matmul``, ``tensordot``, ``einsum``,
+``einsum_path`` and ``kron``.
 
-=============== ==========================================================
+Functions present in numpy.linalg are listed below.
+
+
+Matrix and vector products
+--------------------------
+
+   multi_dot
+   matrix_power
+
+Decompositions
+--------------
+
+   cholesky
+   qr
+   svd
+
+Matrix eigenvalues
+------------------
+
+   eig
+   eigh
+   eigvals
+   eigvalsh
+
+Norms and other numbers
+-----------------------
+
+   norm
+   cond
+   det
+   matrix_rank
+   slogdet
+
+Solving equations and inverting matrices
+----------------------------------------
+
+   solve
+   tensorsolve
+   lstsq
+   inv
+   pinv
+   tensorinv
+
 Exceptions
-==========================================================================
-LinAlgError     Indicates a failed linear algebra operation
-=============== ==========================================================
+----------
+
+   LinAlgError
 
 """
 from __future__ import division, absolute_import, print_function
 
 # To get sub-modules
-from .info import __doc__
-
 from .linalg import *
 
 from numpy._pytesttester import PytestTester
