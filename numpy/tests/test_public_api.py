@@ -250,7 +250,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.fcompiler.sun",
     "distutils.fcompiler.vast",
     "distutils.from_template",
-    "distutils.info",
     "distutils.intelccompiler",
     "distutils.lib2def",
     "distutils.line_endings",
