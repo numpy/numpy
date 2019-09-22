@@ -1564,7 +1564,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
-               invalid_raise=True, max_rows=None, encoding='bytes'):
+               invalid_raise=True, max_rows=None, encoding='bytes', quoter=None):
     """
     Load data from a text file, with missing values handled as specified.
 
@@ -1661,6 +1661,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         to None the system default is used. The default value is 'bytes'.
 
         .. versionadded:: 1.14.0
+
+    quoter: str, optional
+        The string used as the quoting character. By default, it is assumed
+        that the values are not quoted. If invalid value is provided, quoter
+        defaults to None.
+
+        .. versionadded:: 1.18.0
 
     Returns
     -------
@@ -1780,7 +1787,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     with fid_ctx:
         split_line = LineSplitter(delimiter=delimiter, comments=comments,
-                                  autostrip=autostrip, encoding=encoding)
+                                  autostrip=autostrip, encoding=encoding,
+                                  quoter=quoter)
         validate_names = NameValidator(excludelist=excludelist,
                                        deletechars=deletechars,
                                        case_sensitive=case_sensitive,
