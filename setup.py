@@ -83,6 +83,10 @@ def git_version():
     except (subprocess.SubprocessError, OSError):
         GIT_REVISION = "Unknown"
 
+    if not GIT_REVISION:
+        # this shouldn't happen but apparently can (see gh-8512)
+        GIT_REVISION = "Unknown"
+
     return GIT_REVISION
 
 # BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
