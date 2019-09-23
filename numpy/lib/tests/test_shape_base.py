@@ -436,10 +436,18 @@ class TestArraySplit(object):
     def test_index_split_high_bound(self):
         a = np.arange(10)
         indices = [0, 5, 7, 10, 12]
-        res = array_split(a, indices, axis=-1)
+        with assert_warns(UserWarning):
+            res = array_split(a, indices, axis=-1)
         desired = [np.array([]), np.arange(0, 5), np.arange(5, 7),
                    np.arange(7, 10), np.array([]), np.array([])]
         compare_results(res, desired)
+
+    def test_index_empty_range(self):
+        a = np.arange(10)
+        with assert_warns(UserWarning):
+            res = array_split(a, [6, -7])
+            desired = [np.arange(0,6), np.array([]), np.arange(3, 10)]
+            compare_results(res, desired)
 
 
 class TestSplit(object):

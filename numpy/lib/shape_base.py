@@ -770,6 +770,18 @@ def array_split(ary, indices_or_sections, axis=0):
     for i in range(Nsections):
         st = div_points[i]
         end = div_points[i + 1]
+
+        # normalize negative indexes
+        # st = normalize_axis_index(st, Ntotal+1)
+        if st < 0:
+            st += Ntotal
+        # end = normalize_axis_index(end, Ntotal+1)
+        if end < 0:
+            end += Ntotal
+
+        if end < st:
+            warnings.warn("split had negative range", stacklevel=3)
+
         sub_arys.append(_nx.swapaxes(sary[st:end], axis, 0))
 
     return sub_arys
