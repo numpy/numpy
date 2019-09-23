@@ -293,10 +293,8 @@ class TestExpandDims(object):
         # 2017-05-17, 1.13.0
         s = (2, 3, 4, 5)
         a = np.empty(s)
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            assert_warns(DeprecationWarning, expand_dims, a, -6)
-            assert_warns(DeprecationWarning, expand_dims, a, 5)
+        assert_raises(np.AxisError, expand_dims, a, -6)
+        assert_raises(np.AxisError, expand_dims, a, 5)
 
     def test_subclasses(self):
         a = np.arange(10).reshape((2, 5))

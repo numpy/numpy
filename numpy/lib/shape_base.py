@@ -574,16 +574,7 @@ def expand_dims(a, axis):
         a = asanyarray(a)
 
     shape = a.shape
-    if axis > a.ndim or axis < -a.ndim - 1:
-        # 2017-05-17, 1.13.0
-        warnings.warn("Both axis > a.ndim and axis < -a.ndim - 1 are "
-                      "deprecated and will raise an AxisError in the future.",
-                      DeprecationWarning, stacklevel=3)
-    # When the deprecation period expires, delete this if block,
-    if axis < 0:
-        axis = axis + a.ndim + 1
-    # and uncomment the following line.
-    # axis = normalize_axis_index(axis, a.ndim + 1)
+    axis = normalize_axis_index(axis, a.ndim + 1)
     return a.reshape(shape[:axis] + (1,) + shape[axis:])
 
 
