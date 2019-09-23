@@ -682,11 +682,7 @@ def select(condlist, choicelist, default=0):
 
     # Now that the dtype is known, handle the deprecated select([], []) case
     if len(condlist) == 0:
-        # 2014-02-24, 1.9
-        warnings.warn("select with an empty condition list is not possible"
-                      "and will be deprecated",
-                      DeprecationWarning, stacklevel=3)
-        return np.asarray(default)[()]
+        raise ValueError("select with an empty condition list is not possible")
 
     choicelist = [np.asarray(choice) for choice in choicelist]
     choicelist.append(np.asarray(default))
@@ -702,25 +698,11 @@ def select(condlist, choicelist, default=0):
     choicelist = np.broadcast_arrays(*choicelist)
 
     # If cond array is not an ndarray in boolean format or scalar bool, abort.
-    deprecated_ints = False
     for i in range(len(condlist)):
         cond = condlist[i]
         if cond.dtype.type is not np.bool_:
-            if np.issubdtype(cond.dtype, np.integer):
-                # A previous implementation accepted int ndarrays accidentally.
-                # Supported here deliberately, but deprecated.
-                condlist[i] = condlist[i].astype(bool)
-                deprecated_ints = True
-            else:
-                raise ValueError(
-                    'invalid entry {} in condlist: should be boolean ndarray'.format(i))
-
-    if deprecated_ints:
-        # 2014-02-24, 1.9
-        msg = "select condlists containing integer ndarrays is deprecated " \
-            "and will be removed in the future. Use `.astype(bool)` to " \
-            "convert to bools."
-        warnings.warn(msg, DeprecationWarning, stacklevel=3)
+            raise TypeError(
+                'invalid entry {} in condlist: should be boolean ndarray'.format(i))
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.

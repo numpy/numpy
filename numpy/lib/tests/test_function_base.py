@@ -423,27 +423,17 @@ class TestSelect(object):
         assert_equal(select([m], [d]), [0, 0, 0, np.nan, 0, 0])
 
     def test_deprecated_empty(self):
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter("always")
-            assert_equal(select([], [], 3j), 3j)
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("always")
-            assert_warns(DeprecationWarning, select, [], [])
-            warnings.simplefilter("error")
-            assert_raises(DeprecationWarning, select, [], [])
+        assert_raises(ValueError, select, [], [], 3j)
+        assert_raises(ValueError, select, [], [])
 
     def test_non_bool_deprecation(self):
         choices = self.choices
         conditions = self.conditions[:]
-        with warnings.catch_warnings():
-            warnings.filterwarnings("always")
-            conditions[0] = conditions[0].astype(np.int_)
-            assert_warns(DeprecationWarning, select, conditions, choices)
-            conditions[0] = conditions[0].astype(np.uint8)
-            assert_warns(DeprecationWarning, select, conditions, choices)
-            warnings.filterwarnings("error")
-            assert_raises(DeprecationWarning, select, conditions, choices)
+        conditions[0] = conditions[0].astype(np.int_)
+        assert_raises(TypeError, select, conditions, choices)
+        conditions[0] = conditions[0].astype(np.uint8)
+        assert_raises(TypeError, select, conditions, choices)
+        assert_raises(TypeError, select, conditions, choices)
 
     def test_many_arguments(self):
         # This used to be limited by NPY_MAXARGS == 32
