@@ -110,7 +110,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
   
   - column-wise
 
-- row-wise
+  - row-wise
 
     - np.concatenate, np.stack, np.vstack, np.hstack
 
