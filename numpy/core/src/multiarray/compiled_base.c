@@ -950,7 +950,7 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
         for (i = 0; i < ravel_ndim; ++i) {
             if (ravel_dims[i] == 0) {
                 PyErr_SetString(PyExc_ValueError,
-                        "cannot unravel if shape has zero entry (is empty).");
+                        "cannot unravel if shape has zero entries (is empty).");
                 return NPY_FAIL;
             }
         }
