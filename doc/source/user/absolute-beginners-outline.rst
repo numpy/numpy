@@ -24,8 +24,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
   import numpy as np 
 
-
-      - We shorten "numpy" to "np" in order to save time and also so that code is standardized so that anyone working with your code can easily understand and run it.
+(We shorten "numpy" to "np" in order to save time and also so that code is standardized so that anyone working with your code can easily understand and run it.)
 
 - What is an array?
 
