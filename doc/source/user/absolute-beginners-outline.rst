@@ -24,7 +24,6 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
   import numpy as np 
 
-::
 
       - We shorten "numpy" to "np" in order to save time and also so that code is standardized so that anyone working with your code can easily understand and run it.
 
@@ -44,8 +43,6 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
     np.array()
 
-    ::
-
     - All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types [here](https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html#arrays-dtypes)
 
   ::
@@ -58,8 +55,6 @@ This is a working outline for a future section introducing NumPy to absolute beg
     # print the first element of the array
     print(a[0])
     # this will print *1*
-
-  ::
   
   - What else might it be called?
   
