@@ -10,7 +10,9 @@ This is a working outline for a future section introducing NumPy to absolute beg
   
   - various operating systems 
 
-    - If you don't have Python yet, consider using Anaconda as the easiest way to get started
+   - If you don't have Python yet, consider using Anaconda as the easiest way to get started
+
+      - The good thing about getting this Python distribution is is the fact that you don’t need to worry too much about separately installing NumPy or any of the major packages that you’ll be using for your data analyses, such as pandas, Scikit-Learn, etc.
     
     - If you do have Python, you can install NumPy with `conda install numpy` or `pip install numpy`
     
@@ -18,9 +20,48 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
 - How to import NumPy
 
-- What is an array
+::
+
+  import numpy as np 
+
+::
+
+      - We shorten "numpy" to "np" in order to save time and also so that code is standardized so that anyone working with your code can easily understand and run it.
+
+- What is an array?
+
+  - An array is a central data structure of the NumPy library. It's a grid of values and it contains information about the raw data, how to located an element, and how to interpret an element. All of the values in an array should be the same type and an array is indexed by a tuple of nonnegative integers. The *rank* of the array is the number of dimensions. The *shape* of the array is a tuple of integers giving the size of the array along each dimension.
+
+  - We can initialize NumPy arrays from nested Python lists. 
+
+  - We can access the elements in the array using square brackets. When you're accessing elements, remember that indexing starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
+
+  -How to make a NumPy array
+
+    - To make a NumPy array, you can use the function
+
+    ::
+
+    np.array()
+
+    ::
+
+    - All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types [here](https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html#arrays-dtypes)
+
+  ::
+
+    import numpy as np
+
+    # create a 1-D array
+    a = np.array([1,2,3])
+
+    # print the first element of the array
+    print(a[0])
+    # this will print *1*
+
+  ::
   
-  - What else might it be called
+  - What else might it be called?
   
   - What is its shape
 
