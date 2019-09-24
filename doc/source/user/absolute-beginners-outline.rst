@@ -10,7 +10,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
   
   - various operating systems 
 
-    - If you don't have Python yet, consider using Anaconda as the easiest way to get started
+    - If you don't have Python yet, consider using Anaconda as the easiest way to get started.
 
       - The good thing about getting this Python distribution is is the fact that you don’t need to worry too much about separately installing NumPy or any of the major packages that you’ll be using for your data analyses, such as pandas, Scikit-Learn, etc.
     
