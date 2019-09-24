@@ -42,7 +42,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
     np.array()
 
-    - All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types here_ https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html#arrays-dtypes
+    - All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html#arrays-dtypes>`_
 
   ::
 
