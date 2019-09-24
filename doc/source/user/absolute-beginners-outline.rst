@@ -36,7 +36,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
   - We can access the elements in the array using square brackets. When you're accessing elements, remember that indexing starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
 
-  -How to make a NumPy array
+  - How to make a NumPy array
 
     - To make a NumPy array, you can use the function
 
@@ -77,7 +77,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 - How to create a basic array
 - How to create an array from existing data
 
- - reading in a CSV
+  - reading in a CSV
 
 ::
 
