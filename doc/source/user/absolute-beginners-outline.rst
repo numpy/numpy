@@ -34,18 +34,15 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
   - We can access the elements in the array using square brackets. When you're accessing elements, remember that indexing starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
 
--How to make a NumPy array
+- To make a NumPy array, you can use the function
 
-  - To make a NumPy array, you can use the function
-
- ::
+::
 
     np.array()
 
+All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html#arrays-dtypes>`_ 
 
-- All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html#arrays-dtypes>`_
-
- ::
+::
 
     import numpy as np
 
@@ -55,18 +52,23 @@ This is a working outline for a future section introducing NumPy to absolute beg
     # print the first element of the array
     print(a[0])
     # this will print *1*
+ 
+- More information about arrays
+
+  - What else might it be called?
   
- - What else might it be called?
-  
- - What is its shape
+  - What is its shape
 
- - Can you reshape it?
+  - Can you reshape it?
 
- - What’s the difference between a Python List and a NumPy array? Why use NumPy?
 
- - What are the attributes of an array?
+  - What’s the difference between a Python List and a NumPy array? Why use NumPy?
 
- - Broadcasting example
+
+  - What are the attributes of an array?
+
+
+- Broadcasting example
 
 - How to create an array (ndarray object)
 - How to create a basic array
