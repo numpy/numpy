@@ -28,7 +28,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
 - What is an array?
 
-  - An array is a central data structure of the NumPy library. It has two main components: a grid of elements that can be indexed in `various ways <indexing-slicing-and-iterating>`. The elements are all of the same type, referred to as the array `dtype`. All of the values in an array should be the same type and an array can be indexed by a tuple of nonnegative integers, by booleans, by another array, or by integers. The *rank* of the array is the number of dimensions. The *shape* of the array is a tuple of integers giving the size of the array along each dimension.
+  - An array is a central data structure of the NumPy library. It has two main components: a grid of elements that can be indexed in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_ The elements are all of the same type, referred to as the array `dtype`. All of the values in an array should be the same type and an array can be indexed by a tuple of nonnegative integers, by booleans, by another array, or by integers. The *rank* of the array is the number of dimensions. The *shape* of the array is a tuple of integers giving the size of the array along each dimension.
 
   - One way we can initialize NumPy arrays is from nested Python lists. 
 
@@ -40,7 +40,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
     np.array()
 
-All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types here `arrays-dtypes`_
+All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://numpy.org/devdocs/user/quickstart.html#arrays-dtypes>`_
 
 ::
 
