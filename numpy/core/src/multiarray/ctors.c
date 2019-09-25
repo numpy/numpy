@@ -3726,9 +3726,6 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     free(clean_sep);
 
 fail:
-    if (r == NULL) {
-        Py_DECREF(dtype);
-    }
     if (err == 1) {
         PyErr_NoMemory();
     }

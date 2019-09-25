@@ -608,13 +608,8 @@ fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
     if (string == NULL) {
         return NULL;
     }
-    descr = PyArray_DescrFromType(NPY_FLOAT64);
-    Py_INCREF(descr);
+    descr = PyArray_DescrNewFromType(NPY_FLOAT64);
     ret = PyArray_FromString( string, -1, descr, -1, " ");
-    if (ret == NULL)
-    {
-        Py_DECREF(descr);
-    }
     return ret;
 }
 
@@ -931,14 +926,9 @@ get_c_wrapping_array(PyObject* NPY_UNUSED(self), PyObject* arg)
 
     flags = writeable ? NPY_ARRAY_WRITEABLE : 0;
     /* Create an empty array (which points to a random place) */
-    descr =  PyArray_DescrFromType(NPY_INTP);
-    Py_INCREF(descr);
+    descr =  PyArray_DescrNewFromType(NPY_INTP);
     ret = PyArray_NewFromDescr(&PyArray_Type, descr,
                                 1, &zero, NULL, &zero, flags, NULL);
-    if (ret == NULL)
-    {
-        Py_DECREF(descr);
-    }
     return ret;
 }
 
