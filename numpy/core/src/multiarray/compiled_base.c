@@ -942,6 +942,20 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
     char invalid;
     npy_intp j, m;
 
+    /*
+     * Check for 0-dimensional axes unless there is nothing to do.
+     * An empty array/shape cannot be indexed at all.
+     */
+    if (count != 0) {
+        for (i = 0; i < ravel_ndim; ++i) {
+            if (ravel_dims[i] == 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "cannot unravel if shape has zero entries (is empty).");
+                return NPY_FAIL;
+            }
+        }
+    }
+
     NPY_BEGIN_ALLOW_THREADS;
     invalid = 0;
     while (count--) {
