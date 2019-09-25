@@ -1,6 +1,6 @@
-**************
+****************************************
 NumPy: The Absolute Basics for Beginners
-**************
+****************************************
 
 This is a working outline for a future section introducing NumPy to absolute beginners. If you have comments or suggestions, please don’t hesitate to reach out!
 
@@ -10,9 +10,9 @@ This is a working outline for a future section introducing NumPy to absolute beg
   
   - various operating systems 
 
-    - If you don't have Python yet, consider using Anaconda as the easiest way to get started
+  - If you don't have Python yet, consider using Anaconda as the easiest way to get started
 
-      - The good thing about getting this Python distribution is is the fact that you don’t need to worry too much about separately installing NumPy or any of the major packages that you’ll be using for your data analyses, such as pandas, Scikit-Learn, etc.
+    - The good thing about getting this Python distribution is is the fact that you don’t need to worry too much about separately installing NumPy or any of the major packages that you’ll be using for your data analyses, such as pandas, Scikit-Learn, etc.
     
     - If you do have Python, you can install NumPy with `conda install numpy` or `pip install numpy`
     
@@ -34,17 +34,15 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
   - We can access the elements in the array using square brackets. When you're accessing elements, remember that indexing starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
 
-  - How to make a NumPy array
+- To make a NumPy array, you can use the function
 
-    - To make a NumPy array, you can use the function
-
-    ::
+::
 
     np.array()
 
-    - All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html#arrays-dtypes>`_
+All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html#arrays-dtypes>`_ 
 
-  ::
+::
 
     import numpy as np
 
@@ -54,18 +52,23 @@ This is a working outline for a future section introducing NumPy to absolute beg
     # print the first element of the array
     print(a[0])
     # this will print *1*
-  
+ 
+- More information about arrays
+
   - What else might it be called?
   
-  - What is its shape?
+  - What is its shape
 
   - Can you reshape it?
 
+
   - What’s the difference between a Python List and a NumPy array? Why use NumPy?
+
 
   - What are the attributes of an array?
 
-  - Broadcasting example
+
+- Broadcasting example
 
 - How to create an array (ndarray object)
 - How to create a basic array
@@ -110,9 +113,9 @@ This is a working outline for a future section introducing NumPy to absolute beg
   
   - column-wise
 
-  - row-wise
+- row-wise
 
-    - np.concatenate, np.stack, np.vstack, np.hstack
+  - np.concatenate, np.stack, np.vstack, np.hstack
 
 - How to sort an array 
   
@@ -182,3 +185,4 @@ This is a working outline for a future section introducing NumPy to absolute beg
   - np.bincount
   
   - np.histogram
+
