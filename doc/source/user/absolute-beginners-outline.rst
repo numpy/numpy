@@ -28,19 +28,19 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
 - What is an array?
 
-  - An array is a central data structure of the NumPy library. It has two main components: a grid of elements that can be indexed in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_ The elements are all of the same type, referred to as the array `dtype`. All of the values in an array should be the same type and an array can be indexed by a tuple of nonnegative integers, by booleans, by another array, or by integers. The *rank* of the array is the number of dimensions. The *shape* of the array is a tuple of integers giving the size of the array along each dimension.
+  - An array is a central data structure of the NumPy library. It's a grid of values and it contains information about the raw data, how to locate an element, and how to interpret an element. It has a grid of elements that can be indexed in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_. The elements are all of the same type, referred to as the array `dtype`. 
+
+  All of the values in an array should be the same type. An array can be indexed by a tuple of nonnegative integers, by booleans, by another array, or by integers. The **rank** of the array is the number of dimensions. The **shape** of the array is a tuple of integers giving the size of the array along each dimension.
 
   - One way we can initialize NumPy arrays is from nested Python lists. 
 
-  - We can access the elements in the array using square brackets. When you're accessing elements, remember that indexing starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
+  - We can access the elements in the array using square brackets.
 
-- To make a NumPy array, you can use the function
+    - When you're accessing elements, remember that indexing starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
 
-::
+- To make a NumPy array, you can use the function `np.array()`
 
-    np.array()
-
-All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://numpy.org/devdocs/user/quickstart.html#arrays-dtypes>`_
+  - All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://numpy.org/devdocs/user/quickstart.html#arrays-dtypes>`_.
 
 ::
 
@@ -51,22 +51,51 @@ All you need to do to create a simple array is pass a list to it. If you choose 
 
     # print the first element of the array
     print(a[0])
-    # this will print *1*
+    # this will print 1
  
 - More information about arrays
 
   - What else might it be called?
-  
-  - What is its shape
 
-  - Can you reshape it?
-
-
-  - What’s the difference between a Python List and a NumPy array? Why use NumPy?
-
+    - You might occasionally hear an array referred to as an "ndarray," which is shorthand for "N-dimensional array." You might also hear **1-D**, or one-dimensional array, **2-D**, or two-dimensional array, and so on. The numpy `ndarray` class is used to represent both matrices and vectors. A vector is an array with a single column, while a matrix referrs to an array with multiple columns.
 
   - What are the attributes of an array?
 
+  - How do you know the shape and size of an array?
+
+    - **ndarray.ndim** will tell you the number of axes, or dimensions, of the array.
+
+    - **ndarray.shape** will display a tuple of integers that indicate the number of elements stored along each dimension of the array. If, for example, you have a 2D-array with 2 rows and 3 columns, the shape of your array is (2,3).
+
+    - **ndarray.size** will tell you the total number of elements of the array. This is, in other words, the product of the elements of the array's shape.
+
+    - For example:
+
+::
+
+      import numpy as np
+      array_example = np.array([[[0, 1, 2, 3]
+                                 [4, 5, 6, 7]],
+
+                                 [[0, 1, 2, 3]
+                                  [4, 5, 6, 7]],
+
+                                  [0 ,1 ,2, 3]
+                                  [4, 5, 6, 7]]])
+      array_example.ndim
+      # will return 3
+      
+      array_example.shape
+      # will return (3,2,4)
+      
+      array_example.size
+      # will return 24
+
+- Can you reshape an array?
+
+- What’s the difference between a Python List and a NumPy array? 
+
+  - Why use NumPy?
 
 - Broadcasting example
 
@@ -175,6 +204,8 @@ All you need to do to create a simple array is pass a list to it. If you choose 
 - How to save and load NumPy objects
 - How to apply a function column-wise or row-wise
 - How to convert a 1D array into a 2D array (how to add a new axis)
+- How to plot arrays, very basic with Matplotlib
+- How to read a docstring with `?` and source code with `??` in IPython/Jupyter
 
 - More useful functions:
 
