@@ -28,9 +28,9 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
 - What is an array?
 
-  - An array is a central data structure of the NumPy library. It's a grid of values and it contains information about the raw data, how to located an element, and how to interpret an element. All of the values in an array should be the same type and an array is indexed by a tuple of nonnegative integers. The *rank* of the array is the number of dimensions. The *shape* of the array is a tuple of integers giving the size of the array along each dimension.
+  - An array is a central data structure of the NumPy library. It has two main components: a grid of elements that can be indexed in `various ways indexing-slicing-and-iterating`. The elements are all of the same type, referred to as the array `dtype`. All of the values in an array should be the same type and an array can be indexed by a tuple of nonnegative integers, by booleans, by another array, or by integers. The *rank* of the array is the number of dimensions. The *shape* of the array is a tuple of integers giving the size of the array along each dimension.
 
-  - We can initialize NumPy arrays from nested Python lists. 
+  - One way we can initialize NumPy arrays is from nested Python lists. 
 
   - We can access the elements in the array using square brackets. When you're accessing elements, remember that indexing starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
 
@@ -40,7 +40,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
     np.array()
 
-All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html#arrays-dtypes>`_ 
+All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types here_ `array-dtypes` 
 
 ::
 
