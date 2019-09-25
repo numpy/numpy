@@ -1669,10 +1669,11 @@ finish:
             if (!item && PyBytes_Check(obj)) {
                 PyObject *tmp;
                 tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
-                if (tmp != NULL) {
-                    item = PyDict_GetItem(typeDict, tmp);
-                    Py_DECREF(tmp);
+                if (tmp == NULL) {
+                    goto error;
                 }
+                item = PyDict_GetItem(typeDict, tmp);
+                Py_DECREF(tmp);
             }
 #endif
             if (item) {
