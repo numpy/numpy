@@ -1440,11 +1440,10 @@ static PyObject *
  *             CFloat, CDouble, CLongDouble#
  * #cmplx = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1#
  * #to_ctype = , , , , , , , , , , npy_half_to_double, , , , , , #
- * #which = float*17#
  * #func = PyFloat_FromDouble*17#
  */
 static NPY_INLINE PyObject *
-@name@_@which@(PyObject *obj)
+@name@_float(PyObject *obj)
 {
 #if @cmplx@
     if (emit_complexwarning() < 0) {
@@ -1472,13 +1471,12 @@ static NPY_INLINE PyObject *
  *             CFloat, CDouble, CLongDouble)#
  * #cmplx = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1)#
  * #to_ctype = (, , , , , , , , , , npy_half_to_double, , , , , , )#
- * #which = long*17#
  * #func = (PyLong_FromLongLong,  PyLong_FromUnsignedLongLong)*5,
  *         PyLong_FromDouble*3, npy_longdouble_to_PyLong,
  *         PyLong_FromDouble*2, npy_longdouble_to_PyLong#
  */
 static NPY_INLINE PyObject *
-@name@_@which@(PyObject *obj)
+@name@_long(PyObject *obj)
 {
 #if @cmplx@
     if (emit_complexwarning() < 0) {
