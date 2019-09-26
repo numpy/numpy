@@ -1840,7 +1840,7 @@ class chararray(ndarray):
     This constructor creates the array, using `buffer` (with `offset`
     and `strides`) if it is not ``None``. If `buffer` is ``None``, then
     constructs a new array with `strides` in "C order", unless both
-    ``len(shape) >= 2`` and ``order='Fortran'``, in which case `strides`
+    ``len(shape) >= 2`` and ``order='F'``, in which case `strides`
     is in "Fortran order".
 
     Methods

@@ -406,7 +406,6 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
     }
 
     *sortkind = NPY_QUICKSORT;
-        
 
     str = PyBytes_AsString(obj);
     if (!str) {
@@ -551,10 +550,9 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
         int ret;
         tmp = PyUnicode_AsASCIIString(object);
         if (tmp == NULL) {
-            PyErr_SetString(PyExc_ValueError, "Invalid unicode string passed in "
-                                              "for the array ordering. "
-                                              "Please pass in 'C', 'F', 'A' "
-                                              "or 'K' instead");
+            PyErr_SetString(PyExc_ValueError,
+                "Invalid unicode string passed in for the array ordering. "
+                "Please pass in 'C', 'F', 'A' or 'K' instead");
             return NPY_FAIL;
         }
         ret = PyArray_OrderConverter(tmp, val);
@@ -562,38 +560,18 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
         return ret;
     }
     else if (!PyBytes_Check(object) || PyBytes_GET_SIZE(object) < 1) {
-        /* 2015-12-14, 1.11 */
-        int ret = DEPRECATE("Non-string object detected for "
-                            "the array ordering. Please pass "
-                            "in 'C', 'F', 'A', or 'K' instead");
-
-        if (ret < 0) {
-            return -1;
-        }
-
-        if (PyObject_IsTrue(object)) {
-            *val = NPY_FORTRANORDER;
-        }
-        else {
-            *val = NPY_CORDER;
-        }
-        if (PyErr_Occurred()) {
-            return NPY_FAIL;
-        }
-        return NPY_SUCCEED;
+        PyErr_SetString(PyExc_ValueError,
+            "Non-string object detected for the array ordering. "
+            "Please pass in 'C', 'F', 'A', or 'K' instead");
+        return NPY_FAIL;
     }
     else {
         str = PyBytes_AS_STRING(object);
         if (strlen(str) != 1) {
-            /* 2015-12-14, 1.11 */
-            int ret = DEPRECATE("Non length-one string passed "
-                                "in for the array ordering. "
-                                "Please pass in 'C', 'F', 'A', "
-                                "or 'K' instead");
-
-            if (ret < 0) {
-                return -1;
-            }
+            PyErr_SetString(PyExc_ValueError,
+                "Non-string object detected for the array ordering. "
+                "Please pass in 'C', 'F', 'A', or 'K' instead");
+            return NPY_FAIL;
         }
 
         if (str[0] == 'C' || str[0] == 'c') {
