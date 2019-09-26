@@ -1,8 +1,8 @@
 #ifndef _RANDOMDGEN__PHILOX_H_
 #define _RANDOMDGEN__PHILOX_H_
 
-#include <inttypes.h>
 #include "numpy/npy_common.h"
+#include <inttypes.h>
 
 #define PHILOX_BUFFER_SIZE 4L
 

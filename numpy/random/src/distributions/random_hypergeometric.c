@@ -1,6 +1,6 @@
-#include <stdint.h>
 #include "distributions.h"
 #include "logfactorial.h"
+#include <stdint.h>
 
 /*
  *  Generate a sample from the hypergeometric distribution.
