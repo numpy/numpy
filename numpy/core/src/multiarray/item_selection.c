@@ -1336,7 +1336,11 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     PyArray_ArgSortFunc *argsort;
     PyObject *ret;
 
-    if (which < 0 || which >= NPY_NSELECTS) {
+    /*
+     * As a C-exported function, enum NPY_SELECTKIND loses its enum property
+     * Check the values to make sure they are in range
+     */
+    if ((int)which < 0 || (int)which >= NPY_NSELECTS) {
         PyErr_SetString(PyExc_ValueError,
                         "not a valid partition kind");
         return NULL;
