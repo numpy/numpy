@@ -779,7 +779,7 @@ defdict = {
           None,
           TD('e', f='ceil', astype={'e':'f'}),
           TD(inexactvec, simd=[('fma', 'fd'), ('avx512f', 'fd')]),
-          TD(flts, f='ceil', astype={'e':'f'}),
+          TD('fdg', f='ceil'),
           TD(O, f='npy_ObjectCeil'),
           ),
 'trunc':
@@ -788,7 +788,7 @@ defdict = {
           None,
           TD('e', f='trunc', astype={'e':'f'}),
           TD(inexactvec, simd=[('fma', 'fd'), ('avx512f', 'fd')]),
-          TD(flts, f='trunc', astype={'e':'f'}),
+          TD('fdg', f='trunc'),
           TD(O, f='npy_ObjectTrunc'),
           ),
 'fabs':
@@ -804,7 +804,7 @@ defdict = {
           None,
           TD('e', f='floor', astype={'e':'f'}),
           TD(inexactvec, simd=[('fma', 'fd'), ('avx512f', 'fd')]),
-          TD(flts, f='floor', astype={'e':'f'}),
+          TD('fdg', f='floor'),
           TD(O, f='npy_ObjectFloor'),
           ),
 'rint':
@@ -813,7 +813,7 @@ defdict = {
           None,
           TD('e', f='rint', astype={'e':'f'}),
           TD(inexactvec, simd=[('fma', 'fd'), ('avx512f', 'fd')]),
-          TD(inexact, f='rint', astype={'e':'f'}),
+          TD('fdg' + cmplx, f='rint'),
           TD(P, f='rint'),
           ),
 'arctan2':
