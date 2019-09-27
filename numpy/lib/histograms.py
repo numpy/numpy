@@ -423,6 +423,15 @@ def _get_bin_edges(a, bins, range, weights):
         if np.any(bin_edges[:-1] > bin_edges[1:]):
             raise ValueError(
                 '`bins` must increase monotonically, when an array')
+        # Use the fast algorithm if the given bins are equally spaced
+        try:
+            resolution = np.finfo(bin_edges.dtype).resolution
+        except ValueError:
+            resolution = np.finfo(np.float64).resolution
+        widths = np.diff(bin_edges)
+        if np.allclose(widths / widths[0] - 1, 0, rtol=2 * resolution):
+            n_equal_bins = len(bin_edges) - 1
+            first_edge, last_edge = bin_edges[0], bin_edges[-1]
 
     else:
         raise ValueError('`bins` must be 1d, when an array')
