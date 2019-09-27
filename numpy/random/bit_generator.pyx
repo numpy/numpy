@@ -53,9 +53,7 @@ from cpython.pycapsule cimport PyCapsule_New
 import numpy as np
 cimport numpy as np
 
-from libc.stdint cimport uint32_t
 from .common cimport (random_raw, benchmark, prepare_ctypes, prepare_cffi)
-from .distributions cimport bitgen_t
 
 __all__ = ['SeedSequence', 'BitGenerator']
 

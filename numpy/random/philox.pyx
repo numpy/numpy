@@ -6,9 +6,11 @@ except ImportError:
     from dummy_threading import Lock
 
 import numpy as np
+cimport numpy as np
 
-from .common cimport *
-from .bit_generator cimport BitGenerator
+from libc.stdint cimport uint32_t, uint64_t
+from .common cimport uint64_to_double, int_to_array, wrap_int
+from .bit_generator cimport BitGenerator, bitgen_t
 
 __all__ = ['Philox']
 

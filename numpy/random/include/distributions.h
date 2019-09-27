@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 #include "numpy/npy_math.h"
-#include "src/bitgen.h"
+#include "include/bitgen.h"
 
 /*
  * RAND_INT_TYPE is used to share integer generators with RandomState which
