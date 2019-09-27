@@ -1,5 +1,5 @@
 =======================================
-NEP XX — Extensible Datatypes for NumPy
+NEP 33 — Extensible Datatypes for NumPy
 =======================================
 
 :title: Extensible Datatypes for NumPy
