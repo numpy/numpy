@@ -462,7 +462,7 @@ WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
             PyErr_WriteUnraisable(Py_None);
         }
     }
-};
+}
 
 /* array object functions */
 
@@ -483,10 +483,11 @@ array_dealloc(PyArrayObject *self)
             char const * msg = "WRITEBACKIFCOPY detected in array_dealloc. "
                 " Required call to PyArray_ResolveWritebackIfCopy or "
                 "PyArray_DiscardWritebackIfCopy is missing.";
-            Py_INCREF(self); /* hold on to self in next call  since if
-                              * refcount == 0 it will recurse back into
-                              *array_dealloc
-                              */
+            /*
+             * prevent reaching 0 twice and thus recursing into dealloc.
+             * Increasing sys.gettotalrefcount, but path should not be taken.
+             */
+            Py_INCREF(self);
             WARN_IN_DEALLOC(PyExc_RuntimeWarning, msg);
             retval = PyArray_ResolveWritebackIfCopy(self);
             if (retval < 0)
@@ -500,10 +501,11 @@ array_dealloc(PyArrayObject *self)
             char const * msg = "UPDATEIFCOPY detected in array_dealloc. "
                 " Required call to PyArray_ResolveWritebackIfCopy or "
                 "PyArray_DiscardWritebackIfCopy is missing";
-            Py_INCREF(self); /* hold on to self in next call  since if
-                              * refcount == 0 it will recurse back into
-                              *array_dealloc
-                              */
+            /*
+             * prevent reaching 0 twice and thus recursing into dealloc.
+             * Increasing sys.gettotalrefcount, but path should not be taken.
+             */
+            Py_INCREF(self);
             /* 2017-Nov-10 1.14 */
             WARN_IN_DEALLOC(PyExc_DeprecationWarning, msg);
             retval = PyArray_ResolveWritebackIfCopy(self);
@@ -523,12 +525,7 @@ array_dealloc(PyArrayObject *self)
     if ((fa->flags & NPY_ARRAY_OWNDATA) && fa->data) {
         /* Free internal references if an Object array */
         if (PyDataType_FLAGCHK(fa->descr, NPY_ITEM_REFCOUNT)) {
-            Py_INCREF(self); /*hold on to self */
             PyArray_XDECREF(self);
-            /*
-             * Don't need to DECREF -- because we are deleting
-             * self already...
-             */
         }
         npy_free_cache(fa->data, PyArray_NBYTES(self));
     }
@@ -610,7 +607,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
  * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT void
-PyArray_SetDatetimeParseFunction(PyObject *op)
+PyArray_SetDatetimeParseFunction(PyObject *NPY_UNUSED(op))
 {
 }
 
@@ -633,7 +630,7 @@ PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 /*NUMPY_API
  */
 NPY_NO_EXPORT int
-PyArray_CompareString(char *s1, char *s2, size_t len)
+PyArray_CompareString(const char *s1, const char *s2, size_t len)
 {
     const unsigned char *c1 = (unsigned char *)s1;
     const unsigned char *c2 = (unsigned char *)s2;
@@ -1203,15 +1200,28 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             }
         }
         if (res == NULL && !PyErr_Occurred()) {
-            PyErr_SetString(PyExc_ValueError, "No fields found.");
+            /* these dtypes had no fields. Use a MultiIter to broadcast them
+             * to an output array, and fill with True (for EQ)*/
+            PyArrayMultiIterObject *mit = (PyArrayMultiIterObject *)
+                                          PyArray_MultiIterNew(2, self, other);
+            if (mit == NULL) {
+                return NULL;
+            }
+
+            res = PyArray_NewFromDescr(&PyArray_Type,
+                                       PyArray_DescrFromType(NPY_BOOL),
+                                       mit->nd, mit->dimensions,
+                                       NULL, NULL, 0, NULL);
+            Py_DECREF(mit);
+            if (res) {
+                 PyArray_FILLWBYTE((PyArrayObject *)res,
+                                   cmp_op == Py_EQ ? 1 : 0);
+            }
         }
         return res;
     }
     else {
-        /*
-         * compare as a string. Assumes self and
-         * other have same descr->type
-         */
+        /* compare as a string. Assumes self and other have same descr->type */
         return _strings_richcompare(self, other, cmp_op, 0);
     }
 }

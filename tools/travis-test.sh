@@ -32,7 +32,7 @@ werrors="$werrors -Werror=implicit-function-declaration"
 
 setup_base()
 {
-  # use default python flags but remoge sign-compare
+  # use default python flags but remove sign-compare
   sysflags="$($PYTHON -c "from distutils import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
   export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
@@ -52,7 +52,7 @@ setup_base()
   else
     # Python3.5-dbg on travis seems to need this
     export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
-    $PYTHON setup.py build_ext --inplace 2>&1 | tee log
+    $PYTHON setup.py build build_src -v build_ext --inplace 2>&1 | tee log
   fi
   grep -v "_configtest" log \
     | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
@@ -65,12 +65,12 @@ setup_base()
 
 run_test()
 {
+  $PIP install -r test_requirements.txt
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
-    $PIP install pytest-cov
     COVERAGE_FLAG=--coverage
   fi
 
@@ -90,7 +90,9 @@ run_test()
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
     $PYTHON ../runtests.py -n -v --durations 10 --mode=full $COVERAGE_FLAG
   else
-    $PYTHON ../runtests.py -n -v --durations 10
+    # disable --durations temporarily, pytest currently aborts
+    # when that is used with python3.6-dbg
+    $PYTHON ../runtests.py -n -v  # --durations 10
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -149,21 +151,17 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
      export F90='gfortran --coverage'
      export LDFLAGS='--coverage'
   fi
-  $PYTHON setup.py bdist_wheel
+  $PYTHON setup.py build build_src -v bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
   $PIP install --pre --no-index --upgrade --find-links=. numpy
-  $PIP install nose pytest
-
-  if [ -n "$INSTALL_PICKLE5" ]; then
-    $PIP install pickle5
-  fi
-
   popd
+
   run_test
+
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # use an up-to-date pip / setuptools inside the venv
   $PIP install -U virtualenv
@@ -180,11 +178,6 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # Move out of source directory to avoid finding local numpy
   pushd dist
   $PIP install numpy*
-  $PIP install nose pytest
-  if [ -n "$INSTALL_PICKLE5" ]; then
-    $PIP install pickle5
-  fi
-
   popd
   run_test
 else

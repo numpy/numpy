@@ -44,7 +44,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
-    temppath, suppress_warnings, break_cycles, assert_raises_regex,
+    temppath, suppress_warnings, break_cycles,
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
@@ -497,9 +497,6 @@ class TestArrayConstruction(object):
         assert_(np.ascontiguousarray(d).flags.c_contiguous)
         assert_(np.asfortranarray(d).flags.f_contiguous)
 
-    def test_ragged(self):
-        assert_raises_regex(ValueError, 'ragged',
-                             np.array, [[1], [2, 3]], dtype=int)
 
 class TestAssignment(object):
     def test_assignment_broadcasting(self):
@@ -4590,18 +4587,26 @@ class TestTake(object):
         assert_equal(y, np.array([1, 2, 3]))
 
 class TestLexsort(object):
-    def test_basic(self):
-        a = [1, 2, 1, 3, 1, 5]
-        b = [0, 4, 5, 6, 2, 3]
+    @pytest.mark.parametrize('dtype',[
+        np.uint8, np.uint16, np.uint32, np.uint64,
+        np.int8, np.int16, np.int32, np.int64,
+        np.float16, np.float32, np.float64
+    ])
+    def test_basic(self, dtype):
+        a = np.array([1, 2, 1, 3, 1, 5], dtype=dtype)
+        b = np.array([0, 4, 5, 6, 2, 3], dtype=dtype)
         idx = np.lexsort((b, a))
         expected_idx = np.array([0, 4, 2, 1, 3, 5])
         assert_array_equal(idx, expected_idx)
+        assert_array_equal(a[idx], np.sort(a))
 
-        x = np.vstack((b, a))
-        idx = np.lexsort(x)
+    def test_mixed(self):
+        a = np.array([1, 2, 1, 3, 1, 5])
+        b = np.array([0, 4, 5, 6, 2, 3], dtype='datetime64[D]')
+
+        idx = np.lexsort((b, a))
+        expected_idx = np.array([0, 4, 2, 1, 3, 5])
         assert_array_equal(idx, expected_idx)
-
-        assert_array_equal(x[1][idx], np.sort(x[1]))
 
     def test_datetime(self):
         a = np.array([0,0,0], dtype='datetime64[D]')
@@ -4958,7 +4963,8 @@ class TestIO(object):
         self._check_from(b'1,2,3,4', [1., 2., 3., 4.], dtype=float, sep=',')
 
     def test_malformed(self):
-        self._check_from(b'1.234 1,234', [1.234, 1.], sep=' ')
+        with assert_warns(DeprecationWarning):
+            self._check_from(b'1.234 1,234', [1.234, 1.], sep=' ')
 
     def test_long_sep(self):
         self._check_from(b'1_x_3_x_4_x_5', [1, 3, 4, 5], sep='_x_')
@@ -6271,6 +6277,23 @@ class TestMatmul(MatmulCommon):
         with assert_raises(TypeError):
             b = np.matmul(a, a)
 
+    def test_matmul_bool(self):
+        # gh-14439
+        a = np.array([[1, 0],[1, 1]], dtype=bool)
+        assert np.max(a.view(np.uint8)) == 1
+        b = np.matmul(a, a)
+        # matmul with boolean output should always be 0, 1
+        assert np.max(b.view(np.uint8)) == 1
+
+        rg = np.random.default_rng(np.random.PCG64(43))
+        d = rg.integers(2, size=4*5, dtype=np.int8)
+        d = d.reshape(4, 5) > 0
+        out1 = np.matmul(d, d.reshape(5, 4))
+        out2 = np.dot(d, d.reshape(5, 4))
+        assert_equal(out1, out2)
+
+        c = np.matmul(np.zeros((2, 0), dtype=bool), np.zeros(0, dtype=bool))
+        assert not np.any(c)
 
 
 if sys.version_info[:2] >= (3, 5):
@@ -6405,20 +6428,22 @@ class TestInner(object):
 
 class TestAlen(object):
     def test_basic(self):
-        m = np.array([1, 2, 3])
-        assert_equal(np.alen(m), 3)
+        with pytest.warns(DeprecationWarning):
+            m = np.array([1, 2, 3])
+            assert_equal(np.alen(m), 3)
 
-        m = np.array([[1, 2, 3], [4, 5, 7]])
-        assert_equal(np.alen(m), 2)
+            m = np.array([[1, 2, 3], [4, 5, 7]])
+            assert_equal(np.alen(m), 2)
 
-        m = [1, 2, 3]
-        assert_equal(np.alen(m), 3)
+            m = [1, 2, 3]
+            assert_equal(np.alen(m), 3)
 
-        m = [[1, 2, 3], [4, 5, 7]]
-        assert_equal(np.alen(m), 2)
+            m = [[1, 2, 3], [4, 5, 7]]
+            assert_equal(np.alen(m), 2)
 
     def test_singleton(self):
-        assert_equal(np.alen(5), 1)
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.alen(5), 1)
 
 
 class TestChoose(object):
@@ -8080,6 +8105,8 @@ class TestWritebackIfCopy(object):
         arr_wb[...] = 100
         assert_equal(arr, -100)
 
+    @pytest.mark.leaks_references(
+            reason="increments self in dealloc; ignore since deprecated path.")
     def test_dealloc_warning(self):
         with suppress_warnings() as sup:
             sup.record(RuntimeWarning)

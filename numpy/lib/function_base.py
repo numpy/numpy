@@ -316,13 +316,16 @@ def average(a, axis=None, weights=None, returned=False):
         The weights array can either be 1-D (in which case its length must be
         the size of `a` along the given axis) or of the same shape as `a`.
         If `weights=None`, then all data in `a` are assumed to have a
-        weight equal to one.
+        weight equal to one.  The 1-D calculation is::
+
+            avg = sum(a * weights) / sum(weights)
+
+        The only constraint on `weights` is that `sum(weights)` must not be 0.
     returned : bool, optional
         Default is `False`. If `True`, the tuple (`average`, `sum_of_weights`)
         is returned, otherwise only the average is returned.
         If `weights=None`, `sum_of_weights` is equivalent to the number of
         elements over which the average is taken.
-
 
     Returns
     -------
@@ -679,11 +682,7 @@ def select(condlist, choicelist, default=0):
 
     # Now that the dtype is known, handle the deprecated select([], []) case
     if len(condlist) == 0:
-        # 2014-02-24, 1.9
-        warnings.warn("select with an empty condition list is not possible"
-                      "and will be deprecated",
-                      DeprecationWarning, stacklevel=3)
-        return np.asarray(default)[()]
+        raise ValueError("select with an empty condition list is not possible")
 
     choicelist = [np.asarray(choice) for choice in choicelist]
     choicelist.append(np.asarray(default))
@@ -699,25 +698,11 @@ def select(condlist, choicelist, default=0):
     choicelist = np.broadcast_arrays(*choicelist)
 
     # If cond array is not an ndarray in boolean format or scalar bool, abort.
-    deprecated_ints = False
     for i in range(len(condlist)):
         cond = condlist[i]
         if cond.dtype.type is not np.bool_:
-            if np.issubdtype(cond.dtype, np.integer):
-                # A previous implementation accepted int ndarrays accidentally.
-                # Supported here deliberately, but deprecated.
-                condlist[i] = condlist[i].astype(bool)
-                deprecated_ints = True
-            else:
-                raise ValueError(
-                    'invalid entry {} in condlist: should be boolean ndarray'.format(i))
-
-    if deprecated_ints:
-        # 2014-02-24, 1.9
-        msg = "select condlists containing integer ndarrays is deprecated " \
-            "and will be removed in the future. Use `.astype(bool)` to " \
-            "convert to bools."
-        warnings.warn(msg, DeprecationWarning, stacklevel=3)
+            raise TypeError(
+                'invalid entry {} in condlist: should be boolean ndarray'.format(i))
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -1164,11 +1149,13 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         The axis along which the difference is taken, default is the
         last axis.
     prepend, append : array_like, optional
-        Values to prepend or append to "a" along axis prior to
+        Values to prepend or append to `a` along axis prior to
         performing the difference.  Scalar values are expanded to
         arrays with length 1 in the direction of axis and the shape
         of the input array in along all other axes.  Otherwise the
-        dimension and shape must match "a" except along axis.
+        dimension and shape must match `a` except along axis.
+
+        .. versionadded:: 1.16.0
 
     Returns
     -------

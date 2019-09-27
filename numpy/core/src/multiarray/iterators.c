@@ -98,7 +98,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
 
 /* get the dataptr from its current coordinates for simple iterator */
 static char*
-get_ptr_simple(PyArrayIterObject* iter, npy_intp *coordinates)
+get_ptr_simple(PyArrayIterObject* iter, const npy_intp *coordinates)
 {
     npy_intp i;
     char *ret;
@@ -116,10 +116,12 @@ get_ptr_simple(PyArrayIterObject* iter, npy_intp *coordinates)
  * This is common initialization code between PyArrayIterObject and
  * PyArrayNeighborhoodIterObject
  *
- * Increase ao refcount
+ * Steals a reference to the array object which gets removed at deallocation,
+ * if the iterator is allocated statically and its dealloc not called, it
+ * can be thought of as borrowing the reference.
  */
-static PyObject *
-array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
+NPY_NO_EXPORT void
+PyArray_RawIterBaseInit(PyArrayIterObject *it, PyArrayObject *ao)
 {
     int nd, i;
 
@@ -131,7 +133,6 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
     else {
         it->contiguous = 0;
     }
-    Py_INCREF(ao);
     it->ao = ao;
     it->size = PyArray_SIZE(ao);
     it->nd_m1 = nd - 1;
@@ -155,7 +156,7 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
     it->translate = &get_ptr_simple;
     PyArray_ITER_RESET(it);
 
-    return (PyObject *)it;
+    return;
 }
 
 static void
@@ -170,6 +171,10 @@ array_iter_base_dealloc(PyArrayIterObject *it)
 NPY_NO_EXPORT PyObject *
 PyArray_IterNew(PyObject *obj)
 {
+    /*
+     * Note that internall PyArray_RawIterBaseInit may be called directly on a
+     * statically allocated PyArrayIterObject.
+     */
     PyArrayIterObject *it;
     PyArrayObject *ao;
 
@@ -186,7 +191,8 @@ PyArray_IterNew(PyObject *obj)
         return NULL;
     }
 
-    array_iter_base_init(it, ao);
+    Py_INCREF(ao);  /* PyArray_RawIterBaseInit steals a reference */
+    PyArray_RawIterBaseInit(it, ao);
     return (PyObject *)it;
 }
 
@@ -390,6 +396,10 @@ arrayiter_next(PyArrayIterObject *it)
 static void
 arrayiter_dealloc(PyArrayIterObject *it)
 {
+    /*
+     * Note that it is possible to statically allocate a PyArrayIterObject,
+     * which does not call this function.
+     */
     array_iter_base_dealloc(it);
     PyArray_free(it);
 }
@@ -830,7 +840,6 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         if (check_and_adjust_index(&start, self->size, -1, NULL) < 0) {
             goto finish;
         }
-        retval = 0;
         PyArray_ITER_GOTO1D(self, start);
         retval = type->f->setitem(val, self->dataptr, self->ao);
         PyArray_ITER_RESET(self);
@@ -1656,7 +1665,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
 
 /* set the dataptr from its current coordinates */
 static char*
-get_ptr_constant(PyArrayIterObject* _iter, npy_intp *coordinates)
+get_ptr_constant(PyArrayIterObject* _iter, const npy_intp *coordinates)
 {
     int i;
     npy_intp bd, _coordinates[NPY_MAXDIMS];
@@ -1711,7 +1720,7 @@ __npy_pos_remainder(npy_intp i, npy_intp n)
 
 /* set the dataptr from its current coordinates */
 static char*
-get_ptr_mirror(PyArrayIterObject* _iter, npy_intp *coordinates)
+get_ptr_mirror(PyArrayIterObject* _iter, const npy_intp *coordinates)
 {
     int i;
     npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
@@ -1745,7 +1754,7 @@ __npy_euclidean_division(npy_intp i, npy_intp n)
     _coordinates[c] = lb + __npy_euclidean_division(bd, p->limits_sizes[c]);
 
 static char*
-get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
+get_ptr_circular(PyArrayIterObject* _iter, const npy_intp *coordinates)
 {
     int i;
     npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
@@ -1767,7 +1776,7 @@ get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
  * A Neighborhood Iterator object.
 */
 NPY_NO_EXPORT PyObject*
-PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
+PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
                             int mode, PyArrayObject* fill)
 {
     int i;
@@ -1779,7 +1788,8 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
     }
     PyObject_Init((PyObject *)ret, &PyArrayNeighborhoodIter_Type);
 
-    array_iter_base_init((PyArrayIterObject*)ret, x->ao);
+    Py_INCREF(x->ao);  /* PyArray_RawIterBaseInit steals a reference */
+    PyArray_RawIterBaseInit((PyArrayIterObject*)ret, x->ao);
     Py_INCREF(x);
     ret->_internal_iter = x;
 

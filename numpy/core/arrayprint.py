@@ -89,8 +89,10 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
                       "`False`", stacklevel=3)
     if threshold is not None:
         # forbid the bad threshold arg suggested by stack overflow, gh-12351
-        if not isinstance(threshold, numbers.Number) or np.isnan(threshold):
-            raise ValueError("threshold must be numeric and non-NAN, try "
+        if not isinstance(threshold, numbers.Number):
+            raise TypeError("threshold must be numeric")
+        if np.isnan(threshold):
+            raise ValueError("threshold must be non-NAN, try "
                              "sys.maxsize for untruncated representation")
     return options
 
@@ -192,7 +194,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     See Also
     --------
-    get_printoptions, set_string_function, array2string
+    get_printoptions, printoptions, set_string_function, array2string
 
     Notes
     -----
@@ -283,7 +285,7 @@ def get_printoptions():
 
     See Also
     --------
-    set_printoptions, set_string_function
+    set_printoptions, printoptions, set_string_function
 
     """
     return _format_options.copy()
@@ -683,7 +685,7 @@ def array2string(a, max_line_width=None, precision=None,
         if style is np._NoValue:
             style = repr
 
-        if a.shape == () and not a.dtype.names:
+        if a.shape == () and a.dtype.names is None:
             return style(a.item())
     elif style is not np._NoValue:
         # Deprecation 11-9-2017  v1.14
@@ -982,20 +984,6 @@ class FloatingFormat(object):
                                       pad_left=self.pad_left,
                                       pad_right=self.pad_right)
 
-# for back-compatibility, we keep the classes for each float type too
-class FloatFormat(FloatingFormat):
-    def __init__(self, *args, **kwargs):
-        warnings.warn("FloatFormat has been replaced by FloatingFormat",
-                      DeprecationWarning, stacklevel=2)
-        super(FloatFormat, self).__init__(*args, **kwargs)
-
-
-class LongFloatFormat(FloatingFormat):
-    def __init__(self, *args, **kwargs):
-        warnings.warn("LongFloatFormat has been replaced by FloatingFormat",
-                      DeprecationWarning, stacklevel=2)
-        super(LongFloatFormat, self).__init__(*args, **kwargs)
-
 
 @set_module('numpy')
 def format_float_scientific(x, precision=None, unique=True, trim='k',
@@ -1194,21 +1182,6 @@ class ComplexFloatingFormat(object):
 
         return r + i
 
-# for back-compatibility, we keep the classes for each complex type too
-class ComplexFormat(ComplexFloatingFormat):
-    def __init__(self, *args, **kwargs):
-        warnings.warn(
-            "ComplexFormat has been replaced by ComplexFloatingFormat",
-            DeprecationWarning, stacklevel=2)
-        super(ComplexFormat, self).__init__(*args, **kwargs)
-
-class LongComplexFormat(ComplexFloatingFormat):
-    def __init__(self, *args, **kwargs):
-        warnings.warn(
-            "LongComplexFormat has been replaced by ComplexFloatingFormat",
-            DeprecationWarning, stacklevel=2)
-        super(LongComplexFormat, self).__init__(*args, **kwargs)
-
 
 class _TimelikeFormat(object):
     def __init__(self, data):
@@ -1317,16 +1290,6 @@ class StructuredVoidFormat(object):
             return "({},)".format(str_fields[0])
         else:
             return "({})".format(", ".join(str_fields))
-
-
-# for backwards compatibility
-class StructureFormat(StructuredVoidFormat):
-    def __init__(self, *args, **kwargs):
-        # NumPy 1.14, 2018-02-14
-        warnings.warn(
-            "StructureFormat has been replaced by StructuredVoidFormat",
-            DeprecationWarning, stacklevel=2)
-        super(StructureFormat, self).__init__(*args, **kwargs)
 
 
 def _void_scalar_repr(x):

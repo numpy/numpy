@@ -56,7 +56,7 @@ Basic Installation
 
 To install NumPy run::
 
-    python setup.py install
+    pip install .
 
 To perform an in-place build that can be run from the source folder run::
 
@@ -68,6 +68,15 @@ Using ``virtualenv`` should work as expected.
 
 *Note: for build instructions to do development work on NumPy itself, see*
 :ref:`development-environment`.
+
+Testing
+-------
+
+Make sure to test your builds. To ensure everything stays in shape, see if all tests pass::
+
+    $ python runtests.py -v -m full
+
+For detailed info on testing, see :ref:`testing-builds`.
 
 .. _parallel-builds:
 

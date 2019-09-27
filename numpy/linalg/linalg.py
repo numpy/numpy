@@ -778,15 +778,13 @@ def qr(a, mode='reduced'):
     ----------
     a : array_like, shape (M, N)
         Matrix to be factored.
-    mode : {'reduced', 'complete', 'r', 'raw', 'full', 'economic'}, optional
+    mode : {'reduced', 'complete', 'r', 'raw'}, optional
         If K = min(M, N), then
 
         * 'reduced'  : returns q, r with dimensions (M, K), (K, N) (default)
         * 'complete' : returns q, r with dimensions (M, M), (M, N)
         * 'r'        : returns r only with dimensions (K, N)
         * 'raw'      : returns h, tau with dimensions (N, M), (K,)
-        * 'full'     : alias of 'reduced', deprecated
-        * 'economic' : returns h from 'raw', deprecated.
 
         The options 'reduced', 'complete, and 'raw' are new in numpy 1.8,
         see the notes for more information. The default is 'reduced', and to
@@ -848,11 +846,7 @@ def qr(a, mode='reduced'):
     >>> np.allclose(a, np.dot(q, r))  # a does equal qr
     True
     >>> r2 = np.linalg.qr(a, mode='r')
-    >>> r3 = np.linalg.qr(a, mode='economic')
     >>> np.allclose(r, r2)  # mode='r' returns the same r as mode='full'
-    True
-    >>> # But only triu parts are guaranteed equal when mode='economic'
-    >>> np.allclose(r, np.triu(r3[:6,:6], k=0))
     True
 
     Example illustrating a common use of `qr`: solving of least squares
@@ -1487,6 +1481,12 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     compute_uv : bool, optional
         Whether or not to compute `u` and `vh` in addition to `s`.  True
         by default.
+    hermitian : bool, optional
+        If True, `a` is assumed to be Hermitian (symmetric if real-valued),
+        enabling a more efficient method for finding singular values.
+        Defaults to False.
+
+        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1504,12 +1504,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         size as those of the input `a`. The size of the last two dimensions
         depends on the value of `full_matrices`. Only returned when
         `compute_uv` is True.
-    hermitian : bool, optional
-        If True, `a` is assumed to be Hermitian (symmetric if real-valued),
-        enabling a more efficient method for finding singular values.
-        Defaults to False.
-
-        .. versionadded:: 1.17.0
 
     Raises
     ------

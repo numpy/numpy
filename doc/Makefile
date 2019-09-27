@@ -14,6 +14,10 @@ PYTHON = python$(PYVER)
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= LANG=C sphinx-build
 PAPER         ?=
+# For merging a documentation archive into a git checkout of numpy/doc
+# Turn a tag like v1.18.0 into 1.18
+# Use sed -n -e 's/patttern/match/p' to return a blank value if no match
+TAG ?= $(shell git describe --tag | sed -n -e's,v\([1-9]\.[0-9]*\)\.[0-9].*,\1,p')
 
 FILES=
 
@@ -24,7 +28,8 @@ ALLSPHINXOPTS   = -WT --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
   $(SPHINXOPTS) source
 
 .PHONY: help clean html web pickle htmlhelp latex changes linkcheck \
-        dist dist-build gitwash-update version-check
+		dist dist-build gitwash-update version-check html-build latex-build \
+		merge-doc
 
 #------------------------------------------------------------------------------
 
@@ -40,6 +45,7 @@ help:
 	@echo "  dist PYVER=... to make a distribution-ready tree"
 	@echo "  gitwash-update GITWASH=path/to/gitwash  update gitwash developer docs"
 	@echo "  upload USERNAME=... RELEASE=... to upload built docs to docs.scipy.org"
+	@echo "  merge-doc TAG=... to clone numpy/doc and archive documentation into it"
 
 clean:
 	-rm -rf build/* 
@@ -72,13 +78,16 @@ UPLOAD_DIR=/srv/docs_scipy_org/doc/numpy-$(RELEASE)
 
 DIST_VARS=SPHINXBUILD="LANG=C PYTHONPATH=$(INSTALL_PPH) python$(PYVER) `which sphinx-build`" PYTHON="PYTHONPATH=$(INSTALL_PPH) python$(PYVER)" 
 
-NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:10])")
+NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:10])" 2>/dev/null)
 GITVER ?= $(shell cd ..; $(PYTHON) -c "from setup import git_version; \
 				print(git_version()[:10])")
 
 version-check:
 ifeq "$(GITVER)" "Unknown"
 	# @echo sdist build with unlabeled sources
+else ifeq ("", "$(NUMPYVER)")
+	@echo numpy not found, cannot build documentation without successful \"import numpy\"
+	@exit 1
 else ifneq ($(NUMPYVER),$(GITVER))
 	@echo installed numpy $(NUMPYVER) != current repo git version \'$(GITVER)\'
 	@echo use '"make dist"' or '"GITVER=$(NUMPYVER) make $(MAKECMDGOALS) ..."'
@@ -89,13 +98,14 @@ else
 endif
 
 
-dist:
+dist: build/dist.tar.gz
+
+build/dist.tar.gz:
 	make $(DIST_VARS) real-dist
 
-real-dist: dist-build html html-scipyorg
-	test -d build/latex || make latex
+real-dist: dist-build html-build html-scipyorg
+	test -d build/latex || make latex-build
 	make -C build/latex all-pdf
-	-test -d build/htmlhelp || make htmlhelp-build
 	-rm -rf build/dist
 	cp -r build/html-scipyorg build/dist
 	cd build/html && zip -9r ../dist/numpy-html.zip .
@@ -111,7 +121,7 @@ dist-build:
 	install -d $(subst :, ,$(INSTALL_PPH))
 	$(PYTHON) `which easy_install` --prefix=$(INSTALL_DIR) ../dist/*.egg
 
-upload:
+upload: build/dist.tar.gz
 	# SSH must be correctly configured for this to work.
 	# Assumes that ``make dist`` was already run
 	# Example usage: ``make upload USERNAME=rgommers RELEASE=1.10.1``
@@ -128,6 +138,32 @@ upload:
 	ssh $(USERNAME)@docs.scipy.org rm $(UPLOAD_DIR)/dist.tar.gz
 	ssh $(USERNAME)@docs.scipy.org ln -snf numpy-$(RELEASE) /srv/docs_scipy_org/doc/numpy
 
+
+merge-doc: build/dist.tar.gz
+ifeq "$(TAG)" ""
+	echo tag "$(TAG)" not of the form 1.18;
+	exit 1;
+endif
+	@# Only clone if the directory does not exist
+	@if ! test -d build/merge; then \
+		git clone https://github.com/numpy/doc build/merge; \
+	fi;
+	@# Remove any old content and copy in the new, add it to git
+	-rm -rf build/merge/$(TAG)/*
+	-mkdir -p build/merge/$(TAG)
+	@# -C changes working directory
+	tar -C build/merge/$(TAG) -xf build/dist.tar.gz
+	git -C build/merge add $(TAG)
+	@# For now, the user must do this. If it is onerous, automate it and change
+	@# the instructions in doc/HOWTO_RELEASE.rst.txt
+	@echo " "
+	@echo New documentation archive added to ./build/merge.
+	@echo Now add/modify the appropiate section after
+	@echo "    <!-- insert here -->"
+	@echo in build/merge/index.html,
+	@echo then \"git commit\", \"git push\"
+	
+
 #------------------------------------------------------------------------------
 # Basic Sphinx generation rules for different formats
 #------------------------------------------------------------------------------
@@ -137,7 +173,8 @@ build/generate-stamp: $(wildcard source/reference/*.rst)
 	mkdir -p build
 	touch build/generate-stamp
 
-html: generate version-check
+html: version-check html-build
+html-build: generate
 	mkdir -p build/html build/doctrees
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) build/html $(FILES)
 	$(PYTHON) postprocess.py html build/html/*.html
@@ -175,7 +212,8 @@ qthelp: generate version-check
 	mkdir -p build/qthelp build/doctrees
 	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) build/qthelp $(FILES)
 
-latex: generate version-check
+latex: version-check latex-build
+latex-build: generate
 	mkdir -p build/latex build/doctrees
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex $(FILES)
 	$(PYTHON) postprocess.py tex build/latex/*.tex

@@ -146,9 +146,9 @@ and itssub-types).
 
 .. c:function:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
-    Get a Python object of a builtin type from the ndarray, *arr*, 
+    Get a Python object of a builtin type from the ndarray, *arr*,
     at the location pointed to by itemptr. Return ``NULL`` on failure.
-    
+
     `numpy.ndarray.item` is identical to PyArray_GETITEM.
 
 
@@ -226,7 +226,7 @@ From scratch
 
     If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the
-    new flags for the array (except the state of :c:data:`NPY_OWNDATA`,
+    new flags for the array (except the state of :c:data:`NPY_ARRAY_OWNDATA`,
     :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and :c:data:`NPY_ARRAY_UPDATEIFCOPY`
     flags of the new array will be reset).
 
@@ -996,6 +996,10 @@ argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpret
     Type has no size information attached, and can be resized. Should only be
     called on flexible dtypes. Types that are attached to an array will always
     be sized, hence the array form of this macro not existing.
+
+    .. versionchanged:: 1.18
+
+    For structured datatypes with no fields this function now returns False.
 
 .. c:function:: PyTypeNum_ISUSERDEF(num)
 
@@ -2793,10 +2797,7 @@ Array Scalars
     *arr* is not ``NULL`` and the first element is negative then
     :c:data:`NPY_INTNEG_SCALAR` is returned, otherwise
     :c:data:`NPY_INTPOS_SCALAR` is returned. The possible return values
-    are :c:data:`NPY_{kind}_SCALAR` where ``{kind}`` can be **INTPOS**,
-    **INTNEG**, **FLOAT**, **COMPLEX**, **BOOL**, or **OBJECT**.
-    :c:data:`NPY_NOSCALAR` is also an enumerated value
-    :c:type:`NPY_SCALARKIND` variables can take on.
+    are the enumerated values in :c:type:`NPY_SCALARKIND`.
 
 .. c:function:: int PyArray_CanCoerceScalar( \
         char thistype, char neededtype, NPY_SCALARKIND scalar)
@@ -3377,7 +3378,7 @@ Group 1
 
         Useful to release the GIL only if *dtype* does not contain
         arbitrary Python objects which may need the Python interpreter
-        during execution of the loop. Equivalent to
+        during execution of the loop.
 
     .. c:function:: NPY_END_THREADS_DESCR(PyArray_Descr *dtype)
 
@@ -3592,11 +3593,21 @@ Enumerated Types
 
     A special variable type indicating the number of "kinds" of
     scalars distinguished in determining scalar-coercion rules. This
-    variable can take on the values :c:data:`NPY_{KIND}` where ``{KIND}`` can be
+    variable can take on the values:
 
-        **NOSCALAR**, **BOOL_SCALAR**, **INTPOS_SCALAR**,
-        **INTNEG_SCALAR**, **FLOAT_SCALAR**, **COMPLEX_SCALAR**,
-        **OBJECT_SCALAR**
+    .. c:var:: NPY_NOSCALAR
+
+    .. c:var:: NPY_BOOL_SCALAR
+
+    .. c:var:: NPY_INTPOS_SCALAR
+
+    .. c:var:: NPY_INTNEG_SCALAR
+
+    .. c:var:: NPY_FLOAT_SCALAR
+
+    .. c:var:: NPY_COMPLEX_SCALAR
+
+    .. c:var:: NPY_OBJECT_SCALAR
 
     .. c:var:: NPY_NSCALARKINDS
 

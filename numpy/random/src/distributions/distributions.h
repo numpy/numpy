@@ -1,15 +1,14 @@
 #ifndef _RANDOMDGEN__DISTRIBUTIONS_H_
 #define _RANDOMDGEN__DISTRIBUTIONS_H_
 
-#pragma once
+#include "Python.h"
+#include "numpy/npy_common.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "Python.h"
-#include "numpy/npy_common.h"
 #include "numpy/npy_math.h"
-#include "numpy/random/bitgen.h"
+#include "src/bitgen.h"
 
 /*
  * RAND_INT_TYPE is used to share integer generators with RandomState which
@@ -43,11 +42,11 @@
 typedef struct s_binomial_t {
   int has_binomial; /* !=0: following parameters initialized for binomial */
   double psave;
-  int64_t nsave;
+  RAND_INT_TYPE nsave;
   double r;
   double q;
   double fm;
-  int64_t m;
+  RAND_INT_TYPE m;
   double p1;
   double xm;
   double xl;
@@ -148,8 +147,18 @@ DECLDIR double random_triangular(bitgen_t *bitgen_state, double left, double mod
 DECLDIR RAND_INT_TYPE random_poisson(bitgen_t *bitgen_state, double lam);
 DECLDIR RAND_INT_TYPE random_negative_binomial(bitgen_t *bitgen_state, double n,
                                          double p);
-DECLDIR RAND_INT_TYPE random_binomial(bitgen_t *bitgen_state, double p, RAND_INT_TYPE n,
-                                binomial_t *binomial);
+
+DECLDIR RAND_INT_TYPE random_binomial_btpe(bitgen_t *bitgen_state,
+                                           RAND_INT_TYPE n,
+                                           double p,
+                                           binomial_t *binomial);
+DECLDIR RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state,
+                                                RAND_INT_TYPE n,
+                                                double p,
+                                                binomial_t *binomial);
+DECLDIR int64_t random_binomial(bitgen_t *bitgen_state, double p,
+                                int64_t n, binomial_t *binomial);
+
 DECLDIR RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p);
 DECLDIR RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p);
 DECLDIR RAND_INT_TYPE random_geometric_inversion(bitgen_t *bitgen_state, double p);

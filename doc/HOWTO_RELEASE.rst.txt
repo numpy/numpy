@@ -11,7 +11,7 @@ useful info can be found.
 
 Source tree
 -----------
-* INSTALL.txt
+* INSTALL.rst.txt
 * release.sh
 * pavement.py
 
@@ -197,17 +197,6 @@ best to read the pavement.py script.
 .. note:: The following steps are repeated for the beta(s), release
    candidates(s) and the final release.
 
-Check that docs can be built
-----------------------------
-Do::
-
-    cd doc/
-    make dist
-
-to check that the documentation is in a buildable state.  See
-doc/HOWTO_BUILD_DOCS.rst.txt for more details and for how to update
-https://docs.scipy.org.
-
 Check deprecations
 ------------------
 Before the release branch is made, it should be checked that all deprecated
@@ -257,12 +246,19 @@ updated for a major release.
 
 Check the release notes
 -----------------------
+Use `towncrier`_ to build the release note, copy it to the proper name, and
+commit the changes. This will remove all the fragments from ``changelog/*.rst``
+and add ``doc/release/latest-note.rst`` which must be renamed with the proper
+version number::
+
+    python -mtowncrier --version "Numpy 1.11.0"
+    git mv doc/release/latest-note.rst doc/release/1.11.0-notes.rst
+    git commit -m"Create release note"
+
 Check that the release notes are up-to-date.
 
-Write or update the release notes in a file named for the release, such as
-``doc/release/1.11.0-notes.rst``.
-
-Mention at least the following:
+Update the release notes with a Highlights section. Mention some of the
+following:
 
   - major new features
   - deprecated and removed features
@@ -270,8 +266,7 @@ Mention at least the following:
   - for SciPy, supported NumPy version(s)
   - outlook for the near future
 
-Also make sure that as soon as the branch is made, there is a new release
-notes file in the master branch for the next release.
+.. _towncrier: https://github.com/hawkowl/towncrier
 
 Update the release status and create a release "tag"
 ----------------------------------------------------
@@ -383,14 +378,24 @@ Build the changelog and notes for upload with::
 
     paver write_release_and_log
 
-The tar-files and binary releases for distribution should be uploaded to SourceForge,
-together with the Release Notes and the Changelog. Uploading can be done
-through a web interface or, more efficiently, through scp/sftp/rsync as
-described in the SourceForge
-`upload guide <https://sourceforge.net/apps/trac/sourceforge/wiki/Release%20files%20for%20download>`_ (dead link).
-For example::
+Build and archive documentation
+-------------------------------
+Do::
 
-  scp <filename> <username>,numpy@frs.sourceforge.net:/home/frs/project/n/nu/numpy/NumPy/<releasedir>/
+    cd doc/
+    make dist
+
+to check that the documentation is in a buildable state. Then, after tagging,
+create an archive of the documentation in the numpy/doc repo::
+
+    # This checks out github.com/numpy/doc and adds (``git add``) the
+    # documentation to the checked out repo.
+    make merge-doc
+    # Now edit the ``index.html`` file in the repo to reflect the new content,
+    # and commit the changes
+    git -C dist/merge commit -a "Add documentation for <version>"
+    # Push to numpy/doc repo
+    git -C push
 
 Update PyPI
 -----------
@@ -442,28 +447,6 @@ you released you can push the tag and release commit up to github::
 
 where ``upstream`` points to the main https://github.com/numpy/numpy.git
 repository.
-
-Update docs.scipy.org
----------------------
-
-All documentation for a release can be updated on https://docs.scipy.org/ with:
-
-    make dist
-    make upload USERNAME=<yourname> RELEASE=1.11.0
-
-Note that ``<username>`` must have SSH credentials on the server.  If you don't
-have those, ask someone who does (the list currently includes @rgommers,
-@juliantaylor and @pv).
-
-Also rebuild and upload ``docs.scipy.org`` front page, if the release
-series is a new one. The front page sources have their own repo:
-https://github.com/scipy/docs.scipy.org.  Do the following:
-
-- Update ``index.rst`` for the new version.
-- ``make dist``
-- Check that the built documentation is OK.
-- ``touch output-is-fine``
-- ``make upload USERNAME=<username> RELEASE=1.x.y``
 
 Update scipy.org
 ----------------

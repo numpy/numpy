@@ -426,10 +426,7 @@ def _vander2d(vander_f, x, y, deg):
     x, y, deg :
         See the ``<type>vander2d`` functions for more detail
     """
-    degx, degy = [
-        _deprecate_as_int(d, "degrees")
-        for d in deg
-    ]
+    degx, degy = deg
     x, y = np.array((x, y), copy=False) + 0.0
 
     vx = vander_f(x, degx)
@@ -449,10 +446,7 @@ def _vander3d(vander_f, x, y, z, deg):
     x, y, z, deg :
         See the ``<type>vander3d`` functions for more detail
     """
-    degx, degy, degz = [
-        _deprecate_as_int(d, "degrees")
-        for d in deg
-    ]
+    degx, degy, degz = deg
     x, y, z = np.array((x, y, z), copy=False) + 0.0
 
     vx = vander_f(x, degx)

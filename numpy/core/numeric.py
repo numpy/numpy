@@ -26,6 +26,7 @@ if sys.version_info[0] < 3:
 
 from . import overrides
 from . import umath
+from . import shape_base
 from .overrides import set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
@@ -48,14 +49,6 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-def loads(*args, **kwargs):
-    # NumPy 1.15.0, 2017-12-10
-    warnings.warn(
-        "np.core.numeric.loads is deprecated, use pickle.loads instead",
-        DeprecationWarning, stacklevel=2)
-    return pickle.loads(*args, **kwargs)
-
-
 __all__ = [
     'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
     'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
@@ -66,7 +59,7 @@ __all__ = [
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
-    'isclose', 'load', 'loads', 'isscalar', 'binary_repr', 'base_repr', 'ones',
+    'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'compare_chararrays', 'putmask',
     'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
@@ -553,8 +546,10 @@ def argwhere(a):
 
     Returns
     -------
-    index_array : ndarray
+    index_array : (N, a.ndim) ndarray
         Indices of elements that are non-zero. Indices are grouped by element.
+        This array will have shape ``(N, a.ndim)`` where ``N`` is the number of
+        non-zero items.
 
     See Also
     --------
@@ -562,7 +557,8 @@ def argwhere(a):
 
     Notes
     -----
-    ``np.argwhere(a)`` is the same as ``np.transpose(np.nonzero(a))``.
+    ``np.argwhere(a)`` is almost the same as ``np.transpose(np.nonzero(a))``,
+    but produces a result of the correct shape for a 0D array.
 
     The output of ``argwhere`` is not suitable for indexing arrays.
     For this purpose use ``nonzero(a)`` instead.
@@ -580,6 +576,11 @@ def argwhere(a):
            [1, 2]])
 
     """
+    # nonzero does not behave well on 0d, so promote to 1d
+    if np.ndim(a) == 0:
+        a = shape_base.atleast_1d(a)
+        # then remove the added dimension
+        return argwhere(a)[:,:0]
     return transpose(nonzero(a))
 
 
@@ -1935,6 +1936,10 @@ def binary_repr(num, width=None):
                 "will raise an error in the future.", DeprecationWarning,
                 stacklevel=3)
 
+    # Ensure that num is a Python integer to avoid overflow or unwanted
+    # casts to floating point.
+    num = operator.index(num)
+
     if num == 0:
         return '0' * (width or 1)
 
@@ -2024,30 +2029,6 @@ def base_repr(number, base=2, padding=0):
     return ''.join(reversed(res or '0'))
 
 
-def load(file):
-    """
-    Wrapper around cPickle.load which accepts either a file-like object or
-    a filename.
-
-    Note that the NumPy binary format is not based on pickle/cPickle anymore.
-    For details on the preferred way of loading and saving files, see `load`
-    and `save`.
-
-    See Also
-    --------
-    load, save
-
-    """
-    # NumPy 1.15.0, 2017-12-10
-    warnings.warn(
-        "np.core.numeric.load is deprecated, use pickle.load instead",
-        DeprecationWarning, stacklevel=2)
-    if isinstance(file, type("")):
-        with open(file, "rb") as file_pointer:
-            return pickle.load(file_pointer)
-    return pickle.load(file)
-
-
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
 
@@ -2124,7 +2105,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
-        considered equal to NaN's in `b` in the output array.
+        considered equal to NaN's in `b`.
 
         .. versionadded:: 1.10.0
 

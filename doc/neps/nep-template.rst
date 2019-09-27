@@ -1,6 +1,6 @@
-=============================
-NEP Template and Instructions
-=============================
+=================================
+NEP X — Template and Instructions
+=================================
 
 :Author: <list of authors' real names and optionally, email addresses>
 :Status: <Draft | Active | Accepted | Deferred | Rejected | Withdrawn | Final | Superseded>
@@ -14,6 +14,7 @@ Abstract
 
 The abstract should be a short description of what the NEP will achieve.
 
+Note that the — in the title is an elongated dash, not -.
 
 Motivation and Scope
 --------------------

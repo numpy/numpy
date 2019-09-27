@@ -40,13 +40,14 @@
  * flag in an efficient way. The flag is IEEE specific. See
  * https://github.com/freebsd/freebsd/blob/4c6378299/lib/msun/src/catrig.c#L42
  */
+#if !defined(HAVE_CACOSF) || !defined(HAVE_CACOSL) || !defined(HAVE_CASINHF) || !defined(HAVE_CASINHL)
 #define raise_inexact() do {                        \
     volatile npy_float NPY_UNUSED(junk) = 1 + tiny; \
 } while (0)
 
 
 static const volatile npy_float tiny = 3.9443045e-31f;
-
+#endif
 
 /**begin repeat
  * #type = npy_float, npy_double, npy_longdouble#
@@ -64,9 +65,6 @@ static const volatile npy_float tiny = 3.9443045e-31f;
  * Constants
  *=========================================================*/
 static const @ctype@ c_1@c@ = {1.0@C@, 0.0};
-static const @ctype@ c_half@c@ = {0.5@C@, 0.0};
-static const @ctype@ c_i@c@ = {0.0, 1.0@C@};
-static const @ctype@ c_ihalf@c@ = {0.0, 0.5@C@};
 
 /*==========================================================
  * Helper functions
@@ -74,22 +72,6 @@ static const @ctype@ c_ihalf@c@ = {0.0, 0.5@C@};
  * These are necessary because we do not count on using a
  * C99 compiler.
  *=========================================================*/
-static NPY_INLINE
-@ctype@
-cadd@c@(@ctype@ a, @ctype@ b)
-{
-    return npy_cpack@c@(npy_creal@c@(a) + npy_creal@c@(b),
-                        npy_cimag@c@(a) + npy_cimag@c@(b));
-}
-
-static NPY_INLINE
-@ctype@
-csub@c@(@ctype@ a, @ctype@ b)
-{
-    return npy_cpack@c@(npy_creal@c@(a) - npy_creal@c@(b),
-                        npy_cimag@c@(a) - npy_cimag@c@(b));
-}
-
 static NPY_INLINE
 @ctype@
 cmul@c@(@ctype@ a, @ctype@ b)
@@ -130,20 +112,6 @@ cdiv@c@(@ctype@ a, @ctype@ b)
         @type@ scl = 1.0@C@/(bi + br*rat);
         return npy_cpack@c@((ar*rat + ai)*scl, (ai*rat - ar)*scl);
     }
-}
-
-static NPY_INLINE
-@ctype@
-cneg@c@(@ctype@ a)
-{
-    return npy_cpack@c@(-npy_creal@c@(a), -npy_cimag@c@(a));
-}
-
-static NPY_INLINE
-@ctype@
-cmuli@c@(@ctype@ a)
-{
-    return npy_cpack@c@(-npy_cimag@c@(a), npy_creal@c@(a));
 }
 
 /*==========================================================

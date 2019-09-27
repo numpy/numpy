@@ -367,6 +367,18 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
 #define LIKELY_IN_CACHE_SIZE 8
 
+#ifdef __INTEL_COMPILER
+#pragma intel optimization_level 0
+#endif
+static NPY_INLINE npy_intp
+_linear_search(const npy_double key, const npy_double *arr, const npy_intp len, const npy_intp i0)
+{
+    npy_intp i;
+
+    for (i = i0; i < len && key >= arr[i]; i++);
+    return i - 1;
+}
+
 /** @brief find index of a sorted array such that arr[i] <= key < arr[i + 1].
  *
  * If an starting index guess is in-range, the array values around this
@@ -406,10 +418,7 @@ binary_search_with_guess(const npy_double key, const npy_double *arr,
      * From above we know key >= arr[0] when we start.
      */
     if (len <= 4) {
-        npy_intp i;
-
-        for (i = 1; i < len && key >= arr[i]; ++i);
-        return i - 1;
+        return _linear_search(key, arr, len, 1);
     }
 
     if (guess > len - 3) {
@@ -932,6 +941,20 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
     int i;
     char invalid;
     npy_intp j, m;
+
+    /*
+     * Check for 0-dimensional axes unless there is nothing to do.
+     * An empty array/shape cannot be indexed at all.
+     */
+    if (count != 0) {
+        for (i = 0; i < ravel_ndim; ++i) {
+            if (ravel_dims[i] == 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "cannot unravel if shape has zero entries (is empty).");
+                return NPY_FAIL;
+            }
+        }
+    }
 
     NPY_BEGIN_ALLOW_THREADS;
     invalid = 0;

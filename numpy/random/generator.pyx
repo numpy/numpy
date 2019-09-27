@@ -4,6 +4,7 @@ import operator
 import warnings
 
 import numpy as np
+from numpy.core.multiarray import normalize_axis_index
 
 from .bounded_integers import _integers_types
 from .pcg64 import PCG64
@@ -3783,20 +3784,21 @@ cdef class Generator:
         return diric
 
     # Shuffling and permutations:
-    def shuffle(self, object x):
+    def shuffle(self, object x, axis=0):
         """
         shuffle(x)
 
         Modify a sequence in-place by shuffling its contents.
 
-        This function only shuffles the array along the first axis of a
-        multi-dimensional array. The order of sub-arrays is changed but
-        their contents remains the same.
+        The order of sub-arrays is changed but their contents remains the same.
 
         Parameters
         ----------
         x : array_like
             The array or list to be shuffled.
+        axis : int, optional
+            The axis which `x` is shuffled along. Default is 0.
+            It is only supported on `ndarray` objects.
 
         Returns
         -------
@@ -3810,8 +3812,6 @@ cdef class Generator:
         >>> arr
         [1 7 5 2 9 4 3 6 0 8] # random
 
-        Multi-dimensional arrays are only shuffled along the first axis:
-
         >>> arr = np.arange(9).reshape((3, 3))
         >>> rng.shuffle(arr)
         >>> arr
@@ -3819,17 +3819,25 @@ cdef class Generator:
                [6, 7, 8],
                [0, 1, 2]])
 
+        >>> arr = np.arange(9).reshape((3, 3))
+        >>> rng.shuffle(arr, axis=1)
+        >>> arr
+        array([[2, 0, 1], # random
+               [5, 3, 4],
+               [8, 6, 7]])
         """
         cdef:
             np.npy_intp i, j, n = len(x), stride, itemsize
             char* x_ptr
             char* buf_ptr
 
+        axis = normalize_axis_index(axis, np.ndim(x))
+
         if type(x) is np.ndarray and x.ndim == 1 and x.size:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such
             # as MaskedArrays may not support this approach).
-            x_ptr = <char*><size_t>x.ctypes.data
+            x_ptr = <char*><size_t>np.PyArray_DATA(x)
             stride = x.strides[0]
             itemsize = x.dtype.itemsize
             # As the array x could contain python objects we use a buffer
@@ -3837,7 +3845,7 @@ cdef class Generator:
             # within the buffer and erroneously decrementing it's refcount
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
-            buf_ptr = <char*><size_t>buf.ctypes.data
+            buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
             with self.lock:
                 # We trick gcc into providing a specialized implementation for
                 # the most common case, yielding a ~33% performance improvement.
@@ -3847,6 +3855,7 @@ cdef class Generator:
                 else:
                     self._shuffle_raw(n, 1, itemsize, stride, x_ptr, buf_ptr)
         elif isinstance(x, np.ndarray) and x.ndim and x.size:
+            x = np.swapaxes(x, 0, axis)
             buf = np.empty_like(x[0, ...])
             with self.lock:
                 for i in reversed(range(1, n)):
@@ -3859,6 +3868,9 @@ cdef class Generator:
                     x[i] = buf
         else:
             # Untyped path.
+            if axis != 0:
+                raise NotImplementedError("Axis argument is only supported "
+                                          "on ndarray objects")
             with self.lock:
                 for i in reversed(range(1, n)):
                     j = random_interval(&self._bitgen, i)
@@ -3914,14 +3926,11 @@ cdef class Generator:
             data[j] = data[i]
             data[i] = temp
 
-    def permutation(self, object x):
+    def permutation(self, object x, axis=0):
         """
         permutation(x)
 
         Randomly permute a sequence, or return a permuted range.
-
-        If `x` is a multi-dimensional array, it is only shuffled along its
-        first index.
 
         Parameters
         ----------
@@ -3929,6 +3938,8 @@ cdef class Generator:
             If `x` is an integer, randomly permute ``np.arange(x)``.
             If `x` is an array, make a copy and shuffle the elements
             randomly.
+        axis : int, optional
+            The axis which `x` is shuffled along. Default is 0.
 
         Returns
         -------
@@ -3950,6 +3961,17 @@ cdef class Generator:
                [0, 1, 2],
                [3, 4, 5]])
 
+        >>> rng.permutation("abc")
+        Traceback (most recent call last):
+            ...
+        numpy.AxisError: x must be an integer or at least 1-dimensional
+
+        >>> arr = np.arange(9).reshape((3, 3))
+        >>> rng.permutation(arr, axis=1)
+        array([[0, 2, 1], # random
+               [3, 5, 4],
+               [6, 8, 7]])
+
         """
         if isinstance(x, (int, np.integer)):
             arr = np.arange(x)
@@ -3957,6 +3979,8 @@ cdef class Generator:
             return arr
 
         arr = np.asarray(x)
+
+        axis = normalize_axis_index(axis, arr.ndim)
 
         # shuffle has fast-path for 1-d
         if arr.ndim == 1:
@@ -3967,9 +3991,11 @@ cdef class Generator:
             return arr
 
         # Shuffle index array, dtype to ensure fast path
-        idx = np.arange(arr.shape[0], dtype=np.intp)
+        idx = np.arange(arr.shape[axis], dtype=np.intp)
         self.shuffle(idx)
-        return arr[idx]
+        slices = [slice(None)]*arr.ndim
+        slices[axis] = idx
+        return arr[tuple(slices)]
 
 
 def default_rng(seed=None):

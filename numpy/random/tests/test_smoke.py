@@ -5,7 +5,7 @@ from functools import partial
 import numpy as np
 import pytest
 from numpy.testing import assert_equal, assert_, assert_array_equal
-from numpy.random import (Generator, MT19937, PCG64, Philox, SFC64, entropy)
+from numpy.random import (Generator, MT19937, PCG64, Philox, SFC64)
 
 @pytest.fixture(scope='module',
                 params=(np.bool, np.int8, np.int16, np.int32, np.int64,
@@ -806,23 +806,3 @@ class TestDefaultRNG(RNG):
             np.random.default_rng(-1)
         with pytest.raises(ValueError):
             np.random.default_rng([12345, -1])
-
-
-class TestEntropy(object):
-    def test_entropy(self):
-        e1 = entropy.random_entropy()
-        e2 = entropy.random_entropy()
-        assert_((e1 != e2))
-        e1 = entropy.random_entropy(10)
-        e2 = entropy.random_entropy(10)
-        assert_((e1 != e2).all())
-        e1 = entropy.random_entropy(10, source='system')
-        e2 = entropy.random_entropy(10, source='system')
-        assert_((e1 != e2).all())
-
-    def test_fallback(self):
-        e1 = entropy.random_entropy(source='fallback')
-        time.sleep(0.1)
-        e2 = entropy.random_entropy(source='fallback')
-        assert_((e1 != e2))
-

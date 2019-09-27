@@ -102,6 +102,7 @@ _arraydescr_from_dtype_attr(PyObject *obj, PyArray_Descr **newdescr)
     if (Py_EnterRecursiveCall(
             " while trying to convert the given data type from its "
             "`.dtype` attribute.") != 0) {
+        Py_DECREF(dtypedescr);
         return 1;
     }
 
@@ -148,7 +149,7 @@ array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
                              arg == '|' || arg == '=')
 
 static int
-_check_for_commastring(char *type, Py_ssize_t len)
+_check_for_commastring(const char *type, Py_ssize_t len)
 {
     Py_ssize_t i;
     int sqbracket;
@@ -497,9 +498,6 @@ _convert_from_array_descr(PyObject *obj, int align)
             else {
                 ret = PyArray_DescrConverter(PyTuple_GET_ITEM(item, 1), &conv);
             }
-            if (ret == NPY_FAIL) {
-                PyObject_Print(PyTuple_GET_ITEM(item, 1), stderr, 0);
-            }
         }
         else if (PyTuple_GET_SIZE(item) == 3) {
             newobj = PyTuple_GetSlice(item, 1, 3);
@@ -517,6 +515,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         if (ret == NPY_FAIL) {
             goto fail;
         }
+
         if ((PyDict_GetItem(fields, name) != NULL)
              || (title
                  && PyBaseString_Check(title)
@@ -3278,7 +3277,7 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 }
 
 static int
-descr_nonzero(PyObject *self)
+descr_nonzero(PyObject *NPY_UNUSED(self))
 {
     /* `bool(np.dtype(...)) == True` for all dtypes. Needed to override default
      * nonzero implementation, which checks if `len(object) > 0`. */

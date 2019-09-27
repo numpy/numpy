@@ -44,6 +44,7 @@ Programming Language :: Python :: 3
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
+Programming Language :: Python :: 3 :: Only
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
@@ -80,6 +81,10 @@ def git_version():
         out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
         GIT_REVISION = out.strip().decode('ascii')
     except (subprocess.SubprocessError, OSError):
+        GIT_REVISION = "Unknown"
+
+    if not GIT_REVISION:
+        # this shouldn't happen but apparently can (see gh-8512)
         GIT_REVISION = "Unknown"
 
     return GIT_REVISION
@@ -262,7 +267,7 @@ def parse_setuppy_commands():
     # below and not standalone.  Hence they're not added to good_commands.
     good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
                      'build_clib', 'build_scripts', 'bdist_wheel', 'bdist_rpm',
-                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg')
+                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src')
 
     for command in good_commands:
         if command in args:
@@ -364,7 +369,7 @@ def parse_setuppy_commands():
 
 
 def setup_package():
-    src_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    src_path = os.path.dirname(os.path.abspath(__file__))
     old_path = os.getcwd()
     os.chdir(src_path)
     sys.path.insert(0, src_path)
@@ -402,7 +407,8 @@ def setup_package():
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
-        cmdclass={"sdist": sdist_checked},
+        cmdclass={"sdist": sdist_checked,
+                 },
         python_requires='>=3.5',
         zip_safe=False,
         entry_points={
@@ -421,8 +427,8 @@ def setup_package():
     if run_build:
         from numpy.distutils.core import setup
         cwd = os.path.abspath(os.path.dirname(__file__))
-        if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
-            # Generate Cython sources, unless building from source release
+        if not 'sdist' in sys.argv:
+            # Generate Cython sources, unless we're generating an sdist
             generate_cython()
 
         metadata['configuration'] = configuration

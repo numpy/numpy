@@ -1,6 +1,13 @@
+"""
+Contains the core of NumPy: ndarray, ufuncs, dtypes, etc.
+
+Please note that this module is private.  All functions and objects
+are available in the main ``numpy`` namespace - use that instead.
+
+"""
+
 from __future__ import division, absolute_import, print_function
 
-from .info import __doc__
 from numpy.version import version as __version__
 
 import os

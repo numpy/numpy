@@ -2,7 +2,6 @@
 
 """
 from __future__ import division, absolute_import, print_function
-from itertools import chain
 
 import pytest
 
@@ -11,6 +10,12 @@ from numpy.testing import assert_array_equal, assert_allclose, assert_equal
 from numpy.lib.arraypad import _as_pairs
 
 
+_numeric_dtypes = (
+    np.sctypes["uint"]
+    + np.sctypes["int"]
+    + np.sctypes["float"]
+    + np.sctypes["complex"]
+)
 _all_modes = {
     'constant': {'constant_values': 0},
     'edge': {},
@@ -469,6 +474,29 @@ class TestStatistic(object):
             )
         assert_array_equal(a, b)
 
+    @pytest.mark.filterwarnings("ignore:Mean of empty slice:RuntimeWarning")
+    @pytest.mark.filterwarnings(
+        "ignore:invalid value encountered in (true_divide|double_scalars):"
+        "RuntimeWarning"
+    )
+    @pytest.mark.parametrize("mode", ["mean", "median"])
+    def test_zero_stat_length_valid(self, mode):
+        arr = np.pad([1., 2.], (1, 2), mode, stat_length=0)
+        expected = np.array([np.nan, 1., 2., np.nan, np.nan])
+        assert_equal(arr, expected)
+
+    @pytest.mark.parametrize("mode", ["minimum", "maximum"])
+    def test_zero_stat_length_invalid(self, mode):
+        match = "stat_length of 0 yields no value for padding"
+        with pytest.raises(ValueError, match=match):
+            np.pad([1., 2.], 0, mode, stat_length=0)
+        with pytest.raises(ValueError, match=match):
+            np.pad([1., 2.], 0, mode, stat_length=(1, 0))
+        with pytest.raises(ValueError, match=match):
+            np.pad([1., 2.], 1, mode, stat_length=0)
+        with pytest.raises(ValueError, match=match):
+            np.pad([1., 2.], 1, mode, stat_length=(1, 0))
+
 
 class TestConstant(object):
     def test_check_constant(self):
@@ -714,6 +742,24 @@ class TestLinearRamp(object):
         assert_equal(a[:, -1], 0.)
         assert_equal(a[0, :], 0.)
         assert_equal(a[-1, :], 0.)
+
+    @pytest.mark.parametrize("dtype", _numeric_dtypes)
+    def test_negative_difference(self, dtype):
+        """
+        Check correct behavior of unsigned dtypes if there is a negative
+        difference between the edge to pad and `end_values`. Check both cases
+        to be independent of implementation. Test behavior for all other dtypes
+        in case dtype casting interferes with complex dtypes. See gh-14191.
+        """
+        x = np.array([3], dtype=dtype)
+        result = np.pad(x, 3, mode="linear_ramp", end_values=0)
+        expected = np.array([0, 1, 2, 3, 2, 1, 0], dtype=dtype)
+        assert_equal(result, expected)
+
+        x = np.array([0], dtype=dtype)
+        result = np.pad(x, 3, mode="linear_ramp", end_values=3)
+        expected = np.array([3, 2, 1, 0, 1, 2, 3], dtype=dtype)
+        assert_equal(result, expected)
 
 
 class TestReflect(object):
@@ -1307,13 +1353,7 @@ def test_memory_layout_persistence(mode):
     assert np.pad(x, 5, mode).flags["F_CONTIGUOUS"]
 
 
-@pytest.mark.parametrize("dtype", chain(
-    # Skip "other" dtypes as they are not supported by all modes
-    np.sctypes["int"],
-    np.sctypes["uint"],
-    np.sctypes["float"],
-    np.sctypes["complex"]
-))
+@pytest.mark.parametrize("dtype", _numeric_dtypes)
 @pytest.mark.parametrize("mode", _all_modes.keys())
 def test_dtype_persistence(dtype, mode):
     arr = np.zeros((3, 2, 1), dtype=dtype)

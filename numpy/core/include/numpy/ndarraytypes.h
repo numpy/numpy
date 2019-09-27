@@ -1095,7 +1095,8 @@ typedef struct PyArrayIterObject_tag PyArrayIterObject;
  * type of the function which translates a set of coordinates to a
  * pointer to the data
  */
-typedef char* (*npy_iter_get_dataptr_t)(PyArrayIterObject* iter, npy_intp*);
+typedef char* (*npy_iter_get_dataptr_t)(
+        PyArrayIterObject* iter, const npy_intp*);
 
 struct PyArrayIterObject_tag {
         PyObject_HEAD
@@ -1695,7 +1696,8 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 #define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_HASFIELDS(obj) (((PyArray_Descr *)(obj))->names != NULL)
 #define PyDataType_HASSUBARRAY(dtype) ((dtype)->subarray != NULL)
-#define PyDataType_ISUNSIZED(dtype) ((dtype)->elsize == 0)
+#define PyDataType_ISUNSIZED(dtype) ((dtype)->elsize == 0 && \
+                                      !PyDataType_HASFIELDS(dtype))
 #define PyDataType_MAKEUNSIZED(dtype) ((dtype)->elsize = 0)
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))

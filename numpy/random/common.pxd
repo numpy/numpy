@@ -5,7 +5,7 @@ from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           uintptr_t)
 from libc.math cimport sqrt
 
-cdef extern from "numpy/random/bitgen.h":
+cdef extern from "src/bitgen.h":
     struct bitgen:
         void *state
         uint64_t (*next_uint64)(void *st) nogil

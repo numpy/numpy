@@ -386,7 +386,8 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
  * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT npy_datetime
-PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
+PyArray_DatetimeStructToDatetime(
+        NPY_DATETIMEUNIT NPY_UNUSED(fr), npy_datetimestruct *NPY_UNUSED(d))
 {
     PyErr_SetString(PyExc_RuntimeError,
             "The NumPy PyArray_DatetimeStructToDatetime function has "
@@ -400,7 +401,8 @@ PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
  * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT npy_datetime
-PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d)
+PyArray_TimedeltaStructToTimedelta(
+        NPY_DATETIMEUNIT NPY_UNUSED(fr), npy_timedeltastruct *NPY_UNUSED(d))
 {
     PyErr_SetString(PyExc_RuntimeError,
             "The NumPy PyArray_TimedeltaStructToTimedelta function has "
@@ -600,8 +602,9 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
  * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT void
-PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
-                                 npy_datetimestruct *result)
+PyArray_DatetimeToDatetimeStruct(
+        npy_datetime NPY_UNUSED(val), NPY_DATETIMEUNIT NPY_UNUSED(fr),
+        npy_datetimestruct *result)
 {
     PyErr_SetString(PyExc_RuntimeError,
             "The NumPy PyArray_DatetimeToDatetimeStruct function has "
@@ -621,8 +624,9 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
  * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT void
-PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
-                                 npy_timedeltastruct *result)
+PyArray_TimedeltaToTimedeltaStruct(
+        npy_timedelta NPY_UNUSED(val), NPY_DATETIMEUNIT NPY_UNUSED(fr),
+        npy_timedeltastruct *result)
 {
     PyErr_SetString(PyExc_RuntimeError,
             "The NumPy PyArray_TimedeltaToTimedeltaStruct function has "
@@ -2272,7 +2276,10 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
             if (tmp == NULL) {
                 return -1;
             }
-            seconds_offset = PyInt_AsLong(tmp);
+            /* Rounding here is no worse than the integer division below.
+             * Only whole minute offsets are supported by numpy anyway.
+             */
+            seconds_offset = (int)PyFloat_AsDouble(tmp);
             if (error_converting(seconds_offset)) {
                 Py_DECREF(tmp);
                 return -1;
@@ -3125,7 +3132,7 @@ is_any_numpy_datetime_or_timedelta(PyObject *obj)
  */
 NPY_NO_EXPORT int
 convert_pyobjects_to_datetimes(int count,
-                               PyObject **objs, int *type_nums,
+                               PyObject **objs, const int *type_nums,
                                NPY_CASTING casting,
                                npy_int64 *out_values,
                                PyArray_DatetimeMetaData *inout_meta)

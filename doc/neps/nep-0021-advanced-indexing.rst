@@ -630,7 +630,7 @@ At this point we have left the straight forward world of ``oindex`` but can
 do random picking of any element from the array. Note that in the last example
 a method such as mentioned in the ``Related Questions`` section could be more
 straight forward. But this approach is even more flexible, since ``rows``
-does not have to be a simple ``arange``, but could be ``intersting_times``::
+does not have to be a simple ``arange``, but could be ``interesting_times``::
 
     >>> interesting_times = np.array([0, 4, 8, 9, 10])
     >>> correct_sensors_at_it = correct_sensors[interesting_times, :]
