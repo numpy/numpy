@@ -429,7 +429,7 @@ def _get_bin_edges(a, bins, range, weights):
         except ValueError:
             resolution = np.finfo(np.float64).resolution
         widths = np.diff(bin_edges)
-        if np.allclose(widths / widths[0] - 1, 0, rtol=2 * resolution):
+        if np.allclose(widths / widths[0] - 1, 0, rtol=0, atol=2 * resolution):
             n_equal_bins = len(bin_edges) - 1
             first_edge, last_edge = bin_edges[0], bin_edges[-1]
 
