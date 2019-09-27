@@ -3,7 +3,7 @@ NEP 29 — Recommend Python and Numpy version support as a community policy stan
 ==================================================================================
 
 
-:Author: Thomas A Caswell <tcaswell@gmail.com>, Andreas Mueller, Brian Granger, Madicken Munk, Ralf Gommers, Matt Haberland <mhaberla@calpoly.edu>, Matthias Bussonnier <bussonniermatthias@gmail.com>, Stefan van der Walt
+:Author: Thomas A Caswell <tcaswell@gmail.com>, Andreas Mueller, Brian Granger, Madicken Munk, Ralf Gommers, Matt Haberland <mhaberla@calpoly.edu>, Matthias Bussonnier <bussonniermatthias@gmail.com>, Stefan van der Walt <stefanv@berkeley.edu>
 :Status: Draft
 :Type: Informational Track
 :Created: 2019-07-13
@@ -84,15 +84,11 @@ to drop any given minor version of Python.  This, in turn, could save
 months of unnecessary maintenance burden.
 
 If a project releases immediately after a minor version of Python
-drops out of the support window, there will be some unavoidable
-mismatch in supported versions—but this situation should only last
-until other projects in the ecosystem make releases.
+drops out of the support window (or a new version enters), there will
+inevitably be some mismatch in supported versions—but this situation
+should only last until other projects in the ecosystem make releases.
 
-XXX Tom, for you to clarify: what if a project releases *right after*
-Python. No other packages in the ecosystem may be available for that
-Python yet. Is the below paragraph still valid then? XXX
-
-Once a project does a minor or major release, it is guaranteed that
+Otherwise, once a project does a minor or major release, it is guaranteed that
 there will be a stable release of all other projects that support the
 same set of Python versions supported by the new release.
 
