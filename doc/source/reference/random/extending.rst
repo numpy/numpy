@@ -12,7 +12,7 @@ Numba
 Numba can be used with either CTypes or CFFI.  The current iteration of the
 BitGenerators all export a small set of functions through both interfaces.
 
-This example shows how numba can be used to produce Box-Muller normals using
+This example shows how numba can be used to produce gaussian samples using
 a pure Python implementation which is then compiled.  The random numbers are
 provided by ``ctypes.next_double``.
 
@@ -21,21 +21,22 @@ provided by ``ctypes.next_double``.
     from numpy.random import PCG64
     import numpy as np
     import numba as nb
+    from timeit import timeit
 
-    x = PCG64()
-    f = x.ctypes.next_double
-    s = x.ctypes.state
-    state_addr = x.ctypes.state_address
+    bit_gen = PCG64()
+    next_f = bit_gen.ctypes.next_double
+    s = bit_gen.ctypes.state
+    state_addr = bit_gen.ctypes.state_address
 
     def normals(n, state):
         out = np.empty(n)
         for i in range((n+1)//2):
-            x1 = 2.0*f(state) - 1.0
-            x2 = 2.0*f(state) - 1.0
+            x1 = 2.0*next_f(state) - 1.0
+            x2 = 2.0*next_f(state) - 1.0
             r2 = x1*x1 + x2*x2
             while r2 >= 1.0 or r2 == 0.0:
-                x1 = 2.0*f(state) - 1.0
-                x2 = 2.0*f(state) - 1.0
+                x1 = 2.0*next_f(state) - 1.0
+                x2 = 2.0*next_f(state) - 1.0
                 r2 = x1*x1 + x2*x2
             g = np.sqrt(-2.0*np.log(r2)/r2)
             out[2*i] = g*x1
@@ -44,15 +45,29 @@ provided by ``ctypes.next_double``.
         return out
 
     # Compile using Numba
-    print(normals(10, s).var())
-    # Warm up
     normalsj = nb.jit(normals, nopython=True)
     # Must use state address not state with numba
-    normalsj(1, state_addr)
-    %timeit normalsj(1000000, state_addr)
-    print('1,000,000 Box-Muller (numba/PCG64) randoms')
-    %timeit np.random.standard_normal(1000000)
-    print('1,000,000 Box-Muller (NumPy) randoms')
+    n = 10_000
+
+    def numbacall():
+        return normalsj(n, state_addr)
+
+    rg = np.random.Generator(PCG64())
+
+    def numpycall():
+        return rg.normal(size=n)
+
+    # Check that the functions work
+    r1 = numbacall()
+    r2 = numpycall()
+    print('shape', r1.shape, 'mean', np.mean(r1))
+    assert r1.shape == r2.shape
+    assert np.mean(r1) - np.mean(r2) < 1e-2
+
+    t1 = timeit(numbacall, number=1000)
+    print(f'{t1:.2f} secs for {n} PCG64 (Numba/PCG64) gaussian randoms')
+    t2 = timeit(numpycall, number=1000)
+    print(f'{t2:.2f} secs for {n} PCG64 (NumPy/PCG64) gaussian randoms')
 
 
 Both CTypes and CFFI allow the more complicated distributions to be used
@@ -66,11 +81,9 @@ Cython
 ======
 
 Cython can be used to unpack the ``PyCapsule`` provided by a BitGenerator.
-This example uses `~pcg64.PCG64` and
-``random_gauss_zig``, the Ziggurat-based generator for normals, to fill an
-array.  The usual caveats for writing high-performance code using Cython --
-removing bounds checks and wrap around, providing array alignment information
--- still apply.
+This example uses `~pcg64.PCG64` and the example from above.  The usual caveats
+for writing high-performance code using Cython -- removing bounds checks and
+wrap around, providing array alignment information -- still apply.
 
 .. code-block:: cython
 
@@ -79,13 +92,12 @@ removing bounds checks and wrap around, providing array alignment information
     cimport cython
     from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
     from numpy.random.common cimport *
-    from numpy.random.distributions cimport random_gauss_zig
     from numpy.random import PCG64
 
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def normals_zig(Py_ssize_t n):
+    def normals(n, bit_gen):
         cdef Py_ssize_t i
         cdef bitgen_t *rng
         cdef const char *capsule_name = "BitGenerator"
@@ -99,7 +111,23 @@ removing bounds checks and wrap around, providing array alignment information
         random_values = np.empty(n)
         # Best practice is to release GIL and acquire the lock
         with x.lock, nogil:
-            for i in range(n):
+            for i in range((n+1)//2):
+                x1 = 2.0*rng. - 1.0
+                x2 = 2.0*next_f(state) - 1.0
+                r2 = x1*x1 + x2*x2
+                while r2 >= 1.0 or r2 == 0.0:
+                    x1 = 2.0*next_f(state) - 1.0
+                    x2 = 2.0*next_f(state) - 1.0
+                    r2 = x1*x1 + x2*x2
+                g = np.sqrt(-2.0*np.log(r2)/r2)
+                random_values[2*i] = g*x1
+                if 2*i+1 < n:
+                    random_values[2*i+1] = g*x2
+        randoms = np.asarray(random_values)
+        return randoms
+
+    def normals_zig(Py_ssize_t n):
+
                 random_values[i] = random_gauss_zig(rng)
         randoms = np.asarray(random_values)
         return randoms
