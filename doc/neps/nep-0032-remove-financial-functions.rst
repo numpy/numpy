@@ -3,9 +3,10 @@ NEP 32 — Remove the financial functions from NumPy
 ==================================================
 
 :Author: Warren Weckesser <warren.weckesser@gmail.com>
-:Status: Draft
+:Status: Accepted
 :Type: Standards Track
 :Created: 2019-08-30
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2019-September/080074.html
 
 
 Abstract
@@ -158,7 +159,11 @@ Discussion
 ----------
 
 Links to past mailing list discussions, and to relevant GitHub issues and pull
-requests, have already been given.
+requests, have already been given.  The announcement of this NEP was made on
+the NumPy-Discussion mailing list on 3 September 2019 [10]_, and on the
+PyData mailing list on 8 September 2019 [11]_.  The formal proposal to accept
+the NEP was made on 19 September 2019 [12]_; a notification was also sent to
+PyData (same thread as [11]_).  There have been no substantive objections.
 
 
 References and footnotes
@@ -185,12 +190,23 @@ References and footnotes
 .. [7] ``component: numpy.lib.financial`` issues,
    https://github.com/numpy/numpy/issues?utf8=%E2%9C%93&q=is%3Aissue+label%3A%22component%3A+numpy.lib.financial%22+
 
-.. [8] ``component: numpy.lib.financial`` pull request,
+.. [8] ``component: numpy.lib.financial`` pull requests,
    https://github.com/numpy/numpy/pulls?utf8=%E2%9C%93&q=is%3Apr+label%3A%22component%3A+numpy.lib.financial%22+
 
 .. [9] Quansight-Labs/python-api-inspect,
    https://github.com/Quansight-Labs/python-api-inspect/
 
+.. [10] Numpy-discussion mailing list, "NEP 32: Remove the financial functions
+   from NumPy"
+   https://mail.python.org/pipermail/numpy-discussion/2019-September/079965.html
+
+.. [11] PyData mailing list (pydata@googlegroups.com), "NumPy proposal to
+   remove the financial functions.
+   https://mail.google.com/mail/u/0/h/1w0mjgixc4rpe/?&th=16d5c38be45f77c4&q=nep+32&v=c&s=q
+
+.. [12] Numpy-discussion mailing list, "Proposal to accept NEP 32: Remove the
+   financial functions from NumPy"
+   https://mail.python.org/pipermail/numpy-discussion/2019-September/080074.html
 
 Copyright
 ---------
