@@ -6,7 +6,7 @@ import sys
 import numpy as np
 cimport numpy as np
 
-from .common cimport *
+from libc.stdint cimport uintptr_t
 
 __all__ = ['interface']
 

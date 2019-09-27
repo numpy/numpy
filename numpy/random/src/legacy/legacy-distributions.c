@@ -1,4 +1,4 @@
-#include "legacy-distributions.h"
+#include "include/legacy-distributions.h"
 
 
 static NPY_INLINE double legacy_double(aug_bitgen_t *aug_state) {

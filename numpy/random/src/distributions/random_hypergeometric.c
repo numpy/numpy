@@ -1,4 +1,4 @@
-#include "distributions.h"
+#include "include/distributions.h"
 #include "logfactorial.h"
 #include <stdint.h>
 

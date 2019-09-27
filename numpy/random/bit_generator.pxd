@@ -1,6 +1,15 @@
-
-from .common cimport bitgen_t, uint32_t
 cimport numpy as np
+from libc.stdint cimport uint32_t, uint64_t
+
+cdef extern from "include/bitgen.h":
+    struct bitgen:
+        void *state
+        uint64_t (*next_uint64)(void *st) nogil
+        uint32_t (*next_uint32)(void *st) nogil
+        double (*next_double)(void *st) nogil
+        uint64_t (*next_raw)(void *st) nogil
+
+    ctypedef bitgen bitgen_t
 
 cdef class BitGenerator():
     cdef readonly object _seed_seq

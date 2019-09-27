@@ -1,4 +1,4 @@
-#include "distributions.h"
+#include "include/distributions.h"
 #include "ziggurat_constants.h"
 #include "logfactorial.h"
 

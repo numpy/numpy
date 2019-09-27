@@ -126,6 +126,15 @@ def configuration(parent_package='', top_path=None):
                          depends=['mtrand.pyx'],
                          define_macros=defs + LEGACY_DEFS,
                          )
+    config.add_data_files('bit_generator.pxd')
+    config.add_data_files('bounded_integers.pxd')
+    config.add_data_files('common.pxd')
+    # config.add_data_files('generator.pxd')
+    # config.add_data_files('mt19937.pxd')
+    # config.add_data_files('mtrand.pxd')
+    # config.add_data_files('pcg64.pxd')
+    # config.add_data_files('philox.pxd')
+    # config.add_data_files('sfc64.pxd')
     return config
 
 
