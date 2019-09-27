@@ -1937,10 +1937,17 @@ static int
         output.real = result;
 
         // Reading imaginary component
+        char **prev = endptr;
         str = *endptr;
         result = NumPyOS_ascii_strtod(str, endptr);
 
-        output.imag = result;
+        if (endptr && *endptr[0] == 'j') {
+            output.imag = result;
+        }
+        else {
+            endptr = prev;
+            output.imag = 0;
+        }
 
         // Skip j
         ++*endptr;

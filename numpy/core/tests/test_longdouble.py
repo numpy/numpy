@@ -72,16 +72,30 @@ def test_fromstring():
 
 
 def test_fromstring_complex():
-    for ctypes in ["complex", "cdouble", "cfloat"]:
+    for ctype in ["complex", "cdouble", "cfloat"]:
         # Check spacing between separator
-        assert_equal(np.fromstring("1, 2 ,  3  ,4",sep=",",dtype=ctypes),
+        assert_equal(np.fromstring("1, 2 ,  3  ,4",sep=",",dtype=ctype),
                      np.array([1., 2., 3., 4.]))
         # Real component not specified
-        assert_equal(np.fromstring("1j, -2j,  3j, 4e1j",sep=",",dtype=ctypes), 
+        assert_equal(np.fromstring("1j, -2j,  3j, 4e1j",sep=",",dtype=ctype), 
                      np.array([1.j, -2.j, 3.j, 40.j]))
         # Both components specified
-        assert_equal(np.fromstring("1+1j,2-2j, -3+3j,  -4e1", sep=",", dtype=ctypes),
+        assert_equal(np.fromstring("1+1j,2-2j, -3+3j,  -4e1", sep=",", dtype=ctype),
                      np.array([1. + 1.j, 2. - 2.j, - 3. + 3.j, - 40.]))
+        # Spaces at wrong places
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.fromstring("1+2 j,3", dtype=ctype, sep=","),
+                         np.array([1.]))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.fromstring("1+ 2j,3", dtype=ctype, sep=","),
+                         np.array([1.]))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.fromstring("1 +2j,3", dtype=ctype, sep=","),
+                         np.array([1.]))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.fromstring("1+j", dtype=ctype, sep=","),
+                         np.array([1.]))
+
 
 
 def test_fromstring_bogus():
