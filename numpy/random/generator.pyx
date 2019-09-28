@@ -14,13 +14,13 @@ from numpy.core.multiarray import normalize_axis_index
 from libc cimport string
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int32_t, int64_t)
-from .bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
+from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
          _rand_uint8, _gen_mask)
-from .bounded_integers import _integers_types
+from ._bounded_integers import _integers_types
 from .pcg64 import PCG64
 from .bit_generator cimport bitgen_t
-from .common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
+from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
             CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,

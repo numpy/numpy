@@ -3,7 +3,7 @@ import operator
 import numpy as np
 cimport numpy as np
 
-from .common cimport *
+from libc.stdint cimport uint32_t, uint64_t
 from .bit_generator cimport BitGenerator, SeedSequence
 
 __all__ = ['MT19937']

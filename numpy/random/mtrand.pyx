@@ -12,13 +12,13 @@ cimport numpy as np
 
 from libc cimport string
 from libc.stdint cimport int64_t, uint64_t
-from .bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
+from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
          _rand_uint8,)
-from .bounded_integers import _integers_types
+from ._bounded_integers import _integers_types
 from .mt19937 import MT19937 as _MT19937
 from .bit_generator cimport bitgen_t
-from .common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
+from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1, CONS_GTE_1,
             CONS_GT_1, LEGACY_CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3,

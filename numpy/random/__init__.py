@@ -179,8 +179,8 @@ __all__ = [
 
 # add these for module-freeze analysis (like PyInstaller)
 from . import _pickle
-from . import common
-from . import bounded_integers
+from . import _common
+from . import _bounded_integers
 
 from .mtrand import *
 from .generator import Generator, default_rng

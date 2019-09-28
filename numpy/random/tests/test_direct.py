@@ -10,7 +10,7 @@ from numpy.random import (
     Generator, MT19937, PCG64, Philox, RandomState, SeedSequence, SFC64,
     default_rng
 )
-from numpy.random.common import interface
+from numpy.random._common import interface
 
 try:
     import cffi  # noqa: F401
