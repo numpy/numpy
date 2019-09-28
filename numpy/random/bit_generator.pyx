@@ -53,7 +53,7 @@ from cpython.pycapsule cimport PyCapsule_New
 import numpy as np
 cimport numpy as np
 
-from .common cimport (random_raw, benchmark, prepare_ctypes, prepare_cffi)
+from ._common cimport (random_raw, benchmark, prepare_ctypes, prepare_cffi)
 
 __all__ = ['SeedSequence', 'BitGenerator']
 
