@@ -61,28 +61,28 @@ def configuration(parent_package='', top_path=None):
 
     for gen in ['mt19937']:
         # gen.pyx, src/gen/gen.c, src/gen/gen-jump.c
-        config.add_extension(gen,
-                             sources=['{0}.c'.format(gen),
+        config.add_extension('_{0}'.format(gen),
+                             sources=['_{0}.c'.format(gen),
                                       'src/{0}/{0}.c'.format(gen),
                                       'src/{0}/{0}-jump.c'.format(gen)],
                              include_dirs=['.', 'src', join('src', gen)],
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['%s.pyx' % gen],
+                             depends=['_%s.pyx' % gen],
                              define_macros=defs,
                              )
     for gen in ['philox', 'pcg64', 'sfc64']:
         # gen.pyx, src/gen/gen.c
         _defs = defs + PCG64_DEFS if gen == 'pcg64' else defs
-        config.add_extension(gen,
-                             sources=['{0}.c'.format(gen),
+        config.add_extension('_{0}'.format(gen),
+                             sources=['_{0}.c'.format(gen),
                                       'src/{0}/{0}.c'.format(gen)],
                              include_dirs=['.', 'src', join('src', gen)],
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['%s.pyx' % gen, 'bit_generator.pyx',
+                             depends=['_%s.pyx' % gen, 'bit_generator.pyx',
                                       'bit_generator.pxd'],
                              define_macros=_defs,
                              )
@@ -130,11 +130,11 @@ def configuration(parent_package='', top_path=None):
     config.add_data_files('_bounded_integers.pxd')
     config.add_data_files('_common.pxd')
     # config.add_data_files('generator.pxd')
-    # config.add_data_files('mt19937.pxd')
-    # config.add_data_files('mtrand.pxd')
-    # config.add_data_files('pcg64.pxd')
-    # config.add_data_files('philox.pxd')
-    # config.add_data_files('sfc64.pxd')
+    # config.add_data_files('_mt19937.pxd')
+    # config.add_data_files('_mtrand.pxd')
+    # config.add_data_files('_pcg64.pxd')
+    # config.add_data_files('_philox.pxd')
+    # config.add_data_files('_sfc64.pxd')
     return config
 
 

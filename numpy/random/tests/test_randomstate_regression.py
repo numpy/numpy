@@ -8,7 +8,7 @@ from numpy.testing import (
 from numpy.compat import long
 import numpy as np
 
-from numpy.random import mtrand as random
+from numpy import random
 
 
 class TestRegression(object):
