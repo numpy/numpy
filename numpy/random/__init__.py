@@ -182,14 +182,13 @@ from . import _pickle
 from . import _common
 from . import _bounded_integers
 
-from .mtrand import *
 from .generator import Generator, default_rng
 from .bit_generator import SeedSequence
-from .mt19937 import MT19937
-from .pcg64 import PCG64
-from .philox import Philox
-from .sfc64 import SFC64
-from .mtrand import RandomState
+from ._mt19937 import MT19937
+from ._pcg64 import PCG64
+from ._philox import Philox
+from ._sfc64 import SFC64
+from .mtrand import *
 
 __all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',
             'Philox', 'PCG64', 'SFC64', 'default_rng']

@@ -300,11 +300,7 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "matrixlib.defmatrix",
     "random.bit_generator",
     "random.generator",
-    "random.mt19937",
     "random.mtrand",
-    "random.pcg64",
-    "random.philox",
-    "random.sfc64",
     "testing.print_coercion_tables",
     "testing.utils",
 ]]
