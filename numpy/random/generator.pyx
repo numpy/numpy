@@ -193,7 +193,7 @@ cdef class Generator:
         cdef double temp
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_double_fill, &self._bitgen, size, self.lock, out)
+            return double_fill(&random_double, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
             return float_fill(&random_float, &self._bitgen, size, self.lock, out)
         else:
@@ -336,9 +336,9 @@ cdef class Generator:
         key = np.dtype(dtype).name
         if key == 'float64':
             if method == u'zig':
-                return double_fill(&random_standard_exponential_zig_fill, &self._bitgen, size, self.lock, out)
+                return double_fill(&random_standard_exponential_zig, &self._bitgen, size, self.lock, out)
             else:
-                return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
+                return double_fill(&random_standard_exponential, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
             if method == u'zig':
                 return float_fill(&random_standard_exponential_zig_f, &self._bitgen, size, self.lock, out)
@@ -920,7 +920,7 @@ cdef class Generator:
         """
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_gauss_zig_fill, &self._bitgen, size, self.lock, out)
+            return double_fill(&random_gauss_zig, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
             return float_fill(&random_gauss_zig_f, &self._bitgen, size, self.lock, out)
 

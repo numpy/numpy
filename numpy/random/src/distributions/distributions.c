@@ -21,24 +21,10 @@ double random_standard_exponential(bitgen_t *bitgen_state) {
   return next_standard_exponential(bitgen_state);
 }
 
-void random_standard_exponential_fill(bitgen_t *bitgen_state, npy_intp cnt,
-                                      double *out) {
-  npy_intp i;
-  for (i = 0; i < cnt; i++) {
-    out[i] = next_standard_exponential(bitgen_state);
-  }
-}
-
 float random_standard_exponential_f(bitgen_t *bitgen_state) {
   return -logf(1.0f - next_float(bitgen_state));
 }
 
-void random_double_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out) {
-  npy_intp i;
-  for (i = 0; i < cnt; i++) {
-    out[i] = next_double(bitgen_state);
-  }
-}
 #if 0
 double random_gauss(bitgen_t *bitgen_state) {
   if (bitgen_state->has_gauss) {
@@ -124,14 +110,6 @@ double random_standard_exponential_zig(bitgen_t *bitgen_state) {
   return standard_exponential_zig(bitgen_state);
 }
 
-void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, npy_intp cnt,
-                                          double *out) {
-  npy_intp i;
-  for (i = 0; i < cnt; i++) {
-    out[i] = standard_exponential_zig(bitgen_state);
-  }
-}
-
 static NPY_INLINE float standard_exponential_zig_f(bitgen_t *bitgen_state);
 
 static float standard_exponential_zig_unlikely_f(bitgen_t *bitgen_state,
@@ -204,13 +182,6 @@ static NPY_INLINE double next_gauss_zig(bitgen_t *bitgen_state) {
 
 double random_gauss_zig(bitgen_t *bitgen_state) {
   return next_gauss_zig(bitgen_state);
-}
-
-void random_gauss_zig_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out) {
-  npy_intp i;
-  for (i = 0; i < cnt; i++) {
-    out[i] = next_gauss_zig(bitgen_state);
-  }
 }
 
 float random_gauss_zig_f(bitgen_t *bitgen_state) {

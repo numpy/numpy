@@ -29,13 +29,9 @@ cdef extern from "src/distributions/distributions.h":
     ctypedef s_binomial_t binomial_t
 
     double random_double(bitgen_t *bitgen_state) nogil
-    void random_double_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_standard_exponential(bitgen_t *bitgen_state) nogil
-    void random_standard_exponential_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_standard_exponential_zig(bitgen_t *bitgen_state) nogil
-    void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_gauss_zig(bitgen_t* bitgen_state) nogil
-    void random_gauss_zig_fill(bitgen_t *bitgen_state, np.npy_intp count, double *out) nogil
     double random_standard_gamma_zig(bitgen_t *bitgen_state, double shape) nogil
 
     float random_float(bitgen_t *bitgen_state) nogil

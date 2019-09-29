@@ -329,7 +329,7 @@ cdef class RandomState:
 
         """
         cdef double temp
-        return double_fill(&random_double_fill, &self._bitgen, size, self.lock, None)
+        return double_fill(&random_double, &self._bitgen, size, self.lock, None)
 
     def random(self, size=None):
         """
