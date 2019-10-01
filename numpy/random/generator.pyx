@@ -51,32 +51,35 @@ cdef extern from "include/distributions.h":
 
     ctypedef s_binomial_t binomial_t
 
-    double random_double(bitgen_t *bitgen_state) nogil
-    void random_double_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
+    double random_standard_uniform(bitgen_t *bitgen_state) nogil
+    void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_standard_exponential(bitgen_t *bitgen_state) nogil
     void random_standard_exponential_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_standard_exponential_zig(bitgen_t *bitgen_state) nogil
     void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
-    double random_gauss_zig(bitgen_t* bitgen_state) nogil
-    void random_gauss_zig_fill(bitgen_t *bitgen_state, np.npy_intp count, double *out) nogil
-    double random_standard_gamma_zig(bitgen_t *bitgen_state, double shape) nogil
+    double random_standard_normal(bitgen_t* bitgen_state) nogil
+    void random_standard_normal_fill(bitgen_t *bitgen_state, np.npy_intp count, double *out) nogil
+    void random_standard_normal_fill_f(bitgen_t *bitgen_state, np.npy_intp count, float *out) nogil
+    double random_standard_gamma(bitgen_t *bitgen_state, double shape) nogil
 
-    float random_float(bitgen_t *bitgen_state) nogil
+    float random_standard_uniform_f(bitgen_t *bitgen_state) nogil
+    void random_standard_uniform_fill_f(bitgen_t* bitgen_state, np.npy_intp cnt, float *out) nogil
     float random_standard_exponential_f(bitgen_t *bitgen_state) nogil
     float random_standard_exponential_zig_f(bitgen_t *bitgen_state) nogil
-    float random_gauss_zig_f(bitgen_t* bitgen_state) nogil
+    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
+    void random_standard_exponential_zig_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
+    float random_standard_normal_f(bitgen_t* bitgen_state) nogil
     float random_standard_gamma_f(bitgen_t *bitgen_state, float shape) nogil
-    float random_standard_gamma_zig_f(bitgen_t *bitgen_state, float shape) nogil
 
     int64_t random_positive_int64(bitgen_t *bitgen_state) nogil
     int32_t random_positive_int32(bitgen_t *bitgen_state) nogil
     int64_t random_positive_int(bitgen_t *bitgen_state) nogil
     uint64_t random_uint(bitgen_t *bitgen_state) nogil
 
-    double random_normal_zig(bitgen_t *bitgen_state, double loc, double scale) nogil
+    double random_normal(bitgen_t *bitgen_state, double loc, double scale) nogil
 
     double random_gamma(bitgen_t *bitgen_state, double shape, double scale) nogil
-    float random_gamma_float(bitgen_t *bitgen_state, float shape, float scale) nogil
+    float random_gamma_f(bitgen_t *bitgen_state, float shape, float scale) nogil
 
     double random_exponential(bitgen_t *bitgen_state, double scale) nogil
     double random_uniform(bitgen_t *bitgen_state, double lower, double range) nogil
@@ -284,9 +287,9 @@ cdef class Generator:
         cdef double temp
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_double_fill, &self._bitgen, size, self.lock, out)
+            return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
-            return float_fill(&random_float, &self._bitgen, size, self.lock, out)
+            return float_fill(&random_standard_uniform_fill_f, &self._bitgen, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for random' % key)
 
@@ -432,9 +435,9 @@ cdef class Generator:
                 return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
             if method == u'zig':
-                return float_fill(&random_standard_exponential_zig_f, &self._bitgen, size, self.lock, out)
+                return float_fill(&random_standard_exponential_zig_fill_f, &self._bitgen, size, self.lock, out)
             else:
-                return float_fill(&random_standard_exponential_f, &self._bitgen, size, self.lock, out)
+                return float_fill(&random_standard_exponential_fill_f, &self._bitgen, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_exponential'
                             % key)
@@ -1011,9 +1014,9 @@ cdef class Generator:
         """
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_gauss_zig_fill, &self._bitgen, size, self.lock, out)
+            return double_fill(&random_standard_normal_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
-            return float_fill(&random_gauss_zig_f, &self._bitgen, size, self.lock, out)
+            return float_fill(&random_standard_normal_fill_f, &self._bitgen, size, self.lock, out)
 
         else:
             raise TypeError('Unsupported dtype "%s" for standard_normal' % key)
@@ -1114,7 +1117,7 @@ cdef class Generator:
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
-        return cont(&random_normal_zig, &self._bitgen, size, self.lock, 2,
+        return cont(&random_normal, &self._bitgen, size, self.lock, 2,
                     loc, '', CONS_NONE,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
@@ -1200,13 +1203,13 @@ cdef class Generator:
         cdef void *func
         key = np.dtype(dtype).name
         if key == 'float64':
-            return cont(&random_standard_gamma_zig, &self._bitgen, size, self.lock, 1,
+            return cont(&random_standard_gamma, &self._bitgen, size, self.lock, 1,
                         shape, 'shape', CONS_NON_NEGATIVE,
                         0.0, '', CONS_NONE,
                         0.0, '', CONS_NONE,
                         out)
         if key == 'float32':
-            return cont_f(&random_standard_gamma_zig_f, &self._bitgen, size, self.lock,
+            return cont_f(&random_standard_gamma_f, &self._bitgen, size, self.lock,
                           shape, 'shape', CONS_NON_NEGATIVE,
                           out)
         else:
@@ -3864,7 +3867,7 @@ cdef class Generator:
             while i < totsize:
                 acc = 0.0
                 for j in range(k):
-                    val_data[i+j] = random_standard_gamma_zig(&self._bitgen,
+                    val_data[i+j] = random_standard_gamma(&self._bitgen,
                                                               alpha_data[j])
                     acc = acc + val_data[i + j]
                 invacc = 1/acc

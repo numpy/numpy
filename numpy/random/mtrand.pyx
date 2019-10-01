@@ -47,7 +47,7 @@ cdef extern from "include/distributions.h":
 
     ctypedef s_binomial_t binomial_t
 
-    void random_double_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
     int64_t random_positive_int(bitgen_t *bitgen_state) nogil
     double random_uniform(bitgen_t *bitgen_state, double lower, double range) nogil
     double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) nogil
@@ -410,7 +410,7 @@ cdef class RandomState:
 
         """
         cdef double temp
-        return double_fill(&random_double_fill, &self._bitgen, size, self.lock, None)
+        return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, None)
 
     def random(self, size=None):
         """

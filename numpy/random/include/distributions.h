@@ -78,9 +78,10 @@ static NPY_INLINE double next_double(bitgen_t *bitgen_state) {
 
 DECLDIR double loggam(double x);
 
-DECLDIR float random_float(bitgen_t *bitgen_state);
-DECLDIR double random_double(bitgen_t *bitgen_state);
-DECLDIR void random_double_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out);
+DECLDIR float random_standard_uniform_f(bitgen_t *bitgen_state);
+DECLDIR double random_standard_uniform(bitgen_t *bitgen_state);
+DECLDIR void random_standard_uniform_fill(bitgen_t *, npy_intp, double *);
+DECLDIR void random_standard_uniform_fill_f(bitgen_t *, npy_intp, float *);
 
 DECLDIR int64_t random_positive_int64(bitgen_t *bitgen_state);
 DECLDIR int32_t random_positive_int32(bitgen_t *bitgen_state);
@@ -88,37 +89,25 @@ DECLDIR int64_t random_positive_int(bitgen_t *bitgen_state);
 DECLDIR uint64_t random_uint(bitgen_t *bitgen_state);
 
 DECLDIR double random_standard_exponential(bitgen_t *bitgen_state);
-DECLDIR void random_standard_exponential_fill(bitgen_t *bitgen_state, npy_intp cnt,
-                                              double *out);
 DECLDIR float random_standard_exponential_f(bitgen_t *bitgen_state);
 DECLDIR double random_standard_exponential_zig(bitgen_t *bitgen_state);
-DECLDIR void random_standard_exponential_zig_fill(bitgen_t *bitgen_state,
-                                                  npy_intp cnt, double *out);
 DECLDIR float random_standard_exponential_zig_f(bitgen_t *bitgen_state);
+DECLDIR void random_standard_exponential_fill(bitgen_t *, npy_intp, double *);
+DECLDIR void random_standard_exponential_fill_f(bitgen_t *, npy_intp, float *);
+DECLDIR void random_standard_exponential_zig_fill(bitgen_t *, npy_intp, double *);
+DECLDIR void random_standard_exponential_zig_fill_f(bitgen_t *, npy_intp, float *);
 
-/*
-DECLDIR double random_gauss(bitgen_t *bitgen_state);
-DECLDIR float random_gauss_f(bitgen_t *bitgen_state);
-*/
-DECLDIR double random_gauss_zig(bitgen_t *bitgen_state);
-DECLDIR float random_gauss_zig_f(bitgen_t *bitgen_state);
-DECLDIR void random_gauss_zig_fill(bitgen_t *bitgen_state, npy_intp cnt,
-                                   double *out);
-
-/*
+DECLDIR double random_standard_normal(bitgen_t *bitgen_state);
+DECLDIR float random_standard_normal_f(bitgen_t *bitgen_state);
+DECLDIR void random_standard_normal_fill(bitgen_t *, npy_intp, double *);
+DECLDIR void random_standard_normal_fill_f(bitgen_t *, npy_intp, float *);
 DECLDIR double random_standard_gamma(bitgen_t *bitgen_state, double shape);
 DECLDIR float random_standard_gamma_f(bitgen_t *bitgen_state, float shape);
-*/
-DECLDIR double random_standard_gamma_zig(bitgen_t *bitgen_state, double shape);
-DECLDIR float random_standard_gamma_zig_f(bitgen_t *bitgen_state, float shape);
 
-/*
 DECLDIR double random_normal(bitgen_t *bitgen_state, double loc, double scale);
-*/
-DECLDIR double random_normal_zig(bitgen_t *bitgen_state, double loc, double scale);
 
 DECLDIR double random_gamma(bitgen_t *bitgen_state, double shape, double scale);
-DECLDIR float random_gamma_float(bitgen_t *bitgen_state, float shape, float scale);
+DECLDIR float random_gamma_f(bitgen_t *bitgen_state, float shape, float scale);
 
 DECLDIR double random_exponential(bitgen_t *bitgen_state, double scale);
 DECLDIR double random_uniform(bitgen_t *bitgen_state, double lower, double range);
