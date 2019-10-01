@@ -2183,7 +2183,7 @@ add_newdoc('numpy.core.umath', 'logical_and',
     Returns
     -------
     y : ndarray or bool
-        Boolean result of the logical OR operation applied to the elements
+        Boolean result of the logical AND operation applied to the elements
         of `x1` and `x2`; the shape is determined by broadcasting.
         $OUT_SCALAR_2
 
