@@ -103,9 +103,6 @@ Support Table
 ============ ====== =====
 Date         Python NumPy
 ------------ ------ -----
-Jan 16, 2019 3.5+   1.13+
-Mar 14, 2019 3.6+   1.13+
-Jun 08, 2019 3.6+   1.14+
 Jan 07, 2020 3.6+   1.15+
 Jun 23, 2020 3.7+   1.15+
 Jul 23, 2020 3.7+   1.16+
@@ -120,9 +117,7 @@ Drop Schedule
 
 ::
 
-  On Jan 16, 2019 drop support for Numpy 1.12 (initially released on Jan 15, 2017)
-  On Mar 14, 2019 drop support for Python 3.5 (initially released on Sep 13, 2015)
-  On Jun 08, 2019 drop support for Numpy 1.13 (initially released on Jun 07, 2017)
+  On next release, drop support for Python 3.5 (initially released on Sep 13, 2015)
   On Jan 07, 2020 drop support for Numpy 1.14 (initially released on Jan 06, 2018)
   On Jun 23, 2020 drop support for Python 3.6 (initially released on Dec 23, 2016)
   On Jul 23, 2020 drop support for Numpy 1.15 (initially released on Jul 23, 2018)
