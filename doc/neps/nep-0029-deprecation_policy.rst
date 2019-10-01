@@ -84,13 +84,14 @@ to drop any given minor version of Python.  This, in turn, could save
 months of unnecessary maintenance burden.
 
 If a project releases immediately after a minor version of Python
-drops out of the support window (or a new version enters), there will
-inevitably be some mismatch in supported versions—but this situation
-should only last until other projects in the ecosystem make releases.
+drops out of the support window, there will inevitably be some
+mismatch in supported versions—but this situation should only last
+until other projects in the ecosystem make releases.
 
-Otherwise, once a project does a minor or major release, it is guaranteed that
-there will be a stable release of all other projects that support the
-same set of Python versions supported by the new release.
+Otherwise, once a project does a minor or major release, it is
+guaranteed that there will be a stable release of all other projects
+that, at the source level, support the same set of Python versions
+supported by the new release.
 
 If there is a Python 4 or a NumPy 2 this policy will have to be
 reviewed in light of the community's and projects' best interests.
