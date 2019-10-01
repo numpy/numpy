@@ -350,6 +350,7 @@ class finfo(object):
     --------
     MachAr : The implementation of the tests that produce this information.
     iinfo : The equivalent for integer data types.
+    sys.float_info : Python's definitions of these values for
 
     Notes
     -----
