@@ -3297,13 +3297,6 @@ def sinc(x):
     Text(0.5, 0, 'X')
     >>> plt.show()
 
-    It works in 2-D as well:
-
-    >>> x = np.linspace(-4, 4, 401)
-    >>> xx = np.outer(x, x)
-    >>> plt.imshow(np.sinc(xx))
-    <matplotlib.image.AxesImage object at 0x...>
-
     """
     x = np.asanyarray(x)
     y = pi * where(x == 0, 1.0e-20, x)
