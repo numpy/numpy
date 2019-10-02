@@ -71,8 +71,8 @@ def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("--verbose", "-v", action="count", default=1,
                         help="more verbosity")
-    parser.add_argument("--debug-configure", action="store_true",
-                        help=("add -v to build_src to show compiler "
+    parser.add_argument("--debug-info", action="store_true",
+                        help=("add --verbose-cfg to build_src to show compiler "
                               "configuration output while creating "
                               "_numpyconfig.h and config.h"))
     parser.add_argument("--no-build", "-n", action="store_true", default=False,
@@ -376,8 +376,8 @@ def build_project(args):
     cmd += ["build"]
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
-    if args.debug_configure:
-        cmd += ["build_src", "--verbose"]
+    if args.debug_info:
+        cmd += ["build_src", "--verbose-cfg"]
     if args.warn_error:
         cmd += ["--warn-error"]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
