@@ -1365,7 +1365,11 @@ def _nanquantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
     # so deal them upfront
     if a.size == 0:
         #to return a nan for all quantiles
-        return np.full(q.size,np.nanmean(a, axis, out=out, keepdims=keepdims))
+        ans=[]
+        for i in range(q.size):
+            ans.append(np.nanmean(a, axis, out=out, keepdims=keepdims))
+        
+        return np.array(ans)
 
     r, k = function_base._ureduce(
         a, func=_nanquantile_ureduce_func, q=q, axis=axis, out=out,
