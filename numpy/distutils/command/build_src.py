@@ -53,12 +53,12 @@ class build_src(build_ext.build_ext):
         ('inplace', 'i',
          "ignore build-lib and put compiled extensions into the source " +
          "directory alongside your pure Python modules"),
-        ('verbose', 'v',
+        ('verbose-cfg', None,
          "change logging level from WARN to INFO which will show all " +
          "compiler output")
         ]
 
-    boolean_options = ['force', 'inplace', 'verbose']
+    boolean_options = ['force', 'inplace', 'verbose-cfg']
 
     help_options = []
 
@@ -79,7 +79,7 @@ class build_src(build_ext.build_ext):
         self.swig_opts = None
         self.swig_cpp = None
         self.swig = None
-        self.verbose = None
+        self.verbose_cfg = None
 
     def finalize_options(self):
         self.set_undefined_options('build',
@@ -370,7 +370,7 @@ class build_src(build_ext.build_ext):
                                        +name.split('.')[:-1]))
         self.mkpath(build_dir)
 
-        if self.verbose:
+        if self.verbose_cfg:
             new_level = log.INFO
         else:
             new_level = log.WARN
