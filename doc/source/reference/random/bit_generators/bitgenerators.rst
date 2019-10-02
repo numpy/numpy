@@ -3,7 +3,7 @@
 BitGenerator
 ------------
 
-.. currentmodule:: numpy.random.bit_generator
+.. currentmodule:: numpy.random._bit_generator
 
 .. autosummary::
    :toctree: generated/
