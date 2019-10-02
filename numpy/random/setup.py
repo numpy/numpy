@@ -86,7 +86,7 @@ def configuration(parent_package='', top_path=None):
                                       'bit_generator.pxd'],
                              define_macros=_defs,
                              )
-    for gen in ['_common', 'bit_generator']:
+    for gen in ['_common', '_bit_generator']:
         # gen.pyx
         config.add_extension(gen,
                              sources=['{0}.c'.format(gen)],
@@ -102,7 +102,7 @@ def configuration(parent_package='', top_path=None):
         'src/distributions/distributions.c',
         'src/distributions/random_hypergeometric.c',
     ]
-    for gen in ['generator', '_bounded_integers']:
+    for gen in ['_generator', '_bounded_integers']:
         # gen.pyx, src/distributions/distributions.c
         config.add_extension(gen,
                              sources=['{0}.c'.format(gen)] + other_srcs,
@@ -126,15 +126,6 @@ def configuration(parent_package='', top_path=None):
                          depends=['mtrand.pyx'],
                          define_macros=defs + LEGACY_DEFS,
                          )
-    config.add_data_files('bit_generator.pxd')
-    config.add_data_files('_bounded_integers.pxd')
-    config.add_data_files('_common.pxd')
-    # config.add_data_files('generator.pxd')
-    # config.add_data_files('_mt19937.pxd')
-    # config.add_data_files('_mtrand.pxd')
-    # config.add_data_files('_pcg64.pxd')
-    # config.add_data_files('_philox.pxd')
-    # config.add_data_files('_sfc64.pxd')
     return config
 
 

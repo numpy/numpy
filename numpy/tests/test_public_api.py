@@ -298,8 +298,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "ma.timer_comparison",
     "matrixlib",
     "matrixlib.defmatrix",
-    "random.bit_generator",
-    "random.generator",
     "random.mtrand",
     "testing.print_coercion_tables",
     "testing.utils",

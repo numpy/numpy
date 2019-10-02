@@ -21,7 +21,7 @@ Feature            Older Equivalent     Notes
 ------------------ -------------------- -------------
 `~.Generator`      `~.RandomState`      ``Generator`` requires a stream
                                         source, called a `BitGenerator
-                                        <bit_generators>` A number of these
+                                        <_bit_generators>` A number of these
                                         are provided.  ``RandomState`` uses
                                         the Mersenne Twister `~.MT19937` by
                                         default, but can also be instantiated

@@ -182,8 +182,8 @@ from . import _pickle
 from . import _common
 from . import _bounded_integers
 
-from .generator import Generator, default_rng
-from .bit_generator import SeedSequence
+from ._generator import Generator, default_rng
+from ._bit_generator import SeedSequence
 from ._mt19937 import MT19937
 from ._pcg64 import PCG64
 from ._philox import Philox

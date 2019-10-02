@@ -3,7 +3,7 @@ from ._philox import Philox
 from ._pcg64 import PCG64
 from ._sfc64 import SFC64
 
-from .generator import Generator
+from ._generator import Generator
 from ._mt19937 import MT19937
 
 BitGenerators = {'MT19937': MT19937,

@@ -107,6 +107,6 @@ convenient ways.
    :toctree: generated/
 
     SeedSequence
-    bit_generator.ISeedSequence
-    bit_generator.ISpawnableSeedSequence
-    bit_generator.SeedlessSeedSequence
+    _bit_generator.ISeedSequence
+    _bit_generator.ISpawnableSeedSequence
+    _bit_generator.SeedlessSeedSequence
