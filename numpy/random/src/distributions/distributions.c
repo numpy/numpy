@@ -6,6 +6,18 @@
 #include <intrin.h>
 #endif
 
+/* Inline generators for internal use */
+static NPY_INLINE uint32_t next_uint32(bitgen_t *bitgen_state) {
+  return bitgen_state->next_uint32(bitgen_state->state);
+}
+static NPY_INLINE uint64_t next_uint64(bitgen_t *bitgen_state) {
+  return bitgen_state->next_uint64(bitgen_state->state);
+}
+
+static NPY_INLINE float next_float(bitgen_t *bitgen_state) {
+  return (next_uint32(bitgen_state) >> 9) * (1.0f / 8388608.0f);
+}
+
 /* Random generators for external use */
 float random_standard_uniform_f(bitgen_t *bitgen_state) {
     return next_float(bitgen_state); 
@@ -331,10 +343,10 @@ uint64_t random_uint(bitgen_t *bitgen_state) {
  * algorithm comes from SPECFUN by Shanjie Zhang and Jianming Jin and their
  * book "Computation of Special Functions", 1996, John Wiley & Sons, Inc.
  *
- * If loggam(k+1) is being used to compute log(k!) for an integer k, consider
+ * If random_loggam(k+1) is being used to compute log(k!) for an integer k, consider
  * using logfactorial(k) instead.
  */
-double loggam(double x) {
+double random_loggam(double x) {
   double x0, x2, xp, gl, gl0;
   RAND_INT_TYPE k, n;
 
@@ -560,7 +572,7 @@ static RAND_INT_TYPE random_poisson_ptrs(bitgen_t *bitgen_state, double lam) {
     /* log(V) == log(0.0) ok here */
     /* if U==0.0 so that us==0.0, log is ok since always returns */
     if ((log(V) + log(invalpha) - log(a / (us * us) + b)) <=
-        (-lam + k * loglam - loggam(k + 1))) {
+        (-lam + k * loglam - random_loggam(k + 1))) {
       return k;
     }
   }
