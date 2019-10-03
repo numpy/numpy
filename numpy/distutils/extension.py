@@ -19,8 +19,24 @@ if sys.version_info[0] >= 3:
 cxx_ext_re = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match
 fortran_pyf_ext_re = re.compile(r'.*[.](f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
 
+
 class Extension(old_Extension):
-    def __init__ (
+    """
+    Parameters
+    ----------
+    name : str
+        Extension name.
+    sources : list of str
+        List of source file locations relative to the top directory of
+        the package.
+    extra_compile_args : list of str
+        Extra command line arguments to pass to the compiler.
+    extra_f77_compile_args : list of str
+        Extra command line arguments to pass to the fortran77 compiler.
+    extra_f90_compile_args : list of str
+        Extra command line arguments to pass to the fortran90 compiler.
+    """
+    def __init__(
             self, name, sources,
             include_dirs=None,
             define_macros=None,
