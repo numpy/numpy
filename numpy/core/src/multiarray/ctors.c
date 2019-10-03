@@ -3704,6 +3704,8 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     }
     NPY_END_ALLOW_THREADS;
 
+    free(clean_sep);
+
     if (stop_reading_flag == -2) {
         if (PyErr_Occurred()) {
             /* If an error is already set (unlikely), do not create new one */
@@ -3717,8 +3719,6 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
             goto fail;
         }
     }
-
-    free(clean_sep);
 
 fail:
     if (err == 1) {
