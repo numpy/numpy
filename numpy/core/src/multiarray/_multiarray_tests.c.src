@@ -601,14 +601,14 @@ static PyObject *
 fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
 {
     char *string;
+    PyArray_Descr *descr;
 
     string = PyBytes_AsString(byte_obj);
     if (string == NULL) {
         return NULL;
     }
-
-    return PyArray_FromString(
-                    string, -1, PyArray_DescrFromType(NPY_FLOAT64), -1, " ");
+    descr = PyArray_DescrNewFromType(NPY_FLOAT64);
+    return PyArray_FromString(string, -1, descr, -1, " ");
 }
 
 
@@ -913,6 +913,7 @@ static PyObject*
 get_c_wrapping_array(PyObject* NPY_UNUSED(self), PyObject* arg)
 {
     int writeable, flags;
+    PyArray_Descr *descr;
     npy_intp zero = 0;
 
     writeable = PyObject_IsTrue(arg);
@@ -922,7 +923,8 @@ get_c_wrapping_array(PyObject* NPY_UNUSED(self), PyObject* arg)
 
     flags = writeable ? NPY_ARRAY_WRITEABLE : 0;
     /* Create an empty array (which points to a random place) */
-    return PyArray_NewFromDescr(&PyArray_Type, PyArray_DescrFromType(NPY_INTP),
+    descr =  PyArray_DescrNewFromType(NPY_INTP);
+    return PyArray_NewFromDescr(&PyArray_Type, descr,
                                 1, &zero, NULL, &zero, flags, NULL);
 }
 
