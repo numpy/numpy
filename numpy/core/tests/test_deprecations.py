@@ -323,22 +323,6 @@ class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
         self.assert_deprecated(a.__setattr__, args=('data', b.data))
 
 
-class TestLinspaceInvalidNumParameter(_DeprecationTestCase):
-    """Argument to the num parameter in linspace that cannot be
-    safely interpreted as an integer is deprecated in 1.12.0.
-
-    Argument to the num parameter in linspace that cannot be
-    safely interpreted as an integer should not be allowed.
-    In the interest of not breaking code that passes
-    an argument that could still be interpreted as an integer, a
-    DeprecationWarning will be issued for the time being to give
-    developers time to refactor relevant code.
-    """
-    def test_float_arg(self):
-        # 2016-02-25, PR#7328
-        self.assert_deprecated(np.linspace, args=(0, 10, 2.5))
-
-
 class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTestCase):
     """
     If a 'width' parameter is passed into ``binary_repr`` that is insufficient to
@@ -594,7 +578,7 @@ class Test_GetSet_NumericOps(_DeprecationTestCase):
     def test_get_numeric_ops(self):
         from numpy.core._multiarray_tests import getset_numericops
         self.assert_deprecated(getset_numericops, num=2)
-        
+
         # empty kwargs prevents any state actually changing which would break
         # other tests.
         self.assert_deprecated(np.set_numeric_ops, kwargs={})
