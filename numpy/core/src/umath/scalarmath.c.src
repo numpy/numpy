@@ -406,21 +406,22 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2) {
 /**begin repeat
  * #name = float, double, longdouble#
  * #type = npy_float, npy_double, npy_longdouble#
+ * #c = f,,l#
  */
-static npy_@name@ (*_basic_@name@_pow)(@type@ a, @type@ b);
 
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
-    *out = _basic_@name@_pow(a, b);
+    *out = npy_pow@c@(a, b);
 }
+
 /**end repeat**/
 static void
 half_ctype_power(npy_half a, npy_half b, npy_half *out)
 {
     const npy_float af = npy_half_to_float(a);
     const npy_float bf = npy_half_to_float(b);
-    const npy_float outf = _basic_float_pow(af,bf);
+    const npy_float outf = npy_powf(af,bf);
     *out = npy_float_to_half(outf);
 }
 
@@ -477,14 +478,10 @@ static void
 }
 /**end repeat**/
 
-/*
- * Get the nc_powf, nc_pow, and nc_powl functions from
- * the data area of the power ufunc in umathmodule.
- */
-
 /**begin repeat
  * #name = cfloat, cdouble, clongdouble#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #c = f,,l#
  */
 static void
 @name@_ctype_positive(@type@ a, @type@ *out)
@@ -493,12 +490,10 @@ static void
     out->imag = a.imag;
 }
 
-static void (*_basic_@name@_pow)(@type@ *, @type@ *, @type@ *);
-
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out)
 {
-    _basic_@name@_pow(&a, &b, out);
+    *out = npy_cpow@c@(a, b);
 }
 /**end repeat**/
 
@@ -1680,52 +1675,9 @@ add_scalarmath(void)
     /**end repeat**/
 }
 
-static int
-get_functions(PyObject * mm)
-{
-    PyObject *obj;
-    void **funcdata;
-    char *signatures;
-    int i, j;
-    int ret = -1;
-
-    /* Get the nc_pow functions */
-    /* Get the pow functions */
-    obj = PyObject_GetAttrString(mm, "power");
-    if (obj == NULL) {
-        goto fail;
-    }
-    funcdata = ((PyUFuncObject *)obj)->data;
-    signatures = ((PyUFuncObject *)obj)->types;
-
-    i = 0;
-    j = 0;
-    while (signatures[i] != NPY_FLOAT) {
-        i += 3;
-        j++;
-    }
-    _basic_float_pow = funcdata[j];
-    _basic_double_pow = funcdata[j + 1];
-    _basic_longdouble_pow = funcdata[j + 2];
-    _basic_cfloat_pow = funcdata[j + 3];
-    _basic_cdouble_pow = funcdata[j + 4];
-    _basic_clongdouble_pow = funcdata[j + 5];
-    Py_DECREF(obj);
-
-    return ret = 0;
-
- fail:
-    Py_DECREF(mm);
-    return ret;
-}
-
 
 NPY_NO_EXPORT int initscalarmath(PyObject * m)
 {
-    if (get_functions(m) < 0) {
-        return -1;
-    }
-
     add_scalarmath();
 
     return 0;
