@@ -26,6 +26,11 @@ Modules in :mod:`numpy.distutils`
 .. currentmodule:: numpy.distutils
 
 .. autosummary::
+   :toctree: distutils/
+
+   misc_util
+
+.. autosummary::
    :toctree: generated/
 
    ccompiler
@@ -33,7 +38,6 @@ Modules in :mod:`numpy.distutils`
    core.Extension
    exec_command
    log.set_verbosity
-   misc_util
    system_info.get_info
    system_info.get_standard_file
 
@@ -41,7 +45,7 @@ Modules in :mod:`numpy.distutils`
 Configuration class
 ===================
 
-.. currentmodule:: numpy.distutils
+.. currentmodule:: numpy.distutils.misc_util
 
 .. class:: Configuration(package_name=None, parent_name=None, top_path=None, package_path=None, **attrs)
 
