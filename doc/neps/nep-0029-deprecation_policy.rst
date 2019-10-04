@@ -137,7 +137,7 @@ development guidelines:
    - All minor versions of Python released 42 months prior to the
      project, and at minimum the two latest minor versions.
    - All minor versions of ``numpy`` released in the 24 months prior
-     to the project, and at minimum the last thee minor versions.
+     to the project, and at minimum the last three minor versions.
 
    In ``setup.py``, the ``python_requires`` variable should be set to
    the minimum supported version of Python.  All supported minor
