@@ -289,7 +289,7 @@ class NpzFile(Mapping):
 
 
 @set_module('numpy')
-def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
+def load(file, mmap_mode=None, allow_pickle=True, fix_imports=True,
          encoding='ASCII'):
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
