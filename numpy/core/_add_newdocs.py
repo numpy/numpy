@@ -6831,6 +6831,11 @@ add_newdoc_for_scalar_type('clongdouble', ['clongfloat', 'longcomplex'],
     numbers.
     """)
 
+add_newdoc_for_scalar_type('datetime64', [''],
+    """
+    Datetime type.
+    """)
+
 add_newdoc_for_scalar_type('object_', [],
     """
     Any Python object.
@@ -6853,4 +6858,3 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         >>> np.{ftype}(-.25).as_integer_ratio()
         (-1, 4)
         """.format(ftype=float_name)))
-
