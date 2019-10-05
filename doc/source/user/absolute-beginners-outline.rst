@@ -482,8 +482,6 @@ Implementing mathematical formulas that work on matrices and vectors is one of t
 For example, this is the mean square error formula (a central formula used in supervised machine learning models that deal with regression):
 
 .. image:: images/np_MSE_formula.png
-    :width: 100%
-
 
 Implementing this formula is simple and straightforward in NumPy:
 
