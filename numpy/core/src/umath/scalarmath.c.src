@@ -246,24 +246,25 @@ static void
 /**end repeat**/
 
 
-
-/* QUESTION:  Should we check for overflow / underflow in (l,r)shift? */
-
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
  *         long, ulong, longlong, ulonglong#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
+ * #suffix = hh,uhh,h,uh,,u,l,ul,ll,ull#
  */
 
 /**begin repeat1
- * #oper = and, xor, or, lshift, rshift#
- * #op = &, ^, |, <<, >>#
+ * #oper = and, xor, or#
+ * #op = &, ^, |#
  */
 
 #define @name@_ctype_@oper@(arg1, arg2, out) *(out) = (arg1) @op@ (arg2)
 
 /**end repeat1**/
+
+#define @name@_ctype_lshift(arg1, arg2, out) *(out) = npy_lshift@suffix@(arg1, arg2)
+#define @name@_ctype_rshift(arg1, arg2, out) *(out) = npy_rshift@suffix@(arg1, arg2)
 
 /**end repeat**/
 
@@ -570,7 +571,7 @@ static void
  * 1) Convert the types to the common type if both are scalars (0 return)
  * 2) If both are not scalars use ufunc machinery (-2 return)
  * 3) If both are scalars but cannot be cast to the right type
- * return NotImplmented (-1 return)
+ * return NotImplemented (-1 return)
  *
  * 4) Perform the function on the C-type.
  * 5) If an error condition occurred, check to see
@@ -1429,24 +1430,20 @@ static PyObject *
 
 /**begin repeat
  *
- * #name = (byte, ubyte, short, ushort, int, uint,
+ * #name = byte, ubyte, short, ushort, int, uint,
  *             long, ulong, longlong, ulonglong,
  *             half, float, double, longdouble,
- *             cfloat, cdouble, clongdouble)*2#
- * #Name = (Byte, UByte, Short, UShort, Int, UInt,
+ *             cfloat, cdouble, clongdouble#
+ * #Name = Byte, UByte, Short, UShort, Int, UInt,
  *             Long, ULong, LongLong, ULongLong,
  *             Half, Float, Double, LongDouble,
- *             CFloat, CDouble, CLongDouble)*2#
- * #cmplx = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1)*2#
- * #to_ctype = (, , , , , , , , , , npy_half_to_double, , , , , , )*2#
- * #which = long*17, float*17#
- * #func = (PyLong_FromLongLong,  PyLong_FromUnsignedLongLong)*5,
- *         PyLong_FromDouble*3, npy_longdouble_to_PyLong,
- *         PyLong_FromDouble*2, npy_longdouble_to_PyLong,
- *         PyFloat_FromDouble*17#
+ *             CFloat, CDouble, CLongDouble#
+ * #cmplx = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1#
+ * #to_ctype = , , , , , , , , , , npy_half_to_double, , , , , , #
+ * #func = PyFloat_FromDouble*17#
  */
 static NPY_INLINE PyObject *
-@name@_@which@(PyObject *obj)
+@name@_float(PyObject *obj)
 {
 #if @cmplx@
     if (emit_complexwarning() < 0) {
@@ -1459,7 +1456,38 @@ static NPY_INLINE PyObject *
 }
 /**end repeat**/
 
+
 #if !defined(NPY_PY3K)
+
+/**begin repeat
+ *
+ * #name = (byte, ubyte, short, ushort, int, uint,
+ *             long, ulong, longlong, ulonglong,
+ *             half, float, double, longdouble,
+ *             cfloat, cdouble, clongdouble)#
+ * #Name = (Byte, UByte, Short, UShort, Int, UInt,
+ *             Long, ULong, LongLong, ULongLong,
+ *             Half, Float, Double, LongDouble,
+ *             CFloat, CDouble, CLongDouble)#
+ * #cmplx = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1)#
+ * #to_ctype = (, , , , , , , , , , npy_half_to_double, , , , , , )#
+ * #func = (PyLong_FromLongLong,  PyLong_FromUnsignedLongLong)*5,
+ *         PyLong_FromDouble*3, npy_longdouble_to_PyLong,
+ *         PyLong_FromDouble*2, npy_longdouble_to_PyLong#
+ */
+static NPY_INLINE PyObject *
+@name@_long(PyObject *obj)
+{
+#if @cmplx@
+    if (emit_complexwarning() < 0) {
+        return NULL;
+    }
+    return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@).real));
+#else
+    return @func@(@to_ctype@(PyArrayScalar_VAL(obj, @Name@)));
+#endif
+}
+/**end repeat**/
 
 /**begin repeat
  *

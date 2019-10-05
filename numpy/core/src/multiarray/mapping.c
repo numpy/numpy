@@ -176,7 +176,7 @@ unpack_tuple(PyTupleObject *index, PyObject **result, npy_intp result_n)
 
 /* Unpack a single scalar index, taking a new reference to match unpack_tuple */
 static NPY_INLINE npy_intp
-unpack_scalar(PyObject *index, PyObject **result, npy_intp result_n)
+unpack_scalar(PyObject *index, PyObject **result, npy_intp NPY_UNUSED(result_n))
 {
     Py_INCREF(index);
     result[0] = index;

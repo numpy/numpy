@@ -213,6 +213,7 @@ def unique(ar, return_index=False, return_inverse=False,
     -----
     When an axis is specified the subarrays indexed by the axis are sorted.
     This is done by making the specified axis the first dimension of the array
+    (move the axis to the first dimension to keep the order of the other axes)
     and then flattening the subarrays in C order. The flattened subarrays are
     then viewed as a structured type with each element given a label, with the
     effect that we end up with a 1-D array of structured types that can be
@@ -264,7 +265,7 @@ def unique(ar, return_index=False, return_inverse=False,
 
     # axis was specified and not None
     try:
-        ar = np.swapaxes(ar, axis, 0)
+        ar = np.moveaxis(ar, axis, 0)
     except np.AxisError:
         # this removes the "axis1" or "axis2" prefix from the error message
         raise np.AxisError(axis, ar.ndim)
@@ -285,7 +286,7 @@ def unique(ar, return_index=False, return_inverse=False,
     def reshape_uniq(uniq):
         uniq = uniq.view(orig_dtype)
         uniq = uniq.reshape(-1, *orig_shape[1:])
-        uniq = np.swapaxes(uniq, 0, axis)
+        uniq = np.moveaxis(uniq, 0, axis)
         return uniq
 
     output = _unique1d(consolidated, return_index,

@@ -523,7 +523,7 @@ def isfortran(a):
 
     C-ordered arrays evaluate as False even if they are also FORTRAN-ordered.
 
-    >>> np.isfortran(np.array([1, 2], order='FORTRAN'))
+    >>> np.isfortran(np.array([1, 2], order='F'))
     False
 
     """
@@ -938,7 +938,7 @@ def tensordot(a, b, axes=2):
     Returns
     -------
     output : ndarray
-        The tensor dot product of the input.  
+        The tensor dot product of the input.
 
     See Also
     --------

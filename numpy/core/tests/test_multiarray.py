@@ -114,7 +114,7 @@ class TestFlags(object):
         # Ensure that any base being writeable is sufficient to change flag;
         # this is especially interesting for arrays from an array interface.
         arr = np.arange(10)
-        
+
         class subclass(np.ndarray):
             pass
 
@@ -2789,6 +2789,12 @@ class TestMethods(object):
         assert_equal(x1.flatten('F'), y1f)
         assert_equal(x1.flatten('F'), x1.T.flatten())
 
+    def test_flatten_invalid_order(self):
+        # invalid after gh-14596
+        for order in ['Z', 'c', False, True, 0, 8]:
+            x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
+            assert_raises(ValueError, x.flatten, {"order": order})
+
     @pytest.mark.parametrize('func', (np.dot, np.matmul))
     def test_arr_mult(self, func):
         a = np.array([[1, 0], [0, 1]])
@@ -3964,13 +3970,13 @@ class TestPickling(object):
 
     def test_datetime64_byteorder(self):
         original = np.array([['2015-02-24T00:00:00.000000000']], dtype='datetime64[ns]')
-    
+
         original_byte_reversed = original.copy(order='K')
         original_byte_reversed.dtype = original_byte_reversed.dtype.newbyteorder('S')
         original_byte_reversed.byteswap(inplace=True)
 
         new = pickle.loads(pickle.dumps(original_byte_reversed))
-    
+
         assert_equal(original.dtype, new.dtype)
 
 
@@ -4873,7 +4879,7 @@ class TestIO(object):
             offset_bytes = self.dtype.itemsize
             z = np.fromfile(f, dtype=self.dtype, offset=offset_bytes)
             assert_array_equal(z, self.x.flat[offset_items+count_items+1:])
-        
+
         with open(self.filename, 'wb') as f:
             self.x.tofile(f, sep=",")
 
@@ -4963,7 +4969,8 @@ class TestIO(object):
         self._check_from(b'1,2,3,4', [1., 2., 3., 4.], dtype=float, sep=',')
 
     def test_malformed(self):
-        self._check_from(b'1.234 1,234', [1.234, 1.], sep=' ')
+        with assert_warns(DeprecationWarning):
+            self._check_from(b'1.234 1,234', [1.234, 1.], sep=' ')
 
     def test_long_sep(self):
         self._check_from(b'1_x_3_x_4_x_5', [1, 3, 4, 5], sep='_x_')
@@ -6230,14 +6237,14 @@ class TestMatmul(MatmulCommon):
 
         r3 = np.matmul(args[0].copy(), args[1].copy())
         assert_equal(r1, r3)
-    
+
     def test_matmul_object(self):
         import fractions
 
         f = np.vectorize(fractions.Fraction)
         def random_ints():
             return np.random.randint(1, 1000, size=(10, 3, 3))
-        M1 = f(random_ints(), random_ints()) 
+        M1 = f(random_ints(), random_ints())
         M2 = f(random_ints(), random_ints())
 
         M3 = self.matmul(M1, M2)
@@ -6276,6 +6283,23 @@ class TestMatmul(MatmulCommon):
         with assert_raises(TypeError):
             b = np.matmul(a, a)
 
+    def test_matmul_bool(self):
+        # gh-14439
+        a = np.array([[1, 0],[1, 1]], dtype=bool)
+        assert np.max(a.view(np.uint8)) == 1
+        b = np.matmul(a, a)
+        # matmul with boolean output should always be 0, 1
+        assert np.max(b.view(np.uint8)) == 1
+
+        rg = np.random.default_rng(np.random.PCG64(43))
+        d = rg.integers(2, size=4*5, dtype=np.int8)
+        d = d.reshape(4, 5) > 0
+        out1 = np.matmul(d, d.reshape(5, 4))
+        out2 = np.dot(d, d.reshape(5, 4))
+        assert_equal(out1, out2)
+
+        c = np.matmul(np.zeros((2, 0), dtype=bool), np.zeros(0, dtype=bool))
+        assert not np.any(c)
 
 
 if sys.version_info[:2] >= (3, 5):

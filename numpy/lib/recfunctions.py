@@ -200,7 +200,7 @@ def flatten_descr(ndtype):
         descr = []
         for field in names:
             (typ, _) = ndtype.fields[field]
-            if typ.names:
+            if typ.names is not None:
                 descr.extend(flatten_descr(typ))
             else:
                 descr.append((field, typ))
@@ -527,6 +527,10 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
 
     Nested fields are supported.
 
+    ..versionchanged: 1.18.0
+        `drop_fields` returns an array with 0 fields if all fields are dropped,
+        rather than returning ``None`` as it did previously.
+
     Parameters
     ----------
     base : array
@@ -566,7 +570,7 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
             current = ndtype[name]
             if name in drop_names:
                 continue
-            if current.names:
+            if current.names is not None:
                 descr = _drop_descr(current, drop_names)
                 if descr:
                     newdtype.append((name, descr))
@@ -575,8 +579,6 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
         return newdtype
 
     newdtype = _drop_descr(base.dtype, drop_names)
-    if not newdtype:
-        return None
 
     output = np.empty(base.shape, dtype=newdtype)
     output = recursive_fill_fields(base, output)

@@ -83,6 +83,10 @@ def git_version():
     except (subprocess.SubprocessError, OSError):
         GIT_REVISION = "Unknown"
 
+    if not GIT_REVISION:
+        # this shouldn't happen but apparently can (see gh-8512)
+        GIT_REVISION = "Unknown"
+
     return GIT_REVISION
 
 # BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
@@ -263,7 +267,7 @@ def parse_setuppy_commands():
     # below and not standalone.  Hence they're not added to good_commands.
     good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
                      'build_clib', 'build_scripts', 'bdist_wheel', 'bdist_rpm',
-                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg')
+                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src')
 
     for command in good_commands:
         if command in args:
@@ -403,7 +407,8 @@ def setup_package():
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
-        cmdclass={"sdist": sdist_checked},
+        cmdclass={"sdist": sdist_checked,
+                 },
         python_requires='>=3.5',
         zip_safe=False,
         entry_points={

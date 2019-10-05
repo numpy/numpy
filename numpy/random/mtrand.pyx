@@ -3086,7 +3086,9 @@ cdef class RandomState:
                 for i in range(cnt):
                     _dp = (<double*>np.PyArray_MultiIter_DATA(it, 1))[0]
                     _in = (<long*>np.PyArray_MultiIter_DATA(it, 2))[0]
-                    (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = random_binomial(&self._bitgen, _dp, _in, &self._binomial)
+                    (<long*>np.PyArray_MultiIter_DATA(it, 0))[0] = \
+                        legacy_random_binomial(&self._bitgen, _dp, _in,
+                                               &self._binomial)
 
                     np.PyArray_MultiIter_NEXT(it)
 
@@ -3099,7 +3101,8 @@ cdef class RandomState:
 
         if size is None:
             with self.lock:
-                return random_binomial(&self._bitgen, _dp, _in, &self._binomial)
+                return <long>legacy_random_binomial(&self._bitgen, _dp, _in,
+                                                    &self._binomial)
 
         randoms = <np.ndarray>np.empty(size, int)
         cnt = np.PyArray_SIZE(randoms)
@@ -3107,8 +3110,8 @@ cdef class RandomState:
 
         with self.lock, nogil:
             for i in range(cnt):
-                randoms_data[i] = random_binomial(&self._bitgen, _dp, _in,
-                                                  &self._binomial)
+                randoms_data[i] = legacy_random_binomial(&self._bitgen, _dp, _in,
+                                                         &self._binomial)
 
         return randoms
 
@@ -3493,9 +3496,9 @@ cdef class RandomState:
         cdef int64_t lngood, lnbad, lnsample
 
         # This cast to long is required to ensure that the values are inbounds
-        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_INT64, np.NPY_ALIGNED)
-        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_INT64, np.NPY_ALIGNED)
-        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_INT64, np.NPY_ALIGNED)
+        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_LONG, np.NPY_ALIGNED)
+        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_LONG, np.NPY_ALIGNED)
+        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_LONG, np.NPY_ALIGNED)
 
         if np.PyArray_NDIM(ongood) == np.PyArray_NDIM(onbad) == np.PyArray_NDIM(onsample) == 0:
 
@@ -3517,7 +3520,7 @@ cdef class RandomState:
         # Convert to int64, if necessary, to use int64 infrastructure
         ongood = ongood.astype(np.int64)
         onbad = onbad.astype(np.int64)
-        onbad = onbad.astype(np.int64)
+        onsample = onsample.astype(np.int64)
         out = discrete_broadcast_iii(&legacy_random_hypergeometric,&self._bitgen, size, self.lock,
                                      ongood, 'ngood', CONS_NON_NEGATIVE,
                                      onbad, 'nbad', CONS_NON_NEGATIVE,
@@ -4070,7 +4073,7 @@ cdef class RandomState:
             # Fast, statically typed path: shuffle the underlying buffer.
             # Only for non-empty, 1d objects of class ndarray (subclasses such
             # as MaskedArrays may not support this approach).
-            x_ptr = <char*><size_t>x.ctypes.data
+            x_ptr = <char*><size_t>np.PyArray_DATA(x)
             stride = x.strides[0]
             itemsize = x.dtype.itemsize
             # As the array x could contain python objects we use a buffer
@@ -4078,7 +4081,7 @@ cdef class RandomState:
             # within the buffer and erroneously decrementing it's refcount
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
-            buf_ptr = <char*><size_t>buf.ctypes.data
+            buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
             with self.lock:
                 # We trick gcc into providing a specialized implementation for
                 # the most common case, yielding a ~33% performance improvement.

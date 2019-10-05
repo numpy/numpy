@@ -901,8 +901,8 @@ RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state, RAND_INT_TYPE n,
   return X;
 }
 
-RAND_INT_TYPE random_binomial(bitgen_t *bitgen_state, double p, RAND_INT_TYPE n,
-                              binomial_t *binomial) {
+int64_t random_binomial(bitgen_t *bitgen_state, double p, int64_t n,
+                        binomial_t *binomial) {
   double q;
 
   if ((n == 0LL) || (p == 0.0f))
@@ -1478,7 +1478,7 @@ uint64_t random_bounded_uint64(bitgen_t *bitgen_state, uint64_t off,
                                uint64_t rng, uint64_t mask, bool use_masked) {
   if (rng == 0) {
     return off;
-  } else if (rng < 0xFFFFFFFFUL) {
+  } else if (rng <= 0xFFFFFFFFUL) {
     /* Call 32-bit generator if range in 32-bit. */
     if (use_masked) {
       return off + buffered_bounded_masked_uint32(bitgen_state, rng, mask, NULL,
@@ -1592,7 +1592,7 @@ void random_bounded_uint64_fill(bitgen_t *bitgen_state, uint64_t off,
     for (i = 0; i < cnt; i++) {
       out[i] = off;
     }
-  } else if (rng < 0xFFFFFFFFUL) {
+  } else if (rng <= 0xFFFFFFFFUL) {
     uint32_t buf = 0;
     int bcnt = 0;
 

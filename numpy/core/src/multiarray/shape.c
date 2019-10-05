@@ -26,7 +26,7 @@ static int
 _fix_unknown_dimension(PyArray_Dims *newshape, PyArrayObject *arr);
 
 static int
-_attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
+_attempt_nocopy_reshape(PyArrayObject *self, int newnd, const npy_intp *newdims,
                         npy_intp *newstrides, int is_f_order);
 
 static void
@@ -40,7 +40,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype);
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
-               NPY_ORDER order)
+               NPY_ORDER NPY_UNUSED(order))
 {
     npy_intp oldnbytes, newnbytes;
     npy_intp oldsize, newsize;
@@ -361,7 +361,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
  * stride of the next-fastest index.
  */
 static int
-_attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
+_attempt_nocopy_reshape(PyArrayObject *self, int newnd, const npy_intp *newdims,
                         npy_intp *newstrides, int is_f_order)
 {
     int oldnd;
@@ -766,7 +766,7 @@ static int _npy_stride_sort_item_comparator(const void *a, const void *b)
  * [(2, 12), (0, 4), (1, -2)].
  */
 NPY_NO_EXPORT void
-PyArray_CreateSortedStridePerm(int ndim, npy_intp *strides,
+PyArray_CreateSortedStridePerm(int ndim, npy_intp const *strides,
                         npy_stride_sort_item *out_strideperm)
 {
     int i;
@@ -1048,7 +1048,7 @@ build_shape_string(npy_intp n, npy_intp *vals)
  * from a reduction result once its computation is complete.
  */
 NPY_NO_EXPORT void
-PyArray_RemoveAxesInPlace(PyArrayObject *arr, npy_bool *flags)
+PyArray_RemoveAxesInPlace(PyArrayObject *arr, const npy_bool *flags)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
     npy_intp *shape = fa->dimensions, *strides = fa->strides;

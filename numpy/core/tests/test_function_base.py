@@ -236,10 +236,7 @@ class TestLinspace(object):
     def test_corner(self):
         y = list(linspace(0, 1, 1))
         assert_(y == [0.0], y)
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, ".*safely interpreted as an integer")
-            y = list(linspace(0, 1, 2.5))
-            assert_(y == [0.0, 1.0])
+        assert_raises(TypeError, linspace, 0, 1, num=2.5)
 
     def test_type(self):
         t1 = linspace(0, 1, 0).dtype

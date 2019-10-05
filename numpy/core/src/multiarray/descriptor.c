@@ -149,7 +149,7 @@ array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
                              arg == '|' || arg == '=')
 
 static int
-_check_for_commastring(char *type, Py_ssize_t len)
+_check_for_commastring(const char *type, Py_ssize_t len)
 {
     Py_ssize_t i;
     int sqbracket;
@@ -3277,7 +3277,7 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
 }
 
 static int
-descr_nonzero(PyObject *self)
+descr_nonzero(PyObject *NPY_UNUSED(self))
 {
     /* `bool(np.dtype(...)) == True` for all dtypes. Needed to override default
      * nonzero implementation, which checks if `len(object) > 0`. */

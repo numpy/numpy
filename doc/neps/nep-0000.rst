@@ -138,7 +138,7 @@ accepted that a competing proposal is a better alternative.
 When a NEP is ``Accepted``, ``Rejected``, or ``Withdrawn``, the NEP should be
 updated accordingly. In addition to updating the status field, at the very
 least the ``Resolution`` header should be added with a link to the relevant
-post in the mailing list archives.
+thread in the mailing list archives.
 
 NEPs can also be ``Superseded`` by a different NEP, rendering the
 original obsolete.  The ``Replaced-By`` and ``Replaces`` headers
