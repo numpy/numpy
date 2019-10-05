@@ -200,7 +200,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     -----
     `formatter` is always reset with a call to `set_printoptions`.
 
-    `printoptions` context manager can be used to set the values temporarily.
+    Use `printoptions` as a context manager to set the values temporarily.
 
     Examples
     --------
