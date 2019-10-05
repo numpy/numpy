@@ -163,7 +163,7 @@ Optional parameters you can specify are:
   # Otherwise, you can simply select the columns you need:
   x = pd.read_csv('music.csv', columns=['float_colname_1', ...]).values
 
-.. image:: images/np_pandas.png
+.. image:: doc/source/user/images/np_pandas.png
     :width: 100%
 
 - How to create a new array from an existing array
@@ -206,7 +206,7 @@ You can easily add them together with the plus sign.
 
   data + ones
 
-.. image:: images/np_data_plus_ones.png
+.. image:: doc/source/user/images/np_data_plus_ones.png
     :width: 100%
 
 Of course, you can do more than just addition!
