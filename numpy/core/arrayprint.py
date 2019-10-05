@@ -246,7 +246,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     >>> with np.printoptions(precision=2, suppress=True, threshold=5):
     ...     np.linspace(0, 10, 10)
-    array([ 0.    1.11  2.22 ...  7.78  8.89 10.  ])
+    array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])
 
     """
     legacy = kwarg.pop('legacy', None)
