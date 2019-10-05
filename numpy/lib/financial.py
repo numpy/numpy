@@ -645,7 +645,11 @@ def rate(nper, pmt, pv, fv, when='end', guess=None, tol=None, maxiter=100):
         rn = rnp1
     if not close:
         # Return nan's in array of the same shape as rn
-        return np.nan + rn
+        if type(rn)==Decimal:
+            # Type conversion of np.nan to class decimal.Decimal
+            return Decimal(np.nan) + rn
+        else:
+            return np.nan + rn
     else:
         return rn
 
