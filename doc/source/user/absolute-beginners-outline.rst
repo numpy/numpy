@@ -55,8 +55,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
 You can visualize your array this way:
 
-.. image:: images/np_array.png
-    :width: 100%
+.. image:: images/np_array.
 
 - More information about arrays
 
@@ -164,15 +163,12 @@ Optional parameters you can specify are:
   x = pd.read_csv('music.csv', columns=['float_colname_1', ...]).values
 
 .. image:: images/np_pandas.png
-    :width: 100%
 
 - How to create a new array from an existing array
 - How to specify the datatype
   
   - Examples of commonly used NumPy dtypes
  
-
-
 - Indexing and Slicing
 
 ::
@@ -209,7 +205,6 @@ You can easily add them together with the plus sign.
   data + ones
 
 .. image:: images/np_data_plus_ones.png
-    :width: 100%
 
 Of course, you can do more than just addition!
 
@@ -220,7 +215,6 @@ Of course, you can do more than just addition!
   data / data
 
 .. image:: images/np_sub_mult_divide.png
-    :width: 100%
 
 - Broadcasting
 
@@ -449,7 +443,6 @@ will be printed:
 - It's common to need to rotate your matrices. NumPy arrays have the property `T` that allows you to transpose a matrix.
 
 .. image:: images/np_transposing_reshaping.png
-      :width: 100%
 
 - You may need to switch the dimensions of a matrix. This can happen when, for example you have a model that expects a certain input shape that might be different from your dataset. This is where the `reshape` method can be useful. You pass in the new dimensions that you want for the matrix.
 
@@ -459,7 +452,6 @@ will be printed:
   data.reshape(3,2)
 
 .. image:: images/np_reshape.png
-      :width: 100%
 
 - How to reverse
  
@@ -486,13 +478,11 @@ For example, this is the mean square error formula (a central formula used in su
 Implementing this formula is simple and straightforward in NumPy:
 
 .. image:: images/np_MSE_implementation.png
-    :width: 100%
 
 What makes this work so well is that `predictions` and `labels` can contain one or a thousand values. They only need to be the same size. 
 You can visualize it this way:
 
 .. image:: images/.png
-    :width: 100%(IMG)
 
 In this example, both the predictions and labels vectors contain three values, meaning `n` has a value of three. After we carry out subtractions, the values look like this:
 
@@ -500,9 +490,8 @@ Next, the values in the vector are squared. Then NumPy sums the values, and your
 
 
 .. image:: images/np_MSE_explanation.png
-    :width: 100%
+
 .. image:: images/np_MSE_explanation2.png
-    :width: 100%
 
 - How to plot arrays, very basic with Matplotlib
 - How to read a docstring with `?` and source code with `??` in IPython/Jupyter
