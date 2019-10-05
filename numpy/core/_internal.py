@@ -278,7 +278,8 @@ class _ctypes(object):
         # _ctypes.cast function causes a circular reference of self._data in
         # self._data._objects. Attributes of self._data cannot be released
         # until gc.collect is called. Make a copy of the pointer first then let
-        # it hold the array reference.
+        # it hold the array reference. This is a workaround to circumvent the
+        # CPython bug https://bugs.python.org/issue12836
         ptr = self._ctypes.cast(self._data, obj)
         ptr._arr = self._arr
         return ptr
