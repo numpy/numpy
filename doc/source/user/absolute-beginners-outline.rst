@@ -55,7 +55,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
 You can visualize your array this way:
 
-.. image:: images/np_array.png
+.. image:: doc/source/user/images/np_array.png
     :width: 100%
 
 - More information about arrays
@@ -170,8 +170,6 @@ Optional parameters you can specify are:
 - How to specify the datatype
   
   - Examples of commonly used NumPy dtypes
- 
-
 
 - Indexing and Slicing
 
@@ -188,7 +186,7 @@ Optional parameters you can specify are:
 
 - We can index and slice NumPy arrays in the same ways we can slice Python lists:
 
-.. image:: images/np_indexing.png
+.. image:: doc/source/user/images/np_indexing.png
 
 - Basic array operations(np.sum, np.dot)
 
@@ -200,7 +198,7 @@ Optional parameters you can specify are:
 
   - Once you've created your arrays, you can start to work with them. Let's say, for example, that you've created two arrays, one called "data" and one called "ones": 
 
-.. image:: images/np_array_dataones.png
+.. image:: doc/source/user/images/np_array_dataones.png
 
 You can easily add them together with the plus sign.
 
@@ -219,7 +217,7 @@ Of course, you can do more than just addition!
   data * data
   data / data
 
-.. image:: images/np_sub_mult_divide.png
+.. image:: doc/source/user/images/np_sub_mult_divide.png
     :width: 100%
 
 - Broadcasting
@@ -230,7 +228,7 @@ Of course, you can do more than just addition!
 
   data * 1.6
 
-.. image:: images/np_multiply_broadcasting.png
+.. image:: doc/source/user/images/np_multiply_broadcasting.png
 
 - NumPy understands that the multiplication should happen with each cell. That concept is called **broadcasting**.
 
@@ -244,7 +242,7 @@ Of course, you can do more than just addition!
   data.min()
   data.sum()
 
-.. image:: images/np_aggregation.png
+.. image:: doc/source/user/images/np_aggregation.png
   
 - (include row-wise and column-wise compute)
 
@@ -323,7 +321,7 @@ The four values listed above correspond to the number of columns in your array. 
 
   np.array([[1,2],[3,4]])
 
-.. image:: images/np_create_matrix.png
+.. image:: doc/source/user/images/np_create_matrix.png
 
 - Indexing and slicing operations can be useful when you're manipulating matrices:
 
@@ -333,7 +331,7 @@ The four values listed above correspond to the number of columns in your array. 
   data[1:3]
   data[0:2,0]
 
-.. image:: images/np_matrix_indexing.png
+.. image:: doc/source/user/images/np_matrix_indexing.png
 
 - You can aggregate matrices the same way you aggregated vectors:
 
@@ -343,7 +341,7 @@ The four values listed above correspond to the number of columns in your array. 
   data.min()
   data.sum()
 
-.. image:: images/np_matrix_aggregation.png
+.. image:: doc/source/user/images/np_matrix_aggregation.png
 
 - You can aggregate all the values in a matrix and you can aggregate them across columns or rows using the `axis` parameter:
 
@@ -353,7 +351,7 @@ The four values listed above correspond to the number of columns in your array. 
   data.max(axis=1)
 
 
-.. image:: images/np_matrix_aggregation_row.png
+.. image:: doc/source/user/images/np_matrix_aggregation_row.png
 
 - Once you've created your matrices, you can add and multiply them using arithmetic operators if you have two matrices that are the same size.
 
@@ -361,7 +359,7 @@ The four values listed above correspond to the number of columns in your array. 
 
   data + ones
 
-.. image:: images/np_matrix_arithmetic.png
+.. image:: doc/source/user/images/np_matrix_arithmetic.png
 
 - You can do these arithmetic operations on matrices of different sizes, but only if the different matrix has only one column or onw row. In this case, NumPy will use its broadcast rules for the operation.
 
@@ -369,7 +367,7 @@ The four values listed above correspond to the number of columns in your array. 
 
   data + ones_row
 
-.. image:: images/np_matrix_broadcasting.png
+.. image:: doc/source/user/images/np_matrix_broadcasting.png
 
 - How to extract specific items from an array
 - How to create sequences, repetitions, and random numbers
@@ -410,7 +408,7 @@ will be printed:
   mp.zeros(3)
   np.random.random((3)
   
-.. image:: images/np_ones_zeros_random.png
+.. image:: doc/source/user/images/np_ones_zeros_random.png
 
   - np.linspace
   
@@ -442,13 +440,13 @@ will be printed:
   mp.zeros(3,2)
   np.random.random((3,2)
 
-.. image:: images/np_ones_zeros_matrix.png
+.. image:: doc/source/user/images/np_ones_zeros_matrix.png
 
 - How to get the unique items and the counts
 - How to get index locations that satisfy a given condition 
 - It's common to need to rotate your matrices. NumPy arrays have the property `T` that allows you to transpose a matrix.
 
-.. image:: images/np_transposing_reshaping.png
+.. image:: doc/source/user/images/np_transposing_reshaping.png
       :width: 100%
 
 - You may need to switch the dimensions of a matrix. This can happen when, for example you have a model that expects a certain input shape that might be different from your dataset. This is where the `reshape` method can be useful. You pass in the new dimensions that you want for the matrix.
@@ -458,7 +456,7 @@ will be printed:
   data.reshape(2,3)
   data.reshape(3,2)
 
-.. image:: images/np_reshape.png
+.. image:: doc/source/user/images/np_reshape.png
       :width: 100%
 
 - How to reverse
@@ -481,19 +479,19 @@ Implementing mathematical formulas that work on matrices and vectors is one of t
 
 For example, this is the mean square error formula (a central formula used in supervised machine learning models that deal with regression):
 
-.. image:: images/np_MSE_formula.png
+.. image:: doc/source/user/images/np_MSE_formula.png
     :width: 100%
 
 
 Implementing this formula is simple and straightforward in NumPy:
 
-.. image:: images/np_MSE_implementation.png
+.. image:: doc/source/user/images/np_MSE_implementation.png
     :width: 100%
 
 What makes this work so well is that `predictions` and `labels` can contain one or a thousand values. They only need to be the same size. 
 You can visualize it this way:
 
-.. image:: images/.png
+.. image:: doc/source/user/images/.png
     :width: 100%(IMG)
 
 In this example, both the predictions and labels vectors contain three values, meaning `n` has a value of three. After we carry out subtractions, the values look like this:
@@ -501,9 +499,9 @@ In this example, both the predictions and labels vectors contain three values, m
 Next, the values in the vector are squared. Then NumPy sums the values, and your result is the error value for that prediction and a score for the quality of the model.
 
 
-.. image:: images/np_MSE_explanation.png
+.. image:: doc/source/user/images/np_MSE_explanation.png
     :width: 100%
-.. image:: images/np_MSE_explanation2.png
+.. image:: doc/source/user/images/np_MSE_explanation2.png
     :width: 100%
 
 - How to plot arrays, very basic with Matplotlib
