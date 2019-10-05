@@ -406,10 +406,12 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
         return np.array([0,1])
 
     width = np.ptp((first_edge,last_edge))/(n_equal_bins)
-    left_edges = np.floor_divide((a - first_edge), width) * width
+    zeroed_min = a - first_edge
+    quantized = np.floor_divide(zeroed_min, width) * width
+    left_edges = np.unique(quantized)
     right_edges = left_edges + width
-    inner_edges = np.unique((left_edges, right_edges)) + first_edge
-    edges = np.append(np.append(first_edge, inner_edges), last_edge)
+    unzeroed_edges = np.unique((left_edges, right_edges)) + first_edge
+    edges = np.concatenate(([first_edge], unzeroed_edges, [last_edge]))
 
     TOL = width/2
     widths = np.append(width, np.diff(edges)) #remove bins produced by float errors
