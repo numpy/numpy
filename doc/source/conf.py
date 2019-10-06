@@ -30,7 +30,7 @@ extensions = [
     'sphinx.ext.imgmath',
 ]
 
-imgmath_image_format = 'svg'
+# imgmath_image_format = 'svg'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -38,7 +38,7 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
-master_doc = 'contents'
+master_doc = 'index'
 
 # General substitutions.
 project = 'NumPy'
@@ -94,34 +94,35 @@ def setup(app):
 # HTML output
 # -----------------------------------------------------------------------------
 
-themedir = os.path.join(os.pardir, 'scipy-sphinx-theme', '_theme')
+themedir = os.path.join(os.pardir, 'scipy-sphinx-theme-v2')
 if not os.path.isdir(themedir):
-    raise RuntimeError("Get the scipy-sphinx-theme first, "
+    raise RuntimeError("Get the scipy-sphinx-theme-v2 first, "
                        "via git submodule init && git submodule update")
 
-html_theme = 'scipy'
+html_theme = 'custom_sphinx_theme'
 html_theme_path = [themedir]
 
-if 'scipyorg' in tags:
-    # Build for the scipy.org website
-    html_theme_options = {
-        "edit_link": True,
-        "sidebar": "right",
-        "scipy_org_logo": True,
-        "rootlinks": [("https://scipy.org/", "Scipy.org"),
-                      ("https://docs.scipy.org/", "Docs")]
-    }
-else:
-    # Default build
-    html_theme_options = {
-        "edit_link": False,
-        "sidebar": "left",
-        "scipy_org_logo": False,
-        "rootlinks": [("https://numpy.org/", "NumPy.org"),
-                      ("https://numpy.org/doc", "Docs"),
-                     ]
-    }
-    html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
+# if 'scipyorg' in tags:
+# Build for the scipy.org website
+html_theme_options = {
+    "edit_link": "true",
+    "sidebar": "right",
+    "scipy_org_logo": True,
+    "rootlinks": [("https://scipy.org/", "Scipy.org"),
+                  ("https://docs.scipy.org/", "Docs")]
+}
+# TODO: searchbox is not working with this. Remove it later.
+# else:
+#     # Default build
+#     html_theme_options = {
+#         "edit_link": False,
+#         "sidebar": "left",
+#         "scipy_org_logo": False,
+#         "rootlinks": [("https://numpy.org/", "NumPy.org"),
+#                       ("https://numpy.org/doc", "Docs"),
+#                      ]
+#     }
+#     html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
 
 html_additional_pages = {
     'index': 'indexcontent.html',
@@ -380,3 +381,19 @@ class NumPyLexer(CLexer):
             if isinstance(v, tuple):
                 if isinstance(v[0], str):
                     val[i] =  (v[0].replace('a-zA-Z', 'a-zA-Z@'),) + v[1:]
+
+# Edit on github option
+
+html_context = {
+  "display_github": True,
+  "last_updated": True,
+  "commit": False,
+  'source_url_prefix': "https://github.com/numpy/numpy/tree/master/doc/source",
+  "github_host": "github.com",
+  "github_user": "numpy",
+  "github_repo": "numpy",
+  "github_version": "master",
+  "conf_py_path": "/doc/source",
+  "source_suffix": '.rst',
+}
+
