@@ -406,15 +406,15 @@ will be printed:
   
 .. image:: images/np_ones_zeros_random.png
 
-  - np.linspace
+- np.linspace
   
-  - np.logspace
+- np.logspace
 
-  - np.tile
+- np.tile
   
-  - np.zeros
+- np.zeros
 
-  - np.ones
+- np.ones
 
 - Random Number Generation (update below to numpy.random.Generator)
 
