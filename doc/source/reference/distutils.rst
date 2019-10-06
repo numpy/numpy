@@ -22,13 +22,13 @@ information is available in the :ref:`distutils-user-guide`.
 
 Modules in :mod:`numpy.distutils`
 =================================
+.. toctree::
+   :maxdepth: 2
+
+   distutils/misc_util
+
 
 .. currentmodule:: numpy.distutils
-
-.. autosummary::
-   :toctree: distutils/
-
-   misc_util
 
 .. autosummary::
    :toctree: generated/
