@@ -55,7 +55,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
 You can visualize your array this way:
 
-.. image:: images/np_array.
+.. image:: images/np_array.png
 
 - More information about arrays
 
