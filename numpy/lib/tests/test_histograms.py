@@ -478,7 +478,7 @@ class TestHistogramOptimBinNums(object):
                          'doane': 3, 'sqrt': 2, 'stone': 1}}
 
         for testlen, expectedResults in small_dat.items():
-            testdat = np.arange(testlen)
+            testdat = np.arange(testlen).astype(float)
             for estimator, expbins in expectedResults.items():
                 a, b = np.histogram(testdat, estimator)
                 assert_equal(len(a), expbins, err_msg="For the {0} estimator "
@@ -590,6 +590,27 @@ class TestHistogramOptimBinNums(object):
                 msg = "For the {0} estimator".format(estimator)
                 msg += " with datasize of {0}".format(testlen)
                 assert_equal(len(a), numbins, err_msg=msg)
+
+    def test_integer(self):
+        """
+        Test that bin width for integer data is at least 1.
+        """
+        estimator_list = ['fd', 'scott', 'rice', 'sturges', 'auto']
+        for estimator in estimator_list:
+            assert_equal(
+                np.histogram_bin_edges(np.tile(np.arange(9), 1000), estimator),
+                np.arange(9))
+
+    def test_integer_non_auto(self):
+        """
+        Test that the bin-width>=1 requirement *only* applies to auto binning.
+        """
+        assert_equal(
+            np.histogram_bin_edges(np.tile(np.arange(9), 1000), 16),
+            np.arange(17) / 2)
+        assert_equal(
+            np.histogram_bin_edges(np.tile(np.arange(9), 1000), [.1, .2]),
+            [.1, .2])
 
     def test_simple_weighted(self):
         """
