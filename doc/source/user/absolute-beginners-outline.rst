@@ -480,16 +480,14 @@ Implementing this formula is simple and straightforward in NumPy:
 .. image:: images/np_MSE_implementation.png
 
 What makes this work so well is that `predictions` and `labels` can contain one or a thousand values. They only need to be the same size. 
+
 You can visualize it this way:
 
-.. image:: images/.png
+.. image:: images/np_mse_viz1.png
 
-In this example, both the predictions and labels vectors contain three values, meaning `n` has a value of three. After we carry out subtractions, the values look like this:
+In this example, both the predictions and labels vectors contain three values, meaning `n` has a value of three. After we carry out subtractions the values in the vector are squared. Then NumPy sums the values, and your result is the error value for that prediction and a score for the quality of the model.
 
-Next, the values in the vector are squared. Then NumPy sums the values, and your result is the error value for that prediction and a score for the quality of the model.
-
-
-.. image:: images/np_MSE_explanation.png
+.. image:: images/np_mse_viz2.png
 
 .. image:: images/np_MSE_explanation2.png
 
