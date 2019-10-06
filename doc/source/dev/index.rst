@@ -226,7 +226,7 @@ Requirements
 ~~~~~~~~~~~~
 
 `Sphinx <http://www.sphinx-doc.org/en/stable/>`__ is needed to build
-the documentation. Matplotlib and SciPy are also required.
+the documentation. Matplotlib, SciPy, and IPython are also required.
 
 Fixing Warnings
 ~~~~~~~~~~~~~~~
