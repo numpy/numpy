@@ -393,7 +393,7 @@ html_context = {
   "github_user": "numpy",
   "github_repo": "numpy",
   "github_version": "master",
-  "conf_py_path": "/doc/source",
+  "conf_py_path": "/doc/source/",
   "source_suffix": '.rst',
 }
 
