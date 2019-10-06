@@ -200,6 +200,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     -----
     `formatter` is always reset with a call to `set_printoptions`.
 
+    Use `printoptions` as a context manager to set the values temporarily.
+
     Examples
     --------
     Floating point precision can be set:
@@ -236,9 +238,16 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     To put back the default options, you can use:
 
-    >>> np.set_printoptions(edgeitems=3,infstr='inf',
+    >>> np.set_printoptions(edgeitems=3, infstr='inf',
     ... linewidth=75, nanstr='nan', precision=8,
     ... suppress=False, threshold=1000, formatter=None)
+
+    Also to temporarily override options, use `printoptions` as a context manager:
+
+    >>> with np.printoptions(precision=2, suppress=True, threshold=5):
+    ...     np.linspace(0, 10, 10)
+    array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])
+
     """
     legacy = kwarg.pop('legacy', None)
     if kwarg:
