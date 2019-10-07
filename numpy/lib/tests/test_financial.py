@@ -9,12 +9,6 @@ from numpy.testing import (
 
 
 class TestFinancial(object):
-    def test_npv_irr_congruence(self):
-        # IRR is defined as the rate required for the present value of a
-        # a series of cashflows to be zero i.e. NPV(IRR(x), x) = 0
-        cashflows = np.array([-40000, 5000, 8000, 12000, 30000])
-        assert_allclose(np.npv(np.irr(cashflows), cashflows), 0, atol=1e-10, rtol=0)
-
     def test_rate(self):
         assert_almost_equal(
             np.rate(10, 0, -3500, 10000),
@@ -344,3 +338,22 @@ class TestFinancial(object):
                                     Decimal('0'), [Decimal('0'), Decimal('0'), Decimal('1'), 'end', 'begin']),
                             [Decimal('-74.998201'), Decimal('-75.62318601'), Decimal('-75.62318601'),
                              Decimal('-76.88882405'), Decimal('-76.88882405')], 4)
+        
+    def test_rate_nan(self):
+        # Test the inputs whose outcome is nan
+        rate = np.rate(Decimal(12.0), Decimal('400.0'), Decimal('10000.0'), Decimal(0))
+        assert_equal(np.nan, float(rate))
+        rate = np.rate(Decimal(12.0), Decimal('-400.0'), Decimal('10000.0'), Decimal(20000))
+        assert_equal(np.nan, float(rate))
+        # begin
+        rate = np.rate(Decimal(12.0), Decimal('400.0'), Decimal('10000.0'), Decimal(20000), 1)
+        assert_equal(np.nan, float(rate))
+        rate = np.rate(Decimal(12.0), Decimal('400.0'), Decimal('10000.0'), Decimal(20000), 'begin')
+        assert_equal(np.nan, float(rate))
+        # end
+        rate = np.rate(Decimal(12.0), Decimal('400.0'), Decimal('10000.0'), Decimal(0))
+        assert_equal(np.nan, float(rate))
+        rate = np.rate(Decimal(12.0), Decimal('400.0'), Decimal('10000.0'), Decimal(0), 'end')
+        assert_equal(np.nan, float(rate))      
+    
+        
