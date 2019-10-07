@@ -37,6 +37,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
   - We can access the elements in the array using square brackets.
 
     - When you're accessing elements, remember that indexing starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
+<<<<<<< HEAD
 
 - How to create an array (ndarray object)
 - How to create a basic array
@@ -46,6 +47,13 @@ This is a working outline for a future section introducing NumPy to absolute beg
 
   - All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://numpy.org/devdocs/user/quickstart.html#arrays-dtypes>`_.
 
+=======
+
+- To make a NumPy array, you can use the function `np.array()`
+
+  - All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://numpy.org/devdocs/user/quickstart.html#arrays-dtypes>`_.
+
+>>>>>>> eebb65ef9af0b8c919a7dface166bfbc429cc168
 ::
 
     import numpy as np
@@ -53,6 +61,7 @@ This is a working outline for a future section introducing NumPy to absolute beg
     # create a 1-D array
     a = np.array([1,2,3])
 
+<<<<<<< HEAD
 You can visualize your array this way:
 
 .. image:: images/np_array.png
@@ -73,9 +82,21 @@ You can visualize your array this way:
   - Why use NumPy?
 
     - NumPy arrays are faster and more compact than Python lists. An array consumes less memory and is convenient to use. NumPy uses much less memory to store data and it provides a mechanism of specifying the data types, which allow the code to be optimisted even further. 
+=======
+    # print the first element of the array
+    print(a[0])
+    # this will print 1
+ 
+- More information about arrays
+
+  - What else might it be called?
+
+    - You might occasionally hear an array referred to as an "ndarray," which is shorthand for "N-dimensional array." You might also hear **1-D**, or one-dimensional array, **2-D**, or two-dimensional array, and so on. The numpy `ndarray` class is used to represent both matrices and vectors. A vector is an array with a single column, while a matrix referrs to an array with multiple columns.
+>>>>>>> eebb65ef9af0b8c919a7dface166bfbc429cc168
 
 - How do you know the shape and size of an array?
 
+<<<<<<< HEAD
   - **ndarray.ndim** will tell you the number of axes, or dimensions, of the array.
 
   - **ndarray.shape** will display a tuple of integers that indicate the number of elements stored along each dimension of the array. If, for example, you have a 2D-array with 2 rows and 3 columns, the shape of your array is (2,3).
@@ -83,6 +104,17 @@ You can visualize your array this way:
   - **ndarray.size** will tell you the total number of elements of the array. This is, in other words, the product of the elements of the array's shape.
 
   - For example:
+=======
+  - How do you know the shape and size of an array?
+
+    - **ndarray.ndim** will tell you the number of axes, or dimensions, of the array.
+
+    - **ndarray.shape** will display a tuple of integers that indicate the number of elements stored along each dimension of the array. If, for example, you have a 2D-array with 2 rows and 3 columns, the shape of your array is (2,3).
+
+    - **ndarray.size** will tell you the total number of elements of the array. This is, in other words, the product of the elements of the array's shape.
+
+    - For example:
+>>>>>>> eebb65ef9af0b8c919a7dface166bfbc429cc168
 
 ::
 
@@ -105,6 +137,7 @@ You can visualize your array this way:
       # will return 24
 
 - Can you reshape an array?
+<<<<<<< HEAD
   
   - You can! 
 
@@ -148,6 +181,14 @@ Optional parameters you can specify are:
 - **newshape** is the new shape you want. You can specify an integer or a tuple of integers. If you specify an integer, the result wil be an array of that length. The shape should be compatible with the original shape.
 
 - **order** 'C' means to read/write the elements using C-like index order,  ‘F’ means to read / write the elements using Fortran-like index order, ‘A’ means to read / write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise.
+=======
+
+- What’s the difference between a Python List and a NumPy array? 
+
+  - Why use NumPy?
+
+- Broadcasting example
+>>>>>>> eebb65ef9af0b8c919a7dface166bfbc429cc168
 
 - How to create an array from existing data
 
@@ -475,6 +516,8 @@ will be printed:
 - How to save and load NumPy objects
 - How to apply a function column-wise or row-wise
 - How to convert a 1D array into a 2D array (how to add a new axis)
+- How to plot arrays, very basic with Matplotlib
+- How to read a docstring with `?` and source code with `??` in IPython/Jupyter
 
 Formulas:
 Implementing mathematical formulas that work on matrices and vectors is one of the things that make NumPy so highly regarded in the scientific Python community. 
@@ -519,6 +562,7 @@ Next, the values in the vector are squared. Then NumPy sums the values, and your
   
   - np.histogram
 
+<<<<<<< HEAD
 
 
 
@@ -526,3 +570,5 @@ Next, the values in the vector are squared. Then NumPy sums the values, and your
 -------------------------------------------------------
 
 *Image credits: Jay Alammar http://jalammar.github.io/*
+=======
+>>>>>>> eebb65ef9af0b8c919a7dface166bfbc429cc168
