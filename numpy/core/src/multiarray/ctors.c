@@ -3574,6 +3574,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     return NULL;
 }
 
+/* This array creation function steals the reference to dtype. */
 static PyArrayObject *
 array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nread)
 {
@@ -3605,27 +3606,24 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
         }
         num = numbytes / dtype->elsize;
     }
-    /*
-     * When dtype->subarray is true, PyArray_NewFromDescr will decref dtype
-     * even on success, so make sure it stays around until exit.
-     */
-    Py_INCREF(dtype);
     r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &num,
                                               NULL, NULL, 0, NULL);
     if (r == NULL) {
-        Py_DECREF(dtype);
         return NULL;
     }
+    /* In some cases NewFromDescr can replace the dtype, so fetch new one */
+    dtype = PyArray_DESCR(r);
+
     NPY_BEGIN_ALLOW_THREADS;
     *nread = fread(PyArray_DATA(r), dtype->elsize, num, fp);
     NPY_END_ALLOW_THREADS;
-    Py_DECREF(dtype);
     return r;
 }
 
 /*
  * Create an array by reading from the given stream, using the passed
  * next_element and skip_separator functions.
+ * As typical for array creation functions, it steals the reference to dtype.
  */
 #define FROM_BUFFER_SIZE 4096
 static PyArrayObject *
@@ -3644,18 +3642,15 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
 
     size = (num >= 0) ? num : FROM_BUFFER_SIZE;
 
-    /*
-     * When dtype->subarray is true, PyArray_NewFromDescr will decref dtype
-     * even on success, so make sure it stays around until exit.
-     */
-    Py_INCREF(dtype);
     r = (PyArrayObject *)
         PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
                              NULL, NULL, 0, NULL);
     if (r == NULL) {
-        Py_DECREF(dtype);
         return NULL;
     }
+    /* In some cases NewFromDescr can replace the dtype, so fetch new one */
+    dtype = PyArray_DESCR(r);
+
     clean_sep = swab_separator(sep);
     if (clean_sep == NULL) {
         err = 1;
@@ -3709,6 +3704,8 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     }
     NPY_END_ALLOW_THREADS;
 
+    free(clean_sep);
+
     if (stop_reading_flag == -2) {
         if (PyErr_Occurred()) {
             /* If an error is already set (unlikely), do not create new one */
@@ -3723,10 +3720,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
         }
     }
 
-    free(clean_sep);
-
 fail:
-    Py_DECREF(dtype);
     if (err == 1) {
         PyErr_NoMemory();
     }
@@ -3743,9 +3737,8 @@ fail:
  * Given a ``FILE *`` pointer ``fp``, and a ``PyArray_Descr``, return an
  * array corresponding to the data encoded in that file.
  *
- * If the dtype is NULL, the default array type is used (double).
- * If non-null, the reference is stolen and if dtype->subarray is true dtype
- * will be decrefed even on success.
+ * The reference to `dtype` is stolen (it is possible that the passed in
+ * dtype is not held on to).
  *
  * The number of elements to read is given as ``num``; if it is < 0, then
  * then as many as possible are read.
@@ -3793,7 +3786,6 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
                 (skip_separator) fromfile_skip_separator, NULL);
     }
     if (ret == NULL) {
-        Py_DECREF(dtype);
         return NULL;
     }
     if (((npy_intp) nread) < num) {

@@ -83,6 +83,10 @@ def git_version():
     except (subprocess.SubprocessError, OSError):
         GIT_REVISION = "Unknown"
 
+    if not GIT_REVISION:
+        # this shouldn't happen but apparently can (see gh-8512)
+        GIT_REVISION = "Unknown"
+
     return GIT_REVISION
 
 # BEFORE importing setuptools, remove MANIFEST. Otherwise it may not be
@@ -215,7 +219,6 @@ class concat_license_files():
 
 
 from distutils.command.sdist import sdist
-from numpy.distutils.command.build_src import build_src
 class sdist_checked(sdist):
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
@@ -405,7 +408,6 @@ def setup_package():
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
         cmdclass={"sdist": sdist_checked,
-                  "build_src": build_src,
                  },
         python_requires='>=3.5',
         zip_safe=False,

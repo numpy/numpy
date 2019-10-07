@@ -1775,11 +1775,13 @@ def nonzero(a):
     which returns a row for each non-zero element.
 
     .. note::
-        When called on a zero-d array or scalar, ``nonzero(a)`` is treated
-        as ``nonzero(atleast1d(a))``.
 
-        ..deprecated:: 1.17.0
-            Use `atleast1d` explicitly if this behavior is deliberate.
+       When called on a zero-d array or scalar, ``nonzero(a)`` is treated
+       as ``nonzero(atleast1d(a))``.
+
+       .. deprecated:: 1.17.0
+
+          Use `atleast1d` explicitly if this behavior is deliberate.
 
     Parameters
     ----------

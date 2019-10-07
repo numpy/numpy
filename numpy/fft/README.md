@@ -10,11 +10,6 @@ advantages:
 - worst case complexity for transform sizes with large prime factors is
   `N*log(N)`, because Bluestein's algorithm [3] is used for these cases.
 
-License
--------
-
-3-clause BSD (see LICENSE.md)
-
 
 Some code details
 -----------------

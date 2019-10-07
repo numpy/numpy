@@ -1,15 +1,14 @@
 #ifndef _RANDOMDGEN__DISTRIBUTIONS_H_
 #define _RANDOMDGEN__DISTRIBUTIONS_H_
 
-#pragma once
+#include "Python.h"
+#include "numpy/npy_common.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "Python.h"
-#include "numpy/npy_common.h"
 #include "numpy/npy_math.h"
-#include "numpy/random/bitgen.h"
+#include "src/bitgen.h"
 
 /*
  * RAND_INT_TYPE is used to share integer generators with RandomState which

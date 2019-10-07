@@ -275,36 +275,6 @@ class TestNonCContiguousViewDeprecation(_DeprecationTestCase):
         self.assert_deprecated(np.ones((2,2)).T.view, args=(np.int8,))
 
 
-class TestInvalidOrderParameterInputForFlattenArrayDeprecation(_DeprecationTestCase):
-    """Invalid arguments to the ORDER parameter in array.flatten() should not be
-    allowed and should raise an error.  However, in the interests of not breaking
-    code that may inadvertently pass invalid arguments to this parameter, a
-    DeprecationWarning will be issued instead for the time being to give developers
-    time to refactor relevant code.
-    """
-
-    def test_flatten_array_non_string_arg(self):
-        x = np.zeros((3, 5))
-        self.message = ("Non-string object detected for "
-                        "the array ordering. Please pass "
-                        "in 'C', 'F', 'A', or 'K' instead")
-        self.assert_deprecated(x.flatten, args=(np.pi,))
-
-    def test_flatten_array_invalid_string_arg(self):
-        # Tests that a DeprecationWarning is raised
-        # when a string of length greater than one
-        # starting with "C", "F", "A", or "K" (case-
-        # and unicode-insensitive) is passed in for
-        # the ORDER parameter. Otherwise, a TypeError
-        # will be raised!
-
-        x = np.zeros((3, 5))
-        self.message = ("Non length-one string passed "
-                        "in for the array ordering. Please "
-                        "pass in 'C', 'F', 'A', or 'K' instead")
-        self.assert_deprecated(x.flatten, args=("FACK",))
-
-
 class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
     """Assigning the 'data' attribute of an ndarray is unsafe as pointed
      out in gh-7093. Eventually, such assignment should NOT be allowed, but
@@ -321,22 +291,6 @@ class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
                         "inherently unsafe operation and will "
                         "be removed in the future.")
         self.assert_deprecated(a.__setattr__, args=('data', b.data))
-
-
-class TestLinspaceInvalidNumParameter(_DeprecationTestCase):
-    """Argument to the num parameter in linspace that cannot be
-    safely interpreted as an integer is deprecated in 1.12.0.
-
-    Argument to the num parameter in linspace that cannot be
-    safely interpreted as an integer should not be allowed.
-    In the interest of not breaking code that passes
-    an argument that could still be interpreted as an integer, a
-    DeprecationWarning will be issued for the time being to give
-    developers time to refactor relevant code.
-    """
-    def test_float_arg(self):
-        # 2016-02-25, PR#7328
-        self.assert_deprecated(np.linspace, args=(0, 10, 2.5))
 
 
 class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTestCase):
@@ -594,7 +548,7 @@ class Test_GetSet_NumericOps(_DeprecationTestCase):
     def test_get_numeric_ops(self):
         from numpy.core._multiarray_tests import getset_numericops
         self.assert_deprecated(getset_numericops, num=2)
-        
+
         # empty kwargs prevents any state actually changing which would break
         # other tests.
         self.assert_deprecated(np.set_numeric_ops, kwargs={})
