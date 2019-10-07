@@ -94,16 +94,20 @@ You can visualize your array this way:
 
                                   [0 ,1 ,2, 3]
                                   [4, 5, 6, 7]]])
-      array_example.ndim
-      # will return 3
-      
-      array_example.shape
-      # will return (3,2,4)
-      
-      array_example.size
-      # will return 24
 
-- Can you reshape an array?
+  array_example.ndim
+  array_example.size
+  array_example.shape
+
+**Output:**
+
+::
+
+  3
+  24
+  (3,2,4)
+
+- **Can you reshape an array?**
   
   - You can! 
 
@@ -111,7 +115,7 @@ You can visualize your array this way:
 
   numpy.reshape() 
 
-will give a new shape to an array without changing the data. 
+will give a new shape to an array without changing the data. Just remember that when you use the reshape method, the array you want to produce needs to have the same number of elements as the original array. If you start with an array with 12 elements, you'll need to make sure that your new array also has a total of 12 elements.
 
 For example:
 
@@ -126,10 +130,12 @@ For example:
   print('Modified array:')
   print(b)
 
-  # Result
+**Output:**
+
+::
+
   Original array:
   [0 1 2 3 4 5]
-
 
   Modified array:
   [[0 1]
@@ -148,7 +154,7 @@ Optional parameters you can specify are:
 
 - **order** 'C' means to read/write the elements using C-like index order,  ‘F’ means to read / write the elements using Fortran-like index order, ‘A’ means to read / write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise.
 
-- How to create an array from existing data
+- **How to create an array from existing data**
 
   - reading in a CSV
 
@@ -156,20 +162,20 @@ Optional parameters you can specify are:
 
   import pandas as pd
 
-  # If all columns are the same type:
+  # If all oof your columns are the same type:
   x = pd.read_csv('music.csv').values
 
-  # Otherwise, you can simply select the columns you need:
+  # You can also simply select the columns you need:
   x = pd.read_csv('music.csv', columns=['float_colname_1', ...]).values
 
 .. image:: images/np_pandas.png
 
-- How to create a new array from an existing array
-- How to specify the datatype
+- **How to create a new array from an existing array**
+- **How to specify the datatype**
   
   - Examples of commonly used NumPy dtypes
- 
-- Indexing and Slicing
+
+- **Indexing and Slicing**
 
 ::
 
@@ -179,14 +185,17 @@ Optional parameters you can specify are:
     # print the first element of the array
     print(a[0])
 
-    # Result
+**Output:**
+
+::
+
     1
 
 - We can index and slice NumPy arrays in the same ways we can slice Python lists:
 
 .. image:: images/np_indexing.png
 
-- Basic array operations(np.sum, np.dot)
+- **Basic array operations(np.sum, np.dot)**
 
   - Operations on a single array
 
@@ -216,7 +225,7 @@ Of course, you can do more than just addition!
 
 .. image:: images/np_sub_mult_divide.png
 
-- Broadcasting
+- **Broadcasting**
 
   - There are times when you might want to carry out an operation between an array and a single number (also called *an operation between a vector and a scalar*). Your  "data" array might, for example, contain information about distance in miles but you want to convert the information to kilometers. You can perform this operation with 
 
@@ -226,7 +235,7 @@ Of course, you can do more than just addition!
 
 .. image:: images/np_multiply_broadcasting.png
 
-- NumPy understands that the multiplication should happen with each cell. That concept is called **broadcasting**.
+NumPy understands that the multiplication should happen with each cell. That concept is called **broadcasting**.
 
 - How to compute mean, median, minimum, maximum, std, var
 
@@ -250,19 +259,23 @@ Of course, you can do more than just addition!
   print(A)
 
   # Result
-  [[0.55466235 0.3424135  0.15217492 0.21755154]
-  [0.009259   0.24416699 0.89009665 0.44347466]
-  [0.22205557 0.03315231 0.45255134 0.41577852]]
+ [[0.45053314 0.17296777 0.34376245 0.5510652 ]
+ [0.54627315 0.05093587 0.40067661 0.55645993]
+ [0.12697628 0.82485143 0.26590556 0.56917101]]
 
   A.sum()
 
-  # Result:
-  5.103359574405063
-
   A.min()
 
-  # Result
-  0.030703756560824358
+**Output:**
+
+::
+
+  # Sum
+  4.8595783866706
+
+  # Minimum
+  0.050935870838424435
 
 You can easily specify which axis you want the aggregation function to be computed. For example, you can find the minimum value within each column by specifying `axis=0`.
 
@@ -270,28 +283,221 @@ You can easily specify which axis you want the aggregation function to be comput
 
   A.min(axis=0)
 
-  # Result
-  array([0.03070376, 0.51914664, 0.14838017, 0.15097071])
+**Output:**
+
+::
+
+  array([0.12697628, 0.05093587, 0.26590556, 0.5510652 ])
 
 The four values listed above correspond to the number of columns in your array. With a four-column array, you can expect to get four values as your result.
 
+- **How to inspect the size and shape of a NumPy array**
+
+You can get the dimensions of a NumPy array any time using ndarray.shape and NumPy will return the dimensions of the array as a tuple.
+
+For example, if you created this array:
+
+::
+
+  np_arr = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+ 
+  print(np_arr)
+
+**Output:**
+
+::
+
+  [[ 1  2  3  4]
+  [ 5  6  7  8]
+  [ 9 10 11 12]]
+
+Use `.shape` if you want to quickly find the shape of your array:
+
+::
+
+  np_arr.shape
+
+**Output**
+
+::
+
+  (3, 4)
+
+You can find the number of rows with:
+
+::
+
+  # np_arr.shape[0]
+
+  num_of_rows = np_arr.shape[0]
+ 
+  print('Number of Rows : ', num_of_rows)
+
+**Output:**
+
+::
+
+  Number of Rows :  3
+
+Or the number of columns:
+
+::
+
+  # np_arr.shape[1]
+
+  num_of_columns = np_arr.shape[1]
+ 
+  print('Number of Columns : ', num_of_columns) 
+
+**Output:**
+
+::
+  
+  Number of Columns :  4
+
+It's also easy to find the total number of elements in your array:
+
+::
+
+  # np_arr.shape[0] * np_arr.shape[1]
+
+  print('Total number of elements in array : ', np_arr.shape[0] * np_arr.shape[1])
+
+**Output:**
+
+::
+
+  Total number of elements in array:  12
+
+You can also use np.shape() with a 1D array, of course.
+
+::
+
+  # Create an array
+  arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+
+  print('Shape of 1D array: ', arr.shape)
+  print('Length of 1D array: ', arr.shape[0])
+
+**Output:**
+
+::
+
+  Shape of 1D array:  (8,)
+  Length of 1D array:  8
 
 
-- How to inspect the size and shape of a NumPy array
-- How to check whether a list is empty or not
-- How to represent missing values and infinite values
+You can get the dimensions of an array using np.size()
 
-- Sorting an array
+::
 
-- How to concatenate two arrays
+  # get number of rows in array
+  num_of_rows2 = np.size(np_arr, 0)
+ 
+  # get number of columns in 2D numpy array
+  num_of_columns2 = np.size(np_arr, 1)
+ 
+  print('Number of Rows : ', num_of_rows2)
+  print('Number of Columns : ', num_of_columns2)
+
+**Output:**
+
+::
+
+  Number of Rows :  3
+  Number of Columns: 4
+
+  You can print the total number of elements as well:
+
+::
+  
+  print('Total number of elements in  array : ', np.size(np_arr))
+
+**Output:**
+
+::
+
+  Total number of elements in  array :  12
+
+This also works for 3D arrays:
+
+::
+
+  arr3D = np.array([ [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3]],
+                 [[4, 4, 4, 4], [5, 5, 5, 5], [6, 6, 6, 6]] ])
+ 
+  print(arr3D)
+
+**Output:**
+
+::
+
+  [[[1 1 1 1]
+    [2 2 2 2]
+    [3 3 3 3]]
+
+  [[4 4 4 4]
+    [5 5 5 5]
+    [6 6 6 6]]]
+
+You can easily print the size of the axis:
+
+::
+
+  print('Axis 0 size : ', np.size(arr3D, 0))
+  print('Axis 1 size : ', np.size(arr3D, 1))
+  print('Axis 2 size : ', np.size(arr3D, 2))
+
+**Output:**
+
+::
+
+  Axis 0 size :  2
+  Axis 1 size :  3
+  Axis 2 size :  4
+
+You can print the total number of elements:
+
+::
+
+  print('Total number of elements in 3D Numpy array : ', np.size(arr3D))
+
+**Output:**
+
+::
+
+  Total number of elements in 3D Numpy array :  24
+
+You can also use np.size() with 1D arrays:
+
+::
+
+  # Create a 1D array
+  arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+
+  # Determine the length
+  print('Length of 1D numpy array : ', np.size(arr))
+
+**Output:**
+
+::
+
+  Length of 1D numpy array :  8
+
+- **How to check whether a list is empty or not**
+- **How to represent missing values and infinite values**
+
+- **Sorting an array**
+
+- **How to concatenate two arrays**
   
   - column-wise
 
-- row-wise
+  - row-wise
 
   - np.concatenate, np.stack, np.vstack, np.hstack
 
-- How to sort an array 
+- **How to sort an array**
   
   - based on one (or more) columns
     
@@ -307,9 +513,8 @@ The four values listed above correspond to the number of columns in your array. 
     
     - np.lexsort
 
-- How to pass a list of lists to create a 2-D array
 
-- Creating Matrices
+- **Creating Matrices**
 
   - You can pass Python lists of lists to create a matrix to represent them in NumPy.
 
@@ -375,7 +580,7 @@ Be aware that when NumPy prints N-Dimensional arrays, the last axis is looped ov
 
   np.ones((4,3,2))
 
-will be printed:
+**Output:**
 
 ::
 
@@ -468,7 +673,7 @@ will be printed:
 - How to apply a function column-wise or row-wise
 - How to convert a 1D array into a 2D array (how to add a new axis)
 
-Formulas:
+**Formulas:**
 Implementing mathematical formulas that work on matrices and vectors is one of the things that make NumPy so highly regarded in the scientific Python community. 
 
 For example, this is the mean square error formula (a central formula used in supervised machine learning models that deal with regression):
@@ -491,10 +696,10 @@ In this example, both the predictions and labels vectors contain three values, m
 
 .. image:: images/np_MSE_explanation2.png
 
-- How to plot arrays, very basic with Matplotlib
-- How to read a docstring with `?` and source code with `??` in IPython/Jupyter
+- **How to plot arrays, very basic with Matplotlib**
+- **How to read a docstring with `?` and source code with `??` in IPython/Jupyter**
 
-- More useful functions:
+- **More useful functions:**
 
   - np.clip
   
