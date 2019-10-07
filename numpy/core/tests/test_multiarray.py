@@ -44,7 +44,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
-    temppath, suppress_warnings, break_cycles, assert_raises_regex,
+    temppath, suppress_warnings, break_cycles,
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
@@ -497,9 +497,6 @@ class TestArrayConstruction(object):
         assert_(np.ascontiguousarray(d).flags.c_contiguous)
         assert_(np.asfortranarray(d).flags.f_contiguous)
 
-    def test_ragged(self):
-        assert_raises_regex(ValueError, 'ragged',
-                             np.array, [[1], [2, 3]], dtype=int)
 
 class TestAssignment(object):
     def test_assignment_broadcasting(self):
@@ -6405,20 +6402,22 @@ class TestInner(object):
 
 class TestAlen(object):
     def test_basic(self):
-        m = np.array([1, 2, 3])
-        assert_equal(np.alen(m), 3)
+        with pytest.warns(DeprecationWarning):
+            m = np.array([1, 2, 3])
+            assert_equal(np.alen(m), 3)
 
-        m = np.array([[1, 2, 3], [4, 5, 7]])
-        assert_equal(np.alen(m), 2)
+            m = np.array([[1, 2, 3], [4, 5, 7]])
+            assert_equal(np.alen(m), 2)
 
-        m = [1, 2, 3]
-        assert_equal(np.alen(m), 3)
+            m = [1, 2, 3]
+            assert_equal(np.alen(m), 3)
 
-        m = [[1, 2, 3], [4, 5, 7]]
-        assert_equal(np.alen(m), 2)
+            m = [[1, 2, 3], [4, 5, 7]]
+            assert_equal(np.alen(m), 2)
 
     def test_singleton(self):
-        assert_equal(np.alen(5), 1)
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.alen(5), 1)
 
 
 class TestChoose(object):
@@ -8080,6 +8079,8 @@ class TestWritebackIfCopy(object):
         arr_wb[...] = 100
         assert_equal(arr, -100)
 
+    @pytest.mark.leaks_references(
+            reason="increments self in dealloc; ignore since deprecated path.")
     def test_dealloc_warning(self):
         with suppress_warnings() as sup:
             sup.record(RuntimeWarning)

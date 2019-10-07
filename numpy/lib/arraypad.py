@@ -323,6 +323,12 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     if right_length is None or max_length < right_length:
         right_length = max_length
 
+    if (left_length == 0 or right_length == 0) \
+            and stat_func in {np.amax, np.amin}:
+        # amax and amin can't operate on an emtpy array,
+        # raise a more descriptive warning here instead of the default one
+        raise ValueError("stat_length of 0 yields no value for padding")
+
     # Calculate statistic for the left side
     left_slice = _slice_at_axis(
         slice(left_index, left_index + left_length), axis)
@@ -340,6 +346,7 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     right_chunk = padded[right_slice]
     right_stat = stat_func(right_chunk, axis=axis, keepdims=True)
     _round_if_needed(right_stat, padded.dtype)
+
     return left_stat, right_stat
 
 
@@ -835,7 +842,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
         raise ValueError("unsupported keyword arguments for mode '{}': {}"
                          .format(mode, unsupported_kwargs))
 
-    stat_functions = {"maximum": np.max, "minimum": np.min,
+    stat_functions = {"maximum": np.amax, "minimum": np.amin,
                       "mean": np.mean, "median": np.median}
 
     # Create array with final shape and original values

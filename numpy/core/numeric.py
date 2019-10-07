@@ -48,14 +48,6 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-def loads(*args, **kwargs):
-    # NumPy 1.15.0, 2017-12-10
-    warnings.warn(
-        "np.core.numeric.loads is deprecated, use pickle.loads instead",
-        DeprecationWarning, stacklevel=2)
-    return pickle.loads(*args, **kwargs)
-
-
 __all__ = [
     'newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
     'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast', 'dtype',
@@ -66,7 +58,7 @@ __all__ = [
     'correlate', 'convolve', 'inner', 'dot', 'outer', 'vdot', 'roll',
     'rollaxis', 'moveaxis', 'cross', 'tensordot', 'little_endian',
     'fromiter', 'array_equal', 'array_equiv', 'indices', 'fromfunction',
-    'isclose', 'load', 'loads', 'isscalar', 'binary_repr', 'base_repr', 'ones',
+    'isclose', 'isscalar', 'binary_repr', 'base_repr', 'ones',
     'identity', 'allclose', 'compare_chararrays', 'putmask',
     'flatnonzero', 'Inf', 'inf', 'infty', 'Infinity', 'nan', 'NaN',
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
@@ -1935,6 +1927,10 @@ def binary_repr(num, width=None):
                 "will raise an error in the future.", DeprecationWarning,
                 stacklevel=3)
 
+    # Ensure that num is a Python integer to avoid overflow or unwanted
+    # casts to floating point.
+    num = operator.index(num)
+
     if num == 0:
         return '0' * (width or 1)
 
@@ -2024,30 +2020,6 @@ def base_repr(number, base=2, padding=0):
     return ''.join(reversed(res or '0'))
 
 
-def load(file):
-    """
-    Wrapper around cPickle.load which accepts either a file-like object or
-    a filename.
-
-    Note that the NumPy binary format is not based on pickle/cPickle anymore.
-    For details on the preferred way of loading and saving files, see `load`
-    and `save`.
-
-    See Also
-    --------
-    load, save
-
-    """
-    # NumPy 1.15.0, 2017-12-10
-    warnings.warn(
-        "np.core.numeric.load is deprecated, use pickle.load instead",
-        DeprecationWarning, stacklevel=2)
-    if isinstance(file, type("")):
-        with open(file, "rb") as file_pointer:
-            return pickle.load(file_pointer)
-    return pickle.load(file)
-
-
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module
 
@@ -2124,7 +2096,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
-        considered equal to NaN's in `b` in the output array.
+        considered equal to NaN's in `b`.
 
         .. versionadded:: 1.10.0
 

@@ -1,43 +1,8 @@
-==========================
-NumPy 1.18.0 Release Notes
-==========================
+The NumPy 1.18 release is currently in developement. Please check
+the ``numpy/doc/release/upcoming_changes/`` folder for upcoming
+release notes.
+The ``numpy/doc/release/upcoming_changes/README.txt`` details how
+to add new release notes.
 
-
-Highlights
-==========
-
-
-New functions
-=============
-
-
-Deprecations
-============
-
-
-Future Changes
-==============
-
-
-Expired deprecations
-====================
-
-
-Compatibility notes
-===================
-
-
-C API changes
-=============
-
-
-New Features
-============
-
-
-Improvements
-============
-
-
-Changes
-=======
+For the work in progress release notes for the current development
+version, see the `devdocs<https://numpy.org/devdocs/release.html>`.

@@ -72,7 +72,7 @@ The ``__array_ufunc__`` receives:
 - ``inputs``, which could be a mixture of different types
 - ``kwargs``, keyword arguments passed to the function
 
-For this example we will only handle the method ``'__call__``.
+For this example we will only handle the method ``__call__``.
 
 >>> from numbers import Number
 >>> class DiagonalArray:
@@ -218,12 +218,12 @@ For completeness, to support the usage ``arr.sum()`` add a method ``sum`` that
 calls ``numpy.sum(self)``, and the same for ``mean``.
 
 >>> @implements(np.sum)
-... def sum(a):
+... def sum(arr):
 ...     "Implementation of np.sum for DiagonalArray objects"
 ...     return arr._i * arr._N
 ...
 >>> @implements(np.mean)
-... def sum(a):
+... def mean(arr):
 ...     "Implementation of np.mean for DiagonalArray objects"
 ...     return arr._i / arr._N
 ...

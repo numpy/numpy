@@ -101,7 +101,7 @@ class _DeprecationTestCase(object):
                         (self.warning_cls.__name__, warning.category))
         if num is not None and num_found != num:
             msg = "%i warnings found but %i expected." % (len(self.log), num)
-            lst = [str(w.category) for w in self.log]
+            lst = [str(w) for w in self.log]
             raise AssertionError("\n".join([msg] + lst))
 
         with warnings.catch_warnings():
@@ -147,16 +147,6 @@ class TestNonTupleNDIndexDeprecation(object):
 
             # a a[[0, 1]] always was advanced indexing, so no error/warning
             a[[0, 1]]
-
-
-class TestRankDeprecation(_DeprecationTestCase):
-    """Test that np.rank is deprecated. The function should simply be
-    removed. The VisibleDeprecationWarning may become unnecessary.
-    """
-
-    def test(self):
-        a = np.arange(10)
-        assert_warns(np.VisibleDeprecationWarning, np.rank, a)
 
 
 class TestComparisonDeprecations(_DeprecationTestCase):
@@ -497,6 +487,12 @@ class TestBincount(_DeprecationTestCase):
     # 2017-06-01, 1.14.0
     def test_bincount_minlength(self):
         self.assert_deprecated(lambda: np.bincount([1, 2, 3], minlength=None))
+
+
+class TestAlen(_DeprecationTestCase):
+    # 2019-08-02, 1.18.0
+    def test_alen(self):
+        self.assert_deprecated(lambda: np.alen(np.array([1, 2, 3])))
 
 
 class TestGeneratorSum(_DeprecationTestCase):

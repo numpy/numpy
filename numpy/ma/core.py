@@ -59,14 +59,14 @@ __all__ = [
     'choose', 'clip', 'common_fill_value', 'compress', 'compressed',
     'concatenate', 'conjugate', 'convolve', 'copy', 'correlate', 'cos', 'cosh',
     'count', 'cumprod', 'cumsum', 'default_fill_value', 'diag', 'diagonal',
-    'diff', 'divide', 'dump', 'dumps', 'empty', 'empty_like', 'equal', 'exp',
+    'diff', 'divide', 'empty', 'empty_like', 'equal', 'exp',
     'expand_dims', 'fabs', 'filled', 'fix_invalid', 'flatten_mask',
     'flatten_structured_array', 'floor', 'floor_divide', 'fmod',
     'frombuffer', 'fromflex', 'fromfunction', 'getdata', 'getmask',
     'getmaskarray', 'greater', 'greater_equal', 'harden_mask', 'hypot',
     'identity', 'ids', 'indices', 'inner', 'innerproduct', 'isMA',
     'isMaskedArray', 'is_mask', 'is_masked', 'isarray', 'left_shift',
-    'less', 'less_equal', 'load', 'loads', 'log', 'log10', 'log2',
+    'less', 'less_equal', 'log', 'log10', 'log2',
     'logical_and', 'logical_not', 'logical_or', 'logical_xor', 'make_mask',
     'make_mask_descr', 'make_mask_none', 'mask_or', 'masked',
     'masked_array', 'masked_equal', 'masked_greater',
@@ -77,7 +77,7 @@ __all__ = [
     'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
     'mod', 'multiply', 'mvoid', 'ndim', 'negative', 'nomask', 'nonzero',
     'not_equal', 'ones', 'outer', 'outerproduct', 'power', 'prod',
-    'product', 'ptp', 'put', 'putmask', 'rank', 'ravel', 'remainder',
+    'product', 'ptp', 'put', 'putmask', 'ravel', 'remainder',
     'repeat', 'reshape', 'resize', 'right_shift', 'round', 'round_',
     'set_fill_value', 'shape', 'sin', 'sinh', 'size', 'soften_mask',
     'sometrue', 'sort', 'sqrt', 'squeeze', 'std', 'subtract', 'sum',
@@ -5887,7 +5887,6 @@ class MaskedArray(ndarray):
         return out[()]
 
     # Array methods
-    clip = _arraymethod('clip', onmask=False)
     copy = _arraymethod('copy')
     diagonal = _arraymethod('diagonal')
     flatten = _arraymethod('flatten')
@@ -7099,23 +7098,6 @@ def resize(x, new_shape):
     return result
 
 
-def rank(obj):
-    """
-    maskedarray version of the numpy function.
-
-    .. note::
-        Deprecated since 1.10.0
-
-    """
-    # 2015-04-12, 1.10.0
-    warnings.warn(
-        "`rank` is deprecated; use the `ndim` function instead. ",
-        np.VisibleDeprecationWarning, stacklevel=2)
-    return np.ndim(getdata(obj))
-
-rank.__doc__ = np.rank.__doc__
-
-
 def ndim(obj):
     """
     maskedarray version of the numpy function.
@@ -7902,93 +7884,6 @@ def _pickle_warn(method):
             .format(method=method),
         DeprecationWarning,
         stacklevel=3)
-
-
-def dump(a, F):
-    """
-    Pickle a masked array to a file.
-
-    This is a wrapper around ``cPickle.dump``.
-
-    Parameters
-    ----------
-    a : MaskedArray
-        The array to be pickled.
-    F : str or file-like object
-        The file to pickle `a` to. If a string, the full path to the file.
-
-    """
-    _pickle_warn('dump')
-    if not hasattr(F, 'readline'):
-        with open(F, 'w') as F:
-            pickle.dump(a, F)
-    else:
-        pickle.dump(a, F)
-
-
-def dumps(a):
-    """
-    Return a string corresponding to the pickling of a masked array.
-
-    This is a wrapper around ``cPickle.dumps``.
-
-    Parameters
-    ----------
-    a : MaskedArray
-        The array for which the string representation of the pickle is
-        returned.
-
-    """
-    _pickle_warn('dumps')
-    return pickle.dumps(a)
-
-
-def load(F):
-    """
-    Wrapper around ``cPickle.load`` which accepts either a file-like object
-    or a filename.
-
-    Parameters
-    ----------
-    F : str or file
-        The file or file name to load.
-
-    See Also
-    --------
-    dump : Pickle an array
-
-    Notes
-    -----
-    This is different from `numpy.load`, which does not use cPickle but loads
-    the NumPy binary .npy format.
-
-    """
-    _pickle_warn('load')
-    if not hasattr(F, 'readline'):
-        with open(F, 'r') as F:
-            return pickle.load(F)
-    else:
-        return pickle.load(F)
-
-
-def loads(strg):
-    """
-    Load a pickle from the current string.
-
-    The result of ``cPickle.loads(strg)`` is returned.
-
-    Parameters
-    ----------
-    strg : str
-        The string to load.
-
-    See Also
-    --------
-    dumps : Return a string corresponding to the pickling of a masked array.
-
-    """
-    _pickle_warn('loads')
-    return pickle.loads(strg)
 
 
 def fromfile(file, dtype=float, count=-1, sep=''):

@@ -20,27 +20,31 @@ Each file should be named like ``<PULL REQUEST>.<TYPE>.rst``, where
 * ``compatibility``: A change which requires users to change code and is not
   backwards compatible. (Not to be used for removal of deprecated features.)
 * ``c_api``: Changes in the Numpy C-API exported functions
-* ``new_features``: New user facing features like ``kwargs``.
-* ``improvements``: Performance and edge-case changes
-* ``changes``: Other changes
+* ``new_feature``: New user facing features like ``kwargs``.
+* ``improvement``: Performance and edge-case changes
+* ``change``: Other changes
+* ``highlight``: Adds a highlight bullet point to use as a possibly highlight
+  of the release.
 
-So for example: ``123.new_features.rst`` would have the content:
+Most categories shouldl be formatted as paragraphs with a heading.
+So for example: ``123.new_feature.rst`` would have the content::
 
-```
-my_new_feature option for `my_favorite_function`
-------------------------------------------------
-The ``my_new_feature`` option is now available for `my_favorite_function`.
-To use it, write ``np.my_favorite_function(..., my_new_feature=True)``.
-```
+    ``my_new_feature`` option for `my_favorite_function`
+    ----------------------------------------------------
+    The ``my_new_feature`` option is now available for `my_favorite_function`.
+    To use it, write ``np.my_favorite_function(..., my_new_feature=True)``.
+
+``highlight`` is usually formatted as bulled points making the fragment
+``* This is a highlight``.
 
 Note the use of single-backticks to get an internal link (assuming
-``my_favorite_function`` is exported from the ``numpy`` namespace), and double-
-backticks for code.
+``my_favorite_function`` is exported from the ``numpy`` namespace),
+and double-backticks for code.
 
 If you are unsure what pull request type to use, don't hesitate to ask in your
 PR.
 
-You can install ``towncrier`` and run ``towncrier --draft --version NumPy``
+You can install ``towncrier`` and run ``towncrier --draft --version 1.18``
 if you want to get a preview of how your change will look in the final release
 notes.
 

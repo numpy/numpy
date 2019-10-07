@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.random import random
 from numpy.testing import (
-        assert_array_almost_equal, assert_array_equal, assert_raises,
+        assert_array_equal, assert_raises, assert_allclose
         )
 import threading
 import sys
@@ -34,109 +34,115 @@ class TestFFT1D(object):
         x = random(maxlen) + 1j*random(maxlen)
         xr = random(maxlen)
         for i in range(1,maxlen):
-            assert_array_almost_equal(np.fft.ifft(np.fft.fft(x[0:i])), x[0:i],
-                                      decimal=12)
-            assert_array_almost_equal(np.fft.irfft(np.fft.rfft(xr[0:i]),i),
-                                      xr[0:i], decimal=12)
+            assert_allclose(np.fft.ifft(np.fft.fft(x[0:i])), x[0:i],
+                            atol=1e-12)
+            assert_allclose(np.fft.irfft(np.fft.rfft(xr[0:i]),i),
+                            xr[0:i], atol=1e-12)
 
     def test_fft(self):
         x = random(30) + 1j*random(30)
-        assert_array_almost_equal(fft1(x), np.fft.fft(x))
-        assert_array_almost_equal(fft1(x) / np.sqrt(30),
-                                  np.fft.fft(x, norm="ortho"))
+        assert_allclose(fft1(x), np.fft.fft(x), atol=1e-6)
+        assert_allclose(fft1(x) / np.sqrt(30),
+                        np.fft.fft(x, norm="ortho"), atol=1e-6)
 
-    def test_ifft(self):
+    @pytest.mark.parametrize('norm', (None, 'ortho'))
+    def test_ifft(self, norm):
         x = random(30) + 1j*random(30)
-        assert_array_almost_equal(x, np.fft.ifft(np.fft.fft(x)))
-        assert_array_almost_equal(
-            x, np.fft.ifft(np.fft.fft(x, norm="ortho"), norm="ortho"))
+        assert_allclose(
+            x, np.fft.ifft(np.fft.fft(x, norm=norm), norm=norm),
+            atol=1e-6)
+        # Ensure we get the correct error message
+        with pytest.raises(ValueError,
+                           match='Invalid number of FFT data points'):
+            np.fft.ifft([], norm=norm)
 
     def test_fft2(self):
         x = random((30, 20)) + 1j*random((30, 20))
-        assert_array_almost_equal(np.fft.fft(np.fft.fft(x, axis=1), axis=0),
-                                  np.fft.fft2(x))
-        assert_array_almost_equal(np.fft.fft2(x) / np.sqrt(30 * 20),
-                                  np.fft.fft2(x, norm="ortho"))
+        assert_allclose(np.fft.fft(np.fft.fft(x, axis=1), axis=0),
+                        np.fft.fft2(x), atol=1e-6)
+        assert_allclose(np.fft.fft2(x) / np.sqrt(30 * 20),
+                        np.fft.fft2(x, norm="ortho"), atol=1e-6)
 
     def test_ifft2(self):
         x = random((30, 20)) + 1j*random((30, 20))
-        assert_array_almost_equal(np.fft.ifft(np.fft.ifft(x, axis=1), axis=0),
-                                  np.fft.ifft2(x))
-        assert_array_almost_equal(np.fft.ifft2(x) * np.sqrt(30 * 20),
-                                  np.fft.ifft2(x, norm="ortho"))
+        assert_allclose(np.fft.ifft(np.fft.ifft(x, axis=1), axis=0),
+                        np.fft.ifft2(x), atol=1e-6)
+        assert_allclose(np.fft.ifft2(x) * np.sqrt(30 * 20),
+                        np.fft.ifft2(x, norm="ortho"), atol=1e-6)
 
     def test_fftn(self):
         x = random((30, 20, 10)) + 1j*random((30, 20, 10))
-        assert_array_almost_equal(
+        assert_allclose(
             np.fft.fft(np.fft.fft(np.fft.fft(x, axis=2), axis=1), axis=0),
-            np.fft.fftn(x))
-        assert_array_almost_equal(np.fft.fftn(x) / np.sqrt(30 * 20 * 10),
-                                  np.fft.fftn(x, norm="ortho"))
+            np.fft.fftn(x), atol=1e-6)
+        assert_allclose(np.fft.fftn(x) / np.sqrt(30 * 20 * 10),
+                        np.fft.fftn(x, norm="ortho"), atol=1e-6)
 
     def test_ifftn(self):
         x = random((30, 20, 10)) + 1j*random((30, 20, 10))
-        assert_array_almost_equal(
+        assert_allclose(
             np.fft.ifft(np.fft.ifft(np.fft.ifft(x, axis=2), axis=1), axis=0),
-            np.fft.ifftn(x))
-        assert_array_almost_equal(np.fft.ifftn(x) * np.sqrt(30 * 20 * 10),
-                                  np.fft.ifftn(x, norm="ortho"))
+            np.fft.ifftn(x), atol=1e-6)
+        assert_allclose(np.fft.ifftn(x) * np.sqrt(30 * 20 * 10),
+                        np.fft.ifftn(x, norm="ortho"), atol=1e-6)
 
     def test_rfft(self):
         x = random(30)
         for n in [x.size, 2*x.size]:
             for norm in [None, 'ortho']:
-                assert_array_almost_equal(
+                assert_allclose(
                     np.fft.fft(x, n=n, norm=norm)[:(n//2 + 1)],
-                    np.fft.rfft(x, n=n, norm=norm))
-            assert_array_almost_equal(np.fft.rfft(x, n=n) / np.sqrt(n),
-                                      np.fft.rfft(x, n=n, norm="ortho"))
+                    np.fft.rfft(x, n=n, norm=norm), atol=1e-6)
+            assert_allclose(
+                np.fft.rfft(x, n=n) / np.sqrt(n),
+                np.fft.rfft(x, n=n, norm="ortho"), atol=1e-6)
 
     def test_irfft(self):
         x = random(30)
-        assert_array_almost_equal(x, np.fft.irfft(np.fft.rfft(x)))
-        assert_array_almost_equal(
-            x, np.fft.irfft(np.fft.rfft(x, norm="ortho"), norm="ortho"))
+        assert_allclose(x, np.fft.irfft(np.fft.rfft(x)), atol=1e-6)
+        assert_allclose(
+            x, np.fft.irfft(np.fft.rfft(x, norm="ortho"), norm="ortho"), atol=1e-6)
 
     def test_rfft2(self):
         x = random((30, 20))
-        assert_array_almost_equal(np.fft.fft2(x)[:, :11], np.fft.rfft2(x))
-        assert_array_almost_equal(np.fft.rfft2(x) / np.sqrt(30 * 20),
-                                  np.fft.rfft2(x, norm="ortho"))
+        assert_allclose(np.fft.fft2(x)[:, :11], np.fft.rfft2(x), atol=1e-6)
+        assert_allclose(np.fft.rfft2(x) / np.sqrt(30 * 20),
+                        np.fft.rfft2(x, norm="ortho"), atol=1e-6)
 
     def test_irfft2(self):
         x = random((30, 20))
-        assert_array_almost_equal(x, np.fft.irfft2(np.fft.rfft2(x)))
-        assert_array_almost_equal(
-            x, np.fft.irfft2(np.fft.rfft2(x, norm="ortho"), norm="ortho"))
+        assert_allclose(x, np.fft.irfft2(np.fft.rfft2(x)), atol=1e-6)
+        assert_allclose(
+            x, np.fft.irfft2(np.fft.rfft2(x, norm="ortho"), norm="ortho"), atol=1e-6)
 
     def test_rfftn(self):
         x = random((30, 20, 10))
-        assert_array_almost_equal(np.fft.fftn(x)[:, :, :6], np.fft.rfftn(x))
-        assert_array_almost_equal(np.fft.rfftn(x) / np.sqrt(30 * 20 * 10),
-                                  np.fft.rfftn(x, norm="ortho"))
+        assert_allclose(np.fft.fftn(x)[:, :, :6], np.fft.rfftn(x), atol=1e-6)
+        assert_allclose(np.fft.rfftn(x) / np.sqrt(30 * 20 * 10),
+                        np.fft.rfftn(x, norm="ortho"), atol=1e-6)
 
     def test_irfftn(self):
         x = random((30, 20, 10))
-        assert_array_almost_equal(x, np.fft.irfftn(np.fft.rfftn(x)))
-        assert_array_almost_equal(
-            x, np.fft.irfftn(np.fft.rfftn(x, norm="ortho"), norm="ortho"))
+        assert_allclose(x, np.fft.irfftn(np.fft.rfftn(x)), atol=1e-6)
+        assert_allclose(
+            x, np.fft.irfftn(np.fft.rfftn(x, norm="ortho"), norm="ortho"), atol=1e-6)
 
     def test_hfft(self):
         x = random(14) + 1j*random(14)
         x_herm = np.concatenate((random(1), x, random(1)))
         x = np.concatenate((x_herm, x[::-1].conj()))
-        assert_array_almost_equal(np.fft.fft(x), np.fft.hfft(x_herm))
-        assert_array_almost_equal(np.fft.hfft(x_herm) / np.sqrt(30),
-                                  np.fft.hfft(x_herm, norm="ortho"))
+        assert_allclose(np.fft.fft(x), np.fft.hfft(x_herm), atol=1e-6)
+        assert_allclose(np.fft.hfft(x_herm) / np.sqrt(30),
+                        np.fft.hfft(x_herm, norm="ortho"), atol=1e-6)
 
     def test_ihttf(self):
         x = random(14) + 1j*random(14)
         x_herm = np.concatenate((random(1), x, random(1)))
         x = np.concatenate((x_herm, x[::-1].conj()))
-        assert_array_almost_equal(x_herm, np.fft.ihfft(np.fft.hfft(x_herm)))
-        assert_array_almost_equal(
+        assert_allclose(x_herm, np.fft.ihfft(np.fft.hfft(x_herm)), atol=1e-6)
+        assert_allclose(
             x_herm, np.fft.ihfft(np.fft.hfft(x_herm, norm="ortho"),
-                                 norm="ortho"))
+                                 norm="ortho"), atol=1e-6)
 
     @pytest.mark.parametrize("op", [np.fft.fftn, np.fft.ifftn,
                                     np.fft.rfftn, np.fft.irfftn])
@@ -146,7 +152,7 @@ class TestFFT1D(object):
         for a in axes:
             op_tr = op(np.transpose(x, a))
             tr_op = np.transpose(op(x, axes=a), a)
-            assert_array_almost_equal(op_tr, tr_op)
+            assert_allclose(op_tr, tr_op, atol=1e-6)
 
     def test_all_1d_norm_preserving(self):
         # verify that round-trip transforms are norm-preserving
@@ -164,8 +170,8 @@ class TestFFT1D(object):
                 for norm in [None, 'ortho']:
                     tmp = forw(x, n=n, norm=norm)
                     tmp = back(tmp, n=n, norm=norm)
-                    assert_array_almost_equal(x_norm,
-                                              np.linalg.norm(tmp))
+                    assert_allclose(x_norm,
+                                    np.linalg.norm(tmp), atol=1e-6)
 
     @pytest.mark.parametrize("dtype", [np.half, np.single, np.double,
                                        np.longdouble])
@@ -173,8 +179,8 @@ class TestFFT1D(object):
         # make sure that all input precisions are accepted and internally
         # converted to 64bit
         x = random(30).astype(dtype)
-        assert_array_almost_equal(np.fft.ifft(np.fft.fft(x)), x)
-        assert_array_almost_equal(np.fft.irfft(np.fft.rfft(x)), x)
+        assert_allclose(np.fft.ifft(np.fft.fft(x)), x, atol=1e-6)
+        assert_allclose(np.fft.irfft(np.fft.rfft(x)), x, atol=1e-6)
 
 
 @pytest.mark.parametrize(
@@ -190,6 +196,8 @@ def test_fft_with_order(dtype, order, fft):
     # non contiguous arrays
     rng = np.random.RandomState(42)
     X = rng.rand(8, 7, 13).astype(dtype, copy=False)
+    # See discussion in pull/14178
+    _tol = 8.0 * np.sqrt(np.log2(X.size)) * np.finfo(X.dtype).eps
     if order == 'F':
         Y = np.asfortranarray(X)
     else:
@@ -201,7 +209,7 @@ def test_fft_with_order(dtype, order, fft):
         for axis in range(3):
             X_res = fft(X, axis=axis)
             Y_res = fft(Y, axis=axis)
-            assert_array_almost_equal(X_res, Y_res)
+            assert_allclose(X_res, Y_res, atol=_tol, rtol=_tol)
     elif fft.__name__.endswith(('fft2', 'fftn')):
         axes = [(0, 1), (1, 2), (0, 2)]
         if fft.__name__.endswith('fftn'):
@@ -209,9 +217,9 @@ def test_fft_with_order(dtype, order, fft):
         for ax in axes:
             X_res = fft(X, axes=ax)
             Y_res = fft(Y, axes=ax)
-            assert_array_almost_equal(X_res, Y_res)
+            assert_allclose(X_res, Y_res, atol=_tol, rtol=_tol)
     else:
-        raise ValueError
+        raise ValueError()
 
 
 class TestFFTThreadSafe(object):

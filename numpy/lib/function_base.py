@@ -316,13 +316,16 @@ def average(a, axis=None, weights=None, returned=False):
         The weights array can either be 1-D (in which case its length must be
         the size of `a` along the given axis) or of the same shape as `a`.
         If `weights=None`, then all data in `a` are assumed to have a
-        weight equal to one.
+        weight equal to one.  The 1-D calculation is::
+
+            avg = sum(a * weights) / sum(weights)
+
+        The only constraint on `weights` is that `sum(weights)` must not be 0.
     returned : bool, optional
         Default is `False`. If `True`, the tuple (`average`, `sum_of_weights`)
         is returned, otherwise only the average is returned.
         If `weights=None`, `sum_of_weights` is equivalent to the number of
         elements over which the average is taken.
-
 
     Returns
     -------

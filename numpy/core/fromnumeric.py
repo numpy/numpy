@@ -25,7 +25,7 @@ __all__ = [
     'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
     'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
     'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
-    'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
+    'ravel', 'repeat', 'reshape', 'resize', 'round_',
     'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
     'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
 ]
@@ -380,6 +380,7 @@ def choose(a, choices, out=None, mode='raise'):
     See Also
     --------
     ndarray.choose : equivalent method
+    numpy.take_along_axis : Preferable if `choices` is an array
 
     Notes
     -----
@@ -908,17 +909,17 @@ def sort(a, axis=-1, kind=None, order=None):
 
     .. versionadded:: 1.12.0
 
-    quicksort has been changed to `introsort <https://en.wikipedia.org/wiki/Introsort>`_. 
+    quicksort has been changed to `introsort <https://en.wikipedia.org/wiki/Introsort>`_.
     When sorting does not make enough progress it switches to
-    `heapsort <https://en.wikipedia.org/wiki/Heapsort>`_. 
+    `heapsort <https://en.wikipedia.org/wiki/Heapsort>`_.
     This implementation makes quicksort O(n*log(n)) in the worst case.
 
     'stable' automatically chooses the best stable sorting algorithm
-    for the data type being sorted. 
-    It, along with 'mergesort' is currently mapped to 
-    `timsort <https://en.wikipedia.org/wiki/Timsort>`_ 
-    or `radix sort <https://en.wikipedia.org/wiki/Radix_sort>`_ 
-    depending on the data type. 
+    for the data type being sorted.
+    It, along with 'mergesort' is currently mapped to
+    `timsort <https://en.wikipedia.org/wiki/Timsort>`_
+    or `radix sort <https://en.wikipedia.org/wiki/Radix_sort>`_
+    depending on the data type.
     API forward compatibility currently limits the
     ability to select the implementation and it is hardwired for the different
     data types.
@@ -2782,6 +2783,10 @@ def alen(a):
     7
 
     """
+    # NumPy 1.18.0, 2019-08-02
+    warnings.warn(
+        "`np.alen` is deprecated, use `len` instead",
+        DeprecationWarning, stacklevel=2)
     try:
         return len(a)
     except TypeError:
@@ -3414,7 +3419,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         instead of a single axis or all the axes as before.
     dtype : data-type, optional
         Type to use in computing the variance.  For arrays of integer type
-        the default is `float32`; for arrays of float types it is the same as
+        the default is `float64`; for arrays of float types it is the same as
         the array type.
     out : ndarray, optional
         Alternate output array in which to place the result.  It must have
@@ -3573,30 +3578,3 @@ def alltrue(*args, **kwargs):
     numpy.all : Equivalent function; see for details.
     """
     return all(*args, **kwargs)
-
-
-@array_function_dispatch(_ndim_dispatcher)
-def rank(a):
-    """
-    Return the number of dimensions of an array.
-
-    .. note::
-        This function is deprecated in NumPy 1.9 to avoid confusion with
-        `numpy.linalg.matrix_rank`. The ``ndim`` attribute or function
-        should be used instead.
-
-    See Also
-    --------
-    ndim : equivalent non-deprecated function
-
-    Notes
-    -----
-    In the old Numeric package, `rank` was the term used for the number of
-    dimensions, but in NumPy `ndim` is used instead.
-    """
-    # 2014-04-12, 1.9
-    warnings.warn(
-        "`rank` is deprecated; use the `ndim` attribute or function instead. "
-        "To find the rank of a matrix see `numpy.linalg.matrix_rank`.",
-        VisibleDeprecationWarning, stacklevel=3)
-    return ndim(a)

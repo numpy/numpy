@@ -8,7 +8,7 @@ trigger:
 variables:
   # OpenBLAS_version should be updated
   # to match numpy-wheels repo
-  OpenBLAS_version: 0.3.7.dev
+  OpenBLAS_version: 0.3.7
 
 jobs:
 - job: Linux_Python_36_32bit_full_with_asserts
@@ -178,7 +178,6 @@ jobs:
   # vs. manual setup.py and then runtests.py for testing only
   - powershell: |
       If ($(BITS) -eq 32) {
-         $env:NPY_DISTUTILS_APPEND_FLAGS = 1
          $env:CFLAGS = "-m32"
          $env:LDFLAGS = "-m32"
          $env:PATH = "C:\\tools\\mingw32\\bin;" + $env:PATH

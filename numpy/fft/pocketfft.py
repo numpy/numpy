@@ -271,9 +271,10 @@ def ifft(a, n=None, axis=-1, norm=None):
     a = asarray(a)
     if n is None:
         n = a.shape[axis]
-    fct = 1/n
     if norm is not None and _unitary(norm):
-        fct = 1/sqrt(n)
+        fct = 1/sqrt(max(n, 1))
+    else:
+        fct = 1/max(n, 1)
     output = _raw_fft(a, n, axis, False, False, fct)
     return output
 

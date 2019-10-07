@@ -506,7 +506,9 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     Notes
     -----
     For a description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
-
+        
+    Any data saved to the file is appended to the end of the file. 
+    
     Examples
     --------
     >>> from tempfile import TemporaryFile
@@ -519,6 +521,15 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     >>> np.load(outfile)
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
+
+    >>> with open('test.npy', 'wb') as f:
+    ...     np.save(f, np.array([1, 2]))
+    ...     np.save(f, np.array([1, 3]))    
+    >>> with open('test.npy', 'rb') as f:
+    ...     a = np.load(f)
+    ...     b = np.load(f)
+    >>> print(a, b)
+    # [1 2] [1 3]
     """
     own_fid = False
     if hasattr(file, 'write'):
@@ -1776,12 +1787,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                                        replace_space=replace_space)
 
         # Skip the first `skip_header` rows
-        for i in range(skip_header):
-            next(fhd)
-
-        # Keep on until we find the first valid values
-        first_values = None
         try:
+            for i in range(skip_header):
+                next(fhd)
+
+            # Keep on until we find the first valid values
+            first_values = None
+
             while not first_values:
                 first_line = _decode_line(next(fhd), encoding)
                 if (names is True) and (comments is not None):
@@ -2168,7 +2180,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             outputmask = np.array(masks, dtype=mdtype)
     else:
         # Overwrite the initial dtype names if needed
-        if names and dtype.names:
+        if names and dtype.names is not None:
             dtype.names = names
         # Case 1. We have a structured type
         if len(dtype_flat) > 1:
@@ -2218,7 +2230,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             #
             output = np.array(data, dtype)
             if usemask:
-                if dtype.names:
+                if dtype.names is not None:
                     mdtype = [(_, bool) for _ in dtype.names]
                 else:
                     mdtype = bool

@@ -1,5 +1,5 @@
 
-from .common cimport bitgen_t
+from .common cimport bitgen_t, uint32_t
 cimport numpy as np
 
 cdef class BitGenerator():
@@ -14,9 +14,9 @@ cdef class BitGenerator():
 cdef class SeedSequence():
     cdef readonly object entropy
     cdef readonly tuple spawn_key
-    cdef readonly int pool_size
+    cdef readonly uint32_t pool_size
     cdef readonly object pool
-    cdef readonly int n_children_spawned
+    cdef readonly uint32_t n_children_spawned
 
     cdef mix_entropy(self, np.ndarray[np.npy_uint32, ndim=1] mixer,
                      np.ndarray[np.npy_uint32, ndim=1] entropy_array)
