@@ -27,6 +27,40 @@
 #include "datetime_strings.h"
 
 /*
+ * Computes the python `ret, d = divmod(d, unit)`.
+ *
+ * Note that GCC is smart enough at -O2 to eliminate the `if(*d < 0)` branch
+ * for subsequent calls to this command - it is able to deduce that `*d >= 0`.
+ */
+static inline
+npy_int64 extract_unit_64(npy_int64 *d, npy_int64 unit) {
+    assert(unit > 0);
+    npy_int64 div = *d / unit;
+    npy_int64 mod = *d % unit;
+    if (mod < 0) {
+        mod += unit;
+        div -= 1;
+    }
+    assert(mod >= 0);
+    *d = mod;
+    return div;
+}
+
+static inline
+npy_int32 extract_unit_32(npy_int32 *d, npy_int32 unit) {
+    assert(unit > 0);
+    npy_int32 div = *d / unit;
+    npy_int32 mod = *d % unit;
+    if (mod < 0) {
+        mod += unit;
+        div -= 1;
+    }
+    assert(mod >= 0);
+    *d = mod;
+    return div;
+}
+
+/*
  * Imports the PyDateTime functions so we can create these objects.
  * This is called during module initialization
  */
@@ -160,17 +194,7 @@ days_to_yearsdays(npy_int64 *days_)
     npy_int64 year;
 
     /* Break down the 400 year cycle to get the year and day within the year */
-    if (days >= 0) {
-        year = 400 * (days / days_per_400years);
-        days = days % days_per_400years;
-    }
-    else {
-        year = 400 * ((days - (days_per_400years - 1)) / days_per_400years);
-        days = days % days_per_400years;
-        if (days < 0) {
-            days += days_per_400years;
-        }
-    }
+    year = 400 * extract_unit_64(&days, days_per_400years);
 
     /* Work out the year/day within the 400 year cycle */
     if (days >= 366) {
@@ -411,26 +435,6 @@ PyArray_TimedeltaStructToTimedelta(
 }
 
 /*
- * Computes the python `ret, d = divmod(d, unit)`.
- *
- * Note that GCC is smart enough at -O2 to eliminate the `if(*d < 0)` branch
- * for subsequent calls to this command - it is able to deduce that `*d >= 0`.
- */
-static inline
-npy_int64 extract_unit(npy_datetime *d, npy_datetime unit) {
-    assert(unit > 0);
-    npy_int64 div = *d / unit;
-    npy_int64 mod = *d % unit;
-    if (mod < 0) {
-        mod += unit;
-        div -= 1;
-    }
-    assert(mod >= 0);
-    *d = mod;
-    return div;
-}
-
-/*
  * Converts a datetime based on the given metadata into a datetimestruct
  */
 NPY_NO_EXPORT int
@@ -438,7 +442,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                                     npy_datetime dt,
                                     npy_datetimestruct *out)
 {
-    npy_int64 perday;
+    npy_int64 days;
 
     /* Initialize the output to all zeros */
     memset(out, 0, sizeof(npy_datetimestruct));
@@ -473,7 +477,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
             break;
 
         case NPY_FR_M:
-            out->year  = 1970 + extract_unit(&dt, 12);
+            out->year  = 1970 + extract_unit_64(&dt, 12);
             out->month = dt + 1;
             break;
 
@@ -487,73 +491,67 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
             break;
 
         case NPY_FR_h:
-            perday = 24LL;
-
-            set_datetimestruct_days(extract_unit(&dt, perday), out);
+            days      = extract_unit_64(&dt, 24LL);
+            set_datetimestruct_days(days, out);
             out->hour = (int)dt;
             break;
 
         case NPY_FR_m:
-            perday = 24LL * 60;
-
-            set_datetimestruct_days(extract_unit(&dt, perday), out);
-            out->hour = (int)extract_unit(&dt, 60);
-            out->min = (int)dt;
+            days      =      extract_unit_64(&dt, 60LL*24);
+            set_datetimestruct_days(days, out);
+            out->hour = (int)extract_unit_64(&dt, 60LL);
+            out->min  = (int)dt;
             break;
 
         case NPY_FR_s:
-            perday = 24LL * 60 * 60;
-
-            set_datetimestruct_days(extract_unit(&dt, perday), out);
-            out->hour = (int)extract_unit(&dt, 60*60);
-            out->min  = (int)extract_unit(&dt, 60);
+            days      =      extract_unit_64(&dt, 60LL*60*24);
+            set_datetimestruct_days(days, out);
+            out->hour = (int)extract_unit_64(&dt, 60LL*60);
+            out->min  = (int)extract_unit_64(&dt, 60LL);
             out->sec  = (int)dt;
             break;
 
         case NPY_FR_ms:
-            perday = 24LL * 60 * 60 * 1000;
-
-            set_datetimestruct_days(extract_unit(&dt, perday), out);
-            out->hour = (int)extract_unit(&dt, 1000LL*60*60);
-            out->min  = (int)extract_unit(&dt, 1000LL*60);
-            out->sec  = (int)extract_unit(&dt, 1000LL);
+            days      =      extract_unit_64(&dt, 1000LL*60*60*24);
+            set_datetimestruct_days(days, out);
+            out->hour = (int)extract_unit_64(&dt, 1000LL*60*60);
+            out->min  = (int)extract_unit_64(&dt, 1000LL*60);
+            out->sec  = (int)extract_unit_64(&dt, 1000LL);
             out->us   = (int)(dt * 1000);
             break;
 
         case NPY_FR_us:
-            perday = 24LL * 60LL * 60LL * 1000LL * 1000LL;
-            set_datetimestruct_days(extract_unit(&dt, perday), out);
-            out->hour = (int)extract_unit(&dt, 1000LL*1000*60*60);
-            out->min  = (int)extract_unit(&dt, 1000LL*1000*60);
-            out->sec  = (int)extract_unit(&dt, 1000LL*1000);
+            days      =      extract_unit_64(&dt, 1000LL*1000*60*60*24);
+            set_datetimestruct_days(days, out);
+            out->hour = (int)extract_unit_64(&dt, 1000LL*1000*60*60);
+            out->min  = (int)extract_unit_64(&dt, 1000LL*1000*60);
+            out->sec  = (int)extract_unit_64(&dt, 1000LL*1000);
             out->us   = (int)dt;
             break;
 
         case NPY_FR_ns:
-            perday = 24LL * 60LL * 60LL * 1000LL * 1000LL * 1000LL;
-
-            set_datetimestruct_days(extract_unit(&dt, perday), out);
-            out->hour = (int)extract_unit(&dt, 1000LL*1000*1000*60*60);
-            out->min  = (int)extract_unit(&dt, 1000LL*1000*1000*60);
-            out->sec  = (int)extract_unit(&dt, 1000LL*1000*1000);
-            out->us   = (int)extract_unit(&dt, 1000LL);
+            days      =      extract_unit_64(&dt, 1000LL*1000*1000*60*60*24);
+            set_datetimestruct_days(days, out);
+            out->hour = (int)extract_unit_64(&dt, 1000LL*1000*1000*60*60);
+            out->min  = (int)extract_unit_64(&dt, 1000LL*1000*1000*60);
+            out->sec  = (int)extract_unit_64(&dt, 1000LL*1000*1000);
+            out->us   = (int)extract_unit_64(&dt, 1000LL);
             out->ps   = (int)(dt * 1000);
             break;
 
         case NPY_FR_ps:
-            perday = 24LL * 60 * 60 * 1000 * 1000 * 1000 * 1000;
-
-            set_datetimestruct_days(extract_unit(&dt, perday), out);
-            out->hour = (int)extract_unit(&dt, 1000LL*1000*1000*1000*60*60);
-            out->min  = (int)extract_unit(&dt, 1000LL*1000*1000*1000*60);
-            out->sec  = (int)extract_unit(&dt, 1000LL*1000*1000*1000);
-            out->us   = (int)extract_unit(&dt, 1000LL*1000);
+            days      =      extract_unit_64(&dt, 1000LL*1000*1000*1000*60*60*24);
+            set_datetimestruct_days(days, out);
+            out->hour = (int)extract_unit_64(&dt, 1000LL*1000*1000*1000*60*60);
+            out->min  = (int)extract_unit_64(&dt, 1000LL*1000*1000*1000*60);
+            out->sec  = (int)extract_unit_64(&dt, 1000LL*1000*1000*1000);
+            out->us   = (int)extract_unit_64(&dt, 1000LL*1000);
             out->ps   = (int)(dt);
             break;
 
         case NPY_FR_fs:
             /* entire range is only +- 2.6 hours */
-            out->hour = (int)extract_unit(&dt, 1000LL*1000*1000*1000*1000*60*60);
+            out->hour = (int)extract_unit_64(&dt, 1000LL*1000*1000*1000*1000*60*60);
             if (out->hour < 0) {
                 out->year  = 1969;
                 out->month = 12;
@@ -561,16 +559,16 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 out->hour  += 24;
                 assert(out->hour >= 0);
             }
-            out->min  = (int)extract_unit(&dt, 1000LL*1000*1000*1000*1000*60);
-            out->sec  = (int)extract_unit(&dt, 1000LL*1000*1000*1000*1000);
-            out->us   = (int)extract_unit(&dt, 1000LL*1000*1000);
-            out->ps   = (int)extract_unit(&dt, 1000LL);
+            out->min  = (int)extract_unit_64(&dt, 1000LL*1000*1000*1000*1000*60);
+            out->sec  = (int)extract_unit_64(&dt, 1000LL*1000*1000*1000*1000);
+            out->us   = (int)extract_unit_64(&dt, 1000LL*1000*1000);
+            out->ps   = (int)extract_unit_64(&dt, 1000LL);
             out->as   = (int)(dt * 1000);
             break;
 
         case NPY_FR_as:
             /* entire range is only +- 9.2 seconds */
-            out->sec = (int)extract_unit(&dt, 1000LL*1000*1000*1000*1000*1000);
+            out->sec = (int)extract_unit_64(&dt, 1000LL*1000*1000*1000*1000*1000);
             if (out->sec < 0) {
                 out->year  = 1969;
                 out->month = 12;
@@ -580,8 +578,8 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                 out->sec   += 60;
                 assert(out->sec >= 0);
             }
-            out->us   = (int)extract_unit(&dt, 1000LL*1000*1000*1000);
-            out->ps   = (int)extract_unit(&dt, 1000LL*1000);
+            out->us   = (int)extract_unit_64(&dt, 1000LL*1000*1000*1000);
+            out->ps   = (int)extract_unit_64(&dt, 1000LL*1000);
             out->as   = (int)dt;
             break;
 
@@ -2017,20 +2015,8 @@ add_seconds_to_datetimestruct(npy_datetimestruct *dts, int seconds)
     int minutes;
 
     dts->sec += seconds;
-    if (dts->sec < 0) {
-        minutes = dts->sec / 60;
-        dts->sec = dts->sec % 60;
-        if (dts->sec < 0) {
-            --minutes;
-            dts->sec += 60;
-        }
-        add_minutes_to_datetimestruct(dts, minutes);
-    }
-    else if (dts->sec >= 60) {
-        minutes = dts->sec / 60;
-        dts->sec = dts->sec % 60;
-        add_minutes_to_datetimestruct(dts, minutes);
-    }
+    minutes = extract_unit_32(&dts->sec, 60);
+    add_minutes_to_datetimestruct(dts, minutes);
 }
 
 /*
@@ -2042,28 +2028,13 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
 {
     int isleap;
 
-    /* MINUTES */
     dts->min += minutes;
-    while (dts->min < 0) {
-        dts->min += 60;
-        dts->hour--;
-    }
-    while (dts->min >= 60) {
-        dts->min -= 60;
-        dts->hour++;
-    }
 
-    /* HOURS */
-    while (dts->hour < 0) {
-        dts->hour += 24;
-        dts->day--;
-    }
-    while (dts->hour >= 24) {
-        dts->hour -= 24;
-        dts->day++;
-    }
+    /* propagate invalid minutes into hour and day changes */
+    dts->hour += extract_unit_32(&dts->min,  60);
+    dts->day  += extract_unit_32(&dts->hour, 24);
 
-    /* DAYS */
+    /* propagate invalid days into month and year changes */
     if (dts->day < 1) {
         dts->month--;
         if (dts->month < 1) {
@@ -2890,7 +2861,6 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
 NPY_NO_EXPORT PyObject *
 convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
 {
-    PyObject *ret = NULL;
     npy_timedelta value;
     int days = 0, seconds = 0, useconds = 0;
 
@@ -2920,54 +2890,47 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
     /* Convert to days/seconds/useconds */
     switch (meta->base) {
         case NPY_FR_W:
-            value *= 7;
+            days = value * 7;
             break;
         case NPY_FR_D:
+            days = value;
             break;
         case NPY_FR_h:
-            seconds = (int)((value % 24) * (60*60));
-            value = value / 24;
+            days = extract_unit_64(&value, 24ULL);
+            seconds = value*60*60;
             break;
         case NPY_FR_m:
-            seconds = (int)(value % (24*60)) * 60;
-            value = value / (24*60);
+            days = extract_unit_64(&value, 60ULL*24);
+            seconds = value*60;
             break;
         case NPY_FR_s:
-            seconds = (int)(value % (24*60*60));
-            value = value / (24*60*60);
+            days = extract_unit_64(&value, 60ULL*60*24);
+            seconds = value;
             break;
         case NPY_FR_ms:
-            useconds = (int)(value % 1000) * 1000;
-            value = value / 1000;
-            seconds = (int)(value % (24*60*60));
-            value = value / (24*60*60);
+            days     = extract_unit_64(&value, 1000ULL*60*60*24);
+            seconds  = extract_unit_64(&value, 1000ULL);
+            useconds = value*1000;
             break;
         case NPY_FR_us:
-            useconds = (int)(value % (1000*1000));
-            value = value / (1000*1000);
-            seconds = (int)(value % (24*60*60));
-            value = value / (24*60*60);
+            days     = extract_unit_64(&value, 1000ULL*1000*60*60*24);
+            seconds  = extract_unit_64(&value, 1000ULL*1000);
+            useconds = value;
             break;
         default:
+            // unreachable, handled by the `if` above
+            assert(NPY_FALSE);
             break;
     }
     /*
-     * 'value' represents days, and seconds/useconds are filled.
-     *
      * If it would overflow the datetime.timedelta days, return a raw int
      */
-    if (value < -999999999 || value > 999999999) {
+    if (days < -999999999 || days > 999999999) {
         return PyLong_FromLongLong(td);
     }
     else {
-        days = (int)value;
-        ret = PyDelta_FromDSU(days, seconds, useconds);
-        if (ret == NULL) {
-            return NULL;
-        }
+        return PyDelta_FromDSU(days, seconds, useconds);
     }
-
-    return ret;
 }
 
 /*
