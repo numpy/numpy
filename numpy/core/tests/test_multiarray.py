@@ -5023,6 +5023,19 @@ class TestIO(object):
             self.test_tofile_sep()
             self.test_tofile_format()
 
+    def test_fromfile_subarray_binary(self):
+        # Test subarray dtypes which are absorbed into the shape
+        x = np.arange(24, dtype="i4").reshape(2, 3, 4)
+        x.tofile(self.filename)
+        res = np.fromfile(self.filename, dtype="(3,4)i4")
+        assert_array_equal(x, res)
+
+        x_str = x.tobytes()
+        with assert_warns(DeprecationWarning):
+            # binary fromstring is deprecated
+            res = np.fromstring(x_str, dtype="(3,4)i4")
+            assert_array_equal(x, res)
+
 
 class TestFromBuffer(object):
     @pytest.mark.parametrize('byteorder', ['<', '>'])
