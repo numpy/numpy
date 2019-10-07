@@ -1942,15 +1942,18 @@ static int
         result = NumPyOS_ascii_strtod(str, endptr);
 
         if (endptr && *endptr[0] == 'j') {
+            // Read is successful if the immediate following char is j
             output.imag = result;
+
+            // Skip j
+            ++*endptr;
         }
         else {
+            // Set endptr to previous char to trigger the not everything is
+            // read error
             endptr = prev;
             output.imag = 0;
         }
-
-        // Skip j
-        ++*endptr;
     }
     else if (endptr && *endptr[0] == 'j') {
         // Real component not specified
