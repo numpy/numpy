@@ -130,6 +130,10 @@ GitHub workflow. There are a few reasons for this:
   rather than breakages happening when it is least expected.
   In simple terms, bugs in ``unumpy`` mean that ``numpy`` remains
   unaffected.
+* For ``numpy.fft``, ``numpy.linalg`` and ``numpy.random``, the functions in
+  the main namespace will mirror those in the ``numpy.overridable`` namespace.
+  The reason for this is that there may exist functions in the in these
+  submodules that need backends, even for ``numpy.ndarray`` inputs.
 
 Advantanges of ``unumpy`` over other solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -156,7 +160,12 @@ allows one to override a large part of the NumPy API by defining only a small
 part of it. This is to ease the creation of new duck-arrays, by providing
 default implementations of many functions that can be easily expressed in
 terms of others, as well as a repository of utility functions that help in the
-implementation of duck-arrays that most duck-arrays would require.
+implementation of duck-arrays that most duck-arrays would require. This would
+allow us to avoid designing entire protocols, e.g., a protocol for stacking
+and concatenating would be replaced by simply implementing ``stack`` and/or
+``concatenate`` and then providing default implementations for everything else
+in that class. The same applies for transposing, and many other functions
+which cannot even be concretely covered by protocols.
 
 It also allows one to override functions in a manner which
 ``__array_function__`` simply cannot, such as overriding ``np.einsum`` with the
@@ -211,6 +220,94 @@ If the user wishes to obtain a NumPy array, there are two ways of doing it:
 2. Use ``numpy.overridable.asarray`` with the NumPy backend set and coercion
    enabled
 
+Aliases outside of the ``numpy.overridable`` namespace
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All functionality in ``numpy.random``, ``numpy.linalg`` and ``numpy.fft``
+will be aliased to their respective overridable versions inside
+``numpy.overridable``. The reason for this is that there are alternative
+implementations of RNGs (``mkl-random``), linear algebra routines (``eigen``,
+``blis``) and FFT routines (``mkl-fft``, ``pyFFTW``) that need to operate on
+``numpy.ndarray`` inputs, but still need the ability to switch behaviour.
+
+This is different from monkeypatching in a few different ways:
+
+* The caller-facing signature of the function is always the same,
+  so there is at least the loose sense of an API contract. Monkeypatching
+  does not provide this ability.
+* There is the ability of locally switching the backend.
+* It has been `suggested <http://numpy-discussion.10968.n7.nabble.com/NEP-31-Context-local-and-global-overrides-of-the-NumPy-API-tp47452p47472.html>`_
+  that the reason that 1.17 hasn't landed in the Anaconda defaults channel is
+  due to the incompatibility between monkeypatching and `__array_function__`.
+
+All this isn't possible at all with ``__array_function__`` or
+``__array_ufunc__``.
+
+It has been formally realised (at least in part) that a backend system is
+needed for this, in the `NumPy roadmap <https://numpy.org/neps/roadmap.html#other-functionality>`_.
+
+For ``numpy.random``, it's still necessary to make the C-API fit the one
+proposed in `NEP-19 <https://numpy.org/neps/nep-0019-rng-policy.html>`_.
+This is impossible for `mkl-random`, because then it would need to be
+rewritten to fit that framework. The general guarantees on stream
+compatibility will be the same as before: If there's a backend that affects
+``numpy.random`` set, we make no guarantees about stream compatibility, and it
+is up to the backend author to provide their own guarantees.
+
+Providing a way for implicit dispatch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It has been suggested that the ability to dispatch methods which do not take
+a dispatchable is needed, while guessing that backend from another dispatchable.
+
+As a concrete example, consider the following:
+
+.. code:: python
+
+    with unumpy.determine_backend(array_like, np.ndarray):
+        unumpy.arange(len(array_like))
+
+While this does not exist yet in ``uarray``, it is trivial to add it. The
+answer is to simply call ``__ua_convert__`` on the passed-in array with
+``coerce=False`` for each backend, and comparing the result to
+``NotImplemented``.
+
+The need for an opt-in module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The need for an opt-in module is realised because of a few reasons:
+
+* There are parts of the API (like `numpy.asarray`) that simply cannot be
+  overridden due to incompatibility concerns with C/Cython extensions, however,
+  one may want to coerce to a duck-array using ``asarray`` with a backend set.
+* There are possible issues around an implicit option and monkeypatching.
+
+NEP 18 notes that this may require maintenance of two separate APIs. However,
+this burden may be lessened by, for example, parametrizing all tests over
+``numpy.overridable`` separately via a fixture. This also has the side-effect
+of thoroughly testing it, unlike ``__array_function__``. We also feel that it
+provides an oppurtunity to separate the NumPy API contract properly from the
+implementation.
+
+Benefits to end-users and mixing backends
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Mixing backends is easy in ``uarray``, one only has to do:
+
+.. code:: python
+
+    # Explicitly say which backends you want to mix
+    ua.register_backend(backend1)
+    ua.register_backend(backend2)
+    ua.register_backend(backend3)
+
+    # Freely use code that mixes backends here.
+
+The benefits to end-users extend beyond just writing new code. Old code
+(usually in the form of scripts) can be easily ported to different backends
+by a simple import switch and a line adding the preferred backend. This way,
+users may find it easier to port existing code to GPU or distributed computing.
+
 Related Work
 ------------
 
@@ -244,6 +341,14 @@ Existing alternate dtype implementations
 * ``ndtypes``: https://ndtypes.readthedocs.io/en/latest/
 * Datashape: https://datashape.readthedocs.io
 * Plum: https://plum-py.readthedocs.io/
+
+Alternate implementations of parts of the NumPy API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* ``mkl_random``: https://github.com/IntelPython/mkl_random
+* ``mkl_fft``: https://github.com/IntelPython/mkl_fft
+* ``bottleneck``: https://github.com/pydata/bottleneck
+* ``opt_einsum``: https://github.com/dgasmith/opt_einsum
 
 Implementation
 --------------
@@ -419,6 +524,12 @@ develop it as a NumPy project. This will also achieve the said goals, and is
 also a possibility that can be considered by this NEP. However, the act of
 doing an extra ``pip install`` or ``conda install`` may discourage some users
 from adopting this method.
+
+An alternative to requiring opt-in is mainly to *not* override ``np.asarray``
+and ``np.array``, and making the rest of the NumPy API surface overridable,
+instead providing ``np.duckarray`` and ``np.asduckarray``
+as duck-array friendly alternatives that used the respective overrides. However,
+this has the downside of adding a minor overhead to NumPy calls.
 
 Discussion
 ----------
