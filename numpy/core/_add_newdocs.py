@@ -1036,10 +1036,8 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         A string containing the data.
     dtype : data-type, optional
         The data type of the array; default: float.  For binary input data,
-        the data must be in exactly this format.  Supported dtypes are
-        byte, ubyte, short, ushort, int, uint, long, ulong, longlong, ulonglong,
-        datetime, timedelta, float, double, longdouble, half, bool, 
-        cfloat, and cdouble.
+        the data must be in exactly this format. Most builtin numeric types are 
+        supported and extension types may be supported.
 
         Complex dtypes are only supported since numpy 1.18.0
     count : int, optional

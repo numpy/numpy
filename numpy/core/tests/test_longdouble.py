@@ -95,6 +95,12 @@ def test_fromstring_complex():
         with assert_warns(DeprecationWarning):
             assert_equal(np.fromstring("1+j", dtype=ctype, sep=","),
                          np.array([1.]))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.fromstring("1+", dtype=ctype, sep=","),
+                         np.array([1.]))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.fromstring("1j+1", dtype=ctype, sep=","),
+                         np.array([1j]))
 
 
 
