@@ -2,6 +2,8 @@ from __future__ import division, absolute_import, print_function
 
 from decimal import Decimal
 
+import pytest
+
 import numpy as np
 from numpy.testing import (
     assert_, assert_almost_equal, assert_allclose, assert_equal, assert_raises
@@ -345,19 +347,23 @@ class TestFinancial(object):
                             [Decimal('-74.998201'), Decimal('-75.62318601'), Decimal('-75.62318601'),
                              Decimal('-76.88882405'), Decimal('-76.88882405')], 4)
         
-    def test_rate_nan(self):
-        # Test the inputs whose outcome is nan
-        rate = np.rate(Decimal(12.0), Decimal('400.0'), Decimal('10000.0'), Decimal(0))
+    # Test for checking inputs whose output is NaN
+    @pytest.mark.parametrize('number_type', [Decimal, float])
+    def test_rate_nan(number_type):
+        # Rate will return NaN, if newton raphson method's change or diff was not able to become less than default tolerance value i.e. 1e-6 in max iterations possible,    
+        rate = np.rate(number_type(12.0), number_type('400.0'), number_type('10000.0'), number_type(0))
         assert_equal(np.nan, float(rate))
-        rate = np.rate(Decimal(12.0), Decimal('-400.0'), Decimal('10000.0'), Decimal(20000))
+        rate = np.rate(number_type(12.0), number_type('-400.0'), number_type('10000.0'), number_type(20000))
         assert_equal(np.nan, float(rate))
+        
         # begin
-        rate = np.rate(Decimal(12.0), Decimal('400.0'), Decimal('10000.0'), Decimal(20000), 1)
+        rate = np.rate(number_type(12.0), number_type('400.0'), number_type('10000.0'), number_type(20000), 1)
         assert_equal(np.nan, float(rate))
-        rate = np.rate(Decimal(12.0), Decimal('400.0'), Decimal('10000.0'), Decimal(20000), 'begin')
+        rate = np.rate(number_type(12.0), number_type('400.0'), number_type('10000.0'), number_type(20000), 'begin')
         assert_equal(np.nan, float(rate))
         # end
-        rate = np.rate(Decimal(12.0), Decimal('400.0'), Decimal('10000.0'), Decimal(0))
+        
+        rate = np.rate(number_type(12.0), number_type('400.0'), number_type('10000.0'), number_type(0))
         assert_equal(np.nan, float(rate))
-        rate = np.rate(Decimal(12.0), Decimal('400.0'), Decimal('10000.0'), Decimal(0), 'end')
-        assert_equal(np.nan, float(rate)) 
+        rate = np.rate(number_type(12.0), number_type('400.0'), number_type('10000.0'), number_type(0), 'end')
+        assert_equal(np.nan, float(rate))  
