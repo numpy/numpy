@@ -349,8 +349,9 @@ class TestFinancial(object):
         
     # Test for checking inputs whose output is NaN
     @pytest.mark.parametrize('number_type', [Decimal, float])
-    def test_rate_nan(number_type):
-        # Rate will return NaN, if newton raphson method's change or diff was not able to become less than default tolerance value i.e. 1e-6 in max iterations possible,    
+    def test_rate_nan(self, number_type):
+        # Rate will return NaN, if newton raphson method's change or diff was not able to become
+        # less than default tolerance value i.e. 1e-6 in max iterations possible,
         rate = np.rate(number_type(12.0), number_type('400.0'), number_type('10000.0'), number_type(0))
         assert_equal(np.nan, float(rate))
         rate = np.rate(number_type(12.0), number_type('-400.0'), number_type('10000.0'), number_type(20000))
