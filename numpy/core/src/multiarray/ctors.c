@@ -3999,6 +3999,11 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
                 return NULL;
             }
         }
+        /*
+         * NewFromDescr may replace dtype to absorb subarray shape
+         * into the array, so get size beforehand.
+         */
+        npy_intp size_to_copy = num*dtype->elsize;
         ret = (PyArrayObject *)
             PyArray_NewFromDescr(&PyArray_Type, dtype,
                                  1, &num, NULL, NULL,
@@ -4006,7 +4011,7 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
         if (ret == NULL) {
             return NULL;
         }
-        memcpy(PyArray_DATA(ret), data, num*dtype->elsize);
+        memcpy(PyArray_DATA(ret), data, size_to_copy);
     }
     else {
         /* read from character-based string */
