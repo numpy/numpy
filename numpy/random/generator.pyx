@@ -3827,7 +3827,7 @@ cdef class Generator:
     # Shuffling and permutations:
     def shuffle(self, object x, axis=0):
         """
-        shuffle(x)
+        shuffle(x, axis=0)
 
         Modify a sequence in-place by shuffling its contents.
 
@@ -3899,7 +3899,7 @@ cdef class Generator:
             x = np.swapaxes(x, 0, axis)
             buf = np.empty_like(x[0, ...])
             with self.lock:
-                for i in reversed(range(1, n)):
+                for i in reversed(range(1, len(x))):
                     j = random_interval(&self._bitgen, i)
                     if i == j:
                         # i == j is not needed and memcpy is undefined.
@@ -3969,7 +3969,7 @@ cdef class Generator:
 
     def permutation(self, object x, axis=0):
         """
-        permutation(x)
+        permutation(x, axis=0)
 
         Randomly permute a sequence, or return a permuted range.
 
