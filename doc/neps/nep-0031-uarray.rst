@@ -366,8 +366,23 @@ The implementation of this NEP will require the following steps:
 
 * Implementation of ``uarray`` multimethods corresponding to the
   NumPy API, including classes for overriding ``dtype``, ``ufunc``
-  and ``array`` objects, in the ``unumpy`` repository.
+  and ``array`` objects, in the ``unumpy`` repository, which are usually
+  very easy to create.
 * Moving backends from ``unumpy`` into the respective array libraries.
+
+Maintenance can be eased by testing over ``{numpy, unumpy}`` via parameterized
+tests. If a new argument is added to a method, the corresponding argument
+extractor and replacer will need to be updated within ``unumpy``.
+
+A lot of argument extractors can be re-used from the existing implementation
+of the ``__array_function__`` protocol, and the replacers can be usually
+re-used across many methods.
+
+For the parts of the namespace which are going to be overridable by default,
+the main method will need to be renamed and hidden behind a ``uarray`` multimethod.
+
+Default implementations are usually seen in the documentation using the words
+"equivalent to", and thus, are easily available.
 
 ``uarray`` Primer
 ~~~~~~~~~~~~~~~~~
