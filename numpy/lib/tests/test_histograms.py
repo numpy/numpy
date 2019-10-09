@@ -7,6 +7,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose,
     assert_array_max_ulp, assert_raises_regex, suppress_warnings,
+    assert_array_less
     )
 
 
@@ -421,6 +422,24 @@ class TestHistogram(object):
         hist, e = histogram(arr, bins='auto', range=(0, 1))
         edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
+
+    def test_obeys_fast_kwarg(self):
+        np.set_printoptions(precision=100)
+        inp_edges = np.linspace(1, 2, num=11)
+        # Peturb all of the bins, except for the endpoints by eps
+        inp_edges[1:-1] += np.finfo(inp_edges.dtype).eps
+
+        _, ret_edges = histogram([], inp_edges)
+        assert_array_equal(inp_edges, ret_edges)
+
+        _, ret_edges = histogram([], inp_edges, fast=True)
+        assert_array_almost_equal(inp_edges, ret_edges)
+        assert_array_less(ret_edges[1:-1], inp_edges[1:-1])
+
+        # If peturbed by more than numerical precision, don't use the fast algo
+        inp_edges[1:-1] += np.finfo(inp_edges.dtype).eps
+        _, ret_edges = histogram([], inp_edges, fast=True)
+        assert_array_equal(inp_edges, ret_edges)
 
 
 class TestHistogramOptimBinNums(object):
