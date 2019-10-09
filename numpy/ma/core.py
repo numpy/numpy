@@ -5410,6 +5410,15 @@ class MaskedArray(ndarray):
 
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
+        is_float16_result = False
+
+        # Cast bool, unsigned int, and int to float64 by default
+        if dtype is None:
+            if issubclass(self.dtype.type, (ntypes.integer, ntypes.bool_)):
+                dtype = np.float64
+            else:
+                dtype = self.dtype
+
         if self._mask is nomask:
             result = super().mean(axis=axis, dtype=dtype, **kwargs)[()]
         else:
@@ -5427,7 +5436,11 @@ class MaskedArray(ndarray):
             elif is_float16_result:
                 result = self.dtype.type(dsum * 1. / cnt)
             else:
-                result = dsum * 1. / cnt
+                result = true_divide(dsum, cnt, dtype=dtype)
+
+        if is_float16_result and out is None:
+            result = result.astype(np.float16)
+
         if out is not None:
             out.flat = result
             if isinstance(out, MaskedArray):
@@ -5496,6 +5509,15 @@ class MaskedArray(ndarray):
         if keepdims is not np._NoValue:
             kwargs['keepdims'] = keepdims
 
+        is_float16_result = False
+
+        # Cast bool, unsigned int, and int to float64 by default
+        if dtype is None:
+            if issubclass(self.dtype.type, (ntypes.integer, ntypes.bool_)):
+                dtype = np.float64
+            else:
+                dtype = self.dtype
+
         # Easy case: nomask, business as usual
         if self._mask is nomask:
 
@@ -5508,6 +5530,8 @@ class MaskedArray(ndarray):
                 if isinstance(out, MaskedArray):
                     out.__setmask__(nomask)
                 return out
+            if is_float16_result:
+                ret = ret.astype(np.float16)
             return ret
 
         # Some data are masked, yay!
@@ -5516,13 +5540,16 @@ class MaskedArray(ndarray):
         if mean is not np._NoValue:
             danom = self - mean
         else:
-            danom = self - self.mean(axis, dtype, keepdims=True)
+            danom = self - self.mean(axis, dtype=dtype, keepdims=True)
 
         if iscomplexobj(self):
             danom = umath.absolute(danom) ** 2
         else:
             danom *= danom
-        dvar = divide(danom.sum(axis, **kwargs), cnt).view(type(self))
+
+        dsum = danom.sum(axis, **kwargs)
+        dvar = true_divide(dsum, cnt, dtype=dtype)
+
         # Apply the mask if it's not a scalar
         if dvar.ndim:
             dvar._mask = mask_or(self._mask.all(axis, **kwargs), (cnt <= 0))

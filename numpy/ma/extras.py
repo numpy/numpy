@@ -512,6 +512,13 @@ def average(a, axis=None, weights=None, returned=False, *,
     """
     Return the weighted average of array over the given axis.
 
+    .. versionchanged:: 2.5.1
+
+    If `weights` is not `None`, masked values are treated as 0 for the
+    weighted sum, but as `np.nan` for the scaling operation. The resulting
+    average has an adjusted mask to mask all values which are not calculated
+    using any unmasked values.
+
     Parameters
     ----------
     a : array_like
@@ -538,6 +545,11 @@ def average(a, axis=None, weights=None, returned=False, *,
         where the sum is over all included elements.
         The only constraint on the values of `weights` is that `sum(weights)`
         must not be 0.
+
+        .. versionchanged:: 2.5.1
+
+        If `weights` is a masked array, entries masked by either the mask of `a`
+        or the mask of `weights` are not taken into account in the computation.
     returned : bool, optional
         Flag indicating whether a tuple ``(result, sum of weights)``
         should be returned as output (True), or just the result (False).
@@ -554,12 +566,25 @@ def average(a, axis=None, weights=None, returned=False, *,
     Returns
     -------
     average, [sum_of_weights] : (tuple of) scalar or MaskedArray
-        The average along the specified axis. When returned is `True`,
+        The average along the specified axis. When `returned` is `True`,
         return a tuple with the average as the first element and the sum
-        of the weights as the second element. The return type is `np.float64`
-        if `a` is of integer type and floats smaller than `float64`, or the
-        input data-type, otherwise. If returned, `sum_of_weights` is always
-        `float64`.
+        of the weights as the second element. `sum_of_weights` is of the
+        same type as `average`. The result dtype follows a general pattern.
+        If `weights` is None, the result dtype will be that of `a` , or
+        ``float64`` if `a` is integral. Otherwise, if `weights` is not None
+        and `a` is non-integral, the result type will be the type of lowest
+        precision capable of representing values of both `a` and `weights`.
+        If `a` happens to be integral, the previous rule still applies but
+        the result dtype will at least be ``float64``.
+
+    See Also
+    --------
+    mean
+
+    numpy.average
+    numpy.result_type : Returns the type that results from applying the
+                        numpy type promotion rules to the arguments.
+
 
     Raises
     ------
@@ -619,6 +644,32 @@ def average(a, axis=None, weights=None, returned=False, *,
             [4.5]],
       mask=False,
       fill_value=1e+20)
+
+    The weights can also be a MaskedArray and even affect the result type.
+
+    >>> a = np.ma.MaskedArray(np.ones(5, dtype=np.float128))
+    >>> w = np.ma.MaskedArray(np.ones(5, dtype=np.complex64))
+    >>> np.ma.average(a, weights=w).dtype
+    dtype('complex256')
+
+    >>> a = np.ma.MaskedArray([np.arange(1, 6), np.arange(1, 6)])
+    >>> w = np.ma.MaskedArray([np.arange(1, 6), np.arange(1, 6)],
+    ...                       [[True, True, True, True, True],
+    ...                        [False, True, False, False, False]])
+    >>> np.ma.average(a, weights=w)  # scalar, no mask
+    3.923076923076923
+    >>> np.ma.average(a, axis=0, weights=w).mask
+    array([False,  True, False, False, False])
+    >>> np.ma.average(a, axis=1, weights=w).mask
+    array([ True, False])
+
+    >>> x = np.ma.masked_array([[1, 2]], mask=[[0, 1]])
+    >>> w = np.ma.masked_array([[0, 0]], mask=[[0, 0]])
+    >>> np.ma.average(x, weights=w, axis=1)
+    masked_array(data=[--],
+                 mask=[ True],
+           fill_value=1e+20,
+                dtype=float64)
     """
     a = asarray(a)
     m = getmask(a)
@@ -636,7 +687,8 @@ def average(a, axis=None, weights=None, returned=False, *,
         avg = a.mean(axis, **keepdims_kw)
         scl = avg.dtype.type(a.count(axis))
     else:
-        wgt = asarray(weights)
+        wgt = np.asanyarray(weights)
+        mw = getmask(weights)
 
         if issubclass(a.dtype.type, (np.integer, np.bool)):
             result_dtype = np.result_type(a.dtype, wgt.dtype, 'f8')
@@ -659,18 +711,45 @@ def average(a, axis=None, weights=None, returned=False, *,
             wgt = wgt.reshape(tuple((s if ax in axis else 1)
                                     for ax, s in enumerate(a.shape)))
 
-        if m is not nomask:
-            wgt = wgt * (~a.mask)
-            wgt.mask |= a.mask
+            # if one of the masks is not given, create it
+            if m is nomask:
+                m = np.zeros_like(a, dtype=np.bool)
+            if mw is nomask:
+                mw = np.zeros_like(m, dtype=np.bool)
+            elif mw.shape != m.shape:
+                # broadcast weight mask to the same shape as the array mask
+                mw = np.broadcast_to(mw, (m.ndim - 1) * (1,) + mw.shape)
+                mw = mw.swapaxes(-1, *axis)
+
+        avg_mask = nomask
+        if m is not nomask or mw is not nomask:
+            # set masked values to 0
+            unmask = ~(m | mw)
+            wgt = np.where(unmask, wgt, 0)
+            a = np.where(unmask, a, 0)
+
+            avg_mask = np.multiply(~m, ~mw, dtype=np.bool)
+            avg_mask = avg_mask.sum(axis=axis, dtype=np.bool, **keepdims_kw)
+            avg_mask = ~avg_mask
 
         scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
-        avg = np.multiply(a, wgt,
-                          dtype=result_dtype).sum(axis, **keepdims_kw) / scl
+        prod = np.multiply(a, wgt, dtype=result_dtype)
+        # Ignore warnings about DIV0 and similar errors, as they will be masked out.
+        # (see https://github.com/numpy/numpy/pull/14668#issuecomment-571094813)
+        with np.errstate(invalid='ignore'):
+            avg = np.true_divide(prod.sum(axis=axis, dtype=result_dtype, **keepdims_kw),
+                                 scl, dtype=result_dtype)
+
+        # for non-scalars, return a masked array with the new mask
+        if avg_mask is not nomask:
+            # backwards-compatibility: mask nan-values
+            avg_mask = np.where(np.isnan(avg), True, avg_mask)
+            avg = MaskedArray(avg, avg_mask, dtype=result_dtype)
 
     if returned:
         if scl.shape != avg.shape:
             scl = np.broadcast_to(scl, avg.shape).copy()
-        return avg, scl
+        return avg, scl.astype(avg.dtype)
     else:
         return avg
 
