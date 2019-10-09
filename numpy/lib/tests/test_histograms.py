@@ -424,7 +424,6 @@ class TestHistogram(object):
         assert_array_equal(edges, e)
 
     def test_obeys_fast_kwarg(self):
-        np.set_printoptions(precision=100)
         inp_edges = np.linspace(1, 2, num=11)
         # Peturb all of the bins, except for the endpoints by eps
         inp_edges[1:-1] += np.finfo(inp_edges.dtype).eps

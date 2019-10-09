@@ -449,7 +449,13 @@ def _get_bin_edges(a, bins, range, weights, fast):
         return bin_edges, None
 
 def _bins_are_equally_spaced(bin_edges, fast):
-    equally_spaced_bins = np.linspace(bin_edges[0], bin_edges[-1], num=len(bin_edges))
+    # Some valid bin types can't be generated using linspace (e.g. datetime, timedelta)
+    # Bins are also not equally spaced if a RuntimeWarning is thrown because of nans/inf
+    try:
+        equally_spaced_bins = np.linspace(bin_edges[0], bin_edges[-1], num=len(bin_edges))
+    except (TypeError, DeprecationWarning, RuntimeWarning):
+        return False
+
     try:
         resolution = np.finfo(bin_edges.dtype).eps
     except ValueError:
