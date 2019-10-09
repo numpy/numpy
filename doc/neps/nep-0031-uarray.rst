@@ -114,7 +114,8 @@ Proposals
 ~~~~~~~~~
 
 The only change this NEP proposes at its acceptance, is to make ``unumpy`` the
-officially recommended way to override NumPy. ``unumpy`` will remain a separate
+officially recommended way to override NumPy, along with making some submodules
+overridable by default via ``uarray``. ``unumpy`` will remain a separate
 repository/package (which we propose to vendor to avoid a hard dependency, and
 use the separate ``unumpy`` package only if it is installed, rather than depend
 on for the time being). In concrete terms, ``numpy.overridable`` becomes an
@@ -164,8 +165,9 @@ implementation of duck-arrays that most duck-arrays would require. This would
 allow us to avoid designing entire protocols, e.g., a protocol for stacking
 and concatenating would be replaced by simply implementing ``stack`` and/or
 ``concatenate`` and then providing default implementations for everything else
-in that class. The same applies for transposing, and many other functions
-which cannot even be concretely covered by protocols.
+in that class. The same applies for transposing, and many other functions for
+which protocols haven't been proposed, such as ``isin`` in terms of ``in1d``,
+``setdiff1d`` in terms of ``unique``, and so on.
 
 It also allows one to override functions in a manner which
 ``__array_function__`` simply cannot, such as overriding ``np.einsum`` with the
@@ -238,7 +240,11 @@ This is different from monkeypatching in a few different ways:
 * There is the ability of locally switching the backend.
 * It has been `suggested <http://numpy-discussion.10968.n7.nabble.com/NEP-31-Context-local-and-global-overrides-of-the-NumPy-API-tp47452p47472.html>`_
   that the reason that 1.17 hasn't landed in the Anaconda defaults channel is
-  due to the incompatibility between monkeypatching and `__array_function__`.
+  due to the incompatibility between monkeypatching and ``__array_function__``,
+  as monkeypatching would bypass the protocol completely.
+* Statements of the form ``from numpy import x; x`` and ``np.x`` would have
+  different results depending on whether the import was made before or
+  after monkeypatching happened.
 
 All this isn't possible at all with ``__array_function__`` or
 ``__array_ufunc__``.
@@ -249,8 +255,8 @@ needed for this, in the `NumPy roadmap <https://numpy.org/neps/roadmap.html#othe
 For ``numpy.random``, it's still necessary to make the C-API fit the one
 proposed in `NEP-19 <https://numpy.org/neps/nep-0019-rng-policy.html>`_.
 This is impossible for `mkl-random`, because then it would need to be
-rewritten to fit that framework. The general guarantees on stream
-compatibility will be the same as before: If there's a backend that affects
+rewritten to fit that framework. The guarantees on stream
+compatibility will be the same as before, but if there's a backend that affects
 ``numpy.random`` set, we make no guarantees about stream compatibility, and it
 is up to the backend author to provide their own guarantees.
 
@@ -267,10 +273,12 @@ As a concrete example, consider the following:
     with unumpy.determine_backend(array_like, np.ndarray):
         unumpy.arange(len(array_like))
 
-While this does not exist yet in ``uarray``, it is trivial to add it. The
-answer is to simply call ``__ua_convert__`` on the passed-in array with
-``coerce=False`` for each backend, and comparing the result to
-``NotImplemented``.
+While this does not exist yet in ``uarray``, it is trivial to add it. The need for
+this kind of code exists because one might want to have an alternative for the
+proposed ``*_like`` functions, or the ``like=`` keyword argument. The need for these
+exists because there are functions in the NumPy API that do not take a dispatchable
+argument, but there is still the need to select a backend based on a different
+dispatchable.
 
 The need for an opt-in module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -280,7 +288,8 @@ The need for an opt-in module is realised because of a few reasons:
 * There are parts of the API (like `numpy.asarray`) that simply cannot be
   overridden due to incompatibility concerns with C/Cython extensions, however,
   one may want to coerce to a duck-array using ``asarray`` with a backend set.
-* There are possible issues around an implicit option and monkeypatching.
+* There are possible issues around an implicit option and monkeypatching, such
+  as those mentioned above.
 
 NEP 18 notes that this may require maintenance of two separate APIs. However,
 this burden may be lessened by, for example, parametrizing all tests over
