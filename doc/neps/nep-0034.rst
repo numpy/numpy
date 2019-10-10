@@ -1,0 +1,87 @@
+==========================================
+NEP 34 — Disallow default ``dtype=object``
+==========================================
+
+:Author: Matti Picus
+:Status: Draft
+:Type: Standards Track
+:Created: 2019-10-10
+
+
+Abstract
+--------
+
+``np.array([<value])`` with no ``dtype`` keyword argument will sometimes
+default to an ``object``-dtype array. Change the behaviour to raise a
+`ValueError` instead.
+
+Motivation and Scope
+--------------------
+
+Users who specify lists-of-lists when creating a `numpy.ndarray` via
+``np.array`` may mistakenly pass in lists of different lengths. Currently we
+accept this input and create a ragged array with ``dtype=object``. This can be
+confusing, since it is rarely what is desired. Changing the default dtype
+detection to never return ``object`` will force users who actually wish to
+create ``object`` arrays to specify that explicitly, see for instance `issue
+5303`_.
+
+Detailed description
+--------------------
+
+After this change, ragged array creation must explicitly define a dtype:
+
+    a = np.array([1, 2], [1])
+    ValueError: cannot guess the desired dtype from the input
+
+    a = np.array([1, 2], [1], dtype=object)
+    print(a.dtype)
+    object
+
+Related Work
+------------
+
+`PR 14341`_ tried to raise an error when ragged arrays were specified with
+a numeric dtype ``np.array, [[1], [2, 3]], dtype=int)`` but failed due to
+false-postives, for instance ``np.array([1, np.array([5])], dtype=int)``.
+
+.. _`PR 14341`: https://github.com/numpy/numpy/pull/14341
+
+Implementation
+--------------
+
+The code to be changed is inside ``PyArray_DTypeFromObject``, specifically in
+``PyArray_DTypeFromObjectHelper``. Since ``PyArray_DTypeFromObject`` is part of
+the NumPy C-API, its interface cannot be changed, but it can return ``-1`` to
+indicate failure.
+
+Backward compatibility
+----------------------
+
+Anyone depending on ragged lists-of-lists creating object arrays will need to
+modify their code. There will be a deprecation period during which the current
+behaviour will emit a ``DeprecationWarning``
+
+
+Alternatives
+------------
+
+We could continue with the current situation.
+
+Discussion
+----------
+
+Comments to `issue 5303`_ indicate this is unintended behaviour as far back as
+2014. Suggestions to change it have been made in the ensuing years, but none
+have stuck.
+
+References and Footnotes
+------------------------
+
+.. _`issue 5303`: https://github.com/numpy/numpy/issues/5303
+
+
+Copyright
+---------
+
+This document has been placed in the public domain.
