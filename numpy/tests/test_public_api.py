@@ -177,6 +177,7 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "polynomial.polyutils",
     "random",
     "testing",
+    "this",
     "version",
 ]]
 
