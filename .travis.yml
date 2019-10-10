@@ -30,7 +30,6 @@ env:
                ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
 
 python:
-  - 3.5
   - 3.6
   - 3.7
   - 3.8-dev
@@ -62,7 +61,7 @@ matrix:
        - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas
        - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
        - USE_ASV=1
-    - python: 3.5
+    - python: 3.6
       env: NPY_RELAXED_STRIDES_CHECKING=0
     - python: 3.6
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1

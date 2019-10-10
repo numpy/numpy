@@ -134,11 +134,6 @@ jobs:
           PYTHON_ARCH: 'x86'
           TEST_MODE: fast
           BITS: 32
-        Python35-64bit-full:
-          PYTHON_VERSION: '3.5'
-          PYTHON_ARCH: 'x64'
-          TEST_MODE: full
-          BITS: 64
         Python36-64bit-full:
           PYTHON_VERSION: '3.6'
           PYTHON_ARCH: 'x64'
