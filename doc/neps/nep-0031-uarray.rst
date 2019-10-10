@@ -42,7 +42,36 @@ discussed in the references, and this NEP will not attempt to go into the
 details of why these are needed; but in short: It is necessary for library
 authors to be able to coerce arbitrary objects into arrays of their own types,
 such as CuPy needing to coerce to a CuPy array, for example, instead of
-a NumPy array.
+a NumPy array. In simpler words, one needs things like ``np.asarray(...)`` or
+an alternative to "just work" and return duck-arrays.
+
+The primary end-goal of this NEP is to make the following possible:
+
+.. code:: python
+
+    # On the library side
+    import numpy.overridable as unp
+
+    def library_function(array):
+        array = unp.asarray(array)
+        # Code using unumpy as usual
+        return array
+
+    # On the user side:
+    import numpy.overridable as unp
+    import uarray as ua
+    import dask.array as da
+
+    ua.register_backend(da) # Can be done within Dask itself
+
+    library_function(dask_array)  # works and returns dask_array
+
+    with unp.set_backend(da):
+        library_function([1, 2, 3, 4])  # actually returns a Dask array.
+
+Here, ``backend`` can be any compatible object defined either by NumPy or an
+external library, such as Dask or CuPy. Ideally, it should be the module
+``dask.array`` or ``cupy`` itself.
 
 These kinds of overrides are useful for both the end-user as well as library
 authors. End-users may have written or wish to write code that they then later
@@ -72,32 +101,40 @@ Detailed description
 Using overrides
 ~~~~~~~~~~~~~~~
 
-The way we propose the overrides will be used by end users is::
+Here are a few examples of how an end-user would use overrides.
 
-    # On the library side
-    import numpy.overridable as unp
+.. code:: python
 
-    def library_function(array):
-        array = unp.asarray(array)
-        # Code using unumpy as usual
-        return array
+    data = da.from_zarr('myfile.zarr')
+    # result should still be dask, all things being equal
+    result = library_function(data)
+    result.to_zarr('output.zarr')
 
-    # On the user side:
-    import numpy.overridable as unp
-    import uarray as ua
-    import dask.array as da
+This would keep on working, assuming the Dask backend was either set or
+registered. Registration can also be done at import-time.
 
-    ua.register_backend(da)
+Now consider another function, and what would need to happen in order to
+make this work:
 
-    library_function(dask_array)  # works and returns dask_array
+.. code:: python
 
-    with unp.set_backend(da):
-        library_function([1, 2, 3, 4])  # actually returns a Dask array.
+    from dask import array as da
+    from magic_library import pytorch_predict
 
+    data = da.from_zarr('myfile.zarr')
+    # normally here one would use e.g. data.map_overlap
+    result = pytorch_predict(data)
+    result.to_zarr('output.zarr')
 
-Here, ``backend`` can be any compatible object defined either by NumPy or an
-external library, such as Dask or CuPy. Ideally, it should be the module
-``dask.array`` or ``cupy`` itself.
+This would work in two scenarios: The first is that ``pytorch_predict`` was a
+multimethod, and implemented by the Dask backend. Dask could provide utility
+functions to allow external libraries to register implementations.
+
+The second, and perhaps more useful way, is that ``pytorch_predict`` was defined
+in an idiomatic style true to NumPy in terms of other multimethods, and that Dask
+implemented the required multimethods itself, e.g. ``np.convolve``. If this
+happened, then the above example would work without either ``magic_library``
+or Dask having to do anything specific to the other.
 
 Composing backends
 ~~~~~~~~~~~~~~~~~~
