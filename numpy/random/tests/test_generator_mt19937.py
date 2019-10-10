@@ -746,6 +746,15 @@ class TestRandomDist(object):
         random.shuffle(actual, axis=-1)
         assert_array_equal(actual, desired)
 
+    def test_shuffle_axis_nonsquare(self):
+        y1 = np.arange(20).reshape(2, 10)
+        y2 = y1.copy()
+        random = Generator(MT19937(self.seed))
+        random.shuffle(y1, axis=1)
+        random = Generator(MT19937(self.seed))
+        random.shuffle(y2.T)
+        assert_array_equal(y1, y2)
+
     def test_shuffle_masked(self):
         # gh-3263
         a = np.ma.masked_values(np.reshape(range(20), (5, 4)) % 3 - 1, -1)
