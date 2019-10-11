@@ -133,10 +133,10 @@ import textwrap
 from glob import glob
 from functools import reduce
 if sys.version_info[0] < 3:
-    from ConfigParser import NoOptionError
+    from ConfigParser import NoOptionError, ExtendedInterpolation
     from ConfigParser import RawConfigParser as ConfigParser
 else:
-    from configparser import NoOptionError
+    from configparser import NoOptionError, ExtendedInterpolation
     from configparser import RawConfigParser as ConfigParser
 # It seems that some people are importing ConfigParser from here so is
 # good to keep its class name. Use of RawConfigParser is needed in
@@ -568,6 +568,7 @@ class system_info(object):
                     'search_static_first': str(self.search_static_first),
                     'extra_compile_args': '', 'extra_link_args': ''}
         self.cp = ConfigParser(defaults)
+        self.cp._interpolation = ExtendedInterpolation()
         self.files = []
         self.files.extend(get_standard_file('.numpy-site.cfg'))
         self.files.extend(get_standard_file('site.cfg'))
@@ -669,7 +670,7 @@ class system_info(object):
         info = {}
         for key in ['extra_compile_args', 'extra_link_args']:
             # Get values
-            opt = self.cp.get(self.section, key)
+            opt = self.cp.get(self.section, key, vars=os.environ)
             opt = _shell_utils.NativeParser.split(opt)
             if opt:
                 tmp = {key: opt}
@@ -713,7 +714,7 @@ class system_info(object):
         return copy.deepcopy(res)
 
     def get_paths(self, section, key):
-        dirs = self.cp.get(section, key).split(os.pathsep)
+        dirs = self.cp.get(section, key, vars=os.environ).split(os.pathsep)
         env_var = self.dir_env_var
         if env_var:
             if is_sequence(env_var):
@@ -753,7 +754,7 @@ class system_info(object):
                             if os.path.isdir(d1):
                                 ds2.append(d1)
                 dirs = ds2 + dirs
-        default_dirs = self.cp.get(self.section, key).split(os.pathsep)
+        default_dirs = self.cp.get(self.section, key, vars=os.environ).split(os.pathsep)
         dirs.extend(default_dirs)
         ret = []
         for d in dirs:
@@ -784,7 +785,7 @@ class system_info(object):
 
     def get_libs(self, key, default):
         try:
-            libs = self.cp.get(self.section, key)
+            libs = self.cp.get(self.section, key, vars=os.environ)
         except NoOptionError:
             if not default:
                 return []
