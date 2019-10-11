@@ -287,7 +287,7 @@ defdict = {
     Ufunc(2, 1, None, # Zero is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.subtract'),
           'PyUFunc_SubtractionTypeResolver',
-          TD(notimes_or_obj, simd=[('avx2', ints)]),
+          TD(ints + inexact, simd=[('avx2', ints)]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
            TypeDescription('M', FullTypeDescr, 'MM', 'm'),
@@ -409,7 +409,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.negative'),
           'PyUFunc_NegativeTypeResolver',
-          TD(bints+flts+timedeltaonly, simd=[('avx2', ints)]),
+          TD(ints+flts+timedeltaonly, simd=[('avx2', ints)]),
           TD(cmplx, f='neg'),
           TD(O, f='PyNumber_Negative'),
           ),
