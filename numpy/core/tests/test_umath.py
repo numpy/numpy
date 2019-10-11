@@ -75,11 +75,9 @@ class TestOut(object):
             assert_(r1 is o1)
             assert_(r2 is o2)
 
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings('always', '', DeprecationWarning)
+            with assert_raises(TypeError):
+                # Out argument must be tuple, since there are multiple outputs.
                 r1, r2 = np.frexp(d, out=o1, subok=subok)
-                assert_(r1 is o1)
-                assert_(w[0].category is DeprecationWarning)
 
             assert_raises(ValueError, np.add, a, 2, o, o, subok=subok)
             assert_raises(ValueError, np.add, a, 2, o, out=o, subok=subok)
@@ -165,14 +163,9 @@ class TestOut(object):
             else:
                 assert_(type(r1) == np.ndarray)
 
-            with warnings.catch_warnings(record=True) as w:
-                warnings.filterwarnings('always', '', DeprecationWarning)
+            with assert_raises(TypeError):
+                # Out argument must be tuple, since there are multiple outputs.
                 r1, r2 = np.frexp(d, out=o1, subok=subok)
-                if subok:
-                    assert_(isinstance(r2, ArrayWrap))
-                else:
-                    assert_(type(r2) == np.ndarray)
-                assert_(w[0].category is DeprecationWarning)
 
 
 class TestComparisons(object):
@@ -2161,10 +2154,9 @@ class TestSpecialMethods(object):
         assert_(np.modf(a, None) == {})
         assert_(np.modf(a, None, None) == {})
         assert_(np.modf(a, out=(None, None)) == {})
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_(np.modf(a, out=None) == {})
-            assert_(w[0].category is DeprecationWarning)
+        with assert_raises(TypeError):
+            # Out argument must be tuple, since there are multiple outputs.
+            np.modf(a, out=None)
 
         # don't give positional and output argument, or too many arguments.
         # wrong number of arguments in the tuple is an error too.
