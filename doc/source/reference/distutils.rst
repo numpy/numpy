@@ -22,38 +22,30 @@ information is available in the :ref:`distutils-user-guide`.
 
 Modules in :mod:`numpy.distutils`
 =================================
+.. toctree::
+   :maxdepth: 2
 
-misc_util
----------
+   distutils/misc_util
 
-.. module:: numpy.distutils.misc_util
+
+.. currentmodule:: numpy.distutils
 
 .. autosummary::
    :toctree: generated/
 
-   get_numpy_include_dirs
-   dict_append
-   appendpath
-   allpath
-   dot_join
-   generate_config_py
-   get_cmd
-   terminal_has_colors
-   red_text
-   green_text
-   yellow_text
-   blue_text
-   cyan_text
-   cyg2win32
-   all_strings
-   has_f_sources
-   has_cxx_sources
-   filter_sources
-   get_dependencies
-   is_local_src_dir
-   get_ext_source_files
-   get_script_files
+   ccompiler
+   cpuinfo.cpu
+   core.Extension
+   exec_command
+   log.set_verbosity
+   system_info.get_info
+   system_info.get_standard_file
 
+
+Configuration class
+===================
+
+.. currentmodule:: numpy.distutils.misc_util
 
 .. class:: Configuration(package_name=None, parent_name=None, top_path=None, package_path=None, **attrs)
 
@@ -108,20 +100,6 @@ misc_util
     .. automethod:: make_config_py
 
     .. automethod:: get_info
-
-Other modules
--------------
-
-.. currentmodule:: numpy.distutils
-
-.. autosummary::
-   :toctree: generated/
-
-   system_info.get_info
-   system_info.get_standard_file
-   cpuinfo.cpu
-   log.set_verbosity
-   exec_command
 
 Building Installable C libraries
 ================================
