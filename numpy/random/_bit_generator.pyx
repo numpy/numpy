@@ -482,13 +482,12 @@ cdef class BitGenerator():
 
     Parameters
     ----------
-    seed : {None, int, array_like[ints], ISeedSequence}, optional
+    seed : {None, int, array_like[ints], SeedSequence}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
-        `SeedSequence` to derive the initial `BitGenerator` state. One may also
-        pass in an implementor of the `ISeedSequence` interface like
-        `SeedSequence`.
+        ~`numpy.randomSeedSequence` to derive the initial `BitGenerator` state.
+        One may also pass in a ~`numpy.random.SeedSequence` instance.
 
     Attributes
     ----------
