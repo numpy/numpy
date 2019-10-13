@@ -1,6 +1,6 @@
-==========================================
-NEP 34 — Disallow default ``dtype=object``
-==========================================
+===========================================================
+NEP 34 — Disallow inferring ``dtype=object`` from sequences
+===========================================================
 
 :Author: Matti Picus
 :Status: Draft
@@ -11,8 +11,8 @@ NEP 34 — Disallow default ``dtype=object``
 Abstract
 --------
 
-``np.array([<value])`` with no ``dtype`` keyword argument will sometimes
-default to an ``object``-dtype array. Change the behaviour to raise a
+``np.array([<sequence>, <sequence>])`` with no ``dtype`` keyword argument will
+sometimes default to an ``object``-dtype array. Change the behaviour to raise a
 `ValueError` instead.
 
 Motivation and Scope
@@ -31,19 +31,31 @@ Detailed description
 
 After this change, ragged array creation must explicitly define a dtype:
 
-    a = np.array([1, 2], [1])
+    np.array([[1, 2], [1]])
     ValueError: cannot guess the desired dtype from the input
 
-    a = np.array([1, 2], [1], dtype=object)
-    print(a.dtype)
-    object
+    np.array([[1, 2], [1]], dtype=object)
+    ValueError: cannot guess the desired object type, use \
+    ``ragged_object_array`` instead
+
+    np.ragged_array_object([[1, 2], [1]], depth=0)
+    array([list([[1, 2], [1]])], dtype=object)
+
+    np.ragged_array_object([[1, 2], [1]], depth=1)
+    array([list([1, 2]), list([1])], dtype=object)
+
+    np.ragged_array_object([[1, 2], [1]], depth=2)
+    ValueError: cannot interpret input as depth-2 sequences
+    
+    np.ragged_array_object([[[1, 2], [1]], [['a']]], depth = 2)
+    array([[list([1, 2]), list([1])], [list(['a'])]], dtype=object)
 
 Related Work
 ------------
 
 `PR 14341`_ tried to raise an error when ragged arrays were specified with
 a numeric dtype ``np.array, [[1], [2, 3]], dtype=int)`` but failed due to
-false-postives, for instance ``np.array([1, np.array([5])], dtype=int)``.
+false-positives, for instance ``np.array([1, np.array([5])], dtype=int)``.
 
 .. _`PR 14341`: https://github.com/numpy/numpy/pull/14341
 
