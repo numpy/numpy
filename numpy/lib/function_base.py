@@ -2453,12 +2453,14 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
     return c.squeeze()
 
 
-def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None):
+def _corrcoef_dispatcher(x, y=None, rowvar=None, bias=None, ddof=None,
+                            ignore_nan=None):
     return (x, y)
 
 
 @array_function_dispatch(_corrcoef_dispatcher)
-def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
+def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue,
+                ignore_nan=False):
     """
     Return Pearson product-moment correlation coefficients.
 
@@ -2492,6 +2494,9 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
         Has no effect, do not use.
 
         .. deprecated:: 1.10.0
+    ignore_nan: bool, optional
+        If set to True, observations where any variable is equal to np.nan will
+        be ignored.
 
     Returns
     -------
@@ -2520,7 +2525,7 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue):
         # 2015-03-15, 1.10
         warnings.warn('bias and ddof have no effect and are deprecated',
                       DeprecationWarning, stacklevel=3)
-    c = cov(x, y, rowvar)
+    c = cov(x, y, rowvar, ignore_nan=ignore_nan)
     try:
         d = diag(c)
     except ValueError:
