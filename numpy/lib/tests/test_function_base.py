@@ -1865,7 +1865,6 @@ class TestCorrCoef(object):
         assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
         assert_(np.all(np.abs(c) <= 1.0))
 
-
 class TestCov(object):
     x1 = np.array([[0, 2], [1, 1], [2, 0]]).T
     res1 = np.array([[1., -1.], [-1., 1.]])
@@ -1964,6 +1963,15 @@ class TestCov(object):
         assert_allclose(cov(self.x1, fweights=self.unit_frequencies,
                             aweights=self.unit_weights),
                         self.res1)
+
+    def test_ignore_nan(self):
+        nan_x1 = np.array([[0, 2], [1,1], [np.nan, np.nan], [2, 0]]).T
+        nan_res1 = np.array([[1., -1.], [-1., 1.]])
+        assert_allclose(cov(nan_x1, ignore_nan=True), nan_res1)
+
+        nan_x2 = np.array([[5, np.nan], [0, 2], [1,1], [np.nan, 3], [2, 0]]).T
+        nan_res2 = np.array([[1., -1.], [-1., 1.]])
+        assert_allclose(cov(nan_x2, ignore_nan=True), nan_res2)
 
 
 class Test_I0(object):

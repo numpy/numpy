@@ -2225,13 +2225,13 @@ class vectorize(object):
 
 
 def _cov_dispatcher(m, y=None, rowvar=None, bias=None, ddof=None,
-                    fweights=None, aweights=None):
-    return (m, y, fweights, aweights)
+                    fweights=None, aweights=None, ignore_nan=None):
+    return (m, y, fweights, aweights, ignore_nan)
 
 
 @array_function_dispatch(_cov_dispatcher)
 def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
-        aweights=None):
+        aweights=None, ignore_nan=False):
     """
     Estimate a covariance matrix, given data and weights.
 
@@ -2282,6 +2282,9 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         weights can be used to assign probabilities to observation vectors.
 
         .. versionadded:: 1.10
+    ignore_nan: bool, optional
+        If set to True, observations where any variable is equal to np.nan will
+        be ignored.
 
     Returns
     -------
@@ -2375,6 +2378,13 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         if not rowvar and y.shape[0] != 1:
             y = y.T
         X = np.concatenate((X, y), axis=0)
+
+    # Remove observations with nan values
+    if ignore_nan:
+        for i in range(len(X)):
+            for j in range(len(X[i])-1, -1, -1):
+                if np.isnan(X[i][j]):
+                    X = np.delete(X, j, 1)
 
     if ddof is None:
         if bias == 0:
