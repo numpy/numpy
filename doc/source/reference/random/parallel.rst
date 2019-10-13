@@ -18,10 +18,10 @@ a `~BitGenerator`. It uses hashing techniques to ensure that low-quality seeds
 are turned into high quality initial states (at least, with very high
 probability).
 
-For example, `~mt19937.MT19937` has a state consisting of 624
+For example, `MT19937` has a state consisting of 624
 `uint32` integers. A naive way to take a 32-bit integer seed would be to just set
 the last element of the state to the 32-bit seed and leave the rest 0s. This is
-a valid state for `~mt19937.MT19937`, but not a good one. The Mersenne Twister
+a valid state for `MT19937`, but not a good one. The Mersenne Twister
 algorithm `suffers if there are too many 0s`_. Similarly, two adjacent 32-bit
 integer seeds (i.e. ``12345`` and ``12346``) would produce very similar
 streams.
@@ -91,15 +91,15 @@ territory ([2]_).
 .. [2] In this calculation, we can ignore the amount of numbers drawn from each
        stream. Each of the PRNGs we provide has some extra protection built in
        that avoids overlaps if the `~SeedSequence` pools differ in the
-       slightest bit. `~pcg64.PCG64` has :math:`2^{127}` separate cycles
+       slightest bit. `PCG64` has :math:`2^{127}` separate cycles
        determined by the seed in addition to the position in the
        :math:`2^{128}` long period for each cycle, so one has to both get on or
        near the same cycle *and* seed a nearby position in the cycle.
-       `~philox.Philox` has completely independent cycles determined by the seed.
-       `~sfc64.SFC64` incorporates a 64-bit counter so every unique seed is at
+       `Philox` has completely independent cycles determined by the seed.
+       `SFC64` incorporates a 64-bit counter so every unique seed is at
        least :math:`2^{64}` iterations away from any other seed. And
-       finally, `~mt19937.MT19937` has just an unimaginably huge period. Getting
-       a collision internal to `~SeedSequence` is the way a failure would be
+       finally, `MT19937` has just an unimaginably huge period. Getting
+       a collision internal to `SeedSequence` is the way a failure would be
        observed.
 
 .. _`implements an algorithm`: http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
@@ -113,10 +113,10 @@ territory ([2]_).
 Independent Streams
 -------------------
 
-:class:`~philox.Philox` is a counter-based RNG based which generates values by
+`Philox` is a counter-based RNG based which generates values by
 encrypting an incrementing counter using weak cryptographic primitives. The
 seed determines the key that is used for the encryption. Unique keys create
-unique, independent streams. :class:`~philox.Philox` lets you bypass the
+unique, independent streams. `hilox` lets you bypass the
 seeding algorithm to directly set the 128-bit key. Similar, but different, keys
 will still create independent streams.
 

@@ -123,7 +123,7 @@ The `Generator` is the user-facing object that is nearly identical to
   rg.random()
 
 One can also instantiate `Generator` directly with a `BitGenerator` instance.
-To use the older `~mt19937.MT19937` algorithm, one can instantiate it directly
+To use the older `MT19937` algorithm, one can instantiate it directly
 and pass it to `Generator`.
 
 .. code-block:: python

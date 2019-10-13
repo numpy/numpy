@@ -165,7 +165,7 @@ cdef class RandomState:
     --------
     Generator
     MT19937
-    :ref:`bit_generator`
+    numpy.random.BitGenerator
 
     """
     cdef public object _bit_generator
@@ -648,7 +648,7 @@ cdef class RandomState:
 
         See Also
         --------
-        random.random_integers : similar to `randint`, only for the closed
+        random_integers : similar to `randint`, only for the closed
             interval [`low`, `high`], and 1 is the lowest value if `high` is
             omitted.
 
@@ -1066,7 +1066,7 @@ cdef class RandomState:
 
         .. note::
             This is a convenience function for users porting code from Matlab,
-            and wraps `numpy.random.random_sample`. That function takes a
+            and wraps `random_sample`. That function takes a
             tuple to specify the size of the output, which is consistent with
             other NumPy functions like `numpy.zeros` and `numpy.ones`.
 
@@ -1110,7 +1110,7 @@ cdef class RandomState:
 
         .. note::
             This is a convenience function for users porting code from Matlab,
-            and wraps `numpy.random.standard_normal`. That function takes a
+            and wraps `standard_normal`. That function takes a
             tuple to specify the size of the output, which is consistent with
             other NumPy functions like `numpy.zeros` and `numpy.ones`.
 
@@ -1370,8 +1370,8 @@ cdef class RandomState:
         The function has its peak at the mean, and its "spread" increases with
         the standard deviation (the function reaches 0.607 times its maximum at
         :math:`x + \\sigma` and :math:`x - \\sigma` [2]_).  This implies that
-        `numpy.random.normal` is more likely to return samples lying close to
-        the mean, rather than those far away.
+        normal is more likely to return samples lying close to the mean, rather
+        than those far away.
 
         References
         ----------

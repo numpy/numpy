@@ -239,7 +239,7 @@ def rand(*args):
 
     See Also
     --------
-    randn, numpy.random.rand
+    randn, numpy.random.RandomState.rand
 
     Examples
     --------
@@ -285,7 +285,7 @@ def randn(*args):
 
     See Also
     --------
-    rand, random.randn
+    rand, random.RandomState.randn
 
     Notes
     -----
