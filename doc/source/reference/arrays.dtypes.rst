@@ -128,7 +128,7 @@ What can be converted to a data-type object is described below:
 
    Used as-is.
 
-:const:`None`
+`None`
 
    .. index::
       triple: dtype; construction; from None
