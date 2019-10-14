@@ -100,7 +100,7 @@ is true:
    - *d* acts like a (5,6) array where the single value is repeated.
 
 
-.. _ufuncs.output-type:
+.. _ufuncs-output-type:
 
 Output type determination
 =========================
