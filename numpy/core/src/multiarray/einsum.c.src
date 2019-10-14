@@ -2021,7 +2021,7 @@ get_single_op_view(PyArrayObject *op, char *labels,
          * The char type may be either signed or unsigned, we
          * need it to be signed here.
          */
-        label = (signed char)labels[idim];
+        label = labels[idim];
         /* If this label says to merge axes, get the actual label */
         if (label < 0) {
             label = labels[idim+label];
@@ -2135,7 +2135,7 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
          * The char type may be either signed or unsigned, we
          * need it to be signed here.
          */
-        int label = (signed char)labels[idim];
+        int label = labels[idim];
         npy_intp dim = PyArray_DIM(op, idim);
         npy_intp stride = PyArray_STRIDE(op, idim);
 
