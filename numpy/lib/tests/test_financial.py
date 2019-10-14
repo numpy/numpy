@@ -24,6 +24,13 @@ class TestFinancial(object):
         rate = np.rate(Decimal('10'), Decimal('0'), Decimal('-3500'), Decimal('10000'))
         assert_equal(Decimal('0.1106908537142689284704528100'), rate)
 
+    def test_rate_returns_nan_when_infeasible_with_decimal(self):
+        # It is impossible to pay off the existing ammount by making further
+        # withdrawl, therefore no possible ``rate`` exists.
+        # see: https://github.com/numpy/numpy/issues/14638
+        rate = np.rate(Decimal(12), Decimal(400), Decimal(10000), Decimal(0))
+        assert_(isinstance(rate, Decimal) and rate.is_nan())
+
     def test_irr(self):
         v = [-150000, 15000, 25000, 35000, 45000, 60000]
         assert_almost_equal(np.irr(v), 0.0524, 2)
