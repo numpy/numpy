@@ -116,7 +116,7 @@ Independent Streams
 `Philox` is a counter-based RNG based which generates values by
 encrypting an incrementing counter using weak cryptographic primitives. The
 seed determines the key that is used for the encryption. Unique keys create
-unique, independent streams. `hilox` lets you bypass the
+unique, independent streams. `Philox` lets you bypass the
 seeding algorithm to directly set the 128-bit key. Similar, but different, keys
 will still create independent streams.
 

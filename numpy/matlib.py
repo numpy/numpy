@@ -285,7 +285,7 @@ def randn(*args):
 
     See Also
     --------
-    rand, random.RandomState.randn
+    rand, numpy.random.RandomState.randn
 
     Notes
     -----
