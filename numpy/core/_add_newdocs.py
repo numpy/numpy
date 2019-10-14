@@ -1326,9 +1326,9 @@ add_newdoc('numpy.core.multiarray', 'arange',
 
     See Also
     --------
-    linspace : Evenly spaced numbers with careful handling of endpoints.
-    ogrid: Arrays of evenly spaced numbers in N-dimensions.
-    mgrid: Grid-shaped arrays of evenly spaced numbers in N-dimensions.
+    numpy.linspace : Evenly spaced numbers with careful handling of endpoints.
+    numpy.ogrid: Arrays of evenly spaced numbers in N-dimensions.
+    numpy.mgrid: Grid-shaped arrays of evenly spaced numbers in N-dimensions.
 
     Examples
     --------
@@ -3706,10 +3706,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     See Also
     --------
     numpy.sort : Return a sorted copy of an array.
-    argsort : Indirect sort.
-    lexsort : Indirect stable sort on multiple keys.
-    searchsorted : Find elements in sorted array.
-    partition: Partial sort.
+    numpy.argsort : Indirect sort.
+    numpy.lexsort : Indirect stable sort on multiple keys.
+    numpy.searchsorted : Find elements in sorted array.
+    numpy.partition: Partial sort.
 
     Notes
     -----
