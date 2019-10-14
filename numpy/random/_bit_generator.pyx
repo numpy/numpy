@@ -487,7 +487,7 @@ cdef class BitGenerator():
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
         ~`numpy.randomSeedSequence` to derive the initial `BitGenerator` state.
-        One may also pass in a ~`numpy.random.SeedSequence` instance.
+        One may also pass in a `SeedSequence` instance.
 
     Attributes
     ----------
