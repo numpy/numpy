@@ -4105,13 +4105,13 @@ class TestArgmax(object):
           np.datetime64('2010-01-03T05:14:12'),
           np.datetime64('NaT'),
           np.datetime64('2015-09-23T10:10:13'),
-          np.datetime64('1932-10-10T03:50:30')], 4),
+          np.datetime64('1932-10-10T03:50:30')], 0),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
           np.datetime64('NaT'),
           np.datetime64('2022-12-25T16:02:16'),
           np.datetime64('1963-10-04T03:14:12'),
-          np.datetime64('2013-05-08T18:15:23')], 0),
+          np.datetime64('2013-05-08T18:15:23')], 2),
         ([np.timedelta64(2, 's'),
           np.timedelta64(1, 's'),
           np.timedelta64('NaT', 's'),
@@ -4240,13 +4240,13 @@ class TestArgmin(object):
           np.datetime64('2010-01-03T05:14:12'),
           np.datetime64('NaT'),
           np.datetime64('2015-09-23T10:10:13'),
-          np.datetime64('1932-10-10T03:50:30')], 5),
+          np.datetime64('1932-10-10T03:50:30')], 0),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
           np.datetime64('NaT'),
           np.datetime64('2022-12-25T16:02:16'),
           np.datetime64('1963-10-04T03:14:12'),
-          np.datetime64('2013-05-08T18:15:23')], 4),
+          np.datetime64('2013-05-08T18:15:23')], 2),
         ([np.timedelta64(2, 's'),
           np.timedelta64(1, 's'),
           np.timedelta64('NaT', 's'),
@@ -4366,18 +4366,14 @@ class TestMinMax(object):
         assert_equal(np.amax([[1, 2, 3]], axis=1), 3)
 
     def test_datetime(self):
-        # NaTs are ignored
+        # Do not ignore NaT
         for dtype in ('m8[s]', 'm8[Y]'):
             a = np.arange(10).astype(dtype)
+            assert_equal(np.amin(a), a[0])
+            assert_equal(np.amax(a), a[9])
             a[3] = 'NaT'
-            assert_equal(np.amin(a), a[0])
-            assert_equal(np.amax(a), a[9])
-            a[0] = 'NaT'
-            assert_equal(np.amin(a), a[1])
-            assert_equal(np.amax(a), a[9])
-            a.fill('NaT')
-            assert_equal(np.amin(a), a[0])
-            assert_equal(np.amax(a), a[0])
+            assert_equal(np.amin(a), a[3])
+            assert_equal(np.amax(a), a[3])
 
 
 class TestNewaxis(object):
