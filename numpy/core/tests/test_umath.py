@@ -687,8 +687,96 @@ class TestSpecialFloats(object):
             assert_raises(FloatingPointError, np.cos, np.float32(-np.inf))
             assert_raises(FloatingPointError, np.cos, np.float32(np.inf))
 
+    def test_sqrt_values(self):
+        with np.errstate(all='ignore'):
+            x = [np.nan,  np.nan, np.inf, np.nan, 0.]
+            y = [np.nan, -np.nan, np.inf, -np.inf, 0.]
+            for dt in ['f', 'd', 'g']:
+                xf = np.array(x, dtype=dt)
+                yf = np.array(y, dtype=dt)
+                assert_equal(np.sqrt(yf), xf)
 
-class TestSIMDFloat32(object):
+        #with np.errstate(invalid='raise'):
+        #    for dt in ['f', 'd', 'g']:
+        #        assert_raises(FloatingPointError, np.sqrt, np.array(-100., dtype=dt))
+
+    def test_abs_values(self):
+        x = [np.nan,  np.nan, np.inf, np.inf, 0., 0., 1.0, 1.0]
+        y = [np.nan, -np.nan, np.inf, -np.inf, 0., -0., -1.0, 1.0]
+        for dt in ['f', 'd', 'g']:
+            xf = np.array(x, dtype=dt)
+            yf = np.array(y, dtype=dt)
+            assert_equal(np.abs(yf), xf)
+
+    def test_square_values(self):
+        x = [np.nan,  np.nan, np.inf, np.inf]
+        y = [np.nan, -np.nan, np.inf, -np.inf]
+        with np.errstate(all='ignore'):
+            for dt in ['f', 'd', 'g']:
+                xf = np.array(x, dtype=dt)
+                yf = np.array(y, dtype=dt)
+                assert_equal(np.square(yf), xf)
+
+        with np.errstate(over='raise'):
+            assert_raises(FloatingPointError, np.square, np.array(1E32,  dtype='f'))
+            assert_raises(FloatingPointError, np.square, np.array(1E200, dtype='d'))
+
+    def test_reciprocal_values(self):
+        with np.errstate(all='ignore'):
+            x = [np.nan,  np.nan, 0.0, -0.0, np.inf, -np.inf]
+            y = [np.nan, -np.nan, np.inf, -np.inf, 0., -0.]
+            for dt in ['f', 'd', 'g']:
+                xf = np.array(x, dtype=dt)
+                yf = np.array(y, dtype=dt)
+                assert_equal(np.reciprocal(yf), xf)
+
+        with np.errstate(divide='raise'):
+            for dt in ['f', 'd', 'g']:
+                assert_raises(FloatingPointError, np.reciprocal, np.array(-0.0, dtype=dt))
+
+# func : [maxulperror, low, high]
+avx_ufuncs = {'sqrt'        :[1,  0.,   100.],
+              'absolute'    :[0, -100., 100.],
+              'reciprocal'  :[1,  1.,   100.],
+              'square'      :[1, -100., 100.],
+              'rint'        :[0, -100., 100.],
+              'floor'       :[0, -100., 100.],
+              'ceil'        :[0, -100., 100.],
+              'trunc'       :[0, -100., 100.]}
+
+class TestAVXUfuncs(object):
+    def test_avx_based_ufunc(self):
+        strides = np.array([-4,-3,-2,-1,1,2,3,4])
+        np.random.seed(42)
+        for func, prop in avx_ufuncs.items():
+            maxulperr = prop[0]
+            minval = prop[1]
+            maxval = prop[2]
+            # various array sizes to ensure masking in AVX is tested
+            for size in range(1,32):
+                myfunc = getattr(np, func)
+                x_f32 = np.float32(np.random.uniform(low=minval, high=maxval,
+                    size=size))
+                x_f64 = np.float64(x_f32)
+                x_f128 = np.longdouble(x_f32)
+                y_true128 = myfunc(x_f128)
+                if maxulperr == 0:
+                    assert_equal(myfunc(x_f32), np.float32(y_true128))
+                    assert_equal(myfunc(x_f64), np.float64(y_true128))
+                else:
+                    assert_array_max_ulp(myfunc(x_f32), np.float32(y_true128),
+                            maxulp=maxulperr)
+                    assert_array_max_ulp(myfunc(x_f64), np.float64(y_true128),
+                            maxulp=maxulperr)
+                # various strides to test gather instruction
+                if size > 1:
+                    y_true32 = myfunc(x_f32)
+                    y_true64 = myfunc(x_f64)
+                    for jj in strides:
+                        assert_equal(myfunc(x_f64[::jj]), y_true64[::jj])
+                        assert_equal(myfunc(x_f32[::jj]), y_true32[::jj])
+
+class TestAVXFloat32Transcendental(object):
     def test_exp_float32(self):
         np.random.seed(42)
         x_f32 = np.float32(np.random.uniform(low=0.0,high=88.1,size=1000000))
@@ -715,8 +803,8 @@ class TestSIMDFloat32(object):
 
     def test_strided_float32(self):
         np.random.seed(42)
-        strides = np.random.randint(low=-100, high=100, size=100)
-        sizes = np.random.randint(low=1, high=2000, size=100)
+        strides = np.array([-4,-3,-2,-1,1,2,3,4])
+        sizes = np.arange(2,100)
         for ii in sizes:
             x_f32 = np.float32(np.random.uniform(low=0.01,high=88.1,size=ii))
             exp_true = np.exp(x_f32)

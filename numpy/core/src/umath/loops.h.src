@@ -175,6 +175,19 @@ NPY_NO_EXPORT void
  */
 NPY_NO_EXPORT void
 @TYPE@_sqrt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat1
+ * #isa = avx512f, fma#
+ */
+
+/**begin repeat2
+ * #func = sqrt, absolute, square, reciprocal#
+ */
+NPY_NO_EXPORT void
+@TYPE@_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**end repeat2**/
+/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
@@ -190,6 +203,26 @@ FLOAT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSE
 NPY_NO_EXPORT void
 FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ *  #func = rint, ceil, floor, trunc#
+ */
+
+/**begin repeat1
+*  #TYPE = FLOAT, DOUBLE#
+*/
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
+
+/**begin repeat2
+ * #isa = avx512f, fma#
+ */
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
+/**end repeat2**/
 /**end repeat1**/
 /**end repeat**/
 
