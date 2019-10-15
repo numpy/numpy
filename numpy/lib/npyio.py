@@ -506,9 +506,9 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     Notes
     -----
     For a description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
-        
-    Any data saved to the file is appended to the end of the file. 
-    
+
+    Any data saved to the file is appended to the end of the file.
+
     Examples
     --------
     >>> from tempfile import TemporaryFile
@@ -524,7 +524,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
     >>> with open('test.npy', 'wb') as f:
     ...     np.save(f, np.array([1, 2]))
-    ...     np.save(f, np.array([1, 3]))    
+    ...     np.save(f, np.array([1, 3]))
     >>> with open('test.npy', 'rb') as f:
     ...     a = np.load(f)
     ...     b = np.load(f)
@@ -565,8 +565,7 @@ def _savez_dispatcher(file, *args, **kwds):
 
 @array_function_dispatch(_savez_dispatcher)
 def savez(file, *args, **kwds):
-    """
-    Save several arrays into a single file in uncompressed ``.npz`` format.
+    """Save several arrays into a single file in uncompressed ``.npz`` format.
 
     If arguments are passed in with no keywords, the corresponding variable
     names, in the ``.npz`` file, are 'arr_0', 'arr_1', etc. If keyword
@@ -611,19 +610,9 @@ def savez(file, *args, **kwds):
     its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
-    When saving dictionaries, the dictionary keys themselves are stored
-    as zip files under the zip directory. Therefore to avoid unintended
-    changes to the keys, one should avoid using key strings that are not
-    valid file names.
-
-    Examples include strings that begin with "/", or contain ".." or 
-    "./", such as '/test/tmp.txt', './test/tmp.txt', or 
-    'test/../tmp.txt'
-
-    Should keys that include such patterns be required, they must be 
-    properly encapsulated and or escaped using either double quotes or
-    backslashes where necessary. Note that backslashes will be 
-    doubled in the returned keys.
+    When saving dictionaries, the dictionary keys become file names
+    inside the ZIP archive. Therefore, keys should be valid filenames.
+    E.g., avoid keys that begin with ``/`` or contain ``.``.
 
     Examples
     --------
@@ -652,7 +641,6 @@ def savez(file, *args, **kwds):
     ['x', 'y']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
     """
     _savez(file, args, kwds, False)
 
