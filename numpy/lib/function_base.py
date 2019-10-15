@@ -1314,9 +1314,13 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     Notes
     -----
-    Does not check that the x-coordinate sequence `xp` is increasing.
-    If `xp` is not increasing, the results are nonsense.
-    A simple check for increasing is::
+    The x-coordinate sequence is expected to be increasing, but this is not
+    explicitly enforced.  However, if the sequence `xp` is non-increasing,
+    interpolation results are meaningless.
+
+    Note that, since NaN is unsortable, `xp` also cannot contain NaNs.
+
+    A simple check for `xp` being strictly increasing is::
 
         np.all(np.diff(xp) > 0)
 
