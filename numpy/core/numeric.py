@@ -960,6 +960,9 @@ def tensordot(a, b, axes=2):
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
 
+    The shape of the result consists of the non-contracted axes of the
+    first tensor, followed by the non-contracted axes of the second.
+
     Examples
     --------
     A "traditional" example:
