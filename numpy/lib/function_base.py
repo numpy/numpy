@@ -1340,7 +1340,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     A simple check for `xp` being strictly increasing is::
 
-        np.all(np.diff(xp) > 0
+        np.all(np.diff(xp) > 0)
 
     Examples
     --------
