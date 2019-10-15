@@ -3334,6 +3334,12 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                                 NPY_SAME_KIND_CASTING, values, &meta) < 0) {
         return NULL;
     }
+    /* If no start was provided, default to 0 */
+    if (start == NULL) {
+        /* enforced above */
+        assert(type_nums[0] == NPY_TIMEDELTA);
+        values[0] = 0;
+    }
 
     /* If no step was provided, default to 1 */
     if (step == NULL) {

@@ -1831,7 +1831,7 @@ class TestDateTime(object):
     def test_timedelta_arange_no_dtype(self):
         d = np.array(5, dtype="m8[D]")
         assert_equal(np.arange(d, d + 1), d)
-        assert_raises(ValueError, np.arange, d)
+        assert_equal(np.arange(d), np.arange(0, d))
 
     def test_datetime_maximum_reduce(self):
         a = np.array(['2010-01-02', '1999-03-14', '1833-03'], dtype='M8[D]')
