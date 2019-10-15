@@ -164,7 +164,7 @@ the minimum version of Python supported.
 As a major downside, an ad-hoc approach makes it hard for downstream users to predict what
 the future minimum versions will be.  As there is no objective threshold
 to when the minimum version should be dropped, it is easy for these
-version support discussions to devolve into [bike shedding](https://en.wikipedia.org/wiki/Wikipedia:Avoid_Parkinson%27s_bicycle-shed_effect) and acrimony.
+version support discussions to devolve into `bike shedding <https://en.wikipedia.org/wiki/Wikipedia:Avoid_Parkinson%27s_bicycle-shed_effect>`_ and acrimony.
 
 
 All CPython supported versions
