@@ -1889,7 +1889,7 @@ class vectorize(object):
         typecode characters or a list of data type specifiers. There should
         be one data type specifier for each output.
     doc : str, optional
-        The docstring for the function. If `None`, the docstring will be the
+        The docstring for the function. If None, the docstring will be the
         ``pyfunc.__doc__``.
     excluded : set, optional
         Set of strings or integers representing the positional or keyword

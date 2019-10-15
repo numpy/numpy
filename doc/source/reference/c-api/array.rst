@@ -2053,7 +2053,7 @@ Calculation
 .. tip::
 
     Pass in :c:data:`NPY_MAXDIMS` for axis in order to achieve the same
-    effect that is obtained by passing in *axis* = :const:`None` in Python
+    effect that is obtained by passing in ``axis=None`` in Python
     (treating the array as a 1-d array).
 
 

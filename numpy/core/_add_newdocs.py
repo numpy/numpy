@@ -4497,7 +4497,7 @@ add_newdoc('numpy.core', 'ufunc',
         Alternate array object(s) in which to put the result; if provided, it
         must have a shape that the inputs broadcast to. A tuple of arrays
         (possible only as a keyword argument) must have length equal to the
-        number of outputs; use `None` for uninitialized outputs to be
+        number of outputs; use None for uninitialized outputs to be
         allocated by the ufunc.
     where : array_like, optional
         This condition is broadcast over the input. At locations where the
@@ -4691,7 +4691,7 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
     -----
     Generalized ufuncs are used internally in many linalg functions, and in
     the testing suite; the examples below are taken from these.
-    For ufuncs that operate on scalars, the signature is `None`, which is
+    For ufuncs that operate on scalars, the signature is None, which is
     equivalent to '()' for every argument.
 
     Examples
@@ -4742,7 +4742,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
         .. versionadded:: 1.7.0
 
-        If this is `None`, a reduction is performed over all the axes.
+        If this is None, a reduction is performed over all the axes.
         If this is a tuple of ints, a reduction is performed on multiple
         axes, instead of a single axis or all the axes as before.
 
@@ -4755,7 +4755,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         to the data-type of the output array if this is provided, or
         the data-type of the input array if no output array is provided.
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or `None`,
+        A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
         ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
@@ -4872,7 +4872,7 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
         to the data-type of the output array if such is provided, or the
         the data-type of the input array if no output array is provided.
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or `None`,
+        A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
         ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
@@ -4954,7 +4954,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
         to the data type of the output array if this is provided, or
         the data type of the input array if no output array is provided.
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or `None`,
+        A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
         ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.

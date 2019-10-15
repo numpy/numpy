@@ -4394,7 +4394,7 @@ class MaskedArray(ndarray):
         ----------
         axis : None or int or tuple of ints, optional
             Axis or axes along which the count is performed.
-            The default (`axis` = `None`) performs the count over all
+            The default, None, performs the count over all
             the dimensions of the input array. `axis` may be negative, in
             which case it counts from the last to the first axis.
 
