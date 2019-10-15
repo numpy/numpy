@@ -50,7 +50,6 @@ _import_array(void)
   PyObject *c_api = NULL;
 
   if (numpy == NULL) {
-      PyErr_SetString(PyExc_ImportError, "numpy.core._multiarray_umath failed to import");
       return -1;
   }
   c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
@@ -193,7 +192,9 @@ def do_generate_api(targets, sources):
     genapi.check_api_dict(multiarray_api_index)
 
     numpyapi_list = genapi.get_api_functions('NUMPY_API',
-                                              multiarray_funcs)
+                                             multiarray_funcs)
+
+    # FIXME: ordered_funcs_api is unused
     ordered_funcs_api = genapi.order_dict(multiarray_funcs)
 
     # Create dict name -> *Api instance

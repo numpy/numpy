@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import os
+import warnings
 from distutils.dist import Distribution
 
 __metaclass__ = type
@@ -50,19 +51,29 @@ class EnvironmentConfig(object):
 
     def _get_var(self, name, conf_desc):
         hook, envvar, confvar, convert, append = conf_desc
+        if convert is None:
+            convert = lambda x: x
         var = self._hook_handler(name, hook)
         if envvar is not None:
             envvar_contents = os.environ.get(envvar)
             if envvar_contents is not None:
-                if var and append and os.environ.get('NPY_DISTUTILS_APPEND_FLAGS', '0') == '1':
-                    var = var + [envvar_contents]
+                envvar_contents = convert(envvar_contents)
+                if var and append:
+                    if os.environ.get('NPY_DISTUTILS_APPEND_FLAGS', '1') == '1':
+                        var.extend(envvar_contents)
+                    else:
+                        # NPY_DISTUTILS_APPEND_FLAGS was explicitly set to 0
+                        # to keep old (overwrite flags rather than append to
+                        # them) behavior
+                        var = envvar_contents
                 else:
                     var = envvar_contents
         if confvar is not None and self._conf:
-            var = self._conf.get(confvar, (None, var))[1]
-        if convert is not None:
-            var = convert(var)
+            if confvar in self._conf:
+                source, confvar_contents = self._conf[confvar]
+                var = convert(confvar_contents)
         return var
+
 
     def clone(self, hook_handler):
         ec = self.__class__(distutils_section=self._distutils_section,

@@ -48,10 +48,9 @@ class PytestTester(object):
     """
     Pytest test runner.
 
-    This class is made available in ``numpy.testing``, and a test function
-    is typically added to a package's __init__.py like so::
+    A test function is typically added to a package's __init__.py like so::
 
-      from numpy.testing import PytestTester
+      from numpy._pytesttester import PytestTester
       test = PytestTester(__name__).test
       del PytestTester
 
@@ -67,6 +66,12 @@ class PytestTester(object):
     ----------
     module_name : module name
         The name of the module to test.
+
+    Notes
+    -----
+    Unlike the previous ``nose``-based implementation, this class is not
+    publicly exposed as it performs some ``numpy``-specific warning
+    suppression.
 
     """
     def __init__(self, module_name):
@@ -105,24 +110,18 @@ class PytestTester(object):
 
         Notes
         -----
-        Each NumPy module exposes `test` in its namespace to run all tests for it.
-        For example, to run all tests for numpy.lib:
+        Each NumPy module exposes `test` in its namespace to run all tests for
+        it. For example, to run all tests for numpy.lib:
 
         >>> np.lib.test() #doctest: +SKIP
 
         Examples
         --------
         >>> result = np.lib.test() #doctest: +SKIP
-        Running unit tests for numpy.lib
         ...
-        Ran 976 tests in 3.933s
-
-        OK
-
-        >>> result.errors #doctest: +SKIP
-        []
-        >>> result.knownfail #doctest: +SKIP
-        []
+        1023 passed, 2 skipped, 6 deselected, 1 xfailed in 10.39 seconds
+        >>> result
+        True
 
         """
         import pytest

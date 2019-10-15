@@ -45,11 +45,18 @@ except ImportError:
 
 from unittest import TestCase
 
-PY3 = sys.version_info[0] == 3
 PY2 = sys.version_info[0] == 2
 
 
-if PY3:
+if PY2:
+    from types import InstanceType
+    lzip = zip
+    text_type = unicode
+    bytes_type = str
+    string_types = basestring,
+    def make_method(func, instance, type):
+        return MethodType(func, instance, type)
+else:
     # Python 3 doesn't have an InstanceType, so just use a dummy type.
     class InstanceType():
         pass
@@ -61,14 +68,6 @@ if PY3:
         if instance is None:
             return func
         return MethodType(func, instance)
-else:
-    from types import InstanceType
-    lzip = zip
-    text_type = unicode
-    bytes_type = str
-    string_types = basestring,
-    def make_method(func, instance, type):
-        return MethodType(func, instance, type)
 
 _param = namedtuple("param", "args kwargs")
 
@@ -190,7 +189,7 @@ def parameterized_argument_value_pairs(func, p):
         in zip(named_args, argspec.defaults or [])
     ])
 
-    seen_arg_names = set([ n for (n, _) in result ])
+    seen_arg_names = {n for (n, _) in result}
     keywords = QuietOrderedDict(sorted([
         (name, p.kwargs[name])
         for name in p.kwargs

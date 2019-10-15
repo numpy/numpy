@@ -27,13 +27,13 @@ Defining the input
 ==================
 
 The only mandatory argument of :func:`~numpy.genfromtxt` is the source of
-the data. It can be a string, a list of strings, or a generator. If a
-single string is provided, it is assumed to be the name of a local or
-remote file, or an open file-like object with a :meth:`read` method, for
-example, a file or :class:`io.StringIO` object. If a list of strings
-or a generator returning strings is provided, each string is treated as one
-line in a file.  When the URL of a remote file is passed, the file is
-automatically downloaded to the current directory and opened.
+the data. It can be a string, a list of strings, a generator or an open
+file-like object with a :meth:`read` method, for example, a file or 
+:class:`io.StringIO` object. If a single string is provided, it is assumed
+to be the name of a local or remote file. If a list of strings or a generator
+returning strings is provided, each string is treated as one line in a file.
+When the URL of a remote file is passed, the file is automatically downloaded
+to the current directory and opened.
 
 Recognized file types are text files and archives.  Currently, the function
 recognizes :class:`gzip` and :class:`bz2` (`bzip2`) archives.  The type of
@@ -521,12 +521,6 @@ provides several convenience functions derived from
 :func:`~numpy.genfromtxt`.  These functions work the same way as the
 original, but they have different default values.
 
-:func:`~numpy.ndfromtxt`
-   Always set ``usemask=False``.
-   The output is always a standard :class:`numpy.ndarray`.
-:func:`~numpy.mafromtxt`
-   Always set ``usemask=True``.
-   The output is always a :class:`~numpy.ma.MaskedArray`
 :func:`~numpy.recfromtxt`
    Returns a standard :class:`numpy.recarray` (if ``usemask=False``) or a
    :class:`~numpy.ma.MaskedRecords` array (if ``usemaske=True``).  The

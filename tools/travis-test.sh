@@ -25,14 +25,14 @@ if [ -n "$PYTHON_OPTS" ]; then
 fi
 
 # make some warnings fatal, mostly to match windows compilers
-werrors="-Werror=declaration-after-statement -Werror=vla "
-werrors+="-Werror=nonnull -Werror=pointer-arith"
+werrors="-Werror=vla -Werror=nonnull -Werror=pointer-arith"
+werrors="$werrors -Werror=implicit-function-declaration"
 
 # build with c99 by default
 
 setup_base()
 {
-  # use default python flags but remoge sign-compare
+  # use default python flags but remove sign-compare
   sysflags="$($PYTHON -c "from distutils import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
   export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
@@ -52,7 +52,7 @@ setup_base()
   else
     # Python3.5-dbg on travis seems to need this
     export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
-    $PYTHON setup.py build_ext --inplace 2>&1 | tee log
+    $PYTHON setup.py build build_src --verbose-cfg build_ext --inplace 2>&1 | tee log
   fi
   grep -v "_configtest" log \
     | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
@@ -63,56 +63,14 @@ setup_base()
   fi
 }
 
-setup_chroot()
-{
-  # this can all be replaced with:
-  # apt-get install libpython2.7-dev:i386
-  # CC="gcc -m32" LDSHARED="gcc -m32 -shared" LDFLAGS="-m32 -shared" \
-  #   linux32 python setup.py build
-  # when travis updates to ubuntu 14.04
-  #
-  # NumPy may not distinguish between 64 and 32 bit ATLAS in the
-  # configuration stage.
-  DIR=$1
-  set -u
-  sudo debootstrap --variant=buildd --include=fakeroot,build-essential \
-    --arch=$ARCH --foreign $DIST $DIR
-  sudo chroot $DIR ./debootstrap/debootstrap --second-stage
-
-  # put the numpy repo in the chroot directory
-  sudo rsync -a $TRAVIS_BUILD_DIR $DIR/
-
-  # set up repos in the chroot directory for installing packages
-  echo deb http://archive.ubuntu.com/ubuntu/ \
-    $DIST main restricted universe multiverse \
-    | sudo tee -a $DIR/etc/apt/sources.list
-  echo deb http://archive.ubuntu.com/ubuntu/ \
-    $DIST-updates main restricted universe multiverse \
-    | sudo tee -a $DIR/etc/apt/sources.list
-  echo deb http://security.ubuntu.com/ubuntu \
-    $DIST-security  main restricted universe multiverse \
-    | sudo tee -a $DIR/etc/apt/sources.list
-
-  sudo chroot $DIR bash -c "apt-get update"
-  # faster operation with preloaded eatmydata
-  sudo chroot $DIR bash -c "apt-get install -qq -y eatmydata"
-  echo '/usr/$LIB/libeatmydata.so' | \
-    sudo tee -a $DIR/etc/ld.so.preload
-
-  # install needed packages
-  sudo chroot $DIR bash -c "apt-get install -qq -y \
-    libatlas-base-dev gfortran python-dev python-nose python-pip cython \
-    python-pytest"
-}
-
 run_test()
 {
+  $PIP install -r test_requirements.txt
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
-    pip install pytest-cov
     COVERAGE_FLAG=--coverage
   fi
 
@@ -123,11 +81,18 @@ run_test()
   INSTALLDIR=$($PYTHON -c \
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
+
+  if [ -n "$PPC64_LE" ]; then
+    $PYTHON ../tools/openblas_support.py --check_version $OpenBLAS_version
+  fi
+
   if [ -n "$RUN_FULL_TESTS" ]; then
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    $PYTHON ../tools/test-installed-numpy.py -v --mode=full $COVERAGE_FLAG
+    $PYTHON -b ../runtests.py -n -v --durations 10 --mode=full $COVERAGE_FLAG
   else
-    $PYTHON ../tools/test-installed-numpy.py -v
+    # disable --durations temporarily, pytest currently aborts
+    # when that is used with python3.6-dbg
+    $PYTHON ../runtests.py -n -v  # --durations 10
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -153,6 +118,7 @@ run_test()
 
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
+    $PYTHON `which asv` check --python=same
     $PYTHON `which asv` machine --machine travis
     $PYTHON `which asv` dev 2>&1| tee asv-output.log
     if grep -q Traceback asv-output.log; then
@@ -185,21 +151,17 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
      export F90='gfortran --coverage'
      export LDFLAGS='--coverage'
   fi
-  $PYTHON setup.py bdist_wheel
+  $PYTHON setup.py build build_src --verbose-cfg bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
-  pip install --pre --no-index --upgrade --find-links=. numpy
-  pip install nose pytest
-
-  if [ -n "$INSTALL_PICKLE5" ]; then
-    pip install pickle5
-  fi
-
+  $PIP install --pre --no-index --upgrade --find-links=. numpy
   popd
+
   run_test
+
 elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   # use an up-to-date pip / setuptools inside the venv
   $PIP install -U virtualenv
@@ -215,23 +177,9 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   . venv-for-wheel/bin/activate
   # Move out of source directory to avoid finding local numpy
   pushd dist
-  pip install numpy*
-  pip install nose pytest
-  if [ -n "$INSTALL_PICKLE5" ]; then
-    pip install pickle5
-  fi
-
+  $PIP install numpy*
   popd
   run_test
-elif [ -n "$USE_CHROOT" ] && [ $# -eq 0 ]; then
-  DIR=/chroot
-  setup_chroot $DIR
-  # the chroot'ed environment will not have the current locale,
-  # avoid any warnings which may disturb testing
-  export LANG=C LC_ALL=C
-  # run again in chroot with this time testing
-  sudo linux32 chroot $DIR bash -c \
-    "cd numpy && PYTHON=python PIP=pip IN_CHROOT=1 $0 test"
 else
   setup_base
   run_test

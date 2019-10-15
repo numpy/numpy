@@ -5,7 +5,7 @@ import itertools
 
 import pytest
 import numpy as np
-from numpy.testing import assert_, assert_equal, assert_raises
+from numpy.testing import assert_, assert_equal, assert_raises, IS_PYPY
 
 # This is the structure of the table used for plain objects:
 #
@@ -87,10 +87,8 @@ def normalize_descr(descr):
             else:
                 nitem = (item[0], dtype)
             out.append(nitem)
-        elif isinstance(item[1], list):
-            l = []
-            for j in normalize_descr(item[1]):
-                l.append(j)
+        elif isinstance(dtype, list):
+            l = normalize_descr(dtype)
             out.append((item[0], l))
         else:
             raise ValueError("Expected a str or list and got %s" %
@@ -493,9 +491,39 @@ def test_issctype(rep, expected):
 
 @pytest.mark.skipif(sys.flags.optimize > 1,
                     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
+@pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
 class TestDocStrings(object):
     def test_platform_dependent_aliases(self):
         if np.int64 is np.int_:
             assert_('int64' in np.int_.__doc__)
         elif np.int64 is np.longlong:
             assert_('int64' in np.longlong.__doc__)
+
+
+class TestScalarTypeNames:
+    # gh-9799
+
+    numeric_types = [
+        np.byte, np.short, np.intc, np.int_, np.longlong,
+        np.ubyte, np.ushort, np.uintc, np.uint, np.ulonglong,
+        np.half, np.single, np.double, np.longdouble,
+        np.csingle, np.cdouble, np.clongdouble,
+    ]
+
+    def test_names_are_unique(self):
+        # none of the above may be aliases for each other
+        assert len(set(self.numeric_types)) == len(self.numeric_types)
+
+        # names must be unique
+        names = [t.__name__ for t in self.numeric_types]
+        assert len(set(names)) == len(names)
+
+    @pytest.mark.parametrize('t', numeric_types)
+    def test_names_reflect_attributes(self, t):
+        """ Test that names correspond to where the type is under ``np.`` """
+        assert getattr(np, t.__name__) is t
+
+    @pytest.mark.parametrize('t', numeric_types)
+    def test_names_are_undersood_by_dtype(self, t):
+        """ Test the dtype constructor maps names back to the type """
+        assert np.dtype(t.__name__).type is t

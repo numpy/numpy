@@ -19,6 +19,7 @@ __docformat__ = 'restructuredtext'
 
 # The files under src/ that are scanned for API functions
 API_FILES = [join('multiarray', 'alloc.c'),
+             join('multiarray', 'arrayfunction_override.c'),
              join('multiarray', 'array_assign_array.c'),
              join('multiarray', 'array_assign_scalar.c'),
              join('multiarray', 'arrayobject.c'),
@@ -163,9 +164,7 @@ def skip_brackets(s, lbrac, rbrac):
 
 def split_arguments(argstr):
     arguments = []
-    bracket_counts = {'(': 0, '[': 0}
     current_argument = []
-    state = 0
     i = 0
     def finish_arg():
         if current_argument:
@@ -260,7 +259,8 @@ def find_functions(filename, tag='API'):
             elif state == STATE_ARGS:
                 if line.startswith('{'):
                     # finished
-                    fargs_str = ' '.join(function_args).rstrip(' )')
+                    # remove any white space and the closing bracket:
+                    fargs_str = ' '.join(function_args).rstrip()[:-1].rstrip()
                     fargs = split_arguments(fargs_str)
                     f = Function(function_name, return_type, fargs,
                                  '\n'.join(doclist))
@@ -400,9 +400,7 @@ class FunctionApi(object):
         return "        (void *) %s" % self.name
 
     def internal_define(self):
-        annstr = []
-        for a in self.annotations:
-            annstr.append(str(a))
+        annstr = [str(a) for a in self.annotations]
         annstr = ' '.join(annstr)
         astr = """\
 NPY_NO_EXPORT %s %s %s \\\n       (%s);""" % (annstr, self.return_type,
@@ -463,10 +461,7 @@ def get_api_functions(tagname, api_dict):
     functions = []
     for f in API_FILES:
         functions.extend(find_functions(f, tagname))
-    dfunctions = []
-    for func in functions:
-        o = api_dict[func.name][0]
-        dfunctions.append( (o, func) )
+    dfunctions = [(api_dict[func.name][0], func) for func in functions]
     dfunctions.sort()
     return [a[1] for a in dfunctions]
 
@@ -489,14 +484,11 @@ def get_versions_hash():
     d = []
 
     file = os.path.join(os.path.dirname(__file__), 'cversions.txt')
-    fid = open(file, 'r')
-    try:
+    with open(file, 'r') as fid:
         for line in fid:
             m = VERRE.match(line)
             if m:
                 d.append((int(m.group(1), 16), m.group(2)))
-    finally:
-        fid.close()
 
     return dict(d)
 

@@ -24,7 +24,7 @@ static int
 npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags);
 static int
 npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
-                        npy_intp *itershape);
+                        const npy_intp *itershape);
 static int
 npyiter_calculate_ndim(int nop, PyArrayObject **op_in,
                        int oa_ndim);
@@ -55,7 +55,7 @@ npyiter_check_casting(int nop, PyArrayObject **op,
 static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
-                    npy_uint32 *op_flags, int **op_axes,
+                    const npy_uint32 *op_flags, int **op_axes,
                     npy_intp *itershape);
 static void
 npyiter_replace_axisdata(NpyIter *iter, int iop,
@@ -74,23 +74,23 @@ static void
 npyiter_find_best_axis_ordering(NpyIter *iter);
 static PyArray_Descr *
 npyiter_get_common_dtype(int nop, PyArrayObject **op,
-                        npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
+                        const npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
                         PyArray_Descr **op_request_dtypes,
                         int only_inputs);
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 npy_uint32 flags, npyiter_opitflags *op_itflags,
                 int op_ndim, npy_intp *shape,
-                PyArray_Descr *op_dtype, int *op_axes);
+                PyArray_Descr *op_dtype, const int *op_axes);
 static int
 npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
-                        npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
+                        const npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
                         int **op_axes);
 static void
 npyiter_get_priority_subtype(int nop, PyArrayObject **op,
-                            npyiter_opitflags *op_itflags,
+                            const npyiter_opitflags *op_itflags,
                             double *subtype_priority, PyTypeObject **subtype);
 static int
 npyiter_allocate_transfer_functions(NpyIter *iter);
@@ -787,7 +787,7 @@ npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
 
 static int
 npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
-                        npy_intp *itershape)
+                        const npy_intp *itershape)
 {
     char axes_dupcheck[NPY_MAXDIMS];
     int iop, idim;
@@ -1101,8 +1101,8 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             /* We just have a borrowed reference to op_request_dtype */
             Py_INCREF(op_request_dtype);
             /* If the requested dtype is flexible, adapt it */
-            PyArray_AdaptFlexibleDType((PyObject *)(*op), PyArray_DESCR(*op),
-                                        &op_request_dtype);
+            op_request_dtype = PyArray_AdaptFlexibleDType((PyObject *)(*op), PyArray_DESCR(*op),
+                                                          op_request_dtype);
             if (op_request_dtype == NULL) {
                 return 0;
             }
@@ -1132,7 +1132,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         /* Check if the operand is aligned */
         if (op_flags & NPY_ITER_ALIGNED) {
             /* Check alignment */
-            if (!IsUintAligned(*op)) {
+            if (!IsAligned(*op)) {
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_ALIGNED\n");
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
@@ -1248,9 +1248,9 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
     return 1;
 
   fail_nop:
-    iop = nop;
+    iop = nop - 1;
   fail_iop:
-    for (i = 0; i < iop; ++i) {
+    for (i = 0; i < iop+1; ++i) {
         Py_XDECREF(op[i]);
         Py_XDECREF(op_dtype[i]);
     }
@@ -1423,7 +1423,7 @@ check_mask_for_writemasked_reduction(NpyIter *iter, int iop)
 static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
-                    npy_uint32 *op_flags, int **op_axes,
+                    const npy_uint32 *op_flags, int **op_axes,
                     npy_intp *itershape)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -2120,8 +2120,8 @@ npyiter_apply_forced_iteration_order(NpyIter *iter, NPY_ORDER order)
             /* Check that all the array inputs are fortran order */
             for (iop = 0; iop < nop; ++iop, ++op) {
                 if (*op && !PyArray_CHKFLAGS(*op, NPY_ARRAY_F_CONTIGUOUS)) {
-                   forder = 0;
-                   break;
+                    forder = 0;
+                    break;
                 }
             }
 
@@ -2409,7 +2409,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
  */
 static PyArray_Descr *
 npyiter_get_common_dtype(int nop, PyArrayObject **op,
-                        npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
+                        const npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
                         PyArray_Descr **op_request_dtypes,
                         int only_inputs)
 {
@@ -2477,7 +2477,7 @@ static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 npy_uint32 flags, npyiter_opitflags *op_itflags,
                 int op_ndim, npy_intp *shape,
-                PyArray_Descr *op_dtype, int *op_axes)
+                PyArray_Descr *op_dtype, const int *op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
@@ -2706,7 +2706,7 @@ static int
 npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
-                        npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
+                        const npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
                         int **op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -2851,8 +2851,14 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iop, op[iop], ondim,
                     PyArray_DATA(op[iop]), op_axes ? op_axes[iop] : NULL);
 
-            /* New arrays are aligned and need no cast */
-            op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            /*
+             * New arrays are guaranteed true-aligned, but copy/cast code
+             * needs uint-alignment in addition.
+             */
+            if (IsUintAligned(out)) {
+                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            }
+            /* New arrays need no cast */
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
         }
         /*
@@ -2888,11 +2894,17 @@ npyiter_allocate_arrays(NpyIter *iter,
                     PyArray_DATA(op[iop]), NULL);
 
             /*
-             * New arrays are aligned need no cast, and in the case
+             * New arrays are guaranteed true-aligned, but copy/cast code
+             * needs uint-alignment in addition.
+             */
+            if (IsUintAligned(temp)) {
+                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            }
+            /*
+             * New arrays need no cast, and in the case
              * of scalars, always have stride 0 so never need buffering
              */
-            op_itflags[iop] |= (NPY_OP_ITFLAG_ALIGNED |
-                                  NPY_OP_ITFLAG_BUFNEVER);
+            op_itflags[iop] |= NPY_OP_ITFLAG_BUFNEVER;
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
             if (itflags & NPY_ITFLAG_BUFFER) {
                 NBF_STRIDES(bufferdata)[iop] = 0;
@@ -2953,8 +2965,14 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iop, op[iop], ondim,
                     PyArray_DATA(op[iop]), op_axes ? op_axes[iop] : NULL);
 
-            /* The temporary copy is aligned and needs no cast */
-            op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            /*
+             * New arrays are guaranteed true-aligned, but copy/cast code
+             * additionally needs uint-alignment in addition.
+             */
+            if (IsUintAligned(temp)) {
+                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+            }
+            /* The temporary copy needs no cast */
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
         }
         else {
@@ -3091,7 +3109,7 @@ npyiter_allocate_arrays(NpyIter *iter,
  */
 static void
 npyiter_get_priority_subtype(int nop, PyArrayObject **op,
-                            npyiter_opitflags *op_itflags,
+                            const npyiter_opitflags *op_itflags,
                             double *subtype_priority,
                             PyTypeObject **subtype)
 {
@@ -3157,6 +3175,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         &stransfer,
                                         &transferdata,
                                         &needs_api) != NPY_SUCCEED) {
+                    iop -= 1;  /* This one cannot be cleaned up yet. */
                     goto fail;
                 }
                 readtransferfn[iop] = stransfer;
@@ -3250,7 +3269,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     return 1;
 
 fail:
-    for (i = 0; i < iop; ++i) {
+    for (i = 0; i < iop+1; ++i) {
         if (readtransferdata[iop] != NULL) {
             NPY_AUXDATA_FREE(readtransferdata[iop]);
             readtransferdata[iop] = NULL;

@@ -29,6 +29,7 @@
 #include "abstract.h"
 
 #include "numpy/npy_math.h"
+#include "number.h"
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
@@ -160,6 +161,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
 
     self->type_resolver = &object_ufunc_type_resolver;
     self->legacy_inner_loop_selector = &object_ufunc_loop_selector;
+    PyObject_GC_Track(self);
 
     return (PyObject *)self;
 }
@@ -169,7 +171,7 @@ PyObject *
 add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyUFuncObject *ufunc;
-    PyObject *str;
+    PyObject *str, *tmp;
     char *docstr, *newdocstr;
 
 #if defined(NPY_PY3K)
@@ -177,11 +179,15 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
                                         &PyUnicode_Type, &str)) {
         return NULL;
     }
-    docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
+    tmp = PyUnicode_AsUTF8String(str);
+    if (tmp == NULL) {
+        return NULL;
+    }
+    docstr = PyBytes_AS_STRING(tmp);
 #else
     if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,
                                          &PyString_Type, &str)) {
-         return NULL;
+        return NULL;
     }
     docstr = PyString_AS_STRING(str);
 #endif
@@ -189,6 +195,9 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (NULL != ufunc->doc) {
         PyErr_SetString(PyExc_ValueError,
                 "Cannot change docstring of ufunc with non-NULL docstring");
+#if defined(NPY_PY3K)
+        Py_DECREF(tmp);
+#endif
         return NULL;
     }
 
@@ -202,6 +211,9 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     strcpy(newdocstr, docstr);
     ufunc->doc = newdocstr;
 
+#if defined(NPY_PY3K)
+    Py_DECREF(tmp);
+#endif
     Py_RETURN_NONE;
 }
 
@@ -267,10 +279,6 @@ int initumath(PyObject *m)
     UFUNC_FLOATING_POINT_SUPPORT = 0;
 #endif
 
-    /* Initialize the types */
-    if (PyType_Ready(&PyUFunc_Type) < 0)
-        return -1;
-
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
 
@@ -325,7 +333,7 @@ int initumath(PyObject *m)
     s2 = PyDict_GetItemString(d, "remainder");
     /* Setup the array object's numerical structures with appropriate
        ufuncs in d*/
-    PyArray_SetNumericOps(d);
+    _PyArray_SetNumericOps(d);
 
     PyDict_SetItemString(d, "conj", s);
     PyDict_SetItemString(d, "mod", s2);

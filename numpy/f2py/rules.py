@@ -202,7 +202,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 PyMODINIT_FUNC init#modulename#(void) {
 #endif
 \tint i;
-\tPyObject *m,*d, *s;
+\tPyObject *m,*d, *s, *tmp;
 #if PY_VERSION_HEX >= 0x03000000
 \tm = #modulename#_module = PyModule_Create(&moduledef);
 #else
@@ -215,6 +215,7 @@ PyMODINIT_FUNC init#modulename#(void) {
 \td = PyModule_GetDict(m);
 \ts = PyString_FromString(\"$R""" + """evision: $\");
 \tPyDict_SetItemString(d, \"__version__\", s);
+\tPy_DECREF(s);
 #if PY_VERSION_HEX >= 0x03000000
 \ts = PyUnicode_FromString(
 #else
@@ -222,10 +223,19 @@ PyMODINIT_FUNC init#modulename#(void) {
 #endif
 \t\t\"This module '#modulename#' is auto-generated with f2py (version:#f2py_version#).\\nFunctions:\\n\"\n#docs#\".\");
 \tPyDict_SetItemString(d, \"__doc__\", s);
-\t#modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
 \tPy_DECREF(s);
-\tfor(i=0;f2py_routine_defs[i].name!=NULL;i++)
-\t\tPyDict_SetItemString(d, f2py_routine_defs[i].name,PyFortranObject_NewAsAttr(&f2py_routine_defs[i]));
+\t#modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
+\t/*
+\t * Store the error object inside the dict, so that it could get deallocated.
+\t * (in practice, this is a module, so it likely will not and cannot.)
+\t */
+\tPyDict_SetItemString(d, \"_#modulename#_error\", #modulename#_error);
+\tPy_DECREF(#modulename#_error);
+\tfor(i=0;f2py_routine_defs[i].name!=NULL;i++) {
+\t\ttmp = PyFortranObject_NewAsAttr(&f2py_routine_defs[i]);
+\t\tPyDict_SetItemString(d, f2py_routine_defs[i].name, tmp);
+\t\tPy_DECREF(tmp);
+\t}
 #initf2pywraphooks#
 #initf90modhooks#
 #initcommonhooks#
@@ -235,7 +245,6 @@ PyMODINIT_FUNC init#modulename#(void) {
 \tif (! PyErr_Occurred())
 \t\ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
-
 \treturn RETVAL;
 }
 #ifdef __cplusplus
@@ -436,12 +445,16 @@ rout_rules = [
     {
       extern #ctype# #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
-      PyObject_SetAttrString(o,"_cpointer", F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL));
+      tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
+      PyObject_SetAttrString(o,"_cpointer", tmp);
+      Py_DECREF(tmp);
 #if PY_VERSION_HEX >= 0x03000000
-      PyObject_SetAttrString(o,"__name__", PyUnicode_FromString("#name#"));
+      s = PyUnicode_FromString("#name#");
 #else
-      PyObject_SetAttrString(o,"__name__", PyString_FromString("#name#"));
+      s = PyString_FromString("#name#");
 #endif
+      PyObject_SetAttrString(o,"__name__", s);
+      Py_DECREF(s);
     }
     '''},
         'need': {l_not(l_or(ismoduleroutine, isdummyroutine)): ['F_WRAPPEDFUNC', 'F_FUNC']},
@@ -474,12 +487,16 @@ rout_rules = [
     {
       extern void #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
-      PyObject_SetAttrString(o,"_cpointer", F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL));
+      tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
+      PyObject_SetAttrString(o,"_cpointer", tmp);
+      Py_DECREF(tmp);
 #if PY_VERSION_HEX >= 0x03000000
-      PyObject_SetAttrString(o,"__name__", PyUnicode_FromString("#name#"));
+      s = PyUnicode_FromString("#name#");
 #else
-      PyObject_SetAttrString(o,"__name__", PyString_FromString("#name#"));
+      s = PyString_FromString("#name#");
 #endif
+      PyObject_SetAttrString(o,"__name__", s);
+      Py_DECREF(s);
     }
     '''},
         'need': {l_not(l_or(ismoduleroutine, isdummyroutine)): ['F_WRAPPEDFUNC', 'F_FUNC']},
@@ -791,10 +808,13 @@ if (#varname#_capi==Py_None) {
     if (#varname#_xa_capi==NULL) {
       if (PyObject_HasAttrString(#modulename#_module,\"#varname#_extra_args\")) {
         PyObject* capi_tmp = PyObject_GetAttrString(#modulename#_module,\"#varname#_extra_args\");
-        if (capi_tmp)
+        if (capi_tmp) {
           #varname#_xa_capi = (PyTupleObject *)PySequence_Tuple(capi_tmp);
-        else
+          Py_DECREF(capi_tmp);
+        }
+        else {
           #varname#_xa_capi = (PyTupleObject *)Py_BuildValue(\"()\");
+        }
         if (#varname#_xa_capi==NULL) {
           PyErr_SetString(#modulename#_error,\"Failed to convert #modulename#.#varname#_extra_args to tuple.\\n\");
           return NULL;
@@ -1257,82 +1277,77 @@ def buildmodule(m, um):
 
     fn = os.path.join(options['buildpath'], vrd['coutput'])
     ret['csrc'] = fn
-    f = open(fn, 'w')
-    f.write(ar['modulebody'].replace('\t', 2 * ' '))
-    f.close()
+    with open(fn, 'w') as f:
+        f.write(ar['modulebody'].replace('\t', 2 * ' '))
     outmess('\tWrote C/API module "%s" to file "%s"\n' % (m['name'], fn))
 
     if options['dorestdoc']:
         fn = os.path.join(
             options['buildpath'], vrd['modulename'] + 'module.rest')
-        f = open(fn, 'w')
-        f.write('.. -*- rest -*-\n')
-        f.write('\n'.join(ar['restdoc']))
-        f.close()
+        with open(fn, 'w') as f:
+            f.write('.. -*- rest -*-\n')
+            f.write('\n'.join(ar['restdoc']))
         outmess('\tReST Documentation is saved to file "%s/%smodule.rest"\n' %
                 (options['buildpath'], vrd['modulename']))
     if options['dolatexdoc']:
         fn = os.path.join(
             options['buildpath'], vrd['modulename'] + 'module.tex')
         ret['ltx'] = fn
-        f = open(fn, 'w')
-        f.write(
-            '%% This file is auto-generated with f2py (version:%s)\n' % (f2py_version))
-        if 'shortlatex' not in options:
+        with open(fn, 'w') as f:
             f.write(
-                '\\documentclass{article}\n\\usepackage{a4wide}\n\\begin{document}\n\\tableofcontents\n\n')
-        f.write('\n'.join(ar['latexdoc']))
-        if 'shortlatex' not in options:
-            f.write('\\end{document}')
-        f.close()
+                '%% This file is auto-generated with f2py (version:%s)\n' % (f2py_version))
+            if 'shortlatex' not in options:
+                f.write(
+                    '\\documentclass{article}\n\\usepackage{a4wide}\n\\begin{document}\n\\tableofcontents\n\n')
+                f.write('\n'.join(ar['latexdoc']))
+            if 'shortlatex' not in options:
+                f.write('\\end{document}')
         outmess('\tDocumentation is saved to file "%s/%smodule.tex"\n' %
                 (options['buildpath'], vrd['modulename']))
     if funcwrappers:
         wn = os.path.join(options['buildpath'], vrd['f2py_wrapper_output'])
         ret['fsrc'] = wn
-        f = open(wn, 'w')
-        f.write('C     -*- fortran -*-\n')
-        f.write(
-            'C     This file is autogenerated with f2py (version:%s)\n' % (f2py_version))
-        f.write(
-            'C     It contains Fortran 77 wrappers to fortran functions.\n')
-        lines = []
-        for l in ('\n\n'.join(funcwrappers) + '\n').split('\n'):
-            if l and l[0] == ' ':
-                while len(l) >= 66:
-                    lines.append(l[:66] + '\n     &')
-                    l = l[66:]
-                lines.append(l + '\n')
-            else:
-                lines.append(l + '\n')
-        lines = ''.join(lines).replace('\n     &\n', '\n')
-        f.write(lines)
-        f.close()
+        with open(wn, 'w') as f:
+            f.write('C     -*- fortran -*-\n')
+            f.write(
+                'C     This file is autogenerated with f2py (version:%s)\n' % (f2py_version))
+            f.write(
+                'C     It contains Fortran 77 wrappers to fortran functions.\n')
+            lines = []
+            for l in ('\n\n'.join(funcwrappers) + '\n').split('\n'):
+                if l and l[0] == ' ':
+                    while len(l) >= 66:
+                        lines.append(l[:66] + '\n     &')
+                        l = l[66:]
+                    lines.append(l + '\n')
+                else:
+                    lines.append(l + '\n')
+            lines = ''.join(lines).replace('\n     &\n', '\n')
+            f.write(lines)
         outmess('\tFortran 77 wrappers are saved to "%s"\n' % (wn))
     if funcwrappers2:
         wn = os.path.join(
             options['buildpath'], '%s-f2pywrappers2.f90' % (vrd['modulename']))
         ret['fsrc'] = wn
-        f = open(wn, 'w')
-        f.write('!     -*- f90 -*-\n')
-        f.write(
-            '!     This file is autogenerated with f2py (version:%s)\n' % (f2py_version))
-        f.write(
-            '!     It contains Fortran 90 wrappers to fortran functions.\n')
-        lines = []
-        for l in ('\n\n'.join(funcwrappers2) + '\n').split('\n'):
-            if len(l) > 72 and l[0] == ' ':
-                lines.append(l[:72] + '&\n     &')
-                l = l[72:]
-                while len(l) > 66:
-                    lines.append(l[:66] + '&\n     &')
-                    l = l[66:]
-                lines.append(l + '\n')
-            else:
-                lines.append(l + '\n')
-        lines = ''.join(lines).replace('\n     &\n', '\n')
-        f.write(lines)
-        f.close()
+        with open(wn, 'w') as f:
+            f.write('!     -*- f90 -*-\n')
+            f.write(
+                '!     This file is autogenerated with f2py (version:%s)\n' % (f2py_version))
+            f.write(
+                '!     It contains Fortran 90 wrappers to fortran functions.\n')
+            lines = []
+            for l in ('\n\n'.join(funcwrappers2) + '\n').split('\n'):
+                if len(l) > 72 and l[0] == ' ':
+                    lines.append(l[:72] + '&\n     &')
+                    l = l[72:]
+                    while len(l) > 66:
+                        lines.append(l[:66] + '&\n     &')
+                        l = l[66:]
+                    lines.append(l + '\n')
+                else:
+                    lines.append(l + '\n')
+            lines = ''.join(lines).replace('\n     &\n', '\n')
+            f.write(lines)
         outmess('\tFortran 90 wrappers are saved to "%s"\n' % (wn))
     return ret
 

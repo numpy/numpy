@@ -182,12 +182,13 @@ _select_matrix_shape(PyArrayObject *array)
  * This also makes sure that the data segment is aligned with
  * an itemsize address as well by returning one if not true.
  */
-static int
+NPY_NO_EXPORT int
 _bad_strides(PyArrayObject *ap)
 {
     int itemsize = PyArray_ITEMSIZE(ap);
     int i, N=PyArray_NDIM(ap);
     npy_intp *strides = PyArray_STRIDES(ap);
+    npy_intp *dims = PyArray_DIMS(ap);
 
     if (((npy_intp)(PyArray_DATA(ap)) % itemsize) != 0) {
         return 1;
@@ -196,11 +197,13 @@ _bad_strides(PyArrayObject *ap)
         if ((strides[i] < 0) || (strides[i] % itemsize) != 0) {
             return 1;
         }
+        if ((strides[i] == 0 && dims[i] > 1)) {
+            return 1;
+        }
     }
 
     return 0;
 }
-
 
 /*
  * dot(a,b)

@@ -7,17 +7,17 @@ try:
     import collections.abc as collections_abc
 except ImportError:
     import collections as collections_abc
-import pickle
-import warnings
 import textwrap
 from os import path
 import pytest
 
 import numpy as np
+from numpy.compat import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, assert_warns
+    assert_raises, temppath
     )
+from numpy.compat import pickle
 
 
 class TestFromrecords(object):
@@ -325,6 +325,23 @@ class TestFromrecords(object):
         assert_equal(rec['f1'], [b'', b'', b''])
 
 
+@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
+class TestPathUsage(object):
+    # Test that pathlib.Path can be used
+    def test_tofile_fromfile(self):
+        with temppath(suffix='.bin') as path:
+            path = Path(path)
+            np.random.seed(123)
+            a = np.random.rand(10).astype('f8,i4,a5')
+            a[5] = (0.5,10,'abcde')
+            with path.open("wb") as fd:
+                a.tofile(fd)
+            x = np.core.records.fromfile(path,
+                                         formats='f8,i4,a5',
+                                         shape=10)
+            assert_array_equal(x, a)
+
+
 class TestRecord(object):
     def setup(self):
         self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
@@ -361,7 +378,6 @@ class TestRecord(object):
         with assert_raises(ValueError):
             r.setfield([2,3], *r.dtype.fields['f'])
 
-    @pytest.mark.xfail(reason="See gh-10411, becomes real error in 1.16")
     def test_out_of_order_fields(self):
         # names in the same order, padding added to descr
         x = self.data[['col1', 'col2']]
@@ -419,7 +435,56 @@ class TestRecord(object):
     def test_missing_field(self):
         # https://github.com/numpy/numpy/issues/4806
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
-        assert_raises(ValueError, lambda: arr[['nofield']])
+        assert_raises(KeyError, lambda: arr[['nofield']])
+
+    def test_fromarrays_nested_structured_arrays(self):
+        arrays = [
+            np.arange(10),
+            np.ones(10, dtype=[('a', '<u2'), ('b', '<f4')]),
+        ]
+        arr = np.rec.fromarrays(arrays)  # ValueError?
+
+    @pytest.mark.parametrize('nfields', [0, 1, 2])
+    def test_assign_dtype_attribute(self, nfields):
+        dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)][:nfields])
+        data = np.zeros(3, dt).view(np.recarray)
+
+        # the original and resulting dtypes differ on whether they are records
+        assert data.dtype.type == np.record
+        assert dt.type != np.record
+
+        # ensure that the dtype remains a record even when assigned
+        data.dtype = dt
+        assert data.dtype.type == np.record
+
+    @pytest.mark.parametrize('nfields', [0, 1, 2])
+    def test_nested_fields_are_records(self, nfields):
+        """ Test that nested structured types are treated as records too """
+        dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)][:nfields])
+        dt_outer = np.dtype([('inner', dt)])
+
+        data = np.zeros(3, dt_outer).view(np.recarray)
+        assert isinstance(data, np.recarray)
+        assert isinstance(data['inner'], np.recarray)
+
+        data0 = data[0]
+        assert isinstance(data0, np.record)
+        assert isinstance(data0['inner'], np.record)
+
+    def test_nested_dtype_padding(self):
+        """ test that trailing padding is preserved """
+        # construct a dtype with padding at the end
+        dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)])
+        dt_padded_end = dt[['a', 'b']]
+        assert dt_padded_end.itemsize == dt.itemsize
+
+        dt_outer = np.dtype([('inner', dt_padded_end)])
+
+        data = np.zeros(3, dt_outer).view(np.recarray)
+        assert_equal(data['inner'].dtype, dt_padded_end)
+
+        data0 = data[0]
+        assert_equal(data0['inner'].dtype, dt_padded_end)
 
 
 def test_find_duplicate():

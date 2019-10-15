@@ -1,6 +1,6 @@
-=============================
-NEP Template and Instructions
-=============================
+=================================
+NEP X — Template and Instructions
+=================================
 
 :Author: <list of authors' real names and optionally, email addresses>
 :Status: <Draft | Active | Accepted | Deferred | Rejected | Withdrawn | Final | Superseded>
@@ -8,19 +8,37 @@ NEP Template and Instructions
 :Created: <date created on, in yyyy-mm-dd format>
 :Resolution: <url> (required for Accepted | Rejected | Withdrawn)
 
+
 Abstract
 --------
 
 The abstract should be a short description of what the NEP will achieve.
 
+Note that the — in the title is an elongated dash, not -.
+
+Motivation and Scope
+--------------------
+
+This section describes the need for the proposed change. It should describe
+the existing problem, who it affects, what it is trying to solve, and why.
+This section should explicitly address the scope of and key requirements for
+the proposed change.
+
 
 Detailed description
 --------------------
 
-This section describes the need for the NEP.  It should describe the existing
-problem that it is trying to solve and why this NEP makes the situation better.
-It should include examples of how the new functionality would be used and
-perhaps some use cases.
+This section should provide a detailed description of the proposed change.
+It should include examples of how the new functionality would be used,
+intended use-cases and pseudo-code illustrating its use.
+
+
+Related Work
+------------
+
+This section should list relevant and/or similar technologies, possibly in other
+libraries. It does not need to be comprehensive, just list the major examples of
+prior and relevant art.
 
 
 Implementation
@@ -28,8 +46,8 @@ Implementation
 
 This section lists the major steps required to implement the NEP.  Where
 possible, it should be noted where one step is dependent on another, and which
-steps may be optionally omitted.  Where it makes sense, each  step should
-include a link related pull requests as the implementation progresses.
+steps may be optionally omitted.  Where it makes sense, each step should
+include a link to related pull requests as the implementation progresses.
 
 Any pull requests or development branches containing work on this NEP should
 be linked to from here.  (A NEP does not need to be implemented in a single

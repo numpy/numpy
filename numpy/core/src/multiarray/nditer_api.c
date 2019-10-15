@@ -406,7 +406,7 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
  * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
  */
 NPY_NO_EXPORT int
-NpyIter_GotoMultiIndex(NpyIter *iter, npy_intp *multi_index)
+NpyIter_GotoMultiIndex(NpyIter *iter, npy_intp const *multi_index)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
@@ -1628,14 +1628,11 @@ npyiter_coalesce_axes(NpyIter *iter)
     npy_intp istrides, nstrides = NAD_NSTRIDES();
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    NpyIter_AxisData *ad_compress;
+    NpyIter_AxisData *ad_compress = axisdata;
     npy_intp new_ndim = 1;
 
     /* The HASMULTIINDEX or IDENTPERM flags do not apply after coalescing */
     NIT_ITFLAGS(iter) &= ~(NPY_ITFLAG_IDENTPERM|NPY_ITFLAG_HASMULTIINDEX);
-
-    axisdata = NIT_AXISDATA(iter);
-    ad_compress = axisdata;
 
     for (idim = 0; idim < ndim-1; ++idim) {
         int can_coalesce = 1;

@@ -4,6 +4,10 @@
 Indexing
 ********
 
-.. seealso:: :ref:`Indexing routines <routines.indexing>`
+.. seealso::
+
+   :ref:`Indexing <arrays.indexing>`
+
+   :ref:`Indexing routines <routines.indexing>`
 
 .. automodule:: numpy.doc.indexing

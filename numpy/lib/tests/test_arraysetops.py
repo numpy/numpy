@@ -4,7 +4,6 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-import sys
 
 from numpy.testing import (assert_array_equal, assert_equal,
                            assert_raises, assert_raises_regex)
@@ -137,8 +136,8 @@ class TestSetOps(object):
          np.nan),
         # should fail because attempting
         # to downcast to smaller int type:
-        (np.array([1, 2, 3], dtype=np.int32),
-         np.array([5, 7, 2], dtype=np.int64),
+        (np.array([1, 2, 3], dtype=np.int16),
+         np.array([5, 1<<20, 2], dtype=np.int32),
          None),
         # should fail because attempting to cast
         # two special floating point values
@@ -153,8 +152,8 @@ class TestSetOps(object):
         # specifically, raise an appropriate
         # Exception when attempting to append or
         # prepend with an incompatible type
-        msg = 'must be compatible'
-        with assert_raises_regex(TypeError, msg):
+        msg = 'cannot convert'
+        with assert_raises_regex(ValueError, msg):
             ediff1d(ary=ary,
                     to_end=append,
                     to_begin=prepend)
@@ -388,6 +387,13 @@ class TestSetOps(object):
         a = np.array((), np.uint32)
         assert_equal(setdiff1d(a, []).dtype, np.uint32)
 
+    def test_setdiff1d_unique(self):
+        a = np.array([3, 2, 1])
+        b = np.array([7, 5, 2])
+        expected = np.array([3, 1])
+        actual = setdiff1d(a, b, assume_unique=True)
+        assert_equal(actual, expected)
+
     def test_setdiff1d_char_array(self):
         a = np.array(['a', 'b', 'c'])
         b = np.array(['a', 'b', 's'])
@@ -416,41 +422,41 @@ class TestUnique(object):
             assert_array_equal(v, b, msg)
 
             msg = base_msg.format('return_index', dt)
-            v, j = unique(a, 1, 0, 0)
+            v, j = unique(a, True, False, False)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, i1, msg)
 
             msg = base_msg.format('return_inverse', dt)
-            v, j = unique(a, 0, 1, 0)
+            v, j = unique(a, False, True, False)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, i2, msg)
 
             msg = base_msg.format('return_counts', dt)
-            v, j = unique(a, 0, 0, 1)
+            v, j = unique(a, False, False, True)
             assert_array_equal(v, b, msg)
             assert_array_equal(j, c, msg)
 
             msg = base_msg.format('return_index and return_inverse', dt)
-            v, j1, j2 = unique(a, 1, 1, 0)
+            v, j1, j2 = unique(a, True, True, False)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, i2, msg)
 
             msg = base_msg.format('return_index and return_counts', dt)
-            v, j1, j2 = unique(a, 1, 0, 1)
+            v, j1, j2 = unique(a, True, False, True)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, c, msg)
 
             msg = base_msg.format('return_inverse and return_counts', dt)
-            v, j1, j2 = unique(a, 0, 1, 1)
+            v, j1, j2 = unique(a, False, True, True)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i2, msg)
             assert_array_equal(j2, c, msg)
 
             msg = base_msg.format(('return_index, return_inverse '
                                    'and return_counts'), dt)
-            v, j1, j2, j3 = unique(a, 1, 1, 1)
+            v, j1, j2, j3 = unique(a, True, True, True)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, i2, msg)
@@ -594,8 +600,11 @@ class TestUnique(object):
         assert_array_equal(unique(data, axis=1), result.astype(dtype), msg)
 
         msg = 'Unique with 3d array and axis=2 failed'
-        data3d = np.dstack([data] * 3)
-        result = data3d[..., :1]
+        data3d = np.array([[[1, 1],
+                            [1, 0]],
+                           [[0, 1],
+                            [0, 0]]]).astype(dtype)
+        result = np.take(data3d, [1, 0], axis=2)
         assert_array_equal(unique(data3d, axis=2), result, msg)
 
         uniq, idx, inv, cnt = unique(data, axis=0, return_index=True,

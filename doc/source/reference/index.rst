@@ -23,7 +23,8 @@ For learning how to use NumPy, see also :ref:`user`.
    ufuncs
    routines
    distutils
-   c-api
+   distutils_guide
+   c-api/index
    internals
    swig
 

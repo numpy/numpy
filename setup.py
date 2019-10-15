@@ -27,13 +27,10 @@ import subprocess
 import textwrap
 
 
-if sys.version_info[:2] < (2, 7) or (3, 0) <= sys.version_info[:2] < (3, 4):
-    raise RuntimeError("Python version 2.7 or >= 3.4 required.")
+if sys.version_info[:2] < (3, 5):
+    raise RuntimeError("Python version >= 3.5 required.")
 
-if sys.version_info[0] >= 3:
-    import builtins
-else:
-    import __builtin__ as builtins
+import builtins
 
 
 CLASSIFIERS = """\
@@ -43,13 +40,11 @@ Intended Audience :: Developers
 License :: OSI Approved
 Programming Language :: C
 Programming Language :: Python
-Programming Language :: Python :: 2
-Programming Language :: Python :: 2.7
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.4
 Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
+Programming Language :: Python :: 3 :: Only
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
 Topic :: Scientific/Engineering
@@ -60,7 +55,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 16
+MINOR               = 18
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -79,13 +74,17 @@ def git_version():
         env['LANGUAGE'] = 'C'
         env['LANG'] = 'C'
         env['LC_ALL'] = 'C'
-        out = subprocess.Popen(cmd, stdout=subprocess.PIPE, env=env).communicate()[0]
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, env=env)
         return out
 
     try:
         out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
         GIT_REVISION = out.strip().decode('ascii')
-    except OSError:
+    except (subprocess.SubprocessError, OSError):
+        GIT_REVISION = "Unknown"
+
+    if not GIT_REVISION:
+        # this shouldn't happen but apparently can (see gh-8512)
         GIT_REVISION = "Unknown"
 
     return GIT_REVISION
@@ -114,8 +113,8 @@ def get_version_info():
         try:
             from numpy.version import git_revision as GIT_REVISION
         except ImportError:
-            raise ImportError("Unable to import git_revision. Try removing " \
-                              "numpy/version.py and the build directory " \
+            raise ImportError("Unable to import git_revision. Try removing "
+                              "numpy/version.py and the build directory "
                               "before building.")
     else:
         GIT_REVISION = "Unknown"
@@ -192,23 +191,52 @@ def check_submodules():
             raise ValueError('Submodule not clean: %s' % line)
 
 
+class concat_license_files():
+    """Merge LICENSE.txt and LICENSES_bundled.txt for sdist creation
+
+    Done this way to keep LICENSE.txt in repo as exact BSD 3-clause (see
+    gh-13447).  This makes GitHub state correctly how NumPy is licensed.
+    """
+    def __init__(self):
+        self.f1 = 'LICENSE.txt'
+        self.f2 = 'LICENSES_bundled.txt'
+
+    def __enter__(self):
+        """Concatenate files and remove LICENSES_bundled.txt"""
+        with open(self.f1, 'r') as f1:
+            self.bsd_text = f1.read()
+
+        with open(self.f1, 'a') as f1:
+            with open(self.f2, 'r') as f2:
+                self.bundled_text = f2.read()
+                f1.write('\n\n')
+                f1.write(self.bundled_text)
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        """Restore content of both files"""
+        with open(self.f1, 'w') as f:
+            f.write(self.bsd_text)
+
+
 from distutils.command.sdist import sdist
 class sdist_checked(sdist):
     """ check submodules on sdist to prevent incomplete tarballs """
     def run(self):
         check_submodules()
-        sdist.run(self)
+        with concat_license_files():
+            sdist.run(self)
 
 
 def generate_cython():
     cwd = os.path.abspath(os.path.dirname(__file__))
     print("Cythonizing sources")
-    p = subprocess.call([sys.executable,
-                          os.path.join(cwd, 'tools', 'cythonize.py'),
-                          'numpy/random'],
-                         cwd=cwd)
-    if p != 0:
-        raise RuntimeError("Running cythonize failed!")
+    for d in ('random',):
+        p = subprocess.call([sys.executable,
+                              os.path.join(cwd, 'tools', 'cythonize.py'),
+                              'numpy/{0}'.format(d)],
+                             cwd=cwd)
+        if p != 0:
+            raise RuntimeError("Running cythonize failed!")
 
 
 def parse_setuppy_commands():
@@ -239,7 +267,7 @@ def parse_setuppy_commands():
     # below and not standalone.  Hence they're not added to good_commands.
     good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
                      'build_clib', 'build_scripts', 'bdist_wheel', 'bdist_rpm',
-                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg')
+                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src')
 
     for command in good_commands:
         if command in args:
@@ -341,7 +369,7 @@ def parse_setuppy_commands():
 
 
 def setup_package():
-    src_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    src_path = os.path.dirname(os.path.abspath(__file__))
     old_path = os.getcwd()
     os.chdir(src_path)
     sys.path.insert(0, src_path)
@@ -370,12 +398,18 @@ def setup_package():
         url = "https://www.numpy.org",
         author = "Travis E. Oliphant et al.",
         download_url = "https://pypi.python.org/pypi/numpy",
+        project_urls={
+            "Bug Tracker": "https://github.com/numpy/numpy/issues",
+            "Documentation": "https://docs.scipy.org/doc/numpy/",
+            "Source Code": "https://github.com/numpy/numpy",
+        },
         license = 'BSD',
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
-        cmdclass={"sdist": sdist_checked},
-        python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
+        cmdclass={"sdist": sdist_checked,
+                 },
+        python_requires='>=3.5',
         zip_safe=False,
         entry_points={
             'console_scripts': f2py_cmds
@@ -393,8 +427,8 @@ def setup_package():
     if run_build:
         from numpy.distutils.core import setup
         cwd = os.path.abspath(os.path.dirname(__file__))
-        if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
-            # Generate Cython sources, unless building from source release
+        if not 'sdist' in sys.argv:
+            # Generate Cython sources, unless we're generating an sdist
             generate_cython()
 
         metadata['configuration'] = configuration

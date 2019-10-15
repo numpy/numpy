@@ -1,3 +1,5 @@
+:orphan:
+
 .. _CoC_reporting_manual:
 
 NumPy Code of Conduct - How to follow up on a report

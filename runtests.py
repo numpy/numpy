@@ -18,6 +18,10 @@ Run a debugger:
 
     $ gdb --args python runtests.py [...other args...]
 
+Disable pytest capturing of output by using its '-s' option:
+
+    $ python runtests.py -- -s
+
 Generate C code coverage listing under build/lcov/:
 (requires http://ltp.sourceforge.net/coverage/lcov.php)
 
@@ -67,14 +71,18 @@ def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("--verbose", "-v", action="count", default=1,
                         help="more verbosity")
+    parser.add_argument("--debug-info", action="store_true",
+                        help=("add --verbose-cfg to build_src to show compiler "
+                              "configuration output while creating "
+                              "_numpyconfig.h and config.h"))
     parser.add_argument("--no-build", "-n", action="store_true", default=False,
                         help="do not build the project (use system installed version)")
     parser.add_argument("--build-only", "-b", action="store_true", default=False,
                         help="just build, do not run any tests")
     parser.add_argument("--doctests", action="store_true", default=False,
                         help="Run doctests in module")
-    #parser.add_argument("--refguide-check", action="store_true", default=False,
-                        #help="Run refguide check (do not run regular tests.)")
+    parser.add_argument("--refguide-check", action="store_true", default=False,
+                        help="Run refguide (doctest) check (do not run regular tests.)")
     parser.add_argument("--coverage", action="store_true", default=False,
                         help=("report coverage of project code. HTML output goes "
                               "under build/coverage"))
@@ -106,6 +114,8 @@ def main(argv):
                         help="Debug build")
     parser.add_argument("--parallel", "-j", type=int, default=0,
                         help="Number of parallel jobs during build")
+    parser.add_argument("--warn-error", action="store_true",
+                        help="Set -Werror to convert all compiler warnings to errors")
     parser.add_argument("--show-build-log", action="store_true",
                         help="Show build output rather than using a log file")
     parser.add_argument("--bench", action="store_true",
@@ -202,6 +212,14 @@ def main(argv):
             shutil.rmtree(dst_dir)
         extra_argv += ['--cov-report=html:' + dst_dir]
 
+    if args.refguide_check:
+        cmd = [os.path.join(ROOT_DIR, 'tools', 'refguide_check.py'),
+               '--doctests']
+        if args.submodule:
+            cmd += [args.submodule]
+        os.execv(sys.executable, [sys.executable] + cmd)
+        sys.exit(0)
+
     if args.bench:
         # Run ASV
         items = extra_argv
@@ -250,8 +268,6 @@ def main(argv):
                    commit_a, commit_b] + bench_args
             ret = subprocess.call(cmd, cwd=os.path.join(ROOT_DIR, 'benchmarks'))
             sys.exit(ret)
-
-    test_dir = os.path.join(ROOT_DIR, 'build', 'test')
 
     if args.build_only:
         sys.exit(0)
@@ -335,7 +351,6 @@ def build_project(args):
             # add flags used as werrors
             warnings_as_errors = ' '.join([
                 # from tools/travis-test.sh
-                '-Werror=declaration-after-statement',
                 '-Werror=vla',
                 '-Werror=nonnull',
                 '-Werror=pointer-arith',
@@ -361,6 +376,10 @@ def build_project(args):
     cmd += ["build"]
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
+    if args.debug_info:
+        cmd += ["build_src", "--verbose-cfg"]
+    if args.warn_error:
+        cmd += ["--warn-error"]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
     cmd += ['install', '--prefix=' + dst_dir,
             '--single-version-externally-managed',

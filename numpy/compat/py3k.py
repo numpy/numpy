@@ -8,16 +8,22 @@ __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
            'asstr', 'open_latin1', 'long', 'basestring', 'sixu',
            'integer_types', 'is_pathlib_path', 'npy_load_module', 'Path',
-           'contextlib_nullcontext']
+           'pickle', 'contextlib_nullcontext', 'os_fspath', 'os_PathLike']
 
 import sys
+import os
 try:
-    from pathlib import Path
+    from pathlib import Path, PurePath
 except ImportError:
-    Path = None
+    Path = PurePath = None
 
 if sys.version_info[0] >= 3:
     import io
+
+    try:
+        import pickle5 as pickle
+    except ImportError:
+        import pickle
 
     long = int
     integer_types = (int,)
@@ -51,8 +57,9 @@ if sys.version_info[0] >= 3:
 
     strchar = 'U'
 
-
 else:
+    import cpickle as pickle
+
     bytes = str
     long = long
     basestring = basestring
@@ -76,7 +83,6 @@ else:
     def sixu(s):
         return unicode(s, 'unicode_escape')
 
-
 def getexception():
     return sys.exc_info()[1]
 
@@ -95,6 +101,8 @@ def asunicode_nested(x):
 def is_pathlib_path(obj):
     """
     Check whether obj is a pathlib.Path object.
+
+    Prefer using `isinstance(obj, os_PathLike)` instead of this function.
     """
     return Path is not None and isinstance(obj, Path)
 
@@ -166,7 +174,6 @@ else:
 
         """
         import imp
-        import os
         if info is None:
             path = os.path.dirname(fn)
             fo, fn, info = imp.find_module(name, [path])
@@ -177,3 +184,64 @@ else:
         finally:
             fo.close()
         return mod
+
+# backport abc.ABC
+import abc
+if sys.version_info[:2] >= (3, 4):
+    abc_ABC = abc.ABC
+else:
+    abc_ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
+
+
+# Backport os.fs_path, os.PathLike, and PurePath.__fspath__
+if sys.version_info[:2] >= (3, 6):
+    os_fspath = os.fspath
+    os_PathLike = os.PathLike
+else:
+    def _PurePath__fspath__(self):
+        return str(self)
+
+    class os_PathLike(abc_ABC):
+        """Abstract base class for implementing the file system path protocol."""
+
+        @abc.abstractmethod
+        def __fspath__(self):
+            """Return the file system path representation of the object."""
+            raise NotImplementedError
+
+        @classmethod
+        def __subclasshook__(cls, subclass):
+            if PurePath is not None and issubclass(subclass, PurePath):
+                return True
+            return hasattr(subclass, '__fspath__')
+
+
+    def os_fspath(path):
+        """Return the path representation of a path-like object.
+        If str or bytes is passed in, it is returned unchanged. Otherwise the
+        os.PathLike interface is used to get the path representation. If the
+        path representation is not str or bytes, TypeError is raised. If the
+        provided path is not str, bytes, or os.PathLike, TypeError is raised.
+        """
+        if isinstance(path, (str, bytes)):
+            return path
+
+        # Work from the object's type to match method resolution of other magic
+        # methods.
+        path_type = type(path)
+        try:
+            path_repr = path_type.__fspath__(path)
+        except AttributeError:
+            if hasattr(path_type, '__fspath__'):
+                raise
+            elif PurePath is not None and issubclass(path_type, PurePath):
+                return _PurePath__fspath__(path)
+            else:
+                raise TypeError("expected str, bytes or os.PathLike object, "
+                                "not " + path_type.__name__)
+        if isinstance(path_repr, (str, bytes)):
+            return path_repr
+        else:
+            raise TypeError("expected {}.__fspath__() to return str or bytes, "
+                            "not {}".format(path_type.__name__,
+                                            type(path_repr).__name__))

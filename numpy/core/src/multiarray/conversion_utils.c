@@ -16,6 +16,7 @@
 
 #include "conversion_utils.h"
 #include "alloc.h"
+#include "buffer.h"
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
@@ -115,8 +116,8 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         return NPY_FAIL;
     }
     if (len > NPY_MAXDIMS) {
-        PyErr_Format(PyExc_ValueError, "sequence too large; "
-                     "cannot be greater than %d", NPY_MAXDIMS);
+        PyErr_Format(PyExc_ValueError, "maximum supported dimension for an ndarray is %d"
+                     ", found %d", NPY_MAXDIMS, len);
         return NPY_FAIL;
     }
     if (len > 0) {
@@ -185,6 +186,7 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
      * sticks around after the release.
      */
     PyBuffer_Release(&view);
+    _dealloc_cached_buffer_info(obj);
 
     /* Point to the base of the buffer object if present */
     if (PyMemoryView_Check(obj)) {
@@ -391,6 +393,11 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
     char *str;
     PyObject *tmp = NULL;
 
+    if (obj == Py_None) {
+        *sortkind = NPY_QUICKSORT;
+        return NPY_SUCCEED;
+    }
+
     if (PyUnicode_Check(obj)) {
         obj = tmp = PyUnicode_AsASCIIString(obj);
         if (obj == NULL) {
@@ -399,6 +406,7 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
     }
 
     *sortkind = NPY_QUICKSORT;
+
     str = PyBytes_AsString(obj);
     if (!str) {
         Py_XDECREF(tmp);
@@ -417,11 +425,23 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
         *sortkind = NPY_HEAPSORT;
     }
     else if (str[0] == 'm' || str[0] == 'M') {
+        /*
+         * Mergesort is an alias for NPY_STABLESORT.
+         * That maintains backwards compatibility while
+         * allowing other types of stable sorts to be used.
+         */
         *sortkind = NPY_MERGESORT;
     }
     else if (str[0] == 's' || str[0] == 'S') {
-        /* mergesort is the only stable sorting method in numpy */
-        *sortkind = NPY_MERGESORT;
+        /*
+         * NPY_STABLESORT is one of
+         *
+         *   - mergesort
+         *   - timsort
+         *
+         *  Which one is used depends on the data type.
+         */
+        *sortkind = NPY_STABLESORT;
     }
     else {
         PyErr_Format(PyExc_ValueError,
@@ -530,10 +550,9 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
         int ret;
         tmp = PyUnicode_AsASCIIString(object);
         if (tmp == NULL) {
-            PyErr_SetString(PyExc_ValueError, "Invalid unicode string passed in "
-                                              "for the array ordering. "
-                                              "Please pass in 'C', 'F', 'A' "
-                                              "or 'K' instead");
+            PyErr_SetString(PyExc_ValueError,
+                "Invalid unicode string passed in for the array ordering. "
+                "Please pass in 'C', 'F', 'A' or 'K' instead");
             return NPY_FAIL;
         }
         ret = PyArray_OrderConverter(tmp, val);
@@ -541,38 +560,18 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
         return ret;
     }
     else if (!PyBytes_Check(object) || PyBytes_GET_SIZE(object) < 1) {
-        /* 2015-12-14, 1.11 */
-        int ret = DEPRECATE("Non-string object detected for "
-                            "the array ordering. Please pass "
-                            "in 'C', 'F', 'A', or 'K' instead");
-
-        if (ret < 0) {
-            return -1;
-        }
-
-        if (PyObject_IsTrue(object)) {
-            *val = NPY_FORTRANORDER;
-        }
-        else {
-            *val = NPY_CORDER;
-        }
-        if (PyErr_Occurred()) {
-            return NPY_FAIL;
-        }
-        return NPY_SUCCEED;
+        PyErr_SetString(PyExc_ValueError,
+            "Non-string object detected for the array ordering. "
+            "Please pass in 'C', 'F', 'A', or 'K' instead");
+        return NPY_FAIL;
     }
     else {
         str = PyBytes_AS_STRING(object);
         if (strlen(str) != 1) {
-            /* 2015-12-14, 1.11 */
-            int ret = DEPRECATE("Non length-one string passed "
-                                "in for the array ordering. "
-                                "Please pass in 'C', 'F', 'A', "
-                                "or 'K' instead");
-
-            if (ret < 0) {
-                return -1;
-            }
+            PyErr_SetString(PyExc_ValueError,
+                "Non-string object detected for the array ordering. "
+                "Please pass in 'C', 'F', 'A', or 'K' instead");
+            return NPY_FAIL;
         }
 
         if (str[0] == 'C' || str[0] == 'c') {

@@ -5,7 +5,42 @@ String handling is much easier to do correctly in python.
 """
 from __future__ import division, absolute_import, print_function
 
+import sys
+
 import numpy as np
+
+
+_kind_to_stem = {
+    'u': 'uint',
+    'i': 'int',
+    'c': 'complex',
+    'f': 'float',
+    'b': 'bool',
+    'V': 'void',
+    'O': 'object',
+    'M': 'datetime',
+    'm': 'timedelta'
+}
+if sys.version_info[0] >= 3:
+    _kind_to_stem.update({
+        'S': 'bytes',
+        'U': 'str'
+    })
+else:
+    _kind_to_stem.update({
+        'S': 'string',
+        'U': 'unicode'
+    })
+
+
+def _kind_name(dtype):
+    try:
+        return _kind_to_stem[dtype.kind]
+    except KeyError:
+        raise RuntimeError(
+            "internal dtype error, unknown kind {!r}"
+            .format(dtype.kind)
+        )
 
 
 def __str__(dtype):
@@ -103,7 +138,9 @@ def _scalar_str(dtype, short):
         else:
             return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
 
-    elif dtype.type == np.void:
+    # unlike the other types, subclasses of void are preserved - but
+    # historically the repr does not actually reveal the subclass
+    elif issubclass(dtype.type, np.void):
         if _isunsized(dtype):
             return "'V'"
         else:
@@ -122,20 +159,7 @@ def _scalar_str(dtype, short):
 
         # Longer repr, like 'float64'
         else:
-            kindstrs = {
-                'u': "uint",
-                'i': "int",
-                'f': "float",
-                'c': "complex"
-            }
-            try:
-                kindstr = kindstrs[dtype.kind]
-            except KeyError:
-                raise RuntimeError(
-                    "internal dtype repr error, unknown kind {!r}"
-                    .format(dtype.kind)
-                )
-            return "'%s%d'" % (kindstr, 8*dtype.itemsize)
+            return "'%s%d'" % (_kind_name(dtype), 8*dtype.itemsize)
 
     elif dtype.isbuiltin == 2:
         return dtype.type.__name__
@@ -228,7 +252,7 @@ def _is_packed(dtype):
     from a list of the field names and dtypes with no additional
     dtype parameters.
 
-    Duplicates the C `is_dtype_struct_simple_unaligned_layout` functio.
+    Duplicates the C `is_dtype_struct_simple_unaligned_layout` function.
     """
     total_offset = 0
     for name in dtype.names:
@@ -292,26 +316,39 @@ def _subarray_str(dtype):
     )
 
 
+def _name_includes_bit_suffix(dtype):
+    if dtype.type == np.object_:
+        # pointer size varies by system, best to omit it
+        return False
+    elif dtype.type == np.bool_:
+        # implied
+        return False
+    elif np.issubdtype(dtype, np.flexible) and _isunsized(dtype):
+        # unspecified
+        return False
+    else:
+        return True
+
+
 def _name_get(dtype):
-    # provides dtype.name.__get__
+    # provides dtype.name.__get__, documented as returning a "bit name"
 
     if dtype.isbuiltin == 2:
         # user dtypes don't promise to do anything special
         return dtype.type.__name__
 
-    # Builtin classes are documented as returning a "bit name"
-    name = dtype.type.__name__
+    if issubclass(dtype.type, np.void):
+        # historically, void subclasses preserve their name, eg `record64`
+        name = dtype.type.__name__
+    else:
+        name = _kind_name(dtype)
 
-    # handle bool_, str_, etc
-    if name[-1] == '_':
-        name = name[:-1]
-
-    # append bit counts to str, unicode, and void
-    if np.issubdtype(dtype, np.flexible) and not _isunsized(dtype):
+    # append bit counts
+    if _name_includes_bit_suffix(dtype):
         name += "{}".format(dtype.itemsize * 8)
 
     # append metadata to datetimes
-    elif dtype.type in (np.datetime64, np.timedelta64):
+    if dtype.type in (np.datetime64, np.timedelta64):
         name += _datetime_metadata_str(dtype)
 
     return name

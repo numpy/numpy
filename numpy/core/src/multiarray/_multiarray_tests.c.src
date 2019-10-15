@@ -11,6 +11,13 @@
 #include "npy_extint128.h"
 #include "common.h"
 
+
+#if defined(MS_WIN32) || defined(__CYGWIN__)
+#define EXPORT(x) __declspec(dllexport) x
+#else
+#define EXPORT(x) x
+#endif
+
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
@@ -30,6 +37,12 @@ IsPythonScalar(PyObject * dummy, PyObject *args)
 }
 
 #include "npy_pycompat.h"
+
+/** Function to test calling via ctypes */
+EXPORT(void*) forward_pointer(void *x)
+{
+    return x;
+}
 
 /*
  * TODO:
@@ -580,6 +593,25 @@ fail:
     return NULL;
 }
 
+/*
+ * Helper to test fromstring of 0 terminated strings, as the C-API supports
+ * the -1 length identifier.
+ */
+static PyObject *
+fromstring_null_term_c_api(PyObject *dummy, PyObject *byte_obj)
+{
+    char *string;
+    PyArray_Descr *descr;
+
+    string = PyBytes_AsString(byte_obj);
+    if (string == NULL) {
+        return NULL;
+    }
+    descr = PyArray_DescrNewFromType(NPY_FLOAT64);
+    return PyArray_FromString(string, -1, descr, -1, " ");
+}
+
+
 /* check no elison for avoided increfs */
 static PyObject *
 incref_elide(PyObject *dummy, PyObject *args)
@@ -641,6 +673,43 @@ npy_updateifcopy_deprecation(PyObject* NPY_UNUSED(self), PyObject* args)
     PyArray_ResolveWritebackIfCopy((PyArrayObject*)array);
     Py_DECREF(array);
     Py_RETURN_NONE;
+}
+
+/* used to test PyArray_As1D usage emits not implemented error */
+static PyObject*
+npy_pyarrayas1d_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
+{
+    PyObject *op = Py_BuildValue("i", 42);
+    PyObject *result = op;
+    int dim = 4;
+    double arg[2] = {1, 2};
+    int temp = PyArray_As1D(&result, (char **)&arg, &dim, NPY_DOUBLE);
+    if (temp < 0) {
+        Py_DECREF(op);
+        return NULL;
+    }
+    /* op != result */
+    Py_DECREF(op);
+    return result;
+}
+
+/* used to test PyArray_As2D usage emits not implemented error */
+static PyObject*
+npy_pyarrayas2d_deprecation(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
+{
+    PyObject *op = Py_BuildValue("i", 42);
+    PyObject *result = op;
+    int dim1 = 4;
+    int dim2 = 6;
+    double arg[2][2] = {{1, 2}, {3, 4}};
+    int temp = PyArray_As2D(&result, (char ***)&arg, &dim1, &dim2, NPY_DOUBLE);
+    if (temp < 0) {
+        Py_DECREF(op);
+        return NULL;
+    }
+    /* op != result */
+    Py_DECREF(op);
+    return result;
 }
 
 /* used to create array with WRITEBACKIFCOPY flag */
@@ -834,6 +903,31 @@ get_buffer_info(PyObject *NPY_UNUSED(self), PyObject *args)
 
 #undef GET_PYBUF_FLAG
 
+/*
+ * Return a new array object wrapping existing C-allocated (dummy) data.
+ * Such an array does not own its data (must not free it), but because it
+ * wraps C data, it also has no base object. Used to test arr.flags.writeable
+ * setting behaviour.
+ */
+static PyObject*
+get_c_wrapping_array(PyObject* NPY_UNUSED(self), PyObject* arg)
+{
+    int writeable, flags;
+    PyArray_Descr *descr;
+    npy_intp zero = 0;
+
+    writeable = PyObject_IsTrue(arg);
+    if (error_converting(writeable)) {
+        return NULL;
+    }
+
+    flags = writeable ? NPY_ARRAY_WRITEABLE : 0;
+    /* Create an empty array (which points to a random place) */
+    descr =  PyArray_DescrNewFromType(NPY_INTP);
+    return PyArray_NewFromDescr(&PyArray_Type, descr,
+                                1, &zero, NULL, &zero, flags, NULL);
+}
+
 
 /*
  * Test C-api level item getting.
@@ -892,6 +986,7 @@ test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
 
     num_dims = PyArray_NDIM(array_obj);
     descr = PyArray_DESCR(array_obj);
+    Py_INCREF(descr);  /* PyArray_AsCArray steals a reference to this */
 
     switch (num_dims) {
         case 1:
@@ -934,6 +1029,7 @@ test_as_c_array(PyObject *NPY_UNUSED(self), PyObject *args)
             PyArray_Free((PyObject *) array_obj, (void *) array3);
             break;
         default:
+            Py_DECREF(descr);
             PyErr_SetString(PyExc_ValueError, "array.ndim not in [1, 3]");
             return NULL;
     }
@@ -1227,7 +1323,9 @@ pylong_from_int128(npy_extint128_t value)
     }
 
     Py_DECREF(val);
+    Py_DECREF(val_64);
     val = tmp;
+    val_64 = NULL;
 
     tmp = PyLong_FromUnsignedLongLong(value.lo);
     if (tmp == NULL) {
@@ -1855,6 +1953,19 @@ printf_float_g(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     return PrintFloat_Printf_g(obj, precision);
 }
 
+static PyObject *
+getset_numericops(PyObject* NPY_UNUSED(self), PyObject* NPY_UNUSED(args))
+{
+    PyObject *ret;
+    PyObject *ops = PyArray_GetNumericOps();
+    if (ops == NULL) {
+        return NULL;
+    }
+    ret = PyLong_FromLong(PyArray_SetNumericOps(ops));
+    Py_DECREF(ops);
+    return ret;
+}
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"IsPythonScalar",
         IsPythonScalar,
@@ -1874,6 +1985,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_inplace_increment",
         inplace_increment,
         METH_VARARGS, NULL},
+    {"fromstring_null_term_c_api",
+        fromstring_null_term_c_api,
+        METH_O, NULL},
     {"incref_elide",
         incref_elide,
         METH_VARARGS, NULL},
@@ -1886,6 +2000,12 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"npy_updateifcopy_deprecation",
         npy_updateifcopy_deprecation,
         METH_O, NULL},
+    {"npy_pyarrayas1d_deprecation",
+        npy_pyarrayas1d_deprecation,
+        METH_NOARGS, NULL},
+    {"npy_pyarrayas2d_deprecation",
+        npy_pyarrayas2d_deprecation,
+        METH_NOARGS, NULL},
     {"npy_create_writebackifcopy",
         npy_create_writebackifcopy,
         METH_O, NULL},
@@ -1906,6 +2026,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_buffer_info",
         get_buffer_info,
         METH_VARARGS, NULL},
+    {"get_c_wrapping_array",
+        get_c_wrapping_array,
+        METH_O, NULL},
     {"array_indexing",
         array_indexing,
         METH_VARARGS, NULL},
@@ -1963,6 +2086,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"get_fpu_mode",
         get_fpu_mode,
         METH_VARARGS, get_fpu_mode_doc},
+    {"getset_numericops",
+        getset_numericops,
+        METH_NOARGS, NULL},
 /**begin repeat
  * #name = cabs, carg#
  */
@@ -2039,4 +2165,10 @@ init_multiarray_tests(void)
                         "cannot load _multiarray_tests module.");
     }
     return RETVAL;
+}
+
+NPY_NO_EXPORT int
+test_not_exported(void)
+{
+    return 1;
 }

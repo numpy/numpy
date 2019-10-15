@@ -10,7 +10,7 @@ import pytest
 
 from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, suppress_warnings, dec
+from numpy.testing import assert_, assert_equal, suppress_warnings
 
 class TestRealScalars(object):
     def test_str(self):
@@ -51,7 +51,7 @@ class TestRealScalars(object):
 
     def test_py2_float_print(self):
         # gh-10753
-        # In python2, the python float type implements an obsolte method
+        # In python2, the python float type implements an obsolete method
         # tp_print, which overrides tp_repr and tp_str when using "print" to
         # output to a "real file" (ie, not a StringIO). Make sure we don't
         # inherit it.

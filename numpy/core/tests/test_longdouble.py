@@ -1,10 +1,12 @@
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal, temppath,
+    assert_, assert_equal, assert_raises, assert_warns, assert_array_equal,
+    temppath,
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
@@ -70,18 +72,21 @@ def test_fromstring():
 
 
 def test_fromstring_bogus():
-    assert_equal(np.fromstring("1. 2. 3. flop 4.", dtype=float, sep=" "),
-                 np.array([1., 2., 3.]))
+    with assert_warns(DeprecationWarning):
+        assert_equal(np.fromstring("1. 2. 3. flop 4.", dtype=float, sep=" "),
+                     np.array([1., 2., 3.]))
 
 
 def test_fromstring_empty():
-    assert_equal(np.fromstring("xxxxx", sep="x"),
-                 np.array([]))
+    with assert_warns(DeprecationWarning):
+        assert_equal(np.fromstring("xxxxx", sep="x"),
+                     np.array([]))
 
 
 def test_fromstring_missing():
-    assert_equal(np.fromstring("1xx3x4x5x6", sep="x"),
-                 np.array([1]))
+    with assert_warns(DeprecationWarning):
+        assert_equal(np.fromstring("1xx3x4x5x6", sep="x"),
+                     np.array([1]))
 
 
 class TestFileBased(object):
@@ -94,7 +99,9 @@ class TestFileBased(object):
         with temppath() as path:
             with open(path, 'wt') as f:
                 f.write("1. 2. 3. flop 4.\n")
-            res = np.fromfile(path, dtype=float, sep=" ")
+
+            with assert_warns(DeprecationWarning):
+                res = np.fromfile(path, dtype=float, sep=" ")
         assert_equal(res, np.array([1., 2., 3.]))
 
     @pytest.mark.skipif(string_to_longdouble_inaccurate,
@@ -185,12 +192,14 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
         assert_equal(a[0], f)
 
     def test_fromstring_best_effort_float(self):
-        assert_equal(np.fromstring("1,234", dtype=float, sep=" "),
-                     np.array([1.]))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.fromstring("1,234", dtype=float, sep=" "),
+                         np.array([1.]))
 
     def test_fromstring_best_effort(self):
-        assert_equal(np.fromstring("1,234", dtype=np.longdouble, sep=" "),
-                     np.array([1.]))
+        with assert_warns(DeprecationWarning):
+            assert_equal(np.fromstring("1,234", dtype=np.longdouble, sep=" "),
+                         np.array([1.]))
 
     def test_fromstring_foreign(self):
         s = "1.234"
@@ -203,5 +212,32 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
         assert_array_equal(a, b)
 
     def test_fromstring_foreign_value(self):
-        b = np.fromstring("1,234", dtype=np.longdouble, sep=" ")
-        assert_array_equal(b[0], 1)
+        with assert_warns(DeprecationWarning):
+            b = np.fromstring("1,234", dtype=np.longdouble, sep=" ")
+            assert_array_equal(b[0], 1)
+
+
+@pytest.mark.parametrize("int_val", [
+    # cases discussed in gh-10723
+    # and gh-9968
+    2 ** 1024, 0])
+def test_longdouble_from_int(int_val):
+    # for issue gh-9968
+    str_val = str(int_val)
+    # we'll expect a RuntimeWarning on platforms
+    # with np.longdouble equivalent to np.double
+    # for large integer input
+    with warnings.catch_warnings(record=True) as w:
+        warnings.filterwarnings('always', '', RuntimeWarning)
+        # can be inf==inf on some platforms
+        assert np.longdouble(int_val) == np.longdouble(str_val)
+        # we can't directly compare the int and
+        # max longdouble value on all platforms
+        if np.allclose(np.finfo(np.longdouble).max,
+                       np.finfo(np.double).max) and w:
+            assert w[0].category is RuntimeWarning
+
+@pytest.mark.parametrize("bool_val", [
+    True, False])
+def test_longdouble_from_bool(bool_val):
+    assert np.longdouble(bool_val) == np.longdouble(int(bool_val))

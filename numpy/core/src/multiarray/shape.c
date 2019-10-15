@@ -26,7 +26,7 @@ static int
 _fix_unknown_dimension(PyArray_Dims *newshape, PyArrayObject *arr);
 
 static int
-_attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
+_attempt_nocopy_reshape(PyArrayObject *self, int newnd, const npy_intp *newdims,
                         npy_intp *newstrides, int is_f_order);
 
 static void
@@ -40,11 +40,11 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype);
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
-               NPY_ORDER order)
+               NPY_ORDER NPY_UNUSED(order))
 {
     npy_intp oldnbytes, newnbytes;
     npy_intp oldsize, newsize;
-    int new_nd=newshape->len, k, n, elsize;
+    int new_nd=newshape->len, k, elsize;
     int refcnt;
     npy_intp* new_dimensions=newshape->ptr;
     npy_intp new_strides[NPY_MAXDIMS];
@@ -89,11 +89,19 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             return NULL;
         }
 
+        if (PyArray_BASE(self) != NULL
+              || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot resize an array that "
+                    "references or is referenced\n"
+                    "by another array in this way. Use the np.resize function.");
+            return NULL;
+        }
         if (refcheck) {
 #ifdef PYPY_VERSION
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize an array with refcheck=True on PyPy.\n"
-                    "Use the resize function or refcheck=False");
+                    "Use the np.resize function or refcheck=False");
             return NULL;
 #else
             refcnt = PyArray_REFCOUNT(self);
@@ -102,13 +110,12 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         else {
             refcnt = 1;
         }
-        if ((refcnt > 2)
-                || (PyArray_BASE(self) != NULL)
-                || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
+        if (refcnt > 2) {
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize an array that "
                     "references or is referenced\n"
-                    "by another array in this way.  Use the resize function");
+                    "by another array in this way.\n"
+                    "Use the np.resize function or refcheck=False");
             return NULL;
         }
 
@@ -129,8 +136,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             PyObject *zero = PyInt_FromLong(0);
             char *optr;
             optr = PyArray_BYTES(self) + oldnbytes;
-            n = newsize - oldsize;
-            for (k = 0; k < n; k++) {
+            npy_intp n_new = newsize - oldsize;
+            for (npy_intp i = 0; i < n_new; i++) {
                 _putzero((char *)optr, zero, PyArray_DESCR(self));
                 optr += elsize;
             }
@@ -354,7 +361,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
  * stride of the next-fastest index.
  */
 static int
-_attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
+_attempt_nocopy_reshape(PyArrayObject *self, int newnd, const npy_intp *newdims,
                         npy_intp *newstrides, int is_f_order)
 {
     int oldnd;
@@ -759,7 +766,7 @@ static int _npy_stride_sort_item_comparator(const void *a, const void *b)
  * [(2, 12), (0, 4), (1, -2)].
  */
 NPY_NO_EXPORT void
-PyArray_CreateSortedStridePerm(int ndim, npy_intp *strides,
+PyArray_CreateSortedStridePerm(int ndim, npy_intp const *strides,
                         npy_stride_sort_item *out_strideperm)
 {
     int i;
@@ -1041,7 +1048,7 @@ build_shape_string(npy_intp n, npy_intp *vals)
  * from a reduction result once its computation is complete.
  */
 NPY_NO_EXPORT void
-PyArray_RemoveAxesInPlace(PyArrayObject *arr, npy_bool *flags)
+PyArray_RemoveAxesInPlace(PyArrayObject *arr, const npy_bool *flags)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
     npy_intp *shape = fa->dimensions, *strides = fa->strides;

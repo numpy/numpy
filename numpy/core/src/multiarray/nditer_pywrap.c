@@ -82,7 +82,8 @@ static int npyiter_cache_values(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
+npyiter_new(PyTypeObject *subtype, PyObject *NPY_UNUSED(args),
+            PyObject *NPY_UNUSED(kwds))
 {
     NewNpyArrayIterObject *self;
 
@@ -535,7 +536,7 @@ try_single_dtype:
 }
 
 static int
-npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
+npyiter_convert_op_axes(PyObject *op_axes_in, int nop,
                         int **op_axes, int *oa_ndim)
 {
     PyObject *a;
@@ -572,6 +573,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
                 if (*oa_ndim > NPY_MAXDIMS) {
                     PyErr_SetString(PyExc_ValueError,
                             "Too many dimensions in op_axes");
+                    Py_DECREF(a);
                     return 0;
                 }
             }
@@ -602,8 +604,8 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
                 }
                 Py_DECREF(v);
             }
-            Py_DECREF(a);
         }
+        Py_DECREF(a);
     }
 
     if (*oa_ndim == -1) {
@@ -2355,6 +2357,8 @@ npyiter_close(NewNpyArrayIterObject *self)
     }
     ret = NpyIter_Deallocate(iter);
     self->iter = NULL;
+    Py_XDECREF(self->nested_child);
+    self->nested_child = NULL;
     if (ret < 0) {
         return NULL;
     }
@@ -2362,7 +2366,7 @@ npyiter_close(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_exit(NewNpyArrayIterObject *self, PyObject *args)
+npyiter_exit(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     /* even if called via exception handling, writeback any data */
     return npyiter_close(self);

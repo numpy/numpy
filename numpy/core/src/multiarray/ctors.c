@@ -11,7 +11,7 @@
 
 #include "npy_config.h"
 
-#include "npy_import.h"
+#include "npy_ctypes.h"
 #include "npy_pycompat.h"
 #include "multiarraymodule.h"
 
@@ -40,8 +40,30 @@
  * regards to the handling of text representations.
  */
 
+/*
+ * Scanning function for next element parsing and seperator skipping.
+ * These functions return:
+ *   - 0 to indicate more data to read
+ *   - -1 when reading stopped at the end of the string/file
+ *   - -2 when reading stopped before the end was reached.
+ *
+ * The dtype specific parsing functions may set the python error state
+ * (they have to get the GIL first) additionally.
+ */
 typedef int (*next_element)(void **, void *, PyArray_Descr *, void *);
 typedef int (*skip_separator)(void **, const char *, void *);
+
+
+static npy_bool
+string_is_fully_read(char const* start, char const* end) {
+    if (end == NULL) {
+        return *start == '\0';  /* null terminated */
+    }
+    else {
+        return start >= end;  /* fixed length */
+    }
+}
+
 
 static int
 fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
@@ -50,19 +72,23 @@ fromstr_next_element(char **s, void *dptr, PyArray_Descr *dtype,
     char *e = *s;
     int r = dtype->f->fromstr(*s, dptr, &e, dtype);
     /*
-     * fromstr always returns 0 for basic dtypes
-     * s points to the end of the parsed string
-     * if an error occurs s is not changed
+     * fromstr always returns 0 for basic dtypes; s points to the end of the
+     * parsed string. If s is not changed an error occurred or the end was
+     * reached.
      */
-    if (*s == e) {
-        /* Nothing read */
-        return -1;
+    if (*s == e || r < 0) {
+        /* Nothing read, could be end of string or an error (or both) */
+        if (string_is_fully_read(*s, end)) {
+            return -1;
+        }
+        return -2;
     }
     *s = e;
     if (end != NULL && *s > end) {
+        /* Stop the iteration if we read far enough */
         return -1;
     }
-    return r;
+    return 0;
 }
 
 static int
@@ -75,8 +101,12 @@ fromfile_next_element(FILE **fp, void *dptr, PyArray_Descr *dtype,
     if (r == 1) {
         return 0;
     }
-    else {
+    else if (r == EOF) {
         return -1;
+    }
+    else {
+        /* unable to read more, but EOF not reached indicating an error. */
+        return -2;
     }
 }
 
@@ -143,9 +173,10 @@ fromstr_skip_separator(char **s, const char *sep, const char *end)
 {
     char *string = *s;
     int result = 0;
+
     while (1) {
         char c = *string;
-        if (c == '\0' || (end != NULL && string >= end)) {
+        if (string_is_fully_read(string, end)) {
             result = -1;
             break;
         }
@@ -422,6 +453,10 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
     }
 }
 
+NPY_NO_EXPORT PyObject *
+_array_from_array_like(PyObject *op, PyArray_Descr *requested_dtype,
+                       npy_bool writeable, PyObject *context);
+
 /*
  * adapted from Numarray,
  * a: destination array
@@ -441,11 +476,6 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     /* first recursion, view equal destination */
     if (dst == NULL)
         dst = a;
-
-    /*
-     * This code is to ensure that the sequence access below will
-     * return a lower-dimensional sequence.
-     */
 
     /* INCREF on entry DECREF on exit */
     Py_INCREF(s);
@@ -472,6 +502,11 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
         return 0;
     }
 
+    /*
+     * This code is to ensure that the sequence access below will
+     * return a lower-dimensional sequence.
+     */
+
     if (dim > PyArray_NDIM(a)) {
         PyErr_Format(PyExc_ValueError,
                  "setArrayFromSequence: sequence/array dimensions mismatch.");
@@ -482,6 +517,27 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
     if (slen < 0) {
         goto fail;
     }
+    if (slen > 0) {
+        /* gh-13659: try __array__ before using s as a sequence */
+        PyObject *tmp = _array_from_array_like(s, /*dtype*/NULL, /*writeable*/0,
+                                               /*context*/NULL);
+        if (tmp == NULL) {
+            goto fail;
+        }
+        else if (tmp == Py_NotImplemented) {
+            Py_DECREF(tmp);
+        }
+        else {
+            int r = PyArray_CopyInto(dst, (PyArrayObject *)tmp);
+            Py_DECREF(tmp);
+            if (r < 0) {
+                goto fail;
+            }
+            Py_DECREF(s);
+            return 0;
+        }
+    }
+
     /*
      * Either the dimensions match, or the sequence has length 1 and can
      * be broadcast to the destination.
@@ -743,16 +799,31 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                 d[i] = buffer_view.shape[i];
             }
             PyBuffer_Release(&buffer_view);
+            _dealloc_cached_buffer_info(obj);
             return 0;
+        }
+        else if (PyErr_Occurred()) {
+            if (PyErr_ExceptionMatches(PyExc_BufferError) ||
+                    PyErr_ExceptionMatches(PyExc_TypeError)) {
+                PyErr_Clear();
+            } else {
+                return -1;
+            }
         }
         else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
             d[0] = buffer_view.len;
             *maxndim = 1;
             PyBuffer_Release(&buffer_view);
+            _dealloc_cached_buffer_info(obj);
             return 0;
         }
-        else {
-            PyErr_Clear();
+        else if (PyErr_Occurred()) {
+            if (PyErr_ExceptionMatches(PyExc_BufferError) ||
+                    PyErr_ExceptionMatches(PyExc_TypeError)) {
+                PyErr_Clear();
+            } else {
+                return -1;
+            }
         }
     }
 
@@ -896,6 +967,39 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     return 0;
 }
 
+static PyObject *
+raise_memory_error(int nd, npy_intp *dims, PyArray_Descr *descr)
+{
+    static PyObject *exc_type = NULL;
+
+    npy_cache_import(
+        "numpy.core._exceptions", "_ArrayMemoryError",
+        &exc_type);
+    if (exc_type == NULL) {
+        goto fail;
+    }
+
+    PyObject *shape = PyArray_IntTupleFromIntp(nd, dims);
+    if (shape == NULL) {
+        goto fail;
+    }
+
+    /* produce an error object */
+    PyObject *exc_value = PyTuple_Pack(2, shape, (PyObject *)descr);
+    Py_DECREF(shape);
+    if (exc_value == NULL){
+        goto fail;
+    }
+    PyErr_SetObject(exc_type, exc_value);
+    Py_DECREF(exc_value);
+    return NULL;
+
+fail:
+    /* we couldn't raise the formatted exception for some reason */
+    PyErr_WriteUnraisable(NULL);
+    return PyErr_NoMemory();
+}
+
 /*
  * Generic new array creation routine.
  * Internal variant with calloc argument for PyArray_Zeros.
@@ -904,13 +1008,14 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
  * be decrefed.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-                         npy_intp *dims, npy_intp *strides, void *data,
-                         int flags, PyObject *obj, PyObject *base, int zeroed,
-                         int allow_emptystring)
+PyArray_NewFromDescr_int(
+        PyTypeObject *subtype, PyArray_Descr *descr, int nd,
+        npy_intp const *dims, npy_intp const *strides, void *data,
+        int flags, PyObject *obj, PyObject *base, int zeroed,
+        int allow_emptystring)
 {
     PyArrayObject_fields *fa;
-    int i, is_empty;
+    int i;
     npy_intp nbytes;
 
     if (descr->subarray) {
@@ -964,7 +1069,6 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
 
     /* Check dimensions and multiply them to nbytes */
-    is_empty = 0;
     for (i = 0; i < nd; i++) {
         npy_intp dim = dims[i];
 
@@ -973,7 +1077,6 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
              * Compare to PyArray_OverflowMultiplyList that
              * returns 0 in this case.
              */
-            is_empty = 1;
             continue;
         }
 
@@ -1031,7 +1134,9 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             goto fail;
         }
         fa->strides = fa->dimensions + nd;
-        memcpy(fa->dimensions, dims, sizeof(npy_intp)*nd);
+        if (nd) {
+            memcpy(fa->dimensions, dims, sizeof(npy_intp)*nd);
+        }
         if (strides == NULL) {  /* fill it in */
             _array_fill_strides(fa->strides, dims, nd, descr->elsize,
                                 flags, &(fa->flags));
@@ -1041,7 +1146,9 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
              * we allow strides even when we create
              * the memory, but be careful with this...
              */
-            memcpy(fa->strides, strides, sizeof(npy_intp)*nd);
+            if (nd) {
+                memcpy(fa->strides, strides, sizeof(npy_intp)*nd);
+            }
         }
     }
     else {
@@ -1056,8 +1163,8 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * (a.data) doesn't work as it should.
          * Could probably just allocate a few bytes here. -- Chuck
          */
-        if (is_empty) {
-            nbytes = descr->elsize;
+        if (nbytes == 0) {
+            nbytes = descr->elsize ? descr->elsize : 1;
         }
         /*
          * It is bad to have uninitialized OBJECT pointers
@@ -1070,8 +1177,7 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             data = npy_alloc_cache(nbytes);
         }
         if (data == NULL) {
-            PyErr_NoMemory();
-            goto fail;
+            return raise_memory_error(fa->nd, fa->dimensions, descr);
         }
         fa->flags |= NPY_ARRAY_OWNDATA;
 
@@ -1157,9 +1263,10 @@ PyArray_NewFromDescr_int(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
  * true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr,
-                     int nd, npy_intp *dims, npy_intp *strides, void *data,
-                     int flags, PyObject *obj)
+PyArray_NewFromDescr(
+        PyTypeObject *subtype, PyArray_Descr *descr,
+        int nd, npy_intp const *dims, npy_intp const *strides, void *data,
+        int flags, PyObject *obj)
 {
     return PyArray_NewFromDescrAndBase(
             subtype, descr,
@@ -1173,7 +1280,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr,
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescrAndBase(
         PyTypeObject *subtype, PyArray_Descr *descr,
-        int nd, npy_intp *dims, npy_intp *strides, void *data,
+        int nd, npy_intp const *dims, npy_intp const *strides, void *data,
         int flags, PyObject *obj, PyObject *base)
 {
     return PyArray_NewFromDescr_int(subtype, descr, nd,
@@ -1181,9 +1288,9 @@ PyArray_NewFromDescrAndBase(
                                     flags, obj, base, 0, 0);
 }
 
-/*NUMPY_API
+/*
  * Creates a new array with the same shape as the provided one,
- * with possible memory layout order and data type changes.
+ * with possible memory layout order, data type and shape changes.
  *
  * prototype - The array the new one should be like.
  * order     - NPY_CORDER - C-contiguous result.
@@ -1191,6 +1298,8 @@ PyArray_NewFromDescrAndBase(
  *             NPY_ANYORDER - Fortran if prototype is Fortran, C otherwise.
  *             NPY_KEEPORDER - Keeps the axis ordering of prototype.
  * dtype     - If not NULL, overrides the data type of the result.
+ * ndim      - If not 0 and dims not NULL, overrides the shape of the result.
+ * dims      - If not NULL and ndim not 0, overrides the shape of the result.
  * subok     - If 1, use the prototype's array subtype, otherwise
  *             always create a base-class array.
  *
@@ -1198,11 +1307,18 @@ PyArray_NewFromDescrAndBase(
  * dtype->subarray is true, dtype will be decrefed.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
-                     PyArray_Descr *dtype, int subok)
+PyArray_NewLikeArrayWithShape(PyArrayObject *prototype, NPY_ORDER order,
+                              PyArray_Descr *dtype, int ndim, npy_intp const *dims, int subok)
 {
     PyObject *ret = NULL;
-    int ndim = PyArray_NDIM(prototype);
+
+    if (dims == NULL) {
+        ndim = PyArray_NDIM(prototype);
+        dims = PyArray_DIMS(prototype);
+    }
+    else if (order == NPY_KEEPORDER && (ndim != PyArray_NDIM(prototype))) {
+        order = NPY_CORDER;
+    }
 
     /* If no override data type, use the one from the prototype */
     if (dtype == NULL) {
@@ -1235,7 +1351,7 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
         ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
                                         dtype,
                                         ndim,
-                                        PyArray_DIMS(prototype),
+                                        dims,
                                         NULL,
                                         NULL,
                                         order,
@@ -1244,11 +1360,10 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
     /* KEEPORDER needs some analysis of the strides */
     else {
         npy_intp strides[NPY_MAXDIMS], stride;
-        npy_intp *shape = PyArray_DIMS(prototype);
         npy_stride_sort_item strideperm[NPY_MAXDIMS];
         int idim;
 
-        PyArray_CreateSortedStridePerm(PyArray_NDIM(prototype),
+        PyArray_CreateSortedStridePerm(ndim,
                                         PyArray_STRIDES(prototype),
                                         strideperm);
 
@@ -1257,14 +1372,14 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
         for (idim = ndim-1; idim >= 0; --idim) {
             npy_intp i_perm = strideperm[idim].perm;
             strides[i_perm] = stride;
-            stride *= shape[i_perm];
+            stride *= dims[i_perm];
         }
 
         /* Finally, allocate the array */
         ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
                                         dtype,
                                         ndim,
-                                        shape,
+                                        dims,
                                         strides,
                                         NULL,
                                         0,
@@ -1275,12 +1390,36 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
 }
 
 /*NUMPY_API
+ * Creates a new array with the same shape as the provided one,
+ * with possible memory layout order and data type changes.
+ *
+ * prototype - The array the new one should be like.
+ * order     - NPY_CORDER - C-contiguous result.
+ *             NPY_FORTRANORDER - Fortran-contiguous result.
+ *             NPY_ANYORDER - Fortran if prototype is Fortran, C otherwise.
+ *             NPY_KEEPORDER - Keeps the axis ordering of prototype.
+ * dtype     - If not NULL, overrides the data type of the result.
+ * subok     - If 1, use the prototype's array subtype, otherwise
+ *             always create a base-class array.
+ *
+ * NOTE: If dtype is not NULL, steals the dtype reference.  On failure or when
+ * dtype->subarray is true, dtype will be decrefed.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
+                     PyArray_Descr *dtype, int subok)
+{
+    return PyArray_NewLikeArrayWithShape(prototype, order, dtype, 0, NULL, subok);
+}
+
+/*NUMPY_API
  * Generic new array creation routine.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_New(PyTypeObject *subtype, int nd, npy_intp *dims, int type_num,
-            npy_intp *strides, void *data, int itemsize, int flags,
-            PyObject *obj)
+PyArray_New(
+        PyTypeObject *subtype, int nd, npy_intp const *dims, int type_num,
+        npy_intp const *strides, void *data, int itemsize, int flags,
+        PyObject *obj)
 {
     PyArray_Descr *descr;
     PyObject *new;
@@ -1328,28 +1467,6 @@ _dtype_from_buffer_3118(PyObject *memoryview)
 }
 
 
-/*
- * Call the python _is_from_ctypes
- */
-NPY_NO_EXPORT int
-_is_from_ctypes(PyObject *obj) {
-    PyObject *ret_obj;
-    static PyObject *py_func = NULL;
-
-    npy_cache_import("numpy.core._internal", "_is_from_ctypes", &py_func);
-
-    if (py_func == NULL) {
-        return -1;
-    }
-    ret_obj = PyObject_CallFunctionObjArgs(py_func, obj, NULL);
-    if (ret_obj == NULL) {
-        return -1;
-    }
-
-    return PyObject_IsTrue(ret_obj);
-}
-
-
 NPY_NO_EXPORT PyObject *
 _array_from_buffer_3118(PyObject *memoryview)
 {
@@ -1381,15 +1498,7 @@ _array_from_buffer_3118(PyObject *memoryview)
          * Note that even if the above are fixed in master, we have to drop the
          * early patch versions of python to actually make use of the fixes.
          */
-
-        int is_ctypes = _is_from_ctypes(view->obj);
-        if (is_ctypes < 0) {
-            /* This error is not useful */
-            PyErr_WriteUnraisable(view->obj);
-            is_ctypes = 0;
-        }
-
-        if (!is_ctypes) {
+        if (!npy_ctypes_check(Py_TYPE(view->obj))) {
             /* This object has no excuse for a broken PEP3118 buffer */
             PyErr_Format(
                     PyExc_RuntimeError,
@@ -1416,6 +1525,7 @@ _array_from_buffer_3118(PyObject *memoryview)
          * dimensions, so the array is now 0d.
          */
         nd = 0;
+        Py_DECREF(descr);
         descr = (PyArray_Descr *)PyObject_CallFunctionObjArgs(
                 (PyObject *)&PyArrayDescr_Type, Py_TYPE(view->obj), NULL);
         if (descr == NULL) {
@@ -1485,6 +1595,90 @@ fail:
     return NULL;
 
 }
+
+
+/*
+ * Attempts to extract an array from an array-like object.
+ *
+ * array-like is defined as either
+ *
+ * * an object implementing the PEP 3118 buffer interface;
+ * * an object with __array_struct__ or __array_interface__ attributes;
+ * * an object with an __array__ function.
+ *
+ * Returns Py_NotImplemented if a given object is not array-like;
+ * PyArrayObject* in case of success and NULL in case of failure.
+ */
+NPY_NO_EXPORT PyObject *
+_array_from_array_like(PyObject *op, PyArray_Descr *requested_dtype,
+                       npy_bool writeable, PyObject *context) {
+    PyObject* tmp;
+
+    /* If op supports the PEP 3118 buffer interface */
+    if (!PyBytes_Check(op) && !PyUnicode_Check(op)) {
+        PyObject *memoryview = PyMemoryView_FromObject(op);
+        if (memoryview == NULL) {
+            PyErr_Clear();
+        }
+        else {
+          tmp = _array_from_buffer_3118(memoryview);
+          Py_DECREF(memoryview);
+          if (tmp == NULL) {
+              return NULL;
+          }
+
+          if (writeable
+                  && PyArray_FailUnlessWriteable((PyArrayObject *) tmp, "PEP 3118 buffer") < 0) {
+              Py_DECREF(tmp);
+              return NULL;
+          }
+
+          return tmp;
+        }
+    }
+
+    /* If op supports the __array_struct__ or __array_interface__ interface */
+    tmp = PyArray_FromStructInterface(op);
+    if (tmp == NULL) {
+        return NULL;
+    }
+    if (tmp == Py_NotImplemented) {
+        tmp = PyArray_FromInterface(op);
+        if (tmp == NULL) {
+            return NULL;
+        }
+    }
+
+    /*
+     * If op supplies the __array__ function.
+     * The documentation says this should produce a copy, so
+     * we skip this method if writeable is true, because the intent
+     * of writeable is to modify the operand.
+     * XXX: If the implementation is wrong, and/or if actual
+     *      usage requires this behave differently,
+     *      this should be changed!
+     */
+    if (!writeable && tmp == Py_NotImplemented) {
+        tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
+        if (tmp == NULL) {
+            return NULL;
+        }
+    }
+
+    if (tmp != Py_NotImplemented) {
+        if (writeable
+                && PyArray_FailUnlessWriteable((PyArrayObject *) tmp,
+                                               "array interface object") < 0) {
+            Py_DECREF(tmp);
+            return NULL;
+        }
+        return tmp;
+    }
+
+    Py_INCREF(Py_NotImplemented);
+    return Py_NotImplemented;
+}
+
 
 /*NUMPY_API
  * Retrieves the array parameters for viewing/converting an arbitrary
@@ -1593,69 +1787,20 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         return 0;
     }
 
-    /* If op supports the PEP 3118 buffer interface */
-    if (!PyBytes_Check(op) && !PyUnicode_Check(op)) {
-
-        PyObject *memoryview = PyMemoryView_FromObject(op);
-        if (memoryview == NULL) {
-            PyErr_Clear();
-        }
-        else {
-            PyObject *arr = _array_from_buffer_3118(memoryview);
-            Py_DECREF(memoryview);
-            if (arr == NULL) {
-                return -1;
-            }
-            if (writeable
-                    && PyArray_FailUnlessWriteable((PyArrayObject *)arr, "PEP 3118 buffer") < 0) {
-                Py_DECREF(arr);
-                return -1;
-            }
-            *out_arr = (PyArrayObject *)arr;
-            return 0;
-        }
-    }
-
-    /* If op supports the __array_struct__ or __array_interface__ interface */
-    tmp = PyArray_FromStructInterface(op);
+    /* If op is an array-like */
+    tmp = _array_from_array_like(op, requested_dtype, writeable, context);
     if (tmp == NULL) {
         return -1;
     }
-    if (tmp == Py_NotImplemented) {
-        tmp = PyArray_FromInterface(op);
-        if (tmp == NULL) {
-            return -1;
-        }
+    else if (tmp != Py_NotImplemented) {
+        *out_arr = (PyArrayObject*) tmp;
+        return 0;
     }
-    if (tmp != Py_NotImplemented) {
-        if (writeable
-            && PyArray_FailUnlessWriteable((PyArrayObject *)tmp,
-                                           "array interface object") < 0) {
-            Py_DECREF(tmp);
-            return -1;
-        }
-        *out_arr = (PyArrayObject *)tmp;
-        return (*out_arr) == NULL ? -1 : 0;
+    else {
+        Py_DECREF(Py_NotImplemented);
     }
 
-    /*
-     * If op supplies the __array__ function.
-     * The documentation says this should produce a copy, so
-     * we skip this method if writeable is true, because the intent
-     * of writeable is to modify the operand.
-     * XXX: If the implementation is wrong, and/or if actual
-     *      usage requires this behave differently,
-     *      this should be changed!
-     */
-    if (!writeable) {
-        tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
-        if (tmp != Py_NotImplemented) {
-            *out_arr = (PyArrayObject *)tmp;
-            return (*out_arr) == NULL ? -1 : 0;
-        }
-    }
-
-    /* Try to treat op as a list of lists */
+    /* Try to treat op as a list of lists or array-like objects. */
     if (!writeable && PySequence_Check(op)) {
         int check_it, stop_at_string, stop_at_tuple, is_object;
         int type_num, type;
@@ -1817,15 +1962,19 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* If the requested dtype is flexible, adapt it */
     if (newtype != NULL) {
-        PyArray_AdaptFlexibleDType(op,
+        newtype = PyArray_AdaptFlexibleDType(op,
                     (dtype == NULL) ? PyArray_DESCR(arr) : dtype,
-                    &newtype);
+                    newtype);
+        if (newtype == NULL) {
+            return NULL;
+        }
     }
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
         if ((flags & NPY_ARRAY_WRITEBACKIFCOPY) ||
             (flags & NPY_ARRAY_UPDATEIFCOPY)) {
+            Py_DECREF(dtype);
             Py_XDECREF(newtype);
             PyErr_SetString(PyExc_TypeError,
                             "WRITEBACKIFCOPY used for non-array input.");
@@ -2030,7 +2179,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         newtype = oldtype;
         Py_INCREF(oldtype);
     }
-    if (PyDataType_ISUNSIZED(newtype)) {
+    else if (PyDataType_ISUNSIZED(newtype)) {
         PyArray_DESCR_REPLACE(newtype);
         if (newtype == NULL) {
             return NULL;
@@ -2134,12 +2283,15 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
              */
 
             /* 2017-Nov-10 1.14 */
-            if (DEPRECATE("NPY_ARRAY_UPDATEIFCOPY, NPY_ARRAY_INOUT_ARRAY, and "
-                "NPY_ARRAY_INOUT_FARRAY are deprecated, use NPY_WRITEBACKIFCOPY, "
-                "NPY_ARRAY_INOUT_ARRAY2, or NPY_ARRAY_INOUT_FARRAY2 respectively "
-                "instead, and call PyArray_ResolveWritebackIfCopy before the "
-                "array is deallocated, i.e. before the last call to Py_DECREF.") < 0)
+            if (DEPRECATE(
+                    "NPY_ARRAY_UPDATEIFCOPY, NPY_ARRAY_INOUT_ARRAY, and "
+                    "NPY_ARRAY_INOUT_FARRAY are deprecated, use NPY_WRITEBACKIFCOPY, "
+                    "NPY_ARRAY_INOUT_ARRAY2, or NPY_ARRAY_INOUT_FARRAY2 respectively "
+                    "instead, and call PyArray_ResolveWritebackIfCopy before the "
+                    "array is deallocated, i.e. before the last call to Py_DECREF.") < 0) {
+                Py_DECREF(ret);
                 return NULL;
+            }
             Py_INCREF(arr);
             if (PyArray_SetWritebackIfCopyBase(ret, arr) < 0) {
                 Py_DECREF(ret);
@@ -2166,14 +2318,12 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
         Py_DECREF(newtype);
         if (needview) {
-            PyArray_Descr *dtype = PyArray_DESCR(arr);
             PyTypeObject *subtype = NULL;
 
             if (flags & NPY_ARRAY_ENSUREARRAY) {
                 subtype = &PyArray_Type;
             }
 
-            Py_INCREF(dtype);
             ret = (PyArrayObject *)PyArray_View(arr, NULL, subtype);
             if (ret == NULL) {
                 return NULL;
@@ -2471,6 +2621,7 @@ PyArray_FromInterface(PyObject *origin)
          * sticks around after the release.
          */
         PyBuffer_Release(&view);
+        _dealloc_cached_buffer_info(base);
 #else
         res = PyObject_AsWriteBuffer(base, (void **)&data, &buffer_len);
         if (res < 0) {
@@ -2484,7 +2635,7 @@ PyArray_FromInterface(PyObject *origin)
         }
 #endif
         /* Get offset number from interface specification */
-        attr = PyDict_GetItemString(origin, "offset");
+        attr = PyDict_GetItemString(iface, "offset");
         if (attr) {
             npy_longlong num = PyLong_AsLongLong(attr);
             if (error_converting(num)) {
@@ -2500,6 +2651,11 @@ PyArray_FromInterface(PyObject *origin)
             &PyArray_Type, dtype,
             n, dims, NULL, data,
             dataflags, NULL, base);
+    /*
+     * Ref to dtype was stolen by PyArray_NewFromDescrAndBase
+     * Prevent DECREFing dtype in fail codepath by setting to NULL
+     */
+    dtype = NULL;
     if (ret == NULL) {
         goto fail;
     }
@@ -2537,7 +2693,9 @@ PyArray_FromInterface(PyObject *origin)
                 goto fail;
             }
         }
-        memcpy(PyArray_STRIDES(ret), strides, n*sizeof(npy_intp));
+        if (n) {
+            memcpy(PyArray_STRIDES(ret), strides, n*sizeof(npy_intp));
+        }
     }
     PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
     Py_DECREF(iface);
@@ -2626,61 +2784,30 @@ PyArray_DescrFromObject(PyObject *op, PyArray_Descr *mintype)
 /* They all zero-out the memory as previously done */
 
 /* steals reference to descr -- and enforces native byteorder on it.*/
+
 /*NUMPY_API
-  Like FromDimsAndData but uses the Descr structure instead of typecode
-  as input.
+  Deprecated, use PyArray_NewFromDescr instead.
 */
 NPY_NO_EXPORT PyObject *
-PyArray_FromDimsAndDataAndDescr(int nd, int *d,
+PyArray_FromDimsAndDataAndDescr(int NPY_UNUSED(nd), int *NPY_UNUSED(d),
                                 PyArray_Descr *descr,
-                                char *data)
+                                char *NPY_UNUSED(data))
 {
-    PyObject *ret;
-    int i;
-    npy_intp newd[NPY_MAXDIMS];
-    char msg[] = "PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.";
-
-    if (DEPRECATE(msg) < 0) {
-        /* 2009-04-30, 1.5 */
-        return NULL;
-    }
-    if (!PyArray_ISNBO(descr->byteorder))
-        descr->byteorder = '=';
-    for (i = 0; i < nd; i++) {
-        newd[i] = (npy_intp) d[i];
-    }
-    ret = PyArray_NewFromDescr(&PyArray_Type, descr,
-                               nd, newd,
-                               NULL, data,
-                               (data ? NPY_ARRAY_CARRAY : 0), NULL);
-    return ret;
+    PyErr_SetString(PyExc_NotImplementedError,
+                "PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.");
+    Py_DECREF(descr);
+    return NULL;
 }
 
 /*NUMPY_API
-  Construct an empty array from dimensions and typenum
+  Deprecated, use PyArray_SimpleNew instead.
 */
 NPY_NO_EXPORT PyObject *
-PyArray_FromDims(int nd, int *d, int type)
+PyArray_FromDims(int NPY_UNUSED(nd), int *NPY_UNUSED(d), int NPY_UNUSED(type))
 {
-    PyArrayObject *ret;
-    char msg[] = "PyArray_FromDims: use PyArray_SimpleNew.";
-
-    if (DEPRECATE(msg) < 0) {
-        /* 2009-04-30, 1.5 */
-        return NULL;
-    }
-    ret = (PyArrayObject *)PyArray_FromDimsAndDataAndDescr(nd, d,
-                                          PyArray_DescrFromType(type),
-                                          NULL);
-    /*
-     * Old FromDims set memory to zero --- some algorithms
-     * relied on that.  Better keep it the same. If
-     * Object type, then it's already been set to zero, though.
-     */
-    if (ret && (PyArray_DESCR(ret)->type_num != NPY_OBJECT)) {
-        memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
-    }
-    return (PyObject *)ret;
+    PyErr_SetString(PyExc_NotImplementedError,
+                "PyArray_FromDims: use PyArray_SimpleNew.");
+    return NULL;
 }
 
 /* end old calls */
@@ -2832,7 +2959,8 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
      * contiguous strides, etc.
      */
     if (PyArray_GetDTypeTransferFunction(
-                    IsUintAligned(src) && IsUintAligned(dst),
+                    IsUintAligned(src) && IsAligned(src) &&
+                    IsUintAligned(dst) && IsAligned(dst),
                     src_stride, dst_stride,
                     PyArray_DESCR(src), PyArray_DESCR(dst),
                     0,
@@ -2997,7 +3125,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
  * accepts NULL type
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
+PyArray_Zeros(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
     PyArrayObject *ret;
 
@@ -3032,10 +3160,10 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
  * Empty
  *
  * accepts NULL type
- * steals referenct to type
+ * steals a reference to type
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
+PyArray_Empty(int nd, npy_intp const *dims, PyArray_Descr *type, int is_f_order)
 {
     PyArrayObject *ret;
 
@@ -3446,11 +3574,13 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     return NULL;
 }
 
+/* This array creation function steals the reference to dtype. */
 static PyArrayObject *
 array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nread)
 {
     PyArrayObject *r;
     npy_off_t start, numbytes;
+    int elsize;
 
     if (num < 0) {
         int fail = 0;
@@ -3477,27 +3607,29 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
         }
         num = numbytes / dtype->elsize;
     }
+
     /*
-     * When dtype->subarray is true, PyArray_NewFromDescr will decref dtype
-     * even on success, so make sure it stays around until exit.
+     * Array creation may move sub-array dimensions from the dtype to array
+     * dimensions, so we need to use the original element size when reading.
      */
-    Py_INCREF(dtype);
+    elsize = dtype->elsize;
+
     r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &num,
                                               NULL, NULL, 0, NULL);
     if (r == NULL) {
-        Py_DECREF(dtype);
         return NULL;
     }
+
     NPY_BEGIN_ALLOW_THREADS;
-    *nread = fread(PyArray_DATA(r), dtype->elsize, num, fp);
+    *nread = fread(PyArray_DATA(r), elsize, num, fp);
     NPY_END_ALLOW_THREADS;
-    Py_DECREF(dtype);
     return r;
 }
 
 /*
  * Create an array by reading from the given stream, using the passed
  * next_element and skip_separator functions.
+ * As typical for array creation functions, it steals the reference to dtype.
  */
 #define FROM_BUFFER_SIZE 4096
 static PyArrayObject *
@@ -3509,6 +3641,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     npy_intp i;
     char *dptr, *clean_sep, *tmp;
     int err = 0;
+    int stop_reading_flag;  /* -1 indicates end reached; -2 a parsing error */
     npy_intp thisbuf = 0;
     npy_intp size;
     npy_intp bytes, totalbytes;
@@ -3516,10 +3649,11 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     size = (num >= 0) ? num : FROM_BUFFER_SIZE;
 
     /*
-     * When dtype->subarray is true, PyArray_NewFromDescr will decref dtype
-     * even on success, so make sure it stays around until exit.
+     * Array creation may move sub-array dimensions from the dtype to array
+     * dimensions, so we need to use the original dtype when reading.
      */
     Py_INCREF(dtype);
+
     r = (PyArrayObject *)
         PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
                              NULL, NULL, 0, NULL);
@@ -3527,6 +3661,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
         Py_DECREF(dtype);
         return NULL;
     }
+
     clean_sep = swab_separator(sep);
     if (clean_sep == NULL) {
         err = 1;
@@ -3536,9 +3671,9 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     NPY_BEGIN_ALLOW_THREADS;
     totalbytes = bytes = size * dtype->elsize;
     dptr = PyArray_DATA(r);
-    for (i= 0; num < 0 || i < num; i++) {
-        if (next(&stream, dptr, dtype, stream_data) < 0) {
-            /* EOF */
+    for (i = 0; num < 0 || i < num; i++) {
+        stop_reading_flag = next(&stream, dptr, dtype, stream_data);
+        if (stop_reading_flag < 0) {
             break;
         }
         *nread += 1;
@@ -3555,22 +3690,47 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
             dptr = tmp + (totalbytes - bytes);
             thisbuf = 0;
         }
-        if (skip_sep(&stream, clean_sep, stream_data) < 0) {
+        stop_reading_flag = skip_sep(&stream, clean_sep, stream_data);
+        if (stop_reading_flag < 0) {
+            if (num == i + 1) {
+                /* if we read as much as requested sep is optional */
+                stop_reading_flag = -1;
+            }
             break;
         }
     }
     if (num < 0) {
-        tmp = PyDataMem_RENEW(PyArray_DATA(r), PyArray_MAX(*nread,1)*dtype->elsize);
-        if (tmp == NULL) {
-            err = 1;
-        }
-        else {
-            PyArray_DIMS(r)[0] = *nread;
-            ((PyArrayObject_fields *)r)->data = tmp;
+        const size_t nsize = PyArray_MAX(*nread,1)*dtype->elsize;
+
+        if (nsize != 0) {
+            tmp = PyDataMem_RENEW(PyArray_DATA(r), nsize);
+            if (tmp == NULL) {
+                err = 1;
+            }
+            else {
+                PyArray_DIMS(r)[0] = *nread;
+                ((PyArrayObject_fields *)r)->data = tmp;
+            }
         }
     }
     NPY_END_ALLOW_THREADS;
+
     free(clean_sep);
+
+    if (stop_reading_flag == -2) {
+        if (PyErr_Occurred()) {
+            /* If an error is already set (unlikely), do not create new one */
+            Py_DECREF(r);
+            Py_DECREF(dtype);
+            return NULL;
+        }
+        /* 2019-09-12, NumPy 1.18 */
+        if (DEPRECATE(
+                "string or file could not be read to its end due to unmatched "
+                "data; this will raise a ValueError in the future.") < 0) {
+            goto fail;
+        }
+    }
 
 fail:
     Py_DECREF(dtype);
@@ -3590,9 +3750,8 @@ fail:
  * Given a ``FILE *`` pointer ``fp``, and a ``PyArray_Descr``, return an
  * array corresponding to the data encoded in that file.
  *
- * If the dtype is NULL, the default array type is used (double).
- * If non-null, the reference is stolen and if dtype->subarray is true dtype
- * will be decrefed even on success.
+ * The reference to `dtype` is stolen (it is possible that the passed in
+ * dtype is not held on to).
  *
  * The number of elements to read is given as ``num``; if it is < 0, then
  * then as many as possible are read.
@@ -3640,7 +3799,6 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
                 (skip_separator) fromfile_skip_separator, NULL);
     }
     if (ret == NULL) {
-        Py_DECREF(dtype);
         return NULL;
     }
     if (((npy_intp) nread) < num) {
@@ -3687,32 +3845,12 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         Py_DECREF(type);
         return NULL;
     }
-    if (Py_TYPE(buf)->tp_as_buffer == NULL
-#if defined(NPY_PY3K)
-        || Py_TYPE(buf)->tp_as_buffer->bf_getbuffer == NULL
-#else
-        || (Py_TYPE(buf)->tp_as_buffer->bf_getwritebuffer == NULL
-            && Py_TYPE(buf)->tp_as_buffer->bf_getreadbuffer == NULL)
-#endif
-        ) {
-        PyObject *newbuf;
-        newbuf = PyObject_GetAttr(buf, npy_ma_str_buffer);
-        if (newbuf == NULL) {
-            Py_DECREF(type);
-            return NULL;
-        }
-        buf = newbuf;
-    }
-    else {
-        Py_INCREF(buf);
-    }
 
 #if defined(NPY_PY3K)
     if (PyObject_GetBuffer(buf, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         writeable = 0;
         PyErr_Clear();
         if (PyObject_GetBuffer(buf, &view, PyBUF_SIMPLE) < 0) {
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3726,12 +3864,12 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
      * sticks around after the release.
      */
     PyBuffer_Release(&view);
+    _dealloc_cached_buffer_info(buf);
 #else
     if (PyObject_AsWriteBuffer(buf, (void *)&data, &ts) == -1) {
         writeable = 0;
         PyErr_Clear();
         if (PyObject_AsReadBuffer(buf, (void *)&data, &ts) == -1) {
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3742,7 +3880,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         PyErr_Format(PyExc_ValueError,
                      "offset must be non-negative and no greater than buffer "\
                      "length (%" NPY_INTP_FMT ")", (npy_intp)ts);
-        Py_DECREF(buf);
         Py_DECREF(type);
         return NULL;
     }
@@ -3751,12 +3888,17 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     s = (npy_intp)ts - offset;
     n = (npy_intp)count;
     itemsize = type->elsize;
-    if (n < 0 ) {
+    if (n < 0) {
+        if (itemsize == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                            "cannot determine count if itemsize is 0");
+            Py_DECREF(type);
+            return NULL;
+        }
         if (s % itemsize != 0) {
             PyErr_SetString(PyExc_ValueError,
                             "buffer size must be a multiple"\
                             " of element size");
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3767,7 +3909,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             PyErr_SetString(PyExc_ValueError,
                             "buffer is smaller than requested"\
                             " size");
-            Py_DECREF(buf);
             Py_DECREF(type);
             return NULL;
         }
@@ -3777,7 +3918,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
             &PyArray_Type, type,
             1, &n, NULL, data,
             NPY_ARRAY_DEFAULT, NULL, buf);
-    Py_DECREF(buf);
     if (ret == NULL) {
         return NULL;
     }
@@ -3859,6 +3999,11 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
                 return NULL;
             }
         }
+        /*
+         * NewFromDescr may replace dtype to absorb subarray shape
+         * into the array, so get size beforehand.
+         */
+        npy_intp size_to_copy = num*dtype->elsize;
         ret = (PyArrayObject *)
             PyArray_NewFromDescr(&PyArray_Type, dtype,
                                  1, &num, NULL, NULL,
@@ -3866,14 +4011,14 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
         if (ret == NULL) {
             return NULL;
         }
-        memcpy(PyArray_DATA(ret), data, num*dtype->elsize);
+        memcpy(PyArray_DATA(ret), data, size_to_copy);
     }
     else {
         /* read from character-based string */
         size_t nread = 0;
         char *end;
 
-        if (dtype->f->scanfunc == NULL) {
+        if (dtype->f->fromstr == NULL) {
             PyErr_SetString(PyExc_ValueError,
                             "don't know how to read "       \
                             "character strings with that "  \
@@ -3917,7 +4062,16 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
                 "Must specify length when using variable-size data-type.");
         goto done;
     }
-    elcount = (count < 0) ? 0 : count;
+    if (count < 0) {
+        elcount = PyObject_LengthHint(obj, 0);
+        if (elcount < 0) {
+            goto done;
+        }
+    }
+    else {
+        elcount = count;
+    }
+
     elsize = dtype->elsize;
 
     /*
@@ -3938,7 +4092,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     }
     for (i = 0; (i < count || count == -1) &&
              (value = PyIter_Next(iter)); i++) {
-        if (i >= elcount) {
+        if (i >= elcount && elsize != 0) {
             npy_intp nbytes;
             /*
               Grow PyArray_DATA(ret):
@@ -3984,9 +4138,9 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
      * Realloc the data so that don't keep extra memory tied up
      * (assuming realloc is reasonably good about reusing space...)
      */
-    if (i == 0) {
+    if (i == 0 || elsize == 0) {
         /* The size cannot be zero for PyDataMem_RENEW. */
-        i = 1;
+        goto done;
     }
     new_data = PyDataMem_RENEW(PyArray_DATA(ret), i * elsize);
     if (new_data == NULL) {
@@ -4026,7 +4180,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
  */
 
 NPY_NO_EXPORT void
-_array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
+_array_fill_strides(npy_intp *strides, npy_intp const *dims, int nd, size_t itemsize,
                     int inflag, int *objflags)
 {
     int i;

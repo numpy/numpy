@@ -1,17 +1,12 @@
 #include <Python.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
+
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_math.h"
-
-/* This is a backport of Py_SETREF */
-#define NPY_SETREF(op, op2)                      \
-    do {                                        \
-        PyObject *_py_tmp = (PyObject *)(op);   \
-        (op) = (op2);                           \
-        Py_DECREF(_py_tmp);                     \
-    } while (0)
-
+#include "npy_pycompat.h"
+#include "numpyos.h"
 
 /*
  * Heavily derived from PyLong_FromDouble
@@ -66,7 +61,7 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
         npy_ulonglong chunk = (npy_ulonglong)frac;
         PyObject *l_chunk;
         /* v = v << chunk_size */
-        NPY_SETREF(v, PyNumber_Lshift(v, l_chunk_size));
+        Py_SETREF(v, PyNumber_Lshift(v, l_chunk_size));
         if (v == NULL) {
             goto done;
         }
@@ -77,7 +72,7 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
             goto done;
         }
         /* v = v | chunk */
-        NPY_SETREF(v, PyNumber_Or(v, l_chunk));
+        Py_SETREF(v, PyNumber_Or(v, l_chunk));
         Py_DECREF(l_chunk);
         if (v == NULL) {
             goto done;
@@ -90,7 +85,7 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
 
     /* v = -v */
     if (neg) {
-        NPY_SETREF(v, PyNumber_Negative(v));
+        Py_SETREF(v, PyNumber_Negative(v));
         if (v == NULL) {
             goto done;
         }
@@ -99,4 +94,85 @@ npy_longdouble_to_PyLong(npy_longdouble ldval)
 done:
     Py_DECREF(l_chunk_size);
     return v;
+}
+
+/* Helper function to get unicode(PyLong).encode('utf8') */
+static PyObject *
+_PyLong_Bytes(PyObject *long_obj) {
+    PyObject *bytes;
+#if defined(NPY_PY3K)
+    PyObject *unicode = PyObject_Str(long_obj);
+    if (unicode == NULL) {
+        return NULL;
+    }
+    bytes = PyUnicode_AsUTF8String(unicode);
+    Py_DECREF(unicode);
+#else
+    bytes = PyObject_Str(long_obj);
+#endif
+    return bytes;
+}
+
+
+/**
+ * TODO: currently a hack that converts the long through a string. This is
+ * correct, but slow.
+ *
+ * Another approach would be to do this numerically, in a similar way to
+ * PyLong_AsDouble.
+ * However, in order to respect rounding modes correctly, this needs to know
+ * the size of the mantissa, which is platform-dependent.
+ */
+NPY_VISIBILITY_HIDDEN npy_longdouble
+npy_longdouble_from_PyLong(PyObject *long_obj) {
+    npy_longdouble result = 1234;
+    char *end;
+    char *cstr;
+    PyObject *bytes;
+
+    /* convert the long to a string */
+    bytes = _PyLong_Bytes(long_obj);
+    if (bytes == NULL) {
+        return -1;
+    }
+
+    cstr = PyBytes_AsString(bytes);
+    if (cstr == NULL) {
+        goto fail;
+    }
+    end = NULL;
+
+    /* convert the string to a long double and capture errors */
+    errno = 0;
+    result = NumPyOS_ascii_strtold(cstr, &end);
+    if (errno == ERANGE) {
+        /* strtold returns INFINITY of the correct sign. */
+        if (PyErr_Warn(PyExc_RuntimeWarning,
+                "overflow encountered in conversion from python long") < 0) {
+            goto fail;
+        }
+    }
+    else if (errno) {
+        PyErr_Format(PyExc_RuntimeError,
+                     "Could not parse python long as longdouble: %s (%s)",
+                     cstr,
+                     strerror(errno));
+        goto fail;
+    }
+
+    /* Extra characters at the end of the string, or nothing parsed */
+    if (end == cstr || *end != '\0') {
+        PyErr_Format(PyExc_RuntimeError,
+                     "Could not parse long as longdouble: %s",
+                     cstr);
+        goto fail;
+    }
+
+    /* finally safe to decref now that we're done with `end` */
+    Py_DECREF(bytes);
+    return result;
+
+fail:
+    Py_DECREF(bytes);
+    return -1;
 }

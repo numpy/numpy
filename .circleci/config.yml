@@ -19,8 +19,9 @@ jobs:
           name: install dependencies
           command: |
             python3 -m venv venv
+            ln -s $(which python3) venv/bin/python3.6
             . venv/bin/activate
-            pip install cython sphinx==1.7.9 matplotlib
+            pip install cython sphinx==2.2.0 matplotlib ipython
             sudo apt-get update
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra texlive-generic-extra latexmk texlive-xetex
 
@@ -34,23 +35,30 @@ jobs:
             pip install scipy
 
       - run:
+          name: create release notes
+          command: |
+            . venv/bin/activate
+            pip install git+https://github.com/hawkowl/towncrier.git@master
+            VERSION=$(python -c "import setup; print(setup.VERSION)")
+            towncrier --version $VERSION --yes
+            ./tools/ci/test_all_newsfragments_used.py
+      - run:
           name: build devdocs
           command: |
             . venv/bin/activate
             cd doc
             git submodule update --init
-            make html
+            SPHINXOPTS=-q make -e html
 
       - run:
           name: build neps
           command: |
             . venv/bin/activate
             cd doc/neps
-            make html
+            SPHINXOPTS=-q make -e html
 
-     # - store_artifacts:
-     #     path: doc/build/html/
-     #     destination: devdocs
+      - store_artifacts:
+          path: doc/build/html/
 
 
      #  - store_artifacts:

@@ -1,6 +1,8 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import assert_
+import pytest
+
+from numpy.testing import assert_, suppress_warnings
 import numpy.distutils.fcompiler
 
 customizable_flags = [
@@ -25,6 +27,7 @@ def test_fcompiler_flags(monkeypatch):
 
         monkeypatch.setenv(envvar, new_flag)
         new_flags = getattr(flag_vars, opt)
+
         monkeypatch.delenv(envvar)
         assert_(new_flags == [new_flag])
 
@@ -33,9 +36,9 @@ def test_fcompiler_flags(monkeypatch):
     for opt, envvar in customizable_flags:
         new_flag = '-dummy-{}-flag'.format(opt)
         prev_flags = getattr(flag_vars, opt)
-
         monkeypatch.setenv(envvar, new_flag)
         new_flags = getattr(flag_vars, opt)
+
         monkeypatch.delenv(envvar)
         if prev_flags is None:
             assert_(new_flags == [new_flag])

@@ -5,13 +5,13 @@ Current build and release info
 ==============================
 
 The current info on building and releasing NumPy and SciPy is scattered in
-several places. It should be summarized in one place, updated and where
+several places. It should be summarized in one place, updated, and where
 necessary described in more detail. The sections below list all places where
 useful info can be found.
 
 Source tree
 -----------
-* INSTALL.txt
+* INSTALL.rst.txt
 * release.sh
 * pavement.py
 
@@ -37,8 +37,8 @@ Supported platforms and versions
 ================================
 
 Python 2.7 and >=3.4 are the currently supported versions when building from
-source.  We test numpy against all these versions every time we merge code to
-trunk.  Binary installers may be available for a subset of these versions (see
+source.  We test NumPy against all these versions every time we merge code to
+master.  Binary installers may be available for a subset of these versions (see
 below).
 
 OS X
@@ -54,7 +54,7 @@ Windows
 -------
 
 We build 32- and 64-bit wheels for Python 2.7, 3.4, 3.5 on Windows. Windows
-XP, Vista, 7, 8 and 10 are supported.  We build numpy using the MSVC compilers
+XP, Vista, 7, 8 and 10 are supported.  We build NumPy using the MSVC compilers
 on Appveyor, but we are hoping to update to a `mingw-w64 toolchain
 <https://mingwpy.github.io>`_.  The Windows wheels use ATLAS for BLAS / LAPACK.
 
@@ -62,7 +62,7 @@ Linux
 -----
 
 We build and ship `manylinux1 <https://www.python.org/dev/peps/pep-0513>`_
-wheels for numpy.  Many Linux distributions include their own binary builds
+wheels for NumPy.  Many Linux distributions include their own binary builds
 of NumPy.
 
 BSD / Solaris
@@ -93,7 +93,7 @@ each platform. At the moment this means:
 * Manylinux1 wheels use the gcc provided on the Manylinux docker images.
 
 You will need Cython for building the binaries.  Cython compiles the ``.pyx``
-files in the numpy distribution to ``.c`` files.
+files in the NumPy distribution to ``.c`` files.
 
 Building source archives and wheels
 -----------------------------------
@@ -130,9 +130,9 @@ Uploading to PyPI
 Generating author/pr lists
 --------------------------
 
-You will need an personal access token
+You will need a personal access token
 `<https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/>`_
-so that scripts can access the github numpy repository
+so that scripts can access the github NumPy repository.
 
 * gitpython (pip)
 * pygithub (pip)
@@ -182,8 +182,8 @@ After a date is set, create a new maintenance/x.y.z branch, add new empty
 release notes for the next version in the master branch and update the Trac
 Milestones.
 
-Make sure current trunk builds a package correctly
---------------------------------------------------
+Make sure current branch builds a package correctly
+---------------------------------------------------
 ::
 
     git clean -fxd
@@ -191,22 +191,11 @@ Make sure current trunk builds a package correctly
     python setup.py sdist
 
 To actually build the binaries after everything is set up correctly, the
-release.sh script can be used. For details of the build process itself it is
+release.sh script can be used. For details of the build process itself, it is
 best to read the pavement.py script.
 
 .. note:: The following steps are repeated for the beta(s), release
    candidates(s) and the final release.
-
-Check that docs can be built
-----------------------------
-Do::
-
-    cd doc/
-    make dist
-
-to check that the documentation is in a buildable state.  See
-doc/HOWTO_BUILD_DOCS.rst.txt for more details and for how to update
-https://docs.scipy.org.
 
 Check deprecations
 ------------------
@@ -233,7 +222,7 @@ There are three steps to the process.
 
 2. If the C_API_VERSION in the first step has changed, or if the hash of
    the API has changed, the cversions.txt file needs to be updated. To check
-   the hash, run the script numpy/core/cversions.py and note the api hash that
+   the hash, run the script numpy/core/cversions.py and note the API hash that
    is printed. If that hash does not match the last hash in
    numpy/core/code_generators/cversions.txt the hash has changed. Using both
    the appropriate C_API_VERSION and hash, add a new entry to cversions.txt.
@@ -244,7 +233,7 @@ There are three steps to the process.
    definitive.
 
    If steps 1 and 2 are done correctly, compiling the release should not give
-   a warning "API mismatch detect at the beginning of the build.
+   a warning "API mismatch detect at the beginning of the build".
 
 3. The numpy/core/include/numpy/numpyconfig.h will need a new
    NPY_X_Y_API_VERSION macro, where X and Y are the major and minor version
@@ -257,12 +246,19 @@ updated for a major release.
 
 Check the release notes
 -----------------------
+Use `towncrier`_ to build the release note, copy it to the proper name, and
+commit the changes. This will remove all the fragments from ``changelog/*.rst``
+and add ``doc/release/latest-note.rst`` which must be renamed with the proper
+version number::
+
+    python -mtowncrier --version "Numpy 1.11.0"
+    git mv doc/release/latest-note.rst doc/release/1.11.0-notes.rst
+    git commit -m"Create release note"
+
 Check that the release notes are up-to-date.
 
-Write or update the release notes in a file named for the release, such as
-``doc/release/1.11.0-notes.rst``.
-
-Mention at least the following:
+Update the release notes with a Highlights section. Mention some of the
+following:
 
   - major new features
   - deprecated and removed features
@@ -270,8 +266,7 @@ Mention at least the following:
   - for SciPy, supported NumPy version(s)
   - outlook for the near future
 
-Also make sure that as soon as the branch is made, there is a new release
-notes file in trunk for the next release.
+.. _towncrier: https://github.com/hawkowl/towncrier
 
 Update the release status and create a release "tag"
 ----------------------------------------------------
@@ -318,10 +313,10 @@ The ``-s`` flag makes a PGP (usually GPG) signed tag.  Please do sign the
 release tags.
 
 The release tag should have the release number in the annotation (tag
-message).  Unfortunately the name of a tag can be changed without breaking the
+message).  Unfortunately, the name of a tag can be changed without breaking the
 signature, the contents of the message cannot.
 
-See : https://github.com/scipy/scipy/issues/4919 for a discussion of signing
+See: https://github.com/scipy/scipy/issues/4919 for a discussion of signing
 release tags, and https://keyring.debian.org/creating-key.html for instructions
 on creating a GPG key if you do not have one.
 
@@ -383,14 +378,24 @@ Build the changelog and notes for upload with::
 
     paver write_release_and_log
 
-The tar-files and binary releases for distribution should be uploaded to SourceForge,
-together with the Release Notes and the Changelog. Uploading can be done
-through a web interface or, more efficiently, through scp/sftp/rsync as
-described in the SourceForge
-`upload guide <https://sourceforge.net/apps/trac/sourceforge/wiki/Release%20files%20for%20download>`_ (dead link).
-For example::
+Build and archive documentation
+-------------------------------
+Do::
 
-  scp <filename> <username>,numpy@frs.sourceforge.net:/home/frs/project/n/nu/numpy/NumPy/<releasedir>/
+    cd doc/
+    make dist
+
+to check that the documentation is in a buildable state. Then, after tagging,
+create an archive of the documentation in the numpy/doc repo::
+
+    # This checks out github.com/numpy/doc and adds (``git add``) the
+    # documentation to the checked out repo.
+    make merge-doc
+    # Now edit the ``index.html`` file in the repo to reflect the new content,
+    # and commit the changes
+    git -C dist/merge commit -a "Add documentation for <version>"
+    # Push to numpy/doc repo
+    git -C push
 
 Update PyPI
 -----------
@@ -443,28 +448,6 @@ you released you can push the tag and release commit up to github::
 where ``upstream`` points to the main https://github.com/numpy/numpy.git
 repository.
 
-Update docs.scipy.org
----------------------
-
-All documentation for a release can be updated on https://docs.scipy.org/ with:
-
-    make dist
-    make upload USERNAME=<yourname> RELEASE=1.11.0
-
-Note that ``<username>`` must have SSH credentials on the server.  If you don't
-have those, ask someone who does (the list currently includes @rgommers,
-@juliantaylor and @pv).
-
-Also rebuild and upload ``docs.scipy.org`` front page, if the release
-series is a new one. The front page sources have their own repo:
-https://github.com/scipy/docs.scipy.org.  Do the following:
-
-- Update ``index.rst`` for the new version.
-- ``make dist``
-- Check that the built documentation is OK.
-- ``touch output-is-fine``
-- ``make upload USERNAME=<username> RELEASE=1.x.y``
-
 Update scipy.org
 ----------------
 
@@ -479,9 +462,9 @@ Announce to the lists
 
 The release should be announced on the mailing lists of
 NumPy and SciPy, to python-announce, and possibly also those of
-Matplotlib,IPython and/or Pygame.
+Matplotlib, IPython and/or Pygame.
 
-During the beta/RC phase an explicit request for testing the binaries with
+During the beta/RC phase, an explicit request for testing the binaries with
 several other libraries (SciPy/Matplotlib/Pygame) should be posted on the
 mailing list.
 
@@ -497,5 +480,5 @@ After the final release is announced, a few administrative tasks are left to be
 done:
 
   - Forward port changes in the release branch to release notes and release
-    scripts, if any, to trunk.
+    scripts, if any, to master branch.
   - Update the Milestones in Trac.

@@ -5,15 +5,13 @@ import itertools
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_raises, suppress_warnings
+    assert_raises, suppress_warnings, assert_raises_regex
     )
 
 # Setup for optimize einsum
 chars = 'abcdefghij'
 sizes = np.array([2, 3, 4, 5, 4, 3, 2, 6, 5, 4, 3])
-global_size_dict = {}
-for size, char in zip(sizes, chars):
-    global_size_dict[char] = size
+global_size_dict = dict(zip(chars, sizes))
 
 
 class TestEinsum(object):
@@ -92,6 +90,11 @@ class TestEinsum(object):
                           optimize=do_opt)
             assert_raises(ValueError, np.einsum, "i->i", [[0, 1], [0, 1]],
                           out=np.arange(4).reshape(2, 2), optimize=do_opt)
+            with assert_raises_regex(ValueError, "'b'"):
+                # gh-11221 - 'c' erroneously appeared in the error message
+                a = np.ones((3, 3, 4, 5, 6))
+                b = np.ones((3, 4, 5))
+                np.einsum('aabcb,abc', a, b)
 
     def test_einsum_views(self):
         # pass-through

@@ -5,7 +5,7 @@ Building the NumPy API and reference docs
 =========================================
 
 We currently use Sphinx_ for generating the API and reference
-documentation for NumPy.  You will need Sphinx 1.0.1 or newer.
+documentation for NumPy.  You will need Sphinx 1.8.3 <= 1.8.5.
 
 If you only want to get the documentation, note that pre-built
 versions can be found at
@@ -30,11 +30,9 @@ In addition, building the documentation requires the Sphinx extension
 `plot_directive`, which is shipped with Matplotlib_. This Sphinx extension can
 be installed by installing Matplotlib. You will also need python3.6.
 
-Since large parts of the main documentation are stored in
-docstrings, you will need to first build NumPy, and install it so
-that the correct version is imported by
-
-    >>> import numpy
+Since large parts of the main documentation are obtained from numpy via
+``import numpy`` and examining the docstrings, you will need to first build
+NumPy, and install it so that the correct version is imported.
 
 Note that you can eg. install NumPy to a temporary location and set
 the PYTHONPATH environment variable appropriately.
@@ -46,8 +44,11 @@ generate the docs, so write::
     make html
 
 in the ``doc/`` directory. If all goes well, this will generate a
-``build/html`` subdirectory containing the built documentation. Note
-that building the documentation on Windows is currently not actively
+``build/html`` subdirectory containing the built documentation. If you get
+a message about ``installed numpy != current repo git version``, you must
+either override the check by setting ``GITVER`` or re-install NumPy.
+
+Note that building the documentation on Windows is currently not actively
 supported, though it should be possible. (See Sphinx_ documentation
 for more information.)
 

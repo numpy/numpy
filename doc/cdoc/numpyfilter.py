@@ -14,10 +14,7 @@ import os
 import textwrap
 import optparse
 
-if sys.version_info[0] >= 3:
-    import pickle
-else:
-    import cPickle as pickle
+from numpy.core.numeric import pickle
 
 CACHE_FILE = 'build/rst-cache.pck'
 

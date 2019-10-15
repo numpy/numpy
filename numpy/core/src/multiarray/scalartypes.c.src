@@ -139,6 +139,7 @@ gentype_alloc(PyTypeObject *type, Py_ssize_t nitems)
 static void
 gentype_dealloc(PyObject *v)
 {
+    _dealloc_cached_buffer_info(v);
     Py_TYPE(v)->tp_free(v);
 }
 
@@ -1103,8 +1104,7 @@ static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_add,                     /*nb_add*/
     (binaryfunc)gentype_subtract,                /*nb_subtract*/
     (binaryfunc)gentype_multiply,                /*nb_multiply*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     (binaryfunc)gentype_divide,                  /*nb_divide*/
 #endif
     (binaryfunc)gentype_remainder,               /*nb_remainder*/
@@ -1120,8 +1120,7 @@ static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_and,                     /*nb_and*/
     (binaryfunc)gentype_xor,                     /*nb_xor*/
     (binaryfunc)gentype_or,                      /*nb_or*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     0,                                           /*nb_coerce*/
 #endif
     (unaryfunc)gentype_int,                      /*nb_int*/
@@ -1131,16 +1130,14 @@ static PyNumberMethods gentype_as_number = {
     (unaryfunc)gentype_long,                     /*nb_long*/
 #endif
     (unaryfunc)gentype_float,                    /*nb_float*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     (unaryfunc)gentype_oct,                      /*nb_oct*/
     (unaryfunc)gentype_hex,                      /*nb_hex*/
 #endif
     0,                                           /*inplace_add*/
     0,                                           /*inplace_subtract*/
     0,                                           /*inplace_multiply*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     0,                                           /*inplace_divide*/
 #endif
     0,                                           /*inplace_remainder*/
@@ -1155,6 +1152,10 @@ static PyNumberMethods gentype_as_number = {
     0,                                           /*nb_inplace_floor_divide*/
     0,                                           /*nb_inplace_true_divide*/
     (unaryfunc)NULL,                             /*nb_index*/
+#if PY_VERSION_HEX >= 0x03050000
+    0,                                           /*np_matmul*/
+    0,                                           /*np_inplace_matmul*/
+#endif
 };
 
 
@@ -1858,6 +1859,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
          * sticks around after the release.
          */
         PyBuffer_Release(&view);
+        _dealloc_cached_buffer_info(self);
     }
     else {
         Py_DECREF(ret);
@@ -1990,6 +1992,92 @@ static PyObject *
                                  PyArrayScalar_VAL(self, @Name@).imag);
 }
 /**end repeat**/
+
+/**begin repeat
+ *  #name = half, float, double, longdouble#
+ *  #Name = Half, Float, Double, LongDouble#
+ *  #is_half = 1,0,0,0#
+ *  #c    = f, f, , l#
+ *  #convert = PyLong_FromDouble, PyLong_FromDouble, PyLong_FromDouble,
+ *             npy_longdouble_to_PyLong#
+ *  #
+ */
+/* Heavily copied from the builtin float.as_integer_ratio */
+static PyObject *
+@name@_as_integer_ratio(PyObject *self)
+{
+#if @is_half@
+    npy_double val = npy_half_to_double(PyArrayScalar_VAL(self, @Name@));
+    npy_double frac;
+#else
+    npy_@name@ val = PyArrayScalar_VAL(self, @Name@);
+    npy_@name@ frac;
+#endif
+    int exponent;
+    int i;
+
+    PyObject *py_exponent = NULL;
+    PyObject *numerator = NULL;
+    PyObject *denominator = NULL;
+    PyObject *result_pair = NULL;
+    PyNumberMethods *long_methods = PyLong_Type.tp_as_number;
+
+    if (npy_isnan(val)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "cannot convert NaN to integer ratio");
+        return NULL;
+    }
+    if (!npy_isfinite(val)) {
+        PyErr_SetString(PyExc_OverflowError,
+                        "cannot convert Infinity to integer ratio");
+        return NULL;
+    }
+
+    frac = npy_frexp@c@(val, &exponent); /* val == frac * 2**exponent exactly */
+
+    /* This relies on the floating point type being base 2 to converge */
+    for (i = 0; frac != npy_floor@c@(frac); i++) {
+        frac *= 2.0;
+        exponent--;
+    }
+
+    /* self == frac * 2**exponent exactly and frac is integral. */
+    numerator = @convert@(frac);
+    if (numerator == NULL)
+        goto error;
+    denominator = PyLong_FromLong(1);
+    if (denominator == NULL)
+        goto error;
+    py_exponent = PyLong_FromLong(exponent < 0 ? -exponent : exponent);
+    if (py_exponent == NULL)
+        goto error;
+
+    /* fold in 2**exponent */
+    if (exponent > 0) {
+        PyObject *temp = long_methods->nb_lshift(numerator, py_exponent);
+        if (temp == NULL)
+            goto error;
+        Py_DECREF(numerator);
+        numerator = temp;
+    }
+    else {
+        PyObject *temp = long_methods->nb_lshift(denominator, py_exponent);
+        if (temp == NULL)
+            goto error;
+        Py_DECREF(denominator);
+        denominator = temp;
+    }
+
+    result_pair = PyTuple_Pack(2, numerator, denominator);
+
+error:
+    Py_XDECREF(py_exponent);
+    Py_XDECREF(denominator);
+    Py_XDECREF(numerator);
+    return result_pair;
+}
+/**end repeat**/
+
 
 /*
  * need to fill in doc-strings for these methods on import -- copy from
@@ -2250,6 +2338,17 @@ static PyMethodDef @name@type_methods[] = {
     {"__complex__",
         (PyCFunction)@name@_complex,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {NULL, NULL, 0, NULL}
+};
+/**end repeat**/
+
+/**begin repeat
+ * #name = half,float,double,longdouble#
+ */
+static PyMethodDef @name@type_methods[] = {
+    {"as_integer_ratio",
+        (PyCFunction)@name@_as_integer_ratio,
+        METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL}
 };
 /**end repeat**/
@@ -2597,6 +2696,8 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
+    _dealloc_cached_buffer_info((PyObject *)v);
+
     if (v->flags & NPY_ARRAY_OWNDATA) {
         npy_free_cache(v->obval, Py_SIZE(v));
     }
@@ -3923,7 +4024,6 @@ initialize_casting_tables(void)
     }
 
     _npy_can_cast_safely_table[NPY_STRING][NPY_UNICODE] = 1;
-    _npy_can_cast_safely_table[NPY_BOOL][NPY_TIMEDELTA] = 1;
 
 #ifndef NPY_SIZEOF_BYTE
 #define NPY_SIZEOF_BYTE 1
@@ -4307,6 +4407,15 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
+    /**begin repeat
+     * #name = half, float, double, longdouble#
+     * #Name = Half, Float, Double, LongDouble#
+     */
+
+    Py@Name@ArrType_Type.tp_methods = @name@type_methods;
+
+    /**end repeat**/
+
 #if (NPY_SIZEOF_INT != NPY_SIZEOF_LONG) || defined(NPY_PY3K)
     /* We won't be inheriting from Python Int type. */
     PyIntArrType_Type.tp_hash = int_arrtype_hash;
@@ -4383,6 +4492,36 @@ initialize_numeric_types(void)
 
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMapIter_Type.tp_iter = PyObject_SelfIter;
+
+    /*
+     * Give types different names when they are the same size (gh-9799).
+     * `np.intX` always refers to the first int of that size in the sequence
+     * `['LONG', 'LONGLONG', 'INT', 'SHORT', 'BYTE']`.
+     */
+#if (NPY_SIZEOF_BYTE == NPY_SIZEOF_SHORT)
+    PyByteArrType_Type.tp_name = "numpy.byte";
+    PyUByteArrType_Type.tp_name = "numpy.ubyte";
+#endif
+#if (NPY_SIZEOF_SHORT == NPY_SIZEOF_INT)
+    PyShortArrType_Type.tp_name = "numpy.short";
+    PyUShortArrType_Type.tp_name = "numpy.ushort";
+#endif
+#if (NPY_SIZEOF_INT == NPY_SIZEOF_LONG)
+    PyIntArrType_Type.tp_name = "numpy.intc";
+    PyUIntArrType_Type.tp_name = "numpy.uintc";
+#endif
+#if (NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG)
+    PyLongLongArrType_Type.tp_name = "numpy.longlong";
+    PyULongLongArrType_Type.tp_name = "numpy.ulonglong";
+#endif
+
+    /*
+    Do the same for longdouble
+    */
+#if (NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE)
+    PyLongDoubleArrType_Type.tp_name = "numpy.longdouble";
+    PyCLongDoubleArrType_Type.tp_name = "numpy.clongdouble";
+#endif
 }
 
 typedef struct {

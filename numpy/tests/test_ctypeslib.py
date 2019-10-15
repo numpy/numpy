@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import pytest
+import weakref
 
 import numpy as np
 from numpy.ctypeslib import ndpointer, load_library, as_array
@@ -9,20 +10,30 @@ from numpy.distutils.misc_util import get_shared_lib_extension
 from numpy.testing import assert_, assert_array_equal, assert_raises, assert_equal
 
 try:
+    import ctypes
+except ImportError:
+    ctypes = None
+else:
     cdll = None
+    test_cdll = None
     if hasattr(sys, 'gettotalrefcount'):
         try:
             cdll = load_library('_multiarray_umath_d', np.core._multiarray_umath.__file__)
         except OSError:
             pass
+        try:
+            test_cdll = load_library('_multiarray_tests', np.core._multiarray_tests.__file__)
+        except OSError:
+            pass
     if cdll is None:
         cdll = load_library('_multiarray_umath', np.core._multiarray_umath.__file__)
-    _HAS_CTYPE = True
-except ImportError:
-    _HAS_CTYPE = False
+    if test_cdll is None:
+        test_cdll = load_library('_multiarray_tests', np.core._multiarray_tests.__file__)
+
+    c_forward_pointer = test_cdll.forward_pointer
 
 
-@pytest.mark.skipif(not _HAS_CTYPE,
+@pytest.mark.skipif(ctypes is None,
                     reason="ctypes not available in this python")
 @pytest.mark.skipif(sys.platform == 'cygwin',
                     reason="Known to fail on cygwin")
@@ -108,12 +119,72 @@ class TestNdpointer(object):
         assert_raises(TypeError, p.from_param, np.array([[1, 2], [3, 4]]))
 
     def test_cache(self):
-        a1 = ndpointer(dtype=np.float64)
-        a2 = ndpointer(dtype=np.float64)
-        assert_(a1 == a2)
+        assert_(ndpointer(dtype=np.float64) is ndpointer(dtype=np.float64))
+
+        # shapes are normalized
+        assert_(ndpointer(shape=2) is ndpointer(shape=(2,)))
+
+        # 1.12 <= v < 1.16 had a bug that made these fail
+        assert_(ndpointer(shape=2) is not ndpointer(ndim=2))
+        assert_(ndpointer(ndim=2) is not ndpointer(shape=2))
+
+@pytest.mark.skipif(ctypes is None,
+                    reason="ctypes not available on this python installation")
+class TestNdpointerCFunc(object):
+    def test_arguments(self):
+        """ Test that arguments are coerced from arrays """
+        c_forward_pointer.restype = ctypes.c_void_p
+        c_forward_pointer.argtypes = (ndpointer(ndim=2),)
+
+        c_forward_pointer(np.zeros((2, 3)))
+        # too many dimensions
+        assert_raises(
+            ctypes.ArgumentError, c_forward_pointer, np.zeros((2, 3, 4)))
+
+    @pytest.mark.parametrize(
+        'dt', [
+            float,
+            np.dtype(dict(
+                formats=['<i4', '<i4'],
+                names=['a', 'b'],
+                offsets=[0, 2],
+                itemsize=6
+            ))
+        ], ids=[
+            'float',
+            'overlapping-fields'
+        ]
+    )
+    def test_return(self, dt):
+        """ Test that return values are coerced to arrays """
+        arr = np.zeros((2, 3), dt)
+        ptr_type = ndpointer(shape=arr.shape, dtype=arr.dtype)
+
+        c_forward_pointer.restype = ptr_type
+        c_forward_pointer.argtypes = (ptr_type,)
+
+        # check that the arrays are equivalent views on the same data
+        arr2 = c_forward_pointer(arr)
+        assert_equal(arr2.dtype, arr.dtype)
+        assert_equal(arr2.shape, arr.shape)
+        assert_equal(
+            arr2.__array_interface__['data'],
+            arr.__array_interface__['data']
+        )
+
+    def test_vague_return_value(self):
+        """ Test that vague ndpointer return values do not promote to arrays """
+        arr = np.zeros((2, 3))
+        ptr_type = ndpointer(dtype=arr.dtype)
+
+        c_forward_pointer.restype = ptr_type
+        c_forward_pointer.argtypes = (ptr_type,)
+
+        ret = c_forward_pointer(arr)
+        assert_(isinstance(ret, ptr_type))
 
 
-@pytest.mark.skipif(not _HAS_CTYPE,
+@pytest.mark.skipif(ctypes is None,
                     reason="ctypes not available on this python installation")
 class TestAsArray(object):
     def test_array(self):
@@ -190,3 +261,107 @@ class TestAsArray(object):
             b = np.ctypeslib.as_array(newpnt, (N,))
             # now delete both, which should cleanup both objects
             del newpnt, b
+
+    def test_segmentation_fault(self):
+        arr = np.zeros((224, 224, 3))
+        c_arr = np.ctypeslib.as_ctypes(arr)
+        arr_ref = weakref.ref(arr)
+        del arr
+
+        # check the reference wasn't cleaned up
+        assert_(arr_ref() is not None)
+
+        # check we avoid the segfault
+        c_arr[0][0][0]
+
+
+@pytest.mark.skipif(ctypes is None,
+                    reason="ctypes not available on this python installation")
+class TestAsCtypesType(object):
+    """ Test conversion from dtypes to ctypes types """
+    def test_scalar(self):
+        dt = np.dtype('<u2')
+        ct = np.ctypeslib.as_ctypes_type(dt)
+        assert_equal(ct, ctypes.c_uint16.__ctype_le__)
+
+        dt = np.dtype('>u2')
+        ct = np.ctypeslib.as_ctypes_type(dt)
+        assert_equal(ct, ctypes.c_uint16.__ctype_be__)
+
+        dt = np.dtype('u2')
+        ct = np.ctypeslib.as_ctypes_type(dt)
+        assert_equal(ct, ctypes.c_uint16)
+
+    def test_subarray(self):
+        dt = np.dtype((np.int32, (2, 3)))
+        ct = np.ctypeslib.as_ctypes_type(dt)
+        assert_equal(ct, 2 * (3 * ctypes.c_int32))
+
+    def test_structure(self):
+        dt = np.dtype([
+            ('a', np.uint16),
+            ('b', np.uint32),
+        ])
+
+        ct = np.ctypeslib.as_ctypes_type(dt)
+        assert_(issubclass(ct, ctypes.Structure))
+        assert_equal(ctypes.sizeof(ct), dt.itemsize)
+        assert_equal(ct._fields_, [
+            ('a', ctypes.c_uint16),
+            ('b', ctypes.c_uint32),
+        ])
+
+    def test_structure_aligned(self):
+        dt = np.dtype([
+            ('a', np.uint16),
+            ('b', np.uint32),
+        ], align=True)
+
+        ct = np.ctypeslib.as_ctypes_type(dt)
+        assert_(issubclass(ct, ctypes.Structure))
+        assert_equal(ctypes.sizeof(ct), dt.itemsize)
+        assert_equal(ct._fields_, [
+            ('a', ctypes.c_uint16),
+            ('', ctypes.c_char * 2),  # padding
+            ('b', ctypes.c_uint32),
+        ])
+
+    def test_union(self):
+        dt = np.dtype(dict(
+            names=['a', 'b'],
+            offsets=[0, 0],
+            formats=[np.uint16, np.uint32]
+        ))
+
+        ct = np.ctypeslib.as_ctypes_type(dt)
+        assert_(issubclass(ct, ctypes.Union))
+        assert_equal(ctypes.sizeof(ct), dt.itemsize)
+        assert_equal(ct._fields_, [
+            ('a', ctypes.c_uint16),
+            ('b', ctypes.c_uint32),
+        ])
+
+    def test_padded_union(self):
+        dt = np.dtype(dict(
+            names=['a', 'b'],
+            offsets=[0, 0],
+            formats=[np.uint16, np.uint32],
+            itemsize=5,
+        ))
+
+        ct = np.ctypeslib.as_ctypes_type(dt)
+        assert_(issubclass(ct, ctypes.Union))
+        assert_equal(ctypes.sizeof(ct), dt.itemsize)
+        assert_equal(ct._fields_, [
+            ('a', ctypes.c_uint16),
+            ('b', ctypes.c_uint32),
+            ('', ctypes.c_char * 5),  # padding
+        ])
+
+    def test_overlapping(self):
+        dt = np.dtype(dict(
+            names=['a', 'b'],
+            offsets=[0, 2],
+            formats=[np.uint32, np.uint32]
+        ))
+        assert_raises(NotImplementedError, np.ctypeslib.as_ctypes_type, dt)

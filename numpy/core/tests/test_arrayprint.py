@@ -90,6 +90,7 @@ class TestArrayRepr(object):
         assert_equal(repr(x),
             'sub(sub(sub(..., dtype=object), dtype=object), dtype=object)')
         assert_equal(str(x), '...')
+        x[()] = 0  # resolve circular references for garbage collector
 
         # nested 0d-subclass-object
         x = sub(None)
@@ -124,11 +125,13 @@ class TestArrayRepr(object):
         arr0d[()] = arr0d
         assert_equal(repr(arr0d),
             'array(array(..., dtype=object), dtype=object)')
+        arr0d[()] = 0  # resolve recursion for garbage collector
 
         arr1d = np.array([None, None])
         arr1d[1] = arr1d
         assert_equal(repr(arr1d),
             'array([None, array(..., dtype=object)], dtype=object)')
+        arr1d[1] = 0  # resolve recursion for garbage collector
 
         first = np.array(None)
         second = np.array(None)
@@ -136,6 +139,7 @@ class TestArrayRepr(object):
         second[()] = first
         assert_equal(repr(first),
             'array(array(array(..., dtype=object), dtype=object), dtype=object)')
+        first[()] = 0  # resolve circular references for garbage collector
 
     def test_containing_list(self):
         # printing square brackets directly would be ambiguuous
@@ -258,11 +262,6 @@ class TestArray2String(object):
         assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
                 '[abcabc defdef]')
 
-        # check for backcompat that using FloatFormat works and emits warning
-        with assert_warns(DeprecationWarning):
-            fmt = np.core.arrayprint.FloatFormat(x, 9, 'maxprec', False)
-        assert_equal(np.array2string(x, formatter={'float_kind': fmt}),
-                     '[0. 1. 2.]')
 
     def test_structure_format(self):
         dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
@@ -842,6 +841,10 @@ class TestPrintOptions(object):
                     [[ 0.]]]])""")
         )
 
+    def test_bad_args(self):
+        assert_raises(ValueError, np.set_printoptions, threshold=float('nan'))
+        assert_raises(TypeError, np.set_printoptions, threshold='1')
+        assert_raises(TypeError, np.set_printoptions, threshold=b'1')
 
 def test_unicode_object_array():
     import sys

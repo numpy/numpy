@@ -25,7 +25,7 @@ The Basics
 
 NumPy's main object is the homogeneous multidimensional array. It is a
 table of elements (usually numbers), all of the same type, indexed by a
-tuple of positive integers. In NumPy dimensions are called *axes*.
+tuple of non-negative integers. In NumPy dimensions are called *axes*.
 
 For example, the coordinates of a point in 3D space ``[1, 2, 1]`` has
 one axis. That axis has 3 elements in it, so we say it has a length
@@ -206,8 +206,8 @@ of elements that we want, instead of the step::
     `empty_like`,
     `arange`,
     `linspace`,
-    `numpy.random.rand`,
-    `numpy.random.randn`,
+    `numpy.random.mtrand.RandomState.rand`,
+    `numpy.random.mtrand.RandomState.randn`,
     `fromfunction`,
     `fromfile`
 
@@ -270,7 +270,7 @@ can change the printing options using ``set_printoptions``.
 
 ::
 
-    >>> np.set_printoptions(threshold=np.nan)
+    >>> np.set_printoptions(threshold=sys.maxsize)       # sys module should be imported
 
 
 Basic Operations
@@ -732,9 +732,9 @@ stacks 1D arrays as columns into a 2D array. It is equivalent to
     array([[ 4.,  3.],
            [ 2.,  8.]])
 
-On the other hand, the function `row_stack` is equivalent to `vstack`
+On the other hand, the function `ma.row_stack` is equivalent to `vstack`
 for any input arrays.
-In general, for arrays of with more than two dimensions,
+In general, for arrays with more than two dimensions,
 `hstack` stacks along their second
 axes, `vstack` stacks along their
 first axes, and `concatenate`
@@ -883,6 +883,17 @@ The ``copy`` method makes a complete copy of the array and its data.
            [1234,   10,   10,    7],
            [   8,   10,   10,   11]])
 
+
+Sometimes ``copy`` should be called after slicing if the original array is not required anymore.
+For example, suppose ``a`` is a huge intermediate result and the final result ``b`` only contains
+a small fraction of ``a``, a deep copy should be made when constructing ``b`` with slicing::
+
+    >>> a = np.arange(int(1e8))
+    >>> b = a[:100].copy()
+    >>> del a  # the memory of ``a`` can be released.
+
+If ``b = a[:100]`` is used instead, ``a`` is referenced by ``b`` and will persist in memory
+even if ``del a`` is executed.
 
 Functions and Methods Overview
 ------------------------------
@@ -1465,5 +1476,5 @@ Further reading
 -  The `Python tutorial <https://docs.python.org/tutorial/>`__
 -  :ref:`reference`
 -  `SciPy Tutorial <https://docs.scipy.org/doc/scipy/reference/tutorial/index.html>`__
--  `SciPy Lecture Notes <https://www.scipy-lectures.org>`__
+-  `SciPy Lecture Notes <https://scipy-lectures.org>`__
 -  A `matlab, R, IDL, NumPy/SciPy dictionary <http://mathesaurus.sf.net/>`__

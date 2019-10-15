@@ -471,12 +471,18 @@ PyArray_DescrFromTypeObject(PyObject *type)
     /* Do special thing for VOID sub-types */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
         new = PyArray_DescrNewFromType(NPY_VOID);
-        conv = _arraydescr_fromobj(type);
-        if (conv) {
+        if (new == NULL) {
+            return NULL;
+        }
+        if (_arraydescr_from_dtype_attr(type, &conv)) {
+            if (conv == NULL) {
+                Py_DECREF(new);
+                return NULL;
+            }
             new->fields = conv->fields;
-            Py_INCREF(new->fields);
+            Py_XINCREF(new->fields);
             new->names = conv->names;
-            Py_INCREF(new->names);
+            Py_XINCREF(new->names);
             new->elsize = conv->elsize;
             new->subarray = conv->subarray;
             conv->subarray = NULL;
@@ -801,6 +807,9 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
                     vobj->obval = data;
                     return obj;
                 }
+            }
+            if (itemsize == 0) {
+                return obj;
             }
             destptr = PyDataMem_NEW(itemsize);
             if (destptr == NULL) {

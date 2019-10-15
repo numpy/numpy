@@ -20,17 +20,18 @@ gzip, bz2 and xz are supported.
 Example::
 
     >>> # Create a DataSource, use os.curdir (default) for local storage.
-    >>> ds = datasource.DataSource()
+    >>> from numpy import DataSource
+    >>> ds = DataSource()
     >>>
     >>> # Open a remote file.
     >>> # DataSource downloads the file, stores it locally in:
     >>> #     './www.google.com/index.html'
     >>> # opens the file and returns a file object.
-    >>> fp = ds.open('http://www.google.com/index.html')
+    >>> fp = ds.open('http://www.google.com/') # doctest: +SKIP
     >>>
     >>> # Use the file as you normally would
-    >>> fp.read()
-    >>> fp.close()
+    >>> fp.read() # doctest: +SKIP
+    >>> fp.close() # doctest: +SKIP
 
 """
 from __future__ import division, absolute_import, print_function
@@ -40,8 +41,13 @@ import sys
 import warnings
 import shutil
 import io
+from contextlib import closing
+
+from numpy.core.overrides import set_module
+
 
 _open = open
+
 
 def _check_mode(mode, encoding, newline):
     """Check mode and that encoding and newline are compatible.
@@ -152,6 +158,7 @@ class _FileOpeners(object):
 
     Examples
     --------
+    >>> import gzip
     >>> np.lib._datasource._file_openers.keys()
     [None, '.bz2', '.gz', '.xz', '.lzma']
     >>> np.lib._datasource._file_openers['.gz'] is gzip.open
@@ -262,7 +269,8 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     return ds.open(path, mode, encoding=encoding, newline=newline)
 
 
-class DataSource (object):
+@set_module('numpy')
+class DataSource(object):
     """
     DataSource(destpath='.')
 
@@ -285,7 +293,7 @@ class DataSource (object):
     URLs require a scheme string (``http://``) to be used, without it they
     will fail::
 
-        >>> repos = DataSource()
+        >>> repos = np.DataSource()
         >>> repos.exists('www.google.com/index.html')
         False
         >>> repos.exists('http://www.google.com/index.html')
@@ -297,17 +305,17 @@ class DataSource (object):
     --------
     ::
 
-        >>> ds = DataSource('/home/guido')
-        >>> urlname = 'http://www.google.com/index.html'
-        >>> gfile = ds.open('http://www.google.com/index.html')  # remote file
+        >>> ds = np.DataSource('/home/guido')
+        >>> urlname = 'http://www.google.com/'
+        >>> gfile = ds.open('http://www.google.com/')
         >>> ds.abspath(urlname)
-        '/home/guido/www.google.com/site/index.html'
+        '/home/guido/www.google.com/index.html'
 
-        >>> ds = DataSource(None)  # use with temporary file
+        >>> ds = np.DataSource(None)  # use with temporary file
         >>> ds.open('/home/guido/foobar.txt')
         <open file '/home/guido.foobar.txt', mode 'r' at 0x91d4430>
         >>> ds.abspath('/home/guido/foobar.txt')
-        '/tmp/tmpy4pgsP/home/guido/foobar.txt'
+        '/tmp/.../home/guido/foobar.txt'
 
     """
 
@@ -323,7 +331,7 @@ class DataSource (object):
 
     def __del__(self):
         # Remove temp directories
-        if self._istmpdest:
+        if hasattr(self, '_istmpdest') and self._istmpdest:
             shutil.rmtree(self._destpath)
 
     def _iszip(self, filename):
@@ -407,13 +415,9 @@ class DataSource (object):
         # TODO: Doesn't handle compressed files!
         if self._isurl(path):
             try:
-                openedurl = urlopen(path)
-                f = _open(upath, 'wb')
-                try:
-                    shutil.copyfileobj(openedurl, f)
-                finally:
-                    f.close()
-                    openedurl.close()
+                with closing(urlopen(path)) as openedurl:
+                    with _open(upath, 'wb') as f:
+                        shutil.copyfileobj(openedurl, f)
             except URLError:
                 raise URLError("URL not found: %s" % path)
         else:
@@ -540,6 +544,11 @@ class DataSource (object):
         is accessible if it exists in either location.
 
         """
+
+        # First test for local path
+        if os.path.exists(path):
+            return True
+
         # We import this here because importing urllib2 is slow and
         # a significant fraction of numpy's total import time.
         if sys.version_info[0] >= 3:
@@ -548,10 +557,6 @@ class DataSource (object):
         else:
             from urllib2 import urlopen
             from urllib2 import URLError
-
-        # Test local path
-        if os.path.exists(path):
-            return True
 
         # Test cached url
         upath = self.abspath(path)

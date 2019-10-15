@@ -113,9 +113,6 @@ get_argpartition_func(int type, NPY_SELECTKIND which)
     npy_intp i;
     npy_intp ntypes = ARRAY_SIZE(_part_map);
 
-    if (which >= NPY_NSELECTS) {
-        return NULL;
-    }
     for (i = 0; i < ntypes; i++) {
         if (type == _part_map[i].typenum) {
             return _part_map[i].argpart[which];

@@ -31,11 +31,9 @@ from .crackfortran import rmbadname
 def findcommonblocks(block, top=1):
     ret = []
     if hascommon(block):
-        for n in block['common'].keys():
-            vars = {}
-            for v in block['common'][n]:
-                vars[v] = block['vars'][v]
-            ret.append((n, block['common'][n], vars))
+        for key, value in block['common'].items():
+            vars_ = {v: block['vars'][v] for v in value}
+            ret.append((key, value, vars_))
     elif hasbody(block):
         for b in block['body']:
             ret = ret + findcommonblocks(b, 0)
@@ -126,8 +124,9 @@ def buildhooks(m):
         cadd('\t%s(f2pyinit%s,F2PYINIT%s)(f2py_setup_%s);'
              % (F_FUNC, lower_name, name.upper(), name))
         cadd('}\n')
-        iadd('\tF2PyDict_SetItemString(d, \"%s\", PyFortranObject_New(f2py_%s_def,f2py_init_%s));' % (
-            name, name, name))
+        iadd('\ttmp = PyFortranObject_New(f2py_%s_def,f2py_init_%s);' % (name, name))
+        iadd('\tF2PyDict_SetItemString(d, \"%s\", tmp);' % name)
+        iadd('\tPy_DECREF(tmp);')
         tname = name.replace('_', '\\_')
         dadd('\\subsection{Common block \\texttt{%s}}\n' % (tname))
         dadd('\\begin{description}')

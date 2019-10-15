@@ -543,35 +543,6 @@ PyArray_AssignZero(PyArrayObject *dst,
     return retcode;
 }
 
-/*
- * Fills an array with ones.
- *
- * dst: The destination array.
- * wheremask: If non-NULL, a boolean mask specifying where to set the values.
- *
- * Returns 0 on success, -1 on failure.
- */
-NPY_NO_EXPORT int
-PyArray_AssignOne(PyArrayObject *dst,
-                  PyArrayObject *wheremask)
-{
-    npy_bool value;
-    PyArray_Descr *bool_dtype;
-    int retcode;
-
-    /* Create a raw bool scalar with the value True */
-    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
-    if (bool_dtype == NULL) {
-        return -1;
-    }
-    value = 1;
-
-    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
-                                      wheremask, NPY_SAFE_CASTING);
-
-    Py_DECREF(bool_dtype);
-    return retcode;
-}
 
 /*NUMPY_API
  * Copy an array.
@@ -614,22 +585,6 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     }
 
     dtype = PyArray_DESCR(self);
-
-    if (type != NULL && !PyArray_EquivTypes(dtype, type) &&
-            (PyArray_FLAGS(self) & NPY_ARRAY_WARN_ON_WRITE)) {
-        const char *msg =
-            "Numpy has detected that you may be viewing or writing to an array "
-            "returned by selecting multiple fields in a structured array. \n\n"
-            "This code may break in numpy 1.16 because this will return a view "
-            "instead of a copy -- see release notes for details.";
-        /* 2016-09-19, 1.12 */
-        if (DEPRECATE_FUTUREWARNING(msg) < 0) {
-            return NULL;
-        }
-        /* Only warn once per array */
-        PyArray_CLEARFLAGS(self, NPY_ARRAY_WARN_ON_WRITE);
-    }
-
     flags = PyArray_FLAGS(self);
 
     Py_INCREF(dtype);

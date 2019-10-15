@@ -17,6 +17,7 @@ from numpy.testing import (
     clear_and_catch_warnings, suppress_warnings, assert_string_equal, assert_,
     tempdir, temppath, assert_no_gc_cycles, HAS_REFCOUNT
     )
+from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
 
 
 class _GenericTest(object):
@@ -158,6 +159,42 @@ class TestArrayEqual(_GenericTest):
         self._test_equal(a, b)
         self._test_equal(b, a)
 
+    def test_subclass_that_overrides_eq(self):
+        # While we cannot guarantee testing functions will always work for
+        # subclasses, the tests should ideally rely only on subclasses having
+        # comparison operators, not on them being able to store booleans
+        # (which, e.g., astropy Quantity cannot usefully do). See gh-8452.
+        class MyArray(np.ndarray):
+            def __eq__(self, other):
+                return bool(np.equal(self, other).all())
+
+            def __ne__(self, other):
+                return not self == other
+
+        a = np.array([1., 2.]).view(MyArray)
+        b = np.array([2., 3.]).view(MyArray)
+        assert_(type(a == a), bool)
+        assert_(a == a)
+        assert_(a != b)
+        self._test_equal(a, a)
+        self._test_not_equal(a, b)
+        self._test_not_equal(b, a)
+
+    @pytest.mark.skipif(
+        not ARRAY_FUNCTION_ENABLED, reason='requires __array_function__')
+    def test_subclass_that_does_not_implement_npall(self):
+        class MyArray(np.ndarray):
+            def __array_function__(self, *args, **kwargs):
+                return NotImplemented
+
+        a = np.array([1., 2.]).view(MyArray)
+        b = np.array([2., 3.]).view(MyArray)
+        with assert_raises(TypeError):
+            np.all(a)
+        self._test_equal(a, a)
+        self._test_not_equal(a, b)
+        self._test_not_equal(b, a)
+
 
 class TestBuildErrorMessage(object):
 
@@ -292,24 +329,29 @@ class TestEqual(TestArrayEqual):
         self._test_not_equal(x, y)
 
     def test_error_message(self):
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             self._assert_func(np.array([1, 2]), np.array([[1, 2]]))
-        except AssertionError as e:
-            msg = str(e)
-            msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
-            msg_reference = textwrap.dedent("""\
+        msg = str(exc_info.value)
+        msg2 = msg.replace("shapes (2L,), (1L, 2L)", "shapes (2,), (1, 2)")
+        msg_reference = textwrap.dedent("""\
 
-            Arrays are not equal
+        Arrays are not equal
 
-            (shapes (2,), (1, 2) mismatch)
-             x: array([1, 2])
-             y: array([[1, 2]])""")
-            try:
-                assert_equal(msg, msg_reference)
-            except AssertionError:
-                assert_equal(msg2, msg_reference)
-        else:
-            raise AssertionError("Did not raise")
+        (shapes (2,), (1, 2) mismatch)
+         x: array([1, 2])
+         y: array([[1, 2]])""")
+
+        try:
+            assert_equal(msg, msg_reference)
+        except AssertionError:
+            assert_equal(msg2, msg_reference)
+
+    def test_object(self):
+        #gh-12942
+        import datetime
+        a = np.array([datetime.datetime(2000, 1, 1),
+                      datetime.datetime(2000, 1, 2)])
+        self._test_not_equal(a, a[::-1])
 
 
 class TestArrayAlmostEqual(_GenericTest):
@@ -469,29 +511,78 @@ class TestAlmostEqual(_GenericTest):
         self._test_not_equal(x, z)
 
     def test_error_message(self):
-        """Check the message is formatted correctly for the decimal value"""
+        """Check the message is formatted correctly for the decimal value.
+           Also check the message when input includes inf or nan (gh12200)"""
         x = np.array([1.00000000001, 2.00000000002, 3.00003])
         y = np.array([1.00000000002, 2.00000000003, 3.00004])
 
-        # test with a different amount of decimal digits
-        # note that we only check for the formatting of the arrays themselves
-        b = ('x: array([1.00000000001, 2.00000000002, 3.00003     '
-             ' ])\n y: array([1.00000000002, 2.00000000003, 3.00004      ])')
-        try:
+        # Test with a different amount of decimal digits
+        with pytest.raises(AssertionError) as exc_info:
             self._assert_func(x, y, decimal=12)
-        except AssertionError as e:
-            # remove anything that's not the array string
-            assert_equal(str(e).split('%)\n ')[1], b)
+        msgs = str(exc_info.value).split('\n')
+        assert_equal(msgs[3], 'Mismatched elements: 3 / 3 (100%)')
+        assert_equal(msgs[4], 'Max absolute difference: 1.e-05')
+        assert_equal(msgs[5], 'Max relative difference: 3.33328889e-06')
+        assert_equal(
+            msgs[6],
+            ' x: array([1.00000000001, 2.00000000002, 3.00003      ])')
+        assert_equal(
+            msgs[7],
+            ' y: array([1.00000000002, 2.00000000003, 3.00004      ])')
 
-        # with the default value of decimal digits, only the 3rd element differs
-        # note that we only check for the formatting of the arrays themselves
-        b = ('x: array([1.     , 2.     , 3.00003])\n y: array([1.     , '
-             '2.     , 3.00004])')
-        try:
+        # With the default value of decimal digits, only the 3rd element
+        # differs. Note that we only check for the formatting of the arrays
+        # themselves.
+        with pytest.raises(AssertionError) as exc_info:
             self._assert_func(x, y)
-        except AssertionError as e:
-            # remove anything that's not the array string
-            assert_equal(str(e).split('%)\n ')[1], b)
+        msgs = str(exc_info.value).split('\n')
+        assert_equal(msgs[3], 'Mismatched elements: 1 / 3 (33.3%)')
+        assert_equal(msgs[4], 'Max absolute difference: 1.e-05')
+        assert_equal(msgs[5], 'Max relative difference: 3.33328889e-06')
+        assert_equal(msgs[6], ' x: array([1.     , 2.     , 3.00003])')
+        assert_equal(msgs[7], ' y: array([1.     , 2.     , 3.00004])')
+
+        # Check the error message when input includes inf
+        x = np.array([np.inf, 0])
+        y = np.array([np.inf, 1])
+        with pytest.raises(AssertionError) as exc_info:
+            self._assert_func(x, y)
+        msgs = str(exc_info.value).split('\n')
+        assert_equal(msgs[3], 'Mismatched elements: 1 / 2 (50%)')
+        assert_equal(msgs[4], 'Max absolute difference: 1.')
+        assert_equal(msgs[5], 'Max relative difference: 1.')
+        assert_equal(msgs[6], ' x: array([inf,  0.])')
+        assert_equal(msgs[7], ' y: array([inf,  1.])')
+
+        # Check the error message when dividing by zero
+        x = np.array([1, 2])
+        y = np.array([0, 0])
+        with pytest.raises(AssertionError) as exc_info:
+            self._assert_func(x, y)
+        msgs = str(exc_info.value).split('\n')
+        assert_equal(msgs[3], 'Mismatched elements: 2 / 2 (100%)')
+        assert_equal(msgs[4], 'Max absolute difference: 2')
+        assert_equal(msgs[5], 'Max relative difference: inf')
+
+    def test_error_message_2(self):
+        """Check the message is formatted correctly when either x or y is a scalar."""
+        x = 2
+        y = np.ones(20)
+        with pytest.raises(AssertionError) as exc_info:
+            self._assert_func(x, y)
+        msgs = str(exc_info.value).split('\n')
+        assert_equal(msgs[3], 'Mismatched elements: 20 / 20 (100%)')
+        assert_equal(msgs[4], 'Max absolute difference: 1.')
+        assert_equal(msgs[5], 'Max relative difference: 1.')
+
+        y = 2
+        x = np.ones(20)
+        with pytest.raises(AssertionError) as exc_info:
+            self._assert_func(x, y)
+        msgs = str(exc_info.value).split('\n')
+        assert_equal(msgs[3], 'Mismatched elements: 20 / 20 (100%)')
+        assert_equal(msgs[4], 'Max absolute difference: 1.')
+        assert_equal(msgs[5], 'Max relative difference: 0.5')
 
     def test_subclass_that_cannot_be_bool(self):
         # While we cannot guarantee testing functions will always work for
@@ -780,12 +871,13 @@ class TestAssertAllclose(object):
     def test_report_fail_percentage(self):
         a = np.array([1, 1, 1, 1])
         b = np.array([1, 1, 1, 2])
-        try:
+
+        with pytest.raises(AssertionError) as exc_info:
             assert_allclose(a, b)
-            msg = ''
-        except AssertionError as exc:
-            msg = exc.args[0]
-        assert_("mismatch 25.0%" in msg)
+        msg = str(exc_info.value)
+        assert_('Mismatched elements: 1 / 4 (25%)\n'
+                'Max absolute difference: 1\n'
+                'Max relative difference: 0.5' in msg)
 
     def test_equal_nan(self):
         a = np.array([np.nan])
@@ -808,6 +900,15 @@ class TestAssertAllclose(object):
         assert_array_almost_equal(a, b)
         assert_array_less(a, b)
         assert_allclose(a, b)
+
+    def test_report_max_relative_error(self):
+        a = np.array([0, 1])
+        b = np.array([0, 2])
+
+        with pytest.raises(AssertionError) as exc_info:
+            assert_allclose(a, b)
+        msg = str(exc_info.value)
+        assert_('Max relative difference: 0.5' in msg)
 
 
 class TestArrayAlmostEqualNulp(object):
@@ -1068,16 +1169,14 @@ class TestStringEqual(object):
         assert_string_equal("hello", "hello")
         assert_string_equal("hello\nmultiline", "hello\nmultiline")
 
-        try:
+        with pytest.raises(AssertionError) as exc_info:
             assert_string_equal("foo\nbar", "hello\nbar")
-        except AssertionError as exc:
-            assert_equal(str(exc), "Differences in strings:\n- foo\n+ hello")
-        else:
-            raise AssertionError("exception not raised")
+        msg = str(exc_info.value)
+        assert_equal(msg, "Differences in strings:\n- foo\n+ hello")
 
         assert_raises(AssertionError,
                       lambda: assert_string_equal("foo", "hello"))
-        
+
     def test_regex(self):
         assert_string_equal("a+*b", "a+*b")
 
@@ -1383,7 +1482,7 @@ def test_tempdir():
 
 def test_temppath():
     with temppath() as fpath:
-        with open(fpath, 'w') as f:
+        with open(fpath, 'w'):
             pass
     assert_(not os.path.isfile(fpath))
 
@@ -1439,6 +1538,7 @@ class TestAssertNoGcCycles(object):
         with assert_raises(AssertionError):
             assert_no_gc_cycles(make_cycle)
 
+    @pytest.mark.slow
     def test_fails(self):
         """
         Test that in cases where the garbage cannot be collected, we raise an
