@@ -18,6 +18,14 @@ cache:
   directories:
     - $HOME/.cache/pip
 
+stage: Comprehensive tests
+
+stages:
+    # Do the style check and a single test job, don't proceed if it fails
+    - name: Initial tests
+    # Do the rest of the tests
+    - name: Comprehensive tests
+
 env:
   global:
     - OpenBLAS_version=0.3.7
@@ -29,13 +37,14 @@ env:
                iFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAM\
                ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
 
-python:
-  - 3.5
-  - 3.6
-  - 3.7
-  - 3.8-dev
 matrix:
   include:
+    # Do all python versions without environment variables set
+    - python: 3.5
+    - stage: Initial tests
+      python: 3.6
+    - python: 3.7
+    - python: 3.8-dev
     - python: 3.7
       env: INSTALL_PICKLE5=1
     - python: 3.6
