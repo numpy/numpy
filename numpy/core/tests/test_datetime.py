@@ -483,6 +483,30 @@ class TestDateTime(object):
         assert_equal(np.datetime64(a, '[Y]'), np.datetime64('NaT', '[Y]'))
         assert_equal(np.datetime64(a, '[W]'), np.datetime64('NaT', '[W]'))
 
+        # NaN -> NaT
+        nan = np.array([np.nan] * 8)
+        fnan = nan.astype('f')
+        lnan = nan.astype('g')
+        cnan = nan.astype('D')
+        cfnan = nan.astype('F')
+        clnan = nan.astype('G')
+
+        nat = np.array([np.datetime64('NaT')] * 8)
+        assert_equal(nan.astype('M8[ns]'), nat)
+        assert_equal(fnan.astype('M8[ns]'), nat)
+        assert_equal(lnan.astype('M8[ns]'), nat)
+        assert_equal(cnan.astype('M8[ns]'), nat)
+        assert_equal(cfnan.astype('M8[ns]'), nat)
+        assert_equal(clnan.astype('M8[ns]'), nat)
+
+        nat = np.array([np.timedelta64('NaT')] * 8)
+        assert_equal(nan.astype('timedelta64[ns]'), nat)
+        assert_equal(fnan.astype('timedelta64[ns]'), nat)
+        assert_equal(lnan.astype('timedelta64[ns]'), nat)
+        assert_equal(cnan.astype('timedelta64[ns]'), nat)
+        assert_equal(cfnan.astype('timedelta64[ns]'), nat)
+        assert_equal(clnan.astype('timedelta64[ns]'), nat)
+
     def test_days_creation(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('i8'),
                 (1600-1970)*365 - (1972-1600)/4 + 3 - 365)
