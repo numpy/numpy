@@ -1338,7 +1338,8 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
         np.all(np.diff(xp) > 0)
 
-    The value of `xp` cannot be `NaN` because its input is required to be sorted. 
+    Note that since `NaN` is unsortable, this also means that `xp` cannot
+    contain `NaN`, which the check above will detect.
 
     Examples
     --------
