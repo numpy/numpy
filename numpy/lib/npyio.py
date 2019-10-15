@@ -480,7 +480,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     file : file, str, or pathlib.Path
         File or filename to which the data is saved.  If file is a file-object,
         then the filename is unchanged.  If file is a string or Path, a ``.npy``
-        extension will be appended to the file name if it does not already
+        extension will be appended to the filename if it does not already
         have one.
     arr : array_like
         Array data to be saved.
@@ -575,9 +575,9 @@ def savez(file, *args, **kwds):
     Parameters
     ----------
     file : str or file
-        Either the file name (string) or an open file (file-like object)
+        Either the filename (string) or an open file (file-like object)
         where the data will be saved. If file is a string or a Path, the
-        ``.npz`` extension will be appended to the file name if it is not
+        ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
         Arrays to save to the file. Since it is not possible for Python to
@@ -610,7 +610,7 @@ def savez(file, *args, **kwds):
     its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
-    When saving dictionaries, the dictionary keys become file names
+    When saving dictionaries, the dictionary keys become filenames
     inside the ZIP archive. Therefore, keys should be valid filenames.
     E.g., avoid keys that begin with ``/`` or contain ``.``.
 
@@ -658,15 +658,15 @@ def savez_compressed(file, *args, **kwds):
     Save several arrays into a single file in compressed ``.npz`` format.
 
     If keyword arguments are given, then filenames are taken from the keywords.
-    If arguments are passed in with no keywords, then stored file names are
+    If arguments are passed in with no keywords, then stored filenames are
     arr_0, arr_1, etc.
 
     Parameters
     ----------
     file : str or file
-        Either the file name (string) or an open file (file-like object)
+        Either the filename (string) or an open file (file-like object)
         where the data will be saved. If file is a string or a Path, the
-        ``.npz`` extension will be appended to the file name if it is not
+        ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
         Arrays to save to the file. Since it is not possible for Python to
@@ -1471,7 +1471,7 @@ def fromregex(file, regexp, dtype, encoding=None):
     Parameters
     ----------
     file : str or file
-        File name or file object to read.
+        Filename or file object to read.
     regexp : str or regexp
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
