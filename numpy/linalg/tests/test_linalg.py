@@ -19,7 +19,7 @@ from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
 from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, suppress_warnings,
+    assert_almost_equal, assert_allclose, assert_warns, suppress_warnings,
     assert_raises_regex,
     )
 
@@ -1336,15 +1336,6 @@ class _TestNormGeneral(_TestNormBase):
         allclose_err = 'order {0}, axis = {1}'
         shape_err = 'Shape mismatch found {0}, expected {1}, order={2}, axis={3}'
 
-        # check the order=None, axis=None case
-        expected = norm(A, ord=None, axis=None)
-        found = norm(A, ord=None, axis=None, keepdims=True)
-        assert_allclose(np.squeeze(found), expected,
-                        err_msg=allclose_err.format(None, None))
-        expected_shape = (1, 1, 1)
-        assert_(found.shape == expected_shape,
-                shape_err.format(found.shape, expected_shape, None, None))
-
         # Vector norms.
         for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
             for k in range(A.ndim):
@@ -1371,6 +1362,33 @@ class _TestNormGeneral(_TestNormBase):
                 expected_shape = tuple(expected_shape)
                 assert_(found.shape == expected_shape,
                         shape_err.format(found.shape, expected_shape, order, k))
+
+    def test_high_dimension_errors(self):
+        A = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
+
+        with assert_warns(DeprecationWarning):
+            allclose_err = 'order {0}, axis = {1}'
+            shape_err = ('Shape mismatch found {0}, expected {1}, '
+                         'order={2}, axis={3}')
+
+            # check the order=None, axis=None case
+            expected = norm(A, ord=None, axis=None)
+            found = norm(A, ord=None, axis=None, keepdims=True)
+            assert_allclose(np.squeeze(found), expected,
+                            err_msg=allclose_err.format(None, None))
+            expected_shape = (1, 1, 1)
+            assert_(found.shape == expected_shape,
+                    shape_err.format(found.shape, expected_shape, None, None))
+
+        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro', 'nuc']:
+            with assert_raises(ValueError):
+                norm(A, ord=order, axis=(0, 1, 2))
+
+            if order is None:
+                # The above DeprecationWarning is hit for axis=None
+                continue
+            with assert_raises(ValueError):
+                norm(A, ord=order)
 
 
 class _TestNorm2D(_TestNormBase):

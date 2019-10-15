@@ -2465,9 +2465,20 @@ def norm(x, ord=None, axis=None, keepdims=False):
     # Immediately handle some default, simple, fast, and common cases.
     if axis is None:
         ndim = x.ndim
+
         if ((ord is None) or
-            (ord in ('f', 'fro') and ndim == 2) or
-            (ord == 2 and ndim == 1)):
+                (ord in ('f', 'fro') and ndim == 2) or
+                (ord == 2 and ndim == 1)):
+
+            if ndim > 2:  # can only happen for `ord is None`
+                # Deprecated: NumPy 1.18; 2019-10-15
+                warnings.warn(
+                        "Improper number of dimensions to norm.\n"
+                        "The input array had {} dimensions. This was supported "
+                        "only for `axis=None` and `ord=None` and will raise a "
+                        "ValueError in the future. You may use `x.ravel()` "
+                        "as input to keep the current behaviour.".format(ndim),
+                        DeprecationWarning, stacklevel=3)
 
             x = x.ravel(order='K')
             if isComplexType(x.dtype.type):
