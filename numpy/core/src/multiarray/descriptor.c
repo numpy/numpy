@@ -1385,7 +1385,6 @@ NPY_NO_EXPORT int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
     int check_num = NPY_NOTYPE + 10;
-    PyObject *item;
     int elsize = 0;
     char endian = '=';
 
@@ -1664,16 +1663,22 @@ finish:
         PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
         if (typeDict != NULL) {
-            item = PyDict_GetItem(typeDict, obj);
+            PyObject *item = NULL;
 #if defined(NPY_PY3K)
-            if (!item && PyBytes_Check(obj)) {
+            if (PyBytes_Check(obj)) {
                 PyObject *tmp;
                 tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
-                if (tmp != NULL) {
-                    item = PyDict_GetItem(typeDict, tmp);
-                    Py_DECREF(tmp);
+                if (tmp == NULL) {
+                    goto fail;
                 }
+                item = PyDict_GetItem(typeDict, tmp);
+                Py_DECREF(tmp);
             }
+            else {
+                item = PyDict_GetItem(typeDict, obj);
+            }
+#else
+            item = PyDict_GetItem(typeDict, obj);
 #endif
             if (item) {
                 /* Check for a deprecated Numeric-style typecode */
