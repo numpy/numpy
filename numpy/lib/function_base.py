@@ -1336,7 +1336,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     explicitly enforced.  However, if the sequence `xp` is non-increasing,
     interpolation results are meaningless.
 
-    Note that, since `NaN` is unsortable, `xp` then also cannot contain `NaN`s.
+    Note that, since NaN is unsortable, `xp` also cannot contain NaNs.
 
     A simple check for `xp` being strictly increasing is::
 
