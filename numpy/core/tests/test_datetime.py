@@ -75,6 +75,15 @@ class TestDateTime(object):
         # Can cast safely/same_kind from integer to timedelta
         assert_(np.can_cast('i8', 'm8', casting='same_kind'))
         assert_(np.can_cast('i8', 'm8', casting='safe'))
+        assert_(np.can_cast('i4', 'm8', casting='same_kind'))
+        assert_(np.can_cast('i4', 'm8', casting='safe'))
+        assert_(np.can_cast('u4', 'm8', casting='same_kind'))
+        assert_(np.can_cast('u4', 'm8', casting='safe'))
+
+        # Cannot cast safely from unsigned integer of the same size, which
+        # could overflow
+        assert_(not np.can_cast('u8', 'm8', casting='same_kind'))
+        assert_(not np.can_cast('u8', 'm8', casting='safe'))
 
         # Cannot cast safely/same_kind from float to timedelta
         assert_(not np.can_cast('f4', 'm8', casting='same_kind'))
