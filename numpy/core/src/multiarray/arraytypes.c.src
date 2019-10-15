@@ -3105,7 +3105,7 @@ static int
     }
 #endif
 #if @isdatetime@
-   if (mp == NPY_DATETIME_NAT) {
+    if (mp == NPY_DATETIME_NAT) {
         /* NaT encountered, it's maximal */
         return 0;
     }
@@ -3130,11 +3130,11 @@ static int
         }
 #else
 #if @isdatetime@
-           if (*ip == NPY_DATETIME_NAT) {
-                /* NaT encountered, it's maximal */
-                *max_ind = i;
-                break;
-            }
+        if (*ip == NPY_DATETIME_NAT) {
+            /* NaT encountered, it's maximal */
+            *max_ind = i;
+            break;
+        }
 #endif
         if (!@le@(*ip, mp)) {  /* negated, for correct nan handling */
             mp = *ip;
@@ -3211,7 +3211,7 @@ static int
     }
 #endif
 #if @isdatetime@
-   if (mp == NPY_DATETIME_NAT) {
+    if (mp == NPY_DATETIME_NAT) {
         /* NaT encountered, it's minimal */
         return 0;
     }
@@ -3235,6 +3235,13 @@ static int
             }
         }
 #else
+#if @isdatetime@
+        if (*ip == NPY_DATETIME_NAT) {
+            /* NaT encountered, it's minimal */
+            *min_ind = i;
+            break;
+        }
+#endif 
         if (!@le@(mp, *ip)) {  /* negated, for correct nan handling */
             mp = *ip;
             *min_ind = i;
@@ -3244,12 +3251,6 @@ static int
                 break;
             }
 #endif
-#if @isdatetime@
-            if (mp == NPY_DATETIME_NAT) {
-                /* NaT encountered, it's minimal */
-                break;
-            }
-#endif 
         }
 #endif
     }
