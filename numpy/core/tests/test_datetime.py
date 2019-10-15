@@ -1333,10 +1333,10 @@ class TestDateTime(object):
         # Interaction with NaT
         a = np.array('1999-03-12T13', dtype='M8[2m]')
         dtnat = np.array('NaT', dtype='M8[h]')
-        assert_equal(np.minimum(a, dtnat), a)
-        assert_equal(np.minimum(dtnat, a), a)
-        assert_equal(np.maximum(a, dtnat), a)
-        assert_equal(np.maximum(dtnat, a), a)
+        assert_equal(np.minimum(a, dtnat), dtnat)
+        assert_equal(np.minimum(dtnat, a), dtnat)
+        assert_equal(np.maximum(a, dtnat), dtnat)
+        assert_equal(np.maximum(dtnat, a), dtnat)
 
         # Also do timedelta
         a = np.array(3, dtype='m8[h]')

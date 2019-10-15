@@ -3104,6 +3104,12 @@ static int
         return 0;
     }
 #endif
+#if @isdatetime@
+   if (mp == NPY_DATETIME_NAT) {
+        /* NaT encountered, it's maximal */
+        return 0;
+    }
+#endif
 
     for (i = 1; i < n; i++) {
         @incr@;
@@ -3124,8 +3130,9 @@ static int
         }
 #else
 #if @isdatetime@
-           if (mp == NPY_DATETIME_NAT) {
+           if (*ip == NPY_DATETIME_NAT) {
                 /* NaT encountered, it's maximal */
+                *max_ind = i;
                 break;
             }
 #endif
@@ -3200,6 +3207,12 @@ static int
 #if @iscomplex@
     if (@isnan@(mp_im)) {
         /* nan encountered; it's minimal */
+        return 0;
+    }
+#endif
+#if @isdatetime@
+   if (mp == NPY_DATETIME_NAT) {
+        /* NaT encountered, it's minimal */
         return 0;
     }
 #endif

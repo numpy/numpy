@@ -4115,7 +4115,7 @@ class TestArgmax(object):
         ([np.timedelta64(2, 's'),
           np.timedelta64(1, 's'),
           np.timedelta64('NaT', 's'),
-          np.timedelta64(3, 's')], 3),
+          np.timedelta64(3, 's')], 2),
         ([np.timedelta64('NaT', 's')] * 3, 0),
 
         ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
@@ -4250,7 +4250,7 @@ class TestArgmin(object):
         ([np.timedelta64(2, 's'),
           np.timedelta64(1, 's'),
           np.timedelta64('NaT', 's'),
-          np.timedelta64(3, 's')], 1),
+          np.timedelta64(3, 's')], 2),
         ([np.timedelta64('NaT', 's')] * 3, 0),
 
         ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
