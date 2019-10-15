@@ -542,7 +542,7 @@ def average(a, axis=None, weights=None, returned=False):
         Data to be averaged.
         Masked entries are not taken into account in the computation.
     axis : int, optional
-        Axis along which to average `a`. If `None`, averaging is done over
+        Axis along which to average `a`. If None, averaging is done over
         the flattened array.
     weights : array_like, optional
         The importance that each element has in the computation of the average.

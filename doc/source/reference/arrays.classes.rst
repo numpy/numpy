@@ -51,7 +51,7 @@ NumPy provides several hooks that classes can customize:
    .. versionadded:: 1.13
 
    Any class, ndarray subclass or not, can define this method or set it to
-   :obj:`None` in order to override the behavior of NumPy's ufuncs. This works
+   None in order to override the behavior of NumPy's ufuncs. This works
    quite similarly to Python's ``__mul__`` and other binary operation routines.
 
    - *ufunc* is the ufunc object that was called.
@@ -94,13 +94,13 @@ NumPy provides several hooks that classes can customize:
    :class:`ndarray` handles binary operations like ``arr + obj`` and ``arr
    < obj`` when ``arr`` is an :class:`ndarray` and ``obj`` is an instance
    of a custom class. There are two possibilities. If
-   ``obj.__array_ufunc__`` is present and not :obj:`None`, then
+   ``obj.__array_ufunc__`` is present and not None, then
    ``ndarray.__add__`` and friends will delegate to the ufunc machinery,
    meaning that ``arr + obj`` becomes ``np.add(arr, obj)``, and then
    :func:`~numpy.add` invokes ``obj.__array_ufunc__``. This is useful if you
    want to define an object that acts like an array.
 
-   Alternatively, if ``obj.__array_ufunc__`` is set to :obj:`None`, then as a
+   Alternatively, if ``obj.__array_ufunc__`` is set to None, then as a
    special case, special methods like ``ndarray.__add__`` will notice this
    and *unconditionally* raise :exc:`TypeError`. This is useful if you want to
    create objects that interact with arrays via binary operations, but
@@ -135,7 +135,7 @@ NumPy provides several hooks that classes can customize:
         place rather than separately by the ufunc machinery and by the binary
         operation rules (which gives preference to special methods of
         subclasses; the alternative way to enforce a one-place only hierarchy,
-        of setting :func:`__array_ufunc__` to :obj:`None`, would seem very
+        of setting :func:`__array_ufunc__` to None, would seem very
         unexpected and thus confusing, as then the subclass would not work at
         all with ufuncs).
       - :class:`ndarray` defines its own :func:`__array_ufunc__`, which,

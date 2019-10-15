@@ -329,7 +329,7 @@ Item selection and manipulation
 -------------------------------
 
 For array methods that take an *axis* keyword, it defaults to
-:const:`None`. If axis is *None*, then the array is treated as a 1-D
+*None*. If axis is *None*, then the array is treated as a 1-D
 array. Any other value for *axis* represents the dimension along which
 the operation should proceed.
 

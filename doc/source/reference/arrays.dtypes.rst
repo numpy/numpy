@@ -128,7 +128,7 @@ What can be converted to a data-type object is described below:
 
    Used as-is.
 
-`None`
+None
 
    .. index::
       triple: dtype; construction; from None
@@ -392,7 +392,7 @@ Type strings
     their values must each be lists of the same length as the *names*
     and *formats* lists. The *offsets* value is a list of byte offsets
     (limited to `ctypes.c_int`) for each field, while the *titles* value is a
-    list of titles for each field (:const:`None` can be used if no title is
+    list of titles for each field (None can be used if no title is
     desired for that field). The *titles* can be any :class:`string`
     or :class:`unicode` object and will add another entry to the
     fields dictionary keyed by the title and referencing the same

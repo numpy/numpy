@@ -1409,7 +1409,7 @@ def squeeze(a, axis=None):
     Raises
     ------
     ValueError
-        If `axis` is not `None`, and an axis being squeezed is not of length 1
+        If `axis` is not None, and an axis being squeezed is not of length 1
 
     See Also
     --------
@@ -1995,14 +1995,14 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     ----------
     a : array_like
         Array containing elements to clip.
-    a_min : scalar or array_like or `None`
-        Minimum value. If `None`, clipping is not performed on lower
+    a_min : scalar or array_like or None
+        Minimum value. If None, clipping is not performed on lower
         interval edge. Not more than one of `a_min` and `a_max` may be
-        `None`.
-    a_max : scalar or array_like or `None`
-        Maximum value. If `None`, clipping is not performed on upper
+        None.
+    a_max : scalar or array_like or None
+        Maximum value. If None, clipping is not performed on upper
         interval edge. Not more than one of `a_min` and `a_max` may be
-        `None`. If `a_min` or `a_max` are array_like, then the three
+        None. If `a_min` or `a_max` are array_like, then the three
         arrays will be broadcasted to match their shapes.
     out : ndarray, optional
         The results will be placed in this array. It may be the input
@@ -2206,7 +2206,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
         Input array or object that can be converted to an array.
     axis : None or int or tuple of ints, optional
         Axis or axes along which a logical OR reduction is performed.
-        The default (`axis` = `None`) is to perform a logical OR over all
+        The default (``axis=None``) is to perform a logical OR over all
         the dimensions of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
 
@@ -2292,7 +2292,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
         Input array or object that can be converted to an array.
     axis : None or int or tuple of ints, optional
         Axis or axes along which a logical AND reduction is performed.
-        The default (`axis` = `None`) is to perform a logical AND over all
+        The default (``axis=None``) is to perform a logical AND over all
         the dimensions of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
 

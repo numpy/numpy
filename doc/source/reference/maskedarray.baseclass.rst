@@ -160,9 +160,9 @@ replaced with ``n`` integers which will be interpreted as an n-tuple.
 Item selection and manipulation
 -------------------------------
 
-For array methods that take an *axis* keyword, it defaults to `None`.
-If axis is *None*, then the array is treated as a 1-D array.
-Any other value for *axis* represents the dimension along which
+For array methods that take an ``axis`` keyword, it defaults to None.
+If axis is None, then the array is treated as a 1-D array.
+Any other value for ``axis`` represents the dimension along which
 the operation should proceed.
 
 .. autosummary::
