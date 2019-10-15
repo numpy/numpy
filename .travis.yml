@@ -49,7 +49,7 @@ matrix:
             - python3-dbg
             - python3-dev
             - python3-setuptools
-    - python: 3.6
+    - python: 3.7
       env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1 INSTALL_PICKLE5=1
     - python: 3.6
       env: USE_SDIST=1
