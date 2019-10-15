@@ -280,7 +280,7 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array_prepare__(array, context=None)
 
-   At the beginning of every :ref:`ufunc <ufuncs.output-type>`, this
+   At the beginning of every :ref:`ufunc <ufuncs-output-type>`, this
    method is called on the input object with the highest array
    priority, or the output object if one was specified. The output
    array is passed in and whatever is returned is passed to the ufunc.
@@ -295,7 +295,7 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array_wrap__(array, context=None)
 
-   At the end of every :ref:`ufunc <ufuncs.output-type>`, this method
+   At the end of every :ref:`ufunc <ufuncs-output-type>`, this method
    is called on the input object with the highest array priority, or
    the output object if one was specified. The ufunc-computed array
    is passed in and whatever is returned is passed to the user.
@@ -322,7 +322,7 @@ NumPy provides several hooks that classes can customize:
 
    If a class (ndarray subclass or not) having the :func:`__array__`
    method is used as the output object of an :ref:`ufunc
-   <ufuncs.output-type>`, results will be written to the object
+   <ufuncs-output-type>`, results will be written to the object
    returned by :func:`__array__`. Similar conversion is done on
    input arrays.
 
