@@ -478,10 +478,10 @@ Numerical operations
 Numerical operations can be easily performed without worrying about missing
 values, dividing by zero, square roots of negative numbers, etc.::
 
-   >>> import numpy as np, numpy.ma as ma
+   >>> import numpy.ma as ma
    >>> x = ma.array([1., -1., 3., 4., 5., 6.], mask=[0,0,0,0,1,0])
    >>> y = ma.array([1., 2., 0., 4., 5., 6.], mask=[0,0,0,0,0,1])
-   >>> print np.sqrt(x/y)
+   >>> print(ma.sqrt(x/y))
    [1.0 -- -- 1.0 -- --]
 
 Four values of the output are invalid: the first one comes from taking the
