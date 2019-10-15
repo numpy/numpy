@@ -9,6 +9,7 @@ Basic operations
    :toctree: generated/
 
     copyto
+    shape
 
 Changing array shape
 ====================
