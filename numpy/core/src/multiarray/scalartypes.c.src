@@ -4060,8 +4060,11 @@ initialize_casting_tables(void)
     _npy_can_cast_safely_table[_FROM_NUM][NPY_STRING] = 1;
     _npy_can_cast_safely_table[_FROM_NUM][NPY_UNICODE] = 1;
 
-    /* Allow casts from any integer to the TIMEDELTA type */
-#if @from_isint@ || @from_isuint@
+#if @from_isint@ && NPY_SIZEOF_TIMEDELTA >= _FROM_BSIZE
+    /* Allow casts from smaller or equal signed integers to the TIMEDELTA type */
+    _npy_can_cast_safely_table[_FROM_NUM][NPY_TIMEDELTA] = 1;
+#elif @from_isuint@ && NPY_SIZEOF_TIMEDELTA > _FROM_BSIZE
+    /* Allow casts from smaller unsigned integers to the TIMEDELTA type */
     _npy_can_cast_safely_table[_FROM_NUM][NPY_TIMEDELTA] = 1;
 #endif
 
