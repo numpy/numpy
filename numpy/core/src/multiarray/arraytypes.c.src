@@ -1928,49 +1928,42 @@ static int
     double result;
 
     result = NumPyOS_ascii_strtod(str, endptr);
-
     @type@ output;
 
     if (endptr && ((*endptr[0] == '+') || (*endptr[0] == '-'))) {
         // Imaginary component specified
-
         output.real = result;
-
         // Reading imaginary component
         char **prev = endptr;
         str = *endptr;
         result = NumPyOS_ascii_strtod(str, endptr);
-
         if (endptr && *endptr[0] == 'j') {
             // Read is successful if the immediate following char is j
             output.imag = result;
-
             // Skip j
             ++*endptr;
         }
         else {
-            // Set endptr to previous char to trigger the not everything is
-            // read error
+            /*
+             * Set endptr to previous char to trigger the not everything is
+             * read error
+             */
             endptr = prev;
             output.imag = 0;
         }
     }
     else if (endptr && *endptr[0] == 'j') {
         // Real component not specified
-
         output.real = 0;
         output.imag = result;
-
         // Skip j
         ++*endptr;
     }
     else {
         // Imaginary component not specified
-
         output.real = result;
         output.imag = 0.;
     }
-
     *(@type@ *)ip = output;
     return 0;
 }
