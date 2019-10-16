@@ -86,9 +86,7 @@ with ``overrides.array_function_dispatch``:
 .. code:: python
 
     def _asarray_decorator(a, dtype=None, order=None, like=None):
-        if like is not None:
-            return (like,)
-        return (a,)
+        return (like,)
 
     @set_module('numpy')
     @array_function_dispatch(_asarray_decorator)
@@ -116,9 +114,7 @@ the module too.
 
     @array_function_nodocs_from_c_func_and_dispatcher(_multiarray_umath.array)
     def array(a, dtype=None, copy=True, order='K', subok=False, ndmin=0, like=None):
-        if like is not None:
-            return (like,)
-        return (a,)
+        return (like,)
 
 There are two downsides to the implementation above for C functions:
 
