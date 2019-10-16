@@ -3507,7 +3507,7 @@ cdef class Generator:
                 raise ValueError(
                     "check_valid must equal 'warn', 'raise', or 'ignore'")
             if method == 'svd':
-                psd = np.allclose(np.dot(vh.T * s, vh), cov, rtol=tol, atol=tol)
+                psd = np.allclose(np.dot(u * s, u.T), cov, rtol=tol, atol=tol)
             else:
                 psd = not np.any(s < -tol)
             if not psd:
