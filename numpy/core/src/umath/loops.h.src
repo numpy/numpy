@@ -7,14 +7,12 @@
 #define _NPY_UMATH_LOOPS_H_
 
 #define BOOL_invert BOOL_logical_not
-#define BOOL_negative BOOL_logical_not
 #define BOOL_add BOOL_logical_or
 #define BOOL_bitwise_and BOOL_logical_and
 #define BOOL_bitwise_or BOOL_logical_or
 #define BOOL_logical_xor BOOL_not_equal
 #define BOOL_bitwise_xor BOOL_logical_xor
 #define BOOL_multiply BOOL_logical_and
-#define BOOL_subtract BOOL_logical_xor
 #define BOOL_maximum BOOL_logical_or
 #define BOOL_minimum BOOL_logical_and
 #define BOOL_fmax BOOL_maximum
