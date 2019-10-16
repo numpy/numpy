@@ -3331,7 +3331,7 @@ cdef class Generator:
 
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
-                            tol=1e-8, *, method='svd', use_factor=False):
+                            tol=1e-8, *, method='svd'):
         """
         multivariate_normal(mean, cov, size=None, check_valid='warn', tol=1e-8)
 
@@ -3368,14 +3368,6 @@ cdef class Generator:
             the slowest, while 'cholesky' is the fastest but less robust than
             the slowest method. The method `eigh` uses eigen decomposition to
             compute A and is faster than svd but slower than cholesky.
-
-            .. versionadded:: 1.18.0
-
-        use_factor : bool, optional
-            If set to True then cov argument is treated as a precomputed factor
-            matrix A such that `A @ A.T = cov`` holds true. This provides
-            significant speedups because the factorization of cov is avoided.
-            Note that when this argument is set to True, ``method`` is ignored.
 
             .. versionadded:: 1.18.0
 
@@ -3425,11 +3417,7 @@ cdef class Generator:
 
         Note that the covariance matrix must be positive semidefinite (a.k.a.
         nonnegative-definite). Otherwise, the behavior of this method is
-        undefined and backwards compatibility is not guaranteed. When supplying
-        a factor `F` in place of the full covariance matrix the user is expected
-        to ensure that ``F @ F.T`` recovers the covariance matrix. This
-        also implies that a factor input computed using the Cholesky method
-        must be a lower-triangular matrix.
+        undefined and backwards compatibility is not guaranteed.
 
         References
         ----------
@@ -3450,15 +3438,6 @@ cdef class Generator:
         We can use a different method other than the default to factorize cov:
         >>> y = rng.multivariate_normal(mean, cov, (3, 3), method='cholesky')
         >>> y.shape
-        (3, 3, 2)
-
-        We can also use a precomputed factor matrix of cov to speed up the
-        computation. This is very useful when one needs to generate random
-        values using the sample covariance matrix but different means.
-        >>> s, u = np.linalg.eigh(cov)
-        >>> A = u * np.sqrt(s)  # factor matrix of cov using Eigendecomposition.
-        >>> z = rng.multivariate_normal(mean, A, (3, 3), use_factor=True)
-        >>> z.shape
         (3, 3, 2)
 
         The following is probably true, given that 0.6 is roughly twice the
@@ -3484,13 +3463,10 @@ cdef class Generator:
 
         if len(mean.shape) != 1:
             raise ValueError("mean must be 1 dimensional")
-        matrix_type = "factor" if use_factor else "cov"
         if (len(cov.shape) != 2) or (cov.shape[0] != cov.shape[1]):
-            raise ValueError("{} must be 2 dimensional and square"
-                             .format(matrix_type))
+            raise ValueError("cov must be 2 dimensional and square")
         if mean.shape[0] != cov.shape[0]:
-            raise ValueError("mean and {} must have same length"
-                             .format(matrix_type))
+            raise ValueError("mean and cov must have same length")
 
         # Compute shape of output and create a matrix of independent
         # standard normally distributed random numbers. The matrix has rows
@@ -3499,11 +3475,6 @@ cdef class Generator:
         final_shape = list(shape[:])
         final_shape.append(mean.shape[0])
         x = self.standard_normal(final_shape).reshape(-1, mean.shape[0])
-
-        if use_factor:
-            x = mean + np.dot(x, cov)
-            x.shape = tuple(final_shape)
-            return x
 
         # Transform matrix of standard normals into matrix where each row
         # contains multivariate normals with the desired covariance.
