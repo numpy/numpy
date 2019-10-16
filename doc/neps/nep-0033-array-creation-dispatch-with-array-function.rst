@@ -57,8 +57,14 @@ Implementation
 --------------
 
 The implementation requires introducing a new ``like=`` keyword to all existing
-array creation functions of NumPy. As of the writing of this NEP, a complete
-list of array creation functions can be found in [4]_.
+array creation functions of NumPy. As examples of functions that would add this
+new argument (but not limited to) we can cite those taking array-like objects
+such as ``array`` and ``asarray``, functions that create arrays based on
+numerical ranges such as ``range`` and ``linspace``, as well as the ``empty``
+family of functions, even though that may be redundant, since there exists
+already specializations for those with the naming format ``empty_like``. As of
+the writing of this NEP, a complete list of array creation functions can be
+found in [4]_.
 
 This newly proposed keyword shall be removed by the ``__array_function__``
 mechanism from the keyword dictionary before dispatching. The purpose for this
