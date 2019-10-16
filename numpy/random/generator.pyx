@@ -3331,7 +3331,7 @@ cdef class Generator:
 
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
-                            tol=1e-8, method='svd', use_factor=False):
+                            tol=1e-8, *, method='svd', use_factor=False):
         """
         multivariate_normal(mean, cov, size=None, check_valid='warn', tol=1e-8)
 
