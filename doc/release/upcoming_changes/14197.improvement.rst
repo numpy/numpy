@@ -1,9 +1,7 @@
-``method`` and ``use_factor`` options for `np.random.multivariate_normal`
-----------------------------------------------------
-A ``method`` option is now available for `np.random.multivariate_normal` with
-possible values {'svd', 'eigh', 'cholesky'}. To use it, write 
-``np.random.multivariate_normal(..., method=<method>)``. Another option
-``use_factor`` is now available which allows the user to pass a precomputed
-factor of a covariance matrix in order to speed up computation. To use it,
-write ``np.random.multivariate_normal(..., use_factor=True)``. The ``method``
-option is ignored  when ``use_factor=True``
+``method`` keyword argument for `np.random.multivariate_normal`
+---------------------------------------------------------------
+A ``method`` keyword argument is now available for
+`np.random.multivariate_normal` with possible values
+``{'svd', 'eigh', 'cholesky'}``. To use it, write
+``np.random.multivariate_normal(..., method=<method>)``.
+

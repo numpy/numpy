@@ -992,10 +992,6 @@ class TestRandomDist(object):
         random = Generator(MT19937(self.seed))
         actual_chol = random.multivariate_normal(mean, cov, size,
                                                  method='cholesky')
-        # the factor matrix is the same for all methods
-        random = Generator(MT19937(self.seed))
-        actual_factor = random.multivariate_normal(mean, cov, size,
-                                                   use_factor=True)
         desired = np.array([[[-1.747478062846581,  11.25613495182354  ],
                              [-0.9967333370066214, 10.342002097029821 ]],
                             [[ 0.7850019631242964, 11.181113712443013 ],
@@ -1006,7 +1002,6 @@ class TestRandomDist(object):
         assert_array_almost_equal(actual_svd, desired, decimal=15)
         assert_array_almost_equal(actual_eigh, desired, decimal=15)
         assert_array_almost_equal(actual_chol, desired, decimal=15)
-        assert_array_almost_equal(actual_factor, desired, decimal=15)
 
         # Check for default size, was raising deprecation warning
         random = Generator(MT19937(self.seed))
@@ -1017,51 +1012,16 @@ class TestRandomDist(object):
         actual_chol = random.multivariate_normal(mean, cov, method='cholesky')
         # the factor matrix is the same for all methods
         random = Generator(MT19937(self.seed))
-        actual_factor = random.multivariate_normal(mean, cov, use_factor=True)
         desired = np.array([-1.747478062846581, 11.25613495182354])
         assert_array_almost_equal(actual_svd, desired, decimal=15)
         assert_array_almost_equal(actual_eigh, desired, decimal=15)
         assert_array_almost_equal(actual_chol, desired, decimal=15)
-        assert_array_almost_equal(actual_factor, desired, decimal=15)
-
-        # test if raises ValueError when non-square factor is used
-        non_square_factor = [[1, 0], [0, 1], [1, 0]]
-        assert_raises(ValueError, random.multivariate_normal, mean,
-                      non_square_factor, use_factor=True)
-
         # Check that non symmetric covariance input raises exception when
         # check_valid='raises' if using default svd method.
         mean = [0, 0]
         cov = [[1, 2], [1, 2]]
         assert_raises(ValueError, random.multivariate_normal, mean, cov,
                       check_valid='raise')
-
-        # Check if each method used with use_factor=False returns the same
-        # output when used with use_factor=True
-        cov = [[2, 1], [1, 2]]
-        random = Generator(MT19937(self.seed))
-        desired_svd = random.multivariate_normal(mean, cov)
-        u, s, vh = svd(cov)
-        svd_factor = np.sqrt(s)[:, None] * vh
-        random = Generator(MT19937(self.seed))
-        actual_svd = random.multivariate_normal(mean, svd_factor.T,
-                                                use_factor=True)
-        random = Generator(MT19937(self.seed))
-        desired_eigh = random.multivariate_normal(mean, cov, method='eigh')
-        s, u = eigh(cov)
-        eigh_factor = u * np.sqrt(s)
-        random = Generator(MT19937(self.seed))
-        actual_eigh = random.multivariate_normal(mean, eigh_factor,
-                                                 use_factor=True)
-        random = Generator(MT19937(self.seed))
-        desired_chol = random.multivariate_normal(mean, cov, method='cholesky')
-        chol_factor = cholesky(cov)
-        random = Generator(MT19937(self.seed))
-        actual_chol = random.multivariate_normal(mean, chol_factor,
-                                                 use_factor=True)
-        assert_array_almost_equal(actual_svd, desired_svd, decimal=15)
-        assert_array_almost_equal(actual_eigh, desired_eigh, decimal=15)
-        assert_array_almost_equal(actual_chol, desired_chol, decimal=15)
 
         # Check that non positive-semidefinite covariance warns with
         # RuntimeWarning
