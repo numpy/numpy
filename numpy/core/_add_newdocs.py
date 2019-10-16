@@ -1039,7 +1039,9 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         the data must be in exactly this format. Most builtin numeric types are 
         supported and extension types may be supported.
 
-        Complex dtypes are only supported since numpy 1.18.0
+        .. versionadded:: 1.18.0
+            Complex dtypes.
+
     count : int, optional
         Read this number of `dtype` elements from the data.  If this is
         negative (the default), the count will be determined from the
