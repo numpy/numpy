@@ -487,11 +487,10 @@ the last two where the inputs were masked.
 Ignoring extreme values
 -----------------------
 
-Let's consider an array ``d`` of random floats between 0 and 1. We wish to
+Let's consider an array ``d`` of floats between 0 and 1. We wish to
 compute the average of the values of ``d`` while ignoring any data outside
-the range ``[0.1, 0.9]``::
+the range ``[0.2, 0.9]``::
 
-   >>> np.random.seed(42)
-   >>> d = np.random.random(10)
-   >>> print(d.mean() - ma.masked_outside(d, 0.1, 0.9).mean())
-   -0.003934444165904272
+   >>> d = np.linspace(0, 1, 20)
+   >>> print(d.mean() - ma.masked_outside(d, 0.2, 0.9).mean())
+   -0.05263157894736836
