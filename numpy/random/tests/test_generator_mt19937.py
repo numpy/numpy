@@ -996,11 +996,7 @@ class TestRandomDist(object):
         assert_array_almost_equal(actual, desired, decimal=15)
 
         # Check for default size, was raising deprecation warning
-        #random = Generator(MT19937(self.seed))
         actual = random.multivariate_normal(mean, cov, method=method)
-        # the factor matrix is the same for all methods
-        #random = Generator(MT19937(self.seed))
-        #desired = np.array([-1.747478062846581, 11.25613495182354])
         desired = np.array([0.233278563284287, 9.424140804347195])
         assert_array_almost_equal(actual, desired, decimal=15)
         # Check that non symmetric covariance input raises exception when
