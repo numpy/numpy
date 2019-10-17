@@ -1775,7 +1775,58 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
 }
 
 /**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = CFLOAT, CDOUBLE#
+ * #type = npy_cfloat, npy_cdouble#
+ */
+static int
+@fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
+             PyArray_Descr *NPY_UNUSED(ignored))
+{
+    double result;
+    int ret_real, ret_imag;
+
+    ret_real = NumPyOS_ascii_ftolf(fp, &result);
+    @type@ output;
+    // Peek next character
+    char next = getc(fp);
+    if ((next == '+') || (next == '-')) {
+        // Imaginary component specified
+        output.real = result;
+        // Revert peek and read imaginary component
+        ungetc(next, fp);
+        ret_imag = NumPyOS_ascii_ftolf(fp, &result);
+        // Peak next character
+        next = getc(fp);
+        if ((ret_imag == 1) && (next == 'j')) {
+            // If read is successful and the immediate following char is j
+            output.imag = result;
+        }
+        else {
+            output.imag = 0;
+            // Push an invalid char to trigger the not everything is read error
+            ungetc('a', fp);
+        }
+    }
+    else if (next == 'j') {
+        // Real component not specified
+        output.real = 0;
+        output.imag = result;
+    }
+    else {
+        // Imaginary component not specified
+        output.real = result;
+        output.imag = 0.;
+        // Next character is not + / - / j. Revert peek.
+        ungetc(next, fp);
+    }
+    *(@type@ *)ip = output;
+    return ret_real;
+}
+/**end repeat**/
+
+
+/**begin repeat
+ * #fname = CLONGDOUBLE,
  *          OBJECT, STRING, UNICODE, VOID,
  *          DATETIME, TIMEDELTA#
  */

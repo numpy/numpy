@@ -1172,6 +1172,11 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
         Data type of the returned array.
         For binary files, it is used to determine the size and byte-order
         of the items in the file.
+        Most builtin numeric types are supported and extension types may be supported.
+
+        .. versionadded:: 1.18.0
+            Complex dtypes.
+
     count : int
         Number of items to read. ``-1`` means all items (i.e., the complete
         file).
@@ -1196,7 +1201,7 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
     Notes
     -----
     Do not rely on the combination of `tofile` and `fromfile` for
-    data storage, as the binary files generated are are not platform
+    data storage, as the binary files generated are not platform
     independent.  In particular, no byte-order or data-type information is
     saved.  Data can be stored in the platform independent ``.npy`` format
     using `save` and `load` instead.
