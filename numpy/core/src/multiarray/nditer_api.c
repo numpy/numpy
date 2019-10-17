@@ -371,8 +371,8 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
         }
         if (errmsg == NULL) {
             PyErr_Format(PyExc_ValueError,
-                    "Out-of-bounds range [%d, %d) passed to "
-                    "ResetToIterIndexRange", (int)istart, (int)iend);
+                    "Out-of-bounds range [%" NPY_INTP_FMT ", %" NPY_INTP_FMT ") passed to "
+                    "ResetToIterIndexRange", istart, iend);
         }
         else {
             *errmsg = "Out-of-bounds range passed to ResetToIterIndexRange";
@@ -382,8 +382,8 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
     else if (iend < istart) {
         if (errmsg == NULL) {
             PyErr_Format(PyExc_ValueError,
-                    "Invalid range [%d, %d) passed to ResetToIterIndexRange",
-                    (int)istart, (int)iend);
+                    "Invalid range [%" NPY_INTP_FMT ", %" NPY_INTP_FMT ") passed to ResetToIterIndexRange",
+                    istart, iend);
         }
         else {
             *errmsg = "Invalid range passed to ResetToIterIndexRange";
@@ -1429,8 +1429,8 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("REUSE_REDUCE_LOOPS ");
 
     printf("\n");
-    printf("| NDim: %d\n", (int)ndim);
-    printf("| NOp: %d\n", (int)nop);
+    printf("| NDim: %d\n", ndim);
+    printf("| NOp: %d\n", nop);
     if (NIT_MASKOP(iter) >= 0) {
         printf("| MaskOp: %d\n", (int)NIT_MASKOP(iter));
     }

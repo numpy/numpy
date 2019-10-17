@@ -758,8 +758,8 @@ parse_datetime_extended_unit_from_string(char *str, Py_ssize_t len,
 bad_input:
     if (metastr != NULL) {
         PyErr_Format(PyExc_TypeError,
-                "Invalid datetime metadata string \"%s\" at position %d",
-                metastr, (int)(substr-metastr));
+                "Invalid datetime metadata string \"%s\" at position %zd",
+                metastr, substr-metastr);
     }
     else {
         PyErr_Format(PyExc_TypeError,
@@ -820,8 +820,8 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
 bad_input:
     if (substr != metastr) {
         PyErr_Format(PyExc_TypeError,
-                "Invalid datetime metadata string \"%s\" at position %d",
-                metastr, (int)(substr-metastr));
+                "Invalid datetime metadata string \"%s\" at position %zd",
+                metastr, substr - metastr);
     }
     else {
         PyErr_Format(PyExc_TypeError,
@@ -2273,15 +2273,15 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
 
 invalid_date:
     PyErr_Format(PyExc_ValueError,
-            "Invalid date (%d,%d,%d) when converting to NumPy datetime",
-            (int)out->year, (int)out->month, (int)out->day);
+            "Invalid date (%" NPY_INT64_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ") when converting to NumPy datetime",
+            out->year, out->month, out->day);
     return -1;
 
 invalid_time:
     PyErr_Format(PyExc_ValueError,
-            "Invalid time (%d,%d,%d,%d) when converting "
+            "Invalid time (%" NPY_INT32_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ") when converting "
             "to NumPy datetime",
-            (int)out->hour, (int)out->min, (int)out->sec, (int)out->us);
+            out->hour, out->min, out->sec, out->us);
     return -1;
 }
 
