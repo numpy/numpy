@@ -2,8 +2,10 @@
 """
 refguide_check.py [OPTIONS] [-- ARGS]
 
-Check for a NumPy submodule whether the objects in its __all__ dict
-correspond to the objects included in the reference guide.
+- Check for a NumPy submodule whether the objects in its __all__ dict
+  correspond to the objects included in the reference guide.
+- Check docstring examples
+- Check example blocks in RST files
 
 Example of usage::
 
@@ -15,12 +17,13 @@ objects are left out of the refguide for a good reason (it's an alias of
 another function, or deprecated, or ...)
 
 Another use of this helper script is to check validity of code samples
-in docstrings. This is different from doctesting [we do not aim to have
-numpy docstrings doctestable!], this is just to make sure that code in
-docstrings is valid python::
+in docstrings::
 
-    $ python refguide_check.py --doctests optimize
+    $ python refguide_check.py --doctests ma
 
+or in RST files::
+
+    $ python refguide_check.py --rst docs
 """
 from __future__ import print_function
 
@@ -46,6 +49,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
 from numpydoc.docscrape_sphinx import get_doc_object
+
+SKIPBLOCK = doctest.register_optionflag('SKIPBLOCK')
 
 if parse_version(sphinx.__version__) >= parse_version('1.5'):
     # Enable specific Sphinx directives
@@ -101,6 +106,21 @@ DOCTEST_SKIPLIST = set([
     'numpy.lib.DataSource',
     'numpy.lib.Repository',
 ])
+
+# Skip non-numpy RST files, historical release notes
+# Any single-directory exact match will skip the directory and all subdirs.
+# Any exact match (like 'doc/release') will scan subdirs but skip files in
+# the matched directory.
+# Any filename will skip that file
+RST_SKIPLIST = [
+    'scipy-sphinx-theme',
+    'sphinxext',
+    'neps',
+    'changelog',
+    'doc/release',
+    'doc/source/release',
+    'c-info.ufunc-tutorial.rst',
+]
 
 # these names are not required to be present in ALL despite being in
 # autosummary:: listing
@@ -450,6 +470,7 @@ DEFAULT_NAMESPACE = {'np': np}
 # the namespace to do checks in
 CHECK_NAMESPACE = {
       'np': np,
+      'numpy': np,
       'assert_allclose': np.testing.assert_allclose,
       'assert_equal': np.testing.assert_equal,
       # recognize numpy repr's
@@ -465,7 +486,9 @@ CHECK_NAMESPACE = {
       'nan': np.nan,
       'NaN': np.nan,
       'inf': np.inf,
-      'Inf': np.inf,}
+      'Inf': np.inf,
+      'StringIO': io.StringIO,
+    }
 
 
 class DTRunner(doctest.DocTestRunner):
@@ -517,7 +540,7 @@ class Checker(doctest.OutputChecker):
         self.parse_namedtuples = parse_namedtuples
         self.atol, self.rtol = atol, rtol
         if ns is None:
-            self.ns = dict(CHECK_NAMESPACE)
+            self.ns = CHECK_NAMESPACE
         else:
             self.ns = ns
 
@@ -655,11 +678,21 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
         # try to ensure random seed is NOT reproducible
         np.random.seed(None)
 
+        ns = {}
         for t in tests:
+            # We broke the tests up into chunks to try to avoid PSEUDOCODE
+            # This has the unfortunate side effect of restarting the global
+            # namespace for each test chunk, so variables will be "lost" after
+            # a chunk. Chain the globals to avoid this
+            t.globs.update(ns)
             t.filename = short_path(t.filename, cwd)
-            fails, successes = runner.run(t, out=out)
+            # Process our options
+            if any([SKIPBLOCK in ex.options for ex in t.examples]):
+                continue
+            fails, successes = runner.run(t, out=out, clear_globs=False)
             if fails > 0:
                 success = False
+            ns = t.globs
     finally:
         sys.stderr = old_stderr
         os.chdir(cwd)
@@ -757,10 +790,9 @@ def check_doctests_testfile(fname, verbose, ns=None,
     5
 
     """
-    results = []
-
     if ns is None:
-        ns = dict(DEFAULT_NAMESPACE)
+        ns = CHECK_NAMESPACE
+    results = []
 
     _, short_name = os.path.split(fname)
     if short_name in DOCTEST_SKIPLIST:
@@ -782,20 +814,31 @@ def check_doctests_testfile(fname, verbose, ns=None,
     # split the text into "blocks" and try to detect and omit pseudocode blocks.
     parser = doctest.DocTestParser()
     good_parts = []
+    base_line_no = 0
     for part in text.split('\n\n'):
-        tests = parser.get_doctest(part, ns, fname, fname, 0)
+        try:
+            tests = parser.get_doctest(part, ns, fname, fname, base_line_no)
+        except ValueError as e:
+            if e.args[0].startswith('line '):
+                # fix line number
+                parts = e.args[0].split()
+                parts[1] = str(int(parts[1]) + base_line_no)
+                e.args = (' '.join(parts),)
+            raise
         if any(word in ex.source for word in PSEUDOCODE
                                  for ex in tests.examples):
             # omit it
             pass
         else:
             # `part` looks like a good code, let's doctest it
-            good_parts += [part]
+            good_parts.append((part, base_line_no))
+        base_line_no += part.count('\n') + 2
 
     # Reassemble the good bits and doctest them:
-    good_text = '\n\n'.join(good_parts)
-    tests = parser.get_doctest(good_text, ns, fname, fname, 0)
-    success, output = _run_doctests([tests], full_name, verbose,
+    tests = []
+    for good_text, line_no in good_parts:
+        tests.append(parser.get_doctest(good_text, ns, fname, fname, line_no))
+    success, output = _run_doctests(tests, full_name, verbose,
                                     doctest_warnings)
 
     if dots:
@@ -809,6 +852,46 @@ def check_doctests_testfile(fname, verbose, ns=None,
 
     return results
 
+def check_rst(base_path, results, args, dots):
+    if os.path.exists(base_path) and os.path.isfile(base_path):
+        tut_results = check_doctests_testfile(base_path,
+            (args.verbose >= 2), dots=dots,
+            doctest_warnings=args.doctest_warnings)
+        def scratch(): pass        # stub out a "module", see below
+        scratch.__name__ = base_path
+        results.append((scratch, tut_results))
+    for dir_name, subdirs, files in os.walk(base_path, topdown=True):
+        if dir_name in RST_SKIPLIST:
+            if args.verbose > 0:
+                sys.stderr.write('skipping files in %s' % dir_name)
+            files = []
+        for p in RST_SKIPLIST:
+            if p in subdirs:
+                if args.verbose > 0:
+                    sys.stderr.write('skipping %s and subdirs' % p)
+                subdirs.remove(p)
+        test_files = []
+        for f in files:
+            if (os.path.splitext(f)[1] in ('.py', '.rst') and
+                    f not in RST_SKIPLIST):
+                test_files.append(f)
+        if len(test_files) > 1:
+            for fname in test_files:
+                filename = os.path.relpath(os.path.join(dir_name, fname))
+                if dots:
+                    sys.stderr.write(filename + ' ')
+                    sys.stderr.flush()
+
+                tut_results = check_doctests_testfile(filename,
+                    (args.verbose >= 2), dots=dots,
+                    doctest_warnings=args.doctest_warnings)
+
+                def scratch(): pass        # stub out a "module", see below
+                scratch.__name__ = filename
+                results.append((scratch, tut_results))
+                if dots:
+                    sys.stderr.write('\n')
+                    sys.stderr.flush()
 
 def init_matplotlib():
     global HAVE_MATPLOTLIB
@@ -829,16 +912,14 @@ def main(argv):
     parser.add_argument("-v", "--verbose", action="count", default=0)
     parser.add_argument("--doctest-warnings", action="store_true",
                         help="Enforce warning checking for doctests")
-    parser.add_argument("--skip-tutorial", action="store_true",
-                        help="Skip running doctests in the tutorial.")
+    parser.add_argument("--rst", nargs='?', const='doc', default=None,
+                        help="Run also examples from rst files")
     args = parser.parse_args(argv)
 
     modules = []
     names_dict = {}
 
-    if args.module_names:
-        args.skip_tutorial = True
-    else:
+    if not args.module_names:
         args.module_names = list(PUBLIC_SUBMODULES)
 
     os.environ['SCIPY_PIL_IMAGE_VIEWER'] = 'true'
@@ -849,6 +930,15 @@ def main(argv):
             name = OTHER_MODULE_DOCS[name]
             if name not in module_names:
                 module_names.append(name)
+
+    dots = True
+    success = True
+    results = []
+    errormsgs = []
+
+
+    if args.doctests or args.rst:
+        init_matplotlib()
 
     for submodule_name in module_names:
         module_name = BASE_MODULE + '.' + submodule_name
@@ -861,69 +951,57 @@ def main(argv):
         if submodule_name in args.module_names:
             modules.append(module)
 
-    dots = True
-    success = True
-    results = []
 
-    print("Running checks for %d modules:" % (len(modules),))
-
-    if args.doctests or not args.skip_tutorial:
-        init_matplotlib()
-
-    for module in modules:
-        if dots:
-            if module is not modules[0]:
-                sys.stderr.write(' ')
-            sys.stderr.write(module.__name__ + ' ')
-            sys.stderr.flush()
-
-        all_dict, deprecated, others = get_all_dict(module)
-        names = names_dict.get(module.__name__, set())
-
-        mod_results = []
-        mod_results += check_items(all_dict, names, deprecated, others, module.__name__)
-        mod_results += check_rest(module, set(names).difference(deprecated),
-                                  dots=dots)
-        if args.doctests:
-            mod_results += check_doctests(module, (args.verbose >= 2), dots=dots,
-                                          doctest_warnings=args.doctest_warnings)
-
-        for v in mod_results:
-            assert isinstance(v, tuple), v
-
-        results.append((module, mod_results))
-
-    if dots:
-        sys.stderr.write("\n")
-        sys.stderr.flush()
-
-    if not args.skip_tutorial:
-        base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
-        tut_path = os.path.join(base_dir, 'doc', 'source', 'tutorial', '*.rst')
-        print('\nChecking tutorial files at %s:' % os.path.relpath(tut_path, os.getcwd()))
-        for filename in sorted(glob.glob(tut_path)):
+    if args.doctests or not args.rst:
+        print("Running checks for %d modules:" % (len(modules),))
+        for module in modules:
             if dots:
-                sys.stderr.write('\n')
-                sys.stderr.write(os.path.split(filename)[1] + ' ')
+                sys.stderr.write(module.__name__ + ' ')
                 sys.stderr.flush()
 
-            tut_results = check_doctests_testfile(filename, (args.verbose >= 2),
-                    dots=dots, doctest_warnings=args.doctest_warnings)
+            all_dict, deprecated, others = get_all_dict(module)
+            names = names_dict.get(module.__name__, set())
 
-            def scratch(): pass        # stub out a "module", see below
-            scratch.__name__ = filename
-            results.append((scratch, tut_results))
+            mod_results = []
+            mod_results += check_items(all_dict, names, deprecated, others, module.__name__)
+            mod_results += check_rest(module, set(names).difference(deprecated),
+                                      dots=dots)
+            if args.doctests:
+                mod_results += check_doctests(module, (args.verbose >= 2), dots=dots,
+                                              doctest_warnings=args.doctest_warnings)
 
+            for v in mod_results:
+                assert isinstance(v, tuple), v
+
+            results.append((module, mod_results))
+
+            if dots:
+                sys.stderr.write('\n')
+                sys.stderr.flush()
+
+            all_dict, deprecated, others = get_all_dict(module)
+
+    if args.rst:
+        if args.rst.startswith('/'):
+            base_dir= '/'
+        else:
+            base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
+        rst_path = os.path.relpath(os.path.join(base_dir, args.rst))
+        if os.path.exists(rst_path):
+            print('\nChecking rst files in %s:' % os.path.relpath(rst_path, os.getcwd()))
+            check_rst(rst_path, results, args, dots)
+        else:
+            sys.stderr.write(f'\ninvalid --rst argument "{args.rst}"')
+            errormsgs.append('invalid directory argument to --rst')
         if dots:
             sys.stderr.write("\n")
             sys.stderr.flush()
 
     # Report results
-    all_success = True
-
     for module, mod_results in results:
         success = all(x[1] for x in mod_results)
-        all_success = all_success and success
+        if not success:
+            errormsgs.append(f'failed checking {module.__name__}')
 
         if success and args.verbose == 0:
             continue
@@ -946,11 +1024,11 @@ def main(argv):
                 print(output.strip())
                 print("")
 
-    if all_success:
-        print("\nOK: refguide and doctests checks passed!")
+    if len(errormsgs) == 0:
+        print("\nOK: all checks passed!")
         sys.exit(0)
     else:
-        print("\nERROR: refguide or doctests have errors")
+        print('\nERROR: ', '\n        '.join(errormsgs))
         sys.exit(1)
 
 
