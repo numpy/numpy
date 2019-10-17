@@ -1094,6 +1094,8 @@ class TestRandomDist(object):
                       mu, np.empty((3, 2)))
         assert_raises(ValueError, random.multivariate_normal,
                       mu, np.eye(3))
+        
+        assert_raises(NotImplementedError, np.random.multivariate_normal, [0], [[1+1j]])
 
     def test_negative_binomial(self):
         random = Generator(MT19937(self.seed))
