@@ -743,8 +743,8 @@ finish:
 
 parse_error:
     PyErr_Format(PyExc_ValueError,
-            "Error parsing datetime string \"%s\" at position %d",
-            str, (int)(substr-str));
+            "Error parsing datetime string \"%s\" at position %zd",
+            str, substr - str);
     return -1;
 
 error:

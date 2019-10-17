@@ -4058,8 +4058,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     for (i = 0; i < ind_size; ++i) {
         if (reduceat_ind[i] < 0 || reduceat_ind[i] >= red_axis_size) {
             PyErr_Format(PyExc_IndexError,
-                "index %d out-of-bounds in %s.%s [0, %d)",
-                (int)reduceat_ind[i], ufunc_name, opname, (int)red_axis_size);
+                "index %" NPY_INTP_FMT " out-of-bounds in %s.%s [0, %" NPY_INTP_FMT ")",
+                reduceat_ind[i], ufunc_name, opname, red_axis_size);
             return NULL;
         }
     }
