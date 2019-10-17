@@ -24,6 +24,25 @@ the existing problem, who it affects, what it is trying to solve, and why.
 This section should explicitly address the scope of and key requirements for
 the proposed change.
 
+Usage and Impact
+----------------
+
+This section describes how users of NumPy will use features described in this
+NEP. It should be comprised mainly of code examples that wouldn't be possible
+without acceptance and implementation of this NEP, as well as the impact the
+proposed changes would have on the ecosystem. This section should be written
+from the perspective of the users of NumPy, and the benefits it will provide
+them; and as such, it should include implementation details only if
+necessary to explain the functionality.
+
+Backward compatibility
+----------------------
+
+This section describes the ways in which the NEP breaks backward compatibility.
+
+The mailing list post will contain the NEP up to and including this section.
+This is to avoid losing users who are not interested in implementation details
+and instead focus the discussion on usage and impact of the intended features.
 
 Detailed description
 --------------------
@@ -52,12 +71,6 @@ include a link to related pull requests as the implementation progresses.
 Any pull requests or development branches containing work on this NEP should
 be linked to from here.  (A NEP does not need to be implemented in a single
 pull request if it makes sense to implement it in discrete phases).
-
-
-Backward compatibility
-----------------------
-
-This section describes the ways in which the NEP breaks backward compatibility.
 
 
 Alternatives
