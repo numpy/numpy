@@ -34,12 +34,12 @@ The included BitGenerators are:
 .. _`SFC author's page`: http://pracrand.sourceforge.net/RNG_engines.txt
 
 .. autosummary::
-   :toctree: generated/
+    :toctree: generated/
 
     BitGenerator
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
     MT19937 <mt19937>
     PCG64 <pcg64>
@@ -60,9 +60,9 @@ seeds generate high-quality initial states.
 
 .. code-block:: python
 
-  from numpy.random import PCG64
+    from numpy.random import PCG64
 
-  bg = PCG64(12345678903141592653589793)
+    bg = PCG64(12345678903141592653589793)
 
 .. end_block
 
@@ -77,14 +77,14 @@ user, which is up to you.
 
 .. code-block:: python
 
-  from numpy.random import PCG64, SeedSequence
+    from numpy.random import PCG64, SeedSequence
 
-  # Get the user's seed somehow, maybe through `argparse`.
-  # If the user did not provide a seed, it should return `None`.
-  seed = get_user_seed()
-  ss = SeedSequence(seed)
-  print('seed = {}'.format(ss.entropy))
-  bg = PCG64(ss)
+    # Get the user's seed somehow, maybe through `argparse`.
+    # If the user did not provide a seed, it should return `None`.
+    seed = get_user_seed()
+    ss = SeedSequence(seed)
+    print('seed = {}'.format(ss.entropy))
+    bg = PCG64(ss)
 
 .. end_block
 
@@ -106,6 +106,6 @@ or using ``secrets.randbits(128)`` from the standard library are both
 convenient ways.
 
 .. autosummary::
-   :toctree: generated/
+    :toctree: generated/
 
     SeedSequence
