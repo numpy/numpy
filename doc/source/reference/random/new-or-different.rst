@@ -10,9 +10,10 @@ What's New or Different
   The Box-Muller method used to produce NumPy's normals is no longer available
   in `Generator`.  It is not possible to reproduce the exact random
   values using ``Generator`` for the normal distribution or any other
-  distribution that relies on the normal such as the `gamma` or
-  `standard_t`. If you require bitwise backward compatible
-  streams, use `RandomState`.
+  distribution that relies on the normal such as the `Generator.gamma` or
+  `Generator.standard_t`. If you require bitwise backward compatible
+  streams, use `RandomState`, i.e., `RandomState.gamma` or
+  `RandomState.standard_t`.
 
 Quick comparison of legacy `mtrand <legacy>`_ to the new `Generator`
 
@@ -20,9 +21,9 @@ Quick comparison of legacy `mtrand <legacy>`_ to the new `Generator`
 Feature            Older Equivalent     Notes
 ------------------ -------------------- -------------
 `~.Generator`      `~.RandomState`      ``Generator`` requires a stream
-                                        source, called a `BitGenerator
-                                        <bit_generators>` A number of these
-                                        are provided.  ``RandomState`` uses
+                                        source, called a `BitGenerator`
+                                        A number of these are provided.
+                                        ``RandomState`` uses
                                         the Mersenne Twister `~.MT19937` by
                                         default, but can also be instantiated
                                         with any BitGenerator.

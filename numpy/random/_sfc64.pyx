@@ -1,8 +1,9 @@
 import numpy as np
 cimport numpy as np
 
-from .common cimport *
-from .bit_generator cimport BitGenerator
+from libc.stdint cimport uint32_t, uint64_t
+from ._common cimport uint64_to_double
+from ._bit_generator cimport BitGenerator
 
 __all__ = ['SFC64']
 
@@ -38,13 +39,12 @@ cdef class SFC64(BitGenerator):
 
     Parameters
     ----------
-    seed : {None, int, array_like[ints], ISeedSequence}, optional
+    seed : {None, int, array_like[ints], SeedSequence}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
         `SeedSequence` to derive the initial `BitGenerator` state. One may also
-        pass in an implementor of the `ISeedSequence` interface like
-        `SeedSequence`.
+        pass in a `SeedSequence` instance.
 
     Notes
     -----

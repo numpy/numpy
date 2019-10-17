@@ -6,9 +6,11 @@ except ImportError:
     from dummy_threading import Lock
 
 import numpy as np
+cimport numpy as np
 
-from .common cimport *
-from .bit_generator cimport BitGenerator
+from libc.stdint cimport uint32_t, uint64_t
+from ._common cimport uint64_to_double, int_to_array, wrap_int
+from ._bit_generator cimport BitGenerator
 
 __all__ = ['Philox']
 
@@ -62,21 +64,20 @@ cdef class Philox(BitGenerator):
 
     Parameters
     ----------
-    seed : {None, int, array_like[ints], ISeedSequence}, optional
+    seed : {None, int, array_like[ints], SeedSequence}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
         `SeedSequence` to derive the initial `BitGenerator` state. One may also
-        pass in an implementor of the `ISeedSequence` interface like
-        `SeedSequence`.
+        pass in a `SeedSequence` instance.
     counter : {None, int, array_like}, optional
         Counter to use in the Philox state. Can be either
         a Python int (long in 2.x) in [0, 2**256) or a 4-element uint64 array.
         If not provided, the RNG is initialized at 0.
     key : {None, int, array_like}, optional
-        Key to use in the Philox state.  Unlike seed, the value in key is
+        Key to use in the Philox state.  Unlike ``seed``, the value in key is
         directly set. Can be either a Python int in [0, 2**128) or a 2-element
-        uint64 array. `key` and `seed` cannot both be used.
+        uint64 array. `key` and ``seed`` cannot both be used.
 
     Attributes
     ----------
@@ -108,10 +109,10 @@ cdef class Philox(BitGenerator):
     randoms produced. The second is a key which determined the sequence
     produced. Using different keys produces independent sequences.
 
-    The input seed is processed by `SeedSequence` to generate the key. The
+    The input ``seed`` is processed by `SeedSequence` to generate the key. The
     counter is set to 0.
 
-    Alternately, one can omit the seed parameter and set the ``key`` and
+    Alternately, one can omit the ``seed`` parameter and set the ``key`` and
     ``counter`` directly.
 
     **Parallel Features**
@@ -146,7 +147,7 @@ cdef class Philox(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``Philox`` makes a guarantee that a fixed seed will always produce
+    ``Philox`` makes a guarantee that a fixed ``seed`` will always produce
     the same random integer stream.
 
     Examples
