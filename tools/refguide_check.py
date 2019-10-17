@@ -852,14 +852,9 @@ def check_doctests_testfile(fname, verbose, ns=None,
 
     return results
 
-def check_rst(base_path, results, args, dots):
+def iter_included_files(base_path, args, suffixes=('.py', '.rst')):
     if os.path.exists(base_path) and os.path.isfile(base_path):
-        tut_results = check_doctests_testfile(base_path,
-            (args.verbose >= 2), dots=dots,
-            doctest_warnings=args.doctest_warnings)
-        def scratch(): pass        # stub out a "module", see below
-        scratch.__name__ = base_path
-        results.append((scratch, tut_results))
+        yield base_path
     for dir_name, subdirs, files in os.walk(base_path, topdown=True):
         if dir_name in RST_SKIPLIST:
             if args.verbose > 0:
@@ -870,28 +865,27 @@ def check_rst(base_path, results, args, dots):
                 if args.verbose > 0:
                     sys.stderr.write('skipping %s and subdirs' % p)
                 subdirs.remove(p)
-        test_files = []
         for f in files:
-            if (os.path.splitext(f)[1] in ('.py', '.rst') and
+            if (os.path.splitext(f)[1] in suffixes and
                     f not in RST_SKIPLIST):
-                test_files.append(f)
-        if len(test_files) > 1:
-            for fname in test_files:
-                filename = os.path.relpath(os.path.join(dir_name, fname))
-                if dots:
-                    sys.stderr.write(filename + ' ')
-                    sys.stderr.flush()
+                yield os.path.join(dir_name, f)
 
-                tut_results = check_doctests_testfile(filename,
-                    (args.verbose >= 2), dots=dots,
-                    doctest_warnings=args.doctest_warnings)
+def check_rst(base_path, results, args, dots):
+    for filename in iter_included_files(base_path, args):
+        if dots:
+            sys.stderr.write(filename + ' ')
+            sys.stderr.flush()
 
-                def scratch(): pass        # stub out a "module", see below
-                scratch.__name__ = filename
-                results.append((scratch, tut_results))
-                if dots:
-                    sys.stderr.write('\n')
-                    sys.stderr.flush()
+        tut_results = check_doctests_testfile(filename,
+            (args.verbose >= 2), dots=dots,
+            doctest_warnings=args.doctest_warnings)
+
+        def scratch(): pass        # stub out a "module", see below
+        scratch.__name__ = filename
+        results.append((scratch, tut_results))
+        if dots:
+            sys.stderr.write('\n')
+            sys.stderr.flush()
 
 def init_matplotlib():
     global HAVE_MATPLOTLIB
