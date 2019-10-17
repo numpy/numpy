@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from numpy.lib.nanfunctions import _nan_mask
 from numpy.testing import (
-    assert_, assert_equal, assert_almost_equal, assert_no_warnings,
+    assert_, assert_equal, assert_almost_equal, assert_allclose, assert_no_warnings,
     assert_raises, assert_array_equal, suppress_warnings
     )
 
@@ -297,6 +297,11 @@ class TestNanFunctions_IntTypes(object):
         tgt = np.var(mat, ddof=1)
         for mat in self.integer_arrays():
             assert_equal(np.nanvar(mat, ddof=1), tgt)
+
+    def test_nancov(self):
+        tgt = np.cov(self.mat)
+        for mat in self.integer_arrays():
+            assert_equal(np.nancov(mat), tgt)
 
     def test_nanstd(self):
         tgt = np.std(self.mat)
@@ -928,6 +933,89 @@ class TestNanFunctions_Quantile(object):
         np.nanquantile(np.arange(100.), p, interpolation="midpoint")
         assert_array_equal(p, p0)
 
+
+class TestNanFunctions_NanCov(object):
+    def test_basic_no_nans(self):
+        x1 = np.array([
+                [0, 1, 2],
+                [1, 1, 1],
+                [2, 1, 0]])
+        res1 = np.array([
+                [1.,   0., -1.],
+                [0.,   0.,  0.],
+                [-1.,  0.,  1.]])
+        assert_allclose(np.nancov(x1), res1)
+
+        x2 = np.array([
+                [1, 2, 3],
+                [3, 2, 1],
+                [1, 1, 1]])
+        res2 = np.array([
+                [1.,  -1.,  0.],
+                [-1.,  1.,  0.],
+                [0.,   0.,  0.]])
+        assert_allclose(np.nancov(x2), res2)
+
+    def test_basic_some_nans(self):
+        x1 = np.array([
+                [0, np.nan, 1, 2, np.nan],
+                [1,      1, 1, 1,      1],
+                [2,    1.5, 1, 0, np.nan]])
+        res1 = np.array([
+                [1.,   0., -1.],
+                [0.,   0.,  0.],
+                [-1.,  0.,  1.]])
+        assert_allclose(np.nancov(x1), res1)
+
+        x2 = np.array([
+                [np.nan, 1, 2, np.nan, 3],
+                [4,      3, 2, np.nan, 1],
+                [1,      1, 1, np.nan, 1]])
+        res2 = np.array([
+                [1., -1.,  0.],
+                [-1., 1.,  0.],
+                [0.,  0.,  0.]])
+        assert_allclose(np.nancov(x2), res2)
+
+    def test_basic_all_nans(self):
+        x1 = np.array([
+                [np.nan,     1,      2],
+                [1,     np.nan,      1],
+                [2,          1, np.nan]])
+        res1 = np.array([
+                [np.nan, np.nan, np.nan],
+                [np.nan, np.nan, np.nan],
+                [np.nan, np.nan, np.nan]])
+        assert_allclose(np.nancov(x1), res1)
+
+    def test_basic_y(self):
+        x1 = np.array([0, 1, 2, 3, 4])
+        y1 = np.array([4, 3, np.nan, 1, 0])
+        res1 = np.array([
+                [3.3333333,  -3.3333333],
+                [-3.3333333,  3.3333333]])
+        assert_allclose(np.nancov(x1, y1), res1)
+
+    def test_pairwise(self):
+        x1 = np.array([
+                [1,      np.nan,      2],
+                [np.nan,      3,      1],
+                [5,           2, np.nan],
+                [9,           4,      2],
+                [3,           8,      9]])
+        res1 = np.array([
+                [11.6666666, -4.6666666, -4.6666666],
+                [-4.6666666,  6.9166666,       11.5],
+                [-4.6666666,       11.5, 13.6666666]])
+        assert_allclose(np.nancov(x1.T, pairwise=True), res1)
+
+        x2 = x1.T[:-1]
+        y2 = x1.T[-1]
+        print(x2, y2)
+        res2 = res1
+        assert_allclose(np.nancov(x2, y2, pairwise=True), res2)
+
+
 @pytest.mark.parametrize("arr, expected", [
     # array of floats with some nans
     (np.array([np.nan, 5.0, np.nan, np.inf]),
@@ -953,3 +1041,5 @@ def test__nan_mask(arr, expected):
         # for types that can't possibly contain NaN
         if type(expected) is not np.ndarray:
             assert actual is True
+
+

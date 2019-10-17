@@ -14,6 +14,7 @@ Functions
 - `nancumprod` -- cumulative product of non-NaN values
 - `nanmean` -- mean of non-NaN values
 - `nanvar` -- variance of non-NaN values
+- `nancov` -- covariance of non-NaN values
 - `nanstd` -- standard deviation of non-NaN values
 - `nanmedian` -- median of non-NaN values
 - `nanquantile` -- qth quantile of non-NaN values
@@ -35,7 +36,7 @@ array_function_dispatch = functools.partial(
 
 __all__ = [
     'nansum', 'nanmax', 'nanmin', 'nanargmax', 'nanargmin', 'nanmean',
-    'nanmedian', 'nanpercentile', 'nanvar', 'nanstd', 'nanprod',
+    'nanmedian', 'nanpercentile', 'nanvar', 'nancov', 'nanstd', 'nanprod',
     'nancumsum', 'nancumprod', 'nanquantile'
     ]
 
@@ -1560,6 +1561,134 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         # values, so explicitly replace them with NaN.
         var = _copyto(var, np.nan, isbad)
     return var
+
+
+def _nancov_dispatcher(m, y=None, pairwise=None, ddof=None):
+    return (m, y, pairwise)
+
+
+@array_function_dispatch(_nancov_dispatcher)
+def nancov(m, y=None, pairwise=False, ddof=1):
+    """
+    Estimate a covariance matrix, while ignoring NaNs.
+
+    Returns a covariance matrix using only slices with all non-nan values.
+    All slices with nan values will be ignored by default.
+
+    If `pairwise=True` is set, the covariance of variables x and y will be
+    computed using slices where x and y are non-nan values. Only slices
+    where x and y are nan will be ignored. The returned covariance matrix
+    my not be a positive definite matrix.
+
+    For all-NaN slices or slices with zero degrees of freedom, NaN is
+    returned.
+
+    Parameters
+    ----------
+    m : array_like
+        A 1-D or 2-D array containing multiple variables and observations.
+        Each row of `m` represents a variable, and each column a single
+        observation of all those variables.
+    y : array_like, optional
+        An additional set of variables and observations. `y` has the same form
+        as that of `m`.
+    pairwise : bool, option
+        By default (False), any observation(column) with nan values are
+        ignored. If `pairwise` is True, then the covariance of x and y will
+        be computed pairwise, using rows where both x and y are non-nan values
+        and ignoring only rows where either x or y is a nan value.
+    ddof : int, optional
+        "Delta Degrees of Freedom": the divisor used in the calculation is
+        ``N - ddof``, where ``N`` represents the number of
+        observations(columns) with no nan-values. If `pairwise` is set to True,
+        ``N`` is computed separately for each pair of variables as the number
+        of observations where both x and y are non-nan values.
+        By default ddof is 1.
+
+
+    Returns
+    -------
+    out : ndarray
+        The covariance matrix of the variables
+
+    See Also
+    --------
+    cov : Estimated covariance matrix
+
+    Notes
+    -----
+    In the regular covariance matrix function, `cov`, if the i'th variable
+    has a nan value in any observation, all entries :math:`C_{i,j}` and
+    :math:`C_{j,i}` for all variables `j` will have a nan value in the
+    returned matrix.
+
+
+    With `nancov`, if `pairwise` is False, then the covariance matrix will
+    be calculated after removing all columns(observations) with nan values.
+
+    If `pairwise` is True, then pairwise covariances will be calculated where
+    the covariance of `x` and `y` will include all columns where `x` and `y`
+    are not nan values.
+
+    In either case, the normalization will be equal to the number of columns
+    used in calculating the covariance of two variables minus `ddof`.
+
+
+    Examples
+    --------
+
+    >>> x = np.array([
+            [1,      2, 3],
+            [2, np.nan, 6],
+            [3,    1.5, 1]])
+
+    Without pairwise covariances::
+    Notice how all covariances are calculated without the center column.
+
+    >>> np.nancov(x)
+    >>> array([
+            [ 2,  4, -2],
+            [ 4,  8, -4],
+            [-2, -4,  2]])
+
+    With pairwise covariances::
+    Covariance between variables :math:`x_0` and :math:`x_2` are calculated
+    with all 3 columns since they do not have any nan values, but all
+    covariances involving :math:`x_1` exclude the 2nd column with a nan value.
+
+    >>> np.nancov(x, pairwise=True)
+    >>> array([
+            [ 1,  4,         -1],
+            [ 4,  8,         -4],
+            [-1, -4, 1.08333333]])
+
+    >>> np.nanvar(a)
+    1.5555555555555554
+    >>> np.nanvar(a, axis=0)
+    array([1.,  0.])
+    >>> np.nanvar(a, axis=1)
+    array([0.,  0.25])  # may vary
+
+    """
+
+    if not pairwise:
+        # return covariance matrix calculated using only columns with
+        # non-nan values
+        return (np.cov(m, y, ignore_nan=True, ddof=ddof))
+    else:
+        X = np.array(m, ndmin=2)
+        if y is not None:
+            y = np.array(y, ndmin=2)
+            X = np.concatenate((X, y), axis=0)
+
+        rows = X.shape[0]
+        out = np.empty((rows, rows))
+        for i in range(rows):
+            out[i][i] = np.nanvar(X[i], ddof=ddof)
+            for j in range(i+1, rows):
+                out[i][j] = np.nancov(X[i], X[j], ddof=ddof)[0][1]
+                out[j][i] = out[i][j]
+        return out
 
 
 def _nanstd_dispatcher(
