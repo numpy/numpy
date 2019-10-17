@@ -2385,6 +2385,9 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
             for j in range(len(X[i])-1, -1, -1):
                 if np.isnan(X[i][j]):
                     X = np.delete(X, j, 1)
+        if X.shape[1] <= 1:
+            rows = X.shape[0]
+            return np.full((rows, rows), np.nan)
 
     if ddof is None:
         if bias == 0:

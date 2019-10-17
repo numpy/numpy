@@ -1982,6 +1982,16 @@ class TestCov(object):
         nan_res2 = np.array([[1., -1.], [-1., 1.]])
         assert_allclose(cov(nan_x2, ignore_nan=True), nan_res2)
 
+        nan_x3 = np.array([
+            [np.nan,      1,      2],
+            [     1, np.nan,      1],
+            [     2,      1, np.nan]])
+        res3 = np.array([
+            [np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan],
+            [np.nan, np.nan, np.nan]])
+        assert_allclose(np.nancov(nan_x3), res3)
+
 
 class Test_I0(object):
 
