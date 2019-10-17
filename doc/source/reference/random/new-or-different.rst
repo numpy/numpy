@@ -12,7 +12,7 @@ What's New or Different
   values using ``Generator`` for the normal distribution or any other
   distribution that relies on the normal such as the `Generator.gamma` or
   `Generator.standard_t`. If you require bitwise backward compatible
-  streams, use `RandomState`, i.e. `RandomState.gamma` or
+  streams, use `RandomState`, i.e., `RandomState.gamma` or
   `RandomState.standard_t`.
 
 Quick comparison of legacy `mtrand <legacy>`_ to the new `Generator`
