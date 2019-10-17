@@ -313,6 +313,9 @@ new valid values to them::
                    mask=[False, False,  True],
              fill_value=999999)
       >>> x.soften_mask()
+      masked_array(data=[1, 2, --],
+                   mask=[False, False,  True],
+             fill_value=999999)
       >>> x[-1] = 5
       >>> x
       masked_array(data=[1, 2, 5],
@@ -451,7 +454,7 @@ of anomalies (deviations from the average)::
    >>> mx = ma.masked_values (x, -9999.)
    >>> print(mx.mean())
    2.0
-   >>> print mx - mx.mean()
+   >>> print(mx - mx.mean())
    [-2.0 -1.0 -- 1.0 2.0]
    >>> print(mx.anom())
    [-2.0 -1.0 -- 1.0 2.0]
