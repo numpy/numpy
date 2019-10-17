@@ -544,8 +544,8 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
      */
     if (slen != PyArray_DIMS(a)[dim] && slen != 1) {
         PyErr_Format(PyExc_ValueError,
-                 "cannot copy sequence with size %d to array axis "
-                 "with dimension %d", (int)slen, (int)PyArray_DIMS(a)[dim]);
+                 "cannot copy sequence with size %zd to array axis "
+                 "with dimension %" NPY_INTP_FMT, slen, PyArray_DIMS(a)[dim]);
         goto fail;
     }
 
@@ -2894,8 +2894,8 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     src_size = PyArray_SIZE(src);
     if (dst_size != src_size) {
         PyErr_Format(PyExc_ValueError,
-                "cannot copy from array of size %d into an array "
-                "of size %d", (int)src_size, (int)dst_size);
+                "cannot copy from array of size %" NPY_INTP_FMT " into an array "
+                "of size %" NPY_INTP_FMT, src_size, dst_size);
         return -1;
     }
 
