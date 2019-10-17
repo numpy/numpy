@@ -3660,6 +3660,10 @@ cdef class Generator:
         # Check preconditions on arguments
         mean = np.array(mean)
         cov = np.array(cov)
+
+        if np.issubdtype(cov.dtype, np.complexfloating):
+            raise NotImplementedError("Complex gaussians are not supported.")
+
         if size is None:
             shape = []
         elif isinstance(size, (int, long, np.integer)):

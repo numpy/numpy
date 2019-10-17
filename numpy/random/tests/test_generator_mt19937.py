@@ -1452,6 +1452,8 @@ class TestRandomDist:
                       mu, np.empty((3, 2)))
         assert_raises(ValueError, random.multivariate_normal,
                       mu, np.eye(3))
+        
+        assert_raises(NotImplementedError, np.random.multivariate_normal, [0], [[1+1j]])
 
     @pytest.mark.parametrize("method", ["svd", "eigh", "cholesky"])
     def test_multivariate_normal_basic_stats(self, method):
