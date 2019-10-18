@@ -479,10 +479,10 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         coefficients for `k`-th data set are in ``p[:,k]``.
 
     residuals, rank, singular_values, rcond
-        Present only if `full` = True.  Residuals of the least-squares fit,
-        the effective rank of the scaled Vandermonde coefficient matrix,
-        its singular values, and the specified value of `rcond`. For more
-        details, see `linalg.lstsq`.
+        Present only if `full` = True.  Residuals is sum of squared residuals
+        of the least-squares fit, the effective rank of the scaled Vandermonde
+        coefficient matrix, its singular values, and the specified value of
+        `rcond`. For more details, see `linalg.lstsq`.
 
     V : ndarray, shape (M,M) or (M,M,K)
         Present only if `full` = False and `cov`=True.  The covariance
