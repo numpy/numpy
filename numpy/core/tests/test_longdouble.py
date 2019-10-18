@@ -9,6 +9,8 @@ from numpy.testing import (
     temppath,
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
+import subprocess as sp
+import sys
 
 LD_INFO = np.finfo(np.longdouble)
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
@@ -103,6 +105,45 @@ class TestFileBased(object):
             with assert_warns(DeprecationWarning):
                 res = np.fromfile(path, dtype=float, sep=" ")
         assert_equal(res, np.array([1., 2., 3.]))
+
+    @pytest.mark.parametrize('mode', ['numpy', 'python'])
+    @pytest.mark.parametrize(
+        'buffer_type',
+        ['buffered', 'unbuffered'])
+    def test_fromfile_buffered_unseekable(self, buffer_type, mode):
+        # stdout is quite a unique file descripter as it can be buffered, and
+        # unseekable
+        if buffer_type == 'buffered':
+            bufsize = -1
+        else:
+            bufsize = 0
+        s1 = b"numpy is not np"
+        s2 = b" and rain is falling"
+        s = s1 + s2
+        p = sp.Popen([sys.executable, '-c',
+                      'import sys; sys.stdout.buffer.write(' + repr(s) + ')'
+                      ],
+                     stdout=sp.PIPE, bufsize=bufsize)
+        if mode == 'python':
+            buf = p.stdout.read(len(s1))
+            arr = np.frombuffer(buf, dtype=np.uint8)
+        elif mode == 'numpy':
+            arr = np.fromfile(p.stdout, dtype=np.uint8, count=len(s1))
+        else:
+            raise ValueError('Unknown mode {}'.format(mode))
+        assert arr.tobytes() == s1
+
+        # Read the rest of the buffer
+        # We can't use `count=-1` because stdout doesn't support
+        # ftell and/or npy_fseek(fp, 0, SEEK_END)
+        if mode == 'python':
+            buf = p.stdout.read(len(s2))
+            arr = np.frombuffer(buf, dtype=np.uint8)
+        elif mode == 'numpy':
+            arr = np.fromfile(p.stdout, dtype=np.uint8, count=len(s2))
+        else:
+            raise ValueError('Unknown mode {}'.format(mode))
+        assert arr.tobytes() == s2
 
     @pytest.mark.skipif(string_to_longdouble_inaccurate,
                         reason="Need strtold_l")
