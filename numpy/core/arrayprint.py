@@ -111,7 +111,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     ----------
     precision : int or None, optional
         Number of digits of precision for floating point output (default 8).
-        May be `None` if `floatmode` is not `fixed`, to print as many digits as
+        May be None if `floatmode` is not `fixed`, to print as many digits as
         necessary to uniquely specify the value.
     threshold : int, optional
         Total number of array elements which trigger summarization

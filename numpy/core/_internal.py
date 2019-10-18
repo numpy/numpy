@@ -313,7 +313,7 @@ class _ctypes(object):
         crashing. User Beware! The value of this attribute is exactly the same
         as ``self._array_interface_['data'][0]``.
 
-        Note that unlike `data_as`, a reference will not be kept to the array:
+        Note that unlike ``data_as``, a reference will not be kept to the array:
         code like ``ctypes.c_void_p((a + b).ctypes.data)`` will result in a
         pointer to a deallocated array, and should be spelt
         ``(a + b).ctypes.data_as(ctypes.c_void_p)``

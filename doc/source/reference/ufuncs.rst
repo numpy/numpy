@@ -100,7 +100,7 @@ is true:
    - *d* acts like a (5,6) array where the single value is repeated.
 
 
-.. _ufuncs.output-type:
+.. _ufuncs-output-type:
 
 Output type determination
 =========================
@@ -320,7 +320,7 @@ advanced usage and will not typically be used.
     .. versionadded:: 1.10
 
     The 'out' keyword argument is expected to be a tuple with one entry per
-    output (which can be `None` for arrays to be allocated by the ufunc).
+    output (which can be None for arrays to be allocated by the ufunc).
     For ufuncs with a single output, passing a single array (instead of a
     tuple holding a single array) is also valid.
 
@@ -494,7 +494,7 @@ keyword, and an *out* keyword, and the arrays must all have dimension >= 1.
 The *axis* keyword specifies the axis of the array over which the reduction
 will take place (with negative values counting backwards). Generally, it is an
 integer, though for :meth:`ufunc.reduce`, it can also be a tuple of `int` to
-reduce over several axes at once, or `None`, to reduce over all axes.
+reduce over several axes at once, or None, to reduce over all axes.
 The *dtype* keyword allows you to manage a very common problem that arises
 when naively using :meth:`ufunc.reduce`. Sometimes you may
 have an array of a certain data type and wish to add up all of its
