@@ -100,6 +100,8 @@ def configuration(parent_package='', top_path=None):
     other_srcs = [
         'src/distributions/logfactorial.c',
         'src/distributions/distributions.c',
+        'src/distributions/random_mvhg_count.c',
+        'src/distributions/random_mvhg_marginals.c',
         'src/distributions/random_hypergeometric.c',
     ]
     for gen in ['_generator', '_bounded_integers']:
@@ -114,7 +116,6 @@ def configuration(parent_package='', top_path=None):
                              define_macros=defs,
                              )
     config.add_extension('mtrand',
-                         # mtrand does not depend on random_hypergeometric.c.
                          sources=['mtrand.c',
                                   'src/legacy/legacy-distributions.c',
                                   'src/distributions/logfactorial.c',
