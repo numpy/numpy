@@ -557,7 +557,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
     printf(" ndim   : %d\n", fobj->nd);
     printf(" shape  :");
     for (i = 0; i < fobj->nd; ++i) {
-        printf(" %d", (int)fobj->dimensions[i]);
+        printf(" %" NPY_INTP_FMT, fobj->dimensions[i]);
     }
     printf("\n");
 
@@ -567,7 +567,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
     printf(" data   : %p\n", fobj->data);
     printf(" strides:");
     for (i = 0; i < fobj->nd; ++i) {
-        printf(" %d", (int)fobj->strides[i]);
+        printf(" %" NPY_INTP_FMT, fobj->strides[i]);
     }
     printf("\n");
 
