@@ -3502,12 +3502,14 @@ cdef class Generator:
             from numpy.dual import cholesky
             l = cholesky(cov)
 
+        # make sure check_valid is ignored whe method == 'cholesky'
+        # since the decomposition will have failed if cov is not valid.
         if check_valid != 'ignore' and method != 'cholesky':
             if check_valid != 'warn' and check_valid != 'raise':
                 raise ValueError(
                     "check_valid must equal 'warn', 'raise', or 'ignore'")
             if method == 'svd':
-                psd = np.allclose(np.dot(u * s, u.T), cov, rtol=tol, atol=tol)
+                psd = np.allclose(np.dot(vh.T * s, vh), cov, rtol=tol, atol=tol)
             else:
                 psd = not np.any(s < -tol)
             if not psd:
@@ -3518,9 +3520,13 @@ cdef class Generator:
                     raise ValueError("covariance is not positive-semidefinite.")
 
         if method == 'cholesky':
-            x = np.dot(x, l)
+            _factor = l
+        elif method == 'eigh':
+            _factor = u * np.sqrt(s)
         else:
-            x = np.dot(x, u * np.sqrt(s))
+            _factor = np.sqrt(s)[:, None] * vh
+
+        x = np.dot(x, _factor)
         x += mean
         x.shape = tuple(final_shape)
         return x
