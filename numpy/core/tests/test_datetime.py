@@ -129,6 +129,50 @@ class TestDateTime(object):
         assert_(not np.can_cast('M8[h]', 'M8', casting='same_kind'))
         assert_(not np.can_cast('M8[h]', 'M8', casting='safe'))
 
+    @pytest.mark.parametrize("arr, expected_cast", [
+    # the example used in the issue itself
+    (np.array([3, None], 'm8[D]'),
+     np.array([3., np.nan], dtype=np.float64)),
+    # should be equivalent
+    (np.array([3, 'NaT'], 'm8[D]'),
+     np.array([3., np.nan], dtype=np.float64)),
+    # similar with generic units
+    (np.array([3, 'NaT'], 'm8'),
+     np.array([3., np.nan], dtype=np.float64)),
+    # multidimensional with specific units
+    (np.array([[9, 'NaT'],
+               ['NaT', 5]], 'm8[s]'),
+     np.array([[9., np.nan],
+               [np.nan, 5.]], dtype=np.float64)),
+    # multidimensional with generic units
+    (np.array([[9, 'NaT'],
+               ['NaT', 5]], 'm8'),
+     np.array([[9., np.nan],
+               [np.nan, 5.]], dtype=np.float64)),
+    ])
+    def test_cast_NaT_NaN_float(self, arr, expected_cast):
+        # regression test for gh-8449
+        for dtype in ['float16', 'float32', 'float64']:
+            assert_equal(arr.astype(dtype),
+                         expected_cast.astype(dtype))
+            # test the float->timedelta cast as well
+            assert_equal(expected_cast.astype(dtype).astype(arr.dtype),
+                         arr)
+
+    @pytest.mark.parametrize("float_type, cast_type", [
+    (np.float64, 'm8'),
+    (np.float32, 'm8'),
+    (np.float16, 'm8'),
+    (np.float64, 'm8[D]'),
+    (np.float32, 'm8[s]'),
+    (np.float16, 'm8[h]'),
+    ])
+    def test_float_cast_limits(self, float_type, cast_type):
+        arr = np.array([[np.iinfo(np.int64).max + 1],
+                        [np.iinfo(np.int64).min - 1]], dtype=float_type)
+        expected = np.array([['NaT'], ['NaT']], dtype=cast_type)
+        assert_equal(arr.astype(cast_type), expected)
+
     def test_compare_generic_nat(self):
         # regression tests for gh-6452
         assert_(np.datetime64('NaT') !=
