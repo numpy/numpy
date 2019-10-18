@@ -4,9 +4,10 @@ NEP 29 — Recommend Python and Numpy version support as a community policy stan
 
 
 :Author: Thomas A Caswell <tcaswell@gmail.com>, Andreas Mueller, Brian Granger, Madicken Munk, Ralf Gommers, Matt Haberland <mhaberla@calpoly.edu>, Matthias Bussonnier <bussonniermatthias@gmail.com>, Stefan van der Walt <stefanv@berkeley.edu>
-:Status: Draft
-:Type: Informational Track
+:Status: Final
+:Type: Informational
 :Created: 2019-07-13
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2019-October/080128.html
 
 
 Abstract
