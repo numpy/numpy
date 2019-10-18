@@ -3602,10 +3602,10 @@ class TestBinop(object):
         assert_equal(np.modf(dummy, out=(None, a)), (1,))
         assert_equal(np.modf(dummy, out=(dummy, a)), (1,))
         assert_equal(np.modf(a, out=(dummy, a)), 0)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_equal(np.modf(dummy, out=a), (0,))
-            assert_(w[0].category is DeprecationWarning)
+        with assert_raises(TypeError):
+            # Out argument must be tuple, since there are multiple outputs
+            np.modf(dummy, out=a)
+
         assert_raises(ValueError, np.modf, dummy, out=(a,))
 
         # 2 inputs, 1 output
@@ -4105,17 +4105,17 @@ class TestArgmax(object):
           np.datetime64('2010-01-03T05:14:12'),
           np.datetime64('NaT'),
           np.datetime64('2015-09-23T10:10:13'),
-          np.datetime64('1932-10-10T03:50:30')], 4),
+          np.datetime64('1932-10-10T03:50:30')], 0),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
           np.datetime64('NaT'),
           np.datetime64('2022-12-25T16:02:16'),
           np.datetime64('1963-10-04T03:14:12'),
-          np.datetime64('2013-05-08T18:15:23')], 0),
+          np.datetime64('2013-05-08T18:15:23')], 2),
         ([np.timedelta64(2, 's'),
           np.timedelta64(1, 's'),
           np.timedelta64('NaT', 's'),
-          np.timedelta64(3, 's')], 3),
+          np.timedelta64(3, 's')], 2),
         ([np.timedelta64('NaT', 's')] * 3, 0),
 
         ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
@@ -4240,17 +4240,17 @@ class TestArgmin(object):
           np.datetime64('2010-01-03T05:14:12'),
           np.datetime64('NaT'),
           np.datetime64('2015-09-23T10:10:13'),
-          np.datetime64('1932-10-10T03:50:30')], 5),
+          np.datetime64('1932-10-10T03:50:30')], 0),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
           np.datetime64('NaT'),
           np.datetime64('2022-12-25T16:02:16'),
           np.datetime64('1963-10-04T03:14:12'),
-          np.datetime64('2013-05-08T18:15:23')], 4),
+          np.datetime64('2013-05-08T18:15:23')], 2),
         ([np.timedelta64(2, 's'),
           np.timedelta64(1, 's'),
           np.timedelta64('NaT', 's'),
-          np.timedelta64(3, 's')], 1),
+          np.timedelta64(3, 's')], 2),
         ([np.timedelta64('NaT', 's')] * 3, 0),
 
         ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
@@ -4366,18 +4366,14 @@ class TestMinMax(object):
         assert_equal(np.amax([[1, 2, 3]], axis=1), 3)
 
     def test_datetime(self):
-        # NaTs are ignored
+        # Do not ignore NaT
         for dtype in ('m8[s]', 'm8[Y]'):
             a = np.arange(10).astype(dtype)
+            assert_equal(np.amin(a), a[0])
+            assert_equal(np.amax(a), a[9])
             a[3] = 'NaT'
-            assert_equal(np.amin(a), a[0])
-            assert_equal(np.amax(a), a[9])
-            a[0] = 'NaT'
-            assert_equal(np.amin(a), a[1])
-            assert_equal(np.amax(a), a[9])
-            a.fill('NaT')
-            assert_equal(np.amin(a), a[0])
-            assert_equal(np.amax(a), a[0])
+            assert_equal(np.amin(a), a[3])
+            assert_equal(np.amax(a), a[3])
 
 
 class TestNewaxis(object):
@@ -7975,6 +7971,8 @@ class TestFormat(object):
                 dst = object.__format__(a, '30')
                 assert_equal(res, dst)
 
+from numpy.testing import IS_PYPY
+
 class TestCTypes(object):
 
     def test_ctypes_is_available(self):
@@ -8041,7 +8039,29 @@ class TestCTypes(object):
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
+        if IS_PYPY:
+            # Pypy does not recycle arr objects immediately. Trigger gc to
+            # release arr. Cpython uses refcounts. An explicit call to gc
+            # should not be needed here.
+            break_cycles()
+        assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
+
+    def test_ctypes_as_parameter_holds_reference(self):
+        arr = np.array([None]).copy()
+
+        arr_ref = weakref.ref(arr)
+
+        ctypes_ptr = arr.ctypes._as_parameter_
+
+        # `ctypes_ptr` should hold onto `arr`
+        del arr
         break_cycles()
+        assert_(arr_ref() is not None, "ctypes pointer did not hold onto a reference")
+
+        # but when the `ctypes_ptr` object dies, so should `arr`
+        del ctypes_ptr
+        if IS_PYPY:
+            break_cycles()
         assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
 
 

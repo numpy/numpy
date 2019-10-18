@@ -292,7 +292,7 @@ def full(shape, fill_value, dtype=None, order='C'):
     fill_value : scalar
         Fill value.
     dtype : data-type, optional
-        The desired data-type for the array  The default, `None`, means
+        The desired data-type for the array  The default, None, means
          `np.array(fill_value).dtype`.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- or Fortran-contiguous
@@ -959,6 +959,9 @@ def tensordot(a, b, axes=2):
     (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
+
+    The shape of the result consists of the non-contracted axes of the
+    first tensor, followed by the non-contracted axes of the second.
 
     Examples
     --------
@@ -1781,19 +1784,19 @@ def _frombuffer(buf, dtype, shape, order):
 
 
 @set_module('numpy')
-def isscalar(num):
+def isscalar(element):
     """
-    Returns True if the type of `num` is a scalar type.
+    Returns True if the type of `element` is a scalar type.
 
     Parameters
     ----------
-    num : any
+    element : any
         Input argument, can be of any type and shape.
 
     Returns
     -------
     val : bool
-        True if `num` is a scalar type, False if it is not.
+        True if `element` is a scalar type, False if it is not.
 
     See Also
     --------
@@ -1801,10 +1804,14 @@ def isscalar(num):
 
     Notes
     -----
-    In almost all cases ``np.ndim(x) == 0`` should be used instead of this
-    function, as that will also return true for 0d arrays. This is how
-    numpy overloads functions in the style of the ``dx`` arguments to `gradient`
-    and the ``bins`` argument to `histogram`. Some key differences:
+    If you need a stricter way to identify a *numerical* scalar, use
+    ``isinstance(x, numbers.Number)``, as that returns ``False`` for most
+    non-numerical elements such as strings.
+
+    In most cases ``np.ndim(x) == 0`` should be used instead of this function,
+    as that will also return true for 0d arrays. This is how numpy overloads
+    functions in the style of the ``dx`` arguments to `gradient` and the ``bins``
+    argument to `histogram`. Some key differences:
 
     +--------------------------------------+---------------+-------------------+
     | x                                    |``isscalar(x)``|``np.ndim(x) == 0``|
@@ -1852,9 +1859,9 @@ def isscalar(num):
     True
 
     """
-    return (isinstance(num, generic)
-            or type(num) in ScalarType
-            or isinstance(num, numbers.Number))
+    return (isinstance(element, generic)
+            or type(element) in ScalarType
+            or isinstance(element, numbers.Number))
 
 
 @set_module('numpy')
@@ -2091,9 +2098,9 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     `atol` are added together to compare against the absolute difference
     between `a` and `b`.
 
-    If either array contains one or more NaNs, False is returned.
-    Infs are treated as equal if they are in the same place and of the same
-    sign in both arrays.
+    NaNs are treated as equal if they are in the same place and if
+    ``equal_nan=True``.  Infs are treated as equal if they are in the same
+    place and of the same sign in both arrays.
 
     Parameters
     ----------
@@ -2105,7 +2112,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
-        considered equal to NaN's in `b`.
+        considered equal to NaN's in `b` in the output array.
 
         .. versionadded:: 1.10.0
 

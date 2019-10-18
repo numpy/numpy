@@ -4,11 +4,53 @@
 import numpy as np
 cimport numpy as np
 
-from .distributions cimport *
-
 __all__ = []
 
 np.import_array()
+
+cdef extern from "include/distributions.h":
+    # Generate random numbers in closed interval [off, off + rng].
+    uint64_t random_bounded_uint64(bitgen_t *bitgen_state,
+                                   uint64_t off, uint64_t rng,
+                                   uint64_t mask, bint use_masked) nogil
+    uint32_t random_buffered_bounded_uint32(bitgen_t *bitgen_state,
+                                            uint32_t off, uint32_t rng,
+                                            uint32_t mask, bint use_masked,
+                                            int *bcnt, uint32_t *buf) nogil
+    uint16_t random_buffered_bounded_uint16(bitgen_t *bitgen_state,
+                                            uint16_t off, uint16_t rng,
+                                            uint16_t mask, bint use_masked,
+                                            int *bcnt, uint32_t *buf) nogil
+    uint8_t random_buffered_bounded_uint8(bitgen_t *bitgen_state,
+                                          uint8_t off, uint8_t rng,
+                                          uint8_t mask, bint use_masked,
+                                          int *bcnt, uint32_t *buf) nogil
+    np.npy_bool random_buffered_bounded_bool(bitgen_t *bitgen_state,
+                                             np.npy_bool off, np.npy_bool rng,
+                                             np.npy_bool mask, bint use_masked,
+                                             int *bcnt, uint32_t *buf) nogil
+    void random_bounded_uint64_fill(bitgen_t *bitgen_state,
+                                    uint64_t off, uint64_t rng, np.npy_intp cnt,
+                                    bint use_masked,
+                                    uint64_t *out) nogil
+    void random_bounded_uint32_fill(bitgen_t *bitgen_state,
+                                    uint32_t off, uint32_t rng, np.npy_intp cnt,
+                                    bint use_masked,
+                                    uint32_t *out) nogil
+    void random_bounded_uint16_fill(bitgen_t *bitgen_state,
+                                    uint16_t off, uint16_t rng, np.npy_intp cnt,
+                                    bint use_masked,
+                                    uint16_t *out) nogil
+    void random_bounded_uint8_fill(bitgen_t *bitgen_state,
+                                   uint8_t off, uint8_t rng, np.npy_intp cnt,
+                                   bint use_masked,
+                                   uint8_t *out) nogil
+    void random_bounded_bool_fill(bitgen_t *bitgen_state,
+                                  np.npy_bool off, np.npy_bool rng, np.npy_intp cnt,
+                                  bint use_masked,
+                                  np.npy_bool *out) nogil
+
+
 
 _integers_types = {'bool': (0, 2),
                  'int8': (-2**7, 2**7),

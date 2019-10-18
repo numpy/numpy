@@ -239,7 +239,7 @@ New extensible `numpy.random` module with selectable random number generators
 -----------------------------------------------------------------------------
 A new extensible `numpy.random` module along with four selectable random number
 generators and improved seeding designed for use in parallel processes has been
-added. The currently available :ref:`Bit Generators <bit_generator>` are
+added. The currently available `Bit Generators` are
 `~mt19937.MT19937`, `~pcg64.PCG64`, `~philox.Philox`, and `~sfc64.SFC64`.
 ``PCG64`` is the new default while ``MT19937`` is retained for backwards
 compatibility. Note that the legacy random module is unchanged and is now

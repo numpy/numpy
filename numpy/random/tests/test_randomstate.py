@@ -11,7 +11,8 @@ from numpy.testing import (
         suppress_warnings
         )
 
-from numpy.random import MT19937, PCG64, mtrand as random
+from numpy.random import MT19937, PCG64
+from numpy import random
 
 INT_FUNCS = {'binomial': (100.0, 0.6),
              'geometric': (.5,),

@@ -758,8 +758,8 @@ parse_datetime_extended_unit_from_string(char *str, Py_ssize_t len,
 bad_input:
     if (metastr != NULL) {
         PyErr_Format(PyExc_TypeError,
-                "Invalid datetime metadata string \"%s\" at position %d",
-                metastr, (int)(substr-metastr));
+                "Invalid datetime metadata string \"%s\" at position %zd",
+                metastr, substr-metastr);
     }
     else {
         PyErr_Format(PyExc_TypeError,
@@ -820,8 +820,8 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
 bad_input:
     if (substr != metastr) {
         PyErr_Format(PyExc_TypeError,
-                "Invalid datetime metadata string \"%s\" at position %d",
-                metastr, (int)(substr-metastr));
+                "Invalid datetime metadata string \"%s\" at position %zd",
+                metastr, substr - metastr);
     }
     else {
         PyErr_Format(PyExc_TypeError,
@@ -2273,15 +2273,15 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
 
 invalid_date:
     PyErr_Format(PyExc_ValueError,
-            "Invalid date (%d,%d,%d) when converting to NumPy datetime",
-            (int)out->year, (int)out->month, (int)out->day);
+            "Invalid date (%" NPY_INT64_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ") when converting to NumPy datetime",
+            out->year, out->month, out->day);
     return -1;
 
 invalid_time:
     PyErr_Format(PyExc_ValueError,
-            "Invalid time (%d,%d,%d,%d) when converting "
+            "Invalid time (%" NPY_INT32_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ",%" NPY_INT32_FMT ") when converting "
             "to NumPy datetime",
-            (int)out->hour, (int)out->min, (int)out->sec, (int)out->us);
+            out->hour, out->min, out->sec, out->us);
     return -1;
 }
 
@@ -3221,18 +3221,6 @@ NPY_NO_EXPORT PyArrayObject *
 datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                 PyArray_Descr *dtype)
 {
-    PyArray_DatetimeMetaData meta;
-    /*
-     * Both datetime and timedelta are stored as int64, so they can
-     * share value variables.
-     */
-    npy_int64 values[3];
-    PyObject *objs[3];
-    int type_nums[3];
-
-    npy_intp i, length;
-    PyArrayObject *ret;
-    npy_int64 *ret_data;
 
     /*
      * First normalize the input parameters so there is no Py_None,
@@ -3265,6 +3253,8 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
     /* Check if the units of the given dtype are generic, in which
      * case we use the code path that detects the units
      */
+    int type_nums[3];
+    PyArray_DatetimeMetaData meta;
     if (dtype != NULL) {
         PyArray_DatetimeMetaData *meta_tmp;
 
@@ -3313,6 +3303,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
     }
 
     /* Set up to convert the objects to a common datetime unit metadata */
+    PyObject *objs[3];
     objs[0] = start;
     objs[1] = stop;
     objs[2] = step;
@@ -3333,10 +3324,21 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
         type_nums[2] = NPY_TIMEDELTA;
     }
 
-    /* Convert all the arguments */
+    /* Convert all the arguments
+     *
+     * Both datetime and timedelta are stored as int64, so they can
+     * share value variables.
+     */
+    npy_int64 values[3];
     if (convert_pyobjects_to_datetimes(3, objs, type_nums,
                                 NPY_SAME_KIND_CASTING, values, &meta) < 0) {
         return NULL;
+    }
+    /* If no start was provided, default to 0 */
+    if (start == NULL) {
+        /* enforced above */
+        assert(type_nums[0] == NPY_TIMEDELTA);
+        values[0] = 0;
     }
 
     /* If no step was provided, default to 1 */
@@ -3362,6 +3364,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
     }
 
     /* Calculate the array length */
+    npy_intp length;
     if (values[2] > 0 && values[1] > values[0]) {
         length = (values[1] - values[0] + (values[2] - 1)) / values[2];
     }
@@ -3389,19 +3392,20 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
     }
 
     /* Create the result array */
-    ret = (PyArrayObject *)PyArray_NewFromDescr(
-                            &PyArray_Type, dtype, 1, &length, NULL,
-                            NULL, 0, NULL);
+    PyArrayObject *ret = (PyArrayObject *)PyArray_NewFromDescr(
+            &PyArray_Type, dtype, 1, &length, NULL,
+            NULL, 0, NULL);
+
     if (ret == NULL) {
         return NULL;
     }
 
     if (length > 0) {
         /* Extract the data pointer */
-        ret_data = (npy_int64 *)PyArray_DATA(ret);
+        npy_int64 *ret_data = (npy_int64 *)PyArray_DATA(ret);
 
         /* Create the timedeltas or datetimes */
-        for (i = 0; i < length; ++i) {
+        for (npy_intp i = 0; i < length; ++i) {
             *ret_data = values[0];
             values[0] += values[2];
             ret_data++;

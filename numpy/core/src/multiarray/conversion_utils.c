@@ -667,8 +667,8 @@ PyArray_ConvertClipmodeSequence(PyObject *object, NPY_CLIPMODE *modes, int n)
     if (object && (PyTuple_Check(object) || PyList_Check(object))) {
         if (PySequence_Size(object) != n) {
             PyErr_Format(PyExc_ValueError,
-                    "list of clipmodes has wrong length (%d instead of %d)",
-                    (int)PySequence_Size(object), n);
+                    "list of clipmodes has wrong length (%zd instead of %d)",
+                    PySequence_Size(object), n);
             return NPY_FAIL;
         }
 

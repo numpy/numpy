@@ -3,34 +3,128 @@
 import operator
 import warnings
 
-import numpy as np
-from numpy.core.multiarray import normalize_axis_index
-
-from .bounded_integers import _integers_types
-from .pcg64 import PCG64
-
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
-from libc cimport string
 
 cimport cython
+import numpy as np
 cimport numpy as np
+from numpy.core.multiarray import normalize_axis_index
 
-from .bounded_integers cimport *
-from .common cimport *
-from .distributions cimport *
+from libc cimport string
+from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
+                          int32_t, int64_t)
+from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
+         _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
+         _rand_uint8, _gen_mask)
+from ._bounded_integers import _integers_types
+from ._pcg64 import PCG64
+from ._bit_generator cimport bitgen_t
+from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
+            CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
+            CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
+            double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
+            check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
+        )
 
 
-__all__ = ['Generator', 'beta', 'binomial', 'bytes', 'chisquare', 'choice',
-           'dirichlet', 'exponential', 'f', 'gamma',
-           'geometric', 'gumbel', 'hypergeometric', 'integers', 'laplace',
-           'logistic', 'lognormal', 'logseries', 'multinomial',
-           'multivariate_normal', 'negative_binomial', 'noncentral_chisquare',
-           'noncentral_f', 'normal', 'pareto', 'permutation',
-           'poisson', 'power', 'random',  'rayleigh', 'shuffle',
-           'standard_cauchy', 'standard_exponential', 'standard_gamma',
-           'standard_normal', 'standard_t', 'triangular',
-           'uniform', 'vonmises', 'wald', 'weibull', 'zipf']
+cdef extern from "include/distributions.h":
+
+    struct s_binomial_t:
+        int has_binomial
+        double psave
+        int64_t nsave
+        double r
+        double q
+        double fm
+        int64_t m
+        double p1
+        double xm
+        double xl
+        double xr
+        double c
+        double laml
+        double lamr
+        double p2
+        double p3
+        double p4
+
+    ctypedef s_binomial_t binomial_t
+
+    double random_standard_uniform(bitgen_t *bitgen_state) nogil
+    void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
+    double random_standard_exponential(bitgen_t *bitgen_state) nogil
+    void random_standard_exponential_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    double random_standard_exponential_zig(bitgen_t *bitgen_state) nogil
+    void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    double random_standard_normal(bitgen_t* bitgen_state) nogil
+    void random_standard_normal_fill(bitgen_t *bitgen_state, np.npy_intp count, double *out) nogil
+    void random_standard_normal_fill_f(bitgen_t *bitgen_state, np.npy_intp count, float *out) nogil
+    double random_standard_gamma(bitgen_t *bitgen_state, double shape) nogil
+
+    float random_standard_uniform_f(bitgen_t *bitgen_state) nogil
+    void random_standard_uniform_fill_f(bitgen_t* bitgen_state, np.npy_intp cnt, float *out) nogil
+    float random_standard_exponential_f(bitgen_t *bitgen_state) nogil
+    float random_standard_exponential_zig_f(bitgen_t *bitgen_state) nogil
+    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
+    void random_standard_exponential_zig_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
+    float random_standard_normal_f(bitgen_t* bitgen_state) nogil
+    float random_standard_gamma_f(bitgen_t *bitgen_state, float shape) nogil
+
+    int64_t random_positive_int64(bitgen_t *bitgen_state) nogil
+    int32_t random_positive_int32(bitgen_t *bitgen_state) nogil
+    int64_t random_positive_int(bitgen_t *bitgen_state) nogil
+    uint64_t random_uint(bitgen_t *bitgen_state) nogil
+
+    double random_normal(bitgen_t *bitgen_state, double loc, double scale) nogil
+
+    double random_gamma(bitgen_t *bitgen_state, double shape, double scale) nogil
+    float random_gamma_f(bitgen_t *bitgen_state, float shape, float scale) nogil
+
+    double random_exponential(bitgen_t *bitgen_state, double scale) nogil
+    double random_uniform(bitgen_t *bitgen_state, double lower, double range) nogil
+    double random_beta(bitgen_t *bitgen_state, double a, double b) nogil
+    double random_chisquare(bitgen_t *bitgen_state, double df) nogil
+    double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) nogil
+    double random_standard_cauchy(bitgen_t *bitgen_state) nogil
+    double random_pareto(bitgen_t *bitgen_state, double a) nogil
+    double random_weibull(bitgen_t *bitgen_state, double a) nogil
+    double random_power(bitgen_t *bitgen_state, double a) nogil
+    double random_laplace(bitgen_t *bitgen_state, double loc, double scale) nogil
+    double random_gumbel(bitgen_t *bitgen_state, double loc, double scale) nogil
+    double random_logistic(bitgen_t *bitgen_state, double loc, double scale) nogil
+    double random_lognormal(bitgen_t *bitgen_state, double mean, double sigma) nogil
+    double random_rayleigh(bitgen_t *bitgen_state, double mode) nogil
+    double random_standard_t(bitgen_t *bitgen_state, double df) nogil
+    double random_noncentral_chisquare(bitgen_t *bitgen_state, double df,
+                                       double nonc) nogil
+    double random_noncentral_f(bitgen_t *bitgen_state, double dfnum,
+                               double dfden, double nonc) nogil
+    double random_wald(bitgen_t *bitgen_state, double mean, double scale) nogil
+    double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) nogil
+    double random_triangular(bitgen_t *bitgen_state, double left, double mode,
+                             double right) nogil
+
+    int64_t random_poisson(bitgen_t *bitgen_state, double lam) nogil
+    int64_t random_negative_binomial(bitgen_t *bitgen_state, double n, double p) nogil
+    int64_t random_binomial(bitgen_t *bitgen_state, double p, int64_t n, binomial_t *binomial) nogil
+    int64_t random_logseries(bitgen_t *bitgen_state, double p) nogil
+    int64_t random_geometric_search(bitgen_t *bitgen_state, double p) nogil
+    int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) nogil
+    int64_t random_geometric(bitgen_t *bitgen_state, double p) nogil
+    int64_t random_zipf(bitgen_t *bitgen_state, double a) nogil
+    int64_t random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad,
+                                    int64_t sample) nogil
+
+    uint64_t random_interval(bitgen_t *bitgen_state, uint64_t max) nogil
+
+    # Generate random uint64 numbers in closed interval [off, off + rng].
+    uint64_t random_bounded_uint64(bitgen_t *bitgen_state,
+                                   uint64_t off, uint64_t rng,
+                                   uint64_t mask, bint use_masked) nogil
+
+    void random_multinomial(bitgen_t *bitgen_state, int64_t n, int64_t *mnix,
+                            double *pix, np.npy_intp d, binomial_t *binomial) nogil
 
 np.import_array()
 
@@ -193,9 +287,9 @@ cdef class Generator:
         cdef double temp
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_double_fill, &self._bitgen, size, self.lock, out)
+            return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
-            return float_fill(&random_float, &self._bitgen, size, self.lock, out)
+            return float_fill(&random_standard_uniform_fill_f, &self._bitgen, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for random' % key)
 
@@ -341,9 +435,9 @@ cdef class Generator:
                 return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
             if method == u'zig':
-                return float_fill(&random_standard_exponential_zig_f, &self._bitgen, size, self.lock, out)
+                return float_fill(&random_standard_exponential_zig_fill_f, &self._bitgen, size, self.lock, out)
             else:
-                return float_fill(&random_standard_exponential_f, &self._bitgen, size, self.lock, out)
+                return float_fill(&random_standard_exponential_fill_f, &self._bitgen, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_exponential'
                             % key)
@@ -920,9 +1014,9 @@ cdef class Generator:
         """
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_gauss_zig_fill, &self._bitgen, size, self.lock, out)
+            return double_fill(&random_standard_normal_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
-            return float_fill(&random_gauss_zig_f, &self._bitgen, size, self.lock, out)
+            return float_fill(&random_standard_normal_fill_f, &self._bitgen, size, self.lock, out)
 
         else:
             raise TypeError('Unsupported dtype "%s" for standard_normal' % key)
@@ -1023,7 +1117,7 @@ cdef class Generator:
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
-        return cont(&random_normal_zig, &self._bitgen, size, self.lock, 2,
+        return cont(&random_normal, &self._bitgen, size, self.lock, 2,
                     loc, '', CONS_NONE,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
@@ -1109,13 +1203,13 @@ cdef class Generator:
         cdef void *func
         key = np.dtype(dtype).name
         if key == 'float64':
-            return cont(&random_standard_gamma_zig, &self._bitgen, size, self.lock, 1,
+            return cont(&random_standard_gamma, &self._bitgen, size, self.lock, 1,
                         shape, 'shape', CONS_NON_NEGATIVE,
                         0.0, '', CONS_NONE,
                         0.0, '', CONS_NONE,
                         out)
         if key == 'float32':
-            return cont_f(&random_standard_gamma_zig_f, &self._bitgen, size, self.lock,
+            return cont_f(&random_standard_gamma_f, &self._bitgen, size, self.lock,
                           shape, 'shape', CONS_NON_NEGATIVE,
                           out)
         else:
@@ -3773,7 +3867,7 @@ cdef class Generator:
             while i < totsize:
                 acc = 0.0
                 for j in range(k):
-                    val_data[i+j] = random_standard_gamma_zig(&self._bitgen,
+                    val_data[i+j] = random_standard_gamma(&self._bitgen,
                                                               alpha_data[j])
                     acc = acc + val_data[i + j]
                 invacc = 1/acc
@@ -4003,19 +4097,18 @@ def default_rng(seed=None):
 
     Parameters
     ----------
-    seed : {None, int, array_like[ints], ISeedSequence, BitGenerator, Generator}, optional
+    seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
         `SeedSequence` to derive the initial `BitGenerator` state. One may also
-        pass in an implementor of the `ISeedSequence` interface like
-        `SeedSequence`.
+        pass in a`SeedSequence` instance
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.
 
     Notes
     -----
-    When `seed` is omitted or ``None``, a new `BitGenerator` and `Generator` will
+    When ``seed`` is omitted or ``None``, a new `BitGenerator` and `Generator` will
     be instantiated each time. This function does not manage a default global
     instance.
     """

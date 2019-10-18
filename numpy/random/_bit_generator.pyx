@@ -53,9 +53,7 @@ from cpython.pycapsule cimport PyCapsule_New
 import numpy as np
 cimport numpy as np
 
-from libc.stdint cimport uint32_t
-from .common cimport (random_raw, benchmark, prepare_ctypes, prepare_cffi)
-from .distributions cimport bitgen_t
+from ._common cimport (random_raw, benchmark, prepare_ctypes, prepare_cffi)
 
 __all__ = ['SeedSequence', 'BitGenerator']
 
@@ -116,7 +114,7 @@ def _coerce_to_uint32_array(x):
     Examples
     --------
     >>> import numpy as np
-    >>> from numpy.random.bit_generator import _coerce_to_uint32_array
+    >>> from numpy.random._bit_generator import _coerce_to_uint32_array
     >>> _coerce_to_uint32_array(12345)
     array([12345], dtype=uint32)
     >>> _coerce_to_uint32_array('12345')
@@ -484,13 +482,12 @@ cdef class BitGenerator():
 
     Parameters
     ----------
-    seed : {None, int, array_like[ints], ISeedSequence}, optional
+    seed : {None, int, array_like[ints], SeedSequence}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
-        `SeedSequence` to derive the initial `BitGenerator` state. One may also
-        pass in an implementor of the `ISeedSequence` interface like
-        `SeedSequence`.
+        ~`numpy.random.SeedSequence` to derive the initial `BitGenerator` state.
+        One may also pass in a `SeedSequence` instance.
 
     Attributes
     ----------

@@ -6,7 +6,7 @@ import sys
 import numpy as np
 cimport numpy as np
 
-from .common cimport *
+from libc.stdint cimport uintptr_t
 
 __all__ = ['interface']
 
@@ -262,14 +262,16 @@ cdef object double_fill(void *func, bitgen_t *state, object size, object lock, o
     return out_array
 
 cdef object float_fill(void *func, bitgen_t *state, object size, object lock, object out):
-    cdef random_float_0 random_func = (<random_float_0>func)
+    cdef random_float_fill random_func = (<random_float_fill>func)
+    cdef float out_val
     cdef float *out_array_data
     cdef np.ndarray out_array
     cdef np.npy_intp i, n
 
     if size is None and out is None:
         with lock:
-            return random_func(state)
+            random_func(state, 1, &out_val)
+            return out_val
 
     if out is not None:
         check_output(out, np.float32, size)
@@ -280,8 +282,7 @@ cdef object float_fill(void *func, bitgen_t *state, object size, object lock, ob
     n = np.PyArray_SIZE(out_array)
     out_array_data = <float *>np.PyArray_DATA(out_array)
     with lock, nogil:
-        for i in range(n):
-            out_array_data[i] = random_func(state)
+        random_func(state, n, out_array_data)
     return out_array
 
 cdef object float_fill_from_double(void *func, bitgen_t *state, object size, object lock, object out):

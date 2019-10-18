@@ -4394,7 +4394,7 @@ class MaskedArray(ndarray):
         ----------
         axis : None or int or tuple of ints, optional
             Axis or axes along which the count is performed.
-            The default (`axis` = `None`) performs the count over all
+            The default, None, performs the count over all
             the dimensions of the input array. `axis` may be negative, in
             which case it counts from the last to the first axis.
 
@@ -4774,7 +4774,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.all : corresponding function for ndarrays
+        numpy.ndarray.all : corresponding function for ndarrays
         numpy.all : equivalent function
 
         Examples
@@ -4812,7 +4812,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.any : corresponding function for ndarrays
+        numpy.ndarray.any : corresponding function for ndarrays
         numpy.any : equivalent function
 
         """
@@ -4866,7 +4866,7 @@ class MaskedArray(ndarray):
         flatnonzero :
             Return indices that are non-zero in the flattened version of the input
             array.
-        ndarray.nonzero :
+        numpy.ndarray.nonzero :
             Equivalent ndarray method.
         count_nonzero :
             Counts the number of non-zero elements in the input array.
@@ -4994,7 +4994,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.sum : corresponding function for ndarrays
+        numpy.ndarray.sum : corresponding function for ndarrays
         numpy.sum : equivalent function
 
         Examples
@@ -5065,7 +5065,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.cumsum : corresponding function for ndarrays
+        numpy.ndarray.cumsum : corresponding function for ndarrays
         numpy.cumsum : equivalent function
 
         Examples
@@ -5102,7 +5102,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.prod : corresponding function for ndarrays
+        numpy.ndarray.prod : corresponding function for ndarrays
         numpy.prod : equivalent function
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
@@ -5148,7 +5148,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.cumprod : corresponding function for ndarrays
+        numpy.ndarray.cumprod : corresponding function for ndarrays
         numpy.cumprod : equivalent function
         """
         result = self.filled(1).cumprod(axis=axis, dtype=dtype, out=out)
@@ -5171,7 +5171,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.mean : corresponding function for ndarrays
+        numpy.ndarray.mean : corresponding function for ndarrays
         numpy.mean : Equivalent function
         numpy.ma.average: Weighted average.
 
@@ -5260,7 +5260,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.var : corresponding function for ndarrays
+        numpy.ndarray.var : corresponding function for ndarrays
         numpy.var : Equivalent function
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
@@ -5323,7 +5323,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.std : corresponding function for ndarrays
+        numpy.ndarray.std : corresponding function for ndarrays
         numpy.std : Equivalent function
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
@@ -5344,7 +5344,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.around : corresponding function for ndarrays
+        numpy.ndarray.around : corresponding function for ndarrays
         numpy.around : equivalent function
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
@@ -5406,7 +5406,7 @@ class MaskedArray(ndarray):
         --------
         MaskedArray.sort : Describes sorting algorithms used.
         lexsort : Indirect stable sort with multiple keys.
-        ndarray.sort : Inplace sort.
+        numpy.ndarray.sort : Inplace sort.
 
         Notes
         -----
@@ -5558,7 +5558,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.sort : Method to sort an array in-place.
+        numpy.ndarray.sort : Method to sort an array in-place.
         argsort : Indirect sort.
         lexsort : Indirect stable sort on multiple keys.
         searchsorted : Find elements in a sorted array.
@@ -5978,7 +5978,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.tobytes
+        numpy.ndarray.tobytes
         tolist, tofile
 
         Notes

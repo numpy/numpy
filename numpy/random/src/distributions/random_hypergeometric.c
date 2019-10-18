@@ -1,4 +1,4 @@
-#include "distributions.h"
+#include "include/distributions.h"
 #include "logfactorial.h"
 #include <stdint.h>
 
@@ -188,8 +188,8 @@ static int64_t hypergeometric_hrua(bitgen_t *bitgen_state,
     while (1) {
         double U, V, X, T;
         double gp;
-        U = random_double(bitgen_state);
-        V = random_double(bitgen_state);  // "U star" in Stadlober (1989)
+        U = next_double(bitgen_state);
+        V = next_double(bitgen_state);  // "U star" in Stadlober (1989)
         X = a + h*(V - 0.5) / U;
 
         // fast rejection:

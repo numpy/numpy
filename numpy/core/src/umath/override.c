@@ -494,31 +494,17 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
             }
             else {
                 /* not a tuple */
-                if (nout > 1 && DEPRECATE("passing a single argument to the "
-                                          "'out' keyword argument of a "
-                                          "ufunc with\n"
-                                          "more than one output will "
-                                          "result in an error in the "
-                                          "future") < 0) {
-                    /*
-                     * If the deprecation is removed, also remove the loop
-                     * below setting tuple items to None (but keep this future
-                     * error message.)
-                     */
+                if (nout > 1) {
                     PyErr_SetString(PyExc_TypeError,
                                     "'out' must be a tuple of arguments");
                     goto fail;
                 }
                 if (out != Py_None) {
                     /* not already a tuple and not None */
-                    PyObject *out_tuple = PyTuple_New(nout);
+                    PyObject *out_tuple = PyTuple_New(1);
 
                     if (out_tuple == NULL) {
                         goto fail;
-                    }
-                    for (i = 1; i < nout; i++) {
-                        Py_INCREF(Py_None);
-                        PyTuple_SET_ITEM(out_tuple, i, Py_None);
                     }
                     /* out was borrowed ref; make it permanent */
                     Py_INCREF(out);

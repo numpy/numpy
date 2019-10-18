@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 #include "numpy/npy_math.h"
-#include "src/bitgen.h"
+#include "include/bitgen.h"
 
 /*
  * RAND_INT_TYPE is used to share integer generators with RandomState which
@@ -59,28 +59,10 @@ typedef struct s_binomial_t {
   double p4;
 } binomial_t;
 
-/* Inline generators for internal use */
-static NPY_INLINE uint32_t next_uint32(bitgen_t *bitgen_state) {
-  return bitgen_state->next_uint32(bitgen_state->state);
-}
-
-static NPY_INLINE uint64_t next_uint64(bitgen_t *bitgen_state) {
-  return bitgen_state->next_uint64(bitgen_state->state);
-}
-
-static NPY_INLINE float next_float(bitgen_t *bitgen_state) {
-  return (next_uint32(bitgen_state) >> 9) * (1.0f / 8388608.0f);
-}
-
-static NPY_INLINE double next_double(bitgen_t *bitgen_state) {
-  return bitgen_state->next_double(bitgen_state->state);
-}
-
-DECLDIR double loggam(double x);
-
-DECLDIR float random_float(bitgen_t *bitgen_state);
-DECLDIR double random_double(bitgen_t *bitgen_state);
-DECLDIR void random_double_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out);
+DECLDIR float random_standard_uniform_f(bitgen_t *bitgen_state);
+DECLDIR double random_standard_uniform(bitgen_t *bitgen_state);
+DECLDIR void random_standard_uniform_fill(bitgen_t *, npy_intp, double *);
+DECLDIR void random_standard_uniform_fill_f(bitgen_t *, npy_intp, float *);
 
 DECLDIR int64_t random_positive_int64(bitgen_t *bitgen_state);
 DECLDIR int32_t random_positive_int32(bitgen_t *bitgen_state);
@@ -88,37 +70,25 @@ DECLDIR int64_t random_positive_int(bitgen_t *bitgen_state);
 DECLDIR uint64_t random_uint(bitgen_t *bitgen_state);
 
 DECLDIR double random_standard_exponential(bitgen_t *bitgen_state);
-DECLDIR void random_standard_exponential_fill(bitgen_t *bitgen_state, npy_intp cnt,
-                                              double *out);
 DECLDIR float random_standard_exponential_f(bitgen_t *bitgen_state);
 DECLDIR double random_standard_exponential_zig(bitgen_t *bitgen_state);
-DECLDIR void random_standard_exponential_zig_fill(bitgen_t *bitgen_state,
-                                                  npy_intp cnt, double *out);
 DECLDIR float random_standard_exponential_zig_f(bitgen_t *bitgen_state);
+DECLDIR void random_standard_exponential_fill(bitgen_t *, npy_intp, double *);
+DECLDIR void random_standard_exponential_fill_f(bitgen_t *, npy_intp, float *);
+DECLDIR void random_standard_exponential_zig_fill(bitgen_t *, npy_intp, double *);
+DECLDIR void random_standard_exponential_zig_fill_f(bitgen_t *, npy_intp, float *);
 
-/*
-DECLDIR double random_gauss(bitgen_t *bitgen_state);
-DECLDIR float random_gauss_f(bitgen_t *bitgen_state);
-*/
-DECLDIR double random_gauss_zig(bitgen_t *bitgen_state);
-DECLDIR float random_gauss_zig_f(bitgen_t *bitgen_state);
-DECLDIR void random_gauss_zig_fill(bitgen_t *bitgen_state, npy_intp cnt,
-                                   double *out);
-
-/*
+DECLDIR double random_standard_normal(bitgen_t *bitgen_state);
+DECLDIR float random_standard_normal_f(bitgen_t *bitgen_state);
+DECLDIR void random_standard_normal_fill(bitgen_t *, npy_intp, double *);
+DECLDIR void random_standard_normal_fill_f(bitgen_t *, npy_intp, float *);
 DECLDIR double random_standard_gamma(bitgen_t *bitgen_state, double shape);
 DECLDIR float random_standard_gamma_f(bitgen_t *bitgen_state, float shape);
-*/
-DECLDIR double random_standard_gamma_zig(bitgen_t *bitgen_state, double shape);
-DECLDIR float random_standard_gamma_zig_f(bitgen_t *bitgen_state, float shape);
 
-/*
 DECLDIR double random_normal(bitgen_t *bitgen_state, double loc, double scale);
-*/
-DECLDIR double random_normal_zig(bitgen_t *bitgen_state, double loc, double scale);
 
 DECLDIR double random_gamma(bitgen_t *bitgen_state, double shape, double scale);
-DECLDIR float random_gamma_float(bitgen_t *bitgen_state, float shape, float scale);
+DECLDIR float random_gamma_f(bitgen_t *bitgen_state, float shape, float scale);
 
 DECLDIR double random_exponential(bitgen_t *bitgen_state, double scale);
 DECLDIR double random_uniform(bitgen_t *bitgen_state, double lower, double range);
@@ -146,27 +116,16 @@ DECLDIR double random_triangular(bitgen_t *bitgen_state, double left, double mod
 
 DECLDIR RAND_INT_TYPE random_poisson(bitgen_t *bitgen_state, double lam);
 DECLDIR RAND_INT_TYPE random_negative_binomial(bitgen_t *bitgen_state, double n,
-                                         double p);
+                                 double p);
 
-DECLDIR RAND_INT_TYPE random_binomial_btpe(bitgen_t *bitgen_state,
-                                           RAND_INT_TYPE n,
-                                           double p,
-                                           binomial_t *binomial);
-DECLDIR RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state,
-                                                RAND_INT_TYPE n,
-                                                double p,
-                                                binomial_t *binomial);
 DECLDIR int64_t random_binomial(bitgen_t *bitgen_state, double p,
                                 int64_t n, binomial_t *binomial);
 
 DECLDIR RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p);
-DECLDIR RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p);
-DECLDIR RAND_INT_TYPE random_geometric_inversion(bitgen_t *bitgen_state, double p);
 DECLDIR RAND_INT_TYPE random_geometric(bitgen_t *bitgen_state, double p);
 DECLDIR RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a);
 DECLDIR int64_t random_hypergeometric(bitgen_t *bitgen_state,
                                       int64_t good, int64_t bad, int64_t sample);
-
 DECLDIR uint64_t random_interval(bitgen_t *bitgen_state, uint64_t max);
 
 /* Generate random uint64 numbers in closed interval [off, off + rng]. */
@@ -210,5 +169,20 @@ DECLDIR void random_bounded_bool_fill(bitgen_t *bitgen_state, npy_bool off,
 
 DECLDIR void random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n, RAND_INT_TYPE *mnix,
                                 double *pix, npy_intp d, binomial_t *binomial);
+
+/* Common to legacy-distributions.c and distributions.c but not exported */
+
+RAND_INT_TYPE random_binomial_btpe(bitgen_t *bitgen_state,
+                                   RAND_INT_TYPE n,
+                                   double p,
+                                   binomial_t *binomial);
+RAND_INT_TYPE random_binomial_inversion(bitgen_t *bitgen_state,
+                                        RAND_INT_TYPE n,
+                                        double p,
+                                        binomial_t *binomial);
+double random_loggam(double x);
+static NPY_INLINE double next_double(bitgen_t *bitgen_state) {
+    return bitgen_state->next_double(bitgen_state->state);
+}
 
 #endif

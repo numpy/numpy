@@ -1193,34 +1193,11 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                 }
             }
             else {
-                /*
-                 * If the deprecated behavior is ever removed,
-                 * keep only the else branch of this if-else
-                 */
-                if (PyArray_Check(out_kwd) || out_kwd == Py_None) {
-                    if (DEPRECATE("passing a single array to the "
-                                  "'out' keyword argument of a "
-                                  "ufunc with\n"
-                                  "more than one output will "
-                                  "result in an error in the "
-                                  "future") < 0) {
-                        /* The future error message */
-                        PyErr_SetString(PyExc_TypeError,
-                                        "'out' must be a tuple of arrays");
-                        goto fail;
-                    }
-                    if (_set_out_array(out_kwd, out_op+nin) < 0) {
-                        goto fail;
-                    }
-                }
-                else {
-                    PyErr_SetString(PyExc_TypeError,
-                                    nout > 1 ? "'out' must be a tuple "
-                                    "of arrays" :
-                                    "'out' must be an array or a "
-                                    "tuple of a single array");
-                    goto fail;
-                }
+                PyErr_SetString(PyExc_TypeError,
+                        nout > 1 ? "'out' must be a tuple of arrays" :
+                                   "'out' must be an array or a tuple with "
+                                   "a single array");
+                goto fail;
             }
         }
         /*
@@ -4081,8 +4058,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     for (i = 0; i < ind_size; ++i) {
         if (reduceat_ind[i] < 0 || reduceat_ind[i] >= red_axis_size) {
             PyErr_Format(PyExc_IndexError,
-                "index %d out-of-bounds in %s.%s [0, %d)",
-                (int)reduceat_ind[i], ufunc_name, opname, (int)red_axis_size);
+                "index %" NPY_INTP_FMT " out-of-bounds in %s.%s [0, %" NPY_INTP_FMT ")",
+                reduceat_ind[i], ufunc_name, opname, red_axis_size);
             return NULL;
         }
     }
