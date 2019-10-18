@@ -62,6 +62,7 @@ Distributions
    ~numpy.random.Generator.lognormal
    ~numpy.random.Generator.logseries
    ~numpy.random.Generator.multinomial
+   ~numpy.random.Generator.multivariate_hypergeometric
    ~numpy.random.Generator.multivariate_normal
    ~numpy.random.Generator.negative_binomial
    ~numpy.random.Generator.noncentral_chisquare
