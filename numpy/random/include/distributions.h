@@ -170,6 +170,20 @@ DECLDIR void random_bounded_bool_fill(bitgen_t *bitgen_state, npy_bool off,
 DECLDIR void random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n, RAND_INT_TYPE *mnix,
                                 double *pix, npy_intp d, binomial_t *binomial);
 
+/* multivariate hypergeometric, "count" method */
+DECLDIR int random_mvhg_count(bitgen_t *bitgen_state,
+                              int64_t total,
+                              size_t num_colors, int64_t *colors,
+                              int64_t nsample,
+                              size_t num_variates, int64_t *variates);
+
+/* multivariate hypergeometric, "marginals" method */
+DECLDIR void random_mvhg_marginals(bitgen_t *bitgen_state,
+                                   int64_t total,
+                                   size_t num_colors, int64_t *colors,
+                                   int64_t nsample,
+                                   size_t num_variates, int64_t *variates);
+
 /* Common to legacy-distributions.c and distributions.c but not exported */
 
 RAND_INT_TYPE random_binomial_btpe(bitgen_t *bitgen_state,
