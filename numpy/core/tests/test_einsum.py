@@ -700,6 +700,12 @@ class TestEinsum(object):
         y2 = x[idx[:, None], idx[:, None], idx, idx]
         assert_equal(y1, y2)
 
+    def test_einsum_failed_on_p9_and_s390x(self):
+        # Issues gh-14692 and gh-12689
+        # Bug with signed vs unsigned char errored on power9 and s390x Linux
+        tensor = np.random.random_sample((10, 10, 10, 10))
+        print(np.einsum('ijij->', tensor))
+
     def test_einsum_all_contig_non_contig_output(self):
         # Issue gh-5907, tests that the all contiguous special case
         # actually checks the contiguity of the output
