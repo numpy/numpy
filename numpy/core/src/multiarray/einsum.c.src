@@ -1876,7 +1876,7 @@ parse_operand_subscripts(char *subscripts, int length,
      * later where it matters the char is cast to a signed char.
      */
     for (idim = 0; idim < ndim - 1; ++idim) {
-        int label = op_labels[idim];
+        int label = (signed char)op_labels[idim];
         /* If it is a proper label, find any duplicates of it. */
         if (label > 0) {
             /* Search for the next matching label. */
