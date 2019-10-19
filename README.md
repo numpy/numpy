@@ -23,6 +23,7 @@ It provides:
 - sophisticated (broadcasting) functions
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
+Besides its obvious scientific uses, NumPy can also be used as an efficient multi-dimensional container of generic data. 
 
 Testing:
 
