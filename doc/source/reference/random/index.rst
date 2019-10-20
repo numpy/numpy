@@ -32,7 +32,7 @@ instance's methods are imported into the numpy.random namespace, see
 Quick Start
 -----------
 
-By default, `~Generator` uses bits provided by `~pcg64.PCG64` which
+By default, `~Generator` uses bits provided by `PCG64` which
 has better statistical properties than the legacy mt19937 random
 number generator in `~.RandomState`.
 
@@ -155,7 +155,7 @@ What's New or Different
   (`~.PCG64.ctypes`) and CFFI (`~.PCG64.cffi`). This allows the bit generators
   to be used in numba.
 * The bit generators can be used in downstream projects via
-  :ref:`Cython <randomgen_cython>`.
+  :ref:`Cython <random_cython>`.
 * `~.Generator.integers` is now the canonical way to generate integer
   random numbers from a discrete uniform distribution. The ``rand`` and
   ``randn`` methods are only available through the legacy `~.RandomState`.
@@ -199,7 +199,7 @@ Features
    Multithreaded Generation <multithreading>
    new-or-different
    Comparing Performance <performance>
-   extending
+   Using from Numba, Cython, CFFI <extending>
 
 Original Source
 ~~~~~~~~~~~~~~~

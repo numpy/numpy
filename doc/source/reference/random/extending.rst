@@ -71,17 +71,17 @@ provided by ``ctypes.next_double``.
 
 
 Both CTypes and CFFI allow the more complicated distributions to be used
-directly in Numba after compiling the file distributions.c into a DLL or so.
-An example showing the use of a more complicated distribution is in the
-examples folder.
+directly in Numba after compiling the file distributions.c into a ``DLL`` or
+``so``.  An example showing the use of a more complicated distribution is in
+the `examples` section below.
 
-.. _randomgen_cython:
+.. _random_cython:
 
 Cython
 ======
 
 Cython can be used to unpack the ``PyCapsule`` provided by a BitGenerator.
-This example uses `~pcg64.PCG64` and the example from above.  The usual caveats
+This example uses `PCG64` and the example from above.  The usual caveats
 for writing high-performance code using Cython -- removing bounds checks and
 wrap around, providing array alignment information -- still apply.
 
@@ -135,6 +135,8 @@ wrap around, providing array alignment information -- still apply.
 The BitGenerator can also be directly accessed using the members of the basic
 RNG structure.
 
+.. random_cython:
+
 .. code-block:: cython
 
     @cython.boundscheck(False)
@@ -161,7 +163,7 @@ RNG structure.
         return randoms
 
 These functions along with a minimal setup file are included in the
-examples folder.
+`examples` folder, ``numpy.random.examples``.
 
 New Basic RNGs
 ==============
@@ -191,3 +193,11 @@ the next 64-bit unsigned integer function if not needed. Functions inside
 .. code-block:: c
 
   bitgen_state->next_uint64(bitgen_state->state)
+
+Examples
+--------
+
+.. toctree::
+    Numba <examples/numba>
+    CFFI + Numba <examples/numba_cffi> 
+    Cython <examples/cython/index>

@@ -34,6 +34,7 @@ def configuration(parent_package='', top_path=None):
 
     defs.append(('NPY_NO_DEPRECATED_API', 0))
     config.add_data_dir('tests')
+    config.add_data_dir('examples')
 
     EXTRA_LINK_ARGS = []
     # Math lib
@@ -92,6 +93,7 @@ def configuration(parent_package='', top_path=None):
                              depends=['%s.pyx' % gen, '%s.pxd' % gen,],
                              define_macros=defs,
                              )
+        config.add_data_files('{0}.pxd'.format(gen))
     other_srcs = [
         'src/distributions/logfactorial.c',
         'src/distributions/distributions.c',
@@ -110,6 +112,7 @@ def configuration(parent_package='', top_path=None):
                              depends=['%s.pyx' % gen],
                              define_macros=defs,
                              )
+    config.add_data_files('_bounded_inteters.pxd')
     config.add_extension('mtrand',
                          sources=['mtrand.c',
                                   'src/legacy/legacy-distributions.c',
