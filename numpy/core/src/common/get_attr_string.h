@@ -39,6 +39,14 @@ _is_basic_python_type(PyTypeObject *tp)
     );
 }
 
+static NPY_INLINE void
+clear_exception(PyObject *exception)
+{
+    if (PyErr_Occurred() && PyErr_ExceptionMatches(exception)) {
+        PyErr_Clear();
+    }
+}
+
 /*
  * Stripped down version of PyObject_GetAttrString,
  * avoids lookups for None, tuple, and List objects,
@@ -63,7 +71,7 @@ maybe_get_attr(PyObject *obj, char *name)
     if (tp->tp_getattr != NULL) {
         res = (*tp->tp_getattr)(obj, name);
         if (res == NULL) {
-            PyErr_Clear();
+            clear_exception(PyExc_AttributeError);
         }
     }
     /* Attribute referenced by (PyObject *)name */
@@ -79,7 +87,7 @@ maybe_get_attr(PyObject *obj, char *name)
         res = (*tp->tp_getattro)(obj, w);
         Py_DECREF(w);
         if (res == NULL) {
-            PyErr_Clear();
+            clear_exception(PyExc_AttributeError);
         }
     }
     return res;

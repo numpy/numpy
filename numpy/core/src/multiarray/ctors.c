@@ -2351,7 +2351,11 @@ PyArray_FromStructInterface(PyObject *input)
 
     attr = PyArray_LookupSpecial_OnInstance(input, "__array_struct__");
     if (attr == NULL) {
-        return Py_NotImplemented;
+        if (PyErr_Occurred()) {
+            return NULL;
+        } else {
+            return Py_NotImplemented;
+        }
     }
     if (!NpyCapsule_Check(attr)) {
         goto fail;
