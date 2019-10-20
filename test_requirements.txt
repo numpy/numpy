@@ -5,3 +5,7 @@ pytest-cov==2.8.1
 pickle5; python_version == '3.7'
 pickle5; python_version == '3.6' and platform_python_implementation != 'PyPy'
 nose
+
+get fro Pypi or directly create the virtualenv and fetch those using pip/pip3
+// example of using pip3 -->  for windows  --> pip install <<package_name>>
+// for macos/linux --> pip3 install <package_name>>
