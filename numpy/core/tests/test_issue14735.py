@@ -23,29 +23,7 @@ class Wrapper:
         return "<Wrapper({self.array})>".format(self=self)
 
 @pytest.mark.filterwarnings("error")
-def test_pint_replica_warning():
+def test_getattr_warning():
     array = Wrapper(np.arange(10))
     with pytest.raises(UserWarning, match="object got converted"):
         np.asarray(array)
-
-def test_pint_replica():
-    print(np.__version__)
-
-    array = Wrapper(np.arange(10))
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
-        expected = np.asarray(array)
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings("error")
-        try:
-            actual = np.asarray(array)
-        except UserWarning:
-            print("user warning caught")
-            actual = expected
-
-    assert (
-        type(expected) == type(actual)
-        and expected.dtype == actual.dtype
-        and np.allclose(expected, actual)
-    )
