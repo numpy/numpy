@@ -20,7 +20,7 @@ class Wrapper:
         return getattr(self.array, name)
 
     def __repr__(self):
-        return f"<Wrapper({self.array})>"
+        return "<Wrapper({self.array})>".format(self=self)
 
 @pytest.mark.filterwarnings("error")
 def test_pint_replica_warning():
