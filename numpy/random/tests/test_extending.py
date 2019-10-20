@@ -9,8 +9,9 @@ except ImportError:
 def test_cython():
     curdir = os.getcwd()
     argv = sys.argv
+    examples = (os.path.dirname(__file__), '..', 'examples')
     try:
-        os.chdir('numpy/random/examples')
+        os.chdir(os.path.join(*examples))
         sys.argv = argv[:1] + ['build']
         from numpy.random.examples.cython import setup
     finally:

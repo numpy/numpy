@@ -18,8 +18,7 @@ extending = Extension("extending",
                       include_dirs=[np.get_include()])
 distributions = Extension("extending_distributions",
                           sources=[join(curpath, 'extending_distributions.pyx'),
-                                   join(curpath, '..', '..', 'src',
-                                        'distributions', 'distributions.c')],
+                                  ],
                           include_dirs=[np.get_include()])
 
 extensions = [extending, distributions]
