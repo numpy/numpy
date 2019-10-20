@@ -62,12 +62,9 @@ def fv(rate, nper, pmt, pv, when='end'):
 
     .. deprecated:: 1.18
 
-       `fv` is deprecated; see NEP 32::
-
-           https://numpy.org/neps/nep-0032-remove-financial-functions.html
-
-        Use the corresponding function in the numpy-financial library,
-        https://pypi.org/project/numpy-financial
+       `fv` is deprecated; for details, see NEP 32 [1]_.
+       Use the corresponding function in the numpy-financial library,
+       https://pypi.org/project/numpy-financial.
 
     Given:
      * a present value, `pv`
@@ -116,7 +113,9 @@ def fv(rate, nper, pmt, pv, when='end'):
 
     References
     ----------
-    .. [WRW] Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May).
+    .. [1] NumPy Enhancement Proposal (NEP) 32,
+       https://numpy.org/neps/nep-0032-remove-financial-functions.html
+    .. [2] Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May).
        Open Document Format for Office Applications (OpenDocument)v1.2,
        Part 2: Recalculated Formula (OpenFormula) Format - Annotated Version,
        Pre-Draft 12. Organization for the Advancement of Structured Information
@@ -124,6 +123,7 @@ def fv(rate, nper, pmt, pv, when='end'):
        Available:
        http://www.oasis-open.org/committees/documents.php?wg_abbrev=office-formula
        OpenDocument-formula-20090508.odt
+
 
     Examples
     --------
@@ -167,12 +167,9 @@ def pmt(rate, nper, pv, fv=0, when='end'):
 
     .. deprecated:: 1.18
 
-       `pmt` is deprecated; see NEP 32::
-
-           https://numpy.org/neps/nep-0032-remove-financial-functions.html
-
-        Use the corresponding function in the numpy-financial library,
-        https://pypi.org/project/numpy-financial
+       `pmt` is deprecated; for details, see NEP 32 [1]_.
+       Use the corresponding function in the numpy-financial library,
+       https://pypi.org/project/numpy-financial.
 
     Given:
      * a present value, `pv` (e.g., an amount borrowed)
@@ -231,7 +228,9 @@ def pmt(rate, nper, pv, fv=0, when='end'):
 
     References
     ----------
-    .. [WRW] Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May).
+    .. [1] NumPy Enhancement Proposal (NEP) 32,
+       https://numpy.org/neps/nep-0032-remove-financial-functions.html
+    .. [2] Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May).
        Open Document Format for Office Applications (OpenDocument)v1.2,
        Part 2: Recalculated Formula (OpenFormula) Format - Annotated Version,
        Pre-Draft 12. Organization for the Advancement of Structured Information
@@ -276,12 +275,9 @@ def nper(rate, pmt, pv, fv=0, when='end'):
 
     .. deprecated:: 1.18
 
-       `nper` is deprecated; see NEP 32::
-
-           https://numpy.org/neps/nep-0032-remove-financial-functions.html
-
-        Use the corresponding function in the numpy-financial library,
-        https://pypi.org/project/numpy-financial
+       `nper` is deprecated; for details, see NEP 32 [1]_.
+       Use the corresponding function in the numpy-financial library,
+       https://pypi.org/project/numpy-financial.
 
     :class:`decimal.Decimal` type is not supported.
 
@@ -307,6 +303,11 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     but if ``rate = 0`` then::
 
      fv + pv + pmt*nper = 0
+
+    References
+    ----------
+    .. [1] NumPy Enhancement Proposal (NEP) 32,
+       https://numpy.org/neps/nep-0032-remove-financial-functions.html
 
     Examples
     --------
@@ -361,12 +362,9 @@ def ipmt(rate, per, nper, pv, fv=0, when='end'):
 
     .. deprecated:: 1.18
 
-       `ipmt` is deprecated; see NEP 32::
-
-           https://numpy.org/neps/nep-0032-remove-financial-functions.html
-
-        Use the corresponding function in the numpy-financial library,
-        https://pypi.org/project/numpy-financial
+       `ipmt` is deprecated; for details, see NEP 32 [1]_.
+       Use the corresponding function in the numpy-financial library,
+       https://pypi.org/project/numpy-financial.
 
     Parameters
     ----------
@@ -402,6 +400,11 @@ def ipmt(rate, per, nper, pv, fv=0, when='end'):
     The total payment is made up of payment against principal plus interest.
 
     ``pmt = ppmt + ipmt``
+
+    References
+    ----------
+    .. [1] NumPy Enhancement Proposal (NEP) 32,
+       https://numpy.org/neps/nep-0032-remove-financial-functions.html
 
     Examples
     --------
@@ -483,12 +486,9 @@ def ppmt(rate, per, nper, pv, fv=0, when='end'):
 
     .. deprecated:: 1.18
 
-       `ppmt` is deprecated; see NEP 32::
-
-           https://numpy.org/neps/nep-0032-remove-financial-functions.html
-
-        Use the corresponding function in the numpy-financial library,
-        https://pypi.org/project/numpy-financial
+       `ppmt` is deprecated; for details, see NEP 32 [1]_.
+       Use the corresponding function in the numpy-financial library,
+       https://pypi.org/project/numpy-financial.
 
     Parameters
     ----------
@@ -510,6 +510,11 @@ def ppmt(rate, per, nper, pv, fv=0, when='end'):
     --------
     pmt, pv, ipmt
 
+    References
+    ----------
+    .. [1] NumPy Enhancement Proposal (NEP) 32,
+       https://numpy.org/neps/nep-0032-remove-financial-functions.html
+
     """
     total = pmt(rate, nper, pv, fv, when)
     return total - ipmt(rate, per, nper, pv, fv, when)
@@ -528,12 +533,9 @@ def pv(rate, nper, pmt, fv=0, when='end'):
 
     .. deprecated:: 1.18
 
-       `pv` is deprecated; see NEP 32::
-
-           https://numpy.org/neps/nep-0032-remove-financial-functions.html
-
-        Use the corresponding function in the numpy-financial library,
-        https://pypi.org/project/numpy-financial
+       `pv` is deprecated; for details, see NEP 32 [1]_.
+       Use the corresponding function in the numpy-financial library,
+       https://pypi.org/project/numpy-financial.
 
     Given:
      * a future value, `fv`
@@ -581,7 +583,9 @@ def pv(rate, nper, pmt, fv=0, when='end'):
 
     References
     ----------
-    .. [WRW] Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May).
+    .. [1] NumPy Enhancement Proposal (NEP) 32,
+       https://numpy.org/neps/nep-0032-remove-financial-functions.html
+    .. [2] Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May).
        Open Document Format for Office Applications (OpenDocument)v1.2,
        Part 2: Recalculated Formula (OpenFormula) Format - Annotated Version,
        Pre-Draft 12. Organization for the Advancement of Structured Information
@@ -657,12 +661,9 @@ def rate(nper, pmt, pv, fv, when='end', guess=None, tol=None, maxiter=100):
 
     .. deprecated:: 1.18
 
-       `rate` is deprecated; see NEP 32::
-
-           https://numpy.org/neps/nep-0032-remove-financial-functions.html
-
-        Use the corresponding function in the numpy-financial library,
-        https://pypi.org/project/numpy-financial
+       `rate` is deprecated; for details, see NEP 32 [1]_.
+       Use the corresponding function in the numpy-financial library,
+       https://pypi.org/project/numpy-financial.
 
     Parameters
     ----------
@@ -694,13 +695,16 @@ def rate(nper, pmt, pv, fv, when='end', guess=None, tol=None, maxiter=100):
 
     References
     ----------
-    Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May). Open Document
-    Format for Office Applications (OpenDocument)v1.2, Part 2: Recalculated
-    Formula (OpenFormula) Format - Annotated Version, Pre-Draft 12.
-    Organization for the Advancement of Structured Information Standards
-    (OASIS). Billerica, MA, USA. [ODT Document]. Available:
-    http://www.oasis-open.org/committees/documents.php?wg_abbrev=office-formula
-    OpenDocument-formula-20090508.odt
+    .. [1] NumPy Enhancement Proposal (NEP) 32,
+       https://numpy.org/neps/nep-0032-remove-financial-functions.html
+    .. [2] Wheeler, D. A., E. Rathke, and R. Weir (Eds.) (2009, May).
+       Open Document Format for Office Applications (OpenDocument)v1.2,
+       Part 2: Recalculated Formula (OpenFormula) Format - Annotated Version,
+       Pre-Draft 12. Organization for the Advancement of Structured Information
+       Standards (OASIS). Billerica, MA, USA. [ODT Document].
+       Available:
+       http://www.oasis-open.org/committees/documents.php?wg_abbrev=office-formula
+       OpenDocument-formula-20090508.odt
 
     """
     when = _convert_when(when)
@@ -745,12 +749,9 @@ def irr(values):
 
     .. deprecated:: 1.18
 
-       `irr` is deprecated; see NEP 32::
-
-           https://numpy.org/neps/nep-0032-remove-financial-functions.html
-
-        Use the corresponding function in the numpy-financial library,
-        https://pypi.org/project/numpy-financial
+       `irr` is deprecated; for details, see NEP 32 [1]_.
+       Use the corresponding function in the numpy-financial library,
+       https://pypi.org/project/numpy-financial.
 
     This is the "average" periodically compounded rate of return
     that gives a net present value of 0.0; for a more complete explanation,
@@ -786,13 +787,15 @@ def irr(values):
      + \\frac{55}{(1+r)^3} + \\frac{20}{(1+r)^4} = 0
 
     In general, for `values` :math:`= [v_0, v_1, ... v_M]`,
-    irr is the solution of the equation: [G]_
+    irr is the solution of the equation: [2]_
 
     .. math:: \\sum_{t=0}^M{\\frac{v_t}{(1+irr)^{t}}} = 0
 
     References
     ----------
-    .. [G] L. J. Gitman, "Principles of Managerial Finance, Brief," 3rd ed.,
+    .. [1] NumPy Enhancement Proposal (NEP) 32,
+       https://numpy.org/neps/nep-0032-remove-financial-functions.html
+    .. [2] L. J. Gitman, "Principles of Managerial Finance, Brief," 3rd ed.,
        Addison-Wesley, 2003, pg. 348.
 
     Examples
@@ -839,12 +842,9 @@ def npv(rate, values):
 
     .. deprecated:: 1.18
 
-       `npv` is deprecated; see NEP 32::
-
-           https://numpy.org/neps/nep-0032-remove-financial-functions.html
-
-        Use the corresponding function in the numpy-financial library,
-        https://pypi.org/project/numpy-financial
+       `npv` is deprecated; for details, see NEP 32 [1]_.
+       Use the corresponding function in the numpy-financial library,
+       https://pypi.org/project/numpy-financial.
 
     Parameters
     ----------
@@ -876,13 +876,15 @@ def npv(rate, values):
 
     Notes
     -----
-    Returns the result of: [G]_
+    Returns the result of: [2]_
 
     .. math :: \\sum_{t=0}^{M-1}{\\frac{values_t}{(1+rate)^{t}}}
 
     References
     ----------
-    .. [G] L. J. Gitman, "Principles of Managerial Finance, Brief," 3rd ed.,
+    .. [1] NumPy Enhancement Proposal (NEP) 32,
+       https://numpy.org/neps/nep-0032-remove-financial-functions.html
+    .. [2] L. J. Gitman, "Principles of Managerial Finance, Brief," 3rd ed.,
        Addison-Wesley, 2003, pg. 346.
 
     Examples
@@ -924,12 +926,9 @@ def mirr(values, finance_rate, reinvest_rate):
 
     .. deprecated:: 1.18
 
-       `mirr` is deprecated; see NEP 32::
-
-           https://numpy.org/neps/nep-0032-remove-financial-functions.html
-
-        Use the corresponding function in the numpy-financial library,
-        https://pypi.org/project/numpy-financial
+       `mirr` is deprecated; for details, see NEP 32 [1]_.
+       Use the corresponding function in the numpy-financial library,
+       https://pypi.org/project/numpy-financial.
 
     Parameters
     ----------
@@ -947,6 +946,10 @@ def mirr(values, finance_rate, reinvest_rate):
     out : float
         Modified internal rate of return
 
+    References
+    ----------
+    .. [1] NumPy Enhancement Proposal (NEP) 32,
+       https://numpy.org/neps/nep-0032-remove-financial-functions.html
     """
     values = np.asarray(values)
     n = values.size
