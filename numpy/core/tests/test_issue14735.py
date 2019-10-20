@@ -15,7 +15,7 @@ class Wrapper:
 
     def __getattr__(self, name):
         if name.startswith("__array_"):
-            warnings.warn("object got converted", UserWarning)
+            warnings.warn("object got converted", UserWarning, stacklevel=1)
 
         return getattr(self.array, name)
 
