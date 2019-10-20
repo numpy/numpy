@@ -3884,6 +3884,64 @@ class TestPickling(object):
     
         assert_equal(original.dtype, new.dtype)
 
+    def test_py2_can_load_py3_pickle_with_dtype_field_names(self):
+        # gh-2407 and PR #14275
+        # Py2 should be able to load a pickle that was created in PY3
+        # when the pickle contains a structured dtype with field names
+        import numpy as np
+
+        expected_dtype = np.dtype([('SPOT', np.float64)])
+        expected_data = np.array([(6.0)], dtype=expected_dtype)
+        # Pickled under Python 3.6.5 with protocol=2 by the code below:
+        # pickle.dumps(expected_data, protocol=2)
+        saved_pickle_from_py3 = b'''\
+\x80\x02cnumpy.core.multiarray\n_reconstruct\nq\x00cnumpy\nndarray\n\
+q\x01K\x00\x85q\x02c_codecs\nencode\nq\x03X\x01\x00\x00\x00bq\x04X\
+\x06\x00\x00\x00latin1q\x05\x86q\x06Rq\x07\x87q\x08Rq\t(K\x01K\x01\
+\x85q\ncnumpy\ndtype\nq\x0bX\x02\x00\x00\x00V8q\x0cK\x00K\x01\x87q\
+\rRq\x0e(K\x03X\x01\x00\x00\x00|q\x0fNX\x04\x00\x00\x00SPOTq\x10\
+\x85q\x11}q\x12h\x10h\x0bX\x02\x00\x00\x00f8q\x13K\x00K\x01\x87\
+q\x14Rq\x15(K\x03X\x01\x00\x00\x00<q\x16NNNJ\xff\xff\xff\xffJ\xff\
+\xff\xff\xffK\x00tq\x17bK\x00\x86q\x18sK\x08K\x01K\x10tq\x19b\x89h\
+\x03X\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x18@q\x1ah\x05\x86q\
+\x1bRq\x1ctq\x1db.\
+'''
+
+        if sys.version_info[0] < 3:  # PY2
+            assert pickle.loads(saved_pickle_from_py3) == expected_data
+        else:
+            # check that the string above is what we claim on PY3
+            py3_pickle_dump = pickle.dumps(expected_data, protocol=2)
+            assert py3_pickle_dump == saved_pickle_from_py3
+
+    def test_py3_can_load_py2_pickle_with_dtype_field_names(self):
+        # gh-2407 and PR #14275
+        # Roundtrip: Py3 should load a pickle that was created in PY2
+        # after loading the saved_pickle (from PY3) in the test named
+        # 'test_py2_can_load_py3_pickle_with_dtype_field_names'
+        import numpy as np
+
+        expected_dtype = np.dtype([('SPOT', np.float64)])
+        expected = np.array([(6.0)], dtype=expected_dtype)
+        # Pickled under Python 2.7.16 with protocol=2 after it was loaded
+        # by test 'test_py2_can_load_py3_pickle_with_dtype_field_names'
+        pickle_from_py2 = b'''\
+\x80\x02cnumpy.core.multiarray\n_reconstruct\nq\x01cnumpy\nndarray\n\
+q\x02K\x00\x85U\x01b\x87Rq\x03(K\x01K\x01\x85cnumpy\ndtype\nq\x04U\x02\
+V8K\x00K\x01\x87Rq\x05(K\x03U\x01|NU\x04SPOTq\x06\x85q\x07}q\x08h\x06h\
+\x04U\x02f8K\x00K\x01\x87Rq\t(K\x03U\x01<NNNJ\xff\xff\xff\xffJ\xff\xff\
+\xff\xffK\x00tbK\x00\x86sK\x08K\x01K\x10tb\x89U\x08\x00\x00\x00\x00\x00\
+\x00\x18@tb.\
+'''
+
+        if sys.version_info[0] >= 3:  # PY3
+            assert pickle.loads(pickle_from_py2) == expected
+        else:
+            # check that the string above is what we claim on PY2
+            if sys.platform.startswith('linux') and not IS_PYPY:
+                assert pickle.dumps(expected, protocol=2) == pickle_from_py2
+
+
 
 class TestFancyIndexing(object):
     def test_list(self):

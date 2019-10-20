@@ -2751,11 +2751,11 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
             }
         }
         else {
-#if defined(NPY_PY3K)
             /*
-             * To support pickle.load(f, encoding='bytes') for loading Py2
-             * generated pickles on Py3, we need to be more lenient and convert
-             * field names from byte strings to unicode.
+             * At least one of the names is not of the expected type.
+             * The difference might originate from pickles that were
+             * created on another Python version (PY2/PY3). Go through
+             * the names and convert if possible for compatibility
              */
             PyObject *tmp, *new_name, *field;
 
@@ -2780,7 +2780,14 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
                     return NULL;
                 }
 
+#if defined(NPY_PY3K)
+                /*
+                 * To support pickle.load(f, encoding='bytes') for loading Py2
+                 * generated pickles on Py3, we need to be more lenient and convert
+                 * field names from byte strings to unicode.
+                 */
                 if (PyUnicode_Check(name)) {
+                    // no transformation needed, keep it as is
                     new_name = name;
                     Py_INCREF(new_name);
                 }
@@ -2790,17 +2797,35 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
                         return NULL;
                     }
                 }
+#else
+                // PY2 should be able to read PY3 pickles. See gh-2407
+                if (PyString_Check(name)) {
+                    // It is a PY2 string, no transformation is needed
+                    new_name = name;
+                    Py_INCREF(new_name);
+                }
+                else if (PyUnicode_Check(name)) {
+                    // The field names of a structured dtype were pickled in PY3 as unicode strings
+                    // so, to unpickle them in PY2, we need to convert them to PY2 strings
+                    new_name = PyUnicode_AsEncodedString(name, "ASCII", "strict");
+                    if (new_name == NULL) {
+                        return NULL;
+                    }
+                }
+                else {
+                    // The field name is not a string or a unicode object, we cannot process it
+                    PyErr_Format(PyExc_ValueError,
+                        "non-string/non-unicode names in Numpy dtype unpickling");
+                    return NULL;
+                }
+
+#endif
 
                 PyTuple_SET_ITEM(self->names, i, new_name);
                 if (PyDict_SetItem(self->fields, new_name, field) != 0) {
                     return NULL;
                 }
             }
-#else
-            PyErr_Format(PyExc_ValueError,
-                "non-string names in Numpy dtype unpickling");
-            return NULL;
-#endif
         }
     }
 
