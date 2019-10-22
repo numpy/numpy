@@ -80,7 +80,7 @@ An array is usually a fixed-size container of items of the same type and size. T
 
 Array attributes reflect information that is intrinsic to the array itself. If you need to get and even set poperties of an array without creating a new array, you can often access an array through its attributes. 
 
-Read more about array attributes `here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_.
+`Read more about array attributes here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_.
 
 
 How to create a basic array
@@ -88,7 +88,7 @@ How to create a basic array
 
 To create a NumPy array, you can use the function `np.array()`
 
-All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. You can find more information about data types `here <https://numpy.org/devdocs/user/quickstart.html#arrays-dtypes>`_.
+All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. `You can find more information about data types here <https://numpy.org/devdocs/user/quickstart.html#arrays-dtypes>`_.
 
 ::
 
@@ -231,7 +231,7 @@ You can delete an element with np.delete.
 
 **Sort**
 
-Sorting an element is simple with np.sort. You can specify the axis, kind, and order when you call the function. Read more about sorting an array `here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.sort.html>`_.
+Sorting an element is simple with np.sort. You can specify the axis, kind, and order when you call the function. `Read more about sorting an array here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.sort.html>`_.
 
 If you start with this array:
 
