@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-#include "include/distributions.h"
+#include "numpy/random/distributions.h"
 #include "logfactorial.h"
 
 

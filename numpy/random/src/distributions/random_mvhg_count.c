@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "include/distributions.h"
+#include "numpy/random/distributions.h"
 
 /*
  *  random_mvhg_count

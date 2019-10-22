@@ -15,7 +15,11 @@ curpath = abspath(dirname(__file__))
 
 extending = Extension("extending",
                       sources=[join(curpath, 'extending.pyx')],
-                      include_dirs=[np.get_include()])
+                      include_dirs=[
+                            np.get_include(),
+                            join(curpath, '..', '..')
+                        ],
+                      )
 distributions = Extension("extending_distributions",
                           sources=[join(curpath, 'extending_distributions.pyx'),
                                   ],

@@ -8,7 +8,7 @@ __all__ = []
 
 np.import_array()
 
-cdef extern from "include/distributions.h":
+cdef extern from "numpy/random/distributions.h":
     # Generate random numbers in closed interval [off, off + rng].
     uint64_t random_bounded_uint64(bitgen_t *bitgen_state,
                                    uint64_t off, uint64_t rng,
