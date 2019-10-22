@@ -3,36 +3,159 @@
 import operator
 import warnings
 
-import numpy as np
-from numpy.core.multiarray import normalize_axis_index
-
-from .bounded_integers import _integers_types
-from .pcg64 import PCG64
-
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
-from libc cimport string
 
 cimport cython
+import numpy as np
 cimport numpy as np
+from numpy.core.multiarray import normalize_axis_index
 
-from .bounded_integers cimport *
-from .common cimport *
-from .distributions cimport *
+from libc cimport string
+from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
+                          int32_t, int64_t, INT64_MAX, SIZE_MAX)
+from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
+         _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
+         _rand_uint8, _gen_mask)
+from ._bounded_integers import _integers_types
+from ._pcg64 import PCG64
+from ._bit_generator cimport bitgen_t
+from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
+            CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
+            CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
+            double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
+            check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
+        )
 
 
-__all__ = ['Generator', 'beta', 'binomial', 'bytes', 'chisquare', 'choice',
-           'dirichlet', 'exponential', 'f', 'gamma',
-           'geometric', 'gumbel', 'hypergeometric', 'integers', 'laplace',
-           'logistic', 'lognormal', 'logseries', 'multinomial',
-           'multivariate_normal', 'negative_binomial', 'noncentral_chisquare',
-           'noncentral_f', 'normal', 'pareto', 'permutation',
-           'poisson', 'power', 'random',  'rayleigh', 'shuffle',
-           'standard_cauchy', 'standard_exponential', 'standard_gamma',
-           'standard_normal', 'standard_t', 'triangular',
-           'uniform', 'vonmises', 'wald', 'weibull', 'zipf']
+cdef extern from "include/distributions.h":
+
+    struct s_binomial_t:
+        int has_binomial
+        double psave
+        int64_t nsave
+        double r
+        double q
+        double fm
+        int64_t m
+        double p1
+        double xm
+        double xl
+        double xr
+        double c
+        double laml
+        double lamr
+        double p2
+        double p3
+        double p4
+
+    ctypedef s_binomial_t binomial_t
+
+    double random_standard_uniform(bitgen_t *bitgen_state) nogil
+    void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
+    double random_standard_exponential(bitgen_t *bitgen_state) nogil
+    void random_standard_exponential_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    double random_standard_exponential_zig(bitgen_t *bitgen_state) nogil
+    void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    double random_standard_normal(bitgen_t* bitgen_state) nogil
+    void random_standard_normal_fill(bitgen_t *bitgen_state, np.npy_intp count, double *out) nogil
+    void random_standard_normal_fill_f(bitgen_t *bitgen_state, np.npy_intp count, float *out) nogil
+    double random_standard_gamma(bitgen_t *bitgen_state, double shape) nogil
+
+    float random_standard_uniform_f(bitgen_t *bitgen_state) nogil
+    void random_standard_uniform_fill_f(bitgen_t* bitgen_state, np.npy_intp cnt, float *out) nogil
+    float random_standard_exponential_f(bitgen_t *bitgen_state) nogil
+    float random_standard_exponential_zig_f(bitgen_t *bitgen_state) nogil
+    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
+    void random_standard_exponential_zig_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
+    float random_standard_normal_f(bitgen_t* bitgen_state) nogil
+    float random_standard_gamma_f(bitgen_t *bitgen_state, float shape) nogil
+
+    int64_t random_positive_int64(bitgen_t *bitgen_state) nogil
+    int32_t random_positive_int32(bitgen_t *bitgen_state) nogil
+    int64_t random_positive_int(bitgen_t *bitgen_state) nogil
+    uint64_t random_uint(bitgen_t *bitgen_state) nogil
+
+    double random_normal(bitgen_t *bitgen_state, double loc, double scale) nogil
+
+    double random_gamma(bitgen_t *bitgen_state, double shape, double scale) nogil
+    float random_gamma_f(bitgen_t *bitgen_state, float shape, float scale) nogil
+
+    double random_exponential(bitgen_t *bitgen_state, double scale) nogil
+    double random_uniform(bitgen_t *bitgen_state, double lower, double range) nogil
+    double random_beta(bitgen_t *bitgen_state, double a, double b) nogil
+    double random_chisquare(bitgen_t *bitgen_state, double df) nogil
+    double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) nogil
+    double random_standard_cauchy(bitgen_t *bitgen_state) nogil
+    double random_pareto(bitgen_t *bitgen_state, double a) nogil
+    double random_weibull(bitgen_t *bitgen_state, double a) nogil
+    double random_power(bitgen_t *bitgen_state, double a) nogil
+    double random_laplace(bitgen_t *bitgen_state, double loc, double scale) nogil
+    double random_gumbel(bitgen_t *bitgen_state, double loc, double scale) nogil
+    double random_logistic(bitgen_t *bitgen_state, double loc, double scale) nogil
+    double random_lognormal(bitgen_t *bitgen_state, double mean, double sigma) nogil
+    double random_rayleigh(bitgen_t *bitgen_state, double mode) nogil
+    double random_standard_t(bitgen_t *bitgen_state, double df) nogil
+    double random_noncentral_chisquare(bitgen_t *bitgen_state, double df,
+                                       double nonc) nogil
+    double random_noncentral_f(bitgen_t *bitgen_state, double dfnum,
+                               double dfden, double nonc) nogil
+    double random_wald(bitgen_t *bitgen_state, double mean, double scale) nogil
+    double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) nogil
+    double random_triangular(bitgen_t *bitgen_state, double left, double mode,
+                             double right) nogil
+
+    int64_t random_poisson(bitgen_t *bitgen_state, double lam) nogil
+    int64_t random_negative_binomial(bitgen_t *bitgen_state, double n, double p) nogil
+    int64_t random_binomial(bitgen_t *bitgen_state, double p, int64_t n, binomial_t *binomial) nogil
+    int64_t random_logseries(bitgen_t *bitgen_state, double p) nogil
+    int64_t random_geometric_search(bitgen_t *bitgen_state, double p) nogil
+    int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) nogil
+    int64_t random_geometric(bitgen_t *bitgen_state, double p) nogil
+    int64_t random_zipf(bitgen_t *bitgen_state, double a) nogil
+    int64_t random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad,
+                                    int64_t sample) nogil
+
+    uint64_t random_interval(bitgen_t *bitgen_state, uint64_t max) nogil
+
+    # Generate random uint64 numbers in closed interval [off, off + rng].
+    uint64_t random_bounded_uint64(bitgen_t *bitgen_state,
+                                   uint64_t off, uint64_t rng,
+                                   uint64_t mask, bint use_masked) nogil
+
+    void random_multinomial(bitgen_t *bitgen_state, int64_t n, int64_t *mnix,
+                            double *pix, np.npy_intp d, binomial_t *binomial) nogil
+
+    int random_mvhg_count(bitgen_t *bitgen_state,
+                          int64_t total,
+                          size_t num_colors, int64_t *colors,
+                          int64_t nsample,
+                          size_t num_variates, int64_t *variates) nogil
+    void random_mvhg_marginals(bitgen_t *bitgen_state,
+                               int64_t total,
+                               size_t num_colors, int64_t *colors,
+                               int64_t nsample,
+                               size_t num_variates, int64_t *variates) nogil
 
 np.import_array()
+
+
+cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
+    """
+    Sum the values in the array `colors`.
+
+    Return -1 if an overflow occurs.
+    The values in *colors are assumed to be nonnegative.
+    """
+    cdef size_t i
+    cdef int64_t sum
+
+    sum = 0
+    for i in range(num_colors):
+        if colors[i] > INT64_MAX - sum:
+            return -1
+        sum += colors[i]
+    return sum
 
 
 cdef bint _check_bit_generator(object bitgen):
@@ -193,9 +316,9 @@ cdef class Generator:
         cdef double temp
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_double_fill, &self._bitgen, size, self.lock, out)
+            return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
-            return float_fill(&random_float, &self._bitgen, size, self.lock, out)
+            return float_fill(&random_standard_uniform_fill_f, &self._bitgen, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for random' % key)
 
@@ -341,9 +464,9 @@ cdef class Generator:
                 return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
             if method == u'zig':
-                return float_fill(&random_standard_exponential_zig_f, &self._bitgen, size, self.lock, out)
+                return float_fill(&random_standard_exponential_zig_fill_f, &self._bitgen, size, self.lock, out)
             else:
-                return float_fill(&random_standard_exponential_f, &self._bitgen, size, self.lock, out)
+                return float_fill(&random_standard_exponential_fill_f, &self._bitgen, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_exponential'
                             % key)
@@ -920,9 +1043,9 @@ cdef class Generator:
         """
         key = np.dtype(dtype).name
         if key == 'float64':
-            return double_fill(&random_gauss_zig_fill, &self._bitgen, size, self.lock, out)
+            return double_fill(&random_standard_normal_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
-            return float_fill(&random_gauss_zig_f, &self._bitgen, size, self.lock, out)
+            return float_fill(&random_standard_normal_fill_f, &self._bitgen, size, self.lock, out)
 
         else:
             raise TypeError('Unsupported dtype "%s" for standard_normal' % key)
@@ -1023,7 +1146,7 @@ cdef class Generator:
                [ 0.39924804,  4.68456316,  4.99394529,  4.84057254]])  # random
 
         """
-        return cont(&random_normal_zig, &self._bitgen, size, self.lock, 2,
+        return cont(&random_normal, &self._bitgen, size, self.lock, 2,
                     loc, '', CONS_NONE,
                     scale, 'scale', CONS_NON_NEGATIVE,
                     0.0, '', CONS_NONE,
@@ -1109,13 +1232,13 @@ cdef class Generator:
         cdef void *func
         key = np.dtype(dtype).name
         if key == 'float64':
-            return cont(&random_standard_gamma_zig, &self._bitgen, size, self.lock, 1,
+            return cont(&random_standard_gamma, &self._bitgen, size, self.lock, 1,
                         shape, 'shape', CONS_NON_NEGATIVE,
                         0.0, '', CONS_NONE,
                         0.0, '', CONS_NONE,
                         out)
         if key == 'float32':
-            return cont_f(&random_standard_gamma_zig_f, &self._bitgen, size, self.lock,
+            return cont_f(&random_standard_gamma_f, &self._bitgen, size, self.lock,
                           shape, 'shape', CONS_NON_NEGATIVE,
                           out)
         else:
@@ -3147,6 +3270,8 @@ cdef class Generator:
 
         See Also
         --------
+        multivariate_hypergeometric : Draw samples from the multivariate
+            hypergeometric distribution.
         scipy.stats.hypergeom : probability density function, distribution or
             cumulative density function, etc.
 
@@ -3645,6 +3770,222 @@ cdef class Generator:
 
         return multin
 
+    def multivariate_hypergeometric(self, object colors, object nsample,
+                                    size=None, method='marginals'):
+        """
+        multivariate_hypergeometric(colors, nsample, size=None,
+                                    method='marginals')
+
+        Generate variates from a multivariate hypergeometric distribution.
+
+        The multivariate hypergeometric distribution is a generalization
+        of the hypergeometric distribution.
+
+        Choose ``nsample`` items at random without replacement from a
+        collection with ``N`` distinct types.  ``N`` is the length of
+        ``colors``, and the values in ``colors`` are the number of occurrences
+        of that type in the collection.  The total number of items in the
+        collection is ``sum(colors)``.  Each random variate generated by this
+        function is a vector of length ``N`` holding the counts of the
+        different types that occurred in the ``nsample`` items.
+
+        The name ``colors`` comes from a common description of the
+        distribution: it is the probability distribution of the number of
+        marbles of each color selected without replacement from an urn
+        containing marbles of different colors; ``colors[i]`` is the number
+        of marbles in the urn with color ``i``.
+
+        Parameters
+        ----------
+        colors : sequence of integers
+            The number of each type of item in the collection from which
+            a sample is drawn.  The values in ``colors`` must be nonnegative.
+            To avoid loss of precision in the algorithm, ``sum(colors)``
+            must be less than ``10**9`` when `method` is "marginals".
+        nsample : int
+            The number of items selected.  ``nsample`` must not be greater
+            than ``sum(colors)``.
+        size : int or tuple of ints, optional
+            The number of variates to generate, either an integer or a tuple
+            holding the shape of the array of variates.  If the given size is,
+            e.g., ``(k, m)``, then ``k * m`` variates are drawn, where one
+            variate is a vector of length ``len(colors)``, and the return value
+            has shape ``(k, m, len(colors))``.  If `size` is an integer, the
+            output has shape ``(size, len(colors))``.  Default is None, in
+            which case a single variate is returned as an array with shape
+            ``(len(colors),)``.
+        method : string, optional
+            Specify the algorithm that is used to generate the variates.
+            Must be 'count' or 'marginals' (the default).  See the Notes
+            for a description of the methods.
+
+        Returns
+        -------
+        variates : ndarray
+            Array of variates drawn from the multivariate hypergeometric
+            distribution.
+
+        See Also
+        --------
+        hypergeometric : Draw samples from the (univariate) hypergeometric
+            distribution.
+
+        Notes
+        -----
+        The two methods do not return the same sequence of variates.
+
+        The "count" algorithm is roughly equivalent to the following numpy
+        code::
+
+            choices = np.repeat(np.arange(len(colors)), colors)
+            selection = np.random.choice(choices, nsample, replace=False)
+            variate = np.bincount(selection, minlength=len(colors))
+
+        The "count" algorithm uses a temporary array of integers with length
+        ``sum(colors)``.
+
+        The "marginals" algorithm generates a variate by using repeated
+        calls to the univariate hypergeometric sampler.  It is roughly
+        equivalent to::
+
+            variate = np.zeros(len(colors), dtype=np.int64)
+            # `remaining` is the cumulative sum of `colors` from the last
+            # element to the first; e.g. if `colors` is [3, 1, 5], then
+            # `remaining` is [9, 6, 5].
+            remaining = np.cumsum(colors[::-1])[::-1]
+            for i in range(len(colors)-1):
+                if nsample < 1:
+                    break
+                variate[i] = hypergeometric(colors[i], remaining[i+1],
+                                           nsample)
+                nsample -= variate[i]
+            variate[-1] = nsample
+
+        The default method is "marginals".  For some cases (e.g. when
+        `colors` contains relatively small integers), the "count" method
+        can be significantly faster than the "marginals" method.  If
+        performance of the algorithm is important, test the two methods
+        with typical inputs to decide which works best.
+
+        .. versionadded:: 1.18.0
+
+        Examples
+        --------
+        >>> colors = [16, 8, 4]
+        >>> seed = 4861946401452
+        >>> gen = np.random.Generator(np.random.PCG64(seed))
+        >>> gen.multivariate_hypergeometric(colors, 6)
+        array([5, 0, 1])
+        >>> gen.multivariate_hypergeometric(colors, 6, size=3)
+        array([[5, 0, 1],
+               [2, 2, 2],
+               [3, 3, 0]])
+        >>> gen.multivariate_hypergeometric(colors, 6, size=(2, 2))
+        array([[[3, 2, 1],
+                [3, 2, 1]],
+               [[4, 1, 1],
+                [3, 2, 1]]])
+        """
+        cdef int64_t nsamp
+        cdef size_t num_colors
+        cdef int64_t total
+        cdef int64_t *colors_ptr
+        cdef int64_t max_index
+        cdef size_t num_variates
+        cdef int64_t *variates_ptr
+        cdef int result
+
+        if method not in ['count', 'marginals']:
+            raise ValueError('method must be "count" or "marginals".')
+
+        try:
+            operator.index(nsample)
+        except TypeError:
+            raise ValueError('nsample must be an integer')
+
+        if nsample < 0:
+            raise ValueError("nsample must be nonnegative.")
+        if nsample > INT64_MAX:
+            raise ValueError("nsample must not exceed %d" % INT64_MAX)
+        nsamp = nsample
+
+        # Validation of colors, a 1-d sequence of nonnegative integers.
+        invalid_colors = False
+        try:
+            colors = np.asarray(colors)
+            if colors.ndim != 1:
+                invalid_colors = True
+            elif colors.size > 0 and not np.issubdtype(colors.dtype,
+                                                       np.integer):
+                invalid_colors = True
+            elif np.any((colors < 0) | (colors > INT64_MAX)):
+                invalid_colors = True
+        except ValueError:
+            invalid_colors = True
+        if invalid_colors:
+            raise ValueError('colors must be a one-dimensional sequence '
+                             'of nonnegative integers not exceeding %d.' %
+                             INT64_MAX)
+
+        colors = np.ascontiguousarray(colors, dtype=np.int64)
+        num_colors = colors.size
+
+        colors_ptr = <int64_t *> np.PyArray_DATA(colors)
+
+        total = _safe_sum_nonneg_int64(num_colors, colors_ptr)
+        if total == -1:
+            raise ValueError("sum(colors) must not exceed the maximum value "
+                             "of a 64 bit signed integer (%d)" % INT64_MAX)
+
+        if method == 'marginals' and total >= 1000000000:
+            raise ValueError('When method is "marginals", sum(colors) must '
+                             'be less than 1000000000.')
+
+        # The C code that implements the 'count' method will malloc an
+        # array of size total*sizeof(size_t). Here we ensure that that
+        # product does not overflow.
+        if SIZE_MAX > <uint64_t>INT64_MAX:
+            max_index = INT64_MAX // sizeof(size_t)
+        else:
+            max_index = SIZE_MAX // sizeof(size_t)
+        if method == 'count' and total > max_index:
+            raise ValueError("When method is 'count', sum(colors) must not "
+                             "exceed %d" % max_index)
+        if nsamp > total:
+            raise ValueError("nsample > sum(colors)")
+
+        # Figure out the shape of the return array.
+        if size is None:
+            shape = (num_colors,)
+        elif np.isscalar(size):
+            shape = (size, num_colors)
+        else:
+            shape = tuple(size) + (num_colors,)
+        variates = np.zeros(shape, dtype=np.int64)
+
+        if num_colors == 0:
+            return variates
+
+        # One variate is a vector of length num_colors.
+        num_variates = variates.size // num_colors
+        variates_ptr = <int64_t *> np.PyArray_DATA(variates)
+
+        if method == 'count':
+            with self.lock, nogil:
+                result = random_mvhg_count(&self._bitgen, total,
+                                           num_colors, colors_ptr, nsamp,
+                                           num_variates, variates_ptr)
+            if result == -1:
+                raise MemoryError("Insufficent memory for multivariate_"
+                                  "hypergeometric with method='count' and "
+                                  "sum(colors)=%d" % total)
+        else:
+            with self.lock, nogil:
+                random_mvhg_marginals(&self._bitgen, total,
+                                      num_colors, colors_ptr, nsamp,
+                                      num_variates, variates_ptr)
+        return variates
+
     def dirichlet(self, object alpha, size=None):
         """
         dirichlet(alpha, size=None)
@@ -3773,7 +4114,7 @@ cdef class Generator:
             while i < totsize:
                 acc = 0.0
                 for j in range(k):
-                    val_data[i+j] = random_standard_gamma_zig(&self._bitgen,
+                    val_data[i+j] = random_standard_gamma(&self._bitgen,
                                                               alpha_data[j])
                     acc = acc + val_data[i + j]
                 invacc = 1/acc
@@ -3786,7 +4127,7 @@ cdef class Generator:
     # Shuffling and permutations:
     def shuffle(self, object x, axis=0):
         """
-        shuffle(x)
+        shuffle(x, axis=0)
 
         Modify a sequence in-place by shuffling its contents.
 
@@ -3858,7 +4199,7 @@ cdef class Generator:
             x = np.swapaxes(x, 0, axis)
             buf = np.empty_like(x[0, ...])
             with self.lock:
-                for i in reversed(range(1, n)):
+                for i in reversed(range(1, len(x))):
                     j = random_interval(&self._bitgen, i)
                     if i == j:
                         # i == j is not needed and memcpy is undefined.
@@ -3928,7 +4269,7 @@ cdef class Generator:
 
     def permutation(self, object x, axis=0):
         """
-        permutation(x)
+        permutation(x, axis=0)
 
         Randomly permute a sequence, or return a permuted range.
 
@@ -4003,19 +4344,18 @@ def default_rng(seed=None):
 
     Parameters
     ----------
-    seed : {None, int, array_like[ints], ISeedSequence, BitGenerator, Generator}, optional
+    seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then it will be passed to
         `SeedSequence` to derive the initial `BitGenerator` state. One may also
-        pass in an implementor of the `ISeedSequence` interface like
-        `SeedSequence`.
+        pass in a`SeedSequence` instance
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.
 
     Notes
     -----
-    When `seed` is omitted or ``None``, a new `BitGenerator` and `Generator` will
+    When ``seed`` is omitted or ``None``, a new `BitGenerator` and `Generator` will
     be instantiated each time. This function does not manage a default global
     instance.
     """

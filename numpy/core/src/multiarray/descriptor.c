@@ -1149,8 +1149,8 @@ _convert_from_dict(PyObject *obj, int align)
             }
             Py_DECREF(off);
             if (offset < 0) {
-                PyErr_Format(PyExc_ValueError, "offset %d cannot be negative",
-                             (int)offset);
+                PyErr_Format(PyExc_ValueError, "offset %ld cannot be negative",
+                             offset);
                 Py_DECREF(tup);
                 Py_DECREF(ind);
                 goto fail;
@@ -1164,10 +1164,10 @@ _convert_from_dict(PyObject *obj, int align)
             /* If align=True, enforce field alignment */
             if (align && offset % newdescr->alignment != 0) {
                 PyErr_Format(PyExc_ValueError,
-                        "offset %d for NumPy dtype with fields is "
+                        "offset %ld for NumPy dtype with fields is "
                         "not divisible by the field alignment %d "
                         "with align=True",
-                        (int)offset, (int)newdescr->alignment);
+                        offset, newdescr->alignment);
                 ret = NPY_FAIL;
             }
             else if (offset + newdescr->elsize > totalsize) {
@@ -1286,7 +1286,7 @@ _convert_from_dict(PyObject *obj, int align)
             PyErr_Format(PyExc_ValueError,
                     "NumPy dtype descriptor requires %d bytes, "
                     "cannot override to smaller itemsize of %d",
-                    (int)new->elsize, (int)itemsize);
+                    new->elsize, itemsize);
             Py_DECREF(new);
             goto fail;
         }
@@ -1295,7 +1295,7 @@ _convert_from_dict(PyObject *obj, int align)
             PyErr_Format(PyExc_ValueError,
                     "NumPy dtype descriptor requires alignment of %d bytes, "
                     "which is not divisible into the specified itemsize %d",
-                    (int)new->alignment, (int)itemsize);
+                    new->alignment, itemsize);
             Py_DECREF(new);
             goto fail;
         }
@@ -1385,7 +1385,6 @@ NPY_NO_EXPORT int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
     int check_num = NPY_NOTYPE + 10;
-    PyObject *item;
     int elsize = 0;
     char endian = '=';
 
@@ -1664,16 +1663,22 @@ finish:
         PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
         if (typeDict != NULL) {
-            item = PyDict_GetItem(typeDict, obj);
+            PyObject *item = NULL;
 #if defined(NPY_PY3K)
-            if (!item && PyBytes_Check(obj)) {
+            if (PyBytes_Check(obj)) {
                 PyObject *tmp;
                 tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
-                if (tmp != NULL) {
-                    item = PyDict_GetItem(typeDict, tmp);
-                    Py_DECREF(tmp);
+                if (tmp == NULL) {
+                    goto fail;
                 }
+                item = PyDict_GetItem(typeDict, tmp);
+                Py_DECREF(tmp);
             }
+            else {
+                item = PyDict_GetItem(typeDict, obj);
+            }
+#else
+            item = PyDict_GetItem(typeDict, obj);
 #endif
             if (item) {
                 /* Check for a deprecated Numeric-style typecode */

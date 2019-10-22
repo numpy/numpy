@@ -2016,7 +2016,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 
     if (i < 0 || i >= nop) {
         PyErr_Format(PyExc_IndexError,
-                "Iterator operand index %d is out of bounds", (int)i_orig);
+                "Iterator operand index %zd is out of bounds", i_orig);
         return NULL;
     }
 
@@ -2030,7 +2030,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
      */
     if (!self->readflags[i]) {
         PyErr_Format(PyExc_RuntimeError,
-                "Iterator operand %d is write-only", (int)i);
+                "Iterator operand %zd is write-only", i);
         return NULL;
     }
 #endif
@@ -2147,12 +2147,12 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
 
     if (i < 0 || i >= nop) {
         PyErr_Format(PyExc_IndexError,
-                "Iterator operand index %d is out of bounds", (int)i_orig);
+                "Iterator operand index %zd is out of bounds", i_orig);
         return -1;
     }
     if (!self->writeflags[i]) {
         PyErr_Format(PyExc_RuntimeError,
-                "Iterator operand %d is not writeable", (int)i_orig);
+                "Iterator operand %zd is not writeable", i_orig);
         return -1;
     }
 

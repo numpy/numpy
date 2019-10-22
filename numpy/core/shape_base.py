@@ -472,7 +472,7 @@ def _block_check_depths_match(arrays, parent_index=[]):
     first_index : list of int
         The full index of an element from the bottom of the nesting in
         `arrays`. If any element at the bottom is an empty list, this will
-        refer to it, and the last index along the empty axis will be `None`.
+        refer to it, and the last index along the empty axis will be None.
     max_arr_ndim : int
         The maximum of the ndims of the arrays nested in `arrays`.
     final_size: int

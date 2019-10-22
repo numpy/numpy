@@ -1,22 +1,11 @@
 #cython: language_level=3
 
-from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
-                          int8_t, int16_t, int32_t, int64_t, intptr_t,
-                          uintptr_t)
-from libc.math cimport sqrt
-
-cdef extern from "src/bitgen.h":
-    struct bitgen:
-        void *state
-        uint64_t (*next_uint64)(void *st) nogil
-        uint32_t (*next_uint32)(void *st) nogil
-        double (*next_double)(void *st) nogil
-        uint64_t (*next_raw)(void *st) nogil
-
-    ctypedef bitgen bitgen_t
+from libc.stdint cimport uint32_t, uint64_t, int32_t, int64_t
 
 import numpy as np
 cimport numpy as np
+
+from ._bit_generator cimport bitgen_t
 
 cdef double POISSON_LAM_MAX
 cdef double LEGACY_POISSON_LAM_MAX
@@ -44,7 +33,7 @@ cdef object prepare_ctypes(bitgen_t *bitgen)
 cdef int check_constraint(double val, object name, constraint_type cons) except -1
 cdef int check_array_constraint(np.ndarray val, object name, constraint_type cons) except -1
 
-cdef extern from "src/aligned_malloc/aligned_malloc.h":
+cdef extern from "include/aligned_malloc.h":
     cdef void *PyArray_realloc_aligned(void *p, size_t n)
     cdef void *PyArray_malloc_aligned(size_t n)
     cdef void *PyArray_calloc_aligned(size_t n, size_t s)
@@ -56,6 +45,7 @@ ctypedef double (*random_double_1)(void *state, double a) nogil
 ctypedef double (*random_double_2)(void *state, double a, double b) nogil
 ctypedef double (*random_double_3)(void *state, double a, double b, double c) nogil
 
+ctypedef double (*random_float_fill)(bitgen_t *state, np.npy_intp count, float* out) nogil
 ctypedef float (*random_float_0)(bitgen_t *state) nogil
 ctypedef float (*random_float_1)(bitgen_t *state, float a) nogil
 

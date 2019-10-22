@@ -138,18 +138,18 @@ This approach to the interface consists of the object having an
        This attribute can also be an object exposing the
        :c:func:`buffer interface <PyObject_AsCharBuffer>` which
        will be used to share the data. If this key is not present (or
-       returns :class:`None`), then memory sharing will be done
+       returns None), then memory sharing will be done
        through the buffer interface of the object itself.  In this
        case, the offset key can be used to indicate the start of the
        buffer.  A reference to the object exposing the array interface
        must be stored by the new object if the memory area is to be
        secured.
 
-       **Default**: :const:`None`
+       **Default**: None
 
    **strides** (optional)
 
-       Either :const:`None` to indicate a C-style contiguous array or
+       Either None to indicate a C-style contiguous array or
        a Tuple of strides which provides the number of bytes needed
        to jump to the next array element in the corresponding
        dimension. Each entry must be an integer (a Python
@@ -157,29 +157,29 @@ This approach to the interface consists of the object having an
        be larger than can be represented by a C "int" or "long"; the
        calling code should handle this appropriately, either by
        raising an error, or by using :c:type:`Py_LONG_LONG` in C. The
-       default is :const:`None` which implies a C-style contiguous
+       default is None which implies a C-style contiguous
        memory buffer.  In this model, the last dimension of the array
        varies the fastest.  For example, the default strides tuple
        for an object whose array entries are 8 bytes long and whose
        shape is (10,20,30) would be (4800, 240, 8)
 
-       **Default**: :const:`None` (C-style contiguous)
+       **Default**: None (C-style contiguous)
 
    **mask** (optional)
 
-       :const:`None` or an object exposing the array interface.  All
+       None or an object exposing the array interface.  All
        elements of the mask array should be interpreted only as true
        or not true indicating which elements of this array are valid.
        The shape of this object should be `"broadcastable"
        <arrays.broadcasting.broadcastable>` to the shape of the
        original array.
 
-       **Default**: :const:`None` (All array values are valid)
+       **Default**: None (All array values are valid)
 
    **offset** (optional)
 
        An integer offset into the array data region. This can only be
-       used when data is :const:`None` or returns a :class:`buffer`
+       used when data is None or returns a :class:`buffer`
        object.
 
        **Default**: 0.

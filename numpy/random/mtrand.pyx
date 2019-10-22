@@ -5,19 +5,100 @@ import warnings
 
 import numpy as np
 
-from .bounded_integers import _integers_types
-from .mt19937 import MT19937 as _MT19937
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from cpython cimport (Py_INCREF, PyFloat_AsDouble)
-from libc cimport string
-
 cimport cython
 cimport numpy as np
 
-from .bounded_integers cimport *
-from .common cimport *
-from .distributions cimport *
-from .legacy_distributions cimport *
+from libc cimport string
+from libc.stdint cimport int64_t, uint64_t
+from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
+         _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
+         _rand_uint8,)
+from ._bounded_integers import _integers_types
+from ._mt19937 import MT19937 as _MT19937
+from ._bit_generator cimport bitgen_t
+from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
+            CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1, CONS_GTE_1,
+            CONS_GT_1, LEGACY_CONS_POISSON,
+            double_fill, cont, kahan_sum, cont_broadcast_3,
+            check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
+        )
+
+cdef extern from "include/distributions.h":
+    struct s_binomial_t:
+        int has_binomial
+        double psave
+        int64_t nsave
+        double r
+        double q
+        double fm
+        int64_t m
+        double p1
+        double xm
+        double xl
+        double xr
+        double c
+        double laml
+        double lamr
+        double p2
+        double p3
+        double p4
+
+    ctypedef s_binomial_t binomial_t
+
+    void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
+    int64_t random_positive_int(bitgen_t *bitgen_state) nogil
+    double random_uniform(bitgen_t *bitgen_state, double lower, double range) nogil
+    double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa) nogil
+    double random_laplace(bitgen_t *bitgen_state, double loc, double scale) nogil
+    double random_gumbel(bitgen_t *bitgen_state, double loc, double scale) nogil
+    double random_logistic(bitgen_t *bitgen_state, double loc, double scale) nogil
+    double random_rayleigh(bitgen_t *bitgen_state, double mode) nogil
+    double random_triangular(bitgen_t *bitgen_state, double left, double mode,
+                                 double right) nogil
+    uint64_t random_interval(bitgen_t *bitgen_state, uint64_t max) nogil
+
+cdef extern from "include/legacy-distributions.h":
+    struct aug_bitgen:
+        bitgen_t *bit_generator
+        int has_gauss
+        double gauss
+
+    ctypedef aug_bitgen aug_bitgen_t
+
+    double legacy_gauss(aug_bitgen_t *aug_state) nogil
+    double legacy_pareto(aug_bitgen_t *aug_state, double a) nogil
+    double legacy_weibull(aug_bitgen_t *aug_state, double a) nogil
+    double legacy_standard_gamma(aug_bitgen_t *aug_state, double shape) nogil
+    double legacy_normal(aug_bitgen_t *aug_state, double loc, double scale) nogil
+    double legacy_standard_t(aug_bitgen_t *aug_state, double df) nogil
+
+    double legacy_standard_exponential(aug_bitgen_t *aug_state) nogil
+    double legacy_power(aug_bitgen_t *aug_state, double a) nogil
+    double legacy_gamma(aug_bitgen_t *aug_state, double shape, double scale) nogil
+    double legacy_power(aug_bitgen_t *aug_state, double a) nogil
+    double legacy_chisquare(aug_bitgen_t *aug_state, double df) nogil
+    double legacy_noncentral_chisquare(aug_bitgen_t *aug_state, double df,
+                                    double nonc) nogil
+    double legacy_noncentral_f(aug_bitgen_t *aug_state, double dfnum, double dfden,
+                            double nonc) nogil
+    double legacy_wald(aug_bitgen_t *aug_state, double mean, double scale) nogil
+    double legacy_lognormal(aug_bitgen_t *aug_state, double mean, double sigma) nogil
+    int64_t legacy_random_binomial(bitgen_t *bitgen_state, double p,
+                                   int64_t n, binomial_t *binomial) nogil
+    int64_t legacy_negative_binomial(aug_bitgen_t *aug_state, double n, double p) nogil
+    int64_t legacy_random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad, int64_t sample) nogil
+    int64_t legacy_random_logseries(bitgen_t *bitgen_state, double p) nogil
+    int64_t legacy_random_poisson(bitgen_t *bitgen_state, double lam) nogil
+    int64_t legacy_random_zipf(bitgen_t *bitgen_state, double a) nogil
+    int64_t legacy_random_geometric(bitgen_t *bitgen_state, double p) nogil
+    void legacy_random_multinomial(bitgen_t *bitgen_state, long n, long *mnix, double *pix, np.npy_intp d, binomial_t *binomial) nogil
+    double legacy_standard_cauchy(aug_bitgen_t *state) nogil
+    double legacy_beta(aug_bitgen_t *aug_state, double a, double b) nogil
+    double legacy_f(aug_bitgen_t *aug_state, double dfnum, double dfden) nogil
+    double legacy_exponential(aug_bitgen_t *aug_state, double scale) nogil
+    double legacy_power(aug_bitgen_t *state, double a) nogil
 
 np.import_array()
 
@@ -84,7 +165,7 @@ cdef class RandomState:
     --------
     Generator
     MT19937
-    :ref:`bit_generator`
+    numpy.random.BitGenerator
 
     """
     cdef public object _bit_generator
@@ -329,7 +410,7 @@ cdef class RandomState:
 
         """
         cdef double temp
-        return double_fill(&random_double_fill, &self._bitgen, size, self.lock, None)
+        return double_fill(&random_standard_uniform_fill, &self._bitgen, size, self.lock, None)
 
     def random(self, size=None):
         """
@@ -567,7 +648,7 @@ cdef class RandomState:
 
         See Also
         --------
-        random.random_integers : similar to `randint`, only for the closed
+        random_integers : similar to `randint`, only for the closed
             interval [`low`, `high`], and 1 is the lowest value if `high` is
             omitted.
 
@@ -985,7 +1066,7 @@ cdef class RandomState:
 
         .. note::
             This is a convenience function for users porting code from Matlab,
-            and wraps `numpy.random.random_sample`. That function takes a
+            and wraps `random_sample`. That function takes a
             tuple to specify the size of the output, which is consistent with
             other NumPy functions like `numpy.zeros` and `numpy.ones`.
 
@@ -1029,7 +1110,7 @@ cdef class RandomState:
 
         .. note::
             This is a convenience function for users porting code from Matlab,
-            and wraps `numpy.random.standard_normal`. That function takes a
+            and wraps `standard_normal`. That function takes a
             tuple to specify the size of the output, which is consistent with
             other NumPy functions like `numpy.zeros` and `numpy.ones`.
 
@@ -1289,8 +1370,8 @@ cdef class RandomState:
         The function has its peak at the mean, and its "spread" increases with
         the standard deviation (the function reaches 0.607 times its maximum at
         :math:`x + \\sigma` and :math:`x - \\sigma` [2]_).  This implies that
-        `numpy.random.normal` is more likely to return samples lying close to
-        the mean, rather than those far away.
+        normal is more likely to return samples lying close to the mean, rather
+        than those far away.
 
         References
         ----------

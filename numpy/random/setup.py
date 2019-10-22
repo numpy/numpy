@@ -61,32 +61,32 @@ def configuration(parent_package='', top_path=None):
 
     for gen in ['mt19937']:
         # gen.pyx, src/gen/gen.c, src/gen/gen-jump.c
-        config.add_extension(gen,
-                             sources=['{0}.c'.format(gen),
+        config.add_extension('_{0}'.format(gen),
+                             sources=['_{0}.c'.format(gen),
                                       'src/{0}/{0}.c'.format(gen),
                                       'src/{0}/{0}-jump.c'.format(gen)],
                              include_dirs=['.', 'src', join('src', gen)],
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['%s.pyx' % gen],
+                             depends=['_%s.pyx' % gen],
                              define_macros=defs,
                              )
     for gen in ['philox', 'pcg64', 'sfc64']:
         # gen.pyx, src/gen/gen.c
         _defs = defs + PCG64_DEFS if gen == 'pcg64' else defs
-        config.add_extension(gen,
-                             sources=['{0}.c'.format(gen),
+        config.add_extension('_{0}'.format(gen),
+                             sources=['_{0}.c'.format(gen),
                                       'src/{0}/{0}.c'.format(gen)],
                              include_dirs=['.', 'src', join('src', gen)],
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['%s.pyx' % gen, 'bit_generator.pyx',
+                             depends=['_%s.pyx' % gen, 'bit_generator.pyx',
                                       'bit_generator.pxd'],
                              define_macros=_defs,
                              )
-    for gen in ['common', 'bit_generator']:
+    for gen in ['_common', '_bit_generator']:
         # gen.pyx
         config.add_extension(gen,
                              sources=['{0}.c'.format(gen)],
@@ -100,9 +100,11 @@ def configuration(parent_package='', top_path=None):
     other_srcs = [
         'src/distributions/logfactorial.c',
         'src/distributions/distributions.c',
+        'src/distributions/random_mvhg_count.c',
+        'src/distributions/random_mvhg_marginals.c',
         'src/distributions/random_hypergeometric.c',
     ]
-    for gen in ['generator', 'bounded_integers']:
+    for gen in ['_generator', '_bounded_integers']:
         # gen.pyx, src/distributions/distributions.c
         config.add_extension(gen,
                              sources=['{0}.c'.format(gen)] + other_srcs,
@@ -114,7 +116,6 @@ def configuration(parent_package='', top_path=None):
                              define_macros=defs,
                              )
     config.add_extension('mtrand',
-                         # mtrand does not depend on random_hypergeometric.c.
                          sources=['mtrand.c',
                                   'src/legacy/legacy-distributions.c',
                                   'src/distributions/logfactorial.c',

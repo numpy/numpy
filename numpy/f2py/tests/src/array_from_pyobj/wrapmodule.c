@@ -49,9 +49,18 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
     return NULL;
   rank = PySequence_Length(dims_capi);
   dims = malloc(rank*sizeof(npy_intp));
-  for (i=0;i<rank;++i)
-    dims[i] = (npy_intp)PyInt_AsLong(PySequence_GetItem(dims_capi,i));
-
+  for (i=0;i<rank;++i) {
+    PyObject *tmp;
+    tmp = PySequence_GetItem(dims_capi, i);
+    if (tmp == NULL) {
+        goto fail;
+    }
+    dims[i] = (npy_intp)PyInt_AsLong(tmp);
+    Py_DECREF(tmp);
+    if (dims[i] == -1 && PyErr_Occurred()) {
+        goto fail;
+    }
+  }
   capi_arr_tmp = array_from_pyobj(type_num,dims,rank,intent|F2PY_INTENT_OUT,arr_capi);
   if (capi_arr_tmp == NULL) {
     free(dims);
@@ -60,6 +69,10 @@ static PyObject *f2py_rout_wrap_call(PyObject *capi_self,
   capi_buildvalue = Py_BuildValue("N",capi_arr_tmp);
   free(dims);
   return capi_buildvalue;
+
+fail:
+  free(dims);
+  return NULL;
 }
 
 static char doc_f2py_rout_wrap_attrs[] = "\
@@ -97,7 +110,7 @@ static PyObject *f2py_rout_wrap_attrs(PyObject *capi_self,
     PyTuple_SetItem(dimensions,i,PyInt_FromLong(PyArray_DIM(arr,i)));
     PyTuple_SetItem(strides,i,PyInt_FromLong(PyArray_STRIDE(arr,i)));
   }
-  return Py_BuildValue("siOOO(cciii)ii",s,PyArray_NDIM(arr),
+  return Py_BuildValue("siNNO(cciii)ii",s,PyArray_NDIM(arr),
                        dimensions,strides,
                        (PyArray_BASE(arr)==NULL?Py_None:PyArray_BASE(arr)),
                        PyArray_DESCR(arr)->kind,
@@ -154,61 +167,69 @@ PyMODINIT_FUNC inittest_array_from_pyobj_ext(void) {
   PyDict_SetItemString(d, "__doc__", s);
   wrap_error = PyErr_NewException ("wrap.error", NULL, NULL);
   Py_DECREF(s);
-  PyDict_SetItemString(d, "F2PY_INTENT_IN", PyInt_FromLong(F2PY_INTENT_IN));
-  PyDict_SetItemString(d, "F2PY_INTENT_INOUT", PyInt_FromLong(F2PY_INTENT_INOUT));
-  PyDict_SetItemString(d, "F2PY_INTENT_OUT", PyInt_FromLong(F2PY_INTENT_OUT));
-  PyDict_SetItemString(d, "F2PY_INTENT_HIDE", PyInt_FromLong(F2PY_INTENT_HIDE));
-  PyDict_SetItemString(d, "F2PY_INTENT_CACHE", PyInt_FromLong(F2PY_INTENT_CACHE));
-  PyDict_SetItemString(d, "F2PY_INTENT_COPY", PyInt_FromLong(F2PY_INTENT_COPY));
-  PyDict_SetItemString(d, "F2PY_INTENT_C", PyInt_FromLong(F2PY_INTENT_C));
-  PyDict_SetItemString(d, "F2PY_OPTIONAL", PyInt_FromLong(F2PY_OPTIONAL));
-  PyDict_SetItemString(d, "F2PY_INTENT_INPLACE", PyInt_FromLong(F2PY_INTENT_INPLACE));
-  PyDict_SetItemString(d, "NPY_BOOL", PyInt_FromLong(NPY_BOOL));
-  PyDict_SetItemString(d, "NPY_BYTE", PyInt_FromLong(NPY_BYTE));
-  PyDict_SetItemString(d, "NPY_UBYTE", PyInt_FromLong(NPY_UBYTE));
-  PyDict_SetItemString(d, "NPY_SHORT", PyInt_FromLong(NPY_SHORT));
-  PyDict_SetItemString(d, "NPY_USHORT", PyInt_FromLong(NPY_USHORT));
-  PyDict_SetItemString(d, "NPY_INT", PyInt_FromLong(NPY_INT));
-  PyDict_SetItemString(d, "NPY_UINT", PyInt_FromLong(NPY_UINT));
-  PyDict_SetItemString(d, "NPY_INTP", PyInt_FromLong(NPY_INTP));
-  PyDict_SetItemString(d, "NPY_UINTP", PyInt_FromLong(NPY_UINTP));
-  PyDict_SetItemString(d, "NPY_LONG", PyInt_FromLong(NPY_LONG));
-  PyDict_SetItemString(d, "NPY_ULONG", PyInt_FromLong(NPY_ULONG));
-  PyDict_SetItemString(d, "NPY_LONGLONG", PyInt_FromLong(NPY_LONGLONG));
-  PyDict_SetItemString(d, "NPY_ULONGLONG", PyInt_FromLong(NPY_ULONGLONG));
-  PyDict_SetItemString(d, "NPY_FLOAT", PyInt_FromLong(NPY_FLOAT));
-  PyDict_SetItemString(d, "NPY_DOUBLE", PyInt_FromLong(NPY_DOUBLE));
-  PyDict_SetItemString(d, "NPY_LONGDOUBLE", PyInt_FromLong(NPY_LONGDOUBLE));
-  PyDict_SetItemString(d, "NPY_CFLOAT", PyInt_FromLong(NPY_CFLOAT));
-  PyDict_SetItemString(d, "NPY_CDOUBLE", PyInt_FromLong(NPY_CDOUBLE));
-  PyDict_SetItemString(d, "NPY_CLONGDOUBLE", PyInt_FromLong(NPY_CLONGDOUBLE));
-  PyDict_SetItemString(d, "NPY_OBJECT", PyInt_FromLong(NPY_OBJECT));
-  PyDict_SetItemString(d, "NPY_STRING", PyInt_FromLong(NPY_STRING));
-  PyDict_SetItemString(d, "NPY_UNICODE", PyInt_FromLong(NPY_UNICODE));
-  PyDict_SetItemString(d, "NPY_VOID", PyInt_FromLong(NPY_VOID));
-  PyDict_SetItemString(d, "NPY_NTYPES", PyInt_FromLong(NPY_NTYPES));
-  PyDict_SetItemString(d, "NPY_NOTYPE", PyInt_FromLong(NPY_NOTYPE));
-  PyDict_SetItemString(d, "NPY_USERDEF", PyInt_FromLong(NPY_USERDEF));
 
-  PyDict_SetItemString(d, "CONTIGUOUS", PyInt_FromLong(NPY_ARRAY_C_CONTIGUOUS));
-  PyDict_SetItemString(d, "FORTRAN", PyInt_FromLong(NPY_ARRAY_F_CONTIGUOUS));
-  PyDict_SetItemString(d, "OWNDATA", PyInt_FromLong(NPY_ARRAY_OWNDATA));
-  PyDict_SetItemString(d, "FORCECAST", PyInt_FromLong(NPY_ARRAY_FORCECAST));
-  PyDict_SetItemString(d, "ENSURECOPY", PyInt_FromLong(NPY_ARRAY_ENSURECOPY));
-  PyDict_SetItemString(d, "ENSUREARRAY", PyInt_FromLong(NPY_ARRAY_ENSUREARRAY));
-  PyDict_SetItemString(d, "ALIGNED", PyInt_FromLong(NPY_ARRAY_ALIGNED));
-  PyDict_SetItemString(d, "WRITEABLE", PyInt_FromLong(NPY_ARRAY_WRITEABLE));
-  PyDict_SetItemString(d, "UPDATEIFCOPY", PyInt_FromLong(NPY_ARRAY_UPDATEIFCOPY));
-  PyDict_SetItemString(d, "WRITEBACKIFCOPY", PyInt_FromLong(NPY_ARRAY_WRITEBACKIFCOPY));
+#define ADDCONST(NAME, CONST)              \
+    s = PyInt_FromLong(CONST);             \
+    PyDict_SetItemString(d, NAME, s);      \
+    Py_DECREF(s)
 
-  PyDict_SetItemString(d, "BEHAVED", PyInt_FromLong(NPY_ARRAY_BEHAVED));
-  PyDict_SetItemString(d, "BEHAVED_NS", PyInt_FromLong(NPY_ARRAY_BEHAVED_NS));
-  PyDict_SetItemString(d, "CARRAY", PyInt_FromLong(NPY_ARRAY_CARRAY));
-  PyDict_SetItemString(d, "FARRAY", PyInt_FromLong(NPY_ARRAY_FARRAY));
-  PyDict_SetItemString(d, "CARRAY_RO", PyInt_FromLong(NPY_ARRAY_CARRAY_RO));
-  PyDict_SetItemString(d, "FARRAY_RO", PyInt_FromLong(NPY_ARRAY_FARRAY_RO));
-  PyDict_SetItemString(d, "DEFAULT", PyInt_FromLong(NPY_ARRAY_DEFAULT));
-  PyDict_SetItemString(d, "UPDATE_ALL", PyInt_FromLong(NPY_ARRAY_UPDATE_ALL));
+  ADDCONST("F2PY_INTENT_IN", F2PY_INTENT_IN);
+  ADDCONST("F2PY_INTENT_INOUT", F2PY_INTENT_INOUT);
+  ADDCONST("F2PY_INTENT_OUT", F2PY_INTENT_OUT);
+  ADDCONST("F2PY_INTENT_HIDE", F2PY_INTENT_HIDE);
+  ADDCONST("F2PY_INTENT_CACHE", F2PY_INTENT_CACHE);
+  ADDCONST("F2PY_INTENT_COPY", F2PY_INTENT_COPY);
+  ADDCONST("F2PY_INTENT_C", F2PY_INTENT_C);
+  ADDCONST("F2PY_OPTIONAL", F2PY_OPTIONAL);
+  ADDCONST("F2PY_INTENT_INPLACE", F2PY_INTENT_INPLACE);
+  ADDCONST("NPY_BOOL", NPY_BOOL);
+  ADDCONST("NPY_BYTE", NPY_BYTE);
+  ADDCONST("NPY_UBYTE", NPY_UBYTE);
+  ADDCONST("NPY_SHORT", NPY_SHORT);
+  ADDCONST("NPY_USHORT", NPY_USHORT);
+  ADDCONST("NPY_INT", NPY_INT);
+  ADDCONST("NPY_UINT", NPY_UINT);
+  ADDCONST("NPY_INTP", NPY_INTP);
+  ADDCONST("NPY_UINTP", NPY_UINTP);
+  ADDCONST("NPY_LONG", NPY_LONG);
+  ADDCONST("NPY_ULONG", NPY_ULONG);
+  ADDCONST("NPY_LONGLONG", NPY_LONGLONG);
+  ADDCONST("NPY_ULONGLONG", NPY_ULONGLONG);
+  ADDCONST("NPY_FLOAT", NPY_FLOAT);
+  ADDCONST("NPY_DOUBLE", NPY_DOUBLE);
+  ADDCONST("NPY_LONGDOUBLE", NPY_LONGDOUBLE);
+  ADDCONST("NPY_CFLOAT", NPY_CFLOAT);
+  ADDCONST("NPY_CDOUBLE", NPY_CDOUBLE);
+  ADDCONST("NPY_CLONGDOUBLE", NPY_CLONGDOUBLE);
+  ADDCONST("NPY_OBJECT", NPY_OBJECT);
+  ADDCONST("NPY_STRING", NPY_STRING);
+  ADDCONST("NPY_UNICODE", NPY_UNICODE);
+  ADDCONST("NPY_VOID", NPY_VOID);
+  ADDCONST("NPY_NTYPES", NPY_NTYPES);
+  ADDCONST("NPY_NOTYPE", NPY_NOTYPE);
+  ADDCONST("NPY_USERDEF", NPY_USERDEF);
+
+  ADDCONST("CONTIGUOUS", NPY_ARRAY_C_CONTIGUOUS);
+  ADDCONST("FORTRAN", NPY_ARRAY_F_CONTIGUOUS);
+  ADDCONST("OWNDATA", NPY_ARRAY_OWNDATA);
+  ADDCONST("FORCECAST", NPY_ARRAY_FORCECAST);
+  ADDCONST("ENSURECOPY", NPY_ARRAY_ENSURECOPY);
+  ADDCONST("ENSUREARRAY", NPY_ARRAY_ENSUREARRAY);
+  ADDCONST("ALIGNED", NPY_ARRAY_ALIGNED);
+  ADDCONST("WRITEABLE", NPY_ARRAY_WRITEABLE);
+  ADDCONST("UPDATEIFCOPY", NPY_ARRAY_UPDATEIFCOPY);
+  ADDCONST("WRITEBACKIFCOPY", NPY_ARRAY_WRITEBACKIFCOPY);
+
+  ADDCONST("BEHAVED", NPY_ARRAY_BEHAVED);
+  ADDCONST("BEHAVED_NS", NPY_ARRAY_BEHAVED_NS);
+  ADDCONST("CARRAY", NPY_ARRAY_CARRAY);
+  ADDCONST("FARRAY", NPY_ARRAY_FARRAY);
+  ADDCONST("CARRAY_RO", NPY_ARRAY_CARRAY_RO);
+  ADDCONST("FARRAY_RO", NPY_ARRAY_FARRAY_RO);
+  ADDCONST("DEFAULT", NPY_ARRAY_DEFAULT);
+  ADDCONST("UPDATE_ALL", NPY_ARRAY_UPDATE_ALL);
+
+#undef ADDCONST(
 
   if (PyErr_Occurred())
     Py_FatalError("can't initialize module wrap");

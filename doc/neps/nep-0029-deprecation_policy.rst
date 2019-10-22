@@ -4,9 +4,10 @@ NEP 29 — Recommend Python and Numpy version support as a community policy stan
 
 
 :Author: Thomas A Caswell <tcaswell@gmail.com>, Andreas Mueller, Brian Granger, Madicken Munk, Ralf Gommers, Matt Haberland <mhaberla@calpoly.edu>, Matthias Bussonnier <bussonniermatthias@gmail.com>, Stefan van der Walt <stefanv@berkeley.edu>
-:Status: Draft
-:Type: Informational Track
+:Status: Final
+:Type: Informational
 :Created: 2019-07-13
+:Resolution: https://mail.python.org/pipermail/numpy-discussion/2019-October/080128.html
 
 
 Abstract
@@ -164,7 +165,7 @@ the minimum version of Python supported.
 As a major downside, an ad-hoc approach makes it hard for downstream users to predict what
 the future minimum versions will be.  As there is no objective threshold
 to when the minimum version should be dropped, it is easy for these
-version support discussions to devolve into [bike shedding](https://en.wikipedia.org/wiki/Wikipedia:Avoid_Parkinson%27s_bicycle-shed_effect) and acrimony.
+version support discussions to devolve into `bike shedding <https://en.wikipedia.org/wiki/Wikipedia:Avoid_Parkinson%27s_bicycle-shed_effect>`_ and acrimony.
 
 
 All CPython supported versions

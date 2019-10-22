@@ -1,4 +1,4 @@
-#include "legacy-distributions.h"
+#include "include/legacy-distributions.h"
 
 
 static NPY_INLINE double legacy_double(aug_bitgen_t *aug_state) {
@@ -294,8 +294,8 @@ static RAND_INT_TYPE random_hypergeometric_hrua(bitgen_t *bitgen_state,
   d7 = sqrt((double)(popsize - m) * sample * d4 * d5 / (popsize - 1) + 0.5);
   d8 = D1 * d7 + D2;
   d9 = (RAND_INT_TYPE)floor((double)(m + 1) * (mingoodbad + 1) / (popsize + 2));
-  d10 = (loggam(d9 + 1) + loggam(mingoodbad - d9 + 1) + loggam(m - d9 + 1) +
-         loggam(maxgoodbad - m + d9 + 1));
+  d10 = (random_loggam(d9 + 1) + random_loggam(mingoodbad - d9 + 1) +
+         random_loggam(m - d9 + 1) + random_loggam(maxgoodbad - m + d9 + 1));
   d11 = MIN(MIN(m, mingoodbad) + 1.0, floor(d6 + 16 * d7));
   /* 16 for 16-decimal-digit precision in D1 and D2 */
 
@@ -309,8 +309,8 @@ static RAND_INT_TYPE random_hypergeometric_hrua(bitgen_t *bitgen_state,
       continue;
 
     Z = (RAND_INT_TYPE)floor(W);
-    T = d10 - (loggam(Z + 1) + loggam(mingoodbad - Z + 1) + loggam(m - Z + 1) +
-               loggam(maxgoodbad - m + Z + 1));
+    T = d10 - (random_loggam(Z + 1) + random_loggam(mingoodbad - Z + 1) +
+               random_loggam(m - Z + 1) + random_loggam(maxgoodbad - m + Z + 1));
 
     /* fast acceptance: */
     if ((X * (4.0 - X) - 3.0) <= T)

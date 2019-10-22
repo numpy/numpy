@@ -544,8 +544,8 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
      */
     if (slen != PyArray_DIMS(a)[dim] && slen != 1) {
         PyErr_Format(PyExc_ValueError,
-                 "cannot copy sequence with size %d to array axis "
-                 "with dimension %d", (int)slen, (int)PyArray_DIMS(a)[dim]);
+                 "cannot copy sequence with size %zd to array axis "
+                 "with dimension %" NPY_INTP_FMT, slen, PyArray_DIMS(a)[dim]);
         goto fail;
     }
 
@@ -2894,8 +2894,8 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     src_size = PyArray_SIZE(src);
     if (dst_size != src_size) {
         PyErr_Format(PyExc_ValueError,
-                "cannot copy from array of size %d into an array "
-                "of size %d", (int)src_size, (int)dst_size);
+                "cannot copy from array of size %" NPY_INTP_FMT " into an array "
+                "of size %" NPY_INTP_FMT, src_size, dst_size);
         return -1;
     }
 
@@ -3580,6 +3580,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
 {
     PyArrayObject *r;
     npy_off_t start, numbytes;
+    int elsize;
 
     if (num < 0) {
         int fail = 0;
@@ -3606,16 +3607,21 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
         }
         num = numbytes / dtype->elsize;
     }
+
+    /*
+     * Array creation may move sub-array dimensions from the dtype to array
+     * dimensions, so we need to use the original element size when reading.
+     */
+    elsize = dtype->elsize;
+
     r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &num,
                                               NULL, NULL, 0, NULL);
     if (r == NULL) {
         return NULL;
     }
-    /* In some cases NewFromDescr can replace the dtype, so fetch new one */
-    dtype = PyArray_DESCR(r);
 
     NPY_BEGIN_ALLOW_THREADS;
-    *nread = fread(PyArray_DATA(r), dtype->elsize, num, fp);
+    *nread = fread(PyArray_DATA(r), elsize, num, fp);
     NPY_END_ALLOW_THREADS;
     return r;
 }
@@ -3642,14 +3648,19 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
 
     size = (num >= 0) ? num : FROM_BUFFER_SIZE;
 
+    /*
+     * Array creation may move sub-array dimensions from the dtype to array
+     * dimensions, so we need to use the original dtype when reading.
+     */
+    Py_INCREF(dtype);
+
     r = (PyArrayObject *)
         PyArray_NewFromDescr(&PyArray_Type, dtype, 1, &size,
                              NULL, NULL, 0, NULL);
     if (r == NULL) {
+        Py_DECREF(dtype);
         return NULL;
     }
-    /* In some cases NewFromDescr can replace the dtype, so fetch new one */
-    dtype = PyArray_DESCR(r);
 
     clean_sep = swab_separator(sep);
     if (clean_sep == NULL) {
@@ -3710,6 +3721,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
         if (PyErr_Occurred()) {
             /* If an error is already set (unlikely), do not create new one */
             Py_DECREF(r);
+            Py_DECREF(dtype);
             return NULL;
         }
         /* 2019-09-12, NumPy 1.18 */
@@ -3721,6 +3733,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
     }
 
 fail:
+    Py_DECREF(dtype);
     if (err == 1) {
         PyErr_NoMemory();
     }
@@ -3986,6 +3999,11 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
                 return NULL;
             }
         }
+        /*
+         * NewFromDescr may replace dtype to absorb subarray shape
+         * into the array, so get size beforehand.
+         */
+        npy_intp size_to_copy = num*dtype->elsize;
         ret = (PyArrayObject *)
             PyArray_NewFromDescr(&PyArray_Type, dtype,
                                  1, &num, NULL, NULL,
@@ -3993,7 +4011,7 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
         if (ret == NULL) {
             return NULL;
         }
-        memcpy(PyArray_DATA(ret), data, num*dtype->elsize);
+        memcpy(PyArray_DATA(ret), data, size_to_copy);
     }
     else {
         /* read from character-based string */

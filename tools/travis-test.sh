@@ -52,7 +52,7 @@ setup_base()
   else
     # Python3.5-dbg on travis seems to need this
     export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
-    $PYTHON setup.py build build_src -v build_ext --inplace 2>&1 | tee log
+    $PYTHON setup.py build build_src --verbose-cfg build_ext --inplace 2>&1 | tee log
   fi
   grep -v "_configtest" log \
     | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
@@ -88,7 +88,7 @@ run_test()
 
   if [ -n "$RUN_FULL_TESTS" ]; then
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    $PYTHON ../runtests.py -n -v --durations 10 --mode=full $COVERAGE_FLAG
+    $PYTHON -b ../runtests.py -n -v --durations 10 --mode=full $COVERAGE_FLAG
   else
     # disable --durations temporarily, pytest currently aborts
     # when that is used with python3.6-dbg
@@ -151,7 +151,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
      export F90='gfortran --coverage'
      export LDFLAGS='--coverage'
   fi
-  $PYTHON setup.py build build_src -v bdist_wheel
+  $PYTHON setup.py build build_src --verbose-cfg bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
   . venv-for-wheel/bin/activate
