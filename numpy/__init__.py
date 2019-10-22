@@ -6,6 +6,8 @@ Provides
   1. An array object of arbitrary homogeneous items
   2. Fast mathematical operations over arrays
   3. Linear Algebra, Fourier Transforms, Random Number Generation
+  4. Matrix computation can be done
+  5. Numerical Analysis is faster through Numpy
 
 How to use the documentation
 ----------------------------
@@ -20,7 +22,7 @@ instructions.
 
 The docstring examples assume that `numpy` has been imported as `np`::
 
-  >>> import numpy as np
+  >>> import numpy as np  #where np is the object for numpy which can be used insted
 
 Code snippets are indicated by three greater-than signs::
 
