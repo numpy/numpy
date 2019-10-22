@@ -20,4 +20,3 @@ classes contained in the package, see the :ref:`reference`.
    building
    c-info
    absolute-beginners-outline
-   absolute_beginners
