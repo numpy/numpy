@@ -7,6 +7,7 @@ It provides:
 - sophisticated (broadcasting) functions
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
+- enables faster numerical Analysis and Matrix computaional skills
 - and much more
 
 Besides its obvious scientific uses, NumPy can also be used as an efficient
@@ -14,7 +15,7 @@ multi-dimensional container of generic data. Arbitrary data-types can be
 defined. This allows NumPy to seamlessly and speedily integrate with a wide
 variety of databases.
 
-All NumPy wheels distributed on PyPI are BSD licensed.
+All NumPy wheels distributed on PyPI are BSD licensed.   link for PYPI is <<https://pypi.org>>
 
 """
 from __future__ import division, print_function
