@@ -493,6 +493,12 @@ def _recursive_guard(fillvalue='...'):
 # gracefully handle recursive calls, when object arrays contain themselves
 @_recursive_guard()
 def _array2string(a, options, separator=' ', prefix=""):
+    # Note we use the copied array instead of the input array here (since for
+    # subclasses gathering from the array to format it may be expensive, e.g. if
+    # the buffer is on an accelerator).
+    if type(arr) is not ndarray:
+        a = asarray(a)
+
     # The formatter __init__s in _get_format_function cannot deal with
     # subclasses yet, and we also need to avoid recursion issues in
     # _formatArray with subclasses which return 0d arrays in place of scalars
