@@ -5328,7 +5328,7 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
 
     Warning: This attribute exists specifically for `__array_interface__`,
     and passing it directly to `np.dtype` will not accurately reconstruct
-    most dtypes (e.g. scalar and subarray dtypes).
+    some dtypes (e.g., scalar and subarray dtypes).
 
     Examples
     --------
