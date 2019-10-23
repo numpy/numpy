@@ -14,7 +14,7 @@ The NumPy library contains multidimentional array and matrix data structures. It
 Installing NumPy
 ----------------
   
-To install NumPy, we strongly recommend using a scientific Python distribution. If you're looking for the full instructions for installing NumPy on your operating system, you can find all of the details `here <https://www.scipy.org/install.html>`_.
+To install NumPy, we strongly recommend using a scientific Python distribution. If you're looking for the full instructions for installing NumPy on your operating system, `ou can find all of the details here <https://www.scipy.org/install.html>`_.
 
 If you don't have Python yet, you might want to consider using Anaconda. It's the easiest way to get started! The good thing about getting this distribution is is the fact that you don’t need to worry too much about separately installing NumPy or any of the major packages that you’ll be using for your data analyses, such as pandas, Scikit-Learn, etc.
   
@@ -547,7 +547,7 @@ You can easily specify which axis you want the aggregation function to be comput
 
 The four values listed above correspond to the number of columns in your array. With a four-column array, you can expect to get four values as your result.
 
-NumPy has a number of other very useful functions, which you can read about  `here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_.
+NumPy has a number of other very useful functions. `You can read about them here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_.
 
 How to inspect the size and shape of a NumPy array
 --------------------------------------------------
