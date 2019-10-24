@@ -11,9 +11,11 @@ NEP 34 — Disallow inferring ``dtype=object`` from sequences
 Abstract
 --------
 
-``np.array([<ragged_nested_sequence>])`` with no ``dtype`` keyword argument
-will sometimes default to an ``object``-dtype array. Change the behaviour to
-raise a `ValueError` instead.
+When users create arrays with lists-of-lists, they sometimes err in matching
+the lengths of the nested lists, commonly called "ragged arrays". Creating such
+arrays via ``np.array([<ragged_nested_sequence>])`` with no ``dtype`` keyword
+argument will today default to an ``object``-dtype array. Change the behaviour to
+raise a ``ValueError`` instead.
 
 Motivation and Scope
 --------------------
@@ -80,8 +82,14 @@ It was also suggested to add a kwarg `depth` to array creation, or perhaps to
 add another array creation API function `ragged_array_object`. The goal was
 to eliminate the ambiguity in creating an object array from `array([[1, 2],
 [1]], dtype=object)`: should the returned array have a shape of `(1,)`, or
-`(2,)`? This PR does not deal with that issue, and only deprecates the use of
+`(2,)`? This NEP does not deal with that issue, and only deprecates the use of
 `array` with no `dtype=object` for ragged arrays.
+
+It was also suggested to deprecate all automatic creation of ``object``-dtype
+arrays, which would require a dtype for something like ``np.array([Decimal(10),
+Decimal(10)])``. This too is out of scope for the current NEP: only if all the
+top-level elements are `sequences`_ will we require an explicit
+``dtype=object``.
 
 Discussion
 ----------
@@ -94,7 +102,7 @@ References and Footnotes
 ------------------------
 
 .. _`issue 5303`: https://github.com/numpy/numpy/issues/5303
-
+.. _`sequences`: https://docs.python.org/3.7/glossary.html#term-sequence
 
 Copyright
 ---------
