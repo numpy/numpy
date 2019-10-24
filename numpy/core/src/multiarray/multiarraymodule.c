@@ -1562,8 +1562,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     PyArrayObject *oparr = NULL, *ret = NULL;
     npy_bool subok = NPY_FALSE;
     npy_bool copy = NPY_TRUE;
-    int nd;
-    npy_intp ndmin = 0;
+    int ndmin = 0, nd;
     PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
@@ -1625,13 +1624,14 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 
             ndmin_obj = PyDict_GetItem(kws, npy_ma_str_ndmin);
             if (ndmin_obj) {
-                ndmin = PyLong_AsLong(ndmin_obj);
-                if (error_converting(ndmin)) {
+                long t = PyLong_AsLong(ndmin_obj);
+                if (error_converting(t)) {
                     goto clean_type;
                 }
-                else if (ndmin > NPY_MAXDIMS) {
+                else if (t > NPY_MAXDIMS) {
                     goto full_path;
                 }
+                ndmin = t;
             }
 
             /* copy=False with default dtype, order (any is OK) and ndim */
