@@ -11,9 +11,9 @@ NEP 34 — Disallow inferring ``dtype=object`` from sequences
 Abstract
 --------
 
-``np.array([<sequence>, <sequence>])`` with no ``dtype`` keyword argument will
-sometimes default to an ``object``-dtype array. Change the behaviour to raise a
-`ValueError` instead.
+``np.array([<ragged_nested_sequence>])`` with no ``dtype`` keyword argument
+will sometimes default to an ``object``-dtype array. Change the behaviour to
+raise a `ValueError` instead.
 
 Motivation and Scope
 --------------------
@@ -31,10 +31,10 @@ Usage and Impact
 
 After this change, ragged array creation must explicitly define a dtype:
 
-    np.array([[1, 2], [1]])
+    >>> np.array([[1, 2], [1]])
     ValueError: cannot guess the desired dtype from the input
 
-    np.array([[1, 2], [1]], dtype=object)
+    >>> np.array([[1, 2], [1]], dtype=object)
     # succeeds, with no change from current behaviour
 
 Detailed description
@@ -43,8 +43,8 @@ Detailed description
 To explicitly set the shape of the object array, since it is sometimes hard to
 determine what shape is desired, one could use:
 
-    arr = np.empty(correct_shape, dtype=object)
-    arr[...] = values
+    >>> arr = np.empty(correct_shape, dtype=object)
+    >>> arr[...] = values
 
 Related Work
 ------------
@@ -68,7 +68,7 @@ Backward compatibility
 
 Anyone depending on ragged lists-of-lists creating object arrays will need to
 modify their code. There will be a deprecation period during which the current
-behaviour will emit a ``DeprecationWarning``
+behaviour will emit a ``DeprecationWarning``.
 
 
 Alternatives
