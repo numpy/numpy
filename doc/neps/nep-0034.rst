@@ -21,13 +21,13 @@ Motivation and Scope
 Users who specify lists-of-lists when creating a `numpy.ndarray` via
 ``np.array`` may mistakenly pass in lists of different lengths. Currently we
 accept this input and create a ragged array with ``dtype=object``. This can be
-confusing, since it is rarely what is desired. Changing the default dtype
-detection to never return ``object`` will force users who actually wish to
-create ``object`` arrays to specify that explicitly, see for instance `issue
-5303`_.
+confusing, since it is rarely what is desired. Changing the automatic dtype
+detection to never return ``object`` for ragged arrays will force users who
+actually wish to create ``object`` arrays to specify that explicitly, see for
+instance `issue 5303`_.
 
-Detailed description
---------------------
+Usage and Impact
+----------------
 
 After this change, ragged array creation must explicitly define a dtype:
 
@@ -35,20 +35,16 @@ After this change, ragged array creation must explicitly define a dtype:
     ValueError: cannot guess the desired dtype from the input
 
     np.array([[1, 2], [1]], dtype=object)
-    ValueError: cannot guess the desired object type, use \
-    ``ragged_object_array`` instead
+    # succeeds, with no change from current behaviour
 
-    np.ragged_array_object([[1, 2], [1]], depth=0)
-    array([list([[1, 2], [1]])], dtype=object)
+Detailed description
+--------------------
 
-    np.ragged_array_object([[1, 2], [1]], depth=1)
-    array([list([1, 2]), list([1])], dtype=object)
+To explicitly set the shape of the object array, since it is sometimes hard to
+determine what shape is desired, one could use:
 
-    np.ragged_array_object([[1, 2], [1]], depth=2)
-    ValueError: cannot interpret input as depth-2 sequences
-    
-    np.ragged_array_object([[[1, 2], [1]], [['a']]], depth = 2)
-    array([[list([1, 2]), list([1])], [list(['a'])]], dtype=object)
+    arr = np.empty(correct_shape, dtype=object)
+    arr[...] = values
 
 Related Work
 ------------
@@ -80,12 +76,19 @@ Alternatives
 
 We could continue with the current situation.
 
+It was also suggested to add a kwarg `depth` to array creation, or perhaps to
+add another array creation API function `ragged_array_object`. The goal was
+to eliminate the ambiguity in creating an object array from `array([[1, 2],
+[1]], dtype=object)`: should the returned array have a shape of `(1,)`, or
+`(2,)`? This PR does not deal with that issue, and only deprecates the use of
+`array` with no `dtype=object` for ragged arrays.
+
 Discussion
 ----------
 
 Comments to `issue 5303`_ indicate this is unintended behaviour as far back as
 2014. Suggestions to change it have been made in the ensuing years, but none
-have stuck.
+have stuck. The mailing list 
 
 References and Footnotes
 ------------------------
