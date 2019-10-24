@@ -14,7 +14,7 @@ The NumPy library contains multidimentional array and matrix data structures. It
 Installing NumPy
 ----------------
   
-To install NumPy, we strongly recommend using a scientific Python distribution. If you're looking for the full instructions for installing NumPy on your operating system, `ou can find all of the details here <https://www.scipy.org/install.html>`_.
+To install NumPy, we strongly recommend using a scientific Python distribution. If you're looking for the full instructions for installing NumPy on your operating system, you can `find all of the details here <https://www.scipy.org/install.html>`_.
 
 If you don't have Python yet, you might want to consider using Anaconda. It's the easiest way to get started! The good thing about getting this distribution is is the fact that you don’t need to worry too much about separately installing NumPy or any of the major packages that you’ll be using for your data analyses, such as pandas, Scikit-Learn, etc.
   
@@ -52,7 +52,7 @@ NumPy gives you an enormous range of fast and efficient numerically-related opti
 
 **Why use NumPy?**
 
-NumPy arrays are faster and more compact than Python lists. An array consumes less memory and is convenient to use. NumPy uses much less memory to store data and it provides a mechanism of specifying the data types, which allow the code to be optimisted even further. 
+NumPy arrays are faster and more compact than Python lists. An array consumes less memory and is convenient to use. NumPy uses much less memory to store data and it provides a mechanism of specifying the data types. This allows the code to be optimisted even further. 
 
 What is an array?
 -----------------
@@ -76,9 +76,20 @@ You might occasionally hear an array referred to as an "ndarray," which is short
 
 **What are the attributes of an array?**
 
-An array is usually a fixed-size container of items of the same type and size. The number of dimensions and items in an array is defined by its shape. The shape of an array is atuple of non-negative integers that specify the sizes of each dimension. Just like in other Python container objects, the contents of an array can be accessed and modified by indexing or slicing the array. Different arrays can share the same data, so changes made on one array might be visible in another. 
+An array is usually a fixed-size container of items of the same type and size. The number of dimensions and items in an array is defined by its shape. The shape of an array is a tuple of non-negative integers that specify the sizes of each dimension. 
 
-Array attributes reflect information that is intrinsic to the array itself. If you need to get and even set poperties of an array without creating a new array, you can often access an array through its attributes. 
+In NumPy, dimensions are called **axes**. This means that if you have a 2D array that looks like this:
+
+::
+
+  [[0., 0., 0.],
+   [1., 1., 1.]]
+
+Your array has 2 axes. The first axis has a length of 2 and the second axis has a length of 3.
+
+Just like in other Python container objects, the contents of an array can be accessed and modified by indexing or slicing the array. Different arrays can share the same data, so changes made on one array might be visible in another. 
+
+Array **attributes** reflect information intrinsic to the array itself. If you need to get, or even set, poperties of an array without creating a new array, you can often access an array through its attributes. 
 
 `Read more about array attributes here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_.
 
@@ -133,7 +144,7 @@ Or an array filled with 1s:
 
   array([1., 1.])
   
-Or even an empty array:
+Or even an empty array! The function *empty* creates an array whose initial content is random and depends on the state of the memory. 
 
 ::
 
@@ -177,11 +188,19 @@ It's simple to create an array where the values are spaced linearly in an interv
 
   array([ 0. ,  2.5,  5. ,  7.5, 10. ])
 
-While the default data type is floating point, you can expecity specify which data type you want:
+While the default data type is floating point (float64), you can expecity specify which data type you want using 'dtype'.
 
 ::
 
-  array = np.
+  array = np.ones(2, dtype=int)
+  array
+
+**Output:**
+
+::
+
+  array([1, 1])
+
 
 Adding, removing, and sorting elements
 --------------------------------------
@@ -194,14 +213,14 @@ Let's take advantage of:
   np.delete()
   np.sort()
 
-**Append**
-
 If we start with this array:
 
 ::
 
   arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
  
+
+**Append**
 
 You can add elements to an array any time with np.append.
 ::
@@ -251,16 +270,21 @@ You can quickly sort the numbers in ascending order with:
 
   array([1, 2, 3, 4, 5, 6, 7, 8])
 
+In addition to sort, which returns a sorted copy of an array, you can use:
 
+**argsort**, which is an `indirect sort along a specified axis <https://docs.scipy.org/doc/numpy-1.17.0/reference/generated/numpy.argsort.html#numpy.argsort>`_,
+**lexsort**, which is an `indirect stable sort on multiple keys <https://docs.scipy.org/doc/numpy-1.17.0/reference/generated/numpy.lexsort.html#numpy.lexsort>`_,
+**searchsorted**, which will `find elements in a sorted array <https://docs.scipy.org/doc/numpy-1.17.0/reference/generated/numpy.searchsorted.html#numpy.searchsorted>`_, and 
+**partition**, which is a `partial sort  <https://docs.scipy.org/doc/numpy-1.17.0/reference/generated/numpy.partition.html#numpy.partition>`_.
 
 How do you know the shape and size of an array?
 -----------------------------------------------
 
 **ndarray.ndim** will tell you the number of axes, or dimensions, of the array.
 
-**ndarray.shape** will display a tuple of integers that indicate the number of elements stored along each dimension of the array. If, for example, you have a 2D-array with 2 rows and 3 columns, the shape of your array is (2,3).
+**ndarray.shape** will display a tuple of integers that indicate the number of elements stored along each dimension of the array. If, for example, you have a 2D array with 2 rows and 3 columns, the shape of your array is (2,3).
 
-**ndarray.size** will tell you the total number of elements of the array. This is, in other words, the product of the elements of the array's shape.
+**ndarray.size** will tell you the total number of elements of the array. This is the *product* of the elements of the array's shape.
 
 For example:
 
@@ -324,7 +348,7 @@ For example:
    [2 3]
    [4 5]]
 
-Optional parameters you can specify are:
+You can specify a few optional parameters.
 
 ::
 
@@ -335,55 +359,6 @@ Optional parameters you can specify are:
 **newshape** is the new shape you want. You can specify an integer or a tuple of integers. If you specify an integer, the result wil be an array of that length. The shape should be compatible with the original shape.
 
 **order** 'C' means to read/write the elements using C-like index order,  ‘F’ means to read / write the elements using Fortran-like index order, ‘A’ means to read / write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise.
-
-How to create an array from existing data
------------------------------------------
-
-You can easily create a new array from a section of an existing array. Let's say you have this array:
-
-::
-
-  arr = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-  arr
-
-**Output**
-
-::
-
-  array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
-
-You can create a new array from a section of your array with:
-
-::
-
-  arr1 = arr[3:8]
-  arr1
-
-**Output:**
-
-::
-
-  array([4, 5, 6, 7, 8])
-
-
-It's also simple to read in a CSV. The best and easiest way to do this is to use Pandas.
-
-::
-
-  import pandas as pd
-
-  # If all oof your columns are the same type:
-  x = pd.read_csv('music.csv').values
-
-  # You can also simply select the columns you need:
-  x = pd.read_csv('music.csv', columns=['float_colname_1', ...]).values
-
-.. image:: images/np_pandas.png
-
-- **How to create a new array from an existing array**
-- **How to specify the datatype**
-  
-- Examples of commonly used NumPy dtypes
 
 Indexing and Slicing
 --------------------
@@ -414,6 +389,132 @@ We can index and slice NumPy arrays in the same ways we can slice Python lists.
 
 
 .. image:: images/np_indexing.png
+
+How to create an array from existing data
+-----------------------------------------
+
+You can easily create a new array from a section of an existing array. Let's say you have this array:
+
+::
+
+  array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
+
+You can create a new array from a section of your array any time by specifying where you want to slice your array.
+
+::
+
+  arr1 = arr[3:8]
+  arr1
+
+**Output:**
+
+::
+
+  array([4, 5, 6, 7, 8])
+
+Here, you grabbed a section of your array from index position 3 through index position 8.
+
+You can also stack two existing arrays, both vertically and horizontally. Let's say you have two arrays. This one:
+
+::
+
+  array([[1, 1],
+       [2, 2]])
+
+and this one:
+
+::
+
+  array([[3, 3],
+       [4, 4]])
+
+You can stack them vertically with vstack:
+
+::
+
+  np.vstack((a_1, a_2))
+
+**Output:**
+
+::
+
+  array([[1, 1],
+       [2, 2],
+       [3, 3],
+       [4, 4]])
+
+Or stack them horizontally with hstack:
+
+::
+
+  np.hstack((a_1, a_2))
+
+**Output:**
+
+::
+
+  array([[1, 1, 3, 3],
+       [2, 2, 4, 4]])
+
+You can also split an array into several smaller arrays using hsplit. You can specify either the number of equally shaped arrays to return or the columns *after* which the division should occur.
+
+Let's say you have this array:
+
+::
+
+  array([[ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12],
+       [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]])
+
+If you wanted to split this array into three equally shaped arrays, you would run:
+
+::
+
+  np.hsplit(a_3,3)
+
+**Output:**
+
+::
+
+  [array([[ 1,  2,  3,  4],
+        [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
+        [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
+        [21, 22, 23, 24]])]
+
+If you wanted to split your array after the third and fourth column, you'd run:
+
+::
+
+  np.hsplit(a_3,(3,4))
+
+**Output:**
+
+::
+
+  [array([[ 1,  2,  3],
+        [13, 14, 15]]), array([[ 4],
+        [16]]), array([[ 5,  6,  7,  8,  9, 10, 11, 12],
+        [17, 18, 19, 20, 21, 22, 23, 24]])]
+
+You can also use the `view` method to create a new array object that looks at the same data (a *shallow copy*)
+
+Let's say you create this array:
+
+::
+
+  a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+
+You can create a new array with the same data using:
+
+::
+
+  b = np_arr.view()
+
+Using the `copy` method makes a complete copy of the array and its data (a *deep copy*). To use this on your array, you could run:
+
+::
+
+  c = a.copy()
+ 
 
 Basic array operations
 ----------------------
@@ -484,7 +585,7 @@ To add the rows or the columns in a 2D array, you would specify the axis.
 Broadcasting
 ------------
 
-There are times when you might want to carry out an operation between an array and a single number (also called *an operation between a vector and a scalar*). Your  "data" array might, for example, contain information about distance in miles but you want to convert the information to kilometers. You can perform this operation with 
+There are times when you might want to carry out an operation between an array and a single number (also called *an operation between a vector and a scalar*). Your array (we'll name it "data") might, for example, contain information about distance in miles but you want to convert the information to kilometers. You can perform this operation with 
 
 ::
 
@@ -494,7 +595,7 @@ There are times when you might want to carry out an operation between an array a
 
 NumPy understands that the multiplication should happen with each cell. That concept is called **broadcasting**.
 
-How do I find the mean of an array?
+More useful array operations
 -----------------------------------
 
 NumPy also performs aggregation functions. In addition to `min`,  `max`, and `sum`, you can easily run `mean` to get the average, `prod` to get the result of multiplying the elements together, `std` to get the standard deviation, and more.
@@ -507,19 +608,23 @@ NumPy also performs aggregation functions. In addition to `min`,  `max`, and `su
 
 .. image:: images/np_aggregation.png
 
-It's very common to want to aggregate along a row or column. By default, every NumPy aggregation function will return the aggregate of the entire array:
+Let's start with this array, called "A"
 
 ::
 
-  A = np.random.random((3, 4))
-  print(A)
-
-  # Result
  [[0.45053314 0.17296777 0.34376245 0.5510652 ]
  [0.54627315 0.05093587 0.40067661 0.55645993]
  [0.12697628 0.82485143 0.26590556 0.56917101]]
 
+It's very common to want to aggregate along a row or column. By default, every NumPy aggregation function will return the aggregate of the entire array. To find the sum or and the minimum of the elements in your array, simply run:
+
+::
+
   A.sum()
+
+Or
+
+::
 
   A.min()
 
@@ -547,7 +652,7 @@ You can easily specify which axis you want the aggregation function to be comput
 
 The four values listed above correspond to the number of columns in your array. With a four-column array, you can expect to get four values as your result.
 
-NumPy has a number of other very useful functions. `You can read about them here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_.
+`Read more about functions here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_.
 
 How to inspect the size and shape of a NumPy array
 --------------------------------------------------
@@ -584,11 +689,9 @@ You can use `.shape` to quickly find the shape of your array:
 
 This output tells you that your array has three rows and four columns.
 
-You can just find the number of rows with:
+You can find just the number of rows by specifying [0]:
 
 ::
-
-  # np_arr.shape[0]
 
   num_of_rows = np_arr.shape[0]
  
@@ -600,11 +703,9 @@ You can just find the number of rows with:
 
   Number of Rows :  3
 
-Or the just the number of columns with:
+Or just the number of columns by specifying [1]:
 
 ::
-
-  # np_arr.shape[1]
 
   num_of_columns = np_arr.shape[1]
  
@@ -630,7 +731,7 @@ It's also easy to find the total number of elements in your array:
 
   Total number of elements in array:  12
 
-You can also use np.shape() with a 1D array, of course.
+You can use np.shape() with a 1D array, of course.
 
 ::
 
@@ -745,34 +846,7 @@ You can also use np.size() with 1D arrays:
 
   Length of 1D numpy array :  8
 
-- **How to check whether a list is empty or not**
-- **How to represent missing values and infinite values**
-
-- **Sorting an array**
-
-- **How to concatenate two arrays**
-  
-  - column-wise
-
-  - row-wise
-
-  - np.concatenate, np.stack, np.vstack, np.hstack
-
-- **How to sort an array**
-  
-  - based on one (or more) columns
-    
-    - np.sort
-    
-    - np.argsort
-
-    - np.argmin
-
-    - np.argsort
-
-  - based on two or more columns
-    
-    - np.lexsort
+Remember that if you check the size of your array and it equals 0, your array is empty.
 
 
 Creating Matrices
@@ -874,29 +948,30 @@ There are often instances where we want NumPy to initialize the values of an arr
   
 .. image:: images/np_ones_zeros_random.png
 
-- np.linspace
-  
-- np.logspace
+Generating random numbers
+-------------------------
 
-- np.tile
-  
-- np.zeros
+The use of random number generatiion is an important part of the configuration and evaluation of machine learning algorithms. Whether you neeed to randomly initialize weights in an artificial neural network, split data into random sets, or randomly shuffle your dataset, being able to generate random numbers (actaullyrepeatable pseudo-random numbers) is essential.
 
-- np.ones
+You have a number of options when using NumPy for random number generation. Random Generator is NumPy's replacement for RandomState. The main difference between them is that Generator relies on an additional BitGenerator to manage state and generate the random bits, which are transformed into random values.
 
-- Random Number Generation (update below to numpy.random.Generator)
+With Generator.integers, you can generate random integers from low (remeber that this is inclusive with NumPy) to high (exclusive). You can set *endopoint=True* to make the high number inclusive. 
 
-  - np.random.randn
-  
-  - np.random.randint
-  
-  - np.random.random
-  
-  - np.random.choice
-  
-  - np.random.RandomState, np.random.seed
+You can generate a 2 x 4 array of random integers between 0 and 4 with
 
-You can also use the `ones()`, `zeros()`, and `random()` methods to create a matrix if you give them a tuple describing the deminsions of the matrix.
+::
+
+  rng.integers(5, size=(2, 4))
+
+**Output:**
+
+::
+
+  array([[4, 0, 2, 1],
+       [3, 2, 2, 0]])
+
+
+You can also use the `ones()`, `zeros()`, and `random()` methods to create an array if you give them a tuple describing the deminsions of the matrix.
 
 ::
 
@@ -940,19 +1015,15 @@ Reshaping and Flattening multidimensional arrays
   
 - flatten vs ravel
 
-How to import and export data as a CSV
---------------------------------------
 
 How to save and load NumPy objects
 ----------------------------------
 
-How to apply a function column-wise or row-wise
------------------------------------------------
 
 How to convert a 1D array into a 2D array (how to add a new axis)
 -----------------------------------------------------------------
 
-Formulas:
+Formulas
 ---------
 
 Implementing mathematical formulas that work on matrices and vectors is one of the things that make NumPy so highly regarded in the scientific Python community. 
@@ -977,7 +1048,92 @@ In this example, both the predictions and labels vectors contain three values, m
 
 .. image:: images/np_MSE_explanation2.png
 
-- **How to plot arrays, very basic with Matplotlib**
+
+
+Importing and exporting a CSV
+-----------------------------
+
+It's simple to read in a CSV that contains existing information. The best and easiest way to do this is to use Pandas.
+
+::
+
+  import pandas as pd
+
+  # If all oof your columns are the same type:
+  x = pd.read_csv('music.csv').values
+
+  # You can also simply select the columns you need:
+  x = pd.read_csv('music.csv', columns=['float_colname_1', ...]).values
+
+.. image:: images/np_pandas.png
+
+It's simple to use Pandas in order to export your array as well. If you are new to NumPy, you may want to  create a pandas dataframe from the values in your array and then write the data frame to a CSV file with pandas.
+
+If you created this array "a"
+
+::
+
+  [[-2.58289208,  0.43014843, -1.24082018,  1.59572603],
+       [ 0.99027828,  1.17150989,  0.94125714, -0.14692469],
+       [ 0.76989341,  0.81299683, -0.95068423,  0.11769564],
+       [ 0.20484034,  0.34784527,  1.96979195,  0.51992837]]
+
+You could create a Pandas dataframe
+
+::
+
+  df = pd.DataFrame(a)
+  print(df)
+
+**Output:**
+
+::
+  
+            0         1         2         3
+  0 -2.582892  0.430148 -1.240820  1.595726
+  1  0.990278  1.171510  0.941257 -0.146925
+  2  0.769893  0.812997 -0.950684  0.117696
+  3  0.204840  0.347845  1.969792  0.519928
+  ​
+You can easily save your dataframe with
+
+::
+
+  df.to_csv('pd.csv')
+
+And read your CSV with
+
+::
+
+  pd.read_csv('pd.csv')
+
+.. image:: images/np_readcsv.png
+
+You can also save your array with the NumPy "savetxt" method.
+
+::
+
+  np.savetxt('np.csv', a, fmt='%.2f', delimiter=',', header=" 1,  2,  3,  4")
+
+Read your saved CSV any time with a command such as
+
+::
+
+  cat np.csv
+
+**Output:**
+
+::
+
+  #  1,  2,  3,  4
+  -2.58,0.43,-1.24,1.60
+  0.99,1.17,0.94,-0.15
+  0.77,0.81,-0.95,0.12
+  0.20,0.35,1.97,0.52
+
+
+Plotting arrays with Matplotlib
+-------------------------------
 
 If you need to generate a plot for your values, it's very simple with Matplotlib. 
 
@@ -1054,4 +1210,3 @@ More useful functions
 -------------------------------------------------------
 
 *Image credits: Jay Alammar http://jalammar.github.io/*
-
