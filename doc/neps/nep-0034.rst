@@ -24,9 +24,11 @@ Users who specify lists-of-lists when creating a `numpy.ndarray` via
 ``np.array`` may mistakenly pass in lists of different lengths. Currently we
 accept this input and create a ragged array with ``dtype=object``. This can be
 confusing, since it is rarely what is desired. Changing the automatic dtype
-detection to never return ``object`` for ragged arrays will force users who
-actually wish to create ``object`` arrays to specify that explicitly, see for
-instance `issue 5303`_.
+detection to never return ``object`` for ragged arrays (defined as a recursive
+`sequence`_ of sequences, where not all the sequences on the same level have
+the same length) will force users who actually wish to create ``object`` arrays
+to specify that explicitly. Note that lists, tuples, and nd.arrays are all
+sequences. See for instance `issue 5303`_.
 
 Usage and Impact
 ----------------
@@ -47,6 +49,12 @@ determine what shape is desired, one could use:
 
     >>> arr = np.empty(correct_shape, dtype=object)
     >>> arr[...] = values
+
+We will also reject mixed seqeunces of ``non-sequence and sequence``, for instance
+all of these will be rejected:
+
+    >>> arr = np.array([np.arange(10), [10]])
+    >>> arr = np.array([[range(3), range(3), range(3)], [range(3), 0, 0]])
 
 Related Work
 ------------
