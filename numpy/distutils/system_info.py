@@ -1580,7 +1580,7 @@ def get_atlas_version(**config):
             log.info('Status: %d', s)
             log.info('Output: %s', o)
 
-    if atlas_version == '3.2.1_pre3.3.6':
+    elif atlas_version == '3.2.1_pre3.3.6':
         dict_append(info, define_macros=[('NO_ATLAS_INFO', -2)])
     else:
         dict_append(info, define_macros=[(
