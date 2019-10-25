@@ -46,7 +46,7 @@ stages:
             python3 -m pip install --user -r test_requirements.txt && \
             python3 -m pip install . && \
             F77=gfortran-5 F90=gfortran-5 \
-            CFLAGS='-UNDEBUG -std=c99' python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+            CFLAGS=-UNDEBUG python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
             python3 tools/openblas_support.py --check_version $(OpenBLAS_version)"
       displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
     - task: PublishTestResults@2
