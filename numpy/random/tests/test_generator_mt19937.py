@@ -329,11 +329,11 @@ class TestIntegers(object):
                'int16':  '39624ead49ad67e37545744024d2648b',
                'int32':  '5c4810373f979336c6c0c999996e47a1',
                'int64':  'ab126c15edff26f55c50d2b7e37391ac',
-               'int8':   'd1746364b48a020dab9ef0568e6c0cd2',
+               'int8':   'ba71ccaffeeeb9eeb1860f8075020b9c',
                'uint16': '39624ead49ad67e37545744024d2648b',
                'uint32': '5c4810373f979336c6c0c999996e47a1',
                'uint64': 'ab126c15edff26f55c50d2b7e37391ac',
-               'uint8':  'd1746364b48a020dab9ef0568e6c0cd2'}
+               'uint8':  'ba71ccaffeeeb9eeb1860f8075020b9c'}
 
         for dt in self.itype[1:]:
             random = Generator(MT19937(1234))
@@ -483,6 +483,24 @@ class TestIntegers(object):
         other_byteord_dt = '<i4' if sys.byteorder == 'big' else '>i4'
         with pytest.raises(ValueError):
             random.integers(0, 200, size=10, dtype=other_byteord_dt)
+
+    # chi2max is the maximum acceptable chi-squared value.
+    @pytest.mark.slow
+    @pytest.mark.parametrize('sample_size,high,dtype,chi2max',
+        [(5000000, 5, np.int8, 125.0),          # p-value ~4.6e-25
+         (5000000, 7, np.uint8, 150.0),         # p-value ~7.7e-30
+         (10000000, 2500, np.int16, 3300.0),    # p-value ~3.0e-25
+         (50000000, 5000, np.uint16, 6500.0),   # p-value ~3.5e-25
+        ])
+    def test_integers_small_dtype_chisquared(self, sample_size, high,
+                                             dtype, chi2max):
+        # Regression test for gh-14774.
+        samples = random.integers(high, size=sample_size, dtype=dtype)
+
+        values, counts = np.unique(samples, return_counts=True)
+        expected = sample_size / high
+        chi2 = ((counts - expected)**2 / expected).sum()
+        assert chi2 < chi2max
 
 
 class TestRandomDist(object):
