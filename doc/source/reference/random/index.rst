@@ -199,7 +199,8 @@ Features
    Multithreaded Generation <multithreading>
    new-or-different
    Comparing Performance <performance>
-   Using from Numba, Cython, CFFI <extending>
+   c-api
+   Examples of using Numba, Cython, CFFI <extending>
 
 Original Source
 ~~~~~~~~~~~~~~~
