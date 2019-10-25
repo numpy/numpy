@@ -277,6 +277,7 @@ In addition to sort, which returns a sorted copy of an array, you can use:
 **searchsorted**, which will `find elements in a sorted array <https://docs.scipy.org/doc/numpy-1.17.0/reference/generated/numpy.searchsorted.html#numpy.searchsorted>`_, and 
 **partition**, which is a `partial sort  <https://docs.scipy.org/doc/numpy-1.17.0/reference/generated/numpy.partition.html#numpy.partition>`_.
 
+
 How do you know the shape and size of an array?
 -----------------------------------------------
 
@@ -311,6 +312,7 @@ For example:
   3
   24
   (3,2,4)
+
 
 Can you reshape an array?
 -------------------------
@@ -360,6 +362,7 @@ You can specify a few optional parameters.
 
 **order** 'C' means to read/write the elements using C-like index order,  ‘F’ means to read / write the elements using Fortran-like index order, ‘A’ means to read / write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise.
 
+
 Indexing and Slicing
 --------------------
 
@@ -389,6 +392,7 @@ We can index and slice NumPy arrays in the same ways we can slice Python lists.
 
 
 .. image:: images/np_indexing.png
+
 
 How to create an array from existing data
 -----------------------------------------
@@ -582,6 +586,7 @@ To add the rows or the columns in a 2D array, you would specify the axis.
 
   array([2, 4])
 
+
 Broadcasting
 ------------
 
@@ -594,6 +599,7 @@ There are times when you might want to carry out an operation between an array a
 .. image:: images/np_multiply_broadcasting.png
 
 NumPy understands that the multiplication should happen with each cell. That concept is called **broadcasting**.
+
 
 More useful array operations
 -----------------------------------
@@ -653,6 +659,7 @@ You can easily specify which axis you want the aggregation function to be comput
 The four values listed above correspond to the number of columns in your array. With a four-column array, you can expect to get four values as your result.
 
 `Read more about functions here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_.
+
 
 How to inspect the size and shape of a NumPy array
 --------------------------------------------------
@@ -981,6 +988,7 @@ You can also use the `ones()`, `zeros()`, and `random()` methods to create an ar
 
 .. image:: images/np_ones_zeros_matrix.png
 
+
 How to get the unique items and the counts
 ------------------------------------------
 
@@ -1088,7 +1096,6 @@ You could create a Pandas dataframe
 **Output:**
 
 ::
-  
             0         1         2         3
   0 -2.582892  0.430148 -1.240820  1.595726
   1  0.990278  1.171510  0.941257 -0.146925
@@ -1188,6 +1195,7 @@ With Matplotlib, you have access to an enormous number of visualization options.
     :scale: 50 %
 
 To read more about Matplotlib and what it can do, take a look at `the official documentation <https://matplotlib.org/>`_.
+
 
 How to read a docstring with `?` and source code with `??` in IPython/Jupyter
 -----------------------------------------------------------------------------
