@@ -156,7 +156,7 @@ from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
-from numpy.distutils import customized_ccompiler
+from numpy.distutils import customized_ccompiler as _customized_ccompiler
 from numpy.distutils import _shell_utils
 import distutils.ccompiler
 import tempfile
@@ -167,6 +167,15 @@ import shutil
 import platform
 _bits = {'32bit': 32, '64bit': 64}
 platform_bits = _bits[platform.architecture()[0]]
+
+
+global_compiler = None
+
+def customized_ccompiler():
+    global global_compiler
+    if not global_compiler:
+        global_compiler = _customized_ccompiler()
+    return global_compiler
 
 
 def _c_string_literal(s):
