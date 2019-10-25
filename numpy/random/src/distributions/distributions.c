@@ -1297,10 +1297,7 @@ static NPY_INLINE uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
 
   if (leftover < rng_excl) {
     /* `rng_excl` is a simple upper bound for `threshold`. */
-
-    const uint64_t threshold = -rng_excl % rng_excl;
-    /* Same as: threshold=((uint64_t)(0x10000000000000000ULLL - rng_excl)) %
-     * rng_excl; */
+    const uint64_t threshold = (UINT64_MAX - rng) % rng_excl;
 
     while (leftover < threshold) {
       m = ((__uint128_t)next_uint64(bitgen_state)) * rng_excl;
@@ -1323,10 +1320,7 @@ static NPY_INLINE uint64_t bounded_lemire_uint64(bitgen_t *bitgen_state,
 
   if (leftover < rng_excl) {
     /* `rng_excl` is a simple upper bound for `threshold`. */
-
-    const uint64_t threshold = -rng_excl % rng_excl;
-    /* Same as:threshold=((uint64_t)(0x10000000000000000ULLL - rng_excl)) %
-     * rng_excl; */
+    const uint64_t threshold = (UINT64_MAX - rng) % rng_excl;
 
     while (leftover < threshold) {
       x = next_uint64(bitgen_state);
@@ -1387,8 +1381,7 @@ static NPY_INLINE uint32_t buffered_bounded_lemire_uint32(
 
   if (leftover < rng_excl) {
     /* `rng_excl` is a simple upper bound for `threshold`. */
-    const uint32_t threshold = -rng_excl % rng_excl;
-    /* Same as: threshold=((uint64_t)(0x100000000ULL - rng_excl)) % rng_excl; */
+    const uint32_t threshold = (UINT32_MAX - rng) % rng_excl;
 
     while (leftover < threshold) {
       m = ((uint64_t)next_uint32(bitgen_state)) * rng_excl;
@@ -1422,8 +1415,7 @@ static NPY_INLINE uint16_t buffered_bounded_lemire_uint16(
 
   if (leftover < rng_excl) {
     /* `rng_excl` is a simple upper bound for `threshold`. */
-    const uint16_t threshold = -rng_excl % rng_excl;
-    /* Same as: threshold=((uint32_t)(0x10000ULL - rng_excl)) % rng_excl; */
+    const uint16_t threshold = (UINT16_MAX - rng) % rng_excl;
 
     while (leftover < threshold) {
       m = ((uint32_t)buffered_uint16(bitgen_state, bcnt, buf)) * rng_excl;
@@ -1458,8 +1450,7 @@ static NPY_INLINE uint8_t buffered_bounded_lemire_uint8(bitgen_t *bitgen_state,
 
   if (leftover < rng_excl) {
     /* `rng_excl` is a simple upper bound for `threshold`. */
-    const uint8_t threshold = -rng_excl % rng_excl;
-    /* Same as: threshold=((uint16_t)(0x100ULL - rng_excl)) % rng_excl; */
+    const uint8_t threshold = (UINT8_MAX - rng) % rng_excl;
 
     while (leftover < threshold) {
       m = ((uint16_t)buffered_uint8(bitgen_state, bcnt, buf)) * rng_excl;
