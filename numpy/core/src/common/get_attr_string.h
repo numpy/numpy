@@ -62,8 +62,7 @@ maybe_get_attr(PyObject *obj, char *name)
     /* Attribute referenced by (char *)name */
     if (tp->tp_getattr != NULL) {
         res = (*tp->tp_getattr)(obj, name);
-        if (res == NULL && PyErr_Occurred() != NULL
-            && PyErr_ExceptionMatches(PyExc_AttributeError)) {
+        if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
             PyErr_Clear();
         }
     }
@@ -79,8 +78,7 @@ maybe_get_attr(PyObject *obj, char *name)
         }
         res = (*tp->tp_getattro)(obj, w);
         Py_DECREF(w);
-        if (res == NULL && PyErr_Occurred() != NULL
-            && PyErr_ExceptionMatches(PyExc_AttributeError)) {
+        if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
             PyErr_Clear();
         }
     }
