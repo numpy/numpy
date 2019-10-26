@@ -7,7 +7,7 @@ import numpy as np
 from numpy.lib.nanfunctions import _nan_mask
 from numpy.testing import (
     assert_, assert_equal, assert_almost_equal, assert_no_warnings,
-    assert_raises, assert_array_equal, suppress_warnings
+    assert_raises, assert_array_equal, assert_allclose,  suppress_warnings
     )
 
 
@@ -298,6 +298,11 @@ class TestNanFunctions_IntTypes(object):
         for mat in self.integer_arrays():
             assert_equal(np.nanvar(mat, ddof=1), tgt)
 
+    def test_nancov(self):
+        tgt = np.cov(self.mat)
+        for mat in self.integer_arrays():
+            assert_equal(np.nancov(mat), tgt)
+
     def test_nanstd(self):
         tgt = np.std(self.mat)
         for mat in self.integer_arrays():
@@ -445,6 +450,63 @@ class TestNanFunctions_SumProd(SharedNanFunctionsTestsMixin):
             tgt = tgt_value
             res = f(mat, axis=None)
             assert_equal(res, tgt)
+
+
+class TestNanFunctions_NanCov(object):
+    x1 = np.array([
+            [0, 1, 4],
+            [1, 1, 3],
+            [2, 1, 2],
+            [3, 1, 1],
+            [4, 1, 0]])
+    res1 = np.array([
+            [2.5,  0., -2.5],
+            [0.,   0.,   0.],
+            [-2.5, 0.,  2.5]])
+
+    x2 = np.array([
+            [1, np.nan, 2],
+            [np.nan, 3, 1],
+            [5, 2, np.nan],
+            [9, 4, 2],
+            [3, 8, 9]])
+    res2_default = np.array([
+            [18,  -12,   -21],
+            [-12,   8,    14],
+            [-21,  14,  24.5]])
+    res2_pairwise = np.array([
+            [11.6666666, -4.6666666, -4.6666666],
+            [-4.6666666,  6.9166666,       11.5],
+            [-4.6666666,       11.5, 13.6666666]])
+
+    x3 = np.array([0, 1, 2, 3, 4])
+    y3 = np.array([4, 3, np.nan, 1, 0])
+    res3_default = np.array([
+            [3.3333333,  -3.3333333],
+            [-3.3333333,  3.3333333]])
+    res3_pairwise = np.array([
+            [2.5,       -3.3333333],
+            [-3.3333333, 3.3333333]])
+
+    def test_default_no_nans(self):
+        assert_allclose(np.nancov(self.x1.T), self.res1)
+
+    def test_pairwise_no_nans(self):
+        assert_allclose(np.nancov(self.x1.T, pairwise=True), self.res1)
+
+    def test_default_with_nans(self):
+        assert_allclose(np.nancov(self.x2.T), self.res2_default)
+
+    def test_pairwise_with_nans(self):
+        assert_allclose(np.nancov(self.x2.T, pairwise=True),
+                        self.res2_pairwise)
+
+    def test_default_xy(self):
+        assert_allclose(np.nancov(self.x3.T, self.y3), self.res3_default)
+
+    def test_pairwise_xy(self):
+        assert_allclose(np.nancov(self.x3.T, self.y3, pairwise=True),
+                        self.res3_pairwise)
 
 
 class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
