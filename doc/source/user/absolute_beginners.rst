@@ -52,20 +52,26 @@ NumPy gives you an enormous range of fast and efficient numerically-related opti
 
 **Why use NumPy?**
 
-NumPy arrays are faster and more compact than Python lists. An array consumes less memory and is convenient to use. NumPy uses much less memory to store data and it provides a mechanism of specifying the data types. This allows the code to be optimisted even further. 
+NumPy arrays are faster and more compact than Python lists. An array consumes less memory and is convenient to use. NumPy uses much less memory to store data and it provides a mechanism of specifying the data types. This allows the code to be optimised even further. 
 
 What is an array?
 -----------------
 
-An array is a central data structure of the NumPy library. It's a grid of values and it contains information about the raw data, how to locate an element, and how to interpret an element. It has a grid of elements that can be indexed in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_. The elements are all of the same type, referred to as the array `dtype`. 
+An array is a central data structure of the NumPy library. It's a grid of values and it contains information about the raw data, how to locate an element, and how to interpret an element. It has a grid of elements that can be indexed in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_. The elements are all of the same type, referred to as the array **dtype**. 
 
 An array can be indexed by a tuple of nonnegative integers, by booleans, by another array, or by integers. The **rank** of the array is the number of dimensions. The **shape** of the array is a tuple of integers giving the size of the array along each dimension.
 
 One way we can initialize NumPy arrays is from nested Python lists. 
 
-We can access the elements in the array using square brackets.
+::
 
-When you're accessing elements, remember that indexing in NumPy starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
+  a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+
+We can access the elements in the array using square brackets. When you're accessing elements, remember that indexing in NumPy starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
+
+::
+
+  print(data[0])
 
 More information about arrays
 -----------------------------
@@ -283,9 +289,9 @@ How do you know the shape and size of an array?
 
 **ndarray.ndim** will tell you the number of axes, or dimensions, of the array.
 
-**ndarray.shape** will display a tuple of integers that indicate the number of elements stored along each dimension of the array. If, for example, you have a 2D array with 2 rows and 3 columns, the shape of your array is (2,3).
-
 **ndarray.size** will tell you the total number of elements of the array. This is the *product* of the elements of the array's shape.
+
+**ndarray.shape** will display a tuple of integers that indicate the number of elements stored along each dimension of the array. If, for example, you have a 2D array with 2 rows and 3 columns, the shape of your array is (2,3).
 
 For example:
 
@@ -301,9 +307,9 @@ For example:
                                   [0 ,1 ,2, 3]
                                   [4, 5, 6, 7]]])
 
-  array_example.ndim
-  array_example.size
-  array_example.shape
+  array_example.ndim # Number of dimensions
+  array_example.size # Total number of elements in the array
+  array_example.shape # Shape of your array
 
 **Output:**
 
@@ -618,7 +624,7 @@ Let's start with this array, called "A"
 
 ::
 
- [[0.45053314 0.17296777 0.34376245 0.5510652 ]
+ [[0.45053314 0.17296777 0.34376245 0.5510652]
  [0.54627315 0.05093587 0.40067661 0.55645993]
  [0.12697628 0.82485143 0.26590556 0.56917101]]
 
@@ -958,7 +964,7 @@ There are often instances where we want NumPy to initialize the values of an arr
 Generating random numbers
 -------------------------
 
-The use of random number generatiion is an important part of the configuration and evaluation of machine learning algorithms. Whether you neeed to randomly initialize weights in an artificial neural network, split data into random sets, or randomly shuffle your dataset, being able to generate random numbers (actaullyrepeatable pseudo-random numbers) is essential.
+The use of random number generatiion is an important part of the configuration and evaluation of machine learning algorithms. Whether you neeed to randomly initialize weights in an artificial neural network, split data into random sets, or randomly shuffle your dataset, being able to generate random numbers (actually, repeatable pseudo-random numbers) is essential.
 
 You have a number of options when using NumPy for random number generation. Random Generator is NumPy's replacement for RandomState. The main difference between them is that Generator relies on an additional BitGenerator to manage state and generate the random bits, which are transformed into random values.
 
@@ -1067,7 +1073,7 @@ It's simple to read in a CSV that contains existing information. The best and ea
 
   import pandas as pd
 
-  # If all oof your columns are the same type:
+  # If all of your columns are the same type:
   x = pd.read_csv('music.csv').values
 
   # You can also simply select the columns you need:
