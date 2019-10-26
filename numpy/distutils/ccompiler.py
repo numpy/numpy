@@ -533,7 +533,7 @@ def CCompiler_customize(self, dist, need_cxx=0):
                                       'clang' in self.compiler[0]):
         self._auto_depends = True
         if 'gcc' in self.compiler[0]:
-            # add std=c99 flag for gcc < 5
+            # add std=c99 flag for gcc
             # TODO: does this need to be more specific?
             self.compiler.append('-std=c99')
             self.compiler_so.append('-std=c99')
