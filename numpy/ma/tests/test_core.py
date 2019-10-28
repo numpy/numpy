@@ -936,7 +936,7 @@ class TestMaskedArray(object):
     def test_object_with_array(self):
         mx1 = masked_array([1.], mask=[True])
         mx2 = masked_array([1., 2.])
-        mx = masked_array([mx1, mx2], mask=[False, True])
+        mx = masked_array([mx1, mx2], mask=[False, True], dtype=object)
         assert_(mx[0] is mx1)
         assert_(mx[1] is not mx2)
         assert_(np.all(mx[1].data == mx2.data))

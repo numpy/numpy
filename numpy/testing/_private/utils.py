@@ -688,8 +688,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import array, array2string, isnan, inf, bool_, errstate, all, max, object_
 
-    x = array(x, copy=False, subok=True)
-    y = array(y, copy=False, subok=True)
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', '', DeprecationWarning)
+        x = array(x, copy=False, subok=True)
+        y = array(y, copy=False, subok=True)
 
     # original array for output formatting
     ox, oy = x, y
