@@ -1387,7 +1387,7 @@ def polyfit2d(x, y, z, deg=1, rcond=None, full=False, w=None, max_degree=None, s
         to this value, i.e. all terms with `n` + `m` > max_degree are set to 0.
         The default is None.
     scale : bool, optional
-        Wether to scale the input arrays x and y to mean 0 and variance 1, to avoid numerical overflows.
+        Whether to scale the input arrays x and y to mean 0 and variance 1, to avoid numerical overflows.
         Especially useful at higher degrees. By default True.
 
     Returns
