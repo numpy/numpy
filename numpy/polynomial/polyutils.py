@@ -827,9 +827,12 @@ def polyscale2d(coeff, scale_x, scale_y, copy=True):
     """
     if copy:
         coeff = np.copy(coeff)
-    idx = _get_coeff_idx(coeff.shape)
-    for i, j in idx:
-        coeff[i, j] /= scale_x ** i * scale_y ** j
+
+    i = np.arange(coeff.shape[0])
+    j = np.arange(coeff.shape[1])
+    coeff /= (scale_x ** i)[:, None]
+    coeff /= (scale_y ** j)[None, :]
+
     return coeff
 
 
