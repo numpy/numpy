@@ -1356,6 +1356,8 @@ def polyfit2d(x, y, z, deg=1, rcond=None, full=False, w=None, max_degree=None, s
     """A simple 2D polynomial fit to data x, y, z
     The polynomial can be evaluated with numpy.polynomial.polynomial.polyval2d
 
+    ..versionadded:: 1.19.0
+
     Parameters
     ----------
     x : array_like

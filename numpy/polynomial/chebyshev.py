@@ -1671,9 +1671,11 @@ def chebfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     least squares fit to the data values `y` given at points `x`.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x, y) = c_00 + c_10 * T_10(x, y) + ... + c_nm * T_nm(x, y),
+    .. math::  p(x, y) = c_{00} + c_{10} * T_{10}(x, y) + ... + c_{nm} * T_{nm}(x, y),
 
     where `n` and `m` are `deg`.
+
+    ..versionadded:: 1.19.0
 
     Parameters
     ----------
@@ -1703,7 +1705,6 @@ def chebfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
 
-        .. versionadded:: 1.5.0
     max_degree : int, optional
         If given the maximum combined degree of the coefficients is limited
         to this value, i.e. all terms with `n` + `m` > max_degree are set to 0.

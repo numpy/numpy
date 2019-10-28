@@ -1397,9 +1397,11 @@ def hermfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     Return the coefficients of a Hermite series of degree `deg` that is the
     least squares fit to the data values `z` given at points `(x, y)`. 
 
-    .. math::  p(x, y) = c_00 + c_10 * H_10(x, y) + ... + c_nm * H_nm(x, y),
+    .. math::  p(x, y) = c_{00} + c_{10} * H_{10}(x, y) + ... + c_{nm} * H_{nm}(x, y),
 
     where `n` and `m` are `deg`.
+
+    ..versionadded:: 1.19.0
 
     Parameters
     ----------

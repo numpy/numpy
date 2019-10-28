@@ -1392,9 +1392,11 @@ def hermefit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     the least squares fit to the data values `y` given at points `x`.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x, y) = c_00 + c_10 * He_10(x, y) + ... + c_nm * He_nm(x, y),
+    .. math::  p(x, y) = c_{00} + c_{10} * He_{10}(x, y) + ... + c_{nm} * He_{nm}(x, y),
 
     where `n` and `m` are `deg`.
+
+    ..versionadded:: 1.19.0
 
     Parameters
     ----------
