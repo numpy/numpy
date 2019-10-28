@@ -1671,7 +1671,7 @@ def chebfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     least squares fit to the data values `y` given at points `x`.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x, y) = c_{00} + c_{10} * T_{10}(x, y) + ... + c_{nm} * T_{nm}(x, y),
+    .. math::  p(x, y) = c_{00} + c_{10} * T_1(x) T_0(y) + ... + c_{nm} * T_n(x) T_m(y),
 
     where `n` and `m` are `deg`.
 

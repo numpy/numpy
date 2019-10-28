@@ -1399,7 +1399,7 @@ def lagfit2d(x, y, z, deg, rcond=None, full=False, w=None, max_degree=None):
     least squares fit to the data values `z` given at points `(x, y)`.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x, y) = c_{00} + c_{10} * L_{10}(x, y) + c_{01} * L_{01}(x, y) ... + c_{nm} * L_{nm}(x, y),
+    .. math::  p(x, y) = c_{00} + c_{10} * L_1(x) L_0(y) + c_{01} * L_0(x) L_1(y) ... + c_{nm} * L_n(x) L_m(y),
 
     where `n` and `m` are `deg`.
 
