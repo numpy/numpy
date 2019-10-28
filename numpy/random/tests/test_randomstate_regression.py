@@ -128,7 +128,7 @@ class TestRegression(object):
         # a segfault on garbage collection.
         # See gh-7719
         random.seed(1234)
-        a = np.array([np.arange(1), np.arange(4)])
+        a = np.array([np.arange(1), np.arange(4)], dtype=object)
 
         for _ in range(1000):
             random.shuffle(a)
