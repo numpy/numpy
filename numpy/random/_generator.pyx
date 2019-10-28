@@ -904,7 +904,6 @@ cdef class Generator:
         --------
         integers : Discrete uniform distribution, yielding integers.
         random : Floats uniformly distributed over ``[0, 1)``.
-        random : Alias for `random`.
 
         Notes
         -----
