@@ -109,10 +109,9 @@ class TestRegression(object):
         assert_raises(ValueError, linalg.norm, testvector, ord='nuc')
         assert_raises(ValueError, linalg.norm, testvector, ord=np.inf)
         assert_raises(ValueError, linalg.norm, testvector, ord=-np.inf)
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", DeprecationWarning)
-            assert_raises((AttributeError, DeprecationWarning),
-                              linalg.norm, testvector, ord=0)
+        # Succeeds, but returns boolean?
+        r = linalg.norm(testvector, ord=0)
+        assert_(r.dtype == np.type('float64'))
         assert_raises(ValueError, linalg.norm, testvector, ord=-1)
         assert_raises(ValueError, linalg.norm, testvector, ord=-2)
 

@@ -170,10 +170,11 @@ class TestOut(object):
 
 class TestComparisons(object):
     def test_ignore_object_identity_in_equal(self):
-        # Check error raised when comparing identical objects whose comparison
+        # Check comparing identical objects whose comparison
         # is not a simple boolean, e.g., arrays that are compared elementwise.
         a = np.array([np.array([1, 2, 3]), None], dtype=object)
-        assert_raises(ValueError, np.equal, a, a)
+        b = np.equal(a, a.copy())
+        assert b.shape == a.shape
 
         # Check error raised when comparing identical non-comparable objects.
         class FunkyType(object):
@@ -188,10 +189,11 @@ class TestComparisons(object):
         assert_equal(np.equal(a, a), [False])
 
     def test_ignore_object_identity_in_not_equal(self):
-        # Check error raised when comparing identical objects whose comparison
+        # Check comparing identical objects whose comparison
         # is not a simple boolean, e.g., arrays that are compared elementwise.
         a = np.array([np.array([1, 2, 3]), None], dtype=object)
-        assert_raises(ValueError, np.not_equal, a, a)
+        b = np.not_equal(a, a.copy())
+        assert b.shape == a.shape
 
         # Check error raised when comparing identical non-comparable objects.
         class FunkyType(object):
