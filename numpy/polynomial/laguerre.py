@@ -1193,7 +1193,7 @@ def lagvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    return pu._vander2d(lagvander, x, y, deg)
+    return pu._vander_nd_flat((lagvander, lagvander), (x, y), deg)
 
 
 def lagvander3d(x, y, z, deg):
@@ -1247,7 +1247,7 @@ def lagvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    return pu._vander3d(lagvander, x, y, z, deg)
+    return pu._vander_nd_flat((lagvander, lagvander, lagvander), (x, y, z), deg)
 
 
 def lagfit(x, y, deg, rcond=None, full=False, w=None):
