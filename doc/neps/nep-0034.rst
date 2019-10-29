@@ -70,18 +70,27 @@ false-positives, for instance ``np.array([1, np.array([5])], dtype=int)``.
 Implementation
 --------------
 
-The code to be changed is inside ``PyArray_DTypeFromObject``, specifically in
-``PyArray_DTypeFromObjectHelper``. Since ``PyArray_DTypeFromObject`` is part of
-the NumPy C-API, its interface cannot be changed, but it can return ``-1`` to
-indicate failure.
+The code to be changed is inside ``PyArray_GetArrayParamsFromObject`` and the
+internal ``discover_dimentions`` function. See `PR 14794`_.
 
 Backward compatibility
 ----------------------
 
 Anyone depending on ragged nested sequences creating object arrays will need to
 modify their code. There will be a deprecation period during which the current
-behaviour will emit a ``DeprecationWarning``.
+behaviour will emit a ``DeprecationWarning``. There is an open question whether
+the ``assert_equal`` family of functions should be changed or users be forced
+to change code like
 
+```
+np.assert_equal(a, [[1, 2], 3])
+```
+
+to 
+
+```
+np.assert_equal(a, np.array([[1, 2], 3], dtype=object)
+```
 
 Alternatives
 ------------
@@ -99,22 +108,22 @@ Alternatives
 
 - It was also suggested to deprecate all automatic creation of ``object``-dtype
   arrays, which would require a dtype for something like ``np.array([Decimal(10),
-  Decimal(10)])``. This too is out of scope for the current NEP: only if all
-  the top-level elements are `sequences`_ will we require an explicit
-  ``dtype=object``.
+  Decimal(10)])``. This too is out of scope for the current NEP.
 
 Discussion
 ----------
 
 Comments to `issue 5303`_ indicate this is unintended behaviour as far back as
 2014. Suggestions to change it have been made in the ensuing years, but none
-have stuck. 
+have stuck. The WIP implementation in `PR 14794`_ seems to point to the
+viability of this approach.
 
 References and Footnotes
 ------------------------
 
 .. _`issue 5303`: https://github.com/numpy/numpy/issues/5303
 .. _sequences: https://docs.python.org/3.7/glossary.html#term-sequence
+.. _`PR 14794`: https://github.com/numpy/numpy/pull/14794
 
 Copyright
 ---------
