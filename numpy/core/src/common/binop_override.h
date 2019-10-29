@@ -129,10 +129,13 @@ binop_should_defer(PyObject *self, PyObject *other, int inplace)
      * check whether __array_ufunc__ equals None.
      */
     attr = PyArray_LookupSpecial(other, "__array_ufunc__");
-    if (attr) {
+    if (attr != NULL) {
         defer = !inplace && (attr == Py_None);
         Py_DECREF(attr);
         return defer;
+    }
+    else {
+        PyErr_Clear(); // TODO[GH14801]: propagate this?
     }
     /*
      * Otherwise, we need to check for the legacy __array_priority__. But if

@@ -26,6 +26,7 @@ static PyObject *
 get_array_function(PyObject *obj)
 {
     static PyObject *ndarray_array_function = NULL;
+    static PyObject *array_function;
 
     if (ndarray_array_function == NULL) {
         ndarray_array_function = get_ndarray_array_function();
@@ -37,7 +38,12 @@ get_array_function(PyObject *obj)
         return ndarray_array_function;
     }
 
-    return PyArray_LookupSpecial(obj, "__array_function__");
+    array_function = PyArray_LookupSpecial(obj, "__array_function__");
+    if (array_function == NULL) {
+        PyErr_Clear(); // TODO[GH14801]: propagate this?
+    }
+
+    return array_function;
 }
 
 
