@@ -26,7 +26,7 @@ static PyObject *
 get_array_function(PyObject *obj)
 {
     static PyObject *ndarray_array_function = NULL;
-    static PyObject *array_function;
+    PyObject *array_function;
 
     if (ndarray_array_function == NULL) {
         ndarray_array_function = get_ndarray_array_function();
