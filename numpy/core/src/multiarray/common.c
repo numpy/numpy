@@ -367,8 +367,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         }
         Py_DECREF(ip);
     }
-    else {
-        PyErr_Clear(); // TODO[GH14801]: propagate this?
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
 
@@ -393,8 +393,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         }
         Py_DECREF(ip);
     }
-    else {
-        PyErr_Clear(); // TODO[GH14801]: propagate this?
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     /* The old buffer interface */
@@ -426,8 +426,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             goto fail;
         }
     }
-    else {
-        PyErr_Clear(); // TODO[GH14801]: propagate this?
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     /*

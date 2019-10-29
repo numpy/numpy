@@ -39,8 +39,8 @@ get_array_function(PyObject *obj)
     }
 
     array_function = PyArray_LookupSpecial(obj, "__array_function__");
-    if (array_function == NULL) {
-        PyErr_Clear(); // TODO[GH14801]: propagate this?
+    if (array_function == NULL && PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     return array_function;

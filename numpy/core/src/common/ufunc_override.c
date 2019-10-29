@@ -36,7 +36,9 @@ PyUFuncOverride_GetNonDefaultArrayUfunc(PyObject *obj)
      */
     cls_array_ufunc = PyArray_LookupSpecial(obj, "__array_ufunc__");
     if (cls_array_ufunc == NULL) {
-        PyErr_Clear(); // TODO[GH14801]: propagate this?
+        if (PyErr_Occurred()) {
+            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+        }
         return NULL;
     }
     /* Ignore if the same as ndarray.__array_ufunc__ */

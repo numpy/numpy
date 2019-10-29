@@ -118,7 +118,9 @@ PyArray_GetPriority(PyObject *obj, double default_)
 
     ret = PyArray_LookupSpecial_OnInstance(obj, "__array_priority__");
     if (ret == NULL) {
-        PyErr_Clear(); // TODO[GH14801]: propagate this?
+        if (PyErr_Occurred()) {
+            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+        }
         return default_;
     }
 

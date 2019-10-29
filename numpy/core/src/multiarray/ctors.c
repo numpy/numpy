@@ -852,8 +852,8 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             return 0;
         }
     }
-    else {
-        PyErr_Clear(); // TODO[GH14801]: propagate this?
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
 
@@ -885,8 +885,8 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             return 0;
         }
     }
-    else {
-        PyErr_Clear(); // TODO[GH14801]: propagate this?
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
@@ -2474,7 +2474,9 @@ PyArray_FromInterface(PyObject *origin)
     iface = PyArray_LookupSpecial_OnInstance(origin,
                                                     "__array_interface__");
     if (iface == NULL) {
-        PyErr_Clear(); // TODO[GH14801]: propagate this?
+        if (PyErr_Occurred()) {
+            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+        }
         return Py_NotImplemented;
     }
     if (!PyDict_Check(iface)) {
@@ -2728,7 +2730,9 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
 
     array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
-        PyErr_Clear(); // TODO[GH14801]: propagate this?
+        if (PyErr_Occurred()) {
+            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+        }
         return Py_NotImplemented;
     }
     if (context == NULL) {
