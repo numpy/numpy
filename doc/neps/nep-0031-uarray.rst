@@ -156,17 +156,6 @@ on top of ``unumpy``.
     result = pytorch_predict(data)
     result.to_zarr('output.zarr')
 
-Backward compatibility
-----------------------
-
-There are no backward incompatible changes proposed in this NEP.
-
-Detailed description
---------------------
-
-Composing backends
-~~~~~~~~~~~~~~~~~~
-
 There are some backends which may depend on other backends, for example xarray
 depending on `numpy.fft`, and transforming a time axis into a frequency axis,
 or Dask/xarray holding an array other than a NumPy array inside it. This would
@@ -174,6 +163,14 @@ be handled in the following manner inside code::
 
     with ua.set_backend(cupy), ua.set_backend(dask.array):
         # Code that has distributed GPU arrays here
+
+Backward compatibility
+----------------------
+
+There are no backward incompatible changes proposed in this NEP.
+
+Detailed description
+--------------------
 
 Proposals
 ~~~~~~~~~
