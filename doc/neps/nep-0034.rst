@@ -43,6 +43,16 @@ define a dtype:
     >>> np.array([[1, 2], [1]], dtype=object)
     # succeeds, with no change from current behaviour
 
+The deprecation will affect any call that internally calls ``np.asarray``.  For
+instance, the ``assert_equal`` family of functions calls ``np.asarray``, so
+users will have to change code like::
+
+    np.assert_equal(a, [[1, 2], 3])
+
+to::
+
+    np.assert_equal(a, np.array([[1, 2], 3], dtype=object)
+
 Detailed description
 --------------------
 
@@ -76,21 +86,9 @@ internal ``discover_dimentions`` function. See `PR 14794`_.
 Backward compatibility
 ----------------------
 
-Anyone depending on ragged nested sequences creating object arrays will need to
-modify their code. There will be a deprecation period during which the current
-behaviour will emit a ``DeprecationWarning``. There is an open question whether
-the ``assert_equal`` family of functions should be changed or users be forced
-to change code like
-
-```
-np.assert_equal(a, [[1, 2], 3])
-```
-
-to 
-
-```
-np.assert_equal(a, np.array([[1, 2], 3], dtype=object)
-```
+Anyone depending on creating object arrays from ragged nested sequences will
+need to modify their code. There will be a deprecation period during which the
+current behaviour will emit a ``DeprecationWarning``. 
 
 Alternatives
 ------------
@@ -104,11 +102,16 @@ Alternatives
   ``(1,)``, or ``(2,)``? This NEP does not deal with that issue, and only
   deprecates the use of ``array`` with no ``dtype=object`` for ragged nested
   sequences. Users of ragged nested sequences may face another deprecation
-  cycle in the future.
+  cycle in the future. Rationale: we expect that there are very few users who
+  intend to use ragged arrays like that, this was never intended as a use case
+  of NumPy arrays. Users are likely better off with `another library`_ or just
+  using list of lists.
 
 - It was also suggested to deprecate all automatic creation of ``object``-dtype
-  arrays, which would require a dtype for something like ``np.array([Decimal(10),
-  Decimal(10)])``. This too is out of scope for the current NEP.
+  arrays, which would require adding an explicit ``dtype=object`` for something
+  like ``np.array([Decimal(10), Decimal(10)])``. This too is out of scope for
+  the current NEP. Rationale: it's harder to asses the impact of this larger
+  change, we're not sure how many users this may impact.
 
 Discussion
 ----------
@@ -124,6 +127,7 @@ References and Footnotes
 .. _`issue 5303`: https://github.com/numpy/numpy/issues/5303
 .. _sequences: https://docs.python.org/3.7/glossary.html#term-sequence
 .. _`PR 14794`: https://github.com/numpy/numpy/pull/14794
+.. _`another library`: https://github.com/scikit-hep/awkward-array
 
 Copyright
 ---------
