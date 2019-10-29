@@ -51,7 +51,7 @@ users will have to change code like::
 
 to::
 
-    np.assert_equal(a, np.array([[1, 2], 3], dtype=object)
+    np.assert_equal(a, np.array([[1, 2], 3], dtype=object))
 
 Detailed description
 --------------------
