@@ -23,13 +23,13 @@ Motivation and Scope
 
 Users who specify lists-of-lists when creating a `numpy.ndarray` via
 ``np.array`` may mistakenly pass in lists of different lengths. Currently we
-accept this input and create an array with ``dtype=object``. This can be
-confusing, since it is rarely what is desired. Changing the automatic dtype
-detection to never return ``object`` for ragged nested sequences (defined as a
+accept this input and automatically create an array with ``dtype=object``. This
+can be confusing, since it is rarely what is desired. Changing the automatic
+dtype detection to never return ``object`` for ragged nested sequences (defined as a
 recursive sequence of sequences, where not all the sequences on the same
 level have the same length) will force users who actually wish to create
-``object`` arrays to specify that explicitly. Note that lists, tuples, and
-nd.arrays are all sequences. See for instance `issue 5303`_.
+``object`` arrays to specify that explicitly. Note that ``lists``, ``tuples``,
+and ``nd.ndarrays`` are all sequences [0]_. See for instance `issue 5303`_.
 
 Usage and Impact
 ----------------
@@ -128,6 +128,12 @@ References and Footnotes
 .. _sequences: https://docs.python.org/3.7/glossary.html#term-sequence
 .. _`PR 14794`: https://github.com/numpy/numpy/pull/14794
 .. _`another library`: https://github.com/scikit-hep/awkward-array
+
+.. [0] ``np.ndarrays`` are not recursed into, rather their shape is used
+   directly. This will not emit warnings::
+
+      ragged = np.array([[1], [1, 2, 3]], dtype=object)
+      np.array([ragged, ragged]) # no dtype needed
 
 Copyright
 ---------
