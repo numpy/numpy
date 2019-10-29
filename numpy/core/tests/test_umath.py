@@ -2661,6 +2661,31 @@ class TestRoundingFunctions(object):
         assert_equal(np.trunc(f), -1)
 
 
+class TestWrappedMathModuleFunctions(object):
+    """ Tests of ufuncs which just wrap the math module on object arrays """
+    def test_float_coercible(self):
+        class C:
+            def __init__(self, val):
+                self.val = val
+            def __float__(self):
+                return float(self.val)
+
+        # this test is trying to test object arrays
+        assert np.array(C(1)).dtype == object
+
+        assert_equal(np.isfinite(C(0)), True)
+        assert_equal(np.isfinite(C(np.nan)), False)
+        assert_equal(np.isfinite(C(np.inf)), False)
+
+        assert_equal(np.isinf(C(0)), False)
+        assert_equal(np.isinf(C(np.nan)), False)
+        assert_equal(np.isinf(C(np.inf)), True)
+
+        assert_equal(np.isnan(C(0)), False)
+        assert_equal(np.isnan(C(np.nan)), True)
+        assert_equal(np.isnan(C(np.inf)), False)
+
+
 class TestComplexFunctions(object):
     funcs = [np.arcsin,  np.arccos,  np.arctan, np.arcsinh, np.arccosh,
              np.arctanh, np.sin,     np.cos,    np.tan,     np.exp,

@@ -234,6 +234,39 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
 }
 
 static PyObject *
+npy_ObjectIsFinite(PyObject *obj) {
+    static PyObject *math_isfinite_func = NULL;
+
+    npy_cache_import("math", "isfinite", &math_isfinite_func);
+    if (math_isfinite_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_isfinite_func, "O", obj);
+}
+
+static PyObject *
+npy_ObjectIsInf(PyObject *obj) {
+    static PyObject *math_isinf_func = NULL;
+
+    npy_cache_import("math", "isinf", &math_isinf_func);
+    if (math_isinf_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_isinf_func, "O", obj);
+}
+
+static PyObject *
+npy_ObjectIsNaN(PyObject *obj) {
+    static PyObject *math_isnan_func = NULL;
+
+    npy_cache_import("math", "isnan", &math_isnan_func);
+    if (math_isnan_func == NULL) {
+        return NULL;
+    }
+    return PyObject_CallFunction(math_isnan_func, "O", obj);
+}
+
+static PyObject *
 npy_ObjectLCM(PyObject *i1, PyObject *i2)
 {
     /* lcm(a, b) = abs(a // gcd(a, b) * b) */

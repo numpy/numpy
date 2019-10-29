@@ -1,0 +1,3 @@
+``isfinite``, ``isinf``, and ``isnan`` support object arrays
+------------------------------------------------------------
+These fall back on the functions from the `math` module with the same names.
