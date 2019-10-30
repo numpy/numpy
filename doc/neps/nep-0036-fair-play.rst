@@ -4,9 +4,9 @@ NEP 36 — Fair Play
 
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
 :Status: Draft
-:Type: Standards Track
+:Type: Informational
 :Created: 2019-10-24
-:Resolution: <url> (required for Accepted | Rejected | Withdrawn)
+:Resolution: Draft
 
 
 Abstract
@@ -18,13 +18,19 @@ modified distributions of NumPy, and how to best communicate
 with the project when patched versions are deployed.
 
 Companies and developers will know after reading this NEP what kinds
-of behavior the NumPy community consider troublesome, bothersome, and
-unacceptable.
+of behavior the community would like to see, and which we consider
+troublesome, bothersome, and unacceptable.
 
 Motivation
 ----------
 
-In December 2018, through the filing of `Issue #12515
+It has come to our attention that modified versions of NumPy are
+distributed by external entities.  Sometimes, the patches are
+innocuous, such as when they allow NumPy to function on the target
+system.  In other cases, they add new functionality which causes
+problems for the community.
+
+For example, in December 2018, through the filing of `Issue #12515
 <https://github.com/numpy/numpy/issues/12515>`__, it became known to
 the NumPy project that an external company had published a version of
 NumPy with an extended footprint.  In this specific instance, a bug
@@ -37,11 +43,17 @@ side.  The entity agreed to publish the patches made against Python,
 and a special label was added on the NumPy issue tracker to identify
 issues pertaining to this specific distribution.
 
-However, this is *not* the only case where modified versions of NumPy
-are being made available, and it causes wasted time for our
-developers: identifying the release from which the error came, how the
-release was modified from the version we provide, and whether we are
-able to address the issue (if not, where to relay the report to).
+In another example, a security issue (CVE-2019-6446) was filed against
+NumPy.  This forced many distributions to take action, most often by
+changing a default keyword value, unfortunately again leading to
+multiple versions of the NumPy API being deployed, varying across
+distribution.
+
+These are only two of many examples of such modified distributions,
+which cause wasted time for our developers: identifying the release
+from which the error came, how the release was modified from the
+version we provide, and whether we are able to address related issues
+(if not, where to relay the report to).
 
 During a community call on XX/XX/XX the community decided to draft a
 set of guidelines for companies and external developers to use when
@@ -66,9 +78,11 @@ Fair Play Rules
 1. Do not reuse the NumPy name for projects not developed by the NumPy
    community.
 
-   At time of writing, there are only two `numpy`-named packages
-   developed by the community: `numpy` and `numpy-financial`.  We ask
-   that external packages not be named, e.g., `mycompany_numpy`.
+   At time of writing, there are only a handful of `numpy`-named
+   packages developed by the community, including `numpy`,
+   `numpy-financial`, and `unumpy`.  We ask that external packages not
+   include the phrase `numpy`, i.e., avoid names such as
+   `mycompany_numpy`.
 
    NumPy is a trademark owned by NumFOCUS.
 
@@ -111,11 +125,15 @@ Fair Play Rules
    these "officialy sanctioned" mechanisms for overriding or
    interacting with NumPy.
 
+   If these mechanisms are deemed insufficient, please start a
+   discussion on the mailing list before monkeypatching NumPy.
+
 Questions & Answers
 -------------------
 
 **Q:** We would like to distribute an optimized version of NumPy that
-utilizes MKL.  You recommend against that, so what are we to do?
+utilizes special instructions for our company's CPU.  You recommend
+against that, so what are we to do?
 
 **A:** Please consider including the patches required in the official
 NumPy repository.  Not only do we encourage such contributions, but we
@@ -137,6 +155,15 @@ message to the terminal clearly stating what is happening::
   We are now patching NumPy for optimal performance under MyComp
   Special Platform.  Please direct all bug reports to
   https://mycomp.com/numpy-bugs
+
+If you require additional mechanisms for overriding code, please
+discuss this with the development team on the mailing list.
+
+**Q:** We would like to distribute NumPy with faster linear algebra
+routines. Are we allowed to do this?
+
+**A:** Yes, this is explicitly supported by linking to a different
+version of BLAS.
 
 Discussion
 ----------
