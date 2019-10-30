@@ -139,9 +139,9 @@ else:
     # Allow distributors to run custom init code
     from . import _distributor_init
 
+    from . import compat
     from . import core
     from .core import *
-    from . import compat
     from . import lib
     # FIXME: why have numpy.lib if everything is imported here??
     from .lib import *
