@@ -1090,14 +1090,18 @@ class TestUfunc(object):
                 return '=='
 
         arr0d = np.array(HasComparisons())
-        assert_equal(arr0d == arr0d, True)
-        assert_equal(np.equal(arr0d, arr0d), True)  # normal behavior is a cast
+        assert_equal(arr0d == arr0d, '==')
+        assert_equal(np.equal(arr0d, arr0d), '==')
+        assert_equal(np.equal(arr0d, arr0d, dtype=bool), True)
         assert_equal(np.equal(arr0d, arr0d, dtype=object), '==')
 
         arr1d = np.array([HasComparisons()])
-        assert_equal(arr1d == arr1d, np.array([True]))
-        assert_equal(np.equal(arr1d, arr1d), np.array([True]))  # normal behavior is a cast
-        assert_equal(np.equal(arr1d, arr1d, dtype=object), np.array(['==']))
+        ret_obj = np.array(['=='], dtype=object)
+        ret_bool = np.array([True])
+        assert_equal(arr1d == arr1d, ret_obj)
+        assert_equal(np.equal(arr1d, arr1d), ret_obj)
+        assert_equal(np.equal(arr1d, arr1d, dtype=object), ret_obj)
+        assert_equal(np.equal(arr1d, arr1d, dtype=bool), ret_bool)
 
     def test_object_array_reduction(self):
         # Reductions on object arrays

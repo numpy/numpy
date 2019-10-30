@@ -4791,6 +4791,7 @@ class MaskedArray(ndarray):
         mask = _check_mask_axis(self._mask, axis, **kwargs)
         if out is None:
             r = self.filled(True).all(axis=axis, **kwargs)
+            # object dtypes with axis=None return a scalar
             if isinstance(r, bool):
                 d = type(self)(r)
             else:
