@@ -118,6 +118,9 @@ PyArray_GetPriority(PyObject *obj, double default_)
 
     ret = PyArray_LookupSpecial_OnInstance(obj, "__array_priority__");
     if (ret == NULL) {
+        if (PyErr_Occurred()) {
+            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+        }
         return default_;
     }
 
@@ -2063,7 +2066,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     if (file == NULL) {
         return NULL;
     }
-    
+
     if (offset != 0 && strcmp(sep, "") != 0) {
         PyErr_SetString(PyExc_TypeError, "'offset' argument only permitted for binary files");
         Py_XDECREF(type);
@@ -3265,7 +3268,7 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     meta = get_datetime_metadata_from_dtype(dtype);
-    Py_DECREF(dtype);    
+    Py_DECREF(dtype);
     if (meta == NULL) {
         return NULL;
     }
