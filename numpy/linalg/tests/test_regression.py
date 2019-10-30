@@ -109,9 +109,9 @@ class TestRegression(object):
         assert_raises(ValueError, linalg.norm, testvector, ord='nuc')
         assert_raises(ValueError, linalg.norm, testvector, ord=np.inf)
         assert_raises(ValueError, linalg.norm, testvector, ord=-np.inf)
-        # Succeeds, but returns boolean?
+        # Succeeds, equivalent to "sum(x != 0)"
         r = linalg.norm(testvector, ord=0)
-        assert_(r.dtype == np.type('float64'))
+        assert_(r.dtype == 'bool')
         assert_raises(ValueError, linalg.norm, testvector, ord=-1)
         assert_raises(ValueError, linalg.norm, testvector, ord=-2)
 

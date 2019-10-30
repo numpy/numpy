@@ -431,6 +431,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'greater_equal':
     Ufunc(2, 1, None,
@@ -438,6 +439,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'less':
     Ufunc(2, 1, None,
@@ -445,6 +447,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'less_equal':
     Ufunc(2, 1, None,
@@ -452,6 +455,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'equal':
     Ufunc(2, 1, None,
@@ -459,6 +463,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'not_equal':
     Ufunc(2, 1, None,
@@ -466,6 +471,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'logical_and':
     Ufunc(2, 1, True_,
@@ -473,6 +479,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
           TD(O, f='npy_ObjectLogicalAnd'),
+          TD(O, f='npy_ObjectLogicalAnd', out='?'),
           ),
 'logical_not':
     Ufunc(1, 1, None,
@@ -480,6 +487,7 @@ defdict = {
           None,
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
           TD(O, f='npy_ObjectLogicalNot'),
+          TD(O, f='npy_ObjectLogicalNot', out='?'),
           ),
 'logical_or':
     Ufunc(2, 1, False_,
@@ -487,6 +495,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
           TD(O, f='npy_ObjectLogicalOr'),
+          TD(O, f='npy_ObjectLogicalOr', out='?'),
           ),
 'logical_xor':
     Ufunc(2, 1, False_,
