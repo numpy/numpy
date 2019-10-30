@@ -2523,7 +2523,7 @@ class TestPercentile(object):
         assert_equal(np.percentile(x, 0, interpolation='nearest'), np.nan)
 
     def test_fraction(self):
-        x = [Fraction(i, 2) for i in np.arange(8)]
+        x = [Fraction(i, 2) for i in range(8)]
 
         p = np.percentile(x, Fraction(0))
         assert_equal(p, Fraction(0))
@@ -2943,7 +2943,7 @@ class TestQuantile(object):
 
     def test_fraction(self):
         # fractional input, integral quantile
-        x = [Fraction(i, 2) for i in np.arange(8)]
+        x = [Fraction(i, 2) for i in range(8)]
 
         q = np.quantile(x, 0)
         assert_equal(q, 0)
