@@ -11,6 +11,8 @@ NumPy (**Numerical Python**) is an open source Python library that's used in alm
 
 The NumPy library contains multidimentional array and matrix data structures. It provides **ndarray**, a homogeneous n-dimensional array object with methods to efficiently operate on it. NumPy can be used to perform a wide variety of mathematical operations on arrays.  It enriches Python with powerful data structures that guarantee efficient calculations with arrays and matrices and it supplies an enormous library of high-level mathematical functions that operate on these array and matrices. 
 
+`Learn more about NumPy here <https://docs.scipy.org/doc/numpy-1.17.0/user/whatisnumpy.html>`_!
+
 Installing NumPy
 ----------------
   
@@ -97,7 +99,7 @@ Just like in other Python container objects, the contents of an array can be acc
 
 Array **attributes** reflect information intrinsic to the array itself. If you need to get, or even set, poperties of an array without creating a new array, you can often access an array through its attributes. 
 
-`Read more about array attributes here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_.
+`Read more about array attributes here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_ and learn about `array objects here <https://docs.scipy.org/doc/numpy-1.17.0/reference/arrays.html>`_.
 
 
 How to create a basic array
@@ -207,6 +209,7 @@ While the default data type is floating point (float64), you can expecity specif
 
   array([1, 1])
 
+`Learn more about creating arrays here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#array-creation>`_.
 
 Adding, removing, and sorting elements
 --------------------------------------
@@ -368,6 +371,8 @@ You can specify a few optional parameters.
 
 **order:** 'C' means to read/write the elements using C-like index order,  ‘F’ means to read / write the elements using Fortran-like index order, ‘A’ means to read / write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise. (This is an optional parameter and doesn't need to be specified.)
 
+`Learn more about shape manipulation here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#shape-manipulation>`_.
+
 Indexing and Slicing
 --------------------
 
@@ -399,6 +404,7 @@ You can visualize it this way:
 
 .. image:: images/np_indexing.png
 
+`Learn more about indexing and slicing here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#indexing-slicing-and-iterating>`_ and `here <https://docs.scipy.org/doc/numpy-1.17.0/user/basics.indexing.html>`_.
 
 How to create an array from existing data
 -----------------------------------------
@@ -466,6 +472,8 @@ Or stack them horizontally with hstack:
   array([[1, 1, 3, 3],
        [2, 2, 4, 4]])
 
+`Learn more about stacking and splitting arrays here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#stacking-together-different-arrays>`_.
+
 You can also split an array into several smaller arrays using hsplit. You can specify either the number of equally shaped arrays to return or the columns *after* which the division should occur.
 
 Let's say you have this array:
@@ -525,6 +533,7 @@ Using the `copy` method makes a complete copy of the array and its data (a *deep
 
   c = a.copy()
  
+`Learn more about copies and views here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#copies-and-views>`_.
 
 Basic array operations
 ----------------------
@@ -592,6 +601,8 @@ To add the rows or the columns in a 2D array, you would specify the axis.
 
   array([2, 4])
 
+`Learn more about basic operations here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#basic-operations>`_.
+
 
 Broadcasting
 ------------
@@ -605,6 +616,8 @@ There are times when you might want to carry out an operation between an array a
 .. image:: images/np_multiply_broadcasting.png
 
 NumPy understands that the multiplication should happen with each cell. That concept is called **broadcasting**.
+
+`Learn more about broadcasting here <https://docs.scipy.org/doc/numpy-1.17.0/user/basics.broadcasting.html>`_.
 
 
 More useful array operations
@@ -664,7 +677,7 @@ You can easily specify which axis you want the aggregation function to be comput
 
 The four values listed above correspond to the number of columns in your array. With a four-column array, you can expect to get four values as your result.
 
-`Read more about functions here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_.
+`Read more about functions here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_ and `calculations here <https://docs.scipy.org/doc/numpy-1.17.0/reference/arrays.ndarray.html#calculation>`_.
 
 
 How to inspect the size and shape of a NumPy array
@@ -1022,14 +1035,206 @@ You may need to switch the dimensions of a matrix. This can happen when, for exa
 How to reverse
 --------------
  
-**How to reverse the rows**
+NumPy's np.flip() function allows you to easily flip the contents of an array along an axis. You simply specify the array you would like to reverse and the axis. If you don't specify the axis, NumPy will flip or reverse the contents along all of the axes of your input array. 
+
+**Reversing a 1D array**
+
+If you begin with a 1D array like this one:
+
+::
+
+  arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+
+You can reverse it with: 
+
+::
+
+  reversedArr = np.flip(arr)
+
+If you want to print your reversed array, you could run:
+
+::
+
+  print('Reversed Array: ', reversedArr)
+
+**Output:**
+
+::
+
+  Reversed Array:  [8 7 6 5 4 3 2 1]
+
+**Reversing a 2D array**
+
+A 2D array works much the same way.
+
+If you start with this array:
+
+::
+
+  arr2D = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+
+You can reverse the content in all of the rows and all of the columns with:
+
+::
+
+  reversedArr = np.flip(arr2D)
  
-**How to reverse the whole array**
+  print('Reversed Array: ')
+  print(reversedArr)
+
+**Output:**
+
+::
+
+  Reversed Array: 
+  [[12 11 10  9]
+   [ 8  7  6  5]
+   [ 4  3  2  1]]
+
+You can easily reverse only the rows with:
+
+::
+
+  reversedArr_rows = np.flip(arr2D, axis=0)
+ 
+  print('Reversed Array: ')
+  print(reversedArr_rows)
+
+**Output:**
+
+::
+
+  Reversed Array: 
+  [[ 9 10 11 12]
+   [ 5  6  7  8]
+   [ 1  2  3  4]]
+
+Or reverse only the columns with:
+
+::
+
+  reversedArr_columns = np.flip(arr2D, axis=1)
+ 
+  print('Reversed Array columns: ')
+  print(reversedArr_columns)
+
+**Output:**
+
+::
+
+  Reversed Array columns: 
+  [[ 4  3  2  1]
+   [ 8  7  6  5]
+   [12 11 10  9]]
+
+You can also reverse the contents of only one column or row. For example, you can reverse the contents of the row at index position 1 (the second row):
+
+::
+
+  arr2D[1] = np.flip(arr2D[1])
+   
+  print('Reversed Array: ')
+  print(arr2D)
+
+**Output:**
+
+::
+
+  Reversed Array: 
+  [[ 1  2  3  4]
+   [ 5  6  7  8]
+   [ 9 10 11 12]]
+
+You can also reverse the column at index position 1 (the second column):
+
+::
+
+  arr2D[:,1] = np.flip(arr2D[:,1])
+   
+  print('Reversed Array: ')
+  print(arr2D)
+
+**Output:**
+
+::
+
+  Reversed Array: 
+  [[ 1 10  3  4]
+   [ 5  6  7  8]
+   [ 9  2 11 12]]
+
 
 Reshaping and Flattening multidimensional arrays
 ------------------------------------------------
   
-- flatten vs ravel
+There are two popular ways to flatten an array: **flatten()** and **ravel()**. The primary difference between the two is that the new array created using **ravel()** is actually a reference to the parent array. This means that any changes to the new array will affect the parent array as well. Since ravel does not create a copy, it's memory efficient. 
+
+If you start with this array:
+
+::
+
+  array = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+
+You can use **flatten()** to flatten your array into a 1D array.
+
+::
+
+  array.flatten()
+
+**Output:**
+
+::
+
+  array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12])
+
+When you use **flatten()**, changes to your new array won't change the parent array.
+
+For example:
+
+::
+
+  a1 = array.flatten()  
+  a1[0] = 100
+  print('Original array: ')
+  print(array)
+  print('New array: ')
+  print(a1)
+
+**Output:**
+
+::
+
+  Original array: 
+  [[ 1  2  3  4]
+   [ 5  6  7  8]
+   [ 9 10 11 12]]
+  New array: 
+  [100   2   3   4   5   6   7   8   9  10  11  12]
+
+
+But when you use **ravel()**, the changes you make to the new array will affect the parent array.
+
+For example:
+
+::
+
+  a2 = array.ravel()  
+  a2[0] = 101 
+  print('Original array: ')
+  print(array)
+  print('New array: ')
+  print(a2)
+
+**Output:**
+
+::
+
+  Original array: 
+  [[101   2   3   4]
+   [  5   6   7   8]
+   [  9  10  11  12]]
+  New array: 
+  [101   2   3   4   5   6   7   8   9  10  11  12]
 
 
 How to save and load NumPy objects
