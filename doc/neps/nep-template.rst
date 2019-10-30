@@ -41,8 +41,9 @@ Backward compatibility
 This section describes the ways in which the NEP breaks backward compatibility.
 
 The mailing list post will contain the NEP up to and including this section.
-This is to avoid losing users who are not interested in implementation details
-and instead focus the discussion on usage and impact of the intended features.
+Its purpose is to provide a high-level summary to users who are not interested
+in detailed technical discussion, but may have opinions around, e.g., usage and
+impact.
 
 Detailed description
 --------------------
