@@ -367,6 +367,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         }
         Py_DECREF(ip);
     }
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+    }
+
 
     /* The array struct interface */
     ip = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
@@ -388,6 +392,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             }
         }
         Py_DECREF(ip);
+    }
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     /* The old buffer interface */
@@ -418,6 +425,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (PyErr_Occurred()) {
             goto fail;
         }
+    }
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     /*
