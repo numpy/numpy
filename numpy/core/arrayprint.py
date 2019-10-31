@@ -46,7 +46,7 @@ from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          datetime_as_string, datetime_data, ndarray,
                          set_legacy_print_mode)
 from .fromnumeric import ravel, any
-from .numeric import concatenate, asarray, errstate
+from .numeric import concatenate, asarray, asanyarray, errstate
 from .numerictypes import (longlong, intc, int_, float_, complex_, bool_,
                            flexible)
 from .overrides import array_function_dispatch, set_module
@@ -496,8 +496,7 @@ def _array2string(a, options, separator=' ', prefix=""):
     # Note we use the copied array instead of the input array here (since for
     # subclasses gathering from the array to format it may be expensive, e.g. if
     # the buffer is on an accelerator).
-    if type(arr) is not ndarray:
-        a = asarray(a)
+    a = asanyarray(a)
 
     # The formatter __init__s in _get_format_function cannot deal with
     # subclasses yet, and we also need to avoid recursion issues in
