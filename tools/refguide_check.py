@@ -21,7 +21,7 @@ in docstrings::
 
     $ python refguide_check.py --doctests ma
 
-or in RST files::
+or in RST-based documentations (including any python files in the directories)::
 
     $ python refguide_check.py --rst docs
 """
@@ -275,6 +275,9 @@ def is_deprecated(f):
         return False
 
 def check_items(all_dict, names, deprecated, others, module_name, dots=True):
+    """Check that `all_dict` is consistent with the `names` in `module_name`
+    For instance, that there are no deprecated or extra objects.
+    """
     num_all = len(all_dict)
     num_ref = len(names)
 
@@ -820,10 +823,11 @@ def check_doctests_testfile(fname, verbose, ns=None,
             tests = parser.get_doctest(part, ns, fname, fname, base_line_no)
         except ValueError as e:
             if e.args[0].startswith('line '):
-                # fix line number
+                # fix line number since `parser.get_doctest` does not increment
+                # the reported line number by base_line_no in the error message
                 parts = e.args[0].split()
                 parts[1] = str(int(parts[1]) + base_line_no)
-                e.args = (' '.join(parts),)
+                e.args = (' '.join(parts),) + e.args[1:]
             raise
         if any(word in ex.source for word in PSEUDOCODE
                                  for ex in tests.examples):
@@ -852,17 +856,17 @@ def check_doctests_testfile(fname, verbose, ns=None,
 
     return results
 
-def iter_included_files(base_path, args, suffixes=('.py', '.rst')):
+def iter_included_files(base_path, verbose=0, suffixes=('.py', '.rst')):
     if os.path.exists(base_path) and os.path.isfile(base_path):
         yield base_path
     for dir_name, subdirs, files in os.walk(base_path, topdown=True):
         if dir_name in RST_SKIPLIST:
-            if args.verbose > 0:
+            if verbose > 0:
                 sys.stderr.write('skipping files in %s' % dir_name)
             files = []
         for p in RST_SKIPLIST:
             if p in subdirs:
-                if args.verbose > 0:
+                if verbose > 0:
                     sys.stderr.write('skipping %s and subdirs' % p)
                 subdirs.remove(p)
         for f in files:
@@ -870,8 +874,16 @@ def iter_included_files(base_path, args, suffixes=('.py', '.rst')):
                     f not in RST_SKIPLIST):
                 yield os.path.join(dir_name, f)
 
-def check_rst(base_path, results, args, dots):
-    for filename in iter_included_files(base_path, args):
+def check_documentation(base_path, results, args, dots):
+    """Check examples in any *.rst or *.py files located inside `base_path`.
+    Add the output to `results`. As opposed to ``check_doctests``, does not
+    inspect the classes' and functions' docstrings
+
+    See Also
+    --------
+    check_doctests_testfile
+    """
+    for filename in iter_included_files(base_path, args.verbose):
         if dots:
             sys.stderr.write(filename + ' ')
             sys.stderr.flush()
@@ -902,12 +914,15 @@ def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("module_names", metavar="SUBMODULES", default=[],
                         nargs='*', help="Submodules to check (default: all public)")
-    parser.add_argument("--doctests", action="store_true", help="Run also doctests")
+    parser.add_argument("--doctests", action="store_true",
+                        help="Run also doctests on ")
     parser.add_argument("-v", "--verbose", action="count", default=0)
     parser.add_argument("--doctest-warnings", action="store_true",
                         help="Enforce warning checking for doctests")
     parser.add_argument("--rst", nargs='?', const='doc', default=None,
-                        help="Run also examples from rst files")
+                        help=("Run also examples from *rst and *.py files "
+                              "dicovered walking the directory(s) specified, "
+                              "defaults to 'doc'"))
     args = parser.parse_args(argv)
 
     modules = []
@@ -982,8 +997,8 @@ def main(argv):
             base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
         rst_path = os.path.relpath(os.path.join(base_dir, args.rst))
         if os.path.exists(rst_path):
-            print('\nChecking rst files in %s:' % os.path.relpath(rst_path, os.getcwd()))
-            check_rst(rst_path, results, args, dots)
+            print('\nChecking files in %s:' % os.path.relpath(rst_path, os.getcwd()))
+            check_documentation(rst_path, results, args, dots)
         else:
             sys.stderr.write(f'\ninvalid --rst argument "{args.rst}"')
             errormsgs.append('invalid directory argument to --rst')
