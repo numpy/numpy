@@ -17,6 +17,7 @@
 {% if definitions[category]['showcontent'] %}
 {% for text, values in sections[section][category].items() %}
 {{ text }}
+
 {{ get_indent(text) }}({{values|join(', ') }})
 
 {% endfor %}
