@@ -1,0 +1,7 @@
+Deprecate automatic ``dtype=object`` for ragged input
+-----------------------------------------------------
+Calling ``np.array([[1, [1, 2, 3]])`` will issue a ``DeprecationWarning`` as
+per `NEP 34`_. Users should explicitly use ``dtype=object`` to avoid the
+warning.
+
+.. _`NEP 34`: http://www.numpy.org/neps
