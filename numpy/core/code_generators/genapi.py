@@ -8,8 +8,11 @@ specified.
 """
 from __future__ import division, absolute_import, print_function
 
+from numpy.distutils.conv_template import process_file as process_c_file
+
 import sys, os, re
 import hashlib
+import io
 
 import textwrap
 
@@ -215,7 +218,10 @@ def find_functions(filename, tag='API'):
           This function does foo...
          */
     """
-    fo = open(filename, 'r')
+    if filename.endswith(('.c.src', '.h.src')):
+        fo = io.StringIO(process_c_file(filename))
+    else:
+        fo = open(filename, 'r')
     functions = []
     return_type = None
     function_name = None
