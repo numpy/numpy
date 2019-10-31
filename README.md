@@ -1,5 +1,4 @@
 # <img alt="NumPy" src="https://cdn.rawgit.com/numpy/numpy/master/branding/icons/numpylogo.svg" height="60">
-
 [![Travis](https://img.shields.io/travis/numpy/numpy/master.svg?label=Travis%20CI)](
     https://travis-ci.org/numpy/numpy)
 [![Azure](https://dev.azure.com/numpy/numpy/_apis/build/status/azure-pipeline%20numpy.numpy)](
@@ -7,24 +6,26 @@
 [![codecov](https://codecov.io/gh/numpy/numpy/branch/master/graph/badge.svg)](
     https://codecov.io/gh/numpy/numpy)
 
-NumPy is the fundamental package needed for scientific computing with Python.
 
-- **Website:** https://www.numpy.org
-- **Documentation:** https://docs.scipy.org/
-- **Mailing list:** https://mail.python.org/mailman/listinfo/numpy-discussion
-- **Source code:** https://github.com/numpy/numpy
-- **Contributing:** https://www.numpy.org/devdocs/dev/index.html
-- **Bug reports:** https://github.com/numpy/numpy/issues
-- **Report a security vulnerability:** https://tidelift.com/docs/security
+**NumPy is the fundamental package needed for scientific computing with Python, NumPy is a general-purpose 
+array-processing package. It provides a high-performance multidimensional array object, and tools for 
+working with these arrays.**
 
-It provides:
+Some important features of numpy:
 
 - a powerful N-dimensional array object
 - sophisticated (broadcasting) functions
 - tools for integrating C/C++ and Fortran code
 - useful linear algebra, Fourier transform, and random number capabilities
 
-Testing:
+**Installation:**
+To install NumPy, it is strongly recommend using a scientific Python distribution
+[click here for installing the SciPy Stack ](https://www.scipy.org/install.html)
+
+Numpy can be Installed using pip command:
+> pip install numpy
+
+**Testing:**
 
 - NumPy versions &ge; 1.15 require `pytest`
 - NumPy versions &lt; 1.15 require `nose`
@@ -45,5 +46,12 @@ may be a good starting point.
 If you are considering larger contributions outside the traditional coding work,
 please contact us through the mailing list.
 
+ **Website:** https://www.numpy.org
+- **Documentation:** https://docs.scipy.org/
+- **Mailing list:** https://mail.python.org/mailman/listinfo/numpy-discussion
+- **Source code:** https://github.com/numpy/numpy
+- **Contributing:** https://www.numpy.org/devdocs/dev/index.html
+- **Bug reports:** https://github.com/numpy/numpy/issues
+- **Report a security vulnerability:** https://tidelift.com/docs/security
 
 [![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](https://numfocus.org)
