@@ -58,7 +58,8 @@ class TestRegression(object):
             mt19937 = Generator(MT19937(12345))
             shuffled = np.array(t, dtype=object)
             mt19937.shuffle(shuffled)
-            assert_array_equal(shuffled, [t[2], t[0], t[3], t[1]])
+            expected = np.array([t[2], t[0], t[3], t[1]], dtype=object)
+            assert_array_equal(np.array(shuffled, dtype=object), expected)
 
     def test_call_within_randomstate(self):
         # Check that custom BitGenerator does not call into global state
