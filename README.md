@@ -7,17 +7,10 @@
 [![codecov](https://codecov.io/gh/numpy/numpy/branch/master/graph/badge.svg)](
     https://codecov.io/gh/numpy/numpy)
 
-NumPy is the fundamental package needed for scientific computing with Python.
 
-- **Website:** https://www.numpy.org
-- **Documentation:** https://docs.scipy.org/
-- **Mailing list:** https://mail.python.org/mailman/listinfo/numpy-discussion
-- **Source code:** https://github.com/numpy/numpy
-- **Contributing:** https://www.numpy.org/devdocs/dev/index.html
-- **Bug reports:** https://github.com/numpy/numpy/issues
-- **Report a security vulnerability:** https://tidelift.com/docs/security
-
-It provides:
+NumPy is a general-purpose array-processing package. It provides a high-performance 
+multidimensional array object, and tools for working with these arrays. itis  fundamental
+package needed for scientific computing with Python.
 
 - a powerful N-dimensional array object
 - sophisticated (broadcasting) functions
@@ -32,7 +25,11 @@ Testing:
 Tests can then be run after installation with:
 
     python -c 'import numpy; numpy.test()'
+    
+**Installation**
 
+To install NumPy, it is strongly recommend using a scientific Python distribution
+[click here for installing the SciPy Stack ](https://www.scipy.org/install.html)
 
 Call for Contributions
 ----------------------
@@ -45,5 +42,20 @@ may be a good starting point.
 If you are considering larger contributions outside the traditional coding work,
 please contact us through the mailing list.
 
+Important links
+---------------
+- **Website:** https://www.numpy.org
+- **Documentation:** https://docs.scipy.org/
+- **Mailing list:** https://mail.python.org/mailman/listinfo/numpy-discussion
+- **Source code:** https://github.com/numpy/numpy
+- **Contributing:** https://www.numpy.org/devdocs/dev/index.html
+- **Bug reports:** https://github.com/numpy/numpy/issues
+- **Report a security vulnerability:** https://tidelift.com/docs/security
 
 [![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](https://numfocus.org)
+
+
+
+
+
+
