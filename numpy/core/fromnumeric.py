@@ -1240,7 +1240,8 @@ def argmin(a, axis=None, out=None):
     0
 
     >>> x = np.array([[4,2,3],[1,0,3]])
-    >>> np.take_along_axis(x, np.expand_dims(np.argmin(x, axis=-1), axis=-1), axis=-1)
+    >>> index_array = np.argmin(x, axis=-1)
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)
     array([[2],
        [0]])
     >>> np.take_along_axis(x, np.expand_dims(np.argmin(x, axis=-1), axis=-1), axis=-1).flatten() # same as np.max(x, axis=-1)
