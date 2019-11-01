@@ -3497,6 +3497,7 @@ cdef class Generator:
             (u, s, vh) = svd(cov)
         elif method == 'eigh':
             from numpy.dual import eigh
+            # could call linalg.svd(hermitian=True), but that calculates a vh we don't need
             (s, u)  = eigh(cov)
         else:
             from numpy.dual import cholesky
