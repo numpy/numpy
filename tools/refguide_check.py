@@ -263,6 +263,7 @@ def compare(all_dict, others, names, module_name):
 
     return only_all, only_ref, missing
 
+
 def is_deprecated(f):
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("error")
@@ -273,6 +274,7 @@ def is_deprecated(f):
         except Exception:
             pass
         return False
+
 
 def check_items(all_dict, names, deprecated, others, module_name, dots=True):
     """Check that `all_dict` is consistent with the `names` in `module_name`
@@ -856,7 +858,8 @@ def check_doctests_testfile(fname, verbose, ns=None,
 
     return results
 
-def iter_included_files(base_path, verbose=0, suffixes=('.py', '.rst')):
+
+def iter_included_files(base_path, verbose=0, suffixes=('.rst',)):
     if os.path.exists(base_path) and os.path.isfile(base_path):
         yield base_path
     for dir_name, subdirs, files in os.walk(base_path, topdown=True):
@@ -874,10 +877,10 @@ def iter_included_files(base_path, verbose=0, suffixes=('.py', '.rst')):
                     f not in RST_SKIPLIST):
                 yield os.path.join(dir_name, f)
 
+
 def check_documentation(base_path, results, args, dots):
-    """Check examples in any *.rst or *.py files located inside `base_path`.
-    Add the output to `results`. As opposed to ``check_doctests``, does not
-    inspect the classes' and functions' docstrings
+    """Check examples in any *.rst located inside `base_path`.
+    Add the output to `results`.
 
     See Also
     --------
@@ -898,6 +901,7 @@ def check_documentation(base_path, results, args, dots):
         if dots:
             sys.stderr.write('\n')
             sys.stderr.flush()
+
 
 def init_matplotlib():
     global HAVE_MATPLOTLIB
@@ -920,7 +924,7 @@ def main(argv):
     parser.add_argument("--doctest-warnings", action="store_true",
                         help="Enforce warning checking for doctests")
     parser.add_argument("--rst", nargs='?', const='doc', default=None,
-                        help=("Run also examples from *rst and *.py files "
+                        help=("Run also examples from *rst files"
                               "dicovered walking the directory(s) specified, "
                               "defaults to 'doc'"))
     args = parser.parse_args(argv)
@@ -991,10 +995,7 @@ def main(argv):
             all_dict, deprecated, others = get_all_dict(module)
 
     if args.rst:
-        if args.rst.startswith('/'):
-            base_dir= '/'
-        else:
-            base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
+        base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
         rst_path = os.path.relpath(os.path.join(base_dir, args.rst))
         if os.path.exists(rst_path):
             print('\nChecking files in %s:' % os.path.relpath(rst_path, os.getcwd()))
