@@ -817,9 +817,10 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     >>> np.array(x)[np.argpartition(x, 3)]
     array([2, 1, 3, 4])
 
-    >>> x = np.array([3, 4, 2, 1])
+    >>> x = np.array([[3, 4, 2], [1, 3, 1]])
     >>> np.take_along_axis(x, np.argpartition(x, kth=1, axis=-1), axis=-1) # same as np.partition(x, kth=1)
-    array([1, 2, 4, 3])
+    array([[2, 3, 4],
+       [1, 1, 3]])
 
     """
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
