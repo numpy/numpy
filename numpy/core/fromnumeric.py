@@ -1163,7 +1163,7 @@ def argmax(a, axis=None, out=None):
     1
 
     >>> x = np.array([[4,2,3],[1,0,3]])
-    >>> np.take_along_axis(x, np.expand_dims(np.argmax(x, axis=-1), axis=-1), axis=-1)
+    >>> np.take_along_axis(x, np.expand_dims(np.argmax(x, axis=-1), axis=-1), axis=-1)  # same as `np.max(x, axis=-1, keepdims=True)`
     array([[4],
        [3]])
     >>> np.take_along_axis(x, np.expand_dims(np.argmax(x, axis=-1), axis=-1), axis=-1).flatten() # same as np.max(x, axis=-1)
