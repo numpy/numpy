@@ -1244,7 +1244,7 @@ def argmin(a, axis=None, out=None):
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)
     array([[2],
        [0]])
-    >>> np.take_along_axis(x, np.expand_dims(np.argmin(x, axis=-1), axis=-1), axis=-1).flatten() # same as np.max(x, axis=-1)
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1) # same as np.max(x, axis=-1)
     array([2, 0])
 
     """
