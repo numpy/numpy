@@ -29,3 +29,25 @@ class AVX_UFunc(Benchmark):
 
     def time_ufunc(self, ufuncname, stride, dtype):
         self.f(self.arr[::stride])
+
+avx_bfuncs = ['maximum',
+              'minimum']
+
+class AVX_BFunc(Benchmark):
+
+    params = [avx_bfuncs, dtype, stride]
+    param_names = ['avx_based_bfunc', 'dtype', 'stride']
+    timeout = 10
+
+    def setup(self, ufuncname, dtype, stride):
+        np.seterr(all='ignore')
+        try:
+            self.f = getattr(np, ufuncname)
+        except AttributeError:
+            raise NotImplementedError()
+        N = 10000
+        self.arr1 = np.array(np.random.rand(stride*N), dtype=dtype)
+        self.arr2 = np.array(np.random.rand(stride*N), dtype=dtype)
+
+    def time_ufunc(self, ufuncname, dtype, stride):
+        self.f(self.arr1[::stride], self.arr2[::stride])
