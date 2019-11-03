@@ -78,13 +78,13 @@ We can access the elements in the array using square brackets. When you're acces
 More information about arrays
 -----------------------------
 
------
+------
 
 ::
 
   1D array, 2D array, ndarray, vector, matrix
 
------
+------
 
 You might occasionally hear an array referred to as an "ndarray," which is shorthand for "N-dimensional array." You might also hear **1-D**, or one-dimensional array, **2-D**, or two-dimensional array, and so on. The numpy `ndarray` class is used to represent both matrices and vectors. A vector is an array with a single column, while a matrix refers to an array with multiple columns.
 
