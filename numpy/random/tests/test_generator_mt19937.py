@@ -3,6 +3,8 @@ import sys
 import pytest
 
 import numpy as np
+from numpy.dual import cholesky, eigh, svd
+from numpy.linalg import LinAlgError
 from numpy.testing import (
     assert_, assert_raises, assert_equal, assert_allclose,
     assert_warns, assert_no_warnings, assert_array_equal,
@@ -1196,12 +1198,13 @@ class TestRandomDist(object):
                              [5, 5, 3, 1, 2, 4]]])
         assert_array_equal(actual, desired)
 
-    def test_multivariate_normal(self):
+    @pytest.mark.parametrize("method", ["svd", "eigh", "cholesky"])
+    def test_multivariate_normal(self, method):
         random = Generator(MT19937(self.seed))
         mean = (.123456789, 10)
         cov = [[1, 0], [0, 1]]
         size = (3, 2)
-        actual = random.multivariate_normal(mean, cov, size)
+        actual = random.multivariate_normal(mean, cov, size, method=method)
         desired = np.array([[[-1.747478062846581,  11.25613495182354  ],
                              [-0.9967333370066214, 10.342002097029821 ]],
                             [[ 0.7850019631242964, 11.181113712443013 ],
@@ -1212,15 +1215,24 @@ class TestRandomDist(object):
         assert_array_almost_equal(actual, desired, decimal=15)
 
         # Check for default size, was raising deprecation warning
-        actual = random.multivariate_normal(mean, cov)
+        actual = random.multivariate_normal(mean, cov, method=method)
         desired = np.array([0.233278563284287, 9.424140804347195])
         assert_array_almost_equal(actual, desired, decimal=15)
+        # Check that non symmetric covariance input raises exception when
+        # check_valid='raises' if using default svd method.
+        mean = [0, 0]
+        cov = [[1, 2], [1, 2]]
+        assert_raises(ValueError, random.multivariate_normal, mean, cov,
+                      check_valid='raise')
 
         # Check that non positive-semidefinite covariance warns with
         # RuntimeWarning
-        mean = [0, 0]
         cov = [[1, 2], [2, 1]]
         assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov)
+        assert_warns(RuntimeWarning, random.multivariate_normal, mean, cov,
+                     method='eigh')
+        assert_raises(LinAlgError, random.multivariate_normal, mean, cov,
+                      method='cholesky')
 
         # and that it doesn't warn with RuntimeWarning check_valid='ignore'
         assert_no_warnings(random.multivariate_normal, mean, cov,
@@ -1229,10 +1241,12 @@ class TestRandomDist(object):
         # and that it raises with RuntimeWarning check_valid='raises'
         assert_raises(ValueError, random.multivariate_normal, mean, cov,
                       check_valid='raise')
+        assert_raises(ValueError, random.multivariate_normal, mean, cov,
+                      check_valid='raise', method='eigh')
 
         cov = np.array([[1, 0.1], [0.1, 1]], dtype=np.float32)
         with suppress_warnings() as sup:
-            random.multivariate_normal(mean, cov)
+            random.multivariate_normal(mean, cov, method=method)
             w = sup.record(RuntimeWarning)
             assert len(w) == 0
 
