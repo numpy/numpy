@@ -267,7 +267,7 @@ def check_long_double_representation(cmd):
         # try linking to support CC="gcc -flto" or icc -ipo
         # struct needs to be volatile so it isn't optimized away
         body = body.replace('struct', 'volatile struct')
-        body += "int main(void) { return 0; }\n"
+        body += "int main(void) { return foo.before[1]; }\n"
         src, obj = cmd._compile(body, None, None, 'c')
         cmd.temp_files.append("_configtest")
         cmd.compiler.link_executable([obj], "_configtest")
