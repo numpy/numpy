@@ -823,7 +823,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     >>> index_array = np.argpartition(x, kth=1, axis=-1)
     >>> np.take_along_axis(x, index_array, axis=-1)  # same as np.partition(x, kth=1)
     array([[2, 3, 4],
-       [1, 1, 3]])
+           [1, 1, 3]])
 
     """
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
@@ -1169,7 +1169,7 @@ def argmax(a, axis=None, out=None):
     >>> index_array = np.argmax(x, axis=-1)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)  # same as np.max(x, axis=-1, keepdims=True)
     array([[4],
-       [3]])
+           [3]])
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1) # same as np.max(x, axis=-1)
     array([4, 3])
 
@@ -1247,7 +1247,7 @@ def argmin(a, axis=None, out=None):
     >>> index_array = np.argmin(x, axis=-1)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1) # same as np.min(x, axis=-1, keepdims=True)
     array([[2],
-       [0]])
+           [0]])
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1) # same as np.max(x, axis=-1)
     array([2, 0])
 
