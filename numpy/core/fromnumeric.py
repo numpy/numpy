@@ -796,7 +796,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     --------
     partition : Describes partition algorithms used.
     ndarray.partition : Inplace partition.
-    argsort : Full indirect sort
+    argsort : Full indirect sort.
     take_along_axis : Apply ``index_array`` from argpartition to an array as if by calling partition.
 
     Notes
