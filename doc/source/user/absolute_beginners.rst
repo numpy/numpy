@@ -9,7 +9,7 @@ Welcome to NumPy!
 
 NumPy (**Numerical Python**) is an open source Python library that's used in almost every field of science and engineering. It's the universal standard for working with numerical data in Python, and it's at the core of the scientific Python and PyData ecosystems. NumPy users include everyone from beginning coders to experienced researchers doing state-of-the-art scientific and industrial research and development. The NumPy API is used extensively in Pandas, SciPy, Matplotlib, scikit-learn, scikit-image and most other data science and scientific Python packages. 
 
-The NumPy library contains multidimentional array and matrix data structures. It provides **ndarray**, a homogeneous n-dimensional array object with methods to efficiently operate on it. NumPy can be used to perform a wide variety of mathematical operations on arrays.  It enriches Python with powerful data structures that guarantee efficient calculations with arrays and matrices and it supplies an enormous library of high-level mathematical functions that operate on these array and matrices. 
+The NumPy library contains multidimentional array and matrix data structures. It provides **ndarray**, a homogeneous n-dimensional array object, with methods to efficiently operate on it. NumPy can be used to perform a wide variety of mathematical operations on arrays.  It enriches Python with powerful data structures that guarantee efficient calculations with arrays and matrices and it supplies an enormous library of high-level mathematical functions that operate on these array and matrices. 
 
 `Learn more about NumPy here <https://docs.scipy.org/doc/numpy-1.17.0/user/whatisnumpy.html>`_!
 
@@ -78,7 +78,13 @@ We can access the elements in the array using square brackets. When you're acces
 More information about arrays
 -----------------------------
 
-**What else might an array be called?**
+-----
+
+::
+
+  1D array, 2D array, ndarray, vector, matrix
+
+-----
 
 You might occasionally hear an array referred to as an "ndarray," which is shorthand for "N-dimensional array." You might also hear **1-D**, or one-dimensional array, **2-D**, or two-dimensional array, and so on. The numpy `ndarray` class is used to represent both matrices and vectors. A vector is an array with a single column, while a matrix refers to an array with multiple columns.
 
@@ -104,6 +110,20 @@ Array **attributes** reflect information intrinsic to the array itself. If you n
 
 How to create a basic array
 ---------------------------
+
+-----
+
+::
+
+  np.array()
+  np.zeros() 
+  np.ones() 
+  np.empty() 
+  np.arange() 
+  np.linspace()
+  dtype
+
+-----
 
 To create a NumPy array, you can use the function `np.array()`
 
@@ -196,6 +216,8 @@ It's simple to create an array where the values are spaced linearly in an interv
 
   array([ 0. ,  2.5,  5. ,  7.5, 10. ])
 
+**Specifying your data type**
+
 While the default data type is floating point (float64), you can expecity specify which data type you want using 'dtype'.
 
 ::
@@ -214,13 +236,16 @@ While the default data type is floating point (float64), you can expecity specif
 Adding, removing, and sorting elements
 --------------------------------------
 
-Let's take advantage of:
+-----
 
 ::
 
   np.append()
-  np.delete()
+  np.delete() 
   np.sort()
+
+-----
+
 
 If we start with this array:
 
@@ -290,6 +315,16 @@ In addition to sort, which returns a sorted copy of an array, you can use:
 How do you know the shape and size of an array?
 -----------------------------------------------
 
+-----
+
+::
+
+  ndarray.ndim() 
+  ndarray.size()
+  ndarray.shape()
+
+-----
+
 **ndarray.ndim** will tell you the number of axes, or dimensions, of the array.
 
 **ndarray.size** will tell you the total number of elements of the array. This is the *product* of the elements of the array's shape.
@@ -325,12 +360,20 @@ For example:
 
 Can you reshape an array?
 -------------------------
+
+-----
+
+::
+
+  np.reshape()
+
+-----
   
 **Yes!**
 
 ::
 
-  numpy.reshape() 
+  np.reshape() 
 
 will give a new shape to an array without changing the data. Just remember that when you use the reshape method, the array you want to produce needs to have the same number of elements as the original array. If you start with an array with 12 elements, you'll need to make sure that your new array also has a total of 12 elements.
 
@@ -376,7 +419,7 @@ You can specify a few optional parameters.
 Indexing and Slicing
 --------------------
 
-We can index and slice NumPy arrays in the same ways we can slice Python lists.
+You can index and slice NumPy arrays in the same ways you can slice Python lists.
 
 ::
 
@@ -408,6 +451,19 @@ You can visualize it this way:
 
 How to create an array from existing data
 -----------------------------------------
+
+-----
+
+::
+
+  slicing and indexing
+  np.vstack()
+  np.hstack()
+  np.hsplit()
+  view
+  copy
+
+-----
 
 You can easily create a new array from a section of an existing array. Let's say you have this array:
 
@@ -538,6 +594,14 @@ Using the `copy` method makes a complete copy of the array and its data (a *deep
 Basic array operations
 ----------------------
 
+-----
+
+::
+
+  addition, subtraction, multiplication, division, and more
+
+-----
+
 Once you've created your arrays, you can start to work with them. Let's say, for example, that you've created two arrays, one called "data" and one called "ones" 
 
 .. image:: images/np_array_dataones.png
@@ -623,6 +687,12 @@ NumPy understands that the multiplication should happen with each cell. That con
 More useful array operations
 -----------------------------------
 
+-----
+
+::
+
+  maximum, minimum, sum, mean, product, standard deviation, and more
+
 NumPy also performs aggregation functions. In addition to `min`,  `max`, and `sum`, you can easily run `mean` to get the average, `prod` to get the result of multiplying the elements together, `std` to get the standard deviation, and more.
 
 ::
@@ -682,6 +752,16 @@ The four values listed above correspond to the number of columns in your array. 
 
 How to inspect the size and shape of a NumPy array
 --------------------------------------------------
+
+-----
+
+::
+
+
+  np.shape()
+  np.size()
+
+-----
 
 You can get the dimensions of a NumPy array any time using ndarray.shape and NumPy will return the dimensions of the array as a tuple.
 
@@ -1019,6 +1099,15 @@ How to get index locations that satisfy a given condition
 Transposing and reshaping a matrix
 ----------------------------------
 
+-----
+
+::
+
+  np.reshape()
+  T
+
+-----
+
 It's common to need to rotate your matrices. NumPy arrays have the property `T` that allows you to transpose a matrix.
 
 .. image:: images/np_transposing_reshaping.png
@@ -1034,6 +1123,14 @@ You may need to switch the dimensions of a matrix. This can happen when, for exa
 
 How to reverse
 --------------
+
+-----
+
+::
+
+  np.flip
+
+-----
  
 NumPy's np.flip() function allows you to easily flip the contents of an array along an axis. You simply specify the array you would like to reverse and the axis. If you don't specify the axis, NumPy will flip or reverse the contents along all of the axes of your input array. 
 
@@ -1166,6 +1263,13 @@ You can also reverse the column at index position 1 (the second column):
 
 Reshaping and Flattening multidimensional arrays
 ------------------------------------------------
+
+-----
+
+::
+
+  flatten
+  ravel
   
 There are two popular ways to flatten an array: **flatten()** and **ravel()**. The primary difference between the two is that the new array created using **ravel()** is actually a reference to the parent array. This means that any changes to the new array will affect the parent array as well. Since ravel does not create a copy, it's memory efficient. 
 
@@ -1244,8 +1348,8 @@ How to save and load NumPy objects
 How to convert a 1D array into a 2D array (how to add a new axis)
 -----------------------------------------------------------------
 
-Formulas
----------
+Working with Mathematical Formulas
+----------------------------------
 
 Implementing mathematical formulas that work on matrices and vectors is one of the things that make NumPy so highly regarded in the scientific Python community. 
 
@@ -1424,4 +1528,5 @@ More useful functions
 -------------------------------------------------------
 
 *Image credits: Jay Alammar http://jalammar.github.io/*
+
 
