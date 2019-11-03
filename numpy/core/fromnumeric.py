@@ -1165,7 +1165,7 @@ def argmax(a, axis=None, out=None):
     >>> np.argmax(b)  # Only the first occurrence is returned.
     1
 
-    >>> x = np.array([[4,2,3],[1,0,3]])
+    >>> x = np.array([[4,2,3], [1,0,3]])
     >>> index_array = np.argmax(x, axis=-1)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)  # same as np.max(x, axis=-1, keepdims=True)
     array([[4],
@@ -1243,7 +1243,7 @@ def argmin(a, axis=None, out=None):
     >>> np.argmin(b)  # Only the first occurrence is returned.
     0
 
-    >>> x = np.array([[4,2,3],[1,0,3]])
+    >>> x = np.array([[4,2,3], [1,0,3]])
     >>> index_array = np.argmin(x, axis=-1)
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1) # same as np.min(x, axis=-1, keepdims=True)
     array([[2],
