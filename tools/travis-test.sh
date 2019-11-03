@@ -53,7 +53,7 @@ setup_base()
     $PYTHON setup.py build build_src --verbose-cfg build_ext --inplace 2>&1 | tee log
   fi
   grep -v "_configtest" log \
-    | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
+    | grep -vE "ld returned 1|no files found matching|no previously-included files matching|manifest_maker: standard file '-c'" \
     | grep -E "warning\>" \
     | tee warnings
   if [ "$LAPACK" != "None" ]; then
