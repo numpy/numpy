@@ -1,0 +1,3 @@
+Add complex number support for ``numpy.fromfile``
+-------------------------------------------------
+Now ``numpy.fromfile`` can read complex numbers.

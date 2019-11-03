@@ -1081,6 +1081,7 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
  *           npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *           npy_float, npy_double, npy_longdouble,
  *           npy_datetime, npy_timedelta#
+ * #supports_nat = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1#
  */
 
 /**begin repeat1
@@ -1092,6 +1093,7 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *             npy_float, npy_double, npy_longdouble,
  *             npy_datetime, npy_timedelta#
+ * #floatingpoint = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0#
  */
 static void
 @FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
@@ -1101,7 +1103,15 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        *op++ = (@totype@)*ip++;
+        @fromtype@ f = *ip++;
+        @totype@ t = (@totype@)f;
+#if @supports_nat@ && @floatingpoint@
+        /* Avoid undefined behaviour for NaN -> NaT */
+        if (npy_isnan(f)) {
+            t = (@totype@)NPY_DATETIME_NAT;
+        }
+#endif
+        *op++ = t;
     }
 }
 /**end repeat1**/
@@ -1119,7 +1129,15 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        *op++ = (@totype@)*ip;
+        @fromtype@ f = *ip;
+        @totype@ t = (@totype@)f;
+#if @supports_nat@
+        /* Avoid undefined behaviour for NaN -> NaT */
+        if (npy_isnan(f)) {
+            t = (@totype@)NPY_DATETIME_NAT;
+        }
+#endif
+        *op++ = t;
         ip += 2;
     }
 }
@@ -1757,7 +1775,58 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
 }
 
 /**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = CFLOAT, CDOUBLE#
+ * #type = npy_cfloat, npy_cdouble#
+ */
+static int
+@fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
+             PyArray_Descr *NPY_UNUSED(ignored))
+{
+    double result;
+    int ret_real, ret_imag;
+
+    ret_real = NumPyOS_ascii_ftolf(fp, &result);
+    @type@ output;
+    // Peek next character
+    char next = getc(fp);
+    if ((next == '+') || (next == '-')) {
+        // Imaginary component specified
+        output.real = result;
+        // Revert peek and read imaginary component
+        ungetc(next, fp);
+        ret_imag = NumPyOS_ascii_ftolf(fp, &result);
+        // Peak next character
+        next = getc(fp);
+        if ((ret_imag == 1) && (next == 'j')) {
+            // If read is successful and the immediate following char is j
+            output.imag = result;
+        }
+        else {
+            output.imag = 0;
+            // Push an invalid char to trigger the not everything is read error
+            ungetc('a', fp);
+        }
+    }
+    else if (next == 'j') {
+        // Real component not specified
+        output.real = 0;
+        output.imag = result;
+    }
+    else {
+        // Imaginary component not specified
+        output.real = result;
+        output.imag = 0.;
+        // Next character is not + / - / j. Revert peek.
+        ungetc(next, fp);
+    }
+    *(@type@ *)ip = output;
+    return ret_real;
+}
+/**end repeat**/
+
+
+/**begin repeat
+ * #fname = CLONGDOUBLE,
  *          OBJECT, STRING, UNICODE, VOID,
  *          DATETIME, TIMEDELTA#
  */
@@ -1849,7 +1918,60 @@ BOOL_fromstr(char *str, void *ip, char **endptr,
 }
 
 /**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = CFLOAT, CDOUBLE#
+ * #type = npy_cfloat, npy_cdouble#
+ */
+static int
+@fname@_fromstr(char *str, void *ip, char **endptr,
+        PyArray_Descr *NPY_UNUSED(ignore))
+{
+    double result;
+
+    result = NumPyOS_ascii_strtod(str, endptr);
+    @type@ output;
+
+    if (endptr && ((*endptr[0] == '+') || (*endptr[0] == '-'))) {
+        // Imaginary component specified
+        output.real = result;
+        // Reading imaginary component
+        char **prev = endptr;
+        str = *endptr;
+        result = NumPyOS_ascii_strtod(str, endptr);
+        if (endptr && *endptr[0] == 'j') {
+            // Read is successful if the immediate following char is j
+            output.imag = result;
+            // Skip j
+            ++*endptr;
+        }
+        else {
+            /*
+             * Set endptr to previous char to trigger the not everything is
+             * read error
+             */
+            endptr = prev;
+            output.imag = 0;
+        }
+    }
+    else if (endptr && *endptr[0] == 'j') {
+        // Real component not specified
+        output.real = 0;
+        output.imag = result;
+        // Skip j
+        ++*endptr;
+    }
+    else {
+        // Imaginary component not specified
+        output.real = result;
+        output.imag = 0.;
+    }
+    *(@type@ *)ip = output;
+    return 0;
+}
+/**end repeat**/
+
+
+/**begin repeat
+ * #fname = CLONGDOUBLE,
  *          OBJECT, STRING, UNICODE, VOID#
  */
 

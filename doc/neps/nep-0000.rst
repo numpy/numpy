@@ -75,14 +75,11 @@ request`_ to the ``doc/neps`` directory with the name ``nep-<n>.rst``
 where ``<n>`` is an appropriately assigned four-digit number (e.g.,
 ``nep-0000.rst``). The draft must use the :doc:`nep-template` file.
 
-Once the PR is in place, the NEP should be announced on the mailing
-list for discussion. Discussion about implementation details will take place
-on the pull request, but once editorial issues are solved, the PR should be
-merged, even if with draft status. The mailing list e-mail will contain the NEP
-upto the section titled "Backward compatibility", so as to make it digestible
-to a wide audience. The mailing list discussion is intended to target
-end-users, and thus, discussion on the proposed usage and possible impact
-should take place on the mailing list.
+Once the PR for the NEP is in place, a post should be made to the
+mailing list containing the sections upto "Backward compatibility",
+with the purpose of limiting discussion there to usage and impact.
+Discussion on the pull request will have a broader scope, also including
+details of implementation.
 
 At the earliest convenience, the PR should be merged (regardless of
 whether it is accepted during discussion).  Additional PRs may be made

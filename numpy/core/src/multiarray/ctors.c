@@ -852,6 +852,10 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             return 0;
         }
     }
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+    }
+
 
     /* obj has the __array_interface__ interface */
     e = PyArray_LookupSpecial_OnInstance(obj, "__array_interface__");
@@ -880,6 +884,9 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         if (nd >= 0) {
             return 0;
         }
+    }
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
@@ -2351,7 +2358,11 @@ PyArray_FromStructInterface(PyObject *input)
 
     attr = PyArray_LookupSpecial_OnInstance(input, "__array_struct__");
     if (attr == NULL) {
-        return Py_NotImplemented;
+        if (PyErr_Occurred()) {
+            return NULL;
+        } else {
+            return Py_NotImplemented;
+        }
     }
     if (!NpyCapsule_Check(attr)) {
         goto fail;
@@ -2463,6 +2474,9 @@ PyArray_FromInterface(PyObject *origin)
     iface = PyArray_LookupSpecial_OnInstance(origin,
                                                     "__array_interface__");
     if (iface == NULL) {
+        if (PyErr_Occurred()) {
+            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+        }
         return Py_NotImplemented;
     }
     if (!PyDict_Check(iface)) {
@@ -2716,6 +2730,9 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
 
     array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
+        if (PyErr_Occurred()) {
+            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+        }
         return Py_NotImplemented;
     }
     if (context == NULL) {
