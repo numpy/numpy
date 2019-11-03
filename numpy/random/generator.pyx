@@ -3523,7 +3523,10 @@ cdef class Generator:
         if method == 'cholesky':
             _factor = l
         elif method == 'eigh':
-            _factor = u * np.sqrt(s)
+            # if check_valid == 'ignore' we need to ensure that np.sqrt does not
+            # return a NaN if s is a very small negative number that is
+            # approximately zero or when the covariance is not positive-semidefinite
+            _factor = u * np.sqrt(abs(s))
         else:
             _factor = np.sqrt(s)[:, None] * vh
 
