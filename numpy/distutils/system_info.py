@@ -146,7 +146,7 @@ else:
 from distutils.errors import DistutilsError
 from distutils.dist import Distribution
 import distutils.sysconfig
-from distutils import log
+from numpy.distutils import log
 from distutils.util import get_platform
 
 from numpy.distutils.exec_command import (
@@ -156,7 +156,7 @@ from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
-from numpy.distutils import customized_ccompiler
+from numpy.distutils import customized_ccompiler as _customized_ccompiler
 from numpy.distutils import _shell_utils
 import distutils.ccompiler
 import tempfile
@@ -167,6 +167,15 @@ import shutil
 import platform
 _bits = {'32bit': 32, '64bit': 64}
 platform_bits = _bits[platform.architecture()[0]]
+
+
+global_compiler = None
+
+def customized_ccompiler():
+    global global_compiler
+    if not global_compiler:
+        global_compiler = _customized_ccompiler()
+    return global_compiler
 
 
 def _c_string_literal(s):
@@ -456,7 +465,7 @@ class AliasedOptionError(DistutilsError):
 
 class AtlasNotFoundError(NotFoundError):
     """
-    Atlas (http://math-atlas.sourceforge.net/) libraries not found.
+    Atlas (http://github.com/math-atlas/math-atlas) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [atlas]) or by setting
     the ATLAS environment variable."""
@@ -550,7 +559,6 @@ class system_info(object):
     dir_env_var = None
     search_static_first = 0  # XXX: disabled by default, may disappear in
                             # future unless it is proved to be useful.
-    verbosity = 1
     saved_results = {}
 
     notfounderror = NotFoundError
@@ -558,7 +566,6 @@ class system_info(object):
     def __init__(self,
                   default_lib_dirs=default_lib_dirs,
                   default_include_dirs=default_include_dirs,
-                  verbosity=1,
                   ):
         self.__class__.info = {}
         self.local_prefixes = []
@@ -704,7 +711,7 @@ class system_info(object):
                 log.info('  FOUND:')
 
         res = self.saved_results.get(self.__class__.__name__)
-        if self.verbosity > 0 and flag:
+        if log.get_threshold() <= log.INFO and flag:
             for k, v in res.items():
                 v = str(v)
                 if k in ['sources', 'libraries'] and len(v) > 270:
@@ -914,7 +921,7 @@ class system_info(object):
         """Return a list of existing paths composed by all combinations
         of items from the arguments.
         """
-        return combine_paths(*args, **{'verbosity': self.verbosity})
+        return combine_paths(*args)
 
 
 class fft_opt_info(system_info):
@@ -1531,12 +1538,12 @@ def get_atlas_version(**config):
     try:
         s, o = c.get_output(atlas_version_c_text,
                             libraries=libraries, library_dirs=library_dirs,
-                            use_tee=(system_info.verbosity > 0))
+                           )
         if s and re.search(r'undefined reference to `_gfortran', o, re.M):
             s, o = c.get_output(atlas_version_c_text,
                                 libraries=libraries + ['gfortran'],
                                 library_dirs=library_dirs,
-                                use_tee=(system_info.verbosity > 0))
+                               )
             if not s:
                 warnings.warn(textwrap.dedent("""
                     *****************************************************
@@ -1582,7 +1589,7 @@ def get_atlas_version(**config):
             log.info('Status: %d', s)
             log.info('Output: %s', o)
 
-    if atlas_version == '3.2.1_pre3.3.6':
+    elif atlas_version == '3.2.1_pre3.3.6':
         dict_append(info, define_macros=[('NO_ATLAS_INFO', -2)])
     else:
         dict_append(info, define_macros=[(

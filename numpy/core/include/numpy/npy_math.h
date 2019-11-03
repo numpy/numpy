@@ -144,7 +144,22 @@ NPY_INLINE static float __npy_nzerof(void)
 #define NPY_COEFF_Q3_LOGf 9.864942958519418960339e-01f
 #define NPY_COEFF_Q4_LOGf 1.546476374983906719538e-01f
 #define NPY_COEFF_Q5_LOGf 5.875095403124574342950e-03f
-
+/*
+ * Constants used in vector implementation of sinf/cosf(x)
+ */
+#define NPY_TWO_O_PIf 0x1.45f306p-1f
+#define NPY_CODY_WAITE_PI_O_2_HIGHf -0x1.921fb0p+00f
+#define NPY_CODY_WAITE_PI_O_2_MEDf -0x1.5110b4p-22f
+#define NPY_CODY_WAITE_PI_O_2_LOWf -0x1.846988p-48f
+#define NPY_COEFF_INVF0_COSINEf 0x1.000000p+00f
+#define NPY_COEFF_INVF2_COSINEf -0x1.000000p-01f
+#define NPY_COEFF_INVF4_COSINEf 0x1.55553cp-05f
+#define NPY_COEFF_INVF6_COSINEf -0x1.6c06dcp-10f
+#define NPY_COEFF_INVF8_COSINEf 0x1.98e616p-16f
+#define NPY_COEFF_INVF3_SINEf -0x1.555556p-03f
+#define NPY_COEFF_INVF5_SINEf 0x1.11119ap-07f
+#define NPY_COEFF_INVF7_SINEf -0x1.a06bbap-13f
+#define NPY_COEFF_INVF9_SINEf 0x1.7d3bbcp-19f
 /*
  * Integer functions.
  */
@@ -161,6 +176,37 @@ NPY_INPLACE npy_long npy_gcdl(npy_long a, npy_long b);
 NPY_INPLACE npy_long npy_lcml(npy_long a, npy_long b);
 NPY_INPLACE npy_longlong npy_gcdll(npy_longlong a, npy_longlong b);
 NPY_INPLACE npy_longlong npy_lcmll(npy_longlong a, npy_longlong b);
+
+NPY_INPLACE npy_ubyte npy_rshiftuhh(npy_ubyte a, npy_ubyte b);
+NPY_INPLACE npy_ubyte npy_lshiftuhh(npy_ubyte a, npy_ubyte b);
+NPY_INPLACE npy_ushort npy_rshiftuh(npy_ushort a, npy_ushort b);
+NPY_INPLACE npy_ushort npy_lshiftuh(npy_ushort a, npy_ushort b);
+NPY_INPLACE npy_uint npy_rshiftu(npy_uint a, npy_uint b);
+NPY_INPLACE npy_uint npy_lshiftu(npy_uint a, npy_uint b);
+NPY_INPLACE npy_ulong npy_rshiftul(npy_ulong a, npy_ulong b);
+NPY_INPLACE npy_ulong npy_lshiftul(npy_ulong a, npy_ulong b);
+NPY_INPLACE npy_ulonglong npy_rshiftull(npy_ulonglong a, npy_ulonglong b);
+NPY_INPLACE npy_ulonglong npy_lshiftull(npy_ulonglong a, npy_ulonglong b);
+
+NPY_INPLACE npy_byte npy_rshifthh(npy_byte a, npy_byte b);
+NPY_INPLACE npy_byte npy_lshifthh(npy_byte a, npy_byte b);
+NPY_INPLACE npy_short npy_rshifth(npy_short a, npy_short b);
+NPY_INPLACE npy_short npy_lshifth(npy_short a, npy_short b);
+NPY_INPLACE npy_int npy_rshift(npy_int a, npy_int b);
+NPY_INPLACE npy_int npy_lshift(npy_int a, npy_int b);
+NPY_INPLACE npy_long npy_rshiftl(npy_long a, npy_long b);
+NPY_INPLACE npy_long npy_lshiftl(npy_long a, npy_long b);
+NPY_INPLACE npy_longlong npy_rshiftll(npy_longlong a, npy_longlong b);
+NPY_INPLACE npy_longlong npy_lshiftll(npy_longlong a, npy_longlong b);
+
+/*
+ * avx function has a common API for both sin & cos. This enum is used to
+ * distinguish between the two
+ */
+typedef enum {
+    npy_compute_sin,
+    npy_compute_cos
+} NPY_TRIG_OP;
 
 /*
  * C99 double math funcs

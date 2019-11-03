@@ -5,6 +5,7 @@ import sys
 import warnings
 import copy
 import binascii
+import textwrap
 
 from numpy.distutils.misc_util import mingw32
 
@@ -178,9 +179,10 @@ OPTIONAL_FUNCTION_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
 # gcc 4.8.4 support attributes but not with intrisics
 # tested via "#include<%s> int %s %s(void *){code; return 0;};" % (header, attribute, name, code)
 # function name will be converted to HAVE_<upper-case-name> preprocessor macro
-OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2")))',
+OPTIONAL_FUNCTION_ATTRIBUTES_WITH_INTRINSICS = [('__attribute__((target("avx2,fma")))',
                                 'attribute_target_avx2_with_intrinsics',
-                                '__m256 temp = _mm256_set1_ps(1.0)',
+                                '__m256 temp = _mm256_set1_ps(1.0); temp = \
+                                _mm256_fmadd_ps(temp, temp, temp)',
                                 'immintrin.h'),
                                 ('__attribute__((target("avx512f")))',
                                 'attribute_target_avx512f_with_intrinsics',
@@ -414,3 +416,41 @@ def long_double_representation(lines):
     else:
         # We never detected the after_sequence
         raise ValueError("Could not lock sequences (%s)" % saw)
+
+
+def check_for_right_shift_internal_compiler_error(cmd):
+    """
+    On our arm CI, this fails with an internal compilation error
+
+    The failure looks like the following, and can be reproduced on ARM64 GCC 5.4:
+
+        <source>: In function 'right_shift':
+        <source>:4:20: internal compiler error: in expand_shift_1, at expmed.c:2349
+               ip1[i] = ip1[i] >> in2;
+                      ^
+        Please submit a full bug report,
+        with preprocessed source if appropriate.
+        See <http://gcc.gnu.org/bugs.html> for instructions.
+        Compiler returned: 1
+
+    This function returns True if this compiler bug is present, and we need to
+    turn off optimization for the function
+    """
+    cmd._check_compiler()
+    has_optimize = cmd.try_compile(textwrap.dedent("""\
+        __attribute__((optimize("O3"))) void right_shift() {}
+        """), None, None)
+    if not has_optimize:
+        return False
+
+    no_err = cmd.try_compile(textwrap.dedent("""\
+        typedef long the_type;  /* fails also for unsigned and long long */
+        __attribute__((optimize("O3"))) void right_shift(the_type in2, the_type *ip1, int n) {
+            for (int i = 0; i < n; i++) {
+                if (in2 < (the_type)sizeof(the_type) * 8) {
+                    ip1[i] = ip1[i] >> in2;
+                }
+            }
+        }
+        """), None, None)
+    return not no_err

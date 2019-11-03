@@ -44,7 +44,7 @@ from numpy.testing import (
     assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, HAS_REFCOUNT, assert_array_less, runstring,
-    temppath, suppress_warnings, break_cycles, assert_raises_regex,
+    temppath, suppress_warnings, break_cycles,
     )
 from numpy.core.tests._locales import CommaDecimalPointLocale
 
@@ -114,7 +114,7 @@ class TestFlags(object):
         # Ensure that any base being writeable is sufficient to change flag;
         # this is especially interesting for arrays from an array interface.
         arr = np.arange(10)
-        
+
         class subclass(np.ndarray):
             pass
 
@@ -497,9 +497,6 @@ class TestArrayConstruction(object):
         assert_(np.ascontiguousarray(d).flags.c_contiguous)
         assert_(np.asfortranarray(d).flags.f_contiguous)
 
-    def test_ragged(self):
-        assert_raises_regex(ValueError, 'ragged',
-                             np.array, [[1], [2, 3]], dtype=int)
 
 class TestAssignment(object):
     def test_assignment_broadcasting(self):
@@ -2792,6 +2789,12 @@ class TestMethods(object):
         assert_equal(x1.flatten('F'), y1f)
         assert_equal(x1.flatten('F'), x1.T.flatten())
 
+    def test_flatten_invalid_order(self):
+        # invalid after gh-14596
+        for order in ['Z', 'c', False, True, 0, 8]:
+            x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
+            assert_raises(ValueError, x.flatten, {"order": order})
+
     @pytest.mark.parametrize('func', (np.dot, np.matmul))
     def test_arr_mult(self, func):
         a = np.array([[1, 0], [0, 1]])
@@ -3599,10 +3602,10 @@ class TestBinop(object):
         assert_equal(np.modf(dummy, out=(None, a)), (1,))
         assert_equal(np.modf(dummy, out=(dummy, a)), (1,))
         assert_equal(np.modf(a, out=(dummy, a)), 0)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            assert_equal(np.modf(dummy, out=a), (0,))
-            assert_(w[0].category is DeprecationWarning)
+        with assert_raises(TypeError):
+            # Out argument must be tuple, since there are multiple outputs
+            np.modf(dummy, out=a)
+
         assert_raises(ValueError, np.modf, dummy, out=(a,))
 
         # 2 inputs, 1 output
@@ -3967,13 +3970,13 @@ class TestPickling(object):
 
     def test_datetime64_byteorder(self):
         original = np.array([['2015-02-24T00:00:00.000000000']], dtype='datetime64[ns]')
-    
+
         original_byte_reversed = original.copy(order='K')
         original_byte_reversed.dtype = original_byte_reversed.dtype.newbyteorder('S')
         original_byte_reversed.byteswap(inplace=True)
 
         new = pickle.loads(pickle.dumps(original_byte_reversed))
-    
+
         assert_equal(original.dtype, new.dtype)
 
 
@@ -4102,17 +4105,17 @@ class TestArgmax(object):
           np.datetime64('2010-01-03T05:14:12'),
           np.datetime64('NaT'),
           np.datetime64('2015-09-23T10:10:13'),
-          np.datetime64('1932-10-10T03:50:30')], 4),
+          np.datetime64('1932-10-10T03:50:30')], 0),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
           np.datetime64('NaT'),
           np.datetime64('2022-12-25T16:02:16'),
           np.datetime64('1963-10-04T03:14:12'),
-          np.datetime64('2013-05-08T18:15:23')], 0),
+          np.datetime64('2013-05-08T18:15:23')], 2),
         ([np.timedelta64(2, 's'),
           np.timedelta64(1, 's'),
           np.timedelta64('NaT', 's'),
-          np.timedelta64(3, 's')], 3),
+          np.timedelta64(3, 's')], 2),
         ([np.timedelta64('NaT', 's')] * 3, 0),
 
         ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
@@ -4237,17 +4240,17 @@ class TestArgmin(object):
           np.datetime64('2010-01-03T05:14:12'),
           np.datetime64('NaT'),
           np.datetime64('2015-09-23T10:10:13'),
-          np.datetime64('1932-10-10T03:50:30')], 5),
+          np.datetime64('1932-10-10T03:50:30')], 0),
         ([np.datetime64('2059-03-14T12:43:12'),
           np.datetime64('1996-09-21T14:43:15'),
           np.datetime64('NaT'),
           np.datetime64('2022-12-25T16:02:16'),
           np.datetime64('1963-10-04T03:14:12'),
-          np.datetime64('2013-05-08T18:15:23')], 4),
+          np.datetime64('2013-05-08T18:15:23')], 2),
         ([np.timedelta64(2, 's'),
           np.timedelta64(1, 's'),
           np.timedelta64('NaT', 's'),
-          np.timedelta64(3, 's')], 1),
+          np.timedelta64(3, 's')], 2),
         ([np.timedelta64('NaT', 's')] * 3, 0),
 
         ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
@@ -4363,18 +4366,14 @@ class TestMinMax(object):
         assert_equal(np.amax([[1, 2, 3]], axis=1), 3)
 
     def test_datetime(self):
-        # NaTs are ignored
+        # Do not ignore NaT
         for dtype in ('m8[s]', 'm8[Y]'):
             a = np.arange(10).astype(dtype)
+            assert_equal(np.amin(a), a[0])
+            assert_equal(np.amax(a), a[9])
             a[3] = 'NaT'
-            assert_equal(np.amin(a), a[0])
-            assert_equal(np.amax(a), a[9])
-            a[0] = 'NaT'
-            assert_equal(np.amin(a), a[1])
-            assert_equal(np.amax(a), a[9])
-            a.fill('NaT')
-            assert_equal(np.amin(a), a[0])
-            assert_equal(np.amax(a), a[0])
+            assert_equal(np.amin(a), a[3])
+            assert_equal(np.amax(a), a[3])
 
 
 class TestNewaxis(object):
@@ -4590,18 +4589,26 @@ class TestTake(object):
         assert_equal(y, np.array([1, 2, 3]))
 
 class TestLexsort(object):
-    def test_basic(self):
-        a = [1, 2, 1, 3, 1, 5]
-        b = [0, 4, 5, 6, 2, 3]
+    @pytest.mark.parametrize('dtype',[
+        np.uint8, np.uint16, np.uint32, np.uint64,
+        np.int8, np.int16, np.int32, np.int64,
+        np.float16, np.float32, np.float64
+    ])
+    def test_basic(self, dtype):
+        a = np.array([1, 2, 1, 3, 1, 5], dtype=dtype)
+        b = np.array([0, 4, 5, 6, 2, 3], dtype=dtype)
         idx = np.lexsort((b, a))
         expected_idx = np.array([0, 4, 2, 1, 3, 5])
         assert_array_equal(idx, expected_idx)
+        assert_array_equal(a[idx], np.sort(a))
 
-        x = np.vstack((b, a))
-        idx = np.lexsort(x)
+    def test_mixed(self):
+        a = np.array([1, 2, 1, 3, 1, 5])
+        b = np.array([0, 4, 5, 6, 2, 3], dtype='datetime64[D]')
+
+        idx = np.lexsort((b, a))
+        expected_idx = np.array([0, 4, 2, 1, 3, 5])
         assert_array_equal(idx, expected_idx)
-
-        assert_array_equal(x[1][idx], np.sort(x[1]))
 
     def test_datetime(self):
         a = np.array([0,0,0], dtype='datetime64[D]')
@@ -4868,7 +4875,7 @@ class TestIO(object):
             offset_bytes = self.dtype.itemsize
             z = np.fromfile(f, dtype=self.dtype, offset=offset_bytes)
             assert_array_equal(z, self.x.flat[offset_items+count_items+1:])
-        
+
         with open(self.filename, 'wb') as f:
             self.x.tofile(f, sep=",")
 
@@ -4958,7 +4965,8 @@ class TestIO(object):
         self._check_from(b'1,2,3,4', [1., 2., 3., 4.], dtype=float, sep=',')
 
     def test_malformed(self):
-        self._check_from(b'1.234 1,234', [1.234, 1.], sep=' ')
+        with assert_warns(DeprecationWarning):
+            self._check_from(b'1.234 1,234', [1.234, 1.], sep=' ')
 
     def test_long_sep(self):
         self._check_from(b'1_x_3_x_4_x_5', [1, 3, 4, 5], sep='_x_')
@@ -5010,6 +5018,19 @@ class TestIO(object):
             self.test_malformed()
             self.test_tofile_sep()
             self.test_tofile_format()
+
+    def test_fromfile_subarray_binary(self):
+        # Test subarray dtypes which are absorbed into the shape
+        x = np.arange(24, dtype="i4").reshape(2, 3, 4)
+        x.tofile(self.filename)
+        res = np.fromfile(self.filename, dtype="(3,4)i4")
+        assert_array_equal(x, res)
+
+        x_str = x.tobytes()
+        with assert_warns(DeprecationWarning):
+            # binary fromstring is deprecated
+            res = np.fromstring(x_str, dtype="(3,4)i4")
+            assert_array_equal(x, res)
 
 
 class TestFromBuffer(object):
@@ -6225,14 +6246,14 @@ class TestMatmul(MatmulCommon):
 
         r3 = np.matmul(args[0].copy(), args[1].copy())
         assert_equal(r1, r3)
-    
+
     def test_matmul_object(self):
         import fractions
 
         f = np.vectorize(fractions.Fraction)
         def random_ints():
             return np.random.randint(1, 1000, size=(10, 3, 3))
-        M1 = f(random_ints(), random_ints()) 
+        M1 = f(random_ints(), random_ints())
         M2 = f(random_ints(), random_ints())
 
         M3 = self.matmul(M1, M2)
@@ -6271,6 +6292,23 @@ class TestMatmul(MatmulCommon):
         with assert_raises(TypeError):
             b = np.matmul(a, a)
 
+    def test_matmul_bool(self):
+        # gh-14439
+        a = np.array([[1, 0],[1, 1]], dtype=bool)
+        assert np.max(a.view(np.uint8)) == 1
+        b = np.matmul(a, a)
+        # matmul with boolean output should always be 0, 1
+        assert np.max(b.view(np.uint8)) == 1
+
+        rg = np.random.default_rng(np.random.PCG64(43))
+        d = rg.integers(2, size=4*5, dtype=np.int8)
+        d = d.reshape(4, 5) > 0
+        out1 = np.matmul(d, d.reshape(5, 4))
+        out2 = np.dot(d, d.reshape(5, 4))
+        assert_equal(out1, out2)
+
+        c = np.matmul(np.zeros((2, 0), dtype=bool), np.zeros(0, dtype=bool))
+        assert not np.any(c)
 
 
 if sys.version_info[:2] >= (3, 5):
@@ -6405,20 +6443,22 @@ class TestInner(object):
 
 class TestAlen(object):
     def test_basic(self):
-        m = np.array([1, 2, 3])
-        assert_equal(np.alen(m), 3)
+        with pytest.warns(DeprecationWarning):
+            m = np.array([1, 2, 3])
+            assert_equal(np.alen(m), 3)
 
-        m = np.array([[1, 2, 3], [4, 5, 7]])
-        assert_equal(np.alen(m), 2)
+            m = np.array([[1, 2, 3], [4, 5, 7]])
+            assert_equal(np.alen(m), 2)
 
-        m = [1, 2, 3]
-        assert_equal(np.alen(m), 3)
+            m = [1, 2, 3]
+            assert_equal(np.alen(m), 3)
 
-        m = [[1, 2, 3], [4, 5, 7]]
-        assert_equal(np.alen(m), 2)
+            m = [[1, 2, 3], [4, 5, 7]]
+            assert_equal(np.alen(m), 2)
 
     def test_singleton(self):
-        assert_equal(np.alen(5), 1)
+        with pytest.warns(DeprecationWarning):
+            assert_equal(np.alen(5), 1)
 
 
 class TestChoose(object):
@@ -7931,6 +7971,8 @@ class TestFormat(object):
                 dst = object.__format__(a, '30')
                 assert_equal(res, dst)
 
+from numpy.testing import IS_PYPY
+
 class TestCTypes(object):
 
     def test_ctypes_is_available(self):
@@ -7997,7 +8039,29 @@ class TestCTypes(object):
 
         # but when the `ctypes_ptr` object dies, so should `arr`
         del ctypes_ptr
+        if IS_PYPY:
+            # Pypy does not recycle arr objects immediately. Trigger gc to
+            # release arr. Cpython uses refcounts. An explicit call to gc
+            # should not be needed here.
+            break_cycles()
+        assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
+
+    def test_ctypes_as_parameter_holds_reference(self):
+        arr = np.array([None]).copy()
+
+        arr_ref = weakref.ref(arr)
+
+        ctypes_ptr = arr.ctypes._as_parameter_
+
+        # `ctypes_ptr` should hold onto `arr`
+        del arr
         break_cycles()
+        assert_(arr_ref() is not None, "ctypes pointer did not hold onto a reference")
+
+        # but when the `ctypes_ptr` object dies, so should `arr`
+        del ctypes_ptr
+        if IS_PYPY:
+            break_cycles()
         assert_(arr_ref() is None, "unknowable whether ctypes pointer holds a reference")
 
 

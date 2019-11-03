@@ -1,10 +1,10 @@
 from .mtrand import RandomState
-from .philox import Philox
-from .pcg64 import PCG64
-from .sfc64 import SFC64
+from ._philox import Philox
+from ._pcg64 import PCG64
+from ._sfc64 import SFC64
 
-from .generator import Generator
-from .mt19937 import MT19937
+from ._generator import Generator
+from ._mt19937 import MT19937
 
 BitGenerators = {'MT19937': MT19937,
                  'PCG64': PCG64,
@@ -13,7 +13,7 @@ BitGenerators = {'MT19937': MT19937,
                  }
 
 
-def __generator_ctor(bit_generator_name='mt19937'):
+def __generator_ctor(bit_generator_name='MT19937'):
     """
     Pickling helper function that returns a Generator object
 
@@ -36,7 +36,7 @@ def __generator_ctor(bit_generator_name='mt19937'):
     return Generator(bit_generator())
 
 
-def __bit_generator_ctor(bit_generator_name='mt19937'):
+def __bit_generator_ctor(bit_generator_name='MT19937'):
     """
     Pickling helper function that returns a bit generator object
 
@@ -59,7 +59,7 @@ def __bit_generator_ctor(bit_generator_name='mt19937'):
     return bit_generator()
 
 
-def __randomstate_ctor(bit_generator_name='mt19937'):
+def __randomstate_ctor(bit_generator_name='MT19937'):
     """
     Pickling helper function that returns a legacy RandomState-like object
 

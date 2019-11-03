@@ -1336,7 +1336,11 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
     PyArray_ArgSortFunc *argsort;
     PyObject *ret;
 
-    if (which < 0 || which >= NPY_NSELECTS) {
+    /*
+     * As a C-exported function, enum NPY_SELECTKIND loses its enum property
+     * Check the values to make sure they are in range
+     */
+    if ((int)which < 0 || (int)which >= NPY_NSELECTS) {
         PyErr_SetString(PyExc_ValueError,
                         "not a valid partition kind");
         return NULL;
@@ -1456,8 +1460,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 
     /* Now we can check the axis */
     nd = PyArray_NDIM(mps[0]);
-    if ((nd == 0) || (PyArray_SIZE(mps[0]) == 1)) {
-        /* single element case */
+    if ((nd == 0) || (PyArray_SIZE(mps[0]) <= 1)) {
+        /* empty/single element case */
         ret = (PyArrayObject *)PyArray_NewFromDescr(
             &PyArray_Type, PyArray_DescrFromType(NPY_INTP),
             PyArray_NDIM(mps[0]), PyArray_DIMS(mps[0]), NULL, NULL,
@@ -1466,7 +1470,9 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         if (ret == NULL) {
             goto fail;
         }
-        *((npy_intp *)(PyArray_DATA(ret))) = 0;
+        if (PyArray_SIZE(mps[0]) > 0) {
+            *((npy_intp *)(PyArray_DATA(ret))) = 0;
+        }
         goto finish;
     }
     if (check_and_adjust_axis(&axis, nd) < 0) {
@@ -1516,19 +1522,28 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         char *valbuffer, *indbuffer;
         int *swaps;
 
-        if (N == 0 || maxelsize == 0 || sizeof(npy_intp) == 0) {
-            goto fail;
+        assert(N > 0);  /* Guaranteed and assumed by indbuffer */
+        npy_intp valbufsize = N * maxelsize;
+        if (NPY_UNLIKELY(valbufsize) == 0) {
+            valbufsize = 1;  /* Ensure allocation is not empty */
         }
-        valbuffer = PyDataMem_NEW(N * maxelsize);
+
+        valbuffer = PyDataMem_NEW(valbufsize);
         if (valbuffer == NULL) {
             goto fail;
         }
         indbuffer = PyDataMem_NEW(N * sizeof(npy_intp));
         if (indbuffer == NULL) {
+            PyDataMem_FREE(valbuffer);
+            goto fail;
+        }
+        swaps = malloc(NPY_LIKELY(n > 0) ? n * sizeof(int) : 1);
+        if (swaps == NULL) {
+            PyDataMem_FREE(valbuffer);
             PyDataMem_FREE(indbuffer);
             goto fail;
         }
-        swaps = malloc(n*sizeof(int));
+
         for (j = 0; j < n; j++) {
             swaps[j] = PyArray_ISBYTESWAPPED(mps[j]);
         }
@@ -1557,8 +1572,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 #else
                 if (rcode < 0) {
 #endif
-                    npy_free_cache(valbuffer, N * maxelsize);
-                    npy_free_cache(indbuffer, N * sizeof(npy_intp));
+                    PyDataMem_FREE(valbuffer);
+                    PyDataMem_FREE(indbuffer);
                     free(swaps);
                     goto fail;
                 }
@@ -2464,7 +2479,7 @@ finish:
  * array of values, which must be of length PyArray_NDIM(self).
  */
 NPY_NO_EXPORT PyObject *
-PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
+PyArray_MultiIndexGetItem(PyArrayObject *self, const npy_intp *multi_index)
 {
     int idim, ndim = PyArray_NDIM(self);
     char *data = PyArray_DATA(self);
@@ -2492,7 +2507,7 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
+PyArray_MultiIndexSetItem(PyArrayObject *self, const npy_intp *multi_index,
                                                 PyObject *obj)
 {
     int idim, ndim = PyArray_NDIM(self);

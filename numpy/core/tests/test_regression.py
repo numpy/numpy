@@ -436,6 +436,32 @@ class TestRegression(object):
 
         assert_raises(KeyError, np.lexsort, BuggySequence())
 
+    def test_lexsort_zerolen_custom_strides(self):
+        # Ticket #14228
+        xs = np.array([], dtype='i8')
+        assert xs.strides == (8,)
+        assert np.lexsort((xs,)).shape[0] == 0 # Works
+
+        xs.strides = (16,)
+        assert np.lexsort((xs,)).shape[0] == 0 # Was: MemoryError
+
+    def test_lexsort_zerolen_custom_strides_2d(self):
+        xs = np.array([], dtype='i8')
+
+        xs.shape = (0, 2)
+        xs.strides = (16, 16)
+        assert np.lexsort((xs,), axis=0).shape[0] == 0
+
+        xs.shape = (2, 0)
+        xs.strides = (16, 16)
+        assert np.lexsort((xs,), axis=0).shape[0] == 2
+
+    def test_lexsort_zerolen_element(self):
+        dt = np.dtype([])  # a void dtype with no fields
+        xs = np.empty(4, dt)
+
+        assert np.lexsort((xs,)).shape[0] == xs.shape[0]
+
     def test_pickle_py2_bytes_encoding(self):
         # Check that arrays and scalars pickled on Py2 are
         # unpickleable on Py3 using encoding='bytes'
@@ -468,7 +494,7 @@ class TestRegression(object):
                 result = pickle.loads(data, encoding='bytes')
                 assert_equal(result, original)
 
-                if isinstance(result, np.ndarray) and result.dtype.names:
+                if isinstance(result, np.ndarray) and result.dtype.names is not None:
                     for name in result.dtype.names:
                         assert_(isinstance(name, str))
 
@@ -1513,7 +1539,8 @@ class TestRegression(object):
 
     def test_fromstring_crash(self):
         # Ticket #1345: the following should not cause a crash
-        np.fromstring(b'aa, aa, 1.0', sep=',')
+        with assert_warns(DeprecationWarning):
+            np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):
         dtypes = [x for x in np.typeDict.values()
@@ -2474,3 +2501,13 @@ class TestRegression(object):
         t = T()
         #gh-13659, would raise in broadcasting [x=t for x in result]
         np.array([t])
+
+    @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
+    @pytest.mark.skipif(sys.platform == 'win32' and sys.version_info[:2] < (3, 8),
+                        reason='overflows on windows, fixed in bpo-16865')
+    def test_to_ctypes(self):
+        #gh-14214
+        arr = np.zeros((2 ** 31 + 1,), 'b')
+        assert arr.size * arr.itemsize > 2 ** 31
+        c_arr = np.ctypeslib.as_ctypes(arr)
+        assert_equal(c_arr._length_, arr.size)

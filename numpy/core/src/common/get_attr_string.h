@@ -40,18 +40,14 @@ _is_basic_python_type(PyTypeObject *tp)
 }
 
 /*
- * Stripped down version of PyObject_GetAttrString,
- * avoids lookups for None, tuple, and List objects,
- * and doesn't create a PyErr since this code ignores it.
+ * Stripped down version of PyObject_GetAttrString(obj, name) that does not
+ * raise PyExc_AttributeError.
  *
- * This can be much faster then PyObject_GetAttrString where
- * exceptions are not used by caller.
+ * This allows it to avoid creating then discarding exception objects when
+ * performing lookups on objects without any attributes.
  *
- * 'obj' is the object to search for attribute.
- *
- * 'name' is the attribute to search for.
- *
- * Returns attribute value on success, NULL on failure.
+ * Returns attribute value on success, NULL without an exception set if
+ * there is no such attribute, and NULL with an exception on failure.
  */
 static NPY_INLINE PyObject *
 maybe_get_attr(PyObject *obj, char *name)
@@ -62,7 +58,7 @@ maybe_get_attr(PyObject *obj, char *name)
     /* Attribute referenced by (char *)name */
     if (tp->tp_getattr != NULL) {
         res = (*tp->tp_getattr)(obj, name);
-        if (res == NULL) {
+        if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
             PyErr_Clear();
         }
     }
@@ -78,7 +74,7 @@ maybe_get_attr(PyObject *obj, char *name)
         }
         res = (*tp->tp_getattro)(obj, w);
         Py_DECREF(w);
-        if (res == NULL) {
+        if (res == NULL && PyErr_ExceptionMatches(PyExc_AttributeError)) {
             PyErr_Clear();
         }
     }

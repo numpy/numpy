@@ -542,7 +542,7 @@ cppmacros[
     'ARRSIZE'] = '#define ARRSIZE(dims,rank) (_PyArray_multiply_list(dims,rank))'
 cppmacros['OLDPYNUM'] = """\
 #ifdef OLDPYNUM
-#error You need to install Numeric Python version 13 or higher. Get it from http:/sourceforge.net/project/?group_id=1369
+#error You need to install NumPy version 13 or higher. See https://scipy.org/install.html
 #endif
 """
 ################# C functions ###############
@@ -1049,8 +1049,10 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
     CFUNCSMESS(\"create_cb_arglist\\n\");
     tot=opt=ext=siz=0;
     /* Get the total number of arguments */
-    if (PyFunction_Check(fun))
+    if (PyFunction_Check(fun)) {
         tmp_fun = fun;
+        Py_INCREF(tmp_fun);
+    }
     else {
         di = 1;
         if (PyObject_HasAttrString(fun,\"im_func\")) {
@@ -1062,6 +1064,7 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
                 tmp_fun = PyObject_GetAttrString(tmp,\"im_func\");
             else {
                 tmp_fun = fun; /* built-in function */
+                Py_INCREF(tmp_fun);
                 tot = maxnofargs;
                 if (xa != NULL)
                     tot += PyTuple_Size((PyObject *)xa);
@@ -1073,6 +1076,7 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
             if (xa != NULL)
                 tot += PyTuple_Size((PyObject *)xa);
             tmp_fun = fun;
+            Py_INCREF(tmp_fun);
         }
         else if (F2PyCapsule_Check(fun)) {
             tot = maxnofargs;
@@ -1083,6 +1087,7 @@ static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofarg
                 goto capi_fail;
             }
             tmp_fun = fun;
+            Py_INCREF(tmp_fun);
         }
     }
 if (tmp_fun==NULL) {
@@ -1091,13 +1096,19 @@ goto capi_fail;
 }
 #if PY_VERSION_HEX >= 0x03000000
     if (PyObject_HasAttrString(tmp_fun,\"__code__\")) {
-        if (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"__code__\"),\"co_argcount\"))
+        if (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"__code__\"),\"co_argcount\")) {
 #else
     if (PyObject_HasAttrString(tmp_fun,\"func_code\")) {
-        if (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"func_code\"),\"co_argcount\"))
+        if (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"func_code\"),\"co_argcount\")) {
 #endif
-            tot = PyInt_AsLong(PyObject_GetAttrString(tmp,\"co_argcount\")) - di;
-        Py_XDECREF(tmp);
+            PyObject *tmp_argcount = PyObject_GetAttrString(tmp,\"co_argcount\");
+            Py_DECREF(tmp);
+            if (tmp_argcount == NULL) {
+                goto capi_fail;
+            }
+            tot = PyInt_AsLong(tmp_argcount) - di;
+            Py_DECREF(tmp_argcount);
+        }
     }
     /* Get the number of optional arguments */
 #if PY_VERSION_HEX >= 0x03000000
@@ -1136,10 +1147,12 @@ goto capi_fail;
             PyTuple_SET_ITEM(*args,i,tmp);
         }
     CFUNCSMESS(\"create_cb_arglist-end\\n\");
+    Py_DECREF(tmp_fun);
     return 1;
 capi_fail:
     if ((PyErr_Occurred())==NULL)
         PyErr_SetString(#modulename#_error,errmess);
+    Py_XDECREF(tmp_fun);
     return 0;
 }
 """

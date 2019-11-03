@@ -480,7 +480,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     file : file, str, or pathlib.Path
         File or filename to which the data is saved.  If file is a file-object,
         then the filename is unchanged.  If file is a string or Path, a ``.npy``
-        extension will be appended to the file name if it does not already
+        extension will be appended to the filename if it does not already
         have one.
     arr : array_like
         Array data to be saved.
@@ -507,6 +507,8 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     -----
     For a description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
+    Any data saved to the file is appended to the end of the file.
+
     Examples
     --------
     >>> from tempfile import TemporaryFile
@@ -519,6 +521,15 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     >>> np.load(outfile)
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
+
+    >>> with open('test.npy', 'wb') as f:
+    ...     np.save(f, np.array([1, 2]))
+    ...     np.save(f, np.array([1, 3]))
+    >>> with open('test.npy', 'rb') as f:
+    ...     a = np.load(f)
+    ...     b = np.load(f)
+    >>> print(a, b)
+    # [1 2] [1 3]
     """
     own_fid = False
     if hasattr(file, 'write'):
@@ -554,8 +565,7 @@ def _savez_dispatcher(file, *args, **kwds):
 
 @array_function_dispatch(_savez_dispatcher)
 def savez(file, *args, **kwds):
-    """
-    Save several arrays into a single file in uncompressed ``.npz`` format.
+    """Save several arrays into a single file in uncompressed ``.npz`` format.
 
     If arguments are passed in with no keywords, the corresponding variable
     names, in the ``.npz`` file, are 'arr_0', 'arr_1', etc. If keyword
@@ -565,9 +575,9 @@ def savez(file, *args, **kwds):
     Parameters
     ----------
     file : str or file
-        Either the file name (string) or an open file (file-like object)
+        Either the filename (string) or an open file (file-like object)
         where the data will be saved. If file is a string or a Path, the
-        ``.npz`` extension will be appended to the file name if it is not
+        ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
         Arrays to save to the file. Since it is not possible for Python to
@@ -600,6 +610,10 @@ def savez(file, *args, **kwds):
     its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
+    When saving dictionaries, the dictionary keys become filenames
+    inside the ZIP archive. Therefore, keys should be valid filenames.
+    E.g., avoid keys that begin with ``/`` or contain ``.``.
+
     Examples
     --------
     >>> from tempfile import TemporaryFile
@@ -627,7 +641,6 @@ def savez(file, *args, **kwds):
     ['x', 'y']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
     """
     _savez(file, args, kwds, False)
 
@@ -645,15 +658,15 @@ def savez_compressed(file, *args, **kwds):
     Save several arrays into a single file in compressed ``.npz`` format.
 
     If keyword arguments are given, then filenames are taken from the keywords.
-    If arguments are passed in with no keywords, then stored file names are
+    If arguments are passed in with no keywords, then stored filenames are
     arr_0, arr_1, etc.
 
     Parameters
     ----------
     file : str or file
-        Either the file name (string) or an open file (file-like object)
+        Either the filename (string) or an open file (file-like object)
         where the data will be saved. If file is a string or a Path, the
-        ``.npz`` extension will be appended to the file name if it is not
+        ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
         Arrays to save to the file. Since it is not possible for Python to
@@ -1458,7 +1471,7 @@ def fromregex(file, regexp, dtype, encoding=None):
     Parameters
     ----------
     file : str or file
-        File name or file object to read.
+        Filename or file object to read.
     regexp : str or regexp
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
@@ -1776,12 +1789,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                                        replace_space=replace_space)
 
         # Skip the first `skip_header` rows
-        for i in range(skip_header):
-            next(fhd)
-
-        # Keep on until we find the first valid values
-        first_values = None
         try:
+            for i in range(skip_header):
+                next(fhd)
+
+            # Keep on until we find the first valid values
+            first_values = None
+
             while not first_values:
                 first_line = _decode_line(next(fhd), encoding)
                 if (names is True) and (comments is not None):
@@ -2168,7 +2182,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             outputmask = np.array(masks, dtype=mdtype)
     else:
         # Overwrite the initial dtype names if needed
-        if names and dtype.names:
+        if names and dtype.names is not None:
             dtype.names = names
         # Case 1. We have a structured type
         if len(dtype_flat) > 1:
@@ -2218,7 +2232,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             #
             output = np.array(data, dtype)
             if usemask:
-                if dtype.names:
+                if dtype.names is not None:
                     mdtype = [(_, bool) for _ in dtype.names]
                 else:
                     mdtype = bool

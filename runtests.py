@@ -18,6 +18,10 @@ Run a debugger:
 
     $ gdb --args python runtests.py [...other args...]
 
+Disable pytest capturing of output by using its '-s' option:
+
+    $ python runtests.py -- -s
+
 Generate C code coverage listing under build/lcov/:
 (requires http://ltp.sourceforge.net/coverage/lcov.php)
 
@@ -67,6 +71,10 @@ def main(argv):
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("--verbose", "-v", action="count", default=1,
                         help="more verbosity")
+    parser.add_argument("--debug-info", action="store_true",
+                        help=("add --verbose-cfg to build_src to show compiler "
+                              "configuration output while creating "
+                              "_numpyconfig.h and config.h"))
     parser.add_argument("--no-build", "-n", action="store_true", default=False,
                         help="do not build the project (use system installed version)")
     parser.add_argument("--build-only", "-b", action="store_true", default=False,
@@ -106,6 +114,8 @@ def main(argv):
                         help="Debug build")
     parser.add_argument("--parallel", "-j", type=int, default=0,
                         help="Number of parallel jobs during build")
+    parser.add_argument("--warn-error", action="store_true",
+                        help="Set -Werror to convert all compiler warnings to errors")
     parser.add_argument("--show-build-log", action="store_true",
                         help="Show build output rather than using a log file")
     parser.add_argument("--bench", action="store_true",
@@ -366,6 +376,10 @@ def build_project(args):
     cmd += ["build"]
     if args.parallel > 1:
         cmd += ["-j", str(args.parallel)]
+    if args.debug_info:
+        cmd += ["build_src", "--verbose-cfg"]
+    if args.warn_error:
+        cmd += ["--warn-error"]
     # Install; avoid producing eggs so numpy can be imported from dst_dir.
     cmd += ['install', '--prefix=' + dst_dir,
             '--single-version-externally-managed',

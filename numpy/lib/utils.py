@@ -788,13 +788,8 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
         if kind in ('module', 'object'):
             # don't show modules or objects
             continue
-        ok = True
         doc = docstring.lower()
-        for w in whats:
-            if w not in doc:
-                ok = False
-                break
-        if ok:
+        if all(w in doc for w in whats):
             found.append(name)
 
     # Relevance sort
@@ -1002,93 +997,6 @@ def _getmembers(item):
         members = [(x, getattr(item, x)) for x in dir(item)
                    if hasattr(item, x)]
     return members
-
-#-----------------------------------------------------------------------------
-
-# The following SafeEval class and company are adapted from Michael Spencer's
-# ASPN Python Cookbook recipe: https://code.activestate.com/recipes/364469/
-#
-# Accordingly it is mostly Copyright 2006 by Michael Spencer.
-# The recipe, like most of the other ASPN Python Cookbook recipes was made
-# available under the Python license.
-#   https://en.wikipedia.org/wiki/Python_License
-
-# It has been modified to:
-#   * handle unary -/+
-#   * support True/False/None
-#   * raise SyntaxError instead of a custom exception.
-
-class SafeEval(object):
-    """
-    Object to evaluate constant string expressions.
-
-    This includes strings with lists, dicts and tuples using the abstract
-    syntax tree created by ``compiler.parse``.
-
-    .. deprecated:: 1.10.0
-
-    See Also
-    --------
-    safe_eval
-
-    """
-    def __init__(self):
-        # 2014-10-15, 1.10
-        warnings.warn("SafeEval is deprecated in 1.10 and will be removed.",
-                      DeprecationWarning, stacklevel=2)
-
-    def visit(self, node):
-        cls = node.__class__
-        meth = getattr(self, 'visit' + cls.__name__, self.default)
-        return meth(node)
-
-    def default(self, node):
-        raise SyntaxError("Unsupported source construct: %s"
-                          % node.__class__)
-
-    def visitExpression(self, node):
-        return self.visit(node.body)
-
-    def visitNum(self, node):
-        return node.n
-
-    def visitStr(self, node):
-        return node.s
-
-    def visitBytes(self, node):
-        return node.s
-
-    def visitDict(self, node,**kw):
-        return dict([(self.visit(k), self.visit(v))
-                     for k, v in zip(node.keys, node.values)])
-
-    def visitTuple(self, node):
-        return tuple([self.visit(i) for i in node.elts])
-
-    def visitList(self, node):
-        return [self.visit(i) for i in node.elts]
-
-    def visitUnaryOp(self, node):
-        import ast
-        if isinstance(node.op, ast.UAdd):
-            return +self.visit(node.operand)
-        elif isinstance(node.op, ast.USub):
-            return -self.visit(node.operand)
-        else:
-            raise SyntaxError("Unknown unary op: %r" % node.op)
-
-    def visitName(self, node):
-        if node.id == 'False':
-            return False
-        elif node.id == 'True':
-            return True
-        elif node.id == 'None':
-            return None
-        else:
-            raise SyntaxError("Unknown name: %s" % node.id)
-
-    def visitNameConstant(self, node):
-        return node.value
 
 
 def safe_eval(source):

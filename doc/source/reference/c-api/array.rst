@@ -226,7 +226,7 @@ From scratch
 
     If *data* is not ``NULL``, then it is assumed to point to the memory
     to be used for the array and the *flags* argument is used as the
-    new flags for the array (except the state of :c:data:`NPY_OWNDATA`,
+    new flags for the array (except the state of :c:data:`NPY_ARRAY_OWNDATA`,
     :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` and :c:data:`NPY_ARRAY_UPDATEIFCOPY`
     flags of the new array will be reset).
 
@@ -916,122 +916,126 @@ enumerated array data type. For the array type checking macros the
 argument must be a :c:type:`PyObject *<PyObject>` that can be directly interpreted as a
 :c:type:`PyArrayObject *`.
 
-.. c:function:: PyTypeNum_ISUNSIGNED(num)
+.. c:function:: PyTypeNum_ISUNSIGNED(int num)
 
-.. c:function:: PyDataType_ISUNSIGNED(descr)
+.. c:function:: PyDataType_ISUNSIGNED(PyArray_Descr *descr)
 
-.. c:function:: PyArray_ISUNSIGNED(obj)
+.. c:function:: PyArray_ISUNSIGNED(PyArrayObject *obj)
 
     Type represents an unsigned integer.
 
-.. c:function:: PyTypeNum_ISSIGNED(num)
+.. c:function:: PyTypeNum_ISSIGNED(int num)
 
-.. c:function:: PyDataType_ISSIGNED(descr)
+.. c:function:: PyDataType_ISSIGNED(PyArray_Descr *descr)
 
-.. c:function:: PyArray_ISSIGNED(obj)
+.. c:function:: PyArray_ISSIGNED(PyArrayObject *obj)
 
     Type represents a signed integer.
 
-.. c:function:: PyTypeNum_ISINTEGER(num)
+.. c:function:: PyTypeNum_ISINTEGER(int num)
 
-.. c:function:: PyDataType_ISINTEGER(descr)
+.. c:function:: PyDataType_ISINTEGER(PyArray_Descr* descr)
 
-.. c:function:: PyArray_ISINTEGER(obj)
+.. c:function:: PyArray_ISINTEGER(PyArrayObject *obj)
 
     Type represents any integer.
 
-.. c:function:: PyTypeNum_ISFLOAT(num)
+.. c:function:: PyTypeNum_ISFLOAT(int num)
 
-.. c:function:: PyDataType_ISFLOAT(descr)
+.. c:function:: PyDataType_ISFLOAT(PyArray_Descr* descr)
 
-.. c:function:: PyArray_ISFLOAT(obj)
+.. c:function:: PyArray_ISFLOAT(PyArrayObject *obj)
 
     Type represents any floating point number.
 
-.. c:function:: PyTypeNum_ISCOMPLEX(num)
+.. c:function:: PyTypeNum_ISCOMPLEX(int num)
 
-.. c:function:: PyDataType_ISCOMPLEX(descr)
+.. c:function:: PyDataType_ISCOMPLEX(PyArray_Descr* descr)
 
-.. c:function:: PyArray_ISCOMPLEX(obj)
+.. c:function:: PyArray_ISCOMPLEX(PyArrayObject *obj)
 
     Type represents any complex floating point number.
 
-.. c:function:: PyTypeNum_ISNUMBER(num)
+.. c:function:: PyTypeNum_ISNUMBER(int num)
 
-.. c:function:: PyDataType_ISNUMBER(descr)
+.. c:function:: PyDataType_ISNUMBER(PyArray_Descr* descr)
 
-.. c:function:: PyArray_ISNUMBER(obj)
+.. c:function:: PyArray_ISNUMBER(PyArrayObject *obj)
 
     Type represents any integer, floating point, or complex floating point
     number.
 
-.. c:function:: PyTypeNum_ISSTRING(num)
+.. c:function:: PyTypeNum_ISSTRING(int num)
 
-.. c:function:: PyDataType_ISSTRING(descr)
+.. c:function:: PyDataType_ISSTRING(PyArray_Descr* descr)
 
-.. c:function:: PyArray_ISSTRING(obj)
+.. c:function:: PyArray_ISSTRING(PyArrayObject *obj)
 
     Type represents a string data type.
 
-.. c:function:: PyTypeNum_ISPYTHON(num)
+.. c:function:: PyTypeNum_ISPYTHON(int num)
 
-.. c:function:: PyDataType_ISPYTHON(descr)
+.. c:function:: PyDataType_ISPYTHON(PyArray_Descr* descr)
 
-.. c:function:: PyArray_ISPYTHON(obj)
+.. c:function:: PyArray_ISPYTHON(PyArrayObject *obj)
 
     Type represents an enumerated type corresponding to one of the
     standard Python scalar (bool, int, float, or complex).
 
-.. c:function:: PyTypeNum_ISFLEXIBLE(num)
+.. c:function:: PyTypeNum_ISFLEXIBLE(int num)
 
-.. c:function:: PyDataType_ISFLEXIBLE(descr)
+.. c:function:: PyDataType_ISFLEXIBLE(PyArray_Descr* descr)
 
-.. c:function:: PyArray_ISFLEXIBLE(obj)
+.. c:function:: PyArray_ISFLEXIBLE(PyArrayObject *obj)
 
     Type represents one of the flexible array types ( :c:data:`NPY_STRING`,
     :c:data:`NPY_UNICODE`, or :c:data:`NPY_VOID` ).
 
-.. c:function:: PyDataType_ISUNSIZED(descr):
+.. c:function:: PyDataType_ISUNSIZED(PyArray_Descr* descr):
 
     Type has no size information attached, and can be resized. Should only be
     called on flexible dtypes. Types that are attached to an array will always
     be sized, hence the array form of this macro not existing.
 
-.. c:function:: PyTypeNum_ISUSERDEF(num)
+    .. versionchanged:: 1.18
 
-.. c:function:: PyDataType_ISUSERDEF(descr)
+    For structured datatypes with no fields this function now returns False.
 
-.. c:function:: PyArray_ISUSERDEF(obj)
+.. c:function:: PyTypeNum_ISUSERDEF(int num)
+
+.. c:function:: PyDataType_ISUSERDEF(PyArray_Descr* descr)
+
+.. c:function:: PyArray_ISUSERDEF(PyArrayObject *obj)
 
     Type represents a user-defined type.
 
-.. c:function:: PyTypeNum_ISEXTENDED(num)
+.. c:function:: PyTypeNum_ISEXTENDED(int num)
 
-.. c:function:: PyDataType_ISEXTENDED(descr)
+.. c:function:: PyDataType_ISEXTENDED(PyArray_Descr* descr)
 
-.. c:function:: PyArray_ISEXTENDED(obj)
+.. c:function:: PyArray_ISEXTENDED(PyArrayObject *obj)
 
     Type is either flexible or user-defined.
 
-.. c:function:: PyTypeNum_ISOBJECT(num)
+.. c:function:: PyTypeNum_ISOBJECT(int num)
 
-.. c:function:: PyDataType_ISOBJECT(descr)
+.. c:function:: PyDataType_ISOBJECT(PyArray_Descr* descr)
 
-.. c:function:: PyArray_ISOBJECT(obj)
+.. c:function:: PyArray_ISOBJECT(PyArrayObject *obj)
 
     Type represents object data type.
 
-.. c:function:: PyTypeNum_ISBOOL(num)
+.. c:function:: PyTypeNum_ISBOOL(int num)
 
-.. c:function:: PyDataType_ISBOOL(descr)
+.. c:function:: PyDataType_ISBOOL(PyArray_Descr* descr)
 
-.. c:function:: PyArray_ISBOOL(obj)
+.. c:function:: PyArray_ISBOOL(PyArrayObject *obj)
 
     Type represents Boolean data type.
 
-.. c:function:: PyDataType_HASFIELDS(descr)
+.. c:function:: PyDataType_HASFIELDS(PyArray_Descr* descr)
 
-.. c:function:: PyArray_HASFIELDS(obj)
+.. c:function:: PyArray_HASFIELDS(PyArrayObject *obj)
 
     Type has fields associated with it.
 
@@ -1580,7 +1584,7 @@ Flag checking
 For all of these macros *arr* must be an instance of a (subclass of)
 :c:data:`PyArray_Type`.
 
-.. c:function:: PyArray_CHKFLAGS(arr, flags)
+.. c:function:: PyArray_CHKFLAGS(PyObject *arr, flags)
 
     The first parameter, arr, must be an ndarray or subclass. The
     parameter, *flags*, should be an integer consisting of bitwise
@@ -1590,60 +1594,60 @@ For all of these macros *arr* must be an instance of a (subclass of)
     :c:data:`NPY_ARRAY_WRITEABLE`, :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`,
     :c:data:`NPY_ARRAY_UPDATEIFCOPY`.
 
-.. c:function:: PyArray_IS_C_CONTIGUOUS(arr)
+.. c:function:: PyArray_IS_C_CONTIGUOUS(PyObject *arr)
 
     Evaluates true if *arr* is C-style contiguous.
 
-.. c:function:: PyArray_IS_F_CONTIGUOUS(arr)
+.. c:function:: PyArray_IS_F_CONTIGUOUS(PyObject *arr)
 
     Evaluates true if *arr* is Fortran-style contiguous.
 
-.. c:function:: PyArray_ISFORTRAN(arr)
+.. c:function:: PyArray_ISFORTRAN(PyObject *arr)
 
     Evaluates true if *arr* is Fortran-style contiguous and *not*
     C-style contiguous. :c:func:`PyArray_IS_F_CONTIGUOUS`
     is the correct way to test for Fortran-style contiguity.
 
-.. c:function:: PyArray_ISWRITEABLE(arr)
+.. c:function:: PyArray_ISWRITEABLE(PyObject *arr)
 
     Evaluates true if the data area of *arr* can be written to
 
-.. c:function:: PyArray_ISALIGNED(arr)
+.. c:function:: PyArray_ISALIGNED(PyObject *arr)
 
     Evaluates true if the data area of *arr* is properly aligned on
     the machine.
 
-.. c:function:: PyArray_ISBEHAVED(arr)
+.. c:function:: PyArray_ISBEHAVED(PyObject *arr)
 
     Evaluates true if the data area of *arr* is aligned and writeable
     and in machine byte-order according to its descriptor.
 
-.. c:function:: PyArray_ISBEHAVED_RO(arr)
+.. c:function:: PyArray_ISBEHAVED_RO(PyObject *arr)
 
     Evaluates true if the data area of *arr* is aligned and in machine
     byte-order.
 
-.. c:function:: PyArray_ISCARRAY(arr)
+.. c:function:: PyArray_ISCARRAY(PyObject *arr)
 
     Evaluates true if the data area of *arr* is C-style contiguous,
     and :c:func:`PyArray_ISBEHAVED` (*arr*) is true.
 
-.. c:function:: PyArray_ISFARRAY(arr)
+.. c:function:: PyArray_ISFARRAY(PyObject *arr)
 
     Evaluates true if the data area of *arr* is Fortran-style
     contiguous and :c:func:`PyArray_ISBEHAVED` (*arr*) is true.
 
-.. c:function:: PyArray_ISCARRAY_RO(arr)
+.. c:function:: PyArray_ISCARRAY_RO(PyObject *arr)
 
     Evaluates true if the data area of *arr* is C-style contiguous,
     aligned, and in machine byte-order.
 
-.. c:function:: PyArray_ISFARRAY_RO(arr)
+.. c:function:: PyArray_ISFARRAY_RO(PyObject *arr)
 
     Evaluates true if the data area of *arr* is Fortran-style
     contiguous, aligned, and in machine byte-order **.**
 
-.. c:function:: PyArray_ISONESEGMENT(arr)
+.. c:function:: PyArray_ISONESEGMENT(PyObject *arr)
 
     Evaluates true if the data area of *arr* consists of a single
     (C-style or Fortran-style) contiguous segment.
@@ -2049,7 +2053,7 @@ Calculation
 .. tip::
 
     Pass in :c:data:`NPY_MAXDIMS` for axis in order to achieve the same
-    effect that is obtained by passing in *axis* = :const:`None` in Python
+    effect that is obtained by passing in ``axis=None`` in Python
     (treating the array as a 1-d array).
 
 
@@ -2655,18 +2659,27 @@ cost of a slight overhead.
     The mode should be one of:
 
     .. c:macro:: NPY_NEIGHBORHOOD_ITER_ZERO_PADDING
+
             Zero padding. Outside bounds values will be 0.
+
     .. c:macro:: NPY_NEIGHBORHOOD_ITER_ONE_PADDING
+
             One padding, Outside bounds values will be 1.
+
     .. c:macro:: NPY_NEIGHBORHOOD_ITER_CONSTANT_PADDING
+
             Constant padding. Outside bounds values will be the
             same as the first item in fill_value.
+
     .. c:macro:: NPY_NEIGHBORHOOD_ITER_MIRROR_PADDING
+
             Mirror padding. Outside bounds values will be as if the
             array items were mirrored. For example, for the array [1, 2, 3, 4],
             x[-2] will be 2, x[-2] will be 1, x[4] will be 4, x[5] will be 1,
             etc...
+
     .. c:macro:: NPY_NEIGHBORHOOD_ITER_CIRCULAR_PADDING
+
             Circular padding. Outside bounds values will be as if the array
             was repeated. For example, for the array [1, 2, 3, 4], x[-2] will
             be 3, x[-2] will be 4, x[4] will be 1, x[5] will be 2, etc...
@@ -2793,10 +2806,7 @@ Array Scalars
     *arr* is not ``NULL`` and the first element is negative then
     :c:data:`NPY_INTNEG_SCALAR` is returned, otherwise
     :c:data:`NPY_INTPOS_SCALAR` is returned. The possible return values
-    are :c:data:`NPY_{kind}_SCALAR` where ``{kind}`` can be **INTPOS**,
-    **INTNEG**, **FLOAT**, **COMPLEX**, **BOOL**, or **OBJECT**.
-    :c:data:`NPY_NOSCALAR` is also an enumerated value
-    :c:type:`NPY_SCALARKIND` variables can take on.
+    are the enumerated values in :c:type:`NPY_SCALARKIND`.
 
 .. c:function:: int PyArray_CanCoerceScalar( \
         char thistype, char neededtype, NPY_SCALARKIND scalar)
@@ -3507,6 +3517,10 @@ Miscellaneous Macros
 
     Evaluates as True if arrays *a1* and *a2* have the same shape.
 
+.. c:var:: a
+
+.. c:var:: b
+
 .. c:macro:: PyArray_MAX(a,b)
 
     Returns the maximum of *a* and *b*. If (*a*) or (*b*) are
@@ -3592,11 +3606,21 @@ Enumerated Types
 
     A special variable type indicating the number of "kinds" of
     scalars distinguished in determining scalar-coercion rules. This
-    variable can take on the values :c:data:`NPY_{KIND}` where ``{KIND}`` can be
+    variable can take on the values:
 
-        **NOSCALAR**, **BOOL_SCALAR**, **INTPOS_SCALAR**,
-        **INTNEG_SCALAR**, **FLOAT_SCALAR**, **COMPLEX_SCALAR**,
-        **OBJECT_SCALAR**
+    .. c:var:: NPY_NOSCALAR
+
+    .. c:var:: NPY_BOOL_SCALAR
+
+    .. c:var:: NPY_INTPOS_SCALAR
+
+    .. c:var:: NPY_INTNEG_SCALAR
+
+    .. c:var:: NPY_FLOAT_SCALAR
+
+    .. c:var:: NPY_COMPLEX_SCALAR
+
+    .. c:var:: NPY_OBJECT_SCALAR
 
     .. c:var:: NPY_NSCALARKINDS
 

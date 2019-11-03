@@ -75,9 +75,11 @@ request`_ to the ``doc/neps`` directory with the name ``nep-<n>.rst``
 where ``<n>`` is an appropriately assigned four-digit number (e.g.,
 ``nep-0000.rst``). The draft must use the :doc:`nep-template` file.
 
-Once the PR is in place, the NEP should be announced on the mailing
-list for discussion (comments on the PR itself should be restricted to
-minor editorial and technical fixes).
+Once the PR for the NEP is in place, a post should be made to the
+mailing list containing the sections upto "Backward compatibility",
+with the purpose of limiting discussion there to usage and impact.
+Discussion on the pull request will have a broader scope, also including
+details of implementation.
 
 At the earliest convenience, the PR should be merged (regardless of
 whether it is accepted during discussion).  Additional PRs may be made
@@ -138,7 +140,7 @@ accepted that a competing proposal is a better alternative.
 When a NEP is ``Accepted``, ``Rejected``, or ``Withdrawn``, the NEP should be
 updated accordingly. In addition to updating the status field, at the very
 least the ``Resolution`` header should be added with a link to the relevant
-post in the mailing list archives.
+thread in the mailing list archives.
 
 NEPs can also be ``Superseded`` by a different NEP, rendering the
 original obsolete.  The ``Replaced-By`` and ``Replaces`` headers

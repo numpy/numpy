@@ -252,7 +252,7 @@ def _is_packed(dtype):
     from a list of the field names and dtypes with no additional
     dtype parameters.
 
-    Duplicates the C `is_dtype_struct_simple_unaligned_layout` functio.
+    Duplicates the C `is_dtype_struct_simple_unaligned_layout` function.
     """
     total_offset = 0
     for name in dtype.names:
@@ -316,26 +316,39 @@ def _subarray_str(dtype):
     )
 
 
+def _name_includes_bit_suffix(dtype):
+    if dtype.type == np.object_:
+        # pointer size varies by system, best to omit it
+        return False
+    elif dtype.type == np.bool_:
+        # implied
+        return False
+    elif np.issubdtype(dtype, np.flexible) and _isunsized(dtype):
+        # unspecified
+        return False
+    else:
+        return True
+
+
 def _name_get(dtype):
-    # provides dtype.name.__get__
+    # provides dtype.name.__get__, documented as returning a "bit name"
 
     if dtype.isbuiltin == 2:
         # user dtypes don't promise to do anything special
         return dtype.type.__name__
 
-    # Builtin classes are documented as returning a "bit name"
-    name = dtype.type.__name__
+    if issubclass(dtype.type, np.void):
+        # historically, void subclasses preserve their name, eg `record64`
+        name = dtype.type.__name__
+    else:
+        name = _kind_name(dtype)
 
-    # handle bool_, str_, etc
-    if name[-1] == '_':
-        name = name[:-1]
-
-    # append bit counts to str, unicode, and void
-    if np.issubdtype(dtype, np.flexible) and not _isunsized(dtype):
+    # append bit counts
+    if _name_includes_bit_suffix(dtype):
         name += "{}".format(dtype.itemsize * 8)
 
     # append metadata to datetimes
-    elif dtype.type in (np.datetime64, np.timedelta64):
+    if dtype.type in (np.datetime64, np.timedelta64):
         name += _datetime_metadata_str(dtype)
 
     return name

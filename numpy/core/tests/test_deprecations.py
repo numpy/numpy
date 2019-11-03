@@ -10,11 +10,15 @@ import sys
 import operator
 import warnings
 import pytest
+import shutil
+import tempfile
 
 import numpy as np
 from numpy.testing import (
-    assert_raises, assert_warns, assert_
+    assert_raises, assert_warns, assert_, assert_array_equal
     )
+
+from numpy.core._multiarray_tests import fromstring_null_term_c_api
 
 try:
     import pytz
@@ -271,36 +275,6 @@ class TestNonCContiguousViewDeprecation(_DeprecationTestCase):
         self.assert_deprecated(np.ones((2,2)).T.view, args=(np.int8,))
 
 
-class TestInvalidOrderParameterInputForFlattenArrayDeprecation(_DeprecationTestCase):
-    """Invalid arguments to the ORDER parameter in array.flatten() should not be
-    allowed and should raise an error.  However, in the interests of not breaking
-    code that may inadvertently pass invalid arguments to this parameter, a
-    DeprecationWarning will be issued instead for the time being to give developers
-    time to refactor relevant code.
-    """
-
-    def test_flatten_array_non_string_arg(self):
-        x = np.zeros((3, 5))
-        self.message = ("Non-string object detected for "
-                        "the array ordering. Please pass "
-                        "in 'C', 'F', 'A', or 'K' instead")
-        self.assert_deprecated(x.flatten, args=(np.pi,))
-
-    def test_flatten_array_invalid_string_arg(self):
-        # Tests that a DeprecationWarning is raised
-        # when a string of length greater than one
-        # starting with "C", "F", "A", or "K" (case-
-        # and unicode-insensitive) is passed in for
-        # the ORDER parameter. Otherwise, a TypeError
-        # will be raised!
-
-        x = np.zeros((3, 5))
-        self.message = ("Non length-one string passed "
-                        "in for the array ordering. Please "
-                        "pass in 'C', 'F', 'A', or 'K' instead")
-        self.assert_deprecated(x.flatten, args=("FACK",))
-
-
 class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
     """Assigning the 'data' attribute of an ndarray is unsafe as pointed
      out in gh-7093. Eventually, such assignment should NOT be allowed, but
@@ -317,22 +291,6 @@ class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
                         "inherently unsafe operation and will "
                         "be removed in the future.")
         self.assert_deprecated(a.__setattr__, args=('data', b.data))
-
-
-class TestLinspaceInvalidNumParameter(_DeprecationTestCase):
-    """Argument to the num parameter in linspace that cannot be
-    safely interpreted as an integer is deprecated in 1.12.0.
-
-    Argument to the num parameter in linspace that cannot be
-    safely interpreted as an integer should not be allowed.
-    In the interest of not breaking code that passes
-    an argument that could still be interpreted as an integer, a
-    DeprecationWarning will be issued for the time being to give
-    developers time to refactor relevant code.
-    """
-    def test_float_arg(self):
-        # 2016-02-25, PR#7328
-        self.assert_deprecated(np.linspace, args=(0, 10, 2.5))
 
 
 class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTestCase):
@@ -442,6 +400,18 @@ class TestNPY_CHAR(_DeprecationTestCase):
         assert_(npy_char_deprecation() == 'S1')
 
 
+class TestPyArray_AS1D(_DeprecationTestCase):
+    def test_npy_pyarrayas1d_deprecation(self):
+        from numpy.core._multiarray_tests import npy_pyarrayas1d_deprecation
+        assert_raises(NotImplementedError, npy_pyarrayas1d_deprecation)
+
+
+class TestPyArray_AS2D(_DeprecationTestCase):
+    def test_npy_pyarrayas2d_deprecation(self):
+        from numpy.core._multiarray_tests import npy_pyarrayas2d_deprecation
+        assert_raises(NotImplementedError, npy_pyarrayas2d_deprecation)
+
+
 class Test_UPDATEIFCOPY(_DeprecationTestCase):
     """
     v1.14 deprecates creating an array with the UPDATEIFCOPY flag, use
@@ -489,6 +459,12 @@ class TestBincount(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.bincount([1, 2, 3], minlength=None))
 
 
+class TestAlen(_DeprecationTestCase):
+    # 2019-08-02, 1.18.0
+    def test_alen(self):
+        self.assert_deprecated(lambda: np.alen(np.array([1, 2, 3])))
+
+
 class TestGeneratorSum(_DeprecationTestCase):
     # 2018-02-25, 1.15.0
     def test_generator_sum(self):
@@ -508,17 +484,71 @@ class TestPositiveOnNonNumerical(_DeprecationTestCase):
     def test_positive_on_non_number(self):
         self.assert_deprecated(operator.pos, args=(np.array('foo'),))
 
+
 class TestFromstring(_DeprecationTestCase):
     # 2017-10-19, 1.14
     def test_fromstring(self):
         self.assert_deprecated(np.fromstring, args=('\x00'*80,))
+
+
+class TestFromStringAndFileInvalidData(_DeprecationTestCase):
+    # 2019-06-08, 1.17.0
+    # Tests should be moved to real tests when deprecation is done.
+    message = "string or file could not be read to its end"
+
+    @pytest.mark.parametrize("invalid_str", [",invalid_data", "invalid_sep"])
+    def test_deprecate_unparsable_data_file(self, invalid_str):
+        x = np.array([1.51, 2, 3.51, 4], dtype=float)
+
+        with tempfile.TemporaryFile(mode="w") as f:
+            x.tofile(f, sep=',', format='%.2f')
+            f.write(invalid_str)
+
+            f.seek(0)
+            self.assert_deprecated(lambda: np.fromfile(f, sep=","))
+            f.seek(0)
+            self.assert_deprecated(lambda: np.fromfile(f, sep=",", count=5))
+            # Should not raise:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", DeprecationWarning)
+                f.seek(0)
+                res = np.fromfile(f, sep=",", count=4)
+                assert_array_equal(res, x)
+
+    @pytest.mark.parametrize("invalid_str", [",invalid_data", "invalid_sep"])
+    def test_deprecate_unparsable_string(self, invalid_str):
+        x = np.array([1.51, 2, 3.51, 4], dtype=float)
+        x_str = "1.51,2,3.51,4{}".format(invalid_str)
+
+        self.assert_deprecated(lambda: np.fromstring(x_str, sep=","))
+        self.assert_deprecated(lambda: np.fromstring(x_str, sep=",", count=5))
+
+        # The C-level API can use not fixed size, but 0 terminated strings,
+        # so test that as well:
+        bytestr = x_str.encode("ascii")
+        self.assert_deprecated(lambda: fromstring_null_term_c_api(bytestr))
+
+        with assert_warns(DeprecationWarning):
+            # this is slightly strange, in that fromstring leaves data
+            # potentially uninitialized (would be good to error when all is
+            # read, but count is larger then actual data maybe).
+            res = np.fromstring(x_str, sep=",", count=5)
+            assert_array_equal(res[:-1], x)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+
+            # Should not raise:
+            res = np.fromstring(x_str, sep=",", count=4)
+            assert_array_equal(res, x)
+
 
 class Test_GetSet_NumericOps(_DeprecationTestCase):
     # 2018-09-20, 1.16.0
     def test_get_numeric_ops(self):
         from numpy.core._multiarray_tests import getset_numericops
         self.assert_deprecated(getset_numericops, num=2)
-        
+
         # empty kwargs prevents any state actually changing which would break
         # other tests.
         self.assert_deprecated(np.set_numeric_ops, kwargs={})

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """ cythonize
 
 Cythonize pyx files into C files as needed.
@@ -54,30 +54,25 @@ except NameError:
 def process_pyx(fromfile, tofile):
     flags = ['-3', '--fast-fail']
     if tofile.endswith('.cxx'):
-        flags += ['--cplus']
+        flags.append('--cplus')
 
     try:
         # try the cython in the installed python first (somewhat related to scipy/scipy#2397)
         from Cython.Compiler.Version import version as cython_version
     except ImportError:
-        # if that fails, use the one on the path, which might be the wrong version
-        try:
-            # Try the one on the path as a last resort
-            subprocess.check_call(
-                ['cython'] + flags + ["-o", tofile, fromfile])
-        except OSError:
-            raise OSError('Cython needs to be installed')
+        # The `cython` command need not point to the version installed in the
+        # Python running this script, so raise an error to avoid the chance of
+        # using the wrong version of Cython.
+        raise OSError('Cython needs to be installed in Python as a module')
     else:
         # check the version, and invoke through python
         from distutils.version import LooseVersion
 
-        # requiring the newest version on all pythons doesn't work, since
-        # we're relying on the version of the distribution cython. Add new
-        # versions as they become required for new python versions.
-        if sys.version_info[:2] < (3, 7):
-            required_version = LooseVersion('0.19')
-        else:
-            required_version = LooseVersion('0.28')
+        # Cython 0.29.13 is required for Python 3.8 and there are
+        # other fixes in the 0.29 series that are needed even for earlier
+        # Python versions.
+        # Note: keep in sync with that in pyproject.toml
+        required_version = LooseVersion('0.29.13')
 
         if LooseVersion(cython_version) < required_version:
             raise RuntimeError('Building {} requires Cython >= {}'.format(

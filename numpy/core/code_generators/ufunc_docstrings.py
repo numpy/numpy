@@ -22,7 +22,7 @@ subst = {
     'PARAMS': textwrap.dedent("""
         out : ndarray, None, or tuple of ndarray and None, optional
             A location into which the result is stored. If provided, it must have
-            a shape that the inputs broadcast to. If not provided or `None`,
+            a shape that the inputs broadcast to. If not provided or None,
             a freshly-allocated array is returned. A tuple (possible only as a
             keyword argument) must have length equal to the number of outputs.
         where : array_like, optional
@@ -2183,7 +2183,7 @@ add_newdoc('numpy.core.umath', 'logical_and',
     Returns
     -------
     y : ndarray or bool
-        Boolean result of the logical OR operation applied to the elements
+        Boolean result of the logical AND operation applied to the elements
         of `x1` and `x2`; the shape is determined by broadcasting.
         $OUT_SCALAR_2
 
@@ -2596,7 +2596,7 @@ add_newdoc('numpy.core.umath', 'matmul',
     out : ndarray, optional
         A location into which the result is stored. If provided, it must have
         a shape that matches the signature `(n,k),(k,m)->(n,m)`. If not
-        provided or `None`, a freshly-allocated array is returned.
+        provided or None, a freshly-allocated array is returned.
     **kwargs
         For other keyword-only arguments, see the
         :ref:`ufunc docs <ufuncs.kwargs>`.

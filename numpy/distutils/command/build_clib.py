@@ -33,15 +33,18 @@ class build_clib(old_build_clib):
         ('inplace', 'i', 'Build in-place'),
         ('parallel=', 'j',
          "number of parallel jobs"),
+        ('warn-error', None,
+         "turn all warnings into errors (-Werror)"),
     ]
 
-    boolean_options = old_build_clib.boolean_options + ['inplace']
+    boolean_options = old_build_clib.boolean_options + ['inplace', 'warn-error']
 
     def initialize_options(self):
         old_build_clib.initialize_options(self)
         self.fcompiler = None
         self.inplace = 0
         self.parallel = None
+        self.warn_error = None
 
     def finalize_options(self):
         if self.parallel:
@@ -50,7 +53,10 @@ class build_clib(old_build_clib):
             except ValueError:
                 raise ValueError("--parallel/-j argument must be an integer")
         old_build_clib.finalize_options(self)
-        self.set_undefined_options('build', ('parallel', 'parallel'))
+        self.set_undefined_options('build',
+                                        ('parallel', 'parallel'),
+                                        ('warn_error', 'warn_error'),
+                                  )
 
     def have_f_sources(self):
         for (lib_name, build_info) in self.libraries:
@@ -85,6 +91,10 @@ class build_clib(old_build_clib):
                                      force=self.force)
         self.compiler.customize(self.distribution,
                                 need_cxx=self.have_cxx_sources())
+
+        if self.warn_error:
+            self.compiler.compiler.append('-Werror')
+            self.compiler.compiler_so.append('-Werror')
 
         libraries = self.libraries
         self.libraries = None

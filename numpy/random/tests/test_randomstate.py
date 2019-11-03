@@ -11,7 +11,8 @@ from numpy.testing import (
         suppress_warnings
         )
 
-from numpy.random import MT19937, PCG64, mtrand as random
+from numpy.random import MT19937, PCG64
+from numpy import random
 
 INT_FUNCS = {'binomial': (100.0, 0.6),
              'geometric': (.5,),
@@ -685,6 +686,21 @@ class TestRandomDist(object):
         arr_2d = np.atleast_2d([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]).T
         actual = random.permutation(arr_2d)
         assert_array_equal(actual, np.atleast_2d(desired).T)
+
+        random.seed(self.seed)
+        bad_x_str = "abcd"
+        assert_raises(IndexError, random.permutation, bad_x_str)
+
+        random.seed(self.seed)
+        bad_x_float = 1.2
+        assert_raises(IndexError, random.permutation, bad_x_float)
+
+        integer_val = 10
+        desired = [9, 0, 8, 5, 1, 3, 4, 7, 6, 2]
+
+        random.seed(self.seed)
+        actual = random.permutation(integer_val)
+        assert_array_equal(actual, desired)
 
     def test_beta(self):
         random.seed(self.seed)

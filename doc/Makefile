@@ -14,6 +14,10 @@ PYTHON = python$(PYVER)
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= LANG=C sphinx-build
 PAPER         ?=
+# For merging a documentation archive into a git checkout of numpy/doc
+# Turn a tag like v1.18.0 into 1.18
+# Use sed -n -e 's/patttern/match/p' to return a blank value if no match
+TAG ?= $(shell git describe --tag | sed -n -e's,v\([1-9]\.[0-9]*\)\.[0-9].*,\1,p')
 
 FILES=
 
@@ -24,7 +28,8 @@ ALLSPHINXOPTS   = -WT --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
   $(SPHINXOPTS) source
 
 .PHONY: help clean html web pickle htmlhelp latex changes linkcheck \
-        dist dist-build gitwash-update version-check html-build latex-build
+		dist dist-build gitwash-update version-check html-build latex-build \
+		merge-doc
 
 #------------------------------------------------------------------------------
 
@@ -40,6 +45,7 @@ help:
 	@echo "  dist PYVER=... to make a distribution-ready tree"
 	@echo "  gitwash-update GITWASH=path/to/gitwash  update gitwash developer docs"
 	@echo "  upload USERNAME=... RELEASE=... to upload built docs to docs.scipy.org"
+	@echo "  merge-doc TAG=... to clone numpy/doc and archive documentation into it"
 
 clean:
 	-rm -rf build/* 
@@ -92,7 +98,9 @@ else
 endif
 
 
-dist:
+dist: build/dist.tar.gz
+
+build/dist.tar.gz:
 	make $(DIST_VARS) real-dist
 
 real-dist: dist-build html-build html-scipyorg
@@ -113,7 +121,7 @@ dist-build:
 	install -d $(subst :, ,$(INSTALL_PPH))
 	$(PYTHON) `which easy_install` --prefix=$(INSTALL_DIR) ../dist/*.egg
 
-upload:
+upload: build/dist.tar.gz
 	# SSH must be correctly configured for this to work.
 	# Assumes that ``make dist`` was already run
 	# Example usage: ``make upload USERNAME=rgommers RELEASE=1.10.1``
@@ -129,6 +137,32 @@ upload:
 	    $(UPLOAD_DIR)/numpy-html-$(RELEASE).zip
 	ssh $(USERNAME)@docs.scipy.org rm $(UPLOAD_DIR)/dist.tar.gz
 	ssh $(USERNAME)@docs.scipy.org ln -snf numpy-$(RELEASE) /srv/docs_scipy_org/doc/numpy
+
+
+merge-doc: build/dist.tar.gz
+ifeq "$(TAG)" ""
+	echo tag "$(TAG)" not of the form 1.18;
+	exit 1;
+endif
+	@# Only clone if the directory does not exist
+	@if ! test -d build/merge; then \
+		git clone https://github.com/numpy/doc build/merge; \
+	fi;
+	@# Remove any old content and copy in the new, add it to git
+	-rm -rf build/merge/$(TAG)/*
+	-mkdir -p build/merge/$(TAG)
+	@# -C changes working directory
+	tar -C build/merge/$(TAG) -xf build/dist.tar.gz
+	git -C build/merge add $(TAG)
+	@# For now, the user must do this. If it is onerous, automate it and change
+	@# the instructions in doc/HOWTO_RELEASE.rst.txt
+	@echo " "
+	@echo New documentation archive added to ./build/merge.
+	@echo Now add/modify the appropiate section after
+	@echo "    <!-- insert here -->"
+	@echo in build/merge/index.html,
+	@echo then \"git commit\", \"git push\"
+	
 
 #------------------------------------------------------------------------------
 # Basic Sphinx generation rules for different formats

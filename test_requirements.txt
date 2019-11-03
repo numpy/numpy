@@ -1,0 +1,7 @@
+cython==0.29.13
+pytest==5.2.2
+pytz==2019.3
+pytest-cov==2.8.1
+pickle5; python_version == '3.7'
+pickle5; python_version == '3.6' and platform_python_implementation != 'PyPy'
+nose

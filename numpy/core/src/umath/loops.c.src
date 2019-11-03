@@ -699,6 +699,7 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
  * #ftype = npy_float, npy_float, npy_float, npy_float, npy_double, npy_double,
  *          npy_double, npy_double, npy_double, npy_double#
  * #SIGNED = 1, 0, 1, 0, 1, 0, 1, 0, 1, 0#
+ * #c = hh,uhh,h,uh,,u,l,ul,ll,ull#
  */
 
 #define @TYPE@_floor_divide @TYPE@_divide
@@ -776,16 +777,15 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 
 /**begin repeat2
  * Arithmetic
- * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor,
- *          left_shift, right_shift#
- * #OP = +, -,*, &, |, ^, <<, >>#
+ * #kind = add, subtract, multiply, bitwise_and, bitwise_or, bitwise_xor#
+ * #OP = +, -, *, &, |, ^#
  */
 
 #if @CHK@
 NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 @TYPE@_@kind@@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    if(IS_BINARY_REDUCE) {
+    if (IS_BINARY_REDUCE) {
         BINARY_REDUCE_LOOP(@type@) {
             io1 @OP@= *(@type@ *)ip2;
         }
@@ -798,6 +798,47 @@ NPY_NO_EXPORT NPY_GCC_OPT_3 @ATTR@ void
 #endif
 
 /**end repeat2**/
+
+/*
+ * Arithmetic bit shift operations.
+ *
+ * Intel hardware masks bit shift values, so large shifts wrap around
+ * and can produce surprising results. The special handling ensures that
+ * behavior is independent of compiler or hardware.
+ * TODO: We could implement consistent behavior for negative shifts,
+ *       which is undefined in C.
+ */
+
+#define INT_left_shift_needs_clear_floatstatus
+#define UINT_left_shift_needs_clear_floatstatus
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_left_shift@isa@(char **args, npy_intp *dimensions, npy_intp *steps,
+                  void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_FAST(@type@, @type@, *out = npy_lshift@c@(in1, in2));
+
+#ifdef @TYPE@_left_shift_needs_clear_floatstatus
+    // For some reason, our macOS CI sets an "invalid" flag here, but only
+    // for some types.
+    npy_clear_floatstatus_barrier((char*)dimensions);
+#endif
+}
+
+#undef INT_left_shift_needs_clear_floatstatus
+#undef UINT_left_shift_needs_clear_floatstatus
+
+NPY_NO_EXPORT
+#ifndef NPY_DO_NOT_OPTIMIZE_@TYPE@_right_shift
+NPY_GCC_OPT_3
+#endif
+void
+@TYPE@_right_shift@isa@(char **args, npy_intp *dimensions, npy_intp *steps,
+                   void *NPY_UNUSED(func))
+{
+    BINARY_LOOP_FAST(@type@, @type@, *out = npy_rshift@c@(in1, in2));
+}
+
 
 /**begin repeat2
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal,
@@ -1253,10 +1294,10 @@ NPY_NO_EXPORT void
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
         if (in1 == NPY_DATETIME_NAT) {
-            *((@type@ *)op1) = in2;
+            *((@type@ *)op1) = in1;
         }
         else if (in2 == NPY_DATETIME_NAT) {
-            *((@type@ *)op1) = in1;
+            *((@type@ *)op1) = in2;
         }
         else {
             *((@type@ *)op1) = (in1 @OP@ in2) ? in1 : in2;
@@ -1594,8 +1635,32 @@ NPY_NO_EXPORT void
 /**end repeat**/
 
 /**begin repeat
- *  #func = exp, log#
- *  #scalarf = npy_expf, npy_logf#
+ *  #func = rint, ceil, floor, trunc#
+ *  #scalarf = npy_rint, npy_ceil, npy_floor, npy_trunc#
+ */
+
+/**begin repeat1
+*  #TYPE = FLOAT, DOUBLE#
+*  #type = npy_float, npy_double#
+*  #typesub = f, #
+*/
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *(@type@ *)op1 = @scalarf@@typesub@(in1);
+    }
+}
+
+
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ *  #func = sin, cos, exp, log#
+ *  #scalarf = npy_sinf, npy_cosf, npy_expf, npy_logf#
  */
 
 NPY_NO_EXPORT NPY_GCC_OPT_3 void
@@ -1610,10 +1675,82 @@ FLOAT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSE
 /**end repeat**/
 
 /**begin repeat
- * #isa = avx512f, avx2#
- * #ISA = AVX512F, AVX2#
+ * #isa = avx512f, fma#
+ * #ISA = AVX512F, FMA#
  * #CHK = HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS, HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS#
  */
+
+/**begin repeat1
+ *  #TYPE = FLOAT, DOUBLE#
+ *  #type = npy_float, npy_double#
+ *  #typesub = f, #
+ */
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_sqrt_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    if (!run_unary_@isa@_sqrt_@TYPE@(args, dimensions, steps)) {
+        UNARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            *(@type@ *)op1 = npy_sqrt@typesub@(in1);
+        }
+    }
+}
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_absolute_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    if (!run_unary_@isa@_absolute_@TYPE@(args, dimensions, steps)) {
+        UNARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ tmp = in1 > 0 ? in1 : -in1;
+            /* add 0 to clear -0.0 */
+            *((@type@ *)op1) = tmp + 0;
+        }
+    }
+    npy_clear_floatstatus_barrier((char*)dimensions);
+}
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_square_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    if (!run_unary_@isa@_square_@TYPE@(args, dimensions, steps)) {
+        UNARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            *(@type@ *)op1 = in1*in1;
+        }
+    }
+}
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_reciprocal_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    if (!run_unary_@isa@_reciprocal_@TYPE@(args, dimensions, steps)) {
+        UNARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            *(@type@ *)op1 = 1.0f/in1;
+        }
+    }
+}
+
+/**begin repeat2
+ *  #func = rint, ceil, floor, trunc#
+ *  #scalarf = npy_rint, npy_ceil, npy_floor, npy_trunc#
+ */
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    if (!run_unary_@isa@_@func@_@TYPE@(args, dimensions, steps)) {
+        UNARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            *(@type@ *)op1 = @scalarf@@typesub@(in1);
+        }
+    }
+}
+
+/**end repeat2**/
+/**end repeat1**/
 
 /**begin repeat1
  *  #func = exp, log#
@@ -1642,7 +1779,31 @@ FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY
 }
 
 /**end repeat1**/
+
+/**begin repeat1
+ *  #func = cos, sin#
+ *  #enum = npy_compute_cos, npy_compute_sin#
+ *  #scalarf = npy_cosf, npy_sinf#
+ */
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+{
+    if (!run_unary_@isa@_sincos_FLOAT(args, dimensions, steps, @enum@)) {
+        UNARY_LOOP {
+#if defined @CHK@ && defined NPY_HAVE_SSE2_INTRINSICS
+            @ISA@_sincos_FLOAT((npy_float *)op1, (npy_float *)ip1, 1, steps[0], @enum@);
+#else
+	        const npy_float in1 = *(npy_float *)ip1;
+	        *(npy_float *)op1 = @scalarf@(in1);
+#endif
+        }
+    }
+}
+
+/**end repeat1**/
 /**end repeat**/
+
 
 /**begin repeat
  * Float types

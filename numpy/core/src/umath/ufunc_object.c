@@ -908,7 +908,7 @@ parse_ufunc_keywords(PyUFuncObject *ufunc, PyObject *kwds, PyObject **kwnames, .
     typedef int converter(PyObject *, void *);
 
     while (PyDict_Next(kwds, &pos, &key, &value)) {
-        int i;
+        npy_intp i;
         converter *convert;
         void *output = NULL;
         npy_intp index = locate_key(kwnames, key);
@@ -1193,34 +1193,11 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
                 }
             }
             else {
-                /*
-                 * If the deprecated behavior is ever removed,
-                 * keep only the else branch of this if-else
-                 */
-                if (PyArray_Check(out_kwd) || out_kwd == Py_None) {
-                    if (DEPRECATE("passing a single array to the "
-                                  "'out' keyword argument of a "
-                                  "ufunc with\n"
-                                  "more than one output will "
-                                  "result in an error in the "
-                                  "future") < 0) {
-                        /* The future error message */
-                        PyErr_SetString(PyExc_TypeError,
-                                        "'out' must be a tuple of arrays");
-                        goto fail;
-                    }
-                    if (_set_out_array(out_kwd, out_op+nin) < 0) {
-                        goto fail;
-                    }
-                }
-                else {
-                    PyErr_SetString(PyExc_TypeError,
-                                    nout > 1 ? "'out' must be a tuple "
-                                    "of arrays" :
-                                    "'out' must be an array or a "
-                                    "tuple of a single array");
-                    goto fail;
-                }
+                PyErr_SetString(PyExc_TypeError,
+                        nout > 1 ? "'out' must be a tuple of arrays" :
+                                   "'out' must be an array or a tuple with "
+                                   "a single array");
+                goto fail;
             }
         }
         /*
@@ -2297,7 +2274,7 @@ _parse_axes_arg(PyUFuncObject *ufunc, int op_core_num_dims[], PyObject *axes,
  * Returns 0 on success, and -1 on failure
  */
 static int
-_parse_axis_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axis,
+_parse_axis_arg(PyUFuncObject *ufunc, const int core_num_dims[], PyObject *axis,
                 PyArrayObject **op, int broadcast_ndim, int **remap_axis) {
     int nop = ufunc->nargs;
     int iop, axis_int;
@@ -2368,7 +2345,7 @@ _parse_axis_arg(PyUFuncObject *ufunc, int core_num_dims[], PyObject *axis,
  */
 static int
 _get_coredim_sizes(PyUFuncObject *ufunc, PyArrayObject **op,
-                   int *op_core_num_dims, npy_uint32 *core_dim_flags,
+                   const int *op_core_num_dims, npy_uint32 *core_dim_flags,
                    npy_intp *core_dim_sizes, int **remap_axis) {
     int i;
     int nin = ufunc->nin;
@@ -4053,14 +4030,14 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     int *op_axes[3] = {op_axes_arrays[0], op_axes_arrays[1],
                             op_axes_arrays[2]};
     npy_uint32 op_flags[3];
-    int i, idim, ndim, otype_final;
+    int idim, ndim, otype_final;
     int need_outer_iterator = 0;
 
     NpyIter *iter = NULL;
 
     /* The reduceat indices - ind must be validated outside this call */
     npy_intp *reduceat_ind;
-    npy_intp ind_size, red_axis_size;
+    npy_intp i, ind_size, red_axis_size;
     /* The selected inner loop */
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
@@ -4081,8 +4058,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     for (i = 0; i < ind_size; ++i) {
         if (reduceat_ind[i] < 0 || reduceat_ind[i] >= red_axis_size) {
             PyErr_Format(PyExc_IndexError,
-                "index %d out-of-bounds in %s.%s [0, %d)",
-                (int)reduceat_ind[i], ufunc_name, opname, (int)red_axis_size);
+                "index %" NPY_INTP_FMT " out-of-bounds in %s.%s [0, %" NPY_INTP_FMT ")",
+                reduceat_ind[i], ufunc_name, opname, red_axis_size);
             return NULL;
         }
     }
@@ -4146,7 +4123,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 #endif
 
     /* Set up the op_axes for the outer loop */
-    for (i = 0, idim = 0; idim < ndim; ++idim) {
+    for (idim = 0; idim < ndim; ++idim) {
         /* Use the i-th iteration dimension to match up ind */
         if (idim == axis) {
             op_axes_arrays[0][idim] = axis;
@@ -4866,7 +4843,7 @@ ufunc_seterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
 NPY_NO_EXPORT int
 PyUFunc_ReplaceLoopBySignature(PyUFuncObject *func,
                                PyUFuncGenericFunction newfunc,
-                               int *signature,
+                               const int *signature,
                                PyUFuncGenericFunction *oldfunc)
 {
     int i, j;
@@ -4921,7 +4898,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
                                      char *types, int ntypes,
                                      int nin, int nout, int identity,
                                      const char *name, const char *doc,
-                                     int unused, const char *signature,
+                                     const int unused, const char *signature,
                                      PyObject *identity_value)
 {
     PyUFuncObject *ufunc;
@@ -5223,7 +5200,7 @@ NPY_NO_EXPORT int
 PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
                             int usertype,
                             PyUFuncGenericFunction function,
-                            int *arg_types,
+                            const int *arg_types,
                             void *data)
 {
     PyArray_Descr *descr;

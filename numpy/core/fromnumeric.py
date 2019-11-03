@@ -380,6 +380,7 @@ def choose(a, choices, out=None, mode='raise'):
     See Also
     --------
     ndarray.choose : equivalent method
+    numpy.take_along_axis : Preferable if `choices` is an array
 
     Notes
     -----
@@ -908,17 +909,17 @@ def sort(a, axis=-1, kind=None, order=None):
 
     .. versionadded:: 1.12.0
 
-    quicksort has been changed to `introsort <https://en.wikipedia.org/wiki/Introsort>`_. 
+    quicksort has been changed to `introsort <https://en.wikipedia.org/wiki/Introsort>`_.
     When sorting does not make enough progress it switches to
-    `heapsort <https://en.wikipedia.org/wiki/Heapsort>`_. 
+    `heapsort <https://en.wikipedia.org/wiki/Heapsort>`_.
     This implementation makes quicksort O(n*log(n)) in the worst case.
 
     'stable' automatically chooses the best stable sorting algorithm
-    for the data type being sorted. 
-    It, along with 'mergesort' is currently mapped to 
-    `timsort <https://en.wikipedia.org/wiki/Timsort>`_ 
-    or `radix sort <https://en.wikipedia.org/wiki/Radix_sort>`_ 
-    depending on the data type. 
+    for the data type being sorted.
+    It, along with 'mergesort' is currently mapped to
+    `timsort <https://en.wikipedia.org/wiki/Timsort>`_
+    or `radix sort <https://en.wikipedia.org/wiki/Radix_sort>`_
+    depending on the data type.
     API forward compatibility currently limits the
     ability to select the implementation and it is hardwired for the different
     data types.
@@ -1408,7 +1409,7 @@ def squeeze(a, axis=None):
     Raises
     ------
     ValueError
-        If `axis` is not `None`, and an axis being squeezed is not of length 1
+        If `axis` is not None, and an axis being squeezed is not of length 1
 
     See Also
     --------
@@ -1774,11 +1775,13 @@ def nonzero(a):
     which returns a row for each non-zero element.
 
     .. note::
-        When called on a zero-d array or scalar, ``nonzero(a)`` is treated
-        as ``nonzero(atleast1d(a))``.
 
-        ..deprecated:: 1.17.0
-            Use `atleast1d` explicitly if this behavior is deliberate.
+       When called on a zero-d array or scalar, ``nonzero(a)`` is treated
+       as ``nonzero(atleast1d(a))``.
+
+       .. deprecated:: 1.17.0
+
+          Use `atleast1d` explicitly if this behavior is deliberate.
 
     Parameters
     ----------
@@ -1942,7 +1945,7 @@ def compress(condition, a, axis=None, out=None):
     take, choose, diag, diagonal, select
     ndarray.compress : Equivalent method in ndarray
     np.extract: Equivalent method when working on 1-D arrays
-    numpy.doc.ufuncs : Section "Output arguments"
+    ufuncs-output-type
 
     Examples
     --------
@@ -1992,14 +1995,14 @@ def clip(a, a_min, a_max, out=None, **kwargs):
     ----------
     a : array_like
         Array containing elements to clip.
-    a_min : scalar or array_like or `None`
-        Minimum value. If `None`, clipping is not performed on lower
+    a_min : scalar or array_like or None
+        Minimum value. If None, clipping is not performed on lower
         interval edge. Not more than one of `a_min` and `a_max` may be
-        `None`.
-    a_max : scalar or array_like or `None`
-        Maximum value. If `None`, clipping is not performed on upper
+        None.
+    a_max : scalar or array_like or None
+        Maximum value. If None, clipping is not performed on upper
         interval edge. Not more than one of `a_min` and `a_max` may be
-        `None`. If `a_min` or `a_max` are array_like, then the three
+        None. If `a_min` or `a_max` are array_like, then the three
         arrays will be broadcasted to match their shapes.
     out : ndarray, optional
         The results will be placed in this array. It may be the input
@@ -2020,7 +2023,7 @@ def clip(a, a_min, a_max, out=None, **kwargs):
 
     See Also
     --------
-    numpy.doc.ufuncs : Section "Output arguments"
+    ufuncs-output-type
 
     Examples
     --------
@@ -2203,7 +2206,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
         Input array or object that can be converted to an array.
     axis : None or int or tuple of ints, optional
         Axis or axes along which a logical OR reduction is performed.
-        The default (`axis` = `None`) is to perform a logical OR over all
+        The default (``axis=None``) is to perform a logical OR over all
         the dimensions of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
 
@@ -2216,7 +2219,7 @@ def any(a, axis=None, out=None, keepdims=np._NoValue):
         the same shape as the expected output and its type is preserved
         (e.g., if it is of type float, then it will remain so, returning
         1.0 for True and 0.0 for False, regardless of the type of `a`).
-        See `doc.ufuncs` (Section "Output arguments") for details.
+        See `ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2289,7 +2292,7 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
         Input array or object that can be converted to an array.
     axis : None or int or tuple of ints, optional
         Axis or axes along which a logical AND reduction is performed.
-        The default (`axis` = `None`) is to perform a logical AND over all
+        The default (``axis=None``) is to perform a logical AND over all
         the dimensions of the input array. `axis` may be negative, in
         which case it counts from the last to the first axis.
 
@@ -2301,8 +2304,8 @@ def all(a, axis=None, out=None, keepdims=np._NoValue):
         Alternate output array in which to place the result.
         It must have the same shape as the expected output and its
         type is preserved (e.g., if ``dtype(out)`` is float, the result
-        will consist of 0.0's and 1.0's).  See `doc.ufuncs` (Section
-        "Output arguments") for more details.
+        will consist of 0.0's and 1.0's). See `ufuncs-output-type` for more
+        details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2380,8 +2383,8 @@ def cumsum(a, axis=None, dtype=None, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
-        but the type will be cast if necessary. See `doc.ufuncs`
-        (Section "Output arguments") for more details.
+        but the type will be cast if necessary. See `ufuncs-output-type` for
+        more details.
 
     Returns
     -------
@@ -2526,7 +2529,7 @@ def amax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
-        See `doc.ufuncs` (Section "Output arguments") for more details.
+        See `ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2651,7 +2654,7 @@ def amin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
-        See `doc.ufuncs` (Section "Output arguments") for more details.
+        See `ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -2782,6 +2785,10 @@ def alen(a):
     7
 
     """
+    # NumPy 1.18.0, 2019-08-02
+    warnings.warn(
+        "`np.alen` is deprecated, use `len` instead",
+        DeprecationWarning, stacklevel=2)
     try:
         return len(a)
     except TypeError:
@@ -2854,7 +2861,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     See Also
     --------
     ndarray.prod : equivalent method
-    numpy.doc.ufuncs : Section "Output arguments"
+    ufuncs-output-type
 
     Notes
     -----
@@ -2950,7 +2957,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
 
     See Also
     --------
-    numpy.doc.ufuncs : Section "Output arguments"
+    ufuncs-output-type
 
     Notes
     -----
@@ -3096,8 +3103,8 @@ def around(a, decimals=0, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must have
         the same shape as the expected output, but the type of the output
-        values will be cast if necessary. See `doc.ufuncs` (Section
-        "Output arguments") for details.
+        values will be cast if necessary. See `ufuncs-output-type` for more
+        details.
 
     Returns
     -------
@@ -3120,10 +3127,37 @@ def around(a, decimals=0, out=None):
     -----
     For values exactly halfway between rounded decimal values, NumPy
     rounds to the nearest even value. Thus 1.5 and 2.5 round to 2.0,
-    -0.5 and 0.5 round to 0.0, etc. Results may also be surprising due
-    to the inexact representation of decimal fractions in the IEEE
-    floating point standard [1]_ and errors introduced when scaling
-    by powers of ten.
+    -0.5 and 0.5 round to 0.0, etc.
+
+    ``np.around`` uses a fast but sometimes inexact algorithm to round
+    floating-point datatypes. For positive `decimals` it is equivalent to
+    ``np.true_divide(np.rint(a * 10**decimals), 10**decimals)``, which has
+    error due to the inexact representation of decimal fractions in the IEEE
+    floating point standard [1]_ and errors introduced when scaling by powers
+    of ten. For instance, note the extra "1" in the following:
+
+        >>> np.round(56294995342131.5, 3)
+        56294995342131.51
+
+    If your goal is to print such values with a fixed number of decimals, it is
+    preferable to use numpy's float printing routines to limit the number of
+    printed decimals:
+
+        >>> np.format_float_positional(56294995342131.5, precision=3)
+        '56294995342131.5'
+
+    The float printing routines use an accurate but much more computationally
+    demanding algorithm to compute the number of digits after the decimal
+    point.
+
+    Alternatively, Python's builtin `round` function uses a more accurate
+    but slower algorithm for 64-bit floating point values:
+
+        >>> round(56294995342131.5, 3)
+        56294995342131.5
+        >>> np.round(16.055, 2), round(16.055, 2)  # equals 16.0549999999999997
+        (16.06, 16.05)
+
 
     References
     ----------
@@ -3184,7 +3218,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         Alternate output array in which to place the result.  The default
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
-        See `doc.ufuncs` for details.
+        See `ufuncs-output-type` for more details.
 
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
@@ -3319,7 +3353,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     See Also
     --------
     var, mean, nanmean, nanstd, nanvar
-    numpy.doc.ufuncs : Section "Output arguments"
+    ufuncs-output-type
 
     Notes
     -----
@@ -3414,7 +3448,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
         instead of a single axis or all the axes as before.
     dtype : data-type, optional
         Type to use in computing the variance.  For arrays of integer type
-        the default is `float32`; for arrays of float types it is the same as
+        the default is `float64`; for arrays of float types it is the same as
         the array type.
     out : ndarray, optional
         Alternate output array in which to place the result.  It must have
@@ -3444,7 +3478,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     See Also
     --------
     std, mean, nanmean, nanstd, nanvar
-    numpy.doc.ufuncs : Section "Output arguments"
+    ufuncs-output-type
 
     Notes
     -----

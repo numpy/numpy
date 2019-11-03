@@ -3,12 +3,8 @@ from __future__ import division, absolute_import, print_function
 
 import sys, os, re
 
-# Check Sphinx version
-import sphinx
-if sphinx.__version__ < "1.2.1":
-    raise RuntimeError("Sphinx 1.2.1 or newer required")
-
-needs_sphinx = '1.0'
+# Minimum version, enforced by sphinx
+needs_sphinx = '2.2.0'
 
 # -----------------------------------------------------------------------------
 # General configuration
@@ -31,19 +27,18 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
+    'sphinx.ext.imgmath',
 ]
 
-if sphinx.__version__ >= "1.4":
-    extensions.append('sphinx.ext.imgmath')
-    imgmath_image_format = 'svg'
-else:
-    extensions.append('sphinx.ext.pngmath')
+imgmath_image_format = 'svg'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
+
+master_doc = 'contents'
 
 # General substitutions.
 project = 'NumPy'
@@ -93,6 +88,7 @@ pygments_style = 'sphinx'
 def setup(app):
     # add a config value for `ifconfig` directives
     app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
+    app.add_lexer('NumPyC', NumPyLexer(stripnl=False))
 
 # -----------------------------------------------------------------------------
 # HTML output
@@ -121,7 +117,9 @@ else:
         "edit_link": False,
         "sidebar": "left",
         "scipy_org_logo": False,
-        "rootlinks": []
+        "rootlinks": [("https://numpy.org/", "NumPy.org"),
+                      ("https://numpy.org/doc", "Docs"),
+                     ]
     }
     html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
 
@@ -174,6 +172,10 @@ latex_documents = [
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
 #latex_use_parts = False
+
+latex_elements = {
+    'fontenc': r'\usepackage[LGR,T1]{fontenc}'
+}
 
 # Additional stuff for the LaTeX preamble.
 latex_preamble = r'''
@@ -366,18 +368,15 @@ def linkcode_resolve(domain, info):
 
 from pygments.lexers import CLexer
 from pygments import token
-from sphinx.highlighting import lexers
 import copy
 
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'
 
-    tokens = copy.deepcopy(lexers['c'].tokens)
+    tokens = copy.deepcopy(CLexer.tokens)
     # Extend the regex for valid identifiers with @
     for k, val in tokens.items():
         for i, v in enumerate(val):
             if isinstance(v, tuple):
                 if isinstance(v[0], str):
                     val[i] =  (v[0].replace('a-zA-Z', 'a-zA-Z@'),) + v[1:]
-
-lexers['NumPyC'] = NumPyLexer(stripnl=False)

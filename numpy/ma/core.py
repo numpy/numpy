@@ -59,14 +59,14 @@ __all__ = [
     'choose', 'clip', 'common_fill_value', 'compress', 'compressed',
     'concatenate', 'conjugate', 'convolve', 'copy', 'correlate', 'cos', 'cosh',
     'count', 'cumprod', 'cumsum', 'default_fill_value', 'diag', 'diagonal',
-    'diff', 'divide', 'dump', 'dumps', 'empty', 'empty_like', 'equal', 'exp',
+    'diff', 'divide', 'empty', 'empty_like', 'equal', 'exp',
     'expand_dims', 'fabs', 'filled', 'fix_invalid', 'flatten_mask',
     'flatten_structured_array', 'floor', 'floor_divide', 'fmod',
     'frombuffer', 'fromflex', 'fromfunction', 'getdata', 'getmask',
     'getmaskarray', 'greater', 'greater_equal', 'harden_mask', 'hypot',
     'identity', 'ids', 'indices', 'inner', 'innerproduct', 'isMA',
     'isMaskedArray', 'is_mask', 'is_masked', 'isarray', 'left_shift',
-    'less', 'less_equal', 'load', 'loads', 'log', 'log10', 'log2',
+    'less', 'less_equal', 'log', 'log10', 'log2',
     'logical_and', 'logical_not', 'logical_or', 'logical_xor', 'make_mask',
     'make_mask_descr', 'make_mask_none', 'mask_or', 'masked',
     'masked_array', 'masked_equal', 'masked_greater',
@@ -4394,7 +4394,7 @@ class MaskedArray(ndarray):
         ----------
         axis : None or int or tuple of ints, optional
             Axis or axes along which the count is performed.
-            The default (`axis` = `None`) performs the count over all
+            The default, None, performs the count over all
             the dimensions of the input array. `axis` may be negative, in
             which case it counts from the last to the first axis.
 
@@ -4774,7 +4774,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.all : corresponding function for ndarrays
+        numpy.ndarray.all : corresponding function for ndarrays
         numpy.all : equivalent function
 
         Examples
@@ -4812,7 +4812,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.any : corresponding function for ndarrays
+        numpy.ndarray.any : corresponding function for ndarrays
         numpy.any : equivalent function
 
         """
@@ -4866,7 +4866,7 @@ class MaskedArray(ndarray):
         flatnonzero :
             Return indices that are non-zero in the flattened version of the input
             array.
-        ndarray.nonzero :
+        numpy.ndarray.nonzero :
             Equivalent ndarray method.
         count_nonzero :
             Counts the number of non-zero elements in the input array.
@@ -4994,7 +4994,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.sum : corresponding function for ndarrays
+        numpy.ndarray.sum : corresponding function for ndarrays
         numpy.sum : equivalent function
 
         Examples
@@ -5065,7 +5065,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.cumsum : corresponding function for ndarrays
+        numpy.ndarray.cumsum : corresponding function for ndarrays
         numpy.cumsum : equivalent function
 
         Examples
@@ -5102,7 +5102,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.prod : corresponding function for ndarrays
+        numpy.ndarray.prod : corresponding function for ndarrays
         numpy.prod : equivalent function
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
@@ -5148,7 +5148,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.cumprod : corresponding function for ndarrays
+        numpy.ndarray.cumprod : corresponding function for ndarrays
         numpy.cumprod : equivalent function
         """
         result = self.filled(1).cumprod(axis=axis, dtype=dtype, out=out)
@@ -5171,7 +5171,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.mean : corresponding function for ndarrays
+        numpy.ndarray.mean : corresponding function for ndarrays
         numpy.mean : Equivalent function
         numpy.ma.average: Weighted average.
 
@@ -5260,7 +5260,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.var : corresponding function for ndarrays
+        numpy.ndarray.var : corresponding function for ndarrays
         numpy.var : Equivalent function
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
@@ -5323,7 +5323,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.std : corresponding function for ndarrays
+        numpy.ndarray.std : corresponding function for ndarrays
         numpy.std : Equivalent function
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
@@ -5344,7 +5344,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.around : corresponding function for ndarrays
+        numpy.ndarray.around : corresponding function for ndarrays
         numpy.around : equivalent function
         """
         result = self._data.round(decimals=decimals, out=out).view(type(self))
@@ -5406,7 +5406,7 @@ class MaskedArray(ndarray):
         --------
         MaskedArray.sort : Describes sorting algorithms used.
         lexsort : Indirect stable sort with multiple keys.
-        ndarray.sort : Inplace sort.
+        numpy.ndarray.sort : Inplace sort.
 
         Notes
         -----
@@ -5558,7 +5558,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.sort : Method to sort an array in-place.
+        numpy.ndarray.sort : Method to sort an array in-place.
         argsort : Indirect sort.
         lexsort : Indirect stable sort on multiple keys.
         searchsorted : Find elements in a sorted array.
@@ -5978,7 +5978,7 @@ class MaskedArray(ndarray):
 
         See Also
         --------
-        ndarray.tobytes
+        numpy.ndarray.tobytes
         tolist, tofile
 
         Notes
@@ -7884,93 +7884,6 @@ def _pickle_warn(method):
             .format(method=method),
         DeprecationWarning,
         stacklevel=3)
-
-
-def dump(a, F):
-    """
-    Pickle a masked array to a file.
-
-    This is a wrapper around ``cPickle.dump``.
-
-    Parameters
-    ----------
-    a : MaskedArray
-        The array to be pickled.
-    F : str or file-like object
-        The file to pickle `a` to. If a string, the full path to the file.
-
-    """
-    _pickle_warn('dump')
-    if not hasattr(F, 'readline'):
-        with open(F, 'w') as F:
-            pickle.dump(a, F)
-    else:
-        pickle.dump(a, F)
-
-
-def dumps(a):
-    """
-    Return a string corresponding to the pickling of a masked array.
-
-    This is a wrapper around ``cPickle.dumps``.
-
-    Parameters
-    ----------
-    a : MaskedArray
-        The array for which the string representation of the pickle is
-        returned.
-
-    """
-    _pickle_warn('dumps')
-    return pickle.dumps(a)
-
-
-def load(F):
-    """
-    Wrapper around ``cPickle.load`` which accepts either a file-like object
-    or a filename.
-
-    Parameters
-    ----------
-    F : str or file
-        The file or file name to load.
-
-    See Also
-    --------
-    dump : Pickle an array
-
-    Notes
-    -----
-    This is different from `numpy.load`, which does not use cPickle but loads
-    the NumPy binary .npy format.
-
-    """
-    _pickle_warn('load')
-    if not hasattr(F, 'readline'):
-        with open(F, 'r') as F:
-            return pickle.load(F)
-    else:
-        return pickle.load(F)
-
-
-def loads(strg):
-    """
-    Load a pickle from the current string.
-
-    The result of ``cPickle.loads(strg)`` is returned.
-
-    Parameters
-    ----------
-    strg : str
-        The string to load.
-
-    See Also
-    --------
-    dumps : Return a string corresponding to the pickling of a masked array.
-
-    """
-    _pickle_warn('loads')
-    return pickle.loads(strg)
 
 
 def fromfile(file, dtype=float, count=-1, sep=''):

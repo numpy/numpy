@@ -202,7 +202,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 PyMODINIT_FUNC init#modulename#(void) {
 #endif
 \tint i;
-\tPyObject *m,*d, *s;
+\tPyObject *m,*d, *s, *tmp;
 #if PY_VERSION_HEX >= 0x03000000
 \tm = #modulename#_module = PyModule_Create(&moduledef);
 #else
@@ -215,6 +215,7 @@ PyMODINIT_FUNC init#modulename#(void) {
 \td = PyModule_GetDict(m);
 \ts = PyString_FromString(\"$R""" + """evision: $\");
 \tPyDict_SetItemString(d, \"__version__\", s);
+\tPy_DECREF(s);
 #if PY_VERSION_HEX >= 0x03000000
 \ts = PyUnicode_FromString(
 #else
@@ -222,10 +223,19 @@ PyMODINIT_FUNC init#modulename#(void) {
 #endif
 \t\t\"This module '#modulename#' is auto-generated with f2py (version:#f2py_version#).\\nFunctions:\\n\"\n#docs#\".\");
 \tPyDict_SetItemString(d, \"__doc__\", s);
-\t#modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
 \tPy_DECREF(s);
-\tfor(i=0;f2py_routine_defs[i].name!=NULL;i++)
-\t\tPyDict_SetItemString(d, f2py_routine_defs[i].name,PyFortranObject_NewAsAttr(&f2py_routine_defs[i]));
+\t#modulename#_error = PyErr_NewException (\"#modulename#.error\", NULL, NULL);
+\t/*
+\t * Store the error object inside the dict, so that it could get deallocated.
+\t * (in practice, this is a module, so it likely will not and cannot.)
+\t */
+\tPyDict_SetItemString(d, \"_#modulename#_error\", #modulename#_error);
+\tPy_DECREF(#modulename#_error);
+\tfor(i=0;f2py_routine_defs[i].name!=NULL;i++) {
+\t\ttmp = PyFortranObject_NewAsAttr(&f2py_routine_defs[i]);
+\t\tPyDict_SetItemString(d, f2py_routine_defs[i].name, tmp);
+\t\tPy_DECREF(tmp);
+\t}
 #initf2pywraphooks#
 #initf90modhooks#
 #initcommonhooks#
@@ -235,7 +245,6 @@ PyMODINIT_FUNC init#modulename#(void) {
 \tif (! PyErr_Occurred())
 \t\ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
-
 \treturn RETVAL;
 }
 #ifdef __cplusplus
@@ -436,12 +445,16 @@ rout_rules = [
     {
       extern #ctype# #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
-      PyObject_SetAttrString(o,"_cpointer", F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL));
+      tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
+      PyObject_SetAttrString(o,"_cpointer", tmp);
+      Py_DECREF(tmp);
 #if PY_VERSION_HEX >= 0x03000000
-      PyObject_SetAttrString(o,"__name__", PyUnicode_FromString("#name#"));
+      s = PyUnicode_FromString("#name#");
 #else
-      PyObject_SetAttrString(o,"__name__", PyString_FromString("#name#"));
+      s = PyString_FromString("#name#");
 #endif
+      PyObject_SetAttrString(o,"__name__", s);
+      Py_DECREF(s);
     }
     '''},
         'need': {l_not(l_or(ismoduleroutine, isdummyroutine)): ['F_WRAPPEDFUNC', 'F_FUNC']},
@@ -474,12 +487,16 @@ rout_rules = [
     {
       extern void #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
-      PyObject_SetAttrString(o,"_cpointer", F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL));
+      tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
+      PyObject_SetAttrString(o,"_cpointer", tmp);
+      Py_DECREF(tmp);
 #if PY_VERSION_HEX >= 0x03000000
-      PyObject_SetAttrString(o,"__name__", PyUnicode_FromString("#name#"));
+      s = PyUnicode_FromString("#name#");
 #else
-      PyObject_SetAttrString(o,"__name__", PyString_FromString("#name#"));
+      s = PyString_FromString("#name#");
 #endif
+      PyObject_SetAttrString(o,"__name__", s);
+      Py_DECREF(s);
     }
     '''},
         'need': {l_not(l_or(ismoduleroutine, isdummyroutine)): ['F_WRAPPEDFUNC', 'F_FUNC']},
@@ -791,10 +808,13 @@ if (#varname#_capi==Py_None) {
     if (#varname#_xa_capi==NULL) {
       if (PyObject_HasAttrString(#modulename#_module,\"#varname#_extra_args\")) {
         PyObject* capi_tmp = PyObject_GetAttrString(#modulename#_module,\"#varname#_extra_args\");
-        if (capi_tmp)
+        if (capi_tmp) {
           #varname#_xa_capi = (PyTupleObject *)PySequence_Tuple(capi_tmp);
-        else
+          Py_DECREF(capi_tmp);
+        }
+        else {
           #varname#_xa_capi = (PyTupleObject *)Py_BuildValue(\"()\");
+        }
         if (#varname#_xa_capi==NULL) {
           PyErr_SetString(#modulename#_error,\"Failed to convert #modulename#.#varname#_extra_args to tuple.\\n\");
           return NULL;

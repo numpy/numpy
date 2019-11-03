@@ -1341,6 +1341,11 @@ class TestBinaryRepr(object):
             exp = '1' + (width - 1) * '0'
             assert_equal(np.binary_repr(num, width=width), exp)
 
+    def test_large_neg_int64(self):
+        # See gh-14289.
+        assert_equal(np.binary_repr(np.int64(-2**62), width=64),
+                     '11' + '0'*62)
+
 
 class TestBaseRepr(object):
     def test_base3(self):
@@ -2578,6 +2583,30 @@ class TestConvolve(object):
 
 
 class TestArgwhere(object):
+
+    @pytest.mark.parametrize('nd', [0, 1, 2])
+    def test_nd(self, nd):
+        # get an nd array with multiple elements in every dimension
+        x = np.empty((2,)*nd, bool)
+
+        # none
+        x[...] = False
+        assert_equal(np.argwhere(x).shape, (0, nd))
+
+        # only one
+        x[...] = False
+        x.flat[0] = True
+        assert_equal(np.argwhere(x).shape, (1, nd))
+
+        # all but one
+        x[...] = True
+        x.flat[0] = False
+        assert_equal(np.argwhere(x).shape, (x.size - 1, nd))
+
+        # all
+        x[...] = True
+        assert_equal(np.argwhere(x).shape, (x.size, nd))
+
     def test_2D(self):
         x = np.arange(6).reshape((2, 3))
         assert_array_equal(np.argwhere(x > 1),

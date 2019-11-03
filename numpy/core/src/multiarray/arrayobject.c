@@ -462,7 +462,7 @@ WARN_IN_DEALLOC(PyObject* warning, const char * msg) {
             PyErr_WriteUnraisable(Py_None);
         }
     }
-};
+}
 
 /* array object functions */
 
@@ -557,7 +557,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
     printf(" ndim   : %d\n", fobj->nd);
     printf(" shape  :");
     for (i = 0; i < fobj->nd; ++i) {
-        printf(" %d", (int)fobj->dimensions[i]);
+        printf(" %" NPY_INTP_FMT, fobj->dimensions[i]);
     }
     printf("\n");
 
@@ -567,7 +567,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
     printf(" data   : %p\n", fobj->data);
     printf(" strides:");
     for (i = 0; i < fobj->nd; ++i) {
-        printf(" %d", (int)fobj->strides[i]);
+        printf(" %" NPY_INTP_FMT, fobj->strides[i]);
     }
     printf("\n");
 
@@ -607,7 +607,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
  * TO BE REMOVED - NOT USED INTERNALLY.
  */
 NPY_NO_EXPORT void
-PyArray_SetDatetimeParseFunction(PyObject *op)
+PyArray_SetDatetimeParseFunction(PyObject *NPY_UNUSED(op))
 {
 }
 
@@ -630,7 +630,7 @@ PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
 /*NUMPY_API
  */
 NPY_NO_EXPORT int
-PyArray_CompareString(char *s1, char *s2, size_t len)
+PyArray_CompareString(const char *s1, const char *s2, size_t len)
 {
     const unsigned char *c1 = (unsigned char *)s1;
     const unsigned char *c2 = (unsigned char *)s2;
@@ -1200,15 +1200,28 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             }
         }
         if (res == NULL && !PyErr_Occurred()) {
-            PyErr_SetString(PyExc_ValueError, "No fields found.");
+            /* these dtypes had no fields. Use a MultiIter to broadcast them
+             * to an output array, and fill with True (for EQ)*/
+            PyArrayMultiIterObject *mit = (PyArrayMultiIterObject *)
+                                          PyArray_MultiIterNew(2, self, other);
+            if (mit == NULL) {
+                return NULL;
+            }
+
+            res = PyArray_NewFromDescr(&PyArray_Type,
+                                       PyArray_DescrFromType(NPY_BOOL),
+                                       mit->nd, mit->dimensions,
+                                       NULL, NULL, 0, NULL);
+            Py_DECREF(mit);
+            if (res) {
+                 PyArray_FILLWBYTE((PyArrayObject *)res,
+                                   cmp_op == Py_EQ ? 1 : 0);
+            }
         }
         return res;
     }
     else {
-        /*
-         * compare as a string. Assumes self and
-         * other have same descr->type
-         */
+        /* compare as a string. Assumes self and other have same descr->type */
         return _strings_richcompare(self, other, cmp_op, 0);
     }
 }

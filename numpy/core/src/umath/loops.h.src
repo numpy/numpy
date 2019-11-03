@@ -7,14 +7,12 @@
 #define _NPY_UMATH_LOOPS_H_
 
 #define BOOL_invert BOOL_logical_not
-#define BOOL_negative BOOL_logical_not
 #define BOOL_add BOOL_logical_or
 #define BOOL_bitwise_and BOOL_logical_and
 #define BOOL_bitwise_or BOOL_logical_or
 #define BOOL_logical_xor BOOL_not_equal
 #define BOOL_bitwise_xor BOOL_logical_xor
 #define BOOL_multiply BOOL_logical_and
-#define BOOL_subtract BOOL_logical_xor
 #define BOOL_maximum BOOL_logical_or
 #define BOOL_minimum BOOL_logical_and
 #define BOOL_fmax BOOL_maximum
@@ -175,21 +173,54 @@ NPY_NO_EXPORT void
  */
 NPY_NO_EXPORT void
 @TYPE@_sqrt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat1
+ * #isa = avx512f, fma#
+ */
+
+/**begin repeat2
+ * #func = sqrt, absolute, square, reciprocal#
+ */
+NPY_NO_EXPORT void
+@TYPE@_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**end repeat2**/
+/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
- *  #func = exp, log#
+ *  #func = sin, cos, exp, log#
  */
 NPY_NO_EXPORT void
 FLOAT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 /**begin repeat1
- * #isa = avx512f, avx2#
+ * #isa = avx512f, fma#
  */
 
 NPY_NO_EXPORT void
 FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ *  #func = rint, ceil, floor, trunc#
+ */
+
+/**begin repeat1
+*  #TYPE = FLOAT, DOUBLE#
+*/
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
+
+/**begin repeat2
+ * #isa = avx512f, fma#
+ */
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
+/**end repeat2**/
 /**end repeat1**/
 /**end repeat**/
 

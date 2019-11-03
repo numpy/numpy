@@ -1565,6 +1565,13 @@ M   33  21.99
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
 
+        # nested but empty fields also aren't supported
+        ndtype = [('idx', int), ('code', object), ('nest', [])]
+        with assert_raises_regex(NotImplementedError,
+                                 'Nested fields.* not supported.*'):
+            test = np.genfromtxt(TextIO(data), delimiter=";",
+                                 dtype=ndtype, converters=converters)
+
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
         data = TextIO('skip,skip,2001-01-01,1.0,skip')
@@ -1679,6 +1686,10 @@ M   33  21.99
             sup.filter(message="genfromtxt: Empty input file:")
             data = TextIO()
             test = np.genfromtxt(data)
+            assert_equal(test, np.array([]))
+
+            # when skip_header > 0
+            test = np.genfromtxt(data, skip_header=1)
             assert_equal(test, np.array([]))
 
     def test_fancy_dtype_alt(self):
@@ -1860,7 +1871,7 @@ M   33  21.99
         data = ["1, 1, 1, 1, -1.1"] * 50
         mdata = TextIO("\n".join(data))
 
-        converters = {4: lambda x: "(%s)" % x}
+        converters = {4: lambda x: "(%s)" % x.decode()}
         kwargs = dict(delimiter=",", converters=converters,
                       dtype=[(_, int) for _ in 'abcde'],)
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)

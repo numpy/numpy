@@ -10,7 +10,7 @@ from numpy.random import (
     Generator, MT19937, PCG64, Philox, RandomState, SeedSequence, SFC64,
     default_rng
 )
-from numpy.random.common import interface
+from numpy.random._common import interface
 
 try:
     import cffi  # noqa: F401
@@ -120,7 +120,7 @@ def gauss_from_uint(x, n, bits):
     return gauss[:n]
 
 def test_seedsequence():
-    from numpy.random.bit_generator import (ISeedSequence,
+    from numpy.random._bit_generator import (ISeedSequence,
                                             ISpawnableSeedSequence,
                                             SeedlessSeedSequence)
 

@@ -1081,6 +1081,7 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
  *           npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *           npy_float, npy_double, npy_longdouble,
  *           npy_datetime, npy_timedelta#
+ * #supports_nat = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1#
  */
 
 /**begin repeat1
@@ -1092,6 +1093,7 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *             npy_float, npy_double, npy_longdouble,
  *             npy_datetime, npy_timedelta#
+ * #floatingpoint = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0#
  */
 static void
 @FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
@@ -1101,7 +1103,15 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        *op++ = (@totype@)*ip++;
+        @fromtype@ f = *ip++;
+        @totype@ t = (@totype@)f;
+#if @supports_nat@ && @floatingpoint@
+        /* Avoid undefined behaviour for NaN -> NaT */
+        if (npy_isnan(f)) {
+            t = (@totype@)NPY_DATETIME_NAT;
+        }
+#endif
+        *op++ = t;
     }
 }
 /**end repeat1**/
@@ -1119,7 +1129,15 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        *op++ = (@totype@)*ip;
+        @fromtype@ f = *ip;
+        @totype@ t = (@totype@)f;
+#if @supports_nat@
+        /* Avoid undefined behaviour for NaN -> NaT */
+        if (npy_isnan(f)) {
+            t = (@totype@)NPY_DATETIME_NAT;
+        }
+#endif
+        *op++ = t;
         ip += 2;
     }
 }
@@ -1757,7 +1775,58 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
 }
 
 /**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = CFLOAT, CDOUBLE#
+ * #type = npy_cfloat, npy_cdouble#
+ */
+static int
+@fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
+             PyArray_Descr *NPY_UNUSED(ignored))
+{
+    double result;
+    int ret_real, ret_imag;
+
+    ret_real = NumPyOS_ascii_ftolf(fp, &result);
+    @type@ output;
+    // Peek next character
+    char next = getc(fp);
+    if ((next == '+') || (next == '-')) {
+        // Imaginary component specified
+        output.real = result;
+        // Revert peek and read imaginary component
+        ungetc(next, fp);
+        ret_imag = NumPyOS_ascii_ftolf(fp, &result);
+        // Peak next character
+        next = getc(fp);
+        if ((ret_imag == 1) && (next == 'j')) {
+            // If read is successful and the immediate following char is j
+            output.imag = result;
+        }
+        else {
+            output.imag = 0;
+            // Push an invalid char to trigger the not everything is read error
+            ungetc('a', fp);
+        }
+    }
+    else if (next == 'j') {
+        // Real component not specified
+        output.real = 0;
+        output.imag = result;
+    }
+    else {
+        // Imaginary component not specified
+        output.real = result;
+        output.imag = 0.;
+        // Next character is not + / - / j. Revert peek.
+        ungetc(next, fp);
+    }
+    *(@type@ *)ip = output;
+    return ret_real;
+}
+/**end repeat**/
+
+
+/**begin repeat
+ * #fname = CLONGDOUBLE,
  *          OBJECT, STRING, UNICODE, VOID,
  *          DATETIME, TIMEDELTA#
  */
@@ -1849,7 +1918,60 @@ BOOL_fromstr(char *str, void *ip, char **endptr,
 }
 
 /**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = CFLOAT, CDOUBLE#
+ * #type = npy_cfloat, npy_cdouble#
+ */
+static int
+@fname@_fromstr(char *str, void *ip, char **endptr,
+        PyArray_Descr *NPY_UNUSED(ignore))
+{
+    double result;
+
+    result = NumPyOS_ascii_strtod(str, endptr);
+    @type@ output;
+
+    if (endptr && ((*endptr[0] == '+') || (*endptr[0] == '-'))) {
+        // Imaginary component specified
+        output.real = result;
+        // Reading imaginary component
+        char **prev = endptr;
+        str = *endptr;
+        result = NumPyOS_ascii_strtod(str, endptr);
+        if (endptr && *endptr[0] == 'j') {
+            // Read is successful if the immediate following char is j
+            output.imag = result;
+            // Skip j
+            ++*endptr;
+        }
+        else {
+            /*
+             * Set endptr to previous char to trigger the not everything is
+             * read error
+             */
+            endptr = prev;
+            output.imag = 0;
+        }
+    }
+    else if (endptr && *endptr[0] == 'j') {
+        // Real component not specified
+        output.real = 0;
+        output.imag = result;
+        // Skip j
+        ++*endptr;
+    }
+    else {
+        // Imaginary component not specified
+        output.real = result;
+        output.imag = 0.;
+    }
+    *(@type@ *)ip = output;
+    return 0;
+}
+/**end repeat**/
+
+
+/**begin repeat
+ * #fname = CLONGDOUBLE,
  *          OBJECT, STRING, UNICODE, VOID#
  */
 
@@ -3078,6 +3200,7 @@ BOOL_argmax(npy_bool *ip, npy_intp n, npy_intp *max_ind,
  * #le = _LESS_THAN_OR_EQUAL*10, npy_half_le, _LESS_THAN_OR_EQUAL*8#
  * #iscomplex = 0*14, 1*3, 0*2#
  * #incr = ip++*14, ip+=2*3, ip++*2#
+ * #isdatetime = 0*17, 1*2#
  */
 static int
 @fname@_argmax(@type@ *ip, npy_intp n, npy_intp *max_ind,
@@ -3103,6 +3226,12 @@ static int
         return 0;
     }
 #endif
+#if @isdatetime@
+    if (mp == NPY_DATETIME_NAT) {
+        /* NaT encountered, it's maximal */
+        return 0;
+    }
+#endif
 
     for (i = 1; i < n; i++) {
         @incr@;
@@ -3122,6 +3251,13 @@ static int
             }
         }
 #else
+#if @isdatetime@
+        if (*ip == NPY_DATETIME_NAT) {
+            /* NaT encountered, it's maximal */
+            *max_ind = i;
+            break;
+        }
+#endif
         if (!@le@(*ip, mp)) {  /* negated, for correct nan handling */
             mp = *ip;
             *max_ind = i;
@@ -3158,16 +3294,19 @@ BOOL_argmin(npy_bool *ip, npy_intp n, npy_intp *min_ind,
  * #fname = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *          LONG, ULONG, LONGLONG, ULONGLONG,
  *          HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *          CFLOAT, CDOUBLE, CLONGDOUBLE#
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *          DATETIME, TIMEDELTA#
  * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
- *         npy_float, npy_double, npy_longdouble#
- * #isfloat = 0*10, 1*7#
- * #isnan = nop*10, npy_half_isnan, npy_isnan*6#
- * #le = _LESS_THAN_OR_EQUAL*10, npy_half_le, _LESS_THAN_OR_EQUAL*6#
- * #iscomplex = 0*14, 1*3#
- * #incr = ip++*14, ip+=2*3#
+ *         npy_float, npy_double, npy_longdouble,
+ *         npy_datetime, npy_timedelta#
+ * #isfloat = 0*10, 1*7, 0*2#
+ * #isnan = nop*10, npy_half_isnan, npy_isnan*6, nop*2#
+ * #le = _LESS_THAN_OR_EQUAL*10, npy_half_le, _LESS_THAN_OR_EQUAL*8#
+ * #iscomplex = 0*14, 1*3, 0*2#
+ * #incr = ip++*14, ip+=2*3, ip++*2#
+ * #isdatetime = 0*17, 1*2#
  */
 static int
 @fname@_argmin(@type@ *ip, npy_intp n, npy_intp *min_ind,
@@ -3193,6 +3332,12 @@ static int
         return 0;
     }
 #endif
+#if @isdatetime@
+    if (mp == NPY_DATETIME_NAT) {
+        /* NaT encountered, it's minimal */
+        return 0;
+    }
+#endif
 
     for (i = 1; i < n; i++) {
         @incr@;
@@ -3212,6 +3357,13 @@ static int
             }
         }
 #else
+#if @isdatetime@
+        if (*ip == NPY_DATETIME_NAT) {
+            /* NaT encountered, it's minimal */
+            *min_ind = i;
+            break;
+        }
+#endif 
         if (!@le@(mp, *ip)) {  /* negated, for correct nan handling */
             mp = *ip;
             *min_ind = i;
@@ -3230,43 +3382,6 @@ static int
 /**end repeat**/
 
 #undef _LESS_THAN_OR_EQUAL
-
-/**begin repeat
- *
- * #fname = DATETIME, TIMEDELTA#
- * #type = npy_datetime, npy_timedelta#
- */
-static int
-@fname@_argmin(@type@ *ip, npy_intp n, npy_intp *min_ind,
-        PyArrayObject *NPY_UNUSED(aip))
-{
-    /* NPY_DATETIME_NAT is smaller than every other value, we skip
-     * it for consistency with min().
-     */
-    npy_intp i;
-    @type@ mp = NPY_DATETIME_NAT;
-
-    i = 0;
-    while (i < n && mp == NPY_DATETIME_NAT) {
-        mp = ip[i];
-        i++;
-    }
-    if (i == n) {
-        /* All NaTs: return 0 */
-        *min_ind = 0;
-        return 0;
-    }
-    *min_ind = i - 1;
-    for (; i < n; i++) {
-        if (mp > ip[i] && ip[i] != NPY_DATETIME_NAT) {
-            mp = ip[i];
-            *min_ind = i;
-        }
-    }
-    return 0;
-}
-
-/**end repeat**/
 
 static int
 OBJECT_argmax(PyObject **ip, npy_intp n, npy_intp *max_ind,

@@ -206,8 +206,8 @@ of elements that we want, instead of the step::
     `empty_like`,
     `arange`,
     `linspace`,
-    `numpy.random.mtrand.RandomState.rand`,
-    `numpy.random.mtrand.RandomState.randn`,
+    `numpy.random.RandomState.rand`,
+    `numpy.random.RandomState.randn`,
     `fromfunction`,
     `fromfile`
 

@@ -371,8 +371,8 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
         }
         if (errmsg == NULL) {
             PyErr_Format(PyExc_ValueError,
-                    "Out-of-bounds range [%d, %d) passed to "
-                    "ResetToIterIndexRange", (int)istart, (int)iend);
+                    "Out-of-bounds range [%" NPY_INTP_FMT ", %" NPY_INTP_FMT ") passed to "
+                    "ResetToIterIndexRange", istart, iend);
         }
         else {
             *errmsg = "Out-of-bounds range passed to ResetToIterIndexRange";
@@ -382,8 +382,8 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
     else if (iend < istart) {
         if (errmsg == NULL) {
             PyErr_Format(PyExc_ValueError,
-                    "Invalid range [%d, %d) passed to ResetToIterIndexRange",
-                    (int)istart, (int)iend);
+                    "Invalid range [%" NPY_INTP_FMT ", %" NPY_INTP_FMT ") passed to ResetToIterIndexRange",
+                    istart, iend);
         }
         else {
             *errmsg = "Invalid range passed to ResetToIterIndexRange";
@@ -1429,8 +1429,8 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("REUSE_REDUCE_LOOPS ");
 
     printf("\n");
-    printf("| NDim: %d\n", (int)ndim);
-    printf("| NOp: %d\n", (int)nop);
+    printf("| NDim: %d\n", ndim);
+    printf("| NOp: %d\n", nop);
     if (NIT_MASKOP(iter) >= 0) {
         printf("| MaskOp: %d\n", (int)NIT_MASKOP(iter));
     }
@@ -1628,14 +1628,11 @@ npyiter_coalesce_axes(NpyIter *iter)
     npy_intp istrides, nstrides = NAD_NSTRIDES();
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    NpyIter_AxisData *ad_compress;
+    NpyIter_AxisData *ad_compress = axisdata;
     npy_intp new_ndim = 1;
 
     /* The HASMULTIINDEX or IDENTPERM flags do not apply after coalescing */
     NIT_ITFLAGS(iter) &= ~(NPY_ITFLAG_IDENTPERM|NPY_ITFLAG_HASMULTIINDEX);
-
-    axisdata = NIT_AXISDATA(iter);
-    ad_compress = axisdata;
 
     for (idim = 0; idim < ndim-1; ++idim) {
         int can_coalesce = 1;
