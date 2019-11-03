@@ -1170,7 +1170,7 @@ def argmax(a, axis=None, out=None):
     >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)  # same as np.max(x, axis=-1, keepdims=True)
     array([[4],
            [3]])
-    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1) # same as np.max(x, axis=-1)
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1)  # same as np.max(x, axis=-1)
     array([4, 3])
 
     """
@@ -1245,10 +1245,10 @@ def argmin(a, axis=None, out=None):
 
     >>> x = np.array([[4,2,3], [1,0,3]])
     >>> index_array = np.argmin(x, axis=-1)
-    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1) # same as np.min(x, axis=-1, keepdims=True)
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1)  # same as np.min(x, axis=-1, keepdims=True)
     array([[2],
            [0]])
-    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1) # same as np.max(x, axis=-1)
+    >>> np.take_along_axis(x, np.expand_dims(index_array, axis=-1), axis=-1).squeeze(axis=-1)  # same as np.max(x, axis=-1)
     array([2, 0])
 
     """
