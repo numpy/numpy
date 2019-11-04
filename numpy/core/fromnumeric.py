@@ -797,7 +797,8 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     partition : Describes partition algorithms used.
     ndarray.partition : Inplace partition.
     argsort : Full indirect sort.
-    take_along_axis : Apply ``index_array`` from argpartition to an array as if by calling partition.
+    take_along_axis : Apply ``index_array`` from argpartition 
+                      to an array as if by calling partition.
 
     Notes
     -----
@@ -1034,7 +1035,8 @@ def argsort(a, axis=-1, kind=None, order=None):
     lexsort : Indirect stable sort with multiple keys.
     ndarray.sort : Inplace sort.
     argpartition : Indirect partial sort.
-    take_along_axis : Apply ``index_array`` from argsort to an array as if by calling sort.
+    take_along_axis : Apply ``index_array`` from argsort 
+                      to an array as if by calling sort.
 
     Notes
     -----
@@ -1130,7 +1132,8 @@ def argmax(a, axis=None, out=None):
     ndarray.argmax, argmin
     amax : The maximum value along a given axis.
     unravel_index : Convert a flat index into an index tuple.
-    take_along_axis : Apply ``np.expand_dims(index_array, axis)`` from argmax to an array as if by calling max.
+    take_along_axis : Apply ``np.expand_dims(index_array, axis)`` 
+                      from argmax to an array as if by calling max.
 
     Notes
     -----
@@ -1210,7 +1213,8 @@ def argmin(a, axis=None, out=None):
     ndarray.argmin, argmax
     amin : The minimum value along a given axis.
     unravel_index : Convert a flat index into an index tuple.
-    take_along_axis : Apply ``np.expand_dims(index_array, axis)`` from argmin to an array as if by calling min.
+    take_along_axis : Apply ``np.expand_dims(index_array, axis)`` 
+                      from argmin to an array as if by calling min.
 
     Notes
     -----
