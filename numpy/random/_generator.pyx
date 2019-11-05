@@ -3456,7 +3456,7 @@ cdef class Generator:
 
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
-                            tol=1e-8):
+                            tol=1e-8, *, method='svd'):
         """
         multivariate_normal(mean, cov, size=None, check_valid='warn', tol=1e-8)
 
@@ -3486,6 +3486,15 @@ cdef class Generator:
         tol : float, optional
             Tolerance when checking the singular values in covariance matrix.
             cov is cast to double before the check.
+        method : { 'svd', 'eigh', 'cholesky'}, optional
+            The cov input is used to compute a factor matrix A such that
+            ``A @ A.T = cov``. This argument is used to select the method
+            used to compute the factor matrix A. The default method 'svd' is
+            the slowest, while 'cholesky' is the fastest but less robust than
+            the slowest method. The method `eigh` uses eigen decomposition to
+            compute A and is faster than svd but slower than cholesky.
+
+            .. versionadded:: 1.18.0
 
         Returns
         -------
@@ -3546,8 +3555,14 @@ cdef class Generator:
         --------
         >>> mean = (1, 2)
         >>> cov = [[1, 0], [0, 1]]
-        >>> x = np.random.default_rng().multivariate_normal(mean, cov, (3, 3))
+        >>> rng = np.random.default_rng()
+        >>> x = rng.multivariate_normal(mean, cov, (3, 3))
         >>> x.shape
+        (3, 3, 2)
+
+        We can use a different method other than the default to factorize cov:
+        >>> y = rng.multivariate_normal(mean, cov, (3, 3), method='cholesky')
+        >>> y.shape
         (3, 3, 2)
 
         The following is probably true, given that 0.6 is roughly twice the
@@ -3557,7 +3572,9 @@ cdef class Generator:
         [True, True] # random
 
         """
-        from numpy.dual import svd
+        if method not in {'eigh', 'svd', 'cholesky'}:
+            raise ValueError(
+                "method must be one of {'eigh', 'svd', 'cholesky'}")
 
         # Check preconditions on arguments
         mean = np.array(mean)
@@ -3600,13 +3617,27 @@ cdef class Generator:
 
         # GH10839, ensure double to make tol meaningful
         cov = cov.astype(np.double)
-        (u, s, v) = svd(cov)
+        if method == 'svd':
+            from numpy.dual import svd
+            (u, s, vh) = svd(cov)
+        elif method == 'eigh':
+            from numpy.dual import eigh
+            # could call linalg.svd(hermitian=True), but that calculates a vh we don't need
+            (s, u)  = eigh(cov)
+        else:
+            from numpy.dual import cholesky
+            l = cholesky(cov)
 
-        if check_valid != 'ignore':
+        # make sure check_valid is ignored whe method == 'cholesky'
+        # since the decomposition will have failed if cov is not valid.
+        if check_valid != 'ignore' and method != 'cholesky':
             if check_valid != 'warn' and check_valid != 'raise':
-                raise ValueError("check_valid must equal 'warn', 'raise', or 'ignore'")
-
-            psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
+                raise ValueError(
+                    "check_valid must equal 'warn', 'raise', or 'ignore'")
+            if method == 'svd':
+                psd = np.allclose(np.dot(vh.T * s, vh), cov, rtol=tol, atol=tol)
+            else:
+                psd = not np.any(s < -tol)
             if not psd:
                 if check_valid == 'warn':
                     warnings.warn("covariance is not positive-semidefinite.",
@@ -3614,7 +3645,17 @@ cdef class Generator:
                 else:
                     raise ValueError("covariance is not positive-semidefinite.")
 
-        x = np.dot(x, np.sqrt(s)[:, None] * v)
+        if method == 'cholesky':
+            _factor = l
+        elif method == 'eigh':
+            # if check_valid == 'ignore' we need to ensure that np.sqrt does not
+            # return a NaN if s is a very small negative number that is
+            # approximately zero or when the covariance is not positive-semidefinite
+            _factor = u * np.sqrt(abs(s))
+        else:
+            _factor = np.sqrt(s)[:, None] * vh
+
+        x = np.dot(x, _factor)
         x += mean
         x.shape = tuple(final_shape)
         return x

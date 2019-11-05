@@ -226,7 +226,7 @@ chartoname = {
     'P': 'OBJECT',
 }
 
-all = '?bBhHiIlLqQefdgFDGOMm'
+noobj = '?bBhHiIlLqQefdgFDGmM'
 O = 'O'
 P = 'P'
 ints = 'bBhHiIlLqQ'
@@ -246,10 +246,8 @@ inexactvec = 'fd'
 noint = inexact+O
 nointP = inexact+P
 allP = bints+times+flts+cmplxP
-nobool = all[1:]
-noobj = all[:-3]+all[-2:]
-nobool_or_obj = all[1:-3]+all[-2:]
-nobool_or_datetime = all[1:-2]+all[-1:]
+nobool_or_obj = noobj[1:]
+nobool_or_datetime = noobj[1:-1] + O # includes m - timedelta64
 intflt = ints+flts
 intfltcmplx = ints+flts+cmplx
 nocmplx = bints+times+flts
@@ -431,43 +429,49 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'greater_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'less':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'less_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'not_equal':
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.not_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(all, out='?', simd=[('avx2', ints)]),
+          TD(noobj, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
+          TD('O', out='?'),
           ),
 'logical_and':
     Ufunc(2, 1, True_,
@@ -475,6 +479,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
           TD(O, f='npy_ObjectLogicalAnd'),
+          TD(O, f='npy_ObjectLogicalAnd', out='?'),
           ),
 'logical_not':
     Ufunc(1, 1, None,
@@ -482,6 +487,7 @@ defdict = {
           None,
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
           TD(O, f='npy_ObjectLogicalNot'),
+          TD(O, f='npy_ObjectLogicalNot', out='?'),
           ),
 'logical_or':
     Ufunc(2, 1, False_,
@@ -489,6 +495,7 @@ defdict = {
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(nodatetime_or_obj, out='?', simd=[('avx2', ints)]),
           TD(O, f='npy_ObjectLogicalOr'),
+          TD(O, f='npy_ObjectLogicalOr', out='?'),
           ),
 'logical_xor':
     Ufunc(2, 1, False_,

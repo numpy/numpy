@@ -562,11 +562,15 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
         if invert:
             mask = np.ones(len(ar1), dtype=bool)
             for a in ar2:
-                mask &= (ar1 != a)
+                # convert object arrays to bool
+                # cannot use np.not_equal until 'S' and 'U' have loops
+                mask &= (ar1 != a).astype(bool)
         else:
             mask = np.zeros(len(ar1), dtype=bool)
             for a in ar2:
-                mask |= (ar1 == a)
+                # convert object arrays to bool
+                # cannot use np.equal until 'S' and 'U' have loops
+                mask |= (ar1 == a).astype(bool)
         return mask
 
     # Otherwise use sorting
