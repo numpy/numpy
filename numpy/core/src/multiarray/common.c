@@ -12,7 +12,7 @@
 #include "usertypes.h"
 
 #include "common.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 
 #include "get_attr_string.h"
 #include "mem_overlap.h"

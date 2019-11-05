@@ -20,7 +20,7 @@
 #include "arrayobject.h"
 #include "mem_overlap.h"
 #include "alloc.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 
 /*******************  array attribute get and set routines ******************/
 

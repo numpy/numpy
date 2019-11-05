@@ -11,7 +11,7 @@
 
 #include "npy_pycompat.h"
 
-#include "buffer.h"
+#include "npy_buffer.h"
 #include "common.h"
 #include "numpyos.h"
 #include "arrayobject.h"
