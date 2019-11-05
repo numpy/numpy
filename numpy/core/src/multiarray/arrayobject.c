@@ -48,7 +48,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "mapping.h"
 #include "getset.h"
 #include "sequence.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 #include "array_assign.h"
 #include "alloc.h"
 #include "mem_overlap.h"
