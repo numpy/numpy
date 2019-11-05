@@ -78,7 +78,6 @@ We can access the elements in the array using square brackets. When you're acces
 More information about arrays
 -----------------------------
 
-------
 
 ::
 
@@ -111,7 +110,6 @@ Array **attributes** reflect information intrinsic to the array itself. If you n
 How to create a basic array
 ---------------------------
 
------
 
 ::
 
@@ -236,7 +234,6 @@ While the default data type is floating point (float64), you can expecity specif
 Adding, removing, and sorting elements
 --------------------------------------
 
------
 
 ::
 
@@ -315,7 +312,6 @@ In addition to sort, which returns a sorted copy of an array, you can use:
 How do you know the shape and size of an array?
 -----------------------------------------------
 
------
 
 ::
 
@@ -361,7 +357,6 @@ For example:
 Can you reshape an array?
 -------------------------
 
------
 
 ::
 
@@ -452,7 +447,6 @@ You can visualize it this way:
 How to create an array from existing data
 -----------------------------------------
 
------
 
 ::
 
@@ -594,7 +588,6 @@ Using the `copy` method makes a complete copy of the array and its data (a *deep
 Basic array operations
 ----------------------
 
------
 
 ::
 
@@ -687,7 +680,6 @@ NumPy understands that the multiplication should happen with each cell. That con
 More useful array operations
 -----------------------------------
 
------
 
 ::
 
@@ -753,7 +745,6 @@ The four values listed above correspond to the number of columns in your array. 
 How to inspect the size and shape of a NumPy array
 --------------------------------------------------
 
------
 
 ::
 
@@ -1099,7 +1090,6 @@ How to get index locations that satisfy a given condition
 Transposing and reshaping a matrix
 ----------------------------------
 
------
 
 ::
 
@@ -1124,7 +1114,6 @@ You may need to switch the dimensions of a matrix. This can happen when, for exa
 How to reverse
 --------------
 
------
 
 ::
 
@@ -1264,7 +1253,6 @@ You can also reverse the column at index position 1 (the second column):
 Reshaping and Flattening multidimensional arrays
 ------------------------------------------------
 
------
 
 ::
 
