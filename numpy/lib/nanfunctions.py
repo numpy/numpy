@@ -99,7 +99,7 @@ def _replace_nan(a, val):
 
     if a.dtype == np.object_:
         # object arrays do not support `isnan` (gh-9009), so make a guess
-        mask = a != a
+        mask = np.not_equal(a, a, dtype=bool)
     elif issubclass(a.dtype.type, np.inexact):
         mask = np.isnan(a)
     else:
