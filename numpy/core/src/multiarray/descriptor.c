@@ -19,7 +19,7 @@
 #include "descriptor.h"
 #include "alloc.h"
 #include "assert.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 
 /*
  * offset:    A starting offset.

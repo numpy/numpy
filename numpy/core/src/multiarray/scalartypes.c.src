@@ -28,7 +28,7 @@
 #include "npy_import.h"
 #include "dragon4.h"
 #include "npy_longdouble.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 
 #include <stdlib.h>
 
