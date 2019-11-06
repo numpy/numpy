@@ -227,6 +227,8 @@ chartoname = {
 }
 
 noobj = '?bBhHiIlLqQefdgFDGmM'
+all = '?bBhHiIlLqQefdgFDGOmM'
+
 O = 'O'
 P = 'P'
 ints = 'bBhHiIlLqQ'
@@ -429,7 +431,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(noobj, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -437,7 +439,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(noobj, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -445,7 +447,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(noobj, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -453,7 +455,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.less_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(noobj, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -461,7 +463,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(noobj, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
@@ -469,7 +471,7 @@ defdict = {
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.not_equal'),
           'PyUFunc_SimpleBinaryComparisonTypeResolver',
-          TD(noobj, out='?', simd=[('avx2', ints)]),
+          TD(all, out='?', simd=[('avx2', ints)]),
           [TypeDescription('O', FullTypeDescr, 'OO', 'O')],
           TD('O', out='?'),
           ),
