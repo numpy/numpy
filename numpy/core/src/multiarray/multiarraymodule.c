@@ -1115,6 +1115,14 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
 
     n1 = PyArray_DIMS(ap1)[0];
     n2 = PyArray_DIMS(ap2)[0];
+    if (n1 == 0) {
+        PyErr_SetString(PyExc_ValueError, "first array argument cannot be empty");
+        return NULL;
+    }
+    if (n2 == 0) {
+        PyErr_SetString(PyExc_ValueError, "second array argument cannot be empty");
+        return NULL;
+    }
     if (n1 < n2) {
         ret = ap1;
         ap1 = ap2;
