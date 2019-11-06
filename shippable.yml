@@ -22,6 +22,7 @@ runtime:
 build:
     ci:
     # install dependencies
+    - sudo apt-get update
     - sudo apt-get install gcc gfortran
     - target=$(python tools/openblas_support.py)
     - sudo cp -r "${target}"/64/lib/* /usr/lib
