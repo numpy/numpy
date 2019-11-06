@@ -4790,12 +4790,7 @@ class MaskedArray(ndarray):
 
         mask = _check_mask_axis(self._mask, axis, **kwargs)
         if out is None:
-            r = self.filled(True).all(axis=axis, **kwargs)
-            # object dtypes with axis=None return a scalar
-            if isinstance(r, bool):
-                d = type(self)(r)
-            else:
-                d = r.view(type(self))
+            d = self.filled(True).all(axis=axis, **kwargs).view(type(self))
             if d.ndim:
                 d.__setmask__(mask)
             elif mask:
