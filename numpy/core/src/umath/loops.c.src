@@ -1245,6 +1245,22 @@ NPY_NO_EXPORT void
     }
 }
 
+
+NPY_NO_EXPORT void
+@TYPE@_isnan(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *((npy_bool *)op1) = (in1 == NPY_DATETIME_NAT);
+    }
+}
+
+NPY_NO_EXPORT void
+@TYPE@_isinf(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    UNARY_LOOP_FAST(npy_bool, npy_bool, (void)in; *out = NPY_FALSE);
+}
+
 NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {

@@ -386,7 +386,7 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
             if not signbit(desired) == signbit(actual):
                 raise AssertionError(msg)
 
-    except (TypeError, ValueError, NotImplementedError):
+    except (TypeError, ValueError, NotImplementedError, DeprecationWarning):
         pass
 
     try:

@@ -2232,7 +2232,7 @@ class TestDateTime(object):
                 continue
             assert_raises(TypeError, np.isnat, np.zeros(10, t))
 
-    def test_isfinite(self):
+    def test_isfinite_scalar(self):
         assert_(not np.isfinite(np.datetime64('NaT', 'ms')))
         assert_(not np.isfinite(np.datetime64('NaT', 'ns')))
         assert_(np.isfinite(np.datetime64('2038-01-19T03:14:07')))
@@ -2240,18 +2240,21 @@ class TestDateTime(object):
         assert_(not np.isfinite(np.timedelta64('NaT', "ms")))
         assert_(np.isfinite(np.timedelta64(34, "ms")))
 
-        res = np.array([True, True,  False])
-        for unit in ['Y', 'M', 'W', 'D',
-                     'h', 'm', 's', 'ms', 'us',
-                     'ns', 'ps', 'fs', 'as']:
-            arr = np.array([123, -321, "NaT"], dtype='<datetime64[%s]' % unit)
-            assert_equal(np.isfinite(arr), res)
-            arr = np.array([123, -321, "NaT"], dtype='>datetime64[%s]' % unit)
-            assert_equal(np.isfinite(arr), res)
-            arr = np.array([123, -321, "NaT"], dtype='<timedelta64[%s]' % unit)
-            assert_equal(np.isfinite(arr), res)
-            arr = np.array([123, -321, "NaT"], dtype='>timedelta64[%s]' % unit)
-            assert_equal(np.isfinite(arr), res)
+    @pytest.mark.parametrize('unit', ['Y', 'M', 'W', 'D', 'h', 'm', 's', 'ms',
+                                      'us', 'ns', 'ps', 'fs', 'as'])
+    def test_isxx_units(self, unit):
+        '''check isfinite, isinf, isnan for all units of <M, >M, <m, >m dtypes
+        '''
+        arr_val = [123, -321, "NaT"]
+        dstr = ['<datetime64[%s]', '>datetime64[%s]',
+                '<timedelta64[%s]', '>timedelta64[%s]']
+        for arr in [np.array(arr_val,  dtype= s % unit) for s in dstr]:
+            pos = np.array([True, True,  False])
+            neg = np.array([False, False,  True])
+            false = np.array([False, False,  False])
+            assert_equal(np.isfinite(arr), pos)
+            assert_equal(np.isinf(arr), false)
+            assert_equal(np.isnan(arr), neg)
 
     def test_corecursive_input(self):
         # construct a co-recursive list
