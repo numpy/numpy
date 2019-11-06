@@ -146,8 +146,8 @@ raise_casting_error(
         PyObject *exc_type,
         PyUFuncObject *ufunc,
         NPY_CASTING casting,
-        PyArray_Descr *from,
-        PyArray_Descr *to,
+        PyArray_Descr **from,
+        PyArrayObject **to,
         npy_intp i)
 {
     PyObject *exc_value;
@@ -158,12 +158,21 @@ raise_casting_error(
         return -1;
     }
 
+    int j, nin = ufunc->nin, nop = nin + ufunc->nout;
+    PyObject* froms = PyTuple_New(nop);
+    PyObject* tos = PyTuple_New(nop);
+
+    for(j=0;j<nop;j++){
+        PyTuple_SetItem(froms, j, (PyObject *)from[j]);
+        PyTuple_SetItem(tos, j, (PyObject *)PyArray_DESCR(to[j]));
+    }
+
     exc_value = Py_BuildValue(
         "ONOOi",
         ufunc,
         casting_value,
-        (PyObject *)from,
-        (PyObject *)to,
+        froms,
+        tos,
         i
     );
     if (exc_value == NULL){
@@ -182,8 +191,8 @@ static int
 raise_input_casting_error(
         PyUFuncObject *ufunc,
         NPY_CASTING casting,
-        PyArray_Descr *from,
-        PyArray_Descr *to,
+        PyArray_Descr **from,
+        PyArray_Descr **to,
         npy_intp i)
 {
     static PyObject *exc_type = NULL;
@@ -205,8 +214,8 @@ static int
 raise_output_casting_error(
         PyUFuncObject *ufunc,
         NPY_CASTING casting,
-        PyArray_Descr *from,
-        PyArray_Descr *to,
+        PyArray_Descr **from,
+        PyArrayObject **to,
         npy_intp i)
 {
     static PyObject *exc_type = NULL;
@@ -241,13 +250,13 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
         if (i < nin) {
             if (!PyArray_CanCastArrayTo(operands[i], dtypes[i], casting)) {
                 return raise_input_casting_error(
-                    ufunc, casting, PyArray_DESCR(operands[i]), dtypes[i], i);
+                    ufunc, casting, operands, dtypes, i);
             }
         } else if (operands[i] != NULL) {
             if (!PyArray_CanCastTypeTo(dtypes[i],
                                     PyArray_DESCR(operands[i]), casting)) {
                 return raise_output_casting_error(
-                    ufunc, casting, dtypes[i], PyArray_DESCR(operands[i]), i);
+                    ufunc, casting, dtypes, operands, i);
             }
         }
     }
