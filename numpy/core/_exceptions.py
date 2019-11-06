@@ -88,8 +88,6 @@ class _UFuncInputCastingError(_UFuncCastingError):
         self.in_i = i
 
     def __str__(self):
-        # only show the number if more than one output exists
-        i_str = "{} ".format(self.out_i) if self.ufunc.nout != 1 else ""
         if self.ufunc.nout > 1:
             from_outs = ", ".join(["out{}={}".format(i+1, f.name) for i, f in enumerate(self.from_) if i>=self.ufunc.nin])
             to_outs = ", ".join(["out{}={}".format(i+1, t.name) for i, t in enumerate(self.to) if i>=self.ufunc.nin])
@@ -106,7 +104,7 @@ class _UFuncInputCastingError(_UFuncCastingError):
                  self.ufunc.__name__,
                  ", ".join([f.name for i, f in enumerate(self.from_) if i<self.ufunc.nin]),
                  from_outs,
-                 self.from_[self.out_i].name, self.to[self.out_i].name, self.casting
+                 self.from_[self.in_i].name, self.to[self.in_i].name, self.casting
         )
 
 
@@ -118,8 +116,6 @@ class _UFuncOutputCastingError(_UFuncCastingError):
         self.out_i = i
 
     def __str__(self):
-        # only show the number if more than one output exists
-        i_str = "{} ".format(self.out_i) if self.ufunc.nout != 1 else ""
         if self.ufunc.nout > 1:
             from_outs = ", ".join(["out{}={}".format(i+1, f.name) for i, f in enumerate(self.from_) if i>=self.ufunc.nin])
             to_outs = ", ".join(["out{}={}".format(i+1, t.name) for i, t in enumerate(self.to) if i>=self.ufunc.nin])
