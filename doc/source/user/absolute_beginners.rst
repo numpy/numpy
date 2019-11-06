@@ -4,6 +4,8 @@ NumPy: The Absolute Basics for Beginners
 
 This is a working document for a future section introducing NumPy to absolute beginners. If you have comments or suggestions, please don’t hesitate to reach out!
 
+.. image:: images/numpylogo.svg
+
 Welcome to NumPy!
 -----------------
 
@@ -410,6 +412,11 @@ You can specify a few optional parameters.
 **order:** 'C' means to read/write the elements using C-like index order,  ‘F’ means to read / write the elements using Fortran-like index order, ‘A’ means to read / write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise. (This is an optional parameter and doesn't need to be specified.)
 
 `Learn more about shape manipulation here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#shape-manipulation>`_.
+
+
+How to convert a 1D array into a 2D array (how to add a new axis)
+-----------------------------------------------------------------
+
 
 Indexing and Slicing
 --------------------
@@ -1332,9 +1339,61 @@ For example:
 How to save and load NumPy objects
 ----------------------------------
 
+::
 
-How to convert a 1D array into a 2D array (how to add a new axis)
------------------------------------------------------------------
+  np.save()
+  np.savez()
+  np.savetxt()
+  np.load()
+  np.loadtxt()
+
+-----
+
+You will, at some point, want to save your arrays to disk and load them back without having to re-run the code. Fortunately, there are several ways to save and load objects with Numpy. The ndarray objects can be saved to and loaded from the disk files with **loadtxt** and **savetxt** functions that handle normal text files, **load** and **save** functions that handle NumPy binary files with a **.npy** file extension, and a **savez** function that handles NumPy files with a .npz file extension.
+
+The **.npy** and **.npz** files store data, shape, dtype, and other information that's required to reconstruct the ndarray in a way that allows the array to be correctly retrieved, even when the file is on another machine with different architecture.
+
+If you want to store a single ndarray object, store it as a .npy file using np.save. If you want to store more than one ndarray object in a single file, save it as a .npz file using np.savez. You can also `save several arrays into a single file in compressed npz format <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savez_compressed.html>`_ with **np.savez_compressed**.
+
+It's easy to save and load and array with **np.save()**. Just make sure to specify the array you want to save and a file name.  For example, if you create this array:
+
+::
+
+  a = np.array([1, 2, 3, 4, 5, 6])
+
+You can save it as "filename.npy" with
+
+::
+
+  np.save('filename',a)
+
+You can use **np.load()** to reconstruct your array.
+
+::
+
+  b = np.load('filename.npy')
+
+If you want to check your array, you can run:
+
+::
+
+  print(b)
+
+**Output:**
+
+::
+
+  [1 2 3 4 5 6]
+
+The **savetxt()** and **loadtxt()** functions accept additional optional parameters such as header, footer, and delimiter.
+
+You can read more about `save here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.save.html>`_. `savez here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savez.html>`_, and `load here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.load.html>`_. 
+You can read more about `savetxt here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savetxt.html>`_. and `loadtxt here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_.
+
+Learn more about `input and output routines here <https://docs.scipy.org/doc/numpy/reference/routines.io.html>`_.
+
+Be aware that loading files that contain object arrays with **np.load()** uses the pickle module which is not secure against erroneous or maliciously constructed data. Consider passing **allow_pickle=False** to load data that is known not to contain object arrays for the safer handling of untrusted sources.
+
 
 Working with Mathematical Formulas
 ----------------------------------
