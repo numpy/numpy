@@ -104,16 +104,35 @@ class _UFuncOutputCastingError(_UFuncCastingError):
     def __init__(self, ufunc, casting, from_, to, i):
         super().__init__(ufunc, casting, from_, to)
         self.out_i = i
+        import code;code.interact(local=locals())
 
     def __str__(self):
         # only show the number if more than one output exists
         i_str = "{} ".format(self.out_i) if self.ufunc.nout != 1 else ""
+        if self.ufunc.nout > 1:
+            from_outs = ", ".join(["out={}".format(f.name) for i, f in enumerate(self.from_) if i>=self.ufunc.nin])
+            to_outs = ", ".join(["out={}".format(t.name) for i, t in enumerate(self.to) if i>=self.ufunc.nin])
+        else:
+            from_outs = "out={}".format(self.from_[-1])
+            to_outs = "out={}".format(self.to[-1])
+            
         return (
-            "Cannot cast ufunc {!r} output {}from {!r} to {!r} with casting "
-            "rule {!r}"
-        ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
+            "Output of ufunc {}({}, {}) resolved to the {}({}, {}) loop," 
+            " but np.can_cast(np.{}, np.{}, casting='{}') is False"
+        ).format(self.ufunc.__name__,
+                 ", ".join([f.name for i, f in enumerate(self.to) if i<self.ufunc.nin]),
+                 to_outs,
+                 self.ufunc.__name__,
+                 ", ".join([f.name for i, f in enumerate(self.from_) if i<self.ufunc.nin]),
+                 from_outs,
+                 self.from_[self.out_i].name, self.to[self.out_i].name, self.casting
         )
+        #return (
+        #    "Cannot cast ufunc {!r} output {}from {!r} to {!r} with casting "
+        #    "rule {!r}"
+        #).format(
+        #    self.ufunc.__name__, i_str, self.from_, self.to, self.casting
+        #)
 
 
 # Exception used in shares_memory()
