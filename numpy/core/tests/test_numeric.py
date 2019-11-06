@@ -2567,6 +2567,11 @@ class TestCorrelate(object):
         z = np.correlate(y, x, mode='full')
         assert_array_almost_equal(z, r_z)
 
+    def test_zero_size(self):
+        with pytest.raises(ValueError):
+            np.correlate(np.array([]), np.ones(1000), mode='full')
+        with pytest.raises(ValueError):
+            np.correlate(np.ones(1000), np.array([]), mode='full')
 
 class TestConvolve(object):
     def test_object(self):
