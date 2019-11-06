@@ -146,10 +146,12 @@ raise_casting_error(
         PyObject *exc_type,
         PyUFuncObject *ufunc,
         NPY_CASTING casting,
-        PyArray_Descr **from,
-        PyArrayObject **to,
-        npy_intp i)
+        PyArrayObject **operands,
+        PyArray_Descr **dtypes,
+        npy_intp i,
+        bool input)
 {
+    
     PyObject *exc_value;
     PyObject *casting_value;
 
@@ -159,12 +161,19 @@ raise_casting_error(
     }
 
     int j, nin = ufunc->nin, nop = nin + ufunc->nout;
-    PyObject* froms = PyTuple_New(nop);
-    PyObject* tos = PyTuple_New(nop);
+    PyObject *froms = PyTuple_New(nop);
+    PyObject *tos = PyTuple_New(nop);
 
-    for(j=0;j<nop;j++){
-        PyTuple_SetItem(froms, j, (PyObject *)from[j]);
-        PyTuple_SetItem(tos, j, (PyObject *)PyArray_DESCR(to[j]));
+    if (input) {
+        for(j=0;j<nop;j++){
+            PyTuple_SetItem(froms, j, (PyObject *)PyArray_DESCR(operands[j]));
+            PyTuple_SetItem(tos, j, (PyObject *)dtypes[j]);
+        }
+    }else{
+        for(j=0;j<nop;j++){
+            PyTuple_SetItem(froms, j, (PyObject *)dtypes[j]);
+            PyTuple_SetItem(tos, j, (PyObject *)PyArray_DESCR(operands[j]));
+        }
     }
 
     exc_value = Py_BuildValue(
@@ -191,8 +200,8 @@ static int
 raise_input_casting_error(
         PyUFuncObject *ufunc,
         NPY_CASTING casting,
-        PyArray_Descr **from,
-        PyArray_Descr **to,
+        PyArrayObject **operands,
+        PyArray_Descr **dtypes,
         npy_intp i)
 {
     static PyObject *exc_type = NULL;
@@ -203,7 +212,7 @@ raise_input_casting_error(
         return -1;
     }
 
-    return raise_casting_error(exc_type, ufunc, casting, from, to, i);
+    return raise_casting_error(exc_type, ufunc, casting, operands, dtypes, i, true);
 }
 
 
@@ -214,8 +223,8 @@ static int
 raise_output_casting_error(
         PyUFuncObject *ufunc,
         NPY_CASTING casting,
-        PyArray_Descr **from,
-        PyArrayObject **to,
+        PyArrayObject **operands,
+        PyArray_Descr **dtypes,
         npy_intp i)
 {
     static PyObject *exc_type = NULL;
@@ -226,7 +235,7 @@ raise_output_casting_error(
         return -1;
     }
 
-    return raise_casting_error(exc_type, ufunc, casting, from, to, i);
+    return raise_casting_error(exc_type, ufunc, casting, operands, dtypes, i, false);
 }
 
 
@@ -256,7 +265,7 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
             if (!PyArray_CanCastTypeTo(dtypes[i],
                                     PyArray_DESCR(operands[i]), casting)) {
                 return raise_output_casting_error(
-                    ufunc, casting, dtypes, operands, i);
+                    ufunc, casting, operands, dtypes, i);
             }
         }
     }
