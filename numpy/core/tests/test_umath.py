@@ -173,8 +173,7 @@ class TestComparisons(object):
         # Check comparing identical objects whose comparison
         # is not a simple boolean, e.g., arrays that are compared elementwise.
         a = np.array([np.array([1, 2, 3]), None], dtype=object)
-        b = np.equal(a, a.copy())
-        assert b.shape == a.shape
+        assert_raises(ValueError, np.equal, a, a)
 
         # Check error raised when comparing identical non-comparable objects.
         class FunkyType(object):
@@ -192,8 +191,7 @@ class TestComparisons(object):
         # Check comparing identical objects whose comparison
         # is not a simple boolean, e.g., arrays that are compared elementwise.
         a = np.array([np.array([1, 2, 3]), None], dtype=object)
-        b = np.not_equal(a, a.copy())
-        assert b.shape == a.shape
+        assert_raises(ValueError, np.not_equal, a, a)
 
         # Check error raised when comparing identical non-comparable objects.
         class FunkyType(object):

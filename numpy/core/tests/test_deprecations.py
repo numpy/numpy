@@ -175,8 +175,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
             # ragged array comparison returns True/False
             a = np.array([1, np.array([1,2,3])], dtype=object)
             b = np.array([1, np.array([1,2,3])], dtype=object)
-            res = op(a, b)
-            assert res.dtype == 'object'
+            self.assert_deprecated(op, args=(a, b), num=None)
 
     def test_string(self):
         # For two string arrays, strings always raised the broadcasting error:
