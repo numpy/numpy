@@ -1,0 +1,6 @@
+Add ufunc loops to ``isinf`` and ``isnan`` for ``datetime64``, ``timedelta64``
+------------------------------------------------------------------------------
+Add needed infrastructure so ``np.isinf(a)`` and ``np.isnan(a)`` will run on
+``datetime64`` and ``timedelta64`` dtypes. This may require adjustment to user-
+facing code that either disallowed the calls or checked that they raised an
+exception.
