@@ -77,7 +77,7 @@ void mt19937_init_by_array(mt19937_state *state, uint32_t *init_key,
     }
   }
 
-  mt[0] = 0x80000000UL; /* MSB is 1; assuring non-zero initial array */
+  mt[0] |= 0x80000000UL; /* MSB is 1; assuring non-zero initial array */
 }
 
 void mt19937_gen(mt19937_state *state) {

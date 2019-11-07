@@ -107,8 +107,8 @@ class TestSeed(object):
     def test_invalid_initialization(self):
         assert_raises(ValueError, random.RandomState, MT19937)
 
-    def test_init_unique(self):
-        # gh-14844. seed[0] was not correctly initialized;
+    def test_reseed_unique(self):
+        # gh-14844. seed[0] was not correctly re-initialized in legacy seed()
         # key[0] always held the same value
         rs = random.RandomState()
         key = rs._bit_generator.state['state']['key']
@@ -118,11 +118,13 @@ class TestSeed(object):
             rs.seed()
             key = rs._bit_generator.state['state']['key']
             res[i, ...] = key
-        # make sure each the corresponding values at each position in key
-        # are unique. The chances of that failing should be very low.
         res.shape = (32, -1)
-        for i in range(res.shape[1]):
-            assert len(np.unique(res[:, i])) == 32
+        assert not (res[:, 0] == 0x80000000).all()
+
+        rs.seed(np.ones(100, dtype='int64'))
+        k1 = rs._bit_generator.state['state']['key']
+        assert k1[0] != 0x80000000
+        
 
 
 class TestBinomial(object):
