@@ -107,6 +107,23 @@ class TestSeed(object):
     def test_invalid_initialization(self):
         assert_raises(ValueError, random.RandomState, MT19937)
 
+    def test_init_unique(self):
+        # gh-14844. seed[0] was not correctly initialized;
+        # key[0] always held the same value
+        rs = random.RandomState()
+        key = rs._bit_generator.state['state']['key']
+        res = np.empty((32,) + key.shape, dtype=key.dtype)
+        for i in range(32):
+            # enter the _legacy_seed(None) path
+            rs.seed()
+            key = rs._bit_generator.state['state']['key']
+            res[i, ...] = key
+        # make sure each the corresponding values at each position in key
+        # are unique. The chances of that failing should be very low.
+        res.shape = (32, -1)
+        for i in range(res.shape[1]):
+            assert len(np.unique(res[:, i])) == 32
+
 
 class TestBinomial(object):
     def test_n_zero(self):
@@ -618,7 +635,7 @@ class TestRandomDist(object):
         a = np.array([42, 1, 2])
         p = [None, None, None]
         assert_raises(ValueError, random.choice, a, p=p)
-    
+
     def test_choice_p_non_contiguous(self):
         p = np.ones(10) / 5
         p[1::2] = 3.0

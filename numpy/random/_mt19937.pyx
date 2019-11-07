@@ -129,9 +129,9 @@ cdef class MT19937(BitGenerator):
         BitGenerator.__init__(self, seed)
         val = self._seed_seq.generate_state(RK_STATE_LEN, np.uint32)
         # MSB is 1; assuring non-zero initial array
-        self.rng_state.key[0] = 0x80000000UL
-        for i in range(1, RK_STATE_LEN):
+        for i in range(RK_STATE_LEN):
             self.rng_state.key[i] = val[i]
+        self.rng_state.key[0] |= 0x80000000UL
         self.rng_state.pos = i
 
         self._bitgen.state = &self.rng_state
@@ -169,9 +169,9 @@ cdef class MT19937(BitGenerator):
                     seed = SeedSequence()
                     val = seed.generate_state(RK_STATE_LEN)
                     # MSB is 1; assuring non-zero initial array
-                    self.rng_state.key[0] = 0x80000000UL
-                    for i in range(1, RK_STATE_LEN):
+                    for i in range(RK_STATE_LEN):
                         self.rng_state.key[i] = val[i]
+                    self.rng_state.key[0] |= 0x80000000UL
                 else:
                     if hasattr(seed, 'squeeze'):
                         seed = seed.squeeze()

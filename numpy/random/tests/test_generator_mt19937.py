@@ -56,6 +56,26 @@ class TestSeed(object):
         assert_raises(ValueError, Generator, MT19937)
 
 
+    def test_seed_init(self):
+        # gh-14844. seed[0] was not correctly initialized
+        # key[0] always held the same value
+
+        class FullSeedSequence(SeedSequence):
+
+            def __init__(self, x):
+                self.x = x
+
+            def generate_state(self, n_words, dtype=np.uint32):
+                return np.full(n_words, self.x, dtype=dtype)
+
+        for i in range(32):
+            ss = FullSeedSequence(1 << i)
+            key = MT19937(ss).state['state']['key']
+            expected = np.full(624, 1 << i, dtype=np.uint32)
+            expected[0] |= 0x80000000
+            np.testing.assert_array_equal(key, expected)
+
+
 class TestBinomial(object):
     def test_n_zero(self):
         # Tests the corner case of n == 0 for the binomial distribution.
@@ -944,7 +964,7 @@ class TestRandomDist(object):
         arr_2d = np.atleast_2d([1, 2, 3, 4, 5, 6, 7, 8, 9, 0]).T
         actual = random.permutation(arr_2d)
         assert_array_equal(actual, np.atleast_2d(desired).T)
-        
+
         bad_x_str = "abcd"
         assert_raises(np.AxisError, random.permutation, bad_x_str)
 
