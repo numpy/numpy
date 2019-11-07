@@ -387,6 +387,11 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
                 raise AssertionError(msg)
 
     except (TypeError, ValueError, NotImplementedError, DeprecationWarning):
+        # version 1.18:
+        # datetime64/timedelta64 used to raise since they had no isnan
+        # implementation. Now they do, but raise a DeprecationWarning when
+        # compared to 0. When that restriction is removed, they will still
+        # raise an error when signbit is called.
         pass
 
     try:
