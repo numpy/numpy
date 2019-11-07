@@ -1188,9 +1188,7 @@ To get the unique rows, occurrence count, and index position, you can use:
 
   unique_rows, occurence_count, indices = np.unique(a2D, axis=0, return_counts=True, return_index=True)
   print('Unique Rows: ', '\n', unique_rows) 
-
   print('Occurrence Count:', '\n', occurence_count)
-
   print('Indices: ', '\n', indices)
 
 **Output:**
