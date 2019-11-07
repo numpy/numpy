@@ -4,7 +4,12 @@ NumPy: The Absolute Basics for Beginners
 
 This is a working document for a future section introducing NumPy to absolute beginners. If you have comments or suggestions, please don’t hesitate to reach out!
 
-.. image:: images/numpylogo.svg
+-----
+
+.. image:: images/NumPy_logo.svg
+
+-----
+
 
 Welcome to NumPy!
 -----------------
@@ -368,11 +373,7 @@ Can you reshape an array?
   
 **Yes!**
 
-::
-
-  np.reshape() 
-
-will give a new shape to an array without changing the data. Just remember that when you use the reshape method, the array you want to produce needs to have the same number of elements as the original array. If you start with an array with 12 elements, you'll need to make sure that your new array also has a total of 12 elements.
+**np.reshape()** will give a new shape to an array without changing the data. Just remember that when you use the reshape method, the array you want to produce needs to have the same number of elements as the original array. If you start with an array with 12 elements, you'll need to make sure that your new array also has a total of 12 elements.
 
 For example:
 
@@ -458,11 +459,14 @@ How to create an array from existing data
 ::
 
   slicing and indexing
+
+  view
+  copy
+
   np.vstack()
   np.hstack()
   np.hsplit()
-  view
-  copy
+  
 
 -----
 
@@ -598,7 +602,7 @@ Basic array operations
 
 ::
 
-  addition, subtraction, multiplication, division, and more
+  Addition, subtraction, multiplication, division, and more!
 
 -----
 
@@ -1091,6 +1095,117 @@ You can also use the `ones()`, `zeros()`, and `random()` methods to create an ar
 How to get the unique items and the counts
 ------------------------------------------
 
+::
+
+  np.unique()
+
+-----
+
+You can find the unique elements in an array easily with **np.unique**. 
+
+For example, if you start with this array:
+
+::
+
+  a = np.array([11, 11, 12, 13, 14, 15, 16, 17, 12, 13, 11, 14, 18, 19, 20])
+
+you can use **np.unique**
+
+::
+
+  unique_values = np.unique(a)
+  print(unique_values)
+
+**Output:**
+
+::
+
+  [11 12 13 14 15 16 17 18 19 20]
+
+To get the indices of unique values in a NumPy array (an array of first index positions of unique values in the array), just pass the **return_index** argument in np.unique() as well as your array.
+
+::
+
+  indices_list = np.unique(a, return_index=True)
+  print(indices_list)
+
+**Output:**
+
+::
+
+  [ 0  2  3  4  5  6  7 12 13 14]
+
+You can pass the **return_counts** argument in np.unique() along with your array to get the frequecy count of unique values in a NumPy array.
+
+::
+
+  unique_values, occurrence_count = np.unique(a, return_counts=True)
+  print(occurrence_count)
+
+**Output:**
+
+::
+
+  [3 2 2 2 1 1 1 1 1 1]
+
+This also works with 2D arrays. If you start with this array:
+
+::
+
+  a2D = np.array([[1, 2, 3, 4] ,[5, 6, 7, 8] , [9, 10, 11, 12],  [1, 2, 3, 4]])
+
+You can find the unique values with:
+
+::
+
+  unique_values = np.unique(a2D)
+  print(unique_values)
+
+**Output:**
+
+::
+
+  [ 1  2  3  4  5  6  7  8  9 10 11 12]
+
+If the axis argument isn't passed, your 2D array will be flattened. To get the unique rows or columns, make sure to pass the **axis** argument. To find the unique rows, speciify **axis=0** and for columns, specify **axis=1**.
+
+::
+
+  unique_rows = np.unique(a2D, axis=0)
+  print(unique_rows)
+
+**Output:**
+
+::
+
+  [[ 1  2  3  4]
+   [ 5  6  7  8]
+   [ 9 10 11 12]]
+
+To get the unique rows, occurrence count, and index position, you can use:
+
+::
+
+  unique_rows, occurence_count, indices = np.unique(a2D, axis=0, return_counts=True, return_index=True)
+  print('Unique Rows: ', '\n', unique_rows) 
+
+  print('Occurrence Count:', '\n', occurence_count)
+
+  print('Indices: ', '\n', indices)
+
+**Output:**
+
+::
+
+  Unique Rows:  
+   [[ 1  2  3  4]
+   [ 5  6  7  8]
+   [ 9 10 11 12]]
+  Occurrence Count: 
+   [0 1 2]
+  Indices:  
+   [2 1 1]
+
 How to get index locations that satisfy a given condition 
 ---------------------------------------------------------
 
@@ -1385,7 +1500,24 @@ If you want to check your array, you can run:
 
   [1 2 3 4 5 6]
 
-The **savetxt()** and **loadtxt()** functions accept additional optional parameters such as header, footer, and delimiter.
+
+You can save a NumPy array as a plain text file like a **.csv** or **.txt** file with **np.savetxt**.
+
+For example, if you create this array:
+
+::
+
+  csv_arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+
+You can easily save it as a .csv file with the name "new_file.csv" like this:
+
+::
+
+  np.savetxt('new_file.csv', csv_arr)
+
+The **savetxt()** and **loadtxt()** functions accept additional optional parameters such as header, footer, and delimiter. While text files can be easier for sharing, .npy and .npz files are faster to retrieve.
+
+With savetxt, you can specify headers, footers, comments, and more. `Read more about savetxt here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savetxt.html>`_.
 
 You can read more about `save here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.save.html>`_. `savez here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savez.html>`_, and `load here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.load.html>`_. 
 You can read more about `savetxt here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savetxt.html>`_. and `loadtxt here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_.
@@ -1575,5 +1707,4 @@ More useful functions
 -------------------------------------------------------
 
 *Image credits: Jay Alammar http://jalammar.github.io/*
-
 
