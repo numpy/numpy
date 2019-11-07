@@ -713,11 +713,11 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int string_type)
     return 0;
 }
 
-enum NDISOVER_RET {
+typedef enum {
     DISCOVERED_OK = 0,
     DISCOVERED_RAGGED = 1,
-    DISCOVERED_DICT = 2
-};
+    DISCOVERED_OBJECT = 2
+} discovered_t;
 
 /*
  * Take an arbitrary object and discover how many dimensions it
@@ -726,7 +726,7 @@ enum NDISOVER_RET {
 static int
 discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                                     int stop_at_string, int stop_at_tuple,
-                                    enum NDISOVER_RET *out_is_object)
+                                    discovered_t *out_is_object)
 {
     PyObject *e;
     npy_intp n, i;
@@ -912,7 +912,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         if (PyErr_ExceptionMatches(PyExc_KeyError)) {
             PyErr_Clear();
             *maxndim = 0;
-            *out_is_object = DISCOVERED_DICT;
+            *out_is_object = DISCOVERED_OBJECT;
             return 0;
         }
         else {
@@ -1817,7 +1817,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     if (!writeable && PySequence_Check(op)) {
         int check_it, stop_at_string, stop_at_tuple;
         int type_num, type;
-        enum NDISOVER_RET is_object = DISCOVERED_OK;
+        discovered_t is_object = DISCOVERED_OK;
 
         /*
          * Determine the type, using the requested data type if
@@ -1893,6 +1893,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
                     return -1;
                 }
             }
+            /* either DISCOVERED_OBJECT or there is a requested_dtype */
             Py_DECREF(*out_dtype);
             *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
             if (*out_dtype == NULL) {
