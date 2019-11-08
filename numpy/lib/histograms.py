@@ -21,6 +21,16 @@ array_function_dispatch = functools.partial(
 _range = range
 
 
+def _ptp(x):
+    """Peak-to-peak value of x.
+
+    This implementation avoids the problem of signed integer arrays having a
+    peak-to-peak value that cannot be represented with the array's data type.
+    This function returns an unsigned value for signed integer arrays.
+    """
+    return _unsigned_subtract(x.max(), x.min())
+
+
 def _hist_bin_sqrt(x, range):
     """
     Square root histogram bin estimator.
@@ -39,7 +49,7 @@ def _hist_bin_sqrt(x, range):
     h : An estimate of the optimal bin width for the given data.
     """
     del range  # unused
-    return x.ptp() / np.sqrt(x.size)
+    return _ptp(x) / np.sqrt(x.size)
 
 
 def _hist_bin_sturges(x, range):
@@ -62,7 +72,7 @@ def _hist_bin_sturges(x, range):
     h : An estimate of the optimal bin width for the given data.
     """
     del range  # unused
-    return x.ptp() / (np.log2(x.size) + 1.0)
+    return _ptp(x) / (np.log2(x.size) + 1.0)
 
 
 def _hist_bin_rice(x, range):
@@ -86,7 +96,7 @@ def _hist_bin_rice(x, range):
     h : An estimate of the optimal bin width for the given data.
     """
     del range  # unused
-    return x.ptp() / (2.0 * x.size ** (1.0 / 3))
+    return _ptp(x) / (2.0 * x.size ** (1.0 / 3))
 
 
 def _hist_bin_scott(x, range):
@@ -136,7 +146,7 @@ def _hist_bin_stone(x, range):
     """
 
     n = x.size
-    ptp_x = np.ptp(x)
+    ptp_x = _ptp(x)
     if n <= 1 or ptp_x == 0:
         return 0
 
@@ -182,7 +192,7 @@ def _hist_bin_doane(x, range):
             np.true_divide(temp, sigma, temp)
             np.power(temp, 3, temp)
             g1 = np.mean(temp)
-            return x.ptp() / (1.0 + np.log2(x.size) +
+            return _ptp(x) / (1.0 + np.log2(x.size) +
                                     np.log2(1.0 + np.absolute(g1) / sg1))
     return 0.0
 
