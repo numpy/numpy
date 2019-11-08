@@ -19,7 +19,7 @@
 #include "ctors.h"
 #include "convert_datatype.h"
 #include "shape.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 #include "lowlevel_strided_loops.h"
 #include "methods.h"
 #include "_datetime.h"

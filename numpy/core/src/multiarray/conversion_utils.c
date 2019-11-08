@@ -16,7 +16,7 @@
 
 #include "conversion_utils.h"
 #include "alloc.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
