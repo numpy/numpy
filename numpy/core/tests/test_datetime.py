@@ -1361,6 +1361,10 @@ class TestDateTime(object):
         assert_equal(np.minimum(dtnat, a), dtnat)
         assert_equal(np.maximum(a, dtnat), dtnat)
         assert_equal(np.maximum(dtnat, a), dtnat)
+        assert_equal(np.fmin(dtnat, a), a)
+        assert_equal(np.fmin(a, dtnat), a)
+        assert_equal(np.fmax(dtnat, a), a)
+        assert_equal(np.fmax(a, dtnat), a)
 
         # Also do timedelta
         a = np.array(3, dtype='m8[h]')
