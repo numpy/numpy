@@ -5,7 +5,7 @@ import itertools
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_raises, suppress_warnings, assert_raises_regex
+    assert_raises, suppress_warnings, assert_raises_regex, assert_allclose
     )
 
 # Setup for optimize einsum
@@ -699,6 +699,14 @@ class TestEinsum(object):
         idx = np.arange(5)
         y2 = x[idx[:, None], idx[:, None], idx, idx]
         assert_equal(y1, y2)
+
+    def test_einsum_failed_on_p9_and_s390x(self):
+        # Issues gh-14692 and gh-12689
+        # Bug with signed vs unsigned char errored on power9 and s390x Linux
+        tensor = np.random.random_sample((10, 10, 10, 10))
+        x = np.einsum('ijij->', tensor)
+        y = tensor.trace(axis1=0, axis2=2).trace()
+        assert_allclose(x, y)
 
     def test_einsum_all_contig_non_contig_output(self):
         # Issue gh-5907, tests that the all contiguous special case
