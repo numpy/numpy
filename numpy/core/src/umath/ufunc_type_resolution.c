@@ -172,7 +172,11 @@ raise_casting_error(
 
     if (input) {
         for(j=0;j<nop;j++){
-            PyTuple_SET_ITEM(froms, j, (PyObject *)PyArray_DESCR(operands[j]));
+            if (operands[j] == NULL){
+                PyTuple_SET_ITEM(froms, j, Py_None);
+            } else {
+                PyTuple_SET_ITEM(froms, j, (PyObject *)PyArray_DESCR(operands[j]));
+            }
             Py_INCREF(dtypes[j]);
             PyTuple_SET_ITEM(tos, j, (PyObject *)dtypes[j]);
         }
@@ -180,7 +184,11 @@ raise_casting_error(
         for(j=0;j<nop;j++){
             Py_INCREF(dtypes[j]);
             PyTuple_SET_ITEM(froms, j, (PyObject *)dtypes[j]);
-            PyTuple_SET_ITEM(tos, j, (PyObject *)PyArray_DESCR(operands[j]));
+            if (operands[j] == NULL){
+                PyTuple_SET_ITEM(tos, j, Py_None);
+            } else {
+                PyTuple_SET_ITEM(tos, j, (PyObject *)PyArray_DESCR(operands[j]));
+            }
         }
     }
 
