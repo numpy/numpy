@@ -159,7 +159,7 @@ You can visualize your array this way:
 
 .. image:: images/np_array.png
 
-Besides creating an array from a sequence of elements, you can easily create an array filled with **0**s:
+Besides creating an array from a sequence of elements, you can easily create an array filled with 0s:
 
 ::
 
@@ -172,7 +172,7 @@ Besides creating an array from a sequence of elements, you can easily create an 
 
   array([0., 0.])
 
-Or an array filled with **1**s:
+Or an array filled with 1s:
 
 ::
 
@@ -192,7 +192,7 @@ Or even an empty array! The function *empty* creates an array whose initial cont
   # Create an empty array with 2 elements
   np.empty(2)
 
-You can create an array with a **range** of elements:
+You can create an array with a range of elements:
 
 ::
 
