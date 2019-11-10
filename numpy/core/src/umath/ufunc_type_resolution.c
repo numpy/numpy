@@ -162,17 +162,25 @@ raise_casting_error(
 
     int j, nin = ufunc->nin, nop = nin + ufunc->nout;
     PyObject *froms = PyTuple_New(nop);
+    if (froms == NULL) { 
+        return NULL;
+    }
     PyObject *tos = PyTuple_New(nop);
+    if (tos == NULL) { 
+        return NULL;
+    }
 
     if (input) {
         for(j=0;j<nop;j++){
-            PyTuple_SetItem(froms, j, (PyObject *)PyArray_DESCR(operands[j]));
-            PyTuple_SetItem(tos, j, (PyObject *)dtypes[j]);
+            PyTuple_SET_ITEM(froms, j, (PyObject *)PyArray_DESCR(operands[j]));
+            Py_INCREF(dtypes[j]);
+            PyTuple_SET_ITEM(tos, j, (PyObject *)dtypes[j]);
         }
     }else{
         for(j=0;j<nop;j++){
-            PyTuple_SetItem(froms, j, (PyObject *)dtypes[j]);
-            PyTuple_SetItem(tos, j, (PyObject *)PyArray_DESCR(operands[j]));
+            Py_INCREF(dtypes[j]);
+            PyTuple_SET_ITEM(froms, j, (PyObject *)dtypes[j]);
+            PyTuple_SET_ITEM(tos, j, (PyObject *)PyArray_DESCR(operands[j]));
         }
     }
 
