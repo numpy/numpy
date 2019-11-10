@@ -1,24 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 1.17.4 Release Notes
-==========================
-
-This release contains fixes for bugs reported against NumPy 1.17.3 along with
-some build improvements. The Python versions supported in this release
-are 3.5-3.8.
-
-Downstream developers should use Cython >= 0.29.13 for Python 3.8 support and
-OpenBLAS >= 3.7 to avoid errors on the Skylake architecture.
-
-
-Highlights
-==========
-
-- Fixed `random.random_integers` biased generation of 8 and 16 bit integers.
-- Fixed `np.einsum` regression on Power9 and z/Linux.
-- Fixed histogram problem with signed integer arrays.
-
 
 Contributors
 ============
@@ -31,7 +10,6 @@ names contributed a patch for the first time.
 * Matti Picus
 * Qiming Sun +
 * Warren Weckesser
-
 
 Pull requests merged
 ====================
@@ -46,4 +24,3 @@ A total of 8 pull requests were merged for this release.
 * `#14857 <https://github.com/numpy/numpy/pull/14857>`__: BUG: lib: Fix histogram problem with signed integer arrays.
 * `#14858 <https://github.com/numpy/numpy/pull/14858>`__: BLD: Prevent -flto from optimising long double representation...
 * `#14866 <https://github.com/numpy/numpy/pull/14866>`__: MAINT: move buffer.h -> npy_buffer.h to avoid conflicts
-
