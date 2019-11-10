@@ -25,7 +25,7 @@ Installing NumPy
   
 To install NumPy, we strongly recommend using a scientific Python distribution. If you're looking for the full instructions for installing NumPy on your operating system, you can `find all of the details here <https://www.scipy.org/install.html>`_.
 
-If you don't have Python yet, you might want to consider using Anaconda. It's the easiest way to get started! The good thing about getting this distribution is is the fact that you don’t need to worry too much about separately installing NumPy or any of the major packages that you’ll be using for your data analyses, such as pandas, Scikit-Learn, etc.
+
   
 If you already have Python, you can install NumPy with
 
@@ -39,6 +39,8 @@ or
 
   pip install numpy
   
+If you don't have Python yet, you might want to consider using Anaconda. It's the easiest way to get started! The good thing about getting this distribution is is the fact that you don’t need to worry too much about separately installing NumPy or any of the major packages that you’ll be using for your data analyses, such as pandas, Scikit-Learn, etc.
+
 You can find all of the installation details in the `Installation <https://www.scipy.org/install.html>`_ section at scipy.org.
 
 How to import NumPy
@@ -66,7 +68,7 @@ NumPy arrays are faster and more compact than Python lists. An array consumes le
 What is an array?
 -----------------
 
-An array is a central data structure of the NumPy library. It's a grid of values and it contains information about the raw data, how to locate an element, and how to interpret an element. It has a grid of elements that can be indexed in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_. The elements are all of the same type, referred to as the array **dtype**. 
+An array is a central data structure of the NumPy library. An array is a grid of values and it contains information about the raw data, how to locate an element, and how to interpret an element. It has a grid of elements that can be indexed in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_. The elements are all of the same type, referred to as the array **dtype**. 
 
 An array can be indexed by a tuple of nonnegative integers, by booleans, by another array, or by integers. The **rank** of the array is the number of dimensions. The **shape** of the array is a tuple of integers giving the size of the array along each dimension.
 
@@ -76,15 +78,21 @@ One way we can initialize NumPy arrays is from nested Python lists.
 
   a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
-We can access the elements in the array using square brackets. When you're accessing elements, remember that indexing in NumPy starts at 0. That means that, if you want to access the first element in your array, you'll be accessing element "0".
+We can access the elements in the array using square brackets. When you're accessing elements, remember that indexing in NumPy starts at 0. That means that if you want to access the first element in your array, you'll be accessing element "0".
 
 ::
 
-  print(data[0])
+  print(a[0])
+
+**Output:**
+
+::
+
+  [1 2 3 4]
+
 
 More information about arrays
 -----------------------------
-
 
 ::
 
@@ -151,7 +159,7 @@ You can visualize your array this way:
 
 .. image:: images/np_array.png
 
-Besides creating an array from a sequence of elements, you can easily create an array filled with 0s:
+Besides creating an array from a sequence of elements, you can easily create an array filled with **0**s:
 
 ::
 
@@ -164,7 +172,7 @@ Besides creating an array from a sequence of elements, you can easily create an 
 
   array([0., 0.])
 
-Or an array filled with 1s:
+Or an array filled with **1**s:
 
 ::
 
@@ -184,7 +192,7 @@ Or even an empty array! The function *empty* creates an array whose initial cont
   # Create an empty array with 2 elements
   np.empty(2)
 
-You can create an array with a range of elements:
+You can create an array with a **range** of elements:
 
 ::
 
@@ -197,7 +205,7 @@ You can create an array with a range of elements:
 
   array([0, 1, 2, 3])
 
-And even an array that contains a range of evenly spaced interval. To do this, you will specify the first and last number and the step size.
+And even an array that contains a range of evenly spaced interval. To do this, you will specify the **first number**, **last number**, and the **step size**.
 
 ::
 
@@ -223,7 +231,7 @@ It's simple to create an array where the values are spaced linearly in an interv
 
 **Specifying your data type**
 
-While the default data type is floating point (float64), you can expecity specify which data type you want using 'dtype'.
+While the default data type is floating point (float64), you can expecity specify which data type you want using **dtype**.
 
 ::
 
@@ -251,7 +259,7 @@ Adding, removing, and sorting elements
 -----
 
 
-If we start with this array:
+If you start with this array:
 
 ::
 
@@ -260,7 +268,7 @@ If we start with this array:
 
 **Append**
 
-You can add elements to an array any time with np.append.
+You can add elements to your array any time with **np.append()**. Make sure to specify the array and the elements you want to include.
 ::
 
   np.append(arr, [1,2])
@@ -273,11 +281,10 @@ You can add elements to an array any time with np.append.
 
 **Delete**
 
-You can delete an element with np.delete. 
+You can delete an element with **np.delete()**. If you want to delete the element in position 1 of your array "arr," you can run:
 
 ::
 
-  # Delete the element in position 1
   np.delete(arr, 1)
 
 **Output**
@@ -288,7 +295,7 @@ You can delete an element with np.delete.
 
 **Sort**
 
-Sorting an element is simple with np.sort. You can specify the axis, kind, and order when you call the function. `Read more about sorting an array here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.sort.html>`_.
+Sorting an element is simple with **np.sort()**. You can specify the axis, kind, and order when you call the function. `Read more about sorting an array here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.sort.html>`_.
 
 If you start with this array:
 
@@ -373,7 +380,7 @@ Can you reshape an array?
   
 **Yes!**
 
-**np.reshape()** will give a new shape to an array without changing the data. Just remember that when you use the reshape method, the array you want to produce needs to have the same number of elements as the original array. If you start with an array with 12 elements, you'll need to make sure that your new array also has a total of 12 elements.
+Using **np.reshape()** will give a new shape to an array without changing the data. Just remember that when you use the reshape method, the array you want to produce needs to have the same number of elements as the original array. If you start with an array with 12 elements, you'll need to make sure that your new array also has a total of 12 elements.
 
 For example:
 
@@ -418,6 +425,109 @@ You can specify a few optional parameters.
 How to convert a 1D array into a 2D array (how to add a new axis)
 -----------------------------------------------------------------
 
+::
+
+  np.newaxis
+  np.expand_dims
+
+-----
+
+You can use **np.newaxis** and **np.expand_dims** to increase the dimensions of your existing array.
+
+Using **np.newaxis** will increase the dimensions of your array by one dimension when used once. This means that a **1D** array will become a **2D** array, a **2D** array will be come a **3D** array, and so on. 
+
+For example, if you start with this array:
+
+::
+
+  a = np.array([1, 2, 3, 4, 5, 6])
+  a.shape
+
+**Output:**
+
+::
+
+  (6,)
+
+You can use **np.newaxis** to add a new axis:
+
+::
+
+  a2 = a[np.newaxis]
+  a2.shape
+
+**Output:**
+
+::
+
+  (1, 6)
+
+You can explicitly convert a 1D array with either a row vector or a column vector using np.newaxis. For example, you can convert a 1D array to a row vector by inserting an axis  along the first dimension:
+
+::
+
+  row_vec = a[np.newaxis, :]
+  row_vec.shape
+
+**Output:**
+
+::
+
+  (1, 6)
+
+Or, for a column vector, you can insert an axis along the second dimension:
+
+::
+
+  row_vec = a[:, np.newaxis]
+  row_vec.shape
+
+**Output:**
+
+::
+
+  (6, 1)
+
+You can also expand an array by inserting a new axis at a specified position with np.expand_dims.
+
+For example, if you start with this array:
+
+::
+
+  a = np.array([1, 2, 3, 4, 5, 6])
+  a.shape
+
+**Output:**
+
+::
+
+  (6,)
+
+You can use **np.expand_dims** to add an axis at index position 1 with:
+
+::
+
+  b = np.expand_dims(a, axis=1)
+  b.shape
+
+**Output:**
+
+::
+
+  (6, 1)
+
+You can add an axis at index position 0 with:
+
+::
+
+  c = np.expand_dims(a, axis=0)
+  c.shape
+
+**Output:**
+
+::
+
+  (1, 6)
 
 Indexing and Slicing
 --------------------
@@ -444,6 +554,18 @@ You can index and slice NumPy arrays in the same ways you can slice Python lists
   2
   [1 2]
   [2 3]
+  Or you can add an axis at index position 0 with:
+
+  :;:
+
+    c.shape
+    c.shape
+
+  **Output:**
+
+  ::
+
+    (1, 6)
   [2 3]
 
 You can visualize it this way:
@@ -1376,10 +1498,10 @@ Reshaping and Flattening multidimensional arrays
 
 ::
 
-  flatten
-  ravel
+  .flatten()
+  .ravel()
   
-There are two popular ways to flatten an array: **flatten()** and **ravel()**. The primary difference between the two is that the new array created using **ravel()** is actually a reference to the parent array. This means that any changes to the new array will affect the parent array as well. Since ravel does not create a copy, it's memory efficient. 
+There are two popular ways to flatten an array: **.flatten()** and **.ravel()**. The primary difference between the two is that the new array created using **ravel()** is actually a reference to the parent array. This means that any changes to the new array will affect the parent array as well. Since ravel does not create a copy, it's memory efficient. 
 
 If you start with this array:
 
@@ -1387,7 +1509,7 @@ If you start with this array:
 
   array = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
-You can use **flatten()** to flatten your array into a 1D array.
+You can use **flatten** to flatten your array into a 1D array.
 
 ::
 
@@ -1399,7 +1521,7 @@ You can use **flatten()** to flatten your array into a 1D array.
 
   array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12])
 
-When you use **flatten()**, changes to your new array won't change the parent array.
+When you use **flatten**, changes to your new array won't change the parent array.
 
 For example:
 
@@ -1424,7 +1546,7 @@ For example:
   [100   2   3   4   5   6   7   8   9  10  11  12]
 
 
-But when you use **ravel()**, the changes you make to the new array will affect the parent array.
+But when you use **ravel**, the changes you make to the new array will affect the parent array.
 
 For example:
 
@@ -1447,6 +1569,276 @@ For example:
    [  9  10  11  12]]
   New array: 
   [101   2   3   4   5   6   7   8   9  10  11  12]
+
+How to access the docstring for more information
+---------------------------------------------------
+
+::
+
+  help()
+  ?
+  ??
+
+-----
+
+When it comes to the data science ecosystem, Python and NumPy are built with the user in mind. One of the best examples of that is the built-in access to documentation. Every object contains the reference to a string, which is known as the **docstring**. In most cases, this docstring contains a quick and concise summary of the object and how to use it. Python has a built-in **help()** function that can help you access this information. This means that nearly any time you need more information, you can use **help()** to quickly find the information that you need.
+
+For example,
+
+::
+
+  help(max)
+
+Will return
+
+::
+
+  Help on built-in function max in module builtins:
+
+  max(...)
+      max(iterable, *[, default=obj, key=func]) -> value
+      max(arg1, arg2, *args, *[, key=func]) -> value
+      
+      With a single iterable argument, return its biggest item. The
+      default keyword-only argument specifies an object to return if
+      the provided iterable is empty.
+      With two or more arguments, return the largest argument.
+
+Because access to additional information is so useful, IPython uses the **?** character as a shorthand for accessing this documentation along with other relevant information.
+
+For example,
+
+::
+
+  max?
+
+Will return
+
+::
+
+  Docstring:
+  max(iterable, *[, default=obj, key=func]) -> value
+  max(arg1, arg2, *args, *[, key=func]) -> value
+
+  With a single iterable argument, return its biggest item. The
+  default keyword-only argument specifies an object to return if
+  the provided iterable is empty.
+  With two or more arguments, return the largest argument.
+  Type:      builtin_function_or_method
+  
+You can even use this notation for object methods and objects themselves.
+
+Let's say you create this array:
+
+::
+
+  a = np.array([1, 2, 3, 4, 5, 6])
+
+Running
+
+::
+
+  a?
+  
+Will return a lot of useful information.
+
+::
+
+  Type:            ndarray
+  String form:     [1 2 3 4 5 6]
+  Length:          6
+  File:            ~/anaconda3/lib/python3.7/site-packages/numpy/__init__.py
+  Docstring:       <no docstring>
+  Class docstring:
+  ndarray(shape, dtype=float, buffer=None, offset=0,
+          strides=None, order=None)
+
+  An array object represents a multidimensional, homogeneous array
+  of fixed-size items.  An associated data-type object describes the
+  format of each element in the array (its byte-order, how many bytes it
+  occupies in memory, whether it is an integer, a floating point number,
+  or something else, etc.)
+
+  Arrays should be constructed using `array`, `zeros` or `empty` (refer
+  to the See Also section below).  The parameters given here refer to
+  a low-level method (`ndarray(...)`) for instantiating an array.
+
+  For more information, refer to the `numpy` module and examine the
+  methods and attributes of an array.
+
+  Parameters
+  ----------
+  (for the __new__ method; see Notes below)
+
+  shape : tuple of ints
+      Shape of created array.
+  dtype : data-type, optional
+      Any object that can be interpreted as a numpy data type.
+  buffer : object exposing buffer interface, optional
+      Used to fill the array with data.
+  offset : int, optional
+      Offset of array data in buffer.
+  strides : tuple of ints, optional
+      Strides of data in memory.
+  order : {'C', 'F'}, optional
+      Row-major (C-style) or column-major (Fortran-style) order.
+
+  Attributes
+  ----------
+  T : ndarray
+      Transpose of the array.
+  data : buffer
+      The array's elements, in memory.
+  dtype : dtype object
+      Describes the format of the elements in the array.
+  flags : dict
+      Dictionary containing information related to memory use, e.g.,
+      'C_CONTIGUOUS', 'OWNDATA', 'WRITEABLE', etc.
+  flat : numpy.flatiter object
+      Flattened version of the array as an iterator.  The iterator
+      allows assignments, e.g., ``x.flat = 3`` (See `ndarray.flat` for
+      assignment examples; TODO).
+  imag : ndarray
+      Imaginary part of the array.
+  real : ndarray
+      Real part of the array.
+  size : int
+      Number of elements in the array.
+  itemsize : int
+      The memory use of each array element in bytes.
+  nbytes : int
+      The total number of bytes required to store the array data,
+      i.e., ``itemsize * size``.
+  ndim : int
+      The array's number of dimensions.
+  shape : tuple of ints
+      Shape of the array.
+  strides : tuple of ints
+      The step-size required to move from one element to the next in
+      memory. For example, a contiguous ``(3, 4)`` array of type
+      ``int16`` in C-order has strides ``(8, 2)``.  This implies that
+      to move from element to element in memory requires jumps of 2 bytes.
+      To move from row-to-row, one needs to jump 8 bytes at a time
+      (``2 * 4``).
+  ctypes : ctypes object
+      Class containing properties of the array needed for interaction
+      with ctypes.
+  base : ndarray
+      If the array is a view into another array, that array is its `base`
+      (unless that array is also a view).  The `base` array is where the
+      array data is actually stored.
+
+  See Also
+  --------
+  array : Construct an array.
+  zeros : Create an array, each element of which is zero.
+  empty : Create an array, but leave its allocated memory unchanged (i.e.,
+          it contains "garbage").
+  dtype : Create a data-type.
+
+  Notes
+  -----
+  There are two modes of creating an array using ``__new__``:
+
+  1. If `buffer` is None, then only `shape`, `dtype`, and `order`
+     are used.
+  2. If `buffer` is an object exposing the buffer interface, then
+     all keywords are interpreted.
+
+  No ``__init__`` method is needed because the array is fully initialized
+  after the ``__new__`` method.
+
+  Examples
+  --------
+  These examples illustrate the low-level `ndarray` constructor.  Refer
+  to the `See Also` section above for easier ways of constructing an
+  ndarray.
+
+  First mode, `buffer` is None:
+
+  >>> np.ndarray(shape=(2,2), dtype=float, order='F')
+  array([[ -1.13698227e+002,   4.25087011e-303],
+         [  2.88528414e-306,   3.27025015e-309]])         #random
+
+  Second mode:
+
+  >>> np.ndarray((2,), buffer=np.array([1,2,3]),
+  ...            offset=np.int_().itemsize,
+  ...            dtype=int) # offset = 1*itemsize, i.e. skip first element
+  array([2, 3])
+
+This also works for functions and other objects that **you** create. Just remember to include a docstring with your function using a string literal (**""" """** or **''' '''** around your documentation).
+
+For example, if you create this function:
+
+::
+
+  def double(a):
+    '''Return a * 2'''
+    return a * 2
+
+You can run
+
+::
+
+  double?
+
+Which will return
+
+::
+
+  Signature: double(a)
+  Docstring: Return a * 2
+  File:      ~/Desktop/<ipython-input-23-b5adf20be596>
+  Type:      function
+
+You can also reach another level of information by reading the source code of the object you're interested in. You can access the source code using a double question mark (**??**).
+
+For example, running
+
+::
+
+  double??
+
+Will return 
+
+::
+
+  Signature: double(a)
+  Source:   
+  def double(a):
+      '''Return a * 2'''
+      return a * 2
+  File:      ~/Desktop/<ipython-input-23-b5adf20be596>
+  Type:      function
+
+If the object in question is compiled in a language other than Python, using ?? will return the same information as ?. You'll find this with a lot of built-in objects and types, for example:
+
+::
+
+  len?
+
+**Output:**
+
+::
+
+  Signature: len(obj, /)
+  Docstring: Return the number of items in a container.
+  Type:      builtin_function_or_method
+
+and
+
+::
+
+  len??
+
+**Output:**
+
+::
+
+  ​Signature: len(obj, /)
+  Docstring: Return the number of items in a container.
+  Type:      builtin_function_or_method
 
 
 How to save and load NumPy objects
@@ -1517,12 +1909,12 @@ The **savetxt()** and **loadtxt()** functions accept additional optional paramet
 
 With savetxt, you can specify headers, footers, comments, and more. `Read more about savetxt here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savetxt.html>`_.
 
-You can read more about `save here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.save.html>`_. `savez here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savez.html>`_, and `load here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.load.html>`_. 
-You can read more about `savetxt here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savetxt.html>`_. and `loadtxt here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_.
+You can read more about `save <https://docs.scipy.org/doc/numpy/reference/generated/numpy.save.html>`_ here, `savez <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savez.html>`_ here, and `load <https://docs.scipy.org/doc/numpy/reference/generated/numpy.load.html>`_ here. 
+You can read more about `savetxt <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savetxt.html>`_ here, and `loadtxt <https://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_ here.
 
 Learn more about `input and output routines here <https://docs.scipy.org/doc/numpy/reference/routines.io.html>`_.
 
-Be aware that loading files that contain object arrays with **np.load()** uses the pickle module which is not secure against erroneous or maliciously constructed data. Consider passing **allow_pickle=False** to load data that is known not to contain object arrays for the safer handling of untrusted sources.
+**Be aware that loading files that contain object arrays with np.load() uses the pickle module which is not secure against erroneous or maliciously constructed data. Consider passing allow_pickle=False to load data that is known not to contain object arrays for the safer handling of untrusted sources.**
 
 
 Working with Mathematical Formulas
@@ -1629,7 +2021,7 @@ Read your saved CSV any time with a command such as
 Plotting arrays with Matplotlib
 -------------------------------
 
-If you need to generate a plot for your values, it's very simple with Matplotlib. 
+If you need to generate a plot for your values, it's very simple with `Matplotlib <https://matplotlib.org/>`_. 
 
 For example, you may have an array like this one:
 
@@ -1681,11 +2073,9 @@ With Matplotlib, you have access to an enormous number of visualization options.
 .. image:: images/np_matplotlib2.png
     :scale: 50 %
 
-To read more about Matplotlib and what it can do, take a look at `the official documentation <https://matplotlib.org/>`_.
+To read more about Matplotlib and what it can do, take a look at `the official documentation <https://matplotlib.org/>`_. For directions regarding installing Matplotlib, see the official `installation section <https://matplotlib.org/users/installing.html>`_.
 
 
-How to read a docstring with `?` and source code with `??` in IPython/Jupyter
------------------------------------------------------------------------------
 
 More useful functions
 ---------------------
