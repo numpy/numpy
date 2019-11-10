@@ -175,6 +175,7 @@ raise_casting_error(
             if (operands[j] == NULL){
                 PyTuple_SET_ITEM(froms, j, Py_None);
             } else {
+                Py_INCREF(operands[j]);
                 PyTuple_SET_ITEM(froms, j, (PyObject *)PyArray_DESCR(operands[j]));
             }
             Py_INCREF(dtypes[j]);
@@ -187,6 +188,7 @@ raise_casting_error(
             if (operands[j] == NULL){
                 PyTuple_SET_ITEM(tos, j, Py_None);
             } else {
+                Py_INCREF(operands[j]);
                 PyTuple_SET_ITEM(tos, j, (PyObject *)PyArray_DESCR(operands[j]));
             }
         }
