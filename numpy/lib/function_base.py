@@ -1460,7 +1460,7 @@ def _unwrap_dispatcher(p, discont=None, axis=None, min_val=None, max_val=None):
 
 
 @array_function_dispatch(_unwrap_dispatcher)
-def unwrap(p, discont=None, axis=-1, min_val=-pi, max_val=pi):
+def unwrap(p, discont=None, axis=-1, *, min_val=-pi, max_val=pi):
     """
     Unwrap by changing deltas between values to complement.
     
