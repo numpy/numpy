@@ -1511,7 +1511,7 @@ class TestRegression(object):
             min //= -1
 
         with np.errstate(divide="ignore"):
-            for t in (np.int8, np.int16, np.int32, np.int64, int, np.long):
+            for t in (np.int8, np.int16, np.int32, np.int64, int, np.compat.long):
                 test_type(t)
 
     def test_buffer_hashlib(self):
@@ -2112,7 +2112,7 @@ class TestRegression(object):
         # Ticket #1578, the mismatch only showed up when running
         # python-debug for python versions >= 2.7, and then as
         # a core dump and error message.
-        a = np.array(['abc'], dtype=np.unicode)[0]
+        a = np.array(['abc'], dtype=np.unicode_)[0]
         del a
 
     def test_refcount_error_in_clip(self):
