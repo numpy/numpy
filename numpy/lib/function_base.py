@@ -1455,17 +1455,18 @@ def angle(z, deg=False):
     return a
 
 
-def _unwrap_dispatcher(p, discont=None, axis=None):
+def _unwrap_dispatcher(p, discont=None, axis=None, min_val=None, max_val=None):
     return (p,)
 
 
 @array_function_dispatch(_unwrap_dispatcher)
 def unwrap(p, discont=None, axis=-1, min_val=-pi, max_val=pi):
     """
-    Unwrap by changing deltas between values to 2*pi complement.
-
-    Unwrap radian phase `p` by changing absolute jumps greater than
-    `discont` to their 2*pi complement along the given axis.
+    Unwrap by changing deltas between values to complement.
+    
+    For `min_val=-pi` and `max_val=pi`, unwraps radian phase `p` by 
+    changing absolute jumps greater than `discont` to their 2*pi 
+    complement along the given axis.
 
     Parameters
     ----------
@@ -1476,9 +1477,9 @@ def unwrap(p, discont=None, axis=-1, min_val=-pi, max_val=pi):
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
     min_val : float, optional
-        Minimum value when sequence underflows, default is ``-pi``
+        Minimum value when sequence overflows, default is ``-pi``
     max_val : float, optional
-        Maximum value when sequence overflows, default is ``pi``
+        Maximum value when sequence underflows, default is ``pi``
 
     Returns
     -------
