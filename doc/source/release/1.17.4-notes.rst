@@ -1,0 +1,49 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.17.4 Release Notes
+==========================
+
+This release contains fixes for bugs reported against NumPy 1.17.3 along with
+some build improvements. The Python versions supported in this release
+are 3.5-3.8.
+
+Downstream developers should use Cython >= 0.29.13 for Python 3.8 support and
+OpenBLAS >= 3.7 to avoid errors on the Skylake architecture.
+
+
+Highlights
+==========
+
+- Fixed `random.random_integers` biased generation of 8 and 16 bit integers.
+- Fixed `np.einsum` regression on Power9 and z/Linux.
+- Fixed histogram problem with signed integer arrays.
+
+
+Contributors
+============
+
+A total of 5 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Chris Burr +
+* Matti Picus
+* Qiming Sun +
+* Warren Weckesser
+
+
+Pull requests merged
+====================
+
+A total of 8 pull requests were merged for this release.
+
+* `#14758 <https://github.com/numpy/numpy/pull/14758>`__: BLD: declare support for python 3.8
+* `#14781 <https://github.com/numpy/numpy/pull/14781>`__: BUG: random: biased samples from integers() with 8 or 16 bit...
+* `#14851 <https://github.com/numpy/numpy/pull/14851>`__: BUG: Fix _ctypes class circular reference. (#13808)
+* `#14852 <https://github.com/numpy/numpy/pull/14852>`__: BLD: add 'apt update' to shippable
+* `#14855 <https://github.com/numpy/numpy/pull/14855>`__: BUG: Fix `np.einsum` errors on Power9 Linux and z/Linux
+* `#14857 <https://github.com/numpy/numpy/pull/14857>`__: BUG: lib: Fix histogram problem with signed integer arrays.
+* `#14858 <https://github.com/numpy/numpy/pull/14858>`__: BLD: Prevent -flto from optimising long double representation...
+* `#14866 <https://github.com/numpy/numpy/pull/14866>`__: MAINT: move buffer.h -> npy_buffer.h to avoid conflicts
+
