@@ -1514,7 +1514,7 @@ def unwrap(p, discont=None, axis=-1, min_val=-pi, max_val=pi):
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
-    ddmod = mod(dd - min_val, max_val-min_val) + min_val
+    ddmod = mod(dd - min_val, max_val - min_val) + min_val
     _nx.copyto(ddmod, max_val, where=(ddmod == min_val) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
