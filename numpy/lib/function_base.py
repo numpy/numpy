@@ -1507,7 +1507,7 @@ def unwrap(p, discont=None, axis=-1, min_val=-pi, max_val=pi):
 
     """
     if discont is None:
-        discont = (max_val-min_val)/2
+        discont = (max_val - min_val)/2
     p = asarray(p)
     nd = p.ndim
     dd = diff(p, axis=axis)
