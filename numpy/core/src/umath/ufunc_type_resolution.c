@@ -163,11 +163,11 @@ raise_casting_error(
     int j, nin = ufunc->nin, nop = nin + ufunc->nout;
     PyObject *froms = PyTuple_New(nop);
     if (froms == NULL) { 
-        return NULL;
+        return -1;
     }
     PyObject *tos = PyTuple_New(nop);
     if (tos == NULL) { 
-        return NULL;
+        return -1;
     }
 
     if (input) {
