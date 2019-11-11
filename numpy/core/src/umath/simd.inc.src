@@ -33,6 +33,7 @@
 #include <string.h> /* for memcpy */
 
 #define VECTOR_SIZE_BYTES 16
+#define MAX_STEP_SIZE 2097152
 
 static NPY_INLINE npy_uintp
 abs_ptrdiff(char *a, char *b)
@@ -52,13 +53,32 @@ abs_ptrdiff(char *a, char *b)
       ((abs_ptrdiff(args[1], args[0]) == 0))))
 
 /*
+ * Avoid using SIMD for very large step sizes for several reasons:
+ * 1) Supporting large step sizes requires use of i64gather/scatter_ps instructions,
+ *    in which case we need two i64gather instructions and an additional vinsertf32x8
+ *    instruction to load a single zmm register (since one i64gather instruction
+ *    loads into a ymm register). This hurts performance significantly.
+ * 2) Gather and scatter instructions can be slow when the loads/stores
+ *    cross page boundaries.
+ *
+ * We instead rely on i32gather/scatter_ps instructions which use a 32-bit index
+ * element. The index needs to be < INT_MAX to avoid overflow. MAX_STEP_SIZE ensures this.
+ */
+#define IS_BINARY_SMALL_STEPS \
+    ((abs(steps[0]) < MAX_STEP_SIZE)  && \
+     (abs(steps[1]) < MAX_STEP_SIZE)  && \
+     (abs(steps[2]) < MAX_STEP_SIZE))
+
+/*
  * output should be contiguous, can handle strided input data
+ * Input step should be smaller than MAX_STEP_SIZE for performance
  */
 #define IS_OUTPUT_BLOCKABLE_UNARY(esize, vsize) \
     (steps[1] == (esize) && \
-     (npy_is_aligned(args[0], esize) && npy_is_aligned(args[1], esize)) && \
-     ((abs_ptrdiff(args[1], args[0]) >= (vsize)) || \
-      ((abs_ptrdiff(args[1], args[0]) == 0))))
+    (abs(steps[0]) < MAX_STEP_SIZE) && \
+    (npy_is_aligned(args[0], esize) && npy_is_aligned(args[1], esize)) && \
+    ((abs_ptrdiff(args[1], args[0]) >= (vsize)) || \
+    ((abs_ptrdiff(args[1], args[0]) == 0))))
 
 #define IS_BLOCKABLE_REDUCE(esize, vsize) \
     (steps[1] == (esize) && abs_ptrdiff(args[1], args[0]) >= (vsize) && \
@@ -148,8 +168,12 @@ static NPY_INLINE int
 run_binary_avx512f_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
 #if defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS && defined NPY_HAVE_SSE2_INTRINSICS && @EXISTS@
-    AVX512F_@func@_@TYPE@(args, dimensions, steps);
-    return 1;
+    if (IS_BINARY_SMALL_STEPS) {
+        AVX512F_@func@_@TYPE@(args, dimensions, steps);
+        return 1;
+    }
+    else
+        return 0;
 #endif
     return 0;
 }
@@ -1722,9 +1746,9 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ @vtype@d
 static NPY_INLINE NPY_GCC_TARGET_AVX512F void
 AVX512F_@func@_@TYPE@(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
-    const npy_intp stride_ip1 = steps[0]/sizeof(@type@);
-    const npy_intp stride_ip2 = steps[1]/sizeof(@type@);
-    const npy_intp stride_op = steps[2]/sizeof(@type@);
+    const npy_intp stride_ip1 = steps[0]/(npy_intp)sizeof(@type@);
+    const npy_intp stride_ip2 = steps[1]/(npy_intp)sizeof(@type@);
+    const npy_intp stride_op = steps[2]/(npy_intp)sizeof(@type@);
     const npy_intp array_size = dimensions[0];
     npy_intp num_remaining_elements = array_size;
     @type@* ip1 = (@type@*) args[0];
@@ -1817,8 +1841,8 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                    const npy_intp array_size,
                    const npy_intp steps)
 {
-    const npy_intp stride = steps/sizeof(npy_float);
-    const npy_int num_lanes = @BYTES@/sizeof(npy_float);
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
     npy_intp num_remaining_elements = array_size;
     @vtype@ ones_f = _mm@vsize@_set1_ps(1.0f);
     @mask@ load_mask = @isa@_get_full_load_mask_ps();
@@ -1896,8 +1920,8 @@ static NPY_INLINE NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                     const npy_intp array_size,
                     const npy_intp steps)
 {
-    const npy_intp stride = steps/sizeof(npy_double);
-    const npy_int num_lanes = @BYTES@/sizeof(npy_double);
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_double);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_double);
     npy_intp num_remaining_elements = array_size;
     @mask@ load_mask = @isa@_get_full_load_mask_pd();
 #if @replace_0_with_1@
@@ -1992,8 +2016,8 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                    const npy_intp steps,
                    NPY_TRIG_OP my_trig_op)
 {
-    const npy_intp stride = steps/sizeof(npy_float);
-    const npy_int num_lanes = @BYTES@/sizeof(npy_float);
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
     npy_float large_number = 71476.0625f;
     if (my_trig_op == npy_compute_sin) {
         large_number = 117435.992f;
@@ -2135,8 +2159,8 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                 const npy_intp array_size,
                 const npy_intp steps)
 {
-    const npy_intp stride = steps/sizeof(npy_float);
-    const npy_int num_lanes = @BYTES@/sizeof(npy_float);
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
     npy_float xmax = 88.72283935546875f;
     npy_float xmin = -103.97208404541015625f;
     npy_int indexarr[16];
@@ -2261,8 +2285,8 @@ static NPY_GCC_OPT_3 NPY_GCC_TARGET_@ISA@ void
                 const npy_intp array_size,
                 const npy_intp steps)
 {
-    const npy_intp stride = steps/sizeof(npy_float);
-    const npy_int num_lanes = @BYTES@/sizeof(npy_float);
+    const npy_intp stride = steps/(npy_intp)sizeof(npy_float);
+    const npy_int num_lanes = @BYTES@/(npy_intp)sizeof(npy_float);
     npy_int indexarr[16];
     for (npy_int ii = 0; ii < 16; ii++) {
         indexarr[ii] = ii*stride;
