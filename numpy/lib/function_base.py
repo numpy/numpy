@@ -1473,7 +1473,7 @@ def unwrap(p, discont=None, axis=-1, *, min_val=-pi, max_val=pi):
     p : array_like
         Input array.
     discont : float, optional
-        Maximum discontinuity between values, default is ``pi``.
+        Maximum discontinuity between values, default is ``(max_val - min_val)/2``.
     axis : int, optional
         Axis along which unwrap will operate, default is the last axis.
     min_val : float, optional
