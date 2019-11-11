@@ -25,7 +25,7 @@ def assert_dtype_not_equal(a, b):
 
 class TestBuiltin(object):
     @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
-                                   np.unicode])
+                                   np.compat.unicode])
     def test_run(self, t):
         """Only test hash runs at all."""
         dt = np.dtype(t)
@@ -986,7 +986,7 @@ class TestPickling(object):
             assert_equal(x[0], y[0])
 
     @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
-                                   np.unicode, bool])
+                                   np.compat.unicode, bool])
     def test_builtin(self, t):
         self.check_pickling(np.dtype(t))
 

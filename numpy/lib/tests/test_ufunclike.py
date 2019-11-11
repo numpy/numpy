@@ -21,7 +21,7 @@ class TestUfunclike(object):
         assert_equal(res, tgt)
         assert_equal(out, tgt)
 
-        a = a.astype(np.complex)
+        a = a.astype(np.complex_)
         with assert_raises(TypeError):
             ufl.isposinf(a)
 
@@ -36,7 +36,7 @@ class TestUfunclike(object):
         assert_equal(res, tgt)
         assert_equal(out, tgt)
 
-        a = a.astype(np.complex)
+        a = a.astype(np.complex_)
         with assert_raises(TypeError):
             ufl.isneginf(a)
 

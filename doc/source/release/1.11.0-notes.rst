@@ -200,7 +200,7 @@ New Features
 * A ``dtype`` parameter has been added to ``np.random.randint``
   Random ndarrays of the following types can now be generated:
 
-  - ``np.bool``,
+  - ``np.bool_``,
   - ``np.int8``, ``np.uint8``,
   - ``np.int16``, ``np.uint16``,
   - ``np.int32``, ``np.uint32``,

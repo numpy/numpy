@@ -964,7 +964,7 @@ class TestCreation(object):
 
     @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
     def test_sequence_long(self):
-        assert_equal(np.array([long(4), long(4)]).dtype, np.long)
+        assert_equal(np.array([long(4), long(4)]).dtype, long)
         assert_equal(np.array([long(4), 2**80]).dtype, object)
         assert_equal(np.array([long(4), 2**80, long(4)]).dtype, object)
         assert_equal(np.array([2**80, long(4)]).dtype, object)
@@ -1807,7 +1807,7 @@ class TestMethods(object):
 
         # test unicode sorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode)
+        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode_)
         b = a[::-1].copy()
         for kind in self.sort_kinds:
             msg = "unicode sort, kind=%s" % kind
@@ -2059,7 +2059,7 @@ class TestMethods(object):
 
         # test unicode argsorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode)
+        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode_)
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
@@ -2142,7 +2142,7 @@ class TestMethods(object):
         a = np.array(['aaaaaaaaa' for i in range(100)])
         assert_equal(a.argsort(kind='m'), r)
         # unicode
-        a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode)
+        a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode_)
         assert_equal(a.argsort(kind='m'), r)
 
     def test_sort_unicode_kind(self):
@@ -2271,7 +2271,7 @@ class TestMethods(object):
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100197_1',
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100198_1',
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100199_1'],
-                     dtype=np.unicode)
+                     dtype=np.unicode_)
         ind = np.arange(len(a))
         assert_equal([a.searchsorted(v, 'left') for v in a], ind)
         assert_equal([a.searchsorted(v, 'right') for v in a], ind + 1)
@@ -7930,20 +7930,20 @@ class TestBytestringArrayNonzero(object):
 class TestUnicodeArrayNonzero(object):
 
     def test_empty_ustring_array_is_falsey(self):
-        assert_(not np.array([''], dtype=np.unicode))
+        assert_(not np.array([''], dtype=np.unicode_))
 
     def test_whitespace_ustring_array_is_falsey(self):
-        a = np.array(['eggs'], dtype=np.unicode)
+        a = np.array(['eggs'], dtype=np.unicode_)
         a[0] = '  \0\0'
         assert_(not a)
 
     def test_all_null_ustring_array_is_falsey(self):
-        a = np.array(['eggs'], dtype=np.unicode)
+        a = np.array(['eggs'], dtype=np.unicode_)
         a[0] = '\0\0\0\0'
         assert_(not a)
 
     def test_null_inside_ustring_array_is_truthy(self):
-        a = np.array(['eggs'], dtype=np.unicode)
+        a = np.array(['eggs'], dtype=np.unicode_)
         a[0] = ' \0 \0'
         assert_(a)
 

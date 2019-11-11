@@ -980,7 +980,7 @@ class TestUfunc(object):
         assert_array_equal(out, mm_row_col_vec.squeeze())
 
     def test_matrix_multiply(self):
-        self.compare_matrix_multiply_results(np.long)
+        self.compare_matrix_multiply_results(np.int64)
         self.compare_matrix_multiply_results(np.double)
 
     def test_matrix_multiply_umath_empty(self):

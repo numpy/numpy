@@ -38,7 +38,7 @@ class TestAccuracy(object):
                 with open(filepath) as fid:
                     file_without_comments = (r for r in fid if not r[0] in ('$', '#'))
                 data = np.genfromtxt(file_without_comments,
-                                     dtype=('|S39','|S39','|S39',np.int),
+                                     dtype=('|S39','|S39','|S39',int),
                                      names=('type','input','output','ulperr'),
                                      delimiter=',',
                                      skip_header=1)

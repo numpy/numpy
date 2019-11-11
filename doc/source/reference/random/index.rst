@@ -57,7 +57,7 @@ cleanup means that legacy and compatibility methods have been removed from
 ``randint``,        ``integers``   Add an ``endpoint`` kwarg
 ``random_integers``
 ------------------- -------------- ------------
-``tomaxint``        removed        Use ``integers(0, np.iinfo(np.int).max,``
+``tomaxint``        removed        Use ``integers(0, np.iinfo(np.int_).max,``
                                                  ``endpoint=False)``
 ------------------- -------------- ------------
 ``seed``            removed        Use `~.SeedSequence.spawn`

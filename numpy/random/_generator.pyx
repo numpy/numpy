@@ -502,7 +502,7 @@ cdef class Generator:
             Desired dtype of the result. All dtypes are determined by their
             name, i.e., 'int64', 'int', etc, so byteorder is not available
             and a specific precision may have different C types depending
-            on the platform. The default value is 'np.int'.
+            on the platform. The default value is `np.int_`.
         endpoint : bool, optional
             If true, sample from the interval [low, high] instead of the
             default [low, high)
@@ -595,7 +595,7 @@ cdef class Generator:
         elif key == 'bool':
             ret = _rand_bool(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
 
-        if size is None and dtype in (np.bool, np.int, np.long):
+        if size is None and dtype in (bool, int, np.compat.long):
             if np.array(ret).shape == ():
                 return dtype(ret)
         return ret

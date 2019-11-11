@@ -555,7 +555,7 @@ cdef class RandomState:
         tomaxint(size=None)
 
         Return a sample of uniformly distributed random integers in the interval
-        [0, ``np.iinfo(np.int).max``]. The np.int type translates to the C long
+        [0, ``np.iinfo(np.int_).max``]. The `np.int_` type translates to the C long
         integer type and its precision is platform dependent.
 
         Parameters
@@ -584,7 +584,7 @@ cdef class RandomState:
                 [ 739731006, 1947757578]],
                [[1871712945,  752307660],
                 [1601631370, 1479324245]]])
-        >>> rs.tomaxint((2,2,2)) < np.iinfo(np.int).max
+        >>> rs.tomaxint((2,2,2)) < np.iinfo(np.int_).max
         array([[[ True,  True],
                 [ True,  True]],
                [[ True,  True],
@@ -636,7 +636,7 @@ cdef class RandomState:
             Desired dtype of the result. All dtypes are determined by their
             name, i.e., 'int64', 'int', etc, so byteorder is not available
             and a specific precision may have different C types depending
-            on the platform. The default value is 'np.int'.
+            on the platform. The default value is `np.int_`.
 
             .. versionadded:: 1.11.0
 
@@ -724,7 +724,7 @@ cdef class RandomState:
         elif key == 'bool':
             ret = _rand_bool(low, high, size, _masked, _endpoint, &self._bitgen, self.lock)
 
-        if size is None and dtype in (np.bool, np.int, np.long):
+        if size is None and dtype in (bool, int, np.compat.long):
             if np.array(ret).shape == ():
                 return dtype(ret)
         return ret
@@ -1165,11 +1165,11 @@ cdef class RandomState:
         """
         random_integers(low, high=None, size=None)
 
-        Random integers of type np.int between `low` and `high`, inclusive.
+        Random integers of type `np.int_` between `low` and `high`, inclusive.
 
-        Return random integers of type np.int from the "discrete uniform"
+        Return random integers of type `np.int_` from the "discrete uniform"
         distribution in the closed interval [`low`, `high`].  If `high` is
-        None (the default), then results are from [1, `low`]. The np.int
+        None (the default), then results are from [1, `low`]. The `np.int_`
         type translates to the C long integer type and its precision
         is platform dependent.
 
