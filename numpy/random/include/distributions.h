@@ -123,6 +123,7 @@ DECLDIR int64_t random_binomial(bitgen_t *bitgen_state, double p,
 
 DECLDIR RAND_INT_TYPE random_logseries(bitgen_t *bitgen_state, double p);
 DECLDIR RAND_INT_TYPE random_geometric(bitgen_t *bitgen_state, double p);
+DECLDIR RAND_INT_TYPE random_two_sided_geometric(bitgen_t *bitgen_state, double alpha);
 DECLDIR RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a);
 DECLDIR int64_t random_hypergeometric(bitgen_t *bitgen_state,
                                       int64_t good, int64_t bad, int64_t sample);

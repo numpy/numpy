@@ -599,6 +599,14 @@ class TestRandomDist(object):
                             [5, 12]])
         assert_array_equal(actual, desired)
 
+    def test_two_sided_geometric(self):
+        np.random.seed(self.seed)
+        actual = np.random.two_sided_geometric(.123456789, size=(3, 2))
+        desired = np.array([[0, 0],
+                            [1, 0],
+                            [0, 1]])
+        assert_array_equal(actual, desired)
+
     def test_gumbel(self):
         np.random.seed(self.seed)
         actual = np.random.gumbel(loc=.123456789, scale=2.0, size=(3, 2))
@@ -1495,6 +1503,25 @@ class TestBroadcast(object):
         assert_raises(ValueError, geom, bad_p_one * 3)
         assert_raises(ValueError, geom, bad_p_two * 3)
 
+    def test_two_sided_geometric(self):
+        a_one = [0.5]
+        a_two = [0.0]
+        bad_a_one = [-1]
+        bad_a_two = [1.0]
+        bad_a_three = [1.5]
+        tsg = np.random.two_sided_geometric
+        desired_one = np.array([2, -3, -2])
+        desired_two = np.array([0, 0, 0])
+
+        self.setSeed()
+        actual = tsg(a_one * 3)
+        assert_array_equal(actual, desired_one)
+        actual = tsg(a_two * 3)
+        assert_array_equal(actual, desired_two)
+        assert_raises(ValueError, tsg, bad_a_one * 3)
+        assert_raises(ValueError, tsg, bad_a_two * 3)
+        assert_raises(ValueError, tsg, bad_a_three * 3)
+
     def test_hypergeometric(self):
         ngood = [1]
         nbad = [2]
@@ -1601,9 +1628,11 @@ class TestSingleEltArrayInput(object):
                  np.random.pareto, np.random.weibull,
                  np.random.power, np.random.rayleigh,
                  np.random.poisson, np.random.zipf,
-                 np.random.geometric, np.random.logseries)
+                 np.random.geometric, np.random.two_sided_geometric,
+                 np.random.logseries)
 
-        probfuncs = (np.random.geometric, np.random.logseries)
+        probfuncs = (np.random.geometric, np.random.two_sided_geometric,
+                     np.random.logseries)
 
         for func in funcs:
             if func in probfuncs:  # p < 1.0

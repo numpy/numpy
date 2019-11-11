@@ -957,6 +957,39 @@ RAND_INT_TYPE random_geometric(bitgen_t *bitgen_state, double p) {
   }
 }
 
+RAND_INT_TYPE random_two_sided_geometric(bitgen_t *bitgen_state, double alpha) {
+  double prob;
+  RAND_INT_TYPE sign;
+
+  prob = next_double(bitgen_state);
+
+  /* 
+   * This fractional term is the probability
+   * that the distribution returns 0.
+   */
+  if (prob < (1.0 - alpha)/(1.0 + alpha)) {
+    return 0;
+  } else {
+    /* 
+     * If the distribution does not return 0,
+     * then the result can be either + or -.
+     */
+    prob = next_double(bitgen_state);
+    if (prob < 0.5) {
+      sign = -1;
+    } else {
+      sign = 1;
+    }
+    /*
+     * If the distribution does not return 0, then we can
+     * leverage the function for the "standard" geometric
+     * distribution; however, we must first convert 'alpha'
+     * into the 'probability of success' for a Bernoulli trial.
+     */
+    return sign * random_geometric(bitgen_state, 1.0 - alpha);
+  }
+}
+
 RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a) {
   double am1, b;
 

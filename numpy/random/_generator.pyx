@@ -22,7 +22,7 @@ from ._pcg64 import PCG64
 from ._bit_generator cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
-            CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
+            CONS_BOUNDED_0_LT_1, CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
             double_fill, cont, kahan_sum, cont_broadcast_3, float_fill, cont_f,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
         )
@@ -112,6 +112,7 @@ cdef extern from "include/distributions.h":
     int64_t random_geometric_search(bitgen_t *bitgen_state, double p) nogil
     int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) nogil
     int64_t random_geometric(bitgen_t *bitgen_state, double p) nogil
+    int64_t random_two_sided_geometric(bitgen_t *bitgen_state, double alpha) nogil
     int64_t random_zipf(bitgen_t *bitgen_state, double a) nogil
     int64_t random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad,
                                     int64_t sample) nogil
@@ -3228,6 +3229,99 @@ cdef class Generator:
         """
         return disc(&random_geometric, &self._bitgen, size, self.lock, 1, 0,
                     p, 'p', CONS_BOUNDED_GT_0_1,
+                    0.0, '', CONS_NONE,
+                    0.0, '', CONS_NONE)
+
+    def two_sided_geometric(self, alpha, size=None):
+        """
+        two_sided_geometric(alpha, size=None)
+
+        Draw samples from a two-sided geometric distribution.
+
+        Samples are drawn from a two-sided geometric distribution with a
+        specified `alpha` (:math:`\\alpha`), where :math:`0 \\leq \\alpha < 1`.
+        The two-sided geometric distribution, also known as the discrete Laplace
+        distribution, is a distribution that decays in both the positive and
+        negative directions by a factor of :math:`\\alpha`.  It is therefore
+        supported on all integers, ``k = 0, ±1, ±2, ...``.
+
+        Parameters
+        ----------
+        alpha : float or array_like of floats
+            The rate of decay, where 0 ≤ alpha < 1.
+        size : int or tuple of ints, optional
+            Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+            ``m * n * k`` samples are drawn.  If size is ``None`` (default),
+            a single value is returned if ``alpha`` is a scalar.  Otherwise,
+            ``np.array(alpha).size`` samples are drawn.
+
+        Returns
+        -------
+        out : ndarray or scalar
+            Drawn samples from the parameterized two-sided geometric distribution.
+
+        Notes
+        -----
+        The probability mass function of the two-sided geometric distribution is
+
+        .. math:: f(k) = \\frac{1-\\alpha}{1+\\alpha}\\alpha^{\\left | k \\right |}
+
+        where :math:`\\alpha` is the rate of decay.
+
+        Whereas Inusah and Kozubowski restrict :math:`\\alpha` to the interval
+        :math:`(0, 1)`, Ghosh et al. define :math:`\\alpha` on the interval
+        :math:`[0, 1]`.
+
+        This implementation restricts :math:`\\alpha` to the interval
+        :math:`[0, 1)`.  Under this restriction, the two-sided geometric 
+        distribution will always return 0 when :math:`\\alpha = 0`, as this
+        represents the degenerate case where the distribution `decays
+        immediately` in both the positive and negative directions.
+        Conversely, this restriction does `not` allow for :math:`\\alpha = 1`,
+        which causes the probability mass function to become
+        :math:`f(k) = 0` for all `k`.
+
+        As demonstrated by Ghosh et al., the two-sided geometric distribution
+        can be used as a mechanism to generate discrete values for noise.
+
+        References
+        ----------
+        .. [1] Seidu Inusah and Tomasz J. Kozubowski. A discrete analogue of
+               the Laplace distribution. In Journal of Statistical Planning
+               and Inference, Volume 136, Issue 3, 1 March 2006, Pages 1090-1102.
+               DOI: https://doi.org/10.1016/j.jspi.2004.08.014
+        .. [2] Arpita Ghosh, Tim Roughgarden, and Mukund Sundararajan.
+               Universally utility-maximizing privacy mechanisms. In Proceedings
+               of the forty-first annual ACM symposium on Theory of computing
+               (STOC '09). ACM, New York, NY, USA, 351-360.
+               DOI: https://doi.org/10.1145/1536414.1536464
+
+        Examples
+        --------
+        Draw one million values from the two-sided geometric distribution,
+        with an :math:`\\alpha` equal to :math:`\\frac{1}{3}`:
+
+        >>> z = np.random.two_sided_geometric(alpha=1./3., size=1000000)
+
+        Verify that (i) the probability of sampling a 0 is approximately
+        :math:`\\frac{1-\\alpha}{1+\\alpha}` and that (ii) the distribution
+        decays in both the positive and negative directions by a factor
+        approximately equal to :math:`\\alpha`:
+
+        >>> (z == -2).sum() / 1000000. #        _             _
+        0.055582                       # ^ 0.0555 = 1/3 * 0.166
+        >>> (z == -1).sum() / 1000000. # |     _
+        0.166269                       # ^ 0.166  = 1/3 * 0.5
+        >>> (z == 0).sum() / 1000000.  # |
+        0.500454                       # * 0.5    = (1 - 1/3)/(1 + 1/3)
+        >>> (z == 1).sum() / 1000000.  # |     _
+        0.166637                       # v 0.166  = 1/3 * 0.5
+        >>> (z == 2).sum() / 1000000.  # |      _             _
+        0.055319                       # v 0.0555 = 1/3 * 0.166
+
+        """
+        return disc(&random_two_sided_geometric, &self._bitgen, size, self.lock, 1, 0,
+                    alpha, 'alpha', CONS_BOUNDED_0_LT_1,
                     0.0, '', CONS_NONE,
                     0.0, '', CONS_NONE)
 

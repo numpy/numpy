@@ -1104,6 +1104,23 @@ class TestRandomDist(object):
             assert_raises(ValueError, random.geometric, np.nan)
             assert_raises(ValueError, random.geometric, [np.nan] * 10)
 
+    def test_two_sided_geometric(self):
+        random = Generator(MT19937(self.seed))
+        actual = random.two_sided_geometric(.123456789, size=(3, 2))
+        desired = np.array([[0, 0],
+                            [0, 0],
+                            [0, 0]])
+        assert_array_equal(actual, desired)
+
+    def test_two_sided_geometric_exceptions(self):
+        assert_raises(ValueError, random.two_sided_geometric, 1.1)
+        assert_raises(ValueError, random.two_sided_geometric, [1.1] * 10)
+        assert_raises(ValueError, random.two_sided_geometric, -0.1)
+        assert_raises(ValueError, random.two_sided_geometric, [-0.1] * 10)
+        with np.errstate(invalid='ignore'):
+            assert_raises(ValueError, random.two_sided_geometric, np.nan)
+            assert_raises(ValueError, random.two_sided_geometric, [np.nan] * 10)
+
     def test_gumbel(self):
         random = Generator(MT19937(self.seed))
         actual = random.gumbel(loc=.123456789, scale=2.0, size=(3, 2))
@@ -2043,6 +2060,25 @@ class TestBroadcast(object):
         assert_raises(ValueError, geometric, bad_p_one * 3)
         assert_raises(ValueError, geometric, bad_p_two * 3)
 
+    def test_two_sided_geometric(self):
+        a_one = [0.5]
+        a_two = [0.0]
+        bad_a_one = [-1]
+        bad_a_two = [1.0]
+        bad_a_three = [1.5]
+        desired_one = np.array([0, 0, 4])
+        desired_two = np.array([0, 0, 0])
+
+        random = Generator(MT19937(self.seed))
+        tsg = random.two_sided_geometric
+        actual = tsg(a_one * 3)
+        assert_array_equal(actual, desired_one)
+        actual = tsg(a_two * 3)
+        assert_array_equal(actual, desired_two)
+        assert_raises(ValueError, tsg, bad_a_one * 3)
+        assert_raises(ValueError, tsg, bad_a_two * 3)
+        assert_raises(ValueError, tsg, bad_a_three * 3)
+
     def test_hypergeometric(self):
         ngood = [1]
         nbad = [2]
@@ -2179,9 +2215,11 @@ class TestSingleEltArrayInput(object):
                  random.pareto, random.weibull,
                  random.power, random.rayleigh,
                  random.poisson, random.zipf,
-                 random.geometric, random.logseries)
+                 random.geometric, random.two_sided_geometric,
+                 random.logseries)
 
-        probfuncs = (random.geometric, random.logseries)
+        probfuncs = (random.geometric, random.two_sided_geometric,
+                     random.logseries)
 
         for func in funcs:
             if func in probfuncs:  # p < 1.0
