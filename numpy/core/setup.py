@@ -12,9 +12,6 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
-from numpy._build_utils.apple_accelerate import (
-    uses_accelerate_framework, get_sgemv_fix
-    )
 from numpy.compat import npy_load_module
 from setup_common import *
 
@@ -761,8 +758,6 @@ def configuration(parent_package='',top_path=None):
         common_src.extend([join('src', 'common', 'cblasfuncs.c'),
                            join('src', 'common', 'python_xerbla.c'),
                           ])
-        if uses_accelerate_framework(blas_info):
-            common_src.extend(get_sgemv_fix())
     else:
         extra_info = {}
 

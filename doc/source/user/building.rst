@@ -42,8 +42,8 @@ Building NumPy requires the following software installed:
    NumPy does not require any external linear algebra libraries to be
    installed. However, if these are available, NumPy's setup script can detect
    them and use them for building. A number of different LAPACK library setups
-   can be used, including optimized LAPACK libraries such as ATLAS, MKL or the
-   Accelerate/vecLib framework on OS X.
+   can be used, including optimized LAPACK libraries such as ATLAS, MKL and
+   OpenBLAS.
 
 4) Cython
 
@@ -142,8 +142,7 @@ The default order for the libraries are:
 2. BLIS
 3. OpenBLAS
 4. ATLAS
-5. Accelerate (MacOS)
-6. BLAS (NetLIB)
+5. BLAS (NetLIB)
 
 
 If you wish to build against OpenBLAS but you also have BLIS available one
@@ -166,8 +165,7 @@ The default order for the libraries are:
 2. OpenBLAS
 3. libFLAME
 4. ATLAS
-5. Accelerate (MacOS)
-6. LAPACK (NetLIB)
+5. LAPACK (NetLIB)
 
 
 If you wish to build against OpenBLAS but you also have MKL available one

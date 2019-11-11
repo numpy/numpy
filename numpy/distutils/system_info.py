@@ -405,7 +405,6 @@ def get_info(name, notfound_action=0):
           'blis': blis_info,                  # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
-          'accelerate': accelerate_info,      # use blas_opt instead
           'x11': x11_info,
           'fft_opt': fft_opt_info,
           'fftw': fftw_info,
@@ -1603,7 +1602,7 @@ class lapack_opt_info(system_info):
 
     notfounderror = LapackNotFoundError
     # Default order of LAPACK checks
-    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'accelerate', 'lapack']
+    lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'lapack']
 
     def _calc_info_mkl(self):
         info = get_info('lapack_mkl')
@@ -1651,13 +1650,6 @@ class lapack_opt_info(system_info):
                 if not lapack_info:
                     return False
                 dict_append(info, **lapack_info)
-            self.set_info(**info)
-            return True
-        return False
-
-    def _calc_info_accelerate(self):
-        info = get_info('accelerate')
-        if info:
             self.set_info(**info)
             return True
         return False
@@ -1730,7 +1722,7 @@ class blas_opt_info(system_info):
 
     notfounderror = BlasNotFoundError
     # Default order of BLAS checks
-    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'accelerate', 'blas']
+    blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'blas']
 
     def _calc_info_mkl(self):
         info = get_info('blas_mkl')
@@ -1766,12 +1758,6 @@ class blas_opt_info(system_info):
             return True
         return False
 
-    def _calc_info_accelerate(self):
-        info = get_info('accelerate')
-        if info:
-            self.set_info(**info)
-            return True
-        return False
 
     def _calc_info_blas(self):
         # Warn about a non-optimized BLAS library
@@ -2138,60 +2124,6 @@ class flame_info(system_info):
             if self.check_embedded_lapack(info):
                 self.set_info(**info)
 
-
-class accelerate_info(system_info):
-    section = 'accelerate'
-    _lib_names = ['accelerate', 'veclib']
-    notfounderror = BlasNotFoundError
-
-    def calc_info(self):
-        # Make possible to enable/disable from config file/env var
-        libraries = os.environ.get('ACCELERATE')
-        if libraries:
-            libraries = [libraries]
-        else:
-            libraries = self.get_libs('libraries', self._lib_names)
-        libraries = [lib.strip().lower() for lib in libraries]
-
-        if (sys.platform == 'darwin' and
-                not os.getenv('_PYTHON_HOST_PLATFORM', None)):
-            # Use the system BLAS from Accelerate or vecLib under OSX
-            args = []
-            link_args = []
-            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
-               'x86_64' in get_platform() or \
-               'i386' in platform.platform():
-                intel = 1
-            else:
-                intel = 0
-            if (os.path.exists('/System/Library/Frameworks'
-                              '/Accelerate.framework/') and
-                    'accelerate' in libraries):
-                if intel:
-                    args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
-                args.extend([
-                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
-                link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
-            elif (os.path.exists('/System/Library/Frameworks'
-                                 '/vecLib.framework/') and
-                      'veclib' in libraries):
-                if intel:
-                    args.extend(['-msse3'])
-                else:
-                    args.extend(['-faltivec'])
-                args.extend([
-                    '-I/System/Library/Frameworks/vecLib.framework/Headers'])
-                link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
-
-            if args:
-                self.set_info(extra_compile_args=args,
-                              extra_link_args=link_args,
-                              define_macros=[('NO_ATLAS_INFO', 3),
-                                             ('HAVE_CBLAS', None)])
-
-        return
 
 class blas_src_info(system_info):
     section = 'blas_src'
