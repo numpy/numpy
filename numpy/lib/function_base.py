@@ -1460,7 +1460,7 @@ def _unwrap_dispatcher(p, discont=None, axis=None):
 
 
 @array_function_dispatch(_unwrap_dispatcher)
-def unwrap(p, discont=None, axis=-1, min_val=None, max_val=None):
+def unwrap(p, discont=None, axis=-1, min_val=-pi, max_val=pi):
     """
     Unwrap by changing deltas between values to 2*pi complement.
 
@@ -1505,10 +1505,6 @@ def unwrap(p, discont=None, axis=-1, min_val=None, max_val=None):
     array([ 0.        ,  0.78539816,  1.57079633, -0.78539816,  0.        ]) # may vary
 
     """
-    if min_val is None:
-        min_val = -pi
-    if max_val is None:
-        max_val = pi
     if discont is None:
         discont = (max_val-min_val)/2
     p = asarray(p)
@@ -1518,7 +1514,7 @@ def unwrap(p, discont=None, axis=-1, min_val=None, max_val=None):
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
     ddmod = mod(dd - min_val, max_val-min_val) + min_val
-    _nx.copyto(ddmod, pi, where=(ddmod == min_val) & (dd > 0))
+    _nx.copyto(ddmod, max_val, where=(ddmod == min_val) & (dd > 0))
     ph_correct = ddmod - dd
     _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
     up = array(p, copy=True, dtype='d')
