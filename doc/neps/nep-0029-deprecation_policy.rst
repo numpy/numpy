@@ -110,6 +110,7 @@ Jul 23, 2020 3.7+   1.16+
 Jan 13, 2021 3.7+   1.17+
 Jul 26, 2021 3.7+   1.18+
 Dec 26, 2021 3.8+   1.18+
+Apr 14, 2023 3.9+   1.18+
 ============ ====== =====
 
 
@@ -125,6 +126,7 @@ Drop Schedule
   On Jan 13, 2021 drop support for Numpy 1.16 (initially released on Jan 13, 2019)
   On Jul 26, 2021 drop support for Numpy 1.17 (initially released on Jul 26, 2019)
   On Dec 26, 2021 drop support for Python 3.7 (initially released on Jun 27, 2018)
+  On Apr 14, 2023 drop support for Python 3.8 (initially released on Oct 14, 2019)
 
 
 Implementation
@@ -243,13 +245,14 @@ Code to generate support and drop schedule tables ::
 
   data = """Jan 15, 2017: Numpy 1.12
   Sep 13, 2015: Python 3.5
-  Jun 27, 2018: Python 3.7
   Dec 23, 2016: Python 3.6
+  Jun 27, 2018: Python 3.7
   Jun 07, 2017: Numpy 1.13
   Jan 06, 2018: Numpy 1.14
   Jul 23, 2018: Numpy 1.15
   Jan 13, 2019: Numpy 1.16
   Jul 26, 2019: Numpy 1.17
+  Oct 14, 2019: Python 3.8
   """
 
   releases = []
@@ -269,7 +272,7 @@ Code to generate support and drop schedule tables ::
 
   releases = sorted(releases, key=lambda x: x[0])
 
-  minpy = '3.8+'
+  minpy = '3.9+'
   minnum = '1.18+'
 
   toprint_drop_dates = ['']
