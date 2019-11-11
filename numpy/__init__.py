@@ -158,6 +158,7 @@ else:
 
     # Make these accessible from numpy name-space
     # but not imported in from numpy import *
+    # TODO[gh-6103]: Deprecate these
     if sys.version_info[0] >= 3:
         from builtins import bool, int, float, complex, object, str
         unicode = str
@@ -168,13 +169,16 @@ else:
     # now that numpy modules are imported, can initialize limits
     core.getlimits._register_known_types()
 
-    __all__.extend(['bool', 'int', 'float', 'complex', 'object', 'unicode',
-                    'str'])
     __all__.extend(['__version__', 'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
+
+    # These are added by `from .core import *` and `core.__all__`, but we
+    # overwrite them above with builtins we do _not_ want to export.
+    __all__.remove('long')
+    __all__.remove('unicode')
 
     # Remove things that are in the numpy.lib but not in the numpy namespace
     # Note that there is a test (numpy/tests/test_public_api.py:test_numpy_namespace)
