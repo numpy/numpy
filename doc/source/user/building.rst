@@ -123,8 +123,7 @@ The default order for the libraries are:
 2. BLIS
 3. OpenBLAS
 4. ATLAS
-5. Accelerate (MacOS)
-6. BLAS (NetLIB)
+5. BLAS (NetLIB)
 
 If you wish to build against OpenBLAS but you also have BLIS available one
 may predefine the order of searching via the environment variable
@@ -146,8 +145,7 @@ The default order for the libraries are:
 2. OpenBLAS
 3. libFLAME
 4. ATLAS
-5. Accelerate (MacOS)
-6. LAPACK (NetLIB)
+5. LAPACK (NetLIB)
 
 
 If you wish to build against OpenBLAS but you also have MKL available one

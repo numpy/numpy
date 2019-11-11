@@ -10,9 +10,6 @@ from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
-from numpy._build_utils.apple_accelerate import (
-    uses_accelerate_framework, get_sgemv_fix
-    )
 from numpy.compat import npy_load_module
 from setup_common import *  # noqa: F403
 
@@ -392,7 +389,13 @@ def visibility_define(config):
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, dot_join
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import (get_info, blas_opt_info,
+                                             lapack_opt_info)
+
+    # Accelerate is buggy, disallow it. See also numpy/linalg/setup.py
+    for opt_order in (blas_opt_info.blas_order, lapack_opt_info.lapack_order):
+        if 'accelerate' in opt_order:
+            opt_order.remove('accelerate')
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
@@ -762,8 +765,6 @@ def configuration(parent_package='',top_path=None):
         common_src.extend([join('src', 'common', 'cblasfuncs.c'),
                            join('src', 'common', 'python_xerbla.c'),
                           ])
-        if uses_accelerate_framework(blas_info):
-            common_src.extend(get_sgemv_fix())
     else:
         extra_info = {}
 
