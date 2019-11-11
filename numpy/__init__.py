@@ -216,7 +216,7 @@ else:
                                      "{!r}".format(__name__, attr))
 
         def __dir__():
-            return __all__ + ['Tester', 'testing']
+            return list(globals().keys()) + ['Tester', 'testing']
 
     else:
         # We don't actually use this ourselves anymore, but I'm not 100% sure that
