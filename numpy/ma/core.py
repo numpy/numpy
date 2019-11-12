@@ -3665,6 +3665,7 @@ class MaskedArray(ndarray):
     def fill_value(self, value=None):
         target = _check_fill_value(value, self.dtype)
         if not target.ndim == 0:
+            # 2019-11-12, 1.18.0
             warnings.warn(
                 "Non-scalar arrays for the fill value are deprecated. Use "
                 "arrays with scalar values instead. The filled function "
