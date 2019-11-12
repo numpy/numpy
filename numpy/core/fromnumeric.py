@@ -847,10 +847,11 @@ def sort(a, axis=-1, kind=None, order=None):
         Axis along which to sort. If None, the array is flattened before
         sorting. The default is -1, which sorts along the last axis.
     kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
-        Sorting algorithm. The default is 'quicksort'. Note that both 'stable'
-        and 'mergesort' use timsort or radix sort under the covers and, in general,
-        the actual implementation will vary with data type. The 'mergesort' option
-        is retained for backwards compatibility.
+        Sorting algorithm. The default is 'quicksort' (which actually uses
+        introsort). Note that both 'stable' and 'mergesort' use timsort or
+        radix sort under the covers and, in general, the actual implementation
+        will vary with data type. The 'mergesort' option is retained for
+        backwards compatibility.
 
         .. versionchanged:: 1.15.0.
            The 'stable' option was added.
@@ -886,7 +887,7 @@ def sort(a, axis=-1, kind=None, order=None):
     =========== ======= ============= ============ ========
        kind      speed   worst case    work space   stable
     =========== ======= ============= ============ ========
-    'quicksort'    1     O(n^2)            0          no
+    'quicksort'    1     O(n*log(n))       0          no
     'heapsort'     3     O(n*log(n))       0          no
     'mergesort'    2     O(n*log(n))      ~n/2        yes
     'timsort'      2     O(n*log(n))      ~n/2        yes
