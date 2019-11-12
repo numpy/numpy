@@ -5,10 +5,14 @@ import sys
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import get_info, lapack_opt_info
     config = Configuration('linalg', parent_package, top_path)
 
     config.add_data_dir('tests')
+
+    # Accelerate is buggy and not supported
+    if 'accelerate' in lapack_opt_info.lapack_order:
+        lapack_opt_info.lapack_order.remove('accelerate')
 
     # Configure lapack_lite
 

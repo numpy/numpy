@@ -391,7 +391,11 @@ def visibility_define(config):
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, dot_join
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import get_info, blas_opt_info
+
+    # Accelerate is buggy and not supported
+    if 'accelerate' in blas_opt_info.blas_order:
+        blas_opt_info.blas_order.remove('accelerate')
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
