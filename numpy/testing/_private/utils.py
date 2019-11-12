@@ -374,27 +374,6 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     if isscalar(desired) != isscalar(actual):
         raise AssertionError(msg)
 
-    # Inf/nan/negative zero handling
-    try:
-        isdesnan = gisnan(desired)
-        isactnan = gisnan(actual)
-        if isdesnan and isactnan:
-            return  # both nan, so equal
-
-        # handle signed zero specially for floats
-        if desired == 0 and actual == 0:
-            if not signbit(desired) == signbit(actual):
-                raise AssertionError(msg)
-
-    except (TypeError, ValueError, NotImplementedError):
-        pass
-    except DeprecationWarning:
-        # version 1.18
-        # gisnan used to raise for datetime64/timedelta64 (dt64) since they had
-        # no isnan implementation. That call no longer raises. However, a
-        # DeprecationWarning is raised when comparing dt64 to 0.
-        pass
-
     try:
         isdesnat = isnat(desired)
         isactnat = isnat(actual)
@@ -405,6 +384,31 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
             if dtypes_match:
                 return
             else:
+                raise AssertionError(msg)
+
+    except (TypeError, ValueError, NotImplementedError):
+        pass
+
+    # Inf/nan/negative zero handling
+    try:
+        isdesnan = gisnan(desired)
+        isactnan = gisnan(actual)
+        if isdesnan and isactnan:
+            return  # both nan, so equal
+
+        # handle signed zero specially for floats
+        array_actual = array(actual)
+        array_desired = array(desired)
+        if (array_actual.dtype.char in 'Mm' or
+                array_desired.dtype.char in 'Mm'):
+            # version 1.18
+            # until this version, gisnan failed for datetime64. Now
+            # it succeeds but comparison to 0 emits a DeprecationWarning
+            # Avoid that by skipping the next check
+            raise NotImplementedError('cannot compare datetime64 to 0')
+
+        if desired == 0 and actual == 0:
+            if not signbit(desired) == signbit(actual):
                 raise AssertionError(msg)
 
     except (TypeError, ValueError, NotImplementedError):

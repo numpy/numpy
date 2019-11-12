@@ -8,4 +8,4 @@ facing code. Specifically, code that either disallowed the calls to `isinf`` or
 ``isnan`` or checked that they raised an exception will require adaptation, and
 code that mistakenly called ``fmax`` and ``fmin`` instead of ``maximum`` or
 ``minimum`` respectively will requre adjustment. This also affects ``nanmax``
-and ``nanmin`` which may no longer return ``NaT``.
+and ``nanmin``.

@@ -2260,6 +2260,10 @@ class TestDateTime(object):
         assert_equal(np.isinf(arr), false)
         assert_equal(np.isnan(arr), neg)
 
+    def test_assert_equal(self):
+        assert_raises(AssertionError, assert_equal,
+                np.datetime64('nat'), np.timedelta64('nat'))
+
     def test_corecursive_input(self):
         # construct a co-recursive list
         a, b = [], []
