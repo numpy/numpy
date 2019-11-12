@@ -300,9 +300,9 @@ class TestEqual(TestArrayEqual):
             self._test_not_equal([a], b)
 
         for a, b in itertools.product(tds, dts):
-            self._assert_func(a, b)
+            self._test_not_equal(a, b)
             self._test_not_equal(a, [b])
-            self._assert_func([a], [b])
+            self._test_not_equal([a], [b])
             self._test_not_equal([a], np.datetime64("2017-01-01", "s"))
             self._test_not_equal([b], np.datetime64("2017-01-01", "s"))
             self._test_not_equal([a], np.timedelta64(123, "s"))
