@@ -68,8 +68,8 @@ matrix:
        - BLAS=None
        - LAPACK=None
        - ATLAS=None
-       - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas
-       - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
+       - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,blas
+       - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,LAPACK
        - USE_ASV=1
     - python: 3.5
       env: NPY_RELAXED_STRIDES_CHECKING=0

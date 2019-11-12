@@ -117,7 +117,6 @@ stages:
         BLAS: None
         LAPACK: None
         ATLAS: None
-        ACCELERATE: None
         CC: /usr/bin/clang
     # wait until after dev build of NumPy to pip
     # install matplotlib to avoid pip install of older numpy
