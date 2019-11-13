@@ -383,7 +383,7 @@ def irfft(a, n=None, axis=-1, norm=None):
     This function computes the inverse of the one-dimensional *n*-point
     discrete Fourier Transform of real input computed by `rfft`.
     In other words, ``irfft(rfft(a), len(a)) == a`` to within numerical
-    accuracy. (See Notes below for why ``len(a)`` is necessary here.)
+    accuracy. (See Notes below for why ``len(a)`` is not necessary here.)
 
     The input is expected to be in the form returned by `rfft`, i.e. the
     real zero-frequency term followed by the complex positive frequency terms
@@ -1174,8 +1174,8 @@ def irfftn(a, s=None, axes=None, norm=None):
     Fourier Transform for real input over any number of axes in an
     M-dimensional array by means of the Fast Fourier Transform (FFT).  In
     other words, ``irfftn(rfftn(a), a.shape) == a`` to within numerical
-    accuracy. (The ``a.shape`` is necessary like ``len(a)`` is for `irfft`,
-    and for the same reason.)
+    accuracy. (The ``a.shape`` is not necessary like ``len(a)`` is not necessary
+    for `irfft`, and for the same reason.)
 
     The input should be ordered in the same way as is returned by `rfftn`,
     i.e. as for `irfft` for the final transformation axis, and as for `ifftn`
