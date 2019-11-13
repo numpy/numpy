@@ -957,7 +957,7 @@ RAND_INT_TYPE random_geometric(bitgen_t *bitgen_state, double p) {
   }
 }
 
-RAND_INT_TYPE random_two_sided_geometric(bitgen_t *bitgen_state, double alpha) {
+int64_t random_two_sided_geometric(bitgen_t *bitgen_state, double alpha) {
   double prob;
   RAND_INT_TYPE sign;
 
@@ -974,12 +974,7 @@ RAND_INT_TYPE random_two_sided_geometric(bitgen_t *bitgen_state, double alpha) {
      * If the distribution does not return 0,
      * then the result can be either + or -.
      */
-    prob = next_double(bitgen_state);
-    if (prob < 0.5) {
-      sign = -1;
-    } else {
-      sign = 1;
-    }
+    sign = 2 * (int32_t)(next_uint32(bitgen_state) >> 31) - 1;
     /*
      * If the distribution does not return 0, then we can
      * leverage the function for the "standard" geometric

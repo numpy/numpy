@@ -3241,14 +3241,15 @@ cdef class Generator:
         Samples are drawn from a two-sided geometric distribution with a
         specified `alpha` (:math:`\\alpha`), where :math:`0 \\leq \\alpha < 1`.
         The two-sided geometric distribution, also known as the discrete Laplace
-        distribution, is a distribution that decays in both the positive and
-        negative directions by a factor of :math:`\\alpha`.  It is therefore
-        supported on all integers, ``k = 0, ±1, ±2, ...``.
+        distribution, is a distribution that is centered at 0 and that decays
+        in both the positive and negative directions by a common ratio of
+        :math:`\\alpha`.  It is therefore supported on all integers,
+        ``k = 0, ±1, ±2, ...``.
 
         Parameters
         ----------
         alpha : float or array_like of floats
-            The rate of decay, where 0 ≤ alpha < 1.
+            The distribution's common ratio, where 0 ≤ alpha < 1.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -3266,7 +3267,7 @@ cdef class Generator:
 
         .. math:: f(k) = \\frac{1-\\alpha}{1+\\alpha}\\alpha^{\\left | k \\right |}
 
-        where :math:`\\alpha` is the rate of decay.
+        where :math:`\\alpha` is the distribution's common ratio.
 
         Whereas Inusah and Kozubowski restrict :math:`\\alpha` to the interval
         :math:`(0, 1)`, Ghosh et al. define :math:`\\alpha` on the interval
@@ -3275,7 +3276,7 @@ cdef class Generator:
         This implementation restricts :math:`\\alpha` to the interval
         :math:`[0, 1)`.  Under this restriction, the two-sided geometric 
         distribution will always return 0 when :math:`\\alpha = 0`, as this
-        represents the degenerate case where the distribution `decays
+        represents the degenerate case where the distribution `vanishes
         immediately` in both the positive and negative directions.
         Conversely, this restriction does `not` allow for :math:`\\alpha = 1`,
         which causes the probability mass function to become
@@ -3301,7 +3302,7 @@ cdef class Generator:
         Draw one million values from the two-sided geometric distribution,
         with an :math:`\\alpha` equal to :math:`\\frac{1}{3}`:
 
-        >>> z = np.random.two_sided_geometric(alpha=1./3., size=1000000)
+        >>> z = np.random.default_rng().two_sided_geometric(alpha=1./3., size=1000000)
 
         Verify that (i) the probability of sampling a 0 is approximately
         :math:`\\frac{1-\\alpha}{1+\\alpha}` and that (ii) the distribution
@@ -3309,15 +3310,15 @@ cdef class Generator:
         approximately equal to :math:`\\alpha`:
 
         >>> (z == -2).sum() / 1000000. #        _             _
-        0.055582                       # ^ 0.0555 = 1/3 * 0.166
+        0.055489                       # ^ 0.0555 = 1/3 * 0.166
         >>> (z == -1).sum() / 1000000. # |     _
-        0.166269                       # ^ 0.166  = 1/3 * 0.5
+        0.166916                       # ^ 0.166  = 1/3 * 0.5
         >>> (z == 0).sum() / 1000000.  # |
-        0.500454                       # * 0.5    = (1 - 1/3)/(1 + 1/3)
+        0.499738                       # * 0.5    = (1 - 1/3)/(1 + 1/3)
         >>> (z == 1).sum() / 1000000.  # |     _
-        0.166637                       # v 0.166  = 1/3 * 0.5
+        0.16686                        # v 0.166  = 1/3 * 0.5
         >>> (z == 2).sum() / 1000000.  # |      _             _
-        0.055319                       # v 0.0555 = 1/3 * 0.166
+        0.05551                        # v 0.0555 = 1/3 * 0.166
 
         """
         return disc(&random_two_sided_geometric, &self._bitgen, size, self.lock, 1, 0,

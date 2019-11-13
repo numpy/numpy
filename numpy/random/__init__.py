@@ -86,7 +86,6 @@ poisson              Poisson distribution.
 power                Power distribution.
 rayleigh             Rayleigh distribution.
 triangular           Triangular distribution.
-two_sided_geometric  Two-sided geometric distribution.
 uniform              Uniform distribution.
 vonmises             Von Mises circular distribution.
 wald                 Wald (inverse Gaussian) distribution.
@@ -171,7 +170,6 @@ __all__ = [
     'standard_normal',
     'standard_t',
     'triangular',
-    'two_sided_geometric',
     'uniform',
     'vonmises',
     'wald',

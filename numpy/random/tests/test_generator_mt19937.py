@@ -2066,7 +2066,7 @@ class TestBroadcast(object):
         bad_a_one = [-1]
         bad_a_two = [1.0]
         bad_a_three = [1.5]
-        desired_one = np.array([0, 0, 4])
+        desired_one = np.array([0, 0, 1])
         desired_two = np.array([0, 0, 0])
 
         random = Generator(MT19937(self.seed))
