@@ -88,7 +88,8 @@ def _clip_dep_invoke_with_casting(ufunc, *args, out=None, casting=None, **kwargs
         warnings.warn(
             "Converting the output of clip from {!r} to {!r} is deprecated. "
             "Pass `casting=\"unsafe\"` explicitly to silence this warning, or "
-            "correct the type of the variables.".format(e.from_, e.to),
+            "correct the type of the variables."
+            .format(e.from_[e.out_i], e.to[e.out_i]),
             DeprecationWarning,
             stacklevel=2
         )
