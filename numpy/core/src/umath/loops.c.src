@@ -54,210 +54,123 @@
  **                          GENERIC FLOAT LOOPS                             **
  *****************************************************************************/
 
+/* direct loops using a suitable callback */
 
-typedef float halfUnaryFunc(npy_half x);
-typedef float floatUnaryFunc(float x);
-typedef double doubleUnaryFunc(double x);
-typedef npy_longdouble longdoubleUnaryFunc(npy_longdouble x);
-typedef npy_half halfBinaryFunc(npy_half x, npy_half y);
-typedef float floatBinaryFunc(float x, float y);
-typedef double doubleBinaryFunc(double x, double y);
-typedef npy_longdouble longdoubleBinaryFunc(npy_longdouble x, npy_longdouble y);
-
+/**begin repeat
+ * #c = e, f, d, g#
+ * #type = npy_half, npy_float, npy_double, npy_longdouble#
+ **/
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_e_e(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
+PyUFunc_@c@_@c@(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
-    halfUnaryFunc *f = (halfUnaryFunc *)func;
+    typedef @type@ func_type(@type@);
+    func_type *f = (func_type *)func;
     UNARY_LOOP {
-        const npy_half in1 = *(npy_half *)ip1;
-        *(npy_half *)op1 = f(in1);
+        const @type@ in1 = *(@type@ *)ip1;
+        *(@type@ *)op1 = f(in1);
     }
 }
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_e_e_As_f_f(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
+PyUFunc_@c@@c@_@c@(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
-    floatUnaryFunc *f = (floatUnaryFunc *)func;
+    typedef @type@ func_type(@type@, @type@);
+    func_type *f = (func_type *)func;
+    BINARY_LOOP {
+        @type@ in1 = *(@type@ *)ip1;
+        @type@ in2 = *(@type@ *)ip2;
+        *(@type@ *)op1 = f(in1, in2);
+    }
+}
+
+/**end repeat**/
+
+/* indirect loops with casting */
+/**begin repeat
+ * #c1    = e,         e,          f#
+ * #type1 = npy_half,  npy_half,   npy_float#
+ * #c2    = f,         d,          d#
+ * #type2 = npy_float, npy_double, npy_double#
+ *
+ * #conv12  = npy_half_to_float, npy_half_to_double, (double)#
+ * #conv21  = npy_float_to_half, npy_double_to_half, (float)#
+ **/
+
+/*UFUNC_API*/
+NPY_NO_EXPORT void
+PyUFunc_@c1@_@c1@_As_@c2@_@c2@(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
+{
+    typedef @type2@ func_type(@type2@);
+    func_type *f = (func_type *)func;
     UNARY_LOOP {
-        const float in1 = npy_half_to_float(*(npy_half *)ip1);
-        *(npy_half *)op1 = npy_float_to_half(f(in1));
+        const @type2@ in1 = @conv12@(*(@type1@ *)ip1);
+        *(@type1@ *)op1 = @conv21@(f(in1));
     }
 }
-
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_e_e_As_d_d(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
+PyUFunc_@c1@@c1@_@c1@_As_@c2@@c2@_@c2@(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
-    doubleUnaryFunc *f = (doubleUnaryFunc *)func;
-    UNARY_LOOP {
-        const double in1 = npy_half_to_double(*(npy_half *)ip1);
-        *(npy_half *)op1 = npy_double_to_half(f(in1));
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_f_f(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    floatUnaryFunc *f = (floatUnaryFunc *)func;
-    UNARY_LOOP {
-        const float in1 = *(float *)ip1;
-        *(float *)op1 = f(in1);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_f_f_As_d_d(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    doubleUnaryFunc *f = (doubleUnaryFunc *)func;
-    UNARY_LOOP {
-        const float in1 = *(float *)ip1;
-        *(float *)op1 = (float)f((double)in1);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_ee_e(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    halfBinaryFunc *f = (halfBinaryFunc *)func;
+    typedef @type2@ func_type(@type2@, @type2@);
+    func_type *f = (func_type *)func;
     BINARY_LOOP {
-        npy_half in1 = *(npy_half *)ip1;
-        npy_half in2 = *(npy_half *)ip2;
-        *(npy_half *)op1 = f(in1, in2);
+        const @type2@ in1 = @conv12@(*(@type1@ *)ip1);
+        const @type2@ in2 = @conv12@(*(@type1@ *)ip2);
+        *(@type1@ *)op1 = @conv21@(f(in1, in2));
     }
 }
 
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_ee_e_As_ff_f(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    floatBinaryFunc *f = (floatBinaryFunc *)func;
-    BINARY_LOOP {
-        float in1 = npy_half_to_float(*(npy_half *)ip1);
-        float in2 = npy_half_to_float(*(npy_half *)ip2);
-        *(npy_half *)op1 = npy_float_to_half(f(in1, in2));
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_ee_e_As_dd_d(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    doubleBinaryFunc *f = (doubleBinaryFunc *)func;
-    BINARY_LOOP {
-        double in1 = npy_half_to_double(*(npy_half *)ip1);
-        double in2 = npy_half_to_double(*(npy_half *)ip2);
-        *(npy_half *)op1 = npy_double_to_half(f(in1, in2));
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_ff_f(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    floatBinaryFunc *f = (floatBinaryFunc *)func;
-    BINARY_LOOP {
-        float in1 = *(float *)ip1;
-        float in2 = *(float *)ip2;
-        *(float *)op1 = f(in1, in2);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_ff_f_As_dd_d(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    doubleBinaryFunc *f = (doubleBinaryFunc *)func;
-    BINARY_LOOP {
-        float in1 = *(float *)ip1;
-        float in2 = *(float *)ip2;
-        *(float *)op1 = (double)f((double)in1, (double)in2);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_d_d(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    doubleUnaryFunc *f = (doubleUnaryFunc *)func;
-    UNARY_LOOP {
-        double in1 = *(double *)ip1;
-        *(double *)op1 = f(in1);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_dd_d(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    doubleBinaryFunc *f = (doubleBinaryFunc *)func;
-    BINARY_LOOP {
-        double in1 = *(double *)ip1;
-        double in2 = *(double *)ip2;
-        *(double *)op1 = f(in1, in2);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_g_g(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    longdoubleUnaryFunc *f = (longdoubleUnaryFunc *)func;
-    UNARY_LOOP {
-        npy_longdouble in1 = *(npy_longdouble *)ip1;
-        *(npy_longdouble *)op1 = f(in1);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_gg_g(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    longdoubleBinaryFunc *f = (longdoubleBinaryFunc *)func;
-    BINARY_LOOP {
-        npy_longdouble in1 = *(npy_longdouble *)ip1;
-        npy_longdouble in2 = *(npy_longdouble *)ip2;
-        *(npy_longdouble *)op1 = f(in1, in2);
-    }
-}
-
-
+/**end repeat**/
 
 /******************************************************************************
  **                          GENERIC COMPLEX LOOPS                           **
  *****************************************************************************/
 
-
-typedef void cdoubleUnaryFunc(npy_cdouble *x, npy_cdouble *r);
-typedef void cfloatUnaryFunc(npy_cfloat *x, npy_cfloat *r);
-typedef void clongdoubleUnaryFunc(npy_clongdouble *x, npy_clongdouble *r);
-typedef void cdoubleBinaryFunc(npy_cdouble *x, npy_cdouble *y, npy_cdouble *r);
-typedef void cfloatBinaryFunc(npy_cfloat *x, npy_cfloat *y, npy_cfloat *r);
-typedef void clongdoubleBinaryFunc(npy_clongdouble *x, npy_clongdouble *y,
-                                   npy_clongdouble *r);
+/* direct loops using a suitable callback */
+/**begin repeat
+ * #c = F, D, G#
+ * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
+ **/
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_F_F(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
+PyUFunc_@c@_@c@(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
-    cfloatUnaryFunc *f = (cfloatUnaryFunc *)func;
+    typedef void func_type(@type@ *, @type@ *);
+    func_type *f = (func_type *)func;
     UNARY_LOOP {
-        npy_cfloat in1 = *(npy_cfloat *)ip1;
-        npy_cfloat *out = (npy_cfloat *)op1;
+        @type@ in1 = *(@type@ *)ip1;
+        @type@ *out = (@type@ *)op1;
         f(&in1, out);
     }
 }
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
+PyUFunc_@c@@c@_@c@(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
+{
+    typedef void func_type(@type@ *, @type@ *, @type@ *);
+    func_type *f = (func_type *)func;
+    BINARY_LOOP {
+        @type@ in1 = *(@type@ *)ip1;
+        @type@ in2 = *(@type@ *)ip2;
+        @type@ *out = (@type@ *)op1;
+        f(&in1, &in2, out);
+    }
+}
+/**end repeat**/
+
+
+/* indirect loops with casting */
+/*UFUNC_API*/
+NPY_NO_EXPORT void
 PyUFunc_F_F_As_D_D(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
-    cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
+    typedef void func_type(npy_cdouble *, npy_cdouble *);
+    func_type *f = (func_type *)func;
     UNARY_LOOP {
         npy_cdouble tmp, out;
         tmp.real = (double)((float *)ip1)[0];
@@ -270,22 +183,10 @@ PyUFunc_F_F_As_D_D(char **args, npy_intp *dimensions, npy_intp *steps, void *fun
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
-PyUFunc_FF_F(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    cfloatBinaryFunc *f = (cfloatBinaryFunc *)func;
-    BINARY_LOOP {
-        npy_cfloat in1 = *(npy_cfloat *)ip1;
-        npy_cfloat in2 = *(npy_cfloat *)ip2;
-        npy_cfloat *out = (npy_cfloat *)op1;
-        f(&in1, &in2, out);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
 PyUFunc_FF_F_As_DD_D(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
-    cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
+    typedef void func_type(npy_cdouble *, npy_cdouble *, npy_cdouble *);
+    func_type *f = (func_type *)func;
     BINARY_LOOP {
         npy_cdouble tmp1, tmp2, out;
         tmp1.real = (double)((float *)ip1)[0];
@@ -295,56 +196,6 @@ PyUFunc_FF_F_As_DD_D(char **args, npy_intp *dimensions, npy_intp *steps, void *f
         f(&tmp1, &tmp2, &out);
         ((float *)op1)[0] = (float)out.real;
         ((float *)op1)[1] = (float)out.imag;
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_D_D(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
-    UNARY_LOOP {
-        npy_cdouble in1 = *(npy_cdouble *)ip1;
-        npy_cdouble *out = (npy_cdouble *)op1;
-        f(&in1, out);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_DD_D(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
-    BINARY_LOOP {
-        npy_cdouble in1 = *(npy_cdouble *)ip1;
-        npy_cdouble in2 = *(npy_cdouble *)ip2;
-        npy_cdouble *out = (npy_cdouble *)op1;
-        f(&in1, &in2, out);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_G_G(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    clongdoubleUnaryFunc *f = (clongdoubleUnaryFunc *)func;
-    UNARY_LOOP {
-        npy_clongdouble in1 = *(npy_clongdouble *)ip1;
-        npy_clongdouble *out = (npy_clongdouble *)op1;
-        f(&in1, out);
-    }
-}
-
-/*UFUNC_API*/
-NPY_NO_EXPORT void
-PyUFunc_GG_G(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
-{
-    clongdoubleBinaryFunc *f = (clongdoubleBinaryFunc *)func;
-    BINARY_LOOP {
-        npy_clongdouble in1 = *(npy_clongdouble *)ip1;
-        npy_clongdouble in2 = *(npy_clongdouble *)ip2;
-        npy_clongdouble *out = (npy_clongdouble *)op1;
-        f(&in1, &in2, out);
     }
 }
 
