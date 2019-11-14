@@ -1464,9 +1464,12 @@ def unwrap(p, discont=None, axis=-1, *, min_val=-pi, max_val=pi):
     """
     Unwrap by changing deltas between values to complement.
     
-    For `min_val=-pi` and `max_val=pi`, unwraps radian phase `p` by 
-    changing absolute jumps greater than `discont` to their 2*pi 
-    complement along the given axis.
+    For the default case where `min_val=-pi`, `max_val=pi`, `discont=pi`
+    It unwraps radian phase `p` by changing absolute jumps greater 
+    than `pi` to their 2*pi complement along the given axis.
+    
+    In general it unwrapps a signal `p` by changing absolute jumps 
+    greater than `discont` to their complementary values.
 
     Parameters
     ----------
@@ -1492,8 +1495,8 @@ def unwrap(p, discont=None, axis=-1, *, min_val=-pi, max_val=pi):
 
     Notes
     -----
-    If the discontinuity in `p` is smaller than ``pi``, but larger than
-    `discont`, no unwrapping is done because taking the 2*pi complement
+    If the discontinuity in `p` is smaller than ``max_val``, but larger than
+    `discont`, no unwrapping is done because taking the complement
     would only make the discontinuity larger.
 
     Examples
