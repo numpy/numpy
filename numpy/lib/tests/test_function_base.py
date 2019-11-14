@@ -1647,12 +1647,12 @@ class TestUnwrap(object):
         # check that unwrap maintains continuity
         assert_(np.all(diff(unwrap(rand(10) * 1000, min_val=0, max_val=255)) < 255))
         # check simple case
-        simple_seq = linspace(0, 512, 6)
-        wrap_seq = mod(simple_seq, 255)
+        simple_seq = np.linspace(0, 512, 6)
+        wrap_seq = np.mod(simple_seq, 255)
         assert_array_equal(unwrap(wrap_seq, min_val=0, max_val=255), simple_seq)
         # check custom discont value
         uneven_seq = np.array(simple_seq.tolist()+[765])
-        wrap_uneven = mod(uneven_seq, 255)
+        wrap_uneven = np.mod(uneven_seq, 255)
         no_discont = unwrap(wrap_uneven, min_val=0, max_val=255)
         assert_array_equal(no_discont[:-1], uneven_seq[:-1])
         sm_discont = unwrap(wrap_uneven, min_val=0, max_val=255, discont=2)
