@@ -1641,6 +1641,13 @@ class TestUnwrap(object):
         # check that unwrap maintains continuity
         assert_(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
 
+    def test_minmax(self):
+        # check that unwrap removes jumps greater that 255
+        assert_array_equal(unwrap([1, 1 + 256], min_val=0, max_val=255), [1, ])
+        # check that unwrap maintains continuity
+        assert_(np.all(diff(unwrap(rand(10) * 1000, min_val=0, max_val=255)) < 255))
+
+
 
 class TestFilterwindows(object):
 
