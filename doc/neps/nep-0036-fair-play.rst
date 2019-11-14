@@ -37,7 +37,7 @@ NumPy with an extended footprint.  In this specific instance, a bug
 was filed against the `np.erf` function---a function that NumPy itself
 had never provided.
 
-In the months that followed, several conversations was had with the
+In the months that followed, several conversations were had with the
 entity involved, and a better understanding emerged of needs on either
 side.  The entity agreed to publish the patches made against Python,
 and a special label was added on the NumPy issue tracker to identify
