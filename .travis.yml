@@ -82,13 +82,19 @@ matrix:
        - BLAS=None
        - LAPACK=None
        - ATLAS=None
-    - os: linux-ppc64le
-      python: 3.6
+    - python: 3.6
+      os: linux
+      arch: ppc64le
       env:
-       # for matrix annotation only
-       - PPC64_LE=1
-       # use POWER8 OpenBLAS build, not system ATLAS
+       # use ppc64le OpenBLAS build, not system ATLAS
        - ATLAS=None
+    - python: 3.6
+      os: linux
+      arch: s390x
+      env:
+       # use s390x OpenBLAS build, not system ATLAS
+       - ATLAS=None
+
 
 before_install:
   - ./tools/travis-before-install.sh
