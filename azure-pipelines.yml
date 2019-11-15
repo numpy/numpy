@@ -151,6 +151,11 @@ stages:
             PYTHON_ARCH: 'x86'
             TEST_MODE: fast
             BITS: 32
+          Python38-32bit-fast:
+            PYTHON_VERSION: '3.8'
+            PYTHON_ARCH: 'x86'
+            TEST_MODE: fast
+            BITS: 32
           Python35-64bit-full:
             PYTHON_VERSION: '3.5'
             PYTHON_ARCH: 'x64'
@@ -163,6 +168,11 @@ stages:
             BITS: 64
           Python37-64bit-full:
             PYTHON_VERSION: '3.7'
+            PYTHON_ARCH: 'x64'
+            TEST_MODE: full
+            BITS: 64
+          Python38-64bit-full:
+            PYTHON_VERSION: '3.8'
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
