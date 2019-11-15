@@ -121,9 +121,9 @@ argument and the default normalization by :math:`1/n`.
 Type Promotion
 --------------
 
-`numpy.fft` is inconsistent with other NumPy functions as it promotes
-`float32` and `complex64` arrays to `float64` and `complex128` arrays.
-For an FFT implementation that does not promote input arrays, see `scipy.fftpack`.
+`numpy.fft` promotes ``float32`` and ``complex64`` arrays to ``float64`` and
+``complex128`` arrays respectively. For an FFT implementation that does not
+promote input arrays, see `scipy.fftpack`.
 
 Normalization
 -------------
