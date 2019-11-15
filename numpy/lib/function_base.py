@@ -1495,7 +1495,7 @@ def unwrap(p, discont=None, axis=-1, *, min_val=-pi, max_val=pi):
 
     Notes
     -----
-    If the discontinuity in `p` is smaller than ``max_val-min_val/2``, 
+    If the discontinuity in `p` is smaller than ``(max_val-min_val)/2``, 
     but larger than `discont`, no unwrapping is done because taking 
     the complement would only make the discontinuity larger.
 
