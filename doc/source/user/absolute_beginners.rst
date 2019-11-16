@@ -100,7 +100,7 @@ More information about arrays
 
 ------
 
-You might occasionally hear an array referred to as an "ndarray," which is shorthand for "N-dimensional array." An N-dimensional array is simply an array with any number of dimensions. You might also hear **1-D**, or one-dimensional array, **2-D**, or two-dimensional array, and so on. The NumPy `ndarray` class is used to represent both matrices and vectors. A **vector** is an array with a single column, while a **matrix** refers to an array with multiple columns.
+You might occasionally hear an array referred to as a "ndarray," which is shorthand for "N-dimensional array." An N-dimensional array is simply an array with any number of dimensions. You might also hear **1-D**, or one-dimensional array, **2-D**, or two-dimensional array, and so on. The NumPy `ndarray` class is used to represent both matrices and vectors. A **vector** is an array with a single column, while a **matrix** refers to an array with multiple columns.
 
 **What are the attributes of an array?**
 
@@ -203,7 +203,7 @@ You can create an array with a range of elements:
 
   array([0, 1, 2, 3])
 
-And even an array that contains a range of evenly spaced interval. To do this, you will specify the **first number**, **last number**, and the **step size**.
+And even an array that contains a range of evenly spaced intervals. To do this, you will specify the **first number**, **last number**, and the **step size**.
 
 **Input:**
 
@@ -278,7 +278,7 @@ You can add elements to your array any time with **np.append()**. Make sure to s
 
   np.append(arr, [1,2])
 
-**Output**
+**Output:**
 
 ::
 
@@ -292,7 +292,7 @@ You can delete an element with **np.delete()**. If you want to delete the elemen
 
   np.delete(arr, 1)
 
-**Output**
+**Output:**
 
 ::
 
@@ -709,8 +709,6 @@ You can also use **np.where()** to select elements or indices from an array.
 
 Starting with this array:
 
-**Input:**
-
 ::
 
   a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
@@ -804,7 +802,9 @@ How to create an array from existing data
 
 -----
 
-You can easily use create a new array from a section of an existing array. Let's say you have this array:
+You can easily use create a new array from a section of an existing array. 
+
+Let's say you have this array:
 
 ::
 
@@ -829,14 +829,14 @@ Here, you grabbed a section of your array from index position 3 through index po
 
 You can also stack two existing arrays, both vertically and horizontally. Let's say you have two arrays: 
 
-a_1:
+**a_1**:
 
 ::
 
   array([[1, 1],
        [2, 2]])
 
-and a_2:
+and **a_2**:
 
 ::
 
@@ -923,8 +923,6 @@ If you wanted to split your array after the third and fourth column, you'd run:
 You can use the **view** method to create a new array object that looks at the same data as the original array (a *shallow copy*)
 
 Let's say you create this array:
-
-**Input:**
 
 ::
 
@@ -1141,8 +1139,6 @@ How to inspect the size and shape of a NumPy array
 You can get the dimensions of a NumPy array any time using **ndarray.shape**. NumPy will return the dimensions of the array as a tuple.
 
 For example, if you create this array:
-
-**Input:**
 
 ::
 
@@ -1538,8 +1534,6 @@ You can pass the **return_counts** argument in **np.unique()** along with your a
 
 This also works with 2D arrays. If you start with this array:
 
-**Input:**
-
 ::
 
   a2D = np.array([[1, 2, 3, 4] ,[5, 6, 7, 8] , [9, 10, 11, 12],  [1, 2, 3, 4]])
@@ -1634,8 +1628,6 @@ You can also use **np.transpose** to reverse or change the axes of an array acco
 
 If you start with this array:
 
-**Input:**
-
 ::
 
   arr = np.arange(6).reshape((2,3))
@@ -1682,8 +1674,6 @@ NumPy's **np.flip()** function allows you to flip, or reverse, the contents of a
 **Reversing a 1D array**
 
 If you begin with a 1D array like this one:
-
-**Input:**
 
 ::
 
@@ -2321,7 +2311,7 @@ It's simple to read in a CSV that contains existing information. The best and ea
 
 .. image:: images/np_pandas.png
 
-It's simple to use Pandas in order to export your array as well. If you are new to NumPy, you may want to  create a pandas dataframe from the values in your array and then write the data frame to a CSV file with pandas.
+It's simple to use Pandas in order to export your array as well. If you are new to NumPy, you may want to  create a Pandas dataframe from the values in your array and then write the data frame to a CSV file with Pandas.
 
 If you created this array "a"
 
