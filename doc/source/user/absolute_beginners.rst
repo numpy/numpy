@@ -450,7 +450,7 @@ You can use **reshape()** to reshape your array. For example, you can reshape th
    [2 3]
    [4 5]]
 
-With np.reshape, you can specify a few optional parameters:
+With **np.reshape**, you can specify a few optional parameters:
 
 **Input:**
 
@@ -462,7 +462,7 @@ With np.reshape, you can specify a few optional parameters:
 
 **newshape** is the new shape you want. You can specify an integer or a tuple of integers. If you specify an integer, the result will be an array of that length. The shape should be compatible with the original shape.
 
-**order:** 'C' means to read/write the elements using C-like index order,  ‘F’ means to read/write the elements using Fortran-like index order, ‘A’ means to read/write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise. (This is an optional parameter and doesn't need to be specified.)
+**order:** **C** means to read/write the elements using C-like index order,  **F** means to read/write the elements using Fortran-like index order, **A** means to read/write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise. (This is an optional parameter and doesn't need to be specified.)
 
 `Learn more about shape manipulation here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#shape-manipulation>`_.
 
@@ -875,7 +875,7 @@ Or stack them horizontally with **hstack**:
   array([[1, 1, 3, 3],
        [2, 2, 4, 4]])
 
-You can split an array into several smaller arrays using hsplit. You can specify either the number of equally shaped arrays to return or the columns *after* which the division should occur.
+You can split an array into several smaller arrays using **hsplit**. You can specify either the number of equally shaped arrays to return or the columns *after* which the division should occur.
 
 Let's say you have this array:
 
@@ -1360,7 +1360,7 @@ You can aggregate matrices the same way you aggregated vectors:
 
 .. image:: images/np_matrix_aggregation.png
 
-You can aggregate all the values in a matrix and you can aggregate them across columns or rows using the `axis` parameter:
+You can aggregate all the values in a matrix and you can aggregate them across columns or rows using the **axis** parameter:
 
 ::
   
@@ -1417,7 +1417,7 @@ Will print out like this:
         [1., 1.]]])
 
  
-There are often instances where we want NumPy to initialize the values of an array. NumPy offers methods like ones(), zeros() and random.random() for these instances. All you need to do is pass in the number of elements you want it to generate.
+There are often instances where we want NumPy to initialize the values of an array. NumPy offers methods like **ones()**, **zeros()**,  **Random Generator**, and even the legacy method **random.random()** for these instances. All you need to do is pass in the number of elements you want it to generate.
 
 ::
 
@@ -1426,6 +1426,16 @@ There are often instances where we want NumPy to initialize the values of an arr
   np.random.random((3)
   
 .. image:: images/np_ones_zeros_random.png
+
+You can also use the **ones()**, **zeros()**, and **random()** methods to create an array if you give them a tuple describing the dimensions of the matrix.
+
+::
+
+  np.ones(3,2)
+  mp.zeros(3,2)
+  np.random.random((3,2)
+
+.. image:: images/np_ones_zeros_matrix.png
 
 Read more about initializing the values of an array with `ones here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ones.html>`_, `zeros here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.zeros.html>`_, and `initializing empty arrays here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.empty.html>`_.
 
@@ -1439,7 +1449,7 @@ You have a number of options when using NumPy for random number generation. Rand
 
 With Generator.integers, you can generate random integers from low (remember that this is inclusive with NumPy) to high (exclusive). You can set *endopoint=True* to make the high number inclusive. 
 
-You can generate a 2 x 4 array of random integers between 0 and 4 with
+You can generate a 2 x 4 array of random integers between 0 and 4 with:
 
 **Input:**
 
@@ -1453,17 +1463,6 @@ You can generate a 2 x 4 array of random integers between 0 and 4 with
 
   array([[4, 0, 2, 1],
        [3, 2, 2, 0]])
-
-
-You can also use the **ones()**, **zeros()**, and **random()** methods to create an array if you give them a tuple describing the dimensions of the matrix.
-
-::
-
-  np.ones(3,2)
-  mp.zeros(3,2)
-  np.random.random((3,2)
-
-.. image:: images/np_ones_zeros_matrix.png
 
 `Read more about Random Generator here <https://docs.scipy.org/doc/numpy/reference/random/generator.html>`_.
 
@@ -1823,7 +1822,7 @@ Reshaping and flattening multidimensional arrays
   .flatten()
   .ravel()
   
-There are two popular ways to flatten an array: **.flatten()** and **.ravel()**. The primary difference between the two is that the new array created using **ravel()** is actually a reference to the parent array. This means that any changes to the new array will affect the parent array as well. Since ravel does not create a copy, it's memory efficient. 
+There are two popular ways to flatten an array: **.flatten()** and **.ravel()**. The primary difference between the two is that the new array created using **ravel()** is actually a reference to the parent array. This means that any changes to the new array will affect the parent array as well. Since **ravel** does not create a copy, it's memory efficient. 
 
 If you start with this array:
 
@@ -2388,6 +2387,7 @@ If you already have Matplotlib installed, you can import it with
 ::
   
   import matplotlib.pyplot as plt
+
   # If you're using Jupyter Notebook, you may also want to run the following line of code
    to display your code in the notebook
   %matplotlib inline
@@ -2423,12 +2423,21 @@ With Matplotlib, you have access to an enormous number of visualization options.
 
 ::
 
-  image = np.random.rand(40, 40)
-  plt.imshow(image, cmap=plt.cm.magma)
+  from mpl_toolkits.mplot3d import Axes3D
+
+  fig = plt.figure()
+  ax = Axes3D(fig)
+  X = np.arange(-5, 5, 0.15)
+  Y = np.arange(-5, 5, 0.15)
+  X, Y = np.meshgrid(X, Y)
+  R = np.sqrt(X**2 + Y**2)
+  Z = np.sin(R)
+
+  ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis')
 
   plt.colorbar()
 
-.. image:: images/np_matplotlib2.png
+.. image:: images/np_matplotlib4.png
     :scale: 50 %
 
 To read more about Matplotlib and what it can do, take a look at `the official documentation <https://matplotlib.org/>`_. For directions regarding installing Matplotlib, see the official `installation section <https://matplotlib.org/users/installing.html>`_.
@@ -2440,5 +2449,5 @@ To read more about Matplotlib and what it can do, take a look at `the official d
 
 -------------------------------------------------------
 
-*Image credits: Jay Alammar http://jalammar.github.io/*
+*Image credits: Jay Alammar http://jalammar.github.io/ and Anne Bonner https://github.com/bonn0062*
 
