@@ -4124,8 +4124,9 @@ cdef class Generator:
         # return val
 
         cdef np.npy_intp k, totsize, i, j
-        cdef np.ndarray alpha_arr, val_arr
+        cdef np.ndarray alpha_arr, val_arr, alpha_csum_arr
         cdef double *alpha_data
+        cdef double *alpha_csum_data
         cdef double *val_data
         cdef double acc, invacc
 
@@ -4135,6 +4136,11 @@ cdef class Generator:
         if np.any(np.less_equal(alpha_arr, 0)):
             raise ValueError('alpha <= 0')
         alpha_data = <double*>np.PyArray_DATA(alpha_arr)
+
+        alpha_csum = np.ascontiguousarray(np.cumsum(alpha[::-1])[::-1])
+        alpha_csum_arr = <np.ndarray>np.PyArray_FROM_OTF(
+            alpha_csum, np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+        alpha_csum_data = <double*>np.PyArray_DATA(alpha_csum_arr)
 
         if size is None:
             shape = (k,)
@@ -4150,17 +4156,33 @@ cdef class Generator:
 
         i = 0
         totsize = np.PyArray_SIZE(val_arr)
-        with self.lock, nogil:
-            while i < totsize:
-                acc = 0.0
-                for j in range(k):
-                    val_data[i+j] = random_standard_gamma(&self._bitgen,
-                                                              alpha_data[j])
-                    acc = acc + val_data[i + j]
-                invacc = 1/acc
-                for j in range(k):
-                    val_data[i + j] = val_data[i + j] * invacc
-                i = i + k
+
+        # Small alpha case: Use stick-breaking approach with beta random variates
+        if alpha_arr.max() < 1.0:
+            with self.lock, nogil:
+                while i < totsize:
+                    acc = 1.
+                    for j in range(k-1):
+                        val_data[i+j] = acc * random_beta(&self._bitgen,
+                                                          alpha_data[j],
+                                                          alpha_csum_data[j+1])
+                        acc *= (1. - val_data[i+j])
+                    val_data[i+j+1] = acc
+                    i = i + k
+
+        # Non-small alpha case: Perform unit normalisation of a sum of gamma random variates
+        else:
+            with self.lock, nogil:
+                while i < totsize:
+                    acc = 0.0
+                    for j in range(k):
+                        val_data[i+j] = random_standard_gamma(&self._bitgen,
+                                                                  alpha_data[j])
+                        acc = acc + val_data[i + j]
+                    invacc = 1/acc
+                    for j in range(k):
+                        val_data[i + j] = val_data[i + j] * invacc
+                    i = i + k
 
         return diric
 
