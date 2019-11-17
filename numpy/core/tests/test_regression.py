@@ -17,6 +17,7 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.compat import asbytes, asunicode, long, pickle
+from test.support import no_tracing
 
 try:
     RecursionError
@@ -1316,6 +1317,7 @@ class TestRegression(object):
             assert_(pickle.loads(
                 pickle.dumps(test_record, protocol=proto)) == test_record)
 
+    @no_tracing
     def test_blasdot_uninitialized_memory(self):
         # Ticket #950
         for m in [0, 1, 2]:
