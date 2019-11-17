@@ -987,6 +987,15 @@ class TestRandomDist(object):
              [2.830254190078299e-04, 1.744709918330393e-01]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
+    def test_beta_small_a_and_b(self):
+        eps = 1.0e-12  # 1.0e-11 -> runtime x50; 1.0e-12 -> runtime x200
+        a = eps
+        b = eps * 1.0e-3
+
+        random = Generator(MT19937(self.seed))
+        actual = random.beta(a, b)
+        assert actual == 1.
+
     def test_binomial(self):
         random = Generator(MT19937(self.seed))
         actual = random.binomial(100.123, .456, size=(3, 2))
@@ -1053,6 +1062,29 @@ class TestRandomDist(object):
         contig = random.dirichlet(np.ascontiguousarray(alpha),
                                   size=(3, 2))
         assert_array_almost_equal(non_contig, contig)
+
+    def test_dirichlet_small_alpha(self):
+        eps = 1.0e-9  # 1.0e-10 -> runtime x 10; 1e-11 -> runtime x 200, etc.
+        alpha = eps * np.array([1., 1.0e-3])
+        random = Generator(MT19937(self.seed))
+        actual = random.dirichlet(alpha, size=(3, 2))
+        expected = np.array([
+            [
+                [1., 0.],
+                [1., 0.]
+            ],
+
+            [
+                [1., 0.],
+                [1., 0.]
+            ],
+
+            [
+                [1., 0.],
+                [1., 0.]
+            ]
+        ])
+        assert_array_almost_equal(actual, expected, decimal=15)
 
     def test_exponential(self):
         random = Generator(MT19937(self.seed))
