@@ -19,13 +19,13 @@ array_function_dispatch = functools.partial(
 
 
 def _linspace_dispatcher(start, stop, num=None, endpoint=None, retstep=None,
-                         dtype=None, axis=None):
+                         dtype=None, axis=None, keepdims=None):
     return (start, stop)
 
 
 @array_function_dispatch(_linspace_dispatcher)
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
-             axis=0):
+             axis=0, keepdims=False):
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -66,6 +66,13 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         new axis inserted at the beginning. Use -1 to get an axis at the end.
 
         .. versionadded:: 1.16.0
+
+    keepdims : bool, optional
+        If this is set to True, the ndarray returned will have the same
+        dimension as that of start and end.  Also, the value of dimension of
+        star and end corresponding to axis must have value 1.
+
+        .. versionadded:: 1.18.0
 
     Returns
     -------
@@ -129,6 +136,17 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     start = asanyarray(start) * 1.0
     stop  = asanyarray(stop)  * 1.0
 
+    if keepdims:
+        if axis >= len(start.shape) or start.shape[axis] != 1:
+            raise ValueError(
+                "When keepdims=True, the axis dimension must be 1."
+            )
+        # Remove the extra dimension so that the output has the same dimension
+        new_shape = list(start.shape)
+        new_shape.pop(axis)
+        start = start.reshape(new_shape)
+        stop = stop.reshape(new_shape)
+
     dt = result_type(start, stop, float(num))
     if dtype is None:
         dtype = dt
@@ -174,13 +192,13 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
 
 def _logspace_dispatcher(start, stop, num=None, endpoint=None, base=None,
-                         dtype=None, axis=None):
+                         dtype=None, axis=None, keepdims=None):
     return (start, stop)
 
 
 @array_function_dispatch(_logspace_dispatcher)
 def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
-             axis=0):
+             axis=0, keepdims=False):
     """
     Return numbers spaced evenly on a log scale.
 
@@ -218,6 +236,13 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
         new axis inserted at the beginning. Use -1 to get an axis at the end.
 
         .. versionadded:: 1.16.0
+
+    keepdims : bool, optional
+        If this is set to True, the ndarray returned will have the same
+        dimension as that of start and end.  Also, the value of dimension of
+        star and end corresponding to axis must have value 1.
+
+        .. versionadded:: 1.18.0
 
 
     Returns
@@ -268,19 +293,22 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     >>> plt.show()
 
     """
-    y = linspace(start, stop, num=num, endpoint=endpoint, axis=axis)
+    y = linspace(
+        start, stop, num=num, endpoint=endpoint, axis=axis, keepdims=keepdims
+    )
     if dtype is None:
         return _nx.power(base, y)
     return _nx.power(base, y).astype(dtype, copy=False)
 
 
 def _geomspace_dispatcher(start, stop, num=None, endpoint=None, dtype=None,
-                          axis=None):
+                          axis=None, keepdims=None):
     return (start, stop)
 
 
 @array_function_dispatch(_geomspace_dispatcher)
-def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
+def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0,
+              keepdims=False):
     """
     Return numbers spaced evenly on a log scale (a geometric progression).
 
@@ -313,6 +341,13 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
         new axis inserted at the beginning. Use -1 to get an axis at the end.
 
         .. versionadded:: 1.16.0
+
+    keepdims : bool, optional
+        If this is set to True, the ndarray returned will have the same
+        dimension as that of start and end.  Also, the value of dimension of
+        star and end corresponding to axis must have value 1.
+
+        .. versionadded:: 1.18.0
 
     Returns
     -------
@@ -385,6 +420,17 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     if _nx.any(start == 0) or _nx.any(stop == 0):
         raise ValueError('Geometric sequence cannot include zero')
 
+    if keepdims:
+        if axis >= len(start.shape) or start.shape[axis] != 1:
+            raise ValueError(
+                "When keepdims=True, the axis dimension must be 1."
+            )
+        # Remove the extra dimension so that the output has the same dimension
+        new_shape = list(start.shape)
+        new_shape.pop(axis)
+        start = start.reshape(new_shape)
+        stop = stop.reshape(new_shape)
+
     dt = result_type(start, stop, float(num), _nx.zeros((), dtype))
     if dtype is None:
         dtype = dt
@@ -418,6 +464,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     log_stop = _nx.log10(stop)
     result = out_sign * logspace(log_start, log_stop, num=num,
                                  endpoint=endpoint, base=10.0, dtype=dtype)
+
     if axis != 0:
         result = _nx.moveaxis(result, 0, axis)
 

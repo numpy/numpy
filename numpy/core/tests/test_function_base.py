@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
+import numpy as np
 from numpy import (
     logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
     ndarray, sqrt, nextafter, stack
@@ -91,6 +92,22 @@ class TestLogspace(object):
         assert type(ls) is PhysicalQuantity2
         assert_equal(ls, logspace(1.0, 7.0, 1))
 
+    def test_keepdims(self):
+        arr = np.arange(8).reshape((2, 2, 2))
+        for ax in [0, 1, 2, -1]:
+            arr_min = arr.min(axis=ax)
+            arr_max = arr.max(axis=ax)
+            arr_min_keepdims = arr.min(axis=ax, keepdims=True)
+            arr_max_keepdims = arr.max(axis=ax, keepdims=True)
+            linspace = np.linspace(arr_min, arr_max, axis=ax)
+            # For keepdims, the axis dimension must have dimension 1
+            assert_raises(
+                ValueError, np.linspace, arr_min, arr_max, axis=ax, keepdims=True
+            )
+            linspace_keepdims = np.linspace(
+                arr_min_keepdims, arr_max_keepdims, axis=ax, keepdims=True
+            )
+            assert_equal(linspace, linspace_keepdims)
 
 class TestGeomspace(object):
 
@@ -220,6 +237,23 @@ class TestGeomspace(object):
         assert_raises(ValueError, geomspace, 0, 10)
         assert_raises(ValueError, geomspace, 10, 0)
         assert_raises(ValueError, geomspace, 0, 0)
+
+    def test_keepdims(self):
+        arr = np.arange(1, 9).reshape((2, 2, 2))
+        for ax in [0, 1, 2, -1]:
+            arr_min = arr.min(axis=ax)
+            arr_max = arr.max(axis=ax)
+            arr_min_keepdims = arr.min(axis=ax, keepdims=True)
+            arr_max_keepdims = arr.max(axis=ax, keepdims=True)
+            geomspace = np.geomspace(arr_min, arr_max, axis=ax)
+            # For keepdims, the axis dimension must have dimension 1
+            assert_raises(
+                ValueError, np.geomspace, arr_min, arr_max, axis=ax, keepdims=True
+            )
+            geomspace_keepdims = np.geomspace(
+                arr_min_keepdims, arr_max_keepdims, axis=ax, keepdims=True
+            )
+            assert_equal(geomspace, geomspace_keepdims)
 
 
 class TestLinspace(object):
@@ -365,3 +399,20 @@ class TestLinspace(object):
         stop = array(2, dtype='O')
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([1., 1.5, 2.]))
+
+    def test_keepdims(self):
+        arr = np.arange(8).reshape((2, 2, 2))
+        for ax in [0, 1, 2, -1]:
+            arr_min = arr.min(axis=ax)
+            arr_max = arr.max(axis=ax)
+            arr_min_keepdims = arr.min(axis=ax, keepdims=True)
+            arr_max_keepdims = arr.max(axis=ax, keepdims=True)
+            linspace = np.linspace(arr_min, arr_max, axis=ax)
+            # For keepdims, the axis dimension must have dimension 1
+            assert_raises(
+                ValueError, np.linspace, arr_min, arr_max, axis=ax, keepdims=True
+            )
+            linspace_keepdims = np.linspace(
+                arr_min_keepdims, arr_max_keepdims, axis=ax, keepdims=True
+            )
+            assert_equal(linspace, linspace_keepdims)
