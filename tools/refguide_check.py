@@ -277,7 +277,8 @@ def is_deprecated(f):
 
 
 def check_items(all_dict, names, deprecated, others, module_name, dots=True):
-    """Check that `all_dict` is consistent with the `names` in `module_name`
+    """
+    Check that `all_dict` is consistent with the `names` in `module_name`
     For instance, that there are no deprecated or extra objects.
     """
     num_all = len(all_dict)
@@ -493,7 +494,7 @@ CHECK_NAMESPACE = {
       'inf': np.inf,
       'Inf': np.inf,
       'StringIO': io.StringIO,
-    }
+}
 
 
 class DTRunner(doctest.DocTestRunner):
@@ -860,6 +861,11 @@ def check_doctests_testfile(fname, verbose, ns=None,
 
 
 def iter_included_files(base_path, verbose=0, suffixes=('.rst',)):
+    """
+    Generator function to walk `base_path` and its subdirectories, skipping
+    files or directories in RST_SKIPLIST, and yield each file with a suffix in
+    `suffixes`
+    """
     if os.path.exists(base_path) and os.path.isfile(base_path):
         yield base_path
     for dir_name, subdirs, files in os.walk(base_path, topdown=True):
@@ -879,7 +885,8 @@ def iter_included_files(base_path, verbose=0, suffixes=('.rst',)):
 
 
 def check_documentation(base_path, results, args, dots):
-    """Check examples in any *.rst located inside `base_path`.
+    """
+    Check examples in any *.rst located inside `base_path`.
     Add the output to `results`.
 
     See Also
@@ -891,11 +898,14 @@ def check_documentation(base_path, results, args, dots):
             sys.stderr.write(filename + ' ')
             sys.stderr.flush()
 
-        tut_results = check_doctests_testfile(filename,
+        tut_results = check_doctests_testfile(
+            filename,
             (args.verbose >= 2), dots=dots,
             doctest_warnings=args.doctest_warnings)
 
-        def scratch(): pass        # stub out a "module", see below
+        # stub out a "module" which is needed when reporting the result
+        def scratch():
+            pass
         scratch.__name__ = filename
         results.append((scratch, tut_results))
         if dots:
@@ -976,7 +986,8 @@ def main(argv):
             names = names_dict.get(module.__name__, set())
 
             mod_results = []
-            mod_results += check_items(all_dict, names, deprecated, others, module.__name__)
+            mod_results += check_items(all_dict, names, deprecated, others,
+                                       module.__name__)
             mod_results += check_rest(module, set(names).difference(deprecated),
                                       dots=dots)
             if args.doctests:
