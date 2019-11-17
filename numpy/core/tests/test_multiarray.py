@@ -20,6 +20,7 @@ import gc
 import weakref
 import pytest
 from contextlib import contextmanager
+from test.support import no_tracing
 
 from numpy.compat import pickle
 
@@ -5119,6 +5120,8 @@ class TestFlat(object):
 
 
 class TestResize(object):
+
+    @no_tracing
     def test_basic(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         if IS_PYPY:
@@ -5135,6 +5138,7 @@ class TestResize(object):
         assert_raises(ValueError, x.resize, (5, 1))
         del y  # avoid pyflakes unused variable warning.
 
+    @no_tracing
     def test_int_shape(self):
         x = np.eye(3)
         if IS_PYPY:
@@ -5168,6 +5172,7 @@ class TestResize(object):
         assert_raises(TypeError, np.eye(3).resize, order=1)
         assert_raises(TypeError, np.eye(3).resize, refcheck='hi')
 
+    @no_tracing
     def test_freeform_shape(self):
         x = np.eye(3)
         if IS_PYPY:
@@ -5176,6 +5181,7 @@ class TestResize(object):
             x.resize(3, 2, 1)
         assert_(x.shape == (3, 2, 1))
 
+    @no_tracing
     def test_zeros_appended(self):
         x = np.eye(3)
         if IS_PYPY:
@@ -5185,6 +5191,7 @@ class TestResize(object):
         assert_array_equal(x[0], np.eye(3))
         assert_array_equal(x[1], np.zeros((3, 3)))
 
+    @no_tracing
     def test_obj_obj(self):
         # check memory is initialized on resize, gh-4857
         a = np.ones(10, dtype=[('k', object, 2)])
@@ -7796,6 +7803,7 @@ if not IS_PYPY:
             d = np.ones(100)
             assert_(sys.getsizeof(d) < sys.getsizeof(d.reshape(100, 1, 1).copy()))
 
+        @no_tracing
         def test_resize(self):
             d = np.ones(100)
             old = sys.getsizeof(d)
