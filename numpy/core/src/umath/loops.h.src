@@ -356,20 +356,27 @@ NPY_NO_EXPORT void
  * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  * #c = f, , l#
  * #C = F, , L#
+ * #IFSIMD = 1, 1, 0#
  */
 
 /**begin repeat1
+ * #isa = , _avx512f#
+ */
+
+/**begin repeat2
  * arithmetic
  * #kind = add, subtract#
  * #OP = +, -#
  */
-NPY_NO_EXPORT void
-C@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
+NPY_NO_EXPORT void
+C@TYPE@_@kind@@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+
+/**end repeat2**/
+
+NPY_NO_EXPORT void
+C@TYPE@_multiply@isa@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 /**end repeat1**/
-
-NPY_NO_EXPORT void
-C@TYPE@_multiply(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
 C@TYPE@_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -409,19 +416,24 @@ C@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, v
 /**end repeat1**/
 
 NPY_NO_EXPORT void
-C@TYPE@_square(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
-
-NPY_NO_EXPORT void
 C@TYPE@_reciprocal(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 C@TYPE@__ones_like(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data));
 
-NPY_NO_EXPORT void
-C@TYPE@_conjugate(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+/**begin repeat1
+ * #isa = , _avx512f#
+ */
 
 NPY_NO_EXPORT void
-C@TYPE@_absolute(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
+C@TYPE@_conjugate@isa@(char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+C@TYPE@_absolute@isa@(char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(func));
+
+NPY_NO_EXPORT void
+C@TYPE@_square@isa@(char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(data));
+/**end repeat1**/
 
 NPY_NO_EXPORT void
 C@TYPE@__arg(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
@@ -444,7 +456,6 @@ C@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, v
 NPY_NO_EXPORT void
 C@TYPE@_@kind@(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func));
 /**end repeat1**/
-
 #define C@TYPE@_true_divide C@TYPE@_divide
 
 /**end repeat**/

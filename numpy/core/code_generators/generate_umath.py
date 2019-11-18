@@ -233,6 +233,7 @@ flts = 'efdg'
 fltsO = flts + O
 fltsP = flts + P
 cmplx = 'FDG'
+cmplxvec = 'FD'
 cmplxO = cmplx + O
 cmplxP = cmplx + P
 inexact = flts + cmplx
@@ -268,7 +269,7 @@ defdict = {
     Ufunc(2, 1, Zero,
           docstrings.get('numpy.core.umath.add'),
           'PyUFunc_AdditionTypeResolver',
-          TD(notimes_or_obj, simd=[('avx2', ints)]),
+          TD(notimes_or_obj, simd=[('avx512f', cmplxvec),('avx2', ints)]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
            TypeDescription('M', FullTypeDescr, 'mM', 'M'),
@@ -279,7 +280,7 @@ defdict = {
     Ufunc(2, 1, None, # Zero is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.subtract'),
           'PyUFunc_SubtractionTypeResolver',
-          TD(ints + inexact, simd=[('avx2', ints)]),
+          TD(ints + inexact, simd=[('avx512f', cmplxvec),('avx2', ints)]),
           [TypeDescription('M', FullTypeDescr, 'Mm', 'M'),
            TypeDescription('m', FullTypeDescr, 'mm', 'm'),
            TypeDescription('M', FullTypeDescr, 'MM', 'm'),
@@ -290,7 +291,7 @@ defdict = {
     Ufunc(2, 1, One,
           docstrings.get('numpy.core.umath.multiply'),
           'PyUFunc_MultiplicationTypeResolver',
-          TD(notimes_or_obj, simd=[('avx2', ints)]),
+          TD(notimes_or_obj, simd=[('avx512f', cmplxvec),('avx2', ints)]),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'qm', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
@@ -325,7 +326,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.conjugate'),
           None,
-          TD(ints+flts+cmplx, simd=[('avx2', ints)]),
+          TD(ints+flts+cmplx, simd=[('avx2', ints), ('avx512f', cmplxvec)]),
           TD(P, f='conjugate'),
           ),
 'fmod':
@@ -340,7 +341,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.square'),
           None,
-          TD(ints+inexact, simd=[('avx2', ints), ('fma', 'fd'), ('avx512f', 'fd')]),
+          TD(ints+inexact, simd=[('avx2', ints), ('fma', 'fd'), ('avx512f', 'FDfd')]),
           TD(O, f='Py_square'),
           ),
 'reciprocal':
@@ -378,7 +379,7 @@ defdict = {
           docstrings.get('numpy.core.umath.absolute'),
           'PyUFunc_AbsoluteTypeResolver',
           TD(bints+flts+timedeltaonly, simd=[('fma', 'fd'), ('avx512f', 'fd')]),
-          TD(cmplx, out=('f', 'd', 'g')),
+          TD(cmplx, simd=[('avx512f', cmplxvec)], out=('f', 'd', 'g')),
           TD(O, f='PyNumber_Absolute'),
           ),
 '_arg':
