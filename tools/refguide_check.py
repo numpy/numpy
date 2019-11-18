@@ -21,7 +21,7 @@ in docstrings::
 
     $ python refguide_check.py --doctests ma
 
-or in RST-based documentations (including any python files in the directories)::
+or in RST-based documentations::
 
     $ python refguide_check.py --rst docs
 """
@@ -1009,7 +1009,7 @@ def main(argv):
         base_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..')
         rst_path = os.path.relpath(os.path.join(base_dir, args.rst))
         if os.path.exists(rst_path):
-            print('\nChecking files in %s:' % os.path.relpath(rst_path, os.getcwd()))
+            print('\nChecking files in %s:' % rst_path)
             check_documentation(rst_path, results, args, dots)
         else:
             sys.stderr.write(f'\ninvalid --rst argument "{args.rst}"')
