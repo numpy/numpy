@@ -3953,25 +3953,22 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
     Examples
     --------
-    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``, except that it changes numpy scalars to Python scalars:
+    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``, 
+    except that ``tolist`` changes numpy scalars to Python scalars:
 
     >>> a = np.uint32([1, 2])
     >>> a_list = list(a)
     >>> a_list
     [1, 2]
-    >>> type(a_list)
-    <class 'list'> 
     >>> type(a_list[0])
     <class 'numpy.uint32'>
     >>> a_tolist = a.tolist()
     >>> a_tolist
     [1, 2]
-    >>> type(a_tolist)
-    <class 'list'> 
     >>> type(a_tolist[0])
     <class 'int'>
 
-    However, for a 2D array, ``tolist`` applies recursively:
+    Additionally, for a 2D array, ``tolist`` applies recursively:
 
     >>> a = np.array([[1, 2], [3, 4]])
     >>> list(a)
