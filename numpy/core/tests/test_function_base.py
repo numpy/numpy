@@ -356,9 +356,13 @@ class TestLinspace(object):
         for num in (0, 1):
             for ept in (False, True):
                 y = linspace(0, 1, num, endpoint=ept, retstep=True)
-                assert_(isinstance(y, tuple) and len(y) == 2 and
-                        len(y[0]) == num and isnan(y[1]),
-                        'num={0}, endpoint={1}'.format(num, ept))
+                msg = 'num={0}, endpoint={1}'.format(num, ept)
+                if num == 1 and not ept:
+                    assert_(isinstance(y, tuple) and len(y) == 2 and
+                            len(y[0]) == num and y[1] == 1, msg)
+                else:
+                    assert_(isinstance(y, tuple) and len(y) == 2 and
+                            len(y[0]) == num and isnan(y[1]), msg)
 
     def test_object(self):
         start = array(1, dtype='O')
