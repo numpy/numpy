@@ -56,7 +56,11 @@ And in more detail:
   ``randn`` methods are only available through the legacy `~.RandomState`.
   This replaces both ``randint`` and the deprecated ``random_integers``.
 * The Box-Muller method used to produce NumPy's normals is no longer available.
-
+* All bit generators can produce doubles, uint64s and uint32s via CTypes
+  (`~PCG64.ctypes`) and CFFI (`~PCG64.cffi`).  This allows these bit generators
+  to be used in numba.
+* The bit generators can be used in downstream projects via
+  Cython.
 
 .. ipython:: python
 

@@ -151,6 +151,7 @@ What's New or Different
   select distributions
 * Optional ``out`` argument that allows existing arrays to be filled for
   select distributions
+* All BitGenerators can produce doubles, uint64s and uint32s via CTypes
 * `~.Generator.integers` is now the canonical way to generate integer
   random numbers from a discrete uniform distribution. The ``rand`` and
   ``randn`` methods are only available through the legacy `~.RandomState`.

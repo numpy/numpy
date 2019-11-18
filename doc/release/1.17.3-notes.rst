@@ -23,9 +23,9 @@ Compatibility notes
 ===================
 
 - The seldom used ``PyArray_DescrCheck`` macro has been changed/fixed.
-The use of the new ``numpy.random`` features from Cython and Numba
-was broken in 1.17.0-1.17.2 and has been removed completely.
-We plan to reintroduce it in 1.18.0
+- The use of the new ``numpy.random`` features from Cython and Numba
+  was not well documented and parts have been removed or refactored.
+  We plan to finish the refactor and fully document it in 1.18.0
 
 
 
