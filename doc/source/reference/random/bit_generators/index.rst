@@ -19,7 +19,7 @@ The included BitGenerators are:
   and can be advanced by an arbitrary amount. See the documentation for
   :meth:`~.PCG64.advance`. PCG-64 has a period of :math:`2^{128}`. See the `PCG
   author's page`_ for more details about this class of PRNG.
-* MT19937 - The standard Python BitGenerator. Adds a `~mt19937.MT19937.jumped`
+* MT19937 - The standard Python BitGenerator. Adds a `MT19937.jumped`
   function that returns a new generator with state as-if :math:`2^{128}` draws have
   been made.
 * Philox - A counter-based generator capable of being advanced an

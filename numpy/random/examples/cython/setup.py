@@ -9,15 +9,20 @@ import numpy as np
 from distutils.core import setup
 from Cython.Build import cythonize
 from setuptools.extension import Extension
-from os.path import join
+from os.path import join, abspath, dirname
+
+curpath = abspath(dirname(__file__))
 
 extending = Extension("extending",
-                      sources=['extending.pyx'],
-                      include_dirs=[np.get_include()])
+                      sources=[join(curpath, 'extending.pyx')],
+                      include_dirs=[
+                            np.get_include(),
+                            join(curpath, '..', '..')
+                        ],
+                      )
 distributions = Extension("extending_distributions",
-                          sources=['extending_distributions.pyx',
-                                   join('..', '..', 'src',
-                                        'distributions', 'distributions.c')],
+                          sources=[join(curpath, 'extending_distributions.pyx'),
+                                  ],
                           include_dirs=[np.get_include()])
 
 extensions = [extending, distributions]

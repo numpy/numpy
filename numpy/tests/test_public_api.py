@@ -334,6 +334,7 @@ SKIP_LIST = [
     "numpy.core.cversions",
     "numpy.core.generate_numpy_api",
     "numpy.distutils.msvc9compiler",
+    'numpy.random.examples',
 ]
 
 
@@ -386,7 +387,7 @@ SKIP_LIST_2 = [
     'numpy.matlib.fft',
     'numpy.matlib.random',
     'numpy.matlib.ctypeslib',
-    'numpy.matlib.ma'
+    'numpy.matlib.ma',
 ]
 
 

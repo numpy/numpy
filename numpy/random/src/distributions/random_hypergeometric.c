@@ -1,4 +1,4 @@
-#include "include/distributions.h"
+#include "numpy/random/distributions.h"
 #include "logfactorial.h"
 #include <stdint.h>
 
