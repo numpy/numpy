@@ -4253,7 +4253,7 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
 
     See Also
     --------
-    vectorize : evaluates pyfunc over input arrays using broadcasting rules of numpy
+    vectorize : Evaluates pyfunc over input arrays using broadcasting rules of numpy.
 
     Notes
     -----
