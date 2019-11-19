@@ -1,5 +1,6 @@
-Fasttake slot is deprecated and now NULL'ed
--------------------------------------------
-The fasttake slot for all dtypes is now never used internally
-and always set to NULL. No downstream project should be using
-this, so no compatibility issue is expected.
+Fasttake and fastputmask slots are deprecated and NULL'ed
+---------------------------------------------------------
+The fasttake and fastputmask slots are now never used internally.
+They will always set to NULL for builtin dtypes.
+No downstream project should be using these, so no compatibility
+issue are expected.
