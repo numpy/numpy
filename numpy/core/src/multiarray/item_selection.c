@@ -825,7 +825,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
  */
 static int
 _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
-              PyArray_PartitionFunc *part, npy_intp *kth, npy_intp nkth)
+              PyArray_PartitionFunc *part, npy_intp *kth, npy_intp nkth, npy_bool reverse)
 {
     npy_intp N = PyArray_DIM(op, axis);
     npy_intp elsize = (npy_intp)PyArray_ITEMSIZE(op);
@@ -1124,7 +1124,7 @@ fail:
  * Sort an array in-place
  */
 NPY_NO_EXPORT int
-PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
+PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which, npy_bool reverse)
 {
     PyArray_SortFunc *sort = NULL;
     int n = PyArray_NDIM(op);
@@ -1166,7 +1166,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         }
     }
 
-    return _new_sortlike(op, axis, sort, NULL, NULL, 0);
+    return _new_sortlike(op, axis, sort, NULL, NULL, 0, reverse);
 }
 
 
@@ -1218,7 +1218,7 @@ partition_prep_kth_array(PyArrayObject * ktharray,
      * not trample on each other
      */
     if (PyArray_SIZE(kthrvl) > 1) {
-        PyArray_Sort(kthrvl, -1, NPY_QUICKSORT);
+        PyArray_Sort(kthrvl, -1, NPY_QUICKSORT, NPY_FALSE); // mproszewska: delete true
     }
 
     return kthrvl;
@@ -1270,7 +1270,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
     }
 
     ret = _new_sortlike(op, axis, sort, part,
-                        PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl));
+                        PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl), NPY_FALSE);
 
     Py_DECREF(kthrvl);
 

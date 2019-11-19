@@ -1805,6 +1805,19 @@ class TestMethods(object):
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
+        # test string reverse sorts.
+        s = 'aaaaaaaa'
+        a = np.array([s + chr(i) for i in range(101)])
+        b = a[::-1].copy()
+        for kind in self.sort_kinds:
+            msg = "string reverse sort, kind=%s" % kind
+            c = a.copy()
+            c.sort(kind=kind, reverse=True)
+            assert_equal(c, b, msg)
+            c = b.copy()
+            c.sort(kind=kind, reverse=True)
+            assert_equal(c, b, msg)
+
         # test unicode sorts.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode)

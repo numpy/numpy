@@ -820,12 +820,12 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
 
 
-def _sort_dispatcher(a, axis=None, kind=None, order=None):
+def _sort_dispatcher(a, axis=None, kind=None, order=None, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_sort_dispatcher)
-def sort(a, axis=-1, kind=None, order=None):
+def sort(a, axis=-1, kind=None, order=None, reverse=False):
     """
     Return a sorted copy of an array.
 
@@ -972,7 +972,7 @@ def sort(a, axis=-1, kind=None, order=None):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis=axis, kind=kind, order=order)
+    a.sort(axis=axis, kind=kind, order=order, reverse=reverse)
     return a
 
 
