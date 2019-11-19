@@ -3923,58 +3923,6 @@ static void
 
 /*
  *****************************************************************************
- **                              FASTPUTMASK                                **
- *****************************************************************************
- */
-
-
-/**begin repeat
- *
- * #name = BOOL,
- *         BYTE, UBYTE, SHORT, USHORT, INT, UINT,
- *         LONG, ULONG, LONGLONG, ULONGLONG,
- *         HALF, FLOAT, DOUBLE, LONGDOUBLE,
- *         CFLOAT, CDOUBLE, CLONGDOUBLE,
- *         DATETIME, TIMEDELTA#
- * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
- *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_longdouble,
- *         npy_cfloat, npy_cdouble, npy_clongdouble,
- *         npy_datetime, npy_timedelta#
-*/
-static void
-@name@_fastputmask(@type@ *in, npy_bool *mask, npy_intp ni, @type@ *vals,
-        npy_intp nv)
-{
-    npy_intp i, j;
-
-    if (nv == 1) {
-        @type@ s_val = *vals;
-        for (i = 0; i < ni; i++) {
-            if (mask[i]) {
-                in[i] = s_val;
-            }
-        }
-    }
-    else {
-        for (i = 0, j = 0; i < ni; i++, j++) {
-            if (j >= nv) {
-                j = 0;
-            }
-            if (mask[i]) {
-                in[i] = vals[j];
-            }
-        }
-    }
-    return;
-}
-/**end repeat**/
-
-#define OBJECT_fastputmask NULL
-
-
-/*
- *****************************************************************************
  **                                FASTTAKE                                 **
  *****************************************************************************
  */
@@ -4445,7 +4393,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     NULL,
     NULL,
     (PyArray_FastClipFunc*)NULL,
-    (PyArray_FastPutmaskFunc*)@from@_fastputmask,
+    (PyArray_FastPutmaskFunc*)NULL,
     (PyArray_FastTakeFunc*)@from@_fasttake,
     (PyArray_ArgFunc*)@from@_argmin
 };

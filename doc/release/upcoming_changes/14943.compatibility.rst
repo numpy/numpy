@@ -1,0 +1,5 @@
+Fastputmask slot is deprecated and now NULL'ed
+----------------------------------------------
+The ``fastputmask`` slot for all dtypes is now never used internally
+and always set to NULL. No downstream project should be using
+this, so no compatibility issue is expected.

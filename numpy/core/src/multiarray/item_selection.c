@@ -431,16 +431,73 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     return NULL;
 }
 
+
+static NPY_INLINE
+npy_fastputmask_impl(
+        char *dest, char *src, npy_bool *mask_data,
+        npy_intp ni, npy_intp nv, npy_intp chunk)
+{
+    if (nv == 1) {
+        for (npy_intp i = 0; i < ni; i++) {
+            if (mask_data[i]) {
+                memmove(dest + i * chunk, src, chunk);
+            }
+        }
+    }
+    else {
+        for (npy_intp i = 0, j = 0; i < ni; i++, j++) {
+            if (NPY_UNLIKELY(j >= nv)) {
+                j = 0;
+            }
+            if (mask_data[i]) {
+                memmove(dest + i * chunk, src + j * chunk, chunk);
+            }
+        }
+    }
+}
+
+
+/*
+ * Helper function instantiating npy_fastput_impl in different branches
+ * to allow the compiler to optimize each to the specific itemsize.
+ */
+static
+npy_fastputmask(
+        char *dest, char *src, npy_bool *mask_data,
+        npy_intp ni, npy_intp nv, npy_intp chunk)
+{
+    if (chunk == 1) {
+        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, 1);
+    }
+    if (chunk == 2) {
+        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, 2);
+    }
+    if (chunk == 4) {
+        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, 4);
+    }
+    if (chunk == 8) {
+        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, 8);
+    }
+    if (chunk == 16) {
+        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, 16);
+    }
+    if (chunk == 32) {
+        return npy_fastputmask_impl(dest, src, mask_data, ni, nv, 32);
+    }
+
+    return npy_fastputmask_impl(dest, src, mask_data, ni, chunk, nv);
+}
+
+
 /*NUMPY_API
  * Put values into an array according to a mask.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 {
-    PyArray_FastPutmaskFunc *func;
     PyArrayObject *mask, *values;
     PyArray_Descr *dtype;
-    npy_intp i, j, chunk, ni, nv;
+    npy_intp chunk, ni, nv;
     char *src, *dest;
     npy_bool *mask_data;
     int copied = 0;
@@ -505,7 +562,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     dest = PyArray_DATA(self);
 
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
-        for (i = 0, j = 0; i < ni; i++, j++) {
+        for (npy_intp i = 0, j = 0; i < ni; i++, j++) {
             if (j >= nv) {
                 j = 0;
             }
@@ -522,20 +579,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     else {
         NPY_BEGIN_THREADS_DEF;
         NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(self));
-        func = PyArray_DESCR(self)->f->fastputmask;
-        if (func == NULL) {
-            for (i = 0, j = 0; i < ni; i++, j++) {
-                if (j >= nv) {
-                    j = 0;
-                }
-                if (mask_data[i]) {
-                    memmove(dest + i*chunk, src + j*chunk, chunk);
-                }
-            }
-        }
-        else {
-            func(dest, mask_data, ni, src, nv);
-        }
+        npy_fastputmask(dest, src, mask_data, ni, nv, chunk);
         NPY_END_THREADS;
     }
 
