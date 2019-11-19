@@ -6488,6 +6488,15 @@ class TestChoose(object):
         A = np.choose(self.ind, (self.x, self.y2))
         assert_equal(A, [[2, 2, 3], [2, 2, 3]])
 
+    @pytest.mark.parametrize("ops",
+        [(1000, np.array([1], dtype=np.uint8)),
+         (-1, np.array([1], dtype=np.uint8)),
+         (1., np.float32(3)),
+         (1., np.array([3], dtype=np.float32))],)
+    def test_output_dtype(self, ops):
+        expected_dt = np.result_type(*ops)
+        assert(np.choose([0], ops).dtype == expected_dt)
+
 
 class TestRepeat(object):
     def setup(self):
