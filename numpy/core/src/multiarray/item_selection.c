@@ -1218,7 +1218,7 @@ partition_prep_kth_array(PyArrayObject * ktharray,
      * not trample on each other
      */
     if (PyArray_SIZE(kthrvl) > 1) {
-        PyArray_Sort(kthrvl, -1, NPY_QUICKSORT, NPY_FALSE); // mproszewska: delete true
+        PyArray_Sort(kthrvl, -1, NPY_QUICKSORT, NPY_FALSE);
     }
 
     return kthrvl;
