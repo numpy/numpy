@@ -1255,14 +1255,18 @@ Converting data types
 
     Convert a sequence of Python objects contained in *op* to an array
     of ndarrays each having the same data type. The type is selected
-    based on the typenumber (larger type number is chosen over a
-    smaller one) ignoring objects that are only scalars. The length of
-    the sequence is returned in *n*, and an *n* -length array of
-    :c:type:`PyArrayObject` pointers is the return value (or ``NULL`` if an
-    error occurs). The returned array must be freed by the caller of
-    this routine (using :c:func:`PyDataMem_FREE` ) and all the array objects
-    in it ``DECREF`` 'd or a memory-leak will occur. The example
-    template-code below shows a typically usage:
+    in the same way as `PyArray_ResultType`. The length of the sequence is
+    returned in *n*, and an *n* -length array of :c:type:`PyArrayObject`
+    pointers is the return value (or ``NULL`` if an error occurs).
+    The returned array must be freed by the caller of this routine
+    (using :c:func:`PyDataMem_FREE` ) and all the array objects in it
+    ``DECREF`` 'd or a memory-leak will occur. The example template-code
+    below shows a typically usage:
+
+    .. versionchanged:: 1.18.0
+       A mix of scalars and zero-dimensional arrays now produces a type
+       capable of holding the scalar value.
+       Previously priority was given to the dtype of the arrays.
 
     .. code-block:: c
 
