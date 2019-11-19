@@ -4128,7 +4128,7 @@ cdef class Generator:
         cdef double *alpha_data
         cdef double *alpha_csum_data
         cdef double *val_data
-        cdef double acc, invacc
+        cdef double acc, invacc, v
 
         k = len(alpha)
         alpha_arr = <np.ndarray>np.PyArray_FROM_OTF(
@@ -4163,10 +4163,9 @@ cdef class Generator:
                 while i < totsize:
                     acc = 1.
                     for j in range(k-1):
-                        val_data[i+j] = acc * random_beta(&self._bitgen,
-                                                          alpha_data[j],
-                                                          alpha_csum_data[j+1])
-                        acc *= (1. - val_data[i+j])
+                        v = random_beta(&self._bitgen, alpha_data[j], alpha_csum_data[j+1])
+                        val_data[i+j] = acc * v
+                        acc *= (1. - v)
                     val_data[i+j+1] = acc
                     i = i + k
 
