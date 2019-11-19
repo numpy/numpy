@@ -21,11 +21,168 @@
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
 
-#include "item_selection.h"
 #include "npy_sort.h"
 #include "npy_partition.h"
 #include "npy_binsearch.h"
 #include "alloc.h"
+#include "arraytypes.h"
+
+
+
+static NPY_GCC_OPT_3 NPY_INLINE int
+npy_fasttake_impl(
+        char *dest, char *src, const npy_intp *indices,
+        npy_intp n, npy_intp m, npy_intp max_item,
+        npy_intp nelem, npy_intp chunk,
+        NPY_CLIPMODE clipmode, npy_intp itemsize, int needs_refcounting,
+        PyArray_Descr *dtype, int axis)
+{
+    NPY_BEGIN_THREADS_DEF;
+    NPY_BEGIN_THREADS_DESCR(dtype);
+    switch (clipmode) {
+        case NPY_RAISE:
+            for (npy_intp i = 0; i < n; i++) {
+                for (npy_intp j = 0; j < m; j++) {
+                    npy_intp tmp = indices[j];
+                    if (check_and_adjust_index(&tmp, max_item, axis,
+                                               _save) < 0) {
+                        return -1;
+                    }
+                    char *tmp_src = src + tmp * chunk;
+                    if (needs_refcounting) {
+                        for (npy_intp k = 0; k < nelem; k++) {
+                            PyArray_Item_INCREF(tmp_src, dtype);
+                            PyArray_Item_XDECREF(dest, dtype);
+                            memmove(dest, tmp_src, itemsize);
+                            dest += itemsize;
+                            tmp_src += itemsize;
+                        }
+                    }
+                    else {
+                        memmove(dest, tmp_src, chunk);
+                        dest += chunk;
+                    }
+                }
+                src += chunk*max_item;
+            }
+            break;
+        case NPY_WRAP:
+            for (npy_intp i = 0; i < n; i++) {
+                for (npy_intp j = 0; j < m; j++) {
+                    npy_intp tmp = indices[j];
+                    if (tmp < 0) {
+                        while (tmp < 0) {
+                            tmp += max_item;
+                        }
+                    }
+                    else if (tmp >= max_item) {
+                        while (tmp >= max_item) {
+                            tmp -= max_item;
+                        }
+                    }
+                    char *tmp_src = src + tmp * chunk;
+                    if (needs_refcounting) {
+                        for (npy_intp k = 0; k < nelem; k++) {
+                            PyArray_Item_INCREF(tmp_src, dtype);
+                            PyArray_Item_XDECREF(dest, dtype);
+                            memmove(dest, tmp_src, itemsize);
+                            dest += itemsize;
+                            tmp_src += itemsize;
+                        }
+                    }
+                    else {
+                        memmove(dest, tmp_src, chunk);
+                        dest += chunk;
+                    }
+                }
+                src += chunk*max_item;
+            }
+            break;
+        case NPY_CLIP:
+            for (npy_intp i = 0; i < n; i++) {
+                for (npy_intp j = 0; j < m; j++) {
+                    npy_intp tmp = indices[j];
+                    if (tmp < 0) {
+                        tmp = 0;
+                    }
+                    else if (tmp >= max_item) {
+                        tmp = max_item - 1;
+                    }
+                    char *tmp_src = src + tmp * chunk;
+                    if (needs_refcounting) {
+                        for (npy_intp k = 0; k < nelem; k++) {
+                            PyArray_Item_INCREF(tmp_src, dtype);
+                            PyArray_Item_XDECREF(dest, dtype);
+                            memmove(dest, tmp_src, itemsize);
+                            dest += itemsize;
+                            tmp_src += itemsize;
+                        }
+                    }
+                    else {
+                        memmove(dest, tmp_src, chunk);
+                        dest += chunk;
+                    }
+                }
+                src += chunk*max_item;
+            }
+            break;
+    }
+
+    NPY_END_THREADS;
+    return 0;
+}
+
+
+/*
+ * Helper function instantiating npy_fasttake_impl in different branches
+ * to allow the compiler to optimize each to the specific itemsize.
+ */
+static NPY_GCC_OPT_3 int
+npy_fasttake(
+        char *dest, char *src, const npy_intp *indices,
+        npy_intp n, npy_intp m, npy_intp max_item,
+        npy_intp nelem, npy_intp chunk,
+        NPY_CLIPMODE clipmode, npy_intp itemsize, int needs_refcounting,
+        PyArray_Descr *dtype, int axis)
+{
+    if (!needs_refcounting) {
+        if (chunk == 1) {
+            return npy_fasttake_impl(
+                    dest, src, indices, n, m, max_item, nelem, chunk,
+                    clipmode, itemsize, needs_refcounting, dtype, axis);
+        }
+        if (chunk == 2) {
+            return npy_fasttake_impl(
+                    dest, src, indices, n, m, max_item, nelem, chunk,
+                    clipmode, itemsize, needs_refcounting, dtype, axis);
+        }
+        if (chunk == 4) {
+            return npy_fasttake_impl(
+                    dest, src, indices, n, m, max_item, nelem, chunk,
+                    clipmode, itemsize, needs_refcounting, dtype, axis);
+        }
+        if (chunk == 8) {
+            return npy_fasttake_impl(
+                    dest, src, indices, n, m, max_item, nelem, chunk,
+                    clipmode, itemsize, needs_refcounting, dtype, axis);
+        }
+        if (chunk == 16) {
+            return npy_fasttake_impl(
+                    dest, src, indices, n, m, max_item, nelem, chunk,
+                    clipmode, itemsize, needs_refcounting, dtype, axis);
+        }
+        if (chunk == 32) {
+            return npy_fasttake_impl(
+                    dest, src, indices, n, m, max_item, nelem, chunk,
+                    clipmode, itemsize, needs_refcounting, dtype, axis);
+        }
+    }
+
+    return npy_fasttake_impl(
+            dest, src, indices, n, m, max_item, nelem, chunk,
+            clipmode, itemsize, needs_refcounting, dtype, axis);
+}
+
 
 /*NUMPY_API
  * Take
@@ -35,12 +192,10 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                  PyArrayObject *out, NPY_CLIPMODE clipmode)
 {
     PyArray_Descr *dtype;
-    PyArray_FastTakeFunc *func;
     PyArrayObject *obj = NULL, *self, *indices;
-    npy_intp nd, i, j, n, m, k, max_item, tmp, chunk, itemsize, nelem;
+    npy_intp nd, i, n, m, max_item, chunk, itemsize, nelem;
     npy_intp shape[NPY_MAXDIMS];
-    char *src, *dest, *tmp_src;
-    int err;
+
     npy_bool needs_refcounting;
 
     indices = NULL;
@@ -122,9 +277,10 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     nelem = chunk;
     itemsize = PyArray_ITEMSIZE(obj);
     chunk = chunk * itemsize;
-    src = PyArray_DATA(self);
-    dest = PyArray_DATA(obj);
+    char *src = PyArray_DATA(self);
+    char *dest = PyArray_DATA(obj);
     needs_refcounting = PyDataType_REFCHK(PyArray_DESCR(self));
+    npy_intp *indices_data = (npy_intp *)PyArray_DATA(indices);
 
     if ((max_item == 0) && (PyArray_SIZE(obj) != 0)) {
         /* Index error, since that is the usual error for raise mode */
@@ -133,107 +289,10 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         goto fail;
     }
 
-    func = PyArray_DESCR(self)->f->fasttake;
-    if (func == NULL) {
-        NPY_BEGIN_THREADS_DEF;
-        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(self));
-        switch(clipmode) {
-        case NPY_RAISE:
-            for (i = 0; i < n; i++) {
-                for (j = 0; j < m; j++) {
-                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if (check_and_adjust_index(&tmp, max_item, axis,
-                                               _save) < 0) {
-                        goto fail;
-                    }
-                    tmp_src = src + tmp * chunk;
-                    if (needs_refcounting) {
-                        for (k=0; k < nelem; k++) {
-                            PyArray_Item_INCREF(tmp_src, PyArray_DESCR(self));
-                            PyArray_Item_XDECREF(dest, PyArray_DESCR(self));
-                            memmove(dest, tmp_src, itemsize);
-                            dest += itemsize;
-                            tmp_src += itemsize;
-                        }
-                    }
-                    else {
-                        memmove(dest, tmp_src, chunk);
-                        dest += chunk;
-                    }
-                }
-                src += chunk*max_item;
-            }
-            break;
-        case NPY_WRAP:
-            for (i = 0; i < n; i++) {
-                for (j = 0; j < m; j++) {
-                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if (tmp < 0) {
-                        while (tmp < 0) {
-                            tmp += max_item;
-                        }
-                    }
-                    else if (tmp >= max_item) {
-                        while (tmp >= max_item) {
-                            tmp -= max_item;
-                        }
-                    }
-                    tmp_src = src + tmp * chunk;
-                    if (needs_refcounting) {
-                        for (k=0; k < nelem; k++) {
-                            PyArray_Item_INCREF(tmp_src, PyArray_DESCR(self));
-                            PyArray_Item_XDECREF(dest, PyArray_DESCR(self));
-                            memmove(dest, tmp_src, itemsize);
-                            dest += itemsize;
-                            tmp_src += itemsize;
-                        }
-                    }
-                    else {
-                        memmove(dest, tmp_src, chunk);
-                        dest += chunk;
-                    }
-                }
-                src += chunk*max_item;
-            }
-            break;
-        case NPY_CLIP:
-            for (i = 0; i < n; i++) {
-                for (j = 0; j < m; j++) {
-                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if (tmp < 0) {
-                        tmp = 0;
-                    }
-                    else if (tmp >= max_item) {
-                        tmp = max_item - 1;
-                    }
-                    tmp_src = src + tmp * chunk;
-                    if (needs_refcounting) {
-                        for (k=0; k < nelem; k++) {
-                            PyArray_Item_INCREF(tmp_src, PyArray_DESCR(self));
-                            PyArray_Item_XDECREF(dest, PyArray_DESCR(self));
-                            memmove(dest, tmp_src, itemsize);
-                            dest += itemsize;
-                            tmp_src += itemsize;
-                        }
-                    }
-                    else {
-                        memmove(dest, tmp_src, chunk);
-                        dest += chunk;
-                    }
-                }
-                src += chunk*max_item;
-            }
-            break;
-        }
-        NPY_END_THREADS;
-    }
-    else {
-        /* no gil release, need it for error reporting */
-        err = func(dest, src, (npy_intp *)(PyArray_DATA(indices)),
-                    max_item, n, m, nelem, clipmode);
-        if (err) {
-            goto fail;
-        }
+    if (npy_fasttake(
+            dest, src, indices_data, n, m, max_item, nelem, chunk,
+            clipmode, itemsize, needs_refcounting, dtype, axis) < 0) {
+        goto fail;
     }
 
     Py_XDECREF(indices);

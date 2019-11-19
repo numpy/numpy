@@ -4432,11 +4432,10 @@ class TestCompress:
 class TestPutmask:
     def tst_basic(self, x, T, mask, val):
         np.putmask(x, mask, val)
-        assert_equal(x[mask], T(val))
-        assert_equal(x.dtype, T)
+        assert_equal(x[mask], np.array(val, T))
 
     def test_ip_types(self):
-        unchecked_types = [bytes, unicode, np.void, object]
+        unchecked_types = [bytes, unicode, np.void]
 
         x = np.random.random(1000)*100
         mask = x < 40
@@ -4446,6 +4445,10 @@ class TestPutmask:
                 for T in types:
                     if T not in unchecked_types:
                         self.tst_basic(x.copy().astype(T), T, mask, val)
+
+            # Also test string of a length which uses an untypical length
+            dt = np.dtype("S3")
+            self.tst_basic(x.astype(dt), dt.type, mask, dt.type(val)[:3])
 
     def test_mask_size(self):
         assert_raises(ValueError, np.putmask, np.array([1, 2, 3]), [True], 5)
@@ -4486,7 +4489,7 @@ class TestTake:
         assert_array_equal(x.take(ind, axis=0), x)
 
     def test_ip_types(self):
-        unchecked_types = [bytes, unicode, np.void, object]
+        unchecked_types = [bytes, unicode, np.void]
 
         x = np.random.random(24)*100
         x.shape = 2, 3, 4
@@ -4494,6 +4497,9 @@ class TestTake:
             for T in types:
                 if T not in unchecked_types:
                     self.tst_basic(x.copy().astype(T))
+
+            # Also test string of a length which uses an untypical length
+            self.tst_basic(x.astype("S3"))
 
     def test_raise(self):
         x = np.random.random(24)*100
