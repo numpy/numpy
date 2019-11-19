@@ -4393,11 +4393,15 @@ def default_rng(seed=None):
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.
 
+    Returns
+    -------
+    Generator
+        The initialized generator object.
+
     Notes
     -----
-    When ``seed`` is omitted or ``None``, a new `BitGenerator` and `Generator` will
-    be instantiated each time. This function does not manage a default global
-    instance.
+    If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
+    is instantiated. This function does not manage a default global instance.
     """
     if _check_bit_generator(seed):
         # We were passed a BitGenerator, so just wrap it up.
