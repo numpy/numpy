@@ -1,7 +1,7 @@
 cimport numpy as np
 from libc.stdint cimport uint32_t, uint64_t
 
-cdef extern from "include/bitgen.h":
+cdef extern from "numpy/random/bitgen.h":
     struct bitgen:
         void *state
         uint64_t (*next_uint64)(void *st) nogil

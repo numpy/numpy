@@ -25,7 +25,7 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             check_array_constraint, check_constraint, disc, discrete_broadcast_iii,
         )
 
-cdef extern from "include/distributions.h":
+cdef extern from "numpy/random/distributions.h":
     struct s_binomial_t:
         int has_binomial
         double psave

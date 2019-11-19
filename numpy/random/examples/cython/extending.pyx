@@ -8,7 +8,7 @@ import numpy as np
 cimport numpy as np
 cimport cython
 
-from numpy.random.common cimport bitgen_t
+from numpy.random._bit_generator cimport bitgen_t
 from numpy.random import PCG64
 
 np.import_array()
