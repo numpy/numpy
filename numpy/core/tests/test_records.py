@@ -15,7 +15,7 @@ import numpy as np
 from numpy.compat import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, temppath
+    assert_raises, temppath,
     )
 from numpy.compat import pickle
 
@@ -415,6 +415,21 @@ class TestRecord(object):
             assert_(pa.flags.f_contiguous)
             assert_(pa.flags.writeable)
             assert_(pa.flags.aligned)
+
+    def test_pickle_void(self):
+        # issue gh-13593
+        dt = np.dtype([('obj', 'O')])
+        a = np.empty(1, dtype=dt)
+        data = (bytearray(b'eman'),)
+        a['obj'] = data
+        state = a[0].__reduce__()
+        # If the data is bytes, it will pickle the address of the content
+        # which cannot be saved/restored
+        assert not isinstance(state[1][1], bytes)
+        b = state[0](*state[1])
+        assert b[0] == (bytearray(b'eman'),)
+        # got a fresh version, not the original pointers rebuilt
+        assert b[0] is not data
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599

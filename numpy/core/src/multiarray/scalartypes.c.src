@@ -1887,6 +1887,22 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         mod = ((PyObjectScalarObject *)self)->obval;
         PyTuple_SET_ITEM(ret, 1, Py_BuildValue("NO", obj, mod));
     }
+    else if (obj && PyDataType_FLAGCHK((PyArray_Descr *)obj, NPY_LIST_PICKLE)) {
+        /* a structured dtype with an object in a field */
+        PyObject *arr = PyArray_FromScalar(self, NULL);
+        if (arr == NULL) {
+            return NULL;
+        }
+        PyArrayIterObject *it = (PyArrayIterObject *)PyArray_IterNew(arr);
+        if (it == NULL) {
+            return NULL;
+        }
+        mod = ((PyArray_Descr *)obj)->f->getitem(it->dataptr, arr);
+        Py_DECREF(it);
+        Py_DECREF(arr);
+        /* XXX N does not incref, O does. What do we want? */
+        PyTuple_SET_ITEM(ret, 1, Py_BuildValue("NO", obj, mod));
+    }
     else {
 #ifndef Py_UNICODE_WIDE
         /*
