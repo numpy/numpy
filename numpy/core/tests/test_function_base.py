@@ -364,7 +364,7 @@ class TestLinspace(object):
                     assert_equal(y[1], 1.0)
                 else:
                     assert_array_equal(y[0], [0.0][:num])
-                    assert(isnan(y[1]))
+                    assert isnan(y[1])
 
     def test_object(self):
         start = array(1, dtype='O')
