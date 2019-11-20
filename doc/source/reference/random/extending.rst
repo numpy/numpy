@@ -16,7 +16,7 @@ This example shows how numba can be used to produce gaussian samples using
 a pure Python implementation which is then compiled.  The random numbers are
 provided by ``ctypes.next_double``.
 
-.. literalinclude:: ../../../../numpy/random/examples/numba/extending.py
+.. literalinclude:: ../../../../numpy/random/_examples/numba/extending.py
     :language: python
     :end-before: example 2
 
@@ -35,14 +35,14 @@ This example uses `PCG64` and the example from above.  The usual caveats
 for writing high-performance code using Cython -- removing bounds checks and
 wrap around, providing array alignment information -- still apply.
 
-.. literalinclude:: ../../../../numpy/random/examples/cython/extending_distributions.pyx
+.. literalinclude:: ../../../../numpy/random/_examples/cython/extending_distributions.pyx
     :language: cython
     :end-before: example 2
 
 The BitGenerator can also be directly accessed using the members of the basic
 RNG structure.
 
-.. literalinclude:: ../../../../numpy/random/examples/cython/extending_distributions.pyx
+.. literalinclude:: ../../../../numpy/random/_examples/cython/extending_distributions.pyx
     :language: cython
     :start-after: example 2
 

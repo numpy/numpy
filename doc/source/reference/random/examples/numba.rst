@@ -1,5 +1,5 @@
 Extending via Numba
 -------------------
 
-.. literalinclude:: ../../../../../numpy/random/examples/numba/extending.py
+.. literalinclude:: ../../../../../numpy/random/_examples/numba/extending.py
     :language: python

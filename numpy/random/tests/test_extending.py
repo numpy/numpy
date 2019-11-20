@@ -14,19 +14,19 @@ except ImportError:
 def test_cython():
     curdir = os.getcwd()
     argv = sys.argv
-    examples = (os.path.dirname(__file__), '..', 'examples')
+    examples = (os.path.dirname(__file__), '..', '_examples')
     try:
         os.chdir(os.path.join(*examples))
         sys.argv = argv[:1] + ['build']
         with warnings.catch_warnings(record=True) as w:
             # setuptools issue gh-1885
             warnings.filterwarnings('always', '', DeprecationWarning)
-            from numpy.random.examples.cython import setup
+            from numpy.random._examples.cython import setup
     finally:
         sys.argv = argv
         os.chdir(curdir)
 
 @pytest.mark.skipif(numba is None, reason="requires numba")
 def test_numba():
-        from numpy.random.examples.numba import extending
+        from numpy.random._examples.numba import extending
 
