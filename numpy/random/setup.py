@@ -34,7 +34,7 @@ def configuration(parent_package='', top_path=None):
 
     defs.append(('NPY_NO_DEPRECATED_API', 0))
     config.add_data_dir('tests')
-    config.add_data_dir('examples')
+    config.add_data_dir('_examples')
 
     EXTRA_LINK_ARGS = []
     # Math lib
