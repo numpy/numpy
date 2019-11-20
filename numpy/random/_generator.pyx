@@ -4157,28 +4157,31 @@ cdef class Generator:
         i = 0
         totsize = np.PyArray_SIZE(val_arr)
 
-        # Small alpha case: Use stick-breaking approach with beta random variates
+        # Small alpha case: Use stick-breaking approach with beta
+        # random variates
         if alpha_arr.max() < 1.0:
             with self.lock, nogil:
                 while i < totsize:
                     acc = 1.
-                    for j in range(k-1):
-                        v = random_beta(&self._bitgen, alpha_data[j], alpha_csum_data[j+1])
-                        val_data[i+j] = acc * v
+                    for j in range(k - 1):
+                        v = random_beta(&self._bitgen, alpha_data[j],
+                                        alpha_csum_data[j + 1])
+                        val_data[i + j] = acc * v
                         acc *= (1. - v)
-                    val_data[i+j+1] = acc
+                    val_data[i + j + 1] = acc
                     i = i + k
 
-        # Non-small alpha case: Perform unit normalisation of a sum of gamma random variates
+        # Non-small alpha case: Perform unit normalisation of a sum of
+        # gamma random variates
         else:
             with self.lock, nogil:
                 while i < totsize:
-                    acc = 0.0
+                    acc = 0.
                     for j in range(k):
-                        val_data[i+j] = random_standard_gamma(&self._bitgen,
-                                                                  alpha_data[j])
+                        val_data[i + j] = random_standard_gamma(&self._bitgen,
+                                                                alpha_data[j])
                         acc = acc + val_data[i + j]
-                    invacc = 1/acc
+                    invacc = 1. / acc
                     for j in range(k):
                         val_data[i + j] = val_data[i + j] * invacc
                     i = i + k
