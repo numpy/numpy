@@ -284,6 +284,10 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     check that all elements of these objects are equal. An exception is raised
     at the first conflicting values.
 
+    When one of `actual` and `desired` is a scalar and the other is array_like,
+    the function checks that each element of the array_like object is equal to
+    the scalar.
+
     This function handles NaN comparisons as if NaN was a "normal" number.
     That is, no assertion is raised if both objects have NaNs in the same
     positions.  This is in contrast to the IEEE standard on NaNs, which says
@@ -841,10 +845,11 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     Raises an AssertionError if two array_like objects are not equal.
 
     Given two array_like objects, check that the shape is equal and all
-    elements of these objects are equal. An exception is raised at
-    shape mismatch or conflicting values. In contrast to the standard usage
-    in numpy, NaNs are compared like numbers, no assertion is raised if
-    both objects have NaNs in the same positions.
+    elements of these objects are equal (but see the Notes for the special
+    handling of a scalar). An exception is raised at shape mismatch or
+    conflicting values. In contrast to the standard usage in numpy, NaNs
+    are compared like numbers, no assertion is raised if both objects have
+    NaNs in the same positions.
 
     The usual caution for verifying equality with floating point numbers is
     advised.
@@ -871,6 +876,12 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
                      relative and/or absolute precision.
     assert_array_almost_equal_nulp, assert_array_max_ulp, assert_equal
 
+    Notes
+    -----
+    When one of `x` and `y` is a scalar and the other is array_like, the
+    function checks that each element of the array_like object is equal to
+    the scalar.
+
     Examples
     --------
     The first assert does not raise an exception:
@@ -878,7 +889,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
     ...                               [np.exp(0),2.33333, np.nan])
 
-    Assert fails with numerical inprecision with floats:
+    Assert fails with numerical imprecision with floats:
 
     >>> np.testing.assert_array_equal([1.0,np.pi,np.nan],
     ...                               [1, np.sqrt(np.pi)**2, np.nan])
@@ -898,6 +909,12 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     >>> np.testing.assert_allclose([1.0,np.pi,np.nan],
     ...                            [1, np.sqrt(np.pi)**2, np.nan],
     ...                            rtol=1e-10, atol=0)
+
+    As mentioned in the Notes section, `assert_array_equal` has special
+    handling for scalars. Here the test checks that each value in `x` is 3:
+
+    >>> x = np.full((2, 5), fill_value=3)
+    >>> np.testing.assert_array_equal(x, 3)
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
