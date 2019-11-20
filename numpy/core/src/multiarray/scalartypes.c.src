@@ -1884,8 +1884,12 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     PyTuple_SET_ITEM(ret, 0, obj);
     obj = PyObject_GetAttrString((PyObject *)self, "dtype");
     if (PyArray_IsScalar(self, Object)) {
-        mod = ((PyObjectScalarObject *)self)->obval;
-        PyTuple_SET_ITEM(ret, 1, Py_BuildValue("NO", obj, mod));
+        PyObject* val = ((PyObjectScalarObject *)self)->obval;
+        PyObject * tup = Py_BuildValue("NO", obj, val);
+        if (tup == NULL) {
+            return NULL;
+        }
+        PyTuple_SET_ITEM(ret, 1, tup);
     }
     else if (obj && PyDataType_FLAGCHK((PyArray_Descr *)obj, NPY_LIST_PICKLE)) {
         /* a structured dtype with an object in a field */
@@ -1897,11 +1901,15 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         if (it == NULL) {
             return NULL;
         }
-        mod = ((PyArray_Descr *)obj)->f->getitem(it->dataptr, arr);
+        /* get arr[0] */
+        PyObject *val = ((PyArray_Descr *)obj)->f->getitem(it->dataptr, arr);
         Py_DECREF(it);
         Py_DECREF(arr);
-        /* XXX N does not incref, O does. What do we want? */
-        PyTuple_SET_ITEM(ret, 1, Py_BuildValue("NO", obj, mod));
+        PyObject * tup = Py_BuildValue("NO", obj, val);
+        if (tup == NULL) {
+            return NULL;
+        }
+        PyTuple_SET_ITEM(ret, 1, tup);
     }
     else {
 #ifndef Py_UNICODE_WIDE

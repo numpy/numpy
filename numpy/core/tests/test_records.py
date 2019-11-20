@@ -418,18 +418,19 @@ class TestRecord(object):
 
     def test_pickle_void(self):
         # issue gh-13593
-        dt = np.dtype([('obj', 'O')])
+        dt = np.dtype([('obj', 'O'), ('int', 'i')])
         a = np.empty(1, dtype=dt)
         data = (bytearray(b'eman'),)
         a['obj'] = data
+        a['int'] = 42
         state = a[0].__reduce__()
         # If the data is bytes, it will pickle the address of the content
         # which cannot be saved/restored
         assert not isinstance(state[1][1], bytes)
         b = state[0](*state[1])
-        assert b[0] == (bytearray(b'eman'),)
+        assert b[0] == (bytearray(b'eman'), 42)
         # got a fresh version, not the original pointers rebuilt
-        assert b[0] is not data
+        assert b[0][0] is not data
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
