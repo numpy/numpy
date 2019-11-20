@@ -354,7 +354,7 @@ class TestLinspace(object):
         for num in [0, 1, 2]:
             for ept in [False, True]:
                 y = linspace(0, 1, num, endpoint=ept, retstep=True)
-                assert(isinstance(y, tuple) and len(y) == 2)
+                assert isinstance(y, tuple) and len(y) == 2
                 if num == 2:
                     y0_expect = [0.0, 1.0] if ept else [0.0, 0.5]
                     assert_array_equal(y[0], y0_expect)
