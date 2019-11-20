@@ -988,7 +988,7 @@ class TestRandomDist(object):
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_beta_small_a_and_b(self):
-        eps = 1.0e-12  # 1.0e-11 -> runtime x50; 1.0e-12 -> runtime x200
+        eps = 1.0e-10  # 1.0e-11 -> runtime x50; 1.0e-12 -> runtime x200
         a = eps
         b = eps * 1.0e-3
 
@@ -1069,22 +1069,24 @@ class TestRandomDist(object):
         random = Generator(MT19937(self.seed))
         actual = random.dirichlet(alpha, size=(3, 2))
         expected = np.array([
-            [
-                [1., 0.],
-                [1., 0.]
-            ],
-
-            [
-                [1., 0.],
-                [1., 0.]
-            ],
-
-            [
-                [1., 0.],
-                [1., 0.]
-            ]
+            [[1., 0.],
+            [1., 0.]],
+            [[1., 0.],
+            [1., 0.]],
+            [[1., 0.],
+            [1., 0.]]
         ])
         assert_array_almost_equal(actual, expected, decimal=15)
+
+    @pytest.mark.slow
+    def test_dirichlet_moderately_small_alpha(self):
+        # Use alpha.max() < 1 to trigger stick breaking code path
+        alpha = np.array([0.2, 0.4, 0.3])
+        exact_mean = alpha / alpha.sum()
+        random = Generator(MT19937(self.seed))
+        sample = random.dirichlet(alpha, size=20000000)
+        sample_mean = sample.mean(axis=0)
+        assert_allclose(sample_mean, exact_mean, rtol=1e-3)
 
     def test_exponential(self):
         random = Generator(MT19937(self.seed))
