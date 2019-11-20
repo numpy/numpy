@@ -334,7 +334,6 @@ SKIP_LIST = [
     "numpy.core.cversions",
     "numpy.core.generate_numpy_api",
     "numpy.distutils.msvc9compiler",
-    'numpy.random.examples',
 ]
 
 
