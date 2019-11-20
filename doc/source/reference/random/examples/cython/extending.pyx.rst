@@ -1,5 +1,5 @@
 extending.pyx
 -------------
 
-.. literalinclude:: ../../../../../../numpy/random/examples/cython/extending.pyx
+.. literalinclude:: ../../../../../../numpy/random/_examples/cython/extending.pyx
     :language: cython
