@@ -39,7 +39,7 @@ def uniform_mean(Py_ssize_t n):
     return randoms.mean()
 
 
-# This function is declated nogil so it can be used without the GIL below
+# This function is declared nogil so it can be used without the GIL below
 cdef uint32_t bounded_uint(uint32_t lb, uint32_t ub, bitgen_t *rng) nogil:
     cdef uint32_t mask, delta, val
     mask = delta = ub - lb
