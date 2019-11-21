@@ -24,7 +24,7 @@
 #define RAND_INT_MAX INT64_MAX
 #endif
 
-#ifdef DLL_EXPORT
+#ifdef _MSC_VER
 #define DECLDIR __declspec(dllexport)
 #else
 #define DECLDIR extern
