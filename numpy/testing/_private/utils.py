@@ -403,7 +403,8 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
                 array_desired.dtype.char in 'Mm'):
             # version 1.18
             # until this version, gisnan failed for datetime64 and timedelta64.
-            # Now it succeeds but comparison to 0 emits a DeprecationWarning
+            # Now it succeeds but comparison to scalar with a different type
+            # emits a DeprecationWarning.
             # Avoid that by skipping the next check
             raise NotImplementedError('cannot compare datetime64 to 0')
 
