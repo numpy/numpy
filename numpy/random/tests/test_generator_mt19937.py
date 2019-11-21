@@ -1070,11 +1070,11 @@ class TestRandomDist(object):
         actual = random.dirichlet(alpha, size=(3, 2))
         expected = np.array([
             [[1., 0.],
-            [1., 0.]],
+             [1., 0.]],
             [[1., 0.],
-            [1., 0.]],
+             [1., 0.]],
             [[1., 0.],
-            [1., 0.]]
+             [1., 0.]]
         ])
         assert_array_almost_equal(actual, expected, decimal=15)
 
