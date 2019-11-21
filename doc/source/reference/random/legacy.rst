@@ -122,10 +122,18 @@ Distributions
    ~RandomState.weibull
    ~RandomState.zipf
 
-Toplevel `numpy.random` functions
-=================================
-Many of the RandomState methods above are exported as top-level `numpy.random`
-functions. These are:
+Functions in `numpy.random`
+===========================
+Many of the RandomState methods above are exported as functions in
+`numpy.random` This usage is discouraged, as it is implemented via a gloabl
+`RandomState` instance which is not advised on two counts:
+
+- It uses global state, which means results will change as the code changes
+
+- It uses a `RandomState` rather than the more modern `Generator`.
+
+For backward compatible legacy reasons, we cannot change this. See
+`random-quick-start`.
 
 .. autosummary::
    :toctree: generated/
