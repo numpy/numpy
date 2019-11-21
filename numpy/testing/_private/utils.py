@@ -406,7 +406,8 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
             # Now it succeeds but comparison to scalar with a different type
             # emits a DeprecationWarning.
             # Avoid that by skipping the next check
-            raise NotImplementedError('cannot compare datetime64 to 0')
+            raise NotImplementedError('cannot compare to a scalar '
+                                      'with a different type')
 
         if desired == 0 and actual == 0:
             if not signbit(desired) == signbit(actual):
