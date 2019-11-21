@@ -396,7 +396,7 @@ cdef class RandomState:
             Array of random floats of shape `size` (unless ``size=None``, in which
             case a single float is returned).
 
-        See also
+        See Also
         --------
         Generator.random: which should be used for new code.
 
@@ -470,7 +470,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized beta distribution.
 
-        See also
+        See Also
         --------
         Generator.beta: which should be used for new code.
         """
@@ -519,7 +519,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized exponential distribution.
 
-        See also
+        See Also
         --------
         Generator.exponential: which should be used for new code.
 
@@ -564,7 +564,7 @@ cdef class RandomState:
         out : float or ndarray
             Drawn samples.
 
-        See also
+        See Also
         --------
         Generator.standard_exponential: which should be used for new code.
 
@@ -785,7 +785,7 @@ cdef class RandomState:
         out : str
             String of length `length`.
 
-        See also
+        See Also
         --------
         Generator.bytes: which should be used for new code.
 
@@ -1782,7 +1782,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized noncentral Fisher distribution.
 
-        See also
+        See Also
         --------
         Generator.noncentral_f: which should be used for new code.
 
@@ -1864,7 +1864,7 @@ cdef class RandomState:
             When `df` <= 0 or when an inappropriate `size` (e.g. ``size=-1``)
             is given.
 
-        See also
+        See Also
         --------
         Generator.chisquare: which should be used for new code.
 
@@ -1936,7 +1936,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized noncentral chi-square distribution.
 
-        See also
+        See Also
         --------
         Generator.noncentral_chisquare: which should be used for new code.
 
@@ -2014,7 +2014,7 @@ cdef class RandomState:
         samples : ndarray or scalar
             The drawn samples.
 
-        See also
+        See Also
         --------
         Generator.standard_cauchy: which should be used for new code.
 
@@ -2093,7 +2093,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized standard Student's t distribution.
 
-        See also
+        See Also
         --------
         Generator.standard_t: which should be used for new code.
 
@@ -2491,7 +2491,7 @@ cdef class RandomState:
         ValueError
             If a < 1.
 
-        See also
+        See Also
         --------
         Generator.power: which should be used for new code.
 
@@ -2600,7 +2600,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized Laplace distribution.
 
-        See also
+        See Also
         --------
         Generator.laplace: which should be used for new code.
 
@@ -3010,7 +3010,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized Rayleigh distribution.
 
-        See also
+        See Also
         --------
         Generator.rayleigh: which should be used for new code.
 
@@ -3094,7 +3094,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized Wald distribution.
 
-        See also
+        See Also
         --------
         Generator.wald: which should be used for new code.
 
@@ -3171,7 +3171,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized triangular distribution.
 
-        See also
+        See Also
         --------
         Generator.triangular: which should be used for new code.
 
@@ -3426,7 +3426,7 @@ cdef class RandomState:
             where each sample is equal to N, the number of failures that
             occurred before a total of n successes was reached.
 
-        See also
+        See Also
         --------
         Generator.negative_binomial: which should be used for new code.
 
@@ -3508,7 +3508,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized Poisson distribution.
 
-        See also
+        See Also
         --------
         Generator.poisson: which should be used for new code.
 
@@ -3683,7 +3683,7 @@ cdef class RandomState:
         out : ndarray or scalar
             Drawn samples from the parameterized geometric distribution.
 
-        See also
+        See Also
         --------
         Generator.geometric: which should be used for new code.
 
@@ -3973,7 +3973,7 @@ cdef class RandomState:
             In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
             value drawn from the distribution.
 
-        See also
+        See Also
         --------
         Generator.multivariate_normal: which should be used for new code.
 
@@ -4143,7 +4143,7 @@ cdef class RandomState:
             In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
             value drawn from the distribution.
 
-        See also
+        See Also
         --------
         Generator.multinomial: which should be used for new code.
 
@@ -4258,7 +4258,7 @@ cdef class RandomState:
         ValueError
             If any value in alpha is less than or equal to zero
 
-        See also
+        See Also
         --------
         Generator.dirichlet: which should be used for new code.
 
@@ -4392,7 +4392,7 @@ cdef class RandomState:
         -------
         None
 
-        See also
+        See Also
         --------
         Generator.shuffle: which should be used for new code.
 
@@ -4490,7 +4490,7 @@ cdef class RandomState:
         out : ndarray
             Permuted sequence or array range.
 
-        See also
+        See Also
         --------
         Generator.permutation: which should be used for new code.
 
