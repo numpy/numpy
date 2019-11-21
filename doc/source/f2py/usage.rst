@@ -6,11 +6,12 @@ F2PY can be used either as a command line tool ``f2py`` or as a Python
 module ``numpy.f2py``. While we try to install the command line tool as part
 of the numpy setup, some platforms like Windows make it difficult to
 reliably put the executable on the ``PATH``. We will refer to ``f2py``
-in this document but you may have to run it as a module
+in this document but you may have to run it as a module:
 
-```
-python -m numpy.f2py
-```
+::
+
+   python -m numpy.f2py
+
 
 If you run ``f2py`` with no arguments, and the line ``numpy Version`` at the
 end matches the NumPy version printed from ``python -m numpy.f2py``, then you
@@ -21,7 +22,7 @@ Command ``f2py``
 =================
 
 When used as a command line tool, ``f2py`` has three major modes,
-distinguished by the usage of ``-c`` and ``-h`` switches:
+distinguished by the usage of ``-c``, ``-m`` and ``-h`` switches:
 
 1. To scan Fortran sources and generate a signature file, use
 
@@ -50,9 +51,9 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
 
    ::
 
-     f2py <options> <fortran files>          \
-       [[ only: <fortran functions>  : ]     \
-        [ skip: <fortran functions>  : ]]... \
+     f2py -m <modulename> <options> <fortran files>   \
+       [[ only: <fortran functions>  : ]              \
+        [ skip: <fortran functions>  : ]]...          \
        [<fortran files> ...]
 
    The constructed extension module is saved as
@@ -79,8 +80,7 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
      functions. This feature enables using arbitrary C functions
      (defined in ``<includefile>``) in F2PY generated wrappers.
 
-     This option is deprecated. Use ``usercode`` statement to specify
-     C code snippets directly in signature files
+     .. note:: This option is deprecated. Use ``usercode`` statement to specify C code snippets directly in signature files.
 
    ``--[no-]wrap-functions``
 
@@ -161,12 +161,30 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
      for ``-l``.
  
    ``link-<resource>``
- 
      Link extension module with <resource> as defined by
      ``numpy_distutils/system_info.py``. E.g. to link with optimized
      LAPACK libraries (vecLib on MacOSX, ATLAS elsewhere), use
      ``--link-lapack_opt``. See also ``--help-link`` switch.
- 
+
+   .. note:
+
+   The ``f2py -c`` option must be applied either to an existing ``.pyf`` file (plus the source/object/library files) or one must specify the ``-m <modulename>`` option (plus the sources/object/library files). ``f2py -c`` is not meant to compile the generated C/API extension modules directly (although it is likely able to do that with proper include directory flags and the source/object file inputs).
+
+   Use one of the following options:
+
+   ::
+
+      f2py -c -m fib1 fib1.f
+
+   or
+
+   ::
+
+      f2py -m fib1 fib1.f -h fib1.pyf
+      f2py -c fib1.pyf fib1.f
+
+   For more information, see https://docs.python.org/3/extending/building.html
+
    When building an extension module, a combination of the following
    macros may be required for non-gcc Fortran compilers::
  
@@ -204,7 +222,7 @@ Other options:
   Print f2py version ID and exit.
 
 Execute ``f2py`` without any options to get an up-to-date list of
-available options.
+available options.   
 
 Python module ``numpy.f2py``
 ============================
