@@ -1,8 +1,9 @@
 >>> import allocarr 
->>> print allocarr.mod.__doc__
-b - 'f'-array(-1,-1), not allocated
-foo - Function signature:
-  foo()
+>>> print(allocarr.mod.__doc__)
+'f'-
+foo()
+
+Wrapper for ``foo``.
 
 >>> allocarr.mod.foo()  
  b is not allocated
@@ -14,7 +15,9 @@ foo - Function signature:
  ]
 >>> allocarr.mod.b                             # b is Fortran-contiguous
 array([[ 1.,  2.,  3.],
-       [ 4.,  5.,  6.]],'f')
+       [ 4.,  5.,  6.]], dtype=float32)
+>>> allocarr.mod.b.flags.f_contiguous
+True
 >>> allocarr.mod.b = [[1,2,3],[4,5,6],[7,8,9]] # reallocate/initialize b
 >>> allocarr.mod.foo()
  b=[
