@@ -30,7 +30,7 @@ extensions = [
     'sphinx.ext.imgmath',
 ]
 
-# imgmath_image_format = 'svg'
+imgmath_image_format = 'svg'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -38,7 +38,8 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
-master_doc = 'index'
+# Since v2.0, Sphinx uses "index" as master_doc by default. Please add "master_doc = 'contents'" to your conf.py.
+master_doc = 'contents'
 
 # General substitutions.
 project = 'NumPy'
@@ -105,11 +106,7 @@ html_theme_path = [themedir]
 # if 'scipyorg' in tags:
 # Build for the scipy.org website
 html_theme_options = {
-    "edit_link": "true",
-    "sidebar": "right",
-    "scipy_org_logo": True,
-    "rootlinks": [("https://scipy.org/", "Scipy.org"),
-                  ("https://docs.scipy.org/", "Docs")]
+
 }
 # TODO: searchbox is not working with this. Remove it later.
 # else:
