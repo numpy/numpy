@@ -5,3 +5,5 @@ pytest-cov==2.8.1
 pickle5; python_version == '3.7'
 pickle5; python_version == '3.6' and platform_python_implementation != 'PyPy'
 nose
+# for numpy.random.test.test_extending
+cffi
