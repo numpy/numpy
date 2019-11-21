@@ -4138,8 +4138,8 @@ cdef class Generator:
         alpha_data = <double*>np.PyArray_DATA(alpha_arr)
 
         alpha_csum = np.ascontiguousarray(np.cumsum(alpha[::-1])[::-1])
-        alpha_csum_arr = <np.ndarray>np.PyArray_FROM_OTF(
-            alpha_csum, np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+        alpha_csum_arr = <np.ndarray>np.PyArray_FROM_OTF(alpha_csum,
+            np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
         alpha_csum_data = <double*>np.PyArray_DATA(alpha_csum_arr)
 
         if size is None:
