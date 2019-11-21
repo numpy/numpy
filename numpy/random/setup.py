@@ -78,8 +78,8 @@ def configuration(parent_package='', top_path=None):
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['_%s.pyx' % gen, 'bit_generator.pyx',
-                                      'bit_generator.pxd'],
+                             depends=['_%s.pyx' % gen, '_bit_generator.pyx',
+                                      '_bit_generator.pxd'],
                              define_macros=_defs,
                              )
     for gen in ['_common', '_bit_generator']:
@@ -112,7 +112,7 @@ def configuration(parent_package='', top_path=None):
                              depends=['%s.pyx' % gen],
                              define_macros=defs,
                              )
-    config.add_data_files('_bounded_inteters.pxd')
+    config.add_data_files('_bounded_integers.pxd')
     config.add_extension('mtrand',
                          sources=['mtrand.c',
                                   'src/legacy/legacy-distributions.c',
