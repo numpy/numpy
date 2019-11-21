@@ -139,7 +139,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
     # see gh-7142. Hence, we multiply in place only for standard scalar types.
     _mult_inplace = _nx.isscalar(delta)
-    if num > 1:
+    if div > 0:
         step = delta / div
         if _nx.any(step == 0):
             # Special handling for denormal numbers, gh-5437
@@ -154,7 +154,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
             else:
                 y = y * step
     else:
-        # 0 and 1 item long sequences have an undefined step
+        # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
+        # have an undefined step
         step = NaN
         # Multiply with delta to allow possible override of output class.
         y = y * delta
