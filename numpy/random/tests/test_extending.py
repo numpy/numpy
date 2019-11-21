@@ -3,11 +3,15 @@ import pytest
 import warnings
 
 try:
+    import cffi
+except ImportError:
+    cffi = None
+
+try:
     with warnings.catch_warnings(record=True) as w:
         # numba issue gh-4733
         warnings.filterwarnings('always', '', DeprecationWarning)
         import numba
-    import cffi
 except ImportError:
     numba = None
 
@@ -26,7 +30,11 @@ def test_cython():
         sys.argv = argv
         os.chdir(curdir)
 
-@pytest.mark.skipif(numba is None, reason="requires numba")
+@pytest.mark.skipif(numba is None or cffi is None,
+                    reason="requires numba and cffi")
 def test_numba():
         from numpy.random._examples.numba import extending
 
+@pytest.mark.skipif(cffi is None, reason="requires cffi")
+def test_cffi():
+        from numpy.random._examples.cffi import extending
