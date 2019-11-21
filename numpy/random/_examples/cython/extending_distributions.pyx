@@ -8,8 +8,7 @@ cimport numpy as np
 cimport cython
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from libc.stdint cimport uint16_t, uint64_t
-from numpy.random._bit_generator cimport bitgen_t
-
+from numpy.random cimport bitgen_t
 from numpy.random import PCG64
 
 
@@ -72,3 +71,4 @@ def uint10_uniforms(Py_ssize_t n):
 
     randoms = np.asarray(random_values)
     return randoms
+

@@ -125,6 +125,7 @@ def configuration(parent_package='', top_path=None):
                          depends=['mtrand.pyx'],
                          define_macros=defs + LEGACY_DEFS,
                          )
+    config.add_data_files('__init__.pxd')
     return config
 
 
