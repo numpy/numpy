@@ -41,13 +41,16 @@ properties than the legacy `MT19937` used in `RandomState`.
 
 .. code-block:: python
 
-  #Do this
+  # Do this
   from numpy.random import default_rng
-  val = default_rng().standard_normal()
+  rng = default_rng()
+  vals = rng.standard_normal(10)
+  more_vals = rng.standard_normal(10)
 
   # instead of this
   from numpy import random
-  val = random.standard_normal()
+  vals = random.standard_normal(10)
+  more_vals = random.standard_normal(10)
 
 `Generator` can be used as a replacement for `RandomState`. Both class
 instances hold a internal `BitGenerator` instance to provide the bit
