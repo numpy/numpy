@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build the demos
+Build the Cython demonstrations of low-level access to NumPy random
 
 Usage: python setup.py build_ext -i
 """
@@ -11,18 +11,17 @@ from Cython.Build import cythonize
 from setuptools.extension import Extension
 from os.path import join, abspath, dirname
 
-curpath = abspath(dirname(__file__))
+path = abspath(dirname(__file__))
 
 extending = Extension("extending",
-                      sources=[join(curpath, 'extending.pyx')],
+                      sources=[join(path, 'extending.pyx')],
                       include_dirs=[
                             np.get_include(),
-                            join(curpath, '..', '..')
+                            join(path, '..', '..')
                         ],
                       )
 distributions = Extension("extending_distributions",
-                          sources=[join(curpath, 'extending_distributions.pyx'),
-                                  ],
+                          sources=[join(path, 'extending_distributions.pyx')],
                           include_dirs=[np.get_include()])
 
 extensions = [extending, distributions]
