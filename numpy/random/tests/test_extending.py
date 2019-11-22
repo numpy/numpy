@@ -7,6 +7,11 @@ try:
 except ImportError:
     cffi = None
 
+if sys.flags.optimize > 1:
+    # no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1
+    # cffi cannot succeed
+    cffi = None
+
 try:
     with warnings.catch_warnings(record=True) as w:
         # numba issue gh-4733
