@@ -49,6 +49,25 @@ RNG structure.
 These functions along with a minimal setup file are included in the
 `examples` folder, ``numpy.random.examples``.
 
+CFFI
+====
+
+CFFI can be used to directly access the functions in
+``include/numpy/random/distributions.h``. Some "massaging" of the header
+file is required:
+
+.. literalinclude:: ../../../../numpy/random/_examples/cffi/extending.py
+    :language: python
+    :end-before: dlopen
+
+Once the header is parsed by ``ffi.cdef``, the functions can be accessed
+directly from the ``_generator`` shared object, using the `BitGenerator.cffi` interface.
+
+.. literalinclude:: ../../../../numpy/random/_examples/cffi/extending.py
+    :language: python
+    :start-after: dlopen
+
+
 New Basic RNGs
 ==============
 `~Generator` can be used with other user-provided BitGenerators. The simplest
@@ -85,3 +104,4 @@ Examples
     Numba <examples/numba>
     CFFI + Numba <examples/numba_cffi> 
     Cython <examples/cython/index>
+    CFFI <examples/cffi>
