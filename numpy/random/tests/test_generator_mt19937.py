@@ -987,15 +987,6 @@ class TestRandomDist(object):
              [2.830254190078299e-04, 1.744709918330393e-01]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
-    def test_beta_small_a_and_b(self):
-        eps = 1.0e-10  # 1.0e-11 -> runtime x50; 1.0e-12 -> runtime x200
-        a = eps
-        b = eps * 1.0e-3
-
-        random = Generator(MT19937(self.seed))
-        actual = random.beta(a, b)
-        assert actual == 1.
-
     def test_binomial(self):
         random = Generator(MT19937(self.seed))
         actual = random.binomial(100.123, .456, size=(3, 2))
