@@ -54,7 +54,7 @@ SKIPBLOCK = doctest.register_optionflag('SKIPBLOCK')
 
 if parse_version(sphinx.__version__) >= parse_version('1.5'):
     # Enable specific Sphinx directives
-    from sphinx.directives import SeeAlso, Only
+    from sphinx.directives.other import SeeAlso, Only
     directives.register_directive('seealso', SeeAlso)
     directives.register_directive('only', Only)
 else:
@@ -610,9 +610,9 @@ class Checker(doctest.OutputChecker):
             # and then compare the tuples.
             try:
                 num = len(a_want)
-                regex = ('[\w\d_]+\(' +
-                         ', '.join(['[\w\d_]+=(.+)']*num) +
-                         '\)')
+                regex = (r'[\w\d_]+\(' +
+                         ', '.join([r'[\w\d_]+=(.+)']*num) +
+                         r'\)')
                 grp = re.findall(regex, got.replace('\n', ' '))
                 if len(grp) > 1:  # no more than one for now
                     return False
