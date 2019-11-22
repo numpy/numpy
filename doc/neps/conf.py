@@ -111,12 +111,12 @@ todo_include_todos = False
 # HTML output
 # -----------------------------------------------------------------------------
 
-themedir = os.path.join(os.pardir, 'scipy-sphinx-theme', '_theme')
+themedir = os.path.join(os.pardir, 'scipy-sphinx-theme-v2')
 if not os.path.isdir(themedir):
-    raise RuntimeError("Get the scipy-sphinx-theme first, "
+    raise RuntimeError("Get the scipy-sphinx-theme-v2 first, "
                        "via git submodule init && git submodule update")
 
-html_theme = 'scipy'
+html_theme = 'custom_sphinx_theme'
 html_theme_path = [themedir]
 
 #if 'scipyorg' in tags:
