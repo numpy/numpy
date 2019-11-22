@@ -2,7 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 from numpy import (
     logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
-    ndarray, sqrt, nextafter, stack
+    ndarray, sqrt, nextafter, stack, datetime64
     )
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
@@ -371,3 +371,11 @@ class TestLinspace(object):
         stop = array(2, dtype='O')
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([1., 1.5, 2.]))
+
+    def test_datetime64(self):
+        start = datetime64('2019-01-01T00:00:00')
+        stop = datetime64('2019-01-01T00:00:04')
+        y = linspace(start, stop, 2, False)
+        expected = array([datetime64('2019-01-01T00:00:00'),
+                          datetime64('2019-01-01T00:00:02')])
+        assert_array_equal(y, expected)
