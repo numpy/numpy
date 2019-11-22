@@ -858,8 +858,8 @@ defdict = {
 'isnan':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isnan'),
-          None,
-          TD(nodatetime_or_obj, out='?'),
+          'PyUFunc_IsFiniteTypeResolver',
+          TD(noobj, out='?'),
           ),
 'isnat':
     Ufunc(1, 1, None,
@@ -870,8 +870,8 @@ defdict = {
 'isinf':
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.isinf'),
-          None,
-          TD(nodatetime_or_obj, out='?'),
+          'PyUFunc_IsFiniteTypeResolver',
+          TD(noobj, out='?'),
           ),
 'isfinite':
     Ufunc(1, 1, None,
