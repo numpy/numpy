@@ -1,5 +1,6 @@
 import os
 from os.path import join
+import sys
 
 import numpy as np
 from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
@@ -25,6 +26,12 @@ try:
     MISSING_CTYPES = False
 except ImportError:
     MISSING_CTYPES = False
+
+if sys.flags.optimize > 1:
+    # no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1
+    # cffi cannot succeed
+    MISSING_CFFI = True
+
 
 pwd = os.path.dirname(os.path.abspath(__file__))
 
