@@ -10,6 +10,7 @@ __all__ = ['iscomplexobj', 'isrealobj', 'imag', 'iscomplex',
            'typename', 'asfarray', 'mintypecode', 'asscalar',
            'common_type']
 
+from numpy.core.multiarray import array
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, asanyarray, isnan, zeros
 from numpy.core.overrides import set_module
@@ -80,12 +81,12 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
     return l[0][1]
 
 
-def _asfarray_dispatcher(a, dtype=None):
+def _asfarray_dispatcher(a, dtype=None, copy=None):
     return (a,)
 
 
 @array_function_dispatch(_asfarray_dispatcher)
-def asfarray(a, dtype=_nx.float_):
+def asfarray(a, dtype=_nx.float_, copy=False):
     """
     Return an array converted to a float type.
 
@@ -93,9 +94,13 @@ def asfarray(a, dtype=_nx.float_):
     ----------
     a : array_like
         The input array.
-    dtype : str or dtype object, optional
+    dtype : str or dtype object or None, optional
         Float type code to coerce input array `a`.  If `dtype` is one of the
-        'int' dtypes, it is replaced with float64.
+        'int' dtypes, it is replaced with float64. If `None`, use the dtype of
+        the array itself in the same way.
+    copy : bool
+        If `True`, a copy will be returned even if the input array meets the
+        type criteria.
 
     Returns
     -------
@@ -112,9 +117,17 @@ def asfarray(a, dtype=_nx.float_):
     array([2.,  3.])
 
     """
+    if dtype is None:
+        orig = a
+        a = array(orig, copy=False, subok=False, order=None)
+        dtype = a.dtype
+        if a is not orig:
+            copy = False
+
     if not _nx.issubdtype(dtype, _nx.inexact):
         dtype = _nx.float_
-    return asarray(a, dtype=dtype)
+
+    return array(a, dtype=dtype, copy=copy, subok=False, order=None)
 
 
 def _real_dispatcher(val):

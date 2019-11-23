@@ -469,14 +469,49 @@ class TestRealIfClose(object):
         assert_all(isrealobj(b))
 
 
-class TestArrayConversion(object):
+class TestAsfarray(object):
 
-    def test_asfarray(self):
-        a = asfarray(np.array([1, 2, 3]))
+    def test_basic(self):
+        a = asfarray([1, 2, 3])
         assert_equal(a.__class__, np.ndarray)
         assert_(np.issubdtype(a.dtype, np.floating))
 
+        b = asfarray(np.array([1, 2, 3]))
+        assert_equal(b.__class__, np.ndarray)
+        assert_(np.issubdtype(b.dtype, np.floating))
+
+    def test_dtype(self):
+        a = asfarray(np.array([1, 2, 3]), dtype=np.int32)
+        assert_(np.issubdtype(a.dtype, np.floating))
+
+        a = asfarray(np.array([1, 2, 3]), dtype=np.float16)
+        assert_(np.issubdtype(a.dtype, np.floating))
+
+        a = asfarray(np.array([1, 2, 3]), dtype=np.complex128)
+        assert_(np.issubdtype(a.dtype, np.complexfloating))
+
+    def test_dtype_none(self):
+        a = asfarray(np.array([1, 2, 3]), dtype=None)
+        assert_(np.issubdtype(a.dtype, np.floating))
+
+        b = asfarray(np.array([1.0, 2.0, 3.0]), dtype=None)
+        assert_(np.issubdtype(b.dtype, np.inexact))
+
+        c = asfarray(np.array([1.0+1j, 2.0+2j, 3.0+3j]), dtype=None)
+        assert_(np.issubdtype(c.dtype, np.complexfloating))
+
+    def test_dtype_array(self):
         # previously this would infer dtypes from arrays, unlike every single
         # other numpy function
-        assert_raises(TypeError,
-            asfarray, np.array([1, 2, 3]), dtype=np.array(1.0))
+        assert_raises(TypeError, asfarray,
+                      np.array([1, 2, 3]), dtype=np.array(1.0))
+
+    def test_copy(self):
+        a = np.array([1, 2, 3])
+        assert_(asfarray(a, copy=False) is not a)
+        assert_(asfarray(a, copy=True) is not a)
+
+        b = np.array([1.0, 2.0, 3.0])
+        assert_(asfarray(b, copy=False) is b)
+        assert_(asfarray(b, copy=True) is not b)
+

@@ -1,0 +1,5 @@
+`numpy.asfarray` accepts `copy` argument
+----------------------------------------
+It is now possible to force `asfarray` to make a copy using `copy=True`.
+`dtype` also accepts an argument of `None`, to attempt to preserve the type of
+any array-like.
