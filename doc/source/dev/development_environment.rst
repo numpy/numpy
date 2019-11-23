@@ -145,7 +145,7 @@ Running tests
 Besides using ``runtests.py``, there are various ways to run the tests.  Inside
 the interpreter, tests can be run like this::
 
-    >>> np.test()
+    >>> np.test()  # doctest: +SKIPBLOCK
     >>> np.test('full')   # Also run tests marked as slow
     >>> np.test('full', verbose=2)   # Additionally print test name/file
 
