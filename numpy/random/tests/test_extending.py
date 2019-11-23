@@ -11,6 +11,12 @@ try:
 except ImportError:
     numba = None
 
+try:
+    import cython
+except ImportError:
+    cython = None
+
+@pytest.mark.skipif(cython is None, reason="requires cython")
 def test_cython():
     curdir = os.getcwd()
     argv = sys.argv
