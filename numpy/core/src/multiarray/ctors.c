@@ -1757,7 +1757,6 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
     if (!writeable && PySequence_Check(op)) {
         int check_it, stop_at_string, stop_at_tuple;
         int type_num, type;
-        discovered_t is_object = DISCOVERED_OK;
 
         /*
          * Determine the type, using the requested data type if
@@ -1806,6 +1805,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
                          ((*out_dtype)->names || (*out_dtype)->subarray));
 
         *out_ndim = NPY_MAXDIMS;
+        discovered_t is_object = DISCOVERED_OK;
         if (discover_dimensions(
                 op, out_ndim, out_dims, check_it,
                 stop_at_string, stop_at_tuple, &is_object) < 0) {
@@ -1823,9 +1823,8 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         }
         /* If object arrays are forced */
         if (is_object != DISCOVERED_OK) {
-            if (is_object == DISCOVERED_RAGGED && requested_dtype == NULL)
-            {
-                /* 2019-Nov-1 1.18 */
+            if (is_object == DISCOVERED_RAGGED && requested_dtype == NULL) {
+                /* NumPy 1.18, 2019-11-01 */
                 if (DEPRECATE("Creating an ndarray with automatic object "
                     "dtype is deprecated, use dtype=object if you intended "
                     "it, otherwise specify an exact dtype") < 0)
