@@ -2467,8 +2467,11 @@ class TestRegression(object):
         x = np.array([1, 2, 4, 7, 0], dtype=np.int16)
         res = np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))
         assert_equal(res, [-99,   1,   2,   3,  -7,  88,  99])
-        assert_raises(ValueError, np.ediff1d, x, to_begin=(1<<20))
-        assert_raises(ValueError, np.ediff1d, x, to_end=(1<<20))
+
+        # The use of safe casting means, that 1<<20 is cast unsafely, an
+        # error may be better, but currently there is no mechanism for it.
+        res = np.ediff1d(x, to_begin=(1<<20), to_end=(1<<20))
+        assert_equal(res, [0,   1,   2,   3,  -7,  0])
 
     def test_pickle_datetime64_array(self):
         # gh-12745 (would fail with pickle5 installed)
@@ -2493,3 +2496,4 @@ class TestRegression(object):
         assert arr.size * arr.itemsize > 2 ** 31
         c_arr = np.ctypeslib.as_ctypes(arr)
         assert_equal(c_arr._length_, arr.size)
+
