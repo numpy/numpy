@@ -1246,7 +1246,6 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                     &order)) {
         return NULL;
     }
-
     if (order == Py_None) {
         order = NULL;
     }
@@ -1298,6 +1297,7 @@ array_partition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"kth", "axis", "kind", "order", NULL};
     PyArrayObject * ktharray;
     PyObject * kthobj;
+
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&O:partition", kwlist,
                                      &kthobj,

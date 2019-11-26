@@ -907,7 +907,6 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
                 goto fail;
             }
         }
-
         else {
             npy_intp pivots[NPY_MAX_PIVOT_STACK];
             npy_intp npiv = 0;
