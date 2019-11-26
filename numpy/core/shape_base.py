@@ -575,7 +575,7 @@ def _concatenate_shapes(shapes, axis):
         that was computed deeper in the recursion.
 
         These are returned as tuples to ensure that they can quickly be added
-        to existing slice tuple without creating a new tuple everytime.
+        to existing slice tuple without creating a new tuple every time.
 
     """
     # Cache a result that will be reused.

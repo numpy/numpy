@@ -934,8 +934,8 @@ def main(argv):
     parser.add_argument("--doctest-warnings", action="store_true",
                         help="Enforce warning checking for doctests")
     parser.add_argument("--rst", nargs='?', const='doc', default=None,
-                        help=("Run also examples from *rst files"
-                              "dicovered walking the directory(s) specified, "
+                        help=("Run also examples from *rst files "
+                              "discovered walking the directory(s) specified, "
                               "defaults to 'doc'"))
     args = parser.parse_args(argv)
 
