@@ -4158,7 +4158,24 @@ cdef class Generator:
         totsize = np.PyArray_SIZE(val_arr)
 
         # Small alpha case: Use stick-breaking approach with beta
-        # random variates
+        # random variates (RVs).
+        #
+        # This approach prevents NaNs resulting from 0/0 that may
+        # occur when using the standard approach of generating
+        # dirichlet RVs via normalisation of a vector of gamma RVs
+        #
+        # In the standard approach each alpha value is used as the
+        # shape parameter of a gamma distribution. If all the alpha
+        # values are sufficiently small, there is a high probability
+        # that all the gamma variates will be 0. When that happens,
+        # the normalization process ends up computing 0/0, giving nan.
+        #
+        # The stick-breaking algorithm does not use divisions, so that
+        # a situation in which 0/0 has to be computed cannot occur.
+        #
+        # The algorithm is slower than the standard approach as
+        # generation of beta RVs is slower than generation of gamma
+        # RVs.
         if alpha_arr.max() < 1.0:
             with self.lock, nogil:
                 while i < totsize:
@@ -4171,8 +4188,8 @@ cdef class Generator:
                     val_data[i + j + 1] = acc
                     i = i + k
 
-        # Non-small alpha case: Perform unit normalisation of a sum of
-        # gamma random variates
+        # Standard case: Unit normalisation of a vector of gamma random
+        # variates
         else:
             with self.lock, nogil:
                 while i < totsize:
