@@ -345,6 +345,11 @@ def solve(a, b):
     LinAlgError
         If `a` is singular or not square.
 
+    See Also
+    --------
+    scipy.linalg.solve : Solves the linear equation set ``a * x = b`` for the
+                         unknown `x` for square `a` matrix.
+
     Notes
     -----
 
@@ -501,6 +506,10 @@ def inv(a):
     ------
     LinAlgError
         If `a` is not square or inversion fails.
+
+    See Also
+    --------
+    scipy.linalg.inv : Compute the inverse of a matrix.
 
     Notes
     -----
@@ -700,6 +709,14 @@ def cholesky(a):
        If the decomposition fails, for example, if `a` is not
        positive-definite.
 
+    See Also
+    --------
+    scipy.linalg.cholesky : Compute the Cholesky decomposition of a matrix.
+    scipy.linalg.cholesky_banded : Cholesky decompose a banded Hermitian
+        positive-definite matrix
+    scipy.linalg.cho_factor : Compute the Cholesky decomposition of a matrix,
+        to use in cho_solve
+
     Notes
     -----
 
@@ -811,6 +828,11 @@ def qr(a, mode='reduced'):
     ------
     LinAlgError
         If factoring fails.
+
+    See Also
+    --------
+    scipy.linalg.qr : Compute QR decomposition of a matrix.
+    scipy.linalg.rq : Compute RQ decomposition of a matrix.
 
     Notes
     -----
@@ -1004,6 +1026,8 @@ def eigvals(a):
                (conjugate symmetric) arrays.
     eigh : eigenvalues and eigenvectors of real symmetric or complex
            Hermitian (conjugate symmetric) arrays.
+    scipy.linalg.eigvals : Compute eigenvalues from an ordinary or generalized
+                           eigenvalue problem.
 
     Notes
     -----
@@ -1105,6 +1129,8 @@ def eigvalsh(a, UPLO='L'):
     eigvals : eigenvalues of general real or complex arrays.
     eig : eigenvalues and right eigenvectors of general real or complex
           arrays.
+    scipy.linalg.eigvalsh : Solve an ordinary or generalized eigenvalue problem
+                            for a complex Hermitian or real symmetric matrix.
 
     Notes
     -----
@@ -1203,12 +1229,12 @@ def eig(a):
     See Also
     --------
     eigvals : eigenvalues of a non-symmetric array.
-
     eigh : eigenvalues and eigenvectors of a real symmetric or complex
            Hermitian (conjugate symmetric) array.
-
     eigvalsh : eigenvalues of a real symmetric or complex Hermitian
                (conjugate symmetric) array.
+    scipy.linalg.eig : Solve an ordinary or generalized eigenvalue problem
+                       of a square matrix.
 
     Notes
     -----
@@ -1355,6 +1381,8 @@ def eigh(a, UPLO='L'):
                (conjugate symmetric) arrays.
     eig : eigenvalues and right eigenvectors for non-symmetric arrays.
     eigvals : eigenvalues of non-symmetric arrays.
+    scipy.linalg.eigh : Solve an ordinary or generalized eigenvalue problem for
+                        a complex Hermitian or real symmetric matrix.
 
     Notes
     -----
@@ -1505,6 +1533,11 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     ------
     LinAlgError
         If SVD computation does not converge.
+
+    See Also
+    --------
+    scipy.linalg.svd : Singular Value Decomposition.
+    scipy.linalg.svdvals : Compute singular values of a matrix.
 
     Notes
     -----
@@ -1917,6 +1950,14 @@ def pinv(a, rcond=1e-15, hermitian=False):
     LinAlgError
         If the SVD computation does not converge.
 
+    See Also
+    --------
+    scipy.linalg.pinv : Compute the (Moore-Penrose) pseudo-inverse of a matrix.
+    scipy.linalg.pinv2 : Compute the (Moore-Penrose) pseudo-inverse of a
+                         matrix.
+    scipy.linalg.pinvh : Compute the (Moore-Penrose) pseudo-inverse of a
+                         Hermitian matrix.
+
     Notes
     -----
     The pseudo-inverse of a matrix A, denoted :math:`A^+`, is
@@ -2079,6 +2120,7 @@ def det(a):
     --------
     slogdet : Another way to represent the determinant, more suitable
       for large matrices where underflow/overflow may occur.
+    scipy.linalg.det : Compute the determinant of a matrix.
 
     Notes
     -----
@@ -2178,6 +2220,10 @@ def lstsq(a, b, rcond="warn"):
     ------
     LinAlgError
         If computation does not converge.
+
+    See Also
+    --------
+    scipy.linalg.lstsq : Compute least-squares solution to equation Ax = b.
 
     Notes
     -----
@@ -2352,6 +2398,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
     -------
     n : float or ndarray
         Norm of the matrix or vector(s).
+
+    See Also
+    --------
+    scipy.linalg.norm : Matrix or vector norm.
 
     Notes
     -----
