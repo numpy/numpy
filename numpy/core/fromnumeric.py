@@ -841,6 +841,9 @@ def sort(a, axis=-1, kind=None, order=None, reverse=False):
         and 'mergesort' use timsort or radix sort under the covers and, in general,
         the actual implementation will vary with data type. The 'mergesort' option
         is retained for backwards compatibility.
+    reverse : bool, optional
+        If this is set to True, `a` will be sorted in descending order. It is done
+        by flipping `a` before and after sort.
 
         .. versionchanged:: 1.15.0.
            The 'stable' option was added.
@@ -942,6 +945,8 @@ def sort(a, axis=-1, kind=None, order=None, reverse=False):
            [1, 3]])
     >>> np.sort(a, axis=None)     # sort the flattened array
     array([1, 1, 3, 4])
+    >>> np.sort(a, axis=None, reverse=True)  # sort the flattened array in descending order
+    array([4, 3, 1, 1])
     >>> np.sort(a, axis=0)        # sort along the first axis
     array([[1, 1],
            [3, 4]])
@@ -972,7 +977,15 @@ def sort(a, axis=-1, kind=None, order=None, reverse=False):
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
-    a.sort(axis=axis, kind=kind, order=order, reverse=reverse)
+
+    if reverse:
+        a = np.flip(a, axis=axis)
+
+    a.sort(axis=axis, kind=kind, order=order)
+
+    if reverse:
+        a = np.flip(a, axis=axis)
+
     return a
 
 

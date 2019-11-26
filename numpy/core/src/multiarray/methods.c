@@ -1236,16 +1236,14 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
     int val;
     NPY_SORTKIND sortkind = NPY_QUICKSORT;
     PyObject *order = NULL;
-    npy_bool reverse = NPY_FALSE;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
-    static char *kwlist[] = {"axis", "kind", "order", "reverse", NULL};
-	
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&OO&:sort", kwlist,
+    static char *kwlist[] = {"axis", "kind", "order", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&O:sort", kwlist,
                                     &axis,
                                     PyArray_SortkindConverter, &sortkind,
-                                    &order, 
-                                    PyArray_BoolConverter, &reverse)) {
+                                    &order)) {
         return NULL;
     }
 
@@ -1277,7 +1275,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         ((PyArrayObject_fields *)self)->descr = newd;
     }
 
-    val = PyArray_Sort(self, axis, sortkind, reverse);
+    val = PyArray_Sort(self, axis, sortkind);
     if (order != NULL) {
         Py_XDECREF(PyArray_DESCR(self));
         ((PyArrayObject_fields *)self)->descr = saved;
@@ -1300,7 +1298,6 @@ array_partition(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"kth", "axis", "kind", "order", NULL};
     PyArrayObject * ktharray;
     PyObject * kthobj;
-
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&O:partition", kwlist,
                                      &kthobj,

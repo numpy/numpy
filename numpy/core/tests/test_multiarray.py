@@ -1810,12 +1810,12 @@ class TestMethods(object):
         a = np.array([s + chr(i) for i in range(101)])
         b = a[::-1].copy()
         for kind in self.sort_kinds:
-            msg = "string reverse sort, kind=%s" % kind
+            msg = "string sort, kind=%s, reverse=True" % kind
             c = a.copy()
-            c.sort(kind=kind, reverse=True)
+            c = np.sort(c, kind=kind, reverse=True)
             assert_equal(c, b, msg)
             c = b.copy()
-            c.sort(kind=kind, reverse=True)
+            c = np.sort(c, kind=kind, reverse=True)
             assert_equal(c, b, msg)
 
         # test unicode sorts.
@@ -1895,6 +1895,17 @@ class TestMethods(object):
         d = a.copy()
         d.sort()
         assert_equal(d, c, "test sort with default axis")
+
+        # check axis handling with reverse parameter
+        a = np.array([[0, 1], [2, 3]])
+        b = np.array([[2, 3], [0, 1]])
+        c = np.array([[1, 0], [3, 2]])
+        d = np.sort(a, axis=0, reverse=True)
+        assert_equal(d, b, "test sort with reverse=True and axis=0")
+        d = np.sort(a, axis=1, reverse=True)
+        assert_equal(d, c, "test sort with reverse=True and axis=1")
+        d = np.sort(a, reverse=True)
+        assert_equal(d, c, "test sort with reverse=True and default axis")
 
         # check axis handling for multidimensional empty arrays
         a = np.array([])
