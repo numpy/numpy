@@ -488,7 +488,7 @@ of three simple values: ``type``, ``value``, and ``coercible``.
 ``NotImplemented`` in the case of failure.
 
 ``__ua_function__`` has the signature ``(func, args, kwargs)`` and defines
-the actual implementation of the function. It recieves the function and its
+the actual implementation of the function. It receives the function and its
 arguments. Returning ``NotImplemented`` will cause a move to the default
 implementation of the function if one exists, and failing that, the next
 backend.

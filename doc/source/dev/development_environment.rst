@@ -53,7 +53,7 @@ When using pytest as a target (the default), you can
 
 .. note::
 
-    Remember that all tests of NumPy should pass before commiting your changes.
+    Remember that all tests of NumPy should pass before committing your changes.
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place

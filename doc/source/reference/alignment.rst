@@ -67,7 +67,7 @@ There are 4 relevant uses of the word ``align`` used in numpy:
    field alignment. In either case ``dtype.isalignedstruct`` is also set to
    True.
  * ``IsUintAligned`` is used to determine if an ndarray is "uint aligned" in
-   an analagous way to how ``IsAligned`` checks for true-alignment.
+   an analogous way to how ``IsAligned`` checks for true-alignment.
 
 Consequences of alignment
 -------------------------

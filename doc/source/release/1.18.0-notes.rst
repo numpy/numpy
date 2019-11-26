@@ -1,4 +1,4 @@
-The NumPy 1.18 release is currently in developement. Please check
+The NumPy 1.18 release is currently in development. Please check
 the ``numpy/doc/release/upcoming_changes/`` folder for upcoming
 release notes.
 The ``numpy/doc/release/upcoming_changes/README.txt`` details how
