@@ -7349,6 +7349,12 @@ def mask_rowcols(a, axis=None):
         Axis along which to perform the operation. If None, applies to a
         flattened version of the array.
 
+        ..note::
+            Note that this is the axis along which masks are _not_ extended.
+
+            If you want to specify the axis along which the mask _is_ extended,
+            which generalizes to N dimensions, use the newer `mask_extend_axis`.
+
     Returns
     -------
     a : MaskedArray
@@ -7362,13 +7368,8 @@ def mask_rowcols(a, axis=None):
 
     See Also
     --------
-    mask_rows : Mask rows of a 2D array that contain masked values.
-    mask_cols : Mask cols of a 2D array that contain masked values.
-    masked_where : Mask where a condition is met.
+    mask_extend_axis : Variant of this function that generalizes to ND
 
-    Notes
-    -----
-    The input array's mask is modified by this function.
 
     Examples
     --------
@@ -7400,20 +7401,177 @@ def mask_rowcols(a, axis=None):
       fill_value=1)
 
     """
-    a = array(a, subok=False)
+    a = asarray(a)
+    # rather than generalizing this weird API to ND, have the user call the
+    # simpler API
     if a.ndim != 2:
-        raise NotImplementedError("mask_rowcols works for 2D arrays only.")
+        raise NotImplementedError(
+            "mask_rowcols works for 2D arrays only, use mask_extend_axis "
+            "instead (which takes a different axis argument)."
+        )
+    # compatibility logic to accept the weird input that was allowed before
+    axes = ()
+    if not axis:
+        axes += (1,)
+    if axis in [None, 1, -1]:
+        axes += (0,)
+    return mask_extend_axis(a, axes)
+
+
+def mask_extend_axis(a, axis):
+    """
+    Extend masked values along 1d slices.
+
+    If any item is masked, then that entire 1d slice is masked.
+
+    .. versionadded:: 1.19.0
+
+    Parameters
+    ----------
+    a : array_like, MaskedArray
+        The array to mask.  If not a MaskedArray instance (or if no array
+        elements are masked).  The result is a MaskedArray with `mask` set
+        to `nomask` (False).
+    axis : int or tuple of ints, optional
+        Axis along which to extend the mask. If ``None``, do so along
+        all axes.
+
+    Returns
+    -------
+    a : MaskedArray
+        A modified version of the input array, masked depending on the value
+        of the `axis` parameter.
+
+    See Also
+    --------
+    mask_rows : Alias for ``mask_extend_axis(a, axis=-2)``
+    mask_cols : Alias for ``mask_extend_axis(a, axis=-1)``
+
+    Examples
+    --------
+    >>> import numpy.ma as ma
+    >>> a = np.zeros((3, 3, 3), dtype=int)
+    >>> a[1, 1, 1] = 1
+    >>> a
+    array([[[0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]],
+    <BLANKLINE>
+           [[0, 0, 0],
+            [0, 1, 0],
+            [0, 0, 0]],
+    <BLANKLINE>
+           [[0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]]])
+    >>> a = ma.masked_equal(a, 1)
+    >>> a
+    masked_array(
+      data=[[[0, 0, 0],
+             [0, 0, 0],
+             [0, 0, 0]],
+            [[0, 0, 0],
+             [0, --, 0],
+             [0, 0, 0]],
+            [[0, 0, 0],
+             [0, 0, 0],
+             [0, 0, 0]]],
+      mask=[[[False, False, False],
+             [False, False, False],
+             [False, False, False]],
+            [[False, False, False],
+             [False,  True, False],
+             [False, False, False]],
+            [[False, False, False],
+             [False, False, False],
+             [False, False, False]]],
+      fill_value=1)
+    >>> ma.mask_extend_axis(a, axis=1)
+    masked_array(
+      data=[[[0, 0, 0],
+             [0, 0, 0],
+             [0, 0, 0]],
+            [[0, --, 0],
+             [0, --, 0],
+             [0, --, 0]],
+            [[0, 0, 0],
+             [0, 0, 0],
+             [0, 0, 0]]],
+      mask=[[[False, False, False],
+             [False, False, False],
+             [False, False, False]],
+            [[False,  True, False],
+             [False,  True, False],
+             [False,  True, False]],
+            [[False, False, False],
+             [False, False, False],
+             [False, False, False]]],
+      fill_value=1)
+    >>> ma.mask_extend_axis(a, axis=(1, 2))
+    masked_array(
+      data=[[[0, 0, 0],
+             [0, 0, 0],
+             [0, 0, 0]],
+            [[0, --, 0],
+             [--, --, --],
+             [0, --, 0]],
+            [[0, 0, 0],
+             [0, 0, 0],
+             [0, 0, 0]]],
+      mask=[[[False, False, False],
+             [False, False, False],
+             [False, False, False]],
+            [[False,  True, False],
+             [ True,  True,  True],
+             [False,  True, False]],
+            [[False, False, False],
+             [False, False, False],
+             [False, False, False]]],
+      fill_value=1)
+
+    Note that calling this function twice is not equivalent to passing axes
+    simultaneously:
+
+    >>> ma.mask_extend_axis(ma.mask_extend_axis(a, axis=1), axis=2)
+    masked_array(
+      data=[[[0, 0, 0],
+             [0, 0, 0],
+             [0, 0, 0]],
+            [[--, --, --],
+             [--, --, --],
+             [--, --, --]],
+            [[0, 0, 0],
+             [0, 0, 0],
+             [0, 0, 0]]],
+      mask=[[[False, False, False],
+             [False, False, False],
+             [False, False, False]],
+            [[ True,  True,  True],
+             [ True,  True,  True],
+             [ True,  True,  True]],
+            [[False, False, False],
+             [False, False, False],
+             [False, False, False]]],
+      fill_value=1)
+    """
+    a = array(a, subok=False)
+    if axis is None:
+        axis = range(a.ndim)
+    else:
+        axis = normalize_axis_tuple(axis, a.ndim)
     m = getmask(a)
     # Nothing is masked: return a
-    if m is nomask or not m.any():
+    if m is nomask:
         return a
-    maskedval = m.nonzero()
-    a._mask = a._mask.copy()
-    if not axis:
-        a[np.unique(maskedval[0])] = masked
-    if axis in [None, 1, -1]:
-        a[:, np.unique(maskedval[1])] = masked
+    # stretch along each axis in turn
+    new_m = False
+    for ax in axis:
+        new_m = new_m | np.logical_or.reduce(m, axis=ax, keepdims=True)
+
+    a._mask = np.empty(a.shape, MaskType)
+    a._mask[...] = new_m  # broadcasts automatically
     return a
+
 
 
 # Include masked dot here to avoid import problems in getting it from

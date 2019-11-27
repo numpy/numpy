@@ -20,6 +20,7 @@ __all__ = [
     'mask_rows', 'masked_all', 'masked_all_like', 'median', 'mr_',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
     'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
+    'mask_extend_axis',
     ]
 
 import itertools
@@ -30,7 +31,7 @@ from .core import (
     MaskedArray, MAError, add, array, asarray, concatenate, filled, count,
     getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
     nomask, ones, sort, zeros, getdata, get_masked_subclass, dot,
-    mask_rowcols
+    mask_rowcols, mask_extend_axis
     )
 
 import numpy as np
@@ -939,13 +940,18 @@ def compress_cols(a):
 
 def mask_rows(a, axis=None):
     """
-    Mask rows of a 2D array that contain masked values.
+    Mask rows of an array that contain masked values.
 
-    This function is a shortcut to ``mask_rowcols`` with `axis` equal to 0.
+    This function is a shortcut to `mask_extend_axis` with an `axis` of  ``-1``.
+
+    ..versionchanged:: 1.19.0
+        This function now works on arrays with two or more dimensions, by
+        considering them as a stack of 2d arrays along the leading axes
+        Previously only 2D arrays were supported.
 
     See Also
     --------
-    mask_rowcols : Mask rows and/or columns of a 2D array.
+    mask_extend_axis : Mask 1d slices of an array.
     masked_where : Mask where a condition is met.
 
     Examples
@@ -979,17 +985,22 @@ def mask_rows(a, axis=None):
       fill_value=1)
 
     """
-    return mask_rowcols(a, 0)
+    return mask_extend_axis(a, axis=-1)
 
 def mask_cols(a, axis=None):
     """
-    Mask columns of a 2D array that contain masked values.
+    Mask columns of an array that contain masked values.
 
-    This function is a shortcut to ``mask_rowcols`` with `axis` equal to 1.
+    This function is a shortcut to `mask_extend_axis` with an `axis` of  ``-2``.
+
+    ..versionchanged:: 1.19.0
+        This function now works on arrays with two or more dimensions, by
+        considering them as a stack of 2d arrays along the leading axes
+        Previously only 2D arrays were supported.
 
     See Also
     --------
-    mask_rowcols : Mask rows and/or columns of a 2D array.
+    mask_extend_axis : Mask 1d slices of an array.
     masked_where : Mask where a condition is met.
 
     Examples
@@ -1022,7 +1033,7 @@ def mask_cols(a, axis=None):
       fill_value=1)
 
     """
-    return mask_rowcols(a, 1)
+    return mask_extend_axis(a, axis=-2)
 
 
 #####--------------------------------------------------------------------------

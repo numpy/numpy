@@ -1,0 +1,10 @@
+`numpy.ma.mask_extend_axis` added to generalize `numpy.ma.mask_rowcols`
+-----------------------------------------------------------------------
+`numpy.ma.mask_rowcols` only works on 2d arrays, and takes an ``axis`` argument
+with semantics that do not generalize well.
+
+`numpy.ma.mask_extend_axis` generalizes the spirit of this function to N
+dimensions, by choosing a simpler definition of ``axis``.
+
+As a result, `numpy.ma.mask_rows` and `np.ma.mask_cols` have been extended
+to work on ND arrays, considering rows and columns to be the last two axes.
