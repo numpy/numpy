@@ -68,9 +68,9 @@ NumPy arrays are faster and more compact than Python lists. An array consumes le
 What is an array?
 -----------------
 
-An array is a central data structure of the NumPy library. An array is a grid of values and it contains information about the raw data, how to locate an element, and how to interpret an element. It has a grid of elements that can be indexed in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_. The elements are all of the same type, referred to as the array **dtype**. 
+An array is a central data structure of the NumPy library. An array is a grid of values and it contains information about the raw data, how to locate an element, and how to interpret an element. It has a grid of elements that can be indexed in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_. The elements are all of the same type, referred to as the array ``dtype``. 
 
-An array can be indexed by a tuple of nonnegative integers, by booleans, by another array, or by integers. The **rank** of the array is the number of dimensions. The **shape** of the array is a tuple of integers giving the size of the array along each dimension.
+An array can be indexed by a tuple of nonnegative integers, by booleans, by another array, or by integers. The ``rank`` of the array is the number of dimensions. The ``shape`` of the array is a tuple of integers giving the size of the array along each dimension.
 
 One way we can initialize NumPy arrays is from nested Python lists. 
 
@@ -100,7 +100,7 @@ More information about arrays
 
 ------
 
-You might occasionally hear an array referred to as a "ndarray," which is shorthand for "N-dimensional array." An N-dimensional array is simply an array with any number of dimensions. You might also hear **1-D**, or one-dimensional array, **2-D**, or two-dimensional array, and so on. The NumPy `ndarray` class is used to represent both matrices and vectors. A **vector** is an array with a single column, while a **matrix** refers to an array with multiple columns.
+You might occasionally hear an array referred to as a "ndarray," which is shorthand for "N-dimensional array." An N-dimensional array is simply an array with any number of dimensions. You might also hear **1-D**, or one-dimensional array, **2-D**, or two-dimensional array, and so on. The NumPy ``ndarray`` class is used to represent both matrices and vectors. A **vector** is an array with a single column, while a **matrix** refers to an array with multiple columns.
 
 **What are the attributes of an array?**
 
@@ -138,7 +138,7 @@ How to create a basic array
 
 -----
 
-To create a NumPy array, you can use the function **np.array()**.
+To create a NumPy array, you can use the function ``np.array()``.
 
 All you need to do to create a simple array is pass a list to it. If you choose to, you can also specify the type of data in your list. `You can find more information about data types here <https://numpy.org/devdocs/user/quickstart.html#arrays-dtypes>`_.
 
@@ -180,7 +180,7 @@ Or an array filled with 1s:
 
   array([1., 1.])
   
-Or even an empty array! The function *empty* creates an array whose initial content is random and depends on the state of the memory. 
+Or even an empty array! The function ``empty`` creates an array whose initial content is random and depends on the state of the memory. 
 
 **Input:**
 
@@ -217,7 +217,7 @@ And even an array that contains a range of evenly spaced intervals. To do this, 
 
   array([2, 4, 6, 8])
 
-You can also use **np.linspace()** to create an array with values that are spaced linearly in a specified interval:
+You can also use ``np.linspace()`` to create an array with values that are spaced linearly in a specified interval:
 
 **Input:**
 
@@ -233,7 +233,7 @@ You can also use **np.linspace()** to create an array with values that are space
 
 **Specifying your data type**
 
-While the default data type is floating point (**float64**), you can explicitly specify which data type you want using **dtype**.
+While the default data type is floating point (``float64``), you can explicitly specify which data type you want using ``dtype``.
 
 **Input:**
 
@@ -270,7 +270,7 @@ If you start with this array:
   arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
  
 
-You can add elements to your array any time with **np.append()**. Make sure to specify the array and the elements you want to include.
+You can add elements to your array any time with ``np.append()``. Make sure to specify the array and the elements you want to include.
 
 **Input:**
 
@@ -284,7 +284,7 @@ You can add elements to your array any time with **np.append()**. Make sure to s
 
   array([1, 2, 3, 4, 5, 6, 7, 8, 1, 2])
 
-You can delete an element with **np.delete()**. If you want to delete the element in position 1 of your array, you can run:
+You can delete an element with ``np.delete()``. If you want to delete the element in position 1 of your array, you can run:
 
 **Input:**
 
@@ -816,7 +816,7 @@ You can create a new array from a section of your array any time by specifying w
 
 ::
 
-  arr1 = array[3:8]
+  arr1 = np.array[3:8]
   arr1
 
 **Output:**
@@ -1131,8 +1131,8 @@ How to inspect the size and shape of a NumPy array
 ::
 
 
-  np.shape()
-  np.size()
+  arr.shape()
+  arr.size()
 
 -----
 
@@ -1142,15 +1142,15 @@ For example, if you create this array:
 
 ::
 
-  np_arr = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  arr = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
-You can use **np.shape** to find the shape of your array.
+You can use **arr.shape** to find the shape of your array.
 
 **Input:**
 
 ::
 
-  np_arr.shape
+  arr.shape
 
 **Output:**
 
@@ -1166,7 +1166,7 @@ You can find just the number of rows by specifying [0]:
 
 ::
 
-  num_of_rows = np_arr.shape[0]
+  num_of_rows = arr.shape[0]
  
   print('Number of Rows : ', num_of_rows)
 
@@ -1182,7 +1182,7 @@ Or just the number of columns by specifying [1]:
 
 ::
 
-  num_of_columns = np_arr.shape[1]
+  num_of_columns = arr.shape[1]
  
   print('Number of Columns : ', num_of_columns) 
 
@@ -1198,7 +1198,7 @@ It's also easy to find the total number of elements in your array:
 
 ::
 
-  print(np_arr.shape[0] * np_arr.shape[1])
+  print(arr.shape[0] * arr.shape[1])
 
 **Output:**
 
@@ -1206,13 +1206,13 @@ It's also easy to find the total number of elements in your array:
 
   12
 
-You can use **np.shape()** with a 1D array as well. If you create this array:
+You can use **arr.shape()** with a 1D array as well. If you create this array:
 
 **Input:**
 
 ::
 
-  arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+  arr = arr.array([1, 2, 3, 4, 5, 6, 7, 8])
 
 You can print the shape and the length of the array.
 
@@ -1229,17 +1229,17 @@ You can print the shape and the length of the array.
   Length of 1D array:  8
 
 
-You can get the dimensions of an array using **np.size()**.
+You can get the dimensions of an array using **arr.size()**.
 
 **Input:**
 
 ::
 
   # get number of rows in array
-  num_of_rows2 = np.size(np_arr, 0)
+  num_of_rows2 = np.size(arr, 0)
  
   # get number of columns in 2D numpy array
-  num_of_columns2 = np.size(np_arr, 1)
+  num_of_columns2 = arr.size(arr, 1)
  
   print('Number of Rows : ', num_of_rows2)
   print('Number of Columns : ', num_of_columns2)
@@ -1257,7 +1257,7 @@ You can print the total number of elements as well:
 
 ::
   
-  print('Total number of elements in  array : ', np.size(np_arr))
+  print('Total number of elements in  array : ', arr.size(arr))
 
 **Output:**
 
@@ -1280,9 +1280,9 @@ You can easily print the size of the axis:
 
 ::
 
-  print('Axis 0 size : ', np.size(arr3D, 0))
-  print('Axis 1 size : ', np.size(arr3D, 1))
-  print('Axis 2 size : ', np.size(arr3D, 2))
+  print('Axis 0 size : ', arr.size(arr3D, 0))
+  print('Axis 1 size : ', arr.size(arr3D, 1))
+  print('Axis 2 size : ', arr.size(arr3D, 2))
 
 **Output:**
 
@@ -1298,7 +1298,7 @@ You can print the total number of elements:
 
 ::
 
-  print(np.size(arr3D))
+  print(arr.size(arr3D))
 
 **Output:**
 
@@ -1306,7 +1306,7 @@ You can print the total number of elements:
 
   24
 
-You can also use **np.size()** with 1D arrays:
+You can also use **arr.size()** with 1D arrays:
 
 **Input:**
 
@@ -1316,7 +1316,7 @@ You can also use **np.size()** with 1D arrays:
   arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
 
   # Determine the length
-  print('Length of 1D numpy array : ', np.size(arr))
+  print('Length of 1D numpy array : ', arr.size(arr))
 
 **Output:**
 
@@ -1423,7 +1423,7 @@ There are often instances where we want NumPy to initialize the values of an arr
 
   np.ones(3)
   mp.zeros(3)
-  np.random.random((3)
+  np.random.random(3)
   
 .. image:: images/np_ones_zeros_random.png
 
@@ -1433,7 +1433,7 @@ You can also use the **ones()**, **zeros()**, and **random()** methods to create
 
   np.ones(3,2)
   mp.zeros(3,2)
-  np.random.random((3,2)
+  np.random.random(3,2)
 
 .. image:: images/np_ones_zeros_matrix.png
 
@@ -1604,9 +1604,9 @@ Transposing and reshaping a matrix
 
 ::
 
-  np.reshape()
-  np.transpose()
-  np.T()
+  arr.reshape()
+  arr.transpose()
+  arr.T()
 
 -----
 
@@ -1639,13 +1639,13 @@ If you start with this array:
   array([[0, 1, 2],
         [3, 4, 5]])
 
-You can transpose your array with **np.transpose()**.
+You can transpose your array with **arr.transpose()**.
 
 **Input:**
 
 ::
 
-  np.transpose(arr)
+  arr.transpose(arr)
 
 **Output:**
 
@@ -2289,8 +2289,6 @@ You can read more about `save <https://docs.scipy.org/doc/numpy/reference/genera
 You can read more about `savetxt <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savetxt.html>`_ here, and `loadtxt <https://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_ here.
 
 Learn more about `input and output routines here <https://docs.scipy.org/doc/numpy/reference/routines.io.html>`_.
-
-**Be aware that loading files that contain object arrays with np.load() uses the pickle module which is not secure against erroneous or maliciously constructed data. Consider passing allow_pickle=False to load data that is known not to contain object arrays for the safer handling of untrusted sources.**
 
 
 Importing and exporting a CSV
