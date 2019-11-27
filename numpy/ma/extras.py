@@ -937,7 +937,7 @@ def compress_cols(a):
         raise NotImplementedError("compress_cols works for 2D arrays only.")
     return compress_rowcols(a, 1)
 
-def mask_rows(a, axis=None):
+def mask_rows(a, axis=np._NoValue):
     """
     Mask rows of a 2D array that contain masked values.
 
@@ -979,9 +979,15 @@ def mask_rows(a, axis=None):
       fill_value=1)
 
     """
+    if axis is not np._NoValue:
+        # remove the axis argument when this deprecation expires
+        # NumPy 1.18.0, 2019-11-28
+        warnings.warn(
+            "The axis argument has always been ignored, in future passing it "
+            "will raise TypeError", DeprecationWarning, stacklevel=2)
     return mask_rowcols(a, 0)
 
-def mask_cols(a, axis=None):
+def mask_cols(a, axis=np._NoValue):
     """
     Mask columns of a 2D array that contain masked values.
 
@@ -1022,6 +1028,12 @@ def mask_cols(a, axis=None):
       fill_value=1)
 
     """
+    if axis is not np._NoValue:
+        # remove the axis argument when this deprecation expires
+        # NumPy 1.18.0, 2019-11-28
+        warnings.warn(
+            "The axis argument has always been ignored, in future passing it "
+            "will raise TypeError", DeprecationWarning, stacklevel=2)
     return mask_rowcols(a, 1)
 
 
