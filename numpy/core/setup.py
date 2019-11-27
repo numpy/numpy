@@ -655,6 +655,9 @@ def configuration(parent_package='',top_path=None):
         # compiler does not work).
         st = config_cmd.try_link('int main(void) { return 0;}')
         if not st:
+            # rerun the failing command in verbose mode
+            config_cmd.compiler.verbose = True
+            config_cmd.try_link('int main(void) { return 0;}')
             raise RuntimeError("Broken toolchain: cannot link a simple C program")
         mlibs = check_mathlib(config_cmd)
 

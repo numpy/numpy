@@ -3,7 +3,7 @@ NEP 19 — Random Number Generator Policy
 =======================================
 
 :Author: Robert Kern <robert.kern@gmail.com>
-:Status: Accepted
+:Status: Final
 :Type: Standards Track
 :Created: 2018-05-24
 :Updated: 2019-05-21

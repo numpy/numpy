@@ -46,7 +46,7 @@ stages:
             python3 -m pip install --user -r test_requirements.txt && \
             python3 -m pip install . && \
             F77=gfortran-5 F90=gfortran-5 \
-            CFLAGS='-UNDEBUG -std=c99' python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+            CFLAGS=-UNDEBUG python3 runtests.py -n --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml && \
             python3 tools/openblas_support.py --check_version $(OpenBLAS_version)"
       displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
     - task: PublishTestResults@2
@@ -64,7 +64,7 @@ stages:
       # the docs even though i.e., numba uses another in their
       # azure config for mac os -- Microsoft has indicated
       # they will patch this issue
-      vmImage: macOS-10.13
+      vmImage: macOS-10.14
     steps:
     # the @0 refers to the (major) version of the *task* on Microsoft's
     # end, not the order in the build matrix nor anything to do
@@ -180,3 +180,25 @@ stages:
         testResultsFiles: '**/test-*.xml'
         testRunTitle: 'Publish test results for PyPy3'
         failTaskOnFailedTests: true
+  - job: Linux_gcc48
+    pool:
+      vmImage: 'ubuntu-18.04'
+    steps:
+    - script: |
+            if ! `gcc-4.8 2>/dev/null`; then
+                sudo apt install gcc-4.8
+            fi
+      displayName: 'add gcc 4.8'
+    - script: |
+            python3 -m pip install --user --upgrade pip setuptools
+            python3 -m pip install --user -r test_requirements.txt
+            CPPFLAGS='' CC=gcc-4.8 F77=gfortran-5 F90=gfortran-5 \
+            python3 runtests.py --debug-info --mode=full -- -rsx --junitxml=junit/test-results.xml
+      displayName: 'Run gcc4.8 Build / Tests'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-*.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: 'Publish test results for gcc 4.8'
+
