@@ -349,11 +349,11 @@ For example, if you create this array:
   array_example = np.array([[[0, 1, 2, 3]
                              [4, 5, 6, 7]],
 
-                             [[0, 1, 2, 3]
-                              [4, 5, 6, 7]],
+                            [[0, 1, 2, 3]
+                             [4, 5, 6, 7]],
 
-                              [0 ,1 ,2, 3]
-                              [4, 5, 6, 7]]])
+                             [0 ,1 ,2, 3]
+                             [4, 5, 6, 7]]])
 
 To find the number of dimensions of the array, run:
 
@@ -830,7 +830,7 @@ You can also stack two existing arrays, both vertically and horizontally. Let's 
 ::
 
   array([[1, 1],
-        [2, 2]])
+         [2, 2]])
 
 and **a_2**:
 
@@ -1146,7 +1146,7 @@ You can use ``arr.shape`` to find the shape of your array.
 
 ::
 
-  (3, 4)
+  (3,4)
 
 This output tells you that your array has three rows and four columns.
 
@@ -1262,7 +1262,7 @@ This also works for 3D arrays:
 ::
 
   arr_3d = np.array([ [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3]],
-                 [[4, 4, 4, 4], [5, 5, 5, 5], [6, 6, 6, 6]] ])
+                      [[4, 4, 4, 4], [5, 5, 5, 5], [6, 6, 6, 6]] ])
 
 You can easily print the size of the axis:
 
@@ -1391,20 +1391,20 @@ Will print out like this:
 ::
 
   array([[[1., 1.],
-        [1., 1.],
-        [1., 1.]],
+          [1., 1.],
+          [1., 1.]],
 
-       [[1., 1.],
-        [1., 1.],
-        [1., 1.]],
+         [[1., 1.],
+          [1., 1.],
+          [1., 1.]],
 
-       [[1., 1.],
-        [1., 1.],
-        [1., 1.]],
+         [[1., 1.],
+          [1., 1.],
+          [1., 1.]],
 
-       [[1., 1.],
-        [1., 1.],
-        [1., 1.]]])
+         [[1., 1.],
+          [1., 1.],
+          [1., 1.]]])
 
  
 There are often instances where we want NumPy to initialize the values of an array. NumPy offers methods like ``ones()``, ``zeros()``, and  ``Random Generator`` for these instances. All you need to do is pass in the number of elements you want it to generate.
@@ -1451,7 +1451,7 @@ You can generate a 2 x 4 array of random integers between 0 and 4 with:
 ::
 
   array([[4, 0, 2, 1],
-       [3, 2, 2, 0]])
+         [3, 2, 2, 0]])
 
 `Read more about Random Generator here <https://numpy.org/devdocs/reference/random/generator.html>`_.
 
@@ -1549,7 +1549,7 @@ To get the unique rows or columns, make sure to pass the ``axis`` argument. To f
 
 ::
 
-  unique_rows = np.unique(a2D, axis=0)
+  unique_rows = np.unique(a_2d, axis=0)
   print(unique_rows)
 
 **Output:**
@@ -1577,8 +1577,8 @@ To get the unique rows, occurrence count, and index position, you can use:
 
   Unique Rows:  
    [[ 1  2  3  4]
-   [ 5  6  7  8]
-   [ 9 10 11 12]]
+    [ 5  6  7  8]
+    [ 9 10 11 12]]
   Occurrence Count: 
    [0 1 2]
   Indices:  
@@ -1626,7 +1626,7 @@ If you start with this array:
 ::
 
   array([[0, 1, 2],
-        [3, 4, 5]])
+         [3, 4, 5]])
 
 You can transpose your array with ``arr.transpose()``.
 
@@ -1641,8 +1641,8 @@ You can transpose your array with ``arr.transpose()``.
 ::
 
   array([[0, 3],
-       [1, 4],
-       [2, 5]])
+         [1, 4],
+         [2, 5]])
 
 `Learn more about transposing a matrix here <https://numpy.org/devdocs/reference/generated/numpy.transpose.html>`_ and `reshaping a matrix here <https://numpy.org/devdocs/reference/generated/numpy.reshape.html>`_.
 
@@ -1697,7 +1697,7 @@ If you start with this array:
 
 ::
 
-  arr2D = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  arr_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can reverse the content in all of the rows and all of the columns with:
 
@@ -1705,7 +1705,7 @@ You can reverse the content in all of the rows and all of the columns with:
 
 ::
 
-  reversed_arr = np.flip(arr2D)
+  reversed_arr = np.flip(arr_2d)
  
   print('Reversed Array: ')
   print(reversed_arr)
@@ -1725,7 +1725,7 @@ You can easily reverse only the rows with:
 
 ::
 
-  reversed_arr_rows = np.flip(arr2D, axis=0)
+  reversed_arr_rows = np.flip(arr_2d, axis=0)
  
   print('Reversed Array: ')
   print(reversed_arr_rows)
@@ -1745,7 +1745,7 @@ Or reverse only the columns with:
 
 ::
 
-  reversed_arr_columns = np.flip(arr2D, axis=1)
+  reversed_arr_columns = np.flip(arr_2d, axis=1)
  
   print('Reversed Array columns: ')
   print(reversed_arr_columns)
@@ -1765,10 +1765,10 @@ You can also reverse the contents of only one column or row. For example, you ca
 
 ::
 
-  arr2D[1] = np.flip(arr2D[1])
+  arr_2d[1] = np.flip(arr_2d[1])
    
   print('Reversed Array: ')
-  print(arr2D)
+  print(arr_2d)
 
 **Output:**
 
@@ -1785,10 +1785,10 @@ You can also reverse the column at index position 1 (the second column):
 
 ::
 
-  arr2D[:,1] = np.flip(arr2D[:,1])
+  arr_2d[:,1] = np.flip(arr_2d[:,1])
    
   print('Reversed Array: ')
-  print(arr2D)
+  print(arr_2d)
 
 **Output:**
 
@@ -2304,9 +2304,9 @@ If you created this array "a"
 ::
 
   [[-2.58289208,  0.43014843, -1.24082018,  1.59572603],
-  [ 0.99027828,  1.17150989,  0.94125714, -0.14692469],
-  [ 0.76989341,  0.81299683, -0.95068423,  0.11769564],
-  [ 0.20484034,  0.34784527,  1.96979195,  0.51992837]]
+   [ 0.99027828,  1.17150989,  0.94125714, -0.14692469],
+   [ 0.76989341,  0.81299683, -0.95068423,  0.11769564],
+   [ 0.20484034,  0.34784527,  1.96979195,  0.51992837]]
 
 You could create a Pandas dataframe
 
@@ -2335,7 +2335,7 @@ You can also save your array with the NumPy ``savetxt`` method.
 
 ::
 
-  np.savetxt('np.csv', a, fmt='%.2f', delimiter=',', header=" 1,  2,  3,  4")
+  np.savetxt('np.csv', a, fmt='%.2f', delimiter=',', header='1,  2,  3,  4')
 
 Read your saved CSV any time with a command such as:
 
@@ -2367,7 +2367,7 @@ For example, you may have an array like this one:
 
 ::
 
-  A = np.array([2, 1, 5, 7, 4, 6, 8, 14, 10, 9, 18, 20, 22])
+  a = np.array([2, 1, 5, 7, 4, 6, 8, 14, 10, 9, 18, 20, 22])
 
 If you already have Matplotlib installed, you can import it with:
 
@@ -2385,7 +2385,7 @@ All you need to do to plot your values is run:
 
 ::
 
-  plt.plot(A)
+  plt.plot(a)
   plt.show()
 
 **Output:**
