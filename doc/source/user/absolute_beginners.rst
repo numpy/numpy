@@ -1422,7 +1422,7 @@ There are often instances where we want NumPy to initialize the values of an arr
 ::
 
   np.ones(3)
-  mp.zeros(3)
+  np.zeros(3)
   np.random.random(3)
   
 .. image:: images/np_ones_zeros_random.png
@@ -1432,7 +1432,7 @@ You can also use the ``ones()``, ``zeros()``, and ``random()`` methods to create
 ::
 
   np.ones(3,2)
-  mp.zeros(3,2)
+  np.zeros(3,2)
   np.random.random(3,2)
 
 .. image:: images/np_ones_zeros_matrix.png
@@ -2380,7 +2380,7 @@ For example, you may have an array like this one:
 
   A = np.array([2, 1, 5, 7, 4, 6, 8, 14, 10, 9, 18, 20, 22])
 
-If you already have Matplotlib installed, you can import it with
+If you already have Matplotlib installed, you can import it with:
 
 ::
   
@@ -2390,7 +2390,7 @@ If you already have Matplotlib installed, you can import it with
    to display your code in the notebook
   %matplotlib inline
 
-All you need to do to plot your values is run
+All you need to do to plot your values is run:
 
 **Input:**
 
