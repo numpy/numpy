@@ -2386,6 +2386,7 @@ class TestInterp(object):
         yp = np.array([1, 3])
         x = np.datetime64('2019-01-02')
         assert_equal(np.interp(x, xp, yp), 2.)
+        assert_raises(TypeError, np.interp(1., xp, yp))
 
     def test_non_finite_behavior_exact_x(self):
         x = [1, 2, 2.5, 3, 4]
