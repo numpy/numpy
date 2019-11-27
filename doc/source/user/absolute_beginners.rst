@@ -539,7 +539,7 @@ Or, for a column vector, you can insert an axis along the second dimension:
 
   (6, 1)
 
-You can also expand an array by inserting a new axis at a specified position with ``np.expand_dim``.
+You can also expand an array by inserting a new axis at a specified position with ``np.expand_dims``.
 
 For example, if you start with this array:
 
@@ -1160,7 +1160,7 @@ You can use ``arr.shape`` to find the shape of your array.
 
 This output tells you that your array has three rows and four columns.
 
-You can find just the number of rows by specifying [0]:
+You can find just the number of rows by specifying ``[0]``:
 
 **Input:**
 
@@ -1176,7 +1176,7 @@ You can find just the number of rows by specifying [0]:
 
   Number of Rows :  3
 
-Or just the number of columns by specifying [1]:
+Or just the number of columns by specifying ``[1]``:
 
 **Input:**
 
@@ -1447,7 +1447,7 @@ The use of random number generation is an important part of the configuration an
 
 You have a number of options when using NumPy for random number generation. Random Generator is NumPy's replacement for RandomState. The main difference between them is that Generator relies on an additional BitGenerator to manage state and generate the random bits, which are transformed into random values.
 
-With Generator.integers, you can generate random integers from low (remember that this is inclusive with NumPy) to high (exclusive). You can set *endopoint=True* to make the high number inclusive. 
+With Generator.integers, you can generate random integers from low (remember that this is inclusive with NumPy) to high (exclusive). You can set ``endopoint=True`` to make the high number inclusive. 
 
 You can generate a 2 x 4 array of random integers between 0 and 4 with:
 
@@ -1942,7 +1942,7 @@ For example,
 
   max?
 
-Will return
+Will return:
 
 ::
 
@@ -2107,13 +2107,13 @@ For example, if you create this function:
     '''Return a * 2'''
     return a * 2
 
-You can run
+You can run:
 
 ::
 
   double?
 
-Which will return
+Which will return:
 
 ::
 
@@ -2328,13 +2328,13 @@ You could create a Pandas dataframe
 
 .. image:: images/np_pddf.png
 
-You can easily save your dataframe with
+You can easily save your dataframe with:
 
 ::
 
   df.to_csv('pd.csv')
 
-And read your CSV with
+And read your CSV with:
 
 ::
 
@@ -2342,13 +2342,13 @@ And read your CSV with
 
 .. image:: images/np_readcsv.png
 
-You can also save your array with the NumPy``savetxt`` method.
+You can also save your array with the NumPy ``savetxt`` method.
 
 ::
 
   np.savetxt('np.csv', a, fmt='%.2f', delimiter=',', header=" 1,  2,  3,  4")
 
-Read your saved CSV any time with a command such as
+Read your saved CSV any time with a command such as:
 
 **Input:**
 
