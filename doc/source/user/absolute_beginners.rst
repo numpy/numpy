@@ -1610,7 +1610,7 @@ Transposing and reshaping a matrix
 
 -----
 
-It's common to need to rotate your matrices. NumPy arrays have the property **T** that allows you to transpose a matrix.
+It's common to need to rotate your matrices. NumPy arrays have the property ``T`` that allows you to transpose a matrix.
 
 .. image:: images/np_transposing_reshaping.png
 
@@ -1668,7 +1668,7 @@ How to reverse an array
 
 -----
  
-NumPy's ``np.flip()``function allows you to flip, or reverse, the contents of an array along an axis. When using ``np.flip``, specify the array you would like to reverse and the axis. If you don't specify the axis, NumPy will reverse the contents along all of the axes of your input array. 
+NumPy's ``np.flip()`` function allows you to flip, or reverse, the contents of an array along an axis. When using ``np.flip``, specify the array you would like to reverse and the axis. If you don't specify the axis, NumPy will reverse the contents along all of the axes of your input array. 
 
 **Reversing a 1D array**
 
@@ -2170,7 +2170,7 @@ and
   Docstring: Return the number of items in a container.
   Type:      builtin_function_or_method
 
-Have the same output because they were compiled in a programming language other than Python.
+have the same output because they were compiled in a programming language other than Python.
 
 
 
@@ -2213,7 +2213,7 @@ How to save and load NumPy objects
 
 -----
 
-You will, at some point, want to save your arrays to disk and load them back without having to re-run the code. Fortunately, there are several ways to save and load objects with Numpy. The ndarray objects can be saved to and loaded from the disk files with ``loadtxt`` and ``savetxt`` functions that handle normal text files, ``load`` and ``save`` functions that handle NumPy binary files with a **.npy** file extension, and a ``savez`` function that handles NumPy files with a .npz file extension.
+You will, at some point, want to save your arrays to disk and load them back without having to re-run the code. Fortunately, there are several ways to save and load objects with Numpy. The ndarray objects can be saved to and loaded from the disk files with ``loadtxt`` and ``savetxt`` functions that handle normal text files, ``load`` and ``save`` functions that handle NumPy binary files with a **.npy** file extension, and a ``savez`` function that handles NumPy files with a **.npz** file extension.
 
 The **.npy** and **.npz** files store data, shape, dtype, and other information required to reconstruct the ndarray in a way that allows the array to be correctly retrieved, even when the file is on another machine with different architecture.
 
@@ -2342,7 +2342,7 @@ And read your CSV with
 
 .. image:: images/np_readcsv.png
 
-You can also save your array with the NumPy "savetxt" method.
+You can also save your array with the NumPy``savetxt`` method.
 
 ::
 
