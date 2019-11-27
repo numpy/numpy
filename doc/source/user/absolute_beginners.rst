@@ -342,11 +342,11 @@ How do you know the shape and size of an array?
 
 -----
 
-``ndarray.ndim``will tell you the number of axes, or dimensions, of the array.
+**ndarray.ndim** will tell you the number of axes, or dimensions, of the array.
 
-``ndarray.size`` will tell you the total number of elements of the array. This is the *product* of the elements of the array's shape.
+**ndarray.size** will tell you the total number of elements of the array. This is the *product* of the elements of the array's shape.
 
-``ndarray.shape`` will display a tuple of integers that indicate the number of elements stored along each dimension of the array. If, for example, you have a 2D array with 2 rows and 3 columns, the shape of your array is (2,3).
+**ndarray.shape** will display a tuple of integers that indicate the number of elements stored along each dimension of the array. If, for example, you have a 2D array with 2 rows and 3 columns, the shape of your array is (2,3).
 
 For example, if you create this array:
 
@@ -688,7 +688,7 @@ Or you can select elements that satisfy two conditions using the ``&`` and ``|``
 
   [ 3  4  5  6  7  8  9 10]
 
-While it would be incredibly inefficient for this array, you can also make use of the logical operators ``&`` and ``|``in order to return boolean values that specify whether or not the values in an array fulfill a certain condition. This can be useful with arrays that contain names or other categorical values.
+While it would be incredibly inefficient for this array, you can also make use of the logical operators **&** and **|** in order to return boolean values that specify whether or not the values in an array fulfill a certain condition. This can be useful with arrays that contain names or other categorical values.
 
 **Input:**
 
@@ -750,7 +750,7 @@ If you want to generate a list of coordinates where the elements exist, you can 
   (0, 2)
   (0, 3)
 
-You can also use ``np.where()``to print the elements in an array that are less than 5 with:
+You can also use ``np.where()`` to print the elements in an array that are less than 5 with:
 
 **Input:**
 
@@ -936,7 +936,7 @@ You can create a new array object that looks at the same data using:
 
   b = a.view()
 
-Using the ``copy``method will make a complete copy of the array and its data (a *deep copy*). To use this on your array, you could run:
+Using the ``copy`` method will make a complete copy of the array and its data (a *deep copy*). To use this on your array, you could run:
 
 **Input:**
 
