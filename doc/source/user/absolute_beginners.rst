@@ -458,7 +458,7 @@ With ``np.reshape``, you can specify a few optional parameters:
 
 ``order:`` ``C`` means to read/write the elements using C-like index order,  ``F`` means to read/write the elements using Fortran-like index order, ``A`` means to read/write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise. (This is an optional parameter and doesn't need to be specified.)
 
-If you want to learn more about C and Fortran order, you can `read more about the internal organization of NumPy arrays here <https://numpy.org/devdocs/reference/internals.html>`_. Essentially, C and Fortran orders have to do with how indices correspond to the order the array is stored in memory. In Fortran, when moving through the elements of a two dimensional array as it is stored in memory, the first index is the most rapidly varying index. As the first index moves to the next row as it changes, the matrix is stored one column at a time. This is why Fortran is thought of as a Column-major language. In C, on the other hand, the last index changes the most rapidly. The matrix is stored by rows, making it a Row-major language. What you do for C or Fortran depends on whether it's more important to preserve the indexing convention or not reorder the data.
+If you want to learn more about C and Fortran order, you can `read more about the internal organization of NumPy arrays here <https://numpy.org/devdocs/reference/internals.html>`_. Essentially, C and Fortran orders have to do with how indices correspond to the order the array is stored in memory. In Fortran, when moving through the elements of a two dimensional array as it is stored in memory, the **first** index is the most rapidly varying index. As the first index moves to the next row as it changes, the matrix is stored one column at a time. This is why Fortran is thought of as a **Column-major language**. In C on the other hand, the **last** index changes the most rapidly. The matrix is stored by rows, making it a **Row-major language**. What you do for C or Fortran depends on whether it's more important to preserve the indexing convention or not reorder the data.
 
 `Learn more about shape manipulation here <https://numpy.org/devdocs/user/quickstart.html#shape-manipulation>`_.
 
@@ -1890,7 +1890,7 @@ For example:
 
 
 How to access the docstring for more information
----------------------------------------------------
+------------------------------------------------
 
 ::
 
@@ -2434,7 +2434,7 @@ To read more about Matplotlib and what it can do, take a look at `the official d
 
 
 
--------------------------------------------------------
+------
 
 *Image credits: Jay Alammar http://jalammar.github.io/ and Anne Bonner https://github.com/bonn0062*
 
