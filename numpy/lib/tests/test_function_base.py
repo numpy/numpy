@@ -1647,17 +1647,16 @@ class TestUnwrap(object):
         # check that unwrap maintains continuity
         assert_(np.all(diff(unwrap(rand(10) * 1000, min_val=0, max_val=255)) < 255))
         # check simple case
-        simple_seq = np.linspace(0, 512, 6)
+        simple_seq = np.array([0, 75, 150, 225, 300])
         wrap_seq = np.mod(simple_seq, 255)
         assert_array_equal(unwrap(wrap_seq, min_val=0, max_val=255), simple_seq)
         # check custom discont value
-        uneven_seq = np.array(simple_seq.tolist()+[765])
+        uneven_seq = np.array([0, 75, 150, 225, 300, 553])
         wrap_uneven = np.mod(uneven_seq, 255)
         no_discont = unwrap(wrap_uneven, min_val=0, max_val=255)
-        assert_array_equal(no_discont[:-1], uneven_seq[:-1])
+        assert_array_equal(no_discont, [0, 75, 150, 225, 300, 298])
         sm_discont = unwrap(wrap_uneven, min_val=0, max_val=255, discont=2)
-        assert_array_equal(sm_discont, uneven_seq)
-
+        assert_array_equal(sm_discont, [0, 75, 150, 225, 300, 553])
 
 class TestFilterwindows(object):
 
