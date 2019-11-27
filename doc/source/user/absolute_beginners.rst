@@ -299,26 +299,50 @@ In addition to sort, which returns a sorted copy of an array, you can use:
 ``searchsorted``, which will `find elements in a sorted array <https://numpy.org/devdocs/reference/generated/numpy.searchsorted.html#numpy.searchsorted>`_, and 
 ``partition``, which is a `partial sort  <https://numpy.org/devdocs/reference/generated/numpy.partition.html#numpy.partition>`_.
 
-If you start with this array:
+If you start with these arrays:
 
 ::
 
-  arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+  a = np.array([1, 2, 3, 4])
+  b = np.array([5, 6, 7, 8])
  
 
-You can add elements to your array any time with ``np.concatenate()``. Make sure to specify the array and the elements you want to include.
+You can concatenate them with ``np.concatenate()``. 
 
 **Input:**
 
 ::
 
-  np.concatenate(arr, [1,2])
+  np.concatenate((a, b))
 
 **Output:**
 
 ::
 
-  array([1, 2, 3, 4, 5, 6, 7, 8, 1, 2])
+  array([1, 2, 3, 4, 5, 6, 7, 8])
+
+Or, if you start with these arrays:
+
+::
+
+  x = np.array([[1, 2], [3, 4]])
+  y = np.array([[5, 6]])
+
+You can concatenate them with:
+
+
+::
+
+  np.concatenate((x, y), axis=0)
+
+**Output:**
+
+::
+
+  array([[1, 2],
+         [3, 4],
+         [5, 6]])
+
 
 In order to remove elements, you can easily use indexing to select the elements that you want to keep.
 
@@ -2376,7 +2400,7 @@ If you already have Matplotlib installed, you can import it with:
   import matplotlib.pyplot as plt
 
   # If you're using Jupyter Notebook, you may also want to run the following line of code
-   to display your code in the notebook
+   to display your code in the notebook:
   %matplotlib inline
 
 All you need to do to plot your values is run:
