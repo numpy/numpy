@@ -256,7 +256,7 @@ While the default data type is floating point (``float64``), you can explicitly 
 
   array([1, 1])
 
-`Learn more about creating arrays here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#array-creation>`_.
+`Learn more about creating arrays here <https://numpy.org/devdocs/user/quickstart.html#array-creation>`_.
 
 Adding, removing, and sorting elements
 --------------------------------------
@@ -270,7 +270,7 @@ Adding, removing, and sorting elements
 -----
 
 
-Sorting an element is simple with ``np.sort()``. You can specify the axis, kind, and order when you call the function. `Read more about sorting an array here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.sort.html>`_.
+Sorting an element is simple with ``np.sort()``. You can specify the axis, kind, and order when you call the function. `Read more about sorting an array here <https://numpy.org/devdocs/reference/generated/numpy.sort.html>`_.
 
 If you start with this array:
 
@@ -398,7 +398,7 @@ And to find the shape of your array, run:
 
   (3, 2, 4)
 
-`Read more about dimensions here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.ndim.html>`_, `size here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.size.html>`_, and `shape here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.shape.html>`_.
+`Read more about dimensions here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.ndim.html>`_, `size here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.size.html>`_, and `shape here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.shape.html>`_.
 
 Can you reshape an array?
 -------------------------
@@ -458,7 +458,9 @@ With ``np.reshape``, you can specify a few optional parameters:
 
 ``order:`` ``C`` means to read/write the elements using C-like index order,  ``F`` means to read/write the elements using Fortran-like index order, ``A`` means to read/write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise. (This is an optional parameter and doesn't need to be specified.)
 
-`Learn more about shape manipulation here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#shape-manipulation>`_.
+If you want to learn more about C and Fortran order, you can `read more about the internal organization of NumPy arrays here <https://numpy.org/devdocs/reference/internals.html>`_. Essentially, C and Fortran orders have to do with how indices correspond to the order the array is stored in memory. In Fortran, when moving through the elements of a two dimensional array as it is stored in memory, the first index is the most rapidly varying index. As the first index moves to the next row as it changes, the matrix is stored one column at a time. This is why Fortran is thought of as a Column-major language. In C, on the other hand, the last index changes the most rapidly. The matrix is stored by rows, making it a Row-major language. What you do for C or Fortran depends on whether it's more important to preserve the indexing convention or not reorder the data.
+
+`Learn more about shape manipulation here <https://numpy.org/devdocs/user/quickstart.html#shape-manipulation>`_.
 
 
 How to convert a 1D array into a 2D array (how to add a new axis to an array)
@@ -580,7 +582,7 @@ You can add an axis at index position 0 with:
 
   (1, 6)
 
-`Find more information about newaxis here <https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html#index-1>`_ and `expand_dims here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.expand_dims.html>`_.
+`Find more information about newaxis here <https://numpy.org/devdocs/reference/arrays.indexing.html#index-1>`_ and `expand_dims here <https://numpy.org/devdocs/reference/generated/numpy.expand_dims.html>`_.
 
 Indexing and slicing
 --------------------
@@ -774,9 +776,9 @@ If the element you're looking for doesn't exist in the array, then the returned 
   (array([], dtype=int64), array([], dtype=int64))
 
 
-`Learn more about indexing and slicing here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#indexing-slicing-and-iterating>`_ and `here <https://docs.scipy.org/doc/numpy-1.17.0/user/basics.indexing.html>`_.
+`Learn more about indexing and slicing here <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_ and `here <https://numpy.org/devdocs/user/basics.indexing.html>`_.
 
-`Read more about using the where function here <https://docs.scipy.org/doc/numpy-1.15.1/reference/generated/numpy.where.html>`_.
+`Read more about using the where function here <https://numpy.org/devdocs/reference/generated/numpy.where.html>`_.
 
 
 How to create an array from existing data
@@ -912,7 +914,7 @@ If you wanted to split your array after the third and fourth column, you'd run:
           [16]]), array([[ 5,  6,  7,  8,  9, 10, 11, 12],
           [17, 18, 19, 20, 21, 22, 23, 24]])]
 
-`Learn more about stacking and splitting arrays here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#stacking-together-different-arrays>`_.
+`Learn more about stacking and splitting arrays here <https://numpy.org/devdocs/user/quickstart.html#stacking-together-different-arrays>`_.
 
 You can use the ``view`` method to create a new array object that looks at the same data as the original array (a *shallow copy*). 
 
@@ -932,7 +934,7 @@ Using the ``copy`` method will make a complete copy of the array and its data (a
 
   b = a.copy()
  
-`Learn more about copies and views here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#copies-and-views>`_.
+`Learn more about copies and views here <https://numpy.org/devdocs/user/quickstart.html#copies-and-views>`_.
 
 
 Basic array operations
@@ -1022,7 +1024,7 @@ You can sum the columns with:
 
   array([2, 4])
 
-`Learn more about basic operations here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#basic-operations>`_.
+`Learn more about basic operations here <https://numpy.org/devdocs/user/quickstart.html#basic-operations>`_.
 
 
 Broadcasting
@@ -1038,7 +1040,7 @@ There are times when you might want to carry out an operation between an array a
 
 NumPy understands that the multiplication should happen with each cell. That concept is called **broadcasting**. Broadcasting is a mechanism that allows NumPy to perform operations on arrays of different shapes. The dimensions of your array must be compatible, for example, when the dimensions of both arrays are equal or when one of them is 1. If the dimensions are not compatible, you will get a value error. 
 
-`Learn more about broadcasting here <https://docs.scipy.org/doc/numpy-1.17.0/user/basics.broadcasting.html>`_.
+`Learn more about broadcasting here <https://numpy.org/devdocs/user/basics.broadcasting.html>`_.
 
 
 More useful array operations
@@ -1109,7 +1111,7 @@ You can specify on which axis you want the aggregation function to be computed. 
 
 The four values listed above correspond to the number of columns in your array. With a four-column array, you will get four values as your result.
 
-`Read more about functions here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_ and `calculations here <https://docs.scipy.org/doc/numpy-1.17.0/reference/arrays.ndarray.html#calculation>`_.
+`Read more about functions here <https://numpy.org/devdocs/reference/arrays.ndarray.html>`_ and `calculations here <https://numpy.org/devdocs/reference/arrays.ndarray.html#calculation>`_.
 
 
 How to inspect the size and shape of a NumPy array
@@ -1314,7 +1316,7 @@ You can also use ``arr.size()`` with 1D arrays:
 
 *Remember that if you check the size of your array and it equals 0, your array is empty.*
 
-Learn more about `finding the size of an array here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.size.html>`_ and the `shape of an array here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.shape.html>`_.
+Learn more about `finding the size of an array here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.size.html>`_ and the `shape of an array here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.shape.html>`_.
 
 
 Creating matrices
@@ -1426,7 +1428,7 @@ You can also use the ``ones()``, ``zeros()``, and ``random()`` methods to create
 
 .. image:: images/np_ones_zeros_matrix.png
 
-Read more about initializing the values of an array with `ones here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ones.html>`_, `zeros here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.zeros.html>`_, and `initializing empty arrays here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.empty.html>`_.
+Read more about initializing the values of an array with `ones here <https://numpy.org/devdocs/reference/generated/numpy.ones.html>`_, `zeros here <https://numpy.org/devdocs/reference/generated/numpy.zeros.html>`_, and `initializing empty arrays here <https://numpy.org/devdocs/reference/generated/numpy.empty.html>`_.
 
 
 Generating random numbers
@@ -1451,7 +1453,7 @@ You can generate a 2 x 4 array of random integers between 0 and 4 with:
   array([[4, 0, 2, 1],
        [3, 2, 2, 0]])
 
-`Read more about Random Generator here <https://docs.scipy.org/doc/numpy/reference/random/generator.html>`_.
+`Read more about Random Generator here <https://numpy.org/devdocs/reference/random/generator.html>`_.
 
 
 How to get unique items and counts
@@ -1582,7 +1584,7 @@ To get the unique rows, occurrence count, and index position, you can use:
   Indices:  
    [2 1 1]
 
-`Learn more about finding the unique elements in an array here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html>`_.
+`Learn more about finding the unique elements in an array here <https://numpy.org/devdocs/reference/generated/numpy.unique.html>`_.
 
 
 Transposing and reshaping a matrix
@@ -1642,7 +1644,7 @@ You can transpose your array with ``arr.transpose()``.
        [1, 4],
        [2, 5]])
 
-`Learn more about transposing a matrix here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.transpose.html>`_ and `reshaping a matrix here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.reshape.html>`_.
+`Learn more about transposing a matrix here <https://numpy.org/devdocs/reference/generated/numpy.transpose.html>`_ and `reshaping a matrix here <https://numpy.org/devdocs/reference/generated/numpy.reshape.html>`_.
 
 
 How to reverse an array
@@ -1797,7 +1799,7 @@ You can also reverse the column at index position 1 (the second column):
    [ 5  6  7  8]
    [ 9  2 11 12]]
 
-`Read more about reversing arrays here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.flip.html>`_.
+`Read more about reversing arrays here <https://numpy.org/devdocs/reference/generated/numpy.flip.html>`_.
 
 
 Reshaping and flattening multidimensional arrays
@@ -1884,7 +1886,7 @@ For example:
   New array: 
   [101   2   3   4   5   6   7   8   9  10  11  12]
 
-`Read more about flatten here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.flatten.html>`_ and `ravel here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ravel.html>`_.
+`Read more about flatten here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.flatten.html>`_ and `ravel here <https://numpy.org/devdocs/reference/generated/numpy.ravel.html#numpy.ravel>`_.
 
 
 How to access the docstring for more information
@@ -2204,7 +2206,7 @@ You will, at some point, want to save your arrays to disk and load them back wit
 
 The **.npy** and **.npz** files store data, shape, dtype, and other information required to reconstruct the ndarray in a way that allows the array to be correctly retrieved, even when the file is on another machine with different architecture.
 
-If you want to store a single ndarray object, store it as a .npy file using ``np.save``. If you want to store more than one ndarray object in a single file, save it as a .npz file using ``np.savez``. You can also `save several arrays into a single file in compressed npz format <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savez_compressed.html>`_ with ``np.savez_compressed``.
+If you want to store a single ndarray object, store it as a .npy file using ``np.save``. If you want to store more than one ndarray object in a single file, save it as a .npz file using ``np.savez``. You can also `save several arrays into a single file in compressed npz format <https://numpy.org/devdocs/reference/generated/numpy.savez_compressed.html>`_ with ``np.savez_compressed``.
 
 It's easy to save and load and array with ``np.save()``. Just make sure to specify the array you want to save and a file name.  For example, if you create this array:
 
@@ -2268,14 +2270,14 @@ You can quickly and easily load your saved text file using ``loadtxt()``:
   array([1., 2., 3., 4., 5., 6., 7., 8.])
 
 
-The ``savetxt()`` and ``loadtxt()`` functions accept additional optional parameters such as header, footer, and delimiter. While text files can be easier for sharing, .npy and .npz files are faster to retrieve. If you need more sophisticated handling of your text file (for example, if you need to work with lines that contain missing values), you will want to use the  `genfromtxt function <https://docs.scipy.org/doc/numpy/reference/generated/numpy.genfromtxt.html#numpy.genfromtxt>`_.
+The ``savetxt()`` and ``loadtxt()`` functions accept additional optional parameters such as header, footer, and delimiter. While text files can be easier for sharing, .npy and .npz files are faster to retrieve. If you need more sophisticated handling of your text file (for example, if you need to work with lines that contain missing values), you will want to use the  `genfromtxt function <https://numpy.org/devdocs/reference/generated/numpy.genfromtxt.html>`_.
 
-With ``savetxt``, you can specify headers, footers, comments, and more. `Read more about savetxt here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savetxt.html>`_.
+With ``savetxt``, you can specify headers, footers, comments, and more. `Read more about savetxt here <https://numpy.org/devdocs/reference/generated/numpy.savetxt.html>`_.
 
-You can read more about `save <https://docs.scipy.org/doc/numpy/reference/generated/numpy.save.html>`_ here, `savez <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savez.html>`_ here, and `load <https://docs.scipy.org/doc/numpy/reference/generated/numpy.load.html>`_ here. 
-You can read more about `savetxt <https://docs.scipy.org/doc/numpy/reference/generated/numpy.savetxt.html>`_ here, and `loadtxt <https://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_ here.
+You can read more about `save <https://numpy.org/devdocs/reference/generated/numpy.save.html>`_ here, `savez <https://numpy.org/devdocs/reference/generated/numpy.savez.html>`_ here, and `load <https://numpy.org/devdocs/reference/generated/numpy.load.html>`_ here. 
+You can read more about `savetxt <https://numpy.org/devdocs/reference/generated/numpy.savetxt.html>`_ here, and `loadtxt <https://numpy.org/devdocs/reference/generated/numpy.loadtxt.html>`_ here.
 
-Learn more about `input and output routines here <https://docs.scipy.org/doc/numpy/reference/routines.io.html>`_.
+Learn more about `input and output routines here <https://numpy.org/devdocs/reference/routines.io.html>`_.
 
 
 Importing and exporting a CSV
