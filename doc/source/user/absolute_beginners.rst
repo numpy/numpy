@@ -18,7 +18,7 @@ NumPy (**Numerical Python**) is an open source Python library that's used in alm
 
 The NumPy library contains multidimensional array and matrix data structures (you'll find more information about this in later sections). It provides **ndarray**, a homogeneous n-dimensional array object, with methods to efficiently operate on it. NumPy can be used to perform a wide variety of mathematical operations on arrays.  It adds powerful data structures to Python that guarantee efficient calculations with arrays and matrices and it supplies an enormous library of high-level mathematical functions that operate on these arrays and matrices. 
 
-`Learn more about NumPy here <https://docs.scipy.org/doc/numpy-1.17.0/user/whatisnumpy.html>`_!
+`Learn more about NumPy here <https://numpy.org/devdocs/user/whatisnumpy.html>`_!
 
 Installing NumPy
 ----------------
@@ -41,7 +41,7 @@ or
   
 If you don't have Python yet, you might want to consider using `Anaconda <https://www.anaconda.com/>`_. It's the easiest way to get started. The good thing about getting this distribution is the fact that you don’t need to worry too much about separately installing NumPy or any of the major packages that you’ll be using for your data analyses, like pandas, Scikit-Learn, etc.
 
-You can find all of the installation details in the `Installation <https://www.scipy.org/install.html>`_ section at scipy.org.
+You can find all of the installation details in the `Installation <https://www.scipy.org/install.html>`_ section at `SciPy <https://www.scipy.org>`_.
 
 How to import NumPy
 -------------------
@@ -54,12 +54,12 @@ In order to start using NumPy and all of the functions available in NumPy, you'l
 
   import numpy as np 
 
-(We shorten "numpy" to "np" in order to save time and also to keep code standardized so that anyone working with your code can easily understand and run it.)
+(We shorten ``numpy`` to ``np`` in order to save time and also to keep code standardized so that anyone working with your code can easily understand and run it.)
 
 What’s the difference between a Python list and a NumPy array? 
 --------------------------------------------------------------
   
-NumPy gives you an enormous range of fast and efficient numerically-related options. While a Python list can contain different data types within a single list, all of the elements in a NumPy array should be homogenous. The mathematical operations that are meant to be performed on arrays wouldn't be possible if the arrays weren't homogenous. 
+NumPy gives you an enormous range of fast and efficient ways of creating arrays and manipulating numerical data inside them. While a Python list can contain different data types within a single list, all of the elements in a NumPy array should be homogenous. The mathematical operations that are meant to be performed on arrays would be extremely inefficient if the arrays weren't homogenous. 
 
 **Why use NumPy?**
 
@@ -72,11 +72,19 @@ An array is a central data structure of the NumPy library. An array is a grid of
 
 An array can be indexed by a tuple of nonnegative integers, by booleans, by another array, or by integers. The ``rank`` of the array is the number of dimensions. The ``shape`` of the array is a tuple of integers giving the size of the array along each dimension.
 
-One way we can initialize NumPy arrays is from nested Python lists. 
+One way we can initialize NumPy arrays is from Python lists, using nested lists for two- or higher-dimensional data.. 
+
+For example:
 
 ::
 
-  a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  array = np.array([1, 2, 3, 4, 5, 6])
+
+or:
+
+::
+
+  a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 We can access the elements in the array using square brackets. When you're accessing elements, remember that indexing in NumPy starts at 0. That means that if you want to access the first element in your array, you'll be accessing element "0".
 
@@ -119,7 +127,7 @@ Just like in other Python container objects, the contents of an array can be acc
 
 Array **attributes** reflect information intrinsic to the array itself. If you need to get, or even set, properties of an array without creating a new array, you can often access an array through its attributes. 
 
-`Read more about array attributes here <https://docs.scipy.org/doc/numpy/reference/arrays.ndarray.html>`_ and learn about `array objects here <https://docs.scipy.org/doc/numpy-1.17.0/reference/arrays.html>`_.
+`Read more about array attributes here <https://numpy.org/devdocs/reference/arrays.ndarray.html>`_ and learn about `array objects here <https://numpy.org/numpy-1.17.0/reference/arrays.html>`_.
 
 
 How to create a basic array
@@ -152,7 +160,7 @@ You can visualize your array this way:
 
 .. image:: images/np_array.png
 
-Besides creating an array from a sequence of elements, you can easily create an array filled with 0s:
+Besides creating an array from a sequence of elements, you can easily create an array filled with ``0s``:
 
 **Input:**
 
@@ -180,7 +188,7 @@ Or an array filled with 1s:
 
   array([1., 1.])
   
-Or even an empty array! The function ``empty`` creates an array whose initial content is random and depends on the state of the memory. 
+Or even an empty array! The function ``empty`` creates an array whose initial content is random and depends on the state of the memory. The reason to use ``empty`` over ``zeros`` (or something similar) is speed - just make sure to fill every element afterwards!
 
 **Input:**
 
@@ -209,7 +217,7 @@ And even an array that contains a range of evenly spaced intervals. To do this, 
 
 ::
 
-  np.arange(2,9,2)
+  np.arange(2, 9, 2)
 
 **Output:**
 
@@ -223,7 +231,7 @@ You can also use ``np.linspace()`` to create an array with values that are space
 
 ::
 
-  np.linspace(0,10,5)
+  np.linspace(0, 10, 5)
 
 **Output:**
 
@@ -239,7 +247,7 @@ While the default data type is floating point (``float64``), you can explicitly 
 
 ::
 
-  array = np.ones(2, dtype=int)
+  array = np.ones(2, dtype=int64)
   array
 
 **Output:**
@@ -256,49 +264,11 @@ Adding, removing, and sorting elements
 
 ::
 
-  np.append()
-  np.delete() 
   np.sort()
+  np.concatenate()
 
 -----
 
-
-If you start with this array:
-
-::
-
-  arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
- 
-
-You can add elements to your array any time with ``np.append()``. Make sure to specify the array and the elements you want to include.
-
-**Input:**
-
-::
-
-  np.append(arr, [1,2])
-
-**Output:**
-
-::
-
-  array([1, 2, 3, 4, 5, 6, 7, 8, 1, 2])
-
-You can delete an element with ``np.delete()``. If you want to delete the element in position 1 of your array, you can run:
-
-**Input:**
-
-::
-
-  np.delete(arr, 1)
-
-**Output:**
-
-::
-
-  array([1, 3, 4, 5, 6, 7, 8])
-
-`Read more about appending an array here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.append.html>`_ and `deleting elements here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.delete.html>`_.
 
 Sorting an element is simple with ``np.sort()``. You can specify the axis, kind, and order when you call the function. `Read more about sorting an array here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.sort.html>`_.
 
@@ -324,11 +294,35 @@ You can quickly sort the numbers in ascending order with:
 
 In addition to sort, which returns a sorted copy of an array, you can use:
 
-``argsort``, which is an `indirect sort along a specified axis <https://docs.scipy.org/doc/numpy-1.17.0/reference/generated/numpy.argsort.html#numpy.argsort>`_,
-``lexsort``, which is an `indirect stable sort on multiple keys <https://docs.scipy.org/doc/numpy-1.17.0/reference/generated/numpy.lexsort.html#numpy.lexsort>`_,
-``searchsorted``, which will `find elements in a sorted array <https://docs.scipy.org/doc/numpy-1.17.0/reference/generated/numpy.searchsorted.html#numpy.searchsorted>`_, and 
-``partition``, which is a `partial sort  <https://docs.scipy.org/doc/numpy-1.17.0/reference/generated/numpy.partition.html#numpy.partition>`_.
+``argsort``, which is an `indirect sort along a specified axis <https://numpy.org/devdocs/reference/generated/numpy.argsort.html#numpy.argsort>`_,
+``lexsort``, which is an `indirect stable sort on multiple keys <https://numpy.org/devdocs/reference/generated/numpy.lexsort.html#numpy.lexsort>`_,
+``searchsorted``, which will `find elements in a sorted array <https://numpy.org/devdocs/reference/generated/numpy.searchsorted.html#numpy.searchsorted>`_, and 
+``partition``, which is a `partial sort  <https://numpy.org/devdocs/reference/generated/numpy.partition.html#numpy.partition>`_.
 
+If you start with this array:
+
+::
+
+  arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+ 
+
+You can add elements to your array any time with ``np.concatenate()``. Make sure to specify the array and the elements you want to include.
+
+**Input:**
+
+::
+
+  np.concatenate(arr, [1,2])
+
+**Output:**
+
+::
+
+  array([1, 2, 3, 4, 5, 6, 7, 8, 1, 2])
+
+In order to remove elements, you can easily use indexing to select the elements that you want to keep.
+
+`Read more about concatenate here <https://numpy.org/devdocs/reference/generated/numpy.concatenate.html#numpy.concatenate>`_ .
 
 How do you know the shape and size of an array?
 -----------------------------------------------
@@ -402,7 +396,7 @@ And to find the shape of your array, run:
 
 ::
 
-  (3,2,4)
+  (3, 2, 4)
 
 `Read more about dimensions here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.ndim.html>`_, `size here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.size.html>`_, and `shape here <https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.shape.html>`_.
 
@@ -412,13 +406,13 @@ Can you reshape an array?
 
 ::
 
-  np.reshape()
+  arr.reshape()
 
 -----
   
 **Yes!**
 
-Using ``np.reshape()`` will give a new shape to an array without changing the data. Just remember that when you use the reshape method, the array you want to produce needs to have the same number of elements as the original array. If you start with an array with 12 elements, you'll need to make sure that your new array also has a total of 12 elements.
+Using ``arr.reshape()`` will give a new shape to an array without changing the data. Just remember that when you use the reshape method, the array you want to produce needs to have the same number of elements as the original array. If you start with an array with 12 elements, you'll need to make sure that your new array also has a total of 12 elements.
 
 If you start with this array:
 
@@ -500,7 +494,7 @@ You can use ``np.newaxis`` to add a new axis:
 
 ::
 
-  a2 = a[np.newaxis]
+  a2 = a[np.newaxis, :]
   a2.shape
 
 **Output:**
@@ -688,7 +682,7 @@ Or you can select elements that satisfy two conditions using the ``&`` and ``|``
 
   [ 3  4  5  6  7  8  9 10]
 
-While it would be incredibly inefficient for this array, you can also make use of the logical operators **&** and **|** in order to return boolean values that specify whether or not the values in an array fulfill a certain condition. This can be useful with arrays that contain names or other categorical values.
+You can also make use of the logical operators **&** and **|** in order to return boolean values that specify whether or not the values in an array fulfill a certain condition. This can be useful with arrays that contain names or other categorical values.
 
 **Input:**
 
@@ -711,7 +705,7 @@ Starting with this array:
 
 ::
 
-  a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can use ``np.where()`` to print the indices of elements that are, for example, less than 5:
 
@@ -719,7 +713,7 @@ You can use ``np.where()`` to print the indices of elements that are, for exampl
 
 ::
 
-  b = np.where(a<5)
+  b = np.where(a < 5)
   print(b)
 
 **Output:**
@@ -738,8 +732,8 @@ If you want to generate a list of coordinates where the elements exist, you can 
 
   list_of_coordinates= list(zip(b[0], b[1]))
 
-  for cord in list_of_coordinates:
-      print(cord)
+  for coord in list_of_coordinates:
+      print(coord)
 
 **Output:**
 
@@ -834,14 +828,14 @@ You can also stack two existing arrays, both vertically and horizontally. Let's 
 ::
 
   array([[1, 1],
-       [2, 2]])
+        [2, 2]])
 
 and **a_2**:
 
 ::
 
   array([[3, 3],
-       [4, 4]])
+         [4, 4]])
 
 You can stack them vertically with ``vstack``:
 
@@ -856,9 +850,9 @@ You can stack them vertically with ``vstack``:
 ::
 
   array([[1, 1],
-       [2, 2],
-       [3, 3],
-       [4, 4]])
+         [2, 2],
+         [3, 3],
+         [4, 4]])
 
 Or stack them horizontally with ``hstack``:
 
@@ -873,7 +867,7 @@ Or stack them horizontally with ``hstack``:
 ::
 
   array([[1, 1, 3, 3],
-       [2, 2, 4, 4]])
+         [ 2, 2, 4, 4]])
 
 You can split an array into several smaller arrays using ``hsplit``. You can specify either the number of equally shaped arrays to return or the columns *after* which the division should occur.
 
@@ -882,7 +876,7 @@ Let's say you have this array:
 ::
 
   array([[ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12],
-       [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]])
+         [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]])
 
 If you wanted to split this array into three equally shaped arrays, you would run:
 
@@ -890,16 +884,16 @@ If you wanted to split this array into three equally shaped arrays, you would ru
 
 ::
 
-  np.hsplit(array,3)
+  np.hsplit(array, 3)
 
 **Output:**
 
 ::
 
-  [array([[ 1,  2,  3,  4],
-        [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
-        [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
-        [21, 22, 23, 24]])]
+  [array([[1,  2,  3,  4],
+          [13, 14, 15, 16]]), array([[ 5,  6,  7,  8],
+          [17, 18, 19, 20]]), array([[ 9, 10, 11, 12],
+          [21, 22, 23, 24]])]
 
 If you wanted to split your array after the third and fourth column, you'd run:
 
@@ -907,20 +901,22 @@ If you wanted to split your array after the third and fourth column, you'd run:
 
 ::
 
-  np.hsplit(array,(3,4))
+  np.hsplit(array,(3, 4))
 
 **Output:**
 
 ::
 
-  [array([[ 1,  2,  3],
-        [13, 14, 15]]), array([[ 4],
-        [16]]), array([[ 5,  6,  7,  8,  9, 10, 11, 12],
-        [17, 18, 19, 20, 21, 22, 23, 24]])]
+  [array([[1,  2,  3],
+          [13, 14, 15]]), array([[ 4],
+          [16]]), array([[ 5,  6,  7,  8,  9, 10, 11, 12],
+          [17, 18, 19, 20, 21, 22, 23, 24]])]
 
 `Learn more about stacking and splitting arrays here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#stacking-together-different-arrays>`_.
 
-You can use the ``view`` method to create a new array object that looks at the same data as the original array (a *shallow copy*)
+You can use the ``view`` method to create a new array object that looks at the same data as the original array (a *shallow copy*). 
+
+Views are an important NumPy concept! NumPy functions, as well as operations like indexing and slicing, will return views whenever possible. This saves memory and is faster (no copy of the data has to be made). However it's important to be aware of this - modifying data in a view also modifies the original array!
 
 Let's say you create this array:
 
@@ -928,21 +924,13 @@ Let's say you create this array:
 
   a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
-You can create a new array object that looks at the same data using:
-
-**Input:**
-
-::
-
-  b = a.view()
-
 Using the ``copy`` method will make a complete copy of the array and its data (a *deep copy*). To use this on your array, you could run:
 
 **Input:**
 
 ::
 
-  c = a.copy()
+  b = a.copy()
  
 `Learn more about copies and views here <https://docs.scipy.org/doc/numpy-1.17.0/user/quickstart.html#copies-and-views>`_.
 
@@ -1054,7 +1042,7 @@ NumPy understands that the multiplication should happen with each cell. That con
 
 
 More useful array operations
------------------------------------
+----------------------------
 
 
 ::
@@ -1071,13 +1059,13 @@ NumPy also performs aggregation functions. In addition to ``min``,  ``max``, and
 
 .. image:: images/np_aggregation.png
 
-Let's start with this array, called "A"
+Let's start with this array, called "a"
 
 ::
 
- [[0.45053314 0.17296777 0.34376245 0.5510652]
- [0.54627315 0.05093587 0.40067661 0.55645993]
- [0.12697628 0.82485143 0.26590556 0.56917101]]
+  [[0.45053314 0.17296777 0.34376245 0.5510652]
+   [0.54627315 0.05093587 0.40067661 0.55645993]
+   [0.12697628 0.82485143 0.26590556 0.56917101]]
 
 It's very common to want to aggregate along a row or column. By default, every NumPy aggregation function will return the aggregate of the entire array. To find the sum or the minimum of the elements in your array, run:
 
@@ -1085,13 +1073,13 @@ It's very common to want to aggregate along a row or column. By default, every N
 
 ::
 
-  A.sum()
+  a.sum()
 
 Or
 
 ::
 
-  A.min()
+  a.min()
 
 **Output:**
 
@@ -1111,7 +1099,7 @@ You can specify on which axis you want the aggregation function to be computed. 
 
 ::
 
-  A.min(axis=0)
+  a.min(axis=0)
 
 **Output:**
 
@@ -1229,17 +1217,17 @@ You can print the shape and the length of the array.
   Length of 1D array:  8
 
 
-You can get the dimensions of an array using ``arr.size()``.
+You can get the dimensions of an array using ``arr.shape()``.
 
 **Input:**
 
 ::
 
   # get number of rows in array
-  num_of_rows2 = np.size(arr, 0)
+  num_of_rows2 = arr.shape[0]
  
   # get number of columns in 2D numpy array
-  num_of_columns2 = arr.size(arr, 1)
+  num_of_columns2 = arr.shape[1]
  
   print('Number of Rows : ', num_of_rows2)
   print('Number of Columns : ', num_of_columns2)
@@ -1271,7 +1259,7 @@ This also works for 3D arrays:
 
 ::
 
-  arr3D = np.array([ [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3]],
+  arr_3d = np.array([ [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3]],
                  [[4, 4, 4, 4], [5, 5, 5, 5], [6, 6, 6, 6]] ])
 
 You can easily print the size of the axis:
@@ -1280,9 +1268,9 @@ You can easily print the size of the axis:
 
 ::
 
-  print('Axis 0 size : ', arr.size(arr3D, 0))
-  print('Axis 1 size : ', arr.size(arr3D, 1))
-  print('Axis 2 size : ', arr.size(arr3D, 2))
+  print('Axis 0 size : ', arr_3d.shape[0]
+  print('Axis 1 size : ', arr_3d.shape[1]
+  print('Axis 2 size : ', arr_3d.shape[2]
 
 **Output:**
 
@@ -1316,7 +1304,7 @@ You can also use ``arr.size()`` with 1D arrays:
   arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
 
   # Determine the length
-  print('Length of 1D numpy array : ', arr.size(arr))
+  print('Length of 1D numpy array : ', arr.size)
 
 **Output:**
 
@@ -1336,7 +1324,7 @@ You can pass Python lists of lists to create a matrix to represent them in NumPy
 
 ::
 
-  np.array([[1,2],[3,4]])
+  np.array([[1, 2], [3, 4]])
 
 .. image:: images/np_create_matrix.png
 
@@ -1344,9 +1332,9 @@ Indexing and slicing operations are useful when you're manipulating matrices:
 
 ::
 
-  data[0,1]
-  data[1:3]
-  data[0:2,0]
+  data[0, 1]
+  data[1 : 3]
+  data[0 : 2, 0]
 
 .. image:: images/np_matrix_indexing.png
 
@@ -1392,7 +1380,7 @@ Be aware that when NumPy prints N-Dimensional arrays, the last axis is looped ov
 
 ::
 
-  np.ones((4,3,2))
+  np.ones((4, 3, 2))
 
 Will print out like this:
 
@@ -1417,7 +1405,7 @@ Will print out like this:
         [1., 1.]]])
 
  
-There are often instances where we want NumPy to initialize the values of an array. NumPy offers methods like ``ones()``, ``zeros()``,  ``Random Generator``, and even the legacy method ``random.random()`` for these instances. All you need to do is pass in the number of elements you want it to generate.
+There are often instances where we want NumPy to initialize the values of an array. NumPy offers methods like ``ones()``, ``zeros()``, and  ``Random Generator``for these instances. All you need to do is pass in the number of elements you want it to generate.
 
 ::
 
@@ -1433,7 +1421,8 @@ You can also use the ``ones()``, ``zeros()``, and ``random()`` methods to create
 
   np.ones(3,2)
   np.zeros(3,2)
-  np.random.random(3,2)
+  rng = np.random.default_rng()
+  rng.random()
 
 .. image:: images/np_ones_zeros_matrix.png
 
@@ -1445,9 +1434,7 @@ Generating random numbers
 
 The use of random number generation is an important part of the configuration and evaluation of machine learning algorithms. Whether you need to randomly initialize weights in an artificial neural network, split data into random sets, or randomly shuffle your dataset, being able to generate random numbers (actually, repeatable pseudo-random numbers) is essential.
 
-You have a number of options when using NumPy for random number generation. Random Generator is NumPy's replacement for RandomState. The main difference between them is that Generator relies on an additional BitGenerator to manage state and generate the random bits, which are transformed into random values.
-
-With Generator.integers, you can generate random integers from low (remember that this is inclusive with NumPy) to high (exclusive). You can set ``endopoint=True`` to make the high number inclusive. 
+With ``Generator.integers``, you can generate random integers from low (remember that this is inclusive with NumPy) to high (exclusive). You can set ``endpoint=True`` to make the high number inclusive. 
 
 You can generate a 2 x 4 array of random integers between 0 and 4 with:
 
@@ -1468,7 +1455,7 @@ You can generate a 2 x 4 array of random integers between 0 and 4 with:
 
 
 How to get unique items and counts
-------------------------------------------
+----------------------------------
 
 ::
 
@@ -1535,7 +1522,7 @@ This also works with 2D arrays. If you start with this array:
 
 ::
 
-  a2D = np.array([[1, 2, 3, 4] ,[5, 6, 7, 8] , [9, 10, 11, 12],  [1, 2, 3, 4]])
+  a_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [1, 2, 3, 4]])
 
 You can find unique values with:
 
@@ -1543,7 +1530,7 @@ You can find unique values with:
 
 ::
 
-  unique_values = np.unique(a2D)
+  unique_values = np.unique(a_2d)
   print(unique_values)
 
 **Output:**
@@ -1610,7 +1597,7 @@ Transposing and reshaping a matrix
 
 -----
 
-It's common to need to rotate your matrices. NumPy arrays have the property ``T`` that allows you to transpose a matrix.
+It's common to need to transpose your matrices. NumPy arrays have the property ``T`` that allows you to transpose a matrix.
 
 .. image:: images/np_transposing_reshaping.png
 
@@ -1623,7 +1610,7 @@ You may also need to switch the dimensions of a matrix. This can happen when, fo
 
 .. image:: images/np_reshape.png
 
-You can also use ``np.transpose`` to reverse or change the axes of an array according to the values you specify.
+You can also use ``.transpose`` to reverse or change the axes of an array according to the values you specify.
 
 If you start with this array:
 
