@@ -1376,16 +1376,16 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         interp_func = compiled_interp
         input_dtype = np.float64
 
+    x = np.asarray(x, dtype=np.float64)
+    xp = np.asarray(xp, dtype=np.float64)
+    fp = np.asarray(fp, dtype=input_dtype)
+
     if period is not None:
         if period == 0:
             raise ValueError("period must be a non-zero value")
         period = abs(period)
         left = None
         right = None
-
-        x = np.asarray(x, dtype=np.float64)
-        xp = np.asarray(xp, dtype=np.float64)
-        fp = np.asarray(fp, dtype=input_dtype)
 
         if xp.ndim != 1 or fp.ndim != 1:
             raise ValueError("Data points must be 1-D sequences")
