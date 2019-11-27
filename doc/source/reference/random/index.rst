@@ -22,34 +22,44 @@ Since Numpy version 1.17.0 the Generator can be initialized with a
 number of different BitGenerators. It exposes many different probability
 distributions. See `NEP 19 <https://www.numpy.org/neps/
 nep-0019-rng-policy.html>`_ for context on the updated random Numpy number
-routines. The legacy `.RandomState` random number routines are still
+routines. The legacy `RandomState` random number routines are still
 available, but limited to a single BitGenerator.
 
-For convenience and backward compatibility, a single `~.RandomState`
+For convenience and backward compatibility, a single `RandomState`
 instance's methods are imported into the numpy.random namespace, see
 :ref:`legacy` for the complete list.
+
+.. _random-quick-start:
 
 Quick Start
 -----------
 
-By default, `~Generator` uses bits provided by `PCG64` which
-has better statistical properties than the legacy mt19937 random
-number generator in `~.RandomState`.
+Call `default_rng` to get a new instance of a `Generator`, then call its
+methods to obtain samples from different distributions.  By default,
+`Generator` uses bits provided by `PCG64` which has better statistical
+properties than the legacy `MT19937` used in `RandomState`.
 
 .. code-block:: python
 
-  # Uses the old numpy.random.RandomState
-  from numpy import random
-  random.standard_normal()
+  # Do this
+  from numpy.random import default_rng
+  rng = default_rng()
+  vals = rng.standard_normal(10)
+  more_vals = rng.standard_normal(10)
 
-`~Generator` can be used as a replacement for `~.RandomState`. Both class
-instances now hold a internal `BitGenerator` instance to provide the bit
+  # instead of this
+  from numpy import random
+  vals = random.standard_normal(10)
+  more_vals = random.standard_normal(10)
+
+`Generator` can be used as a replacement for `RandomState`. Both class
+instances hold a internal `BitGenerator` instance to provide the bit
 stream, it is accessible as ``gen.bit_generator``. Some long-overdue API
 cleanup means that legacy and compatibility methods have been removed from
-`~.Generator`
+`Generator`
 
 =================== ============== ============
-`~.RandomState`     `~.Generator`  Notes
+`RandomState`       `Generator`    Notes
 ------------------- -------------- ------------
 ``random_sample``,  ``random``     Compatible with `random.random`
 ``rand``
@@ -58,21 +68,12 @@ cleanup means that legacy and compatibility methods have been removed from
 ``random_integers``
 ------------------- -------------- ------------
 ``tomaxint``        removed        Use ``integers(0, np.iinfo(np.int_).max,``
-                                                 ``endpoint=False)``
+                                   ``endpoint=False)``
 ------------------- -------------- ------------
-``seed``            removed        Use `~.SeedSequence.spawn`
+``seed``            removed        Use `SeedSequence.spawn`
 =================== ============== ============
 
-See `new-or-different` for more information
-
-.. code-block:: python
-
-  # As replacement for RandomState(); default_rng() instantiates Generator with
-  # the default PCG64 BitGenerator.
-  from numpy.random import default_rng
-  rg = default_rng()
-  rg.standard_normal()
-  rg.bit_generator
+See :ref:`new-or-different` for more information
 
 Something like the following code can be used to support both ``RandomState``
 and ``Generator``, with the understanding that the interfaces are slightly
@@ -87,9 +88,9 @@ different
     a = rg_integers(1000)
 
 Seeds can be passed to any of the BitGenerators. The provided value is mixed
-via `~.SeedSequence` to spread a possible sequence of seeds across a wider
-range of initialization states for the BitGenerator. Here `~.PCG64` is used and
-is wrapped with a `~.Generator`.
+via `SeedSequence` to spread a possible sequence of seeds across a wider
+range of initialization states for the BitGenerator. Here `PCG64` is used and
+is wrapped with a `Generator`.
 
 .. code-block:: python
 
@@ -100,7 +101,7 @@ is wrapped with a `~.Generator`.
 Introduction
 ------------
 The new infrastructure takes a different approach to producing random numbers
-from the `~.RandomState` object.  Random number generation is separated into
+from the `RandomState` object.  Random number generation is separated into
 two components, a bit generator and a random generator.
 
 The `BitGenerator` has a limited set of responsibilities. It manages state
@@ -113,8 +114,8 @@ distributions, e.g., simulated normal random values. This structure allows
 alternative bit generators to be used with little code duplication.
 
 The `Generator` is the user-facing object that is nearly identical to
-`.RandomState`. The canonical method to initialize a generator passes a
-`~.PCG64` bit generator as the sole argument.
+`RandomState`. The canonical method to initialize a generator passes a
+`PCG64` bit generator as the sole argument.
 
 .. code-block:: python
 
@@ -139,9 +140,9 @@ What's New or Different
   The Box-Muller method used to produce NumPy's normals is no longer available
   in `Generator`.  It is not possible to reproduce the exact random
   values using Generator for the normal distribution or any other
-  distribution that relies on the normal such as the `.RandomState.gamma` or
-  `.RandomState.standard_t`. If you require bitwise backward compatible
-  streams, use `.RandomState`.
+  distribution that relies on the normal such as the `RandomState.gamma` or
+  `RandomState.standard_t`. If you require bitwise backward compatible
+  streams, use `RandomState`.
 
 * The Generator's normal, exponential and gamma functions use 256-step Ziggurat
   methods which are 2-10 times faster than NumPy's Box-Muller or inverse CDF
@@ -152,20 +153,20 @@ What's New or Different
 * Optional ``out`` argument that allows existing arrays to be filled for
   select distributions
 * All BitGenerators can produce doubles, uint64s and uint32s via CTypes
-  (`~.PCG64.ctypes`) and CFFI (`~.PCG64.cffi`). This allows the bit generators
+  (`PCG64.ctypes`) and CFFI (`PCG64.cffi`). This allows the bit generators
   to be used in numba.
 * The bit generators can be used in downstream projects via
   :ref:`Cython <random_cython>`.
-* `~.Generator.integers` is now the canonical way to generate integer
+* `Generator.integers` is now the canonical way to generate integer
   random numbers from a discrete uniform distribution. The ``rand`` and
-  ``randn`` methods are only available through the legacy `~.RandomState`.
+  ``randn`` methods are only available through the legacy `RandomState`.
   The ``endpoint`` keyword can be used to specify open or closed intervals.
   This replaces both ``randint`` and the deprecated ``random_integers``.
-* `~.Generator.random` is now the canonical way to generate floating-point
-  random numbers, which replaces `.RandomState.random_sample`,
-  `.RandomState.sample`, and `.RandomState.ranf`. This is consistent with
+* `Generator.random` is now the canonical way to generate floating-point
+  random numbers, which replaces `RandomState.random_sample`,
+  `RandomState.sample`, and `RandomState.ranf`. This is consistent with
   Python's `random.random`.
-* All BitGenerators in numpy use `~SeedSequence` to convert seeds into
+* All BitGenerators in numpy use `SeedSequence` to convert seeds into
   initialized states.
 
 See :ref:`new-or-different` for a complete list of improvements and
@@ -202,8 +203,9 @@ Features
    c-api
    Examples of using Numba, Cython, CFFI <extending>
 
-Original Source
-~~~~~~~~~~~~~~~
+Original Source of the Generator and BitGenerators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This package was developed independently of NumPy and was integrated in version
 1.17.0. The original repo is at https://github.com/bashtage/randomgen.
+
