@@ -1805,7 +1805,7 @@ class TestMethods(object):
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-        # test string reverse sorts.
+        # test string sorts with reverse parameter.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(101)])
         b = a[::-1].copy()
