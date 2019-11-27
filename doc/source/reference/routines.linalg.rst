@@ -18,6 +18,25 @@ or specify the processor architecture.
 .. _OpenBLAS: https://www.openblas.net/
 .. _threadpoolctl: https://github.com/joblib/threadpoolctl
 
+Frequently asked question about `numpy.linalg` include "Why do both NumPy and
+SciPy have `linalg` submodules, with duplicated functions?" and "Which should
+I use?"  The following is from the SciPy FAQ:
+
+* `scipy.linalg` is a more complete wrapping of Fortran LAPACK using f2py.
+* One of the design goals of NumPy was to make it buildable without a Fortran
+  compiler, and if you don’t have LAPACK available, NumPy will use its own
+  implementation. SciPy requires a Fortran compiler to be built, and heavily
+  depends on wrapped Fortran code.
+* The ``linalg`` modules in NumPy and SciPy have some common functions but
+  with different docstrings, and `scipy.linalg` contains functions not found
+  in `numpy.linalg`, such as functions related to LU decomposition and the
+  Schur decomposition, multiple ways of calculating the pseudoinverse, and
+  matrix transcendentals, like the matrix logarithm. Some functions that exist
+  in both have augmented functionality in `scipy.linalg`; for example,
+  `scipy.linalg.eig` can take a second matrix argument for solving generalized
+  eigenvalue problems.
+
+
 .. currentmodule:: numpy
 
 Matrix and vector products
