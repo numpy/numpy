@@ -265,13 +265,20 @@ def dtype_to_descr(dtype):
         replicate the input dtype.
 
     """
+    warn_msg = ("metadata on a dtype can be saved but cannot be read. Use "
+               "another form of storage for the array")
     if dtype.names is not None:
         # This is a record array. The .descr is fine.  XXX: parts of the
         # record array with an empty name, like padding bytes, still get
         # fiddled with. This needs to be fixed in the C implementation of
         # dtype().
+        for k in dtype.names:
+            if dtype[k].metadata:
+                warnings.warn (warn_msg, UserWarning, stacklevel=2)
         return dtype.descr
     else:
+        if dtype.metadata:
+            warnings.warn (warn_msg, UserWarning, stacklevel=2)
         return dtype.str
 
 def descr_to_dtype(descr):

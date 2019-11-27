@@ -963,3 +963,14 @@ def test_unicode_field_names():
     with open(fname, 'wb') as f:
         with assert_warns(UserWarning):
             format.write_array(f, arr, version=None)
+
+def test_metadata_dtype():
+    # gh-14142
+    dt = np.dtype({'names': ['a', 'b'], 'formats':  [float, np.dtype('S3', metadata={'some': 'stuff'})]})
+    arr = np.array([(1, 'abc'), (2, 'def')], dtype=dt)
+    buf = BytesIO()
+    with assert_warns(UserWarning):
+        np.save(buf, arr)
+    buf.seek(0)
+    with assert_raises(ValueError):
+        np.load(buf)
