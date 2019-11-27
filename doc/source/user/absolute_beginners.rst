@@ -1405,7 +1405,7 @@ Will print out like this:
         [1., 1.]]])
 
  
-There are often instances where we want NumPy to initialize the values of an array. NumPy offers methods like ``ones()``, ``zeros()``, and  ``Random Generator``for these instances. All you need to do is pass in the number of elements you want it to generate.
+There are often instances where we want NumPy to initialize the values of an array. NumPy offers methods like ``ones()``, ``zeros()``, and  ``Random Generator`` for these instances. All you need to do is pass in the number of elements you want it to generate.
 
 ::
 
