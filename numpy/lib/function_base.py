@@ -1336,6 +1336,16 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     >>> np.interp(3.14, xp, fp, right=UNDEF)
     -99.0
 
+    Interpolation with np.float64 convertible types:
+
+    >>> d1 = np.datetime64('2019-01-01')
+    >>> d2 = np.datetime64('2019-01-03')
+    >>> xp = np.array([d1, d2])
+    >>> yp = np.array([1, 3])
+    >>> x = np.datetime64('2019-01-02')
+    >>> np.interp(x, xp, yp)
+    2.0
+
     Plot an interpolant to the sine function:
 
     >>> x = np.linspace(0, 2*np.pi, 10)
