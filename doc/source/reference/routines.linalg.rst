@@ -18,8 +18,8 @@ or specify the processor architecture.
 .. _OpenBLAS: https://www.openblas.net/
 .. _threadpoolctl: https://github.com/joblib/threadpoolctl
 
-The SciPy library also contains a ``linalg`` submodule, and there is overlap
-in the functionality provided by the SciPy and NumPy submodules.  SciPy
+The SciPy library also contains a `~scipy.linalg` submodule, and there is
+overlap in the functionality provided by the SciPy and NumPy submodules.  SciPy
 contains functions not found in `numpy.linalg`, such as functions related to
 LU decomposition and the Schur decomposition, multiple ways of calculating the
 pseudoinverse, and matrix transcendentals such as the matrix logarithm.  Some

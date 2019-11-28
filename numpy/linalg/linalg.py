@@ -347,8 +347,7 @@ def solve(a, b):
 
     See Also
     --------
-    scipy.linalg.solve : Solves the linear equation set ``a * x = b`` for the
-                         unknown `x` for square `a` matrix.
+    scipy.linalg.solve : Similar function in SciPy.
 
     Notes
     -----
@@ -509,7 +508,7 @@ def inv(a):
 
     See Also
     --------
-    scipy.linalg.inv : Compute the inverse of a matrix.
+    scipy.linalg.inv : Similar function in SciPy.
 
     Notes
     -----
@@ -711,11 +710,11 @@ def cholesky(a):
 
     See Also
     --------
-    scipy.linalg.cholesky : Compute the Cholesky decomposition of a matrix.
+    scipy.linalg.cholesky : Similar function in SciPy.
     scipy.linalg.cholesky_banded : Cholesky decompose a banded Hermitian
-        positive-definite matrix
-    scipy.linalg.cho_factor : Compute the Cholesky decomposition of a matrix,
-        to use in cho_solve
+                                   positive-definite matrix.
+    scipy.linalg.cho_factor : Cholesky decomposition of a matrix, to use in
+                              `scipy.linalg.cho_solve`.
 
     Notes
     -----
@@ -831,7 +830,7 @@ def qr(a, mode='reduced'):
 
     See Also
     --------
-    scipy.linalg.qr : Compute QR decomposition of a matrix.
+    scipy.linalg.qr : Similar function in SciPy.
     scipy.linalg.rq : Compute RQ decomposition of a matrix.
 
     Notes
@@ -1026,8 +1025,7 @@ def eigvals(a):
                (conjugate symmetric) arrays.
     eigh : eigenvalues and eigenvectors of real symmetric or complex
            Hermitian (conjugate symmetric) arrays.
-    scipy.linalg.eigvals : Compute eigenvalues from an ordinary or generalized
-                           eigenvalue problem.
+    scipy.linalg.eigvals : Similar function in SciPy.
 
     Notes
     -----
@@ -1129,8 +1127,7 @@ def eigvalsh(a, UPLO='L'):
     eigvals : eigenvalues of general real or complex arrays.
     eig : eigenvalues and right eigenvectors of general real or complex
           arrays.
-    scipy.linalg.eigvalsh : Solve an ordinary or generalized eigenvalue problem
-                            for a complex Hermitian or real symmetric matrix.
+    scipy.linalg.eigvalsh : Similar function in SciPy.
 
     Notes
     -----
@@ -1233,8 +1230,8 @@ def eig(a):
            Hermitian (conjugate symmetric) array.
     eigvalsh : eigenvalues of a real symmetric or complex Hermitian
                (conjugate symmetric) array.
-    scipy.linalg.eig : Solve an ordinary or generalized eigenvalue problem
-                       of a square matrix.
+    scipy.linalg.eig : Similar function in SciPy (but also solves the
+                       generalized eigenvalue problem).
 
     Notes
     -----
@@ -1381,8 +1378,8 @@ def eigh(a, UPLO='L'):
                (conjugate symmetric) arrays.
     eig : eigenvalues and right eigenvectors for non-symmetric arrays.
     eigvals : eigenvalues of non-symmetric arrays.
-    scipy.linalg.eigh : Solve an ordinary or generalized eigenvalue problem for
-                        a complex Hermitian or real symmetric matrix.
+    scipy.linalg.eigh : Similar function in SciPy (but also solves the
+                        generalized eigenvalue problem).
 
     Notes
     -----
@@ -1536,7 +1533,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     See Also
     --------
-    scipy.linalg.svd : Singular Value Decomposition.
+    scipy.linalg.svd : Similar function in SciPy.
     scipy.linalg.svdvals : Compute singular values of a matrix.
 
     Notes
@@ -1952,9 +1949,8 @@ def pinv(a, rcond=1e-15, hermitian=False):
 
     See Also
     --------
-    scipy.linalg.pinv : Compute the (Moore-Penrose) pseudo-inverse of a matrix.
-    scipy.linalg.pinv2 : Compute the (Moore-Penrose) pseudo-inverse of a
-                         matrix.
+    scipy.linalg.pinv : Similar function in SciPy.
+    scipy.linalg.pinv2 : Similar function in SciPy (SVD-based).
     scipy.linalg.pinvh : Compute the (Moore-Penrose) pseudo-inverse of a
                          Hermitian matrix.
 
@@ -2120,7 +2116,7 @@ def det(a):
     --------
     slogdet : Another way to represent the determinant, more suitable
       for large matrices where underflow/overflow may occur.
-    scipy.linalg.det : Compute the determinant of a matrix.
+    scipy.linalg.det : Similar function in SciPy.
 
     Notes
     -----
@@ -2223,7 +2219,7 @@ def lstsq(a, b, rcond="warn"):
 
     See Also
     --------
-    scipy.linalg.lstsq : Compute least-squares solution to equation Ax = b.
+    scipy.linalg.lstsq : Similar function in SciPy.
 
     Notes
     -----
@@ -2401,7 +2397,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     See Also
     --------
-    scipy.linalg.norm : Matrix or vector norm.
+    scipy.linalg.norm : Similar function in SciPy.
 
     Notes
     -----
