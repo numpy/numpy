@@ -59,6 +59,7 @@ jobs:
 
       - store_artifacts:
           path: doc/build/html/
+          destination: html-docs
 
 
      #  - store_artifacts:
