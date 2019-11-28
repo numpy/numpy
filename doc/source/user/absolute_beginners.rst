@@ -1947,7 +1947,7 @@ Will return
       the provided iterable is empty.
       With two or more arguments, return the largest argument.
 
-Because access to additional information is so useful, IPython uses the ``?`` character as a shorthand for accessing this documentation along with other relevant information.
+Because access to additional information is so useful, IPython uses the ``?`` character as a shorthand for accessing this documentation along with other relevant information. IPython is a command shell for interactive computing in multiple languages.`You can find more information about IPython here <https://ipython.org/>`_. 
 
 For example,
 
