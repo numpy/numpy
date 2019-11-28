@@ -527,7 +527,8 @@ If you start with this array:
 
 ::
 
-  a = np.arange(6) print(a)
+  a = np.arange(6) 
+  print(a)
 
 **Output:**
 
@@ -586,8 +587,7 @@ the most rapidly. The matrix is stored by rows, making it a **Row-major
 language**. What you do for C or Fortran depends on whether it's more important
 to preserve the indexing convention or not reorder the data.
 
-`Learn more about shape manipulation here
-<https://numpy.org/devdocs/user/quickstart.html#shape-manipulation>`_.
+`Learn more about shape manipulation here <https://numpy.org/devdocs/user/quickstart.html#shape-manipulation>`_.
 
 
 How to convert a 1D array into a 2D array (how to add a new axis to an array)
