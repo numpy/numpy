@@ -60,7 +60,7 @@ class NumpyVersion():
         self.vstring = vstring
         ver_main = re.match(r'\d[.]\d+[.]\d+', vstring)
         if not ver_main:
-            raise ValueError("Not a valid numpy version string")
+            raise ValueError("{} is not a valid numpy version string".format(vstring))
 
         self.version = ver_main.group()
         self.major, self.minor, self.bugfix = [int(x) for x in
