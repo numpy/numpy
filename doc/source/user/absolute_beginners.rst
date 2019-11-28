@@ -1170,7 +1170,7 @@ You can use ``arr.shape`` to find the shape of your array.
 
 ::
 
-  (3,4)
+  (3, 4)
 
 This output tells you that your array has three rows and four columns.
 
@@ -1590,7 +1590,7 @@ To get the unique rows, occurrence count, and index position, you can use:
 
 ::
 
-  unique_rows, occurence_count, indices = np.unique(a2D, axis=0, return_counts=True, return_index=True)
+  unique_rows, occurence_count, indices = np.unique(a_2d, axis=0, return_counts=True, return_index=True)
   print('Unique Rows: ', '\n', unique_rows) 
   print('Occurrence Count:', '\n', occurence_count)
   print('Indices: ', '\n', indices)
@@ -1631,8 +1631,8 @@ You may also need to switch the dimensions of a matrix. This can happen when, fo
 
 ::
 
-  data.reshape(2,3)
-  data.reshape(3,2)
+  data.reshape(2, 3)
+  data.reshape(3, 2)
 
 .. image:: images/np_reshape.png
 
@@ -1642,7 +1642,7 @@ If you start with this array:
 
 ::
 
-  arr = np.arange(6).reshape((2,3))
+  arr = np.arange(6).reshape((2, 3))
   arr
 
 **Output:**
