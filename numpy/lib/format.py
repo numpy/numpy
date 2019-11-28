@@ -279,8 +279,8 @@ def dtype_to_descr(dtype):
 
     """
     if _has_metadata(dtype):
-        warnings.warn("metadata on a dtype can be saved but will be ignored "
-                      "or raise when read. Use another form of storage.",
+        warnings.warn("metadata on a dtype may be saved or ignored, but will "
+                      "raise if saved when read. Use another form of storage.",
                       MetadataWarning, stacklevel=2)
     if dtype.names is not None:
         # This is a record array. The .descr is fine.  XXX: parts of the
