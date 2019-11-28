@@ -2339,7 +2339,15 @@ You could create a Pandas dataframe
   df = pd.DataFrame(a)
   print(df)
 
-.. image:: images/np_pddf.png
+**Output:**
+
+::
+
+              0         1         2         3
+    0 -2.582892  0.430148 -1.240820  1.595726
+    1  0.990278  1.171510  0.941257 -0.146925
+    2  0.769893  0.812997 -0.950684  0.117696
+    3  0.204840  0.347845  1.969792  0.519928
 
 You can easily save your dataframe with:
 
