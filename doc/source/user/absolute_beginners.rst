@@ -40,15 +40,11 @@ operating system, you can `find all of the details here
 
 
   
-If you already have Python, you can install NumPy with
-
-::
+If you already have Python, you can install NumPy with::
 
   conda install numpy
   
-or 
-
-::
+or ::
 
   pip install numpy
   
