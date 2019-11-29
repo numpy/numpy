@@ -222,7 +222,7 @@ array filled with ``0s``:
 
   array([0., 0.])
 
-Or an array filled with 1s:
+Or an array filled with ``1s``:
 
 **Input:**
 
@@ -2351,13 +2351,13 @@ error value for that prediction and a score for the quality of the model.
 How to save and load NumPy objects 
 ----------------------------------
 
-::
+.. autosummary::
 
-  np.save() 
-  np.savez() 
-  np.savetxt() 
-  np.load() 
-  np.loadtxt()
+    numpy.save
+    numpy.savez
+    numpy.savetxt
+    numpy.load
+    numpy.loadtxt
 
 -----
 
