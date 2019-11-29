@@ -69,10 +69,6 @@ The functions are named with the following cconventions:
 
 .. c:function:: void random_standard_exponential_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out)
 
-.. c:function:: double random_standard_exponential_zig(bitgen_t *bitgen_state)
-
-.. c:function:: void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out)
-
 .. c:function:: double random_standard_normal(bitgen_t* bitgen_state)
 
 .. c:function:: void random_standard_normal_fill(bitgen_t *bitgen_state, npy_intp count, double *out)
@@ -87,11 +83,7 @@ The functions are named with the following cconventions:
 
 .. c:function:: float random_standard_exponential_f(bitgen_t *bitgen_state)
 
-.. c:function:: float random_standard_exponential_zig_f(bitgen_t *bitgen_state)
-
 .. c:function:: void random_standard_exponential_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out)
-
-.. c:function:: void random_standard_exponential_zig_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out)
 
 .. c:function:: float random_standard_normal_f(bitgen_t* bitgen_state)
 
@@ -112,7 +104,7 @@ The functions are named with the following cconventions:
 
 .. c:function:: double random_f(bitgen_t *bitgen_state, double dfnum, double dfden)
 
-.. c:function:: double random_standard_cauchy(bitgen_t *bitgen_state)
+.. c:function:: double random_cauchy(bitgen_t *bitgen_state)
 
 .. c:function:: double random_pareto(bitgen_t *bitgen_state, double a)
 
@@ -130,7 +122,7 @@ The functions are named with the following cconventions:
 
 .. c:function:: double random_rayleigh(bitgen_t *bitgen_state, double mode)
 
-.. c:function:: double random_standard_t(bitgen_t *bitgen_state, double df)
+.. c:function:: double random_student_t(bitgen_t *bitgen_state, double df)
 
 .. c:function:: double random_noncentral_chisquare(bitgen_t *bitgen_state, double df,
                                        double nonc)
