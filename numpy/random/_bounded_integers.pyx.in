@@ -316,8 +316,12 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
     high_ndim = np.PyArray_NDIM(high_arr)
     if ((low_ndim == 0 or (low_ndim == 1 and low_arr.size == 1 and size is not None)) and
             (high_ndim == 0 or (high_ndim == 1 and high_arr.size == 1 and size is not None))):
-        low = int(low_arr)
-        high = int(high_arr)
+        # nschloe, 2019-11-29:
+        # It'd be nicer if we just allowed int input for low, high in the first place,
+        # not array_like.
+        low = int(low_arr[0]) if low_ndim == 1 else int(low_arr)
+        high = int(high_arr[0]) if high_ndim == 1 else int(high_arr)
+
         # Subtract 1 since internal generator produces on closed interval [low, high]
         if not closed:
             high -= 1
