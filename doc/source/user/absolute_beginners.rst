@@ -2614,6 +2614,7 @@ For directions regarding installing Matplotlib, see the official
 
 
 
-=======
-*Image credits: Jay Alammar http://jalammar.github.io/ and 
-Anne Bonner https://github.com/bonn0062*
+-------------------------------------------------------
+
+*Image credits: Jay Alammar http://jalammar.github.io/ 
+and Anne Bonner https://github.com/bonn0062*
