@@ -3,32 +3,49 @@ Cython API for random
 
 .. currentmodule:: numpy.random
 
-Typed versions of many of the `Generator` and `BitGenerator` can be accessed
-directly from Cython: the complete list is given below.
+Typed versions of many of the `Generator` and `BitGenerator` methods can be
+accessed directly from Cython: the complete list is given below.
 
 The ``_bit_generator`` module is usable via::
 
     cimport numpy.random._bit_generator
 
 It provides function pointers for quickly accessing the next bytes in the
-`BitGenerator`::
-
-    struct bitgen:
-        void *state
-        uint64_t (*next_uint64)(void *st) nogil
-        uint32_t (*next_uint32)(void *st) nogil
-        double (*next_double)(void *st) nogil
-        uint64_t (*next_raw)(void *st) nogil
-
-    ctypedef bitgen bitgen_t
-
-See `extending` for examples of using these functions.
+`BitGenerator` via a :c:type:`bitgen_t` struct.
 
 The ``_generator`` module is usable via::
 
     cimport numpy.random._generator
 
-It provides low-level functions for various distributions. All the functions require a ``bitgen_t`` BitGenerator structure. The functions are named with the followig cconventions:
+It provides low-level functions for various distributions. All the functions
+require a ``bitgen_t`` BitGenerator structure.
+
+C API for random
+---------------------
+
+Access to various distributions is available via Cython or C-wrapper libraries
+like CFFI. All the functions accept a :c:type:`bitgen_t` as their first argument.
+
+.. c:type:: bitgen_t
+
+    The :c:type:`bitgen_t` holds the current state of the BitGenerator and
+    pointers to functions that return standard C types while advancing the
+    state.
+
+    .. code-block:: c
+
+        struct bitgen:
+            void *state
+            npy_uint64 (*next_uint64)(void *st) nogil
+            uint32_t (*next_uint32)(void *st) nogil
+            double (*next_double)(void *st) nogil
+            npy_uint64 (*next_raw)(void *st) nogil
+
+        ctypedef bitgen bitgen_t
+
+See :doc:`extending` for examples of using these functions.
+
+The functions are named with the following cconventions:
 
 - "standard" refers to the reference values for any parameters. For instance
   "standard_uniform" means a uniform distribution on the interval ``0.0`` to
@@ -39,37 +56,42 @@ It provides low-level functions for various distributions. All the functions req
 - The functions without "standard" in their name require additional parameters
   to describe the distributions.
 
+- ``zig`` in the name are based on a ziggurat lookup algorithm is used instead
+  of calculating the ``log``, which is significantly faster. The non-ziggurat
+  variants are used in corner cases and for legacy compatibility.
+
+
 .. c:function:: double random_standard_uniform(bitgen_t *bitgen_state)
 
-.. c:function:: void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out)
+.. c:function:: void random_standard_uniform_fill(bitgen_t* bitgen_state, npy_intp cnt, double *out)
 
 .. c:function:: double random_standard_exponential(bitgen_t *bitgen_state)
 
-.. c:function:: void random_standard_exponential_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out)
+.. c:function:: void random_standard_exponential_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out)
 
 .. c:function:: double random_standard_exponential_zig(bitgen_t *bitgen_state)
 
-.. c:function:: void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out)
+.. c:function:: void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, npy_intp cnt, double *out)
 
 .. c:function:: double random_standard_normal(bitgen_t* bitgen_state)
 
-.. c:function:: void random_standard_normal_fill(bitgen_t *bitgen_state, np.npy_intp count, double *out)
+.. c:function:: void random_standard_normal_fill(bitgen_t *bitgen_state, npy_intp count, double *out)
 
-.. c:function:: void random_standard_normal_fill_f(bitgen_t *bitgen_state, np.npy_intp count, float *out)
+.. c:function:: void random_standard_normal_fill_f(bitgen_t *bitgen_state, npy_intp count, float *out)
 
 .. c:function:: double random_standard_gamma(bitgen_t *bitgen_state, double shape)
 
 .. c:function:: float random_standard_uniform_f(bitgen_t *bitgen_state)
 
-.. c:function:: void random_standard_uniform_fill_f(bitgen_t* bitgen_state, np.npy_intp cnt, float *out)
+.. c:function:: void random_standard_uniform_fill_f(bitgen_t* bitgen_state, npy_intp cnt, float *out)
 
 .. c:function:: float random_standard_exponential_f(bitgen_t *bitgen_state)
 
 .. c:function:: float random_standard_exponential_zig_f(bitgen_t *bitgen_state)
 
-.. c:function:: void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out)
+.. c:function:: void random_standard_exponential_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out)
 
-.. c:function:: void random_standard_exponential_zig_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out)
+.. c:function:: void random_standard_exponential_zig_fill_f(bitgen_t *bitgen_state, npy_intp cnt, float *out)
 
 .. c:function:: float random_standard_normal_f(bitgen_t* bitgen_state)
 
@@ -121,57 +143,82 @@ It provides low-level functions for various distributions. All the functions req
 .. c:function:: double random_triangular(bitgen_t *bitgen_state, double left, double mode,
                              double right)
 
-.. c:function:: int64_t random_poisson(bitgen_t *bitgen_state, double lam)
+.. c:function:: npy_int64 random_poisson(bitgen_t *bitgen_state, double lam)
 
-.. c:function:: int64_t random_negative_binomial(bitgen_t *bitgen_state, double n, double p)
+.. c:function:: npy_int64 random_negative_binomial(bitgen_t *bitgen_state, double n, double p)
 
-.. c:function:: int64_t random_binomial(bitgen_t *bitgen_state, double p, int64_t n, binomial_t *binomial)
+.. c:type:: binomial_t
 
-.. c:function:: int64_t random_logseries(bitgen_t *bitgen_state, double p)
+    .. code-block:: c
 
-.. c:function:: int64_t random_geometric_search(bitgen_t *bitgen_state, double p)
+        typedef struct s_binomial_t {
+          int has_binomial; /* !=0: following parameters initialized for binomial */
+          double psave;
+          RAND_INT_TYPE nsave;
+          double r;
+          double q;
+          double fm;
+          RAND_INT_TYPE m;
+          double p1;
+          double xm;
+          double xl;
+          double xr;
+          double c;
+          double laml;
+          double lamr;
+          double p2;
+          double p3;
+          double p4;
+        } binomial_t;
+     
 
-.. c:function:: int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p)
+.. c:function:: npy_int64 random_binomial(bitgen_t *bitgen_state, double p, npy_int64 n, binomial_t *binomial)
 
-.. c:function:: int64_t random_geometric(bitgen_t *bitgen_state, double p)
+.. c:function:: npy_int64 random_logseries(bitgen_t *bitgen_state, double p)
 
-.. c:function:: int64_t random_zipf(bitgen_t *bitgen_state, double a)
+.. c:function:: npy_int64 random_geometric_search(bitgen_t *bitgen_state, double p)
 
-.. c:function:: int64_t random_hypergeometric(bitgen_t *bitgen_state, int64_t good, int64_t bad,
-                                    int64_t sample)
+.. c:function:: npy_int64 random_geometric_inversion(bitgen_t *bitgen_state, double p)
 
-.. c:function:: uint64_t random_interval(bitgen_t *bitgen_state, uint64_t max)
+.. c:function:: npy_int64 random_geometric(bitgen_t *bitgen_state, double p)
 
-.. c:function:: void random_multinomial(bitgen_t *bitgen_state, int64_t n, int64_t *mnix,
-                            double *pix, np.npy_intp d, binomial_t *binomial)
+.. c:function:: npy_int64 random_zipf(bitgen_t *bitgen_state, double a)
+
+.. c:function:: npy_int64 random_hypergeometric(bitgen_t *bitgen_state, npy_int64 good, npy_int64 bad,
+                                    npy_int64 sample)
+
+.. c:function:: npy_uint64 random_interval(bitgen_t *bitgen_state, npy_uint64 max)
+
+.. c:function:: void random_multinomial(bitgen_t *bitgen_state, npy_int64 n, npy_int64 *mnix,
+                            double *pix, npy_intp d, binomial_t *binomial)
 
 .. c:function:: int random_mvhg_count(bitgen_t *bitgen_state,
-                          int64_t total,
-                          size_t num_colors, int64_t *colors,
-                          int64_t nsample,
-                          size_t num_variates, int64_t *variates)
+                          npy_int64 total,
+                          size_t num_colors, npy_int64 *colors,
+                          npy_int64 nsample,
+                          size_t num_variates, npy_int64 *variates)
 
 .. c:function:: void random_mvhg_marginals(bitgen_t *bitgen_state,
-                               int64_t total,
-                               size_t num_colors, int64_t *colors,
-                               int64_t nsample,
-                               size_t num_variates, int64_t *variates)
+                               npy_int64 total,
+                               size_t num_colors, npy_int64 *colors,
+                               npy_int64 nsample,
+                               size_t num_variates, npy_int64 *variates)
 
 Generate a single integer
 
-.. c:function:: int64_t random_positive_int64(bitgen_t *bitgen_state)
+.. c:function:: npy_int64 random_positive_int64(bitgen_t *bitgen_state)
 
-.. c:function:: int32_t random_positive_int32(bitgen_t *bitgen_state)
+.. c:function:: npy_int32 random_positive_int32(bitgen_t *bitgen_state)
 
-.. c:function:: int64_t random_positive_int(bitgen_t *bitgen_state)
+.. c:function:: npy_int64 random_positive_int(bitgen_t *bitgen_state)
 
-.. c:function:: uint64_t random_uint(bitgen_t *bitgen_state)
+.. c:function:: npy_uint64 random_uint(bitgen_t *bitgen_state)
 
 
 Generate random uint64 numbers in closed interval [off, off + rng].
 
-.. c:function:: uint64_t random_bounded_uint64(bitgen_t *bitgen_state,
-                                   uint64_t off, uint64_t rng,
-                                   uint64_t mask, bint use_masked)
+.. c:function:: npy_uint64 random_bounded_uint64(bitgen_t *bitgen_state,
+                                   npy_uint64 off, npy_uint64 rng,
+                                   npy_uint64 mask, bint use_masked)
 
 
