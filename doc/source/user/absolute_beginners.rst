@@ -125,7 +125,7 @@ for two- or higher-dimensional data..
 
 For example::
 
-  >>> array = np.array([1, 2, 3, 4, 5, 6])
+  >>> a = np.array([1, 2, 3, 4, 5, 6])
 
 or::
 
