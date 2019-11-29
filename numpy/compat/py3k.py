@@ -7,7 +7,7 @@ from __future__ import division, absolute_import, print_function
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
            'asstr', 'open_latin1', 'long', 'basestring', 'sixu',
-           'integer_types', 'is_pathlib_path', 'npy_load_module', 'PathLike',
+           'integer_types', 'is_pathlib_path', 'npy_load_module', 'Path',
            'pickle', 'contextlib_nullcontext', 'os_fspath', 'os_PathLike']
 
 import sys
