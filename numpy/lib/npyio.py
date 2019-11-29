@@ -833,7 +833,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     fname : file, str, or pathlib.Path
         File, filename, or generator to read.  If the filename extension is
         ``.gz`` or ``.bz2``, the file is first decompressed. Note that
-        generators should return byte strings for Python 3.
+        generators should return byte strings.
     dtype : data-type, optional
         Data-type of the resulting array; default: float.  If this is a
         structured data-type, the resulting array will be 1-dimensional, and
@@ -1578,7 +1578,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     fname : file, str, pathlib.Path, list of str, generator
         File, filename, list, or generator to read.  If the filename
         extension is `.gz` or `.bz2`, the file is first decompressed. Note
-        that generators must return byte strings in Python 3k.  The strings
+        that generators must return byte strings. The strings
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
         Data type of the resulting array.
