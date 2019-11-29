@@ -325,8 +325,7 @@ Adding, removing, and sorting elements
 
 
 Sorting an element is simple with ``np.sort()``. You can specify the axis, kind,
-and order when you call the function. 
-`Read more about sorting an array here <https://numpy.org/devdocs/reference/generated/numpy.sort.html>`_.
+and order when you call the function. `Read more about sorting an array here <https://numpy.org/devdocs/reference/generated/numpy.sort.html>`_.
 
 If you start with this array:
 
@@ -418,11 +417,11 @@ How do you know the shape and size of an array?
 **ndarray.ndim** will tell you the number of axes, or dimensions, of the array.
 
 **ndarray.size** will tell you the total number of elements of the array. This
-**is the *product* of the elements of the array's shape.
+is the *product* of the elements of the array's shape.
 
 **ndarray.shape** will display a tuple of integers that indicate the number of
-**elements stored along each dimension of the array. If, for example, you have a
-**2D array with 2 rows and 3 columns, the shape of your array is (2,3).
+elements stored along each dimension of the array. If, for example, you have a
+2D array with 2 rows and 3 columns, the shape of your array is (2,3).
 
 For example, if you create this array::
 
@@ -2573,10 +2572,6 @@ All you need to do to plot your values is run:
   plt.plot(a) 
   plt.show()
 
-.. plot:: full/path/to/script.py
-   :align: center
-   :include-source: 0
-
 **Output:**
 
 .. image:: images/np_matplotlib.png
@@ -2591,10 +2586,6 @@ For example, you can plot a 1D array like this:
   y = np.linspace(0, 10, 20) 
   plt.plot(x, y, 'purple') # line   
   plt.plot(x, y, 'o')      # dots
-
-.. plot:: full/path/to/script.py
-   :align: center
-   :include-source: 0
 
 .. image:: images/np_matplotlib1.png :scale: 50 %
 
@@ -2615,10 +2606,6 @@ With Matplotlib, you have access to an enormous number of visualization options.
   ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis')
 
   plt.colorbar()
-
-.. plot:: full/path/to/script.py
-   :align: center
-   :include-source: 0
 
 .. image:: images/np_matplotlib4.png :scale: 50 %
 
