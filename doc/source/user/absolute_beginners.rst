@@ -2519,7 +2519,7 @@ You can also save your array with the NumPy ``savetxt`` method. ::
 
   np.savetxt('np.csv', a, fmt='%.2f', delimiter=',', header='1,  2,  3,  4')
 
-Read your saved CSV any time with a command such as:
+If you're using the command line, you can read your saved CSV any time with a command such as:
 
 **Input:**
 
@@ -2536,6 +2536,8 @@ Read your saved CSV any time with a command such as:
   0.99,1.17,0.94,-0.15 
   0.77,0.81,-0.95,0.12 
   0.20,0.35,1.97,0.52
+
+Or you can open the file any time with a text editor!
 
 If you're interested in learning more about Pandas, take a look at the 
 `official Pandas documentation <https://pandas.pydata.org/index.html>`_. 
@@ -2571,6 +2573,10 @@ All you need to do to plot your values is run:
   plt.plot(a) 
   plt.show()
 
+.. plot:: full/path/to/script.py
+   :align: center
+   :include-source: 0
+
 **Output:**
 
 .. image:: images/np_matplotlib.png
@@ -2585,6 +2591,10 @@ For example, you can plot a 1D array like this:
   y = np.linspace(0, 10, 20) 
   plt.plot(x, y, 'purple') # line   
   plt.plot(x, y, 'o')      # dots
+
+.. plot:: full/path/to/script.py
+   :align: center
+   :include-source: 0
 
 .. image:: images/np_matplotlib1.png :scale: 50 %
 
@@ -2605,6 +2615,10 @@ With Matplotlib, you have access to an enormous number of visualization options.
   ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis')
 
   plt.colorbar()
+
+.. plot:: full/path/to/script.py
+   :align: center
+   :include-source: 0
 
 .. image:: images/np_matplotlib4.png :scale: 50 %
 
