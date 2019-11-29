@@ -176,7 +176,7 @@ Your array has 2 axes. The first axis has a length of 2 and the second axis has
 a length of 3.
 
 Just like in other Python container objects, the contents of an array can be
-accessed and modified by indexing or slicing the array. Different arrays can
+accessed and modified by indexing or slicing the array. Unlike the typical container objects, different arrays can
 share the same data, so changes made on one array might be visible in another. 
 
 Array **attributes** reflect information intrinsic to the array itself. If you
