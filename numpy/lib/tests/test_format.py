@@ -970,11 +970,11 @@ def test_unicode_field_names():
                  metadata={'some': 'stuff'})]}), True),
     (np.dtype(int, metadata={'some': 'stuff'}), False),
     (np.dtype(int, (2,), metadata={'some': 'stuff'}), False),
+    (np.dtype((int, 3), metadata={'some': 'stuff'}), True),
     # recursive: metadata on the field of a dtype
-    (np.dtype({'names': ['a', 'b'], 'formats': [float,
-        np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})],
-        }),
-     False)
+    (np.dtype({'names': ['a', 'b'], 'formats': [
+        float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
+    ]}), False)
     ])
 def test_metadata_dtype(dt, fail):
     # gh-14142

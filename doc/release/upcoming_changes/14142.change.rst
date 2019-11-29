@@ -1,6 +1,6 @@
-Warn when saving a dtype that cannot be loaded
-----------------------------------------------
+Warn when saving a dtype with metadata
+--------------------------------------
 A ``UserWarning`` will be raised when saving an array via `numpy.save` with
-``metadata``, since loading such an array will cause a ``ValueError``. This
-shorcoming in the NPY format will be addressed in a future release, in the
-mean time use pickle instead.
+``metadata``, since saving such an array may not preserve metadata and loading
+if metadata is preserved, loading it will cause a ``ValueError``. This
+shorcoming in the NPY format will be addressed in a future release.

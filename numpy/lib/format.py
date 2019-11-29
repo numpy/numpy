@@ -242,9 +242,6 @@ def read_magic(fp):
         major, minor = magic_str[-2:]
     return major, minor
 
-class MetadataWarning(UserWarning):
-    pass
-
 def _has_metadata(dt):
     if dt.metadata is not None:
         return True
@@ -281,7 +278,7 @@ def dtype_to_descr(dtype):
     if _has_metadata(dtype):
         warnings.warn("metadata on a dtype may be saved or ignored, but will "
                       "raise if saved when read. Use another form of storage.",
-                      MetadataWarning, stacklevel=2)
+                      UserWarning, stacklevel=2)
     if dtype.names is not None:
         # This is a record array. The .descr is fine.  XXX: parts of the
         # record array with an empty name, like padding bytes, still get
