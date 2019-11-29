@@ -70,8 +70,8 @@ you'll need to import it. This can be easily done with this import statement::
   import numpy as np 
 
 (We shorten ``numpy`` to ``np`` in order to save time and also to keep code
-(standardized so that anyone working with your code can easily understand and
-(run it.)
+standardized so that anyone working with your code can easily understand and
+run it.)
 
 Reading the example code
 ------------------------
@@ -87,7 +87,8 @@ like this::
 If you aren't familiar with this style, it's very easy to understand. 
 If you see ``>>>``, you're looking at **input**, or the code that 
 you would enter. Everything that doesn't have ``>>>`` in front of it 
-is **output**, or the results of running your code.
+is **output**, or the results of running your code. This is the style 
+you see when you run ``python`` on the command line, but if you're using IPython, you might see a different style.
 
 
 What’s the difference between a Python list and a NumPy array? 
@@ -125,7 +126,7 @@ for two- or higher-dimensional data..
 
 For example::
 
-  >>> array = np.array([1, 2, 3, 4, 5, 6])
+  >>> a = np.array([1, 2, 3, 4, 5, 6])
 
 or::
 
@@ -1768,6 +1769,7 @@ here.
 
 Learn more about 
 `input and output routines here <https://numpy.org/devdocs/reference/routines.io.html>`_.
+Learn more about input and output routines here :doc:`numpy:reference/routines.io`
 
 
 Importing and exporting a CSV 
