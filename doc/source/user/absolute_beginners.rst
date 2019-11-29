@@ -1651,13 +1651,7 @@ make NumPy so highly regarded in the scientific Python community.
 For example, this is the mean square error formula (a central formula used in
 supervised machine learning models that deal with regression):
 
-.. math::
-
-  MeanSquareError = \color{green}{\frac{1}{n}}
-  \color{blue}{\sum{i=1}^{n}} (
-  \color{red}{predictions} - 
-  \color{purple}{labels} )
-  \color{yellow}{^{2}}
+.. image:: images/np_MSE_formula.png
 
 Implementing this formula is simple and straightforward in NumPy:
 
