@@ -132,6 +132,23 @@
 # include_dirs = /opt/OpenBLAS/include
 # runtime_library_dirs = /opt/OpenBLAS/lib
 
+# OpenBLAS (64-bit with suffix)
+# -----------------------------
+# OpenBLAS can be compiled with 64-bit integer size and symbol suffix '64_'
+# (INTERFACE64=1 SYMBOLSUFFIX=64_). OpenBLAS built with this setting are also
+# provided by some Linux distributions (e.g. Fedora's 64-bit openblas packages).
+# This is an emerging "standard" for 64-bit BLAS/LAPACK, avoiding symbol clashes
+# with 32-bit BLAS/LAPACK.
+#
+# See:
+# https://github.com/xianyi/OpenBLAS/issues/646
+#
+# [openblas64_]
+# libraries = openblas64_
+# library_dirs = /opt/OpenBLAS/lib
+# include_dirs = /opt/OpenBLAS/include
+# runtime_library_dirs = /opt/OpenBLAS/lib
+
 # BLIS
 # ----
 # BLIS (https://github.com/flame/blis) also provides a BLAS interface.  It's a
