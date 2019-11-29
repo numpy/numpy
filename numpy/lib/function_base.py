@@ -1507,7 +1507,8 @@ def unwrap(p, discont=None, axis=-1, *, min_val=-pi, max_val=pi):
     array([ 0.        ,  0.78539816,  1.57079633,  5.49778714,  6.28318531]) # may vary
     >>> np.unwrap(phase)
     array([ 0.        ,  0.78539816,  1.57079633, -0.78539816,  0.        ]) # may vary
-
+    >>> unwrap([0, 1, 2, -1, 0], min_val=-1, max_val=3)
+    array([0., 1., 2., 3., 4.])
     """
     if discont is None:
         discont = (max_val - min_val)/2
