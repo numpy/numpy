@@ -1865,8 +1865,8 @@ All you need to do to plot your values is run::
   >>> plt.show()
 
 .. plot:: plots/matplotlib1.py
-  :align: center
-  :include-source: 0
+   :align: center
+   :include-source: 0
 
 For example, you can plot a 1D array like this::
 
@@ -1876,8 +1876,8 @@ For example, you can plot a 1D array like this::
   >>> plt.plot(x, y, 'o')      # dots
 
 .. plot:: plots/matplotlib2.py
-  :align: center
-  :include-source: 0
+   :align: center
+   :include-source: 0
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
