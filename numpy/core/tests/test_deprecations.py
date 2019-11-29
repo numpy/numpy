@@ -542,7 +542,6 @@ class TestFromStringAndFileInvalidData(_DeprecationTestCase):
             res = np.fromstring(x_str, sep=",", count=4)
             assert_array_equal(res, x)
 
-
 class Test_GetSet_NumericOps(_DeprecationTestCase):
     # 2018-09-20, 1.16.0
     def test_get_numeric_ops(self):
@@ -568,3 +567,12 @@ class TestNonZero(_DeprecationTestCase):
     def test_zerod(self):
         self.assert_deprecated(lambda: np.nonzero(np.array(0)))
         self.assert_deprecated(lambda: np.nonzero(np.array(1)))
+
+
+class TestRaggedArary(_DeprecationTestCase):
+    # 2019-11-29 1.18.0
+    def test_deprecate_ragged_arrays(self):
+        # NEP 34 deprecated automatic object dtype when creating ragged
+        # arrays. Also see the "ragged" tests in `test_multiarray`
+        self.assert_deprecated(np.array, args=([1, [2, 3]],)) 
+
