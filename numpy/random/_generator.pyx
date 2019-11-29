@@ -54,9 +54,11 @@ cdef extern from "numpy/random/distributions.h":
     double random_standard_uniform(bitgen_t *bitgen_state) nogil
     void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_standard_exponential(bitgen_t *bitgen_state) nogil
+    double random_standard_exponential_f(bitgen_t *bitgen_state) nogil
     void random_standard_exponential_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
-    double random_standard_exponential_zig(bitgen_t *bitgen_state) nogil
-    void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_exponential_inv_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_exponential_inv_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_standard_normal(bitgen_t* bitgen_state) nogil
     void random_standard_normal_fill(bitgen_t *bitgen_state, np.npy_intp count, double *out) nogil
     void random_standard_normal_fill_f(bitgen_t *bitgen_state, np.npy_intp count, float *out) nogil
@@ -64,10 +66,6 @@ cdef extern from "numpy/random/distributions.h":
 
     float random_standard_uniform_f(bitgen_t *bitgen_state) nogil
     void random_standard_uniform_fill_f(bitgen_t* bitgen_state, np.npy_intp cnt, float *out) nogil
-    float random_standard_exponential_f(bitgen_t *bitgen_state) nogil
-    float random_standard_exponential_zig_f(bitgen_t *bitgen_state) nogil
-    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
-    void random_standard_exponential_zig_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
     float random_standard_normal_f(bitgen_t* bitgen_state) nogil
     float random_standard_gamma_f(bitgen_t *bitgen_state, float shape) nogil
 
@@ -86,7 +84,7 @@ cdef extern from "numpy/random/distributions.h":
     double random_beta(bitgen_t *bitgen_state, double a, double b) nogil
     double random_chisquare(bitgen_t *bitgen_state, double df) nogil
     double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) nogil
-    double random_standard_cauchy(bitgen_t *bitgen_state) nogil
+    double random_cauchy(bitgen_t *bitgen_state) nogil
     double random_pareto(bitgen_t *bitgen_state, double a) nogil
     double random_weibull(bitgen_t *bitgen_state, double a) nogil
     double random_power(bitgen_t *bitgen_state, double a) nogil
@@ -95,7 +93,7 @@ cdef extern from "numpy/random/distributions.h":
     double random_logistic(bitgen_t *bitgen_state, double loc, double scale) nogil
     double random_lognormal(bitgen_t *bitgen_state, double mean, double sigma) nogil
     double random_rayleigh(bitgen_t *bitgen_state, double mode) nogil
-    double random_standard_t(bitgen_t *bitgen_state, double df) nogil
+    double random_student_t(bitgen_t *bitgen_state, double df) nogil
     double random_noncentral_chisquare(bitgen_t *bitgen_state, double df,
                                        double nonc) nogil
     double random_noncentral_f(bitgen_t *bitgen_state, double dfnum,
@@ -459,14 +457,14 @@ cdef class Generator:
         key = np.dtype(dtype).name
         if key == 'float64':
             if method == u'zig':
-                return double_fill(&random_standard_exponential_zig_fill, &self._bitgen, size, self.lock, out)
-            else:
                 return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
+            else:
+                return double_fill(&random_standard_exponential_inv_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
             if method == u'zig':
-                return float_fill(&random_standard_exponential_zig_fill_f, &self._bitgen, size, self.lock, out)
-            else:
                 return float_fill(&random_standard_exponential_fill_f, &self._bitgen, size, self.lock, out)
+            else:
+                return float_fill(&random_standard_exponential_inv_fill_f, &self._bitgen, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_exponential'
                             % key)
@@ -1697,7 +1695,7 @@ cdef class Generator:
         >>> plt.show()
 
         """
-        return cont(&random_standard_cauchy, &self._bitgen, size, self.lock, 0,
+        return cont(&random_cauchy, &self._bitgen, size, self.lock, 0,
                     0.0, '', CONS_NONE, 0.0, '', CONS_NONE, 0.0, '', CONS_NONE, None)
 
     def standard_t(self, df, size=None):
@@ -1788,7 +1786,7 @@ cdef class Generator:
         probability of about 99% of being true.
 
         """
-        return cont(&random_standard_t, &self._bitgen, size, self.lock, 1,
+        return cont(&random_student_t, &self._bitgen, size, self.lock, 1,
                     df, 'df', CONS_POSITIVE,
                     0, '', CONS_NONE,
                     0, '', CONS_NONE,
