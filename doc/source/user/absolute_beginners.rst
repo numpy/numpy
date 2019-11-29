@@ -230,7 +230,7 @@ Or an array filled with ``1s``::
 Or even an empty array! The function ``empty`` creates an array whose initial
 content is random and depends on the state of the memory. The reason to use
 ``empty`` over ``zeros`` (or something similar) is speed - just make sure to
-fill every element afterwards!::
+fill every element afterwards! ::
 
   >>> # Create an empty array with 2 elements 
   >>> np.empty(2)
@@ -280,7 +280,7 @@ and order when you call the function. `Read more about sorting an array here <ht
 
 If you start with this array::
 
-  >>> arr = np.array([2, 1, 5, 3, 7, 4, 6, 8])
+  arr = np.array([2, 1, 5, 3, 7, 4, 6, 8])
 
 You can quickly sort the numbers in ascending order with::
 
@@ -311,8 +311,8 @@ You can concatenate them with ``np.concatenate()``. ::
 
 Or, if you start with these arrays::
 
-  >>> x = np.array([[1, 2], [3, 4]])
-  >>> y = np.array([[5, 6]])
+  x = np.array([[1, 2], [3, 4]])
+  y = np.array([[5, 6]])
 
 You can concatenate them with::
 
@@ -649,7 +649,7 @@ Let's say you have this array:
 
 ::
 
-  >>> array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
+  array([ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10])
 
 You can create a new array from a section of your array any time by specifying
 where you want to slice your array. ::
@@ -1120,7 +1120,7 @@ For example, if you start with this array::
 
   a = np.array([11, 11, 12, 13, 14, 15, 16, 17, 12, 13, 11, 14, 18, 19, 20])
 
-you can use ``np.unique`` ::
+you can use ``np.unique`` to print the unique values in your array::
 
   >>> unique_values = np.unique(a)
   >>> print(unique_values)
@@ -1141,7 +1141,8 @@ array to get the frequency count of unique values in a NumPy array. ::
   >>> print(occurrence_count)
   [3 2 2 2 1 1 1 1 1 1]
 
-This also works with 2D arrays. If you start with this array::
+This also works with 2D arrays! 
+If you start with this array::
 
   a_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [1, 2, 3, 4]])
 
@@ -1153,7 +1154,7 @@ You can find unique values with::
 
 If the axis argument isn't passed, your 2D array will be flattened. 
 
-To get the unique rows or columns, make sure to pass the ``axis`` argument. To
+If you want to get the unique rows or columns, make sure to pass the ``axis`` argument. To
 find the unique rows, specify ``axis=0`` and for columns, specify ``axis=1``. ::
 
   >>> unique_rows = np.unique(a_2d, axis=0)
@@ -1278,7 +1279,7 @@ You can reverse the content in all of the rows and all of the columns with::
      [ 8  7  6  5]
      [ 4  3  2  1]]
 
-You can easily reverse only the rows with::
+You can easily reverse only the **rows** with::
 
   >>> reversed_arr_rows = np.flip(arr_2d, axis=0)
  
@@ -1289,7 +1290,7 @@ You can easily reverse only the rows with::
    [ 5  6  7  8]
    [ 1  2  3  4]]
 
-Or reverse only the columns with::
+Or reverse only the **columns** with::
 
   >>> reversed_arr_columns = np.flip(arr_2d, axis=1)
  
@@ -1397,7 +1398,9 @@ How to access the docstring for more information
 
 ::
 
-  help() ? ??
+  help()
+  ?
+  ??
 
 -----
 
@@ -1736,7 +1739,7 @@ For example, if you create this array::
 
 You can easily save it as a .csv file with the name "new_file.csv" like this::
 
-  np.savetxt('new_file.csv', csv_arr)
+  >>> np.savetxt('new_file.csv', csv_arr)
 
 You can quickly and easily load your saved text file using ``loadtxt()``::
 
@@ -1864,7 +1867,7 @@ All you need to do to plot your values is run::
   >>> .plot(a) 
   >>> plt.show()
 
-
+.. image:: images/np_matplotlib.png
 
 For example, you can plot a 1D array like this::
 
@@ -1873,7 +1876,7 @@ For example, you can plot a 1D array like this::
   >>> plt.plot(x, y, 'purple') # line
   >>> plt.plot(x, y, 'o')      # dots
 
-
+.. image:: images/np_matplotlib1.png
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
@@ -1891,7 +1894,7 @@ With Matplotlib, you have access to an enormous number of visualization options.
 
   >>> plt.colorbar()
 
-
+.. image:: images/np_matplotlib4.png
 
 
 To read more about Matplotlib and what it can do, take a look at 
