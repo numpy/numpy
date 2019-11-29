@@ -314,13 +314,14 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
     high_arr = <np.ndarray>np.array(high, copy=False)
     low_ndim = np.PyArray_NDIM(low_arr)
     high_ndim = np.PyArray_NDIM(high_arr)
+    # nschloe, 2019-11-29:
+    # This conditional allows x and [x]. Why stop there? [[[[[x]]]]] also wants to be a
+    # low/high. It'd be more consistent if we just allowed int input for low, high in
+    # the first place, not array_like.
     if ((low_ndim == 0 or (low_ndim == 1 and low_arr.size == 1 and size is not None)) and
             (high_ndim == 0 or (high_ndim == 1 and high_arr.size == 1 and size is not None))):
-        # nschloe, 2019-11-29:
-        # It'd be nicer if we just allowed int input for low, high in the first place,
-        # not array_like.
-        low = int(low_arr[0]) if low_ndim == 1 else int(low_arr)
-        high = int(high_arr[0]) if high_ndim == 1 else int(high_arr)
+        low = int(low_arr.reshape(1)[0])
+        high = int(high_arr.reshape(1)[0])
 
         # Subtract 1 since internal generator produces on closed interval [low, high]
         if not closed:
