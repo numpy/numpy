@@ -272,7 +272,7 @@ class memmap(ndarray):
             if isinstance(filename, os_PathLike):
                 # special case - if we were constructed with a pathlib.path,
                 # then filename is a path object, not a string
-                self.filename = filename.resolve()
+                self.filename = os.path.abspath(filename)
             elif hasattr(fid, "name") and isinstance(fid.name, basestring):
                 # py3 returns int for TemporaryFile().name
                 self.filename = os.path.abspath(fid.name)
