@@ -2094,15 +2094,11 @@ Will return::
       iterable is empty. With two or more arguments, return the largest
       argument.
 
-<<<<<<< HEAD
 Because access to additional information is so useful, IPython uses the ``?``
 character as a shorthand for accessing this documentation along with other
 relevant information. IPython is a command shell for interactive computing in
 multiple languages.`You can find more information about IPython here
 <https://ipython.org/>`_. 
-=======
-Because access to additional information is so useful, IPython uses the ``?`` character as a shorthand for accessing this documentation along with other relevant information. IPython is a command shell for interactive computing in multiple languages. `You can find more information about IPython here <https://ipython.org/>`_. 
->>>>>>> e1969d86e2fe034c46b8943a40282007ec561b6f
 
 For example,
 
@@ -2567,14 +2563,13 @@ All you need to do to plot your values is run:
 
 **Input:**
 
-::
+.. plot::
 
   plt.plot(a) 
   plt.show()
 
-**Output:**
-
-.. image:: images/np_matplotlib.png
+  :align: center
+  :include-source: 0
 
 For example, you can plot a 1D array like this:
 
@@ -2619,7 +2614,6 @@ For directions regarding installing Matplotlib, see the official
 
 
 
-
 =======
-*Image credits: Jay Alammar http://jalammar.github.io/ and Anne Bonner https://github.com/bonn0062*
-
+*Image credits: Jay Alammar http://jalammar.github.io/ and 
+Anne Bonner https://github.com/bonn0062*
