@@ -281,7 +281,7 @@ and order when you call the function. `Read more about sorting an array here <ht
 
 If you start with this array::
 
-  arr = np.array([2, 1, 5, 3, 7, 4, 6, 8])
+  >>> arr = np.array([2, 1, 5, 3, 7, 4, 6, 8])
 
 You can quickly sort the numbers in ascending order with::
 
@@ -301,8 +301,8 @@ and  ``partition``, which is a
 
 If you start with these arrays::
 
-  a = np.array([1, 2, 3, 4])
-  b = np.array([5, 6, 7, 8])
+  >>> a = np.array([1, 2, 3, 4])
+  >>> b = np.array([5, 6, 7, 8])
  
 
 You can concatenate them with ``np.concatenate()``. ::
@@ -312,8 +312,8 @@ You can concatenate them with ``np.concatenate()``. ::
 
 Or, if you start with these arrays::
 
-  x = np.array([[1, 2], [3, 4]])
-  y = np.array([[5, 6]])
+  >>> x = np.array([[1, 2], [3, 4]])
+  >>> y = np.array([[5, 6]])
 
 You can concatenate them with::
 
@@ -352,7 +352,7 @@ elements stored along each dimension of the array. If, for example, you have a
 
 For example, if you create this array::
 
-  array_example = np.array([[[0, 1, 2, 3]
+  >>> array_example = np.array([[[0, 1, 2, 3]
                              [4, 5, 6, 7]],
 
                             [[0, 1, 2, 3]
@@ -808,7 +808,7 @@ or between arrays of two different sizes. For example, your array (we'll call it
 "data") might contain information about distance in miles but you want to
 convert the information to kilometers. You can perform this operation with::
 
-  data * 1.6
+  >>> data * 1.6
 
 .. image:: images/np_multiply_broadcasting.png
 
@@ -835,9 +835,9 @@ NumPy also performs aggregation functions. In addition to ``min``,  ``max``, and
 result of multiplying the elements together, ``std`` to get the standard
 deviation, and more. ::
 
-  data.max()
-  data.min()
-  data.sum()
+  >>> data.max()
+  >>> data.min()
+  >>> data.sum()
 
 .. image:: images/np_aggregation.png
 
@@ -888,7 +888,7 @@ NumPy will return the dimensions of the array as a tuple.
 
 For example, if you create this array::
 
-  arr = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> arr = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can use ``arr.shape`` to find the shape of your array. ::
 
@@ -916,7 +916,7 @@ It's also easy to find the total number of elements in your array::
 
 You can use ``arr.shape()`` with a 1D array as well. If you create this array::
 
-  arr = arr.array([1, 2, 3, 4, 5, 6, 7, 8])
+  >>> arr = arr.array([1, 2, 3, 4, 5, 6, 7, 8])
 
 You can print the shape and the length of the array. ::
 
@@ -946,7 +946,7 @@ You can print the total number of elements as well::
 
 This also works for 3D arrays::
 
-  arr_3d = np.array([ [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3]],
+  >>> arr_3d = np.array([ [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3]],
                       [[4, 4, 4, 4], [5, 5, 5, 5], [6, 6, 6, 6]] ])
 
 You can easily print the size of the axis::
@@ -994,25 +994,25 @@ NumPy. ::
 
 Indexing and slicing operations are useful when you're manipulating matrices::
 
-  data[0, 1]
-  data[1 : 3]
-  data[0 : 2, 0]
+  >>> data[0, 1]
+  >>> data[1 : 3]
+  >>> data[0 : 2, 0]
 
 .. image:: images/np_matrix_indexing.png
 
 You can aggregate matrices the same way you aggregated vectors::
 
-  data.max()
-  data.min()
-  data.sum()
+  >>> data.max()
+  >>> data.min()
+  >>> data.sum()
 
 .. image:: images/np_matrix_aggregation.png
 
 You can aggregate all the values in a matrix and you can aggregate them across
 columns or rows using the ``axis`` parameter::
   
-  data.max(axis=0)
-  data.max(axis=1)
+  >>> data.max(axis=0)
+  >>> data.max(axis=1)
 
 
 .. image:: images/np_matrix_aggregation_row.png
@@ -1020,7 +1020,7 @@ columns or rows using the ``axis`` parameter::
 Once you've created your matrices, you can add and multiply them using
 arithmetic operators if you have two matrices that are the same size. ::
 
-  data + ones
+  >>> data + ones
 
 .. image:: images/np_matrix_arithmetic.png
 
@@ -1028,7 +1028,7 @@ You can do these arithmetic operations on matrices of different sizes, but only
 if one matrix has only one column or one row. In this case, NumPy will use its
 broadcast rules for the operation. ::
 
-  data + ones_row
+  >>> data + ones_row
 
 .. image:: images/np_matrix_broadcasting.png
 
@@ -1061,19 +1061,19 @@ array. NumPy offers methods like ``ones()``, ``zeros()``, and  ``Random Generato
 for these instances. All you need to do is pass in the number of
 elements you want it to generate. ::
 
-  np.ones(3)
-  np.zeros(3)
-  np.random.random(3)
+  >>> np.ones(3)
+  >>> np.zeros(3)
+  >>> np.random.random(3)
   
 .. image:: images/np_ones_zeros_random.png
 
 You can also use the ``ones()``, ``zeros()``, and ``random()`` methods to create
 an array if you give them a tuple describing the dimensions of the matrix. ::
 
-  np.ones(3,2)
-  np.zeros(3,2)
-  rng = np.random.default_rng()
-  rng.random()
+  >>> np.ones(3,2)
+  >>> np.zeros(3,2)
+  >>> rng = np.random.default_rng()
+  >>> rng.random()
 
 .. image:: images/np_ones_zeros_matrix.png
 
@@ -1119,7 +1119,7 @@ You can find the unique elements in an array easily with ``np.unique``.
 
 For example, if you start with this array::
 
-  a = np.array([11, 11, 12, 13, 14, 15, 16, 17, 12, 13, 11, 14, 18, 19, 20])
+  >>> a = np.array([11, 11, 12, 13, 14, 15, 16, 17, 12, 13, 11, 14, 18, 19, 20])
 
 you can use ``np.unique`` to print the unique values in your array::
 
@@ -1145,7 +1145,7 @@ array to get the frequency count of unique values in a NumPy array. ::
 This also works with 2D arrays! 
 If you start with this array::
 
-  a_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [1, 2, 3, 4]])
+  >>> a_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [1, 2, 3, 4]])
 
 You can find unique values with::
 
@@ -1250,7 +1250,7 @@ contents along all of the axes of your input array.
 
 If you begin with a 1D array like this one::
 
-  arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+  >>> arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
 
 You can reverse it with::
 
@@ -1267,7 +1267,7 @@ A 2D array works much the same way.
 
 If you start with this array::
 
-  arr_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> arr_2d = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can reverse the content in all of the rows and all of the columns with::
 
@@ -1346,7 +1346,7 @@ If you start with this array:
 
 ::
 
-  array = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> array = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can use ``flatten`` to flatten your array into a 1D array. ::
 
@@ -1715,7 +1715,7 @@ It's easy to save and load and array with ``np.save()``. Just make sure to
 specify the array you want to save and a file name.  For example, if you create
 this array::
 
-  a = np.array([1, 2, 3, 4, 5, 6])
+  >>> a = np.array([1, 2, 3, 4, 5, 6])
 
 You can save it as "filename.npy" with::
 
@@ -1736,7 +1736,7 @@ with ``np.savetxt``.
 
 For example, if you create this array::
 
-  csv_arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+  >>> csv_arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
 
 You can easily save it as a .csv file with the name "new_file.csv" like this::
 
@@ -1769,7 +1769,6 @@ You can read more about
 
 Learn more about 
 `input and output routines here <https://numpy.org/devdocs/reference/routines.io.html>`_.
-Learn more about input and output routines here :doc:`numpy:reference/routines.io`
 
 
 Importing and exporting a CSV 
@@ -1853,7 +1852,7 @@ If you need to generate a plot for your values, it's very simple with
 
 For example, you may have an array like this one::
 
-  a = np.array([2, 1, 5, 7, 4, 6, 8, 14, 10, 9, 18, 20, 22])
+  >>> a = np.array([2, 1, 5, 7, 4, 6, 8, 14, 10, 9, 18, 20, 22])
 
 If you already have Matplotlib installed, you can import it with::
   
