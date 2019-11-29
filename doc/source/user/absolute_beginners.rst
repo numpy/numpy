@@ -1878,7 +1878,7 @@ For example, you can plot a 1D array like this::
   plt.plot(x, y, 'purple') # line
   plt.plot(x, y, 'o')      # dots
 
-.. image:: images/np_matplotlib1.png :scale: 50 %
+.. image:: images/np_matplotlib1.png
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
@@ -1896,7 +1896,7 @@ With Matplotlib, you have access to an enormous number of visualization options.
 
   >>> plt.colorbar()
 
-.. image:: images/np_matplotlib4.png :scale: 50 %
+.. image:: images/np_matplotlib4.png
 
 To read more about Matplotlib and what it can do, take a look at 
 `the official documentation <https://matplotlib.org/>`_. 
