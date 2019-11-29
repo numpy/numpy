@@ -18,76 +18,48 @@ __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
 
 import sys
 import os
+from pathlib import Path, PurePath
+import io
+
+import abc
+from abc import ABC as abc_ABC
+
 try:
-    from pathlib import Path, PurePath
+    import pickle5 as pickle
 except ImportError:
-    Path = PurePath = None
+    import pickle
 
-if sys.version_info[0] >= 3:
-    import io
+long = int
+integer_types = (int,)
+basestring = str
+unicode = str
+bytes = bytes
 
-    try:
-        import pickle5 as pickle
-    except ImportError:
-        import pickle
+def asunicode(s):
+    if isinstance(s, bytes):
+        return s.decode('latin1')
+    return str(s)
 
-    long = int
-    integer_types = (int,)
-    basestring = str
-    unicode = str
-    bytes = bytes
-
-    def asunicode(s):
-        if isinstance(s, bytes):
-            return s.decode('latin1')
-        return str(s)
-
-    def asbytes(s):
-        if isinstance(s, bytes):
-            return s
-        return str(s).encode('latin1')
-
-    def asstr(s):
-        if isinstance(s, bytes):
-            return s.decode('latin1')
-        return str(s)
-
-    def isfileobj(f):
-        return isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter))
-
-    def open_latin1(filename, mode='r'):
-        return open(filename, mode=mode, encoding='iso-8859-1')
-
-    def sixu(s):
+def asbytes(s):
+    if isinstance(s, bytes):
         return s
+    return str(s).encode('latin1')
 
-    strchar = 'U'
+def asstr(s):
+    if isinstance(s, bytes):
+        return s.decode('latin1')
+    return str(s)
 
-else:
-    import cpickle as pickle
+def isfileobj(f):
+    return isinstance(f, (io.FileIO, io.BufferedReader, io.BufferedWriter))
 
-    bytes = str
-    long = long
-    basestring = basestring
-    unicode = unicode
-    integer_types = (int, long)
-    asbytes = str
-    asstr = str
-    strchar = 'S'
+def open_latin1(filename, mode='r'):
+    return open(filename, mode=mode, encoding='iso-8859-1')
 
-    def isfileobj(f):
-        return isinstance(f, file)
+def sixu(s):
+    return s
 
-    def asunicode(s):
-        if isinstance(s, unicode):
-            return s
-        return str(s).decode('ascii')
-
-    def open_latin1(filename, mode='r'):
-        return open(filename, mode=mode)
-
-    def sixu(s):
-        return unicode(s, 'unicode_escape')
+strchar = 'U'
 
 def getexception():
     return sys.exc_info()[1]
@@ -134,69 +106,30 @@ class contextlib_nullcontext(object):
         pass
 
 
-if sys.version_info[0] >= 3 and sys.version_info[1] >= 4:
-    def npy_load_module(name, fn, info=None):
-        """
-        Load a module.
+def npy_load_module(name, fn, info=None):
+    """
+    Load a module.
 
-        .. versionadded:: 1.11.2
+    .. versionadded:: 1.11.2
 
-        Parameters
-        ----------
-        name : str
-            Full module name.
-        fn : str
-            Path to module file.
-        info : tuple, optional
-            Only here for backward compatibility with Python 2.*.
+    Parameters
+    ----------
+    name : str
+        Full module name.
+    fn : str
+        Path to module file.
+    info : tuple, optional
+        Only here for backward compatibility with Python 2.*.
 
-        Returns
-        -------
-        mod : module
+    Returns
+    -------
+    mod : module
 
-        """
-        import importlib.machinery
-        return importlib.machinery.SourceFileLoader(name, fn).load_module()
-else:
-    def npy_load_module(name, fn, info=None):
-        """
-        Load a module.
-
-        .. versionadded:: 1.11.2
-
-        Parameters
-        ----------
-        name : str
-            Full module name.
-        fn : str
-            Path to module file.
-        info : tuple, optional
-            Information as returned by `imp.find_module`
-            (suffix, mode, type).
-
-        Returns
-        -------
-        mod : module
-
-        """
-        import imp
-        if info is None:
-            path = os.path.dirname(fn)
-            fo, fn, info = imp.find_module(name, [path])
-        else:
-            fo = open(fn, info[1])
-        try:
-            mod = imp.load_module(name, fo, fn, info)
-        finally:
-            fo.close()
-        return mod
-
-# backport abc.ABC
-import abc
-if sys.version_info[:2] >= (3, 4):
-    abc_ABC = abc.ABC
-else:
-    abc_ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
+    """
+    # Explicitly lazy import this to avoid paying the cost
+    # of importing importlib at startup
+    from importlib.machinery import SourceFileLoader
+    return SourceFileLoader(name, fn).load_module()
 
 
 # Backport os.fs_path, os.PathLike, and PurePath.__fspath__
