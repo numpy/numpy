@@ -756,19 +756,15 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'numpyos.c'),
             ]
 
-    blas_info = get_info('blas_opt', 0)
-
     if is_npy_use_blas64_():
-        blas64__info = get_info('blas64__opt', 2)
+        blas_info = get_info('blas64__opt', 2)
+        have_blas = blas_info and ('HAVE_CBLAS64_', None) in blas_info.get('define_macros', [])
     else:
-        blas64__info = {}
+        blas_info = get_info('blas_opt', 0)
+        have_blas = blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', [])
 
-    have_blas = blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', [])
-    have_blas64_ = blas64__info and ('HAVE_CBLAS64_', None) in blas64__info.get('define_macros', [])
-
-    if have_blas or have_blas64_:
+    if have_blas:
         extra_info = blas_info
-        dict_append(blas_info, **blas64__info)
         # These files are also in MANIFEST.in so that they are always in
         # the source distribution independently of HAVE_CBLAS.
         common_src.extend([join('src', 'common', 'cblasfuncs.c'),
