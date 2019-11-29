@@ -1,0 +1,536 @@
+==========================
+NumPy 1.16.0 Release Notes
+==========================
+
+This NumPy release is the last one to support Python 2.7 and will be maintained
+as a long term release with bug fixes until 2020.  Support for Python 3.4 been
+dropped, the supported Python versions are 2.7 and 3.5-3.7. The wheels on PyPI
+are linked with OpenBLAS v0.3.4+,  which should fix the known threading issues
+found in previous OpenBLAS versions.
+
+Downstream developers building this release should use Cython >= 0.29 and, if
+using OpenBLAS, OpenBLAS > v0.3.4.
+
+This release has seen a lot of refactoring and features many bug fixes, improved
+code organization, and better cross platform compatibility. Not all of these
+improvements will be visible to users, but they should help make maintenance
+easier going forward.
+
+
+Highlights
+==========
+
+* Experimental (opt-in only) support for overriding numpy functions,
+  see ``__array_function__`` below.
+
+* The ``matmul`` function is now a ufunc. This provides better
+  performance and allows overriding with ``__array_ufunc__``.
+
+* Improved support for the ARM and POWER architectures.
+
+* Improved support for AIX and PyPy.
+
+* Improved interop with ctypes.
+
+* Improved support for PEP 3118.
+
+
+
+New functions
+=============
+
+* New functions added to the `numpy.lib.recfuntions` module to ease the
+  structured assignment changes:
+
+    * ``assign_fields_by_name``
+    * ``structured_to_unstructured``
+    * ``unstructured_to_structured``
+    * ``apply_along_fields``
+    * ``require_fields``
+
+  See the user guide at <https://docs.scipy.org/doc/numpy/user/basics.rec.html>
+  for more info.
+
+
+New deprecations
+================
+
+* The type dictionaries `numpy.core.typeNA` and `numpy.core.sctypeNA` are
+  deprecated. They were buggy and not documented and will be removed in the
+  1.18 release. Use`numpy.sctypeDict` instead.
+
+* The `numpy.asscalar` function is deprecated. It is an alias to the more
+  powerful `numpy.ndarray.item`, not tested, and fails for scalars.
+
+* The `numpy.set_array_ops` and `numpy.get_array_ops` functions are deprecated.
+  As part of `NEP 15`, they have been deprecated along with the C-API functions
+  :c:func:`PyArray_SetNumericOps` and :c:func:`PyArray_GetNumericOps`. Users
+  who wish to override the inner loop functions in built-in ufuncs should use
+  :c:func:`PyUFunc_ReplaceLoopBySignature`.
+
+* The `numpy.unravel_index` keyword argument ``dims`` is deprecated, use
+  ``shape`` instead.
+
+* The `numpy.histogram` ``normed`` argument is deprecated.  It was deprecated
+  previously, but no warning was issued.
+
+* The ``positive`` operator (``+``) applied to non-numerical arrays is
+  deprecated. See below for details.
+
+* Passing an iterator to the stack functions is deprecated
+
+
+Expired deprecations
+====================
+
+* NaT comparisons now return ``False`` without a warning, finishing a
+  deprecation cycle begun in NumPy 1.11.
+
+* ``np.lib.function_base.unique`` was removed, finishing a deprecation cycle
+  begun in NumPy 1.4. Use `numpy.unique` instead.
+
+* multi-field indexing now returns views instead of copies, finishing a
+  deprecation cycle begun in NumPy 1.7. The change was previously attempted in
+  NumPy 1.14 but reverted until now.
+
+* ``np.PackageLoader`` and ``np.pkgload`` have been removed. These were
+  deprecated in 1.10, had no tests, and seem to no longer work in 1.15.
+
+
+Future changes
+==============
+
+* NumPy 1.17 will drop support for Python 2.7.
+
+
+Compatibility notes
+===================
+
+f2py script on Windows
+----------------------
+On Windows, the installed script for running f2py is now an ``.exe`` file
+rather than a ``*.py`` file and should be run from the command line as ``f2py``
+whenever the ``Scripts`` directory is in the path. Running ``f2py`` as a module
+``python -m numpy.f2py [...]`` will work without path modification in any
+version of NumPy.
+
+NaT comparisons
+---------------
+Consistent with the behavior of NaN, all comparisons other than inequality
+checks with datetime64 or timedelta64 NaT ("not-a-time") values now always
+return ``False``, and inequality checks with NaT now always return ``True``.
+This includes comparisons beteween NaT values. For compatibility with the
+old behavior, use ``np.isnat`` to explicitly check for NaT or convert
+datetime64/timedelta64 arrays with ``.astype(np.int64)`` before making
+comparisons.
+
+complex64/128 alignment has changed
+-----------------------------------
+The memory alignment of complex types is now the same as a C-struct composed of
+two floating point values, while before it was equal to the size of the type.
+For many users (for instance on x64/unix/gcc) this means that complex64 is now
+4-byte aligned instead of 8-byte aligned. An important consequence is that
+aligned structured dtypes may now have a different size. For instance,
+``np.dtype('c8,u1', align=True)`` used to have an itemsize of 16 (on x64/gcc)
+but now it is 12.
+
+More in detail, the complex64 type now has the same alignment as a C-struct
+``struct {float r, i;}``, according to the compiler used to compile numpy, and
+similarly for the complex128 and complex256 types.
+
+nd_grid __len__ removal
+-----------------------
+``len(np.mgrid)`` and ``len(np.ogrid)`` are now considered nonsensical
+and raise a ``TypeError``.
+
+``np.unravel_index`` now accepts ``shape`` keyword argument
+-----------------------------------------------------------
+Previously, only the ``dims`` keyword argument was accepted
+for specification of the shape of the array to be used
+for unraveling. ``dims`` remains supported, but is now deprecated.
+
+multi-field views return a view instead of a copy
+-------------------------------------------------
+Indexing a structured array with multiple fields, e.g., ``arr[['f1', 'f3']]``,
+returns a view into the original array instead of a copy. The returned view
+will often have extra padding bytes corresponding to intervening fields in the
+original array, unlike before, which will affect code such as
+``arr[['f1', 'f3']].view('float64')``. This change has been planned since numpy
+1.7. Operations hitting this path have emitted ``FutureWarnings`` since then.
+Additional ``FutureWarnings`` about this change were added in 1.12.
+
+To help users update their code to account for these changes, a number of
+functions have been added to the ``numpy.lib.recfunctions`` module which
+safely allow such operations. For instance, the code above can be replaced
+with ``structured_to_unstructured(arr[['f1', 'f3']], dtype='float64')``.
+See the "accessing multiple fields" section of the
+`user guide <https://docs.scipy.org/doc/numpy/user/basics.rec.html#accessing-multiple-fields>`__.
+
+
+C API changes
+=============
+
+The :c:data:`NPY_API_VERSION` was incremented to 0x0000D, due to the addition
+of:
+
+* :c:member:`PyUFuncObject.core_dim_flags`
+* :c:member:`PyUFuncObject.core_dim_sizes`
+* :c:member:`PyUFuncObject.identity_value`
+* :c:func:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`
+
+
+New Features
+============
+
+Integrated squared error (ISE) estimator added to ``histogram``
+---------------------------------------------------------------
+This method (``bins='stone'``) for optimizing the bin number is a
+generalization of the Scott's rule. The Scott's rule assumes the distribution
+is approximately Normal, while the ISE_ is a non-parametric method based on
+cross-validation.
+
+.. _ISE: https://en.wikipedia.org/wiki/Histogram#Minimizing_cross-validation_estimated_squared_error
+
+``max_rows`` keyword added for ``np.loadtxt``
+---------------------------------------------
+New keyword ``max_rows`` in `numpy.loadtxt` sets the maximum rows of the
+content to be read after ``skiprows``, as in `numpy.genfromtxt`.
+
+modulus operator support added for ``np.timedelta64`` operands
+--------------------------------------------------------------
+The modulus (remainder) operator is now supported for two operands
+of type ``np.timedelta64``. The operands may have different units
+and the return value will match the type of the operands.
+
+
+Improvements
+============
+
+no-copy pickling of numpy arrays
+--------------------------------
+Up to protocol 4, numpy array pickling created 2 spurious copies of the data
+being serialized.  With pickle protocol 5, and the ``PickleBuffer`` API, a
+large variety of numpy arrays can now be serialized without any copy using
+out-of-band buffers, and with one less copy using in-band buffers. This
+results, for large arrays, in an up to 66% drop in peak memory usage.
+
+build shell independence
+------------------------
+NumPy builds should no longer interact with the host machine
+shell directly. ``exec_command`` has been replaced with
+``subprocess.check_output`` where appropriate.
+
+`np.polynomial.Polynomial` classes render in LaTeX in Jupyter notebooks
+-----------------------------------------------------------------------
+When used in a front-end that supports it, `Polynomial` instances are now
+rendered through LaTeX. The current format is experimental, and is subject to
+change.
+
+``randint`` and ``choice`` now work on empty distributions
+----------------------------------------------------------
+Even when no elements needed to be drawn, ``np.random.randint`` and
+``np.random.choice`` raised an error when the arguments described an empty
+distribution. This has been fixed so that e.g.
+``np.random.choice([], 0) == np.array([], dtype=float64)``.
+
+``linalg.lstsq``, ``linalg.qr``, and ``linalg.svd`` now work with empty arrays
+------------------------------------------------------------------------------
+Previously, a ``LinAlgError`` would be raised when an empty matrix/empty
+matrices (with zero rows and/or columns) is/are passed in. Now outputs of
+appropriate shapes are returned.
+
+Chain exceptions to give better error messages for invalid PEP3118 format strings
+---------------------------------------------------------------------------------
+This should help track down problems.
+
+Einsum optimization path updates and efficiency improvements
+------------------------------------------------------------
+Einsum was synchronized with the current upstream work.
+
+`numpy.angle` and `numpy.expand_dims` now work on ``ndarray`` subclasses
+------------------------------------------------------------------------
+In particular, they now work for masked arrays.
+
+``NPY_NO_DEPRECATED_API`` compiler warning suppression
+------------------------------------------------------
+Setting ``NPY_NO_DEPRECATED_API`` to a value of 0 will suppress the current compiler
+warnings when the deprecated numpy API is used.
+
+``np.diff`` Added kwargs prepend and append
+-------------------------------------------
+New kwargs ``prepend`` and ``append``, allow for values to be inserted on
+either end of the differences.  Similar to options for `ediff1d`. Now the
+inverse of `cumsum` can be obtained easily via ``prepend=0``.
+
+ARM support updated
+-------------------
+Support for ARM CPUs has been updated to accommodate 32 and 64 bit targets,
+and also big and little endian byte ordering. AARCH32 memory alignment issues
+have been addressed. CI testing has been expanded to include AARCH64 targets
+via the services of shippable.com.
+
+Appending to build flags
+------------------------
+`numpy.distutils` has always overridden rather than appended to `LDFLAGS` and
+other similar such environment variables for compiling Fortran extensions.
+Now, if the `NPY_DISTUTILS_APPEND_FLAGS` environment variable is set to 1, the
+behavior will be appending.  This applied to: `LDFLAGS`, `F77FLAGS`,
+`F90FLAGS`, `FREEFLAGS`, `FOPT`, `FDEBUG`, and `FFLAGS`.  See gh-11525 for more
+details.
+
+Generalized ufunc signatures now allow fixed-size dimensions
+------------------------------------------------------------
+By using a numerical value in the signature of a generalized ufunc, one can
+indicate that the given function requires input or output to have dimensions
+with the given size. E.g., the signature of a function that converts a polar
+angle to a two-dimensional cartesian unit vector would be ``()->(2)``; that
+for one that converts two spherical angles to a three-dimensional unit vector
+would be ``(),()->(3)``; and that for the cross product of two
+three-dimensional vectors would be ``(3),(3)->(3)``.
+
+Note that to the elementary function these dimensions are not treated any
+differently from variable ones indicated with a name starting with a letter;
+the loop still is passed the corresponding size, but it can now count on that
+size being equal to the fixed one given in the signature.
+
+Generalized ufunc signatures now allow flexible dimensions
+----------------------------------------------------------
+Some functions, in particular numpy's implementation of ``@`` as ``matmul``,
+are very similar to generalized ufuncs in that they operate over core
+dimensions, but one could not present them as such because they were able to
+deal with inputs in which a dimension is missing. To support this, it is now
+allowed to postfix a dimension name with a question mark to indicate that the
+dimension does not necessarily have to be present.
+
+With this addition, the signature for ``matmul`` can be expressed as
+``(m?,n),(n,p?)->(m?,p?)``.  This indicates that if, e.g., the second operand
+has only one dimension, for the purposes of the elementary function it will be
+treated as if that input has core shape ``(n, 1)``, and the output has the
+corresponding core shape of ``(m, 1)``. The actual output array, however, has
+the flexible dimension removed, i.e., it will have shape ``(..., m)``.
+Similarly, if both arguments have only a single dimension, the inputs will be
+presented as having shapes ``(1, n)`` and ``(n, 1)`` to the elementary
+function, and the output as ``(1, 1)``, while the actual output array returned
+will have shape ``()``. In this way, the signature allows one to use a
+single elementary function for four related but different signatures,
+``(m,n),(n,p)->(m,p)``, ``(n),(n,p)->(p)``, ``(m,n),(n)->(m)`` and
+``(n),(n)->()``.
+
+``np.clip`` and the ``clip`` method check for memory overlap
+------------------------------------------------------------
+The ``out`` argument to these functions is now always tested for memory overlap
+to avoid corrupted results when memory overlap occurs.
+
+New value ``unscaled`` for option ``cov`` in ``np.polyfit``
+-----------------------------------------------------------
+A further possible value has been added to the ``cov`` parameter of the
+``np.polyfit`` function. With ``cov='unscaled'`` the scaling of the covariance
+matrix is disabled completely (similar to setting ``absolute_sigma=True`` in
+``scipy.optimize.curve_fit``). This would be useful in occasions, where the
+weights are given by 1/sigma with sigma being the (known) standard errors of
+(Gaussian distributed) data points, in which case the unscaled matrix is
+already a correct estimate for the covariance matrix.
+
+Detailed docstrings for scalar numeric types
+--------------------------------------------
+The ``help`` function, when applied to numeric types such as `numpy.intc`,
+`numpy.int_`, and `numpy.longlong`, now lists all of the aliased names for that
+type, distinguishing between platform -dependent and -independent aliases.
+
+``__module__`` attribute now points to public modules
+-----------------------------------------------------
+The ``__module__`` attribute on most NumPy functions has been updated to refer
+to the preferred public module from which to access a function, rather than
+the module in which the function happens to be defined. This produces more
+informative displays for functions in tools such as IPython, e.g., instead of
+``<function 'numpy.core.fromnumeric.sum'>`` you now see
+``<function 'numpy.sum'>``.
+
+Large allocations marked as suitable for transparent hugepages
+--------------------------------------------------------------
+On systems that support transparent hugepages over the madvise system call
+numpy now marks that large memory allocations can be backed by hugepages which
+reduces page fault overhead and can in some fault heavy cases improve
+performance significantly. On Linux the setting for huge pages to be used,
+`/sys/kernel/mm/transparent_hugepage/enabled`, must be at least `madvise`.
+Systems which already have it set to `always` will not see much difference as
+the kernel will automatically use huge pages where appropriate.
+
+Users of very old Linux kernels (~3.x and older) should make sure that
+`/sys/kernel/mm/transparent_hugepage/defrag` is not set to `always` to avoid
+performance problems due concurrency issues in the memory defragmentation.
+
+Alpine Linux (and other musl c library distros) support
+-------------------------------------------------------
+We now default to use `fenv.h` for floating point status error reporting.
+Previously we had a broken default that sometimes would not report underflow,
+overflow, and invalid floating point operations. Now we can support non-glibc
+distrubutions like Alpine Linux as long as they ship `fenv.h`.
+
+Speedup ``np.block`` for large arrays
+-------------------------------------
+Large arrays (greater than ``512 * 512``) now use a blocking algorithm based on
+copying the data directly into the appropriate slice of the resulting array.
+This results in significant speedups for these large arrays, particularly for
+arrays being blocked along more than 2 dimensions.
+
+``arr.ctypes.data_as(...)`` holds a reference to arr
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Previously the caller was responsible for keeping the array alive for the
+lifetime of the pointer.
+
+Speedup ``np.take`` for read-only arrays
+----------------------------------------
+The implementation of ``np.take`` no longer makes an unnecessary copy of the
+source array when its ``writeable`` flag is set to ``False``.
+
+Support path-like objects for more functions
+--------------------------------------------
+The ``np.core.records.fromfile`` function now supports ``pathlib.Path``
+and other path-like objects in addition to a file object. Furthermore, the
+``np.load`` function now also supports path-like objects when using memory
+mapping (``mmap_mode`` keyword argument).
+
+Better behaviour of ufunc identities during reductions
+------------------------------------------------------
+Universal functions have an ``.identity`` which is used when ``.reduce`` is
+called on an empty axis.
+
+As of this release, the logical binary ufuncs, `logical_and`, `logical_or`,
+and `logical_xor`, now have ``identity`` s of type `bool`, where previously they
+were of type `int`. This restores the 1.14 behavior of getting ``bool`` s when
+reducing empty object arrays with these ufuncs, while also keeping the 1.15
+behavior of getting ``int`` s when reducing empty object arrays with arithmetic
+ufuncs like ``add`` and ``multiply``.
+
+Additionally, `logaddexp` now has an identity of ``-inf``, allowing it to be
+called on empty sequences, where previously it could not be.
+
+This is possible thanks to the new
+:c:func:`PyUFunc_FromFuncAndDataAndSignatureAndIdentity`, which allows
+arbitrary values to be used as identities now.
+
+Improved conversion from ctypes objects
+---------------------------------------
+Numpy has always supported taking a value or type from ``ctypes`` and
+converting it into an array or dtype, but only behaved correctly for simpler
+types. As of this release, this caveat is lifted - now:
+
+* The ``_pack_`` attribute of ``ctypes.Structure``, used to emulate C's
+  ``__attribute__((packed))``, is respected.
+* Endianness of all ctypes objects is preserved
+* ``ctypes.Union`` is supported
+* Non-representable constructs raise exceptions, rather than producing
+  dangerously incorrect results:
+
+  * Bitfields are no longer interpreted as sub-arrays
+  * Pointers are no longer replaced with the type that they point to
+
+A new ``ndpointer.contents`` member
+-----------------------------------
+This matches the ``.contents`` member of normal ctypes arrays, and can be used
+to construct an ``np.array`` around the pointers contents.  This replaces
+``np.array(some_nd_pointer)``, which stopped working in 1.15.  As a side effect
+of this change, ``ndpointer`` now supports dtypes with overlapping fields and
+padding.
+
+``matmul`` is now a ``ufunc``
+-----------------------------
+`numpy.matmul` is now a ufunc which means that both the function and the
+``__matmul__`` operator can now be overridden by ``__array_ufunc__``. Its
+implementation has also changed. It uses the same BLAS routines as
+`numpy.dot`, ensuring its performance is similar for large matrices.
+
+Start and stop arrays for ``linspace``, ``logspace`` and ``geomspace``
+----------------------------------------------------------------------
+These functions used to be limited to scalar stop and start values, but can
+now take arrays, which will be properly broadcast and result in an output
+which has one axis prepended.  This can be used, e.g., to obtain linearly
+interpolated points between sets of points.
+
+CI extended with additional services
+------------------------------------
+We now use additional free CI services, thanks to the companies that provide:
+
+* Codecoverage testing via codecov.io
+* Arm testing via shippable.com
+* Additional test runs on azure pipelines
+
+These are in addition to our continued use of travis, appveyor (for wheels) and
+LGTM
+
+
+Changes
+=======
+
+Comparison ufuncs will now error rather than return NotImplemented
+------------------------------------------------------------------
+Previously, comparison ufuncs such as ``np.equal`` would return
+`NotImplemented` if their arguments had structured dtypes, to help comparison
+operators such as ``__eq__`` deal with those.  This is no longer needed, as the
+relevant logic has moved to the comparison operators proper (which thus do
+continue to return `NotImplemented` as needed). Hence, like all other ufuncs,
+the comparison ufuncs will now error on structured dtypes.
+
+Positive will now raise a deprecation warning for non-numerical arrays
+----------------------------------------------------------------------
+Previously, ``+array`` unconditionally returned a copy. Now, it will
+raise a ``DeprecationWarning`` if the array is not numerical (i.e.,
+if ``np.positive(array)`` raises a ``TypeError``. For ``ndarray``
+subclasses that override the default ``__array_ufunc__`` implementation,
+the ``TypeError`` is passed on.
+
+``NDArrayOperatorsMixin`` now implements matrix multiplication
+--------------------------------------------------------------
+Previously, ``np.lib.mixins.NDArrayOperatorsMixin`` did not implement the
+special methods for Python's matrix multiplication operator (``@``). This has
+changed now that ``matmul`` is a ufunc and can be overridden using
+``__array_ufunc__``.
+
+The scaling of the covariance matrix in ``np.polyfit`` is different
+-------------------------------------------------------------------
+So far, ``np.polyfit`` used a non-standard factor in the scaling of the the
+covariance matrix. Namely, rather than using the standard ``chisq/(M-N)``, it
+scaled it with ``chisq/(M-N-2)`` where M is the number of data points and N is the
+number of parameters.  This scaling is inconsistent with other fitting programs
+such as e.g. ``scipy.optimize.curve_fit`` and was changed to ``chisq/(M-N)``.
+
+``maximum`` and ``minimum`` no longer emit warnings
+---------------------------------------------------
+As part of code introduced in 1.10,  ``float32`` and ``float64`` set invalid
+float status when a Nan is encountered in `numpy.maximum` and `numpy.minimum`,
+when using SSE2 semantics. This caused a `RuntimeWarning` to sometimes be
+emitted. In 1.15 we fixed the inconsistencies which caused the warnings to
+become more conspicuous. Now no warnings will be emitted.
+
+Umath and multiarray c-extension modules merged into a single module
+--------------------------------------------------------------------
+The two modules were merged, according to `NEP 15`_. Previously `np.core.umath`
+and `np.core.multiarray` were separate c-extension modules. They are now python
+wrappers to the single `np.core/_multiarray_math` c-extension module.
+
+.. _`NEP 15` : http://www.numpy.org/neps/nep-0015-merge-multiarray-umath.html
+
+``getfield`` validity checks extended
+-------------------------------------
+`numpy.ndarray.getfield` now checks the dtype and offset arguments to prevent
+accessing invalid memory locations.
+
+NumPy functions now support overrides with ``__array_function__``
+-----------------------------------------------------------------
+NumPy has a new experimental mechanism for overriding the implementation of
+almost all NumPy functions on non-NumPy arrays by defining an
+``__array_function__`` method, as described in `NEP 18`_.
+
+This feature is not yet been enabled by default, but has been released to
+facilitate experimentation by potential users. See the NEP for details on
+setting the appropriate environment variable. We expect the NumPy 1.17 release
+will enable overrides by default, which will also be more performant due to a
+new implementation written in C.
+
+.. _`NEP 18` : http://www.numpy.org/neps/nep-0018-array-function-protocol.html
+
+Arrays based off readonly buffers cannot be set ``writeable``
+-------------------------------------------------------------
+We now disallow setting the ``writeable`` flag True on arrays created
+from ``fromstring(readonly-buffer)``.

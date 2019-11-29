@@ -1,17 +1,23 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import collections
-import pickle
-import warnings
+try:
+    # Accessing collections abstract classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 import textwrap
 from os import path
+import pytest
 
 import numpy as np
+from numpy.compat import Path
 from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_raises, assert_warns
+    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
+    assert_raises, temppath
     )
+from numpy.compat import pickle
 
 
 class TestFromrecords(object):
@@ -252,7 +258,7 @@ class TestFromrecords(object):
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
-        assert_(isinstance(ra.field, collections.Callable))
+        assert_(isinstance(ra.field, collections_abc.Callable))
 
     def test_fromrecords_with_explicit_dtype(self):
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')],
@@ -319,6 +325,23 @@ class TestFromrecords(object):
         assert_equal(rec['f1'], [b'', b'', b''])
 
 
+@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
+class TestPathUsage(object):
+    # Test that pathlib.Path can be used
+    def test_tofile_fromfile(self):
+        with temppath(suffix='.bin') as path:
+            path = Path(path)
+            np.random.seed(123)
+            a = np.random.rand(10).astype('f8,i4,a5')
+            a[5] = (0.5,10,'abcde')
+            with path.open("wb") as fd:
+                a.tofile(fd)
+            x = np.core.records.fromfile(path,
+                                         formats='f8,i4,a5',
+                                         shape=10)
+            assert_array_equal(x, a)
+
+
 class TestRecord(object):
     def setup(self):
         self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
@@ -371,22 +394,27 @@ class TestRecord(object):
     def test_pickle_1(self):
         # Issue #1529
         a = np.array([(1, [])], dtype=[('a', np.int32), ('b', np.int32, 0)])
-        assert_equal(a, pickle.loads(pickle.dumps(a)))
-        assert_equal(a[0], pickle.loads(pickle.dumps(a[0])))
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            assert_equal(a, pickle.loads(pickle.dumps(a, protocol=proto)))
+            assert_equal(a[0], pickle.loads(pickle.dumps(a[0],
+                                                         protocol=proto)))
 
     def test_pickle_2(self):
         a = self.data
-        assert_equal(a, pickle.loads(pickle.dumps(a)))
-        assert_equal(a[0], pickle.loads(pickle.dumps(a[0])))
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            assert_equal(a, pickle.loads(pickle.dumps(a, protocol=proto)))
+            assert_equal(a[0], pickle.loads(pickle.dumps(a[0],
+                                                         protocol=proto)))
 
     def test_pickle_3(self):
         # Issue #7140
         a = self.data
-        pa = pickle.loads(pickle.dumps(a[0]))
-        assert_(pa.flags.c_contiguous)
-        assert_(pa.flags.f_contiguous)
-        assert_(pa.flags.writeable)
-        assert_(pa.flags.aligned)
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            pa = pickle.loads(pickle.dumps(a[0], protocol=proto))
+            assert_(pa.flags.c_contiguous)
+            assert_(pa.flags.f_contiguous)
+            assert_(pa.flags.writeable)
+            assert_(pa.flags.aligned)
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
@@ -407,7 +435,57 @@ class TestRecord(object):
     def test_missing_field(self):
         # https://github.com/numpy/numpy/issues/4806
         arr = np.zeros((3,), dtype=[('x', int), ('y', int)])
-        assert_raises(ValueError, lambda: arr[['nofield']])
+        assert_raises(KeyError, lambda: arr[['nofield']])
+
+    def test_fromarrays_nested_structured_arrays(self):
+        arrays = [
+            np.arange(10),
+            np.ones(10, dtype=[('a', '<u2'), ('b', '<f4')]),
+        ]
+        arr = np.rec.fromarrays(arrays)  # ValueError?
+
+    @pytest.mark.parametrize('nfields', [0, 1, 2])
+    def test_assign_dtype_attribute(self, nfields):
+        dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)][:nfields])
+        data = np.zeros(3, dt).view(np.recarray)
+
+        # the original and resulting dtypes differ on whether they are records
+        assert data.dtype.type == np.record
+        assert dt.type != np.record
+
+        # ensure that the dtype remains a record even when assigned
+        data.dtype = dt
+        assert data.dtype.type == np.record
+
+    @pytest.mark.parametrize('nfields', [0, 1, 2])
+    def test_nested_fields_are_records(self, nfields):
+        """ Test that nested structured types are treated as records too """
+        dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)][:nfields])
+        dt_outer = np.dtype([('inner', dt)])
+
+        data = np.zeros(3, dt_outer).view(np.recarray)
+        assert isinstance(data, np.recarray)
+        assert isinstance(data['inner'], np.recarray)
+
+        data0 = data[0]
+        assert isinstance(data0, np.record)
+        assert isinstance(data0['inner'], np.record)
+
+    def test_nested_dtype_padding(self):
+        """ test that trailing padding is preserved """
+        # construct a dtype with padding at the end
+        dt = np.dtype([('a', np.uint8), ('b', np.uint8), ('c', np.uint8)])
+        dt_padded_end = dt[['a', 'b']]
+        assert dt_padded_end.itemsize == dt.itemsize
+
+        dt_outer = np.dtype([('inner', dt_padded_end)])
+
+        data = np.zeros(3, dt_outer).view(np.recarray)
+        assert_equal(data['inner'].dtype, dt_padded_end)
+
+        data0 = data[0]
+        assert_equal(data0['inner'].dtype, dt_padded_end)
+
 
 def test_find_duplicate():
     l1 = [1, 2, 3, 4, 5, 6]
@@ -421,6 +499,3 @@ def test_find_duplicate():
 
     l3 = [2, 2, 1, 4, 1, 6, 2, 3]
     assert_(np.rec.find_duplicate(l3) == [2, 1])
-
-if __name__ == "__main__":
-    run_module_suite()

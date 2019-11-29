@@ -5,6 +5,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
+#include "lowlevel_strided_loops.h"
 
 #include "npy_config.h"
 
@@ -100,10 +101,10 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     }
 
     if (!out) {
-        rp = (PyArrayObject *)PyArray_New(Py_TYPE(ap), PyArray_NDIM(ap)-1,
-                                          PyArray_DIMS(ap), NPY_INTP,
-                                          NULL, NULL, 0, 0,
-                                          (PyObject *)ap);
+        rp = (PyArrayObject *)PyArray_NewFromDescr(
+                Py_TYPE(ap), PyArray_DescrFromType(NPY_INTP),
+                PyArray_NDIM(ap) - 1, PyArray_DIMS(ap), NULL, NULL,
+                0, (PyObject *)ap);
         if (rp == NULL) {
             goto fail;
         }
@@ -216,10 +217,10 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
     }
 
     if (!out) {
-        rp = (PyArrayObject *)PyArray_New(Py_TYPE(ap), PyArray_NDIM(ap)-1,
-                                          PyArray_DIMS(ap), NPY_INTP,
-                                          NULL, NULL, 0, 0,
-                                          (PyObject *)ap);
+        rp = (PyArrayObject *)PyArray_NewFromDescr(
+                Py_TYPE(ap), PyArray_DescrFromType(NPY_INTP),
+                PyArray_NDIM(ap) - 1, PyArray_DIMS(ap), NULL, NULL,
+                0, (PyObject *)ap);
         if (rp == NULL) {
             goto fail;
         }
@@ -917,6 +918,27 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     }
 
     func = PyArray_DESCR(self)->f->fastclip;
+    if (func == NULL) {
+        if (min == NULL) {
+            return PyObject_CallFunctionObjArgs(n_ops.minimum, self, max, out, NULL);
+        }
+        else if (max == NULL) {
+            return PyObject_CallFunctionObjArgs(n_ops.maximum, self, min, out, NULL);
+        }
+        else {
+            return PyObject_CallFunctionObjArgs(n_ops.clip, self, min, max, out, NULL);
+        }
+    }
+
+    /* NumPy 1.17.0, 2019-02-24 */
+    if (DEPRECATE(
+            "->f->fastclip is deprecated. Use PyUFunc_RegisterLoopForDescr to "
+            "attach a custom loop to np.core.umath.clip, np.minimum, and "
+            "np.maximum") < 0) {
+        return NULL;
+    }
+    /* everything below can be removed once this deprecation completes */
+
     if (func == NULL
         || (min != NULL && !PyArray_CheckAnyScalar(min))
         || (max != NULL && !PyArray_CheckAnyScalar(max))
@@ -1102,7 +1124,18 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     if (out == newin) {
         outgood = 1;
     }
-    if (!outgood && PyArray_ISONESEGMENT(out) &&
+
+
+    /* make sure the shape of the output array is the same */
+    if (!PyArray_SAMESHAPE(newin, out)) {
+        PyErr_SetString(PyExc_ValueError, "clip: Output array must have the"
+                        "same shape as the input.");
+        goto fail;
+    }
+
+    if (!outgood && PyArray_EQUIVALENTLY_ITERABLE(
+                            self, out, PyArray_TRIVIALLY_ITERABLE_OP_READ,
+                            PyArray_TRIVIALLY_ITERABLE_OP_NOREAD) &&
                         PyArray_CHKFLAGS(out, NPY_ARRAY_ALIGNED) &&
                         PyArray_ISNOTSWAPPED(out) &&
                         PyArray_EquivTypes(PyArray_DESCR(out), indescr)) {
@@ -1111,15 +1144,19 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 
     /*
      * Do we still not have a suitable output array?
-     * Create one, now
+     * Create one, now. No matter why the array is not suitable a copy has
+     * to be made. This may be just to avoid memory overlap though.
      */
     if (!outgood) {
         int oflags;
-        if (PyArray_ISFORTRAN(out))
+        if (PyArray_ISFORTRAN(self)) {
             oflags = NPY_ARRAY_FARRAY;
-        else
+        }
+        else {
             oflags = NPY_ARRAY_CARRAY;
-        oflags |= NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_FORCECAST;
+        }
+        oflags |= (NPY_ARRAY_WRITEBACKIFCOPY | NPY_ARRAY_FORCECAST |
+                   NPY_ARRAY_ENSURECOPY);
         Py_INCREF(indescr);
         newout = (PyArrayObject*)PyArray_FromArray(out, indescr, oflags);
         if (newout == NULL) {
@@ -1129,13 +1166,6 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     else {
         newout = out;
         Py_INCREF(newout);
-    }
-
-    /* make sure the shape of the output array is the same */
-    if (!PyArray_SAMESHAPE(newin, newout)) {
-        PyErr_SetString(PyExc_ValueError, "clip: Output array must have the"
-                        "same shape as the input.");
-        goto fail;
     }
 
     /* Now we can call the fast-clip function */

@@ -4,8 +4,7 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-import sys
-import shutil
+import subprocess
 from glob import glob
 
 from distutils.dep_util import newer_group
@@ -15,7 +14,7 @@ from distutils.errors import DistutilsFileError, DistutilsSetupError,\
 from distutils.file_util import copy_file
 
 from numpy.distutils import log
-from numpy.distutils.exec_command import exec_command
+from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.system_info import combine_paths, system_info
 from numpy.distutils.misc_util import filter_sources, has_f_sources, \
     has_cxx_sources, get_ext_source_files, \
@@ -34,6 +33,8 @@ class build_ext (old_build_ext):
          "specify the Fortran compiler type"),
         ('parallel=', 'j',
          "number of parallel jobs"),
+        ('warn-error', None,
+         "turn all warnings into errors (-Werror)"),
     ]
 
     help_options = old_build_ext.help_options + [
@@ -41,10 +42,13 @@ class build_ext (old_build_ext):
          show_fortran_compilers),
     ]
 
+    boolean_options = old_build_ext.boolean_options + ['warn-error']
+
     def initialize_options(self):
         old_build_ext.initialize_options(self)
         self.fcompiler = None
         self.parallel = None
+        self.warn_error = None
 
     def finalize_options(self):
         if self.parallel:
@@ -70,7 +74,10 @@ class build_ext (old_build_ext):
         self.include_dirs.extend(incl_dirs)
 
         old_build_ext.finalize_options(self)
-        self.set_undefined_options('build', ('parallel', 'parallel'))
+        self.set_undefined_options('build',
+                                        ('parallel', 'parallel'),
+                                        ('warn_error', 'warn_error'),
+                                  )
 
     def run(self):
         if not self.extensions:
@@ -117,6 +124,11 @@ class build_ext (old_build_ext):
                                      force=self.force)
         self.compiler.customize(self.distribution)
         self.compiler.customize_cmd(self)
+
+        if self.warn_error:
+            self.compiler.compiler.append('-Werror')
+            self.compiler.compiler_so.append('-Werror')
+
         self.compiler.show_customization()
 
         # Setup directory for storing generated extra DLL files on Windows
@@ -266,10 +278,10 @@ class build_ext (old_build_ext):
         # we blindly assume that both packages need all of the libraries,
         # resulting in a larger wheel than is required. This should be fixed,
         # but it's so rare that I won't bother to handle it.
-        pkg_roots = set(
+        pkg_roots = {
             self.get_ext_fullname(ext.name).split('.')[0]
             for ext in self.extensions
-        )
+        }
         for pkg_root in pkg_roots:
             shared_lib_dir = os.path.join(pkg_root, '.libs')
             if not self.inplace:
@@ -282,8 +294,8 @@ class build_ext (old_build_ext):
                 runtime_lib = os.path.join(self.extra_dll_dir, fn)
                 copy_file(runtime_lib, shared_lib_dir)
 
-    def swig_sources(self, sources):
-        # Do nothing. Swig sources have beed handled in build_src command.
+    def swig_sources(self, sources, extensions=None):
+        # Do nothing. Swig sources have been handled in build_src command.
         return sources
 
     def build_extension(self, ext):
@@ -558,9 +570,12 @@ class build_ext (old_build_ext):
             # correct path when compiling in Cygwin but with normal Win
             # Python
             if dir.startswith('/usr/lib'):
-                s, o = exec_command(['cygpath', '-w', dir], use_tee=False)
-                if not s:
-                    dir = o
+                try:
+                    dir = subprocess.check_output(['cygpath', '-w', dir])
+                except (OSError, subprocess.CalledProcessError):
+                    pass
+                else:
+                    dir = filepath_from_subprocess_output(dir)
             f_lib_dirs.append(dir)
         c_library_dirs.extend(f_lib_dirs)
 

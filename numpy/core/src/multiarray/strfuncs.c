@@ -41,7 +41,7 @@ PyArray_SetStringFunction(PyObject *op, int repr)
  * XXX we do this in multiple places; time for a string library?
  */
 static char *
-extend(char **strp, Py_ssize_t n, Py_ssize_t *maxp)
+extend_str(char **strp, Py_ssize_t n, Py_ssize_t *maxp)
 {
     char *str = *strp;
     Py_ssize_t new_cap;
@@ -71,7 +71,7 @@ dump_data(char **string, Py_ssize_t *n, Py_ssize_t *max_n, char *data, int nd,
     npy_intp i, N, ret = 0;
 
 #define CHECK_MEMORY do {                           \
-        if (extend(string, *n, max_n) == NULL) {    \
+        if (extend_str(string, *n, max_n) == NULL) {    \
             ret = -1;                               \
             goto end;                               \
         }                                           \

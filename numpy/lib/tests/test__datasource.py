@@ -2,13 +2,14 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import sys
+import pytest
 from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
 
-from numpy.testing import (
-    run_module_suite, assert_, assert_equal, assert_raises, SkipTest,
-    )
 import numpy.lib._datasource as datasource
+from numpy.testing import (
+    assert_, assert_equal, assert_raises, assert_warns
+    )
 
 if sys.version_info[0] >= 3:
     import urllib.request as urllib_request
@@ -32,14 +33,14 @@ def urlopen_stub(url, data=None):
 old_urlopen = None
 
 
-def setup():
+def setup_module():
     global old_urlopen
 
     old_urlopen = urllib_request.urlopen
     urllib_request.urlopen = urlopen_stub
 
 
-def teardown():
+def teardown_module():
     urllib_request.urlopen = old_urlopen
 
 # A valid website for more robust testing
@@ -136,7 +137,7 @@ class TestDataSourceOpen(object):
             import gzip
         except ImportError:
             # We don't have the gzip capabilities to test.
-            raise SkipTest
+            pytest.skip()
         # Test datasource's internal file_opener for Gzip files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.gz')
         fp = gzip.open(filepath, 'w')
@@ -152,7 +153,7 @@ class TestDataSourceOpen(object):
             import bz2
         except ImportError:
             # We don't have the bz2 capabilities to test.
-            raise SkipTest
+            pytest.skip()
         # Test datasource's internal file_opener for BZip2 files.
         filepath = os.path.join(self.tmpdir, 'foobar.txt.bz2')
         fp = bz2.BZ2File(filepath, 'w')
@@ -161,6 +162,24 @@ class TestDataSourceOpen(object):
         fp = self.ds.open(filepath)
         result = fp.readline()
         fp.close()
+        assert_equal(magic_line, result)
+
+    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Python 2 only")
+    def test_Bz2File_text_mode_warning(self):
+        try:
+            import bz2
+        except ImportError:
+            # We don't have the bz2 capabilities to test.
+            pytest.skip()
+        # Test datasource's internal file_opener for BZip2 files.
+        filepath = os.path.join(self.tmpdir, 'foobar.txt.bz2')
+        fp = bz2.BZ2File(filepath, 'w')
+        fp.write(magic_line)
+        fp.close()
+        with assert_warns(RuntimeWarning):
+            fp = self.ds.open(filepath, 'rt')
+            result = fp.readline()
+            fp.close()
         assert_equal(magic_line, result)
 
 
@@ -343,6 +362,17 @@ class TestOpenFunc(object):
         assert_(fp)
         fp.close()
 
+def test_del_attr_handling():
+    # DataSource __del__ can be called
+    # even if __init__ fails when the
+    # Exception object is caught by the
+    # caller as happens in refguide_check
+    # is_deprecated() function
 
-if __name__ == "__main__":
-    run_module_suite()
+    ds = datasource.DataSource()
+    # simulate failed __init__ by removing key attribute
+    # produced within __init__ and expected by __del__
+    del ds._istmpdest
+    # should not raise an AttributeError if __del__
+    # gracefully handles failed __init__:
+    ds.__del__()

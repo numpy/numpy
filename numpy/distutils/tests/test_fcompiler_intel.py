@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy.distutils.fcompiler
-from numpy.testing import run_module_suite, assert_
+from numpy.testing import assert_
 
 
 intel_32bit_version_strings = [
@@ -30,7 +30,3 @@ class TestIntelEM64TFCompilerVersions(object):
         for vs, version in intel_64bit_version_strings:
             v = fc.version_match(vs)
             assert_(v == version)
-
-
-if __name__ == '__main__':
-    run_module_suite()

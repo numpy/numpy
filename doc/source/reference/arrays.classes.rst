@@ -6,8 +6,15 @@ Standard array subclasses
 
 .. currentmodule:: numpy
 
-The :class:`ndarray` in NumPy is a "new-style" Python
-built-in-type. Therefore, it can be inherited from (in Python or in C)
+.. note::
+
+    Subclassing a ``numpy.ndarray`` is possible but if your goal is to create
+    an array with *modified* behavior, as do dask arrays for distributed
+    computation and cupy arrays for GPU-based computation, subclassing is
+    discouraged. Instead, using numpy's
+    :ref:`dispatch mechanism <basics.dispatch>` is recommended.
+
+The :class:`ndarray` can be inherited from (in Python or in C)
 if desired. Therefore, it can form a foundation for many useful
 classes. Often whether to sub-class the array object or to simply use
 the core array component as an internal part of a new class is a
@@ -43,12 +50,8 @@ NumPy provides several hooks that classes can customize:
 
    .. versionadded:: 1.13
 
-   .. note:: The API is `provisional
-             <https://docs.python.org/3/glossary.html#term-provisional-api>`_,
-             i.e., we do not yet guarantee backward compatibility.
-
    Any class, ndarray subclass or not, can define this method or set it to
-   :obj:`None` in order to override the behavior of NumPy's ufuncs. This works
+   None in order to override the behavior of NumPy's ufuncs. This works
    quite similarly to Python's ``__mul__`` and other binary operation routines.
 
    - *ufunc* is the ufunc object that was called.
@@ -79,7 +82,7 @@ NumPy provides several hooks that classes can customize:
        :func:`~numpy.matmul`, which currently is not a Ufunc, but could be
        relatively easily be rewritten as a (set of) generalized Ufuncs. The
        same may happen with functions such as :func:`~numpy.median`,
-       :func:`~numpy.min`, and :func:`~numpy.argsort`.
+       :func:`~numpy.amin`, and :func:`~numpy.argsort`.
 
    Like with some other special methods in python, such as ``__hash__`` and
    ``__iter__``, it is possible to indicate that your class does *not*
@@ -91,13 +94,13 @@ NumPy provides several hooks that classes can customize:
    :class:`ndarray` handles binary operations like ``arr + obj`` and ``arr
    < obj`` when ``arr`` is an :class:`ndarray` and ``obj`` is an instance
    of a custom class. There are two possibilities. If
-   ``obj.__array_ufunc__`` is present and not :obj:`None`, then
+   ``obj.__array_ufunc__`` is present and not None, then
    ``ndarray.__add__`` and friends will delegate to the ufunc machinery,
    meaning that ``arr + obj`` becomes ``np.add(arr, obj)``, and then
    :func:`~numpy.add` invokes ``obj.__array_ufunc__``. This is useful if you
    want to define an object that acts like an array.
 
-   Alternatively, if ``obj.__array_ufunc__`` is set to :obj:`None`, then as a
+   Alternatively, if ``obj.__array_ufunc__`` is set to None, then as a
    special case, special methods like ``ndarray.__add__`` will notice this
    and *unconditionally* raise :exc:`TypeError`. This is useful if you want to
    create objects that interact with arrays via binary operations, but
@@ -132,7 +135,7 @@ NumPy provides several hooks that classes can customize:
         place rather than separately by the ufunc machinery and by the binary
         operation rules (which gives preference to special methods of
         subclasses; the alternative way to enforce a one-place only hierarchy,
-        of setting :func:`__array_ufunc__` to :obj:`None`, would seem very
+        of setting :func:`__array_ufunc__` to None, would seem very
         unexpected and thus confusing, as then the subclass would not work at
         all with ufuncs).
       - :class:`ndarray` defines its own :func:`__array_ufunc__`, which,
@@ -151,6 +154,121 @@ NumPy provides several hooks that classes can customize:
       :func:`__array_prepare__`, :data:`__array_priority__` mechanism
       described below for ufuncs (which may eventually be deprecated).
 
+.. py:method:: class.__array_function__(func, types, args, kwargs)
+
+   .. versionadded:: 1.16
+
+   .. note::
+
+       - In NumPy 1.17, the protocol is enabled by default, but can be disabled
+         with ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0``.
+       - In NumPy 1.16, you need to set the environment variable
+         ``NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1`` before importing NumPy to use
+         NumPy function overrides.
+       - Eventually, expect to ``__array_function__`` to always be enabled.
+
+   -  ``func`` is an arbitrary callable exposed by NumPy's public API,
+      which was called in the form ``func(*args, **kwargs)``.
+   -  ``types`` is a `collection <collections.abc.Collection>`_
+      of unique argument types from the original NumPy function call that
+      implement ``__array_function__``.
+   -  The tuple ``args`` and dict ``kwargs`` are directly passed on from the
+      original call.
+
+   As a convenience for ``__array_function__`` implementors, ``types``
+   provides all argument types with an ``'__array_function__'`` attribute.
+   This allows implementors to quickly identify cases where they should defer
+   to ``__array_function__`` implementations on other arguments.
+   Implementations should not rely on the iteration order of ``types``.
+
+   Most implementations of ``__array_function__`` will start with two
+   checks:
+
+   1.  Is the given function something that we know how to overload?
+   2.  Are all arguments of a type that we know how to handle?
+
+   If these conditions hold, ``__array_function__`` should return the result
+   from calling its implementation for ``func(*args, **kwargs)``.  Otherwise,
+   it should return the sentinel value ``NotImplemented``, indicating that the
+   function is not implemented by these types.
+
+   There are no general requirements on the return value from
+   ``__array_function__``, although most sensible implementations should
+   probably return array(s) with the same type as one of the function's
+   arguments.
+
+   It may also be convenient to define a custom decorators (``implements``
+   below) for registering ``__array_function__`` implementations.
+
+   .. code:: python
+
+       HANDLED_FUNCTIONS = {}
+
+       class MyArray:
+           def __array_function__(self, func, types, args, kwargs):
+               if func not in HANDLED_FUNCTIONS:
+                   return NotImplemented
+               # Note: this allows subclasses that don't override
+               # __array_function__ to handle MyArray objects
+               if not all(issubclass(t, MyArray) for t in types):
+                   return NotImplemented
+               return HANDLED_FUNCTIONS[func](*args, **kwargs)
+
+       def implements(numpy_function):
+           """Register an __array_function__ implementation for MyArray objects."""
+           def decorator(func):
+               HANDLED_FUNCTIONS[numpy_function] = func
+               return func
+           return decorator
+
+       @implements(np.concatenate)
+       def concatenate(arrays, axis=0, out=None):
+           ...  # implementation of concatenate for MyArray objects
+
+       @implements(np.broadcast_to)
+       def broadcast_to(array, shape):
+           ...  # implementation of broadcast_to for MyArray objects
+
+   Note that it is not required for ``__array_function__`` implementations to
+   include *all* of the corresponding NumPy function's optional arguments
+   (e.g., ``broadcast_to`` above omits the irrelevant ``subok`` argument).
+   Optional arguments are only passed in to ``__array_function__`` if they
+   were explicitly used in the NumPy function call.
+
+   Just like the case for builtin special methods like ``__add__``, properly
+   written ``__array_function__`` methods should always return
+   ``NotImplemented`` when an unknown type is encountered. Otherwise, it will
+   be impossible to correctly override NumPy functions from another object
+   if the operation also includes one of your objects.
+
+   For the most part, the rules for dispatch with ``__array_function__``
+   match those for ``__array_ufunc__``. In particular:
+
+   -  NumPy will gather implementations of ``__array_function__`` from all
+      specified inputs and call them in order: subclasses before
+      superclasses, and otherwise left to right. Note that in some edge cases
+      involving subclasses, this differs slightly from the
+      `current behavior <https://bugs.python.org/issue30140>`_ of Python.
+   -  Implementations of ``__array_function__`` indicate that they can
+      handle the operation by returning any value other than
+      ``NotImplemented``.
+   -  If all ``__array_function__`` methods return ``NotImplemented``,
+      NumPy will raise ``TypeError``.
+
+   If no ``__array_function__`` methods exists, NumPy will default to calling
+   its own implementation, intended for use on NumPy arrays. This case arises,
+   for example, when all array-like arguments are Python numbers or lists.
+   (NumPy arrays do have a ``__array_function__`` method, given below, but it
+   always returns ``NotImplemented`` if any argument other than a NumPy array
+   subclass implements ``__array_function__``.)
+
+   One deviation from the current behavior of ``__array_ufunc__`` is that
+   NumPy will only call ``__array_function__`` on the *first* argument of each
+   unique type. This matches Python's `rule for calling reflected methods
+   <https://docs.python.org/3/reference/datamodel.html#object.__ror__>`_, and
+   this ensures that checking overloads has acceptable performance even when
+   there are a large number of overloaded arguments.
+
 .. py:method:: class.__array_finalize__(obj)
 
    This method is called whenever the system internally allocates a
@@ -162,7 +280,7 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array_prepare__(array, context=None)
 
-   At the beginning of every :ref:`ufunc <ufuncs.output-type>`, this
+   At the beginning of every :ref:`ufunc <ufuncs-output-type>`, this
    method is called on the input object with the highest array
    priority, or the output object if one was specified. The output
    array is passed in and whatever is returned is passed to the ufunc.
@@ -177,7 +295,7 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array_wrap__(array, context=None)
 
-   At the end of every :ref:`ufunc <ufuncs.output-type>`, this method
+   At the end of every :ref:`ufunc <ufuncs-output-type>`, this method
    is called on the input object with the highest array priority, or
    the output object if one was specified. The ufunc-computed array
    is passed in and whatever is returned is passed to the user.
@@ -204,7 +322,7 @@ NumPy provides several hooks that classes can customize:
 
    If a class (ndarray subclass or not) having the :func:`__array__`
    method is used as the output object of an :ref:`ufunc
-   <ufuncs.output-type>`, results will be written to the object
+   <ufuncs-output-type>`, results will be written to the object
    returned by :func:`__array__`. Similar conversion is done on
    input arrays.
 
@@ -214,6 +332,13 @@ Matrix objects
 
 .. index::
    single: matrix
+
+.. note::
+   It is strongly advised *not* to use the matrix subclass.  As described
+   below, it makes writing functions that deal consistently with matrices
+   and regular arrays very difficult. Currently, they are mainly used for
+   interacting with ``scipy.sparse``. We hope to provide an alternative
+   for this use, however, and eventually remove the ``matrix`` subclass.
 
 :class:`matrix` objects inherit from the ndarray and therefore, they
 have the same attributes and methods of ndarrays. There are six
@@ -445,7 +570,7 @@ object, then the Python code::
         some code involving val
         ...
 
-calls ``val = myiter.next()`` repeatedly until :exc:`StopIteration` is
+calls ``val = next(myiter)`` repeatedly until :exc:`StopIteration` is
 raised by the iterator. There are several ways to iterate over an
 array that may be useful: default iteration, flat iteration, and
 :math:`N`-dimensional enumeration.

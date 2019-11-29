@@ -14,7 +14,7 @@ import itertools
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, assert_warns, suppress_warnings, assert_raises,
+    assert_warns, suppress_warnings
     )
 from numpy.ma.testutils import (
     assert_, assert_array_equal, assert_equal, assert_almost_equal
@@ -29,9 +29,8 @@ from numpy.ma.extras import (
     ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
     notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
-    diagflat, stack, vstack, hstack
+    diagflat, stack, vstack
     )
-import numpy.ma.extras as mae
 
 
 class TestGeneric(object):
@@ -128,7 +127,10 @@ class TestGeneric(object):
         a = arange(10)
         # No mask
         test = flatnotmasked_contiguous(a)
-        assert_equal(test, slice(0, a.size))
+        assert_equal(test, [slice(0, a.size)])
+        # mask of all false
+        a.mask = np.zeros(10, dtype=bool)
+        assert_equal(test, [slice(0, a.size)])
         # Some mask
         a[(a < 3) | (a > 8) | (a == 5)] = masked
         test = flatnotmasked_contiguous(a)
@@ -136,7 +138,7 @@ class TestGeneric(object):
         #
         a[:] = masked
         test = flatnotmasked_contiguous(a)
-        assert_equal(test, None)
+        assert_equal(test, [])
 
 
 class TestAverage(object):
@@ -146,7 +148,7 @@ class TestAverage(object):
         ott = array([0., 1., 2., 3.], mask=[True, False, False, False])
         assert_equal(2.0, average(ott, axis=0))
         assert_equal(2.0, average(ott, weights=[1., 1., 2., 1.]))
-        result, wts = average(ott, weights=[1., 1., 2., 1.], returned=1)
+        result, wts = average(ott, weights=[1., 1., 2., 1.], returned=True)
         assert_equal(2.0, result)
         assert_(wts == 4.0)
         ott[:] = masked
@@ -157,7 +159,7 @@ class TestAverage(object):
         assert_equal(average(ott, axis=0), [2.0, 0.0])
         assert_equal(average(ott, axis=1).mask[0], [True])
         assert_equal([2., 0.], average(ott, axis=0))
-        result, wts = average(ott, axis=0, returned=1)
+        result, wts = average(ott, axis=0, returned=True)
         assert_equal(wts, [1., 0.])
 
     def test_testAverage2(self):
@@ -198,14 +200,14 @@ class TestAverage(object):
         # Yet more tests of average!
         a = arange(6)
         b = arange(6) * 3
-        r1, w1 = average([[a, b], [b, a]], axis=1, returned=1)
+        r1, w1 = average([[a, b], [b, a]], axis=1, returned=True)
         assert_equal(shape(r1), shape(w1))
         assert_equal(r1.shape, w1.shape)
-        r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=1)
+        r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=True)
         assert_equal(shape(w2), shape(r2))
-        r2, w2 = average(ones((2, 2, 3)), returned=1)
+        r2, w2 = average(ones((2, 2, 3)), returned=True)
         assert_equal(shape(w2), shape(r2))
-        r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=1)
+        r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=True)
         assert_equal(shape(w2), shape(r2))
         a2d = array([[1, 2], [0, 4]], float)
         a2dm = masked_array(a2d, [[False, False], [True, False]])
@@ -304,18 +306,6 @@ class TestConcatenator(object):
         assert_array_equal(d[5:,:], b_2)
         assert_array_equal(d.mask, np.r_[m_1, m_2])
 
-    def test_matrix_builder(self):
-        assert_raises(np.ma.MAError, lambda: mr_['1, 2; 3, 4'])
-
-    def test_matrix(self):
-        actual = mr_['r', 1, 2, 3]
-        expected = np.ma.array(np.r_['r', 1, 2, 3])
-        assert_array_equal(actual, expected)
-
-        # outer type is masked array, inner type is matrix
-        assert_equal(type(actual), type(expected))
-        assert_equal(type(actual.data), type(expected.data))
-
     def test_masked_constant(self):
         actual = mr_[np.ma.masked, 1]
         assert_equal(actual.mask, [True, False])
@@ -368,23 +358,32 @@ class TestNotMasked(object):
         a = masked_array(np.arange(24).reshape(3, 8),
                          mask=[[0, 0, 0, 0, 1, 1, 1, 1],
                                [1, 1, 1, 1, 1, 1, 1, 1],
-                               [0, 0, 0, 0, 0, 0, 1, 0], ])
+                               [0, 0, 0, 0, 0, 0, 1, 0]])
         tmp = notmasked_contiguous(a, None)
-        assert_equal(tmp[-1], slice(23, 24, None))
-        assert_equal(tmp[-2], slice(16, 22, None))
-        assert_equal(tmp[-3], slice(0, 4, None))
-        #
+        assert_equal(tmp, [
+            slice(0, 4, None),
+            slice(16, 22, None),
+            slice(23, 24, None)
+        ])
+
         tmp = notmasked_contiguous(a, 0)
-        assert_(len(tmp[-1]) == 1)
-        assert_(tmp[-2] is None)
-        assert_equal(tmp[-3], tmp[-1])
-        assert_(len(tmp[0]) == 2)
+        assert_equal(tmp, [
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(0, 1, None), slice(2, 3, None)],
+            [slice(2, 3, None)],
+            [slice(2, 3, None)],
+            [],
+            [slice(2, 3, None)]
+        ])
         #
         tmp = notmasked_contiguous(a, 1)
-        assert_equal(tmp[0][-1], slice(0, 4, None))
-        assert_(tmp[1] is None)
-        assert_equal(tmp[2][-1], slice(7, 8, None))
-        assert_equal(tmp[2][-2], slice(0, 6, None))
+        assert_equal(tmp, [
+            [slice(0, 4, None)],
+            [],
+            [slice(0, 6, None), slice(7, 8, None)]
+        ])
 
 
 class TestCompressFunctions(object):
@@ -892,61 +891,51 @@ class TestMedian(object):
                            expected)
 
     def test_nan(self):
-        with suppress_warnings() as w:
-            w.record(RuntimeWarning)
-            for mask in (False, np.zeros(6, dtype=bool)):
-                dm = np.ma.array([[1, np.nan, 3], [1, 2, 3]])
-                dm.mask = mask
-
-                # scalar result
-                r = np.ma.median(dm, axis=None)
-                assert_(np.isscalar(r))
-                assert_array_equal(r, np.nan)
-                r = np.ma.median(dm.ravel(), axis=0)
-                assert_(np.isscalar(r))
-                assert_array_equal(r, np.nan)
-
-                r = np.ma.median(dm, axis=0)
-                assert_equal(type(r), MaskedArray)
-                assert_array_equal(r, [1, np.nan, 3])
-                r = np.ma.median(dm, axis=1)
-                assert_equal(type(r), MaskedArray)
-                assert_array_equal(r, [np.nan, 2])
-                r = np.ma.median(dm, axis=-1)
-                assert_equal(type(r), MaskedArray)
-                assert_array_equal(r, [np.nan, 2])
-
+        for mask in (False, np.zeros(6, dtype=bool)):
             dm = np.ma.array([[1, np.nan, 3], [1, 2, 3]])
-            dm[:, 2] = np.ma.masked
-            assert_array_equal(np.ma.median(dm, axis=None), np.nan)
-            assert_array_equal(np.ma.median(dm, axis=0), [1, np.nan, 3])
-            assert_array_equal(np.ma.median(dm, axis=1), [np.nan, 1.5])
-            assert_equal([x.category is RuntimeWarning for x in w.log],
-                         [True]*13)
+            dm.mask = mask
+
+            # scalar result
+            r = np.ma.median(dm, axis=None)
+            assert_(np.isscalar(r))
+            assert_array_equal(r, np.nan)
+            r = np.ma.median(dm.ravel(), axis=0)
+            assert_(np.isscalar(r))
+            assert_array_equal(r, np.nan)
+
+            r = np.ma.median(dm, axis=0)
+            assert_equal(type(r), MaskedArray)
+            assert_array_equal(r, [1, np.nan, 3])
+            r = np.ma.median(dm, axis=1)
+            assert_equal(type(r), MaskedArray)
+            assert_array_equal(r, [np.nan, 2])
+            r = np.ma.median(dm, axis=-1)
+            assert_equal(type(r), MaskedArray)
+            assert_array_equal(r, [np.nan, 2])
+
+        dm = np.ma.array([[1, np.nan, 3], [1, 2, 3]])
+        dm[:, 2] = np.ma.masked
+        assert_array_equal(np.ma.median(dm, axis=None), np.nan)
+        assert_array_equal(np.ma.median(dm, axis=0), [1, np.nan, 3])
+        assert_array_equal(np.ma.median(dm, axis=1), [np.nan, 1.5])
 
     def test_out_nan(self):
-        with warnings.catch_warnings(record=True):
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            o = np.ma.masked_array(np.zeros((4,)))
-            d = np.ma.masked_array(np.ones((3, 4)))
-            d[2, 1] = np.nan
-            d[2, 2] = np.ma.masked
-            assert_equal(np.ma.median(d, 0, out=o), o)
-            o = np.ma.masked_array(np.zeros((3,)))
-            assert_equal(np.ma.median(d, 1, out=o), o)
-            o = np.ma.masked_array(np.zeros(()))
-            assert_equal(np.ma.median(d, out=o), o)
+        o = np.ma.masked_array(np.zeros((4,)))
+        d = np.ma.masked_array(np.ones((3, 4)))
+        d[2, 1] = np.nan
+        d[2, 2] = np.ma.masked
+        assert_equal(np.ma.median(d, 0, out=o), o)
+        o = np.ma.masked_array(np.zeros((3,)))
+        assert_equal(np.ma.median(d, 1, out=o), o)
+        o = np.ma.masked_array(np.zeros(()))
+        assert_equal(np.ma.median(d, out=o), o)
 
     def test_nan_behavior(self):
         a = np.ma.masked_array(np.arange(24, dtype=float))
         a[::3] = np.ma.masked
         a[2] = np.nan
-        with suppress_warnings() as w:
-            w.record(RuntimeWarning)
-            assert_array_equal(np.ma.median(a), np.nan)
-            assert_array_equal(np.ma.median(a, axis=0), np.nan)
-            assert_(w.log[0].category is RuntimeWarning)
-            assert_(w.log[1].category is RuntimeWarning)
+        assert_array_equal(np.ma.median(a), np.nan)
+        assert_array_equal(np.ma.median(a, axis=0), np.nan)
 
         a = np.ma.masked_array(np.arange(24, dtype=float).reshape(2, 3, 4))
         a.mask = np.arange(a.size) % 2 == 1
@@ -955,39 +944,26 @@ class TestMedian(object):
         a[1, 1, 2] = np.nan
 
         # no axis
-        with suppress_warnings() as w:
-            w.record(RuntimeWarning)
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_array_equal(np.ma.median(a), np.nan)
-            assert_(np.isscalar(np.ma.median(a)))
-            assert_(w.log[0].category is RuntimeWarning)
+        assert_array_equal(np.ma.median(a), np.nan)
+        assert_(np.isscalar(np.ma.median(a)))
 
         # axis0
         b = np.ma.median(aorig, axis=0)
         b[2, 3] = np.nan
         b[1, 2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.ma.median(a, 0), b)
-            assert_equal(len(w), 1)
+        assert_equal(np.ma.median(a, 0), b)
 
         # axis1
         b = np.ma.median(aorig, axis=1)
         b[1, 3] = np.nan
         b[1, 2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.ma.median(a, 1), b)
-            assert_equal(len(w), 1)
+        assert_equal(np.ma.median(a, 1), b)
 
         # axis02
         b = np.ma.median(aorig, axis=(0, 2))
         b[1] = np.nan
         b[2] = np.nan
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_equal(np.ma.median(a, (0, 2)), b)
-            assert_equal(len(w), 1)
+        assert_equal(np.ma.median(a, (0, 2)), b)
 
     def test_ambigous_fill(self):
         # 255 is max value, used as filler for sort
@@ -1677,7 +1653,3 @@ class TestStack(object):
         assert_equal(c.shape, c_shp)
         assert_array_equal(a1.mask, c[..., 0].mask)
         assert_array_equal(a2.mask, c[..., 1].mask)
-
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -7,6 +7,7 @@ import re
 import warnings
 
 from numpy.core.numerictypes import issubclass_, issubsctype, issubdtype
+from numpy.core.overrides import set_module
 from numpy.core import ndarray, ufunc, asarray
 import numpy as np
 
@@ -80,7 +81,6 @@ class _Deprecate(object):
         new_name = self.new_name
         message = self.message
 
-        import warnings
         if old_name is None:
             try:
                 old_name = func.__name__
@@ -105,6 +105,20 @@ class _Deprecate(object):
         if doc is None:
             doc = depdoc
         else:
+            lines = doc.expandtabs().split('\n')
+            indent = _get_indent(lines[1:])
+            if lines[0].lstrip():
+                # Indent the original first line to let inspect.cleandoc()
+                # dedent the docstring despite the deprecation notice.
+                doc = indent * ' ' + doc
+            else:
+                # Remove the same leading blank lines as cleandoc() would.
+                skip = len(lines[0]) + 1
+                for line in lines[1:]:
+                    if len(line) > indent:
+                        break
+                    skip += len(line) + 1
+                doc = doc[skip:]
             doc = '\n\n'.join([depdoc, doc])
         newfunc.__doc__ = doc
         try:
@@ -114,6 +128,21 @@ class _Deprecate(object):
         else:
             newfunc.__dict__.update(d)
         return newfunc
+
+
+def _get_indent(lines):
+    """
+    Determines the leading whitespace that could be removed from all the lines.
+    """
+    indent = sys.maxsize
+    for line in lines:
+        content = len(line.lstrip())
+        if content:
+            indent = min(indent, len(line) - content)
+    if indent == sys.maxsize:
+        indent = 0
+    return indent
+
 
 def deprecate(*args, **kwargs):
     """
@@ -150,10 +179,8 @@ def deprecate(*args, **kwargs):
     Warning:
 
     >>> olduint = np.deprecate(np.uint)
+    DeprecationWarning: `uint64` is deprecated! # may vary
     >>> olduint(6)
-    /usr/lib/python2.5/site-packages/numpy/lib/utils.py:114:
-    DeprecationWarning: uint32 is deprecated
-      warnings.warn(str1, DeprecationWarning, stacklevel=2)
     6
 
     """
@@ -164,13 +191,6 @@ def deprecate(*args, **kwargs):
     if args:
         fn = args[0]
         args = args[1:]
-
-        # backward compatibility -- can be removed
-        # after next release
-        if 'newname' in kwargs:
-            kwargs['new_name'] = kwargs.pop('newname')
-        if 'oldname' in kwargs:
-            kwargs['old_name'] = kwargs.pop('oldname')
 
         return _Deprecate(*args, **kwargs)(fn)
     else:
@@ -208,8 +228,8 @@ def byte_bounds(a):
     >>> low, high = np.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
-    >>> I = np.eye(2, dtype='G'); I.dtype
-    dtype('complex192')
+    >>> I = np.eye(2); I.dtype
+    dtype('float64')
     >>> low, high = np.byte_bounds(I)
     >>> high - low == I.size*I.itemsize
     True
@@ -270,17 +290,17 @@ def who(vardict=None):
     >>> np.who()
     Name            Shape            Bytes            Type
     ===========================================================
-    a               10               40               int32
+    a               10               80               int64
     b               20               160              float64
-    Upper bound on total bytes  =       200
+    Upper bound on total bytes  =       240
 
     >>> d = {'x': np.arange(2.0), 'y': np.arange(3.0), 'txt': 'Some str',
     ... 'idx':5}
     >>> np.who(d)
     Name            Shape            Bytes            Type
     ===========================================================
-    y               3                24               float64
     x               2                16               float64
+    y               3                24               float64
     Upper bound on total bytes  =       40
 
     """
@@ -440,6 +460,7 @@ def _info(obj, output=sys.stdout):
     print("type: %s" % obj.dtype, file=output)
 
 
+@set_module('numpy')
 def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
     """
     Get help information for a function, class, or module.
@@ -645,6 +666,7 @@ def info(object=None, maxwidth=76, output=sys.stdout, toplevel='numpy'):
         print(inspect.getdoc(object), file=output)
 
 
+@set_module('numpy')
 def source(object, output=sys.stdout):
     """
     Print or write to a file the source code for a NumPy object.
@@ -702,6 +724,8 @@ _lookfor_caches = {}
 # signature
 _function_signature_re = re.compile(r"[a-z0-9_]+\(.*[,=].*\)", re.I)
 
+
+@set_module('numpy')
 def lookfor(what, module=None, import_modules=True, regenerate=False,
             output=None):
     """
@@ -736,7 +760,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
 
     Examples
     --------
-    >>> np.lookfor('binary representation')
+    >>> np.lookfor('binary representation') # doctest: +SKIP
     Search results for 'binary representation'
     ------------------------------------------
     numpy.binary_repr
@@ -764,13 +788,8 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
         if kind in ('module', 'object'):
             # don't show modules or objects
             continue
-        ok = True
         doc = docstring.lower()
-        for w in whats:
-            if w not in doc:
-                ok = False
-                break
-        if ok:
+        if all(w in doc for w in whats):
             found.append(name)
 
     # Relevance sort
@@ -979,93 +998,6 @@ def _getmembers(item):
                    if hasattr(item, x)]
     return members
 
-#-----------------------------------------------------------------------------
-
-# The following SafeEval class and company are adapted from Michael Spencer's
-# ASPN Python Cookbook recipe:
-#   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/364469
-# Accordingly it is mostly Copyright 2006 by Michael Spencer.
-# The recipe, like most of the other ASPN Python Cookbook recipes was made
-# available under the Python license.
-#   http://www.python.org/license
-
-# It has been modified to:
-#   * handle unary -/+
-#   * support True/False/None
-#   * raise SyntaxError instead of a custom exception.
-
-class SafeEval(object):
-    """
-    Object to evaluate constant string expressions.
-
-    This includes strings with lists, dicts and tuples using the abstract
-    syntax tree created by ``compiler.parse``.
-
-    .. deprecated:: 1.10.0
-
-    See Also
-    --------
-    safe_eval
-
-    """
-    def __init__(self):
-        # 2014-10-15, 1.10
-        warnings.warn("SafeEval is deprecated in 1.10 and will be removed.",
-                      DeprecationWarning, stacklevel=2)
-
-    def visit(self, node):
-        cls = node.__class__
-        meth = getattr(self, 'visit' + cls.__name__, self.default)
-        return meth(node)
-
-    def default(self, node):
-        raise SyntaxError("Unsupported source construct: %s"
-                          % node.__class__)
-
-    def visitExpression(self, node):
-        return self.visit(node.body)
-
-    def visitNum(self, node):
-        return node.n
-
-    def visitStr(self, node):
-        return node.s
-
-    def visitBytes(self, node):
-        return node.s
-
-    def visitDict(self, node,**kw):
-        return dict([(self.visit(k), self.visit(v))
-                     for k, v in zip(node.keys, node.values)])
-
-    def visitTuple(self, node):
-        return tuple([self.visit(i) for i in node.elts])
-
-    def visitList(self, node):
-        return [self.visit(i) for i in node.elts]
-
-    def visitUnaryOp(self, node):
-        import ast
-        if isinstance(node.op, ast.UAdd):
-            return +self.visit(node.operand)
-        elif isinstance(node.op, ast.USub):
-            return -self.visit(node.operand)
-        else:
-            raise SyntaxError("Unknown unary op: %r" % node.op)
-
-    def visitName(self, node):
-        if node.id == 'False':
-            return False
-        elif node.id == 'True':
-            return True
-        elif node.id == 'None':
-            return None
-        else:
-            raise SyntaxError("Unknown name: %s" % node.id)
-
-    def visitNameConstant(self, node):
-        return node.value
-
 
 def safe_eval(source):
     """
@@ -1107,12 +1039,11 @@ def safe_eval(source):
     >>> np.safe_eval('open("/home/user/.ssh/id_dsa").read()')
     Traceback (most recent call last):
       ...
-    SyntaxError: Unsupported source construct: compiler.ast.CallFunc
+    ValueError: malformed node or string: <_ast.Call object at 0x...>
 
     """
     # Local import to speed up numpy's import time.
     import ast
-
     return ast.literal_eval(source)
 
 
@@ -1145,17 +1076,12 @@ def _median_nancheck(data, result, axis, out):
         n = n.filled(False)
     if result.ndim == 0:
         if n == True:
-            warnings.warn("Invalid value encountered in median",
-                          RuntimeWarning, stacklevel=3)
             if out is not None:
                 out[...] = data.dtype.type(np.nan)
                 result = out
             else:
                 result = data.dtype.type(np.nan)
     elif np.count_nonzero(n.ravel()) > 0:
-        warnings.warn("Invalid value encountered in median for" +
-                      " %d results" % np.count_nonzero(n.ravel()),
-                      RuntimeWarning, stacklevel=3)
         result[n] = np.nan
     return result
 

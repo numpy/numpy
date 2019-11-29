@@ -5,14 +5,14 @@ import warnings
 import itertools
 import operator
 import platform
+import pytest
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite,
-    assert_, assert_equal, assert_raises,
-    assert_almost_equal, assert_allclose, assert_array_equal,
-    IS_PYPY, suppress_warnings, dec, _gen_alignment_data, assert_warns
-)
+    assert_, assert_equal, assert_raises, assert_almost_equal,
+    assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
+    assert_warns, assert_raises_regex,
+    )
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
@@ -136,7 +136,7 @@ class TestPower(object):
         # 1 ** -1 possible special case
         base = [np.array(1, dt)[()] for dt in 'bhilqBHILQ']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -146,7 +146,7 @@ class TestPower(object):
         # -1 ** -1 possible special case
         base = [np.array(-1, dt)[()] for dt in 'bhilq']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -156,7 +156,7 @@ class TestPower(object):
         # 2 ** -1 perhaps generic
         base = [np.array(2, dt)[()] for dt in 'bhilqBHILQ']
         for i1, i2 in itertools.product(base, exp):
-            if i1.dtype.name != 'uint64':
+            if i1.dtype != np.uint64:
                 assert_raises(ValueError, operator.pow, i1, i2)
             else:
                 res = operator.pow(i1, i2)
@@ -184,7 +184,7 @@ class TestPower(object):
         a = 5
         b = 4
         c = 10
-        expected = pow(a, b, c)
+        expected = pow(a, b, c)  # noqa: F841
         for t in (np.int32, np.float32, np.complex64):
             # note that 3-operand power only dispatches on the first argument
             assert_raises(TypeError, operator.pow, t(a), b, c)
@@ -292,6 +292,16 @@ class TestModulus(object):
                 assert_(np.isnan(rem), 'dt: %s' % dt)
                 rem = operator.mod(finf, fone)
                 assert_(np.isnan(rem), 'dt: %s' % dt)
+
+    def test_inplace_floordiv_handling(self):
+        # issue gh-12927
+        # this only applies to in-place floordiv //=, because the output type
+        # promotes to float which does not fit
+        a = np.array([1, 2], np.int64)
+        b = np.array([1, 2], np.uint64)
+        pattern = 'could not be coerced to provided output parameter'
+        with assert_raises_regex(TypeError, pattern):
+            a //= b
 
 
 class TestComplexDivision(object):
@@ -410,8 +420,7 @@ class TestConversion(object):
             assert_raises(OverflowError, int, x)
             assert_equal(len(sup.log), 1)
 
-    @dec.knownfailureif(not IS_PYPY,
-        "__int__ is not the same as int in cpython (gh-9972)")
+    @pytest.mark.skipif(not IS_PYPY, reason="Test is PyPy only (gh-9972)")
     def test_int_from_infinite_longdouble___int__(self):
         x = np.longdouble(np.inf)
         assert_raises(OverflowError, x.__int__)
@@ -421,8 +430,10 @@ class TestConversion(object):
             assert_raises(OverflowError, x.__int__)
             assert_equal(len(sup.log), 1)
 
-    @dec.knownfailureif(platform.machine().startswith("ppc64"))
-    @dec.skipif(np.finfo(np.double) == np.finfo(np.longdouble))
+    @pytest.mark.skipif(np.finfo(np.double) == np.finfo(np.longdouble),
+                        reason="long double is same as double")
+    @pytest.mark.skipif(platform.machine().startswith("ppc"),
+                        reason="IBM double double")
     def test_int_from_huge_longdouble(self):
         # Produce a longdouble that would overflow a double,
         # use exponent that avoids bug in Darwin pow function.
@@ -518,7 +529,7 @@ class TestRepr(object):
         storage_bytes = np.dtype(t).itemsize*8
         # could add some more types to the list below
         for which in ['small denorm', 'small norm']:
-            # Values from http://en.wikipedia.org/wiki/IEEE_754
+            # Values from https://en.wikipedia.org/wiki/IEEE_754
             constr = np.array([0x00]*storage_bytes, dtype=np.uint8)
             if which == 'small denorm':
                 byte = last_fraction_bit_idx // 8
@@ -564,10 +575,10 @@ class TestMultiply(object):
         # Some of this behaviour may be controversial and could be open for
         # change.
         accepted_types = set(np.typecodes["AllInteger"])
-        deprecated_types = set('?')
+        deprecated_types = {'?'}
         forbidden_types = (
             set(np.typecodes["All"]) - accepted_types - deprecated_types)
-        forbidden_types -= set('V')  # can't default-construct void scalars
+        forbidden_types -= {'V'}  # can't default-construct void scalars
 
         for seq_type in (list, tuple):
             seq = seq_type([1, 2, 3])
@@ -665,5 +676,29 @@ class TestAbs(object):
         self._test_abs_func(np.abs)
 
 
-if __name__ == "__main__":
-    run_module_suite()
+class TestBitShifts(object):
+
+    @pytest.mark.parametrize('type_code', np.typecodes['AllInteger'])
+    @pytest.mark.parametrize('op',
+        [operator.rshift, operator.lshift], ids=['>>', '<<'])
+    def test_shift_all_bits(self, type_code, op):
+        """ Shifts where the shift amount is the width of the type or wider """
+        # gh-2449
+        dt = np.dtype(type_code)
+        nbits = dt.itemsize * 8
+        for val in [5, -5]:
+            for shift in [nbits, nbits + 4]:
+                val_scl = dt.type(val)
+                shift_scl = dt.type(shift)
+                res_scl = op(val_scl, shift_scl)
+                if val_scl < 0 and op is operator.rshift:
+                    # sign bit is preserved
+                    assert_equal(res_scl, -1)
+                else:
+                    assert_equal(res_scl, 0)
+
+                # Result on scalars should be the same as on arrays
+                val_arr = np.array([val]*32, dtype=dt)
+                shift_arr = np.array([shift]*32, dtype=dt)
+                res_arr = op(val_arr, shift_arr)
+                assert_equal(res_arr, res_scl)

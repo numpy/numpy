@@ -61,6 +61,24 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
     PySlice_GetIndicesEx((PySliceObject *)op, nop, start, end, step, slicelength)
 #endif
 
+/* <2.7.11 and <3.4.4 have the wrong argument type for Py_EnterRecursiveCall */
+#if (PY_VERSION_HEX < 0x02070B00) || \
+    ((0x03000000 <= PY_VERSION_HEX) && (PY_VERSION_HEX < 0x03040400))
+    #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall((char *)(x))
+#else
+    #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
+#endif
+
+/* Py_SETREF was added in 3.5.2, and only if Py_LIMITED_API is absent */
+#if PY_VERSION_HEX < 0x03050200
+    #define Py_SETREF(op, op2)                      \
+        do {                                        \
+            PyObject *_py_tmp = (PyObject *)(op);   \
+            (op) = (op2);                           \
+            Py_DECREF(_py_tmp);                     \
+        } while (0)
+#endif
+
 /*
  * PyString -> PyBytes
  */
@@ -133,20 +151,14 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 static NPY_INLINE void
 PyUnicode_ConcatAndDel(PyObject **left, PyObject *right)
 {
-    PyObject *newobj;
-    newobj = PyUnicode_Concat(*left, right);
-    Py_DECREF(*left);
+    Py_SETREF(*left, PyUnicode_Concat(*left, right));
     Py_DECREF(right);
-    *left = newobj;
 }
 
 static NPY_INLINE void
 PyUnicode_Concat2(PyObject **left, PyObject *right)
 {
-    PyObject *newobj;
-    newobj = PyUnicode_Concat(*left, right);
-    Py_DECREF(*left);
-    *left = newobj;
+    Py_SETREF(*left, PyUnicode_Concat(*left, right));
 }
 
 /*
@@ -207,6 +219,7 @@ npy_PyFile_Dup2(PyObject *file, char *mode, npy_off_t *orig_pos)
     if (handle == NULL) {
         PyErr_SetString(PyExc_IOError,
                         "Getting a FILE* from a Python file object failed");
+        return NULL;
     }
 
     /* Record the original raw file handle position */
@@ -368,6 +381,68 @@ npy_PyFile_CloseFile(PyObject *file)
     }
     Py_DECREF(ret);
     return 0;
+}
+
+
+/* This is a copy of _PyErr_ChainExceptions
+ */
+static NPY_INLINE void
+npy_PyErr_ChainExceptions(PyObject *exc, PyObject *val, PyObject *tb)
+{
+    if (exc == NULL)
+        return;
+
+    if (PyErr_Occurred()) {
+        /* only py3 supports this anyway */
+        #ifdef NPY_PY3K
+            PyObject *exc2, *val2, *tb2;
+            PyErr_Fetch(&exc2, &val2, &tb2);
+            PyErr_NormalizeException(&exc, &val, &tb);
+            if (tb != NULL) {
+                PyException_SetTraceback(val, tb);
+                Py_DECREF(tb);
+            }
+            Py_DECREF(exc);
+            PyErr_NormalizeException(&exc2, &val2, &tb2);
+            PyException_SetContext(val2, val);
+            PyErr_Restore(exc2, val2, tb2);
+        #endif
+    }
+    else {
+        PyErr_Restore(exc, val, tb);
+    }
+}
+
+
+/* This is a copy of _PyErr_ChainExceptions, with:
+ *  - a minimal implementation for python 2
+ *  - __cause__ used instead of __context__
+ */
+static NPY_INLINE void
+npy_PyErr_ChainExceptionsCause(PyObject *exc, PyObject *val, PyObject *tb)
+{
+    if (exc == NULL)
+        return;
+
+    if (PyErr_Occurred()) {
+        /* only py3 supports this anyway */
+        #ifdef NPY_PY3K
+            PyObject *exc2, *val2, *tb2;
+            PyErr_Fetch(&exc2, &val2, &tb2);
+            PyErr_NormalizeException(&exc, &val, &tb);
+            if (tb != NULL) {
+                PyException_SetTraceback(val, tb);
+                Py_DECREF(tb);
+            }
+            Py_DECREF(exc);
+            PyErr_NormalizeException(&exc2, &val2, &tb2);
+            PyException_SetCause(val2, val);
+            PyErr_Restore(exc2, val2, tb2);
+        #endif
+    }
+    else {
+        PyErr_Restore(exc, val, tb);
+    }
 }
 
 /*

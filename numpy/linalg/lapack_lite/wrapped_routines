@@ -1,5 +1,6 @@
 ccopy
 cgeev
+cgelsd
 cgemm
 cgesdd
 cgesv
@@ -23,6 +24,7 @@ dpotrs
 dsyevd
 scopy
 sgeev
+sgelsd
 sgemm
 sgesdd
 sgesv

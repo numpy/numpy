@@ -15,6 +15,7 @@
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
 #include "templ_common.h"
+#include "ctors.h"
 
 /* Internal helper functions private to this file */
 static npy_intp
@@ -370,8 +371,8 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
         }
         if (errmsg == NULL) {
             PyErr_Format(PyExc_ValueError,
-                    "Out-of-bounds range [%d, %d) passed to "
-                    "ResetToIterIndexRange", (int)istart, (int)iend);
+                    "Out-of-bounds range [%" NPY_INTP_FMT ", %" NPY_INTP_FMT ") passed to "
+                    "ResetToIterIndexRange", istart, iend);
         }
         else {
             *errmsg = "Out-of-bounds range passed to ResetToIterIndexRange";
@@ -381,8 +382,8 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
     else if (iend < istart) {
         if (errmsg == NULL) {
             PyErr_Format(PyExc_ValueError,
-                    "Invalid range [%d, %d) passed to ResetToIterIndexRange",
-                    (int)istart, (int)iend);
+                    "Invalid range [%" NPY_INTP_FMT ", %" NPY_INTP_FMT ") passed to ResetToIterIndexRange",
+                    istart, iend);
         }
         else {
             *errmsg = "Invalid range passed to ResetToIterIndexRange";
@@ -405,7 +406,7 @@ NpyIter_ResetToIterIndexRange(NpyIter *iter,
  * Returns NPY_SUCCEED on success, NPY_FAIL on failure.
  */
 NPY_NO_EXPORT int
-NpyIter_GotoMultiIndex(NpyIter *iter, npy_intp *multi_index)
+NpyIter_GotoMultiIndex(NpyIter *iter, npy_intp const *multi_index)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
@@ -1140,21 +1141,10 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     }
 
     Py_INCREF(dtype);
-    view = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
-                                shape, strides, dataptr,
-                                writeable ? NPY_ARRAY_WRITEABLE : 0,
-                                NULL);
-    if (view == NULL) {
-        return NULL;
-    }
-    /* Tell the view who owns the data */
-    Py_INCREF(obj);
-    if (PyArray_SetBaseObject(view, (PyObject *)obj) < 0) {
-        Py_DECREF(view);
-        return NULL;
-    }
-    /* Make sure all the flags are good */
-    PyArray_UpdateFlags(view, NPY_ARRAY_UPDATE_ALL);
+    view = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+            &PyArray_Type, dtype,
+            ndim, shape, strides, dataptr,
+            writeable ? NPY_ARRAY_WRITEABLE : 0, NULL, (PyObject *)obj);
 
     return view;
 }
@@ -1439,8 +1429,8 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("REUSE_REDUCE_LOOPS ");
 
     printf("\n");
-    printf("| NDim: %d\n", (int)ndim);
-    printf("| NOp: %d\n", (int)nop);
+    printf("| NDim: %d\n", ndim);
+    printf("| NOp: %d\n", nop);
     if (NIT_MASKOP(iter) >= 0) {
         printf("| MaskOp: %d\n", (int)NIT_MASKOP(iter));
     }
@@ -1638,14 +1628,11 @@ npyiter_coalesce_axes(NpyIter *iter)
     npy_intp istrides, nstrides = NAD_NSTRIDES();
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    NpyIter_AxisData *ad_compress;
+    NpyIter_AxisData *ad_compress = axisdata;
     npy_intp new_ndim = 1;
 
     /* The HASMULTIINDEX or IDENTPERM flags do not apply after coalescing */
     NIT_ITFLAGS(iter) &= ~(NPY_ITFLAG_IDENTPERM|NPY_ITFLAG_HASMULTIINDEX);
-
-    axisdata = NIT_AXISDATA(iter);
-    ad_compress = axisdata;
 
     for (idim = 0; idim < ndim-1; ++idim) {
         int can_coalesce = 1;
@@ -2800,4 +2787,22 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     return count * (*reduce_innersize);
 }
 
+NPY_NO_EXPORT npy_bool
+npyiter_has_writeback(NpyIter *iter)
+{
+    int iop, nop;
+    npyiter_opitflags *op_itflags;
+    if (iter == NULL) {
+        return 0;
+    }
+    nop = NIT_NOP(iter);
+    op_itflags = NIT_OPITFLAGS(iter);
+
+    for (iop=0; iop<nop; iop++) {
+        if (op_itflags[iop] & NPY_OP_ITFLAG_HAS_WRITEBACK) {
+            return NPY_TRUE;
+        }
+    }
+    return NPY_FALSE;
+}
 #undef NPY_ITERATOR_IMPLEMENTATION_CODE

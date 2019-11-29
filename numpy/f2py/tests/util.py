@@ -15,23 +15,23 @@ import shutil
 import atexit
 import textwrap
 import re
-import random
-import numpy.f2py
+import pytest
 
 from numpy.compat import asbytes, asstr
-from numpy.testing import SkipTest, temppath, dec
+from numpy.testing import temppath
 from importlib import import_module
 
 try:
     from hashlib import md5
 except ImportError:
-    from md5 import new as md5
+    from md5 import new as md5  # noqa: F401
 
 #
 # Maintaining a temporary module directory
 #
 
 _module_dir = None
+_module_num = 5403
 
 
 def _cleanup():
@@ -60,13 +60,14 @@ def get_module_dir():
 
 def get_temp_module_name():
     # Assume single-threaded, and the module dir usable only by this thread
+    global _module_num
     d = get_module_dir()
-    for j in range(5403, 9999999):
-        name = "_test_ext_module_%d" % j
-        fn = os.path.join(d, name)
-        if name not in sys.modules and not os.path.isfile(fn + '.py'):
-            return name
-    raise RuntimeError("Failed to create a temporary module name")
+    name = "_test_ext_module_%d" % _module_num
+    _module_num += 1
+    if name in sys.modules:
+        # this should not be possible, but check anyway
+        raise RuntimeError("Temporary module name already in use.")
+    return name
 
 
 def _memoize(func):
@@ -181,27 +182,27 @@ def _get_compiler_status():
 
     # XXX: this is really ugly. But I don't know how to invoke Distutils
     #      in a safer way...
-    code = """
-import os
-import sys
-sys.path = %(syspath)s
+    code = textwrap.dedent("""\
+        import os
+        import sys
+        sys.path = %(syspath)s
 
-def configuration(parent_name='',top_path=None):
-    global config
-    from numpy.distutils.misc_util import Configuration
-    config = Configuration('', parent_name, top_path)
-    return config
+        def configuration(parent_name='',top_path=None):
+            global config
+            from numpy.distutils.misc_util import Configuration
+            config = Configuration('', parent_name, top_path)
+            return config
 
-from numpy.distutils.core import setup
-setup(configuration=configuration)
+        from numpy.distutils.core import setup
+        setup(configuration=configuration)
 
-config_cmd = config.get_config_cmd()
-have_c = config_cmd.try_compile('void foo() {}')
-print('COMPILERS:%%d,%%d,%%d' %% (have_c,
-                                  config.have_f77c(),
-                                  config.have_f90c()))
-sys.exit(99)
-"""
+        config_cmd = config.get_config_cmd()
+        have_c = config_cmd.try_compile('void foo() {}')
+        print('COMPILERS:%%d,%%d,%%d' %% (have_c,
+                                          config.have_f77c(),
+                                          config.have_f90c()))
+        sys.exit(99)
+        """)
     code = code % dict(syspath=repr(sys.path))
 
     with temppath(suffix='.py') as script:
@@ -260,21 +261,21 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
     # Build script
     config_code = textwrap.dedent(config_code).replace("\n", "\n    ")
 
-    code = """\
-import os
-import sys
-sys.path = %(syspath)s
+    code = textwrap.dedent("""\
+        import os
+        import sys
+        sys.path = %(syspath)s
 
-def configuration(parent_name='',top_path=None):
-    from numpy.distutils.misc_util import Configuration
-    config = Configuration('', parent_name, top_path)
-    %(config_code)s
-    return config
+        def configuration(parent_name='',top_path=None):
+            from numpy.distutils.misc_util import Configuration
+            config = Configuration('', parent_name, top_path)
+            %(config_code)s
+            return config
 
-if __name__ == "__main__":
-    from numpy.distutils.core import setup
-    setup(configuration=configuration)
-""" % dict(config_code=config_code, syspath=repr(sys.path))
+        if __name__ == "__main__":
+            from numpy.distutils.core import setup
+            setup(configuration=configuration)
+        """) % dict(config_code=config_code, syspath=repr(sys.path))
 
     script = os.path.join(d, get_temp_module_name() + '.py')
     dst_sources.append(script)
@@ -319,14 +320,16 @@ class F2PyTest(object):
     module = None
     module_name = None
 
-    @dec.knownfailureif(sys.platform=='win32', msg='Fails with MinGW64 Gfortran (Issue #9673)')
     def setup(self):
+        if sys.platform == 'win32':
+            pytest.skip('Fails with MinGW64 Gfortran (Issue #9673)')
+
         if self.module is not None:
             return
 
         # Check compiler availability first
         if not has_c_compiler():
-            raise SkipTest("No C compiler available")
+            pytest.skip("No C compiler available")
 
         codes = []
         if self.sources:
@@ -342,9 +345,9 @@ class F2PyTest(object):
             elif fn.endswith('.f90'):
                 needs_f90 = True
         if needs_f77 and not has_f77_compiler():
-            raise SkipTest("No Fortran 77 compiler available")
+            pytest.skip("No Fortran 77 compiler available")
         if needs_f90 and not has_f90_compiler():
-            raise SkipTest("No Fortran 90 compiler available")
+            pytest.skip("No Fortran 90 compiler available")
 
         # Build the module
         if self.code is not None:

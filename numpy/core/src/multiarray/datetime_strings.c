@@ -69,7 +69,7 @@
  * multiplatform code, get_localtime() should never be used outside of this
  * range.
  *
- * [1] http://en.wikipedia.org/wiki/Year_2038_problem
+ * [1] https://en.wikipedia.org/wiki/Year_2038_problem
  */
 static int
 get_localtime(NPY_TIME_T *ts, struct tm *tms)
@@ -374,7 +374,7 @@ parse_iso_8601_datetime(char *str, Py_ssize_t len,
     }
 
     /* Leading '-' sign for negative year */
-    if (*substr == '-') {
+    if (*substr == '-' || *substr == '+') {
         ++substr;
         --sublen;
     }
@@ -743,8 +743,8 @@ finish:
 
 parse_error:
     PyErr_Format(PyExc_ValueError,
-            "Error parsing datetime string \"%s\" at position %d",
-            str, (int)(substr-str));
+            "Error parsing datetime string \"%s\" at position %zd",
+            str, substr - str);
     return -1;
 
 error:

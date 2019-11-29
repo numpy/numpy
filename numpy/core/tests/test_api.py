@@ -3,10 +3,11 @@ from __future__ import division, absolute_import, print_function
 import sys
 
 import numpy as np
+import pytest
 from numpy.testing import (
-     run_module_suite, assert_, assert_equal, assert_array_equal,
-     assert_raises, HAS_REFCOUNT
-)
+     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
+     HAS_REFCOUNT
+    )
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
 NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
@@ -224,22 +225,25 @@ def test_array_astype():
     b = a.astype('f4', subok=0, copy=False)
     assert_(a is b)
 
-    a = np.matrix([[0, 1, 2], [3, 4, 5]], dtype='f4')
+    class MyNDArray(np.ndarray):
+        pass
 
-    # subok=True passes through a matrix
+    a = np.array([[0, 1, 2], [3, 4, 5]], dtype='f4').view(MyNDArray)
+
+    # subok=True passes through a subclass
     b = a.astype('f4', subok=True, copy=False)
     assert_(a is b)
 
     # subok=True is default, and creates a subtype on a cast
     b = a.astype('i4', copy=False)
     assert_equal(a, b)
-    assert_equal(type(b), np.matrix)
+    assert_equal(type(b), MyNDArray)
 
-    # subok=False never returns a matrix
+    # subok=False never returns a subclass
     b = a.astype('f4', subok=False, copy=False)
     assert_equal(a, b)
     assert_(not (a is b))
-    assert_(type(b) is not np.matrix)
+    assert_(type(b) is not MyNDArray)
 
     # Make sure converting from string object to fixed length string
     # does not truncate.
@@ -286,6 +290,14 @@ def test_array_astype():
 
     a = np.array(1000, dtype='i4')
     assert_raises(TypeError, a.astype, 'U1', casting='safe')
+
+@pytest.mark.parametrize("t",
+    np.sctypes['uint'] + np.sctypes['int'] + np.sctypes['float']
+)
+def test_array_astype_warning(t):
+    # test ComplexWarning when casting from complex to float or int
+    a = np.array(10, dtype=np.complex_)
+    assert_warns(np.ComplexWarning, a.astype, t)
 
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2, 3)
@@ -512,6 +524,3 @@ def test_broadcast_arrays():
     result = np.broadcast_arrays(a, b)
     assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
     assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
-
-if __name__ == "__main__":
-    run_module_suite()

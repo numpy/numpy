@@ -1,0 +1,231 @@
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "npy_sort.h"
+#include "npysort_common.h"
+#include <stdlib.h>
+
+/*
+ *****************************************************************************
+ **                            INTEGER SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *         LONGLONG, ULONGLONG#
+ * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong#
+ * #type = npy_ubyte, npy_ubyte, npy_ubyte, npy_ushort, npy_ushort, npy_uint,
+ *         npy_uint, npy_ulong, npy_ulong, npy_ulonglong, npy_ulonglong#
+ * #sign = 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0#
+ * #floating = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0#
+ */
+
+// Reference: https://github.com/eloj/radix-sorting#-key-derivation
+#if @sign@
+    // Floating-point is currently disabled.
+    // Floating-point tests succeed for double and float on macOS but not on Windows/Linux.
+    // Basic sorting tests succeed but others relying on sort fail.
+    // Possibly related to floating-point normalisation or multiple NaN reprs? Not sure.
+    #if @floating@
+        // For floats, we invert the key if the sign bit is set, else we invert the sign bit.
+        #define KEY_OF(x) ((x) ^ (-((x) >> (sizeof(@type@) * 8 - 1)) | ((@type@)1 << (sizeof(@type@) * 8 - 1))))
+    #else
+        // For signed ints, we flip the sign bit so the negatives are below the positives.
+        #define KEY_OF(x) ((x) ^ ((@type@)1 << (sizeof(@type@) * 8 - 1)))
+    #endif
+#else
+    // For unsigned ints, the key is as-is
+    #define KEY_OF(x) (x)
+#endif
+
+static inline npy_ubyte
+nth_byte_@suff@(@type@ key, npy_intp l) {
+    return (key >> (l << 3)) & 0xFF;
+}
+
+@type@*
+radixsort0_@suff@(@type@ *arr, @type@ *aux, npy_intp num)
+{
+    npy_intp cnt[sizeof(@type@)][1 << 8] = { { 0 } };
+    npy_intp i;
+    size_t l;
+    @type@ key0 = KEY_OF(arr[0]);
+    size_t ncols = 0;
+    npy_ubyte cols[sizeof(@type@)];
+
+    for (i = 0; i < num; i++) {
+        @type@ k = KEY_OF(arr[i]);
+
+        for (l = 0; l < sizeof(@type@); l++) {
+            cnt[l][nth_byte_@suff@(k, l)]++;
+        }
+    }
+
+    for (l = 0; l < sizeof(@type@); l++) {
+	    if (cnt[l][nth_byte_@suff@(key0, l)] != num) {
+	        cols[ncols++] = l;
+        }
+    }
+
+    for (l = 0; l < ncols; l++) {
+        npy_intp a = 0;
+        for (i = 0; i < 256; i++) {
+            npy_intp b = cnt[cols[l]][i];
+            cnt[cols[l]][i] = a;
+            a += b;
+        }
+    }
+
+    for (l = 0; l < ncols; l++) {
+        @type@* temp;
+        for (i = 0; i < num; i++) {
+            @type@ k = KEY_OF(arr[i]);
+            npy_intp dst = cnt[cols[l]][nth_byte_@suff@(k, cols[l])]++;
+            aux[dst] = arr[i];
+        }
+
+        temp = aux;
+        aux = arr;
+        arr = temp;
+    }
+
+    return arr;
+}
+
+int
+radixsort_@suff@(void *start, npy_intp num, void *NPY_UNUSED(varr))
+{
+    void *sorted;
+    @type@ *aux;
+    @type@ *arr = start;
+    @type@ k1, k2;
+    npy_bool all_sorted = 1;
+
+    if (num < 2) {
+        return 0;
+    }
+
+    k1 = KEY_OF(arr[0]);
+    for (npy_intp i = 1; i < num; i++) {
+        k2 = KEY_OF(arr[i]);
+        if (k1 > k2) {
+            all_sorted = 0;
+            break;
+        }
+        k1 = k2;
+    }
+
+    if (all_sorted) {
+        return 0;
+    }
+
+    aux = malloc(num * sizeof(@type@));
+    if (aux == NULL) {
+        return -NPY_ENOMEM;
+    }
+
+    sorted = radixsort0_@suff@(start, aux, num);
+    if (sorted != start) {
+        memcpy(start, sorted, num * sizeof(@type@));
+    }
+
+    free(aux);
+    return 0;
+}
+
+npy_intp*
+aradixsort0_@suff@(@type@ *arr, npy_intp *aux, npy_intp *tosort, npy_intp num)
+{
+    npy_intp cnt[sizeof(@type@)][1 << 8] = { { 0 } };
+    npy_intp i;
+    size_t l;
+    @type@ key0 = KEY_OF(arr[0]);
+    size_t ncols = 0;
+    npy_ubyte cols[sizeof(@type@)];
+
+    for (i = 0; i < num; i++) {
+        @type@ k = KEY_OF(arr[i]);
+
+        for (l = 0; l < sizeof(@type@); l++) {
+            cnt[l][nth_byte_@suff@(k, l)]++;
+        }
+    }
+
+    for (l = 0; l < sizeof(@type@); l++) {
+        if (cnt[l][nth_byte_@suff@(key0, l)] != num) {
+            cols[ncols++] = l;
+        }
+    }
+
+    for (l = 0; l < ncols; l++) {
+        npy_intp a = 0;
+        for (i = 0; i < 256; i++) {
+            npy_intp b = cnt[cols[l]][i];
+            cnt[cols[l]][i] = a;
+            a += b;
+        }
+    }
+
+    for (l = 0; l < ncols; l++) {
+        npy_intp* temp;
+        for (i = 0; i < num; i++) {
+            @type@ k = KEY_OF(arr[tosort[i]]);
+            npy_intp dst = cnt[cols[l]][nth_byte_@suff@(k, cols[l])]++;
+            aux[dst] = tosort[i];
+        }
+
+        temp = aux;
+        aux = tosort;
+        tosort = temp;
+    }
+
+    return tosort;
+}
+
+int
+aradixsort_@suff@(void *start, npy_intp* tosort, npy_intp num, void *NPY_UNUSED(varr))
+{
+    npy_intp *sorted;
+    npy_intp *aux;
+    @type@ *arr = start;
+    @type@ k1, k2;
+    npy_bool all_sorted = 1;
+
+    if (num < 2) {
+        return 0;
+    }
+
+    k1 = KEY_OF(arr[tosort[0]]);
+    for (npy_intp i = 1; i < num; i++) {
+        k2 = KEY_OF(arr[tosort[i]]);
+        if (k1 > k2) {
+            all_sorted = 0;
+            break;
+        }
+        k1 = k2;
+    }
+
+    if (all_sorted) {
+        return 0;
+    }
+
+    aux = malloc(num * sizeof(npy_intp));
+    if (aux == NULL) {
+        return -NPY_ENOMEM;
+    }
+
+    sorted = aradixsort0_@suff@(start, aux, tosort, num);
+    if (sorted != tosort) {
+        memcpy(tosort, sorted, num * sizeof(npy_intp));
+    }
+
+    free(aux);
+    return 0;
+}
+
+#undef KEY_OF
+
+/**end repeat**/

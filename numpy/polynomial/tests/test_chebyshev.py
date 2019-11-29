@@ -3,12 +3,13 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.chebyshev as cheb
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite
     )
 
 
@@ -112,6 +113,15 @@ class TestArithmetic(object):
                 res = cheb.chebadd(cheb.chebmul(quo, ci), rem)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
+    def test_chebpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(cheb.chebmul, [c]*j, np.array([1]))
+                res = cheb.chebpow(c, j)
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
 
 class TestEvaluation(object):
     # coefficients of 1 + 2*x + 3*x**2
@@ -211,12 +221,12 @@ class TestIntegral(object):
 
     def test_chebint(self):
         # check exceptions
-        assert_raises(ValueError, cheb.chebint, [0], .5)
+        assert_raises(TypeError, cheb.chebint, [0], .5)
         assert_raises(ValueError, cheb.chebint, [0], -1)
         assert_raises(ValueError, cheb.chebint, [0], 1, [0, 0])
         assert_raises(ValueError, cheb.chebint, [0], lbnd=[0])
         assert_raises(ValueError, cheb.chebint, [0], scl=[0])
-        assert_raises(ValueError, cheb.chebint, [0], axis=.5)
+        assert_raises(TypeError, cheb.chebint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -313,7 +323,7 @@ class TestDerivative(object):
 
     def test_chebder(self):
         # check exceptions
-        assert_raises(ValueError, cheb.chebder, [0], .5)
+        assert_raises(TypeError, cheb.chebder, [0], .5)
         assert_raises(ValueError, cheb.chebder, [0], -1)
 
         # check that zeroth derivative does nothing
@@ -609,6 +619,3 @@ class TestMisc(object):
         assert_almost_equal(cheb.chebpts2(4), tgt)
         tgt = [-1.0, -0.707106781187, 0, 0.707106781187, 1.0]
         assert_almost_equal(cheb.chebpts2(5), tgt)
-
-if __name__ == "__main__":
-    run_module_suite()

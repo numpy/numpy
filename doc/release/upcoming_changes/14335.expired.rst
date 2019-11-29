@@ -1,0 +1,2 @@
+* Class ``SafeEval`` in ``numpy/lib/utils.py`` has been removed. This was deprecated in NumPy 1.10.
+  Use ``np.safe_eval`` instead.

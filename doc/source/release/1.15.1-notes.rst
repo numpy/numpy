@@ -1,0 +1,74 @@
+==========================
+NumPy 1.15.1 Release Notes
+==========================
+
+This is a bugfix release for bugs and regressions reported following the 1.15.0
+release.
+
+* The annoying but harmless RuntimeWarning that "numpy.dtype size changed" has
+  been suppressed. The long standing suppression was lost in the transition to
+  pytest.
+* The update to Cython 0.28.3 exposed a problematic use of a gcc attribute used
+  to prefer code size over speed in module initialization, possibly resulting in
+  incorrect compiled code. This has been fixed in latest Cython but has been
+  disabled here for safety.
+* Support for big-endian and ARMv8 architectures has been improved.
+
+The Python versions supported by this release are 2.7, 3.4-3.7. The wheels are
+linked with OpenBLAS v0.3.0, which should fix some of the linalg problems
+reported for NumPy 1.14.
+
+
+Compatibility Note
+==================
+
+The NumPy 1.15.x OS X wheels released on PyPI no longer contain 32-bit
+binaries.  That will also be the case in future releases. See
+`#11625 <https://github.com/numpy/numpy/issues/11625>`__ for the related
+discussion.  Those needing 32-bit support should look elsewhere or build
+from source.
+
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Chris Billington
+* Elliott Sales de Andrade +
+* Eric Wieser
+* Jeremy Manning +
+* Matti Picus
+* Ralf Gommers
+
+Pull requests merged
+====================
+
+A total of 24 pull requests were merged for this release.
+
+* `#11647 <https://github.com/numpy/numpy/pull/11647>`__: MAINT: Filter Cython warnings in ``__init__.py``
+* `#11648 <https://github.com/numpy/numpy/pull/11648>`__: BUG: Fix doc source links to unwrap decorators
+* `#11657 <https://github.com/numpy/numpy/pull/11657>`__: BUG: Ensure singleton dimensions are not dropped when converting...
+* `#11661 <https://github.com/numpy/numpy/pull/11661>`__: BUG: Warn on Nan in minimum,maximum for scalars
+* `#11665 <https://github.com/numpy/numpy/pull/11665>`__: BUG: cython sometimes emits invalid gcc attribute
+* `#11682 <https://github.com/numpy/numpy/pull/11682>`__: BUG: Fix regression in void_getitem
+* `#11698 <https://github.com/numpy/numpy/pull/11698>`__: BUG: Make matrix_power again work for object arrays.
+* `#11700 <https://github.com/numpy/numpy/pull/11700>`__: BUG: Add missing PyErr_NoMemory after failing malloc
+* `#11719 <https://github.com/numpy/numpy/pull/11719>`__: BUG: Fix undefined functions on big-endian systems.
+* `#11720 <https://github.com/numpy/numpy/pull/11720>`__: MAINT: Make einsum optimize default to False.
+* `#11746 <https://github.com/numpy/numpy/pull/11746>`__: BUG: Fix regression in loadtxt for bz2 text files in Python 2.
+* `#11757 <https://github.com/numpy/numpy/pull/11757>`__: BUG: Revert use of `console_scripts`.
+* `#11758 <https://github.com/numpy/numpy/pull/11758>`__: BUG: Fix Fortran kind detection for aarch64 & s390x.
+* `#11759 <https://github.com/numpy/numpy/pull/11759>`__: BUG: Fix printing of longdouble on ppc64le.
+* `#11760 <https://github.com/numpy/numpy/pull/11760>`__: BUG: Fixes for unicode field names in Python 2
+* `#11761 <https://github.com/numpy/numpy/pull/11761>`__: BUG: Increase required cython version on python 3.7
+* `#11763 <https://github.com/numpy/numpy/pull/11763>`__: BUG: check return value of _buffer_format_string
+* `#11775 <https://github.com/numpy/numpy/pull/11775>`__: MAINT: Make assert_array_compare more generic.
+* `#11776 <https://github.com/numpy/numpy/pull/11776>`__: TST: Fix urlopen stubbing.
+* `#11777 <https://github.com/numpy/numpy/pull/11777>`__: BUG: Fix regression in intersect1d.
+* `#11779 <https://github.com/numpy/numpy/pull/11779>`__: BUG: Fix test sensitive to platform byte order.
+* `#11781 <https://github.com/numpy/numpy/pull/11781>`__: BUG: Avoid signed overflow in histogram
+* `#11785 <https://github.com/numpy/numpy/pull/11785>`__: BUG: Fix pickle and memoryview for datetime64, timedelta64 scalars
+* `#11786 <https://github.com/numpy/numpy/pull/11786>`__: BUG: Deprecation triggers segfault

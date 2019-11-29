@@ -16,7 +16,7 @@ Building NumPy requires the following software installed:
    On Debian and derivatives (Ubuntu): python, python-dev (or python3-dev)
 
    On Windows: the official python installer at
-   `www.python.org <http://www.python.org>`_ is enough
+   `www.python.org <https://www.python.org>`_ is enough
 
    Make sure that the Python package distutils is installed before
    continuing. For example, in Debian GNU/Linux, installing python-dev
@@ -56,7 +56,7 @@ Basic Installation
 
 To install NumPy run::
 
-    python setup.py install
+    pip install .
 
 To perform an in-place build that can be run from the source folder run::
 
@@ -68,6 +68,15 @@ Using ``virtualenv`` should work as expected.
 
 *Note: for build instructions to do development work on NumPy itself, see*
 :ref:`development-environment`.
+
+Testing
+-------
+
+Make sure to test your builds. To ensure everything stays in shape, see if all tests pass::
+
+    $ python runtests.py -v -m full
+
+For detailed info on testing, see :ref:`testing-builds`.
 
 .. _parallel-builds:
 
@@ -118,11 +127,70 @@ means that g77 has been used. If libgfortran.so is a dependency, gfortran
 has been used. If both are dependencies, this means both have been used, which
 is almost always a very bad idea.
 
+Accelerated BLAS/LAPACK libraries
+---------------------------------
+
+NumPy searches for optimized linear algebra libraries such as BLAS and LAPACK.
+There are specific orders for searching these libraries, as described below.
+
+BLAS
+~~~~
+
+The default order for the libraries are:
+
+1. MKL
+2. BLIS
+3. OpenBLAS
+4. ATLAS
+5. Accelerate (MacOS)
+6. BLAS (NetLIB)
+
+
+If you wish to build against OpenBLAS but you also have BLIS available one
+may predefine the order of searching via the environment variable
+``NPY_BLAS_ORDER`` which is a comma-separated list of the above names which
+is used to determine what to search for, for instance::
+
+      NPY_BLAS_ORDER=ATLAS,blis,openblas,MKL python setup.py build
+
+will prefer to use ATLAS, then BLIS, then OpenBLAS and as a last resort MKL.
+If neither of these exists the build will fail (names are compared
+lower case).
+
+LAPACK
+~~~~~~
+
+The default order for the libraries are:
+
+1. MKL
+2. OpenBLAS
+3. libFLAME
+4. ATLAS
+5. Accelerate (MacOS)
+6. LAPACK (NetLIB)
+
+
+If you wish to build against OpenBLAS but you also have MKL available one
+may predefine the order of searching via the environment variable
+``NPY_LAPACK_ORDER`` which is a comma-separated list of the above names,
+for instance::
+
+      NPY_LAPACK_ORDER=ATLAS,openblas,MKL python setup.py build
+
+will prefer to use ATLAS, then OpenBLAS and as a last resort MKL.
+If neither of these exists the build will fail (names are compared
+lower case).
+
+
 Disabling ATLAS and other accelerated libraries
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Usage of ATLAS and other accelerated libraries in NumPy can be disabled
 via::
+
+    NPY_BLAS_ORDER= NPY_LAPACK_ORDER= python setup.py build
+
+or::
 
     BLAS=None LAPACK=None ATLAS=None python setup.py build
 
@@ -132,6 +200,8 @@ Supplying additional compiler flags
 
 Additional compiler flags can be supplied by setting the ``OPT``,
 ``FOPT`` (for Fortran), and ``CC`` environment variables.
+When providing options that should improve the performance of the code ensure
+that you also set ``-DNDEBUG`` so that debugging code is not executed.
 
 
 Building with ATLAS support

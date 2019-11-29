@@ -28,6 +28,8 @@ Steering council
 
 * Allan Haldane
 
+* Stefan van der Walt
+
 
 Emeritus members
 ----------------
@@ -46,7 +48,7 @@ NumFOCUS Subcommittee
 
 * Jaime Fernández del Río
 
-* Nathaniel Smith
+* Sebastian Berg
 
 * External member: Thomas Caswell
 
@@ -54,10 +56,7 @@ NumFOCUS Subcommittee
 Institutional Partners
 ----------------------
 
-*  UC Berkeley (Nathaniel Smith)
+* UC Berkeley (Stefan van der Walt, Matti Picus, Tyler Reddy, Sebastian Berg)
 
+* Quansight (Ralf Gommers, Hameer Abbasi)
 
-Document history
-----------------
-
-https://github.com/numpy/numpy/commits/master/doc/source/dev/governance/governance.rst

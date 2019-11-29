@@ -19,7 +19,6 @@ import sys
 import warnings
 
 import numpy as np
-import numpy.core.numerictypes as ntypes
 from numpy.compat import basestring
 from numpy import (
         bool_, dtype, ndarray, recarray, array as narray
@@ -29,7 +28,6 @@ from numpy.core.records import (
         )
 
 _byteorderconv = np.core.records._byteorderconv
-_typestr = ntypes._typestr
 
 import numpy.ma as ma
 from numpy.ma import (
@@ -46,24 +44,6 @@ __all__ = [
     ]
 
 reserved_fields = ['_data', '_mask', '_fieldmask', 'dtype']
-
-
-def _getformats(data):
-    """
-    Returns the formats of arrays in arraylist as a comma-separated string.
-
-    """
-    if hasattr(data, 'dtype'):
-        return ",".join([desc[1] for desc in data.dtype.descr])
-
-    formats = ''
-    for obj in data:
-        obj = np.asarray(obj)
-        formats += _typestr[obj.dtype.type]
-        if issubclass(obj.dtype.type, ntypes.flexible):
-            formats += repr(obj.itemsize)
-        formats += ','
-    return formats[:-1]
 
 
 def _checknames(descr, names=None):
@@ -186,23 +166,21 @@ class MaskedRecords(MaskedArray, object):
             _dict['_baseclass'] = recarray
         return
 
-    def _getdata(self):
+    @property
+    def _data(self):
         """
         Returns the data as a recarray.
 
         """
         return ndarray.view(self, recarray)
 
-    _data = property(fget=_getdata)
-
-    def _getfieldmask(self):
+    @property
+    def _fieldmask(self):
         """
         Alias to mask.
 
         """
         return self._mask
-
-    _fieldmask = property(fget=_getfieldmask)
 
     def __len__(self):
         """
@@ -230,7 +208,7 @@ class MaskedRecords(MaskedArray, object):
         _localdict = ndarray.__getattribute__(self, '__dict__')
         _data = ndarray.view(self, _localdict['_baseclass'])
         obj = _data.getfield(*res)
-        if obj.dtype.fields:
+        if obj.dtype.names is not None:
             raise NotImplementedError("MaskedRecords is currently limited to"
                                       "simple records.")
         # Get some special attributes
@@ -243,7 +221,8 @@ class MaskedRecords(MaskedArray, object):
             except IndexError:
                 # Couldn't find a mask: use the default (nomask)
                 pass
-            hasmasked = _mask.view((bool, (len(_mask.dtype) or 1))).any()
+            tp_len = len(_mask.dtype)
+            hasmasked = _mask.view((bool, ((tp_len,) if tp_len else ()))).any()
         if (obj.shape or hasmasked):
             obj = obj.view(MaskedArray)
             obj._baseclass = ndarray

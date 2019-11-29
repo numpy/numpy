@@ -3,12 +3,13 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.legendre as leg
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    run_module_suite
     )
 
 L0 = np.array([1])
@@ -99,6 +100,15 @@ class TestArithmetic(object):
                 tgt = leg.legadd(ci, cj)
                 quo, rem = leg.legdiv(tgt, ci)
                 res = leg.legadd(leg.legmul(quo, ci), rem)
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
+
+    def test_legpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(leg.legmul, [c]*j, np.array([1]))
+                res = leg.legpow(c, j) 
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
@@ -200,12 +210,12 @@ class TestIntegral(object):
 
     def test_legint(self):
         # check exceptions
-        assert_raises(ValueError, leg.legint, [0], .5)
+        assert_raises(TypeError, leg.legint, [0], .5)
         assert_raises(ValueError, leg.legint, [0], -1)
         assert_raises(ValueError, leg.legint, [0], 1, [0, 0])
         assert_raises(ValueError, leg.legint, [0], lbnd=[0])
         assert_raises(ValueError, leg.legint, [0], scl=[0])
-        assert_raises(ValueError, leg.legint, [0], axis=.5)
+        assert_raises(TypeError, leg.legint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -302,7 +312,7 @@ class TestDerivative(object):
 
     def test_legder(self):
         # check exceptions
-        assert_raises(ValueError, leg.legder, [0], .5)
+        assert_raises(TypeError, leg.legder, [0], .5)
         assert_raises(ValueError, leg.legder, [0], -1)
 
         # check that zeroth derivative does nothing
@@ -546,7 +556,3 @@ class TestMisc(object):
         tgt = 1.
         res = leg.legweight(x)
         assert_almost_equal(res, tgt)
-
-
-if __name__ == "__main__":
-    run_module_suite()
