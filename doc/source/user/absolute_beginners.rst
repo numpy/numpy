@@ -1651,7 +1651,13 @@ make NumPy so highly regarded in the scientific Python community.
 For example, this is the mean square error formula (a central formula used in
 supervised machine learning models that deal with regression):
 
-.. image:: images/np_MSE_formula.png
+.. math::
+
+  MeanSquareError = \color{green}{\frac{1}{n}}
+  \color{blue}{\sum{i=1}^{n}} (
+  \color{red}{predictions} - 
+  \color{purple}{labels} )
+  \color{yellow}{^{2}}
 
 Implementing this formula is simple and straightforward in NumPy:
 
@@ -1864,9 +1870,7 @@ All you need to do to plot your values is run::
   >>> .plot(a) 
   >>> plt.show()
 
-.. plot:: plots/matplotlib1.py
-   :align: center
-   :include-source: 0
+
 
 For example, you can plot a 1D array like this::
 
@@ -1875,9 +1879,7 @@ For example, you can plot a 1D array like this::
   >>> plt.plot(x, y, 'purple') # line
   >>> plt.plot(x, y, 'o')      # dots
 
-.. plot:: plots/matplotlib2.py
-   :align: center
-   :include-source: 0
+
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
@@ -1895,9 +1897,7 @@ With Matplotlib, you have access to an enormous number of visualization options.
 
   >>> plt.colorbar()
 
-.. plot:: plots/matplotlib3.py
-  :align: center
-  :include-source: 0
+
 
 
 To read more about Matplotlib and what it can do, take a look at 
