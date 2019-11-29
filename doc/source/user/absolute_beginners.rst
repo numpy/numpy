@@ -65,9 +65,7 @@ Any time you want to use a package or library in your code, you first need to
 make it accessible. 
 
 In order to start using NumPy and all of the functions available in NumPy,
-you'll need to import it. This can be easily done with this import statement:
-
-::
+you'll need to import it. This can be easily done with this import statement::
 
   import numpy as np 
 
@@ -108,15 +106,11 @@ the array along each dimension.
 One way we can initialize NumPy arrays is from Python lists, using nested lists
 for two- or higher-dimensional data.. 
 
-For example:
-
-::
+For example::
 
   array = np.array([1, 2, 3, 4, 5, 6])
 
-or:
-
-::
+or::
 
   a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
@@ -160,9 +154,7 @@ shape of an array is a tuple of non-negative integers that specify the sizes of
 each dimension. 
 
 In NumPy, dimensions are called **axes**. This means that if you have a 2D array
-that looks like this:
-
-::
+that looks like this::
 
   [[0., 0., 0.], 
    [1., 1., 1.]]
@@ -317,9 +309,8 @@ specify which data type you want using ``dtype``.
 ::
 
   array([1, 1])
-
-`Learn more about creating arrays here
-<https://numpy.org/devdocs/user/quickstart.html#array-creation>`_.
+  
+`Learn more about creating arrays here <https://numpy.org/devdocs/user/quickstart.html#array-creation>`_.
 
 Adding, removing, and sorting elements 
 --------------------------------------
@@ -368,9 +359,7 @@ In addition to sort, which returns a sorted copy of an array, you can use:
 and  ``partition``, which is a 
 `partial sort  <https://numpy.org/devdocs/reference/generated/numpy.partition.html#numpy.partition>`_.
 
-If you start with these arrays:
-
-::
+If you start with these arrays::
 
   a = np.array([1, 2, 3, 4]) 
   b = np.array([5, 6, 7, 8])
@@ -390,17 +379,12 @@ You can concatenate them with ``np.concatenate()``.
 
   array([1, 2, 3, 4, 5, 6, 7, 8])
 
-Or, if you start with these arrays:
-
-::
+Or, if you start with these arrays::
 
   x = np.array([[1, 2], [3, 4]]) 
   y = np.array([[5, 6]])
 
-You can concatenate them with:
-
-
-::
+You can concatenate them with::
 
   np.concatenate((x, y), axis=0)
 
@@ -440,9 +424,7 @@ How do you know the shape and size of an array?
 **elements stored along each dimension of the array. If, for example, you have a
 **2D array with 2 rows and 3 columns, the shape of your array is (2,3).
 
-For example, if you create this array:
-
-::
+For example, if you create this array::
 
   array_example = np.array([[[0, 1, 2, 3] 
                              [4, 5, 6, 7]],
@@ -519,9 +501,7 @@ produce needs to have the same number of elements as the original array. If you
 start with an array with 12 elements, you'll need to make sure that your new
 array also has a total of 12 elements.
 
-If you start with this array:
-
-::
+If you start with this array::
 
   a = np.arange(6) 
   print(a)
@@ -603,9 +583,7 @@ Using ``np.newaxis`` will increase the dimensions of your array by one dimension
 when used once. This means that a **1D** array will become a **2D** array, a
 **2D** array will become a **3D** array, and so on. 
 
-For example, if you start with this array:
-
-::
+For example, if you start with this array::
 
   a = np.array([1, 2, 3, 4, 5, 6]) 
   a.shape
@@ -750,9 +728,7 @@ slice, and/or index your arrays.
 If you want to select values from your array that fulfill certain conditions,
 it's straightforward with NumPy. 
 
-For example, if you start with this array:
-
-::
+For example, if you start with this array::
 
   a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
@@ -838,9 +814,7 @@ categorical values.
 
 You can also use ``np.nonzero()`` to select elements or indices from an array. 
 
-Starting with this array:
-
-::
+Starting with this array::
 
   a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
@@ -1070,9 +1044,7 @@ memory and is faster (no copy of the data has to be made). However it's
 important to be aware of this - modifying data in a view also modifies the
 original array!
 
-Let's say you create this array:
-
-::
+Let's say you create this array::
 
   a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
@@ -1187,9 +1159,7 @@ There are times when you might want to carry out an operation between an array
 and a single number (also called *an operation between a vector and a scalar*)
 or between arrays of two different sizes. For example, your array (we'll call it
 "data") might contain information about distance in miles but you want to
-convert the information to kilometers. You can perform this operation with: 
-
-::
+convert the information to kilometers. You can perform this operation with::
 
   data * 1.6
 
@@ -1216,9 +1186,7 @@ More useful array operations
 NumPy also performs aggregation functions. In addition to ``min``,  ``max``, and
 ``sum``, you can easily run ``mean`` to get the average, ``prod`` to get the
 result of multiplying the elements together, ``std`` to get the standard
-deviation, and more.
-
-::
+deviation, and more. ::
 
   data.max() 
   data.min() 
@@ -1226,9 +1194,7 @@ deviation, and more.
 
 .. image:: images/np_aggregation.png
 
-Let's start with this array, called "a"
-
-::
+Let's start with this array, called "a" ::
 
   [[0.45053314 0.17296777 0.34376245 0.5510652] 
    [0.54627315 0.05093587 0.40067661 0.55645993] 
@@ -1244,9 +1210,7 @@ find the sum or the minimum of the elements in your array, run:
 
   a.sum()
 
-Or
-
-::
+Or::
 
   a.min()
 
@@ -1292,7 +1256,6 @@ How to inspect the size and shape of a NumPy array
 
 ::
 
-
   arr.shape() 
   arr.size()
 
@@ -1301,9 +1264,7 @@ How to inspect the size and shape of a NumPy array
 You can get the dimensions of a NumPy array any time using ``ndarray.shape``.
 NumPy will return the dimensions of the array as a tuple.
 
-For example, if you create this array:
-
-::
+For example, if you create this array::
 
   arr = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
@@ -1496,7 +1457,8 @@ the `shape of an array here
 <https://numpy.org/devdocs/reference/generated/numpy.ndarray.shape.html>`_.
 
 
-Creating matrices -----------------
+Creating matrices 
+-----------------
 
 You can pass Python lists of lists to create a matrix to represent them in
 NumPy.
@@ -1808,9 +1770,7 @@ It's common to need to transpose your matrices. NumPy arrays have the property
 You may also need to switch the dimensions of a matrix. This can happen when,
 for example, you have a model that expects a certain input shape that is
 different from your dataset. This is where the ``reshape`` method can be useful.
-You simply need to pass in the new dimensions that you want for the matrix.
-
-::
+You simply need to pass in the new dimensions that you want for the matrix. ::
 
   data.reshape(2, 3) 
   data.reshape(3, 2)
@@ -1820,9 +1780,7 @@ You simply need to pass in the new dimensions that you want for the matrix.
 You can also use ``.transpose`` to reverse or change the axes of an array
 according to the values you specify.
 
-If you start with this array:
-
-::
+If you start with this array::
 
   arr = np.arange(6).reshape((2, 3)) 
   arr
@@ -1871,15 +1829,11 @@ contents along all of the axes of your input array.
 
 **Reversing a 1D array**
 
-If you begin with a 1D array like this one:
-
-::
+If you begin with a 1D array like this one::
 
   arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
 
-You can reverse it with: 
-
-::
+You can reverse it with::
 
   reversed_arr = np.flip(arr)
 
@@ -2125,15 +2079,11 @@ function that can help you access this information. This means that nearly any
 time you need more information, you can use ``help()`` to quickly find the
 information that you need.
 
-For example,
-
-::
+For example, ::
 
   help(max)
 
-Will return
-
-::
+Will return::
 
   Help on built-in function max in module builtins:
 
@@ -2161,9 +2111,7 @@ For example,
 
   max?
 
-Will return:
-
-::
+Will return::
 
   Docstring: max(iterable, *[, default=obj, key=func]) -> value max(arg1, arg2,
   *args, *[, key=func]) -> value
@@ -2175,21 +2123,15 @@ Will return:
   
 You can even use this notation for object methods and objects themselves.
 
-Let's say you create this array:
-
-::
+Let's say you create this array::
 
   a = np.array([1, 2, 3, 4, 5, 6])
 
-Running
-
-::
+Running ::
 
   a?
   
-Will return a lot of useful information.
-
-::
+Will return a lot of useful information. ::
 
   Type:            ndarray String form:     
                   [1 2 3 4 5 6] Length:          6
@@ -2309,23 +2251,17 @@ This also works for functions and other objects that **you** create. Just
 remember to include a docstring with your function using a string literal (``"""
 """`` or ``''' '''`` around your documentation).
 
-For example, if you create this function:
-
-::
+For example, if you create this function::
 
   def double(a): 
     '''Return a * 2''' 
     return a * 2
 
-You can run:
-
-::
+You can run::
 
   double?
 
-Which will return:
-
-::
+Which will return::
 
   Signature: double(a) 
   Docstring: Return a * 2 
@@ -2336,15 +2272,11 @@ You can reach another level of information by reading the source code of the
 object you're interested in. Using a double question mark (``??``) allows you to
 access the source code.
 
-For example, running:
-
-::
+For example, running::
 
   double??
 
-Will return 
-
-::
+Will return ::
 
   Signature: double(a) 
   Source:    def double(a): 
@@ -2355,9 +2287,7 @@ Will return
 
 If the object in question is compiled in a language other than Python, using
 ``??`` will return the same information as ``?``. You'll find this with a lot of
-built-in objects and types, for example:
-
-::
+built-in objects and types, for example::
 
   len?
 
@@ -2369,9 +2299,7 @@ built-in objects and types, for example:
   Docstring: Return the number of items in a container.
   Type:      builtin_function_or_method
 
-and
-
-::
+and ::
 
   len??
 
@@ -2455,21 +2383,15 @@ with ``np.savez_compressed``.
 
 It's easy to save and load and array with ``np.save()``. Just make sure to
 specify the array you want to save and a file name.  For example, if you create
-this array:
-
-::
+this array::
 
   a = np.array([1, 2, 3, 4, 5, 6])
 
-You can save it as "filename.npy" with
-
-::
+You can save it as "filename.npy" with::
 
   np.save('filename',a)
 
-You can use ``np.load()`` to reconstruct your array.
-
-::
+You can use ``np.load()`` to reconstruct your array. ::
 
   b = np.load('filename.npy')
 
@@ -2491,15 +2413,11 @@ If you want to check your array, you can run:
 You can save a NumPy array as a plain text file like a **.csv** or **.txt** file
 with ``np.savetxt``.
 
-For example, if you create this array:
-
-::
+For example, if you create this array::
 
   csv_arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
 
-You can easily save it as a .csv file with the name "new_file.csv" like this:
-
-::
+You can easily save it as a .csv file with the name "new_file.csv" like this::
 
   np.savetxt('new_file.csv', csv_arr)
 
@@ -2566,18 +2484,14 @@ It's simple to use Pandas in order to export your array as well. If you are new
 to NumPy, you may want to  create a Pandas dataframe from the values in your
 array and then write the data frame to a CSV file with Pandas.
 
-If you created this array "a"
-
-::
+If you created this array "a" ::
 
   [[-2.58289208,  0.43014843, -1.24082018, 1.59572603], 
    [ 0.99027828, 1.17150989,  0.94125714, -0.14692469], 
    [ 0.76989341,  0.81299683, -0.95068423, 0.11769564], 
    [ 0.20484034,  0.34784527,  1.96979195, 0.51992837]]
 
-You could create a Pandas dataframe
-
-::
+You could create a Pandas dataframe ::
 
   df = pd.DataFrame(a) print(df)
 
@@ -2591,23 +2505,17 @@ You could create a Pandas dataframe
   2  0.769893  0.812997 -0.950684  0.117696 
   3  0.204840  0.347845  1.969792  0.519928
 
-You can easily save your dataframe with:
-
-::
+You can easily save your dataframe with::
 
   df.to_csv('pd.csv')
 
-And read your CSV with:
-
-::
+And read your CSV with::
 
   pd.read_csv('pd.csv')
 
 .. image:: images/np_readcsv.png
 
-You can also save your array with the NumPy ``savetxt`` method.
-
-::
+You can also save your array with the NumPy ``savetxt`` method. ::
 
   np.savetxt('np.csv', a, fmt='%.2f', delimiter=',', header='1,  2,  3,  4')
 
@@ -2641,15 +2549,11 @@ Plotting arrays with Matplotlib
 If you need to generate a plot for your values, it's very simple with
 `Matplotlib <https://matplotlib.org/>`_. 
 
-For example, you may have an array like this one:
-
-::
+For example, you may have an array like this one::
 
   a = np.array([2, 1, 5, 7, 4, 6, 8, 14, 10, 9, 18, 20, 22])
 
-If you already have Matplotlib installed, you can import it with:
-
-::
+If you already have Matplotlib installed, you can import it with::
   
   import matplotlib.pyplot as plt
 
@@ -2714,12 +2618,7 @@ For directions regarding installing Matplotlib, see the official
 
 
 
-------
-
-<<<<<<< HEAD
-*Image credits: Jay Alammar http://jalammar.github.io/ and Anne Bonner
-*https://github.com/bonn0062*
 
 =======
 *Image credits: Jay Alammar http://jalammar.github.io/ and Anne Bonner https://github.com/bonn0062*
->>>>>>> e1969d86e2fe034c46b8943a40282007ec561b6f
+
