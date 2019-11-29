@@ -176,25 +176,15 @@ The functions are named with the following cconventions:
 
 .. c:function:: npy_int64 random_zipf(bitgen_t *bitgen_state, double a)
 
-.. c:function:: npy_int64 random_hypergeometric(bitgen_t *bitgen_state, npy_int64 good, npy_int64 bad,
-                                    npy_int64 sample)
+.. c:function:: npy_int64 random_hypergeometric(bitgen_t *bitgen_state, npy_int64 good, npy_int64 bad, npy_int64 sample)
 
 .. c:function:: npy_uint64 random_interval(bitgen_t *bitgen_state, npy_uint64 max)
 
-.. c:function:: void random_multinomial(bitgen_t *bitgen_state, npy_int64 n, npy_int64 *mnix,
-                            double *pix, npy_intp d, binomial_t *binomial)
+.. c:function:: void random_multinomial(bitgen_t *bitgen_state, npy_int64 n, npy_int64 *mnix, double *pix, npy_intp d, binomial_t *binomial)
 
-.. c:function:: int random_mvhg_count(bitgen_t *bitgen_state,
-                          npy_int64 total,
-                          size_t num_colors, npy_int64 *colors,
-                          npy_int64 nsample,
-                          size_t num_variates, npy_int64 *variates)
+.. c:function:: int random_mvhg_count(bitgen_t *bitgen_state, npy_int64 total, size_t num_colors, npy_int64 *colors, npy_int64 nsample, size_t num_variates, npy_int64 *variates)
 
-.. c:function:: void random_mvhg_marginals(bitgen_t *bitgen_state,
-                               npy_int64 total,
-                               size_t num_colors, npy_int64 *colors,
-                               npy_int64 nsample,
-                               size_t num_variates, npy_int64 *variates)
+.. c:function:: void random_mvhg_marginals(bitgen_t *bitgen_state, npy_int64 total, size_t num_colors, npy_int64 *colors, npy_int64 nsample, size_t num_variates, npy_int64 *variates)
 
 Generate a single integer
 
@@ -209,8 +199,6 @@ Generate a single integer
 
 Generate random uint64 numbers in closed interval [off, off + rng].
 
-.. c:function:: npy_uint64 random_bounded_uint64(bitgen_t *bitgen_state,
-                                   npy_uint64 off, npy_uint64 rng,
-                                   npy_uint64 mask, bint use_masked)
+.. c:function:: npy_uint64 random_bounded_uint64(bitgen_t *bitgen_state, npy_uint64 off, npy_uint64 rng, npy_uint64 mask, bint use_masked)
 
 
