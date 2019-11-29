@@ -1,4 +1,5 @@
 #include "Python.h"
+#include "numpy/npy_common.h"
 
 /*
  * From f2c.h, this should be safe unless fortran is set to use 64
@@ -48,4 +49,12 @@ int xerbla_(char *srname, integer *info)
 #endif
 
         return 0;
+}
+
+
+/* Same for LAPACK64_ */
+npy_int64 xerbla_64_(char *srname, npy_int64 *info)
+{
+        integer info_int = (integer)*info;
+        return xerbla_(srname, &info_int);
 }

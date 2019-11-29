@@ -1,4 +1,5 @@
 #include "Python.h"
+#include "numpy/npy_common.h"
 
 #undef c_abs
 #include "f2c.h"
@@ -45,4 +46,12 @@ int xerbla_(char *srname, integer *info)
 #endif
 
         return 0;
+}
+
+
+/* Same for LAPACK64_ */
+npy_int64 xerbla_64_(char *srname, npy_int64 *info)
+{
+        integer info_int = (integer)*info;
+        return xerbla_(srname, &info_int);
 }

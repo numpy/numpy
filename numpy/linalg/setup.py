@@ -26,7 +26,12 @@ def configuration(parent_package='', top_path=None):
     ]
     all_sources = config.paths(lapack_lite_src)
 
-    lapack_info = get_info('lapack_opt', 0)  # and {}
+    if (os.environ.get('NPY_USE_BLAS64_', "0") != "0"):
+        lapack_info = get_info('lapack64__opt', 2)
+        lapack_info.setdefault('define_macros', [])
+        lapack_info['define_macros'] += [('NPY_UMATH_USE_BLAS64_', None)]
+    else:
+        lapack_info = get_info('lapack_opt', 0)  # and {}
 
     def get_lapack_lite_sources(ext, build_dir):
         if not lapack_info:
