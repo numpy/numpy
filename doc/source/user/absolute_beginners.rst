@@ -1765,7 +1765,7 @@ You can read more about
 You can read more about 
 `savetxt <https://numpy.org/devdocs/reference/generated/numpy.savetxt.html>`_ here, and
 `loadtxt <https://numpy.org/devdocs/reference/generated/numpy.loadtxt.html>`_
-here.
+:doc: `here <numpy:reference/generated/numpy.loadtxt>`.
 
 Learn more about 
 `input and output routines here <https://numpy.org/devdocs/reference/routines.io.html>`_.
