@@ -91,6 +91,9 @@ def is_npy_no_smp():
     #  block.
     return 'NPY_NOSMP' in os.environ
 
+def is_npy_use_blas64_():
+    return (os.environ.get('NPY_USE_BLAS64_', "0") != "0")
+
 def win32_checks(deflist):
     from numpy.distutils.misc_util import get_build_architecture
     a = get_build_architecture()
@@ -394,7 +397,7 @@ def visibility_define(config):
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, dot_join
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import get_info, dict_append
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
@@ -754,8 +757,18 @@ def configuration(parent_package='',top_path=None):
             ]
 
     blas_info = get_info('blas_opt', 0)
-    if blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
+
+    if is_npy_use_blas64_():
+        blas64__info = get_info('blas64__opt', 2)
+    else:
+        blas64__info = {}
+
+    have_blas = blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', [])
+    have_blas64_ = blas64__info and ('HAVE_CBLAS64_', None) in blas64__info.get('define_macros', [])
+
+    if have_blas or have_blas64_:
         extra_info = blas_info
+        dict_append(blas_info, **blas64__info)
         # These files are also in MANIFEST.in so that they are always in
         # the source distribution independently of HAVE_CBLAS.
         common_src.extend([join('src', 'common', 'cblasfuncs.c'),
