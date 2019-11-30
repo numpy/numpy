@@ -969,7 +969,7 @@ def test_unicode_field_names():
     (np.dtype({'names': ['a', 'b'], 'formats':  [float, np.dtype('S3',
                  metadata={'some': 'stuff'})]}), True),
     (np.dtype(int, metadata={'some': 'stuff'}), False),
-    (np.dtype(int, (2,), metadata={'some': 'stuff'}), False),
+    (np.dtype([('subarray', (int, (2,)))], metadata={'some': 'stuff'}), False),
     # recursive: metadata on the field of a dtype
     (np.dtype({'names': ['a', 'b'], 'formats': [
         float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
