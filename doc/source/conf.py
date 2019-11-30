@@ -55,7 +55,7 @@ version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
 release = numpy.__version__
 print("%s %s" % (version, release))
 
-# There are two options for replacing |today|: either, you set today to some
+# There are two options for replacing |today|: either you set today to some
 # non-false value, then it is used:
 #today = ''
 # Else, today_fmt is used as the format for a strftime call.
