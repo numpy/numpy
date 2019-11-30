@@ -976,10 +976,8 @@ You can also use ``arr.size()`` with 1D arrays::
 *Remember that if you check the size of your array and it equals 0, your array
 *is empty.*
 
-Learn more about `finding the size of an array here
-<https://numpy.org/devdocs/reference/generated/numpy.ndarray.size.html>`_ and
-the `shape of an array here
-<https://numpy.org/devdocs/reference/generated/numpy.ndarray.shape.html>`_.
+Learn more about `finding the size of an array here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.size.html>`_ and
+the `shape of an array here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.shape.html>`_.
 
 
 Creating matrices 
@@ -1433,8 +1431,8 @@ Will return::
 Because access to additional information is so useful, IPython uses the ``?``
 character as a shorthand for accessing this documentation along with other
 relevant information. IPython is a command shell for interactive computing in
-multiple languages.`You can find more information about IPython here
-<https://ipython.org/>`_. 
+multiple languages.
+`You can find more information about IPython here <https://ipython.org/>`_. 
 
 For example, ::
 
@@ -1456,7 +1454,7 @@ You can even use this notation for object methods and objects themselves.
 
 Let's say you create this array::
 
-  a = np.array([1, 2, 3, 4, 5, 6])
+  >>> a = np.array([1, 2, 3, 4, 5, 6])
 
 Running ::
 
@@ -1706,9 +1704,8 @@ architecture.
 
 If you want to store a single ndarray object, store it as a .npy file using
 ``np.save``. If you want to store more than one ndarray object in a single file,
-save it as a .npz file using ``np.savez``. You can also `save several arrays
-into a single file in compressed npz format
-<https://numpy.org/devdocs/reference/generated/numpy.savez_compressed.html>`_
+save it as a .npz file using ``np.savez``. You can also 
+`save several arrays into a single file in compressed npz format <https://numpy.org/devdocs/reference/generated/numpy.savez_compressed.html>`_
 with ``np.savez_compressed``.
 
 It's easy to save and load and array with ``np.save()``. Just make sure to
@@ -1764,8 +1761,9 @@ You can read more about
 `load <https://numpy.org/devdocs/reference/generated/numpy.load.html>`_ here. 
 You can read more about 
 `savetxt <https://numpy.org/devdocs/reference/generated/numpy.savetxt.html>`_ here, and
-`loadtxt <https://numpy.org/devdocs/reference/generated/numpy.loadtxt.html>`_
-:doc: `here <numpy:reference/generated/numpy.loadtxt>`.
+`loadtxt <https://numpy.org/devdocs/reference/generated/numpy.loadtxt.html>`_ here.
+
+Read more about :doc:`loadtxt here <numpy:reference/loadtxt>`.
 
 Learn more about 
 `input and output routines here <https://numpy.org/devdocs/reference/routines.io.html>`_.
@@ -1910,5 +1908,4 @@ For directions regarding installing Matplotlib, see the official
 
 -------------------------------------------------------
 
-*Image credits: Jay Alammar http://jalammar.github.io/ 
-and Anne Bonner https://github.com/bonn0062*
+*Image credits: Jay Alammar http://jalammar.github.io/*
