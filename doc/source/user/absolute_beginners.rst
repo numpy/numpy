@@ -779,7 +779,7 @@ and arrays in higher dimensions. ::
 
   >>> a = np.array([1, 2, 3, 4])
 
-  >>> # Add all of the elements in the array a.sum()
+  >>> a.sum()
   10
 
 To add the rows or the columns in a 2D array, you would specify the axis.
