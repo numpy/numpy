@@ -4176,7 +4176,19 @@ cdef class Generator:
         # The algorithm is slower than the standard approach as
         # generation of beta RVs is slower than generation of gamma
         # RVs.
-        if alpha_arr.max() < 1.0:
+        #
+        # The switch from the standard to the stick-breaking algorithm
+        # is made whenever the maximum of all alpha values is smaller
+        # than a threshold `t`. The threshold is chosen such that for
+        # `alpha.max() >= t` the probability that all gamma variates
+        # will be zero is neglegible.
+        #
+        # Formally for a given threshold `t` this probability can be
+        # bounded by `gammainc(t, d)` where `gammainc` is the
+        # regularized incomplete gamma function and `d` is the
+        # smallest positive floating point number that can be
+        # represented with a given precision.
+        if alpha_arr.max() < 0.1:
             with self.lock, nogil:
                 while i < totsize:
                     acc = 1.
