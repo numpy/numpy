@@ -84,7 +84,7 @@ cdef extern from "numpy/random/distributions.h":
     double random_beta(bitgen_t *bitgen_state, double a, double b) nogil
     double random_chisquare(bitgen_t *bitgen_state, double df) nogil
     double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) nogil
-    double random_cauchy(bitgen_t *bitgen_state) nogil
+    double random_standard_cauchy(bitgen_t *bitgen_state) nogil
     double random_pareto(bitgen_t *bitgen_state, double a) nogil
     double random_weibull(bitgen_t *bitgen_state, double a) nogil
     double random_power(bitgen_t *bitgen_state, double a) nogil
@@ -93,7 +93,7 @@ cdef extern from "numpy/random/distributions.h":
     double random_logistic(bitgen_t *bitgen_state, double loc, double scale) nogil
     double random_lognormal(bitgen_t *bitgen_state, double mean, double sigma) nogil
     double random_rayleigh(bitgen_t *bitgen_state, double mode) nogil
-    double random_student_t(bitgen_t *bitgen_state, double df) nogil
+    double random_standard_t(bitgen_t *bitgen_state, double df) nogil
     double random_noncentral_chisquare(bitgen_t *bitgen_state, double df,
                                        double nonc) nogil
     double random_noncentral_f(bitgen_t *bitgen_state, double dfnum,
@@ -1695,7 +1695,7 @@ cdef class Generator:
         >>> plt.show()
 
         """
-        return cont(&random_cauchy, &self._bitgen, size, self.lock, 0,
+        return cont(&random_standard_cauchy, &self._bitgen, size, self.lock, 0,
                     0.0, '', CONS_NONE, 0.0, '', CONS_NONE, 0.0, '', CONS_NONE, None)
 
     def standard_t(self, df, size=None):
@@ -1786,7 +1786,7 @@ cdef class Generator:
         probability of about 99% of being true.
 
         """
-        return cont(&random_student_t, &self._bitgen, size, self.lock, 1,
+        return cont(&random_standard_t, &self._bitgen, size, self.lock, 1,
                     df, 'df', CONS_POSITIVE,
                     0, '', CONS_NONE,
                     0, '', CONS_NONE,
