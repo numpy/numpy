@@ -353,13 +353,13 @@ elements stored along each dimension of the array. If, for example, you have a
 For example, if you create this array::
 
   >>> array_example = np.array([[[0, 1, 2, 3]
-                             [4, 5, 6, 7]],
+                                 [4, 5, 6, 7]],
 
-                            [[0, 1, 2, 3]
-                             [4, 5, 6, 7]],
+                                [[0, 1, 2, 3]
+                                 [4, 5, 6, 7]],
 
-                             [0 ,1 ,2, 3]
-                             [4, 5, 6, 7]]])
+                                [[0 ,1 ,2, 3]
+                                 [4, 5, 6, 7]]])
 
 To find the number of dimensions of the array, run::
 
@@ -946,8 +946,8 @@ You can print the total number of elements as well::
 
 This also works for 3D arrays::
 
-  >>> arr_3d = np.array([ [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3]],
-                      [[4, 4, 4, 4], [5, 5, 5, 5], [6, 6, 6, 6]] ])
+  >>> arr_3d = np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3]],
+                         [[4, 4, 4, 4], [5, 5, 5, 5], [6, 6, 6, 6]] ])
 
 You can easily print the size of the axis::
 
@@ -1763,8 +1763,6 @@ You can read more about
 `savetxt <https://numpy.org/devdocs/reference/generated/numpy.savetxt.html>`_ here, and
 `loadtxt <https://numpy.org/devdocs/reference/generated/numpy.loadtxt.html>`_ here.
 
-Read more about :doc:`loadtxt here <numpy:reference/loadtxt>`.
-
 Learn more about 
 `input and output routines here <https://numpy.org/devdocs/reference/routines.io.html>`_.
 
@@ -1863,35 +1861,13 @@ If you already have Matplotlib installed, you can import it with::
 
 All you need to do to plot your values is run::
 
-  >>> .plot(a) 
-  >>> plt.show()
-
 .. plot:: user/plots/matplotlib1.py
 
 For example, you can plot a 1D array like this::
 
-  >>> x = np.linspace(0, 5, 20)
-  >>> y = np.linspace(0, 10, 20)
-  >>> plt.plot(x, y, 'purple') # line
-  >>> plt.plot(x, y, 'o')      # dots
-
 .. plot:: user/plots/matplotlib2.py
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
-
-  from mpl_toolkits.mplot3d import Axes3D
-
-  >>> fig = plt.figure()
-  >>> ax = Axes3D(fig)
-  >>> X = np.arange(-5, 5, 0.15)
-  >>> Y = np.arange(-5, 5, 0.15)
-  >>> X, Y = np.meshgrid(X, Y)
-  >>> R = np.sqrt(X**2 + Y**2)
-  >>> Z = np.sin(R)
-
-  >>> ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis')
-
-  >>> plt.colorbar()
 
 .. plot:: user/plots/matplotlib3.py
 
