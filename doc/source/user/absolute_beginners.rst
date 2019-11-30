@@ -217,6 +217,8 @@ You can visualize your array this way:
 
 .. image:: images/np_array.png
 
+*Be aware that these visualizations are meant to simplify ideas and give you a basic understanding of NumPy concepts and mechanics. Arrays and array operations are much more complicated than are captured here!*
+
 Besides creating an array from a sequence of elements, you can easily create an
 array filled with ``0s``::
 
