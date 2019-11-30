@@ -1868,7 +1868,7 @@ All you need to do to plot your values is run::
   >>> .plot(a) 
   >>> plt.show()
 
-.. plot:: user/plots/matplotlib.py
+.. plot:: user/plots/matplotlib1.py
 
 For example, you can plot a 1D array like this::
 
@@ -1877,7 +1877,7 @@ For example, you can plot a 1D array like this::
   >>> plt.plot(x, y, 'purple') # line
   >>> plt.plot(x, y, 'o')      # dots
 
-.. plot:: user/plots/matplotlib1.py
+.. plot:: user/plots/matplotlib2.py
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
@@ -1895,7 +1895,7 @@ With Matplotlib, you have access to an enormous number of visualization options.
 
   >>> plt.colorbar()
 
-.. plot:: user/plots/matplotlib4.py
+.. plot:: user/plots/matplotlib3.py
 
 
 To read more about Matplotlib and what it can do, take a look at 
