@@ -443,7 +443,7 @@ double random_f(bitgen_t *bitgen_state, double dfnum, double dfden) {
           (random_chisquare(bitgen_state, dfden) * dfnum));
 }
 
-double random_cauchy(bitgen_t *bitgen_state) {
+double random_standard_cauchy(bitgen_t *bitgen_state) {
   return random_standard_normal(bitgen_state) / random_standard_normal(bitgen_state);
 }
 
@@ -507,7 +507,7 @@ double random_rayleigh(bitgen_t *bitgen_state, double mode) {
   return mode * sqrt(-2.0 * log(1.0 - next_double(bitgen_state)));
 }
 
-double random_student_t(bitgen_t *bitgen_state, double df) {
+double random_standard_t(bitgen_t *bitgen_state, double df) {
   double num, denom;
 
   num = random_standard_normal(bitgen_state);

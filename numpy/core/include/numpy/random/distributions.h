@@ -93,7 +93,7 @@ DECLDIR double random_uniform(bitgen_t *bitgen_state, double lower, double range
 DECLDIR double random_beta(bitgen_t *bitgen_state, double a, double b);
 DECLDIR double random_chisquare(bitgen_t *bitgen_state, double df);
 DECLDIR double random_f(bitgen_t *bitgen_state, double dfnum, double dfden);
-DECLDIR double random_cauchy(bitgen_t *bitgen_state);
+DECLDIR double random_standard_cauchy(bitgen_t *bitgen_state);
 DECLDIR double random_pareto(bitgen_t *bitgen_state, double a);
 DECLDIR double random_weibull(bitgen_t *bitgen_state, double a);
 DECLDIR double random_power(bitgen_t *bitgen_state, double a);
@@ -102,7 +102,7 @@ DECLDIR double random_gumbel(bitgen_t *bitgen_state, double loc, double scale);
 DECLDIR double random_logistic(bitgen_t *bitgen_state, double loc, double scale);
 DECLDIR double random_lognormal(bitgen_t *bitgen_state, double mean, double sigma);
 DECLDIR double random_rayleigh(bitgen_t *bitgen_state, double mode);
-DECLDIR double random_student_t(bitgen_t *bitgen_state, double df);
+DECLDIR double random_standard_t(bitgen_t *bitgen_state, double df);
 DECLDIR double random_noncentral_chisquare(bitgen_t *bitgen_state, double df,
                                            double nonc);
 DECLDIR double random_noncentral_f(bitgen_t *bitgen_state, double dfnum,
