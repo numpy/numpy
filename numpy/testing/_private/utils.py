@@ -21,6 +21,7 @@ import pprint
 
 from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
+import numpy.__config__
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -39,7 +40,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
         '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles',
-        'break_cycles',
+        'break_cycles', 'HAS_LAPACK64'
         ]
 
 
@@ -53,6 +54,7 @@ verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
+HAS_LAPACK64 = hasattr(numpy.__config__, 'lapack64__opt_info')
 
 
 def import_nose():
