@@ -195,6 +195,25 @@ or::
     BLAS=None LAPACK=None ATLAS=None python setup.py build
 
 
+64-bit BLAS and LAPACK with symbol suffix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Numpy also supports 64-bit OpenBLAS with ``64_`` symbol suffix. Such
+library is obtained by compiling OpenBLAS with settings::
+
+    make INTERFACE64=1 SYMBOLSUFFIX=64_
+
+To make Numpy use it, set ``NPY_USE_BLAS64_=1`` environment variable
+when building Numpy. You may also need to configure the
+``[openblas64_]`` section in ``site.cfg``.
+
+The symbol suffix avoids symbol name clashes between 32-bit and 64-bit
+BLAS/LAPACK libraries, meaning that you can link to both in the same
+program. This avoids potential issues when using 64-bit BLAS/LAPACK in
+Numpy while simultaneously using other Python software that uses the
+32-bit versions.
+
+
 Supplying additional compiler flags
 -----------------------------------
 
