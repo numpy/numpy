@@ -95,7 +95,7 @@ def _replace_nan(a, val):
         NaNs, otherwise return None.
 
     """
-    a = np.array(a, subok=True, copy=True)
+    a = np.asanyarray(a)
 
     if a.dtype == np.object_:
         # object arrays do not support `isnan` (gh-9009), so make a guess
@@ -106,6 +106,7 @@ def _replace_nan(a, val):
         mask = None
 
     if mask is not None:
+        a = np.array(a, subok=True, copy=True)
         np.copyto(a, val, where=mask)
 
     return a, mask
