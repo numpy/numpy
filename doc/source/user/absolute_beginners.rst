@@ -33,7 +33,7 @@ arrays and matrices.
 Installing NumPy 
 ----------------
   
-To install NumPy, we strongly recommend using a scientific Python distribution.
+To install NumPy, we strongly recommend using a scientific Python distribution. 
 If you're looking for the full instructions for installing NumPy on your
 operating system, you can `find all of the details here
 <https://www.scipy.org/install.html>`_.
@@ -98,23 +98,23 @@ NumPy gives you an enormous range of fast and efficient ways of creating arrays
 and manipulating numerical data inside them. While a Python list can contain
 different data types within a single list, all of the elements in a NumPy array
 should be homogenous. The mathematical operations that are meant to be performed
-on arrays would be extremely inefficient if the arrays weren't homogenous. 
+on arrays would be extremely inefficient if the arrays weren't homogenous.
 
 **Why use NumPy?**
 
 NumPy arrays are faster and more compact than Python lists. An array consumes
 less memory and is convenient to use. NumPy uses much less memory to store data
 and it provides a mechanism of specifying the data types. This allows the code
-to be optimized even further. 
+to be optimized even further.
 
-What is an array? 
+What is an array?
 -----------------
 
 An array is a central data structure of the NumPy library. An array is a grid of
 values and it contains information about the raw data, how to locate an element,
 and how to interpret an element. It has a grid of elements that can be indexed
 in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_.
-The elements are all of the same type, referred to as the array ``dtype``. 
+The elements are all of the same type, referred to as the array ``dtype``.
 
 An array can be indexed by a tuple of nonnegative integers, by booleans, by
 another array, or by integers. The ``rank`` of the array is the number of
@@ -122,7 +122,7 @@ dimensions. The ``shape`` of the array is a tuple of integers giving the size of
 the array along each dimension.
 
 One way we can initialize NumPy arrays is from Python lists, using nested lists
-for two- or higher-dimensional data.. 
+for two- or higher-dimensional data.
 
 For example::
 
@@ -176,8 +176,9 @@ Your array has 2 axes. The first axis has a length of 2 and the second axis has
 a length of 3.
 
 Just like in other Python container objects, the contents of an array can be
-accessed and modified by indexing or slicing the array. Unlike the typical container objects, different arrays can
-share the same data, so changes made on one array might be visible in another. 
+accessed and modified by indexing or slicing the array. Unlike the typical container 
+objects, different arrays can share the same data, so changes made on one array might 
+be visible in another. 
 
 Array **attributes** reflect information intrinsic to the array itself. If you
 need to get, or even set, properties of an array without creating a new array,
@@ -188,7 +189,7 @@ you can often access an array through its attributes.
 `array objects here <https://numpy.org/numpy-1.17.0/reference/arrays.html>`_.
 
 
-How to create a basic array 
+How to create a basic array
 ---------------------------
 
 
@@ -266,7 +267,7 @@ specify which data type you want using ``dtype``. ::
   
 `Learn more about creating arrays here <https://numpy.org/devdocs/user/quickstart.html#array-creation>`_.
 
-Adding, removing, and sorting elements 
+Adding, removing, and sorting elements
 --------------------------------------
 
 
@@ -279,7 +280,8 @@ Adding, removing, and sorting elements
 
 
 Sorting an element is simple with ``np.sort()``. You can specify the axis, kind,
-and order when you call the function. `Read more about sorting an array here <https://numpy.org/devdocs/reference/generated/numpy.sort.html>`_.
+and order when you call the function. 
+`Read more about sorting an array here <https://numpy.org/devdocs/reference/generated/numpy.sort.html>`_.
 
 If you start with this array::
 
@@ -379,7 +381,7 @@ And to find the shape of your array, run::
   (3, 2, 4)
 
 `Read more about dimensions here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.ndim.html>`_, 
-`size here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.size.html>`_,
+`size here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.size.html>`_, 
 and 
 `shape here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.shape.html>`_.
 
@@ -512,7 +514,7 @@ You can add an axis at index position 0 with::
   >>> c.shape
  (1, 6)
 
-`Find more information about newaxis here <https://numpy.org/devdocs/reference/arrays.indexing.html#index-1>`_ and
+`Find more information about newaxis here <https://numpy.org/devdocs/reference/arrays.indexing.html#index-1>`_ and 
 `expand_dims here <https://numpy.org/devdocs/reference/generated/numpy.expand_dims.html>`_.
 
 Indexing and slicing 
@@ -575,7 +577,8 @@ return boolean values that specify whether or not the values in an array fulfill
 a certain condition. This can be useful with arrays that contain names or other
 categorical values. ::
 
-  >>> five_up = (array > 5) | (array == 5) print(five_up)
+  >>> five_up = (array > 5) | (array == 5) 
+  print(five_up)
   [[False False False False]
    [ True  True  True  True]
    [ True  True  True True]]
@@ -619,11 +622,12 @@ than 5 with::
 If the element you're looking for doesn't exist in the array, then the returned
 array of indices will be empty. For example::
 
-  >>> not_there = np.nonzero(a == 42) print(not_there)
+  >>> not_there = np.nonzero(a == 42) 
+  print(not_there)
   (array([], dtype=int64), array([], dtype=int64))
 
 
-`Learn more about indexing and slicing here <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_
+`Learn more about indexing and slicing here <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_ 
 and `here <https://numpy.org/devdocs/user/basics.indexing.html>`_.
 
 `Read more about using the nonzero function here <https://numpy.org/devdocs/reference/generated/numpy.nonzero.html>`_.
@@ -801,7 +805,7 @@ You can sum the columns with::
 `Learn more about basic operations here <https://numpy.org/devdocs/user/quickstart.html#basic-operations>`_.
 
 
-Broadcasting 
+Broadcasting
 ------------
 
 There are times when you might want to carry out an operation between an array
@@ -824,7 +828,7 @@ will get a value error.
 `Learn more about broadcasting here <https://numpy.org/devdocs/user/basics.broadcasting.html>`_.
 
 
-More useful array operations 
+More useful array operations
 ----------------------------
 
 
@@ -885,7 +889,7 @@ How to inspect the size and shape of a NumPy array
 
 -----
 
-You can get the dimensions of a NumPy array any time using ``ndarray.shape``.
+You can get the dimensions of a NumPy array any time using ``ndarray.shape``. 
 NumPy will return the dimensions of the array as a tuple.
 
 For example, if you create this array::
@@ -897,7 +901,7 @@ You can use ``arr.shape`` to find the shape of your array. ::
   >>> arr.shape
   (3, 4)
 
-This output tells you that your array has three rows and four columns.
+This output tells you that your array has three rows and four columns. 
 
 You can find just the number of rows by specifying ``[0]``::
 
@@ -975,10 +979,10 @@ You can also use ``arr.size()`` with 1D arrays::
 
   Length of 1D numpy array :  8
 
-*Remember that if you check the size of your array and it equals 0, your array
-*is empty.*
+Remember that if you check the size of your array and it equals 0, your array
+is empty.
 
-Learn more about `finding the size of an array here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.size.html>`_ and
+Learn more about `finding the size of an array here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.size.html>`_ and 
 the `shape of an array here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.shape.html>`_.
 
 
@@ -1095,7 +1099,7 @@ or randomly shuffle your dataset, being able to generate random numbers
 
 With ``Generator.integers``, you can generate random integers from low (remember
 that this is inclusive with NumPy) to high (exclusive). You can set
-``endpoint=True`` to make the high number inclusive. 
+``endpoint=True`` to make the high number inclusive.
 
 You can generate a 2 x 4 array of random integers between 0 and 4 with::
 
@@ -1153,7 +1157,7 @@ You can find unique values with::
   >>> print(unique_values)
   [ 1  2  3  4  5  6  7  8  9 10 11 12]
 
-If the axis argument isn't passed, your 2D array will be flattened. 
+If the axis argument isn't passed, your 2D array will be flattened.
 
 If you want to get the unique rows or columns, make sure to pass the ``axis`` argument. To
 find the unique rows, specify ``axis=0`` and for columns, specify ``axis=1``. ::
@@ -1183,7 +1187,7 @@ To get the unique rows, occurrence count, and index position, you can use::
 `Learn more about finding the unique elements in an array here <https://numpy.org/devdocs/reference/generated/numpy.unique.html>`_.
 
 
-Transposing and reshaping a matrix 
+Transposing and reshaping a matrix
 ----------------------------------
 
 
@@ -1227,11 +1231,11 @@ You can transpose your array with ``arr.transpose()``. ::
          [1, 4],
          [2, 5]])
 
-`Learn more about transposing a matrix here <https://numpy.org/devdocs/reference/generated/numpy.transpose.html>`_ and
+`Learn more about transposing a matrix here <https://numpy.org/devdocs/reference/generated/numpy.transpose.html>`_ and 
 `reshaping a matrix here <https://numpy.org/devdocs/reference/generated/numpy.reshape.html>`_.
 
 
-How to reverse an array 
+How to reverse an array
 -----------------------
 
 
@@ -1244,7 +1248,7 @@ How to reverse an array
 NumPy's ``np.flip()`` function allows you to flip, or reverse, the contents of
 an array along an axis. When using ``np.flip``, specify the array you would like
 to reverse and the axis. If you don't specify the axis, NumPy will reverse the
-contents along all of the axes of your input array. 
+contents along all of the axes of your input array.
 
 **Reversing a 1D array**
 
@@ -1340,11 +1344,9 @@ There are two popular ways to flatten an array: ``.flatten()`` and ``.ravel()``.
 The primary difference between the two is that the new array created using
 ``ravel()`` is actually a reference to the parent array. This means that any
 changes to the new array will affect the parent array as well. Since ``ravel``
-does not create a copy, it's memory efficient. 
+does not create a copy, it's memory efficient.
 
-If you start with this array:
-
-::
+If you start with this array::
 
   >>> array = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
@@ -1390,7 +1392,7 @@ For example::
   New array:  
     [101 2 3 4 5 6 7 8 9 10 11 12]
 
-`Read more about flatten here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.flatten.html>`_ and
+`Read more about flatten here <https://numpy.org/devdocs/reference/generated/numpy.ndarray.flatten.html>`_ and 
 `ravel here <https://numpy.org/devdocs/reference/generated/numpy.ravel.html#numpy.ravel>`_.
 
 
@@ -1433,8 +1435,8 @@ Will return::
 Because access to additional information is so useful, IPython uses the ``?``
 character as a shorthand for accessing this documentation along with other
 relevant information. IPython is a command shell for interactive computing in
-multiple languages.
-`You can find more information about IPython here <https://ipython.org/>`_. 
+multiple languages. 
+`You can find more information about IPython here <https://ipython.org/>`_.
 
 For example, ::
 
@@ -1646,11 +1648,11 @@ than Python.
 
 
 
-Working with mathematical formulas 
+Working with mathematical formulas
 ----------------------------------
 
 Implementing mathematical formulas that work on arrays is one of the things that
-make NumPy so highly regarded in the scientific Python community. 
+make NumPy so highly regarded in the scientific Python community.
 
 For example, this is the mean square error formula (a central formula used in
 supervised machine learning models that deal with regression):
@@ -1662,7 +1664,7 @@ Implementing this formula is simple and straightforward in NumPy:
 .. image:: images/np_MSE_implementation.png
 
 What makes this work so well is that ``predictions`` and ``labels`` can contain
-one or a thousand values. They only need to be the same size. 
+one or a thousand values. They only need to be the same size.
 
 You can visualize it this way:
 
@@ -1751,7 +1753,7 @@ The ``savetxt()`` and ``loadtxt()`` functions accept additional optional
 parameters such as header, footer, and delimiter. While text files can be easier
 for sharing, .npy and .npz files are faster to retrieve. If you need more
 sophisticated handling of your text file (for example, if you need to work with
-lines that contain missing values), you will want to use the  
+lines that contain missing values), you will want to use the 
 `genfromtxt function <https://numpy.org/devdocs/reference/generated/numpy.genfromtxt.html>`_.
 
 With ``savetxt``, you can specify headers, footers, comments, and more. 
@@ -1759,17 +1761,17 @@ With ``savetxt``, you can specify headers, footers, comments, and more.
 
 You can read more about 
 `save <https://numpy.org/devdocs/reference/generated/numpy.save.html>`_ here, 
-`savez <https://numpy.org/devdocs/reference/generated/numpy.savez.html>`_ here, and
+`savez <https://numpy.org/devdocs/reference/generated/numpy.savez.html>`_ here, and 
 `load <https://numpy.org/devdocs/reference/generated/numpy.load.html>`_ here. 
 You can read more about 
-`savetxt <https://numpy.org/devdocs/reference/generated/numpy.savetxt.html>`_ here, and
+`savetxt <https://numpy.org/devdocs/reference/generated/numpy.savetxt.html>`_ here, and 
 `loadtxt <https://numpy.org/devdocs/reference/generated/numpy.loadtxt.html>`_ here.
 
 Learn more about 
 `input and output routines here <https://numpy.org/devdocs/reference/routines.io.html>`_.
 
 
-Importing and exporting a CSV 
+Importing and exporting a CSV
 -----------------------------
 
 It's simple to read in a CSV that contains existing information. The best and
