@@ -1064,8 +1064,10 @@ if (#varname#_capi==Py_None) {
                        '\tcapi_#varname#_tmp = array_from_pyobj(#atype#,#varname#_Dims,#varname#_Rank,capi_#varname#_intent,#varname#_capi);'},
                       """\
 \tif (capi_#varname#_tmp == NULL) {
-\t\tif (!PyErr_Occurred())
-\t\t\tPyErr_SetString(#modulename#_error,\"failed in converting #nth# `#varname#\' of #pyname# to C/Fortran array\" );
+\t\tPyObject *exc, *val, *tb;
+\t\tPyErr_Fetch(&exc, &val, &tb);
+\t\tPyErr_SetString(exc ? exc : #modulename#_error,\"failed in converting #nth# `#varname#\' of #pyname# to C/Fortran array\" );
+\t\tnpy_PyErr_ChainExceptionsCause(exc, val, tb);
 \t} else {
 \t\t#varname# = (#ctype# *)(PyArray_DATA(capi_#varname#_tmp));
 """,
@@ -1081,8 +1083,10 @@ if (#varname#_capi==Py_None) {
 \t\t\twhile ((_i = nextforcomb()))
 \t\t\t\t#varname#[capi_i++] = #init#; /* fortran way */
 \t\t} else {
-\t\t\tif (!PyErr_Occurred())
-\t\t\t\tPyErr_SetString(#modulename#_error,\"Initialization of #nth# #varname# failed (initforcomb).\");
+\t\t\tPyObject *exc, *val, *tb;
+\t\t\tPyErr_Fetch(&exc, &val, &tb);
+\t\t\tPyErr_SetString(exc ? exc : #modulename#_error,\"Initialization of #nth# #varname# failed (initforcomb).\");
+\t\t\tnpy_PyErr_ChainExceptionsCause(exc, val, tb);
 \t\t\tf2py_success = 0;
 \t\t}
 \t}
