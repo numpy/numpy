@@ -140,6 +140,9 @@
 # This is an emerging "standard" for 64-bit BLAS/LAPACK, avoiding symbol clashes
 # with 32-bit BLAS/LAPACK.
 #
+# To build Numpy with such 64-bit BLAS/LAPACK, set environment variable
+# NPY_USE_BLAS64_=1 at build time.
+#
 # See:
 # https://github.com/xianyi/OpenBLAS/issues/646
 #
