@@ -11,30 +11,7 @@ extern "C" {
 #endif
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_f2py_ARRAY_API
 #include "numpy/arrayobject.h"
-
-/*
- * Python 3 support macros
- */
-#if PY_VERSION_HEX >= 0x03000000
-#define PyString_Check PyBytes_Check
-#define PyString_GET_SIZE PyBytes_GET_SIZE
-#define PyString_AS_STRING PyBytes_AS_STRING
-#define PyString_FromString PyBytes_FromString
-#define PyUString_FromStringAndSize PyUnicode_FromStringAndSize
-#define PyString_ConcatAndDel PyBytes_ConcatAndDel
-#define PyString_AsString PyBytes_AsString
-
-#define PyInt_Check PyLong_Check
-#define PyInt_FromLong PyLong_FromLong
-#define PyInt_AS_LONG PyLong_AsLong
-#define PyInt_AsLong PyLong_AsLong
-
-#define PyNumber_Int PyNumber_Long
-
-#else
-
-#define PyUString_FromStringAndSize PyString_FromStringAndSize
-#endif
+#include "numpy/npy_3kcompat.h"
 
 
 #ifdef F2PY_REPORT_ATEXIT
