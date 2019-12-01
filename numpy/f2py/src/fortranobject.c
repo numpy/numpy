@@ -839,9 +839,10 @@ PyArrayObject* array_from_pyobj(const int type_num,
     if ((intent & F2PY_INTENT_INOUT) ||
             (intent & F2PY_INTENT_INPLACE) ||
             (intent & F2PY_INTENT_CACHE)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "failed to initialize intent(inout|inplace|cache) "
-                        "array, input not an array");
+        PyErr_Format(PyExc_TypeError,
+                     "failed to initialize intent(inout|inplace|cache) "
+                     "array, input '%s' object is not an array",
+                     Py_TYPE(obj)->tp_name);
         return NULL;
     }
 
