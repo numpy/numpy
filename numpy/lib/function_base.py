@@ -2305,7 +2305,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         >>> m = np.arange(10, dtype=np.float64)
         >>> f = np.arange(10) * 2
         >>> a = np.arange(10) ** 2.
-        >>> ddof = 9 # N - 1
+        >>> ddof = 1
         >>> w = f * a
         >>> v1 = np.sum(w)
         >>> v2 = np.sum(w * a)
