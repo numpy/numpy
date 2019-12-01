@@ -1863,15 +1863,39 @@ If you already have Matplotlib installed, you can import it with::
 
 All you need to do to plot your values is run::
 
+  >>> plt.plot(a)
+  >>> plt.show()
+
 .. plot:: user/plots/matplotlib1.py
+   :align: center
+   :include-source: 0
 
 For example, you can plot a 1D array like this::
 
+  >>> x = np.linspace(0, 5, 20)
+  >>> y = np.linspace(0, 10, 20)
+  >>> plt.plot(x, y, 'purple') # line
+  >>> plt.plot(x, y, 'o')      # dots
+
 .. plot:: user/plots/matplotlib2.py
+   :align: center
+   :include-source: 0
 
 With Matplotlib, you have access to an enormous number of visualization options. ::
 
+  fig = plt.figure()
+  ax = Axes3D(fig)
+  X = np.arange(-5, 5, 0.15)
+  Y = np.arange(-5, 5, 0.15)
+  X, Y = np.meshgrid(X, Y)
+  R = np.sqrt(X**2 + Y**2)
+  Z = np.sin(R)
+
+  ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis')
+
 .. plot:: user/plots/matplotlib3.py
+   :align: center
+   :include-source: 0
 
 
 To read more about Matplotlib and what it can do, take a look at 
