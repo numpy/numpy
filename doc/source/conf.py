@@ -178,15 +178,28 @@ latex_elements = {
 }
 
 # Additional stuff for the LaTeX preamble.
-latex_preamble = r'''
-\usepackage{amsmath}
-\DeclareUnicodeCharacter{00A0}{\nobreakspace}
-
+latex_elements['preamble'] = r'''
 % In the parameters section, place a newline after the Parameters
 % header
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}
+% but expdlist old LaTeX package requires fixes:
+% 1) remove extra space
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\@item{{\@breaklabel} }{{\@breaklabel}}{}{}
+\makeatother
+% 2) fix bug in expdlist's way of breaking the line after long item label
+\makeatletter
+\def\breaklabel{%
+    \def\@breaklabel{%
+        \leavevmode\par
+        % now a hack because Sphinx inserts \leavevmode after term node
+        \def\leavevmode{\def\leavevmode{\unhbox\voidb@x}}%
+    }%
+}
+\makeatother
 
 % Make Examples/etc section headers smaller and more compact
 \makeatletter
