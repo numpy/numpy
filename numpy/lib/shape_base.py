@@ -524,16 +524,14 @@ def expand_dims(a, axis):
     axis : int or tuple of ints
         Position in the expanded axes where the new axis (or axes) is placed.
 
-        .. deprecated: 1.13.0
+        .. deprecated:: 1.13.0
+            Passing an axis where ``axis > a.ndim`` will be treated as
+            ``axis == a.ndim``, and passing ``axis < -a.ndim - 1`` will
+            be treated as ``axis == 0``. This behavior is deprecated.
 
-        Passing an axis where ``axis > a.ndim`` will be treated as
-        ``axis == a.ndim``, and passing ``axis < -a.ndim - 1`` will be
-        treated as ``axis == 0``. This behavior is deprecated.
-
-        .. versionchanged: 1.18.0
-
-        A tuple of axes is now supported.  Out of range axes as
-        described above are now forbidden and raise an `AxisError`.
+        .. versionchanged:: 1.18.0
+            A tuple of axes is now supported.  Out of range axes as
+            described above are now forbidden and raise an `AxisError`.
 
     Returns
     -------
