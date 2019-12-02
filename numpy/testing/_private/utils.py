@@ -21,6 +21,7 @@ import pprint
 
 from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
+import numpy.__config__
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -39,7 +40,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
         '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles',
-        'break_cycles',
+        'break_cycles', 'HAS_LAPACK64'
         ]
 
 
@@ -53,6 +54,7 @@ verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
+HAS_LAPACK64 = hasattr(numpy.__config__, 'lapack64__opt_info')
 
 
 def import_nose():
@@ -2380,3 +2382,73 @@ def break_cycles():
         gc.collect()
         # one more, just to make sure
         gc.collect()
+
+
+def requires_memory(free_bytes):
+    """Decorator to skip a test if not enough memory is available"""
+    import pytest
+
+    env_var = 'NPY_AVAILABLE_MEM'
+    env_value = os.environ.get(env_var)
+    if env_value is not None:
+        try:
+            mem_free = _parse_size(env_value)
+        except ValueError as exc:
+            raise ValueError('Invalid environment variable {}: {!s}'.format(
+                env_var, exc))
+
+        msg = ('{0} GB memory required, but environment variable '
+               'NPY_AVAILABLE_MEM={1} set'.format(
+                   free_bytes/1e9, env_value))
+    else:
+        mem_free = _get_mem_available()
+
+        if mem_free is None:
+            msg = ("Could not determine available memory; set NPY_AVAILABLE_MEM "
+                   "environment variable (e.g. NPY_AVAILABLE_MEM=16GB) to run "
+                   "the test.")
+            mem_free = -1
+        else:
+            msg = '{0} GB memory required, but {1} GB available'.format(
+                free_bytes/1e9, mem_free/1e9)
+
+    return pytest.mark.skipif(mem_free < free_bytes, reason=msg)
+
+
+def _parse_size(size_str):
+    """Convert memory size strings ('12 GB' etc.) to float"""
+    suffixes = {'': 1.0, 'b': 1.0,
+                'k': 1e3, 'm': 1e6, 'g': 1e9, 't': 1e12,
+                'kb': 1e3, 'mb': 1e6, 'gb': 1e9, 'tb': 1e12}
+
+    size_re = re.compile(r'^\s*(\d+|\d+\.\d+)\s*({0})\s*$'.format(
+        '|'.join(suffixes.keys())), re.I)
+
+    m = size_re.match(size_str.lower())
+    if not m or m.group(2) not in suffixes:
+        raise ValueError("value {!r} not a valid size".format(size_str))
+    return float(m.group(1)) * suffixes[m.group(2)]
+
+
+def _get_mem_available():
+    """Return available memory in bytes, or None if unknown."""
+    try:
+        import psutil
+        return psutil.virtual_memory().available
+    except (ImportError, AttributeError):
+        pass
+
+    if sys.platform.startswith('linux'):
+        info = {}
+        with open('/proc/meminfo', 'r') as f:
+            for line in f:
+                p = line.split()
+                info[p[0].strip(':').lower()] = float(p[1]) * 1e3
+
+        if 'memavailable' in info:
+            # Linux >= 3.14
+            return info['memavailable']
+        else:
+            return info['memfree'] + info['cached']
+
+    return None
