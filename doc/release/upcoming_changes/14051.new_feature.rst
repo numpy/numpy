@@ -1,4 +1,4 @@
 A tuple of axes can now be input to ``expand_dims``
---------------------------------------------------
+---------------------------------------------------
 The `numpy.expand_dim` ``axis`` keyword can now accept a tuple of
 axes.  Previously, ``axis`` was required to be an integer.
