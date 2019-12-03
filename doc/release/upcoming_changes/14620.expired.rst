@@ -1,1 +1,0 @@
-* np.linspace param num must be an integer. This was deprecated in NumPy 1.12.

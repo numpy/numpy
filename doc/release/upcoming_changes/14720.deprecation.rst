@@ -1,8 +1,0 @@
-Deprecate the financial functions
----------------------------------
-In accordance with
-`NEP-32 <https://numpy.org/neps/nep-0032-remove-financial-functions.html>`_,
-the functions `fv`, `ipmt`, `irr`, `mirr`, `nper`, `npv`, `pmt`, `ppmt`,
-`pv` and `rate` are deprecated, and will be removed from NumPy 1.20.
-The replacement for these functions is the Python package
-`numpy-financial <https://pypi.org/project/numpy-financial>`_.

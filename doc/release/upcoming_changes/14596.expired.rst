@@ -1,2 +1,0 @@
-* Array order only accepts 'C', 'F', 'A', and 'K'. More permissive options
-  were deprecated in NumPy 1.11.
