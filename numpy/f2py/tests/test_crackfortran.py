@@ -8,6 +8,8 @@ from . import util
 
 
 class TestNoSpace(util.F2PyTest):
+    # issue gh-15035: add handling for endsubroutine, endfunction with no space
+    # between "end" and the block name
     code = """
         subroutine subb(k)
           real(8), intent(inout) :: k(:)
@@ -25,12 +27,11 @@ class TestNoSpace(util.F2PyTest):
           character t0
           t0 = value
         endfunction
- 
     """
 
     def test_module(self):
-        k = np.array([1, 2, 3], dtype = np.float)
-        w = np.array([1, 2, 3], dtype = np.float)
+        k = np.array([1, 2, 3], dtype=np.float64)
+        w = np.array([1, 2, 3], dtype=np.float64)
         self.module.subb(k)
         assert_array_equal(k, w + 1)
         self.module.subc([w, k])
