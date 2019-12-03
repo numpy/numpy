@@ -71,12 +71,10 @@ DECLDIR uint64_t random_uint(bitgen_t *bitgen_state);
 
 DECLDIR double random_standard_exponential(bitgen_t *bitgen_state);
 DECLDIR float random_standard_exponential_f(bitgen_t *bitgen_state);
-DECLDIR double random_standard_exponential_zig(bitgen_t *bitgen_state);
-DECLDIR float random_standard_exponential_zig_f(bitgen_t *bitgen_state);
 DECLDIR void random_standard_exponential_fill(bitgen_t *, npy_intp, double *);
 DECLDIR void random_standard_exponential_fill_f(bitgen_t *, npy_intp, float *);
-DECLDIR void random_standard_exponential_zig_fill(bitgen_t *, npy_intp, double *);
-DECLDIR void random_standard_exponential_zig_fill_f(bitgen_t *, npy_intp, float *);
+DECLDIR void random_standard_exponential_inv_fill(bitgen_t *, npy_intp, double *);
+DECLDIR void random_standard_exponential_inv_fill_f(bitgen_t *, npy_intp, float *);
 
 DECLDIR double random_standard_normal(bitgen_t *bitgen_state);
 DECLDIR float random_standard_normal_f(bitgen_t *bitgen_state);

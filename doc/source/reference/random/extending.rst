@@ -1,5 +1,7 @@
 .. currentmodule:: numpy.random
 
+.. _extending:
+
 Extending
 ---------
 The BitGenerators have been designed to be extendable using standard tools for
