@@ -605,19 +605,18 @@ def _transpose_dispatcher(a, axes=None):
 def transpose(a, axes=None):
     """
     Reverse or permute the axes of an array; returns the modified array.
-    For an array a with two axes, transpose(a) gives the matrix transpose
-    of a.
+    For an array a with two axes, transpose(a) gives the matrix transpose.
 
     Parameters
     ----------
     a : array_like
         Input array.
     axes : tuple or list of ints, optional
-        If not specified, this function reverses the order of the axes.
-        If specified, it must be a tuple, list or similar object which contains
-        a permutation of [0,1,..,N-1] where N is the number of axes of a.  The
-        i'th axis of the returned array will correspond to the axis numbered
-        axes[i] of the input.
+        If specified, it must be a tuple or list which contains a permutation of
+        [0,1,..,N-1] where N is the number of axes of a.  The i'th axis of the
+        returned array will correspond to the axis numbered ``axes[i]`` of the
+        input.  If not specified, defaults to ``range(a.ndim)[::-1]``, which
+        reverses the order of the axes.
 
     Returns
     -------
