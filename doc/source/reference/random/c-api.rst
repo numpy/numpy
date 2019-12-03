@@ -45,7 +45,7 @@ like CFFI. All the functions accept a :c:type:`bitgen_t` as their first argument
 
 See :doc:`extending` for examples of using these functions.
 
-The functions are named with the following cconventions:
+The functions are named with the following conventions:
 
 - "standard" refers to the reference values for any parameters. For instance
   "standard_uniform" means a uniform distribution on the interval ``0.0`` to
@@ -98,13 +98,14 @@ The functions are named with the following cconventions:
 .. c:function:: double random_exponential(bitgen_t *bitgen_state, double scale)
 
 .. c:function:: double random_uniform(bitgen_t *bitgen_state, double lower, double range)
+
 .. c:function:: double random_beta(bitgen_t *bitgen_state, double a, double b)
 
 .. c:function:: double random_chisquare(bitgen_t *bitgen_state, double df)
 
 .. c:function:: double random_f(bitgen_t *bitgen_state, double dfnum, double dfden)
 
-.. c:function:: double random_cauchy(bitgen_t *bitgen_state)
+.. c:function:: double random_standard_cauchy(bitgen_t *bitgen_state)
 
 .. c:function:: double random_pareto(bitgen_t *bitgen_state, double a)
 
@@ -122,18 +123,15 @@ The functions are named with the following cconventions:
 
 .. c:function:: double random_rayleigh(bitgen_t *bitgen_state, double mode)
 
-.. c:function:: double random_student_t(bitgen_t *bitgen_state, double df)
+.. c:function:: double random_standard_t(bitgen_t *bitgen_state, double df)
 
-.. c:function:: double random_noncentral_chisquare(bitgen_t *bitgen_state, double df,
-                                       double nonc)
-.. c:function:: double random_noncentral_f(bitgen_t *bitgen_state, double dfnum,
-                               double dfden, double nonc)
+.. c:function:: double random_noncentral_chisquare(bitgen_t *bitgen_state, double df, double nonc)
+.. c:function:: double random_noncentral_f(bitgen_t *bitgen_state, double dfnum, double dfden, double nonc)
 .. c:function:: double random_wald(bitgen_t *bitgen_state, double mean, double scale)
 
 .. c:function:: double random_vonmises(bitgen_t *bitgen_state, double mu, double kappa)
 
-.. c:function:: double random_triangular(bitgen_t *bitgen_state, double left, double mode,
-                             double right)
+.. c:function:: double random_triangular(bitgen_t *bitgen_state, double left, double mode, double right)
 
 .. c:function:: npy_int64 random_poisson(bitgen_t *bitgen_state, double lam)
 
