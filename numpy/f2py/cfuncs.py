@@ -542,7 +542,7 @@ cppmacros[
     'ARRSIZE'] = '#define ARRSIZE(dims,rank) (_PyArray_multiply_list(dims,rank))'
 cppmacros['OLDPYNUM'] = """\
 #ifdef OLDPYNUM
-#error You need to install NumPy version 13 or higher. See https://scipy.org/install.html
+#error You need to install NumPy version 0.13 or higher. See https://scipy.org/install.html
 #endif
 """
 ################# C functions ###############
