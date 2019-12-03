@@ -568,3 +568,13 @@ class TestNonZero(_DeprecationTestCase):
     def test_zerod(self):
         self.assert_deprecated(lambda: np.nonzero(np.array(0)))
         self.assert_deprecated(lambda: np.nonzero(np.array(1)))
+
+
+class TestRaggedArray(_DeprecationTestCase):
+    # 2019-11-29 1.18.0
+    def test_deprecate_ragged_arrays(self):
+        # NEP 34 deprecated automatic object dtype when creating ragged
+        # arrays. Also see the "ragged" tests in `test_multiarray`
+        arg = [1, [2, 3]]
+        self.assert_deprecated(np.array, args=(arg,))
+

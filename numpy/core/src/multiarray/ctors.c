@@ -688,6 +688,12 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int string_type)
     return 0;
 }
 
+typedef enum {
+    DISCOVERED_OK = 0,
+    DISCOVERED_RAGGED = 1,
+    DISCOVERED_OBJECT = 2
+} discovered_t;
+
 /*
  * Take an arbitrary object and discover how many dimensions it
  * has, filling in the dimensions as we go.
@@ -695,7 +701,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int string_type)
 static int
 discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                                     int stop_at_string, int stop_at_tuple,
-                                    int *out_is_object)
+                                    discovered_t *out_is_object)
 {
     PyObject *e;
     npy_intp n, i;
@@ -881,7 +887,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         if (PyErr_ExceptionMatches(PyExc_KeyError)) {
             PyErr_Clear();
             *maxndim = 0;
-            *out_is_object = 1;
+            *out_is_object = DISCOVERED_OBJECT;
             return 0;
         }
         else {
@@ -940,7 +946,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         *maxndim = all_elems_maxndim + 1;
         if (!all_dimensions_match) {
             /* typically results in an array containing variable-length lists */
-            *out_is_object = 1;
+            *out_is_object = DISCOVERED_RAGGED;
         }
     }
 
@@ -1749,7 +1755,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
 
     /* Try to treat op as a list of lists */
     if (!writeable && PySequence_Check(op)) {
-        int check_it, stop_at_string, stop_at_tuple, is_object;
+        int check_it, stop_at_string, stop_at_tuple;
         int type_num, type;
 
         /*
@@ -1799,7 +1805,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
                          ((*out_dtype)->names || (*out_dtype)->subarray));
 
         *out_ndim = NPY_MAXDIMS;
-        is_object = 0;
+        discovered_t is_object = DISCOVERED_OK;
         if (discover_dimensions(
                 op, out_ndim, out_dims, check_it,
                 stop_at_string, stop_at_tuple, &is_object) < 0) {
@@ -1816,7 +1822,17 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
             return 0;
         }
         /* If object arrays are forced */
-        if (is_object) {
+        if (is_object != DISCOVERED_OK) {
+            if (is_object == DISCOVERED_RAGGED && requested_dtype == NULL) {
+                /* NumPy 1.18, 2019-11-01 */
+                if (DEPRECATE("Creating an ndarray with automatic object "
+                    "dtype is deprecated, use dtype=object if you intended "
+                    "it, otherwise specify an exact dtype") < 0)
+                {
+                    return -1;
+                }
+            }
+            /* either DISCOVERED_OBJECT or there is a requested_dtype */
             Py_DECREF(*out_dtype);
             *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
             if (*out_dtype == NULL) {

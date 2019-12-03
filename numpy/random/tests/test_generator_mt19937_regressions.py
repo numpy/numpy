@@ -56,9 +56,10 @@ class TestRegression(object):
                   [1, (2, 2), (3, 3), None],
                   [(1, 1), 2, 3, None]]:
             mt19937 = Generator(MT19937(12345))
-            shuffled = list(t)
+            shuffled = np.array(t, dtype=object)
             mt19937.shuffle(shuffled)
-            assert_array_equal(shuffled, [t[2], t[0], t[3], t[1]])
+            expected = np.array([t[2], t[0], t[3], t[1]], dtype=object)
+            assert_array_equal(np.array(shuffled, dtype=object), expected)
 
     def test_call_within_randomstate(self):
         # Check that custom BitGenerator does not call into global state
@@ -118,7 +119,7 @@ class TestRegression(object):
         # a segfault on garbage collection.
         # See gh-7719
         mt19937 = Generator(MT19937(1234))
-        a = np.array([np.arange(1), np.arange(4)])
+        a = np.array([np.arange(1), np.arange(4)], dtype=object)
 
         for _ in range(1000):
             mt19937.shuffle(a)

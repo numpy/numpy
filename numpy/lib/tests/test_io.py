@@ -580,7 +580,7 @@ class TestSaveTxt(object):
     def test_large_zip(self):
         # The test takes at least 6GB of memory, writes a file larger than 4GB
         test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
-                               for i in range(800000)])
+                               for i in range(800000)], dtype=object)
         with tempdir() as tmpdir:
             np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
 
