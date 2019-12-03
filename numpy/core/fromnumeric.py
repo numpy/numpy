@@ -605,6 +605,7 @@ def _transpose_dispatcher(a, axes=None):
 def transpose(a, axes=None):
     """
     Reverse or permute the axes of an array; returns the modified array.
+
     For an array a with two axes, transpose(a) gives the matrix transpose.
 
     Parameters
