@@ -300,7 +300,7 @@ def reshape(a, newshape, order='C'):
     """
     for dim in newshape:
         if dim < 0:
-            raise ValueError('negative dimensions not allowed')
+            raise TypeError('negative dimensions not allowed')
     return _wrapfunc(a, 'reshape', newshape, order=order)
 
 
