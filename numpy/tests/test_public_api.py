@@ -386,7 +386,7 @@ SKIP_LIST_2 = [
     'numpy.matlib.fft',
     'numpy.matlib.random',
     'numpy.matlib.ctypeslib',
-    'numpy.matlib.ma'
+    'numpy.matlib.ma',
 ]
 
 

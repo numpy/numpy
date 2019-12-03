@@ -20,6 +20,7 @@ import gc
 import weakref
 import pytest
 from contextlib import contextmanager
+from test.support import no_tracing
 
 from numpy.compat import pickle
 
@@ -447,7 +448,7 @@ class TestArrayConstruction(object):
         assert_equal(r, np.ones((2, 6, 6)))
 
         d = np.ones((6, ))
-        r = np.array([[d, d + 1], d + 2])
+        r = np.array([[d, d + 1], d + 2], dtype=object)
         assert_equal(len(r), 2)
         assert_equal(r[0], [d, d + 1])
         assert_equal(r[1], d + 2)
@@ -969,29 +970,6 @@ class TestCreation(object):
         assert_equal(np.array([long(4), 2**80, long(4)]).dtype, object)
         assert_equal(np.array([2**80, long(4)]).dtype, object)
 
-    def test_sequence_of_array_like(self):
-        class ArrayLike:
-            def __init__(self):
-                self.__array_interface__ = {
-                    "shape": (42,),
-                    "typestr": "<i1",
-                    "data": bytes(42)
-                }
-
-            # Make sure __array_*__ is used instead of Sequence methods.
-            def __iter__(self):
-                raise AssertionError("__iter__ was called")
-
-            def __getitem__(self, idx):
-                raise AssertionError("__getitem__ was called")
-
-            def __len__(self):
-                return 42
-
-        assert_equal(
-            np.array([ArrayLike()]),
-            np.zeros((1, 42), dtype=np.byte))
-
     def test_non_sequence_sequence(self):
         """Should not segfault.
 
@@ -1073,34 +1051,60 @@ class TestCreation(object):
             assert_raises(ValueError, np.ndarray, buffer=buf, strides=(0,),
                           shape=(max_bytes//itemsize + 1,), dtype=dtype)
 
-    def test_jagged_ndim_object(self):
+    def _ragged_creation(self, seq):
+        # without dtype=object, the ragged object should raise
+        with assert_warns(DeprecationWarning):
+            a = np.array(seq)
+        b = np.array(seq, dtype=object)
+        assert_equal(a, b)
+        return b
+
+    def test_ragged_ndim_object(self):
         # Lists of mismatching depths are treated as object arrays
-        a = np.array([[1], 2, 3])
+        a = self._ragged_creation([[1], 2, 3])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
-        a = np.array([1, [2], 3])
+        a = self._ragged_creation([1, [2], 3])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
-        a = np.array([1, 2, [3]])
+        a = self._ragged_creation([1, 2, [3]])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
-    def test_jagged_shape_object(self):
+    def test_ragged_shape_object(self):
         # The jagged dimension of a list is turned into an object array
-        a = np.array([[1, 1], [2], [3]])
+        a = self._ragged_creation([[1, 1], [2], [3]])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
-        a = np.array([[1], [2, 2], [3]])
+        a = self._ragged_creation([[1], [2, 2], [3]])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
-        a = np.array([[1], [2], [3, 3]])
-        assert_equal(a.shape, (3,))
-        assert_equal(a.dtype, object)
+        a = self._ragged_creation([[1], [2], [3, 3]])
+        assert a.shape == (3,)
+        assert a.dtype == object
 
+    def test_array_of_ragged_array(self):
+        outer = np.array([None, None])
+        outer[0] = outer[1] = np.array([1, 2, 3])
+        assert np.array(outer).shape == (2,)
+        assert np.array([outer]).shape == (1, 2)
+
+        outer_ragged = np.array([None, None])
+        outer_ragged[0] = np.array([1, 2, 3])
+        outer_ragged[1] = np.array([1, 2, 3, 4])
+        # should both of these emit deprecation warnings?
+        assert np.array(outer_ragged).shape == (2,)
+        assert np.array([outer_ragged]).shape == (1, 2,)
+
+    def test_deep_nonragged_object(self):
+        # None of these should raise, even though they are missing dtype=object
+        a = np.array([[[Decimal(1)]]])
+        a = np.array([1, Decimal(1)])
+        a = np.array([[1], [Decimal(1)]])
 
 class TestStructured(object):
     def test_subarray_field_access(self):
@@ -5119,6 +5123,8 @@ class TestFlat(object):
 
 
 class TestResize(object):
+
+    @no_tracing
     def test_basic(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         if IS_PYPY:
@@ -5135,6 +5141,7 @@ class TestResize(object):
         assert_raises(ValueError, x.resize, (5, 1))
         del y  # avoid pyflakes unused variable warning.
 
+    @no_tracing
     def test_int_shape(self):
         x = np.eye(3)
         if IS_PYPY:
@@ -5168,6 +5175,7 @@ class TestResize(object):
         assert_raises(TypeError, np.eye(3).resize, order=1)
         assert_raises(TypeError, np.eye(3).resize, refcheck='hi')
 
+    @no_tracing
     def test_freeform_shape(self):
         x = np.eye(3)
         if IS_PYPY:
@@ -5176,6 +5184,7 @@ class TestResize(object):
             x.resize(3, 2, 1)
         assert_(x.shape == (3, 2, 1))
 
+    @no_tracing
     def test_zeros_appended(self):
         x = np.eye(3)
         if IS_PYPY:
@@ -5185,6 +5194,7 @@ class TestResize(object):
         assert_array_equal(x[0], np.eye(3))
         assert_array_equal(x[1], np.zeros((3, 3)))
 
+    @no_tracing
     def test_obj_obj(self):
         # check memory is initialized on resize, gh-4857
         a = np.ones(10, dtype=[('k', object, 2)])
@@ -7796,6 +7806,7 @@ if not IS_PYPY:
             d = np.ones(100)
             assert_(sys.getsizeof(d) < sys.getsizeof(d.reshape(100, 1, 1).copy()))
 
+        @no_tracing
         def test_resize(self):
             d = np.ones(100)
             old = sys.getsizeof(d)

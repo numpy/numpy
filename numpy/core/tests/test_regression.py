@@ -17,6 +17,7 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.compat import asbytes, asunicode, long, pickle
+from test.support import no_tracing
 
 try:
     RecursionError
@@ -1316,6 +1317,7 @@ class TestRegression(object):
             assert_(pickle.loads(
                 pickle.dumps(test_record, protocol=proto)) == test_record)
 
+    @no_tracing
     def test_blasdot_uninitialized_memory(self):
         # Ticket #950
         for m in [0, 1, 2]:
@@ -1365,13 +1367,13 @@ class TestRegression(object):
     def test_array_from_sequence_scalar_array(self):
         # Ticket #1078: segfaults when creating an array with a sequence of
         # 0d arrays.
-        a = np.array((np.ones(2), np.array(2)))
+        a = np.array((np.ones(2), np.array(2)), dtype=object)
         assert_equal(a.shape, (2,))
         assert_equal(a.dtype, np.dtype(object))
         assert_equal(a[0], np.ones(2))
         assert_equal(a[1], np.array(2))
 
-        a = np.array(((1,), np.array(1)))
+        a = np.array(((1,), np.array(1)), dtype=object)
         assert_equal(a.shape, (2,))
         assert_equal(a.dtype, np.dtype(object))
         assert_equal(a[0], (1,))
@@ -1379,7 +1381,7 @@ class TestRegression(object):
 
     def test_array_from_sequence_scalar_array2(self):
         # Ticket #1081: weird array with strange input...
-        t = np.array([np.array([]), np.array(0, object)])
+        t = np.array([np.array([]), np.array(0, object)], dtype=object)
         assert_equal(t.shape, (2,))
         assert_equal(t.dtype, np.dtype(object))
 
@@ -2288,9 +2290,10 @@ class TestRegression(object):
             x[0], x[-1] = x[-1], x[0]
 
         uf = np.frompyfunc(f, 1, 0)
-        a = np.array([[1, 2, 3], [4, 5], [6, 7, 8, 9]])
+        a = np.array([[1, 2, 3], [4, 5], [6, 7, 8, 9]], dtype=object)
         assert_equal(uf(a), ())
-        assert_array_equal(a, [[3, 2, 1], [5, 4], [9, 7, 8, 6]])
+        expected = np.array([[3, 2, 1], [5, 4], [9, 7, 8, 6]], dtype=object)
+        assert_array_equal(a, expected)
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test_leak_in_structured_dtype_comparison(self):
@@ -2481,26 +2484,6 @@ class TestRegression(object):
             __array_interface__ = {}
 
         np.array([T()])
-
-    def test_2d__array__shape(self):
-        class T(object):
-            def __array__(self):
-                return np.ndarray(shape=(0,0))
-
-            # Make sure __array__ is used instead of Sequence methods.
-            def __iter__(self):
-                return iter([])
-
-            def __getitem__(self, idx):
-                raise AssertionError("__getitem__ was called")
-
-            def __len__(self):
-                return 0
-
-
-        t = T()
-        #gh-13659, would raise in broadcasting [x=t for x in result]
-        np.array([t])
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
     @pytest.mark.skipif(sys.platform == 'win32' and sys.version_info[:2] < (3, 8),

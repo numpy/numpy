@@ -19,7 +19,7 @@ from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_uint8, _gen_mask)
 from ._bounded_integers import _integers_types
 from ._pcg64 import PCG64
-from ._bit_generator cimport bitgen_t
+from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
             CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
@@ -28,7 +28,7 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
         )
 
 
-cdef extern from "include/distributions.h":
+cdef extern from "numpy/random/distributions.h":
 
     struct s_binomial_t:
         int has_binomial
@@ -1004,18 +1004,18 @@ cdef class Generator:
             A floating-point array of shape ``size`` of drawn samples, or a
             single sample if ``size`` was not specified.
 
+        See Also
+        --------
+        normal :
+            Equivalent function with additional ``loc`` and ``scale`` arguments
+            for setting the mean and standard deviation.
+
         Notes
         -----
         For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
 
             mu + sigma * gen.standard_normal(size=...)
             gen.normal(mu, sigma, size=...)
-
-        See Also
-        --------
-        normal :
-            Equivalent function with additional ``loc`` and ``scale`` arguments
-            for setting the mean and standard deviation.
 
         Examples
         --------
@@ -4393,11 +4393,15 @@ def default_rng(seed=None):
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.
 
+    Returns
+    -------
+    Generator
+        The initialized generator object.
+
     Notes
     -----
-    When ``seed`` is omitted or ``None``, a new `BitGenerator` and `Generator` will
-    be instantiated each time. This function does not manage a default global
-    instance.
+    If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
+    is instantiated. This function does not manage a default global instance.
     """
     if _check_bit_generator(seed):
         # We were passed a BitGenerator, so just wrap it up.

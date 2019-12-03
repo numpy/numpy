@@ -1,6 +1,0 @@
-Add ``axis`` argument for ``random.permutation`` and ``random.shuffle``
------------------------------------------------------------------------
-
-Previously the ``random.permutation`` and ``random.shuffle`` functions
-can only shuffle an array along the first axis; they now have a
-new argument ``axis`` which allows shuffle along a specified axis.

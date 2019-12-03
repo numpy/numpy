@@ -2325,16 +2325,19 @@ def norm(x, ord=None, axis=None, keepdims=False):
     Parameters
     ----------
     x : array_like
-        Input array.  If `axis` is None, `x` must be 1-D or 2-D.
+        Input array.  If `axis` is None, `x` must be 1-D or 2-D, unless `ord`
+        is None. If both `axis` and `ord` are None, the 2-norm of
+        ``x.ravel`` will be returned.
     ord : {non-zero int, inf, -inf, 'fro', 'nuc'}, optional
         Order of the norm (see table under ``Notes``). inf means numpy's
-        `inf` object.
-    axis : {int, 2-tuple of ints, None}, optional
+        `inf` object. The default is None.
+    axis : {None, int, 2-tuple of ints}, optional.
         If `axis` is an integer, it specifies the axis of `x` along which to
         compute the vector norms.  If `axis` is a 2-tuple, it specifies the
         axes that hold 2-D matrices, and the matrix norms of these matrices
         are computed.  If `axis` is None then either a vector norm (when `x`
-        is 1-D) or a matrix norm (when `x` is 2-D) is returned.
+        is 1-D) or a matrix norm (when `x` is 2-D) is returned. The default
+        is None.
 
         .. versionadded:: 1.8.0
 

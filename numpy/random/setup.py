@@ -34,6 +34,7 @@ def configuration(parent_package='', top_path=None):
 
     defs.append(('NPY_NO_DEPRECATED_API', 0))
     config.add_data_dir('tests')
+    config.add_data_dir('_examples')
 
     EXTRA_LINK_ARGS = []
     # Math lib
@@ -47,11 +48,6 @@ def configuration(parent_package='', top_path=None):
     elif not is_msvc:
         # Some bit generators require c99
         EXTRA_COMPILE_ARGS += ['-std=c99']
-        INTEL_LIKE = any(arch in platform.machine() 
-                         for arch in ('x86', 'i686', 'i386', 'amd64'))
-        if INTEL_LIKE:
-            # Assumes GCC or GCC-like compiler
-            EXTRA_COMPILE_ARGS += ['-msse2']
 
     # Use legacy integer variable sizes
     LEGACY_DEFS = [('NP_RANDOM_LEGACY', '1')]
@@ -82,8 +78,8 @@ def configuration(parent_package='', top_path=None):
                              libraries=EXTRA_LIBRARIES,
                              extra_compile_args=EXTRA_COMPILE_ARGS,
                              extra_link_args=EXTRA_LINK_ARGS,
-                             depends=['_%s.pyx' % gen, 'bit_generator.pyx',
-                                      'bit_generator.pxd'],
+                             depends=['_%s.pyx' % gen, '_bit_generator.pyx',
+                                      '_bit_generator.pxd'],
                              define_macros=_defs,
                              )
     for gen in ['_common', '_bit_generator']:
@@ -97,6 +93,7 @@ def configuration(parent_package='', top_path=None):
                              depends=['%s.pyx' % gen, '%s.pxd' % gen,],
                              define_macros=defs,
                              )
+        config.add_data_files('{0}.pxd'.format(gen))
     other_srcs = [
         'src/distributions/logfactorial.c',
         'src/distributions/distributions.c',
@@ -115,6 +112,7 @@ def configuration(parent_package='', top_path=None):
                              depends=['%s.pyx' % gen],
                              define_macros=defs,
                              )
+    config.add_data_files('_bounded_integers.pxd')
     config.add_extension('mtrand',
                          sources=['mtrand.c',
                                   'src/legacy/legacy-distributions.c',
@@ -127,6 +125,7 @@ def configuration(parent_package='', top_path=None):
                          depends=['mtrand.pyx'],
                          define_macros=defs + LEGACY_DEFS,
                          )
+    config.add_data_files('__init__.pxd')
     return config
 
 

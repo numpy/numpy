@@ -68,16 +68,14 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
     'G'
 
     """
-    typecodes = [(isinstance(t, str) and t) or asarray(t).dtype.char
-                 for t in typechars]
-    intersection = [t for t in typecodes if t in typeset]
+    typecodes = ((isinstance(t, str) and t) or asarray(t).dtype.char
+                 for t in typechars)
+    intersection = set(t for t in typecodes if t in typeset)
     if not intersection:
         return default
     if 'F' in intersection and 'd' in intersection:
         return 'D'
-    l = [(_typecodes_by_elsize.index(t), t) for t in intersection]
-    l.sort()
-    return l[0][1]
+    return min(intersection, key=_typecodes_by_elsize.index)
 
 
 def _asfarray_dispatcher(a, dtype=None):

@@ -53,11 +53,21 @@ When using pytest as a target (the default), you can
 
 .. note::
 
-    Remember that all tests of NumPy should pass before commiting your changes.
+    Remember that all tests of NumPy should pass before committing your changes.
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
 build or installing to a virtualenv. See the FAQ below for details.
+
+.. note::
+
+   Some of the tests in the test suite require a large amount of
+   memory, and are skipped if your system does not have enough.
+
+   To override the automatic detection of available memory, set the
+   environment variable ``NPY_AVAILABLE_MEM``, for example
+   ``NPY_AVAILABLE_MEM=32GB``, or using pytest ``--available-memory=32GB``
+   target option.
 
 
 Building in-place
@@ -145,7 +155,7 @@ Running tests
 Besides using ``runtests.py``, there are various ways to run the tests.  Inside
 the interpreter, tests can be run like this::
 
-    >>> np.test()
+    >>> np.test()  # doctest: +SKIPBLOCK
     >>> np.test('full')   # Also run tests marked as slow
     >>> np.test('full', verbose=2)   # Additionally print test name/file
 

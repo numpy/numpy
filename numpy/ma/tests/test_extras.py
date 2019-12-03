@@ -11,6 +11,7 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 import itertools
+import pytest
 
 import numpy as np
 from numpy.testing import (
@@ -551,6 +552,18 @@ class TestCompressFunctions(object):
         assert_(mask_rowcols(x).mask.all())
         assert_(mask_rowcols(x, 0).mask.all())
         assert_(mask_rowcols(x, 1).mask.all())
+
+    @pytest.mark.parametrize("axis", [None, 0, 1])
+    @pytest.mark.parametrize(["func", "rowcols_axis"],
+                             [(np.ma.mask_rows, 0), (np.ma.mask_cols, 1)])
+    def test_mask_row_cols_axis_deprecation(self, axis, func, rowcols_axis):
+        # Test deprecation of the axis argument to `mask_rows` and `mask_cols`
+        x = array(np.arange(9).reshape(3, 3),
+                  mask=[[1, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        with assert_warns(DeprecationWarning):
+            res = func(x, axis=axis)
+            assert_equal(res, mask_rowcols(x, rowcols_axis))
 
     def test_dot(self):
         # Tests dot product
