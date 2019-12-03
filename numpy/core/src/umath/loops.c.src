@@ -384,7 +384,11 @@ PyUFunc_O_O_method(char **args, npy_intp *dimensions, npy_intp *steps, void *fun
         PyObject **out = (PyObject **)op1;
         PyObject *ret, *func;
         func = PyObject_GetAttrString(in1 ? in1 : Py_None, meth);
-        if (func == NULL || !PyCallable_Check(func)) {
+        if (func != NULL && !PyCallable_Check(func)) {
+            Py_DECREF(func);
+            func = NULL;
+        }
+        if (func == NULL) {
             PyObject *exc, *val, *tb;
             PyTypeObject *type = in1 ? Py_TYPE(in1) : Py_TYPE(Py_None);
             PyErr_Fetch(&exc, &val, &tb);
@@ -397,6 +401,7 @@ PyUFunc_O_O_method(char **args, npy_intp *dimensions, npy_intp *steps, void *fun
             return;
         }
         ret = PyObject_Call(func, tup, NULL);
+        Py_DECREF(func);
         if (ret == NULL) {
             Py_DECREF(tup);
             return;
