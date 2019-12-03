@@ -1,8 +1,0 @@
-``np.can_cast(np.uint64, np.timedelta64, casting='safe')`` is now ``False``
----------------------------------------------------------------------------
-
-Previously this was ``True`` - however, this was inconsistent with ``uint64``
-not being safely castable to ``int64``, and resulting in strange type
-resolution.
-
-If this impacts your code, cast ``uint64`` to ``int64`` first.

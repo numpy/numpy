@@ -1,7 +1,0 @@
-``method`` keyword argument for `np.random.multivariate_normal`
----------------------------------------------------------------
-A ``method`` keyword argument is now available for
-`np.random.multivariate_normal` with possible values
-``{'svd', 'eigh', 'cholesky'}``. To use it, write
-``np.random.multivariate_normal(..., method=<method>)``.
-

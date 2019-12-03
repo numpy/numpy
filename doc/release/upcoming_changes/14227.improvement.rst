@@ -1,3 +1,0 @@
-Add complex number support for ``numpy.fromstring``
----------------------------------------------------
-Now ``numpy.fromstring`` can read complex numbers.

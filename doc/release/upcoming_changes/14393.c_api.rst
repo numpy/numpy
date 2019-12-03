@@ -1,5 +1,0 @@
-PyDataType_ISUNSIZED(descr) now returns False for structured datatypes
-----------------------------------------------------------------------
-Previously this returned True for any datatype of itemsize 0, but now this
-returns false for the non-flexible datatype with itemsize 0, ``np.dtype([])``.
-

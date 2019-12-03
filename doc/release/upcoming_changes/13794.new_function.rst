@@ -1,5 +1,0 @@
-Multivariate hypergeometric distribution added to `numpy.random`
-----------------------------------------------------------------
-The method `multivariate_hypergeometric` has been added to the class
-`numpy.random.Generator`.  This method generates random variates from
-the multivariate hypergeometric probability distribution.

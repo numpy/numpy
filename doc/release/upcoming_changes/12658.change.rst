@@ -1,5 +1,0 @@
-``NaT`` now sorts to the end of arrays
---------------------------------------
-``NaT`` is now effectively treated as the largest integer for sorting
-purposes, so that it sorts to the end of arrays. This change is for consistency
-with ``NaN`` sorting behavior.

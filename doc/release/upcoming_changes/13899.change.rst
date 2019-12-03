@@ -1,4 +1,0 @@
-Incorrect ``threshold`` in ``np.set_printoptions`` raises ``TypeError`` or ``ValueError``
------------------------------------------------------------------------------------------
-Previously an incorrect ``threshold`` raised ``ValueError``; it now raises ``TypeError``
-for non-numeric types and ``ValueError`` for ``nan`` values.

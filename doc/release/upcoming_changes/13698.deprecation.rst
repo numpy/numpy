@@ -1,5 +1,0 @@
-Deprecate non-scalar arrays as fill values in ``ma.fill_value``
----------------------------------------------------------------
-Setting a ``MaskedArray.fill_value`` to a non-scalar array is deprecated
-since the logic to broadcast the fill value to the array is fragile,
-especially when slicing.

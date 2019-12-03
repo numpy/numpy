@@ -1,5 +1,0 @@
-
-Add our own ``*.pxd`` cython import file
---------------------------------------------
-Added a ``numpy/__init__.pxd`` file. It will be used for `cimport numpy`
-

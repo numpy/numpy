@@ -1,4 +1,0 @@
-`numpy.unique` has consistent axes order (except the chosen one) when ``axis`` is not None
-------------------------------------------------------------------------------------------
-Using ``moveaxis`` instead of ``swapaxes`` in `numpy.unique`, so that the ordering of axes
-except the axis in arguments will not be broken.
