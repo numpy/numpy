@@ -1,6 +1,0 @@
-`numpy.matmul` with boolean output now converts to boolean values
------------------------------------------------------------------
-Calling `numpy.matmul` where the output is a boolean array would fill the array
-with uint8 equivalents of the result, rather than 0/1. Now it forces the output
-to 0 or 1 (``NPY_TRUE`` or ``NPY_FALSE``).
-

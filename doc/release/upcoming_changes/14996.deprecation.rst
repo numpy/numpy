@@ -1,3 +1,0 @@
-The ``axis`` argument to `numpy.ma.mask_cols` and `numpy.ma.mask_row` is deprecated
------------------------------------------------------------------------------------
-This argument was always ignored.

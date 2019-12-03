@@ -1,5 +1,0 @@
-``argwhere`` now produces a consistent result on 0d arrays
-----------------------------------------------------------
-On N-d arrays, `numpy.argwhere` now always produces an array of shape
-``(n_non_zero, arr.ndim)``, even when ``arr.ndim == 0``. Previously, the
-last axis would have a dimension of 1 in this case.
