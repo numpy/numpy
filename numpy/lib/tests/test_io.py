@@ -576,7 +576,7 @@ class TestSaveTxt(object):
     @pytest.mark.skipif(sys.platform=='win32',
                         reason="large files cause problems")
     @pytest.mark.slow
-    @requires_memory(7e9)
+    @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
         # The test takes at least 6GB of memory, writes a file larger than 4GB
         test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
