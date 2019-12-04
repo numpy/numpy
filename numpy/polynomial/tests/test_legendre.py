@@ -3,12 +3,14 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.legendre as leg
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
-    TestCase, assert_almost_equal, assert_raises,
-    assert_equal, assert_, run_module_suite)
+    assert_almost_equal, assert_raises, assert_equal, assert_,
+    )
 
 L0 = np.array([1])
 L1 = np.array([0, 1])
@@ -28,7 +30,7 @@ def trim(x):
     return leg.legtrim(x, tol=1e-6)
 
 
-class TestConstants(TestCase):
+class TestConstants(object):
 
     def test_legdomain(self):
         assert_equal(leg.legdomain, [-1, 1])
@@ -43,7 +45,7 @@ class TestConstants(TestCase):
         assert_equal(leg.legx, [0, 1])
 
 
-class TestArithmetic(TestCase):
+class TestArithmetic(object):
     x = np.linspace(-1, 1, 100)
 
     def test_legadd(self):
@@ -100,8 +102,17 @@ class TestArithmetic(TestCase):
                 res = leg.legadd(leg.legmul(quo, ci), rem)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
+    def test_legpow(self):
+        for i in range(5):
+            for j in range(5):
+                msg = "At i=%d, j=%d" % (i, j)
+                c = np.arange(i + 1)
+                tgt = reduce(leg.legmul, [c]*j, np.array([1]))
+                res = leg.legpow(c, j) 
+                assert_equal(trim(res), trim(tgt), err_msg=msg)
 
-class TestEvaluation(TestCase):
+
+class TestEvaluation(object):
     # coefficients of 1 + 2*x + 3*x**2
     c1d = np.array([2., 2., 2.])
     c2d = np.einsum('i,j->ij', c1d, c1d)
@@ -195,13 +206,16 @@ class TestEvaluation(TestCase):
         assert_(res.shape == (2, 3)*3)
 
 
-class TestIntegral(TestCase):
+class TestIntegral(object):
 
     def test_legint(self):
         # check exceptions
-        assert_raises(ValueError, leg.legint, [0], .5)
+        assert_raises(TypeError, leg.legint, [0], .5)
         assert_raises(ValueError, leg.legint, [0], -1)
         assert_raises(ValueError, leg.legint, [0], 1, [0, 0])
+        assert_raises(ValueError, leg.legint, [0], lbnd=[0])
+        assert_raises(ValueError, leg.legint, [0], scl=[0])
+        assert_raises(TypeError, leg.legint, [0], axis=.5)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -294,11 +308,11 @@ class TestIntegral(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestDerivative(TestCase):
+class TestDerivative(object):
 
     def test_legder(self):
         # check exceptions
-        assert_raises(ValueError, leg.legder, [0], .5)
+        assert_raises(TypeError, leg.legder, [0], .5)
         assert_raises(ValueError, leg.legder, [0], -1)
 
         # check that zeroth derivative does nothing
@@ -334,7 +348,7 @@ class TestDerivative(TestCase):
         assert_almost_equal(res, tgt)
 
 
-class TestVander(TestCase):
+class TestVander(object):
     # some random values in [-1, 1)
     x = np.random.random((3, 5))*2 - 1
 
@@ -382,7 +396,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestFitting(TestCase):
+class TestFitting(object):
 
     def test_legfit(self):
         def f(x):
@@ -459,7 +473,7 @@ class TestFitting(TestCase):
         assert_almost_equal(coef1, coef2)
 
 
-class TestCompanion(TestCase):
+class TestCompanion(object):
 
     def test_raises(self):
         assert_raises(ValueError, leg.legcompanion, [])
@@ -474,7 +488,7 @@ class TestCompanion(TestCase):
         assert_(leg.legcompanion([1, 2])[0, 0] == -.5)
 
 
-class TestGauss(TestCase):
+class TestGauss(object):
 
     def test_100(self):
         x, w = leg.leggauss(100)
@@ -493,7 +507,7 @@ class TestGauss(TestCase):
         assert_almost_equal(w.sum(), tgt)
 
 
-class TestMisc(TestCase):
+class TestMisc(object):
 
     def test_legfromroots(self):
         res = leg.legfromroots([])
@@ -542,7 +556,3 @@ class TestMisc(TestCase):
         tgt = 1.
         res = leg.legweight(x)
         assert_almost_equal(res, tgt)
-
-
-if __name__ == "__main__":
-    run_module_suite()

@@ -25,6 +25,8 @@ to the instructions at http://help.github.com/forking/ - please see that
 page for more detail.  We're repeating some of it here just to give the
 specifics for the NumPy_ project, and to suggest some default names.
 
+.. _set-up-and-configure-a-github-account:
+
 Set up and configure a github_ account
 ======================================
 
@@ -62,7 +64,7 @@ Overview
 
    git clone https://github.com/your-user-name/numpy.git
    cd numpy
-   git remote add upstream git://github.com/numpy/numpy.git
+   git remote add upstream https://github.com/numpy/numpy.git
 
 In detail
 =========
@@ -95,21 +97,16 @@ Linking your repository to the upstream repo
 ::
 
    cd numpy
-   git remote add upstream git://github.com/numpy/numpy.git
+   git remote add upstream https://github.com/numpy/numpy.git
 
 ``upstream`` here is just the arbitrary name we're using to refer to the
 main NumPy_ repository at `NumPy github`_.
 
-Note that we've used ``git://`` for the URL rather than ``https://``.  The
-``git://`` URL is read only.  This means we that we can't accidentally
-(or deliberately) write to the upstream repo, and we are only going to
-use it to merge into our own code.
-
 Just for your own satisfaction, show yourself that you now have a new
 'remote', with ``git remote -v show``, giving you something like::
 
-   upstream	git://github.com/numpy/numpy.git (fetch)
-   upstream	git://github.com/numpy/numpy.git (push)
+   upstream	https://github.com/numpy/numpy.git (fetch)
+   upstream	https://github.com/numpy/numpy.git (push)
    origin	https://github.com/your-user-name/numpy.git (fetch)
    origin	https://github.com/your-user-name/numpy.git (push)
 
@@ -122,7 +119,7 @@ so it pulls from ``upstream`` by default.  This can be done with::
 You may also want to have easy access to all pull requests sent to the
 NumPy repository::
 
-   git config --add remote.upstream.fetch '+refs/pull//head:refs/remotes/upstream/pr/'
+   git config --add remote.upstream.fetch '+refs/pull/*/head:refs/remotes/upstream/pr/*'
 
 Your config file should now look something like (from
 ``$ cat .git/config``)::
@@ -138,7 +135,7 @@ Your config file should now look something like (from
            url = https://github.com/your-user-name/numpy.git
            fetch = +refs/heads/*:refs/remotes/origin/*
    [remote "upstream"]
-           url = git://github.com/numpy/numpy.git
+           url = https://github.com/numpy/numpy.git
            fetch = +refs/heads/*:refs/remotes/upstream/*
            fetch = +refs/pull/*/head:refs/remotes/upstream/pr/*
    [branch "master"]

@@ -3,12 +3,8 @@ from __future__ import division, absolute_import, print_function
 
 import sys, os, re
 
-# Check Sphinx version
-import sphinx
-if sphinx.__version__ < "1.0.1":
-    raise RuntimeError("Sphinx 1.0.1 or newer required")
-
-needs_sphinx = '1.0'
+# Minimum version, enforced by sphinx
+needs_sphinx = '2.2.0'
 
 # -----------------------------------------------------------------------------
 # General configuration
@@ -19,10 +15,22 @@ needs_sphinx = '1.0'
 
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
-              'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest', 'sphinx.ext.autosummary',
-              'matplotlib.sphinxext.plot_directive']
+extensions = [
+    'sphinx.ext.autodoc',
+    'numpydoc',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.coverage',
+    'sphinx.ext.doctest',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.ifconfig',
+    'matplotlib.sphinxext.plot_directive',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive',
+    'sphinx.ext.imgmath',
+]
+
+imgmath_image_format = 'svg'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -30,9 +38,11 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
+master_doc = 'contents'
+
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2009, The Scipy community'
+copyright = '2008-2019, The SciPy community'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -75,6 +85,10 @@ add_function_parentheses = False
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+def setup(app):
+    # add a config value for `ifconfig` directives
+    app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
+    app.add_lexer('NumPyC', NumPyLexer(stripnl=False))
 
 # -----------------------------------------------------------------------------
 # HTML output
@@ -94,8 +108,8 @@ if 'scipyorg' in tags:
         "edit_link": True,
         "sidebar": "right",
         "scipy_org_logo": True,
-        "rootlinks": [("http://scipy.org/", "Scipy.org"),
-                      ("http://docs.scipy.org/", "Docs")]
+        "rootlinks": [("https://scipy.org/", "Scipy.org"),
+                      ("https://docs.scipy.org/", "Docs")]
     }
 else:
     # Default build
@@ -103,9 +117,11 @@ else:
         "edit_link": False,
         "sidebar": "left",
         "scipy_org_logo": False,
-        "rootlinks": []
+        "rootlinks": [("https://numpy.org/", "NumPy.org"),
+                      ("https://numpy.org/doc", "Docs"),
+                     ]
     }
-    html_sidebars = {'index': 'indexsidebar.html'}
+    html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
 
 html_additional_pages = {
     'index': 'indexcontent.html',
@@ -122,9 +138,12 @@ html_file_suffix = '.html'
 
 htmlhelp_basename = 'numpy'
 
-pngmath_use_preview = True
-pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
+if 'sphinx.ext.pngmath' in extensions:
+    pngmath_use_preview = True
+    pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
 
+plot_html_show_formats = False
+plot_html_show_source_link = False
 
 # -----------------------------------------------------------------------------
 # LaTeX output
@@ -154,16 +173,33 @@ latex_documents = [
 # not chapters.
 #latex_use_parts = False
 
-# Additional stuff for the LaTeX preamble.
-latex_preamble = r'''
-\usepackage{amsmath}
-\DeclareUnicodeCharacter{00A0}{\nobreakspace}
+latex_elements = {
+    'fontenc': r'\usepackage[LGR,T1]{fontenc}'
+}
 
+# Additional stuff for the LaTeX preamble.
+latex_elements['preamble'] = r'''
 % In the parameters section, place a newline after the Parameters
 % header
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}
+% but expdlist old LaTeX package requires fixes:
+% 1) remove extra space
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\@item{{\@breaklabel} }{{\@breaklabel}}{}{}
+\makeatother
+% 2) fix bug in expdlist's way of breaking the line after long item label
+\makeatletter
+\def\breaklabel{%
+    \def\@breaklabel{%
+        \leavevmode\par
+        % now a hack because Sphinx inserts \leavevmode after term node
+        \def\leavevmode{\def\leavevmode{\unhbox\voidb@x}}%
+    }%
+}
+\makeatother
 
 % Make Examples/etc section headers smaller and more compact
 \makeatletter
@@ -202,7 +238,7 @@ texinfo_documents = [
 intersphinx_mapping = {
     'python': ('https://docs.python.org/dev', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'matplotlib': ('http://matplotlib.org', None)
+    'matplotlib': ('https://matplotlib.org', None)
 }
 
 
@@ -221,7 +257,7 @@ numpydoc_use_plots = True
 # -----------------------------------------------------------------------------
 
 import glob
-autosummary_generate = glob.glob("reference/*.rst")
+autosummary_generate = True
 
 # -----------------------------------------------------------------------------
 # Coverage checker
@@ -305,19 +341,28 @@ def linkcode_resolve(domain, info):
     for part in fullname.split('.'):
         try:
             obj = getattr(obj, part)
-        except:
+        except Exception:
             return None
+
+    # strip decorators, which would resolve to the source of the decorator
+    # possibly an upstream bug in getsourcefile, bpo-1764286
+    try:
+        unwrap = inspect.unwrap
+    except AttributeError:
+        pass
+    else:
+        obj = unwrap(obj)
 
     try:
         fn = inspect.getsourcefile(obj)
-    except:
+    except Exception:
         fn = None
     if not fn:
         return None
 
     try:
         source, lineno = inspect.getsourcelines(obj)
-    except:
+    except Exception:
         lineno = None
 
     if lineno:
@@ -328,8 +373,23 @@ def linkcode_resolve(domain, info):
     fn = relpath(fn, start=dirname(numpy.__file__))
 
     if 'dev' in numpy.__version__:
-        return "http://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
            fn, linespec)
     else:
-        return "http://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
+
+from pygments.lexers import CLexer
+from pygments import token
+import copy
+
+class NumPyLexer(CLexer):
+    name = 'NUMPYLEXER'
+
+    tokens = copy.deepcopy(CLexer.tokens)
+    # Extend the regex for valid identifiers with @
+    for k, val in tokens.items():
+        for i, v in enumerate(val):
+            if isinstance(v, tuple):
+                if isinstance(v[0], str):
+                    val[i] =  (v[0].replace('a-zA-Z', 'a-zA-Z@'),) + v[1:]

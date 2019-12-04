@@ -5,21 +5,11 @@ Miscellaneous routines
 
 .. currentmodule:: numpy
 
-Buffer objects
---------------
-.. autosummary::
-   :toctree: generated/
-
-   getbuffer
-   newbuffer
-
 Performance tuning
 ------------------
 .. autosummary::
    :toctree: generated/
 
-   alterdot
-   restoredot
    setbufsize
    getbufsize
 
@@ -31,6 +21,14 @@ Memory ranges
 
    shares_memory
    may_share_memory
+   byte_bounds
+
+Array mixins
+------------
+.. autosummary::
+   :toctree: generated/
+
+   lib.mixins.NDArrayOperatorsMixin
 
 NumPy version comparison
 ------------------------
@@ -38,3 +36,21 @@ NumPy version comparison
    :toctree: generated/
 
    lib.NumpyVersion
+
+Utility
+-------
+
+.. autosummary::
+   :toctree: generated/
+
+   get_include
+   deprecate
+   deprecate_with_doc
+
+Matlab-like Functions
+---------------------
+.. autosummary::
+   :toctree: generated/
+
+   who
+   disp

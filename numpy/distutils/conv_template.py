@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 takes templated file .xxx.src and produces .xxx file  where .xxx is
 .i or .c or .h, using the following template rules
@@ -186,8 +186,8 @@ def parse_loop_header(loophead) :
         if nsub is None :
             nsub = size
         elif nsub != size :
-            msg = "Mismatch in number of values:\n%s = %s" % (name, vals)
-            raise ValueError(msg)
+            msg = "Mismatch in number of values, %d != %d\n%s = %s"
+            raise ValueError(msg % (nsub, size, name, vals))
         names.append((name, vals))
 
 
@@ -206,10 +206,8 @@ def parse_loop_header(loophead) :
     dlist = []
     if nsub is None :
         raise ValueError("No substitution variables found")
-    for i in range(nsub) :
-        tmp = {}
-        for name, vals in names :
-            tmp[name] = vals[i]
+    for i in range(nsub):
+        tmp = {name: vals[i] for name, vals in names}
         dlist.append(tmp)
     return dlist
 
@@ -269,22 +267,21 @@ include_src_re = re.compile(r"(\n|\A)#include\s*['\"]"
 
 def resolve_includes(source):
     d = os.path.dirname(source)
-    fid = open(source)
-    lines = []
-    for line in fid:
-        m = include_src_re.match(line)
-        if m:
-            fn = m.group('name')
-            if not os.path.isabs(fn):
-                fn = os.path.join(d, fn)
-            if os.path.isfile(fn):
-                print('Including file', fn)
-                lines.extend(resolve_includes(fn))
+    with open(source) as fid:
+        lines = []
+        for line in fid:
+            m = include_src_re.match(line)
+            if m:
+                fn = m.group('name')
+                if not os.path.isabs(fn):
+                    fn = os.path.join(d, fn)
+                if os.path.isfile(fn):
+                    print('Including file', fn)
+                    lines.extend(resolve_includes(fn))
+                else:
+                    lines.append(line)
             else:
                 lines.append(line)
-        else:
-            lines.append(line)
-    fid.close()
     return lines
 
 def process_file(source):
@@ -315,8 +312,7 @@ def unique_key(adict):
     return newkey
 
 
-if __name__ == "__main__":
-
+def main():
     try:
         file = sys.argv[1]
     except IndexError:
@@ -334,4 +330,8 @@ if __name__ == "__main__":
     except ValueError:
         e = get_exception()
         raise ValueError("In %s loop at %s" % (file, e))
+
     outfile.write(writestr)
+
+if __name__ == "__main__":
+    main()

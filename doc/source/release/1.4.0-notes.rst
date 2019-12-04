@@ -1,0 +1,238 @@
+=========================
+NumPy 1.4.0 Release Notes
+=========================
+
+This minor includes numerous bug fixes, as well as a few new features. It
+is backward compatible with 1.3.0 release.
+
+Highlights
+==========
+
+* New datetime dtype support to deal with dates in arrays
+
+* Faster import time
+
+* Extended array wrapping mechanism for ufuncs
+
+* New Neighborhood iterator (C-level only)
+
+* C99-like complex functions in npymath
+
+New features
+============
+
+Extended array wrapping mechanism for ufuncs
+--------------------------------------------
+
+An __array_prepare__ method has been added to ndarray to provide subclasses
+greater flexibility to interact with ufuncs and ufunc-like functions. ndarray
+already provided __array_wrap__, which allowed subclasses to set the array type
+for the result and populate metadata on the way out of the ufunc (as seen in
+the implementation of MaskedArray). For some applications it is necessary to
+provide checks and populate metadata *on the way in*. __array_prepare__ is
+therefore called just after the ufunc has initialized the output array but
+before computing the results and populating it. This way, checks can be made
+and errors raised before operations which may modify data in place.
+
+Automatic detection of forward incompatibilities
+------------------------------------------------
+
+Previously, if an extension was built against a version N of NumPy, and used on
+a system with NumPy M < N, the import_array was successful, which could cause
+crashes because the version M does not have a function in N. Starting from
+NumPy 1.4.0, this will cause a failure in import_array, so the error will be
+caught early on.
+
+New iterators
+-------------
+
+A new neighborhood iterator has been added to the C API. It can be used to
+iterate over the items in a neighborhood of an array, and can handle boundaries
+conditions automatically. Zero and one padding are available, as well as
+arbitrary constant value, mirror and circular padding.
+
+New polynomial support
+----------------------
+
+New modules chebyshev and polynomial have been added. The new polynomial module
+is not compatible with the current polynomial support in numpy, but is much
+like the new chebyshev module. The most noticeable difference to most will
+be that coefficients are specified from low to high power, that the low
+level functions do *not* work with the Chebyshev and Polynomial classes as
+arguments, and that the Chebyshev and Polynomial classes include a domain.
+Mapping between domains is a linear substitution and the two classes can be
+converted one to the other, allowing, for instance, a Chebyshev series in
+one domain to be expanded as a polynomial in another domain. The new classes
+should generally be used instead of the low level functions, the latter are
+provided for those who wish to build their own classes.
+
+The new modules are not automatically imported into the numpy namespace,
+they must be explicitly brought in with an "import numpy.polynomial"
+statement.
+
+New C API
+---------
+
+The following C functions have been added to the C API:
+
+    #. PyArray_GetNDArrayCFeatureVersion: return the *API* version of the
+       loaded numpy.
+    #. PyArray_Correlate2 - like PyArray_Correlate, but implements the usual
+       definition of correlation. Inputs are not swapped, and conjugate is
+       taken for complex arrays.
+    #. PyArray_NeighborhoodIterNew - a new iterator to iterate over a
+       neighborhood of a point, with automatic boundaries handling. It is
+       documented in the iterators section of the C-API reference, and you can
+       find some examples in  the multiarray_test.c.src file in numpy.core.
+
+New ufuncs
+----------
+
+The following ufuncs have been added to the C API:
+
+    #. copysign - return the value of the first argument with the sign copied
+       from the second argument.
+    #. nextafter - return the next representable floating point value of the
+       first argument toward the second argument.
+
+New defines
+-----------
+
+The alpha processor is now defined and available in numpy/npy_cpu.h. The
+failed detection of the PARISC processor has been fixed. The defines are:
+
+    #. NPY_CPU_HPPA: PARISC
+    #. NPY_CPU_ALPHA: Alpha
+
+Testing
+-------
+
+    #. deprecated decorator: this decorator may be used to avoid cluttering
+       testing output while testing DeprecationWarning is effectively raised by
+       the decorated test.
+    #. assert_array_almost_equal_nulps: new method to compare two arrays of
+       floating point values. With this function, two values are considered
+       close if there are not many representable floating point values in
+       between, thus being more robust than assert_array_almost_equal when the
+       values fluctuate a lot.
+    #. assert_array_max_ulp: raise an assertion if there are more than N
+       representable numbers between two floating point values.
+    #. assert_warns: raise an AssertionError if a callable does not generate a
+       warning of the appropriate class, without altering the warning state.
+
+Reusing npymath
+---------------
+
+In 1.3.0, we started putting portable C math routines in npymath library, so
+that people can use those to write portable extensions. Unfortunately, it was
+not possible to easily link against this library: in 1.4.0, support has been
+added to numpy.distutils so that 3rd party can reuse this library. See coremath
+documentation for more information.
+
+Improved set operations
+-----------------------
+
+In previous versions of NumPy some set functions (intersect1d,
+setxor1d, setdiff1d and setmember1d) could return incorrect results if
+the input arrays contained duplicate items. These now work correctly
+for input arrays with duplicates. setmember1d has been renamed to
+in1d, as with the change to accept arrays with duplicates it is
+no longer a set operation, and is conceptually similar to an
+elementwise version of the Python operator 'in'.  All of these
+functions now accept the boolean keyword assume_unique. This is False
+by default, but can be set True if the input arrays are known not
+to contain duplicates, which can increase the functions' execution
+speed.
+
+Improvements
+============
+
+    #. numpy import is noticeably faster (from 20 to 30 % depending on the
+       platform and computer)
+
+    #. The sort functions now sort nans to the end.
+
+        * Real sort order is [R, nan]
+        * Complex sort order is [R + Rj, R + nanj, nan + Rj, nan + nanj]
+
+       Complex numbers with the same nan placements are sorted according to
+       the non-nan part if it exists.
+    #. The type comparison functions have been made consistent with the new
+       sort order of nans. Searchsorted now works with sorted arrays
+       containing nan values.
+    #. Complex division has been made more resistant to overflow.
+    #. Complex floor division has been made more resistant to overflow.
+
+Deprecations
+============
+
+The following functions are deprecated:
+
+    #. correlate: it takes a new keyword argument old_behavior. When True (the
+       default), it returns the same result as before. When False, compute the
+       conventional correlation, and take the conjugate for complex arrays. The
+       old behavior will be removed in NumPy 1.5, and raises a
+       DeprecationWarning in 1.4.
+
+    #. unique1d: use unique instead. unique1d raises a deprecation
+       warning in 1.4, and will be removed in 1.5.
+
+    #. intersect1d_nu: use intersect1d instead. intersect1d_nu raises
+       a deprecation warning in 1.4, and will be removed in 1.5.
+
+    #. setmember1d: use in1d instead. setmember1d raises a deprecation
+       warning in 1.4, and will be removed in 1.5.
+
+The following raise errors:
+
+    #. When operating on 0-d arrays, ``numpy.max`` and other functions accept
+       only ``axis=0``, ``axis=-1`` and ``axis=None``. Using an out-of-bounds
+       axes is an indication of a bug, so Numpy raises an error for these cases
+       now.
+
+    #. Specifying ``axis > MAX_DIMS`` is no longer allowed; Numpy raises now an
+       error instead of behaving similarly as for ``axis=None``.
+
+Internal changes
+================
+
+Use C99 complex functions when available
+----------------------------------------
+
+The numpy complex types are now guaranteed to be ABI compatible with C99
+complex type, if available on the platform. Moreover, the complex ufunc now use
+the platform C99 functions instead of our own.
+
+split multiarray and umath source code
+--------------------------------------
+
+The source code of multiarray and umath has been split into separate logic
+compilation units. This should make the source code more amenable for
+newcomers.
+
+Separate compilation
+--------------------
+
+By default, every file of multiarray (and umath) is merged into one for
+compilation as was the case before, but if NPY_SEPARATE_COMPILATION env
+variable is set to a non-negative value, experimental individual compilation of
+each file is enabled. This makes the compile/debug cycle much faster when
+working on core numpy.
+
+Separate core math library
+--------------------------
+
+New functions which have been added:
+
+	* npy_copysign
+        * npy_nextafter
+        * npy_cpack
+        * npy_creal
+        * npy_cimag
+        * npy_cabs
+        * npy_cexp
+        * npy_clog
+        * npy_cpow
+        * npy_csqr
+        * npy_ccos
+        * npy_csin

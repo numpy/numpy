@@ -387,7 +387,7 @@ distribution of the ``add.f`` module (as part of the package
 
 Installation of the new package is easy using::
 
-    python setup.py install
+    pip install .
 
 assuming you have the proper permissions to write to the main site-
 packages directory for the version of Python you are using. For the
@@ -405,8 +405,8 @@ interface between Python and Fortran. There is decent documentation
 for f2py found in the numpy/f2py/docs directory where-ever NumPy is
 installed on your system (usually under site-packages). There is also
 more information on using f2py (including how to use it to wrap C
-codes) at http://www.scipy.org/Cookbook under the "Using NumPy with
-Other Languages" heading.
+codes) at https://scipy-cookbook.readthedocs.io under the "Interfacing
+With Other Languages" heading.
 
 The f2py method of linking compiled code is currently the most
 sophisticated and integrated approach. It allows clean separation of
@@ -414,7 +414,7 @@ Python with compiled code while still allowing for separate
 distribution of the extension module. The only draw-back is that it
 requires the existence of a Fortran compiler in order for a user to
 install the code. However, with the existence of the free-compilers
-g77, gfortran, and g95, as well as high-quality commerical compilers,
+g77, gfortran, and g95, as well as high-quality commercial compilers,
 this restriction is not particularly onerous. In my opinion, Fortran
 is still the easiest way to write fast and clear code for scientific
 computing. It handles complex numbers, and multi-dimensional indexing
@@ -643,7 +643,7 @@ order to check the data types and array bounds of objects passed to
 the underlying subroutine. This additional layer of checking (not to
 mention the conversion from ctypes objects to C-data-types that ctypes
 itself performs), will make the interface slower than a hand-written
-extension-module interface. However, this overhead should be neglible
+extension-module interface. However, this overhead should be negligible
 if the C-routine being called is doing any significant amount of work.
 If you are a great Python programmer with weak C skills, ctypes is an
 easy way to write a useful interface to a (shared) library of compiled
@@ -744,14 +744,14 @@ around this restriction that allow ctypes to integrate with other
 objects.
 
 1. Don't set the argtypes attribute of the function object and define an
-   :obj:`_as_parameter_` method for the object you want to pass in. The
-   :obj:`_as_parameter_` method must return a Python int which will be passed
+   ``_as_parameter_`` method for the object you want to pass in. The
+   ``_as_parameter_`` method must return a Python int which will be passed
    directly to the function.
 
 2. Set the argtypes attribute to a list whose entries contain objects
    with a classmethod named from_param that knows how to convert your
    object to an object that ctypes can understand (an int/long, string,
-   unicode, or object with the :obj:`_as_parameter_` attribute).
+   unicode, or object with the ``_as_parameter_`` attribute).
 
 NumPy uses both methods with a preference for the second method
 because it can be safer. The ctypes attribute of the ndarray returns
@@ -761,10 +761,10 @@ associated. As a result, one can pass this ctypes attribute object
 directly to a function expecting a pointer to the data in your
 ndarray. The caller must be sure that the ndarray object is of the
 correct type, shape, and has the correct flags set or risk nasty
-crashes if the data-pointer to inappropriate arrays are passsed in.
+crashes if the data-pointer to inappropriate arrays are passed in.
 
 To implement the second method, NumPy provides the class-factory
-function :func:`ndpointer` in the :mod:`ctypeslib` module. This
+function :func:`ndpointer` in the :mod:`numpy.ctypeslib` module. This
 class-factory function produces an appropriate class that can be
 placed in an argtypes attribute entry of a ctypes function. The class
 will contain a from_param method which ctypes will use to convert any
@@ -783,7 +783,7 @@ attributes that may be convenient when passing additional information
 about the array into a ctypes function. The attributes **data**,
 **shape**, and **strides** can provide ctypes compatible types
 corresponding to the data-area, the shape, and the strides of the
-array. The data attribute reutrns a ``c_void_p`` representing a
+array. The data attribute returns a ``c_void_p`` representing a
 pointer to the data area. The shape and strides attributes each return
 an array of ctypes integers (or None representing a NULL pointer, if a
 0-d array). The base ctype of the array is a ctype integer of the same
@@ -935,7 +935,7 @@ The ``code.c`` file also contains the function ``dfilter2d``:
 A possible advantage this code has over the Fortran-equivalent code is
 that it takes arbitrarily strided (i.e. non-contiguous arrays) and may
 also run faster depending on the optimization capability of your
-compiler. But, it is a obviously more complicated than the simple code
+compiler. But, it is an obviously more complicated than the simple code
 in ``filter.f``. This code must be compiled into a shared library. On my
 Linux system this is accomplished using::
 
@@ -944,7 +944,7 @@ Linux system this is accomplished using::
 Which creates a shared_library named code.so in the current directory.
 On Windows don't forget to either add ``__declspec(dllexport)`` in front
 of void on the line preceding each function definition, or write a
-code.def file that lists the names of the functions to be exported.
+``code.def`` file that lists the names of the functions to be exported.
 
 A suitable Python interface to this shared library should be
 constructed. To do this create a file named interface.py with the
@@ -954,25 +954,25 @@ following lines at the top:
 
     __all__ = ['add', 'filter2d']
 
-    import numpy as N
+    import numpy as np
     import os
 
     _path = os.path.dirname('__file__')
-    lib = N.ctypeslib.load_library('code', _path)
-    _typedict = {'zadd' : complex, 'sadd' : N.single,
-                 'cadd' : N.csingle, 'dadd' : float}
+    lib = np.ctypeslib.load_library('code', _path)
+    _typedict = {'zadd' : complex, 'sadd' : np.single,
+                 'cadd' : np.csingle, 'dadd' : float}
     for name in _typedict.keys():
         val = getattr(lib, name)
         val.restype = None
         _type = _typedict[name]
-        val.argtypes = [N.ctypeslib.ndpointer(_type,
+        val.argtypes = [np.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous'),
-                        N.ctypeslib.ndpointer(_type,
+                        np.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous'),
-                        N.ctypeslib.ndpointer(_type,
+                        np.ctypeslib.ndpointer(_type,
                           flags='aligned, contiguous,'\
                                 'writeable'),
-                        N.ctypeslib.c_intp]
+                        np.ctypeslib.c_intp]
 
 This code loads the shared library named ``code.{ext}`` located in the
 same path as this file. It then adds a return type of void to the
@@ -989,13 +989,13 @@ strides and shape of an ndarray) as the last two arguments.:
 .. code-block:: python
 
     lib.dfilter2d.restype=None
-    lib.dfilter2d.argtypes = [N.ctypeslib.ndpointer(float, ndim=2,
+    lib.dfilter2d.argtypes = [np.ctypeslib.ndpointer(float, ndim=2,
                                            flags='aligned'),
-                              N.ctypeslib.ndpointer(float, ndim=2,
+                              np.ctypeslib.ndpointer(float, ndim=2,
                                      flags='aligned, contiguous,'\
                                            'writeable'),
-                              ctypes.POINTER(N.ctypeslib.c_intp),
-                              ctypes.POINTER(N.ctypeslib.c_intp)]
+                              ctypes.POINTER(np.ctypeslib.c_intp),
+                              ctypes.POINTER(np.ctypeslib.c_intp)]
 
 Next, define a simple selection function that chooses which addition
 function to call in the shared library based on the data-type:
@@ -1020,11 +1020,11 @@ written simply as:
 
     def add(a, b):
         requires = ['CONTIGUOUS', 'ALIGNED']
-        a = N.asanyarray(a)
+        a = np.asanyarray(a)
         func, dtype = select(a.dtype)
-        a = N.require(a, dtype, requires)
-        b = N.require(b, dtype, requires)
-        c = N.empty_like(a)
+        a = np.require(a, dtype, requires)
+        b = np.require(b, dtype, requires)
+        c = np.empty_like(a)
         func(a,b,c,a.size)
         return c
 
@@ -1033,8 +1033,8 @@ and:
 .. code-block:: python
 
     def filter2d(a):
-        a = N.require(a, float, ['ALIGNED'])
-        b = N.zeros_like(a)
+        a = np.require(a, float, ['ALIGNED'])
+        b = np.zeros_like(a)
         lib.dfilter2d(a, b, a.ctypes.strides, a.ctypes.shape)
         return b
 
@@ -1149,7 +1149,7 @@ but the interface file looks a lot like a C/C++ header file. While SIP
 is not a full C++ parser, it understands quite a bit of C++ syntax as
 well as its own special directives that allow modification of how the
 Python binding is accomplished. It also allows the user to define
-mappings between Python types and C/C++ structrues and classes.
+mappings between Python types and C/C++ structures and classes.
 
 
 Boost Python

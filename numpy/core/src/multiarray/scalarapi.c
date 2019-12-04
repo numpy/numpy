@@ -290,21 +290,12 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     if ((typecode->type_num == NPY_VOID) &&
             !(((PyVoidScalarObject *)scalar)->flags & NPY_ARRAY_OWNDATA) &&
             outcode == NULL) {
-        r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                typecode,
+        return PyArray_NewFromDescrAndBase(
+                &PyArray_Type, typecode,
                 0, NULL, NULL,
                 ((PyVoidScalarObject *)scalar)->obval,
                 ((PyVoidScalarObject *)scalar)->flags,
-                NULL);
-        if (r == NULL) {
-            return NULL;
-        }
-        Py_INCREF(scalar);
-        if (PyArray_SetBaseObject(r, (PyObject *)scalar) < 0) {
-            Py_DECREF(r);
-            return NULL;
-        }
-        return (PyObject *)r;
+                NULL, (PyObject *)scalar);
     }
 
     /* Need to INCREF typecode because PyArray_NewFromDescr steals a
@@ -415,7 +406,7 @@ PyArray_ScalarFromObject(PyObject *object)
     else if (PyLong_Check(object)) {
         npy_longlong val;
         val = PyLong_AsLongLong(object);
-        if (val==-1 && PyErr_Occurred()) {
+        if (error_converting(val)) {
             PyErr_Clear();
             return NULL;
         }
@@ -480,12 +471,18 @@ PyArray_DescrFromTypeObject(PyObject *type)
     /* Do special thing for VOID sub-types */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
         new = PyArray_DescrNewFromType(NPY_VOID);
-        conv = _arraydescr_fromobj(type);
-        if (conv) {
+        if (new == NULL) {
+            return NULL;
+        }
+        if (_arraydescr_from_dtype_attr(type, &conv)) {
+            if (conv == NULL) {
+                Py_DECREF(new);
+                return NULL;
+            }
             new->fields = conv->fields;
-            Py_INCREF(new->fields);
+            Py_XINCREF(new->fields);
             new->names = conv->names;
-            Py_INCREF(new->names);
+            Py_XINCREF(new->names);
             new->elsize = conv->elsize;
             new->subarray = conv->subarray;
             conv->subarray = NULL;
@@ -567,7 +564,7 @@ PyArray_DescrFromScalar(PyObject *sc)
     }
 
     descr = PyArray_DescrFromTypeObject((PyObject *)Py_TYPE(sc));
-    if (descr->elsize == 0) {
+    if (PyDataType_ISUNSIZED(descr)) {
         PyArray_DESCR_REPLACE(descr);
         type_num = descr->type_num;
         if (type_num == NPY_STRING) {
@@ -810,6 +807,9 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
                     vobj->obval = data;
                     return obj;
                 }
+            }
+            if (itemsize == 0) {
+                return obj;
             }
             destptr = PyDataMem_NEW(itemsize);
             if (destptr == NULL) {

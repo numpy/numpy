@@ -1,9 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from numpy.testing import TestCase, run_module_suite, assert_raises
+from numpy.testing import assert_raises
 
-class TestIndexErrors(TestCase):
+class TestIndexErrors(object):
     '''Tests to exercise indexerrors not covered by other tests.'''
 
     def test_arraytypes_fasttake(self):
@@ -121,6 +121,3 @@ class TestIndexErrors(TestCase):
         a = np.zeros((0, 3))
         assert_raises(IndexError, lambda: a.item(100))
         assert_raises(IndexError, lambda: a.itemset(100, 1))
-
-if __name__ == "__main__":
-    run_module_suite()

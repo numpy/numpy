@@ -22,10 +22,6 @@ import os
 import sys
 import re
 import types
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 from numpy.compat import open_latin1
 
@@ -39,9 +35,11 @@ from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
 from numpy.distutils.misc_util import is_string, all_strings, is_sequence, \
     make_temp_file, get_shared_lib_extension
-from numpy.distutils.environment import EnvironmentConfig
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils.compat import get_exception
+from numpy.distutils import _shell_utils
+
+from .environment import EnvironmentConfig
 
 __metaclass__ = type
 
@@ -95,7 +93,7 @@ class FCompiler(CCompiler):
 
     # These are the environment variables and distutils keys used.
     # Each configuration description is
-    # (<hook name>, <environment variable>, <key in distutils.cfg>, <convert>)
+    # (<hook name>, <environment variable>, <key in distutils.cfg>, <convert>, <append>)
     # The hook names are handled by the self._environment_hook method.
     #  - names starting with 'self.' call methods in this class
     #  - names starting with 'exe.' return the key in the executables dict
@@ -105,43 +103,43 @@ class FCompiler(CCompiler):
 
     distutils_vars = EnvironmentConfig(
         distutils_section='config_fc',
-        noopt = (None, None, 'noopt', str2bool),
-        noarch = (None, None, 'noarch', str2bool),
-        debug = (None, None, 'debug', str2bool),
-        verbose = (None, None, 'verbose', str2bool),
+        noopt = (None, None, 'noopt', str2bool, False),
+        noarch = (None, None, 'noarch', str2bool, False),
+        debug = (None, None, 'debug', str2bool, False),
+        verbose = (None, None, 'verbose', str2bool, False),
     )
 
     command_vars = EnvironmentConfig(
         distutils_section='config_fc',
-        compiler_f77 = ('exe.compiler_f77', 'F77', 'f77exec', None),
-        compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec', None),
-        compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec', None),
-        version_cmd = ('exe.version_cmd', None, None, None),
-        linker_so = ('exe.linker_so', 'LDSHARED', 'ldshared', None),
-        linker_exe = ('exe.linker_exe', 'LD', 'ld', None),
-        archiver = (None, 'AR', 'ar', None),
-        ranlib = (None, 'RANLIB', 'ranlib', None),
+        compiler_f77 = ('exe.compiler_f77', 'F77', 'f77exec', None, False),
+        compiler_f90 = ('exe.compiler_f90', 'F90', 'f90exec', None, False),
+        compiler_fix = ('exe.compiler_fix', 'F90', 'f90exec', None, False),
+        version_cmd = ('exe.version_cmd', None, None, None, False),
+        linker_so = ('exe.linker_so', 'LDSHARED', 'ldshared', None, False),
+        linker_exe = ('exe.linker_exe', 'LD', 'ld', None, False),
+        archiver = (None, 'AR', 'ar', None, False),
+        ranlib = (None, 'RANLIB', 'ranlib', None, False),
     )
 
     flag_vars = EnvironmentConfig(
         distutils_section='config_fc',
-        f77 = ('flags.f77', 'F77FLAGS', 'f77flags', flaglist),
-        f90 = ('flags.f90', 'F90FLAGS', 'f90flags', flaglist),
-        free = ('flags.free', 'FREEFLAGS', 'freeflags', flaglist),
-        fix = ('flags.fix', None, None, flaglist),
-        opt = ('flags.opt', 'FOPT', 'opt', flaglist),
-        opt_f77 = ('flags.opt_f77', None, None, flaglist),
-        opt_f90 = ('flags.opt_f90', None, None, flaglist),
-        arch = ('flags.arch', 'FARCH', 'arch', flaglist),
-        arch_f77 = ('flags.arch_f77', None, None, flaglist),
-        arch_f90 = ('flags.arch_f90', None, None, flaglist),
-        debug = ('flags.debug', 'FDEBUG', 'fdebug', flaglist),
-        debug_f77 = ('flags.debug_f77', None, None, flaglist),
-        debug_f90 = ('flags.debug_f90', None, None, flaglist),
-        flags = ('self.get_flags', 'FFLAGS', 'fflags', flaglist),
-        linker_so = ('flags.linker_so', 'LDFLAGS', 'ldflags', flaglist),
-        linker_exe = ('flags.linker_exe', 'LDFLAGS', 'ldflags', flaglist),
-        ar = ('flags.ar', 'ARFLAGS', 'arflags', flaglist),
+        f77 = ('flags.f77', 'F77FLAGS', 'f77flags', flaglist, True),
+        f90 = ('flags.f90', 'F90FLAGS', 'f90flags', flaglist, True),
+        free = ('flags.free', 'FREEFLAGS', 'freeflags', flaglist, True),
+        fix = ('flags.fix', None, None, flaglist, False),
+        opt = ('flags.opt', 'FOPT', 'opt', flaglist, True),
+        opt_f77 = ('flags.opt_f77', None, None, flaglist, False),
+        opt_f90 = ('flags.opt_f90', None, None, flaglist, False),
+        arch = ('flags.arch', 'FARCH', 'arch', flaglist, False),
+        arch_f77 = ('flags.arch_f77', None, None, flaglist, False),
+        arch_f90 = ('flags.arch_f90', None, None, flaglist, False),
+        debug = ('flags.debug', 'FDEBUG', 'fdebug', flaglist, True),
+        debug_f77 = ('flags.debug_f77', None, None, flaglist, False),
+        debug_f90 = ('flags.debug_f90', None, None, flaglist, False),
+        flags = ('self.get_flags', 'FFLAGS', 'fflags', flaglist, True),
+        linker_so = ('flags.linker_so', 'LDFLAGS', 'ldflags', flaglist, True),
+        linker_exe = ('flags.linker_exe', 'LDFLAGS', 'ldflags', flaglist, True),
+        ar = ('flags.ar', 'ARFLAGS', 'arflags', flaglist, True),
     )
 
     language_map = {'.f': 'f77',
@@ -364,7 +362,7 @@ class FCompiler(CCompiler):
         set_exe('archiver')
         set_exe('ranlib')
 
-    def update_executables(elf):
+    def update_executables(self):
         """Called at the beginning of customisation. Subclasses should
         override this if they need to set up the executables dictionary.
 
@@ -434,6 +432,7 @@ class FCompiler(CCompiler):
             raise CompilerNotFound()
         return version
 
+
     ############################################################
 
     ## Public methods:
@@ -476,13 +475,23 @@ class FCompiler(CCompiler):
         fixflags = []
 
         if f77:
+            f77 = _shell_utils.NativeParser.split(f77)
             f77flags = self.flag_vars.f77
         if f90:
+            f90 = _shell_utils.NativeParser.split(f90)
             f90flags = self.flag_vars.f90
             freeflags = self.flag_vars.free
         # XXX Assuming that free format is default for f90 compiler.
         fix = self.command_vars.compiler_fix
+        # NOTE: this and similar examples are probably just
+        # excluding --coverage flag when F90 = gfortran --coverage
+        # instead of putting that flag somewhere more appropriate
+        # this and similar examples where a Fortran compiler
+        # environment variable has been customized by CI or a user
+        # should perhaps eventually be more thoroughly tested and more
+        # robustly handled
         if fix:
+            fix = _shell_utils.NativeParser.split(fix)
             fixflags = self.flag_vars.fix + f90flags
 
         oflags, aflags, dflags = [], [], []
@@ -508,11 +517,11 @@ class FCompiler(CCompiler):
         fflags = self.flag_vars.flags + dflags + oflags + aflags
 
         if f77:
-            self.set_commands(compiler_f77=[f77]+f77flags+fflags)
+            self.set_commands(compiler_f77=f77+f77flags+fflags)
         if f90:
-            self.set_commands(compiler_f90=[f90]+freeflags+f90flags+fflags)
+            self.set_commands(compiler_f90=f90+freeflags+f90flags+fflags)
         if fix:
-            self.set_commands(compiler_fix=[fix]+fixflags+fflags)
+            self.set_commands(compiler_fix=fix+fixflags+fflags)
 
 
         #XXX: Do we need LDSHARED->SOSHARED, LDFLAGS->SOFLAGS
@@ -701,15 +710,47 @@ class FCompiler(CCompiler):
         else:
             return hook_name()
 
+    def can_ccompiler_link(self, ccompiler):
+        """
+        Check if the given C compiler can link objects produced by
+        this compiler.
+        """
+        return True
+
+    def wrap_unlinkable_objects(self, objects, output_dir, extra_dll_dir):
+        """
+        Convert a set of object files that are not compatible with the default
+        linker, to a file that is compatible.
+
+        Parameters
+        ----------
+        objects : list
+            List of object files to include.
+        output_dir : str
+            Output directory to place generated object files.
+        extra_dll_dir : str
+            Output directory to place extra DLL files that need to be
+            included on Windows.
+
+        Returns
+        -------
+        converted_objects : list of str
+             List of converted object files.
+             Note that the number of output files is not necessarily
+             the same as inputs.
+
+        """
+        raise NotImplementedError()
+
     ## class FCompiler
 
 _default_compilers = (
     # sys.platform mappings
     ('win32', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95',
-               'intelvem', 'intelem')),
+               'intelvem', 'intelem', 'flang')),
     ('cygwin.*', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95')),
     ('linux.*', ('gnu95', 'intel', 'lahey', 'pg', 'absoft', 'nag', 'vast', 'compaq',
-                'intele', 'intelem', 'gnu', 'g95', 'pathf95')),
+                 'intele', 'intelem', 'gnu', 'g95', 'pathf95', 'nagfor')),
     ('darwin.*', ('gnu95', 'nag', 'absoft', 'ibm', 'intel', 'gnu', 'g95', 'pg')),
     ('sunos.*', ('sun', 'gnu', 'gnu95', 'g95')),
     ('irix.*', ('mips', 'gnu', 'gnu95',)),
@@ -809,6 +850,8 @@ def get_default_fcompiler(osname=None, platform=None, requiref90=False,
     platform."""
     matching_compiler_types = available_fcompilers_for_platform(osname,
                                                                 platform)
+    log.info("get_default_fcompiler: matching types: '%s'",
+             matching_compiler_types)
     compiler_type =  _find_existing_fcompiler(matching_compiler_types,
                                               osname=osname,
                                               platform=platform,

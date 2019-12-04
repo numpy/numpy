@@ -35,7 +35,7 @@ def getoutput(cmd, successful_status=(0,), stacklevel=1):
     except EnvironmentError:
         e = get_exception()
         warnings.warn(str(e), UserWarning, stacklevel=stacklevel)
-        return False, output
+        return False, ""
     if os.WIFEXITED(status) and os.WEXITSTATUS(status) in successful_status:
         return True, output
     return False, output
@@ -75,7 +75,7 @@ class CPUInfoBase(object):
     def _try_call(self, func):
         try:
             return func()
-        except:
+        except Exception:
             pass
 
     def __getattr__(self, name):
@@ -93,7 +93,7 @@ class CPUInfoBase(object):
 
     def __get_nbits(self):
         abits = platform.architecture()[0]
-        nbits = re.compile('(\d+)bit').search(abits).group(1)
+        nbits = re.compile(r'(\d+)bit').search(abits).group(1)
         return nbits
 
     def _is_32bit(self):
@@ -242,16 +242,16 @@ class LinuxCPUInfo(CPUInfoBase):
         return self.is_PentiumIV() and self.has_sse3()
 
     def _is_Nocona(self):
-        return self.is_Intel() \
-               and (self.info[0]['cpu family'] == '6' \
-                    or self.info[0]['cpu family'] == '15' ) \
-               and (self.has_sse3() and not self.has_ssse3())\
-               and re.match(r'.*?\blm\b', self.info[0]['flags']) is not None
+        return (self.is_Intel()
+                and (self.info[0]['cpu family'] == '6'
+                     or self.info[0]['cpu family'] == '15')
+                and (self.has_sse3() and not self.has_ssse3())
+                and re.match(r'.*?\blm\b', self.info[0]['flags']) is not None)
 
     def _is_Core2(self):
-        return self.is_64bit() and self.is_Intel() and \
-               re.match(r'.*?Core\(TM\)2\b', \
-                        self.info[0]['model name']) is not None
+        return (self.is_64bit() and self.is_Intel() and
+                re.match(r'.*?Core\(TM\)2\b',
+                         self.info[0]['model name']) is not None)
 
     def _is_Itanium(self):
         return re.match(r'.*?Itanium\b',
@@ -336,7 +336,7 @@ class IRIXCPUInfo(CPUInfoBase):
 
     def get_ip(self):
         try: return self.info.get('MACHINE')
-        except: pass
+        except Exception: pass
     def __machine(self, n):
         return self.info.get('MACHINE').lower() == 'ip%s' % (n)
     def _is_IP19(self): return self.__machine(19)
@@ -495,8 +495,8 @@ class Win32CPUInfo(CPUInfoBase):
             else:
                 import _winreg as winreg
 
-            prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"\
-                              "\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
+            prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"
+                              r"\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
             chnd=winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, self.pkey)
             pnum=0
             while True:
@@ -523,7 +523,7 @@ class Win32CPUInfo(CPUInfoBase):
                                     info[-1]["Family"]=int(srch.group("FML"))
                                     info[-1]["Model"]=int(srch.group("MDL"))
                                     info[-1]["Stepping"]=int(srch.group("STP"))
-        except:
+        except Exception:
             print(sys.exc_info()[1], '(ignoring)')
         self.__class__.info = info
 
@@ -632,13 +632,13 @@ class Win32CPUInfo(CPUInfoBase):
 
     def _has_sse(self):
         if self.is_Intel():
-            return (self.info[0]['Family']==6 and \
-                    self.info[0]['Model'] in [7, 8, 9, 10, 11]) \
-                    or self.info[0]['Family']==15
+            return ((self.info[0]['Family']==6 and
+                     self.info[0]['Model'] in [7, 8, 9, 10, 11])
+                     or self.info[0]['Family']==15)
         elif self.is_AMD():
-            return (self.info[0]['Family']==6 and \
-                    self.info[0]['Model'] in [6, 7, 8, 10]) \
-                    or self.info[0]['Family']==15
+            return ((self.info[0]['Family']==6 and
+                     self.info[0]['Model'] in [6, 7, 8, 10])
+                     or self.info[0]['Family']==15)
         else:
             return False
 

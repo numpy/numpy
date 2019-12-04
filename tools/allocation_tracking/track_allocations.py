@@ -76,7 +76,7 @@ class AllocationTracker(object):
         # then actual code.
         try:
             return inspect.stack()[4][1:]
-        except:
+        except Exception:
             return inspect.stack()[0][1:]
 
     def check_line_changed(self):
@@ -125,7 +125,7 @@ class AllocationTracker(object):
                     try:
                         filename, line, module, code, index = val
                         val = "{0}({1}): {2}".format(filename, line, code[index])
-                    except:
+                    except Exception:
                         # sometimes this info is not available (from eval()?)
                         val = str(val)
                 f.write("  <TD>{0}</TD>".format(val))

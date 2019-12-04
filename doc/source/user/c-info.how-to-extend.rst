@@ -36,7 +36,7 @@ into Python as if it were a standard python file. It will contain
 objects and methods that have been defined and compiled in C code. The
 basic steps for doing this in Python are well-documented and you can
 find more information in the documentation for Python itself available
-online at `www.python.org <http://www.python.org>`_ .
+online at `www.python.org <https://www.python.org>`_ .
 
 In addition to the Python C-API, there is a full and rich C-API for
 NumPy allowing sophisticated manipulations on a C-level. However, for
@@ -56,8 +56,8 @@ order for Python to use it as an extension module. The function must
 be called init{name} where {name} is the name of the module from
 Python. This function must be declared so that it is visible to code
 outside of the routine. Besides adding the methods and constants you
-desire, this subroutine must also contain calls to import_array()
-and/or import_ufunc() depending on which C-API is needed. Forgetting
+desire, this subroutine must also contain calls like ``import_array()``
+and/or ``import_ufunc()`` depending on which C-API is needed. Forgetting
 to place these commands will show itself as an ugly segmentation fault
 (crash) as soon as any C-API subroutine is actually called. It is
 actually possible to have multiple init{name} functions in a single
@@ -90,11 +90,14 @@ that do not require a separate extraction of the module dictionary.
 These are documented in the Python documentation, but repeated here
 for convenience:
 
-.. c:function:: int PyModule_AddObject(PyObject* module, char* name, PyObject* value)
+.. c:function:: int PyModule_AddObject( \
+        PyObject* module, char* name, PyObject* value)
 
-.. c:function:: int PyModule_AddIntConstant(PyObject* module, char* name, long value)
+.. c:function:: int PyModule_AddIntConstant( \
+        PyObject* module, char* name, long value)
 
-.. c:function:: int PyModule_AddStringConstant(PyObject* module, char* name, char* value)
+.. c:function:: int PyModule_AddStringConstant( \
+        PyObject* module, char* name, char* value)
 
     All three of these functions require the *module* object (the
     return value of Py_InitModule). The *name* is a string that
@@ -210,9 +213,9 @@ The :c:func:`Py_BuildValue` (format_string, c_variables...) function makes
 it easy to build tuples of Python objects from C variables. Pay
 special attention to the difference between 'N' and 'O' in the format
 string or you can easily create memory leaks. The 'O' format string
-increments the reference count of the :c:type:`PyObject *` C-variable it
+increments the reference count of the :c:type:`PyObject *<PyObject>` C-variable it
 corresponds to, while the 'N' format string steals a reference to the
-corresponding :c:type:`PyObject *` C-variable. You should use 'N' if you have
+corresponding :c:type:`PyObject *<PyObject>` C-variable. You should use 'N' if you have
 already created a reference for the object and just want to give that
 reference to the tuple. You should use 'O' if you only have a borrowed
 reference to an object and need to create one to provide for the
@@ -246,7 +249,7 @@ format_string. Using this function will raise a TypeError if invalid
 keyword arguments are passed in.
 
 For more help on this function please see section 1.8 (Keyword
-Paramters for Extension Functions) of the Extending and Embedding
+Parameters for Extension Functions) of the Extending and Embedding
 tutorial in the Python documentation.
 
 
@@ -339,7 +342,7 @@ The method is to
 
 4. If you are writing the algorithm, then I recommend that you use the
    stride information contained in the array to access the elements of
-   the array (the :c:func:`PyArray_GETPTR` macros make this painless). Then,
+   the array (the :c:func:`PyArray_GetPtr` macros make this painless). Then,
    you can relax your requirements so as not to force a single-segment
    array and the data-copying that might result.
 
@@ -359,7 +362,7 @@ specific builtin data-type ( *e.g.* float), while specifying a
 particular set of requirements ( *e.g.* contiguous, aligned, and
 writeable). The syntax is
 
-.. c:function:: PyObject *PyArray_FROM_OTF(PyObject* obj, int typenum, int requirements)
+:c:func:`PyArray_FROM_OTF`
 
     Return an ndarray from any Python object, *obj*, that can be
     converted to an array. The number of dimensions in the returned
@@ -373,7 +376,7 @@ writeable). The syntax is
 
     *obj*
 
-        The object can be any Python object convertable to an ndarray.
+        The object can be any Python object convertible to an ndarray.
         If the object is already (a subclass of) the ndarray that
         satisfies the requirements then a new reference is returned.
         Otherwise, a new array is constructed. The contents of *obj*
@@ -381,13 +384,13 @@ writeable). The syntax is
         so that data does not have to be copied. Objects that can be
         converted to an array include: 1) any nested sequence object,
         2) any object exposing the array interface, 3) any object with
-        an :obj:`__array__` method (which should return an ndarray),
+        an :obj:`~numpy.class.__array__` method (which should return an ndarray),
         and 4) any scalar object (becomes a zero-dimensional
         array). Sub-classes of the ndarray that otherwise fit the
         requirements will be passed through. If you want to ensure
-        a base-class ndarray, then use :c:data:`NPY_ENSUREARRAY` in the
+        a base-class ndarray, then use :c:data:`NPY_ARRAY_ENSUREARRAY` in the
         requirements flag. A copy is made only if necessary. If you
-        want to guarantee a copy, then pass in :c:data:`NPY_ENSURECOPY`
+        want to guarantee a copy, then pass in :c:data:`NPY_ARRAY_ENSURECOPY`
         to the requirements flag.
 
     *typenum*
@@ -415,7 +418,7 @@ writeable). The syntax is
 
         The object will be converted to the desired type only if it
         can be done without losing precision. Otherwise ``NULL`` will
-        be returned and an error raised. Use :c:data:`NPY_FORCECAST` in the
+        be returned and an error raised. Use :c:data:`NPY_ARRAY_FORCECAST` in the
         requirements flag to override this behavior.
 
     *requirements*
@@ -442,55 +445,49 @@ writeable). The syntax is
         flags most commonly needed are :c:data:`NPY_ARRAY_IN_ARRAY`,
         :c:data:`NPY_OUT_ARRAY`, and :c:data:`NPY_ARRAY_INOUT_ARRAY`:
 
-        .. c:var:: NPY_ARRAY_IN_ARRAY
+        :c:data:`NPY_ARRAY_IN_ARRAY`
 
-            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :c:data:`NPY_ARRAY_ALIGNED`. This combination of flags is useful
-            for arrays that must be in C-contiguous order and aligned.
-            These kinds of arrays are usually input arrays for some
-            algorithm.
+            This flag is useful for arrays that must be in C-contiguous
+            order and aligned. These kinds of arrays are usually input 
+            arrays for some algorithm.
 
-        .. c:var:: NPY_ARRAY_OUT_ARRAY
+        :c:data:`NPY_ARRAY_OUT_ARRAY`
 
-            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE`. This
-            combination of flags is useful to specify an array that is
+            This flag is useful to specify an array that is
             in C-contiguous order, is aligned, and can be written to
             as well. Such an array is usually returned as output
             (although normally such output arrays are created from
             scratch).
 
-        .. c:var:: NPY_ARRAY_INOUT_ARRAY
+        :c:data:`NPY_ARRAY_INOUT_ARRAY`
 
-            Equivalent to :c:data:`NPY_ARRAY_C_CONTIGUOUS` \|
-            :c:data:`NPY_ARRAY_ALIGNED` \| :c:data:`NPY_ARRAY_WRITEABLE` \|
-            :c:data:`NPY_ARRAY_UPDATEIFCOPY`. This combination of flags is
-            useful to specify an array that will be used for both
-            input and output. If a copy is needed, then when the
-            temporary is deleted (by your use of :c:func:`Py_DECREF` at
-            the end of the interface routine), the temporary array
-            will be copied back into the original array passed in. Use
-            of the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag requires that the input
+            This flag is useful to specify an array that will be used for both
+            input and output. :c:func:`PyArray_ResolveWritebackIfCopy`
+            must be called before :c:func:`Py_DECREF` at
+            the end of the interface routine to write back the temporary data
+            into the original array passed in. Use
+            of the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` or
+            :c:data:`NPY_ARRAY_UPDATEIFCOPY` flags requires that the input
             object is already an array (because other objects cannot
             be automatically updated in this fashion). If an error
-            occurs use :c:func:`PyArray_DECREF_ERR` (obj) on an array
-            with the :c:data:`NPY_ARRAY_UPDATEIFCOPY` flag set. This will
-            delete the array without causing the contents to be copied
+            occurs use :c:func:`PyArray_DiscardWritebackIfCopy` (obj) on an
+            array with these flags set. This will set the underlying base array
+            writable without causing the contents to be copied
             back into the original array.
 
 
         Other useful flags that can be OR'd as additional requirements are:
 
-        .. c:var:: NPY_ARRAY_FORCECAST
+        :c:data:`NPY_ARRAY_FORCECAST`
 
             Cast to the desired type, even if it can't be done without losing
             information.
 
-        .. c:var:: NPY_ARRAY_ENSURECOPY
+        :c:data:`NPY_ARRAY_ENSURECOPY`
 
             Make sure the resulting array is a copy of the original.
 
-        .. c:var:: NPY_ARRAY_ENSUREARRAY
+        :c:data:`NPY_ARRAY_ENSUREARRAY`
 
             Make sure the resulting object is an actual ndarray and not a sub-
             class.
@@ -507,7 +504,7 @@ writeable). The syntax is
 Creating a brand-new ndarray
 ----------------------------
 
-Quite often new arrays must be created from within extension-module
+Quite often, new arrays must be created from within extension-module
 code. Perhaps an output array is needed and you don't want the caller
 to have to supply it. Perhaps only a temporary array is needed to hold
 an intermediate calculation. Whatever the need there are simple ways
@@ -515,42 +512,9 @@ to get an ndarray object of whatever data-type is needed. The most
 general function for doing this is :c:func:`PyArray_NewFromDescr`. All array
 creation functions go through this heavily re-used code. Because of
 its flexibility, it can be somewhat confusing to use. As a result,
-simpler forms exist that are easier to use.
-
-.. c:function:: PyObject *PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
-
-    This function allocates new memory and places it in an ndarray
-    with *nd* dimensions whose shape is determined by the array of
-    at least *nd* items pointed to by *dims*. The memory for the
-    array is uninitialized (unless typenum is :c:data:`NPY_OBJECT` in
-    which case each element in the array is set to NULL). The
-    *typenum* argument allows specification of any of the builtin
-    data-types such as :c:data:`NPY_FLOAT` or :c:data:`NPY_LONG`. The
-    memory for the array can be set to zero if desired using
-    :c:func:`PyArray_FILLWBYTE` (return_object, 0).
-
-.. c:function:: PyObject *PyArray_SimpleNewFromData( int nd, npy_intp* dims, int typenum, void* data)
-
-    Sometimes, you want to wrap memory allocated elsewhere into an
-    ndarray object for downstream use. This routine makes it
-    straightforward to do that. The first three arguments are the same
-    as in :c:func:`PyArray_SimpleNew`, the final argument is a pointer to a
-    block of contiguous memory that the ndarray should use as it's
-    data-buffer which will be interpreted in C-style contiguous
-    fashion. A new reference to an ndarray is returned, but the
-    ndarray will not own its data. When this ndarray is deallocated,
-    the pointer will not be freed.
-
-    You should ensure that the provided memory is not freed while the
-    returned array is in existence. The easiest way to handle this is
-    if data comes from another reference-counted Python object. The
-    reference count on this object should be increased after the
-    pointer is passed in, and the base member of the returned ndarray
-    should point to the Python object that owns the data. Then, when
-    the ndarray is deallocated, the base-member will be DECREF'd
-    appropriately. If you want the memory to be freed as soon as the
-    ndarray is deallocated then simply set the OWNDATA flag on the
-    returned ndarray.
+simpler forms exist that are easier to use. These forms are part of the
+:c:func:`PyArray_SimpleNew` family of functions, which simplify the interface
+by providing default values for common use cases.
 
 
 Getting at ndarray memory and accessing elements of the ndarray
@@ -566,7 +530,7 @@ specific element of the array is determined only by the array of
 npy_intp variables, :c:func:`PyArray_STRIDES` (obj). In particular, this
 c-array of integers shows how many **bytes** must be added to the
 current element pointer to get to the next element in each dimension.
-For arrays less than 4-dimensions there are :c:func:`PyArray_GETPTR{k}`
+For arrays less than 4-dimensions there are ``PyArray_GETPTR{k}``
 (obj, ...) macros where {k} is the integer 1, 2, 3, or 4 that make
 using the array strides easier. The arguments .... represent {k} non-
 negative integer indices into the array. For example, suppose ``E`` is
@@ -575,11 +539,11 @@ is obtained as :c:func:`PyArray_GETPTR3` (E, i, j, k).
 
 As explained previously, C-style contiguous arrays and Fortran-style
 contiguous arrays have particular striding patterns. Two array flags
-(:c:data:`NPY_C_CONTIGUOUS` and :cdata`NPY_F_CONTIGUOUS`) indicate
+(:c:data:`NPY_ARRAY_C_CONTIGUOUS` and :c:data:`NPY_ARRAY_F_CONTIGUOUS`) indicate
 whether or not the striding pattern of a particular array matches the
 C-style contiguous or Fortran-style contiguous or neither. Whether or
 not the striding pattern matches a standard C or Fortran one can be
-tested Using :c:func:`PyArray_ISCONTIGUOUS` (obj) and
+tested Using :c:func:`PyArray_IS_C_CONTIGUOUS` (obj) and
 :c:func:`PyArray_ISFORTRAN` (obj) respectively. Most third-party
 libraries expect contiguous arrays.  But, often it is not difficult to
 support general-purpose striding. I encourage you to use the striding
@@ -598,7 +562,8 @@ Example
 The following example shows how you might write a wrapper that accepts
 two input arguments (that will be converted to an array) and an output
 argument (that must be an array). The function returns None and
-updates the output array.
+updates the output array. Note the updated use of WRITEBACKIFCOPY semantics
+for NumPy v1.14 and above
 
 .. code-block:: c
 
@@ -611,11 +576,15 @@ updates the output array.
         if (!PyArg_ParseTuple(args, "OOO!", &arg1, &arg2,
             &PyArray_Type, &out)) return NULL;
 
-        arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_IN_ARRAY);
+        arr1 = PyArray_FROM_OTF(arg1, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
         if (arr1 == NULL) return NULL;
-        arr2 = PyArray_FROM_OTF(arg2, NPY_DOUBLE, NPY_IN_ARRAY);
+        arr2 = PyArray_FROM_OTF(arg2, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
         if (arr2 == NULL) goto fail;
-        oarr = PyArray_FROM_OTF(out, NPY_DOUBLE, NPY_INOUT_ARRAY);
+    #if NPY_API_VERSION >= 0x0000000c
+        oarr = PyArray_FROM_OTF(out, NPY_DOUBLE, NPY_ARRAY_INOUT_ARRAY2);
+    #else
+        oarr = PyArray_FROM_OTF(out, NPY_DOUBLE, NPY_ARRAY_INOUT_ARRAY);
+    #endif
         if (oarr == NULL) goto fail;
 
         /* code that makes use of arguments */
@@ -630,6 +599,9 @@ updates the output array.
 
         Py_DECREF(arr1);
         Py_DECREF(arr2);
+    #if NPY_API_VERSION >= 0x0000000c
+        PyArray_ResolveWritebackIfCopy(oarr);
+    #endif
         Py_DECREF(oarr);
         Py_INCREF(Py_None);
         return Py_None;
@@ -637,6 +609,9 @@ updates the output array.
      fail:
         Py_XDECREF(arr1);
         Py_XDECREF(arr2);
-        PyArray_XDECREF_ERR(oarr);
+    #if NPY_API_VERSION >= 0x0000000c
+        PyArray_DiscardWritebackIfCopy(oarr);
+    #endif
+        Py_XDECREF(oarr);
         return NULL;
     }

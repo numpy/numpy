@@ -47,11 +47,10 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
     PyObject *out;
 
     /* If the requested dtype is flexible, adapt it */
-    PyArray_AdaptFlexibleDType((PyObject *)arr, PyArray_DESCR(arr), &dtype);
+    dtype = PyArray_AdaptFlexibleDType((PyObject *)arr, PyArray_DESCR(arr), dtype);
     if (dtype == NULL) {
         return NULL;
     }
-
     out = PyArray_NewFromDescr(Py_TYPE(arr), dtype,
                                PyArray_NDIM(arr),
                                PyArray_DIMS(arr),
@@ -128,55 +127,47 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 }
 
 /*
- * This function calls Py_DECREF on flex_dtype, and replaces it with
- * a new dtype that has been adapted based on the values in data_dtype
- * and data_obj. If the flex_dtype is not flexible, it leaves it as is.
+ * This function returns a dtype based on flex_dtype and the values in
+ * data_dtype and data_obj. It also calls Py_DECREF on the flex_dtype. If the
+ * flex_dtype is not flexible, it returns it as-is.
  *
  * Usually, if data_obj is not an array, dtype should be the result
  * given by the PyArray_GetArrayParamsFromObject function.
  *
- * The data_obj may be NULL if just a dtype is is known for the source.
+ * The data_obj may be NULL if just a dtype is known for the source.
  *
  * If *flex_dtype is NULL, returns immediately, without setting an
- * exception. This basically assumes an error was already set previously.
+ * exception, leaving any previous error handling intact.
  *
  * The current flexible dtypes include NPY_STRING, NPY_UNICODE, NPY_VOID,
  * and NPY_DATETIME with generic units.
  */
-NPY_NO_EXPORT void
+NPY_NO_EXPORT PyArray_Descr *
 PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
-                            PyArray_Descr **flex_dtype)
+                            PyArray_Descr *flex_dtype)
 {
     PyArray_DatetimeMetaData *meta;
+    PyArray_Descr *retval = NULL;
     int flex_type_num;
-    PyArrayObject *arr = NULL;
-    PyArray_Descr *dtype = NULL;
-    int ndim = 0;
-    npy_intp dims[NPY_MAXDIMS];
-    int result;
 
-    if (*flex_dtype == NULL) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "NumPy AdaptFlexibleDType was called with NULL flex_dtype "
-                    "but no error set");
-        }
-        return;
+    if (flex_dtype == NULL) {
+        return retval;
     }
 
-    flex_type_num = (*flex_dtype)->type_num;
+    flex_type_num = flex_dtype->type_num;
 
     /* Flexible types with expandable size */
-    if ((*flex_dtype)->elsize == 0) {
-        /* First replace the flex dtype */
-        PyArray_DESCR_REPLACE(*flex_dtype);
-        if (*flex_dtype == NULL) {
-            return;
+    if (PyDataType_ISUNSIZED(flex_dtype)) {
+        /* First replace the flex_dtype */
+        retval = PyArray_DescrNew(flex_dtype);
+        Py_DECREF(flex_dtype);
+        if (retval == NULL) {
+            return retval;
         }
 
         if (data_dtype->type_num == flex_type_num ||
                                     flex_type_num == NPY_VOID) {
-            (*flex_dtype)->elsize = data_dtype->elsize;
+            (retval)->elsize = data_dtype->elsize;
         }
         else if (flex_type_num == NPY_STRING || flex_type_num == NPY_UNICODE) {
             npy_intp size = 8;
@@ -204,7 +195,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                     }
                     else if (data_dtype->elsize > 8 ||
                              data_dtype->elsize < 0) {
-                        /* 
+                        /*
                          * Element size should never be greater than 8 or
                          * less than 0 for integer type, but just in case...
                          */
@@ -242,9 +233,8 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                                 PyObject *s = PyObject_Str(list);
                                 if (s == NULL) {
                                     Py_DECREF(list);
-                                    Py_DECREF(*flex_dtype);
-                                    *flex_dtype = NULL;
-                                    return;
+                                    Py_DECREF(retval);
+                                    return NULL;
                                 }
                                 else {
                                     size = PyObject_Length(s);
@@ -259,12 +249,24 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                              * GetArrayParamsFromObject won't iterate over
                              * array.
                              */
+                            PyArray_Descr *dtype = NULL;
+                            PyArrayObject *arr = NULL;
+                            int result;
+                            int ndim = 0;
+                            npy_intp dims[NPY_MAXDIMS];
                             list = PyArray_ToList((PyArrayObject *)data_obj);
                             result = PyArray_GetArrayParamsFromObject(
                                     list,
-                                    *flex_dtype,
+                                    retval,
                                     0, &dtype,
                                     &ndim, dims, &arr, NULL);
+                            Py_DECREF(list);
+                            Py_XDECREF(arr);
+                            if (result < 0) {
+                                Py_XDECREF(dtype);
+                                Py_DECREF(retval);
+                                return NULL;
+                            }
                             if (result == 0 && dtype != NULL) {
                                 if (flex_type_num == NPY_UNICODE) {
                                     size = dtype->elsize / 4;
@@ -273,14 +275,13 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                                     size = dtype->elsize;
                                 }
                             }
-                            Py_DECREF(list);
+                            Py_XDECREF(dtype);
                         }
                         else if (PyArray_IsPythonScalar(data_obj)) {
                             PyObject *s = PyObject_Str(data_obj);
                             if (s == NULL) {
-                                Py_DECREF(*flex_dtype);
-                                *flex_dtype = NULL;
-                                return;
+                                Py_DECREF(retval);
+                                return NULL;
                             }
                             else {
                                 size = PyObject_Length(s);
@@ -299,9 +300,8 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                 case NPY_DATETIME:
                     meta = get_datetime_metadata_from_dtype(data_dtype);
                     if (meta == NULL) {
-                        Py_DECREF(*flex_dtype);
-                        *flex_dtype = NULL;
-                        return;
+                        Py_DECREF(retval);
+                        return NULL;
                     }
                     size = get_datetime_iso_8601_strlen(0, meta->base);
                     break;
@@ -311,10 +311,10 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
             }
 
             if (flex_type_num == NPY_STRING) {
-                (*flex_dtype)->elsize = size;
+                retval->elsize = size;
             }
             else if (flex_type_num == NPY_UNICODE) {
-                (*flex_dtype)->elsize = size * 4;
+                retval->elsize = size * 4;
             }
         }
         else {
@@ -324,18 +324,17 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
              */
             PyErr_SetString(PyExc_TypeError,
                     "don't know how to adapt flex dtype");
-            *flex_dtype = NULL;
-            return;
+            Py_DECREF(retval);
+            return NULL;
         }
     }
     /* Flexible type with generic time unit that adapts */
     else if (flex_type_num == NPY_DATETIME ||
                 flex_type_num == NPY_TIMEDELTA) {
-        meta = get_datetime_metadata_from_dtype(*flex_dtype);
+        meta = get_datetime_metadata_from_dtype(flex_dtype);
+        retval = flex_dtype;
         if (meta == NULL) {
-            Py_DECREF(*flex_dtype);
-            *flex_dtype = NULL;
-            return;
+            return NULL;
         }
 
         if (meta->base == NPY_FR_GENERIC) {
@@ -343,22 +342,24 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                     data_dtype->type_num == NPY_TIMEDELTA) {
                 meta = get_datetime_metadata_from_dtype(data_dtype);
                 if (meta == NULL) {
-                    Py_DECREF(*flex_dtype);
-                    *flex_dtype = NULL;
-                    return;
+                    return NULL;
                 }
 
-                Py_DECREF(*flex_dtype);
-                *flex_dtype = create_datetime_dtype(flex_type_num, meta);
+                retval = create_datetime_dtype(flex_type_num, meta);
+                Py_DECREF(flex_dtype);
             }
             else if (data_obj != NULL) {
                 /* Detect the unit from the input's data */
-                Py_DECREF(*flex_dtype);
-                *flex_dtype = find_object_datetime_type(data_obj,
+                retval = find_object_datetime_type(data_obj,
                                                     flex_type_num);
+                Py_DECREF(flex_dtype);
             }
         }
     }
+    else {
+        retval = flex_dtype;
+    }
+    return retval;
 }
 
 /*
@@ -516,7 +517,7 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
          * stringified value of the object.
          */
         else if (to_type_num == NPY_STRING || to_type_num == NPY_UNICODE) {
-            /* 
+            /*
              * Boolean value cast to string type is 5 characters max
              * for string 'False'.
              */
@@ -526,10 +527,10 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
             }
 
             ret = 0;
-            if (to->elsize == 0) {
+            if (PyDataType_ISUNSIZED(to)) {
                 ret = 1;
             }
-            /* 
+            /*
              * Need at least 5 characters to convert from boolean
              * to 'True' or 'False'.
              */
@@ -678,15 +679,82 @@ NPY_NO_EXPORT npy_bool
 PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                                                     NPY_CASTING casting)
 {
-    /* Fast path for unsafe casts or basic types */
-    if (casting == NPY_UNSAFE_CASTING ||
-            (NPY_LIKELY(from->type_num < NPY_OBJECT) &&
-             NPY_LIKELY(from->type_num == to->type_num) &&
-             NPY_LIKELY(from->byteorder == to->byteorder))) {
+    /*
+     * Fast paths for equality and for basic types.
+     */
+    if (from == to ||
+        ((NPY_LIKELY(PyDataType_ISNUMBER(from)) ||
+          PyDataType_ISOBJECT(from)) &&
+         NPY_LIKELY(from->type_num == to->type_num) &&
+         NPY_LIKELY(from->byteorder == to->byteorder))) {
         return 1;
     }
-    /* Equivalent types can be cast with any value of 'casting'  */
-    else if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
+    /*
+     * Cases with subarrays and fields need special treatment.
+     */
+    if (PyDataType_HASFIELDS(from)) {
+        /*
+         * If from is a structured data type, then it can be cast to a simple
+         * non-object one only for unsafe casting *and* if it has a single
+         * field; recurse just in case the single field is itself structured.
+         */
+        if (!PyDataType_HASFIELDS(to) && !PyDataType_ISOBJECT(to)) {
+            if (casting == NPY_UNSAFE_CASTING &&
+                    PyDict_Size(from->fields) == 1) {
+                Py_ssize_t ppos = 0;
+                PyObject *tuple;
+                PyArray_Descr *field;
+                PyDict_Next(from->fields, &ppos, NULL, &tuple);
+                field = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
+                /*
+                 * For a subarray, we need to get the underlying type;
+                 * since we already are casting unsafely, we can ignore
+                 * the shape.
+                 */
+                if (PyDataType_HASSUBARRAY(field)) {
+                    field = field->subarray->base;
+                }
+                return PyArray_CanCastTypeTo(field, to, casting);
+            }
+            else {
+                return 0;
+            }
+        }
+        /*
+         * Casting from one structured data type to another depends on the fields;
+         * we pass that case on to the EquivTypenums case below.
+         *
+         * TODO: move that part up here? Need to check whether equivalent type
+         * numbers is an addition constraint that is needed.
+         *
+         * TODO/FIXME: For now, always allow structured to structured for unsafe
+         * casting; this is not correct, but needed since the treatment in can_cast
+         * below got out of sync with astype; see gh-13667.
+         */
+        if (casting == NPY_UNSAFE_CASTING) {
+            return 1;
+        }
+    }
+    else if (PyDataType_HASFIELDS(to)) {
+        /*
+         * If "from" is a simple data type and "to" has fields, then only
+         * unsafe casting works (and that works always, even to multiple fields).
+         */
+        return casting == NPY_UNSAFE_CASTING;
+    }
+    /*
+     * Everything else we consider castable for unsafe for now.
+     * FIXME: ensure what we do here is consistent with "astype",
+     * i.e., deal more correctly with subarrays and user-defined dtype.
+     */
+    else if (casting == NPY_UNSAFE_CASTING) {
+        return 1;
+    }
+    /*
+     * Equivalent simple types can be cast with any value of 'casting', but
+     * we need to be careful about structured to structured.
+     */
+    if (PyArray_EquivTypenums(from->type_num, to->type_num)) {
         /* For complicated case, use EquivTypes (for now) */
         if (PyTypeNum_ISUSERDEF(from->type_num) ||
                         from->subarray != NULL) {
@@ -809,7 +877,13 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
             from_order = dtype_kind_to_ordering(from->kind);
             to_order = dtype_kind_to_ordering(to->kind);
 
-            return from_order != -1 && from_order <= to_order;
+            if (to->kind == 'm') {
+                /* both types being timedelta is already handled before. */
+                int integer_order = dtype_kind_to_ordering('i');
+                return (from_order != -1) && (from_order <= integer_order);
+            }
+
+            return (from_order != -1) && (from_order <= to_order);
         }
         else {
             return 0;
@@ -1002,6 +1076,17 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 {
     int type_num1, type_num2, ret_type_num;
 
+    /*
+     * Fast path for identical dtypes.
+     *
+     * Non-native-byte-order types are converted to native ones below, so we
+     * can't quit early.
+     */
+    if (type1 == type2 && PyArray_ISNBO(type1->byteorder)) {
+        Py_INCREF(type1);
+        return type1;
+    }
+
     type_num1 = type1->type_num;
     type_num2 = type2->type_num;
 
@@ -1152,8 +1237,12 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             else if (PyTypeNum_ISNUMBER(type_num2)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
-                temp->elsize = 0;
-                PyArray_AdaptFlexibleDType(NULL, type2, &temp);
+                PyDataType_MAKEUNSIZED(temp);
+
+                temp = PyArray_AdaptFlexibleDType(NULL, type2, temp);
+                if (temp == NULL) {
+                    return NULL;
+                }
                 if (temp->elsize > type1->elsize) {
                     ret = ensure_dtype_nbo(temp);
                 }
@@ -1190,8 +1279,11 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             else if (PyTypeNum_ISNUMBER(type_num2)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type1);
-                temp->elsize = 0;
-                PyArray_AdaptFlexibleDType(NULL, type2, &temp);
+                PyDataType_MAKEUNSIZED(temp);
+                temp = PyArray_AdaptFlexibleDType(NULL, type2, temp);
+                if (temp == NULL) {
+                    return NULL;
+                }
                 if (temp->elsize > type1->elsize) {
                     ret = ensure_dtype_nbo(temp);
                 }
@@ -1238,8 +1330,11 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             if (PyTypeNum_ISNUMBER(type_num1)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
-                temp->elsize = 0;
-                PyArray_AdaptFlexibleDType(NULL, type1, &temp);
+                PyDataType_MAKEUNSIZED(temp);
+                temp = PyArray_AdaptFlexibleDType(NULL, type1, temp);
+                if (temp == NULL) {
+                    return NULL;
+                }
                 if (temp->elsize > type2->elsize) {
                     ret = ensure_dtype_nbo(temp);
                 }
@@ -1255,8 +1350,11 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             if (PyTypeNum_ISNUMBER(type_num1)) {
                 PyArray_Descr *ret = NULL;
                 PyArray_Descr *temp = PyArray_DescrNew(type2);
-                temp->elsize = 0;
-                PyArray_AdaptFlexibleDType(NULL, type1, &temp);
+                PyDataType_MAKEUNSIZED(temp);
+                temp = PyArray_AdaptFlexibleDType(NULL, type1, temp);
+                if (temp == NULL) {
+                    return NULL;
+                }
                 if (temp->elsize > type2->elsize) {
                     ret = ensure_dtype_nbo(temp);
                 }
@@ -1291,6 +1389,34 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     */
     PyErr_SetString(PyExc_TypeError, "invalid type promotion");
     return NULL;
+}
+
+/*
+ * Produces the smallest size and lowest kind type to which all
+ * input types can be cast.
+ *
+ * Equivalent to functools.reduce(PyArray_PromoteTypes, types)
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_PromoteTypeSequence(PyArray_Descr **types, npy_intp ntypes)
+{
+    npy_intp i;
+    PyArray_Descr *ret = NULL;
+    if (ntypes == 0) {
+        PyErr_SetString(PyExc_TypeError, "at least one type needed to promote");
+        return NULL;
+    }
+    ret = types[0];
+    Py_INCREF(ret);
+    for (i = 1; i < ntypes; ++i) {
+        PyArray_Descr *tmp = PyArray_PromoteTypes(types[i], ret);
+        Py_DECREF(ret);
+        ret = tmp;
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+    return ret;
 }
 
 /*
@@ -1353,7 +1479,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         case NPY_UINT: {
             npy_uint value = *(npy_uint *)valueptr;
             if (value <= NPY_MAX_UBYTE) {
-                if (value < NPY_MAX_BYTE) {
+                if (value <= NPY_MAX_BYTE) {
                     *is_small_unsigned = 1;
                 }
                 return NPY_UBYTE;
@@ -1530,7 +1656,7 @@ static int min_scalar_type_num(char *valueptr, int type_num,
         }
         /*
          * The code to demote complex to float is disabled for now,
-         * as forcing complex by adding 0j is probably desireable.
+         * as forcing complex by adding 0j is probably desirable.
          */
         case NPY_CFLOAT: {
             /*
@@ -1579,16 +1705,12 @@ static int min_scalar_type_num(char *valueptr, int type_num,
     return type_num;
 }
 
-/*NUMPY_API
- * If arr is a scalar (has 0 dimensions) with a built-in number data type,
- * finds the smallest type size/kind which can still represent its data.
- * Otherwise, returns the array's data type.
- *
- */
+
 NPY_NO_EXPORT PyArray_Descr *
-PyArray_MinScalarType(PyArrayObject *arr)
+PyArray_MinScalarType_internal(PyArrayObject *arr, int *is_small_unsigned)
 {
     PyArray_Descr *dtype = PyArray_DESCR(arr);
+    *is_small_unsigned = 0;
     /*
      * If the array isn't a numeric scalar, just return the array's dtype.
      */
@@ -1599,16 +1721,28 @@ PyArray_MinScalarType(PyArrayObject *arr)
     else {
         char *data = PyArray_BYTES(arr);
         int swap = !PyArray_ISNBO(dtype->byteorder);
-        int is_small_unsigned = 0;
         /* An aligned memory buffer large enough to hold any type */
         npy_longlong value[4];
         dtype->f->copyswap(&value, data, swap, NULL);
 
         return PyArray_DescrFromType(
                         min_scalar_type_num((char *)&value,
-                                dtype->type_num, &is_small_unsigned));
+                                dtype->type_num, is_small_unsigned));
 
     }
+}
+
+/*NUMPY_API
+ * If arr is a scalar (has 0 dimensions) with a built-in number data type,
+ * finds the smallest type size/kind which can still represent its data.
+ * Otherwise, returns the array's data type.
+ *
+ */
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_MinScalarType(PyArrayObject *arr)
+{
+    int is_small_unsigned;
+    return PyArray_MinScalarType_internal(arr, &is_small_unsigned);
 }
 
 /*
@@ -1639,6 +1773,67 @@ dtype_kind_to_simplified_ordering(char kind)
     }
 }
 
+
+/*
+ * Determine if there is a mix of scalars and arrays/dtypes.
+ * If this is the case, the scalars should be handled as the minimum type
+ * capable of holding the value when the maximum "category" of the scalars
+ * surpasses the maximum "category" of the arrays/dtypes.
+ * If the scalars are of a lower or same category as the arrays, they may be
+ * demoted to a lower type within their category (the lowest type they can
+ * be cast to safely according to scalar casting rules).
+ */
+NPY_NO_EXPORT int
+should_use_min_scalar(npy_intp narrs, PyArrayObject **arr,
+                      npy_intp ndtypes, PyArray_Descr **dtypes)
+{
+    int use_min_scalar = 0;
+
+    if (narrs > 0) {
+        int all_scalars;
+        int max_scalar_kind = -1;
+        int max_array_kind = -1;
+
+        all_scalars = (ndtypes > 0) ? 0 : 1;
+
+        /* Compute the maximum "kinds" and whether everything is scalar */
+        for (npy_intp i = 0; i < narrs; ++i) {
+            if (PyArray_NDIM(arr[i]) == 0) {
+                int kind = dtype_kind_to_simplified_ordering(
+                                    PyArray_DESCR(arr[i])->kind);
+                if (kind > max_scalar_kind) {
+                    max_scalar_kind = kind;
+                }
+            }
+            else {
+                int kind = dtype_kind_to_simplified_ordering(
+                                    PyArray_DESCR(arr[i])->kind);
+                if (kind > max_array_kind) {
+                    max_array_kind = kind;
+                }
+                all_scalars = 0;
+            }
+        }
+        /*
+         * If the max scalar kind is bigger than the max array kind,
+         * finish computing the max array kind
+         */
+        for (npy_intp i = 0; i < ndtypes; ++i) {
+            int kind = dtype_kind_to_simplified_ordering(dtypes[i]->kind);
+            if (kind > max_array_kind) {
+                max_array_kind = kind;
+            }
+        }
+
+        /* Indicate whether to use the min_scalar_type function */
+        if (!all_scalars && max_array_kind >= max_scalar_kind) {
+            use_min_scalar = 1;
+        }
+    }
+    return use_min_scalar;
+}
+
+
 /*NUMPY_API
  * Produces the result type of a bunch of inputs, using the UFunc
  * type promotion rules. Use this function when you have a set of
@@ -1658,12 +1853,10 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                     npy_intp ndtypes, PyArray_Descr **dtypes)
 {
     npy_intp i;
-    int use_min_scalar = 0;
-    PyArray_Descr *ret = NULL, *tmpret;
-    int ret_is_small_unsigned = 0;
 
     /* If there's just one type, pass it through */
     if (narrs + ndtypes == 1) {
+        PyArray_Descr *ret = NULL;
         if (narrs == 1) {
             ret = PyArray_DESCR(arr[0]);
         }
@@ -1674,123 +1867,40 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
         return ret;
     }
 
-    /*
-     * Determine if there are any scalars, and if so, whether
-     * the maximum "kind" of the scalars surpasses the maximum
-     * "kind" of the arrays
-     */
-    if (narrs > 0) {
-        int all_scalars, max_scalar_kind = -1, max_array_kind = -1;
-        int kind;
-
-        all_scalars = (ndtypes > 0) ? 0 : 1;
-
-        /* Compute the maximum "kinds" and whether everything is scalar */
-        for (i = 0; i < narrs; ++i) {
-            if (PyArray_NDIM(arr[i]) == 0) {
-                kind = dtype_kind_to_simplified_ordering(
-                                    PyArray_DESCR(arr[i])->kind);
-                if (kind > max_scalar_kind) {
-                    max_scalar_kind = kind;
-                }
-            }
-            else {
-                all_scalars = 0;
-                kind = dtype_kind_to_simplified_ordering(
-                                    PyArray_DESCR(arr[i])->kind);
-                if (kind > max_array_kind) {
-                    max_array_kind = kind;
-                }
-            }
-        }
-        /*
-         * If the max scalar kind is bigger than the max array kind,
-         * finish computing the max array kind
-         */
-        for (i = 0; i < ndtypes; ++i) {
-            kind = dtype_kind_to_simplified_ordering(dtypes[i]->kind);
-            if (kind > max_array_kind) {
-                max_array_kind = kind;
-            }
-        }
-
-        /* Indicate whether to use the min_scalar_type function */
-        if (!all_scalars && max_array_kind >= max_scalar_kind) {
-            use_min_scalar = 1;
-        }
-    }
+    int use_min_scalar = should_use_min_scalar(narrs, arr, ndtypes, dtypes);
 
     /* Loop through all the types, promoting them */
     if (!use_min_scalar) {
-        for (i = 0; i < narrs; ++i) {
-            PyArray_Descr *tmp = PyArray_DESCR(arr[i]);
-            /* Combine it with the existing type */
-            if (ret == NULL) {
-                ret = tmp;
-                Py_INCREF(ret);
-            }
-            else {
-                /* Only call promote if the types aren't the same dtype */
-                if (tmp != ret || !PyArray_ISNBO(ret->byteorder)) {
-                    tmpret = PyArray_PromoteTypes(tmp, ret);
-                    Py_DECREF(ret);
-                    ret = tmpret;
-                    if (ret == NULL) {
-                        return NULL;
-                    }
-                }
-            }
-        }
+        PyArray_Descr *ret;
 
-        for (i = 0; i < ndtypes; ++i) {
-            PyArray_Descr *tmp = dtypes[i];
-            /* Combine it with the existing type */
-            if (ret == NULL) {
-                ret = tmp;
-                Py_INCREF(ret);
-            }
-            else {
-                /* Only call promote if the types aren't the same dtype */
-                if (tmp != ret || !PyArray_ISNBO(tmp->byteorder)) {
-                    tmpret = PyArray_PromoteTypes(tmp, ret);
-                    Py_DECREF(ret);
-                    ret = tmpret;
-                    if (ret == NULL) {
-                        return NULL;
-                    }
-                }
-            }
+        /* Build a single array of all the dtypes */
+        PyArray_Descr **all_dtypes = PyArray_malloc(
+            sizeof(*all_dtypes) * (narrs + ndtypes));
+        if (all_dtypes == NULL) {
+            PyErr_NoMemory();
+            return NULL;
         }
+        for (i = 0; i < narrs; ++i) {
+            all_dtypes[i] = PyArray_DESCR(arr[i]);
+        }
+        for (i = 0; i < ndtypes; ++i) {
+            all_dtypes[narrs + i] = dtypes[i];
+        }
+        ret = PyArray_PromoteTypeSequence(all_dtypes, narrs + ndtypes);
+        PyArray_free(all_dtypes);
+        return ret;
     }
     else {
+        int ret_is_small_unsigned = 0;
+        PyArray_Descr *ret = NULL;
+
         for (i = 0; i < narrs; ++i) {
-            /* Get the min scalar type for the array */
-            PyArray_Descr *tmp = PyArray_DESCR(arr[i]);
-            int tmp_is_small_unsigned = 0;
-            /*
-             * If it's a scalar, find the min scalar type. The function
-             * is expanded here so that we can flag whether we've got an
-             * unsigned integer which would fit an a signed integer
-             * of the same size, something not exposed in the public API.
-             */
-            if (PyArray_NDIM(arr[i]) == 0 &&
-                                PyTypeNum_ISNUMBER(tmp->type_num)) {
-                char *data = PyArray_BYTES(arr[i]);
-                int swap = !PyArray_ISNBO(tmp->byteorder);
-                int type_num;
-                /* An aligned memory buffer large enough to hold any type */
-                npy_longlong value[4];
-                tmp->f->copyswap(&value, data, swap, NULL);
-                type_num = min_scalar_type_num((char *)&value,
-                                        tmp->type_num, &tmp_is_small_unsigned);
-                tmp = PyArray_DescrFromType(type_num);
-                if (tmp == NULL) {
-                    Py_XDECREF(ret);
-                    return NULL;
-                }
-            }
-            else {
-                Py_INCREF(tmp);
+            int tmp_is_small_unsigned;
+            PyArray_Descr *tmp = PyArray_MinScalarType_internal(
+                arr[i], &tmp_is_small_unsigned);
+            if (tmp == NULL) {
+                Py_XDECREF(ret);
+                return NULL;
             }
             /* Combine it with the existing type */
             if (ret == NULL) {
@@ -1798,30 +1908,15 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 ret_is_small_unsigned = tmp_is_small_unsigned;
             }
             else {
-#if 0
-                printf("promoting type ");
-                PyObject_Print(tmp, stdout, 0);
-                printf(" (%d) ", tmp_is_small_unsigned);
-                PyObject_Print(ret, stdout, 0);
-                printf(" (%d) ", ret_is_small_unsigned);
-                printf("\n");
-#endif
-                /* If they point to the same type, don't call promote */
-                if (tmp == ret && PyArray_ISNBO(tmp->byteorder)) {
-                    Py_DECREF(tmp);
+                PyArray_Descr *tmpret = promote_types(
+                    tmp, ret, tmp_is_small_unsigned, ret_is_small_unsigned);
+                Py_DECREF(tmp);
+                Py_DECREF(ret);
+                ret = tmpret;
+                if (ret == NULL) {
+                    return NULL;
                 }
-                else {
-                    tmpret = promote_types(tmp, ret, tmp_is_small_unsigned,
-                                                        ret_is_small_unsigned);
-                    if (tmpret == NULL) {
-                        Py_DECREF(tmp);
-                        Py_DECREF(ret);
-                        return NULL;
-                    }
-                    Py_DECREF(tmp);
-                    Py_DECREF(ret);
-                    ret = tmpret;
-                }
+
                 ret_is_small_unsigned = tmp_is_small_unsigned &&
                                         ret_is_small_unsigned;
             }
@@ -1835,36 +1930,23 @@ PyArray_ResultType(npy_intp narrs, PyArrayObject **arr,
                 Py_INCREF(ret);
             }
             else {
-                /* Only call promote if the types aren't the same dtype */
-                if (tmp != ret || !PyArray_ISNBO(tmp->byteorder)) {
-                    if (ret_is_small_unsigned) {
-                        tmpret = promote_types(tmp, ret, 0,
-                                                ret_is_small_unsigned);
-                        if (tmpret == NULL) {
-                            Py_DECREF(tmp);
-                            Py_DECREF(ret);
-                            return NULL;
-                        }
-                    }
-                    else {
-                        tmpret = PyArray_PromoteTypes(tmp, ret);
-                    }
-                    Py_DECREF(ret);
-                    ret = tmpret;
-                    if (ret == NULL) {
-                        return NULL;
-                    }
+                PyArray_Descr *tmpret = promote_types(
+                    tmp, ret, 0, ret_is_small_unsigned);
+                Py_DECREF(ret);
+                ret = tmpret;
+                if (ret == NULL) {
+                    return NULL;
                 }
             }
         }
-    }
+        /* None of the above loops ran */
+        if (ret == NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "no arrays or types available to calculate result type");
+        }
 
-    if (ret == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "no arrays or types available to calculate result type");
+        return ret;
     }
-
-    return ret;
 }
 
 /*NUMPY_API
@@ -1916,7 +1998,7 @@ PyArray_Zero(PyArrayObject *arr)
 {
     char *zeroval;
     int ret, storeflags;
-    PyObject *obj;
+    static PyObject * zero_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -1927,17 +2009,26 @@ PyArray_Zero(PyArrayObject *arr)
         return NULL;
     }
 
-    obj=PyInt_FromLong((long) 0);
+    if (zero_obj == NULL) {
+        zero_obj = PyInt_FromLong((long) 0);
+        if (zero_obj == NULL) {
+            return NULL;
+        }
+    }
     if (PyArray_ISOBJECT(arr)) {
-        memcpy(zeroval, &obj, sizeof(PyObject *));
-        Py_DECREF(obj);
+        /* XXX this is dangerous, the caller probably is not
+           aware that zeroval is actually a static PyObject*
+           In the best case they will only use it as-is, but
+           if they simply memcpy it into a ndarray without using
+           setitem(), refcount errors will occur
+        */
+        memcpy(zeroval, &zero_obj, sizeof(PyObject *));
         return zeroval;
     }
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_DESCR(arr)->f->setitem(obj, zeroval, arr);
+    ret = PyArray_SETITEM(arr, zeroval, zero_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
-    Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
         return NULL;
@@ -1953,7 +2044,7 @@ PyArray_One(PyArrayObject *arr)
 {
     char *oneval;
     int ret, storeflags;
-    PyObject *obj;
+    static PyObject * one_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -1964,18 +2055,27 @@ PyArray_One(PyArrayObject *arr)
         return NULL;
     }
 
-    obj = PyInt_FromLong((long) 1);
+    if (one_obj == NULL) {
+        one_obj = PyInt_FromLong((long) 1);
+        if (one_obj == NULL) {
+            return NULL;
+        }
+    }
     if (PyArray_ISOBJECT(arr)) {
-        memcpy(oneval, &obj, sizeof(PyObject *));
-        Py_DECREF(obj);
+        /* XXX this is dangerous, the caller probably is not
+           aware that oneval is actually a static PyObject*
+           In the best case they will only use it as-is, but
+           if they simply memcpy it into a ndarray without using
+           setitem(), refcount errors will occur
+        */
+        memcpy(oneval, &one_obj, sizeof(PyObject *));
         return oneval;
     }
 
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_DESCR(arr)->f->setitem(obj, oneval, arr);
+    ret = PyArray_SETITEM(arr, oneval, one_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
-    Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(oneval);
         return NULL;
@@ -2027,7 +2127,6 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 {
     int i, n, allscalars = 0;
     PyArrayObject **mps = NULL;
-    PyObject *otmp;
     PyArray_Descr *intype = NULL, *stype = NULL;
     PyArray_Descr *newtype = NULL;
     NPY_SCALARKIND scalarkind = NPY_NOSCALAR, intypekind = NPY_NOSCALAR;
@@ -2066,9 +2165,13 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     }
 
     for (i = 0; i < n; i++) {
-        otmp = PySequence_GetItem(op, i);
+        PyObject *otmp = PySequence_GetItem(op, i);
+        if (otmp == NULL) {
+            goto fail;
+        }
         if (!PyArray_CheckAnyScalar(otmp)) {
             newtype = PyArray_DescrFromObject(otmp, intype);
+            Py_DECREF(otmp);
             Py_XDECREF(intype);
             if (newtype == NULL) {
                 goto fail;
@@ -2078,6 +2181,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         }
         else {
             newtype = PyArray_DescrFromObject(otmp, stype);
+            Py_DECREF(otmp);
             Py_XDECREF(stype);
             if (newtype == NULL) {
                 goto fail;
@@ -2087,7 +2191,6 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
             mps[i] = (PyArrayObject *)Py_None;
             Py_INCREF(Py_None);
         }
-        Py_XDECREF(otmp);
     }
     if (intype == NULL) {
         /* all scalars */
@@ -2111,6 +2214,9 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
             newtype = PyArray_PromoteTypes(intype, stype);
             Py_XDECREF(intype);
             intype = newtype;
+            if (newtype == NULL) {
+                goto fail;
+            }
         }
         for (i = 0; i < n; i++) {
             Py_XDECREF(mps[i]);
@@ -2122,8 +2228,9 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     /* Make sure all arrays are actual array objects. */
     for (i = 0; i < n; i++) {
         int flags = NPY_ARRAY_CARRAY;
+        PyObject *otmp = PySequence_GetItem(op, i);
 
-        if ((otmp = PySequence_GetItem(op, i)) == NULL) {
+        if (otmp == NULL) {
             goto fail;
         }
         if (!allscalars && ((PyObject *)(mps[i]) == Py_None)) {
@@ -2132,8 +2239,8 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
             Py_DECREF(Py_None);
         }
         Py_INCREF(intype);
-        mps[i] = (PyArrayObject*)
-            PyArray_FromAny(otmp, intype, 0, 0, flags, NULL);
+        mps[i] = (PyArrayObject*)PyArray_FromAny(otmp, intype, 0, 0,
+                                                 flags, NULL);
         Py_DECREF(otmp);
         if (mps[i] == NULL) {
             goto fail;

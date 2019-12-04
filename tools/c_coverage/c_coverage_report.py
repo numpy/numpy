@@ -94,7 +94,7 @@ class SourceFiles:
 
     def clean_path(self, path):
         path = path[len(self.prefix):]
-        return re.sub("[^A-Za-z0-9\.]", '_', path)
+        return re.sub(r"[^A-Za-z0-9\.]", '_', path)
 
     def write_text(self, root):
         for path, source in self.files.items():
@@ -121,8 +121,8 @@ class SourceFiles:
 def collect_stats(files, fd, pattern):
     # TODO: Handle compressed callgrind files
     line_regexs = [
-        re.compile("(?P<lineno>[0-9]+)(\s[0-9]+)+"),
-        re.compile("((jump)|(jcnd))=([0-9]+)\s(?P<lineno>[0-9]+)")
+        re.compile(r"(?P<lineno>[0-9]+)(\s[0-9]+)+"),
+        re.compile(r"((jump)|(jcnd))=([0-9]+)\s(?P<lineno>[0-9]+)")
         ]
 
     current_file = None

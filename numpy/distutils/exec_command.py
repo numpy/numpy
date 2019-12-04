@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 exec_command
 
@@ -56,15 +55,60 @@ __all__ = ['exec_command', 'find_executable']
 
 import os
 import sys
-import shlex
+import subprocess
+import locale
+import warnings
 
 from numpy.distutils.misc_util import is_sequence, make_temp_file
 from numpy.distutils import log
-from numpy.distutils.compat import get_exception
 
-from numpy.compat import open_latin1
+def filepath_from_subprocess_output(output):
+    """
+    Convert `bytes` in the encoding used by a subprocess into a filesystem-appropriate `str`.
+
+    Inherited from `exec_command`, and possibly incorrect.
+    """
+    mylocale = locale.getpreferredencoding(False)
+    if mylocale is None:
+        mylocale = 'ascii'
+    output = output.decode(mylocale, errors='replace')
+    output = output.replace('\r\n', '\n')
+    # Another historical oddity
+    if output[-1:] == '\n':
+        output = output[:-1]
+    # stdio uses bytes in python 2, so to avoid issues, we simply
+    # remove all non-ascii characters
+    if sys.version_info < (3, 0):
+        output = output.encode('ascii', errors='replace')
+    return output
+
+
+def forward_bytes_to_stdout(val):
+    """
+    Forward bytes from a subprocess call to the console, without attempting to
+    decode them.
+
+    The assumption is that the subprocess call already returned bytes in
+    a suitable encoding.
+    """
+    if sys.version_info.major < 3:
+        # python 2 has binary output anyway
+        sys.stdout.write(val)
+    elif hasattr(sys.stdout, 'buffer'):
+        # use the underlying binary output if there is one
+        sys.stdout.buffer.write(val)
+    elif hasattr(sys.stdout, 'encoding'):
+        # round-trip the encoding if necessary
+        sys.stdout.write(val.decode(sys.stdout.encoding))
+    else:
+        # make a best-guess at the encoding
+        sys.stdout.write(val.decode('utf8', errors='replace'))
+
 
 def temp_file_name():
+    # 2019-01-30, 1.17
+    warnings.warn('temp_file_name is deprecated since NumPy v1.17, use '
+                  'tempfile.mkstemp instead', DeprecationWarning, stacklevel=1)
     fo, name = make_temp_file()
     fo.close()
     return name
@@ -131,9 +175,7 @@ def find_executable(exe, path=None, _cache={}):
 
 def _preserve_environment( names ):
     log.debug('_preserve_environment(%r)' % (names))
-    env = {}
-    for name in names:
-        env[name] = os.environ.get(name)
+    env = {name: os.environ.get(name) for name in names}
     return env
 
 def _update_environment( **env ):
@@ -141,23 +183,13 @@ def _update_environment( **env ):
     for name, value in env.items():
         os.environ[name] = value or ''
 
-def _supports_fileno(stream):
-    """
-    Returns True if 'stream' supports the file descriptor and allows fileno().
-    """
-    if hasattr(stream, 'fileno'):
-        try:
-            r = stream.fileno()
-            return True
-        except IOError:
-            return False
-    else:
-        return False
-
 def exec_command(command, execute_in='', use_shell=None, use_tee=None,
                  _with_python = 1, **env ):
     """
     Return (status,output) of executed command.
+
+    .. deprecated:: 1.17
+        Use subprocess.Popen instead
 
     Parameters
     ----------
@@ -182,7 +214,10 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
     Wild cards will not work for non-posix systems or when use_shell=0.
 
     """
-    log.debug('exec_command(%r,%s)' % (command,\
+    # 2019-01-30, 1.17
+    warnings.warn('exec_command is deprecated since NumPy v1.17, use '
+                  'subprocess.Popen instead', DeprecationWarning, stacklevel=1)
+    log.debug('exec_command(%r,%s)' % (command,
          ','.join(['%s=%r'%kv for kv in env.items()])))
 
     if use_tee is None:
@@ -211,28 +246,10 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
     _update_environment( **env )
 
     try:
-        # _exec_command is robust but slow, it relies on
-        # usable sys.std*.fileno() descriptors. If they
-        # are bad (like in win32 Idle, PyCrust environments)
-        # then _exec_command_python (even slower)
-        # will be used as a last resort.
-        #
-        # _exec_command_posix uses os.system and is faster
-        # but not on all platforms os.system will return
-        # a correct status.
-        if (_with_python and _supports_fileno(sys.stdout) and
-                            sys.stdout.fileno() == -1):
-            st = _exec_command_python(command,
-                                      exec_command_dir = exec_dir,
-                                      **env)
-        elif os.name=='posix':
-            st = _exec_command_posix(command,
-                                     use_shell=use_shell,
-                                     use_tee=use_tee,
-                                     **env)
-        else:
-            st = _exec_command(command, use_shell=use_shell,
-                               use_tee=use_tee,**env)
+        st = _exec_command(command,
+                           use_shell=use_shell,
+                           use_tee=use_tee,
+                           **env)
     finally:
         if oldcwd!=execute_in:
             os.chdir(oldcwd)
@@ -241,419 +258,73 @@ def exec_command(command, execute_in='', use_shell=None, use_tee=None,
 
     return st
 
-def _exec_command_posix( command,
-                         use_shell = None,
-                         use_tee = None,
-                         **env ):
-    log.debug('_exec_command_posix(...)')
 
-    if is_sequence(command):
-        command_str = ' '.join(list(command))
-    else:
-        command_str = command
-
-    tmpfile = temp_file_name()
-    stsfile = None
-    if use_tee:
-        stsfile = temp_file_name()
-        filter = ''
-        if use_tee == 2:
-            filter = r'| tr -cd "\n" | tr "\n" "."; echo'
-        command_posix = '( %s ; echo $? > %s ) 2>&1 | tee %s %s'\
-                      % (command_str, stsfile, tmpfile, filter)
-    else:
-        stsfile = temp_file_name()
-        command_posix = '( %s ; echo $? > %s ) > %s 2>&1'\
-                        % (command_str, stsfile, tmpfile)
-        #command_posix = '( %s ) > %s 2>&1' % (command_str,tmpfile)
-
-    log.debug('Running os.system(%r)' % (command_posix))
-    status = os.system(command_posix)
-
-    if use_tee:
-        if status:
-            # if command_tee fails then fall back to robust exec_command
-            log.warn('_exec_command_posix failed (status=%s)' % status)
-            return _exec_command(command, use_shell=use_shell, **env)
-
-    if stsfile is not None:
-        f = open_latin1(stsfile, 'r')
-        status_text = f.read()
-        status = int(status_text)
-        f.close()
-        os.remove(stsfile)
-
-    f = open_latin1(tmpfile, 'r')
-    text = f.read()
-    f.close()
-    os.remove(tmpfile)
-
-    if text[-1:]=='\n':
-        text = text[:-1]
-
-    return status, text
-
-
-def _exec_command_python(command,
-                         exec_command_dir='', **env):
-    log.debug('_exec_command_python(...)')
-
-    python_exe = get_pythonexe()
-    cmdfile = temp_file_name()
-    stsfile = temp_file_name()
-    outfile = temp_file_name()
-
-    f = open(cmdfile, 'w')
-    f.write('import os\n')
-    f.write('import sys\n')
-    f.write('sys.path.insert(0,%r)\n' % (exec_command_dir))
-    f.write('from exec_command import exec_command\n')
-    f.write('del sys.path[0]\n')
-    f.write('cmd = %r\n' % command)
-    f.write('os.environ = %r\n' % (os.environ))
-    f.write('s,o = exec_command(cmd, _with_python=0, **%r)\n' % (env))
-    f.write('f=open(%r,"w")\nf.write(str(s))\nf.close()\n' % (stsfile))
-    f.write('f=open(%r,"w")\nf.write(o)\nf.close()\n' % (outfile))
-    f.close()
-
-    cmd = '%s %s' % (python_exe, cmdfile)
-    status = os.system(cmd)
-    if status:
-        raise RuntimeError("%r failed" % (cmd,))
-    os.remove(cmdfile)
-
-    f = open_latin1(stsfile, 'r')
-    status = int(f.read())
-    f.close()
-    os.remove(stsfile)
-
-    f = open_latin1(outfile, 'r')
-    text = f.read()
-    f.close()
-    os.remove(outfile)
-
-    return status, text
-
-def quote_arg(arg):
-    if arg[0]!='"' and ' ' in arg:
-        return '"%s"' % arg
-    return arg
-
-def _exec_command( command, use_shell=None, use_tee = None, **env ):
-    log.debug('_exec_command(...)')
-
+def _exec_command(command, use_shell=None, use_tee = None, **env):
+    """
+    Internal workhorse for exec_command().
+    """
     if use_shell is None:
         use_shell = os.name=='posix'
     if use_tee is None:
         use_tee = os.name=='posix'
-    using_command = 0
-    if use_shell:
-        # We use shell (unless use_shell==0) so that wildcards can be
-        # used.
+
+    if os.name == 'posix' and use_shell:
+        # On POSIX, subprocess always uses /bin/sh, override
         sh = os.environ.get('SHELL', '/bin/sh')
         if is_sequence(command):
-            argv = [sh, '-c', ' '.join(list(command))]
+            command = [sh, '-c', ' '.join(command)]
         else:
-            argv = [sh, '-c', command]
-    else:
-        # On NT, DOS we avoid using command.com as it's exit status is
-        # not related to the exit status of a command.
-        if is_sequence(command):
-            argv = command[:]
-        else:
-            argv = shlex.split(command)
+            command = [sh, '-c', command]
+        use_shell = False
 
-    # `spawn*p` family with path (vp, vpe, ...) are not available on windows.
-    # Also prefer spawn{v,vp} in favor of spawn{ve,vpe} if no env
-    # modification is actually requested as the *e* functions are not thread
-    # safe on windows (https://bugs.python.org/issue6476)
-    if hasattr(os, 'spawnvpe'):
-        spawn_command = os.spawnvpe if env else os.spawnvp
-    else:
-        spawn_command = os.spawnve if env else os.spawnv
-        argv[0] = find_executable(argv[0]) or argv[0]
-        if not os.path.isfile(argv[0]):
-            log.warn('Executable %s does not exist' % (argv[0]))
-            if os.name in ['nt', 'dos']:
-                # argv[0] might be internal command
-                argv = [os.environ['COMSPEC'], '/C'] + argv
-                using_command = 1
+    elif os.name == 'nt' and is_sequence(command):
+        # On Windows, join the string for CreateProcess() ourselves as
+        # subprocess does it a bit differently
+        command = ' '.join(_quote_arg(arg) for arg in command)
 
-    _so_has_fileno = _supports_fileno(sys.stdout)
-    _se_has_fileno = _supports_fileno(sys.stderr)
-    so_flush = sys.stdout.flush
-    se_flush = sys.stderr.flush
-    if _so_has_fileno:
-        so_fileno = sys.stdout.fileno()
-        so_dup = os.dup(so_fileno)
-    if _se_has_fileno:
-        se_fileno = sys.stderr.fileno()
-        se_dup = os.dup(se_fileno)
-
-    outfile = temp_file_name()
-    fout = open(outfile, 'w')
-    if using_command:
-        errfile = temp_file_name()
-        ferr = open(errfile, 'w')
-
-    log.debug('Running %s(%s,%r,%r,os.environ)' \
-              % (spawn_command.__name__, os.P_WAIT, argv[0], argv))
-
-    if env and sys.version_info[0] >= 3 and os.name == 'nt':
-        # Pre-encode os.environ, discarding un-encodable entries,
-        # to avoid it failing during encoding as part of spawn. Failure
-        # is possible if the environment contains entries that are not
-        # encoded using the system codepage as windows expects.
-        #
-        # This is not necessary on unix, where os.environ is encoded
-        # using the surrogateescape error handler and decoded using
-        # it as part of spawn.
-        encoded_environ = {}
-        for k, v in os.environ.items():
-            try:
-                encoded_environ[k.encode(sys.getfilesystemencoding())] = v.encode(
-                    sys.getfilesystemencoding())
-            except UnicodeEncodeError:
-                log.debug("ignoring un-encodable env entry %s", k)
-    else:
-        encoded_environ = os.environ
-
-    argv0 = argv[0]
-    if not using_command:
-        argv[0] = quote_arg(argv0)
-
-    so_flush()
-    se_flush()
-    if _so_has_fileno:
-        os.dup2(fout.fileno(), so_fileno)
-
-    if _se_has_fileno:
-        if using_command:
-            #XXX: disabled for now as it does not work from cmd under win32.
-            #     Tests fail on msys
-            os.dup2(ferr.fileno(), se_fileno)
-        else:
-            os.dup2(fout.fileno(), se_fileno)
+    # Inherit environment by default
+    env = env or None
     try:
-        # Use spawnv in favor of spawnve, unless necessary
-        if env:
-            status = spawn_command(os.P_WAIT, argv0, argv, encoded_environ)
-        else:
-            status = spawn_command(os.P_WAIT, argv0, argv)
-    except Exception:
-        errmess = str(get_exception())
-        status = 999
-        sys.stderr.write('%s: %s'%(errmess, argv[0]))
+        # universal_newlines is set to False so that communicate()
+        # will return bytes. We need to decode the output ourselves
+        # so that Python will not raise a UnicodeDecodeError when
+        # it encounters an invalid character; rather, we simply replace it
+        proc = subprocess.Popen(command, shell=use_shell, env=env,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                universal_newlines=False)
+    except EnvironmentError:
+        # Return 127, as os.spawn*() and /bin/sh do
+        return 127, ''
 
-    so_flush()
-    se_flush()
-    if _so_has_fileno:
-        os.dup2(so_dup, so_fileno)
-        os.close(so_dup)
-    if _se_has_fileno:
-        os.dup2(se_dup, se_fileno)
-        os.close(se_dup)
-
-    fout.close()
-    fout = open_latin1(outfile, 'r')
-    text = fout.read()
-    fout.close()
-    os.remove(outfile)
-
-    if using_command:
-        ferr.close()
-        ferr = open_latin1(errfile, 'r')
-        errmess = ferr.read()
-        ferr.close()
-        os.remove(errfile)
-        if errmess and not status:
-            # Not sure how to handle the case where errmess
-            # contains only warning messages and that should
-            # not be treated as errors.
-            #status = 998
-            if text:
-                text = text + '\n'
-            #text = '%sCOMMAND %r FAILED: %s' %(text,command,errmess)
-            text = text + errmess
-            print (errmess)
-    if text[-1:]=='\n':
+    text, err = proc.communicate()
+    mylocale = locale.getpreferredencoding(False)
+    if mylocale is None:
+        mylocale = 'ascii'
+    text = text.decode(mylocale, errors='replace')
+    text = text.replace('\r\n', '\n')
+    # Another historical oddity
+    if text[-1:] == '\n':
         text = text[:-1]
-    if status is None:
-        status = 0
 
-    if use_tee:
-        print (text)
+    # stdio uses bytes in python 2, so to avoid issues, we simply
+    # remove all non-ascii characters
+    if sys.version_info < (3, 0):
+        text = text.encode('ascii', errors='replace')
 
-    return status, text
-
-
-def test_nt(**kws):
-    pythonexe = get_pythonexe()
-    echo = find_executable('echo')
-    using_cygwin_echo = echo != 'echo'
-    if using_cygwin_echo:
-        log.warn('Using cygwin echo in win32 environment is not supported')
-
-        s, o=exec_command(pythonexe\
-                         +' -c "import os;print os.environ.get(\'AAA\',\'\')"')
-        assert s==0 and o=='', (s, o)
-
-        s, o=exec_command(pythonexe\
-                         +' -c "import os;print os.environ.get(\'AAA\')"',
-                         AAA='Tere')
-        assert s==0 and o=='Tere', (s, o)
-
-        os.environ['BBB'] = 'Hi'
-        s, o=exec_command(pythonexe\
-                         +' -c "import os;print os.environ.get(\'BBB\',\'\')"')
-        assert s==0 and o=='Hi', (s, o)
-
-        s, o=exec_command(pythonexe\
-                         +' -c "import os;print os.environ.get(\'BBB\',\'\')"',
-                         BBB='Hey')
-        assert s==0 and o=='Hey', (s, o)
-
-        s, o=exec_command(pythonexe\
-                         +' -c "import os;print os.environ.get(\'BBB\',\'\')"')
-        assert s==0 and o=='Hi', (s, o)
-    elif 0:
-        s, o=exec_command('echo Hello')
-        assert s==0 and o=='Hello', (s, o)
-
-        s, o=exec_command('echo a%AAA%')
-        assert s==0 and o=='a', (s, o)
-
-        s, o=exec_command('echo a%AAA%', AAA='Tere')
-        assert s==0 and o=='aTere', (s, o)
-
-        os.environ['BBB'] = 'Hi'
-        s, o=exec_command('echo a%BBB%')
-        assert s==0 and o=='aHi', (s, o)
-
-        s, o=exec_command('echo a%BBB%', BBB='Hey')
-        assert s==0 and o=='aHey', (s, o)
-        s, o=exec_command('echo a%BBB%')
-        assert s==0 and o=='aHi', (s, o)
-
-        s, o=exec_command('this_is_not_a_command')
-        assert s and o!='', (s, o)
-
-        s, o=exec_command('type not_existing_file')
-        assert s and o!='', (s, o)
-
-    s, o=exec_command('echo path=%path%')
-    assert s==0 and o!='', (s, o)
-
-    s, o=exec_command('%s -c "import sys;sys.stderr.write(sys.platform)"' \
-                     % pythonexe)
-    assert s==0 and o=='win32', (s, o)
-
-    s, o=exec_command('%s -c "raise \'Ignore me.\'"' % pythonexe)
-    assert s==1 and o, (s, o)
-
-    s, o=exec_command('%s -c "import sys;sys.stderr.write(\'0\');sys.stderr.write(\'1\');sys.stderr.write(\'2\')"'\
-                     % pythonexe)
-    assert s==0 and o=='012', (s, o)
-
-    s, o=exec_command('%s -c "import sys;sys.exit(15)"' % pythonexe)
-    assert s==15 and o=='', (s, o)
-
-    s, o=exec_command('%s -c "print \'Heipa\'"' % pythonexe)
-    assert s==0 and o=='Heipa', (s, o)
-
-    print ('ok')
-
-def test_posix(**kws):
-    s, o=exec_command("echo Hello",**kws)
-    assert s==0 and o=='Hello', (s, o)
-
-    s, o=exec_command('echo $AAA',**kws)
-    assert s==0 and o=='', (s, o)
-
-    s, o=exec_command('echo "$AAA"',AAA='Tere',**kws)
-    assert s==0 and o=='Tere', (s, o)
+    if use_tee and text:
+        print(text)
+    return proc.returncode, text
 
 
-    s, o=exec_command('echo "$AAA"',**kws)
-    assert s==0 and o=='', (s, o)
-
-    os.environ['BBB'] = 'Hi'
-    s, o=exec_command('echo "$BBB"',**kws)
-    assert s==0 and o=='Hi', (s, o)
-
-    s, o=exec_command('echo "$BBB"',BBB='Hey',**kws)
-    assert s==0 and o=='Hey', (s, o)
-
-    s, o=exec_command('echo "$BBB"',**kws)
-    assert s==0 and o=='Hi', (s, o)
-
-
-    s, o=exec_command('this_is_not_a_command',**kws)
-    assert s!=0 and o!='', (s, o)
-
-    s, o=exec_command('echo path=$PATH',**kws)
-    assert s==0 and o!='', (s, o)
-
-    s, o=exec_command('python -c "import sys,os;sys.stderr.write(os.name)"',**kws)
-    assert s==0 and o=='posix', (s, o)
-
-    s, o=exec_command('python -c "raise \'Ignore me.\'"',**kws)
-    assert s==1 and o, (s, o)
-
-    s, o=exec_command('python -c "import sys;sys.stderr.write(\'0\');sys.stderr.write(\'1\');sys.stderr.write(\'2\')"',**kws)
-    assert s==0 and o=='012', (s, o)
-
-    s, o=exec_command('python -c "import sys;sys.exit(15)"',**kws)
-    assert s==15 and o=='', (s, o)
-
-    s, o=exec_command('python -c "print \'Heipa\'"',**kws)
-    assert s==0 and o=='Heipa', (s, o)
-
-    print ('ok')
-
-def test_execute_in(**kws):
-    pythonexe = get_pythonexe()
-    tmpfile = temp_file_name()
-    fn = os.path.basename(tmpfile)
-    tmpdir = os.path.dirname(tmpfile)
-    f = open(tmpfile, 'w')
-    f.write('Hello')
-    f.close()
-
-    s, o = exec_command('%s -c "print \'Ignore the following IOError:\','\
-                       'open(%r,\'r\')"' % (pythonexe, fn),**kws)
-    assert s and o!='', (s, o)
-    s, o = exec_command('%s -c "print open(%r,\'r\').read()"' % (pythonexe, fn),
-                       execute_in = tmpdir,**kws)
-    assert s==0 and o=='Hello', (s, o)
-    os.remove(tmpfile)
-    print ('ok')
-
-def test_svn(**kws):
-    s, o = exec_command(['svn', 'status'],**kws)
-    assert s, (s, o)
-    print ('svn ok')
-
-def test_cl(**kws):
-    if os.name=='nt':
-        s, o = exec_command(['cl', '/V'],**kws)
-        assert s, (s, o)
-        print ('cl ok')
-
-if os.name=='posix':
-    test = test_posix
-elif os.name in ['nt', 'dos']:
-    test = test_nt
-else:
-    raise NotImplementedError('exec_command tests for ', os.name)
+def _quote_arg(arg):
+    """
+    Quote the argument for safe use in a shell command line.
+    """
+    # If there is a quote in the string, assume relevants parts of the
+    # string are already quoted (e.g. '-I"C:\\Program Files\\..."')
+    if '"' not in arg and ' ' in arg:
+        return '"%s"' % arg
+    return arg
 
 ############################################################
-
-if __name__ == "__main__":
-
-    test(use_tee=0)
-    test(use_tee=1)
-    test_execute_in(use_tee=0)
-    test_execute_in(use_tee=1)
-    test_svn(use_tee=1)
-    test_cl(use_tee=1)

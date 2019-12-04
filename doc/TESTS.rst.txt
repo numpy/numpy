@@ -1,25 +1,25 @@
-.. -*- rest -*-
-
 NumPy/SciPy Testing Guidelines
 ==============================
 
 .. contents::
 
+
 Introduction
 ''''''''''''
 
-SciPy uses the `Nose testing system
-<http://nose.readthedocs.io>`__, with some
-minor convenience features added.  Nose is an extension of the unit
-testing framework offered by `unittest.py
-<http://docs.python.org/lib/module-unittest.html>`__. Our goal is that
-every module and package in SciPy should have a thorough set of unit
+Until the 1.15 release, NumPy used the `nose`_ testing framework, it now uses
+the `pytest`_ framework. The older framework is still maintained in order to
+support downstream projects that use the old numpy framework, but all tests
+for NumPy should use pytest.
+
+Our goal is that every module and package in SciPy and NumPy
+should have a thorough set of unit
 tests. These tests should exercise the full functionality of a given
 routine as well as its robustness to erroneous or unexpected input
 arguments. Long experience has shown that by far the best time to
 write the tests is before you write or change the code - this is
 `test-driven development
-<http://en.wikipedia.org/wiki/Test-driven_development>`__.  The
+<https://en.wikipedia.org/wiki/Test-driven_development>`__.  The
 arguments for this can sound rather abstract, but we can assure you
 that you will find that writing the tests first leads to more robust
 and better designed code. Well-designed tests with good coverage make
@@ -33,10 +33,13 @@ To run SciPy's full test suite, use the following::
   >>> import scipy
   >>> scipy.test()
 
-SciPy uses the testing framework from NumPy (specifically
-``numpy.testing``), so all the SciPy examples shown here are also
-applicable to NumPy.  So NumPy's full test suite can be run as
-follows::
+or from the command line::
+
+  $ python runtests.py
+
+SciPy uses the testing framework from :mod:`numpy.testing`, so all
+the SciPy examples shown here are also applicable to NumPy.  NumPy's full test
+suite can be run as follows::
 
   >>> import numpy
   >>> numpy.test()
@@ -57,7 +60,11 @@ messages about which modules don't have tests::
 Finally, if you are only interested in testing a subset of SciPy, for
 example, the ``integrate`` module, use the following::
 
->>> scipy.integrate.test()
+  >>> scipy.integrate.test()
+
+or from the command line::
+
+  $python runtests.py -t scipy/integrate/tests
 
 The rest of this page will give you a basic idea of how to add unit
 tests to modules in SciPy. It is extremely important for us to have
@@ -76,7 +83,7 @@ Writing your own tests
 
 Every Python module, extension module, or subpackage in the SciPy
 package directory should have a corresponding ``test_<name>.py`` file.
-Nose examines these files for test methods (named test*) and test
+Pytest examines these files for test methods (named test*) and test
 classes (named Test*).
 
 Suppose you have a SciPy module ``scipy/xxx/yyy.py`` containing a
@@ -112,22 +119,16 @@ that makes it hard to identify the test from the output of running the test
 suite with ``verbose=2`` (or similar verbosity setting).  Use plain comments
 (``#``) if necessary.
 
-Sometimes it is convenient to run ``test_yyy.py`` by itself, so we add
+Labeling tests 
+--------------
 
-::
-
-  if __name__ == "__main__":
-      run_module_suite()
-
-at the bottom.
-
-Labeling tests with nose
-------------------------
+As an alternative to ``pytest.mark.<label>``, there are a number of labels you
+can use.
 
 Unlabeled tests like the ones above are run in the default
 ``scipy.test()`` run.  If you want to label your test as slow - and
 therefore reserved for a full ``scipy.test(label='full')`` run, you
-can label it with a nose decorator::
+can label it with a decorator::
 
   # numpy.testing module includes 'import decorators as dec'
   from numpy.testing import dec, assert_
@@ -143,11 +144,26 @@ Similarly for methods::
       def test_simple(self):
           assert_(zzz() == 'Hello from zzz')
 
+Available labels are:
+
+- ``slow``: marks a test as taking a long time
+- ``setastest(tf)``: work-around for test discovery when the test name is
+  non conformant
+- ``skipif(condition, msg=None)``: skips the test when ``eval(condition)`` is
+  ``True``
+- ``knownfailureif(fail_cond, msg=None)``: will avoid running the test if
+  ``eval(fail_cond)`` is ``True``, useful for tests that conditionally segfault
+- ``deprecated(conditional=True)``: filters deprecation warnings emitted in the
+  test
+- ``paramaterize(var, input)``: an alternative to
+  `pytest.mark.paramaterized
+  <https://docs.pytest.org/en/latest/parametrize.html>`_
+
 Easier setup and teardown functions / methods
 ---------------------------------------------
 
-Nose looks for module level setup and teardown functions by name;
-thus::
+Testing looks for module-level or class-level setup and teardown functions by
+name; thus::
 
   def setup():
       """Module-level setup"""
@@ -158,64 +174,25 @@ thus::
       print 'doing teardown'
 
 
-You can add setup and teardown functions to functions and methods with
-nose decorators::
+  class TestMe(object):
+      def setup():
+          """Class-level setup"""
+          print 'doing setup'
 
-  import nose
-  # import all functions from numpy.testing that are needed
-  from numpy.testing import assert_, assert_array_almost_equal
+      def teardown():
+          """Class-level teardown"""
+          print 'doing teardown'
 
-  def setup_func():
-      """A trivial setup function."""
-      global helpful_variable
-      helpful_variable = 'pleasant'
-      print "In setup_func"
 
-  def teardown_func():
-      """A trivial teardown function."""
-      global helpful_variable
-      del helpful_variable
-      print "In teardown_func"
-
-  @nose.with_setup(setup_func, teardown_func)
-  def test_with_extras():
-      # This test uses the setup/teardown functions.
-      global helpful_variable
-      print "  In test_with_extras"
-      print "  Helpful is %s" % helpful_variable
+Setup and teardown functions to functions and methods are known as "fixtures",
+and their use is not encouraged.
 
 Parametric tests
 ----------------
 
-One very nice feature of nose is allowing easy testing across a range
-of parameters - a nasty problem for standard unit tests.  It does this
-with test generators::
-
-  def check_even(n, nn):
-      """A check function to be used in a test generator."""
-      assert_(n % 2 == 0 or nn % 2 == 0)
-
-  def test_evens():
-      for i in range(0,4,2):
-          yield check_even, i, i*3
-
-Note that ``check_even`` is not itself a test (no 'test' in the name),
-but ``test_evens`` is a generator that returns a series of tests, using
-``check_even``, across a range of inputs.
-
-A problem with generator tests can be that if a test is failing, it's
-hard to see for which parameters.  To avoid this problem, ensure that:
-
-  - No computation related to the features tested is done in the
-    ``test_*`` generator function, but delegated to a corresponding
-    ``check_*`` function (can be inside the generator, to share namespace).
-  - The generators are used *solely* for loops over parameters.
-  - Those parameters are *not* arrays.
-
-.. warning::
-
-   Parametric tests cannot be implemented on classes derived from
-   TestCase.
+One very nice feature of testing is allowing easy testing across a range
+of parameters - a nasty problem for standard unit tests. Use the
+``dec.paramaterize`` decorator.
 
 Doctests
 --------
@@ -306,7 +283,7 @@ minor variations, it can be helpful to create a base class containing
 all the common tests, and then create a subclass for each variation.
 Several examples of this technique exist in NumPy; below are excerpts
 from one in `numpy/linalg/tests/test_linalg.py
-<http://github.com/numpy/numpy/blob/master/numpy/linalg/tests/test_linalg.py>`__::
+<https://github.com/numpy/numpy/blob/master/numpy/linalg/tests/test_linalg.py>`__::
 
   class LinalgTestCase:
       def test_single(self):
@@ -344,35 +321,33 @@ Known failures & skipping tests
 Sometimes you might want to skip a test or mark it as a known failure,
 such as when the test suite is being written before the code it's
 meant to test, or if a test only fails on a particular architecture.
-The decorators from numpy.testing.dec can be used to do this.
 
 To skip a test, simply use ``skipif``::
 
-  from numpy.testing import dec
+  import pytest
 
-  @dec.skipif(SkipMyTest, "Skipping this test because...")
+  @pytest.mark.skipif(SkipMyTest, reason="Skipping this test because...")
   def test_something(foo):
       ...
 
 The test is marked as skipped if ``SkipMyTest`` evaluates to nonzero,
 and the message in verbose test output is the second argument given to
 ``skipif``.  Similarly, a test can be marked as a known failure by
-using ``knownfailureif``::
+using ``xfail``::
 
-  from numpy.testing import dec
+  import pytest
 
-  @dec.knownfailureif(MyTestFails, "This test is known to fail because...")
+  @pytest.mark.xfail(MyTestFails, reason="This test is known to fail because...")
   def test_something_else(foo):
       ...
 
 Of course, a test can be unconditionally skipped or marked as a known
-failure by passing ``True`` as the first argument to ``skipif`` or
-``knownfailureif``, respectively.
+failure by using ``skip`` or ``xfail`` without argument, respectively.
 
 A total of the number of skipped and known failing tests is displayed
 at the end of the test run.  Skipped tests are marked as ``'S'`` in
 the test results (or ``'SKIPPED'`` for ``verbose > 1``), and known
-failing tests are marked as ``'K'`` (or ``'KNOWN'`` if ``verbose >
+failing tests are marked as ``'x'`` (or ``'XFAIL'`` if ``verbose >
 1``).
 
 Tests on random data
@@ -384,3 +359,8 @@ occasionally with no code changes is not helpful. Make the random data
 deterministic by setting the random number seed before generating it.  Use
 either Python's ``random.seed(some_number)`` or NumPy's
 ``numpy.random.seed(some_number)``, depending on the source of random numbers.
+
+
+.. _nose: https://nose.readthedocs.io/en/latest/
+.. _pytest: https://pytest.readthedocs.io
+.. _parameterization: https://docs.pytest.org/en/latest/parametrize.html

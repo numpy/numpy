@@ -80,9 +80,8 @@ class Arrayterator(object):
 
     >>> for subarr in a_itor:
     ...     if not subarr.all():
-    ...         print(subarr, subarr.shape)
-    ...
-    [[[[0 1]]]] (1, 1, 1, 2)
+    ...         print(subarr, subarr.shape) # doctest: +SKIP
+    >>> # [[[[0 1]]]] (1, 1, 1, 2)
 
     """
 
@@ -106,7 +105,7 @@ class Arrayterator(object):
         if not isinstance(index, tuple):
             index = (index,)
         fixed = []
-        length, dims = len(index), len(self.shape)
+        length, dims = len(index), self.ndim
         for slice_ in index:
             if slice_ is Ellipsis:
                 fixed.extend([slice(None)] * (dims-length+1))
@@ -160,7 +159,7 @@ class Arrayterator(object):
         ...     if not subarr:
         ...         print(subarr, type(subarr))
         ...
-        0 <type 'numpy.int32'>
+        0 <class 'numpy.int64'>
 
         """
         for block in self:
@@ -186,7 +185,7 @@ class Arrayterator(object):
         start = self.start[:]
         stop = self.stop[:]
         step = self.step[:]
-        ndims = len(self.var.shape)
+        ndims = self.var.ndim
 
         while True:
             count = self.buf_size or reduce(mul, self.shape)

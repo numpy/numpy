@@ -1,0 +1,96 @@
+=========================
+NumPy 1.8.1 Release Notes
+=========================
+
+This is a bugfix only release in the 1.8.x series.
+
+
+Issues fixed
+============
+
+* gh-4276: Fix mean, var, std methods for object arrays
+* gh-4262: remove insecure mktemp usage
+* gh-2385: absolute(complex(inf)) raises invalid warning in python3
+* gh-4024: Sequence assignment doesn't raise exception on shape mismatch
+* gh-4027: Fix chunked reading of strings longer than BUFFERSIZE
+* gh-4109: Fix object scalar return type of 0-d array indices
+* gh-4018: fix missing check for memory allocation failure in ufuncs
+* gh-4156: high order linalg.norm discards imaginary elements of complex arrays
+* gh-4144: linalg: norm fails on longdouble, signed int
+* gh-4094: fix NaT handling in _strided_to_strided_string_to_datetime
+* gh-4051: fix uninitialized use in _strided_to_strided_string_to_datetime
+* gh-4093: Loading compressed .npz file fails under Python 2.6.6
+* gh-4138: segfault with non-native endian memoryview in python 3.4
+* gh-4123: Fix missing NULL check in lexsort
+* gh-4170: fix native-only long long check in memoryviews
+* gh-4187: Fix large file support on 32 bit
+* gh-4152: fromfile: ensure file handle positions are in sync in python3
+* gh-4176: clang compatibility: Typos in conversion_utils
+* gh-4223: Fetching a non-integer item caused array return
+* gh-4197: fix minor memory leak in memoryview failure case
+* gh-4206: fix build with single-threaded python
+* gh-4220: add versionadded:: 1.8.0 to ufunc.at docstring
+* gh-4267: improve handling of memory allocation failure
+* gh-4267: fix use of capi without gil in ufunc.at
+* gh-4261: Detect vendor versions of GNU Compilers
+* gh-4253: IRR was returning nan instead of valid negative answer
+* gh-4254: fix unnecessary byte order flag change for byte arrays
+* gh-3263: numpy.random.shuffle clobbers mask of a MaskedArray
+* gh-4270: np.random.shuffle not work with flexible dtypes
+* gh-3173: Segmentation fault when 'size' argument to random.multinomial
+* gh-2799: allow using unique with lists of complex
+* gh-3504: fix linspace truncation for integer array scalar
+* gh-4191: get_info('openblas') does not read libraries key
+* gh-3348: Access violation in _descriptor_from_pep3118_format
+* gh-3175: segmentation fault with numpy.array() from bytearray
+* gh-4266: histogramdd - wrong result for entries very close to last boundary
+* gh-4408: Fix stride_stricks.as_strided function for object arrays
+* gh-4225: fix log1p and exmp1 return for np.inf on windows compiler builds
+* gh-4359: Fix infinite recursion in str.format of flex arrays
+* gh-4145: Incorrect shape of broadcast result with the exponent operator
+* gh-4483: Fix commutativity of {dot,multiply,inner}(scalar, matrix_of_objs)
+* gh-4466: Delay npyiter size check when size may change
+* gh-4485: Buffered stride was erroneously marked fixed
+* gh-4354: byte_bounds fails with datetime dtypes
+* gh-4486: segfault/error converting from/to high-precision datetime64 objects
+* gh-4428: einsum(None, None, None, None) causes segfault
+* gh-4134: uninitialized use for for size 1 object reductions
+
+Changes
+=======
+
+NDIter
+------
+When ``NpyIter_RemoveAxis`` is now called, the iterator range will be reset.
+
+When a multi index is being tracked and an iterator is not buffered, it is
+possible to use ``NpyIter_RemoveAxis``. In this case an iterator can shrink
+in size. Because the total size of an iterator is limited, the iterator
+may be too large before these calls. In this case its size will be set to ``-1``
+and an error issued not at construction time but when removing the multi
+index, setting the iterator range, or getting the next function.
+
+This has no effect on currently working code, but highlights the necessity
+of checking for an error return if these conditions can occur. In most
+cases the arrays being iterated are as large as the iterator so that such
+a problem cannot occur.
+
+Optional reduced verbosity for np.distutils
+-------------------------------------------
+Set ``numpy.distutils.system_info.system_info.verbosity = 0`` and then
+calls to ``numpy.distutils.system_info.get_info('blas_opt')`` will not
+print anything on the output. This is mostly for other packages using
+numpy.distutils.
+
+Deprecations
+============
+
+C-API
+-----
+
+The utility function npy_PyFile_Dup and npy_PyFile_DupClose are broken by the
+internal buffering python 3 applies to its file objects.
+To fix this two new functions npy_PyFile_Dup2 and npy_PyFile_DupClose2 are
+declared in npy_3kcompat.h and the old functions are deprecated.
+Due to the fragile nature of these functions it is recommended to instead use
+the python API when possible.

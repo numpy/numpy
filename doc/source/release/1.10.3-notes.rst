@@ -1,0 +1,5 @@
+==========================
+NumPy 1.10.3 Release Notes
+==========================
+
+N/A this release did not happen due to various screwups involving PyPi.

@@ -1,0 +1,347 @@
+#!python
+#cython: wraparound=False, nonecheck=False, boundscheck=False, cdivision=True
+
+import numpy as np
+cimport numpy as np
+
+__all__ = []
+
+np.import_array()
+
+cdef extern from "numpy/random/distributions.h":
+    # Generate random numbers in closed interval [off, off + rng].
+    uint64_t random_bounded_uint64(bitgen_t *bitgen_state,
+                                   uint64_t off, uint64_t rng,
+                                   uint64_t mask, bint use_masked) nogil
+    uint32_t random_buffered_bounded_uint32(bitgen_t *bitgen_state,
+                                            uint32_t off, uint32_t rng,
+                                            uint32_t mask, bint use_masked,
+                                            int *bcnt, uint32_t *buf) nogil
+    uint16_t random_buffered_bounded_uint16(bitgen_t *bitgen_state,
+                                            uint16_t off, uint16_t rng,
+                                            uint16_t mask, bint use_masked,
+                                            int *bcnt, uint32_t *buf) nogil
+    uint8_t random_buffered_bounded_uint8(bitgen_t *bitgen_state,
+                                          uint8_t off, uint8_t rng,
+                                          uint8_t mask, bint use_masked,
+                                          int *bcnt, uint32_t *buf) nogil
+    np.npy_bool random_buffered_bounded_bool(bitgen_t *bitgen_state,
+                                             np.npy_bool off, np.npy_bool rng,
+                                             np.npy_bool mask, bint use_masked,
+                                             int *bcnt, uint32_t *buf) nogil
+    void random_bounded_uint64_fill(bitgen_t *bitgen_state,
+                                    uint64_t off, uint64_t rng, np.npy_intp cnt,
+                                    bint use_masked,
+                                    uint64_t *out) nogil
+    void random_bounded_uint32_fill(bitgen_t *bitgen_state,
+                                    uint32_t off, uint32_t rng, np.npy_intp cnt,
+                                    bint use_masked,
+                                    uint32_t *out) nogil
+    void random_bounded_uint16_fill(bitgen_t *bitgen_state,
+                                    uint16_t off, uint16_t rng, np.npy_intp cnt,
+                                    bint use_masked,
+                                    uint16_t *out) nogil
+    void random_bounded_uint8_fill(bitgen_t *bitgen_state,
+                                   uint8_t off, uint8_t rng, np.npy_intp cnt,
+                                   bint use_masked,
+                                   uint8_t *out) nogil
+    void random_bounded_bool_fill(bitgen_t *bitgen_state,
+                                  np.npy_bool off, np.npy_bool rng, np.npy_intp cnt,
+                                  bint use_masked,
+                                  np.npy_bool *out) nogil
+
+
+
+_integers_types = {'bool': (0, 2),
+                 'int8': (-2**7, 2**7),
+                 'int16': (-2**15, 2**15),
+                 'int32': (-2**31, 2**31),
+                 'int64': (-2**63, 2**63),
+                 'uint8': (0, 2**8),
+                 'uint16': (0, 2**16),
+                 'uint32': (0, 2**32),
+                 'uint64': (0, 2**64)}
+{{
+py:
+type_info = (('uint32', 'uint32', 'uint64', 'NPY_UINT64', 0, 0, 0, '0X100000000ULL'),
+          ('uint16', 'uint16', 'uint32', 'NPY_UINT32', 1, 16, 0, '0X10000UL'),
+          ('uint8', 'uint8', 'uint16', 'NPY_UINT16', 3, 8, 0, '0X100UL'),
+          ('bool','bool', 'uint8', 'NPY_UINT8', 31, 1, 0, '0x2UL'),
+          ('int32', 'uint32', 'uint64', 'NPY_INT64', 0, 0, '-0x80000000LL', '0x80000000LL'),
+          ('int16', 'uint16', 'uint32', 'NPY_INT32', 1, 16, '-0x8000LL', '0x8000LL' ),
+          ('int8', 'uint8', 'uint16', 'NPY_INT16', 3, 8, '-0x80LL', '0x80LL' ),
+)}}
+{{for  nptype, utype, nptype_up, npctype, remaining, bitshift, lb, ub in type_info}}
+{{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
+cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object size,
+                                       bint use_masked, bint closed,
+                                       bitgen_t *state, object lock):
+    """
+    Array path for smaller integer types
+
+    This path is simpler since the high value in the open interval [low, high)
+    must be in-range for the next larger type, {{nptype_up}}. Here we case to
+    this type for checking and the recast to {{nptype}} when producing the
+    random integers.
+    """
+    cdef {{utype}}_t rng, last_rng, off, val, mask, out_val, is_open
+    cdef uint32_t buf
+    cdef {{utype}}_t *out_data
+    cdef {{nptype_up}}_t low_v, high_v
+    cdef np.ndarray low_arr, high_arr, out_arr
+    cdef np.npy_intp i, cnt
+    cdef np.broadcast it
+    cdef int buf_rem = 0
+
+    # Array path
+    is_open = not closed
+    low_arr = <np.ndarray>low
+    high_arr = <np.ndarray>high
+    if np.any(np.less(low_arr, {{lb}})):
+        raise ValueError('low is out of bounds for {{nptype}}')
+    if closed:
+        high_comp = np.greater_equal
+        low_high_comp = np.greater
+    else:
+        high_comp = np.greater
+        low_high_comp = np.greater_equal
+
+    if np.any(high_comp(high_arr, {{ub}})):
+        raise ValueError('high is out of bounds for {{nptype}}')
+    if np.any(low_high_comp(low_arr, high_arr)):
+        comp = '>' if closed else '>='
+        raise ValueError('low {comp} high'.format(comp=comp))
+
+    low_arr = <np.ndarray>np.PyArray_FROM_OTF(low, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
+    high_arr = <np.ndarray>np.PyArray_FROM_OTF(high, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
+
+    if size is not None:
+        out_arr = <np.ndarray>np.empty(size, np.{{otype}})
+    else:
+        it = np.PyArray_MultiIterNew2(low_arr, high_arr)
+        out_arr = <np.ndarray>np.empty(it.shape, np.{{otype}})
+
+    it = np.PyArray_MultiIterNew3(low_arr, high_arr, out_arr)
+    out_data = <{{utype}}_t *>np.PyArray_DATA(out_arr)
+    cnt = np.PyArray_SIZE(out_arr)
+    mask = last_rng = 0
+    with lock, nogil:
+        for i in range(cnt):
+            low_v = (<{{nptype_up}}_t*>np.PyArray_MultiIter_DATA(it, 0))[0]
+            high_v = (<{{nptype_up}}_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
+            # Subtract 1 since generator produces values on the closed int [off, off+rng]
+            rng = <{{utype}}_t>((high_v - is_open) - low_v)
+            off = <{{utype}}_t>(<{{nptype_up}}_t>low_v)
+
+            if rng != last_rng:
+                # Smallest bit mask >= max
+                mask = <{{utype}}_t>_gen_mask(rng)
+
+            out_data[i] = random_buffered_bounded_{{utype}}(state, off, rng, mask, use_masked, &buf_rem, &buf)
+
+            np.PyArray_MultiIter_NEXT(it)
+    return out_arr
+{{endfor}}
+{{
+py:
+big_type_info = (('uint64', 'uint64', 'NPY_UINT64', '0x0ULL', '0xFFFFFFFFFFFFFFFFULL'),
+                 ('int64', 'uint64', 'NPY_INT64', '-0x8000000000000000LL', '0x7FFFFFFFFFFFFFFFLL' )
+)}}
+{{for  nptype, utype, npctype, lb, ub in big_type_info}}
+{{ py: otype = nptype}}
+cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
+                                       bint use_masked, bint closed,
+                                       bitgen_t *state, object lock):
+    """
+    Array path for 64-bit integer types
+
+    Requires special treatment since the high value can be out-of-range for
+    the largest (64 bit) integer type since the generator is specified on the
+    interval [low,high).
+
+    The internal generator does not have this issue since it generates from
+    the closes interval [low, high-1] and high-1 is always in range for the
+    64 bit integer type.
+    """
+
+    cdef np.ndarray low_arr, high_arr, out_arr, highm1_arr
+    cdef np.npy_intp i, cnt, n
+    cdef np.broadcast it
+    cdef object closed_upper
+    cdef uint64_t *out_data
+    cdef {{nptype}}_t *highm1_data
+    cdef {{nptype}}_t low_v, high_v
+    cdef uint64_t rng, last_rng, val, mask, off, out_val
+
+    low_arr = <np.ndarray>low
+    high_arr = <np.ndarray>high
+
+    if np.any(np.less(low_arr, {{lb}})):
+        raise ValueError('low is out of bounds for {{nptype}}')
+    dt = high_arr.dtype
+    if closed or np.issubdtype(dt, np.integer):
+        # Avoid object dtype path if already an integer
+        high_lower_comp = np.less if closed else np.less_equal
+        if np.any(high_lower_comp(high_arr, {{lb}})):
+            comp = '>' if closed else '>='
+            raise ValueError('low {comp} high'.format(comp=comp))
+        high_m1 = high_arr if closed else high_arr - dt.type(1)
+        if np.any(np.greater(high_m1, {{ub}})):
+            raise ValueError('high is out of bounds for {{nptype}}')
+        highm1_arr = <np.ndarray>np.PyArray_FROM_OTF(high_m1, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
+    else:
+        # If input is object or a floating type
+        highm1_arr = <np.ndarray>np.empty_like(high_arr, dtype=np.{{otype}})
+        highm1_data = <{{nptype}}_t *>np.PyArray_DATA(highm1_arr)
+        cnt = np.PyArray_SIZE(high_arr)
+        flat = high_arr.flat
+        for i in range(cnt):
+            # Subtract 1 since generator produces values on the closed int [off, off+rng]
+            closed_upper = int(flat[i]) - 1
+            if closed_upper > {{ub}}:
+                raise ValueError('high is out of bounds for {{nptype}}')
+            if closed_upper < {{lb}}:
+                comp = '>' if closed else '>='
+                raise ValueError('low {comp} high'.format(comp=comp))
+            highm1_data[i] = <{{nptype}}_t>closed_upper
+
+    if np.any(np.greater(low_arr, highm1_arr)):
+        comp = '>' if closed else '>='
+        raise ValueError('low {comp} high'.format(comp=comp))
+
+    high_arr = highm1_arr
+    low_arr = <np.ndarray>np.PyArray_FROM_OTF(low, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
+
+    if size is not None:
+        out_arr = <np.ndarray>np.empty(size, np.{{otype}})
+    else:
+        it = np.PyArray_MultiIterNew2(low_arr, high_arr)
+        out_arr = <np.ndarray>np.empty(it.shape, np.{{otype}})
+
+    it = np.PyArray_MultiIterNew3(low_arr, high_arr, out_arr)
+    out_data = <uint64_t *>np.PyArray_DATA(out_arr)
+    n = np.PyArray_SIZE(out_arr)
+    mask = last_rng = 0
+    with lock, nogil:
+        for i in range(n):
+            low_v = (<{{nptype}}_t*>np.PyArray_MultiIter_DATA(it, 0))[0]
+            high_v = (<{{nptype}}_t*>np.PyArray_MultiIter_DATA(it, 1))[0]
+            # Generator produces values on the closed int [off, off+rng], -1 subtracted above
+            rng = <{{utype}}_t>(high_v - low_v)
+            off = <{{utype}}_t>(<{{nptype}}_t>low_v)
+
+            if rng != last_rng:
+                mask = _gen_mask(rng)
+            out_data[i] = random_bounded_uint64(state, off, rng, mask, use_masked)
+
+            np.PyArray_MultiIter_NEXT(it)
+
+    return out_arr
+{{endfor}}
+{{
+py:
+type_info = (('uint64', 'uint64', '0x0ULL', '0xFFFFFFFFFFFFFFFFULL'),
+             ('uint32', 'uint32', '0x0UL', '0XFFFFFFFFUL'),
+             ('uint16', 'uint16', '0x0UL', '0XFFFFUL'),
+             ('uint8', 'uint8', '0x0UL', '0XFFUL'),
+             ('bool', 'bool', '0x0UL', '0x1UL'),
+             ('int64', 'uint64', '-0x8000000000000000LL', '0x7FFFFFFFFFFFFFFFL'),
+             ('int32', 'uint32', '-0x80000000L', '0x7FFFFFFFL'),
+             ('int16', 'uint16', '-0x8000L', '0x7FFFL' ),
+             ('int8', 'uint8', '-0x80L', '0x7FL' )
+)}}
+{{for  nptype, utype, lb, ub in type_info}}
+{{ py: otype = nptype + '_' if nptype == 'bool' else nptype }}
+cdef object _rand_{{nptype}}(object low, object high, object size,
+                             bint use_masked, bint closed,
+                             bitgen_t *state, object lock):
+    """
+    _rand_{{nptype}}(low, high, size, use_masked, *state, lock)
+
+    Return random `np.{{otype}}` integers from `low` (inclusive) to `high` (exclusive).
+
+    Return random integers from the "discrete uniform" distribution in the
+    interval [`low`, `high`).  If `high` is None (the default),
+    then results are from [0, `low`). On entry the arguments are presumed
+    to have been validated for size and order for the `np.{{otype}}` type.
+
+    Parameters
+    ----------
+    low : int or array-like
+        Lowest (signed) integer to be drawn from the distribution (unless
+        ``high=None``, in which case this parameter is the *highest* such
+        integer).
+    high : int or array-like
+        If provided, one above the largest (signed) integer to be drawn from the
+        distribution (see above for behavior if ``high=None``).
+    size : int or tuple of ints
+        Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
+        ``m * n * k`` samples are drawn.  Default is None, in which case a
+        single value is returned.
+    use_masked : bool
+        If True then rejection sampling with a range mask is used else Lemire's algorithm is used.
+    closed : bool
+        If True then sample from [low, high].  If False, sample [low, high)
+    state : bit generator
+        Bit generator state to use in the core random number generators
+    lock : threading.Lock
+        Lock to prevent multiple using a single generator simultaneously
+
+    Returns
+    -------
+    out : python scalar or ndarray of np.{{otype}}
+          `size`-shaped array of random integers from the appropriate
+          distribution, or a single such random int if `size` not provided.
+
+    Notes
+    -----
+    The internal integer generator produces values from the closed
+    interval [low, high-(not closed)].  This requires some care since
+    high can be out-of-range for {{utype}}. The scalar path leaves
+    integers as Python integers until the 1 has been subtracted to
+    avoid needing to cast to a larger type.
+    """
+    cdef np.ndarray out_arr, low_arr, high_arr
+    cdef {{utype}}_t rng, off, out_val
+    cdef {{utype}}_t *out_data
+    cdef np.npy_intp i, n, cnt
+
+    if size is not None:
+        if (np.prod(size) == 0):
+            return np.empty(size, dtype=np.{{otype}})
+
+    low_arr = <np.ndarray>np.array(low, copy=False)
+    high_arr = <np.ndarray>np.array(high, copy=False)
+    low_ndim = np.PyArray_NDIM(low_arr)
+    high_ndim = np.PyArray_NDIM(high_arr)
+    if ((low_ndim == 0 or (low_ndim == 1 and low_arr.size == 1 and size is not None)) and
+            (high_ndim == 0 or (high_ndim == 1 and high_arr.size == 1 and size is not None))):
+        low = int(low_arr)
+        high = int(high_arr)
+        # Subtract 1 since internal generator produces on closed interval [low, high]
+        if not closed:
+            high -= 1
+
+        if low < {{lb}}:
+            raise ValueError("low is out of bounds for {{nptype}}")
+        if high > {{ub}}:
+            raise ValueError("high is out of bounds for {{nptype}}")
+        if low > high:  # -1 already subtracted, closed interval
+            comp = '>' if closed else '>='
+            raise ValueError('low {comp} high'.format(comp=comp))
+
+        rng = <{{utype}}_t>(high - low)
+        off = <{{utype}}_t>(<{{nptype}}_t>low)
+        if size is None:
+            with lock:
+                random_bounded_{{utype}}_fill(state, off, rng, 1, use_masked, &out_val)
+            return np.{{otype}}(<{{nptype}}_t>out_val)
+        else:
+            out_arr = <np.ndarray>np.empty(size, np.{{otype}})
+            cnt = np.PyArray_SIZE(out_arr)
+            out_data = <{{utype}}_t *>np.PyArray_DATA(out_arr)
+            with lock, nogil:
+                random_bounded_{{utype}}_fill(state, off, rng, cnt, use_masked, out_data)
+            return out_arr
+    return _rand_{{nptype}}_broadcast(low_arr, high_arr, size, use_masked, closed, state, lock)
+{{endfor}}

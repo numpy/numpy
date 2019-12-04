@@ -45,9 +45,9 @@ to run
 
 ::
 
-  f2py -c fib1.f -m fib1
+  python -m numpy.f2py -c fib1.f -m fib1
 
-This command builds (see ``-c`` flag, execute ``f2py`` without
+This command builds (see ``-c`` flag, execute ``python -m numpy.f2py`` without
 arguments to see the explanation of command line options) an extension
 module ``fib1.so`` (see ``-m`` flag) to the current directory. Now, in
 Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
@@ -162,7 +162,7 @@ one.
 
   ::
 
-    f2py fib1.f -m fib2 -h fib1.pyf
+    python -m numpy.f2py fib1.f -m fib2 -h fib1.pyf
 
   The signature file is saved to ``fib1.pyf`` (see ``-h`` flag) and
   its contents is shown below.
@@ -170,7 +170,7 @@ one.
   .. include:: fib1.pyf
      :literal:
 
-* Next, we'll teach F2PY that the argument ``n`` is a input argument
+* Next, we'll teach F2PY that the argument ``n`` is an input argument
   (use ``intent(in)`` attribute) and that the result, i.e. the
   contents of ``a`` after calling Fortran function ``FIB``, should be
   returned to Python (use ``intent(out)`` attribute). In addition, an
@@ -188,7 +188,7 @@ one.
 
   ::
 
-    f2py -c fib2.pyf fib1.f
+    python -m numpy.f2py -c fib2.pyf fib1.f
 
 In Python::
 
@@ -243,7 +243,7 @@ __ fib3.f
 
 Building the extension module can be now carried out in one command::
 
-  f2py -c -m fib3 fib3.f
+  python -m numpy.f2py -c -m fib3 fib3.f
 
 Notice that the resulting wrapper to ``FIB`` is as "smart" as in
 previous case::

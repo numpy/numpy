@@ -1,14 +1,14 @@
 About NumPy
 ===========
 
-`NumPy <http://www.scipy.org/NumpPy/>`__ is the fundamental package
+NumPy is the fundamental package
 needed for scientific computing with Python. This package contains:
 
 - a powerful N-dimensional :ref:`array object <arrays>`
 - sophisticated :ref:`(broadcasting) functions <ufuncs>`
 - basic :ref:`linear algebra functions <routines.linalg>`
 - basic :ref:`Fourier transforms <routines.fft>`
-- sophisticated :ref:`random number capabilities <routines.random>`
+- sophisticated :ref:`random number capabilities <numpyrandom>`
 - tools for integrating Fortran code
 - tools for integrating C/C++ code
 
@@ -18,9 +18,7 @@ data types can be defined. This allows *NumPy* to seamlessly and
 speedily integrate with a wide variety of databases.
 
 NumPy is a successor for two earlier scientific Python libraries:
-NumPy derives from the old *Numeric* code base and can be used
-as a replacement for *Numeric*.  It also adds the features introduced
-by *Numarray* and can also be used to replace *Numarray*.
+Numeric and Numarray.
 
 NumPy community
 ---------------
@@ -32,20 +30,17 @@ even better, contact us and participate in fixing the problem.
 
 Our main means of communication are:
 
-- `scipy.org website <http://scipy.org/>`__
+- `scipy.org website <https://scipy.org/>`__
 
-- `Mailing lists <http://scipy.org/Mailing_Lists>`__
+- `Mailing lists <https://scipy.org/scipylib/mailing-lists.html>`__
 
 - `NumPy Issues <https://github.com/numpy/numpy/issues>`__ (bug reports go here)
 
-- `Old NumPy Trac <http://projects.scipy.org/numpy>`__ (no longer used)
+- `Old NumPy Trac <http://projects.scipy.org/numpy>`__ (dead link)
 
-More information about the development of NumPy can be found at
-http://scipy.org/Developer_Zone
+More information about the development of NumPy can be found at our `Developer Zone <https://scipy.scipy.org/scipylib/dev-zone.html>`__.
 
-If you want to fix issues in this documentation, the easiest way
-is to participate in `our ongoing documentation marathon
-<http://scipy.org/Developer_Zone/DocMarathon2008>`__.
+The project management structure can be found at our :doc:`governance page <dev/governance/index>`
 
 
 About this documentation

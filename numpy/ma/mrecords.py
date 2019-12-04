@@ -19,7 +19,6 @@ import sys
 import warnings
 
 import numpy as np
-import numpy.core.numerictypes as ntypes
 from numpy.compat import basestring
 from numpy import (
         bool_, dtype, ndarray, recarray, array as narray
@@ -29,7 +28,6 @@ from numpy.core.records import (
         )
 
 _byteorderconv = np.core.records._byteorderconv
-_typestr = ntypes._typestr
 
 import numpy.ma as ma
 from numpy.ma import (
@@ -46,24 +44,6 @@ __all__ = [
     ]
 
 reserved_fields = ['_data', '_mask', '_fieldmask', 'dtype']
-
-
-def _getformats(data):
-    """
-    Returns the formats of arrays in arraylist as a comma-separated string.
-
-    """
-    if hasattr(data, 'dtype'):
-        return ",".join([desc[1] for desc in data.dtype.descr])
-
-    formats = ''
-    for obj in data:
-        obj = np.asarray(obj)
-        formats += _typestr[obj.dtype.type]
-        if issubclass(obj.dtype.type, ntypes.flexible):
-            formats += repr(obj.itemsize)
-        formats += ','
-    return formats[:-1]
 
 
 def _checknames(descr, names=None):
@@ -186,23 +166,21 @@ class MaskedRecords(MaskedArray, object):
             _dict['_baseclass'] = recarray
         return
 
-    def _getdata(self):
+    @property
+    def _data(self):
         """
         Returns the data as a recarray.
 
         """
         return ndarray.view(self, recarray)
 
-    _data = property(fget=_getdata)
-
-    def _getfieldmask(self):
+    @property
+    def _fieldmask(self):
         """
         Alias to mask.
 
         """
         return self._mask
-
-    _fieldmask = property(fget=_getfieldmask)
 
     def __len__(self):
         """
@@ -230,7 +208,7 @@ class MaskedRecords(MaskedArray, object):
         _localdict = ndarray.__getattribute__(self, '__dict__')
         _data = ndarray.view(self, _localdict['_baseclass'])
         obj = _data.getfield(*res)
-        if obj.dtype.fields:
+        if obj.dtype.names is not None:
             raise NotImplementedError("MaskedRecords is currently limited to"
                                       "simple records.")
         # Get some special attributes
@@ -243,7 +221,8 @@ class MaskedRecords(MaskedArray, object):
             except IndexError:
                 # Couldn't find a mask: use the default (nomask)
                 pass
-            hasmasked = _mask.view((np.bool, (len(_mask.dtype) or 1))).any()
+            tp_len = len(_mask.dtype)
+            hasmasked = _mask.view((bool, ((tp_len,) if tp_len else ()))).any()
         if (obj.shape or hasmasked):
             obj = obj.view(MaskedArray)
             obj._baseclass = ndarray
@@ -276,13 +255,12 @@ class MaskedRecords(MaskedArray, object):
         try:
             # Is attr a generic attribute ?
             ret = object.__setattr__(self, attr, val)
-        except:
+        except Exception:
             # Not a generic attribute: exit if it's not a valid field
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             optinfo = ndarray.__getattribute__(self, '_optinfo') or {}
             if not (attr in fielddict or attr in optinfo):
-                exctype, value = sys.exc_info()[:2]
-                raise exctype(value)
+                raise
         else:
             # Get the list of names
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
@@ -294,7 +272,7 @@ class MaskedRecords(MaskedArray, object):
                 # internal attribute.
                 try:
                     object.__delattr__(self, attr)
-                except:
+                except Exception:
                     return ret
         # Let's try to set the field
         try:
@@ -625,7 +603,7 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
         maskrecordlength = len(mask.dtype)
         if maskrecordlength:
             mrec._mask.flat = mask
-        elif len(mask.shape) == 2:
+        elif mask.ndim == 2:
             mrec._mask.flat = [tuple(m) for m in mask]
         else:
             mrec.__setmask__(mask)
@@ -646,9 +624,9 @@ def _guessvartypes(arr):
     """
     vartypes = []
     arr = np.asarray(arr)
-    if len(arr.shape) == 2:
+    if arr.ndim == 2:
         arr = arr[0]
-    elif len(arr.shape) > 2:
+    elif arr.ndim > 2:
         raise ValueError("The array should be 2D at most!")
     # Start the conversion loop.
     for f in arr:

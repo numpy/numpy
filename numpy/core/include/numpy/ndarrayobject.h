@@ -5,13 +5,7 @@
 #ifndef NPY_NDARRAYOBJECT_H
 #define NPY_NDARRAYOBJECT_H
 #ifdef __cplusplus
-#define CONFUSE_EMACS {
-#define CONFUSE_EMACS2 }
-extern "C" CONFUSE_EMACS
-#undef CONFUSE_EMACS
-#undef CONFUSE_EMACS2
-/* ... otherwise a semi-smart identer (like emacs) tries to indent
-       everything when you're typing */
+extern "C" {
 #endif
 
 #include <Python.h>
@@ -29,7 +23,7 @@ extern "C" CONFUSE_EMACS
 
 /* C-API that requires previous API to be defined */
 
-#define PyArray_DescrCheck(op) (((PyObject*)(op))->ob_type==&PyArrayDescr_Type)
+#define PyArray_DescrCheck(op) PyObject_TypeCheck(op, &PyArrayDescr_Type)
 
 #define PyArray_Check(op) PyObject_TypeCheck(op, &PyArray_Type)
 #define PyArray_CheckExact(op) (((PyObject*)(op))->ob_type == &PyArray_Type)
@@ -170,16 +164,20 @@ extern "C" CONFUSE_EMACS
                                             (k)*PyArray_STRIDES(obj)[2] + \
                                             (l)*PyArray_STRIDES(obj)[3]))
 
+/* Move to arrayobject.c once PyArray_XDECREF_ERR is removed */
 static NPY_INLINE void
-PyArray_XDECREF_ERR(PyArrayObject *arr)
+PyArray_DiscardWritebackIfCopy(PyArrayObject *arr)
 {
-    if (arr != NULL) {
-        if (PyArray_FLAGS(arr) & NPY_ARRAY_UPDATEIFCOPY) {
-            PyArrayObject *base = (PyArrayObject *)PyArray_BASE(arr);
-            PyArray_ENABLEFLAGS(base, NPY_ARRAY_WRITEABLE);
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
+    if (fa && fa->base) {
+        if ((fa->flags & NPY_ARRAY_UPDATEIFCOPY) ||
+                (fa->flags & NPY_ARRAY_WRITEBACKIFCOPY)) {
+            PyArray_ENABLEFLAGS((PyArrayObject*)fa->base, NPY_ARRAY_WRITEABLE);
+            Py_DECREF(fa->base);
+            fa->base = NULL;
+            PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEBACKIFCOPY);
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
         }
-        Py_DECREF(arr);
     }
 }
 
@@ -231,12 +229,52 @@ PyArray_XDECREF_ERR(PyArrayObject *arr)
    dict.
 */
 
-#define NPY_TITLE_KEY(key, value) ((PyTuple_GET_SIZE((value))==3) && \
-                                   (PyTuple_GET_ITEM((value), 2) == (key)))
+static NPY_INLINE int
+NPY_TITLE_KEY_check(PyObject *key, PyObject *value)
+{
+    PyObject *title;
+    if (PyTuple_Size(value) != 3) {
+        return 0;
+    }
+    title = PyTuple_GetItem(value, 2);
+    if (key == title) {
+        return 1;
+    }
+#ifdef PYPY_VERSION
+    /*
+     * On PyPy, dictionary keys do not always preserve object identity.
+     * Fall back to comparison by value.
+     */
+    if (PyUnicode_Check(title) && PyUnicode_Check(key)) {
+        return PyUnicode_Compare(title, key) == 0 ? 1 : 0;
+    }
+#if PY_VERSION_HEX < 0x03000000
+    if (PyString_Check(title) && PyString_Check(key)) {
+        return PyObject_Compare(title, key) == 0 ? 1 : 0;
+    }
+#endif
+#endif
+    return 0;
+}
 
+/* Macro, for backward compat with "if NPY_TITLE_KEY(key, value) { ..." */
+#define NPY_TITLE_KEY(key, value) (NPY_TITLE_KEY_check((key), (value)))
 
 #define DEPRECATE(msg) PyErr_WarnEx(PyExc_DeprecationWarning,msg,1)
 #define DEPRECATE_FUTUREWARNING(msg) PyErr_WarnEx(PyExc_FutureWarning,msg,1)
+
+#if !defined(NPY_NO_DEPRECATED_API) || \
+    (NPY_NO_DEPRECATED_API < NPY_1_14_API_VERSION)
+static NPY_INLINE void
+PyArray_XDECREF_ERR(PyArrayObject *arr)
+{
+    /* 2017-Nov-10 1.14 */
+    DEPRECATE("PyArray_XDECREF_ERR is deprecated, call "
+        "PyArray_DiscardWritebackIfCopy then Py_XDECREF instead");
+    PyArray_DiscardWritebackIfCopy(arr);
+    Py_XDECREF(arr);
+}
+#endif
 
 
 #ifdef __cplusplus

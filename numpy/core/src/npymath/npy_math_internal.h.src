@@ -1,0 +1,759 @@
+/*
+ * vim:syntax=c
+ * A small module to implement missing C99 math capabilities required by numpy
+ *
+ * Please keep this independent of python ! Only basic types (npy_longdouble)
+ * can be used, otherwise, pure C, without any use of Python facilities
+ *
+ * How to add a function to this section
+ * -------------------------------------
+ *
+ * Say you want to add `foo`, these are the steps and the reasons for them.
+ *
+ * 1) Add foo to the appropriate list in the configuration system. The
+ *    lists can be found in numpy/core/setup.py lines 63-105. Read the
+ *    comments that come with them, they are very helpful.
+ *
+ * 2) The configuration system will define a macro HAVE_FOO if your function
+ *    can be linked from the math library. The result can depend on the
+ *    optimization flags as well as the compiler, so can't be known ahead of
+ *    time. If the function can't be linked, then either it is absent, defined
+ *    as a macro, or is an intrinsic (hardware) function.
+ *
+ *    i) Undefine any possible macros:
+ *
+ *    #ifdef foo
+ *    #undef foo
+ *    #endif
+ *
+ *    ii) Avoid as much as possible to declare any function here. Declaring
+ *    functions is not portable: some platforms define some function inline
+ *    with a non standard identifier, for example, or may put another
+ *    identifier which changes the calling convention of the function. If you
+ *    really have to, ALWAYS declare it for the one platform you are dealing
+ *    with:
+ *
+ *    Not ok:
+ *        double exp(double a);
+ *
+ *    Ok:
+ *        #ifdef SYMBOL_DEFINED_WEIRD_PLATFORM
+ *        double exp(double);
+ *        #endif
+ *
+ * Some of the code is taken from msun library in FreeBSD, with the following
+ * notice:
+ *
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
+#include "npy_math_private.h"
+
+/*
+ *****************************************************************************
+ **                     BASIC MATH FUNCTIONS                                **
+ *****************************************************************************
+ */
+
+/* Original code by Konrad Hinsen.  */
+#ifndef HAVE_EXPM1
+NPY_INPLACE double npy_expm1(double x)
+{
+    if (npy_isinf(x) && x > 0) {
+        return x;
+    }
+    else {
+        const double u = npy_exp(x);
+
+        if (u == 1.0) {
+            return x;
+        } else if (u - 1.0 == -1.0) {
+            return -1;
+        } else {
+            return (u - 1.0) * x/npy_log(u);
+        }
+    }
+}
+#endif
+
+#ifndef HAVE_LOG1P
+NPY_INPLACE double npy_log1p(double x)
+{
+    if (npy_isinf(x) && x > 0) {
+        return x;
+    }
+    else {
+        const double u = 1. + x;
+        const double d = u - 1.;
+
+        if (d == 0) {
+            return x;
+        } else {
+            return npy_log(u) * x / d;
+        }
+    }
+}
+#endif
+
+/* Taken from FreeBSD mlib, adapted for numpy
+ *
+ * XXX: we could be a bit faster by reusing high/low words for inf/nan
+ * classification instead of calling npy_isinf/npy_isnan: we should have some
+ * macros for this, though, instead of doing it manually
+ */
+#ifndef HAVE_ATAN2
+/* XXX: we should have this in npy_math.h */
+#define NPY_DBL_EPSILON 1.2246467991473531772E-16
+NPY_INPLACE double npy_atan2(double y, double x)
+{
+    npy_int32 k, m, iy, ix, hx, hy;
+    npy_uint32 lx,ly;
+    double z;
+
+    EXTRACT_WORDS(hx, lx, x);
+    ix = hx & 0x7fffffff;
+    EXTRACT_WORDS(hy, ly, y);
+    iy = hy & 0x7fffffff;
+
+    /* if x or y is nan, return nan */
+    if (npy_isnan(x * y)) {
+        return x + y;
+    }
+
+    if (x == 1.0) {
+        return npy_atan(y);
+    }
+
+    m = 2 * (npy_signbit((x)) != 0) + (npy_signbit((y)) != 0);
+    if (y == 0.0) {
+        switch(m) {
+        case 0:
+        case 1: return  y;  /* atan(+-0,+anything)=+-0 */
+        case 2: return  NPY_PI;/* atan(+0,-anything) = pi */
+        case 3: return -NPY_PI;/* atan(-0,-anything) =-pi */
+        }
+    }
+
+    if (x == 0.0) {
+        return y > 0 ? NPY_PI_2 : -NPY_PI_2;
+    }
+
+    if (npy_isinf(x)) {
+        if (npy_isinf(y)) {
+            switch(m) {
+                case 0: return  NPY_PI_4;/* atan(+INF,+INF) */
+                case 1: return -NPY_PI_4;/* atan(-INF,+INF) */
+                case 2: return  3.0*NPY_PI_4;/*atan(+INF,-INF)*/
+                case 3: return -3.0*NPY_PI_4;/*atan(-INF,-INF)*/
+            }
+        } else {
+            switch(m) {
+                case 0: return  NPY_PZERO;  /* atan(+...,+INF) */
+                case 1: return  NPY_NZERO;  /* atan(-...,+INF) */
+                case 2: return  NPY_PI;  /* atan(+...,-INF) */
+                case 3: return -NPY_PI;  /* atan(-...,-INF) */
+            }
+        }
+    }
+
+    if (npy_isinf(y)) {
+        return y > 0 ? NPY_PI_2 : -NPY_PI_2;
+    }
+
+    /* compute y/x */
+    k = (iy - ix) >> 20;
+    if (k > 60) {            /* |y/x| >  2**60 */
+        z = NPY_PI_2 + 0.5 * NPY_DBL_EPSILON;
+        m &= 1;
+    } else if (hx < 0 && k < -60) {
+        z = 0.0;    /* 0 > |y|/x > -2**-60 */
+    } else {
+        z = npy_atan(npy_fabs(y/x));        /* safe to do y/x */
+    }
+
+    switch (m) {
+        case 0: return  z  ;    /* atan(+,+) */
+        case 1: return -z  ;    /* atan(-,+) */
+        case 2: return  NPY_PI - (z - NPY_DBL_EPSILON);/* atan(+,-) */
+        default: /* case 3 */
+            return  (z - NPY_DBL_EPSILON) - NPY_PI;/* atan(-,-) */
+    }
+}
+
+#endif
+
+#ifndef HAVE_HYPOT
+NPY_INPLACE double npy_hypot(double x, double y)
+{
+    double yx;
+
+    if (npy_isinf(x) || npy_isinf(y)) {
+        return NPY_INFINITY;
+    }
+
+    if (npy_isnan(x) || npy_isnan(y)) {
+        return NPY_NAN;
+    }
+
+    x = npy_fabs(x);
+    y = npy_fabs(y);
+    if (x < y) {
+        double temp = x;
+        x = y;
+        y = temp;
+    }
+    if (x == 0.) {
+        return 0.;
+    }
+    else {
+        yx = y/x;
+        return x*npy_sqrt(1.+yx*yx);
+    }
+}
+#endif
+
+#ifndef HAVE_ACOSH
+NPY_INPLACE double npy_acosh(double x)
+{
+    if (x < 1.0) {
+        return NPY_NAN;
+    }
+
+    if (npy_isfinite(x)) {
+        if (x > 1e8) {
+             return npy_log(x) + NPY_LOGE2;
+        }
+        else {
+            double u = x - 1.0;
+            return npy_log1p(u + npy_sqrt(2*u + u*u));
+        }
+    }
+    return x;
+}
+#endif
+
+#ifndef HAVE_ASINH
+NPY_INPLACE double npy_asinh(double xx)
+{
+    double x, d;
+    int sign;
+    if (xx < 0.0) {
+        sign = -1;
+        x = -xx;
+    }
+    else {
+        sign = 1;
+        x = xx;
+    }
+    if (x > 1e8) {
+        d = x;
+    } else {
+        d = npy_sqrt(x*x + 1);
+    }
+    return sign*npy_log1p(x*(1.0 + x/(d+1)));
+}
+#endif
+
+#ifndef HAVE_ATANH
+NPY_INPLACE double npy_atanh(double x)
+{
+    if (x > 0) {
+        return -0.5*npy_log1p(-2.0*x/(1.0 + x));
+    }
+    else {
+        return 0.5*npy_log1p(2.0*x/(1.0 - x));
+    }
+}
+#endif
+
+#ifndef HAVE_RINT
+#if defined(_MSC_VER) && (_MSC_VER == 1500) && !defined(_WIN64)
+#pragma optimize("", off)
+#endif
+NPY_INPLACE double npy_rint(double x)
+{
+    double y, r;
+
+    y = npy_floor(x);
+    r = x - y;
+
+    if (r > 0.5) {
+        y += 1.0;
+    }
+
+    /* Round to nearest even */
+    if (r == 0.5) {
+        r = y - 2.0*npy_floor(0.5*y);
+        if (r == 1.0) {
+            y += 1.0;
+        }
+    }
+    return y;
+}
+#if defined(_MSC_VER) && (_MSC_VER == 1500) && !defined(_WIN64)
+#pragma optimize("", on)
+#endif
+#endif
+
+#ifndef HAVE_TRUNC
+NPY_INPLACE double npy_trunc(double x)
+{
+    return x < 0 ? npy_ceil(x) : npy_floor(x);
+}
+#endif
+
+#ifndef HAVE_EXP2
+NPY_INPLACE double npy_exp2(double x)
+{
+    return npy_exp(NPY_LOGE2*x);
+}
+#endif
+
+#ifndef HAVE_LOG2
+NPY_INPLACE double npy_log2(double x)
+{
+#ifdef HAVE_FREXP
+    if (!npy_isfinite(x) || x <= 0.) {
+        /* special value result */
+        return npy_log(x);
+    }
+    else {
+        /*
+         * fallback implementation copied from python3.4 math.log2
+         * provides int(log(2**i)) == i for i 1-64 in default rounding mode.
+         *
+         * We want log2(m * 2**e) == log(m) / log(2) + e.  Care is needed when
+         * x is just greater than 1.0: in that case e is 1, log(m) is negative,
+         * and we get significant cancellation error from the addition of
+         * log(m) / log(2) to e.  The slight rewrite of the expression below
+         * avoids this problem.
+         */
+        int e;
+        double m = frexp(x, &e);
+        if (x >= 1.0) {
+            return log(2.0 * m) / log(2.0) + (e - 1);
+        }
+        else {
+            return log(m) / log(2.0) + e;
+        }
+    }
+#else
+    /* does not provide int(log(2**i)) == i */
+    return NPY_LOG2E * npy_log(x);
+#endif
+}
+#endif
+
+/*
+ * if C99 extensions not available then define dummy functions that use the
+ * double versions for
+ *
+ * sin, cos, tan
+ * sinh, cosh, tanh,
+ * fabs, floor, ceil, rint, trunc
+ * sqrt, log10, log, exp, expm1
+ * asin, acos, atan,
+ * asinh, acosh, atanh
+ *
+ * hypot, atan2, pow, fmod, modf
+ * ldexp, frexp
+ *
+ * We assume the above are always available in their double versions.
+ *
+ * NOTE: some facilities may be available as macro only  instead of functions.
+ * For simplicity, we define our own functions and undef the macros. We could
+ * instead test for the macro, but I am lazy to do that for now.
+ */
+
+/**begin repeat
+ * #type = npy_longdouble, npy_float#
+ * #TYPE = NPY_LONGDOUBLE, FLOAT#
+ * #c = l,f#
+ * #C = L,F#
+ */
+
+/**begin repeat1
+ * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
+ *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
+ * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
+ *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
+ */
+
+#ifdef @kind@@c@
+#undef @kind@@c@
+#endif
+#ifndef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
+{
+    return (@type@) npy_@kind@((double)x);
+}
+#endif
+
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = atan2,hypot,pow,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
+ */
+#ifdef @kind@@c@
+#undef @kind@@c@
+#endif
+#ifndef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
+{
+    return (@type@) npy_@kind@((double)x, (double) y);
+}
+#endif
+/**end repeat1**/
+
+#ifdef modf@c@
+#undef modf@c@
+#endif
+#ifndef HAVE_MODF@C@
+NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
+{
+    double niptr;
+    double y = npy_modf((double)x, &niptr);
+    *iptr = (@type@) niptr;
+    return (@type@) y;
+}
+#endif
+
+#ifdef ldexp@c@
+#undef ldexp@c@
+#endif
+#ifndef HAVE_LDEXP@C@
+NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
+{
+    return (@type@) npy_ldexp((double)x, exp);
+}
+#endif
+
+#ifdef frexp@c@
+#undef frexp@c@
+#endif
+#ifndef HAVE_FREXP@C@
+NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
+{
+    return (@type@) npy_frexp(x, exp);
+}
+#endif
+
+/**end repeat**/
+
+
+/*
+ * Decorate all the math functions which are available on the current platform
+ */
+
+/**begin repeat
+ * #type = npy_longdouble, npy_double, npy_float#
+ * #c = l,,f#
+ * #C = L,,F#
+ */
+/**begin repeat1
+ * #kind = sin,cos,tan,sinh,cosh,tanh,fabs,floor,ceil,rint,trunc,sqrt,log10,
+ *         log,exp,expm1,asin,acos,atan,asinh,acosh,atanh,log1p,exp2,log2#
+ * #KIND = SIN,COS,TAN,SINH,COSH,TANH,FABS,FLOOR,CEIL,RINT,TRUNC,SQRT,LOG10,
+ *         LOG,EXP,EXPM1,ASIN,ACOS,ATAN,ASINH,ACOSH,ATANH,LOG1P,EXP2,LOG2#
+ */
+#ifdef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
+{
+    return @kind@@c@(x);
+}
+#endif
+
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = atan2,hypot,pow,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
+ */
+#ifdef HAVE_@KIND@@C@
+NPY_INPLACE @type@ npy_@kind@@c@(@type@ x, @type@ y)
+{
+    return @kind@@c@(x, y);
+}
+#endif
+/**end repeat1**/
+
+#ifdef HAVE_MODF@C@
+NPY_INPLACE @type@ npy_modf@c@(@type@ x, @type@ *iptr)
+{
+    return modf@c@(x, iptr);
+}
+#endif
+
+#ifdef HAVE_LDEXP@C@
+NPY_INPLACE @type@ npy_ldexp@c@(@type@ x, int exp)
+{
+    return ldexp@c@(x, exp);
+}
+#endif
+
+#ifdef HAVE_FREXP@C@
+NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
+{
+    return frexp@c@(x, exp);
+}
+#endif
+
+/* C99 but not mandatory */
+
+#ifndef HAVE_CBRT@C@
+NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
+{
+    /* don't set invalid flag */
+    if (npy_isnan(x)) {
+        return NPY_NAN;
+    }
+    else if (x < 0) {
+        return -npy_pow@c@(-x, 1. / 3.);
+    }
+    else {
+        return npy_pow@c@(x, 1. / 3.);
+    }
+}
+#else
+NPY_INPLACE @type@ npy_cbrt@c@(@type@ x)
+{
+    return cbrt@c@(x);
+}
+#endif
+
+/**end repeat**/
+
+
+/*
+ * Non standard functions
+ */
+
+/**begin repeat
+ * #type = npy_float, npy_double, npy_longdouble#
+ * #c = f, ,l#
+ * #C = F, ,L#
+ */
+
+@type@ npy_heaviside@c@(@type@ x, @type@ h0)
+{
+    if (npy_isnan(x)) {
+        return (@type@) NPY_NAN;
+    }
+    else if (x == 0) {
+        return h0;
+    }
+    else if (x < 0) {
+        return (@type@) 0.0;
+    }
+    else {
+        return (@type@) 1.0;
+    }
+}
+
+#define LOGE2    NPY_LOGE2@c@
+#define LOG2E    NPY_LOG2E@c@
+#define RAD2DEG  (180.0@c@/NPY_PI@c@)
+#define DEG2RAD  (NPY_PI@c@/180.0@c@)
+
+NPY_INPLACE @type@ npy_rad2deg@c@(@type@ x)
+{
+    return x*RAD2DEG;
+}
+
+NPY_INPLACE @type@ npy_deg2rad@c@(@type@ x)
+{
+    return x*DEG2RAD;
+}
+
+NPY_INPLACE @type@ npy_log2_1p@c@(@type@ x)
+{
+    return LOG2E*npy_log1p@c@(x);
+}
+
+NPY_INPLACE @type@ npy_exp2_m1@c@(@type@ x)
+{
+    return npy_expm1@c@(LOGE2*x);
+}
+
+NPY_INPLACE @type@ npy_logaddexp@c@(@type@ x, @type@ y)
+{
+    if (x == y) {
+        /* Handles infinities of the same sign without warnings */
+        return x + LOGE2;
+    }
+    else {
+        const @type@ tmp = x - y;
+        if (tmp > 0) {
+            return x + npy_log1p@c@(npy_exp@c@(-tmp));
+        }
+        else if (tmp <= 0) {
+            return y + npy_log1p@c@(npy_exp@c@(tmp));
+        }
+        else {
+            /* NaNs */
+            return tmp;
+        }
+    }
+}
+
+NPY_INPLACE @type@ npy_logaddexp2@c@(@type@ x, @type@ y)
+{
+    if (x == y) {
+        /* Handles infinities of the same sign without warnings */
+        return x + 1;
+    }
+    else {
+        const @type@ tmp = x - y;
+        if (tmp > 0) {
+            return x + npy_log2_1p@c@(npy_exp2@c@(-tmp));
+        }
+        else if (tmp <= 0) {
+            return y + npy_log2_1p@c@(npy_exp2@c@(tmp));
+        }
+        else {
+            /* NaNs */
+            return tmp;
+        }
+    }
+}
+
+/*
+ * Python version of divmod.
+ *
+ * The implementation is mostly copied from cpython 3.5.
+ */
+NPY_INPLACE @type@
+npy_divmod@c@(@type@ a, @type@ b, @type@ *modulus)
+{
+    @type@ div, mod, floordiv;
+
+    mod = npy_fmod@c@(a, b);
+
+    if (!b) {
+        /* If b == 0, return result of fmod. For IEEE is nan */
+        *modulus = mod;
+        return mod;
+    }
+
+    /* a - mod should be very nearly an integer multiple of b */
+    div = (a - mod) / b;
+
+    /* adjust fmod result to conform to Python convention of remainder */
+    if (mod) {
+        if ((b < 0) != (mod < 0)) {
+            mod += b;
+            div -= 1.0@c@;
+        }
+    }
+    else {
+        /* if mod is zero ensure correct sign */
+        mod = npy_copysign@c@(0, b);
+    }
+
+    /* snap quotient to nearest integral value */
+    if (div) {
+        floordiv = npy_floor@c@(div);
+        if (div - floordiv > 0.5@c@)
+            floordiv += 1.0@c@;
+    }
+    else {
+        /* if div is zero ensure correct sign */
+        floordiv = npy_copysign@c@(0, a/b);
+    }
+
+    *modulus = mod;
+    return floordiv;
+}
+
+#undef LOGE2
+#undef LOG2E
+#undef RAD2DEG
+#undef DEG2RAD
+
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #type = npy_uint, npy_ulong, npy_ulonglong#
+ * #c = u,ul,ull#
+ */
+NPY_INPLACE @type@
+npy_gcd@c@(@type@ a, @type@ b)
+{
+    @type@ c;
+    while (a != 0) {
+        c = a;
+        a = b%a;
+        b = c;
+    }
+    return b;
+}
+
+NPY_INPLACE @type@
+npy_lcm@c@(@type@ a, @type@ b)
+{
+    @type@ gcd = npy_gcd@c@(a, b);
+    return gcd == 0 ? 0 : a / gcd * b;
+}
+/**end repeat**/
+
+/**begin repeat
+ *
+ * #type = (npy_int, npy_long, npy_longlong)*2#
+ * #c = (,l,ll)*2#
+ * #func=gcd*3,lcm*3#
+ */
+NPY_INPLACE @type@
+npy_@func@@c@(@type@ a, @type@ b)
+{
+    return npy_@func@u@c@(a < 0 ? -a : a, b < 0 ? -b : b);
+}
+/**end repeat**/
+
+/* Unlike LCM and GCD, we need byte and short variants for the shift operators,
+ * since the result is dependent on the width of the type
+ */
+/**begin repeat
+ *
+ * #type = byte, short, int, long, longlong#
+ * #c = hh,h,,l,ll#
+ */
+/**begin repeat1
+ *
+ * #u         = u,#
+ * #is_signed = 0,1#
+ */
+NPY_INPLACE npy_@u@@type@
+npy_lshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
+{
+    if (NPY_LIKELY((size_t)b < sizeof(a) * CHAR_BIT)) {
+        return a << b;
+    }
+    else {
+        return 0;
+    }
+}
+NPY_INPLACE npy_@u@@type@
+npy_rshift@u@@c@(npy_@u@@type@ a, npy_@u@@type@ b)
+{
+    if (NPY_LIKELY((size_t)b < sizeof(a) * CHAR_BIT)) {
+        return a >> b;
+    }
+#if @is_signed@
+    else if (a < 0) {
+        return (npy_@u@@type@)-1;  /* preserve the sign bit */
+    }
+#endif
+    else {
+        return 0;
+    }
+}
+/**end repeat1**/
+/**end repeat**/

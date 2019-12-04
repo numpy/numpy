@@ -31,10 +31,10 @@ Some Key Differences
        these arrays are designed to act more or less like matrix operations
        in linear algebra.
      - In NumPy the basic type is a multidimensional ``array``.  Operations
-       on these arrays in all dimensionalities including 2D are elementwise
-       operations.  However, there is a special ``matrix`` type for doing
-       linear algebra, which is just a subclass of the ``array`` class.
-       Operations on matrix-class arrays are linear algebra operations.
+       on these arrays in all dimensionalities including 2D are element-wise
+       operations.  One needs to use specific functions for linear algebra
+       (though for matrix multiplication, one can use the ``@`` operator
+       in python 3.5 and above).
 
    * - MATLAB® uses 1 (one) based indexing. The initial element of a
        sequence is found using a(1).
@@ -50,8 +50,8 @@ Some Key Differences
        an excellent general-purpose programming language.  While Matlab's
        syntax for some array manipulations is more compact than
        NumPy's, NumPy (by virtue of being an add-on to Python) can do many
-       things that Matlab just cannot, for instance subclassing the main
-       array type to do both array and matrix math cleanly.
+       things that Matlab just cannot, for instance dealing properly with
+       stacks of matrices.
 
    * - In MATLAB®, arrays have pass-by-value semantics, with a lazy
        copy-on-write scheme to prevent actually creating copies until they
@@ -63,8 +63,10 @@ Some Key Differences
 'array' or 'matrix'? Which should I use?
 ========================================
 
-NumPy provides, in addition to ``np.ndarray``, an additional matrix type
-that you may see used in some existing code. Which one to use?
+Historically, NumPy has provided a special matrix type, `np.matrix`, which
+is a subclass of ndarray which makes binary operations linear algebra
+operations. You may see it used in some existing code instead of `np.array`.
+So, which one to use?
 
 Short answer
 ------------
@@ -77,9 +79,12 @@ Short answer
    linear algebra operations.
 -  You can have standard vectors or row/column vectors if you like.
 
-The only disadvantage of using the array type is that you will have to
-use ``dot`` instead of ``*`` to multiply (reduce) two tensors (scalar
-product, matrix vector multiplication etc.).
+Until Python 3.5 the only disadvantage of using the array type was that you
+had to use ``dot`` instead of ``*`` to multiply (reduce) two tensors
+(scalar product, matrix vector multiplication etc.). Since Python 3.5 you
+can use the matrix multiplication ``@`` operator.
+
+Given the above, we intend to deprecate ``matrix`` eventually.
 
 Long answer
 -----------
@@ -90,12 +95,14 @@ for many kinds of numerical computing, while ``matrix`` is intended to
 facilitate linear algebra computations specifically. In practice there
 are only a handful of key differences between the two.
 
--  Operator ``*``, ``dot()``, and ``multiply()``:
+-  Operators ``*`` and ``@``, functions ``dot()``, and ``multiply()``:
 
-   -  For ``array``, **'``*``\ ' means element-wise multiplication**,
-      and the ``dot()`` function is used for matrix multiplication.
-   -  For ``matrix``, **'``*``\ ' means matrix multiplication**, and the
-      ``multiply()`` function is used for element-wise multiplication.
+   -  For ``array``, **``*`` means element-wise multiplication**, while
+      **``@`` means matrix multiplication**; they have associated functions
+      ``multiply()`` and ``dot()``.  (Before python 3.5, ``@`` did not exist
+      and one had to use ``dot()`` for matrix multiplication).
+   -  For ``matrix``, **``*`` means matrix multiplication**, and for
+      element-wise multiplication one has to use the ``multiply()`` function.
 
 -  Handling of vectors (one-dimensional arrays)
 
@@ -131,13 +138,13 @@ There are pros and cons to using both:
 
 -  ``array``
 
-   -  ``:)`` You can treat one-dimensional arrays as *either* row or column
-      vectors. ``dot(A,v)`` treats ``v`` as a column vector, while
-      ``dot(v,A)`` treats ``v`` as a row vector. This can save you having to
-      type a lot of transposes.
-   -  ``<:(`` Having to use the ``dot()`` function for matrix-multiply is
-      messy -- ``dot(dot(A,B),C)`` vs. ``A*B*C``.
    -  ``:)`` Element-wise multiplication is easy: ``A*B``.
+   -  ``:(`` You have to remember that matrix multiplication has its own
+      operator, ``@``.
+   -  ``:)`` You can treat one-dimensional arrays as *either* row or column
+      vectors. ``A @ v`` treats ``v`` as a column vector, while
+      ``v @ A`` treats ``v`` as a row vector. This can save you having to
+      type a lot of transposes.
    -  ``:)`` ``array`` is the "default" NumPy type, so it gets the most
       testing, and is the type most likely to be returned by 3rd party
       code that uses NumPy.
@@ -145,7 +152,9 @@ There are pros and cons to using both:
    -  ``:)`` Closer in semantics to tensor algebra, if you are familiar
       with that.
    -  ``:)`` *All* operations (``*``, ``/``, ``+``, ``-`` etc.) are
-      elementwise
+      element-wise.
+   -  ``:(`` Sparse matrices from ``scipy.sparse`` do not interact as well
+      with arrays.
 
 -  ``matrix``
 
@@ -159,34 +168,17 @@ There are pros and cons to using both:
       argument. This shouldn't happen with NumPy functions (if it does
       it's a bug), but 3rd party code based on NumPy may not honor type
       preservation like NumPy does.
-   -  ``:)`` ``A*B`` is matrix multiplication, so more convenient for
-      linear algebra.
+   -  ``:)`` ``A*B`` is matrix multiplication, so it looks just like you write
+      it in linear algebra (For Python >= 3.5 plain arrays have the same
+      convenience with the ``@`` operator).
    -  ``<:(`` Element-wise multiplication requires calling a function,
-      ``multipy(A,B)``.
+      ``multiply(A,B)``.
    -  ``<:(`` The use of operator overloading is a bit illogical: ``*``
-      does not work elementwise but ``/`` does.
+      does not work element-wise but ``/`` does.
+   -  Interaction with ``scipy.sparse`` is a bit cleaner.
 
-The ``array`` is thus much more advisable to use.
-
-Facilities for Matrix Users
-===========================
-
-NumPy has some features that facilitate the use of the ``matrix`` type,
-which hopefully make things easier for Matlab converts.
-
--  A ``matlib`` module has been added that contains matrix versions of
-   common array constructors like ``ones()``, ``zeros()``, ``empty()``,
-   ``eye()``, ``rand()``, ``repmat()``, etc. Normally these functions
-   return ``array``\ s, but the ``matlib`` versions return ``matrix``
-   objects.
--  ``mat`` has been changed to be a synonym for ``asmatrix``, rather
-   than ``matrix``, thus making it a concise way to convert an ``array``
-   to a ``matrix`` without copying the data.
--  Some top-level functions have been removed. For example
-   ``numpy.rand()`` now needs to be accessed as ``numpy.random.rand()``.
-   Or use the ``rand()`` from the ``matlib`` module. But the
-   "numpythonic" way is to use ``numpy.random.random()``, which takes a
-   tuple for the shape, like other numpy functions.
+The ``array`` is thus much more advisable to use.  Indeed, we intend to
+deprecate ``matrix`` eventually.
 
 Table of Rough MATLAB-NumPy Equivalents
 =======================================
@@ -195,23 +187,6 @@ The table below gives rough equivalents for some common MATLAB®
 expressions. **These are not exact equivalents**, but rather should be
 taken as hints to get you going in the right direction. For more detail
 read the built-in documentation on the NumPy functions.
-
-Some care is necessary when writing functions that take arrays or
-matrices as arguments --- if you are expecting an ``array`` and are
-given a ``matrix``, or vice versa, then '\*' (multiplication) will give
-you unexpected results. You can convert back and forth between arrays
-and matrices using
-
-- ``asarray``: always returns an object of type ``array``
-- ``asmatrix`` or ``mat``: always return an object of type
-  ``matrix``
-- ``asanyarray``: always returns an ``array`` object or a subclass
-  derived from it, depending on the input. For instance if you pass in
-  a ``matrix`` it returns a ``matrix``.
-
-These functions all accept both arrays and matrices (among other things
-like Python lists), and thus are useful when writing functions that
-should accept any array-like object.
 
 In the table below, it is assumed that you have executed the following
 commands in Python:
@@ -265,11 +240,11 @@ General Purpose Equivalents
      - Distance between 1 and the nearest floating point number.
 
    * - ``ode45``
-     - ``scipy.integrate.ode(f).set_integrator('dopri5')``
+     - ``scipy.integrate.solve_ivp(f)``
      - integrate an ODE with Runge-Kutta 4,5
 
    * - ``ode15s``
-     - ``scipy.integrate.ode(f).set_integrator('vode', method='bdf', order=5)``
+     - ``scipy.integrate.solve_ivp(f, method='BDF')``
      - integrate an ODE with BDF method
 
 Linear Algebra Equivalents
@@ -305,8 +280,7 @@ Linear Algebra Equivalents
      - 2x3 matrix literal
 
    * - ``[ a b; c d ]``
-     - ``vstack([hstack([a,b]), hstack([c,d])])`` or
-       ``bmat('a b; c d').A``
+     - ``block([[a,b], [c,d]])``
      - construct a matrix from blocks ``a``, ``b``, ``c``, and ``d``
 
    * - ``a(end)``
@@ -365,7 +339,7 @@ Linear Algebra Equivalents
      - conjugate transpose of ``a``
 
    * - ``a * b``
-     - ``a.dot(b)``
+     - ``a @ b``
      - matrix multiply
 
    * - ``a .* b``
@@ -462,7 +436,7 @@ Linear Algebra Equivalents
        ``a``
 
    * - ``rand(3,4)``
-     - ``random.rand(3,4)``
+     - ``random.rand(3,4)`` or ``random.random_sample((3, 4))``
      - random 3x4 matrix
 
    * - ``linspace(1,3,4)``
@@ -516,7 +490,7 @@ Linear Algebra Equivalents
        from each pair
 
    * - ``norm(v)``
-     - ``sqrt(dot(v,v))`` or ``np.linalg.norm(v)``
+     - ``sqrt(v @ v)`` or ``np.linalg.norm(v)``
      - L2 norm of vector ``v``
 
    * - ``a & b``
@@ -573,7 +547,7 @@ Linear Algebra Equivalents
      - eigenvalues and eigenvectors of ``a``
 
    * - ``[V,D]=eig(a,b)``
-     - ``V,D = np.linalg.eig(a,b)``
+     - ``D,V = scipy.linalg.eig(a,b)``
      - eigenvalues and eigenvectors of ``a``, ``b``
 
    * - ``[V,D]=eigs(a,k)``
@@ -644,9 +618,9 @@ initial element of a sequence has index 0. Confusion and flamewars arise
 because each has advantages and disadvantages. One based indexing is
 consistent with common human language usage, where the "first" element
 of a sequence has index 1. Zero based indexing `simplifies
-indexing <http://groups.google.com/group/comp.lang.python/msg/1bf4d925dfbf368?q=g:thl3498076713d&hl=en>`__.
+indexing <https://groups.google.com/group/comp.lang.python/msg/1bf4d925dfbf368?q=g:thl3498076713d&hl=en>`__.
 See also `a text by prof.dr. Edsger W.
-Dijkstra <http://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html>`__.
+Dijkstra <https://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html>`__.
 
 \ **RANGES**: In MATLAB®, ``0:5`` can be used as both a range literal
 and a 'slice' index (inside parentheses); however, in Python, constructs
@@ -719,19 +693,19 @@ this is just an example, not a statement of "best practices"):
 
 ::
 
-    # Make all numpy available via shorter 'num' prefix
-    import numpy as num
+    # Make all numpy available via shorter 'np' prefix
+    import numpy as np
     # Make all matlib functions accessible at the top level via M.func()
     import numpy.matlib as M
     # Make some matlib functions accessible directly at the top level via, e.g. rand(3,3)
     from numpy.matlib import rand,zeros,ones,empty,eye
     # Define a Hermitian function
     def hermitian(A, **kwargs):
-        return num.transpose(A,**kwargs).conj()
-    # Make some shorcuts for transpose,hermitian:
-    #    num.transpose(A) --> T(A)
+        return np.transpose(A,**kwargs).conj()
+    # Make some shortcuts for transpose,hermitian:
+    #    np.transpose(A) --> T(A)
     #    hermitian(A) --> H(A)
-    T = num.transpose
+    T = np.transpose
     H = hermitian
 
 Links
@@ -741,6 +715,6 @@ See http://mathesaurus.sf.net/ for another MATLAB®/NumPy
 cross-reference.
 
 An extensive list of tools for scientific work with python can be
-found in the `topical software page <http://scipy.org/topical-software.html>`__.
+found in the `topical software page <https://scipy.org/topical-software.html>`__.
 
 MATLAB® and SimuLink® are registered trademarks of The MathWorks.

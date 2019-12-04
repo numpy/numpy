@@ -10,6 +10,7 @@ class Core(Benchmark):
         self.l100 = range(100)
         self.l50 = range(50)
         self.l = [np.arange(1000), np.arange(1000)]
+        self.l_view = [memoryview(a) for a in self.l]
         self.l10x10 = np.ones((10, 10))
 
     def time_array_1(self):
@@ -26,6 +27,9 @@ class Core(Benchmark):
 
     def time_array_l(self):
         np.array(self.l)
+
+    def time_array_l_view(self):
+        np.array(self.l_view)
 
     def time_vstack_l(self):
         np.vstack(self.l)
@@ -76,24 +80,29 @@ class Core(Benchmark):
         np.tril(self.l10x10)
 
 
-class MA(Benchmark):
+class Temporaries(Benchmark):
     def setup(self):
-        self.l100 = range(100)
-        self.t100 = ([True] * 100)
+        self.amid = np.ones(50000)
+        self.bmid = np.ones(50000)
+        self.alarge = np.ones(1000000)
+        self.blarge = np.ones(1000000)
 
-    def time_masked_array(self):
-        np.ma.masked_array()
+    def time_mid(self):
+        (self.amid * 2) + self.bmid
 
-    def time_masked_array_l100(self):
-        np.ma.masked_array(self.l100)
+    def time_mid2(self):
+        (self.amid + self.bmid) - 2
 
-    def time_masked_array_l100_t100(self):
-        np.ma.masked_array(self.l100, self.t100)
+    def time_large(self):
+        (self.alarge * 2) + self.blarge
+
+    def time_large2(self):
+        (self.alarge + self.blarge) - 2
 
 
 class CorrConv(Benchmark):
-    params = [[50, 1000, 1e5],
-              [10, 100, 1000, 1e4],
+    params = [[50, 1000, int(1e5)],
+              [10, 100, 1000, int(1e4)],
               ['valid', 'same', 'full']]
     param_names = ['size1', 'size2', 'mode']
 
@@ -117,8 +126,8 @@ class CountNonzero(Benchmark):
     ]
 
     def setup(self, numaxes, size, dtype):
-        self.x = np.empty(shape=(
-            numaxes, size), dtype=dtype)
+        self.x = np.arange(numaxes * size).reshape(numaxes, size)
+        self.x = (self.x % 3).astype(dtype)
 
     def time_count_nonzero(self, numaxes, size, dtype):
         np.count_nonzero(self.x)
@@ -130,3 +139,46 @@ class CountNonzero(Benchmark):
         if self.x.ndim >= 2:
             np.count_nonzero(self.x, axis=(
                 self.x.ndim - 1, self.x.ndim - 2))
+
+
+class PackBits(Benchmark):
+    param_names = ['dtype']
+    params = [[bool, np.uintp]]
+    def setup(self, dtype):
+        self.d = np.ones(10000, dtype=dtype)
+        self.d2 = np.ones((200, 1000), dtype=dtype)
+
+    def time_packbits(self, dtype):
+        np.packbits(self.d)
+
+    def time_packbits_axis0(self, dtype):
+        np.packbits(self.d2, axis=0)
+
+    def time_packbits_axis1(self, dtype):
+        np.packbits(self.d2, axis=1)
+
+
+class UnpackBits(Benchmark):
+    def setup(self):
+        self.d = np.ones(10000, dtype=np.uint8)
+        self.d2 = np.ones((200, 1000), dtype=np.uint8)
+
+    def time_unpackbits(self):
+        np.unpackbits(self.d)
+
+    def time_unpackbits_little(self):
+        np.unpackbits(self.d, bitorder="little")
+
+    def time_unpackbits_axis0(self):
+        np.unpackbits(self.d2, axis=0)
+
+    def time_unpackbits_axis1(self):
+        np.unpackbits(self.d2, axis=1)
+
+    def time_unpackbits_axis1_little(self):
+        np.unpackbits(self.d2, bitorder="little", axis=1)
+
+
+class Indices(Benchmark):
+    def time_indices(self):
+        np.indices((1000, 500))

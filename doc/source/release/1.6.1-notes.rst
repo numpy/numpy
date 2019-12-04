@@ -1,0 +1,21 @@
+=========================
+NumPy 1.6.1 Release Notes
+=========================
+
+This is a bugfix only release in the 1.6.x series.
+
+
+Issues Fixed
+============
+
+* #1834: einsum fails for specific shapes
+* #1837: einsum throws nan or freezes python for specific array shapes
+* #1838: object <-> structured type arrays regression
+* #1851: regression for SWIG based code in 1.6.0
+* #1863: Buggy results when operating on array copied with astype()
+* #1870: Fix corner case of object array assignment
+* #1843: Py3k: fix error with recarray
+* #1885: nditer: Error in detecting double reduction loop
+* #1874: f2py: fix --include_paths bug
+* #1749: Fix ctypes.load_library()
+* #1895/1896:  iter: writeonly operands weren't always being buffered correctly

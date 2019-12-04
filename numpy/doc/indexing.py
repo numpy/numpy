@@ -1,4 +1,5 @@
-"""==============
+"""
+==============
 Array indexing
 ==============
 
@@ -93,7 +94,9 @@ well. A few examples illustrates best: ::
         [21, 24, 27]])
 
 Note that slices of arrays do not copy the internal array data but
-also produce new views of the original data.
+only produce new views of the original data. This is different from
+list or tuple slicing and an explicit ``copy()`` is recommended if
+the original data is not required anymore.
 
 It is possible to index arrays with other arrays for the purposes of
 selecting lists of values out of arrays into new arrays. There are
@@ -105,7 +108,7 @@ arrays and thus greatly improve performance.
 
 It is possible to use special features to effectively increase the
 number of dimensions in an array through indexing so the resulting
-array aquires the shape needed for use in an expression or with a
+array acquires the shape needed for use in an expression or with a
 specific function.
 
 Index arrays
@@ -200,8 +203,8 @@ one index array with y: ::
 
 What results is the construction of a new array where each value of
 the index array selects one row from the array being indexed and the
-resultant array has the resulting shape (size of row, number index
-elements).
+resultant array has the resulting shape (number of index elements,
+size of row).
 
 An example of where this may be useful is for a color lookup table
 where we want to map the values of an image into RGB triples for
@@ -240,7 +243,7 @@ The result will be multidimensional if y has more dimensions than b.
 For example: ::
 
  >>> b[:,5] # use a 1-D boolean whose first dim agrees with the first dim of y
- array([False, False, False,  True,  True], dtype=bool)
+ array([False, False, False,  True,  True])
  >>> y[b[:,5]]
  array([[21, 22, 23, 24, 25, 26, 27],
         [28, 29, 30, 31, 32, 33, 34]])
@@ -293,6 +296,13 @@ to produce a resultant array of shape (3,2).
 
 Likewise, slicing can be combined with broadcasted boolean indices: ::
 
+ >>> b = y > 20
+ >>> b
+ array([[False, False, False, False, False, False, False],
+       [False, False, False, False, False, False, False],
+       [False, False, False, False, False, False, False],
+       [ True,  True,  True,  True,  True,  True,  True],
+       [ True,  True,  True,  True,  True,  True,  True]])
  >>> y[b[:,5],1:3]
  array([[22, 23],
         [29, 30]])
@@ -422,7 +432,7 @@ object: ::
         [37, 40, 43],
         [46, 49, 52]])
 
-For this reason it is possible to use the output from the np.where()
+For this reason it is possible to use the output from the np.nonzero()
 function directly as an index since it always returns a tuple of index
 arrays.
 

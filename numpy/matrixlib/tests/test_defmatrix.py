@@ -1,17 +1,22 @@
 from __future__ import division, absolute_import, print_function
 
-import collections
+try:
+    # Accessing collections abstract classes from collections
+    # has been deprecated since Python 3.3
+    import collections.abc as collections_abc
+except ImportError:
+    import collections as collections_abc
 
 import numpy as np
 from numpy import matrix, asmatrix, bmat
 from numpy.testing import (
-    TestCase, run_module_suite, assert_, assert_equal, assert_almost_equal,
-    assert_array_equal, assert_array_almost_equal, assert_raises
-)
-from numpy.matrixlib.defmatrix import matrix_power
+    assert_, assert_equal, assert_almost_equal, assert_array_equal,
+    assert_array_almost_equal, assert_raises
+    )
+from numpy.linalg import matrix_power
 from numpy.matrixlib import mat
 
-class TestCtor(TestCase):
+class TestCtor(object):
     def test_basic(self):
         A = np.array([[1, 2], [3, 4]])
         mA = matrix(A)
@@ -35,8 +40,8 @@ class TestCtor(TestCase):
         assert_(mvec.shape == (1, 5))
 
     def test_exceptions(self):
-        # Check for TypeError when called with invalid string data.
-        assert_raises(TypeError, matrix, "invalid")
+        # Check for ValueError when called with invalid string data.
+        assert_raises(ValueError, matrix, "invalid")
 
     def test_bmat_nondefault_str(self):
         A = np.array([[1, 2], [3, 4]])
@@ -58,7 +63,7 @@ class TestCtor(TestCase):
         assert_(np.all(b2 == mixresult))
 
 
-class TestProperties(TestCase):
+class TestProperties(object):
     def test_sum(self):
         """Test whether matrix.sum(axis=1) preserves orientation.
         Fails in NumPy <= 0.9.6.2127.
@@ -186,7 +191,12 @@ class TestProperties(TestCase):
         A = matrix([[1, 0], [0, 1]])
         assert_(repr(A) == "matrix([[1, 0],\n        [0, 1]])")
 
-class TestCasting(TestCase):
+    def test_make_bool_matrix_from_str(self):
+        A = matrix('True; True; False')
+        B = matrix([[True], [True], [False]])
+        assert_array_equal(A, B)
+
+class TestCasting(object):
     def test_basic(self):
         A = np.arange(100).reshape(10, 10)
         mA = matrix(A)
@@ -205,7 +215,7 @@ class TestCasting(TestCase):
         assert_(np.all(mA != mB))
 
 
-class TestAlgebra(TestCase):
+class TestAlgebra(object):
     def test_basic(self):
         import numpy.linalg as linalg
 
@@ -244,29 +254,27 @@ class TestAlgebra(TestCase):
         assert_array_almost_equal(m4, np.dot(m2, m2))
         assert_array_almost_equal(np.dot(mi, m), np.eye(2))
 
+    def test_scalar_type_pow(self):
+        m = matrix([[1, 2], [3, 4]])
+        for scalar_t in [np.int8, np.uint8]:
+            two = scalar_t(2)
+            assert_array_almost_equal(m ** 2, m ** two)
+
     def test_notimplemented(self):
         '''Check that 'not implemented' operations produce a failure.'''
         A = matrix([[1., 2.],
                     [3., 4.]])
 
         # __rpow__
-        try:
+        with assert_raises(TypeError):
             1.0**A
-        except TypeError:
-            pass
-        else:
-            self.fail("matrix.__rpow__ doesn't raise a TypeError")
 
         # __mul__ with something not a list, ndarray, tuple, or scalar
-        try:
+        with assert_raises(TypeError):
             A*object()
-        except TypeError:
-            pass
-        else:
-            self.fail("matrix.__mul__ with non-numeric object doesn't raise"
-                      "a TypeError")
 
-class TestMatrixReturn(TestCase):
+
+class TestMatrixReturn(object):
     def test_instance_methods(self):
         a = matrix([1.0], dtype='f8')
         methodargs = {
@@ -291,7 +299,7 @@ class TestMatrixReturn(TestCase):
             if attrib.startswith('_') or attrib in excluded_methods:
                 continue
             f = getattr(a, attrib)
-            if isinstance(f, collections.Callable):
+            if isinstance(f, collections_abc.Callable):
                 # reset contents of a
                 a.astype('f8')
                 a.fill(1.0)
@@ -308,7 +316,7 @@ class TestMatrixReturn(TestCase):
         assert_(type(d) is np.ndarray)
 
 
-class TestIndexing(TestCase):
+class TestIndexing(object):
     def test_basic(self):
         x = asmatrix(np.zeros((3, 2), float))
         y = np.zeros((3, 1), float)
@@ -317,9 +325,8 @@ class TestIndexing(TestCase):
         assert_equal(x, [[0, 1], [0, 0], [0, 0]])
 
 
-class TestNewScalarIndexing(TestCase):
-    def setUp(self):
-        self.a = matrix([[1, 2], [3, 4]])
+class TestNewScalarIndexing(object):
+    a = matrix([[1, 2], [3, 4]])
 
     def test_dimesions(self):
         a = self.a
@@ -385,7 +392,7 @@ class TestNewScalarIndexing(TestCase):
         assert_array_equal(x[[2, 1, 0],:], x[::-1,:])
 
 
-class TestPower(TestCase):
+class TestPower(object):
     def test_returntype(self):
         a = np.array([[0, 1], [0, 0]])
         assert_(type(matrix_power(a, 2)) is np.ndarray)
@@ -396,10 +403,10 @@ class TestPower(TestCase):
         assert_array_equal(matrix_power([[0, 1], [0, 0]], 2), [[0, 0], [0, 0]])
 
 
-class TestShape(TestCase):
-    def setUp(self):
-        self.a = np.array([[1], [2]])
-        self.m = matrix([[1], [2]])
+class TestShape(object):
+
+    a = np.array([[1], [2]])
+    m = matrix([[1], [2]])
 
     def test_shape(self):
         assert_equal(self.a.shape, (2, 1))
@@ -444,6 +451,10 @@ class TestShape(TestCase):
         assert_(np.may_share_memory(self.m, self.m.ravel()))
         assert_(not np.may_share_memory(self.m, self.m.flatten()))
 
-
-if __name__ == "__main__":
-    run_module_suite()
+    def test_expand_dims_matrix(self):
+        # matrices are always 2d - so expand_dims only makes sense when the
+        # type is changed away from matrix.
+        a = np.arange(10).reshape((2, 5)).view(np.matrix)
+        expanded = np.expand_dims(a, axis=1)
+        assert_equal(expanded.ndim, 3)
+        assert_(not isinstance(expanded, np.matrix))

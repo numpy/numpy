@@ -9,6 +9,8 @@ import atexit
 import tempfile
 import subprocess
 import shutil
+import multiprocessing
+import textwrap
 
 import distutils
 from distutils.errors import DistutilsError
@@ -31,11 +33,6 @@ def clean_up_temporary_directory():
                 pass
 
 atexit.register(clean_up_temporary_directory)
-
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 from numpy.distutils.compat import get_exception
 from numpy.compat import basestring
@@ -87,7 +84,9 @@ def get_num_build_jobs():
     Get number of parallel build jobs set by the --parallel command line
     argument of setup.py
     If the command did not receive a setting the environment variable
-    NPY_NUM_BUILD_JOBS checked and if that is unset it returns 1.
+    NPY_NUM_BUILD_JOBS is checked. If that is unset, return the number of
+    processors on the system, with a maximum of 8 (to prevent
+    overloading the system if there a lot of CPUs).
 
     Returns
     -------
@@ -96,7 +95,12 @@ def get_num_build_jobs():
 
     """
     from numpy.distutils.core import get_distribution
-    envjobs = int(os.environ.get("NPY_NUM_BUILD_JOBS", 1))
+    try:
+        cpu_count = len(os.sched_getaffinity(0))
+    except AttributeError:
+        cpu_count = multiprocessing.cpu_count()
+    cpu_count = min(cpu_count, 8)
+    envjobs = int(os.environ.get("NPY_NUM_BUILD_JOBS", cpu_count))
     dist = get_distribution()
     # may be None during configuration
     if dist is None:
@@ -215,15 +219,14 @@ def get_mathlibs(path=None):
             raise DistutilsError('_numpyconfig.h not found in numpy include '
                 'dirs %r' % (dirs,))
 
-    fid = open(config_file)
-    mathlibs = []
-    s = '#define MATHLIB'
-    for line in fid:
-        if line.startswith(s):
-            value = line[len(s):].strip()
-            if value:
-                mathlibs.extend(value.split(','))
-    fid.close()
+    with open(config_file) as fid:
+        mathlibs = []
+        s = '#define MATHLIB'
+        for line in fid:
+            if line.startswith(s):
+                value = line[len(s):].strip()
+                if value:
+                    mathlibs.extend(value.split(','))
     return mathlibs
 
 def minrelpath(path):
@@ -255,6 +258,11 @@ def minrelpath(path):
         return ''
     return os.sep.join(l)
 
+def sorted_glob(fileglob):
+    """sorts output of python glob for https://bugs.python.org/issue30461
+    to allow extensions to have reproducible build results"""
+    return sorted(glob.glob(fileglob))
+
 def _fix_paths(paths, local_path, include_non_existing):
     assert is_sequence(paths), repr(type(paths))
     new_paths = []
@@ -262,8 +270,8 @@ def _fix_paths(paths, local_path, include_non_existing):
     for n in paths:
         if is_string(n):
             if '*' in n or '?' in n:
-                p = glob.glob(n)
-                p2 = glob.glob(njoin(local_path, n))
+                p = sorted_glob(n)
+                p2 = sorted_glob(njoin(local_path, n))
                 if p2:
                     new_paths.extend(p2)
                 elif p:
@@ -311,7 +319,7 @@ def make_temp_file(suffix='', prefix='', text=True):
     return fo, name
 
 # Hooks for colored terminal output.
-# See also http://www.livinglogic.de/Python/ansistyle
+# See also https://web.archive.org/web/20100314204946/http://www.livinglogic.de/Python/ansistyle
 def terminal_has_colors():
     if sys.platform=='cygwin' and 'USE_COLOR' not in os.environ:
         # Avoid importing curses that causes illegal operation
@@ -390,21 +398,36 @@ def mingw32():
             return True
     return False
 
-def msvc_runtime_library():
-    "Return name of MSVC runtime library if Python was built with MSVC >= 7"
+def msvc_runtime_version():
+    "Return version of MSVC runtime library, as defined by __MSC_VER__ macro"
     msc_pos = sys.version.find('MSC v.')
     if msc_pos != -1:
-        msc_ver = sys.version[msc_pos+6:msc_pos+10]
-        lib = {'1300': 'msvcr70',    # MSVC 7.0
-               '1310': 'msvcr71',    # MSVC 7.1
-               '1400': 'msvcr80',    # MSVC 8
-               '1500': 'msvcr90',    # MSVC 9 (VS 2008)
-               '1600': 'msvcr100',   # MSVC 10 (aka 2010)
-              }.get(msc_ver, None)
+        msc_ver = int(sys.version[msc_pos+6:msc_pos+10])
     else:
-        lib = None
-    return lib
+        msc_ver = None
+    return msc_ver
 
+def msvc_runtime_library():
+    "Return name of MSVC runtime library if Python was built with MSVC >= 7"
+    ver = msvc_runtime_major ()
+    if ver:
+        if ver < 140:
+            return "msvcr%i" % ver
+        else:
+            return "vcruntime%i" % ver
+    else:
+        return None
+
+def msvc_runtime_major():
+    "Return major version of MSVC runtime coded like get_build_msvc_version"
+    major = {1300:  70,  # MSVC 7.0
+             1310:  71,  # MSVC 7.1
+             1400:  80,  # MSVC 8
+             1500:  90,  # MSVC 9  (aka 2008)
+             1600: 100,  # MSVC 10 (aka 2010)
+             1900: 140,  # MSVC 14 (aka 2015)
+    }.get(msvc_runtime_version(), None)
+    return major
 
 #########################
 
@@ -420,14 +443,13 @@ def _get_f90_modules(source):
     if not f90_ext_match(source):
         return []
     modules = []
-    f = open(source, 'r')
-    for line in f:
-        m = f90_module_name_match(line)
-        if m:
-            name = m.group('name')
-            modules.append(name)
-            # break  # XXX can we assume that there is one module per file?
-    f.close()
+    with open(source, 'r') as f:
+        for line in f:
+            m = f90_module_name_match(line)
+            if m:
+                name = m.group('name')
+                modules.append(name)
+                # break  # XXX can we assume that there is one module per file?
     return modules
 
 def is_string(s):
@@ -445,12 +467,12 @@ def is_sequence(seq):
         return False
     try:
         len(seq)
-    except:
+    except Exception:
         return False
     return True
 
 def is_glob_pattern(s):
-    return is_string(s) and ('*' in s or '?' is s)
+    return is_string(s) and ('*' in s or '?' in s)
 
 def as_list(seq):
     if is_sequence(seq):
@@ -512,7 +534,7 @@ def _get_headers(directory_list):
     # get *.h files from list of directories
     headers = []
     for d in directory_list:
-        head = glob.glob(os.path.join(d, "*.h")) #XXX: *.hpp files??
+        head = sorted_glob(os.path.join(d, "*.h")) #XXX: *.hpp files??
         headers.extend(head)
     return headers
 
@@ -524,6 +546,18 @@ def _get_directories(list_of_sources):
         if d[0] != '' and not d[0] in direcs:
             direcs.append(d[0])
     return direcs
+
+def _commandline_dep_string(cc_args, extra_postargs, pp_opts):
+    """
+    Return commandline representation used to determine if a file needs
+    to be recompiled
+    """
+    cmdline = 'commandline: '
+    cmdline += ' '.join(cc_args)
+    cmdline += ' '.join(extra_postargs)
+    cmdline += ' '.join(pp_opts) + '\n'
+    return cmdline
+
 
 def get_dependencies(sources):
     #XXX scan sources for include statements
@@ -825,7 +859,7 @@ class Configuration(object):
             print(message)
 
     def warn(self, message):
-        sys.stderr.write('Warning: %s' % (message,))
+        sys.stderr.write('Warning: %s\n' % (message,))
 
     def set_options(self, **options):
         """
@@ -854,7 +888,7 @@ class Configuration(object):
                                  caller_level = 1):
         l = subpackage_name.split('.')
         subpackage_path = njoin([self.local_path]+l)
-        dirs = [_m for _m in glob.glob(subpackage_path) if os.path.isdir(_m)]
+        dirs = [_m for _m in sorted_glob(subpackage_path) if os.path.isdir(_m)]
         config_list = []
         for d in dirs:
             if not os.path.isfile(njoin(d, '__init__.py')):
@@ -1036,24 +1070,25 @@ class Configuration(object):
 
         Notes
         -----
-        Rules for installation paths:
-          foo/bar -> (foo/bar, foo/bar) -> parent/foo/bar
-          (gun, foo/bar) -> parent/gun
-          foo/* -> (foo/a, foo/a), (foo/b, foo/b) -> parent/foo/a, parent/foo/b
-          (gun, foo/*) -> (gun, foo/a), (gun, foo/b) -> gun
-          (gun/*, foo/*) -> parent/gun/a, parent/gun/b
-          /foo/bar -> (bar, /foo/bar) -> parent/bar
-          (gun, /foo/bar) -> parent/gun
-          (fun/*/gun/*, sun/foo/bar) -> parent/fun/foo/gun/bar
+        Rules for installation paths::
+
+            foo/bar -> (foo/bar, foo/bar) -> parent/foo/bar
+            (gun, foo/bar) -> parent/gun
+            foo/* -> (foo/a, foo/a), (foo/b, foo/b) -> parent/foo/a, parent/foo/b
+            (gun, foo/*) -> (gun, foo/a), (gun, foo/b) -> gun
+            (gun/*, foo/*) -> parent/gun/a, parent/gun/b
+            /foo/bar -> (bar, /foo/bar) -> parent/bar
+            (gun, /foo/bar) -> parent/gun
+            (fun/*/gun/*, sun/foo/bar) -> parent/fun/foo/gun/bar
 
         Examples
         --------
         For example suppose the source directory contains fun/foo.dat and
-        fun/bar/car.dat::
+        fun/bar/car.dat:
 
-            >>> self.add_data_dir('fun')                       #doctest: +SKIP
-            >>> self.add_data_dir(('sun', 'fun'))              #doctest: +SKIP
-            >>> self.add_data_dir(('gun', '/full/path/to/fun'))#doctest: +SKIP
+        >>> self.add_data_dir('fun')                       #doctest: +SKIP
+        >>> self.add_data_dir(('sun', 'fun'))              #doctest: +SKIP
+        >>> self.add_data_dir(('gun', '/full/path/to/fun'))#doctest: +SKIP
 
         Will install data-files to the locations::
 
@@ -1069,6 +1104,7 @@ class Configuration(object):
               gun/
                 foo.dat
                 car.dat
+
         """
         if is_sequence(data_path):
             d, data_path = data_path
@@ -1188,15 +1224,15 @@ class Configuration(object):
           #. file.txt -> (., file.txt)-> parent/file.txt
           #. foo/file.txt -> (foo, foo/file.txt) -> parent/foo/file.txt
           #. /foo/bar/file.txt -> (., /foo/bar/file.txt) -> parent/file.txt
-          #. *.txt -> parent/a.txt, parent/b.txt
-          #. foo/*.txt -> parent/foo/a.txt, parent/foo/b.txt
-          #. */*.txt -> (*, */*.txt) -> parent/c/a.txt, parent/d/b.txt
+          #. ``*``.txt -> parent/a.txt, parent/b.txt
+          #. foo/``*``.txt`` -> parent/foo/a.txt, parent/foo/b.txt
+          #. ``*/*.txt`` -> (``*``, ``*``/``*``.txt) -> parent/c/a.txt, parent/d/b.txt
           #. (sun, file.txt) -> parent/sun/file.txt
           #. (sun, bar/file.txt) -> parent/sun/file.txt
           #. (sun, /foo/bar/file.txt) -> parent/sun/file.txt
-          #. (sun, *.txt) -> parent/sun/a.txt, parent/sun/b.txt
-          #. (sun, bar/*.txt) -> parent/sun/a.txt, parent/sun/b.txt
-          #. (sun/*, */*.txt) -> parent/sun/c/a.txt, parent/d/b.txt
+          #. (sun, ``*``.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          #. (sun, bar/``*``.txt) -> parent/sun/a.txt, parent/sun/b.txt
+          #. (sun/``*``, ``*``/``*``.txt) -> parent/sun/c/a.txt, parent/d/b.txt
 
         An additional feature is that the path to a data-file can actually be
         a function that takes no arguments and returns the actual path(s) to
@@ -1529,7 +1565,6 @@ class Configuration(object):
         """Common implementation for add_library and add_installed_library. Do
         not use directly"""
         build_info = copy.copy(build_info)
-        name = name #+ '__OF__' + self.name
         build_info['sources'] = sources
 
         # Sometimes, depends is not set up to an empty list by default, and if
@@ -1652,10 +1687,44 @@ class Configuration(object):
 
         and will be installed as foo.ini in the 'lib' subpath.
 
+        When cross-compiling with numpy distutils, it might be necessary to
+        use modified npy-pkg-config files.  Using the default/generated files
+        will link with the host libraries (i.e. libnpymath.a).  For
+        cross-compilation you of-course need to link with target libraries,
+        while using the host Python installation.
+
+        You can copy out the numpy/core/lib/npy-pkg-config directory, add a
+        pkgdir value to the .ini files and set NPY_PKG_CONFIG_PATH environment
+        variable to point to the directory with the modified npy-pkg-config
+        files.
+
+        Example npymath.ini modified for cross-compilation::
+
+            [meta]
+            Name=npymath
+            Description=Portable, core math library implementing C99 standard
+            Version=0.1
+
+            [variables]
+            pkgname=numpy.core
+            pkgdir=/build/arm-linux-gnueabi/sysroot/usr/lib/python3.7/site-packages/numpy/core
+            prefix=${pkgdir}
+            libdir=${prefix}/lib
+            includedir=${prefix}/include
+
+            [default]
+            Libs=-L${libdir} -lnpymath
+            Cflags=-I${includedir}
+            Requires=mlib
+
+            [msvc]
+            Libs=/LIBPATH:${libdir} npymath.lib
+            Cflags=/INCLUDE:${includedir}
+            Requires=mlib
+
         """
         if subst_dict is None:
             subst_dict = {}
-        basename = os.path.splitext(template)[0]
         template = os.path.join(self.package_path, template)
 
         if self.name in self.installed_pkg_config:
@@ -1798,67 +1867,53 @@ class Configuration(object):
     def _get_svn_revision(self, path):
         """Return path's SVN revision number.
         """
-        revision = None
-        m = None
-        cwd =  os.getcwd()
         try:
-            os.chdir(path or '.')
-            p = subprocess.Popen(['svnversion'], shell=True,
-                    stdout=subprocess.PIPE, stderr=None,
-                    close_fds=True)
-            sout = p.stdout
-            m = re.match(r'(?P<revision>\d+)', sout.read())
-        except:
+            output = subprocess.check_output(
+                ['svnversion'], shell=True, cwd=path)
+        except (subprocess.CalledProcessError, OSError):
             pass
-        os.chdir(cwd)
-        if m:
-            revision = int(m.group('revision'))
-            return revision
+        else:
+            m = re.match(rb'(?P<revision>\d+)', output)
+            if m:
+                return int(m.group('revision'))
+
         if sys.platform=='win32' and os.environ.get('SVN_ASP_DOT_NET_HACK', None):
             entries = njoin(path, '_svn', 'entries')
         else:
             entries = njoin(path, '.svn', 'entries')
         if os.path.isfile(entries):
-            f = open(entries)
-            fstr = f.read()
-            f.close()
+            with open(entries) as f:
+                fstr = f.read()
             if fstr[:5] == '<?xml':  # pre 1.4
                 m = re.search(r'revision="(?P<revision>\d+)"', fstr)
                 if m:
-                    revision = int(m.group('revision'))
+                    return int(m.group('revision'))
             else:  # non-xml entries file --- check to be sure that
                 m = re.search(r'dir[\n\r]+(?P<revision>\d+)', fstr)
                 if m:
-                    revision = int(m.group('revision'))
-        return revision
+                    return int(m.group('revision'))
+        return None
 
     def _get_hg_revision(self, path):
         """Return path's Mercurial revision number.
         """
-        revision = None
-        m = None
-        cwd =  os.getcwd()
         try:
-            os.chdir(path or '.')
-            p = subprocess.Popen(['hg identify --num'], shell=True,
-                    stdout=subprocess.PIPE, stderr=None,
-                    close_fds=True)
-            sout = p.stdout
-            m = re.match(r'(?P<revision>\d+)', sout.read())
-        except:
+            output = subprocess.check_output(
+                ['hg identify --num'], shell=True, cwd=path)
+        except (subprocess.CalledProcessError, OSError):
             pass
-        os.chdir(cwd)
-        if m:
-            revision = int(m.group('revision'))
-            return revision
+        else:
+            m = re.match(rb'(?P<revision>\d+)', output)
+            if m:
+                return int(m.group('revision'))
+
         branch_fn = njoin(path, '.hg', 'branch')
         branch_cache_fn = njoin(path, '.hg', 'branch.cache')
 
         if os.path.isfile(branch_fn):
             branch0 = None
-            f = open(branch_fn)
-            revision0 = f.read().strip()
-            f.close()
+            with open(branch_fn) as f:
+                revision0 = f.read().strip()
 
             branch_map = {}
             for line in file(branch_cache_fn, 'r'):
@@ -1871,8 +1926,9 @@ class Configuration(object):
                     continue
                 branch_map[branch1] = revision1
 
-            revision = branch_map.get(branch0)
-        return revision
+            return branch_map.get(branch0)
+
+        return None
 
 
     def get_version(self, version_file=None, version_variable=None):
@@ -1885,7 +1941,7 @@ class Configuration(object):
         -----
         This method scans files named
         __version__.py, <packagename>_version.py, version.py, and
-        __svn_version__.py for string variables version, __version\__, and
+        __svn_version__.py for string variables version, __version__, and
         <packagename>_version, until a version number is found.
         """
         version = getattr(self, 'version', None)
@@ -1970,11 +2026,9 @@ class Configuration(object):
                 if not os.path.isfile(target):
                     version = str(revision)
                     self.info('Creating %s (version=%r)' % (target, version))
-                    f = open(target, 'w')
-                    f.write('version = %r\n' % (version))
-                    f.close()
+                    with open(target, 'w') as f:
+                        f.write('version = %r\n' % (version))
 
-                import atexit
                 def rm_file(f=target,p=self.info):
                     if delete:
                         try: os.remove(f); p('removed '+f)
@@ -2012,11 +2066,9 @@ class Configuration(object):
                 if not os.path.isfile(target):
                     version = str(revision)
                     self.info('Creating %s (version=%r)' % (target, version))
-                    f = open(target, 'w')
-                    f.write('version = %r\n' % (version))
-                    f.close()
+                    with open(target, 'w') as f:
+                        f.write('version = %r\n' % (version))
 
-                import atexit
                 def rm_file(f=target,p=self.info):
                     if delete:
                         try: os.remove(f); p('removed '+f)
@@ -2039,7 +2091,6 @@ class Configuration(object):
 
         """
         self.py_modules.append((self.name, name, generate_config_py))
-
 
     def get_info(self,*names):
         """Get resources information.
@@ -2076,9 +2127,22 @@ def get_numpy_include_dirs():
     return include_dirs
 
 def get_npy_pkg_dir():
-    """Return the path where to find the npy-pkg-config directory."""
+    """Return the path where to find the npy-pkg-config directory.
+
+    If the NPY_PKG_CONFIG_PATH environment variable is set, the value of that
+    is returned.  Otherwise, a path inside the location of the numpy module is
+    returned.
+
+    The NPY_PKG_CONFIG_PATH can be useful when cross-compiling, maintaining
+    customized npy-pkg-config .ini files for the cross-compilation
+    environment, and using them when cross-compiling.
+
+    """
     # XXX: import here for bootstrapping reasons
     import numpy
+    d = os.environ.get('NPY_PKG_CONFIG_PATH')
+    if d is not None:
+        return d
     d = os.path.join(os.path.dirname(numpy.__file__),
             'core', 'lib', 'npy-pkg-config')
     return d
@@ -2192,7 +2256,6 @@ def is_bootstrapping():
         return True
     except AttributeError:
         return False
-        __NUMPY_SETUP__ = False
 
 
 #########################
@@ -2253,31 +2316,47 @@ def generate_config_py(target):
     from numpy.distutils.system_info import system_info
     from distutils.dir_util import mkpath
     mkpath(os.path.dirname(target))
-    f = open(target, 'w')
-    f.write('# This file is generated by %s\n' % (os.path.abspath(sys.argv[0])))
-    f.write('# It contains system_info results at the time of building this package.\n')
-    f.write('__all__ = ["get_info","show"]\n\n')
-    for k, i in system_info.saved_results.items():
-        f.write('%s=%r\n' % (k, i))
-    f.write(r'''
-def get_info(name):
-    g = globals()
-    return g.get(name, g.get(name + "_info", {}))
+    with open(target, 'w') as f:
+        f.write('# This file is generated by numpy\'s %s\n' % (os.path.basename(sys.argv[0])))
+        f.write('# It contains system_info results at the time of building this package.\n')
+        f.write('__all__ = ["get_info","show"]\n\n')
 
-def show():
-    for name,info_dict in globals().items():
-        if name[0] == "_" or type(info_dict) is not type({}): continue
-        print(name + ":")
-        if not info_dict:
-            print("  NOT AVAILABLE")
-        for k,v in info_dict.items():
-            v = str(v)
-            if k == "sources" and len(v) > 200:
-                v = v[:60] + " ...\n... " + v[-60:]
-            print("    %s = %s" % (k,v))
-    ''')
+        # For gfortran+msvc combination, extra shared libraries may exist
+        f.write(textwrap.dedent("""
+            import os
+            import sys
 
-    f.close()
+            extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
+
+            if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
+                if sys.version_info >= (3, 8):
+                    os.add_dll_directory(extra_dll_dir)
+                else:
+                    os.environ.setdefault('PATH', '')
+                    os.environ['PATH'] += os.pathsep + extra_dll_dir
+
+            """))
+
+        for k, i in system_info.saved_results.items():
+            f.write('%s=%r\n' % (k, i))
+        f.write(textwrap.dedent(r'''
+            def get_info(name):
+                g = globals()
+                return g.get(name, g.get(name + "_info", {}))
+
+            def show():
+                for name,info_dict in globals().items():
+                    if name[0] == "_" or type(info_dict) is not type({}): continue
+                    print(name + ":")
+                    if not info_dict:
+                        print("  NOT AVAILABLE")
+                    for k,v in info_dict.items():
+                        v = str(v)
+                        if k == "sources" and len(v) > 200:
+                            v = v[:60] + " ...\n... " + v[-60:]
+                        print("    %s = %s" % (k,v))
+                    '''))
+
     return target
 
 def msvc_version(compiler):
@@ -2288,20 +2367,8 @@ def msvc_version(compiler):
                          % compiler.compiler_type)
     return compiler._MSVCCompiler__version
 
-if sys.version[:3] >= '2.5':
-    def get_build_architecture():
-        from distutils.msvccompiler import get_build_architecture
-        return get_build_architecture()
-else:
-    #copied from python 2.5.1 distutils/msvccompiler.py
-    def get_build_architecture():
-        """Return the processor architecture.
-
-        Possible results are "Intel", "Itanium", or "AMD64".
-        """
-        prefix = " bit ("
-        i = sys.version.find(prefix)
-        if i == -1:
-            return "Intel"
-        j = sys.version.find(")", i)
-        return sys.version[i+len(prefix):j]
+def get_build_architecture():
+    # Importing distutils.msvccompiler triggers a warning on non-Windows
+    # systems, so delay the import to here.
+    from distutils.msvccompiler import get_build_architecture
+    return get_build_architecture()

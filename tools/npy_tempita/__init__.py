@@ -105,21 +105,21 @@ class Template(object):
 
     def __init__(self, content, name=None, namespace=None, stacklevel=None,
                  get_template=None, default_inherit=None, line_offset=0,
-                 delimeters=None):
+                 delimiters=None):
         self.content = content
 
-        # set delimeters
-        if delimeters is None:
-            delimeters = (self.default_namespace['start_braces'],
+        # set delimiters
+        if delimiters is None:
+            delimiters = (self.default_namespace['start_braces'],
                           self.default_namespace['end_braces'])
         else:
-            assert len(delimeters) == 2 and all(
-                [isinstance(delimeter, basestring_)
-                    for delimeter in delimeters])
+            assert len(delimiters) == 2 and all(
+                [isinstance(delimiter, basestring_)
+                    for delimiter in delimiters])
             self.default_namespace = self.__class__.default_namespace.copy()
-            self.default_namespace['start_braces'] = delimeters[0]
-            self.default_namespace['end_braces'] = delimeters[1]
-        self.delimeters = delimeters
+            self.default_namespace['start_braces'] = delimiters[0]
+            self.default_namespace['end_braces'] = delimiters[1]
+        self.delimiters = delimiters
 
         self._unicode = is_unicode(content)
         if name is None and stacklevel is not None:
@@ -143,7 +143,7 @@ class Template(object):
         self.name = name
         self._parsed = parse(
             content, name=name, line_offset=line_offset,
-            delimeters=self.delimeters)
+            delimiters=self.delimiters)
         if namespace is None:
             namespace = {}
         self.namespace = namespace
@@ -153,9 +153,8 @@ class Template(object):
 
     def from_filename(cls, filename, namespace=None, encoding=None,
                       default_inherit=None, get_template=get_file_template):
-        f = open(filename, 'rb')
-        c = f.read()
-        f.close()
+        with open(filename, 'rb') as f:
+            c = f.read()
         if encoding:
             c = c.decode(encoding)
         elif PY3:
@@ -315,33 +314,31 @@ class Template(object):
                     'invalid syntax in expression: %s' % code)
             return value
         except:
-            exc_info = sys.exc_info()
-            e = exc_info[1]
-            if getattr(e, 'args', None):
-                arg0 = e.args[0]
+            e_type, e_value, e_traceback = sys.exc_info()
+            if getattr(e_value, 'args', None):
+                arg0 = e_value.args[0]
             else:
-                arg0 = coerce_text(e)
-            e.args = (self._add_line_info(arg0, pos),)
+                arg0 = coerce_text(e_value)
+            e_value.args = (self._add_line_info(arg0, pos),)            
             if PY3:
-                raise(e)
+                raise e_value
             else:
-                raise (exc_info[1], e, exc_info[2])
+                exec('raise e_type, e_value, e_traceback')
 
     def _exec(self, code, ns, pos):
         # __traceback_hide__ = True
         try:
             exec(code, self.default_namespace, ns)
         except:
-            exc_info = sys.exc_info()
-            e = exc_info[1]
-            if e.args:
-                e.args = (self._add_line_info(e.args[0], pos),)
+            e_type, e_value, e_traceback = sys.exc_info()
+            if e_value.args:
+                e_value.args = (self._add_line_info(e_value.args[0], pos),)
             else:
-                e.args = (self._add_line_info(None, pos),)
+                e_value.args = (self._add_line_info(None, pos),)
             if PY3:
-                raise(e)
+                raise e_value
             else:
-                raise (exc_info[1], e, exc_info[2])
+                exec('raise e_type, e_value, e_traceback')
 
     def _repr(self, value, pos):
         # __traceback_hide__ = True
@@ -358,13 +355,12 @@ class Template(object):
                 if (is_unicode(value) and self.default_encoding):
                     value = value.encode(self.default_encoding)
         except:
-            exc_info = sys.exc_info()
-            e = exc_info[1]
-            e.args = (self._add_line_info(e.args[0], pos),)
+            e_type, e_value, e_traceback = sys.exc_info()
+            e_value.args = (self._add_line_info(e_value.args[0], pos),)
             if PY3:
-                raise(e)
+                raise e_value
             else:
-                raise (exc_info[1], e, exc_info[2])
+                exec('raise e_type, e_value, e_traceback')
         else:
             if self._unicode and isinstance(value, bytes):
                 if not self.default_encoding:
@@ -396,9 +392,9 @@ class Template(object):
         return msg
 
 
-def sub(content, delimeters=None, **kw):
+def sub(content, delimiters=None, **kw):
     name = kw.get('__name')
-    tmpl = Template(content, name=name, delimeters=delimeters)
+    tmpl = Template(content, name=name, delimiters=delimiters)
     return tmpl.substitute(kw)
 
 
@@ -656,28 +652,28 @@ del _Empty
 ############################################################
 
 
-def lex(s, name=None, trim_whitespace=True, line_offset=0, delimeters=None):
-    if delimeters is None:
-        delimeters = (Template.default_namespace['start_braces'],
+def lex(s, name=None, trim_whitespace=True, line_offset=0, delimiters=None):
+    if delimiters is None:
+        delimiters = (Template.default_namespace['start_braces'],
                       Template.default_namespace['end_braces'])
     in_expr = False
     chunks = []
     last = 0
     last_pos = (line_offset + 1, 1)
-    token_re = re.compile(r'%s|%s' % (re.escape(delimeters[0]),
-                                      re.escape(delimeters[1])))
+    token_re = re.compile(r'%s|%s' % (re.escape(delimiters[0]),
+                                      re.escape(delimiters[1])))
     for match in token_re.finditer(s):
         expr = match.group(0)
         pos = find_position(s, match.end(), last, last_pos)
-        if expr == delimeters[0] and in_expr:
-            raise TemplateError('%s inside expression' % delimeters[0],
+        if expr == delimiters[0] and in_expr:
+            raise TemplateError('%s inside expression' % delimiters[0],
                                 position=pos,
                                 name=name)
-        elif expr == delimeters[1] and not in_expr:
-            raise TemplateError('%s outside expression' % delimeters[1],
+        elif expr == delimiters[1] and not in_expr:
+            raise TemplateError('%s outside expression' % delimiters[1],
                                 position=pos,
                                 name=name)
-        if expr == delimeters[0]:
+        if expr == delimiters[0]:
             part = s[last:match.start()]
             if part:
                 chunks.append(part)
@@ -688,7 +684,7 @@ def lex(s, name=None, trim_whitespace=True, line_offset=0, delimeters=None):
         last = match.end()
         last_pos = pos
     if in_expr:
-        raise TemplateError('No %s to finish last expression' % delimeters[1],
+        raise TemplateError('No %s to finish last expression' % delimiters[1],
                             name=name, position=last_pos)
     part = s[last:]
     if part:
@@ -826,12 +822,12 @@ def find_position(string, index, last_index, last_pos):
     return (last_pos[0] + lines, column)
 
 
-def parse(s, name=None, line_offset=0, delimeters=None):
+def parse(s, name=None, line_offset=0, delimiters=None):
 
-    if delimeters is None:
-        delimeters = (Template.default_namespace['start_braces'],
+    if delimiters is None:
+        delimiters = (Template.default_namespace['start_braces'],
                       Template.default_namespace['end_braces'])
-    tokens = lex(s, name=name, line_offset=line_offset, delimeters=delimeters)
+    tokens = lex(s, name=name, line_offset=line_offset, delimiters=delimiters)
     result = []
     while tokens:
         next_chunk, tokens = parse_expr(tokens, name)
@@ -1295,9 +1291,8 @@ def fill_command(args=None):
         template_content = sys.stdin.read()
         template_name = '<stdin>'
     else:
-        f = open(template_name, 'rb', encoding="latin-1")
-        template_content = f.read()
-        f.close()
+        with open(template_name, 'rb', encoding="latin-1") as f: 
+            template_content = f.read()
     if options.use_html:
         TemplateClass = HTMLTemplate
     else:
@@ -1305,9 +1300,8 @@ def fill_command(args=None):
     template = TemplateClass(template_content, name=template_name)
     result = template.substitute(vars)
     if options.output:
-        f = open(options.output, 'wb')
-        f.write(result)
-        f.close()
+        with open(options.output, 'wb') as f: 
+            f.write(result)
     else:
         sys.stdout.write(result)
 

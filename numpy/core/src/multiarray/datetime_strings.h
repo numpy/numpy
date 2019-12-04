@@ -70,7 +70,7 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base);
  *  string was too short).
  */
 NPY_NO_EXPORT int
-make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
+make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, npy_intp outlen,
                     int local, int utc, NPY_DATETIMEUNIT base, int tzoffset,
                     NPY_CASTING casting);
 

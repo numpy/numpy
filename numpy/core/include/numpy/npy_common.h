@@ -11,6 +11,16 @@
 #include <Python.h>
 
 /*
+ * using static inline modifiers when defining npy_math functions
+ * allows the compiler to make optimizations when possible
+ */
+#if defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD
+#ifndef NPY_INLINE_MATH
+#define NPY_INLINE_MATH 1
+#endif
+#endif
+
+/*
  * gcc does not unroll even with -O3
  * use with care, unrolling on modern cpus rarely speeds things up
  */
@@ -34,10 +44,24 @@
 #else
 #define NPY_GCC_TARGET_AVX
 #endif
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX2_WITH_INTRINSICS
+#define HAVE_ATTRIBUTE_TARGET_FMA
+#define NPY_GCC_TARGET_FMA __attribute__((target("avx2,fma")))
+#endif
+
 #if defined HAVE_ATTRIBUTE_TARGET_AVX2 && defined HAVE_LINK_AVX2
 #define NPY_GCC_TARGET_AVX2 __attribute__((target("avx2")))
 #else
 #define NPY_GCC_TARGET_AVX2
+#endif
+
+#if defined HAVE_ATTRIBUTE_TARGET_AVX512F && defined HAVE_LINK_AVX512F
+#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
+#elif defined HAVE_ATTRIBUTE_TARGET_AVX512F_WITH_INTRINSICS
+#define NPY_GCC_TARGET_AVX512F __attribute__((target("avx512f")))
+#else
+#define NPY_GCC_TARGET_AVX512F
 #endif
 
 /*
@@ -58,6 +82,13 @@
 #define NPY_HAVE_SSE2_INTRINSICS
 #endif
 
+#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX2
+#define NPY_HAVE_AVX2_INTRINSICS
+#endif
+
+#if defined HAVE_IMMINTRIN_H && defined HAVE_LINK_AVX512F
+#define NPY_HAVE_AVX512F_INTRINSICS
+#endif
 /*
  * give a hint to the compiler which branch is more likely or unlikely
  * to occur, e.g. rare error cases:
@@ -91,32 +122,16 @@
 #endif
 #endif
 
-#ifdef HAVE___BUILTIN_CPU_SUPPORTS
-  #ifdef HAVE_ATTRIBUTE_TARGET_AVX2
-    #define NPY_CPU_SUPPORTS_AVX2 __builtin_cpu_supports("avx2")
-  #else
-    #define NPY_CPU_SUPPORTS_AVX2 0
-  #endif
-  #ifdef HAVE_ATTRIBUTE_TARGET_AVX
-    #define NPY_CPU_SUPPORTS_AVX __builtin_cpu_supports("avx")
-  #else
-    #define NPY_CPU_SUPPORTS_AVX 0
-  #endif
-#else
-  #define NPY_CPU_SUPPORTS_AVX 0
-  #define NPY_CPU_SUPPORTS_AVX2 0
-#endif
-
 #if defined(_MSC_VER)
         #define NPY_INLINE __inline
 #elif defined(__GNUC__)
-	#if defined(__STRICT_ANSI__)
-		#define NPY_INLINE __inline__
-	#else
-		#define NPY_INLINE inline
-	#endif
+    #if defined(__STRICT_ANSI__)
+         #define NPY_INLINE __inline__
+    #else
+         #define NPY_INLINE inline
+    #endif
 #else
-        #define NPY_INLINE
+    #define NPY_INLINE
 #endif
 
 #ifdef HAVE___THREAD
@@ -237,10 +252,6 @@ typedef Py_uintptr_t npy_uintp;
  *      PyString_Format. These functions use different formatting
  *      codes which are portably specified according to the Python
  *      documentation. See ticket #1795.
- *
- *      On Windows x64, the LONGLONG formatter should be used, but
- *      in Python 2.6 the %lld formatter is not supported. In this
- *      case we work around the problem by using the %zd formatter.
  */
 #if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INT
         #define NPY_INTP NPY_INT
@@ -268,11 +279,7 @@ typedef Py_uintptr_t npy_uintp;
         #define NPY_MAX_INTP NPY_MAX_LONGLONG
         #define NPY_MIN_INTP NPY_MIN_LONGLONG
         #define NPY_MAX_UINTP NPY_MAX_ULONGLONG
-    #if (PY_VERSION_HEX >= 0x02070000)
         #define NPY_INTP_FMT "lld"
-    #else
-        #define NPY_INTP_FMT "zd"
-    #endif
 #endif
 
 /*

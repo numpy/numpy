@@ -25,6 +25,47 @@
 #include "array_assign.h"
 
 /*
+ * Check that array data is both uint-aligned and true-aligned for all array
+ * elements, as required by the copy/casting code in lowlevel_strided_loops.c
+ */
+NPY_NO_EXPORT int
+copycast_isaligned(int ndim, npy_intp *shape,
+        PyArray_Descr *dtype, char *data, npy_intp *strides)
+{
+    int aligned;
+    int big_aln, small_aln;
+
+    int uint_aln = npy_uint_alignment(dtype->elsize);
+    int true_aln = dtype->alignment;
+
+    /* uint alignment can be 0, meaning not uint alignable */
+    if (uint_aln == 0) {
+        return 0;
+    }
+
+    /*
+     * As an optimization, it is unnecessary to check the alignment to the
+     * smaller of (uint_aln, true_aln) if the data is aligned to the bigger of
+     * the two and the big is a multiple of the small aln. We check the bigger
+     * one first and only check the smaller if necessary.
+     */
+    if (true_aln >= uint_aln) {
+        big_aln = true_aln;
+        small_aln = uint_aln;
+    }
+    else {
+        big_aln = uint_aln;
+        small_aln = true_aln;
+    }
+
+    aligned = raw_array_is_aligned(ndim, shape, data, strides, big_aln);
+    if (aligned && big_aln % small_aln != 0) {
+        aligned = raw_array_is_aligned(ndim, shape, data, strides, small_aln);
+    }
+    return aligned;
+}
+
+/*
  * Assigns the array from 'src' to 'dst'. The strides must already have
  * been broadcast.
  *
@@ -48,11 +89,9 @@ raw_array_assign_array(int ndim, npy_intp *shape,
 
     NPY_BEGIN_THREADS_DEF;
 
-    /* Check alignment */
-    aligned = raw_array_is_aligned(ndim,
-                        dst_data, dst_strides, dst_dtype->alignment) &&
-              raw_array_is_aligned(ndim,
-                        src_data, src_strides, src_dtype->alignment);
+    aligned =
+        copycast_isaligned(ndim, shape, dst_dtype, dst_data, dst_strides) &&
+        copycast_isaligned(ndim, shape, src_dtype, src_data, src_strides);
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareTwoRawArrayIter(
@@ -133,11 +172,9 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp *shape,
 
     NPY_BEGIN_THREADS_DEF;
 
-    /* Check alignment */
-    aligned = raw_array_is_aligned(ndim,
-                        dst_data, dst_strides, dst_dtype->alignment) &&
-              raw_array_is_aligned(ndim,
-                        src_data, src_strides, src_dtype->alignment);
+    aligned =
+        copycast_isaligned(ndim, shape, dst_dtype, dst_data, dst_strides) &&
+        copycast_isaligned(ndim, shape, src_dtype, src_data, src_strides);
 
     /* Use raw iteration with no heap allocation */
     if (PyArray_PrepareThreeRawArrayIter(
@@ -293,7 +330,8 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     if (((PyArray_NDIM(dst) == 1 && PyArray_NDIM(src) >= 1 &&
                     PyArray_STRIDES(dst)[0] *
                             PyArray_STRIDES(src)[PyArray_NDIM(src) - 1] < 0) ||
-                    PyArray_NDIM(dst) > 1) && arrays_overlap(src, dst)) {
+                    PyArray_NDIM(dst) > 1 || PyArray_HASFIELDS(dst)) &&
+                    arrays_overlap(src, dst)) {
         PyArrayObject *tmp;
 
         /*
@@ -345,6 +383,21 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
         }
     }
 
+    /* optimization: scalar boolean mask */
+    if (wheremask != NULL &&
+            PyArray_NDIM(wheremask) == 0 &&
+            PyArray_DESCR(wheremask)->type_num == NPY_BOOL) {
+        npy_bool value = *(npy_bool *)PyArray_DATA(wheremask);
+        if (value) {
+            /* where=True is the same as no where at all */
+            wheremask = NULL;
+        }
+        else {
+            /* where=False copies nothing */
+            return 0;
+        }
+    }
+
     if (wheremask == NULL) {
         /* A straightforward value assignment */
         /* Do the assignment with raw array iteration */
@@ -367,14 +420,14 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
 
         /* A straightforward where-masked assignment */
          /* Do the masked assignment with raw array iteration */
-         if (raw_array_wheremasked_assign_array(
-                 PyArray_NDIM(dst), PyArray_DIMS(dst),
-                 PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
-                 PyArray_DESCR(src), PyArray_DATA(src), src_strides,
-                 PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
-                         wheremask_strides) < 0) {
-             goto fail;
-         }
+        if (raw_array_wheremasked_assign_array(
+                PyArray_NDIM(dst), PyArray_DIMS(dst),
+                PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
+                PyArray_DESCR(src), PyArray_DATA(src), src_strides,
+                PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
+                        wheremask_strides) < 0) {
+            goto fail;
+        }
     }
 
     if (copied_src) {

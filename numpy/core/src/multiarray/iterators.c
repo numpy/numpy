@@ -92,121 +92,13 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
 }
 
 
-/*
- * Parses an index that has no fancy indexing. Populates
- * out_dimensions, out_strides, and out_offset.
- */
-NPY_NO_EXPORT int
-parse_index(PyArrayObject *self, PyObject *op,
-            npy_intp *out_dimensions,
-            npy_intp *out_strides,
-            npy_intp *out_offset,
-            int check_index)
-{
-    int i, j, n;
-    int nd_old, nd_new, n_add, n_ellipsis;
-    npy_intp n_steps, start, offset, step_size;
-    PyObject *op1 = NULL;
-    int is_slice;
-
-    if (PySlice_Check(op) || op == Py_Ellipsis || op == Py_None) {
-        n = 1;
-        op1 = op;
-        Py_INCREF(op);
-        /* this relies on the fact that n==1 for loop below */
-        is_slice = 1;
-    }
-    else {
-        if (!PySequence_Check(op)) {
-            PyErr_SetString(PyExc_IndexError,
-                            "index must be either an int "
-                            "or a sequence");
-            return -1;
-        }
-        n = PySequence_Length(op);
-        is_slice = 0;
-    }
-
-    nd_old = nd_new = 0;
-
-    offset = 0;
-    for (i = 0; i < n; i++) {
-        if (!is_slice) {
-            op1 = PySequence_GetItem(op, i);
-            if (op1 == NULL) {
-                return -1;
-            }
-        }
-        start = parse_index_entry(op1, &step_size, &n_steps,
-                                  nd_old < PyArray_NDIM(self) ?
-                                  PyArray_DIMS(self)[nd_old] : 0,
-                                  nd_old, check_index ?
-                                  nd_old < PyArray_NDIM(self) : 0);
-        Py_DECREF(op1);
-        if (start == -1) {
-            break;
-        }
-        if (n_steps == NEWAXIS_INDEX) {
-            out_dimensions[nd_new] = 1;
-            out_strides[nd_new] = 0;
-            nd_new++;
-        }
-        else if (n_steps == ELLIPSIS_INDEX) {
-            for (j = i + 1, n_ellipsis = 0; j < n; j++) {
-                op1 = PySequence_GetItem(op, j);
-                if (op1 == Py_None) {
-                    n_ellipsis++;
-                }
-                Py_DECREF(op1);
-            }
-            n_add = PyArray_NDIM(self)-(n-i-n_ellipsis-1+nd_old);
-            if (n_add < 0) {
-                PyErr_SetString(PyExc_IndexError, "too many indices");
-                return -1;
-            }
-            for (j = 0; j < n_add; j++) {
-                out_dimensions[nd_new] = PyArray_DIMS(self)[nd_old];
-                out_strides[nd_new] = PyArray_STRIDES(self)[nd_old];
-                nd_new++; nd_old++;
-            }
-        }
-        else {
-            if (nd_old >= PyArray_NDIM(self)) {
-                PyErr_SetString(PyExc_IndexError, "too many indices");
-                return -1;
-            }
-            offset += PyArray_STRIDES(self)[nd_old]*start;
-            nd_old++;
-            if (n_steps != SINGLE_INDEX) {
-                out_dimensions[nd_new] = n_steps;
-                out_strides[nd_new] = step_size *
-                                            PyArray_STRIDES(self)[nd_old-1];
-                nd_new++;
-            }
-        }
-    }
-    if (i < n) {
-        return -1;
-    }
-    n_add = PyArray_NDIM(self)-nd_old;
-    for (j = 0; j < n_add; j++) {
-        out_dimensions[nd_new] = PyArray_DIMS(self)[nd_old];
-        out_strides[nd_new] = PyArray_STRIDES(self)[nd_old];
-        nd_new++;
-        nd_old++;
-    }
-    *out_offset = offset;
-    return nd_new;
-}
-
-
 /*********************** Element-wise Array Iterator ***********************/
 /*  Aided by Peter J. Verveer's  nd_image package and numpy's arraymap  ****/
 /*         and Python's array iterator                                   ***/
 
 /* get the dataptr from its current coordinates for simple iterator */
 static char*
-get_ptr_simple(PyArrayIterObject* iter, npy_intp *coordinates)
+get_ptr_simple(PyArrayIterObject* iter, const npy_intp *coordinates)
 {
     npy_intp i;
     char *ret;
@@ -224,10 +116,12 @@ get_ptr_simple(PyArrayIterObject* iter, npy_intp *coordinates)
  * This is common initialization code between PyArrayIterObject and
  * PyArrayNeighborhoodIterObject
  *
- * Increase ao refcount
+ * Steals a reference to the array object which gets removed at deallocation,
+ * if the iterator is allocated statically and its dealloc not called, it
+ * can be thought of as borrowing the reference.
  */
-static PyObject *
-array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
+NPY_NO_EXPORT void
+PyArray_RawIterBaseInit(PyArrayIterObject *it, PyArrayObject *ao)
 {
     int nd, i;
 
@@ -239,11 +133,12 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
     else {
         it->contiguous = 0;
     }
-    Py_INCREF(ao);
     it->ao = ao;
     it->size = PyArray_SIZE(ao);
     it->nd_m1 = nd - 1;
-    it->factors[nd-1] = 1;
+    if (nd != 0) {
+        it->factors[nd-1] = 1;
+    }
     for (i = 0; i < nd; i++) {
         it->dims_m1[i] = PyArray_DIMS(ao)[i] - 1;
         it->strides[i] = PyArray_STRIDES(ao)[i];
@@ -261,7 +156,7 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
     it->translate = &get_ptr_simple;
     PyArray_ITER_RESET(it);
 
-    return (PyObject *)it;
+    return;
 }
 
 static void
@@ -276,6 +171,10 @@ array_iter_base_dealloc(PyArrayIterObject *it)
 NPY_NO_EXPORT PyObject *
 PyArray_IterNew(PyObject *obj)
 {
+    /*
+     * Note that internall PyArray_RawIterBaseInit may be called directly on a
+     * statically allocated PyArrayIterObject.
+     */
     PyArrayIterObject *it;
     PyArrayObject *ao;
 
@@ -292,7 +191,8 @@ PyArray_IterNew(PyObject *obj)
         return NULL;
     }
 
-    array_iter_base_init(it, ao);
+    Py_INCREF(ao);  /* PyArray_RawIterBaseInit steals a reference */
+    PyArray_RawIterBaseInit(it, ao);
     return (PyObject *)it;
 }
 
@@ -340,7 +240,9 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     it->ao = ao;
     it->size = PyArray_MultiplyList(dims, nd);
     it->nd_m1 = nd - 1;
-    it->factors[nd-1] = 1;
+    if (nd != 0) {
+        it->factors[nd-1] = 1;
+    }
     for (i = 0; i < nd; i++) {
         it->dims_m1[i] = dims[i] - 1;
         k = i - diff;
@@ -494,6 +396,10 @@ arrayiter_next(PyArrayIterObject *it)
 static void
 arrayiter_dealloc(PyArrayIterObject *it)
 {
+    /*
+     * Note that it is possible to statically allocate a PyArrayIterObject,
+     * which does not call this function.
+     */
     array_iter_base_dealloc(it);
     PyArray_free(it);
 }
@@ -643,6 +549,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     char *dptr;
     int size;
     PyObject *obj = NULL;
+    PyObject *new;
     PyArray_CopySwapFunc *copyswap;
 
     if (ind == Py_Ellipsis) {
@@ -744,35 +651,35 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         obj = ind;
     }
 
-    if (PyArray_Check(obj)) {
-        /* Check for Boolean object */
-        if (PyArray_TYPE((PyArrayObject *)obj) == NPY_BOOL) {
-            ret = iter_subscript_Bool(self, (PyArrayObject *)obj);
-            Py_DECREF(indtype);
-        }
-        /* Check for integer array */
-        else if (PyArray_ISINTEGER((PyArrayObject *)obj)) {
-            PyObject *new;
-            new = PyArray_FromAny(obj, indtype, 0, 0,
-                              NPY_ARRAY_FORCECAST | NPY_ARRAY_ALIGNED, NULL);
-            if (new == NULL) {
-                goto fail;
-            }
-            Py_DECREF(obj);
-            obj = new;
-            new = iter_subscript_int(self, (PyArrayObject *)obj);
-            Py_DECREF(obj);
-            return new;
-        }
-        else {
-            goto fail;
-        }
+    /* Any remaining valid input is an array or has been turned into one */
+    if (!PyArray_Check(obj)) {
+        goto fail;
+    }
+
+    /* Check for Boolean array */
+    if (PyArray_TYPE((PyArrayObject *)obj) == NPY_BOOL) {
+        ret = iter_subscript_Bool(self, (PyArrayObject *)obj);
+        Py_DECREF(indtype);
         Py_DECREF(obj);
         return (PyObject *)ret;
     }
-    else {
-        Py_DECREF(indtype);
+
+    /* Only integer arrays left */
+    if (!PyArray_ISINTEGER((PyArrayObject *)obj)) {
+        goto fail;
     }
+
+    Py_INCREF(indtype);
+    new = PyArray_FromAny(obj, indtype, 0, 0,
+                      NPY_ARRAY_FORCECAST | NPY_ARRAY_ALIGNED, NULL);
+    if (new == NULL) {
+        goto fail;
+    }
+    Py_DECREF(indtype);
+    Py_DECREF(obj);
+    ret = (PyArrayObject *)iter_subscript_int(self, (PyArrayObject *)new);
+    Py_DECREF(new);
+    return (PyObject *)ret;
 
 
  fail:
@@ -911,13 +818,13 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     type = PyArray_DESCR(self->ao);
 
     /*
-     * Check for Boolean -- this is first becasue
+     * Check for Boolean -- this is first because
      * Bool is a subclass of Int
      */
     if (PyBool_Check(ind)) {
         retval = 0;
         if (PyObject_IsTrue(ind)) {
-            retval = type->f->setitem(val, self->dataptr, self->ao);
+            retval = PyArray_SETITEM(self->ao, self->dataptr, val);
         }
         goto finish;
     }
@@ -926,14 +833,13 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         goto skip;
     }
     start = PyArray_PyIntAsIntp(ind);
-    if (start==-1 && PyErr_Occurred()) {
+    if (error_converting(start)) {
         PyErr_Clear();
     }
     else {
         if (check_and_adjust_index(&start, self->size, -1, NULL) < 0) {
             goto finish;
         }
-        retval = 0;
         PyArray_ITER_GOTO1D(self, start);
         retval = type->f->setitem(val, self->dataptr, self->ao);
         PyArray_ITER_RESET(self);
@@ -1055,7 +961,28 @@ static PyMappingMethods iter_as_mapping = {
 };
 
 
-
+/* Two options:
+ *  1) underlying array is contiguous
+ *     -- return 1-d wrapper around it
+ *  2) underlying array is not contiguous
+ *     -- make new 1-d contiguous array with updateifcopy flag set
+ *        to copy back to the old array
+ *
+ *  If underlying array is readonly, then we make the output array readonly
+ *     and updateifcopy does not apply.
+ *
+ *  Changed 2017-07-21, 1.14.0.
+ *
+ *  In order to start the process of removing UPDATEIFCOPY, see gh-7054, the
+ *  behavior is changed to always return an non-writeable copy when the base
+ *  array is non-contiguous. Doing that will hopefully smoke out those few
+ *  folks who assign to the result with the expectation that the base array
+ *  will be changed. At a later date non-contiguous arrays will always return
+ *  writeable copies.
+ *
+ *  Note that the type and argument expected for the __array__ method is
+ *  ignored.
+ */
 static PyArrayObject *
 iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
 {
@@ -1063,42 +990,23 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
     PyArrayObject *ret;
     npy_intp size;
 
-    /* Any argument ignored */
-
-    /* Two options:
-     *  1) underlying array is contiguous
-     *     -- return 1-d wrapper around it
-     *  2) underlying array is not contiguous
-     *     -- make new 1-d contiguous array with updateifcopy flag set
-     *        to copy back to the old array
-     *
-     *  If underlying array is readonly, then we make the output array readonly
-     *     and updateifcopy does not apply.
-     */
     size = PyArray_SIZE(it->ao);
     Py_INCREF(PyArray_DESCR(it->ao));
+
     if (PyArray_ISCONTIGUOUS(it->ao)) {
-        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                 PyArray_DESCR(it->ao),
-                                 1, &size,
-                                 NULL, PyArray_DATA(it->ao),
-                                 PyArray_FLAGS(it->ao),
-                                 (PyObject *)it->ao);
+        ret = (PyArrayObject *)PyArray_NewFromDescrAndBase(
+                &PyArray_Type, PyArray_DESCR(it->ao),
+                1, &size, NULL, PyArray_DATA(it->ao),
+                PyArray_FLAGS(it->ao), (PyObject *)it->ao, (PyObject *)it->ao);
         if (ret == NULL) {
-            return NULL;
-        }
-        Py_INCREF(it->ao);
-        if (PyArray_SetBaseObject(ret, (PyObject *)it->ao) < 0) {
-            Py_DECREF(ret);
             return NULL;
         }
     }
     else {
-        ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                 PyArray_DESCR(it->ao),
-                                 1, &size,
-                                 NULL, NULL,
-                                 0, (PyObject *)it->ao);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(
+                &PyArray_Type, PyArray_DESCR(it->ao), 1, &size,
+                NULL, NULL, 0,
+                (PyObject *)it->ao);
         if (ret == NULL) {
             return NULL;
         }
@@ -1106,16 +1014,7 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
             Py_DECREF(ret);
             return NULL;
         }
-        if (PyArray_ISWRITEABLE(it->ao)) {
-            Py_INCREF(it->ao);
-            if (PyArray_SetUpdateIfCopyBase(ret, it->ao) < 0) {
-                Py_DECREF(ret);
-                return NULL;
-            }
-        }
-        else {
-            PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
-        }
+        PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
     }
     return ret;
 
@@ -1151,6 +1050,7 @@ iter_richcompare(PyArrayIterObject *self, PyObject *other, int cmp_op)
         return NULL;
     }
     ret = array_richcompare(new, other, cmp_op);
+    PyArray_ResolveWritebackIfCopy(new);
     Py_DECREF(new);
     return ret;
 }
@@ -1323,7 +1223,9 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
         it->nd_m1 = mit->nd - 1;
         it->size = tmp;
         nd = PyArray_NDIM(it->ao);
-        it->factors[mit->nd-1] = 1;
+        if (nd != 0) {
+            it->factors[mit->nd-1] = 1;
+        }
         for (j = 0; j < mit->nd; j++) {
             it->dims_m1[j] = mit->dimensions[j] - 1;
             k = j + nd - mit->nd;
@@ -1349,232 +1251,169 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
     return 0;
 }
 
-/*NUMPY_API
- * Get MultiIterator from array of Python objects and any additional
- *
- * PyObject **mps -- array of PyObjects
- * int n - number of PyObjects in the array
- * int nadd - number of additional arrays to include in the iterator.
- *
- * Returns a multi-iterator object.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
+static NPY_INLINE PyObject*
+multiiter_wrong_number_of_args(void)
 {
-    va_list va;
-    PyArrayMultiIterObject *multi;
-    PyObject *current;
-    PyObject *arr;
-
-    int i, ntot, err=0;
-
-    ntot = n + nadd;
-    if (ntot < 1 || ntot > NPY_MAXARGS) {
-        PyErr_Format(PyExc_ValueError,
-                     "Need at least 1 and at most %d "
-                     "array objects.", NPY_MAXARGS);
-        return NULL;
-    }
-    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
-    if (multi == NULL) {
-        return PyErr_NoMemory();
-    }
-    PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
-
-    for (i = 0; i < ntot; i++) {
-        multi->iters[i] = NULL;
-    }
-    multi->numiter = ntot;
-    multi->index = 0;
-
-    va_start(va, nadd);
-    for (i = 0; i < ntot; i++) {
-        if (i < n) {
-            current = mps[i];
-        }
-        else {
-            current = va_arg(va, PyObject *);
-        }
-        arr = PyArray_FROM_O(current);
-        if (arr == NULL) {
-            err = 1;
-            break;
-        }
-        else {
-            multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
-            if (multi->iters[i] == NULL) {
-                err = 1;
-                break;
-            }
-            Py_DECREF(arr);
-        }
-    }
-    va_end(va);
-
-    if (!err && PyArray_Broadcast(multi) < 0) {
-        err = 1;
-    }
-    if (err) {
-        Py_DECREF(multi);
-        return NULL;
-    }
-    PyArray_MultiIter_RESET(multi);
-    return (PyObject *)multi;
+    return PyErr_Format(PyExc_ValueError,
+                        "Need at least 0 and at most %d "
+                        "array objects.", NPY_MAXARGS);
 }
 
-/*NUMPY_API
- * Get MultiIterator,
+/*
+ * Common implementation for all PyArrayMultiIterObject constructors.
  */
-NPY_NO_EXPORT PyObject *
-PyArray_MultiIterNew(int n, ...)
+static PyObject*
+multiiter_new_impl(int n_args, PyObject **args)
 {
-    va_list va;
     PyArrayMultiIterObject *multi;
-    PyObject *current;
-    PyObject *arr;
-
-    int i, err = 0;
-
-    if (n < 1 || n > NPY_MAXARGS) {
-        PyErr_Format(PyExc_ValueError,
-                     "Need at least 1 and at most %d "
-                     "array objects.", NPY_MAXARGS);
-        return NULL;
-    }
-
-    /* fprintf(stderr, "multi new...");*/
+    int i;
 
     multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
     if (multi == NULL) {
         return PyErr_NoMemory();
     }
     PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
+    multi->numiter = 0;
 
-    for (i = 0; i < n; i++) {
-        multi->iters[i] = NULL;
-    }
-    multi->numiter = n;
-    multi->index = 0;
-
-    va_start(va, n);
-    for (i = 0; i < n; i++) {
-        current = va_arg(va, PyObject *);
-        arr = PyArray_FROM_O(current);
-        if (arr == NULL) {
-            err = 1;
-            break;
-        }
-        else {
-            multi->iters[i] = (PyArrayIterObject *)PyArray_IterNew(arr);
-            if (multi->iters[i] == NULL) {
-                err = 1;
-                break;
-            }
-            Py_DECREF(arr);
-        }
-    }
-    va_end(va);
-
-    if (!err && PyArray_Broadcast(multi) < 0) {
-        err = 1;
-    }
-    if (err) {
-        Py_DECREF(multi);
-        return NULL;
-    }
-    PyArray_MultiIter_RESET(multi);
-    return (PyObject *)multi;
-}
-
-static PyObject *
-arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds)
-{
-
-    Py_ssize_t n = 0;
-    Py_ssize_t i, j, k;
-    PyArrayMultiIterObject *multi;
-    PyObject *arr;
-
-    if (kwds != NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                        "keyword arguments not accepted.");
-        return NULL;
-    }
-
-    for (j = 0; j < PyTuple_Size(args); ++j) {
-        PyObject *obj = PyTuple_GET_ITEM(args, j);
-
-        if (PyObject_IsInstance(obj, (PyObject *)&PyArrayMultiIter_Type)) {
-            /*
-             * If obj is a multi-iterator, all its arrays will be added
-             * to the new multi-iterator.
-             */
-            n += ((PyArrayMultiIterObject *)obj)->numiter;
-        }
-        else {
-            /* If not, will try to convert it to a single array */
-            ++n;
-        }
-    }
-    if (n < 1 || n > NPY_MAXARGS) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
-        PyErr_Format(PyExc_ValueError,
-                     "Need at least 1 and at most %d "
-                     "array objects.", NPY_MAXARGS);
-        return NULL;
-    }
-
-    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
-    if (multi == NULL) {
-        return PyErr_NoMemory();
-    }
-    PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
-
-    multi->numiter = n;
-    multi->index = 0;
-    i = 0;
-    for (j = 0; j < PyTuple_GET_SIZE(args); ++j) {
-        PyObject *obj = PyTuple_GET_ITEM(args, j);
+    for (i = 0; i < n_args; ++i) {
+        PyObject *obj = args[i];
+        PyObject *arr;
         PyArrayIterObject *it;
 
         if (PyObject_IsInstance(obj, (PyObject *)&PyArrayMultiIter_Type)) {
             PyArrayMultiIterObject *mit = (PyArrayMultiIterObject *)obj;
+            int j;
 
-            for (k = 0; k < mit->numiter; ++k) {
-                arr = (PyObject *)mit->iters[k]->ao;
-                assert (arr != NULL);
+            if (multi->numiter + mit->numiter > NPY_MAXARGS) {
+                multiiter_wrong_number_of_args();
+                goto fail;
+            }
+            for (j = 0; j < mit->numiter; ++j) {
+                arr = (PyObject *)mit->iters[j]->ao;
                 it = (PyArrayIterObject *)PyArray_IterNew(arr);
                 if (it == NULL) {
                     goto fail;
                 }
-                multi->iters[i++] = it;
+                multi->iters[multi->numiter++] = it;
             }
         }
-        else {
+        else if (multi->numiter < NPY_MAXARGS) {
             arr = PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
             if (arr == NULL) {
                 goto fail;
             }
             it = (PyArrayIterObject *)PyArray_IterNew(arr);
+            Py_DECREF(arr);
             if (it == NULL) {
                 goto fail;
             }
-            multi->iters[i++] = it;
-            Py_DECREF(arr);
+            multi->iters[multi->numiter++] = it;
+        }
+        else {
+            multiiter_wrong_number_of_args();
+            goto fail;
         }
     }
-    assert (i == n);
+
+    if (multi->numiter < 0) {
+        multiiter_wrong_number_of_args();
+        goto fail;
+    }
     if (PyArray_Broadcast(multi) < 0) {
         goto fail;
     }
     PyArray_MultiIter_RESET(multi);
+
     return (PyObject *)multi;
 
- fail:
+fail:
     Py_DECREF(multi);
+
     return NULL;
+}
+
+/*NUMPY_API
+ * Get MultiIterator from array of Python objects and any additional
+ *
+ * PyObject **mps - array of PyObjects
+ * int n - number of PyObjects in the array
+ * int nadd - number of additional arrays to include in the iterator.
+ *
+ * Returns a multi-iterator object.
+ */
+NPY_NO_EXPORT PyObject*
+PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
+{
+    PyObject *args_impl[NPY_MAXARGS];
+    int ntot = n + nadd;
+    int i;
+    va_list va;
+
+    if ((ntot > NPY_MAXARGS) || (ntot < 0)) {
+        return multiiter_wrong_number_of_args();
+    }
+
+    for (i = 0; i < n; ++i) {
+        args_impl[i] = mps[i];
+    }
+
+    va_start(va, nadd);
+    for (; i < ntot; ++i) {
+        args_impl[i] = va_arg(va, PyObject *);
+    }
+    va_end(va);
+
+    return multiiter_new_impl(ntot, args_impl);
+}
+
+/*NUMPY_API
+ * Get MultiIterator,
+ */
+NPY_NO_EXPORT PyObject*
+PyArray_MultiIterNew(int n, ...)
+{
+    PyObject *args_impl[NPY_MAXARGS];
+    int i;
+    va_list va;
+
+    if ((n > NPY_MAXARGS) || (n < 0)) {
+        return multiiter_wrong_number_of_args();
+    }
+
+    va_start(va, n);
+    for (i = 0; i < n; ++i) {
+        args_impl[i] = va_arg(va, PyObject *);
+    }
+    va_end(va);
+
+    return multiiter_new_impl(n, args_impl);
+}
+
+static PyObject*
+arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args,
+                  PyObject *kwds)
+{
+    PyObject *ret, *fast_seq;
+    Py_ssize_t n;
+
+    if (kwds != NULL && PyDict_Size(kwds) > 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "keyword arguments not accepted.");
+        return NULL;
+    }
+
+    fast_seq = PySequence_Fast(args, "");  // needed for pypy
+    if (fast_seq == NULL) {
+        return NULL;
+    }
+    n = PySequence_Fast_GET_SIZE(fast_seq);
+    if (n > NPY_MAXARGS) {
+        Py_DECREF(fast_seq);
+        return multiiter_wrong_number_of_args();
+    }
+    ret = multiiter_new_impl(n, PySequence_Fast_ITEMS(fast_seq));
+    Py_DECREF(fast_seq);
+    return ret;
 }
 
 static PyObject *
@@ -1717,7 +1556,7 @@ static PyMethodDef arraymultiter_methods[] = {
     {"reset",
         (PyCFunction) arraymultiter_reset,
         METH_VARARGS, NULL},
-    {NULL, NULL, 0, NULL},      /* sentinal */
+    {NULL, NULL, 0, NULL},      /* sentinel */
 };
 
 NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
@@ -1805,7 +1644,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
 
         storeflags = PyArray_FLAGS(ar->ao);
         PyArray_ENABLEFLAGS(ar->ao, NPY_ARRAY_BEHAVED);
-        st = PyArray_DESCR(ar->ao)->f->setitem((PyObject*)fill, ret, ar->ao);
+        st = PyArray_SETITEM(ar->ao, ret, (PyObject*)fill);
         ((PyArrayObject_fields *)ar->ao)->flags = storeflags;
 
         if (st < 0) {
@@ -1826,7 +1665,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
 
 /* set the dataptr from its current coordinates */
 static char*
-get_ptr_constant(PyArrayIterObject* _iter, npy_intp *coordinates)
+get_ptr_constant(PyArrayIterObject* _iter, const npy_intp *coordinates)
 {
     int i;
     npy_intp bd, _coordinates[NPY_MAXDIMS];
@@ -1881,7 +1720,7 @@ __npy_pos_remainder(npy_intp i, npy_intp n)
 
 /* set the dataptr from its current coordinates */
 static char*
-get_ptr_mirror(PyArrayIterObject* _iter, npy_intp *coordinates)
+get_ptr_mirror(PyArrayIterObject* _iter, const npy_intp *coordinates)
 {
     int i;
     npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
@@ -1915,7 +1754,7 @@ __npy_euclidean_division(npy_intp i, npy_intp n)
     _coordinates[c] = lb + __npy_euclidean_division(bd, p->limits_sizes[c]);
 
 static char*
-get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
+get_ptr_circular(PyArrayIterObject* _iter, const npy_intp *coordinates)
 {
     int i;
     npy_intp bd, _coordinates[NPY_MAXDIMS], lb;
@@ -1937,7 +1776,7 @@ get_ptr_circular(PyArrayIterObject* _iter, npy_intp *coordinates)
  * A Neighborhood Iterator object.
 */
 NPY_NO_EXPORT PyObject*
-PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
+PyArray_NeighborhoodIterNew(PyArrayIterObject *x, const npy_intp *bounds,
                             int mode, PyArrayObject* fill)
 {
     int i;
@@ -1949,7 +1788,8 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
     }
     PyObject_Init((PyObject *)ret, &PyArrayNeighborhoodIter_Type);
 
-    array_iter_base_init((PyArrayIterObject*)ret, x->ao);
+    Py_INCREF(x->ao);  /* PyArray_RawIterBaseInit steals a reference */
+    PyArray_RawIterBaseInit((PyArrayIterObject*)ret, x->ao);
     Py_INCREF(x);
     ret->_internal_iter = x;
 

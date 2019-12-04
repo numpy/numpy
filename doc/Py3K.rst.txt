@@ -22,8 +22,8 @@ Resources
 
 Information on porting to 3K:
 
-- http://wiki.python.org/moin/cporting
-- http://wiki.python.org/moin/PortingExtensionModulesToPy3k
+- https://wiki.python.org/moin/cporting
+- https://wiki.python.org/moin/PortingExtensionModulesToPy3k
 
 
 Prerequisites
@@ -721,7 +721,7 @@ keep in mind.
    warnings if they are initialized in the old way.
 
 2) The compare slot has been made reserved in order to preserve binary
-   compatibily while the tp_compare function went away. The tp_richcompare
+   compatibility while the tp_compare function went away. The tp_richcompare
    function has replaced it and we need to use that slot instead. This will
    likely require modifications in the searchsorted functions and generic sorts
    that currently use the compare function.
@@ -812,20 +812,20 @@ Types with tp_as_sequence defined
 
 PySequenceMethods in py3k are binary compatible with py2k, but some of the
 slots have gone away. I suspect this means some functions need redefining so
-the semantics of the slots needs to be checked.
+the semantics of the slots needs to be checked::
 
-PySequenceMethods foo_sequence_methods = {
-    (lenfunc)0,                                 /* sq_length */
-    (binaryfunc)0,                              /* sq_concat */
-    (ssizeargfunc)0,                            /* sq_repeat */
-    (ssizeargfunc)0,                            /* sq_item */
-    (void *)0,                                  /* nee sq_slice */
-    (ssizeobjargproc)0,                         /* sq_ass_item */
-    (void *)0,                                  /* nee sq_ass_slice */
-    (objobjproc)0,                              /* sq_contains */
-    (binaryfunc)0,                              /* sq_inplace_concat */
-    (ssizeargfunc)0                             /* sq_inplace_repeat */
-};
+    PySequenceMethods foo_sequence_methods = {
+        (lenfunc)0,                                 /* sq_length */
+        (binaryfunc)0,                              /* sq_concat */
+        (ssizeargfunc)0,                            /* sq_repeat */
+        (ssizeargfunc)0,                            /* sq_item */
+        (void *)0,                                  /* nee sq_slice */
+        (ssizeobjargproc)0,                         /* sq_ass_item */
+        (void *)0,                                  /* nee sq_ass_slice */
+        (objobjproc)0,                              /* sq_contains */
+        (binaryfunc)0,                              /* sq_inplace_concat */
+        (ssizeargfunc)0                             /* sq_inplace_repeat */
+    };
 
 
 PyMappingMethods
@@ -840,13 +840,13 @@ Types with tp_as_mapping defined
 * multiarray/arrayobject.c
 
 PyMappingMethods in py3k look to be the same as in py2k. The semantics
-of the slots needs to be checked.
+of the slots needs to be checked::
 
-PyMappingMethods foo_mapping_methods = {
-    (lenfunc)0,                             /* mp_length */
-    (binaryfunc)0,                          /* mp_subscript */
-    (objobjargproc)0                        /* mp_ass_subscript */
-};
+    PyMappingMethods foo_mapping_methods = {
+        (lenfunc)0,                             /* mp_length */
+        (binaryfunc)0,                          /* mp_subscript */
+        (objobjargproc)0                        /* mp_ass_subscript */
+    };
 
 
 PyFile

@@ -11,10 +11,10 @@ How to use the documentation
 ----------------------------
 Documentation is available in two forms: docstrings provided
 with the code, and a loose standing reference guide, available from
-`the NumPy homepage <http://www.scipy.org>`_.
+`the NumPy homepage <https://www.scipy.org>`_.
 
 We recommend exploring the docstrings using
-`IPython <http://ipython.scipy.org>`_, an advanced Python shell with
+`IPython <https://ipython.org>`_, an advanced Python shell with
 TAB-completion and introspection capabilities.  See below for further
 instructions.
 
@@ -133,24 +133,8 @@ else:
     from .version import git_revision as __git_revision__
     from .version import version as __version__
 
-    from ._import_tools import PackageLoader
-
-    def pkgload(*packages, **options):
-        loader = PackageLoader(infunc=True)
-        return loader(*packages, **options)
-
-    from . import add_newdocs
-    __all__ = ['add_newdocs',
-               'ModuleDeprecationWarning',
+    __all__ = ['ModuleDeprecationWarning',
                'VisibleDeprecationWarning']
-
-    pkgload.__doc__ = PackageLoader.__call__.__doc__
-
-    # We don't actually use this ourselves anymore, but I'm not 100% sure that
-    # no-one else in the world is using it (though I hope not)
-    from .testing import Tester
-    test = testing.nosetester._numpy_tester().test
-    bench = testing.nosetester._numpy_tester().bench
 
     # Allow distributors to run custom init code
     from . import _distributor_init
@@ -159,7 +143,9 @@ else:
     from .core import *
     from . import compat
     from . import lib
+    # FIXME: why have numpy.lib if everything is imported here??
     from .lib import *
+
     from . import linalg
     from . import fft
     from . import polynomial
@@ -172,6 +158,7 @@ else:
 
     # Make these accessible from numpy name-space
     # but not imported in from numpy import *
+    # TODO[gh-6103]: Deprecate these
     if sys.version_info[0] >= 3:
         from builtins import bool, int, float, complex, object, str
         unicode = str
@@ -179,16 +166,29 @@ else:
         from __builtin__ import bool, int, float, complex, object, unicode, str
 
     from .core import round, abs, max, min
+    # now that numpy modules are imported, can initialize limits
+    core.getlimits._register_known_types()
 
-    __all__.extend(['__version__', 'pkgload', 'PackageLoader',
-               'show_config'])
+    __all__.extend(['__version__', 'show_config'])
     __all__.extend(core.__all__)
     __all__.extend(_mat.__all__)
     __all__.extend(lib.__all__)
     __all__.extend(['linalg', 'fft', 'random', 'ctypeslib', 'ma'])
 
+    # These are added by `from .core import *` and `core.__all__`, but we
+    # overwrite them above with builtins we do _not_ want to export.
+    __all__.remove('long')
+    __all__.remove('unicode')
 
-    # Filter annoying Cython warnings that serve no good purpose.
+    # Remove things that are in the numpy.lib but not in the numpy namespace
+    # Note that there is a test (numpy/tests/test_public_api.py:test_numpy_namespace)
+    # that prevents adding more things to the main namespace by accident.
+    # The list below will grow until the `from .lib import *` fixme above is
+    # taken care of
+    __all__.remove('Arrayterator')
+    del Arrayterator
+
+    # Filter out Cython harmless warnings
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
@@ -197,3 +197,64 @@ else:
     # but do not use them, we define them here for backward compatibility.
     oldnumeric = 'removed'
     numarray = 'removed'
+
+    if sys.version_info[:2] >= (3, 7):
+        # Importing Tester requires importing all of UnitTest which is not a
+        # cheap import Since it is mainly used in test suits, we lazy import it
+        # here to save on the order of 10 ms of import time for most users
+        #
+        # The previous way Tester was imported also had a side effect of adding
+        # the full `numpy.testing` namespace
+        #
+        # module level getattr is only supported in 3.7 onwards
+        # https://www.python.org/dev/peps/pep-0562/
+        def __getattr__(attr):
+            if attr == 'testing':
+                import numpy.testing as testing
+                return testing
+            elif attr == 'Tester':
+                from .testing import Tester
+                return Tester
+            else:
+                raise AttributeError("module {!r} has no attribute "
+                                     "{!r}".format(__name__, attr))
+
+        def __dir__():
+            return list(globals().keys()) + ['Tester', 'testing']
+
+    else:
+        # We don't actually use this ourselves anymore, but I'm not 100% sure that
+        # no-one else in the world is using it (though I hope not)
+        from .testing import Tester
+
+    # Pytest testing
+    from numpy._pytesttester import PytestTester
+    test = PytestTester(__name__)
+    del PytestTester
+
+
+    def _sanity_check():
+        """
+        Quick sanity checks for common bugs caused by environment.
+        There are some cases e.g. with wrong BLAS ABI that cause wrong
+        results under specific runtime conditions that are not necessarily
+        achieved during test suite runs, and it is useful to catch those early.
+
+        See https://github.com/numpy/numpy/issues/8577 and other
+        similar bug reports.
+
+        """
+        try:
+            x = ones(2, dtype=float32)
+            if not abs(x.dot(x) - 2.0) < 1e-5:
+                raise AssertionError()
+        except AssertionError:
+            msg = ("The current Numpy installation ({!r}) fails to "
+                   "pass simple sanity checks. This can be caused for example "
+                   "by incorrect BLAS library being linked in, or by mixing "
+                   "package managers (pip, conda, apt, ...). Search closed "
+                   "numpy issues for similar problems.")
+            raise RuntimeError(msg.format(__file__))
+
+    _sanity_check()
+    del _sanity_check

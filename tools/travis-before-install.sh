@@ -4,17 +4,21 @@ uname -a
 free -m
 df -h
 ulimit -a
+
+if [ -n "$PPC64_LE" ]; then
+  pwd
+  ls -ltrh
+  target=$(python tools/openblas_support.py)
+  sudo cp -r $target/64/lib/* /usr/lib
+  sudo cp $target/64/include/* /usr/include
+fi
+
 mkdir builds
 pushd builds
 
 # Build into own virtualenv
 # We therefore control our own environment, avoid travis' numpy
-#
-# Some change in virtualenv 14.0.5 caused `test_f2py` to fail. So, we have
-# pinned `virtualenv` to the last known working version to avoid this failure.
-# Appears we had some issues with certificates on Travis. It looks like
-# bumping to 14.0.6 will help.
-pip install -U 'virtualenv==14.0.6'
+pip install -U virtualenv
 
 if [ -n "$USE_DEBUG" ]
 then
@@ -25,7 +29,9 @@ fi
 
 source venv/bin/activate
 python -V
-pip install --upgrade pip setuptools
-pip install nose pytz cython
-if [ -n "$USE_ASV" ]; then pip install asv; fi
+
 popd
+
+pip install --upgrade pip setuptools
+pip install -r test_requirements.txt
+if [ -n "$USE_ASV" ]; then pip install asv; fi

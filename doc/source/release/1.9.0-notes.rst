@@ -1,0 +1,448 @@
+=========================
+NumPy 1.9.0 Release Notes
+=========================
+
+This release supports Python 2.6 - 2.7 and 3.2 - 3.4.
+
+
+Highlights
+==========
+* Numerous performance improvements in various areas, most notably indexing and
+  operations on small arrays are significantly faster.
+  Indexing operations now also release the GIL.
+* Addition of `nanmedian` and `nanpercentile` rounds out the nanfunction set.
+
+
+Dropped Support
+===============
+
+* The oldnumeric and numarray modules have been removed.
+* The doc/pyrex and doc/cython directories have been removed.
+* The doc/numpybook directory has been removed.
+* The numpy/testing/numpytest.py file has been removed together with
+  the importall function it contained.
+
+
+Future Changes
+==============
+
+* The numpy/polynomial/polytemplate.py file will be removed in NumPy 1.10.0.
+* Default casting for inplace operations will change to 'same_kind' in
+  Numpy 1.10.0. This will certainly break some code that is currently
+  ignoring the warning.
+* Relaxed stride checking will be the default in 1.10.0
+* String version checks will break because, e.g., '1.9' > '1.10' is True. A
+  NumpyVersion class has been added that can be used for such comparisons.
+* The diagonal and diag functions will return writeable views in 1.10.0
+* The `S` and/or `a` dtypes may be changed to represent Python strings
+  instead of bytes, in Python 3 these two types are very different.
+
+
+Compatibility notes
+===================
+
+The diagonal and diag functions return readonly views.
+------------------------------------------------------
+In NumPy 1.8, the diagonal and diag functions returned readonly copies, in
+NumPy 1.9 they return readonly views, and in 1.10 they will return writeable
+views.
+
+Special scalar float values don't cause upcast to double anymore
+----------------------------------------------------------------
+In previous numpy versions operations involving floating point scalars
+containing special values ``NaN``, ``Inf`` and ``-Inf`` caused the result
+type to be at least ``float64``.  As the special values can be represented
+in the smallest available floating point type, the upcast is not performed
+anymore.
+
+For example the dtype of:
+
+    ``np.array([1.], dtype=np.float32) * float('nan')``
+
+now remains ``float32`` instead of being cast to ``float64``.
+Operations involving non-special values have not been changed.
+
+Percentile output changes
+-------------------------
+If given more than one percentile to compute numpy.percentile returns an
+array instead of a list. A single percentile still returns a scalar.  The
+array is equivalent to converting the list returned in older versions
+to an array via ``np.array``.
+
+If the ``overwrite_input`` option is used the input is only partially
+instead of fully sorted.
+
+ndarray.tofile exception type
+-----------------------------
+All ``tofile`` exceptions are now ``IOError``, some were previously
+``ValueError``.
+
+Invalid fill value exceptions
+-----------------------------
+Two changes to numpy.ma.core._check_fill_value:
+
+* When the fill value is a string and the array type is not one of
+  'OSUV', TypeError is raised instead of the default fill value being used.
+
+* When the fill value overflows the array type, TypeError is raised instead
+  of OverflowError.
+
+Polynomial Classes no longer derived from PolyBase
+--------------------------------------------------
+This may cause problems with folks who depended on the polynomial classes
+being derived from PolyBase. They are now all derived from the abstract
+base class ABCPolyBase. Strictly speaking, there should be a deprecation
+involved, but no external code making use of the old baseclass could be
+found.
+
+Using numpy.random.binomial may change the RNG state vs. numpy < 1.9
+--------------------------------------------------------------------
+A bug in one of the algorithms to generate a binomial random variate has
+been fixed. This change will likely alter the number of random draws
+performed, and hence the sequence location will be different after a
+call to distribution.c::rk_binomial_btpe. Any tests which rely on the RNG
+being in a known state should be checked and/or updated as a result.
+
+Random seed enforced to be a 32 bit unsigned integer
+----------------------------------------------------
+``np.random.seed`` and ``np.random.RandomState`` now throw a ``ValueError``
+if the seed cannot safely be converted to 32 bit unsigned integers.
+Applications that now fail can be fixed by masking the higher 32 bit values to
+zero: ``seed = seed & 0xFFFFFFFF``. This is what is done silently in older
+versions so the random stream remains the same.
+
+Argmin and argmax out argument
+------------------------------
+The ``out`` argument to ``np.argmin`` and ``np.argmax`` and their
+equivalent C-API functions is now checked to match the desired output shape
+exactly.  If the check fails a ``ValueError`` instead of ``TypeError`` is
+raised.
+
+Einsum
+------
+Remove unnecessary broadcasting notation restrictions.
+``np.einsum('ijk,j->ijk', A, B)`` can also be written as
+``np.einsum('ij...,j->ij...', A, B)`` (ellipsis is no longer required on 'j')
+
+Indexing
+--------
+
+The NumPy indexing has seen a complete rewrite in this version. This makes
+most advanced integer indexing operations much faster and should have no
+other implications.  However some subtle changes and deprecations were
+introduced in advanced indexing operations:
+
+* Boolean indexing into scalar arrays will always return a new 1-d array.
+  This means that ``array(1)[array(True)]`` gives ``array([1])`` and
+  not the original array.
+
+* Advanced indexing into one dimensional arrays used to have
+  (undocumented) special handling regarding repeating the value array in
+  assignments when the shape of the value array was too small or did not
+  match.  Code using this will raise an error. For compatibility you can
+  use ``arr.flat[index] = values``, which uses the old code branch.  (for
+  example ``a = np.ones(10); a[np.arange(10)] = [1, 2, 3]``)
+
+* The iteration order over advanced indexes used to be always C-order.
+  In NumPy 1.9. the iteration order adapts to the inputs and is not
+  guaranteed (with the exception of a *single* advanced index which is
+  never reversed for compatibility reasons). This means that the result
+  is undefined if multiple values are assigned to the same element.  An
+  example for this is ``arr[[0, 0], [1, 1]] = [1, 2]``, which may set
+  ``arr[0, 1]`` to either 1 or 2.
+
+* Equivalent to the iteration order, the memory layout of the advanced
+  indexing result is adapted for faster indexing and cannot be predicted.
+
+* All indexing operations return a view or a copy. No indexing operation
+  will return the original array object. (For example ``arr[...]``)
+
+* In the future Boolean array-likes (such as lists of python bools) will
+  always be treated as Boolean indexes and Boolean scalars (including
+  python ``True``) will be a legal *boolean* index. At this time, this is
+  already the case for scalar arrays to allow the general
+  ``positive = a[a > 0]`` to work when ``a`` is zero dimensional.
+
+* In NumPy 1.8 it was possible to use ``array(True)`` and
+  ``array(False)`` equivalent to 1 and 0 if the result of the operation
+  was a scalar.  This will raise an error in NumPy 1.9 and, as noted
+  above, treated as a boolean index in the future.
+
+* All non-integer array-likes are deprecated, object arrays of custom
+  integer like objects may have to be cast explicitly.
+
+* The error reporting for advanced indexing is more informative, however
+  the error type has changed in some cases. (Broadcasting errors of
+  indexing arrays are reported as ``IndexError``)
+
+* Indexing with more then one ellipsis (``...``) is deprecated.
+
+Non-integer reduction axis indexes are deprecated
+-------------------------------------------------
+Non-integer axis indexes to reduction ufuncs like `add.reduce` or `sum` are
+deprecated.
+
+``promote_types`` and string dtype
+----------------------------------
+``promote_types`` function now returns a valid string length when given an
+integer or float dtype as one argument and a string dtype as another
+argument.  Previously it always returned the input string dtype, even if it
+wasn't long enough to store the max integer/float value converted to a
+string.
+
+``can_cast`` and string dtype
+-----------------------------
+``can_cast`` function now returns False in "safe" casting mode for
+integer/float dtype and string dtype if the string dtype length is not long
+enough to store the max integer/float value converted to a string.
+Previously ``can_cast`` in "safe" mode returned True for integer/float
+dtype and a string dtype of any length.
+
+astype and string dtype
+-----------------------
+The ``astype`` method now returns an error if the string dtype to cast to
+is not long enough in "safe" casting mode to hold the max value of
+integer/float array that is being casted. Previously the casting was
+allowed even if the result was truncated.
+
+`npyio.recfromcsv` keyword arguments change
+-------------------------------------------
+`npyio.recfromcsv` no longer accepts the undocumented `update` keyword,
+which used to override the `dtype` keyword.
+
+The ``doc/swig`` directory moved
+--------------------------------
+The ``doc/swig`` directory has been moved to ``tools/swig``.
+
+The ``npy_3kcompat.h`` header changed
+-------------------------------------
+The unused ``simple_capsule_dtor`` function has been removed from
+``npy_3kcompat.h``.  Note that this header is not meant to be used outside
+of numpy; other projects should be using their own copy of this file when
+needed.
+
+Negative indices in C-Api ``sq_item`` and ``sq_ass_item`` sequence methods
+--------------------------------------------------------------------------
+When directly accessing the ``sq_item`` or ``sq_ass_item`` PyObject slots
+for item getting, negative indices will not be supported anymore.
+``PySequence_GetItem`` and ``PySequence_SetItem`` however fix negative
+indices so that they can be used there.
+
+NDIter
+------
+When ``NpyIter_RemoveAxis`` is now called, the iterator range will be reset.
+
+When a multi index is being tracked and an iterator is not buffered, it is
+possible to use ``NpyIter_RemoveAxis``. In this case an iterator can shrink
+in size. Because the total size of an iterator is limited, the iterator
+may be too large before these calls. In this case its size will be set to ``-1``
+and an error issued not at construction time but when removing the multi
+index, setting the iterator range, or getting the next function.
+
+This has no effect on currently working code, but highlights the necessity
+of checking for an error return if these conditions can occur. In most
+cases the arrays being iterated are as large as the iterator so that such
+a problem cannot occur.
+
+This change was already applied to the 1.8.1 release.
+
+``zeros_like`` for string dtypes now returns empty strings
+----------------------------------------------------------
+To match the `zeros` function `zeros_like` now returns an array initialized
+with empty strings instead of an array filled with `'0'`.
+
+
+New Features
+============
+
+Percentile supports more interpolation options
+----------------------------------------------
+``np.percentile`` now has the interpolation keyword argument to specify in
+which way points should be interpolated if the percentiles fall between two
+values.  See the documentation for the available options.
+
+Generalized axis support for median and percentile
+--------------------------------------------------
+``np.median`` and ``np.percentile`` now support generalized axis arguments like
+ufunc reductions do since 1.7. One can now say axis=(index, index) to pick a
+list of axes for the reduction. The ``keepdims`` keyword argument was also
+added to allow convenient broadcasting to arrays of the original shape.
+
+Dtype parameter added to ``np.linspace`` and ``np.logspace``
+------------------------------------------------------------
+The returned data type from the ``linspace`` and ``logspace`` functions can
+now be specified using the dtype parameter.
+
+More general ``np.triu`` and ``np.tril`` broadcasting
+-----------------------------------------------------
+For arrays with ``ndim`` exceeding 2, these functions will now apply to the
+final two axes instead of raising an exception.
+
+``tobytes`` alias for ``tostring`` method
+-----------------------------------------
+``ndarray.tobytes`` and ``MaskedArray.tobytes`` have been added as aliases
+for ``tostring`` which exports arrays as ``bytes``. This is more consistent
+in Python 3 where ``str`` and ``bytes`` are not the same.
+
+Build system
+------------
+Added experimental support for the ppc64le and OpenRISC architecture.
+
+Compatibility to python ``numbers`` module
+------------------------------------------
+All numerical numpy types are now registered with the type hierarchy in
+the python ``numbers`` module.
+
+``increasing`` parameter added to ``np.vander``
+-----------------------------------------------
+The ordering of the columns of the Vandermonde matrix can be specified with
+this new boolean argument.
+
+``unique_counts`` parameter added to ``np.unique``
+--------------------------------------------------
+The number of times each unique item comes up in the input can now be
+obtained as an optional return value.
+
+Support for median and percentile in nanfunctions
+-------------------------------------------------
+The ``np.nanmedian`` and ``np.nanpercentile`` functions behave like
+the median and percentile functions except that NaNs are ignored.
+
+NumpyVersion class added
+------------------------
+The class may be imported from numpy.lib and can be used for version
+comparison when the numpy version goes to 1.10.devel. For example::
+
+    >>> from numpy.lib import NumpyVersion
+    >>> if NumpyVersion(np.__version__) < '1.10.0'):
+    ...     print('Wow, that is an old NumPy version!')
+
+Allow saving arrays with large number of named columns
+------------------------------------------------------
+The numpy storage format 1.0 only allowed the array header to have a total size
+of 65535 bytes. This can be exceeded by structured arrays with a large number
+of columns. A new format 2.0 has been added which extends the header size to 4
+GiB. `np.save` will automatically save in 2.0 format if the data requires it,
+else it will always use the more compatible 1.0 format.
+
+Full broadcasting support for ``np.cross``
+------------------------------------------
+``np.cross`` now properly broadcasts its two input arrays, even if they
+have different number of dimensions. In earlier versions this would result
+in either an error being raised, or wrong results computed.
+
+
+Improvements
+============
+
+Better numerical stability for sum in some cases
+------------------------------------------------
+Pairwise summation is now used in the sum method, but only along the fast
+axis and for groups of the values <= 8192 in length. This should also
+improve the accuracy of var and std in some common cases.
+
+Percentile implemented in terms of ``np.partition``
+---------------------------------------------------
+``np.percentile`` has been implemented in terms of ``np.partition`` which
+only partially sorts the data via a selection algorithm. This improves the
+time complexity from ``O(nlog(n))`` to ``O(n)``.
+
+Performance improvement for ``np.array``
+----------------------------------------
+The performance of converting lists containing arrays to arrays using
+``np.array`` has been improved. It is now equivalent in speed to
+``np.vstack(list)``.
+
+Performance improvement for ``np.searchsorted``
+-----------------------------------------------
+For the built-in numeric types, ``np.searchsorted`` no longer relies on the
+data type's ``compare`` function to perform the search, but is now
+implemented by type specific functions. Depending on the size of the
+inputs, this can result in performance improvements over 2x.
+
+Optional reduced verbosity for np.distutils
+-------------------------------------------
+Set ``numpy.distutils.system_info.system_info.verbosity = 0`` and then
+calls to ``numpy.distutils.system_info.get_info('blas_opt')`` will not
+print anything on the output. This is mostly for other packages using
+numpy.distutils.
+
+Covariance check in ``np.random.multivariate_normal``
+-----------------------------------------------------
+A ``RuntimeWarning`` warning is raised when the covariance matrix is not
+positive-semidefinite.
+
+Polynomial Classes no longer template based
+-------------------------------------------
+The polynomial classes have been refactored to use an abstract base class
+rather than a template in order to implement a common interface. This makes
+importing the polynomial package faster as the classes do not need to be
+compiled on import.
+
+More GIL releases
+-----------------
+Several more functions now release the Global Interpreter Lock allowing more
+efficient parallelization using the ``threading`` module. Most notably the GIL is
+now released for fancy indexing, ``np.where`` and the ``random`` module now
+uses a per-state lock instead of the GIL.
+
+MaskedArray support for more complicated base classes
+-----------------------------------------------------
+Built-in assumptions that the baseclass behaved like a plain array are being
+removed. In particalur, ``repr`` and ``str`` should now work more reliably.
+
+
+C-API
+-----
+
+
+Deprecations
+============
+
+Non-integer scalars for sequence repetition
+-------------------------------------------
+Using non-integer numpy scalars to repeat python sequences is deprecated.
+For example ``np.float_(2) * [1]`` will be an error in the future.
+
+``select`` input deprecations
+-----------------------------
+The integer and empty input to ``select`` is deprecated. In the future only
+boolean arrays will be valid conditions and an empty ``condlist`` will be
+considered an input error instead of returning the default.
+
+``rank`` function
+-----------------
+The ``rank`` function has been deprecated to avoid confusion with
+``numpy.linalg.matrix_rank``.
+
+Object array equality comparisons
+---------------------------------
+In the future object array comparisons both `==` and `np.equal` will not
+make use of identity checks anymore. For example:
+
+>>> a = np.array([np.array([1, 2, 3]), 1])
+>>> b = np.array([np.array([1, 2, 3]), 1])
+>>> a == b
+
+will consistently return False (and in the future an error) even if the array
+in `a` and `b` was the same object.
+
+The equality operator `==` will in the future raise errors like `np.equal`
+if broadcasting or element comparisons, etc. fails.
+
+Comparison with `arr == None` will in the future do an elementwise comparison
+instead of just returning False. Code should be using `arr is None`.
+
+All of these changes will give Deprecation- or FutureWarnings at this time.
+
+C-API
+-----
+
+The utility function npy_PyFile_Dup and npy_PyFile_DupClose are broken by the
+internal buffering python 3 applies to its file objects.
+To fix this two new functions npy_PyFile_Dup2 and npy_PyFile_DupClose2 are
+declared in npy_3kcompat.h and the old functions are deprecated.
+Due to the fragile nature of these functions it is recommended to instead use
+the python API when possible.
+
+This change was already applied to the 1.8.1 release.

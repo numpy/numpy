@@ -15,15 +15,23 @@ def configuration(parent_package='', top_path=None):
     src_dir = 'lapack_lite'
     lapack_lite_src = [
         os.path.join(src_dir, 'python_xerbla.c'),
-        os.path.join(src_dir, 'zlapack_lite.c'),
-        os.path.join(src_dir, 'dlapack_lite.c'),
-        os.path.join(src_dir, 'blas_lite.c'),
-        os.path.join(src_dir, 'dlamch.c'),
-        os.path.join(src_dir, 'f2c_lite.c'),
+        os.path.join(src_dir, 'f2c_z_lapack.c'),
+        os.path.join(src_dir, 'f2c_c_lapack.c'),
+        os.path.join(src_dir, 'f2c_d_lapack.c'),
+        os.path.join(src_dir, 'f2c_s_lapack.c'),
+        os.path.join(src_dir, 'f2c_lapack.c'),
+        os.path.join(src_dir, 'f2c_blas.c'),
+        os.path.join(src_dir, 'f2c_config.c'),
+        os.path.join(src_dir, 'f2c.c'),
     ]
     all_sources = config.paths(lapack_lite_src)
 
-    lapack_info = get_info('lapack_opt', 0)  # and {}
+    if (os.environ.get('NPY_USE_BLAS64_', "0") != "0"):
+        lapack_info = get_info('lapack64__opt', 2)
+        lapack_info.setdefault('define_macros', [])
+        lapack_info['define_macros'] += [('NPY_UMATH_USE_BLAS64_', None)]
+    else:
+        lapack_info = get_info('lapack_opt', 0)  # and {}
 
     def get_lapack_lite_sources(ext, build_dir):
         if not lapack_info:
