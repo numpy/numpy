@@ -49,7 +49,7 @@ RNG structure.
     :start-after: example 2
 
 These functions along with a minimal setup file are included in the
-`examples` folder, ``numpy.random.examples``.
+`examples` folder, ``numpy.random._examples``.
 
 CFFI
 ====
