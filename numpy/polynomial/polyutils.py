@@ -543,13 +543,18 @@ def _valnd(val_f, c, *args):
         See the ``<type>val<n>d`` functions for more detail
     """
     try:
-        args = tuple(np.array(args, copy=False))
-    except Exception:
+        # Automatic object array creation from ragged lists deprecated in 1.18,
+        # so pre-emptively raise. Change to correct exception when deprecation is removed
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error', 'Creating an ndarray with automatic',
+                                    DeprecationWarning)
+            args = tuple(np.array(args, copy=False))
+    except DeprecationWarning:
         # preserve the old error message
         if len(args) == 2:
-            raise ValueError('x, y, z are incompatible')
-        elif len(args) == 3:
             raise ValueError('x, y are incompatible')
+        elif len(args) == 3:
+            raise ValueError('x, y, z are incompatible')
         else:
             raise ValueError('ordinates are incompatible')
 
