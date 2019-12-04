@@ -448,7 +448,7 @@ class TestArrayConstruction(object):
         assert_equal(r, np.ones((2, 6, 6)))
 
         d = np.ones((6, ))
-        r = np.array([[d, d + 1], d + 2], dtype=object)
+        r = np.array([[d, d + 1], d + 2])
         assert_equal(len(r), 2)
         assert_equal(r[0], [d, d + 1])
         assert_equal(r[1], d + 2)
@@ -1051,60 +1051,34 @@ class TestCreation(object):
             assert_raises(ValueError, np.ndarray, buffer=buf, strides=(0,),
                           shape=(max_bytes//itemsize + 1,), dtype=dtype)
 
-    def _ragged_creation(self, seq):
-        # without dtype=object, the ragged object should raise
-        with assert_warns(DeprecationWarning):
-            a = np.array(seq)
-        b = np.array(seq, dtype=object)
-        assert_equal(a, b)
-        return b
-
-    def test_ragged_ndim_object(self):
+    def test_jagged_ndim_object(self):
         # Lists of mismatching depths are treated as object arrays
-        a = self._ragged_creation([[1], 2, 3])
+        a = np.array([[1], 2, 3])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
-        a = self._ragged_creation([1, [2], 3])
+        a = np.array([1, [2], 3])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
-        a = self._ragged_creation([1, 2, [3]])
+        a = np.array([1, 2, [3]])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
-    def test_ragged_shape_object(self):
+    def test_jagged_shape_object(self):
         # The jagged dimension of a list is turned into an object array
-        a = self._ragged_creation([[1, 1], [2], [3]])
+        a = np.array([[1, 1], [2], [3]])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
-        a = self._ragged_creation([[1], [2, 2], [3]])
+        a = np.array([[1], [2, 2], [3]])
         assert_equal(a.shape, (3,))
         assert_equal(a.dtype, object)
 
-        a = self._ragged_creation([[1], [2], [3, 3]])
-        assert a.shape == (3,)
-        assert a.dtype == object
+        a = np.array([[1], [2], [3, 3]])
+        assert_equal(a.shape, (3,))
+        assert_equal(a.dtype, object)
 
-    def test_array_of_ragged_array(self):
-        outer = np.array([None, None])
-        outer[0] = outer[1] = np.array([1, 2, 3])
-        assert np.array(outer).shape == (2,)
-        assert np.array([outer]).shape == (1, 2)
-
-        outer_ragged = np.array([None, None])
-        outer_ragged[0] = np.array([1, 2, 3])
-        outer_ragged[1] = np.array([1, 2, 3, 4])
-        # should both of these emit deprecation warnings?
-        assert np.array(outer_ragged).shape == (2,)
-        assert np.array([outer_ragged]).shape == (1, 2,)
-
-    def test_deep_nonragged_object(self):
-        # None of these should raise, even though they are missing dtype=object
-        a = np.array([[[Decimal(1)]]])
-        a = np.array([1, Decimal(1)])
-        a = np.array([[1], [Decimal(1)]])
 
 class TestStructured(object):
     def test_subarray_field_access(self):
