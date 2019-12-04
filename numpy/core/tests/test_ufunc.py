@@ -179,7 +179,6 @@ class TestUfuncGenericLoops(object):
                 assert_array_equal(res_num.astype("O"), res_obj)
 
 
-
 class TestUfunc(object):
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
