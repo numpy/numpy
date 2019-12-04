@@ -423,14 +423,12 @@ class TestRecord(object):
         data = (bytearray(b'eman'),)
         a['obj'] = data
         a['int'] = 42
-        state = a[0].__reduce__()
-        # If the data is bytes, it will pickle the address of the content
-        # which cannot be saved/restored
-        assert not isinstance(state[1][1], bytes)
-        b = state[0](*state[1])
-        assert b[0] == (bytearray(b'eman'), 42)
-        # got a fresh version, not the original pointers rebuilt
-        assert b[0][0] is not data
+        ctor, args = a[0].__reduce__()
+        # check the contructor is what we expect before interpreting the arguments
+        assert ctor is np.core.multiarray.scalar
+        dtype, obj = args
+        # make sure we did not pickle the address
+        assert not isinstance(obj, bytes)
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
