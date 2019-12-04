@@ -2008,7 +2008,7 @@ def test_unsupported_commontype():
 @pytest.mark.slow
 @pytest.mark.xfail(not HAS_LAPACK64, run=False,
                    reason="Numpy not compiled with 64-bit BLAS/LAPACK")
-@requires_memory(16e9)
+@requires_memory(free_bytes=16e9)
 def test_blas64_dot():
     n = 2**32
     a = np.zeros([1, n], dtype=np.float32)
