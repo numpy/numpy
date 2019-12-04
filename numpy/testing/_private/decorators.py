@@ -15,10 +15,6 @@ function name, setup and teardown functions and so on - see
 """
 from __future__ import division, absolute_import, print_function
 
-import sys
-import os
-import re
-
 try:
     # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
