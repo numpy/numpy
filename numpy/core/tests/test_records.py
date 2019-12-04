@@ -430,6 +430,8 @@ class TestRecord(object):
         # make sure we did not pickle the address
         assert not isinstance(obj, bytes)
 
+        assert_raises(TypeError, ctor, dtype, 13)
+
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
         dt = np.dtype([('foo', 'i8'), ('bar', 'O')])
