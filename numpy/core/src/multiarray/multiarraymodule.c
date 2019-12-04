@@ -1894,7 +1894,8 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     if (PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
         if (!PySequence_Check(obj)) {
             PyErr_SetString(PyExc_TypeError,
-                            "scalar pickle not returning sequence");
+                            "found non-sequence while unpicking scalar with "
+                            "NPY_LIST_PICKLE set");
             return NULL;
         }
         dptr = &obj;
