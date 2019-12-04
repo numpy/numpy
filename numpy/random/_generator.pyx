@@ -124,12 +124,12 @@ cdef extern from "numpy/random/distributions.h":
     void random_multinomial(bitgen_t *bitgen_state, int64_t n, int64_t *mnix,
                             double *pix, np.npy_intp d, binomial_t *binomial) nogil
 
-    int random_mvhg_count(bitgen_t *bitgen_state,
+    int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
                           int64_t total,
                           size_t num_colors, int64_t *colors,
                           int64_t nsample,
                           size_t num_variates, int64_t *variates) nogil
-    void random_mvhg_marginals(bitgen_t *bitgen_state,
+    void random_multivariate_hypergeometric_marginals(bitgen_t *bitgen_state,
                                int64_t total,
                                size_t num_colors, int64_t *colors,
                                int64_t nsample,
@@ -4010,18 +4010,18 @@ cdef class Generator:
 
         if method == 'count':
             with self.lock, nogil:
-                result = random_mvhg_count(&self._bitgen, total,
-                                           num_colors, colors_ptr, nsamp,
-                                           num_variates, variates_ptr)
+                result = random_multivariate_hypergeometric_count(&self._bitgen,
+                                        total, num_colors, colors_ptr, nsamp,
+                                        num_variates, variates_ptr)
             if result == -1:
                 raise MemoryError("Insufficent memory for multivariate_"
                                   "hypergeometric with method='count' and "
                                   "sum(colors)=%d" % total)
         else:
             with self.lock, nogil:
-                random_mvhg_marginals(&self._bitgen, total,
-                                      num_colors, colors_ptr, nsamp,
-                                      num_variates, variates_ptr)
+                random_multivariate_hypergeometric_marginals(&self._bitgen,
+                                        total, num_colors, colors_ptr, nsamp,
+                                        num_variates, variates_ptr)
         return variates
 
     def dirichlet(self, object alpha, size=None):

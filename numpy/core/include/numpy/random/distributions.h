@@ -169,14 +169,14 @@ DECLDIR void random_multinomial(bitgen_t *bitgen_state, RAND_INT_TYPE n, RAND_IN
                                 double *pix, npy_intp d, binomial_t *binomial);
 
 /* multivariate hypergeometric, "count" method */
-DECLDIR int random_mvhg_count(bitgen_t *bitgen_state,
+DECLDIR int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
                               int64_t total,
                               size_t num_colors, int64_t *colors,
                               int64_t nsample,
                               size_t num_variates, int64_t *variates);
 
 /* multivariate hypergeometric, "marginals" method */
-DECLDIR void random_mvhg_marginals(bitgen_t *bitgen_state,
+DECLDIR void random_multivariate_hypergeometric_marginals(bitgen_t *bitgen_state,
                                    int64_t total,
                                    size_t num_colors, int64_t *colors,
                                    int64_t nsample,

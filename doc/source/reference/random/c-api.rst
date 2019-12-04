@@ -3,25 +3,15 @@ Cython API for random
 
 .. currentmodule:: numpy.random
 
-Typed versions of many of the `Generator` and `BitGenerator` methods can be
-accessed directly from Cython: the complete list is given below.
+Typed versions of many of the `Generator` and `BitGenerator` methods as well as
+the classes themselves can be accessed directly from Cython via
 
-The ``_bit_generator`` module is usable via::
+.. code-block:: cython
 
-    cimport numpy.random._bit_generator
-
-It provides function pointers for quickly accessing the next bytes in the
-`BitGenerator` via a :c:type:`bitgen_t` struct.
-
-The ``_generator`` module is usable via::
-
-    cimport numpy.random._generator
-
-It provides low-level functions for various distributions. All the functions
-require a ``bitgen_t`` BitGenerator structure.
+    cimport numpy.random
 
 C API for random
----------------------
+----------------
 
 Access to various distributions is available via Cython or C-wrapper libraries
 like CFFI. All the functions accept a :c:type:`bitgen_t` as their first argument.
@@ -180,9 +170,9 @@ The functions are named with the following conventions:
 
 .. c:function:: void random_multinomial(bitgen_t *bitgen_state, npy_int64 n, npy_int64 *mnix, double *pix, npy_intp d, binomial_t *binomial)
 
-.. c:function:: int random_mvhg_count(bitgen_t *bitgen_state, npy_int64 total, size_t num_colors, npy_int64 *colors, npy_int64 nsample, size_t num_variates, npy_int64 *variates)
+.. c:function:: int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state, npy_int64 total, size_t num_colors, npy_int64 *colors, npy_int64 nsample, size_t num_variates, npy_int64 *variates)
 
-.. c:function:: void random_mvhg_marginals(bitgen_t *bitgen_state, npy_int64 total, size_t num_colors, npy_int64 *colors, npy_int64 nsample, size_t num_variates, npy_int64 *variates)
+.. c:function:: void random_multivariate_hypergeometric_marginals(bitgen_t *bitgen_state, npy_int64 total, size_t num_colors, npy_int64 *colors, npy_int64 nsample, size_t num_variates, npy_int64 *variates)
 
 Generate a single integer
 
