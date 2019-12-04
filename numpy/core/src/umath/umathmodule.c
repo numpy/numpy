@@ -79,10 +79,10 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     Py_ssize_t fname_len = -1;
     void * ptr, **data;
     int offset[2];
-    int identity = PyUFunc_None;
+    PyObject *identity = NULL;  /* note: not the same semantics as Py_None */
     static char *kwlist[] = {"", "nin", "nout", "identity", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "Oii|$i:frompyfunc", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "Oii|$O:frompyfunc", kwlist,
                 &function, &nin, &nout, &identity)) {
         return NULL;
     }
@@ -150,7 +150,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
 
     self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
             (PyUFuncGenericFunction *)pyfunc_functions, data,
-            types, /* ntypes */ 1, nin, nout, PyUFunc_IdentityValue,
+            types, /* ntypes */ 1, nin, nout, identity ? PyUFunc_IdentityValue : PyUFunc_None,
             str, doc, /* unused */ 0, NULL, identity);
 
     if (self == NULL) {
