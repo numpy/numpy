@@ -1826,8 +1826,9 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
             if (is_object == DISCOVERED_RAGGED && requested_dtype == NULL) {
                 /* NumPy 1.18, 2019-11-01 */
                 if (DEPRECATE("Creating an ndarray with automatic object "
-                    "dtype is deprecated, use dtype=object if you intended "
-                    "it, otherwise specify an exact dtype") < 0)
+                              "dtype is deprecated, use dtype=object if you "
+                              "intended it, otherwise specify an exact "
+                              "dtype") < 0)
                 {
                     return -1;
                 }
