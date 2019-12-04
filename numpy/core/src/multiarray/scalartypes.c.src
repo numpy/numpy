@@ -1906,6 +1906,9 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         PyObject *val = PyArray_GETITEM((PyArrayObject *)arr, it->dataptr);
         Py_DECREF(it);
         Py_DECREF(arr);
+        if (val == NULL) {
+            return NULL;
+        }
         PyObject *tup = Py_BuildValue("NO", obj, val);
         if (tup == NULL) {
             return NULL;
