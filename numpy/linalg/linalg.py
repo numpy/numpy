@@ -2355,7 +2355,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     Notes
     -----
-    For values of ``ord <= 1``, the result is, strictly speaking, not a
+    For values of ``ord < 1``, the result is, strictly speaking, not a
     mathematical 'norm', but it may still be useful for various numerical
     purposes.
 
