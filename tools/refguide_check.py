@@ -177,7 +177,7 @@ def short_path(path, cwd=None):
 
 def find_names(module, names_dict):
     """
-    Finds the occurences of function names, special directives like data
+    Finds the occurrences of function names, special directives like data
     and functions and scipy constants in the docstrings of `module`. The
     following patterns are searched for:
 
@@ -193,7 +193,7 @@ def find_names(module, names_dict):
     Parameters
     ----------
     module : ModuleType
-        The module, whose docstrings id to be searched
+        The module, whose docstrings is to be searched
     names_dict : dict
         Dictionary which contains module name as key and a set of found
         function names and directives as value
@@ -282,7 +282,11 @@ def get_all_dict(module):
 
 def compare(all_dict, others, names, module_name):
     """
-    Return sets of objects only in __all__, refguide, or completely missing.
+    Return sets of objects from all_dict.
+    Will return three sets:
+     {in module_name.__all__},
+     {in REFGUIDE*},
+     and {missing from others}
 
     Parameters
     ----------
@@ -365,6 +369,9 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
 
     module_name : ModuleType
 
+    dots : bool
+        Whether to print a dot for each check
+
     Returns
     -------
     list
@@ -421,14 +428,16 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
 
 def validate_rst_syntax(text, name, dots=True):
     """
-    Validates the doc string text of a module `name`
+    Validates the doc string in a snippet of documentation
+    `text` from file `name`
     Parameters
     ----------
     text : str
-        Docstring of module
+        Docstring text
     name : str
-        name of module
-
+        File name for which the doc string is to be validated
+    dots : bool
+        Whether to print a dot symbol for each check
     Returns
     -------
     (bool, str)
@@ -518,7 +527,7 @@ def check_rest(module, names, dots=True):
     Returns
     -------
     result : list
-        List of [(module_name, success_flag, output)...]
+        List of [(module_name, success_flag, output),...]
     """
 
     try:
@@ -776,8 +785,8 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
 
     Returns
     -------
-    list
-        List of [(success_flag, output), ...]
+    tuple(bool, list)
+        Tuple of (success, output)
     """
     flags = NORMALIZE_WHITESPACE | ELLIPSIS | IGNORE_EXCEPTION_DETAIL
     runner = DTRunner(full_name, checker=Checker(), optionflags=flags,
@@ -789,7 +798,9 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
         output.append(msg)
 
     class MyStderr(object):
-        """Redirect stderr to the current stdout"""
+        """
+        Redirect stderr to the current stdout
+        """
         def write(self, msg):
             if doctest_warnings:
                 sys.stdout.write(msg)
@@ -1134,7 +1145,7 @@ def main(argv):
     module_names = list(args.module_names)
     for name in module_names:
         if name in OTHER_MODULE_DOCS:
-            name = OTHER_MODULE_DOCS[name]    
+            name = OTHER_MODULE_DOCS[name]
             if name not in module_names:
                 module_names.append(name)
 
