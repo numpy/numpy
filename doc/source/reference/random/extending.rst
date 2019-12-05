@@ -48,8 +48,8 @@ RNG structure.
     :language: cython
     :start-after: example 2
 
-These functions along with a minimal setup file are included in the
-`examples` folder, ``numpy.random._examples``.
+See :ref:`extending_cython_example` for a complete working example including a
+minimal setup and cython files.
 
 CFFI
 ====
