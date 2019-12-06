@@ -68,8 +68,7 @@ class TestRegression(object):
             random.seed(12345)
             shuffled = list(t)
             random.shuffle(shuffled)
-            expected = np.array([t[0], t[3], t[1], t[2]], dtype=object)
-            assert_array_equal(np.array(shuffled, dtype=object), expected)
+            assert_array_equal(shuffled, [t[0], t[3], t[1], t[2]])
 
     def test_call_within_randomstate(self):
         # Check that custom RandomState does not call into global state
@@ -129,7 +128,7 @@ class TestRegression(object):
         # a segfault on garbage collection.
         # See gh-7719
         random.seed(1234)
-        a = np.array([np.arange(1), np.arange(4)], dtype=object)
+        a = np.array([np.arange(1), np.arange(4)])
 
         for _ in range(1000):
             random.shuffle(a)

@@ -2828,8 +2828,8 @@ class MaskedArray(ndarray):
             elif isinstance(data, (tuple, list)):
                 try:
                     # If data is a sequence of masked array
-                    mask = np.array([getmaskarray(np.asanyarray(m, dtype=mdtype))
-                                                    for m in data], dtype=mdtype)
+                    mask = np.array([getmaskarray(m) for m in data],
+                                    dtype=mdtype)
                 except ValueError:
                     # If data is nested
                     mask = nomask

@@ -1262,29 +1262,24 @@ class TestPadWidth(object):
         with pytest.raises(ValueError, match=match):
             np.pad(arr, pad_width, mode)
 
-    @pytest.mark.parametrize("pad_width, dtype", [
-        ("3", None),
-        ("word", None),
-        (None, None),
-        (object(), None),
-        (3.4, None),
-        (((2, 3, 4), (3, 2)), object),
-        (complex(1, -1), None),
-        (((-2.1, 3), (3, 2)), None),
+    @pytest.mark.parametrize("pad_width", [
+        "3",
+        "word",
+        None,
+        object(),
+        3.4,
+        ((2, 3, 4), (3, 2)),  # dtype=object (tuple)
+        complex(1, -1),
+        ((-2.1, 3), (3, 2)),
     ])
     @pytest.mark.parametrize("mode", _all_modes.keys())
-    def test_bad_type(self, pad_width, dtype, mode):
+    def test_bad_type(self, pad_width, mode):
         arr = np.arange(30).reshape((6, 5))
         match = "`pad_width` must be of integral type."
-        if dtype is not None:
-            # avoid DeprecationWarning when not specifying dtype
-            with pytest.raises(TypeError, match=match):
-                np.pad(arr, np.array(pad_width, dtype=dtype), mode)
-        else:
-            with pytest.raises(TypeError, match=match):
-                np.pad(arr, pad_width, mode)
-            with pytest.raises(TypeError, match=match):
-                np.pad(arr, np.array(pad_width), mode)
+        with pytest.raises(TypeError, match=match):
+            np.pad(arr, pad_width, mode)
+        with pytest.raises(TypeError, match=match):
+            np.pad(arr, np.array(pad_width), mode)
 
     def test_pad_width_as_ndarray(self):
         a = np.arange(12)
