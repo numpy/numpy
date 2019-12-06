@@ -4230,7 +4230,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
 add_newdoc('numpy.core.umath', 'frompyfunc',
     """
-    frompyfunc(func, nin, nout)
+    frompyfunc(func, nin, nout, *[, identity])
 
     Takes an arbitrary Python function and returns a NumPy ufunc.
 
@@ -4245,6 +4245,13 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
         The number of input arguments.
     nout : int
         The number of objects returned by `func`.
+    identity : object, optional
+        The value to use for the `~numpy.ufunc.identity` attribute of the resulting
+        object. If specified, this is equivalent to setting the underlying
+        C ``identity`` field to ``PyUFunc_IdentityValue``.
+        If omitted, the identity is set to ``PyUFunc_None``. Note that this is
+        _not_ equivalent to setting the identity to ``None``, which implies the
+        operation is reorderable.
 
     Returns
     -------

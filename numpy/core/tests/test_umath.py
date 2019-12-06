@@ -2876,6 +2876,32 @@ class TestSubclass(object):
         a = simple((3, 4))
         assert_equal(a+a, a)
 
+
+class TestFrompyfunc(object):
+
+    def test_identity(self):
+        def mul(a, b):
+            return a * b
+
+        # with identity=value
+        mul_ufunc = np.frompyfunc(mul, nin=2, nout=1, identity=1)
+        assert_equal(mul_ufunc.reduce([2, 3, 4]), 24)
+        assert_equal(mul_ufunc.reduce(np.ones((2, 2)), axis=(0, 1)), 1)
+        assert_equal(mul_ufunc.reduce([]), 1)
+
+        # with identity=None (reorderable)
+        mul_ufunc = np.frompyfunc(mul, nin=2, nout=1, identity=None)
+        assert_equal(mul_ufunc.reduce([2, 3, 4]), 24)
+        assert_equal(mul_ufunc.reduce(np.ones((2, 2)), axis=(0, 1)), 1)
+        assert_raises(ValueError, lambda: mul_ufunc.reduce([]))
+
+        # with no identity (not reorderable)
+        mul_ufunc = np.frompyfunc(mul, nin=2, nout=1)
+        assert_equal(mul_ufunc.reduce([2, 3, 4]), 24)
+        assert_raises(ValueError, lambda: mul_ufunc.reduce(np.ones((2, 2)), axis=(0, 1)))
+        assert_raises(ValueError, lambda: mul_ufunc.reduce([]))
+
+
 def _check_branch_cut(f, x0, dx, re_sign=1, im_sign=-1, sig_zero_ok=False,
                       dtype=complex):
     """
