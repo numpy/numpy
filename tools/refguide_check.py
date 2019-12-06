@@ -152,6 +152,17 @@ HAVE_MATPLOTLIB = False
 def short_path(path, cwd=None):
     """
     Return relative or absolute path name, whichever is shortest.
+
+    Parameters
+    ----------
+    path: str or None
+
+    cwd: str or None
+
+    Returns
+    -------
+    str
+        Relative path or absolute path based on current working directory
     """
     if not isinstance(path, str):
         return path
@@ -165,17 +176,32 @@ def short_path(path, cwd=None):
 
 
 def find_names(module, names_dict):
-    # Refguide entries:
-    #
-    # - 3 spaces followed by function name, and maybe some spaces, some
-    #   dashes, and an explanation; only function names listed in
-    #   refguide are formatted like this (mostly, there may be some false
-    #   positives)
-    #
-    # - special directives, such as data and function
-    #
-    # - (scipy.constants only): quoted list
-    #
+    """
+    Finds the occurrences of function names, special directives like data
+    and functions and scipy constants in the docstrings of `module`. The
+    following patterns are searched for:
+
+    * 3 spaces followed by function name, and maybe some spaces, some
+      dashes, and an explanation; only function names listed in
+      refguide are formatted like this (mostly, there may be some false
+      positives
+    * special directives, such as data and function
+    * (scipy.constants only): quoted list
+
+    The `names_dict` is updated by reference and accessible in calling method
+
+    Parameters
+    ----------
+    module : ModuleType
+        The module, whose docstrings is to be searched
+    names_dict : dict
+        Dictionary which contains module name as key and a set of found
+        function names and directives as value
+    
+    Returns
+    -------
+    None
+    """
     patterns = [
         r"^\s\s\s([a-z_0-9A-Z]+)(\s+-+.*)?$",
         r"^\.\. (?:data|function)::\s*([a-z_0-9A-Z]+)\s*$"
@@ -203,7 +229,23 @@ def find_names(module, names_dict):
 
 
 def get_all_dict(module):
-    """Return a copy of the __all__ dict with irrelevant items removed."""
+    """
+    Return a copy of the __all__ dict with irrelevant items removed.
+    
+    Parameters
+    ----------
+    module : ModuleType
+        The module whose __all__ dict has to be processed
+    
+    Returns
+    -------
+    deprecated : list
+        List of callable and deprecated sub modules
+    not_deprecated : list
+        List of non callable or non deprecated sub modules
+    others : list
+        List of remaining types of sub modules 
+    """
     if hasattr(module, "__all__"):
         all_dict = copy.deepcopy(module.__all__)
     else:
@@ -239,7 +281,30 @@ def get_all_dict(module):
 
 
 def compare(all_dict, others, names, module_name):
-    """Return sets of objects only in __all__, refguide, or completely missing."""
+    """
+    Return sets of objects from all_dict.
+    Will return three sets:
+     {in module_name.__all__},
+     {in REFGUIDE*},
+     and {missing from others}
+
+    Parameters
+    ----------
+    all_dict : list
+        List of non deprecated sub modules for module_name
+    others : list
+        List of sub modules for module_name
+    names :  set
+        Set of function names or special directives present in
+        docstring of module_name
+    module_name : ModuleType
+
+    Returns
+    -------
+    only_all : set
+    only_ref : set
+    missing : set
+    """
     only_all = set()
     for name in all_dict:
         if name not in names:
@@ -265,6 +330,17 @@ def compare(all_dict, others, names, module_name):
 
 
 def is_deprecated(f):
+    """
+    Check if module `f` is deprecated
+
+    Parameter
+    ---------
+    f : ModuleType
+
+    Returns
+    -------
+    bool
+    """
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("error")
         try:
@@ -280,6 +356,26 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
     """
     Check that `all_dict` is consistent with the `names` in `module_name`
     For instance, that there are no deprecated or extra objects.
+
+    Parameters
+    ----------
+    all_dict : list
+
+    names : set
+
+    deprecated : list
+
+    others : list
+
+    module_name : ModuleType
+
+    dots : bool
+        Whether to print a dot for each check
+
+    Returns
+    -------
+    list
+        List of [(name, success_flag, output)...]
     """
     num_all = len(all_dict)
     num_ref = len(names)
@@ -331,6 +427,21 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
 
 
 def validate_rst_syntax(text, name, dots=True):
+    """
+    Validates the doc string in a snippet of documentation
+    `text` from file `name`
+    Parameters
+    ----------
+    text : str
+        Docstring text
+    name : str
+        File name for which the doc string is to be validated
+    dots : bool
+        Whether to print a dot symbol for each check
+    Returns
+    -------
+    (bool, str)
+    """
     if text is None:
         if dots:
             output_dot('E')
@@ -407,7 +518,16 @@ def check_rest(module, names, dots=True):
     """
     Check reStructuredText formatting of docstrings
 
-    Returns: [(name, success_flag, output), ...]
+    Parameters
+    ----------
+    module : ModuleType
+
+    names : set
+
+    Returns
+    -------
+    result : list
+        List of [(module_name, success_flag, output),...]
     """
 
     try:
@@ -498,6 +618,9 @@ CHECK_NAMESPACE = {
 
 
 class DTRunner(doctest.DocTestRunner):
+    """
+    The doctest runner
+    """
     DIVIDER = "\n"
 
     def __init__(self, item_name, checker=None, verbose=None, optionflags=0):
@@ -531,6 +654,9 @@ class DTRunner(doctest.DocTestRunner):
                                                     example, got)
 
 class Checker(doctest.OutputChecker):
+    """
+    Check the docstrings
+    """
     obj_pattern = re.compile('at 0x[0-9a-fA-F]+>')
     int_pattern = re.compile('^[0-9]+L?$')
     vanilla = doctest.OutputChecker()
@@ -644,9 +770,23 @@ class Checker(doctest.OutputChecker):
 
 
 def _run_doctests(tests, full_name, verbose, doctest_warnings):
-    """Run modified doctests for the set of `tests`.
+    """
+    Run modified doctests for the set of `tests`.
 
-    Returns: list of [(success_flag, output), ...]
+    Parameters
+    ----------
+    tests: list
+
+    full_name : str
+
+    verbose : bool
+
+    doctest_warning : bool
+
+    Returns
+    -------
+    tuple(bool, list)
+        Tuple of (success, output)
     """
     flags = NORMALIZE_WHITESPACE | ELLIPSIS | IGNORE_EXCEPTION_DETAIL
     runner = DTRunner(full_name, checker=Checker(), optionflags=flags,
@@ -658,7 +798,9 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
         output.append(msg)
 
     class MyStderr(object):
-        """Redirect stderr to the current stdout"""
+        """
+        Redirect stderr to the current stdout
+        """
         def write(self, msg):
             if doctest_warnings:
                 sys.stdout.write(msg)
@@ -711,9 +853,25 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
 
 def check_doctests(module, verbose, ns=None,
                    dots=True, doctest_warnings=False):
-    """Check code in docstrings of the module's public symbols.
+    """
+    Check code in docstrings of the module's public symbols.
 
-    Returns: list of [(item_name, success_flag, output), ...]
+    Parameters
+    ----------
+    module : ModuleType
+        Name of module
+    verbose : bool
+        Should the result be verbose
+    ns : dict
+        Name space of module
+    dots : bool
+    
+    doctest_warnings : bool
+
+    Returns
+    -------
+    results : list
+        List of [(item_name, success_flag, output), ...]
     """
     if ns is None:
         ns = dict(DEFAULT_NAMESPACE)
@@ -763,13 +921,30 @@ def check_doctests(module, verbose, ns=None,
 
 def check_doctests_testfile(fname, verbose, ns=None,
                    dots=True, doctest_warnings=False):
-    """Check code in a text file.
+    """
+    Check code in a text file.
 
     Mimic `check_doctests` above, differing mostly in test discovery.
     (which is borrowed from stdlib's doctest.testfile here,
      https://github.com/python-git/python/blob/master/Lib/doctest.py)
 
-    Returns: list of [(item_name, success_flag, output), ...]
+    Parameters
+    ----------
+    fname : str
+        File name
+    verbose : bool
+
+    ns : dict
+        Name space
+    
+    dots : bool
+
+    doctest_warnings : bool
+
+    Returns
+    -------
+    list
+        List of [(item_name, success_flag, output), ...]
 
     Notes
     -----
@@ -865,6 +1040,19 @@ def iter_included_files(base_path, verbose=0, suffixes=('.rst',)):
     Generator function to walk `base_path` and its subdirectories, skipping
     files or directories in RST_SKIPLIST, and yield each file with a suffix in
     `suffixes`
+
+    Parameters
+    ----------
+    base_path : str
+        Base path of the directory to be processed
+    verbose : int
+
+    suffixes : tuple
+
+    Yields
+    ------
+    path
+        Path of the directory and it's sub directories
     """
     if os.path.exists(base_path) and os.path.isfile(base_path):
         yield base_path
@@ -914,6 +1102,9 @@ def check_documentation(base_path, results, args, dots):
 
 
 def init_matplotlib():
+    """
+    Check feasibility of matplotlib initialization.
+    """
     global HAVE_MATPLOTLIB
 
     try:
@@ -925,6 +1116,10 @@ def init_matplotlib():
 
 
 def main(argv):
+    """
+    Validates the docstrings of all the pre decided set of
+    modules for errors and docstring standards. 
+    """
     parser = ArgumentParser(usage=__doc__.lstrip())
     parser.add_argument("module_names", metavar="SUBMODULES", default=[],
                         nargs='*', help="Submodules to check (default: all public)")
@@ -948,7 +1143,7 @@ def main(argv):
     os.environ['SCIPY_PIL_IMAGE_VIEWER'] = 'true'
 
     module_names = list(args.module_names)
-    for name in list(module_names):
+    for name in module_names:
         if name in OTHER_MODULE_DOCS:
             name = OTHER_MODULE_DOCS[name]
             if name not in module_names:
