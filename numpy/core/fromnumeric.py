@@ -604,15 +604,20 @@ def _transpose_dispatcher(a, axes=None):
 @array_function_dispatch(_transpose_dispatcher)
 def transpose(a, axes=None):
     """
-    Permute the dimensions of an array.
+    Reverse or permute the axes of an array; returns the modified array.
+
+    For an array a with two axes, transpose(a) gives the matrix transpose.
 
     Parameters
     ----------
     a : array_like
         Input array.
-    axes : list of ints, optional
-        By default, reverse the dimensions, otherwise permute the axes
-        according to the values given.
+    axes : tuple or list of ints, optional
+        If specified, it must be a tuple or list which contains a permutation of
+        [0,1,..,N-1] where N is the number of axes of a.  The i'th axis of the
+        returned array will correspond to the axis numbered ``axes[i]`` of the
+        input.  If not specified, defaults to ``range(a.ndim)[::-1]``, which
+        reverses the order of the axes.
 
     Returns
     -------
@@ -797,7 +802,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     partition : Describes partition algorithms used.
     ndarray.partition : Inplace partition.
     argsort : Full indirect sort.
-    take_along_axis : Apply ``index_array`` from argpartition 
+    take_along_axis : Apply ``index_array`` from argpartition
                       to an array as if by calling partition.
 
     Notes
@@ -1039,7 +1044,7 @@ def argsort(a, axis=-1, kind=None, order=None):
     lexsort : Indirect stable sort with multiple keys.
     ndarray.sort : Inplace sort.
     argpartition : Indirect partial sort.
-    take_along_axis : Apply ``index_array`` from argsort 
+    take_along_axis : Apply ``index_array`` from argsort
                       to an array as if by calling sort.
 
     Notes
@@ -1136,7 +1141,7 @@ def argmax(a, axis=None, out=None):
     ndarray.argmax, argmin
     amax : The maximum value along a given axis.
     unravel_index : Convert a flat index into an index tuple.
-    take_along_axis : Apply ``np.expand_dims(index_array, axis)`` 
+    take_along_axis : Apply ``np.expand_dims(index_array, axis)``
                       from argmax to an array as if by calling max.
 
     Notes
@@ -1217,7 +1222,7 @@ def argmin(a, axis=None, out=None):
     ndarray.argmin, argmax
     amin : The minimum value along a given axis.
     unravel_index : Convert a flat index into an index tuple.
-    take_along_axis : Apply ``np.expand_dims(index_array, axis)`` 
+    take_along_axis : Apply ``np.expand_dims(index_array, axis)``
                       from argmin to an array as if by calling min.
 
     Notes
