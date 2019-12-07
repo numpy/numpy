@@ -194,7 +194,7 @@ class TestDateTime(object):
                    [-90, -17, 'NaT']], dtype='m8[us]')),
         ])
     def test_datetime_timedelta_sort_nat(self, arr, expected):
-        # fix for gh-12629 and gh-12658; NaT sorting to end of array
+        # fix for gh-12629 and gh-15063; NaT sorting to end of array
         arr.sort()
         assert_equal(arr, expected)
 
