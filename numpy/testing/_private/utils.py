@@ -2388,6 +2388,29 @@ def requires_memory(free_bytes):
     """Decorator to skip a test if not enough memory is available"""
     import pytest
 
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*a, **kw):
+            msg = check_free_memory(free_bytes)
+            if msg is not None:
+                pytest.skip(msg)
+
+            try:
+                return func(*a, **kw)
+            except MemoryError:
+                # Probably ran out of memory regardless: don't regard as failure
+                pytest.xfail("MemoryError raised")
+
+        return wrapper
+
+    return decorator
+
+
+def check_free_memory(free_bytes):
+    """
+    Check whether `free_bytes` amount of memory is currently free.
+    Returns: None if enough memory available, otherwise error message
+    """
     env_var = 'NPY_AVAILABLE_MEM'
     env_value = os.environ.get(env_var)
     if env_value is not None:
@@ -2412,7 +2435,7 @@ def requires_memory(free_bytes):
             msg = '{0} GB memory required, but {1} GB available'.format(
                 free_bytes/1e9, mem_free/1e9)
 
-    return pytest.mark.skipif(mem_free < free_bytes, reason=msg)
+    return msg if mem_free < free_bytes else None
 
 
 def _parse_size(size_str):
