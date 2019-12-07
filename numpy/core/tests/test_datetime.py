@@ -179,7 +179,7 @@ class TestDateTime(object):
          [[-220, 51, 'NaT'],
           [-90, -17, 'NaT']]),
         ])
-    @pytest.mark.parameterize("dtype", [
+    @pytest.mark.parametrize("dtype", [
         'M8[ns]', 'M8[us]',
         'm8[ns]', 'm8[us]'])
     def test_datetime_timedelta_sort_nat(self, arr, expected, dtype):
