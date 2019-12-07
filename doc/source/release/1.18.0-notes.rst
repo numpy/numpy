@@ -296,6 +296,7 @@ Changes
 purposes, so that it sorts to the end of arrays. This change is for consistency
 with ``NaN`` sorting behavior.
 (`gh-12658 <https://github.com/numpy/numpy/pull/12658>`__)
+(`gh-15068 <https://github.com/numpy/numpy/pull/15068>`__)
 
 Incorrect ``threshold`` in ``np.set_printoptions`` raises ``TypeError`` or ``ValueError``
 -----------------------------------------------------------------------------------------
