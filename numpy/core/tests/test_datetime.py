@@ -153,6 +153,15 @@ class TestDateTime(object):
         expected = np.arange(size)
         arr = np.tile(np.datetime64('NaT'), size)
         assert_equal(np.argsort(arr, kind='mergesort'), expected)
+    
+    @pytest.mark.parametrize("size", [
+        3, 21, 217, 1000])
+    def test_timedelta_nat_argsort_stability(self, size):
+        # NaT < NaT should be False internally for
+        # sort stability
+        expected = np.arange(size)
+        arr = np.tile(np.timedelta64('NaT'), size)
+        assert_equal(np.argsort(arr, kind='mergesort'), expected)
 
     @pytest.mark.parametrize("arr, expected", [
         # the example provided in gh-12629
@@ -169,9 +178,23 @@ class TestDateTime(object):
                    [-17, 'NaT', -90]], dtype='M8[us]'),
          np.array([[-220, 51, 'NaT'],
                    [-90, -17, 'NaT']], dtype='M8[us]')),
+        # test suite for `timedelta64` type arrays
+        (np.array(['NaT', 1, 2, 3], dtype='m8[ns]'),
+         np.array([1, 2, 3, 'NaT'], dtype='m8[ns]')),
+        # multiple NaTs
+        (np.array(['NaT', 9, 'NaT', -707], dtype='m8[s]'),
+         np.array([-707, 9, 'NaT', 'NaT'], dtype='m8[s]')),
+        # this sort explores another code path for NaT
+        (np.array([1, -2, 3, 'NaT'], dtype='m8[ns]'),
+         np.array([-2, 1, 3, 'NaT'], dtype='m8[ns]')),
+        # 2-D array
+        (np.array([[51, -220, 'NaT'],
+                   [-17, 'NaT', -90]], dtype='m8[us]'),
+         np.array([[-220, 51, 'NaT'],
+                   [-90, -17, 'NaT']], dtype='m8[us]')),
         ])
-    def test_datetime_sort_nat(self, arr, expected):
-        # fix for gh-12629; NaT sorting to end of array
+    def test_datetime_timedelta_sort_nat(self, arr, expected):
+        # fix for gh-12629 and gh-15063; NaT sorting to end of array
         arr.sort()
         assert_equal(arr, expected)
 
@@ -397,38 +420,6 @@ class TestDateTime(object):
         a = datetime.timedelta()
         assert_raises(TypeError, np.timedelta64, a, 'M')
         assert_raises(TypeError, np.timedelta64, a, 'Y')
-
-    @pytest.mark.parametrize("size", [
-        3, 21, 217, 1000])
-    def test_timedelta64_nat_argsort_stability(self, size):
-        # NaT < NaT should be False internally for
-        # sort stability
-        expected = np.arange(size)
-        arr = np.tile(np.timedelta64('NaT'), size)
-        assert_equal(np.argsort(arr, kind='mergesort'), expected)
-
-    @pytest.mark.parametrize("arr, expected", [
-        # the example provided in gh-12629
-        (np.array(['NaT', 1, 2, 3], dtype='m8[ns]'),
-         np.array([1, 2, 3, 'NaT'], dtype='m8[ns]')),
-        # multiple NaTs
-        (np.array(['NaT', 9, 'NaT', -707], dtype='m8[s]'),
-         np.array([-707, 9, 'NaT', 'NaT'], dtype='m8[s]')),
-        # this sort explores another code path for NaT
-        (np.array([1, -2, 3, 'NaT'], dtype='m8[ns]'),
-         np.array([-2, 1, 3, 'NaT'], dtype='m8[ns]')),
-        # 2-D array
-        (np.array([[51, -220, 'NaT'],
-                   [-17, 'NaT', -90]], dtype='m8[us]'),
-         np.array([[-220, 51, 'NaT'],
-                   [-90, -17, 'NaT']], dtype='m8[us]')),
-        ])
-    def test_datetime_sort_nat(self, arr, expected):
-        # fix for gh-12629; NaT sorting to end of array
-        # a follow up of gh-12658. NaT sorting to the
-        # end of array for `timedelta64` dtype.
-        arr.sort()
-        assert_equal(arr, expected)
 
     def test_timedelta_object_array_conversion(self):
         # Regression test for gh-11096
