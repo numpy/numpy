@@ -949,7 +949,7 @@ def sort(a, axis=-1, kind=None, order=None):
     'mergesort' and 'stable' are mapped to radix sort for integer data types. Radix sort is an
     O(n) sort instead of O(n log n).
 
-    .. versionchanged:: 1.17.0
+    .. versionchanged:: 1.18.0
 
     NaT now sorts to the end of arrays for consistency with NaN.
 
