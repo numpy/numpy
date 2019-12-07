@@ -423,7 +423,7 @@ class TestDateTime(object):
          np.array([[-220, 51, 'NaT'],
                    [-90, -17, 'NaT']], dtype='m8[us]')),
         ])
-    def test_datetime_sort_nat(self, arr, expected):
+    def test_timedelta_sort_nat(self, arr, expected):
         # fix for gh-12629; NaT sorting to end of array
         # a follow up of gh-12658. NaT sorting to the
         # end of array for `timedelta64` dtype.
