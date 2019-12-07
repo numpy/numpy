@@ -1,11 +1,6 @@
 #include "Python.h"
 #include "numpy/npy_common.h"
-
-/*
- * From f2c.h, this should be safe unless fortran is set to use 64
- * bit integers. We don't seem to have any good way to detect that.
- */
-typedef int integer;
+#include "npy_cblas.h"
 
 /*
   From the original manpage:
@@ -24,7 +19,7 @@ typedef int integer;
   info: Number of the invalid parameter.
 */
 
-int xerbla_(char *srname, integer *info)
+CBLAS_INT BLAS_FUNC(xerbla)(char *srname, CBLAS_INT *info)
 {
         static const char format[] = "On entry to %.*s" \
                 " parameter number %d had an illegal value";
@@ -42,19 +37,11 @@ int xerbla_(char *srname, integer *info)
 #ifdef WITH_THREAD
         save = PyGILState_Ensure();
 #endif
-        PyOS_snprintf(buf, sizeof(buf), format, len, srname, *info);
+        PyOS_snprintf(buf, sizeof(buf), format, len, srname, (int)*info);
         PyErr_SetString(PyExc_ValueError, buf);
 #ifdef WITH_THREAD
         PyGILState_Release(save);
 #endif
 
         return 0;
-}
-
-
-/* Same for LAPACK64_ */
-npy_int64 xerbla_64_(char *srname, npy_int64 *info)
-{
-        integer info_int = (integer)*info;
-        return xerbla_(srname, &info_int);
 }
