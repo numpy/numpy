@@ -15,6 +15,8 @@
 
 #include "npy_config.h"
 
+#include "npy_cblas.h"
+
 #include <stddef.h>
 #include <stdio.h>
 #include <assert.h>
@@ -62,23 +64,9 @@ dbg_stack_trace()
  *****************************************************************************
  */
 
-#ifndef NPY_UMATH_USE_BLAS64_
+#define FNAME(x) BLAS_FUNC(x)
 
-#ifdef NO_APPEND_FORTRAN
-# define FNAME(x) x
-#else
-# define FNAME(x) x##_
-#endif
-
-typedef int               fortran_int;
-
-#else
-
-#define FNAME(x) x##_64_
-
-typedef npy_int64         fortran_int;
-
-#endif
+typedef CBLAS_INT         fortran_int;
 
 typedef struct { float r, i; } f2c_complex;
 typedef struct { double r, i; } f2c_doublecomplex;

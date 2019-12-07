@@ -25,8 +25,34 @@ enum CBLAS_SIDE {CblasLeft=141, CblasRight=142};
 
 #define CBLAS_INDEX size_t  /* this may vary between platforms */
 
-#define BLASINT int
-#define BLASNAME(name) name
+#ifdef NO_APPEND_FORTRAN
+#define BLAS_FORTRAN_SUFFIX
+#else
+#define BLAS_FORTRAN_SUFFIX _
+#endif
+
+#ifndef BLAS_SYMBOL_PREFIX
+#define BLAS_SYMBOL_PREFIX
+#endif
+
+#ifndef BLAS_SYMBOL_SUFFIX
+#define BLAS_SYMBOL_SUFFIX
+#endif
+
+#define BLAS_FUNC_CONCAT(name,prefix,suffix,suffix2) prefix ## name ## suffix ## suffix2
+#define BLAS_FUNC_EXPAND(name,prefix,suffix,suffix2) BLAS_FUNC_CONCAT(name,prefix,suffix,suffix2)
+
+#define CBLAS_FUNC(name) BLAS_FUNC_EXPAND(name,BLAS_SYMBOL_PREFIX,,BLAS_SYMBOL_SUFFIX)
+#define BLAS_FUNC(name) BLAS_FUNC_EXPAND(name,BLAS_SYMBOL_PREFIX,BLAS_FORTRAN_SUFFIX,BLAS_SYMBOL_SUFFIX)
+
+#ifdef HAVE_BLAS_ILP64
+#define CBLAS_INT npy_int64
+#else
+#define CBLAS_INT int
+#endif
+
+#define BLASNAME(name) CBLAS_FUNC(name)
+#define BLASINT CBLAS_INT
 
 #include "npy_cblas_base.h"
 

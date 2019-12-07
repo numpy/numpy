@@ -6,31 +6,14 @@ More modifications by Jeff Whitaker
 
 #include "Python.h"
 #include "numpy/arrayobject.h"
+#include "npy_cblas.h"
 
 
-#ifndef NPY_UMATH_USE_BLAS64_
+#define FNAME(name) BLAS_FUNC(name)
 
-/*
- * Standard BLAS
- */
-#ifdef NO_APPEND_FORTRAN
-# define FNAME(x) x
-#else
-# define FNAME(x) x##_
-#endif
+typedef CBLAS_INT        fortran_int;
 
-#define FINT_PYFMT       "i"
-typedef int               fortran_int;
-
-#else
-
-/*
- * BLAS64_
- */
-
-#define FNAME(x) x##_64_
-
-typedef npy_int64         fortran_int;
+#ifdef HAVE_BLAS_ILP64
 
 #if NPY_BITSOF_SHORT == 64
 #define FINT_PYFMT       "h"
@@ -46,6 +29,8 @@ typedef npy_int64         fortran_int;
        compiler and platform, or set NPY_USE_BLAS64_=0
 #endif
 
+#else
+#define FINT_PYFMT       "i"
 #endif
 
 typedef struct { float r, i; } f2c_complex;

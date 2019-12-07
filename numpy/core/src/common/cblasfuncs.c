@@ -10,19 +10,9 @@
 #include <assert.h>
 #include <numpy/arrayobject.h>
 #include "npy_cblas.h"
-#include "npy_cblas64_.h"
 #include "arraytypes.h"
 #include "common.h"
 
-
-/*
- * If 64-bit CBLAS with symbol suffix '64_' is available, use it.
- */
-#ifdef HAVE_CBLAS64_
-#define CBLAS_FUNC(name) name ## 64_
-#else
-#define CBLAS_FUNC(name) name
-#endif
 
 static const double oneD[2] = {1.0, 0.0}, zeroD[2] = {0.0, 0.0};
 static const float oneF[2] = {1.0, 0.0}, zeroF[2] = {0.0, 0.0};
