@@ -546,6 +546,21 @@ class TestPower:
             assert_raises(ValueError, np.power, one, b)
             assert_raises(ValueError, np.power, one, minusone)
 
+    @pytest.mark.skipif(not hasattr(np, 'float128'),
+                        reason='test requires float128')
+    def test_float128(self):
+        x = np.array([0, 1, 2], dtype=np.float128)
+        # On Mac OSX, this would trigger a divide-by-zero warning.
+        y = np.power(x, 4)
+        assert_array_equal(y, [0.0, 1.0, 16.0])
+
+    @pytest.mark.skipif(not sys.platform == 'darwin',
+                        reason='only test on Mac OSX (i.e. darwin)')
+    def test_float128_precision(self):
+        # Check that we are using more than double precision.
+        v = np.float128(2) ** 16383
+        assert_allclose(v, np.float128('5.9486574767861588254e+4931'))
+
 
 class TestFloat_power:
     def test_type_conversion(self):

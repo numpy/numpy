@@ -55,6 +55,7 @@
  */
 #include "npy_math_private.h"
 
+
 /*
  *****************************************************************************
  **                     BASIC MATH FUNCTIONS                                **
@@ -398,8 +399,8 @@ NPY_INPLACE @type@ npy_@kind@@c@(@type@ x)
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = atan2,hypot,pow,fmod,copysign#
- * #KIND = ATAN2,HYPOT,POW,FMOD,COPYSIGN#
+ * #kind = atan2,hypot,fmod,copysign#
+ * #KIND = ATAN2,HYPOT,FMOD,COPYSIGN#
  */
 #ifdef @kind@@c@
 #undef @kind@@c@
@@ -447,6 +448,37 @@ NPY_INPLACE @type@ npy_frexp@c@(@type@ x, int* exp)
 
 /**end repeat**/
 
+
+#ifdef powf
+#undef powf
+#endif
+#ifndef HAVE_POWF
+NPY_INPLACE npy_float npy_powf(npy_float x, npy_float y)
+{
+    return (npy_float) npy_pow((double) x, (double) y);
+}
+#endif
+
+#ifdef powl
+#undef powl
+#endif
+#ifndef HAVE_POWL
+#if defined(NPY_OS_DARWIN)
+NPY_INPLACE npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y)
+{
+    if (x == 0 && y > 0) {
+        return 0.0L;
+    }
+    return powl(x, y);
+}
+#else
+// Fall back to the double precision version.
+NPY_INPLACE npy_longdouble npy_powl(npy_longdouble x, npy_longdouble y)
+{
+    return (npy_longdouble) npy_pow((npy_double) x, (npy_double) y);
+}
+#endif
+#endif
 
 /*
  * Decorate all the math functions which are available on the current platform
