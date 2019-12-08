@@ -651,12 +651,12 @@ def transpose(a, axes=None):
     return _wrapfunc(a, 'transpose', axes)
 
 
-def _partition_dispatcher(a, kth, axis=None, kind=None, order=None):
+def _partition_dispatcher(a, kth, axis=None, kind=None, order=None, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_partition_dispatcher)
-def partition(a, kth, axis=-1, kind='introselect', order=None):
+def partition(a, kth, axis=-1, kind='introselect', order=None, reverse=False):
     """
     Return a partitioned copy of an array.
 
@@ -691,6 +691,8 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
         field can be specified as a string.  Not all fields need be
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
+    reverse : bool, optional
+        If this is set to True, partition will be done in descending order.
 
     Returns
     -------
@@ -732,18 +734,32 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     >>> a = np.array([3, 4, 2, 1])
     >>> np.partition(a, 3)
     array([2, 1, 3, 4])
+    >>> np.partition(a, 3, reverse=True)
+    array([3, 4, 2, 1])
 
     >>> np.partition(a, (1, 3))
     array([1, 2, 3, 4])
 
     """
+
     if axis is None:
         # flatten returns (1, N) for np.matrix, so always use the last axis
         a = asanyarray(a).flatten()
         axis = -1
     else:
         a = asanyarray(a).copy(order="K")
+
+    if reverse:
+        if isinstance(kth, int): 
+            kth = a.shape[axis] - kth - 1
+        else: 
+            kth = [a.shape[axis] - i - 1 for i in kth]
+
     a.partition(kth, axis=axis, kind=kind, order=order)
+ 
+    if reverse:
+        a = np.flip(a, axis=axis)
+
     return a
 
 

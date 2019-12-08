@@ -2681,6 +2681,14 @@ class TestMethods(object):
                     msg="kth %d, %r not greater equal %d" % (k, d[k:], d[k]))
             prev = k + 1
 
+    def assert_partitioned_desc(self, d, kth):
+        prev = 0
+        for k in np.sort(kth):
+            assert_array_less(d[k+1:], d[k], err_msg='kth %d' % k)
+            assert_((d[prev:k] >= d[k]).all(),
+                    msg="kth %d, %r not greater equal %d" % (k, d[k:], d[k]))
+            prev = k + 1
+
     def test_partition_iterative(self):
             d = np.arange(17)
             kth = (0, 1, 2, 429, 231)
@@ -2748,6 +2756,22 @@ class TestMethods(object):
             assert_array_equal(p, pa)
             for i in range(d0.shape[1]):
                 self.assert_partitioned(p[:, i], kth)
+
+            # test reverse
+            d = np.arange(20)
+            kth = 5
+            self.assert_partitioned_desc(np.partition(d, kth, reverse=True), [kth])
+            kth = [2, 5, 10]
+            self.assert_partitioned_desc(np.partition(d, kth, reverse=True), kth)
+            d = d.reshape((4, 5))
+            kth = [1, 0]
+            p = np.partition(d, kth=kth, axis=0, reverse=True)
+            for i in range(d.shape[1]):
+                self.assert_partitioned_desc(p[:, i], kth)
+            p = np.partition(d, kth, axis=1, reverse=True)
+            for i in range(d1.shape[0]):
+                self.assert_partitioned_desc(p[i,:], kth)
+          
 
     def test_partition_cdtype(self):
         d = np.array([('Galahad', 1.7, 38), ('Arthur', 1.8, 41),
