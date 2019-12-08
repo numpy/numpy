@@ -1231,7 +1231,7 @@ add_newdoc('numpy.core.umath', 'expm1',
     Parameters
     ----------
     x : array_like
-       Input values.
+        Input values.
     $PARAMS
 
     Returns
