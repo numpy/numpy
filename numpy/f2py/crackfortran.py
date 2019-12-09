@@ -558,7 +558,8 @@ groupbegins90 = groupbegins77 + \
     r'|module(?!\s*procedure)|python\s*module|interface|type(?!\s*\()'
 beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
-groupends = r'end|endprogram|endblockdata|endmodule|endpythonmodule|endinterface'
+groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
+             r'endinterface|endsubroutine|endfunction')
 endpattern = re.compile(
     beforethisafter % ('', groupends, groupends, r'[\w\s]*'), re.I), 'end'
 # endifs='end\s*(if|do|where|select|while|forall)'
