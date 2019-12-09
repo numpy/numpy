@@ -131,8 +131,11 @@ Here's the short summary, complete TOC links are below:
 
    Beyond changes to a functions docstring and possible description in the
    general documentation, if your change introduces any user-facing
-   modifications, update the current release notes under
-   ``doc/release/X.XX-notes.rst``
+   modifications they may need to be mentioned in the release notes.
+   To add your change to the release notes, you need to create a short file
+   with a summary and place it in ``doc/release/upcoming_changes``.
+   The file ``doc/release/upcoming_changes/README.rst`` details the format and
+   filename conventions.
 
    If your change introduces a deprecation, make sure to discuss this first on
    GitHub or the mailing list first. If agreement on the deprecation is
@@ -226,7 +229,7 @@ Requirements
 ~~~~~~~~~~~~
 
 `Sphinx <http://www.sphinx-doc.org/en/stable/>`__ is needed to build
-the documentation. Matplotlib and SciPy are also required.
+the documentation. Matplotlib, SciPy, and IPython are also required.
 
 Fixing Warnings
 ~~~~~~~~~~~~~~~

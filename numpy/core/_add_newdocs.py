@@ -386,12 +386,12 @@ add_newdoc('numpy.core', 'nditer',
     >>> luf(lambda i,j:i*i + j/2, a, b)
     array([  0.5,   1.5,   4.5,   9.5,  16.5])
 
-    If operand flags `"writeonly"` or `"readwrite"` are used the operands may
-    be views into the original data with the `WRITEBACKIFCOPY` flag. In this case
-    nditer must be used as a context manager or the nditer.close
-    method must be called before using the result. The temporary
-    data will be written back to the original data when the `__exit__`
-    function is called but not before:
+    If operand flags `"writeonly"` or `"readwrite"` are used the
+    operands may be views into the original data with the
+    `WRITEBACKIFCOPY` flag. In this case `nditer` must be used as a
+    context manager or the `nditer.close` method must be called before
+    using the result. The temporary data will be written back to the
+    original data when the `__exit__` function is called but not before:
 
     >>> a = np.arange(6, dtype='i4')[::-2]
     >>> with np.nditer(a, [],
@@ -412,6 +412,8 @@ add_newdoc('numpy.core', 'nditer',
     no longer write to `a`. If writeback semantics are not active, then
     `x.data` will still point at some part of `a.data`, and writing to
     one will affect the other.
+
+    Context management and the `close` method appeared in version 1.15.0.
 
     """)
 
@@ -567,6 +569,8 @@ add_newdoc('numpy.core', 'nditer', ('close',
     close()
 
     Resolve all writeback semantics in writeable operands.
+
+    .. versionadded:: 1.15.0
 
     See Also
     --------
@@ -1032,7 +1036,12 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         A string containing the data.
     dtype : data-type, optional
         The data type of the array; default: float.  For binary input data,
-        the data must be in exactly this format.
+        the data must be in exactly this format. Most builtin numeric types are 
+        supported and extension types may be supported.
+
+        .. versionadded:: 1.18.0
+            Complex dtypes.
+
     count : int, optional
         Read this number of `dtype` elements from the data.  If this is
         negative (the default), the count will be determined from the
@@ -1168,6 +1177,11 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
         Data type of the returned array.
         For binary files, it is used to determine the size and byte-order
         of the items in the file.
+        Most builtin numeric types are supported and extension types may be supported.
+
+        .. versionadded:: 1.18.0
+            Complex dtypes.
+
     count : int
         Number of items to read. ``-1`` means all items (i.e., the complete
         file).
@@ -1192,7 +1206,7 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
     Notes
     -----
     Do not rely on the combination of `tofile` and `fromfile` for
-    data storage, as the binary files generated are are not platform
+    data storage, as the binary files generated are not platform
     independent.  In particular, no byte-order or data-type information is
     saved.  Data can be stored in the platform independent ``.npy`` format
     using `save` and `load` instead.
@@ -1322,9 +1336,9 @@ add_newdoc('numpy.core.multiarray', 'arange',
 
     See Also
     --------
-    linspace : Evenly spaced numbers with careful handling of endpoints.
-    ogrid: Arrays of evenly spaced numbers in N-dimensions.
-    mgrid: Grid-shaped arrays of evenly spaced numbers in N-dimensions.
+    numpy.linspace : Evenly spaced numbers with careful handling of endpoints.
+    numpy.ogrid: Arrays of evenly spaced numbers in N-dimensions.
+    numpy.mgrid: Grid-shaped arrays of evenly spaced numbers in N-dimensions.
 
     Examples
     --------
@@ -1342,7 +1356,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
 add_newdoc('numpy.core.multiarray', '_get_ndarray_c_version',
     """_get_ndarray_c_version()
 
-    Return the compile time NDARRAY_VERSION number.
+    Return the compile time NPY_VERSION (formerly called NDARRAY_VERSION) number.
 
     """)
 
@@ -3702,10 +3716,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     See Also
     --------
     numpy.sort : Return a sorted copy of an array.
-    argsort : Indirect sort.
-    lexsort : Indirect stable sort on multiple keys.
-    searchsorted : Find elements in sorted array.
-    partition: Partial sort.
+    numpy.argsort : Indirect sort.
+    numpy.lexsort : Indirect stable sort on multiple keys.
+    numpy.searchsorted : Find elements in sorted array.
+    numpy.partition: Partial sort.
 
     Notes
     -----
@@ -3939,15 +3953,22 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
     Examples
     --------
-    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``:
+    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``, 
+    except that ``tolist`` changes numpy scalars to Python scalars:
 
-    >>> a = np.array([1, 2])
-    >>> list(a)
+    >>> a = np.uint32([1, 2])
+    >>> a_list = list(a)
+    >>> a_list
     [1, 2]
-    >>> a.tolist()
+    >>> type(a_list[0])
+    <class 'numpy.uint32'>
+    >>> a_tolist = a.tolist()
+    >>> a_tolist
     [1, 2]
+    >>> type(a_tolist[0])
+    <class 'int'>
 
-    However, for a 2D array, ``tolist`` applies recursively:
+    Additionally, for a 2D array, ``tolist`` applies recursively:
 
     >>> a = np.array([[1, 2], [3, 4]])
     >>> list(a)
@@ -4232,7 +4253,7 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
 
     See Also
     --------
-    vectorize : evaluates pyfunc over input arrays using broadcasting rules of numpy
+    vectorize : Evaluates pyfunc over input arrays using broadcasting rules of numpy.
 
     Notes
     -----
@@ -4493,7 +4514,7 @@ add_newdoc('numpy.core', 'ufunc',
         Alternate array object(s) in which to put the result; if provided, it
         must have a shape that the inputs broadcast to. A tuple of arrays
         (possible only as a keyword argument) must have length equal to the
-        number of outputs; use `None` for uninitialized outputs to be
+        number of outputs; use None for uninitialized outputs to be
         allocated by the ufunc.
     where : array_like, optional
         This condition is broadcast over the input. At locations where the
@@ -4687,7 +4708,7 @@ add_newdoc('numpy.core', 'ufunc', ('signature',
     -----
     Generalized ufuncs are used internally in many linalg functions, and in
     the testing suite; the examples below are taken from these.
-    For ufuncs that operate on scalars, the signature is `None`, which is
+    For ufuncs that operate on scalars, the signature is None, which is
     equivalent to '()' for every argument.
 
     Examples
@@ -4738,7 +4759,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
 
         .. versionadded:: 1.7.0
 
-        If this is `None`, a reduction is performed over all the axes.
+        If this is None, a reduction is performed over all the axes.
         If this is a tuple of ints, a reduction is performed on multiple
         axes, instead of a single axis or all the axes as before.
 
@@ -4751,7 +4772,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         to the data-type of the output array if this is provided, or
         the data-type of the input array if no output array is provided.
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or `None`,
+        A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
         ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
@@ -4868,7 +4889,7 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
         to the data-type of the output array if such is provided, or the
         the data-type of the input array if no output array is provided.
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or `None`,
+        A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
         ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
@@ -4950,7 +4971,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduceat',
         to the data type of the output array if this is provided, or
         the data type of the input array if no output array is provided.
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or `None`,
+        A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
         ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
@@ -5323,7 +5344,8 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('descr',
     `__array_interface__` attribute.
 
     Warning: This attribute exists specifically for `__array_interface__`,
-    and is not a datatype description compatible with `np.dtype`.
+    and passing it directly to `np.dtype` will not accurately reconstruct
+    some dtypes (e.g., scalar and subarray dtypes).
 
     Examples
     --------

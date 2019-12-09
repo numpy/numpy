@@ -1,5 +1,3 @@
-.. _bit_generator:
-
 .. currentmodule:: numpy.random
 
 Bit Generators
@@ -21,7 +19,7 @@ The included BitGenerators are:
   and can be advanced by an arbitrary amount. See the documentation for
   :meth:`~.PCG64.advance`. PCG-64 has a period of :math:`2^{128}`. See the `PCG
   author's page`_ for more details about this class of PRNG.
-* MT19937 - The standard Python BitGenerator. Adds a `~mt19937.MT19937.jumped`
+* MT19937 - The standard Python BitGenerator. Adds a `MT19937.jumped`
   function that returns a new generator with state as-if :math:`2^{128}` draws have
   been made.
 * Philox - A counter-based generator capable of being advanced an
@@ -35,14 +33,18 @@ The included BitGenerators are:
 .. _`Random123`: https://www.deshawresearch.com/resources_random123.html
 .. _`SFC author's page`: http://pracrand.sourceforge.net/RNG_engines.txt
 
-.. toctree::
-   :maxdepth: 1
+.. autosummary::
+    :toctree: generated/
 
-   BitGenerator <bitgenerators>
-   MT19937 <mt19937>
-   PCG64 <pcg64>
-   Philox <philox>
-   SFC64 <sfc64>
+    BitGenerator
+
+.. toctree::
+    :maxdepth: 1
+
+    MT19937 <mt19937>
+    PCG64 <pcg64>
+    Philox <philox>
+    SFC64 <sfc64>
 
 Seeding and Entropy
 -------------------
@@ -53,14 +55,14 @@ seed. All of the provided BitGenerators will take an arbitrary-sized
 non-negative integer, or a list of such integers, as a seed. BitGenerators
 need to take those inputs and process them into a high-quality internal state
 for the BitGenerator. All of the BitGenerators in numpy delegate that task to
-`~SeedSequence`, which uses hashing techniques to ensure that even low-quality
+`SeedSequence`, which uses hashing techniques to ensure that even low-quality
 seeds generate high-quality initial states.
 
 .. code-block:: python
 
-  from numpy.random import PCG64
+    from numpy.random import PCG64
 
-  bg = PCG64(12345678903141592653589793)
+    bg = PCG64(12345678903141592653589793)
 
 .. end_block
 
@@ -75,14 +77,14 @@ user, which is up to you.
 
 .. code-block:: python
 
-  from numpy.random import PCG64, SeedSequence
+    from numpy.random import PCG64, SeedSequence
 
-  # Get the user's seed somehow, maybe through `argparse`.
-  # If the user did not provide a seed, it should return `None`.
-  seed = get_user_seed()
-  ss = SeedSequence(seed)
-  print('seed = {}'.format(ss.entropy))
-  bg = PCG64(ss)
+    # Get the user's seed somehow, maybe through `argparse`.
+    # If the user did not provide a seed, it should return `None`.
+    seed = get_user_seed()
+    ss = SeedSequence(seed)
+    print('seed = {}'.format(ss.entropy))
+    bg = PCG64(ss)
 
 .. end_block
 
@@ -104,9 +106,6 @@ or using ``secrets.randbits(128)`` from the standard library are both
 convenient ways.
 
 .. autosummary::
-   :toctree: generated/
+    :toctree: generated/
 
     SeedSequence
-    bit_generator.ISeedSequence
-    bit_generator.ISpawnableSeedSequence
-    bit_generator.SeedlessSeedSequence

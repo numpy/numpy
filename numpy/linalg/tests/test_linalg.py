@@ -20,8 +20,9 @@ from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_allclose, suppress_warnings,
-    assert_raises_regex,
+    assert_raises_regex, HAS_LAPACK64,
     )
+from numpy.testing._private.utils import requires_memory
 
 
 def consistent_subclass(out, in_):
@@ -2002,3 +2003,16 @@ def test_unsupported_commontype():
     arr = np.array([[1, -2], [2, 5]], dtype='float16')
     with assert_raises_regex(TypeError, "unsupported in linalg"):
         linalg.cholesky(arr)
+
+
+@pytest.mark.slow
+@pytest.mark.xfail(not HAS_LAPACK64, run=False,
+                   reason="Numpy not compiled with 64-bit BLAS/LAPACK")
+@requires_memory(free_bytes=16e9)
+def test_blas64_dot():
+    n = 2**32
+    a = np.zeros([1, n], dtype=np.float32)
+    b = np.ones([1, 1], dtype=np.float32)
+    a[0,-1] = 1
+    c = np.dot(b, a)
+    assert_equal(c[0,-1], 1)

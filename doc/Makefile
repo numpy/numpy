@@ -217,7 +217,7 @@ latex-build: generate
 	mkdir -p build/latex build/doctrees
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) build/latex $(FILES)
 	$(PYTHON) postprocess.py tex build/latex/*.tex
-	perl -pi -e 's/\t(latex.*|pdflatex) (.*)/\t-$$1 -interaction batchmode $$2/' build/latex/Makefile
+	perl -pi -e 's/LATEXOPTS =/LATEXOPTS ?= --halt-on-error/' build/latex/Makefile
 	@echo
 	@echo "Build finished; the LaTeX files are in build/latex."
 	@echo "Run \`make all-pdf' or \`make all-ps' in that directory to" \

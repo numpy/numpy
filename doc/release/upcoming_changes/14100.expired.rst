@@ -1,3 +1,0 @@
-* ``PyArray_FromDimsAndDataAndDescr`` has been removed, use
-  ``PyArray_NewFromDescr`` instead
-* ``PyArray_FromDims`` has been removed, use ``PyArray_SimpleNew`` instead

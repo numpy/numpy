@@ -27,13 +27,13 @@ Defining the input
 ==================
 
 The only mandatory argument of :func:`~numpy.genfromtxt` is the source of
-the data. It can be a string, a list of strings, or a generator. If a
-single string is provided, it is assumed to be the name of a local or
-remote file, or an open file-like object with a :meth:`read` method, for
-example, a file or :class:`io.StringIO` object. If a list of strings
-or a generator returning strings is provided, each string is treated as one
-line in a file.  When the URL of a remote file is passed, the file is
-automatically downloaded to the current directory and opened.
+the data. It can be a string, a list of strings, a generator or an open
+file-like object with a :meth:`read` method, for example, a file or 
+:class:`io.StringIO` object. If a single string is provided, it is assumed
+to be the name of a local or remote file. If a list of strings or a generator
+returning strings is provided, each string is treated as one line in a file.
+When the URL of a remote file is passed, the file is automatically downloaded
+to the current directory and opened.
 
 Recognized file types are text files and archives.  Currently, the function
 recognizes :class:`gzip` and :class:`bz2` (`bzip2`) archives.  The type of
@@ -98,13 +98,11 @@ This behavior can be overwritten by setting the optional argument
    >>> # Without autostrip
    >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|U5")
    array([['1', ' abc ', ' 2'],
-          ['3', ' xxx', ' 4']],
-         dtype='|U5')
+          ['3', ' xxx', ' 4']], dtype='<U5')
    >>> # With autostrip
    >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|U5", autostrip=True)
    array([['1', 'abc', '2'],
-          ['3', 'xxx', '4']],
-         dtype='|U5')
+          ['3', 'xxx', '4']], dtype='<U5')
 
 
 The ``comments`` argument
@@ -127,11 +125,11 @@ marker(s) is simply ignored::
    ... 9, 0
    ... """
    >>> np.genfromtxt(StringIO(data), comments="#", delimiter=",")
-   [[ 1.  2.]
-    [ 3.  4.]
-    [ 5.  6.]
-    [ 7.  8.]
-    [ 9.  0.]]
+   array([[1., 2.],
+          [3., 4.],
+          [5., 6.],
+          [7., 8.],
+          [9., 0.]])
 
 .. versionadded:: 1.7.0
 
@@ -376,12 +374,12 @@ single element of the wanted type.
 In the following example, the second column is converted from as string
 representing a percentage to a float between 0 and 1::
 
-   >>> convertfunc = lambda x: float(x.strip("%"))/100.
+   >>> convertfunc = lambda x: float(x.strip(b"%"))/100.
    >>> data = u"1, 2.3%, 45.\n6, 78.9%, 0"
    >>> names = ("i", "p", "n")
    >>> # General case .....
    >>> np.genfromtxt(StringIO(data), delimiter=",", names=names)
-   array([(1.0, nan, 45.0), (6.0, nan, 0.0)],
+   array([(1., nan, 45.), (6., nan, 0.)],
          dtype=[('i', '<f8'), ('p', '<f8'), ('n', '<f8')])
 
 We need to keep in mind that by default, ``dtype=float``.  A float is

@@ -28,7 +28,7 @@ Building NumPy requires the following installed software:
 
 2) Cython >= 0.29.2 (for development versions of numpy, not for released
                      versions)
-                     
+
 3) pytest__ (optional) 1.15 or later
 
    This is required for testing numpy, but not for using it.
@@ -42,7 +42,7 @@ pytest__ http://pytest.readthedocs.io
 hypothesis__ https://hypothesis.readthedocs.io
 
 
-.. note:: 
+.. note::
 
    If you want to build NumPy in order to work on NumPy itself, use
    ``runtests.py``.  For more details, see
@@ -82,11 +82,7 @@ skipped when running the test suite if no Fortran compiler is available.  For
 building Scipy a Fortran compiler is needed though, so we include some details
 on Fortran compilers in the rest of this section.
 
-On OS X and Linux, all common compilers will work.  Note that C99 support is
-required.  For compilers that don't support the C99 language standard by
-default (such as ``gcc`` versions < 5.0), it should be enabled.  For ``gcc``::
-
-    export CFLAGS='-std=c99'
+On OS X and Linux, all common compilers will work.
 
 For Fortran, ``gfortran`` works, ``g77`` does not.  In case ``g77`` is
 installed then ``g77`` will be detected and used first.  To explicitly select
@@ -122,9 +118,9 @@ details.
 Windows
 -------
 
-The Intel compilers work with Intel MKL, see the application note linked above. 
+The Intel compilers work with Intel MKL, see the application note linked above.
 MingwPy__ works with OpenBLAS.
-For an overview of the state of BLAS/LAPACK libraries on Windows, see 
+For an overview of the state of BLAS/LAPACK libraries on Windows, see
 `here <https://mingwpy.github.io/blas_lapack.html>`_.
 
 OS X

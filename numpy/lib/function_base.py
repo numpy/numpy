@@ -682,11 +682,7 @@ def select(condlist, choicelist, default=0):
 
     # Now that the dtype is known, handle the deprecated select([], []) case
     if len(condlist) == 0:
-        # 2014-02-24, 1.9
-        warnings.warn("select with an empty condition list is not possible"
-                      "and will be deprecated",
-                      DeprecationWarning, stacklevel=3)
-        return np.asarray(default)[()]
+        raise ValueError("select with an empty condition list is not possible")
 
     choicelist = [np.asarray(choice) for choice in choicelist]
     choicelist.append(np.asarray(default))
@@ -702,25 +698,11 @@ def select(condlist, choicelist, default=0):
     choicelist = np.broadcast_arrays(*choicelist)
 
     # If cond array is not an ndarray in boolean format or scalar bool, abort.
-    deprecated_ints = False
     for i in range(len(condlist)):
         cond = condlist[i]
         if cond.dtype.type is not np.bool_:
-            if np.issubdtype(cond.dtype, np.integer):
-                # A previous implementation accepted int ndarrays accidentally.
-                # Supported here deliberately, but deprecated.
-                condlist[i] = condlist[i].astype(bool)
-                deprecated_ints = True
-            else:
-                raise ValueError(
-                    'invalid entry {} in condlist: should be boolean ndarray'.format(i))
-
-    if deprecated_ints:
-        # 2014-02-24, 1.9
-        msg = "select condlists containing integer ndarrays is deprecated " \
-            "and will be removed in the future. Use `.astype(bool)` to " \
-            "convert to bools."
-        warnings.warn(msg, DeprecationWarning, stacklevel=3)
+            raise TypeError(
+                'invalid entry {} in condlist: should be boolean ndarray'.format(i))
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -1167,11 +1149,13 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         The axis along which the difference is taken, default is the
         last axis.
     prepend, append : array_like, optional
-        Values to prepend or append to "a" along axis prior to
+        Values to prepend or append to `a` along axis prior to
         performing the difference.  Scalar values are expanded to
         arrays with length 1 in the direction of axis and the shape
         of the input array in along all other axes.  Otherwise the
-        dimension and shape must match "a" except along axis.
+        dimension and shape must match `a` except along axis.
+
+        .. versionadded:: 1.16.0
 
     Returns
     -------
@@ -1330,9 +1314,13 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     Notes
     -----
-    Does not check that the x-coordinate sequence `xp` is increasing.
-    If `xp` is not increasing, the results are nonsense.
-    A simple check for increasing is::
+    The x-coordinate sequence is expected to be increasing, but this is not
+    explicitly enforced.  However, if the sequence `xp` is non-increasing,
+    interpolation results are meaningless.
+
+    Note that, since NaN is unsortable, `xp` also cannot contain NaNs.
+
+    A simple check for `xp` being strictly increasing is::
 
         np.all(np.diff(xp) > 0)
 
@@ -1905,7 +1893,7 @@ class vectorize(object):
         typecode characters or a list of data type specifiers. There should
         be one data type specifier for each output.
     doc : str, optional
-        The docstring for the function. If `None`, the docstring will be the
+        The docstring for the function. If None, the docstring will be the
         ``pyfunc.__doc__``.
     excluded : set, optional
         Set of strings or integers representing the positional or keyword
@@ -2317,7 +2305,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         >>> m = np.arange(10, dtype=np.float64)
         >>> f = np.arange(10) * 2
         >>> a = np.arange(10) ** 2.
-        >>> ddof = 9 # N - 1
+        >>> ddof = 1
         >>> w = f * a
         >>> v1 = np.sum(w)
         >>> v2 = np.sum(w * a)
@@ -3312,13 +3300,6 @@ def sinc(x):
     >>> plt.xlabel("X")
     Text(0.5, 0, 'X')
     >>> plt.show()
-
-    It works in 2-D as well:
-
-    >>> x = np.linspace(-4, 4, 401)
-    >>> xx = np.outer(x, x)
-    >>> plt.imshow(np.sinc(xx))
-    <matplotlib.image.AxesImage object at 0x...>
 
     """
     x = np.asanyarray(x)

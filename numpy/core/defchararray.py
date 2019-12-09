@@ -82,7 +82,7 @@ def _clean_args(*args):
 
     Many of the Python string operations that have optional arguments
     do not use 'None' to indicate a default value.  In these cases,
-    we need to remove all `None` arguments, and those following them.
+    we need to remove all None arguments, and those following them.
     """
     newargs = []
     for chk in args:
@@ -1333,7 +1333,7 @@ def rsplit(a, sep=None, maxsplit=None):
     a : array_like of str or unicode
 
     sep : str or unicode, optional
-        If `sep` is not specified or `None`, any whitespace string
+        If `sep` is not specified or None, any whitespace string
         is a separator.
     maxsplit : int, optional
         If `maxsplit` is given, at most `maxsplit` splits are done,
@@ -1417,7 +1417,7 @@ def split(a, sep=None, maxsplit=None):
     a : array_like of str or unicode
 
     sep : str or unicode, optional
-       If `sep` is not specified or `None`, any whitespace string is a
+       If `sep` is not specified or None, any whitespace string is a
        separator.
 
     maxsplit : int, optional
@@ -1840,7 +1840,7 @@ class chararray(ndarray):
     This constructor creates the array, using `buffer` (with `offset`
     and `strides`) if it is not ``None``. If `buffer` is ``None``, then
     constructs a new array with `strides` in "C order", unless both
-    ``len(shape) >= 2`` and ``order='Fortran'``, in which case `strides`
+    ``len(shape) >= 2`` and ``order='F'``, in which case `strides`
     is in "Fortran order".
 
     Methods
@@ -2659,7 +2659,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
     unicode : bool, optional
         When true, the resulting `chararray` can contain Unicode
         characters, when false only 8-bit characters.  If unicode is
-        `None` and `obj` is one of the following:
+        None and `obj` is one of the following:
 
           - a `chararray`,
           - an ndarray of type `str` or `unicode`
@@ -2799,7 +2799,7 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
     unicode : bool, optional
         When true, the resulting `chararray` can contain Unicode
         characters, when false only 8-bit characters.  If unicode is
-        `None` and `obj` is one of the following:
+        None and `obj` is one of the following:
 
           - a `chararray`,
           - an ndarray of type `str` or 'unicode`

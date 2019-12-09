@@ -11,8 +11,7 @@ Recommended development setup
 Since NumPy contains parts written in C and Cython that need to be
 compiled before use, make sure you have the necessary compilers and Python
 development headers installed - see :ref:`building-from-source`. Building
-NumPy as of version ``1.17`` requires a C99 compliant compiler. For
-some older compilers this may require ``export CFLAGS='-std=c99'``.
+NumPy as of version ``1.17`` requires a C99 compliant compiler.
 
 Having compiled code also means that importing NumPy from the development
 sources needs some additional steps, which are explained below.  For the rest
@@ -54,11 +53,21 @@ When using pytest as a target (the default), you can
 
 .. note::
 
-    Remember that all tests of NumPy should pass before commiting your changes.
+    Remember that all tests of NumPy should pass before committing your changes.
 
 Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
 build or installing to a virtualenv. See the FAQ below for details.
+
+.. note::
+
+   Some of the tests in the test suite require a large amount of
+   memory, and are skipped if your system does not have enough.
+
+   To override the automatic detection of available memory, set the
+   environment variable ``NPY_AVAILABLE_MEM``, for example
+   ``NPY_AVAILABLE_MEM=32GB``, or using pytest ``--available-memory=32GB``
+   target option.
 
 
 Building in-place
@@ -96,6 +105,11 @@ installs a ``.egg-link`` file into your site-packages as well as adjusts the
 Other build options
 -------------------
 
+Build options can be discovered by running any of::
+
+    $ python setup.py --help
+    $ python setup.py --help-commands
+
 It's possible to do a parallel build with ``numpy.distutils`` with the ``-j`` option;
 see :ref:`parallel-builds` for more details.
 
@@ -105,6 +119,16 @@ source tree is to use::
     $ pip install . --prefix /some/owned/folder
     $ export PYTHONPATH=/some/owned/folder/lib/python3.4/site-packages
 
+
+NumPy uses a series of tests to probe the compiler and libc libraries for
+funtions. The results are stored in ``_numpyconfig.h`` and ``config.h`` files
+using ``HAVE_XXX`` definitions. These tests are run during the ``build_src``
+phase of the ``_multiarray_umath`` module in the ``generate_config_h`` and
+``generate_numpyconfig_h`` functions. Since the output of these calls includes
+many compiler warnings and errors, by default it is run quietly. If you wish
+to see this output, you can run the ``build_src`` stage verbosely::
+
+    $ python build build_src -v
 
 Using virtualenvs
 -----------------
@@ -131,7 +155,7 @@ Running tests
 Besides using ``runtests.py``, there are various ways to run the tests.  Inside
 the interpreter, tests can be run like this::
 
-    >>> np.test()
+    >>> np.test()  # doctest: +SKIPBLOCK
     >>> np.test('full')   # Also run tests marked as slow
     >>> np.test('full', verbose=2)   # Additionally print test name/file
 

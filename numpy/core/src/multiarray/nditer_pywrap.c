@@ -82,7 +82,8 @@ static int npyiter_cache_values(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
+npyiter_new(PyTypeObject *subtype, PyObject *NPY_UNUSED(args),
+            PyObject *NPY_UNUSED(kwds))
 {
     NewNpyArrayIterObject *self;
 
@@ -535,7 +536,7 @@ try_single_dtype:
 }
 
 static int
-npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
+npyiter_convert_op_axes(PyObject *op_axes_in, int nop,
                         int **op_axes, int *oa_ndim)
 {
     PyObject *a;
@@ -2015,7 +2016,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 
     if (i < 0 || i >= nop) {
         PyErr_Format(PyExc_IndexError,
-                "Iterator operand index %d is out of bounds", (int)i_orig);
+                "Iterator operand index %zd is out of bounds", i_orig);
         return NULL;
     }
 
@@ -2029,7 +2030,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
      */
     if (!self->readflags[i]) {
         PyErr_Format(PyExc_RuntimeError,
-                "Iterator operand %d is write-only", (int)i);
+                "Iterator operand %zd is write-only", i);
         return NULL;
     }
 #endif
@@ -2146,12 +2147,12 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
 
     if (i < 0 || i >= nop) {
         PyErr_Format(PyExc_IndexError,
-                "Iterator operand index %d is out of bounds", (int)i_orig);
+                "Iterator operand index %zd is out of bounds", i_orig);
         return -1;
     }
     if (!self->writeflags[i]) {
         PyErr_Format(PyExc_RuntimeError,
-                "Iterator operand %d is not writeable", (int)i_orig);
+                "Iterator operand %zd is not writeable", i_orig);
         return -1;
     }
 
@@ -2365,7 +2366,7 @@ npyiter_close(NewNpyArrayIterObject *self)
 }
 
 static PyObject *
-npyiter_exit(NewNpyArrayIterObject *self, PyObject *args)
+npyiter_exit(NewNpyArrayIterObject *self, PyObject *NPY_UNUSED(args))
 {
     /* even if called via exception handling, writeback any data */
     return npyiter_close(self);

@@ -1,5 +1,6 @@
 import os
 from os.path import join
+import sys
 
 import numpy as np
 from numpy.testing import (assert_equal, assert_allclose, assert_array_equal,
@@ -10,7 +11,7 @@ from numpy.random import (
     Generator, MT19937, PCG64, Philox, RandomState, SeedSequence, SFC64,
     default_rng
 )
-from numpy.random.common import interface
+from numpy.random._common import interface
 
 try:
     import cffi  # noqa: F401
@@ -25,6 +26,12 @@ try:
     MISSING_CTYPES = False
 except ImportError:
     MISSING_CTYPES = False
+
+if sys.flags.optimize > 1:
+    # no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1
+    # cffi cannot succeed
+    MISSING_CFFI = True
+
 
 pwd = os.path.dirname(os.path.abspath(__file__))
 
@@ -120,7 +127,7 @@ def gauss_from_uint(x, n, bits):
     return gauss[:n]
 
 def test_seedsequence():
-    from numpy.random.bit_generator import (ISeedSequence,
+    from numpy.random._bit_generator import (ISeedSequence,
                                             ISpawnableSeedSequence,
                                             SeedlessSeedSequence)
 

@@ -480,7 +480,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     file : file, str, or pathlib.Path
         File or filename to which the data is saved.  If file is a file-object,
         then the filename is unchanged.  If file is a string or Path, a ``.npy``
-        extension will be appended to the file name if it does not already
+        extension will be appended to the filename if it does not already
         have one.
     arr : array_like
         Array data to be saved.
@@ -506,9 +506,9 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     Notes
     -----
     For a description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
-        
-    Any data saved to the file is appended to the end of the file. 
-    
+
+    Any data saved to the file is appended to the end of the file.
+
     Examples
     --------
     >>> from tempfile import TemporaryFile
@@ -524,7 +524,7 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
     >>> with open('test.npy', 'wb') as f:
     ...     np.save(f, np.array([1, 2]))
-    ...     np.save(f, np.array([1, 3]))    
+    ...     np.save(f, np.array([1, 3]))
     >>> with open('test.npy', 'rb') as f:
     ...     a = np.load(f)
     ...     b = np.load(f)
@@ -565,8 +565,7 @@ def _savez_dispatcher(file, *args, **kwds):
 
 @array_function_dispatch(_savez_dispatcher)
 def savez(file, *args, **kwds):
-    """
-    Save several arrays into a single file in uncompressed ``.npz`` format.
+    """Save several arrays into a single file in uncompressed ``.npz`` format.
 
     If arguments are passed in with no keywords, the corresponding variable
     names, in the ``.npz`` file, are 'arr_0', 'arr_1', etc. If keyword
@@ -576,9 +575,9 @@ def savez(file, *args, **kwds):
     Parameters
     ----------
     file : str or file
-        Either the file name (string) or an open file (file-like object)
+        Either the filename (string) or an open file (file-like object)
         where the data will be saved. If file is a string or a Path, the
-        ``.npz`` extension will be appended to the file name if it is not
+        ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
         Arrays to save to the file. Since it is not possible for Python to
@@ -611,6 +610,10 @@ def savez(file, *args, **kwds):
     its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
+    When saving dictionaries, the dictionary keys become filenames
+    inside the ZIP archive. Therefore, keys should be valid filenames.
+    E.g., avoid keys that begin with ``/`` or contain ``.``.
+
     Examples
     --------
     >>> from tempfile import TemporaryFile
@@ -638,7 +641,6 @@ def savez(file, *args, **kwds):
     ['x', 'y']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
     """
     _savez(file, args, kwds, False)
 
@@ -656,15 +658,15 @@ def savez_compressed(file, *args, **kwds):
     Save several arrays into a single file in compressed ``.npz`` format.
 
     If keyword arguments are given, then filenames are taken from the keywords.
-    If arguments are passed in with no keywords, then stored file names are
+    If arguments are passed in with no keywords, then stored filenames are
     arr_0, arr_1, etc.
 
     Parameters
     ----------
     file : str or file
-        Either the file name (string) or an open file (file-like object)
+        Either the filename (string) or an open file (file-like object)
         where the data will be saved. If file is a string or a Path, the
-        ``.npz`` extension will be appended to the file name if it is not
+        ``.npz`` extension will be appended to the filename if it is not
         already there.
     args : Arguments, optional
         Arrays to save to the file. Since it is not possible for Python to
@@ -831,7 +833,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     fname : file, str, or pathlib.Path
         File, filename, or generator to read.  If the filename extension is
         ``.gz`` or ``.bz2``, the file is first decompressed. Note that
-        generators should return byte strings for Python 3k.
+        generators should return byte strings.
     dtype : data-type, optional
         Data-type of the resulting array; default: float.  If this is a
         structured data-type, the resulting array will be 1-dimensional, and
@@ -1469,7 +1471,7 @@ def fromregex(file, regexp, dtype, encoding=None):
     Parameters
     ----------
     file : str or file
-        File name or file object to read.
+        Filename or file object to read.
     regexp : str or regexp
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
@@ -1527,9 +1529,9 @@ def fromregex(file, regexp, dtype, encoding=None):
             dtype = np.dtype(dtype)
 
         content = file.read()
-        if isinstance(content, bytes) and isinstance(regexp, np.unicode):
+        if isinstance(content, bytes) and isinstance(regexp, np.compat.unicode):
             regexp = asbytes(regexp)
-        elif isinstance(content, np.unicode) and isinstance(regexp, bytes):
+        elif isinstance(content, np.compat.unicode) and isinstance(regexp, bytes):
             regexp = asstr(regexp)
 
         if not hasattr(regexp, 'match'):
@@ -1576,7 +1578,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     fname : file, str, pathlib.Path, list of str, generator
         File, filename, list, or generator to read.  If the filename
         extension is `.gz` or `.bz2`, the file is first decompressed. Note
-        that generators must return byte strings in Python 3k.  The strings
+        that generators must return byte strings. The strings
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
         Data type of the resulting array.

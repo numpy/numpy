@@ -173,6 +173,9 @@ from numpy.compat import (
     )
 
 
+__all__ = []
+
+
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
 ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
@@ -239,6 +242,16 @@ def read_magic(fp):
         major, minor = magic_str[-2:]
     return major, minor
 
+def _has_metadata(dt):
+    if dt.metadata is not None:
+        return True
+    elif dt.names is not None:
+        return any(_has_metadata(dt[k]) for k in dt.names)
+    elif dt.subdtype is not None:
+        return _has_metadata(dt.base)
+    else:
+        return False
+
 def dtype_to_descr(dtype):
     """
     Get a serializable descriptor from the dtype.
@@ -262,6 +275,10 @@ def dtype_to_descr(dtype):
         replicate the input dtype.
 
     """
+    if _has_metadata(dtype):
+        warnings.warn("metadata on a dtype may be saved or ignored, but will "
+                      "raise if saved when read. Use another form of storage.",
+                      UserWarning, stacklevel=2)
     if dtype.names is not None:
         # This is a record array. The .descr is fine.  XXX: parts of the
         # record array with an empty name, like padding bytes, still get

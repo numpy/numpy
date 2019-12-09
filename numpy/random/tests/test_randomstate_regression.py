@@ -8,7 +8,7 @@ from numpy.testing import (
 from numpy.compat import long
 import numpy as np
 
-from numpy.random import mtrand as random
+from numpy import random
 
 
 class TestRegression(object):
@@ -181,3 +181,30 @@ class TestRegression(object):
         assert c.dtype == np.dtype(int)
         c = np.random.choice(10, replace=False, size=2)
         assert c.dtype == np.dtype(int)
+
+    @pytest.mark.skipif(np.iinfo('l').max < 2**32,
+                        reason='Cannot test with 32-bit C long')
+    def test_randint_117(self):
+        # GH 14189
+        random.seed(0)
+        expected = np.array([2357136044, 2546248239, 3071714933, 3626093760,
+                             2588848963, 3684848379, 2340255427, 3638918503,
+                             1819583497, 2678185683], dtype='int64')
+        actual = random.randint(2**32, size=10)
+        assert_array_equal(actual, expected)
+
+    def test_p_zero_stream(self):
+        # Regression test for gh-14522.  Ensure that future versions
+        # generate the same variates as version 1.16.
+        np.random.seed(12345)
+        assert_array_equal(random.binomial(1, [0, 0.25, 0.5, 0.75, 1]),
+                           [0, 0, 0, 1, 1])
+
+    def test_n_zero_stream(self):
+        # Regression test for gh-14522.  Ensure that future versions
+        # generate the same variates as version 1.16.
+        np.random.seed(8675309)
+        expected = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                             [3, 4, 2, 3, 3, 1, 5, 3, 1, 3]])
+        assert_array_equal(random.binomial([[0], [10]], 0.25, size=(2, 10)),
+                           expected)

@@ -877,7 +877,13 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
             from_order = dtype_kind_to_ordering(from->kind);
             to_order = dtype_kind_to_ordering(to->kind);
 
-            return from_order != -1 && from_order <= to_order;
+            if (to->kind == 'm') {
+                /* both types being timedelta is already handled before. */
+                int integer_order = dtype_kind_to_ordering('i');
+                return (from_order != -1) && (from_order <= integer_order);
+            }
+
+            return (from_order != -1) && (from_order <= to_order);
         }
         else {
             return 0;

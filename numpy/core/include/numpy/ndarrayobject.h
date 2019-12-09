@@ -23,7 +23,7 @@ extern "C" {
 
 /* C-API that requires previous API to be defined */
 
-#define PyArray_DescrCheck(op) (((PyObject*)(op))->ob_type==&PyArrayDescr_Type)
+#define PyArray_DescrCheck(op) PyObject_TypeCheck(op, &PyArrayDescr_Type)
 
 #define PyArray_Check(op) PyObject_TypeCheck(op, &PyArray_Type)
 #define PyArray_CheckExact(op) (((PyObject*)(op))->ob_type == &PyArray_Type)

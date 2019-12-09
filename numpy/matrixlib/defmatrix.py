@@ -1046,7 +1046,7 @@ def bmat(obj, ldict=None, gdict=None):
         referenced by name.
     ldict : dict, optional
         A dictionary that replaces local operands in current frame.
-        Ignored if `obj` is not a string or `gdict` is `None`.
+        Ignored if `obj` is not a string or `gdict` is None.
     gdict : dict, optional
         A dictionary that replaces global operands in current frame.
         Ignored if `obj` is not a string.

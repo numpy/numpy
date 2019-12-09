@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/* Must match the declaration in numpy/random/common.pxd */
+/* Must match the declaration in numpy/random/<any>.pxd */
 
 typedef struct bitgen {
   void *state;

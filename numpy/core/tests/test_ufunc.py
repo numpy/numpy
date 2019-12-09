@@ -18,6 +18,11 @@ from numpy.testing import (
 from numpy.compat import pickle
 
 
+UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values()
+                    if isinstance(obj, np.ufunc)]
+UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
+
+
 class TestUfuncKwargs(object):
     def test_kwarg_exact(self):
         assert_raises(TypeError, np.add, 1, 2, castingx='safe')
@@ -124,7 +129,7 @@ class TestUfuncGenericLoops(object):
         x = np.ones(10, dtype=object)
         assert_(np.all(np.abs(x) == 1))
 
-    def test_unary_PyUFunc_O_O_method(self, foo=foo):
+    def test_unary_PyUFunc_O_O_method_simple(self, foo=foo):
         x = np.full(10, foo(), dtype=object)
         assert_(np.all(np.conjugate(x) == True))
 
@@ -139,6 +144,39 @@ class TestUfuncGenericLoops(object):
     def test_binary_PyUFunc_On_Om_method(self, foo=foo):
         x = np.full((10, 2, 3), foo(), dtype=object)
         assert_(np.all(np.logical_xor(x, x)))
+
+    def test_python_complex_conjugate(self):
+        # The conjugate ufunc should fall back to calling the method:
+        arr = np.array([1+2j, 3-4j], dtype="O")
+        assert isinstance(arr[0], complex)
+        res = np.conjugate(arr)
+        assert res.dtype == np.dtype("O")
+        assert_array_equal(res, np.array([1-2j, 3+4j], dtype="O"))
+
+    @pytest.mark.parametrize("ufunc", UNARY_OBJECT_UFUNCS)
+    def test_unary_PyUFunc_O_O_method_full(self, ufunc):
+        """Compare the result of the object loop with non-object one"""
+        val = np.float64(np.pi/4)
+
+        class MyFloat(np.float64):
+            def __getattr__(self, attr):
+                try:
+                    return super().__getattr__(attr)
+                except AttributeError:
+                    return lambda: getattr(np.core.umath, attr)(val)
+
+        num_arr = np.array([val], dtype=np.float64)
+        obj_arr = np.array([MyFloat(val)], dtype="O")
+
+        with np.errstate(all="raise"):
+            try:
+                res_num = ufunc(num_arr)
+            except Exception as exc:
+                with assert_raises(type(exc)):
+                    ufunc(obj_arr)
+            else:
+                res_obj = ufunc(obj_arr)
+                assert_array_equal(res_num.astype("O"), res_obj)
 
 
 class TestUfunc(object):
@@ -980,7 +1018,7 @@ class TestUfunc(object):
         assert_array_equal(out, mm_row_col_vec.squeeze())
 
     def test_matrix_multiply(self):
-        self.compare_matrix_multiply_results(np.long)
+        self.compare_matrix_multiply_results(np.int64)
         self.compare_matrix_multiply_results(np.double)
 
     def test_matrix_multiply_umath_empty(self):
@@ -1092,7 +1130,6 @@ class TestUfunc(object):
         arr0d = np.array(HasComparisons())
         assert_equal(arr0d == arr0d, True)
         assert_equal(np.equal(arr0d, arr0d), True)  # normal behavior is a cast
-        assert_equal(np.equal(arr0d, arr0d, dtype=object), '==')
 
         arr1d = np.array([HasComparisons()])
         assert_equal(arr1d == arr1d, np.array([True]))

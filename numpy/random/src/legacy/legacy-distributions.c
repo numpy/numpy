@@ -1,4 +1,4 @@
-#include "legacy-distributions.h"
+#include "include/legacy-distributions.h"
 
 
 static NPY_INLINE double legacy_double(aug_bitgen_t *aug_state) {
@@ -215,6 +215,37 @@ double legacy_exponential(aug_bitgen_t *aug_state, double scale) {
 }
 
 
+static RAND_INT_TYPE legacy_random_binomial_original(bitgen_t *bitgen_state,
+                                                     double p,
+                                                     RAND_INT_TYPE n,
+                                                     binomial_t *binomial) {
+  double q;
+
+  if (p <= 0.5) {
+    if (p * n <= 30.0) {
+      return random_binomial_inversion(bitgen_state, n, p, binomial);
+    } else {
+      return random_binomial_btpe(bitgen_state, n, p, binomial);
+    }
+  } else {
+    q = 1.0 - p;
+    if (q * n <= 30.0) {
+      return n - random_binomial_inversion(bitgen_state, n, q, binomial);
+    } else {
+      return n - random_binomial_btpe(bitgen_state, n, q, binomial);
+    }
+  }
+}
+
+
+int64_t legacy_random_binomial(bitgen_t *bitgen_state, double p,
+                               int64_t n, binomial_t *binomial) {
+  return (int64_t) legacy_random_binomial_original(bitgen_state, p,
+                                                   (RAND_INT_TYPE) n,
+                                                   binomial);
+}
+
+
 static RAND_INT_TYPE random_hypergeometric_hyp(bitgen_t *bitgen_state,
                                                RAND_INT_TYPE good,
                                                RAND_INT_TYPE bad,
@@ -263,8 +294,8 @@ static RAND_INT_TYPE random_hypergeometric_hrua(bitgen_t *bitgen_state,
   d7 = sqrt((double)(popsize - m) * sample * d4 * d5 / (popsize - 1) + 0.5);
   d8 = D1 * d7 + D2;
   d9 = (RAND_INT_TYPE)floor((double)(m + 1) * (mingoodbad + 1) / (popsize + 2));
-  d10 = (loggam(d9 + 1) + loggam(mingoodbad - d9 + 1) + loggam(m - d9 + 1) +
-         loggam(maxgoodbad - m + d9 + 1));
+  d10 = (random_loggam(d9 + 1) + random_loggam(mingoodbad - d9 + 1) +
+         random_loggam(m - d9 + 1) + random_loggam(maxgoodbad - m + d9 + 1));
   d11 = MIN(MIN(m, mingoodbad) + 1.0, floor(d6 + 16 * d7));
   /* 16 for 16-decimal-digit precision in D1 and D2 */
 
@@ -278,8 +309,8 @@ static RAND_INT_TYPE random_hypergeometric_hrua(bitgen_t *bitgen_state,
       continue;
 
     Z = (RAND_INT_TYPE)floor(W);
-    T = d10 - (loggam(Z + 1) + loggam(mingoodbad - Z + 1) + loggam(m - Z + 1) +
-               loggam(maxgoodbad - m + Z + 1));
+    T = d10 - (random_loggam(Z + 1) + random_loggam(mingoodbad - Z + 1) +
+               random_loggam(m - Z + 1) + random_loggam(maxgoodbad - m + Z + 1));
 
     /* fast acceptance: */
     if ((X * (4.0 - X) - 3.0) <= T)

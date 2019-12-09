@@ -20,7 +20,7 @@
 #include "arrayobject.h"
 #include "mem_overlap.h"
 #include "alloc.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 
 /*******************  array attribute get and set routines ******************/
 
@@ -190,7 +190,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 
 
 static PyObject *
-array_priority_get(PyArrayObject *self)
+array_priority_get(PyArrayObject *NPY_UNUSED(self))
 {
     return PyFloat_FromDouble(NPY_PRIORITY);
 }

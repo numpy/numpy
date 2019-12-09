@@ -21,6 +21,7 @@ import pprint
 
 from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
+import numpy.__config__
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -39,7 +40,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', 'suppress_warnings', 'assert_array_compare',
         '_assert_valid_refcount', '_gen_alignment_data', 'assert_no_gc_cycles',
-        'break_cycles',
+        'break_cycles', 'HAS_LAPACK64'
         ]
 
 
@@ -53,6 +54,7 @@ verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
+HAS_LAPACK64 = hasattr(numpy.__config__, 'lapack64__opt_info')
 
 
 def import_nose():
@@ -284,6 +286,10 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     check that all elements of these objects are equal. An exception is raised
     at the first conflicting values.
 
+    When one of `actual` and `desired` is a scalar and the other is array_like,
+    the function checks that each element of the array_like object is equal to
+    the scalar.
+
     This function handles NaN comparisons as if NaN was a "normal" number.
     That is, no assertion is raised if both objects have NaNs in the same
     positions.  This is in contrast to the IEEE standard on NaNs, which says
@@ -374,21 +380,6 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     if isscalar(desired) != isscalar(actual):
         raise AssertionError(msg)
 
-    # Inf/nan/negative zero handling
-    try:
-        isdesnan = gisnan(desired)
-        isactnan = gisnan(actual)
-        if isdesnan and isactnan:
-            return  # both nan, so equal
-
-        # handle signed zero specially for floats
-        if desired == 0 and actual == 0:
-            if not signbit(desired) == signbit(actual):
-                raise AssertionError(msg)
-
-    except (TypeError, ValueError, NotImplementedError):
-        pass
-
     try:
         isdesnat = isnat(desired)
         isactnat = isnat(actual)
@@ -399,6 +390,33 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
             if dtypes_match:
                 return
             else:
+                raise AssertionError(msg)
+
+    except (TypeError, ValueError, NotImplementedError):
+        pass
+
+    # Inf/nan/negative zero handling
+    try:
+        isdesnan = gisnan(desired)
+        isactnan = gisnan(actual)
+        if isdesnan and isactnan:
+            return  # both nan, so equal
+
+        # handle signed zero specially for floats
+        array_actual = array(actual)
+        array_desired = array(desired)
+        if (array_actual.dtype.char in 'Mm' or
+                array_desired.dtype.char in 'Mm'):
+            # version 1.18
+            # until this version, gisnan failed for datetime64 and timedelta64.
+            # Now it succeeds but comparison to scalar with a different type
+            # emits a DeprecationWarning.
+            # Avoid that by skipping the next check
+            raise NotImplementedError('cannot compare to a scalar '
+                                      'with a different type')
+
+        if desired == 0 and actual == 0:
+            if not signbit(desired) == signbit(actual):
                 raise AssertionError(msg)
 
     except (TypeError, ValueError, NotImplementedError):
@@ -841,10 +859,11 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     Raises an AssertionError if two array_like objects are not equal.
 
     Given two array_like objects, check that the shape is equal and all
-    elements of these objects are equal. An exception is raised at
-    shape mismatch or conflicting values. In contrast to the standard usage
-    in numpy, NaNs are compared like numbers, no assertion is raised if
-    both objects have NaNs in the same positions.
+    elements of these objects are equal (but see the Notes for the special
+    handling of a scalar). An exception is raised at shape mismatch or
+    conflicting values. In contrast to the standard usage in numpy, NaNs
+    are compared like numbers, no assertion is raised if both objects have
+    NaNs in the same positions.
 
     The usual caution for verifying equality with floating point numbers is
     advised.
@@ -871,6 +890,12 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
                      relative and/or absolute precision.
     assert_array_almost_equal_nulp, assert_array_max_ulp, assert_equal
 
+    Notes
+    -----
+    When one of `x` and `y` is a scalar and the other is array_like, the
+    function checks that each element of the array_like object is equal to
+    the scalar.
+
     Examples
     --------
     The first assert does not raise an exception:
@@ -878,7 +903,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
     ...                               [np.exp(0),2.33333, np.nan])
 
-    Assert fails with numerical inprecision with floats:
+    Assert fails with numerical imprecision with floats:
 
     >>> np.testing.assert_array_equal([1.0,np.pi,np.nan],
     ...                               [1, np.sqrt(np.pi)**2, np.nan])
@@ -898,6 +923,12 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     >>> np.testing.assert_allclose([1.0,np.pi,np.nan],
     ...                            [1, np.sqrt(np.pi)**2, np.nan],
     ...                            rtol=1e-10, atol=0)
+
+    As mentioned in the Notes section, `assert_array_equal` has special
+    handling for scalars. Here the test checks that each value in `x` is 3:
+
+    >>> x = np.full((2, 5), fill_value=3)
+    >>> np.testing.assert_array_equal(x, 3)
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -2351,3 +2382,97 @@ def break_cycles():
         gc.collect()
         # one more, just to make sure
         gc.collect()
+
+
+def requires_memory(free_bytes):
+    """Decorator to skip a test if not enough memory is available"""
+    import pytest
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*a, **kw):
+            msg = check_free_memory(free_bytes)
+            if msg is not None:
+                pytest.skip(msg)
+
+            try:
+                return func(*a, **kw)
+            except MemoryError:
+                # Probably ran out of memory regardless: don't regard as failure
+                pytest.xfail("MemoryError raised")
+
+        return wrapper
+
+    return decorator
+
+
+def check_free_memory(free_bytes):
+    """
+    Check whether `free_bytes` amount of memory is currently free.
+    Returns: None if enough memory available, otherwise error message
+    """
+    env_var = 'NPY_AVAILABLE_MEM'
+    env_value = os.environ.get(env_var)
+    if env_value is not None:
+        try:
+            mem_free = _parse_size(env_value)
+        except ValueError as exc:
+            raise ValueError('Invalid environment variable {}: {!s}'.format(
+                env_var, exc))
+
+        msg = ('{0} GB memory required, but environment variable '
+               'NPY_AVAILABLE_MEM={1} set'.format(
+                   free_bytes/1e9, env_value))
+    else:
+        mem_free = _get_mem_available()
+
+        if mem_free is None:
+            msg = ("Could not determine available memory; set NPY_AVAILABLE_MEM "
+                   "environment variable (e.g. NPY_AVAILABLE_MEM=16GB) to run "
+                   "the test.")
+            mem_free = -1
+        else:
+            msg = '{0} GB memory required, but {1} GB available'.format(
+                free_bytes/1e9, mem_free/1e9)
+
+    return msg if mem_free < free_bytes else None
+
+
+def _parse_size(size_str):
+    """Convert memory size strings ('12 GB' etc.) to float"""
+    suffixes = {'': 1, 'b': 1,
+                'k': 1000, 'm': 1000**2, 'g': 1000**3, 't': 1000**4,
+                'kb': 1000, 'mb': 1000**2, 'gb': 1000**3, 'tb': 1000**4,
+                'kib': 1024, 'mib': 1024**2, 'gib': 1024**3, 'tib': 1024**4}
+
+    size_re = re.compile(r'^\s*(\d+|\d+\.\d+)\s*({0})\s*$'.format(
+        '|'.join(suffixes.keys())), re.I)
+
+    m = size_re.match(size_str.lower())
+    if not m or m.group(2) not in suffixes:
+        raise ValueError("value {!r} not a valid size".format(size_str))
+    return int(float(m.group(1)) * suffixes[m.group(2)])
+
+
+def _get_mem_available():
+    """Return available memory in bytes, or None if unknown."""
+    try:
+        import psutil
+        return psutil.virtual_memory().available
+    except (ImportError, AttributeError):
+        pass
+
+    if sys.platform.startswith('linux'):
+        info = {}
+        with open('/proc/meminfo', 'r') as f:
+            for line in f:
+                p = line.split()
+                info[p[0].strip(':').lower()] = int(p[1]) * 1024
+
+        if 'memavailable' in info:
+            # Linux >= 3.14
+            return info['memavailable']
+        else:
+            return info['memfree'] + info['cached']
+
+    return None

@@ -859,7 +859,7 @@ class Configuration(object):
             print(message)
 
     def warn(self, message):
-        sys.stderr.write('Warning: %s' % (message,))
+        sys.stderr.write('Warning: %s\n' % (message,))
 
     def set_options(self, **options):
         """
@@ -1687,6 +1687,41 @@ class Configuration(object):
 
         and will be installed as foo.ini in the 'lib' subpath.
 
+        When cross-compiling with numpy distutils, it might be necessary to
+        use modified npy-pkg-config files.  Using the default/generated files
+        will link with the host libraries (i.e. libnpymath.a).  For
+        cross-compilation you of-course need to link with target libraries,
+        while using the host Python installation.
+
+        You can copy out the numpy/core/lib/npy-pkg-config directory, add a
+        pkgdir value to the .ini files and set NPY_PKG_CONFIG_PATH environment
+        variable to point to the directory with the modified npy-pkg-config
+        files.
+
+        Example npymath.ini modified for cross-compilation::
+
+            [meta]
+            Name=npymath
+            Description=Portable, core math library implementing C99 standard
+            Version=0.1
+
+            [variables]
+            pkgname=numpy.core
+            pkgdir=/build/arm-linux-gnueabi/sysroot/usr/lib/python3.7/site-packages/numpy/core
+            prefix=${pkgdir}
+            libdir=${prefix}/lib
+            includedir=${prefix}/include
+
+            [default]
+            Libs=-L${libdir} -lnpymath
+            Cflags=-I${includedir}
+            Requires=mlib
+
+            [msvc]
+            Libs=/LIBPATH:${libdir} npymath.lib
+            Cflags=/INCLUDE:${includedir}
+            Requires=mlib
+
         """
         if subst_dict is None:
             subst_dict = {}
@@ -2092,9 +2127,22 @@ def get_numpy_include_dirs():
     return include_dirs
 
 def get_npy_pkg_dir():
-    """Return the path where to find the npy-pkg-config directory."""
+    """Return the path where to find the npy-pkg-config directory.
+
+    If the NPY_PKG_CONFIG_PATH environment variable is set, the value of that
+    is returned.  Otherwise, a path inside the location of the numpy module is
+    returned.
+
+    The NPY_PKG_CONFIG_PATH can be useful when cross-compiling, maintaining
+    customized npy-pkg-config .ini files for the cross-compilation
+    environment, and using them when cross-compiling.
+
+    """
     # XXX: import here for bootstrapping reasons
     import numpy
+    d = os.environ.get('NPY_PKG_CONFIG_PATH')
+    if d is not None:
+        return d
     d = os.path.join(os.path.dirname(numpy.__file__),
             'core', 'lib', 'npy-pkg-config')
     return d
@@ -2281,8 +2329,11 @@ def generate_config_py(target):
             extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 
             if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
-                os.environ.setdefault('PATH', '')
-                os.environ['PATH'] += os.pathsep + extra_dll_dir
+                if sys.version_info >= (3, 8):
+                    os.add_dll_directory(extra_dll_dir)
+                else:
+                    os.environ.setdefault('PATH', '')
+                    os.environ['PATH'] += os.pathsep + extra_dll_dir
 
             """))
 

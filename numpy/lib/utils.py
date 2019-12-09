@@ -788,13 +788,8 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
         if kind in ('module', 'object'):
             # don't show modules or objects
             continue
-        ok = True
         doc = docstring.lower()
-        for w in whats:
-            if w not in doc:
-                ok = False
-                break
-        if ok:
+        if all(w in doc for w in whats):
             found.append(name)
 
     # Relevance sort

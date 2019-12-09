@@ -111,7 +111,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     ----------
     precision : int or None, optional
         Number of digits of precision for floating point output (default 8).
-        May be `None` if `floatmode` is not `fixed`, to print as many digits as
+        May be None if `floatmode` is not `fixed`, to print as many digits as
         necessary to uniquely specify the value.
     threshold : int, optional
         Total number of array elements which trigger summarization
@@ -200,6 +200,8 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     -----
     `formatter` is always reset with a call to `set_printoptions`.
 
+    Use `printoptions` as a context manager to set the values temporarily.
+
     Examples
     --------
     Floating point precision can be set:
@@ -236,9 +238,16 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     To put back the default options, you can use:
 
-    >>> np.set_printoptions(edgeitems=3,infstr='inf',
+    >>> np.set_printoptions(edgeitems=3, infstr='inf',
     ... linewidth=75, nanstr='nan', precision=8,
     ... suppress=False, threshold=1000, formatter=None)
+
+    Also to temporarily override options, use `printoptions` as a context manager:
+
+    >>> with np.printoptions(precision=2, suppress=True, threshold=5):
+    ...     np.linspace(0, 10, 10)
+    array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])
+
     """
     legacy = kwarg.pop('legacy', None)
     if kwarg:
@@ -1470,7 +1479,11 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
         arr, max_line_width, precision, suppress_small)
 
 
-_guarded_str = _recursive_guard()(str)
+@_recursive_guard()
+def _guarded_repr_or_str(v):
+    if isinstance(v, bytes):
+        return repr(v)
+    return str(v)
 
 
 def _array_str_implementation(
@@ -1488,7 +1501,7 @@ def _array_str_implementation(
         # obtain a scalar and call str on it, avoiding problems for subclasses
         # for which indexing with () returns a 0d instead of a scalar by using
         # ndarray's getindex. Also guard against recursive 0d object arrays.
-        return _guarded_str(np.ndarray.__getitem__(a, ()))
+        return _guarded_repr_or_str(np.ndarray.__getitem__(a, ()))
 
     return array2string(a, max_line_width, precision, suppress_small, ' ', "")
 

@@ -17,6 +17,7 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.compat import asbytes, asunicode, long, pickle
+from test.support import no_tracing
 
 try:
     RecursionError
@@ -1316,6 +1317,7 @@ class TestRegression(object):
             assert_(pickle.loads(
                 pickle.dumps(test_record, protocol=proto)) == test_record)
 
+    @no_tracing
     def test_blasdot_uninitialized_memory(self):
         # Ticket #950
         for m in [0, 1, 2]:
@@ -1511,7 +1513,7 @@ class TestRegression(object):
             min //= -1
 
         with np.errstate(divide="ignore"):
-            for t in (np.int8, np.int16, np.int32, np.int64, int, np.long):
+            for t in (np.int8, np.int16, np.int32, np.int64, int, np.compat.long):
                 test_type(t)
 
     def test_buffer_hashlib(self):
@@ -1539,7 +1541,8 @@ class TestRegression(object):
 
     def test_fromstring_crash(self):
         # Ticket #1345: the following should not cause a crash
-        np.fromstring(b'aa, aa, 1.0', sep=',')
+        with assert_warns(DeprecationWarning):
+            np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):
         dtypes = [x for x in np.typeDict.values()
@@ -2111,7 +2114,7 @@ class TestRegression(object):
         # Ticket #1578, the mismatch only showed up when running
         # python-debug for python versions >= 2.7, and then as
         # a core dump and error message.
-        a = np.array(['abc'], dtype=np.unicode)[0]
+        a = np.array(['abc'], dtype=np.unicode_)[0]
         del a
 
     def test_refcount_error_in_clip(self):
@@ -2480,26 +2483,6 @@ class TestRegression(object):
             __array_interface__ = {}
 
         np.array([T()])
-
-    def test_2d__array__shape(self):
-        class T(object):
-            def __array__(self):
-                return np.ndarray(shape=(0,0))
-
-            # Make sure __array__ is used instead of Sequence methods.
-            def __iter__(self):
-                return iter([])
-
-            def __getitem__(self, idx):
-                raise AssertionError("__getitem__ was called")
-
-            def __len__(self):
-                return 0
-
-
-        t = T()
-        #gh-13659, would raise in broadcasting [x=t for x in result]
-        np.array([t])
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
     @pytest.mark.skipif(sys.platform == 'win32' and sys.version_info[:2] < (3, 8),

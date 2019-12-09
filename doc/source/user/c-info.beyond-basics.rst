@@ -217,14 +217,13 @@ type will behave much like a regular data-type except ufuncs must have
 1-d loops registered to handle it separately. Also checking for
 whether or not other data-types can be cast "safely" to and from this
 new type or not will always return "can cast" unless you also register
-which types your new data-type can be cast to and from. Adding
-data-types is one of the less well-tested areas for NumPy 1.0, so
-there may be bugs remaining in the approach. Only add a new data-type
-if you can't do what you want to do using the OBJECT or VOID
-data-types that are already available. As an example of what I
-consider a useful application of the ability to add data-types is the
-possibility of adding a data-type of arbitrary precision floats to
-NumPy.
+which types your new data-type can be cast to and from.
+
+The NumPy source code includes an example of a custom data-type as part
+of its test suite. The file ``_rational_tests.c.src`` in the source code
+directory  ``numpy/numpy/core/src/umath/`` contains an implementation of
+a data-type that represents a rational number as the ratio of two 32 bit
+integers.
 
 .. index::
    pair: dtype; adding new
@@ -300,9 +299,10 @@ An example castfunc is:
 
     static void
     double_to_float(double *from, float* to, npy_intp n,
-           void* ig1, void* ig2);
-    while (n--) {
-          (*to++) = (double) *(from++);
+                    void* ignore1, void* ignore2) {
+        while (n--) {
+              (*to++) = (double) *(from++);
+        }
     }
 
 This could then be registered to convert doubles to floats using the

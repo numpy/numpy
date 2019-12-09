@@ -1,5 +1,5 @@
-Parallel Congruent Generator (64-bit, PCG64)
---------------------------------------------
+Permuted Congruential Generator (64-bit, PCG64)
+-----------------------------------------------
 
 .. currentmodule:: numpy.random
 

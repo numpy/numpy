@@ -46,6 +46,7 @@ Functions
 from __future__ import division, absolute_import, print_function
 
 import operator
+import functools
 import warnings
 
 import numpy as np
@@ -415,45 +416,89 @@ def mapdomain(x, old, new):
     return off + scl*x
 
 
-def _vander2d(vander_f, x, y, deg):
-    """
-    Helper function used to implement the ``<type>vander2d`` functions.
+def _nth_slice(i, ndim):
+    sl = [np.newaxis] * ndim
+    sl[i] = slice(None)
+    return tuple(sl)
+
+
+def _vander_nd(vander_fs, points, degrees):
+    r"""
+    A generalization of the Vandermonde matrix for N dimensions
+
+    The result is built by combining the results of 1d Vandermonde matrices,
+
+    .. math::
+        W[i_0, \ldots, i_M, j_0, \ldots, j_N] = \prod_{k=0}^N{V_k(x_k)[i_0, \ldots, i_M, j_k]}
+
+    where
+
+    .. math::
+        N &= \texttt{len(points)} = \texttt{len(degrees)} = \texttt{len(vander\_fs)} \\
+        M &= \texttt{points[k].ndim} \\
+        V_k &= \texttt{vander\_fs[k]} \\
+        x_k &= \texttt{points[k]} \\
+        0 \le j_k &\le \texttt{degrees[k]}
+
+    Expanding the one-dimensional :math:`V_k` functions gives:
+
+    .. math::
+        W[i_0, \ldots, i_M, j_0, \ldots, j_N] = \prod_{k=0}^N{B_{k, j_k}(x_k[i_0, \ldots, i_M])}
+
+    where :math:`B_{k,m}` is the m'th basis of the polynomial construction used along
+    dimension :math:`k`. For a regular polynomial, :math:`B_{k, m}(x) = P_m(x) = x^m`.
 
     Parameters
     ----------
-    vander_f : function(array_like, int) -> ndarray
-        The 1d vander function, such as ``polyvander``
-    x, y, deg :
-        See the ``<type>vander2d`` functions for more detail
+    vander_fs : Sequence[function(array_like, int) -> ndarray]
+        The 1d vander function to use for each axis, such as ``polyvander``
+    points : Sequence[array_like]
+        Arrays of point coordinates, all of the same shape. The dtypes
+        will be converted to either float64 or complex128 depending on
+        whether any of the elements are complex. Scalars are converted to
+        1-D arrays.
+        This must be the same length as `vander_fs`.
+    degrees : Sequence[int]
+        The maximum degree (inclusive) to use for each axis.
+        This must be the same length as `vander_fs`.
+
+    Returns
+    -------
+    vander_nd : ndarray
+        An array of shape ``points[0].shape + tuple(d + 1 for d in degrees)``.
     """
-    degx, degy = deg
-    x, y = np.array((x, y), copy=False) + 0.0
+    n_dims = len(vander_fs)
+    if n_dims != len(points):
+        raise ValueError(
+            "Expected {} dimensions of sample points, got {}".format(n_dims, len(points)))
+    if n_dims != len(degrees):
+        raise ValueError(
+            "Expected {} dimensions of degrees, got {}".format(n_dims, len(degrees)))
+    if n_dims == 0:
+        raise ValueError("Unable to guess a dtype or shape when no points are given")
 
-    vx = vander_f(x, degx)
-    vy = vander_f(y, degy)
-    v = vx[..., None]*vy[..., None,:]
-    return v.reshape(v.shape[:-2] + (-1,))
+    # convert to the same shape and type
+    points = tuple(np.array(tuple(points), copy=False) + 0.0)
+
+    # produce the vandermonde matrix for each dimension, placing the last
+    # axis of each in an independent trailing axis of the output
+    vander_arrays = (
+        vander_fs[i](points[i], degrees[i])[(...,) + _nth_slice(i, n_dims)]
+        for i in range(n_dims)
+    )
+
+    # we checked this wasn't empty already, so no `initial` needed
+    return functools.reduce(operator.mul, vander_arrays)
 
 
-def _vander3d(vander_f, x, y, z, deg):
+def _vander_nd_flat(vander_fs, points, degrees):
     """
-    Helper function used to implement the ``<type>vander3d`` functions.
+    Like `_vander_nd`, but flattens the last ``len(degrees)`` axes into a single axis
 
-    Parameters
-    ----------
-    vander_f : function(array_like, int) -> ndarray
-        The 1d vander function, such as ``polyvander``
-    x, y, z, deg :
-        See the ``<type>vander3d`` functions for more detail
+    Used to implement the public ``<type>vander<n>d`` functions.
     """
-    degx, degy, degz = deg
-    x, y, z = np.array((x, y, z), copy=False) + 0.0
-
-    vx = vander_f(x, degx)
-    vy = vander_f(y, degy)
-    vz = vander_f(z, degz)
-    v = vx[..., None, None]*vy[..., None,:, None]*vz[..., None, None,:]
-    return v.reshape(v.shape[:-3] + (-1,))
+    v = _vander_nd(vander_fs, points, degrees)
+    return v.reshape(v.shape[:-len(degrees)] + (-1,))
 
 
 def _fromroots(line_f, mul_f, roots):

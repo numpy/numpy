@@ -7,14 +7,12 @@
 #define _NPY_UMATH_LOOPS_H_
 
 #define BOOL_invert BOOL_logical_not
-#define BOOL_negative BOOL_logical_not
 #define BOOL_add BOOL_logical_or
 #define BOOL_bitwise_and BOOL_logical_and
 #define BOOL_bitwise_or BOOL_logical_or
 #define BOOL_logical_xor BOOL_not_equal
 #define BOOL_bitwise_xor BOOL_logical_xor
 #define BOOL_multiply BOOL_logical_and
-#define BOOL_subtract BOOL_logical_xor
 #define BOOL_maximum BOOL_logical_or
 #define BOOL_minimum BOOL_logical_and
 #define BOOL_fmax BOOL_maximum
@@ -175,6 +173,19 @@ NPY_NO_EXPORT void
  */
 NPY_NO_EXPORT void
 @TYPE@_sqrt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**begin repeat1
+ * #isa = avx512f, fma#
+ */
+
+/**begin repeat2
+ * #func = sqrt, absolute, square, reciprocal#
+ */
+NPY_NO_EXPORT void
+@TYPE@_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+/**end repeat2**/
+/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
@@ -190,6 +201,26 @@ FLOAT_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSE
 NPY_NO_EXPORT void
 FLOAT_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ *  #func = rint, ceil, floor, trunc#
+ */
+
+/**begin repeat1
+*  #TYPE = FLOAT, DOUBLE#
+*/
+
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_@func@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
+
+/**begin repeat2
+ * #isa = avx512f, fma#
+ */
+NPY_NO_EXPORT NPY_GCC_OPT_3 void
+@TYPE@_@func@_@isa@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
+/**end repeat2**/
 /**end repeat1**/
 /**end repeat**/
 
@@ -447,6 +478,11 @@ NPY_NO_EXPORT void
 @TYPE@_isfinite(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
 NPY_NO_EXPORT void
+@TYPE@_isinf(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
+#define @TYPE@_isnan @TYPE@_isnat
+
+NPY_NO_EXPORT void
 @TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data));
 
 /**begin repeat1
@@ -458,8 +494,7 @@ NPY_NO_EXPORT void
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = maximum, minimum#
- * #OP =  >, <#
+ * #kind = maximum, minimum, fmin, fmax#
  **/
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
@@ -523,10 +558,6 @@ TIMEDELTA_mm_qm_divmod(char **args, npy_intp *dimensions, npy_intp *steps, void 
 #define TIMEDELTA_mq_m_floor_divide TIMEDELTA_mq_m_divide
 #define TIMEDELTA_md_m_floor_divide TIMEDELTA_md_m_divide
 /* #define TIMEDELTA_mm_d_floor_divide TIMEDELTA_mm_d_divide */
-#define TIMEDELTA_fmin TIMEDELTA_minimum
-#define TIMEDELTA_fmax TIMEDELTA_maximum
-#define DATETIME_fmin DATETIME_minimum
-#define DATETIME_fmax DATETIME_maximum
 
 /*
  *****************************************************************************

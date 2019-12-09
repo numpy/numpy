@@ -2567,6 +2567,11 @@ class TestCorrelate(object):
         z = np.correlate(y, x, mode='full')
         assert_array_almost_equal(z, r_z)
 
+    def test_zero_size(self):
+        with pytest.raises(ValueError):
+            np.correlate(np.array([]), np.ones(1000), mode='full')
+        with pytest.raises(ValueError):
+            np.correlate(np.ones(1000), np.array([]), mode='full')
 
 class TestConvolve(object):
     def test_object(self):
@@ -2948,7 +2953,7 @@ class TestIndices(object):
         assert_array_equal(x, np.array([[0], [1], [2], [3]]))
         assert_array_equal(y, np.array([[0, 1, 2]]))
 
-    @pytest.mark.parametrize("dtype", [np.int, np.float32, np.float64])
+    @pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
     @pytest.mark.parametrize("dims", [(), (0,), (4, 3)])
     def test_return_type(self, dtype, dims):
         inds = np.indices(dims, dtype=dtype)

@@ -24,7 +24,7 @@ static int
 npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags);
 static int
 npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
-                        npy_intp *itershape);
+                        const npy_intp *itershape);
 static int
 npyiter_calculate_ndim(int nop, PyArrayObject **op_in,
                        int oa_ndim);
@@ -55,7 +55,7 @@ npyiter_check_casting(int nop, PyArrayObject **op,
 static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
-                    npy_uint32 *op_flags, int **op_axes,
+                    const npy_uint32 *op_flags, int **op_axes,
                     npy_intp *itershape);
 static void
 npyiter_replace_axisdata(NpyIter *iter, int iop,
@@ -74,23 +74,23 @@ static void
 npyiter_find_best_axis_ordering(NpyIter *iter);
 static PyArray_Descr *
 npyiter_get_common_dtype(int nop, PyArrayObject **op,
-                        npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
+                        const npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
                         PyArray_Descr **op_request_dtypes,
                         int only_inputs);
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 npy_uint32 flags, npyiter_opitflags *op_itflags,
                 int op_ndim, npy_intp *shape,
-                PyArray_Descr *op_dtype, int *op_axes);
+                PyArray_Descr *op_dtype, const int *op_axes);
 static int
 npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
-                        npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
+                        const npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
                         int **op_axes);
 static void
 npyiter_get_priority_subtype(int nop, PyArrayObject **op,
-                            npyiter_opitflags *op_itflags,
+                            const npyiter_opitflags *op_itflags,
                             double *subtype_priority, PyTypeObject **subtype);
 static int
 npyiter_allocate_transfer_functions(NpyIter *iter);
@@ -154,7 +154,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     if (nop > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
             "Cannot construct an iterator with more than %d operands "
-            "(%d were requested)", (int)NPY_MAXARGS, (int)nop);
+            "(%d were requested)", NPY_MAXARGS, nop);
         return NULL;
     }
 
@@ -787,7 +787,7 @@ npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
 
 static int
 npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
-                        npy_intp *itershape)
+                        const npy_intp *itershape)
 {
     char axes_dupcheck[NPY_MAXDIMS];
     int iop, idim;
@@ -810,7 +810,7 @@ npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
         PyErr_Format(PyExc_ValueError,
                 "Cannot construct an iterator with more than %d dimensions "
                 "(%d were requested for op_axes)",
-                (int)NPY_MAXDIMS, oa_ndim);
+                NPY_MAXDIMS, oa_ndim);
         return 0;
     }
     if (op_axes == NULL) {
@@ -826,14 +826,14 @@ npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
         if (axes != NULL) {
             memset(axes_dupcheck, 0, NPY_MAXDIMS);
             for (idim = 0; idim < oa_ndim; ++idim) {
-                npy_intp i = axes[idim];
+                int i = axes[idim];
                 if (i >= 0) {
                     if (i >= NPY_MAXDIMS) {
                         PyErr_Format(PyExc_ValueError,
                                 "The 'op_axes' provided to the iterator "
                                 "constructor for operand %d "
                                 "contained invalid "
-                                "values %d", (int)iop, (int)i);
+                                "values %d", iop, i);
                         return 0;
                     }
                     else if (axes_dupcheck[i] == 1) {
@@ -841,7 +841,7 @@ npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
                                 "The 'op_axes' provided to the iterator "
                                 "constructor for operand %d "
                                 "contained duplicate "
-                                "value %d", (int)iop, (int)i);
+                                "value %d", iop, i);
                         return 0;
                     }
                     else {
@@ -1311,7 +1311,7 @@ npyiter_check_casting(int nop, PyArrayObject **op,
                 PyObject *errmsg;
                 errmsg = PyUString_FromFormat(
                         "Iterator operand %d dtype could not be cast from ",
-                        (int)iop);
+                        iop);
                 PyUString_ConcatAndDel(&errmsg,
                         PyObject_Repr((PyObject *)PyArray_DESCR(op[iop])));
                 PyUString_ConcatAndDel(&errmsg,
@@ -1342,7 +1342,7 @@ npyiter_check_casting(int nop, PyArrayObject **op,
                 PyUString_ConcatAndDel(&errmsg,
                         PyUString_FromFormat(", the operand %d dtype, "
                                 "according to the rule %s",
-                                (int)iop,
+                                iop,
                                 npyiter_casting_to_string(casting)));
                 PyErr_SetObject(PyExc_TypeError, errmsg);
                 Py_DECREF(errmsg);
@@ -1423,7 +1423,7 @@ check_mask_for_writemasked_reduction(NpyIter *iter, int iop)
 static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
-                    npy_uint32 *op_flags, int **op_axes,
+                    const npy_uint32 *op_flags, int **op_axes,
                     npy_intp *itershape)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -1500,8 +1500,8 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                                     "Iterator input op_axes[%d][%d] (==%d) "
                                     "is not a valid axis of op[%d], which "
                                     "has %d dimensions ",
-                                    (int)iop, (int)(ndim-idim-1), (int)i,
-                                    (int)iop, (int)ondim);
+                                    iop, (ndim-idim-1), i,
+                                    iop, ondim);
                             return 0;
                         }
                     }
@@ -2409,7 +2409,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
  */
 static PyArray_Descr *
 npyiter_get_common_dtype(int nop, PyArrayObject **op,
-                        npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
+                        const npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
                         PyArray_Descr **op_request_dtypes,
                         int only_inputs)
 {
@@ -2477,7 +2477,7 @@ static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 npy_uint32 flags, npyiter_opitflags *op_itflags,
                 int op_ndim, npy_intp *shape,
-                PyArray_Descr *op_dtype, int *op_axes)
+                PyArray_Descr *op_dtype, const int *op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
@@ -2706,7 +2706,7 @@ static int
 npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
-                        npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
+                        const npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
                         int **op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -3109,7 +3109,7 @@ npyiter_allocate_arrays(NpyIter *iter,
  */
 static void
 npyiter_get_priority_subtype(int nop, PyArrayObject **op,
-                            npyiter_opitflags *op_itflags,
+                            const npyiter_opitflags *op_itflags,
                             double *subtype_priority,
                             PyTypeObject **subtype)
 {

@@ -11,7 +11,8 @@ from numpy.testing import (
         suppress_warnings
         )
 
-from numpy.random import MT19937, PCG64, mtrand as random
+from numpy.random import MT19937, PCG64
+from numpy import random
 
 INT_FUNCS = {'binomial': (100.0, 0.6),
              'geometric': (.5,),
@@ -228,7 +229,7 @@ class TestSetState(object):
         new_state = ('Unknown', ) + state[1:]
         assert_raises(ValueError, self.random_state.set_state, new_state)
         assert_raises(TypeError, self.random_state.set_state,
-                      np.array(new_state, dtype=np.object))
+                      np.array(new_state, dtype=object))
         state = self.random_state.get_state(legacy=False)
         del state['bit_generator']
         assert_raises(ValueError, self.random_state.set_state, state)
@@ -381,7 +382,7 @@ class TestRandint(object):
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
             assert_equal(sample.dtype, np.dtype(dt))
 
-        for dt in (bool, int, np.long):
+        for dt in (bool, int, np.compat.long):
             lbnd = 0 if dt is bool else np.iinfo(dt).min
             ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
 
@@ -454,7 +455,7 @@ class TestRandomDist(object):
         random.seed(self.seed)
         rs = random.RandomState(self.seed)
         actual = rs.tomaxint(size=(3, 2))
-        if np.iinfo(np.int).max == 2147483647:
+        if np.iinfo(int).max == 2147483647:
             desired = np.array([[1328851649,  731237375],
                                 [1270502067,  320041495],
                                 [1908433478,  499156889]], dtype=np.int64)

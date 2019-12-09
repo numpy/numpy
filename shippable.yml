@@ -22,6 +22,7 @@ runtime:
 build:
     ci:
     # install dependencies
+    - sudo apt-get update
     - sudo apt-get install gcc gfortran
     - target=$(python tools/openblas_support.py)
     - sudo cp -r "${target}"/64/lib/* /usr/lib
@@ -48,7 +49,7 @@ build:
     # check OpenBLAS version
     - python tools/openblas_support.py --check_version 0.3.7
     # run the test suite
-    - python runtests.py -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
+    - python runtests.py --debug-info --show-build-log -- -rsx --junit-xml=$SHIPPABLE_REPO_DIR/shippable/testresults/tests.xml -n 2 --durations=10
 
     cache: true
     cache_dir_list:

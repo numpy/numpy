@@ -118,8 +118,16 @@ The inverse DFT is defined as
 It differs from the forward transform by the sign of the exponential
 argument and the default normalization by :math:`1/n`.
 
+Type Promotion
+--------------
+
+`numpy.fft` promotes ``float32`` and ``complex64`` arrays to ``float64`` and
+``complex128`` arrays respectively. For an FFT implementation that does not
+promote input arrays, see `scipy.fftpack`.
+
 Normalization
 -------------
+
 The default normalization has the direct transforms unscaled and the inverse
 transforms are scaled by :math:`1/n`. It is possible to obtain unitary
 transforms by setting the keyword argument ``norm`` to ``"ortho"`` (default is

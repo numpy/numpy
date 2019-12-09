@@ -118,6 +118,9 @@ PyArray_GetPriority(PyObject *obj, double default_)
 
     ret = PyArray_LookupSpecial_OnInstance(obj, "__array_priority__");
     if (ret == NULL) {
+        if (PyErr_Occurred()) {
+            PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+        }
         return default_;
     }
 
@@ -286,7 +289,8 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
  * Convert to a 1D C-array
  */
 NPY_NO_EXPORT int
-PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
+PyArray_As1D(PyObject **NPY_UNUSED(op), char **NPY_UNUSED(ptr),
+             int *NPY_UNUSED(d1), int NPY_UNUSED(typecode))
 {
     /* 2008-07-14, 1.5 */
     PyErr_SetString(PyExc_NotImplementedError,
@@ -298,7 +302,8 @@ PyArray_As1D(PyObject **op, char **ptr, int *d1, int typecode)
  * Convert to a 2D C-array
  */
 NPY_NO_EXPORT int
-PyArray_As2D(PyObject **op, char ***ptr, int *d1, int *d2, int typecode)
+PyArray_As2D(PyObject **NPY_UNUSED(op), char ***NPY_UNUSED(ptr),
+             int *NPY_UNUSED(d1), int *NPY_UNUSED(d2), int NPY_UNUSED(typecode))
 {
     /* 2008-07-14, 1.5 */
     PyErr_SetString(PyExc_NotImplementedError,
@@ -1110,6 +1115,14 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
 
     n1 = PyArray_DIMS(ap1)[0];
     n2 = PyArray_DIMS(ap2)[0];
+    if (n1 == 0) {
+        PyErr_SetString(PyExc_ValueError, "first array argument cannot be empty");
+        return NULL;
+    }
+    if (n2 == 0) {
+        PyErr_SetString(PyExc_ValueError, "second array argument cannot be empty");
+        return NULL;
+    }
     if (n1 < n2) {
         ret = ap1;
         ap1 = ap2;
@@ -1622,21 +1635,20 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 
             ndmin_obj = PyDict_GetItem(kws, npy_ma_str_ndmin);
             if (ndmin_obj) {
-                ndmin = PyLong_AsLong(ndmin_obj);
-                if (error_converting(ndmin)) {
+                long t = PyLong_AsLong(ndmin_obj);
+                if (error_converting(t)) {
                     goto clean_type;
                 }
-                else if (ndmin > NPY_MAXDIMS) {
+                else if (t > NPY_MAXDIMS) {
                     goto full_path;
                 }
+                ndmin = t;
             }
 
-            /* copy=False with default dtype, order and ndim */
-            if (STRIDING_OK(oparr, order)) {
-                ret = oparr;
-                Py_INCREF(ret);
-                goto finish;
-            }
+            /* copy=False with default dtype, order (any is OK) and ndim */
+            ret = oparr;
+            Py_INCREF(ret);
+            goto finish;
         }
     }
 
@@ -2062,7 +2074,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     if (file == NULL) {
         return NULL;
     }
-    
+
     if (offset != 0 && strcmp(sep, "") != 0) {
         PyErr_SetString(PyExc_TypeError, "'offset' argument only permitted for binary files");
         Py_XDECREF(type);
@@ -3264,7 +3276,7 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
     }
 
     meta = get_datetime_metadata_from_dtype(dtype);
-    Py_DECREF(dtype);    
+    Py_DECREF(dtype);
     if (meta == NULL) {
         return NULL;
     }
@@ -3781,7 +3793,7 @@ _vec_string_no_args(PyArrayObject* char_array,
 }
 
 static PyObject *
-_vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+_vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyArrayObject* char_array = NULL;
     PyArray_Descr *type;

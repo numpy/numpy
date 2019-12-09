@@ -1193,7 +1193,7 @@ def hermvander2d(x, y, deg):
     .. versionadded:: 1.7.0
 
     """
-    return pu._vander2d(hermvander, x, y, deg)
+    return pu._vander_nd_flat((hermvander, hermvander), (x, y), deg)
 
 
 def hermvander3d(x, y, z, deg):
@@ -1247,7 +1247,7 @@ def hermvander3d(x, y, z, deg):
     .. versionadded:: 1.7.0
 
     """
-    return pu._vander3d(hermvander, x, y, z, deg)
+    return pu._vander_nd_flat((hermvander, hermvander, hermvander), (x, y, z), deg)
 
 
 def hermfit(x, y, deg, rcond=None, full=False, w=None):

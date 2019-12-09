@@ -95,17 +95,18 @@ def _replace_nan(a, val):
         NaNs, otherwise return None.
 
     """
-    a = np.array(a, subok=True, copy=True)
+    a = np.asanyarray(a)
 
     if a.dtype == np.object_:
         # object arrays do not support `isnan` (gh-9009), so make a guess
-        mask = a != a
+        mask = np.not_equal(a, a, dtype=bool)
     elif issubclass(a.dtype.type, np.inexact):
         mask = np.isnan(a)
     else:
         mask = None
 
     if mask is not None:
+        a = np.array(a, subok=True, copy=True)
         np.copyto(a, val, where=mask)
 
     return a, mask
@@ -244,8 +245,8 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue):
     out : ndarray, optional
         Alternate output array in which to place the result.  The default
         is ``None``; if provided, it must have the same shape as the
-        expected output, but the type will be cast if necessary.  See
-        `doc.ufuncs` for details.
+        expected output, but the type will be cast if necessary. See
+        `ufuncs-output-type` for more details.
 
         .. versionadded:: 1.8.0
     keepdims : bool, optional
@@ -359,8 +360,8 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue):
     out : ndarray, optional
         Alternate output array in which to place the result.  The default
         is ``None``; if provided, it must have the same shape as the
-        expected output, but the type will be cast if necessary.  See
-        `doc.ufuncs` for details.
+        expected output, but the type will be cast if necessary. See
+        `ufuncs-output-type` for more details.
 
         .. versionadded:: 1.8.0
     keepdims : bool, optional
@@ -585,8 +586,8 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
         Alternate output array in which to place the result.  The default
         is ``None``. If provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.  See
-        `doc.ufuncs` for details. The casting of NaN to integer can yield
-        unexpected results.
+        `ufuncs-output-type` for more details. The casting of NaN to integer
+        can yield unexpected results.
 
         .. versionadded:: 1.8.0
     keepdims : bool, optional
@@ -681,9 +682,9 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     out : ndarray, optional
         Alternate output array in which to place the result.  The default
         is ``None``. If provided, it must have the same shape as the
-        expected output, but the type will be cast if necessary.  See
-        `doc.ufuncs` for details. The casting of NaN to integer can yield
-        unexpected results.
+        expected output, but the type will be cast if necessary. See
+        `ufuncs-output-type` for more details. The casting of NaN to integer
+        can yield unexpected results.
     keepdims : bool, optional
         If True, the axes which are reduced are left in the result as
         dimensions with size one. With this option, the result will
@@ -750,8 +751,8 @@ def nancumsum(a, axis=None, dtype=None, out=None):
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output
-        but the type will be cast if necessary. See `doc.ufuncs`
-        (Section "Output arguments") for more details.
+        but the type will be cast if necessary. See `ufuncs-output-type` for
+        more details.
 
     Returns
     -------
@@ -888,8 +889,8 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue):
     out : ndarray, optional
         Alternate output array in which to place the result.  The default
         is ``None``; if provided, it must have the same shape as the
-        expected output, but the type will be cast if necessary.  See
-        `doc.ufuncs` for details.
+        expected output, but the type will be cast if necessary. See
+        `ufuncs-output-type` for more details.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -1473,7 +1474,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     mean : Average
     var : Variance while not ignoring NaNs
     nanstd, nanmean
-    numpy.doc.ufuncs : Section "Output arguments"
+    ufuncs-output-type
 
     Notes
     -----
@@ -1625,7 +1626,7 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue):
     --------
     var, mean, std
     nanvar, nanmean
-    numpy.doc.ufuncs : Section "Output arguments"
+    ufuncs-output-type
 
     Notes
     -----

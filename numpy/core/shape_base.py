@@ -472,7 +472,7 @@ def _block_check_depths_match(arrays, parent_index=[]):
     first_index : list of int
         The full index of an element from the bottom of the nesting in
         `arrays`. If any element at the bottom is an empty list, this will
-        refer to it, and the last index along the empty axis will be `None`.
+        refer to it, and the last index along the empty axis will be None.
     max_arr_ndim : int
         The maximum of the ndims of the arrays nested in `arrays`.
     final_size: int
@@ -575,7 +575,7 @@ def _concatenate_shapes(shapes, axis):
         that was computed deeper in the recursion.
 
         These are returned as tuples to ensure that they can quickly be added
-        to existing slice tuple without creating a new tuple everytime.
+        to existing slice tuple without creating a new tuple every time.
 
     """
     # Cache a result that will be reused.

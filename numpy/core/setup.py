@@ -91,6 +91,9 @@ def is_npy_no_smp():
     #  block.
     return 'NPY_NOSMP' in os.environ
 
+def is_npy_use_blas64_():
+    return (os.environ.get('NPY_USE_BLAS64_', "0") != "0")
+
 def win32_checks(deflist):
     from numpy.distutils.misc_util import get_build_architecture
     a = get_build_architecture()
@@ -394,7 +397,7 @@ def visibility_define(config):
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, dot_join
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import get_info, dict_append
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
@@ -463,6 +466,12 @@ def configuration(parent_package='',top_path=None):
             rep = check_long_double_representation(config_cmd)
             moredefs.append(('HAVE_LDOUBLE_%s' % rep, 1))
 
+            if check_for_right_shift_internal_compiler_error(config_cmd):
+                moredefs.append('NPY_DO_NOT_OPTIMIZE_LONG_right_shift')
+                moredefs.append('NPY_DO_NOT_OPTIMIZE_ULONG_right_shift')
+                moredefs.append('NPY_DO_NOT_OPTIMIZE_LONGLONG_right_shift')
+                moredefs.append('NPY_DO_NOT_OPTIMIZE_ULONGLONG_right_shift')
+
             # Py3K check
             if sys.version_info[0] >= 3:
                 moredefs.append(('NPY_PY3K', 1))
@@ -491,10 +500,10 @@ def configuration(parent_package='',top_path=None):
                     #endif
                     """))
 
-            print('File:', target)
+            log.info('File: %s' % target)
             with open(target) as target_f:
-                print(target_f.read())
-            print('EOF')
+                log.info(target_f.read())
+            log.info('EOF')
         else:
             mathlibs = []
             with open(target) as target_f:
@@ -581,10 +590,10 @@ def configuration(parent_package='',top_path=None):
                     """))
 
             # Dump the numpyconfig.h header to stdout
-            print('File: %s' % target)
+            log.info('File: %s' % target)
             with open(target) as target_f:
-                print(target_f.read())
-            print('EOF')
+                log.info(target_f.read())
+            log.info('EOF')
         config.add_data_files((header_dir, target))
         return target
 
@@ -633,23 +642,6 @@ def configuration(parent_package='',top_path=None):
             ]
 
     #######################################################################
-    #                            dummy module                             #
-    #######################################################################
-
-    # npymath needs the config.h and numpyconfig.h files to be generated, but
-    # build_clib cannot handle generate_config_h and generate_numpyconfig_h
-    # (don't ask). Because clib are generated before extensions, we have to
-    # explicitly add an extension which has generate_config_h and
-    # generate_numpyconfig_h as sources *before* adding npymath.
-
-    config.add_extension('_dummy',
-                         sources=[join('src', 'dummymodule.c'),
-                                  generate_config_h,
-                                  generate_numpyconfig_h,
-                                  generate_numpy_api]
-                         )
-
-    #######################################################################
     #                          npymath library                            #
     #######################################################################
 
@@ -666,6 +658,9 @@ def configuration(parent_package='',top_path=None):
         # compiler does not work).
         st = config_cmd.try_link('int main(void) { return 0;}')
         if not st:
+            # rerun the failing command in verbose mode
+            config_cmd.compiler.verbose = True
+            config_cmd.try_link('int main(void) { return 0;}')
             raise RuntimeError("Broken toolchain: cannot link a simple C program")
         mlibs = check_mathlib(config_cmd)
 
@@ -761,8 +756,14 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'numpyos.c'),
             ]
 
-    blas_info = get_info('blas_opt', 0)
-    if blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
+    if is_npy_use_blas64_():
+        blas_info = get_info('blas64__opt', 2)
+        have_blas = blas_info and ('HAVE_CBLAS64_', None) in blas_info.get('define_macros', [])
+    else:
+        blas_info = get_info('blas_opt', 0)
+        have_blas = blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', [])
+
+    if have_blas:
         extra_info = blas_info
         # These files are also in MANIFEST.in so that they are always in
         # the source distribution independently of HAVE_CBLAS.
@@ -782,7 +783,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
             join('src', 'multiarray', 'arrayfunction_override.h'),
-            join('src', 'multiarray', 'buffer.h'),
+            join('src', 'multiarray', 'npy_buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
             join('src', 'multiarray', 'convert_datatype.h'),

@@ -24,6 +24,7 @@ from numpy.testing import (
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
     HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings
     )
+from numpy.testing._private.utils import requires_memory
 
 
 class TextIO(BytesIO):
@@ -518,7 +519,7 @@ class TestSaveTxt(object):
 
     def test_unicode(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode)
+        a = np.array([utf8], dtype=np.unicode_)
         with tempdir() as tmpdir:
             # set encoding as on windows it may not be unicode even on py3
             np.savetxt(os.path.join(tmpdir, 'test.csv'), a, fmt=['%s'],
@@ -526,7 +527,7 @@ class TestSaveTxt(object):
 
     def test_unicode_roundtrip(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode)
+        a = np.array([utf8], dtype=np.unicode_)
         # our gz wrapper support encoding
         suffixes = ['', '.gz']
         # stdlib 2 versions do not support encoding
@@ -540,12 +541,12 @@ class TestSaveTxt(object):
                 np.savetxt(os.path.join(tmpdir, 'test.csv' + suffix), a,
                            fmt=['%s'], encoding='UTF-16-LE')
                 b = np.loadtxt(os.path.join(tmpdir, 'test.csv' + suffix),
-                               encoding='UTF-16-LE', dtype=np.unicode)
+                               encoding='UTF-16-LE', dtype=np.unicode_)
                 assert_array_equal(a, b)
 
     def test_unicode_bytestream(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode)
+        a = np.array([utf8], dtype=np.unicode_)
         s = BytesIO()
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
@@ -553,7 +554,7 @@ class TestSaveTxt(object):
 
     def test_unicode_stringstream(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode)
+        a = np.array([utf8], dtype=np.unicode_)
         s = StringIO()
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
@@ -575,13 +576,9 @@ class TestSaveTxt(object):
     @pytest.mark.skipif(sys.platform=='win32',
                         reason="large files cause problems")
     @pytest.mark.slow
+    @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
         # The test takes at least 6GB of memory, writes a file larger than 4GB
-        try:
-            a = 'a' * 6 * 1024 * 1024 * 1024
-            del a
-        except (MemoryError, OverflowError):
-            pytest.skip("Cannot allocate enough memory for test")
         test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
                                for i in range(800000)])
         with tempdir() as tmpdir:
@@ -632,12 +629,12 @@ class LoadTxtBase(object):
         with temppath() as path:
             with open(path, "wb") as f:
                 f.write(nonascii.encode("UTF-16"))
-            x = self.loadfunc(path, encoding="UTF-16", dtype=np.unicode)
+            x = self.loadfunc(path, encoding="UTF-16", dtype=np.unicode_)
             assert_array_equal(x, nonascii)
 
     def test_binary_decode(self):
         utf16 = b'\xff\xfeh\x04 \x00i\x04 \x00j\x04'
-        v = self.loadfunc(BytesIO(utf16), dtype=np.unicode, encoding='UTF-16')
+        v = self.loadfunc(BytesIO(utf16), dtype=np.unicode_, encoding='UTF-16')
         assert_array_equal(v, np.array(utf16.decode('UTF-16').split()))
 
     def test_converters_decode(self):
@@ -645,7 +642,7 @@ class LoadTxtBase(object):
         c = TextIO()
         c.write(b'\xcf\x96')
         c.seek(0)
-        x = self.loadfunc(c, dtype=np.unicode,
+        x = self.loadfunc(c, dtype=np.unicode_,
                           converters={0: lambda x: x.decode('UTF-8')})
         a = np.array([b'\xcf\x96'.decode('UTF-8')])
         assert_array_equal(x, a)
@@ -656,7 +653,7 @@ class LoadTxtBase(object):
         with temppath() as path:
             with io.open(path, 'wt', encoding='UTF-8') as f:
                 f.write(utf8)
-            x = self.loadfunc(path, dtype=np.unicode,
+            x = self.loadfunc(path, dtype=np.unicode_,
                               converters={0: lambda x: x + 't'},
                               encoding='UTF-8')
             a = np.array([utf8 + 't'])
@@ -1104,7 +1101,7 @@ class TestLoadTxt(LoadTxtBase):
             with open(path, "wb") as f:
                 f.write(butf8)
             with open(path, "rb") as f:
-                x = np.loadtxt(f, encoding="UTF-8", dtype=np.unicode)
+                x = np.loadtxt(f, encoding="UTF-8", dtype=np.unicode_)
             assert_array_equal(x, sutf8)
             # test broken latin1 conversion people now rely on
             with open(path, "rb") as f:
@@ -1587,7 +1584,7 @@ M   33  21.99
             with open(path, 'wb') as f:
                 f.write(b'skip,skip,2001-01-01' + utf8 + b',1.0,skip')
             test = np.genfromtxt(path, delimiter=",", names=None, dtype=float,
-                                 usecols=(2, 3), converters={2: np.unicode},
+                                 usecols=(2, 3), converters={2: np.compat.unicode},
                                  encoding='UTF-8')
         control = np.array([('2001-01-01' + utf8.decode('UTF-8'), 1.)],
                            dtype=[('', '|U11'), ('', float)])
@@ -1871,7 +1868,7 @@ M   33  21.99
         data = ["1, 1, 1, 1, -1.1"] * 50
         mdata = TextIO("\n".join(data))
 
-        converters = {4: lambda x: "(%s)" % x}
+        converters = {4: lambda x: "(%s)" % x.decode()}
         kwargs = dict(delimiter=",", converters=converters,
                       dtype=[(_, int) for _ in 'abcde'],)
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)
@@ -2126,7 +2123,7 @@ M   33  21.99
             ctl = np.array([
                      ["test1", "testNonethe" + utf8.decode("UTF-8"), "test3"],
                      ["test1", "testNonethe" + utf8.decode("UTF-8"), "test3"]],
-                     dtype=np.unicode)
+                     dtype=np.unicode_)
             assert_array_equal(test, ctl)
 
             # test a mixed dtype
@@ -2169,7 +2166,7 @@ M   33  21.99
                      ["norm1", "norm2", "norm3"],
                      ["norm1", latin1, "norm3"],
                      ["test1", "testNonethe" + utf8, "test3"]],
-                     dtype=np.unicode)
+                     dtype=np.unicode_)
             assert_array_equal(test, ctl)
 
     def test_recfromtxt(self):

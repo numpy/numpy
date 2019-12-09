@@ -236,10 +236,7 @@ class TestLinspace(object):
     def test_corner(self):
         y = list(linspace(0, 1, 1))
         assert_(y == [0.0], y)
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, ".*safely interpreted as an integer")
-            y = list(linspace(0, 1, 2.5))
-            assert_(y == [0.0, 1.0])
+        assert_raises(TypeError, linspace, 0, 1, num=2.5)
 
     def test_type(self):
         t1 = linspace(0, 1, 0).dtype
@@ -354,14 +351,20 @@ class TestLinspace(object):
                          arange(j+1, dtype=int))
 
     def test_retstep(self):
-        y = linspace(0, 1, 2, retstep=True)
-        assert_(isinstance(y, tuple) and len(y) == 2)
-        for num in (0, 1):
-            for ept in (False, True):
+        for num in [0, 1, 2]:
+            for ept in [False, True]:
                 y = linspace(0, 1, num, endpoint=ept, retstep=True)
-                assert_(isinstance(y, tuple) and len(y) == 2 and
-                        len(y[0]) == num and isnan(y[1]),
-                        'num={0}, endpoint={1}'.format(num, ept))
+                assert isinstance(y, tuple) and len(y) == 2
+                if num == 2:
+                    y0_expect = [0.0, 1.0] if ept else [0.0, 0.5]
+                    assert_array_equal(y[0], y0_expect)
+                    assert_equal(y[1], y0_expect[1])
+                elif num == 1 and not ept:
+                    assert_array_equal(y[0], [0.0])
+                    assert_equal(y[1], 1.0)
+                else:
+                    assert_array_equal(y[0], [0.0][:num])
+                    assert isnan(y[1])
 
     def test_object(self):
         start = array(1, dtype='O')

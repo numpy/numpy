@@ -27,8 +27,8 @@ import subprocess
 import textwrap
 
 
-if sys.version_info[:2] < (3, 5):
-    raise RuntimeError("Python version >= 3.5 required.")
+if sys.version_info[:2] < (3, 6):
+    raise RuntimeError("Python version >= 3.6 required.")
 
 import builtins
 
@@ -41,9 +41,9 @@ License :: OSI Approved
 Programming Language :: C
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.5
 Programming Language :: Python :: 3.6
 Programming Language :: Python :: 3.7
+Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3 :: Only
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development
@@ -55,7 +55,7 @@ Operating System :: MacOS
 """
 
 MAJOR               = 1
-MINOR               = 18
+MINOR               = 19
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
@@ -81,6 +81,10 @@ def git_version():
         out = _minimal_ext_cmd(['git', 'rev-parse', 'HEAD'])
         GIT_REVISION = out.strip().decode('ascii')
     except (subprocess.SubprocessError, OSError):
+        GIT_REVISION = "Unknown"
+
+    if not GIT_REVISION:
+        # this shouldn't happen but apparently can (see gh-8512)
         GIT_REVISION = "Unknown"
 
     return GIT_REVISION
@@ -263,7 +267,7 @@ def parse_setuppy_commands():
     # below and not standalone.  Hence they're not added to good_commands.
     good_commands = ('develop', 'sdist', 'build', 'build_ext', 'build_py',
                      'build_clib', 'build_scripts', 'bdist_wheel', 'bdist_rpm',
-                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg')
+                     'bdist_wininst', 'bdist_msi', 'bdist_mpkg', 'build_src')
 
     for command in good_commands:
         if command in args:
@@ -403,7 +407,8 @@ def setup_package():
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
-        cmdclass={"sdist": sdist_checked},
+        cmdclass={"sdist": sdist_checked,
+                 },
         python_requires='>=3.5',
         zip_safe=False,
         entry_points={

@@ -32,12 +32,10 @@ werrors="$werrors -Werror=implicit-function-declaration"
 
 setup_base()
 {
-  # use default python flags but remoge sign-compare
+  # use default python flags but remove sign-compare
   sysflags="$($PYTHON -c "from distutils import sysconfig; \
     print (sysconfig.get_config_var('CFLAGS'))")"
   export CFLAGS="$sysflags $werrors -Wlogical-op -Wno-sign-compare"
-  # use c99
-  export CFLAGS=$CFLAGS" -std=c99"
   # We used to use 'setup.py install' here, but that has the terrible
   # behaviour that if a copy of the package is already installed in the
   # install location, then the new copy just gets dropped on top of it.
@@ -52,10 +50,12 @@ setup_base()
   else
     # Python3.5-dbg on travis seems to need this
     export CFLAGS=$CFLAGS" -Wno-maybe-uninitialized"
-    $PYTHON setup.py build_ext --inplace 2>&1 | tee log
+    $PYTHON setup.py build build_src --verbose-cfg build_ext --inplace 2>&1 | tee log
   fi
   grep -v "_configtest" log \
-    | grep -vE "ld returned 1|no previously-included files matching|manifest_maker: standard file '-c'" \
+    | grep -vE "ld returned 1|no files found matching" \
+    | grep -vE "no previously-included files matching" \
+    | grep -vE "manifest_maker: standard file '-c'" \
     | grep -E "warning\>" \
     | tee warnings
   if [ "$LAPACK" != "None" ]; then
@@ -66,8 +66,16 @@ setup_base()
 run_test()
 {
   $PIP install -r test_requirements.txt
+
   if [ -n "$USE_DEBUG" ]; then
     export PYTHONPATH=$PWD
+  fi
+
+  # pytest aborts when running --durations with python3.6-dbg, so only enable
+  # it for non-debug tests. That is a cPython bug fixed in later versions of
+  # python3.7 but python3.7-dbg is not currently available on travisCI.
+  if [ -z "$USE_DEBUG" ]; then
+    DURATIONS_FLAG="--durations 10"
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -82,17 +90,15 @@ run_test()
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
 
-  if [ -n "$PPC64_LE" ]; then
+  if [ -n "$CHECK_BLAS" ]; then
     $PYTHON ../tools/openblas_support.py --check_version $OpenBLAS_version
   fi
 
   if [ -n "$RUN_FULL_TESTS" ]; then
     export PYTHONWARNINGS="ignore::DeprecationWarning:virtualenv"
-    $PYTHON ../runtests.py -n -v --durations 10 --mode=full $COVERAGE_FLAG
+    $PYTHON -b ../runtests.py -n -v --mode=full $DURATIONS_FLAG $COVERAGE_FLAG
   else
-    # disable --durations temporarily, pytest currently aborts
-    # when that is used with python3.6-dbg
-    $PYTHON ../runtests.py -n -v  # --durations 10
+    $PYTHON ../runtests.py -n -v $DURATIONS_FLAG
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
@@ -141,8 +147,6 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
   $PIP install -U virtualenv
   # ensure some warnings are not issued
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
-  # use c99
-  export CFLAGS=$CFLAGS" -std=c99"
   # adjust gcc flags if C coverage requested
   if [ -n "$RUN_COVERAGE" ]; then
      export NPY_DISTUTILS_APPEND_FLAGS=1
@@ -151,7 +155,7 @@ if [ -n "$USE_WHEEL" ] && [ $# -eq 0 ]; then
      export F90='gfortran --coverage'
      export LDFLAGS='--coverage'
   fi
-  $PYTHON setup.py bdist_wheel
+  $PYTHON setup.py build build_src --verbose-cfg bdist_wheel
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
   . venv-for-wheel/bin/activate
@@ -169,8 +173,6 @@ elif [ -n "$USE_SDIST" ] && [ $# -eq 0 ]; then
   $PYTHON -c "import fcntl; fcntl.fcntl(1, fcntl.F_SETFL, 0)"
   # ensure some warnings are not issued
   export CFLAGS=$CFLAGS" -Wno-sign-compare -Wno-unused-result"
-  # use c99
-  export CFLAGS=$CFLAGS" -std=c99"
   $PYTHON setup.py sdist
   # Make another virtualenv to install into
   virtualenv --python=`which $PYTHON` venv-for-wheel
