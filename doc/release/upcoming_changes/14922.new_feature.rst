@@ -1,0 +1,4 @@
+Add ``keepdims`` to ``linspace/logspace/geomspace``
+---------------------------------------------------
+Added ``keepdims`` to ``linspace/logspace/geomspace`` so that the ndarray
+returned will have the same dimension as that of ``start`` and ``end``.

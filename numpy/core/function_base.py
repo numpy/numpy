@@ -69,10 +69,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     keepdims : bool, optional
         If this is set to True, the ndarray returned will have the same
-        dimension as that of start and end.  Also, the value of dimension of
-        star and end corresponding to axis must have value 1.
+        dimension as that of start and end.  The length of start and end along
+        the provided axis must be 1.
 
-        .. versionadded:: 1.18.0
+        .. versionadded:: 1.19.0
 
     Returns
     -------
