@@ -30,6 +30,10 @@ recursive sequence of sequences, where not all the sequences on the same
 level have the same length) will force users who actually wish to create
 ``object`` arrays to specify that explicitly. Note that ``lists``, ``tuples``,
 and ``nd.ndarrays`` are all sequences [0]_. See for instance `issue 5303`_.
+Since this paradigm seems to be in wide use in libraries like pandas, scipy,
+and matplotlib, a work-around via ``np.array([<ragged_nested_sequence>],
+dtype=np.allow_ragged)`` will be added, with the intent that the work-around
+will be removed at some time in the future.
 
 Usage and Impact
 ----------------
@@ -71,11 +75,13 @@ all of these will be rejected:
 Related Work
 ------------
 
-`PR 14341`_ tried to raise an error when ragged nested sequences were specified
-with a numeric dtype ``np.array, [[1], [2, 3]], dtype=int)`` but failed due to
-false-positives, for instance ``np.array([1, np.array([5])], dtype=int)``.
+`PR 14341`_ tried to change the error reported when ragged nested sequences
+were specified with a numeric dtype ``np.array([[1], [2, 3]], dtype=int)`` but
+failed due to false-positives when assigning a mixed scalar-ndarray list to an
+array (`issue 14138`_)
 
 .. _`PR 14341`: https://github.com/numpy/numpy/pull/14341
+.. _`issue 14138`: https://github.com/numpy/numpy/issue/14138
 
 Implementation
 --------------
@@ -88,7 +94,10 @@ Backward compatibility
 
 Anyone depending on creating object arrays from ragged nested sequences will
 need to modify their code. There will be a deprecation period during which the
-current behaviour will emit a ``DeprecationWarning``. 
+current behaviour will emit a ``DeprecationWarning``. Additionally, a sentinal
+value ``np.allow_ragged`` will use the pre-NEP-34 behaviour without a warning.
+Once the implications of the change are well-understood, the sentinal value
+could be removed.
 
 Alternatives
 ------------
@@ -113,18 +122,26 @@ Alternatives
   the current NEP. Rationale: it's harder to asses the impact of this larger
   change, we're not sure how many users this may impact.
 
+- The issue of ``np.array([0.3, [0.3]])`` (or more commonly ``np.array([0.3,
+  np.array([0.3])])`` creating an object array rather than a ``float64`` array
+  was discussed in `issue 15075`_. This too is out of scope for the current
+  NEP.
+
+
 Discussion
 ----------
 
 Comments to `issue 5303`_ indicate this is unintended behaviour as far back as
 2014. Suggestions to change it have been made in the ensuing years, but none
-have stuck. The WIP implementation in `PR 14794`_ seems to point to the
-viability of this approach.
+have stuck. The implementation in `PR 14794`_ seemed to point to the
+viability of this approach. However this proved very disruptive to downstream
+library authors, so the idea to add a ``np.allow_ragged`` sentinal was added.
 
 References and Footnotes
 ------------------------
 
 .. _`issue 5303`: https://github.com/numpy/numpy/issues/5303
+.. _`issue 15075`: https://github.com/numpy/numpy/issues/15075
 .. _sequences: https://docs.python.org/3.7/glossary.html#term-sequence
 .. _`PR 14794`: https://github.com/numpy/numpy/pull/14794
 .. _`another library`: https://github.com/scikit-hep/awkward-array
