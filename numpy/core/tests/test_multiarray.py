@@ -2081,6 +2081,17 @@ class TestMethods(object):
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
+        # test string argsorts with reverse=True.
+        s = 'aaaaaaaa'
+        a = np.array([s + chr(i) for i in range(101)])
+        b = a[::-1].copy()
+        r = np.arange(101)
+        rr = r[::-1]
+        for kind in self.sort_kinds:
+            msg = "string argsort, kind=%s, reverse=True" % kind
+            assert_equal(np.argsort(a, kind=kind, reverse=True), rr, msg)
+            assert_equal(np.argsort(b, kind=kind, reverse=True), r, msg)
+
         # test unicode argsorts.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode)

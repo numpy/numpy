@@ -753,7 +753,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None, reverse=False):
         if isinstance(kth, int): 
             kth = a.shape[axis] - kth - 1
         else: 
-            kth = [a.shape[axis] - i - 1 for i in kth]
+            kth = list(map(lambda i: a.shape[axis] - i - 1, kth))
 
     a.partition(kth, axis=axis, kind=kind, order=order)
  
@@ -961,7 +961,7 @@ def sort(a, axis=-1, kind=None, order=None, reverse=False):
            [1, 3]])
     >>> np.sort(a, axis=None)     # sort the flattened array
     array([1, 1, 3, 4])
-    >>> np.sort(a, axis=None, reverse=True)  # sort the flattened array in descending order
+    >>> np.sort(a, axis=None, reverse=True)  # sort in descending order
     array([4, 3, 1, 1])
     >>> np.sort(a, axis=0)        # sort along the first axis
     array([[1, 1],
@@ -1005,12 +1005,12 @@ def sort(a, axis=-1, kind=None, order=None, reverse=False):
     return a
 
 
-def _argsort_dispatcher(a, axis=None, kind=None, order=None):
+def _argsort_dispatcher(a, axis=None, kind=None, order=None, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_argsort_dispatcher)
-def argsort(a, axis=-1, kind=None, order=None):
+def argsort(a, axis=-1, kind=None, order=None, reverse=False):
     """
     Returns the indices that would sort an array.
 
@@ -1039,6 +1039,8 @@ def argsort(a, axis=-1, kind=None, order=None):
         be specified as a string, and not all fields need be specified,
         but unspecified fields will still be used, in the order in which
         they come up in the dtype, to break ties.
+    reverse : bool, optional
+        If this is set to True, argsort will be done in descending order.
 
     Returns
     -------
@@ -1069,6 +1071,8 @@ def argsort(a, axis=-1, kind=None, order=None):
     >>> x = np.array([3, 1, 2])
     >>> np.argsort(x)
     array([1, 2, 0])
+    >>> np.argsort(x, reverse=True)
+    array([0, 2, 1])
 
     Two-dimensional array:
 
@@ -1115,7 +1119,18 @@ def argsort(a, axis=-1, kind=None, order=None):
     array([0, 1])
 
     """
-    return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
+    if reverse:
+        a = np.flip(a, axis=axis)
+    
+    args = _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
+
+    if reverse:
+        flip_index = lambda i: args.shape[axis] - i - 1
+        vectorized_flip_index = np.vectorize(flip_index)
+        args = vectorized_flip_index(args)
+        args = np.flip(args, axis)
+
+    return args
 
 
 def _argmax_dispatcher(a, axis=None, out=None):

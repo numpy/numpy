@@ -3307,12 +3307,12 @@ def sinc(x):
     return sin(y)/y
 
 
-def _msort_dispatcher(a):
+def _msort_dispatcher(a, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_msort_dispatcher)
-def msort(a):
+def msort(a, reverse=False):
     """
     Return a copy of an array sorted along the first axis.
 
@@ -3320,6 +3320,8 @@ def msort(a):
     ----------
     a : array_like
         Array to be sorted.
+    reverse : bool, optional
+        If this is set to True, sort will be done in descending order.
 
     Returns
     -------
@@ -3336,8 +3338,7 @@ def msort(a):
 
     """
     b = array(a, subok=True, copy=True)
-    b.sort(0)
-    return b
+    return np.sort(b, axis=0, reverse=reverse)
 
 
 def _ureduce(a, func, **kwargs):
