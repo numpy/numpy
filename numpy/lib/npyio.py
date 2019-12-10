@@ -822,7 +822,7 @@ _loadtxt_chunksize = 50000
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0, encoding='bytes', max_rows=None):
+            ndmin=0, encoding='bytes', max_rows=None, skipCols=0):
     """
     Load data from a text file.
 
@@ -890,6 +890,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         .. versionadded:: 1.16.0
 
+    skipCols : int, optional
+        skips the specified number of columns when loading the txt file. When
+        specified with usecols, will return all columns after skipCols
+
     Returns
     -------
     out : ndarray
@@ -956,6 +960,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     if usecols is not None:
         # Allow usecols to be a single int or a sequence of ints
+        skipCols = 0
         try:
             usecols_as_list = list(usecols)
         except TypeError:
@@ -1057,7 +1062,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         else:
             return []
 
-    def read_data(chunk_size):
+    def read_data(chunk_size, usecols, N):
         """Parse each line, including the first.
 
         The file read, `fh`, is a global defined above.
@@ -1076,7 +1081,15 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             vals = split_line(line)
             if len(vals) == 0:
                 continue
+            if skipCols > len(vals):
+                raise ValueError("skipCols is greater than the number of columns in the table")
+
+            # Set usecols to be all columns after skipCols
+            if skipCols != 0 and not usecols:
+                usecols = list(range(skipCols, len(vals)))
+
             if usecols:
+                N = len(usecols)
                 vals = [vals[j] for j in usecols]
             if len(vals) != N:
                 line_num = i + skiprows + 1
@@ -1156,7 +1169,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         # probably not relevant compared to the cost of actually reading and
         # converting the data
         X = None
-        for x in read_data(_loadtxt_chunksize):
+        for x in read_data(_loadtxt_chunksize, usecols, N):
             if X is None:
                 X = np.array(x, dtype)
             else:

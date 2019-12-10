@@ -799,6 +799,15 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
+    def test_skipcols(self):
+        # Testing that the first column is skipped
+        a = np.array([[1,2], [3,4]], float)
+        c = BytesIO()
+        np.savetxt(c,a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=float, skipCols=1)
+        assert_array_equal(x, a[:,1])
+
     def test_usecols(self):
         a = np.array([[1, 2], [3, 4]], float)
         c = BytesIO()
