@@ -2219,6 +2219,14 @@ class TestMethods(object):
         a = np.array([0, 128], dtype='>i4')
         b = a.searchsorted(np.array(128, dtype='>i4'))
         assert_equal(b, 1, msg)
+        # check double with reverse=True
+        a = np.array([np.nan, 1, 1, 0])
+        msg = "Test real searchsorted with nans, side='l', reverse=True"
+        b = np.searchsorted(a, a, side='l', reverse=True)
+        assert_equal(b, np.array([0, 1, 1, 3]), msg)
+        msg = "Test real searchsorted with nans, side='r', reverse=True"
+        b = np.searchsorted(a, a, side='r', reverse=True)
+        assert_equal(b, np.array([1, 3, 3, 4]), msg)
 
         # Check 0 elements
         a = np.ones(0)

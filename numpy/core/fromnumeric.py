@@ -1122,15 +1122,15 @@ def argsort(a, axis=-1, kind=None, order=None, reverse=False):
     if reverse:
         a = np.flip(a, axis=axis)
     
-    args = _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
+    index_array = _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
 
     if reverse:
-        flip_index = lambda i: args.shape[axis] - i - 1
+        flip_index = lambda i: index_array.shape[axis] - i - 1
         vectorized_flip_index = np.vectorize(flip_index)
-        args = vectorized_flip_index(args)
-        args = np.flip(args, axis)
+        index_array = vectorized_flip_index(index_array)
+        index_array = np.flip(index_array, axis)
 
-    return args
+    return index_array
 
 
 def _argmax_dispatcher(a, axis=None, out=None):
@@ -1271,12 +1271,12 @@ def argmin(a, axis=None, out=None):
     return _wrapfunc(a, 'argmin', axis=axis, out=out)
 
 
-def _searchsorted_dispatcher(a, v, side=None, sorter=None):
+def _searchsorted_dispatcher(a, v, side=None, sorter=None, reverse=None):
     return (a, v, sorter)
 
 
 @array_function_dispatch(_searchsorted_dispatcher)
-def searchsorted(a, v, side='left', sorter=None):
+def searchsorted(a, v, side='left', sorter=None, reverse=False):
     """
     Find indices where elements should be inserted to maintain order.
 
@@ -1308,6 +1308,9 @@ def searchsorted(a, v, side='left', sorter=None):
     sorter : 1-D array_like, optional
         Optional array of integer indices that sort array a into ascending
         order. They are typically the result of argsort.
+    reverse : bool, optional
+        If this is set to True, input array must be sorted in descending order,
+        otherwise `sorter` must be an array of indices that sort it.
 
         .. versionadded:: 1.7.0
 
@@ -1336,13 +1339,33 @@ def searchsorted(a, v, side='left', sorter=None):
     --------
     >>> np.searchsorted([1,2,3,4,5], 3)
     2
+    >>> np.searchsorted([5,4,3,2,1], 4, reverse=True)
+    1
     >>> np.searchsorted([1,2,3,4,5], 3, side='right')
     3
     >>> np.searchsorted([1,2,3,4,5], [-10, 10, 2, 3])
     array([0, 5, 1, 2])
 
     """
-    return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
+
+    if reverse:
+        a = np.flip(a)
+        if sorter is not None: 
+             flip_index = lambda i: len(a) - i - 1
+             vectorized_flip_index = np.vectorize(flip_index)
+             sorter = vectorized_flip_index(sorter)
+             sorter = np.filp(sorter)
+        if side.startswith('l'): side = 'r'
+        elif side.startswith('r'): side = 'l'
+        
+    indices = _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
+
+    if reverse:
+        flip_index = lambda i: len(a) - i
+        vectorized_flip_index = np.vectorize(flip_index)
+        indices = vectorized_flip_index(indices)
+
+    return indices 
 
 
 def _resize_dispatcher(a, new_shape):
