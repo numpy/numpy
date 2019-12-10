@@ -750,6 +750,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None, reverse=False):
         a = asanyarray(a).copy(order="K")
 
     if reverse:
+        a = np.flip(a, axis=axis)
         if isinstance(kth, int): 
             kth = a.shape[axis] - kth - 1
         else: 
@@ -763,12 +764,12 @@ def partition(a, kth, axis=-1, kind='introselect', order=None, reverse=False):
     return a
 
 
-def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None):
+def _argpartition_dispatcher(a, kth, axis=None, kind=None, order=None, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_argpartition_dispatcher)
-def argpartition(a, kth, axis=-1, kind='introselect', order=None):
+def argpartition(a, kth, axis=-1, kind='introselect', order=None, reverse=False):
     """
     Perform an indirect partition along the given axis using the
     algorithm specified by the `kind` keyword. It returns an array of
@@ -799,7 +800,9 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         field can be specified as a string, and not all fields need be
         specified, but unspecified fields will still be used, in the
         order in which they come up in the dtype, to break ties.
-
+    reverse : bool, optional
+        If this is set to True, argpartition will be done in descending order.
+    
     Returns
     -------
     index_array : ndarray, int
@@ -827,14 +830,33 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     array([2, 1, 3, 4])
     >>> x[np.argpartition(x, (1, 3))]
     array([1, 2, 3, 4])
-
-    >>> x = [3, 4, 2, 1]
-    >>> np.array(x)[np.argpartition(x, 3)]
-    array([2, 1, 3, 4])
+    >>> np.array(x)[np.argpartition(x, 3, reverse=True)]
+    array([3, 4, 2, 1])
 
     """
-    return _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
+    if axis is None:
+        # flatten returns (1, N) for np.matrix, so always use the last axis
+        a = asanyarray(a).flatten()
+        axis = -1
+    else:
+        a = asanyarray(a).copy(order="K")
 
+    if reverse:
+        a = np.flip(a, axis=axis)
+        if isinstance(kth, int): 
+            kth = a.shape[axis] - kth - 1
+        else: 
+            kth = list(map(lambda i: a.shape[axis] - i - 1, kth))
+
+    index_array = _wrapfunc(a, 'argpartition', kth, axis=axis, kind=kind, order=order)
+ 
+    if reverse:
+        flip_index = lambda i: index_array.shape[axis] - i - 1
+        vectorized_flip_index = np.vectorize(flip_index)
+        index_array = vectorized_flip_index(index_array)
+        index_array = np.flip(index_array, axis=axis)
+
+    return index_array
 
 def _sort_dispatcher(a, axis=None, kind=None, order=None, reverse=None):
     return (a,)

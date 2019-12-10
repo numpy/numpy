@@ -2838,9 +2838,19 @@ class TestMethods(object):
 
     def test_argpartition_gh5524(self):
         #  A test for functionality of argpartition on lists.
-        d = [6,7,3,2,9,0]
-        p = np.argpartition(d,1)
-        self.assert_partitioned(np.array(d)[p],[1])
+        d = [6, 7, 3, 2, 9, 0]
+        p = np.argpartition(d, 1)
+        self.assert_partitioned(np.array(d)[p], [1])
+
+    def test_argpartition_reverse(self):
+        #  Test argpatition with reverse=True.
+        d = [6, 7, 3, 2, 9, 0]
+        kth = 1
+        p = np.argpartition(d, kth, reverse=True)
+        self.assert_partitioned_desc(np.array(d)[p], [kth])
+        kth = [4, 1, 5]
+        p = np.argpartition(d, kth, reverse=True)
+        self.assert_partitioned_desc(np.array(d)[p], kth)
 
     def test_flatten(self):
         x0 = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
