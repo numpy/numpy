@@ -770,6 +770,9 @@ def fill_diagonal(a, val, wrap=False, offset=0):
       diagonal "wrapped" after N columns. You can have this behavior
       with this option. This affects only tall matrices.
 
+    offset: int
+      Fills array along non-primary diagonal specified by offset.
+
     See also
     --------
     diag_indices, diag_indices_from
