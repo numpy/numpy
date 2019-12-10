@@ -542,17 +542,12 @@ def _valnd(val_f, c, *args):
     c, args :
         See the ``<type>val<n>d`` functions for more detail
     """
-    try:
-        args = tuple(np.array(args, copy=False))
-    except Exception:
-        # preserve the old error message
-        if len(args) == 2:
+    if len(args) > 2:
+        if len(args[0]) != len(args[1]) or len(args[1]) != len(args[2]):
             raise ValueError('x, y, z are incompatible')
-        elif len(args) == 3:
+    elif len(args) > 1:
+        if len(args[0]) != len(args[1]):
             raise ValueError('x, y are incompatible')
-        else:
-            raise ValueError('ordinates are incompatible')
-
     it = iter(args)
     x0 = next(it)
 

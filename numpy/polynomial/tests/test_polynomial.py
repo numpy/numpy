@@ -9,7 +9,7 @@ import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    assert_warns, assert_array_equal)
+    assert_warns, assert_array_equal, assert_raises_regex)
 
 
 def trim(x):
@@ -229,7 +229,8 @@ class TestEvaluation(object):
         y1, y2, y3 = self.y
 
         #test exceptions
-        assert_raises(ValueError, poly.polyval2d, x1, x2[:2], self.c2d)
+        assert_raises_regex(ValueError, 'incompatible',
+                            poly.polyval2d, x1, x2[:2], self.c2d)
 
         #test values
         tgt = y1*y2
@@ -246,7 +247,8 @@ class TestEvaluation(object):
         y1, y2, y3 = self.y
 
         #test exceptions
-        assert_raises(ValueError, poly.polyval3d, x1, x2, x3[:2], self.c3d)
+        assert_raises_regex(ValueError, 'incompatible',
+                      poly.polyval3d, x1, x2, x3[:2], self.c3d)
 
         #test values
         tgt = y1*y2*y3
