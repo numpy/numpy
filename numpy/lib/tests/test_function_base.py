@@ -3261,3 +3261,11 @@ class TestSortComplex(object):
         actual = np.sort_complex(a)
         assert_equal(actual, expected)
         assert_equal(actual.dtype, expected.dtype)
+
+    def test_sort_complex_reverse(self):
+        # sort_complex() with reverse=True
+        a = np.array([2 + 3j, 1 - 2j, 1 - 3j, 2 + 1j], dtype='D')
+        expected = np.array([2 + 3j, 2 + 1j, 1 - 2j, 1 - 3j], dtype='D')
+        actual = np.sort_complex(a, reverse=True)
+        assert_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
