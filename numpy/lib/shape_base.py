@@ -20,7 +20,7 @@ __all__ = [
     'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
     'hsplit', 'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
     'apply_along_axis', 'kron', 'tile', 'get_array_wrap', 'take_along_axis',
-    'put_along_axis'
+    'put_along_axis', 'array_of_lists_to_array'
     ]
 
 
@@ -1241,3 +1241,51 @@ def tile(A, reps):
                 c = c.reshape(-1, n).repeat(nrep, 0)
             n //= dim_in
     return c.reshape(shape_out)
+
+def _safe_list_conversion(l):
+    if not isinstance(l, list):
+        raise TypeError('the values of the array must be lists')
+    return array(l)
+
+def _array_of_lists_to_array_dispatcher(a):
+    return (a)
+
+@array_function_dispatch(_array_of_lists_to_array_dispatcher)
+def array_of_lists_to_array(a):
+    """
+    Converts an array of lists into an array with those lists converted into arrays.
+
+    Parameters
+    ----------
+    a : array_like
+        The input array of lists.
+
+    Returns
+    -------
+    c : ndarray
+        The converted output array.
+
+    Raises
+    ------
+    TypeError
+        If the input array's values aren't lists.
+    ValueError
+        If the lists in the array aren't of the same length.
+
+    See Also
+    --------
+    array_to_array_of_lists : The inverse of this function.
+
+    Examples
+    --------
+    >>> a = np.char.split(np.array([['1 2'], ['3 4']]))
+    >>> a
+    >>> array([[list(['1', '2'])],
+               [list(['3', '4'])]], dtype=object)
+    >>> np.array_of_lists_to_array(a)
+    >>> array([[['1' '2']],
+               [['3' '4']]], dtype=np.str_)
+    """
+    
+    axis = -1
+    return apply_along_axis(lambda r: _safe_list_conversion(r[0]), axis, a[..., None])
