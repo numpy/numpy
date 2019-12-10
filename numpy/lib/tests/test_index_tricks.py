@@ -359,9 +359,61 @@ def test_c_():
 
 
 class TestFillDiagonal(object):
+    def test_offset_tall(self):
+        a = np.zeros((10, 4), int)
+        fill_diagonal(a, 5, wrap=True)
+        assert_array_equal(
+            a, np.array([[5, 0, 0, 0],
+                         [0, 5, 0, 0],
+                         [0, 0, 5, 0],
+                         [0, 0, 0, 5],
+                         [0, 0, 0, 0],
+                         [5, 0, 0, 0],
+                         [0, 5, 0, 0],
+                         [0, 0, 5, 0],
+                         [0, 0, 0, 5],
+                         [0, 0, 0, 0]])
+            )
+
+    def test_offset_tall2(self):
+        a = np.zeros((10,7), int)
+        fill_diagonal(a, 5, wrap=True)
+        assert_array_equal(
+            a, np.array([[5, 0, 0, 0, 0, 0, 0],
+                         [0, 5, 0, 0, 0, 0, 0],
+                         [0, 0, 5, 0, 0, 0, 0],
+                         [0, 0, 0, 5, 0, 0, 0],
+                         [0, 0, 0, 0, 5, 0, 0],
+                         [0, 0, 0, 0, 0, 5, 0],
+                         [0, 0, 0, 0, 0, 0, 5],
+                         [0, 0, 0, 0, 0, 0, 0],
+                         [5, 0, 0, 0, 0, 0, 0],
+                         [0, 5, 0, 0, 0, 0, 0]])
+            )
+
+
+    def test_offset_nowrap(self):
+        a = np.zeros((3,3), int)
+        fill_diagonal(a, 5, offset=2)
+        assert_array_equal(
+            a, np.array([[0, 0, 5],
+                         [0, 0, 0],
+                         [0, 0, 0]])
+            )
+
+    def test_offset_square_wrap(self):
+        a = np.zeros((3,3), int)
+        fill_diagonal(a, 5, wrap=True, offset=2)
+        assert_array_equal(
+            a, np.array([[0, 0, 5],
+                         [5, 0, 0],
+                         [0, 5, 0]])
+            )
+
     def test_basic(self):
         a = np.zeros((3, 3), int)
         fill_diagonal(a, 5)
+        print(a)
         assert_array_equal(
             a, np.array([[5, 0, 0],
                          [0, 5, 0],
