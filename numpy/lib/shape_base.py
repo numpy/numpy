@@ -5,7 +5,7 @@ import warnings
 
 import numpy.core.numeric as _nx
 from numpy.core.numeric import (
-    asarray, zeros, outer, concatenate, array, asanyarray
+    asarray, zeros, outer, concatenate, array, asanyarray, empty
     )
 from numpy.core.fromnumeric import reshape, transpose
 from numpy.core.multiarray import normalize_axis_index
@@ -20,7 +20,7 @@ __all__ = [
     'column_stack', 'row_stack', 'dstack', 'array_split', 'split',
     'hsplit', 'vsplit', 'dsplit', 'apply_over_axes', 'expand_dims',
     'apply_along_axis', 'kron', 'tile', 'get_array_wrap', 'take_along_axis',
-    'put_along_axis', 'array_of_lists_to_array'
+    'put_along_axis', 'array_of_lists_to_array', 'array_to_array_of_lists'
     ]
 
 
@@ -1289,3 +1289,55 @@ def array_of_lists_to_array(a):
     
     axis = -1
     return apply_along_axis(lambda r: _safe_list_conversion(r[0]), axis, a[..., None])
+
+def _array_to_array_of_lists_dispatcher(a, axis = None):
+    return (a, axis)
+
+@array_function_dispatch(_array_to_array_of_lists_dispatcher)
+def array_to_array_of_lists(a, axis = 0):
+    """
+    Converts an array into an array of lists.
+    The axes up to the given axis are preserved.
+    The given axis contains lists containing the remaining axes of the array.
+    The given axis can't be the last axis of the given array,
+    as in this case no axes are left to be converted into lists.
+
+    Parameters
+    ----------
+    a : array_like
+        The input array.
+    axis : int, optional, default: 0
+        The axis to contain the lists.
+
+    Returns
+    -------
+    c : ndarray
+        The converted output array.
+
+    Raises
+    ------
+    ValueError
+        If the given axis is the last axis of the given array.
+
+    See Also
+    --------
+    array_of_lists_to_array : The inverse of this function.
+
+    Examples
+    --------
+    >>> a = np.array([[['1', '2'],
+                       ['3', '4']]], dtype=np.str_)
+    >>> np.array_to_array_of_lists(a, -2)
+    >>> array([[list(['1', '2'])],
+               [list(['3', '4'])]], dtype=object)
+    """
+
+    nd = a.ndim
+    axis = normalize_axis_index(axis, nd)
+    if axis == a.ndim - 1:
+        raise ValueError('the given axis can not be the last axis of the given array')
+    result = empty(a.shape[:axis + 1], dtype=object)
+    colon = (slice(None),)
+    dim_slice = colon * (axis + 1)
+    result[dim_slice] = a[dim_slice].tolist()
+    return result
