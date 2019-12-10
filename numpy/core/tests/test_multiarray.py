@@ -2790,7 +2790,6 @@ class TestMethods(object):
             p = np.partition(d, kth, axis=1, reverse=True)
             for i in range(d1.shape[0]):
                 self.assert_partitioned_desc(p[i,:], kth)
-          
 
     def test_partition_cdtype(self):
         d = np.array([('Galahad', 1.7, 38), ('Arthur', 1.8, 41),

@@ -734,14 +734,12 @@ def partition(a, kth, axis=-1, kind='introselect', order=None, reverse=False):
     >>> a = np.array([3, 4, 2, 1])
     >>> np.partition(a, 3)
     array([2, 1, 3, 4])
+    >>> np.partition(a, (1, 3))
+    array([1, 2, 3, 4])
     >>> np.partition(a, 3, reverse=True)
     array([3, 4, 2, 1])
 
-    >>> np.partition(a, (1, 3))
-    array([1, 2, 3, 4])
-
     """
-
     if axis is None:
         # flatten returns (1, N) for np.matrix, so always use the last axis
         a = asanyarray(a).flatten()
