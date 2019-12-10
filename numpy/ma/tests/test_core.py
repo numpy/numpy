@@ -1232,6 +1232,32 @@ class TestMaskedArrayArithmetic(object):
         assert_(x.max() is masked)
         assert_(x.ptp() is masked)
 
+    def test_minmax_dtypes(self):
+        # Additonal tests on max/min for non-standard float and complex dtypes
+        (x, _, a10, m1, _, xm, _, _, _, _) = self.d
+        assert_equal(xm.max(), a10)
+        assert_equal(masked_array(x, mask=m1, dtype=np.half).max(), np.half(a10))
+        assert_equal(masked_array(x, mask=m1, dtype=np.single).max(), np.single(a10))
+        assert_equal(masked_array(x, mask=m1, dtype=np.double).max(), np.double(a10))
+        assert_equal(masked_array(x, mask=m1, dtype=np.longdouble).max(), np.longdouble(a10))
+        assert_equal(masked_array(x, mask=m1, dtype=np.cfloat).max(), np.cfloat(a10))
+        assert_equal(masked_array(x, mask=m1, dtype=np.cdouble).max(), np.cdouble(a10))
+        assert_equal(masked_array(x, mask=m1, dtype=np.clongdouble).max(), np.clongdouble(a10))
+        ym = masked_array([1e20, 2e20], mask=[1,0])
+        assert_equal(ym.min(), 2e20)
+        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.single)
+        assert_equal(ym.min(), np.single(2e20))
+        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.double)
+        assert_equal(ym.min(), np.double(2e20))
+        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.longdouble)
+        assert_equal(ym.min(), np.longdouble(2e20))
+        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.cfloat)
+        assert_equal(ym.min(), np.cfloat(2e20))
+        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.cdouble)
+        assert_equal(ym.min(), np.cdouble(2e20))
+        ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.clongdouble)
+        assert_equal(ym.min(), np.clongdouble(2e20))
+
     def test_addsumprod(self):
         # Tests add, sum, product.
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
