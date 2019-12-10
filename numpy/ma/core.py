@@ -198,14 +198,14 @@ for v in ["Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps",
     default_filler["M8[" + v + "]"] = np.datetime64("NaT", v)
     default_filler["m8[" + v + "]"] = np.timedelta64("NaT", v)
 
+float_types_list = [np.float16, np.float32, np.float64, np.float128,
+                    np.complex64, np.complex128, np.complex256]
 max_filler = ntypes._minvals
-max_filler.update([(k, -np.inf) for k in [np.float32, np.float64]])
+max_filler.update([(k, -np.inf) for k in float_types_list
+                    if k in ntypes.typeDict.values()])
 min_filler = ntypes._maxvals
-min_filler.update([(k, +np.inf) for k in [np.float32, np.float64]])
-if 'float128' in ntypes.typeDict:
-    max_filler.update([(np.float128, -np.inf)])
-    min_filler.update([(np.float128, +np.inf)])
-
+min_filler.update([(k, +np.inf) for k in float_types_list
+                    if k in ntypes.typeDict.values()])
 
 def _recursive_fill_value(dtype, f):
     """
