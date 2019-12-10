@@ -242,7 +242,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
         dimension as that of start and end.  Also, the value of dimension of
         star and end corresponding to axis must have value 1.
 
-        .. versionadded:: 1.18.0
+        .. versionadded:: 1.19.0
 
 
     Returns
@@ -347,7 +347,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0,
         dimension as that of start and end.  Also, the value of dimension of
         star and end corresponding to axis must have value 1.
 
-        .. versionadded:: 1.18.0
+        .. versionadded:: 1.19.0
 
     Returns
     -------
