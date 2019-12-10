@@ -1336,7 +1336,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
     >>> np.interp(3.14, xp, fp, right=UNDEF)
     -99.0
 
-    Interpolation with np.float64 convertible types:
+    Interpolation with np.float64 convertible type:
 
     >>> d1 = np.datetime64('2019-01-01')
     >>> d2 = np.datetime64('2019-01-03')
