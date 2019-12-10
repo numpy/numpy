@@ -2256,21 +2256,19 @@ class TestMethods(object):
         assert_equal([a.searchsorted(a[i], 'left') for i in ind], ind)
         assert_equal([a.searchsorted(a[i], 'right') for i in ind], ind + 1)
 
-    @pytest.mark.parametrize('index, sorter, error',
-                        (
-                            (0, np.array([1, (2, 3)], dtype=object), TypeError),
-                            (0, [1.1], TypeError),
-                            (0, [1, 2, 3, 4], ValueError),
-                            (0, [1, 2, 3, 4, 5, 6], ValueError),
-                            # bounds check
-                            (4, [0, 1, 2, 3, 5], ValueError),
-                            (0, [-1, 0, 1, 2, 3], ValueError),
-                            (0, [4, 0, -1, 2, 3], ValueError),
-                        ))
-    def test_searchsorted_with_invalid_sorter(self, index, sorter, error):
+    def test_searchsorted_with_invalid_sorter(self):
         a = np.array([5, 2, 1, 3, 4])
         s = np.argsort(a)
-        assert_raises(error, np.searchsorted, a, index, sorter=sorter)
+        assert_raises(TypeError, np.searchsorted, a, 0,
+                      sorter=np.array((1, (2, 3)), dtype=object))
+        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1.1])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1, 2, 3, 4])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1, 2, 3, 4, 5, 6])
+
+        # bounds check
+        assert_raises(ValueError, np.searchsorted, a, 4, sorter=[0, 1, 2, 3, 5])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1, 0, 1, 2, 3])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[4, 0, -1, 2, 3])
 
     def test_searchsorted_with_sorter(self):
         a = np.random.rand(300)
