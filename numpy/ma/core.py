@@ -206,6 +206,7 @@ max_filler.update([(k, -np.inf) for k in float_types_list
 min_filler = ntypes._maxvals
 min_filler.update([(k, +np.inf) for k in float_types_list
                     if k in ntypes.typeDict.values()])
+del float_types_list
 
 def _recursive_fill_value(dtype, f):
     """
