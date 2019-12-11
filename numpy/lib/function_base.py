@@ -3949,7 +3949,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         r = np.where(weights_above < 0.5, r_above, r_below)
 
         if r.ndim == 0:
-            r = r[None][0]
+            r = r[()]
 
         if out is not None:
             out[...] = r
