@@ -137,6 +137,13 @@ have stuck. The implementation in `PR 14794`_ seemed to point to the
 viability of this approach. However this proved very disruptive to downstream
 library authors, so the idea to add a ``np.allow_ragged`` sentinal was added.
 
+The name is specific to ragged nested sequences. In discussion we considered a
+more general ``np.allow_object``. That is over-general and would not
+differentiate between ``np.array([Decimal(10), Decimal(10)])`` and the ragged
+nested sequence ``np.array([Decimal(10), [1, Decimal(10)]])``. Currently the
+NEP does not propose disallowing the latter without an explicit
+``np.allow_ragged``, but a future enhancement could.
+
 References and Footnotes
 ------------------------
 
