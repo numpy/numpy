@@ -138,6 +138,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         if dtype is None:
             raise ValueError("linspace with {} objects cannot be called with"
                     "dtype=None".format(start.dtype))
+        if np.isnat(start):
+            raise ValueError("start is NaT, linspace won't work.")
+        if np.isnat(stop):
+            raise ValueError("stop is NaT, linspace won't work.")
         start = start.astype(dtype).view(_nx.int64)
         stop = stop.astype(dtype).view(_nx.int64)
     else:
