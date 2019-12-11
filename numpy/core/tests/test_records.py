@@ -15,7 +15,7 @@ import numpy as np
 from numpy.compat import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, temppath
+    assert_raises, temppath,
     )
 from numpy.compat import pickle
 
@@ -415,6 +415,22 @@ class TestRecord(object):
             assert_(pa.flags.f_contiguous)
             assert_(pa.flags.writeable)
             assert_(pa.flags.aligned)
+
+    def test_pickle_void(self):
+        # issue gh-13593
+        dt = np.dtype([('obj', 'O'), ('int', 'i')])
+        a = np.empty(1, dtype=dt)
+        data = (bytearray(b'eman'),)
+        a['obj'] = data
+        a['int'] = 42
+        ctor, args = a[0].__reduce__()
+        # check the contructor is what we expect before interpreting the arguments
+        assert ctor is np.core.multiarray.scalar
+        dtype, obj = args
+        # make sure we did not pickle the address
+        assert not isinstance(obj, bytes)
+
+        assert_raises(TypeError, ctor, dtype, 13)
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599
