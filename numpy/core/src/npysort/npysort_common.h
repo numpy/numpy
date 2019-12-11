@@ -344,6 +344,14 @@ DATETIME_LT(npy_datetime a, npy_datetime b)
 NPY_INLINE static int
 TIMEDELTA_LT(npy_timedelta a, npy_timedelta b)
 {
+    if (a == NPY_DATETIME_NAT) {
+        return 0;
+    }
+
+    if (b == NPY_DATETIME_NAT) {
+        return 1;
+    }
+
     return a < b;
 }
 
