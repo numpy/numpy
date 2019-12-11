@@ -3814,7 +3814,7 @@ def _quantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
     """Assumes that q is in [0, 1], and is an ndarray"""
     r, k = _ureduce(a, func=_quantile_ureduce_func, q=q, axis=axis, out=out,
                     overwrite_input=overwrite_input,
-                    interpolation=interpolation, keepdims=keepdims)
+                    interpolation=interpolation)
     if keepdims:
         return r.reshape(q.shape + k)
     else:
@@ -3949,6 +3949,8 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         r = np.where(weights_above < 0.5, r_above, r_below)
 
         if r.ndim == 0:
+            # get the element stored in the 0-d array for backward
+            # compatibility
             r = r[()]
 
         if out is not None:
