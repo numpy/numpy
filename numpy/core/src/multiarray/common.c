@@ -12,6 +12,7 @@
 #include "usertypes.h"
 
 #include "common.h"
+#include "conversion_utils.h"
 #include "npy_buffer.h"
 
 #include "get_attr_string.h"
@@ -946,4 +947,341 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 }
 
 
+typedef int convert(PyObject *, void *);
 
+
+// TODO: Probably the compiler does not, but could use _attribute__((noinline))
+static int
+initialize_keywords(
+        const char *funcname, int nrequired, int npositional,
+        _NpyArgParserCache *cache, va_list va_orig) {
+    va_list va;
+    int nargs = 0;
+    int nkwargs = 0;
+    int npositional_only = 0;
+
+    va_copy(va, va_orig);
+    while (1) {
+        /* Count length first: */
+        char *name = va_arg(va, char *);
+        convert *converter = va_arg(va, convert *);
+        void *data = va_arg(va, void *);
+
+
+        /* Check if this is the sentinel, only converter may be NULL */
+        if ((name == NULL) && (converter == NULL) && (data == NULL)) {
+            break;
+        }
+        nargs += 1;
+
+        if (name == NULL) {
+            PyErr_Format(PyExc_SystemError,
+                    "internal error: name is NULL in %s at argument %d.",
+                    funcname, nargs);
+            va_end(va);
+            return -1;
+        }
+        if (data == NULL) {
+            PyErr_Format(PyExc_SystemError,
+                    "internal error: data is NULL in %s at argument %d.",
+                    funcname, nargs);
+            va_end(va);
+            return -1;
+        }
+
+        if (*name == '\0') {
+            /* Empty string signals positional only */
+            if (nkwargs > 0) {
+                PyErr_Format(PyExc_SystemError,
+                        "internal error: non-kwarg after kwarg to %s "
+                        "at argument %d.", funcname, nargs);
+                va_end(va);
+                return -1;
+            }
+            npositional_only += 1;
+        }
+        else {
+            nkwargs += 1;
+        }
+    }
+    va_end(va);
+
+    /* Perform sanity checks on the number of arguments. */
+    // TODO: Add more checks for npositional (if not -1)
+    if (nargs < nrequired) {
+        PyErr_Format(PyExc_SystemError,
+                "internal error: %s has %d positional arguments but only %d "
+                "arguments found.", funcname, npositional_only, nargs);
+        return -1;
+    }
+    if (nrequired < npositional_only) {
+        /* We expect positional only kwargs are required */
+        PyErr_Format(PyExc_SystemError,
+                     "internal error: %s has %d required arguments but only %d "
+                     "positional only ones.",
+                     funcname, nrequired, npositional_only);
+        return -1;
+    }
+
+    if (nargs > NPY_MAXARGS) {
+        PyErr_Format(PyExc_SystemError,
+                "internal error: function %s has %d arguments, but "
+                "the maximum is currently limited for easier parsing.",
+                funcname, nargs);
+    }
+
+    /*
+     * Do any necessary string allocation and interning,
+     * creating a caching object.
+     */
+    cache->nargs = nargs;
+    cache->npositional_only = npositional_only;
+    cache->npositional = npositional;
+    if (npositional == -1) {
+        cache->npositional = nargs;
+    }
+    cache->nrequired = nrequired;
+    cache->nkwarg = nkwargs;
+
+    /* Allocate interned string storage and NULL it for error handling */
+    PyObject **kw_strings = malloc(sizeof(PyObject *) * (nkwargs + 1));
+    if (kw_strings == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    memset(cache->kw_strings, 0, sizeof(PyObject *) * (nkwargs + 1));
+
+    va_copy(va, va_orig);
+    for (int i = 0; i < nargs; i++) {
+        /* Advance through non-kwargs, which do not require setup. */
+        char *name = va_arg(va, char *);
+        convert *converter = va_arg(va, convert *);
+        va_arg(va, void *);
+
+        /*
+        if (converter == NULL) {
+            cache->intent[i] = 'O';
+        }
+        else if (converter == (convert *)PyArray_BoolConverter) {
+            cache->intent[i] = '?';
+        }
+        else if (converter == (convert *)PyArray_PythonPyIntFromInt) {
+            cache->intent[i] = 'i';
+        }
+        else {
+            cache->intent[i] = '&';
+        }
+         */
+
+        if (i >= npositional_only) {
+            int i_kwarg = i - npositional_only;
+            cache->kw_strings[i_kwarg] = PyUString_InternFromString(name);
+            if (cache->kw_strings[i_kwarg] == NULL) {
+                va_end(va);
+                goto error;
+            }
+        }
+    }
+    va_end(va);
+    return 0;
+
+error:
+    for (int i = 0; i < nkwargs; i++) {
+        Py_XDECREF(cache->kw_strings[i]);
+    }
+    return -1;
+}
+
+static int
+raise_incorrect_number_of_positional_args(const char *funcname,
+        const _NpyArgParserCache *cache, Py_ssize_t len_args)
+{
+    // TODO: The error message will also note the number of keyword args!
+    if (cache->npositional == cache->nrequired) {
+        PyErr_Format(PyExc_TypeError,
+                "%s() takes %zd positional arguments but %zd were given",
+                funcname, cache->npositional, len_args);
+    }
+    else {
+        PyErr_Format(PyExc_TypeError,
+                "%s() takes %zd to %zd positional arguments but %zd "
+                "were given",
+                funcname, cache->nrequired, cache->npositional, len_args);
+    }
+    return 0;
+}
+
+static void
+raise_missing_argument(const char *funcname,
+        const _NpyArgParserCache *cache, int i)
+{
+    if (i < cache->npositional_only) {
+        PyErr_Format(PyExc_TypeError,
+                "%s() missing required positional argument %d",
+                funcname, i);
+    }
+    else {
+        PyObject *kw = cache->kw_strings[i-cache->npositional_only];
+        PyErr_Format(PyExc_TypeError,
+                "%s() missing required argument '%S' (pos %d)",
+                funcname, kw, i);
+    }
+}
+
+NPY_NO_EXPORT int
+_npy_parse_arguments(
+        const char *funcname, int nrequired, int npositional,
+         /* cache_ptr is a NULL initialized persistent storage for data */
+        _NpyArgParserCache *cache,
+        PyObject *args, PyObject *kwargs,
+        /* ... is NULL, NULL, NULL terminated: name, converter, value */
+        ...)
+{
+    if (NPY_UNLIKELY(cache->npositional == -1)) {
+        va_list va;
+
+        va_start(va, kwargs);
+        int res = initialize_keywords(
+                funcname, nrequired, npositional, cache, va);
+        va_end(va);
+        if (res < 0) {
+            return 0;
+        }
+    }
+
+    Py_ssize_t len_args = PyTuple_GET_SIZE(args);
+    if (NPY_UNLIKELY(len_args > cache->npositional)) {
+        return raise_incorrect_number_of_positional_args(
+                funcname, cache, len_args);
+    }
+
+    /* NOTE: Could remove the limit but too many kwargs are slow anyway. */
+    PyObject *all_arguments[NPY_MAXARGS];
+
+    for (Py_ssize_t i = 0; i < len_args; i++) {
+        all_arguments[i] = PyTuple_GET_ITEM(args, i);
+    }
+
+    /* Without kwarg, do not iterate all converters. */
+    int max_nargs = (int)len_args;
+    Py_ssize_t len_kwargs = 0;
+
+    if (NPY_LIKELY(kwargs != NULL)) {
+        /* If there are any kwargs, first handle them */
+        max_nargs = cache->nargs;
+
+        for (int i = len_args; i < cache->nargs; i++) {
+            all_arguments[i] = NULL;
+        }
+
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+
+        while (PyDict_Next(kwargs, &pos, &key, &value)) {
+            PyObject * const *name;
+            len_kwargs += 1;
+
+            /* Super-fast path, check identity: */
+            for (name = cache->kw_strings; *name != NULL; name++) {
+                if (*name == key) {
+                    break;
+                }
+            }
+            if (NPY_UNLIKELY(*name == NULL)) {
+                /* Slow  fallback, if identity checks failed for some reason */
+                for (name = cache->kw_strings; *name != NULL; name++) {
+                    int eq = PyObject_RichCompareBool(*name, key, Py_EQ);
+                    if (eq == -1) {
+                        return 0;
+                    }
+                    else if (eq) {
+                        break;
+                    }
+                }
+                if (NPY_UNLIKELY(*name == NULL)) {
+                    /* Invalid keyword argument. */
+                    PyErr_Format(PyExc_TypeError,
+                            "%s() got an unexpected keyword argument '%S'",
+                            funcname, key);
+                    return 0;
+                }
+            }
+
+            ssize_t param_pos = (
+                    (name - cache->kw_strings) + cache->npositional_only);
+
+            /* There could be an identical positional argument */
+            if (NPY_UNLIKELY(all_arguments[param_pos] != NULL)) {
+                PyErr_Format(PyExc_TypeError,
+                        "%s() got multiple values for argument '%S'",
+                        funcname, key);
+                return 0;
+            }
+
+            all_arguments[param_pos] = value;
+        }
+    }
+
+    if (NPY_UNLIKELY(len_args + len_kwargs > cache->nargs)) {
+        PyErr_Format(PyExc_TypeError,
+                "%s() takes at most %d arguments (%zd given)",
+                funcname, cache->nargs, len_args + len_kwargs);
+        return 0;
+    }
+
+    /* At this time `all_arguments` holds either NULLs or the objects */
+    va_list va;
+    va_start(va, kwargs);
+
+    for (int i = 0; i < max_nargs; i++) {
+        va_arg(va, char *);
+        convert *converter = va_arg(va, convert *);
+        void *data = va_arg(va, void *);
+
+        if (all_arguments[i] == NULL) {
+            continue;
+        }
+
+        int res;
+        if (converter == NULL) {
+            *((PyObject **) data) = all_arguments[i];
+            continue;
+        }
+        res = converter(all_arguments[i], data);
+
+        if (NPY_UNLIKELY(res == NPY_SUCCEED)) {
+            continue;
+        }
+        else if (NPY_UNLIKELY(res == NPY_FAIL)) {
+            /* It is usually the users responsibility to clean up. */
+            goto converting_failed;
+        }
+        else if (NPY_UNLIKELY(res == Py_CLEANUP_SUPPORTED)) {
+            /* TODO: Implementing cleanup when needed should not be hard */
+            PyErr_Format(PyExc_SystemError,
+                         "converter cleanup of parameter %d to %s() not supported.",
+                         i, funcname);
+            goto converting_failed;
+        }
+        assert(0);
+    }
+
+    /* Required arguments are typically not passed as keyword arguments */
+    if (NPY_UNLIKELY(len_args < cache->nrequired)) {
+        /* (PyArg_* also does this after the actual parsing is finished) */
+        for (int i = 0; i < cache->nrequired; i++) {
+            if (NPY_UNLIKELY(all_arguments[i] == NULL)) {
+                raise_missing_argument(funcname, cache, i);
+                goto converting_failed;
+            }
+        }
+    }
+
+    va_end(va);
+    return 1;
+
+converting_failed:
+    va_end(va);
+    return 0;
+
+}

@@ -22,6 +22,9 @@ NPY_NO_EXPORT int
 PyArray_SearchsideConverter(PyObject *obj, void *addr);
 
 NPY_NO_EXPORT int
+PyArray_PythonPyIntFromInt(PyObject *obj, int *value);
+
+NPY_NO_EXPORT int
 PyArray_PyIntAsInt(PyObject *o);
 
 NPY_NO_EXPORT npy_intp

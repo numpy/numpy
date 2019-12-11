@@ -334,4 +334,34 @@ NPY_NO_EXPORT PyArrayObject *
 new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
                   int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
 
+typedef struct {
+    int npositional;
+    int nargs;
+    Py_ssize_t npositional_only;
+    int nrequired;
+    int nkwarg;
+    // char intent[NPY_MAXARGS];
+    /* Null terminated list of keyword argument name strings */
+    PyObject *kw_strings[NPY_MAXARGS];
+} _NpyArgParserCache;
+
+#define NPY_PREPARE_ARGPARSER \
+        static _NpyArgParserCache __argparse_cache = {-1};      \
+        static _NpyArgParserCache *const __argparse_cache_ptr = \
+                        &__argparse_cache
+
+NPY_NO_EXPORT int
+_npy_parse_arguments(
+        const char *funcname, int nrequired, int npositional,
+        /* cache_ptr is a NULL initialized persistent storage for data */
+        _NpyArgParserCache *cache_ptr,
+        PyObject *args, PyObject *kwargs,
+        /* va_list is NULL, NULL, NULL terminated: name, converter, value */
+        ...) NPY_GCC_NONNULL(1);
+
+#define npy_parse_arguments(                                                \
+        funcname, nrequired, npositional, args, kwargs, ...)                \
+        _npy_parse_arguments(funcname, nrequired, npositional,              \
+                             __argparse_cache_ptr, args, kwargs, __VA_ARGS__)
+
 #endif

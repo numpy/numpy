@@ -317,17 +317,30 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val)
 {
-    if (PyObject_IsTrue(object)) {
+    /* Super fast path, for the most common input: */
+    if (object == Py_True) {
+        *val = NPY_TRUE;
+        return NPY_SUCCEED;
+    }
+    if (object == Py_False) {
+        *val = NPY_FALSE;
+        return NPY_SUCCEED;
+    }
+
+    /* Full path: */
+    int res = PyObject_IsTrue(object);
+    if (res == 1) {
         *val = NPY_TRUE;
     }
-    else {
+    else if (res == 0) {
         *val = NPY_FALSE;
     }
-    if (PyErr_Occurred()) {
+    else {
         return NPY_FAIL;
     }
     return NPY_SUCCEED;
 }
+
 
 /*NUMPY_API
  * Convert object to endian
@@ -764,6 +777,40 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
 /*****************************
 * Other conversion functions
 *****************************/
+
+/*
+ * Small wrapper converting to array just like CPython does, we could
+ * use our own PyArray_PyIntAsInt function, but it deprecates floats
+ * differently.
+ * Function should thus be replaced at some point.
+ * The disadvantage of this function is that it cannot do argument specific
+ * error reporting. We could use a pointer instead...
+ */
+NPY_NO_EXPORT int
+PyArray_PythonPyIntFromInt(PyObject *obj, int *value)
+{
+    /* Pythons behaviour is to check only for float explicitly... */
+    if (NPY_UNLIKELY(PyFloat_Check(obj))) {
+        PyErr_SetString(PyExc_TypeError,
+                "integer argument expected, got float");
+        return NPY_FAIL;
+    }
+
+    long result = PyLong_AsLong(obj);
+    if (NPY_UNLIKELY(error_converting(result))) {
+        return NPY_FAIL;
+    }
+    if (NPY_UNLIKELY((result > INT_MAX) || (result < INT_MIN))) {
+        PyErr_SetString(PyExc_OverflowError,
+                "Python int too large to convert to C int");
+        return NPY_FAIL;
+    }
+    else {
+        *value = (int)result;
+        return NPY_SUCCEED;
+    }
+}
+
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg)
