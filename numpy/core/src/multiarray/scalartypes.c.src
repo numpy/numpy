@@ -1893,18 +1893,12 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     }
     else if (obj && PyDataType_FLAGCHK((PyArray_Descr *)obj, NPY_LIST_PICKLE)) {
         /* a structured dtype with an object in a field */
-        PyObject *arr = PyArray_FromScalar(self, NULL);
+        PyArrayObject *arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
         if (arr == NULL) {
             return NULL;
         }
-        PyArrayIterObject *it = (PyArrayIterObject *)PyArray_IterNew(arr);
-        if (it == NULL) {
-            Py_DECREF(arr);
-            return NULL;
-        }
         /* arr.item() */
-        PyObject *val = PyArray_GETITEM((PyArrayObject *)arr, it->dataptr);
-        Py_DECREF(it);
+        PyObject *val = PyArray_GETITEM(arr, PyArray_DATA(arr));
         Py_DECREF(arr);
         if (val == NULL) {
             return NULL;
