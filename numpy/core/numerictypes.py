@@ -512,7 +512,8 @@ def sctype2char(sctype):
 # indexed by type or type character
 cast = _typedict()
 for key in _concrete_types:
-    cast[key] = lambda x, k=key: array(x, copy=False).astype(k)
+    # Note that the casting functions create a forced copy.
+    cast[key] = lambda x, k=key: array(x, dtype=k)
 
 try:
     ScalarType = [_types.IntType, _types.FloatType, _types.ComplexType,

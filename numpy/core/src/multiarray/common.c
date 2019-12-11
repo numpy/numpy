@@ -1128,6 +1128,36 @@ raise_missing_argument(const char *funcname,
     }
 }
 
+/*
+ * Find key in a list of pointers to keyword names.
+ * The list should end with NULL.
+ *
+ * Returns either the index into the list (pointing to the final key with NULL
+ * if no match was found), or -1 on failure.
+ */
+static NPY_INLINE npy_intp
+locate_key(PyObject *const *kwnames, PyObject *key)
+{
+    PyObject *const *kwname = kwnames;
+    while (*kwname != NULL && *kwname != key) {
+        kwname++;
+    }
+    /* Slow fallback, just in case */
+    if (NPY_UNLIKELY(*kwname == NULL)) {
+        int cmp = 0;
+        kwname = kwnames;
+        while (*kwname != NULL &&
+               (cmp = PyObject_RichCompareBool(key, *kwname,
+                                               Py_EQ)) == 0) {
+            kwname++;
+        }
+        if (cmp < 0) {
+            return -1;
+        }
+    }
+    return kwname - kwnames;
+}
+
 NPY_NO_EXPORT int
 _npy_parse_arguments(
         const char *funcname, int nrequired, int npositional,
@@ -1178,37 +1208,10 @@ _npy_parse_arguments(
         Py_ssize_t pos = 0;
 
         while (PyDict_Next(kwargs, &pos, &key, &value)) {
-            PyObject * const *name;
             len_kwargs += 1;
 
-            /* Super-fast path, check identity: */
-            for (name = cache->kw_strings; *name != NULL; name++) {
-                if (*name == key) {
-                    break;
-                }
-            }
-            if (NPY_UNLIKELY(*name == NULL)) {
-                /* Slow  fallback, if identity checks failed for some reason */
-                for (name = cache->kw_strings; *name != NULL; name++) {
-                    int eq = PyObject_RichCompareBool(*name, key, Py_EQ);
-                    if (eq == -1) {
-                        return 0;
-                    }
-                    else if (eq) {
-                        break;
-                    }
-                }
-                if (NPY_UNLIKELY(*name == NULL)) {
-                    /* Invalid keyword argument. */
-                    PyErr_Format(PyExc_TypeError,
-                            "%s() got an unexpected keyword argument '%S'",
-                            funcname, key);
-                    return 0;
-                }
-            }
-
             ssize_t param_pos = (
-                    (name - cache->kw_strings) + cache->npositional_only);
+                locate_key(cache->kw_strings, key) + cache->npositional_only);
 
             /* There could be an identical positional argument */
             if (NPY_UNLIKELY(all_arguments[param_pos] != NULL)) {

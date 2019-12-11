@@ -56,7 +56,7 @@ __all__ = ['load_library', 'ndpointer', 'ctypes_load_library',
 
 import os
 from numpy import (
-    integer, ndarray, dtype as _dtype, deprecate, array, frombuffer
+    integer, ndarray, dtype as _dtype, deprecate, asarray, frombuffer
 )
 from numpy.core.multiarray import _flagdict, flagsobj
 
@@ -520,7 +520,7 @@ if ctypes is not None:
             p_arr_type = ctypes.POINTER(_ctype_ndarray(obj._type_, shape))
             obj = ctypes.cast(obj, p_arr_type).contents
 
-        return array(obj, copy=False)
+        return asarray(obj)
 
 
     def as_ctypes(obj):

@@ -1566,112 +1566,23 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
                  ((order) == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(op)) || \
                  ((order) == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(op)))
 
-static PyObject *
-_array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
+static NPY_INLINE PyObject *
+_array_fromobject_generic(
+        PyObject *op, PyArray_Descr *type, npy_bool copy, NPY_ORDER order,
+        npy_bool subok, int ndmin)
 {
-    PyObject *op;
     PyArrayObject *oparr = NULL, *ret = NULL;
-    npy_bool subok = NPY_FALSE;
-    npy_bool copy = NPY_TRUE;
-    int ndmin = 0, nd;
-    PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
-    NPY_ORDER order = NPY_KEEPORDER;
-    int flags = 0;
-
-    static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
-                         "ndmin", NULL};
-
-    if (PyTuple_GET_SIZE(args) > 2) {
-        PyErr_SetString(PyExc_ValueError,
-                        "only 2 non-keyword arguments accepted");
-        return NULL;
-    }
-
-    /* super-fast path for ndarray argument calls */
-    if (PyTuple_GET_SIZE(args) == 0) {
-        goto full_path;
-    }
-    op = PyTuple_GET_ITEM(args, 0);
-    if (PyArray_CheckExact(op)) {
-        PyObject * dtype_obj = Py_None;
-        oparr = (PyArrayObject *)op;
-        /* get dtype which can be positional */
-        if (PyTuple_GET_SIZE(args) == 2) {
-            dtype_obj = PyTuple_GET_ITEM(args, 1);
-        }
-        else if (kws) {
-            dtype_obj = PyDict_GetItem(kws, npy_ma_str_dtype);
-            if (dtype_obj == NULL) {
-                dtype_obj = Py_None;
-            }
-        }
-        if (dtype_obj != Py_None) {
-            goto full_path;
-        }
-
-        /* array(ndarray) */
-        if (kws == NULL) {
-            ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
-            goto finish;
-        }
-        else {
-            /* fast path for copy=False rest default (np.asarray) */
-            PyObject * copy_obj, * order_obj, *ndmin_obj;
-            copy_obj = PyDict_GetItem(kws, npy_ma_str_copy);
-            if (copy_obj != Py_False) {
-                goto full_path;
-            }
-            copy = NPY_FALSE;
-
-            /* order does not matter for contiguous 1d arrays */
-            if (PyArray_NDIM((PyArrayObject*)op) > 1 ||
-                !PyArray_IS_C_CONTIGUOUS((PyArrayObject*)op)) {
-                order_obj = PyDict_GetItem(kws, npy_ma_str_order);
-                if (order_obj != Py_None && order_obj != NULL) {
-                    goto full_path;
-                }
-            }
-
-            ndmin_obj = PyDict_GetItem(kws, npy_ma_str_ndmin);
-            if (ndmin_obj) {
-                long t = PyLong_AsLong(ndmin_obj);
-                if (error_converting(t)) {
-                    goto clean_type;
-                }
-                else if (t > NPY_MAXDIMS) {
-                    goto full_path;
-                }
-                ndmin = t;
-            }
-
-            /* copy=False with default dtype, order (any is OK) and ndim */
-            ret = oparr;
-            Py_INCREF(ret);
-            goto finish;
-        }
-    }
-
-full_path:
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i:array", kwd,
-                &op,
-                PyArray_DescrConverter2, &type,
-                PyArray_BoolConverter, &copy,
-                PyArray_OrderConverter, &order,
-                PyArray_BoolConverter, &subok,
-                &ndmin)) {
-        goto clean_type;
-    }
+    int nd, flags = 0;
 
     if (ndmin > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
                 "ndmin bigger than allowable number of dimensions "
                 "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
-        goto clean_type;
+        return NULL;
     }
     /* fast exit if simple call */
-    if ((subok && PyArray_Check(op)) ||
-        (!subok && PyArray_CheckExact(op))) {
+    if (PyArray_CheckExact(op) || (subok && PyArray_Check(op))) {
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
             if (!copy && STRIDING_OK(oparr, order)) {
@@ -1726,8 +1637,7 @@ full_path:
     ret = (PyArrayObject *)PyArray_CheckFromAny(op, type,
                                                 0, 0, flags, NULL);
 
- finish:
-    Py_XDECREF(type);
+finish:
     if (ret == NULL) {
         return NULL;
     }
@@ -1741,11 +1651,158 @@ full_path:
      * steals a reference to ret
      */
     return _prepend_ones(ret, nd, ndmin, order);
-
-clean_type:
-    Py_XDECREF(type);
-    return NULL;
 }
+
+#undef STRIDING_OK
+
+
+static PyObject *
+array_array(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
+{
+    PyObject *op;
+    npy_bool subok = NPY_FALSE;
+    npy_bool copy = NPY_TRUE;
+    int ndmin = 0;
+    PyArray_Descr *type = NULL;
+    NPY_ORDER order = NPY_KEEPORDER;
+    NPY_PREPARE_ARGPARSER;
+
+    if ((kws != NULL) || (PyTuple_GET_SIZE(args) != 1)) {
+        if (!npy_parse_arguments("array", 1, 2, args, kws,
+                    "object", NULL, &op,
+                    "dtype", &PyArray_DescrConverter2, &type,
+                    "copy", &PyArray_BoolConverter, &copy,
+                    "order", &PyArray_OrderConverter, &order,
+                    "subok", &PyArray_BoolConverter, &subok,
+                    "ndmin", &PyArray_PythonPyIntFromInt, &ndmin,
+                    NULL, NULL, NULL)) {
+            Py_XDECREF(type);
+            return NULL;
+        }
+    }
+    else {
+        /* Fast path should not matter much here, just for symmetry */
+        op = PyTuple_GET_ITEM(args, 0);
+    }
+
+    PyObject *res = _array_fromobject_generic(
+            op, type, copy, order, subok, ndmin);
+    Py_XDECREF(type);
+    return res;
+}
+
+static PyObject *
+array_asarray(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
+{
+    PyObject *op;
+    PyArray_Descr *type = NULL;
+    NPY_ORDER order = NPY_KEEPORDER;
+    NPY_PREPARE_ARGPARSER;
+
+    if ((kws != NULL) || (PyTuple_GET_SIZE(args) != 1)) {
+        if (!npy_parse_arguments("asarray", 1, -1, args, kws,
+                "object", NULL, &op,
+                "dtype", &PyArray_DescrConverter2, &type,
+                "order", &PyArray_OrderConverter, &order,
+                NULL, NULL, NULL)) {
+            Py_XDECREF(type);
+            return NULL;
+        }
+    }
+    else {
+        op = PyTuple_GET_ITEM(args, 0);
+    }
+
+    PyObject *res = _array_fromobject_generic(
+            op, type, NPY_FALSE, order, NPY_FALSE, 0);
+    Py_XDECREF(type);
+    return res;
+}
+
+static PyObject *
+array_asanyarray(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
+{
+    PyObject *op;
+    PyArray_Descr *type = NULL;
+    NPY_ORDER order = NPY_KEEPORDER;
+    NPY_PREPARE_ARGPARSER;
+
+    if ((kws != NULL) || (PyTuple_GET_SIZE(args) != 1)) {
+        if (!npy_parse_arguments("asarray", 1, -1, args, kws,
+                "object", NULL, &op,
+                "dtype", &PyArray_DescrConverter2, &type,
+                "order", &PyArray_OrderConverter, &order,
+                NULL, NULL, NULL)) {
+            Py_XDECREF(type);
+            return NULL;
+        }
+    }
+    else {
+        op = PyTuple_GET_ITEM(args, 0);
+    }
+
+    PyObject *res = _array_fromobject_generic(
+            op, type, NPY_FALSE, order, NPY_TRUE, 0);
+    Py_XDECREF(type);
+    return res;
+}
+
+
+static PyObject *
+array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
+        PyObject *args, PyObject *kws)
+{
+    PyObject *op;
+    PyArray_Descr *type = NULL;
+    NPY_PREPARE_ARGPARSER;
+
+    if ((kws != NULL) || (PyTuple_GET_SIZE(args) != 1)) {
+        if (!npy_parse_arguments("asarray", 1, -1, args, kws,
+                "object", NULL, &op,
+                "dtype", &PyArray_DescrConverter2, &type,
+                NULL, NULL, NULL)) {
+            Py_XDECREF(type);
+            return NULL;
+        }
+    }
+    else {
+        op = PyTuple_GET_ITEM(args, 0);
+    }
+
+    PyObject *res = _array_fromobject_generic(
+            op, type, NPY_FALSE, NPY_CORDER, NPY_FALSE, 1);
+    Py_XDECREF(type);
+    return res;
+}
+
+
+static PyObject *
+array_asfortranarray(PyObject *NPY_UNUSED(ignored),
+        PyObject *args, PyObject *kws)
+{
+    PyObject *op;
+    PyArray_Descr *type = NULL;
+    NPY_PREPARE_ARGPARSER;
+
+    if ((kws != NULL) || (PyTuple_GET_SIZE(args) != 1)) {
+        if (!npy_parse_arguments("asarray", 1, -1, args, kws,
+                "object", NULL, &op,
+                "dtype", &PyArray_DescrConverter2, &type,
+                NULL, NULL, NULL)) {
+            Py_XDECREF(type);
+            return NULL;
+        }
+    }
+    else {
+        op = PyTuple_GET_ITEM(args, 0);
+    }
+
+    PyObject *res = _array_fromobject_generic(
+            op, type, NPY_FALSE, NPY_FORTRANORDER, NPY_FALSE, 1);
+    Py_XDECREF(type);
+    return res;
+}
+
 
 static PyObject *
 array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)

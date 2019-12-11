@@ -19,6 +19,7 @@ from unittest.case import SkipTest
 from warnings import WarningMessage
 import pprint
 
+import numpy as np
 from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 import numpy.__config__
@@ -383,7 +384,8 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     try:
         isdesnat = isnat(desired)
         isactnat = isnat(actual)
-        dtypes_match = array(desired).dtype.type == array(actual).dtype.type
+        dtypes_match = (
+                np.asarray(desired).dtype.type == np.asarray(actual).dtype.type)
         if isdesnat and isactnat:
             # If both are NaT (and have the same dtype -- datetime or
             # timedelta) they are considered equal.
@@ -403,8 +405,8 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
             return  # both nan, so equal
 
         # handle signed zero specially for floats
-        array_actual = array(actual)
-        array_desired = array(desired)
+        array_actual = np.asarray(actual)
+        array_desired = np.asarray(desired)
         if (array_actual.dtype.char in 'Mm' or
                 array_desired.dtype.char in 'Mm'):
             # version 1.18
@@ -706,8 +708,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy.core import array, array2string, isnan, inf, bool_, errstate, all, max, object_
 
-    x = array(x, copy=False, subok=True)
-    y = array(y, copy=False, subok=True)
+    x = np.asanyarray(x)
+    y = np.asanyarray(y)
 
     # original array for output formatting
     ox, oy = x, y
@@ -1034,7 +1036,7 @@ def assert_array_almost_equal(x, y, decimal=6, err_msg='', verbose=True):
         # make sure y is an inexact type to avoid abs(MIN_INT); will cause
         # casting of x later.
         dtype = result_type(y, 1.)
-        y = array(y, dtype=dtype, copy=False, subok=True)
+        y = np.asanyarray(y, dtype)
         z = abs(x - y)
 
         if not issubdtype(z.dtype, number):
@@ -1669,25 +1671,25 @@ def nulp_diff(x, y, dtype=None):
     """
     import numpy as np
     if dtype:
-        x = np.array(x, dtype=dtype)
-        y = np.array(y, dtype=dtype)
+        x = np.asarray(x, dtype=dtype)
+        y = np.asarray(y, dtype=dtype)
     else:
-        x = np.array(x)
-        y = np.array(y)
+        x = np.asarray(x)
+        y = np.asarray(y)
 
     t = np.common_type(x, y)
     if np.iscomplexobj(x) or np.iscomplexobj(y):
         raise NotImplementedError("_nulp not implemented for complex array")
 
-    x = np.array(x, dtype=t)
-    y = np.array(y, dtype=t)
+    x = np.asarray(x, dtype=t)
+    y = np.asarray(y, dtype=t)
 
     if not x.shape == y.shape:
         raise ValueError("x and y do not have the same shape: %s - %s" %
                          (x.shape, y.shape))
 
     def _diff(rx, ry, vdt):
-        diff = np.array(rx-ry, dtype=vdt)
+        diff = np.asarray(rx-ry, dtype=vdt)
         return np.abs(diff)
 
     rx = integer_repr(x)
