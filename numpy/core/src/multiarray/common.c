@@ -1128,35 +1128,6 @@ raise_missing_argument(const char *funcname,
     }
 }
 
-/*
- * Find key in a list of pointers to keyword names.
- * The list should end with NULL.
- *
- * Returns either the index into the list (pointing to the final key with NULL
- * if no match was found), or -1 on failure.
- */
-static NPY_INLINE npy_intp
-locate_key(PyObject *const *kwnames, PyObject *key)
-{
-    PyObject *const *kwname = kwnames;
-    while (*kwname != NULL && *kwname != key) {
-        kwname++;
-    }
-    /* Slow fallback, just in case */
-    if (NPY_UNLIKELY(*kwname == NULL)) {
-        int cmp = 0;
-        kwname = kwnames;
-        while (*kwname != NULL &&
-               (cmp = PyObject_RichCompareBool(key, *kwname,
-                                               Py_EQ)) == 0) {
-            kwname++;
-        }
-        if (cmp < 0) {
-            return -1;
-        }
-    }
-    return kwname - kwnames;
-}
 
 NPY_NO_EXPORT int
 _npy_parse_arguments(
@@ -1298,6 +1269,10 @@ _npy_parse_arguments(
     /* Required arguments are typically not passed as keyword arguments */
     if (NPY_UNLIKELY(len_args < cache->nrequired)) {
         /* (PyArg_* also does this after the actual parsing is finished) */
+        if (NPY_UNLIKELY(max_nargs < cache->nrequired)) {
+            raise_missing_argument(funcname, cache, max_nargs);
+            goto converting_failed;
+        }
         for (int i = 0; i < cache->nrequired; i++) {
             if (NPY_UNLIKELY(all_arguments[i] == NULL)) {
                 raise_missing_argument(funcname, cache, i);
