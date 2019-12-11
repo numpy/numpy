@@ -130,18 +130,18 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     # check if dealing with datetime64 or timedelta64
     is_datelike = start.dtype.kind in 'Mm'
     if is_datelike:
-        # For datetime/timedelta, dtype must be specified:
-        # start and stop will first be cast to this dtype.
-        # Warning: dtype must have high enough precision so
-        # that it is at all possible to draw num equispaced
-        # samples.
+        # For datetime/timedelta, dtype must be specified.
+        # Warning: dtype must have high enough precision so that it is at all possible
+        # to draw num equispaced samples.
         if dtype is None:
-            raise ValueError("linspace with {} objects cannot be called with"
-                    "dtype=None".format(start.dtype))
-        if np.isnat(start):
-            raise ValueError("start is NaT, linspace won't work.")
-        if np.isnat(stop):
-            raise ValueError("stop is NaT, linspace won't work.")
+            raise ValueError("linspace() with {} objects requires the `dtype` argument "
+                    "to be set to the desired output dtype".format(start.dtype))
+        if _nx.isnat(start):
+            raise ValueError("linspace() cannot be called with start=NaT")
+        if _nx.isnat(stop):
+            raise ValueError("linspace() cannot be called with end=NaT")
+        # for datetime/timedelta, we convert start and stop to their internal int
+        # representation.
         start = start.astype(dtype).view(_nx.int64)
         stop = stop.astype(dtype).view(_nx.int64)
     else:
@@ -158,20 +158,18 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
     # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
-    # see gh-7142. Hence, we multiply in place only for standard scalar types,
-    # excepting datetime64 and timedelta64
-    _mult_inplace = _nx.isscalar(delta)
+    # see gh-7142. Hence, we multiply in place only for standard scalar types.
     if num > 1:
         step = delta / div
         if _nx.any(step == 0):
             # Special handling for denormal numbers, gh-5437
             y /= div
-            if _mult_inplace:
+            if _nx.isscalar(delta):
                 y *= delta
             else:
                 y = y * delta
         else:
-            if _mult_inplace:
+            if _nx.isscalar(delta):
                 y *= step
             else:
                 y = y * step
