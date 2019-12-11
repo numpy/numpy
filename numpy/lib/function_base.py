@@ -3814,7 +3814,7 @@ def _quantile_unchecked(a, q, axis=None, out=None, overwrite_input=False,
     """Assumes that q is in [0, 1], and is an ndarray"""
     r, k = _ureduce(a, func=_quantile_ureduce_func, q=q, axis=axis, out=out,
                     overwrite_input=overwrite_input,
-                    interpolation=interpolation)
+                    interpolation=interpolation, keepdims=keepdims)
     if keepdims:
         return r.reshape(q.shape + k)
     else:
@@ -3929,21 +3929,40 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             indices_above = indices_above[:-1]
             n = np.isnan(ap[-1:, ...])
 
-        x1 = take(ap, indices_below, axis=axis) * weights_below
-        x2 = take(ap, indices_above, axis=axis) * weights_above
+        x1 = take(ap, indices_below, axis=axis)
+        x2 = take(ap, indices_above, axis=axis)
+
+        r_above = x1 + (x2 - x1) * weights_above
+        r_below = x2 - (x2 - x1) * weights_below
 
         # ensure axis with q-th is first
-        x1 = np.moveaxis(x1, axis, 0)
-        x2 = np.moveaxis(x2, axis, 0)
+        r_above = np.moveaxis(r_above, axis, 0)
+        r_below = np.moveaxis(r_below, axis, 0)
 
         if zerod:
-            x1 = x1.squeeze(0)
-            x2 = x2.squeeze(0)
+            weights_above = weights_above.squeeze(0)
+            weights_below = weights_below.squeeze(0)
+            r_above = r_above.squeeze(0)
+            r_below = r_below.squeeze(0)
+
+        r = np.where(weights_above < 0.5, r_above, r_below)
 
         if out is not None:
-            r = add(x1, x2, out=out)
+            if out.ndim == 0:
+                # 0-d output array
+                out[None] = r[None]
+            elif r.ndim == 0:
+                # single element output array
+                out[0] = r.item()
+            else:
+                # n-d array
+                out[:] = r[:]
+            # necessary to not touch the remaining code
+            r = out
         else:
-            r = add(x1, x2)
+            if not keepdims and r.ndim == 0:
+                # return the 0-d item
+                r = r.item()
 
     if np.any(n):
         if zerod:

@@ -2931,6 +2931,13 @@ class TestPercentile(object):
         assert_equal(np.percentile(
             a, [0.3, 0.6], (0, 2), interpolation='nearest'), b)
 
+    def test_percentile_monitically_property(self):
+        # regression for gh-14685
+        a = np.array(
+            [0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7]) * 0.1
+        p = np.percentile(a, [89, 90, 95, 96, 98, 99])
+        assert (np.diff(p) >= 0).all()
+
 
 class TestQuantile(object):
     # most of this is already tested by TestPercentile
