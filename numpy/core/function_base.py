@@ -130,7 +130,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     # check if dealing with datetime64 or timedelta64
     is_datelike = start.dtype.kind in 'Mm'
     if is_datelike:
-        # For datetime/timedelta, dtype must be specified
+        # For datetime/timedelta, dtype must be specified:
         # start and stop will first be cast to this dtype.
         # Warning: dtype must have high enough precision so
         # that it is at all possible to draw num equispaced
@@ -138,33 +138,28 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         if dtype is None:
             raise ValueError("linspace with {} objects cannot be called with"
                     "dtype=None".format(start.dtype))
-        start = start.astype(dtype)
-        stop = stop.astype(dtype)
-        # y cannot be cast to datetime64/timedelta64, but left
-        # as int64, since later on we will do y * delta, and
-        # <m8[s] * <m8[s] is not allowed.
-        delta = stop - start
-        y = _nx.arange(0, num).reshape((-1,) + (1,) * ndim(delta))
-
+        start = start.astype(dtype).view(_nx.int64)
+        stop = stop.astype(dtype).view(_nx.int64)
     else:
         # Convert float/complex array scalars to float, gh-3504
         start = start * 1.0
         stop  = stop  * 1.0
-        dt = result_type(start, stop, float(num))
-        delta = stop - start
-        y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
 
-        if dtype is None:
-            dtype = dt
+    dt = result_type(start, stop, float(num))
+    delta = stop - start
+    y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
+
+    if dtype is None:
+        dtype = dt
 
     # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
     # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
     # see gh-7142. Hence, we multiply in place only for standard scalar types,
     # excepting datetime64 and timedelta64
-    _mult_inplace = _nx.isscalar(delta) and (not is_datelike)
+    _mult_inplace = _nx.isscalar(delta)
     if num > 1:
         step = delta / div
-        if (not is_datelike) and _nx.any(step == 0):
+        if _nx.any(step == 0):
             # Special handling for denormal numbers, gh-5437
             y /= div
             if _mult_inplace:
@@ -192,6 +187,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     if axis != 0:
         y = _nx.moveaxis(y, 0, axis)
+
+    if is_datelike:
+        y = y.astype(dtype)
 
     if retstep:
         return y.astype(dtype, copy=False), step
