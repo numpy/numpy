@@ -1055,23 +1055,8 @@ initialize_keywords(
     for (int i = 0; i < nargs; i++) {
         /* Advance through non-kwargs, which do not require setup. */
         char *name = va_arg(va, char *);
-        convert *converter = va_arg(va, convert *);
+        va_arg(va, convert *);
         va_arg(va, void *);
-
-        /*
-        if (converter == NULL) {
-            cache->intent[i] = 'O';
-        }
-        else if (converter == (convert *)PyArray_BoolConverter) {
-            cache->intent[i] = '?';
-        }
-        else if (converter == (convert *)PyArray_PythonPyIntFromInt) {
-            cache->intent[i] = 'i';
-        }
-        else {
-            cache->intent[i] = '&';
-        }
-         */
 
         if (i >= npositional_only) {
             int i_kwarg = i - npositional_only;
@@ -1133,15 +1118,14 @@ NPY_NO_EXPORT int
 _npy_parse_arguments(
         const char *funcname, int nrequired, int npositional,
          /* cache_ptr is a NULL initialized persistent storage for data */
-        _NpyArgParserCache *cache,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
+        _NpyArgParserCache *cache, NPY_PARAMS_DEF,
         /* ... is NULL, NULL, NULL terminated: name, converter, value */
         ...)
 {
     if (NPY_UNLIKELY(cache->npositional == -1)) {
         va_list va;
+        va_start(va, NPY_PARAMS_KWARG_OBJ);
 
-        va_start(va, kwnames);
         int res = initialize_keywords(
                 funcname, nrequired, npositional, cache, va);
         va_end(va);
@@ -1150,6 +1134,8 @@ _npy_parse_arguments(
         }
     }
 
+
+    NPY_PARAMS_DEFINE_LEN_ARGS;
     if (NPY_UNLIKELY(len_args > cache->npositional)) {
         return raise_incorrect_number_of_positional_args(
                 funcname, cache, len_args);
@@ -1159,24 +1145,36 @@ _npy_parse_arguments(
     PyObject *all_arguments[NPY_MAXARGS];
 
     for (Py_ssize_t i = 0; i < len_args; i++) {
-        all_arguments[i] = args[i];
+        all_arguments[i] = NPY_PARAMS_GET_ARG(i);
     }
 
     /* Without kwarg, do not iterate all converters. */
     int max_nargs = (int)len_args;
     Py_ssize_t len_kwargs = 0;
 
+    /* If there are any kwargs, first handle them */
+#ifdef METH_FASTCALL
     if (NPY_LIKELY(kwnames != NULL)) {
-        /* If there are any kwargs, first handle them */
         len_kwargs = PyTuple_GET_SIZE(kwnames);
+#else
+    if (NPY_LIKELY(kwargs != NULL)) {
+#endif
         max_nargs = cache->nargs;
 
         for (int i = len_args; i < cache->nargs; i++) {
             all_arguments[i] = NULL;
         }
 
+#ifdef METH_FASTCALL
         for (Py_ssize_t i = 0; i < len_kwargs; i++) {
             PyObject *key = PyTuple_GET_ITEM(kwnames, i);
+            PyObject *value = args[i + len_args];
+#else
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(kwargs, &pos, &key, &value)) {
+            len_kwargs += 1;
+#endif
             PyObject *const *name;
 
             /* Super-fast path, check identity: */
@@ -1217,8 +1215,7 @@ _npy_parse_arguments(
                 return 0;
             }
 
-            // TODO: Optimize i away maybe...:
-            all_arguments[param_pos] = args[i + len_args];
+            all_arguments[param_pos] = value;
         }
     }
 
@@ -1231,7 +1228,7 @@ _npy_parse_arguments(
 
     /* At this time `all_arguments` holds either NULLs or the objects */
     va_list va;
-    va_start(va, kwnames);
+    va_start(va, NPY_PARAMS_KWARG_OBJ);
 
     for (int i = 0; i < max_nargs; i++) {
         va_arg(va, char *);

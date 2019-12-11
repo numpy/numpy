@@ -345,6 +345,39 @@ typedef struct {
     PyObject *kw_strings[NPY_MAXARGS];
 } _NpyArgParserCache;
 
+
+/*
+ * Macros to help support `METH_FASTCALL` when available and fall back to
+ * normal parsing when not.
+ * The signature of function is different in the two cases, so this switches.
+ */
+#ifdef METH_FASTCALL
+
+#if PY_VERSION_HEX >= 0x03070000
+    #define NPY_METH_KWARGS_FASTCALL METH_FASTCALL | METH_KEYWORDS
+#else
+    /* Python 3.6 _officially_ did not support this, but it does. */
+    #define NPY_METH_KWARGS_FASTCALL METH_FASTCALL
+#endif
+#define NPY_PARAMS_DEF \
+    PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames
+#define NPY_PARAMS_PASS args, len_args, kwnames
+#define NPY_PARAMS_GET_ARG(i) args[i]
+#define NPY_PARAMS_DEFINE_LEN_ARGS do {} while(0)
+#define NPY_PARAMS_KWARG_OBJ kwnames
+
+#else  /* METH_FASTCALL */
+
+#define NPY_METH_KWARGS_FASTCALL METH_VARARGS | METH_KEYWORDS
+#define NPY_PARAMS_DEF PyObject *args, PyObject *kwargs
+#define NPY_PARAMS_PASS args, kwargs
+#define NPY_PARAMS_GET_ARG(i) PyTuple_GET_ITEM(args, i)
+#define NPY_PARAMS_DEFINE_LEN_ARGS Py_ssize_t len_args = PyTuple_GET_SIZE(args)
+#define NPY_PARAMS_KWARG_OBJ kwargs
+
+#endif  /* METH_FASTCALL */
+
+
 #define NPY_PREPARE_ARGPARSER \
         static _NpyArgParserCache __argparse_cache = {-1};      \
         static _NpyArgParserCache *const __argparse_cache_ptr = \
@@ -354,14 +387,13 @@ NPY_NO_EXPORT int
 _npy_parse_arguments(
         const char *funcname, int nrequired, int npositional,
         /* cache_ptr is a NULL initialized persistent storage for data */
-        _NpyArgParserCache *cache_ptr,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
+        _NpyArgParserCache *cache_ptr, NPY_PARAMS_DEF,
         /* va_list is NULL, NULL, NULL terminated: name, converter, value */
         ...) NPY_GCC_NONNULL(1);
 
 #define npy_parse_arguments(                                                \
-        funcname, nrequired, npositional, args, kwargs, ...)                \
+        funcname, nrequired, npositional, NPY_PARAMS_PASS, ...)             \
         _npy_parse_arguments(funcname, nrequired, npositional,              \
-                             __argparse_cache_ptr, args, kwargs, __VA_ARGS__)
+                             __argparse_cache_ptr, NPY_PARAMS_PASS, __VA_ARGS__)
 
 #endif
