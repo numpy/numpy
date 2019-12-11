@@ -135,8 +135,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         # Warning: dtype must have high enough precision so
         # that it is at all possible to draw num equispaced
         # samples.
-        assert dtype is not None, "linspace with {} objects cannot be called "\
-            "with dtype=None".format(start.dtype)
+        if dtype is None:
+            raise ValueError("linspace with {} objects cannot be called with"
+                    "dtype=None".format(start.dtype))
         start = start.astype(dtype)
         stop = stop.astype(dtype)
         # y cannot be cast to datetime64/timedelta64, but left
