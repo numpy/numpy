@@ -1891,8 +1891,17 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                 &PyArrayDescr_Type, &typecode, &obj)) {
         return NULL;
     }
+    if (PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
+        if (!PySequence_Check(obj)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "found non-sequence while unpickling scalar with "
+                            "NPY_LIST_PICKLE set");
+            return NULL;
+        }
+        dptr = &obj;
+    }
 
-    if (PyDataType_FLAGCHK(typecode, NPY_ITEM_IS_POINTER)) {
+    else if (PyDataType_FLAGCHK(typecode, NPY_ITEM_IS_POINTER)) {
         if (obj == NULL) {
             obj = Py_None;
         }
