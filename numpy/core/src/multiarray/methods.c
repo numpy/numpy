@@ -246,11 +246,12 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyObject *out_dtype = NULL;
     PyObject *out_type = NULL;
     PyArray_Descr *dtype = NULL;
+    NPY_PREPARE_ARGPARSER;
 
-    static char *kwlist[] = {"dtype", "type", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO:view", kwlist,
-                                     &out_dtype,
-                                     &out_type)) {
+    if (!npy_parse_arguments("view", 0, -1, args, kwds,
+                "dtype", NULL, &out_dtype,
+                "type", NULL, &out_type,
+                NULL, NULL, NULL)) {
         return NULL;
     }
 
@@ -790,8 +791,6 @@ npy_casting_to_string(NPY_CASTING casting)
 static PyObject *
 array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"dtype", "order", "casting",
-                             "subok", "copy", NULL};
     PyArray_Descr *dtype = NULL;
     /*
      * TODO: UNSAFE default for compatibility, I think
@@ -800,13 +799,15 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
     NPY_CASTING casting = NPY_UNSAFE_CASTING;
     NPY_ORDER order = NPY_KEEPORDER;
     int forcecopy = 1, subok = 1;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&ii:astype", kwlist,
-                            PyArray_DescrConverter, &dtype,
-                            PyArray_OrderConverter, &order,
-                            PyArray_CastingConverter, &casting,
-                            &subok,
-                            &forcecopy)) {
+    if (!npy_parse_arguments("astype", 1, -1, args, kwds,
+                "dtype", &PyArray_DescrConverter, &dtype,
+                "order", &PyArray_OrderConverter, &order,
+                "casting", &PyArray_CastingConverter, &casting,
+                "subok", &PyArray_PythonPyIntFromInt, &subok,
+                "copy", &PyArray_PythonPyIntFromInt, &forcecopy,
+                NULL, NULL, NULL)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -1127,10 +1128,11 @@ static PyObject *
 array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     NPY_ORDER order = NPY_CORDER;
-    static char *kwlist[] = {"order", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:copy", kwlist,
-                                     PyArray_OrderConverter, &order)) {
+    if (!npy_parse_arguments("copy", 0, -1, args, kwds,
+                "order", PyArray_OrderConverter, &order,
+                NULL, NULL, NULL)) {
         return NULL;
     }
 
@@ -2424,10 +2426,11 @@ static PyObject *
 array_flatten(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     NPY_ORDER order = NPY_CORDER;
-    static char *kwlist[] = {"order", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:flatten", kwlist,
-                            PyArray_OrderConverter, &order)) {
+    if (!npy_parse_arguments("flatten", 0, -1, args, kwds,
+                "order", PyArray_OrderConverter, &order,
+                NULL, NULL, NULL)) {
         return NULL;
     }
     return PyArray_Flatten(self, order);
@@ -2438,10 +2441,11 @@ static PyObject *
 array_ravel(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     NPY_ORDER order = NPY_CORDER;
-    static char *kwlist[] = {"order", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:ravel", kwlist,
-                            PyArray_OrderConverter, &order)) {
+    if (!npy_parse_arguments("ravel", 0, -1, args, kwds,
+                "order", PyArray_OrderConverter, &order,
+                NULL, NULL, NULL)) {
         return NULL;
     }
     return PyArray_Ravel(self, order);

@@ -47,6 +47,7 @@
 #include "extobj.h"
 #include "common.h"
 #include "numpyos.h"
+#include "conversion_utils.h"
 
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
@@ -4402,12 +4403,6 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     PyArrayObject *out = NULL;
     int keepdims = 0;
     PyObject *initial = NULL;
-    static char *reduce_kwlist[] = {
-        "array", "axis", "dtype", "out", "keepdims", "initial", "where", NULL};
-    static char *accumulate_kwlist[] = {
-            "array", "axis", "dtype", "out", NULL};
-    static char *reduceat_kwlist[] = {
-            "array", "indices", "axis", "dtype", "out", NULL};
 
     static char *_reduce_type[] = {"reduce", "accumulate", "reduceat", NULL};
 
@@ -4450,12 +4445,16 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(NPY_INTP);
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&:reduceat", reduceat_kwlist,
-                                         &op,
-                                         &obj_ind,
-                                         &axes_in,
-                                         PyArray_DescrConverter2, &otype,
-                                         PyArray_OutputConverter, &out)) {
+        NPY_PREPARE_ARGPARSER;
+
+        if (!npy_parse_arguments(
+                "reduceat", 2, -1, args, kwds,
+                "array", NULL, &op,
+                "indices", NULL, &obj_ind,
+                "axis", NULL, &axes_in,
+                "dtype", PyArray_DescrConverter2, &otype,
+                "out", PyArray_OutputConverter, &out,
+                NULL, NULL, NULL)) {
             goto fail;
         }
         indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype,
@@ -4465,24 +4464,30 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     else if (operation == UFUNC_ACCUMULATE) {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&:accumulate",
-                                         accumulate_kwlist,
-                                         &op,
-                                         &axes_in,
-                                         PyArray_DescrConverter2, &otype,
-                                         PyArray_OutputConverter, &out)) {
+        NPY_PREPARE_ARGPARSER;
+
+        if (!npy_parse_arguments(
+                "accumulate", 1, -1, args, kwds,
+                "array", NULL, &op,
+                "axis", NULL, &axes_in,
+                "dtype", PyArray_DescrConverter2, &otype,
+                "out", PyArray_OutputConverter, &out,
+                NULL, NULL, NULL)) {
             goto fail;
         }
     }
     else {
-        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&iOO&:reduce",
-                                         reduce_kwlist,
-                                         &op,
-                                         &axes_in,
-                                         PyArray_DescrConverter2, &otype,
-                                         PyArray_OutputConverter, &out,
-                                         &keepdims, &initial,
-                                         _wheremask_converter, &wheremask)) {
+        NPY_PREPARE_ARGPARSER;
+
+        if (!npy_parse_arguments("reduce", 1, -1, args, kwds,
+                "array", NULL, &op,
+                "axis", NULL, &axes_in,
+                "dtype", PyArray_DescrConverter2, &otype,
+                "out", PyArray_OutputConverter, &out,
+                "keepdims", PyArray_PythonPyIntFromInt, &keepdims,
+                "initial", NULL, &initial,
+                "where", _wheremask_converter, &wheremask,
+                NULL, NULL, NULL)) {
             goto fail;
         }
     }

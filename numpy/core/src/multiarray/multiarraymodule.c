@@ -1795,18 +1795,18 @@ fail:
 static PyObject *
 array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
-
-    static char *kwlist[] = {"shape", "dtype", "order", NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order;
     PyArrayObject *ret = NULL;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&:empty", kwlist,
-                PyArray_IntpConverter, &shape,
-                PyArray_DescrConverter, &typecode,
-                PyArray_OrderConverter, &order)) {
+    if (!npy_parse_arguments("empty", 1, -1, args, kwds,
+                "shape", &PyArray_IntpConverter, &shape,
+                "dtype", &PyArray_DescrConverter, &typecode,
+                "order", &PyArray_OrderConverter, &order,
+                NULL, NULL, NULL)) {
         goto fail;
     }
 
@@ -1838,21 +1838,21 @@ fail:
 static PyObject *
 array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
-
-    static char *kwlist[] = {"prototype", "dtype", "order", "subok", "shape", NULL};
     PyArrayObject *prototype = NULL;
     PyArray_Descr *dtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
     PyArrayObject *ret = NULL;
     int subok = 1;
     PyArray_Dims shape = {NULL, 0};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&iO&:empty_like", kwlist,
-                &PyArray_Converter, &prototype,
-                &PyArray_DescrConverter2, &dtype,
-                &PyArray_OrderConverter, &order,
-                &subok,
-                &PyArray_IntpConverter, &shape)) {
+    if (!npy_parse_arguments("empty_like", 1, -1, args, kwds,
+                "prototype", &PyArray_Converter, &prototype,
+                "dtype", &PyArray_DescrConverter2, &dtype,
+                "order", &PyArray_OrderConverter, &order,
+                "subok", &PyArray_PythonPyIntFromInt, &subok,
+                "shape", &PyArray_IntpConverter, &shape,
+                NULL, NULL, NULL)) {
         goto fail;
     }
     /* steals the reference to dtype if it's not NULL */
@@ -1955,17 +1955,18 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 static PyObject *
 array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"shape", "dtype", "order", NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order = NPY_FALSE;
     PyArrayObject *ret = NULL;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&:zeros", kwlist,
-                PyArray_IntpConverter, &shape,
-                PyArray_DescrConverter, &typecode,
-                PyArray_OrderConverter, &order)) {
+    if (!npy_parse_arguments("zeros", 1, -1, args, kwds,
+                "shape", &PyArray_IntpConverter, &shape,
+                "dtype", &PyArray_DescrConverter, &typecode,
+                "order", &PyArray_OrderConverter, &order,
+                NULL, NULL, NULL)) {
         goto fail;
     }
 
@@ -2174,10 +2175,13 @@ array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     PyObject *a0;
     PyObject *out = NULL;
     int axis = 0;
-    static char *kwlist[] = {"seq", "axis", "out", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:concatenate", kwlist,
-                &a0, PyArray_AxisConverter, &axis, &out)) {
+    if (!npy_parse_arguments("concatenate", 1, -1, args, kwds,
+                "seq", NULL, &a0,
+                "axis", &PyArray_AxisConverter, &axis,
+                "out", NULL, &out,
+                NULL, NULL, NULL)) {
         return NULL;
     }
     if (out != NULL) {
@@ -2208,10 +2212,13 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
 {
     PyObject *v, *a, *o = NULL;
     PyArrayObject *ret;
-    char* kwlist[] = {"a", "b", "out", NULL };
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O:matrixproduct",
-                                     kwlist, &a, &v, &o)) {
+    if (!npy_parse_arguments("matrixproduct", 2, -1, args, kwds,
+            "a", NULL, &a,
+            "b", NULL, &v,
+            "out", NULL, &o,
+            NULL, NULL, NULL)) {
         return NULL;
     }
     if (o != NULL) {
@@ -2717,10 +2724,13 @@ array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *shape, *a0;
     int mode = 0;
-    static char *kwlist[] = {"a", "v", "mode", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i:correlate", kwlist,
-                &a0, &shape, &mode)) {
+    if (!npy_parse_arguments("correlate", 2, -1, args, kwds,
+                "a", NULL, &a0,
+                "v", NULL, &shape,
+                "mode", &PyArray_PythonPyIntFromInt, &mode,
+                NULL, NULL, NULL)) {
         return NULL;
     }
     return PyArray_Correlate(a0, shape, mode);
@@ -2731,10 +2741,13 @@ array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *shape, *a0;
     int mode = 0;
-    static char *kwlist[] = {"a", "v", "mode", NULL};
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i:correlate2", kwlist,
-                &a0, &shape, &mode)) {
+    if (!npy_parse_arguments("correlate2", 2, -1, args, kwds,
+            "a", NULL, &a0,
+            "v", NULL, &shape,
+            "mode", &PyArray_PythonPyIntFromInt, &mode,
+            NULL, NULL, NULL)) {
         return NULL;
     }
     return PyArray_Correlate2(a0, shape, mode);
@@ -2743,14 +2756,15 @@ array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 static PyObject *
 array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
-    static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
     PyArray_Descr *typecode = NULL;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&:arange", kwd,
-                &o_start,
-                &o_stop,
-                &o_step,
-                PyArray_DescrConverter2, &typecode)) {
+    if (!npy_parse_arguments("arange", 1, -1, args, kws,
+            "start", NULL, &o_start,
+            "stop", NULL, &o_stop,
+            "step", NULL, &o_step,
+            "dtype", &PyArray_DescrConverter2, &typecode,
+            NULL, NULL, NULL)) {
         Py_XDECREF(typecode);
         return NULL;
     }
@@ -3412,6 +3426,40 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 #undef _test_code
 
 
+static int
+trimmode_converter(PyObject *obj, TrimMode *trim)
+{
+    if (!PyUnicode_Check(obj) || PyUnicode_GetLength(obj) != 1) {
+        goto error;
+    }
+    const char *trimstr = PyUnicode_AsUTF8AndSize(obj, NULL);
+
+    if (trimstr != NULL) {
+        if (trimstr[0] == 'k') {
+            *trim = TrimMode_None;
+        }
+        else if (trimstr[0] == '.') {
+            *trim = TrimMode_Zeros;
+        }
+        else if (trimstr[0] ==  '0') {
+            *trim = TrimMode_LeaveOneZero;
+        }
+        else if (trimstr[0] ==  '-') {
+            *trim = TrimMode_DptZeros;
+        }
+        else {
+            goto error;
+        }
+    }
+    return NPY_SUCCEED;
+
+error:
+    PyErr_Format(PyExc_TypeError,
+            "if supplied, trim must be 'k', '.', '0' or '-' found `%100S`",
+            obj);
+    return NPY_FAIL;
+}
+
 /*
  * Prints floating-point scalars using the Dragon4 algorithm, scientific mode.
  * See docstring of `np.format_float_scientific` for description of arguments.
@@ -3422,38 +3470,23 @@ static PyObject *
 dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
-    static char *kwlist[] = {"x", "precision", "unique", "sign", "trim",
-                             "pad_left", "exp_digits", NULL};
     int precision=-1, pad_left=-1, exp_digits=-1;
-    char *trimstr=NULL;
     DigitMode digit_mode;
     TrimMode trim = TrimMode_None;
     int sign=0, unique=1;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiisii:dragon4_scientific",
-                kwlist, &obj, &precision, &unique, &sign, &trimstr, &pad_left,
-                &exp_digits)) {
+    if (!npy_parse_arguments(
+            "dragon4_scientific", 1, -1, args, kwds,
+            "x", NULL , &obj,
+            "precision", &PyArray_PythonPyIntFromInt, &precision,
+            "unique", &PyArray_PythonPyIntFromInt, &unique,
+            "sign", &PyArray_PythonPyIntFromInt, &sign,
+            "trim", &trimmode_converter, &trim,
+            "pad_left", &PyArray_PythonPyIntFromInt, &pad_left,
+            "exp_digits", &PyArray_PythonPyIntFromInt, &exp_digits,
+            NULL, NULL, NULL)) {
         return NULL;
-    }
-
-    if (trimstr != NULL) {
-        if (strcmp(trimstr, "k") == 0) {
-            trim = TrimMode_None;
-        }
-        else if (strcmp(trimstr, ".") == 0) {
-            trim = TrimMode_Zeros;
-        }
-        else if (strcmp(trimstr, "0") == 0) {
-            trim = TrimMode_LeaveOneZero;
-        }
-        else if (strcmp(trimstr, "-") == 0) {
-            trim = TrimMode_DptZeros;
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                "if supplied, trim must be 'k', '.', '0' or '-'");
-            return NULL;
-        }
     }
 
     digit_mode = unique ? DigitMode_Unique : DigitMode_Exact;
@@ -3478,39 +3511,25 @@ static PyObject *
 dragon4_positional(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
-    static char *kwlist[] = {"x", "precision", "unique", "fractional",
-                             "sign", "trim", "pad_left", "pad_right", NULL};
     int precision=-1, pad_left=-1, pad_right=-1;
-    char *trimstr=NULL;
     CutoffMode cutoff_mode;
     DigitMode digit_mode;
     TrimMode trim = TrimMode_None;
     int sign=0, unique=1, fractional=0;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiiisii:dragon4_positional",
-                kwlist, &obj, &precision, &unique, &fractional, &sign, &trimstr,
-                &pad_left, &pad_right)) {
+    if (!npy_parse_arguments(
+            "dragon4_positional", 1, -1, args, kwds,
+            "x", NULL , &obj,
+            "precision", &PyArray_PythonPyIntFromInt, &precision,
+            "unique", &PyArray_PythonPyIntFromInt, &unique,
+            "fractional", &PyArray_PythonPyIntFromInt, &fractional,
+            "sign", &PyArray_PythonPyIntFromInt, &sign,
+            "trim", &trimmode_converter, &trim,
+            "pad_left", &PyArray_PythonPyIntFromInt, &pad_left,
+            "pad_right", &PyArray_PythonPyIntFromInt, &pad_right,
+            NULL, NULL, NULL)) {
         return NULL;
-    }
-
-    if (trimstr != NULL) {
-        if (strcmp(trimstr, "k") == 0) {
-            trim = TrimMode_None;
-        }
-        else if (strcmp(trimstr, ".") == 0) {
-            trim = TrimMode_Zeros;
-        }
-        else if (strcmp(trimstr, "0") == 0) {
-            trim = TrimMode_LeaveOneZero;
-        }
-        else if (strcmp(trimstr, "-") == 0) {
-            trim = TrimMode_DptZeros;
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError,
-                "if supplied, trim must be 'k', '.', '0' or '-'");
-            return NULL;
-        }
     }
 
     digit_mode = unique ? DigitMode_Unique : DigitMode_Exact;
@@ -4075,13 +4094,16 @@ array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *
 static PyObject *
 normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"axis", "ndim", "msg_prefix", NULL};
     int axis;
     int ndim;
     PyObject *msg_prefix = Py_None;
+    NPY_PREPARE_ARGPARSER;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "ii|O:normalize_axis_index",
-                                     kwlist, &axis, &ndim, &msg_prefix)) {
+    if (!npy_parse_arguments("normalize_axis_index", 2, -1, args, kwds,
+            "axis", &PyArray_PythonPyIntFromInt, &axis,
+            "ndim", &PyArray_PythonPyIntFromInt, &ndim,
+            "msg_prefix", NULL, &msg_prefix,
+            NULL, NULL, NULL)) {
         return NULL;
     }
     if (check_and_adjust_axis_msg(&axis, ndim, msg_prefix) < 0) {
@@ -4114,7 +4136,19 @@ static struct PyMethodDef array_module_methods[] = {
         (PyCFunction)array_set_typeDict,
         METH_VARARGS, NULL},
     {"array",
-        (PyCFunction)_array_fromobject,
+        (PyCFunction)array_array,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"asarray",
+        (PyCFunction)array_asarray,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"asanyarray",
+        (PyCFunction)array_asanyarray,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"ascontiguousarray",
+        (PyCFunction)array_ascontiguousarray,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"asfortranarray",
+        (PyCFunction)array_asfortranarray,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"copyto",
         (PyCFunction)array_copyto,
