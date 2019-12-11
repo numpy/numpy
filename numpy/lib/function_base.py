@@ -3932,8 +3932,9 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         x1 = take(ap, indices_below, axis=axis)
         x2 = take(ap, indices_above, axis=axis)
 
-        r_above = x1 + (x2 - x1) * weights_above
-        r_below = x2 - (x2 - x1) * weights_below
+        diff_x2_x1 = x2 - x1
+        r_above = x1 + diff_x2_x1 * weights_above
+        r_below = x2 - diff_x2_x1 * weights_below
 
         # ensure axis with q-th is first
         r_above = np.moveaxis(r_above, axis, 0)
@@ -3947,22 +3948,12 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
 
         r = np.where(weights_above < 0.5, r_above, r_below)
 
+        if r.ndim == 0:
+            r = r[None][0]
+
         if out is not None:
-            if out.ndim == 0:
-                # 0-d output array
-                out[None] = r[None]
-            elif r.ndim == 0:
-                # single element output array
-                out[0] = r.item()
-            else:
-                # n-d array
-                out[:] = r[:]
-            # necessary to not touch the remaining code
+            out[...] = r
             r = out
-        else:
-            if not keepdims and r.ndim == 0:
-                # return the 0-d item
-                r = r.item()
 
     if np.any(n):
         if zerod:
