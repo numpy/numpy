@@ -355,7 +355,7 @@ _npy_parse_arguments(
         const char *funcname, int nrequired, int npositional,
         /* cache_ptr is a NULL initialized persistent storage for data */
         _NpyArgParserCache *cache_ptr,
-        PyObject *args, PyObject *kwargs,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         /* va_list is NULL, NULL, NULL terminated: name, converter, value */
         ...) NPY_GCC_NONNULL(1);
 

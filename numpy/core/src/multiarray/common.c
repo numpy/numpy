@@ -1163,14 +1163,14 @@ _npy_parse_arguments(
         const char *funcname, int nrequired, int npositional,
          /* cache_ptr is a NULL initialized persistent storage for data */
         _NpyArgParserCache *cache,
-        PyObject *args, PyObject *kwargs,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
         /* ... is NULL, NULL, NULL terminated: name, converter, value */
         ...)
 {
     if (NPY_UNLIKELY(cache->npositional == -1)) {
         va_list va;
 
-        va_start(va, kwargs);
+        va_start(va, kwnames);
         int res = initialize_keywords(
                 funcname, nrequired, npositional, cache, va);
         va_end(va);
@@ -1179,7 +1179,6 @@ _npy_parse_arguments(
         }
     }
 
-    Py_ssize_t len_args = PyTuple_GET_SIZE(args);
     if (NPY_UNLIKELY(len_args > cache->npositional)) {
         return raise_incorrect_number_of_positional_args(
                 funcname, cache, len_args);
@@ -1189,29 +1188,55 @@ _npy_parse_arguments(
     PyObject *all_arguments[NPY_MAXARGS];
 
     for (Py_ssize_t i = 0; i < len_args; i++) {
-        all_arguments[i] = PyTuple_GET_ITEM(args, i);
+        all_arguments[i] = args[i];
     }
 
     /* Without kwarg, do not iterate all converters. */
     int max_nargs = (int)len_args;
     Py_ssize_t len_kwargs = 0;
 
-    if (NPY_LIKELY(kwargs != NULL)) {
+    if (NPY_LIKELY(kwnames != NULL)) {
         /* If there are any kwargs, first handle them */
+        len_kwargs = PyTuple_GET_SIZE(kwnames);
         max_nargs = cache->nargs;
 
         for (int i = len_args; i < cache->nargs; i++) {
             all_arguments[i] = NULL;
         }
 
-        PyObject *key, *value;
-        Py_ssize_t pos = 0;
+        for (Py_ssize_t i = 0; i < len_kwargs; i++) {
+            PyObject *key = PyTuple_GET_ITEM(kwnames, i);
+            PyObject *const *name;
 
-        while (PyDict_Next(kwargs, &pos, &key, &value)) {
-            len_kwargs += 1;
+            /* Super-fast path, check identity: */
+            for (name = cache->kw_strings; *name != NULL; name++) {
+                if (*name == key) {
+                    break;
+                }
+            }
+            if (NPY_UNLIKELY(*name == NULL)) {
+                /* Slow  fallback, if identity checks failed for some reason */
+                for (name = cache->kw_strings; *name != NULL; name++) {
+                    int eq = PyObject_RichCompareBool(*name, key, Py_EQ);
+                    if (eq == -1) {
+                        return 0;
+                    }
+                    else if (eq) {
+                        break;
+                    }
+                }
+                if (NPY_UNLIKELY(*name == NULL)) {
+                    /* Invalid keyword argument. */
+                    PyErr_Format(PyExc_TypeError,
+                            "%s() got an unexpected keyword argument '%S'",
+                            funcname, key);
+                    return 0;
+                }
+            }
 
-            ssize_t param_pos = (
-                locate_key(cache->kw_strings, key) + cache->npositional_only);
+             ssize_t param_pos = (
+                    (name - cache->kw_strings) + cache->npositional_only);
+
 
             /* There could be an identical positional argument */
             if (NPY_UNLIKELY(all_arguments[param_pos] != NULL)) {
@@ -1221,7 +1246,8 @@ _npy_parse_arguments(
                 return 0;
             }
 
-            all_arguments[param_pos] = value;
+            // TODO: Optimize i away maybe...:
+            all_arguments[param_pos] = args[i + len_args];
         }
     }
 
@@ -1234,7 +1260,7 @@ _npy_parse_arguments(
 
     /* At this time `all_arguments` holds either NULLs or the objects */
     va_list va;
-    va_start(va, kwargs);
+    va_start(va, kwnames);
 
     for (int i = 0; i < max_nargs; i++) {
         va_arg(va, char *);
@@ -1262,8 +1288,8 @@ _npy_parse_arguments(
         else if (NPY_UNLIKELY(res == Py_CLEANUP_SUPPORTED)) {
             /* TODO: Implementing cleanup when needed should not be hard */
             PyErr_Format(PyExc_SystemError,
-                         "converter cleanup of parameter %d to %s() not supported.",
-                         i, funcname);
+                    "converter cleanup of parameter %d to %s() not supported.",
+                    i, funcname);
             goto converting_failed;
         }
         assert(0);

@@ -1657,7 +1657,8 @@ finish:
 
 
 static PyObject *
-array_array(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
+array_array(PyObject *NPY_UNUSED(ignored),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
     npy_bool subok = NPY_FALSE;
@@ -1667,8 +1668,8 @@ array_array(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     NPY_ORDER order = NPY_KEEPORDER;
     NPY_PREPARE_ARGPARSER;
 
-    if ((kws != NULL) || (PyTuple_GET_SIZE(args) != 1)) {
-        if (!npy_parse_arguments("array", 1, 2, args, kws,
+    if (len_args != 1 || (kwnames != NULL)) {
+        if (!npy_parse_arguments("array", 1, 2, args, len_args, kwnames,
                     "object", NULL, &op,
                     "dtype", &PyArray_DescrConverter2, &type,
                     "copy", &PyArray_BoolConverter, &copy,
@@ -1682,7 +1683,7 @@ array_array(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     }
     else {
         /* Fast path should not matter much here, just for symmetry */
-        op = PyTuple_GET_ITEM(args, 0);
+        op = args[0];
     }
 
     PyObject *res = _array_fromobject_generic(
@@ -1692,15 +1693,16 @@ array_array(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 }
 
 static PyObject *
-array_asarray(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
+array_asarray(PyObject *NPY_UNUSED(ignored),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
     NPY_PREPARE_ARGPARSER;
 
-    if ((kws != NULL) || (PyTuple_GET_SIZE(args) != 1)) {
-        if (!npy_parse_arguments("asarray", 1, -1, args, kws,
+    if (len_args != 1 || (kwnames != NULL)) {
+        if (!npy_parse_arguments("asarray", 1, -1, args, len_args, kwnames,
                 "object", NULL, &op,
                 "dtype", &PyArray_DescrConverter2, &type,
                 "order", &PyArray_OrderConverter, &order,
@@ -1710,7 +1712,7 @@ array_asarray(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         }
     }
     else {
-        op = PyTuple_GET_ITEM(args, 0);
+        op = args[0];
     }
 
     PyObject *res = _array_fromobject_generic(
@@ -1720,15 +1722,16 @@ array_asarray(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 }
 
 static PyObject *
-array_asanyarray(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
+array_asanyarray(PyObject *NPY_UNUSED(ignored),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
     PyArray_Descr *type = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
     NPY_PREPARE_ARGPARSER;
 
-    if ((kws != NULL) || (PyTuple_GET_SIZE(args) != 1)) {
-        if (!npy_parse_arguments("asarray", 1, -1, args, kws,
+    if (len_args != 1 || (kwnames != NULL)) {
+        if (!npy_parse_arguments("asarray", 1, -1, args, len_args, kwnames,
                 "object", NULL, &op,
                 "dtype", &PyArray_DescrConverter2, &type,
                 "order", &PyArray_OrderConverter, &order,
@@ -1738,7 +1741,7 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         }
     }
     else {
-        op = PyTuple_GET_ITEM(args, 0);
+        op = args[0];
     }
 
     PyObject *res = _array_fromobject_generic(
@@ -1750,14 +1753,14 @@ array_asanyarray(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 
 static PyObject *
 array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
-        PyObject *args, PyObject *kws)
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
     PyArray_Descr *type = NULL;
     NPY_PREPARE_ARGPARSER;
 
-    if ((kws != NULL) || (PyTuple_GET_SIZE(args) != 1)) {
-        if (!npy_parse_arguments("asarray", 1, -1, args, kws,
+    if (len_args != 1 || (kwnames != NULL)) {
+        if (!npy_parse_arguments("asarray", 1, -1, args, len_args, kwnames,
                 "object", NULL, &op,
                 "dtype", &PyArray_DescrConverter2, &type,
                 NULL, NULL, NULL)) {
@@ -1766,7 +1769,7 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
         }
     }
     else {
-        op = PyTuple_GET_ITEM(args, 0);
+        op = args[0];
     }
 
     PyObject *res = _array_fromobject_generic(
@@ -1778,14 +1781,15 @@ array_ascontiguousarray(PyObject *NPY_UNUSED(ignored),
 
 static PyObject *
 array_asfortranarray(PyObject *NPY_UNUSED(ignored),
-        PyObject *args, PyObject *kws)
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *op;
     PyArray_Descr *type = NULL;
     NPY_PREPARE_ARGPARSER;
 
-    if ((kws != NULL) || (PyTuple_GET_SIZE(args) != 1)) {
-        if (!npy_parse_arguments("asarray", 1, -1, args, kws,
+    if (len_args != 1 || (kwnames != NULL)) {
+        if (!npy_parse_arguments("asfotranarray", 1, -1,
+                args, len_args, kwnames,
                 "object", NULL, &op,
                 "dtype", &PyArray_DescrConverter2, &type,
                 NULL, NULL, NULL)) {
@@ -1794,7 +1798,7 @@ array_asfortranarray(PyObject *NPY_UNUSED(ignored),
         }
     }
     else {
-        op = PyTuple_GET_ITEM(args, 0);
+        op = args[0];
     }
 
     PyObject *res = _array_fromobject_generic(
@@ -1850,7 +1854,8 @@ fail:
 }
 
 static PyObject *
-array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+array_empty(PyObject *NPY_UNUSED(ignored),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
@@ -1859,7 +1864,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyArrayObject *ret = NULL;
     NPY_PREPARE_ARGPARSER;
 
-    if (!npy_parse_arguments("empty", 1, -1, args, kwds,
+    if (!npy_parse_arguments("empty", 1, -1, args, len_args, kwnames,
                 "shape", &PyArray_IntpConverter, &shape,
                 "dtype", &PyArray_DescrConverter, &typecode,
                 "order", &PyArray_OrderConverter, &order,
@@ -1893,7 +1898,8 @@ fail:
 }
 
 static PyObject *
-array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+array_empty_like(PyObject *NPY_UNUSED(ignored),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyArrayObject *prototype = NULL;
     PyArray_Descr *dtype = NULL;
@@ -1903,7 +1909,7 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyArray_Dims shape = {NULL, 0};
     NPY_PREPARE_ARGPARSER;
 
-    if (!npy_parse_arguments("empty_like", 1, -1, args, kwds,
+    if (!npy_parse_arguments("empty_like", 1, -1, args, len_args, kwnames,
                 "prototype", &PyArray_Converter, &prototype,
                 "dtype", &PyArray_DescrConverter2, &dtype,
                 "order", &PyArray_OrderConverter, &order,
@@ -2010,7 +2016,8 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+array_zeros(PyObject *NPY_UNUSED(ignored),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
@@ -2019,7 +2026,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyArrayObject *ret = NULL;
     NPY_PREPARE_ARGPARSER;
 
-    if (!npy_parse_arguments("zeros", 1, -1, args, kwds,
+    if (!npy_parse_arguments("zeros", 1, -1, args, len_args, kwnames,
                 "shape", &PyArray_IntpConverter, &shape,
                 "dtype", &PyArray_DescrConverter, &typecode,
                 "order", &PyArray_OrderConverter, &order,
@@ -2227,14 +2234,15 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
 }
 
 static PyObject *
-array_concatenate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+array_concatenate(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *a0;
     PyObject *out = NULL;
     int axis = 0;
     NPY_PREPARE_ARGPARSER;
 
-    if (!npy_parse_arguments("concatenate", 1, -1, args, kwds,
+    if (!npy_parse_arguments("concatenate", 1, -1, args, len_args, kwnames,
                 "seq", NULL, &a0,
                 "axis", &PyArray_AxisConverter, &axis,
                 "out", NULL, &out,
@@ -2265,13 +2273,14 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 static PyObject *
-array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
+array_matrixproduct(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *v, *a, *o = NULL;
     PyArrayObject *ret;
     NPY_PREPARE_ARGPARSER;
 
-    if (!npy_parse_arguments("matrixproduct", 2, -1, args, kwds,
+    if (!npy_parse_arguments("matrixproduct", 2, -1, args, len_args, kwnames,
             "a", NULL, &a,
             "b", NULL, &v,
             "out", NULL, &o,
@@ -2777,13 +2786,14 @@ array_fastCopyAndTranspose(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 static PyObject *
-array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+array_correlate(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *shape, *a0;
     int mode = 0;
     NPY_PREPARE_ARGPARSER;
 
-    if (!npy_parse_arguments("correlate", 2, -1, args, kwds,
+    if (!npy_parse_arguments("correlate", 2, -1, args, len_args, kwnames,
                 "a", NULL, &a0,
                 "v", NULL, &shape,
                 "mode", &PyArray_PythonPyIntFromInt, &mode,
@@ -2794,13 +2804,14 @@ array_correlate(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 }
 
 static PyObject*
-array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+array_correlate2(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *shape, *a0;
     int mode = 0;
     NPY_PREPARE_ARGPARSER;
 
-    if (!npy_parse_arguments("correlate2", 2, -1, args, kwds,
+    if (!npy_parse_arguments("correlate2", 2, -1, args, len_args, kwnames,
             "a", NULL, &a0,
             "v", NULL, &shape,
             "mode", &PyArray_PythonPyIntFromInt, &mode,
@@ -2811,12 +2822,14 @@ array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
+array_arange(PyObject *NPY_UNUSED(ignored),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
     PyArray_Descr *typecode = NULL;
     NPY_PREPARE_ARGPARSER;
 
-    if (!npy_parse_arguments("arange", 1, -1, args, kws,
+    if (!npy_parse_arguments("arange", 1, -1, args, len_args, kwnames,
             "start", NULL, &o_start,
             "stop", NULL, &o_stop,
             "step", NULL, &o_step,
@@ -3524,7 +3537,8 @@ error:
  * precision, which is equivalent to `None`.
  */
 static PyObject *
-dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+dragon4_scientific(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj;
     int precision=-1, pad_left=-1, exp_digits=-1;
@@ -3534,7 +3548,7 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     NPY_PREPARE_ARGPARSER;
 
     if (!npy_parse_arguments(
-            "dragon4_scientific", 1, -1, args, kwds,
+            "dragon4_scientific", 1, -1, args, len_args, kwnames,
             "x", NULL , &obj,
             "precision", &PyArray_PythonPyIntFromInt, &precision,
             "unique", &PyArray_PythonPyIntFromInt, &unique,
@@ -3565,7 +3579,8 @@ dragon4_scientific(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
  * precision, which is equivalent to `None`.
  */
 static PyObject *
-dragon4_positional(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+dragon4_positional(PyObject *NPY_UNUSED(dummy),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj;
     int precision=-1, pad_left=-1, pad_right=-1;
@@ -3576,7 +3591,7 @@ dragon4_positional(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     NPY_PREPARE_ARGPARSER;
 
     if (!npy_parse_arguments(
-            "dragon4_positional", 1, -1, args, kwds,
+            "dragon4_positional", 1, -1, args, len_args, kwnames,
             "x", NULL , &obj,
             "precision", &PyArray_PythonPyIntFromInt, &precision,
             "unique", &PyArray_PythonPyIntFromInt, &unique,
@@ -4149,14 +4164,16 @@ array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *
 }
 
 static PyObject *
-normalize_axis_index(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+normalize_axis_index(PyObject *NPY_UNUSED(self),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     int axis;
     int ndim;
     PyObject *msg_prefix = Py_None;
     NPY_PREPARE_ARGPARSER;
 
-    if (!npy_parse_arguments("normalize_axis_index", 2, -1, args, kwds,
+    if (!npy_parse_arguments("normalize_axis_index", 2, -1,
+            args, len_args, kwnames,
             "axis", &PyArray_PythonPyIntFromInt, &axis,
             "ndim", &PyArray_PythonPyIntFromInt, &ndim,
             "msg_prefix", NULL, &msg_prefix,
@@ -4194,19 +4211,19 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"array",
         (PyCFunction)array_array,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_KEYWORDS|METH_FASTCALL, NULL},
     {"asarray",
         (PyCFunction)array_asarray,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_KEYWORDS|METH_FASTCALL, NULL},
     {"asanyarray",
         (PyCFunction)array_asanyarray,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_KEYWORDS|METH_FASTCALL, NULL},
     {"ascontiguousarray",
         (PyCFunction)array_ascontiguousarray,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_KEYWORDS|METH_FASTCALL, NULL},
     {"asfortranarray",
         (PyCFunction)array_asfortranarray,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_KEYWORDS|METH_FASTCALL, NULL},
     {"copyto",
         (PyCFunction)array_copyto,
         METH_VARARGS|METH_KEYWORDS, NULL},
@@ -4215,19 +4232,19 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"arange",
         (PyCFunction)array_arange,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_KEYWORDS|METH_FASTCALL, NULL},
     {"zeros",
         (PyCFunction)array_zeros,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_KEYWORDS|METH_FASTCALL, NULL},
     {"count_nonzero",
         (PyCFunction)array_count_nonzero,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"empty",
         (PyCFunction)array_empty,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_KEYWORDS|METH_FASTCALL, NULL},
     {"empty_like",
         (PyCFunction)array_empty_like,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_KEYWORDS|METH_FASTCALL, NULL},
     {"scalar",
         (PyCFunction)array_scalar,
         METH_VARARGS|METH_KEYWORDS, NULL},
@@ -4248,13 +4265,13 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"concatenate",
         (PyCFunction)array_concatenate,
-        METH_VARARGS|METH_KEYWORDS, NULL},
+        METH_KEYWORDS|METH_FASTCALL, NULL},
     {"inner",
         (PyCFunction)array_innerproduct,
         METH_VARARGS, NULL},
     {"dot",
         (PyCFunction)array_matrixproduct,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_KEYWORDS | METH_FASTCALL, NULL},
     {"vdot",
         (PyCFunction)array_vdot,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -4266,10 +4283,10 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"correlate",
         (PyCFunction)array_correlate,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_KEYWORDS | METH_FASTCALL, NULL},
     {"correlate2",
         (PyCFunction)array_correlate2,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_KEYWORDS | METH_FASTCALL, NULL},
     {"frombuffer",
         (PyCFunction)array_frombuffer,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -4327,10 +4344,10 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"dragon4_positional",
         (PyCFunction)dragon4_positional,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_KEYWORDS | METH_FASTCALL, NULL},
     {"dragon4_scientific",
         (PyCFunction)dragon4_scientific,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_KEYWORDS | METH_FASTCALL, NULL},
     {"compare_chararrays",
         (PyCFunction)compare_chararrays,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -4366,7 +4383,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"unpackbits", (PyCFunction)io_unpack,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"normalize_axis_index", (PyCFunction)normalize_axis_index,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_KEYWORDS | METH_FASTCALL, NULL},
     {"set_legacy_print_mode", (PyCFunction)set_legacy_print_mode,
         METH_VARARGS, NULL},
     /* from umath */
