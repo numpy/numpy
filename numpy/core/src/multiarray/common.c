@@ -950,7 +950,6 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 typedef int convert(PyObject *, void *);
 
 
-// TODO: Probably the compiler does not, but could use _attribute__((noinline))
 static int
 initialize_keywords(
         const char *funcname, int nrequired, int npositional,
@@ -976,14 +975,14 @@ initialize_keywords(
 
         if (name == NULL) {
             PyErr_Format(PyExc_SystemError,
-                    "internal error: name is NULL in %s at argument %d.",
+                    "internal error: name is NULL in %s() at argument %d.",
                     funcname, nargs);
             va_end(va);
             return -1;
         }
         if (data == NULL) {
             PyErr_Format(PyExc_SystemError,
-                    "internal error: data is NULL in %s at argument %d.",
+                    "internal error: data is NULL in %s() at argument %d.",
                     funcname, nargs);
             va_end(va);
             return -1;
@@ -993,7 +992,7 @@ initialize_keywords(
             /* Empty string signals positional only */
             if (nkwargs > 0) {
                 PyErr_Format(PyExc_SystemError,
-                        "internal error: non-kwarg after kwarg to %s "
+                        "internal error: non-kwarg after kwarg to %s() "
                         "at argument %d.", funcname, nargs);
                 va_end(va);
                 return -1;
@@ -1006,28 +1005,40 @@ initialize_keywords(
     }
     va_end(va);
 
+    if (npositional == -1) {
+        npositional = nargs;
+    }
+
     /* Perform sanity checks on the number of arguments. */
-    // TODO: Add more checks for npositional (if not -1)
     if (nargs < nrequired) {
         PyErr_Format(PyExc_SystemError,
-                "internal error: %s has %d positional arguments but only %d "
-                "arguments found.", funcname, npositional_only, nargs);
+                "internal error: %s() has %d required arguments but only %d "
+                "arguments found.", funcname, nrequired, nargs);
         return -1;
     }
     if (nrequired < npositional_only) {
         /* We expect positional only kwargs are required */
         PyErr_Format(PyExc_SystemError,
-                     "internal error: %s has %d required arguments but only %d "
-                     "positional only ones.",
-                     funcname, nrequired, npositional_only);
+                "internal error: %s() has %d required arguments but only %d "
+                "positional only ones.",
+                funcname, nrequired, npositional_only);
+        return -1;
+    }
+    if ((npositional < npositional_only) || (npositional > nargs)) {
+        PyErr_Format(PyExc_SystemError,
+                "internal error: %s() with %d positional arguments, %d "
+                "positional only arguments and %d total arguments found "
+                "is not consistent.",
+                funcname, npositional, npositional_only, nargs);
         return -1;
     }
 
     if (nargs > NPY_MAXARGS) {
         PyErr_Format(PyExc_SystemError,
-                "internal error: function %s has %d arguments, but "
+                "internal error: function %s() has %d arguments, but "
                 "the maximum is currently limited for easier parsing.",
                 funcname, nargs);
+        return -1;
     }
 
     /*
@@ -1037,18 +1048,10 @@ initialize_keywords(
     cache->nargs = nargs;
     cache->npositional_only = npositional_only;
     cache->npositional = npositional;
-    if (npositional == -1) {
-        cache->npositional = nargs;
-    }
     cache->nrequired = nrequired;
     cache->nkwarg = nkwargs;
 
-    /* Allocate interned string storage and NULL it for error handling */
-    PyObject **kw_strings = malloc(sizeof(PyObject *) * (nkwargs + 1));
-    if (kw_strings == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
+    /* NULL kw_strings for easier cleanup (and NULL termination) */
     memset(cache->kw_strings, 0, sizeof(PyObject *) * (nkwargs + 1));
 
     va_copy(va, va_orig);
@@ -1089,8 +1092,8 @@ raise_incorrect_number_of_positional_args(const char *funcname,
     }
     else {
         PyErr_Format(PyExc_TypeError,
-                "%s() takes %zd to %zd positional arguments but %zd "
-                "were given",
+                "%s() takes from %zd to %zd positional arguments but"
+                "%zd were given",
                 funcname, cache->nrequired, cache->npositional, len_args);
     }
     return 0;
@@ -1100,6 +1103,7 @@ static void
 raise_missing_argument(const char *funcname,
         const _NpyArgParserCache *cache, int i)
 {
+    /* These errors are as precise as PyArg_*, but less than python */
     if (i < cache->npositional_only) {
         PyErr_Format(PyExc_TypeError,
                 "%s() missing required positional argument %d",
@@ -1148,7 +1152,7 @@ _npy_parse_arguments(
         all_arguments[i] = NPY_PARAMS_GET_ARG(i);
     }
 
-    /* Without kwarg, do not iterate all converters. */
+    /* Without kwargs, do not iterate all converters. */
     int max_nargs = (int)len_args;
     Py_ssize_t len_kwargs = 0;
 
@@ -1158,6 +1162,7 @@ _npy_parse_arguments(
         len_kwargs = PyTuple_GET_SIZE(kwnames);
 #else
     if (NPY_LIKELY(kwargs != NULL)) {
+        /* kwargs are counted in the iteration */
 #endif
         max_nargs = cache->nargs;
 
@@ -1206,12 +1211,11 @@ _npy_parse_arguments(
              ssize_t param_pos = (
                     (name - cache->kw_strings) + cache->npositional_only);
 
-
             /* There could be an identical positional argument */
             if (NPY_UNLIKELY(all_arguments[param_pos] != NULL)) {
                 PyErr_Format(PyExc_TypeError,
-                        "%s() got multiple values for argument '%S'",
-                        funcname, key);
+                        "argument for %s() given by name ('%S') and position "
+                        "(position %zd)", funcname, key, param_pos);
                 return 0;
             }
 
@@ -1219,12 +1223,11 @@ _npy_parse_arguments(
         }
     }
 
-    if (NPY_UNLIKELY(len_args + len_kwargs > cache->nargs)) {
-        PyErr_Format(PyExc_TypeError,
-                "%s() takes at most %d arguments (%zd given)",
-                funcname, cache->nargs, len_args + len_kwargs);
-        return 0;
-    }
+    /*
+     * There cannot be too many args, too many kwargs would find an
+     * incorrect one above
+     */
+    assert(len_args + len_kwargs <= cache->nargs);
 
     /* At this time `all_arguments` holds either NULLs or the objects */
     va_list va;
