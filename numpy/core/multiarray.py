@@ -652,6 +652,10 @@ def result_type(*arrays_and_dtypes):
     By examining the value of the constant, '3', we see that it fits in
     an 8-bit integer, which can be cast losslessly into the 32-bit float.
 
+    The type promotion process results in a data type with the same byte
+    order as the host system, regardless of the byte order of the
+    original data type(s).
+
     Parameters
     ----------
     arrays_and_dtypes : list of arrays and dtypes
@@ -671,6 +675,9 @@ def result_type(*arrays_and_dtypes):
     .. versionadded:: 1.6.0
 
     The specific algorithm used is as follows.
+
+    If there is only one input parameter, the data type of the
+    input is returned unmodified.
 
     Categories are determined by first checking which of boolean,
     integer (int/uint), or floating point (float/complex) the maximum
@@ -699,6 +706,11 @@ def result_type(*arrays_and_dtypes):
 
     >>> np.result_type(3.0, -2)
     dtype('float64')
+
+    Byte order of result of type promotion on a little-endian system
+
+    >>> np.result_type('>i4', '>i4')
+    dtype('int32')
 
     """
     return arrays_and_dtypes

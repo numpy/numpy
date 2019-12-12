@@ -275,6 +275,13 @@ the 'S', 'U', and 'V' types cannot be operated on by ufuncs. Also,
 note that on a 32-bit system the integer types may have different
 sizes, resulting in a slightly altered table.
 
+.. note::
+
+    The byte order (endianness) of data types is not necessarily
+    preserved during casting. The casting process automatically
+    converts the endianness of the resultant data type to match
+    that of the host system.
+
 Mixed scalar-array operations use a different set of casting rules
 that ensure that a scalar cannot "upcast" an array unless the scalar is
 of a fundamentally different kind of data (*i.e.*, under a different
