@@ -317,17 +317,6 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 NPY_NO_EXPORT int
 PyArray_BoolConverter(PyObject *object, npy_bool *val)
 {
-    /* Super fast path, for the most common input: */
-    if (object == Py_True) {
-        *val = NPY_TRUE;
-        return NPY_SUCCEED;
-    }
-    if (object == Py_False) {
-        *val = NPY_FALSE;
-        return NPY_SUCCEED;
-    }
-
-    /* Full path: */
     int res = PyObject_IsTrue(object);
     if (res == 1) {
         *val = NPY_TRUE;
