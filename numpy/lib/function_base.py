@@ -3948,14 +3948,13 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
 
         r = np.where(weights_above < 0.5, r_above, r_below)
 
-        if r.ndim == 0:
-            # get the element stored in the 0-d array for backward
-            # compatibility
-            r = r[()]
-
         if out is not None:
             out[...] = r
             r = out
+        else:
+            # get the element stored in the 0-d array for backward
+            # compatibility
+            r = r[()]
 
     if np.any(n):
         if zerod:
