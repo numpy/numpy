@@ -920,7 +920,8 @@ _borrowed_reference(PyObject *obj, PyObject **out)
  * Due to the array override, do the actual parameter conversion
  * only in this step. This function takes the reference objects and
  * parses them into the desired values.
- * This function cleans up after itself and NULLs references on error.
+ * This function cleans up after itself and NULLs references on error,
+ * the caller has to ensure that out_op[0:nargs] is NULLed.
  */
 static int
 convert_ufunc_arguments(PyUFuncObject *ufunc,
@@ -935,13 +936,7 @@ convert_ufunc_arguments(PyUFuncObject *ufunc,
     int nout = ufunc->nout;
     int nop = ufunc->nargs;
     PyObject *obj, *context;
-    /*
-     * Initialize output objects so caller knows when outputs and optional
-     * arguments are set (also means we can safely XDECREF on failure).
-     */
-    for (int i = 0; i < nop; i++) {
-        out_op[i] = NULL;
-    }
+
     if (out_wheremask != NULL) {
         *out_wheremask = NULL;
     }
@@ -2278,6 +2273,11 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc, PyArrayObject **op,
 
     /* Possibly remap axes. */
     if (axes != NULL || axis != NULL) {
+        if ((axes != NULL) && (axis != NULL)) {
+            PyErr_SetString(PyExc_TypeError,
+                    "cannot specify both 'axis' and 'axes'");
+        }
+
         remap_axis = PyArray_malloc(sizeof(remap_axis[0]) * nop);
         remap_axis_memory = PyArray_malloc(sizeof(remap_axis_memory[0]) *
                                                   nop * NPY_MAXDIMS);
@@ -2800,7 +2800,6 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc, PyArrayObject **op,
          */
         _find_array_prepare(full_args, arr_prep, nout);
     }
-
 
     /* Do the ufunc loop */
     if (wheremask != NULL) {
@@ -3993,7 +3992,8 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
         return 0;
     }
     if (full_args->out != NULL) {
-        PyErr_SetString(PyExc_ValueError,
+        // TODO: Was ValueError (and error order changed)
+        PyErr_SetString(PyExc_TypeError,
                         "cannot specify 'out' as both a "
                         "positional and keyword argument");
         return -1;
@@ -4001,7 +4001,8 @@ _set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
 
     if (PyTuple_CheckExact(out_obj)) {
         if (PyTuple_GET_SIZE(out_obj) != nout) {
-            PyErr_SetString(PyExc_ValueError,
+            // TODO: Was ValueError (and error order changed)
+            PyErr_SetString(PyExc_TypeError,
                             "The 'out' tuple must have exactly "
                             "one entry per ufunc output");
             return -1;
@@ -4114,7 +4115,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, NPY_PARAMS_DEF, int operation)
                     "dtype", NULL, &otype_obj,
                     "out", NULL, &out_obj,
                     "keepdims", NULL, &keepdims_obj,
-                    "intial", NULL, &initial,
+                    "initial", NULL, &initial,
                     "where", NULL, &wheremask_obj,
                     NULL, NULL, NULL)) {
             goto fail;
@@ -4129,6 +4130,18 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, NPY_PARAMS_DEF, int operation)
         Py_DECREF(full_args.in);
         goto fail;
     }
+
+    /* The original arguments are not needed anymore: */
+#ifdef METH_FASTCALL
+    args += len_args;
+#else
+    static PyObject *empty_tuple = NULL;
+    if (NPY_UNLIKELY(empty_tuple == NULL)) {
+        empty_tuple = PyTuple_New(0);
+    }
+    args = empty_tuple;
+#endif
+    len_args = 0;
 
     /* We now have all the information required to check for Overrides */
     PyObject *override = NULL;
@@ -4386,7 +4399,8 @@ _get_typetup(PyObject *sig_obj, PyObject *signature_obj, PyObject *dtype,
         Py_INCREF(sig_obj);
         *out_typetup = sig_obj;
     }
-    if (dtype) {
+
+    if (dtype != NULL) {
         if (*out_typetup != NULL) {
             PyErr_SetString(PyExc_RuntimeError,
                     "cannot specify both 'signature' and 'dtype'");
@@ -4428,7 +4442,11 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc, NPY_PARAMS_DEF, npy_bool outer)
 
     /* Check number of arguments */
     if ((len_args < nin) || (len_args > nop)) {
-        PyErr_SetString(PyExc_ValueError, "invalid number of arguments");
+        // TODO: This was a ValueError (but TypeError is more correct)
+        PyErr_Format(PyExc_TypeError,
+                "%s() takes from %d to %d positional arguments but "
+                "%zd were given",
+                ufunc_get_name_cstr(ufunc) , nin, nop, len_args);
         return NULL;
     }
 
@@ -4448,6 +4466,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc, NPY_PARAMS_DEF, npy_bool outer)
      * full_args.out is NULL for now, and the `out` kwarg may still be passed.
      */
     if (len_args > nin) {
+        npy_bool all_none = NPY_TRUE;
+
         full_args.out = PyTuple_New(nout);
         if (full_args.out == NULL) {
             goto fail;
@@ -4456,12 +4476,18 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc, NPY_PARAMS_DEF, npy_bool outer)
             PyObject *tmp;
             if (i < (int)len_args) {
                 tmp = NPY_PARAMS_GET_ARG(i);
+                if (tmp != Py_None) {
+                    all_none = NPY_FALSE;
+                }
             }
             else {
                 tmp = Py_None;
             }
             Py_INCREF(tmp);
             PyTuple_SET_ITEM(full_args.out, i-nin, tmp);
+        }
+        if (all_none) {
+            Py_SETREF(full_args.out, NULL);
         }
     }
     else {
@@ -4490,49 +4516,52 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc, NPY_PARAMS_DEF, npy_bool outer)
     PyObject *subok_obj = NULL, *signature_obj = NULL, *sig_obj = NULL;
     PyObject *dtype_obj = NULL, *extobj = NULL;
 
-    if (!ufunc->core_enabled) {
-        NPY_PREPARE_ARGPARSER;
-        if (!npy_parse_arguments(ufunc->name, 0, 0, NPY_PARAMS_PASS,
-                    "out", NULL, &out_obj,
-                    "where", NULL, &where_obj,
-                    "casting", NULL, &casting_obj,
-                    "order", NULL, &order_obj,
-                    "subok", NULL, &subok_obj,
-                    "dtype", NULL, &dtype_obj,
-                    "signature", NULL, &signature_obj,
-                    "sig", NULL, &sig_obj,
-                    "extobj", NULL, &extobj,
-                    NULL, NULL, NULL)) {
+    /* We can skip parsing if there are no keyword arguments... */
+    if (NPY_PARAMS_KWARG_OBJ != NULL) {
+        if (!ufunc->core_enabled) {
+            NPY_PREPARE_ARGPARSER;
+            if (!npy_parse_arguments(ufunc->name, 0, 0, NPY_PARAMS_PASS,
+                        "out", NULL, &out_obj,
+                        "where", NULL, &where_obj,
+                        "casting", NULL, &casting_obj,
+                        "order", NULL, &order_obj,
+                        "subok", NULL, &subok_obj,
+                        "dtype", NULL, &dtype_obj,
+                        "signature", NULL, &signature_obj,
+                        "sig", NULL, &sig_obj,
+                        "extobj", NULL, &extobj,
+                        NULL, NULL, NULL)) {
+                goto fail;
+            }
+        }
+        else {
+            NPY_PREPARE_ARGPARSER;
+            if (!npy_parse_arguments(ufunc->name, 0, 0, NPY_PARAMS_PASS,
+                        "out", NULL, &out_obj,
+                        "axes", NULL, &axes_obj,
+                        "axis", NULL, &axis_obj,
+                        "keepdims", NULL, &keepdims_obj,
+                        "casting", NULL, &casting_obj,
+                        "order", NULL, &order_obj,
+                        "subok", NULL, &subok_obj,
+                        "dtype", NULL, &dtype_obj,
+                        "signature", NULL, &signature_obj,
+                        "sig", NULL, &sig_obj,
+                        "extobj", NULL, &extobj,
+                        NULL, NULL, NULL)) {
+                goto fail;
+            }
+        }
+
+        /* Finish preparation of non-converted output objects (if necessary) */
+        if (_set_full_args_out(nout, out_obj, &full_args) < 0) {
             goto fail;
         }
-    }
-    else {
-        NPY_PREPARE_ARGPARSER;
-        if (!npy_parse_arguments(ufunc->name, 0, 0, NPY_PARAMS_PASS,
-                    "out", NULL, &out_obj,
-                    "axes", NULL, &axes_obj,
-                    "axis", NULL, &axis_obj,
-                    "keepdims", NULL, &keepdims_obj,
-                    "casting", NULL, &casting_obj,
-                    "order", NULL, &order_obj,
-                    "subok", NULL, &subok_obj,
-                    "dtype", NULL, &dtype_obj,
-                    "signature", NULL, &signature_obj,
-                    "sig", NULL, &sig_obj,
-                    "extobj", NULL, &extobj,
-                    NULL, NULL, NULL)) {
+
+        /* Only one of signature, sig, and dtype should be passed */
+        if (_get_typetup(sig_obj, signature_obj, dtype_obj, &typetup) < 0) {
             goto fail;
         }
-    }
-
-    /* Finish preparation of non-converted output objects (if necessary) */
-    if (_set_full_args_out(nout, out_obj, &full_args) < 0) {
-        goto fail;
-    }
-
-    /* Only one of signature, sig, and dtype should be passed */
-    if (_get_typetup(sig_obj, signature_obj, dtype_obj, &typetup) < 0) {
-        goto fail;
     }
 
     char *method;
@@ -4669,7 +4698,6 @@ static PyObject *
 ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
     Py_ssize_t len_args = PyTuple_GET_SIZE(args);
-    PyObject *new_args[NPY_MAXARGS];
     /*
      * Wrapper for tp_call to tp_fastcall, to support both on older versions
      * of Python. (and generally simplifying support of both versions in the
@@ -4680,6 +4708,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
                 PySequence_Fast_ITEMS(args), len_args, NULL, NPY_FALSE);
     }
 
+    PyObject *new_args[NPY_MAXARGS];
     Py_ssize_t len_kwds = PyDict_GET_SIZE(kwds);
 
     if (NPY_UNLIKELY(len_args + len_kwds > NPY_MAXARGS)) {
@@ -4687,9 +4716,11 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
          * We do not have enough scratch-space, so we have to abort;
          * In practice this error should not be seen by users.
          */
-        PyErr_Format(PyExc_TypeError,
-                     "%s() called with too many arguments: %zd were given.",
-                     ufunc->name, len_args + len_kwds);
+        // TODO: This was a ValueError (but TypeError is more correct)
+        PyErr_Format(PyExc_ValueError,
+                "%s() takes from %d to %d positional arguments but "
+                "%zd were given",
+                ufunc_get_name_cstr(ufunc) , ufunc->nin, ufunc->nargs, len_args);
         return NULL;
     }
 
@@ -5355,7 +5386,6 @@ prepare_input_arguments_for_outer(PyObject *args)
     else {
         ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
     }
-    Py_DECREF(tmp);
     if (ap1 == NULL) {
         return NULL;
     }
@@ -5368,7 +5398,6 @@ prepare_input_arguments_for_outer(PyObject *args)
     else {
         ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);
     }
-    Py_DECREF(tmp);
     if (ap2 == NULL) {
         Py_DECREF(ap1);
         return NULL;
