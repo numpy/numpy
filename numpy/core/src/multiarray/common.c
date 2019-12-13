@@ -1092,7 +1092,7 @@ raise_incorrect_number_of_positional_args(const char *funcname,
     }
     else {
         PyErr_Format(PyExc_TypeError,
-                "%s() takes from %zd to %zd positional arguments but"
+                "%s() takes from %zd to %zd positional arguments but "
                 "%zd were given",
                 funcname, cache->nrequired, cache->npositional, len_args);
     }
