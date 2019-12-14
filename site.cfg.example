@@ -165,6 +165,10 @@
 # in the same application may cause problems due to symbol name
 # clashes, especially with embedded Python interpreters.
 #
+# The name of the library file may vary on different systems, so you
+# may need to check your specific OpenBLAS installation and
+# uncomment and e.g. set ``libraries = openblas`` below.
+#
 # [openblas_ilp64]
 # libraries = openblas64
 # library_dirs = /opt/OpenBLAS/lib
