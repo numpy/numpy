@@ -204,14 +204,20 @@ def _get_compiler_status():
         """)
     code = code % dict(syspath=repr(sys.path))
 
-    with temppath(suffix='.py') as script:
+    tmpdir = tempfile.mkdtemp()
+    try:
+        script = os.path.join(tmpdir, 'setup.py')
+
         with open(script, 'w') as f:
             f.write(code)
 
-        cmd = [sys.executable, script, 'config']
+        cmd = [sys.executable, 'setup.py', 'config']
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
+                             stderr=subprocess.STDOUT,
+                             cwd=tmpdir)
         out, err = p.communicate()
+    finally:
+        shutil.rmtree(tmpdir)
 
     m = re.search(br'COMPILERS:(\d+),(\d+),(\d+)', out)
     if m:
