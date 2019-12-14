@@ -60,14 +60,17 @@ example, if Fortran 90 code contains::
 
     REAL(kind=KIND(0.0D0)) ...
 
-then create a file ``.f2py_f2cmap`` (into the working directory)
-containing a Python dictionary::
+then create a mapping file containing a Python dictionary::
 
     {'real': {'KIND(0.0D0)': 'double'}}
 
 for instance.
 
-Or more generally, the file ``.f2py_f2cmap`` must contain a dictionary
+Use the ``--f2cmap`` command-line option to pass the file name to F2PY.
+By default, F2PY assumes file name is ``.f2py_f2cmap`` in the current
+working directory.
+
+Or more generally, the f2cmap file must contain a dictionary
 with items::
 
     <Fortran typespec> : {<selector_expr>:<C type>}
