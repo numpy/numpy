@@ -211,7 +211,7 @@ supported:
 
 The order in which they are preferred is determined by
 ``NPY_BLAS_ILP64_ORDER`` and ``NPY_LAPACK_ILP64_ORDER`` environment
-variables, similarly as above.
+variables. The default value is ``openblas64_,openblas_ilp64``.
 
 .. note::
 
