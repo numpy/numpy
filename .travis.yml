@@ -75,7 +75,17 @@ jobs:
        - USE_ASV=1
 
     - python: 3.7
-      env: NPY_RELAXED_STRIDES_CHECKING=0
+      env:
+        - NPY_RELAXED_STRIDES_CHECKING=0
+        # use custom symbol-suffixed openblas build, not system ATLAS
+        - DOWNLOAD_OPENBLAS=1
+        - CHECK_BLAS=1
+        - NPY_USE_BLAS_ILP64=1
+      addons:
+        apt:
+          packages:
+            - gfortran
+            - eatmydata
 
     - python: 3.7
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
