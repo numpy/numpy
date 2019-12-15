@@ -2440,9 +2440,10 @@ def check_free_memory(free_bytes):
 
 def _parse_size(size_str):
     """Convert memory size strings ('12 GB' etc.) to float"""
-    suffixes = {'': 1.0, 'b': 1.0,
-                'k': 1e3, 'm': 1e6, 'g': 1e9, 't': 1e12,
-                'kb': 1e3, 'mb': 1e6, 'gb': 1e9, 'tb': 1e12}
+    suffixes = {'': 1, 'b': 1,
+                'k': 1000, 'm': 1000**2, 'g': 1000**3, 't': 1000**4,
+                'kb': 1000, 'mb': 1000**2, 'gb': 1000**3, 'tb': 1000**4,
+                'kib': 1024, 'mib': 1024**2, 'gib': 1024**3, 'tib': 1024**4}
 
     size_re = re.compile(r'^\s*(\d+|\d+\.\d+)\s*({0})\s*$'.format(
         '|'.join(suffixes.keys())), re.I)
@@ -2450,7 +2451,7 @@ def _parse_size(size_str):
     m = size_re.match(size_str.lower())
     if not m or m.group(2) not in suffixes:
         raise ValueError("value {!r} not a valid size".format(size_str))
-    return float(m.group(1)) * suffixes[m.group(2)]
+    return int(float(m.group(1)) * suffixes[m.group(2)])
 
 
 def _get_mem_available():
@@ -2466,7 +2467,7 @@ def _get_mem_available():
         with open('/proc/meminfo', 'r') as f:
             for line in f:
                 p = line.split()
-                info[p[0].strip(':').lower()] = float(p[1]) * 1e3
+                info[p[0].strip(':').lower()] = int(p[1]) * 1024
 
         if 'memavailable' in info:
             # Linux >= 3.14
