@@ -91,9 +91,6 @@ def is_npy_no_smp():
     #  block.
     return 'NPY_NOSMP' in os.environ
 
-def is_npy_use_blas64_():
-    return (os.environ.get('NPY_USE_BLAS64_', "0") != "0")
-
 def win32_checks(deflist):
     from numpy.distutils.misc_util import get_build_architecture
     a = get_build_architecture()
@@ -756,12 +753,12 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'numpyos.c'),
             ]
 
-    if is_npy_use_blas64_():
-        blas_info = get_info('blas64__opt', 2)
-        have_blas = blas_info and ('HAVE_CBLAS64_', None) in blas_info.get('define_macros', [])
+    if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":
+        blas_info = get_info('blas_ilp64_opt', 2)
     else:
         blas_info = get_info('blas_opt', 0)
-        have_blas = blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', [])
+
+    have_blas = blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', [])
 
     if have_blas:
         extra_info = blas_info

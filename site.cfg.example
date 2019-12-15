@@ -140,8 +140,9 @@
 # This is an emerging "standard" for 64-bit BLAS/LAPACK, avoiding symbol clashes
 # with 32-bit BLAS/LAPACK.
 #
-# To build Numpy with such 64-bit BLAS/LAPACK, set environment variable
-# NPY_USE_BLAS64_=1 at build time.
+# To build Numpy with such 64-bit BLAS/LAPACK, set environment
+# variables NPY_USE_BLAS_ILP64=1, NPY_BLAS_ILP64_ORDER=openblas64_,
+# NPY_LAPACK_ILP64_ORDER=openblas64_ at build time.
 #
 # See:
 # https://github.com/xianyi/OpenBLAS/issues/646
@@ -151,6 +152,30 @@
 # library_dirs = /opt/OpenBLAS/lib
 # include_dirs = /opt/OpenBLAS/include
 # runtime_library_dirs = /opt/OpenBLAS/lib
+
+# OpenBLAS (64-bit ILP64)
+# -----------------------
+# It is possible to also use OpenBLAS compiled with 64-bit integer
+# size (ILP64) but no symbol name changes. To do that, set the
+# environment variables NPY_USE_BLAS_ILP64=1,
+# NPY_BLAS_ILP64_ORDER=openblas_ilp64,
+# NPY_LAPACK_ILP64_ORDER=openblas_ilp64 at build time.
+#
+# Note that mixing both 64-bit and 32-bit BLAS without symbol suffixes
+# in the same application may cause problems due to symbol name
+# clashes, especially with embedded Python interpreters.
+#
+# The name of the library file may vary on different systems, so you
+# may need to check your specific OpenBLAS installation and
+# uncomment and e.g. set ``libraries = openblas`` below.
+#
+# [openblas_ilp64]
+# libraries = openblas64
+# library_dirs = /opt/OpenBLAS/lib
+# include_dirs = /opt/OpenBLAS/include
+# runtime_library_dirs = /opt/OpenBLAS/lib
+# symbol_prefix =
+# symbol_suffix =
 
 # BLIS
 # ----
