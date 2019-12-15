@@ -32,7 +32,7 @@ level have the same length) will force users who actually wish to create
 and ``nd.ndarrays`` are all sequences [0]_. See for instance `issue 5303`_.
 Since this paradigm seems to be in wide use in libraries like pandas, scipy,
 and matplotlib, a work-around via ``np.array([<ragged_nested_sequence>],
-dtype=np.allow_ragged)`` will be added, with the intent that the work-around
+dtype=np.allow_object)`` will be added, with the intent that the work-around
 will be removed at some time in the future.
 
 Usage and Impact
@@ -87,7 +87,7 @@ Implementation
 --------------
 
 The code to be changed is inside ``PyArray_GetArrayParamsFromObject`` and the
-internal ``discover_dimentions`` function. See `PR 14794`_.
+internal ``discover_dimensions`` function. See `PR 14794`_.
 
 Backward compatibility
 ----------------------
@@ -95,7 +95,7 @@ Backward compatibility
 Anyone depending on creating object arrays from ragged nested sequences will
 need to modify their code. There will be a deprecation period during which the
 current behaviour will emit a ``DeprecationWarning``. Additionally, a sentinal
-value ``np.allow_ragged`` will use the pre-NEP-34 behaviour without a warning.
+value ``np.allow_object`` will use the pre-NEP-34 behaviour without a warning.
 Once the implications of the change are well-understood, the sentinal value
 could be removed.
 
@@ -135,14 +135,15 @@ Comments to `issue 5303`_ indicate this is unintended behaviour as far back as
 2014. Suggestions to change it have been made in the ensuing years, but none
 have stuck. The implementation in `PR 14794`_ seemed to point to the
 viability of this approach. However this proved very disruptive to downstream
-library authors, so the idea to add a ``np.allow_ragged`` sentinal was added.
+library authors, so the idea to add a ``np.allow_object`` sentinal was added.
 
-The name is specific to ragged nested sequences. In discussion we considered a
-more general ``np.allow_object``. That is over-general and would not
-differentiate between ``np.array([Decimal(10), Decimal(10)])`` and the ragged
-nested sequence ``np.array([Decimal(10), [1, Decimal(10)]])``. Currently the
-NEP does not propose disallowing the latter without an explicit
-``np.allow_ragged``, but a future enhancement could.
+The name is not specific to ragged nested sequences. In discussion we
+considered a more specific ``np.allow_ragged``. However it was felt that there
+is really no difference between an object array with ragged sequences and an
+object array like ``np.array([Decimal(10), Decimal(10)])``. There was some
+discussion of the possibility of a future NEP allowing syntax like
+``np.array([Decimal(10), Decimal(10)], dtype=Decimal)``, but again that is out
+of scope for the current NEP.
 
 References and Footnotes
 ------------------------
