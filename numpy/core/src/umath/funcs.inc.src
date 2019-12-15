@@ -360,9 +360,9 @@ nc_exp2@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_expm1@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ a = npy_exp@c@(x->real);
-    r->real = a*npy_cos@c@(x->imag) - 1.0@c@;
-    r->imag = a*npy_sin@c@(x->imag);
+    @ftype@ a = npy_cos@c@(x->imag);
+    r->real = npy_expm1@c@(x->real) * a + (a - 1);
+    r->imag = npy_exp@c@(x->real) * npy_sin@c@(x->imag);
     return;
 }
 

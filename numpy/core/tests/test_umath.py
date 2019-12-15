@@ -888,6 +888,12 @@ class TestExpm1(object):
         assert_equal(ncu.expm1(np.inf), np.inf)
         assert_equal(ncu.expm1(-np.inf), -1.)
 
+    def test_complex(self):
+        x = np.asarray(1e-12)
+        assert_allclose(x, ncu.expm1(x))
+        x = x.astype(np.complex128)
+        assert_allclose(x, ncu.expm1(x))
+
 
 class TestHypot(object):
     def test_simple(self):
