@@ -48,6 +48,59 @@ cdef int64_t _safe_sum_nonneg_int64(size_t num_colors, int64_t *colors):
     return sum
 
 
+cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
+                              np.npy_intp first, np.npy_intp itemsize,
+                              np.npy_intp stride,
+                              char* data, char* buf) nogil:
+    """
+    Parameters
+    ----------
+    n
+        Number of elements in data
+    first
+        First observation to shuffle.  Shuffles n-1,
+        n-2, ..., first, so that when first=1 the entire
+        array is shuffled
+    itemsize
+        Size in bytes of item
+    stride
+        Array stride
+    data
+        Location of data
+    buf
+        Location of buffer (itemsize)
+    """
+    cdef np.npy_intp i, j
+    for i in reversed(range(first, n)):
+        j = random_interval(bitgen, i)
+        string.memcpy(buf, data + j * stride, itemsize)
+        string.memcpy(data + j * stride, data + i * stride, itemsize)
+        string.memcpy(data + i * stride, buf, itemsize)
+
+
+cdef inline void _shuffle_int(bitgen_t *bitgen, np.npy_intp n,
+                              np.npy_intp first, int64_t* data) nogil:
+    """
+    Parameters
+    ----------
+    n
+        Number of elements in data
+    first
+        First observation to shuffle.  Shuffles n-1,
+        n-2, ..., first, so that when first=1 the entire
+        array is shuffled
+    data
+        Location of data
+    """
+    cdef np.npy_intp i, j
+    cdef int64_t temp
+    for i in reversed(range(first, n)):
+        j = random_bounded_uint64(bitgen, 0, i, 0, 0)
+        temp = data[j]
+        data[j] = data[i]
+        data[i] = temp
+
+
 cdef bint _check_bit_generator(object bitgen):
     """Check if an object satisfies the BitGenerator interface.
     """
@@ -708,8 +761,8 @@ cdef class Generator:
                     idx = np.PyArray_Arange(0, pop_size_i, 1, np.NPY_INT64)
                     idx_data = <int64_t*>(<np.ndarray>idx).data
                     with self.lock, nogil:
-                        self._shuffle_int(pop_size_i, max(pop_size_i - size_i, 1),
-                                          idx_data)
+                        _shuffle_int(&self._bitgen, pop_size_i,
+                                     max(pop_size_i - size_i, 1), idx_data)
                     # Copy to allow potentially large array backing idx to be gc
                     idx = idx[(pop_size - size):].copy()
                 else:
@@ -737,7 +790,7 @@ cdef class Generator:
                                 hash_set[loc] = j
                                 idx_data[j - pop_size_i + size_i] = j
                         if shuffle:
-                            self._shuffle_int(size_i, 1, idx_data)
+                            _shuffle_int(&self._bitgen, size_i, 1, idx_data)
                 idx.shape = shape
 
         if is_scalar and isinstance(idx, np.ndarray):
@@ -4177,14 +4230,16 @@ cdef class Generator:
             # when the function exits.
             buf = np.empty(itemsize, dtype=np.int8)  # GC'd at function exit
             buf_ptr = <char*><size_t>np.PyArray_DATA(buf)
-            with self.lock:
+            with self.lock, nogil:
                 # We trick gcc into providing a specialized implementation for
                 # the most common case, yielding a ~33% performance improvement.
                 # Note that apparently, only one branch can ever be specialized.
                 if itemsize == sizeof(np.npy_intp):
-                    self._shuffle_raw(n, 1, sizeof(np.npy_intp), stride, x_ptr, buf_ptr)
+                    _shuffle_raw(&self._bitgen, n, 1, sizeof(np.npy_intp),
+                                 stride, x_ptr, buf_ptr)
                 else:
-                    self._shuffle_raw(n, 1, itemsize, stride, x_ptr, buf_ptr)
+                    _shuffle_raw(&self._bitgen, n, 1, itemsize, stride, x_ptr,
+                                 buf_ptr)
         elif isinstance(x, np.ndarray) and x.ndim and x.size:
             x = np.swapaxes(x, 0, axis)
             buf = np.empty_like(x[0, ...])
@@ -4206,56 +4261,6 @@ cdef class Generator:
                 for i in reversed(range(1, n)):
                     j = random_interval(&self._bitgen, i)
                     x[i], x[j] = x[j], x[i]
-
-    cdef inline _shuffle_raw(self, np.npy_intp n, np.npy_intp first,
-                             np.npy_intp itemsize, np.npy_intp stride,
-                             char* data, char* buf):
-        """
-        Parameters
-        ----------
-        n
-            Number of elements in data
-        first
-            First observation to shuffle.  Shuffles n-1,
-            n-2, ..., first, so that when first=1 the entire
-            array is shuffled
-        itemsize
-            Size in bytes of item
-        stride
-            Array stride
-        data
-            Location of data
-        buf
-            Location of buffer (itemsize)
-        """
-        cdef np.npy_intp i, j
-        for i in reversed(range(first, n)):
-            j = random_interval(&self._bitgen, i)
-            string.memcpy(buf, data + j * stride, itemsize)
-            string.memcpy(data + j * stride, data + i * stride, itemsize)
-            string.memcpy(data + i * stride, buf, itemsize)
-
-    cdef inline void _shuffle_int(self, np.npy_intp n, np.npy_intp first,
-                             int64_t* data) nogil:
-        """
-        Parameters
-        ----------
-        n
-            Number of elements in data
-        first
-            First observation to shuffle.  Shuffles n-1,
-            n-2, ..., first, so that when first=1 the entire
-            array is shuffled
-        data
-            Location of data
-        """
-        cdef np.npy_intp i, j
-        cdef int64_t temp
-        for i in reversed(range(first, n)):
-            j = random_bounded_uint64(&self._bitgen, 0, i, 0, 0)
-            temp = data[j]
-            data[j] = data[i]
-            data[i] = temp
 
     def permutation(self, object x, axis=0):
         """
