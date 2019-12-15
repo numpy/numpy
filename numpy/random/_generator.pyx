@@ -12,6 +12,7 @@ cimport numpy as np
 from numpy.core.multiarray import normalize_axis_index
 
 from .c_distributions cimport *
+from libc.stdlib cimport malloc, free
 from libc cimport string
 from libc.stdint cimport (uint8_t, uint16_t, uint32_t, uint64_t,
                           int32_t, int64_t, INT64_MAX, SIZE_MAX)
@@ -55,6 +56,8 @@ cdef inline void _shuffle_raw(bitgen_t *bitgen, np.npy_intp n,
     """
     Parameters
     ----------
+    bitgen
+        Pointer to a bitgen_t instance.
     n
         Number of elements in data
     first
@@ -83,6 +86,8 @@ cdef inline void _shuffle_int(bitgen_t *bitgen, np.npy_intp n,
     """
     Parameters
     ----------
+    bitgen
+        Pointer to a bitgen_t instance.
     n
         Number of elements in data
     first
@@ -4167,7 +4172,122 @@ cdef class Generator:
 
         return diric
 
-    # Shuffling and permutations:
+    def permuted(self, object x, *, axis=None, out=None):
+        """
+        permuted(x, axis=None, out=None)
+
+        Randomly permute `x` along axis `axis`.
+
+        Unlike `shuffle`, each slice along the given axis is shuffled
+        independently of the others.
+
+        Parameters
+        ----------
+        x : array_like
+            Array to be shuffled.
+        axis : int, optional
+            Slices of `x` in this axis are shuffled. Each slice
+            is shuffled independently of the others.  If `axis` is
+            None, the flattened array is shuffled.
+        out : ndarray, optional
+            If given, this is the destinaton of the shuffled array.
+            If `out` is None, a shuffled copy of the array is returned.
+
+        Returns
+        -------
+        ndarray
+            If `out` is None, a shuffled copy of `x` is returned.
+            Otherwise, the shuffled array is stored in `out`,
+            and `out` is returned
+
+        See Also
+        --------
+        shuffle
+        permutation
+
+        Examples
+        --------
+        Create a `numpy.random.Generator` instance:
+
+        >>> rng = np.random.default_rng()
+
+        Create a test array:
+
+        >>> x = np.arange(24).reshape(3, 8)
+        >>> x
+        array([[ 0,  1,  2,  3,  4,  5,  6,  7],
+               [ 8,  9, 10, 11, 12, 13, 14, 15],
+               [16, 17, 18, 19, 20, 21, 22, 23]])
+
+        Shuffle the rows of `x`:
+
+        >>> y = rng.permuted(x, axis=1)
+        >>> y
+        array([[ 4,  3,  6,  7,  1,  2,  5,  0],  # random
+               [15, 10, 14,  9, 12, 11,  8, 13],
+               [17, 16, 20, 21, 18, 22, 23, 19]])
+
+        `x` has not been modified:
+
+        >>> x
+        array([[ 0,  1,  2,  3,  4,  5,  6,  7],
+               [ 8,  9, 10, 11, 12, 13, 14, 15],
+               [16, 17, 18, 19, 20, 21, 22, 23]])
+
+        To shuffle the rows of `x` in-place, pass `x` as the `out`
+        parameter:
+
+        >>> y = rng.permuted(x, axis=1, out=x)
+        >>> x
+        array([[ 3,  0,  4,  7,  1,  6,  2,  5],  # random
+               [ 8, 14, 13,  9, 12, 11, 15, 10],
+               [17, 18, 16, 22, 19, 23, 20, 21]])
+
+        Note that when the ``out`` parameter is given, the return
+        value is ``out``:
+
+        >>> y is x
+        True
+        """
+
+        cdef int ax
+        cdef np.npy_intp axlen, axstride, itemsize
+        cdef void *buf
+        cdef np.flatiter it
+
+        x = np.asarray(x)
+
+        if out is None:
+            out = x.copy()
+        else:
+            if type(out) is not np.ndarray:
+                raise ValueError('out must be a numpy array')
+            out[...] = x
+
+        if axis is None:
+            self.shuffle(out.flat)
+            return out
+
+        ax = normalize_axis_index(axis, np.ndim(out))
+        itemsize = out.itemsize
+        axlen = out.shape[ax]
+        axstride = out.strides[ax]
+
+        it = np.PyArray_IterAllButAxis(out, &ax)
+
+        buf = malloc(itemsize)
+        if buf == NULL:
+            raise MemoryError('memory allocation failed in permuted')
+
+        with self.lock, nogil:
+            while np.PyArray_ITER_NOTDONE(it):
+                _shuffle_raw(&self._bitgen, axlen, 0, itemsize, axstride,
+                             <char *>np.PyArray_ITER_DATA(it), <char *>buf)
+                np.PyArray_ITER_NEXT(it)
+
+        free(buf)
+        return out
+
     def shuffle(self, object x, axis=0):
         """
         shuffle(x, axis=0)

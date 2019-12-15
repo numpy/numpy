@@ -1039,6 +1039,41 @@ class TestRandomDist:
         assert_raises(np.AxisError, random.permutation, arr, 3)
         assert_raises(TypeError, random.permutation, arr, slice(1, 2, None))
 
+    @pytest.mark.parametrize("axis, expected",
+                             [(None, np.array([[3, 7, 0, 9, 10, 11],
+                                               [8, 4, 2, 5,  1,  6]])),
+                              (0, np.array([[6, 1, 2, 9, 10, 11],
+                                            [0, 7, 8, 3,  4,  5]])),
+                              (1, np.array([[ 5, 3,  4, 0, 2, 1],
+                                            [11, 9, 10, 6, 8, 7]]))])
+    def test_permuted(self, axis, expected):
+        random = Generator(MT19937(self.seed))
+        x = np.arange(12).reshape(2, 6)
+        random.permuted(x, axis=axis, out=x)
+        assert_array_equal(x, expected)
+
+        random = Generator(MT19937(self.seed))
+        x = np.arange(12).reshape(2, 6)
+        y = random.permuted(x, axis=axis)
+        assert_array_equal(y, expected)
+
+    def test_permuted_with_strides(self):
+        random = Generator(MT19937(self.seed))
+        x0 = np.arange(22).reshape(2, 11)
+        x1 = x0.copy()
+        x = x0[:, ::3]
+        y = random.permuted(x, axis=1, out=x)
+        expected = np.array([[0, 9, 3, 6],
+                             [14, 20, 11, 17]])
+        assert_array_equal(y, expected)
+        x1[:, ::3] = expected
+        # Verify that the original x0 was modified in-place as expected.
+        assert_array_equal(x1, x0)
+
+    def test_permuted_empty(self):
+        y = random.permuted([])
+        assert_array_equal(y, [])
+
     def test_beta(self):
         random = Generator(MT19937(self.seed))
         actual = random.beta(.1, .9, size=(3, 2))

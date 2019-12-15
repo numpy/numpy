@@ -36,11 +36,82 @@ Simple random data
 
 Permutations
 ============
+
+The methods `Generator.shuffle`, `Generator.permutation` and
+`Generator.permuted` are used for randomly permuting an input array.
+The following describes the important differences among these methods.
+
+Handling the ``axis`` parameter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+An important distinction for these methods is how they handle the ``axis``
+parameter.  Both `Generator.shuffle` and `Generator.permutation` treat the
+input as a one-dimensional sequence, and the ``axis`` parameter determines
+which dimension of the input array to use as the sequence. In the case of a
+two-dimensional array, ``axis=0`` will, in effect, rearrange the rows of the
+array, and  ``axis=1`` will rearrange the columns.  For example
+
+    >>> rg = np.random.default_rng()
+    >>> x = np.arange(0, 15).reshape(3, 5)
+    >>> x
+    array([[ 0,  1,  2,  3,  4],
+           [ 5,  6,  7,  8,  9],
+           [10, 11, 12, 13, 14]])
+    >>> rg.permutation(x, axis=1)
+    array([[ 0,  1,  4,  3,  2],  # random
+           [ 5,  6,  9,  8,  7],
+           [10, 11, 14, 13, 12]])
+
+Note that the columns have been rearranged "in bulk": the values within
+each column have not changed.
+
+The method `Generator.permuted` treats the ``axis`` parameter similar to
+how `numpy.sort` treats it.  Each slice along the given axis is shuffled
+independently of the others.  Compare the following example of the use of
+`Generator.permuted` to the above example of `Generator.permutation`:
+
+    >>> rg.permuted(x, axis=1)
+    array([[ 1,  0,  2,  4,  3],  # random
+           [ 5,  7,  6,  9,  8],
+           [10, 14, 12, 13, 11]])
+
+In this example, the values within each row (i.e. the values along
+``axis=1``) have been shuffled independently.  This is not a "bulk"
+shuffle of the columns.
+
+In-place vs. copy
+~~~~~~~~~~~~~~~~~
+The main difference between `Generator.shuffle` and `Generator.permutation`
+is that `Generator.shuffle` operates in-place, while `Generator.permutation`
+returns a copy.
+
+By default, `Generator.permuted` returns a copy.  To operate in-place with
+`Generator.permuted`, pass the same array as the first argument *and* as
+the value of the ``out`` parameter.  For example,
+
+    >>> x
+    array([[ 0,  1,  2,  3,  4],
+           [ 5,  6,  7,  8,  9],
+           [10, 11, 12, 13, 14]])
+    >>> y = rg.permuted(x, axis=1, out=x)
+    >>> x
+    array([[ 1,  0,  2,  4,  3],  # random
+           [ 6,  7,  8,  9,  5],
+           [10, 14, 11, 13, 12]])
+
+Note that when ``out`` is given, the return value is ``out``:
+
+    >>> y is x
+    True
+
+Permutation methods
+~~~~~~~~~~~~~~~~~~~
+
 .. autosummary::
    :toctree: generated/
 
    ~numpy.random.Generator.shuffle
    ~numpy.random.Generator.permutation
+   ~numpy.random.Generator.permuted
 
 Distributions
 =============
