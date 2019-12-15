@@ -28,6 +28,7 @@ from . import auxfuncs
 from . import cfuncs
 from . import f90mod_rules
 from . import __version__
+from . import capi_maps
 
 f2py_version = __version__.version
 errmess = sys.stderr.write
@@ -118,6 +119,9 @@ Options:
                    --link-<resource> switch below. [..] is optional list
                    of resources names. E.g. try 'f2py --help-link lapack_opt'.
 
+  --f2cmap <filename>  Load Fortran-to-Python KIND specification from the given
+                   file. Default: .f2py_f2cmap in current directory.
+
   --quiet          Run quietly.
   --verbose        Run with extra verbosity.
   -v               Print f2py version ID and exit.
@@ -175,7 +179,7 @@ http://cens.ioc.ee/projects/f2py2e/""" % (f2py_version, numpy_version)
 
 def scaninputline(inputline):
     files, skipfuncs, onlyfuncs, debug = [], [], [], []
-    f, f2, f3, f5, f6, f7, f8, f9 = 1, 0, 0, 0, 0, 0, 0, 0
+    f, f2, f3, f5, f6, f7, f8, f9, f10 = 1, 0, 0, 0, 0, 0, 0, 0, 0
     verbose = 1
     dolc = -1
     dolatexdoc = 0
@@ -226,6 +230,8 @@ def scaninputline(inputline):
             f8 = 1
         elif l == '--f2py-wrapper-output':
             f9 = 1
+        elif l == '--f2cmap':
+            f10 = 1
         elif l == '--overwrite-signature':
             options['h-overwrite'] = 1
         elif l == '-h':
@@ -267,6 +273,9 @@ def scaninputline(inputline):
         elif f9:
             f9 = 0
             options["f2py_wrapper_output"] = l
+        elif f10:
+            f10 = 0
+            options["f2cmap_file"] = l
         elif f == 1:
             try:
                 with open(l):
@@ -312,6 +321,7 @@ def scaninputline(inputline):
     options['wrapfuncs'] = wrapfuncs
     options['buildpath'] = buildpath
     options['include_paths'] = include_paths
+    options.setdefault('f2cmap_file', None)
     return files, options
 
 
@@ -422,6 +432,7 @@ def run_main(comline_list):
     fobjcsrc = os.path.join(f2pydir, 'src', 'fortranobject.c')
     files, options = scaninputline(comline_list)
     auxfuncs.options = options
+    capi_maps.load_f2cmap_file(options['f2cmap_file'])
     postlist = callcrackfortran(files, options)
     isusedby = {}
     for i in range(len(postlist)):
@@ -574,7 +585,7 @@ def run_compile():
     modulename = 'untitled'
     sources = sys.argv[1:]
 
-    for optname in ['--include_paths', '--include-paths']:
+    for optname in ['--include_paths', '--include-paths', '--f2cmap']:
         if optname in sys.argv:
             i = sys.argv.index(optname)
             f2py_flags.extend(sys.argv[i:i + 2])
