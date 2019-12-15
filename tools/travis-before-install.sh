@@ -5,12 +5,17 @@ free -m
 df -h
 ulimit -a
 
-if [ -n "$PPC64_LE" ]; then
+if [ -n "$PPC64_LE" -o -n "$DOWNLOAD_OPENBLAS" ]; then
   pwd
   ls -ltrh
   target=$(python tools/openblas_support.py)
-  sudo cp -r $target/64/lib/* /usr/lib
-  sudo cp $target/64/include/* /usr/include
+  if [ -d "$target/usr/local" ]; then
+      sudo cp -r $target/usr/local/lib/* /usr/lib
+      sudo cp $target/usr/local/include/* /usr/include
+  else
+      sudo cp -r $target/64/lib/* /usr/lib
+      sudo cp $target/64/include/* /usr/include
+  fi
 fi
 
 mkdir builds
