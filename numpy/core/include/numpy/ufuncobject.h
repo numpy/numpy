@@ -196,7 +196,7 @@ typedef struct _tagPyUFuncObject {
          */
     #ifdef METH_FASTCALL  /* TODO: Replace with `vectorcallfunc` when defined */
         PyObject *(*vectorcall)(
-                PyObject *, PyObject *const *, size_t, PyObject *);
+                PyObject *, PyObject *const *, Py_ssize_t, PyObject *);
     #else
         void *reserved2;
     #endif

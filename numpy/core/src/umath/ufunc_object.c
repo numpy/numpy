@@ -4769,7 +4769,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
 
     PyObject *new_args[NPY_MAXARGS];
-    Py_ssize_t len_kwds = PyDict_GET_SIZE(kwds);
+    Py_ssize_t len_kwds = PyDict_Size(kwds);
 
     if (NPY_UNLIKELY(len_args + len_kwds > NPY_MAXARGS)) {
         /*
@@ -4825,7 +4825,7 @@ ufunc_generic_vectorcall(PyObject *ufunc,
      * Unlike METH_FASTCALL, `len_args` may have a flag to signal that
      * args[-1] may be (temporarily) used. So normalize it here.
      */
-    return ufunc_generic_fastcall(ufunc,
+    return ufunc_generic_fastcall((PyUFuncObject *)ufunc,
             args, PyVectorcall_NARGS(len_args), kwnames, NPY_FALSE);
 }
 
@@ -5014,7 +5014,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->userloops = NULL;
     ufunc->ptr = NULL;
 #ifdef METH_FASTCALL
-    ufunc->vectorcall = ufunc_generic_vectorcall;
+    ufunc->vectorcall = &ufunc_generic_vectorcall;
 #else
     ufunc->reserved2 = NULL;
 #endif
