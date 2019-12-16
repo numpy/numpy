@@ -7584,8 +7584,9 @@ class TestConversion(object):
         for int_func in int_funcs:
             assert_equal(int_func(np.array(1)), 1)
             assert_equal(int_func(np.array(0)), 0)
-            assert_raises(DeprecationWarning, int_func, np.array([1]))
-            assert_raises(DeprecationWarning, int_func, np.array([[42]]))
+            with assert_warns(DeprecationWarning):
+                assert_equal(int_func(np.array([1])), 1)
+                assert_equal(int_func(np.array([[42]])), 42)
             assert_raises(TypeError, int_func, np.array([1, 2]))
 
             # gh-9972
@@ -7597,14 +7598,17 @@ class TestConversion(object):
                 def __trunc__(self):
                     return 3
             assert_equal(3, int_func(np.array(HasTrunc())))
-            assert_raises(DeprecationWarning, int_func, np.array([HasTrunc()]))
+            with assert_warns(DeprecationWarning):
+                assert_equal(3, int_func(np.array([HasTrunc()])))
 
             class NotConvertible(object):
                 def __int__(self):
                     raise NotImplementedError
             assert_raises(NotImplementedError,
                 int_func, np.array(NotConvertible()))
-            assert_raises(DeprecationWarning, int_func, np.array([NotConvertible()]))
+            with assert_warns(DeprecationWarning):
+                assert_raises(NotImplementedError,
+                    int_func, np.array([NotConvertible()]))
 
 
 class TestWhere(object):
