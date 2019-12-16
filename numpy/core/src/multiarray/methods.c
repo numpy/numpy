@@ -2581,9 +2581,9 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     if (PyArray_NDIM(self) != 0) {
         if (PyArray_SIZE(self) == 1) {
             if (DEPRECATE(
-                "Conversion of an array with one element to a scalar "
-                "is deprecated, and will error in future. "
-                "Ensure you extract a single element from your array before performing this operation".
+                "Conversion of an array with one element to a scalar \
+                is deprecated, and will error in future. \
+                Ensure you extract a single element from your array before performing this operation"
             ) < 0) {
                 return NULL;
             }
