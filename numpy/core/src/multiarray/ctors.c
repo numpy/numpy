@@ -1619,6 +1619,8 @@ fail:
  *              validate and possibly copy arr itself ...
  *      }
  *      ... use arr ...
+ * context is passed to PyArray_FromArrayAttr, which ignores it. Since this is
+ * a NUMPY_API function, we cannot remove it.
  */
 NPY_NO_EXPORT int
 PyArray_GetArrayParamsFromObject(PyObject *op,
@@ -1871,6 +1873,10 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
 /*NUMPY_API
  * Does not check for NPY_ARRAY_ENSURECOPY and NPY_ARRAY_NOTSWAPPED in flags
  * Steals a reference to newtype --- which can be NULL
+ *
+ * context is passed to PyArray_GetArrayParamsFromObject, which passes it to
+ * PyArray_FromArrayAttr, which raises if it is not NULL. Since this is a
+ * NUMPY_API function, we cannot remove it.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -2623,13 +2629,18 @@ PyArray_FromInterface(PyObject *origin)
     return NULL;
 }
 
-/*NUMPY_API*/
+/*NUMPY_API
+ */
 NPY_NO_EXPORT PyObject *
 PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
 {
     PyObject *new;
     PyObject *array_meth;
 
+    if (context != NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "'context' must be NULL");
+        return NULL;
+    }
     array_meth = PyArray_LookupSpecial_OnInstance(op, "__array__");
     if (array_meth == NULL) {
         if (PyErr_Occurred()) {
@@ -2637,29 +2648,11 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
         }
         return Py_NotImplemented;
     }
-    if (context == NULL) {
-        if (typecode == NULL) {
-            new = PyObject_CallFunction(array_meth, NULL);
-        }
-        else {
-            new = PyObject_CallFunction(array_meth, "O", typecode);
-        }
+    if (typecode == NULL) {
+        new = PyObject_CallFunction(array_meth, NULL);
     }
     else {
-        if (typecode == NULL) {
-            new = PyObject_CallFunction(array_meth, "OO", Py_None, context);
-            if (new == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
-                PyErr_Clear();
-                new = PyObject_CallFunction(array_meth, "");
-            }
-        }
-        else {
-            new = PyObject_CallFunction(array_meth, "OO", typecode, context);
-            if (new == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
-                PyErr_Clear();
-                new = PyObject_CallFunction(array_meth, "O", typecode);
-            }
-        }
+        new = PyObject_CallFunction(array_meth, "O", typecode);
     }
     Py_DECREF(array_meth);
     if (new == NULL) {

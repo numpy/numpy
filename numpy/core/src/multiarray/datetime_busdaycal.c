@@ -293,7 +293,7 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
 
         /* This steals the datetime_dtype reference */
         dates = (PyArrayObject *)PyArray_FromAny(dates_in, datetime_dtype,
-                                                0, 0, 0, dates_in);
+                                                0, 0, 0, NULL);
         if (dates == NULL) {
             goto fail;
         }

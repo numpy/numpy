@@ -1848,32 +1848,14 @@ class TestSpecialMethods:
         a = A()
         assert_raises(RuntimeError, ncu.maximum, a, a)
 
-    def test_array_with_context(self):
+    def test_array_too_many_args(self):
 
-        class A:
-            def __array__(self, dtype=None, context=None):
-                func, args, i = context
-                self.func = func
-                self.args = args
-                self.i = i
-                return np.zeros(1)
-
-        class B:
-            def __array__(self, dtype=None):
-                return np.zeros(1, dtype)
-
-        class C:
-            def __array__(self):
+        class A(object):
+            def __array__(self, dtype, context):
                 return np.zeros(1)
 
         a = A()
-        ncu.maximum(np.zeros(1), a)
-        assert_(a.func is ncu.maximum)
-        assert_equal(a.args[0], 0)
-        assert_(a.args[1] is a)
-        assert_(a.i == 1)
-        assert_equal(ncu.maximum(a, B()), 0)
-        assert_equal(ncu.maximum(a, C()), 0)
+        assert_raises_regex(TypeError, '2 required positional', np.sum, a)
 
     def test_ufunc_override(self):
         # check override works even with instance with high priority.
