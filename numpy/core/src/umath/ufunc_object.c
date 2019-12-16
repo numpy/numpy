@@ -28,6 +28,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "Python.h"
+#include "stddef.h"
 
 #include "npy_config.h"
 
@@ -4748,6 +4749,11 @@ fail:
 
 
 #ifdef METH_FASTCALL
+
+/*
+ * TODO: The implementation below can be replaced with PyVectorcall_Call
+ *       when available (should be Python 3.9).
+ */
 static PyObject *
 ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
@@ -4801,34 +4807,37 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     Py_DECREF(kwnames);
     return res;
 }
-#else
+
+
+/*
+ * Implement the vectorcall slot if available (only if METH_FASTCALL
+ * is available). If PyVectorcall_NARGS is defined use it to, otherwise
+ * assume it will not be used.
+ */
+#ifndef PyVectorcall_NARGS
+#define PyVectorcall_NARGS(len_args) len_args & ~NPY_MIN_INTP
+#endif
+static PyObject *
+ufunc_generic_vectorcall(PyUFuncObject *ufunc,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    /*
+     * Unlike METH_FASTCALL, `len_args` may have a flag to signal that
+     * args[-1] may be (temporarily) used. So normalize it here.
+     */
+    return ufunc_generic_fastcall(ufunc,
+            args, PyVectorcall_NARGS(len_args), kwnames, NPY_FALSE);
+}
+
+#else  /* METH_FASTCALL */
+
 static PyObject *
 ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
     return ufunc_generic_fastcall(ufunc, args, kwds, NPY_FALSE);
 }
+
 #endif  /* METH_FASTCALL */
-
-
-/*
- * Implement the vectorcall slot if available. `tp_vectorcall` is slightly
- * newer then `METH_FASTCALL`. METH_FASTCALL is available in 3.6 (undocumented)
- * and 3.7+ documented. `tp_vectorcall` and `PyVectorcall_NARGS` is
- * implemented in python 3.8+
- */
-#ifdef PyVectorcall_NARGS
-static PyObject *
-ufunc_generic_call(PyUFuncObject *ufunc,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
-{
-    /*
-     * Unlike METH_FASTCALL, `len_args` may have a flag to signal that
-     * args[-] may be (temporarily) used. So normalize it here.
-     */
-    return ufunc_generic_fastcall(ufunc,
-            args, PyVectorcall_NARGS(len_args), kwnames, NPY_FALSE);
-}
-#endif
 
 
 
@@ -5004,7 +5013,11 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->core_dim_flags = NULL;
     ufunc->userloops = NULL;
     ufunc->ptr = NULL;
+#ifdef METH_FASTCALL
+    ufunc->vectorcall = ufunc_generic_vectorcall;
+#else
     ufunc->reserved2 = NULL;
+#endif
     ufunc->reserved1 = 0;
     ufunc->iter_flags = 0;
 
@@ -6079,7 +6092,11 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     0,                                          /* tp_itemsize */
     /* methods */
     (destructor)ufunc_dealloc,                  /* tp_dealloc */
-    0,                                          /* tp_print */  // TODO this is tp_vectorcall?
+#ifdef METH_FASTCALL
+    offsetof(PyUFuncObject, vectorcall),
+#else
+    0,                                          /* tp_print */
+#endif
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
 #if defined(NPY_PY3K)
@@ -6097,7 +6114,11 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,    /* tp_flags */  // TODO: Implemetn and add vectorcall.
+    Py_TPFLAGS_DEFAULT |
+#if defined(METH_FASTCALL) && defined(_Py_TPFLAGS_HAVE_VECTORCALL)
+        _Py_TPFLAGS_HAVE_VECTORCALL |
+#endif
+        Py_TPFLAGS_HAVE_GC,                     /* tp_flags */
     0,                                          /* tp_doc */
     (traverseproc)ufunc_traverse,               /* tp_traverse */
     0,                                          /* tp_clear */

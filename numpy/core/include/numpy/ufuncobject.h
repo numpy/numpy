@@ -194,7 +194,12 @@ typedef struct _tagPyUFuncObject {
          * but this was never implemented. (This is also why the above
          * selector is called the "legacy" selector.)
          */
+    #ifdef METH_FASTCALL  /* TODO: Replace with `vectorcallfunc` when defined */
+        PyObject *(*vectorcall)(
+                PyObject *, PyObject *const *, size_t, PyObject *);
+    #else
         void *reserved2;
+    #endif
         /*
          * A function which returns a masked inner loop for the ufunc.
          */
