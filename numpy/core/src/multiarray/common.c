@@ -945,5 +945,24 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
     }
 }
 
-
-
+bool
+has_rank_0(PyArrayObject *v)
+{
+    if (PyArray_NDIM(v) != 0) {
+        if (PyArray_SIZE(v) == 1) {
+            if (DEPRECATE(
+                "Conversion of an array with one element to a scalar "
+                "is deprecated, and will error in future. "
+                "Ensure you extract a single element from your array before performing this operation."
+            ) < 0) {
+                return false;
+            }
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError, "only rank-0 arrays can "
+                            "be converted to Python scalars");
+            return false;
+        }
+    }
+    return true;
+}

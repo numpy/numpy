@@ -5,6 +5,7 @@
 #include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
 #include <limits.h>
+#include <stdbool.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -235,7 +236,7 @@ npy_uint_alignment(int itemsize)
         default:
             break;
     }
-    
+
     return alignment;
 }
 
@@ -335,3 +336,7 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
                   int nd, npy_intp dimensions[], int typenum, PyArrayObject **result);
 
 #endif
+
+
+bool
+has_rank_0(PyArrayObject *v);
