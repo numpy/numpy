@@ -3297,10 +3297,17 @@ class TestMethods(object):
             c = np.array([[[[[7]]]]], dtype=dt)
 
             msg = 'dtype: {0}'.format(dt)
+
             ap = complex(a)
             assert_equal(ap, a, msg)
-            assert_warns(DeprecationWarning, complex, b)
-            assert_warns(DeprecationWarning, complex, c)
+
+            with assert_warns(DeprecationWarning):
+                bp = complex(b)
+            assert_equal(bp, b, msg)
+
+            with assert_warns(DeprecationWarning):
+                cp = complex(c)
+            assert_equal(cp, c, msg)
 
     def test__complex__should_not_work(self):
         dtypes = ['i1', 'i2', 'i4', 'i8',
@@ -7586,6 +7593,7 @@ class TestConversion(object):
             assert_equal(int_func(np.array(0)), 0)
             with assert_warns(DeprecationWarning):
                 assert_equal(int_func(np.array([1])), 1)
+            with assert_warns(DeprecationWarning):
                 assert_equal(int_func(np.array([[42]])), 42)
             assert_raises(TypeError, int_func, np.array([1, 2]))
 
