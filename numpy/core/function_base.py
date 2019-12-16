@@ -136,20 +136,15 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         if dtype is None:
             raise ValueError("linspace() with {} objects requires the `dtype` argument "
                     "to be set to the desired output dtype".format(start.dtype))
-        if _nx.isnat(start):
-            raise ValueError("linspace() cannot be called with start=NaT")
-        if _nx.isnat(stop):
-            raise ValueError("linspace() cannot be called with end=NaT")
-        # for datetime/timedelta, we convert start and stop to their internal int
-        # representation.
-        start = start.astype(dtype).view(_nx.int64)
-        stop = stop.astype(dtype).view(_nx.int64)
+        # dt will be used as the dtype argument of arange after this if/else block ends,
+        # to generate array y. Therefore it must be unitless, not timedelta or datetime.
+        dt = _nx.integer
     else:
         # Convert float/complex array scalars to float, gh-3504
         start = start * 1.0
         stop  = stop  * 1.0
+        dt = result_type(start, stop, float(num))
 
-    dt = result_type(start, stop, float(num))
     delta = stop - start
     y = _nx.arange(0, num, dtype=dt).reshape((-1,) + (1,) * ndim(delta))
 
@@ -159,17 +154,23 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     # In-place multiplication y *= delta/div is faster, but prevents the multiplicant
     # from overriding what class is produced, and thus prevents, e.g. use of Quantities,
     # see gh-7142. Hence, we multiply in place only for standard scalar types.
+    # In-place division also cannot be done for datetime64 and timedelta64.
+    _mult_inplace = _nx.isscalar(delta) and (not is_datelike)
     if num > 1:
         step = delta / div
-        if _nx.any(step == 0):
+        # The following check that step is not 0 must be done with
+        # an explicit dtype at right hand side because comparing 
+        # datetime or timedelta objects with (unitless) 0 is not
+        # allowed
+        if _nx.any(step == _nx.array(0, asanyarray(step).dtype)):
             # Special handling for denormal numbers, gh-5437
             y /= div
-            if _nx.isscalar(delta):
+            if _mult_inplace:
                 y *= delta
             else:
                 y = y * delta
         else:
-            if _nx.isscalar(delta):
+            if _mult_inplace:
                 y *= step
             else:
                 y = y * step
