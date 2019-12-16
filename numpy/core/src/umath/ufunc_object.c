@@ -4827,7 +4827,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
  */
 static PyObject *
 ufunc_generic_vectorcall(PyObject *ufunc,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+        PyObject *const *args, size_t len_args, PyObject *kwnames)
 {
     /*
      * Unlike METH_FASTCALL, `len_args` may have a flag to signal that
