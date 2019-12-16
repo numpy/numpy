@@ -11,7 +11,7 @@ steps:
 - powershell: |
     $pyversion = python -c "from __future__ import print_function; import sys; print(sys.version.split()[0])"
     Write-Host "Python Version: $pyversion"
-    $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
+    $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas$env:OPENBLAS_SUFFIX.a"
     Write-Host "target path: $target"
     $openblas = python tools/openblas_support.py
     cp $openblas $target
