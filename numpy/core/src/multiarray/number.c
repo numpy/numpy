@@ -892,7 +892,7 @@ array_scalar_forward(PyArrayObject *v,
                      PyObject *(*builtin_func)(PyObject *),
                      const char *where)
 {
-    if (!has_rank_0(v)) {
+    if (check_has_rank_0(v) < 0) {
         return NULL;
     }
 

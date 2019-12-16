@@ -2578,7 +2578,7 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     PyArray_Descr *dtype;
     PyObject *c;
 
-    if (!has_rank_0(self)) {
+    if (check_has_rank_0(self) < 0) {
       return NULL;
     }
 

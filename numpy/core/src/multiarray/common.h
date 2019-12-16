@@ -5,7 +5,6 @@
 #include <numpy/npy_cpu.h>
 #include <numpy/ndarraytypes.h>
 #include <limits.h>
-#include <stdbool.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -338,5 +337,5 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
 #endif
 
 
-bool
-has_rank_0(PyArrayObject *v);
+NPY_NO_EXPORT int
+check_has_rank_0(PyArrayObject *v);
