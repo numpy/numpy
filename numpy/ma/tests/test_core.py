@@ -1233,7 +1233,7 @@ class TestMaskedArrayArithmetic(object):
         assert_(x.ptp() is masked)
 
     def test_minmax_dtypes(self):
-        # Additonal tests on max/min for non-standard float and complex dtypes
+        # Additional tests on max/min for non-standard float and complex dtypes
         (x, _, a10, m1, _, xm, _, _, _, _) = self.d
         assert_equal(xm.max(), a10)
         assert_equal(masked_array(x, mask=m1, dtype=np.half).max(), np.half(a10))
@@ -1243,8 +1243,6 @@ class TestMaskedArrayArithmetic(object):
         assert_equal(masked_array(x, mask=m1, dtype=np.cfloat).max(), np.cfloat(a10))
         assert_equal(masked_array(x, mask=m1, dtype=np.cdouble).max(), np.cdouble(a10))
         assert_equal(masked_array(x, mask=m1, dtype=np.clongdouble).max(), np.clongdouble(a10))
-        ym = masked_array([1e20, 2e20], mask=[1,0])
-        assert_equal(ym.min(), 2e20)
         ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.single)
         assert_equal(ym.min(), np.single(2e20))
         ym = masked_array([1e20, 2e20], mask=[1,0], dtype=np.double)
