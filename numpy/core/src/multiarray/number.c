@@ -896,9 +896,9 @@ array_scalar_forward(PyArrayObject *v,
     if (PyArray_NDIM(v) != 0) {
         if (PyArray_SIZE(v) == 1) {
             if (DEPRECATE(
-                "Conversion of an array with one element to a scalar \
-is deprecated, and will error in future. \
-Ensure you extract a single element from your array before performing this operation"
+                "Conversion of an array with one element to a scalar "
+                "is deprecated, and will error in future. "
+                "Ensure you extract a single element from your array before performing this operation."
             ) < 0) {
                 return NULL;
             }
