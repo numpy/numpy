@@ -4818,7 +4818,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 #define PyVectorcall_NARGS(len_args) len_args & ~NPY_MIN_INTP
 #endif
 static PyObject *
-ufunc_generic_vectorcall(PyUFuncObject *ufunc,
+ufunc_generic_vectorcall(PyObject *ufunc,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     /*
