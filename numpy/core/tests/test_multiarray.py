@@ -7584,7 +7584,6 @@ class TestConversion(object):
         for int_func in int_funcs:
             assert_equal(int_func(np.array(1)), 1)
             assert_equal(int_func(np.array(0)), 0)
-            # These tests both raise a TypeError and a DeprecationWarning
             assert_raises(DeprecationWarning, int_func, np.array([1]))
             assert_raises(DeprecationWarning, int_func, np.array([[42]]))
             assert_raises(TypeError, int_func, np.array([1, 2]))
