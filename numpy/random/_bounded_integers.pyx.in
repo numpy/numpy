@@ -317,7 +317,6 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
     if (low_ndim == 0 and high_ndim == 0):
         low = int(low_arr)
         high = int(high_arr)
-
         # Subtract 1 since internal generator produces on closed interval [low, high]
         if not closed:
             high -= 1
