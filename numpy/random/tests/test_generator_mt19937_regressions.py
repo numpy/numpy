@@ -1,4 +1,3 @@
-import sys
 from numpy.testing import (assert_, assert_array_equal)
 from numpy.compat import long
 import numpy as np

@@ -3,7 +3,6 @@ import sys
 import pytest
 
 import numpy as np
-from numpy.dual import cholesky, eigh, svd
 from numpy.linalg import LinAlgError
 from numpy.testing import (
     assert_, assert_raises, assert_equal, assert_allclose,
