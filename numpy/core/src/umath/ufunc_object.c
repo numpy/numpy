@@ -4808,15 +4808,23 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     return res;
 }
 
+#else  /* METH_FASTCALL */
 
+static PyObject *
+ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
+{
+    return ufunc_generic_fastcall(ufunc, args, kwds, NPY_FALSE);
+}
+
+#endif  /* METH_FASTCALL */
+
+#if PY_VERSION_HEX >= 0x03080000
 /*
- * Implement the vectorcall slot if available (only if METH_FASTCALL
- * is available). If PyVectorcall_NARGS is defined use it to, otherwise
- * assume it will not be used.
+ * Implement vectorcallfunc which should be defined with Python 3.8+.
+ * In principle this could be backported, but the speed gain seems moderate
+ * since ufunc calls often do not have keyword arguments and always have
+ * a large overhead. The only user would potentially be cython probably.
  */
-#ifndef PyVectorcall_NARGS
-#define PyVectorcall_NARGS(len_args) len_args & ~NPY_MIN_INTP
-#endif
 static PyObject *
 ufunc_generic_vectorcall(PyObject *ufunc,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
@@ -4828,17 +4836,7 @@ ufunc_generic_vectorcall(PyObject *ufunc,
     return ufunc_generic_fastcall((PyUFuncObject *)ufunc,
             args, PyVectorcall_NARGS(len_args), kwnames, NPY_FALSE);
 }
-
-#else  /* METH_FASTCALL */
-
-static PyObject *
-ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
-{
-    return ufunc_generic_fastcall(ufunc, args, kwds, NPY_FALSE);
-}
-
-#endif  /* METH_FASTCALL */
-
+#endif  /* PY_VERSION_HEX >= 0x03080000 */
 
 
 NPY_NO_EXPORT PyObject *
@@ -5013,7 +5011,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->core_dim_flags = NULL;
     ufunc->userloops = NULL;
     ufunc->ptr = NULL;
-#ifdef METH_FASTCALL
+#if PY_VERSION_HEX >= 0x03080000
     ufunc->vectorcall = &ufunc_generic_vectorcall;
 #else
     ufunc->reserved2 = NULL;
@@ -6092,7 +6090,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     0,                                          /* tp_itemsize */
     /* methods */
     (destructor)ufunc_dealloc,                  /* tp_dealloc */
-#ifdef METH_FASTCALL
+#if PY_VERSION_HEX >= 0x03080000
     offsetof(PyUFuncObject, vectorcall),
 #else
     0,                                          /* tp_print */
@@ -6115,7 +6113,7 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT |
-#if defined(METH_FASTCALL) && defined(_Py_TPFLAGS_HAVE_VECTORCALL)
+#if PY_VERSION_HEX >= 0x03080000
         _Py_TPFLAGS_HAVE_VECTORCALL |
 #endif
         Py_TPFLAGS_HAVE_GC,                     /* tp_flags */
