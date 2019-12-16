@@ -2042,12 +2042,12 @@ class TestSpecialMethods(object):
         a = A()
         with assert_raises(TypeError):
             np.multiply.__call__(1, a, foo='bar', answer=42)
-        res = np.multiply.__call__(1, a, subok='bar', wheremask=42)
+        res = np.multiply.__call__(1, a, subok='bar', where=42)
         assert_equal(res[0], a)
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], '__call__')
         assert_equal(res[3], (1, a))
-        assert_equal(res[4], {'subok': 'bar', 'keepdims': 42})
+        assert_equal(res[4], {'subok': 'bar', 'where': 42})
 
         # __call__, wrong args
         assert_raises(TypeError, np.multiply, a)
@@ -2173,8 +2173,8 @@ class TestSpecialMethods(object):
         assert_equal(res[4], {'axis': None, 'dtype': None})
 
         # reduceat, wrong args
-        assert_raises(ValueError, np.multiply.reduce, a, [4, 2], out=())
-        assert_raises(ValueError, np.multiply.reduce, a, [4, 2],
+        assert_raises(TypeError, np.multiply.reduce, a, [4, 2], out=())
+        assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
                       out=('out0', 'out1'))
         assert_raises(TypeError, np.multiply.reduce, a, [4, 2],
                       'axis0', axis='axis0')

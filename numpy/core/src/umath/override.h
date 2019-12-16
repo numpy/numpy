@@ -6,13 +6,13 @@
 
 NPY_NO_EXPORT int
 PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
-                      PyObject *in_args, PyObject *out_args,
+        PyObject *in_args, PyObject *out_args,
 #ifdef METH_FASTCALL
-                      PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
 #else
         PyObject *args, PyObject *kwargs,
 #endif
-                      PyObject **result);
+        PyObject **result);
 
 
 #endif

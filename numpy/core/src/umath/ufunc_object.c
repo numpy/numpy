@@ -45,7 +45,6 @@
 #include "override.h"
 #include "npy_import.h"
 #include "extobj.h"
-#include "common.h"
 #include "conversion_utils.h"
 #include "numpyos.h"
 
@@ -2273,10 +2272,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc, PyArrayObject **op,
 
     /* Possibly remap axes. */
     if (axes != NULL || axis != NULL) {
-        if ((axes != NULL) && (axis != NULL)) {
-            PyErr_SetString(PyExc_TypeError,
-                    "cannot specify both 'axis' and 'axes'");
-        }
+        assert((axes == NULL) || (axis == NULL));
 
         remap_axis = PyArray_malloc(sizeof(remap_axis[0]) * nop);
         remap_axis_memory = PyArray_malloc(sizeof(remap_axis_memory[0]) *
@@ -2858,7 +2854,6 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc, PyArrayObject **op,
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
-    Py_XDECREF(wheremask);
 
     NPY_UF_DBG_PRINT("Returning success code 0\n");
 
@@ -2870,7 +2865,6 @@ fail:
         Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
-    Py_XDECREF(wheremask);
 
     return retval;
 }
@@ -3986,12 +3980,13 @@ tuple_all_none(PyObject *tup) {
 
 
 static int
-_set_full_args_out(int nout, PyObject *out_obj, ufunc_full_args *full_args)
+_set_full_args_out(npy_bool out_already_found,
+        int nout, PyObject *out_obj, ufunc_full_args *full_args)
 {
     if (out_obj == NULL) {
         return 0;
     }
-    if (full_args->out != NULL) {
+    if (out_already_found) {
         // TODO: Was ValueError (and error order changed)
         PyErr_SetString(PyExc_TypeError,
                         "cannot specify 'out' as both a "
@@ -4055,7 +4050,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, NPY_PARAMS_DEF, int operation)
     PyArrayObject *out = NULL;
     int keepdims = 0;
     PyObject *initial = NULL;
-
+    npy_bool out_is_passed_by_position = NPY_FALSE;
+    NPY_PARAMS_DEFINE_LEN_ARGS;
 
     static char *_reduce_type[] = {"reduce", "accumulate", "reduceat", NULL};
 
@@ -4095,6 +4091,12 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, NPY_PARAMS_DEF, int operation)
                     NULL, NULL, NULL)) {
             goto fail;
         }
+        /* Prepare inputs for PyUfunc_CheckOverride */
+        full_args.in = PyTuple_Pack(2, op, indices_obj);
+        if (full_args.in == NULL) {
+            goto fail;
+        }
+        out_is_passed_by_position = len_args >= 5;
     }
     else if (operation == UFUNC_ACCUMULATE) {
         NPY_PREPARE_ARGPARSER;
@@ -4106,6 +4108,12 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, NPY_PARAMS_DEF, int operation)
                     NULL, NULL, NULL)) {
             goto fail;
         }
+        /* Prepare input for PyUfunc_CheckOverride */
+        full_args.in = PyTuple_Pack(1, op);
+        if (full_args.in == NULL) {
+            goto fail;
+        }
+        out_is_passed_by_position = len_args >= 4;
     }
     else {
         NPY_PREPARE_ARGPARSER;
@@ -4120,28 +4128,33 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, NPY_PARAMS_DEF, int operation)
                     NULL, NULL, NULL)) {
             goto fail;
         }
+        /* Prepare input for PyUfunc_CheckOverride */
+        full_args.in = PyTuple_Pack(1, op);
+        if (full_args.in == NULL) {
+            goto fail;
+        }
+        out_is_passed_by_position = len_args >= 4;
     }
 
-    full_args.in = PyTuple_Pack(1, op);
-    if (full_args.in == NULL) {
-        goto fail;
+    /* Normalize output for PyUFunc_CheckOverride and conversion. */
+    if (out_is_passed_by_position) {
+        /* in this branch, out is always wrapped in a tuple. */
+        if ((out_obj != NULL) && (out_obj != Py_None)) {
+            full_args.out = PyTuple_Pack(1, out_obj);
+            if (full_args.out == NULL) {
+                goto fail;
+            }
+        }
     }
-    if (_set_full_args_out(1, out_obj, &full_args) < 0) {
-        Py_DECREF(full_args.in);
-        goto fail;
+    else if (out_obj) {
+        if (_set_full_args_out(NPY_FALSE, 1, out_obj, &full_args) < 0) {
+            goto fail;
+        }
+        /* Ensure that out_obj is the array, not the tuple: */
+        if (full_args.out != NULL) {
+            out_obj = PyTuple_GET_ITEM(full_args.out, 0);
+        }
     }
-
-    /* The original arguments are not needed anymore: */
-#ifdef METH_FASTCALL
-    args += len_args;
-#else
-    static PyObject *empty_tuple = NULL;
-    if (NPY_UNLIKELY(empty_tuple == NULL)) {
-        empty_tuple = PyTuple_New(0);
-    }
-    args = empty_tuple;
-#endif
-    len_args = 0;
 
     /* We now have all the information required to check for Overrides */
     PyObject *override = NULL;
@@ -4391,7 +4404,7 @@ _get_typetup(PyObject *sig_obj, PyObject *signature_obj, PyObject *dtype,
 
     if (sig_obj != NULL) {
         if (*out_typetup != NULL) {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(PyExc_TypeError,
                     "cannot specify both 'sig' and 'signature'");
             Py_SETREF(*out_typetup, NULL);
             return -1;
@@ -4402,16 +4415,41 @@ _get_typetup(PyObject *sig_obj, PyObject *signature_obj, PyObject *dtype,
 
     if (dtype != NULL) {
         if (*out_typetup != NULL) {
+            // TODO: change to typeerreor
             PyErr_SetString(PyExc_RuntimeError,
                     "cannot specify both 'signature' and 'dtype'");
             Py_SETREF(*out_typetup, NULL);
             return -1;
         }
-        *out_typetup = Py_BuildValue("(O)", dtype);
+        /* dtype needs to be converted, delay after the override check */
+    }
+    return 0;
+}
+
+/*
+ * Finish conversion parsing of the type tuple. This is currenlty only
+ * conversion of the `dtype` argument, but should do more in the future.
+ *
+ * TODO: The parsing of the typetup should be moved here (followup cleanup).
+ */
+static int
+_convert_typetup(PyObject *dtype_obj, PyObject **out_typetup)
+{
+    if (dtype_obj != NULL) {
+        PyArray_Descr *dtype = NULL;
+        if (!PyArray_DescrConverter2(dtype_obj, &dtype)) {
+            return -1;
+        }
+        if (dtype == NULL) {
+            /* dtype=None, no need to set typetup. */
+            return 0;
+        }
+        *out_typetup = PyTuple_Pack(1, (PyObject *)dtype);
         if (*out_typetup == NULL) {
             return -1;
         }
     }
+    /* sig and signature are not converted here right now. */
     return 0;
 }
 
@@ -4429,6 +4467,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc, NPY_PARAMS_DEF, npy_bool outer)
     PyObject *override = NULL;
     ufunc_full_args full_args = {NULL, NULL};
     PyObject *typetup = NULL;
+    NPY_PARAMS_DEFINE_LEN_ARGS;
 
     int errval;
     int nin = ufunc->nin, nout = ufunc->nout, nop = ufunc->nargs;
@@ -4465,8 +4504,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc, NPY_PARAMS_DEF, npy_bool outer)
      * If there are more arguments, they define the out args. Otherwise
      * full_args.out is NULL for now, and the `out` kwarg may still be passed.
      */
+    npy_bool were_outputs_passed_as_positional_args = NPY_FALSE;
     if (len_args > nin) {
         npy_bool all_none = NPY_TRUE;
+        were_outputs_passed_as_positional_args = NPY_TRUE;
 
         full_args.out = PyTuple_New(nout);
         if (full_args.out == NULL) {
@@ -4494,7 +4535,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc, NPY_PARAMS_DEF, npy_bool outer)
         full_args.out = NULL;
     }
 
-    /* The original arguments are not needed anymore: */
+    /* The original positional arguments are already parsed. */
 #ifdef METH_FASTCALL
     args += len_args;
 #else
@@ -4551,10 +4592,16 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc, NPY_PARAMS_DEF, npy_bool outer)
                         NULL, NULL, NULL)) {
                 goto fail;
             }
+            if (NPY_UNLIKELY((axes_obj != NULL) && (axis_obj != NULL))) {
+                PyErr_SetString(PyExc_TypeError,
+                        "cannot specify both 'axis' and 'axes'");
+                goto fail;
+            }
         }
 
         /* Finish preparation of non-converted output objects (if necessary) */
-        if (_set_full_args_out(nout, out_obj, &full_args) < 0) {
+        if (_set_full_args_out(were_outputs_passed_as_positional_args,
+                    nout, out_obj, &full_args) < 0) {
             goto fail;
         }
 
@@ -4582,12 +4629,17 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc, NPY_PARAMS_DEF, npy_bool outer)
     }
 
     if (outer) {
-        /* Outer uses special preparation of inputs (expand dims drop matrix) */
+        /* Outer uses special preparation of inputs (expand dims) */
         PyObject *new_in = prepare_input_arguments_for_outer(full_args.in);
         if (new_in == NULL) {
             goto fail;
         }
         Py_SETREF(full_args.in, new_in);
+    }
+
+    /* Finish argument parsing/converting for the dtype and all others */
+    if (_convert_typetup(dtype_obj, &typetup) < 0) {
+        goto fail;
     }
 
     NPY_ORDER order = NPY_KEEPORDER;
@@ -4608,14 +4660,16 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc, NPY_PARAMS_DEF, npy_bool outer)
         errval = PyUFunc_GenericFunctionInternal(ufunc, mps,
                 full_args, typetup, extobj, casting, order, subok,
                 wheremask);
+        Py_XDECREF(wheremask);
     }
     else {
         errval = PyUFunc_GeneralizedFunctionInternal(ufunc, mps,
                 full_args, typetup, extobj, casting, order, subok,
                 axis_obj, axes_obj, keepdims);
     }
+
     if (errval < 0) {
-        return NULL;
+        goto fail;
     }
 
     /* Free the input references */
@@ -4686,7 +4740,7 @@ fail:
     Py_XDECREF(typetup);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
-    for (int i = ufunc->nin; i < ufunc->nargs; i++) {
+    for (int i = 0; i < ufunc->nargs; i++) {
         Py_XDECREF(mps[i]);
     }
     return NULL;
@@ -4736,13 +4790,16 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     Py_ssize_t i = 0;
     // TODO: do compilers optimize this all the way?
     while (PyDict_Next(kwds, &pos, &key, &value)) {
+        Py_INCREF(key);
         PyTuple_SET_ITEM(kwnames, i, key);
         new_args[i + len_args] = value;
         i++;
     }
 
-    return ufunc_generic_fastcall(ufunc,
+    PyObject *res = ufunc_generic_fastcall(ufunc,
             new_args, len_args, kwnames, NPY_FALSE);
+    Py_DECREF(kwnames);
+    return res;
 }
 #else
 static PyObject *
@@ -4751,6 +4808,28 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     return ufunc_generic_fastcall(ufunc, args, kwds, NPY_FALSE);
 }
 #endif  /* METH_FASTCALL */
+
+
+/*
+ * Implement the vectorcall slot if available. `tp_vectorcall` is slightly
+ * newer then `METH_FASTCALL`. METH_FASTCALL is available in 3.6 (undocumented)
+ * and 3.7+ documented. `tp_vectorcall` and `PyVectorcall_NARGS` is
+ * implemented in python 3.8+
+ */
+#ifdef PyVectorcall_NARGS
+static PyObject *
+ufunc_generic_call(PyUFuncObject *ufunc,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    /*
+     * Unlike METH_FASTCALL, `len_args` may have a flag to signal that
+     * args[-] may be (temporarily) used. So normalize it here.
+     */
+    return ufunc_generic_fastcall(ufunc,
+            args, PyVectorcall_NARGS(len_args), kwnames, NPY_FALSE);
+}
+#endif
+
 
 
 NPY_NO_EXPORT PyObject *
@@ -5536,8 +5615,13 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         return NULL;
     }
 
+#ifdef METH_FASTCALL
     errval = PyUFunc_CheckOverride(ufunc, "at",
             args, NULL, NULL, 0, NULL, &override);
+#else
+    errval = PyUFunc_CheckOverride(ufunc, "at",
+            args, NULL, NULL, NULL, &override);
+#endif
     if (errval) {
         return NULL;
     }

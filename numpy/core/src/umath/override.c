@@ -8,6 +8,7 @@
 #include "override.h"
 #include "ufunc_override.h"
 
+
 /*
  * For each positional argument and each argument in a possible "out"
  * keyword, look for overrides of the standard ufunc behaviour, i.e.,
@@ -88,26 +89,157 @@ fail:
 }
 
 
+static int
+initialize_normal_kwds(PyObject *out_args,
+#ifdef METH_FASTCALL
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames,
+#else
+        PyObject *args, PyObject *kwargs,
+#endif
+        PyObject **out_normal_kwds)
+{
+#ifdef METH_FASTCALL
+    if ((kwnames != NULL) || (out_args != NULL)) {
+        *out_normal_kwds = PyDict_New();
+        if (*out_normal_kwds == NULL) {
+            return -1;
+        }
+        if (kwnames != NULL) {
+            /* When using the fastcall method we have to build a new dictionary */
+
+            for (int i = 0; i < PyTuple_GET_SIZE(kwnames); i++) {
+                PyDict_SetItem(*out_normal_kwds,
+                        PyTuple_GET_ITEM(kwnames, i), args[i + len_args]);
+            }
+        }
+    }
+#else
+    if (kwargs != NULL) {
+        *out_normal_kwds = PyDict_Copy(kwargs);
+        if (*out_normal_kwds == NULL) {
+            return -1;
+        }
+    }
+    else if (out_args != NULL) {
+        *out_normal_kwds = PyDict_New();
+        if (*out_normal_kwds == NULL) {
+            return -1;
+        }
+    }
+#endif
+    static PyObject *out_str = NULL;
+    if (out_str == NULL) {
+        out_str = PyUnicode_InternFromString("out");
+        if (out_str == NULL) {
+            return -1;
+        }
+    }
+
+    /* Build new kwds */
+    if (*out_normal_kwds) {
+        /*
+         * The old keyword arguments are fine, but we want to replace the
+         * output argument.
+         */
+        if (out_args != NULL) {
+            int res = PyDict_SetItem(*out_normal_kwds, out_str, out_args);
+            if (res < 0) {
+                return -1;
+            }
+        }
+        else {
+            /* Ensure that `out` is not present. */
+            int res = PyDict_Contains(*out_normal_kwds, out_str);
+            if (res < 0) {
+                return -1;
+            }
+            if (res) {
+                return PyDict_DelItem(*out_normal_kwds, out_str);
+            }
+        }
+    }
+
+    return 0;
+}
+
 /*
  * ufunc() and ufunc.outer() accept 'sig' or 'signature';
  * normalize to 'signature'
  */
-static void
+static int
 normalize_signature_keyword(PyObject *normal_kwds)
 {
     /*
      * If the keywords include sign rename to signature. An error
      * will have been raised if both were given.
      */
+    if (normal_kwds == NULL) {
+        return 0;
+    }
     PyObject* obj = PyDict_GetItemString(normal_kwds, "sig");
     if (obj != NULL) {
         /*
          * No INCREF or DECREF needed: got a borrowed reference above,
          * and, unlike e.g. PyList_SetItem, PyDict_SetItem INCREF's it.
          */
-        PyDict_SetItemString(normal_kwds, "signature", obj);
-        PyDict_DelItemString(normal_kwds, "sig");
+        if (PyDict_SetItemString(normal_kwds, "signature", obj) < 0) {
+            return -1;
+        }
+        if (PyDict_DelItemString(normal_kwds, "sig") < 0) {
+            return -1;
+        }
     }
+    return 0;
+}
+
+
+static int copy_positional_args_to_kwargs(const char **keywords,
+#ifdef METH_FASTCALL
+        PyObject * const *args, Py_ssize_t len_args, PyObject **out_normal_kwds
+#else
+        PyObject *args_tup, Py_ssize_t len_args, PyObject **out_normal_kwds
+#endif
+        )
+{
+#ifndef METH_FASTCALL
+    PyObject * const *args = PySequence_Fast_ITEMS(args_tup);
+#endif
+    assert(keywords[0] == NULL);
+    assert(keywords[1] != NULL);
+    if (len_args <= 1) {
+        /* There are no arguments to copy, simply return */
+        return 0;
+    }
+    if (*out_normal_kwds == NULL) {
+        /* At this point normalized keywords may still be NULL */
+        *out_normal_kwds = PyDict_New();
+        if (*out_normal_kwds == NULL) {
+            return -1;
+        }
+    }
+
+    for (Py_ssize_t i = 0; i < len_args; i++) {
+        if (keywords[i] == NULL) {
+            /* keyword argument is either input or output and not set here */
+            continue;
+        }
+        if (NPY_UNLIKELY(i == 5)) {
+            PyObject *NoValue = NULL;
+            /* only relevant for reduce */
+            assert(strcmp(keywords[i], "initial") != 0);
+            npy_cache_import("numpy", "_NoValue", &NoValue);
+            if (args[i] == NoValue) {
+                continue;
+            }
+        }
+
+        int res = PyDict_SetItemString(*out_normal_kwds,
+                keywords[i], args[i]);
+        if (res < 0) {
+            return -1;
+        }
+    }
+    return 0;
 }
 
 /*
@@ -163,68 +295,69 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
      * arguments. It is an empty tuple without METH_FASTCALL, and otherwise
      * len_args is 0.
      */
+
 #ifdef METH_FASTCALL
-    assert(len_args == 0);
-
-    if ((kwnames != NULL) || (out_args != NULL)) {
-        normal_kwds = PyDict_New();
-        if (normal_kwds == NULL) {
-            goto fail;
-        }
-        if (kwnames != NULL) {
-            /* When using the fastcall method we have to build a new dictionary */
-
-            for (int i = 0; i < PyTuple_GET_SIZE(kwnames); i++) {
-                PyDict_SetItem(normal_kwds, PyTuple_GET_ITEM(kwnames, i), args[i]);
-            }
-        }
+    if (initialize_normal_kwds(out_args,
+            args, len_args, kwnames, &normal_kwds) < 0) {
+        goto fail;
     }
 #else
-    if (kwds != NULL) {
-        normal_kwds = PyDict_Copy(kwds);
-        if (normal_kwds == NULL) {
-            goto fail;
-        }
-    }
-    else if (out_args != NULL) {
-        normal_kwds = PyDict_New();
-        if (normal_kwds == NULL) {
-            goto fail;
-        }
+    Py_ssize_t len_args = (args  != NULL) ? PyTuple_GET_SIZE(args) : 0;
+    if (initialize_normal_kwds(out_args, args, kwargs, &normal_kwds) < 0) {
+        goto fail;
     }
 #endif
-    static PyObject *out_str = NULL;
-    if (out_str == NULL) {
-        out_str = PyUnicode_InternFromString("out");
-        if (out_str == NULL) {
-            goto fail;
-        }
-    }
 
-    /* Build new kwds */
-    if (normal_kwds) {
-        /*
-         * The old keyword arguments are fine, but we want to replace the
-         * output argument.
-         */
-        if (out_args != NULL) {
-            int res = PyDict_SetItem(normal_kwds, out_str, out_args);
-            if (res < 0) {
-                goto fail;
-            }
-        }
-        else {
-            /* Ensure that `out` is not present. */
-            int res = PyDict_Contains(normal_kwds, out_str);
-            if (res < 0) {
-                goto fail;
-            }
-            if (res) {
-                PyDict_DelItem(normal_kwds, out_str);
-            }
-        }
-        /* outer and __call__ support sig and signature, rename if it is sig. */
-        normalize_signature_keyword(normal_kwds);
+    /*
+     * Reduce-like methods can pass keyword arguments also by position,
+     * in which case the additional positional arguments have to be copied
+     * into the keyword argument dictionary. The __call__ method has to
+     * normalize sig and signature away.
+     */
+
+    /* ufunc.__call__ */
+    if (strcmp(method, "__call__") == 0) {
+        status = normalize_signature_keyword(normal_kwds);
+    }
+    /* ufunc.reduce */
+    else if (strcmp(method, "reduce") == 0) {
+        static const char *keywords[] = {
+                NULL, "axis", "dtype", NULL, "keepdims",
+                "initial", "where"};
+        status = copy_positional_args_to_kwargs(keywords,
+                args, len_args, &normal_kwds);
+    }
+    /* ufunc.accumulate */
+    else if (strcmp(method, "accumulate") == 0) {
+        static const char *keywords[] = {
+                NULL, "axis", "dtype", NULL};
+        status = copy_positional_args_to_kwargs(keywords,
+                args, len_args, &normal_kwds);
+    }
+    /* ufunc.reduceat */
+    else if (strcmp(method, "reduceat") == 0) {
+        static const char *keywords[] = {
+                NULL, NULL, "axis", "dtype", NULL};
+        status = copy_positional_args_to_kwargs(keywords,
+                args, len_args, &normal_kwds);
+    }
+    /* ufunc.outer (identical to call) */
+    else if (strcmp(method, "outer") == 0) {
+        status = normalize_signature_keyword(normal_kwds);
+    }
+    /* ufunc.at */
+    else if (strcmp(method, "at") == 0) {
+        status = 0;
+    }
+    /* unknown method */
+    else {
+        PyErr_Format(PyExc_TypeError,
+                     "Internal Numpy error: unknown ufunc method '%s' in call "
+                     "to PyUFunc_CheckOverride", method);
+        status = -1;
+    }
+    if (status != 0) {
+        goto fail;
     }
 
     method_name = PyUString_FromString(method);
