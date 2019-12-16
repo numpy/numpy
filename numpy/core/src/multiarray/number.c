@@ -893,10 +893,21 @@ array_scalar_forward(PyArrayObject *v,
                      const char *where)
 {
     PyObject *scalar;
-    if (PyArray_NDIM(v) != 0) {
-        PyErr_SetString(PyExc_TypeError, "only rank-0 arrays can be"\
-                        " converted to Python scalars");
-        return NULL;
+    if (PyArray_NDIM(self) != 0) {
+        if (PyArray_SIZE(self) == 1) {
+            if (DEPRECATE(
+                "Conversion of an array with one element to a scalar "
+                "is deprecated, and will error in future. "
+                "Ensure you extract a single element from your array before performing this operation".
+            ) < 0) {
+                return NULL;
+            }
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError, "only rank-0 arrays can "
+                            "be converted to Python scalars");
+            return NULL;
+        }
     }
 
     scalar = PyArray_GETITEM(v, PyArray_DATA(v));
