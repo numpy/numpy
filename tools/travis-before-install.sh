@@ -5,7 +5,7 @@ free -m
 df -h
 ulimit -a
 
-if [ -n "$PPC64_LE" -o -n "$DOWNLOAD_OPENBLAS" ]; then
+if [ -n "$DOWNLOAD_OPENBLAS" ]; then
   pwd
   ls -ltrh
   target=$(python tools/openblas_support.py)
