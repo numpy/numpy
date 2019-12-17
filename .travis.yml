@@ -105,6 +105,7 @@ matrix:
       arch: ppc64le
       env:
        # use ppc64le OpenBLAS build, not system ATLAS
+       - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
 
     - python: 3.7
