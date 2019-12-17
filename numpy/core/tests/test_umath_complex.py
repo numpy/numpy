@@ -6,7 +6,7 @@ import numpy as np
 # import the c-extension module directly since _arg is not exported via umath
 import numpy.core._multiarray_umath as ncu
 from numpy.testing import (
-    assert_raises, assert_equal, assert_array_equal, assert_almost_equal
+    assert_raises, assert_equal, assert_array_equal, assert_almost_equal, assert_array_max_ulp
     )
 
 # TODO: branch cuts (use Pauli code)
@@ -540,3 +540,30 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
             assert_equal(f(z1), z2)
         else:
             assert_almost_equal(f(z1), z2)
+
+class TestComplexAVX(object):
+    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
+    def test_array(self, stride, astype):
+        arr = np.array([np.complex(np.nan , np.nan),
+                        np.complex(np.nan , np.inf),
+                        np.complex(np.inf , np.nan),
+                        np.complex(np.inf , np.inf),
+                        np.complex(0.     , np.inf),
+                        np.complex(np.inf , 0.),
+                        np.complex(0.     , 0.),
+                        np.complex(0.     , np.nan),
+                        np.complex(np.nan , 0.)], dtype=astype)
+        abs_true = np.array([np.nan, np.inf, np.inf, np.inf, np.inf, np.inf, 0., np.nan, np.nan], dtype=arr.real.dtype)
+        sq_true = np.array([np.complex(np.nan,  np.nan),
+                            np.complex(np.nan,  np.nan),
+                            np.complex(np.nan,  np.nan),
+                            np.complex(np.nan,  np.inf),
+                            np.complex(-np.inf, np.nan),
+                            np.complex(np.inf,  np.nan),
+                            np.complex(0.,     0.),
+                            np.complex(np.nan, np.nan),
+                            np.complex(np.nan, np.nan)], dtype=astype)
+        assert_equal(np.abs(arr[::stride]), abs_true[::stride])
+        with np.errstate(invalid='ignore'):
+            assert_equal(np.square(arr[::stride]), sq_true[::stride])
