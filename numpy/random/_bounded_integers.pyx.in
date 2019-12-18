@@ -314,7 +314,7 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
     high_arr = <np.ndarray>np.array(high, copy=False)
     low_ndim = np.PyArray_NDIM(low_arr)
     high_ndim = np.PyArray_NDIM(high_arr)
-    if (low_ndim == 0 and high_ndim == 0):
+    if low_ndim == 0 and high_ndim == 0:
         low = int(low_arr)
         high = int(high_arr)
         # Subtract 1 since internal generator produces on closed interval [low, high]

@@ -2579,7 +2579,7 @@ array_complex(PyArrayObject *self, PyObject *NPY_UNUSED(args))
     PyObject *c;
 
     if (check_has_rank_0(self) < 0) {
-      return NULL;
+        return NULL;
     }
 
     dtype = PyArray_DescrFromType(NPY_CDOUBLE);
