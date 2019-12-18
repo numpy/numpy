@@ -3331,11 +3331,9 @@ class TestMethods(object):
         e = np.array('1+1j', 'U')
         assert_raises(TypeError, complex, e)
 
-        # This gives both a TypeError (because of the 'U') and a DeprecationWarning
-        # (because of the []). Not sure how to deal with it.
-        # e = np.array(['1+1j'], 'U')
-        # assert_raises(TypeError, complex, e)
-        # assert_warns(DeprecationWarning, complex, e)
+        f = np.array(['1+1j'], 'U')
+        with assert_warns(DeprecationWarning):
+            assert_raises(TypeError, complex, f)
 
 class TestCequenceMethods(object):
     def test_array_contains(self):
