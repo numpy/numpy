@@ -16,7 +16,7 @@ class TestMachAr(object):
         # underflow
         try:
             hiprec = ntypes.float96
-            MachAr(lambda v:array([v], hiprec))
+            MachAr(lambda v: array(v, hiprec))
         except AttributeError:
             # Fixme, this needs to raise a 'skip' exception.
             "Skipping test: no ntypes.float96 available on this platform."
