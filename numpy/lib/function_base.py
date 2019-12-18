@@ -3837,6 +3837,17 @@ def _quantile_is_valid(q):
 def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
                            interpolation='linear', keepdims=False):
     a = asarray(a)
+
+    # cast datetime64 to timedelta64 to calc, then cast back
+    dtype = a.dtype if a.dtype.kind == 'M' else None
+
+    if dtype is not None and np.isnat(a).any():
+        warnings.warn(
+            "Invalid value encountered in percentile",
+            RuntimeWarning,
+            stacklevel=3)
+        return np.datetime64('NaT')
+
     if q.ndim == 0:
         # Do not allow 0-d arrays because following code fails for scalar
         zerod = True
@@ -3858,6 +3869,9 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
 
     if axis is None:
         axis = 0
+
+    if dtype is not None:
+        ap = ap.view('timedelta64')
 
     Nx = ap.shape[axis]
     indices = q * (Nx - 1)
@@ -3896,8 +3910,11 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
 
         if zerod:
             indices = indices[0]
-        r = take(ap, indices, axis=axis, out=out)
 
+        if dtype is not None:
+            ap = ap.view(dtype)
+
+        r = take(ap, indices, axis=axis, out=out)
 
     else:  # weight the points above and below the indices
         indices_below = floor(indices).astype(intp)
@@ -3940,6 +3957,9 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             x1 = x1.squeeze(0)
             x2 = x2.squeeze(0)
 
+        if dtype is not None:
+            x1 = x1.view(dtype)
+
         if out is not None:
             r = add(x1, x2, out=out)
         else:
@@ -3960,6 +3980,9 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
                 r[:] = a.dtype.type(np.nan)
             else:
                 r[..., n.repeat(q.size, 0)] = a.dtype.type(np.nan)
+
+    if dtype is not None:
+        r = r.view(dtype)
 
     return r
 
