@@ -26,7 +26,10 @@ def configuration(parent_package='', top_path=None):
     ]
     all_sources = config.paths(lapack_lite_src)
 
-    lapack_info = get_info('lapack_opt', 0)  # and {}
+    if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":
+        lapack_info = get_info('lapack_ilp64_opt', 2)
+    else:
+        lapack_info = get_info('lapack_opt', 0)  # and {}
 
     def get_lapack_lite_sources(ext, build_dir):
         if not lapack_info:

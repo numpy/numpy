@@ -21,9 +21,17 @@ classes are available:
   blas_info
   lapack_info
   openblas_info
+  openblas64__info
+  openblas_ilp64_info
   blis_info
   blas_opt_info       # usage recommended
   lapack_opt_info     # usage recommended
+  blas_ilp64_opt_info    # usage recommended (general ILP64 BLAS)
+  lapack_ilp64_opt_info  # usage recommended (general ILP64 LAPACK)
+  blas_ilp64_plain_opt_info    # usage recommended (general ILP64 BLAS, no symbol suffix)
+  lapack_ilp64_plain_opt_info  # usage recommended (general ILP64 LAPACK, no symbol suffix)
+  blas64__opt_info    # usage recommended (general ILP64 BLAS, 64_ symbol suffix)
+  lapack64__opt_info  # usage recommended (general ILP64 LAPACK, 64_ symbol suffix)
   fftw_info,dfftw_info,sfftw_info
   fftw_threads_info,dfftw_threads_info,sfftw_threads_info
   djbfft_info
@@ -406,6 +414,10 @@ def get_info(name, notfound_action=0):
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
           'accelerate': accelerate_info,      # use blas_opt instead
+          'openblas64_': openblas64__info,
+          'openblas64__lapack': openblas64__lapack_info,
+          'openblas_ilp64': openblas_ilp64_info,
+          'openblas_ilp64_lapack': openblas_ilp64_lapack_info,
           'x11': x11_info,
           'fft_opt': fft_opt_info,
           'fftw': fftw_info,
@@ -428,7 +440,13 @@ def get_info(name, notfound_action=0):
           'numarray': numarray_info,
           'numerix': numerix_info,
           'lapack_opt': lapack_opt_info,
+          'lapack_ilp64_opt': lapack_ilp64_opt_info,
+          'lapack_ilp64_plain_opt': lapack_ilp64_plain_opt_info,
+          'lapack64__opt': lapack64__opt_info,
           'blas_opt': blas_opt_info,
+          'blas_ilp64_opt': blas_ilp64_opt_info,
+          'blas_ilp64_plain_opt': blas_ilp64_plain_opt_info,
+          'blas64__opt': blas64__opt_info,
           'boost_python': boost_python_info,
           'agg2': agg2_info,
           'wx': wx_info,
@@ -494,6 +512,13 @@ class LapackSrcNotFoundError(LapackNotFoundError):
     the LAPACK_SRC environment variable."""
 
 
+class LapackILP64NotFoundError(NotFoundError):
+    """
+    64-bit Lapack libraries not found.
+    Known libraries in numpy/distutils/site.cfg file are:
+    openblas64_, openblas_ilp64
+    """
+
 class BlasOptNotFoundError(NotFoundError):
     """
     Optimized (vendor) Blas libraries are not found.
@@ -508,6 +533,12 @@ class BlasNotFoundError(NotFoundError):
     numpy/distutils/site.cfg file (section [blas]) or by setting
     the BLAS environment variable."""
 
+class BlasILP64NotFoundError(NotFoundError):
+    """
+    64-bit Blas libraries not found.
+    Known libraries in numpy/distutils/site.cfg file are:
+    openblas64_, openblas_ilp64
+    """
 
 class BlasSrcNotFoundError(BlasNotFoundError):
     """
@@ -1600,10 +1631,10 @@ def get_atlas_version(**config):
 
 
 class lapack_opt_info(system_info):
-
     notfounderror = LapackNotFoundError
-    # Default order of LAPACK checks
+    # List of all known BLAS libraries, in the default order
     lapack_order = ['mkl', 'openblas', 'flame', 'atlas', 'accelerate', 'lapack']
+    order_env_var_name = 'NPY_LAPACK_ORDER'
 
     def _calc_info_mkl(self):
         info = get_info('lapack_mkl')
@@ -1695,8 +1726,11 @@ class lapack_opt_info(system_info):
             return True
         return False
 
+    def _calc_info(self, name):
+        return getattr(self, '_calc_info_{}'.format(name))()
+
     def calc_info(self):
-        user_order = os.environ.get('NPY_LAPACK_ORDER', None)
+        user_order = os.environ.get(self.order_env_var_name, None)
         if user_order is None:
             lapack_order = self.lapack_order
         else:
@@ -1716,7 +1750,7 @@ class lapack_opt_info(system_info):
                                  "values: {}".format(non_existing))
 
         for lapack in lapack_order:
-            if getattr(self, '_calc_info_{}'.format(lapack))():
+            if self._calc_info(lapack):
                 return
 
         if 'lapack' not in lapack_order:
@@ -1726,11 +1760,53 @@ class lapack_opt_info(system_info):
             warnings.warn(LapackSrcNotFoundError.__doc__ or '', stacklevel=2)
 
 
-class blas_opt_info(system_info):
+class _ilp64_opt_info_mixin:
+    symbol_suffix = None
+    symbol_prefix = None
 
+    def _check_info(self, info):
+        macros = dict(info.get('define_macros', []))
+        prefix = macros.get('BLAS_SYMBOL_PREFIX', '')
+        suffix = macros.get('BLAS_SYMBOL_SUFFIX', '')
+
+        if self.symbol_prefix not in (None, prefix):
+            return False
+
+        if self.symbol_suffix not in (None, suffix):
+            return False
+
+        return bool(info)
+
+
+class lapack_ilp64_opt_info(lapack_opt_info, _ilp64_opt_info_mixin):
+    notfounderror = LapackILP64NotFoundError
+    lapack_order = ['openblas64_', 'openblas_ilp64']
+    order_env_var_name = 'NPY_LAPACK_ILP64_ORDER'
+
+    def _calc_info(self, name):
+        info = get_info(name + '_lapack')
+        if self._check_info(info):
+            self.set_info(**info)
+            return True
+        return False
+
+
+class lapack_ilp64_plain_opt_info(lapack_ilp64_opt_info):
+    # Same as lapack_ilp64_opt_info, but fix symbol names
+    symbol_prefix = ''
+    symbol_suffix = ''
+
+
+class lapack64__opt_info(lapack_ilp64_opt_info):
+    symbol_prefix = ''
+    symbol_suffix = '64_'
+
+
+class blas_opt_info(system_info):
     notfounderror = BlasNotFoundError
-    # Default order of BLAS checks
+    # List of all known BLAS libraries, in the default order
     blas_order = ['mkl', 'blis', 'openblas', 'atlas', 'accelerate', 'blas']
+    order_env_var_name = 'NPY_BLAS_ORDER'
 
     def _calc_info_mkl(self):
         info = get_info('blas_mkl')
@@ -1795,8 +1871,11 @@ class blas_opt_info(system_info):
         self.set_info(**info)
         return True
 
+    def _calc_info(self, name):
+        return getattr(self, '_calc_info_{}'.format(name))()
+
     def calc_info(self):
-        user_order = os.environ.get('NPY_BLAS_ORDER', None)
+        user_order = os.environ.get(self.order_env_var_name, None)
         if user_order is None:
             blas_order = self.blas_order
         else:
@@ -1814,7 +1893,7 @@ class blas_opt_info(system_info):
                 raise ValueError("blas_opt_info user defined BLAS order has unacceptable values: {}".format(non_existing))
 
         for blas in blas_order:
-            if getattr(self, '_calc_info_{}'.format(blas))():
+            if self._calc_info(blas):
                 return
 
         if 'blas' not in blas_order:
@@ -1822,6 +1901,29 @@ class blas_opt_info(system_info):
             # to raise warnings to signal missing packages!
             warnings.warn(BlasNotFoundError.__doc__ or '', stacklevel=2)
             warnings.warn(BlasSrcNotFoundError.__doc__ or '', stacklevel=2)
+
+
+class blas_ilp64_opt_info(blas_opt_info, _ilp64_opt_info_mixin):
+    notfounderror = BlasILP64NotFoundError
+    blas_order = ['openblas64_', 'openblas_ilp64']
+    order_env_var_name = 'NPY_BLAS_ILP64_ORDER'
+
+    def _calc_info(self, name):
+        info = get_info(name)
+        if self._check_info(info):
+            self.set_info(**info)
+            return True
+        return False
+
+
+class blas_ilp64_plain_opt_info(blas_ilp64_opt_info):
+    symbol_prefix = ''
+    symbol_suffix = ''
+
+
+class blas64__opt_info(blas_ilp64_opt_info):
+    symbol_prefix = ''
+    symbol_suffix = '64_'
 
 
 class blas_info(system_info):
@@ -1923,12 +2025,24 @@ class openblas_info(blas_info):
     section = 'openblas'
     dir_env_var = 'OPENBLAS'
     _lib_names = ['openblas']
+    _require_symbols = []
     notfounderror = BlasNotFoundError
 
-    def check_embedded_lapack(self, info):
-        return True
+    @property
+    def symbol_prefix(self):
+        try:
+            return self.cp.get(self.section, 'symbol_prefix')
+        except NoOptionError:
+            return ''
 
-    def calc_info(self):
+    @property
+    def symbol_suffix(self):
+        try:
+            return self.cp.get(self.section, 'symbol_suffix')
+        except NoOptionError:
+            return ''
+
+    def _calc_info(self):
         c = customized_ccompiler()
 
         lib_dirs = self.get_lib_dirs()
@@ -1946,23 +2060,33 @@ class openblas_info(blas_info):
                 # Try gfortran-compatible library files
                 info = self.check_msvc_gfortran_libs(lib_dirs, openblas_libs)
                 # Skip lapack check, we'd need build_ext to do it
-                assume_lapack = True
+                skip_symbol_check = True
         elif info:
-            assume_lapack = False
+            skip_symbol_check = False
             info['language'] = 'c'
 
         if info is None:
-            return
+            return None
 
         # Add extra info for OpenBLAS
         extra_info = self.calc_extra_info()
         dict_append(info, **extra_info)
 
-        if not (assume_lapack or self.check_embedded_lapack(info)):
-            return
+        if not (skip_symbol_check or self.check_symbols(info)):
+            return None
 
         info['define_macros'] = [('HAVE_CBLAS', None)]
-        self.set_info(**info)
+        if self.symbol_prefix:
+            info['define_macros'] += [('BLAS_SYMBOL_PREFIX', self.symbol_prefix)]
+        if self.symbol_suffix:
+            info['define_macros'] += [('BLAS_SYMBOL_SUFFIX', self.symbol_suffix)]
+
+        return info
+
+    def calc_info(self):
+        info = self._calc_info()
+        if info is not None:
+            self.set_info(**info)
 
     def check_msvc_gfortran_libs(self, library_dirs, libraries):
         # First, find the full path to each library directory
@@ -1995,24 +2119,27 @@ class openblas_info(blas_info):
 
         return info
 
-class openblas_lapack_info(openblas_info):
-    section = 'openblas'
-    dir_env_var = 'OPENBLAS'
-    _lib_names = ['openblas']
-    notfounderror = BlasNotFoundError
-
-    def check_embedded_lapack(self, info):
+    def check_symbols(self, info):
         res = False
         c = customized_ccompiler()
 
         tmpdir = tempfile.mkdtemp()
+
+        prototypes = "\n".join("void %s%s%s();" % (self.symbol_prefix,
+                                                   symbol_name,
+                                                   self.symbol_suffix)
+                               for symbol_name in self._require_symbols)
+        calls = "\n".join("%s%s%s();" % (self.symbol_prefix,
+                                         symbol_name,
+                                         self.symbol_suffix)
+                          for symbol_name in self._require_symbols)
         s = textwrap.dedent("""\
-            void zungqr_();
+            %(prototypes)s
             int main(int argc, const char *argv[])
             {
-                zungqr_();
+                %(calls)s
                 return 0;
-            }""")
+            }""") % dict(prototypes=prototypes, calls=calls)
         src = os.path.join(tmpdir, 'source.c')
         out = os.path.join(tmpdir, 'a.out')
         # Add the additional "extra" arguments
@@ -2037,8 +2164,48 @@ class openblas_lapack_info(openblas_info):
             shutil.rmtree(tmpdir)
         return res
 
+class openblas_lapack_info(openblas_info):
+    section = 'openblas'
+    dir_env_var = 'OPENBLAS'
+    _lib_names = ['openblas']
+    _require_symbols = ['zungqr_']
+    notfounderror = BlasNotFoundError
+
 class openblas_clapack_info(openblas_lapack_info):
     _lib_names = ['openblas', 'lapack']
+
+class openblas_ilp64_info(openblas_info):
+    section = 'openblas_ilp64'
+    dir_env_var = 'OPENBLAS_ILP64'
+    _lib_names = ['openblas64']
+    _require_symbols = ['dgemm_', 'cblas_dgemm']
+    notfounderror = BlasILP64NotFoundError
+
+    def _calc_info(self):
+        info = super()._calc_info()
+        if info is not None:
+            info['define_macros'] += [('HAVE_BLAS_ILP64', None)]
+        return info
+
+class openblas_ilp64_lapack_info(openblas_ilp64_info):
+    _require_symbols = ['dgemm_', 'cblas_dgemm', 'zungqr_', 'LAPACKE_zungqr']
+
+    def _calc_info(self):
+        info = super()._calc_info()
+        if info:
+            info['define_macros'] += [('HAVE_LAPACKE', None)]
+        return info
+
+class openblas64__info(openblas_ilp64_info):
+    # ILP64 Openblas, with default symbol suffix
+    section = 'openblas64_'
+    dir_env_var = 'OPENBLAS64_'
+    _lib_names = ['openblas64_']
+    symbol_suffix = '64_'
+    symbol_prefix = ''
+
+class openblas64__lapack_info(openblas_ilp64_lapack_info, openblas64__info):
+    pass
 
 class blis_info(blas_info):
     section = 'blis'

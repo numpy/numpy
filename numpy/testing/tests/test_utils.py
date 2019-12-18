@@ -608,7 +608,7 @@ class TestApproxEqual(object):
     def setup(self):
         self._assert_func = assert_approx_equal
 
-    def test_simple_arrays(self):
+    def test_simple_0d_arrays(self):
         x = np.array(1234.22)
         y = np.array(1234.23)
 

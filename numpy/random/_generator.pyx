@@ -54,9 +54,11 @@ cdef extern from "numpy/random/distributions.h":
     double random_standard_uniform(bitgen_t *bitgen_state) nogil
     void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_standard_exponential(bitgen_t *bitgen_state) nogil
+    double random_standard_exponential_f(bitgen_t *bitgen_state) nogil
     void random_standard_exponential_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
-    double random_standard_exponential_zig(bitgen_t *bitgen_state) nogil
-    void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_exponential_inv_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_exponential_inv_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_standard_normal(bitgen_t* bitgen_state) nogil
     void random_standard_normal_fill(bitgen_t *bitgen_state, np.npy_intp count, double *out) nogil
     void random_standard_normal_fill_f(bitgen_t *bitgen_state, np.npy_intp count, float *out) nogil
@@ -64,10 +66,6 @@ cdef extern from "numpy/random/distributions.h":
 
     float random_standard_uniform_f(bitgen_t *bitgen_state) nogil
     void random_standard_uniform_fill_f(bitgen_t* bitgen_state, np.npy_intp cnt, float *out) nogil
-    float random_standard_exponential_f(bitgen_t *bitgen_state) nogil
-    float random_standard_exponential_zig_f(bitgen_t *bitgen_state) nogil
-    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
-    void random_standard_exponential_zig_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
     float random_standard_normal_f(bitgen_t* bitgen_state) nogil
     float random_standard_gamma_f(bitgen_t *bitgen_state, float shape) nogil
 
@@ -126,12 +124,12 @@ cdef extern from "numpy/random/distributions.h":
     void random_multinomial(bitgen_t *bitgen_state, int64_t n, int64_t *mnix,
                             double *pix, np.npy_intp d, binomial_t *binomial) nogil
 
-    int random_mvhg_count(bitgen_t *bitgen_state,
+    int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
                           int64_t total,
                           size_t num_colors, int64_t *colors,
                           int64_t nsample,
                           size_t num_variates, int64_t *variates) nogil
-    void random_mvhg_marginals(bitgen_t *bitgen_state,
+    void random_multivariate_hypergeometric_marginals(bitgen_t *bitgen_state,
                                int64_t total,
                                size_t num_colors, int64_t *colors,
                                int64_t nsample,
@@ -459,14 +457,14 @@ cdef class Generator:
         key = np.dtype(dtype).name
         if key == 'float64':
             if method == u'zig':
-                return double_fill(&random_standard_exponential_zig_fill, &self._bitgen, size, self.lock, out)
-            else:
                 return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
+            else:
+                return double_fill(&random_standard_exponential_inv_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
             if method == u'zig':
-                return float_fill(&random_standard_exponential_zig_fill_f, &self._bitgen, size, self.lock, out)
-            else:
                 return float_fill(&random_standard_exponential_fill_f, &self._bitgen, size, self.lock, out)
+            else:
+                return float_fill(&random_standard_exponential_inv_fill_f, &self._bitgen, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_exponential'
                             % key)
@@ -4012,18 +4010,18 @@ cdef class Generator:
 
         if method == 'count':
             with self.lock, nogil:
-                result = random_mvhg_count(&self._bitgen, total,
-                                           num_colors, colors_ptr, nsamp,
-                                           num_variates, variates_ptr)
+                result = random_multivariate_hypergeometric_count(&self._bitgen,
+                                        total, num_colors, colors_ptr, nsamp,
+                                        num_variates, variates_ptr)
             if result == -1:
                 raise MemoryError("Insufficent memory for multivariate_"
                                   "hypergeometric with method='count' and "
                                   "sum(colors)=%d" % total)
         else:
             with self.lock, nogil:
-                random_mvhg_marginals(&self._bitgen, total,
-                                      num_colors, colors_ptr, nsamp,
-                                      num_variates, variates_ptr)
+                random_multivariate_hypergeometric_marginals(&self._bitgen,
+                                        total, num_colors, colors_ptr, nsamp,
+                                        num_variates, variates_ptr)
         return variates
 
     def dirichlet(self, object alpha, size=None):

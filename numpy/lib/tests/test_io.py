@@ -24,6 +24,7 @@ from numpy.testing import (
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
     HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings
     )
+from numpy.testing._private.utils import requires_memory
 
 
 class TextIO(BytesIO):
@@ -575,13 +576,9 @@ class TestSaveTxt(object):
     @pytest.mark.skipif(sys.platform=='win32',
                         reason="large files cause problems")
     @pytest.mark.slow
+    @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
         # The test takes at least 6GB of memory, writes a file larger than 4GB
-        try:
-            a = 'a' * 6 * 1024 * 1024 * 1024
-            del a
-        except (MemoryError, OverflowError):
-            pytest.skip("Cannot allocate enough memory for test")
         test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
                                for i in range(800000)])
         with tempdir() as tmpdir:

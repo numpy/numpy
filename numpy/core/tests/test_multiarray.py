@@ -970,29 +970,6 @@ class TestCreation(object):
         assert_equal(np.array([long(4), 2**80, long(4)]).dtype, object)
         assert_equal(np.array([2**80, long(4)]).dtype, object)
 
-    def test_sequence_of_array_like(self):
-        class ArrayLike:
-            def __init__(self):
-                self.__array_interface__ = {
-                    "shape": (42,),
-                    "typestr": "<i1",
-                    "data": bytes(42)
-                }
-
-            # Make sure __array_*__ is used instead of Sequence methods.
-            def __iter__(self):
-                raise AssertionError("__iter__ was called")
-
-            def __getitem__(self, idx):
-                raise AssertionError("__getitem__ was called")
-
-            def __len__(self):
-                return 42
-
-        assert_equal(
-            np.array([ArrayLike()]),
-            np.zeros((1, 42), dtype=np.byte))
-
     def test_non_sequence_sequence(self):
         """Should not segfault.
 
@@ -6497,6 +6474,15 @@ class TestChoose(object):
         A = np.choose(self.ind, (self.x, self.y2))
         assert_equal(A, [[2, 2, 3], [2, 2, 3]])
 
+    @pytest.mark.parametrize("ops",
+        [(1000, np.array([1], dtype=np.uint8)),
+         (-1, np.array([1], dtype=np.uint8)),
+         (1., np.float32(3)),
+         (1., np.array([3], dtype=np.float32))],)
+    def test_output_dtype(self, ops):
+        expected_dt = np.result_type(*ops)
+        assert(np.choose([0], ops).dtype == expected_dt)
+
 
 class TestRepeat(object):
     def setup(self):
@@ -7587,7 +7573,6 @@ class TestConversion(object):
         # gh-9972 means that these aren't always the same
         int_funcs = (int, lambda x: x.__int__())
         for int_func in int_funcs:
-            assert_equal(int_func(np.array(1)), 1)
             assert_equal(int_func(np.array(0)), 0)
             with assert_warns(DeprecationWarning):
                 assert_equal(int_func(np.array([1])), 1)

@@ -394,7 +394,7 @@ def visibility_define(config):
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, dot_join
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import get_info, dict_append
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
@@ -753,8 +753,14 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'numpyos.c'),
             ]
 
-    blas_info = get_info('blas_opt', 0)
-    if blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
+    if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":
+        blas_info = get_info('blas_ilp64_opt', 2)
+    else:
+        blas_info = get_info('blas_opt', 0)
+
+    have_blas = blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', [])
+
+    if have_blas:
         extra_info = blas_info
         # These files are also in MANIFEST.in so that they are always in
         # the source distribution independently of HAVE_CBLAS.

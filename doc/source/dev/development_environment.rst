@@ -59,6 +59,16 @@ Using ``runtests.py`` is the recommended approach to running tests.
 There are also a number of alternatives to it, for example in-place
 build or installing to a virtualenv. See the FAQ below for details.
 
+.. note::
+
+   Some of the tests in the test suite require a large amount of
+   memory, and are skipped if your system does not have enough.
+
+   To override the automatic detection of available memory, set the
+   environment variable ``NPY_AVAILABLE_MEM``, for example
+   ``NPY_AVAILABLE_MEM=32GB``, or using pytest ``--available-memory=32GB``
+   target option.
+
 
 Building in-place
 -----------------
