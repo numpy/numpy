@@ -2121,15 +2121,19 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
 
 /* Raises error when len(op) == 0 */
 
-/*NUMPY_API*/
+/*NUMPY_API
+ *
+ * This function is only used in one place within NumPy and should
+ * generally be avoided. It is provided mainly for backward compatibility.
+ *
+ * The user of the function has to free the returned array.
+ */
 NPY_NO_EXPORT PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn)
 {
-    int i, n, allscalars = 0;
+    int i, n;
+    PyArray_Descr *common_descr = NULL;
     PyArrayObject **mps = NULL;
-    PyArray_Descr *intype = NULL, *stype = NULL;
-    PyArray_Descr *newtype = NULL;
-    NPY_SCALARKIND scalarkind = NPY_NOSCALAR, intypekind = NPY_NOSCALAR;
 
     *retn = n = PySequence_Length(op);
     if (n == 0) {
@@ -2165,94 +2169,41 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
     }
 
     for (i = 0; i < n; i++) {
-        PyObject *otmp = PySequence_GetItem(op, i);
-        if (otmp == NULL) {
+        /* Convert everything to an array, this could be optimized away */
+        PyObject *tmp = PySequence_GetItem(op, i);
+        if (tmp == NULL) {
             goto fail;
         }
-        if (!PyArray_CheckAnyScalar(otmp)) {
-            newtype = PyArray_DescrFromObject(otmp, intype);
-            Py_DECREF(otmp);
-            Py_XDECREF(intype);
-            if (newtype == NULL) {
-                goto fail;
-            }
-            intype = newtype;
-            intypekind = PyArray_ScalarKind(intype->type_num, NULL);
-        }
-        else {
-            newtype = PyArray_DescrFromObject(otmp, stype);
-            Py_DECREF(otmp);
-            Py_XDECREF(stype);
-            if (newtype == NULL) {
-                goto fail;
-            }
-            stype = newtype;
-            scalarkind = PyArray_ScalarKind(newtype->type_num, NULL);
-            mps[i] = (PyArrayObject *)Py_None;
-            Py_INCREF(Py_None);
-        }
-    }
-    if (intype == NULL) {
-        /* all scalars */
-        allscalars = 1;
-        intype = stype;
-        Py_INCREF(intype);
-        for (i = 0; i < n; i++) {
-            Py_XDECREF(mps[i]);
-            mps[i] = NULL;
-        }
-    }
-    else if ((stype != NULL) && (intypekind != scalarkind)) {
-        /*
-         * we need to upconvert to type that
-         * handles both intype and stype
-         * also don't forcecast the scalars.
-         */
-        if (!PyArray_CanCoerceScalar(stype->type_num,
-                                     intype->type_num,
-                                     scalarkind)) {
-            newtype = PyArray_PromoteTypes(intype, stype);
-            Py_XDECREF(intype);
-            intype = newtype;
-            if (newtype == NULL) {
-                goto fail;
-            }
-        }
-        for (i = 0; i < n; i++) {
-            Py_XDECREF(mps[i]);
-            mps[i] = NULL;
-        }
-    }
 
-
-    /* Make sure all arrays are actual array objects. */
-    for (i = 0; i < n; i++) {
-        int flags = NPY_ARRAY_CARRAY;
-        PyObject *otmp = PySequence_GetItem(op, i);
-
-        if (otmp == NULL) {
-            goto fail;
-        }
-        if (!allscalars && ((PyObject *)(mps[i]) == Py_None)) {
-            /* forcecast scalars */
-            flags |= NPY_ARRAY_FORCECAST;
-            Py_DECREF(Py_None);
-        }
-        Py_INCREF(intype);
-        mps[i] = (PyArrayObject*)PyArray_FromAny(otmp, intype, 0, 0,
-                                                 flags, NULL);
-        Py_DECREF(otmp);
+        mps[i] = (PyArrayObject *)PyArray_FROM_O(tmp);
+        Py_DECREF(tmp);
         if (mps[i] == NULL) {
             goto fail;
         }
     }
-    Py_DECREF(intype);
-    Py_XDECREF(stype);
+
+    common_descr = PyArray_ResultType(n, mps, 0, NULL);
+    if (common_descr == NULL) {
+        goto fail;
+    }
+
+    /* Make sure all arrays are contiguous and have the correct dtype. */
+    for (i = 0; i < n; i++) {
+        int flags = NPY_ARRAY_CARRAY;
+        PyArrayObject *tmp = mps[i];
+
+        Py_INCREF(common_descr);
+        mps[i] = (PyArrayObject *)PyArray_FromArray(tmp, common_descr, flags);
+        Py_DECREF(tmp);
+        if (mps[i] == NULL) {
+            goto fail;
+        }
+    }
+    Py_DECREF(common_descr);
     return mps;
 
  fail:
-    Py_XDECREF(intype);
-    Py_XDECREF(stype);
+    Py_XDECREF(common_descr);
     *retn = 0;
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
