@@ -18,14 +18,6 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-stage: Comprehensive tests
-
-stages:
-    # Do the style check and a single test job, don't proceed if it fails
-    - name: Initial tests
-    # Do the rest of the tests
-    - name: Comprehensive tests
-
 env:
   global:
     - OpenBLAS_version=0.3.7
