@@ -1,7 +1,7 @@
 """
 Python 3.X compatibility tools.
 
-While this file was originally intented for Python 2 -> 3 transition,
+While this file was originally intended for Python 2 -> 3 transition,
 it is now used to create a compatibility layer between different
 minor versions of Python 3.
 

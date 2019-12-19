@@ -14,7 +14,7 @@ def isContinuation(line):
 
 COMMENT, STATEMENT, CONTINUATION = 0, 1, 2
 def lineType(line):
-    """Return the type of a line of Fortan code."""
+    """Return the type of a line of Fortran code."""
     if isBlank(line):
         return COMMENT
     elif isLabel(line):

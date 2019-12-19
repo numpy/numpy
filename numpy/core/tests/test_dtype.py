@@ -732,7 +732,7 @@ class TestStructuredDtypeSparseFields(object):
         assert_array_equal(arr["a"]["aa"], np.zeros((3, 2, 3)))
 
     def test_sparse_field_assignment_fancy(self):
-        # Fancy assignment goes to the copyswap function for comlex types:
+        # Fancy assignment goes to the copyswap function for complex types:
         arr = np.zeros(3, self.dtype)
         sparse_arr = arr.view(self.sparse_dtype)
 

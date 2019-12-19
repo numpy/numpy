@@ -523,7 +523,7 @@ _buffer_info_new(PyObject *obj)
         /*
          * Special case datetime64 scalars to remain backward compatible.
          * This will change in a future version.
-         * Note arrays of datetime64 and strutured arrays with datetime64
+         * Note arrays of datetime64 and structured arrays with datetime64
          * fields will not hit this code path and are currently unsupported
          * in _buffer_format_string.
          */

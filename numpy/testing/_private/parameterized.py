@@ -271,7 +271,7 @@ def set_test_runner(name):
 def detect_runner():
     """ Guess which test runner we're using by traversing the stack and looking
         for the first matching module. This *should* be reasonably safe, as
-        it's done during test disocvery where the test runner should be the
+        it's done during test discovery where the test runner should be the
         stack frame immediately outside. """
     if _test_runner_override is not None:
         return _test_runner_override

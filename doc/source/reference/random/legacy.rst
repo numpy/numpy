@@ -125,7 +125,7 @@ Distributions
 Functions in `numpy.random`
 ===========================
 Many of the RandomState methods above are exported as functions in
-`numpy.random` This usage is discouraged, as it is implemented via a gloabl
+`numpy.random` This usage is discouraged, as it is implemented via a global
 `RandomState` instance which is not advised on two counts:
 
 - It uses global state, which means results will change as the code changes

@@ -193,7 +193,7 @@ Those can be useful for precise floating point comparison.
 .. c:function:: int npy_get_floatstatus_barrier(char*)
 
     Get floating point status. A pointer to a local variable is passed in to
-    prevent aggressive compiler optimizations from reodering this function call
+    prevent aggressive compiler optimizations from reordering this function call
     relative to the code setting the status, which could lead to incorrect
     results.
 
@@ -219,7 +219,7 @@ Those can be useful for precise floating point comparison.
 .. c:function:: int npy_clear_floatstatus_barrier(char*)
 
     Clears the floating point status. A pointer to a local variable is passed in to
-    prevent aggressive compiler optimizations from reodering this function call.
+    prevent aggressive compiler optimizations from reordering this function call.
     Returns the previous status mask.
 
     .. versionadded:: 1.15.0
