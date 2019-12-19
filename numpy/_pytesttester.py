@@ -15,7 +15,7 @@ Warnings filtering and other runtime settings should be dealt with in the
 whether or not that file is found as follows:
 
 * ``pytest.ini`` is present (develop mode)
-    All warnings except those explicily filtered out are raised as error.
+    All warnings except those explicitly filtered out are raised as error.
 * ``pytest.ini`` is absent (release mode)
     DeprecationWarnings and PendingDeprecationWarnings are ignored, other
     warnings are passed through.

@@ -79,7 +79,7 @@ c2capi_map = {'double': 'NPY_DOUBLE',
               'complex_long_double': 'NPY_CDOUBLE',   # forced casting
               'string': 'NPY_STRING'}
 
-# These new maps aren't used anyhere yet, but should be by default
+# These new maps aren't used anywhere yet, but should be by default
 #  unless building numeric or numarray extensions.
 if using_newcore:
     c2capi_map = {'double': 'NPY_DOUBLE',

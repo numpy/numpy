@@ -158,7 +158,7 @@ endif
 	@# the instructions in doc/HOWTO_RELEASE.rst.txt
 	@echo " "
 	@echo New documentation archive added to ./build/merge.
-	@echo Now add/modify the appropiate section after
+	@echo Now add/modify the appropriate section after
 	@echo "    <!-- insert here -->"
 	@echo in build/merge/index.html,
 	@echo then \"git commit\", \"git push\"

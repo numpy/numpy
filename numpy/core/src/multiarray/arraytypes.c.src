@@ -4193,7 +4193,7 @@ _datetime_dtype_metadata_clone(NpyAuxData *data)
 }
 
 /*
- * Allcoate and initialize a PyArray_DatetimeDTypeMetaData object
+ * Allocate and initialize a PyArray_DatetimeDTypeMetaData object
  */
 static NpyAuxData*
 _create_datetime_metadata(NPY_DATETIMEUNIT base, int num)

@@ -297,7 +297,7 @@ mergesort. Due to the need to maintain backward compatibility, the sorting
 ``kind`` options ``"stable"`` and ``"mergesort"`` have been made aliases of
 each other with the actual sort implementation depending on the array type.
 Radix sort is used for small integer types of 16 bits or less and timsort for
-the remaining types.  Timsort features improved performace on data containing
+the remaining types.  Timsort features improved performance on data containing
 already or nearly sorted data and performs like mergesort on random data and
 requires :math:`O(n/2)` working space.  Details of the timsort algorithm can be
 found at `CPython listsort.txt
