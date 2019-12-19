@@ -210,11 +210,18 @@ class LineSplitter(object):
         return lambda input: [_.strip() for _ in method(input)]
     #
 
-    def __init__(self, delimiter=None, comments='#', autostrip=True, encoding=None):
+    def __init__(self, delimiter=None, comments='#', autostrip=True, encoding=None, quoter=None):
         delimiter = _decode_line(delimiter)
         comments = _decode_line(comments)
+        quoter = _decode_line(quoter)
 
         self.comments = comments
+
+        # Quoter is a character or None
+        if (quoter is None) or (isinstance(quoter, basestring) and len(quoter) == 1):
+            self.quoter = quoter or None
+        else:
+            self.quoter = None
 
         # Delimiter is a character
         if (delimiter is None) or isinstance(delimiter, basestring):
@@ -246,8 +253,32 @@ class LineSplitter(object):
         line = line.strip(" \r\n")
         if not line:
             return []
-        return line.split(self.delimiter)
-    #
+
+        if self.quoter is None:
+            return line.split(self.delimiter)
+        else:
+            out = []
+            index = 0
+            isQuoted = False
+            word = ''
+
+            while index < len(line):
+                char = line[index]
+                if char == self.quoter:
+                    if len(word) == 0 and not isQuoted:
+                        isQuoted = True
+                    else:
+                        isQuoted = False
+                elif char == self.delimiter and not isQuoted:
+                    out.append(word)
+                    word = ''
+                else:
+                    word += char
+                index += 1
+            if word:
+                out.append(word)
+            
+            return out
 
     def _fixedwidth_splitter(self, line):
         if self.comments is not None:
