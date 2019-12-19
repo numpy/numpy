@@ -39,68 +39,11 @@ env:
 
 matrix:
   include:
-    # Do all python versions without environment variables set
-    - stage: Initial tests
-      python: 3.8
-
     - python: 3.6
-    - python: 3.7
-
-    - python: 3.6
-      dist: bionic
-      env: USE_DEBUG=1
-      addons:
-        apt:
-          packages:
-            - *common_packages
-            - cython3-dbg
-            - python3-dbg
-            - python3-dev
-            - python3-setuptools
-
-    - python: 3.7
-      env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1 INSTALL_PICKLE5=1
-
-    - python: 3.7
-      env: USE_SDIST=1
-
-    - python: 3.7
-      env:
-       - PYTHONOPTIMIZE=2
-       - BLAS=None
-       - LAPACK=None
-       - ATLAS=None
-       - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas
-       - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
-       - USE_ASV=1
-
-    - python: 3.7
-      env: NPY_RELAXED_STRIDES_CHECKING=0
-
-    - python: 3.7
-      env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
-
-    - python: 3.7
-      env: NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
-
-    - python: 3.7
-      env:
-       - BLAS=None
-       - LAPACK=None
-       - ATLAS=None
-
-    - python: 3.7
       os: linux
       arch: ppc64le
       env:
        # use ppc64le OpenBLAS build, not system ATLAS
-       - ATLAS=None
-
-    - python: 3.7
-      os: linux
-      arch: s390x
-      env:
-       # use s390x OpenBLAS build, not system ATLAS
        - ATLAS=None
 
 
