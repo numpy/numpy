@@ -40,8 +40,9 @@ stages:
             locale-gen fr_FR && update-locale && \
             apt-get -y install gfortran-5 wget && \
             target=\$(python3 tools/openblas_support.py) && \
-            cp -r \$target/usr/local/lib/* /usr/lib && \
-            cp \$target/usr/local/include/* /usr/include && \
+            ls -lR \$target && \
+            cp -r \$target/lib/* /usr/lib && \
+            cp \$target/include/* /usr/include && \
             python3 -m pip install --user --upgrade pip setuptools && \
             python3 -m pip install --user -r test_requirements.txt && \
             python3 -m pip install . && \
@@ -105,9 +106,10 @@ stages:
     # primarily on file size / name details
     - script: |
         target=$(python tools/openblas_support.py)
+        ls -lR $target
         # manually link to appropriate system paths
-        cp $target/usr/local/lib/* /usr/local/lib/
-        cp $target/usr/local/include/* /usr/local/include/
+        cp $target/lib/* /usr/local/lib/
+        cp $target/include/* /usr/local/include/
       displayName: 'install pre-built openblas'
     - script: python -m pip install --upgrade pip setuptools wheel
       displayName: 'Install tools'

@@ -9,13 +9,8 @@ if [ -n "$DOWNLOAD_OPENBLAS" ]; then
   pwd
   ls -ltrh
   target=$(python tools/openblas_support.py)
-  if [ -d "$target/usr/local" ]; then
-      sudo cp -r $target/usr/local/lib/* /usr/lib
-      sudo cp $target/usr/local/include/* /usr/include
-  else
-      sudo cp -r $target/64/lib/* /usr/lib
-      sudo cp $target/64/include/* /usr/include
-  fi
+  sudo cp -r $target/lib/* /usr/lib
+  sudo cp $target/include/* /usr/include
 fi
 
 mkdir builds
