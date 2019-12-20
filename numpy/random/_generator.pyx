@@ -635,26 +635,26 @@ cdef class Generator:
 
         Parameters
         ----------
-        a : 1-D array-like or int
+        a : {array_like, int}
             If an ndarray, a random sample is generated from its elements.
-            If an int, the random sample is generated as if a were np.arange(a)
-        size : int or tuple of ints, optional
+            If an int, the random sample is generated from np.arange(a).
+        size : {int, tuple[int]}, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn from the 1-d `a`. If `a` has more
             than one dimension, the `size` shape will be inserted into the
             `axis` dimension, so the output ``ndim`` will be ``a.ndim - 1 +
             len(size)``. Default is None, in which case a single value is
             returned.
-        replace : boolean, optional
+        replace : bool, optional
             Whether the sample is with or without replacement
-        p : 1-D array-like, optional
+        p : 1-D array_like, optional
             The probabilities associated with each entry in a.
             If not given the sample assumes a uniform distribution over all
             entries in a.
         axis : int, optional
             The axis along which the selection is performed. The default, 0,
             selects by row.
-        shuffle : boolean, optional
+        shuffle : bool, optional
             Whether the sample is shuffled when sampling without replacement.
             Default is True, False provides a speedup.
 
@@ -725,13 +725,15 @@ cdef class Generator:
                 # __index__ must return an integer by python rules.
                 pop_size = operator.index(a.item())
             except TypeError:
-                raise ValueError("a must be 1-dimensional or an integer")
+                raise ValueError("a must an array or an integer")
             if pop_size <= 0 and np.prod(size) != 0:
-                raise ValueError("a must be greater than 0 unless no samples are taken")
+                raise ValueError("a must be a positive integer unless no"
+                                 "samples are taken")
         else:
             pop_size = a.shape[axis]
             if pop_size == 0 and np.prod(size) != 0:
-                raise ValueError("'a' cannot be empty unless no samples are taken")
+                raise ValueError("a cannot be empty unless no samples are"
+                                 "taken")
 
         if p is not None:
             d = len(p)
@@ -746,9 +748,9 @@ cdef class Generator:
             pix = <double*>np.PyArray_DATA(p)
 
             if p.ndim != 1:
-                raise ValueError("'p' must be 1-dimensional")
+                raise ValueError("p must be 1-dimensional")
             if p.size != pop_size:
-                raise ValueError("'a' and 'p' must have same size")
+                raise ValueError("a and p must have same size")
             p_sum = kahan_sum(pix, d)
             if np.isnan(p_sum):
                 raise ValueError("probabilities contain NaN")
@@ -770,13 +772,14 @@ cdef class Generator:
                 cdf /= cdf[-1]
                 uniform_samples = self.random(shape)
                 idx = cdf.searchsorted(uniform_samples, side='right')
-                idx = np.array(idx, copy=False, dtype=np.int64)  # searchsorted returns a scalar
+                # searchsorted returns a scalar
+                idx = np.array(idx, copy=False, dtype=np.int64)
             else:
                 idx = self.integers(0, pop_size, size=shape, dtype=np.int64)
         else:
             if size > pop_size:
                 raise ValueError("Cannot take a larger sample than "
-                                 "population when 'replace=False'")
+                                 "population when replace is False")
             elif size < 0:
                 raise ValueError("negative dimensions are not allowed")
 
