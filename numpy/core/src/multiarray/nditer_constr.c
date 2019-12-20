@@ -1645,6 +1645,19 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                 else if (bshape == 1) {
                     strides[iop] = 0;
                 }
+                else if (i == -2) {
+                    /*
+                     * The signal -2 is meant to indicate that an axis will be
+                     * removed later and should be ignored.  So, we are free
+                     * to just set the strides as 0 here.  Obviously, if
+                     * the caller does not actually remove the axis later,
+                     * there will be problems.
+                     *
+                     * NOTE: this is mostly a rather ugly hack to help
+                     * PyUFunc_GeneralizedFunction.
+                     */
+                    strides[iop] = 0;
+                }
                 else {
                     strides[iop] = 0;
                     /* If it's writeable, this means a reduction */
@@ -2551,7 +2564,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                     stride *= shape[i];
                 }
             }
-            else {
+            else if (i != -2) {  /* see long comment about -2 above */
                 if (shape == NULL) {
                     /*
                      * If deleting this axis produces a reduction, but
