@@ -612,7 +612,17 @@ class TestUfunc(object):
             warnings.simplefilter("always")
             u += v
             assert_equal(len(w), 1)
-            assert_(x[0,0]  != u[0, 0])
+            assert_(x[0, 0] != u[0, 0])
+
+        # Output reduction should not be allowed.
+        # See gh-15139
+        a = np.arange(6).reshape(3, 2)
+        b = np.ones(2)
+        out = np.empty(())
+        assert_raises(ValueError, umt.inner1d, a, b, out)
+        out2 = np.empty(3)
+        c = umt.inner1d(a, b, out2)
+        assert_(c is out2)
 
     def test_type_cast(self):
         msg = "type cast"
@@ -944,7 +954,10 @@ class TestUfunc(object):
         assert_array_equal(result, np.vstack((np.zeros(3), a[2], -a[1])))
         assert_raises(ValueError, umt.cross1d, np.eye(4), np.eye(4))
         assert_raises(ValueError, umt.cross1d, a, np.arange(4.))
+        # Wrong output core dimension.
         assert_raises(ValueError, umt.cross1d, a, np.arange(3.), np.zeros((3, 4)))
+        # Wrong output broadcast dimension (see gh-15139).
+        assert_raises(ValueError, umt.cross1d, a, np.arange(3.), np.zeros(3))
 
     def test_can_ignore_signature(self):
         # Comparing the effects of ? in signature:
