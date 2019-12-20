@@ -19,11 +19,11 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-stages:
-    # Do the style check and a single test job, don't proceed if it fails
-    - name: Initial tests
-    # Do the rest of the tests
-    - name: Comprehensive tests
+#stages:
+#    # Do the style check and a single test job, don't proceed if it fails
+#    - name: Initial tests
+#    # Do the rest of the tests
+#    - name: Comprehensive tests
 
 env:
   global:
@@ -38,19 +38,12 @@ env:
 
 jobs:
   include:
-    # Do all python versions without environment variables set
-    - stage: Initial tests
-      python: 3.8
-
-    - stage: Comprehensive tests
-      python: 3.6
-
     - python: 3.6
       os: linux
       arch: ppc64le
-      env:
-       # use ppc64le OpenBLAS build, not system ATLAS
-       - ATLAS=None
+      #env:
+      # # use ppc64le OpenBLAS build, not system ATLAS
+      # - ATLAS=None
 
 before_install:
   - ./tools/travis-before-install.sh
