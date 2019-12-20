@@ -25,8 +25,9 @@ build:
     - sudo apt-get update
     - sudo apt-get install gcc gfortran
     - target=$(python tools/openblas_support.py)
-    - sudo cp -r "${target}"/64/lib/* /usr/lib
-    - sudo cp "${target}"/64/include/* /usr/include
+    - ls -lR "${target}"
+    - sudo cp -r "${target}"/lib/* /usr/lib
+    - sudo cp "${target}"/include/* /usr/include
     - python -m pip install --upgrade pip
 
     # we will pay the ~13 minute cost of compiling Cython only when a new
