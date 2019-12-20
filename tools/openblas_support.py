@@ -1,6 +1,8 @@
 from __future__ import division, absolute_import, print_function
 import os
 import sys
+import glob
+import shutil
 import textwrap
 import platform
 try:
@@ -86,6 +88,7 @@ def download_openblas(target, arch, ilp64):
         typ = 'tar.gz'
     if not filename:
         return None
+    print("Downloading:", filename, file=sys.stderr)
     try:
         with open(target, 'wb') as fid:
             fid.write(urlopen(filename).read())
@@ -140,10 +143,33 @@ def unpack_targz(fname):
     if not os.path.exists(target):
         os.mkdir(target)
     with tarfile.open(fname, 'r') as zf:
-        # TODO: check that all the zf.getnames() files do not escape the
-        # extract directory (no leading '../', '/')
-        zf.extractall(target)
-    return target
+        # Strip common prefix from paths when unpacking
+        prefix = os.path.commonpath(zf.getnames())
+        extract_tarfile_to(zf, target, prefix)
+        return target
+
+def extract_tarfile_to(tarfileobj, target_path, archive_path):
+    """Extract TarFile contents under archive_path/ to target_path/"""
+
+    target_path = os.path.abspath(target_path)
+
+    def get_members():
+        for member in tarfileobj.getmembers():
+            if archive_path:
+                norm_path = os.path.normpath(member.name)
+                if norm_path.startswith(archive_path + os.path.sep):
+                    member.name = norm_path[len(archive_path)+1:]
+                else:
+                    continue
+
+            dst_path = os.path.abspath(os.path.join(target_path, member.name))
+            if os.path.commonpath([target_path, dst_path]) != target_path:
+                # Path not under target_path, probably contains ../
+                continue
+
+            yield member
+
+    tarfileobj.extractall(target_path, members=get_members())
 
 def make_init(dirname):
     '''
@@ -197,14 +223,30 @@ def test_setup(arches):
     for arch, ilp64 in items():
         if arch == '':
             continue
+
+        target = None
         try:
-            target = setup_openblas(arch, ilp64)
-        except:
-            print('Could not setup %s' % arch)
-            raise
-        if not target:
-            raise RuntimeError('Could not setup %s' % arch)
-        print(target)
+            try:
+                target = setup_openblas(arch, ilp64)
+            except:
+                print('Could not setup %s' % arch)
+                raise
+            if not target:
+                raise RuntimeError('Could not setup %s' % arch)
+            print(target)
+            if arch == 'windows':
+                if not target.endswith('.a'):
+                    raise RuntimeError("Not .a extracted!")
+            else:
+                files = glob.glob(os.path.join(target, "lib", "*.a"))
+                if not files:
+                    raise RuntimeError("No lib/*.a unpacked!")
+        finally:
+            if target is not None:
+                if os.path.isfile(target):
+                    os.unlink(target)
+                else:
+                    shutil.rmtree(target)
 
 def test_version(expected_version, ilp64=get_ilp64()):
     """
