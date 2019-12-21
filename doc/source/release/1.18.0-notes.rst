@@ -205,10 +205,9 @@ The `numpy.expand_dims` ``axis`` keyword can now accept a tuple of
 axes.  Previously, ``axis`` was required to be an integer.
 (`gh-14051 <https://github.com/numpy/numpy/pull/14051>`__)
 
-Support for 64-bit OpenBLAS with symbol suffix
-----------------------------------------------
-Added support for 64-bit (ILP64) OpenBLAS compiled with
-``make INTERFACE64=1 SYMBOLSUFFIX=64_``. See ``site.cfg.example``
+Support for 64-bit OpenBLAS
+---------------------------
+Added support for 64-bit (ILP64) OpenBLAS. See ``site.cfg.example``
 for details.
 
 Improvements
@@ -296,6 +295,7 @@ Changes
 purposes, so that it sorts to the end of arrays. This change is for consistency
 with ``NaN`` sorting behavior.
 (`gh-12658 <https://github.com/numpy/numpy/pull/12658>`__)
+(`gh-15068 <https://github.com/numpy/numpy/pull/15068>`__)
 
 Incorrect ``threshold`` in ``np.set_printoptions`` raises ``TypeError`` or ``ValueError``
 -----------------------------------------------------------------------------------------

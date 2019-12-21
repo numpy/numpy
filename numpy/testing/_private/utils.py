@@ -54,7 +54,7 @@ verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
-HAS_LAPACK64 = hasattr(numpy.__config__, 'lapack64__opt_info')
+HAS_LAPACK64 = hasattr(numpy.__config__, 'lapack_ilp64_opt_info')
 
 
 def import_nose():

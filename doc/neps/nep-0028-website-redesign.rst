@@ -166,7 +166,7 @@ have a similar deployment to GitHub Pages or Netlify.
 Analytics
 ~~~~~~~~~
 
-It's benefical to maintainers to know how many visitors are coming to
+It's beneficial to maintainers to know how many visitors are coming to
 numpy.org. Google Analytics offers visitor counts and locations. This will
 help to support and deploy more strategically, and help maintainers
 understand where traffic is coming from.

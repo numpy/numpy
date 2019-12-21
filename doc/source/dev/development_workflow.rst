@@ -303,7 +303,7 @@ Suppose that the commit history looks like this::
     2dec1ac Fix a few bugs + disable
     13d7934 First implementation
     6ad92e5 * masked is now an instance of a new object, MaskedConstant
-    29001ed Add pre-nep for a copule of structured_array_extensions.
+    29001ed Add pre-nep for a couple of structured_array_extensions.
     ...
 
 and ``6ad92e5`` is the last commit in the ``master`` branch. Suppose we

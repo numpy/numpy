@@ -6465,6 +6465,15 @@ class TestChoose(object):
         A = np.choose(self.ind, (self.x, self.y2))
         assert_equal(A, [[2, 2, 3], [2, 2, 3]])
 
+    @pytest.mark.parametrize("ops",
+        [(1000, np.array([1], dtype=np.uint8)),
+         (-1, np.array([1], dtype=np.uint8)),
+         (1., np.float32(3)),
+         (1., np.array([3], dtype=np.float32))],)
+    def test_output_dtype(self, ops):
+        expected_dt = np.result_type(*ops)
+        assert(np.choose([0], ops).dtype == expected_dt)
+
 
 class TestRepeat(object):
     def setup(self):
@@ -7555,8 +7564,8 @@ class TestConversion(object):
         # gh-9972 means that these aren't always the same
         int_funcs = (int, lambda x: x.__int__())
         for int_func in int_funcs:
+            assert_equal(int_func(np.array(0)), 0)
             assert_equal(int_func(np.array([1])), 1)
-            assert_equal(int_func(np.array([0])), 0)
             assert_equal(int_func(np.array([[42]])), 42)
             assert_raises(TypeError, int_func, np.array([1, 2]))
 
