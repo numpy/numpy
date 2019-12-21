@@ -3932,6 +3932,9 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         x1 = take(ap, indices_below, axis=axis)
         x2 = take(ap, indices_above, axis=axis)
 
+        # the linear interpolation below ensure monotonicity with floating
+        # point operations and was proposed in:
+        # https://math.stackexchange.com/a/1798323 by Pedro Gimeno
         diff_x2_x1 = x2 - x1
         r_above = x1 + diff_x2_x1 * weights_above
         r_below = x2 - diff_x2_x1 * weights_below
