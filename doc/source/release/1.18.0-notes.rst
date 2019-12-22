@@ -366,9 +366,9 @@ Added two new configuration options. During the ``build_src`` subcommand, as
 part of configuring NumPy, the files ``_numpyconfig.h`` and ``config.h`` are
 created by probing support for various runtime functions and routines.
 Previously, the very verbose compiler output during this stage clouded more
-important information. By default the output is silenced. Running ``runtests.py
---debug-info`` will add ``--verbose-cfg`` to the ``build_src`` subcommand,
-which will restore the previous behaviour.
+important information. By default the output is silenced. Running
+``runtests.py --debug-info`` will add ``--verbose-cfg`` to the ``build_src``
+subcommand,which will restore the previous behaviour.
 
 Adding ``CFLAGS=-Werror`` to turn warnings into errors would trigger errors
 during the configuration. Now ``runtests.py --warn-error`` will add

@@ -106,9 +106,10 @@ You will need write permission for numpy-wheels in order to trigger wheel
 builds.
 
 - Python(s) from `python.org <https://python.org>`_ or linux distro.
-- cython
+- cython (pip)
 - virtualenv (pip)
 - Paver (pip)
+- pandoc `pandoc.org <https://www.pandoc.org>`_ or linux distro.
 - numpy-wheels `<https://github.com/MacPython/numpy-wheels>`_ (clone)
 
 
@@ -379,7 +380,7 @@ Make the release
 ----------------
 Build the changelog and notes for upload with::
 
-    paver write_release_and_log
+    paver write_release
 
 
 Build and archive documentation
