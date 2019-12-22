@@ -1,4 +1,0 @@
-Add ``--f2cmap`` option to F2PY
--------------------------------
-Allow specifying a file to load Fortran-to-C type map
-customizations from.
