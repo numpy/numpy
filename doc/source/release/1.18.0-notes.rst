@@ -9,7 +9,7 @@ the new random C-API, expires a large number of old deprecations, and improves
 the appearance of the documentation. The Python versions supported are 3.5-3.8.
 This is the last NumPy release series that will support Python 3.5.
 
-Downstream developers should use Cython >= 0.29.13 for Python 3.8 support and
+Downstream developers should use Cython >= 0.29.14 for Python 3.8 support and
 OpenBLAS >= 3.7 to avoid problems on the Skylake
 architecture.
 

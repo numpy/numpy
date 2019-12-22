@@ -57,8 +57,8 @@ Operating System :: MacOS
 
 MAJOR               = 1
 MINOR               = 18
-MICRO               = 0
-ISRELEASED          = True
+MICRO               = 1
+ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 
