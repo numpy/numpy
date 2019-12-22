@@ -2,7 +2,7 @@
 Contributors
 ============
 
-A total of 113 people contributed to this release.  People with a "+" by their
+A total of 114 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * Abhinav Sagar
@@ -112,6 +112,7 @@ names contributed a patch for the first time.
 * Thomas A Caswell
 * Thomas Kluyver
 * Tim Hoffmann +
+* Tirth Patel +
 * Tyler Reddy
 * Vladimir Pershin +
 * Warren Weckesser
@@ -122,7 +123,7 @@ names contributed a patch for the first time.
 Pull requests merged
 ====================
 
-A total of 400 pull requests were merged for this release.
+A total of 406 pull requests were merged for this release.
 
 * `#9301 <https://github.com/numpy/numpy/pull/9301>`__: DOC: added note to docstring of numpy.savez
 * `#10151 <https://github.com/numpy/numpy/pull/10151>`__: BUG: Numpy scalar types sometimes have the same name
@@ -524,3 +525,9 @@ A total of 400 pull requests were merged for this release.
 * `#15053 <https://github.com/numpy/numpy/pull/15053>`__: REV: Revert "Merge pull request #14794 from mattip/nep-0034-impl"
 * `#15058 <https://github.com/numpy/numpy/pull/15058>`__: API, DOC: change names to multivariate_hypergeometric, improve docs
 * `#15059 <https://github.com/numpy/numpy/pull/15059>`__: REL: Prepare for NumPy 1.18.0 release.
+* `#15109 <https://github.com/numpy/numpy/pull/15109>`__: TST: Check requires_memory immediately before the test
+* `#15111 <https://github.com/numpy/numpy/pull/15111>`__: ENH: Add support to sort timedelta64 `NaT` to end of the array
+* `#15112 <https://github.com/numpy/numpy/pull/15112>`__: MAINT: follow-up cleanup for blas64 PR
+* `#15113 <https://github.com/numpy/numpy/pull/15113>`__: ENH: f2py: add --f2cmap option for specifying the name of .f2py_f2cmap
+* `#15114 <https://github.com/numpy/numpy/pull/15114>`__: ENH: add support for ILP64 OpenBLAS (without symbol suffix)
+* `#15146 <https://github.com/numpy/numpy/pull/15146>`__: REL: Prepare for 1.18.0 release.
