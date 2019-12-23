@@ -206,6 +206,7 @@ As part of the API cleanup, the submodules in ``numpy.random``
 and ``bounded_integers`` were moved to ``_bit_generator``, ``_philox``,
 ``_pcg64``, ``_sfc64, ``_common``, ``_generator``, and ``_bounded_integers``
 respectively to indicate that they are not part of the public interface.
+(`gh-14608 <https://github.com/numpy/numpy/pull/14608>`__)
 
 
 C API changes
