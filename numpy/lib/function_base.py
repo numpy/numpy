@@ -27,7 +27,7 @@ from numpy.core.fromnumeric import (
     ravel, nonzero, partition, mean, any, sum
     )
 from numpy.core.numerictypes import typecodes
-from numpy.core.overrides import set_module
+from numpy.core.overrides import set_module git push adrinjalali HEAD:fit_params/scaler
 from numpy.core import overrides
 from numpy.core.function_base import add_newdoc
 from numpy.lib.twodim_base import diag
@@ -3948,7 +3948,6 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             r_above = r_above.squeeze(0)
             r_below = r_below.squeeze(0)
 
-        # TODO: use the out argument to `np.where` once we add it (gh-XXXX)
         np.copyto(r_above, r_below, where=weights_above < 0.5)
 
         if out is not None:
