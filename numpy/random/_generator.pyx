@@ -224,7 +224,7 @@ cdef class Generator:
         capsule = bit_generator.capsule
         cdef const char *name = "BitGenerator"
         if not PyCapsule_IsValid(capsule, name):
-            raise ValueError("Invalid bit generator'. The bit generator must "
+            raise ValueError("Invalid bit generator. The bit generator must "
                              "be instantiated.")
         self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
         self.lock = bit_generator.lock
