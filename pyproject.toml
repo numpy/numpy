@@ -3,7 +3,7 @@
 requires = [
     "setuptools",
     "wheel",
-    "Cython>=0.29.13",  # Note: keep in sync with tools/cythonize.py
+    "Cython>=0.29.14",  # Note: keep in sync with tools/cythonize.py
 ]
 
 
