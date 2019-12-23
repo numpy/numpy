@@ -3948,7 +3948,8 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             r_above = r_above.squeeze(0)
             r_below = r_below.squeeze(0)
 
-        r_above[r_above < 0.5] = r_below[r_above < 0.5]
+        # TODO: use the out argument to `np.where` once we add it (gh-XXXX)
+        np.copyto(r_above, r_below, where=weights_above < 0.5)
 
         if out is not None:
             out[...] = r_above
