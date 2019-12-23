@@ -3898,7 +3898,6 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             indices = indices[0]
         r = take(ap, indices, axis=axis, out=out)
 
-
     else:  # weight the points above and below the indices
         indices_below = floor(indices).astype(intp)
         indices_above = indices_below + 1
@@ -3949,15 +3948,15 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             r_above = r_above.squeeze(0)
             r_below = r_below.squeeze(0)
 
-        r = np.where(weights_above < 0.5, r_above, r_below)
+        r_above[r_above < 0.5] = r_below
 
         if out is not None:
-            out[...] = r
+            out[...] = r_above
             r = out
         else:
             # get the element stored in the 0-d array for backward
             # compatibility
-            r = r[()]
+            r = r_above[()]
 
     if np.any(n):
         if zerod:
