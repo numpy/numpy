@@ -1,0 +1,71 @@
+#ifndef NPY_GLOBAL_H
+#define NPY_GLOBAL_H
+
+#include <Python.h>
+#include "numpy/npy_common.h"
+
+static struct _global
+{
+    PyObject * ndarray_array_ufunc;
+    PyObject * ndarray_array_function;
+    PyObject * casting_unsafe_dict;
+    PyObject * errmsg_formatter;
+    PyTypeObject *PyMemberDescr_TypePtr;
+    PyTypeObject *PyGetSetDescr_TypePtr;
+    PyTypeObject *PyMethodDescr_TypePtr;
+    int unpack_init;
+    union {
+        npy_uint8  bytes[8];
+        npy_uint64 uint64;
+    } unpack_lookup_big[256];
+    PyObject * zero_obj;
+    PyObject * one_obj;
+    PyObject *mem_error_exc_type;
+    PyObject *view_is_safe;
+    PyObject *getfield_is_safe;
+/**begin repeat
+ *
+ * #func = amax, amin, ptp, clip, dump, dumps, mean, sum, prod, any, all, std,
+           var #
+ */
+    PyObject *callable_@func@;
+/**end repeat**/
+
+    PyObject *dump_method;
+    PyObject *dumps_method;
+    PyObject *too_hard_cls;
+    PyObject *reprfunc;
+
+    /* temp_elide.c */
+    int elide_init;
+    /*
+     * measured DSO object memory start and end, if an address is located
+     * inside these bounds it is part of that library so we don't need to call
+     * dladdr on it (assuming linear memory)
+     */
+    void * elide_pos_python_start;
+    void * elide_pos_python_end;
+    void * elide_pos_ma_start;
+    void * elide_pos_ma_end;
+
+    /* known address storage to save dladdr calls */
+    void * elide_py_addr[64];
+    void * elide_pyeval_addr[64];
+    npy_intp elide_n_py_addr;
+    npy_intp elide_n_pyeval;
+    npy_bool logical_or_zero[4096];
+    npy_bool logical_and_zero[4096];
+    PyObject *NoValue;
+    PyObject *ComplexWarning;
+    PyObject *ufunc_kwnames[13];
+    PyObject *numpy_matrix;
+    PyObject *sig_formatter;
+    PyObject *UFuncBinaryResolutionError;
+    PyObject *UFuncNoLoopError;
+    PyObject *UFuncInputCastingError;
+    PyObject *UFuncOutputCastingError;
+    PyObject *default_type_tup;
+
+} npy_globals;
+
+#endif

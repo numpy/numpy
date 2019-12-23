@@ -751,6 +751,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'ucsnarrow.c'),
             join('src', 'common', 'ufunc_override.c'),
             join('src', 'common', 'numpyos.c'),
+            join('src', 'common', 'npy_global.h.src'),
             ]
 
     if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":

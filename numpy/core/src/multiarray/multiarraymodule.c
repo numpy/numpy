@@ -30,6 +30,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
+#include "npy_global.h"
 
 NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
@@ -3957,7 +3958,6 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     static char *kwlist[] = {"self", "other", "max_work", NULL};
 
     mem_overlap_t result;
-    static PyObject *too_hard_cls = NULL;
     Py_ssize_t max_work;
     NPY_BEGIN_THREADS_DEF;
 
@@ -4043,9 +4043,9 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
     else if (result == MEM_OVERLAP_TOO_HARD) {
         if (raise_exceptions) {
             npy_cache_import("numpy.core._exceptions", "TooHardError",
-                             &too_hard_cls);
-            if (too_hard_cls) {
-                PyErr_SetString(too_hard_cls, "Exceeded max_work");
+                             &npy_globals.too_hard_cls);
+            if (npy_globals.too_hard_cls) {
+                PyErr_SetString(npy_globals.too_hard_cls, "Exceeded max_work");
             }
             return NULL;
         }
@@ -4607,6 +4607,9 @@ PyMODINIT_FUNC init_multiarray_umath(void) {
     if (!d) {
         goto err;
     }
+
+    /* Zero out the globals */
+    memset(&npy_globals, 0, sizeof(npy_globals));
 
     /*
      * Before calling PyType_Ready, initialize the tp_hash slot in

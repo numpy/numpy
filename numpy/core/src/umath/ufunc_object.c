@@ -30,6 +30,7 @@
 #include "Python.h"
 
 #include "npy_config.h"
+#include "npy_global.h"
 
 #include "npy_pycompat.h"
 
@@ -1119,28 +1120,27 @@ get_ufunc_arguments(PyUFuncObject *ufunc,
     if (kwds) {
         PyObject *out_kwd = NULL;
         PyObject *sig = NULL;
-        static PyObject *kwnames[13] = {NULL};
-        if (kwnames[0] == NULL) {
-            kwnames[0] = npy_um_str_out;
-            kwnames[1] = npy_um_str_where;
-            kwnames[2] = npy_um_str_axes;
-            kwnames[3] = npy_um_str_axis;
-            kwnames[4] = npy_um_str_keepdims;
-            kwnames[5] = npy_um_str_casting;
-            kwnames[6] = npy_um_str_order;
-            kwnames[7] = npy_um_str_dtype;
-            kwnames[8] = npy_um_str_subok;
-            kwnames[9] = npy_um_str_signature;
-            kwnames[10] = npy_um_str_sig;
-            kwnames[11] = npy_um_str_extobj;
-            kwnames[12] = NULL;  /* sentinel */
+        if (npy_globals.ufunc_kwnames[0] == NULL) {
+            npy_globals.ufunc_kwnames[0] = npy_um_str_out;
+            npy_globals.ufunc_kwnames[1] = npy_um_str_where;
+            npy_globals.ufunc_kwnames[2] = npy_um_str_axes;
+            npy_globals.ufunc_kwnames[3] = npy_um_str_axis;
+            npy_globals.ufunc_kwnames[4] = npy_um_str_keepdims;
+            npy_globals.ufunc_kwnames[5] = npy_um_str_casting;
+            npy_globals.ufunc_kwnames[6] = npy_um_str_order;
+            npy_globals.ufunc_kwnames[7] = npy_um_str_dtype;
+            npy_globals.ufunc_kwnames[8] = npy_um_str_subok;
+            npy_globals.ufunc_kwnames[9] = npy_um_str_signature;
+            npy_globals.ufunc_kwnames[10] = npy_um_str_sig;
+            npy_globals.ufunc_kwnames[11] = npy_um_str_extobj;
+            npy_globals.ufunc_kwnames[12] = NULL;  /* sentinel */
         }
         /*
          * Parse using converters to calculate outputs
          * (NULL outputs are treated as indicating a keyword is not allowed).
          */
         if (parse_ufunc_keywords(
-                ufunc, kwds, kwnames,
+                ufunc, kwds, npy_globals.ufunc_kwnames,
                 _borrowed_reference, &out_kwd,
                 _wheremask_converter, out_wheremask,  /* new reference */
                 _new_reference, out_axes,
@@ -3582,12 +3582,11 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
-    static PyObject *NoValue = NULL;
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s.reduce\n", ufunc_name);
 
-    npy_cache_import("numpy", "_NoValue", &NoValue);
-    if (NoValue == NULL) return NULL;
+    npy_cache_import("numpy", "_NoValue", &npy_globals.NoValue);
+    if (npy_globals.NoValue == NULL) return NULL;
 
     ndim = PyArray_NDIM(arr);
 
@@ -3614,7 +3613,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     }
 
     /* Get the initial value */
-    if (initial == NULL || initial == NoValue) {
+    if (initial == NULL || initial == npy_globals.NoValue) {
         initial = identity;
 
         /*
@@ -5376,7 +5375,6 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyArrayObject *ap1 = NULL, *ap2 = NULL, *ap_new = NULL;
     PyObject *new_args, *tmp;
     PyObject *shape1, *shape2, *newshape;
-    static PyObject *_numpy_matrix;
 
 
     errval = PyUFunc_CheckOverride(ufunc, "outer", args, kwds, &override);
@@ -5414,9 +5412,9 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     npy_cache_import(
         "numpy",
         "matrix",
-        &_numpy_matrix);
+        &npy_globals.numpy_matrix);
 
-    if (PyObject_IsInstance(tmp, _numpy_matrix)) {
+    if (PyObject_IsInstance(tmp, npy_globals.numpy_matrix)) {
         ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
     }
     else {
@@ -5430,7 +5428,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (tmp == NULL) {
         return NULL;
     }
-    if (PyObject_IsInstance(tmp, _numpy_matrix)) {
+    if (PyObject_IsInstance(tmp, npy_globals.numpy_matrix)) {
         ap2 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
     }
     else {
@@ -5904,15 +5902,14 @@ _typecharfromnum(int num) {
 static PyObject *
 ufunc_get_doc(PyUFuncObject *ufunc)
 {
-    static PyObject *_sig_formatter;
     PyObject *doc;
 
     npy_cache_import(
         "numpy.core._internal",
         "_ufunc_doc_signature_formatter",
-        &_sig_formatter);
+        &npy_globals.sig_formatter);
 
-    if (_sig_formatter == NULL) {
+    if (npy_globals.sig_formatter == NULL) {
         return NULL;
     }
 
@@ -5922,7 +5919,7 @@ ufunc_get_doc(PyUFuncObject *ufunc)
      * of it the doc string shouldn't need the calling convention
      */
     doc = PyObject_CallFunctionObjArgs(
-        _sig_formatter, (PyObject *)ufunc, NULL);
+        npy_globals.sig_formatter, (PyObject *)ufunc, NULL);
     if (doc == NULL) {
         return NULL;
     }

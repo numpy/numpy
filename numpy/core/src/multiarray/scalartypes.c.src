@@ -16,6 +16,7 @@
 #include "npy_pycompat.h"
 
 #include "npy_config.h"
+#include "npy_global.h"
 #include "mapping.h"
 #include "ctors.h"
 #include "usertypes.h"
@@ -540,13 +541,12 @@ _void_to_hex(const char* argbuf, const Py_ssize_t arglen,
 
 static PyObject *
 _void_scalar_repr(PyObject *obj) {
-    static PyObject *reprfunc = NULL;
     npy_cache_import("numpy.core.arrayprint",
-                     "_void_scalar_repr", &reprfunc);
-    if (reprfunc == NULL) {
+                     "_void_scalar_repr", &npy_globals.reprfunc);
+    if (npy_globals.reprfunc == NULL) {
         return NULL;
     }
-    return PyObject_CallFunction(reprfunc, "O", obj);
+    return PyObject_CallFunction(npy_globals.reprfunc, "O", obj);
 }
 
 static PyObject *

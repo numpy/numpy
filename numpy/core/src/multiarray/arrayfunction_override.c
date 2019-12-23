@@ -4,6 +4,7 @@
 #include "npy_pycompat.h"
 #include "get_attr_string.h"
 #include "npy_import.h"
+#include "npy_global.h"
 #include "multiarraymodule.h"
 
 
@@ -25,17 +26,16 @@ get_ndarray_array_function(void)
 static PyObject *
 get_array_function(PyObject *obj)
 {
-    static PyObject *ndarray_array_function = NULL;
     PyObject *array_function;
 
-    if (ndarray_array_function == NULL) {
-        ndarray_array_function = get_ndarray_array_function();
+    if (npy_globals.ndarray_array_function == NULL) {
+        npy_globals.ndarray_array_function = get_ndarray_array_function();
     }
 
     /* Fast return for ndarray */
     if (PyArray_CheckExact(obj)) {
-        Py_INCREF(ndarray_array_function);
-        return ndarray_array_function;
+        Py_INCREF(npy_globals.ndarray_array_function);
+        return npy_globals.ndarray_array_function;
     }
 
     array_function = PyArray_LookupSpecial(obj, "__array_function__");
@@ -143,12 +143,10 @@ fail:
 static int
 is_default_array_function(PyObject *obj)
 {
-    static PyObject *ndarray_array_function = NULL;
-
-    if (ndarray_array_function == NULL) {
-        ndarray_array_function = get_ndarray_array_function();
+    if (npy_globals.ndarray_array_function == NULL) {
+        npy_globals.ndarray_array_function = get_ndarray_array_function();
     }
-    return obj == ndarray_array_function;
+    return obj == npy_globals.ndarray_array_function;
 }
 
 
@@ -225,8 +223,6 @@ array_implement_array_function(
     int j, any_overrides;
     int num_implementing_args = 0;
     PyObject *result = NULL;
-
-    static PyObject *errmsg_formatter = NULL;
 
     if (!PyArg_UnpackTuple(
             positional_args, "implement_array_function", 5, 5,
@@ -308,10 +304,10 @@ array_implement_array_function(
     /* No acceptable override found, raise TypeError. */
     npy_cache_import("numpy.core._internal",
                      "array_function_errmsg_formatter",
-                     &errmsg_formatter);
-    if (errmsg_formatter != NULL) {
+                     &npy_globals.errmsg_formatter);
+    if (npy_globals.errmsg_formatter != NULL) {
         PyObject *errmsg = PyObject_CallFunctionObjArgs(
-            errmsg_formatter, public_api, types, NULL);
+            npy_globals.errmsg_formatter, public_api, types, NULL);
         if (errmsg != NULL) {
             PyErr_SetObject(PyExc_TypeError, errmsg);
             Py_DECREF(errmsg);

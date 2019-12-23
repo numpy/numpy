@@ -4,6 +4,7 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "npy_config.h"
+#include "npy_global.h"
 #include "numpy/arrayobject.h"
 
 #define NPY_NUMBER_MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -119,28 +120,12 @@ check_callers(int * cannot)
      * TODO some calls go over scalarmath in umath but we cannot get the base
      * address of it from multiarraymodule as it is not linked against it
      */
-    static int init = 0;
-    /*
-     * measured DSO object memory start and end, if an address is located
-     * inside these bounds it is part of that library so we don't need to call
-     * dladdr on it (assuming linear memory)
-     */
-    static void * pos_python_start;
-    static void * pos_python_end;
-    static void * pos_ma_start;
-    static void * pos_ma_end;
-
-    /* known address storage to save dladdr calls */
-    static void * py_addr[64];
-    static void * pyeval_addr[64];
-    static npy_intp n_py_addr = 0;
-    static npy_intp n_pyeval = 0;
-
+    int *init = &npy_globals.elide_init;
     void *buffer[NPY_MAX_STACKSIZE];
     int i, nptrs;
     int ok = 0;
     /* cannot determine callers */
-    if (init == -1) {
+    if (*init == -1) {
         *cannot = 1;
         return 0;
     }
@@ -148,33 +133,33 @@ check_callers(int * cannot)
     nptrs = backtrace(buffer, NPY_MAX_STACKSIZE);
     if (nptrs == 0) {
         /* complete failure, disable elision */
-        init = -1;
+        *init = -1;
         *cannot = 1;
         return 0;
     }
 
     /* setup DSO base addresses, ends updated later */
-    if (NPY_UNLIKELY(init == 0)) {
+    if (NPY_UNLIKELY(*init == 0)) {
         Dl_info info;
         /* get python base address */
         if (dladdr(&PyNumber_Or, &info)) {
-            pos_python_start = info.dli_fbase;
-            pos_python_end = info.dli_fbase;
+            npy_globals.elide_pos_python_start = info.dli_fbase;
+            npy_globals.elide_pos_python_end = info.dli_fbase;
         }
         else {
-            init = -1;
+            *init = -1;
             return 0;
         }
         /* get multiarray base address */
         if (dladdr(&PyArray_INCREF, &info)) {
-            pos_ma_start = info.dli_fbase;
-            pos_ma_end = info.dli_fbase;
+            npy_globals.elide_pos_ma_start = info.dli_fbase;
+            npy_globals.elide_pos_ma_end = info.dli_fbase;
         }
         else {
-            init = -1;
+            *init = -1;
             return 0;
         }
-        init = 1;
+        *init = 1;
     }
 
     /* loop over callstack addresses to check if they leave numpy or cpython */
@@ -190,27 +175,31 @@ check_callers(int * cannot)
 #endif
 
         /* check stored DSO boundaries first */
-        if (buffer[i] >= pos_python_start && buffer[i] <= pos_python_end) {
+        if (buffer[i] >= npy_globals.elide_pos_python_start &&
+                             buffer[i] <= npy_globals.elide_pos_python_end) {
             in_python = 1;
         }
-        else if (buffer[i] >= pos_ma_start && buffer[i] <= pos_ma_end) {
+        else if (buffer[i] >= npy_globals.elide_pos_ma_start &&
+                             buffer[i] <= npy_globals.elide_pos_ma_end) {
             in_multiarray = 1;
         }
 
         /* update DSO boundaries via dladdr if necessary */
         if (!in_python && !in_multiarray) {
             if (dladdr(buffer[i], &info) == 0) {
-                init = -1;
+                *init = -1;
                 ok = 0;
                 break;
             }
             /* update DSO end */
-            if (info.dli_fbase == pos_python_start) {
-                pos_python_end = NPY_NUMBER_MAX(buffer[i], pos_python_end);
+            if (info.dli_fbase == npy_globals.elide_pos_python_start) {
+                npy_globals.elide_pos_python_end = NPY_NUMBER_MAX(buffer[i],
+                                             npy_globals.elide_pos_python_end);
                 in_python = 1;
             }
-            else if (info.dli_fbase == pos_ma_start) {
-                pos_ma_end = NPY_NUMBER_MAX(buffer[i], pos_ma_end);
+            else if (info.dli_fbase == npy_globals.elide_pos_ma_start) {
+                npy_globals.elide_pos_ma_end = NPY_NUMBER_MAX(buffer[i],
+                                             npy_globals.elide_pos_ma_end);
                 in_multiarray = 1;
             }
         }
@@ -224,7 +213,8 @@ check_callers(int * cannot)
         /* in python check if the frame eval function was reached */
         if (in_python) {
             /* if reached eval we are done */
-            if (find_addr(pyeval_addr, n_pyeval, buffer[i])) {
+            if (find_addr(npy_globals.elide_pyeval_addr,
+                          npy_globals.elide_n_pyeval, buffer[i])) {
                 ok = 1;
                 break;
             }
@@ -232,28 +222,33 @@ check_callers(int * cannot)
              * check if its some other function, use pointer lookup table to
              * save expensive dladdr calls
              */
-            if (find_addr(py_addr, n_py_addr, buffer[i])) {
+            if (find_addr(npy_globals.elide_py_addr,
+                          npy_globals.elide_n_py_addr, buffer[i])) {
                 continue;
             }
 
             /* new python address, check for PyEvalFrame */
             if (dladdr(buffer[i], &info) == 0) {
-                init = -1;
+                *init = -1;
                 ok = 0;
                 break;
             }
             if (info.dli_sname &&
                     strcmp(info.dli_sname, PYFRAMEEVAL_FUNC) == 0) {
-                if (n_pyeval < (npy_intp)ARRAY_SIZE(pyeval_addr)) {
+                if (npy_globals.elide_n_pyeval < (npy_intp)ARRAY_SIZE(
+                                              npy_globals.elide_pyeval_addr)) {
                     /* store address to not have to dladdr it again */
-                    pyeval_addr[n_pyeval++] = buffer[i];
+                    npy_globals.elide_pyeval_addr[npy_globals.elide_n_pyeval++] =
+                                                                     buffer[i];
                 }
                 ok = 1;
                 break;
             }
-            else if (n_py_addr < (npy_intp)ARRAY_SIZE(py_addr)) {
+            else if (npy_globals.elide_n_py_addr < (npy_intp)ARRAY_SIZE(
+                                                npy_globals.elide_py_addr)) {
                 /* store other py function to not have to dladdr it again */
-                py_addr[n_py_addr++] = buffer[i];
+                npy_globals.elide_py_addr[npy_globals.elide_n_py_addr++] = 
+                                                                     buffer[i];
             }
         }
     }

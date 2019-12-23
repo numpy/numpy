@@ -12,6 +12,7 @@
 
 #include "Python.h"
 #include "npy_config.h"
+#include "npy_global.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/arrayscalars.h"
@@ -1353,16 +1354,15 @@ NONZERO_NAME(@name@_)(PyObject *a)
 static int
 emit_complexwarning(void)
 {
-    static PyObject *cls = NULL;
-    if (cls == NULL) {
+    if (npy_globals.ComplexWarning == NULL) {
         PyObject *mod;
         mod = PyImport_ImportModule("numpy.core");
         assert(mod != NULL);
-        cls = PyObject_GetAttrString(mod, "ComplexWarning");
-        assert(cls != NULL);
+        npy_globals.ComplexWarning = PyObject_GetAttrString(mod, "ComplexWarning");
+        assert(npy_globals.ComplexWarning != NULL);
         Py_DECREF(mod);
     }
-    return PyErr_WarnEx(cls,
+    return PyErr_WarnEx(npy_globals.ComplexWarning,
             "Casting complex values to real discards the imaginary part", 1);
 }
 

@@ -11,6 +11,7 @@
 #include "npy_config.h"
 #include "npy_pycompat.h"
 #include "npy_import.h"
+#include "npy_global.h"
 
 #include "common.h"
 #include "ctors.h"
@@ -494,15 +495,15 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 
     /* check that we are not reinterpreting memory containing Objects. */
     if (_may_have_objects(PyArray_DESCR(self)) || _may_have_objects(newtype)) {
-        static PyObject *checkfunc = NULL;
         PyObject *safe;
 
-        npy_cache_import("numpy.core._internal", "_view_is_safe", &checkfunc);
-        if (checkfunc == NULL) {
+        npy_cache_import("numpy.core._internal", "_view_is_safe",
+                         &npy_globals.view_is_safe);
+        if (npy_globals.view_is_safe == NULL) {
             goto fail;
         }
 
-        safe = PyObject_CallFunction(checkfunc, "OO",
+        safe = PyObject_CallFunction(npy_globals.view_is_safe, "OO",
                                      PyArray_DESCR(self), newtype);
         if (safe == NULL) {
             goto fail;

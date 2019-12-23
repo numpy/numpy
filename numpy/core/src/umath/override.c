@@ -4,6 +4,7 @@
 #include "npy_pycompat.h"
 #include "numpy/ufuncobject.h"
 #include "npy_import.h"
+#include "npy_global.h"
 
 #include "override.h"
 #include "ufunc_override.h"
@@ -224,12 +225,11 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
     npy_intp nargs = PyTuple_GET_SIZE(args);
     npy_intp i;
     PyObject *obj;
-    static PyObject *NoValue = NULL;
     static char *kwlist[] = {"array", "axis", "dtype", "out", "keepdims",
                              "initial", "where"};
 
-    npy_cache_import("numpy", "_NoValue", &NoValue);
-    if (NoValue == NULL) return -1;
+    npy_cache_import("numpy", "_NoValue", &npy_globals.NoValue);
+    if (npy_globals.NoValue == NULL) return -1;
 
     if (nargs < 1 || nargs > 7) {
         PyErr_Format(PyExc_TypeError,
@@ -258,7 +258,7 @@ normalize_reduce_args(PyUFuncObject *ufunc, PyObject *args,
             obj = PyTuple_GetSlice(args, 3, 4);
         }
         /* Remove initial=np._NoValue */
-        if (i == 5 && obj == NoValue) {
+        if (i == 5 && obj == npy_globals.NoValue) {
             continue;
         }
         PyDict_SetItemString(*normal_kwds, kwlist[i], obj);
@@ -635,18 +635,17 @@ PyUFunc_CheckOverride(PyUFuncObject *ufunc, char *method,
         /* Check if there is a method left to call */
         if (!override_obj) {
             /* No acceptable override found. */
-            static PyObject *errmsg_formatter = NULL;
             PyObject *errmsg;
 
             npy_cache_import("numpy.core._internal",
                              "array_ufunc_errmsg_formatter",
-                             &errmsg_formatter);
+                             &npy_globals.errmsg_formatter);
 
-            if (errmsg_formatter != NULL) {
+            if (npy_globals.errmsg_formatter != NULL) {
                 /* All tuple items must be set before use */
                 Py_INCREF(Py_None);
                 PyTuple_SET_ITEM(override_args, 0, Py_None);
-                errmsg = PyObject_Call(errmsg_formatter, override_args,
+                errmsg = PyObject_Call(npy_globals.errmsg_formatter, override_args,
                                        normal_kwds);
                 if (errmsg != NULL) {
                     PyErr_SetObject(PyExc_TypeError, errmsg);

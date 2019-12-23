@@ -8,6 +8,7 @@
 #include "lowlevel_strided_loops.h"
 
 #include "npy_config.h"
+#include "npy_global.h"
 
 #include "npy_pycompat.h"
 
@@ -834,11 +835,11 @@ _GenericBinaryOutFunction(PyArrayObject *m1, PyObject *m2, PyArrayObject *out,
     }
     else {
         PyObject *args, *ret;
-        static PyObject *kw = NULL;
 
-        if (kw == NULL) {
-            kw = Py_BuildValue("{s:s}", "casting", "unsafe");
-            if (kw == NULL) {
+        if (npy_globals.casting_unsafe_dict == NULL) {
+            npy_globals.casting_unsafe_dict = Py_BuildValue("{s:s}", "casting",
+                                                            "unsafe");
+            if (npy_globals.casting_unsafe_dict == NULL) {
                 return NULL;
             }
         }
@@ -848,7 +849,7 @@ _GenericBinaryOutFunction(PyArrayObject *m1, PyObject *m2, PyArrayObject *out,
             return NULL;
         }
 
-        ret = PyObject_Call(op, args, kw);
+        ret = PyObject_Call(op, args, npy_globals.casting_unsafe_dict);
 
         Py_DECREF(args);
 

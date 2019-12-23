@@ -10,6 +10,7 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
+#include "npy_global.h"
 
 #include "npy_ctypes.h"
 #include "npy_pycompat.h"
@@ -952,12 +953,10 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 static PyObject *
 raise_memory_error(int nd, npy_intp *dims, PyArray_Descr *descr)
 {
-    static PyObject *exc_type = NULL;
-
     npy_cache_import(
         "numpy.core._exceptions", "_ArrayMemoryError",
-        &exc_type);
-    if (exc_type == NULL) {
+        &npy_globals.mem_error_exc_type);
+    if (npy_globals.mem_error_exc_type == NULL) {
         goto fail;
     }
 
@@ -972,7 +971,7 @@ raise_memory_error(int nd, npy_intp *dims, PyArray_Descr *descr)
     if (exc_value == NULL){
         goto fail;
     }
-    PyErr_SetObject(exc_type, exc_value);
+    PyErr_SetObject(npy_globals.mem_error_exc_type, exc_value);
     Py_DECREF(exc_value);
     return NULL;
 

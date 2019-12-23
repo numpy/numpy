@@ -8,6 +8,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
+#include "npy_global.h"
 
 #include "npy_pycompat.h"
 #include "numpy/npy_math.h"
@@ -1998,7 +1999,6 @@ PyArray_Zero(PyArrayObject *arr)
 {
     char *zeroval;
     int ret, storeflags;
-    static PyObject * zero_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -2009,9 +2009,9 @@ PyArray_Zero(PyArrayObject *arr)
         return NULL;
     }
 
-    if (zero_obj == NULL) {
-        zero_obj = PyInt_FromLong((long) 0);
-        if (zero_obj == NULL) {
+    if (npy_globals.zero_obj == NULL) {
+        npy_globals.zero_obj = PyInt_FromLong((long) 0);
+        if (npy_globals.zero_obj == NULL) {
             return NULL;
         }
     }
@@ -2022,12 +2022,12 @@ PyArray_Zero(PyArrayObject *arr)
            if they simply memcpy it into a ndarray without using
            setitem(), refcount errors will occur
         */
-        memcpy(zeroval, &zero_obj, sizeof(PyObject *));
+        memcpy(zeroval, &npy_globals.zero_obj, sizeof(PyObject *));
         return zeroval;
     }
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_SETITEM(arr, zeroval, zero_obj);
+    ret = PyArray_SETITEM(arr, zeroval, npy_globals.zero_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
@@ -2044,7 +2044,6 @@ PyArray_One(PyArrayObject *arr)
 {
     char *oneval;
     int ret, storeflags;
-    static PyObject * one_obj = NULL;
 
     if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
@@ -2055,9 +2054,9 @@ PyArray_One(PyArrayObject *arr)
         return NULL;
     }
 
-    if (one_obj == NULL) {
-        one_obj = PyInt_FromLong((long) 1);
-        if (one_obj == NULL) {
+    if (npy_globals.one_obj == NULL) {
+        npy_globals.one_obj = PyInt_FromLong((long) 1);
+        if (npy_globals.one_obj == NULL) {
             return NULL;
         }
     }
@@ -2068,13 +2067,13 @@ PyArray_One(PyArrayObject *arr)
            if they simply memcpy it into a ndarray without using
            setitem(), refcount errors will occur
         */
-        memcpy(oneval, &one_obj, sizeof(PyObject *));
+        memcpy(oneval, &npy_globals.one_obj, sizeof(PyObject *));
         return oneval;
     }
 
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
-    ret = PyArray_SETITEM(arr, oneval, one_obj);
+    ret = PyArray_SETITEM(arr, oneval, npy_globals.one_obj);
     ((PyArrayObject_fields *)arr)->flags = storeflags;
     if (ret < 0) {
         PyDataMem_FREE(oneval);

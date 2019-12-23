@@ -218,7 +218,6 @@ NPY_NO_EXPORT void
                            void *_ip2, npy_intp is2_n, npy_intp is2_p,
                            void *_op, npy_intp os_m, npy_intp os_p,
                            npy_intp dm, npy_intp dn, npy_intp dp)
-                           
 {
     npy_intp m, n, p;
     npy_intp ib1_n, ib2_n, ib2_p, ob_p;
@@ -276,7 +275,6 @@ BOOL_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
                            void *_ip2, npy_intp is2_n, npy_intp is2_p,
                            void *_op, npy_intp os_m, npy_intp os_p,
                            npy_intp dm, npy_intp dn, npy_intp dp)
-                           
 {
     npy_intp m, n, p;
     npy_intp ib2_p, ob_p;
@@ -314,7 +312,7 @@ NPY_NO_EXPORT void
 OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
                            void *_ip2, npy_intp is2_n, npy_intp is2_p,
                            void *_op, npy_intp os_m, npy_intp os_p,
-                           npy_intp dm, npy_intp dn, npy_intp dp)                         
+                           npy_intp dm, npy_intp dn, npy_intp dp)
 {
     char *ip1 = (char *)_ip1, *ip2 = (char *)_ip2, *op = (char *)_op;
 
@@ -439,7 +437,7 @@ NPY_NO_EXPORT void
          * n, m, p and strides.
          */
         if (too_big_for_blas || any_zero_dim) {
-            @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+            @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                        ip2, is2_n, is2_p,
                                        op, os_m, os_p, dm, dn, dp);
         }
@@ -454,7 +452,7 @@ NPY_NO_EXPORT void
                  * could use cblas_Xaxy, but that requires 0ing output
                  * and would not be faster (XXX prove it)
                  */
-                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                            ip2, is2_n, is2_p,
                                            op, os_m, os_p, dm, dn, dp);
             } else if (vector_matrix) {
@@ -468,7 +466,7 @@ NPY_NO_EXPORT void
                             op, os_m, os_p, dm, dn, dp);
             } else {
                 /* column @ row, 2d output, no blas needed or non-blas-able input */
-                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                            ip2, is2_n, is2_p,
                                            op, os_m, os_p, dm, dn, dp);
             }
@@ -494,13 +492,13 @@ NPY_NO_EXPORT void
                  * non-blasable (or non-ccontiguous output)
                  * we could still use BLAS, see gh-12365.
                  */
-                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+                @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                            ip2, is2_n, is2_p,
                                            op, os_m, os_p, dm, dn, dp);
             }
         }
 #else
-        @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, 
+        @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                    ip2, is2_n, is2_p,
                                    op, os_m, os_p, dm, dn, dp);
 

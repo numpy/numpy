@@ -8,6 +8,7 @@
 #include "numpy/npy_3kcompat.h"
 #include "numpy/npy_math.h"
 #include "npy_config.h"
+#include "npy_global.h"
 #include "templ_common.h" /* for npy_mul_with_overflow_intp */
 #include "lowlevel_strided_loops.h" /* for npy_bswap8 */
 #include "alloc.h"
@@ -1418,32 +1419,29 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     static char *msg = "already has a docstring";
     PyObject *tp_dict = PyArrayDescr_Type.tp_dict;
     PyObject *myobj;
-    static PyTypeObject *PyMemberDescr_TypePtr = NULL;
-    static PyTypeObject *PyGetSetDescr_TypePtr = NULL;
-    static PyTypeObject *PyMethodDescr_TypePtr = NULL;
 
     /* Don't add docstrings */
     if (Py_OptimizeFlag > 1) {
         Py_RETURN_NONE;
     }
 
-    if (PyGetSetDescr_TypePtr == NULL) {
+    if (npy_globals.PyGetSetDescr_TypePtr == NULL) {
         /* Get "subdescr" */
         myobj = PyDict_GetItemString(tp_dict, "fields");
         if (myobj != NULL) {
-            PyGetSetDescr_TypePtr = Py_TYPE(myobj);
+            npy_globals.PyGetSetDescr_TypePtr = Py_TYPE(myobj);
         }
     }
-    if (PyMemberDescr_TypePtr == NULL) {
+    if (npy_globals.PyMemberDescr_TypePtr == NULL) {
         myobj = PyDict_GetItemString(tp_dict, "alignment");
         if (myobj != NULL) {
-            PyMemberDescr_TypePtr = Py_TYPE(myobj);
+            npy_globals.PyMemberDescr_TypePtr = Py_TYPE(myobj);
         }
     }
-    if (PyMethodDescr_TypePtr == NULL) {
+    if (npy_globals.PyMethodDescr_TypePtr == NULL) {
         myobj = PyDict_GetItemString(tp_dict, "newbyteorder");
         if (myobj != NULL) {
-            PyMethodDescr_TypePtr = Py_TYPE(myobj);
+            npy_globals.PyMethodDescr_TypePtr = Py_TYPE(myobj);
         }
     }
 
@@ -1465,7 +1463,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 #endif
 
 #define _TESTDOC1(typebase) (Py_TYPE(obj) == &Py##typebase##_Type)
-#define _TESTDOC2(typebase) (Py_TYPE(obj) == Py##typebase##_TypePtr)
+#define _TESTDOC2(typebase) (Py_TYPE(obj) == npy_globals.Py##typebase##_TypePtr)
 #define _ADDDOC(typebase, doc, name) do {                               \
         Py##typebase##Object *new = (Py##typebase##Object *)obj;        \
         if (!(doc)) {                                                   \
@@ -1726,15 +1724,11 @@ fail:
 static PyObject *
 unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
 {
-    static int unpack_init = 0;
     /*
-     * lookuptable for bitorder big as it has been around longer
-     * bitorder little is handled via byteswapping in the loop
+     * npy_globals.unpack_lookup_big is a lookuptable for bitorder big as it
+     * has been around longer. bitorder little is handled via byteswapping in
+     * the loop
      */
-    static union {
-        npy_uint8  bytes[8];
-        npy_uint64 uint64;
-    } unpack_lookup_big[256];
     PyArrayObject *inp;
     PyArrayObject *new = NULL;
     PyArrayObject *out = NULL;
@@ -1824,16 +1818,16 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
      * setup lookup table under GIL, 256 8 byte blocks representing 8 bits
      * expanded to 1/0 bytes
      */
-    if (unpack_init == 0) {
+    if (npy_globals.unpack_init == 0) {
         npy_intp j;
         for (j=0; j < 256; j++) {
             npy_intp k;
             for (k=0; k < 8; k++) {
                 npy_uint8 v = (j & (1 << k)) == (1 << k);
-                unpack_lookup_big[j].bytes[7 - k] = v;
+                npy_globals.unpack_lookup_big[j].bytes[7 - k] = v;
             }
         }
-        unpack_init = 1;
+        npy_globals.unpack_init = 1;
     }
 
     count = PyArray_DIM(new, axis) * 8;
@@ -1862,7 +1856,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             /* for unity stride we can just copy out of the lookup table */
             if (order == 'b') {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = npy_globals.unpack_lookup_big[*inptr].uint64;
                     memcpy(outptr, &v, 8);
                     outptr += 8;
                     inptr += in_stride;
@@ -1870,7 +1864,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             else {
                 for (index = 0; index < in_n; index++) {
-                    npy_uint64 v = unpack_lookup_big[*inptr].uint64;
+                    npy_uint64 v = npy_globals.unpack_lookup_big[*inptr].uint64;
                     if (order != 'b') {
                         v = npy_bswap8(v);
                     }
@@ -1881,7 +1875,7 @@ unpack_bits(PyObject *input, int axis, PyObject *count_obj, char order)
             }
             /* Clean up the tail portion */
             if (in_tail) {
-                npy_uint64 v = unpack_lookup_big[*inptr].uint64;
+                npy_uint64 v = npy_globals.unpack_lookup_big[*inptr].uint64;
                 if (order != 'b') {
                     v = npy_bswap8(v);
                 }
