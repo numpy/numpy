@@ -3948,7 +3948,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             r_above = r_above.squeeze(0)
             r_below = r_below.squeeze(0)
 
-        r_above[r_above < 0.5] = r_below
+        r_above[r_above < 0.5] = r_below[r_above < 0.5]
 
         if out is not None:
             out[...] = r_above
