@@ -2144,6 +2144,8 @@ class TestMethods(object):
         msg = "Test real searchsorted with nans, side='r'"
         b = a.searchsorted(a, side='r')
         assert_equal(b, np.arange(1, 4), msg)
+        # check keyword arguments
+        a.searchsorted(v=1)
         # check double complex
         a = np.zeros(9, dtype=np.complex128)
         a.real += [0, 0, 1, 1, 0, 1, np.nan, np.nan, np.nan]
