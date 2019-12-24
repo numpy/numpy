@@ -11,19 +11,11 @@ Prerequisites
 
 Building NumPy requires the following software installed:
 
-1) Python 2.7.x, 3.4.x or newer
+1) Python 3.5.x or newer
 
-   On Debian and derivatives (Ubuntu): python, python-dev (or python3-dev)
-
-   On Windows: the official python installer at
-   `www.python.org <https://www.python.org>`_ is enough
-
-   Make sure that the Python package distutils is installed before
-   continuing. For example, in Debian GNU/Linux, installing python-dev
-   also installs distutils.
-
-   Python must also be compiled with the zlib module enabled. This is
-   practically always the case with pre-packaged Pythons.
+   Please note that the Python development headers also need to be installed,
+   e.g., on Debian/Ubuntu one needs to install both `python3` and
+   `python3-dev`. On Windows and macOS this is normally not an issue.
 
 2) Compilers
 
@@ -42,29 +34,22 @@ Building NumPy requires the following software installed:
    NumPy does not require any external linear algebra libraries to be
    installed. However, if these are available, NumPy's setup script can detect
    them and use them for building. A number of different LAPACK library setups
-   can be used, including optimized LAPACK libraries such as ATLAS, MKL or the
-   Accelerate/vecLib framework on OS X.
+   can be used, including optimized LAPACK libraries such as OpenBLAS or MKL.
 
 4) Cython
 
-   To build development versions of NumPy, you'll need a recent version of
-   Cython.  Released NumPy sources on PyPi include the C files generated from
-   Cython code, so for released versions having Cython installed isn't needed.
+   For building NumPy, you'll need a recent version of Cython.
 
 Basic Installation
 ------------------
 
-To install NumPy run::
+To install NumPy, run::
 
     pip install .
 
 To perform an in-place build that can be run from the source folder run::
 
     python setup.py build_ext --inplace
-
-The NumPy build system uses ``setuptools`` (from numpy 1.11.0, before that it
-was plain ``distutils``) and ``numpy.distutils``.
-Using ``virtualenv`` should work as expected.
 
 *Note: for build instructions to do development work on NumPy itself, see*
 :ref:`development-environment`.
@@ -83,7 +68,7 @@ For detailed info on testing, see :ref:`testing-builds`.
 Parallel builds
 ~~~~~~~~~~~~~~~
 
-From NumPy 1.10.0 on it's also possible to do a parallel build with::
+It's possible to do a parallel build with::
 
     python setup.py build -j 4 install --prefix $HOME/.local
 
@@ -95,22 +80,11 @@ to perform a parallel in-place build, run::
 The number of build jobs can also be specified via the environment variable
 ``NPY_NUM_BUILD_JOBS``.
 
-
-FORTRAN ABI mismatch
---------------------
-
-The two most popular open source fortran compilers are g77 and gfortran.
-Unfortunately, they are not ABI compatible, which means that concretely you
-should avoid mixing libraries built with one with another. In particular, if
-your blas/lapack/atlas is built with g77, you *must* use g77 when building
-numpy and scipy; on the contrary, if your atlas is built with gfortran, you
-*must* build numpy/scipy with gfortran. This applies for most other cases
-where different FORTRAN compilers might have been used.
-
 Choosing the fortran compiler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To build with gfortran::
+Compilers are auto-detected; building with a particular compiler can be done
+with ``--fcompiler``.  E.g. to select gfortran::
 
     python setup.py build --fcompiler=gnu95
 
@@ -118,14 +92,14 @@ For more information see::
 
     python setup.py build --help-fcompiler
 
-How to check the ABI of blas/lapack/atlas
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+How to check the ABI of BLAS/LAPACK libraries
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 One relatively simple and reliable way to check for the compiler used to build
 a library is to use ldd on the library. If libg2c.so is a dependency, this
-means that g77 has been used. If libgfortran.so is a dependency, gfortran
-has been used. If both are dependencies, this means both have been used, which
-is almost always a very bad idea.
+means that g77 has been used (note: g77 is no longer supported for building NumPy).
+If libgfortran.so is a dependency, gfortran has been used. If both are dependencies,
+this means both have been used, which is almost always a very bad idea.
 
 Accelerated BLAS/LAPACK libraries
 ---------------------------------
@@ -144,7 +118,6 @@ The default order for the libraries are:
 4. ATLAS
 5. Accelerate (MacOS)
 6. BLAS (NetLIB)
-
 
 If you wish to build against OpenBLAS but you also have BLIS available one
 may predefine the order of searching via the environment variable
@@ -235,14 +208,3 @@ Additional compiler flags can be supplied by setting the ``OPT``,
 ``FOPT`` (for Fortran), and ``CC`` environment variables.
 When providing options that should improve the performance of the code ensure
 that you also set ``-DNDEBUG`` so that debugging code is not executed.
-
-
-Building with ATLAS support
----------------------------
-
-Ubuntu
-~~~~~~
-
-You can install the necessary package for optimized ATLAS with this command::
-
-    sudo apt-get install libatlas-base-dev
