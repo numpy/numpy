@@ -1,6 +1,8 @@
 import os, sys
 import pytest
 import warnings
+import shutil
+import subprocess
 
 try:
     import cffi
@@ -25,21 +27,22 @@ try:
 except ImportError:
     cython = None
 
+cython_ver = cython.__version__.split('.')
+if len(cython_ver) < 3 or cython_ver < ['0', '29', '14']:
+    # too old or wrong cython, skip the test
+    cython = None
+
 @pytest.mark.skipif(cython is None, reason="requires cython")
-def test_cython():
+@pytest.mark.slow
+def test_cython(tmp_path):
     curdir = os.getcwd()
     argv = sys.argv
-    examples = (os.path.dirname(__file__), '..', '_examples')
-    try:
-        os.chdir(os.path.join(*examples))
-        sys.argv = argv[:1] + ['build']
-        with warnings.catch_warnings(record=True) as w:
-            # setuptools issue gh-1885
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            from numpy.random._examples.cython import setup
-    finally:
-        sys.argv = argv
-        os.chdir(curdir)
+    examples = os.path.join(os.path.dirname(__file__), '..', '_examples')
+    base = os.path.dirname(examples)
+    shutil.copytree(examples, tmp_path / '_examples')
+    env = os.environ.copy()
+    subprocess.check_call([sys.executable, 'setup.py', 'build'], env=env,
+                          cwd=str(tmp_path / '_examples' / 'cython'))
 
 @pytest.mark.skipif(numba is None or cffi is None,
                     reason="requires numba and cffi")
