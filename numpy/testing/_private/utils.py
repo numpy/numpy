@@ -20,7 +20,7 @@ from warnings import WarningMessage
 import pprint
 
 from numpy.core import(
-     float32, empty, arange, array_repr, ndarray, isnat, array)
+     intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy.lib.utils import deprecate
 
 if sys.version_info[0] >= 3:
@@ -301,6 +301,15 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     check that all elements of these objects are equal. An exception is raised
     at the first conflicting values.
 
+    When one of `actual` and `desired` is a scalar and the other is array_like,
+    the function checks that each element of the array_like object is equal to
+    the scalar.
+
+    This function handles NaN comparisons as if NaN was a "normal" number.
+    That is, no assertion is raised if both objects have NaNs in the same
+    positions.  This is in contrast to the IEEE standard on NaNs, which says
+    that NaN compared to anything must return False.
+
     Parameters
     ----------
     actual : array_like
@@ -327,6 +336,11 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     item=1
      ACTUAL: 5
      DESIRED: 6
+
+    The following comparison does not raise an exception.  There are NaNs
+    in the inputs, but they are in the same positions.
+
+    >>> np.testing.assert_equal(np.array([1.0, 2.0, np.nan]), [1, 2, np.nan])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -381,21 +395,6 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
     if isscalar(desired) != isscalar(actual):
         raise AssertionError(msg)
 
-    # Inf/nan/negative zero handling
-    try:
-        isdesnan = gisnan(desired)
-        isactnan = gisnan(actual)
-        if isdesnan and isactnan:
-            return  # both nan, so equal
-
-        # handle signed zero specially for floats
-        if desired == 0 and actual == 0:
-            if not signbit(desired) == signbit(actual):
-                raise AssertionError(msg)
-
-    except (TypeError, ValueError, NotImplementedError):
-        pass
-
     try:
         isdesnat = isnat(desired)
         isactnat = isnat(actual)
@@ -406,6 +405,33 @@ def assert_equal(actual, desired, err_msg='', verbose=True):
             if dtypes_match:
                 return
             else:
+                raise AssertionError(msg)
+
+    except (TypeError, ValueError, NotImplementedError):
+        pass
+
+    # Inf/nan/negative zero handling
+    try:
+        isdesnan = gisnan(desired)
+        isactnan = gisnan(actual)
+        if isdesnan and isactnan:
+            return  # both nan, so equal
+
+        # handle signed zero specially for floats
+        array_actual = array(actual)
+        array_desired = array(desired)
+        if (array_actual.dtype.char in 'Mm' or
+                array_desired.dtype.char in 'Mm'):
+            # version 1.18
+            # until this version, gisnan failed for datetime64 and timedelta64.
+            # Now it succeeds but comparison to scalar with a different type
+            # emits a DeprecationWarning.
+            # Avoid that by skipping the next check
+            raise NotImplementedError('cannot compare to a scalar '
+                                      'with a different type')
+
+        if desired == 0 and actual == 0:
+            if not signbit(desired) == signbit(actual):
                 raise AssertionError(msg)
 
     except (TypeError, ValueError, NotImplementedError):
@@ -693,12 +719,12 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header='', precision=6, equal_nan=True,
                          equal_inf=True):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy.core import array, array2string, isnan, inf, bool_, errstate, all
+    from numpy.core import array, array2string, isnan, inf, bool_, errstate, all, max, object_
 
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
-    # original array for output formating
+    # original array for output formatting
     ox, oy = x, y
 
     def isnumber(x):
@@ -723,7 +749,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
         # (2) __eq__ on some ndarray subclasses returns Python booleans
         #     instead of element-wise comparisons, so we cast to bool_() and
         #     use isinstance(..., bool) checks
-        # (3) subclasses with bare-bones __array_function__ implemenations may
+        # (3) subclasses with bare-bones __array_function__ implementations may
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting such subclasses, but it's nice to
         # support them if possible.
@@ -784,26 +810,29 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
 
         if isinstance(val, bool):
             cond = val
-            reduced = [0]
+            reduced = array([val])
         else:
             reduced = val.ravel()
             cond = reduced.all()
-            reduced = reduced.tolist()
 
         # The below comparison is a hack to ensure that fully masked
         # results, for which val.ravel().all() returns np.ma.masked,
         # do not trigger a failure (np.ma.masked != True evaluates as
         # np.ma.masked, which is falsy).
         if cond != True:
-            mismatch = 100.0 * reduced.count(0) / ox.size
-            remarks = ['Mismatch: {:.3g}%'.format(mismatch)]
+            n_mismatch = reduced.size - reduced.sum(dtype=intp)
+            n_elements = flagged.size if flagged.ndim != 0 else reduced.size
+            percent_mismatch = 100 * n_mismatch / n_elements
+            remarks = [
+                'Mismatched elements: {} / {} ({:.3g}%)'.format(
+                    n_mismatch, n_elements, percent_mismatch)]
 
             with errstate(invalid='ignore', divide='ignore'):
                 # ignore errors for non-numeric types
                 try:
                     error = abs(x - y)
-                    max_abs_error = error.max()
-                    if error.dtype == 'object':
+                    max_abs_error = max(error)
+                    if getattr(error, 'dtype', object_) == object_:
                         remarks.append('Max absolute difference: '
                                         + str(max_abs_error))
                     else:
@@ -817,8 +846,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                     if all(~nonzero):
                         max_rel_error = array(inf)
                     else:
-                        max_rel_error = (error[nonzero] / abs(y[nonzero])).max()
-                    if error.dtype == 'object':
+                        max_rel_error = max(error[nonzero] / abs(y[nonzero]))
+                    if getattr(error, 'dtype', object_) == object_:
                         remarks.append('Max relative difference: '
                                         + str(max_rel_error))
                     else:
@@ -847,10 +876,11 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     Raises an AssertionError if two array_like objects are not equal.
 
     Given two array_like objects, check that the shape is equal and all
-    elements of these objects are equal. An exception is raised at
-    shape mismatch or conflicting values. In contrast to the standard usage
-    in numpy, NaNs are compared like numbers, no assertion is raised if
-    both objects have NaNs in the same positions.
+    elements of these objects are equal (but see the Notes for the special
+    handling of a scalar). An exception is raised at shape mismatch or
+    conflicting values. In contrast to the standard usage in numpy, NaNs
+    are compared like numbers, no assertion is raised if both objects have
+    NaNs in the same positions.
 
     The usual caution for verifying equality with floating point numbers is
     advised.
@@ -877,6 +907,12 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
                      relative and/or absolute precision.
     assert_array_almost_equal_nulp, assert_array_max_ulp, assert_equal
 
+    Notes
+    -----
+    When one of `x` and `y` is a scalar and the other is array_like, the
+    function checks that each element of the array_like object is equal to
+    the scalar.
+
     Examples
     --------
     The first assert does not raise an exception:
@@ -884,7 +920,7 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     >>> np.testing.assert_array_equal([1.0,2.33333,np.nan],
     ...                               [np.exp(0),2.33333, np.nan])
 
-    Assert fails with numerical inprecision with floats:
+    Assert fails with numerical imprecision with floats:
 
     >>> np.testing.assert_array_equal([1.0,np.pi,np.nan],
     ...                               [1, np.sqrt(np.pi)**2, np.nan])
@@ -904,6 +940,12 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     >>> np.testing.assert_allclose([1.0,np.pi,np.nan],
     ...                            [1, np.sqrt(np.pi)**2, np.nan],
     ...                            rtol=1e-10, atol=0)
+
+    As mentioned in the Notes section, `assert_array_equal` has special
+    handling for scalars. Here the test checks that each value in `x` is 3:
+
+    >>> x = np.full((2, 5), fill_value=3)
+    >>> np.testing.assert_array_equal(x, 3)
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -1143,7 +1185,7 @@ def assert_string_equal(actual, desired):
     if desired == actual:
         return
 
-    diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
+    diff = list(difflib.Differ().compare(actual.splitlines(True), desired.splitlines(True)))
     diff_list = []
     while diff:
         d1 = diff.pop(0)
@@ -1456,9 +1498,9 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     Raises an AssertionError if two objects are not equal up to desired
     tolerance.
 
-    The test is equivalent to ``allclose(actual, desired, rtol, atol)``.
-    It compares the difference between `actual` and `desired` to
-    ``atol + rtol * abs(desired)``.
+    The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (note
+    that ``allclose`` has different default values). It compares the difference
+    between `actual` and `desired` to ``atol + rtol * abs(desired)``.
 
     .. versionadded:: 1.5.0
 
