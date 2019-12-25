@@ -6,6 +6,10 @@ NumPy 1.16.6 Release Notes
 Highlights
 ==========
 
+- The ``np.testing.utils`` functions have been updated from 1.19.0-dev0.
+  This improves the function documentation and error messages as well
+  extending the ``assert_array_compare`` function to additional types.
+
 
 New functions
 =============
@@ -14,18 +18,6 @@ Allow matmul (`@` operator) to work with object arrays.
 -------------------------------------------------------
 This is an enhancement that was added in NumPy 1.17 and seems reasonable to
 include in the LTS 1.16 release series.
-
-
-New deprecations
-================
-
-
-Expired deprecations
-====================
-
-
-Future changes
-==============
 
 
 Compatibility notes
@@ -37,17 +29,12 @@ Booleans were being treated as integers rather than booleans,
 which was a regression from previous behavior.
 
 
-C API changes
-=============
-
-
-New Features
-============
-
-
 Improvements
 ============
 
-
-Changes
-=======
+Array comparison assertions include maximum differences
+-------------------------------------------------------
+Error messages from array comparison tests such as ``testing.assert_allclose``
+now include "max absolute difference" and "max relative difference," in
+addition to the previous "mismatch" percentage.  This information makes it
+easier to update absolute and relative error tolerances.
