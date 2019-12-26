@@ -34,6 +34,7 @@ if len(cython_ver) < 3 or cython_ver < ['0', '29', '14']:
 
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
+@pytest.mark.skipif(sys.platform == 'win32', reason="cmd too long on CI")
 def test_cython(tmp_path):
     curdir = os.getcwd()
     argv = sys.argv
@@ -47,8 +48,8 @@ def test_cython(tmp_path):
 @pytest.mark.skipif(numba is None or cffi is None,
                     reason="requires numba and cffi")
 def test_numba():
-        from numpy.random._examples.numba import extending
+    from numpy.random._examples.numba import extending
 
 @pytest.mark.skipif(cffi is None, reason="requires cffi")
 def test_cffi():
-        from numpy.random._examples.cffi import extending
+    from numpy.random._examples.cffi import extending
