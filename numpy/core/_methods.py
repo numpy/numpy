@@ -7,6 +7,7 @@ from __future__ import division, absolute_import, print_function
 
 import warnings
 
+import numpy as np
 from numpy.core import multiarray as mu
 from numpy.core import umath as um
 from numpy.core._asarray import asanyarray
@@ -148,19 +149,35 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
             dtype = mu.dtype('f4')
             is_float16_result = True
 
-    ret = umr_sum(arr, axis, dtype, out, keepdims)
-    if isinstance(ret, mu.ndarray):
-        ret = um.true_divide(
-                ret, rcount, out=ret, casting='unsafe', subok=False)
-        if is_float16_result and out is None:
-            ret = arr.dtype.type(ret)
-    elif hasattr(ret, 'dtype'):
-        if is_float16_result:
-            ret = arr.dtype.type(ret / rcount)
+    if axis is None: 
+        sorted_axis = range(len(arr.shape))
+    elif isinstance(axis, tuple): 
+        sorted_axis = np.sort(np.unique(axis))
+    else: 
+        sorted_axis = np.array([axis])
+
+    if keepdims is False: 
+        sorted_axis = [axis-i for i, axis in enumerate(sorted_axis)]
+
+    out_iter = [None]*len(sorted_axis)
+    out_iter[-1] = out
+    
+    for axis, out in zip(sorted_axis, out_iter):
+        rcount = _count_reduce_items(arr, axis)
+        ret = umr_sum(arr, axis, dtype, out, keepdims)
+        if isinstance(ret, mu.ndarray):
+            ret = um.true_divide(
+                    ret, rcount, out=ret, casting='unsafe', subok=False)
+            if is_float16_result and out is None:
+                ret = arr.dtype.type(ret)
+        elif hasattr(ret, 'dtype'):
+            if is_float16_result:
+                ret = arr.dtype.type(ret / rcount)
+            else:
+                ret = ret.dtype.type(ret / rcount)
         else:
-            ret = ret.dtype.type(ret / rcount)
-    else:
-        ret = ret / rcount
+            ret = ret / rcount
+        arr = ret
 
     return ret
 
