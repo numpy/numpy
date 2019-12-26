@@ -1557,28 +1557,55 @@ def sort_complex(a):
         return b
 
 
-def _trim_zeros(filt, trim=None):
+def _trim_zeros(
+    filt,
+    trim=None,
+    axis=None,
+    *,
+    atol=None,
+    rtol=None,
+    return_lengths=None
+):
     return (filt,)
 
 
 @array_function_dispatch(_trim_zeros)
-def trim_zeros(filt, trim='fb'):
-    """
-    Trim the leading and/or trailing zeros from a 1-D array or sequence.
+def trim_zeros(
+    filt,
+    trim='fb',
+    axis=-1,
+    *,
+    atol=0,
+    rtol=0,
+    return_lengths=False
+):
+    """Remove values along a dimension which are zero along all other.
 
     Parameters
     ----------
-    filt : 1-D array or sequence
+    filt : array_like
         Input array.
     trim : str, optional
         A string with 'f' representing trim from front and 'b' to trim from
-        back. Default is 'fb', trim zeros from both front and back of the
-        array.
+        back. By default, zeros are trimmed from the front and back.
+    axis : int or sequence, optional
+        The axis or a sequence of axes to trim. If None all axes are trimmed.
+    atol : float, optional
+        Absolute tolerance with which a value is considered for trimming.
+    rtol : float, optional
+        Relative tolerance with which a value is considered for trimming.
+    return_lengths : bool, optional
+        Additionally return the number of trimmed samples in each dimension at
+        the front and back.
 
     Returns
     -------
-    trimmed : 1-D array or sequence
+    trimmed : ndarray or sequence
         The result of trimming the input. The input data type is preserved.
+    lengths : ndarray
+        If `return_lengths` was True, an array of shape (``filt.ndim``, 2) is
+        returned. It contains the number of trimmed samples in each dimension
+        at the front and back.
 
     Examples
     --------
@@ -1595,22 +1622,62 @@ def trim_zeros(filt, trim='fb'):
     [1, 2]
 
     """
-    first = 0
-    trim = trim.upper()
-    if 'F' in trim:
-        for i in filt:
-            if i != 0.:
-                break
-            else:
-                first = first + 1
-    last = len(filt)
-    if 'B' in trim:
-        for i in filt[::-1]:
-            if i != 0.:
-                break
-            else:
-                last = last - 1
-    return filt[first:last]
+    trim = trim.lower()
+
+    if axis is None:
+        # Apply iteratively to all axes
+        axis = range(filt.ndim)
+
+    # Normalize axes to 1D-array
+    axis = np.asarray(axis, dtype=np.intp)
+    if axis.ndim == 0:
+        axis = np.asarray([axis], dtype=np.intp)
+
+    absolutes = np.abs(filt)
+    lengths = np.zeros((absolutes.ndim, 2), dtype=np.intp)
+
+    for current_axis in axis:
+        absolutes.take([], current_axis)  # Raises if axis is out of bounds
+        if current_axis < 0:
+            current_axis += absolutes.ndim
+
+        # Reduce to envelope along all axes except the selected one
+        reduced = np.moveaxis(absolutes, current_axis, -1)
+        for _ in range(absolutes.ndim - 1):
+            reduced = reduced.max(axis=0)
+        assert reduced.ndim == 1
+
+        if atol > 0:
+            reduced[reduced <= atol] = 0
+        if rtol > 0:
+            reduced[reduced <= rtol * reduced.max()] = 0
+
+        # Find start and stop indices for current dimension
+        start, stop = np.nonzero(reduced)[0][[0, -1]]
+        stop += 1
+
+        if "f" not in trim:
+            start = None
+        else:
+            lengths[current_axis, 0] = start
+        if "b" not in trim:
+            stop = None
+        else:
+            lengths[current_axis, 1] = absolutes.shape[current_axis] - stop
+
+        # Use multi-dimensional slicing only when necessary, this allows
+        # preservation of the non-arrays input types
+        sl = slice(start, stop)
+        if current_axis != 0:
+            sl = (slice(None),) * current_axis + (sl,) + (...,)
+
+        filt = filt[sl]
+
+    if return_lengths is True:
+        return filt, lengths
+    else:
+        return filt
+
 
 def _extract_dispatcher(condition, arr):
     return (condition, arr)
