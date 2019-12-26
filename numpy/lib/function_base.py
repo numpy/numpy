@@ -1607,6 +1607,10 @@ def trim_zeros(
         returned. It contains the number of trimmed samples in each dimension
         at the front and back.
 
+    Notes
+    -----
+    For all-zero arrays, the first axis is trimmed first.
+
     Examples
     --------
     >>> a = np.array((0, 0, 0, 1, 2, 3, 0, 2, 1, 0))
@@ -1625,6 +1629,12 @@ def trim_zeros(
     trim = trim.lower()
 
     absolutes = np.abs(filt)
+    if atol > 0:
+        absolutes[absolutes <= atol] = 0
+    if rtol > 0:
+        absolutes[absolutes <= rtol * absolutes.max()] = 0
+    nonzero = np.nonzero(absolutes)
+
     lengths = np.zeros((absolutes.ndim, 2), dtype=np.intp)
 
     if axis is None:
@@ -1635,28 +1645,19 @@ def trim_zeros(
     if axis.ndim == 0:
         axis = np.asarray([axis], dtype=np.intp)
 
-    if atol > 0:
-        absolutes[absolutes <= atol] = 0
-    if rtol > 0:
-        absolutes[absolutes <= rtol * absolutes.max()] = 0
-
-    nonzero = np.nonzero(absolutes)
-
     for current_axis in axis:
-        absolutes.take([], current_axis)  # Raises if axis is out of bounds
-        if current_axis < 0:
-            current_axis += absolutes.ndim
+        current_axis = normalize_axis_index(current_axis, absolutes.ndim)
 
         if nonzero[current_axis].size > 0:
             start = nonzero[current_axis].min()
-            stop = nonzero[current_axis].max()
-            stop += 1
+            stop = nonzero[current_axis].max() + 1
         else:
-            # In case the input is all-zero, slice only in front
-            start = stop = absolutes.shape[current_axis]
-            if "f" not in trim:
-                # except when only the backside is to be sliced
-                stop = 0
+            # In case the input is all-zero, slice depending on preference
+            # given by user
+            if trim.startswith("b"):
+                start = stop = 0
+            else:
+                start = stop = absolutes.shape[current_axis]
 
         # Only slice on specified side(s)
         if "f" not in trim:
@@ -1665,7 +1666,7 @@ def trim_zeros(
             stop = None
 
         # Use multi-dimensional slicing only when necessary, this allows
-        # preservation of the non-arrays input types
+        # preservation of the non-array input types
         sl = slice(start, stop)
         if current_axis != 0:
             sl = (slice(None),) * current_axis + (sl,) + (...,)
