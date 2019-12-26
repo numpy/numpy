@@ -1,6 +1,8 @@
 import os, sys
 import pytest
 import warnings
+import shutil
+import subprocess
 
 try:
     import cffi
@@ -22,30 +24,35 @@ except ImportError:
 
 try:
     import cython
+    from Cython.Compiler.Version import version as cython_version
 except ImportError:
     cython = None
+else:
+    from distutils.version import LooseVersion
+    # Cython 0.29.14 is required for Python 3.8 and there are
+    # other fixes in the 0.29 series that are needed even for earlier
+    # Python versions.
+    # Note: keep in sync with the one in pyproject.toml
+    required_version = LooseVersion('0.29.14')
+    if LooseVersion(cython_version) < required_version:
+        # too old or wrong cython, skip the test
+        cython = None
 
 @pytest.mark.skipif(cython is None, reason="requires cython")
-def test_cython():
-    curdir = os.getcwd()
-    argv = sys.argv
-    examples = (os.path.dirname(__file__), '..', '_examples')
-    try:
-        os.chdir(os.path.join(*examples))
-        sys.argv = argv[:1] + ['build']
-        with warnings.catch_warnings(record=True) as w:
-            # setuptools issue gh-1885
-            warnings.filterwarnings('always', '', DeprecationWarning)
-            from numpy.random._examples.cython import setup
-    finally:
-        sys.argv = argv
-        os.chdir(curdir)
+@pytest.mark.slow
+@pytest.mark.skipif(sys.platform == 'win32', reason="cmd too long on CI")
+def test_cython(tmp_path):
+    examples = os.path.join(os.path.dirname(__file__), '..', '_examples')
+    base = os.path.dirname(examples)
+    shutil.copytree(examples, tmp_path / '_examples')
+    subprocess.check_call([sys.executable, 'setup.py', 'build'],
+                          cwd=str(tmp_path / '_examples' / 'cython'))
 
 @pytest.mark.skipif(numba is None or cffi is None,
                     reason="requires numba and cffi")
 def test_numba():
-        from numpy.random._examples.numba import extending
+    from numpy.random._examples.numba import extending
 
 @pytest.mark.skipif(cffi is None, reason="requires cffi")
 def test_cffi():
-        from numpy.random._examples.cffi import extending
+    from numpy.random._examples.cffi import extending
