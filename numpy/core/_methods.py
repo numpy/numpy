@@ -150,7 +150,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
             is_float16_result = True
 
     if axis is None: 
-        sorted_axis = range(len(arr.shape))
+        sorted_axis = range(arr.ndim)
     elif isinstance(axis, tuple): 
         sorted_axis = np.sort(np.unique(axis))
     else: 
