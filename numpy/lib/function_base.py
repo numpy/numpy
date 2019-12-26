@@ -1516,19 +1516,21 @@ def unwrap(p, discont=pi, axis=-1):
     return up
 
 
-def _sort_complex(a):
+def _sort_complex(a, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_sort_complex)
-def sort_complex(a):
+def sort_complex(a, reverse=False):
     """
     Sort a complex array using the real part first, then the imaginary part.
 
     Parameters
     ----------
     a : array_like
-        Input array
+        Input array.
+    reverse : bool, optional
+        If this is set to True, sort will be done in descending order.
 
     Returns
     -------
@@ -1537,15 +1539,20 @@ def sort_complex(a):
 
     Examples
     --------
-    >>> np.sort_complex([5, 3, 6, 2, 1])
+    >>> a = np.array([5, 3, 6, 2, 1])
+    >>> np.sort_complex(a)
     array([1.+0.j, 2.+0.j, 3.+0.j, 5.+0.j, 6.+0.j])
+    >>> np.sort_complex(a, reverse=True)
+    array([6.+0.j, 5.+0.j, 3.+0.j, 2.+0.j, 1.+0.j])
 
-    >>> np.sort_complex([1 + 2j, 2 - 1j, 3 - 2j, 3 - 3j, 3 + 5j])
+    >>> a = np.array([1 + 2j, 2 - 1j, 3 - 2j, 3 - 3j, 3 + 5j])
+    >>> np.sort_complex(a)
     array([1.+2.j,  2.-1.j,  3.-3.j,  3.-2.j,  3.+5.j])
+    >>> np.sort_complex(a, reverse=True)
+    array([3.+5.j,  3.-2.j,  3.-3.j,  2.-1.j, 1.+2.j])
 
     """
-    b = array(a, copy=True)
-    b.sort()
+    b = np.sort(a, reverse=reverse)
     if not issubclass(b.dtype.type, _nx.complexfloating):
         if b.dtype.char in 'bhBH':
             return b.astype('F')
@@ -3307,12 +3314,12 @@ def sinc(x):
     return sin(y)/y
 
 
-def _msort_dispatcher(a):
+def _msort_dispatcher(a, reverse=None):
     return (a,)
 
 
 @array_function_dispatch(_msort_dispatcher)
-def msort(a):
+def msort(a, reverse=False):
     """
     Return a copy of an array sorted along the first axis.
 
@@ -3320,6 +3327,8 @@ def msort(a):
     ----------
     a : array_like
         Array to be sorted.
+    reverse : bool, optional
+        If this is set to True, sort will be done in descending order.
 
     Returns
     -------
@@ -3336,8 +3345,7 @@ def msort(a):
 
     """
     b = array(a, subok=True, copy=True)
-    b.sort(0)
-    return b
+    return np.sort(b, axis=0, reverse=reverse)
 
 
 def _ureduce(a, func, **kwargs):
@@ -3453,6 +3461,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     middle value of a sorted copy of ``V``, ``V_sorted`` - i
     e., ``V_sorted[(N-1)/2]``, when ``N`` is odd, and the average of the
     two middle values of ``V_sorted`` when ``N`` is even.
+    ``median`` ignores mask of the MaskedArray.
 
     Examples
     --------
@@ -3482,6 +3491,11 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     >>> assert not np.all(a==b)
 
     """
+    if isinstance(a, np.ma.MaskedArray):
+        a = a.data
+        warnings.warn("Warning: 'median' will ignore the 'mask' "
+                      "of the MaskedArray.", stacklevel=1)
+
     r, k = _ureduce(a, func=_median, axis=axis, out=out,
                     overwrite_input=overwrite_input)
     if keepdims:
@@ -3631,6 +3645,7 @@ def percentile(a, q, axis=None, out=None,
     match the location of ``q`` exactly. This function is the same as
     the median if ``q=50``, the same as the minimum if ``q=0`` and the
     same as the maximum if ``q=100``.
+    ``percentile`` ignores mask of the MaskedArray.
 
     Examples
     --------
@@ -3689,6 +3704,11 @@ def percentile(a, q, axis=None, out=None,
         plt.show()
 
     """
+    if isinstance(a, np.ma.MaskedArray):
+        a = a.data
+        warnings.warn("Warning: 'percentile' will ignore the 'mask' "
+                      "of the MaskedArray.", stacklevel=1)
+
     q = np.true_divide(q, 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
     if not _quantile_is_valid(q):
@@ -3775,6 +3795,7 @@ def quantile(a, q, axis=None, out=None,
     match the location of ``q`` exactly. This function is the same as
     the median if ``q=0.5``, the same as the minimum if ``q=0.0`` and the
     same as the maximum if ``q=1.0``.
+    ``quantile`` ignores mask of the MaskedArray.
 
     Examples
     --------
@@ -3802,6 +3823,11 @@ def quantile(a, q, axis=None, out=None,
     array([7.,  2.])
     >>> assert not np.all(a == b)
     """
+    if isinstance(a, np.ma.MaskedArray):
+        a = a.data
+        warnings.warn("Warning: 'quantile' will ignore the 'mask' "
+                      "of the MaskedArray.", stacklevel=1)
+
     q = np.asanyarray(q)
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
