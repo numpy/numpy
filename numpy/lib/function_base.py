@@ -3485,8 +3485,8 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     """
     if isinstance(a, np.ma.MaskedArray):
         a = a.data
-        warnings.warn("Warning: 'median' will ignore the 'mask' "
-                      "of the MaskedArray.", stacklevel=1)
+        warnings.warn("'median' will ignore the 'mask' "
+                      "of the MaskedArray.", stacklevel=2)
 
     r, k = _ureduce(a, func=_median, axis=axis, out=out,
                     overwrite_input=overwrite_input)
@@ -3698,8 +3698,8 @@ def percentile(a, q, axis=None, out=None,
     """
     if isinstance(a, np.ma.MaskedArray):
         a = a.data
-        warnings.warn("Warning: 'percentile' will ignore the 'mask' "
-                      "of the MaskedArray.", stacklevel=1)
+        warnings.warn("'percentile' will ignore the 'mask' "
+                      "of the MaskedArray.", stacklevel=2)
 
     q = np.true_divide(q, 100)
     q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
@@ -3817,8 +3817,8 @@ def quantile(a, q, axis=None, out=None,
     """
     if isinstance(a, np.ma.MaskedArray):
         a = a.data
-        warnings.warn("Warning: 'quantile' will ignore the 'mask' "
-                      "of the MaskedArray.", stacklevel=1)
+        warnings.warn("'quantile' will ignore the 'mask' "
+                      "of the MaskedArray.", stacklevel=2)
 
     q = np.asanyarray(q)
     if not _quantile_is_valid(q):
