@@ -12,6 +12,7 @@ from setuptools.extension import Extension
 from os.path import join, abspath, dirname
 
 path = abspath(dirname(__file__))
+defs = [('NPY_NO_DEPRECATED_API', 0)]
 
 extending = Extension("extending",
                       sources=[join(path, 'extending.pyx')],
@@ -19,10 +20,13 @@ extending = Extension("extending",
                             np.get_include(),
                             join(path, '..', '..')
                         ],
+                      define_macros=defs,
                       )
 distributions = Extension("extending_distributions",
                           sources=[join(path, 'extending_distributions.pyx')],
-                          include_dirs=[np.get_include()])
+                          include_dirs=[np.get_include()],
+                          define_macros=defs,
+                         )
 
 extensions = [extending, distributions]
 
