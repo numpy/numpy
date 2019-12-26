@@ -26,18 +26,16 @@ try:
     import cython
 except ImportError:
     cython = None
-
-cython_ver = cython.__version__.split('.')
-if len(cython_ver) < 3 or cython_ver < ['0', '29', '14']:
-    # too old or wrong cython, skip the test
-    cython = None
+else:
+    cython_ver = cython.__version__.split('.')
+    if len(cython_ver) < 3 or cython_ver < ['0', '29', '14']:
+        # too old or wrong cython, skip the test
+        cython = None
 
 @pytest.mark.skipif(cython is None, reason="requires cython")
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == 'win32', reason="cmd too long on CI")
 def test_cython(tmp_path):
-    curdir = os.getcwd()
-    argv = sys.argv
     examples = os.path.join(os.path.dirname(__file__), '..', '_examples')
     base = os.path.dirname(examples)
     shutil.copytree(examples, tmp_path / '_examples')
