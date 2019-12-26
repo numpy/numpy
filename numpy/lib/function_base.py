@@ -1624,46 +1624,45 @@ def trim_zeros(
     """
     trim = trim.lower()
 
+    absolutes = np.abs(filt)
+    lengths = np.zeros((absolutes.ndim, 2), dtype=np.intp)
+
     if axis is None:
         # Apply iteratively to all axes
-        axis = range(filt.ndim)
-
+        axis = range(absolutes.ndim)
     # Normalize axes to 1D-array
     axis = np.asarray(axis, dtype=np.intp)
     if axis.ndim == 0:
         axis = np.asarray([axis], dtype=np.intp)
 
-    absolutes = np.abs(filt)
-    lengths = np.zeros((absolutes.ndim, 2), dtype=np.intp)
+    if atol > 0:
+        absolutes[absolutes <= atol] = 0
+    if rtol > 0:
+        absolutes[absolutes <= rtol * absolutes.max()] = 0
+
+    nonzero = np.nonzero(absolutes)
 
     for current_axis in axis:
         absolutes.take([], current_axis)  # Raises if axis is out of bounds
         if current_axis < 0:
             current_axis += absolutes.ndim
 
-        # Reduce to envelope along all axes except the selected one
-        reduced = np.moveaxis(absolutes, current_axis, -1)
-        for _ in range(absolutes.ndim - 1):
-            reduced = reduced.max(axis=0)
-        assert reduced.ndim == 1
+        if nonzero[current_axis].size > 0:
+            start = nonzero[current_axis].min()
+            stop = nonzero[current_axis].max()
+            stop += 1
+        else:
+            # In case the input is all-zero, slice only in front
+            start = stop = absolutes.shape[current_axis]
+            if "f" not in trim:
+                # except when only the backside is to be sliced
+                stop = 0
 
-        if atol > 0:
-            reduced[reduced <= atol] = 0
-        if rtol > 0:
-            reduced[reduced <= rtol * reduced.max()] = 0
-
-        # Find start and stop indices for current dimension
-        start, stop = np.nonzero(reduced)[0][[0, -1]]
-        stop += 1
-
+        # Only slice on specified side(s)
         if "f" not in trim:
             start = None
-        else:
-            lengths[current_axis, 0] = start
         if "b" not in trim:
             stop = None
-        else:
-            lengths[current_axis, 1] = absolutes.shape[current_axis] - stop
 
         # Use multi-dimensional slicing only when necessary, this allows
         # preservation of the non-arrays input types
@@ -1672,6 +1671,11 @@ def trim_zeros(
             sl = (slice(None),) * current_axis + (sl,) + (...,)
 
         filt = filt[sl]
+
+        if start is not None:
+            lengths[current_axis, 0] = start
+        if stop is not None:
+            lengths[current_axis, 1] = absolutes.shape[current_axis] - stop
 
     if return_lengths is True:
         return filt, lengths
