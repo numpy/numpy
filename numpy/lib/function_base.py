@@ -1543,7 +1543,6 @@ def sort_complex(a):
     >>> np.sort_complex([1 + 2j, 2 - 1j, 3 - 2j, 3 - 3j, 3 + 5j])
     array([1.+2.j,  2.-1.j,  3.-3.j,  3.-2.j,  3.+5.j])
 
-
     """
     b = array(a, copy=True)
     b.sort()
