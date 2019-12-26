@@ -24,15 +24,17 @@ except ImportError:
 
 try:
     import cython
+    from Cython.Compiler.Version import version as cython_version
 except ImportError:
     cython = None
 else:
-    cython_ver = cython.__version__.split('.')
+    from distutils.version import LooseVersion
     # Cython 0.29.14 is required for Python 3.8 and there are
     # other fixes in the 0.29 series that are needed even for earlier
     # Python versions.
     # Note: keep in sync with the one in pyproject.toml
-    if len(cython_ver) < 3 or cython_ver < ['0', '29', '14']:
+    required_version = LooseVersion('0.29.14')
+    if LooseVersion(cython_version) < required_version:
         # too old or wrong cython, skip the test
         cython = None
 
@@ -44,7 +46,6 @@ def test_cython(tmp_path):
     base = os.path.dirname(examples)
     shutil.copytree(examples, tmp_path / '_examples')
     subprocess.check_call([sys.executable, 'setup.py', 'build'],
-                          env=os.environ,
                           cwd=str(tmp_path / '_examples' / 'cython'))
 
 @pytest.mark.skipif(numba is None or cffi is None,
