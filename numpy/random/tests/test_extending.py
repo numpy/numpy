@@ -42,7 +42,6 @@ else:
 @pytest.mark.slow
 def test_cython(tmp_path):
     examples = os.path.join(os.path.dirname(__file__), '..', '_examples')
-    base = os.path.dirname(examples)
     shutil.copytree(examples, tmp_path / '_examples')
     subprocess.check_call([sys.executable, 'setup.py', 'build'],
                           cwd=str(tmp_path / '_examples' / 'cython'))
