@@ -1557,28 +1557,12 @@ def sort_complex(a):
         return b
 
 
-def _trim_zeros(
-    filt,
-    trim=None,
-    axis=None,
-    *,
-    atol=None,
-    rtol=None,
-    return_lengths=None
-):
+def _trim_zeros(filt, trim=None, axis=None, *, return_lengths=None):
     return (filt,)
 
 
 @array_function_dispatch(_trim_zeros)
-def trim_zeros(
-    filt,
-    trim='fb',
-    axis=-1,
-    *,
-    atol=0,
-    rtol=0,
-    return_lengths=False
-):
+def trim_zeros(filt, trim='fb', axis=-1, *, return_lengths=False):
     """Remove values along a dimension which are zero along all other.
 
     Parameters
@@ -1590,10 +1574,6 @@ def trim_zeros(
         back. By default, zeros are trimmed from the front and back.
     axis : int or sequence, optional
         The axis or a sequence of axes to trim. If None all axes are trimmed.
-    atol : float, optional
-        Absolute tolerance with which a value is considered for trimming.
-    rtol : float, optional
-        Relative tolerance with which a value is considered for trimming.
     return_lengths : bool, optional
         Additionally return the number of trimmed samples in each dimension at
         the front and back.
@@ -1629,12 +1609,7 @@ def trim_zeros(
     trim = trim.lower()
 
     absolutes = np.abs(filt)
-    if atol > 0:
-        absolutes[absolutes <= atol] = 0
-    if rtol > 0:
-        absolutes[absolutes <= rtol * absolutes.max()] = 0
     nonzero = np.nonzero(absolutes)
-
     lengths = np.zeros((absolutes.ndim, 2), dtype=np.intp)
 
     if axis is None:
