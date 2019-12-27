@@ -9,9 +9,9 @@ import numpy as np
 from distutils.core import setup
 from Cython.Build import cythonize
 from setuptools.extension import Extension
-from os.path import join, abspath, dirname
+from os.path import join, dirname
 
-path = abspath(dirname(__file__))
+path = dirname(__file__)
 defs = [('NPY_NO_DEPRECATED_API', 0)]
 
 extending = Extension("extending",
