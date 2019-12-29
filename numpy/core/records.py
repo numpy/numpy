@@ -211,21 +211,25 @@ class format_parser(object):
         if _dup:
             raise ValueError("Duplicate field names: %s" % _dup)
 
-        if (titles):
+        if titles:
             self._titles = [n.strip() for n in titles[:self._nfields]]
         else:
             self._titles = []
             titles = []
 
-        if (self._nfields > len(titles)):
+        if self._nfields > len(titles):
             self._titles += [None] * (self._nfields - len(titles))
 
     def _createdescr(self, byteorder):
-        descr = sb.dtype({'names':self._names,
-                          'formats':self._f_formats,
-                          'offsets':self._offsets,
-                          'titles':self._titles})
-        if (byteorder is not None):
+        descr = sb.dtype(
+            {
+                'names': self._names,
+                'formats': self._f_formats,
+                'offsets': self._offsets,
+                'titles': self._titles,
+            }
+        )
+        if byteorder is not None:
             byteorder = _byteorderconv[byteorder[0]]
             descr = descr.newbyteorder(byteorder)
 
@@ -251,7 +255,7 @@ class record(nt.void):
         return super(record, self).__str__()
 
     def __getattribute__(self, attr):
-        if attr in ['setfield', 'getfield', 'dtype']:
+        if attr in ('setfield', 'getfield', 'dtype'):
             return nt.void.__getattribute__(self, attr)
         try:
             return nt.void.__getattribute__(self, attr)
@@ -276,7 +280,7 @@ class record(nt.void):
                     "attribute '%s'" % attr)
 
     def __setattr__(self, attr, val):
-        if attr in ['setfield', 'getfield', 'dtype']:
+        if attr in ('setfield', 'getfield', 'dtype'):
             raise AttributeError("Cannot set '%s' attribute" % attr)
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr, None)
@@ -600,7 +604,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     arrayList = [sb.asarray(x) for x in arrayList]
 
-    if shape is None or shape == 0:
+    if shape in (None, 0):
         shape = arrayList[0].shape
 
     if isinstance(shape, int):
@@ -609,9 +613,10 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     if formats is None and dtype is None:
         # go through each object in the list to see if it is an ndarray
         # and determine the formats.
-        formats = []
-        for obj in arrayList:
-            formats.append(obj.dtype)
+        formats = [
+            obj.dtype
+            for obj in arrayList
+        ]
 
     if dtype is not None:
         descr = sb.dtype(dtype)
@@ -689,7 +694,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     try:
         retval = sb.array(recList, dtype=descr)
     except (TypeError, ValueError):
-        if (shape is None or shape == 0):
+        if shape in (None, 0):
             shape = len(recList)
         if isinstance(shape, (int, long)):
             shape = (shape,)
@@ -728,7 +733,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
         descr = format_parser(formats, names, titles, aligned, byteorder)._descr
 
     itemsize = descr.itemsize
-    if (shape is None or shape == 0 or shape == -1):
+    if shape in (None, 0, -1):
         shape = (len(datastring) - offset) // itemsize
 
     _array = recarray(shape, descr, buf=datastring, offset=offset)
@@ -771,7 +776,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
     if dtype is None and formats is None:
         raise TypeError("fromfile() needs a 'dtype' or 'formats' argument")
 
-    if (shape is None or shape == 0):
+    if shape in (None, 0):
         shape = (-1,)
     elif isinstance(shape, (int, long)):
         shape = (shape,)
@@ -784,7 +789,7 @@ def fromfile(fd, dtype=None, shape=None, offset=0, formats=None,
         ctx = open(os_fspath(fd), 'rb')
 
     with ctx as fd:
-        if (offset > 0):
+        if offset > 0:
             fd.seek(offset, 1)
         size = get_remaining_size(fd)
 
