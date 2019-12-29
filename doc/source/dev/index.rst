@@ -231,6 +231,17 @@ Requirements
 `Sphinx <http://www.sphinx-doc.org/en/stable/>`__ is needed to build
 the documentation. Matplotlib, SciPy, and IPython are also required.
 
+The numpy documentation also depends on the
+`numpydoc <https://numpydoc.readthedocs.io/en/latest/>`__ sphinx extension
+as well as an external sphinx theme.
+These extensions are included as git submodules and must be initialized
+before building the docs.
+From the ``doc/`` directory:
+
+.. code:: sh
+
+    git submodule update --init
+
 Fixing Warnings
 ~~~~~~~~~~~~~~~
 
