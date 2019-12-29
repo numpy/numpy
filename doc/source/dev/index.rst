@@ -242,6 +242,11 @@ From the ``doc/`` directory:
 
     git submodule update --init
 
+The documentation includes mathematical formulae with LaTeX formatting.
+A working LaTeX document production system 
+(e.g. `texlive <https://www.tug.org/texlive/>`__) is required for the
+proper rendering of the LaTeX math in the documentation.
+
 Fixing Warnings
 ~~~~~~~~~~~~~~~
 
