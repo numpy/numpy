@@ -117,9 +117,8 @@ from the type of the elements in the sequences.
     >>> b.dtype
     dtype('float64')
 
-A frequent error consists in calling ``array`` with multiple numeric
-arguments, rather than providing a single list of numbers as an
-argument.
+A frequent error consists in calling ``array`` with multiple arguments,
+rather than providing a single sequence as an argument.
 
 ::
 
@@ -174,8 +173,9 @@ state of the memory. By default, the dtype of the created array is
     array([[  3.73603959e-262,   6.02658058e-154,   6.55490914e-260],
            [  5.30498948e-313,   3.14673309e-307,   1.00000000e+000]])
 
-To create sequences of numbers, NumPy provides a function analogous to
-``range`` that returns arrays instead of lists.
+To create sequences of numbers, NumPy provides the ``arange`` function
+which is analogous to the Python built-in ``range``, but returns an 
+array.
 
 ::
 
@@ -300,9 +300,9 @@ elementwise in NumPy arrays. The matrix product can be performed using
 the ``@`` operator (in python >=3.5) or the ``dot`` function or method::
 
     >>> A = np.array( [[1,1],
-    ...             [0,1]] )
+    ...                [0,1]] )
     >>> B = np.array( [[2,0],
-    ...             [3,4]] )
+    ...                [3,4]] )
     >>> A * B                       # elementwise product
     array([[2, 0],
            [0, 4]])
@@ -437,7 +437,7 @@ operate elementwise on an array, producing an array as output.
     `dot`,
     `floor`,
     `inner`,
-    `inv`,
+    `invert`,
     `lexsort`,
     `max`,
     `maximum`,
@@ -732,8 +732,14 @@ stacks 1D arrays as columns into a 2D array. It is equivalent to
     array([[ 4.,  3.],
            [ 2.,  8.]])
 
-On the other hand, the function `ma.row_stack` is equivalent to `vstack`
-for any input arrays.
+On the other hand, the function `row_stack` is equivalent to `vstack`
+for any input arrays. In fact, `row_stack` is an alias for `vstack`::
+
+    >>> np.column_stack is np.hstack
+    False
+    >>> np.row_stack is np.vstack
+    True
+
 In general, for arrays with more than two dimensions,
 `hstack` stacks along their second
 axes, `vstack` stacks along their
@@ -917,7 +923,7 @@ Array Creation
     `ogrid`,
     `ones`,
     `ones_like`,
-    `r`,
+    `r_`,
     `zeros`,
     `zeros_like`
 Conversions
@@ -1431,11 +1437,15 @@ functions ``column_stack``, ``dstack``, ``hstack`` and ``vstack``,
 depending on the dimension in which the stacking is to be done. For
 example::
 
-    x = np.arange(0,10,2)                     # x=([0,2,4,6,8])
-    y = np.arange(5)                          # y=([0,1,2,3,4])
-    m = np.vstack([x,y])                      # m=([[0,2,4,6,8],
-                                              #     [0,1,2,3,4]])
-    xy = np.hstack([x,y])                     # xy =([0,2,4,6,8,0,1,2,3,4])
+    >>> x = np.arange(0,10,2)
+    >>> y = np.arange(5)
+    >>> m = np.vstack([x,y])
+    >>> m
+    array([[0, 2, 4, 6, 8],
+           [0, 1, 2, 3, 4]])
+    >>> xy = np.hstack([x,y])
+    >>> xy
+    array([0, 2, 4, 6, 8, 0, 1, 2, 3, 4])
 
 The logic behind those functions in more than two dimensions can be
 strange.
@@ -1448,7 +1458,7 @@ Histograms
 ----------
 
 The NumPy ``histogram`` function applied to an array returns a pair of
-vectors: the histogram of the array and the vector of bins. Beware:
+vectors: the histogram of the array and a vector of the bin edges. Beware:
 ``matplotlib`` also has a function to build histograms (called ``hist``,
 as in Matlab) that differs from the one in NumPy. The main difference is
 that ``pylab.hist`` plots the histogram automatically, while
