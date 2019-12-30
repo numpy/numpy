@@ -188,8 +188,8 @@ class format_parser(object):
         """convert input field names into a list and assign to the _names
         attribute """
 
-        if (names):
-            if (type(names) in [list, tuple]):
+        if names:
+            if type(names) in [list, tuple]:
                 pass
             elif isinstance(names, (str, unicode)):
                 names = names.split(',')
@@ -221,14 +221,12 @@ class format_parser(object):
             self._titles += [None] * (self._nfields - len(titles))
 
     def _createdescr(self, byteorder):
-        descr = sb.dtype(
-            {
-                'names': self._names,
-                'formats': self._f_formats,
-                'offsets': self._offsets,
-                'titles': self._titles,
-            }
-        )
+        descr = sb.dtype({
+            'names': self._names,
+            'formats': self._f_formats,
+            'offsets': self._offsets,
+            'titles': self._titles,
+        })
         if byteorder is not None:
             byteorder = _byteorderconv[byteorder[0]]
             descr = descr.newbyteorder(byteorder)
@@ -538,8 +536,7 @@ class recarray(ndarray):
     def __repr__(self):
 
         repr_dtype = self.dtype
-        if (self.dtype.type is record
-                or (not issubclass(self.dtype.type, nt.void))):
+        if self.dtype.type is record or not issubclass(self.dtype.type, nt.void):
             # If this is a full record array (has numpy.record dtype),
             # or if it has a scalar (non-void) dtype with no records,
             # represent it using the rec.array function. Since rec.array
@@ -828,7 +825,7 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
     """
 
     if ((isinstance(obj, (type(None), str)) or isfileobj(obj)) and
-           (formats is None) and (dtype is None)):
+           formats is None and dtype is None):
         raise ValueError("Must define formats (or dtype) if object is "
                          "None, string, or an open file")
 
