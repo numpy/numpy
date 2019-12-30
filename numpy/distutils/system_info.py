@@ -2102,16 +2102,17 @@ class openblas_info(blas_info):
                 return None
 
         # Generate numpy.distutils virtual static library file
-        tmpdir = os.path.join(os.getcwd(), 'build', 'openblas')
+        basename = self.__class__.__name__
+        tmpdir = os.path.join(os.getcwd(), 'build', basename)
         if not os.path.isdir(tmpdir):
             os.makedirs(tmpdir)
 
         info = {'library_dirs': [tmpdir],
-                'libraries': ['openblas'],
+                'libraries': [basename],
                 'language': 'f77'}
 
-        fake_lib_file = os.path.join(tmpdir, 'openblas.fobjects')
-        fake_clib_file = os.path.join(tmpdir, 'openblas.cobjects')
+        fake_lib_file = os.path.join(tmpdir, basename + '.fobjects')
+        fake_clib_file = os.path.join(tmpdir, basename + '.cobjects')
         with open(fake_lib_file, 'w') as f:
             f.write("\n".join(library_paths))
         with open(fake_clib_file, 'w') as f:
