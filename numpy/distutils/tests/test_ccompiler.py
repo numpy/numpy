@@ -10,7 +10,7 @@ def test_ccompiler():
     We unconditionally add ``-std-c99`` to the gcc compiler in order
     to support c99 with very old gcc compilers. However the same call
     is used to get the flags for the c++ compiler, just with a kwarg.
-    Make sure in this case the option is **not** added.
+    Make sure in this case, where it would not be legal, the option is **not** added
     '''
     dist = NumpyDistribution()
     compiler = new_compiler()
@@ -22,4 +22,3 @@ def test_ccompiler():
     compiler.customize(dist, need_cxx=True)
     if hasattr(compiler, 'compiler') and 'gcc' in compiler.compiler[0]:
         assert 'c99' not in ' '.join(compiler.compiler)
-
