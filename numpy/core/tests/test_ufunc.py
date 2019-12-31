@@ -1984,3 +1984,27 @@ def test_ufunc_noncontiguous(ufunc):
                 assert_allclose(res_c, res_n, atol=tol, rtol=tol)
             else:
                 assert_equal(c_ar, n_ar)
+
+
+@pytest.mark.parametrize('ufunc', [np.sign, np.equal])
+def test_ufunc_warn_with_nan(ufunc):
+    # issue gh-15127
+    # test that calling certain ufuncs with a non-standard `nan` value does not
+    # emit a warning
+    a = np.packbits([0, 0, 0, 0, 0, 0, 0, 1,
+                     0, 0, 0, 0, 0, 0, 0, 0,
+                     0, 0, 0, 0, 0, 0, 0, 0,
+                     0, 0, 0, 0, 0, 0, 0, 0,
+                     0, 0, 0, 0, 0, 0, 0, 0,
+                     0, 0, 0, 0, 0, 0, 0, 0,
+                     1, 1, 1, 1, 0, 0, 0, 0,
+                     0, 1, 1, 1, 1, 1, 1, 1])
+    b = a.view(np.float64)
+    assert np.isnan(b)
+    if ufunc.nin == 1:
+        ufunc(b)
+    elif ufunc.nin == 2:
+        ufunc(b, b.copy())
+    else:
+        raise ValueError('ufunc with more than 2 inputs')
+
