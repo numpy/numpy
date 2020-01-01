@@ -13,10 +13,10 @@ import warnings
 
 import numpy as np
 import numpy.core.numeric as _nx
-from numpy.core import atleast_1d, transpose
+from numpy.core import transpose
 from numpy.core.numeric import (
     ones, zeros, arange, concatenate, array, asarray, asanyarray, empty,
-    empty_like, ndarray, around, floor, ceil, take, dot, where, intp,
+    ndarray, around, floor, ceil, take, dot, where, intp,
     integer, isscalar, absolute
     )
 from numpy.core.umath import (
@@ -38,20 +38,15 @@ from numpy.core.multiarray import (
 from numpy.core.umath import _add_newdoc_ufunc as add_newdoc_ufunc
 from numpy.compat import long
 
-if sys.version_info[0] < 3:
-    # Force range to be a generator, for np.delete's usage.
-    range = xrange
-    import __builtin__ as builtins
-else:
-    import builtins
+import builtins
+
+# needed in this module for compatibility
+from numpy.lib.histograms import histogram, histogramdd
 
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
-
-# needed in this module for compatibility
-from numpy.lib.histograms import histogram, histogramdd
 
 __all__ = [
     'select', 'piecewise', 'trim_zeros', 'copy', 'iterable', 'percentile',
@@ -70,7 +65,7 @@ def _rot90_dispatcher(m, k=None, axes=None):
 
 
 @array_function_dispatch(_rot90_dispatcher)
-def rot90(m, k=1, axes=(0,1)):
+def rot90(m, k=1, axes=(0, 1)):
     """
     Rotate an array by 90 degrees in the plane specified by axes.
 
@@ -150,7 +145,7 @@ def rot90(m, k=1, axes=(0,1)):
                                                 axes_list[axes[0]])
 
     if k == 1:
-        return transpose(flip(m,axes[1]), axes_list)
+        return transpose(flip(m, axes[1]), axes_list)
     else:
         # k == 3
         return flip(transpose(m, axes_list), axes[1])
@@ -1612,6 +1607,7 @@ def trim_zeros(filt, trim='fb'):
                 last = last - 1
     return filt[first:last]
 
+
 def _extract_dispatcher(condition, arr):
     return (condition, arr)
 
@@ -2947,6 +2943,7 @@ def hamming(M):
     n = arange(0, M)
     return 0.54 - 0.46*cos(2.0*pi*n/(M-1))
 
+
 ## Code from cephes for i0
 
 _i0A = [
@@ -3489,6 +3486,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     else:
         return r
 
+
 def _median(a, axis=None, out=None, overwrite_input=False):
     # can't be reasonably be implemented in terms of percentile as we have to
     # call mean to not break astropy
@@ -3707,7 +3705,7 @@ def quantile(a, q, axis=None, out=None,
              overwrite_input=False, interpolation='linear', keepdims=False):
     """
     Compute the q-th quantile of the data along the specified axis.
-    
+
     .. versionadded:: 1.15.0
 
     Parameters
@@ -3878,7 +3876,7 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
             "interpolation can only be 'linear', 'lower' 'higher', "
             "'midpoint', or 'nearest'")
 
-    n = np.array(False, dtype=bool) # check for nan's flag
+    n = np.array(False, dtype=bool)  # check for nan's flag
     if indices.dtype == intp:  # take the points along axis
         # Check if the array contains any nan's
         if np.issubdtype(a.dtype, np.inexact):
@@ -3897,7 +3895,6 @@ def _quantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
         if zerod:
             indices = indices[0]
         r = take(ap, indices, axis=axis, out=out)
-
 
     else:  # weight the points above and below the indices
         indices_below = floor(indices).astype(intp)
