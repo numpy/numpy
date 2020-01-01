@@ -1,0 +1,45 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.17.5 Release Notes
+==========================
+
+This release contains fixes for bugs reported against NumPy 1.17.4 along with
+some build improvements. The Python versions supported in this release
+are 3.5-3.8.
+
+Downstream developers should use Cython >= 0.29.14 for Python 3.8 support and
+OpenBLAS >= 3.7 to avoid errors on the Skylake architecture.
+
+It is recommended that developers interested in the new random bit generators
+upgrade to the NumPy 1.18.x series, as it has updated documentation and
+many small improvements.
+
+
+Contributors
+============
+
+A total of 6 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Eric Wieser
+* Ilhan Polat
+* Matti Picus
+* Michael Hudson-Doyle
+* Ralf Gommers
+
+
+Pull requests merged
+====================
+
+A total of 8 pull requests were merged for this release.
+
+* `#14593 <https://github.com/numpy/numpy/pull/14593>`__: MAINT: backport Cython API cleanup to 1.17.x, remove docs
+* `#14937 <https://github.com/numpy/numpy/pull/14937>`__: BUG: fix integer size confusion in handling array's ndmin argument
+* `#14939 <https://github.com/numpy/numpy/pull/14939>`__: BUILD: remove SSE2 flag from numpy.random builds
+* `#14993 <https://github.com/numpy/numpy/pull/14993>`__: MAINT: Added Python3.8 branch to dll lib discovery
+* `#15038 <https://github.com/numpy/numpy/pull/15038>`__: BUG: Fix refcounting in ufunc object loops
+* `#15067 <https://github.com/numpy/numpy/pull/15067>`__: BUG: Exceptions tracebacks are dropped
+* `#15175 <https://github.com/numpy/numpy/pull/15175>`__: ENH: Backport improvements to testing functions.
+* `#15213 <https://github.com/numpy/numpy/pull/15213>`__: REL: Prepare for the NumPy 1.17.5 release.
