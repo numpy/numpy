@@ -286,7 +286,7 @@ For example, a library that supports arrays on both CPUs and GPUs might decide o
             base_func = getattr(base_module, name)
             return functools.partial(base_func, prefer_gpu=self.prefer_gpu)
 
-This might be useful, but it's not clear if we really need it. Pint seems to get along OK without any explicit array creation routines, and for the most part Dask is also OK with existing ``__array_function__`` style overides. Choosing whether to place an array on the CPU or GPU could be solved by `making array creation lazy <https://github.com/google/jax/pull/1668>`_.
+This might be useful, but it's not clear if we really need it. Pint seems to get along OK without any explicit array creation routines (favoring multiplication by units, e.g., ``np.ones(5) * ureg.m``), and for the most part Dask is also OK with existing ``__array_function__`` style overides (e.g., favoring ``np.ones_like`` over ``np.ones``). Choosing whether to place an array on the CPU or GPU could be solved by `making array creation lazy <https://github.com/google/jax/pull/1668>`_.
 
 .. _appendix-design-choices:
 
