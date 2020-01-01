@@ -4,7 +4,6 @@ import operator
 import warnings
 import sys
 import decimal
-import types
 from fractions import Fraction
 import pytest
 
