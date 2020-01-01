@@ -40,8 +40,9 @@ stages:
             locale-gen fr_FR && update-locale && \
             apt-get -y install gfortran-5 wget && \
             target=\$(python3 tools/openblas_support.py) && \
-            cp -r \$target/usr/local/lib/* /usr/lib && \
-            cp \$target/usr/local/include/* /usr/include && \
+            ls -lR \$target && \
+            cp -r \$target/lib/* /usr/lib && \
+            cp \$target/include/* /usr/include && \
             python3 -m pip install --user --upgrade pip setuptools && \
             python3 -m pip install --user -r test_requirements.txt && \
             python3 -m pip install . && \
@@ -65,13 +66,21 @@ stages:
       # azure config for mac os -- Microsoft has indicated
       # they will patch this issue
       vmImage: macOS-10.14
+    strategy:
+      maxParallel: 2
+      matrix:
+          Python36:
+            PYTHON_VERSION: '3.6'
+          Python36-ILP64:
+            PYTHON_VERSION: '3.6'
+            NPY_USE_BLAS_ILP64: '1'
     steps:
     # the @0 refers to the (major) version of the *task* on Microsoft's
     # end, not the order in the build matrix nor anything to do
     # with version of Python selected
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.6'
+        versionSpec: $(PYTHON_VERSION)
         addToPath: true
         architecture: 'x64'
     # NOTE: do we have a compelling reason to use older / newer
@@ -97,9 +106,10 @@ stages:
     # primarily on file size / name details
     - script: |
         target=$(python tools/openblas_support.py)
+        ls -lR $target
         # manually link to appropriate system paths
-        cp $target/usr/local/lib/* /usr/local/lib/
-        cp $target/usr/local/include/* /usr/local/include/
+        cp $target/lib/* /usr/local/lib/
+        cp $target/include/* /usr/local/include/
       displayName: 'install pre-built openblas'
     - script: python -m pip install --upgrade pip setuptools wheel
       displayName: 'Install tools'
@@ -171,6 +181,8 @@ stages:
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
+            NPY_USE_BLAS_ILP64: '1'
+            OPENBLAS_SUFFIX: '64_'
     steps:
     - template: azure-steps-windows.yml
   - job: Linux_PyPy3
