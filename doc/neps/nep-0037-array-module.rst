@@ -12,7 +12,7 @@ NEP 37 — A dispatch protocol for NumPy-like modules
 Abstact
 -------
 
-NEP-18's `__array_function__` has been a mixed success. Some projects (e.g., dask, CuPy, xarray, sparse) have enthusiastically adopted it. Others (e.g., PyTorch, JAX, SciPy) have been more reluctant. Here we propose a new protocol, ``__array_module__``, that we expect could eventually subsume most use-cases for ``__array_function__``.  The protocol requires explicit adoption by both users and library authors, which ensures backwards compatibility, and is also significantly simpler than ``__array_function__``, both of which we expect will make it easier to adopt.
+NEP-18's `__array_function__` has been a mixed success. Some projects (e.g., dask, CuPy, xarray, sparse, Pint) have enthusiastically adopted it. Others (e.g., PyTorch, JAX, SciPy) have been more reluctant. Here we propose a new protocol, ``__array_module__``, that we expect could eventually subsume most use-cases for ``__array_function__``.  The protocol requires explicit adoption by both users and library authors, which ensures backwards compatibility, and is also significantly simpler than ``__array_function__``, both of which we expect will make it easier to adopt.
 
 Why ``__array_function__`` hasn't been enough
 ---------------------------------------------
@@ -286,7 +286,7 @@ For example, a library that supports arrays on both CPUs and GPUs might decide o
             base_func = getattr(base_module, name)
             return functools.partial(base_func, prefer_gpu=self.prefer_gpu)
 
-This might be useful, but it's not clear if we really need it. Pint seems to get along OK without any explicit array creation routines, and for the most part Dask is also OK with existing ``__array_function__`` style overides. Choosing whether to place an array on the CPU or GPU could be solved by making array creation lazy.
+This might be useful, but it's not clear if we really need it. Pint seems to get along OK without any explicit array creation routines, and for the most part Dask is also OK with existing ``__array_function__`` style overides. Choosing whether to place an array on the CPU or GPU could be solved by `making array creation lazy <https://github.com/google/jax/pull/1668>`_.
 
 .. _appendix-design-choices:
 
@@ -314,7 +314,7 @@ Both ``__array_ufunc__`` and ``__array_function__`` have implicit control over d
 
 In contrast, importing a new library (e.g., ``import  dask.array as da``) with an API matching NumPy is entirely explicit. There is no overhead from dispatch or ambiguity about which implementation is being used.
 
-Explicit and implicit choice of implementations are not mutually exclusive options. Indeed, every implementation of NumPy API overrides via ``__array_function__`` that we are familiar with (namely, dask, CuPy and sparse) also includes an explicit way to use their version of NumPy's API by importing a module directly (``dask.array``, ``cupy`` or ``sparse``, respectively).
+Explicit and implicit choice of implementations are not mutually exclusive options. Indeed, most implementations of NumPy API overrides via ``__array_function__`` that we are familiar with (namely, dask, CuPy and sparse, but not Pint) also include an explicit way to use their version of NumPy's API by importing a module directly (``dask.array``, ``cupy`` or ``sparse``, respectively).
 
 Local vs. non-local vs. global control
 ======================================
