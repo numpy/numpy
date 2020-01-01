@@ -5,16 +5,9 @@ from __future__ import division, absolute_import, print_function
 
 __docformat__ = "restructuredtext en"
 
-import sys
 import numpy as np
 import numpy.core.numeric as nx
 from numpy.compat import asbytes, asunicode, bytes, basestring
-
-if sys.version_info[0] >= 3:
-    from builtins import bool, int, float, complex, object, str
-    unicode = str
-else:
-    from __builtin__ import bool, int, float, complex, object, unicode, str
 
 
 def _decode_line(line, encoding=None):
@@ -63,40 +56,6 @@ def _is_bytes_like(obj):
     except (TypeError, ValueError):
         return False
     return True
-
-
-def _to_filehandle(fname, flag='r', return_opened=False):
-    """
-    Returns the filehandle corresponding to a string or a file.
-    If the string ends in '.gz', the file is automatically unzipped.
-
-    Parameters
-    ----------
-    fname : string, filehandle
-        Name of the file whose filehandle must be returned.
-    flag : string, optional
-        Flag indicating the status of the file ('r' for read, 'w' for write).
-    return_opened : boolean, optional
-        Whether to return the opening status of the file.
-    """
-    if _is_string_like(fname):
-        if fname.endswith('.gz'):
-            import gzip
-            fhd = gzip.open(fname, flag)
-        elif fname.endswith('.bz2'):
-            import bz2
-            fhd = bz2.BZ2File(fname)
-        else:
-            fhd = file(fname, flag)
-        opened = True
-    elif hasattr(fname, 'seek'):
-        fhd = fname
-        opened = False
-    else:
-        raise ValueError('fname must be a string or file handle')
-    if return_opened:
-        return fhd, opened
-    return fhd
 
 
 def has_nested_fields(ndtype):
@@ -210,7 +169,8 @@ class LineSplitter(object):
         return lambda input: [_.strip() for _ in method(input)]
     #
 
-    def __init__(self, delimiter=None, comments='#', autostrip=True, encoding=None):
+    def __init__(self, delimiter=None, comments='#', autostrip=True,
+                 encoding=None):
         delimiter = _decode_line(delimiter)
         comments = _decode_line(comments)
 
@@ -949,9 +909,10 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         elif ndtype.names is not None:
             validate = NameValidator(**validationargs)
             # Default initial names : should we change the format ?
-            if ((ndtype.names == tuple("f%i" % i for i in range(len(ndtype.names)))) and
-                    (defaultfmt != "f%i")):
-                ndtype.names = validate([''] * len(ndtype.names), defaultfmt=defaultfmt)
+            numbered_names = tuple("f%i" % i for i in range(len(ndtype.names)))
+            if ((ndtype.names == numbered_names) and (defaultfmt != "f%i")):
+                ndtype.names = validate([''] * len(ndtype.names),
+                                        defaultfmt=defaultfmt)
             # Explicit initial names : just validate
             else:
                 ndtype.names = validate(ndtype.names, defaultfmt=defaultfmt)
