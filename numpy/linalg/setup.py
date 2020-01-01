@@ -31,6 +31,10 @@ def configuration(parent_package='', top_path=None):
     else:
         lapack_info = get_info('lapack_opt', 0)  # and {}
 
+    if not lapack_info and sys.maxsize > 2**32:
+        # Build lapack-lite in 64-bit integer mode
+        config.add_define_macros([('HAVE_BLAS_ILP64', None)])
+
     def get_lapack_lite_sources(ext, build_dir):
         if not lapack_info:
             print("### Warning:  Using unoptimized lapack ###")
