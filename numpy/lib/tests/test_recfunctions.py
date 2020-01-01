@@ -772,7 +772,6 @@ class TestJoinBy(object):
 
     def test_join_subdtype(self):
         # tests the bug in https://stackoverflow.com/q/44769632/102441
-        from numpy.lib import recfunctions as rfn
         foo = np.array([(1,)],
                        dtype=[('key', int)])
         bar = np.array([(1, np.array([1,2,3]))],
