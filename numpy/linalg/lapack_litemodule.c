@@ -416,5 +416,11 @@ initlapack_lite(void)
     LapackError = PyErr_NewException("lapack_lite.LapackError", NULL, NULL);
     PyDict_SetItemString(d, "LapackError", LapackError);
 
+#ifdef HAVE_BLAS_ILP64
+    PyDict_SetItemString(d, "_ilp64", Py_True);
+#else
+    PyDict_SetItemString(d, "_ilp64", Py_False);
+#endif
+
     return RETVAL(m);
 }
