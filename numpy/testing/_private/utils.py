@@ -21,7 +21,7 @@ import pprint
 
 from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
-import numpy.__config__
+import numpy.linalg.lapack_lite
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -54,7 +54,7 @@ verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
-HAS_LAPACK64 = hasattr(numpy.__config__, 'lapack_ilp64_opt_info')
+HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
 
 
 def import_nose():

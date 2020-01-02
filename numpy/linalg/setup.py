@@ -5,7 +5,7 @@ import sys
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import get_info, system_info
     config = Configuration('linalg', parent_package, top_path)
 
     config.add_data_dir('tests')
@@ -31,8 +31,23 @@ def configuration(parent_package='', top_path=None):
     else:
         lapack_info = get_info('lapack_opt', 0)  # and {}
 
+    use_lapack_lite = not lapack_info
+
+    if use_lapack_lite:
+        # This makes numpy.distutils write the fact that lapack_lite
+        # is being used to numpy.__config__
+        class numpy_linalg_lapack_lite(system_info):
+            def calc_info(self):
+                info = {'language': 'c'}
+                if sys.maxsize > 2**32:
+                    # Build lapack-lite in 64-bit integer mode
+                    info['define_macros'] = [('HAVE_BLAS_ILP64', None)]
+                self.set_info(**info)
+
+        lapack_info = numpy_linalg_lapack_lite().get_info(2)
+
     def get_lapack_lite_sources(ext, build_dir):
-        if not lapack_info:
+        if use_lapack_lite:
             print("### Warning:  Using unoptimized lapack ###")
             return all_sources
         else:
