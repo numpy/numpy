@@ -11,6 +11,8 @@
 #include "numpy/npy_common.h"
 #include "npy_cblas.h"
 
+#include "lapack_lite_names.h"
+
 typedef CBLAS_INT integer;
 typedef char *address;
 typedef short int shortint;
@@ -382,6 +384,9 @@ extern void z_exp(doublecomplex *, doublecomplex *);
 extern void z_log(doublecomplex *, doublecomplex *);
 extern void z_sin(doublecomplex *, doublecomplex *);
 extern void z_sqrt(doublecomplex *, doublecomplex *);
+
+extern double f__cabs(double, double);
+extern double f__cabsf(float, float);
 
 #ifdef __cplusplus
 	}
