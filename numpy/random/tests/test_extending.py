@@ -39,9 +39,11 @@ else:
         cython = None
 
 @pytest.mark.skipif(cython is None, reason="requires cython")
+@pytest.mark.skipif(sys.version_info < (3, 6, 0), reason="uses __fspath__")
 @pytest.mark.slow
 def test_cython(tmp_path):
     examples = os.path.join(os.path.dirname(__file__), '..', '_examples')
+    # CPython 3.5 and below does not handle __fspath__ well: see bpo-26027
     shutil.copytree(examples, tmp_path / '_examples')
     subprocess.check_call([sys.executable, 'setup.py', 'build'],
                           cwd=str(tmp_path / '_examples' / 'cython'))
