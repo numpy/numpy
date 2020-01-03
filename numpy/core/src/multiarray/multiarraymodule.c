@@ -4551,7 +4551,6 @@ intern_strings(void)
            npy_ma_str_ndmin && npy_ma_str_axis1 && npy_ma_str_axis2;
 }
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_multiarray_umath",
@@ -4563,25 +4562,15 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
 /* Initialization function for the module */
-#if defined(NPY_PY3K)
 #define RETVAL(x) x
 PyMODINIT_FUNC PyInit__multiarray_umath(void) {
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC init_multiarray_umath(void) {
-#endif
     PyObject *m, *d, *s;
     PyObject *c_api;
 
     /* Create the module and add the functions */
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("_multiarray_umath", array_module_methods);
-#endif
     if (!m) {
         goto err;
     }

@@ -2392,7 +2392,7 @@ PyArray_Nonzero(PyArrayObject *self)
             Py_DECREF(ret);
             return NULL;
         }
-        
+
         needs_api = NpyIter_IterationNeedsAPI(iter);
 
         NPY_BEGIN_THREADS_NDITER(iter);
@@ -2436,7 +2436,7 @@ finish:
         Py_DECREF(ret);
         return NULL;
     }
-    
+
     /* if executed `nonzero()` check for miscount due to side-effect */
     if (!is_bool && added_count != nonzero_count) {
         PyErr_SetString(PyExc_RuntimeError,
