@@ -40,16 +40,21 @@ The protocol itself is both simpler and more powerful than ``__array_function__`
 
 The new protocol is opt-in, explicit and with local control; see :ref:`appendix-design-choices` for discussion on the importance of these design features.
 
+The array module contract
+=========================
+
+Modules returned by ``get_array_module``/``__array_module__`` should make a best effort to implement NumPy's core functionality on new array types(s). Unimplemented functionality should simply be omitted (e.g., accessing an unimplemented function should raise ``AttributeError``). In the future, we anticipate codifying a protocol for requesting restricted subsets of ``numpy``; see :ref:`requesting-restricted-subsets` for more details.
+
 How to use ``get_array_module``
 ===============================
 
-Code that wants to support generic duck arrays should explicitly call `get_array_module` to determine an appropriate array module from which to call functions, rather than using the ``numpy`` namespace directly. For example:
+Code that wants to support generic duck arrays should explicitly call ``get_array_module`` to determine an appropriate array module from which to call functions, rather than using the ``numpy`` namespace directly. For example:
 
 .. code:: python
 
     # calls the appropriate version of np.something for x and y
-    array_module = np.get_array_module(x, y)
-    array_module.something(x, y)
+    module = np.get_array_module(x, y)
+    module.something(x, y)
 
 Both array creation and array conversion are supported, because dispatching is handled by ``get_array_module`` rather than via the types of function arguments.
 For example, to use random number generation functions or methods, we can simply pull out the appropriate submodule:
@@ -57,8 +62,8 @@ For example, to use random number generation functions or methods, we can simply
 .. code:: python
 
     def duckarray_add_random(array):
-        np = np.get_array_module(array)
-        noise = np.random.randn(*array.shape)
+        module = np.get_array_module(array)
+        noise = module.random.randn(*array.shape)
         return array + noise
 
 We can also write the duck-array ``stack`` function from `NEP 30 <https://numpy.org/neps/nep-0030-duck-array-protocol.html>`_, without the need for a new ``np.duckarray`` function:
@@ -138,7 +143,7 @@ The actual implementation of `get_array_module` will be in C, but should be equi
 .. code::python
 
     def get_array_module(*arrays, default=numpy):
-        arrays, types = _implementing_arrays_and_types(arrays)
+        implementing_arrays, types = _implementing_arrays_and_types(arrays)
         if not implementing_arrays and default is not None:
             return default
         for array in implementing_arrays:
@@ -150,11 +155,17 @@ The actual implementation of `get_array_module` will be in C, but should be equi
     def _implementing_arrays_and_types(relevant_arrays):
         types = []
         implementing_arrays = []
-        for array in arrays:
+        for array in relevant_arrays:
             t = type(array)
             if t not in types and hasattr(t, '__array_module__'):
                 types.append(t)
-                implementing_arrays.append(array)
+                # Subclasses before superclasses, otherwise left to right
+                index = len(implementing_arrays)
+                for i, old_array in enumerate(implementing_arrays):
+                    if issubclass(t, type(old_array)):
+                        index = i
+                        break
+                implementing_arrays.insert(index, array)
         return implementing_arrays, types
 
 Relationship with ``__array_ufunc__`` and ``__array_function__``
@@ -176,7 +187,7 @@ Mixin classes to implement ``__array_function__`` and ``__array_ufunc__``
 
 Despite the user-facing differences, ``__array_module__`` and a module implementing NumPy's API still contain sufficient functionality needed to implement dispatching with the existing duck array protocols.
 
-To make it easier to write duck arrays, we plan to add mixin classes (into ``numpy.lib.mixins``) that provide sensible defaults for these special methods in terms of ``get_array_module`` and ``__array_module__``, e.g.,
+For example, the following mixin classes would provide sensible defaults for these special methods in terms of ``get_array_module`` and ``__array_module__``:
 
 .. code:: python
 
@@ -223,6 +234,8 @@ To make it easier to write duck arrays, we plan to add mixin classes (into ``num
 
             return new_func(*args, **kwargs)
 
+To make it easier to write duck arrays, we could also these mixin classes into ``numpy.lib.mixins`` (but the examples above may suffice).
+
 Alternatives considered
 -----------------------
 
@@ -232,6 +245,8 @@ Naming
 We like the name ``__array_module__`` because it mirrors the existing ``__array_function__`` and ``__array_ufunc__`` protocols. Another reasonable choice could be ``__array_namespace__``.
 
 It is less clear what the NumPy function that calls this protocol should be called (``get_array_module`` in this proposal). Some possible alternatives: ``array_module``, ``common_array_module``, ``resolve_array_module``, ``get_namespace``, ``get_numpy``, ``get_numpylike_module``, ``get_duck_array_module``.
+
+.. _requesting-restricted-subsets:
 
 Requesting restricted subsets of NumPy's API
 ============================================
@@ -249,7 +264,7 @@ Support for requesting a restricted subset of NumPy's API would be a natural fea
 
 To facilitate testing with NumPy and use with any valid duck array library, NumPy itself would return restricted versions of the ``numpy`` module when ``get_array_module`` is called only on NumPy arrays. Omitted functions would simply not exist.
 
-Unfortuntely, we have not yet figured out what these restricted subsets should be, so it doesn't make sense to do this yet. When/if we do, we could either add new keyword arguments to ``get_array_module`` or add new top level functions, e.g., ``get_minimal_array_module``. We would also need to add a new protocol patterned off of ``__array_module__`` (e.g., ``__array_module_minimal__``), because passing new arguments into methods is not backwards compatible. (We could anticipate this need by adding placeholder arguments into  ``__array_module__``, but it probably isn't worth the trouble.)
+Unfortuntely, we have not yet figured out what these restricted subsets should be, so it doesn't make sense to do this yet. When/if we do, we could either add new keyword arguments to ``get_array_module`` or add new top level functions, e.g., ``get_minimal_array_module``. We would also need to add either a new protocol patterned off of ``__array_module__`` (e.g., ``__array_module_minimal__``), or could add an optional second argument to ``__array_module__`` (catching errors with ``try``/``except``).
 
 A new namespace for implicit dispatch
 =====================================
