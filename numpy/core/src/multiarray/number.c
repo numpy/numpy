@@ -363,7 +363,6 @@ array_divmod(PyArrayObject *m1, PyObject *m2)
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.divmod);
 }
 
-#if PY_VERSION_HEX >= 0x03050000
 /* Need this to be version dependent on account of the slot check */
 static PyObject *
 array_matrix_multiply(PyArrayObject *m1, PyObject *m2)
@@ -381,7 +380,6 @@ array_inplace_matrix_multiply(
                     "Use 'a = a @ b' instead of 'a @= b'.");
     return NULL;
 }
-#endif
 
 /*
  * Determine if object is a scalar and if so, convert the object
@@ -1028,8 +1026,7 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_inplace_floor_divide,     /*nb_inplace_floor_divide*/
     (binaryfunc)array_inplace_true_divide,      /*nb_inplace_true_divide*/
     (unaryfunc)array_index,                     /*nb_index */
-#if PY_VERSION_HEX >= 0x03050000
+
     (binaryfunc)array_matrix_multiply,          /*nb_matrix_multiply*/
     (binaryfunc)array_inplace_matrix_multiply,  /*nb_inplace_matrix_multiply*/
-#endif
 };

@@ -197,8 +197,7 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
 {
     PyObject *gcd = NULL;
 
-    /* use math.gcd if available, and valid on the provided types */
-#if PY_VERSION_HEX >= 0x03050000
+    /* use math.gcd if valid on the provided types */
     {
         static PyObject *math_gcd_func = NULL;
 
@@ -213,7 +212,6 @@ npy_ObjectGCD(PyObject *i1, PyObject *i2)
         /* silence errors, and fall back on pure-python gcd */
         PyErr_Clear();
     }
-#endif
 
     /* otherwise, use our internal one, written in python */
     {
