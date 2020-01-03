@@ -2359,7 +2359,6 @@ static struct PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}          /* sentinel */
 };
 
-#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_pocketfft_internal",
@@ -2371,30 +2370,14 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
 /* Initialization function for the module */
-#if PY_MAJOR_VERSION >= 3
-#define RETVAL(x) x
 PyMODINIT_FUNC PyInit__pocketfft_internal(void)
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC
-init_pocketfft_internal(void)
-#endif
 {
     PyObject *m;
-#if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&moduledef);
-#else
-    static const char module_documentation[] = "";
-
-    m = Py_InitModule4("_pocketfft_internal", methods,
-            module_documentation,
-            (PyObject*)NULL,PYTHON_API_VERSION);
-#endif
     if (m == NULL) {
-        return RETVAL(NULL);
+        return NULL;
     }
 
     /* Import the array object */
@@ -2402,5 +2385,5 @@ init_pocketfft_internal(void)
 
     /* XXXX Add constants here */
 
-    return RETVAL(m);
+    return m;
 }

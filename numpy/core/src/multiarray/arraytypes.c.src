@@ -748,7 +748,7 @@ _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
     }
 
     ((PyArrayObject_fields *)(arr))->descr = new;
-    if ((new->alignment > 1) && 
+    if ((new->alignment > 1) &&
                 ((((uintptr_t)dstdata + offset) % new->alignment) != 0)) {
         PyArray_CLEARFLAGS(arr, NPY_ARRAY_ALIGNED);
     }
@@ -836,7 +836,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             if (names_size != PyTuple_Size(op)) {
                 errmsg = PyUString_FromFormat(
                         "could not assign tuple of length %zd to structure "
-                        "with %" NPY_INTP_FMT " fields.", 
+                        "with %" NPY_INTP_FMT " fields.",
                         PyTuple_Size(op), names_size);
                 PyErr_SetObject(PyExc_ValueError, errmsg);
                 Py_DECREF(errmsg);
@@ -3000,7 +3000,7 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
 
     ret = PyObject_RichCompareBool(*ip1, *ip2, Py_LT);
     if (ret < 0) {
-        /* error occurred, avoid the next call to PyObject_RichCompareBool */ 
+        /* error occurred, avoid the next call to PyObject_RichCompareBool */
         return 0;
     }
     if (ret == 1) {
@@ -4429,7 +4429,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         #if @rsort@
             aradixsort_@suff@
         #else
-            atimsort_@suff@            
+            atimsort_@suff@
         #endif
     },
 #else

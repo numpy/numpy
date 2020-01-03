@@ -1159,7 +1159,7 @@ fail:
 }
 
 
-/* 
+/*
  * Inner loop for unravel_index
  * order must be NPY_CORDER or NPY_FORTRANORDER
  */
@@ -1186,7 +1186,7 @@ unravel_index_loop(int unravel_ndim, npy_intp *unravel_dims,
         }
         idx = idx_start;
         for (i = 0; i < unravel_ndim; ++i) {
-            /* 
+            /*
              * Using a local seems to enable single-divide optimization
              * but only if the / precedes the %
              */

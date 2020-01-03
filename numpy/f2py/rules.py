@@ -194,13 +194,7 @@ static struct PyModuleDef moduledef = {
 };
 #endif
 
-#if PY_VERSION_HEX >= 0x03000000
-#define RETVAL m
 PyMODINIT_FUNC PyInit_#modulename#(void) {
-#else
-#define RETVAL
-PyMODINIT_FUNC init#modulename#(void) {
-#endif
 \tint i;
 \tPyObject *m,*d, *s, *tmp;
 #if PY_VERSION_HEX >= 0x03000000
@@ -211,7 +205,7 @@ PyMODINIT_FUNC init#modulename#(void) {
 \tPy_TYPE(&PyFortran_Type) = &PyType_Type;
 \timport_array();
 \tif (PyErr_Occurred())
-\t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return RETVAL;}
+\t\t{PyErr_SetString(PyExc_ImportError, \"can't initialize module #modulename# (failed to import numpy)\"); return m;}
 \td = PyModule_GetDict(m);
 \ts = PyString_FromString(\"$R""" + """evision: $\");
 \tPyDict_SetItemString(d, \"__version__\", s);
@@ -245,7 +239,7 @@ PyMODINIT_FUNC init#modulename#(void) {
 \tif (! PyErr_Occurred())
 \t\ton_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
-\treturn RETVAL;
+\treturn m;
 }
 #ifdef __cplusplus
 }

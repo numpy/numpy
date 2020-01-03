@@ -976,7 +976,6 @@ The C file is given below.
 
         static void *data[1] = {NULL};
 
-        #if defined(NPY_PY3K)
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
             "struct_ufunc_test",
@@ -988,31 +987,18 @@ The C file is given below.
             NULL,
             NULL
         };
-        #endif
 
-        #if defined(NPY_PY3K)
         PyMODINIT_FUNC PyInit_struct_ufunc_test(void)
-        #else
-        PyMODINIT_FUNC initstruct_ufunc_test(void)
-        #endif
         {
             PyObject *m, *add_triplet, *d;
             PyObject *dtype_dict;
             PyArray_Descr *dtype;
             PyArray_Descr *dtypes[3];
 
-        #if defined(NPY_PY3K)
             m = PyModule_Create(&moduledef);
-        #else
-            m = Py_InitModule("struct_ufunc_test", StructUfuncTestMethods);
-        #endif
 
             if (m == NULL) {
-        #if defined(NPY_PY3K)
                 return NULL;
-        #else
-                return;
-        #endif
             }
 
             import_array();
@@ -1043,9 +1029,7 @@ The C file is given below.
 
             PyDict_SetItemString(d, "add_triplet", add_triplet);
             Py_DECREF(add_triplet);
-        #if defined(NPY_PY3K)
             return m;
-        #endif
         }
 
 .. index::

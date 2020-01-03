@@ -586,7 +586,6 @@ static PyMethodDef UMath_TestsMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_umath_tests",
@@ -598,27 +597,16 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
 /* Initialization function for the module */
-#if defined(NPY_PY3K)
-#define RETVAL(x) x
 PyMODINIT_FUNC PyInit__umath_tests(void) {
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC init_umath_tests(void) {
-#endif
     PyObject *m;
     PyObject *d;
     PyObject *version;
 
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("_umath_tests", UMath_TestsMethods);
-#endif
     if (m == NULL) {
-        return RETVAL(NULL);
+        return NULL;
     }
 
     import_array();
@@ -636,8 +624,8 @@ PyMODINIT_FUNC init_umath_tests(void) {
         PyErr_Print();
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _umath_tests module.");
-        return RETVAL(NULL);
+        return NULL;
     }
 
-    return RETVAL(m);
+    return m;
 }

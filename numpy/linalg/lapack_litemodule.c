@@ -377,7 +377,6 @@ static struct PyMethodDef lapack_lite_module_methods[] = {
 };
 
 
-#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "lapack_lite",
@@ -389,27 +388,14 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
 /* Initialization function for the module */
-#if PY_MAJOR_VERSION >= 3
-#define RETVAL(x) x
 PyMODINIT_FUNC PyInit_lapack_lite(void)
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC
-initlapack_lite(void)
-#endif
 {
     PyObject *m,*d;
-#if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule4("lapack_lite", lapack_lite_module_methods,
-                       "", (PyObject*)NULL,PYTHON_API_VERSION);
-#endif
     if (m == NULL) {
-        return RETVAL(NULL);
+        return NULL;
     }
     import_array();
     d = PyModule_GetDict(m);
@@ -422,5 +408,5 @@ initlapack_lite(void)
     PyDict_SetItemString(d, "_ilp64", Py_False);
 #endif
 
-    return RETVAL(m);
+    return m;
 }

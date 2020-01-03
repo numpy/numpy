@@ -241,7 +241,7 @@ _convert_from_tuple(PyObject *obj, int align)
         if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
             return NULL;
         }
-    }    
+    }
     val = PyTuple_GET_ITEM(obj,1);
     /* try to interpret next item as a type */
     res = _use_inherit(type, val, &errflag);
@@ -455,11 +455,11 @@ _convert_from_array_descr(PyObject *obj, int align)
         Py_INCREF(name);
 
 #if !defined(NPY_PY3K)
-        /* convert unicode name to ascii on Python 2 if possible */ 
+        /* convert unicode name to ascii on Python 2 if possible */
         if (PyUnicode_Check(name)) {
             PyObject *tmp = PyUnicode_AsASCIIString(name);
             Py_DECREF(name);
-            if (tmp == NULL) { 
+            if (tmp == NULL) {
                 goto fail;
             }
             name = tmp;
