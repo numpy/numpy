@@ -60,13 +60,7 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
     PySlice_GetIndicesEx((PySliceObject *)op, nop, start, end, step, slicelength)
 #endif
 
-/* <2.7.11 and <3.4.4 have the wrong argument type for Py_EnterRecursiveCall */
-#if (PY_VERSION_HEX < 0x02070B00) || \
-    ((0x03000000 <= PY_VERSION_HEX) && (PY_VERSION_HEX < 0x03040400))
-    #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall((char *)(x))
-#else
-    #define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
-#endif
+#define Npy_EnterRecursiveCall(x) Py_EnterRecursiveCall(x)
 
 /* Py_SETREF was added in 3.5.2, and only if Py_LIMITED_API is absent */
 #if PY_VERSION_HEX < 0x03050200
@@ -488,8 +482,6 @@ PyObject_Cmp(PyObject *i1, PyObject *i2, int *cmp)
  * The main job here is to get rid of the improved error handling
  * of PyCapsules. It's a shame...
  */
-#if PY_VERSION_HEX >= 0x03000000
-
 static NPY_INLINE PyObject *
 NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *))
 {
@@ -533,41 +525,6 @@ NpyCapsule_Check(PyObject *ptr)
 {
     return PyCapsule_CheckExact(ptr);
 }
-
-#else
-
-static NPY_INLINE PyObject *
-NpyCapsule_FromVoidPtr(void *ptr, void (*dtor)(void *))
-{
-    return PyCObject_FromVoidPtr(ptr, dtor);
-}
-
-static NPY_INLINE PyObject *
-NpyCapsule_FromVoidPtrAndDesc(void *ptr, void* context,
-        void (*dtor)(void *, void *))
-{
-    return PyCObject_FromVoidPtrAndDesc(ptr, context, dtor);
-}
-
-static NPY_INLINE void *
-NpyCapsule_AsVoidPtr(PyObject *ptr)
-{
-    return PyCObject_AsVoidPtr(ptr);
-}
-
-static NPY_INLINE void *
-NpyCapsule_GetDesc(PyObject *obj)
-{
-    return PyCObject_GetDesc(obj);
-}
-
-static NPY_INLINE int
-NpyCapsule_Check(PyObject *ptr)
-{
-    return PyCObject_Check(ptr);
-}
-
-#endif
 
 #ifdef __cplusplus
 }

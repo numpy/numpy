@@ -1152,10 +1152,8 @@ static PyNumberMethods gentype_as_number = {
     0,                                           /*nb_inplace_floor_divide*/
     0,                                           /*nb_inplace_true_divide*/
     (unaryfunc)NULL,                             /*nb_index*/
-#if PY_VERSION_HEX >= 0x03050000
     0,                                           /*np_matmul*/
     0,                                           /*np_inplace_matmul*/
-#endif
 };
 
 
@@ -2877,11 +2875,7 @@ finish:
     *((npy_@name@ *)dest) = *((npy_@name@ *)src);
 #elif @default@ == 1 /* unicode and strings */
     if (itemsize == 0) { /* unicode */
-#if PY_VERSION_HEX >= 0x03030000
         itemsize = PyUnicode_GetLength(robj) * PyUnicode_KIND(robj);
-#else
-        itemsize = ((PyUnicodeObject *)robj)->length * sizeof(Py_UNICODE);
-#endif
     }
     memcpy(dest, src, itemsize);
     /* @default@ == 2 won't get here */

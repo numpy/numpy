@@ -1017,8 +1017,6 @@ int copy_ND_array(const PyArrayObject *arr, PyArrayObject *out)
 /* Compatibility functions for Python >= 3.0 */
 /*********************************************/
 
-#if PY_VERSION_HEX >= 0x03000000
-
 PyObject *
 F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(PyObject *))
 {
@@ -1044,29 +1042,6 @@ F2PyCapsule_Check(PyObject *ptr)
 {
     return PyCapsule_CheckExact(ptr);
 }
-
-#else
-
-PyObject *
-F2PyCapsule_FromVoidPtr(void *ptr, void (*dtor)(void *))
-{
-    return PyCObject_FromVoidPtr(ptr, dtor);
-}
-
-void *
-F2PyCapsule_AsVoidPtr(PyObject *ptr)
-{
-    return PyCObject_AsVoidPtr(ptr);
-}
-
-int
-F2PyCapsule_Check(PyObject *ptr)
-{
-    return PyCObject_Check(ptr);
-}
-
-#endif
-
 
 #ifdef __cplusplus
 }
