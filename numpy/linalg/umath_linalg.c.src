@@ -3626,7 +3626,6 @@ static PyMethodDef UMath_LinAlgMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         UMATH_LINALG_MODULE_NAME,
@@ -3638,29 +3637,17 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
-#if defined(NPY_PY3K)
-#define RETVAL(x) x
 PyObject *PyInit__umath_linalg(void)
-#else
-#define RETVAL(x)
-PyMODINIT_FUNC
-init_umath_linalg(void)
-#endif
 {
     PyObject *m;
     PyObject *d;
     PyObject *version;
 
     init_constants();
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule(UMATH_LINALG_MODULE_NAME, UMath_LinAlgMethods);
-#endif
     if (m == NULL) {
-        return RETVAL(NULL);
+        return NULL;
     }
 
     import_array();
@@ -3678,8 +3665,8 @@ init_umath_linalg(void)
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _umath_linalg module.");
-        return RETVAL(NULL);
+        return NULL;
     }
 
-    return RETVAL(m);
+    return m;
 }
