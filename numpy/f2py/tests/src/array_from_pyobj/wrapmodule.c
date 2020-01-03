@@ -129,7 +129,6 @@ static PyMethodDef f2py_module_methods[] = {
   {NULL,NULL}
 };
 
-#if PY_VERSION_HEX >= 0x03000000
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
     "test_array_from_pyobj_ext",
@@ -141,7 +140,6 @@ static struct PyModuleDef moduledef = {
     NULL,
     NULL
 };
-#endif
 
 PyMODINIT_FUNC PyInit_test_array_from_pyobj_ext(void) {
   PyObject *m,*d, *s;

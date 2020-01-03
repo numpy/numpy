@@ -75,21 +75,6 @@
   SWIGINTERN int
   SWIG_AsVal_dec(unsigned long)(PyObject *obj, unsigned long *val)
   {
-    %#if PY_VERSION_HEX < 0x03000000
-    if (PyInt_Check(obj)) 
-    {
-      long v = PyInt_AsLong(obj);
-      if (v >= 0) 
-      {
-        if (val) *val = v;
-	    return SWIG_OK;
-      } 
-      else 
-      {
-	    return SWIG_OverflowError;
-      }
-    } else 
-    %#endif
     if (PyLong_Check(obj)) {
       unsigned long v = PyLong_AsUnsignedLong(obj);
       if (!PyErr_Occurred()) {

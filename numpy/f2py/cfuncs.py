@@ -644,7 +644,6 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
         tmp = obj;
         Py_INCREF(tmp);
     }
-#if PY_VERSION_HEX >= 0x03000000
     else if (PyUnicode_Check(obj)) {
         tmp = PyUnicode_AsASCIIString(obj);
     }
@@ -659,11 +658,6 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",(cha
             tmp = NULL;
         }
     }
-#else
-    else {
-        tmp = PyObject_Str(obj);
-    }
-#endif
     if (tmp == NULL) goto capi_fail;
     if (*len == -1)
         *len = PyString_GET_SIZE(tmp);
@@ -1092,13 +1086,8 @@ if (tmp_fun==NULL) {
 fprintf(stderr,\"Call-back argument must be function|instance|instance.__call__|f2py-function but got %s.\\n\",(fun==NULL?\"NULL\":Py_TYPE(fun)->tp_name));
 goto capi_fail;
 }
-#if PY_VERSION_HEX >= 0x03000000
     if (PyObject_HasAttrString(tmp_fun,\"__code__\")) {
         if (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"__code__\"),\"co_argcount\")) {
-#else
-    if (PyObject_HasAttrString(tmp_fun,\"func_code\")) {
-        if (PyObject_HasAttrString(tmp = PyObject_GetAttrString(tmp_fun,\"func_code\"),\"co_argcount\")) {
-#endif
             PyObject *tmp_argcount = PyObject_GetAttrString(tmp,\"co_argcount\");
             Py_DECREF(tmp);
             if (tmp_argcount == NULL) {
@@ -1109,13 +1098,8 @@ goto capi_fail;
         }
     }
     /* Get the number of optional arguments */
-#if PY_VERSION_HEX >= 0x03000000
     if (PyObject_HasAttrString(tmp_fun,\"__defaults__\")) {
         if (PyTuple_Check(tmp = PyObject_GetAttrString(tmp_fun,\"__defaults__\")))
-#else
-    if (PyObject_HasAttrString(tmp_fun,\"func_defaults\")) {
-        if (PyTuple_Check(tmp = PyObject_GetAttrString(tmp_fun,\"func_defaults\")))
-#endif
             opt = PyTuple_Size(tmp);
         Py_XDECREF(tmp);
     }

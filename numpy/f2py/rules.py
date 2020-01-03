@@ -178,7 +178,6 @@ static PyMethodDef f2py_module_methods[] = {
 \t{NULL,NULL}
 };
 
-#if PY_VERSION_HEX >= 0x03000000
 static struct PyModuleDef moduledef = {
 \tPyModuleDef_HEAD_INIT,
 \t"#modulename#",
@@ -190,16 +189,11 @@ static struct PyModuleDef moduledef = {
 \tNULL,
 \tNULL
 };
-#endif
 
 PyMODINIT_FUNC PyInit_#modulename#(void) {
 \tint i;
 \tPyObject *m,*d, *s, *tmp;
-#if PY_VERSION_HEX >= 0x03000000
 \tm = #modulename#_module = PyModule_Create(&moduledef);
-#else
-\tm = #modulename#_module = Py_InitModule(\"#modulename#\", f2py_module_methods);
-#endif
 \tPy_TYPE(&PyFortran_Type) = &PyType_Type;
 \timport_array();
 \tif (PyErr_Occurred())
@@ -208,11 +202,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 \ts = PyString_FromString(\"$R""" + """evision: $\");
 \tPyDict_SetItemString(d, \"__version__\", s);
 \tPy_DECREF(s);
-#if PY_VERSION_HEX >= 0x03000000
 \ts = PyUnicode_FromString(
-#else
-\ts = PyString_FromString(
-#endif
 \t\t\"This module '#modulename#' is auto-generated with f2py (version:#f2py_version#).\\nFunctions:\\n\"\n#docs#\".\");
 \tPyDict_SetItemString(d, \"__doc__\", s);
 \tPy_DECREF(s);
@@ -440,11 +430,7 @@ rout_rules = [
       tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
       PyObject_SetAttrString(o,"_cpointer", tmp);
       Py_DECREF(tmp);
-#if PY_VERSION_HEX >= 0x03000000
       s = PyUnicode_FromString("#name#");
-#else
-      s = PyString_FromString("#name#");
-#endif
       PyObject_SetAttrString(o,"__name__", s);
       Py_DECREF(s);
     }
@@ -482,11 +468,7 @@ rout_rules = [
       tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
       PyObject_SetAttrString(o,"_cpointer", tmp);
       Py_DECREF(tmp);
-#if PY_VERSION_HEX >= 0x03000000
       s = PyUnicode_FromString("#name#");
-#else
-      s = PyString_FromString("#name#");
-#endif
       PyObject_SetAttrString(o,"__name__", s);
       Py_DECREF(s);
     }

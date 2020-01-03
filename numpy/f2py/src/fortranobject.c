@@ -115,14 +115,6 @@ fortran_dealloc(PyFortranObject *fp) {
 }
 
 
-#if PY_VERSION_HEX >= 0x03000000
-#else
-static PyMethodDef fortran_methods[] = {
-    {NULL,          NULL}           /* sentinel */
-};
-#endif
-
-
 /* Returns number of bytes consumed from buf, or -1 on error. */
 static Py_ssize_t
 format_def(char *buf, Py_ssize_t size, FortranDataDef def)
@@ -242,11 +234,7 @@ fortran_doc(FortranDataDef def)
     size--;
 
     /* p now points one beyond the last character of the string in buf */
-#if PY_VERSION_HEX >= 0x03000000
     s = PyUnicode_FromStringAndSize(buf, p - buf);
-#else
-    s = PyString_FromStringAndSize(buf, p - buf);
-#endif
 
     PyMem_Free(buf);
     return s;
@@ -306,7 +294,6 @@ fortran_getattr(PyFortranObject *fp, char *name) {
         return fp->dict;
     }
     if (strcmp(name,"__doc__")==0) {
-#if PY_VERSION_HEX >= 0x03000000
         PyObject *s = PyUnicode_FromString(""), *s2, *s3;
         for (i=0;i<fp->len;i++) {
             s2 = fortran_doc(fp->defs[i]);
@@ -315,11 +302,6 @@ fortran_getattr(PyFortranObject *fp, char *name) {
             Py_DECREF(s);
             s = s3;
         }
-#else
-        PyObject *s = PyString_FromString("");
-        for (i=0;i<fp->len;i++)
-            PyString_ConcatAndDel(&s,fortran_doc(fp->defs[i]));
-#endif
         if (PyDict_SetItemString(fp->dict, name, s))
             return NULL;
         return s;
@@ -330,7 +312,6 @@ fortran_getattr(PyFortranObject *fp, char *name) {
             return NULL;
         return cobj;
     }
-#if PY_VERSION_HEX >= 0x03000000
     if (1) {
         PyObject *str, *ret;
         str = PyUnicode_FromString(name);
@@ -338,9 +319,6 @@ fortran_getattr(PyFortranObject *fp, char *name) {
         Py_DECREF(str);
         return ret;
     }
-#else
-    return Py_FindMethod(fortran_methods, (PyObject *)fp, name);
-#endif
 }
 
 static int
@@ -434,33 +412,19 @@ fortran_repr(PyFortranObject *fp)
     PyObject *name = NULL, *repr = NULL;
     name = PyObject_GetAttrString((PyObject *)fp, "__name__");
     PyErr_Clear();
-#if PY_VERSION_HEX >= 0x03000000
     if (name != NULL && PyUnicode_Check(name)) {
         repr = PyUnicode_FromFormat("<fortran %U>", name);
     }
     else {
         repr = PyUnicode_FromString("<fortran object>");
     }
-#else
-    if (name != NULL && PyString_Check(name)) {
-        repr = PyString_FromFormat("<fortran %s>", PyString_AsString(name));
-    }
-    else {
-        repr = PyString_FromString("<fortran object>");
-    }
-#endif
     Py_XDECREF(name);
     return repr;
 }
 
 
 PyTypeObject PyFortran_Type = {
-#if PY_VERSION_HEX >= 0x03000000
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(0)
-    0,                            /*ob_size*/
-#endif
     "fortran",                    /*tp_name*/
     sizeof(PyFortranObject),      /*tp_basicsize*/
     0,                            /*tp_itemsize*/
