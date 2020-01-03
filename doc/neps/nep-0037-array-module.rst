@@ -34,9 +34,9 @@ There are two broad ways in which NEP-18 has fallen short of its goals:
 ``get_array_module`` and the ``__array_module__`` protocol
 ----------------------------------------------------------
 
-We propose a new user-facing mechanism for dispatching to a duck-array implementation, ``numpy.get_array_module``. ``get_array_module`` performs the type resolution dance of ``__array_function__``, returning a module with an API promised to match the standard interface of ``numpy`` that can implement operations on all provided array types.
+We propose a new user-facing mechanism for dispatching to a duck-array implementation, ``numpy.get_array_module``. ``get_array_module`` performs the same type resolution as ``__array_function__`` and returns a module with an API promised to match the standard interface of ``numpy`` that can implement operations on all provided array types.
 
-The protocol itself is both simpler and more powerful than ``__array_function__``, because it doesn't need to worry about actually implementing functions. We believe it resolves most of thje maintainability and functionality limitations of ``__array_function__``.
+The protocol itself is both simpler and more powerful than ``__array_function__``, because it doesn't need to worry about actually implementing functions. We believe it resolves most of the maintainability and functionality limitations of ``__array_function__``.
 
 The new protocol is opt-in, explicit and with local control; see :ref:`appendix-design-choices` for discussion on the importance of these design features.
 
@@ -96,7 +96,7 @@ The special method should either return an namespace with an API matching ``nump
 Returning custom objects from ``__array_module__``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``my_array_module`` will typically but need not always be a Python module. Returning a custom objects (e.g., with functions implemented via ``__getattr__``) may be useful for some advanced use cases.
+``my_array_module`` will typically, but need not always, be a Python module. Returning a custom objects (e.g., with functions implemented via ``__getattr__``) may be useful for some advanced use cases.
 
 For example, custom objects could allow for partial implementations of duck array modules that fall-back to NumPy (although this is not recommended in general because such fall-back behavior can be error prone):
 
@@ -247,7 +247,7 @@ Support for requesting a restricted subset of NumPy's API would be a natural fea
     # array_module is only guranteed to contain "minimal" NumPy
     array_module = np.get_array_module(*arrays, request='minimal')
 
-To facilitate testing with NumPy and use with any valid duck array library, NumPy itself would return restricted versions of the ``numpy`` module when ``get_array_module`` is called only on NumPy arrays. Omited functions would simply not exist.
+To facilitate testing with NumPy and use with any valid duck array library, NumPy itself would return restricted versions of the ``numpy`` module when ``get_array_module`` is called only on NumPy arrays. Omitted functions would simply not exist.
 
 Unfortuntely, we have not yet figured out what these restricted subsets should be, so it doesn't make sense to do this yet. When/if we do, we could either add new keyword arguments to ``get_array_module`` or add new top level functions, e.g., ``get_minimal_array_module``. We would also need to add a new protocol patterned off of ``__array_module__`` (e.g., ``__array_module_minimal__``), because passing new arguments into methods is not backwards compatible. (We could anticipate this need by adding placeholder arguments into  ``__array_module__``, but it probably isn't worth the trouble.)
 
@@ -300,7 +300,7 @@ Opt-in vs. opt-out for users
 
 The ``__array_ufunc__`` and ``__array_function__`` protocols provide a mechanism for overriding NumPy functions *within NumPy's existing namespace*. This means that users need to explicitly opt-out if they do not want any overriden behavior, e.g., by casting arrays with ``np.asarray()``.
 
-In theory, this approach lowers the barrier for adopting these protocols in user code and libraries, because code that using the standard NumPy namespace is automatically compatible. But in practice, this hasn't worked out. For example, most well-maintained libraries that use NumPy follow the best practice of casting all inputs with ``np.asarray()``, which they would have to explicitly relax to use ``__array_function__``. Our experience has been that making a library compatible with a new duck array type typically requires at least a small amount of work to accomodate differences in the data model and operations that can be implemented efficiently.
+In theory, this approach lowers the barrier for adopting these protocols in user code and libraries, because code that uses the standard NumPy namespace is automatically compatible. But in practice, this hasn't worked out. For example, most well-maintained libraries that use NumPy follow the best practice of casting all inputs with ``np.asarray()``, which they would have to explicitly relax to use ``__array_function__``. Our experience has been that making a library compatible with a new duck array type typically requires at least a small amount of work to accomodate differences in the data model and operations that can be implemented efficiently.
 
 These opt-out approaches also considerably complicate backwards compatibility for libraries that adopt these protocols, because by opting in as a library they also opt-in their users, whether they expect it or not. For winning over libraries that have been unable to adopt ``__array_function__``, an opt-in approach seems like a must.
 
