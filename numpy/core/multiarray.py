@@ -33,7 +33,7 @@ __all__ = [
     'digitize', 'dot', 'dragon4_positional', 'dragon4_scientific', 'dtype',
     'empty', 'empty_like', 'error', 'flagsobj', 'flatiter', 'format_longfloat',
     'frombuffer', 'fromfile', 'fromiter', 'fromstring', 'inner',
-    'int_asbuffer', 'interp', 'interp_complex', 'is_busday', 'lexsort',
+    'interp', 'interp_complex', 'is_busday', 'lexsort',
     'matmul', 'may_share_memory', 'min_scalar_type', 'ndarray', 'nditer',
     'nested_iters', 'normalize_axis_index', 'packbits',
     'promote_types', 'putmask', 'ravel_multi_index', 'result_type', 'scalar',
