@@ -2,8 +2,6 @@
 
 Note that tests with MaskedArray and linalg are done in separate files.
 """
-from __future__ import division, absolute_import, print_function
-
 import pytest
 
 import textwrap

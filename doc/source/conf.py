@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import, print_function
-
 import sys, os, re
 
 # Minimum version, enforced by sphinx

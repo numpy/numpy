@@ -1,7 +1,5 @@
 """ Test functions for linalg module
 """
-from __future__ import division, absolute_import, print_function
-
 import warnings
 
 import numpy as np

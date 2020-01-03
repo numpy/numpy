@@ -15,8 +15,6 @@ That was not the case when the singleton classes were defined in the numpy
 motivated this module.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __ALL__ = [
     'ModuleDeprecationWarning', 'VisibleDeprecationWarning', '_NoValue'
     ]

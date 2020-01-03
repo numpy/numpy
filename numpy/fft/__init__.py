@@ -191,8 +191,6 @@ For examples, see the various functions.
 
 """
 
-from __future__ import division, absolute_import, print_function
-
 from ._pocketfft import *
 from .helper import *
 

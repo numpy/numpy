@@ -2,8 +2,6 @@
 Test the decorators from ``testing.decorators``.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import warnings
 import pytest
 

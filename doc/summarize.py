@@ -5,8 +5,6 @@ summarize.py
 Show a summary about which NumPy functions are documented and which are not.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os, glob, re, sys, inspect, optparse
 try:
     # Accessing collections abstract classes from collections

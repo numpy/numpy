@@ -17,8 +17,6 @@ variety of databases.
 All NumPy wheels distributed on PyPI are BSD licensed.
 
 """
-from __future__ import division, print_function
-
 DOCLINES = (__doc__ or '').split("\n")
 
 import os

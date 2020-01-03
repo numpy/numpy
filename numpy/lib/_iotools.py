@@ -1,8 +1,6 @@
 """A collection of functions designed to help I/O with ascii files.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __docformat__ = "restructuredtext en"
 
 import numpy as np

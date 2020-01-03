@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from numpy import (
     logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
     ndarray, sqrt, nextafter, stack

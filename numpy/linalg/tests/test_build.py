@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from subprocess import PIPE, Popen
 import sys
 import re

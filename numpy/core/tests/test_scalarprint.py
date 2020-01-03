@@ -2,8 +2,6 @@
 """ Test printing of scalar types.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import code, sys
 import platform
 import pytest

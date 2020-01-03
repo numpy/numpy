@@ -3,8 +3,6 @@ Test machar. Given recent changes to hardcode type data, we might want to get
 rid of both MachAr and this test at some point.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from numpy.core.machar import MachAr
 import numpy.core.numerictypes as ntypes
 from numpy import errstate, array
