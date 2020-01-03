@@ -3638,7 +3638,6 @@ static struct PyModuleDef moduledef = {
         NULL
 };
 
-#define RETVAL(x) x
 PyObject *PyInit__umath_linalg(void)
 {
     PyObject *m;
@@ -3648,7 +3647,7 @@ PyObject *PyInit__umath_linalg(void)
     init_constants();
     m = PyModule_Create(&moduledef);
     if (m == NULL) {
-        return RETVAL(NULL);
+        return NULL;
     }
 
     import_array();
@@ -3666,8 +3665,8 @@ PyObject *PyInit__umath_linalg(void)
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _umath_linalg module.");
-        return RETVAL(NULL);
+        return NULL;
     }
 
-    return RETVAL(m);
+    return m;
 }

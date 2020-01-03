@@ -51,7 +51,6 @@ static struct PyModuleDef moduledef = {
     NULL
 };
 
-#define RETVAL m
 PyMODINIT_FUNC PyInit__operand_flag_tests(void)
 {
     PyObject *m = NULL;
@@ -77,19 +76,16 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
     ((PyUFuncObject*)ufunc)->iter_flags = NPY_ITER_REDUCE_OK;
     PyModule_AddObject(m, "inplace_add", (PyObject*)ufunc);
 
-    return RETVAL;
+    return m;
 
 fail:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _operand_flag_tests module.");
     }
-#if defined(NPY_PY3K)
     if (m) {
         Py_DECREF(m);
         m = NULL;
     }
-#endif
-    return RETVAL;
-
+    return m;
 }

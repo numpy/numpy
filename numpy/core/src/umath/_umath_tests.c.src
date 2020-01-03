@@ -599,7 +599,6 @@ static struct PyModuleDef moduledef = {
 };
 
 /* Initialization function for the module */
-#define RETVAL(x) x
 PyMODINIT_FUNC PyInit__umath_tests(void) {
     PyObject *m;
     PyObject *d;
@@ -607,7 +606,7 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
 
     m = PyModule_Create(&moduledef);
     if (m == NULL) {
-        return RETVAL(NULL);
+        return NULL;
     }
 
     import_array();
@@ -625,8 +624,8 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
         PyErr_Print();
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _umath_tests module.");
-        return RETVAL(NULL);
+        return NULL;
     }
 
-    return RETVAL(m);
+    return m;
 }

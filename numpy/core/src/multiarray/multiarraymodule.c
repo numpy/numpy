@@ -4564,7 +4564,6 @@ static struct PyModuleDef moduledef = {
 };
 
 /* Initialization function for the module */
-#define RETVAL(x) x
 PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     PyObject *m, *d, *s;
     PyObject *c_api;
@@ -4755,12 +4754,12 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (initumath(m) != 0) {
         goto err;
     }
-    return RETVAL(m);
+    return m;
 
  err:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load multiarray module.");
     }
-    return RETVAL(NULL);
+    return NULL;
 }

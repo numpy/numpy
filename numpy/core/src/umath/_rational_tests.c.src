@@ -1138,7 +1138,6 @@ static struct PyModuleDef moduledef = {
     NULL
 };
 
-#define RETVAL m
 PyMODINIT_FUNC PyInit__rational_tests(void) {
     PyObject *m = NULL;
     PyObject* numpy_str;
@@ -1380,7 +1379,7 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     GCD_LCM_UFUNC(gcd,NPY_INT64,"greatest common denominator of two integers");
     GCD_LCM_UFUNC(lcm,NPY_INT64,"least common multiple of two integers");
 
-    return RETVAL;
+    return m;
 
 fail:
     if (!PyErr_Occurred()) {
@@ -1391,5 +1390,5 @@ fail:
         Py_DECREF(m);
         m = NULL;
     }
-    return RETVAL;
+    return m;
 }
