@@ -120,11 +120,6 @@
     if (PyDict_Check(    py_obj)) return "dict"        ;
     if (PyList_Check(    py_obj)) return "list"        ;
     if (PyTuple_Check(   py_obj)) return "tuple"       ;
-%#if PY_MAJOR_VERSION < 3
-    if (PyFile_Check(    py_obj)) return "file"        ;
-    if (PyModule_Check(  py_obj)) return "module"      ;
-    if (PyInstance_Check(py_obj)) return "instance"    ;
-%#endif
 
     return "unknown type";
   }
@@ -545,7 +540,7 @@
     const npy_intp *dims = array_dimensions(ary);
     for (i=0; i < nd; ++i)
       n_non_one += (dims[i] != 1) ? 1 : 0;
-    if (n_non_one > 1)    
+    if (n_non_one > 1)
       array_clearflags(ary,NPY_ARRAY_CARRAY);
     array_enableflags(ary,NPY_ARRAY_FARRAY);
     /* Recompute the strides */

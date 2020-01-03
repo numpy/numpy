@@ -1293,7 +1293,6 @@ gentype_sizeof(PyObject *self)
     return PyLong_FromSsize_t(nbytes);
 }
 
-#if PY_VERSION_HEX >= 0x03000000
 NPY_NO_EXPORT void
 gentype_struct_free(PyObject *ptr)
 {
@@ -1307,17 +1306,6 @@ gentype_struct_free(PyObject *ptr)
     PyArray_free(arrif->shape);
     PyArray_free(arrif);
 }
-#else
-NPY_NO_EXPORT void
-gentype_struct_free(void *ptr, void *arg)
-{
-    PyArrayInterface *arrif = (PyArrayInterface *)ptr;
-    Py_DECREF((PyObject *)arg);
-    Py_XDECREF(arrif->descr);
-    PyArray_free(arrif->shape);
-    PyArray_free(arrif);
-}
-#endif
 
 static PyObject *
 gentype_struct_get(PyObject *self)

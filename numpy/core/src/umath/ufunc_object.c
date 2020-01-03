@@ -929,22 +929,9 @@ parse_ufunc_keywords(PyUFuncObject *ufunc, PyObject *kwds, PyObject **kwnames, .
             }
         }
         else {
-#if PY_VERSION_HEX >= 0x03000000
             PyErr_Format(PyExc_TypeError,
                          "'%S' is an invalid keyword to ufunc '%s'",
                          key, ufunc_get_name_cstr(ufunc));
-#else
-            char *str = PyString_AsString(key);
-            if (str == NULL) {
-                PyErr_Clear();
-                PyErr_SetString(PyExc_TypeError, "invalid keyword argument");
-            }
-            else {
-                PyErr_Format(PyExc_TypeError,
-                             "'%s' is an invalid keyword to ufunc '%s'",
-                             str, ufunc_get_name_cstr(ufunc));
-            }
-#endif
             return -1;
         }
     }
@@ -5068,21 +5055,12 @@ _free_loop1d_list(PyUFunc_Loop1d *data)
     }
 }
 
-#if PY_VERSION_HEX >= 0x03000000
 static void
 _loop1d_list_free(PyObject *ptr)
 {
     PyUFunc_Loop1d *data = (PyUFunc_Loop1d *)PyCapsule_GetPointer(ptr, NULL);
     _free_loop1d_list(data);
 }
-#else
-static void
-_loop1d_list_free(void *ptr)
-{
-    PyUFunc_Loop1d *data = (PyUFunc_Loop1d *)ptr;
-    _free_loop1d_list(data);
-}
-#endif
 
 
 /*
