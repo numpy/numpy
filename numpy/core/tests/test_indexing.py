@@ -9,7 +9,7 @@ from numpy.core._multiarray_tests import array_indexing
 from itertools import product
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal, assert_warns,
-    HAS_REFCOUNT, suppress_warnings,
+    HAS_REFCOUNT,
     )
 
 
@@ -669,30 +669,16 @@ class TestSubclasses:
         k[0:5]
         assert_equal(k.indx, slice(0, 5))
         assert_equal(sys.getrefcount(k.indx), 2)
-        try:
+        with assert_raises(ValueError):
             k[0:7]
-            raise AssertionError
-        except ValueError:
-            # The exception holds a reference to the slice so clear on Py2
-            if hasattr(sys, 'exc_clear'):
-                with suppress_warnings() as sup:
-                    sup.filter(DeprecationWarning)
-                    sys.exc_clear()
         assert_equal(k.indx, slice(0, 7))
         assert_equal(sys.getrefcount(k.indx), 2)
 
         k[0:3] = 6
         assert_equal(k.indx, slice(0, 3))
         assert_equal(sys.getrefcount(k.indx), 2)
-        try:
+        with assert_raises(ValueError):
             k[0:4] = 2
-            raise AssertionError
-        except ValueError:
-            # The exception holds a reference to the slice so clear on Py2
-            if hasattr(sys, 'exc_clear'):
-                with suppress_warnings() as sup:
-                    sup.filter(DeprecationWarning)
-                    sys.exc_clear()
         assert_equal(k.indx, slice(0, 4))
         assert_equal(sys.getrefcount(k.indx), 2)
 
