@@ -8240,9 +8240,6 @@ class TestArrayFinalize:
         # get an array that crashed in __array_finalize__
         with assert_raises(Exception) as e:
             obj_arr.view(RaisesInFinalize)
-        if sys.version_info.major == 2:
-            # prevent an extra reference being kept
-            sys.exc_clear()
 
         obj_subarray = e.exception.args[0]
         del e
