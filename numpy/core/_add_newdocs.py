@@ -1034,7 +1034,7 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         A string containing the data.
     dtype : data-type, optional
         The data type of the array; default: float.  For binary input data,
-        the data must be in exactly this format. Most builtin numeric types are 
+        the data must be in exactly this format. Most builtin numeric types are
         supported and extension types may be supported.
 
         .. versionadded:: 1.18.0
@@ -1483,59 +1483,6 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     dtype('S4')
 
     """)
-
-if sys.version_info.major < 3:
-    add_newdoc('numpy.core.multiarray', 'newbuffer',
-        """
-        newbuffer(size)
-
-        Return a new uninitialized buffer object.
-
-        Parameters
-        ----------
-        size : int
-            Size in bytes of returned buffer object.
-
-        Returns
-        -------
-        newbuffer : buffer object
-            Returned, uninitialized buffer object of `size` bytes.
-
-        """)
-
-    add_newdoc('numpy.core.multiarray', 'getbuffer',
-        """
-        getbuffer(obj [,offset[, size]])
-
-        Create a buffer object from the given object referencing a slice of
-        length size starting at offset.
-
-        Default is the entire buffer. A read-write buffer is attempted followed
-        by a read-only buffer.
-
-        Parameters
-        ----------
-        obj : object
-
-        offset : int, optional
-
-        size : int, optional
-
-        Returns
-        -------
-        buffer_obj : buffer
-
-        Examples
-        --------
-        >>> buf = np.getbuffer(np.ones(5), 1, 3)
-        >>> len(buf)
-        3
-        >>> buf[0]
-        '\\x00'
-        >>> buf
-        <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
-
-        """)
 
 add_newdoc('numpy.core.multiarray', 'c_einsum',
     """
@@ -3951,7 +3898,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
     Examples
     --------
-    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``, 
+    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``,
     except that ``tolist`` changes numpy scalars to Python scalars:
 
     >>> a = np.uint32([1, 2])
