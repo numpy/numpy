@@ -3293,42 +3293,6 @@ array_datetime_data(PyObject *NPY_UNUSED(dummy), PyObject *args)
     return convert_datetime_metadata_to_tuple(meta);
 }
 
-#if !defined(NPY_PY3K)
-static PyObject *
-new_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args)
-{
-    int size;
-
-    if (!PyArg_ParseTuple(args, "i:buffer", &size)) {
-        return NULL;
-    }
-    return PyBuffer_New(size);
-}
-
-static PyObject *
-buffer_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
-{
-    PyObject *obj;
-    Py_ssize_t offset = 0, n;
-    Py_ssize_t size = Py_END_OF_BUFFER;
-    void *unused;
-    static char *kwlist[] = {"object", "offset", "size", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                "O|" NPY_SSIZE_T_PYFMT NPY_SSIZE_T_PYFMT ":get_buffer", kwlist,
-                &obj, &offset, &size)) {
-        return NULL;
-    }
-    if (PyObject_AsWriteBuffer(obj, &unused, &n) < 0) {
-        PyErr_Clear();
-        return PyBuffer_FromObject(obj, offset, size);
-    }
-    else {
-        return PyBuffer_FromReadWriteObject(obj, offset, size);
-    }
-}
-#endif
-
 /*
  * Prints floating-point scalars using the Dragon4 algorithm, scientific mode.
  * See docstring of `np.format_float_scientific` for description of arguments.
@@ -4137,14 +4101,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"is_busday",
         (PyCFunction)array_is_busday,
         METH_VARARGS | METH_KEYWORDS, NULL},
-#if !defined(NPY_PY3K)
-    {"newbuffer",
-        (PyCFunction)new_buffer,
-        METH_VARARGS, NULL},
-    {"getbuffer",
-        (PyCFunction)buffer_buffer,
-        METH_VARARGS | METH_KEYWORDS, NULL},
-#endif
     {"format_longfloat",
         (PyCFunction)format_longfloat,
         METH_VARARGS | METH_KEYWORDS, NULL},

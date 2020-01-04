@@ -19,8 +19,6 @@ from .multiarray import (
     min_scalar_type, ndarray, nditer, nested_iters, promote_types,
     putmask, result_type, set_numeric_ops, shares_memory, vdot, where,
     zeros, normalize_axis_index)
-if sys.version_info[0] < 3:
-    from .multiarray import newbuffer, getbuffer
 
 from . import overrides
 from . import umath
@@ -64,9 +62,6 @@ __all__ = [
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
     'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
-
-if sys.version_info[0] < 3:
-    __all__.extend(['getbuffer', 'newbuffer'])
 
 
 @set_module('numpy')
