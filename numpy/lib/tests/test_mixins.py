@@ -96,7 +96,7 @@ _ALL_BINARY_OPERATORS = [
 ]
 
 
-class TestNDArrayOperatorsMixin(object):
+class TestNDArrayOperatorsMixin:
 
     def test_array_like_add(self):
 
@@ -126,7 +126,7 @@ class TestNDArrayOperatorsMixin(object):
 
     def test_opt_out(self):
 
-        class OptOut(object):
+        class OptOut:
             """Object that opts out of __array_ufunc__."""
             __array_ufunc__ = None
 

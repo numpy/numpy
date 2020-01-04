@@ -14,7 +14,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, suppress_warnings
     )
 
-class TestMemmap(object):
+class TestMemmap:
     def setup(self):
         self.tmpfp = NamedTemporaryFile(prefix='mmap')
         self.tempdir = mkdtemp()

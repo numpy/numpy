@@ -12,7 +12,7 @@ sizes = np.array([2, 3, 4, 5, 4, 3, 2, 6, 5, 4, 3])
 global_size_dict = dict(zip(chars, sizes))
 
 
-class TestEinsum(object):
+class TestEinsum:
     def test_einsum_errors(self):
         for do_opt in [True, False]:
             # Need enough arguments
@@ -866,7 +866,7 @@ class TestEinsum(object):
         self.optimize_compare('obk,ijk->ioj', operands=[g, g])
 
 
-class TestEinsumPath(object):
+class TestEinsumPath:
     def build_operands(self, string, size_dict=global_size_dict):
 
         # Builds views based off initial operands

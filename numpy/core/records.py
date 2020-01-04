@@ -96,7 +96,7 @@ def find_duplicate(list):
 
 
 @set_module('numpy')
-class format_parser(object):
+class format_parser:
     """
     Class to convert formats, names, titles description to a dtype.
 

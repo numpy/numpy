@@ -90,7 +90,7 @@ def get_file_template(name, from_template):
         get_template=from_template.get_template)
 
 
-class Template(object):
+class Template:
 
     default_namespace = {
         'start_braces': '{{',
@@ -438,7 +438,7 @@ class bunch(dict):
 ############################################################
 
 
-class html(object):
+class html:
 
     def __init__(self, value):
         self.value = value
@@ -520,7 +520,7 @@ def sub_html(content, **kw):
     return tmpl.substitute(kw)
 
 
-class TemplateDef(object):
+class TemplateDef:
     def __init__(self, template, func_name, func_signature,
                  body, ns, pos, bound_self=None):
         self._template = template
@@ -597,7 +597,7 @@ class TemplateDef(object):
         return values
 
 
-class TemplateObject(object):
+class TemplateObject:
 
     def __init__(self, name):
         self.__name = name
@@ -607,7 +607,7 @@ class TemplateObject(object):
         return '<%s %s>' % (self.__class__.__name__, self.__name)
 
 
-class TemplateObjectGetter(object):
+class TemplateObjectGetter:
 
     def __init__(self, template_obj):
         self.__template_obj = template_obj
@@ -620,7 +620,7 @@ class TemplateObjectGetter(object):
             self.__class__.__name__, self.__template_obj)
 
 
-class _Empty(object):
+class _Empty:
     def __call__(self, *args, **kw):
         return self
 

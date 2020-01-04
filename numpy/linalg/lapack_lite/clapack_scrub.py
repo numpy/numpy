@@ -104,7 +104,7 @@ def cleanSource(source):
     source = re.sub(r'\n\n\n\n+', r'\n\n\n', source)
     return source
 
-class LineQueue(object):
+class LineQueue:
     def __init__(self):
         object.__init__(self)
         self._queue = []

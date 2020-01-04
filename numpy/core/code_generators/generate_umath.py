@@ -19,16 +19,16 @@ ReorderableNone = "(Py_INCREF(Py_None), Py_None)"
 
 # Sentinel value to specify using the full type description in the
 # function name
-class FullTypeDescr(object):
+class FullTypeDescr:
     pass
 
-class FuncNameSuffix(object):
+class FuncNameSuffix:
     """Stores the suffix to append when generating functions names.
     """
     def __init__(self, suffix):
         self.suffix = suffix
 
-class TypeDescription(object):
+class TypeDescription:
     """Type signature for a ufunc.
 
     Attributes
@@ -118,7 +118,7 @@ def TD(types, f=None, astype=None, in_=None, out=None, simd=None):
         tds.append(TypeDescription(t, f=fd, in_=i, out=o, astype=astype, simd=simdt))
     return tds
 
-class Ufunc(object):
+class Ufunc:
     """Description of a ufunc.
 
     Attributes

@@ -2001,7 +2001,7 @@ class clear_and_catch_warnings(warnings.catch_warnings):
                 mod.__warningregistry__.update(self._warnreg_copies[mod])
 
 
-class suppress_warnings(object):
+class suppress_warnings:
     """
     Context manager and decorator doing much the same as
     ``warnings.catch_warnings``.

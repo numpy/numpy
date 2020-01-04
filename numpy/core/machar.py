@@ -14,7 +14,7 @@ from numpy.core.overrides import set_module
 # Need to speed this up...especially for longfloat
 
 @set_module('numpy')
-class MachAr(object):
+class MachAr:
     """
     Diagnosing machine parameters.
 

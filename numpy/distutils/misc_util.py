@@ -49,7 +49,7 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info',
            'get_num_build_jobs']
 
-class InstallableLib(object):
+class InstallableLib:
     """
     Container to hold information on an installable library.
 
@@ -726,7 +726,7 @@ def get_frame(level=0):
 
 ######################
 
-class Configuration(object):
+class Configuration:
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
                   'libraries', 'headers', 'scripts', 'py_modules',

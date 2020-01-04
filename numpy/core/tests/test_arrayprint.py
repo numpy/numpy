@@ -10,7 +10,7 @@ from numpy.testing import (
     )
 import textwrap
 
-class TestArrayRepr(object):
+class TestArrayRepr:
     def test_nan_inf(self):
         x = np.array([np.nan, np.inf])
         assert_equal(repr(x), 'array([nan, inf])')
@@ -158,7 +158,7 @@ class TestArrayRepr(object):
         assert_equal(repr(arr_no_fields), 'array([(), (), (), ()], dtype=[])')
 
 
-class TestComplexArray(object):
+class TestComplexArray:
     def test_str(self):
         rvals = [0, 1, -1, np.inf, -np.inf, np.nan]
         cvals = [complex(rp, ip) for rp in rvals for ip in rvals]
@@ -205,7 +205,7 @@ class TestComplexArray(object):
         for res, val in zip(actual, wanted):
             assert_equal(res, val)
 
-class TestArray2String(object):
+class TestArray2String:
     def test_basic(self):
         """Basic test of array2string."""
         a = np.arange(3)
@@ -411,7 +411,7 @@ class TestArray2String(object):
         gc.enable()
         assert_(r1 == r2)
 
-class TestPrintOptions(object):
+class TestPrintOptions:
     """Test getting and setting global print options."""
 
     def setup(self):
@@ -854,7 +854,7 @@ def test_unicode_object_array():
     assert_equal(repr(x), expected)
 
 
-class TestContextManager(object):
+class TestContextManager:
     def test_ctx_mgr(self):
         # test that context manager actuall works
         with np.printoptions(precision=2):

@@ -66,7 +66,7 @@ all_tags = {
 }
 
 
-class LinalgCase(object):
+class LinalgCase:
     def __init__(self, name, a, b, tags=set()):
         """
         A bundle of arguments to be passed to a test case, with an identifying
@@ -331,7 +331,7 @@ CASES += _make_strided_cases()
 #
 # Test different routines against the above cases
 #
-class LinalgTestCase(object):
+class LinalgTestCase:
     TEST_CASES = CASES
 
     def check_cases(self, require=set(), exclude=set()):
@@ -632,7 +632,7 @@ class TestEig(EigCases):
         assert_(isinstance(a, np.ndarray))
 
 
-class SVDBaseTests(object):
+class SVDBaseTests:
     hermitian = False
 
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
@@ -974,7 +974,7 @@ class TestLstsq(LstsqCases):
 
 
 @pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
-class TestMatrixPower(object):
+class TestMatrixPower:
 
     rshft_0 = np.eye(4)
     rshft_1 = rshft_0[[3, 0, 1, 2]]
@@ -1074,7 +1074,7 @@ class TestEigvalshCases(HermitianTestCase, HermitianGeneralizedTestCase):
         assert_allclose(ev2, evalues, rtol=get_rtol(ev.dtype))
 
 
-class TestEigvalsh(object):
+class TestEigvalsh:
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
@@ -1150,7 +1150,7 @@ class TestEighCases(HermitianTestCase, HermitianGeneralizedTestCase):
                         rtol=get_rtol(ev.dtype), err_msg=repr(a))
 
 
-class TestEigh(object):
+class TestEigh:
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
@@ -1209,7 +1209,7 @@ class TestEigh(object):
         assert_(isinstance(a, np.ndarray))
 
 
-class _TestNormBase(object):
+class _TestNormBase:
     dt = None
     dec = None
 
@@ -1495,7 +1495,7 @@ class _TestNorm(_TestNorm2D, _TestNormGeneral):
     pass
 
 
-class TestNorm_NonSystematic(object):
+class TestNorm_NonSystematic:
 
     def test_longdouble_norm(self):
         # Non-regression test: p-norm of longdouble would previously raise
@@ -1550,7 +1550,7 @@ class TestNormInt64(_TestNorm, _TestNormInt64Base):
     pass
 
 
-class TestMatrixRank(object):
+class TestMatrixRank:
 
     def test_matrix_rank(self):
         # Full rank matrix
@@ -1599,7 +1599,7 @@ def test_reduced_rank():
         assert_equal(matrix_rank(X), 8)
 
 
-class TestQR(object):
+class TestQR:
     # Define the array class here, so run this on matrices elsewhere.
     array = np.array
 
@@ -1699,7 +1699,7 @@ class TestQR(object):
             self.check_qr(m2.T)
 
 
-class TestCholesky(object):
+class TestCholesky:
     # TODO: are there no other tests for cholesky?
 
     def test_basic_property(self):
@@ -1861,7 +1861,7 @@ def test_sdot_bug_8577():
         subprocess.check_call([sys.executable, "-c", code])
 
 
-class TestMultiDot(object):
+class TestMultiDot:
 
     def test_basic_function_with_three_arguments(self):
         # multi_dot with three arguments uses a fast hand coded algorithm to
@@ -1955,7 +1955,7 @@ class TestMultiDot(object):
         assert_raises(ValueError, multi_dot, [np.random.random((3, 3))])
 
 
-class TestTensorinv(object):
+class TestTensorinv:
 
     @pytest.mark.parametrize("arr, ind", [
         (np.ones((4, 6, 8, 2)), 2),

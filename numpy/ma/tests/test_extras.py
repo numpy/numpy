@@ -32,7 +32,7 @@ from numpy.ma.extras import (
     )
 
 
-class TestGeneric(object):
+class TestGeneric:
     #
     def test_masked_all(self):
         # Tests masked_all
@@ -140,7 +140,7 @@ class TestGeneric(object):
         assert_equal(test, [])
 
 
-class TestAverage(object):
+class TestAverage:
     # Several tests of average. Why so many ? Good point...
     def test_testAverage1(self):
         # Test of average.
@@ -271,7 +271,7 @@ class TestAverage(object):
         assert_almost_equal(wav1.imag, expected1.imag)
 
 
-class TestConcatenator(object):
+class TestConcatenator:
     # Tests for mr_, the equivalent of r_ for masked arrays.
 
     def test_1d(self):
@@ -315,7 +315,7 @@ class TestConcatenator(object):
         assert_equal(actual.data[:2], [1, 2])
 
 
-class TestNotMasked(object):
+class TestNotMasked:
     # Tests notmasked_edges and notmasked_contiguous.
 
     def test_edges(self):
@@ -385,7 +385,7 @@ class TestNotMasked(object):
         ])
 
 
-class TestCompressFunctions(object):
+class TestCompressFunctions:
 
     def test_compress_nd(self):
         # Tests compress_nd
@@ -650,7 +650,7 @@ class TestCompressFunctions(object):
         assert_equal(a, res)
 
 
-class TestApplyAlongAxis(object):
+class TestApplyAlongAxis:
     # Tests 2D functions
     def test_3d(self):
         a = arange(12.).reshape(2, 2, 3)
@@ -672,7 +672,7 @@ class TestApplyAlongAxis(object):
         assert_equal(xa, [[2, 5], [8, 11]])
 
 
-class TestApplyOverAxes(object):
+class TestApplyOverAxes:
     # Tests apply_over_axes
     def test_basic(self):
         a = arange(24).reshape(2, 3, 4)
@@ -685,7 +685,7 @@ class TestApplyOverAxes(object):
         assert_equal(test, ctrl)
 
 
-class TestMedian(object):
+class TestMedian:
     def test_pytype(self):
         r = np.ma.median([[np.inf, np.inf], [np.inf, np.inf]], axis=-1)
         assert_equal(r, np.inf)
@@ -1064,7 +1064,7 @@ class TestMedian(object):
         assert_(type(np.ma.median(o.astype(object))), float)
 
 
-class TestCov(object):
+class TestCov:
 
     def setup(self):
         self.data = array(np.random.rand(12))
@@ -1131,7 +1131,7 @@ class TestCov(object):
                              x.shape[0] / frac))
 
 
-class TestCorrcoef(object):
+class TestCorrcoef:
 
     def setup(self):
         self.data = array(np.random.rand(12))
@@ -1238,7 +1238,7 @@ class TestCorrcoef(object):
                                 control[:-1, :-1])
 
 
-class TestPolynomial(object):
+class TestPolynomial:
     #
     def test_polyfit(self):
         # Tests polyfit
@@ -1296,7 +1296,7 @@ class TestPolynomial(object):
             assert_almost_equal(a, a_)
 
 
-class TestArraySetOps(object):
+class TestArraySetOps:
 
     def test_unique_onlist(self):
         # Test unique on list
@@ -1528,7 +1528,7 @@ class TestArraySetOps(object):
         assert_array_equal(setdiff1d(a, b), np.array(['c']))
 
 
-class TestShapeBase(object):
+class TestShapeBase:
 
     def test_atleast_2d(self):
         # Test atleast_2d
@@ -1584,7 +1584,7 @@ class TestShapeBase(object):
         assert_equal(b.mask.shape, b.data.shape)
 
 
-class TestStack(object):
+class TestStack:
 
     def test_stack_1d(self):
         a = masked_array([0, 1, 2], mask=[0, 1, 0])

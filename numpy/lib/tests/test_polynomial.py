@@ -5,7 +5,7 @@ from numpy.testing import (
     )
 
 
-class TestPolynomial(object):
+class TestPolynomial:
     def test_poly1d_str_and_repr(self):
         p = np.poly1d([1., 2, 3])
         assert_equal(repr(p), 'poly1d([1., 2., 3.])')

@@ -15,7 +15,7 @@ from numpy.compat import long
 __all__ = ['Arrayterator']
 
 
-class Arrayterator(object):
+class Arrayterator:
     """
     Buffered iterator for big arrays.
 

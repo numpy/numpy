@@ -58,7 +58,7 @@ def _unary_method(ufunc, name):
     return func
 
 
-class NDArrayOperatorsMixin(object):
+class NDArrayOperatorsMixin:
     """Mixin defining all operator special methods using __array_ufunc__.
 
     This class implements the special methods for almost all of Python's

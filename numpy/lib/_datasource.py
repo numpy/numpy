@@ -139,7 +139,7 @@ def _python2_gzipopen(fn, mode, encoding, newline):
 # deferring the import of lzma, bz2 and gzip until needed
 
 # TODO: .zip support, .tar support?
-class _FileOpeners(object):
+class _FileOpeners:
     """
     Container for different methods to open (un-)compressed files.
 
@@ -268,7 +268,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
 
 
 @set_module('numpy')
-class DataSource(object):
+class DataSource:
     """
     DataSource(destpath='.')
 

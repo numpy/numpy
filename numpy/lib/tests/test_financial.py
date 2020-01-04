@@ -16,7 +16,7 @@ def filter_deprecation(func):
     return newfunc
 
 
-class TestFinancial(object):
+class TestFinancial:
     @filter_deprecation
     def test_npv_irr_congruence(self):
         # IRR is defined as the rate required for the present value of a

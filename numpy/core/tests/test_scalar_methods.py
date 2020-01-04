@@ -14,7 +14,7 @@ from numpy.testing import (
     dec
 )
 
-class TestAsIntegerRatio(object):
+class TestAsIntegerRatio:
     # derived in part from the cpython test "test_floatasratio"
 
     @pytest.mark.parametrize("ftype", [

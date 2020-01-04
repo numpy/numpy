@@ -28,7 +28,7 @@ files = ['umath-validation-set-exp',
          'umath-validation-set-sin',
          'umath-validation-set-cos']
 
-class TestAccuracy(object):
+class TestAccuracy:
     @pytest.mark.xfail(reason="Fails for MacPython/numpy-wheels builds")
     def test_validate_transcendentals(self):
         with np.errstate(all='ignore'):

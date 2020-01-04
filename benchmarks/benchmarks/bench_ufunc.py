@@ -150,7 +150,7 @@ class Scalar(Benchmark):
         (self.y + self.z)
 
 
-class ArgPack(object):
+class ArgPack:
     __slots__ = ['args', 'kwargs']
     def __init__(self, *args, **kwargs):
         self.args = args

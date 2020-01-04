@@ -293,10 +293,10 @@ def detect_runner():
             _test_runner_guess = None
     return _test_runner_guess
 
-class parameterized(object):
+class parameterized:
     """ Parameterize a test case::
 
-            class TestInt(object):
+            class TestInt:
                 @parameterized([
                     ("A", 10),
                     ("F", 15),

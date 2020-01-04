@@ -19,13 +19,13 @@ def fft1(x):
     return np.sum(x*np.exp(phase), axis=1)
 
 
-class TestFFTShift(object):
+class TestFFTShift:
 
     def test_fft_n(self):
         assert_raises(ValueError, np.fft.fft, [1, 2, 3], 0)
 
 
-class TestFFT1D(object):
+class TestFFT1D:
 
     def test_identity(self):
         maxlen = 512
@@ -220,7 +220,7 @@ def test_fft_with_order(dtype, order, fft):
         raise ValueError()
 
 
-class TestFFTThreadSafe(object):
+class TestFFTThreadSafe:
     threads = 16
     input_shape = (800, 200)
 

@@ -7,7 +7,7 @@ from numpy.random import Generator, MT19937
 mt19937 = Generator(MT19937())
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
@@ -136,7 +136,7 @@ class TestRegression(object):
         assert_array_equal(perm, np.array([2, 0, 1]))
         assert_array_equal(orig, np.arange(3).view(N))
 
-        class M(object):
+        class M:
             a = np.arange(5)
 
             def __array__(self):

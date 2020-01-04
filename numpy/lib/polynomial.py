@@ -1005,7 +1005,7 @@ def _raise_power(astr, wrap=70):
 
 
 @set_module('numpy')
-class poly1d(object):
+class poly1d:
     """
     A one-dimensional polynomial class.
 

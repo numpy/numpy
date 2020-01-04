@@ -21,7 +21,7 @@ def assert_dtype_not_equal(a, b):
     assert_(hash(a) != hash(b),
             "two different types hash to the same value !")
 
-class TestBuiltin(object):
+class TestBuiltin:
     @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
                                    np.compat.unicode])
     def test_run(self, t):
@@ -144,7 +144,7 @@ class TestBuiltin(object):
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
 
-class TestRecord(object):
+class TestRecord:
     def test_equivalent_record(self):
         """Test whether equivalent record dtypes hash the same."""
         a = np.dtype([('yo', int)])
@@ -443,7 +443,7 @@ class TestRecord(object):
                      np.ones((1, 2), dtype=bool))
 
 
-class TestSubarray(object):
+class TestSubarray:
     def test_single_subarray(self):
         a = np.dtype((int, (2)))
         b = np.dtype((int, (2,)))
@@ -519,7 +519,7 @@ class TestSubarray(object):
         assert_(isinstance(dt['a'].shape, tuple))
         #
 
-        class IntLike(object):
+        class IntLike:
             def __index__(self):
                 return 3
 
@@ -709,7 +709,7 @@ class TestStructuredObjectRefcounting:
         assert after_repeat - after == count * 2 * 10
 
 
-class TestStructuredDtypeSparseFields(object):
+class TestStructuredDtypeSparseFields:
     """Tests subarray fields which contain sparse dtypes so that
     not all memory is used by the dtype work. Such dtype's should
     leave the underlying memory unchanged.
@@ -739,7 +739,7 @@ class TestStructuredDtypeSparseFields(object):
         assert_array_equal(arr["a"]["aa"], np.zeros((3, 2, 3)))
 
 
-class TestMonsterType(object):
+class TestMonsterType:
     """Test deeply nested subtypes."""
 
     def test1(self):
@@ -757,7 +757,7 @@ class TestMonsterType(object):
             ('yi', np.dtype((a, (3, 2))))])
         assert_dtype_equal(c, d)
 
-class TestMetadata(object):
+class TestMetadata:
     def test_no_metadata(self):
         d = np.dtype(int)
         assert_(d.metadata is None)
@@ -779,7 +779,7 @@ class TestMetadata(object):
         d = np.dtype((np.void, np.dtype('i4,i4', metadata={'datum': 1})))
         assert_(d.metadata == {'datum': 1})
 
-class TestString(object):
+class TestString:
     def test_complex_dtype_str(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
                                 ('rtile', '>f4', (64, 36))], (3,)),
@@ -932,7 +932,7 @@ class TestString(object):
         assert_equal(dt.name, 'record16')
 
 
-class TestDtypeAttributeDeletion(object):
+class TestDtypeAttributeDeletion:
 
     def test_dtype_non_writable_attributes_deletion(self):
         dt = np.dtype(np.double)
@@ -950,7 +950,7 @@ class TestDtypeAttributeDeletion(object):
             assert_raises(AttributeError, delattr, dt, s)
 
 
-class TestDtypeAttributes(object):
+class TestDtypeAttributes:
     def test_descr_has_trailing_void(self):
         # see gh-6359
         dtype = np.dtype({
@@ -968,7 +968,7 @@ class TestDtypeAttributes(object):
         assert_equal(np.dtype(user_def_subcls).name, 'user_def_subcls')
 
 
-class TestPickling(object):
+class TestPickling:
 
     def check_pickling(self, dtype):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
@@ -1052,7 +1052,7 @@ def test_invalid_dtype_string():
     assert_raises(TypeError, np.dtype, u'Fl\xfcgel')
 
 
-class TestFromDTypeAttribute(object):
+class TestFromDTypeAttribute:
     def test_simple(self):
         class dt:
             dtype = "f8"
@@ -1096,7 +1096,7 @@ class TestFromDTypeAttribute(object):
         with pytest.raises(RecursionError):
             np.dtype(dt(1))
 
-class TestFromCTypes(object):
+class TestFromCTypes:
 
     @staticmethod
     def check(ctype, dtype):
