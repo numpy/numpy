@@ -607,8 +607,14 @@ _convert_from_list(PyObject *obj, int align)
      * can produce
      */
     PyObject *last_item = PyList_GET_ITEM(obj, n-1);
-    if (PyBytes_Check(last_item) && PyBytes_GET_SIZE(last_item) == 0) {
-        n = n - 1;
+    if (PyUnicode_Check(last_item)) {
+        Py_ssize_t s = PySequence_Size(last_item);
+        if (s < 0) {
+            return NULL;
+        }
+        if (s == 0) {
+            n = n - 1;
+        }
     }
     if (n == 0) {
         PyErr_SetString(PyExc_ValueError, "Expected at least one field name");
@@ -709,7 +715,7 @@ _convert_from_commastring(PyObject *obj, int align)
     PyArray_Descr *res;
     PyObject *_numpy_internal;
 
-    if (!PyBytes_Check(obj)) {
+    if (!PyUnicode_Check(obj)) {
         _report_generic_error();
         return NULL;
     }
@@ -1390,7 +1396,7 @@ _convert_from_type(PyObject *obj) {
 
 
 static PyArray_Descr *
-_convert_from_bytes(PyObject *obj, int align);
+_convert_from_str(PyObject *obj, int align);
 
 static PyArray_Descr *
 _convert_from_any(PyObject *obj, int align)
@@ -1408,24 +1414,23 @@ _convert_from_any(PyObject *obj, int align)
         return _convert_from_type(obj);
     }
     /* or a typecode string */
-    else if (PyUnicode_Check(obj)) {
-        /* Allow unicode format strings: convert to bytes */
-        PyObject *obj2 = PyUnicode_AsASCIIString(obj);
+    else if (PyBytes_Check(obj)) {
+        /* Allow bytes format strings: convert to unicode */
+        PyObject *obj2 = PyUnicode_FromEncodedObject(obj, NULL, NULL);
         if (obj2 == NULL) {
             /* Convert the exception into a TypeError */
-            PyObject *err = PyErr_Occurred();
-            if (PyErr_GivenExceptionMatches(err, PyExc_UnicodeEncodeError)) {
+            if (PyErr_ExceptionMatches(PyExc_UnicodeDecodeError)) {
                 PyErr_SetString(PyExc_TypeError,
                         "data type not understood");
             }
             return NULL;
         }
-        PyArray_Descr *ret = _convert_from_any(obj2, align);
+        PyArray_Descr *ret = _convert_from_str(obj2, align);
         Py_DECREF(obj2);
         return ret;
     }
-    else if (PyBytes_Check(obj)) {
-        return _convert_from_bytes(obj, align);
+    else if (PyUnicode_Check(obj)) {
+        return _convert_from_str(obj, align);
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
@@ -1489,12 +1494,12 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 
 /** Convert a bytestring specification into a dtype */
 static PyArray_Descr *
-_convert_from_bytes(PyObject *obj, int align)
+_convert_from_str(PyObject *obj, int align)
 {
     /* Check for a string typecode. */
-    char *type = NULL;
     Py_ssize_t len = 0;
-    if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
+    char const *type = PyUnicode_AsUTF8AndSize(obj, &len);
+    if (type == NULL) {
         return NULL;
     }
 
@@ -1611,13 +1616,7 @@ _convert_from_bytes(PyObject *obj, int align)
         if (typeDict == NULL) {
             goto fail;
         }
-        PyObject *item = NULL;
-        PyObject *tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
-        if (tmp == NULL) {
-            goto fail;
-        }
-        item = PyDict_GetItem(typeDict, tmp);
-        Py_DECREF(tmp);
+        PyObject *item = PyDict_GetItem(typeDict, obj);
         if (item == NULL) {
             goto fail;
         }
@@ -1665,8 +1664,7 @@ _convert_from_bytes(PyObject *obj, int align)
     return ret;
 
 fail:
-    PyErr_Format(PyExc_TypeError,
-            "data type \"%s\" not understood", PyBytes_AS_STRING(obj));
+    PyErr_Format(PyExc_TypeError, "data type %R not understood", obj);
     return NULL;
 }
 

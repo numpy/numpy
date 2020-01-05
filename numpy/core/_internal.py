@@ -18,9 +18,9 @@ except ImportError:
 IS_PYPY = platform.python_implementation() == 'PyPy'
 
 if (sys.byteorder == 'little'):
-    _nbo = b'<'
+    _nbo = '<'
 else:
-    _nbo = b'>'
+    _nbo = '>'
 
 def _makenames_list(adict, align):
     allfields = []
@@ -143,16 +143,16 @@ def _reconstruct(subtype, shape, dtype):
 
 # format_re was originally from numarray by J. Todd Miller
 
-format_re = re.compile(br'(?P<order1>[<>|=]?)'
-                       br'(?P<repeats> *[(]?[ ,0-9]*[)]? *)'
-                       br'(?P<order2>[<>|=]?)'
-                       br'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)')
-sep_re = re.compile(br'\s*,\s*')
-space_re = re.compile(br'\s+$')
+format_re = re.compile(r'(?P<order1>[<>|=]?)'
+                       r'(?P<repeats> *[(]?[ ,0-9]*[)]? *)'
+                       r'(?P<order2>[<>|=]?)'
+                       r'(?P<dtype>[A-Za-z0-9.?]*(?:\[[a-zA-Z0-9,.]+\])?)')
+sep_re = re.compile(r'\s*,\s*')
+space_re = re.compile(r'\s+$')
 
 # astr is a string (perhaps comma separated)
 
-_convorder = {b'=': _nbo}
+_convorder = {'=': _nbo}
 
 def _commastring(astr):
     startindex = 0
@@ -177,9 +177,9 @@ def _commastring(astr):
                         (len(result)+1, astr))
                 startindex = mo.end()
 
-        if order2 == b'':
+        if order2 == '':
             order = order1
-        elif order1 == b'':
+        elif order1 == '':
             order = order2
         else:
             order1 = _convorder.get(order1, order1)
@@ -190,10 +190,10 @@ def _commastring(astr):
                     (order1, order2))
             order = order1
 
-        if order in [b'|', b'=', _nbo]:
-            order = b''
+        if order in ['|', '=', _nbo]:
+            order = ''
         dtype = order + dtype
-        if (repeats == b''):
+        if (repeats == ''):
             newitem = dtype
         else:
             newitem = (dtype, eval(repeats))
