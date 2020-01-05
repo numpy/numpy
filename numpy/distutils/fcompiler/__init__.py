@@ -34,7 +34,6 @@ from numpy.distutils import log
 from numpy.distutils.misc_util import is_string, all_strings, is_sequence, \
     make_temp_file, get_shared_lib_extension
 from numpy.distutils.exec_command import find_executable
-from numpy.distutils.compat import get_exception
 from numpy.distutils import _shell_utils
 
 from .environment import EnvironmentConfig
@@ -612,8 +611,8 @@ class FCompiler(CCompiler):
                               src)
         try:
             self.spawn(command, display=display)
-        except DistutilsExecError:
-            msg = str(get_exception())
+        except DistutilsExecError as e:
+            msg = str(e)
             raise CompileError(msg)
 
     def module_options(self, module_dirs, module_build_dir):
@@ -680,8 +679,8 @@ class FCompiler(CCompiler):
             command = linker + ld_args
             try:
                 self.spawn(command)
-            except DistutilsExecError:
-                msg = str(get_exception())
+            except DistutilsExecError as e:
+                msg = str(e)
                 raise LinkError(msg)
         else:
             log.debug("skipping %s (up-to-date)", output_filename)
@@ -929,8 +928,7 @@ def show_fcompilers(dist=None):
             c = new_fcompiler(compiler=compiler, verbose=dist.verbose)
             c.customize(dist)
             v = c.get_version()
-        except (DistutilsModuleError, CompilerNotFound):
-            e = get_exception()
+        except (DistutilsModuleError, CompilerNotFound) as e:
             log.debug("show_fcompilers: %s not found" % (compiler,))
             log.debug(repr(e))
 
