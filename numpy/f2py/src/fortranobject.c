@@ -590,7 +590,7 @@ count_negative_dimensions(const int rank,
 }
 
 #ifdef DEBUG_COPY_ND_ARRAY
-void dump_dims(int rank, npy_intp* dims) {
+void dump_dims(int rank, npy_intp const* dims) {
     int i;
     printf("[");
     for(i=0;i<rank;++i) {

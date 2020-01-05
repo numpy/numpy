@@ -161,7 +161,7 @@ PyArray_MultiplyList(npy_intp const *l1, int n)
  * Multiply a List of Non-negative numbers with over-flow detection.
  */
 NPY_NO_EXPORT npy_intp
-PyArray_OverflowMultiplyList(npy_intp *l1, int n)
+PyArray_OverflowMultiplyList(npy_intp const *l1, int n)
 {
     npy_intp prod = 1;
     int i;

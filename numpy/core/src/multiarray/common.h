@@ -61,7 +61,7 @@ NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
 NPY_NO_EXPORT PyObject *
-convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
+convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 
 /*
  * Sets ValueError with "matrices not aligned" message for np.dot and friends

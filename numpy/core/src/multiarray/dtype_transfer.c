@@ -3832,8 +3832,8 @@ PyArray_CastRawArrays(npy_intp count,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
-                            char *data, npy_intp *strides,
+PyArray_PrepareOneRawArrayIter(int ndim, npy_intp const *shape,
+                            char *data, npy_intp const *strides,
                             int *out_ndim, npy_intp *out_shape,
                             char **out_data, npy_intp *out_strides)
 {
@@ -3953,9 +3953,9 @@ PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
-                            char *dataA, npy_intp *stridesA,
-                            char *dataB, npy_intp *stridesB,
+PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp const *shape,
+                            char *dataA, npy_intp const *stridesA,
+                            char *dataB, npy_intp const *stridesB,
                             int *out_ndim, npy_intp *out_shape,
                             char **out_dataA, npy_intp *out_stridesA,
                             char **out_dataB, npy_intp *out_stridesB)
@@ -4077,10 +4077,10 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
-                            char *dataA, npy_intp *stridesA,
-                            char *dataB, npy_intp *stridesB,
-                            char *dataC, npy_intp *stridesC,
+PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp const *shape,
+                            char *dataA, npy_intp const *stridesA,
+                            char *dataB, npy_intp const *stridesB,
+                            char *dataC, npy_intp const *stridesC,
                             int *out_ndim, npy_intp *out_shape,
                             char **out_dataA, npy_intp *out_stridesA,
                             char **out_dataB, npy_intp *out_stridesB,

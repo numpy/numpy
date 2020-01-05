@@ -27,9 +27,9 @@
 
 /* See array_assign.h for parameter documentation */
 NPY_NO_EXPORT int
-broadcast_strides(int ndim, npy_intp *shape,
-                int strides_ndim, npy_intp *strides_shape, npy_intp *strides,
-                char *strides_name,
+broadcast_strides(int ndim, npy_intp const *shape,
+                int strides_ndim, npy_intp const *strides_shape, npy_intp const *strides,
+                char const *strides_name,
                 npy_intp *out_strides)
 {
     int idim, idim_start = ndim - strides_ndim;
@@ -84,8 +84,8 @@ broadcast_error: {
 
 /* See array_assign.h for parameter documentation */
 NPY_NO_EXPORT int
-raw_array_is_aligned(int ndim, npy_intp *shape,
-                     char *data, npy_intp *strides, int alignment)
+raw_array_is_aligned(int ndim, npy_intp const *shape,
+                     char *data, npy_intp const *strides, int alignment)
 {
 
     /*

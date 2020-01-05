@@ -107,7 +107,7 @@
  */
 static void
 @name@_sum_of_products_@noplabel@(int nop, char **dataptr,
-                                npy_intp *strides, npy_intp count)
+                                npy_intp const *strides, npy_intp count)
 {
 #if (@nop@ == 1) || (@nop@ <= 3 && !@complex@)
     char *data0 = dataptr[0];
@@ -206,7 +206,7 @@ static void
 
 static void
 @name@_sum_of_products_contig_one(int nop, char **dataptr,
-                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
     @type@ *data0 = (@type@ *)dataptr[0];
     @type@ *data_out = (@type@ *)dataptr[1];
@@ -268,7 +268,7 @@ finish_after_unrolled_loop:
 
 static void
 @name@_sum_of_products_contig_two(int nop, char **dataptr,
-                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
     @type@ *data0 = (@type@ *)dataptr[0];
     @type@ *data1 = (@type@ *)dataptr[1];
@@ -354,7 +354,7 @@ finish_after_unrolled_loop:
 /* Some extra specializations for the two operand case */
 static void
 @name@_sum_of_products_stride0_contig_outcontig_two(int nop, char **dataptr,
-                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
     @temptype@ value0 = @from@(*(@type@ *)dataptr[0]);
     @type@ *data1 = (@type@ *)dataptr[1];
@@ -483,7 +483,7 @@ finish_after_unrolled_loop:
 
 static void
 @name@_sum_of_products_contig_stride0_outcontig_two(int nop, char **dataptr,
-                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
     @type@ *data0 = (@type@ *)dataptr[0];
     @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
@@ -567,7 +567,7 @@ finish_after_unrolled_loop:
 
 static void
 @name@_sum_of_products_contig_contig_outstride0_two(int nop, char **dataptr,
-                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
     @type@ *data0 = (@type@ *)dataptr[0];
     @type@ *data1 = (@type@ *)dataptr[1];
@@ -727,7 +727,7 @@ finish_after_unrolled_loop:
 
 static void
 @name@_sum_of_products_stride0_contig_outstride0_two(int nop, char **dataptr,
-                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
     @temptype@ value0 = @from@(*(@type@ *)dataptr[0]);
     @type@ *data1 = (@type@ *)dataptr[1];
@@ -826,7 +826,7 @@ finish_after_unrolled_loop:
 
 static void
 @name@_sum_of_products_contig_stride0_outstride0_two(int nop, char **dataptr,
-                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
     @type@ *data0 = (@type@ *)dataptr[0];
     @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
@@ -927,7 +927,7 @@ finish_after_unrolled_loop:
 
 static void
 @name@_sum_of_products_contig_three(int nop, char **dataptr,
-                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
     @type@ *data0 = (@type@ *)dataptr[0];
     @type@ *data1 = (@type@ *)dataptr[1];
@@ -971,7 +971,7 @@ static void
 
 static void
 @name@_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
-                                npy_intp *NPY_UNUSED(strides), npy_intp count)
+                                npy_intp const *NPY_UNUSED(strides), npy_intp count)
 {
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_@noplabel@ (%d)\n",
                                                     (int)count);
@@ -1024,7 +1024,7 @@ static void
 
 static void
 @name@_sum_of_products_contig_outstride0_one(int nop, char **dataptr,
-                                npy_intp *strides, npy_intp count)
+                                npy_intp const *strides, npy_intp count)
 {
 #if @complex@
     @temptype@ accum_re = 0, accum_im = 0;
@@ -1201,7 +1201,7 @@ finish_after_unrolled_loop:
 
 static void
 @name@_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
-                                npy_intp *strides, npy_intp count)
+                                npy_intp const *strides, npy_intp count)
 {
 #if @complex@
     @temptype@ accum_re = 0, accum_im = 0;
@@ -1319,7 +1319,7 @@ static void
 
 static void
 bool_sum_of_products_@noplabel@(int nop, char **dataptr,
-                                npy_intp *strides, npy_intp count)
+                                npy_intp const *strides, npy_intp count)
 {
 #if (@nop@ <= 3)
     char *data0 = dataptr[0];
@@ -1376,7 +1376,7 @@ bool_sum_of_products_@noplabel@(int nop, char **dataptr,
 
 static void
 bool_sum_of_products_contig_@noplabel@(int nop, char **dataptr,
-                                npy_intp *strides, npy_intp count)
+                                npy_intp const *strides, npy_intp count)
 {
 #if (@nop@ <= 3)
     char *data0 = dataptr[0];
@@ -1484,7 +1484,7 @@ finish_after_unrolled_loop:
 
 static void
 bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
-                                npy_intp *strides, npy_intp count)
+                                npy_intp const *strides, npy_intp count)
 {
     npy_bool accum = 0;
 
@@ -1538,7 +1538,7 @@ bool_sum_of_products_outstride0_@noplabel@(int nop, char **dataptr,
 
 /**end repeat**/
 
-typedef void (*sum_of_products_fn)(int, char **, npy_intp *, npy_intp);
+typedef void (*sum_of_products_fn)(int, char **, npy_intp const*, npy_intp);
 
 /* These tables need to match up with the type enum */
 static sum_of_products_fn
@@ -1720,7 +1720,7 @@ static sum_of_products_fn _unspecialized_table[NPY_NTYPES][4] = {
 
 static sum_of_products_fn
 get_sum_of_products_function(int nop, int type_num,
-                             npy_intp itemsize, npy_intp *fixed_strides)
+                             npy_intp itemsize, npy_intp const *fixed_strides)
 {
     int iop;
 

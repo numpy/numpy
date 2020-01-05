@@ -6,7 +6,7 @@
  * A negative value in 'vals' gets interpreted as newaxis.
  */
 NPY_NO_EXPORT PyObject *
-build_shape_string(npy_intp n, npy_intp *vals);
+build_shape_string(npy_intp n, npy_intp const *vals);
 
 /*
  * Creates a sorted stride perm matching the KEEPORDER behavior

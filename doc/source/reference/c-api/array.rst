@@ -2514,7 +2514,7 @@ this useful approach to looping over an array.
     stride and that axis will be used.
 
 .. c:function:: PyObject *PyArray_BroadcastToShape( \
-        PyObject* arr, npy_intp *dimensions, int nd)
+        PyObject* arr, npy_intp const *dimensions, int nd)
 
     Return an array iterator that is broadcast to iterate as an array
     of the shape provided by *dimensions* and *nd*.

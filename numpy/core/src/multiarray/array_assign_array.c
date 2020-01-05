@@ -29,8 +29,8 @@
  * elements, as required by the copy/casting code in lowlevel_strided_loops.c
  */
 NPY_NO_EXPORT int
-copycast_isaligned(int ndim, npy_intp *shape,
-        PyArray_Descr *dtype, char *data, npy_intp *strides)
+copycast_isaligned(int ndim, npy_intp const *shape,
+        PyArray_Descr *dtype, char *data, npy_intp const *strides)
 {
     int aligned;
     int big_aln, small_aln;
@@ -72,9 +72,9 @@ copycast_isaligned(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-raw_array_assign_array(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data, npy_intp *src_strides)
+raw_array_assign_array(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
+        PyArray_Descr *src_dtype, char *src_data, npy_intp const *src_strides)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS];
@@ -152,11 +152,11 @@ raw_array_assign_array(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-raw_array_wheremasked_assign_array(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data, npy_intp *src_strides,
+raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
+        PyArray_Descr *src_dtype, char *src_data, npy_intp const *src_strides,
         PyArray_Descr *wheremask_dtype, char *wheremask_data,
-        npy_intp *wheremask_strides)
+        npy_intp const *wheremask_strides)
 {
     int idim;
     npy_intp shape_it[NPY_MAXDIMS];

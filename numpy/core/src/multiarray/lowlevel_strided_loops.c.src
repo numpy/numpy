@@ -974,9 +974,9 @@ PyArray_GetStridedNumericCastFn(int aligned, npy_intp src_stride,
 NPY_NO_EXPORT npy_intp
 PyArray_TransferNDimToStrided(npy_intp ndim,
                 char *dst, npy_intp dst_stride,
-                char *src, npy_intp *src_strides, npy_intp src_strides_inc,
-                npy_intp *coords, npy_intp coords_inc,
-                npy_intp *shape, npy_intp shape_inc,
+                char *src, npy_intp const *src_strides, npy_intp src_strides_inc,
+                npy_intp const *coords, npy_intp coords_inc,
+                npy_intp const *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedUnaryOp *stransfer,
                 NpyAuxData *data)
@@ -1092,10 +1092,10 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
 /* See documentation of arguments in lowlevel_strided_loops.h */
 NPY_NO_EXPORT npy_intp
 PyArray_TransferStridedToNDim(npy_intp ndim,
-                char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
+                char *dst, npy_intp const *dst_strides, npy_intp dst_strides_inc,
                 char *src, npy_intp src_stride,
-                npy_intp *coords, npy_intp coords_inc,
-                npy_intp *shape, npy_intp shape_inc,
+                npy_intp const *coords, npy_intp coords_inc,
+                npy_intp const *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedUnaryOp *stransfer,
                 NpyAuxData *data)
@@ -1211,11 +1211,11 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
 /* See documentation of arguments in lowlevel_strided_loops.h */
 NPY_NO_EXPORT npy_intp
 PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
-                char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
+                char *dst, npy_intp const *dst_strides, npy_intp dst_strides_inc,
                 char *src, npy_intp src_stride,
                 npy_uint8 *mask, npy_intp mask_stride,
-                npy_intp *coords, npy_intp coords_inc,
-                npy_intp *shape, npy_intp shape_inc,
+                npy_intp const *coords, npy_intp coords_inc,
+                npy_intp const *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_MaskedStridedUnaryOp *stransfer,
                 NpyAuxData *data)

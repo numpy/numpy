@@ -56,7 +56,7 @@ static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
                     const npy_uint32 *op_flags, int **op_axes,
-                    npy_intp *itershape);
+                    npy_intp const *itershape);
 static void
 npyiter_replace_axisdata(NpyIter *iter, int iop,
                       PyArrayObject *op,
@@ -80,7 +80,7 @@ npyiter_get_common_dtype(int nop, PyArrayObject **op,
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 npy_uint32 flags, npyiter_opitflags *op_itflags,
-                int op_ndim, npy_intp *shape,
+                int op_ndim, npy_intp const *shape,
                 PyArray_Descr *op_dtype, const int *op_axes);
 static int
 npyiter_allocate_arrays(NpyIter *iter,
@@ -1424,7 +1424,7 @@ static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
                     const npy_uint32 *op_flags, int **op_axes,
-                    npy_intp *itershape)
+                    npy_intp const *itershape)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
@@ -2476,7 +2476,7 @@ npyiter_get_common_dtype(int nop, PyArrayObject **op,
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 npy_uint32 flags, npyiter_opitflags *op_itflags,
-                int op_ndim, npy_intp *shape,
+                int op_ndim, npy_intp const *shape,
                 PyArray_Descr *op_dtype, const int *op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);

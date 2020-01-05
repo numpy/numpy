@@ -44,8 +44,8 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-raw_array_assign_scalar(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
+raw_array_assign_scalar(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
         PyArray_Descr *src_dtype, char *src_data);
 
 /*
@@ -55,11 +55,11 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
+raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
         PyArray_Descr *src_dtype, char *src_data,
         PyArray_Descr *wheremask_dtype, char *wheremask_data,
-        npy_intp *wheremask_strides);
+        npy_intp const *wheremask_strides);
 
 /******** LOW-LEVEL ARRAY MANIPULATION HELPERS ********/
 
@@ -80,9 +80,9 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-broadcast_strides(int ndim, npy_intp *shape,
-                int strides_ndim, npy_intp *strides_shape, npy_intp *strides,
-                char *strides_name,
+broadcast_strides(int ndim, npy_intp const *shape,
+                int strides_ndim, npy_intp const *strides_shape, npy_intp const *strides,
+                char const *strides_name,
                 npy_intp *out_strides);
 
 /*
@@ -93,8 +93,8 @@ broadcast_strides(int ndim, npy_intp *shape,
  * cannot-be-aligned, in which case 0 (false) is always returned.
  */
 NPY_NO_EXPORT int
-raw_array_is_aligned(int ndim, npy_intp *shape,
-                     char *data, npy_intp *strides, int alignment);
+raw_array_is_aligned(int ndim, npy_intp const *shape,
+                     char *data, npy_intp const *strides, int alignment);
 
 /*
  * Checks if an array is aligned to its "true alignment"

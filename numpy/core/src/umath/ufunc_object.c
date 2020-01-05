@@ -3424,8 +3424,8 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
 }
 
 static int
-reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
-            npy_intp *countptr, NpyIter_IterNextFunc *iternext,
+reduce_loop(NpyIter *iter, char **dataptrs, npy_intp const *strides,
+            npy_intp const *countptr, NpyIter_IterNextFunc *iternext,
             int needs_api, npy_intp skip_first_count, void *data)
 {
     PyArray_Descr *dtypes[3], **iter_dtypes;
@@ -3502,7 +3502,11 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
         strides_copy[2] = strides[0];
 
         if (!masked) {
-            innerloop(dataptrs_copy, countptr,
+            /* gh-15252: The signature of the inner loop considers `countptr`
+             * mutable. Inner loops aren't actually allowed to modify this
+             * though, so it's fine to cast it.
+             */
+            innerloop(dataptrs_copy, (npy_intp *)countptr,
                       strides_copy, innerloopdata);
         }
         else {
