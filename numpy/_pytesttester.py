@@ -42,7 +42,7 @@ def _show_numpy_info():
     print("NumPy relaxed strides checking option:", relaxed_strides)
 
 
-class PytestTester(object):
+class PytestTester:
     """
     Pytest test runner.
 

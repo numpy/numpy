@@ -10,7 +10,7 @@ from numpy.testing import (
 kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
 
-class TestBasic(object):
+class TestBasic:
     def test_from_object_array(self):
         A = np.array([['abc', 2],
                       ['long   ', '0123456789']], dtype='O')
@@ -81,7 +81,7 @@ class TestBasic(object):
         assert_equal(A.itemsize, 4)
         assert_(issubclass(A.dtype.type, np.unicode_))
 
-class TestVecString(object):
+class TestVecString:
     def test_non_existent_method(self):
 
         def fail():
@@ -132,7 +132,7 @@ class TestVecString(object):
         assert_raises(ValueError, fail)
 
 
-class TestWhitespace(object):
+class TestWhitespace:
     def setup(self):
         self.A = np.array([['abc ', '123  '],
                            ['789 ', 'xyz ']]).view(np.chararray)
@@ -147,7 +147,7 @@ class TestWhitespace(object):
         assert_(not np.any(self.A < self.B))
         assert_(not np.any(self.A != self.B))
 
-class TestChar(object):
+class TestChar:
     def setup(self):
         self.A = np.array('abc1', dtype='c').view(np.chararray)
 
@@ -155,7 +155,7 @@ class TestChar(object):
         assert_equal(self.A.shape, (4,))
         assert_equal(self.A.upper()[:2].tobytes(), b'AB')
 
-class TestComparisons(object):
+class TestComparisons:
     def setup(self):
         self.A = np.array([['abc', '123'],
                            ['789', 'xyz']]).view(np.chararray)
@@ -196,7 +196,7 @@ class TestComparisonsMixed2(TestComparisons):
         self.A = np.array([['abc', '123'],
                            ['789', 'xyz']], np.unicode_).view(np.chararray)
 
-class TestInformation(object):
+class TestInformation:
     def setup(self):
         self.A = np.array([[' abc ', ''],
                            ['12345', 'MixedCase'],
@@ -302,7 +302,7 @@ class TestInformation(object):
         assert_raises(TypeError, fail)
 
 
-class TestMethods(object):
+class TestMethods:
     def setup(self):
         self.A = np.array([[' abc ', ''],
                            ['12345', 'MixedCase'],
@@ -597,7 +597,7 @@ class TestMethods(object):
                 [False, False], [True, False], [False, False]])
 
 
-class TestOperations(object):
+class TestOperations:
     def setup(self):
         self.A = np.array([['abc', '123'],
                            ['789', 'xyz']]).view(np.chararray)

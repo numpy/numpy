@@ -65,7 +65,7 @@ def key_value_from_command(cmd, sep, successful_status=(0,),
             d[l[0]] = l[1]
     return d
 
-class CPUInfoBase(object):
+class CPUInfoBase:
     """Holds CPU information and provides methods for requiring
     the availability of various CPU features.
     """

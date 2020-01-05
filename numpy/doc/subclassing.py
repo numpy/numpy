@@ -114,7 +114,7 @@ For example, consider the following Python code:
 
 .. testcode::
 
-  class C(object):
+  class C:
       def __new__(cls, *args):
           print('Cls in __new__:', cls)
           print('Args in __new__:', args)

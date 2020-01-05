@@ -2186,7 +2186,7 @@ def test_iter_no_broadcast():
                   [['readonly'], ['readonly'], ['readonly', 'no_broadcast']])
 
 
-class TestIterNested(object):
+class TestIterNested:
 
     def test_basic(self):
         # Test nested iteration basic usage

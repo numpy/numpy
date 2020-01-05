@@ -110,7 +110,7 @@ def run_module_suite(file_to_run=None, argv=None):
     nose.run(argv=argv, addplugins=[KnownFailurePlugin()])
 
 
-class NoseTester(object):
+class NoseTester:
     """
     Nose test runner.
 

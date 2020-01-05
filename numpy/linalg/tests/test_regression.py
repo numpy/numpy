@@ -10,7 +10,7 @@ from numpy.testing import (
 )
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_eig_build(self):
         # Ticket #652

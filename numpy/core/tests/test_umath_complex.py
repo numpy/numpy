@@ -29,7 +29,7 @@ platform_skip = pytest.mark.skipif(xfail_complex_tests,
 
 
 
-class TestCexp(object):
+class TestCexp:
     def test_simple(self):
         check = check_complex_value
         f = np.exp
@@ -129,7 +129,7 @@ class TestCexp(object):
 
         check(f, np.nan, 0, np.nan, 0)
 
-class TestClog(object):
+class TestClog:
     def test_simple(self):
         x = np.array([1+0j, 1+2j])
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
@@ -274,7 +274,7 @@ class TestClog(object):
                 assert_almost_equal(np.log(xa[i].conj()), ya[i].conj())
 
 
-class TestCsqrt(object):
+class TestCsqrt:
 
     def test_simple(self):
         # sqrt(1)
@@ -354,7 +354,7 @@ class TestCsqrt(object):
         # XXX: check for conj(csqrt(z)) == csqrt(conj(z)) (need to fix branch
         # cuts first)
 
-class TestCpow(object):
+class TestCpow:
     def setup(self):
         self.olderr = np.seterr(invalid='ignore')
 
@@ -394,7 +394,7 @@ class TestCpow(object):
         for i in lx:
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
 
-class TestCabs(object):
+class TestCabs:
     def setup(self):
         self.olderr = np.seterr(invalid='ignore')
 
@@ -456,7 +456,7 @@ class TestCabs(object):
             ref = g(x[i], y[i])
             check_real_value(f, x[i], y[i], ref)
 
-class TestCarg(object):
+class TestCarg:
     def test_simple(self):
         check_real_value(ncu._arg, 1, 0, 0, False)
         check_real_value(ncu._arg, 0, 1, 0.5*np.pi, False)

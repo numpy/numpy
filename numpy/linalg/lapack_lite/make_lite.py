@@ -63,7 +63,7 @@ them.
 #endif
 '''
 
-class FortranRoutine(object):
+class FortranRoutine:
     """Wrapper for a Fortran routine in a file.
     """
     type = 'generic'
@@ -95,7 +95,7 @@ class UnknownFortranRoutine(FortranRoutine):
     def dependencies(self):
         return []
 
-class FortranLibrary(object):
+class FortranLibrary:
     """Container for a bunch of Fortran routines.
     """
     def __init__(self, src_dirs):

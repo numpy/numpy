@@ -18,7 +18,7 @@ from numpy.testing import (
 from numpy.compat import pickle
 
 
-class TestFromrecords(object):
+class TestFromrecords:
     def test_fromrecords(self):
         r = np.rec.fromrecords([[456, 'dbe', 1.2], [2, 'de', 1.3]],
                             names='col1,col2,col3')
@@ -324,7 +324,7 @@ class TestFromrecords(object):
 
 
 @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
-class TestPathUsage(object):
+class TestPathUsage:
     # Test that pathlib.Path can be used
     def test_tofile_fromfile(self):
         with temppath(suffix='.bin') as path:
@@ -340,7 +340,7 @@ class TestPathUsage(object):
             assert_array_equal(x, a)
 
 
-class TestRecord(object):
+class TestRecord:
     def setup(self):
         self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
                             dtype=[("col1", "<i4"),

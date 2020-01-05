@@ -6,7 +6,7 @@ from numpy.testing import (
 )
 
 
-class TestUfunclike(object):
+class TestUfunclike:
 
     def test_isposinf(self):
         a = nx.array([nx.inf, -nx.inf, nx.nan, 0.0, 3.0, -3.0])

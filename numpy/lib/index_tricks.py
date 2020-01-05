@@ -105,7 +105,7 @@ def ix_(*args):
         out.append(new)
     return tuple(out)
 
-class nd_grid(object):
+class nd_grid:
     """
     Construct a multi-dimensional "meshgrid".
 
@@ -297,7 +297,7 @@ class OGridClass(nd_grid):
 ogrid = OGridClass()
 
 
-class AxisConcatenator(object):
+class AxisConcatenator:
     """
     Translates slice objects to concatenation along an axis.
 
@@ -550,7 +550,7 @@ c_ = CClass()
 
 
 @set_module('numpy')
-class ndenumerate(object):
+class ndenumerate:
     """
     Multidimensional index iterator.
 
@@ -601,7 +601,7 @@ class ndenumerate(object):
 
 
 @set_module('numpy')
-class ndindex(object):
+class ndindex:
     """
     An N-dimensional iterator object to index arrays.
 
@@ -679,7 +679,7 @@ class ndindex(object):
 #
 #
 
-class IndexExpression(object):
+class IndexExpression:
     """
     A nicer way to build up index tuples for arrays.
 

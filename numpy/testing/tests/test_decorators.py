@@ -21,7 +21,7 @@ else:
 
 
 @pytest.mark.skipif(not HAVE_NOSE, reason="Needs nose")
-class TestNoseDecorators(object):
+class TestNoseDecorators:
     # These tests are run in a class for simplicity while still
     # getting a report on each, skipped or success.
 

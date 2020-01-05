@@ -13,7 +13,7 @@ np.seterr(all='ignore')
 pi = np.pi
 
 
-class ModuleTester(object):
+class ModuleTester:
     def __init__(self, module):
         self.module = module
         self.allequal = module.allequal

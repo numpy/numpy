@@ -119,7 +119,7 @@ def test_fromstring_missing():
                      np.array([1]))
 
 
-class TestFileBased(object):
+class TestFileBased:
 
     ldbl = 1 + LD_INFO.eps
     tgt = np.array([ldbl]*5)

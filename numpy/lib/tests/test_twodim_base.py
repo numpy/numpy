@@ -24,7 +24,7 @@ def get_mat(n):
     return data
 
 
-class TestEye(object):
+class TestEye:
     def test_basic(self):
         assert_equal(eye(4),
                      array([[1, 0, 0, 0],
@@ -106,7 +106,7 @@ class TestEye(object):
         assert mat_f.flags.f_contiguous
 
 
-class TestDiag(object):
+class TestDiag:
     def test_vector(self):
         vals = (100 * arange(5)).astype('l')
         b = zeros((5, 5))
@@ -153,7 +153,7 @@ class TestDiag(object):
         assert_raises(ValueError, diag, [[[1]]])
 
 
-class TestFliplr(object):
+class TestFliplr:
     def test_basic(self):
         assert_raises(ValueError, fliplr, ones(4))
         a = get_mat(4)
@@ -166,7 +166,7 @@ class TestFliplr(object):
         assert_equal(fliplr(a), b)
 
 
-class TestFlipud(object):
+class TestFlipud:
     def test_basic(self):
         a = get_mat(4)
         b = a[::-1, :]
@@ -178,7 +178,7 @@ class TestFlipud(object):
         assert_equal(flipud(a), b)
 
 
-class TestHistogram2d(object):
+class TestHistogram2d:
     def test_simple(self):
         x = array(
             [0.41702200, 0.72032449, 1.1437481e-4, 0.302332573, 0.146755891])
@@ -296,7 +296,7 @@ class TestHistogram2d(object):
         assert_(r, ((ShouldDispatch,), (xy, xy), dict(weights=s_d)))
 
 
-class TestTri(object):
+class TestTri:
     def test_dtype(self):
         out = array([[1, 0, 0],
                      [1, 1, 0],
@@ -434,7 +434,7 @@ def test_tril_indices():
                               [-10, -10, -10, -10, -10]]))
 
 
-class TestTriuIndices(object):
+class TestTriuIndices:
     def test_triu_indices(self):
         iu1 = triu_indices(4)
         iu2 = triu_indices(4, k=2)
@@ -484,21 +484,21 @@ class TestTriuIndices(object):
                                   [16, 17, 18, -1, -1]]))
 
 
-class TestTrilIndicesFrom(object):
+class TestTrilIndicesFrom:
     def test_exceptions(self):
         assert_raises(ValueError, tril_indices_from, np.ones((2,)))
         assert_raises(ValueError, tril_indices_from, np.ones((2, 2, 2)))
         # assert_raises(ValueError, tril_indices_from, np.ones((2, 3)))
 
 
-class TestTriuIndicesFrom(object):
+class TestTriuIndicesFrom:
     def test_exceptions(self):
         assert_raises(ValueError, triu_indices_from, np.ones((2,)))
         assert_raises(ValueError, triu_indices_from, np.ones((2, 2, 2)))
         # assert_raises(ValueError, triu_indices_from, np.ones((2, 3)))
 
 
-class TestVander(object):
+class TestVander:
     def test_basic(self):
         c = np.array([0, 1, -2, 3])
         v = vander(c)

@@ -24,7 +24,7 @@ from numpy.ma.testutils import (
 from numpy.compat import pickle
 
 
-class TestMRecords(object):
+class TestMRecords:
 
     ilist = [1, 2, 3, 4, 5]
     flist = [1.1, 2.2, 3.3, 4.4, 5.5]
@@ -346,7 +346,7 @@ class TestMRecords(object):
                                       dtype=mult.dtype))
 
 
-class TestView(object):
+class TestView:
 
     def setup(self):
         (a, b) = (np.arange(10), np.random.rand(10))
@@ -384,7 +384,7 @@ class TestView(object):
 
 
 ##############################################################################
-class TestMRecordsImport(object):
+class TestMRecordsImport:
 
     _a = ma.array([1, 2, 3], mask=[0, 0, 1], dtype=int)
     _b = ma.array([1.1, 2.2, 3.3], mask=[0, 0, 1], dtype=float)

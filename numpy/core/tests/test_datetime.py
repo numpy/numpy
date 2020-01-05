@@ -22,7 +22,7 @@ except NameError:
     RecursionError = RuntimeError  # python < 3.5
 
 
-class TestDateTime(object):
+class TestDateTime:
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
@@ -2366,7 +2366,7 @@ class TestDateTime(object):
         assert limit_via_str == limit
 
 
-class TestDateTimeData(object):
+class TestDateTimeData:
 
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)

@@ -562,7 +562,7 @@ def test_internal_overlap_fuzz():
 def test_non_ndarray_inputs():
     # Regression check for gh-5604
 
-    class MyArray(object):
+    class MyArray:
         def __init__(self, data):
             self.data = data
 
@@ -570,7 +570,7 @@ def test_non_ndarray_inputs():
         def __array_interface__(self):
             return self.data.__array_interface__
 
-    class MyArray2(object):
+    class MyArray2:
         def __init__(self, data):
             self.data = data
 
@@ -617,7 +617,7 @@ def assert_copy_equivalent(operation, args, out, **kwargs):
         assert_equal(got, expected)
 
 
-class TestUFunc(object):
+class TestUFunc:
     """
     Test ufunc call memory overlap handling
     """

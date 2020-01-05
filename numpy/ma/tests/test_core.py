@@ -63,7 +63,7 @@ num_dts = [np.dtype(dt_) for dt_ in '?bhilqBHILQefdgFD']
 num_ids = [dt_.char for dt_ in num_dts]
 
 
-class TestMaskedArray(object):
+class TestMaskedArray:
     # Base test class for MaskedArrays.
 
     def setup(self):
@@ -944,7 +944,7 @@ class TestMaskedArray(object):
         assert_(mx2[0] == 0.)
 
 
-class TestMaskedArrayArithmetic(object):
+class TestMaskedArrayArithmetic:
     # Base test class for MaskedArrays.
 
     def setup(self):
@@ -1713,7 +1713,7 @@ class TestMaskedArrayArithmetic(object):
         assert_equal(a.mask, [0, 0, 0, 0, 1])
 
 
-class TestMaskedArrayAttributes(object):
+class TestMaskedArrayAttributes:
 
     def test_keepmask(self):
         # Tests the keep mask flag
@@ -1889,7 +1889,7 @@ class TestMaskedArrayAttributes(object):
         assert_equal(m._mask, np.ma.nomask)
 
 
-class TestFillingValues(object):
+class TestFillingValues:
 
     def test_check_on_scalar(self):
         # Test _check_fill_value set to valid and invalid values
@@ -2227,7 +2227,7 @@ class TestFillingValues(object):
         assert_equal(a["f1"].fill_value, default_fill_value("eggs"))
 
 
-class TestUfuncs(object):
+class TestUfuncs:
     # Test class for the application of ufuncs on MaskedArrays.
 
     def setup(self):
@@ -2307,7 +2307,7 @@ class TestUfuncs(object):
         assert_raises(TypeError, operator.mul, a, "abc")
         assert_raises(TypeError, operator.truediv, a, "abc")
 
-        class MyClass(object):
+        class MyClass:
             __array_priority__ = a.__array_priority__ + 1
 
             def __mul__(self, other):
@@ -2321,7 +2321,7 @@ class TestUfuncs(object):
         assert_(a * me == "My rmul")
 
         # and that __array_priority__ is respected
-        class MyClass2(object):
+        class MyClass2:
             __array_priority__ = 100
 
             def __mul__(self, other):
@@ -2371,7 +2371,7 @@ class TestUfuncs(object):
             # also check that allclose uses ma ufuncs, to avoid warning
             allclose(m, 0.5)
 
-class TestMaskedArrayInPlaceArithmetics(object):
+class TestMaskedArrayInPlaceArithmetics:
     # Test MaskedArray Arithmetics
 
     def setup(self):
@@ -2873,7 +2873,7 @@ class TestMaskedArrayInPlaceArithmetics(object):
                 assert_equal(len(w), 0, "Failed on type=%s." % t)
 
 
-class TestMaskedArrayMethods(object):
+class TestMaskedArrayMethods:
     # Test class for miscellaneous MaskedArrays methods.
     def setup(self):
         # Base data definition.
@@ -3580,7 +3580,7 @@ class TestMaskedArrayMethods(object):
         assert_equal(xd.data, x.diagonal().data)
 
 
-class TestMaskedArrayMathMethods(object):
+class TestMaskedArrayMathMethods:
 
     def setup(self):
         # Base data definition.
@@ -3858,7 +3858,7 @@ class TestMaskedArrayMathMethods(object):
         assert_equal(a.max(1), [3, 6])
 
 
-class TestMaskedArrayMathMethodsComplex(object):
+class TestMaskedArrayMathMethodsComplex:
     # Test class for miscellaneous MaskedArrays methods.
     def setup(self):
         # Base data definition.
@@ -3911,7 +3911,7 @@ class TestMaskedArrayMathMethodsComplex(object):
                                 mX[:, k].compressed().std())
 
 
-class TestMaskedArrayFunctions(object):
+class TestMaskedArrayFunctions:
     # Test class for miscellaneous functions.
 
     def setup(self):
@@ -4550,7 +4550,7 @@ class TestMaskedArrayFunctions(object):
         assert_equal(test, masked_equal([-1, -1, -1, -1, -1], -1))
 
 
-class TestMaskedFields(object):
+class TestMaskedFields:
 
     def setup(self):
         ilist = [1, 2, 3, 4, 5]
@@ -4712,7 +4712,7 @@ class TestMaskedFields(object):
             assert_equal(len(rec), len(self.data['ddtype']))
 
 
-class TestMaskedObjectArray(object):
+class TestMaskedObjectArray:
 
     def test_getitem(self):
         arr = np.ma.array([None, None])
@@ -4760,7 +4760,7 @@ class TestMaskedObjectArray(object):
         assert_(arr[0] is np.ma.masked)
 
 
-class TestMaskedView(object):
+class TestMaskedView:
 
     def setup(self):
         iterator = list(zip(np.arange(10), np.random.rand(10)))
@@ -4838,7 +4838,7 @@ class TestMaskedView(object):
         assert_(not isinstance(test, MaskedArray))
 
 
-class TestOptionalArgs(object):
+class TestOptionalArgs:
     def test_ndarrayfuncs(self):
         # test axis arg behaves the same as ndarray (including multiple axes)
 
@@ -4925,7 +4925,7 @@ class TestOptionalArgs(object):
         assert_raises(np.AxisError, count, np.ma.array(1), axis=1)
 
 
-class TestMaskedConstant(object):
+class TestMaskedConstant:
     def _do_add_test(self, add):
         # sanity check
         assert_(add(np.ma.masked, 1) is np.ma.masked)
@@ -5042,7 +5042,7 @@ class TestMaskedConstant(object):
         assert_raises(AttributeError, setattr, np.ma.masked, 'dtype', np.int64)
 
 
-class TestMaskedWhereAliases(object):
+class TestMaskedWhereAliases:
 
     # TODO: Test masked_object, masked_equal, ...
 

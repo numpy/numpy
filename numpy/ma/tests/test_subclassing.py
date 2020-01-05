@@ -78,7 +78,7 @@ msubarray = MSubArray
 # and overrides __array_wrap__, updating the info dict, to check that this
 # doesn't get destroyed by MaskedArray._update_from.  But this one also needs
 # its own iterator...
-class CSAIterator(object):
+class CSAIterator:
     """
     Flat iterator object that uses its own setter/getter
     (works around ndarray.flat not propagating subclass setters/getters
@@ -152,7 +152,7 @@ class ComplicatedSubArray(SubArray):
         return obj
 
 
-class TestSubclassing(object):
+class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
 
     def setup(self):

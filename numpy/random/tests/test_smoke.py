@@ -91,7 +91,7 @@ def warmup(rg, n=None):
     rg.random(n, dtype=np.float32)
 
 
-class RNG(object):
+class RNG:
     @classmethod
     def setup_class(cls):
         # Overridden in test classes. Place holder to silence IDE noise

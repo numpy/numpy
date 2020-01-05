@@ -110,5 +110,5 @@ def get_indexes_rand_():
     return indexes_rand_
 
 
-class Benchmark(object):
+class Benchmark:
     goal_time = 0.25
