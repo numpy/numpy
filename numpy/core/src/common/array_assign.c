@@ -85,7 +85,7 @@ broadcast_error: {
 /* See array_assign.h for parameter documentation */
 NPY_NO_EXPORT int
 raw_array_is_aligned(int ndim, npy_intp const *shape,
-                     char *data, npy_intp const *strides, int alignment)
+                     char const *data, npy_intp const *strides, int alignment)
 {
 
     /*
@@ -123,7 +123,7 @@ raw_array_is_aligned(int ndim, npy_intp const *shape,
 #endif /* not NPY_RELAXED_STRIDES_CHECKING */
         }
 
-        return npy_is_aligned((void *)align_check, alignment);
+        return npy_is_aligned((void const*)align_check, alignment);
     }
     else if (alignment == 1) {
         return 1;

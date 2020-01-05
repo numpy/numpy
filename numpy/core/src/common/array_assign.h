@@ -32,7 +32,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
 
 NPY_NO_EXPORT int
 PyArray_AssignRawScalar(PyArrayObject *dst,
-                        PyArray_Descr *src_dtype, char *src_data,
+                        PyArray_Descr *src_dtype, char const *src_data,
                         PyArrayObject *wheremask,
                         NPY_CASTING casting);
 
@@ -46,7 +46,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
 NPY_NO_EXPORT int
 raw_array_assign_scalar(int ndim, npy_intp const *shape,
         PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data);
+        PyArray_Descr *src_dtype, char const *src_data);
 
 /*
  * Assigns the scalar value to every element of the destination raw array
@@ -57,8 +57,8 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
 NPY_NO_EXPORT int
 raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
         PyArray_Descr *dst_dtype, char *dst_data, npy_intp const *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data,
-        PyArray_Descr *wheremask_dtype, char *wheremask_data,
+        PyArray_Descr *src_dtype, char const *src_data,
+        PyArray_Descr *wheremask_dtype, char const *wheremask_data,
         npy_intp const *wheremask_strides);
 
 /******** LOW-LEVEL ARRAY MANIPULATION HELPERS ********/
@@ -94,7 +94,7 @@ broadcast_strides(int ndim, npy_intp const *shape,
  */
 NPY_NO_EXPORT int
 raw_array_is_aligned(int ndim, npy_intp const *shape,
-                     char *data, npy_intp const *strides, int alignment);
+                     char const *data, npy_intp const *strides, int alignment);
 
 /*
  * Checks if an array is aligned to its "true alignment"
