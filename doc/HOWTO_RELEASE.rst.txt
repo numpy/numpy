@@ -40,7 +40,7 @@ Release Scripts
 
 Supported platforms and versions
 ================================
-Python 2.7 and >=3.4 are the currently supported versions when building from
+Python >=3.5 are the currently supported versions when building from
 source.  We test NumPy against all these versions every time we merge code to
 master.  Binary installers may be available for a subset of these versions (see
 below).
@@ -48,7 +48,7 @@ below).
 
 OS X
 ----
-Python 2.7 and >=3.4 are the versions for which we provide binary installers.
+Python >=3.5 are the versions for which we provide binary installers.
 OS X versions >= 10.6 are supported.  We build binary wheels for OSX that are
 compatible with Python.org Python, system Python, homebrew and macports - see
 this `OSX wheel building summary
@@ -57,7 +57,7 @@ this `OSX wheel building summary
 
 Windows
 -------
-We build 32- and 64-bit wheels for Python 2.7, 3.4, 3.5 on Windows. Windows
+We build 32- and 64-bit wheels for Python 3.5 on Windows. Windows
 XP, Vista, 7, 8 and 10 are supported.  We build NumPy using the MSVC compilers
 on Appveyor, but we are hoping to update to a `mingw-w64 toolchain
 <https://mingwpy.github.io>`_.  The Windows wheels use ATLAS for BLAS / LAPACK.
