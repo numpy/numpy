@@ -9,7 +9,6 @@ import os
 from distutils.errors import DistutilsExecError, CompileError
 from distutils.unixccompiler import *
 from numpy.distutils.ccompiler import replace_method
-from numpy.distutils.compat import get_exception
 from numpy.distutils.misc_util import _commandline_dep_string
 
 if sys.version_info[0] < 3:
@@ -56,8 +55,8 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
     try:
         self.spawn(self.compiler_so + cc_args + [src, '-o', obj] + deps +
                    extra_postargs, display = display)
-    except DistutilsExecError:
-        msg = str(get_exception())
+    except DistutilsExecError as e:
+        msg = str(e)
         raise CompileError(msg)
 
     # add commandline flags to dependency file
@@ -128,8 +127,8 @@ def UnixCCompiler_create_static_lib(self, objects, output_libname,
             try:
                 self.spawn(self.ranlib + [output_filename],
                            display = display)
-            except DistutilsExecError:
-                msg = str(get_exception())
+            except DistutilsExecError as e:
+                msg = str(e)
                 raise LibError(msg)
     else:
         log.debug("skipping %s (up-to-date)", output_filename)

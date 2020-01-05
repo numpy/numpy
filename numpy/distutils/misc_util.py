@@ -34,7 +34,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-from numpy.distutils.compat import get_exception
 from numpy.compat import basestring
 from numpy.compat import npy_load_module
 
@@ -1972,9 +1971,8 @@ class Configuration(object):
                 try:
                     version_module = npy_load_module('_'.join(n.split('.')),
                                                      fn, info)
-                except ImportError:
-                    msg = get_exception()
-                    self.warn(str(msg))
+                except ImportError as e:
+                    self.warn(str(e))
                     version_module = None
                 if version_module is None:
                     continue

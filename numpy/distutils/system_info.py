@@ -163,7 +163,6 @@ from numpy.distutils.exec_command import (
 from numpy.distutils.misc_util import (is_sequence, is_string,
                                        get_shared_lib_extension)
 from numpy.distutils.command.config import config as cmd_config
-from numpy.distutils.compat import get_exception
 from numpy.distutils import customized_ccompiler as _customized_ccompiler
 from numpy.distutils import _shell_utils
 import distutils.ccompiler
@@ -2541,18 +2540,18 @@ class numerix_info(system_info):
             try:
                 import numpy  # noqa: F401
                 which = "numpy", "defaulted"
-            except ImportError:
-                msg1 = str(get_exception())
+            except ImportError as e:
+                msg1 = str(e)
                 try:
                     import Numeric  # noqa: F401
                     which = "numeric", "defaulted"
-                except ImportError:
-                    msg2 = str(get_exception())
+                except ImportError as e:
+                    msg2 = str(e)
                     try:
                         import numarray  # noqa: F401
                         which = "numarray", "defaulted"
-                    except ImportError:
-                        msg3 = str(get_exception())
+                    except ImportError as e:
+                        msg3 = str(e)
                         log.info(msg1)
                         log.info(msg2)
                         log.info(msg3)

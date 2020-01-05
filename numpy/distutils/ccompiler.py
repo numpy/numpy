@@ -16,7 +16,6 @@ from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
 from numpy.distutils import log
-from numpy.distutils.compat import get_exception
 from numpy.distutils.exec_command import (
     filepath_from_subprocess_output, forward_bytes_to_stdout
 )
@@ -756,15 +755,15 @@ def new_compiler (plat=None,
     module_name = "numpy.distutils." + module_name
     try:
         __import__ (module_name)
-    except ImportError:
-        msg = str(get_exception())
+    except ImportError as e:
+        msg = str(e)
         log.info('%s in numpy.distutils; trying from distutils',
                  str(msg))
         module_name = module_name[6:]
         try:
             __import__(module_name)
-        except ImportError:
-            msg = str(get_exception())
+        except ImportError as e:
+            msg = str(e)
             raise DistutilsModuleError("can't compile C/C++ code: unable to load module '%s'" % \
                   module_name)
     try:
