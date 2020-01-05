@@ -228,7 +228,7 @@ class sdist_checked(sdist):
 
 def get_build_overrides():
     """
-    Custom build commands to add `--std=c99` to compilation
+    Custom build commands to add `-std=c99` to compilation
     """
     from numpy.distutils.command.build_clib import build_clib
     from numpy.distutils.command.build_ext import build_ext
@@ -247,15 +247,15 @@ def get_build_overrides():
         def build_a_library(self, build_info, lib_name, libraries):
             if _is_using_gcc(self):
                 args = build_info.get('extra_compiler_args') or []
-                args.append('--std=c99')
+                args.append('-std=c99')
                 build_info['extra_compiler_args'] = args
             build_clib.build_a_library(self, build_info, lib_name, libraries)
 
     class new_build_ext(build_ext):
         def build_extension(self, ext):
             if _is_using_gcc(self):
-                if '--std=c99' not in ext.extra_compile_args:
-                    ext.extra_compile_args.append('--std=c99')
+                if '-std=c99' not in ext.extra_compile_args:
+                    ext.extra_compile_args.append('-std=c99')
             build_ext.build_extension(self, ext)
     return new_build_clib, new_build_ext
 
