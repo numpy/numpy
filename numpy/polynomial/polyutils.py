@@ -78,7 +78,7 @@ class PolyDomainError(PolyError):
 # Base class for all polynomial types
 #
 
-class PolyBase(object):
+class PolyBase:
     """
     Base class for all polynomial types.
 

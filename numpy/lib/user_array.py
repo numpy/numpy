@@ -14,7 +14,7 @@ from numpy.core import (
 from numpy.compat import long
 
 
-class container(object):
+class container:
     """
     container(data, dtype=None, copy=True)
 

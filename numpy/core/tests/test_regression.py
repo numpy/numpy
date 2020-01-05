@@ -22,7 +22,7 @@ try:
 except NameError:
     RecursionError = RuntimeError  # python < 3.5
 
-class TestRegression(object):
+class TestRegression:
     def test_invalid_round(self):
         # Ticket #3
         v = 4.7599999999999998
@@ -426,7 +426,7 @@ class TestRegression(object):
 
     def test_lexsort_invalid_sequence(self):
         # Issue gh-4123
-        class BuggySequence(object):
+        class BuggySequence:
             def __len__(self):
                 return 4
 
@@ -1039,7 +1039,7 @@ class TestRegression(object):
 
     def test_mem_custom_float_to_array(self):
         # Ticket 702
-        class MyFloat(object):
+        class MyFloat:
             def __float__(self):
                 return 1.0
 
@@ -1048,7 +1048,7 @@ class TestRegression(object):
 
     def test_object_array_refcount_self_assign(self):
         # Ticket #711
-        class VictimObject(object):
+        class VictimObject:
             deleted = False
 
             def __del__(self):
@@ -2231,7 +2231,7 @@ class TestRegression(object):
         import operator as op
 
         # dummy class where __array__ throws exception
-        class Foo(object):
+        class Foo:
             __array_priority__ = 1002
 
             def __array__(self, *args, **kwargs):
@@ -2480,7 +2480,7 @@ class TestRegression(object):
             assert_equal(pickle.loads(dumped), arr)
 
     def test_bad_array_interface(self):
-        class T(object):
+        class T:
             __array_interface__ = {}
 
         np.array([T()])

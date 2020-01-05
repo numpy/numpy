@@ -4,7 +4,7 @@ from numpy.testing import (
     )
 
 
-class TestRegression(object):
+class TestRegression:
     def test_masked_array_create(self):
         # Ticket #17
         x = np.ma.masked_array([0, 1, 2, 3, 0, 4, 5, 6],

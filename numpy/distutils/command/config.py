@@ -493,7 +493,7 @@ class config(old_config):
         self._clean()
         return exitcode, output
 
-class GrabStdout(object):
+class GrabStdout:
 
     def __init__(self):
         self.sys_stdout = sys.stdout

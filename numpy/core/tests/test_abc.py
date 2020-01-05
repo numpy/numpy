@@ -5,7 +5,7 @@ import numbers
 import numpy as np
 from numpy.core.numerictypes import sctypes
 
-class TestABC(object):
+class TestABC:
     def test_abstract(self):
         assert_(issubclass(np.number, numbers.Number))
 

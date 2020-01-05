@@ -7,7 +7,7 @@ from numpy.linalg import lapack_lite
 from numpy.testing import assert_
 
 
-class FindDependenciesLdd(object):
+class FindDependenciesLdd:
 
     def __init__(self):
         self.cmd = ['ldd']
@@ -39,7 +39,7 @@ class FindDependenciesLdd(object):
         return founds
 
 
-class TestF77Mismatch(object):
+class TestF77Mismatch:
 
     @pytest.mark.skipif(not(sys.platform[:5] == 'linux'),
                         reason="no fortran compiler on non-Linux platform")

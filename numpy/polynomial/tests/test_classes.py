@@ -572,7 +572,7 @@ def test_ufunc_override(Poly):
 
 
 
-class TestLatexRepr(object):
+class TestLatexRepr:
     """Test the latex repr used by ipython """
 
     def as_latex(self, obj):
@@ -626,7 +626,7 @@ class TestLatexRepr(object):
 #
 
 
-class TestInterpolate(object):
+class TestInterpolate:
 
     def f(self, x):
         return x * (x - 1) * (x - 2)

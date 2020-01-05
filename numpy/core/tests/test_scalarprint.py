@@ -10,7 +10,7 @@ from tempfile import TemporaryFile
 import numpy as np
 from numpy.testing import assert_, assert_equal, suppress_warnings
 
-class TestRealScalars(object):
+class TestRealScalars:
     def test_str(self):
         svals = [0.0, -0.0, 1, -1, np.inf, -np.inf, np.nan]
         styps = [np.float16, np.float32, np.float64, np.longdouble]

@@ -33,7 +33,7 @@ scalars_only, codes_only = zip(*scalars_and_codes)
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="Python 2 scalars lack a buffer interface")
-class TestScalarPEP3118(object):
+class TestScalarPEP3118:
 
     @pytest.mark.parametrize('scalar', scalars_only, ids=codes_only)
     def test_scalar_match_array(self, scalar):

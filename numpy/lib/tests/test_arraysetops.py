@@ -12,7 +12,7 @@ import pytest
 
 
 
-class TestSetOps(object):
+class TestSetOps:
 
     def test_intersect1d(self):
         # unique inputs
@@ -34,7 +34,7 @@ class TestSetOps(object):
 
     def test_intersect1d_array_like(self):
         # See gh-11772
-        class Test(object):
+        class Test:
             def __array__(self):
                 return np.arange(3)
 
@@ -413,7 +413,7 @@ class TestSetOps(object):
         assert_array_equal(c1, c2)
 
 
-class TestUnique(object):
+class TestUnique:
 
     def test_unique_1d(self):
 

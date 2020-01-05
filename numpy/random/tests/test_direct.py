@@ -145,7 +145,7 @@ def test_seedsequence():
     assert len(dummy.spawn(10)) == 10
 
 
-class Base(object):
+class Base:
     dtype = np.uint64
     data2 = data1 = {}
 
@@ -410,7 +410,7 @@ class TestSFC64(Base):
         cls.invalid_init_values = [(-1,)]
 
 
-class TestDefaultRNG(object):
+class TestDefaultRNG:
     def test_seed(self):
         for args in [(), (None,), (1234,), ([1234, 5678],)]:
             rg = default_rng(*args)

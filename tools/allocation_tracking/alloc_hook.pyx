@@ -22,7 +22,7 @@ cdef void pyhook(void *old, void *new, size_t size, void *user_data):
            PyLong_FromVoidPtr(new),
            size)
 
-class NumpyAllocHook(object):
+class NumpyAllocHook:
     def __init__(self, callback):
         self.callback = callback
 

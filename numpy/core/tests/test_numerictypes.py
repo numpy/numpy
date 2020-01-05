@@ -98,7 +98,7 @@ def normalize_descr(descr):
 #    Creation tests
 ############################################################
 
-class CreateZeros(object):
+class CreateZeros:
     """Check the creation of heterogeneous arrays zero-valued"""
 
     def test_zeros0D(self):
@@ -141,7 +141,7 @@ class TestCreateZerosNested(CreateZeros):
     _descr = Ndescr
 
 
-class CreateValues(object):
+class CreateValues:
     """Check the creation of heterogeneous arrays with values"""
 
     def test_tuple(self):
@@ -201,7 +201,7 @@ class TestCreateValuesNestedMultiple(CreateValues):
 #    Reading tests
 ############################################################
 
-class ReadValuesPlain(object):
+class ReadValuesPlain:
     """Check the reading of values in heterogeneous arrays (plain)"""
 
     def test_access_fields(self):
@@ -233,7 +233,7 @@ class TestReadValuesPlainMultiple(ReadValuesPlain):
     multiple_rows = 1
     _buffer = PbufferT
 
-class ReadValuesNested(object):
+class ReadValuesNested:
     """Check the reading of values in heterogeneous arrays (nested)"""
 
     def test_access_top_fields(self):
@@ -331,14 +331,14 @@ class TestReadValuesNestedMultiple(ReadValuesNested):
     multiple_rows = True
     _buffer = NbufferT
 
-class TestEmptyField(object):
+class TestEmptyField:
     def test_assign(self):
         a = np.arange(10, dtype=np.float32)
         a.dtype = [("int",   "<0i4"), ("float", "<2f4")]
         assert_(a['int'].shape == (5, 0))
         assert_(a['float'].shape == (5, 2))
 
-class TestCommonType(object):
+class TestCommonType:
     def test_scalar_loses1(self):
         res = np.find_common_type(['f4', 'f4', 'i2'], ['f8'])
         assert_(res == 'f4')
@@ -359,7 +359,7 @@ class TestCommonType(object):
         res = np.find_common_type(['u8', 'i8', 'i8'], ['f8'])
         assert_(res == 'f8')
 
-class TestMultipleFields(object):
+class TestMultipleFields:
     def setup(self):
         self.ary = np.array([(1, 2, 3, 4), (5, 6, 7, 8)], dtype='i4,f4,i2,c8')
 
@@ -374,7 +374,7 @@ class TestMultipleFields(object):
         assert_(res == [(1, 3), (5, 7)])
 
 
-class TestIsSubDType(object):
+class TestIsSubDType:
     # scalar types can be promoted into dtypes
     wrappers = [np.dtype, lambda x: x]
 
@@ -405,18 +405,18 @@ class TestIsSubDType(object):
             assert_(not np.issubdtype(w1(np.float64), w2(np.float32)))
 
 
-class TestSctypeDict(object):
+class TestSctypeDict:
     def test_longdouble(self):
         assert_(np.sctypeDict['f8'] is not np.longdouble)
         assert_(np.sctypeDict['c16'] is not np.clongdouble)
 
 
-class TestBitName(object):
+class TestBitName:
     def test_abstract(self):
         assert_raises(ValueError, np.core.numerictypes.bitname, np.floating)
 
 
-class TestMaximumSctype(object):
+class TestMaximumSctype:
 
     # note that parametrizing with sctype['int'] and similar would skip types
     # with the same size (gh-11923)
@@ -442,7 +442,7 @@ class TestMaximumSctype(object):
         assert_equal(np.maximum_sctype(t), t)
 
 
-class Test_sctype2char(object):
+class Test_sctype2char:
     # This function is old enough that we're really just documenting the quirks
     # at this point.
 
@@ -490,7 +490,7 @@ def test_issctype(rep, expected):
 @pytest.mark.skipif(sys.flags.optimize > 1,
                     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
 @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
-class TestDocStrings(object):
+class TestDocStrings:
     def test_platform_dependent_aliases(self):
         if np.int64 is np.int_:
             assert_('int64' in np.int_.__doc__)

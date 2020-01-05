@@ -53,7 +53,7 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-class BagObj(object):
+class BagObj:
     """
     BagObj(obj)
 
@@ -67,7 +67,7 @@ class BagObj(object):
     Examples
     --------
     >>> from numpy.lib.npyio import BagObj as BO
-    >>> class BagDemo(object):
+    >>> class BagDemo:
     ...     def __getitem__(self, key): # An instance of BagObj(BagDemo)
     ...                                 # will call this method when any
     ...                                 # attribute look-up is required
@@ -1334,7 +1334,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         fmt = asstr(fmt)
     delimiter = asstr(delimiter)
 
-    class WriteWrap(object):
+    class WriteWrap:
         """Convert to unicode in py2 or to bytes on bytestream inputs.
 
         """

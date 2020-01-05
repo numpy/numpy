@@ -65,7 +65,7 @@ def test_string_cast():
 #    Creation tests
 ############################################################
 
-class CreateZeros(object):
+class CreateZeros:
     """Check the creation of zero-valued arrays"""
 
     def content_check(self, ua, ua_scalar, nbytes):
@@ -117,7 +117,7 @@ class TestCreateZeros_1009(CreateZeros):
     ulen = 1009
 
 
-class CreateValues(object):
+class CreateValues:
     """Check the creation of unicode arrays with values"""
 
     def content_check(self, ua, ua_scalar, nbytes):
@@ -202,7 +202,7 @@ class TestCreateValues_1009_UCS4(CreateValues):
 #    Assignment tests
 ############################################################
 
-class AssignValues(object):
+class AssignValues:
     """Check the assignment of unicode arrays with values"""
 
     def content_check(self, ua, ua_scalar, nbytes):
@@ -292,7 +292,7 @@ class TestAssignValues_1009_UCS4(AssignValues):
 #    Byteorder tests
 ############################################################
 
-class ByteorderValues(object):
+class ByteorderValues:
     """Check the byteorder of unicode arrays in round-trip conversions"""
 
     def test_values0D(self):

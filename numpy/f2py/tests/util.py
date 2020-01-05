@@ -313,7 +313,7 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
 #
 
 
-class F2PyTest(object):
+class F2PyTest:
     code = None
     sources = None
     options = []

@@ -128,7 +128,7 @@ class DuplicateOptionInfo(_system_info):
     section = 'duplicate_options'
 
 
-class TestSystemInfoReading(object):
+class TestSystemInfoReading:
 
     def setup(self):
         """ Create the libraries """

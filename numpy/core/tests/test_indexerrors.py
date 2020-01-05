@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_raises
 
-class TestIndexErrors(object):
+class TestIndexErrors:
     '''Tests to exercise indexerrors not covered by other tests.'''
 
     def test_arraytypes_fasttake(self):

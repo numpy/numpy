@@ -288,7 +288,7 @@ def seterrcall(func):
 
     Log error message:
 
-    >>> class Log(object):
+    >>> class Log:
     ...     def write(self, msg):
     ...         print("LOG: %s" % msg)
     ...
@@ -363,7 +363,7 @@ def geterrcall():
     return umath.geterrobj()[2]
 
 
-class _unspecified(object):
+class _unspecified:
     pass
 
 

@@ -119,7 +119,7 @@ that makes it hard to identify the test from the output of running the test
 suite with ``verbose=2`` (or similar verbosity setting).  Use plain comments
 (``#``) if necessary.
 
-Labeling tests 
+Labeling tests
 --------------
 
 As an alternative to ``pytest.mark.<label>``, there are a number of labels you
@@ -174,7 +174,7 @@ name; thus::
       print 'doing teardown'
 
 
-  class TestMe(object):
+  class TestMe:
       def setup():
           """Class-level setup"""
           print 'doing setup'

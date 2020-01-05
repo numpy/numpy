@@ -43,7 +43,7 @@ def find_comma_decimal_point_locale():
     return old_locale, new_locale
 
 
-class CommaDecimalPointLocale(object):
+class CommaDecimalPointLocale:
     """Sets LC_NUMERIC to a locale with comma as decimal point.
 
     Classes derived from this class have setup and teardown methods that run

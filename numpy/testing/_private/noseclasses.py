@@ -266,7 +266,7 @@ class NumpyDoctest(npd.Doctest):
         return npd.Doctest.wantFile(self, file)
 
 
-class Unplugger(object):
+class Unplugger:
     """ Nose plugin to remove named plugin late in loading
 
     By default it removes the "doctest" plugin.

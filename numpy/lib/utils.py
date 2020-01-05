@@ -53,7 +53,7 @@ def _set_function_name(func, name):
     return func
 
 
-class _Deprecate(object):
+class _Deprecate:
     """
     Decorator class to deprecate old functions.
 

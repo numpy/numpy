@@ -85,7 +85,7 @@ def _get_fieldmask(self):
     return fdmask
 
 
-class MaskedRecords(MaskedArray, object):
+class MaskedRecords(MaskedArray):
     """
 
     Attributes

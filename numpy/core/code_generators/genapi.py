@@ -74,7 +74,7 @@ def _repl(str):
     return str.replace('Bool', 'npy_bool')
 
 
-class StealRef(object):
+class StealRef:
     def __init__(self, arg):
         self.arg = arg # counting from 1
 
@@ -85,7 +85,7 @@ class StealRef(object):
             return 'NPY_STEALS_REF_TO_ARG(%d)' % self.arg
 
 
-class NonNull(object):
+class NonNull:
     def __init__(self, arg):
         self.arg = arg # counting from 1
 
@@ -96,7 +96,7 @@ class NonNull(object):
             return 'NPY_GCC_NONNULL(%d)' % self.arg
 
 
-class Function(object):
+class Function:
     def __init__(self, name, return_type, args, doc=''):
         self.name = name
         self.return_type = _repl(return_type)
@@ -307,7 +307,7 @@ def write_file(filename, data):
 
 
 # Those *Api classes instances know how to output strings for the generated code
-class TypeApi(object):
+class TypeApi:
     def __init__(self, name, index, ptr_cast, api_name):
         self.index = index
         self.name = name
@@ -329,7 +329,7 @@ extern NPY_NO_EXPORT PyTypeObject %(type)s;
 """ % {'type': self.name}
         return astr
 
-class GlobalVarApi(object):
+class GlobalVarApi:
     def __init__(self, name, index, type, api_name):
         self.name = name
         self.index = index
@@ -353,7 +353,7 @@ extern NPY_NO_EXPORT %(type)s %(name)s;
 
 # Dummy to be able to consistently use *Api instances for all items in the
 # array api
-class BoolValuesApi(object):
+class BoolValuesApi:
     def __init__(self, name, index, api_name):
         self.name = name
         self.index = index
@@ -375,7 +375,7 @@ extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 """
         return astr
 
-class FunctionApi(object):
+class FunctionApi:
     def __init__(self, name, index, annotations, return_type, args, api_name):
         self.name = name
         self.index = index

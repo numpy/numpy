@@ -42,7 +42,7 @@ def _make_complex(real, imag):
     return ret
 
 
-class TestRot90(object):
+class TestRot90:
     def test_basic(self):
         assert_raises(ValueError, rot90, np.ones(4))
         assert_raises(ValueError, rot90, np.ones((2,2,2)), axes=(0,1,2))
@@ -110,7 +110,7 @@ class TestRot90(object):
                          rot90(a_rot90_20, k=k-1, axes=(2, 0)))
 
 
-class TestFlip(object):
+class TestFlip:
 
     def test_axes(self):
         assert_raises(np.AxisError, np.flip, np.ones(4), axis=1)
@@ -213,7 +213,7 @@ class TestFlip(object):
         assert_equal(np.flip(a, axis=(1, 2)), c)
 
 
-class TestAny(object):
+class TestAny:
 
     def test_basic(self):
         y1 = [0, 0, 1, 0]
@@ -230,7 +230,7 @@ class TestAny(object):
         assert_array_equal(np.sometrue(y1, axis=1), [0, 1, 1])
 
 
-class TestAll(object):
+class TestAll:
 
     def test_basic(self):
         y1 = [0, 1, 1, 0]
@@ -248,7 +248,7 @@ class TestAll(object):
         assert_array_equal(np.alltrue(y1, axis=1), [0, 0, 1])
 
 
-class TestCopy(object):
+class TestCopy:
 
     def test_basic(self):
         a = np.array([[1, 2], [3, 4]])
@@ -276,7 +276,7 @@ class TestCopy(object):
         assert_(a_fort_copy.flags.f_contiguous)
 
 
-class TestAverage(object):
+class TestAverage:
 
     def test_basic(self):
         y1 = np.array([1, 2, 3])
@@ -377,7 +377,7 @@ class TestAverage(object):
         w /= w.sum()
         assert_almost_equal(a.mean(0), average(a, weights=w))
 
-class TestSelect(object):
+class TestSelect:
     choices = [np.array([1, 2, 3]),
                np.array([4, 5, 6]),
                np.array([7, 8, 9])]
@@ -439,7 +439,7 @@ class TestSelect(object):
         select(conditions, choices)
 
 
-class TestInsert(object):
+class TestInsert:
 
     def test_basic(self):
         a = [1, 2, 3]
@@ -540,7 +540,7 @@ class TestInsert(object):
         assert_array_equal(b[[0, 3]], np.array(val, dtype=b.dtype))
 
 
-class TestAmax(object):
+class TestAmax:
 
     def test_basic(self):
         a = [3, 4, 5, 10, -3, -5, 6.0]
@@ -552,7 +552,7 @@ class TestAmax(object):
         assert_equal(np.amax(b, axis=1), [9.0, 10.0, 8.0])
 
 
-class TestAmin(object):
+class TestAmin:
 
     def test_basic(self):
         a = [3, 4, 5, 10, -3, -5, 6.0]
@@ -564,7 +564,7 @@ class TestAmin(object):
         assert_equal(np.amin(b, axis=1), [3.0, 4.0, 2.0])
 
 
-class TestPtp(object):
+class TestPtp:
 
     def test_basic(self):
         a = np.array([3, 4, 5, 10, -3, -5, 6.0])
@@ -579,7 +579,7 @@ class TestPtp(object):
         assert_equal(b.ptp(axis=(0,1), keepdims=True), [[8.0]])
 
 
-class TestCumsum(object):
+class TestCumsum:
 
     def test_basic(self):
         ba = [1, 2, 10, 11, 6, 5, 4]
@@ -602,7 +602,7 @@ class TestCumsum(object):
             assert_array_equal(np.cumsum(a2, axis=1), tgt)
 
 
-class TestProd(object):
+class TestProd:
 
     def test_basic(self):
         ba = [1, 2, 10, 11, 6, 5, 4]
@@ -622,7 +622,7 @@ class TestProd(object):
                                    np.array([24, 1890, 600], ctype))
 
 
-class TestCumprod(object):
+class TestCumprod:
 
     def test_basic(self):
         ba = [1, 2, 10, 11, 6, 5, 4]
@@ -649,7 +649,7 @@ class TestCumprod(object):
                                              [10, 30, 120, 600]], ctype))
 
 
-class TestDiff(object):
+class TestDiff:
 
     def test_basic(self):
         x = [1, 4, 6, 7, 12]
@@ -789,7 +789,7 @@ class TestDiff(object):
         assert_raises(np.AxisError, diff, x, append=0, axis=3)
 
 
-class TestDelete(object):
+class TestDelete:
 
     def setup(self):
         self.a = np.arange(5)
@@ -864,7 +864,7 @@ class TestDelete(object):
         assert_equal(m.flags.f_contiguous, k.flags.f_contiguous)
 
 
-class TestGradient(object):
+class TestGradient:
 
     def test_basic(self):
         v = [[1, 1], [3, 4]]
@@ -1116,7 +1116,7 @@ class TestGradient(object):
         assert_array_equal(dfdx, [0.5, 0.5])
 
 
-class TestAngle(object):
+class TestAngle:
 
     def test_basic(self):
         x = [1 + 3j, np.sqrt(2) / 2.0 + 1j * np.sqrt(2) / 2,
@@ -1142,7 +1142,7 @@ class TestAngle(object):
         assert_equal(actual, expected)
 
 
-class TestTrimZeros(object):
+class TestTrimZeros:
 
     """
     Only testing for integer splits.
@@ -1165,7 +1165,7 @@ class TestTrimZeros(object):
         assert_array_equal(res, np.array([1, 0, 2, 3, 0, 4]))
 
 
-class TestExtins(object):
+class TestExtins:
 
     def test_basic(self):
         a = np.array([1, 3, 2, 1, 2, 3, 3])
@@ -1204,7 +1204,7 @@ class TestExtins(object):
         assert_array_equal(a, ac)
 
 
-class TestVectorize(object):
+class TestVectorize:
 
     def test_simple(self):
         def addsubtract(a, b):
@@ -1536,8 +1536,8 @@ class TestVectorize(object):
             f(x)
 
 
-class TestLeaks(object):
-    class A(object):
+class TestLeaks:
+    class A:
         iters = 20
 
         def bound(self, *args):
@@ -1579,7 +1579,7 @@ class TestLeaks(object):
         finally:
             gc.enable()
 
-class TestDigitize(object):
+class TestDigitize:
 
     def test_forward(self):
         x = np.arange(-6, 5)
@@ -1664,7 +1664,7 @@ class TestDigitize(object):
         assert_equal(np.digitize(x, [x + 1, x - 1]), 1)
 
 
-class TestUnwrap(object):
+class TestUnwrap:
 
     def test_simple(self):
         # check that unwrap removes jumps greater that 2*pi
@@ -1673,7 +1673,7 @@ class TestUnwrap(object):
         assert_(np.all(diff(unwrap(rand(10) * 100)) < np.pi))
 
 
-class TestFilterwindows(object):
+class TestFilterwindows:
 
     def test_hanning(self):
         # check symmetry
@@ -1704,7 +1704,7 @@ class TestFilterwindows(object):
         assert_almost_equal(np.sum(w, axis=0), 3.7800, 4)
 
 
-class TestTrapz(object):
+class TestTrapz:
 
     def test_simple(self):
         x = np.arange(-10, 10, .1)
@@ -1766,7 +1766,7 @@ class TestTrapz(object):
         assert_almost_equal(trapz(y, xm), r)
 
 
-class TestSinc(object):
+class TestSinc:
 
     def test_simple(self):
         assert_(sinc(0) == 1)
@@ -1783,7 +1783,7 @@ class TestSinc(object):
         assert_array_equal(y1, y3)
 
 
-class TestUnique(object):
+class TestUnique:
 
     def test_simple(self):
         x = np.array([4, 3, 2, 1, 1, 2, 3, 4, 0])
@@ -1795,7 +1795,7 @@ class TestUnique(object):
         assert_(np.all(unique(x) == [1 + 1j, 1 + 10j, 5 + 6j, 10]))
 
 
-class TestCheckFinite(object):
+class TestCheckFinite:
 
     def test_simple(self):
         a = [1, 2, 3]
@@ -1812,7 +1812,7 @@ class TestCheckFinite(object):
         assert_(a.dtype == np.float64)
 
 
-class TestCorrCoef(object):
+class TestCorrCoef:
     A = np.array(
         [[0.15391142, 0.18045767, 0.14197213],
          [0.70461506, 0.96474128, 0.27906989],
@@ -1897,7 +1897,7 @@ class TestCorrCoef(object):
         assert_(np.all(np.abs(c) <= 1.0))
 
 
-class TestCov(object):
+class TestCov:
     x1 = np.array([[0, 2], [1, 1], [2, 0]]).T
     res1 = np.array([[1., -1.], [-1., 1.]])
     x2 = np.array([0.0, 1.0, 2.0], ndmin=2)
@@ -1997,7 +1997,7 @@ class TestCov(object):
                         self.res1)
 
 
-class Test_I0(object):
+class Test_I0:
 
     def test_simple(self):
         assert_almost_equal(
@@ -2043,7 +2043,7 @@ class Test_I0(object):
         assert_array_equal(exp, res)
 
 
-class TestKaiser(object):
+class TestKaiser:
 
     def test_simple(self):
         assert_(np.isfinite(kaiser(1, 1.0)))
@@ -2062,7 +2062,7 @@ class TestKaiser(object):
         kaiser(3, 4)
 
 
-class TestMsort(object):
+class TestMsort:
 
     def test_simple(self):
         A = np.array([[0.44567325, 0.79115165, 0.54900530],
@@ -2075,7 +2075,7 @@ class TestMsort(object):
                       [0.64864341, 0.79115165, 0.96098397]]))
 
 
-class TestMeshgrid(object):
+class TestMeshgrid:
 
     def test_simple(self):
         [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7])
@@ -2164,7 +2164,7 @@ class TestMeshgrid(object):
         assert_equal(x[1, :], X)
 
 
-class TestPiecewise(object):
+class TestPiecewise:
 
     def test_simple(self):
         # Condition is single bool list
@@ -2256,7 +2256,7 @@ class TestPiecewise(object):
                                         [3., 3., 1.]]))
 
 
-class TestBincount(object):
+class TestBincount:
 
     def test_simple(self):
         y = np.bincount(np.arange(4))
@@ -2343,7 +2343,7 @@ class TestBincount(object):
         assert_equal(sys.getrefcount(np.dtype(np.double)), double_refcount)
 
 
-class TestInterp(object):
+class TestInterp:
 
     def test_exceptions(self):
         assert_raises(ValueError, interp, 0, [], [])
@@ -2542,7 +2542,7 @@ def compare_results(res, desired):
         assert_array_equal(res[i], desired[i])
 
 
-class TestPercentile(object):
+class TestPercentile:
 
     def test_basic(self):
         x = np.arange(8) * 0.5
@@ -2963,7 +2963,7 @@ class TestPercentile(object):
             a, [0.3, 0.6], (0, 2), interpolation='nearest'), b)
 
 
-class TestQuantile(object):
+class TestQuantile:
     # most of this is already tested by TestPercentile
 
     def test_basic(self):
@@ -3005,7 +3005,7 @@ class TestQuantile(object):
         assert_array_equal(p, p0)
 
 
-class TestMedian(object):
+class TestMedian:
 
     def test_basic(self):
         a0 = np.array(1)
@@ -3244,7 +3244,7 @@ class TestMedian(object):
                      (1, 1, 7, 1))
 
 
-class TestAdd_newdoc_ufunc(object):
+class TestAdd_newdoc_ufunc:
 
     def test_ufunc_arg(self):
         assert_raises(TypeError, add_newdoc_ufunc, 2, "blah")
@@ -3254,7 +3254,7 @@ class TestAdd_newdoc_ufunc(object):
         assert_raises(TypeError, add_newdoc_ufunc, np.add, 3)
 
 
-class TestAdd_newdoc(object):
+class TestAdd_newdoc:
 
     @pytest.mark.skipif(sys.flags.optimize == 2, reason="Python running -OO")
     @pytest.mark.xfail(IS_PYPY, reason="PyPy does not modify tp_doc")
@@ -3265,7 +3265,7 @@ class TestAdd_newdoc(object):
         assert_(len(np.core.ufunc.identity.__doc__) > 300)
         assert_(len(np.lib.index_tricks.mgrid.__doc__) > 300)
 
-class TestSortComplex(object):
+class TestSortComplex:
 
     @pytest.mark.parametrize("type_in, type_out", [
         ('l', 'D'),

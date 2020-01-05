@@ -8,7 +8,7 @@ import numpy.core.numerictypes as ntypes
 from numpy import errstate, array
 
 
-class TestMachAr(object):
+class TestMachAr:
     def _run_machar_highprec(self):
         # Instantiate MachAr instance with high enough precision to cause
         # underflow

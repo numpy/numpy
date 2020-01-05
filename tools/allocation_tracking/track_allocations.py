@@ -3,7 +3,7 @@ import gc
 import inspect
 from alloc_hook import NumpyAllocHook
 
-class AllocationTracker(object):
+class AllocationTracker:
     def __init__(self, threshold=0):
         '''track numpy allocations of size threshold bytes or more.'''
 

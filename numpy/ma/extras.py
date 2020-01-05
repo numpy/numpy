@@ -212,7 +212,7 @@ def masked_all_like(arr):
 #####--------------------------------------------------------------------------
 #---- --- Standard functions ---
 #####--------------------------------------------------------------------------
-class _fromnxfunction(object):
+class _fromnxfunction:
     """
     Defines a wrapper to adapt NumPy functions to masked arrays.
 

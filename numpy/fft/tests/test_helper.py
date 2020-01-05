@@ -8,7 +8,7 @@ from numpy.testing import assert_array_almost_equal, assert_equal
 from numpy import fft, pi
 
 
-class TestFFTShift(object):
+class TestFFTShift:
 
     def test_definition(self):
         x = [0, 1, 2, 3, 4, -4, -3, -2, -1]
@@ -134,7 +134,7 @@ class TestFFTShift(object):
                                               original_ifftshift(inp, axes_keyword))
 
 
-class TestFFTFreq(object):
+class TestFFTFreq:
 
     def test_definition(self):
         x = [0, 1, 2, 3, 4, -4, -3, -2, -1]
@@ -145,7 +145,7 @@ class TestFFTFreq(object):
         assert_array_almost_equal(10*pi*fft.fftfreq(10, pi), x)
 
 
-class TestRFFTFreq(object):
+class TestRFFTFreq:
 
     def test_definition(self):
         x = [0, 1, 2, 3, 4]
@@ -156,7 +156,7 @@ class TestRFFTFreq(object):
         assert_array_almost_equal(10*pi*fft.rfftfreq(10, pi), x)
 
 
-class TestIRFFTN(object):
+class TestIRFFTN:
 
     def test_not_last_axis_success(self):
         ar, ai = np.random.random((2, 16, 8, 32))

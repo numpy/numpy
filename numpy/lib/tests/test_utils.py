@@ -100,7 +100,7 @@ def test_safe_eval_nameconstant():
     utils.safe_eval('None')
 
 
-class TestByteBounds(object):
+class TestByteBounds:
 
     def test_byte_bounds(self):
         # pointer difference matches size * itemsize

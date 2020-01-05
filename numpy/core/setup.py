@@ -36,7 +36,7 @@ NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CH
 # Use pickle in all cases, as cPickle is gone in python3 and the difference
 # in time is only in build. -- Charles Harris, 2013-03-30
 
-class CallOnceOnly(object):
+class CallOnceOnly:
     def __init__(self):
         self._check_types = None
         self._check_ieee_macros = None
