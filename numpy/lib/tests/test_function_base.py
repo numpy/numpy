@@ -1084,6 +1084,40 @@ class TestGradient(object):
         assert_raises(ValueError, gradient, np.arange(1), edge_order=2)
         assert_raises(ValueError, gradient, np.arange(2), edge_order=2)
 
+    @pytest.mark.parametrize('f_dtype', [np.uint8, np.uint16,
+                                         np.uint32, np.uint64])
+    def test_f_decreasing_unsigned_int(self, f_dtype):
+        f = np.array([5, 4, 3, 2, 1], dtype=f_dtype)
+        g = gradient(f)
+        assert_array_equal(g, [-1]*len(f))
+
+    @pytest.mark.parametrize('f_dtype', [np.int8, np.int16,
+                                         np.int32, np.int64])
+    def test_f_signed_int_big_jump(self, f_dtype):
+        maxint = np.iinfo(f_dtype).max
+        x = np.array([1, 3])
+        f = np.array([-1, maxint], dtype=f_dtype)
+        dfdx = gradient(f, x)
+        assert_array_equal(dfdx, [(maxint + 1) // 2]*2)
+
+    @pytest.mark.parametrize('x_dtype', [np.uint8, np.uint16,
+                                         np.uint32, np.uint64])
+    def test_x_decreasing_unsigned(self, x_dtype):
+        x = np.array([3, 2, 1], dtype=x_dtype)
+        f = np.array([0, 2, 4])
+        dfdx = gradient(f, x)
+        assert_array_equal(dfdx, [-2]*len(x))
+
+    @pytest.mark.parametrize('x_dtype', [np.int8, np.int16,
+                                         np.int32, np.int64])
+    def test_x_signed_int_big_jump(self, x_dtype):
+        minint = np.iinfo(x_dtype).min
+        maxint = np.iinfo(x_dtype).max
+        x = np.array([-1, maxint], dtype=x_dtype)
+        f = np.array([minint // 2, 0])
+        dfdx = gradient(f, x)
+        assert_array_equal(dfdx, [0.5, 0.5])
+
 
 class TestAngle(object):
 

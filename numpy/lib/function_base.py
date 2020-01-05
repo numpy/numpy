@@ -979,13 +979,18 @@ def gradient(f, *varargs, **kwargs):
         # scalar or 1d array for each axis
         dx = list(varargs)
         for i, distances in enumerate(dx):
-            if np.ndim(distances) == 0:
+            distances = np.asanyarray(distances)
+            if distances.ndim == 0:
                 continue
-            elif np.ndim(distances) != 1:
+            elif distances.ndim != 1:
                 raise ValueError("distances must be either scalars or 1d")
             if len(distances) != f.shape[axes[i]]:
                 raise ValueError("when 1d, distances must match "
                                  "the length of the corresponding dimension")
+            if np.issubdtype(distances.dtype, np.integer):
+                # Convert numpy integer types to float64 to avoid modular
+                # arithmetic in np.diff(distances).
+                distances = distances.astype(np.float64)
             diffx = np.diff(distances)
             # if distances are constant reduce to the scalar case
             # since it brings a consistent speedup
@@ -1024,8 +1029,12 @@ def gradient(f, *varargs, **kwargs):
     elif np.issubdtype(otype, np.inexact):
         pass
     else:
-        # all other types convert to floating point
-        otype = np.double
+        # All other types convert to floating point.
+        # First check if f is a numpy integer type; if so, convert f to float64
+        # to avoid modular arithmetic when computing the changes in f.
+        if np.issubdtype(otype, np.integer):
+            f = f.astype(np.float64)
+        otype = np.float64
 
     for axis, ax_dx in zip(axes, dx):
         if f.shape[axis] < edge_order + 1:
