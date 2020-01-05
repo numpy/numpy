@@ -55,7 +55,7 @@ EXPORT(void*) forward_pointer(void *x)
  * #typenum = NPY_DOUBLE, NPY_INT#
  */
 static int copy_@name@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *niterx,
-        npy_intp *bounds,
+        npy_intp const *bounds,
         PyObject **out)
 {
     npy_intp i, j;
@@ -97,7 +97,7 @@ static int copy_@name@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
 /**end repeat**/
 
 static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *niterx,
-        npy_intp *bounds,
+        npy_intp const *bounds,
         PyObject **out)
 {
     npy_intp i, j;
@@ -251,7 +251,7 @@ clean_ax:
 static int
 copy_double_double(PyArrayNeighborhoodIterObject *itx,
         PyArrayNeighborhoodIterObject *niterx,
-        npy_intp *bounds,
+        npy_intp const *bounds,
         PyObject **out)
 {
     npy_intp i, j;

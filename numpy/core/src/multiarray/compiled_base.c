@@ -1164,7 +1164,7 @@ fail:
  * order must be NPY_CORDER or NPY_FORTRANORDER
  */
 static int
-unravel_index_loop(int unravel_ndim, npy_intp *unravel_dims,
+unravel_index_loop(int unravel_ndim, npy_intp const *unravel_dims,
                    npy_intp unravel_size, npy_intp count,
                    char *indices, npy_intp indices_stride,
                    npy_intp *coords, NPY_ORDER order)
