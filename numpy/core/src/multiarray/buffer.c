@@ -968,13 +968,13 @@ NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
  */
 
 static int
-_descriptor_from_pep3118_format_fast(char *s, PyObject **result);
+_descriptor_from_pep3118_format_fast(char const *s, PyObject **result);
 
 static int
 _pep3118_letter_to_type(char letter, int native, int complex);
 
 NPY_NO_EXPORT PyArray_Descr*
-_descriptor_from_pep3118_format(char *s)
+_descriptor_from_pep3118_format(char const *s)
 {
     char *buf, *p;
     int in_name = 0;
@@ -1059,7 +1059,7 @@ _descriptor_from_pep3118_format(char *s)
  */
 
 static int
-_descriptor_from_pep3118_format_fast(char *s, PyObject **result)
+_descriptor_from_pep3118_format_fast(char const *s, PyObject **result)
 {
     PyArray_Descr *descr;
 

@@ -199,7 +199,7 @@ _check_for_commastring(const char *type, Py_ssize_t len)
 #undef _chk_byteorder
 
 static int
-is_datetime_typestr(char *type, Py_ssize_t len)
+is_datetime_typestr(char const *type, Py_ssize_t len)
 {
     if (len < 2) {
         return 0;
