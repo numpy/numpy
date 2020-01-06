@@ -9,8 +9,8 @@ NEP 37 — A dispatch protocol for NumPy-like modules
 :Type: Standards Track
 :Created: 2019-12-29
 
-Abstact
--------
+Abstract
+--------
 
 NEP-18's `__array_function__` has been a mixed success. Some projects (e.g.,
 dask, CuPy, xarray, sparse, Pint) have enthusiastically adopted it. Others
@@ -50,7 +50,7 @@ There are two broad ways in which NEP-18 has fallen short of its goals:
       by using NumPy's implementation is hard to get right (but see the
       `version from dask <https://github.com/dask/dask/pull/5043>`_), because
       ``__array_function__`` does not present a consistent interface.
-      Converting all arguments of array type requries recursing into generic
+      Converting all arguments of array type requires recursing into generic
       arguments of the form ``*args, **kwargs``.
 
 2. **Limitations on what can be overridden.** ``__array_function__`` has some
@@ -364,7 +364,7 @@ classes, because the frequently used subset of NumPy is much smaller.
 
 We think it would be useful exercise to define "minimal" subset(s) of NumPy's
 API, omitting rarely used or non-recommended functionality. For example,
-minimal NumPy might include ``stack``, but not the other stacking funtions
+minimal NumPy might include ``stack``, but not the other stacking functions
 ``column_stack``, ``dstack``, ``hstack`` and ``vstack``. This could clearly
 indicate to duck array authors and users want functionality is core and what
 functionality they can skip.
@@ -374,7 +374,7 @@ feature to include in  ``get_array_function`` and ``__array_module__``, e.g.,
 
 .. code:: python
 
-    # array_module is only guranteed to contain "minimal" NumPy
+    # array_module is only guaranteed to contain "minimal" NumPy
     array_module = np.get_array_module(*arrays, request='minimal')
 
 To facilitate testing with NumPy and use with any valid duck array library,
@@ -382,7 +382,7 @@ NumPy itself would return restricted versions of the ``numpy`` module when
 ``get_array_module`` is called only on NumPy arrays. Omitted functions would
 simply not exist.
 
-Unfortuntely, we have not yet figured out what these restricted subsets should
+Unfortunately, we have not yet figured out what these restricted subsets should
 be, so it doesn't make sense to do this yet. When/if we do, we could either add
 new keyword arguments to ``get_array_module`` or add new top level functions,
 e.g., ``get_minimal_array_module``. We would also need to add either a new
@@ -468,7 +468,7 @@ Opt-in vs. opt-out for users
 The ``__array_ufunc__`` and ``__array_function__`` protocols provide a
 mechanism for overriding NumPy functions *within NumPy's existing namespace*.
 This means that users need to explicitly opt-out if they do not want any
-overriden behavior, e.g., by casting arrays with ``np.asarray()``.
+overridden behavior, e.g., by casting arrays with ``np.asarray()``.
 
 In theory, this approach lowers the barrier for adopting these protocols in
 user code and libraries, because code that uses the standard NumPy namespace is
@@ -477,7 +477,7 @@ most well-maintained libraries that use NumPy follow the best practice of
 casting all inputs with ``np.asarray()``, which they would have to explicitly
 relax to use ``__array_function__``. Our experience has been that making a
 library compatible with a new duck array type typically requires at least a
-small amount of work to accomodate differences in the data model and operations
+small amount of work to accommodate differences in the data model and operations
 that can be implemented efficiently.
 
 These opt-out approaches also considerably complicate backwards compatibility
@@ -500,7 +500,7 @@ operators in Python, but it has two downsides:
    why arithmetic on builtin Python numbers is slow.
 2. *Readability*: it is not longer immediately evident to readers of code what
    happens when a function is called, because the function's implementation
-   could be overriden by any of its arguments.
+   could be overridden by any of its arguments.
 
 In contrast, importing a new library (e.g., ``import  dask.array as da``) with
 an API matching NumPy is entirely explicit. There is no overhead from dispatch
@@ -518,7 +518,7 @@ Local vs. non-local vs. global control
 
 The final design axis is how users control the choice of API:
 
-- **Local control**, as exemplied by multiple dispatch and Python protocols for
+- **Local control**, as exemplified by multiple dispatch and Python protocols for
   arithmetic, determines which implementation to use either by checking types
   or calling methods on the direct arguments of a function.
 - **Non-local control** such as `np.errstate
@@ -532,7 +532,7 @@ The final design axis is how users control the choice of API:
 
 Local control is generally considered a best practice for API design, because
 control flow is entirely explicit, which makes it the easiest to understand.
-Non-local and global control are ocasionally used, but generally either due to
+Non-local and global control are occasionally used, but generally either due to
 ignorance or a lack of better alternatives.
 
 In the case of duck typing for NumPy's public API, we think non-local or global
