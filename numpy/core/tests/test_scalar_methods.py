@@ -1,8 +1,6 @@
 """
 Test the scalar constructors, which also do type-coercion
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import fractions
 import platform
@@ -16,7 +14,7 @@ from numpy.testing import (
     dec
 )
 
-class TestAsIntegerRatio(object):
+class TestAsIntegerRatio:
     # derived in part from the cpython test "test_floatasratio"
 
     @pytest.mark.parametrize("ftype", [

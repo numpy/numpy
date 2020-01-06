@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
@@ -7,7 +5,7 @@ from numpy.testing import (
     )
 
 
-class TestPolynomial(object):
+class TestPolynomial:
     def test_poly1d_str_and_repr(self):
         p = np.poly1d([1., 2, 3])
         assert_equal(repr(p), 'poly1d([1., 2., 3.])')

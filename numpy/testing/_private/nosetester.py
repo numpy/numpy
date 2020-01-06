@@ -4,8 +4,6 @@ Nose test running.
 This module implements ``test()`` and ``bench()`` functions for NumPy modules.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import warnings
@@ -112,7 +110,7 @@ def run_module_suite(file_to_run=None, argv=None):
     nose.run(argv=argv, addplugins=[KnownFailurePlugin()])
 
 
-class NoseTester(object):
+class NoseTester:
     """
     Nose test runner.
 
@@ -456,9 +454,6 @@ class NoseTester(object):
                 # This is very specific, so using the fragile module filter
                 # is fine
                 import threading
-                sup.filter(DeprecationWarning,
-                           r"sys\.exc_clear\(\) not supported in 3\.x",
-                           module=threading)
                 sup.filter(DeprecationWarning, message=r"in 3\.x, __setslice__")
                 sup.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
                 sup.filter(DeprecationWarning, message=r"buffer\(\) not supported in 3\.x")

@@ -20,8 +20,6 @@ Released for unlimited redistribution.
 
 """
 # pylint: disable-msg=E1002
-from __future__ import division, absolute_import, print_function
-
 import sys
 import operator
 import warnings
@@ -800,7 +798,7 @@ ufunc_domain = {}
 ufunc_fills = {}
 
 
-class _DomainCheckInterval(object):
+class _DomainCheckInterval:
     """
     Define a valid interval, so that :
 
@@ -825,7 +823,7 @@ class _DomainCheckInterval(object):
                                     umath.less(x, self.a))
 
 
-class _DomainTan(object):
+class _DomainTan:
     """
     Define a valid interval for the `tan` function, so that:
 
@@ -843,7 +841,7 @@ class _DomainTan(object):
             return umath.less(umath.absolute(umath.cos(x)), self.eps)
 
 
-class _DomainSafeDivide(object):
+class _DomainSafeDivide:
     """
     Define a domain for safe division.
 
@@ -864,7 +862,7 @@ class _DomainSafeDivide(object):
             return umath.absolute(a) * self.tolerance >= umath.absolute(b)
 
 
-class _DomainGreater(object):
+class _DomainGreater:
     """
     DomainGreater(v)(x) is True where x <= v.
 
@@ -880,7 +878,7 @@ class _DomainGreater(object):
             return umath.less_equal(x, self.critical_value)
 
 
-class _DomainGreaterEqual(object):
+class _DomainGreaterEqual:
     """
     DomainGreaterEqual(v)(x) is True where x < v.
 
@@ -896,7 +894,7 @@ class _DomainGreaterEqual(object):
             return umath.less(x, self.critical_value)
 
 
-class _MaskedUFunc(object):
+class _MaskedUFunc:
     def __init__(self, ufunc):
         self.f = ufunc
         self.__doc__ = ufunc.__doc__
@@ -2386,7 +2384,7 @@ def masked_invalid(a, copy=True):
 ###############################################################################
 
 
-class _MaskedPrintOption(object):
+class _MaskedPrintOption:
     """
     Handle the string used to represent missing data in a masked array.
 
@@ -2604,7 +2602,7 @@ def _arraymethod(funcname, onmask=True):
     return wrapped_method
 
 
-class MaskedIterator(object):
+class MaskedIterator:
     """
     Flat iterator object to iterate over masked arrays.
 
@@ -6646,7 +6644,7 @@ ptp.__doc__ = MaskedArray.ptp.__doc__
 ##############################################################################
 
 
-class _frommethod(object):
+class _frommethod:
     """
     Define functions from existing MaskedArray methods.
 
@@ -7980,7 +7978,7 @@ def fromflex(fxarray):
     return masked_array(fxarray['_data'], mask=fxarray['_mask'])
 
 
-class _convert2ma(object):
+class _convert2ma:
 
     """
     Convert functions from numpy to numpy.ma.

@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import warnings
 import itertools
@@ -17,7 +15,7 @@ from numpy.testing import (
     )
 
 
-class TestResize(object):
+class TestResize:
     def test_copies(self):
         A = np.array([[1, 2], [3, 4]])
         Ar1 = np.array([[1, 2, 3, 4], [1, 2, 3, 4]])
@@ -49,7 +47,7 @@ class TestResize(object):
         assert_equal(A.dtype, Ar.dtype)
 
 
-class TestNonarrayArgs(object):
+class TestNonarrayArgs:
     # check that non-array arguments to functions wrap them in arrays
     def test_choose(self):
         choices = [[0, 1, 2],
@@ -220,7 +218,7 @@ class TestNonarrayArgs(object):
         B[0] = 1j
         assert_almost_equal(np.var(B), 0.25)
 
-class TestIsscalar(object):
+class TestIsscalar:
     def test_isscalar(self):
         assert_(np.isscalar(3.1))
         assert_(np.isscalar(np.int16(12345)))
@@ -236,7 +234,7 @@ class TestIsscalar(object):
         assert_(np.isscalar(Number()))
 
 
-class TestBoolScalar(object):
+class TestBoolScalar:
     def test_logical(self):
         f = np.False_
         t = np.True_
@@ -269,7 +267,7 @@ class TestBoolScalar(object):
         assert_((f ^ f) is f)
 
 
-class TestBoolArray(object):
+class TestBoolArray:
     def setup(self):
         # offset for simd tests
         self.t = np.array([True] * 41, dtype=bool)[1::]
@@ -356,7 +354,7 @@ class TestBoolArray(object):
         assert_array_equal(self.im ^ False, self.im)
 
 
-class TestBoolCmp(object):
+class TestBoolCmp:
     def setup(self):
         self.f = np.ones(256, dtype=np.float32)
         self.ef = np.ones(self.f.size, dtype=bool)
@@ -456,7 +454,7 @@ class TestBoolCmp(object):
             assert_array_equal(np.signbit(self.signd[i:]), self.ed[i:])
 
 
-class TestSeterr(object):
+class TestSeterr:
     def test_default(self):
         err = np.geterr()
         assert_equal(err,
@@ -537,7 +535,7 @@ class TestSeterr(object):
             np.seterrobj(olderrobj)
 
 
-class TestFloatExceptions(object):
+class TestFloatExceptions:
     def assert_raises_fpe(self, fpeerr, flop, x, y):
         ftype = type(x)
         try:
@@ -633,7 +631,7 @@ class TestFloatExceptions(object):
                 assert_("underflow" in str(w[-1].message))
 
 
-class TestTypes(object):
+class TestTypes:
     def check_promotion_cases(self, promote_func):
         # tests that the scalars get coerced correctly.
         b = np.bool_(0)
@@ -954,7 +952,7 @@ class NIterError(Exception):
     pass
 
 
-class TestFromiter(object):
+class TestFromiter:
     def makegen(self):
         for x in range(24):
             yield x**2
@@ -1005,7 +1003,7 @@ class TestFromiter(object):
                           self.load_data(count, eindex), dtype=int, count=count)
 
 
-class TestNonzero(object):
+class TestNonzero:
     def test_nonzero_trivial(self):
         assert_equal(np.count_nonzero(np.array([])), 0)
         assert_equal(np.count_nonzero(np.array([], dtype='?')), 0)
@@ -1288,7 +1286,7 @@ class TestNonzero(object):
         assert_raises(ValueError, np.nonzero, a)
 
 
-class TestIndex(object):
+class TestIndex:
     def test_boolean(self):
         a = rand(3, 5, 8)
         V = rand(5, 8)
@@ -1305,7 +1303,7 @@ class TestIndex(object):
         assert_equal(c.dtype, np.dtype('int32'))
 
 
-class TestBinaryRepr(object):
+class TestBinaryRepr:
     def test_zero(self):
         assert_equal(np.binary_repr(0), '0')
 
@@ -1347,7 +1345,7 @@ class TestBinaryRepr(object):
                      '11' + '0'*62)
 
 
-class TestBaseRepr(object):
+class TestBaseRepr:
     def test_base3(self):
         assert_equal(np.base_repr(3**5, 3), '100000')
 
@@ -1369,7 +1367,7 @@ class TestBaseRepr(object):
             np.base_repr(1, 37)
 
 
-class TestArrayComparisons(object):
+class TestArrayComparisons:
     def test_array_equal(self):
         res = np.array_equal(np.array([1, 2]), np.array([1, 2]))
         assert_(res)
@@ -1448,7 +1446,7 @@ def assert_array_strict_equal(x, y):
     assert_(x.dtype.isnative == y.dtype.isnative)
 
 
-class TestClip(object):
+class TestClip:
     def setup(self):
         self.nr = 5
         self.nc = 3
@@ -2022,7 +2020,7 @@ class TestClip(object):
         assert_equal(actual, expected)
 
 
-class TestAllclose(object):
+class TestAllclose:
     rtol = 1e-5
     atol = 1e-8
 
@@ -2107,7 +2105,7 @@ class TestAllclose(object):
         assert_(type(np.allclose(a, a)) is bool)
 
 
-class TestIsclose(object):
+class TestIsclose:
     rtol = 1e-5
     atol = 1e-8
 
@@ -2245,7 +2243,7 @@ class TestIsclose(object):
         assert_(type(np.isclose(0, np.inf)) is np.bool_)
 
 
-class TestStdVar(object):
+class TestStdVar:
     def setup(self):
         self.A = np.array([1, -1, 1, -1])
         self.real_var = 1
@@ -2284,7 +2282,7 @@ class TestStdVar(object):
         assert_array_equal(r, out)
 
 
-class TestStdVarComplex(object):
+class TestStdVarComplex:
     def test_basic(self):
         A = np.array([1, 1.j, -1, -1.j])
         real_var = 1
@@ -2296,7 +2294,7 @@ class TestStdVarComplex(object):
         assert_equal(np.std(1j), 0)
 
 
-class TestCreationFuncs(object):
+class TestCreationFuncs:
     # Test ones, zeros, empty and full.
 
     def setup(self):
@@ -2367,7 +2365,7 @@ class TestCreationFuncs(object):
         assert_(sys.getrefcount(dim) == beg)
 
 
-class TestLikeFuncs(object):
+class TestLikeFuncs:
     '''Test ones_like, zeros_like, empty_like and full_like'''
 
     def setup(self):
@@ -2517,7 +2515,7 @@ class TestLikeFuncs(object):
         self.check_like_function(np.full_like, np.inf, True)
 
 
-class TestCorrelate(object):
+class TestCorrelate:
     def _setup(self, dt):
         self.x = np.array([1, 2, 3, 4, 5], dtype=dt)
         self.xs = np.arange(1, 20)[::3]
@@ -2573,7 +2571,7 @@ class TestCorrelate(object):
         with pytest.raises(ValueError):
             np.correlate(np.ones(1000), np.array([]), mode='full')
 
-class TestConvolve(object):
+class TestConvolve:
     def test_object(self):
         d = [1.] * 100
         k = [1.] * 3
@@ -2587,7 +2585,7 @@ class TestConvolve(object):
         assert_array_equal(k, np.ones(3))
 
 
-class TestArgwhere(object):
+class TestArgwhere:
 
     @pytest.mark.parametrize('nd', [0, 1, 2])
     def test_nd(self, nd):
@@ -2624,7 +2622,7 @@ class TestArgwhere(object):
         assert_equal(np.argwhere([4, 0, 2, 1, 3]), [[0], [2], [3], [4]])
 
 
-class TestStringFunction(object):
+class TestStringFunction:
 
     def test_set_string_function(self):
         a = np.array([1])
@@ -2639,7 +2637,7 @@ class TestStringFunction(object):
         assert_equal(str(a), "[1]")
 
 
-class TestRoll(object):
+class TestRoll:
     def test_roll1d(self):
         x = np.arange(10)
         xr = np.roll(x, 2)
@@ -2697,7 +2695,7 @@ class TestRoll(object):
         assert_equal(np.roll(x, 1), np.array([]))
 
 
-class TestRollaxis(object):
+class TestRollaxis:
 
     # expected shape indexed by (axis, start) for array of
     # shape (1, 2, 3, 4)
@@ -2759,7 +2757,7 @@ class TestRollaxis(object):
             assert_(not res.flags['OWNDATA'])
 
 
-class TestMoveaxis(object):
+class TestMoveaxis:
     def test_move_to_end(self):
         x = np.random.randn(5, 6, 7)
         for source, expected in [(0, (6, 7, 5)),
@@ -2833,7 +2831,7 @@ class TestMoveaxis(object):
         assert_(isinstance(result, np.ndarray))
 
 
-class TestCross(object):
+class TestCross:
     def test_2x2(self):
         u = [1, 2]
         v = [3, 4]
@@ -2922,7 +2920,7 @@ def test_outer_out_param():
     assert_equal(np.outer(arr2, arr3, out2), out2)
 
 
-class TestIndices(object):
+class TestIndices:
 
     def test_simple(self):
         [x, y] = np.indices((4, 3))
@@ -2963,7 +2961,7 @@ class TestIndices(object):
             assert_(arr.dtype == dtype)
 
 
-class TestRequire(object):
+class TestRequire:
     flag_names = ['C', 'C_CONTIGUOUS', 'CONTIGUOUS',
                   'F', 'F_CONTIGUOUS', 'FORTRAN',
                   'A', 'ALIGNED',
@@ -3037,7 +3035,7 @@ class TestRequire(object):
             self.set_and_check_flag(flag, None, a)
 
 
-class TestBroadcast(object):
+class TestBroadcast:
     def test_broadcast_in_args(self):
         # gh-5881
         arrs = [np.empty((6, 7)), np.empty((5, 6, 1)), np.empty((7,)),
@@ -3088,7 +3086,7 @@ class TestBroadcast(object):
 
         assert_raises(ValueError, np.broadcast, 1, **{'x': 1})
 
-class TestKeepdims(object):
+class TestKeepdims:
 
     class sub_array(np.ndarray):
         def sum(self, axis=None, dtype=None, out=None):
@@ -3100,7 +3098,7 @@ class TestKeepdims(object):
         assert_raises(TypeError, np.sum, x, keepdims=True)
 
 
-class TestTensordot(object):
+class TestTensordot:
 
     def test_zero_dimension(self):
         # Test resolution to issue #5663

@@ -2,8 +2,6 @@
 Implementation of optimized einsum.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import itertools
 
 from numpy.compat import basestring

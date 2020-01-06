@@ -17,14 +17,13 @@ variety of databases.
 All NumPy wheels distributed on PyPI are BSD licensed.
 
 """
-from __future__ import division, print_function
-
 DOCLINES = (__doc__ or '').split("\n")
 
 import os
 import sys
 import subprocess
 import textwrap
+import sysconfig
 
 
 if sys.version_info[:2] < (3, 6):
@@ -227,6 +226,40 @@ class sdist_checked(sdist):
             sdist.run(self)
 
 
+def get_build_overrides():
+    """
+    Custom build commands to add `-std=c99` to compilation
+    """
+    from numpy.distutils.command.build_clib import build_clib
+    from numpy.distutils.command.build_ext import build_ext
+
+    def _is_using_gcc(obj):
+        is_gcc = False
+        if obj.compiler.compiler_type == 'unix':
+            cc = sysconfig.get_config_var("CC")
+            if not cc:
+                cc = ""
+            compiler_name = os.path.basename(cc)
+            is_gcc = "gcc" in compiler_name
+        return is_gcc
+
+    class new_build_clib(build_clib):
+        def build_a_library(self, build_info, lib_name, libraries):
+            if _is_using_gcc(self):
+                args = build_info.get('extra_compiler_args') or []
+                args.append('-std=c99')
+                build_info['extra_compiler_args'] = args
+            build_clib.build_a_library(self, build_info, lib_name, libraries)
+
+    class new_build_ext(build_ext):
+        def build_extension(self, ext):
+            if _is_using_gcc(self):
+                if '-std=c99' not in ext.extra_compile_args:
+                    ext.extra_compile_args.append('-std=c99')
+            build_ext.build_extension(self, ext)
+    return new_build_clib, new_build_ext
+
+
 def generate_cython():
     cwd = os.path.abspath(os.path.dirname(__file__))
     print("Cythonizing sources")
@@ -389,6 +422,8 @@ def setup_package():
             'f2py%s.%s = numpy.f2py.f2py2e:main' % sys.version_info[:2],
             ]
 
+    cmdclass={"sdist": sdist_checked,
+             }
     metadata = dict(
         name = 'numpy',
         maintainer = "NumPy Developers",
@@ -407,8 +442,7 @@ def setup_package():
         classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
         platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
         test_suite='nose.collector',
-        cmdclass={"sdist": sdist_checked,
-                 },
+        cmdclass=cmdclass,
         python_requires='>=3.5',
         zip_safe=False,
         entry_points={
@@ -432,6 +466,8 @@ def setup_package():
             generate_cython()
 
         metadata['configuration'] = configuration
+        # Customize extension building
+        cmdclass['build_clib'], cmdclass['build_ext'] = get_build_overrides()
     else:
         # Version number is added to metadata inside configuration() if build
         # is run.

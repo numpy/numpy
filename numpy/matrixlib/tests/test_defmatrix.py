@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 try:
     # Accessing collections abstract classes from collections
     # has been deprecated since Python 3.3
@@ -16,7 +14,7 @@ from numpy.testing import (
 from numpy.linalg import matrix_power
 from numpy.matrixlib import mat
 
-class TestCtor(object):
+class TestCtor:
     def test_basic(self):
         A = np.array([[1, 2], [3, 4]])
         mA = matrix(A)
@@ -63,7 +61,7 @@ class TestCtor(object):
         assert_(np.all(b2 == mixresult))
 
 
-class TestProperties(object):
+class TestProperties:
     def test_sum(self):
         """Test whether matrix.sum(axis=1) preserves orientation.
         Fails in NumPy <= 0.9.6.2127.
@@ -196,7 +194,7 @@ class TestProperties(object):
         B = matrix([[True], [True], [False]])
         assert_array_equal(A, B)
 
-class TestCasting(object):
+class TestCasting:
     def test_basic(self):
         A = np.arange(100).reshape(10, 10)
         mA = matrix(A)
@@ -215,7 +213,7 @@ class TestCasting(object):
         assert_(np.all(mA != mB))
 
 
-class TestAlgebra(object):
+class TestAlgebra:
     def test_basic(self):
         import numpy.linalg as linalg
 
@@ -274,7 +272,7 @@ class TestAlgebra(object):
             A*object()
 
 
-class TestMatrixReturn(object):
+class TestMatrixReturn:
     def test_instance_methods(self):
         a = matrix([1.0], dtype='f8')
         methodargs = {
@@ -316,7 +314,7 @@ class TestMatrixReturn(object):
         assert_(type(d) is np.ndarray)
 
 
-class TestIndexing(object):
+class TestIndexing:
     def test_basic(self):
         x = asmatrix(np.zeros((3, 2), float))
         y = np.zeros((3, 1), float)
@@ -325,7 +323,7 @@ class TestIndexing(object):
         assert_equal(x, [[0, 1], [0, 0], [0, 0]])
 
 
-class TestNewScalarIndexing(object):
+class TestNewScalarIndexing:
     a = matrix([[1, 2], [3, 4]])
 
     def test_dimesions(self):
@@ -392,7 +390,7 @@ class TestNewScalarIndexing(object):
         assert_array_equal(x[[2, 1, 0],:], x[::-1,:])
 
 
-class TestPower(object):
+class TestPower:
     def test_returntype(self):
         a = np.array([[0, 1], [0, 0]])
         assert_(type(matrix_power(a, 2)) is np.ndarray)
@@ -403,7 +401,7 @@ class TestPower(object):
         assert_array_equal(matrix_power([[0, 1], [0, 0]], 2), [[0, 0], [0, 0]])
 
 
-class TestShape(object):
+class TestShape:
 
     a = np.array([[1], [2]])
     m = matrix([[1], [2]])

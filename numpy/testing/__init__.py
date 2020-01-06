@@ -5,8 +5,6 @@ in a single location, so that test scripts can just import it and work right
 away.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from unittest import TestCase
 
 from ._private.utils import *

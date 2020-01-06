@@ -113,7 +113,7 @@ def is_pathlib_path(obj):
     return Path is not None and isinstance(obj, Path)
 
 # from Python 3.7
-class contextlib_nullcontext(object):
+class contextlib_nullcontext:
     """Context manager that does no additional processing.
 
     Used as a stand-in for a normal context manager, when a particular

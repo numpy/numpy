@@ -25,8 +25,6 @@ or in RST-based documentations::
 
     $ python refguide_check.py --rst docs
 """
-from __future__ import print_function
-
 import sys
 import os
 import re
@@ -797,7 +795,7 @@ def _run_doctests(tests, full_name, verbose, doctest_warnings):
     def out(msg):
         output.append(msg)
 
-    class MyStderr(object):
+    class MyStderr:
         """
         Redirect stderr to the current stdout
         """

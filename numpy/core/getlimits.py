@@ -1,8 +1,6 @@
 """Machine limits for Float32 and Float64 and (long double) if available...
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['finfo', 'iinfo']
 
 import warnings
@@ -31,7 +29,7 @@ def _fr1(a):
         a.shape = ()
     return a
 
-class MachArLike(object):
+class MachArLike:
     """ Object to simulate MachAr instance """
 
     def __init__(self,
@@ -291,7 +289,7 @@ def _discovered_machar(ftype):
 
 
 @set_module('numpy')
-class finfo(object):
+class finfo:
     """
     finfo(dtype)
 
@@ -442,7 +440,7 @@ class finfo(object):
 
 
 @set_module('numpy')
-class iinfo(object):
+class iinfo:
     """
     iinfo(type)
 

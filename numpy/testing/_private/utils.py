@@ -2,8 +2,6 @@
 Utility function to facilitate testing.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import platform
@@ -21,7 +19,7 @@ import pprint
 
 from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
-import numpy.__config__
+import numpy.linalg.lapack_lite
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -54,7 +52,7 @@ verbose = 0
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None
-HAS_LAPACK64 = hasattr(numpy.__config__, 'lapack_ilp64_opt_info')
+HAS_LAPACK64 = numpy.linalg.lapack_lite._ilp64
 
 
 def import_nose():
@@ -1636,8 +1634,9 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     import numpy as np
     ret = nulp_diff(a, b, dtype)
     if not np.all(ret <= maxulp):
-        raise AssertionError("Arrays are not almost equal up to %g ULP" %
-                             maxulp)
+        raise AssertionError("Arrays are not almost equal up to %g "
+                             "ULP (max difference is %g ULP)" %
+                             (maxulp, np.max(ret)))
     return ret
 
 
@@ -2002,7 +2001,7 @@ class clear_and_catch_warnings(warnings.catch_warnings):
                 mod.__warningregistry__.update(self._warnreg_copies[mod])
 
 
-class suppress_warnings(object):
+class suppress_warnings:
     """
     Context manager and decorator doing much the same as
     ``warnings.catch_warnings``.

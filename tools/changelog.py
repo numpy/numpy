@@ -33,8 +33,6 @@ From the bash command line with $GITHUB token::
     $ ./tools/announce $GITHUB v1.13.0..v1.14.0 > 1.14.0-changelog.rst
 
 """
-from __future__ import print_function, division
-
 import os
 import sys
 import re

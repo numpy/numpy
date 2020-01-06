@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import re
 import os
@@ -78,7 +76,7 @@ def parse_flags(line):
 def _escape_backslash(val):
     return val.replace('\\', '\\\\')
 
-class LibraryInfo(object):
+class LibraryInfo:
     """
     Object containing build information about a library.
 
@@ -150,7 +148,7 @@ class LibraryInfo(object):
 
         return "\n".join(m)
 
-class VariableSet(object):
+class VariableSet:
     """
     Container object for the variables defined in a config file.
 

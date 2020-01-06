@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 
 from numpy.lib.histograms import histogram, histogramdd, histogram_bin_edges
@@ -11,7 +9,7 @@ from numpy.testing import (
 import pytest
 
 
-class TestHistogram(object):
+class TestHistogram:
 
     def setup(self):
         pass
@@ -424,7 +422,7 @@ class TestHistogram(object):
         assert_array_equal(edges, e)
 
 
-class TestHistogramOptimBinNums(object):
+class TestHistogramOptimBinNums:
     """
     Provide test coverage when using provided estimators for optimal number of
     bins
@@ -612,7 +610,7 @@ class TestHistogramOptimBinNums(object):
                           estimator, weights=[1, 2, 3])
 
 
-class TestHistogramdd(object):
+class TestHistogramdd:
 
     def test_simple(self):
         x = np.array([[-.5, .5, 1.5], [-.5, 1.5, 2.5], [-.5, 2.5, .5],

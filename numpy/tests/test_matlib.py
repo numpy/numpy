@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 # As we are testing matrices, we ignore its PendingDeprecationWarnings
 try:
     import pytest

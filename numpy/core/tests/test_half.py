@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import platform
 import pytest
 
@@ -18,7 +16,7 @@ def assert_raises_fpe(strmatch, callable, *args, **kwargs):
         assert_(False,
                 "Did not raise floating point %s error" % strmatch)
 
-class TestHalf(object):
+class TestHalf:
     def setup(self):
         # An array of all possible float16 values
         self.all_f16 = np.arange(0x10000, dtype=uint16)

@@ -12,8 +12,6 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['cpu']
 
 import sys, re, types
@@ -64,7 +62,7 @@ def key_value_from_command(cmd, sep, successful_status=(0,),
             d[l[0]] = l[1]
     return d
 
-class CPUInfoBase(object):
+class CPUInfoBase:
     """Holds CPU information and provides methods for requiring
     the availability of various CPU features.
     """

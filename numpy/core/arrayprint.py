@@ -3,8 +3,6 @@
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ["array2string", "array_str", "array_repr", "set_string_function",
            "set_printoptions", "get_printoptions", "printoptions",
            "format_float_positional", "format_float_scientific"]
@@ -851,7 +849,7 @@ def _none_or_positive_arg(x, name):
         raise ValueError("{} must be >= 0".format(name))
     return x
 
-class FloatingFormat(object):
+class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
                  **kwarg):
@@ -1140,7 +1138,7 @@ def format_float_positional(x, precision=None, unique=True,
                               pad_right=pad_right)
 
 
-class IntegerFormat(object):
+class IntegerFormat:
     def __init__(self, data):
         if data.size > 0:
             max_str_len = max(len(str(np.max(data))),
@@ -1153,7 +1151,7 @@ class IntegerFormat(object):
         return self.format % x
 
 
-class BoolFormat(object):
+class BoolFormat:
     def __init__(self, data, **kwargs):
         # add an extra space so " True" and "False" have the same length and
         # array elements align nicely when printed, except in 0d arrays
@@ -1163,7 +1161,7 @@ class BoolFormat(object):
         return self.truestr if x else "False"
 
 
-class ComplexFloatingFormat(object):
+class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
     def __init__(self, x, precision, floatmode, suppress_small,
                  sign=False, **kwarg):
@@ -1192,7 +1190,7 @@ class ComplexFloatingFormat(object):
         return r + i
 
 
-class _TimelikeFormat(object):
+class _TimelikeFormat:
     def __init__(self, data):
         non_nat = data[~isnat(data)]
         if len(non_nat) > 0:
@@ -1255,7 +1253,7 @@ class TimedeltaFormat(_TimelikeFormat):
         return str(x.astype('i8'))
 
 
-class SubArrayFormat(object):
+class SubArrayFormat:
     def __init__(self, format_function):
         self.format_function = format_function
 
@@ -1265,7 +1263,7 @@ class SubArrayFormat(object):
         return "[" + ", ".join(self.__call__(a) for a in arr) + "]"
 
 
-class StructuredVoidFormat(object):
+class StructuredVoidFormat:
     """
     Formatter for structured np.void objects.
 

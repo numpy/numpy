@@ -128,8 +128,6 @@ this distribution for specifics.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import re
@@ -581,7 +579,7 @@ class UmfpackNotFoundError(NotFoundError):
     the UMFPACK environment variable."""
 
 
-class system_info(object):
+class system_info:
 
     """ get_info() is the only public method. Don't use others.
     """

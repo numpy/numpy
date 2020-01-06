@@ -114,7 +114,7 @@ For example, consider the following Python code:
 
 .. testcode::
 
-  class C(object):
+  class C:
       def __new__(cls, *args):
           print('Cls in __new__:', cls)
           print('Args in __new__:', args)
@@ -750,4 +750,3 @@ This object is now compatible with ``np.sum`` again because any extraneous argum
 ``**unused_kwargs`` parameter.
 
 """
-from __future__ import division, absolute_import, print_function

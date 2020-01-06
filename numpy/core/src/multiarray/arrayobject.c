@@ -1601,7 +1601,7 @@ PyArray_ElementStrides(PyObject *obj)
 /*NUMPY_API*/
 NPY_NO_EXPORT npy_bool
 PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
-                     npy_intp *dims, npy_intp *newstrides)
+                     npy_intp const *dims, npy_intp const *newstrides)
 {
     npy_intp begin, end;
     npy_intp lower_offset;

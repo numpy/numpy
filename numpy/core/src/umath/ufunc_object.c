@@ -929,22 +929,9 @@ parse_ufunc_keywords(PyUFuncObject *ufunc, PyObject *kwds, PyObject **kwnames, .
             }
         }
         else {
-#if PY_VERSION_HEX >= 0x03000000
             PyErr_Format(PyExc_TypeError,
                          "'%S' is an invalid keyword to ufunc '%s'",
                          key, ufunc_get_name_cstr(ufunc));
-#else
-            char *str = PyString_AsString(key);
-            if (str == NULL) {
-                PyErr_Clear();
-                PyErr_SetString(PyExc_TypeError, "invalid keyword argument");
-            }
-            else {
-                PyErr_Format(PyExc_TypeError,
-                             "'%s' is an invalid keyword to ufunc '%s'",
-                             str, ufunc_get_name_cstr(ufunc));
-            }
-#endif
             return -1;
         }
     }
@@ -3437,8 +3424,8 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
 }
 
 static int
-reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
-            npy_intp *countptr, NpyIter_IterNextFunc *iternext,
+reduce_loop(NpyIter *iter, char **dataptrs, npy_intp const *strides,
+            npy_intp const *countptr, NpyIter_IterNextFunc *iternext,
             int needs_api, npy_intp skip_first_count, void *data)
 {
     PyArray_Descr *dtypes[3], **iter_dtypes;
@@ -3515,7 +3502,11 @@ reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
         strides_copy[2] = strides[0];
 
         if (!masked) {
-            innerloop(dataptrs_copy, countptr,
+            /* gh-15252: The signature of the inner loop considers `countptr`
+             * mutable. Inner loops aren't actually allowed to modify this
+             * though, so it's fine to cast it.
+             */
+            innerloop(dataptrs_copy, (npy_intp *)countptr,
                       strides_copy, innerloopdata);
         }
         else {
@@ -5068,21 +5059,12 @@ _free_loop1d_list(PyUFunc_Loop1d *data)
     }
 }
 
-#if PY_VERSION_HEX >= 0x03000000
 static void
 _loop1d_list_free(PyObject *ptr)
 {
     PyUFunc_Loop1d *data = (PyUFunc_Loop1d *)PyCapsule_GetPointer(ptr, NULL);
     _free_loop1d_list(data);
 }
-#else
-static void
-_loop1d_list_free(void *ptr)
-{
-    PyUFunc_Loop1d *data = (PyUFunc_Loop1d *)ptr;
-    _free_loop1d_list(data);
-}
-#endif
 
 
 /*

@@ -5,8 +5,6 @@ Try to inherit from the ndarray instead of using this class as this is not
 complete.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from numpy.core import (
     array, asarray, absolute, add, subtract, multiply, divide,
     remainder, power, left_shift, right_shift, bitwise_and, bitwise_or,
@@ -16,7 +14,7 @@ from numpy.core import (
 from numpy.compat import long
 
 
-class container(object):
+class container:
     """
     container(data, dtype=None, copy=True)
 

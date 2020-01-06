@@ -27,8 +27,6 @@ This module is imported by every numpy subpackage, so lies at the top level to
 simplify circular import issues. For the same reason, it contains no numpy
 imports at module scope, instead importing numpy within function calls.
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 
@@ -44,7 +42,7 @@ def _show_numpy_info():
     print("NumPy relaxed strides checking option:", relaxed_strides)
 
 
-class PytestTester(object):
+class PytestTester:
     """
     Pytest test runner.
 
@@ -166,7 +164,6 @@ class PytestTester(object):
 
         # Ignore python2.7 -3 warnings
         pytest_args += [
-            r"-W ignore:sys\.exc_clear\(\) not supported in 3\.x:DeprecationWarning",
             r"-W ignore:in 3\.x, __setslice__:DeprecationWarning",
             r"-W ignore:in 3\.x, __getslice__:DeprecationWarning",
             r"-W ignore:buffer\(\) not supported in 3\.x:DeprecationWarning",

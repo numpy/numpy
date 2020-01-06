@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from os.path import join
 
 from numpy.compat import isfileobj

@@ -695,7 +695,7 @@ _IsWriteable(PyArrayObject *ap)
  * @return Python unicode string
  */
 NPY_NO_EXPORT PyObject *
-convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending)
+convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
 {
     npy_intp i;
     PyObject *ret, *tmp;

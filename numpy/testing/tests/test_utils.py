@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import warnings
 import sys
 import os
@@ -20,7 +18,7 @@ from numpy.testing import (
 from numpy.core.overrides import ARRAY_FUNCTION_ENABLED
 
 
-class _GenericTest(object):
+class _GenericTest:
 
     def _test_equal(self, a, b):
         self._assert_func(a, b)
@@ -211,7 +209,7 @@ class TestArrayEqual(_GenericTest):
         self._test_not_equal(b, a)
 
 
-class TestBuildErrorMessage(object):
+class TestBuildErrorMessage:
 
     def test_build_err_msg_defaults(self):
         x = np.array([1.00001, 2.00002, 3.00003])
@@ -618,7 +616,7 @@ class TestAlmostEqual(_GenericTest):
         self._assert_func(a, a)
 
 
-class TestApproxEqual(object):
+class TestApproxEqual:
 
     def setup(self):
         self._assert_func = assert_approx_equal
@@ -661,7 +659,7 @@ class TestApproxEqual(object):
         assert_raises(AssertionError, lambda: self._assert_func(ainf, anan))
 
 
-class TestArrayAssertLess(object):
+class TestArrayAssertLess:
 
     def setup(self):
         self._assert_func = assert_array_less
@@ -771,7 +769,7 @@ class TestArrayAssertLess(object):
 
 
 @pytest.mark.skip(reason="The raises decorator depends on Nose")
-class TestRaises(object):
+class TestRaises:
 
     def setup(self):
         class MyException(Exception):
@@ -805,7 +803,7 @@ class TestRaises(object):
             raise AssertionError("should have raised an AssertionError")
 
 
-class TestWarns(object):
+class TestWarns:
 
     def test_warn(self):
         def f():
@@ -856,7 +854,7 @@ class TestWarns(object):
             raise AssertionError("wrong warning caught by assert_warn")
 
 
-class TestAssertAllclose(object):
+class TestAssertAllclose:
 
     def test_simple(self):
         x = 1e-3
@@ -926,7 +924,7 @@ class TestAssertAllclose(object):
         assert_('Max relative difference: 0.5' in msg)
 
 
-class TestArrayAlmostEqualNulp(object):
+class TestArrayAlmostEqualNulp:
 
     def test_float64_pass(self):
         # The number of units of least precision
@@ -1123,7 +1121,7 @@ class TestArrayAlmostEqualNulp(object):
                       xi, y + y*1j, nulp)
 
 
-class TestULP(object):
+class TestULP:
 
     def test_equal(self):
         x = np.random.randn(10)
@@ -1179,7 +1177,7 @@ class TestULP(object):
                           maxulp=maxulp))
 
 
-class TestStringEqual(object):
+class TestStringEqual:
     def test_simple(self):
         assert_string_equal("hello", "hello")
         assert_string_equal("hello\nmultiline", "hello\nmultiline")
@@ -1241,7 +1239,7 @@ def test_warn_len_equal_call_scenarios():
     # check that no assertion is uncaught
 
     # parallel scenario -- no warning issued yet
-    class mod(object):
+    class mod:
         pass
 
     mod_inst = mod()
@@ -1251,7 +1249,7 @@ def test_warn_len_equal_call_scenarios():
 
     # serial test scenario -- the __warningregistry__
     # attribute should be present
-    class mod(object):
+    class mod:
         def __init__(self):
             self.__warningregistry__ = {'warning1':1,
                                         'warning2':2}
@@ -1526,7 +1524,7 @@ def test_clear_and_catch_warnings_inherit():
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-class TestAssertNoGcCycles(object):
+class TestAssertNoGcCycles:
     """ Test assert_no_gc_cycles """
     def test_passes(self):
         def no_cycle():
@@ -1560,7 +1558,7 @@ class TestAssertNoGcCycles(object):
         error, instead of hanging forever trying to clear it.
         """
 
-        class ReferenceCycleInDel(object):
+        class ReferenceCycleInDel:
             """
             An object that not only contains a reference cycle, but creates new
             cycles whenever it's garbage-collected and its __del__ runs

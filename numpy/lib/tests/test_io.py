@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import gzip
 import os
@@ -71,7 +69,7 @@ def strptime(s, fmt=None):
     return datetime(*time.strptime(s, fmt)[:3])
 
 
-class RoundtripTest(object):
+class RoundtripTest:
     def roundtrip(self, save_func, *args, **kwargs):
         """
         save_func : callable
@@ -318,7 +316,7 @@ class TestSavezLoad(RoundtripTest):
             assert_(fp.closed)
 
 
-class TestSaveTxt(object):
+class TestSaveTxt:
     def test_array(self):
         a = np.array([[1, 2], [3, 4]], float)
         fmt = "%.18e"
@@ -584,7 +582,7 @@ class TestSaveTxt(object):
         with tempdir() as tmpdir:
             np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
 
-class LoadTxtBase(object):
+class LoadTxtBase:
     def check_compressed(self, fopen, suffixes):
         # Test that we can load data from a compressed file
         wanted = np.arange(6).reshape((2, 3))
@@ -826,7 +824,7 @@ class TestLoadTxt(LoadTxtBase):
             assert_array_equal(x, a[:, 1])
 
         # Testing with some crazy custom integer type
-        class CrazyInt(object):
+        class CrazyInt:
             def __index__(self):
                 return 1
 
@@ -1158,7 +1156,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
         assert_array_equal(x, a)
 
-class Testfromregex(object):
+class Testfromregex:
     def test_record(self):
         c = TextIO()
         c.write('1.312 foo\n1.534 bar\n4.444 qux')
@@ -2349,7 +2347,7 @@ M   33  21.99
 
 
 @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
-class TestPathUsage(object):
+class TestPathUsage:
     # Test that pathlib.Path can be used
     def test_loadtxt(self):
         with temppath(suffix='.txt') as path:
@@ -2482,7 +2480,7 @@ def test_gzip_load():
 
 # These next two classes encode the minimal API needed to save()/load() arrays.
 # The `test_ducktyping` ensures they work correctly
-class JustWriter(object):
+class JustWriter:
     def __init__(self, base):
         self.base = base
 
@@ -2492,7 +2490,7 @@ class JustWriter(object):
     def flush(self):
         return self.base.flush()
 
-class JustReader(object):
+class JustReader:
     def __init__(self, base):
         self.base = base
 

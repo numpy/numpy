@@ -24,7 +24,7 @@ seed will produce the same outputs.
     import concurrent.futures
     import numpy as np
 
-    class MultithreadedRNG(object):
+    class MultithreadedRNG:
         def __init__(self, n, seed=None, threads=None):
             rg = PCG64(seed)
             if threads is None:

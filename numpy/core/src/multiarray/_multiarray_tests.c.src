@@ -55,7 +55,7 @@ EXPORT(void*) forward_pointer(void *x)
  * #typenum = NPY_DOUBLE, NPY_INT#
  */
 static int copy_@name@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *niterx,
-        npy_intp *bounds,
+        npy_intp const *bounds,
         PyObject **out)
 {
     npy_intp i, j;
@@ -97,7 +97,7 @@ static int copy_@name@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
 /**end repeat**/
 
 static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *niterx,
-        npy_intp *bounds,
+        npy_intp const *bounds,
         PyObject **out)
 {
     npy_intp i, j;
@@ -251,7 +251,7 @@ clean_ax:
 static int
 copy_double_double(PyArrayNeighborhoodIterObject *itx,
         PyArrayNeighborhoodIterObject *niterx,
-        npy_intp *bounds,
+        npy_intp const *bounds,
         PyObject **out)
 {
     npy_intp i, j;
@@ -2126,7 +2126,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
 };
 
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_multiarray_tests",
@@ -2138,33 +2137,21 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
-#if defined(NPY_PY3K)
-#define RETVAL m
 PyMODINIT_FUNC PyInit__multiarray_tests(void)
-#else
-#define RETVAL
-PyMODINIT_FUNC
-init_multiarray_tests(void)
-#endif
 {
     PyObject *m;
 
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("_multiarray_tests", Multiarray_TestsMethods);
-#endif
     if (m == NULL) {
-        return RETVAL;
+        return m;
     }
     import_array();
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _multiarray_tests module.");
     }
-    return RETVAL;
+    return m;
 }
 
 NPY_NO_EXPORT int

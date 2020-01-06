@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.ma.testutils import (assert_, assert_equal, assert_raises,
                                 assert_array_equal)
@@ -29,7 +27,7 @@ class MMatrix(MaskedArray, np.matrix,):
         return _view
 
 
-class TestMaskedMatrix(object):
+class TestMaskedMatrix:
     def test_matrix_indexing(self):
         # Tests conversions and indexing
         x1 = np.matrix([[1, 2, 3], [4, 3, 2]])
@@ -171,7 +169,7 @@ class TestMaskedMatrix(object):
         assert_(not isinstance(test, MaskedArray))
 
 
-class TestSubclassing(object):
+class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
 
     def setup(self):
@@ -212,7 +210,7 @@ class TestSubclassing(object):
         assert_(isinstance(divide(mx, x), MMatrix))
         assert_equal(divide(mx, mx), divide(xmx, xmx))
 
-class TestConcatenator(object):
+class TestConcatenator:
     # Tests for mr_, the equivalent of r_ for masked arrays.
 
     def test_matrix_builder(self):

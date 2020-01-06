@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import inspect
 import sys
 from unittest import mock
@@ -36,7 +34,7 @@ def dispatched_two_arg(array1, array2):
     return 'original'
 
 
-class TestGetImplementingArgs(object):
+class TestGetImplementingArgs:
 
     def test_ndarray(self):
         array = np.array(1)
@@ -77,7 +75,7 @@ class TestGetImplementingArgs(object):
 
     def test_ndarray_and_duck_array(self):
 
-        class Other(object):
+        class Other:
             __array_function__ = _return_not_implemented
 
         array = np.array(1)
@@ -94,7 +92,7 @@ class TestGetImplementingArgs(object):
         class OverrideSub(np.ndarray):
             __array_function__ = _return_not_implemented
 
-        class Other(object):
+        class Other:
             __array_function__ = _return_not_implemented
 
         array = np.array(1)
@@ -108,7 +106,7 @@ class TestGetImplementingArgs(object):
 
     def test_many_duck_arrays(self):
 
-        class A(object):
+        class A:
             __array_function__ = _return_not_implemented
 
         class B(A):
@@ -117,7 +115,7 @@ class TestGetImplementingArgs(object):
         class C(A):
             __array_function__ = _return_not_implemented
 
-        class D(object):
+        class D:
             __array_function__ = _return_not_implemented
 
         a = A()
@@ -147,12 +145,12 @@ class TestGetImplementingArgs(object):
             _get_implementing_args(relevant_args)
 
 
-class TestNDArrayArrayFunction(object):
+class TestNDArrayArrayFunction:
 
     @requires_array_function
     def test_method(self):
 
-        class Other(object):
+        class Other:
             __array_function__ = _return_not_implemented
 
         class NoOverrideSub(np.ndarray):
@@ -209,7 +207,7 @@ class TestNDArrayArrayFunction(object):
 
 
 @requires_array_function
-class TestArrayFunctionDispatch(object):
+class TestArrayFunctionDispatch:
 
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
@@ -224,7 +222,7 @@ class TestArrayFunctionDispatch(object):
 
     def test_interface(self):
 
-        class MyArray(object):
+        class MyArray:
             def __array_function__(self, func, types, args, kwargs):
                 return (self, func, types, args, kwargs)
 
@@ -239,7 +237,7 @@ class TestArrayFunctionDispatch(object):
 
     def test_not_implemented(self):
 
-        class MyArray(object):
+        class MyArray:
             def __array_function__(self, func, types, args, kwargs):
                 return NotImplemented
 
@@ -249,7 +247,7 @@ class TestArrayFunctionDispatch(object):
 
 
 @requires_array_function
-class TestVerifyMatchingSignatures(object):
+class TestVerifyMatchingSignatures:
 
     def test_verify_matching_signatures(self):
 
@@ -283,7 +281,7 @@ def _new_duck_type_and_implements():
     """Create a duck array type and implements functions."""
     HANDLED_FUNCTIONS = {}
 
-    class MyArray(object):
+    class MyArray:
         def __array_function__(self, func, types, args, kwargs):
             if func not in HANDLED_FUNCTIONS:
                 return NotImplemented
@@ -302,7 +300,7 @@ def _new_duck_type_and_implements():
 
 
 @requires_array_function
-class TestArrayFunctionImplementation(object):
+class TestArrayFunctionImplementation:
 
     def test_one_arg(self):
         MyArray, implements = _new_duck_type_and_implements()
@@ -355,7 +353,7 @@ class TestArrayFunctionImplementation(object):
             func(MyArray())
 
 
-class TestNDArrayMethods(object):
+class TestNDArrayMethods:
 
     def test_repr(self):
         # gh-12162: should still be defined even if __array_function__ doesn't
@@ -370,7 +368,7 @@ class TestNDArrayMethods(object):
         assert_equal(str(array), '1')
 
 
-class TestNumPyFunctions(object):
+class TestNumPyFunctions:
 
     def test_set_module(self):
         assert_equal(np.sum.__module__, 'numpy')

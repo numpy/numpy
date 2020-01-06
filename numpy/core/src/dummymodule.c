@@ -16,7 +16,6 @@ static struct PyMethodDef methods[] = {
 };
 
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "dummy",
@@ -28,10 +27,8 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
 /* Initialization function for the module */
-#if defined(NPY_PY3K)
 PyMODINIT_FUNC PyInit__dummy(void) {
     PyObject *m;
     m = PyModule_Create(&moduledef);
@@ -40,9 +37,3 @@ PyMODINIT_FUNC PyInit__dummy(void) {
     }
     return m;
 }
-#else
-PyMODINIT_FUNC
-init_dummy(void) {
-    Py_InitModule("_dummy", methods);
-}
-#endif

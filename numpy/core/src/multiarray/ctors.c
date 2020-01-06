@@ -950,7 +950,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 }
 
 static PyObject *
-raise_memory_error(int nd, npy_intp *dims, PyArray_Descr *descr)
+raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
 {
     static PyObject *exc_type = NULL;
 

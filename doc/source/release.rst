@@ -7,11 +7,13 @@ Release Notes
 
     1.19.0 <release/1.19.0-notes>
     1.18.0 <release/1.18.0-notes>
+    1.17.5 <release/1.17.5-notes>
     1.17.4 <release/1.17.4-notes>
     1.17.3 <release/1.17.3-notes>
     1.17.2 <release/1.17.2-notes>
     1.17.1 <release/1.17.1-notes>
     1.17.0 <release/1.17.0-notes>
+    1.16.6 <release/1.16.6-notes>
     1.16.5 <release/1.16.5-notes>
     1.16.4 <release/1.16.4-notes>
     1.16.3 <release/1.16.3-notes>

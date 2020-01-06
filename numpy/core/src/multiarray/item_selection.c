@@ -825,7 +825,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
  */
 static int
 _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
-              PyArray_PartitionFunc *part, npy_intp *kth, npy_intp nkth)
+              PyArray_PartitionFunc *part, npy_intp const *kth, npy_intp nkth)
 {
     npy_intp N = PyArray_DIM(op, axis);
     npy_intp elsize = (npy_intp)PyArray_ITEMSIZE(op);
@@ -953,7 +953,7 @@ fail:
 static PyObject*
 _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
                  PyArray_ArgPartitionFunc *argpart,
-                 npy_intp *kth, npy_intp nkth)
+                 npy_intp const *kth, npy_intp nkth)
 {
     npy_intp N = PyArray_DIM(op, axis);
     npy_intp elsize = (npy_intp)PyArray_ITEMSIZE(op);
@@ -2028,7 +2028,7 @@ count_nonzero_bytes_384(const npy_uint64 * w)
  * Returns -1 on error.
  */
 NPY_NO_EXPORT npy_intp
-count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
+count_boolean_trues(int ndim, char *data, npy_intp const *ashape, npy_intp const *astrides)
 {
     int idim;
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
@@ -2392,7 +2392,7 @@ PyArray_Nonzero(PyArrayObject *self)
             Py_DECREF(ret);
             return NULL;
         }
-        
+
         needs_api = NpyIter_IterationNeedsAPI(iter);
 
         NPY_BEGIN_THREADS_NDITER(iter);
@@ -2436,7 +2436,7 @@ finish:
         Py_DECREF(ret);
         return NULL;
     }
-    
+
     /* if executed `nonzero()` check for miscount due to side-effect */
     if (!is_bool && added_count != nonzero_count) {
         PyErr_SetString(PyExc_RuntimeError,

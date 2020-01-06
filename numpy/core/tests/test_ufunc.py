@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import warnings
 import itertools
 
@@ -23,7 +21,7 @@ UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values()
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 
 
-class TestUfuncKwargs(object):
+class TestUfuncKwargs:
     def test_kwarg_exact(self):
         assert_raises(TypeError, np.add, 1, 2, castingx='safe')
         assert_raises(TypeError, np.add, 1, 2, dtypex=int)
@@ -49,7 +47,7 @@ class TestUfuncKwargs(object):
         assert_raises(TypeError, np.add, 1, 2, extobj=[4096], parrot=True)
 
 
-class TestUfuncGenericLoops(object):
+class TestUfuncGenericLoops:
     """Test generic loops.
 
     The loops to be tested are:
@@ -118,7 +116,7 @@ class TestUfuncGenericLoops(object):
         assert_equal(ys.dtype, output_dtype)
 
     # class to use in testing object method loops
-    class foo(object):
+    class foo:
         def conjugate(self):
             return np.bool_(1)
 
@@ -179,7 +177,7 @@ class TestUfuncGenericLoops(object):
                 assert_array_equal(res_num.astype("O"), res_obj)
 
 
-class TestUfunc(object):
+class TestUfunc:
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             assert_(pickle.loads(pickle.dumps(np.sin,
@@ -1123,7 +1121,7 @@ class TestUfunc(object):
         assert_equal(np.logical_and.reduce(a), None)
 
     def test_object_comparison(self):
-        class HasComparisons(object):
+        class HasComparisons:
             def __eq__(self, other):
                 return '=='
 
@@ -1592,7 +1590,7 @@ class TestUfunc(object):
 
     def test_custom_array_like(self):
 
-        class MyThing(object):
+        class MyThing:
             __array_priority__ = 1000
 
             rmul_count = 0

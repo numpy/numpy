@@ -1,8 +1,6 @@
 """See https://github.com/numpy/numpy/pull/10676.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 from importlib import import_module
 import pytest

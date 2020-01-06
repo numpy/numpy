@@ -5,15 +5,13 @@ An explanation of strides can be found in the "ndarray.rst" file in the
 NumPy reference guide.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.core.overrides import array_function_dispatch
 
 __all__ = ['broadcast_to', 'broadcast_arrays']
 
 
-class DummyArray(object):
+class DummyArray:
     """Dummy object that just exists to hang __array_interface__ dictionaries
     and possibly keep alive a reference to a base array.
     """

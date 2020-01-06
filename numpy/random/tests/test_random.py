@@ -1,4 +1,3 @@
-from __future__ import division, absolute_import, print_function
 import warnings
 
 import numpy as np
@@ -11,7 +10,7 @@ from numpy import random
 import sys
 
 
-class TestSeed(object):
+class TestSeed:
     def test_scalar(self):
         s = np.random.RandomState(0)
         assert_equal(s.randint(1000), 684)
@@ -50,7 +49,7 @@ class TestSeed(object):
                                                           [4, 5, 6]])
 
 
-class TestBinomial(object):
+class TestBinomial:
     def test_n_zero(self):
         # Tests the corner case of n == 0 for the binomial distribution.
         # binomial(0, p) should be zero for any p in [0, 1].
@@ -65,7 +64,7 @@ class TestBinomial(object):
         assert_raises(ValueError, random.binomial, 1, np.nan)
 
 
-class TestMultinomial(object):
+class TestMultinomial:
     def test_basic(self):
         random.multinomial(100, [0.2, 0.8])
 
@@ -93,7 +92,7 @@ class TestMultinomial(object):
                       float(1))
 
 
-class TestSetState(object):
+class TestSetState:
     def setup(self):
         self.seed = 1234567890
         self.prng = random.RandomState(self.seed)
@@ -141,7 +140,7 @@ class TestSetState(object):
         self.prng.negative_binomial(0.5, 0.5)
 
 
-class TestRandint(object):
+class TestRandint:
 
     rfunc = np.random.randint
 
@@ -279,7 +278,7 @@ class TestRandint(object):
             assert_equal(type(sample), dt)
 
 
-class TestRandomDist(object):
+class TestRandomDist:
     # Make sure the random distribution returns the correct value for a
     # given seed
 
@@ -974,7 +973,7 @@ class TestRandomDist(object):
         assert_array_equal(actual, desired)
 
 
-class TestBroadcast(object):
+class TestBroadcast:
     # tests that functions that broadcast behave
     # correctly when presented with non-scalar arguments
     def setup(self):
@@ -1544,7 +1543,7 @@ class TestBroadcast(object):
         assert_raises(ValueError, logseries, bad_p_two * 3)
 
 
-class TestThread(object):
+class TestThread:
     # make sure each state produces the same sequence even in threads
     def setup(self):
         self.seeds = range(4)
@@ -1588,7 +1587,7 @@ class TestThread(object):
 
 
 # See Issue #4263
-class TestSingleEltArrayInput(object):
+class TestSingleEltArrayInput:
     def setup(self):
         self.argOne = np.array([2])
         self.argTwo = np.array([3])

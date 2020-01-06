@@ -5,8 +5,6 @@ Utility functions for
 - detecting if compilers are present
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import subprocess
@@ -315,7 +313,7 @@ def build_module_distutils(source_files, config_code, module_name, **kw):
 #
 
 
-class F2PyTest(object):
+class F2PyTest:
     code = None
     sources = None
     options = []

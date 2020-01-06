@@ -5,8 +5,6 @@ The LooseVersion and StrictVersion classes that distutils provides don't
 work; they don't recognize anything like alpha/beta/rc/dev versions.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import re
 
 from numpy.compat import basestring
