@@ -64,7 +64,7 @@ extend_str(char **strp, Py_ssize_t n, Py_ssize_t *maxp)
 
 static int
 dump_data(char **string, Py_ssize_t *n, Py_ssize_t *max_n, char *data, int nd,
-          npy_intp *dimensions, npy_intp *strides, PyArrayObject* self)
+          npy_intp const *dimensions, npy_intp const *strides, PyArrayObject* self)
 {
     PyObject *op = NULL, *sp = NULL;
     char *ostring;

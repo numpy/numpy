@@ -306,30 +306,30 @@ PyArray_CastRawArrays(npy_intp count,
 NPY_NO_EXPORT npy_intp
 PyArray_TransferNDimToStrided(npy_intp ndim,
                 char *dst, npy_intp dst_stride,
-                char *src, npy_intp *src_strides, npy_intp src_strides_inc,
-                npy_intp *coords, npy_intp coords_inc,
-                npy_intp *shape, npy_intp shape_inc,
+                char *src, npy_intp const *src_strides, npy_intp src_strides_inc,
+                npy_intp const *coords, npy_intp coords_inc,
+                npy_intp const *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedUnaryOp *stransfer,
                 NpyAuxData *transferdata);
 
 NPY_NO_EXPORT npy_intp
 PyArray_TransferStridedToNDim(npy_intp ndim,
-                char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
+                char *dst, npy_intp const *dst_strides, npy_intp dst_strides_inc,
                 char *src, npy_intp src_stride,
-                npy_intp *coords, npy_intp coords_inc,
-                npy_intp *shape, npy_intp shape_inc,
+                npy_intp const *coords, npy_intp coords_inc,
+                npy_intp const *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedUnaryOp *stransfer,
                 NpyAuxData *transferdata);
 
 NPY_NO_EXPORT npy_intp
 PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
-                char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
+                char *dst, npy_intp const *dst_strides, npy_intp dst_strides_inc,
                 char *src, npy_intp src_stride,
                 npy_bool *mask, npy_intp mask_stride,
-                npy_intp *coords, npy_intp coords_inc,
-                npy_intp *shape, npy_intp shape_inc,
+                npy_intp const *coords, npy_intp coords_inc,
+                npy_intp const *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_MaskedStridedUnaryOp *stransfer,
                 NpyAuxData *data);
@@ -365,8 +365,8 @@ mapiter_set(PyArrayMapIterObject *mit);
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
-                            char *data, npy_intp *strides,
+PyArray_PrepareOneRawArrayIter(int ndim, npy_intp const *shape,
+                            char *data, npy_intp const *strides,
                             int *out_ndim, npy_intp *out_shape,
                             char **out_data, npy_intp *out_strides);
 
@@ -387,9 +387,9 @@ PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
-                            char *dataA, npy_intp *stridesA,
-                            char *dataB, npy_intp *stridesB,
+PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp const *shape,
+                            char *dataA, npy_intp const *stridesA,
+                            char *dataB, npy_intp const *stridesB,
                             int *out_ndim, npy_intp *out_shape,
                             char **out_dataA, npy_intp *out_stridesA,
                             char **out_dataB, npy_intp *out_stridesB);
@@ -411,10 +411,10 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
-                            char *dataA, npy_intp *stridesA,
-                            char *dataB, npy_intp *stridesB,
-                            char *dataC, npy_intp *stridesC,
+PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp const *shape,
+                            char *dataA, npy_intp const *stridesA,
+                            char *dataB, npy_intp const *stridesB,
+                            char *dataC, npy_intp const *stridesC,
                             int *out_ndim, npy_intp *out_shape,
                             char **out_dataA, npy_intp *out_stridesA,
                             char **out_dataB, npy_intp *out_stridesB,
