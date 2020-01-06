@@ -1366,6 +1366,76 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
     }
 }
 
+/**
+ * Get a dtype instance from a python type
+ */
+static PyArray_Descr *
+_convert_from_type(PyObject *obj) {
+    PyTypeObject *typ = (PyTypeObject*)obj;
+
+    if (PyType_IsSubtype(typ, &PyGenericArrType_Type)) {
+        return PyArray_DescrFromTypeObject(obj);
+    }
+#if !defined(NPY_PY3K)
+    else if (typ == &PyInt_Type) {
+        return PyArray_DescrFromType(NPY_LONG);
+    }
+    else if (typ == &PyLong_Type) {
+        return PyArray_DescrFromType(NPY_LONGLONG);
+    }
+#else
+    else if (typ == &PyLong_Type) {
+        return PyArray_DescrFromType(NPY_LONG);
+    }
+#endif
+    else if (typ == &PyFloat_Type) {
+        return PyArray_DescrFromType(NPY_DOUBLE);
+    }
+    else if (typ == &PyComplex_Type) {
+        return PyArray_DescrFromType(NPY_CDOUBLE);
+    }
+    else if (typ == &PyBool_Type) {
+        return PyArray_DescrFromType(NPY_BOOL);
+    }
+    else if (typ == &PyBytes_Type) {
+        return PyArray_DescrFromType(NPY_STRING);
+    }
+    else if (typ == &PyUnicode_Type) {
+        return PyArray_DescrFromType(NPY_UNICODE);
+    }
+#if defined(NPY_PY3K)
+    else if (typ == &PyMemoryView_Type) {
+#else
+    else if (typ == &PyBuffer_Type) {
+#endif
+        return PyArray_DescrFromType(NPY_VOID);
+    }
+    else {
+        PyArray_Descr *at = NULL;
+        if (_arraydescr_from_dtype_attr(obj, &at)) {
+            /*
+             * Using dtype attribute, *at may be NULL if a
+             * RecursionError occurred.
+             */
+            if (at == NULL) {
+                return NULL;
+            }
+            return at;
+        }
+        /*
+         * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
+         * type might override the dtype if numpy does not otherwise
+         * support it.
+         */
+        if (npy_ctypes_check(typ)) {
+            return _arraydescr_from_ctypes_type(typ);
+        }
+
+        /* All other classes are treated as object */
+        return PyArray_DescrFromType(NPY_OBJECT);
+    }
+}
+
 /*NUMPY_API
  * Get typenum from an object -- None goes to NPY_DEFAULT_TYPE
  * This function takes a Python object representing a type and converts it
@@ -1403,67 +1473,8 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
 
     if (PyType_Check(obj)) {
-        if (PyType_IsSubtype((PyTypeObject *)obj, &PyGenericArrType_Type)) {
-            *at = PyArray_DescrFromTypeObject(obj);
-            return (*at) ? NPY_SUCCEED : NPY_FAIL;
-        }
-        check_num = NPY_OBJECT;
-#if !defined(NPY_PY3K)
-        if (obj == (PyObject *)(&PyInt_Type)) {
-            check_num = NPY_LONG;
-        }
-        else if (obj == (PyObject *)(&PyLong_Type)) {
-            check_num = NPY_LONGLONG;
-        }
-#else
-        if (obj == (PyObject *)(&PyLong_Type)) {
-            check_num = NPY_LONG;
-        }
-#endif
-        else if (obj == (PyObject *)(&PyFloat_Type)) {
-            check_num = NPY_DOUBLE;
-        }
-        else if (obj == (PyObject *)(&PyComplex_Type)) {
-            check_num = NPY_CDOUBLE;
-        }
-        else if (obj == (PyObject *)(&PyBool_Type)) {
-            check_num = NPY_BOOL;
-        }
-        else if (obj == (PyObject *)(&PyBytes_Type)) {
-            check_num = NPY_STRING;
-        }
-        else if (obj == (PyObject *)(&PyUnicode_Type)) {
-            check_num = NPY_UNICODE;
-        }
-#if defined(NPY_PY3K)
-        else if (obj == (PyObject *)(&PyMemoryView_Type)) {
-#else
-        else if (obj == (PyObject *)(&PyBuffer_Type)) {
-#endif
-            check_num = NPY_VOID;
-        }
-        else {
-            if (_arraydescr_from_dtype_attr(obj, at)) {
-                /*
-                 * Using dtype attribute, *at may be NULL if a
-                 * RecursionError occurred.
-                 */
-                if (*at == NULL) {
-                    goto error;
-                }
-                return NPY_SUCCEED;
-            }
-            /*
-             * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
-             * type might override the dtype if numpy does not otherwise
-             * support it.
-             */
-            if (npy_ctypes_check((PyTypeObject *)obj)) {
-                *at = _arraydescr_from_ctypes_type((PyTypeObject *)obj);
-                return *at ? NPY_SUCCEED : NPY_FAIL;
-            }
-        }
-        goto finish;
+        *at = _convert_from_type(obj);
+        return (*at) ? NPY_SUCCEED : NPY_FAIL;
     }
 
     /* or a typecode string */
@@ -1657,7 +1668,6 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         goto fail;
     }
 
-finish:
     if ((check_num == NPY_NOTYPE + 10) ||
             (*at = PyArray_DescrFromType(check_num)) == NULL) {
         PyErr_Clear();
