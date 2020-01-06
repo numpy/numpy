@@ -3590,7 +3590,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
  */
 #define FROM_BUFFER_SIZE 4096
 static PyArrayObject *
-array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
+array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nread,
                 void *stream, next_element next, skip_separator skip_sep,
                 void *stream_data)
 {

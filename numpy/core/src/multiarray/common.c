@@ -554,7 +554,7 @@ fail:
 
 /* new reference */
 NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char *c_str)
+_array_typedescr_fromstr(char const *c_str)
 {
     PyArray_Descr *descr = NULL;
     PyObject *stringobj = PyString_FromString(c_str);
