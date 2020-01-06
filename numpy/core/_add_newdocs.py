@@ -4122,7 +4122,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     """
-    a.view(dtype=None, type=None)
+    a.view([dtype][, type])
 
     New view of array with the same data.
 
@@ -4159,11 +4159,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     memory. Therefore if ``a`` is C-ordered versus fortran-ordered, versus
     defined as a slice or transpose, etc., the view may give different
     results.
-
-    Passing None explicitly for ``dtype`` is different from omitting the
-    parameter, since the former invokes ``dtype(None)`` which is an alias for
-    ``dtype('float_')``. Similarly, explicitly passing None for ``type``
-    is an error.
 
 
     Examples
