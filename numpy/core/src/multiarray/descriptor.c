@@ -2950,32 +2950,13 @@ PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
 NPY_NO_EXPORT int
 PyArray_DescrAlignConverter2(PyObject *obj, PyArray_Descr **at)
 {
-    if (PyDict_Check(obj) || PyDictProxy_Check(obj)) {
-        *at =  _convert_from_dict(obj, 1);
-    }
-    else if (PyBytes_Check(obj)) {
-        *at = _convert_from_commastring(obj, 1);
-    }
-    else if (PyUnicode_Check(obj)) {
-        PyObject *tmp;
-        tmp = PyUnicode_AsASCIIString(obj);
-        *at = _convert_from_commastring(tmp, 1);
-        Py_DECREF(tmp);
-    }
-    else if (PyList_Check(obj)) {
-        *at = _convert_from_array_descr(obj, 1);
+    if (obj == Py_None) {
+        *at = NULL;
+        return NPY_SUCCEED;
     }
     else {
-        return PyArray_DescrConverter2(obj, at);
+        return PyArray_DescrAlignConverter(obj, at);
     }
-    if (*at == NULL) {
-        if (!PyErr_Occurred()) {
-            PyErr_SetString(PyExc_ValueError,
-                    "data-type-descriptor not understood");
-        }
-        return NPY_FAIL;
-    }
-    return NPY_SUCCEED;
 }
 
 
