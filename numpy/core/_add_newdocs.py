@@ -4069,21 +4069,26 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     """
-    a.view(dtype=None, type=None)
+    a.view([dtype][, type])
 
     New view of array with the same data.
+
+    .. note::
+        Passing None for ``dtype`` is different from omitting the parameter,
+        since the former invokes ``dtype(None)`` which is an alias for
+        ``dtype('float_')``.
 
     Parameters
     ----------
     dtype : data-type or ndarray sub-class, optional
-        Data-type descriptor of the returned view, e.g., float32 or int16. The
-        default, None, results in the view having the same data-type as `a`.
+        Data-type descriptor of the returned view, e.g., float32 or int16.
+        Omitting it results in the view having the same data-type as `a`.
         This argument can also be specified as an ndarray sub-class, which
         then specifies the type of the returned object (this is equivalent to
         setting the ``type`` parameter).
     type : Python type, optional
-        Type of the returned view, e.g., ndarray or matrix.  Again, the
-        default None results in type preservation.
+        Type of the returned view, e.g., ndarray or matrix.  Again, omission
+        of the parameter results in type preservation.
 
     Notes
     -----
