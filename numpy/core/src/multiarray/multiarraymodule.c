@@ -1601,7 +1601,10 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
             dtype_obj = PyTuple_GET_ITEM(args, 1);
         }
         else if (kws) {
-            dtype_obj = PyDict_GetItem(kws, npy_ma_str_dtype);
+            dtype_obj = PyDict_GetItemWithError(kws, npy_ma_str_dtype);
+            if (dtype_obj == NULL && PyErr_Occurred()) {
+                return NULL;
+            }
             if (dtype_obj == NULL) {
                 dtype_obj = Py_None;
             }
@@ -1618,7 +1621,10 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         else {
             /* fast path for copy=False rest default (np.asarray) */
             PyObject * copy_obj, * order_obj, *ndmin_obj;
-            copy_obj = PyDict_GetItem(kws, npy_ma_str_copy);
+            copy_obj = PyDict_GetItemWithError(kws, npy_ma_str_copy);
+            if (copy_obj == NULL && PyErr_Occurred()) {
+                return NULL;
+            }
             if (copy_obj != Py_False) {
                 goto full_path;
             }
@@ -1627,14 +1633,20 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
             /* order does not matter for contiguous 1d arrays */
             if (PyArray_NDIM((PyArrayObject*)op) > 1 ||
                 !PyArray_IS_C_CONTIGUOUS((PyArrayObject*)op)) {
-                order_obj = PyDict_GetItem(kws, npy_ma_str_order);
-                if (order_obj != Py_None && order_obj != NULL) {
+                order_obj = PyDict_GetItemWithError(kws, npy_ma_str_order);
+                if (order_obj == NULL && PyErr_Occurred()) {
+                    return NULL;
+                }
+                else if (order_obj != Py_None && order_obj != NULL) {
                     goto full_path;
                 }
             }
 
-            ndmin_obj = PyDict_GetItem(kws, npy_ma_str_ndmin);
-            if (ndmin_obj) {
+            ndmin_obj = PyDict_GetItemWithError(kws, npy_ma_str_ndmin);
+            if (ndmin_obj == NULL && PyErr_Occurred()) {
+                return NULL;
+            }
+            else if (ndmin_obj) {
                 long t = PyLong_AsLong(ndmin_obj);
                 if (error_converting(t)) {
                     goto clean_type;

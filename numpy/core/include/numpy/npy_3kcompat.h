@@ -72,6 +72,22 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
         } while (0)
 #endif
 
+/* introduced in https://github.com/python/cpython/commit/a24107b04c1277e3c1105f98aff5bfa3a98b33a0 */
+#if PY_VERSION_HEX < 0x030800A3
+    static NPY_INLINE PyObject *
+    _PyDict_GetItemStringWithError(PyObject *v, const char *key)
+    {
+        PyObject *kv, *rv;
+        kv = PyUnicode_FromString(key);
+        if (kv == NULL) {
+            return NULL;
+        }
+        rv = PyDict_GetItemWithError(v, kv);
+        Py_DECREF(kv);
+        return rv;
+    }
+#endif
+
 /*
  * PyString -> PyBytes
  */

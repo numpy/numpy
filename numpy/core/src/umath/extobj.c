@@ -165,7 +165,7 @@ get_global_ext_obj(void)
         if (thedict == NULL) {
             thedict = PyEval_GetBuiltins();
         }
-        ref = PyDict_GetItem(thedict, npy_um_str_pyvals_name);
+        ref = PyDict_GetItemWithError(thedict, npy_um_str_pyvals_name);
 #if USE_USE_DEFAULTS==1
     }
 #endif
@@ -290,6 +290,9 @@ _check_ufunc_fperr(int errmask, PyObject *extobj, const char *ufunc_name) {
     /* Get error object globals */
     if (extobj == NULL) {
         extobj = get_global_ext_obj();
+        if (extobj == NULL && PyErr_Occurred()) {
+            return -1;
+        }
     }
     if (_extract_pyvals(extobj, ufunc_name,
                         NULL, NULL, &errobj) < 0) {
@@ -311,6 +314,9 @@ _get_bufsize_errmask(PyObject * extobj, const char *ufunc_name,
     /* Get the buffersize and errormask */
     if (extobj == NULL) {
         extobj = get_global_ext_obj();
+        if (extobj == NULL && PyErr_Occurred()) {
+            return -1;
+        }
     }
     if (_extract_pyvals(extobj, ufunc_name,
                         buffersize, errormask, NULL) < 0) {

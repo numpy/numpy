@@ -64,7 +64,11 @@ get_forwarding_ndarray_method(const char *name)
     if (module_methods == NULL) {
         return NULL;
     }
-    callable = PyDict_GetItemString(PyModule_GetDict(module_methods), name);
+    callable = _PyDict_GetItemStringWithError(PyModule_GetDict(module_methods), name);
+    if (callable == NULL && PyErr_Occurred()) {
+        Py_DECREF(module_methods);
+        return NULL;
+    }
     if (callable == NULL) {
         Py_DECREF(module_methods);
         PyErr_Format(PyExc_RuntimeError,

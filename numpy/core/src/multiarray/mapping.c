@@ -1404,8 +1404,11 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         npy_intp offset;
 
         /* get the field offset and dtype */
-        tup = PyDict_GetItem(PyArray_DESCR(arr)->fields, ind);
-        if (tup == NULL){
+        tup = PyDict_GetItemWithError(PyArray_DESCR(arr)->fields, ind);
+        if (tup == NULL && PyErr_Occurred()) {
+            return 0;
+        }
+        else if (tup == NULL){
             PyObject *errmsg = PyUString_FromString("no field of name ");
             PyUString_Concat(&errmsg, ind);
             PyErr_SetObject(PyExc_ValueError, errmsg);

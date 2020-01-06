@@ -260,8 +260,11 @@ static PyObject *
 fortran_getattr(PyFortranObject *fp, char *name) {
     int i,j,k,flag;
     if (fp->dict != NULL) {
-        PyObject *v = PyDict_GetItemString(fp->dict, name);
-        if (v != NULL) {
+        PyObject *v = _PyDict_GetItemStringWithError(fp->dict, name);
+        if (v == NULL && PyErr_Occurred()) {
+            return NULL;
+        }
+        else if (v != NULL) {
             Py_INCREF(v);
             return v;
         }

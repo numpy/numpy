@@ -824,7 +824,11 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         int nd = -1;
         if (PyDict_Check(e)) {
             PyObject *new;
-            new = PyDict_GetItemString(e, "shape");
+            new = _PyDict_GetItemStringWithError(e, "shape");
+            if (new == NULL && PyErr_Occurred()) {
+                Py_DECREF(e);
+                return -1;
+            }
             if (new && PyTuple_Check(new)) {
                 nd = PyTuple_GET_SIZE(new);
                 if (nd < *maxndim) {
@@ -2403,11 +2407,13 @@ PyArray_FromInterface(PyObject *origin)
     }
 
     /* Get type string from interface specification */
-    attr = PyDict_GetItemString(iface, "typestr");
+    attr = _PyDict_GetItemStringWithError(iface, "typestr");
     if (attr == NULL) {
         Py_DECREF(iface);
-        PyErr_SetString(PyExc_ValueError,
-                "Missing __array_interface__ typestr");
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Missing __array_interface__ typestr");
+        }
         return NULL;
     }
 
@@ -2439,7 +2445,10 @@ PyArray_FromInterface(PyObject *origin)
      * the 'descr' attribute.
      */
     if (dtype->type_num == NPY_VOID) {
-        PyObject *descr = PyDict_GetItemString(iface, "descr");
+        PyObject *descr = _PyDict_GetItemStringWithError(iface, "descr");
+        if (descr == NULL && PyErr_Occurred()) {
+            goto fail;
+        }
         PyArray_Descr *new_dtype = NULL;
 
         if (descr != NULL && !_is_default_descr(descr, attr) &&
@@ -2453,10 +2462,17 @@ PyArray_FromInterface(PyObject *origin)
     Py_DECREF(attr);  /* Pairs with the unicode handling above */
 
     /* Get shape tuple from interface specification */
-    attr = PyDict_GetItemString(iface, "shape");
+    attr = _PyDict_GetItemStringWithError(iface, "shape");
     if (attr == NULL) {
+        if (PyErr_Occurred()) {
+            return NULL;
+        }
         /* Shape must be specified when 'data' is specified */
-        if (PyDict_GetItemString(iface, "data") != NULL) {
+        PyObject *data = _PyDict_GetItemStringWithError(iface, "data");
+        if (data == NULL && PyErr_Occurred()) {
+            return NULL;
+        }
+        else if (data != NULL) {
             Py_DECREF(iface);
             PyErr_SetString(PyExc_ValueError,
                     "Missing __array_interface__ shape");
@@ -2487,7 +2503,10 @@ PyArray_FromInterface(PyObject *origin)
     }
 
     /* Get data buffer from interface specification */
-    attr = PyDict_GetItemString(iface, "data");
+    attr = _PyDict_GetItemStringWithError(iface, "data");
+    if (attr == NULL && PyErr_Occurred()){
+        return NULL;
+    }
 
     /* Case for data access through pointer */
     if (attr && PyTuple_Check(attr)) {
@@ -2551,8 +2570,11 @@ PyArray_FromInterface(PyObject *origin)
         _dealloc_cached_buffer_info(base);
 
         /* Get offset number from interface specification */
-        attr = PyDict_GetItemString(iface, "offset");
-        if (attr) {
+        attr = _PyDict_GetItemStringWithError(iface, "offset");
+        if (attr == NULL && PyErr_Occurred()) {
+            goto fail;
+        }
+        else if (attr) {
             npy_longlong num = PyLong_AsLongLong(attr);
             if (error_converting(num)) {
                 PyErr_SetString(PyExc_TypeError,
@@ -2587,7 +2609,10 @@ PyArray_FromInterface(PyObject *origin)
             goto fail;
         }
     }
-    attr = PyDict_GetItemString(iface, "strides");
+    attr = _PyDict_GetItemStringWithError(iface, "strides");
+    if (attr == NULL && PyErr_Occurred()){
+        return NULL;
+    }
     if (attr != NULL && attr != Py_None) {
         if (!PyTuple_Check(attr)) {
             PyErr_SetString(PyExc_TypeError,
