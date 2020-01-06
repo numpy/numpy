@@ -324,7 +324,7 @@ _find_array_prepare(ufunc_full_args args,
 NPY_NO_EXPORT int
 set_matmul_flags(PyObject *d)
 {
-    PyObject *matmul = PyDict_GetItemString(d, "matmul");
+    PyObject *matmul = _PyDict_GetItemStringWithError(d, "matmul");
     if (matmul == NULL) {
         return -1;
     }
@@ -397,7 +397,7 @@ _ufunc_setup_flags(PyUFuncObject *ufunc, npy_uint32 op_in_flags,
  * A NULL is placed in output_wrap for outputs that
  * should just have PyArray_Return called.
  */
-static void
+static int
 _find_array_wrap(ufunc_full_args args, PyObject *kwds,
                 PyObject **output_wrap, int nin, int nout)
 {
@@ -409,9 +409,12 @@ _find_array_wrap(ufunc_full_args args, PyObject *kwds,
      * If a 'subok' parameter is passed and isn't True, don't wrap but put None
      * into slots with out arguments which means return the out argument
      */
-    if (kwds != NULL && (obj = PyDict_GetItem(kwds,
-                                              npy_um_str_subok)) != NULL) {
-        if (obj != Py_True) {
+    if (kwds != NULL) {
+        obj = PyDict_GetItemWithError(kwds, npy_um_str_subok);
+        if (obj == NULL && PyErr_Occurred()) {
+            return -1;
+        }
+        else if (obj != NULL && obj != Py_True) {
             /* skip search for wrap members */
             goto handle_out;
         }
@@ -450,7 +453,7 @@ handle_out:
     }
 
     Py_XDECREF(wrap);
-    return;
+    return 0;
 }
 
 
@@ -1928,7 +1931,15 @@ make_full_arg_tuple(
     }
 
     /* Look for output keyword arguments */
-    out_kwd = kwds ? PyDict_GetItem(kwds, npy_um_str_out) : NULL;
+    if (kwds) {
+        out_kwd = PyDict_GetItemWithError(kwds, npy_um_str_out);
+        if (out_kwd == NULL && PyErr_Occurred()) {
+            goto fail;
+        }
+    }
+    else {
+        out_kwd = NULL;
+    }
 
     if (out_kwd != NULL) {
         assert(nargs == nin);
@@ -3296,9 +3307,12 @@ get_binary_op_function(PyUFuncObject *ufunc, int *otype,
         if (key == NULL) {
             return -1;
         }
-        obj = PyDict_GetItem(ufunc->userloops, key);
+        obj = PyDict_GetItemWithError(ufunc->userloops, key);
         Py_DECREF(key);
-        if (obj != NULL) {
+        if (obj == NULL && PyErr_Occurred()) {
+            return -1;
+        }
+        else if (obj != NULL) {
             funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
             while (funcdata != NULL) {
                 int *types = funcdata->arg_types;
@@ -4426,8 +4440,11 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     }
     /* if there is a tuple of 1 for `out` in kwds, unpack it */
     if (kwds != NULL) {
-        PyObject *out_obj = PyDict_GetItem(kwds, npy_um_str_out);
-        if (out_obj != NULL && PyTuple_CheckExact(out_obj)) {
+        PyObject *out_obj = PyDict_GetItemWithError(kwds, npy_um_str_out);
+        if (out_obj == NULL && PyErr_Occurred()){
+            return NULL;
+        }
+        else if (out_obj != NULL && PyTuple_CheckExact(out_obj)) {
             if (PyTuple_GET_SIZE(out_obj) != 1) {
                 PyErr_SetString(PyExc_ValueError,
                                 "The 'out' tuple must have exactly one entry");
@@ -4719,7 +4736,9 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (make_full_arg_tuple(&full_args, ufunc->nin, ufunc->nout, args, kwds) < 0) {
         goto fail;
     }
-    _find_array_wrap(full_args, kwds, wraparr, ufunc->nin, ufunc->nout);
+    if (_find_array_wrap(full_args, kwds, wraparr, ufunc->nin, ufunc->nout) < 0) {
+        goto fail;
+    }
 
     /* wrap outputs */
     for (i = 0; i < ufunc->nout; i++) {
@@ -4781,8 +4800,11 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (thedict == NULL) {
         thedict = PyEval_GetBuiltins();
     }
-    res = PyDict_GetItem(thedict, npy_um_str_pyvals_name);
-    if (res != NULL) {
+    res = PyDict_GetItemWithError(thedict, npy_um_str_pyvals_name);
+    if (res == NULL && PyErr_Occurred()) {
+        return NULL;
+    }
+    else if (res != NULL) {
         Py_INCREF(res);
         return res;
     }
@@ -5127,8 +5149,11 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
         function, arg_typenums, data);
 
     if (result == 0) {
-        cobj = PyDict_GetItem(ufunc->userloops, key);
-        if (cobj == NULL) {
+        cobj = PyDict_GetItemWithError(ufunc->userloops, key);
+        if (cobj == NULL && PyErr_Occurred()) {
+            result = -1;
+        }
+        else if (cobj == NULL) {
             PyErr_SetString(PyExc_KeyError,
                 "userloop for user dtype not found");
             result = -1;
@@ -5232,9 +5257,12 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     funcdata->nargs = 0;
 
     /* Get entry for this user-defined type*/
-    cobj = PyDict_GetItem(ufunc->userloops, key);
+    cobj = PyDict_GetItemWithError(ufunc->userloops, key);
+    if (cobj == NULL && PyErr_Occurred()) {
+        return 0;
+    }
     /* If it's not there, then make one and return. */
-    if (cobj == NULL) {
+    else if (cobj == NULL) {
         cobj = NpyCapsule_FromVoidPtr((void *)funcdata, _loop1d_list_free);
         if (cobj == NULL) {
             goto fail;

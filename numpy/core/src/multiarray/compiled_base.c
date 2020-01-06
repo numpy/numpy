@@ -1242,8 +1242,14 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
      */
     if (kwds) {
         PyObject *dims_item, *shape_item;
-        dims_item = PyDict_GetItemString(kwds, "dims");
-        shape_item = PyDict_GetItemString(kwds, "shape");
+        dims_item = _PyDict_GetItemStringWithError(kwds, "dims");
+        if (dims_item == NULL && PyErr_Occurred()){
+            return NULL;
+        }
+        shape_item = _PyDict_GetItemStringWithError(kwds, "shape");
+        if (shape_item == NULL && PyErr_Occurred()){
+            return NULL;
+        }
         if (dims_item != NULL && shape_item == NULL) {
             if (DEPRECATE("'shape' argument should be"
                           " used instead of 'dims'") < 0) {
@@ -1429,19 +1435,28 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     if (PyGetSetDescr_TypePtr == NULL) {
         /* Get "subdescr" */
-        myobj = PyDict_GetItemString(tp_dict, "fields");
+        myobj = _PyDict_GetItemStringWithError(tp_dict, "fields");
+        if (myobj == NULL && PyErr_Occurred()) {
+            return NULL;
+        }
         if (myobj != NULL) {
             PyGetSetDescr_TypePtr = Py_TYPE(myobj);
         }
     }
     if (PyMemberDescr_TypePtr == NULL) {
-        myobj = PyDict_GetItemString(tp_dict, "alignment");
+        myobj = _PyDict_GetItemStringWithError(tp_dict, "alignment");
+        if (myobj == NULL && PyErr_Occurred()) {
+            return NULL;
+        }
         if (myobj != NULL) {
             PyMemberDescr_TypePtr = Py_TYPE(myobj);
         }
     }
     if (PyMethodDescr_TypePtr == NULL) {
-        myobj = PyDict_GetItemString(tp_dict, "newbyteorder");
+        myobj = _PyDict_GetItemStringWithError(tp_dict, "newbyteorder");
+        if (myobj == NULL && PyErr_Occurred()) {
+            return NULL;
+        }
         if (myobj != NULL) {
             PyMethodDescr_TypePtr = Py_TYPE(myobj);
         }
