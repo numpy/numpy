@@ -98,7 +98,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
 @set_module('numpy')
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None, nanstr=None, infstr=None,
-                     formatter=None, sign=None, floatmode=None, **kwarg):
+                     formatter=None, sign=None, floatmode=None, *, legacy=None):
     """
     Set printing options.
 
@@ -247,11 +247,6 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
     array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])
 
     """
-    legacy = kwarg.pop('legacy', None)
-    if kwarg:
-        msg = "set_printoptions() got unexpected keyword argument '{}'"
-        raise TypeError(msg.format(kwarg.popitem()[0]))
-
     opt = _make_options_dict(precision, threshold, edgeitems, linewidth,
                              suppress, nanstr, infstr, sign, formatter,
                              floatmode, legacy)
@@ -367,23 +362,22 @@ def repr_format(x):
 def str_format(x):
     return str(x)
 
-def _get_formatdict(data, **opt):
-    prec, fmode = opt['precision'], opt['floatmode']
-    supp, sign = opt['suppress'], opt['sign']
-    legacy = opt['legacy']
+def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
+                    formatter, **kwargs):
+    # note: extra arguments in kwargs are ignored
 
     # wrapped in lambdas to avoid taking a code path with the wrong type of data
     formatdict = {
         'bool': lambda: BoolFormat(data),
         'int': lambda: IntegerFormat(data),
-        'float': lambda:
-            FloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
-        'longfloat': lambda:
-            FloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
-        'complexfloat': lambda:
-            ComplexFloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
-        'longcomplexfloat': lambda:
-            ComplexFloatingFormat(data, prec, fmode, supp, sign, legacy=legacy),
+        'float': lambda: FloatingFormat(
+            data, precision, floatmode, suppress, sign, legacy=legacy),
+        'longfloat': lambda: FloatingFormat(
+            data, precision, floatmode, suppress, sign, legacy=legacy),
+        'complexfloat': lambda: ComplexFloatingFormat(
+            data, precision, floatmode, suppress, sign, legacy=legacy),
+        'longcomplexfloat': lambda: ComplexFloatingFormat(
+            data, precision, floatmode, suppress, sign, legacy=legacy),
         'datetime': lambda: DatetimeFormat(data, legacy=legacy),
         'timedelta': lambda: TimedeltaFormat(data),
         'object': lambda: _object_format,
@@ -396,7 +390,6 @@ def _get_formatdict(data, **opt):
     def indirect(x):
         return lambda: x
 
-    formatter = opt['formatter']
     if formatter is not None:
         fkeys = [k for k in formatter.keys() if formatter[k] is not None]
         if 'all' in fkeys:
@@ -523,7 +516,7 @@ def _array2string_dispatcher(
         suppress_small=None, separator=None, prefix=None,
         style=None, formatter=None, threshold=None,
         edgeitems=None, sign=None, floatmode=None, suffix=None,
-        **kwarg):
+        *, legacy=None):
     return (a,)
 
 
@@ -532,7 +525,7 @@ def array2string(a, max_line_width=None, precision=None,
                  suppress_small=None, separator=' ', prefix="",
                  style=np._NoValue, formatter=None, threshold=None,
                  edgeitems=None, sign=None, floatmode=None, suffix="",
-                 **kwarg):
+                 *, legacy=None):
     """
     Return a string representation of an array.
 
@@ -677,10 +670,6 @@ def array2string(a, max_line_width=None, precision=None,
     '[0x0 0x1 0x2]'
 
     """
-    legacy = kwarg.pop('legacy', None)
-    if kwarg:
-        msg = "array2string() got unexpected keyword argument '{}'"
-        raise TypeError(msg.format(kwarg.popitem()[0]))
 
     overrides = _make_options_dict(precision, threshold, edgeitems,
                                    max_line_width, suppress_small, None, None,
@@ -852,12 +841,12 @@ def _none_or_positive_arg(x, name):
 class FloatingFormat:
     """ Formatter for subtypes of np.floating """
     def __init__(self, data, precision, floatmode, suppress_small, sign=False,
-                 **kwarg):
+                 *, legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
-        self._legacy = kwarg.get('legacy', False)
+        self._legacy = legacy
         if self._legacy == '1.13':
             # when not 0d, legacy does not support '-'
             if data.shape != () and sign == '-':
@@ -1164,20 +1153,24 @@ class BoolFormat:
 class ComplexFloatingFormat:
     """ Formatter for subtypes of np.complexfloating """
     def __init__(self, x, precision, floatmode, suppress_small,
-                 sign=False, **kwarg):
+                 sign=False, *, legacy=None):
         # for backcompatibility, accept bools
         if isinstance(sign, bool):
             sign = '+' if sign else '-'
 
         floatmode_real = floatmode_imag = floatmode
-        if kwarg.get('legacy', False) == '1.13':
+        if legacy == '1.13':
             floatmode_real = 'maxprec_equal'
             floatmode_imag = 'maxprec'
 
-        self.real_format = FloatingFormat(x.real, precision, floatmode_real,
-                                          suppress_small, sign=sign, **kwarg)
-        self.imag_format = FloatingFormat(x.imag, precision, floatmode_imag,
-                                          suppress_small, sign='+', **kwarg)
+        self.real_format = FloatingFormat(
+            x.real, precision, floatmode_real, suppress_small,
+            sign=sign, legacy=legacy
+        )
+        self.imag_format = FloatingFormat(
+            x.imag, precision, floatmode_imag, suppress_small,
+            sign='+', legacy=legacy
+        )
 
     def __call__(self, x):
         r = self.real_format(x.real)

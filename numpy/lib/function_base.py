@@ -770,14 +770,14 @@ def copy(a, order='K'):
 # Basic operations
 
 
-def _gradient_dispatcher(f, *varargs, **kwargs):
+def _gradient_dispatcher(f, *varargs, axis=None, edge_order=None):
     yield f
     for v in varargs:
         yield v
 
 
 @array_function_dispatch(_gradient_dispatcher)
-def gradient(f, *varargs, **kwargs):
+def gradient(f, *varargs, axis=None, edge_order=1):
     """
     Return the gradient of an N-dimensional array.
 
@@ -954,11 +954,10 @@ def gradient(f, *varargs, **kwargs):
     f = np.asanyarray(f)
     N = f.ndim  # number of dimensions
 
-    axes = kwargs.pop('axis', None)
-    if axes is None:
+    if axis is None:
         axes = tuple(range(N))
     else:
-        axes = _nx.normalize_axis_tuple(axes, N)
+        axes = _nx.normalize_axis_tuple(axis, N)
 
     len_axes = len(axes)
     n = len(varargs)
@@ -993,10 +992,6 @@ def gradient(f, *varargs, **kwargs):
     else:
         raise TypeError("invalid number of arguments")
 
-    edge_order = kwargs.pop('edge_order', 1)
-    if kwargs:
-        raise TypeError('"{}" are not valid keyword arguments.'.format(
-                                                  '", "'.join(kwargs.keys())))
     if edge_order > 2:
         raise ValueError("'edge_order' greater than 2 not supported")
 
@@ -4063,13 +4058,13 @@ def trapz(y, x=None, dx=1.0, axis=-1):
     return ret
 
 
-def _meshgrid_dispatcher(*xi, **kwargs):
+def _meshgrid_dispatcher(*xi, copy=None, sparse=None, indexing=None):
     return xi
 
 
 # Based on scitools meshgrid
 @array_function_dispatch(_meshgrid_dispatcher)
-def meshgrid(*xi, **kwargs):
+def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
     Return coordinate matrices from coordinate vectors.
 
@@ -4175,14 +4170,6 @@ def meshgrid(*xi, **kwargs):
     """
     ndim = len(xi)
 
-    copy_ = kwargs.pop('copy', True)
-    sparse = kwargs.pop('sparse', False)
-    indexing = kwargs.pop('indexing', 'xy')
-
-    if kwargs:
-        raise TypeError("meshgrid() got an unexpected keyword argument '%s'"
-                        % (list(kwargs)[0],))
-
     if indexing not in ['xy', 'ij']:
         raise ValueError(
             "Valid values for `indexing` are 'xy' and 'ij'.")
@@ -4200,7 +4187,7 @@ def meshgrid(*xi, **kwargs):
         # Return the full N-D matrix (not only the 1-D vector)
         output = np.broadcast_arrays(*output, subok=True)
 
-    if copy_:
+    if copy:
         output = [x.copy() for x in output]
 
     return output

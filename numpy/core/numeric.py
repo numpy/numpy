@@ -1716,7 +1716,7 @@ def indices(dimensions, dtype=int, sparse=False):
 
 
 @set_module('numpy')
-def fromfunction(function, shape, **kwargs):
+def fromfunction(function, shape, *, dtype=float, **kwargs):
     """
     Construct an array by executing a function over each coordinate.
 
@@ -1767,7 +1767,6 @@ def fromfunction(function, shape, **kwargs):
            [2, 3, 4]])
 
     """
-    dtype = kwargs.pop('dtype', float)
     args = indices(shape, dtype=dtype)
     return function(*args, **kwargs)
 

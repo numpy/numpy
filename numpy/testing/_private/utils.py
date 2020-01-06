@@ -2216,8 +2216,7 @@ class suppress_warnings:
         del self._filters
 
     def _showwarning(self, message, category, filename, lineno,
-                     *args, **kwargs):
-        use_warnmsg = kwargs.pop("use_warnmsg", None)
+                     *args, use_warnmsg=None, **kwargs):
         for cat, _, pattern, mod, rec in (
                 self._suppressions + self._tmp_suppressions)[::-1]:
             if (issubclass(category, cat) and
