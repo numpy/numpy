@@ -43,6 +43,24 @@ static PyArray_Descr *
 _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag);
 
 static PyArray_Descr *
+_arraydescr_run_converter(PyObject *arg, int align)
+{
+    PyArray_Descr *type = NULL;
+    if (align) {
+        if (PyArray_DescrAlignConverter(arg, &type) == NPY_FAIL) {
+            return NULL;
+        }
+    }
+    else {
+        if (PyArray_DescrConverter(arg, &type) == NPY_FAIL) {
+            return NULL;
+        }
+    }
+    assert(type != NULL);
+    return type;
+}
+
+static PyArray_Descr *
 _arraydescr_from_ctypes_type(PyTypeObject *type)
 {
     PyObject *_numpy_dtype_ctypes;
@@ -232,15 +250,9 @@ _convert_from_tuple(PyObject *obj, int align)
     if (PyTuple_GET_SIZE(obj) != 2) {
         return NULL;
     }
-    if (align) {
-        if (!PyArray_DescrAlignConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
-            return NULL;
-        }
-    }
-    else {
-        if (!PyArray_DescrConverter(PyTuple_GET_ITEM(obj, 0), &type)) {
-            return NULL;
-        }
+    type = _arraydescr_run_converter(PyTuple_GET_ITEM(obj, 0), align);
+    if (type == NULL) {
+        return NULL;
     }
     val = PyTuple_GET_ITEM(obj,1);
     /* try to interpret next item as a type */
@@ -411,7 +423,6 @@ static PyArray_Descr *
 _convert_from_array_descr(PyObject *obj, int align)
 {
     int n, i, totalsize;
-    int ret;
     PyObject *fields, *item, *newobj;
     PyObject *name, *tup, *title;
     PyObject *nameslist;
@@ -491,31 +502,22 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Process rest */
 
         if (PyTuple_GET_SIZE(item) == 2) {
-            if (align) {
-                ret = PyArray_DescrAlignConverter(PyTuple_GET_ITEM(item, 1),
-                                                        &conv);
-            }
-            else {
-                ret = PyArray_DescrConverter(PyTuple_GET_ITEM(item, 1), &conv);
+            conv = _arraydescr_run_converter(PyTuple_GET_ITEM(item, 1), align);
+            if (conv == NULL) {
+                goto fail;
             }
         }
         else if (PyTuple_GET_SIZE(item) == 3) {
             newobj = PyTuple_GetSlice(item, 1, 3);
-            if (align) {
-                ret = PyArray_DescrAlignConverter(newobj, &conv);
-            }
-            else {
-                ret = PyArray_DescrConverter(newobj, &conv);
-            }
+            conv = _arraydescr_run_converter(newobj, align);
             Py_DECREF(newobj);
+            if (conv == NULL) {
+                goto fail;
+            }
         }
         else {
             goto fail;
         }
-        if (ret == NPY_FAIL) {
-            goto fail;
-        }
-
         if ((PyDict_GetItem(fields, name) != NULL)
              || (title
                  && PyBaseString_Check(title)
@@ -616,7 +618,6 @@ _convert_from_list(PyObject *obj, int align)
     PyArray_Descr *new;
     PyObject *key, *tup;
     PyObject *nameslist = NULL;
-    int ret;
     int maxalign = 0;
     /* Types with fields need the Python C API for field access */
     char dtypeflags = NPY_NEEDS_PYAPI;
@@ -643,13 +644,8 @@ _convert_from_list(PyObject *obj, int align)
     for (i = 0; i < n; i++) {
         tup = PyTuple_New(2);
         key = PyUString_FromFormat("f%d", i);
-        if (align) {
-            ret = PyArray_DescrAlignConverter(PyList_GET_ITEM(obj, i), &conv);
-        }
-        else {
-            ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
-        }
-        if (ret == NPY_FAIL) {
+        conv = _arraydescr_run_converter(PyList_GET_ITEM(obj, i), align);
+        if (conv == NULL) {
             Py_DECREF(tup);
             Py_DECREF(key);
             goto fail;
@@ -1091,7 +1087,7 @@ _convert_from_dict(PyObject *obj, int align)
     totalsize = 0;
     for (i = 0; i < n; i++) {
         PyObject *tup, *descr, *ind, *title, *name, *off;
-        int len, ret, _align = 1;
+        int len, _align = 1;
         PyArray_Descr *newdescr;
 
         /* Build item to insert (descr, offset, [title])*/
@@ -1115,14 +1111,9 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(ind);
             goto fail;
         }
-        if (align) {
-            ret = PyArray_DescrAlignConverter(descr, &newdescr);
-        }
-        else {
-            ret = PyArray_DescrConverter(descr, &newdescr);
-        }
+        newdescr = _arraydescr_run_converter(descr, align);
         Py_DECREF(descr);
-        if (ret == NPY_FAIL) {
+        if (newdescr == NULL) {
             Py_DECREF(tup);
             Py_DECREF(ind);
             goto fail;
@@ -1168,7 +1159,9 @@ _convert_from_dict(PyObject *obj, int align)
                         "not divisible by the field alignment %d "
                         "with align=True",
                         offset, newdescr->alignment);
-                ret = NPY_FAIL;
+                Py_DECREF(ind);
+                Py_DECREF(tup);
+                goto fail;
             }
             else if (offset + newdescr->elsize > totalsize) {
                 totalsize = offset + newdescr->elsize;
@@ -1180,11 +1173,6 @@ _convert_from_dict(PyObject *obj, int align)
             }
             PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
             totalsize += newdescr->elsize;
-        }
-        if (ret == NPY_FAIL) {
-            Py_DECREF(ind);
-            Py_DECREF(tup);
-            goto fail;
         }
         if (len == 3) {
             PyTuple_SET_ITEM(tup, 2, title);
@@ -1223,9 +1211,6 @@ _convert_from_dict(PyObject *obj, int align)
             }
         }
         Py_DECREF(tup);
-        if (ret == NPY_FAIL) {
-            goto fail;
-        }
         dtypeflags |= (newdescr->flags & NPY_FROM_FIELDS);
     }
 
@@ -2281,12 +2266,8 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
         return NULL;
     }
 
-    if (align) {
-        if (!PyArray_DescrAlignConverter(odescr, &conv)) {
-            return NULL;
-        }
-    }
-    else if (!PyArray_DescrConverter(odescr, &conv)) {
+    conv = _arraydescr_run_converter(odescr, align);
+    if (conv == NULL) {
         return NULL;
     }
 
