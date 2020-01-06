@@ -706,35 +706,37 @@ static int
 _myunincmp(npy_ucs4 const *s1, npy_ucs4 const *s2, int len1, int len2)
 {
     npy_ucs4 const *sptr;
-    /* FIXME: Casting away const makes the below easier to write, but should
-     * still be safe.
-     */
-    npy_ucs4 *s1t = (npy_ucs4 *)s1, *s2t = (npy_ucs4 *)s2;
+    npy_ucs4 *s1t = NULL;
+    npy_ucs4 *s2t = NULL;
     int val;
     npy_intp size;
     int diff;
 
+    /* Replace `s1` and `s2` with aligned copies if needed */
     if ((npy_intp)s1 % sizeof(npy_ucs4) != 0) {
         size = len1*sizeof(npy_ucs4);
         s1t = malloc(size);
         memcpy(s1t, s1, size);
+        s1 = s1t;
     }
     if ((npy_intp)s2 % sizeof(npy_ucs4) != 0) {
         size = len2*sizeof(npy_ucs4);
         s2t = malloc(size);
         memcpy(s2t, s2, size);
+        s2 = s1t;
     }
-    val = PyArray_CompareUCS4(s1t, s2t, PyArray_MIN(len1,len2));
+
+    val = PyArray_CompareUCS4(s1, s2, PyArray_MIN(len1,len2));
     if ((val != 0) || (len1 == len2)) {
         goto finish;
     }
     if (len2 > len1) {
-        sptr = s2t+len1;
+        sptr = s2+len1;
         val = -1;
         diff = len2-len1;
     }
     else {
-        sptr = s1t+len2;
+        sptr = s1+len2;
         val = 1;
         diff=len1-len2;
     }
@@ -747,10 +749,11 @@ _myunincmp(npy_ucs4 const *s1, npy_ucs4 const *s2, int len1, int len2)
     val = 0;
 
  finish:
-    if (s1t != s1) {
+    /* Cleanup the aligned copies */
+    if (s1t) {
         free(s1t);
     }
-    if (s2t != s2) {
+    if (s2t) {
         free(s2t);
     }
     return val;
