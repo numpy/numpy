@@ -10,7 +10,6 @@ import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from numpy.distutils.exec_command import filepath_from_subprocess_output
 from numpy.distutils.fcompiler import FCompiler
-from numpy.distutils.compat import get_exception
 from numpy.distutils.system_info import system_info
 
 compilers = ['GnuFCompiler', 'Gnu95FCompiler']
@@ -558,5 +557,5 @@ if __name__ == '__main__':
     print(customized_fcompiler('gnu').get_version())
     try:
         print(customized_fcompiler('g95').get_version())
-    except Exception:
-        print(get_exception())
+    except Exception as e:
+        print(e)
