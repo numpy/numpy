@@ -24,7 +24,7 @@ There are two broad ways in which NEP-18 has fallen short of its goals:
     - Projects like `PyTorch <https://github.com/pytorch/pytorch/issues/22402>`_, `JAX <https://github.com/google/jax/issues/1565>`_ and even `scipy.sparse <https://github.com/scipy/scipy/issues/10362>`_ have been reluctant to implement `__array_function__` in part because they are concerned about **breaking existing code**: users expect NumPy functions like ``np.concatenate`` to return NumPy arrays. This is a fundamental limitation of the ``__array_function__`` design, which we chose to allow overriding the existing ``numpy`` namespace. 
     - ``__array_function__`` currently requires an "all or nothing" approach to implementing NumPy's API. There is no good pathway for **incremental adoption**, which is particularly problematic for established projects for which adopting ``__array_function__`` would result in breaking changes.
     - It is no longer possible to use **aliases to NumPy functions** within modules that support overrides. For example, both CuPy and JAX set ``result_type = np.result_type``.
-    - Implementing **fall-back mechanisms** for unimplemented NumPy functions by using NumPy's implementation is hard to get right (although dask has tried), because ``__array_function__`` does not present a consistent interface.
+    - Implementing **fall-back mechanisms** for unimplemented NumPy functions by using NumPy's implementation is hard to get right (but see the `version from dask <https://github.com/dask/dask/pull/5043>`_), because ``__array_function__`` does not present a consistent interface. Converting all arguments of array type requries recursing into generic arguments of the form ``*args, **kwargs``.
 
 2. **Limitations on what can be overridden.** ``__array_function__`` has some important gaps, most notably array creation and coercion functions:
 
@@ -140,7 +140,7 @@ The type resolution rules of ``get_array_module`` follow the same model as Pytho
 
 The actual implementation of `get_array_module` will be in C, but should be equivalent to this Python code:
 
-.. code::python
+.. code:: python
 
     def get_array_module(*arrays, default=numpy):
         implementing_arrays, types = _implementing_arrays_and_types(arrays)
@@ -234,7 +234,7 @@ For example, the following mixin classes would provide sensible defaults for the
 
             return new_func(*args, **kwargs)
 
-To make it easier to write duck arrays, we could also these mixin classes into ``numpy.lib.mixins`` (but the examples above may suffice).
+To make it easier to write duck arrays, we could also add these mixin classes into ``numpy.lib.mixins`` (but the examples above may suffice).
 
 Alternatives considered
 -----------------------
@@ -273,7 +273,7 @@ Instead of supporting overrides in the main `numpy` namespace with ``__array_fun
 
 This would resolve the biggest limitations of ``__array_function__`` by being opt-in and would also allow for unambiguously overriding functions like ``asarray``, because ``np.api.asarray`` would always mean "convert an array-like object."  But it wouldn't solve all the dispatching needs met by ``__array_module__``, and would leave us with supporting a considerably more complex protocol both for array users and implementors.
 
-We could potentially implement such a new namespace *via* the   ``__array_module__`` protocol. Certainly some users would find this convenient, because it is slightly less boilerplate. But this would leave users with a confusing choice: when should they use `get_array_module` vs. `np.api.something`. Also, we would have to add and maintain a whole new module, which is considerably more expensive than merely adding a function.
+We could potentially implement such a new namespace *via* the ``__array_module__`` protocol. Certainly some users would find this convenient, because it is slightly less boilerplate. But this would leave users with a confusing choice: when should they use `get_array_module` vs. `np.api.something`. Also, we would have to add and maintain a whole new module, which is considerably more expensive than merely adding a function.
 
 Dispatching on both types and arrays instead of only types
 ==========================================================
