@@ -4126,6 +4126,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
 
     New view of array with the same data.
 
+    .. note::
+        Passing None for ``dtype`` is different from omitting the parameter,
+        since the former invokes ``dtype(None)`` which is an alias for
+        ``dtype('float_')``.
+
     Parameters
     ----------
     dtype : data-type or ndarray sub-class, optional
