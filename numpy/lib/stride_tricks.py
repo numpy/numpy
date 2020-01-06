@@ -197,12 +197,12 @@ def _broadcast_shape(*args):
     return b.shape
 
 
-def _broadcast_arrays_dispatcher(*args, **kwargs):
+def _broadcast_arrays_dispatcher(*args, subok=None):
     return args
 
 
 @array_function_dispatch(_broadcast_arrays_dispatcher, module='numpy')
-def broadcast_arrays(*args, **kwargs):
+def broadcast_arrays(*args, subok=False):
     """
     Broadcast any number of arrays against each other.
 
@@ -253,10 +253,6 @@ def broadcast_arrays(*args, **kwargs):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    subok = kwargs.pop('subok', False)
-    if kwargs:
-        raise TypeError('broadcast_arrays() got an unexpected keyword '
-                        'argument {!r}'.format(list(kwargs.keys())[0]))
     args = [np.array(_m, copy=False, subok=subok) for _m in args]
 
     shape = _broadcast_shape(*args)

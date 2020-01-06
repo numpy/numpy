@@ -34,7 +34,7 @@ class MachArLike:
 
     def __init__(self,
                  ftype,
-                 **kwargs):
+                 *, eps, epsneg, huge, tiny, ibeta, **kwargs):
         params = _MACHAR_PARAMS[ftype]
         float_conv = lambda v: array([v], ftype)
         float_to_float = lambda v : _fr1(float_conv(v))
@@ -42,11 +42,11 @@ class MachArLike:
 
         self.title = params['title']
         # Parameter types same as for discovered MachAr object.
-        self.epsilon = self.eps = float_to_float(kwargs.pop('eps'))
-        self.epsneg = float_to_float(kwargs.pop('epsneg'))
-        self.xmax = self.huge = float_to_float(kwargs.pop('huge'))
-        self.xmin = self.tiny = float_to_float(kwargs.pop('tiny'))
-        self.ibeta = params['itype'](kwargs.pop('ibeta'))
+        self.epsilon = self.eps = float_to_float(eps)
+        self.epsneg = float_to_float(epsneg)
+        self.xmax = self.huge = float_to_float(huge)
+        self.xmin = self.tiny = float_to_float(tiny)
+        self.ibeta = params['itype'](ibeta)
         self.__dict__.update(kwargs)
         self.precision = int(-log10(self.eps))
         self.resolution = float_to_float(float_conv(10) ** (-self.precision))

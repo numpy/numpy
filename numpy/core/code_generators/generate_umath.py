@@ -130,7 +130,7 @@ class Ufunc:
     type_descriptions : list of TypeDescription objects
     """
     def __init__(self, nin, nout, identity, docstring, typereso,
-                 *type_descriptions, **kwargs):
+                 *type_descriptions, signature=None):
         self.nin = nin
         self.nout = nout
         if identity is None:
@@ -139,13 +139,11 @@ class Ufunc:
         self.docstring = docstring
         self.typereso = typereso
         self.type_descriptions = []
-        self.signature = kwargs.pop('signature', None)
+        self.signature = signature
         for td in type_descriptions:
             self.type_descriptions.extend(td)
         for td in self.type_descriptions:
             td.finish_signature(self.nin, self.nout)
-        if kwargs:
-            raise ValueError('unknown kwargs %r' % str(kwargs))
 
 # String-handling utilities to avoid locale-dependence.
 
