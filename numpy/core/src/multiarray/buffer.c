@@ -98,13 +98,8 @@ _append_field_name(_tmp_string_t *str, PyObject *name)
     char *p;
     Py_ssize_t len;
     PyObject *tmp;
-#if defined(NPY_PY3K)
     /* FIXME: XXX -- should it use UTF-8 here? */
     tmp = PyUnicode_AsUTF8String(name);
-#else
-    tmp = name;
-    Py_INCREF(tmp);
-#endif
     if (tmp == NULL || PyBytes_AsStringAndSize(tmp, &p, &len) < 0) {
         PyErr_Clear();
         PyErr_SetString(PyExc_ValueError, "invalid field name");

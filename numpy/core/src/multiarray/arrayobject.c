@@ -1333,14 +1333,6 @@ _failed_comparison_workaround(PyArrayObject *self, PyObject *other, int cmp_op)
          * get us the desired TypeError, but on python 2, one gets strange
          * ordering, so we emit a warning.
          */
-#if !defined(NPY_PY3K)
-        /* 2015-05-14, 1.10 */
-        if (DEPRECATE(
-                "unorderable dtypes; returning scalar but in "
-                "the future this will be an error") < 0) {
-            goto fail;
-        }
-#endif
         Py_XDECREF(exc);
         Py_XDECREF(val);
         Py_XDECREF(tb);
@@ -1790,12 +1782,7 @@ array_free(PyObject * v)
 
 
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.ndarray",                            /* tp_name */
     NPY_SIZEOF_PYARRAYOBJECT,                   /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -1804,11 +1791,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     (printfunc)NULL,                            /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     (reprfunc)array_repr,                       /* tp_repr */
     &array_as_number,                           /* tp_as_number */
     &array_as_sequence,                         /* tp_as_sequence */
@@ -1823,12 +1806,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     (getattrofunc)0,                            /* tp_getattro */
     (setattrofunc)0,                            /* tp_setattro */
     &array_as_buffer,                           /* tp_as_buffer */
-    (Py_TPFLAGS_DEFAULT
-#if !defined(NPY_PY3K)
-     | Py_TPFLAGS_CHECKTYPES
-     | Py_TPFLAGS_HAVE_NEWBUFFER
-#endif
-     | Py_TPFLAGS_BASETYPE),                    /* tp_flags */
+    (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE), /* tp_flags */
     0,                                          /* tp_doc */
 
     (traverseproc)0,                            /* tp_traverse */

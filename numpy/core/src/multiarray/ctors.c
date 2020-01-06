@@ -629,13 +629,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int string_type)
     }
 
     if ((nd == 0) || PyString_Check(s) ||
-#if defined(NPY_PY3K)
-            PyMemoryView_Check(s) ||
-#else
-            PyBuffer_Check(s) ||
-#endif
-            PyUnicode_Check(s)) {
-
+            PyMemoryView_Check(s) || PyUnicode_Check(s)) {
         /* If an object has no length, leave it be */
         if (string_type && s != NULL &&
                 !PyString_Check(s) && !PyUnicode_Check(s)) {
@@ -644,11 +638,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int string_type)
                 s_string = PyObject_Str(s);
             }
             else {
-#if defined(NPY_PY3K)
                 s_string = PyObject_Str(s);
-#else
-                s_string = PyObject_Unicode(s);
-#endif
             }
             if (s_string) {
                 n = PyObject_Length(s_string);
@@ -736,10 +726,6 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 
     /* obj is a String */
     if (PyString_Check(obj) ||
-#if defined(NPY_PY3K)
-#else
-            PyBuffer_Check(obj) ||
-#endif
             PyUnicode_Check(obj)) {
         if (stop_at_string) {
             *maxndim = 0;
@@ -2352,9 +2338,7 @@ PyArray_FromStructInterface(PyObject *input)
 NPY_NO_EXPORT int
 _is_default_descr(PyObject *descr, PyObject *typestr) {
     PyObject *tuple, *name, *typestr2;
-#if defined(NPY_PY3K)
     PyObject *tmp = NULL;
-#endif
     int ret = 0;
 
     if (!PyList_Check(descr) || PyList_GET_SIZE(descr) != 1) {
@@ -2369,7 +2353,6 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
         return 0;
     }
     typestr2 = PyTuple_GET_ITEM(tuple, 1);
-#if defined(NPY_PY3K)
     /* Allow unicode type strings */
     if (PyUnicode_Check(typestr2)) {
         tmp = PyUnicode_AsASCIIString(typestr2);
@@ -2378,14 +2361,11 @@ _is_default_descr(PyObject *descr, PyObject *typestr) {
         }
         typestr2 = tmp;
     }
-#endif
     if (PyBytes_Check(typestr2) &&
             PyObject_RichCompareBool(typestr, typestr2, Py_EQ)) {
         ret = 1;
     }
-#if defined(NPY_PY3K)
     Py_XDECREF(tmp);
-#endif
 
     return ret;
 }
@@ -2402,11 +2382,7 @@ PyArray_FromInterface(PyObject *origin)
     PyArrayObject *ret;
     PyArray_Descr *dtype = NULL;
     char *data = NULL;
-#if defined(NPY_PY3K)
     Py_buffer view;
-#else
-    Py_ssize_t buffer_len;
-#endif
     int res, i, n;
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
@@ -2434,7 +2410,7 @@ PyArray_FromInterface(PyObject *origin)
                 "Missing __array_interface__ typestr");
         return NULL;
     }
-#if defined(NPY_PY3K)
+
     /* Allow unicode type strings */
     if (PyUnicode_Check(attr)) {
         PyObject *tmp = PyUnicode_AsASCIIString(attr);
@@ -2446,7 +2422,7 @@ PyArray_FromInterface(PyObject *origin)
     else {
         Py_INCREF(attr);
     }
-#endif
+
     if (!PyBytes_Check(attr)) {
         PyErr_SetString(PyExc_TypeError,
                     "__array_interface__ typestr must be a string");
@@ -2474,9 +2450,7 @@ PyArray_FromInterface(PyObject *origin)
         }
     }
 
-#if defined(NPY_PY3K)
     Py_DECREF(attr);  /* Pairs with the unicode handling above */
-#endif
 
     /* Get shape tuple from interface specification */
     attr = PyDict_GetItemString(iface, "shape");
@@ -2557,7 +2531,6 @@ PyArray_FromInterface(PyObject *origin)
         else {
             base = origin;
         }
-#if defined(NPY_PY3K)
         if (PyObject_GetBuffer(base, &view,
                     PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
             PyErr_Clear();
@@ -2576,18 +2549,7 @@ PyArray_FromInterface(PyObject *origin)
          */
         PyBuffer_Release(&view);
         _dealloc_cached_buffer_info(base);
-#else
-        res = PyObject_AsWriteBuffer(base, (void **)&data, &buffer_len);
-        if (res < 0) {
-            PyErr_Clear();
-            res = PyObject_AsReadBuffer(
-                        base, (const void **)&data, &buffer_len);
-            if (res < 0) {
-                goto fail;
-            }
-            dataflags &= ~NPY_ARRAY_WRITEABLE;
-        }
-#endif
+
         /* Get offset number from interface specification */
         attr = PyDict_GetItemString(iface, "offset");
         if (attr) {
@@ -3780,9 +3742,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 {
     PyArrayObject *ret;
     char *data;
-#if defined(NPY_PY3K)
     Py_buffer view;
-#endif
     Py_ssize_t ts;
     npy_intp s, n;
     int itemsize;
@@ -3803,7 +3763,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         return NULL;
     }
 
-#if defined(NPY_PY3K)
     if (PyObject_GetBuffer(buf, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         writeable = 0;
         PyErr_Clear();
@@ -3822,16 +3781,6 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
      */
     PyBuffer_Release(&view);
     _dealloc_cached_buffer_info(buf);
-#else
-    if (PyObject_AsWriteBuffer(buf, (void *)&data, &ts) == -1) {
-        writeable = 0;
-        PyErr_Clear();
-        if (PyObject_AsReadBuffer(buf, (void *)&data, &ts) == -1) {
-            Py_DECREF(type);
-            return NULL;
-        }
-    }
-#endif
 
     if ((offset < 0) || (offset > ts)) {
         PyErr_Format(PyExc_ValueError,

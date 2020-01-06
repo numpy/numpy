@@ -661,12 +661,7 @@ static PyGetSetDef pyrational_getset[] = {
 };
 
 static PyTypeObject PyRational_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                        /* ob_size */
-#endif
     "rational",                               /* tp_name */
     sizeof(PyRational),                       /* tp_basicsize */
     0,                                        /* tp_itemsize */
@@ -674,11 +669,7 @@ static PyTypeObject PyRational_Type = {
     0,                                        /* tp_print */
     0,                                        /* tp_getattr */
     0,                                        /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                        /* tp_reserved */
-#else
-    0,                                        /* tp_compare */
-#endif
     pyrational_repr,                          /* tp_repr */
     &pyrational_as_number,                    /* tp_as_number */
     0,                                        /* tp_as_sequence */

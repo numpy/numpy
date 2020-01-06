@@ -771,30 +771,6 @@ npy_discard(PyObject* NPY_UNUSED(self), PyObject* args)
     Py_RETURN_NONE;
 }
 
-#if !defined(NPY_PY3K)
-static PyObject *
-int_subclass(PyObject *dummy, PyObject *args)
-{
-
-  PyObject *result = NULL;
-  PyObject *scalar_object = NULL;
-
-  if (!PyArg_UnpackTuple(args, "test_int_subclass", 1, 1, &scalar_object))
-    return NULL;
-
-  if (PyInt_Check(scalar_object))
-    result = Py_True;
-  else
-    result = Py_False;
-
-  Py_INCREF(result);
-
-  return result;
-
-}
-#endif
-
-
 /*
  * Create python string from a FLAG and or the corresponding PyBuf flag
  * for the use in get_buffer_info.
@@ -1210,11 +1186,7 @@ array_solve_diophantine(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject 
 
         for (j = 0; j < nterms; ++j) {
             PyObject *obj;
-#if defined(NPY_PY3K)
             obj = PyLong_FromSsize_t(x[j]);
-#else
-            obj = PyInt_FromSsize_t(x[j]);
-#endif
             if (obj == NULL) {
                 goto fail;
             }
@@ -2018,11 +1990,6 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"npy_discard",
         npy_discard,
         METH_O, NULL},
-#if !defined(NPY_PY3K)
-    {"test_int_subclass",
-        int_subclass,
-        METH_VARARGS, NULL},
-#endif
     {"get_buffer_info",
         get_buffer_info,
         METH_VARARGS, NULL},

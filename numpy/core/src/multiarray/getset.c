@@ -110,12 +110,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     npy_intp offset = 0;
     npy_intp lower_offset = 0;
     npy_intp upper_offset = 0;
-#if defined(NPY_PY3K)
     Py_buffer view;
-#else
-    Py_ssize_t buf_len;
-    char *buf;
-#endif
 
     if (obj == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -140,7 +135,6 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
      * Get the available memory through the buffer interface on
      * PyArray_BASE(new) or if that fails from the current new
      */
-#if defined(NPY_PY3K)
     if (PyArray_BASE(new) &&
             PyObject_GetBuffer(PyArray_BASE(new), &view, PyBUF_SIMPLE) >= 0) {
         offset = PyArray_BYTES(self) - (char *)view.buf;
@@ -148,14 +142,6 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
         PyBuffer_Release(&view);
         _dealloc_cached_buffer_info((PyObject*)new);
     }
-#else
-    if (PyArray_BASE(new) &&
-            PyObject_AsReadBuffer(PyArray_BASE(new), (const void **)&buf,
-                                  &buf_len) >= 0) {
-        offset = PyArray_BYTES(self) - buf;
-        numbytes = buf_len + offset;
-    }
-#endif
     else {
         PyErr_Clear();
         offset_bounds_from_strides(PyArray_ITEMSIZE(new), PyArray_NDIM(new),
@@ -318,23 +304,7 @@ array_interface_get(PyArrayObject *self)
 static PyObject *
 array_data_get(PyArrayObject *self)
 {
-#if defined(NPY_PY3K)
     return PyMemoryView_FromObject((PyObject *)self);
-#else
-    npy_intp nbytes;
-    if (!(PyArray_ISONESEGMENT(self))) {
-        PyErr_SetString(PyExc_AttributeError, "cannot get single-"\
-                        "segment buffer for discontiguous array");
-        return NULL;
-    }
-    nbytes = PyArray_NBYTES(self);
-    if (PyArray_ISWRITEABLE(self)) {
-        return PyBuffer_FromReadWriteObject((PyObject *)self, 0, (Py_ssize_t) nbytes);
-    }
-    else {
-        return PyBuffer_FromObject((PyObject *)self, 0, (Py_ssize_t) nbytes);
-    }
-#endif
 }
 
 static int
@@ -343,9 +313,7 @@ array_data_set(PyArrayObject *self, PyObject *op)
     void *buf;
     Py_ssize_t buf_len;
     int writeable=1;
-#if defined(NPY_PY3K)
     Py_buffer view;
-#endif
 
     /* 2016-19-02, 1.12 */
     int ret = DEPRECATE("Assigning the 'data' attribute is an "
@@ -360,7 +328,6 @@ array_data_set(PyArrayObject *self, PyObject *op)
                 "Cannot delete array data");
         return -1;
     }
-#if defined(NPY_PY3K)
     if (PyObject_GetBuffer(op, &view, PyBUF_WRITABLE|PyBUF_SIMPLE) < 0) {
         writeable = 0;
         PyErr_Clear();
@@ -378,18 +345,7 @@ array_data_set(PyArrayObject *self, PyObject *op)
      */
     PyBuffer_Release(&view);
     _dealloc_cached_buffer_info(op);
-#else
-    if (PyObject_AsWriteBuffer(op, &buf, &buf_len) < 0) {
-        PyErr_Clear();
-        writeable = 0;
-        if (PyObject_AsReadBuffer(op, (const void **)&buf, &buf_len) < 0) {
-            PyErr_Clear();
-            PyErr_SetString(PyExc_AttributeError,
-                    "object does not have single-segment buffer interface");
-            return -1;
-        }
-    }
-#endif
+
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_AttributeError,
                 "cannot set single-segment buffer for discontiguous array");
