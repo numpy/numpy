@@ -454,7 +454,7 @@ following.
     input numpy as np
 
     class A(np.ndarray):
-        def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        def __array_ufunc__(self, ufunc, method, *inputs, out=None, **kwargs):
             args = []
             in_no = []
             for i, input_ in enumerate(inputs):
@@ -464,7 +464,7 @@ following.
                 else:
                     args.append(input_)
 
-            outputs = kwargs.pop('out', None)
+            outputs = out
             out_no = []
             if outputs:
                 out_args = []

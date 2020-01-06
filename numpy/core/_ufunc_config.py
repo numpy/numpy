@@ -430,8 +430,8 @@ class errstate(contextlib.ContextDecorator):
 
     """
 
-    def __init__(self, **kwargs):
-        self.call = kwargs.pop('call', _Unspecified)
+    def __init__(self, *, call=_Unspecified, **kwargs):
+        self.call = call
         self.kwargs = kwargs
 
     def __enter__(self):

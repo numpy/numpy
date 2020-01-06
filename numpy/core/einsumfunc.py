@@ -689,7 +689,7 @@ def _parse_einsum_input(operands):
     return (input_subscripts, output_subscript, operands)
 
 
-def _einsum_path_dispatcher(*operands, **kwargs):
+def _einsum_path_dispatcher(*operands, optimize=None, einsum_call=None):
     # NOTE: technically, we should only dispatch on array-like arguments, not
     # subscripts (given as strings). But separating operands into
     # arrays/subscripts is a little tricky/slow (given einsum's two supported
@@ -700,7 +700,7 @@ def _einsum_path_dispatcher(*operands, **kwargs):
 
 
 @array_function_dispatch(_einsum_path_dispatcher, module='numpy')
-def einsum_path(*operands, **kwargs):
+def einsum_path(*operands, optimize='greedy', einsum_call=False):
     """
     einsum_path(subscripts, *operands, optimize='greedy')
 
@@ -810,16 +810,8 @@ def einsum_path(*operands, **kwargs):
        5               defg,hd->efgh                               efgh->efgh
     """
 
-    # Make sure all keywords are valid
-    valid_contract_kwargs = ['optimize', 'einsum_call']
-    unknown_kwargs = [k for (k, v) in kwargs.items() if k
-                      not in valid_contract_kwargs]
-    if len(unknown_kwargs):
-        raise TypeError("Did not understand the following kwargs:"
-                        " %s" % unknown_kwargs)
-
     # Figure out what the path really is
-    path_type = kwargs.pop('optimize', True)
+    path_type = optimize
     if path_type is True:
         path_type = 'greedy'
     if path_type is None:
@@ -845,7 +837,7 @@ def einsum_path(*operands, **kwargs):
         raise TypeError("Did not understand the path: %s" % str(path_type))
 
     # Hidden option, only einsum should call this
-    einsum_call_arg = kwargs.pop("einsum_call", False)
+    einsum_call_arg = einsum_call
 
     # Python side parsing
     input_subscripts, output_subscript, operands = _parse_einsum_input(operands)
@@ -990,17 +982,17 @@ def einsum_path(*operands, **kwargs):
     return (path, path_print)
 
 
-def _einsum_dispatcher(*operands, **kwargs):
+def _einsum_dispatcher(*operands, out=None, optimize=None, **kwargs):
     # Arguably we dispatch on more arguments that we really should; see note in
     # _einsum_path_dispatcher for why.
     for op in operands:
         yield op
-    yield kwargs.get('out')
+    yield out
 
 
 # Rewrite einsum to handle different cases
 @array_function_dispatch(_einsum_dispatcher, module='numpy')
-def einsum(*operands, **kwargs):
+def einsum(*operands, out=None, optimize=False, **kwargs):
     """
     einsum(subscripts, *operands, out=None, dtype=None, order='K',
            casting='safe', optimize=False)
@@ -1345,38 +1337,28 @@ def einsum(*operands, **kwargs):
     ...     _ = np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize=path)
 
     """
-
-    # Grab non-einsum kwargs; do not optimize by default.
-    optimize_arg = kwargs.pop('optimize', False)
+    # Special handling if out is specified
+    specified_out = out is not None
 
     # If no optimization, run pure einsum
-    if optimize_arg is False:
+    if optimize is False:
+        if specified_out:
+            kwargs['out'] = out
         return c_einsum(*operands, **kwargs)
 
-    valid_einsum_kwargs = ['out', 'dtype', 'order', 'casting']
-    einsum_kwargs = {k: v for (k, v) in kwargs.items() if
-                     k in valid_einsum_kwargs}
-
-    # Make sure all keywords are valid
-    valid_contract_kwargs = ['optimize'] + valid_einsum_kwargs
+    # Check the kwargs to avoid a more cryptic error later, without having to
+    # repeat default values here
+    valid_einsum_kwargs = ['dtype', 'order', 'casting']
     unknown_kwargs = [k for (k, v) in kwargs.items() if
-                      k not in valid_contract_kwargs]
-
+                      k not in valid_einsum_kwargs]
     if len(unknown_kwargs):
         raise TypeError("Did not understand the following kwargs: %s"
                         % unknown_kwargs)
 
-    # Special handeling if out is specified
-    specified_out = False
-    out_array = einsum_kwargs.pop('out', None)
-    if out_array is not None:
-        specified_out = True
 
     # Build the contraction list and operand
-    operands, contraction_list = einsum_path(*operands, optimize=optimize_arg,
+    operands, contraction_list = einsum_path(*operands, optimize=optimize,
                                              einsum_call=True)
-
-    handle_out = False
 
     # Start contraction loop
     for num, contraction in enumerate(contraction_list):
@@ -1408,23 +1390,23 @@ def einsum(*operands, **kwargs):
             # Build a new view if needed
             if (tensor_result != results_index) or handle_out:
                 if handle_out:
-                    einsum_kwargs["out"] = out_array
-                new_view = c_einsum(tensor_result + '->' + results_index, new_view, **einsum_kwargs)
+                    kwargs["out"] = out
+                new_view = c_einsum(tensor_result + '->' + results_index, new_view, **kwargs)
 
         # Call einsum
         else:
             # If out was specified
             if handle_out:
-                einsum_kwargs["out"] = out_array
+                kwargs["out"] = out
 
             # Do the contraction
-            new_view = c_einsum(einsum_str, *tmp_operands, **einsum_kwargs)
+            new_view = c_einsum(einsum_str, *tmp_operands, **kwargs)
 
         # Append new items and dereference what we can
         operands.append(new_view)
         del tmp_operands, new_view
 
     if specified_out:
-        return out_array
+        return out
     else:
         return operands[0]

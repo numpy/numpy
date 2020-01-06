@@ -2353,7 +2353,7 @@ class TestSpecialMethods:
         # NOTE: this class is given as an example in doc/subclassing.py;
         # if you make any changes here, do update it there too.
         class A(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+            def __array_ufunc__(self, ufunc, method, *inputs, out=None, **kwargs):
                 args = []
                 in_no = []
                 for i, input_ in enumerate(inputs):
@@ -2363,7 +2363,7 @@ class TestSpecialMethods:
                     else:
                         args.append(input_)
 
-                outputs = kwargs.pop('out', None)
+                outputs = out
                 out_no = []
                 if outputs:
                     out_args = []
