@@ -164,8 +164,6 @@ class PytestTester:
 
         # Ignore python2.7 -3 warnings
         pytest_args += [
-            r"-W ignore:in 3\.x, __setslice__:DeprecationWarning",
-            r"-W ignore:in 3\.x, __getslice__:DeprecationWarning",
             r"-W ignore:buffer\(\) not supported in 3\.x:DeprecationWarning",
             r"-W ignore:CObject type is not supported in 3\.x:DeprecationWarning",
             r"-W ignore:comparing unequal types not supported in 3\.x:DeprecationWarning",
