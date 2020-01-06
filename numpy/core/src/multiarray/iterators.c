@@ -1102,12 +1102,7 @@ static PyGetSetDef iter_getsets[] = {
 };
 
 NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.flatiter",                           /* tp_name */
     sizeof(PyArrayIterObject),                  /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -1116,11 +1111,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayIter_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
     0,                                          /* tp_as_sequence */
@@ -1560,12 +1551,7 @@ static PyMethodDef arraymultiter_methods[] = {
 };
 
 NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.broadcast",                          /* tp_name */
     sizeof(PyArrayMultiIterObject),             /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -1574,11 +1560,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMultiIter_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
     0,                                          /* tp_as_sequence */
@@ -1890,12 +1872,7 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
 }
 
 NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.neigh_internal_iter",                /* tp_name*/
     sizeof(PyArrayNeighborhoodIterObject),      /* tp_basicsize*/
     0,                                          /* tp_itemsize*/
@@ -1903,11 +1880,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {
     0,                                          /* tp_print*/
     0,                                          /* tp_getattr*/
     0,                                          /* tp_setattr*/
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr*/
     0,                                          /* tp_as_number*/
     0,                                          /* tp_as_sequence*/

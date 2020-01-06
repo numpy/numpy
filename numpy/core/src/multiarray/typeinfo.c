@@ -58,11 +58,7 @@ PyArray_typeinfo(
     PyObject *entry = PyStructSequence_New(&PyArray_typeinfoType);
     if (entry == NULL)
         return NULL;
-#if defined(NPY_PY3K)
     PyStructSequence_SET_ITEM(entry, 0, Py_BuildValue("C", typechar));
-#else
-    PyStructSequence_SET_ITEM(entry, 0, Py_BuildValue("c", typechar));
-#endif
     PyStructSequence_SET_ITEM(entry, 1, Py_BuildValue("i", typenum));
     PyStructSequence_SET_ITEM(entry, 2, Py_BuildValue("i", nbits));
     PyStructSequence_SET_ITEM(entry, 3, Py_BuildValue("i", align));
@@ -84,11 +80,7 @@ PyArray_typeinforanged(
     PyObject *entry = PyStructSequence_New(&PyArray_typeinforangedType);
     if (entry == NULL)
         return NULL;
-#if defined(NPY_PY3K)
     PyStructSequence_SET_ITEM(entry, 0, Py_BuildValue("C", typechar));
-#else
-    PyStructSequence_SET_ITEM(entry, 0, Py_BuildValue("c", typechar));
-#endif
     PyStructSequence_SET_ITEM(entry, 1, Py_BuildValue("i", typenum));
     PyStructSequence_SET_ITEM(entry, 2, Py_BuildValue("i", nbits));
     PyStructSequence_SET_ITEM(entry, 3, Py_BuildValue("i", align));

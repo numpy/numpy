@@ -1487,7 +1487,6 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
 
     /* Get a string size long enough for any datetimes we're given */
     strsize = get_datetime_iso_8601_strlen(local, unit);
-#if defined(NPY_PY3K)
     /*
      * For Python3, allocate the output array as a UNICODE array, so
      * that it will behave as strings properly
@@ -1504,7 +1503,6 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
         op_dtypes[1] = NULL;
         goto fail;
     }
-#endif
     /* Create the iteration string data type (always ASCII string) */
     op_dtypes[1] = PyArray_DescrNewFromType(NPY_STRING);
     if (op_dtypes[1] == NULL) {

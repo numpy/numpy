@@ -901,66 +901,11 @@ array_float(PyArrayObject *v)
     return array_scalar_forward(v, &PyNumber_Float, " in ndarray.__float__");
 }
 
-#if defined(NPY_PY3K)
-
 NPY_NO_EXPORT PyObject *
 array_int(PyArrayObject *v)
 {
     return array_scalar_forward(v, &PyNumber_Long, " in ndarray.__int__");
 }
-
-#else
-
-NPY_NO_EXPORT PyObject *
-array_int(PyArrayObject *v)
-{
-    return array_scalar_forward(v, &PyNumber_Int, " in ndarray.__int__");
-}
-
-NPY_NO_EXPORT PyObject *
-array_long(PyArrayObject *v)
-{
-    return array_scalar_forward(v, &PyNumber_Long, " in ndarray.__long__");
-}
-
-/* hex and oct aren't exposed to the C api, but we need a function pointer */
-static PyObject *
-_PyNumber_Oct(PyObject *o) {
-    PyObject *res;
-    PyObject *mod = PyImport_ImportModule("__builtin__");
-    if (mod == NULL) {
-        return NULL;
-    }
-    res = PyObject_CallMethod(mod, "oct", "(O)", o);
-    Py_DECREF(mod);
-    return res;
-}
-
-static PyObject *
-_PyNumber_Hex(PyObject *o) {
-    PyObject *res;
-    PyObject *mod = PyImport_ImportModule("__builtin__");
-    if (mod == NULL) {
-        return NULL;
-    }
-    res = PyObject_CallMethod(mod, "hex", "(O)", o);
-    Py_DECREF(mod);
-    return res;
-}
-
-NPY_NO_EXPORT PyObject *
-array_oct(PyArrayObject *v)
-{
-    return array_scalar_forward(v, &_PyNumber_Oct, " in ndarray.__oct__");
-}
-
-NPY_NO_EXPORT PyObject *
-array_hex(PyArrayObject *v)
-{
-    return array_scalar_forward(v, &_PyNumber_Hex, " in ndarray.__hex__");
-}
-
-#endif
 
 static PyObject *
 array_index(PyArrayObject *v)
@@ -991,20 +936,9 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_bitwise_and,              /*nb_and*/
     (binaryfunc)array_bitwise_xor,              /*nb_xor*/
     (binaryfunc)array_bitwise_or,               /*nb_or*/
-#if !defined(NPY_PY3K)
-    0,                                          /*nb_coerce*/
-#endif
     (unaryfunc)array_int,                       /*nb_int*/
-#if defined(NPY_PY3K)
     0,                                          /*nb_reserved*/
-#else
-    (unaryfunc)array_long,                      /*nb_long*/
-#endif
     (unaryfunc)array_float,                     /*nb_float*/
-#if !defined(NPY_PY3K)
-    (unaryfunc)array_oct,                       /*nb_oct*/
-    (unaryfunc)array_hex,                       /*nb_hex*/
-#endif
 
     /*
      * This code adds augmented assignment functionality

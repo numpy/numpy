@@ -100,16 +100,12 @@ done:
 static PyObject *
 _PyLong_Bytes(PyObject *long_obj) {
     PyObject *bytes;
-#if defined(NPY_PY3K)
     PyObject *unicode = PyObject_Str(long_obj);
     if (unicode == NULL) {
         return NULL;
     }
     bytes = PyUnicode_AsUTF8String(unicode);
     Py_DECREF(unicode);
-#else
-    bytes = PyObject_Str(long_obj);
-#endif
     return bytes;
 }
 

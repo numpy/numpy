@@ -54,12 +54,7 @@ NPY_NO_EXPORT PyTypeObject PyTimeIntegerArrType_Type;
  *         Floating, ComplexFloating, Flexible, Character#
  */
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.@name@",                             /* tp_name*/
     sizeof(PyObject),                           /* tp_basicsize*/
     0,                                          /* tp_itemsize */
@@ -68,11 +63,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
     0,                                          /* tp_as_sequence */
@@ -279,27 +270,6 @@ gentype_@name@(PyObject *m1)
 }
 /**end repeat**/
 
-#if !defined(NPY_PY3K)
-/**begin repeat
- *
- * #name = long, oct, hex#
- */
-static PyObject *
-gentype_@name@(PyObject *m1)
-{
-    PyObject *arr, *ret;
-
-    arr = PyArray_FromScalar(m1, NULL);
-    if (arr == NULL) {
-        return NULL;
-    }
-    ret = Py_TYPE(arr)->tp_as_number->nb_@name@(arr);
-    Py_DECREF(arr);
-    return ret;
-}
-/**end repeat**/
-#endif
-
 static int
 gentype_nonzero_number(PyObject *m1)
 {
@@ -310,11 +280,7 @@ gentype_nonzero_number(PyObject *m1)
     if (arr == NULL) {
         return -1;
     }
-#if defined(NPY_PY3K)
     ret = Py_TYPE(arr)->tp_as_number->nb_bool(arr);
-#else
-    ret = Py_TYPE(arr)->tp_as_number->nb_nonzero(arr);
-#endif
     Py_DECREF(arr);
     return ret;
 }
@@ -342,21 +308,9 @@ gentype_format(PyObject *self, PyObject *args)
     PyObject *format_spec;
     PyObject *obj, *ret;
 
-#if defined(NPY_PY3K)
     if (!PyArg_ParseTuple(args, "U:__format__", &format_spec)) {
         return NULL;
     }
-#else
-    if (!PyArg_ParseTuple(args, "O:__format__", &format_spec)) {
-        return NULL;
-    }
-
-    if (!PyUnicode_Check(format_spec) && !PyString_Check(format_spec)) {
-        PyErr_SetString(PyExc_TypeError,
-                "format must be a string");
-        return NULL;
-    }
-#endif
 
     /*
      * Convert to an appropriate Python type and call its format.
@@ -367,11 +321,7 @@ gentype_format(PyObject *self, PyObject *args)
         obj = PyBool_FromLong(((PyBoolScalarObject *)self)->obval);
     }
     else if (PyArray_IsScalar(self, Integer)) {
-#if defined(NPY_PY3K)
         obj = Py_TYPE(self)->tp_as_number->nb_int(self);
-#else
-        obj = Py_TYPE(self)->tp_as_number->nb_long(self);
-#endif
     }
     else if (PyArray_IsScalar(self, Floating)) {
         obj = Py_TYPE(self)->tp_as_number->nb_float(self);
@@ -1063,27 +1013,6 @@ static PyObject *
     return npy_longdouble_to_PyLong(val);
 }
 
-#if !defined(NPY_PY3K)
-
-/**begin repeat1
- * #name = int, hex, oct#
- */
-static PyObject *
-@char@longdoubletype_@name@(PyObject *self)
-{
-    PyObject *ret;
-    PyObject *obj = @char@longdoubletype_long(self);
-    if (obj == NULL) {
-        return NULL;
-    }
-    ret = Py_TYPE(obj)->tp_as_number->nb_@name@(obj);
-    Py_DECREF(obj);
-    return ret;
-}
-/**end repeat1**/
-
-#endif /* !defined(NPY_PY3K) */
-
 /**end repeat**/
 
 static PyNumberMethods gentype_as_number = {
@@ -1103,20 +1032,9 @@ static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_and,                     /*nb_and*/
     (binaryfunc)gentype_xor,                     /*nb_xor*/
     (binaryfunc)gentype_or,                      /*nb_or*/
-#if !defined(NPY_PY3K)
-    0,                                           /*nb_coerce*/
-#endif
     (unaryfunc)gentype_int,                      /*nb_int*/
-#if defined(NPY_PY3K)
     0,                                           /*nb_reserved*/
-#else
-    (unaryfunc)gentype_long,                     /*nb_long*/
-#endif
     (unaryfunc)gentype_float,                    /*nb_float*/
-#if !defined(NPY_PY3K)
-    (unaryfunc)gentype_oct,                      /*nb_oct*/
-    (unaryfunc)gentype_hex,                      /*nb_hex*/
-#endif
     0,                                           /*inplace_add*/
     0,                                           /*inplace_subtract*/
     0,                                           /*inplace_multiply*/
@@ -1224,11 +1142,7 @@ inttype_denominator_get(PyObject *self)
 static PyObject *
 gentype_data_get(PyObject *self)
 {
-#if defined(NPY_PY3K)
     return PyMemoryView_FromObject(self);
-#else
-    return PyBuffer_FromObject(self, 0, Py_END_OF_BUFFER);
-#endif
 }
 
 
@@ -1802,9 +1716,7 @@ static PyObject *
 gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
 {
     PyObject *ret = NULL, *obj = NULL, *mod = NULL;
-#if defined(NPY_PY3K)
     Py_buffer view;
-#endif
     const char *buffer;
     Py_ssize_t buflen;
 
@@ -1814,7 +1726,6 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-#if defined(NPY_PY3K)
     if (PyArray_IsScalar(self, Unicode)) {
         /* Unicode on Python 3 does not expose the buffer interface */
         buffer = PyUnicode_AS_DATA(self);
@@ -1836,12 +1747,6 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
         Py_DECREF(ret);
         return NULL;
     }
-#else
-    if (PyObject_AsReadBuffer(self, (const void **)&buffer, &buflen)<0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-#endif
 
     mod = PyImport_ImportModule("numpy.core._multiarray_umath");
     if (mod == NULL) {
@@ -2260,12 +2165,10 @@ static PyMethodDef gentype_methods[] = {
     {"round",
         (PyCFunction)gentype_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
-#if defined(NPY_PY3K)
     /* Hook for the round() builtin */
     {"__round__",
         (PyCFunction)gentype_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
-#endif
     /* For the format function */
     {"__format__",
         gentype_format,
@@ -2577,21 +2480,11 @@ static PyBufferProcs gentype_as_buffer = {
 };
 
 
-#if defined(NPY_PY3K)
 #define BASEFLAGS Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE
 #define LEAFFLAGS  Py_TPFLAGS_DEFAULT
-#else
-#define BASEFLAGS Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES
-#define LEAFFLAGS  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES
-#endif
 
 NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.generic",                            /* tp_name*/
     sizeof(PyObject),                           /* tp_basicsize*/
     0,                                          /* tp_itemsize */
@@ -2600,11 +2493,7 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
     0,                                          /* tp_as_sequence */
@@ -3021,22 +2910,9 @@ NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
     (binaryfunc)bool_arrtype_and,                /* nb_and */
     (binaryfunc)bool_arrtype_xor,                /* nb_xor */
     (binaryfunc)bool_arrtype_or,                 /* nb_or */
-#if defined(NPY_PY3K)
-#else
-    0,                                           /* nb_coerce */
-#endif
     0,                                           /* nb_int */
-#if defined(NPY_PY3K)
     0,                                           /* nb_reserved */
-#else
-    0,                                           /* nb_long */
-#endif
     0,                                           /* nb_float */
-#if defined(NPY_PY3K)
-#else
-    0,                                           /* nb_oct */
-    0,                                           /* nb_hex */
-#endif
     /* Added in release 2.0 */
     0,                                           /* nb_inplace_add */
     0,                                           /* nb_inplace_subtract */
@@ -3076,11 +2952,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
             (PyArray_Check(obj) &&
                      PyArray_NDIM((PyArrayObject *)obj)==0 &&
                      PyArray_ISINTEGER((PyArrayObject *)obj))) {
-#if defined(NPY_PY3K)
         new = Py_TYPE(obj)->tp_as_number->nb_int(obj);
-#else
-        new = Py_TYPE(obj)->tp_as_number->nb_long(obj);
-#endif
     }
     if (new && PyLong_Check(new)) {
         PyObject *ret;
@@ -3166,7 +3038,6 @@ int_arrtype_hash(PyObject *obj)
     return x;
 }
 
-#if defined(NPY_PY3K)
 static npy_hash_t
 long_arrtype_hash(PyObject *obj)
 {
@@ -3175,7 +3046,6 @@ long_arrtype_hash(PyObject *obj)
     Py_DECREF(l);
     return x;
 }
-#endif
 
 /**begin repeat
  * #char = ,u#
@@ -3415,72 +3285,6 @@ static PyMappingMethods object_arrtype_as_mapping = {
     (objobjargproc)object_arrtype_ass_subscript,
 };
 
-#if !defined(NPY_PY3K)
-static Py_ssize_t
-object_arrtype_getsegcount(PyObjectScalarObject *self, Py_ssize_t *lenp)
-{
-    Py_ssize_t newlen;
-    int cnt;
-    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
-
-    if (pb == NULL ||
-            pb->bf_getsegcount == NULL ||
-            (cnt = (*pb->bf_getsegcount)(self->obval, &newlen)) != 1) {
-        return 0;
-    }
-    if (lenp) {
-        *lenp = newlen;
-    }
-    return cnt;
-}
-
-static Py_ssize_t
-object_arrtype_getreadbuf(PyObjectScalarObject *self, Py_ssize_t segment, void **ptrptr)
-{
-    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
-
-    if (pb == NULL ||
-            pb->bf_getreadbuffer == NULL ||
-            pb->bf_getsegcount == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "expected a readable buffer object");
-        return -1;
-    }
-    return (*pb->bf_getreadbuffer)(self->obval, segment, ptrptr);
-}
-
-static Py_ssize_t
-object_arrtype_getwritebuf(PyObjectScalarObject *self, Py_ssize_t segment, void **ptrptr)
-{
-    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
-
-    if (pb == NULL ||
-            pb->bf_getwritebuffer == NULL ||
-            pb->bf_getsegcount == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "expected a writeable buffer object");
-        return -1;
-    }
-    return (*pb->bf_getwritebuffer)(self->obval, segment, ptrptr);
-}
-
-static Py_ssize_t
-object_arrtype_getcharbuf(PyObjectScalarObject *self, Py_ssize_t segment,
-                          constchar **ptrptr)
-{
-    PyBufferProcs *pb = Py_TYPE(self->obval)->tp_as_buffer;
-
-    if (pb == NULL ||
-            pb->bf_getcharbuffer == NULL ||
-            pb->bf_getsegcount == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "expected a character buffer object");
-        return -1;
-    }
-    return (*pb->bf_getcharbuffer)(self->obval, segment, ptrptr);
-}
-#endif
-
 static int
 object_arrtype_getbuffer(PyObjectScalarObject *self, Py_buffer *view, int flags)
 {
@@ -3508,12 +3312,6 @@ object_arrtype_releasebuffer(PyObjectScalarObject *self, Py_buffer *view)
 }
 
 static PyBufferProcs object_arrtype_as_buffer = {
-#if !defined(NPY_PY3K)
-    (readbufferproc)object_arrtype_getreadbuf,
-    (writebufferproc)object_arrtype_getwritebuf,
-    (segcountproc)object_arrtype_getsegcount,
-    (charbufferproc)object_arrtype_getcharbuf,
-#endif
     (getbufferproc)object_arrtype_getbuffer,
     (releasebufferproc)object_arrtype_releasebuffer,
 };
@@ -3525,12 +3323,7 @@ object_arrtype_call(PyObjectScalarObject *obj, PyObject *args, PyObject *kwds)
 }
 
 NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.object_",                            /* tp_name*/
     sizeof(PyObjectScalarObject),               /* tp_basicsize*/
     0,                                          /* tp_itemsize */
@@ -3538,11 +3331,7 @@ NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
     &object_arrtype_as_sequence,                /* tp_as_sequence */
@@ -3609,13 +3398,8 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
 
 #define NAME_bool "bool"
 #define NAME_void "void"
-#if defined(NPY_PY3K)
 #define NAME_string "bytes"
 #define NAME_unicode "str"
-#else
-#define NAME_string "string"
-#define NAME_unicode "unicode"
-#endif
 
 /**begin repeat
  * #name = bool, string, unicode, void#
@@ -3623,12 +3407,7 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
  * #ex = _,_,_,#
  */
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy." NAME_@name@ "@ex@",                /* tp_name*/
     sizeof(Py@NAME@ScalarObject),               /* tp_basicsize*/
     0,                                          /* tp_itemsize */
@@ -3636,11 +3415,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
     0,                                          /* tp_as_sequence */
@@ -3712,12 +3487,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
 #define _THIS_SIZE "256"
 #endif
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.@name@" _THIS_SIZE,                  /* tp_name*/
     sizeof(Py@NAME@ScalarObject),               /* tp_basicsize*/
     0,                                          /* tp_itemsize */
@@ -3725,11 +3495,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
     0,                                          /* tp_as_sequence */
@@ -3803,12 +3569,7 @@ static PyMappingMethods gentype_as_mapping = {
 #endif
 
 NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(0, 0)
-#else
-    PyObject_HEAD_INIT(0)
-    0,                                          /* ob_size */
-#endif
     "numpy.@name@" _THIS_SIZE,                  /* tp_name*/
     sizeof(Py@NAME@ScalarObject),               /* tp_basicsize*/
     0,                                          /* tp_itemsize*/
@@ -3816,11 +3577,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_print*/
     0,                                          /* tp_getattr*/
     0,                                          /* tp_setattr*/
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr*/
     0,                                          /* tp_as_number*/
     0,                                          /* tp_as_sequence*/
@@ -4191,38 +3948,6 @@ initialize_casting_tables(void)
     }
 }
 
-#ifndef NPY_PY3K
-/*
- * In python2, the `float` and `complex` types still implement the obsolete
- * "tp_print" method, which uses CPython's float-printing routines to print the
- * float.  Numpy's float_/cfloat inherit from Python float/complex, but
- * override its tp_repr and tp_str methods. In order to avoid an inconsistency
- * with the inherited tp_print, we need to override it too.
- *
- * In python3 the tp_print method is reserved/unused.
- */
-static int
-doubletype_print(PyObject *o, FILE *fp, int flags)
-{
-    int ret;
-    PyObject *to_print;
-    if (flags & Py_PRINT_RAW) {
-        to_print = PyObject_Str(o);
-    }
-    else {
-        to_print = PyObject_Repr(o);
-    }
-
-    if (to_print == NULL) {
-        return -1;
-    }
-
-    ret = PyObject_Print(to_print, fp, Py_PRINT_RAW);
-    Py_DECREF(to_print);
-    return ret;
-}
-#endif
-
 static PyNumberMethods longdoubletype_as_number;
 static PyNumberMethods clongdoubletype_as_number;
 static void init_basetypes(void);
@@ -4273,12 +3998,6 @@ initialize_numeric_types(void)
     Py@NAME@ArrType_Type.tp_as_number = &@name@_arrtype_as_number;
 
     /**end repeat**/
-
-#ifndef NPY_PY3K
-    PyDoubleArrType_Type.tp_print = &doubletype_print;
-    PyCDoubleArrType_Type.tp_print = &doubletype_print;
-#endif
-
 
     PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
 
@@ -4360,10 +4079,8 @@ initialize_numeric_types(void)
     /* We won't be inheriting from Python Int type. */
     PyIntArrType_Type.tp_hash = int_arrtype_hash;
 
-#if defined(NPY_PY3K)
     /* We won't be inheriting from Python Int type. */
     PyLongArrType_Type.tp_hash = long_arrtype_hash;
-#endif
 
     /* We won't be inheriting from Python Int type. */
     PyLongLongArrType_Type.tp_hash = longlong_arrtype_hash;
@@ -4409,14 +4126,7 @@ initialize_numeric_types(void)
      * does not return a normal Python type
      */
     @char@longdoubletype_as_number.nb_float = @char@longdoubletype_float;
-#if defined(NPY_PY3K)
     @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_long;
-#else
-    @char@longdoubletype_as_number.nb_int  = @char@longdoubletype_int;
-    @char@longdoubletype_as_number.nb_long = @char@longdoubletype_long;
-    @char@longdoubletype_as_number.nb_hex  = @char@longdoubletype_hex;
-    @char@longdoubletype_as_number.nb_oct  = @char@longdoubletype_oct;
-#endif
 
     Py@CHAR@LongDoubleArrType_Type.tp_as_number = &@char@longdoubletype_as_number;
     Py@CHAR@LongDoubleArrType_Type.tp_repr = @char@longdoubletype_repr;

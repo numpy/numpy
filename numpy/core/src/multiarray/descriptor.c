@@ -465,23 +465,11 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Insert name into nameslist */
         Py_INCREF(name);
 
-#if !defined(NPY_PY3K)
-        /* convert unicode name to ascii on Python 2 if possible */
-        if (PyUnicode_Check(name)) {
-            PyObject *tmp = PyUnicode_AsASCIIString(name);
-            Py_DECREF(name);
-            if (tmp == NULL) {
-                goto fail;
-            }
-            name = tmp;
-        }
-#endif
         if (PyUString_GET_SIZE(name) == 0) {
             Py_DECREF(name);
             if (title == NULL) {
                 name = PyUString_FromFormat("f%d", i);
             }
-#if defined(NPY_PY3K)
             /* On Py3, allow only non-empty Unicode strings as field names */
             else if (PyUString_Check(title) && PyUString_GET_SIZE(title) > 0) {
                 name = title;
@@ -490,12 +478,6 @@ _convert_from_array_descr(PyObject *obj, int align)
             else {
                 goto fail;
             }
-#else
-            else {
-                name = title;
-                Py_INCREF(name);
-            }
-#endif
         }
         PyTuple_SET_ITEM(nameslist, i, name);
 
@@ -522,14 +504,10 @@ _convert_from_array_descr(PyObject *obj, int align)
              || (title
                  && PyBaseString_Check(title)
                  && (PyDict_GetItem(fields, title) != NULL))) {
-#if defined(NPY_PY3K)
             name = PyUnicode_AsUTF8String(name);
-#endif
             PyErr_Format(PyExc_ValueError,
                     "field '%s' occurs more than once", PyString_AsString(name));
-#if defined(NPY_PY3K)
             Py_DECREF(name);
-#endif
             Py_DECREF(conv);
             goto fail;
         }
@@ -1680,7 +1658,6 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
             goto fail;
         }
         PyObject *item = NULL;
-#if defined(NPY_PY3K)
         PyObject *tmp;
         tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
         if (tmp == NULL) {
@@ -1688,9 +1665,6 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
         }
         item = PyDict_GetItem(typeDict, tmp);
         Py_DECREF(tmp);
-#else
-        item = PyDict_GetItem(typeDict, obj);
-#endif
         if (item == NULL) {
             goto fail;
         }
@@ -2725,11 +2699,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         subarray_shape = PyTuple_GET_ITEM(subarray, 1);
         if (PyNumber_Check(subarray_shape)) {
             PyObject *tmp;
-#if defined(NPY_PY3K)
             tmp = PyNumber_Long(subarray_shape);
-#else
-            tmp = PyNumber_Int(subarray_shape);
-#endif
             if (tmp == NULL) {
                 return NULL;
             }
@@ -2784,7 +2754,6 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
             }
         }
         else {
-#if defined(NPY_PY3K)
             /*
              * To support pickle.load(f, encoding='bytes') for loading Py2
              * generated pickles on Py3, we need to be more lenient and convert
@@ -2829,11 +2798,6 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
                     return NULL;
                 }
             }
-#else
-            PyErr_Format(PyExc_ValueError,
-                "non-string names in Numpy dtype unpickling");
-            return NULL;
-#endif
         }
     }
 
@@ -3318,13 +3282,11 @@ _check_has_fields(PyArray_Descr *self)
         if (astr == NULL) {
             return -1;
         }
-#if defined(NPY_PY3K)
         {
             PyObject *bstr = PyUnicode_AsUnicodeEscapeString(astr);
             Py_DECREF(astr);
             astr = bstr;
         }
-#endif
         PyErr_Format(PyExc_KeyError,
                 "There are no fields in dtype %s.", PyBytes_AsString(astr));
         Py_DECREF(astr);
@@ -3539,12 +3501,7 @@ static PyMappingMethods descr_as_mapping = {
 /****************** End of Mapping Protocol ******************************/
 
 NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.dtype",                              /* tp_name */
     sizeof(PyArray_Descr),                      /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -3553,11 +3510,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayDescr_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     (void *)0,                                  /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     (reprfunc)arraydescr_repr,                  /* tp_repr */
     &descr_as_number,                           /* tp_as_number */
     &descr_as_sequence,                         /* tp_as_sequence */

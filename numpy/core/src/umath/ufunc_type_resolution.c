@@ -1361,20 +1361,6 @@ PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
                                   PyObject *type_tup,
                                   PyArray_Descr **out_dtypes)
 {
- /* Deprecation checks needed only on python 2 */
-#if !defined(NPY_PY3K)
-    int type_num1, type_num2;
-
-    type_num1 = PyArray_DESCR(operands[0])->type_num;
-    type_num2 = PyArray_DESCR(operands[1])->type_num;
-
-    /* If both types are integer, warn the user, same as python does */
-    if (Py_DivisionWarningFlag &&
-            (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) &&
-            (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2))) {
-        PyErr_Warn(PyExc_DeprecationWarning, "numpy: classic int division");
-    }
-#endif
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);
 }
