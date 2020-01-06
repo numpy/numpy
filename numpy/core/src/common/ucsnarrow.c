@@ -31,7 +31,7 @@
  * Values above 0xffff are converted to surrogate pairs.
  */
 NPY_NO_EXPORT int
-PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length)
+PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 const *ucs4, int ucs4length)
 {
     int i;
     int numucs2 = 0;
@@ -63,7 +63,7 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length)
  * The return value is the actual size of the used part of the ucs4 buffer.
  */
 NPY_NO_EXPORT int
-PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len)
+PyUCS2Buffer_AsUCS4(Py_UNICODE const *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len)
 {
     int i;
     npy_ucs4 chr;
@@ -107,10 +107,11 @@ PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len)
  * new_reference: PyUnicodeObject
  */
 NPY_NO_EXPORT PyUnicodeObject *
-PyUnicode_FromUCS4(char *src, Py_ssize_t size, int swap, int align)
+PyUnicode_FromUCS4(char const *src, Py_ssize_t size, int swap, int align)
 {
     Py_ssize_t ucs4len = size / sizeof(npy_ucs4);
-    npy_ucs4 *buf = (npy_ucs4 *)src;
+    /* FIXME: This is safe, but better to rewrite to not cast away const */
+    npy_ucs4 *buf = (npy_ucs4 *)(char *)src;
     int alloc = 0;
     PyUnicodeObject *ret;
 
@@ -136,7 +137,7 @@ PyUnicode_FromUCS4(char *src, Py_ssize_t size, int swap, int align)
     /* produce PyUnicode object */
 #ifdef Py_UNICODE_WIDE
     {
-        ret = (PyUnicodeObject *)PyUnicode_FromUnicode((Py_UNICODE*)buf,
+        ret = (PyUnicodeObject *)PyUnicode_FromUnicode((Py_UNICODE const*)buf,
                                                        (Py_ssize_t) ucs4len);
         if (ret == NULL) {
             goto fail;

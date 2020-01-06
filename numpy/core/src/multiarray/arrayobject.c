@@ -388,7 +388,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 /*NUMPY_API
  */
 NPY_NO_EXPORT int
-PyArray_TypeNumFromName(char *str)
+PyArray_TypeNumFromName(char const *str)
 {
     int i;
     PyArray_Descr *descr;
@@ -614,7 +614,7 @@ PyArray_SetDatetimeParseFunction(PyObject *NPY_UNUSED(op))
 /*NUMPY_API
  */
 NPY_NO_EXPORT int
-PyArray_CompareUCS4(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
+PyArray_CompareUCS4(npy_ucs4 const *s1, npy_ucs4 const *s2, size_t len)
 {
     npy_ucs4 c1, c2;
     while(len-- > 0) {
@@ -703,10 +703,13 @@ PyArray_FailUnlessWriteable(PyArrayObject *obj, const char *name)
    If they are NULL terminated, then stop comparison.
 */
 static int
-_myunincmp(npy_ucs4 *s1, npy_ucs4 *s2, int len1, int len2)
+_myunincmp(npy_ucs4 const *s1, npy_ucs4 const *s2, int len1, int len2)
 {
-    npy_ucs4 *sptr;
-    npy_ucs4 *s1t=s1, *s2t=s2;
+    npy_ucs4 const *sptr;
+    /* FIXME: Casting away const makes the below easier to write, but should
+     * still be safe.
+     */
+    npy_ucs4 *s1t = (npy_ucs4 *)s1, *s2t = (npy_ucs4 *)s2;
     int val;
     npy_intp size;
     int diff;
@@ -763,9 +766,9 @@ _myunincmp(npy_ucs4 *s1, npy_ucs4 *s2, int len1, int len2)
  * If they are NULL terminated, then stop comparison.
  */
 static int
-_mystrncmp(char *s1, char *s2, int len1, int len2)
+_mystrncmp(char const *s1, char const *s2, int len1, int len2)
 {
-    char *sptr;
+    char const *sptr;
     int val;
     int diff;
 
@@ -827,7 +830,7 @@ static void _unistripw(npy_ucs4 *s, int n)
 
 
 static char *
-_char_copy_n_strip(char *original, char *temp, int nc)
+_char_copy_n_strip(char const *original, char *temp, int nc)
 {
     if (nc > SMALL_STRING) {
         temp = malloc(nc);
@@ -850,7 +853,7 @@ _char_release(char *ptr, int nc)
 }
 
 static char *
-_uni_copy_n_strip(char *original, char *temp, int nc)
+_uni_copy_n_strip(char const *original, char *temp, int nc)
 {
     if (nc*sizeof(npy_ucs4) > SMALL_STRING) {
         temp = malloc(nc*sizeof(npy_ucs4));
@@ -919,7 +922,7 @@ _compare_strings(PyArrayObject *result, PyArrayMultiIterObject *multi,
     int N1, N2;
     int (*compfunc)(void *, void *, int, int);
     void (*relfunc)(char *, int);
-    char* (*stripfunc)(char *, char *, int);
+    char* (*stripfunc)(char const *, char *, int);
 
     compfunc = func;
     dptr = (npy_bool *)PyArray_DATA(result);

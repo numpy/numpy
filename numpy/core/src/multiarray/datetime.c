@@ -71,7 +71,7 @@ numpy_pydatetime_import(void)
 }
 
 /* Exported as DATETIMEUNITS in multiarraymodule.c */
-NPY_NO_EXPORT char *_datetime_strings[NPY_DATETIME_NUMUNITS] = {
+NPY_NO_EXPORT char const *_datetime_strings[NPY_DATETIME_NUMUNITS] = {
     "Y",
     "M",
     "W",
@@ -692,6 +692,14 @@ get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
     return &(((PyArray_DatetimeDTypeMetaData *)dtype->c_metadata)->meta);
 }
 
+/* strtol does not know whether to put a const qualifier on endptr, wrap
+ * it so we can put this cast in one place.
+ */
+NPY_NO_EXPORT long int
+strtol_const(char const *str, char const **endptr, int base) {
+    return strtol(str, (char**)endptr, base);
+}
+
 /*
  * Converts a substring given by 'str' and 'len' into
  * a date time unit multiplier + enum value, which are populated
@@ -702,15 +710,15 @@ get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_datetime_extended_unit_from_string(char *str, Py_ssize_t len,
-                                    char *metastr,
+parse_datetime_extended_unit_from_string(char const *str, Py_ssize_t len,
+                                    char const *metastr,
                                     PyArray_DatetimeMetaData *out_meta)
 {
-    char *substr = str, *substrend = NULL;
+    char const *substr = str, *substrend = NULL;
     int den = 1;
 
     /* First comes an optional integer multiplier */
-    out_meta->num = (int)strtol(substr, &substrend, 10);
+    out_meta->num = (int)strtol_const(substr, &substrend, 10);
     if (substr == substrend) {
         out_meta->num = 1;
     }
@@ -735,7 +743,7 @@ parse_datetime_extended_unit_from_string(char *str, Py_ssize_t len,
     /* Next comes an optional integer denominator */
     if (substr-str < len && *substr == '/') {
         substr++;
-        den = (int)strtol(substr, &substrend, 10);
+        den = (int)strtol_const(substr, &substrend, 10);
         /* If the '/' exists, there must be a number followed by ']' */
         if (substr == substrend || *substrend != ']') {
             goto bad_input;
@@ -776,10 +784,10 @@ bad_input:
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
+parse_datetime_metadata_from_metastr(char const *metastr, Py_ssize_t len,
                                     PyArray_DatetimeMetaData *out_meta)
 {
-    char *substr = metastr, *substrend = NULL;
+    char const *substr = metastr, *substrend = NULL;
 
     /* Treat the empty string as generic units */
     if (len == 0) {
@@ -837,10 +845,10 @@ bad_input:
  * The "type" string should be NULL-terminated.
  */
 NPY_NO_EXPORT PyArray_Descr *
-parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
+parse_dtype_from_datetime_typestr(char const *typestr, Py_ssize_t len)
 {
     PyArray_DatetimeMetaData meta;
-    char *metastr = NULL;
+    char const *metastr = NULL;
     int is_timedelta = 0;
     Py_ssize_t metalen = 0;
 
@@ -923,7 +931,7 @@ static NPY_DATETIMEUNIT _multiples_table[16][4] = {
  */
 NPY_NO_EXPORT int
 convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
-                                    int den, char *metastr)
+                                    int den, char const *metastr)
 {
     int i, num, ind;
     NPY_DATETIMEUNIT *totry;
@@ -1671,7 +1679,7 @@ datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
  * Returns NPY_DATETIMEUNIT on success, NPY_FR_ERROR on failure.
  */
 NPY_NO_EXPORT NPY_DATETIMEUNIT
-parse_datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr)
+parse_datetime_unit_from_string(char const *str, Py_ssize_t len, char const *metastr)
 {
     /* Use switch statements so the compiler can make it fast */
     if (len == 1) {
@@ -1956,7 +1964,7 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
 {
     PyObject *res;
     int num;
-    char *basestr;
+    char const *basestr;
 
     if (ret == NULL) {
         return NULL;
