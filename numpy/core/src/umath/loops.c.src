@@ -1824,6 +1824,7 @@ NPY_NO_EXPORT void
             *((npy_bool *)op1) = in1 @OP@ in2;
         }
     }
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 /**end repeat1**/
 
@@ -2068,6 +2069,7 @@ NPY_NO_EXPORT void
         const @type@ in1 = *(@type@ *)ip1;
         *((@type@ *)op1) = in1 > 0 ? 1 : (in1 < 0 ? -1 : (in1 == 0 ? 0 : in1));
     }
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 NPY_NO_EXPORT void
