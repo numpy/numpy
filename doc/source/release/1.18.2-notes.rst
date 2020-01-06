@@ -1,0 +1,51 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.18.2 Release Notes
+==========================
+
+This release contains fixes for bugs reported against NumPy 1.18.1.
+
+The Python versions supported in this release are 3.5-3.8. Downstream
+developers should use Cython >= 0.29.14 for Python 3.8 support and OpenBLAS >=
+3.7 to avoid errors on the Skylake architecture.
+
+
+Highlights
+==========
+
+
+New functions
+=============
+
+
+Deprecations
+============
+
+
+Future Changes
+==============
+
+
+Expired deprecations
+====================
+
+
+Compatibility notes
+===================
+
+
+C API changes
+=============
+
+
+New Features
+============
+
+
+Improvements
+============
+
+
+Changes
+=======
