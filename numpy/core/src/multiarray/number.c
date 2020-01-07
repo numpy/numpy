@@ -32,10 +32,6 @@ static PyObject *
 array_inplace_subtract(PyArrayObject *m1, PyObject *m2);
 static PyObject *
 array_inplace_multiply(PyArrayObject *m1, PyObject *m2);
-#if !defined(NPY_PY3K)
-static PyObject *
-array_inplace_divide(PyArrayObject *m1, PyObject *m2);
-#endif
 static PyObject *
 array_inplace_true_divide(PyArrayObject *m1, PyObject *m2);
 static PyObject *
@@ -352,20 +348,6 @@ array_multiply(PyArrayObject *m1, PyObject *m2)
     }
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.multiply);
 }
-
-#if !defined(NPY_PY3K)
-static PyObject *
-array_divide(PyArrayObject *m1, PyObject *m2)
-{
-    PyObject *res;
-
-    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_divide, array_divide);
-    if (try_binary_elide(m1, m2, &array_inplace_divide, &res, 0)) {
-        return res;
-    }
-    return PyArray_GenericBinaryFunction(m1, m2, n_ops.divide);
-}
-#endif
 
 static PyObject *
 array_remainder(PyArrayObject *m1, PyObject *m2)
@@ -728,16 +710,6 @@ array_inplace_multiply(PyArrayObject *m1, PyObject *m2)
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.multiply);
 }
 
-#if !defined(NPY_PY3K)
-static PyObject *
-array_inplace_divide(PyArrayObject *m1, PyObject *m2)
-{
-    INPLACE_GIVE_UP_IF_NEEDED(
-            m1, m2, nb_inplace_divide, array_inplace_divide);
-    return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.divide);
-}
-#endif
-
 static PyObject *
 array_inplace_remainder(PyArrayObject *m1, PyObject *m2)
 {
@@ -1008,9 +980,6 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_add,                      /*nb_add*/
     (binaryfunc)array_subtract,                 /*nb_subtract*/
     (binaryfunc)array_multiply,                 /*nb_multiply*/
-#if !defined(NPY_PY3K)
-    (binaryfunc)array_divide,                   /*nb_divide*/
-#endif
     (binaryfunc)array_remainder,                /*nb_remainder*/
     (binaryfunc)array_divmod,                   /*nb_divmod*/
     (ternaryfunc)array_power,                   /*nb_power*/
@@ -1046,9 +1015,6 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_inplace_add,              /*nb_inplace_add*/
     (binaryfunc)array_inplace_subtract,         /*nb_inplace_subtract*/
     (binaryfunc)array_inplace_multiply,         /*nb_inplace_multiply*/
-#if !defined(NPY_PY3K)
-    (binaryfunc)array_inplace_divide,           /*nb_inplace_divide*/
-#endif
     (binaryfunc)array_inplace_remainder,        /*nb_inplace_remainder*/
     (ternaryfunc)array_inplace_power,           /*nb_inplace_power*/
     (binaryfunc)array_inplace_left_shift,       /*nb_inplace_lshift*/
