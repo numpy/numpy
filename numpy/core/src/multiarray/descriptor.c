@@ -40,6 +40,16 @@
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
 /*
+ * Returned as a singleton address by the `_try_convert` methods, for cases
+ * when conversion was not possible, but there is no error to be reported.
+ *
+ * This object does not actually exist, it's just a reserved memory location.
+ * So don't touch any of its members or try to incref it - treat it like you
+ * would a NULL.
+ */
+static PyArray_Descr _try_convert_attempt_failed;
+
+/*
  * Generate a vague error message when a function returned NULL but forgot
  * to set an exception. We should aim to remove this eventually.
  */
@@ -49,7 +59,7 @@ _report_generic_error(void) {
 }
 
 static PyArray_Descr *
-_use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag);
+_try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj);
 
 static PyArray_Descr *
 _convert_from_any(PyObject *obj, int align);
@@ -65,11 +75,20 @@ _arraydescr_run_converter(PyObject *arg, int align)
     return type;
 }
 
+/*
+ * This function creates a dtype object when the object is a ctypes subclass.
+ *
+ * Returns `&_try_convert_attempt_failed` if the type is not a ctypes subclass.
+ */
 static PyArray_Descr *
-_arraydescr_from_ctypes_type(PyTypeObject *type)
+_try_convert_from_ctypes_type(PyTypeObject *type)
 {
     PyObject *_numpy_dtype_ctypes;
     PyObject *res;
+
+    if (!npy_ctypes_check(type)) {
+        return &_try_convert_attempt_failed;
+    }
 
     /* Call the python function of the same name. */
     _numpy_dtype_ctypes = PyImport_ImportModule("numpy.core._dtype_ctypes");
@@ -95,25 +114,21 @@ _arraydescr_from_ctypes_type(PyTypeObject *type)
     return (PyArray_Descr *)res;
 }
 
+static PyArray_Descr *
+_convert_from_any(PyObject *obj, int align);
+
 /*
  * This function creates a dtype object when the object has a "dtype" attribute,
  * and it can be converted to a dtype object.
  *
- * Returns a new reference to a dtype object, or NULL
- * if this is not possible.
- * When the return value is true, the dtype attribute should have been used
- * and parsed. Currently the only failure mode for a 1 return is a
- * RecursionError and the descriptor is set to NULL.
- * When the return value is false, no error will be set.
+ * Returns `&_try_convert_attempt_failed` if this is not possible.
+ * Currently the only failure mode for a NULL return is a RecursionError.
  */
-int
-_arraydescr_from_dtype_attr(PyObject *obj, PyArray_Descr **newdescr)
+static PyArray_Descr *
+_try_convert_from_dtype_attr(PyObject *obj)
 {
-    PyObject *dtypedescr;
-    int ret;
-
     /* For arbitrary objects that have a "dtype" attribute */
-    dtypedescr = PyObject_GetAttrString(obj, "dtype");
+    PyObject *dtypedescr = PyObject_GetAttrString(obj, "dtype");
     if (dtypedescr == NULL) {
         /*
          * This can be reached due to recursion limit being hit while fetching
@@ -126,10 +141,11 @@ _arraydescr_from_dtype_attr(PyObject *obj, PyArray_Descr **newdescr)
             " while trying to convert the given data type from its "
             "`.dtype` attribute.") != 0) {
         Py_DECREF(dtypedescr);
-        return 1;
+        return NULL;
     }
 
-    ret = PyArray_DescrConverter(dtypedescr, newdescr);
+    PyArray_Descr *newdescr;
+    int ret = PyArray_DescrConverter(dtypedescr, &newdescr);
 
     Py_DECREF(dtypedescr);
     Py_LeaveRecursiveCall();
@@ -137,14 +153,26 @@ _arraydescr_from_dtype_attr(PyObject *obj, PyArray_Descr **newdescr)
         goto fail;
     }
 
-    return 1;
+    return newdescr;
 
   fail:
     /* Ignore all but recursion errors, to give ctypes a full try. */
     if (!PyErr_ExceptionMatches(PyExc_RecursionError)) {
         PyErr_Clear();
+        return &_try_convert_attempt_failed;
+    }
+    return NULL;
+}
+
+/* This is used from another file */
+NPY_NO_EXPORT int
+_arraydescr_from_dtype_attr(PyObject *obj, PyArray_Descr **out)
+{
+    PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
+    if (ret == &_try_convert_attempt_failed) {
         return 0;
     }
+    *out = ret;
     return 1;
 }
 
@@ -257,16 +285,13 @@ _convert_from_tuple(PyObject *obj, int align)
     }
     PyObject *val = PyTuple_GET_ITEM(obj,1);
     /* try to interpret next item as a type */
-    int errflag;
-    PyArray_Descr *res = _use_inherit(type, val, &errflag);
-    if (res || errflag) {
+    PyArray_Descr *res = _try_convert_from_inherit_tuple(type, val);
+    if (res != &_try_convert_attempt_failed) {
         Py_DECREF(type);
         return res;
     }
-    PyErr_Clear();
     /*
-     * We get here if res was NULL but errflag wasn't set
-     * --- i.e. the conversion to a data-descr failed in _use_inherit
+     * We get here if _try_convert_from_inherit_tuple failed without crashing
      */
     if (PyDataType_ISUNSIZED(type)) {
         /* interpret next item as a typesize */
@@ -757,7 +782,7 @@ _is_tuple_of_integers(PyObject *obj)
 }
 
 /*
- * helper function for _use_inherit to disallow dtypes of the form
+ * helper function for _try_convert_from_inherit_tuple to disallow dtypes of the form
  * (old_dtype, new_dtype) where either of the dtypes contains python
  * objects - these dtypes are not useful and can be a source of segfaults,
  * when an attempt is made to interpret a python object as a different dtype
@@ -818,20 +843,23 @@ fail:
  * a['real'] and a['imag'] to an int32 array.
  *
  * leave type reference alone
+ *
+ * Returns `&_try_convert_attempt_failed` if the second tuple item is not
+ * appropriate.
  */
 static PyArray_Descr *
-_use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
+_try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
 {
     PyArray_Descr *new;
     PyArray_Descr *conv;
 
-    *errflag = 0;
     if (PyArray_IsScalar(newobj, Integer)
             || _is_tuple_of_integers(newobj)
             || !PyArray_DescrConverter(newobj, &conv)) {
-        return NULL;
+        /* PyArray_DescrConverter may have set an exception, which we ignore */
+        PyErr_Clear();
+        return &_try_convert_attempt_failed;
     }
-    *errflag = 1;
     new = PyArray_DescrNew(type);
     if (new == NULL) {
         goto fail;
@@ -866,7 +894,6 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
     }
     new->flags = conv->flags;
     Py_DECREF(conv);
-    *errflag = 0;
     return new;
 
  fail:
@@ -982,7 +1009,7 @@ validate_object_field_overlap(PyArray_Descr *dtype)
  * then it will be checked for conformity and used directly.
  */
 static PyArray_Descr *
-_use_fields_dict(PyObject *obj, int align)
+_convert_from_field_dict(PyObject *obj, int align)
 {
     PyObject *_numpy_internal;
     PyArray_Descr *res;
@@ -1015,7 +1042,7 @@ _convert_from_dict(PyObject *obj, int align)
         Py_DECREF(fields);
         /* XXX should check this is a KeyError */
         PyErr_Clear();
-        return _use_fields_dict(obj, align);
+        return _convert_from_field_dict(obj, align);
     }
     PyObject *descrs = PyMapping_GetItemString(obj, "formats");
     if (descrs == NULL) {
@@ -1023,7 +1050,7 @@ _convert_from_dict(PyObject *obj, int align)
         /* XXX should check this is a KeyError */
         PyErr_Clear();
         Py_DECREF(names);
-        return _use_fields_dict(obj, align);
+        return _convert_from_field_dict(obj, align);
     }
     int n = PyObject_Length(names);
     PyObject *offsets = PyMapping_GetItemString(obj, "offsets");
@@ -1364,24 +1391,19 @@ _convert_from_type(PyObject *obj) {
         return PyArray_DescrFromType(NPY_VOID);
     }
     else {
-        PyArray_Descr *at = NULL;
-        if (_arraydescr_from_dtype_attr(obj, &at)) {
-            /*
-             * Using dtype attribute, *at may be NULL if a
-             * RecursionError occurred.
-             */
-            if (at == NULL) {
-                return NULL;
-            }
-            return at;
+        PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
+        if (ret != &_try_convert_attempt_failed) {
+            return ret;
         }
+
         /*
-         * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
+         * Note: this comes after _try_convert_from_dtype_attr because the ctypes
          * type might override the dtype if numpy does not otherwise
          * support it.
          */
-        if (npy_ctypes_check(typ)) {
-            return _arraydescr_from_ctypes_type(typ);
+        ret = _try_convert_from_ctypes_type(typ);
+        if (ret != &_try_convert_attempt_failed) {
+            return ret;
         }
 
         /* All other classes are treated as object */
@@ -1445,21 +1467,18 @@ _convert_from_any(PyObject *obj, int align)
         return NULL;
     }
     else {
-        PyArray_Descr *ret;
-        if (_arraydescr_from_dtype_attr(obj, &ret)) {
-            /*
-             * Using dtype attribute, ret may be NULL if a
-             * RecursionError occurred.
-             */
+        PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
+        if (ret != &_try_convert_attempt_failed) {
             return ret;
         }
         /*
-         * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
+         * Note: this comes after _try_convert_from_dtype_attr because the ctypes
          * type might override the dtype if numpy does not otherwise
          * support it.
          */
-        if (npy_ctypes_check(Py_TYPE(obj))) {
-            return _arraydescr_from_ctypes_type(Py_TYPE(obj));
+        ret = _try_convert_from_ctypes_type(Py_TYPE(obj));
+        if (ret != &_try_convert_attempt_failed) {
+            return ret;
         }
         _report_generic_error();
         return NULL;
