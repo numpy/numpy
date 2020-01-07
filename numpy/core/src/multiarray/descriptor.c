@@ -1574,13 +1574,9 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 static int
 _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
 {
-    int check_num = NPY_NOTYPE + 10;
-    int elsize = 0;
-    char endian = '=';
+    /* Check for a string typecode. */
     char *type = NULL;
     Py_ssize_t len = 0;
-
-    /* Check for a string typecode. */
     if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
         goto error;
     }
@@ -1597,6 +1593,7 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
     }
 
     /* Process the endian character. '|' is replaced by '='*/
+    char endian = '=';
     switch (type[0]) {
         case '>':
         case '<':
@@ -1631,6 +1628,8 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
         return NPY_SUCCEED;
     }
 
+    int check_num = NPY_NOTYPE + 10;
+    int elsize = 0;
     /* A typecode like 'd' */
     if (len == 1) {
         /* Python byte string characters are unsigned */
@@ -1716,8 +1715,7 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
                            "Object0", "String0", "Timedelta64",
                            "Unicode0", "UInt", "Void0"};
         int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
-        int i;
-        for (i = 0; i < ndep_tps; ++i) {
+        for (int i = 0; i < ndep_tps; ++i) {
             char *dep_tp = dep_tps[i];
 
             if (strncmp(type, dep_tp, strlen(dep_tp)) == 0) {
