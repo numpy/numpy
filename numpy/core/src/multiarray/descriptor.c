@@ -3274,10 +3274,6 @@ static PyNumberMethods descr_as_number = {
     (binaryfunc)0,                          /* nb_add */
     (binaryfunc)0,                          /* nb_subtract */
     (binaryfunc)0,                          /* nb_multiply */
-    #if defined(NPY_PY3K)
-    #else
-    (binaryfunc)0,                          /* nb_divide */
-    #endif
     (binaryfunc)0,                          /* nb_remainder */
     (binaryfunc)0,                          /* nb_divmod */
     (ternaryfunc)0,                         /* nb_power */
