@@ -1436,6 +1436,15 @@ _convert_from_type(PyObject *obj) {
     }
 }
 
+/*
+ * Generate a vague error message when a function returned NULL but forgot
+ * to set an exception. We should aim to remove this eventually.
+ */
+static void
+_report_generic_error(void) {
+    PyErr_SetString(PyExc_TypeError, "data type not understood");
+}
+
 /*NUMPY_API
  * Get typenum from an object -- None goes to NPY_DEFAULT_TYPE
  * This function takes a Python object representing a type and converts it
@@ -1610,10 +1619,10 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         /* or a tuple */
         *at = _convert_from_tuple(obj, 0);
         if (*at == NULL){
-            if (PyErr_Occurred()) {
-                return NPY_FAIL;
+            if (!PyErr_Occurred()) {
+                _report_generic_error();
             }
-            goto fail;
+            return NPY_FAIL;
         }
         return NPY_SUCCEED;
     }
@@ -1621,10 +1630,10 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         /* or a list */
         *at = _convert_from_array_descr(obj,0);
         if (*at == NULL) {
-            if (PyErr_Occurred()) {
-                return NPY_FAIL;
+            if (!PyErr_Occurred()) {
+                _report_generic_error();
             }
-            goto fail;
+            return NPY_FAIL;
         }
         return NPY_SUCCEED;
     }
@@ -1632,15 +1641,16 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         /* or a dictionary */
         *at = _convert_from_dict(obj,0);
         if (*at == NULL) {
-            if (PyErr_Occurred()) {
-                return NPY_FAIL;
+            if (!PyErr_Occurred()) {
+                _report_generic_error();
             }
-            goto fail;
+            return NPY_FAIL;
         }
         return NPY_SUCCEED;
     }
     else if (PyArray_Check(obj)) {
-        goto fail;
+        _report_generic_error();
+        return NPY_FAIL;
     }
     else {
         if (_arraydescr_from_dtype_attr(obj, at)) {
@@ -1649,7 +1659,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
              * RecursionError occurred.
              */
             if (*at == NULL) {
-                goto error;
+                return NPY_FAIL;
             }
             return NPY_SUCCEED;
         }
@@ -1662,8 +1672,12 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             *at = _arraydescr_from_ctypes_type(Py_TYPE(obj));
             return *at ? NPY_SUCCEED : NPY_FAIL;
         }
-        goto fail;
+        _report_generic_error();
+        return NPY_FAIL;
     }
+
+    assert(PyBytes_Check(obj));
+
     if (PyErr_Occurred()) {
         goto fail;
     }
@@ -1725,7 +1739,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     if (PyDataType_ISUNSIZED(*at) && (*at)->elsize != elsize) {
         PyArray_DESCR_REPLACE(*at);
         if (*at == NULL) {
-            goto error;
+            return NPY_FAIL;
         }
         (*at)->elsize = elsize;
     }
@@ -1736,21 +1750,15 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         && (*at)->byteorder != endian) {
         PyArray_DESCR_REPLACE(*at);
         if (*at == NULL) {
-            goto error;
+            return NPY_FAIL;
         }
         (*at)->byteorder = endian;
     }
     return NPY_SUCCEED;
 
 fail:
-    if (PyBytes_Check(obj)) {
-        PyErr_Format(PyExc_TypeError,
-                "data type \"%s\" not understood", PyBytes_AS_STRING(obj));
-    }
-    else {
-        PyErr_SetString(PyExc_TypeError,
-                "data type not understood");
-    }
+    PyErr_Format(PyExc_TypeError,
+            "data type \"%s\" not understood", PyBytes_AS_STRING(obj));
 
 error:
     *at = NULL;
