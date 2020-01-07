@@ -12,7 +12,7 @@ NEP 37 — A dispatch protocol for NumPy-like modules
 Abstract
 --------
 
-NEP-18's `__array_function__` has been a mixed success. Some projects (e.g.,
+NEP-18's ``__array_function__`` has been a mixed success. Some projects (e.g.,
 dask, CuPy, xarray, sparse, Pint) have enthusiastically adopted it. Others
 (e.g., PyTorch, JAX, SciPy) have been more reluctant. Here we propose a new
 protocol, ``__array_module__``, that we expect could eventually subsume most
@@ -29,47 +29,47 @@ There are two broad ways in which NEP-18 has fallen short of its goals:
 1. **Maintainability concerns**. `__array_function__` has significant
    implications for libraries that use it:
 
-    - Projects like `PyTorch
-      <https://github.com/pytorch/pytorch/issues/22402>`_, `JAX
-      <https://github.com/google/jax/issues/1565>`_ and even `scipy.sparse
-      <https://github.com/scipy/scipy/issues/10362>`_ have been reluctant to
-      implement `__array_function__` in part because they are concerned about
-      **breaking existing code**: users expect NumPy functions like
-      ``np.concatenate`` to return NumPy arrays. This is a fundamental
-      limitation of the ``__array_function__`` design, which we chose to allow
-      overriding the existing ``numpy`` namespace.
-    - ``__array_function__`` currently requires an "all or nothing" approach to
-      implementing NumPy's API. There is no good pathway for **incremental
-      adoption**, which is particularly problematic for established projects
-      for which adopting ``__array_function__`` would result in breaking
-      changes.
-    - It is no longer possible to use **aliases to NumPy functions** within
-      modules that support overrides. For example, both CuPy and JAX set
-      ``result_type = np.result_type``.
-    - Implementing **fall-back mechanisms** for unimplemented NumPy functions
-      by using NumPy's implementation is hard to get right (but see the
-      `version from dask <https://github.com/dask/dask/pull/5043>`_), because
-      ``__array_function__`` does not present a consistent interface.
-      Converting all arguments of array type requires recursing into generic
-      arguments of the form ``*args, **kwargs``.
+   - Projects like `PyTorch
+     <https://github.com/pytorch/pytorch/issues/22402>`_, `JAX
+     <https://github.com/google/jax/issues/1565>`_ and even `scipy.sparse
+     <https://github.com/scipy/scipy/issues/10362>`_ have been reluctant to
+     implement `__array_function__` in part because they are concerned about
+     **breaking existing code**: users expect NumPy functions like
+     ``np.concatenate`` to return NumPy arrays. This is a fundamental
+     limitation of the ``__array_function__`` design, which we chose to allow
+     overriding the existing ``numpy`` namespace.
+   - ``__array_function__`` currently requires an "all or nothing" approach to
+     implementing NumPy's API. There is no good pathway for **incremental
+     adoption**, which is particularly problematic for established projects
+     for which adopting ``__array_function__`` would result in breaking
+     changes.
+   - It is no longer possible to use **aliases to NumPy functions** within
+     modules that support overrides. For example, both CuPy and JAX set
+     ``result_type = np.result_type``.
+   - Implementing **fall-back mechanisms** for unimplemented NumPy functions
+     by using NumPy's implementation is hard to get right (but see the
+     `version from dask <https://github.com/dask/dask/pull/5043>`_), because
+     ``__array_function__`` does not present a consistent interface.
+     Converting all arguments of array type requires recursing into generic
+     arguments of the form ``*args, **kwargs``.
 
 2. **Limitations on what can be overridden.** ``__array_function__`` has some
    important gaps, most notably array creation and coercion functions:
 
-    - **Array creation** routines (e.g., ``np.arange`` and those in
-      ``np.random``) need some other mechanism for indicating what type of
-      arrays to create. `NEP 36 <https://github.com/numpy/numpy/pull/14715>`_
-      proposed adding optional ``like=`` arguments to functions without
-      existing array arguments. However, we still lack any mechanism to
-      override methods on objects, such as those needed by
-      ``np.random.RandomState``.
-    - **Array conversion** can't reuse the existing coercion functions like
-      ``np.asarray``, because ``np.asarray`` sometimes means "convert to an
-      exact ``np.ndarray``" and other times means "convert to something _like_
-      a NumPy array." This led to the `NEP 30
-      <https://numpy.org/neps/nep-0030-duck-array-protocol.html>`_ proposal for
-      a separate ``np.duckarray`` function, but this still does not resolve how
-      to cast one duck array into a type matching another duck array.
+   - **Array creation** routines (e.g., ``np.arange`` and those in
+     ``np.random``) need some other mechanism for indicating what type of
+     arrays to create. `NEP 36 <https://github.com/numpy/numpy/pull/14715>`_
+     proposed adding optional ``like=`` arguments to functions without
+     existing array arguments. However, we still lack any mechanism to
+     override methods on objects, such as those needed by
+     ``np.random.RandomState``.
+   - **Array conversion** can't reuse the existing coercion functions like
+     ``np.asarray``, because ``np.asarray`` sometimes means "convert to an
+     exact ``np.ndarray``" and other times means "convert to something _like_
+     a NumPy array." This led to the `NEP 30
+     <https://numpy.org/neps/nep-0030-duck-array-protocol.html>`_ proposal for
+     a separate ``np.duckarray`` function, but this still does not resolve how
+     to cast one duck array into a type matching another duck array.
 
 ``get_array_module`` and the ``__array_module__`` protocol
 ----------------------------------------------------------
@@ -196,7 +196,7 @@ general because such fall-back behavior can be error prone):
             return getattr(base_module, name, getattr(numpy, name))
 
 Subclassing from ``numpy.ndarray``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All of the same guidance about well-defined type casting hierarchies from
 NEP-18 still applies. ``numpy.ndarray`` itself contains a matching
@@ -251,7 +251,7 @@ equivalent to this Python code:
         return implementing_arrays, types
 
 Relationship with ``__array_ufunc__`` and ``__array_function__``
----------------------------------------------------------------
+----------------------------------------------------------------
 
 These older protocols have distinct use-cases and should remain
 ===============================================================
