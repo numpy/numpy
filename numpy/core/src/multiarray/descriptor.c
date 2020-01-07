@@ -54,17 +54,6 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj);
 static PyArray_Descr *
 _convert_from_any(PyObject *obj, int align);
 
-static PyArray_Descr *
-_arraydescr_run_converter(PyObject *arg, int align)
-{
-    PyArray_Descr *type = _convert_from_any(arg, align);
-    /* TODO: fix the `_convert` functions so that this can never happen */
-    if (type == NULL && !PyErr_Occurred()) {
-        _report_generic_error();
-    }
-    return type;
-}
-
 /*
  * This function creates a dtype object when the object is a ctypes subclass.
  *
@@ -135,12 +124,10 @@ _try_convert_from_dtype_attr(PyObject *obj)
         return NULL;
     }
 
-    PyArray_Descr *newdescr;
-    int ret = PyArray_DescrConverter(dtypedescr, &newdescr);
-
+    PyArray_Descr *newdescr = _convert_from_any(dtypedescr, 0);
     Py_DECREF(dtypedescr);
     Py_LeaveRecursiveCall();
-    if (ret != NPY_SUCCEED) {
+    if (newdescr == NULL) {
         goto fail;
     }
 
@@ -264,9 +251,10 @@ static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
     if (PyTuple_GET_SIZE(obj) != 2) {
+        _report_generic_error();
         return NULL;
     }
-    PyArray_Descr *type = _arraydescr_run_converter(PyTuple_GET_ITEM(obj, 0), align);
+    PyArray_Descr *type = _convert_from_any(PyTuple_GET_ITEM(obj, 0), align);
     if (type == NULL) {
         return NULL;
     }
@@ -453,6 +441,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     for (int i = 0; i < n; i++) {
         PyObject *item = PyList_GET_ITEM(obj, i);
         if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2)) {
+            _report_generic_error();
             goto fail;
         }
         PyObject *name = PyTuple_GET_ITEM(item, 0);
@@ -462,15 +451,18 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         else if (PyTuple_Check(name)) {
             if (PyTuple_GET_SIZE(name) != 2) {
+                _report_generic_error();
                 goto fail;
             }
             title = PyTuple_GET_ITEM(name, 0);
             name = PyTuple_GET_ITEM(name, 1);
             if (!PyBaseString_Check(name)) {
+                _report_generic_error();
                 goto fail;
             }
         }
         else {
+            _report_generic_error();
             goto fail;
         }
 
@@ -491,6 +483,7 @@ _convert_from_array_descr(PyObject *obj, int align)
                 Py_INCREF(name);
             }
             else {
+                _report_generic_error();
                 goto fail;
             }
         }
@@ -499,20 +492,21 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Process rest */
         PyArray_Descr *conv;
         if (PyTuple_GET_SIZE(item) == 2) {
-            conv = _arraydescr_run_converter(PyTuple_GET_ITEM(item, 1), align);
+            conv = _convert_from_any(PyTuple_GET_ITEM(item, 1), align);
             if (conv == NULL) {
                 goto fail;
             }
         }
         else if (PyTuple_GET_SIZE(item) == 3) {
             PyObject *newobj = PyTuple_GetSlice(item, 1, 3);
-            conv = _arraydescr_run_converter(newobj, align);
+            conv = _convert_from_any(newobj, align);
             Py_DECREF(newobj);
             if (conv == NULL) {
                 goto fail;
             }
         }
         else {
+            _report_generic_error();
             goto fail;
         }
         if ((PyDict_GetItem(fields, name) != NULL)
@@ -633,7 +627,7 @@ _convert_from_list(PyObject *obj, int align)
     int maxalign = 0;
     int totalsize = 0;
     for (int i = 0; i < n; i++) {
-        PyArray_Descr *conv = _arraydescr_run_converter(
+        PyArray_Descr *conv = _convert_from_any(
                 PyList_GET_ITEM(obj, i), align);
         if (conv == NULL) {
             goto fail;
@@ -714,6 +708,7 @@ _convert_from_commastring(PyObject *obj, int align)
     PyObject *_numpy_internal;
 
     if (!PyBytes_Check(obj)) {
+        _report_generic_error();
         return NULL;
     }
     _numpy_internal = PyImport_ImportModule("numpy.core._internal");
@@ -732,22 +727,12 @@ _convert_from_commastring(PyObject *obj, int align)
         return NULL;
     }
     if (PyList_GET_SIZE(listobj) == 1) {
-        int retcode;
-        retcode = PyArray_DescrConverter(PyList_GET_ITEM(listobj, 0),
-                                                &res);
-        if (retcode == NPY_FAIL) {
-            res = NULL;
-        }
+        res = _convert_from_any(PyList_GET_ITEM(listobj, 0), align);
     }
     else {
         res = _convert_from_list(listobj, align);
     }
     Py_DECREF(listobj);
-    if (!res && !PyErr_Occurred()) {
-        PyErr_SetString(PyExc_ValueError,
-                "invalid data-type");
-        return NULL;
-    }
     return res;
 }
 
@@ -777,7 +762,7 @@ _is_tuple_of_integers(PyObject *obj)
  * people have been using to add a field to an object array without fields
  */
 static int
-invalid_union_object_dtype(PyArray_Descr *new, PyArray_Descr *conv)
+_validate_union_object_dtype(PyArray_Descr *new, PyArray_Descr *conv)
 {
     PyObject *name, *tup;
     PyArray_Descr *dtype;
@@ -836,18 +821,19 @@ fail:
 static PyArray_Descr *
 _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
 {
-    PyArray_Descr *new;
-    PyArray_Descr *conv;
-
-    if (PyArray_IsScalar(newobj, Integer)
-            || _is_tuple_of_integers(newobj)
-            || !PyArray_DescrConverter(newobj, &conv)) {
-        /* PyArray_DescrConverter may have set an exception, which we ignore */
+    if (PyArray_IsScalar(newobj, Integer) || _is_tuple_of_integers(newobj)) {
+        /* It's a subarray or flexible type instead */
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_Descr *)Py_NotImplemented;
+    }
+    PyArray_Descr *conv = _convert_from_any(newobj, 0);
+    if (conv == NULL) {
+        /* Let someone else try to convert this */
         PyErr_Clear();
         Py_INCREF(Py_NotImplemented);
         return (PyArray_Descr *)Py_NotImplemented;
     }
-    new = PyArray_DescrNew(type);
+    PyArray_Descr *new = PyArray_DescrNew(type);
     if (new == NULL) {
         goto fail;
     }
@@ -860,7 +846,7 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
         Py_DECREF(new);
         goto fail;
     }
-    else if (invalid_union_object_dtype(new, conv)) {
+    else if (_validate_union_object_dtype(new, conv) < 0) {
         Py_DECREF(new);
         goto fail;
     }
@@ -900,7 +886,7 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
  * Returns 0 on success, -1 if an exception is raised.
  */
 static int
-validate_object_field_overlap(PyArray_Descr *dtype)
+_validate_object_field_overlap(PyArray_Descr *dtype)
 {
     PyObject *names, *fields, *key, *tup, *title;
     Py_ssize_t i, j, names_size;
@@ -1106,7 +1092,7 @@ _convert_from_dict(PyObject *obj, int align)
             Py_DECREF(ind);
             goto fail;
         }
-        PyArray_Descr *newdescr = _arraydescr_run_converter(descr, align);
+        PyArray_Descr *newdescr = _convert_from_any(descr, align);
         Py_DECREF(descr);
         if (newdescr == NULL) {
             Py_DECREF(tup);
@@ -1239,7 +1225,7 @@ _convert_from_dict(PyObject *obj, int align)
      * need to verify that no OBJECT types overlap with something else.
      */
     if (has_out_of_order_fields && PyDataType_REFCHK(new)) {
-        if (validate_object_field_overlap(new) < 0) {
+        if (_validate_object_field_overlap(new) < 0) {
             Py_DECREF(new);
             goto fail;
         }
@@ -1495,7 +1481,7 @@ _convert_from_any(PyObject *obj, int align)
 NPY_NO_EXPORT int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
-    *at = _arraydescr_run_converter(obj, 0);
+    *at = _convert_from_any(obj, 0);
     return (*at) ? NPY_SUCCEED : NPY_FAIL;
 }
 
@@ -2216,7 +2202,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
         return NULL;
     }
 
-    conv = _arraydescr_run_converter(odescr, align);
+    conv = _convert_from_any(odescr, align);
     if (conv == NULL) {
         return NULL;
     }
@@ -2851,7 +2837,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 NPY_NO_EXPORT int
 PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
 {
-    *at = _arraydescr_run_converter(obj, 1);
+    *at = _convert_from_any(obj, 1);
     return (*at) ? NPY_SUCCEED : NPY_FAIL;
 }
 
@@ -3092,7 +3078,8 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
     PyArray_Descr *new = NULL;
     PyObject *result = Py_NotImplemented;
     if (!PyArray_DescrCheck(other)) {
-        if (PyArray_DescrConverter(other, &new) == NPY_FAIL) {
+        new = _convert_from_any(other, 0);
+        if (new == NULL) {
             return NULL;
         }
     }
@@ -3207,7 +3194,7 @@ descr_repeat(PyObject *self, Py_ssize_t length)
     if (tup == NULL) {
         return NULL;
     }
-    PyArray_DescrConverter(tup, &new);
+    new = _convert_from_any(tup, 0);
     Py_DECREF(tup);
     return (PyObject *)new;
 }
