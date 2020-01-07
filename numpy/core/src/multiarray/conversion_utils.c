@@ -812,18 +812,6 @@ PyArray_PyIntAsIntp_ErrMsg(PyObject *o, const char * msg)
      * Since it is the usual case, first check if o is an integer. This is
      * an exact check, since otherwise __index__ is used.
      */
-#if !defined(NPY_PY3K)
-    if (PyInt_CheckExact(o)) {
-  #if (NPY_SIZEOF_LONG <= NPY_SIZEOF_INTP)
-        /* No overflow is possible, so we can just return */
-        return PyInt_AS_LONG(o);
-  #else
-        long_value = PyInt_AS_LONG(o);
-        goto overflow_check;
-  #endif
-    }
-    else
-#endif
     if (PyLong_CheckExact(o)) {
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
         long_value = PyLong_AsLongLong(o);
