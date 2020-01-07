@@ -166,11 +166,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                     goto fail;
                 }
 #if defined(NPY_PY3K)
-    #if PY_VERSION_HEX >= 0x03030000
                 itemsize = PyUnicode_GetLength(temp);
-    #else
-                itemsize = PyUnicode_GET_SIZE(temp);
-    #endif
 #else
                 itemsize = PyString_GET_SIZE(temp);
 #endif
@@ -222,11 +218,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                     goto fail;
                 }
 #if defined(NPY_PY3K)
-    #if PY_VERSION_HEX >= 0x03030000
                 itemsize = PyUnicode_GetLength(temp);
-    #else
-                itemsize = PyUnicode_GET_SIZE(temp);
-    #endif
 #else
                 itemsize = PyString_GET_SIZE(temp);
 #endif
