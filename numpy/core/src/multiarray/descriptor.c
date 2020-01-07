@@ -1459,7 +1459,7 @@ _convert_from_any(PyObject *obj)
                 PyErr_SetString(PyExc_TypeError,
                         "data type not understood");
             }
-            return NPY_FAIL;
+            return NULL;
         }
         PyArray_Descr *ret = _convert_from_any(obj2);
         Py_DECREF(obj2);
@@ -1488,7 +1488,7 @@ _convert_from_any(PyObject *obj)
         PyArray_Descr *ret;
         if (_arraydescr_from_dtype_attr(obj, &ret)) {
             /*
-             * Using dtype attribute, *at may be NULL if a
+             * Using dtype attribute, ret may be NULL if a
              * RecursionError occurred.
              */
             return ret;
@@ -1582,7 +1582,7 @@ _convert_from_bytes(PyObject *obj)
         if (ret == NULL) {
             return NULL;
         }
-        /* *at has byte order '=' at this point */
+        /* ret has byte order '=' at this point */
         if (!PyArray_ISNBO(endian)) {
             ret->byteorder = endian;
         }
@@ -1693,7 +1693,7 @@ _convert_from_bytes(PyObject *obj)
     if (PyDataType_ISUNSIZED(ret) && ret->elsize != elsize) {
         PyArray_DESCR_REPLACE(ret);
         if (ret == NULL) {
-            return NPY_FAIL;
+            return NULL;
         }
         ret->elsize = elsize;
     }
@@ -1703,7 +1703,7 @@ _convert_from_bytes(PyObject *obj)
     if (endian != '=' && ret->byteorder != '|' && ret->byteorder != endian) {
         PyArray_DESCR_REPLACE(ret);
         if (ret == NULL) {
-            return NPY_FAIL;
+            return NULL;
         }
         ret->byteorder = endian;
     }
