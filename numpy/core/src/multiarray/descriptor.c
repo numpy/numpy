@@ -1445,6 +1445,9 @@ _report_generic_error(void) {
     PyErr_SetString(PyExc_TypeError, "data type not understood");
 }
 
+static int
+_convert_from_bytes(PyObject *obj, PyArray_Descr **at);
+
 /*NUMPY_API
  * Get typenum from an object -- None goes to NPY_DEFAULT_TYPE
  * This function takes a Python object representing a type and converts it
@@ -1463,10 +1466,6 @@ _report_generic_error(void) {
 NPY_NO_EXPORT int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
-    int check_num = NPY_NOTYPE + 10;
-    int elsize = 0;
-    char endian = '=';
-
     *at = NULL;
 
     /* default */
@@ -1508,112 +1507,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
 
     if (PyBytes_Check(obj)) {
-        char *type = NULL;
-        Py_ssize_t len = 0;
-
-        /* Check for a string typecode. */
-        if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
-            goto error;
-        }
-
-        /* Empty string is invalid */
-        if (len == 0) {
-            goto fail;
-        }
-
-        /* check for commas present or first (or second) element a digit */
-        if (_check_for_commastring(type, len)) {
-            *at = _convert_from_commastring(obj, 0);
-            return (*at) ? NPY_SUCCEED : NPY_FAIL;
-        }
-
-        /* Process the endian character. '|' is replaced by '='*/
-        switch (type[0]) {
-            case '>':
-            case '<':
-            case '=':
-                endian = type[0];
-                ++type;
-                --len;
-                break;
-
-            case '|':
-                endian = '=';
-                ++type;
-                --len;
-                break;
-        }
-
-        /* Just an endian character is invalid */
-        if (len == 0) {
-            goto fail;
-        }
-
-        /* Check for datetime format */
-        if (is_datetime_typestr(type, len)) {
-            *at = parse_dtype_from_datetime_typestr(type, len);
-            if (*at == NULL) {
-                return NPY_FAIL;
-            }
-            /* *at has byte order '=' at this point */
-            if (!PyArray_ISNBO(endian)) {
-                (*at)->byteorder = endian;
-            }
-            return NPY_SUCCEED;
-        }
-
-        /* A typecode like 'd' */
-        if (len == 1) {
-            /* Python byte string characters are unsigned */
-            check_num = (unsigned char) type[0];
-        }
-        /* A kind + size like 'f8' */
-        else {
-            char *typeend = NULL;
-            int kind;
-
-            /* Parse the integer, make sure it's the rest of the string */
-            elsize = (int)strtol(type + 1, &typeend, 10);
-            if (typeend - type == len) {
-
-                kind = type[0];
-                switch (kind) {
-                    case NPY_STRINGLTR:
-                    case NPY_STRINGLTR2:
-                        check_num = NPY_STRING;
-                        break;
-
-                    /*
-                     * When specifying length of UNICODE
-                     * the number of characters is given to match
-                     * the STRING interface.  Each character can be
-                     * more than one byte and itemsize must be
-                     * the number of bytes.
-                     */
-                    case NPY_UNICODELTR:
-                        check_num = NPY_UNICODE;
-                        elsize <<= 2;
-                        break;
-
-                    case NPY_VOIDLTR:
-                        check_num = NPY_VOID;
-                        break;
-
-                    default:
-                        if (elsize == 0) {
-                            check_num = NPY_NOTYPE+10;
-                        }
-                        /* Support for generic processing c8, i4, f8, etc...*/
-                        else {
-                            check_num = PyArray_TypestrConvert(elsize, kind);
-                            if (check_num == NPY_NOTYPE) {
-                                check_num += 10;
-                            }
-                            elsize = 0;
-                        }
-                }
-            }
-        }
+        return _convert_from_bytes(obj, at);
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
@@ -1675,8 +1569,120 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         _report_generic_error();
         return NPY_FAIL;
     }
+}
 
-    assert(PyBytes_Check(obj));
+static int
+_convert_from_bytes(PyObject *obj, PyArray_Descr **at)
+{
+    int check_num = NPY_NOTYPE + 10;
+    int elsize = 0;
+    char endian = '=';
+    char *type = NULL;
+    Py_ssize_t len = 0;
+
+    /* Check for a string typecode. */
+    if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
+        goto error;
+    }
+
+    /* Empty string is invalid */
+    if (len == 0) {
+        goto fail;
+    }
+
+    /* check for commas present or first (or second) element a digit */
+    if (_check_for_commastring(type, len)) {
+        *at = _convert_from_commastring(obj, 0);
+        return (*at) ? NPY_SUCCEED : NPY_FAIL;
+    }
+
+    /* Process the endian character. '|' is replaced by '='*/
+    switch (type[0]) {
+        case '>':
+        case '<':
+        case '=':
+            endian = type[0];
+            ++type;
+            --len;
+            break;
+
+        case '|':
+            endian = '=';
+            ++type;
+            --len;
+            break;
+    }
+
+    /* Just an endian character is invalid */
+    if (len == 0) {
+        goto fail;
+    }
+
+    /* Check for datetime format */
+    if (is_datetime_typestr(type, len)) {
+        *at = parse_dtype_from_datetime_typestr(type, len);
+        if (*at == NULL) {
+            return NPY_FAIL;
+        }
+        /* *at has byte order '=' at this point */
+        if (!PyArray_ISNBO(endian)) {
+            (*at)->byteorder = endian;
+        }
+        return NPY_SUCCEED;
+    }
+
+    /* A typecode like 'd' */
+    if (len == 1) {
+        /* Python byte string characters are unsigned */
+        check_num = (unsigned char) type[0];
+    }
+    /* A kind + size like 'f8' */
+    else {
+        char *typeend = NULL;
+        int kind;
+
+        /* Parse the integer, make sure it's the rest of the string */
+        elsize = (int)strtol(type + 1, &typeend, 10);
+        if (typeend - type == len) {
+
+            kind = type[0];
+            switch (kind) {
+                case NPY_STRINGLTR:
+                case NPY_STRINGLTR2:
+                    check_num = NPY_STRING;
+                    break;
+
+                /*
+                 * When specifying length of UNICODE
+                 * the number of characters is given to match
+                 * the STRING interface.  Each character can be
+                 * more than one byte and itemsize must be
+                 * the number of bytes.
+                 */
+                case NPY_UNICODELTR:
+                    check_num = NPY_UNICODE;
+                    elsize <<= 2;
+                    break;
+
+                case NPY_VOIDLTR:
+                    check_num = NPY_VOID;
+                    break;
+
+                default:
+                    if (elsize == 0) {
+                        check_num = NPY_NOTYPE+10;
+                    }
+                    /* Support for generic processing c8, i4, f8, etc...*/
+                    else {
+                        check_num = PyArray_TypestrConvert(elsize, kind);
+                        if (check_num == NPY_NOTYPE) {
+                            check_num += 10;
+                        }
+                        elsize = 0;
+                    }
+            }
+        }
+    }
 
     if (PyErr_Occurred()) {
         goto fail;
