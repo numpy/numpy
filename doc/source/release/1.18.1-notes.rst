@@ -1,0 +1,52 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.18.1 Release Notes
+==========================
+
+This release contains fixes for bugs reported against NumPy 1.18.0.  Two bugs
+in particular that caused widespread problems downstream were:
+
+- The cython random extension test was not using a temporary directory for
+  building, resulting in a permission violation. Fixed.
+
+- Numpy distutils was appending `-std=c99` to all C compiler runs, leading to
+  changed behavior and compile problems downstream. That flag is now only
+  applied when building numpy C code.
+
+The Python versions supported in this release are 3.5-3.8. Downstream
+developers should use Cython >= 0.29.14 for Python 3.8 support and OpenBLAS >=
+3.7 to avoid errors on the Skylake architecture.
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Matti Picus
+* Maxwell Aladago
+* Pauli Virtanen
+* Ralf Gommers
+* Tyler Reddy
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 13 pull requests were merged for this release.
+
+* `#15158 <https://github.com/numpy/numpy/pull/15158>`__: MAINT: Update pavement.py for towncrier.
+* `#15159 <https://github.com/numpy/numpy/pull/15159>`__: DOC: add moved modules to 1.18 release note
+* `#15161 <https://github.com/numpy/numpy/pull/15161>`__: MAINT, DOC: Minor backports and updates for 1.18.x
+* `#15176 <https://github.com/numpy/numpy/pull/15176>`__: TST: Add assert_array_equal test for big integer arrays
+* `#15184 <https://github.com/numpy/numpy/pull/15184>`__: BUG: use tmp dir and check version for cython test (#15170)
+* `#15220 <https://github.com/numpy/numpy/pull/15220>`__: BUG: distutils: fix msvc+gfortran openblas handling corner case
+* `#15221 <https://github.com/numpy/numpy/pull/15221>`__: BUG: remove -std=c99 for c++ compilation (#15194)
+* `#15222 <https://github.com/numpy/numpy/pull/15222>`__: MAINT: unskip test on win32
+* `#15223 <https://github.com/numpy/numpy/pull/15223>`__: TST: add BLAS ILP64 run in Travis & Azure
+* `#15245 <https://github.com/numpy/numpy/pull/15245>`__: MAINT: only add --std=c99 where needed
+* `#15246 <https://github.com/numpy/numpy/pull/15246>`__: BUG: lib: Fix handling of integer arrays by gradient.
+* `#15247 <https://github.com/numpy/numpy/pull/15247>`__: MAINT: Do not use private Python function in testing
+* `#15250 <https://github.com/numpy/numpy/pull/15250>`__: REL: Prepare for the NumPy 1.18.1 release.
