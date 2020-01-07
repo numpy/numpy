@@ -16,10 +16,10 @@ import zipfile
 import tarfile
 
 OPENBLAS_V = 'v0.3.7'
-OPENBLAS_LONG = 'v0.3.7'
+OPENBLAS_LONG = 'v0.3.5-605-gc815b8fb' 
 BASE_LOC = ''
 RACKSPACE = 'https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com'
-ARCHITECTURES = ['', 'windows', 'darwin', 'arm', 'x86', 'ppc64']
+ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86', 'ppc64le', 's390x']
 
 IS_32BIT = sys.maxsize < 2**32
 def get_arch():
@@ -27,17 +27,12 @@ def get_arch():
         ret = 'windows'
     elif platform.system() == 'Darwin':
         ret = 'darwin'
-    # Python3 returns a named tuple, but Python2 does not, so we are stuck
-    elif 'arm' in os.uname()[-1]:
-        ret = 'arm';
-    elif 'aarch64' in os.uname()[-1]:
-        ret = 'arm';
-    elif 'x86' in os.uname()[-1]:
+    elif 'x86' in platform.uname().machine:
+        # What do 32 bit machines report?
+        # If they are a docker, they report x86_64
         ret = 'x86'
-    elif 'ppc64' in os.uname()[-1]:
-        ret = 'ppc64'
     else:
-        ret = ''
+        ret = platform.uname().machine
     assert ret in ARCHITECTURES
     return ret
 
@@ -51,21 +46,10 @@ def get_ilp64():
 def download_openblas(target, arch, ilp64):
     fnsuffix = {None: "", "64_": "64_"}[ilp64]
     filename = ''
-    if arch == 'arm':
-        # ARMv8 OpenBLAS built using script available here:
-        # https://github.com/tylerjereddy/openblas-static-gcc/tree/master/ARMv8
-        # build done on GCC compile farm machine named gcc115
-        # tarball uploaded manually to an unshared Dropbox location
-        filename = ('https://www.dropbox.com/s/vdeckao4omss187/'
-                    'openblas{}-{}-armv8.tar.gz?dl=1'.format(fnsuffix, OPENBLAS_V))
+    if arch in ('aarch64', 'ppc64le', 's390x'):
+        filename = '{0}/openblas{1}-{2}-manylinux2014_{3}.tar.gz'.format(
+                        RACKSPACE, fnsuffix, OPENBLAS_LONG, arch)
         typ = 'tar.gz'
-    elif arch == 'ppc64':
-        # build script for POWER8 OpenBLAS available here:
-        # https://github.com/tylerjereddy/openblas-static-gcc/blob/master/power8
-        # built on GCC compile farm machine named gcc112
-        # manually uploaded tarball to an unshared Dropbox location
-        filename = ('https://www.dropbox.com/s/yt0d2j86x1j8nh1/'
-                    'openblas{}-{}-ppc64le-power8.tar.gz?dl=1'.format(fnsuffix, OPENBLAS_V))
         typ = 'tar.gz'
     elif arch == 'darwin':
         filename = '{0}/openblas{1}-{2}-macosx_10_9_x86_64-gf_1becaaa.tar.gz'.format(
@@ -78,7 +62,7 @@ def download_openblas(target, arch, ilp64):
             suffix = 'win_amd64-gcc_7_1_0.zip'
         filename = '{0}/openblas{1}-{2}-{3}'.format(RACKSPACE, fnsuffix, OPENBLAS_LONG, suffix)
         typ = 'zip'
-    elif arch == 'x86':
+    elif 'x86' in arch:
         if IS_32BIT:
             suffix = 'manylinux1_i686.tar.gz'
         else:
