@@ -454,8 +454,6 @@ class NoseTester:
                 # This is very specific, so using the fragile module filter
                 # is fine
                 import threading
-                sup.filter(DeprecationWarning, message=r"in 3\.x, __setslice__")
-                sup.filter(DeprecationWarning, message=r"in 3\.x, __getslice__")
                 sup.filter(DeprecationWarning, message=r"buffer\(\) not supported in 3\.x")
                 sup.filter(DeprecationWarning, message=r"CObject type is not supported in 3\.x")
                 sup.filter(DeprecationWarning, message=r"comparing unequal types not supported in 3\.x")

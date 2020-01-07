@@ -648,40 +648,6 @@ class TestSubclasses:
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
-    @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
-    def test_slice_decref_getsetslice(self):
-        # See gh-10066, a temporary slice object should be discarted.
-        # This test is only really interesting on Python 2 since
-        # it goes through `__set/getslice__` here and can probably be
-        # removed. Use 0:7 to make sure it is never None:7.
-        class KeepIndexObject(np.ndarray):
-            def __getitem__(self, indx):
-                self.indx = indx
-                if indx == slice(0, 7):
-                    raise ValueError
-
-            def __setitem__(self, indx, val):
-                self.indx = indx
-                if indx == slice(0, 4):
-                    raise ValueError
-
-        k = np.array([1]).view(KeepIndexObject)
-        k[0:5]
-        assert_equal(k.indx, slice(0, 5))
-        assert_equal(sys.getrefcount(k.indx), 2)
-        with assert_raises(ValueError):
-            k[0:7]
-        assert_equal(k.indx, slice(0, 7))
-        assert_equal(sys.getrefcount(k.indx), 2)
-
-        k[0:3] = 6
-        assert_equal(k.indx, slice(0, 3))
-        assert_equal(sys.getrefcount(k.indx), 2)
-        with assert_raises(ValueError):
-            k[0:4] = 2
-        assert_equal(k.indx, slice(0, 4))
-        assert_equal(sys.getrefcount(k.indx), 2)
-
 
 class TestFancyIndexingCast:
     def test_boolean_index_cast_assign(self):
