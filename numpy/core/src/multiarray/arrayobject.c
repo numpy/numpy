@@ -1004,22 +1004,18 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
 {
     PyArrayObject *result;
     PyArrayMultiIterObject *mit;
-    int val, cast = 0;
+    int val;
 
     /* Cast arrays to a common type */
     if (PyArray_TYPE(self) != PyArray_DESCR(other)->type_num) {
-#if defined(NPY_PY3K)
         /*
          * Comparison between Bytes and Unicode is not defined in Py3K;
          * we follow.
          */
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
-#else
-        cast = 1;
-#endif  /* define(NPY_PY3K) */
     }
-    if (cast || (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other))) {
+    if (PyArray_ISNOTSWAPPED(self) != PyArray_ISNOTSWAPPED(other)) {
         PyObject *new;
         if (PyArray_TYPE(self) == NPY_STRING &&
                 PyArray_DESCR(other)->type_num == NPY_UNICODE) {
