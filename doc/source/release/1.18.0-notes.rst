@@ -1,8 +1,8 @@
 .. currentmodule:: numpy
 
-================================
-NumPy NumPy 1.18.0 Release Notes
-================================
+==========================
+NumPy 1.18.0 Release Notes
+==========================
 
 In addition to the usual bug fixes, this NumPy release cleans up and documents
 the new random C-API, expires a large number of old deprecations, and improves
