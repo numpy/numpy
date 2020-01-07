@@ -1,8 +1,6 @@
 """ Test functions for linalg module
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import itertools
@@ -20,8 +18,9 @@ from numpy.linalg.linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_allclose, suppress_warnings,
-    assert_raises_regex,
+    assert_raises_regex, HAS_LAPACK64,
     )
+from numpy.testing._private.utils import requires_memory
 
 
 def consistent_subclass(out, in_):
@@ -67,7 +66,7 @@ all_tags = {
 }
 
 
-class LinalgCase(object):
+class LinalgCase:
     def __init__(self, name, a, b, tags=set()):
         """
         A bundle of arguments to be passed to a test case, with an identifying
@@ -332,7 +331,7 @@ CASES += _make_strided_cases()
 #
 # Test different routines against the above cases
 #
-class LinalgTestCase(object):
+class LinalgTestCase:
     TEST_CASES = CASES
 
     def check_cases(self, require=set(), exclude=set()):
@@ -633,7 +632,7 @@ class TestEig(EigCases):
         assert_(isinstance(a, np.ndarray))
 
 
-class SVDBaseTests(object):
+class SVDBaseTests:
     hermitian = False
 
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
@@ -975,7 +974,7 @@ class TestLstsq(LstsqCases):
 
 
 @pytest.mark.parametrize('dt', [np.dtype(c) for c in '?bBhHiIqQefdgFDGO']) 
-class TestMatrixPower(object):
+class TestMatrixPower:
 
     rshft_0 = np.eye(4)
     rshft_1 = rshft_0[[3, 0, 1, 2]]
@@ -1075,7 +1074,7 @@ class TestEigvalshCases(HermitianTestCase, HermitianGeneralizedTestCase):
         assert_allclose(ev2, evalues, rtol=get_rtol(ev.dtype))
 
 
-class TestEigvalsh(object):
+class TestEigvalsh:
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
@@ -1151,7 +1150,7 @@ class TestEighCases(HermitianTestCase, HermitianGeneralizedTestCase):
                         rtol=get_rtol(ev.dtype), err_msg=repr(a))
 
 
-class TestEigh(object):
+class TestEigh:
     @pytest.mark.parametrize('dtype', [single, double, csingle, cdouble])
     def test_types(self, dtype):
         x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
@@ -1210,7 +1209,7 @@ class TestEigh(object):
         assert_(isinstance(a, np.ndarray))
 
 
-class _TestNormBase(object):
+class _TestNormBase:
     dt = None
     dec = None
 
@@ -1496,7 +1495,7 @@ class _TestNorm(_TestNorm2D, _TestNormGeneral):
     pass
 
 
-class TestNorm_NonSystematic(object):
+class TestNorm_NonSystematic:
 
     def test_longdouble_norm(self):
         # Non-regression test: p-norm of longdouble would previously raise
@@ -1551,7 +1550,7 @@ class TestNormInt64(_TestNorm, _TestNormInt64Base):
     pass
 
 
-class TestMatrixRank(object):
+class TestMatrixRank:
 
     def test_matrix_rank(self):
         # Full rank matrix
@@ -1600,7 +1599,7 @@ def test_reduced_rank():
         assert_equal(matrix_rank(X), 8)
 
 
-class TestQR(object):
+class TestQR:
     # Define the array class here, so run this on matrices elsewhere.
     array = np.array
 
@@ -1700,7 +1699,7 @@ class TestQR(object):
             self.check_qr(m2.T)
 
 
-class TestCholesky(object):
+class TestCholesky:
     # TODO: are there no other tests for cholesky?
 
     def test_basic_property(self):
@@ -1862,7 +1861,7 @@ def test_sdot_bug_8577():
         subprocess.check_call([sys.executable, "-c", code])
 
 
-class TestMultiDot(object):
+class TestMultiDot:
 
     def test_basic_function_with_three_arguments(self):
         # multi_dot with three arguments uses a fast hand coded algorithm to
@@ -1956,7 +1955,7 @@ class TestMultiDot(object):
         assert_raises(ValueError, multi_dot, [np.random.random((3, 3))])
 
 
-class TestTensorinv(object):
+class TestTensorinv:
 
     @pytest.mark.parametrize("arr, ind", [
         (np.ones((4, 6, 8, 2)), 2),
@@ -2002,3 +2001,44 @@ def test_unsupported_commontype():
     arr = np.array([[1, -2], [2, 5]], dtype='float16')
     with assert_raises_regex(TypeError, "unsupported in linalg"):
         linalg.cholesky(arr)
+
+
+@pytest.mark.slow
+@pytest.mark.xfail(not HAS_LAPACK64, run=False,
+                   reason="Numpy not compiled with 64-bit BLAS/LAPACK")
+@requires_memory(free_bytes=16e9)
+def test_blas64_dot():
+    n = 2**32
+    a = np.zeros([1, n], dtype=np.float32)
+    b = np.ones([1, 1], dtype=np.float32)
+    a[0,-1] = 1
+    c = np.dot(b, a)
+    assert_equal(c[0,-1], 1)
+
+
+@pytest.mark.xfail(not HAS_LAPACK64,
+                   reason="Numpy not compiled with 64-bit BLAS/LAPACK")
+def test_blas64_geqrf_lwork_smoketest():
+    # Smoke test LAPACK geqrf lwork call with 64-bit integers
+    dtype = np.float64
+    lapack_routine = np.linalg.lapack_lite.dgeqrf
+
+    m = 2**32 + 1
+    n = 2**32 + 1
+    lda = m
+
+    # Dummy arrays, not referenced by the lapack routine, so don't
+    # need to be of the right size
+    a = np.zeros([1, 1], dtype=dtype)
+    work = np.zeros([1], dtype=dtype)
+    tau = np.zeros([1], dtype=dtype)
+
+    # Size query
+    results = lapack_routine(m, n, a, lda, tau, work, -1, 0)
+    assert_equal(results['info'], 0)
+    assert_equal(results['m'], m)
+    assert_equal(results['n'], m)
+
+    # Should result to an integer of a reasonable size
+    lwork = int(work.item())
+    assert_(2**32 < lwork < 2**42)

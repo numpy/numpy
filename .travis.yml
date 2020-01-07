@@ -2,6 +2,7 @@
 #   http://lint.travis-ci.org/
 language: python
 group: travis_latest
+os: linux
 dist: xenial
 
 # Travis whitelists the installable packages, additions can be requested
@@ -17,8 +18,6 @@ addons:
 cache:
   directories:
     - $HOME/.cache/pip
-
-stage: Comprehensive tests
 
 stages:
     # Do the style check and a single test job, don't proceed if it fails
@@ -37,16 +36,16 @@ env:
                iFWt9Ka92CaqYdU7nqfWp9VImSndPmssjmCXJ1v1IjZPAM\
                ahp7Qnm0rWRmA0z9SomuRUQOJQ6s684vU="
 
-matrix:
+jobs:
   include:
     # Do all python versions without environment variables set
-    - python: 3.5
     - stage: Initial tests
+      python: 3.8
+
+    - stage: Comprehensive tests
       python: 3.6
     - python: 3.7
-    - python: 3.8-dev
-    - python: 3.7
-      env: INSTALL_PICKLE5=1
+
     - python: 3.6
       dist: bionic
       env: USE_DEBUG=1
@@ -58,11 +57,14 @@ matrix:
             - python3-dbg
             - python3-dev
             - python3-setuptools
-    - python: 3.6
+
+    - python: 3.7
       env: USE_WHEEL=1 RUN_FULL_TESTS=1 RUN_COVERAGE=1 INSTALL_PICKLE5=1
-    - python: 3.6
+
+    - python: 3.7
       env: USE_SDIST=1
-    - python: 3.6
+
+    - python: 3.7
       env:
        - PYTHONOPTIMIZE=2
        - BLAS=None
@@ -71,24 +73,47 @@ matrix:
        - NPY_BLAS_ORDER=mkl,blis,openblas,atlas,accelerate,blas
        - NPY_LAPACK_ORDER=MKL,OPENBLAS,ATLAS,ACCELERATE,LAPACK
        - USE_ASV=1
-    - python: 3.5
-      env: NPY_RELAXED_STRIDES_CHECKING=0
-    - python: 3.6
+
+    - python: 3.7
+      env:
+        - NPY_RELAXED_STRIDES_CHECKING=0
+        # use custom symbol-suffixed openblas build, not system ATLAS
+        - DOWNLOAD_OPENBLAS=1
+        - CHECK_BLAS=1
+        - NPY_USE_BLAS_ILP64=1
+      addons:
+        apt:
+          packages:
+            - gfortran
+            - eatmydata
+
+    - python: 3.7
       env: USE_WHEEL=1 NPY_RELAXED_STRIDES_DEBUG=1
-    - python: 3.6
+
+    - python: 3.7
       env: NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=0
-    - python: 3.6
+
+    - python: 3.7
       env:
        - BLAS=None
        - LAPACK=None
        - ATLAS=None
-    - os: linux-ppc64le
-      python: 3.6
+
+    - python: 3.7
+      os: linux
+      arch: ppc64le
       env:
-       # for matrix annotation only
-       - PPC64_LE=1
-       # use POWER8 OpenBLAS build, not system ATLAS
+       # use ppc64le OpenBLAS build, not system ATLAS
+       - DOWNLOAD_OPENBLAS=1
        - ATLAS=None
+
+    - python: 3.7
+      os: linux
+      arch: s390x
+      env:
+       # use s390x OpenBLAS build, not system ATLAS
+       - ATLAS=None
+
 
 before_install:
   - ./tools/travis-before-install.sh

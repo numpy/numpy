@@ -182,7 +182,7 @@ Glossary
    instance
        A class definition gives the blueprint for constructing an object::
 
-         >>> class House(object):
+         >>> class House:
          ...     wall_colour = 'white'
 
        Yet, we have to *build* a house before it exists::
@@ -336,7 +336,7 @@ Glossary
        Often seen in method signatures, ``self`` refers to the instance
        of the associated class.  For example:
 
-         >>> class Paintbrush(object):
+         >>> class Paintbrush:
          ...     color = 'blue'
          ...
          ...     def paint(self):
@@ -473,4 +473,3 @@ Glossary
        and f2py (which wraps Fortran).
 
 """
-from __future__ import division, absolute_import, print_function

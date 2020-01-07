@@ -609,9 +609,6 @@ static PyNumberMethods pyrational_as_number = {
     pyrational_add,          /* nb_add */
     pyrational_subtract,     /* nb_subtract */
     pyrational_multiply,     /* nb_multiply */
-#if PY_MAJOR_VERSION < 3
-    pyrational_divide,       /* nb_divide */
-#endif
     pyrational_remainder,    /* nb_remainder */
     0,                       /* nb_divmod */
     0,                       /* nb_power */
@@ -625,27 +622,13 @@ static PyNumberMethods pyrational_as_number = {
     0,                       /* nb_and */
     0,                       /* nb_xor */
     0,                       /* nb_or */
-#if PY_MAJOR_VERSION < 3
-    0,                       /* nb_coerce */
-#endif
     pyrational_int,          /* nb_int */
-#if PY_MAJOR_VERSION < 3
-    pyrational_int,          /* nb_long */
-#else
     0,                       /* reserved */
-#endif
     pyrational_float,        /* nb_float */
-#if PY_MAJOR_VERSION < 3
-    0,                       /* nb_oct */
-    0,                       /* nb_hex */
-#endif
 
     0,                       /* nb_inplace_add */
     0,                       /* nb_inplace_subtract */
     0,                       /* nb_inplace_multiply */
-#if PY_MAJOR_VERSION < 3
-    0,                       /* nb_inplace_divide */
-#endif
     0,                       /* nb_inplace_remainder */
     0,                       /* nb_inplace_power */
     0,                       /* nb_inplace_lshift */
@@ -1126,7 +1109,6 @@ PyMethodDef module_methods[] = {
     {0} /* sentinel */
 };
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
     "_rational_tests",
@@ -1138,16 +1120,8 @@ static struct PyModuleDef moduledef = {
     NULL,
     NULL
 };
-#endif
 
-#if defined(NPY_PY3K)
-#define RETVAL m
 PyMODINIT_FUNC PyInit__rational_tests(void) {
-#else
-#define RETVAL
-PyMODINIT_FUNC init_rational_tests(void) {
-#endif
-
     PyObject *m = NULL;
     PyObject* numpy_str;
     PyObject* numpy;
@@ -1292,11 +1266,7 @@ PyMODINIT_FUNC init_rational_tests(void) {
     REGISTER_UFUNC_UNARY(sign)
 
     /* Create module */
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("_rational_tests", module_methods);
-#endif
 
     if (!m) {
         goto fail;
@@ -1392,18 +1362,16 @@ PyMODINIT_FUNC init_rational_tests(void) {
     GCD_LCM_UFUNC(gcd,NPY_INT64,"greatest common denominator of two integers");
     GCD_LCM_UFUNC(lcm,NPY_INT64,"least common multiple of two integers");
 
-    return RETVAL;
+    return m;
 
 fail:
     if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _rational_tests module.");
     }
-#if defined(NPY_PY3K)
     if (m) {
         Py_DECREF(m);
         m = NULL;
     }
-#endif
-    return RETVAL;
+    return m;
 }

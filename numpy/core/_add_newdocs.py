@@ -8,8 +8,6 @@ NOTE: Many of the methods of ndarray have corresponding functions.
       core/fromnumeric.py, core/defmatrix.py up-to-date.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 from numpy.core import numerictypes as _numerictypes
@@ -1036,7 +1034,12 @@ add_newdoc('numpy.core.multiarray', 'fromstring',
         A string containing the data.
     dtype : data-type, optional
         The data type of the array; default: float.  For binary input data,
-        the data must be in exactly this format.
+        the data must be in exactly this format. Most builtin numeric types are
+        supported and extension types may be supported.
+
+        .. versionadded:: 1.18.0
+            Complex dtypes.
+
     count : int, optional
         Read this number of `dtype` elements from the data.  If this is
         negative (the default), the count will be determined from the
@@ -1172,6 +1175,11 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
         Data type of the returned array.
         For binary files, it is used to determine the size and byte-order
         of the items in the file.
+        Most builtin numeric types are supported and extension types may be supported.
+
+        .. versionadded:: 1.18.0
+            Complex dtypes.
+
     count : int
         Number of items to read. ``-1`` means all items (i.e., the complete
         file).
@@ -1196,7 +1204,7 @@ add_newdoc('numpy.core.multiarray', 'fromfile',
     Notes
     -----
     Do not rely on the combination of `tofile` and `fromfile` for
-    data storage, as the binary files generated are are not platform
+    data storage, as the binary files generated are not platform
     independent.  In particular, no byte-order or data-type information is
     saved.  Data can be stored in the platform independent ``.npy`` format
     using `save` and `load` instead.
@@ -1475,59 +1483,6 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     dtype('S4')
 
     """)
-
-if sys.version_info.major < 3:
-    add_newdoc('numpy.core.multiarray', 'newbuffer',
-        """
-        newbuffer(size)
-
-        Return a new uninitialized buffer object.
-
-        Parameters
-        ----------
-        size : int
-            Size in bytes of returned buffer object.
-
-        Returns
-        -------
-        newbuffer : buffer object
-            Returned, uninitialized buffer object of `size` bytes.
-
-        """)
-
-    add_newdoc('numpy.core.multiarray', 'getbuffer',
-        """
-        getbuffer(obj [,offset[, size]])
-
-        Create a buffer object from the given object referencing a slice of
-        length size starting at offset.
-
-        Default is the entire buffer. A read-write buffer is attempted followed
-        by a read-only buffer.
-
-        Parameters
-        ----------
-        obj : object
-
-        offset : int, optional
-
-        size : int, optional
-
-        Returns
-        -------
-        buffer_obj : buffer
-
-        Examples
-        --------
-        >>> buf = np.getbuffer(np.ones(5), 1, 3)
-        >>> len(buf)
-        3
-        >>> buf[0]
-        '\\x00'
-        >>> buf
-        <read-write buffer for 0x8af1e70, size 3, offset 1 at 0x8ba4ec0>
-
-        """)
 
 add_newdoc('numpy.core.multiarray', 'c_einsum',
     """
@@ -2497,7 +2452,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('T',
 
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('__array__',
-    """ a.__array__(|dtype) -> reference if type unchanged, copy otherwise.
+    """ a.__array__([dtype], /) -> reference if type unchanged, copy otherwise.
 
     Returns either a new reference to self if dtype is not given or a new array
     of provided data type if dtype is different from the current dtype of the
@@ -3943,15 +3898,22 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('tolist',
 
     Examples
     --------
-    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``:
+    For a 1D array, ``a.tolist()`` is almost the same as ``list(a)``,
+    except that ``tolist`` changes numpy scalars to Python scalars:
 
-    >>> a = np.array([1, 2])
-    >>> list(a)
+    >>> a = np.uint32([1, 2])
+    >>> a_list = list(a)
+    >>> a_list
     [1, 2]
-    >>> a.tolist()
+    >>> type(a_list[0])
+    <class 'numpy.uint32'>
+    >>> a_tolist = a.tolist()
+    >>> a_tolist
     [1, 2]
+    >>> type(a_tolist[0])
+    <class 'int'>
 
-    However, for a 2D array, ``tolist`` applies recursively:
+    Additionally, for a 2D array, ``tolist`` applies recursively:
 
     >>> a = np.array([[1, 2], [3, 4]])
     >>> list(a)
@@ -4107,21 +4069,26 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('var',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     """
-    a.view(dtype=None, type=None)
+    a.view([dtype][, type])
 
     New view of array with the same data.
+
+    .. note::
+        Passing None for ``dtype`` is different from omitting the parameter,
+        since the former invokes ``dtype(None)`` which is an alias for
+        ``dtype('float_')``.
 
     Parameters
     ----------
     dtype : data-type or ndarray sub-class, optional
-        Data-type descriptor of the returned view, e.g., float32 or int16. The
-        default, None, results in the view having the same data-type as `a`.
+        Data-type descriptor of the returned view, e.g., float32 or int16.
+        Omitting it results in the view having the same data-type as `a`.
         This argument can also be specified as an ndarray sub-class, which
         then specifies the type of the returned object (this is equivalent to
         setting the ``type`` parameter).
     type : Python type, optional
-        Type of the returned view, e.g., ndarray or matrix.  Again, the
-        default None results in type preservation.
+        Type of the returned view, e.g., ndarray or matrix.  Again, omission
+        of the parameter results in type preservation.
 
     Notes
     -----
@@ -4236,7 +4203,7 @@ add_newdoc('numpy.core.umath', 'frompyfunc',
 
     See Also
     --------
-    vectorize : evaluates pyfunc over input arrays using broadcasting rules of numpy
+    vectorize : Evaluates pyfunc over input arrays using broadcasting rules of numpy.
 
     Notes
     -----
@@ -6854,4 +6821,3 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         >>> np.{ftype}(-.25).as_integer_ratio()
         (-1, 4)
         """.format(ftype=float_name)))
-

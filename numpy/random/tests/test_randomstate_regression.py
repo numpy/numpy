@@ -11,7 +11,7 @@ import numpy as np
 from numpy import random
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
@@ -147,7 +147,7 @@ class TestRegression(object):
         assert_array_equal(perm, np.array([0, 2, 1]))
         assert_array_equal(orig, np.arange(3).view(N))
 
-        class M(object):
+        class M:
             a = np.arange(5)
 
             def __array__(self):

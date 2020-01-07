@@ -13,8 +13,6 @@ $Date: 2005/02/03 19:30:23 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import, print_function
-
 __version__ = "$Revision: 1.27 $"[10:-1]
 
 f2py_version = 'See `f2py -v`'

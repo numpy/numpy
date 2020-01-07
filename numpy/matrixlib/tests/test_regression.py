@@ -1,10 +1,8 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
 
 
-class TestRegression(object):
+class TestRegression:
     def test_kron_matrix(self):
         # Ticket #71
         x = np.matrix('[1 0; 1 0]')

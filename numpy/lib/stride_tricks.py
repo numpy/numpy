@@ -5,15 +5,13 @@ An explanation of strides can be found in the "ndarray.rst" file in the
 NumPy reference guide.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.core.overrides import array_function_dispatch
 
 __all__ = ['broadcast_to', 'broadcast_arrays']
 
 
-class DummyArray(object):
+class DummyArray:
     """Dummy object that just exists to hang __array_interface__ dictionaries
     and possibly keep alive a reference to a base array.
     """
@@ -199,12 +197,12 @@ def _broadcast_shape(*args):
     return b.shape
 
 
-def _broadcast_arrays_dispatcher(*args, **kwargs):
+def _broadcast_arrays_dispatcher(*args, subok=None):
     return args
 
 
 @array_function_dispatch(_broadcast_arrays_dispatcher, module='numpy')
-def broadcast_arrays(*args, **kwargs):
+def broadcast_arrays(*args, subok=False):
     """
     Broadcast any number of arrays against each other.
 
@@ -255,10 +253,6 @@ def broadcast_arrays(*args, **kwargs):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    subok = kwargs.pop('subok', False)
-    if kwargs:
-        raise TypeError('broadcast_arrays() got an unexpected keyword '
-                        'argument {!r}'.format(list(kwargs.keys())[0]))
     args = [np.array(_m, copy=False, subok=subok) for _m in args]
 
     shape = _broadcast_shape(*args)

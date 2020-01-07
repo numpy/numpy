@@ -11,8 +11,6 @@ Requires the following to be on the path:
  * patch
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import subprocess
@@ -65,7 +63,7 @@ them.
 #endif
 '''
 
-class FortranRoutine(object):
+class FortranRoutine:
     """Wrapper for a Fortran routine in a file.
     """
     type = 'generic'
@@ -97,7 +95,7 @@ class UnknownFortranRoutine(FortranRoutine):
     def dependencies(self):
         return []
 
-class FortranLibrary(object):
+class FortranLibrary:
     """Container for a bunch of Fortran routines.
     """
     def __init__(self, src_dirs):

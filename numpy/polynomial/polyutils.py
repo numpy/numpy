@@ -43,8 +43,6 @@ Functions
    mapparms     parameters of the linear map between domains.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import operator
 import functools
 import warnings
@@ -80,7 +78,7 @@ class PolyDomainError(PolyError):
 # Base class for all polynomial types
 #
 
-class PolyBase(object):
+class PolyBase:
     """
     Base class for all polynomial types.
 

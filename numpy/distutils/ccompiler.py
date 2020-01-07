@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import re
 import sys
@@ -16,7 +14,6 @@ from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
 from numpy.distutils import log
-from numpy.distutils.compat import get_exception
 from numpy.distutils.exec_command import (
     filepath_from_subprocess_output, forward_bytes_to_stdout
 )
@@ -532,11 +529,6 @@ def CCompiler_customize(self, dist, need_cxx=0):
                                       'g++' in self.compiler[0] or
                                       'clang' in self.compiler[0]):
         self._auto_depends = True
-        if 'gcc' in self.compiler[0]:
-            # add std=c99 flag for gcc
-            # TODO: does this need to be more specific?
-            self.compiler.append('-std=c99')
-            self.compiler_so.append('-std=c99')
     elif os.name == 'posix':
         import tempfile
         import shutil
@@ -756,15 +748,15 @@ def new_compiler (plat=None,
     module_name = "numpy.distutils." + module_name
     try:
         __import__ (module_name)
-    except ImportError:
-        msg = str(get_exception())
+    except ImportError as e:
+        msg = str(e)
         log.info('%s in numpy.distutils; trying from distutils',
                  str(msg))
         module_name = module_name[6:]
         try:
             __import__(module_name)
-        except ImportError:
-            msg = str(get_exception())
+        except ImportError as e:
+            msg = str(e)
             raise DistutilsModuleError("can't compile C/C++ code: unable to load module '%s'" % \
                   module_name)
     try:

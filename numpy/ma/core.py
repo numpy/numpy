@@ -20,8 +20,6 @@ Released for unlimited redistribution.
 
 """
 # pylint: disable-msg=E1002
-from __future__ import division, absolute_import, print_function
-
 import sys
 import operator
 import warnings
@@ -602,8 +600,10 @@ def filled(a, fill_value=None):
     ----------
     a : MaskedArray or array_like
         An input object.
-    fill_value : scalar, optional
-        Filling value. Default is None.
+    fill_value : array_like, optional.
+        Can be scalar or non-scalar. If non-scalar, the
+        resulting filled array should be broadcastable
+        over input array. Default is None.
 
     Returns
     -------
@@ -623,10 +623,19 @@ def filled(a, fill_value=None):
     array([[999999,      1,      2],
            [999999,      4,      5],
            [     6,      7,      8]])
+    >>> x.filled(fill_value=333)
+    array([[333,   1,   2],
+           [333,   4,   5],
+           [  6,   7,   8]])
+    >>> x.filled(fill_value=np.arange(3))
+    array([[0, 1, 2],
+           [0, 4, 5],
+           [6, 7, 8]])
 
     """
     if hasattr(a, 'filled'):
         return a.filled(fill_value)
+
     elif isinstance(a, ndarray):
         # Should we check for contiguity ? and a.flags['CONTIGUOUS']:
         return a
@@ -789,7 +798,7 @@ ufunc_domain = {}
 ufunc_fills = {}
 
 
-class _DomainCheckInterval(object):
+class _DomainCheckInterval:
     """
     Define a valid interval, so that :
 
@@ -814,7 +823,7 @@ class _DomainCheckInterval(object):
                                     umath.less(x, self.a))
 
 
-class _DomainTan(object):
+class _DomainTan:
     """
     Define a valid interval for the `tan` function, so that:
 
@@ -832,7 +841,7 @@ class _DomainTan(object):
             return umath.less(umath.absolute(umath.cos(x)), self.eps)
 
 
-class _DomainSafeDivide(object):
+class _DomainSafeDivide:
     """
     Define a domain for safe division.
 
@@ -853,7 +862,7 @@ class _DomainSafeDivide(object):
             return umath.absolute(a) * self.tolerance >= umath.absolute(b)
 
 
-class _DomainGreater(object):
+class _DomainGreater:
     """
     DomainGreater(v)(x) is True where x <= v.
 
@@ -869,7 +878,7 @@ class _DomainGreater(object):
             return umath.less_equal(x, self.critical_value)
 
 
-class _DomainGreaterEqual(object):
+class _DomainGreaterEqual:
     """
     DomainGreaterEqual(v)(x) is True where x < v.
 
@@ -885,7 +894,7 @@ class _DomainGreaterEqual(object):
             return umath.less(x, self.critical_value)
 
 
-class _MaskedUFunc(object):
+class _MaskedUFunc:
     def __init__(self, ufunc):
         self.f = ufunc
         self.__doc__ = ufunc.__doc__
@@ -2375,7 +2384,7 @@ def masked_invalid(a, copy=True):
 ###############################################################################
 
 
-class _MaskedPrintOption(object):
+class _MaskedPrintOption:
     """
     Handle the string used to represent missing data in a masked array.
 
@@ -2593,7 +2602,7 @@ def _arraymethod(funcname, onmask=True):
     return wrapped_method
 
 
-class MaskedIterator(object):
+class MaskedIterator:
     """
     Flat iterator object to iterate over masked arrays.
 
@@ -3653,6 +3662,14 @@ class MaskedArray(ndarray):
     @fill_value.setter
     def fill_value(self, value=None):
         target = _check_fill_value(value, self.dtype)
+        if not target.ndim == 0:
+            # 2019-11-12, 1.18.0
+            warnings.warn(
+                "Non-scalar arrays for the fill value are deprecated. Use "
+                "arrays with scalar values instead. The filled function "
+                "still supports any array as `fill_value`.",
+                DeprecationWarning, stacklevel=2)
+
         _fill_value = self._fill_value
         if _fill_value is None:
             # Create the attribute if it was undefined
@@ -3673,9 +3690,11 @@ class MaskedArray(ndarray):
 
         Parameters
         ----------
-        fill_value : scalar, optional
-            The value to use for invalid entries (None by default).
-            If None, the `fill_value` attribute of the array is used instead.
+        fill_value : array_like, optional
+            The value to use for invalid entries. Can be scalar or non-scalar.
+            If non-scalar, the resulting ndarray must be broadcastable over
+            input array. Default is None, in which case, the `fill_value`
+            attribute of the array is used instead.
 
         Returns
         -------
@@ -3694,6 +3713,8 @@ class MaskedArray(ndarray):
         >>> x = np.ma.array([1,2,3,4,5], mask=[0,0,1,0,1], fill_value=-999)
         >>> x.filled()
         array([   1,    2, -999,    4, -999])
+        >>> x.filled(fill_value=1000)
+        array([   1,    2, 1000,    4, 1000])
         >>> type(x.filled())
         <class 'numpy.ndarray'>
 
@@ -6220,9 +6241,11 @@ class mvoid(MaskedArray):
 
         Parameters
         ----------
-        fill_value : scalar, optional
-            The value to use for invalid entries (None by default).
-            If None, the `fill_value` attribute is used instead.
+        fill_value : array_like, optional
+            The value to use for invalid entries. Can be scalar or
+            non-scalar. If latter is the case, the filled array should
+            be broadcastable over input array. Default is None, in
+            which case the `fill_value` attribute is used instead.
 
         Returns
         -------
@@ -6621,7 +6644,7 @@ ptp.__doc__ = MaskedArray.ptp.__doc__
 ##############################################################################
 
 
-class _frommethod(object):
+class _frommethod:
     """
     Define functions from existing MaskedArray methods.
 
@@ -7955,7 +7978,7 @@ def fromflex(fxarray):
     return masked_array(fxarray['_data'], mask=fxarray['_mask'])
 
 
-class _convert2ma(object):
+class _convert2ma:
 
     """
     Convert functions from numpy to numpy.ma.

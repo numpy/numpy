@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from numpy import (
     logspace, linspace, geomspace, dtype, array, sctypes, arange, isnan,
     ndarray, sqrt, nextafter, stack
@@ -42,7 +40,7 @@ class PhysicalQuantity2(ndarray):
     __array_priority__ = 10
 
 
-class TestLogspace(object):
+class TestLogspace:
 
     def test_basic(self):
         y = logspace(0, 6)
@@ -92,7 +90,7 @@ class TestLogspace(object):
         assert_equal(ls, logspace(1.0, 7.0, 1))
 
 
-class TestGeomspace(object):
+class TestGeomspace:
 
     def test_basic(self):
         y = geomspace(1, 1e6)
@@ -222,7 +220,7 @@ class TestGeomspace(object):
         assert_raises(ValueError, geomspace, 0, 0)
 
 
-class TestLinspace(object):
+class TestLinspace:
 
     def test_basic(self):
         y = linspace(0, 10)
@@ -309,7 +307,7 @@ class TestLinspace(object):
         # Ensure that start/stop can be objects that implement
         # __array_interface__ and are convertible to numeric scalars
 
-        class Arrayish(object):
+        class Arrayish:
             """
             A generic object that supports the __array_interface__ and hence
             can in principle be converted to a numeric scalar, but is not
@@ -351,14 +349,20 @@ class TestLinspace(object):
                          arange(j+1, dtype=int))
 
     def test_retstep(self):
-        y = linspace(0, 1, 2, retstep=True)
-        assert_(isinstance(y, tuple) and len(y) == 2)
-        for num in (0, 1):
-            for ept in (False, True):
+        for num in [0, 1, 2]:
+            for ept in [False, True]:
                 y = linspace(0, 1, num, endpoint=ept, retstep=True)
-                assert_(isinstance(y, tuple) and len(y) == 2 and
-                        len(y[0]) == num and isnan(y[1]),
-                        'num={0}, endpoint={1}'.format(num, ept))
+                assert isinstance(y, tuple) and len(y) == 2
+                if num == 2:
+                    y0_expect = [0.0, 1.0] if ept else [0.0, 0.5]
+                    assert_array_equal(y[0], y0_expect)
+                    assert_equal(y[1], y0_expect[1])
+                elif num == 1 and not ept:
+                    assert_array_equal(y[0], [0.0])
+                    assert_equal(y[1], 1.0)
+                else:
+                    assert_array_equal(y[0], [0.0][:num])
+                    assert isnan(y[1])
 
     def test_object(self):
         start = array(1, dtype='O')

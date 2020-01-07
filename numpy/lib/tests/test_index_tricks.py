@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import pytest
 
 import numpy as np
@@ -14,7 +12,7 @@ from numpy.lib.index_tricks import (
     )
 
 
-class TestRavelUnravelIndex(object):
+class TestRavelUnravelIndex:
     def test_basic(self):
         assert_equal(np.unravel_index(2, (2, 2)), (1, 0))
 
@@ -194,7 +192,7 @@ class TestRavelUnravelIndex(object):
         with assert_raises(ValueError):
             np.unravel_index([1], (2, 1, 0))
 
-class TestGrid(object):
+class TestGrid:
     def test_basic(self):
         a = mgrid[-1:1:10j]
         b = mgrid[-1:1:0.1]
@@ -252,7 +250,7 @@ class TestGrid(object):
         assert_equal(grid_small.size, expected[1])
 
 
-class TestConcatenator(object):
+class TestConcatenator:
     def test_1d(self):
         assert_array_equal(r_[1, 2, 3, 4, 5, 6], np.array([1, 2, 3, 4, 5, 6]))
         b = np.ones(5)
@@ -290,14 +288,14 @@ class TestConcatenator(object):
         assert_equal(r_[np.array(0), [1, 2, 3]], [0, 1, 2, 3])
 
 
-class TestNdenumerate(object):
+class TestNdenumerate:
     def test_basic(self):
         a = np.array([[1, 2], [3, 4]])
         assert_equal(list(ndenumerate(a)),
                      [((0, 0), 1), ((0, 1), 2), ((1, 0), 3), ((1, 1), 4)])
 
 
-class TestIndexExpression(object):
+class TestIndexExpression:
     def test_regression_1(self):
         # ticket #1196
         a = np.arange(2)
@@ -311,7 +309,7 @@ class TestIndexExpression(object):
         assert_equal(a[:, :3, [1, 2]], a[s_[:, :3, [1, 2]]])
 
 
-class TestIx_(object):
+class TestIx_:
     def test_regression_1(self):
         # Test empty untyped inputs create outputs of indexing type, gh-5804
         a, = np.ix_(range(0))
@@ -358,7 +356,7 @@ def test_c_():
     assert_equal(a, [[1, 2, 3, 0, 0, 4, 5, 6]])
 
 
-class TestFillDiagonal(object):
+class TestFillDiagonal:
     def test_basic(self):
         a = np.zeros((3, 3), int)
         fill_diagonal(a, 5)
@@ -457,7 +455,7 @@ def test_diag_indices():
         )
 
 
-class TestDiagIndicesFrom(object):
+class TestDiagIndicesFrom:
 
     def test_diag_indices_from(self):
         x = np.random.random((4, 4))

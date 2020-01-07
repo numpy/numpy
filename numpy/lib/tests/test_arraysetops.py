@@ -1,8 +1,6 @@
 """Test functions for 1D array set operations.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 
 from numpy.testing import (assert_array_equal, assert_equal,
@@ -14,7 +12,7 @@ import pytest
 
 
 
-class TestSetOps(object):
+class TestSetOps:
 
     def test_intersect1d(self):
         # unique inputs
@@ -36,7 +34,7 @@ class TestSetOps(object):
 
     def test_intersect1d_array_like(self):
         # See gh-11772
-        class Test(object):
+        class Test:
             def __array__(self):
                 return np.arange(3)
 
@@ -135,9 +133,9 @@ class TestSetOps(object):
          None,
          np.nan),
         # should fail because attempting
-        # to downcast to smaller int type:
-        (np.array([1, 2, 3], dtype=np.int16),
-         np.array([5, 1<<20, 2], dtype=np.int32),
+        # to downcast to int type:
+        (np.array([1, 2, 3], dtype=np.int64),
+         np.array([5, 7, 2], dtype=np.float32),
          None),
         # should fail because attempting to cast
         # two special floating point values
@@ -152,8 +150,8 @@ class TestSetOps(object):
         # specifically, raise an appropriate
         # Exception when attempting to append or
         # prepend with an incompatible type
-        msg = 'cannot convert'
-        with assert_raises_regex(ValueError, msg):
+        msg = 'must be compatible'
+        with assert_raises_regex(TypeError, msg):
             ediff1d(ary=ary,
                     to_end=append,
                     to_begin=prepend)
@@ -163,9 +161,13 @@ class TestSetOps(object):
                              "append,"
                              "expected", [
         (np.array([1, 2, 3], dtype=np.int16),
-         0,
+         2**16,  # will be cast to int16 under same kind rule.
+         2**16 + 4,
+         np.array([0, 1, 1, 4], dtype=np.int16)),
+        (np.array([1, 2, 3], dtype=np.float32),
+         np.array([5], dtype=np.float64),
          None,
-         np.array([0, 1, 1], dtype=np.int16)),
+         np.array([5, 1, 1], dtype=np.float32)),
         (np.array([1, 2, 3], dtype=np.int32),
          0,
          0,
@@ -187,6 +189,7 @@ class TestSetOps(object):
                             to_end=append,
                             to_begin=prepend)
         assert_equal(actual, expected)
+        assert actual.dtype == expected.dtype
 
 
     def test_isin(self):
@@ -410,7 +413,7 @@ class TestSetOps(object):
         assert_array_equal(c1, c2)
 
 
-class TestUnique(object):
+class TestUnique:
 
     def test_unique_1d(self):
 

@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import re
@@ -55,7 +53,7 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-class BagObj(object):
+class BagObj:
     """
     BagObj(obj)
 
@@ -69,7 +67,7 @@ class BagObj(object):
     Examples
     --------
     >>> from numpy.lib.npyio import BagObj as BO
-    >>> class BagDemo(object):
+    >>> class BagDemo:
     ...     def __getitem__(self, key): # An instance of BagObj(BagDemo)
     ...                                 # will call this method when any
     ...                                 # attribute look-up is required
@@ -833,7 +831,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     fname : file, str, or pathlib.Path
         File, filename, or generator to read.  If the filename extension is
         ``.gz`` or ``.bz2``, the file is first decompressed. Note that
-        generators should return byte strings for Python 3k.
+        generators should return byte strings.
     dtype : data-type, optional
         Data-type of the resulting array; default: float.  If this is a
         structured data-type, the resulting array will be 1-dimensional, and
@@ -1336,7 +1334,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         fmt = asstr(fmt)
     delimiter = asstr(delimiter)
 
-    class WriteWrap(object):
+    class WriteWrap:
         """Convert to unicode in py2 or to bytes on bytestream inputs.
 
         """
@@ -1529,9 +1527,9 @@ def fromregex(file, regexp, dtype, encoding=None):
             dtype = np.dtype(dtype)
 
         content = file.read()
-        if isinstance(content, bytes) and isinstance(regexp, np.unicode):
+        if isinstance(content, bytes) and isinstance(regexp, np.compat.unicode):
             regexp = asbytes(regexp)
-        elif isinstance(content, np.unicode) and isinstance(regexp, bytes):
+        elif isinstance(content, np.compat.unicode) and isinstance(regexp, bytes):
             regexp = asstr(regexp)
 
         if not hasattr(regexp, 'match'):
@@ -1578,7 +1576,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     fname : file, str, pathlib.Path, list of str, generator
         File, filename, list, or generator to read.  If the filename
         extension is `.gz` or `.bz2`, the file is first decompressed. Note
-        that generators must return byte strings in Python 3k.  The strings
+        that generators must return byte strings. The strings
         in a list or produced by a generator are treated as lines.
     dtype : dtype, optional
         Data type of the resulting array.

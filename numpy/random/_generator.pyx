@@ -19,7 +19,7 @@ from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_uint8, _gen_mask)
 from ._bounded_integers import _integers_types
 from ._pcg64 import PCG64
-from ._bit_generator cimport bitgen_t
+from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
             CONS_GT_1, CONS_POSITIVE_NOT_NAN, CONS_POISSON,
@@ -28,7 +28,7 @@ from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
         )
 
 
-cdef extern from "include/distributions.h":
+cdef extern from "numpy/random/distributions.h":
 
     struct s_binomial_t:
         int has_binomial
@@ -54,9 +54,11 @@ cdef extern from "include/distributions.h":
     double random_standard_uniform(bitgen_t *bitgen_state) nogil
     void random_standard_uniform_fill(bitgen_t* bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_standard_exponential(bitgen_t *bitgen_state) nogil
+    double random_standard_exponential_f(bitgen_t *bitgen_state) nogil
     void random_standard_exponential_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
-    double random_standard_exponential_zig(bitgen_t *bitgen_state) nogil
-    void random_standard_exponential_zig_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_exponential_inv_fill(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
+    void random_standard_exponential_inv_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, double *out) nogil
     double random_standard_normal(bitgen_t* bitgen_state) nogil
     void random_standard_normal_fill(bitgen_t *bitgen_state, np.npy_intp count, double *out) nogil
     void random_standard_normal_fill_f(bitgen_t *bitgen_state, np.npy_intp count, float *out) nogil
@@ -64,10 +66,6 @@ cdef extern from "include/distributions.h":
 
     float random_standard_uniform_f(bitgen_t *bitgen_state) nogil
     void random_standard_uniform_fill_f(bitgen_t* bitgen_state, np.npy_intp cnt, float *out) nogil
-    float random_standard_exponential_f(bitgen_t *bitgen_state) nogil
-    float random_standard_exponential_zig_f(bitgen_t *bitgen_state) nogil
-    void random_standard_exponential_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
-    void random_standard_exponential_zig_fill_f(bitgen_t *bitgen_state, np.npy_intp cnt, float *out) nogil
     float random_standard_normal_f(bitgen_t* bitgen_state) nogil
     float random_standard_gamma_f(bitgen_t *bitgen_state, float shape) nogil
 
@@ -126,12 +124,12 @@ cdef extern from "include/distributions.h":
     void random_multinomial(bitgen_t *bitgen_state, int64_t n, int64_t *mnix,
                             double *pix, np.npy_intp d, binomial_t *binomial) nogil
 
-    int random_mvhg_count(bitgen_t *bitgen_state,
+    int random_multivariate_hypergeometric_count(bitgen_t *bitgen_state,
                           int64_t total,
                           size_t num_colors, int64_t *colors,
                           int64_t nsample,
                           size_t num_variates, int64_t *variates) nogil
-    void random_mvhg_marginals(bitgen_t *bitgen_state,
+    void random_multivariate_hypergeometric_marginals(bitgen_t *bitgen_state,
                                int64_t total,
                                size_t num_colors, int64_t *colors,
                                int64_t nsample,
@@ -226,7 +224,7 @@ cdef class Generator:
         capsule = bit_generator.capsule
         cdef const char *name = "BitGenerator"
         if not PyCapsule_IsValid(capsule, name):
-            raise ValueError("Invalid bit generator'. The bit generator must "
+            raise ValueError("Invalid bit generator. The bit generator must "
                              "be instantiated.")
         self._bitgen = (<bitgen_t *> PyCapsule_GetPointer(capsule, name))[0]
         self.lock = bit_generator.lock
@@ -459,14 +457,14 @@ cdef class Generator:
         key = np.dtype(dtype).name
         if key == 'float64':
             if method == u'zig':
-                return double_fill(&random_standard_exponential_zig_fill, &self._bitgen, size, self.lock, out)
-            else:
                 return double_fill(&random_standard_exponential_fill, &self._bitgen, size, self.lock, out)
+            else:
+                return double_fill(&random_standard_exponential_inv_fill, &self._bitgen, size, self.lock, out)
         elif key == 'float32':
             if method == u'zig':
-                return float_fill(&random_standard_exponential_zig_fill_f, &self._bitgen, size, self.lock, out)
-            else:
                 return float_fill(&random_standard_exponential_fill_f, &self._bitgen, size, self.lock, out)
+            else:
+                return float_fill(&random_standard_exponential_inv_fill_f, &self._bitgen, size, self.lock, out)
         else:
             raise TypeError('Unsupported dtype "%s" for standard_exponential'
                             % key)
@@ -502,7 +500,7 @@ cdef class Generator:
             Desired dtype of the result. All dtypes are determined by their
             name, i.e., 'int64', 'int', etc, so byteorder is not available
             and a specific precision may have different C types depending
-            on the platform. The default value is 'np.int'.
+            on the platform. The default value is `np.int_`.
         endpoint : bool, optional
             If true, sample from the interval [low, high] instead of the
             default [low, high)
@@ -595,7 +593,7 @@ cdef class Generator:
         elif key == 'bool':
             ret = _rand_bool(low, high, size, _masked, endpoint, &self._bitgen, self.lock)
 
-        if size is None and dtype in (np.bool, np.int, np.long):
+        if size is None and dtype in (bool, int, np.compat.long):
             if np.array(ret).shape == ():
                 return dtype(ret)
         return ret
@@ -631,32 +629,32 @@ cdef class Generator:
     @cython.wraparound(True)
     def choice(self, a, size=None, replace=True, p=None, axis=0, bint shuffle=True):
         """
-        choice(a, size=None, replace=True, p=None, axis=0):
+        choice(a, size=None, replace=True, p=None, axis=0, shuffle=True):
 
         Generates a random sample from a given 1-D array
 
         Parameters
         ----------
-        a : 1-D array-like or int
+        a : {array_like, int}
             If an ndarray, a random sample is generated from its elements.
-            If an int, the random sample is generated as if a were np.arange(a)
-        size : int or tuple of ints, optional
+            If an int, the random sample is generated from np.arange(a).
+        size : {int, tuple[int]}, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn from the 1-d `a`. If `a` has more
             than one dimension, the `size` shape will be inserted into the
             `axis` dimension, so the output ``ndim`` will be ``a.ndim - 1 +
             len(size)``. Default is None, in which case a single value is
             returned.
-        replace : boolean, optional
+        replace : bool, optional
             Whether the sample is with or without replacement
-        p : 1-D array-like, optional
+        p : 1-D array_like, optional
             The probabilities associated with each entry in a.
             If not given the sample assumes a uniform distribution over all
             entries in a.
         axis : int, optional
             The axis along which the selection is performed. The default, 0,
             selects by row.
-        shuffle : boolean, optional
+        shuffle : bool, optional
             Whether the sample is shuffled when sampling without replacement.
             Default is True, False provides a speedup.
 
@@ -727,13 +725,15 @@ cdef class Generator:
                 # __index__ must return an integer by python rules.
                 pop_size = operator.index(a.item())
             except TypeError:
-                raise ValueError("a must be 1-dimensional or an integer")
+                raise ValueError("a must an array or an integer")
             if pop_size <= 0 and np.prod(size) != 0:
-                raise ValueError("a must be greater than 0 unless no samples are taken")
+                raise ValueError("a must be a positive integer unless no"
+                                 "samples are taken")
         else:
             pop_size = a.shape[axis]
             if pop_size == 0 and np.prod(size) != 0:
-                raise ValueError("'a' cannot be empty unless no samples are taken")
+                raise ValueError("a cannot be empty unless no samples are"
+                                 "taken")
 
         if p is not None:
             d = len(p)
@@ -748,9 +748,9 @@ cdef class Generator:
             pix = <double*>np.PyArray_DATA(p)
 
             if p.ndim != 1:
-                raise ValueError("'p' must be 1-dimensional")
+                raise ValueError("p must be 1-dimensional")
             if p.size != pop_size:
-                raise ValueError("'a' and 'p' must have same size")
+                raise ValueError("a and p must have same size")
             p_sum = kahan_sum(pix, d)
             if np.isnan(p_sum):
                 raise ValueError("probabilities contain NaN")
@@ -772,13 +772,14 @@ cdef class Generator:
                 cdf /= cdf[-1]
                 uniform_samples = self.random(shape)
                 idx = cdf.searchsorted(uniform_samples, side='right')
-                idx = np.array(idx, copy=False, dtype=np.int64)  # searchsorted returns a scalar
+                # searchsorted returns a scalar
+                idx = np.array(idx, copy=False, dtype=np.int64)
             else:
                 idx = self.integers(0, pop_size, size=shape, dtype=np.int64)
         else:
             if size > pop_size:
                 raise ValueError("Cannot take a larger sample than "
-                                 "population when 'replace=False'")
+                                 "population when replace is False")
             elif size < 0:
                 raise ValueError("negative dimensions are not allowed")
 
@@ -1004,18 +1005,18 @@ cdef class Generator:
             A floating-point array of shape ``size`` of drawn samples, or a
             single sample if ``size`` was not specified.
 
+        See Also
+        --------
+        normal :
+            Equivalent function with additional ``loc`` and ``scale`` arguments
+            for setting the mean and standard deviation.
+
         Notes
         -----
         For random samples from :math:`N(\\mu, \\sigma^2)`, use one of::
 
             mu + sigma * gen.standard_normal(size=...)
             gen.normal(mu, sigma, size=...)
-
-        See Also
-        --------
-        normal :
-            Equivalent function with additional ``loc`` and ``scale`` arguments
-            for setting the mean and standard deviation.
 
         Examples
         --------
@@ -3456,7 +3457,7 @@ cdef class Generator:
 
     # Multivariate distributions:
     def multivariate_normal(self, mean, cov, size=None, check_valid='warn',
-                            tol=1e-8):
+                            tol=1e-8, *, method='svd'):
         """
         multivariate_normal(mean, cov, size=None, check_valid='warn', tol=1e-8)
 
@@ -3486,6 +3487,15 @@ cdef class Generator:
         tol : float, optional
             Tolerance when checking the singular values in covariance matrix.
             cov is cast to double before the check.
+        method : { 'svd', 'eigh', 'cholesky'}, optional
+            The cov input is used to compute a factor matrix A such that
+            ``A @ A.T = cov``. This argument is used to select the method
+            used to compute the factor matrix A. The default method 'svd' is
+            the slowest, while 'cholesky' is the fastest but less robust than
+            the slowest method. The method `eigh` uses eigen decomposition to
+            compute A and is faster than svd but slower than cholesky.
+
+            .. versionadded:: 1.18.0
 
         Returns
         -------
@@ -3546,8 +3556,14 @@ cdef class Generator:
         --------
         >>> mean = (1, 2)
         >>> cov = [[1, 0], [0, 1]]
-        >>> x = np.random.default_rng().multivariate_normal(mean, cov, (3, 3))
+        >>> rng = np.random.default_rng()
+        >>> x = rng.multivariate_normal(mean, cov, (3, 3))
         >>> x.shape
+        (3, 3, 2)
+
+        We can use a different method other than the default to factorize cov:
+        >>> y = rng.multivariate_normal(mean, cov, (3, 3), method='cholesky')
+        >>> y.shape
         (3, 3, 2)
 
         The following is probably true, given that 0.6 is roughly twice the
@@ -3557,7 +3573,9 @@ cdef class Generator:
         [True, True] # random
 
         """
-        from numpy.dual import svd
+        if method not in {'eigh', 'svd', 'cholesky'}:
+            raise ValueError(
+                "method must be one of {'eigh', 'svd', 'cholesky'}")
 
         # Check preconditions on arguments
         mean = np.array(mean)
@@ -3600,13 +3618,27 @@ cdef class Generator:
 
         # GH10839, ensure double to make tol meaningful
         cov = cov.astype(np.double)
-        (u, s, v) = svd(cov)
+        if method == 'svd':
+            from numpy.dual import svd
+            (u, s, vh) = svd(cov)
+        elif method == 'eigh':
+            from numpy.dual import eigh
+            # could call linalg.svd(hermitian=True), but that calculates a vh we don't need
+            (s, u)  = eigh(cov)
+        else:
+            from numpy.dual import cholesky
+            l = cholesky(cov)
 
-        if check_valid != 'ignore':
+        # make sure check_valid is ignored whe method == 'cholesky'
+        # since the decomposition will have failed if cov is not valid.
+        if check_valid != 'ignore' and method != 'cholesky':
             if check_valid != 'warn' and check_valid != 'raise':
-                raise ValueError("check_valid must equal 'warn', 'raise', or 'ignore'")
-
-            psd = np.allclose(np.dot(v.T * s, v), cov, rtol=tol, atol=tol)
+                raise ValueError(
+                    "check_valid must equal 'warn', 'raise', or 'ignore'")
+            if method == 'svd':
+                psd = np.allclose(np.dot(vh.T * s, vh), cov, rtol=tol, atol=tol)
+            else:
+                psd = not np.any(s < -tol)
             if not psd:
                 if check_valid == 'warn':
                     warnings.warn("covariance is not positive-semidefinite.",
@@ -3614,7 +3646,17 @@ cdef class Generator:
                 else:
                     raise ValueError("covariance is not positive-semidefinite.")
 
-        x = np.dot(x, np.sqrt(s)[:, None] * v)
+        if method == 'cholesky':
+            _factor = l
+        elif method == 'eigh':
+            # if check_valid == 'ignore' we need to ensure that np.sqrt does not
+            # return a NaN if s is a very small negative number that is
+            # approximately zero or when the covariance is not positive-semidefinite
+            _factor = u * np.sqrt(abs(s))
+        else:
+            _factor = np.sqrt(s)[:, None] * vh
+
+        x = np.dot(x, _factor)
         x += mean
         x.shape = tuple(final_shape)
         return x
@@ -3971,18 +4013,18 @@ cdef class Generator:
 
         if method == 'count':
             with self.lock, nogil:
-                result = random_mvhg_count(&self._bitgen, total,
-                                           num_colors, colors_ptr, nsamp,
-                                           num_variates, variates_ptr)
+                result = random_multivariate_hypergeometric_count(&self._bitgen,
+                                        total, num_colors, colors_ptr, nsamp,
+                                        num_variates, variates_ptr)
             if result == -1:
                 raise MemoryError("Insufficent memory for multivariate_"
                                   "hypergeometric with method='count' and "
                                   "sum(colors)=%d" % total)
         else:
             with self.lock, nogil:
-                random_mvhg_marginals(&self._bitgen, total,
-                                      num_colors, colors_ptr, nsamp,
-                                      num_variates, variates_ptr)
+                random_multivariate_hypergeometric_marginals(&self._bitgen,
+                                        total, num_colors, colors_ptr, nsamp,
+                                        num_variates, variates_ptr)
         return variates
 
     def dirichlet(self, object alpha, size=None):
@@ -4352,11 +4394,15 @@ def default_rng(seed=None):
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.
 
+    Returns
+    -------
+    Generator
+        The initialized generator object.
+
     Notes
     -----
-    When ``seed`` is omitted or ``None``, a new `BitGenerator` and `Generator` will
-    be instantiated each time. This function does not manage a default global
-    instance.
+    If ``seed`` is not a `BitGenerator` or a `Generator`, a new `BitGenerator`
+    is instantiated. This function does not manage a default global instance.
     """
     if _check_bit_generator(seed):
         # We were passed a BitGenerator, so just wrap it up.

@@ -1,5 +1,0 @@
-The files ``numpy/testing/decorators.py``, ``numpy/testing/noseclasses.py``
-and ``numpy/testing/nosetester.py`` have been removed.  They were never
-meant to be public (all relevant objects are present in the
-``numpy.testing`` namespace), and importing them has given a deprecation
-warning since NumPy 1.15.0

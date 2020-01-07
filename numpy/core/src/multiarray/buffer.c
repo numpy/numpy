@@ -11,7 +11,7 @@
 
 #include "npy_pycompat.h"
 
-#include "buffer.h"
+#include "npy_buffer.h"
 #include "common.h"
 #include "numpyos.h"
 #include "arrayobject.h"
@@ -20,59 +20,6 @@
 /*************************************************************************
  ****************   Implement Buffer Protocol ****************************
  *************************************************************************/
-
-/* removed multiple segment interface */
-
-#if !defined(NPY_PY3K)
-static Py_ssize_t
-array_getsegcount(PyArrayObject *self, Py_ssize_t *lenp)
-{
-    if (lenp) {
-        *lenp = PyArray_NBYTES(self);
-    }
-    if (PyArray_ISONESEGMENT(self)) {
-        return 1;
-    }
-    if (lenp) {
-        *lenp = 0;
-    }
-    return 0;
-}
-
-static Py_ssize_t
-array_getreadbuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
-{
-    if (segment != 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "accessing non-existing array segment");
-        return -1;
-    }
-    if (PyArray_ISONESEGMENT(self)) {
-        *ptrptr = PyArray_DATA(self);
-        return PyArray_NBYTES(self);
-    }
-    PyErr_SetString(PyExc_ValueError, "array is not a single segment");
-    *ptrptr = NULL;
-    return -1;
-}
-
-
-static Py_ssize_t
-array_getwritebuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
-{
-    if (PyArray_FailUnlessWriteable(self, "buffer source array") < 0) {
-        return -1;
-    }
-    return array_getreadbuf(self, segment, (void **) ptrptr);
-}
-
-static Py_ssize_t
-array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, constchar **ptrptr)
-{
-    return array_getreadbuf(self, segment, (void **) ptrptr);
-}
-#endif /* !defined(NPY_PY3K) */
-
 
 /*************************************************************************
  * PEP 3118 buffer protocol
@@ -523,7 +470,7 @@ _buffer_info_new(PyObject *obj)
         /*
          * Special case datetime64 scalars to remain backward compatible.
          * This will change in a future version.
-         * Note arrays of datetime64 and strutured arrays with datetime64
+         * Note arrays of datetime64 and structured arrays with datetime64
          * fields will not hit this code path and are currently unsupported
          * in _buffer_format_string.
          */
@@ -952,12 +899,6 @@ _dealloc_cached_buffer_info(PyObject *self)
 /*************************************************************************/
 
 NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
-#if !defined(NPY_PY3K)
-    (readbufferproc)array_getreadbuf,       /*bf_getreadbuffer*/
-    (writebufferproc)array_getwritebuf,     /*bf_getwritebuffer*/
-    (segcountproc)array_getsegcount,        /*bf_getsegcount*/
-    (charbufferproc)array_getcharbuf,       /*bf_getcharbuffer*/
-#endif
     (getbufferproc)array_getbuffer,
     (releasebufferproc)0,
 };
@@ -968,13 +909,13 @@ NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
  */
 
 static int
-_descriptor_from_pep3118_format_fast(char *s, PyObject **result);
+_descriptor_from_pep3118_format_fast(char const *s, PyObject **result);
 
 static int
 _pep3118_letter_to_type(char letter, int native, int complex);
 
 NPY_NO_EXPORT PyArray_Descr*
-_descriptor_from_pep3118_format(char *s)
+_descriptor_from_pep3118_format(char const *s)
 {
     char *buf, *p;
     int in_name = 0;
@@ -1059,7 +1000,7 @@ _descriptor_from_pep3118_format(char *s)
  */
 
 static int
-_descriptor_from_pep3118_format_fast(char *s, PyObject **result)
+_descriptor_from_pep3118_format_fast(char const *s, PyObject **result)
 {
     PyArray_Descr *descr;
 

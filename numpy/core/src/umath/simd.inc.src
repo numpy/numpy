@@ -280,11 +280,11 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
     @type@ * op = (@type@ *)args[2];
     npy_intp n = dimensions[0];
 #if defined __AVX512F__
-    const npy_intp vector_size_bytes = 64;
+    const npy_uintp vector_size_bytes = 64;
 #elif defined __AVX2__
-    const npy_intp vector_size_bytes = 32;
+    const npy_uintp vector_size_bytes = 32;
 #else
-    const npy_intp vector_size_bytes = 32;
+    const npy_uintp vector_size_bytes = 32;
 #endif
     /* argument one scalar */
     if (IS_BLOCKABLE_BINARY_SCALAR1(sizeof(@type@), vector_size_bytes)) {

@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import subprocess
 import pkgutil
@@ -50,7 +48,6 @@ def test_numpy_namespace():
         'fastCopyAndTranspose': 'numpy.core._multiarray_umath._fastCopyAndTranspose',
         'get_array_wrap': 'numpy.lib.shape_base.get_array_wrap',
         'get_include': 'numpy.lib.utils.get_include',
-        'int_asbuffer': 'numpy.core._multiarray_umath.int_asbuffer',
         'mafromtxt': 'numpy.lib.npyio.mafromtxt',
         'ndfromtxt': 'numpy.lib.npyio.ndfromtxt',
         'recfromcsv': 'numpy.lib.npyio.recfromcsv',
@@ -228,7 +225,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "distutils.command.install_data",
     "distutils.command.install_headers",
     "distutils.command.sdist",
-    "distutils.compat",
     "distutils.conv_template",
     "distutils.core",
     "distutils.extension",
@@ -386,7 +382,7 @@ SKIP_LIST_2 = [
     'numpy.matlib.fft',
     'numpy.matlib.random',
     'numpy.matlib.ctypeslib',
-    'numpy.matlib.ma'
+    'numpy.matlib.ma',
 ]
 
 

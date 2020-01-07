@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 
@@ -11,7 +9,7 @@ from numpy.testing import (
 from numpy.compat import unicode
 
 
-class TestRegression(object):
+class TestRegression:
     def test_poly1d(self):
         # Ticket #28
         assert_equal(np.poly1d([1]) - np.poly1d([1, 0]),

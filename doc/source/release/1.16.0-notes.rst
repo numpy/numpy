@@ -506,7 +506,7 @@ become more conspicuous. Now no warnings will be emitted.
 Umath and multiarray c-extension modules merged into a single module
 --------------------------------------------------------------------
 The two modules were merged, according to `NEP 15`_. Previously `np.core.umath`
-and `np.core.multiarray` were seperate c-extension modules. They are now python
+and `np.core.multiarray` were separate c-extension modules. They are now python
 wrappers to the single `np.core/_multiarray_math` c-extension module.
 
 .. _`NEP 15` : http://www.numpy.org/neps/nep-0015-merge-multiarray-umath.html

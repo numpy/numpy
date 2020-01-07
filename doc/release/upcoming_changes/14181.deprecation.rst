@@ -1,3 +1,0 @@
-Deprecate `np.alen`
--------------------
-`np.alen` was deprecated. Use `len` instead.

@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises,
@@ -9,7 +7,7 @@ from numpy.compat import long
 import numpy as np
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
@@ -145,7 +143,7 @@ class TestRegression(object):
         assert_array_equal(perm, np.array([0, 2, 1]))
         assert_array_equal(orig, np.arange(3).view(N))
 
-        class M(object):
+        class M:
             a = np.arange(5)
 
             def __array__(self):

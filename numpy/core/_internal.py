@@ -4,8 +4,6 @@ A place for internal code
 Some things are more easily handled Python.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import re
 import sys
 import platform
@@ -203,7 +201,7 @@ def _commastring(astr):
 
     return result
 
-class dummy_ctype(object):
+class dummy_ctype:
     def __init__(self, cls):
         self._cls = cls
     def __mul__(self, other):
@@ -238,16 +236,16 @@ _getintp_ctype.cache = None
 
 # Used for .ctypes attribute of ndarray
 
-class _missing_ctypes(object):
+class _missing_ctypes:
     def cast(self, num, obj):
         return num.value
 
-    class c_void_p(object):
+    class c_void_p:
         def __init__(self, ptr):
             self.value = ptr
 
 
-class _ctypes(object):
+class _ctypes:
     def __init__(self, array, ptr=None):
         self._arr = array
 
@@ -523,7 +521,7 @@ _pep3118_unsupported_map = {
     'X': 'function pointers',
 }
 
-class _Stream(object):
+class _Stream:
     def __init__(self, s):
         self.s = s
         self.byteorder = '@'
@@ -845,7 +843,7 @@ def npy_ctypes_check(cls):
         return False
 
 
-class recursive(object):
+class recursive:
     '''
     A decorator class for recursive nested functions.
     Naive recursive nested functions hold a reference to themselves:

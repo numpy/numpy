@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
 import sys, os
 import re
 from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
@@ -106,7 +104,7 @@ def cleanSource(source):
     source = re.sub(r'\n\n\n\n+', r'\n\n\n', source)
     return source
 
-class LineQueue(object):
+class LineQueue:
     def __init__(self):
         object.__init__(self)
         self._queue = []

@@ -16,7 +16,7 @@
 
 #include "conversion_utils.h"
 #include "alloc.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
@@ -1145,7 +1145,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
   PyArray_IntTupleFromIntp
 */
 NPY_NO_EXPORT PyObject *
-PyArray_IntTupleFromIntp(int len, npy_intp *vals)
+PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
 {
     int i;
     PyObject *intTuple = PyTuple_New(len);

@@ -1,10 +1,8 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy.polynomial as poly
 from numpy.testing import assert_equal
 
 
-class TestStr(object):
+class TestStr:
     def test_polynomial_str(self):
         res = str(poly.Polynomial([0, 1]))
         tgt = 'poly([0. 1.])'
@@ -36,7 +34,7 @@ class TestStr(object):
         assert_equal(res, tgt)
 
 
-class TestRepr(object):
+class TestRepr:
     def test_polynomial_str(self):
         res = repr(poly.Polynomial([0, 1]))
         tgt = 'Polynomial([0., 1.], domain=[-1,  1], window=[-1,  1])'

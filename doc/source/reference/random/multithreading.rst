@@ -24,7 +24,7 @@ seed will produce the same outputs.
     import concurrent.futures
     import numpy as np
 
-    class MultithreadedRNG(object):
+    class MultithreadedRNG:
         def __init__(self, n, seed=None, threads=None):
             rg = PCG64(seed)
             if threads is None:
@@ -41,7 +41,7 @@ seed will produce the same outputs.
             self.n = n
             self.executor = concurrent.futures.ThreadPoolExecutor(threads)
             self.values = np.empty(n)
-            self.step = np.ceil(n / threads).astype(np.int)
+            self.step = np.ceil(n / threads).astype(np.int_)
 
         def fill(self):
             def _fill(random_state, out, first, last):

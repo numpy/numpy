@@ -1,2 +1,0 @@
-* ``PyArray_As1D`` and ``PyArray_As2D`` have been removed in favor of
-  ``PyArray_AsCArray``

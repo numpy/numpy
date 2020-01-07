@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 import numpy as np
@@ -8,7 +6,7 @@ from numpy.testing import (
     )
 
 
-class TestTake(object):
+class TestTake:
     def test_simple(self):
         a = [[1, 2], [3, 4]]
         a_str = [[b'1', b'2'], [b'3', b'4']]

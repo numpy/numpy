@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import inspect
 import sys
 import pytest
@@ -102,7 +100,7 @@ def test_safe_eval_nameconstant():
     utils.safe_eval('None')
 
 
-class TestByteBounds(object):
+class TestByteBounds:
 
     def test_byte_bounds(self):
         # pointer difference matches size * itemsize

@@ -1,5 +1,0 @@
-Changed random variate stream from `numpy.random.Generator.integers`
---------------------------------------------------------------------
-There was a bug in `numpy.random.Generator.integers` that caused biased
-sampling of 8 and 16 bit integer types. Fixing that bug has changed the
-output stream from what it was in previous releases.

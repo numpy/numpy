@@ -1,8 +1,6 @@
 """
 Test the scalar constructors, which also do type-coercion
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import platform
 import pytest
@@ -12,7 +10,7 @@ from numpy.testing import (
     assert_equal, assert_almost_equal, assert_raises, assert_warns,
     )
 
-class TestFromString(object):
+class TestFromString:
     def test_floating(self):
         # Ticket #640, floats from string
         fsingle = np.single('1.234')
@@ -56,7 +54,7 @@ class TestFromString(object):
         assert_equal(255, np.intp('0xFF', 16))
 
 
-class TestFromInt(object):
+class TestFromInt:
     def test_intp(self):
         # Ticket #99
         assert_equal(1024, np.intp(1024))

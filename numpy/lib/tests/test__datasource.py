@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import sys
 import pytest
@@ -96,7 +94,7 @@ def invalid_httpfile():
     return http_fakefile
 
 
-class TestDataSourceOpen(object):
+class TestDataSourceOpen:
     def setup(self):
         self.tmpdir = mkdtemp()
         self.ds = datasource.DataSource(self.tmpdir)
@@ -183,7 +181,7 @@ class TestDataSourceOpen(object):
         assert_equal(magic_line, result)
 
 
-class TestDataSourceExists(object):
+class TestDataSourceExists:
     def setup(self):
         self.tmpdir = mkdtemp()
         self.ds = datasource.DataSource(self.tmpdir)
@@ -213,7 +211,7 @@ class TestDataSourceExists(object):
         assert_equal(self.ds.exists(tmpfile), False)
 
 
-class TestDataSourceAbspath(object):
+class TestDataSourceAbspath:
     def setup(self):
         self.tmpdir = os.path.abspath(mkdtemp())
         self.ds = datasource.DataSource(self.tmpdir)
@@ -278,7 +276,7 @@ class TestDataSourceAbspath(object):
             os.sep = orig_os_sep
 
 
-class TestRepositoryAbspath(object):
+class TestRepositoryAbspath:
     def setup(self):
         self.tmpdir = os.path.abspath(mkdtemp())
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
@@ -311,7 +309,7 @@ class TestRepositoryAbspath(object):
             os.sep = orig_os_sep
 
 
-class TestRepositoryExists(object):
+class TestRepositoryExists:
     def setup(self):
         self.tmpdir = mkdtemp()
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
@@ -344,7 +342,7 @@ class TestRepositoryExists(object):
         assert_(self.repos.exists(tmpfile))
 
 
-class TestOpenFunc(object):
+class TestOpenFunc:
     def setup(self):
         self.tmpdir = mkdtemp()
 

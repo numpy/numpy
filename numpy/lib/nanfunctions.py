@@ -20,8 +20,6 @@ Functions
 - `nanpercentile` -- qth percentile of non-NaN values
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 import warnings
 import numpy as np
@@ -95,17 +93,18 @@ def _replace_nan(a, val):
         NaNs, otherwise return None.
 
     """
-    a = np.array(a, subok=True, copy=True)
+    a = np.asanyarray(a)
 
     if a.dtype == np.object_:
         # object arrays do not support `isnan` (gh-9009), so make a guess
-        mask = a != a
+        mask = np.not_equal(a, a, dtype=bool)
     elif issubclass(a.dtype.type, np.inexact):
         mask = np.isnan(a)
     else:
         mask = None
 
     if mask is not None:
+        a = np.array(a, subok=True, copy=True)
         np.copyto(a, val, where=mask)
 
     return a, mask

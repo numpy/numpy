@@ -15,8 +15,6 @@ available in your version of Python.
 The preferred alias for `defchararray` is `numpy.char`.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 import sys
 from .numerictypes import string_, unicode_, integer, object_, bool_, character
@@ -358,7 +356,7 @@ def _mod_dispatcher(a, values):
 def mod(a, values):
     """
     Return (a % i), that is pre-Python 2.6 string formatting
-    (iterpolation), element-wise for a pair of array_likes of str
+    (interpolation), element-wise for a pair of array_likes of str
     or unicode.
 
     Parameters
@@ -2112,7 +2110,7 @@ class chararray(ndarray):
     def __mod__(self, i):
         """
         Return (self % i), that is pre-Python 2.6 string formatting
-        (iterpolation), element-wise for a pair of array_likes of `string_`
+        (interpolation), element-wise for a pair of array_likes of `string_`
         or `unicode_`.
 
         See also

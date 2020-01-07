@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 from distutils.core import Command
 from distutils.ccompiler import new_compiler

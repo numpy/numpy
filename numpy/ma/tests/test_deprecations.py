@@ -1,14 +1,12 @@
 """Test deprecation and future warnings.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.testing import assert_warns
 from numpy.ma.testutils import assert_equal
 from numpy.ma.core import MaskedArrayFutureWarning
 
-class TestArgsort(object):
+class TestArgsort:
     """ gh-8701 """
     def _test_base(self, argsort, cls):
         arr_0d = np.array(1).view(cls)
@@ -37,7 +35,7 @@ class TestArgsort(object):
         return self._test_base(np.ma.MaskedArray.argsort, np.ma.MaskedArray)
 
 
-class TestMinimumMaximum(object):
+class TestMinimumMaximum:
     def test_minimum(self):
         assert_warns(DeprecationWarning, np.ma.minimum, np.ma.array([1, 2]))
 

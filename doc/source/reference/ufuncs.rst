@@ -253,9 +253,9 @@ can generate this table for your system with the code given in the Figure.
     B - - Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
     H - - - Y Y Y Y - Y Y Y Y Y - Y Y Y Y Y Y Y Y Y Y - Y
     I - - - - Y Y Y - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - Y
-    L - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - Y
-    Q - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - Y
-    P - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - Y
+    L - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
+    Q - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
+    P - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
     e - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - -
     f - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y - -
     d - - - - - - - - - - - - - - - Y Y - Y Y Y Y Y Y - -

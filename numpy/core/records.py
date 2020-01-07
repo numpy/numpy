@@ -33,8 +33,6 @@ Record arrays allow us to access fields as properties::
   array([2., 2.])
 
 """
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import warnings
@@ -98,7 +96,7 @@ def find_duplicate(list):
 
 
 @set_module('numpy')
-class format_parser(object):
+class format_parser:
     """
     Class to convert formats, names, titles description to a dtype.
 
@@ -496,8 +494,7 @@ class recarray(ndarray):
         except Exception:
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             if attr not in fielddict:
-                exctype, value = sys.exc_info()[:2]
-                raise exctype(value)
+                raise
         else:
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             if attr not in fielddict:

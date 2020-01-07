@@ -2,12 +2,10 @@
 """Prints type-coercion tables for the built-in NumPy types
 
 """
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 
 # Generic object that can be added, but doesn't do anything else
-class GenericObject(object):
+class GenericObject:
     def __init__(self, v):
         self.v = v
 

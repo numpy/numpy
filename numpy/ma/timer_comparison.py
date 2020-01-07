@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import timeit
 from functools import reduce
 
@@ -15,7 +13,7 @@ np.seterr(all='ignore')
 pi = np.pi
 
 
-class ModuleTester(object):
+class ModuleTester:
     def __init__(self, module):
         self.module = module
         self.allequal = module.allequal

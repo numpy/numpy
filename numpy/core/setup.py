@@ -1,5 +1,3 @@
-from __future__ import division, print_function
-
 import os
 import sys
 import pickle
@@ -38,7 +36,7 @@ NPY_RELAXED_STRIDES_DEBUG = NPY_RELAXED_STRIDES_DEBUG and NPY_RELAXED_STRIDES_CH
 # Use pickle in all cases, as cPickle is gone in python3 and the difference
 # in time is only in build. -- Charles Harris, 2013-03-30
 
-class CallOnceOnly(object):
+class CallOnceOnly:
     def __init__(self):
         self._check_types = None
         self._check_ieee_macros = None
@@ -394,7 +392,7 @@ def visibility_define(config):
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, dot_join
-    from numpy.distutils.system_info import get_info
+    from numpy.distutils.system_info import get_info, dict_append
 
     config = Configuration('core', parent_package, top_path)
     local_dir = config.local_path
@@ -753,8 +751,14 @@ def configuration(parent_package='',top_path=None):
             join('src', 'common', 'numpyos.c'),
             ]
 
-    blas_info = get_info('blas_opt', 0)
-    if blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', []):
+    if os.environ.get('NPY_USE_BLAS_ILP64', "0") != "0":
+        blas_info = get_info('blas_ilp64_opt', 2)
+    else:
+        blas_info = get_info('blas_opt', 0)
+
+    have_blas = blas_info and ('HAVE_CBLAS', None) in blas_info.get('define_macros', [])
+
+    if have_blas:
         extra_info = blas_info
         # These files are also in MANIFEST.in so that they are always in
         # the source distribution independently of HAVE_CBLAS.
@@ -774,7 +778,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
             join('src', 'multiarray', 'arrayfunction_override.h'),
-            join('src', 'multiarray', 'buffer.h'),
+            join('src', 'multiarray', 'npy_buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
             join('src', 'multiarray', 'convert_datatype.h'),

@@ -1,8 +1,6 @@
 """Tests for polynomial module.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from functools import reduce
 
 import numpy as np
@@ -29,7 +27,7 @@ T9 = [0, 9, 0, -120, 0, 432, 0, -576, 0, 256]
 Tlist = [T0, T1, T2, T3, T4, T5, T6, T7, T8, T9]
 
 
-class TestConstants(object):
+class TestConstants:
 
     def test_polydomain(self):
         assert_equal(poly.polydomain, [-1, 1])
@@ -44,7 +42,7 @@ class TestConstants(object):
         assert_equal(poly.polyx, [0, 1])
 
 
-class TestArithmetic(object):
+class TestArithmetic:
 
     def test_polyadd(self):
         for i in range(5):
@@ -114,7 +112,7 @@ class TestArithmetic(object):
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
-class TestEvaluation(object):
+class TestEvaluation:
     # coefficients of 1 + 2*x + 3*x**2
     c1d = np.array([1., 2., 3.])
     c2d = np.einsum('i,j->ij', c1d, c1d)
@@ -287,7 +285,7 @@ class TestEvaluation(object):
         assert_(res.shape == (2, 3)*3)
 
 
-class TestIntegral(object):
+class TestIntegral:
 
     def test_polyint(self):
         # check exceptions
@@ -386,7 +384,7 @@ class TestIntegral(object):
         assert_almost_equal(res, tgt)
 
 
-class TestDerivative(object):
+class TestDerivative:
 
     def test_polyder(self):
         # check exceptions
@@ -426,7 +424,7 @@ class TestDerivative(object):
         assert_almost_equal(res, tgt)
 
 
-class TestVander(object):
+class TestVander:
     # some random values in [-1, 1)
     x = np.random.random((3, 5))*2 - 1
 
@@ -474,7 +472,7 @@ class TestVander(object):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestCompanion(object):
+class TestCompanion:
 
     def test_raises(self):
         assert_raises(ValueError, poly.polycompanion, [])
@@ -489,7 +487,7 @@ class TestCompanion(object):
         assert_(poly.polycompanion([1, 2])[0, 0] == -.5)
 
 
-class TestMisc(object):
+class TestMisc:
 
     def test_polyfromroots(self):
         res = poly.polyfromroots([])

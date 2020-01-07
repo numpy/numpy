@@ -1,18 +1,16 @@
 """ Basic functions for manipulating 2d arrays
 
 """
-from __future__ import division, absolute_import, print_function
-
 import functools
 
 from numpy.core.numeric import (
-    absolute, asanyarray, arange, zeros, greater_equal, multiply, ones,
+    asanyarray, arange, zeros, greater_equal, multiply, ones,
     asarray, where, int8, int16, int32, int64, empty, promote_types, diagonal,
     nonzero
     )
 from numpy.core.overrides import set_module
 from numpy.core import overrides
-from numpy.core import iinfo, transpose
+from numpy.core import iinfo
 
 
 __all__ = [
