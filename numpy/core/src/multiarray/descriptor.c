@@ -1712,17 +1712,11 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
         }
 
         /* Check for a deprecated Numeric-style typecode */
-        char *type = NULL;
-        Py_ssize_t len = 0;
         char *dep_tps[] = {"Bool", "Complex", "Float", "Int",
                            "Object0", "String0", "Timedelta64",
                            "Unicode0", "UInt", "Void0"};
         int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
         int i;
-
-        if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
-            goto error;
-        }
         for (i = 0; i < ndep_tps; ++i) {
             char *dep_tp = dep_tps[i];
 
