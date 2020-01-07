@@ -569,6 +569,7 @@ Math operations
     add
     subtract
     multiply
+    matmul
     divide
     logaddexp
     logaddexp2
@@ -577,6 +578,7 @@ Math operations
     negative
     positive
     power
+    float_power
     remainder
     mod
     fmod
@@ -635,6 +637,8 @@ The ratio of degrees to radians is :math:`180^{\circ}/\pi.`
     arcsinh
     arccosh
     arctanh
+    degrees
+    radians
     deg2rad
     rad2deg
 
