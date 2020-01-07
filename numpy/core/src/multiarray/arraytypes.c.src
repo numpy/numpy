@@ -1530,7 +1530,7 @@ OBJECT_to_@TOTYPE@(void *input, void *output, npy_intp n,
  * #convert = 1*18, 0*3, 1*2,
  *            1*18, 0*3, 1*2,
  *            0*23#
- * #convstr = (Int*9, Long*2, Float*4, Complex*3, Tuple*3, Long*2)*3#
+ * #convstr = (Long*9, Long*2, Float*4, Complex*3, Tuple*3, Long*2)*3#
  */
 
 #if @convert@
@@ -1556,7 +1556,7 @@ static void
             return;
         }
 
-#if defined(NPY_PY3K) && defined(IS_STRING)
+#if defined(IS_STRING)
         /* Work around some Python 3K */
         new = PyUnicode_FromEncodedObject(temp, "ascii", "strict");
         Py_DECREF(temp);
@@ -1571,13 +1571,7 @@ static void
 
             /* call out to the Python builtin given by convstr */
             args = Py_BuildValue("(N)", temp);
-#if defined(NPY_PY3K)
-#define PyInt_Type PyLong_Type
-#endif
             new = Py@convstr@_Type.tp_new(&Py@convstr@_Type, args, NULL);
-#if defined(NPY_PY3K)
-#undef PyInt_Type
-#endif
             Py_DECREF(args);
             temp = new;
             if (temp == NULL) {
