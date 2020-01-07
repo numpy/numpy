@@ -21,7 +21,7 @@ Command ``f2py``
 =================
 
 When used as a command line tool, ``f2py`` has three major modes,
-distinguished by the usage of ``-c`` and ``-h`` switches:
+distinguished by the usage of ``-c``, ``-m`` and ``-h`` switches:
 
 1. To scan Fortran sources and generate a signature file, use
 
@@ -50,9 +50,9 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
 
    ::
 
-     f2py <options> <fortran files>          \
-       [[ only: <fortran functions>  : ]     \
-        [ skip: <fortran functions>  : ]]... \
+     f2py -m <modulename> <options> <fortran files>   \
+       [[ only: <fortran functions>  : ]              \
+        [ skip: <fortran functions>  : ]]...          \
        [<fortran files> ...]
 
    The constructed extension module is saved as
@@ -79,8 +79,7 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
      functions. This feature enables using arbitrary C functions
      (defined in ``<includefile>``) in F2PY generated wrappers.
 
-     This option is deprecated. Use ``usercode`` statement to specify
-     C code snippets directly in signature files
+     .. note:: This option is deprecated. Use ``usercode`` statement to specify C code snippets directly in signature files.
 
    ``--[no-]wrap-functions``
 
