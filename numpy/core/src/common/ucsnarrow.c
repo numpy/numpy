@@ -107,12 +107,11 @@ PyUCS2Buffer_AsUCS4(Py_UNICODE const *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs
  * new_reference: PyUnicodeObject
  */
 NPY_NO_EXPORT PyUnicodeObject *
-PyUnicode_FromUCS4(char const *src, Py_ssize_t size, int swap, int align)
+PyUnicode_FromUCS4(char const *src_char, Py_ssize_t size, int swap, int align)
 {
     Py_ssize_t ucs4len = size / sizeof(npy_ucs4);
-    /* FIXME: This is safe, but better to rewrite to not cast away const */
-    npy_ucs4 *buf = (npy_ucs4 *)(char *)src;
-    int alloc = 0;
+    npy_ucs4 const *src = (npy_ucs4 const *)src_char;
+    npy_ucs4 *buf = NULL;
     PyUnicodeObject *ret;
 
     /* swap and align if needed */
@@ -122,22 +121,22 @@ PyUnicode_FromUCS4(char const *src, Py_ssize_t size, int swap, int align)
             PyErr_NoMemory();
             goto fail;
         }
-        alloc = 1;
         memcpy(buf, src, size);
         if (swap) {
             byte_swap_vector(buf, ucs4len, sizeof(npy_ucs4));
         }
+        src = buf;
     }
 
     /* trim trailing zeros */
-    while (ucs4len > 0 && buf[ucs4len - 1] == 0) {
+    while (ucs4len > 0 && src[ucs4len - 1] == 0) {
         ucs4len--;
     }
 
     /* produce PyUnicode object */
 #ifdef Py_UNICODE_WIDE
     {
-        ret = (PyUnicodeObject *)PyUnicode_FromUnicode((Py_UNICODE const*)buf,
+        ret = (PyUnicodeObject *)PyUnicode_FromUnicode((Py_UNICODE const*)src,
                                                        (Py_ssize_t) ucs4len);
         if (ret == NULL) {
             goto fail;
@@ -153,7 +152,7 @@ PyUnicode_FromUCS4(char const *src, Py_ssize_t size, int swap, int align)
             PyErr_NoMemory();
             goto fail;
         }
-        ucs2len = PyUCS2Buffer_FromUCS4(tmp, buf, ucs4len);
+        ucs2len = PyUCS2Buffer_FromUCS4(tmp, src, ucs4len);
         ret = (PyUnicodeObject *)PyUnicode_FromUnicode(tmp, (Py_ssize_t) ucs2len);
         free(tmp);
         if (ret == NULL) {
@@ -162,13 +161,13 @@ PyUnicode_FromUCS4(char const *src, Py_ssize_t size, int swap, int align)
     }
 #endif
 
-    if (alloc) {
+    if (buf) {
         free(buf);
     }
     return ret;
 
 fail:
-    if (alloc) {
+    if (buf) {
         free(buf);
     }
     return NULL;
