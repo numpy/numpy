@@ -1351,6 +1351,88 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
     }
 }
 
+/**
+ * Get a dtype instance from a python type
+ */
+static PyArray_Descr *
+_convert_from_type(PyObject *obj) {
+    PyTypeObject *typ = (PyTypeObject*)obj;
+
+    if (PyType_IsSubtype(typ, &PyGenericArrType_Type)) {
+        return PyArray_DescrFromTypeObject(obj);
+    }
+#if !defined(NPY_PY3K)
+    else if (typ == &PyInt_Type) {
+        return PyArray_DescrFromType(NPY_LONG);
+    }
+    else if (typ == &PyLong_Type) {
+        return PyArray_DescrFromType(NPY_LONGLONG);
+    }
+#else
+    else if (typ == &PyLong_Type) {
+        return PyArray_DescrFromType(NPY_LONG);
+    }
+#endif
+    else if (typ == &PyFloat_Type) {
+        return PyArray_DescrFromType(NPY_DOUBLE);
+    }
+    else if (typ == &PyComplex_Type) {
+        return PyArray_DescrFromType(NPY_CDOUBLE);
+    }
+    else if (typ == &PyBool_Type) {
+        return PyArray_DescrFromType(NPY_BOOL);
+    }
+    else if (typ == &PyBytes_Type) {
+        return PyArray_DescrFromType(NPY_STRING);
+    }
+    else if (typ == &PyUnicode_Type) {
+        return PyArray_DescrFromType(NPY_UNICODE);
+    }
+#if defined(NPY_PY3K)
+    else if (typ == &PyMemoryView_Type) {
+#else
+    else if (typ == &PyBuffer_Type) {
+#endif
+        return PyArray_DescrFromType(NPY_VOID);
+    }
+    else {
+        PyArray_Descr *at = NULL;
+        if (_arraydescr_from_dtype_attr(obj, &at)) {
+            /*
+             * Using dtype attribute, *at may be NULL if a
+             * RecursionError occurred.
+             */
+            if (at == NULL) {
+                return NULL;
+            }
+            return at;
+        }
+        /*
+         * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
+         * type might override the dtype if numpy does not otherwise
+         * support it.
+         */
+        if (npy_ctypes_check(typ)) {
+            return _arraydescr_from_ctypes_type(typ);
+        }
+
+        /* All other classes are treated as object */
+        return PyArray_DescrFromType(NPY_OBJECT);
+    }
+}
+
+/*
+ * Generate a vague error message when a function returned NULL but forgot
+ * to set an exception. We should aim to remove this eventually.
+ */
+static void
+_report_generic_error(void) {
+    PyErr_SetString(PyExc_TypeError, "data type not understood");
+}
+
+static int
+_convert_from_bytes(PyObject *obj, PyArray_Descr **at);
+
 /*NUMPY_API
  * Get typenum from an object -- None goes to NPY_DEFAULT_TYPE
  * This function takes a Python object representing a type and converts it
@@ -1369,10 +1451,6 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
 NPY_NO_EXPORT int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
-    int check_num = NPY_NOTYPE + 10;
-    int elsize = 0;
-    char endian = '=';
-
     *at = NULL;
 
     /* default */
@@ -1388,67 +1466,8 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
 
     if (PyType_Check(obj)) {
-        if (PyType_IsSubtype((PyTypeObject *)obj, &PyGenericArrType_Type)) {
-            *at = PyArray_DescrFromTypeObject(obj);
-            return (*at) ? NPY_SUCCEED : NPY_FAIL;
-        }
-        check_num = NPY_OBJECT;
-#if !defined(NPY_PY3K)
-        if (obj == (PyObject *)(&PyInt_Type)) {
-            check_num = NPY_LONG;
-        }
-        else if (obj == (PyObject *)(&PyLong_Type)) {
-            check_num = NPY_LONGLONG;
-        }
-#else
-        if (obj == (PyObject *)(&PyLong_Type)) {
-            check_num = NPY_LONG;
-        }
-#endif
-        else if (obj == (PyObject *)(&PyFloat_Type)) {
-            check_num = NPY_DOUBLE;
-        }
-        else if (obj == (PyObject *)(&PyComplex_Type)) {
-            check_num = NPY_CDOUBLE;
-        }
-        else if (obj == (PyObject *)(&PyBool_Type)) {
-            check_num = NPY_BOOL;
-        }
-        else if (obj == (PyObject *)(&PyBytes_Type)) {
-            check_num = NPY_STRING;
-        }
-        else if (obj == (PyObject *)(&PyUnicode_Type)) {
-            check_num = NPY_UNICODE;
-        }
-#if defined(NPY_PY3K)
-        else if (obj == (PyObject *)(&PyMemoryView_Type)) {
-#else
-        else if (obj == (PyObject *)(&PyBuffer_Type)) {
-#endif
-            check_num = NPY_VOID;
-        }
-        else {
-            if (_arraydescr_from_dtype_attr(obj, at)) {
-                /*
-                 * Using dtype attribute, *at may be NULL if a
-                 * RecursionError occurred.
-                 */
-                if (*at == NULL) {
-                    goto error;
-                }
-                return NPY_SUCCEED;
-            }
-            /*
-             * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
-             * type might override the dtype if numpy does not otherwise
-             * support it.
-             */
-            if (npy_ctypes_check((PyTypeObject *)obj)) {
-                *at = _arraydescr_from_ctypes_type((PyTypeObject *)obj);
-                return *at ? NPY_SUCCEED : NPY_FAIL;
-            }
-        }
-        goto finish;
+        *at = _convert_from_type(obj);
+        return (*at) ? NPY_SUCCEED : NPY_FAIL;
     }
 
     /* or a typecode string */
@@ -1473,121 +1492,16 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
 
     if (PyBytes_Check(obj)) {
-        char *type = NULL;
-        Py_ssize_t len = 0;
-
-        /* Check for a string typecode. */
-        if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
-            goto error;
-        }
-
-        /* Empty string is invalid */
-        if (len == 0) {
-            goto fail;
-        }
-
-        /* check for commas present or first (or second) element a digit */
-        if (_check_for_commastring(type, len)) {
-            *at = _convert_from_commastring(obj, 0);
-            return (*at) ? NPY_SUCCEED : NPY_FAIL;
-        }
-
-        /* Process the endian character. '|' is replaced by '='*/
-        switch (type[0]) {
-            case '>':
-            case '<':
-            case '=':
-                endian = type[0];
-                ++type;
-                --len;
-                break;
-
-            case '|':
-                endian = '=';
-                ++type;
-                --len;
-                break;
-        }
-
-        /* Just an endian character is invalid */
-        if (len == 0) {
-            goto fail;
-        }
-
-        /* Check for datetime format */
-        if (is_datetime_typestr(type, len)) {
-            *at = parse_dtype_from_datetime_typestr(type, len);
-            if (*at == NULL) {
-                return NPY_FAIL;
-            }
-            /* *at has byte order '=' at this point */
-            if (!PyArray_ISNBO(endian)) {
-                (*at)->byteorder = endian;
-            }
-            return NPY_SUCCEED;
-        }
-
-        /* A typecode like 'd' */
-        if (len == 1) {
-            /* Python byte string characters are unsigned */
-            check_num = (unsigned char) type[0];
-        }
-        /* A kind + size like 'f8' */
-        else {
-            char *typeend = NULL;
-            int kind;
-
-            /* Parse the integer, make sure it's the rest of the string */
-            elsize = (int)strtol(type + 1, &typeend, 10);
-            if (typeend - type == len) {
-
-                kind = type[0];
-                switch (kind) {
-                    case NPY_STRINGLTR:
-                    case NPY_STRINGLTR2:
-                        check_num = NPY_STRING;
-                        break;
-
-                    /*
-                     * When specifying length of UNICODE
-                     * the number of characters is given to match
-                     * the STRING interface.  Each character can be
-                     * more than one byte and itemsize must be
-                     * the number of bytes.
-                     */
-                    case NPY_UNICODELTR:
-                        check_num = NPY_UNICODE;
-                        elsize <<= 2;
-                        break;
-
-                    case NPY_VOIDLTR:
-                        check_num = NPY_VOID;
-                        break;
-
-                    default:
-                        if (elsize == 0) {
-                            check_num = NPY_NOTYPE+10;
-                        }
-                        /* Support for generic processing c8, i4, f8, etc...*/
-                        else {
-                            check_num = PyArray_TypestrConvert(elsize, kind);
-                            if (check_num == NPY_NOTYPE) {
-                                check_num += 10;
-                            }
-                            elsize = 0;
-                        }
-                }
-            }
-        }
+        return _convert_from_bytes(obj, at);
     }
     else if (PyTuple_Check(obj)) {
         /* or a tuple */
         *at = _convert_from_tuple(obj, 0);
         if (*at == NULL){
-            if (PyErr_Occurred()) {
-                return NPY_FAIL;
+            if (!PyErr_Occurred()) {
+                _report_generic_error();
             }
-            goto fail;
+            return NPY_FAIL;
         }
         return NPY_SUCCEED;
     }
@@ -1595,10 +1509,10 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         /* or a list */
         *at = _convert_from_array_descr(obj,0);
         if (*at == NULL) {
-            if (PyErr_Occurred()) {
-                return NPY_FAIL;
+            if (!PyErr_Occurred()) {
+                _report_generic_error();
             }
-            goto fail;
+            return NPY_FAIL;
         }
         return NPY_SUCCEED;
     }
@@ -1606,15 +1520,16 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         /* or a dictionary */
         *at = _convert_from_dict(obj,0);
         if (*at == NULL) {
-            if (PyErr_Occurred()) {
-                return NPY_FAIL;
+            if (!PyErr_Occurred()) {
+                _report_generic_error();
             }
-            goto fail;
+            return NPY_FAIL;
         }
         return NPY_SUCCEED;
     }
     else if (PyArray_Check(obj)) {
-        goto fail;
+        _report_generic_error();
+        return NPY_FAIL;
     }
     else {
         if (_arraydescr_from_dtype_attr(obj, at)) {
@@ -1623,7 +1538,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
              * RecursionError occurred.
              */
             if (*at == NULL) {
-                goto error;
+                return NPY_FAIL;
             }
             return NPY_SUCCEED;
         }
@@ -1636,71 +1551,173 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             *at = _arraydescr_from_ctypes_type(Py_TYPE(obj));
             return *at ? NPY_SUCCEED : NPY_FAIL;
         }
+        _report_generic_error();
+        return NPY_FAIL;
+    }
+}
+
+static int
+_convert_from_bytes(PyObject *obj, PyArray_Descr **at)
+{
+    /* Check for a string typecode. */
+    char *type = NULL;
+    Py_ssize_t len = 0;
+    if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
+        goto error;
+    }
+
+    /* Empty string is invalid */
+    if (len == 0) {
         goto fail;
     }
+
+    /* check for commas present or first (or second) element a digit */
+    if (_check_for_commastring(type, len)) {
+        *at = _convert_from_commastring(obj, 0);
+        return (*at) ? NPY_SUCCEED : NPY_FAIL;
+    }
+
+    /* Process the endian character. '|' is replaced by '='*/
+    char endian = '=';
+    switch (type[0]) {
+        case '>':
+        case '<':
+        case '=':
+            endian = type[0];
+            ++type;
+            --len;
+            break;
+
+        case '|':
+            endian = '=';
+            ++type;
+            --len;
+            break;
+    }
+
+    /* Just an endian character is invalid */
+    if (len == 0) {
+        goto fail;
+    }
+
+    /* Check for datetime format */
+    if (is_datetime_typestr(type, len)) {
+        *at = parse_dtype_from_datetime_typestr(type, len);
+        if (*at == NULL) {
+            return NPY_FAIL;
+        }
+        /* *at has byte order '=' at this point */
+        if (!PyArray_ISNBO(endian)) {
+            (*at)->byteorder = endian;
+        }
+        return NPY_SUCCEED;
+    }
+
+    int check_num = NPY_NOTYPE + 10;
+    int elsize = 0;
+    /* A typecode like 'd' */
+    if (len == 1) {
+        /* Python byte string characters are unsigned */
+        check_num = (unsigned char) type[0];
+    }
+    /* A kind + size like 'f8' */
+    else {
+        char *typeend = NULL;
+        int kind;
+
+        /* Parse the integer, make sure it's the rest of the string */
+        elsize = (int)strtol(type + 1, &typeend, 10);
+        if (typeend - type == len) {
+
+            kind = type[0];
+            switch (kind) {
+                case NPY_STRINGLTR:
+                case NPY_STRINGLTR2:
+                    check_num = NPY_STRING;
+                    break;
+
+                /*
+                 * When specifying length of UNICODE
+                 * the number of characters is given to match
+                 * the STRING interface.  Each character can be
+                 * more than one byte and itemsize must be
+                 * the number of bytes.
+                 */
+                case NPY_UNICODELTR:
+                    check_num = NPY_UNICODE;
+                    elsize <<= 2;
+                    break;
+
+                case NPY_VOIDLTR:
+                    check_num = NPY_VOID;
+                    break;
+
+                default:
+                    if (elsize == 0) {
+                        check_num = NPY_NOTYPE+10;
+                    }
+                    /* Support for generic processing c8, i4, f8, etc...*/
+                    else {
+                        check_num = PyArray_TypestrConvert(elsize, kind);
+                        if (check_num == NPY_NOTYPE) {
+                            check_num += 10;
+                        }
+                        elsize = 0;
+                    }
+            }
+        }
+    }
+
     if (PyErr_Occurred()) {
         goto fail;
     }
 
-finish:
     if ((check_num == NPY_NOTYPE + 10) ||
             (*at = PyArray_DescrFromType(check_num)) == NULL) {
         PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
-        if (typeDict != NULL) {
-            PyObject *item = NULL;
+        if (typeDict == NULL) {
+            goto fail;
+        }
+        PyObject *item = NULL;
 #if defined(NPY_PY3K)
-            if (PyBytes_Check(obj)) {
-                PyObject *tmp;
-                tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
-                if (tmp == NULL) {
+        PyObject *tmp;
+        tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
+        if (tmp == NULL) {
+            goto fail;
+        }
+        item = PyDict_GetItem(typeDict, tmp);
+        Py_DECREF(tmp);
+#else
+        item = PyDict_GetItem(typeDict, obj);
+#endif
+        if (item == NULL) {
+            goto fail;
+        }
+
+        /* Check for a deprecated Numeric-style typecode */
+        char *dep_tps[] = {"Bool", "Complex", "Float", "Int",
+                           "Object0", "String0", "Timedelta64",
+                           "Unicode0", "UInt", "Void0"};
+        int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
+        for (int i = 0; i < ndep_tps; ++i) {
+            char *dep_tp = dep_tps[i];
+
+            if (strncmp(type, dep_tp, strlen(dep_tp)) == 0) {
+                if (DEPRECATE("Numeric-style type codes are "
+                              "deprecated and will result in "
+                              "an error in the future.") < 0) {
                     goto fail;
                 }
-                item = PyDict_GetItem(typeDict, tmp);
-                Py_DECREF(tmp);
-            }
-            else {
-                item = PyDict_GetItem(typeDict, obj);
-            }
-#else
-            item = PyDict_GetItem(typeDict, obj);
-#endif
-            if (item) {
-                /* Check for a deprecated Numeric-style typecode */
-                if (PyBytes_Check(obj)) {
-                    char *type = NULL;
-                    Py_ssize_t len = 0;
-                    char *dep_tps[] = {"Bool", "Complex", "Float", "Int",
-                                       "Object0", "String0", "Timedelta64",
-                                       "Unicode0", "UInt", "Void0"};
-                    int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
-                    int i;
-
-                    if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
-                        goto error;
-                    }
-                    for (i = 0; i < ndep_tps; ++i) {
-                        char *dep_tp = dep_tps[i];
-
-                        if (strncmp(type, dep_tp, strlen(dep_tp)) == 0) {
-                            if (DEPRECATE("Numeric-style type codes are "
-                                          "deprecated and will result in "
-                                          "an error in the future.") < 0) {
-                                goto fail;
-                            }
-                        }
-                    }
-                }
-                return PyArray_DescrConverter(item, at);
             }
         }
-        goto fail;
+        return PyArray_DescrConverter(item, at);
     }
 
     if (PyDataType_ISUNSIZED(*at) && (*at)->elsize != elsize) {
         PyArray_DESCR_REPLACE(*at);
         if (*at == NULL) {
-            goto error;
+            return NPY_FAIL;
         }
         (*at)->elsize = elsize;
     }
@@ -1711,21 +1728,15 @@ finish:
         && (*at)->byteorder != endian) {
         PyArray_DESCR_REPLACE(*at);
         if (*at == NULL) {
-            goto error;
+            return NPY_FAIL;
         }
         (*at)->byteorder = endian;
     }
     return NPY_SUCCEED;
 
 fail:
-    if (PyBytes_Check(obj)) {
-        PyErr_Format(PyExc_TypeError,
-                "data type \"%s\" not understood", PyBytes_AS_STRING(obj));
-    }
-    else {
-        PyErr_SetString(PyExc_TypeError,
-                "data type not understood");
-    }
+    PyErr_Format(PyExc_TypeError,
+            "data type \"%s\" not understood", PyBytes_AS_STRING(obj));
 
 error:
     *at = NULL;
