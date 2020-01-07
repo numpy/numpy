@@ -1686,54 +1686,49 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             (*at = PyArray_DescrFromType(check_num)) == NULL) {
         PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
-        if (typeDict != NULL) {
-            PyObject *item = NULL;
+        if (typeDict == NULL) {
+            goto fail;
+        }
+        PyObject *item = NULL;
 #if defined(NPY_PY3K)
-            if (PyBytes_Check(obj)) {
-                PyObject *tmp;
-                tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
-                if (tmp == NULL) {
+        PyObject *tmp;
+        tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
+        if (tmp == NULL) {
+            goto fail;
+        }
+        item = PyDict_GetItem(typeDict, tmp);
+        Py_DECREF(tmp);
+#else
+        item = PyDict_GetItem(typeDict, obj);
+#endif
+        if (item == NULL) {
+            goto fail;
+        }
+
+        /* Check for a deprecated Numeric-style typecode */
+        char *type = NULL;
+        Py_ssize_t len = 0;
+        char *dep_tps[] = {"Bool", "Complex", "Float", "Int",
+                           "Object0", "String0", "Timedelta64",
+                           "Unicode0", "UInt", "Void0"};
+        int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
+        int i;
+
+        if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
+            goto error;
+        }
+        for (i = 0; i < ndep_tps; ++i) {
+            char *dep_tp = dep_tps[i];
+
+            if (strncmp(type, dep_tp, strlen(dep_tp)) == 0) {
+                if (DEPRECATE("Numeric-style type codes are "
+                              "deprecated and will result in "
+                              "an error in the future.") < 0) {
                     goto fail;
                 }
-                item = PyDict_GetItem(typeDict, tmp);
-                Py_DECREF(tmp);
-            }
-            else {
-                item = PyDict_GetItem(typeDict, obj);
-            }
-#else
-            item = PyDict_GetItem(typeDict, obj);
-#endif
-            if (item) {
-                /* Check for a deprecated Numeric-style typecode */
-                if (PyBytes_Check(obj)) {
-                    char *type = NULL;
-                    Py_ssize_t len = 0;
-                    char *dep_tps[] = {"Bool", "Complex", "Float", "Int",
-                                       "Object0", "String0", "Timedelta64",
-                                       "Unicode0", "UInt", "Void0"};
-                    int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
-                    int i;
-
-                    if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
-                        goto error;
-                    }
-                    for (i = 0; i < ndep_tps; ++i) {
-                        char *dep_tp = dep_tps[i];
-
-                        if (strncmp(type, dep_tp, strlen(dep_tp)) == 0) {
-                            if (DEPRECATE("Numeric-style type codes are "
-                                          "deprecated and will result in "
-                                          "an error in the future.") < 0) {
-                                goto fail;
-                            }
-                        }
-                    }
-                }
-                return PyArray_DescrConverter(item, at);
             }
         }
-        goto fail;
+        return PyArray_DescrConverter(item, at);
     }
 
     if (PyDataType_ISUNSIZED(*at) && (*at)->elsize != elsize) {
