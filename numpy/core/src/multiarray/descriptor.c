@@ -1314,18 +1314,9 @@ _convert_from_type(PyObject *obj) {
     if (PyType_IsSubtype(typ, &PyGenericArrType_Type)) {
         return PyArray_DescrFromTypeObject(obj);
     }
-#if !defined(NPY_PY3K)
-    else if (typ == &PyInt_Type) {
-        return PyArray_DescrFromType(NPY_LONG);
-    }
-    else if (typ == &PyLong_Type) {
-        return PyArray_DescrFromType(NPY_LONGLONG);
-    }
-#else
     else if (typ == &PyLong_Type) {
         return PyArray_DescrFromType(NPY_LONG);
     }
-#endif
     else if (typ == &PyFloat_Type) {
         return PyArray_DescrFromType(NPY_DOUBLE);
     }
@@ -1341,11 +1332,7 @@ _convert_from_type(PyObject *obj) {
     else if (typ == &PyUnicode_Type) {
         return PyArray_DescrFromType(NPY_UNICODE);
     }
-#if defined(NPY_PY3K)
     else if (typ == &PyMemoryView_Type) {
-#else
-    else if (typ == &PyBuffer_Type) {
-#endif
         return PyArray_DescrFromType(NPY_VOID);
     }
     else {
