@@ -584,40 +584,33 @@ _convert_from_array_descr(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_list(PyObject *obj, int align)
 {
-    int n, i;
-    int totalsize;
-    PyObject *fields;
-    PyArray_Descr *conv = NULL;
-    PyArray_Descr *new;
-    PyObject *key, *tup;
-    PyObject *nameslist = NULL;
-    int maxalign = 0;
-    /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
-
-    n = PyList_GET_SIZE(obj);
+    int n = PyList_GET_SIZE(obj);
     /*
      * Ignore any empty string at end which _internal._commastring
      * can produce
      */
-    key = PyList_GET_ITEM(obj, n-1);
-    if (PyBytes_Check(key) && PyBytes_GET_SIZE(key) == 0) {
+    PyObject *last_item = PyList_GET_ITEM(obj, n-1);
+    if (PyBytes_Check(last_item) && PyBytes_GET_SIZE(last_item) == 0) {
         n = n - 1;
     }
     /* End ignore code.*/
-    totalsize = 0;
     if (n == 0) {
         return NULL;
     }
-    nameslist = PyTuple_New(n);
+    PyObject *nameslist = PyTuple_New(n);
     if (!nameslist) {
         return NULL;
     }
-    fields = PyDict_New();
-    for (i = 0; i < n; i++) {
-        tup = PyTuple_New(2);
-        key = PyUString_FromFormat("f%d", i);
-        conv = _arraydescr_run_converter(PyList_GET_ITEM(obj, i), align);
+    PyObject *fields = PyDict_New();
+
+    /* Types with fields need the Python C API for field access */
+    char dtypeflags = NPY_NEEDS_PYAPI;
+    int maxalign = 0;
+    int totalsize = 0;
+    for (int i = 0; i < n; i++) {
+        PyObject *tup = PyTuple_New(2);
+        PyObject *key = PyUString_FromFormat("f%d", i);
+        PyArray_Descr *conv = _arraydescr_run_converter(PyList_GET_ITEM(obj, i), align);
         if (conv == NULL) {
             Py_DECREF(tup);
             Py_DECREF(key);
@@ -640,7 +633,7 @@ _convert_from_list(PyObject *obj, int align)
         PyTuple_SET_ITEM(nameslist, i, key);
         totalsize += conv->elsize;
     }
-    new = PyArray_DescrNewFromType(NPY_VOID);
+    PyArray_Descr *new = PyArray_DescrNewFromType(NPY_VOID);
     new->fields = fields;
     new->names = nameslist;
     new->flags = dtypeflags;
