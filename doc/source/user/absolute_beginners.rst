@@ -146,9 +146,7 @@ element "0".
 More information about arrays 
 -----------------------------
 
-::
-
-  1D array, 2D array, ndarray, vector, matrix
+*This section covers* ``1D array``, ``2D array``, ``ndarray``, ``vector``, ``matrix``
 
 ------
 
@@ -156,8 +154,11 @@ You might occasionally hear an array referred to as a "ndarray," which is
 shorthand for "N-dimensional array." An N-dimensional array is simply an array
 with any number of dimensions. You might also hear **1-D**, or one-dimensional
 array, **2-D**, or two-dimensional array, and so on. The NumPy ``ndarray`` class
-is used to represent both matrices and vectors. A **vector** is an array with a
-single column, while a **matrix** refers to an array with multiple columns.
+is used to represent both matrices and vectors. A **vector** is an array with a 
+single dimension (there's no difference
+between row and column vectors), while a **matrix** refers to an
+array with two dimensions. For **3-D** or higher dimensional arrays, the term
+**tensor** is also commonly used.
 
 **What are the attributes of an array?**
 
@@ -193,15 +194,8 @@ How to create a basic array
 ---------------------------
 
 
-::
-
-  np.array()
-  np.zeros()
-  np.ones()
-  np.empty()
-  np.arange()
-  np.linspace()
-  dtype
+*This section covers* ``np.array()``, ``np.zeros()``, ``np.ones()``, 
+``np.empty()``, ``np.arange()``, ``np.linspace()``, ``dtype``
 
 -----
 
@@ -271,10 +265,7 @@ Adding, removing, and sorting elements
 --------------------------------------
 
 
-::
-
-  np.sort()
-  np.concatenate()
+*This section covers* ``np.sort()``, ``np.concatenate()``
 
 -----
 
@@ -337,11 +328,8 @@ How do you know the shape and size of an array?
 -----------------------------------------------
 
 
-::
-
-  ndarray.ndim()
-  ndarray.size()
-  ndarray.shape()
+*This section covers* ``ndarray.ndim()``, ``ndarray.size()``, 
+``ndarray.shape()``
 
 -----
 
@@ -389,9 +377,7 @@ Can you reshape an array?
 -------------------------
 
 
-::
-
-  arr.reshape()
+*This section covers* ``arr.reshape()``
 
 -----
   
@@ -453,10 +439,7 @@ to preserve the indexing convention or not reorder the data.
 How to convert a 1D array into a 2D array (how to add a new axis to an array)
 -----------------------------------------------------------------------------
 
-::
-
-  np.newaxis
-  np.expand_dims
+*This section covers* ``np.newaxis``, ``np.expand_dims``
 
 -----
 
@@ -637,16 +620,8 @@ How to create an array from existing data
 -----------------------------------------
 
 
-::
-
-  slicing and indexing
-
-  np.vstack()
-  np.hstack()
-  np.hsplit()
-  
-  .view()
-  copy()
+*This section covers* ``slicing and indexing``, ``np.vstack()``, ``np.hstack()``, 
+``np.hsplit()``, ``.view()``, ``copy()``
 
 -----
 
@@ -747,9 +722,7 @@ Using the ``copy`` method will make a complete copy of the array and its data (a
 Basic array operations 
 ----------------------
 
-::
-
-  Addition, subtraction, multiplication, division, and more!
+*This section covers addition, subtraction, multiplication, division, and more*
 
 -----
 
@@ -832,9 +805,7 @@ More useful array operations
 ----------------------------
 
 
-::
-
-  Maximum, minimum, sum, mean, product, standard deviation, and more
+*This section covers maximum, minimum, sum, mean, product, standard deviation, and more*
 
 NumPy also performs aggregation functions. In addition to ``min``,  ``max``, and
 ``sum``, you can easily run ``mean`` to get the average, ``prod`` to get the
@@ -882,10 +853,7 @@ How to inspect the size and shape of a NumPy array
 --------------------------------------------------
 
 
-::
-
-  arr.shape()
-  arr.size()
+*This section covers* ``arr.shape()``, ``arr.size()``
 
 -----
 
@@ -1113,9 +1081,7 @@ You can generate a 2 x 4 array of random integers between 0 and 4 with::
 How to get unique items and counts 
 ----------------------------------
 
-::
-
-  np.unique()
+*This section covers* ``np.unique()``
 
 -----
 
@@ -1191,11 +1157,7 @@ Transposing and reshaping a matrix
 ----------------------------------
 
 
-::
-
-  arr.reshape()
-  arr.transpose()
-  arr.T()
+*This section covers* ``arr.reshape()``, ``arr.transpose()``, ``arr.T()``
 
 -----
 
@@ -1239,9 +1201,7 @@ How to reverse an array
 -----------------------
 
 
-::
-
-  np.flip
+*This section covers* ``np.flip``
 
 -----
  
@@ -1335,10 +1295,7 @@ Reshaping and flattening multidimensional arrays
 ------------------------------------------------
 
 
-::
-
-  .flatten()
-  ravel()
+*This section covers* ``.flatten()``, ``ravel()``
   
 There are two popular ways to flatten an array: ``.flatten()`` and ``.ravel()``.
 The primary difference between the two is that the new array created using
@@ -1399,11 +1356,7 @@ For example::
 How to access the docstring for more information
 ------------------------------------------------
 
-::
-
-  help()
-  ?
-  ??
+*This section covers* ``help()``, ``?``, ``??``
 
 -----
 
@@ -1683,13 +1636,8 @@ error value for that prediction and a score for the quality of the model.
 How to save and load NumPy objects 
 ----------------------------------
 
-.. autosummary::
-
-    numpy.save
-    numpy.savez
-    numpy.savetxt
-    numpy.load
-    numpy.loadtxt
+*This section covers* ``numpy.save``, ``numpy.savez``, ``numpy.savetxt``, 
+``numpy.load``, ``numpy.loadtxt``
 
 -----
 
