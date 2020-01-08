@@ -981,35 +981,21 @@ _use_fields_dict(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_dict(PyObject *obj, int align)
 {
-    PyArray_Descr *new;
-    PyObject *fields = NULL;
-    PyObject *names  = NULL;
-    PyObject *offsets= NULL;
-    PyObject *descrs = NULL;
-    PyObject *titles = NULL;
-    PyObject *metadata, *tmp;
-    int n, i;
-    int totalsize, itemsize;
-    int maxalign = 0;
-    /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
-    int has_out_of_order_fields = 0;
-
-    fields = PyDict_New();
+    PyObject *fields = PyDict_New();
     if (fields == NULL) {
         return (PyArray_Descr *)PyErr_NoMemory();
     }
     /*
      * Use PyMapping_GetItemString to support dictproxy objects as well.
      */
-    names = PyMapping_GetItemString(obj, "names");
+    PyObject *names = PyMapping_GetItemString(obj, "names");
     if (names == NULL) {
         Py_DECREF(fields);
         /* XXX should check this is a KeyError */
         PyErr_Clear();
         return _use_fields_dict(obj, align);
     }
-    descrs = PyMapping_GetItemString(obj, "formats");
+    PyObject *descrs = PyMapping_GetItemString(obj, "formats");
     if (descrs == NULL) {
         Py_DECREF(fields);
         /* XXX should check this is a KeyError */
@@ -1017,12 +1003,12 @@ _convert_from_dict(PyObject *obj, int align)
         Py_DECREF(names);
         return _use_fields_dict(obj, align);
     }
-    n = PyObject_Length(names);
-    offsets = PyMapping_GetItemString(obj, "offsets");
+    int n = PyObject_Length(names);
+    PyObject *offsets = PyMapping_GetItemString(obj, "offsets");
     if (!offsets) {
         PyErr_Clear();
     }
-    titles = PyMapping_GetItemString(obj, "titles");
+    PyObject *titles = PyMapping_GetItemString(obj, "titles");
     if (!titles) {
         PyErr_Clear();
     }
@@ -1040,7 +1026,7 @@ _convert_from_dict(PyObject *obj, int align)
      * If a property 'aligned' is in the dict, it overrides the align flag
      * to be True if it not already true.
      */
-    tmp = PyMapping_GetItemString(obj, "aligned");
+    PyObject *tmp = PyMapping_GetItemString(obj, "aligned");
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
@@ -1057,16 +1043,16 @@ _convert_from_dict(PyObject *obj, int align)
         Py_DECREF(tmp);
     }
 
-    totalsize = 0;
-    for (i = 0; i < n; i++) {
-        PyObject *tup, *descr, *ind, *title, *name, *off;
-        int len, _align = 1;
-        PyArray_Descr *newdescr;
-
+    /* Types with fields need the Python C API for field access */
+    char dtypeflags = NPY_NEEDS_PYAPI;
+    int totalsize = 0;
+    int maxalign = 0;
+    int has_out_of_order_fields = 0;
+    for (int i = 0; i < n; i++) {
         /* Build item to insert (descr, offset, [title])*/
-        len = 2;
-        title = NULL;
-        ind = PyInt_FromLong(i);
+        int len = 2;
+        PyObject *title = NULL;
+        PyObject *ind = PyInt_FromLong(i);
         if (titles) {
             title=PyObject_GetItem(titles, ind);
             if (title && title != Py_None) {
@@ -1077,14 +1063,14 @@ _convert_from_dict(PyObject *obj, int align)
             }
             PyErr_Clear();
         }
-        tup = PyTuple_New(len);
-        descr = PyObject_GetItem(descrs, ind);
+        PyObject *tup = PyTuple_New(len);
+        PyObject *descr = PyObject_GetItem(descrs, ind);
         if (!descr) {
             Py_DECREF(tup);
             Py_DECREF(ind);
             goto fail;
         }
-        newdescr = _arraydescr_run_converter(descr, align);
+        PyArray_Descr *newdescr = _arraydescr_run_converter(descr, align);
         Py_DECREF(descr);
         if (newdescr == NULL) {
             Py_DECREF(tup);
@@ -1092,19 +1078,19 @@ _convert_from_dict(PyObject *obj, int align)
             goto fail;
         }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
+        int _align = 1;
         if (align) {
             _align = newdescr->alignment;
             maxalign = PyArray_MAX(maxalign,_align);
         }
         if (offsets) {
-            long offset;
-            off = PyObject_GetItem(offsets, ind);
+            PyObject *off = PyObject_GetItem(offsets, ind);
             if (!off) {
                 Py_DECREF(tup);
                 Py_DECREF(ind);
                 goto fail;
             }
-            offset = PyArray_PyIntAsInt(off);
+            long offset = PyArray_PyIntAsInt(off);
             if (error_converting(offset)) {
                 Py_DECREF(off);
                 Py_DECREF(tup);
@@ -1150,7 +1136,7 @@ _convert_from_dict(PyObject *obj, int align)
         if (len == 3) {
             PyTuple_SET_ITEM(tup, 2, title);
         }
-        name = PyObject_GetItem(names, ind);
+        PyObject *name = PyObject_GetItem(names, ind);
         Py_DECREF(ind);
         if (!name) {
             Py_DECREF(tup);
@@ -1187,7 +1173,7 @@ _convert_from_dict(PyObject *obj, int align)
         dtypeflags |= (newdescr->flags & NPY_FROM_FIELDS);
     }
 
-    new = PyArray_DescrNewFromType(NPY_VOID);
+    PyArray_Descr *new = PyArray_DescrNewFromType(NPY_VOID);
     if (new == NULL) {
         goto fail;
     }
@@ -1233,7 +1219,7 @@ _convert_from_dict(PyObject *obj, int align)
     if (tmp == NULL) {
         PyErr_Clear();
     } else {
-        itemsize = (int)PyArray_PyIntAsInt(tmp);
+        int itemsize = (int)PyArray_PyIntAsInt(tmp);
         Py_DECREF(tmp);
         if (error_converting(itemsize)) {
             Py_DECREF(new);
@@ -1262,7 +1248,7 @@ _convert_from_dict(PyObject *obj, int align)
     }
 
     /* Add the metadata if provided */
-    metadata = PyMapping_GetItemString(obj, "metadata");
+    PyObject *metadata = PyMapping_GetItemString(obj, "metadata");
 
     if (metadata == NULL) {
         PyErr_Clear();
