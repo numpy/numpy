@@ -4216,15 +4216,6 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
         return -1;                                                      \
     }
 
-/*
- * In Py3K, int is no longer a fixed-width integer type, so don't
- * inherit numpy.int_ from it.
- */
-#define INHERIT_INT(child, parent2)                                     \
-    SINGLE_INHERIT(child, parent2);
-
-#define DUAL_INHERIT_COMPARE(child, parent1, parent2)
-
 #define DUAL_INHERIT2(child, parent1, parent2)                          \
     Py##child##ArrType_Type.tp_base = &Py##parent1##_Type;              \
     Py##child##ArrType_Type.tp_bases =                                  \
@@ -4232,7 +4223,6 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
                       &Py##parent2##ArrType_Type);                      \
     Py##child##ArrType_Type.tp_richcompare =                            \
         Py##parent1##_Type.tp_richcompare;                              \
-    DUAL_INHERIT_COMPARE(child, parent1, parent2)                       \
     Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;       \
     if (PyType_Ready(&Py##child##ArrType_Type) < 0) {                   \
         PyErr_Print();                                                  \
@@ -4245,20 +4235,9 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(Bool, Generic);
     SINGLE_INHERIT(Byte, SignedInteger);
     SINGLE_INHERIT(Short, SignedInteger);
-
-#if NPY_SIZEOF_INT == NPY_SIZEOF_LONG
-    INHERIT_INT(Int, SignedInteger);
-#else
     SINGLE_INHERIT(Int, SignedInteger);
-#endif
-
-    INHERIT_INT(Long, SignedInteger);
-
-#if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG
-    INHERIT_INT(LongLong, SignedInteger);
-#else
+    SINGLE_INHERIT(Long, SignedInteger);
     SINGLE_INHERIT(LongLong, SignedInteger);
-#endif
 
     /* Datetime doesn't fit in any category */
     SINGLE_INHERIT(Datetime, Generic);
@@ -4297,9 +4276,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
 
 #undef SINGLE_INHERIT
 #undef DUAL_INHERIT
-#undef INHERIT_INT
 #undef DUAL_INHERIT2
-#undef DUAL_INHERIT_COMPARE
 
     /*
      * Clean up string and unicode array types so they act more like
