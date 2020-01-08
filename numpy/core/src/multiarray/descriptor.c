@@ -243,20 +243,17 @@ is_datetime_typestr(char const *type, Py_ssize_t len)
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj, int align)
 {
-    PyArray_Descr *type, *res;
-    PyObject *val;
-    int errflag;
-
     if (PyTuple_GET_SIZE(obj) != 2) {
         return NULL;
     }
-    type = _arraydescr_run_converter(PyTuple_GET_ITEM(obj, 0), align);
+    PyArray_Descr *type = _arraydescr_run_converter(PyTuple_GET_ITEM(obj, 0), align);
     if (type == NULL) {
         return NULL;
     }
-    val = PyTuple_GET_ITEM(obj,1);
+    PyObject *val = PyTuple_GET_ITEM(obj,1);
     /* try to interpret next item as a type */
-    res = _use_inherit(type, val, &errflag);
+    int errflag;
+    PyArray_Descr *res = _use_inherit(type, val, &errflag);
     if (res || errflag) {
         Py_DECREF(type);
         return res;
@@ -303,11 +300,6 @@ _convert_from_tuple(PyObject *obj, int align)
          * a new fields attribute.
          */
         PyArray_Dims shape = {NULL, -1};
-        PyArray_Descr *newdescr = NULL;
-        npy_intp items;
-        int i, overflowed;
-        int nbytes;
-
         if (!(PyArray_IntpConverter(val, &shape)) || (shape.len > NPY_MAXDIMS)) {
             PyErr_SetString(PyExc_ValueError,
                     "invalid shape in fixed-type tuple.");
@@ -334,7 +326,7 @@ _convert_from_tuple(PyObject *obj, int align)
         }
 
         /* validate and set shape */
-        for (i=0; i < shape.len; i++) {
+        for (int i=0; i < shape.len; i++) {
             if (shape.ptr[i] < 0) {
                 PyErr_SetString(PyExc_ValueError,
                                 "invalid shape in fixed-type tuple: "
@@ -348,7 +340,9 @@ _convert_from_tuple(PyObject *obj, int align)
                 goto fail;
             }
         }
-        items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
+        npy_intp items = PyArray_OverflowMultiplyList(shape.ptr, shape.len);
+        int overflowed;
+        int nbytes;
         if (items < 0 || items > NPY_MAX_INT) {
             overflowed = 1;
         }
@@ -362,13 +356,14 @@ _convert_from_tuple(PyObject *obj, int align)
                             "bytes must fit into a C int.");
             goto fail;
         }
-        newdescr = PyArray_DescrNewFromType(NPY_VOID);
+        PyArray_Descr *newdescr = PyArray_DescrNewFromType(NPY_VOID);
         if (newdescr == NULL) {
             goto fail;
         }
         newdescr->elsize = nbytes;
         newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
         if (newdescr->subarray == NULL) {
+            Py_DECREF(newdescr);
             PyErr_NoMemory();
             goto fail;
         }
@@ -387,13 +382,15 @@ _convert_from_tuple(PyObject *obj, int align)
          */
         newdescr->subarray->shape = PyTuple_New(shape.len);
         if (newdescr->subarray->shape == NULL) {
+            Py_DECREF(newdescr);
             goto fail;
         }
-        for (i=0; i < shape.len; i++) {
+        for (int i=0; i < shape.len; i++) {
             PyTuple_SET_ITEM(newdescr->subarray->shape, i,
                              PyInt_FromLong((long)shape.ptr[i]));
 
             if (PyTuple_GET_ITEM(newdescr->subarray->shape, i) == NULL) {
+                Py_DECREF(newdescr);
                 goto fail;
             }
         }
@@ -403,7 +400,6 @@ _convert_from_tuple(PyObject *obj, int align)
 
     fail:
         Py_XDECREF(type);
-        Py_XDECREF(newdescr);
         npy_free_cache_dim_obj(shape);
         return NULL;
     }
