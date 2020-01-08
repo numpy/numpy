@@ -1347,23 +1347,6 @@ PyUFunc_TrueDivisionTypeResolver(PyUFuncObject *ufunc,
     return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
                                         type_tup, out_dtypes);
 }
-/*
- * Function to check and report floor division warning when python2.x is
- * invoked with -3 switch
- * See PEP238 and #7949 for numpy
- * This function will not be hit for py3 or when __future__ imports division.
- * See generate_umath.py for reason
-*/
-NPY_NO_EXPORT int
-PyUFunc_MixedDivisionTypeResolver(PyUFuncObject *ufunc,
-                                  NPY_CASTING casting,
-                                  PyArrayObject **operands,
-                                  PyObject *type_tup,
-                                  PyArray_Descr **out_dtypes)
-{
-    return PyUFunc_DivisionTypeResolver(ufunc, casting, operands,
-                                        type_tup, out_dtypes);
-}
 
 static int
 find_userloop(PyUFuncObject *ufunc,
