@@ -346,17 +346,8 @@ class TestAttributes:
 
         numpy_int = np.int_(0)
 
-        if sys.version_info[0] >= 3:
-            # On Py3k int_ should not inherit from int, because it's not
-            # fixed-width anymore
-            assert_equal(isinstance(numpy_int, int), False)
-        else:
-            # Otherwise, it should inherit from int...
-            assert_equal(isinstance(numpy_int, int), True)
-
-            # ... and fast-path checks on C-API level should also work
-            from numpy.core._multiarray_tests import test_int_subclass
-            assert_equal(test_int_subclass(numpy_int), True)
+        # int_ doesn't inherit from Python int, because it is not fixed width
+        assert_equal(isinstance(numpy_int, int), False)
 
     def test_stridesattr(self):
         x = self.one

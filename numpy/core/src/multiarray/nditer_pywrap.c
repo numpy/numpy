@@ -2490,12 +2490,7 @@ NPY_NO_EXPORT PyMappingMethods npyiter_as_mapping = {
 };
 
 NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.nditer",                             /* tp_name */
     sizeof(NewNpyArrayIterObject),              /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -2504,11 +2499,7 @@ NPY_NO_EXPORT PyTypeObject NpyIter_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
     &npyiter_as_sequence,                       /* tp_as_sequence */

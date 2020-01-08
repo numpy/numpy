@@ -152,11 +152,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 {
-#if defined(NPY_PY3K)
     Py_buffer view;
-#else
-    Py_ssize_t buflen;
-#endif
 
     buf->ptr = NULL;
     buf->flags = NPY_ARRAY_BEHAVED;
@@ -165,7 +161,6 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
         return NPY_SUCCEED;
     }
 
-#if defined(NPY_PY3K)
     if (PyObject_GetBuffer(obj, &view,
                 PyBUF_ANY_CONTIGUOUS|PyBUF_WRITABLE|PyBUF_SIMPLE) != 0) {
         PyErr_Clear();
@@ -192,22 +187,6 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     if (PyMemoryView_Check(obj)) {
         buf->base = PyMemoryView_GET_BASE(obj);
     }
-#else
-    if (PyObject_AsWriteBuffer(obj, &(buf->ptr), &buflen) < 0) {
-        PyErr_Clear();
-        buf->flags &= ~NPY_ARRAY_WRITEABLE;
-        if (PyObject_AsReadBuffer(obj, (const void **)&(buf->ptr),
-                                  &buflen) < 0) {
-            return NPY_FAIL;
-        }
-    }
-    buf->len = (npy_intp) buflen;
-
-    /* Point to the base of the buffer object if present */
-    if (PyBuffer_Check(obj)) {
-        buf->base = ((PyArray_Chunk *)obj)->base;
-    }
-#endif
     if (buf->base == NULL) {
         buf->base = obj;
     }

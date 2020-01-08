@@ -793,12 +793,7 @@ arrayflags_new(PyTypeObject *NPY_UNUSED(self), PyObject *args, PyObject *NPY_UNU
 }
 
 NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.flagsobj",
     sizeof(PyArrayFlagsObject),
     0,                                          /* tp_itemsize */
@@ -807,11 +802,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    (cmpfunc)arrayflags_compare,                /* tp_compare */
-#endif
     (reprfunc)arrayflags_print,                 /* tp_repr */
     0,                                          /* tp_as_number */
     0,                                          /* tp_as_sequence */

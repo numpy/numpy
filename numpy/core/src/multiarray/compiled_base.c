@@ -1447,7 +1447,6 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
         }
     }
 
-#if defined(NPY_PY3K)
     if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyUnicode_Type, &str)) {
         return NULL;
     }
@@ -1456,13 +1455,6 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (docstr == NULL) {
         return NULL;
     }
-#else
-    if (!PyArg_ParseTuple(args, "OO!:add_docstring", &obj, &PyString_Type, &str)) {
-        return NULL;
-    }
-
-    docstr = PyString_AS_STRING(str);
-#endif
 
 #define _TESTDOC1(typebase) (Py_TYPE(obj) == &Py##typebase##_Type)
 #define _TESTDOC2(typebase) (Py_TYPE(obj) == Py##typebase##_TypePtr)

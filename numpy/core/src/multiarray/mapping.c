@@ -227,11 +227,7 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
 
     /* Obvious single-entry cases */
     if (0  /* to aid macros below */
-#if !defined(NPY_PY3K)
-            || PyInt_CheckExact(index)
-#else
             || PyLong_CheckExact(index)
-#endif
             || index == Py_None
             || PySlice_Check(index)
             || PyArray_Check(index)
@@ -481,11 +477,7 @@ prepare_index(PyArrayObject *self, PyObject *index,
              *
              * Check for integers first, purely for performance
              */
-#if !defined(NPY_PY3K)
-            if (PyInt_CheckExact(obj) || !PyArray_Check(obj)) {
-#else
             if (PyLong_CheckExact(obj) || !PyArray_Check(obj)) {
-#endif
                 npy_intp ind = PyArray_PyIntAsIntp(obj);
 
                 if (error_converting(ind)) {
@@ -3340,12 +3332,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
  * to a[indexobj].flat but the latter gets to use slice syntax.
  */
 NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
-#if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
-#else
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
-#endif
     "numpy.mapiter",                            /* tp_name */
     sizeof(PyArrayMapIterObject),               /* tp_basicsize */
     0,                                          /* tp_itemsize */
@@ -3354,11 +3341,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
-#if defined(NPY_PY3K)
     0,                                          /* tp_reserved */
-#else
-    0,                                          /* tp_compare */
-#endif
     0,                                          /* tp_repr */
     0,                                          /* tp_as_number */
     0,                                          /* tp_as_sequence */

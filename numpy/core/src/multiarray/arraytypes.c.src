@@ -330,11 +330,7 @@ string_to_long_double(PyObject*op)
     /* Convert python long objects to a longdouble, without precision or range
      * loss via a double.
      */
-    if ((PyLong_Check(op) && !PyBool_Check(op))
-#if !defined(NPY_PY3K)
-        || (PyInt_Check(op) && !PyBool_Check(op))
-#endif
-    ) {
+    if ((PyLong_Check(op) && !PyBool_Check(op))) {
         return npy_longdouble_from_PyLong(op);
     }
 
@@ -470,7 +466,6 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
                 "setting an array element with a sequence");
         return -1;
     }
-#if defined(NPY_PY3K)
     if (PyBytes_Check(op)) {
         /* Try to decode from ASCII */
         temp = PyUnicode_FromEncodedObject(op, "ASCII", "strict");
@@ -479,9 +474,6 @@ UNICODE_setitem(PyObject *op, void *ov, void *vap)
         }
     }
     else if ((temp=PyObject_Str(op)) == NULL) {
-#else
-    if ((temp=PyObject_Unicode(op)) == NULL) {
-#endif
         return -1;
     }
     ptr = PyUnicode_AS_UNICODE(temp);
@@ -561,7 +553,6 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
                 "setting an array element with a sequence");
         return -1;
     }
-#if defined(NPY_PY3K)
     if (PyUnicode_Check(op)) {
         /* Assume ASCII codec -- function similarly as Python 2 */
         temp = PyUnicode_AsASCIIString(op);
@@ -588,11 +579,6 @@ STRING_setitem(PyObject *op, void *ov, void *vap)
             return -1;
         }
     }
-#else
-    if ((temp = PyObject_Str(op)) == NULL) {
-        return -1;
-    }
-#endif
     if (PyBytes_AsStringAndSize(temp, &ptr, &len) < 0) {
         Py_DECREF(temp);
         return -1;
@@ -919,7 +905,6 @@ VOID_setitem(PyObject *op, void *input, void *vap)
      * undiscerning case: It interprets any object as a buffer
      * and reads as many bytes as possible, padding with 0.
      */
-#if defined(NPY_PY3K)
     {
         Py_buffer view;
 
@@ -933,20 +918,6 @@ VOID_setitem(PyObject *op, void *input, void *vap)
         PyBuffer_Release(&view);
         _dealloc_cached_buffer_info(op);
     }
-#else
-    {
-        const void *buffer;
-        Py_ssize_t buflen;
-
-        if (PyObject_AsReadBuffer(op, &buffer, &buflen) < 0) {
-            return -1;
-        }
-        memcpy(ip, buffer, PyArray_MIN(buflen, itemsize));
-        if (itemsize > buflen) {
-            memset(ip + buflen, 0, itemsize - buflen);
-        }
-    }
-#endif
     return 0;
 }
 

@@ -1059,12 +1059,10 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
         if (argpart == NULL) {
             ret = argsort(valptr, idxptr, N, op);
-#if defined(NPY_PY3K)
             /* Object comparisons may raise an exception in Python 3 */
             if (hasrefs && PyErr_Occurred()) {
                 ret = -1;
             }
-#endif
             if (ret < 0) {
                 goto fail;
             }
@@ -1075,12 +1073,10 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
             for (i = 0; i < nkth; ++i) {
                 ret = argpart(valptr, idxptr, N, kth[i], pivots, &npiv, op);
-#if defined(NPY_PY3K)
                 /* Object comparisons may raise an exception in Python 3 */
                 if (hasrefs && PyErr_Occurred()) {
                     ret = -1;
                 }
-#endif
                 if (ret < 0) {
                     goto fail;
                 }
@@ -1566,12 +1562,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                     _strided_byte_swap(valbuffer, (npy_intp) elsize, N, elsize);
                 }
                 rcode = argsort(valbuffer, (npy_intp *)indbuffer, N, mps[j]);
-#if defined(NPY_PY3K)
                 if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
                             && PyErr_Occurred())) {
-#else
-                if (rcode < 0) {
-#endif
                     PyDataMem_FREE(valbuffer);
                     PyDataMem_FREE(indbuffer);
                     free(swaps);
@@ -1601,12 +1593,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 }
                 rcode = argsort(its[j]->dataptr,
                         (npy_intp *)rit->dataptr, N, mps[j]);
-#if defined(NPY_PY3K)
                 if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
                             && PyErr_Occurred())) {
-#else
-                if (rcode < 0) {
-#endif
                     goto fail;
                 }
                 PyArray_ITER_NEXT(its[j]);

@@ -1920,7 +1920,6 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
             alloc = 1;
         }
         else {
-#if defined(NPY_PY3K)
             /* Backward compatibility with Python 2 NumPy pickles */
             if (PyUnicode_Check(obj)) {
                 tmpobj = PyUnicode_AsLatin1String(obj);
@@ -1934,8 +1933,6 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                     return NULL;
                 }
             }
-#endif
-
             if (!PyString_Check(obj)) {
                 PyErr_SetString(PyExc_TypeError,
                         "initializing object must be a string");
@@ -2020,11 +2017,7 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     if (count == -1) {
         return NULL;
     }
-#if defined(NPY_PY3K)
     return PyLong_FromSsize_t(count);
-#else
-    return PyInt_FromSsize_t(count);
-#endif
 }
 
 static PyObject *
@@ -2639,13 +2632,11 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
         while (PyDict_Next(kwds, &pos, &key, &value)) {
             char *str = NULL;
 
-#if defined(NPY_PY3K)
             Py_XDECREF(str_key_obj);
             str_key_obj = PyUnicode_AsASCIIString(key);
             if (str_key_obj != NULL) {
                 key = str_key_obj;
             }
-#endif
 
             str = PyBytes_AsString(key);
 
@@ -3873,11 +3864,6 @@ array_shares_memory_impl(PyObject *args, PyObject *kwds, Py_ssize_t default_max_
             goto fail;
         }
     }
-#if !defined(NPY_PY3K)
-    else if (PyInt_Check(max_work_obj)) {
-        max_work = PyInt_AsSsize_t(max_work_obj);
-    }
-#endif
     else {
         PyErr_SetString(PyExc_ValueError, "max_work must be an integer");
         goto fail;
@@ -4180,11 +4166,6 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     if (PyType_Ready(&PyBool_Type) < 0) {
         return -1;
     }
-#if !defined(NPY_PY3K)
-    if (PyType_Ready(&PyInt_Type) < 0) {
-        return -1;
-    }
-#endif
     if (PyType_Ready(&PyFloat_Type) < 0) {
         return -1;
     }
@@ -4239,22 +4220,10 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
  * In Py3K, int is no longer a fixed-width integer type, so don't
  * inherit numpy.int_ from it.
  */
-#if defined(NPY_PY3K)
 #define INHERIT_INT(child, parent2)                                     \
     SINGLE_INHERIT(child, parent2);
-#else
-#define INHERIT_INT(child, parent2)                                     \
-    Py##child##ArrType_Type.tp_flags |= Py_TPFLAGS_INT_SUBCLASS;        \
-    DUAL_INHERIT(child, Int, parent2);
-#endif
 
-#if defined(NPY_PY3K)
 #define DUAL_INHERIT_COMPARE(child, parent1, parent2)
-#else
-#define DUAL_INHERIT_COMPARE(child, parent1, parent2)                   \
-    Py##child##ArrType_Type.tp_compare =                                \
-        Py##parent1##_Type.tp_compare;
-#endif
 
 #define DUAL_INHERIT2(child, parent1, parent2)                          \
     Py##child##ArrType_Type.tp_base = &Py##parent1##_Type;              \
