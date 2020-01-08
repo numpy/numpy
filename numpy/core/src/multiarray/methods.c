@@ -1954,7 +1954,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
     else {
         Py_INCREF(rawdata);
 
-#if defined(NPY_PY3K)
         /* Backward compatibility with Python 2 NumPy pickles */
         if (PyUnicode_Check(rawdata)) {
             PyObject *tmp;
@@ -1969,7 +1968,6 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 return NULL;
             }
         }
-#endif
 
         if (!PyBytes_Check(rawdata)) {
             PyErr_SetString(PyExc_TypeError,
@@ -2030,14 +2028,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
     if (!PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
         int swap = PyArray_ISBYTESWAPPED(self);
         fa->data = datastr;
-#ifndef NPY_PY3K
-        /* Check that the string is not interned */
-        if (!IsAligned(self) || swap || PyString_CHECK_INTERNED(rawdata)) {
-#else
         /* Bytes should always be considered immutable, but we just grab the
          * pointer if they are large, to save memory. */
         if (!IsAligned(self) || swap || (len <= 1000)) {
-#endif
             npy_intp num = PyArray_NBYTES(self);
             if (num == 0) {
                 Py_DECREF(rawdata);

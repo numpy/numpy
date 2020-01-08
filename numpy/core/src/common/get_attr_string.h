@@ -7,9 +7,6 @@ _is_basic_python_type(PyTypeObject *tp)
     return (
         /* Basic number types */
         tp == &PyBool_Type ||
-#if !defined(NPY_PY3K)
-        tp == &PyInt_Type ||
-#endif
         tp == &PyLong_Type ||
         tp == &PyFloat_Type ||
         tp == &PyComplex_Type ||
@@ -22,9 +19,6 @@ _is_basic_python_type(PyTypeObject *tp)
         tp == &PyFrozenSet_Type ||
         tp == &PyUnicode_Type ||
         tp == &PyBytes_Type ||
-#if !defined(NPY_PY3K)
-        tp == &PyString_Type ||
-#endif
 
         /* other builtins */
         tp == &PySlice_Type ||
@@ -64,11 +58,7 @@ maybe_get_attr(PyObject *obj, char const *name)
     }
     /* Attribute referenced by (PyObject *)name */
     else if (tp->tp_getattro != NULL) {
-#if defined(NPY_PY3K)
         PyObject *w = PyUnicode_InternFromString(name);
-#else
-        PyObject *w = PyString_InternFromString(name);
-#endif
         if (w == NULL) {
             return (PyObject *)NULL;
         }
