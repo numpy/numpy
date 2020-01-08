@@ -422,29 +422,24 @@ _convert_from_tuple(PyObject *obj, int align)
 static PyArray_Descr *
 _convert_from_array_descr(PyObject *obj, int align)
 {
-    int n, i, totalsize;
-    PyObject *fields, *item, *newobj;
-    PyObject *name, *tup, *title;
-    PyObject *nameslist;
-    PyArray_Descr *new;
-    PyArray_Descr *conv;
-    /* Types with fields need the Python C API for field access */
-    char dtypeflags = NPY_NEEDS_PYAPI;
-    int maxalign = 0;
-
-    n = PyList_GET_SIZE(obj);
-    nameslist = PyTuple_New(n);
+    int n = PyList_GET_SIZE(obj);
+    PyObject *nameslist = PyTuple_New(n);
     if (!nameslist) {
         return NULL;
     }
-    totalsize = 0;
-    fields = PyDict_New();
-    for (i = 0; i < n; i++) {
-        item = PyList_GET_ITEM(obj, i);
+
+    /* Types with fields need the Python C API for field access */
+    char dtypeflags = NPY_NEEDS_PYAPI;
+    int maxalign = 0;
+    int totalsize = 0;
+    PyObject *fields = PyDict_New();
+    for (int i = 0; i < n; i++) {
+        PyObject *item = PyList_GET_ITEM(obj, i);
         if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2)) {
             goto fail;
         }
-        name = PyTuple_GET_ITEM(item, 0);
+        PyObject *name = PyTuple_GET_ITEM(item, 0);
+        PyObject *title;
         if (PyBaseString_Check(name)) {
             title = NULL;
         }
@@ -482,7 +477,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         PyTuple_SET_ITEM(nameslist, i, name);
 
         /* Process rest */
-
+        PyArray_Descr *conv;
         if (PyTuple_GET_SIZE(item) == 2) {
             conv = _arraydescr_run_converter(PyTuple_GET_ITEM(item, 1), align);
             if (conv == NULL) {
@@ -490,7 +485,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
         }
         else if (PyTuple_GET_SIZE(item) == 3) {
-            newobj = PyTuple_GetSlice(item, 1, 3);
+            PyObject *newobj = PyTuple_GetSlice(item, 1, 3);
             conv = _arraydescr_run_converter(newobj, align);
             Py_DECREF(newobj);
             if (conv == NULL) {
@@ -521,7 +516,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             }
             maxalign = PyArray_MAX(maxalign, _align);
         }
-        tup = PyTuple_New((title == NULL ? 2 : 3));
+        PyObject *tup = PyTuple_New((title == NULL ? 2 : 3));
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
         PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
 
@@ -556,7 +551,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
     }
 
-    new = PyArray_DescrNewFromType(NPY_VOID);
+    PyArray_Descr *new = PyArray_DescrNewFromType(NPY_VOID);
     if (new == NULL) {
         Py_XDECREF(fields);
         Py_XDECREF(nameslist);
