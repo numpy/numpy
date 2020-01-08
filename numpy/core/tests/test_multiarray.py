@@ -346,8 +346,8 @@ class TestAttributes:
 
         numpy_int = np.int_(0)
 
-        # int_ doesn't inherit from Python int, because it is not fixed width
-        assert_equal(isinstance(numpy_int, int), False)
+        # int_ doesn't inherit from Python int, because it's not fixed-width
+        assert_(not isinstance(numpy_int, int))
 
     def test_stridesattr(self):
         x = self.one
