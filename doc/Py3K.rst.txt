@@ -225,8 +225,6 @@ A #define in config.h, defined when building for Py3.
    Currently, this is generated as a part of the config.
    Is this sensible (we could also use Py_VERSION_HEX)?
 
-   This is being cleaned up in the C code.
-
 
 private/npy_3kcompat.h
 ----------------------

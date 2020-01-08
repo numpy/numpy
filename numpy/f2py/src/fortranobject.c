@@ -312,13 +312,11 @@ fortran_getattr(PyFortranObject *fp, char *name) {
             return NULL;
         return cobj;
     }
-    if (1) {
-        PyObject *str, *ret;
-        str = PyUnicode_FromString(name);
-        ret = PyObject_GenericGetAttr((PyObject *)fp, str);
-        Py_DECREF(str);
-        return ret;
-    }
+    PyObject *str, *ret;
+    str = PyUnicode_FromString(name);
+    ret = PyObject_GenericGetAttr((PyObject *)fp, str);
+    Py_DECREF(str);
+    return ret;
 }
 
 static int
