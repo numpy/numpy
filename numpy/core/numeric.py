@@ -282,7 +282,7 @@ def full(shape, fill_value, dtype=None, order='C'):
     ----------
     shape : int or sequence of ints
         Shape of the new array, e.g., ``(2, 3)`` or ``2``.
-    fill_value : scalar
+    fill_value : scalar or array_like
         Fill value.
     dtype : data-type, optional
         The desired data-type for the array  The default, None, means
@@ -311,6 +311,10 @@ def full(shape, fill_value, dtype=None, order='C'):
     >>> np.full((2, 2), 10)
     array([[10, 10],
            [10, 10]])
+
+    >>> np.full((2, 2), [1, 2])
+    array([[1, 2],
+           [1, 2]])
 
     """
     if dtype is None:
