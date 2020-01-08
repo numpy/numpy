@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import warnings
 import itertools
 
@@ -18,7 +16,12 @@ from numpy.testing import (
 from numpy.compat import pickle
 
 
-class TestUfuncKwargs(object):
+UNARY_UFUNCS = [obj for obj in np.core.umath.__dict__.values()
+                    if isinstance(obj, np.ufunc)]
+UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
+
+
+class TestUfuncKwargs:
     def test_kwarg_exact(self):
         assert_raises(TypeError, np.add, 1, 2, castingx='safe')
         assert_raises(TypeError, np.add, 1, 2, dtypex=int)
@@ -44,7 +47,7 @@ class TestUfuncKwargs(object):
         assert_raises(TypeError, np.add, 1, 2, extobj=[4096], parrot=True)
 
 
-class TestUfuncGenericLoops(object):
+class TestUfuncGenericLoops:
     """Test generic loops.
 
     The loops to be tested are:
@@ -113,7 +116,7 @@ class TestUfuncGenericLoops(object):
         assert_equal(ys.dtype, output_dtype)
 
     # class to use in testing object method loops
-    class foo(object):
+    class foo:
         def conjugate(self):
             return np.bool_(1)
 
@@ -124,7 +127,7 @@ class TestUfuncGenericLoops(object):
         x = np.ones(10, dtype=object)
         assert_(np.all(np.abs(x) == 1))
 
-    def test_unary_PyUFunc_O_O_method(self, foo=foo):
+    def test_unary_PyUFunc_O_O_method_simple(self, foo=foo):
         x = np.full(10, foo(), dtype=object)
         assert_(np.all(np.conjugate(x) == True))
 
@@ -140,8 +143,41 @@ class TestUfuncGenericLoops(object):
         x = np.full((10, 2, 3), foo(), dtype=object)
         assert_(np.all(np.logical_xor(x, x)))
 
+    def test_python_complex_conjugate(self):
+        # The conjugate ufunc should fall back to calling the method:
+        arr = np.array([1+2j, 3-4j], dtype="O")
+        assert isinstance(arr[0], complex)
+        res = np.conjugate(arr)
+        assert res.dtype == np.dtype("O")
+        assert_array_equal(res, np.array([1-2j, 3+4j], dtype="O"))
 
-class TestUfunc(object):
+    @pytest.mark.parametrize("ufunc", UNARY_OBJECT_UFUNCS)
+    def test_unary_PyUFunc_O_O_method_full(self, ufunc):
+        """Compare the result of the object loop with non-object one"""
+        val = np.float64(np.pi/4)
+
+        class MyFloat(np.float64):
+            def __getattr__(self, attr):
+                try:
+                    return super().__getattr__(attr)
+                except AttributeError:
+                    return lambda: getattr(np.core.umath, attr)(val)
+
+        num_arr = np.array([val], dtype=np.float64)
+        obj_arr = np.array([MyFloat(val)], dtype="O")
+
+        with np.errstate(all="raise"):
+            try:
+                res_num = ufunc(num_arr)
+            except Exception as exc:
+                with assert_raises(type(exc)):
+                    ufunc(obj_arr)
+            else:
+                res_obj = ufunc(obj_arr)
+                assert_array_equal(res_num.astype("O"), res_obj)
+
+
+class TestUfunc:
     def test_pickle(self):
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             assert_(pickle.loads(pickle.dumps(np.sin,
@@ -980,7 +1016,7 @@ class TestUfunc(object):
         assert_array_equal(out, mm_row_col_vec.squeeze())
 
     def test_matrix_multiply(self):
-        self.compare_matrix_multiply_results(np.long)
+        self.compare_matrix_multiply_results(np.int64)
         self.compare_matrix_multiply_results(np.double)
 
     def test_matrix_multiply_umath_empty(self):
@@ -1085,14 +1121,13 @@ class TestUfunc(object):
         assert_equal(np.logical_and.reduce(a), None)
 
     def test_object_comparison(self):
-        class HasComparisons(object):
+        class HasComparisons:
             def __eq__(self, other):
                 return '=='
 
         arr0d = np.array(HasComparisons())
         assert_equal(arr0d == arr0d, True)
         assert_equal(np.equal(arr0d, arr0d), True)  # normal behavior is a cast
-        assert_equal(np.equal(arr0d, arr0d, dtype=object), '==')
 
         arr1d = np.array([HasComparisons()])
         assert_equal(arr1d == arr1d, np.array([True]))
@@ -1555,7 +1590,7 @@ class TestUfunc(object):
 
     def test_custom_array_like(self):
 
-        class MyThing(object):
+        class MyThing:
             __array_priority__ = 1000
 
             rmul_count = 0
@@ -1947,3 +1982,21 @@ def test_ufunc_noncontiguous(ufunc):
                 assert_allclose(res_c, res_n, atol=tol, rtol=tol)
             else:
                 assert_equal(c_ar, n_ar)
+
+
+@pytest.mark.parametrize('ufunc', [np.sign, np.equal])
+def test_ufunc_warn_with_nan(ufunc):
+    # issue gh-15127
+    # test that calling certain ufuncs with a non-standard `nan` value does not
+    # emit a warning
+    # `b` holds a 64 bit signaling nan: the most significant bit of the
+    # significand is zero.
+    b = np.array([0x7ff0000000000001], 'i8').view('f8')
+    assert np.isnan(b)
+    if ufunc.nin == 1:
+        ufunc(b)
+    elif ufunc.nin == 2:
+        ufunc(b, b.copy())
+    else:
+        raise ValueError('ufunc with more than 2 inputs')
+

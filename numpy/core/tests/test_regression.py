@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import copy
 import sys
 import gc
@@ -17,13 +15,14 @@ from numpy.testing import (
         _assert_valid_refcount, HAS_REFCOUNT,
         )
 from numpy.compat import asbytes, asunicode, long, pickle
+from test.support import no_tracing
 
 try:
     RecursionError
 except NameError:
     RecursionError = RuntimeError  # python < 3.5
 
-class TestRegression(object):
+class TestRegression:
     def test_invalid_round(self):
         # Ticket #3
         v = 4.7599999999999998
@@ -427,7 +426,7 @@ class TestRegression(object):
 
     def test_lexsort_invalid_sequence(self):
         # Issue gh-4123
-        class BuggySequence(object):
+        class BuggySequence:
             def __len__(self):
                 return 4
 
@@ -1040,7 +1039,7 @@ class TestRegression(object):
 
     def test_mem_custom_float_to_array(self):
         # Ticket 702
-        class MyFloat(object):
+        class MyFloat:
             def __float__(self):
                 return 1.0
 
@@ -1049,7 +1048,7 @@ class TestRegression(object):
 
     def test_object_array_refcount_self_assign(self):
         # Ticket #711
-        class VictimObject(object):
+        class VictimObject:
             deleted = False
 
             def __del__(self):
@@ -1316,6 +1315,7 @@ class TestRegression(object):
             assert_(pickle.loads(
                 pickle.dumps(test_record, protocol=proto)) == test_record)
 
+    @no_tracing
     def test_blasdot_uninitialized_memory(self):
         # Ticket #950
         for m in [0, 1, 2]:
@@ -1511,7 +1511,7 @@ class TestRegression(object):
             min //= -1
 
         with np.errstate(divide="ignore"):
-            for t in (np.int8, np.int16, np.int32, np.int64, int, np.long):
+            for t in (np.int8, np.int16, np.int32, np.int64, int, np.compat.long):
                 test_type(t)
 
     def test_buffer_hashlib(self):
@@ -2112,7 +2112,7 @@ class TestRegression(object):
         # Ticket #1578, the mismatch only showed up when running
         # python-debug for python versions >= 2.7, and then as
         # a core dump and error message.
-        a = np.array(['abc'], dtype=np.unicode)[0]
+        a = np.array(['abc'], dtype=np.unicode_)[0]
         del a
 
     def test_refcount_error_in_clip(self):
@@ -2231,7 +2231,7 @@ class TestRegression(object):
         import operator as op
 
         # dummy class where __array__ throws exception
-        class Foo(object):
+        class Foo:
             __array_priority__ = 1002
 
             def __array__(self, *args, **kwargs):
@@ -2465,8 +2465,11 @@ class TestRegression(object):
         x = np.array([1, 2, 4, 7, 0], dtype=np.int16)
         res = np.ediff1d(x, to_begin=-99, to_end=np.array([88, 99]))
         assert_equal(res, [-99,   1,   2,   3,  -7,  88,  99])
-        assert_raises(ValueError, np.ediff1d, x, to_begin=(1<<20))
-        assert_raises(ValueError, np.ediff1d, x, to_end=(1<<20))
+
+        # The use of safe casting means, that 1<<20 is cast unsafely, an
+        # error may be better, but currently there is no mechanism for it.
+        res = np.ediff1d(x, to_begin=(1<<20), to_end=(1<<20))
+        assert_equal(res, [0,   1,   2,   3,  -7,  0])
 
     def test_pickle_datetime64_array(self):
         # gh-12745 (would fail with pickle5 installed)
@@ -2477,30 +2480,10 @@ class TestRegression(object):
             assert_equal(pickle.loads(dumped), arr)
 
     def test_bad_array_interface(self):
-        class T(object):
+        class T:
             __array_interface__ = {}
 
         np.array([T()])
-
-    def test_2d__array__shape(self):
-        class T(object):
-            def __array__(self):
-                return np.ndarray(shape=(0,0))
-
-            # Make sure __array__ is used instead of Sequence methods.
-            def __iter__(self):
-                return iter([])
-
-            def __getitem__(self, idx):
-                raise AssertionError("__getitem__ was called")
-
-            def __len__(self):
-                return 0
-
-
-        t = T()
-        #gh-13659, would raise in broadcasting [x=t for x in result]
-        np.array([t])
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
     @pytest.mark.skipif(sys.platform == 'win32' and sys.version_info[:2] < (3, 8),
@@ -2511,3 +2494,4 @@ class TestRegression(object):
         assert arr.size * arr.itemsize > 2 ** 31
         c_arr = np.ctypeslib.as_ctypes(arr)
         assert_equal(c_arr._length_, arr.size)
+

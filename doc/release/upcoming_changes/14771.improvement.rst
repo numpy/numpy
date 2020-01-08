@@ -1,5 +1,0 @@
-``std=c99`` added if compiler is named ``gcc``
-----------------------------------------------
-GCC before version 5 requires the ``-std=c99`` command line argument. Newer
-compilers automatically turn on C99 mode. The compiler setup code will
-automatically add the code if the compiler name has ``gcc`` in it.

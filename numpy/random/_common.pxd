@@ -5,7 +5,7 @@ from libc.stdint cimport uint32_t, uint64_t, int32_t, int64_t
 import numpy as np
 cimport numpy as np
 
-from ._bit_generator cimport bitgen_t
+from numpy.random cimport bitgen_t
 
 cdef double POISSON_LAM_MAX
 cdef double LEGACY_POISSON_LAM_MAX

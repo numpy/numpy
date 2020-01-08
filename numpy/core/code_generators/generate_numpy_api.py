@@ -1,5 +1,3 @@
-from __future__ import division, print_function
-
 import os
 import genapi
 
@@ -59,21 +57,12 @@ _import_array(void)
       return -1;
   }
 
-#if PY_VERSION_HEX >= 0x03000000
   if (!PyCapsule_CheckExact(c_api)) {
       PyErr_SetString(PyExc_RuntimeError, "_ARRAY_API is not PyCapsule object");
       Py_DECREF(c_api);
       return -1;
   }
   PyArray_API = (void **)PyCapsule_GetPointer(c_api, NULL);
-#else
-  if (!PyCObject_Check(c_api)) {
-      PyErr_SetString(PyExc_RuntimeError, "_ARRAY_API is not PyCObject object");
-      Py_DECREF(c_api);
-      return -1;
-  }
-  PyArray_API = (void **)PyCObject_AsVoidPtr(c_api);
-#endif
   Py_DECREF(c_api);
   if (PyArray_API == NULL) {
       PyErr_SetString(PyExc_RuntimeError, "_ARRAY_API is NULL pointer");
@@ -120,13 +109,7 @@ _import_array(void)
   return 0;
 }
 
-#if PY_VERSION_HEX >= 0x03000000
-#define NUMPY_IMPORT_ARRAY_RETVAL NULL
-#else
-#define NUMPY_IMPORT_ARRAY_RETVAL
-#endif
-
-#define import_array() {if (_import_array() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import"); return NUMPY_IMPORT_ARRAY_RETVAL; } }
+#define import_array() {if (_import_array() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import"); return NULL; } }
 
 #define import_array1(ret) {if (_import_array() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import"); return ret; } }
 

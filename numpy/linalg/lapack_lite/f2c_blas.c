@@ -4912,7 +4912,7 @@ L20:
              ( 1 + ( n - 1 )*abs( INCX ) ).
              Before entry, the incremented array X must contain the n
              element vector x. On exit, X is overwritten with the
-             tranformed vector x.
+             transformed vector x.
 
     INCX   - INTEGER.
              On entry, INCX specifies the increment for the elements of
@@ -9807,7 +9807,7 @@ L40:
              ( 1 + ( n - 1 )*abs( INCX ) ).
              Before entry, the incremented array X must contain the n
              element vector x. On exit, X is overwritten with the
-             tranformed vector x.
+             transformed vector x.
 
     INCX   - INTEGER.
              On entry, INCX specifies the increment for the elements of
@@ -14410,7 +14410,7 @@ L40:
              ( 1 + ( n - 1 )*abs( INCX ) ).
              Before entry, the incremented array X must contain the n
              element vector x. On exit, X is overwritten with the
-             tranformed vector x.
+             transformed vector x.
 
     INCX   - INTEGER.
              On entry, INCX specifies the increment for the elements of
@@ -19998,7 +19998,7 @@ L20:
              ( 1 + ( n - 1 )*abs( INCX ) ).
              Before entry, the incremented array X must contain the n
              element vector x. On exit, X is overwritten with the
-             tranformed vector x.
+             transformed vector x.
 
     INCX   - INTEGER.
              On entry, INCX specifies the increment for the elements of

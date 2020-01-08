@@ -2,7 +2,7 @@
 #define _RANDOMDGEN__DISTRIBUTIONS_LEGACY_H_
 
 
-#include "distributions.h"
+#include "numpy/random/distributions.h"
 
 typedef struct aug_bitgen {
   bitgen_t *bit_generator;

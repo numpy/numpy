@@ -3,20 +3,18 @@ Test machar. Given recent changes to hardcode type data, we might want to get
 rid of both MachAr and this test at some point.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from numpy.core.machar import MachAr
 import numpy.core.numerictypes as ntypes
 from numpy import errstate, array
 
 
-class TestMachAr(object):
+class TestMachAr:
     def _run_machar_highprec(self):
         # Instantiate MachAr instance with high enough precision to cause
         # underflow
         try:
             hiprec = ntypes.float96
-            MachAr(lambda v:array([v], hiprec))
+            MachAr(lambda v: array(v, hiprec))
         except AttributeError:
             # Fixme, this needs to raise a 'skip' exception.
             "Skipping test: no ntypes.float96 available on this platform."

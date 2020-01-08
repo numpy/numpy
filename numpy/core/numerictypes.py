@@ -79,8 +79,6 @@ Exported symbols include:
      \\-> object_ (not used much)               (kind=O)
 
 """
-from __future__ import division, absolute_import, print_function
-
 import types as _types
 import sys
 import numbers
@@ -485,7 +483,7 @@ def sctype2char(sctype):
 
     Examples
     --------
-    >>> for sctype in [np.int32, np.double, np.complex, np.string_, np.ndarray]:
+    >>> for sctype in [np.int32, np.double, np.complex_, np.string_, np.ndarray]:
     ...     print(np.sctype2char(sctype))
     l # may vary
     d

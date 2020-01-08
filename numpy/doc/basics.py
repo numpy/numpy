@@ -18,7 +18,7 @@ The primitive types supported are tied closely to those in C:
       - C type
       - Description
 
-    * - `np.bool`
+    * - `np.bool_`
       - ``bool``
       - Boolean (True or False) stored as a byte
 
@@ -283,7 +283,7 @@ NumPy provides `numpy.iinfo` and `numpy.finfo` to verify the
 minimum or maximum values of NumPy integer and floating point values
 respectively ::
 
-    >>> np.iinfo(np.int) # Bounds of the default integer on this system.
+    >>> np.iinfo(int) # Bounds of the default integer on this system.
     iinfo(min=-9223372036854775808, max=9223372036854775807, dtype=int64)
     >>> np.iinfo(np.int32) # Bounds of a 32-bit integer
     iinfo(min=-2147483648, max=2147483647, dtype=int32)
@@ -339,4 +339,3 @@ be useful to test your code with the value
 ``1 + np.finfo(np.longdouble).eps``.
 
 """
-from __future__ import division, absolute_import, print_function

@@ -9,7 +9,6 @@ for the ufuncs in numpy.core at the C level when the ufuncs are created
 at compile time.
 
 """
-from __future__ import division, absolute_import, print_function
 import textwrap
 
 docdict = {}
@@ -37,8 +36,8 @@ subst = {
             :ref:`ufunc docs <ufuncs.kwargs>`.
     """).strip(),
     'BROADCASTABLE_2': ("If ``x1.shape != x2.shape``, they must be "
-                        "broadcastable to a common shape (which becomes the "
-                        "shape of the output)."),
+                        "broadcastable to a common\n    shape (which becomes "
+                        "the shape of the output)."),
     'OUT_SCALAR_1': "This is a scalar if `x` is a scalar.",
     'OUT_SCALAR_2': "This is a scalar if both `x1` and `x2` are scalars.",
 }
@@ -117,7 +116,8 @@ add_newdoc('numpy.core.umath', 'add',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays to be added. $BROADCASTABLE_2
+        The arrays to be added.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -443,7 +443,8 @@ add_newdoc('numpy.core.umath', 'arctan2',
     x1 : array_like, real-valued
         `y`-coordinates.
     x2 : array_like, real-valued
-        `x`-coordinates. $BROADCASTABLE_2
+        `x`-coordinates.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -566,7 +567,8 @@ add_newdoc('numpy.core.umath', 'bitwise_and',
     Parameters
     ----------
     x1, x2 : array_like
-        Only integer and boolean types are handled. $BROADCASTABLE_2
+        Only integer and boolean types are handled.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -619,7 +621,8 @@ add_newdoc('numpy.core.umath', 'bitwise_or',
     Parameters
     ----------
     x1, x2 : array_like
-        Only integer and boolean types are handled. $BROADCASTABLE_2
+        Only integer and boolean types are handled.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -677,7 +680,8 @@ add_newdoc('numpy.core.umath', 'bitwise_xor',
     Parameters
     ----------
     x1, x2 : array_like
-        Only integer and boolean types are handled. $BROADCASTABLE_2
+        Only integer and boolean types are handled.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -987,7 +991,8 @@ add_newdoc('numpy.core.umath', 'heaviside',
     x1 : array_like
         Input values.
     x2 : array_like
-        The value of the function when x1 is 0. $BROADCASTABLE_2
+        The value of the function when x1 is 0.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -1022,7 +1027,8 @@ add_newdoc('numpy.core.umath', 'divide',
     x1 : array_like
         Dividend array.
     x2 : array_like
-        Divisor array. $BROADCASTABLE_2
+        Divisor array.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -1091,7 +1097,8 @@ add_newdoc('numpy.core.umath', 'equal',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays. $BROADCASTABLE_2
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -1223,7 +1230,7 @@ add_newdoc('numpy.core.umath', 'expm1',
     Parameters
     ----------
     x : array_like
-       Input values.
+        Input values.
     $PARAMS
 
     Returns
@@ -1338,7 +1345,8 @@ add_newdoc('numpy.core.umath', 'floor_divide',
     x1 : array_like
         Numerator.
     x2 : array_like
-        Denominator. $BROADCASTABLE_2
+        Denominator.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -1378,7 +1386,8 @@ add_newdoc('numpy.core.umath', 'fmod',
     x1 : array_like
         Dividend.
     x2 : array_like
-        Divisor. $BROADCASTABLE_2
+        Divisor.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -1428,7 +1437,8 @@ add_newdoc('numpy.core.umath', 'greater',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays. $BROADCASTABLE_2
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -1464,7 +1474,8 @@ add_newdoc('numpy.core.umath', 'greater_equal',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays. $BROADCASTABLE_2
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -1497,7 +1508,8 @@ add_newdoc('numpy.core.umath', 'hypot',
     Parameters
     ----------
     x1, x2 : array_like
-        Leg of the triangle(s). $BROADCASTABLE_2
+        Leg of the triangle(s).
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -1832,7 +1844,8 @@ add_newdoc('numpy.core.umath', 'less',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays. $BROADCASTABLE_2
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -1860,7 +1873,8 @@ add_newdoc('numpy.core.umath', 'less_equal',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays. $BROADCASTABLE_2
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2044,7 +2058,8 @@ add_newdoc('numpy.core.umath', 'logaddexp',
     Parameters
     ----------
     x1, x2 : array_like
-        Input values. $BROADCASTABLE_2
+        Input values.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2086,7 +2101,8 @@ add_newdoc('numpy.core.umath', 'logaddexp2',
     Parameters
     ----------
     x1, x2 : array_like
-        Input values. $BROADCASTABLE_2
+        Input values.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2177,7 +2193,8 @@ add_newdoc('numpy.core.umath', 'logical_and',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays. $BROADCASTABLE_2
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2282,7 +2299,8 @@ add_newdoc('numpy.core.umath', 'logical_xor',
     Parameters
     ----------
     x1, x2 : array_like
-        Logical XOR is applied to the elements of `x1` and `x2`. $BROADCASTABLE_2
+        Logical XOR is applied to the elements of `x1` and `x2`.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2329,7 +2347,8 @@ add_newdoc('numpy.core.umath', 'maximum',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. $BROADCASTABLE_2
+        The arrays holding the elements to be compared.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2387,7 +2406,8 @@ add_newdoc('numpy.core.umath', 'minimum',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. $BROADCASTABLE_2
+        The arrays holding the elements to be compared.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2445,7 +2465,8 @@ add_newdoc('numpy.core.umath', 'fmax',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. $BROADCASTABLE_2
+        The arrays holding the elements to be compared.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2502,7 +2523,8 @@ add_newdoc('numpy.core.umath', 'fmin',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays holding the elements to be compared. $BROADCASTABLE_2
+        The arrays holding the elements to be compared.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2755,7 +2777,8 @@ add_newdoc('numpy.core.umath', 'multiply',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays to be multiplied. $BROADCASTABLE_2
+        Input arrays to be multiplied.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2836,7 +2859,8 @@ add_newdoc('numpy.core.umath', 'not_equal',
     Parameters
     ----------
     x1, x2 : array_like
-        Input arrays.  $BROADCASTABLE_2
+        Input arrays.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2885,7 +2909,8 @@ add_newdoc('numpy.core.umath', 'power',
     x1 : array_like
         The bases.
     x2 : array_like
-        The exponents. $BROADCASTABLE_2
+        The exponents.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -2944,7 +2969,8 @@ add_newdoc('numpy.core.umath', 'float_power',
     x1 : array_like
         The bases.
     x2 : array_like
-        The exponents. $BROADCASTABLE_2
+        The exponents.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -3116,7 +3142,8 @@ add_newdoc('numpy.core.umath', 'remainder',
     x1 : array_like
         Dividend array.
     x2 : array_like
-        Divisor array. $BROADCASTABLE_2
+        Divisor array.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -3162,7 +3189,8 @@ add_newdoc('numpy.core.umath', 'divmod',
     x1 : array_like
         Dividend array.
     x2 : array_like
-        Divisor array. $BROADCASTABLE_2
+        Divisor array.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -3201,7 +3229,8 @@ add_newdoc('numpy.core.umath', 'right_shift',
     x1 : array_like, int
         Input values.
     x2 : array_like, int
-        Number of bits to remove at the right of `x1`. $BROADCASTABLE_2
+        Number of bits to remove at the right of `x1`.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -3335,7 +3364,8 @@ add_newdoc('numpy.core.umath', 'copysign',
     x1 : array_like
         Values to change the sign of.
     x2 : array_like
-        The sign of `x2` is copied to `x1`. $BROADCASTABLE_2
+        The sign of `x2` is copied to `x1`.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -3642,7 +3672,8 @@ add_newdoc('numpy.core.umath', 'subtract',
     Parameters
     ----------
     x1, x2 : array_like
-        The arrays to be subtracted from each other. $BROADCASTABLE_2
+        The arrays to be subtracted from each other.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -3783,7 +3814,8 @@ add_newdoc('numpy.core.umath', 'true_divide',
     x1 : array_like
         Dividend array.
     x2 : array_like
-        Divisor array. $BROADCASTABLE_2
+        Divisor array.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -3793,12 +3825,7 @@ add_newdoc('numpy.core.umath', 'true_divide',
 
     Notes
     -----
-    The floor division operator ``//`` was added in Python 2.2 making
-    ``//`` and ``/`` equivalent operators.  The default floor division
-    operation of ``/`` can be replaced by true division with ``from
-    __future__ import division``.
-
-    In Python 3.0, ``//`` is the floor division operator and ``/`` the
+    In Python, ``//`` is the floor division operator and ``/`` the
     true division operator.  The ``true_divide(x1, x2)`` function is
     equivalent to true division in Python.
 
@@ -3811,7 +3838,6 @@ add_newdoc('numpy.core.umath', 'true_divide',
     >>> x//4
     array([0, 0, 0, 0, 1])
 
-    >>> from __future__ import division
     >>> x/4
     array([ 0.  ,  0.25,  0.5 ,  0.75,  1.  ])
     >>> x//4
@@ -3880,7 +3906,8 @@ add_newdoc('numpy.core.umath', 'ldexp',
     x1 : array_like
         Array of multipliers.
     x2 : array_like, int
-        Array of twos exponents. $BROADCASTABLE_2
+        Array of twos exponents.
+        $BROADCASTABLE_2
     $PARAMS
 
     Returns
@@ -3918,7 +3945,8 @@ add_newdoc('numpy.core.umath', 'gcd',
     Parameters
     ----------
     x1, x2 : array_like, int
-        Arrays of values. $BROADCASTABLE_2
+        Arrays of values.
+        $BROADCASTABLE_2
 
     Returns
     -------
@@ -3948,7 +3976,8 @@ add_newdoc('numpy.core.umath', 'lcm',
     Parameters
     ----------
     x1, x2 : array_like, int
-        Arrays of values. $BROADCASTABLE_2
+        Arrays of values.
+        $BROADCASTABLE_2
 
     Returns
     -------

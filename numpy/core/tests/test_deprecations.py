@@ -3,8 +3,6 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import datetime
 import sys
 import operator
@@ -27,7 +25,7 @@ except ImportError:
     _has_pytz = False
 
 
-class _DeprecationTestCase(object):
+class _DeprecationTestCase:
     # Just as warning: warnings uses re.match, so the start of this message
     # must match.
     message = ''
@@ -137,7 +135,7 @@ class _VisibleDeprecationTestCase(_DeprecationTestCase):
     warning_cls = np.VisibleDeprecationWarning
 
 
-class TestNonTupleNDIndexDeprecation(object):
+class TestNonTupleNDIndexDeprecation:
     def test_basic(self):
         a = np.zeros((5, 5))
         with warnings.catch_warnings():
@@ -172,7 +170,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
             # (warning is issued a couple of times here)
             self.assert_deprecated(op, args=(a, a[:-1]), num=None)
 
-            # Element comparison error (numpy array can't be compared).
+            # ragged array comparison returns True/False
             a = np.array([1, np.array([1,2,3])], dtype=object)
             b = np.array([1, np.array([1,2,3])], dtype=object)
             self.assert_deprecated(op, args=(a, b), num=None)
@@ -189,7 +187,7 @@ class TestComparisonDeprecations(_DeprecationTestCase):
         assert_warns(FutureWarning, lambda: a == [])
 
     def test_void_dtype_equality_failures(self):
-        class NotArray(object):
+        class NotArray:
             def __array__(self):
                 raise TypeError
 
@@ -342,7 +340,7 @@ class TestNumericStyleTypecodes(_DeprecationTestCase):
                                    args=(dt,))
 
 
-class TestTestDeprecated(object):
+class TestTestDeprecated:
     def test_assert_deprecated(self):
         test_case_instance = _DeprecationTestCase()
         test_case_instance.setup()

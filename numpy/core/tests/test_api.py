@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 
 import numpy as np
@@ -296,7 +294,7 @@ def test_array_astype():
 )
 def test_array_astype_warning(t):
     # test ComplexWarning when casting from complex to float or int
-    a = np.array(10, dtype=np.complex)
+    a = np.array(10, dtype=np.complex_)
     assert_warns(np.ComplexWarning, a.astype, t)
 
 def test_copyto_fromscalar():

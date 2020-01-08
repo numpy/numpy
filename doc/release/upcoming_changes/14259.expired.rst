@@ -1,6 +1,0 @@
-* ``arrayprint.FloatFormat``, ``arrayprint.LongFloatFormat`` has been removed,
-  use ``FloatingFormat`` instead
-* ``arrayprint.ComplexFormat``, ``arrayprint.LongComplexFormat`` has been
-  removed, use ``ComplexFloatingFormat`` instead
-* ``arrayprint.StructureFormat`` has been removed, use ``StructureVoidFormat``
-  instead

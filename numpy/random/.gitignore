@@ -1,0 +1,3 @@
+# generated files
+_bounded_integers.pyx
+_bounded_integers.pxd

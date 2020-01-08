@@ -42,7 +42,7 @@ improve the dtype system.
   - One of these should probably be the default for text data. The current
     behavior on Python 3 is neither efficient nor user friendly.
 
-- `np.int` should not be platform dependent
+- ``np.dtype(int)`` should not be platform dependent
 - Better coercion for string + number
 
 Performance

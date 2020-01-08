@@ -13,10 +13,8 @@
 #include <Python.h>
 #include <stdio.h>
 
-#if PY_VERSION_HEX >= 0x03000000
 #ifndef NPY_PY3K
 #define NPY_PY3K 1
-#endif
 #endif
 
 #include "numpy/npy_common.h"
@@ -45,6 +43,7 @@ static NPY_INLINE int PyInt_Check(PyObject *op) {
 #define PyInt_AsLong PyLong_AsLong
 #define PyInt_AS_LONG PyLong_AsLong
 #define PyInt_AsSsize_t PyLong_AsSsize_t
+#define PyNumber_Int PyNumber_Long
 
 /* NOTE:
  *

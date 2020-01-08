@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 try:
     # Accessing collections abstract classes from collections
@@ -15,12 +13,12 @@ import numpy as np
 from numpy.compat import Path
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, temppath
+    assert_raises, temppath,
     )
 from numpy.compat import pickle
 
 
-class TestFromrecords(object):
+class TestFromrecords:
     def test_fromrecords(self):
         r = np.rec.fromrecords([[456, 'dbe', 1.2], [2, 'de', 1.3]],
                             names='col1,col2,col3')
@@ -326,7 +324,7 @@ class TestFromrecords(object):
 
 
 @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
-class TestPathUsage(object):
+class TestPathUsage:
     # Test that pathlib.Path can be used
     def test_tofile_fromfile(self):
         with temppath(suffix='.bin') as path:
@@ -342,7 +340,7 @@ class TestPathUsage(object):
             assert_array_equal(x, a)
 
 
-class TestRecord(object):
+class TestRecord:
     def setup(self):
         self.data = np.rec.fromrecords([(1, 2, 3), (4, 5, 6)],
                             dtype=[("col1", "<i4"),
@@ -415,6 +413,22 @@ class TestRecord(object):
             assert_(pa.flags.f_contiguous)
             assert_(pa.flags.writeable)
             assert_(pa.flags.aligned)
+
+    def test_pickle_void(self):
+        # issue gh-13593
+        dt = np.dtype([('obj', 'O'), ('int', 'i')])
+        a = np.empty(1, dtype=dt)
+        data = (bytearray(b'eman'),)
+        a['obj'] = data
+        a['int'] = 42
+        ctor, args = a[0].__reduce__()
+        # check the contructor is what we expect before interpreting the arguments
+        assert ctor is np.core.multiarray.scalar
+        dtype, obj = args
+        # make sure we did not pickle the address
+        assert not isinstance(obj, bytes)
+
+        assert_raises(TypeError, ctor, dtype, 13)
 
     def test_objview_record(self):
         # https://github.com/numpy/numpy/issues/2599

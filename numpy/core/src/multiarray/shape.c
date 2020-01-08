@@ -981,7 +981,7 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
 
 /* See shape.h for parameters documentation */
 NPY_NO_EXPORT PyObject *
-build_shape_string(npy_intp n, npy_intp *vals)
+build_shape_string(npy_intp n, npy_intp const *vals)
 {
     npy_intp i;
     PyObject *ret, *tmp;

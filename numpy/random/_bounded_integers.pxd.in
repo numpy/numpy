@@ -4,7 +4,7 @@ import numpy as np
 cimport numpy as np
 ctypedef np.npy_bool bool_t
 
-from ._bit_generator cimport bitgen_t
+from numpy.random cimport bitgen_t
 
 cdef inline uint64_t _gen_mask(uint64_t max_val) nogil:
     """Mask generator for use in bounded random numbers"""

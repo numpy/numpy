@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark
 
 import numpy as np
@@ -106,7 +104,7 @@ def memoize(f):
     return f
 
 
-class SortGenerator(object):
+class SortGenerator:
     # The size of the unsorted area in the "random unsorted area"
     # benchmarks
     AREA_SIZE = 100

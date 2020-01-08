@@ -5,7 +5,7 @@ Building the NumPy API and reference docs
 =========================================
 
 We currently use Sphinx_ for generating the API and reference
-documentation for NumPy.  You will need Sphinx 1.8.3 <= 1.8.5.
+documentation for NumPy.  You will need Sphinx >= 2.0.0.
 
 If you only want to get the documentation, note that pre-built
 versions can be found at
@@ -57,7 +57,9 @@ To build the PDF documentation, do instead::
    make latex
    make -C build/latex all-pdf
 
-You will need to have Latex installed for this.
+You will need to have Latex installed for this, inclusive of support for
+Greek letters.  For example, on Ubuntu xenial ``texlive-lang-greek`` and
+``cm-super`` are needed.  Also ``latexmk`` is needed on non-Windows systems.
 
 Instead of the above, you can also do::
 

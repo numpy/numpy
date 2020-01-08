@@ -36,7 +36,7 @@
 
 #include "cblasfuncs.h"
 #include "npy_cblas.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 
 /* check for sequences, but ignore the types numpy considers scalars */
 static NPY_INLINE npy_bool
@@ -748,7 +748,7 @@ _setup_field(int i, PyArray_Descr *descr, PyArrayObject *arr,
     }
 
     ((PyArrayObject_fields *)(arr))->descr = new;
-    if ((new->alignment > 1) && 
+    if ((new->alignment > 1) &&
                 ((((uintptr_t)dstdata + offset) % new->alignment) != 0)) {
         PyArray_CLEARFLAGS(arr, NPY_ARRAY_ALIGNED);
     }
@@ -836,7 +836,7 @@ VOID_setitem(PyObject *op, void *input, void *vap)
             if (names_size != PyTuple_Size(op)) {
                 errmsg = PyUString_FromFormat(
                         "could not assign tuple of length %zd to structure "
-                        "with %" NPY_INTP_FMT " fields.", 
+                        "with %" NPY_INTP_FMT " fields.",
                         PyTuple_Size(op), names_size);
                 PyErr_SetObject(PyExc_ValueError, errmsg);
                 Py_DECREF(errmsg);
@@ -1081,6 +1081,7 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
  *           npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *           npy_float, npy_double, npy_longdouble,
  *           npy_datetime, npy_timedelta#
+ * #supports_nat = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1#
  */
 
 /**begin repeat1
@@ -1092,6 +1093,7 @@ TIMEDELTA_setitem(PyObject *op, void *ov, void *vap)
  *             npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *             npy_float, npy_double, npy_longdouble,
  *             npy_datetime, npy_timedelta#
+ * #floatingpoint = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0#
  */
 static void
 @FROMTYPE@_to_@TOTYPE@(void *input, void *output, npy_intp n,
@@ -1101,7 +1103,15 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        *op++ = (@totype@)*ip++;
+        @fromtype@ f = *ip++;
+        @totype@ t = (@totype@)f;
+#if @supports_nat@ && @floatingpoint@
+        /* Avoid undefined behaviour for NaN -> NaT */
+        if (npy_isnan(f)) {
+            t = (@totype@)NPY_DATETIME_NAT;
+        }
+#endif
+        *op++ = t;
     }
 }
 /**end repeat1**/
@@ -1119,7 +1129,15 @@ static void
     @totype@ *op = output;
 
     while (n--) {
-        *op++ = (@totype@)*ip;
+        @fromtype@ f = *ip;
+        @totype@ t = (@totype@)f;
+#if @supports_nat@
+        /* Avoid undefined behaviour for NaN -> NaT */
+        if (npy_isnan(f)) {
+            t = (@totype@)NPY_DATETIME_NAT;
+        }
+#endif
+        *op++ = t;
         ip += 2;
     }
 }
@@ -1757,7 +1775,58 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
 }
 
 /**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = CFLOAT, CDOUBLE#
+ * #type = npy_cfloat, npy_cdouble#
+ */
+static int
+@fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
+             PyArray_Descr *NPY_UNUSED(ignored))
+{
+    double result;
+    int ret_real, ret_imag;
+
+    ret_real = NumPyOS_ascii_ftolf(fp, &result);
+    @type@ output;
+    // Peek next character
+    char next = getc(fp);
+    if ((next == '+') || (next == '-')) {
+        // Imaginary component specified
+        output.real = result;
+        // Revert peek and read imaginary component
+        ungetc(next, fp);
+        ret_imag = NumPyOS_ascii_ftolf(fp, &result);
+        // Peak next character
+        next = getc(fp);
+        if ((ret_imag == 1) && (next == 'j')) {
+            // If read is successful and the immediate following char is j
+            output.imag = result;
+        }
+        else {
+            output.imag = 0;
+            // Push an invalid char to trigger the not everything is read error
+            ungetc('a', fp);
+        }
+    }
+    else if (next == 'j') {
+        // Real component not specified
+        output.real = 0;
+        output.imag = result;
+    }
+    else {
+        // Imaginary component not specified
+        output.real = result;
+        output.imag = 0.;
+        // Next character is not + / - / j. Revert peek.
+        ungetc(next, fp);
+    }
+    *(@type@ *)ip = output;
+    return ret_real;
+}
+/**end repeat**/
+
+
+/**begin repeat
+ * #fname = CLONGDOUBLE,
  *          OBJECT, STRING, UNICODE, VOID,
  *          DATETIME, TIMEDELTA#
  */
@@ -1849,7 +1918,60 @@ BOOL_fromstr(char *str, void *ip, char **endptr,
 }
 
 /**begin repeat
- * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE,
+ * #fname = CFLOAT, CDOUBLE#
+ * #type = npy_cfloat, npy_cdouble#
+ */
+static int
+@fname@_fromstr(char *str, void *ip, char **endptr,
+        PyArray_Descr *NPY_UNUSED(ignore))
+{
+    double result;
+
+    result = NumPyOS_ascii_strtod(str, endptr);
+    @type@ output;
+
+    if (endptr && ((*endptr[0] == '+') || (*endptr[0] == '-'))) {
+        // Imaginary component specified
+        output.real = result;
+        // Reading imaginary component
+        char **prev = endptr;
+        str = *endptr;
+        result = NumPyOS_ascii_strtod(str, endptr);
+        if (endptr && *endptr[0] == 'j') {
+            // Read is successful if the immediate following char is j
+            output.imag = result;
+            // Skip j
+            ++*endptr;
+        }
+        else {
+            /*
+             * Set endptr to previous char to trigger the not everything is
+             * read error
+             */
+            endptr = prev;
+            output.imag = 0;
+        }
+    }
+    else if (endptr && *endptr[0] == 'j') {
+        // Real component not specified
+        output.real = 0;
+        output.imag = result;
+        // Skip j
+        ++*endptr;
+    }
+    else {
+        // Imaginary component not specified
+        output.real = result;
+        output.imag = 0.;
+    }
+    *(@type@ *)ip = output;
+    return 0;
+}
+/**end repeat**/
+
+
+/**begin repeat
+ * #fname = CLONGDOUBLE,
  *          OBJECT, STRING, UNICODE, VOID#
  */
 
@@ -2878,7 +3000,7 @@ OBJECT_compare(PyObject **ip1, PyObject **ip2, PyArrayObject *NPY_UNUSED(ap))
 
     ret = PyObject_RichCompareBool(*ip1, *ip2, Py_LT);
     if (ret < 0) {
-        /* error occurred, avoid the next call to PyObject_RichCompareBool */ 
+        /* error occurred, avoid the next call to PyObject_RichCompareBool */
         return 0;
     }
     if (ret == 1) {
@@ -3413,17 +3535,17 @@ NPY_NO_EXPORT void
            npy_intp n, void *NPY_UNUSED(ignore))
 {
 #if defined(HAVE_CBLAS)
-    int is1b = blas_stride(is1, sizeof(@type@));
-    int is2b = blas_stride(is2, sizeof(@type@));
+    CBLAS_INT is1b = blas_stride(is1, sizeof(@type@));
+    CBLAS_INT is2b = blas_stride(is2, sizeof(@type@));
 
     if (is1b && is2b)
     {
         double sum = 0.;  /* double for stability */
 
         while (n > 0) {
-            int chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
+            CBLAS_INT chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
 
-            sum += cblas_@prefix@dot(chunk,
+            sum += CBLAS_FUNC(cblas_@prefix@dot)(chunk,
                                      (@type@ *) ip1, is1b,
                                      (@type@ *) ip2, is2b);
             /* use char strides here */
@@ -3462,17 +3584,17 @@ NPY_NO_EXPORT void
            char *op, npy_intp n, void *NPY_UNUSED(ignore))
 {
 #if defined(HAVE_CBLAS)
-    int is1b = blas_stride(is1, sizeof(@ctype@));
-    int is2b = blas_stride(is2, sizeof(@ctype@));
+    CBLAS_INT is1b = blas_stride(is1, sizeof(@ctype@));
+    CBLAS_INT is2b = blas_stride(is2, sizeof(@ctype@));
 
     if (is1b && is2b) {
         double sum[2] = {0., 0.};  /* double for stability */
 
         while (n > 0) {
-            int chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
+            CBLAS_INT chunk = n < NPY_CBLAS_CHUNK ? n : NPY_CBLAS_CHUNK;
             @type@ tmp[2];
 
-            cblas_@prefix@dotu_sub((int)n, ip1, is1b, ip2, is2b, tmp);
+            CBLAS_FUNC(cblas_@prefix@dotu_sub)((CBLAS_INT)n, ip1, is1b, ip2, is2b, tmp);
             sum[0] += (double)tmp[0];
             sum[1] += (double)tmp[1];
             /* use char strides here */
@@ -4071,7 +4193,7 @@ _datetime_dtype_metadata_clone(NpyAuxData *data)
 }
 
 /*
- * Allcoate and initialize a PyArray_DatetimeDTypeMetaData object
+ * Allocate and initialize a PyArray_DatetimeDTypeMetaData object
  */
 static NpyAuxData*
 _create_datetime_metadata(NPY_DATETIMEUNIT base, int num)
@@ -4307,7 +4429,7 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
         #if @rsort@
             aradixsort_@suff@
         #else
-            atimsort_@suff@            
+            atimsort_@suff@
         #endif
     },
 #else

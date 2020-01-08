@@ -172,7 +172,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_IterNew(PyObject *obj)
 {
     /*
-     * Note that internall PyArray_RawIterBaseInit may be called directly on a
+     * Note that internally PyArray_RawIterBaseInit may be called directly on a
      * statically allocated PyArrayIterObject.
      */
     PyArrayIterObject *it;

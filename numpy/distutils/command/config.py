@@ -2,8 +2,6 @@
 # try_compile call. try_run works but is untested for most of Fortran
 # compilers (they must define linker_exe first).
 # Pearu Peterson
-from __future__ import division, absolute_import, print_function
-
 import os, signal
 import warnings
 import sys
@@ -24,7 +22,6 @@ from numpy.distutils.command.autodist import (check_gcc_function_attribute,
                                               check_inline,
                                               check_restrict,
                                               check_compiler_gcc4)
-from numpy.distutils.compat import get_exception
 
 LANG_EXT['f77'] = '.f'
 LANG_EXT['f90'] = '.f90'
@@ -52,8 +49,7 @@ class config(old_config):
             if not self.compiler.initialized:
                 try:
                     self.compiler.initialize()
-                except IOError:
-                    e = get_exception()
+                except IOError as e:
                     msg = textwrap.dedent("""\
                         Could not initialize compiler instance: do you have Visual Studio
                         installed?  If you are trying to build with MinGW, please use "python setup.py
@@ -96,8 +92,8 @@ class config(old_config):
             self.compiler = self.fcompiler
         try:
             ret = mth(*((self,)+args))
-        except (DistutilsExecError, CompileError):
-            str(get_exception())
+        except (DistutilsExecError, CompileError) as e:
+            str(e)
             self.compiler = save_compiler
             raise CompileError
         self.compiler = save_compiler
@@ -495,7 +491,7 @@ class config(old_config):
         self._clean()
         return exitcode, output
 
-class GrabStdout(object):
+class GrabStdout:
 
     def __init__(self):
         self.sys_stdout = sys.stdout

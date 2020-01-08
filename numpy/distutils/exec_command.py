@@ -49,8 +49,6 @@ Known bugs:
   because the messages are lost at some point.
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = ['exec_command', 'find_executable']
 
 import os

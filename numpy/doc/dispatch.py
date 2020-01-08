@@ -58,7 +58,7 @@ numpy.ndarray
 
 How can we pass our custom array type through this function? Numpy allows a
 class to indicate that it would like to handle computations in a custom-defined
-way through the interaces ``__array_ufunc__`` and ``__array_function__``. Let's
+way through the interfaces ``__array_ufunc__`` and ``__array_function__``. Let's
 take one at a time, starting with ``_array_ufunc__``. This method covers
 :ref:`ufuncs`, a class of functions that includes, for example,
 :func:`numpy.multiply` and :func:`numpy.sin`.

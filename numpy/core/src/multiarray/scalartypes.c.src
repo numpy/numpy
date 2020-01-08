@@ -28,7 +28,7 @@
 #include "npy_import.h"
 #include "dragon4.h"
 #include "npy_longdouble.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 
 #include <stdlib.h>
 
@@ -225,20 +225,6 @@ gentype_@name@(PyObject *m1, PyObject *m2)
 }
 
 /**end repeat**/
-
-#if !defined(NPY_PY3K)
-/**begin repeat
- *
- * #name = divide#
- */
-static PyObject *
-gentype_@name@(PyObject *m1, PyObject *m2)
-{
-    BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
-    return PyArray_Type.tp_as_number->nb_@name@(m1, m2);
-}
-/**end repeat**/
-#endif
 
 /* Get a nested slot, or NULL if absent */
 #define GET_NESTED_SLOT(type, group, slot) \
@@ -1104,9 +1090,6 @@ static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_add,                     /*nb_add*/
     (binaryfunc)gentype_subtract,                /*nb_subtract*/
     (binaryfunc)gentype_multiply,                /*nb_multiply*/
-#if !defined(NPY_PY3K)
-    (binaryfunc)gentype_divide,                  /*nb_divide*/
-#endif
     (binaryfunc)gentype_remainder,               /*nb_remainder*/
     (binaryfunc)gentype_divmod,                  /*nb_divmod*/
     (ternaryfunc)gentype_power,                  /*nb_power*/
@@ -1137,9 +1120,6 @@ static PyNumberMethods gentype_as_number = {
     0,                                           /*inplace_add*/
     0,                                           /*inplace_subtract*/
     0,                                           /*inplace_multiply*/
-#if !defined(NPY_PY3K)
-    0,                                           /*inplace_divide*/
-#endif
     0,                                           /*inplace_remainder*/
     0,                                           /*inplace_power*/
     0,                                           /*inplace_lshift*/
@@ -1293,7 +1273,6 @@ gentype_sizeof(PyObject *self)
     return PyLong_FromSsize_t(nbytes);
 }
 
-#if PY_VERSION_HEX >= 0x03000000
 NPY_NO_EXPORT void
 gentype_struct_free(PyObject *ptr)
 {
@@ -1307,17 +1286,6 @@ gentype_struct_free(PyObject *ptr)
     PyArray_free(arrif->shape);
     PyArray_free(arrif);
 }
-#else
-NPY_NO_EXPORT void
-gentype_struct_free(void *ptr, void *arg)
-{
-    PyArrayInterface *arrif = (PyArrayInterface *)ptr;
-    Py_DECREF((PyObject *)arg);
-    Py_XDECREF(arrif->descr);
-    PyArray_free(arrif->shape);
-    PyArray_free(arrif);
-}
-#endif
 
 static PyObject *
 gentype_struct_get(PyObject *self)
@@ -1671,6 +1639,11 @@ gentype_itemset(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
     return NULL;
 }
 
+/* This function matches the Python 2.7 PyBufferProcs.bf_getreadbuffer
+ * interface, but no longer needs to. In the future we could consider
+ * rewriting callers to use `gentype_getbuffer`, or inline the function body
+ * at the caller.
+ */
 static Py_ssize_t
 gentype_getreadbuf(PyObject *, Py_ssize_t, void **);
 
@@ -1884,8 +1857,30 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
     PyTuple_SET_ITEM(ret, 0, obj);
     obj = PyObject_GetAttrString((PyObject *)self, "dtype");
     if (PyArray_IsScalar(self, Object)) {
-        mod = ((PyObjectScalarObject *)self)->obval;
-        PyTuple_SET_ITEM(ret, 1, Py_BuildValue("NO", obj, mod));
+        PyObject *val = ((PyObjectScalarObject *)self)->obval;
+        PyObject *tup = Py_BuildValue("NO", obj, val);
+        if (tup == NULL) {
+            return NULL;
+        }
+        PyTuple_SET_ITEM(ret, 1, tup);
+    }
+    else if (obj && PyDataType_FLAGCHK((PyArray_Descr *)obj, NPY_LIST_PICKLE)) {
+        /* a structured dtype with an object in a field */
+        PyArrayObject *arr = (PyArrayObject *)PyArray_FromScalar(self, NULL);
+        if (arr == NULL) {
+            return NULL;
+        }
+        /* arr.item() */
+        PyObject *val = PyArray_GETITEM(arr, PyArray_DATA(arr));
+        Py_DECREF(arr);
+        if (val == NULL) {
+            return NULL;
+        }
+        PyObject *tup = Py_BuildValue("NN", obj, val);
+        if (tup == NULL) {
+            return NULL;
+        }
+        PyTuple_SET_ITEM(ret, 1, tup);
     }
     else {
 #ifndef Py_UNICODE_WIDE
@@ -2578,48 +2573,7 @@ gentype_getreadbuf(PyObject *self, Py_ssize_t segment, void **ptrptr)
     return numbytes;
 }
 
-#if !defined(NPY_PY3K)
-static Py_ssize_t
-gentype_getsegcount(PyObject *self, Py_ssize_t *lenp)
-{
-    PyArray_Descr *outcode;
-
-    outcode = PyArray_DescrFromScalar(self);
-    if (lenp) {
-        *lenp = outcode->elsize;
-#ifndef Py_UNICODE_WIDE
-        if (outcode->type_num == NPY_UNICODE) {
-            *lenp >>= 1;
-        }
-#endif
-    }
-    Py_DECREF(outcode);
-    return 1;
-}
-
-static Py_ssize_t
-gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
-{
-    if (PyArray_IsScalar(self, String) ||
-            PyArray_IsScalar(self, Unicode)) {
-        return gentype_getreadbuf(self, segment, (void **)ptrptr);
-    }
-    else {
-        PyErr_SetString(PyExc_TypeError,
-                "Non-character array cannot be interpreted "\
-                "as character buffer.");
-        return -1;
-    }
-}
-#endif /* !defined(NPY_PY3K) */
-
 static PyBufferProcs gentype_as_buffer = {
-#if !defined(NPY_PY3K)
-    gentype_getreadbuf,                          /* bf_getreadbuffer*/
-    NULL,                                        /* bf_getwritebuffer*/
-    gentype_getsegcount,                         /* bf_getsegcount*/
-    gentype_getcharbuf,                          /* bf_getcharbuffer*/
-#endif
     gentype_getbuffer,                           /* bf_getbuffer */
     NULL,                                        /* bf_releasebuffer */
 };
@@ -3060,10 +3014,6 @@ NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
     0,                                           /* nb_add */
     0,                                           /* nb_subtract */
     0,                                           /* nb_multiply */
-#if defined(NPY_PY3K)
-#else
-    0,                                           /* nb_divide */
-#endif
     0,                                           /* nb_remainder */
     0,                                           /* nb_divmod */
     0,                                           /* nb_power */
@@ -3097,10 +3047,6 @@ NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
     0,                                           /* nb_inplace_add */
     0,                                           /* nb_inplace_subtract */
     0,                                           /* nb_inplace_multiply */
-#if defined(NPY_PY3K)
-#else
-    0,                                           /* nb_inplace_divide */
-#endif
     0,                                           /* nb_inplace_remainder */
     0,                                           /* nb_inplace_power */
     0,                                           /* nb_inplace_lshift */
@@ -4060,8 +4006,11 @@ initialize_casting_tables(void)
     _npy_can_cast_safely_table[_FROM_NUM][NPY_STRING] = 1;
     _npy_can_cast_safely_table[_FROM_NUM][NPY_UNICODE] = 1;
 
-    /* Allow casts from any integer to the TIMEDELTA type */
-#if @from_isint@ || @from_isuint@
+#if @from_isint@ && NPY_SIZEOF_TIMEDELTA >= _FROM_BSIZE
+    /* Allow casts from smaller or equal signed integers to the TIMEDELTA type */
+    _npy_can_cast_safely_table[_FROM_NUM][NPY_TIMEDELTA] = 1;
+#elif @from_isuint@ && NPY_SIZEOF_TIMEDELTA > _FROM_BSIZE
+    /* Allow casts from smaller unsigned integers to the TIMEDELTA type */
     _npy_can_cast_safely_table[_FROM_NUM][NPY_TIMEDELTA] = 1;
 #endif
 

@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import, print_function
-
 import sys, os, re
 
 # Minimum version, enforced by sphinx
@@ -178,16 +176,29 @@ latex_elements = {
 }
 
 # Additional stuff for the LaTeX preamble.
-latex_preamble = r'''
-\usepackage{amsmath}
-imgmath_latex_preamble = R"\usepackage{xcolor}"
-\DeclareUnicodeCharacter{00A0}{\nobreakspace}
-
+latex_elements['preamble'] = r'''
 % In the parameters section, place a newline after the Parameters
 % header
+\usepackage{xcolor}
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}
+% but expdlist old LaTeX package requires fixes:
+% 1) remove extra space
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\@item{{\@breaklabel} }{{\@breaklabel}}{}{}
+\makeatother
+% 2) fix bug in expdlist's way of breaking the line after long item label
+\makeatletter
+\def\breaklabel{%
+    \def\@breaklabel{%
+        \leavevmode\par
+        % now a hack because Sphinx inserts \leavevmode after term node
+        \def\leavevmode{\def\leavevmode{\unhbox\voidb@x}}%
+    }%
+}
+\makeatother
 
 % Make Examples/etc section headers smaller and more compact
 \makeatletter

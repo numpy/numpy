@@ -8,8 +8,6 @@ extend over multiple lines, the closing three quotation marks must be on
 a line by itself, preferably preceded by a blank line.
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os # standard library imports first
 
 # Do NOT import using *, e.g. from numpy import *
@@ -112,9 +110,9 @@ def foo(var1, var2, long_var_name='hi'):
     use the function.
 
     >>> a = [1, 2, 3]
-    >>> print [x + 3 for x in a]
+    >>> print([x + 3 for x in a])
     [4, 5, 6]
-    >>> print "a\n\nb"
+    >>> print("a\n\nb")
     a
     b
 

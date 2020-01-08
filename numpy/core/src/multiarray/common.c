@@ -12,7 +12,7 @@
 #include "usertypes.h"
 
 #include "common.h"
-#include "buffer.h"
+#include "npy_buffer.h"
 
 #include "get_attr_string.h"
 #include "mem_overlap.h"
@@ -367,6 +367,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         }
         Py_DECREF(ip);
     }
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
+    }
+
 
     /* The array struct interface */
     ip = PyArray_LookupSpecial_OnInstance(obj, "__array_struct__");
@@ -388,6 +392,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             }
         }
         Py_DECREF(ip);
+    }
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     /* The old buffer interface */
@@ -418,6 +425,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (PyErr_Occurred()) {
             goto fail;
         }
+    }
+    else if (PyErr_Occurred()) {
+        PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
     /*
@@ -544,7 +554,7 @@ fail:
 
 /* new reference */
 NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char *c_str)
+_array_typedescr_fromstr(char const *c_str)
 {
     PyArray_Descr *descr = NULL;
     PyObject *stringobj = PyString_FromString(c_str);
@@ -685,7 +695,7 @@ _IsWriteable(PyArrayObject *ap)
  * @return Python unicode string
  */
 NPY_NO_EXPORT PyObject *
-convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending)
+convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending)
 {
     npy_intp i;
     PyObject *ret, *tmp;

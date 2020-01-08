@@ -114,7 +114,7 @@ An example of how the ``__duckarray__`` protocol could be used to write a
 seen below. The example here was chosen not only to demonstrate the usage of
 the ``duckarray`` function, but also to demonstrate its dependency on the NumPy
 API, demonstrated by checks on the array's ``shape`` attribute. Note that the
-example is merely a simplified version of NumPy's actualy implementation of
+example is merely a simplified version of NumPy's actually implementation of
 ``stack`` working on the first axis, and it is assumed that Dask has implemented
 the ``__duckarray__`` method.
 

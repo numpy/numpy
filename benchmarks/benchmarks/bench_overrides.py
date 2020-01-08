@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark
 
 try:
@@ -35,7 +33,7 @@ def mock_concatenate(arrays, axis=0, out=None):
     pass
 
 
-class DuckArray(object):
+class DuckArray:
     def __array_function__(self, func, types, args, kwargs):
         pass
 

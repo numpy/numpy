@@ -49,7 +49,7 @@ NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op);
 
 NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char *str);
+_array_typedescr_fromstr(char const *str);
 
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i);
@@ -61,7 +61,7 @@ NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
 NPY_NO_EXPORT PyObject *
-convert_shape_to_string(npy_intp n, npy_intp *vals, char *ending);
+convert_shape_to_string(npy_intp n, npy_intp const *vals, char *ending);
 
 /*
  * Sets ValueError with "matrices not aligned" message for np.dot and friends
@@ -303,7 +303,11 @@ blas_stride(npy_intp stride, unsigned itemsize)
      */
     if (stride > 0 && npy_is_aligned((void *)stride, itemsize)) {
         stride /= itemsize;
+#ifndef HAVE_BLAS_ILP64
         if (stride <= INT_MAX) {
+#else
+        if (stride <= NPY_MAX_INT64) {
+#endif
             return stride;
         }
     }
@@ -314,7 +318,11 @@ blas_stride(npy_intp stride, unsigned itemsize)
  * Define a chunksize for CBLAS. CBLAS counts in integers.
  */
 #if NPY_MAX_INTP > INT_MAX
-# define NPY_CBLAS_CHUNK  (INT_MAX / 2 + 1)
+# ifndef HAVE_BLAS_ILP64
+#  define NPY_CBLAS_CHUNK  (INT_MAX / 2 + 1)
+# else
+#  define NPY_CBLAS_CHUNK  (NPY_MAX_INT64 / 2 + 1)
+# endif
 #else
 # define NPY_CBLAS_CHUNK  NPY_MAX_INTP
 #endif
