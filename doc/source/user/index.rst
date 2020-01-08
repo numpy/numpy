@@ -18,5 +18,6 @@ classes contained in the package, see the :ref:`reference`.
    basics
    misc
    numpy-for-matlab-users
+   tutorial-svd
    building
    c-info
