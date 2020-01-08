@@ -1291,8 +1291,6 @@ static PyObject *
 
 /**end repeat**/
 
-#define NONZERO_NAME(prefix) prefix##bool
-
 #define _IS_NONZERO(x) (x != 0)
 /**begin repeat
  *
@@ -1308,7 +1306,7 @@ static PyObject *
  * #nonzero = _IS_NONZERO*10, !npy_half_iszero, _IS_NONZERO*6#
  */
 static int
-NONZERO_NAME(@name@_)(PyObject *a)
+@name@_bool(PyObject *a)
 {
     int ret;
     @type@ arg1;
@@ -1317,7 +1315,7 @@ NONZERO_NAME(@name@_)(PyObject *a)
         if (PyErr_Occurred()) {
             return -1;
         }
-        return PyGenericArrType_Type.tp_as_number->NONZERO_NAME(nb_)(a);
+        return PyGenericArrType_Type.tp_as_number->nb_bool(a);
     }
 
     /*

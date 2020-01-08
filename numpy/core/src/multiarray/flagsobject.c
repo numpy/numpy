@@ -727,47 +727,25 @@ arrayflags_print(PyArrayFlagsObject *self)
     );
 }
 
-static int
-arrayflags_compare(PyArrayFlagsObject *self, PyArrayFlagsObject *other)
-{
-    if (self->flags == other->flags) {
-        return 0;
-    }
-    else if (self->flags < other->flags) {
-        return -1;
-    }
-    else {
-        return 1;
-    }
-}
-
-
 static PyObject*
 arrayflags_richcompare(PyObject *self, PyObject *other, int cmp_op)
 {
-    PyObject *result = Py_NotImplemented;
-    int cmp;
-
-    if (cmp_op != Py_EQ && cmp_op != Py_NE) {
-        PyErr_SetString(PyExc_TypeError,
-                        "undefined comparison for flag object");
-        return NULL;
+    if (!PyObject_TypeCheck(other, &PyArrayFlags_Type)) {
+        Py_RETURN_NOTIMPLEMENTED;
     }
 
-    if (PyObject_TypeCheck(other, &PyArrayFlags_Type)) {
-        cmp = arrayflags_compare((PyArrayFlagsObject *)self,
-                                 (PyArrayFlagsObject *)other);
+    npy_bool eq = ((PyArrayFlagsObject*) self)->flags ==
+                   ((PyArrayFlagsObject*) other)->flags;
 
-        if (cmp_op == Py_EQ) {
-            result = (cmp == 0) ? Py_True : Py_False;
-        }
-        else if (cmp_op == Py_NE) {
-            result = (cmp != 0) ? Py_True : Py_False;
-        }
+    if (cmp_op == Py_EQ) {
+        return PyBool_FromLong(eq);
     }
-
-    Py_INCREF(result);
-    return result;
+    else if (cmp_op == Py_NE) {
+        return PyBool_FromLong(!eq);
+    }
+    else {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
 }
 
 static PyMappingMethods arrayflags_as_mapping = {

@@ -302,17 +302,6 @@ defdict = {
           ],
           TD(O, f='PyNumber_Multiply'),
           ),
-'divide':
-    Ufunc(2, 1, None, # One is only a unit to the right, not the left
-          docstrings.get('numpy.core.umath.divide'),
-          'PyUFunc_MixedDivisionTypeResolver',
-          TD(intfltcmplx),
-          [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
-           TypeDescription('m', FullTypeDescr, 'md', 'm'),
-           TypeDescription('m', FullTypeDescr, 'mm', 'd'),
-          ],
-          TD(O, f='PyNumber_Divide'),
-          ),
 'floor_divide':
     Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.floor_divide'),
@@ -952,10 +941,6 @@ defdict = {
           signature='(n?,k),(k,m?)->(n?,m?)',
           ),
 }
-
-if sys.version_info[0] >= 3:
-    # Will be aliased to true_divide in umathmodule.c.src:InitOtherOperators
-    del defdict['divide']
 
 def indent(st, spaces):
     indentation = ' '*spaces
