@@ -40,27 +40,23 @@ Release Scripts
 
 Supported platforms and versions
 ================================
-Python >=3.5 are the currently supported versions when building from
-source.  We test NumPy against all these versions every time we merge code to
-master.  Binary installers may be available for a subset of these versions (see
-below).
-
+`NEP 29`_ outlines which Python versions are supported; For the first half of
+2020, this will be Python >= 3.6. We test NumPy against all these versions
+every time we merge code to master.  Binary installers may be available for a
+subset of these versions (see below).
 
 OS X
 ----
-Python >=3.5 are the versions for which we provide binary installers.
-OS X versions >= 10.6 are supported.  We build binary wheels for OSX that are
-compatible with Python.org Python, system Python, homebrew and macports - see
-this `OSX wheel building summary
+OS X versions >= 10.9 are supported, for Python version support see `NEP 29`_.
+We build binary wheels for OSX that are compatible with Python.org Python,
+system Python, homebrew and macports - see this `OSX wheel building summary
 <https://github.com/MacPython/wiki/wiki/Spinning-wheels>`_ for details.
 
 
 Windows
 -------
-We build 32- and 64-bit wheels for Python 3.5 on Windows. Windows
-XP, Vista, 7, 8 and 10 are supported.  We build NumPy using the MSVC compilers
-on Appveyor, but we are hoping to update to a `mingw-w64 toolchain
-<https://mingwpy.github.io>`_.  The Windows wheels use ATLAS for BLAS / LAPACK.
+We build 32- and 64-bit wheels on Windows. Windows 7, 8 and 10 are supported.
+We build NumPy using the `mingw-w64 toolchain`_ on Appveyor.
 
 
 Linux
@@ -92,12 +88,23 @@ each platform. At the moment this means:
 - OS X builds on travis currently use `clang`.  It appears that binary wheels
   for OSX >= 10.6 can be safely built from the travis-ci OSX 10.9 VMs
   when building against the Python from the Python.org installers;
-- Windows builds use the MSVC version corresponding to the Python being built
-  against;
+- Windows builds use the `mingw-w64 toolchain`_;
 - Manylinux1 wheels use the gcc provided on the Manylinux docker images.
 
 You will need Cython for building the binaries.  Cython compiles the ``.pyx``
 files in the NumPy distribution to ``.c`` files.
+
+.. _mingw-w64 toolchain : https://mingwpy.github.io
+.. _NEP 29 : https://numpy.org/neps/nep-0029-deprecation_policy.html
+
+OpenBLAS
+------------
+All the wheels link to a version of OpenBLAS_ supplied via the openblas-libs_ repo.
+The shared object (or DLL) is shipped with in the wheel, renamed to prevent name
+collisions with other OpenBLAS shared objects that may exist in the filesystem.
+
+.. _OpenBLAS: https://github.com/xianyi/OpenBLAS
+.. _openblas-libs: https://github.com/MacPython/openblas-libs
 
 
 Building source archives and wheels
