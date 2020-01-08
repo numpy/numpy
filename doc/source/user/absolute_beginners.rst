@@ -379,6 +379,7 @@ Can you reshape an array?
 
 *This section covers* ``arr.reshape()``
 
+.. _quickstart.shape-manipulation:
 -----
   
 **Yes!**
@@ -434,6 +435,8 @@ language**. What you do for C or Fortran depends on whether it's more important
 to preserve the indexing convention or not reorder the data.
 
 `Learn more about shape manipulation here <https://numpy.org/devdocs/user/quickstart.html#shape-manipulation>`_.
+
+:ref:` Learn more about shape manipulation here <_quickstart.shape-manipulation>`
 
 
 How to convert a 1D array into a 2D array (how to add a new axis to an array)
@@ -1609,6 +1612,14 @@ make NumPy so highly regarded in the scientific Python community.
 
 For example, this is the mean square error formula (a central formula used in
 supervised machine learning models that deal with regression):
+
+.. math::
+
+    MeanSquareError = \color{green}{\frac{1}{n}}
+    \color{blue}{\sum{i=1}^{n}} (
+    \color{red}{predictions} - 
+    \color{purple}{labels} )
+    ^{{\color{yellow}{2}}
 
 .. image:: images/np_MSE_formula.png
 
