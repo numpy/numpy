@@ -1330,7 +1330,7 @@ def searchsorted(a, v, side='left', sorter=None, reverse=False):
         order. They are typically the result of argsort.
     reverse : bool, optional
         If this is set to True, input array must be sorted in descending order,
-        otherwise `sorter` must be an array of indices that sort it.
+        otherwise `sorter` must be an array of indices that sort it in descending order.
 
         .. versionadded:: 1.7.0
 
