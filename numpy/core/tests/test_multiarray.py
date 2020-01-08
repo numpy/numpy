@@ -5570,6 +5570,11 @@ class TestStats(object):
         # of float32.
         assert_(_mean(np.ones(100000, dtype='float16')) == 1)
 
+    def test_mean_accuracy(self):
+        # This fail if the sum inside mean is done in float16 instead
+        # of float32.
+        assert_(_mean(np.ones((1000000, 4, 15), dtype = 'float32')) == 1)
+
     def test_var_values(self):
         for mat in [self.rmat, self.cmat, self.omat]:
             for axis in [0, 1, None]:
