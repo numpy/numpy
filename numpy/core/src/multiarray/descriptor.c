@@ -1408,8 +1408,82 @@ _report_generic_error(void) {
     PyErr_SetString(PyExc_TypeError, "data type not understood");
 }
 
-static int
-_convert_from_bytes(PyObject *obj, PyArray_Descr **at);
+static PyArray_Descr *
+_convert_from_bytes(PyObject *obj);
+
+static PyArray_Descr *
+_convert_from_any(PyObject *obj)
+{
+    /* default */
+    if (obj == Py_None) {
+        return PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    else if (PyArray_DescrCheck(obj)) {
+        PyArray_Descr *ret = (PyArray_Descr *)obj;
+        Py_INCREF(ret);
+        return ret;
+    }
+    else if (PyType_Check(obj)) {
+        return _convert_from_type(obj);
+    }
+    /* or a typecode string */
+    else if (PyUnicode_Check(obj)) {
+        /* Allow unicode format strings: convert to bytes */
+        PyObject *obj2 = PyUnicode_AsASCIIString(obj);
+        if (obj2 == NULL) {
+            /* Convert the exception into a TypeError */
+            PyObject *err = PyErr_Occurred();
+            if (PyErr_GivenExceptionMatches(err, PyExc_UnicodeEncodeError)) {
+                PyErr_SetString(PyExc_TypeError,
+                        "data type not understood");
+            }
+            return NULL;
+        }
+        PyArray_Descr *ret = _convert_from_any(obj2);
+        Py_DECREF(obj2);
+        return ret;
+    }
+    else if (PyBytes_Check(obj)) {
+        return _convert_from_bytes(obj);
+    }
+    else if (PyTuple_Check(obj)) {
+        /* or a tuple */
+        return _convert_from_tuple(obj, 0);
+    }
+    else if (PyList_Check(obj)) {
+        /* or a list */
+        return _convert_from_array_descr(obj, 0);
+    }
+    else if (PyDict_Check(obj) || PyDictProxy_Check(obj)) {
+        /* or a dictionary */
+        return _convert_from_dict(obj, 0);
+    }
+    else if (PyArray_Check(obj)) {
+        _report_generic_error();
+        return NULL;
+    }
+    else {
+        PyArray_Descr *ret;
+        if (_arraydescr_from_dtype_attr(obj, &ret)) {
+            /*
+             * Using dtype attribute, ret may be NULL if a
+             * RecursionError occurred.
+             */
+            return ret;
+        }
+        /*
+         * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
+         * type might override the dtype if numpy does not otherwise
+         * support it.
+         */
+        if (npy_ctypes_check(Py_TYPE(obj))) {
+            return _arraydescr_from_ctypes_type(Py_TYPE(obj));
+        }
+        _report_generic_error();
+        return NULL;
+    }
+}
+
 
 /*NUMPY_API
  * Get typenum from an object -- None goes to NPY_DEFAULT_TYPE
@@ -1429,119 +1503,22 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at);
 NPY_NO_EXPORT int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
-    *at = NULL;
-
-    /* default */
-    if (obj == Py_None) {
-        *at = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
-        return NPY_SUCCEED;
-    }
-
-    if (PyArray_DescrCheck(obj)) {
-        *at = (PyArray_Descr *)obj;
-        Py_INCREF(*at);
-        return NPY_SUCCEED;
-    }
-
-    if (PyType_Check(obj)) {
-        *at = _convert_from_type(obj);
-        return (*at) ? NPY_SUCCEED : NPY_FAIL;
-    }
-
-    /* or a typecode string */
-
-    if (PyUnicode_Check(obj)) {
-        /* Allow unicode format strings: convert to bytes */
-        int retval;
-        PyObject *obj2;
-        obj2 = PyUnicode_AsASCIIString(obj);
-        if (obj2 == NULL) {
-            /* Convert the exception into a TypeError */
-            PyObject *err = PyErr_Occurred();
-            if (PyErr_GivenExceptionMatches(err, PyExc_UnicodeEncodeError)) {
-                PyErr_SetString(PyExc_TypeError,
-                        "data type not understood");
-            }
-            return NPY_FAIL;
-        }
-        retval = PyArray_DescrConverter(obj2, at);
-        Py_DECREF(obj2);
-        return retval;
-    }
-
-    if (PyBytes_Check(obj)) {
-        return _convert_from_bytes(obj, at);
-    }
-    else if (PyTuple_Check(obj)) {
-        /* or a tuple */
-        *at = _convert_from_tuple(obj, 0);
-        if (*at == NULL){
-            if (!PyErr_Occurred()) {
-                _report_generic_error();
-            }
-            return NPY_FAIL;
-        }
-        return NPY_SUCCEED;
-    }
-    else if (PyList_Check(obj)) {
-        /* or a list */
-        *at = _convert_from_array_descr(obj,0);
-        if (*at == NULL) {
-            if (!PyErr_Occurred()) {
-                _report_generic_error();
-            }
-            return NPY_FAIL;
-        }
-        return NPY_SUCCEED;
-    }
-    else if (PyDict_Check(obj) || PyDictProxy_Check(obj)) {
-        /* or a dictionary */
-        *at = _convert_from_dict(obj,0);
-        if (*at == NULL) {
-            if (!PyErr_Occurred()) {
-                _report_generic_error();
-            }
-            return NPY_FAIL;
-        }
-        return NPY_SUCCEED;
-    }
-    else if (PyArray_Check(obj)) {
+    *at = _convert_from_any(obj);
+    if (*at == NULL && !PyErr_Occurred()) {
         _report_generic_error();
-        return NPY_FAIL;
     }
-    else {
-        if (_arraydescr_from_dtype_attr(obj, at)) {
-            /*
-             * Using dtype attribute, *at may be NULL if a
-             * RecursionError occurred.
-             */
-            if (*at == NULL) {
-                return NPY_FAIL;
-            }
-            return NPY_SUCCEED;
-        }
-        /*
-         * Note: this comes after _arraydescr_from_dtype_attr because the ctypes
-         * type might override the dtype if numpy does not otherwise
-         * support it.
-         */
-        if (npy_ctypes_check(Py_TYPE(obj))) {
-            *at = _arraydescr_from_ctypes_type(Py_TYPE(obj));
-            return *at ? NPY_SUCCEED : NPY_FAIL;
-        }
-        _report_generic_error();
-        return NPY_FAIL;
-    }
+    return (*at) ? NPY_SUCCEED : NPY_FAIL;
 }
 
-static int
-_convert_from_bytes(PyObject *obj, PyArray_Descr **at)
+/** Convert a bytestring specification into a dtype */
+static PyArray_Descr *
+_convert_from_bytes(PyObject *obj)
 {
     /* Check for a string typecode. */
     char *type = NULL;
     Py_ssize_t len = 0;
     if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
-        goto error;
+        return NULL;
     }
 
     /* Empty string is invalid */
@@ -1551,8 +1528,7 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
 
     /* check for commas present or first (or second) element a digit */
     if (_check_for_commastring(type, len)) {
-        *at = _convert_from_commastring(obj, 0);
-        return (*at) ? NPY_SUCCEED : NPY_FAIL;
+        return _convert_from_commastring(obj, 0);
     }
 
     /* Process the endian character. '|' is replaced by '='*/
@@ -1580,15 +1556,15 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
 
     /* Check for datetime format */
     if (is_datetime_typestr(type, len)) {
-        *at = parse_dtype_from_datetime_typestr(type, len);
-        if (*at == NULL) {
-            return NPY_FAIL;
+        PyArray_Descr *ret = parse_dtype_from_datetime_typestr(type, len);
+        if (ret == NULL) {
+            return NULL;
         }
-        /* *at has byte order '=' at this point */
+        /* ret has byte order '=' at this point */
         if (!PyArray_ISNBO(endian)) {
-            (*at)->byteorder = endian;
+            ret->byteorder = endian;
         }
-        return NPY_SUCCEED;
+        return ret;
     }
 
     int check_num = NPY_NOTYPE + 10;
@@ -1650,16 +1626,16 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
         goto fail;
     }
 
+    PyArray_Descr *ret;
     if ((check_num == NPY_NOTYPE + 10) ||
-            (*at = PyArray_DescrFromType(check_num)) == NULL) {
+            (ret = PyArray_DescrFromType(check_num)) == NULL) {
         PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
         if (typeDict == NULL) {
             goto fail;
         }
         PyObject *item = NULL;
-        PyObject *tmp;
-        tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
+        PyObject *tmp = PyUnicode_FromEncodedObject(obj, "ascii", "strict");
         if (tmp == NULL) {
             goto fail;
         }
@@ -1685,36 +1661,32 @@ _convert_from_bytes(PyObject *obj, PyArray_Descr **at)
                 }
             }
         }
-        return PyArray_DescrConverter(item, at);
+        return _convert_from_any(item);
     }
 
-    if (PyDataType_ISUNSIZED(*at) && (*at)->elsize != elsize) {
-        PyArray_DESCR_REPLACE(*at);
-        if (*at == NULL) {
-            return NPY_FAIL;
+    if (PyDataType_ISUNSIZED(ret) && ret->elsize != elsize) {
+        PyArray_DESCR_REPLACE(ret);
+        if (ret == NULL) {
+            return NULL;
         }
-        (*at)->elsize = elsize;
+        ret->elsize = elsize;
     }
     if (endian != '=' && PyArray_ISNBO(endian)) {
         endian = '=';
     }
-    if (endian != '=' && (*at)->byteorder != '|'
-        && (*at)->byteorder != endian) {
-        PyArray_DESCR_REPLACE(*at);
-        if (*at == NULL) {
-            return NPY_FAIL;
+    if (endian != '=' && ret->byteorder != '|' && ret->byteorder != endian) {
+        PyArray_DESCR_REPLACE(ret);
+        if (ret == NULL) {
+            return NULL;
         }
-        (*at)->byteorder = endian;
+        ret->byteorder = endian;
     }
-    return NPY_SUCCEED;
+    return ret;
 
 fail:
     PyErr_Format(PyExc_TypeError,
             "data type \"%s\" not understood", PyBytes_AS_STRING(obj));
-
-error:
-    *at = NULL;
-    return NPY_FAIL;
+    return NULL;
 }
 
 /** Array Descr Objects for dynamic types **/
