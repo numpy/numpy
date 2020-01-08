@@ -113,7 +113,7 @@ What is an array?
 An array is a central data structure of the NumPy library. An array is a grid of
 values and it contains information about the raw data, how to locate an element,
 and how to interpret an element. It has a grid of elements that can be indexed
-in `various ways <https://numpy.org/devdocs/user/quickstart.html#indexing-slicing-and-iterating>`_.
+in :ref:` various ways <_quickstart.indexing-slicing-and-iterating>`.
 The elements are all of the same type, referred to as the array ``dtype``.
 
 An array can be indexed by a tuple of nonnegative integers, by booleans, by
@@ -186,7 +186,7 @@ need to get, or even set, properties of an array without creating a new array,
 you can often access an array through its attributes. 
 
 `Read more about array attributes here
-<https://numpy.org/devdocs/reference/arrays.ndarray.html>`_ and learn about
+<https://numpy.org/devdocs/reference/arrays.ndarray.html>`_ and learn about 
 `array objects here <https://numpy.org/numpy-1.17.0/reference/arrays.html>`_.
 
 
@@ -259,7 +259,7 @@ specify which data type you want using ``dtype``. ::
   >>> array
   array([1, 1])
   
-`Learn more about creating arrays here <https://numpy.org/devdocs/user/quickstart.html#array-creation>`_.
+:ref:` Learn more about creating arrays here <_quickstart.array-creation>`
 
 Adding, removing, and sorting elements
 --------------------------------------
