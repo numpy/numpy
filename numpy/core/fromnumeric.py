@@ -1400,6 +1400,14 @@ def resize(a, new_shape):
            [0, 1, 2, 3]])
 
     """
+    tuplearg = type(new_shape) is tuple
+    errmsg = "negative dimensions not allowed"
+    if tuplearg is True:
+        for value in new_shape:
+            if value < 0:
+                raise ValueError(errmsg)
+    elif new_shape < 0:
+        raise ValueError(errmsg)
     if isinstance(new_shape, (int, nt.integer)):
         new_shape = (new_shape,)
     a = ravel(a)
