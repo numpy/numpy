@@ -380,6 +380,7 @@ Can you reshape an array?
 *This section covers* ``arr.reshape()``
 
 .. _quickstart.shape-manipulation:
+
 -----
   
 **Yes!**
@@ -1864,3 +1865,4 @@ For directions regarding installing Matplotlib, see the official
 -------------------------------------------------------
 
 *Image credits: Jay Alammar http://jalammar.github.io/*
+
