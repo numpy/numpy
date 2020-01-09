@@ -28,9 +28,6 @@ def check_dir(module, module_name=None):
     return results
 
 
-@pytest.mark.skipif(
-    sys.version_info[0] < 3,
-    reason="NumPy exposes slightly different functions on Python 2")
 def test_numpy_namespace():
     # None of these objects are publicly documented to be part of the main
     # NumPy namespace (some are useful though, others need to be cleaned up)

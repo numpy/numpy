@@ -21,10 +21,7 @@ from numpy.core import(
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 import numpy.linalg.lapack_lite
 
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
@@ -1344,14 +1341,7 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
-
-    if sys.version_info.major >= 3:
-        funcname = _d.assertRaisesRegex
-    else:
-        # Only present in Python 2.7, missing from unittest in 2.6
-        funcname = _d.assertRaisesRegexp
-
-    return funcname(exception_class, expected_regexp, *args, **kwargs)
+    return _d.assertRaisesRegex(exception_class, expected_regexp, *args, **kwargs)
 
 
 def decorate_methods(cls, decorator, testmatch=None):

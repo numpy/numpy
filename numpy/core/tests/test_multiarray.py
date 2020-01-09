@@ -29,10 +29,7 @@ except ImportError:
     except ImportError:
         pathlib = None
 
-if sys.version_info[0] >= 3:
-    import builtins
-else:
-    import __builtin__ as builtins
+import builtins
 from decimal import Decimal
 
 import numpy as np
@@ -161,7 +158,6 @@ class TestFlags:
         vals.setflags(write=True)
         assert_(vals.flags.writeable)
 
-    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Python 2 always copies")
     @pytest.mark.skipif(IS_PYPY, reason="PyPy always copies")
     def test_writeable_pickle(self):
         import pickle
@@ -942,13 +938,6 @@ class TestCreation:
         assert_equal(np.array([[1, 1],[1j, 1j]]).dtype, complex)
         assert_equal(np.array([[1j, 1j],[1, 1]]).dtype, complex)
         assert_equal(np.array([[1, 1, 1],[1, 1j, 1.], [1, 1, 1]]).dtype, complex)
-
-    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
-    def test_sequence_long(self):
-        assert_equal(np.array([long(4), long(4)]).dtype, long)
-        assert_equal(np.array([long(4), 2**80]).dtype, object)
-        assert_equal(np.array([long(4), 2**80, long(4)]).dtype, object)
-        assert_equal(np.array([2**80, long(4)]).dtype, object)
 
     def test_non_sequence_sequence(self):
         """Should not segfault.
@@ -3347,6 +3336,7 @@ class TestBinop:
             'and':      (np.bitwise_and, True, int),
             'xor':      (np.bitwise_xor, True, int),
             'or':       (np.bitwise_or, True, int),
+            'matmul':   (np.matmul, False, float),
             # 'ge':       (np.less_equal, False),
             # 'gt':       (np.less, False),
             # 'le':       (np.greater_equal, False),
@@ -3354,8 +3344,6 @@ class TestBinop:
             # 'eq':       (np.equal, False),
             # 'ne':       (np.not_equal, False),
         }
-        if sys.version_info >= (3, 5):
-            ops['matmul'] = (np.matmul, False, float)
 
         class Coerced(Exception):
             pass
@@ -3780,8 +3768,6 @@ class TestSubscripting:
     def test_test_zero_rank(self):
         x = np.array([1, 2, 3])
         assert_(isinstance(x[0], np.int_))
-        if sys.version_info[0] < 3:
-            assert_(isinstance(x[0], int))
         assert_(type(x[0, ...]) is np.ndarray)
 
 
@@ -3880,10 +3866,7 @@ class TestPickling:
                 assert ref() is None
 
     def _loads(self, obj):
-        if sys.version_info[0] >= 3:
-            return pickle.loads(obj, encoding='latin1')
-        else:
-            return pickle.loads(obj)
+        return pickle.loads(obj, encoding='latin1')
 
     # version 0 pickles, using protocol=2 to pickle
     # version 0 doesn't have a version field
@@ -5192,7 +5175,6 @@ class TestRecord:
         # Error raised when multiple fields have the same name
         assert_raises(ValueError, test_dtype_init)
 
-    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
     def test_bytes_fields(self):
         # Bytes are not allowed in field names and not recognized in titles
         # on Py3
@@ -5208,39 +5190,12 @@ class TestRecord:
         y = x[0]
         assert_raises(IndexError, y.__getitem__, b'a')
 
-    @pytest.mark.skipif(sys.version_info[0] < 3, reason="Not Python 3")
     def test_multiple_field_name_unicode(self):
         def test_dtype_unicode():
             np.dtype([("\u20B9", "f8"), ("B", "f8"), ("\u20B9", "f8")])
 
         # Error raised when multiple fields have the same name(unicode included)
         assert_raises(ValueError, test_dtype_unicode)
-
-    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
-    def test_unicode_field_titles(self):
-        # Unicode field titles are added to field dict on Py2
-        title = u'b'
-        dt = np.dtype([((title, 'a'), int)])
-        dt[title]
-        dt['a']
-        x = np.array([(1,), (2,), (3,)], dtype=dt)
-        x[title]
-        x['a']
-        y = x[0]
-        y[title]
-        y['a']
-
-    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Not Python 2")
-    def test_unicode_field_names(self):
-        # Unicode field names are converted to ascii on Python 2:
-        encodable_name = u'b'
-        assert_equal(np.dtype([(encodable_name, int)]).names[0], b'b')
-        assert_equal(np.dtype([(('a', encodable_name), int)]).names[0], b'b')
-
-        # But raises UnicodeEncodeError if it can't be encoded:
-        nonencodable_name = u'\uc3bc'
-        assert_raises(UnicodeEncodeError, np.dtype, [(nonencodable_name, int)])
-        assert_raises(UnicodeEncodeError, np.dtype, [(('a', nonencodable_name), int)])
 
     def test_fromarrays_unicode(self):
         # A single name string provided to fromarrays() is allowed to be unicode
@@ -6269,56 +6224,55 @@ class TestMatmul(MatmulCommon):
         assert not np.any(c)
 
 
-if sys.version_info[:2] >= (3, 5):
-    class TestMatmulOperator(MatmulCommon):
-        import operator
-        matmul = operator.matmul
+class TestMatmulOperator(MatmulCommon):
+    import operator
+    matmul = operator.matmul
 
-        def test_array_priority_override(self):
+    def test_array_priority_override(self):
 
-            class A:
-                __array_priority__ = 1000
+        class A:
+            __array_priority__ = 1000
 
-                def __matmul__(self, other):
-                    return "A"
+            def __matmul__(self, other):
+                return "A"
 
-                def __rmatmul__(self, other):
-                    return "A"
+            def __rmatmul__(self, other):
+                return "A"
 
-            a = A()
-            b = np.ones(2)
-            assert_equal(self.matmul(a, b), "A")
-            assert_equal(self.matmul(b, a), "A")
+        a = A()
+        b = np.ones(2)
+        assert_equal(self.matmul(a, b), "A")
+        assert_equal(self.matmul(b, a), "A")
 
-        def test_matmul_raises(self):
-            assert_raises(TypeError, self.matmul, np.int8(5), np.int8(5))
-            assert_raises(TypeError, self.matmul, np.void(b'abc'), np.void(b'abc'))
-            assert_raises(ValueError, self.matmul, np.arange(10), np.void(b'abc'))
+    def test_matmul_raises(self):
+        assert_raises(TypeError, self.matmul, np.int8(5), np.int8(5))
+        assert_raises(TypeError, self.matmul, np.void(b'abc'), np.void(b'abc'))
+        assert_raises(ValueError, self.matmul, np.arange(10), np.void(b'abc'))
 
-    def test_matmul_inplace():
-        # It would be nice to support in-place matmul eventually, but for now
-        # we don't have a working implementation, so better just to error out
-        # and nudge people to writing "a = a @ b".
-        a = np.eye(3)
-        b = np.eye(3)
-        assert_raises(TypeError, a.__imatmul__, b)
-        import operator
-        assert_raises(TypeError, operator.imatmul, a, b)
-        # we avoid writing the token `exec` so as not to crash python 2's
-        # parser
-        exec_ = getattr(builtins, "exec")
-        assert_raises(TypeError, exec_, "a @= b", globals(), locals())
+def test_matmul_inplace():
+    # It would be nice to support in-place matmul eventually, but for now
+    # we don't have a working implementation, so better just to error out
+    # and nudge people to writing "a = a @ b".
+    a = np.eye(3)
+    b = np.eye(3)
+    assert_raises(TypeError, a.__imatmul__, b)
+    import operator
+    assert_raises(TypeError, operator.imatmul, a, b)
+    # we avoid writing the token `exec` so as not to crash python 2's
+    # parser
+    exec_ = getattr(builtins, "exec")
+    assert_raises(TypeError, exec_, "a @= b", globals(), locals())
 
-    def test_matmul_axes():
-        a = np.arange(3*4*5).reshape(3, 4, 5)
-        c = np.matmul(a, a, axes=[(-2, -1), (-1, -2), (1, 2)])
-        assert c.shape == (3, 4, 4)
-        d = np.matmul(a, a, axes=[(-2, -1), (-1, -2), (0, 1)])
-        assert d.shape == (4, 4, 3)
-        e = np.swapaxes(d, 0, 2)
-        assert_array_equal(e, c)
-        f = np.matmul(a, np.arange(3), axes=[(1, 0), (0), (0)])
-        assert f.shape == (4, 5)
+def test_matmul_axes():
+    a = np.arange(3*4*5).reshape(3, 4, 5)
+    c = np.matmul(a, a, axes=[(-2, -1), (-1, -2), (1, 2)])
+    assert c.shape == (3, 4, 4)
+    d = np.matmul(a, a, axes=[(-2, -1), (-1, -2), (0, 1)])
+    assert d.shape == (4, 4, 3)
+    e = np.swapaxes(d, 0, 2)
+    assert_array_equal(e, c)
+    f = np.matmul(a, np.arange(3), axes=[(1, 0), (0), (0)])
+    assert f.shape == (4, 5)
 
 
 class TestInner:
@@ -7195,7 +7149,6 @@ class TestNewBufferProtocol:
         a = np.empty((1,) * 32)
         self._check_roundtrip(a)
 
-    @pytest.mark.skipif(sys.version_info < (2, 7, 7), reason="See gh-11115")
     def test_error_too_many_dims(self):
         def make_ctype(shape, scalar_type):
             t = scalar_type
@@ -7236,12 +7189,11 @@ class TestNewBufferProtocol:
             np.array(t())
 
         exc = cm.exception
-        if sys.version_info.major > 2:
-            with assert_raises_regex(
-                NotImplementedError,
-                r"Unrepresentable .* 'u' \(UCS-2 strings\)"
-            ):
-                raise exc.__cause__
+        with assert_raises_regex(
+            NotImplementedError,
+            r"Unrepresentable .* 'u' \(UCS-2 strings\)"
+        ):
+            raise exc.__cause__
 
     def test_ctypes_integer_via_memoryview(self):
         # gh-11150, due to bpo-10746
@@ -7797,11 +7749,6 @@ class TestArrayPriority:
         op.ge, op.lt, op.le, op.ne, op.eq
         ]
 
-    # See #7949. Don't use "/" operator With -3 switch, since python reports it
-    # as a DeprecationWarning
-    if sys.version_info[0] < 3 and not sys.py3kwarning:
-        binary_ops.append(op.div)
-
     class Foo(np.ndarray):
         __array_priority__ = 100.
 
@@ -7929,14 +7876,7 @@ class TestFormat:
     def test_1d_format(self):
         # until gh-5543, ensure that the behaviour matches what it used to be
         a = np.array([np.pi])
-        if sys.version_info[:2] >= (3, 4):
-            assert_raises(TypeError, '{:30}'.format, a)
-        else:
-            with suppress_warnings() as sup:
-                sup.filter(PendingDeprecationWarning)
-                res = '{:30}'.format(a)
-                dst = object.__format__(a, '30')
-                assert_equal(res, dst)
+        assert_raises(TypeError, '{:30}'.format, a)
 
 from numpy.testing import IS_PYPY
 

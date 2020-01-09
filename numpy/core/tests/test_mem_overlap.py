@@ -11,9 +11,6 @@ from numpy.testing import (
     assert_, assert_raises, assert_equal, assert_array_equal
     )
 
-if sys.version_info[0] >= 3:
-    xrange = range
-
 
 ndims = 2
 size = 10
@@ -138,11 +135,7 @@ def test_diophantine_fuzz():
                 # Check no solution exists (provided the problem is
                 # small enough so that brute force checking doesn't
                 # take too long)
-                try:
-                    ranges = tuple(xrange(0, a*ub+1, a) for a, ub in zip(A, U))
-                except OverflowError:
-                    # xrange on 32-bit Python 2 may overflow
-                    continue
+                ranges = tuple(range(0, a*ub+1, a) for a, ub in zip(A, U))
 
                 size = 1
                 for r in ranges:
@@ -475,7 +468,7 @@ def check_internal_overlap(a, manual_expected=None):
 
     # Brute-force check
     m = set()
-    ranges = tuple(xrange(n) for n in a.shape)
+    ranges = tuple(range(n) for n in a.shape)
     for v in itertools.product(*ranges):
         offset = sum(s*w for s, w in zip(a.strides, v))
         if offset in m:

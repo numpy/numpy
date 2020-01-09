@@ -6,9 +6,6 @@ import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
 
 
-PY2 = sys.version_info.major < 3
-
-
 # NOTE: This class should be kept as an exact copy of the example from the
 # docstring for NDArrayOperatorsMixin.
 
@@ -202,11 +199,10 @@ class TestNDArrayOperatorsMixin:
         array_like = ArrayLike(array)
         expected = ArrayLike(np.float64(5))
         _assert_equal_type_and_value(expected, np.matmul(array_like, array))
-        if not PY2:
-            _assert_equal_type_and_value(
-                expected, operator.matmul(array_like, array))
-            _assert_equal_type_and_value(
-                expected, operator.matmul(array, array_like))
+        _assert_equal_type_and_value(
+            expected, operator.matmul(array_like, array))
+        _assert_equal_type_and_value(
+            expected, operator.matmul(array, array_like))
 
     def test_ufunc_at(self):
         array = ArrayLike(np.array([1, 2, 3, 4]))

@@ -6,10 +6,7 @@ from numpy.testing import (
         )
 import threading
 import sys
-if sys.version_info[0] >= 3:
-    import queue
-else:
-    import Queue as queue
+import queue
 
 
 def fft1(x):

@@ -23,8 +23,6 @@ from numpy.lib import (
 
 from numpy.compat import long
 
-PY2 = sys.version_info[0] == 2
-
 def get_mat(n):
     data = np.arange(n)
     data = np.add.outer(data, data)
@@ -1568,11 +1566,8 @@ class TestLeaks:
                 a.f = np.frompyfunc(getattr(a, name), 1, 1)
                 out = a.f(np.arange(10))
             a = None
-            if PY2:
-                assert_equal(sys.getrefcount(A_func), refcount)
-            else:
-                # A.func is part of a reference cycle if incr is non-zero
-                assert_equal(sys.getrefcount(A_func), refcount + incr)
+            # A.func is part of a reference cycle if incr is non-zero
+            assert_equal(sys.getrefcount(A_func), refcount + incr)
             for i in range(5):
                 gc.collect()
             assert_equal(sys.getrefcount(A_func), refcount)
