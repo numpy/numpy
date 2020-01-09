@@ -13,6 +13,12 @@ PyArray_INCREF(PyArrayObject *mp);
 NPY_NO_EXPORT int
 PyArray_XDECREF(PyArrayObject *mp);
 
+NPY_NO_EXPORT int
+_PyArray_VISIT(PyArrayObject *mp, visitproc visit, void *arg);
+
+NPY_NO_EXPORT int
+_PyArray_CLEAR(PyArrayObject *mp);
+
 NPY_NO_EXPORT void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj);
 

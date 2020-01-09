@@ -8445,3 +8445,104 @@ def test_getfield():
     pytest.raises(ValueError, a.getfield, 'uint8', -1)
     pytest.raises(ValueError, a.getfield, 'uint8', 16)
     pytest.raises(ValueError, a.getfield, 'uint64', 0)
+
+
+@pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
+class TestGarbageCollection:
+    @pytest.mark.slow
+    def test_trashcan(self):
+        # this code triggers a long chain of nested deallocations - a stack
+        # overflow is prevented by invoking the "trashcan mechanism" in
+        # ndarray's deallocator
+        a = None
+        for i in range(200000):
+            a = np.array((a, i), dtype=object)
+
+    # check that various kinds of reference cycles are collected correctly
+    def test_simple_cycle(self):
+        a = np.empty(1, dtype='O')
+        a[0] = a
+        r = weakref.ref(a)
+        del a
+        gc.collect()
+        assert_(r() is None)
+
+    def test_complex_cycle(self):
+        a = np.empty(2, dtype='O')
+        b = np.empty(2, dtype='O')
+        c = np.empty(2, dtype='O')
+        a[0] = b
+        b[0] = c
+        c[0] = a
+        a[1] = [a]
+        b[1] = a
+        c[1] = c
+        ra = weakref.ref(a)
+        rb = weakref.ref(b)
+        rc = weakref.ref(c)
+        del a, b, c
+        gc.collect()
+        assert_(ra() is rb() is rc() is None)
+
+    def test_slice_cycle(self):
+        a = np.empty((5, 5), dtype='O')
+        b = np.empty((5, 5), dtype='O')
+        a[0, 0] = b[0]
+        b[0, 0] = a[0]
+        ra = weakref.ref(a)
+        rb = weakref.ref(b)
+        del a, b
+        gc.collect()
+        assert_(ra() is rb() is None)
+
+    def test_subclass_cycle(self):
+        class Subclass(np.ndarray):
+            pass
+        a = Subclass(1, dtype='O')
+        a[0] = a
+        ra = weakref.ref(a)
+        del a
+        gc.collect()
+        assert_(ra() is None)
+
+    def test_subclass_always_tracked(self):
+        class Subclass(np.ndarray):
+            pass
+        a = Subclass([1])
+        assert gc.is_tracked(a)
+
+    def test_structured_cycle(self):
+        # note that the object fields are not generally aligned due to the 'i1'.
+        a = np.empty(2, dtype=[('a', 'O'), ('b', [('c', 'O'), ('d', 'i1')])])
+        a['b']['c'][0] = a
+        a['b']['c'][1] = a
+        ra = weakref.ref(a)
+        del a
+        gc.collect()
+        assert_(ra() is None)
+
+    def test_unaligned_subarray(self):
+        a = np.empty(2, dtype=[('a', 'i1'), ('b', 'O', (2, 3))])
+        a['b'][0, 0, 0] = a
+        a['b'][1, 0, 1] = a
+        ra = weakref.ref(a)
+        del a
+        gc.collect()
+        assert_(ra() is None)
+
+    def test_updateifcopy_cycle(self):
+        # a WRITEBACKIFCOPY array caught in a reference cycle is not guaranteed
+        # to update its base array, but we should at least check that it gets
+        # deallocated
+        a = np.zeros(1, dtype=([('a', 'f8'), ('b', 'O')]))
+        a['b'][0] = []
+        i = np.nditer(a, ['refs_ok'],
+                [['readwrite', 'updateifcopy']],
+                casting='same_kind',
+                op_dtypes=[np.dtype([('a', 'f4'), ('b', 'O')])])
+        a['b'][0].append(i.operands[0])
+        ra = weakref.ref(a)
+        del a, i
+        gc.collect()
+        assert_(ra() is None)
+

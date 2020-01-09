@@ -53,6 +53,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "alloc.h"
 #include "mem_overlap.h"
 #include "numpyos.h"
+#include "refcount.h"
 #include "strfuncs.h"
 
 #include "binop_override.h"
@@ -471,6 +472,13 @@ array_dealloc(PyArrayObject *self)
 {
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
+    PyObject_GC_UnTrack(self);
+    /*
+     * prevent deeply-nested object arrays from causing stack overflows
+     * on deallocation
+     */
+    Py_TRASHCAN_SAFE_BEGIN(self);
+
     _dealloc_cached_buffer_info((PyObject*)self);
 
     if (fa->weakreflist != NULL) {
@@ -534,7 +542,66 @@ array_dealloc(PyArrayObject *self)
     npy_free_cache_dim(fa->dimensions, 2 * fa->nd);
     Py_DECREF(fa->descr);
     Py_TYPE(self)->tp_free((PyObject *)self);
+
+    Py_TRASHCAN_SAFE_END(self)
 }
+
+
+/*
+ * Implement traversal for cyclic garbage collection. There are two main
+ * cases. Arrays that do not own their own data, must VISIT their base.
+ * Arrays which hold the actual data own the references and have to visit
+ * all items.
+ */
+static int
+array_traverse(PyArrayObject *self, visitproc visit, void *arg)
+{
+    /* Make sure we don't traverse the array before it is fully initialized */
+    if (PyArray_DATA(self) == NULL) {
+        return 0;
+    }
+
+    /* TODO: In principle descr can create a cycle, but as long as we only
+     *       traverse object arrays, there is not much reason to visit it.
+     */
+    PyArray_Descr *descr = PyArray_DESCR(self);
+    Py_VISIT(((PyArrayObject_fields *)self)->base);
+
+    if (!PyDataType_REFCHK(descr)) {
+        /*
+         * There is no need to traverse an array not containing objects.
+         * NOTE: If user dtypes could handle reference counting themselves,
+         *       they would also have to handle VISIT here.
+         */
+        return 0;
+    }
+    if (!PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA)) {
+        /* if the array doesn't own its data, visiting fa->base is sufficient */
+        return 0;
+    }
+
+    /*
+     * Visit all objects in the array. Except for hypothetical cases and
+     * structured types, the array will be a continuous chunk of well behaved
+     * objects. If not, fall back to a structured type version.
+     */
+    if ((descr->type_num == NPY_OBJECT) &&
+        PyArray_ISONESEGMENT(self) && PyArray_ISALIGNED(self)) {
+        npy_intp i, size;
+        PyObject **data = PyArray_DATA(self);
+
+        assert(PyArray_ISNOTSWAPPED(self));  /* objects are always NBO */
+        size = PyArray_SIZE(self);
+        for (i = 0; i < size; i++) {
+            Py_VISIT(*data);  /* Should be able to handle NULL */
+            data++;
+        }
+        return 0;
+    }
+    _PyArray_VISIT(self, visit, arg);
+    return 0;
+}
+
 
 /*NUMPY_API
  * Prints the raw data of the ndarray in a form useful for debugging
@@ -1764,21 +1831,19 @@ array_iter(PyArrayObject *arr)
     return PySeqIter_New((PyObject *)arr);
 }
 
-static PyObject *
-array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
-{
-    /* nitems will always be 0 */
-    PyObject *obj = PyObject_Malloc(type->tp_basicsize);
-    PyObject_Init(obj, type);
-    return obj;
+
+/*
+ * To break cycles, tp_clear is implemented in PyArray_ClearAndFillNone,
+ * which sets all items to None. This is sufficient to break any cycle. It
+ * is not necessary to overwrite the base attribute of arrays not owning their
+ * data.
+ * We do not implement any special paths, since clearing will occur very rarely.
+ */
+static int
+array_clear(PyArrayObject *self) {
+    return _PyArray_CLEAR(self);
 }
 
-static void
-array_free(PyObject * v)
-{
-    /* avoid same deallocator as PyBaseObject, see gentype_free */
-    PyObject_Free(v);
-}
 
 
 NPY_NO_EXPORT PyTypeObject PyArray_Type = {
@@ -1806,11 +1871,12 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     (getattrofunc)0,                            /* tp_getattro */
     (setattrofunc)0,                            /* tp_setattro */
     &array_as_buffer,                           /* tp_as_buffer */
-    (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE), /* tp_flags */
+    (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
+     Py_TPFLAGS_HAVE_GC),                       /* tp_flags */
     0,                                          /* tp_doc */
 
-    (traverseproc)0,                            /* tp_traverse */
-    (inquiry)0,                                 /* tp_clear */
+    (traverseproc)array_traverse,               /* tp_traverse */
+    (inquiry)array_clear,                       /* tp_clear */
     (richcmpfunc)array_richcompare,             /* tp_richcompare */
     offsetof(PyArrayObject_fields, weakreflist), /* tp_weaklistoffset */
     (getiterfunc)array_iter,                    /* tp_iter */
@@ -1824,9 +1890,9 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     0,                                          /* tp_descr_set */
     0,                                          /* tp_dictoffset */
     (initproc)0,                                /* tp_init */
-    (allocfunc)array_alloc,                     /* tp_alloc */
+    0,                                          /* tp_alloc */
     (newfunc)array_new,                         /* tp_new */
-    (freefunc)array_free,                       /* tp_free */
+    0,                                          /* tp_free */
     0,                                          /* tp_is_gc */
     0,                                          /* tp_bases */
     0,                                          /* tp_mro */

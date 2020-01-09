@@ -861,7 +861,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'nditer_constr.c'),
             join('src', 'multiarray', 'nditer_pywrap.c'),
             join('src', 'multiarray', 'number.c'),
-            join('src', 'multiarray', 'refcount.c'),
+            join('src', 'multiarray', 'refcount.c.src'),
             join('src', 'multiarray', 'sequence.c'),
             join('src', 'multiarray', 'shape.c'),
             join('src', 'multiarray', 'scalarapi.c'),
