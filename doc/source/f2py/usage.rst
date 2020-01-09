@@ -166,24 +166,23 @@ distinguished by the usage of ``-c``, ``-m`` and ``-h`` switches:
      LAPACK libraries (vecLib on MacOSX, ATLAS elsewhere), use
      ``--link-lapack_opt``. See also ``--help-link`` switch.
 
-   .. note:
+   .. note:: The ``f2py -c`` option must be applied either to an existing ``.pyf`` file (plus the source/object/library files) or one must specify the ``-m <modulename>`` option (plus the sources/object/library files). ``f2py -c`` is not meant to compile the generated C/API extension modules directly (although it is likely able to do that with proper include directory flags and the source/object file inputs). Use one of the following options:
 
-   The ``f2py -c`` option must be applied either to an existing ``.pyf`` file (plus the source/object/library files) or one must specify the ``-m <modulename>`` option (plus the sources/object/library files). ``f2py -c`` is not meant to compile the generated C/API extension modules directly (although it is likely able to do that with proper include directory flags and the source/object file inputs).
+      ::
 
-   Use one of the following options:
+         f2py -c -m fib1 fib1.f
 
-   ::
+      or
 
-      f2py -c -m fib1 fib1.f
+      ::
 
-   or
+         f2py -m fib1 fib1.f -h fib1.pyf
+         f2py -c fib1.pyf fib1.f
 
-   ::
+      For more information, see `Building C and C++ Extensions`__ Python documentation for details.
 
-      f2py -m fib1 fib1.f -h fib1.pyf
-      f2py -c fib1.pyf fib1.f
+      __ https://docs.python.org/3/extending/building.html
 
-   For more information, see https://docs.python.org/3/extending/building.html
 
    When building an extension module, a combination of the following
    macros may be required for non-gcc Fortran compilers::
