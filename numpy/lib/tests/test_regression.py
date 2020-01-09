@@ -206,10 +206,7 @@ class TestRegression:
 
     def test_loadtxt_fields_subarrays(self):
         # For ticket #1936
-        if sys.version_info[0] >= 3:
-            from io import StringIO
-        else:
-            from StringIO import StringIO
+        from io import StringIO
 
         dt = [("a", 'u1', 2), ("b", 'u1', 2)]
         x = np.loadtxt(StringIO("0 1 2 3"), dtype=dt)

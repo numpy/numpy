@@ -24,12 +24,8 @@ class TestFromrecords:
                             names='col1,col2,col3')
         assert_equal(r[0].item(), (456, 'dbe', 1.2))
         assert_equal(r['col1'].dtype.kind, 'i')
-        if sys.version_info[0] >= 3:
-            assert_equal(r['col2'].dtype.kind, 'U')
-            assert_equal(r['col2'].dtype.itemsize, 12)
-        else:
-            assert_equal(r['col2'].dtype.kind, 'S')
-            assert_equal(r['col2'].dtype.itemsize, 3)
+        assert_equal(r['col2'].dtype.kind, 'U')
+        assert_equal(r['col2'].dtype.itemsize, 12)
         assert_equal(r['col3'].dtype.kind, 'f')
 
     def test_fromrecords_0len(self):

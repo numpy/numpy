@@ -157,10 +157,8 @@ class TestHstack:
     def test_generator(self):
         with assert_warns(FutureWarning):
             hstack((np.arange(3) for _ in range(2)))
-        if sys.version_info.major > 2:
-            # map returns a list on Python 2
-            with assert_warns(FutureWarning):
-                hstack(map(lambda x: x, np.ones((3, 2))))
+        with assert_warns(FutureWarning):
+            hstack(map(lambda x: x, np.ones((3, 2))))
 
 
 class TestVstack:

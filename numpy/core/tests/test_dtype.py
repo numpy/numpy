@@ -136,11 +136,11 @@ class TestBuiltin:
                          'offsets':[0, 2]}, align=True)
 
     def test_field_order_equality(self):
-        x = np.dtype({'names': ['A', 'B'], 
-                      'formats': ['i4', 'f4'], 
+        x = np.dtype({'names': ['A', 'B'],
+                      'formats': ['i4', 'f4'],
                       'offsets': [0, 4]})
-        y = np.dtype({'names': ['B', 'A'], 
-                      'formats': ['f4', 'i4'], 
+        y = np.dtype({'names': ['B', 'A'],
+                      'formats': ['f4', 'i4'],
                       'offsets': [4, 0]})
         assert_equal(x == y, False)
 
@@ -418,7 +418,7 @@ class TestRecord:
                 {'formats': ['i4', 'i4'], 'f0': ('i4', 0), 'f1':('i4', 4)})
 
     def test_fieldless_views(self):
-        a = np.zeros(2, dtype={'names':[], 'formats':[], 'offsets':[], 
+        a = np.zeros(2, dtype={'names':[], 'formats':[], 'offsets':[],
                                'itemsize':8})
         assert_raises(ValueError, a.view, np.dtype([]))
 
@@ -899,11 +899,6 @@ class TestString:
         dt = np.dtype(('<i2', (1,)))
         assert_equal(repr(dt), "dtype(('<i2', (1,)))")
         assert_equal(str(dt), "('<i2', (1,))")
-
-    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Python 2 only")
-    def test_dtype_str_with_long_in_shape(self):
-        # Pull request #376, should not error
-        np.dtype('(1L,)i4')
 
     def test_base_dtype_with_object_type(self):
         # Issue gh-2798, should not error.

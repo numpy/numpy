@@ -487,15 +487,13 @@ class TestRegression:
              b"bI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb."),
         ]
 
-        if sys.version_info[:2] >= (3, 4):
-            # encoding='bytes' was added in Py3.4
-            for original, data in test_data:
-                result = pickle.loads(data, encoding='bytes')
-                assert_equal(result, original)
+        for original, data in test_data:
+            result = pickle.loads(data, encoding='bytes')
+            assert_equal(result, original)
 
-                if isinstance(result, np.ndarray) and result.dtype.names is not None:
-                    for name in result.dtype.names:
-                        assert_(isinstance(name, str))
+            if isinstance(result, np.ndarray) and result.dtype.names is not None:
+                for name in result.dtype.names:
+                    assert_(isinstance(name, str))
 
     def test_pickle_dtype(self):
         # Ticket #251
@@ -1106,14 +1104,8 @@ class TestRegression:
         # The dtype is float64, but the isbuiltin attribute is 0.
         data_dir = path.join(path.dirname(__file__), 'data')
         filename = path.join(data_dir, "astype_copy.pkl")
-        if sys.version_info[0] >= 3:
-            f = open(filename, 'rb')
+        with open(filename, 'rb') as f:
             xp = pickle.load(f, encoding='latin1')
-            f.close()
-        else:
-            f = open(filename)
-            xp = pickle.load(f)
-            f.close()
         xpd = xp.astype(np.float64)
         assert_((xp.__array_interface__['data'][0] !=
                 xpd.__array_interface__['data'][0]))
@@ -1230,10 +1222,7 @@ class TestRegression:
             msg = 'unicode offset: %d chars' % i
             t = np.dtype([('a', 'S%d' % i), ('b', 'U2')])
             x = np.array([(b'a', u'b')], dtype=t)
-            if sys.version_info[0] >= 3:
-                assert_equal(str(x), "[(b'a', 'b')]", err_msg=msg)
-            else:
-                assert_equal(str(x), "[('a', u'b')]", err_msg=msg)
+            assert_equal(str(x), "[(b'a', 'b')]", err_msg=msg)
 
     def test_sign_for_complex_nan(self):
         # Ticket 794.
@@ -1815,11 +1804,6 @@ class TestRegression:
         assert_raises(RecursionError, int, a)
         assert_raises(RecursionError, long, a)
         assert_raises(RecursionError, float, a)
-        if sys.version_info.major == 2:
-            # in python 3, this falls back on operator.index, which fails on
-            # on dtype=object
-            assert_raises(RecursionError, oct, a)
-            assert_raises(RecursionError, hex, a)
         a[()] = None
 
     def test_object_array_circular_reference(self):
@@ -1846,11 +1830,6 @@ class TestRegression:
         assert_equal(int(a), int(0))
         assert_equal(long(a), long(0))
         assert_equal(float(a), float(0))
-        if sys.version_info.major == 2:
-            # in python 3, this falls back on operator.index, which fails on
-            # on dtype=object
-            assert_equal(oct(a), oct(0))
-            assert_equal(hex(a), hex(0))
 
     def test_object_array_self_copy(self):
         # An object array being copied into itself DECREF'ed before INCREF'ing
@@ -1954,13 +1933,12 @@ class TestRegression:
         assert_equal(s[0], "\x01")
 
     def test_pickle_bytes_overwrite(self):
-        if sys.version_info[0] >= 3:
-            for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
-                data = np.array([1], dtype='b')
-                data = pickle.loads(pickle.dumps(data, protocol=proto))
-                data[0] = 0xdd
-                bytestring = "\x01  ".encode('ascii')
-                assert_equal(bytestring[0:1], '\x01'.encode('ascii'))
+        for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
+            data = np.array([1], dtype='b')
+            data = pickle.loads(pickle.dumps(data, protocol=proto))
+            data[0] = 0xdd
+            bytestring = "\x01  ".encode('ascii')
+            assert_equal(bytestring[0:1], '\x01'.encode('ascii'))
 
     def test_pickle_py2_array_latin1_hack(self):
         # Check that unpickling hacks in Py3 that support
@@ -1971,12 +1949,11 @@ class TestRegression:
                 b"tp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\n"
                 b"I0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\n"
                 b"p13\ntp14\nb.")
-        if sys.version_info[0] >= 3:
-            # This should work:
-            result = pickle.loads(data, encoding='latin1')
-            assert_array_equal(result, np.array([129], dtype='b'))
-            # Should not segfault:
-            assert_raises(Exception, pickle.loads, data, encoding='koi8-r')
+        # This should work:
+        result = pickle.loads(data, encoding='latin1')
+        assert_array_equal(result, np.array([129], dtype='b'))
+        # Should not segfault:
+        assert_raises(Exception, pickle.loads, data, encoding='koi8-r')
 
     def test_pickle_py2_scalar_latin1_hack(self):
         # Check that scalar unpickling hack in Py3 that supports
@@ -2003,25 +1980,24 @@ class TestRegression:
               b"tp8\nRp9\n."),
              'different'),
         ]
-        if sys.version_info[0] >= 3:
-            for original, data, koi8r_validity in datas:
-                result = pickle.loads(data, encoding='latin1')
-                assert_equal(result, original)
+        for original, data, koi8r_validity in datas:
+            result = pickle.loads(data, encoding='latin1')
+            assert_equal(result, original)
 
-                # Decoding under non-latin1 encoding (e.g.) KOI8-R can
-                # produce bad results, but should not segfault.
-                if koi8r_validity == 'different':
-                    # Unicode code points happen to lie within latin1,
-                    # but are different in koi8-r, resulting to silent
-                    # bogus results
-                    result = pickle.loads(data, encoding='koi8-r')
-                    assert_(result != original)
-                elif koi8r_validity == 'invalid':
-                    # Unicode code points outside latin1, so results
-                    # to an encoding exception
-                    assert_raises(ValueError, pickle.loads, data, encoding='koi8-r')
-                else:
-                    raise ValueError(koi8r_validity)
+            # Decoding under non-latin1 encoding (e.g.) KOI8-R can
+            # produce bad results, but should not segfault.
+            if koi8r_validity == 'different':
+                # Unicode code points happen to lie within latin1,
+                # but are different in koi8-r, resulting to silent
+                # bogus results
+                result = pickle.loads(data, encoding='koi8-r')
+                assert_(result != original)
+            elif koi8r_validity == 'invalid':
+                # Unicode code points outside latin1, so results
+                # to an encoding exception
+                assert_raises(ValueError, pickle.loads, data, encoding='koi8-r')
+            else:
+                raise ValueError(koi8r_validity)
 
     def test_structured_type_to_object(self):
         a_rec = np.array([(0, 1), (3, 2)], dtype='i4,i8')
@@ -2094,10 +2070,7 @@ class TestRegression:
         # Ticket #2081. Python compiled with two byte unicode
         # can lead to truncation if itemsize is not properly
         # adjusted for NumPy's four byte unicode.
-        if sys.version_info[0] >= 3:
-            a = np.array(['abcd'])
-        else:
-            a = np.array([u'abcd'])
+        a = np.array(['abcd'])
         assert_equal(a.dtype.itemsize, 16)
 
     def test_unique_stable(self):
@@ -2240,12 +2213,7 @@ class TestRegression:
         rhs = Foo()
         lhs = np.array(1)
         for f in [op.lt, op.le, op.gt, op.ge]:
-            if sys.version_info[0] >= 3:
-                assert_raises(TypeError, f, lhs, rhs)
-            elif not sys.py3kwarning:
-                # With -3 switch in python 2, DeprecationWarning is raised
-                # which we are not interested in
-                f(lhs, rhs)
+            assert_raises(TypeError, f, lhs, rhs)
         assert_(not op.eq(lhs, rhs))
         assert_(op.ne(lhs, rhs))
 
