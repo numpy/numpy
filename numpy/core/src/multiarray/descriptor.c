@@ -40,16 +40,6 @@
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
 /*
- * Returned as a singleton address by the `_try_convert` methods, for cases
- * when conversion was not possible, but there is no error to be reported.
- *
- * This object does not actually exist, it's just a reserved memory location.
- * So don't touch any of its members or try to incref it - treat it like you
- * would a NULL.
- */
-static PyArray_Descr _try_convert_attempt_failed;
-
-/*
  * Generate a vague error message when a function returned NULL but forgot
  * to set an exception. We should aim to remove this eventually.
  */
@@ -78,7 +68,7 @@ _arraydescr_run_converter(PyObject *arg, int align)
 /*
  * This function creates a dtype object when the object is a ctypes subclass.
  *
- * Returns `&_try_convert_attempt_failed` if the type is not a ctypes subclass.
+ * Returns `Py_NotImplemented` if the type is not a ctypes subclass.
  */
 static PyArray_Descr *
 _try_convert_from_ctypes_type(PyTypeObject *type)
@@ -87,7 +77,8 @@ _try_convert_from_ctypes_type(PyTypeObject *type)
     PyObject *res;
 
     if (!npy_ctypes_check(type)) {
-        return &_try_convert_attempt_failed;
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_Descr *)Py_NotImplemented;
     }
 
     /* Call the python function of the same name. */
@@ -121,7 +112,7 @@ _convert_from_any(PyObject *obj, int align);
  * This function creates a dtype object when the object has a "dtype" attribute,
  * and it can be converted to a dtype object.
  *
- * Returns `&_try_convert_attempt_failed` if this is not possible.
+ * Returns `Py_NotImplemented` if this is not possible.
  * Currently the only failure mode for a NULL return is a RecursionError.
  */
 static PyArray_Descr *
@@ -159,7 +150,8 @@ _try_convert_from_dtype_attr(PyObject *obj)
     /* Ignore all but recursion errors, to give ctypes a full try. */
     if (!PyErr_ExceptionMatches(PyExc_RecursionError)) {
         PyErr_Clear();
-        return &_try_convert_attempt_failed;
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_Descr *)Py_NotImplemented;
     }
     return NULL;
 }
@@ -169,7 +161,8 @@ NPY_NO_EXPORT int
 _arraydescr_from_dtype_attr(PyObject *obj, PyArray_Descr **out)
 {
     PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
-    if (ret == &_try_convert_attempt_failed) {
+    if ((PyObject *)ret == Py_NotImplemented) {
+        Py_DECREF(ret);
         return 0;
     }
     *out = ret;
@@ -286,10 +279,11 @@ _convert_from_tuple(PyObject *obj, int align)
     PyObject *val = PyTuple_GET_ITEM(obj,1);
     /* try to interpret next item as a type */
     PyArray_Descr *res = _try_convert_from_inherit_tuple(type, val);
-    if (res != &_try_convert_attempt_failed) {
+    if ((PyObject *)res != Py_NotImplemented) {
         Py_DECREF(type);
         return res;
     }
+    Py_DECREF(res);
     /*
      * We get here if _try_convert_from_inherit_tuple failed without crashing
      */
@@ -844,7 +838,7 @@ fail:
  *
  * leave type reference alone
  *
- * Returns `&_try_convert_attempt_failed` if the second tuple item is not
+ * Returns `Py_NotImplemented` if the second tuple item is not
  * appropriate.
  */
 static PyArray_Descr *
@@ -858,7 +852,8 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
             || !PyArray_DescrConverter(newobj, &conv)) {
         /* PyArray_DescrConverter may have set an exception, which we ignore */
         PyErr_Clear();
-        return &_try_convert_attempt_failed;
+        Py_INCREF(Py_NotImplemented);
+        return (PyArray_Descr *)Py_NotImplemented;
     }
     new = PyArray_DescrNew(type);
     if (new == NULL) {
@@ -1392,9 +1387,10 @@ _convert_from_type(PyObject *obj) {
     }
     else {
         PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
-        if (ret != &_try_convert_attempt_failed) {
+        if ((PyObject *)ret != Py_NotImplemented) {
             return ret;
         }
+        Py_DECREF(ret);
 
         /*
          * Note: this comes after _try_convert_from_dtype_attr because the ctypes
@@ -1402,9 +1398,10 @@ _convert_from_type(PyObject *obj) {
          * support it.
          */
         ret = _try_convert_from_ctypes_type(typ);
-        if (ret != &_try_convert_attempt_failed) {
+        if ((PyObject *)ret != Py_NotImplemented) {
             return ret;
         }
+        Py_DECREF(ret);
 
         /* All other classes are treated as object */
         return PyArray_DescrFromType(NPY_OBJECT);
@@ -1468,18 +1465,20 @@ _convert_from_any(PyObject *obj, int align)
     }
     else {
         PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
-        if (ret != &_try_convert_attempt_failed) {
+        if ((PyObject *)ret != Py_NotImplemented) {
             return ret;
         }
+        Py_DECREF(ret);
         /*
          * Note: this comes after _try_convert_from_dtype_attr because the ctypes
          * type might override the dtype if numpy does not otherwise
          * support it.
          */
         ret = _try_convert_from_ctypes_type(Py_TYPE(obj));
-        if (ret != &_try_convert_attempt_failed) {
+        if ((PyObject *)ret != Py_NotImplemented) {
             return ret;
         }
+        Py_DECREF(ret);
         _report_generic_error();
         return NULL;
     }
