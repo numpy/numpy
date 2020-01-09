@@ -7,8 +7,8 @@ NPY_NO_EXPORT PyObject *arraydescr_protocol_descr_get(PyArray_Descr *self);
 NPY_NO_EXPORT PyObject *
 array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args);
 
-int
-_arraydescr_from_dtype_attr(PyObject *obj, PyArray_Descr **newdescr);
+PyArray_Descr *
+_arraydescr_try_convert_from_dtype_attr(PyObject *obj);
 
 
 NPY_NO_EXPORT int

@@ -425,14 +425,10 @@ PyArray_ScalarFromObject(PyObject *object)
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrFromTypeObject(PyObject *type)
 {
-    int typenum;
-    PyArray_Descr *new, *conv = NULL;
-
     /* if it's a builtin type, then use the typenumber */
-    typenum = _typenum_fromtypeobj(type,1);
+    int typenum = _typenum_fromtypeobj(type,1);
     if (typenum != NPY_NOTYPE) {
-        new = PyArray_DescrFromType(typenum);
-        return new;
+        return PyArray_DescrFromType(typenum);
     }
 
     /* Check the generic types */
@@ -470,11 +466,12 @@ PyArray_DescrFromTypeObject(PyObject *type)
 
     /* Do special thing for VOID sub-types */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
-        new = PyArray_DescrNewFromType(NPY_VOID);
+        PyArray_Descr *new = PyArray_DescrNewFromType(NPY_VOID);
         if (new == NULL) {
             return NULL;
         }
-        if (_arraydescr_from_dtype_attr(type, &conv)) {
+        PyArray_Descr *conv = _arraydescr_try_convert_from_dtype_attr(type);
+        if ((PyObject *)conv != Py_NotImplemented) {
             if (conv == NULL) {
                 Py_DECREF(new);
                 return NULL;
@@ -486,8 +483,8 @@ PyArray_DescrFromTypeObject(PyObject *type)
             new->elsize = conv->elsize;
             new->subarray = conv->subarray;
             conv->subarray = NULL;
-            Py_DECREF(conv);
         }
+        Py_DECREF(conv);
         Py_XDECREF(new->typeobj);
         new->typeobj = (PyTypeObject *)type;
         Py_INCREF(type);

@@ -156,17 +156,11 @@ _try_convert_from_dtype_attr(PyObject *obj)
     return NULL;
 }
 
-/* This is used from another file */
-NPY_NO_EXPORT int
-_arraydescr_from_dtype_attr(PyObject *obj, PyArray_Descr **out)
+/* Expose to another file with a prefixed name */
+NPY_NO_EXPORT PyArray_Descr *
+arraydescr_try_convert_from_dtype_attr(PyObject *obj)
 {
-    PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
-    if ((PyObject *)ret == Py_NotImplemented) {
-        Py_DECREF(ret);
-        return 0;
-    }
-    *out = ret;
-    return 1;
+    return _try_convert_from_dtype_attr(obj);
 }
 
 /*
