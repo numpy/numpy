@@ -39,57 +39,38 @@ def test_array_array():
         assert_equal(old_refcount, sys.getrefcount(np.float64))
 
     # test string
-    S2 = np.dtype((str, 2))
-    S3 = np.dtype((str, 3))
-    S5 = np.dtype((str, 5))
+    S2 = np.dtype((bytes, 2))
+    S3 = np.dtype((bytes, 3))
+    S5 = np.dtype((bytes, 5))
+    assert_equal(np.array(b"1.0", dtype=np.float64),
+                 np.ones((), dtype=np.float64))
+    assert_equal(np.array(b"1.0").dtype, S3)
+    assert_equal(np.array(b"1.0", dtype=bytes).dtype, S3)
+    assert_equal(np.array(b"1.0", dtype=S2), np.array(b"1."))
+    assert_equal(np.array(b"1", dtype=S5), np.ones((), dtype=S5))
+
+    # test string
+    U2 = np.dtype((str, 2))
+    U3 = np.dtype((str, 3))
+    U5 = np.dtype((str, 5))
     assert_equal(np.array("1.0", dtype=np.float64),
                  np.ones((), dtype=np.float64))
-    assert_equal(np.array("1.0").dtype, S3)
-    assert_equal(np.array("1.0", dtype=str).dtype, S3)
-    assert_equal(np.array("1.0", dtype=S2), np.array("1."))
-    assert_equal(np.array("1", dtype=S5), np.ones((), dtype=S5))
-
-    # test unicode
-    _unicode = globals().get("unicode")
-    if _unicode:
-        U2 = np.dtype((_unicode, 2))
-        U3 = np.dtype((_unicode, 3))
-        U5 = np.dtype((_unicode, 5))
-        assert_equal(np.array(_unicode("1.0"), dtype=np.float64),
-                     np.ones((), dtype=np.float64))
-        assert_equal(np.array(_unicode("1.0")).dtype, U3)
-        assert_equal(np.array(_unicode("1.0"), dtype=_unicode).dtype, U3)
-        assert_equal(np.array(_unicode("1.0"), dtype=U2),
-                     np.array(_unicode("1.")))
-        assert_equal(np.array(_unicode("1"), dtype=U5),
-                     np.ones((), dtype=U5))
+    assert_equal(np.array("1.0").dtype, U3)
+    assert_equal(np.array("1.0", dtype=str).dtype, U3)
+    assert_equal(np.array("1.0", dtype=U2), np.array(str("1.")))
+    assert_equal(np.array("1", dtype=U5), np.ones((), dtype=U5))
 
     builtins = getattr(__builtins__, '__dict__', __builtins__)
     assert_(hasattr(builtins, 'get'))
 
-    # test buffer
-    _buffer = builtins.get("buffer")
-    if _buffer and sys.version_info[:3] >= (2, 7, 5):
-        # This test fails for earlier versions of Python.
-        # Evidently a bug got fixed in 2.7.5.
-        dat = np.array(_buffer('1.0'), dtype=np.float64)
-        assert_equal(dat, [49.0, 46.0, 48.0])
-        assert_(dat.dtype.type is np.float64)
+    # test memoryview
+    dat = np.array(memoryview(b'1.0'), dtype=np.float64)
+    assert_equal(dat, [49.0, 46.0, 48.0])
+    assert_(dat.dtype.type is np.float64)
 
-        dat = np.array(_buffer(b'1.0'))
-        assert_equal(dat, [49, 46, 48])
-        assert_(dat.dtype.type is np.uint8)
-
-    # test memoryview, new version of buffer
-    _memoryview = builtins.get("memoryview")
-    if _memoryview:
-        dat = np.array(_memoryview(b'1.0'), dtype=np.float64)
-        assert_equal(dat, [49.0, 46.0, 48.0])
-        assert_(dat.dtype.type is np.float64)
-
-        dat = np.array(_memoryview(b'1.0'))
-        assert_equal(dat, [49, 46, 48])
-        assert_(dat.dtype.type is np.uint8)
+    dat = np.array(memoryview(b'1.0'))
+    assert_equal(dat, [49, 46, 48])
+    assert_(dat.dtype.type is np.uint8)
 
     # test array interface
     a = np.array(100.0, dtype=np.float64)
