@@ -40,13 +40,6 @@ __all__ = [
 
 
 _globalvar = 0
-if sys.version_info[0] >= 3:
-    _unicode = str
-    _bytes = bytes
-else:
-    _unicode = unicode
-    _bytes = str
-_len = len
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.char')
@@ -61,7 +54,7 @@ def _use_unicode(*args):
     result should be unicode.
     """
     for x in args:
-        if (isinstance(x, _unicode) or
+        if (isinstance(x, str) or
                 issubclass(numpy.asarray(x).dtype.type, unicode_)):
             return unicode_
     return string_
@@ -1960,7 +1953,7 @@ class chararray(ndarray):
         # strings in the new array.
         itemsize = long(itemsize)
 
-        if sys.version_info[0] >= 3 and isinstance(buffer, _unicode):
+        if sys.version_info[0] >= 3 and isinstance(buffer, str):
             # On Py3, unicode objects do not have the buffer interface
             filler = buffer
             buffer = None
@@ -1991,7 +1984,7 @@ class chararray(ndarray):
 
         if isinstance(val, character):
             temp = val.rstrip()
-            if _len(temp) == 0:
+            if len(temp) == 0:
                 val = ''
             else:
                 val = temp
@@ -2675,16 +2668,16 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
     """
-    if isinstance(obj, (_bytes, _unicode)):
+    if isinstance(obj, (bytes, str)):
         if unicode is None:
-            if isinstance(obj, _unicode):
+            if isinstance(obj, str):
                 unicode = True
             else:
                 unicode = False
 
         if itemsize is None:
-            itemsize = _len(obj)
-        shape = _len(obj) // itemsize
+            itemsize = len(obj)
+        shape = len(obj) // itemsize
 
         if unicode:
             if sys.maxunicode == 0xffff:
@@ -2699,11 +2692,11 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
                 # should happen in native endianness.
                 obj = obj.encode('utf_32')
             else:
-                obj = _unicode(obj)
+                obj = str(obj)
         else:
             # Let the default Unicode -> string encoding (if any) take
             # precedence.
-            obj = _bytes(obj)
+            obj = bytes(obj)
 
         return chararray(shape, itemsize=itemsize, unicode=unicode,
                          buffer=obj, order=order)

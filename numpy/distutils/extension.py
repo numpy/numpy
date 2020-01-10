@@ -10,9 +10,6 @@ import sys
 import re
 from distutils.extension import Extension as old_Extension
 
-if sys.version_info[0] >= 3:
-    basestring = str
-
 
 cxx_ext_re = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match
 fortran_pyf_ext_re = re.compile(r'.*[.](f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
@@ -74,7 +71,7 @@ class Extension(old_Extension):
         self.swig_opts = swig_opts or []
         # swig_opts is assumed to be a list. Here we handle the case where it
         # is specified as a string instead.
-        if isinstance(self.swig_opts, basestring):
+        if isinstance(self.swig_opts, str):
             import warnings
             msg = "swig_opts is specified as a string instead of a list"
             warnings.warn(msg, SyntaxWarning, stacklevel=2)

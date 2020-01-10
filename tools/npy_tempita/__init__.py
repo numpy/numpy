@@ -639,9 +639,6 @@ class _Empty:
     def __bool__(self):
         return False
 
-    if sys.version < "3":
-        __nonzero__ = __bool__
-
 Empty = _Empty()
 del _Empty
 
