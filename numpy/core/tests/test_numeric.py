@@ -46,6 +46,16 @@ class TestResize:
         assert_array_equal(Ar, np.zeros((2, 1), Ar.dtype))
         assert_equal(A.dtype, Ar.dtype)
 
+    def test_resize_negative(self):
+        A = np.arange(0, 10)
+        #test for tuples
+        new_shape = (5, -1)
+        with pytest.raises(ValueError, match="negative"):
+            np.resize(A, new_shape)
+        #Also test for single valued shape
+        new_shape = -1
+        with pytest.raises(ValueError, match="negative"):
+            np.resize(A, new_shape)
 
 class TestNonarrayArgs:
     # check that non-array arguments to functions wrap them in arrays

@@ -1373,6 +1373,11 @@ def resize(a, new_shape):
         if necessary to fill out the required number of elements.  The
         data are repeated in the order that they are stored in memory.
 
+    Raises
+    ------
+    ValueError
+        If the value(s) passed for new_shape are negative.
+
     See Also
     --------
     ndarray.resize : resize an array in-place.
@@ -1400,6 +1405,7 @@ def resize(a, new_shape):
            [0, 1, 2, 3]])
 
     """
+    
     tuplearg = type(new_shape) is tuple
     errmsg = "negative dimensions not allowed"
     if tuplearg is True:
@@ -1408,6 +1414,7 @@ def resize(a, new_shape):
                 raise ValueError(errmsg)
     elif new_shape < 0:
         raise ValueError(errmsg)
+    
     if isinstance(new_shape, (int, nt.integer)):
         new_shape = (new_shape,)
     a = ravel(a)
