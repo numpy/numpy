@@ -158,7 +158,7 @@ _try_convert_from_dtype_attr(PyObject *obj)
 
 /* Expose to another file with a prefixed name */
 NPY_NO_EXPORT PyArray_Descr *
-arraydescr_try_convert_from_dtype_attr(PyObject *obj)
+_arraydescr_try_convert_from_dtype_attr(PyObject *obj)
 {
     return _try_convert_from_dtype_attr(obj);
 }
