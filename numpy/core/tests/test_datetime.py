@@ -2365,6 +2365,13 @@ class TestDateTime:
         limit_via_str = np.datetime64(str(limit), time_unit)
         assert limit_via_str == limit
 
+    def test_memview_buffer(self):
+        arr = np.array([np.datetime64('2000-01-01'), np.datetime64('2020-01-01')])
+        expected = arr.astype(np.int64)
+        memview = memoryview(arr)
+        assert memview[0] == expected[0]
+        assert memview[1] == expected[1]
+
 
 class TestDateTimeData:
 
