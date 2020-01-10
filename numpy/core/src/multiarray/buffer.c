@@ -378,7 +378,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_CFLOAT:       if (_append_str(str, "Zf") < 0) return -1; break;
         case NPY_CDOUBLE:      if (_append_str(str, "Zd") < 0) return -1; break;
         case NPY_CLONGDOUBLE:  if (_append_str(str, "Zg") < 0) return -1; break;
-        /* XXX NPY_DATETIME */
+        case NPY_DATETIME:     if (_append_char(str, 'i') < 0) return -1; break;
         /* XXX NPY_TIMEDELTA */
         case NPY_OBJECT:       if (_append_char(str, 'O') < 0) return -1; break;
         case NPY_STRING: {
