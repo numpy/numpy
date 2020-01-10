@@ -434,6 +434,9 @@ _convert_from_array_descr(PyObject *obj, int align)
     int maxalign = 0;
     int totalsize = 0;
     PyObject *fields = PyDict_New();
+    if (!fields) {
+        return NULL;
+    }
     for (int i = 0; i < n; i++) {
         PyObject *item = PyList_GET_ITEM(obj, i);
         if (!PyTuple_Check(item) || (PyTuple_GET_SIZE(item) < 2)) {
@@ -465,6 +468,9 @@ _convert_from_array_descr(PyObject *obj, int align)
             Py_DECREF(name);
             if (title == NULL) {
                 name = PyUString_FromFormat("f%d", i);
+                if (name == NULL) {
+                    goto fail;
+                }
             }
             /* On Py3, allow only non-empty Unicode strings as field names */
             else if (PyUString_Check(title) && PyUString_GET_SIZE(title) > 0) {
@@ -509,15 +515,16 @@ _convert_from_array_descr(PyObject *obj, int align)
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
         if (align) {
-            int _align;
-
-            _align = conv->alignment;
+            int _align = conv->alignment;
             if (_align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
             maxalign = PyArray_MAX(maxalign, _align);
         }
         PyObject *tup = PyTuple_New((title == NULL ? 2 : 3));
+        if (tup == NULL) {
+            goto fail;
+        }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
         PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
 
@@ -529,7 +536,9 @@ _convert_from_array_descr(PyObject *obj, int align)
         if (title != NULL) {
             Py_INCREF(title);
             PyTuple_SET_ITEM(tup, 2, title);
-            PyDict_SetItem(fields, name, tup);
+            if (PyDict_SetItem(fields, name, tup) < 0) {
+                goto fail;
+            }
             if (PyBaseString_Check(title)) {
                 if (PyDict_GetItem(fields, title) != NULL) {
                     PyErr_SetString(PyExc_ValueError,
@@ -594,8 +603,8 @@ _convert_from_list(PyObject *obj, int align)
     if (PyBytes_Check(last_item) && PyBytes_GET_SIZE(last_item) == 0) {
         n = n - 1;
     }
-    /* End ignore code.*/
     if (n == 0) {
+        PyErr_SetString(PyExc_ValueError, "Expected at least one field name");
         return NULL;
     }
     PyObject *nameslist = PyTuple_New(n);
@@ -603,35 +612,54 @@ _convert_from_list(PyObject *obj, int align)
         return NULL;
     }
     PyObject *fields = PyDict_New();
+    if (!fields) {
+        Py_DECREF(nameslist);
+        return NULL;
+    }
 
     /* Types with fields need the Python C API for field access */
     char dtypeflags = NPY_NEEDS_PYAPI;
     int maxalign = 0;
     int totalsize = 0;
     for (int i = 0; i < n; i++) {
-        PyObject *tup = PyTuple_New(2);
-        PyObject *key = PyUString_FromFormat("f%d", i);
-        PyArray_Descr *conv = _arraydescr_run_converter(PyList_GET_ITEM(obj, i), align);
+        PyArray_Descr *conv = _arraydescr_run_converter(
+                PyList_GET_ITEM(obj, i), align);
         if (conv == NULL) {
-            Py_DECREF(tup);
-            Py_DECREF(key);
             goto fail;
         }
         dtypeflags |= (conv->flags & NPY_FROM_FIELDS);
-        PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
         if (align) {
-            int _align;
-
-            _align = conv->alignment;
+            int _align = conv->alignment;
             if (_align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
             maxalign = PyArray_MAX(maxalign, _align);
         }
-        PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
-        PyDict_SetItem(fields, key, tup);
-        Py_DECREF(tup);
+        PyObject *size_obj = PyInt_FromLong((long) totalsize);
+        if (!size_obj) {
+            Py_DECREF(conv);
+            goto fail;
+        }
+        PyObject *tup = PyTuple_New(2);
+        if (!tup) {
+            Py_DECREF(size_obj);
+            Py_DECREF(conv);
+            goto fail;
+        }
+        PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
+        PyTuple_SET_ITEM(tup, 1, size_obj);
+        PyObject *key = PyUString_FromFormat("f%d", i);
+        if (!key) {
+            Py_DECREF(tup);
+            goto fail;
+        }
+        /* steals a reference to key */
         PyTuple_SET_ITEM(nameslist, i, key);
+        int ret = PyDict_SetItem(fields, key, tup);
+        Py_DECREF(tup);
+        if (ret < 0) {
+            goto fail;
+        }
         totalsize += conv->elsize;
     }
     PyArray_Descr *new = PyArray_DescrNewFromType(NPY_VOID);
