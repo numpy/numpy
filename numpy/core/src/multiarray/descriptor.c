@@ -521,7 +521,6 @@ _convert_from_array_descr(PyObject *obj, int align)
                  && (PyDict_GetItem(fields, title) != NULL))) {
             PyErr_Format(PyExc_ValueError,
                     "field %R occurs more than once", name);
-            Py_DECREF(name);
             Py_DECREF(conv);
             goto fail;
         }
