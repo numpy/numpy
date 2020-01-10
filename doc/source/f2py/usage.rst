@@ -83,7 +83,6 @@ distinguished by the usage of ``-c``, ``-m`` and ``-h`` switches:
      .. note:: This option is deprecated. Use ``usercode`` statement to specify C code snippets directly in signature files.
 
    ``--[no-]wrap-functions``
-
      Create Fortran subroutine wrappers to Fortran functions.
      ``--wrap-functions`` is default because it ensures maximum
      portability and compiler independence.

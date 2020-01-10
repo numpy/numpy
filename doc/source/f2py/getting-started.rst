@@ -96,7 +96,6 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
       fib.error: (len(a)>=n) failed for 1st keyword n: fib:n=10
       >>>
 
-    This demonstrates one of the useful features in F2PY, that is,
     F2PY implements basic compatibility checks between related
     arguments in order to avoid any unexpected crashes.
 
