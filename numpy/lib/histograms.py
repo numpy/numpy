@@ -405,7 +405,7 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
     if a.size == 0:
         return np.array([0,1])
 
-    width = np.ptp((first_edge,last_edge))/(n_equal_bins)
+    width = _unsigned_subtract(last_edge, first_edge) / n_equal_bins
     zeroed_min = a - first_edge
     quantized = np.floor_divide(zeroed_min, width) * width
     left_edges = np.unique(quantized)
