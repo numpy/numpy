@@ -414,7 +414,7 @@ def _get_auto_bin_edges(a, n_equal_bins, first_edge, last_edge):
     edges = np.concatenate(([first_edge], unzeroed_edges, [last_edge]))
 
     TOL = width/2
-    widths = np.append(width, np.diff(edges)) #remove bins produced by float errors
+    widths = np.concatenate(([width], np.diff(edges)))  # remove bins produced by float errors
     return edges[(widths>TOL) & (edges <= last_edge)]
 
 def _get_bin_edges(a, bins, range, weights):
