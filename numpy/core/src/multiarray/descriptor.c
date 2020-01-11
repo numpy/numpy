@@ -519,10 +519,8 @@ _convert_from_array_descr(PyObject *obj, int align)
              || (title
                  && PyBaseString_Check(title)
                  && (PyDict_GetItem(fields, title) != NULL))) {
-            name = PyUnicode_AsUTF8String(name);
             PyErr_Format(PyExc_ValueError,
-                    "field '%s' occurs more than once", PyString_AsString(name));
-            Py_DECREF(name);
+                    "field %R occurs more than once", name);
             Py_DECREF(conv);
             goto fail;
         }
@@ -3218,18 +3216,7 @@ static int
 _check_has_fields(PyArray_Descr *self)
 {
     if (!PyDataType_HASFIELDS(self)) {
-        PyObject *astr = arraydescr_str(self);
-        if (astr == NULL) {
-            return -1;
-        }
-        {
-            PyObject *bstr = PyUnicode_AsUnicodeEscapeString(astr);
-            Py_DECREF(astr);
-            astr = bstr;
-        }
-        PyErr_Format(PyExc_KeyError,
-                "There are no fields in dtype %s.", PyBytes_AsString(astr));
-        Py_DECREF(astr);
+        PyErr_Format(PyExc_KeyError, "There are no fields in dtype %S.", self);
         return -1;
     }
     else {
@@ -3241,25 +3228,12 @@ static PyObject *
 _subscript_by_name(PyArray_Descr *self, PyObject *op)
 {
     PyObject *obj = PyDict_GetItem(self->fields, op);
-    PyObject *descr;
-    PyObject *s;
-
     if (obj == NULL) {
-        if (PyUnicode_Check(op)) {
-            s = PyUnicode_AsUnicodeEscapeString(op);
-        }
-        else {
-            s = op;
-        }
-
         PyErr_Format(PyExc_KeyError,
-                "Field named \'%s\' not found.", PyBytes_AsString(s));
-        if (s != op) {
-            Py_DECREF(s);
-        }
+                "Field named %R not found.", op);
         return NULL;
     }
-    descr = PyTuple_GET_ITEM(obj, 0);
+    PyObject *descr = PyTuple_GET_ITEM(obj, 0);
     Py_INCREF(descr);
     return descr;
 }
