@@ -3115,7 +3115,7 @@ def true_intent_list(var):
         try:
             f = globals()['isintent_%s' % intent]
         except KeyError:
-            c = False
+            pass
         else:
             if f(var):
                 ret.append(intent)
