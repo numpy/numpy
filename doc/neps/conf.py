@@ -116,7 +116,7 @@ if not os.path.isdir(themedir):
     raise RuntimeError("Get the scipy-sphinx-theme-v2 first, "
                        "via git submodule init && git submodule update")
 
-html_theme = 'custom_sphinx_theme'
+html_theme = 'scipy_sphinx_theme'
 html_theme_path = [themedir]
 
 #if 'scipyorg' in tags:
