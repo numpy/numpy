@@ -3113,11 +3113,12 @@ def true_intent_list(var):
     ret = []
     for intent in lst:
         try:
-            c = eval('isintent_%s(var)' % intent)
-        except NameError:
-            c = 0
-        if c:
-            ret.append(intent)
+            f = globals()['isintent_%s' % intent]
+        except KeyError:
+            pass
+        else:
+            if f(var):
+                ret.append(intent)
     return ret
 
 
