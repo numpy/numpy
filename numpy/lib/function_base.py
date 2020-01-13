@@ -1557,21 +1557,18 @@ def sort_complex(a):
         return b
 
 
-def _arg_trim_zeros(filt, trim=None):
+def _arg_trim_zeros(filt):
     return (filt, filt)
 
 
 @array_function_dispatch(_arg_trim_zeros)
-def arg_trim_zeros(filt, trim='fb'):
+def arg_trim_zeros(filt):
     """Return indices of the first and last non-zero element.
 
     Parameters
     ----------
     filt : array_like
         Input array.
-    trim : str, optional
-        A string with 'f' representing trim from front and 'b' to trim from
-        back. By default, zeros are trimmed from the front and back.
 
     Returns
     -------
@@ -1583,19 +1580,12 @@ def arg_trim_zeros(filt, trim='fb'):
     --------
     trim_zeros
     """
-    filt = np.asarray(filt)
-    trim = trim.lower()
-
     nonzero = np.argwhere(filt)
     if nonzero.size == 0:
-        if trim.startswith('b'):
-            start = stop = np.zeros(filt.ndim, dtype=np.intp)
-        else:
-            start = stop = np.array(filt.shape, dtype=np.intp)
+        start = stop = nonzero
     else:
         start = nonzero.min(axis=0)
         stop = nonzero.max(axis=0)
-
     return start, stop
 
 
@@ -1646,18 +1636,31 @@ def trim_zeros(filt, trim='fb', axis=-1):
     [1, 2]
 
     """
-    start, stop = arg_trim_zeros(filt, trim)
+    start, stop = arg_trim_zeros(filt)
     stop += 1  # Adjust for slicing
+    ndim = start.shape[-1]
+
+    if start.size == 0:
+        # filt is all-zero -> assign same values to start and stop so that
+        # resulting slice will be empty
+        start = stop = np.zeros(ndim, dtype=np.intp)
+    else:
+        trim = trim.lower()
+        if 'f' not in trim:
+            start = (None,) * ndim
+        if 'b' not in trim:
+            stop = (None,) * ndim
 
     if start.size == 1:
-        # filt is 1D -> use multi-dimensional slicing only when necessary,
-        # this allows preservation of the non-array input types
+        # filt is 1D -> don't use multi-dimensional slicing to preserve
+        # non-array input types
         sl = slice(start[0], stop[0])
     elif axis is None:
         # trim all axes
         sl = tuple(slice(*x) for x in zip(start, stop))
     else:
-        # only trim given axis
+        # only trim single axis
+        axis = normalize_axis_index(axis, ndim)
         sl = (slice(None),) * axis + (slice(start[axis], stop[axis]),) + (...,)
 
     return filt[sl]
