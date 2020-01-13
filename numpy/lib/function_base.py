@@ -1557,12 +1557,54 @@ def sort_complex(a):
         return b
 
 
-def _trim_zeros(filt, trim=None, axis=None, *, return_lengths=None):
+def _arg_trim_zeros(filt, trim=None):
+    return (filt, filt)
+
+
+@array_function_dispatch(_arg_trim_zeros)
+def arg_trim_zeros(filt, trim='fb'):
+    """Return indices of the first and last non-zero element.
+
+    Parameters
+    ----------
+    filt : array_like
+        Input array.
+    trim : str, optional
+        A string with 'f' representing trim from front and 'b' to trim from
+        back. By default, zeros are trimmed from the front and back.
+
+    Returns
+    -------
+    start, stop : ndarray
+        Two arrays containing the indices of the first and last non-zero
+        element in each dimension.
+
+    See also
+    --------
+    trim_zeros
+    """
+    filt = np.asarray(filt)
+    trim = trim.lower()
+
+    nonzero = np.argwhere(filt)
+    if nonzero.size == 0:
+        if trim.startswith('b'):
+            start = stop = np.zeros(filt.ndim, dtype=np.intp)
+        else:
+            start = stop = np.array(filt.shape, dtype=np.intp)
+    else:
+        start = nonzero.min(axis=0)
+        stop = nonzero.max(axis=0)
+
+    return start, stop
+
+
+def _trim_zeros(filt, trim=None, axis=None):
     return (filt,)
 
 
 @array_function_dispatch(_trim_zeros)
-def trim_zeros(filt, trim='fb', axis=-1, *, return_lengths=False):
+def trim_zeros(filt, trim='fb', axis=-1):
     """Remove values along a dimension which are zero along all other.
 
     Parameters
@@ -1573,23 +1615,21 @@ def trim_zeros(filt, trim='fb', axis=-1, *, return_lengths=False):
         A string with 'f' representing trim from front and 'b' to trim from
         back. By default, zeros are trimmed from the front and back.
     axis : int or sequence, optional
-        The axis or a sequence of axes to trim. If None all axes are trimmed.
-    return_lengths : bool, optional
-        Additionally return the number of trimmed samples in each dimension at
-        the front and back.
+        The axis to trim. If None all axes are trimmed.
 
     Returns
     -------
     trimmed : ndarray or sequence
         The result of trimming the input. The input data type is preserved.
-    lengths : ndarray
-        If `return_lengths` was True, an array of shape (``filt.ndim``, 2) is
-        returned. It contains the number of trimmed samples in each dimension
-        at the front and back.
+
+    See also
+    --------
+    arg_trim_zeros
 
     Notes
     -----
-    For all-zero arrays, the first axis is trimmed first.
+    For all-zero arrays, the first axis is trimmed depending on the order in
+    `trim`.
 
     Examples
     --------
@@ -1606,57 +1646,21 @@ def trim_zeros(filt, trim='fb', axis=-1, *, return_lengths=False):
     [1, 2]
 
     """
-    trim = trim.lower()
+    start, stop = arg_trim_zeros(filt, trim)
+    stop += 1  # Adjust for slicing
 
-    absolutes = np.abs(filt)
-    nonzero = np.nonzero(absolutes)
-    lengths = np.zeros((absolutes.ndim, 2), dtype=np.intp)
-
-    if axis is None:
-        # Apply iteratively to all axes
-        axis = range(absolutes.ndim)
-    # Normalize axes to 1D-array
-    axis = np.asarray(axis, dtype=np.intp)
-    if axis.ndim == 0:
-        axis = np.asarray([axis], dtype=np.intp)
-
-    for current_axis in axis:
-        current_axis = normalize_axis_index(current_axis, absolutes.ndim)
-
-        if nonzero[current_axis].size > 0:
-            start = nonzero[current_axis].min()
-            stop = nonzero[current_axis].max() + 1
-        else:
-            # In case the input is all-zero, slice depending on preference
-            # given by user
-            if trim.startswith("b"):
-                start = stop = 0
-            else:
-                start = stop = absolutes.shape[current_axis]
-
-        # Only slice on specified side(s)
-        if "f" not in trim:
-            start = None
-        if "b" not in trim:
-            stop = None
-
-        # Use multi-dimensional slicing only when necessary, this allows
-        # preservation of the non-array input types
-        sl = slice(start, stop)
-        if current_axis != 0:
-            sl = (slice(None),) * current_axis + (sl,) + (...,)
-
-        filt = filt[sl]
-
-        if start is not None:
-            lengths[current_axis, 0] = start
-        if stop is not None:
-            lengths[current_axis, 1] = absolutes.shape[current_axis] - stop
-
-    if return_lengths is True:
-        return filt, lengths
+    if start.size == 1:
+        # filt is 1D -> use multi-dimensional slicing only when necessary,
+        # this allows preservation of the non-array input types
+        sl = slice(start[0], stop[0])
+    elif axis is None:
+        # trim all axes
+        sl = tuple(slice(*x) for x in zip(start, stop))
     else:
-        return filt
+        # only trim given axis
+        sl = (slice(None),) * axis + (slice(start[axis], stop[axis]),) + (...,)
+
+    return filt[sl]
 
 
 def _extract_dispatcher(condition, arr):
