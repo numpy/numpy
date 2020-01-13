@@ -3453,7 +3453,8 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     middle value of a sorted copy of ``V``, ``V_sorted`` - i
     e., ``V_sorted[(N-1)/2]``, when ``N`` is odd, and the average of the
     two middle values of ``V_sorted`` when ``N`` is even.
-    ``median`` ignores mask of the MaskedArray.
+    ``median`` ignores mask of the MaskedArray. For MaskedArray use
+    ``ma.median`` instead.
 
     Examples
     --------
@@ -3637,7 +3638,8 @@ def percentile(a, q, axis=None, out=None,
     match the location of ``q`` exactly. This function is the same as
     the median if ``q=50``, the same as the minimum if ``q=0`` and the
     same as the maximum if ``q=100``.
-    ``percentile`` ignores mask of the MaskedArray.
+    ``percentile`` ignores mask of the MaskedArray. For MaskedArray use 
+    ma.median instead.
 
     Examples
     --------
