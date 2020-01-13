@@ -10,6 +10,11 @@
  *  \author Martin Reinecke
  */
 
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "Python.h"
+#include "numpy/arrayobject.h"
+
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
@@ -2183,11 +2188,6 @@ WARN_UNUSED_RESULT static int rfft_forward(rfft_plan plan, double c[], double fc
   else // if (plan->blueplan)
     return rfftblue_forward(plan->blueplan,c,fct);
   }
-
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-
-#include "Python.h"
-#include "numpy/arrayobject.h"
 
 static PyObject *
 execute_complex(PyObject *a1, int is_forward, double fct)

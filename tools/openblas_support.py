@@ -16,7 +16,7 @@ import zipfile
 import tarfile
 
 OPENBLAS_V = 'v0.3.7'
-OPENBLAS_LONG = 'v0.3.5-605-gc815b8fb' 
+OPENBLAS_LONG = 'v0.3.7' 
 BASE_LOC = ''
 RACKSPACE = 'https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com'
 ARCHITECTURES = ['', 'windows', 'darwin', 'aarch64', 'x86', 'ppc64le', 's390x']
