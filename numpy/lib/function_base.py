@@ -3638,8 +3638,7 @@ def percentile(a, q, axis=None, out=None,
     match the location of ``q`` exactly. This function is the same as
     the median if ``q=50``, the same as the minimum if ``q=0`` and the
     same as the maximum if ``q=100``.
-    ``percentile`` ignores mask of the MaskedArray. For MaskedArray use 
-    ma.median instead.
+    ``percentile`` ignores mask of the MaskedArray.
 
     Examples
     --------
