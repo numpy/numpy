@@ -1651,7 +1651,7 @@ def trim_zeros(filt, trim='fb', axis=-1):
         if 'b' not in trim:
             stop = (None,) * ndim
 
-    if start.size == 1:
+    if len(start) == 1:
         # filt is 1D -> don't use multi-dimensional slicing to preserve
         # non-array input types
         sl = slice(start[0], stop[0])

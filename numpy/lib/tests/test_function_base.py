@@ -1146,6 +1146,18 @@ class TestTrimZeros(object):
         res = trim_zeros(a, axis=None)
         assert_array_equal(res, np.zeros((0,) * ndim))
 
+    def test_trim_arg(self):
+        a = np.array([0, 1, 2, 0])
+
+        res = trim_zeros(a, trim='f')
+        assert_array_equal(res, [1, 2, 0])
+
+        res = trim_zeros(a, trim='b')
+        assert_array_equal(res, [0, 1, 2])
+
+        res = trim_zeros(a, trim='')
+        assert_array_equal(res, [0, 1, 2, 0])
+
 
 class TestExtins(object):
 
