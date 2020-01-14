@@ -1,6 +1,6 @@
-===============================================================
-NEP XXXX — Using SIMD optimization instructions for performance
-===============================================================
+=============================================================
+NEP 38 — Using SIMD optimization instructions for performance
+=============================================================
 
 :Author: Sayed Adel, Matti Picus, Ralf Gommers
 :Status: Draft
@@ -14,8 +14,9 @@ Abstract
 
 While compilers are getting better at using hardware-specific routines to
 optimize code, they sometimes do not produce optimal results. Also, we would
-like to be able to copy binary C-extension modules from one machine to another
-with the same architecture without recompiling.
+like to be able to copy binary optimized C-extension modules from one machine
+to another with the same base architecture (x86, ARM, PowerPC) but with
+different capabilities without recompiling.
 
 We have a mechanism in the ufunc machinery to `build alternative loops`_
 indexed by CPU feature name. At import (in ``InitOperators``), the loop
@@ -85,9 +86,9 @@ platform and compiler. Optionally,
 the user may be able to specify which of the loops available at runtime will be
 used, perhaps via an environment variable to enable benchmarking the impact of
 the different loops. There should be no direct impact to naive end users, the
-results of all the loops should be identical to within a small number (1-3)
+results of all the loops should be identical to within a small number (1-3?)
 ULPs. On the other hand, users with more powerful machines should notice a
-performance boost.
+significant performance boost.
 
 Binary releases - wheels on PyPI and conda packages
 ```````````````````````````````````````````````````
@@ -96,14 +97,17 @@ The binaries released by this process will be larger since they include all
 possible loops for the architecture. Some packagers may prefer to limit the
 number of loops in order to limit the size of the binaries, we would hope they
 would still support a wide range of families of architectures. Note this
-problem already exists in the Intel MKL offering.
+problem already exists in the Intel MKL offering, where the binary package
+includes an extensive set of alternative shared objects (DLLs) for various CPU
+alternatives.
 
 Source builds
 `````````````
-TBD
-- Setting the baseline and set of runtime-dispatchable ISA extensions
-- Behavior when compiler or hardware doesn't support a requested ISA extension
 
+See "Detailed Description" below. A source build where the packager knows
+details of the target machine could theoretically produce a smaller binary by
+choosing to compile only the loops needed by the target via command line
+arguments.
 
 How to run benchmarks to assess performance benefits
 ````````````````````````````````````````````````````
@@ -113,7 +117,7 @@ Therefore, such code should only be added if it yields a significant
 performance benefit. Assessing this performance benefit can be nontrivial.
 To aid with this, the implementation for this NEP will add a way to select
 which instruction sets can be used at *runtime* via environment variables.
-(name TBD).
+(name TBD). This ablility is critical for CI code verification.
 
 
 Diagnostics
@@ -211,8 +215,8 @@ A proposed alternative in gh-13516_ is to implement loops for each CPU
 architecture separately by hand, without trying to abstract common patterns in
 the SIMD intrinsics (e.g., have `loops.avx512.c.src`, `loops.avx2.c.src`,
 `loops.sse.c.src`, `loops.vsx.c.src`, `loops.neon.c.src`, etc.). This is more
-similar to what PIXMAX does. There's a lot of duplication here though, and it
-the manual code duplication requires a champion who will be dedicated to
+similar to what PIXMAX does. There's a lot of duplication here though, and the
+manual code duplication requires a champion who will be dedicated to
 implementing and maintaining that platform's loop code.
 
 
